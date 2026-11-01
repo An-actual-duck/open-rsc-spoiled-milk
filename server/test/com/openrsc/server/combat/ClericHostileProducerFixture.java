@@ -46,7 +46,7 @@ public final class ClericHostileProducerFixture {
       h.world().getRegionManager().preflightNativeLayeredPlacements();
       h.world().getRegionManager().populateNativeLayeredPlacements();
       Player c = h.player("weaknessowner", 450, 450);
-      c.setClientVersion(10055);
+      c.setClientVersion(10056);
       c.getClientLimitations().maxItemId = 65535;
       h.recordOutgoingPackets(c);
       SharedAttackFoundationFixture.healthy(c);
@@ -89,7 +89,7 @@ public final class ClericHostileProducerFixture {
             "weakness does not invent on-hit summoning XP");
       }
       Player reflector = h.player("weakreflector", 450, 449);
-      reflector.setClientVersion(10055);
+      reflector.setClientVersion(10056);
       reflector.getClientLimitations().maxItemId = 65535;
       h.recordOutgoingPackets(reflector);
       SharedAttackFoundationFixture.healthy(reflector);

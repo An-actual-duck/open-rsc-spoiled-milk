@@ -59,7 +59,7 @@ public final class ClericThreeTierClientFixture {
       throws Exception {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     DataOutputStream out = new DataOutputStream(bytes);
-    out.writeByte(4);
+    out.writeByte(ClericBlessingContract.SCHEMA_VERSION);
     out.writeByte(1);
     out.writeShort(code);
     for (String s :
@@ -101,16 +101,16 @@ public final class ClericThreeTierClientFixture {
 
   static void presentation() throws Exception {
     check(packet.length > 1024 && packet.length <= 65535, "bounded authoritative source payload");
-    check(definitions.size() == 17, "active11");
+    check(definitions.size() == 20, "active11");
     ClericSpellbookCatalog catalog = new ClericSpellbookCatalog();
-    catalog.replace(4, definitions);
-    int[] order = {12,15,18,22,25,1,13,16,19,23,26,21,14,17,20,24,27};
+    catalog.replace(ClericBlessingContract.SCHEMA_VERSION, definitions);
+    int[] order = {12,15,18,22,25,28,1,13,16,19,23,26,29,21,14,17,20,24,27,30};
     for (int i = 0; i < order.length; i++) {
       check(catalog.codeAtIndex(i) == order[i], "sparse sorted position " + i);
       check(catalog.get(order[i]) == catalog.atIndex(i), "stable lookup");
     }
     check(
-        catalog.codeAtIndex(-1) == -1 && catalog.codeAtIndex(17) == -1 && catalog.get(0) == null,
+        catalog.codeAtIndex(-1) == -1 && catalog.codeAtIndex(20) == -1 && catalog.get(0) == null,
         "unknown identity");
     for (ClericSpellDef d : definitions) {
       Map<Integer, Integer> inventory = new HashMap<Integer, Integer>();
@@ -140,6 +140,7 @@ public final class ClericThreeTierClientFixture {
     reject(() -> ClericSpellbookPacketDecoder.decode(change(packet, 0, 2)), "schema2");
     reject(() -> ClericSpellbookPacketDecoder.decode(change(packet, 0, 3)), "schema3");
     reject(()->ClericSpellbookPacketDecoder.decode(recordedHex("cleric-schema3-payload.hex")),"actual retired schema3 payload");
+    reject(()->ClericSpellbookPacketDecoder.decode(recordedHex("cleric-schema4-payload.hex")),"actual retired schema4 payload");
     reject(
         () -> ClericSpellbookPacketDecoder.decode(change(packet, 1, 33)), "too many definitions");
     reject(
@@ -163,7 +164,7 @@ public final class ClericThreeTierClientFixture {
         () -> ClericSpellbookPacketDecoder.decode(synthetic(12, 1, 2, 2, 1, 0, 0)),
         "duplicate components");
     reject(
-        () -> ClericSpellbookPacketDecoder.decode(synthetic(12, 1, 2, 1, 17, 0, 0)),
+        () -> ClericSpellbookPacketDecoder.decode(synthetic(12, 1, 2, 1, 20, 0, 0)),
         "unknown component");
     reject(
         () -> ClericSpellbookPacketDecoder.decode(synthetic(12, 1, 2, 1, 1, 4, 0)),
@@ -173,7 +174,7 @@ public final class ClericThreeTierClientFixture {
     reject(() -> new ClericCostDef(1, 0), "zero cost");
     reject(() -> new ClericComponentDef(5, 101, 0, 0), "percentage bounds");
     reject(() -> catalog.replace(2, definitions), "old catalog");
-    reject(() -> catalog.replace(4, Arrays.asList(spell(12), spell(12))), "duplicate identities");
+    reject(() -> catalog.replace(ClericBlessingContract.SCHEMA_VERSION, Arrays.asList(spell(12), spell(12))), "duplicate identities");
     int[] thresholds = {0, 20, 45, 75, 115, 160};
     for (int rank = 1; rank <= 6; rank++) {
       check(ClericPowerPresentation.rank(thresholds[rank - 1], 6) == rank, "threshold");
@@ -219,7 +220,7 @@ public final class ClericThreeTierClientFixture {
 
   static void hud() throws Exception {
     ClericSpellbookCatalog catalog = new ClericSpellbookCatalog();
-    catalog.replace(4, definitions);
+    catalog.replace(ClericBlessingContract.SCHEMA_VERSION, definitions);
     ActiveStatusHudModel hud = new ActiveStatusHudModel();
     hud.replace(ActiveStatusPacketDecoder.decode(statuses(14, 17, 20)), catalog, 1000);
     List<ActiveStatusHudModel.Row> rows = hud.snapshot(1000).getRows();
@@ -250,6 +251,14 @@ public final class ClericThreeTierClientFixture {
     hud.replace(ActiveStatusPacketDecoder.decode(statuses(14)), catalog, 1000);
     hud.replace(ActiveStatusPacketDecoder.decode(new byte[] {0}), catalog, 1001);
     check(hud.snapshot(1001).getRows().isEmpty(), "authoritative removal");
+    hud.replace(ActiveStatusPacketDecoder.decode(statuses(30)),catalog,1000);
+    ActiveStatusHudModel.Row curse=hud.snapshot(1000).getRows().get(0);
+    check(curse.getClericIconAssetKey().equals("zamoraks_ruin") && curse.getCounterBadge().equals("P6"),
+        "new hostile identity uses canonical icon and shared power badge");
+    check(curse.getClericHoverText().contains("15% chance")
+        && curse.getClericHoverText().contains("50% chance per critical")
+        && curse.getClericHoverText().contains("75% execution chance")
+        && curse.getClericHoverText().contains("25% Hits"),"three approved curse components in generic status presentation");
   }
 
   static void guide() {
@@ -274,8 +283,15 @@ public final class ClericThreeTierClientFixture {
     }
     for(int code=12;code<=20;code++)check(!spell(code).getRecipientFlavor().isEmpty(),"nine recipient flavors");
     check(spell(17).getEffectRank(6).describeComponents().indexOf("Sap Blood")==spell(17).getEffectRank(6).describeComponents().lastIndexOf("Sap Blood"),"Sap Blood one label for both mechanics");
-    for(int code=22;code<=27;code++)check(spell(code).isHostile()&&spell(code).getRecipientFlavor().isEmpty(),"hostile target kind with no invented recipient flavor");
+    for(int code=22;code<=30;code++)check(spell(code).isHostile()&&spell(code).getRecipientFlavor().isEmpty(),"hostile target kind with no invented recipient flavor");
     check(spell(27).getEffectRank(6).describeComponents().contains("3 game ticks"),"phase duration numeric metadata");
+    StringBuilder zamGuide=new StringBuilder();
+    for(ClericSpellGuideCatalog.Entry entry:entries)if(entry.getStableCode()==30)zamGuide.append(entry.getLines());
+    String normalized=zamGuide.toString().replaceAll("[^A-Za-z0-9%]+"," ");
+    check(normalized.contains("15 17 19 21 23 25") && normalized.contains("50 55 60 65 70 75"),
+        "guide has both execution HP thresholds and chance curves");
+    check(normalized.contains("before the triggering hit") && normalized.contains("Bosses are immune"),
+        "guide explains pre-hit and boss boundaries");
     for (String row :
         ClericTextLayout.wrap(
             "Long blessing name and three detailed components displayed correctly",
@@ -311,7 +327,7 @@ public final class ClericThreeTierClientFixture {
     handler.getPacketsIncoming().dataBuffer = packet.clone();
     handler.getPacketsIncoming().packetEnd = 0;
     handler.handlePacket(158, packet.length);
-    check(mc.getClericSpellbookDefinitions().size() == 17, "actual opcode158 dispatch");
+    check(mc.getClericSpellbookDefinitions().size() == 20, "actual opcode158 dispatch");
     handler.getPacketsIncoming().dataBuffer = change(packet, 0, 2);
     handler.getPacketsIncoming().packetEnd = 0;
     handler.handlePacket(158, packet.length);
@@ -422,7 +438,7 @@ public final class ClericThreeTierClientFixture {
             + (checks - truncations)
             + " other behavior checks");
     System.out.println(
-        "PASS Cleric schema4 client "
+        "PASS Cleric schema5 client "
             + scope
             + ": "
             + checks

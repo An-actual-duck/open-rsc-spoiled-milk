@@ -104,7 +104,7 @@ public final class ClericSpellbookFoundationFixture {
   check(actual.equals(expected),"exact current-and-previous-grade vector, with purpose and neutral quantities");
  }
  public static void main(String[] args){
-  check(ClericSpellCatalog.SCHEMA_VERSION==4,"schema4");check(ClericSpellCatalog.getAll().size()==17,"active seventeen-spell book");
+  check(ClericSpellCatalog.SCHEMA_VERSION==5,"schema5");check(ClericSpellCatalog.getAll().size()==20,"active twenty-spell book");
   Set<Integer> ids=new HashSet<Integer>();Set<String> keys=new HashSet<String>();
   for(ClericSpellDefinition d:ClericSpellCatalog.getAll()){
    check(ids.add(d.getStableCode())&&keys.add(d.getStableKey()),"unique stable identities");check(ClericSpellCatalog.fromKey(d.getStableKey())==d&&ClericSpellCatalog.fromCode(d.getStableCode())==d,"identity lookup");
@@ -120,7 +120,7 @@ public final class ClericSpellbookFoundationFixture {
      if(d.getAlignment()==ClericAlignment.ZAMORAK)check(m.maxDamagePercent()==3+2*power&&m.dealtDamagePercent()==(tier>=2?power+2:0)&&m.lifestealPercent()==(tier>=3?power+4:0),"Zam incremental values");
      check(ClericEffectCatalog.get(d.getId(),power).getDuration().toMilliseconds(640)==60000,"shared60s");
     }
-   }else if(d.isHostile()) check(d.getStableCode()>=22&&d.getStableCode()<=27,"appended hostile identities");
+   }else if(d.isHostile()) check(d.getStableCode()>=22&&d.getStableCode()<=30,"appended hostile identities");
    else check(d.getId()==ClericSpellId.UNIFY||d.getId()==ClericSpellId.GREATER_UNIFY,"only generic utilities");
   }
   for(int code:new int[]{0,2,3,4,5,6,7,8,9,10,11,-1,65535}){try{ClericSpellCatalog.fromCode(code);throw new AssertionError("retired code accepted");}catch(IllegalArgumentException expected){checks++;}}

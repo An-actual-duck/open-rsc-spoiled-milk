@@ -10,7 +10,7 @@ public final class ClericHostileMagnitude implements ClericCompositeMagnitude {
   private final int tier, power;
 
   public ClericHostileMagnitude(ClericAlignment god, int tier, int power) {
-    if ((god != ClericAlignment.GUTHIX && god != ClericAlignment.SARADOMIN)
+    if ((god != ClericAlignment.GUTHIX && god != ClericAlignment.SARADOMIN && god != ClericAlignment.ZAMORAK)
         || tier < 1
         || tier > 3
         || power < 1
@@ -60,6 +60,22 @@ public final class ClericHostileMagnitude implements ClericCompositeMagnitude {
     return power <= 3 ? 1 : power <= 5 ? 2 : 3;
   }
 
+  public int criticalChance() {
+    return god == ClericAlignment.ZAMORAK ? 5 + 2 * (power - 1) : 0;
+  }
+
+  public int staggerChance() {
+    return god == ClericAlignment.ZAMORAK && tier >= 2 ? 25 + 5 * (power - 1) : 0;
+  }
+
+  public int executionThreshold() {
+    return god == ClericAlignment.ZAMORAK && tier >= 3 ? 15 + 2 * (power - 1) : 0;
+  }
+
+  public int executionChance() {
+    return god == ClericAlignment.ZAMORAK && tier >= 3 ? 50 + 5 * (power - 1) : 0;
+  }
+
   public List<ClericBlessingComponent> components() {
     List<ClericBlessingComponent> result = new ArrayList<ClericBlessingComponent>();
     if (god == ClericAlignment.GUTHIX) {
@@ -74,7 +90,7 @@ public final class ClericHostileMagnitude implements ClericCompositeMagnitude {
         result.add(
             new ClericBlessingComponent(
                 ClericBlessingContract.RECOIL_WEAKNESS, recoilWeakness(), 0, 0));
-    } else {
+    } else if (god == ClericAlignment.SARADOMIN) {
       result.add(
           new ClericBlessingComponent(
               ClericBlessingContract.MAGIC_DEFENSE_REDUCTION, magicDefenseReduction(), 0, 0));
@@ -86,6 +102,15 @@ public final class ClericHostileMagnitude implements ClericCompositeMagnitude {
         result.add(
             new ClericBlessingComponent(
                 ClericBlessingContract.NON_CORPOREAL, phaseChance(), phaseTicks(), 1));
+    } else {
+      result.add(new ClericBlessingComponent(ClericBlessingContract.CRITICAL_VULNERABILITY,
+          criticalChance(), 0, 0));
+      if (tier >= 2)
+        result.add(new ClericBlessingComponent(ClericBlessingContract.CRITICAL_STAGGER,
+            staggerChance(), 1, 5));
+      if (tier >= 3)
+        result.add(new ClericBlessingComponent(ClericBlessingContract.CRITICAL_EXECUTION,
+            executionChance(), executionThreshold(), 0));
     }
     return Collections.unmodifiableList(result);
   }

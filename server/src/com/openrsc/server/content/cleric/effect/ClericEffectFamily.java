@@ -17,7 +17,8 @@ public enum ClericEffectFamily {
     GUTHIX_BLESSING(8, "cleric:guthix_blessing"),
     ZAMORAK_BLESSING(9, "cleric:zamorak_blessing"),
     GUTHIX_HOSTILE(10, "cleric:guthix_hostile"),
-    SARADOMIN_HOSTILE(11, "cleric:saradomin_hostile");
+    SARADOMIN_HOSTILE(11, "cleric:saradomin_hostile"),
+    ZAMORAK_HOSTILE(12, "cleric:zamorak_hostile");
 
 	private static final Map<Integer, ClericEffectFamily> BY_CODE;
 	private static final Map<String, ClericEffectFamily> BY_KEY;

@@ -21,7 +21,9 @@ public final class ClericEffectCatalog {
         List<ClericEffectRankDefinition<? extends ClericEffectMagnitude>> ranks =
             new ArrayList<ClericEffectRankDefinition<? extends ClericEffectMagnitude>>();
         ClericEffectFamily family =
-            spell.isHostile() ? (spell.getAlignment() == ClericAlignment.GUTHIX ? ClericEffectFamily.GUTHIX_HOSTILE : ClericEffectFamily.SARADOMIN_HOSTILE) : spell.getAlignment() == ClericAlignment.SARADOMIN
+            spell.isHostile() ? (spell.getAlignment() == ClericAlignment.GUTHIX ? ClericEffectFamily.GUTHIX_HOSTILE
+                : spell.getAlignment() == ClericAlignment.SARADOMIN ? ClericEffectFamily.SARADOMIN_HOSTILE
+                    : ClericEffectFamily.ZAMORAK_HOSTILE) : spell.getAlignment() == ClericAlignment.SARADOMIN
                 ? ClericEffectFamily.SARADOMIN_BLESSING
                 : spell.getAlignment() == ClericAlignment.GUTHIX
                     ? ClericEffectFamily.GUTHIX_BLESSING

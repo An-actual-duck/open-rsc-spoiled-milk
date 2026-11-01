@@ -1,7 +1,7 @@
 /** Versioned numeric metadata only; no executable expressions cross the wire. */
 public final class ClericBlessingContract {
-  public static final int SCHEMA_VERSION = 4;
-  public static final int CLIENT_VERSION = 10055;
+  public static final int SCHEMA_VERSION = 5;
+  public static final int CLIENT_VERSION = 10056;
   public static final int MAX_DEFINITIONS = 32;
   public static final int MAX_COSTS = 4;
   public static final int MAX_COMPONENTS = 9;
@@ -22,7 +22,10 @@ public final class ClericBlessingContract {
   public static final int MAGIC_DEFENSE_REDUCTION = 14;
   public static final int MAX_MELEE_REDUCTION = 15;
   public static final int NON_CORPOREAL = 16;
-  public static final int LAST_COMPONENT_KIND = NON_CORPOREAL;
+  public static final int CRITICAL_VULNERABILITY = 17;
+  public static final int CRITICAL_STAGGER = 18;
+  public static final int CRITICAL_EXECUTION = 19;
+  public static final int LAST_COMPONENT_KIND = CRITICAL_EXECUTION;
   public static final int HOSTILE_PRESENTATION = 9;
 
   public static String componentName(int kind) {
@@ -58,6 +61,12 @@ public final class ClericBlessingContract {
         return "Muscular Atrophy";
       case NON_CORPOREAL:
         return "Molecular Antipode";
+      case CRITICAL_VULNERABILITY:
+        return "Expose Weakness";
+      case CRITICAL_STAGGER:
+        return "Weak Legs";
+      case CRITICAL_EXECUTION:
+        return "Weak Constitution";
       default:
         throw new IllegalArgumentException("Unknown Cleric component");
     }
@@ -132,6 +141,15 @@ public final class ClericBlessingContract {
                 + " game ticks non-corporeal, then "
                 + second
                 + " corporeal attack to rearm";
+        break;
+      case CRITICAL_VULNERABILITY:
+        text = amount + "% chance for primary melee, ranged or Magic attacks to hit their maximum";
+        break;
+      case CRITICAL_STAGGER:
+        text = amount + "% chance per critical to stagger for " + first + " attack(s); then immunity for " + second + " attacks";
+        break;
+      case CRITICAL_EXECUTION:
+        text = amount + "% execution chance per critical at or below " + first + "% Hits; ordinary enemies only";
         break;
       default:
         throw new IllegalArgumentException("Unknown Cleric component");
@@ -214,6 +232,15 @@ public final class ClericBlessingContract {
                 + "; non-corporeal game ticks: "
                 + intervals
                 + "; then one corporeal attack attempt to rearm";
+        break;
+      case CRITICAL_VULNERABILITY:
+        text = "primary melee/ranged/Magic critical chance (%): " + values;
+        break;
+      case CRITICAL_STAGGER:
+        text = "stagger chance per critical (%): " + values + "; " + first + " attack(s), then " + second + " unstaggered attacks of immunity";
+        break;
+      case CRITICAL_EXECUTION:
+        text = "execution chance per eligible critical (%): " + values + "; pre-hit Hits threshold (%): " + intervals + "; ordinary enemies only";
         break;
       default:
         throw new IllegalArgumentException("Unknown Cleric component");

@@ -50,7 +50,7 @@ public final class ClericThreeTierClientRenderFixture {
     List<ClericSpellDef> defs =
         ClericSpellbookPacketDecoder.decode(Files.readAllBytes(Paths.get(args[1])));
     ClericSpellbookCatalog catalog = new ClericSpellbookCatalog();
-    catalog.replace(4, defs);
+    catalog.replace(ClericBlessingContract.SCHEMA_VERSION, defs);
     mudclient mc =
         (mudclient) ClericThreeTierClientFixture.unsafe().allocateInstance(mudclient.class);
     ClericThreeTierClientFixture.set(mc, "clericSpellbook", catalog);
@@ -127,7 +127,7 @@ public final class ClericThreeTierClientRenderFixture {
     png(surface, out.resolve("native-guide-row.png"));
     Files.write(out.resolve("native-font-widths.txt"), measurements);
     System.out.println(
-        "PASS native font bounds for all17 names, actual mudclient compact tooltip/HUD rendering and"
+        "PASS native font bounds for all20 names, actual mudclient compact tooltip/HUD rendering and"
             + " detailed guide row: "
             + out);
   }

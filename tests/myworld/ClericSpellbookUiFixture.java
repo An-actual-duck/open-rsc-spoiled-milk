@@ -24,7 +24,7 @@ public final class ClericSpellbookUiFixture {
   static mudclient client(Path root,List<ClericSpellDef> defs,int width,int height)throws Exception {
     mudclient mc=(mudclient)ClericThreeTierClientFixture.unsafe().allocateInstance(mudclient.class);
     MudClientGraphics surface=new MudClientGraphics(width,height+12,5000);surface.fillSpriteTree();mc.setSurface(surface);
-    ClericSpellbookCatalog book=new ClericSpellbookCatalog();book.replace(4,defs);
+    ClericSpellbookCatalog book=new ClericSpellbookCatalog();book.replace(ClericBlessingContract.SCHEMA_VERSION,defs);
     set(mc,"clericSpellbook",book);set(mc,"clericIconSprites",new HashMap<Integer,Sprite>());
     set(mc,"externalAssetLoader",new ClientExternalAssetLoader(root,ClericSpellbookUiFixture.class));
     set(mc,"spellIconSprites",new Sprite[300]);
@@ -59,7 +59,7 @@ public final class ClericSpellbookUiFixture {
     Config.C_SIDE_MENU_OVERLAY=true;Config.S_SIDE_MENU_TOGGLE=true;
     EntityHandler.load(true);ClericThreeTierClientRenderFixture.fonts(root);
     List<ClericSpellDef> defs=ClericSpellbookPacketDecoder.decode(Files.readAllBytes(Paths.get(args[1])));
-    check(defs.size()==17,"active roster unchanged");
+    check(defs.size()==20,"complete twenty-spell active roster");
     for(boolean custom:new boolean[]{false,true})for(int[] size:new int[][]{{512,334},{960,528}}) {
       Config.C_CUSTOM_UI=custom;mudclient mc=client(root,defs,size[0],size[1]);
       MudClientGraphics surface=(MudClientGraphics)mc.getSurface();int left=size[0]-199;
@@ -134,7 +134,7 @@ public final class ClericSpellbookUiFixture {
       for(String line:page.getLines())check(mc.getSurface().stringWidth(1,line)<=410,"guide body fits native font width");
       if(page.getStableCode()<0)overview.append(page.getLines());else covered.add(page.getStableCode());
     }
-    check(covered.size()==17,"guide retains every active spell");
+    check(covered.size()==20,"guide retains every active spell");
     check(overview.toString().contains("maximum strength")&&overview.toString().contains("Worship unlocks"),"guide explains terminology");
     for(int value:new int[]{0,20,45,75,115,160})check(overview.toString().contains(value+" Holy Power"),"explicit power thresholds");
     StringBuilder curse=new StringBuilder();for(ClericSpellGuideCatalog.Entry page:pages)if(page.getStableCode()==27||page.getStableCode()==24)curse.append(page.getLines());

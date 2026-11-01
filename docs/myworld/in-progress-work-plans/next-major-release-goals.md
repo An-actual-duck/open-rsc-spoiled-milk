@@ -87,11 +87,12 @@ References: [coating design](../rough-drafts/slayer-unique-equipment-design.md),
 
 ## 2. Cleric — current release stage complete
 
-Owner acceptance covers the current seventeen-spell book: nine blessings,
-Unify/Greater Unify and six Guthix/Saradomin hostile spells, together with
-Grace/Blight production and Cosmic combat luck. The remaining Zamorak hostile
-chain and Tier 4 stay documented for a later stage. No further Cleric design or
-implementation is required to satisfy this release's feature scope.
+Owner acceptance covers the current twenty-spell book: nine blessings,
+Unify/Greater Unify and all nine god-aligned hostile spells, together with
+Grace/Blight production and Cosmic combat luck. On November 1 the owner
+explicitly required Zamorak's Malice/Cruelty/Ruin before release, superseding
+the temporary hold. Tier 4 remains deferred. Combined private acceptance and
+the normal integration/release gates remain required.
 
 ### Confirmed overhaul direction — October 29, 2026
 
@@ -127,7 +128,7 @@ implementation is required to satisfy this release's feature scope.
 
 This supersedes the older four-primary/neutral-altar, Unholy-carving recipe and
 Curse-sigil/ichor-river proposals. The shipped twelve-spell book is the historical
-reuse baseline; the current private implementation has seventeen spells.
+reuse baseline; the current private implementation has twenty spells.
 
 ### Well visuals and edge access
 
@@ -185,7 +186,7 @@ independent of Holy Power. The universal curve selects rank; each component
 uses its own approved incremental values. Standalone Tier 1 caps at P2; its
 inherited component inside Tier 3 can reach P6. The owner approved the revised
 values below on October 31, superseding earlier `3P`/`2P` proposals and the
-former Saradomin `P+1` draft. The private implementation candidate exposes seventeen
+former Saradomin `P+1` draft. The private implementation candidate exposes twenty
 spells; retired launch IDs remain reserved and are refused. All blessings last
 **60 seconds**, with one composite snapshot/expiry per god.
 
@@ -379,14 +380,20 @@ melee-only Zamorak damage bonuses. Non-corporeal durations1/1/1/2/2/3 game ticks
 and the confirmed magical-combat-only exception are implemented with independent
 50% NPC opacity. Poison keeps cleansing without harm while phased; no catch-up.
 Rearm requires a tangible attack attempt and a following tick before another roll.
-Matched schema4/client10055 is required; owner maps and public activation remain
+Matched schema5/client10056 is required; owner maps and public activation remain
 separate. See [implementation review](cleric-consistency-implementation-review.md).
 
-Zamorak hostile activation remains deferred beyond this release stage. The implemented Cosmic replacement is
+Zamorak's Malice/Cruelty/Ruin are now required and implemented in the feature
+candidate as stable codes28–30: authored critical vulnerability, shared
+one-attack Stagger with five-attack immunity, and pre-hit-threshold execution
+for ordinary enemies only. Bosses and protected quest/script encounters cannot
+be executed. Their normal damage, attribution and death rules remain intact.
+The implemented Cosmic replacement is
 **combat luck**:1percentage point per equipped robe tier, capped50%. Named damage/
 defense rolls and beneficial combat checks can select one favorable extra candidate;
-loot, skilling, random choices and recurring curse checks are excluded. No Expose Weakness/Weak Legs/Weak Constitution
-mechanics or proposed penetration redesign are activated.
+loot, skilling, random choices and recurring curse checks are excluded.
+It can favor the named critical/Stagger/execution chance checks without
+replaying attacks. The proposed penetration redesign remains unimplemented.
 
 ## 3. Boss-dragon expansion — deferred beyond this release
 

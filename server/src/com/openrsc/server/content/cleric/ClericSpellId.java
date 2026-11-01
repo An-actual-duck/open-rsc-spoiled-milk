@@ -33,7 +33,10 @@ public enum ClericSpellId {
     GUTHIX_TERROR(24, "cleric.guthix_terror"),
     SARADOMIN_CENSURE(25, "cleric.saradomin_censure"),
     SARADOMIN_CONDEMNATION(26, "cleric.saradomin_condemnation"),
-    SARADOMIN_UNMAKING(27, "cleric.saradomin_unmaking");
+    SARADOMIN_UNMAKING(27, "cleric.saradomin_unmaking"),
+    ZAMORAK_MALICE(28, "cleric.zamorak_malice"),
+    ZAMORAK_CRUELTY(29, "cleric.zamorak_cruelty"),
+    ZAMORAK_RUIN(30, "cleric.zamorak_ruin");
 
 	private static final Map<Integer, ClericSpellId> BY_CODE;
 	private static final Map<String, ClericSpellId> BY_KEY;
@@ -71,7 +74,7 @@ public enum ClericSpellId {
 
     /** Legacy identities retain their codes but cannot be cast from the active book. */
     public boolean isBlessing() { return code >= 12 && code <= 20; }
-    public boolean isHostile() { return code >= 22 && code <= 27; }
+    public boolean isHostile() { return code >= 22 && code <= 30; }
     public boolean isActive() { return this == UNIFY || this == GREATER_UNIFY || isBlessing() || isHostile(); }
 
 	public static ClericSpellId fromCode(int code) {

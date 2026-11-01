@@ -4,7 +4,7 @@ import com.openrsc.client.entityhandling.defs.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-/** Atomic, bounds-checked schema-4 decoder. No partial catalog is exposed. */
+/** Atomic, bounds-checked schema-5 decoder. No partial catalog is exposed. */
 public final class ClericSpellbookPacketDecoder {
   private ClericSpellbookPacketDecoder() {}
 

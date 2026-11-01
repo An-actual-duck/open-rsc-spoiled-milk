@@ -6,7 +6,7 @@ This is the governing design document for the Worship-tiered Cleric spellbook.
 The latest confirmed direction below supersedes conflicting older requirements;
 unresolved choices remain explicit. The twelve-spell launch book and Blessing
 foundation shipped in `v0.2.64`; the maintained private candidate now has the
-seventeen-spell roster below (nine blessings, two Unify forms and six Guthix/Saradomin hostile spells). Their effect contracts are useful reuse material, not a
+twenty-spell roster below (nine blessings, two Unify forms and nine god-aligned hostile spells). Their effect contracts are useful reuse material, not a
 requirement to preserve their old resource assignments or book layout.
 
 The [completed implementation plan](../completed-work-plans/cleric-spellbook-implementation-plan.md)
@@ -14,14 +14,14 @@ is a historical launch record. The owner separately authorized the buff
 implementation now tracked in [the candidate review](cleric-three-tier-buffs-review.md).
 Map imports and public activation remain separate operations.
 
-### Accepted release stage — October 31, 2026
+### Accepted release stage — updated November 1, 2026
 
 The owner considers the current Cleric stage complete for the next release:
-nine blessings, Unify/Greater Unify, six Guthix/Saradomin hostile spells,
-Grace/Blight production and the Cosmic combat-luck replacement. **Tier 4 and the
-unimplemented Zamorak hostile chain are later work, not release requirements.**
-Preserve their designs without activating them or requiring further Cleric
-expansion before release. Ordinary combined release-candidate testing remains;
+nine blessings, Unify/Greater Unify, all nine god-aligned hostile spells,
+Grace/Blight production and the Cosmic combat-luck replacement. The owner
+explicitly restored Zamorak's Malice/Cruelty/Ruin to the required release scope
+on November 1, superseding the temporary October 31 hold. **Tier 4 remains
+deferred.** Ordinary combined release-candidate testing remains;
 this scope acceptance does not claim unrun gameplay coverage. The active
 [release checklist](next-major-release-goals.md#current-release-checkpoint--october-31-2026)
 governs what is still required.
@@ -54,8 +54,9 @@ private-build cost defaults throughout this historical design document.
 
 Each cast spends its complete vector once, only on useful application. Tier 3
 uses no Stone. **Unify costs2 Stone Grace; Greater Unify costs3 Stone Grace plus
-3 Silver Grace**, explicitly approved by the owner. No neutral Blight spell,
-Zamorak hostile spell or Tier 4 is enabled by this material addition.
+3 Silver Grace**, explicitly approved by the owner. No neutral Blight spell or
+Tier 4 is enabled by this material addition. Zamorak's separately completed
+hostile spells use the same god-plus-Blight vectors.
 
 See [production and validation](cleric-metal-sigil-production-review.md) for
 identities, actual XP units, recipe defaults, asset provenance and tests.
@@ -65,14 +66,14 @@ identities, actual XP units, recipe defaults, asset provenance and tests.
 This is the owner-confirmed **implemented baseline for the accepted stage**, superseding the old
 individually unlocked twelve-spell roster and spell-specific rank tables as the
 desired overhaul. The implementation candidate now exposes the nine god
-blessings, Unify, Greater Unify and six Guthix/Saradomin hostile spells; retired launch codes stay reserved and fail
+blessings, Unify, Greater Unify and nine god-aligned hostile spells; retired launch codes stay reserved and fail
 closed. The twelve-spell launch book remains historical salvage, not the active
 candidate roster. No public deployment or owner-map change is implied.
 Grace/Blight well production remains implemented separately.
 
 **Worship unlocks spell tiers; Blessing produces their resources.** The ordinary
-book has three buff tiers, with one blessing per god at each tier, and a future
-debuff branch with one debuff per god per tier. Each later blessing tier adds
+book has three buff tiers and three debuff tiers, with one spell per god at
+each tier in each line. Each later blessing tier adds
 its god's next component to the earlier components. Tier 3 targets roughly
 Worship 40, matching the elemental single-element progression of 1/20/40
 (dual-element progression is 10/30/50). Worship 1/20 for Cleric tiers 1/2 remains
@@ -223,7 +224,7 @@ attributes, sounds and Crumble Undead quest/classic admission remain unchanged.
 The candidate consistently exposes spell title, inherited named effects and
 numeric descriptions; Sap Blood groups its two mechanics beneath one label.
 All nine approved recipient messages follow the revised tier associations.
-Schema4/client10055 carries typed components, recipient flavor and target kind.
+Schema5/client10056 carries typed components, recipient flavor and target kind.
 Old icon keys such as Mend, Purify, Zeal or Rally do not independently select
 new effect names. Unify and Greater Unify retain those spell names and movement
 descriptions, with no bespoke recipient flavor line currently defined.
@@ -408,14 +409,12 @@ own flag and does not reuse the spirit-summon gameplay flag.
 
 ### Owner-selected Zamorak debuffs — October 31, 2026
 
-**Deferred beyond this release stage; design recorded, not implemented.**
-Cosmic combat luck is implemented; hostile hit/execution boundaries remain a
-later decision. These owner-selected
+**Required for this release; implementation authorized November 1.**
+The owner confirmed the primary-hit and execution boundaries below. These owner-selected
 components replace the earlier manager suggestions for Zamorak. Higher tiers
 retain the earlier components, using the shared Holy Power thresholds and
 tier caps **2/4/6**. The quoted names below are the owner's effect labels;
-the approved spell titles are listed above. Exact mechanical descriptions still
-need implementation review; hostile recipient flavor messages are not requested.
+the approved spell titles are listed above. Hostile recipient flavor messages are not requested.
 
 | Tier addition | Component | Formula at power P | P1 / P2 / P3 / P4 / P5 / P6 |
 |---|---|---|---|
@@ -429,8 +428,9 @@ from the three main combat styles: **melee, ranged and Magic**, not just melee.
 A critical converts the qualifying damage roll into a maximum-damage hit.
 This is not an instruction to make every naturally rolled maximum a critical.
 The Tier 1 spell itself caps at 7%; its inherited component can reach 15%
-inside Tier 3. Existing equipment critical chance and the exact eligible-hit
-boundary must be reconciled explicitly before implementation.
+inside Tier 3. Cosmic robes supply combat luck rather than a second critical
+chance. Only admitted positive authored primary criticals can trigger later
+components; an ordinary maximum, a miss or a forced zero cannot.
 
 **Weak Legs** rolls only on critical hits. A successful stagger makes the NPC
 lose **one attack turn**. After that turn is lost, the NPC is immune to another
@@ -441,14 +441,17 @@ their own independent stagger allowance. Pending losses must not queue, and
 recasting must not bypass the five-attack protection. The shared Stagger foundation now consolidates Ogre and Startle into one
 actor-owned pending-loss/recovery authority in the implementation candidate.
 Every existing source still requests one attack; the API supports an explicit
-attack count without stacking applications. This does not enable Weak Legs.
+attack count without stacking applications. Weak Legs uses this same authority;
+curse expiry or recasting never clears its protection.
 
 **Weak Constitution** rolls on critical hits against an afflicted enemy at or
 below the power-dependent HP threshold. A success instantly kills that enemy.
 The owner explicitly chose **ordinary enemies only; bosses are exempt from
 this execution effect**. This does not establish blanket boss immunity to
-Expose Weakness or Weak Legs. Boss classification must be reviewed before
-implementation, with normal kill attribution, loot and death cleanup retained.
+Expose Weakness or Weak Legs. The implementation reuses the explicit boss
+policy/task tags, protects script-owned deaths and the existing Witch's
+Experiment/Salarin encounter identities, and leaves the unrelated Slayer boss
+roster unchanged. Normal kill attribution, loot and death cleanup are retained.
 
 At the highest permitted rank of each spell: Tier 1 has 7% crit chance;
 Tier 2 has 11% crit chance and 40% stagger chance per crit; Tier 3 has 15%
@@ -460,7 +463,7 @@ The shared critical foundation carries an immutable explicit outcome through
 ordinary melee, bow/throwing, and combat Magic launch/impact settlement. Cosmic now supplies combat luck instead of critical chance (approved October31).
 Each robe tier contributes1percentage point, capped50% over all pieces. A normal maximum is not a critical; a Stagger-forced zero is not a
 critical. Existing secondary/offhand damage eligibility is retained, without
-permission to trigger these future hostile components. Remaining legacy integer-only secondary/death helpers retain their historical
+permission to trigger these hostile components. Remaining legacy integer-only secondary/death helpers retain their historical
 damage/RNG and attribution ordering. In particular, lethal God/Iban secondary
 damage still has its older direct death path. Those compatibility helpers do
 not have complete critical provenance and are not approved hostile-trigger
@@ -478,22 +481,30 @@ Stagger, phase and additive delay rules remain unchanged. The optional OSRS
 profile retains its separate formula/cape mechanics. See the [source-family and
 verification review](cosmic-combat-luck-review.md) for exact integration boundaries.
 
-Before hostile implementation, resolve: aggregation with existing critical
-equipment; offhand/secondary/multi-hit eligibility; the HP checkpoint used for
-execution (before or after the triggering hit), and final hostile-trigger
-eligibility at the explicit outcome boundary. Shared Stagger recovery and
-primary critical-result propagation are foundation work, not implementation
-of the hostile spells. Costs, duration,
-enemy admission, immunity/stacking rules and PvP policy remain separate hostile
-decisions. No new PvP permission or live activation is implied.
+Execution uses HP **before** the triggering hit. A normal killing critical
+needs no execution or Stagger roll. Otherwise execution rolls first; a success
+increases that same admitted damage request to the remaining HP and follows the
+producer's ordinary death/loot/XP path once. If the target survives, Weak Legs
+may request one shared Stagger. Cosmic can favor each pure chance check once;
+callbacks, resources and whole attacks are never replayed. Bow/throwing and
+normal/God/Iban Magic primary launches retain immutable critical outcomes;
+Salarin's fixed primary also carries explicit provenance without changing its
+damage or restricted-spell rules. Offhand, extra/proc hits, summons, cannon,
+periodic and reflected damage remain outside this chain. The disabled optional
+OSRS formula/cape profile is unchanged and has no Zamorak critical provider.
+No new PvP permission or live activation is implied.
+
+See [the native implementation and verification review](zamorak-hostile-implementation-review.md)
+for exact primary-source, scripted-encounter and lifecycle boundaries.
 
 **Implemented specialization:** Zamorak maximum/dealt bonuses apply to melee,
 Barkskin to ranged defense; lifesteal retains its existing direct-hit scope.
 The candidate includes Saradomin's undead damage/tier-order revision and the
-six Guthix/Saradomin hostile spells. Zamorak hostile activation remains deferred
-pending separate eligible-hit/execution decisions; Cosmic combat luck is implemented without enabling this chain.
+six Guthix/Saradomin hostile spells plus Malice/Cruelty/Ruin, appended as stable
+codes 28–30. Schema 5/client 10056 adds the three new numeric component kinds,
+canonical spell-specific icon keys, guide tables and status presentation.
 
-The old neutral Respite stays absent from the active17-entry candidate. This
+The old neutral Respite stays absent from the active20-entry candidate. This
 does not remove Saradomin regeneration, other equipment/potion regeneration,
 assets or item identities. The owner-approved current/previous-grade costs above replace the initial manager vectors;
 God+Grace/God+Blight are exchanged atomically once per useful cast. Unify's

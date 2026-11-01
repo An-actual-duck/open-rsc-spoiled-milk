@@ -623,6 +623,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			final DamageResult damageResult = opponent.getWorld().getServer()
 				.getResolvedDamageTransaction().apply(damageRequest);
 			damageDealt = damageResult.getLegacyDamageDealt();
+			damage = damageResult.getRequest().getResolvedDamage();
 		} else if (damage >= 0) {
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				caster, opponent, DamageRequest.SourceCategory.ACTOR,

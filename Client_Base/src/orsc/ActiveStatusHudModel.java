@@ -222,8 +222,10 @@ public final class ActiveStatusHudModel {
 
     public String getCounterBadge() {
       return isCleric()
-              && clericSpell.getEffectRank(rank).getPresentationKind()
+              && (clericSpell.getEffectRank(rank).getPresentationKind()
                   == ClericBlessingContract.BLESSING_PRESENTATION
+                  || clericSpell.getEffectRank(rank).getPresentationKind()
+                  == ClericBlessingContract.HOSTILE_PRESENTATION)
           ? "P" + rank
           : counterKind == 1
               ? remainingCounter + "H"
@@ -242,6 +244,7 @@ public final class ActiveStatusHudModel {
               : counterKind == 2 ? " — " + remainingCounter + " healing pulses remaining" : "";
       switch (effectRank.getPresentationKind()) {
         case ClericBlessingContract.BLESSING_PRESENTATION:
+        case ClericBlessingContract.HOSTILE_PRESENTATION:
           return prefix + effectRank.describeComponents();
         case 1:
           return prefix + effectRank.getPrimaryMagnitude() + " Hits per pulse" + counter;
@@ -269,9 +272,10 @@ public final class ActiveStatusHudModel {
     }
 
     public List<String> getClericHoverLines() {
-      if (!isCleric()
-          || clericSpell.getEffectRank(rank).getPresentationKind()
-              != ClericBlessingContract.BLESSING_PRESENTATION) return null;
+      if (!isCleric()) return null;
+      int presentation=clericSpell.getEffectRank(rank).getPresentationKind();
+      if (presentation!=ClericBlessingContract.BLESSING_PRESENTATION
+          && presentation!=ClericBlessingContract.HOSTILE_PRESENTATION) return null;
       ArrayList<String> lines = new ArrayList<String>();
       lines.add(clericSpell.getName() + " P" + rank);
       String previous=null;

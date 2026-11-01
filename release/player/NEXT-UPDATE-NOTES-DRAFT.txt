@@ -13,7 +13,7 @@ Slow, coatings and antidotes
 Battleaxes can receive a permanent, single-dose Viscous coating, with an option to wipe it clean. Shared Slow and weaker poison contributions work with the existing combat systems. New spider-egg ingredients and antidotes provide more gathering and cleansing options.
 
 Cleric overhaul
-Three growing blessing tiers for Saradomin, Guthix and Zamorak combine their effects as stronger tiers are unlocked. Guthix and Saradomin also have hostile spell lines; Unify and Greater Unify help parties regroup. Holy Power controls spell strength within each tier. The in-game guide explains effects, power thresholds and costs.
+Three growing blessing and curse tiers for Saradomin, Guthix and Zamorak combine their effects as stronger tiers are unlocked. Zamorak's curses expose enemies to critical hits, Stagger and executions; bosses and protected encounters cannot be executed. Unify and Greater Unify help parties regroup. Holy Power controls spell strength within each tier. The in-game guide explains effects, power thresholds and costs.
 
 Grace, Blight and Moonsilver
 Existing neutral sigils become Grace without replacing players’ stocks. Charge Grace at Divine wellsprings and Blight at Ichor wells; god sigils still use their god altars. Silver and Moonsilver sigils start from moulded blanks, producing three blanks per bar before carving and infusion. Spell costs now use the appropriate combination of sigil grades.
@@ -28,7 +28,7 @@ Known minor visual limitations
 Four existing grey floor joins remain flagged because the current ground-colour palette cannot reproduce their intended grey closely. A broader system for automatic floor-edge matching and separate half-tile materials is deferred.
 
 Not part of this release
-Mystic Blue Dragon, Fierce Red Dragon, Corporeal Beast, Ante, Cleric Tier 4 and the remaining Zamorak hostile spell line remain future work. The development editor remains a separate private pre-alpha tool.
+Mystic Blue Dragon, Fierce Red Dragon, Corporeal Beast, Ante and Cleric Tier 4 remain future work. The development editor remains a separate private pre-alpha tool.
 
 Final artwork
-Cleric spell icons are still being selected by the owner. No new icon choice is assumed in this draft or the current candidate.
+The owner-selected Cleric spell icons distinguish each of the twenty spells. Final combined visual acceptance remains part of private testing.

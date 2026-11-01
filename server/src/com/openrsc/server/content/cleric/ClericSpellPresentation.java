@@ -29,7 +29,7 @@ public final class ClericSpellPresentation {
 		}
 		if (statusIconAssetKey == null
 				|| (!statusIconAssetKey.isEmpty()
-					&& !statusIconAssetKey.matches("[a-z0-9]+(?:-[a-z0-9]+)*"))) {
+					&& !statusIconAssetKey.matches("[a-z0-9]+(?:[-_][a-z0-9]+)*"))) {
 			throw new IllegalArgumentException("Invalid Cleric status icon asset key");
 		}
 		this.spellbookIconItemId = spellbookIconItemId;

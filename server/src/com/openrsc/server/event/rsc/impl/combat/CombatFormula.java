@@ -94,9 +94,11 @@ public class CombatFormula {
         if(directAttack) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax,com.openrsc.server.model.combat.CombatStyle.MAGIC);
     final int resolvedMaximum = attackMax;
     AttackRoll roll =
-        CriticalHitResolver.ordinary(
-            source,
+        com.openrsc.server.content.cleric.runtime.ClericCriticalRuntime.primaryRoll(
+            source, victim,
             resolvedMaximum,
+            directAttack,
+            com.openrsc.server.model.combat.CombatStyle.MAGIC,
             () -> applyMitigationRoll(source, victim, resolvedMaximum, defenseMax, directAttack));
     int damage = roll.getDamage();
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.MAGIC);
@@ -126,9 +128,11 @@ public class CombatFormula {
 		int cappedAttackMax = Math.max(1, (int) Math.ceil(attackMax * maxHitPercent));
     final int resolvedMaximum = cappedAttackMax;
     AttackRoll roll =
-        CriticalHitResolver.ordinary(
-            source,
+        com.openrsc.server.content.cleric.runtime.ClericCriticalRuntime.primaryRoll(
+            source, victim,
             resolvedMaximum,
+            directAttack,
+            com.openrsc.server.model.combat.CombatStyle.MAGIC,
             () -> applyMitigationRoll(source, victim, resolvedMaximum, defenseMax, directAttack));
     int damage = roll.getDamage();
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.MAGIC);
@@ -276,9 +280,11 @@ public class CombatFormula {
         else if(directAttack && capDivisor==1) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
     final int resolvedMaximum = attackMax;
     AttackRoll roll =
-        CriticalHitResolver.ordinary(
-            source,
+        com.openrsc.server.content.cleric.runtime.ClericCriticalRuntime.primaryRoll(
+            source, victim,
             resolvedMaximum,
+            directAttack && capDivisor==1,
+            com.openrsc.server.model.combat.CombatStyle.MELEE,
             () ->
                 applyMitigationRoll(
                     source,
@@ -325,9 +331,11 @@ public class CombatFormula {
         attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax,com.openrsc.server.model.combat.CombatStyle.RANGED);
     final int resolvedMaximum = attackMax;
     AttackRoll roll =
-        CriticalHitResolver.ordinary(
-            source,
+        com.openrsc.server.content.cleric.runtime.ClericCriticalRuntime.primaryRoll(
+            source, victim,
             resolvedMaximum,
+            true,
+            com.openrsc.server.model.combat.CombatStyle.RANGED,
             () ->
                 applyMitigationRoll(
                     source,

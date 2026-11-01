@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Schema4 actual-client transport, sparse book, composite HUD and detailed guide gates."""
+"""Schema5 actual-client transport, sparse book, composite HUD and detailed guide gates."""
 from pathlib import Path
 import argparse, os, subprocess, tempfile
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,8 +33,8 @@ def main():
         work=Path(directory)
         wire=args.wire
         if wire is None:
-            wire=work/'schema4.bin'
-            lines=(ROOT/'tests/myworld/fixtures/cleric-schema4-payload.hex').read_text().splitlines()
+            wire=work/'schema5.bin'
+            lines=(ROOT/'tests/myworld/fixtures/cleric-schema5-payload.hex').read_text().splitlines()
             wire.write_bytes(bytes.fromhex(''.join(line for line in lines if not line.startswith('#'))))
         subprocess.run([str(java_home/'bin/javac'), '-J-Xmx128m', '-cp', str(jar), '-d', str(work), str(ROOT/'tests/myworld/ClericThreeTierClientFixture.java'),str(ROOT/'tests/myworld/ClericGenericStatusHudFixture.java'),str(ROOT/'tests/myworld/ClericThreeTierClientRenderFixture.java'),str(ROOT/'tests/myworld/ClericSpellbookUiFixture.java')],check=True)
         subprocess.run([str(java_home/'bin/java'), '-Xmx256m', '-XX:+UseSerialGC', '-Djava.awt.headless=true', '-cp', os.pathsep.join([str(work),str(jar)]), 'orsc.ClericThreeTierClientFixture',str(wire),args.scope],check=True,cwd=ROOT)

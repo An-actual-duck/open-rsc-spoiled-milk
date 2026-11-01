@@ -149,6 +149,7 @@ public final class ClericSpellGuideCatalog {
           values.append(c.getMagnitude());
           intervals.append(
               c.getKind() == orsc.ClericBlessingContract.NON_CORPOREAL
+                      || c.getKind() == orsc.ClericBlessingContract.CRITICAL_EXECUTION
                   ? c.getParameter1()
                   : c.getParameter1() / 1000);
         }
@@ -193,6 +194,14 @@ public final class ClericSpellGuideCatalog {
         } else if (component.getKind() == ClericBlessingContract.NON_CORPOREAL) {
           add(lines, "Non-corporeal enemies cannot deal or receive non-magical damage. Magical damage still works in both directions.");
           add(lines, "Poison keeps cleansing normally while non-corporeal. Blocked poison damage is not dealt later.");
+        } else if (component.getKind() == ClericBlessingContract.CRITICAL_VULNERABILITY) {
+          add(lines, "A critical forces an attack to its maximum damage. A normal maximum roll does not count as a critical. Any eligible player's main melee, bow, throwing or Magic attack can benefit.");
+          add(lines, "Offhand, extra hits, summons, cannon, poison and recoil do not trigger this critical chain. Cosmic robes can improve these chances.");
+        } else if (component.getKind() == ClericBlessingContract.CRITICAL_STAGGER) {
+          add(lines, "Stagger negates the next attack. Its shared protection lasts for five performed, unstaggered attacks; recasting or another attacker cannot reset it.");
+        } else if (component.getKind() == ClericBlessingContract.CRITICAL_EXECUTION) {
+          add(lines, "Execution checks health before the triggering hit. Bosses are immune to execution, but can still be susceptible to critical hits and Stagger. A normal killing critical needs no execution roll.");
+          add(lines, "Some quest enemies and special spell encounters are protected from execution too. Their normal combat rules still apply.");
         }
       }
     }

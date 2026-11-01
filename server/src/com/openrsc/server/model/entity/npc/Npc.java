@@ -941,7 +941,8 @@ public class Npc extends Mob {
 		}
 	}
 
-	private boolean isPluginOwnedDeathCompatibility() {
+	/** Script-owned completion must not be bypassed by ordinary-enemy execution effects. */
+	public boolean isPluginOwnedDeathCompatibility() {
 		for (final int npcId : PLUGIN_OWNED_DEATH_NPC_IDS) {
 			if (getID() == npcId) {
 				return true;

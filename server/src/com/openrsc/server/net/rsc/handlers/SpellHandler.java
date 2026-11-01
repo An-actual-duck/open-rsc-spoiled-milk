@@ -2209,7 +2209,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						if (affectedMob.getID() == NpcId.SALARIN_THE_TWISTED.id() && (spellEnum == Spells.WIND_STRIKE
 							|| spellEnum == Spells.WATER_STRIKE || spellEnum == Spells.EARTH_STRIKE
 							|| spellEnum == Spells.FIRE_STRIKE)) {
-							int firstDamage = 0;
+							final int firstDamage;
 							final int secondAdditionalDamage;
 							if (spellEnum == Spells.FIRE_STRIKE) {
 								firstDamage = 12;
@@ -2226,12 +2226,18 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							}
 							// Shout message from NPC when being maged
 							affectedMob.getUpdateFlags().setChatMessage(new ChatMessage(affectedMob, "Aaarrgh my head", getPlayer()));
+							// Fixed-damage primary still has explicit authored critical provenance.
+                            final com.openrsc.server.model.combat.AttackRoll salarinRoll = defaultAttack.isSuppressed()
+                                ? com.openrsc.server.model.combat.AttackRoll.normal(0)
+                                : com.openrsc.server.content.cleric.runtime.ClericCriticalRuntime.primaryRoll(
+                                    getPlayer(), affectedMob, firstDamage, true, CombatStyle.MAGIC, () -> firstDamage);
 							// Deal first damage
 							getPlayer().getWorld().getServer().getGameEventHandler().add(
 								new ProjectileEvent(getPlayer().getWorld(), getPlayer(),
 									affectedMob, ProjectileLaunchSpecification.builder(
 									ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,
-									firstDamage, 1)
+									salarinRoll.getDamage(), 1)
+									.attackRoll(salarinRoll)
 									.attackCommitment(defaultAttack).build(), defaultSpellResources));
 							// Deal Second Damage
 							getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "Salarin the Twisted Strike") {

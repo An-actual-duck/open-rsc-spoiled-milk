@@ -22,13 +22,17 @@ without guessing that a matching image has a newly established artist/licence.
 
 ## Integration sequence
 
-Core keeps the eleven old non-Unify PNGs temporarily so the current seventeen-
-spell catalog still has its resources when this art branch is integrated first.
-The manifest lists their exact filenames and preserved hashes. Complete intake
-therefore has twenty canonical PNGs plus eleven temporary compatibility PNGs.
-These compatibility files are not aliases for the new twenty-spell catalog.
-The gameplay cutover switches to the canonical keys and retires those eleven
-old resources in the same reviewed change. Historical artwork remains in Git.
+The schema-5 twenty-spell gameplay cutover now uses exactly twenty canonical
+PNGs. The eleven old non-Unify resources have been retired from the current
+inventory; their names and hashes remain in `temporaryCompatibilityAssets` as
+historical provenance with retirement markers. Historical artwork remains in
+Git and the owner's supplied originals remain preserved separately.
+
+Core first integrated the art with those eleven resources temporarily present
+so the old seventeen-spell catalog stayed usable during the transition. That
+compatibility step is complete. The current gameplay branch must prove the
+twenty definitions, source files, embedded resources and actual icon cache
+together; the older two-build intake evidence below is historical.
 
 This folder owns artwork and its receipts only. Server catalog/protocol,
 spell effects, resource loading and spellbook interaction are separate gameplay
@@ -55,6 +59,13 @@ presentation canvas at load time; that existing rendering behavior does not
 change the supplied source PNGs.
 
 ## Verification
+
+The unified schema-5/client-10056 gameplay build now passes all twenty native
+spell/code/icon bindings, exact source/JAR bytes and the actual embedded-only
+mudclient cache (162 checks). The final resource inventory is twenty canonical
+PNGs and zero legacy compatibility PNGs. Spellbook and guide rendering cover
+all twenty definitions in both supported desktop layouts; the compact hover
+layout is preserved. This is offline UI proof, not private gameplay acceptance.
 
 `python3 tests/myworld/test-cleric-spell-icons.py --source-only` requires a
 complete twenty-icon receipt and checks exact bytes, dimensions, RGBA pixels,
