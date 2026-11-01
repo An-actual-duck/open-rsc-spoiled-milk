@@ -1,0 +1,29 @@
+{
+  "baseCommit": "94fcee395717716b318d7b6795776ec566df1b98",
+  "testedImplementationCommit": "6457deed9229e2a8ffb77737e7fabb5409a19f38",
+  "results": {
+    "preFix": "stored109,3509 without layered cache reproduced incorrect signed level0",
+    "fixedFullAccountLoadAssertions": 57,
+    "combatScenarios": 145,
+    "slowBoundaryAssertions": 115,
+    "sqliteAuctionAssertions": 252,
+    "crashRecoveries": [
+      4,
+      4
+    ]
+  },
+  "limits": [
+    "synthetic authentication and non-economic profile fields",
+    "actual full PlayerService load and real SQLite cache/economic queries",
+    "fresh generated native terrain",
+    "no network/listeners/server operations/real accounts/owner maps"
+  ],
+  "sha256": {
+    "output/player-location-bootstrap-2ca2533470/login.log": "2bfecc1335327e9423fef24ebdfe543ff2a071fedf8de0cbfead7fbe4651a795",
+    "output/player-location-bootstrap-9f608174e7/login.log": "c02f84f86534299fb4999e59a32a143eb84b465b1e8ceacdd4cc5f83ec64388a",
+    "/tmp/location-bootstrap-regressions.log": "d325cee304741c955e234e8800c4e2a37d63c28da8711c6a19bd56e352ded84c",
+    "output/market-atomicity-85327b5436/results.json": "fa068b74cff0a082285ceb9c172aeb50c5df0c0660afb482431f85eb2d487976",
+    "output/combat-test/core-classes/com/openrsc/server/service/PlayerService.class": "4408f16e13182830ba03d334808b4bfd527c5b22bd800abc5c84f5c2bf5f8a96",
+    "output/combat-test/test-classes/com/openrsc/server/combat/LegacyPlayerLocationBootstrapFixture.class": "ac4621199445125758430b2caf93e697ef380b7f442ee585379d0ac94d7af302"
+  }
+}
