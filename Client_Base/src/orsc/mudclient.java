@@ -380,7 +380,7 @@ public final class mudclient implements Runnable {
 	private static final int INVENTORY_TAB_HEIGHT = 24;
 	private static final int EQUIPMENT_PANEL_HEIGHT = 286;
 	private static final int CUSTOM_UI_PLAYER_INFO_PANEL_OFFSET = 287;
-	private static final int CUSTOM_UI_MAGIC_PANEL_HEIGHT = 200;
+	private static final int CUSTOM_UI_MAGIC_PANEL_HEIGHT = 280;
 	private static final int CUSTOM_UI_SOCIAL_PANEL_HEIGHT = 182;
 	private static final int CUSTOM_UI_CLAN_PANEL_EXTRA_HEIGHT = 19;
 	private static final int CUSTOM_UI_OPTIONS_PANEL_HEIGHT = 265;
@@ -13366,17 +13366,28 @@ public final class mudclient implements Runnable {
 	}
 
 	// spells menu
+	private int getAbilitiesExtraHeight() {
+		return isAndroid() && this.magicOrPrayerList == 0
+			&& this.spellsSubtab == SPELLS_SUBTAB_MAGE && this.lastSelectedSpell >= 0 ? 69 : 0;
+	}
+
+	private int getAbilitiesPanelHeight() {
+		int available = C_CUSTOM_UI ? getUITabsY() : getGameHeight() - 36 - 4;
+		return Math.max(132, Math.min(CUSTOM_UI_MAGIC_PANEL_HEIGHT,
+			available - getAbilitiesExtraHeight()));
+	}
+
+	private int getAbilitiesPanelTop() {
+		return C_CUSTOM_UI ? getUITabsY() - getAbilitiesPanelHeight() - getAbilitiesExtraHeight() : 36;
+	}
+
 	private void drawUiTabMagic(boolean var1, byte var2) {
-
-		int maxY = getUITabsY();
-
 		try {
 			int magicPanelX = this.getSurface().width2 - 199;
-			int magicPanelYStart = 36;
+			int magicPanelYStart = getAbilitiesPanelTop();
+			int magicPanelHeight = getAbilitiesPanelHeight();
 			if (!C_CUSTOM_UI)
 				this.getSurface().drawSprite(spriteSelect(GUIPARTS.MENUSPELLS.getDef()), magicPanelX - 49, 3);
-			if (C_CUSTOM_UI)
-				magicPanelYStart = maxY - CUSTOM_UI_MAGIC_PANEL_HEIGHT;
 			short magicPanelWidth = 196;
 			int inactiveTabColor = GenUtil.buildColor(160, 160, 160);
 			int activeTabColor = GenUtil.buildColor(220, 220, 220);
@@ -13390,7 +13401,8 @@ public final class mudclient implements Runnable {
 			this.getSurface().drawBoxAlpha(magicPanelX + firstTabWidth + secondTabWidth, magicPanelYStart, thirdTabWidth, 24,
 				this.magicOrPrayerList == 2 ? activeTabColor : inactiveTabColor, 128);
 			this.getSurface().drawBoxAlpha(magicPanelX, magicPanelYStart + 24, magicPanelWidth, 108, GenUtil.buildColor(220, 220, 220), 128);
-			this.getSurface().drawBoxAlpha(magicPanelX, 132 + magicPanelYStart, magicPanelWidth, 68, GenUtil.buildColor(160, 160, 160),
+			this.getSurface().drawBoxAlpha(magicPanelX, 132 + magicPanelYStart, magicPanelWidth,
+				magicPanelHeight - 132, GenUtil.buildColor(160, 160, 160),
 				128);
 			this.getSurface().drawLineHoriz(magicPanelX, 24 + magicPanelYStart, magicPanelWidth, 0);
 			this.getSurface().drawLineVert(magicPanelX + firstTabWidth, 0 + magicPanelYStart, 0, 24);
@@ -13411,7 +13423,7 @@ public final class mudclient implements Runnable {
 				int lastSpellWidth = magicPanelWidth;
 				int lastSpellHeight = 50;
 				int lastSpellX = magicPanelX;
-				int lastSpellY = magicPanelYStart + CUSTOM_UI_MAGIC_PANEL_HEIGHT;
+				int lastSpellY = magicPanelYStart + magicPanelHeight;
 				String lastSpellNameColor = "@yel@";
 
 				// 0 is the Spells list, with remembered Mage and Cleric subtabs.
@@ -13692,7 +13704,7 @@ public final class mudclient implements Runnable {
 				if (var1) {
 					magicPanelX = 199 - this.getSurface().width2 + this.mouseX;
 					int relativeMouseY = this.mouseY - 36;
-					int maxClickableY = isAndroid() ? 268 : CUSTOM_UI_MAGIC_PANEL_HEIGHT;
+					int maxClickableY = magicPanelHeight + getAbilitiesExtraHeight();
 					if (C_CUSTOM_UI)
 						relativeMouseY = this.mouseY - magicPanelYStart;
 					if (magicPanelX >= 0 && relativeMouseY >= 0 && magicPanelX < 196 && relativeMouseY < maxClickableY) {
@@ -13956,35 +13968,45 @@ public final class mudclient implements Runnable {
 
 	private void drawClericTooltip(int stableCode, int panelX, int tooltipY, int panelWidth) {
 		ClericSpellDef definition = this.clericSpellbook.get(stableCode);
-		if (definition == null) {
-			return;
+		if (definition == null) return;
+		int costsY = this.drawSpellTooltipText(
+			definition.getName() + " (Level " + definition.getWorshipLevel() + ")",
+			ClericSpellSummary.describe(definition), panelX, tooltipY, panelWidth);
+		int count = definition.getCosts().size();
+		int[] ids = new int[count], amounts = new int[count];
+		for (int i = 0; i < count; i++) {
+			ids[i] = definition.getCosts().get(i).getItemId();
+			amounts[i] = definition.getCosts().get(i).getCount();
 		}
-        this.getSurface().drawColoredStringCentered(panelX+panelWidth/2,definition.getName(),0xFFFF00,0,0,tooltipY+12);
-        this.getSurface().drawColoredStringCentered(panelX+panelWidth/2,"Worship "+definition.getWorshipLevel()+" - Tier "+definition.getSpellTier(),0xFFFFFF,0,0,tooltipY+24);
-        this.getSurface().drawColoredStringCentered(panelX+panelWidth/2,this.shortenTooltipDescription(definition.getDescription()),0xFFFFFF,0,0,tooltipY+36);
-        int count=definition.getCosts().size();int[] ids=new int[count],amounts=new int[count];
-        for(int i=0;i<count;i++){ids[i]=definition.getCosts().get(i).getItemId();amounts[i]=definition.getCosts().get(i).getCount();}
-        this.drawTooltipCosts(ids,amounts,count,panelX,tooltipY+41,panelWidth,true);
-        this.drawClericPowerTooltip(definition,panelX,tooltipY);
+		this.drawTooltipCosts(ids, amounts, count, panelX, costsY, panelWidth, true);
 	}
 
-    private void drawClericPowerTooltip(ClericSpellDef definition,int panelX,int tooltipY){
-        if(definition.getEffectRanks().isEmpty())return;
-        int power=clericHolyPowerKnown&&playerStatEquipment.length>7?playerStatEquipment[7]:-1;
-        int rank=ClericPowerPresentation.rank(power,definition.getEffectRanks().size());
-        java.util.List<String> lines=new java.util.ArrayList<String>();
-        if(rank==0)lines.add("Holy Power is not available yet.");
-        else {
-            com.openrsc.client.entityhandling.defs.ClericEffectRankDef effect=definition.getEffectRank(rank);
-            lines.add("Holy Power "+power+" - P"+rank+" - "+(effect.getDurationMilliseconds()/1000)+" sec");
-            lines.add((definition.isHostile()?"Enemy NPCs":"Party allies")+" within "+definition.getRadius()+" tiles; caster excluded");
-            lines.addAll(ClericTextLayout.wrap(effect.describeComponents(),280,text->getSurface().stringWidth(0,text)));
-        }
-        int width=296,height=lines.size()*13+12;
-        int x=Math.max(5,panelX-width-5),y=Math.max(20,Math.min(tooltipY,getGameHeight()-height-4));
-        getSurface().drawBoxAlpha(x,y,width,height,0x111111,225);getSurface().drawBoxBorder(x,width,y,height,0xB7B7B7);
-        for(int i=0;i<lines.size();i++)getSurface().drawString(lines.get(i),x+7,y+14+i*13,i==0?0xFFFF00:0xFFFFFF,0);
-    }
+	private int drawSpellTooltipText(String title, String summary,
+			int panelX, int tooltipY, int panelWidth) {
+		int y = tooltipY + 13;
+		java.util.List<String> titleLines = new java.util.ArrayList<String>();
+		int levelLabel = title.lastIndexOf(" (Level ");
+		if (levelLabel >= 0 && this.getSurface().stringWidth(1, title) > panelWidth - 12) {
+			titleLines.addAll(ClericTextLayout.wrap(title.substring(0, levelLabel), panelWidth - 12,
+				text -> this.getSurface().stringWidth(1, text)));
+			titleLines.add(title.substring(levelLabel + 1));
+		} else {
+			titleLines.addAll(ClericTextLayout.wrap(title, panelWidth - 12,
+				text -> this.getSurface().stringWidth(1, text)));
+		}
+		for (String line : titleLines) {
+			this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
+				line, 0xFFFF00, 0, 1, y);
+			y += 13;
+		}
+		for (String line : ClericTextLayout.wrap(summary, panelWidth - 12,
+			text -> this.getSurface().stringWidth(0, text))) {
+			this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
+				line, 0xFFFFFF, 0, 0, y);
+			y += 12;
+		}
+		return y - 4;
+	}
 
 	private int getClericSpellCodeAt(int localPanelX, int localGridY, int panelWidth) {
 		int gridWidth = MAGIC_ICON_COLUMNS * MAGIC_ICON_SIZE
@@ -14420,11 +14442,9 @@ public final class mudclient implements Runnable {
 		}
 		ElementalSpellDisplayMetadata metadata = ElementalSpellDisplayMetadata.resolve(spellIndex, spellDef);
 		String spellName = metadata == null ? spellDef.getName() : metadata.getSpellName();
-		this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
+		int costsY = this.drawSpellTooltipText(
 			spellName + " (Level " + spellDef.getReqLevel() + ")",
-			0xFFFF00, 0, 1, tooltipY + 13);
-		this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
-			this.getBriefSpellDescription(spellDef, metadata), 0xFFFFFF, 0, 0, tooltipY + 26);
+			this.getBriefSpellDescription(spellDef, metadata), panelX, tooltipY, panelWidth);
 
 		int[] itemIds = new int[8];
 		int[] amounts = new int[8];
@@ -14437,7 +14457,7 @@ public final class mudclient implements Runnable {
 			amounts[count] = e.getValue();
 			count++;
 		}
-		this.drawTooltipCosts(itemIds, amounts, count, panelX, tooltipY + 31, panelWidth);
+		this.drawTooltipCosts(itemIds, amounts, count, panelX, costsY, panelWidth);
 	}
 
 	private void drawSummoningTooltip(int summonIndex, int panelX, int tooltipY, int panelWidth) {
@@ -14446,15 +14466,13 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		int level = summonIndex < SUMMONING_LEVELS.length ? SUMMONING_LEVELS[summonIndex] : 1;
-		this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
+		int costsY = this.drawSpellTooltipText(
 			SUMMONING_NAMES[summonIndex] + " (Level " + level + ")",
-			0xFFFF00, 0, 1, tooltipY + 13);
-		this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
-			SUMMONING_DESCRIPTIONS[summonIndex], 0xFFFFFF, 0, 0, tooltipY + 26);
+			SUMMONING_DESCRIPTIONS[summonIndex], panelX, tooltipY, panelWidth);
 		int[] itemIds = SUMMONING_COST_ITEM_IDS[summonIndex];
 		int[] amounts = SUMMONING_COST_AMOUNTS[summonIndex];
 		int count = Math.min(itemIds.length, amounts.length);
-		this.drawTooltipCosts(itemIds, amounts, count, panelX, tooltipY + 31, panelWidth);
+		this.drawTooltipCosts(itemIds, amounts, count, panelX, costsY, panelWidth);
 	}
 
 	private void drawTooltipCosts(int[] itemIds, int[] amounts, int count, int panelX, int y, int panelWidth) {
@@ -14466,12 +14484,16 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		int usableWidth = Math.max(1, panelWidth - 8);
-		int slotWidth = Math.min(42, Math.max(30, usableWidth / count));
+		int columns = Math.min(count, Math.max(1, usableWidth / 34));
+		int slotWidth = Math.min(42, usableWidth / columns);
 		int maxIconWidth = Math.min(30, Math.max(22, slotWidth - 6));
 		int maxIconHeight = 24;
-		int totalWidth = count * slotWidth;
-		int startX = panelX + Math.max(4, (panelWidth - totalWidth) / 2);
 		for (int i = 0; i < count; ++i) {
+			int row = i / columns;
+			int rowCount = Math.min(columns, count - row * columns);
+			int startX = panelX + (panelWidth - rowCount * slotWidth) / 2;
+			int column = i % columns;
+			int rowY = y + row * 36;
 			int itemId = itemIds[i];
 			int required = amounts[i];
 			ItemDef itemDef = EntityHandler.getItemDef(itemId);
@@ -14488,14 +14510,14 @@ public final class mudclient implements Runnable {
 				drawWidth = Math.max(1, (int) Math.round(spriteWidth * scale));
 				drawHeight = Math.max(1, (int) Math.round(spriteHeight * scale));
 			}
-			int x = startX + i * slotWidth + (slotWidth - drawWidth) / 2;
-			int iconY = y + (maxIconHeight - drawHeight) / 2;
+			int x = startX + column * slotWidth + (slotWidth - drawWidth) / 2;
+			int iconY = rowY + (maxIconHeight - drawHeight) / 2;
 			this.getSurface().drawSpriteClipping(sprite, x, iconY, drawWidth, drawHeight,
 				itemDef.getPictureMask(), 0, itemDef.getBlueMask(), false, 0, 1);
 			int available = unnotedOnly ? this.getInventoryCount(itemId,false) : this.getInventoryCount(itemId);
 			String color = available >= required ? "@gre@" : "@red@";
-			this.getSurface().drawColoredStringCentered(startX + i * slotWidth + slotWidth / 2,
-				color + available + "/" + required, 0xFFFFFF, 0, 1, y + maxIconHeight + 9);
+			this.getSurface().drawColoredStringCentered(startX + column * slotWidth + slotWidth / 2,
+				color + available + "/" + required, 0xFFFFFF, 0, 1, rowY + maxIconHeight + 9);
 		}
 	}
 
@@ -17722,7 +17744,7 @@ public final class mudclient implements Runnable {
 		panelSettings.reposition(controlSettingPanel, var3 + 1, (maxY - 240) + 16, 195, 184);
 		panelSocial.reposition(controlSocialPanel, var3, (maxY - 182) + 40, 196, 126);
 		panelMagic.reposition(controlMagicPanel, var3,
-			(maxY - CUSTOM_UI_MAGIC_PANEL_HEIGHT) + 24 + SPELLS_SUBTAB_HEIGHT, 196, 90);
+			getAbilitiesPanelTop() + 24 + SPELLS_SUBTAB_HEIGHT, 196, 90);
 		panelPlayerInfo.reposition(controlPlayerInfoPanel, var3, (maxY - 287) + 24, 196, 251);
 		panelQuestInfo.reposition(controlQuestInfoPanel, var3, (maxY - 287) + 24, 196, 251);
 		int offX = 300;
@@ -20610,7 +20632,7 @@ public final class mudclient implements Runnable {
 				panelBottom = Math.min(tabBarY, panelTop + playerInfoHeight + 12);
 				break;
 			case Config.MAGIC_AND_PRAYER_TAB:
-				panelTop = tabBarY - CUSTOM_UI_MAGIC_PANEL_HEIGHT;
+				panelTop = getAbilitiesPanelTop();
 				break;
 			case Config.FRIENDS_TAB:
 				panelTop = tabBarY - CUSTOM_UI_SOCIAL_PANEL_HEIGHT
@@ -20654,7 +20676,7 @@ public final class mudclient implements Runnable {
 				panelBottom = 36 + playerInfoHeight + 12;
 				break;
 			case Config.MAGIC_AND_PRAYER_TAB:
-				panelBottom = 36 + CUSTOM_UI_MAGIC_PANEL_HEIGHT;
+				panelBottom = getAbilitiesPanelTop() + getAbilitiesPanelHeight() + getAbilitiesExtraHeight();
 				break;
 			case Config.FRIENDS_TAB:
 				panelBottom = this.panelSocialTab == 1 ? 307 : 240;

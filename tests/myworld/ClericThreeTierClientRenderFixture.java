@@ -66,19 +66,13 @@ public final class ClericThreeTierClientRenderFixture {
     mc.setSurface(surface);
     Arrays.fill(surface.pixelData, 0x22262b);
     int i = 0;
-    for (int code : new int[] {14, 17, 20}) {
-      ClericSpellDef d = catalog.get(code);
-      surface.drawString(d.getName(), 10 + i * 315, 28, 0xffffff, 1);
-      invoke(
-          mc,
-          "drawClericPowerTooltip",
-          new Class<?>[] {ClericSpellDef.class, int.class, int.class},
-          d,
-          306 + i * 315,
-          45);
-      i++;
+    for (int code : new int[] {12, 17, 27}) {
+      int panelX = 10 + i++ * 315;
+      surface.drawBoxAlpha(panelX, 40, 196, 148, 0x989898, 128);
+      invoke(mc, "drawClericTooltip", new Class<?>[] {int.class, int.class, int.class, int.class},
+          code, panelX, 40, 196);
     }
-    png(surface, out.resolve("native-power-tooltips.png"));
+    png(surface, out.resolve("native-compact-cleric-tooltips.png"));
     ArrayList<String> measurements = new ArrayList<String>();
     for (ClericSpellDef d : defs) {
       int width = surface.stringWidth(0, d.getName());
@@ -133,7 +127,7 @@ public final class ClericThreeTierClientRenderFixture {
     png(surface, out.resolve("native-guide-row.png"));
     Files.write(out.resolve("native-font-widths.txt"), measurements);
     System.out.println(
-        "PASS native font bounds for all17 names, actual mudclient power tooltip/HUD rendering and"
+        "PASS native font bounds for all17 names, actual mudclient compact tooltip/HUD rendering and"
             + " detailed guide row: "
             + out);
   }

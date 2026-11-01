@@ -12,8 +12,9 @@ def validate_wiring():
     npc = (client/'orsc/NpcCapacityContract.java').read_text()
     for required in ('updateClericSpellbook(length)', 'ClericSpellbookPacketDecoder.decode(payload)', 'mc.clearClericSpellbook()', 'mc.setClericHolyPowerKnown(intCount>=8)'):
         assert required in handler, required
-    for required in ('codeAtIndex(this.panelMagic.getControlSelectedListIndex', 'this.clericSpellbook.atIndex(index)', 'this.clericSpellbook.atIndex(code)', 'putShort(definition.getStableCode())', 'definition.hasResources(id->this.getInventoryCount(id,false))', 'playerStatEquipment[7]', 'ClericPowerPresentation.rank(power', 'getClericHoverText()', 'status.getClericHoverLines()'):
+    for required in ('codeAtIndex(this.panelMagic.getControlSelectedListIndex', 'this.clericSpellbook.atIndex(index)', 'this.clericSpellbook.atIndex(code)', 'putShort(definition.getStableCode())', 'definition.hasResources(id->this.getInventoryCount(id,false))', 'ClericSpellSummary.describe(definition)', 'getClericHoverText()', 'status.getClericHoverLines()'):
         assert required in mud, required
+    assert 'drawClericPowerTooltip' not in mud, 'Spellbook power popout must stay in the guide'
     assert 'CLIENT_VERSION = ClericBlessingContract.CLIENT_VERSION' in config
     assert 'FIRST_EXPANDED_CLIENT_VERSION = 10053' in npc
 
@@ -35,10 +36,12 @@ def main():
             wire=work/'schema4.bin'
             lines=(ROOT/'tests/myworld/fixtures/cleric-schema4-payload.hex').read_text().splitlines()
             wire.write_bytes(bytes.fromhex(''.join(line for line in lines if not line.startswith('#'))))
-        subprocess.run([str(java_home/'bin/javac'), '-J-Xmx128m', '-cp', str(jar), '-d', str(work), str(ROOT/'tests/myworld/ClericThreeTierClientFixture.java'),str(ROOT/'tests/myworld/ClericGenericStatusHudFixture.java'),str(ROOT/'tests/myworld/ClericThreeTierClientRenderFixture.java')],check=True)
+        subprocess.run([str(java_home/'bin/javac'), '-J-Xmx128m', '-cp', str(jar), '-d', str(work), str(ROOT/'tests/myworld/ClericThreeTierClientFixture.java'),str(ROOT/'tests/myworld/ClericGenericStatusHudFixture.java'),str(ROOT/'tests/myworld/ClericThreeTierClientRenderFixture.java'),str(ROOT/'tests/myworld/ClericSpellbookUiFixture.java')],check=True)
         subprocess.run([str(java_home/'bin/java'), '-Xmx256m', '-XX:+UseSerialGC', '-Djava.awt.headless=true', '-cp', os.pathsep.join([str(work),str(jar)]), 'orsc.ClericThreeTierClientFixture',str(wire),args.scope],check=True,cwd=ROOT)
         if args.render:
             subprocess.run([str(java_home/'bin/java'), '-Xmx256m', '-XX:+UseSerialGC', '-Djava.awt.headless=true', '-cp', os.pathsep.join([str(work),str(jar)]), 'orsc.ClericThreeTierClientRenderFixture', str(ROOT), str(wire), str(args.render.resolve())],check=True,cwd=ROOT)
+        if args.render:
+            subprocess.run([str(java_home/'bin/java'), '-Xmx256m', '-XX:+UseSerialGC', '-Djava.awt.headless=true', '-Dspoiled_milk.opengl_sprite_overlay=true', '-Dspoiled_milk.opengl_sprite_overlay_mode=phased', '-Dspoiledmilk.openglWorldUiReplay=true', '-cp', os.pathsep.join([str(work),str(jar)]), 'orsc.ClericSpellbookUiFixture', str(ROOT), str(wire), str(args.render.resolve())],check=True,cwd=ROOT)
         if args.scope in ('all','hud'):
             subprocess.run([str(java_home/'bin/java'), '-Xmx128m', '-XX:+UseSerialGC', '-cp', os.pathsep.join([str(work),str(jar)]), 'orsc.ClericGenericStatusHudFixture'],check=True,cwd=ROOT)
 if __name__ == '__main__': main()

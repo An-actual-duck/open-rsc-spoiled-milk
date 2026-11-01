@@ -279,7 +279,10 @@ public final class SkillGuideInterface {
 
 		// Sets up scroll
 		skillGuide.clearList(skillGuideScroll);
-		int trailingRows = isClericSpellsTab() ? 4 : 2;
+		// The native scrollbar counts font rows, while Cleric displays one full
+		// page at a time. Pad its logical rows so the final real page is reachable.
+		int trailingRows = isClericSpellsTab()
+			? Math.max(0, (height - 82) / mc.getSurface().fontHeight(7) - 1) : 2;
 		for (int i = 0; i < skillMenuEntries.size() + trailingRows; i++) {
 			skillGuide.setListEntry(skillGuideScroll, i, "", 0, (String) null, (String) null);
 		}
