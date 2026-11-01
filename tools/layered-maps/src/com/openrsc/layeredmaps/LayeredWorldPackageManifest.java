@@ -290,7 +290,8 @@ public final class LayeredWorldPackageManifest {
 			if (!LayeredEntityPlacements.ENCODING_V1.equals(encoding)
 				&& !LayeredEntityPlacements.ENCODING_V2.equals(encoding)
 				&& !LayeredEntityPlacements.ENCODING_V3.equals(encoding)
-				&& !LayeredEntityPlacements.ENCODING_V4.equals(encoding)) {
+				&& !LayeredEntityPlacements.ENCODING_V4.equals(encoding)
+				&& !LayeredEntityPlacements.ENCODING_V5.equals(encoding)) {
 				throw new PreflightException(
 					"Placement payload encoding is unsupported by this loader: "
 						+ encoding + ".");

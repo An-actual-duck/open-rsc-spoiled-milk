@@ -160,7 +160,9 @@
             "enum": [
               "layered-entity-placements-v1",
               "layered-world-placements-v2",
-              "layered-world-placements-v3"
+              "layered-world-placements-v3",
+              "layered-world-placements-v4",
+              "layered-world-placements-v5"
             ]
           },
           "path": {"type": "string", "minLength": 1},

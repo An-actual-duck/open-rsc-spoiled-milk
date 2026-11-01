@@ -10,7 +10,7 @@ gem-dragon cave are authored in the latest saved editor map. Both await final
 migration with the coordinated update package; do not replace or re-author
 that saved map while finishing gameplay and release integration.
 
-## Current release checkpoint — October 31, 2026
+## Current release checkpoint — November 1, 2026
 
 The owner accepts the **current Cleric stage as complete for this release**.
 Tier 4 and the unimplemented Zamorak hostile spell chain are follow-up work,
@@ -24,7 +24,7 @@ Existing Elder Green/KBD content and the implemented gem dragons stay in scope.
 
 | Workstream | Current state | Remaining for this release |
 | --- | --- | --- |
-| Slayer Tower and gem-dragon cave | Owner-authored layouts and placement work are finished | Refresh the frozen export from the latest owner save; verify the assembled map and bindings |
+| Slayer Tower and gem-dragon cave | Owner-authored layouts finished; verified repaired pair selected in source for private acceptance | Combined private gameplay/visual acceptance and coordinated migration |
 | Slayer encounters, capacity, guards, Slow/poison/antidotes and all 15 battleaxe coatings | Implemented/integrated; prior approved content retains its approvals | Combined private gameplay/acquisition checks and migration |
 | Gem dragons and Crafting loot | Five variants, drops and equipment behavior implemented | Combined private gameplay; glove icon and no worn monocle visual approved |
 | Cleric, Grace/Blight wells and Cosmic combat luck | Current stage complete and accepted for release scope | Ordinary combined release QA; no additional spell tiers required |
@@ -37,11 +37,14 @@ The owner approved the thumb-hidden v2 glove icon and accepted no worn monocle
 visual. Both equipment art loose ends are closed; the approved loupe inventory
 icon remains unchanged.
 
-1. Prepare matching server/client map exports from the **latest authored save**,
-   preserving the original and current work. The existing staged export is older.
-   Recheck tower entrance/upward-stair bindings, stationary associates, gem cave
-   placements, owner-added egg spawns/respawns and reachable well shorelines.
-   An old blocked-shore report is a recheck item, not proof the latest map is broken.
+1. Complete the owner's Cleric spell-icon choice and final paired private
+   acceptance. Map assembly is prepared: exact repaired pair `e343c03b…e58cf`
+   is selected in source, with 1,787 sectors, nine levels and 34,598 placements.
+   Tower bindings, associates, cave placements, eggs and reachable well/ladder
+   routes are covered by the map acceptance checks; owner gameplay/visual
+   acceptance of this assembled candidate remains. The original editable save
+   and prior map packages are retained. See
+   [the assembly record](next-update-candidate-assembly-review.md).
 2. Run one coordinated private release-candidate pass: access/travel, combat,
    Slow/poison/coatings and ingredient collection, gem rewards/equipment, sigil
    infusion/Cleric/Cosmic, hit numbers, saving and persistence. Fix demonstrated
@@ -92,15 +95,17 @@ implementation is required to satisfy this release's feature scope.
 
 ### Confirmed overhaul direction — October 29, 2026
 
-- Keep **Saradomin, Guthix and Zamorak sigils** and their existing stone/silver
-  carving and god-altar production process unchanged.
+- Keep **Saradomin, Guthix and Zamorak sigils**, their existing identities and
+  god-altar charging. Stone carving remains unchanged. The later owner-approved
+  Moonsilver revision below supersedes direct Silver-nugget carving.
 - Repurpose existing neutral sigils as **Grace**, preserving their stable IDs,
   stone/silver forms, all quantities and artwork: raw IDs `3299`/`3307` still
   need infusion; usable IDs `3300`/`3308` remain ready for casting. Keep existing
   inventory, bank, container, map and note references; no duplicate Grace items,
   stock exchange, compensation or database rewrite is needed.
-- Reuse the existing neutral stone/silver carving materials, recipes, Crafting
-  requirements and XP as Grace's baseline, without a carving-cost rebalance.
+- Preserve the existing neutral sigils as Grace's identity/art baseline. Stone
+  keeps its recipe; Silver now uses moulded blanks alongside the new Moonsilver
+  grade, as recorded in the current production rules below.
 - Use two distinct carved resource families with final owner-approved names:
   **Grace** for support/buffs and **Blight** for hostile/debuff spells.
   “Holy/Unholy” are not their item names.
@@ -140,19 +145,23 @@ and land-side reach. Place them along the entire accessible liquid edge, next
 to walkable shore; no hardcoded editor roster or visible well structure is used.
 Blocked shores still need authoring; infusion does not bypass walls or water.
 
-### Implemented carving and infusion — October 30, 2026
+### Implemented carving and infusion — current metal-grade revision
 
 The owner confirmed the existing altar's increased-yield progression for wells.
-Grace and Blight both carve from Rune stone + chisel (Crafting 1, 5 XP) or Silver
-nugget + chisel (Crafting 20, 10 XP), producing one uninfused sigil. Their stone/
-silver infusion requirements are Blessing 1/16 with base 5/10 XP. Output increases
-by one per ten levels above the requirement, using the exact existing altar
-multiplier and diminishing-XP formula. Purpose wells charge **no Devotion**.
+Stone Grace and Blight still carve from Rune stone + chisel (Crafting 1,
+5 XP). Silver and Moonsilver now follow bar → three blanks → carving → charging.
+Moonsilver alloys one Silver bar with one Mithril bar; the reusable Sigil mould
+is stocked by Dommik and Rommik. Silver/Moonsilver moulding and carving require
+Crafting 20/40 with base 10/15 XP. Stone/Silver/Moonsilver charging requires
+Blessing 1/16/40 with base 5/10/15 XP. Output increases by one per ten levels above
+the requirement, using the existing altar multiplier and diminishing-XP formula.
+Purpose wells charge **no Devotion**. Existing stocks and identities are retained.
+See [current metal production and costs](cleric-metal-sigil-production-review.md).
 
 Grace retains raw/infused IDs 3299/3300/3307/3308, all stock and original artwork;
 it now uses Divine wellsprings instead of god altars. Blight uses new IDs 3426–3429
-and the approved Thorn artwork. Uninfused forms are nonstackable; infused forms
-stack; neither is noteable. **Dip sigils** processes both matching grades
+and the approved Thorn artwork; Moonsilver adds its own grade. Uninfused forms
+are nonstackable; infused forms stack; neither is noteable. **Dip sigils** processes all matching grades
 independently; using a raw sigil on its well processes all stock of that grade.
 Wrong wells, already infused/god/noted items, unsupported output and fatigue
 are refused without that grade's consumption or XP. God-sigil altars retain
@@ -259,21 +268,22 @@ recipient); exclude the old neutral Respite from the
 future book because of abuse concerns.** Unify uses Worship 3, radius 3,
 party-allies-only targeting excluding the caster, at most one safe ordinary
 walking step toward the caster stopping within two tiles, same-level/world
-and line-of-effect checks, disabled PvP and no Holy Power ranks. The base unlock and movement are unchanged. Two Grace is the confirmed quantity; grade
-correspondence remains open (current Stone Grace 3300 is a reference, not a
-new grade decision). Excluding the old neutral Respite does not remove Saradomin's planned
-regeneration, other potion/equipment regeneration, assets or item IDs.
+and line-of-effect checks, disabled PvP and no Holy Power ranks. The base unlock
+and movement are unchanged. Excluding the old neutral Respite does not remove
+Saradomin's regeneration, other potion/equipment regeneration, assets or item IDs.
 
 **Greater Unify** is the only upgrade: Worship 30, radius 5, up to three safe
-ordinary steps stopping within two tiles, flat six Stone Grace per cast, no god
-sigil or Holy Power scaling. Base Unify uses two Stone Grace per cast.
+ordinary steps stopping within two tiles, costing 3 Stone Grace +3 Silver Grace,
+no god sigil or Holy Power scaling. Base Unify costs 2 Stone Grace per cast.
 
-Initial reviewable manager defaults for this private build: god tiers 1/2/3 cost
-one stone god+one Stone Grace /two stone god+two Stone Grace /two silver god+two
-Silver Grace. These exact economic vectors were not separately owner-specified.
-The entire vector is spent atomically once per cast, never per recipient; no
-eligible/useful target means no cost. Same-god versions do not stack or downgrade,
-equal strength safely refreshes, and all three gods may coexist.
+The owner-approved current-plus-previous grade costs replace temporary early
+private-build defaults. Each god spell spends matching god and purpose sigils:
+Tier 1 uses 1 Stone of each; Tier 2 uses 1 Stone +1 Silver of each; Tier 3 uses
+1 Silver +1 Moonsilver of each. Purpose is Grace for blessings and Blight for
+hostile spells; Tier 3 spends no Stone. The entire vector is spent atomically
+once per useful cast, never per recipient; no eligible/useful target means no
+cost. Same-god versions do not stack or downgrade, equal strength safely
+refreshes, and all three gods may coexist.
 
 Owner-approved Guthix debuff design: **Toxiphobia** adds poison weakness,
 **Agrizoophobia** adds summon weakness and **Hematophobia** adds recoil/reflected
@@ -344,8 +354,9 @@ Other hostile suggestions remain unselected.
 God+Grace buffs, the six implemented god+Blight debuffs and atomic joint resource
 consumption are present in the candidate. Generic purpose-only costs replace the god
 share with extra purpose sigils (`A god + B Grace` becomes `A+B Grace` within
-compatible grades); Unify/Greater use 2/6 Stone Grace and initial mixed-cost defaults are recorded
-above. Production and the scoped hostile casting branch are complete in source;
+compatible grades); Unify uses 2 Stone Grace and Greater Unify uses 3 Stone
+Grace +3 Silver Grace. The approved mixed-grade vectors are recorded above.
+Production and the scoped hostile casting branch are complete in source;
 Core integration/private gameplay acceptance are separate.
 
 ### Later follow-up, not current release gates
@@ -391,7 +402,7 @@ attack-style or balance rules, or authorize reworking the existing two bosses.
 The owner has removed both additions from the next release. Worthwhile drops,
 potential hides and associated armor sets should be designed before resuming them.
 
-## 4. Gem dragons — implemented; final art, acceptance and migration
+## 4. Gem dragons — implemented; acceptance and migration
 
 - **Sapphire, Emerald, Ruby, Diamond and Dragonstone dragons** are implemented
   and staged, with the approved native gem-dragon model, scaling defenses,

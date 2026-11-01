@@ -30,10 +30,44 @@ Core workers and exact READY handoffs; integration/tests use the manager workflo
 - Mark incomplete components and unrun acceptance explicitly. A prepared map is
   not proof that every tower restriction or pending weapon coating is finished.
 
+## Source-selected private candidate — November 1, 2026
+
+The repaired export is now copied byte-for-byte into both versioned Core map
+roots, with the matching server/client selectors and required configuration
+manifest/path values. It is selected for **private final acceptance**, not public
+release. No owner editable project, discovered catalog, local override settings,
+account database or raw logs were copied into Git. Older package directories
+remain available.
+
+- Fingerprint: `e343c03b026920ab0f6dd6e9fdd8d9601d1992177f24510f1d21a266e22e58cf`.
+- Manifest: `c12686677f3bc49956af7957e1a7ec2916cffa622c4e4af8290c11a6451bacbb`.
+- Each role contains 1,797 files and 46,101,722 bytes: 1,787 sectors across
+  levels -2, -1, 0, 1, 2, 3, 4, 5 and 10; 34,598 placements comprise
+  4,081 NPCs, 926 items, 28,612 scenery and 979 boundaries.
+- The reviewed repair copy retains 64 floor-overlay corrections and three
+  ground-colour corrections for accessible well/ladder routes and isolated green
+  corners. Four grey cosmetic joins remain intentionally unchanged; automatic
+  per-half material matching is deferred.
+
+See [the source assembly review](next-update-candidate-assembly-review.md) for
+exact export provenance, selector scope and current verification. Historical
+staging/repair records remain evidence, not independent public approvals.
+The public deployment remains `v0.2.89` / `a5043328f`. Provisional private
+`v0.3.0-alpha.1` is not a final release label, public tag or beta decision.
+
+The independent migration rehearsal is reviewed and integrated in manager
+revision `02243c3c398cff507504969b3b77317c287a9e4b`; its disposable database
+fixtures and evidence are separate from this map copy. Remaining gates are the
+owner's Cleric icon selection, actual paired private artifacts and owner
+gameplay/visual acceptance. Preserve the accepted concise Cleric UI.
+Deferred bosses, Ante, Tier 4 and Zamorak hostile activation are not release gates.
+
 ## Tower candidate additions
 
-Six stationary, nonattackable/nonaggressive associates are added to the preserved
-34358-placement decorated checkpoint, bringing the NPC count4047→4053. Their
+The earlier associate-preparation copy added six stationary,
+nonattackable/nonaggressive associates to the preserved 34,358-placement
+checkpoint, bringing its NPC count 4,047→4,053. Those are historical counts;
+the source-selected package above includes the later authored work. Their
 rank-bound entrance/upward-stair coordinates and dialogue behavior are documented
 in `slayer-tower-stair-guard-migration-review.md`. Downward travel, room doors and
 exit from the tower remain unrestricted. Existing rank progression and completed

@@ -214,6 +214,18 @@ roaming bounds. The bounds must contain the start, remain within the loader's
 parity-preserving format for legacy NPC records whose roaming rectangles are
 not necessarily square or centered on their start.
 
+`layered-world-placements-v4` adds explicit NPC respawn seconds (-1 through
+86,400) while retaining v3 bounds; v3/v4/v5 permit empty placement sets.
+`layered-world-placements-v5` additionally permits an optional `agilityShortcut`
+on scenery. The read-only tool validates the same exact schema, five matching
+template/action pairs, level/chance relationships and global signed-level
+landing coordinates as the native server parser. It does not rewrite metadata
+or execute shortcuts. Runtime landing terrain/collision and gameplay admission
+remain separate mandatory server checks. Unknown fields, malformed shortcuts,
+shortcut metadata on older encodings and unsupported future versions are refused.
+Normal installed player clients use server-authored native scene/terrain data;
+the separate adaptive editor binding's v3/v4 contract is unchanged.
+
 The compact `uniform-layered-sector-v1` payload remains a laboratory encoding.
 The definitive `rle-layered-sector-v1` payload expands positive runs in
 `x-major-y-minor` order to exactly 2,304 independent tile values. It retains

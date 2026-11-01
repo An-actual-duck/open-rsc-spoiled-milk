@@ -12,6 +12,17 @@ equipment sprite artwork included by the optional remastered-sprite catalog.
 Per-set mappings and provenance are tracked under
 dev/myworld/assets/remastered-sprites/.
 
+Next-update gem-dragon, sigil, coating and well artwork includes project-made
+additions and adaptations of existing RuneScape Classic artwork. Provenance and
+approved asset receipts are recorded under dev/myworld/assets/sprites/npcs/gem-dragons/,
+dev/myworld/moonsilver-sigil-production/, dev/myworld/blight-sigil-production/,
+dev/myworld/battleaxe-coatings/, dev/myworld/practice-feedback/ and
+dev/myworld/cleric-wells/. The tower's project-authored scenery exports are
+recorded in the corresponding native model reviews under docs/myworld/in-progress-work-plans/.
+Adaptations retain the underlying game's provenance and redistribution
+constraints; project authorship and the source-code licence do not grant new
+rights to Jagex's base artwork. Final Cleric icon choices are not assumed here.
+
 Prayer UI icon assets are sourced from a royalty-free repository.
 
 Summon UI icon provenance is tracked in dev/myworld/assets/credit.
