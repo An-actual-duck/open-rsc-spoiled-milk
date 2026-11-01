@@ -30,60 +30,70 @@ public final class MarketTransactions {
             p.message("The auction is unavailable with experimental concurrent player events enabled.");
             return;
         }
+        // Tick-owned gameplay and the save economic boundary exclude other
+        // writers; this is not a new global lock order for historical bank APIs.
         synchronized (p.getEconomicStateLock()) {
-            synchronized (p.getBank().getItems()) {
-                synchronized (p.getCarriedItems().getInventory().getItems()) {
-                    if (!op.hasCurrentActor()) return;
-                    Inventory inventory = p.getCarriedItems().getInventory().copyForTransaction();
-                    Bank bank = p.getBank().copyForTransaction();
-                    boolean committed = false;
-                    MarketItem[] notice = new MarketItem[1];
-                    try {
-                        committed = store.transact(op, c -> {
-                            settle(c, op, inventory, bank, notice);
-                            store.saveContainers(c, op.actorId, inventory.getItems(), bank.getItems());
-                        });
-                        if (committed) {
-                            store.checkpoint("before-publish");
-                            p.getCarriedItems().getInventory().publishTransaction(inventory);
-                            p.getBank().publishTransaction(bank);
-                        }
-                    } catch (MarketJdbcStore.UnresolvedCommit ex) {
-                        LOGGER.error("Unresolved market commit {}; detaching player {} for ordinary reload", op.id, op.actorId, ex);
-                        p.requireEconomicReload();
-                        return;
-                    } catch (SQLException | RuntimeException ex) {
-                        if (committed) {
-                            LOGGER.error("Committed market state could not be published {}; detaching player {}", op.id, op.actorId, ex);
-                            p.requireEconomicReload();
-                        } else {
-                            p.message("The auction could not be completed. Your items and coins have not changed. Please refresh and try again.");
-                            LOGGER.warn("Market operation {} did not commit", op.id, ex);
-                        }
-                        return;
+            synchronized (p.getCarriedItems().getEquipment().getList()) {
+                synchronized (p.getBank().getItems()) {
+                    synchronized (p.getCarriedItems().getInventory().getItems()) {
+                        settleAndPublish(op, p);
                     }
-                    // All external publication follows the durable commit. No queued
-                    // player save is needed; inventory/bank are already persisted.
-                    if (committed) {
-                        ActionSender.sendInventory(p);
-                        if (p.accessingBank()) ActionSender.showBank(p);
-                        p.message("Auction transaction completed.");
-                        try {
-                            world.getMarket().addRequestOpenAuctionHouseTask(p);
-                            if (notice[0] != null && op.kind == MarketOperation.Kind.BUY) {
-                                Player seller = world.getPlayerID(notice[0].getSeller());
-                                if (seller != null) seller.message("An auction sale completed. You can collect your earnings from a bank.");
-                            }
-                            com.openrsc.server.net.DiscordService discord = world.getServer().getDiscordService();
-                            if (discord != null && notice[0] != null) {
-                                if (op.kind == MarketOperation.Kind.CREATE) discord.auctionAdd(notice[0]);
-                                else if (op.kind == MarketOperation.Kind.BUY) discord.auctionBuy(notice[0]);
-                            }
-                        } catch (RuntimeException notification) { LOGGER.warn("Auction committed; notification failed for {}", op.id, notification); }
-                    } else p.message("That auction request was already completed.");
                 }
             }
         }
+    }
+
+    private void settleAndPublish(MarketOperation op, Player p) {
+        if (!op.hasCurrentActor()) return;
+        Inventory inventory = p.getCarriedItems().getInventory().copyForTransaction();
+        Bank bank = p.getBank().copyForTransaction();
+        java.util.List<Item> equipped = new ArrayList<>();
+        for (Item item : p.getCarriedItems().getEquipment().getList()) if (item != null) equipped.add(item.copyForTransaction());
+        boolean committed = false;
+        MarketItem[] notice = new MarketItem[1];
+        try {
+            committed = store.transact(op, c -> {
+                settle(c, op, inventory, bank, notice);
+                store.saveContainers(c, op.actorId, inventory.getItems(), bank.getItems(), equipped);
+            });
+            if (committed) {
+                store.checkpoint("before-publish");
+                p.getCarriedItems().getInventory().publishTransaction(inventory);
+                p.getBank().publishTransaction(bank);
+            }
+        } catch (MarketJdbcStore.UnresolvedCommit ex) {
+            LOGGER.error("Unresolved market commit {}; detaching player {} for ordinary reload", op.id, op.actorId, ex);
+            p.requireEconomicReload();
+            return;
+        } catch (SQLException | RuntimeException ex) {
+            if (committed) {
+                LOGGER.error("Committed market state could not be published {}; detaching player {}", op.id, op.actorId, ex);
+                p.requireEconomicReload();
+            } else {
+                p.message("The auction could not be completed. Your items and coins have not changed. Please refresh and try again.");
+                LOGGER.warn("Market operation {} did not commit", op.id, ex);
+            }
+            return;
+        }
+        // All external publication follows the durable commit. No queued
+        // player save is needed; inventory/bank are already persisted.
+        if (committed) {
+            ActionSender.sendInventory(p);
+            if (p.accessingBank()) ActionSender.showBank(p);
+            p.message("Auction transaction completed.");
+            try {
+                world.getMarket().addRequestOpenAuctionHouseTask(p);
+                if (notice[0] != null && op.kind == MarketOperation.Kind.BUY) {
+                    Player seller = world.getPlayerID(notice[0].getSeller());
+                    if (seller != null) seller.message("An auction sale completed. You can collect your earnings from a bank.");
+                }
+                com.openrsc.server.net.DiscordService discord = world.getServer().getDiscordService();
+                if (discord != null && notice[0] != null) {
+                    if (op.kind == MarketOperation.Kind.CREATE) discord.auctionAdd(notice[0]);
+                    else if (op.kind == MarketOperation.Kind.BUY) discord.auctionBuy(notice[0]);
+                }
+            } catch (RuntimeException notification) { LOGGER.warn("Auction committed; notification failed for {}", op.id, notification); }
+        } else p.message("That auction request was already completed.");
     }
 
     private void settle(Connection c, MarketOperation op, Inventory inventory, Bank bank, MarketItem[] notice) throws SQLException {

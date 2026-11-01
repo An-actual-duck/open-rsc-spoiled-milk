@@ -98,16 +98,14 @@ public class PlayerService implements IPlayerService {
 	@Override
 	public boolean savePlayer(final Player player) throws GameDatabaseException {
 		if (player == null) return false;
-		synchronized (player.getEconomicStateLock()) {
-			synchronized (player.getBank().getItems()) {
-				synchronized (player.getCarriedItems().getInventory().getItems()) {
-					Player registered = world.getPlayerID(player.getDatabaseID());
-					if (player.isPersistenceSessionClosed() || (registered != null && registered != player)) return false;
-					return savePlayerWithinEconomicBoundary(player);
-				}
-			}
-		}
-	}
+        // Serialize against auction commit/publication, without introducing new
+        // bank/inventory -> equipment nesting across the historical save phases.
+        synchronized (player.getEconomicStateLock()) {
+            Player registered = world.getPlayerID(player.getDatabaseID());
+            if (player.isPersistenceSessionClosed() || (registered != null && registered != player)) return false;
+            return savePlayerWithinEconomicBoundary(player);
+        }
+    }
 
 	private boolean savePlayerWithinEconomicBoundary(final Player player) {
 		try {

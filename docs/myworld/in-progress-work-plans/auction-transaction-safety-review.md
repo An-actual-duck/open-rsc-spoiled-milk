@@ -34,3 +34,12 @@ runtime/config copies and synthetic database rows, with a network/listener guard
 Initial test corrections concern Java compilation and noted-item assertions; no
 passing engine or crash/reload claim is made at this checkpoint. Final evidence,
 commands, coverage and limits will replace this status before READY.
+
+Independent review corrections (verification continuing): ordinary saves retain
+only the economic boundary, avoiding a new bank/inventory-to-equipment lock
+inversion with existing bank equip/unequip/deposit-all paths. Auction transactions
+now include current equipment ownership/statuses alongside inventory and bank,
+so a recent equip/unequip cannot be lost or rejected because its previous saved
+container is stale. Equipment uses its existing `(playerID,itemID)` links and
+existing definition-derived slots; no invented slot column is introduced.
+Legacy worlds without the optional equipment table remain supported.

@@ -29,7 +29,8 @@ public final class MarketAtomicityFixture {
         String auto = mysql ? "INTEGER PRIMARY KEY AUTO_INCREMENT" : "INTEGER PRIMARY KEY AUTOINCREMENT";
         for (String table : Arrays.asList("market_operations","auctions","expired_auctions","invitems","bank","equipped","itemstatuses","players")) sql("DROP TABLE IF EXISTS "+P+table);
         sql("CREATE TABLE "+P+"players(id INTEGER PRIMARY KEY, username VARCHAR(12))");
-        for(String table:Arrays.asList("invitems","bank","equipped")) sql("CREATE TABLE "+P+table+"(playerID INTEGER,itemID BIGINT,slot INTEGER,PRIMARY KEY(playerID,itemID,slot))");
+        for(String table:Arrays.asList("invitems","bank")) sql("CREATE TABLE "+P+table+"(playerID INTEGER,itemID BIGINT,slot INTEGER,PRIMARY KEY(playerID,itemID,slot))");
+        sql("CREATE TABLE "+P+"equipped(playerID INTEGER,itemID BIGINT)");
         sql("CREATE TABLE "+P+"itemstatuses(itemID BIGINT PRIMARY KEY,catalogID INTEGER,amount INTEGER,noted INTEGER,wielded INTEGER,durability INTEGER)");
         sql("CREATE TABLE "+P+"auctions(auctionID "+auto+",itemID INTEGER,amount INTEGER,amount_left INTEGER,price INTEGER,seller INTEGER,seller_username VARCHAR(12),buyer_info TEXT,`sold-out` INTEGER DEFAULT 0,time BIGINT,was_cancel INTEGER DEFAULT 0)");
         sql("CREATE TABLE "+P+"expired_auctions(claim_id "+auto+",playerID INTEGER,item_id INTEGER,item_amount INTEGER,time BIGINT,claim_time BIGINT DEFAULT 0,claimed INTEGER DEFAULT 0,explanation VARCHAR(255))");
@@ -58,12 +59,15 @@ public final class MarketAtomicityFixture {
     }
     static Player player(CurrentCombatHarness h) throws Exception {
         int id=++playerNumber;
-        Player p=h.player("auction"+id,449,450); p.setDatabaseID(id); p.setBank(new Bank(p)); p.getClientLimitations().maxItemId=Integer.MAX_VALUE; h.recordOutgoingPackets(p);
+        Player p=h.player("auction"+id,449,450); p.setDatabaseID(id); p.getSettings().setAppearance(new com.openrsc.server.model.PlayerAppearance(2,8,14,0,1,2)); p.setBank(new Bank(p)); p.getClientLimitations().maxItemId=Integer.MAX_VALUE; h.recordOutgoingPackets(p);
         sql("INSERT INTO "+P+"players VALUES("+id+",'"+p.getUsername()+"')");
         check(p.getCarriedItems().getInventory().add(new Item(10,1000),false),"seed coins");
         persist(p); return p;
     }
-    static void persist(Player p)throws Exception {try(Connection c=open()){c.setAutoCommit(false);new Store().saveContainers(c,p.getDatabaseID(),p.getCarriedItems().getInventory().getItems(),p.getBank().getItems());c.commit();}}
+    static java.util.List<Item> equipment(Player p) {
+        java.util.List<Item> result=new ArrayList<>();for(Item item:p.getCarriedItems().getEquipment().getList())if(item!=null)result.add(item.copyForTransaction());return result;
+    }
+    static void persist(Player p)throws Exception {try(Connection c=open()){c.setAutoCommit(false);new Store().saveContainers(c,p.getDatabaseID(),p.getCarriedItems().getInventory().getItems(),p.getBank().getItems(),equipment(p));c.commit();}}
     static int listing(int seller,int amount,int left,int price)throws Exception {
         sql("INSERT INTO "+P+"auctions(itemID,amount,amount_left,price,seller,seller_username,buyer_info,time) VALUES(384,"+amount+","+left+","+price+","+seller+",'seller','',"+(System.currentTimeMillis()/1000)+")");
         return (int)n("SELECT MAX(auctionID) FROM "+P+"auctions");
@@ -79,7 +83,8 @@ public final class MarketAtomicityFixture {
         set(h.server(),Server.class,"playerService",new PlayerService(h.world(),h.server().getConfig(),db));
     }
     static void reloadContainers(CurrentCombatHarness h,Player p)throws Exception {
-        for(String name:Arrays.asList("loadPlayerInventory","loadPlayerBank")) {
+        p.getSettings().setAppearance(new com.openrsc.server.model.PlayerAppearance(2,8,14,0,1,2));
+        for(String name:Arrays.asList("loadPlayerEquipment","loadPlayerInventory","loadPlayerBank")) {
             Method m=PlayerService.class.getDeclaredMethod(name,Player.class);m.setAccessible(true);m.invoke(h.server().getPlayerService(),p);
         }
     }
@@ -99,7 +104,7 @@ public final class MarketAtomicityFixture {
         run(s,h,request);check(p.getCarriedItems().getInventory().countId(384,Optional.empty())==1,"same UUID replay no second grant "+failure);
     }
     static void scenarios(CurrentCombatHarness h)throws Exception{
-        for(String stage:Arrays.asList("buyer-stage","seller-credit","listing-update","inventory-save","bank-save","before-receipt","before-commit")) assertBuyRollback(h,stage);
+        for(String stage:Arrays.asList("buyer-stage","seller-credit","listing-update","inventory-save","bank-save","equipment-save","before-receipt","before-commit")) assertBuyRollback(h,stage);
         Player p=player(h);int id=listing(999,3,3,300);Store s=new Store();s.failure="after-commit";
         MarketOperation buy=op(MarketOperation.Kind.BUY,p,id,0,2,0);run(s,h,buy);
         check(p.getCarriedItems().getInventory().countId(384,Optional.empty())==2&&p.getCarriedItems().getInventory().countId(10)==800,"lost commit acknowledgement publishes once");
@@ -147,7 +152,7 @@ public final class MarketAtomicityFixture {
         check(n("SELECT COUNT(*) FROM "+P+"expired_auctions WHERE playerID=992")==0,"moderation failure returns nothing prematurely");
         run(moderation,h,moderate);run(moderation,h,moderate);
         check(n("SELECT SUM(item_amount) FROM "+P+"expired_auctions WHERE playerID=992")==4,"moderation returns remainder once to seller");
-        bankPins(h);admission(h);concurrentBuy(h);gameQueue(h);engineSafety(h);
+        bankPins(h);equipmentTransitions(h);saveLockOrder(h);admission(h);concurrentBuy(h);gameQueue(h);engineSafety(h);legacyStorage(h);providerConnections(h);
     }
     static void bankPins(CurrentCombatHarness h)throws Exception {
         Player p=player(h);Bank bank=p.getBank();check(bank.add(new Item(384,1),false),"pin seed");
@@ -168,6 +173,49 @@ public final class MarketAtomicityFixture {
         check(inv.getItems().get(0)==old&&old.getItemStatus().getDurability()==37&&"kept".equals(old.getAttribute("tag","")),"successful publication preserves surviving identity metadata");
         check(n("SELECT durability FROM "+P+"itemstatuses WHERE itemID="+worn.getItemId())==41&&n("SELECT wielded FROM "+P+"itemstatuses WHERE itemID="+worn.getItemId())==1,"durable untouched wield/durability exact");
     }
+    static Item equipFromInventory(Player p)throws Exception {
+        Inventory inv=p.getCarriedItems().getInventory();check(inv.add(new Item(66,1),false),"seed weapon before ordinary container save");persist(p);
+        Item sword=inv.get(inv.getLastIndexById(66));
+        check(p.getCarriedItems().getEquipment().equipItem(new com.openrsc.server.model.struct.EquipRequest(p,sword,com.openrsc.server.model.struct.EquipRequest.RequestType.FROM_INVENTORY,false),false),"ordinary equip since last save");
+        Item current=p.getCarriedItems().getEquipment().get(sword.getDef(p.getWorld()).getWieldPosition());current.getItemStatus().setDurability(37);return current;
+    }
+    static void equipmentTransitions(CurrentCombatHarness h)throws Exception {
+        Player p=player(h);Item sword=equipFromInventory(p);long id=sword.getItemId();int slot=sword.getDef(h.world()).getWieldPosition();
+        int listing=listing(987,2,2,200);Store failing=new Store();failing.failure="equipment-save";
+        MarketOperation buy=op(MarketOperation.Kind.BUY,p,listing,0,1,0);run(failing,h,buy);
+        check(p.getCarriedItems().getEquipment().get(slot)==sword&&sword.getItemStatus().getDurability()==37,"rollback keeps live equipped object unchanged");
+        check(persisted(p.getDatabaseID(),"invitems",66)==1&&persisted(p.getDatabaseID(),"equipped",66)==0,"rollback retains old coherent durable equipment/container state");
+        run(failing,h,buy);check(persisted(p.getDatabaseID(),"equipped",66)==1&&persisted(p.getDatabaseID(),"invitems",66)==0,"market includes current equipped ownership");
+        h.logout(p);Player next=h.player(p.getUsername(),449,450);next.setDatabaseID(p.getDatabaseID());h.recordOutgoingPackets(next);reloadContainers(h,next);
+        Item loaded=next.getCarriedItems().getEquipment().get(slot);
+        check(loaded!=null&&loaded.getItemId()==id&&loaded.getItemStatus().getDurability()==37,"ordinary reload preserves exact equipped identity, slot and durability");
+        check(next.getCarriedItems().getEquipment().unequipItem(new com.openrsc.server.model.struct.UnequipRequest(next,loaded,com.openrsc.server.model.struct.UnequipRequest.RequestType.FROM_BANK,false),false),"ordinary unequip into bank since last save");
+        Item bankItem=next.getBank().get(next.getBank().getFirstIndexById(66));long bankId=bankItem.getItemId();
+        run(new Store(),h,op(MarketOperation.Kind.BUY,next,listing,0,1,0));
+        check(persisted(next.getDatabaseID(),"equipped",66)==0&&persisted(next.getDatabaseID(),"bank",66)==1,"stale equipped rows do not reject current bank item");
+        reloadContainers(h,next);check(next.getBank().get(next.getBank().getFirstIndexById(66)).getItemId()==bankId&&next.getCarriedItems().getEquipment().get(slot)==null,"unequip then market then reload preserves current bank ownership");
+    }
+    static void saveLockOrder(CurrentCombatHarness h)throws Exception {
+        for(String action:Arrays.asList("unequip","equip","deposit-all")) {
+            boolean equip=action.equals("equip");
+            Player p=player(h);Item sword=equipFromInventory(p);int slot=sword.getDef(h.world()).getWieldPosition();
+            if(equip)check(p.getCarriedItems().getEquipment().unequipItem(new com.openrsc.server.model.struct.UnequipRequest(p,sword,com.openrsc.server.model.struct.UnequipRequest.RequestType.FROM_BANK,false),false),"prepare bank equip lock test");
+            CountDownLatch holdingEquipment=new CountDownLatch(1),saveEntered=new CountDownLatch(1);
+            MySqlGameDatabase db=new MySqlGameDatabase(h.server()) { @Override public boolean queryPlayerExists(int id) {
+                saveEntered.countDown();p.getCarriedItems().getEquipment().get(slot);return false;
+            }};
+            PlayerService service=new PlayerService(h.world(),h.server().getConfig(),db);
+            ExecutorService pool=Executors.newFixedThreadPool(2, r->{Thread t=new Thread(r,"market-lock-order-fixture");t.setDaemon(true);return t;});
+            Future<Boolean> writer=pool.submit(()->{synchronized(action.equals("deposit-all")?p.getBank().getItems():p.getCarriedItems().getEquipment().getList()){
+                holdingEquipment.countDown();check(saveEntered.await(2,TimeUnit.SECONDS),"ordinary save entered while equipment held");
+                if(action.equals("deposit-all")){p.getBank().depositAllFromEquipment();return p.getBank().countId(66)==1;}
+                if(equip){Item item=p.getBank().get(p.getBank().getFirstIndexById(66));return p.getCarriedItems().getEquipment().equipItem(new com.openrsc.server.model.struct.EquipRequest(p,item,com.openrsc.server.model.struct.EquipRequest.RequestType.FROM_BANK,false),false);}
+                return p.getCarriedItems().getEquipment().unequipItem(new com.openrsc.server.model.struct.UnequipRequest(p,sword,com.openrsc.server.model.struct.UnequipRequest.RequestType.FROM_BANK,false),false);
+            }});
+            check(holdingEquipment.await(2,TimeUnit.SECONDS),"equipment monitor latched");Future<Boolean> saver=pool.submit(()->service.savePlayer(p));
+            check(writer.get(4,TimeUnit.SECONDS)&&!saver.get(4,TimeUnit.SECONDS),"bank "+action+" and ordinary save complete without monitor inversion");pool.shutdownNow();
+        }
+    }
     static void concurrentBuy(CurrentCombatHarness h)throws Exception {
         Player a=player(h),b=player(h);int id=listing(989,1,1,100);
         CountDownLatch staged=new CountDownLatch(2);
@@ -184,11 +232,42 @@ public final class MarketAtomicityFixture {
     static void gameQueue(CurrentCombatHarness h)throws Exception {
         Player p=player(h);int id=listing(988,1,1,100);
         Field field=com.openrsc.server.model.world.World.class.getDeclaredField("market");field.setAccessible(true);
-        field.set(h.world(),new Market(h.world(),new Store()));
+        field.set(h.world(),new Market(h.world()));
         h.world().getMarket().addBuyAuctionItemTask(p,id,1);
         check(p.getCarriedItems().getInventory().countId(384)==0,"queued request changes nothing before game event");
         h.advanceOneCombatTick();h.advanceOneCombatTick();
         check(p.getCarriedItems().getInventory().countId(384)==1&&persisted(p.getDatabaseID(),"invitems",10)==900,"ordinary game-event task settles durable transaction");
+    }
+    static void providerConnections(CurrentCombatHarness h)throws Exception {
+        com.openrsc.server.ServerConfiguration cfg=h.server().getConfig();
+        String oldName=cfg.DB_NAME,oldHost=cfg.DB_HOST,oldUser=cfg.DB_USER,oldPass=cfg.DB_PASS;
+        try {
+            JDBCDatabaseConnection factory;
+            if(mysql){
+                cfg.DB_HOST="127.0.0.1:32768";cfg.DB_NAME="auction_test";cfg.DB_USER=user;cfg.DB_PASS=password;
+                factory=new com.openrsc.server.database.impl.mysql.MySQLDatabaseConnection(h.server());
+            }else{
+                java.nio.file.Path directory=java.nio.file.Paths.get("inc/sqlite");java.nio.file.Files.createDirectories(directory);
+                java.nio.file.Files.copy(java.nio.file.Paths.get(url.substring("jdbc:sqlite:".length())),directory.resolve("market-provider-check.db"));
+                cfg.DB_NAME="market-provider-check";
+                factory=new com.openrsc.server.database.impl.sqlite.SqliteGameDatabaseConnection(h.server());
+            }
+            try(Connection a=factory.openIsolatedConnection();Connection b=factory.openIsolatedConnection()){
+                check(a!=b,"configured production provider gives distinct physical connections");
+                a.setAutoCommit(false);try(Statement s=a.createStatement()){s.executeUpdate("INSERT INTO "+P+"players VALUES(777777,'isolation')");}
+                try(Statement s=b.createStatement();ResultSet r=s.executeQuery("SELECT COUNT(*) FROM "+P+"players WHERE id=777777")){r.next();check(r.getInt(1)==0,"provider connections do not share uncommitted state");}
+                a.rollback();
+            }
+            if(!mysql){cfg.DB_NAME="missing-market-provider";boolean denied=false;try{factory.openIsolatedConnection();}catch(SQLException expected){denied=true;}
+                check(denied&&!java.nio.file.Files.exists(java.nio.file.Paths.get("inc/sqlite/missing-market-provider.db")),"missing configured SQLite file fails without creating replacement database");}
+        }finally{cfg.DB_NAME=oldName;cfg.DB_HOST=oldHost;cfg.DB_USER=oldUser;cfg.DB_PASS=oldPass;}
+    }
+    static void legacyStorage(CurrentCombatHarness h)throws Exception {
+        Player p=player(h);int id=listing(986,1,1,100);sql("DROP TABLE "+P+"equipped");
+        MarketJdbcStore store=new MarketJdbcStore(MarketAtomicityFixture::open,P,false);
+        new MarketTransactions(h.world(),store).execute(op(MarketOperation.Kind.BUY,p,id,0,1,0));
+        check(p.getCarriedItems().getInventory().countId(384)==1&&persisted(p.getDatabaseID(),"invitems",10)==900,"legacy inventory world works without optional equipped table");
+        sql("CREATE TABLE "+P+"equipped(playerID INTEGER,itemID BIGINT)");
     }
     static void engineSafety(CurrentCombatHarness h)throws Exception {
         Player p=player(h);int id=listing(990,1,1,100);
@@ -255,12 +334,13 @@ public final class MarketAtomicityFixture {
         try(CurrentCombatHarness h=new CurrentCombatHarness();Provider provider=new Provider()){
             installDatabase(h,provider);
             if(mode.startsWith("crash")){
-                Player p=player(h);int id=listing(999,1,1,100);Store s=new Store();s.failure=mode.endsWith("before")?"before-commit":"after-commit";s.halt=true;run(s,h,op(MarketOperation.Kind.BUY,p,id,0,1,0));throw new AssertionError("halt missing");
+                Player p=player(h);equipFromInventory(p);int id=listing(999,1,1,100);Store s=new Store();s.failure=mode.endsWith("before")?"before-commit":"after-commit";s.halt=true;run(s,h,op(MarketOperation.Kind.BUY,p,id,0,1,0));throw new AssertionError("halt missing");
             }else if(mode.startsWith("recover")){
                 Player p=h.player("auction101",449,450);p.setDatabaseID(101);reloadContainers(h,p);
                 boolean before=mode.endsWith("before");
                 check(p.getCarriedItems().getInventory().countId(10)==(before?1000:900)&&p.getCarriedItems().getInventory().countId(384,Optional.empty())==(before?0:1),"fresh process provider reload after crash");
                 check(n("SELECT COUNT(*) FROM "+P+"market_operations")== (before?0:1)&&n("SELECT COALESCE(SUM(item_amount),0) FROM "+P+"expired_auctions WHERE playerID=999")==(before?0:100),"crash receipt and seller payout atomic");
+                check(persisted(101,before?"invitems":"equipped",66)==1&&equipment(p).size()==(before?0:1),"crash keeps coherent equipment ownership since last save");
             }else{scenarios(h);lockResolution();}
         }
         System.out.println("PASS market "+(mysql?"MySQL/MariaDB":"SQLite")+" "+mode+": "+checks+" assertions; no listeners or account databases");

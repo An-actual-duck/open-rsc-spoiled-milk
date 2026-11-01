@@ -15,19 +15,22 @@ public class MarketJdbcStore {
     }
     private final Connections connections;
     private final String prefix;
+    private final boolean equipmentTable;
     private volatile boolean schemaReady;
 
     public MarketJdbcStore(Server server) {
         this(() -> {
             if (!(server.getDatabase() instanceof JDBCDatabase)) throw new SQLException("Market requires a JDBC provider");
             return ((JDBCDatabase) server.getDatabase()).getConnection().openIsolatedConnection();
-        }, server.getConfig().DB_TABLE_PREFIX);
+        }, server.getConfig().DB_TABLE_PREFIX, server.getConfig().WANT_EQUIPMENT_TAB);
     }
 
     /** Explicit connection ownership also permits disposable engine integration tests. */
-    public MarketJdbcStore(Connections connections, String prefix) {
+    public MarketJdbcStore(Connections connections, String prefix) { this(connections, prefix, true); }
+
+    public MarketJdbcStore(Connections connections, String prefix, boolean equipmentTable) {
         if (prefix == null || !prefix.matches("[A-Za-z0-9_]*")) throw new IllegalArgumentException("Invalid table prefix");
-        this.connections = connections; this.prefix = prefix;
+        this.connections = connections; this.prefix = prefix; this.equipmentTable = equipmentTable;
     }
 
     String table(String name) { return "`" + prefix + name + "`"; }
@@ -57,6 +60,7 @@ public class MarketJdbcStore {
         try (Connection c = openOwned()) {
             if (!isSqlite(c)) {
                 for (String name : Arrays.asList("players", "auctions", "expired_auctions", "invitems", "bank", "equipped", "itemstatuses", "market_operations")) {
+                    if (name.equals("equipped") && !equipmentTable) continue;
                     try (PreparedStatement s = c.prepareStatement("SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?")) {
                         s.setString(1, prefix + name);
                         try (ResultSet r = s.executeQuery()) {
@@ -198,35 +202,42 @@ public class MarketJdbcStore {
         checkpoint("claim-update");
     }
 
-    public void saveContainers(Connection c, int actor, List<Item> inventory, List<Item> bank) throws SQLException {
+    private List<String> containers() {
+        return equipmentTable ? Arrays.asList("invitems", "bank", "equipped") : Arrays.asList("invitems", "bank");
+    }
+
+    public void saveContainers(Connection c, int actor, List<Item> inventory, List<Item> bank, List<Item> equipped) throws SQLException {
+        if (!equipmentTable && !equipped.isEmpty()) throw new SQLException("Unexpected equipment in a legacy inventory world");
         Set<Long> previousIds = new HashSet<>();
-        for (String container : Arrays.asList("invitems", "bank")) {
+        for (String container : containers()) {
             try (PreparedStatement s = c.prepareStatement("SELECT itemID FROM " + table(container) + " WHERE playerID=?")) {
                 s.setInt(1, actor); try (ResultSet r = s.executeQuery()) { while (r.next()) previousIds.add(r.getLong(1)); }
             }
         }
         Set<Long> ids = new HashSet<>();
-        for (List<Item> items : Arrays.asList(inventory, bank)) for (Item item : items) {
+        for (List<Item> items : Arrays.asList(inventory, bank, equipped)) for (Item item : items) {
             if (item.getItemId() < 0 || item.getAmount() <= 0 || !ids.add(item.getItemId())) throw new SQLException("Invalid container item identity");
-            for (String container : Arrays.asList("invitems", "bank", "equipped")) {
-                try (PreparedStatement s = c.prepareStatement("SELECT playerID FROM " + table(container) + " WHERE itemID=?" + (container.equals("equipped") ? "" : " AND playerID<>?"))) {
-                    s.setLong(1, item.getItemId()); if (!container.equals("equipped")) s.setInt(2, actor);
+            for (String container : containers()) {
+                try (PreparedStatement s = c.prepareStatement("SELECT playerID FROM " + table(container) + " WHERE itemID=? AND playerID<>?")) {
+                    s.setLong(1, item.getItemId()); s.setInt(2, actor);
                     try (ResultSet rs = s.executeQuery()) { if (rs.next()) throw new SQLException("Item belongs to a different player"); }
                 }
             }
         }
-        for (String container : Arrays.asList("invitems", "bank")) {
+        for (String container : containers()) {
             try (PreparedStatement s = c.prepareStatement("DELETE FROM " + table(container) + " WHERE playerID=?")) { s.setInt(1, actor); s.executeUpdate(); }
         }
         writeContainer(c, actor, "invitems", inventory); checkpoint("inventory-save");
         writeContainer(c, actor, "bank", bank); checkpoint("bank-save");
+        if (equipmentTable) writeContainer(c, actor, "equipped", equipped);
+        checkpoint("equipment-save");
         previousIds.removeAll(ids);
         for (Long removed : previousIds) {
             try (PreparedStatement s = c.prepareStatement("DELETE FROM " + table("itemstatuses") + " WHERE itemID=?"
                     + " AND NOT EXISTS (SELECT 1 FROM " + table("invitems") + " WHERE itemID=?)"
                     + " AND NOT EXISTS (SELECT 1 FROM " + table("bank") + " WHERE itemID=?)"
-                    + " AND NOT EXISTS (SELECT 1 FROM " + table("equipped") + " WHERE itemID=?)")) {
-                for (int i=1;i<=4;i++) s.setLong(i,removed); s.executeUpdate();
+                    + (equipmentTable ? " AND NOT EXISTS (SELECT 1 FROM " + table("equipped") + " WHERE itemID=?)" : ""))) {
+                for (int i=1;i<=(equipmentTable ? 4 : 3);i++) s.setLong(i,removed); s.executeUpdate();
             }
         }
     }
@@ -240,8 +251,8 @@ public class MarketJdbcStore {
                 if (s.executeUpdate() == 0 && !statusExists(c, item.getItemId())) try (PreparedStatement add = c.prepareStatement("INSERT INTO " + table("itemstatuses")
                         + " (catalogID,amount,noted,wielded,durability,itemID) VALUES(?,?,?,?,?,?)")) { bindStatus(add, item); add.executeUpdate(); }
             }
-            try (PreparedStatement s = c.prepareStatement("INSERT INTO " + table(name) + " (playerID,itemID,slot) VALUES(?,?,?)")) {
-                s.setInt(1, actor); s.setLong(2, item.getItemId()); s.setInt(3, slot); s.executeUpdate();
+            try (PreparedStatement s = c.prepareStatement("INSERT INTO " + table(name) +  (name.equals("equipped") ? " (playerID,itemID) VALUES(?,?)" : " (playerID,itemID,slot) VALUES(?,?,?)"))) {
+                s.setInt(1, actor); s.setLong(2, item.getItemId()); if (!name.equals("equipped")) s.setInt(3, slot); s.executeUpdate();
             }
         }
     }
