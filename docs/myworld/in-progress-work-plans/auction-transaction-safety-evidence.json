@@ -1,0 +1,127 @@
+{
+  "testedCodeCommit": "b8c2e96289d466fca123bb33f1d49573874ed189",
+  "java": "Java 8; 512MiB SerialGC",
+  "heavyBuildLock": "/home/justin/.local/share/core-heavy-build.lock",
+  "results": {
+    "combat": {
+      "passed": 145,
+      "scenarios": 145
+    },
+    "slowBoundaryAssertions": 115,
+    "inventoryCapacityPackets": "PASS"
+  },
+  "engines": [
+    {
+      "backend": "sqlite",
+      "results": [
+        {
+          "mode": "test",
+          "exit": 0,
+          "expected": 0,
+          "seconds": 6.87,
+          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-2af6bd6c57/test.log"
+        },
+        {
+          "mode": "crash-before",
+          "exit": 77,
+          "expected": 77,
+          "seconds": 1.47,
+          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-2af6bd6c57/crash-before.log"
+        },
+        {
+          "mode": "recover-before",
+          "exit": 0,
+          "expected": 0,
+          "seconds": 1.22,
+          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-2af6bd6c57/recover-before.log"
+        },
+        {
+          "mode": "crash",
+          "exit": 77,
+          "expected": 77,
+          "seconds": 1.47,
+          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-2af6bd6c57/crash.log"
+        },
+        {
+          "mode": "recover",
+          "exit": 0,
+          "expected": 0,
+          "seconds": 1.22,
+          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-2af6bd6c57/recover.log"
+        }
+      ],
+      "engine": "SQLite",
+      "assertions": {
+        "test": 194,
+        "recover-before": 3,
+        "recover": 3
+      },
+      "logSha256": {
+        "recover-before.log": "918ebdf79fafc4f8de3e3aa0e40ad13efe1062960d41b37abad7867bc44320d4",
+        "recover.log": "16af3885e638385da0705f36c9911ba340d39ca9d814a84379ea82029c75191d",
+        "crash.log": "555a128a89146044ea0cdc16598c264bf692f0b758f937720122d4bde94f6c40",
+        "crash-before.log": "dba8af840d68dd98b2a6eda3cc47e99737682be0d12808737155fea99f89b17b",
+        "test.log": "0f1006cbbb900223c4c9f8c95bf7bbf0d85423a5b70be5c95bf2dcdfb4b4d64c"
+      }
+    },
+    {
+      "backend": "mysql-mariadb",
+      "results": [
+        {
+          "mode": "test",
+          "exit": 0,
+          "expected": 0,
+          "seconds": 10.58,
+          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-bf8ae2cec8/test.log"
+        },
+        {
+          "mode": "crash-before",
+          "exit": 77,
+          "expected": 77,
+          "seconds": 1.62,
+          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-bf8ae2cec8/crash-before.log"
+        },
+        {
+          "mode": "recover-before",
+          "exit": 0,
+          "expected": 0,
+          "seconds": 1.27,
+          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-bf8ae2cec8/recover-before.log"
+        },
+        {
+          "mode": "crash",
+          "exit": 77,
+          "expected": 77,
+          "seconds": 1.57,
+          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-bf8ae2cec8/crash.log"
+        },
+        {
+          "mode": "recover",
+          "exit": 0,
+          "expected": 0,
+          "seconds": 1.32,
+          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-bf8ae2cec8/recover.log"
+        }
+      ],
+      "engine": "MySQL JDBC / MariaDB 11.4.13",
+      "assertions": {
+        "test": 194,
+        "recover-before": 3,
+        "recover": 3
+      },
+      "logSha256": {
+        "recover-before.log": "0e4030c9e40ed0b0ba1fa9d68fa040cc864243658331cbd1ff5fb6c4b732b4e2",
+        "recover.log": "390a6a83bfe20d551ad1b56efec4f3093bb3dc226999fc6b35ea3ffc3348265f",
+        "crash.log": "4dd7bc1caac2e4fada40483b1bfa08b624ae692a8998b3ddfab9e0e8fdac9b74",
+        "crash-before.log": "5d241eb5b04ff270f28bc56275db9da2652c96417e21d9160da54ecdabf7c2dc",
+        "test.log": "0b9da5213137ca3ffeeb5080e69cb302c0bfa8e531c890d2fe5e8e0ba8d74d52"
+      }
+    }
+  ],
+  "artifacts": {
+    "server/core.jar": "10f9877c7abfe258a916d6bd3047a520a7e30a51dd50183100109158eb1954dd",
+    "server/core-gameplay-overlay.jar": "4006096d6f9a48e34d5aa20e1b263625f31e3bd4fa009c2e76ebf2c8a7ef6806",
+    "output/combat-test/test-classes/com/openrsc/server/combat/MarketAtomicityFixture.class": "3d2ff156bd8a8c1b76e58fd481852ed3d3421ca7becc9cda73f1a687ee72ff44",
+    "/tmp/auction-regressions-final.log": "5956d593a814d7ef3d1fefefd412946ac127c22cdbe80124829a6bcf60002a01"
+  }
+}
