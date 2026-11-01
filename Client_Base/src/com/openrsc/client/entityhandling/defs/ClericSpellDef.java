@@ -168,7 +168,7 @@ public final class ClericSpellDef {
       throw new IllegalArgumentException("Invalid Cleric spell presentation metadata");
     }
     if (iconAssetKey == null
-        || (!iconAssetKey.isEmpty() && !iconAssetKey.matches("[a-z0-9]+(?:-[a-z0-9]+)*"))
+        || (!iconAssetKey.isEmpty() && !iconAssetKey.matches("[a-z0-9]+(?:[-_][a-z0-9]+)*"))
         || effectRanks == null
         || effectRanks.size() > 6) {
       throw new IllegalArgumentException("Invalid Cleric icon or effect-rank metadata");

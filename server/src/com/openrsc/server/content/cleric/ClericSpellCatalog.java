@@ -28,9 +28,9 @@ public final class ClericSpellCatalog {
       ClericAlignment.SARADOMIN, ClericAlignment.GUTHIX, ClericAlignment.ZAMORAK
     };
     String[][] icons = {
-      {"mend", "greater-mend", "aegis"},
-      {"purify", "restore", "thorns"},
-      {"fervor", "zeal", "rally"}
+      {"saradomins_light", "saradomins_aura", "saradomins_resplendence"},
+      {"guthixs_respite", "guthixs_protection", "guthixs_vengeance"},
+      {"zamoraks_fervor", "zamoraks_fury", "zamoraks_wrath"}
     };
     int[][] animations = {{67, 72, 75}, {69, 70, 74}, {68, 73, 76}};
     for (int tier = 1; tier <= 3; tier++)
@@ -57,15 +57,22 @@ public final class ClericSpellCatalog {
             30,
             2,
             5,
-            "unify",
+            "greater_unify",
             -1));
     String[][] hostileNames = {
       {"Guthix's Unease", "Guthix's Dread", "Guthix's Terror"},
-      {"Saradomin's Censure", "Saradomin's Condemnation", "Saradomin's Unmaking"}
+      {"Saradomin's Censure", "Saradomin's Condemnation", "Saradomin's Unmaking"},
+      {"Zamorak's Malice", "Zamorak's Cruelty", "Zamorak's Ruin"}
+    };
+    String[][] hostileIcons = {
+      {"guthixs_unease", "guthixs_dread", "guthixs_terror"},
+      {"saradomins_censure", "saradomins_condemnation", "saradomins_unmaking"},
+      {"zamoraks_malice", "zamoraks_cruelty", "zamoraks_ruin"}
     };
     for (int tier = 1; tier <= 3; tier++)
-      for (int god = 0; god < 2; god++) {
-        ClericAlignment alignment = god == 0 ? ClericAlignment.GUTHIX : ClericAlignment.SARADOMIN;
+      for (int god = 0; god < 3; god++) {
+        ClericAlignment alignment = god == 0 ? ClericAlignment.GUTHIX
+            : god == 1 ? ClericAlignment.SARADOMIN : ClericAlignment.ZAMORAK;
         defs.add(
             make(
                 ClericSpellId.fromCode(22 + god * 3 + tier - 1),
@@ -75,8 +82,8 @@ public final class ClericSpellCatalog {
                 tier == 1 ? 1 : tier == 2 ? 20 : 40,
                 tier,
                 tier + 1,
-                icons[god == 0 ? 1 : 0][tier - 1],
-                animations[god == 0 ? 1 : 0][tier - 1]));
+                hostileIcons[god][tier - 1],
+                animations[god == 0 ? 1 : god == 1 ? 0 : 2][tier - 1]));
       }
     for (ClericSpellDefinition d : defs)
       if (BY_CODE.put(d.getStableCode(), d) != null)

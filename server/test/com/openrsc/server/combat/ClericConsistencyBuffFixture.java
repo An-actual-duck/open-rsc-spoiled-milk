@@ -36,7 +36,7 @@ public final class ClericConsistencyBuffFixture {
       Player caster = h.player("consistencycaster", 450, 450);
       Player ally = h.player("consistencyally", 451, 450);
       for (Player p : new Player[] {caster, ally}) {
-        p.setClientVersion(10055);
+        p.setClientVersion(10056);
         p.getClientLimitations().maxItemId = 65535;
         h.recordOutgoingPackets(p);
         ClericBlessingsFixture.skill(p, Skill.HITS, 100, 1000);
@@ -201,7 +201,7 @@ public final class ClericConsistencyBuffFixture {
       Packet wire = new PayloadCustomGenerator().generate(payload, caster);
       byte[] bytes = new byte[wire.getBuffer().readableBytes()];
       wire.getBuffer().getBytes(wire.getBuffer().readerIndex(), bytes);
-      check(bytes[0] == 4 && bytes[1] == 17, "actual schema4 native packet");
+      check(bytes[0] == 5 && bytes[1] == 20, "actual schema5 native packet");
       if (args.length > 0) Files.write(Paths.get(args[0]), bytes);
       System.out.println("PASS " + checks + " Cleric consistency buff checks");
     }

@@ -37,6 +37,8 @@ public final class ResolvedDamageTransaction {
 
     checkedRequest =
         com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.amplify(checkedRequest);
+    checkedRequest =
+        com.openrsc.server.content.cleric.runtime.ClericCriticalRuntime.beforeSettlement(checkedRequest);
     target
         .getSkills()
         .subtractLevel(

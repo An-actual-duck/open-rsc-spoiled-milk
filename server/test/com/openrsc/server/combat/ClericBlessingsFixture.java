@@ -99,7 +99,7 @@ public final class ClericBlessingsFixture {
       h.world().getRegionManager().populateNativeLayeredPlacements();
       Player c = h.player("clericcast", 450, 450), r = h.player("clerically", 451, 450);
       for (Player p : new Player[] {c, r}) {
-        p.setClientVersion(10055);
+        p.setClientVersion(10056);
         p.getClientLimitations().maxItemId = 65535;
         h.recordOutgoingPackets(p);
         skill(p, Skill.HITS, 100, 1000);
@@ -116,7 +116,7 @@ public final class ClericBlessingsFixture {
           !ClericSpellCatalog.fromCode(1).getPresentation().hasOnEntityAnimation()
               && !ClericSpellCatalog.fromCode(21).getPresentation().hasOnEntityAnimation(),
           "both Unify forms stay animationless");
-      check(ClericSpellCatalog.getAll().size() == 17, "active17 book");
+      check(ClericSpellCatalog.getAll().size() == 20, "active20 book");
       int[] thresholds = {0, 20, 45, 75, 115, 160};
       for (ClericSpellDefinition d : ClericSpellCatalog.getAll()) {
         check(d.getId().isActive(), "no retired metadata");
@@ -171,7 +171,7 @@ public final class ClericBlessingsFixture {
       c.setClientVersion(10053);
       packet(c, 12);
       check(count(c, 3294) == 100, "old maintained client failclosed");
-      c.setClientVersion(10055);
+      c.setClientVersion(10056);
       clear(r);
       fund(c, ClericSpellCatalog.fromCode(12));
       inv(c).getItems().removeIf(item -> item.getCatalogId() == 3300);
@@ -426,7 +426,7 @@ public final class ClericBlessingsFixture {
           r.getCurrentPoisonPower() == 70, "actual poison pulse adds baseline3,antidote20,Guthix7");
       r.curePoison();
       Player crit = h.player("clericcrit", 451, 450);
-      crit.setClientVersion(10055);
+      crit.setClientVersion(10056);
       crit.getClientLimitations().maxItemId = 65535;
       h.recordOutgoingPackets(crit);
       skill(crit, Skill.HITS, 100, 1000);
@@ -571,7 +571,7 @@ public final class ClericBlessingsFixture {
       byte[] bytes = new byte[wire.getBuffer().readableBytes()];
       wire.getBuffer().getBytes(wire.getBuffer().readerIndex(), bytes);
       if (args.length > 0) Files.write(Paths.get(args[0]), bytes);
-      check(bytes[0] == 4 && bytes[1] == 17, "actual generated schema4 seventeen entries");
+      check(bytes[0] == 5 && bytes[1] == 20, "actual generated schema5 twenty entries");
       System.out.println(
           "PASS "
               + checks

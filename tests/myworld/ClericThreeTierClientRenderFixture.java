@@ -50,7 +50,7 @@ public final class ClericThreeTierClientRenderFixture {
     List<ClericSpellDef> defs =
         ClericSpellbookPacketDecoder.decode(Files.readAllBytes(Paths.get(args[1])));
     ClericSpellbookCatalog catalog = new ClericSpellbookCatalog();
-    catalog.replace(4, defs);
+    catalog.replace(ClericBlessingContract.SCHEMA_VERSION, defs);
     mudclient mc =
         (mudclient) ClericThreeTierClientFixture.unsafe().allocateInstance(mudclient.class);
     ClericThreeTierClientFixture.set(mc, "clericSpellbook", catalog);

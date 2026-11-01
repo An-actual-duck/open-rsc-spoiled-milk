@@ -134,7 +134,7 @@ public final class ClericGenericStatusHudFixture {
     ArrayList<ClericSpellDef> definitions = new ArrayList<ClericSpellDef>();
     for (int code = 0; code < 12; code++) definitions.add(spell(code));
     ClericSpellbookCatalog catalog = new ClericSpellbookCatalog();
-    catalog.replace(4, definitions);
+    catalog.replace(ClericBlessingContract.SCHEMA_VERSION, definitions);
     return catalog;
   }
 

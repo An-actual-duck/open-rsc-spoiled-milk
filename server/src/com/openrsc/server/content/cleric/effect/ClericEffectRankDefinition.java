@@ -80,7 +80,9 @@ public final class ClericEffectRankDefinition<M extends ClericEffectMagnitude> {
             requireShape(counterKind==ClericEffectCounterKind.NONE && magnitude instanceof ClericHostileMagnitude,spellId);
             ClericHostileMagnitude hostile=(ClericHostileMagnitude)magnitude;
             requireShape(family==(hostile.getGod()==com.openrsc.server.content.cleric.ClericAlignment.GUTHIX
-                ?ClericEffectFamily.GUTHIX_HOSTILE:ClericEffectFamily.SARADOMIN_HOSTILE),spellId);
+                ?ClericEffectFamily.GUTHIX_HOSTILE
+                :hostile.getGod()==com.openrsc.server.content.cleric.ClericAlignment.SARADOMIN
+                ?ClericEffectFamily.SARADOMIN_HOSTILE:ClericEffectFamily.ZAMORAK_HOSTILE),spellId);
             return;
         }
         if (spellId.isBlessing()) {

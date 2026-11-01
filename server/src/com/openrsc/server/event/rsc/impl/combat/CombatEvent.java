@@ -645,6 +645,7 @@ public class CombatEvent extends GameTickEvent {
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
 		final int damageDealt = damageResult.getLegacyDamageDealt();
+		damage = damageResult.getRequest().getResolvedDamage();
 		if (!offhand && !attackSuppressed) com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipHit(
 			hitter, target, damageResult.getActualDamage());
 		if (!attackSuppressed) com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.onDamage(

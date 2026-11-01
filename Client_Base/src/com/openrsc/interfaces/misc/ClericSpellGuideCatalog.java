@@ -149,6 +149,7 @@ public final class ClericSpellGuideCatalog {
           values.append(c.getMagnitude());
           intervals.append(
               c.getKind() == orsc.ClericBlessingContract.NON_CORPOREAL
+                      || c.getKind() == orsc.ClericBlessingContract.CRITICAL_EXECUTION
                   ? c.getParameter1()
                   : c.getParameter1() / 1000);
         }
@@ -193,6 +194,14 @@ public final class ClericSpellGuideCatalog {
         } else if (component.getKind() == ClericBlessingContract.NON_CORPOREAL) {
           add(lines, "Non-corporeal enemies cannot deal or receive non-magical damage. Magical damage still works in both directions.");
           add(lines, "Poison keeps cleansing normally while non-corporeal. Blocked poison damage is not dealt later.");
+        } else if (component.getKind() == ClericBlessingContract.CRITICAL_VULNERABILITY) {
+          add(lines, "A critical is an authored maximum-damage roll. A naturally rolled maximum is not a critical. Any eligible player's primary melee, bow, throwing or Magic attack can benefit.");
+          add(lines, "Offhand, extra hits, summons, cannon, poison and recoil do not trigger this critical chain. Cosmic robes can improve each beneficial chance check; they do not replay an attack.");
+        } else if (component.getKind() == ClericBlessingContract.CRITICAL_STAGGER) {
+          add(lines, "Stagger negates the next attack. Its shared protection lasts for five performed, unstaggered attacks; recasting or another attacker cannot reset it.");
+        } else if (component.getKind() == ClericBlessingContract.CRITICAL_EXECUTION) {
+          add(lines, "Execution checks health before the triggering hit. Bosses are immune to execution, but can still be susceptible to critical hits and Stagger. A normal killing critical needs no execution roll.");
+          add(lines, "Script-controlled deaths, quest transformations and restricted-spell encounters are also protected from execution. Normal damage still follows their encounter rules.");
         }
       }
     }

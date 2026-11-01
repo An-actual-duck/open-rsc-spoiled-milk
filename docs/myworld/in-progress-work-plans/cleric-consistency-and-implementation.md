@@ -155,8 +155,12 @@ Never operate the public server, accounts, owner maps, installed toolkit or
 
 The scoped source candidate is complete. See [the implementation review](cleric-consistency-implementation-review.md)
 for exact identities, nature classification, lifetime/rounding policy and durable
-validation receipts. All A buffs/presentation and six B Guthix/Saradomin hostile
-spells are implemented; Cosmic's approved combat-luck replacement follows separately.
-Zamorak hostile activation/eligible-hit/execution decisions remain deferred. Private gameplay and manager integration/
+validation receipts. All A buffs/presentation and the six B Guthix/Saradomin hostile
+spells are implemented; Cosmic's approved combat-luck replacement is integrated.
+The owner subsequently required Zamorak's Malice/Cruelty/Ruin for this release
+on November 1. That separate implementation completes all nine hostile spells
+using primary authored criticals, shared Stagger and ordinary-enemy execution;
+Tier 4 remains deferred. See the governing concept's confirmed boundaries.
+Private gameplay and manager integration/
 prepared-package refresh are separate. No owner world, account or game session
 was modified by this worker.

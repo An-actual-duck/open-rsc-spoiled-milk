@@ -24,7 +24,7 @@ public final class ClericSpellbookUiFixture {
   static mudclient client(Path root,List<ClericSpellDef> defs,int width,int height)throws Exception {
     mudclient mc=(mudclient)ClericThreeTierClientFixture.unsafe().allocateInstance(mudclient.class);
     MudClientGraphics surface=new MudClientGraphics(width,height+12,5000);surface.fillSpriteTree();mc.setSurface(surface);
-    ClericSpellbookCatalog book=new ClericSpellbookCatalog();book.replace(4,defs);
+    ClericSpellbookCatalog book=new ClericSpellbookCatalog();book.replace(ClericBlessingContract.SCHEMA_VERSION,defs);
     set(mc,"clericSpellbook",book);set(mc,"clericIconSprites",new HashMap<Integer,Sprite>());
     set(mc,"externalAssetLoader",new ClientExternalAssetLoader(root,ClericSpellbookUiFixture.class));
     set(mc,"spellIconSprites",new Sprite[300]);

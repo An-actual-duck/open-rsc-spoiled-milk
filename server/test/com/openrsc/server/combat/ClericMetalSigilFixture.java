@@ -55,7 +55,7 @@ public final class ClericMetalSigilFixture {
             h.server().getConfig().WANT_MYWORLD=true; h.server().getConfig().WANT_FATIGUE=false;
             h.world().getRegionManager().preflightNativeLayeredPlacements();
             h.world().getRegionManager().populateNativeLayeredPlacements();
-            Player p=h.player("metal sigils",450,450);p.setClientVersion(10055);p.getClientLimitations().maxItemId=65535;h.recordOutgoingPackets(p);
+            Player p=h.player("metal sigils",450,450);p.setClientVersion(10056);p.getClientLimitations().maxItemId=65535;h.recordOutgoingPackets(p);
             level(p,Skill.CRAFTING,99);level(p,Skill.SMITHING,99);level(p,Skill.BLESSING,99);
             GameObject furnace=new GameObject(h.world(),Point.location(449,450),SceneryId.FURNACE.id(),0,0);furnace.setInitialLocation(Point.location(449,450));
             for(int blank:new int[]{3431,3432}) {

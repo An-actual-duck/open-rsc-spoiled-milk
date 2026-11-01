@@ -52,7 +52,7 @@ public final class ClericHostileFixture {
       h.world().getRegionManager().preflightNativeLayeredPlacements();
       h.world().getRegionManager().populateNativeLayeredPlacements();
       Player c = h.player("hostilecleric", 450, 450);
-      c.setClientVersion(10055);
+      c.setClientVersion(10056);
       c.getClientLimitations().maxItemId = 65535;
       h.recordOutgoingPackets(c);
       ClericBlessingsFixture.skill(c, Skill.HITS, 100, 100);
@@ -61,8 +61,8 @@ public final class ClericHostileFixture {
       target.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), 1000, 1000, false);
       source.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), 1000, 1000, false);
       check(
-          ClericSpellCatalog.getAll().size() == 17,
-          "17 active spells and no Zam hostile activation");
+          ClericSpellCatalog.getAll().size() == 20,
+          "20 active spells including Zamorak hostile");
       for (int tier = 1; tier <= 3; tier++)
         for (int power = 1; power <= tier * 2; power++) {
           ClericHostileMagnitude g =
@@ -258,11 +258,11 @@ public final class ClericHostileFixture {
           ((java.util.Map<?, ?>) origins.get(retainedState)).isEmpty(),
           "expired state retains no caster references");
       c.setLoggedIn(true);
-      c.setClientVersion(10055);
+      c.setClientVersion(10056);
       // A separate solo area makes all no-target outcomes observable at the real packet resource
       // boundary.
       Player solo = h.player("admissioncleric", 490, 490);
-      solo.setClientVersion(10055);
+      solo.setClientVersion(10056);
       solo.getClientLimitations().maxItemId = 65535;
       h.recordOutgoingPackets(solo);
       ClericBlessingsFixture.skill(solo, Skill.HITS, 100, 100);
