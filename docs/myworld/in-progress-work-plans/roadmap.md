@@ -21,7 +21,8 @@ old preserved branch does not make approved content a fresh development backlog.
 
 Remaining work:
 
-1. Review the gem-cutter glove icon with the owner. The owner chose no worn
+1. Review the corrected gem-cutter glove preview with the owner (requested thumb
+   correction applied; final preview approval pending). The owner chose no worn
    monocle visual; its approved inventory icon remains and dedicated worn art is not required.
 2. Refresh the paired map export from the latest saved work, preserving it;
    verify tower access/stairs, associates, gem cave, egg spawns and well shores.

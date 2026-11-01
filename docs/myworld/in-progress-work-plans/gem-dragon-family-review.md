@@ -144,7 +144,8 @@ No additional ring-of-wealth multiplication is added to these hidden rolls.
 - The 48×32 inventory/ground icons are integrated from Core's Aseprite work.
   The owner approved the monocle's jeweller's loupe v2 icon; the October 28
   update copies its PNG exactly (see guaranteed-gems review for source/hash).
-  Glove icon approval remains a separate visual gate. Worn glove geometry reuses the existing
+  The requested glove thumb correction is applied; final preview approval remains
+  pending. Worn glove geometry reuses the existing
   leather glove appearance. The owner explicitly chose **no worn monocle visual**
   (October 31): appearance `0` (`AppearanceId.NOTHING`) removes the eye-patch
   placeholder while retaining wearable head slot `5`, the5% cutting effect and
@@ -165,6 +166,23 @@ that3400–3407 remain reserved. Those IDs already belong to antidotes at baseli
 the unmodified entrypoints stop there before completing. No tests were added or
 changed. Original failures and external-copy successes are preserved under
 `/home/justin/.local/share/gem-monocle-no-worn-visual-review-20261031`.
+
+### Glove thumb correction: final preview pending
+
+The owner requested removal of the hanging thumb on the left-handed glove,
+which should be hidden. The native Aseprite correction erases only seven pixels
+at zero-based canvas coordinates `(25..29,23)` and `(26..27,24)`. All other1,529
+RGBA pixels, the48×32canvas, cuffs, fingers, palette and offsets are unchanged.
+The original editable source is immutable. The versioned Aseprite candidate,
+native PNG, pixel diff and before/after proofs are preserved under
+`/home/justin/.local/share/gem-equipment-review-20261031/glove-thumb-v2`.
+The corrected PNG is installed at the existing game-owned asset path; no archive,
+item identity or gameplay change is involved. Root accepted the targeted removal;
+the owner's final preview response is pending. Gloves are not marked fully approved.
+The bounded Java8 client build passes and its packaged glove PNG is byte-identical
+to the corrected native asset. Existing client source/packaged definition and
+render checks pass with the same baseline reservation exception described above;
+the prior224native equip/effect/cutting checks remain valid (only art changed).
 
 ## Visual provenance and discovery
 

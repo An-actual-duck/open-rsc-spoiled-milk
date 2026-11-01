@@ -33,7 +33,8 @@ Existing Elder Green/KBD content and the implemented gem dragons stay in scope.
 
 ### Remaining release work, in order
 
-1. Review the gem-cutter glove icon with the owner. The monocle inventory icon is
+1. Review the corrected gem-cutter glove preview with the owner (requested thumb
+   correction applied; final preview approval pending). The monocle inventory icon is
    approved; the owner chose no worn monocle visual, so dedicated worn art is not required.
 2. Prepare matching server/client map exports from the **latest authored save**,
    preserving the original and current work. The existing staged export is older.

@@ -10,7 +10,8 @@ cave and accepts the current Cleric stage. Existing Slayer approvals remain
 valid; release separation is not a new development/reapproval backlog.
 The [current release checklist](next-major-release-goals.md) governs scope.
 
-1. Review the gem-cutter glove icon with the owner. The monocle inventory icon is
+1. Review the corrected gem-cutter glove preview with the owner (requested thumb
+   correction applied; final preview approval pending). The monocle inventory icon is
    approved; the owner chose no worn monocle visual, so dedicated worn art is not required.
 2. Export the latest owner-authored map into the paired private candidate;
    preserve existing saves and verify guards/stairs, cave placements, egg spawns
