@@ -282,7 +282,7 @@ public final class MarketAtomicityFixture {
             return new ValidatedLogin(authCode);
         }
         @Override public void loginValidated(int code){check(response==-999,"one login response only");response=code;}
-        @Override public void loadingComplete(Player p){completed=p;h.world().getPlayers().add(p);p.updateRegion();}
+        @Override public void loadingComplete(Player p){p.setClientLimitations(com.openrsc.server.net.rsc.ClientLimitations.forVersion(p.getClientVersion()));completed=p;h.world().getPlayers().add(p);p.updateRegion();}
     }
     static io.netty.channel.Channel loginChannel(){
         return (io.netty.channel.Channel)Proxy.newProxyInstance(io.netty.channel.Channel.class.getClassLoader(),new Class<?>[]{io.netty.channel.Channel.class},(proxy,method,args)->{
@@ -322,6 +322,12 @@ public final class MarketAtomicityFixture {
                 check(settled.completed.getUsername().equals("aUcTiOn"+p.getDatabaseID()),"stored mixed-case account survives ordinary case-insensitive lookup");
                 h.server().getPacketFilter().removeLoggedInPlayer("127.0.0.1",p.getUsernameHash());h.logout(settled.completed);
             }
+            Player committed=player(h);int committedListing=listing(985,1,1,100);Store publication=new Store();publication.failure="before-publish";
+            run(publication,h,op(MarketOperation.Kind.BUY,committed,committedListing,0,1,0));
+            RecordingLogin recovered=new RecordingLogin(h,committed.getUsername());recovered.process();h.advanceOneCombatTick();h.advanceOneCombatTick();
+            check(committed.isPersistenceSessionClosed()&&recovered.completed!=null&&recovered.completed!=committed,"known-committed publication failure permits fresh settled login");
+            check(recovered.completed.getCarriedItems().getInventory().countId(10)==900&&recovered.completed.getCarriedItems().getInventory().countId(384)==1,"ordinary login recovers committed assets after publication failure");
+            h.server().getPacketFilter().removeLoggedInPlayer("127.0.0.1",committed.getUsernameHash());h.logout(recovered.completed);
             Player redirected=player(h);h.logout(redirected);
             RecordingLogin alias=new RecordingLogin(h,"formername");alias.redirect=redirected.getUsername();long oldHash=alias.getUsernameHash();alias.process();h.advanceOneCombatTick();h.advanceOneCombatTick();
             check(alias.completed!=null&&alias.completed.getDatabaseID()==redirected.getDatabaseID()&&oldHash!=alias.completed.getUsernameHash(),"accepted renamed-account redirect settles final username instead of initial alias hash");

@@ -32,7 +32,7 @@ for mode, expected in [('test',0),('crash-before',77),('recover-before',0),('cra
     with log.open('w') as stream:
         result=subprocess.run([str(java),'-Xmx512m','-XX:+UseSerialGC','-cp',classpath,'com.openrsc.server.combat.MarketAtomicityFixture',mode],cwd=runtime,env=env,stdout=stream,stderr=subprocess.STDOUT,timeout=180)
     results.append(dict(mode=mode, exit=result.returncode, expected=expected, seconds=round(time.monotonic()-start,2), log=str(log)))
-    if result.returncode != expected or (not mode.startswith('crash') and ('PASS market ' not in log.read_text() or 'java.lang.AssertionError' in log.read_text())):
+    if result.returncode != expected or (not mode.startswith('crash') and ('PASS market ' not in log.read_text() or 'java.lang.AssertionError' in log.read_text() or 'Exception while executing GameTickEvent' in log.read_text())):
         print(log.read_text()[-8000:]); raise SystemExit('Market fixture failed: '+mode+'; evidence '+str(output))
 (output/'results.json').write_text(json.dumps(dict(backend=backend, results=results),indent=2)+'\n')
 for mode in ['test','recover-before','recover']:
