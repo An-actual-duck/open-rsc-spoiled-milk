@@ -80,6 +80,13 @@ public class Item implements Comparable<Item> {
 		return copyWithItemId(itemId);
 	}
 
+	/** Detached economic staging retains opaque instance attributes as well as status. */
+	public Item copyForTransaction() {
+		Item copy = copy();
+		copy.attributes.putAll(attributes);
+		return copy;
+	}
+
 	public Item copyWithItemId(long newItemId) {
 		Item copy = new Item(getCatalogId(), getAmount(), getNoted(), newItemId);
 		copy.getItemStatus().setWielded(isWielded());

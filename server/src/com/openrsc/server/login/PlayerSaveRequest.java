@@ -65,6 +65,7 @@ public class PlayerSaveRequest extends LoginExecutorProcess {
 	}
 
 	public void logoutSaveSuccess() {
+		getPlayer().closePersistenceSession();
 		getServer().getGameEventHandler().getPlayerEvents(getPlayer()).forEach(GameTickEvent::stop);
 
 		getServer().getPacketFilter().removeLoggedInPlayer(getPlayer().getCurrentIP(), getPlayer().getUsernameHash());

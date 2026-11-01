@@ -7,6 +7,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public abstract class JDBCDatabaseConnection {
+    /** A separately owned connection; never shares a transaction with autosave/logging. */
+    public Connection openIsolatedConnection() throws SQLException {
+        throw new SQLException("Isolated transactions are unsupported by this database provider");
+    }
     public synchronized int executeUpdate(final String string) throws SQLException {
         return getStatement().executeUpdate(string);
     }

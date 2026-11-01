@@ -8,6 +8,8 @@ import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.util.ServerAwareThreadFactory;
+import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.event.rsc.DuplicationStrategy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,11 +31,13 @@ public class Market implements Runnable {
 
 	private Boolean running;
 
-	private ArrayList<MarketItem> auctionItems;
+	private volatile ArrayList<MarketItem> auctionItems;
 	private LinkedBlockingQueue<MarketTask> auctionTaskQueue;
 	private long lastCleanUp = 0;
+	private long lastRefresh = 0;
 	private LinkedBlockingQueue<OpenMarketTask> refreshRequestTasks;
 	private ScheduledExecutorService scheduledExecutor;
+	private MarketTransactions transactions;
 
 	public Market(final World world) {
 		this.world = world;
@@ -43,16 +47,36 @@ public class Market implements Runnable {
 		this.running = false;
 	}
 
+	public Market(World world, MarketJdbcStore store) {
+		this(world);
+		this.transactions = new MarketTransactions(world, store);
+	}
+
+	public synchronized MarketTransactions getTransactions() {
+		if (transactions == null) transactions = new MarketTransactions(world, new MarketJdbcStore(world.getServer()));
+		return transactions;
+	}
+
+	private void queueMutation(final Player player, final MarketTask task) {
+		world.getServer().getGameEventHandler().add(new GameTickEvent(world, player, 0,
+			"Auction transaction", DuplicationStrategy.ALLOW_MULTIPLE) {
+			@Override public void run() {
+				try { task.doTask(); } catch (Exception ex) { LOGGER.error("Auction transaction failed", ex); }
+				finally { stop(); }
+			}
+		});
+	}
+
 	public void addBuyAuctionItemTask(final Player player, final int auctionID, final int amount) {
-		auctionTaskQueue.add(new BuyMarketItemTask(player, auctionID, amount));
+		queueMutation(player, new BuyMarketItemTask(player, auctionID, amount));
 	}
 
 	public void addCancelAuctionItemTask(final Player player, final int auctionID) {
-		auctionTaskQueue.add(new CancelMarketItemTask(player, auctionID));
+		queueMutation(player, new CancelMarketItemTask(player, auctionID));
 	}
 
 	public void addNewAuctionItemTask(final Player player, final int itemID, final int amount, final int price) {
-		auctionTaskQueue.add(new NewMarketItemTask(player, new MarketItem(-1, itemID, amount, amount, price,
+		queueMutation(player, new NewMarketItemTask(player, new MarketItem(-1, itemID, amount, amount, price,
 			player.getDatabaseID(), player.getUsername(), "", System.currentTimeMillis() / 1000)));
 	}
 
@@ -65,11 +89,11 @@ public class Market implements Runnable {
 	}
 
 	public void addPlayerCollectItemsTask(final Player player) {
-		auctionTaskQueue.add(new PlayerCollectItemsTask(player));
+		queueMutation(player, new PlayerCollectItemsTask(player));
 	}
 
 	public void addModeratorDeleteItemTask(final Player player, final int auctionID) {
-		auctionTaskQueue.add(new ModeratorDeleteAuctionTask(player, auctionID));
+		queueMutation(player, new ModeratorDeleteAuctionTask(player, auctionID));
 	}
 
 	private void checkAndRemoveExpiredItems() {
@@ -79,8 +103,6 @@ public class Market implements Runnable {
 			for (final MarketItem auction : auctionItems) {
 				if (auction.hasExpired()) {
 					expiredItems.add(auction);
-					getWorld().getServer().getDatabase().addExpiredAuction("Expired",
-						auction.getCatalogID(), auction.getAmount(), auction.getSeller());
 				}
 			}
 
@@ -90,7 +112,7 @@ public class Market implements Runnable {
 					final int amount = expiredItem.getAmountLeft();
 
 					final Player sellerPlayer = getWorld().getPlayerID(expiredItem.getSeller());
-					getWorld().getServer().getDatabase().setSoldOut(expiredItem);
+					if (!getTransactions().expire(expiredItem)) continue;
 
 					if (sellerPlayer != null) {
 						ItemDefinition def = sellerPlayer.getWorld().getServer().getEntityHandler().getItemDef(itemIndex);
@@ -107,7 +129,7 @@ public class Market implements Runnable {
 	}
 
 	public ArrayList<MarketItem> getAuctionItems() {
-		return auctionItems;
+		return new ArrayList<>(auctionItems);
 	}
 
 	private void processAuctionTasks() {
@@ -130,11 +152,12 @@ public class Market implements Runnable {
 
 	private void processUpdateAuctionItemCache() {
 		try {
-			final int activeAuctionCount = getWorld().getServer().getDatabase().auctionCount();
-			if (activeAuctionCount == auctionItems.size()) return;
-			auctionItems.clear();
-			auctionItems = getWorld().getServer().getDatabase().getAuctionItems();
-		} catch (GameDatabaseException e) {
+            if (refreshRequestTasks.isEmpty() && System.currentTimeMillis() - lastRefresh < 1000) return;
+            // A purchase may change quantity and price without changing row count.
+            // Publish a new snapshot; the cache never authorizes settlement.
+            auctionItems = getTransactions().activeListings();
+            lastRefresh = System.currentTimeMillis();
+		} catch (java.sql.SQLException e) {
 			LOGGER.catching(e);
 		}
 	}
@@ -153,7 +176,7 @@ public class Market implements Runnable {
 
 	public void stop() {
 		// Process the rest of the Market tasks.
-		auctionItems.clear();
+		auctionItems = new ArrayList<>();
 		scheduledExecutor.shutdown();
 		try {
 			final boolean success = scheduledExecutor.awaitTermination(1, TimeUnit.MINUTES);

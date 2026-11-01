@@ -11,8 +11,8 @@ public final class MarketInventoryAdmission {
 	public static boolean canReceive(Inventory inventory, int catalogId, int amount,
 			boolean stackable) {
 		if (amount <= 0) return false;
-		// Preserve the existing market representation: non-stackable auction
-		// quantities are delivered as their noted equivalent in one stack.
-		return inventory.canHold(new Item(catalogId, amount, !stackable));
+		// One item is delivered unnoted; larger non-stackable quantities use notes.
+		// Admission must test the exact representation that will be delivered.
+		return inventory.canHold(new Item(catalogId, amount, !stackable && amount > 1));
 	}
 }

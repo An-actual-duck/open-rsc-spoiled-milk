@@ -57,6 +57,7 @@ public class Inventory {
 	 * Holds all items in the logged-in users inventory
 	 */
 	private List<Item> list = Collections.synchronizedList(new ArrayList<>());
+	private boolean transactionStaging;
 
 	/**
 	 * Reference back to the player who owns this inventory
@@ -90,6 +91,35 @@ public class Inventory {
 		// TODO: This should be made private and all calls converted to use API on ItemContainer. This could stay public, IF we copy the list to a new list before returning.
 		synchronized (list) {
 			return list;
+		}
+	}
+
+	/** Detached staging only: it owns copies, never the live list or its ItemStatus values. */
+	public Inventory copyForTransaction() {
+		synchronized (list) {
+			Inventory copy = new Inventory(player, new PlayerInventory[0]);
+			copy.transactionStaging = true;
+			for (Item item : list) copy.list.add(item.copyForTransaction());
+			return copy;
+		}
+	}
+
+	/** Caller holds the economic boundary and both live container monitors. */
+	public void publishTransaction(Inventory staged) {
+		if (staged.player != player) throw new IllegalArgumentException("Different inventory owner");
+		synchronized (list) {
+			java.util.Map<Long, Item> original = new java.util.HashMap<>();
+			for (Item item : list) original.put(item.getItemId(), item);
+			List<Item> committed = new ArrayList<>();
+			for (Item item : staged.list) {
+				Item existing = original.get(item.getItemId());
+				if (existing != null) {
+					existing.setItemStatus(item.copyForTransaction().getItemStatus());
+					committed.add(existing);
+				} else committed.add(item);
+			}
+			list.clear();
+			list.addAll(committed);
 		}
 	}
 
@@ -180,6 +210,7 @@ public class Inventory {
 			}
 
 			if (player.getClientLimitations().maxItemId < itemToAdd.getCatalogId()) {
+				if (transactionStaging) return false;
 				player.message("Your client could not receive " + itemToAdd.getDef(player.getWorld()).getName() + ", it drops to the ground!");
 				player.getWorld().registerItem(
 					new GroundItem(player.getWorld(), itemToAdd.getCatalogId(), player.getX(), player.getY(),
@@ -217,6 +248,7 @@ public class Inventory {
 
 				// Make sure they have room in the inventory
 				if (list.size() >= getCapacity()) {
+					if (transactionStaging) return false;
 					if (player.getConfig().MESSAGE_FULL_INVENTORY) {
 						player.message("Your Inventory is full, the " + itemToAdd.getDef(player.getWorld()).getName() + " drops to the ground!");
 					}
@@ -265,6 +297,7 @@ public class Inventory {
 
 					// Make sure they have room in the inventory for the second stack.
 					if (list.size() >= getCapacity()) {
+						if (transactionStaging) return false;
 						if (player.getConfig().MESSAGE_FULL_INVENTORY) {
 							player.message("Your Inventory is full, the " + itemToAdd.getDef(player.getWorld()).getName() + " drops to the ground!");
 						}
@@ -285,8 +318,10 @@ public class Inventory {
 					list.add(itemToAdd);
 
 					// Update the Client - Both stacks
-					ActionSender.sendInventoryUpdateItem(player, index);
-					ActionSender.sendInventoryUpdateItem(player, list.size() - 1);
+					if (sendInventory) {
+						ActionSender.sendInventoryUpdateItem(player, index);
+						ActionSender.sendInventoryUpdateItem(player, list.size() - 1);
+					}
 				}
 			}
 			return true;
