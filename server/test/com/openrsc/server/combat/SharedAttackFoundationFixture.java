@@ -282,12 +282,16 @@ public final class SharedAttackFoundationFixture {
       check(
           !criticalSpell.getLaunchSnapshot().getSpecification().getAttackRoll().isCritical(),
           "Cosmic luck Magic launch never invents critical identity");
+      int launchedDamage=criticalSpell.getLaunchSnapshot().getSpecification().getAttackRoll().getDamage();
+      Arrays.fill(caster.getCarriedItems().getEquipment().getList(),null);
+      check(caster.getCombatLuckChance()==0,"robe removal after launch changes future luck only");
       check(caster.applyStagger(1), "post-launch stagger is accepted for following action");
       before = results.size();
       criticalSpell.action();
       check(results.size() > before, "actual Magic impact settles");
       DamageResult criticalMagic = results.get(results.size() - 1);
       check(!criticalMagic.isCritical(), "ordinary Magic receipt survives later stagger");
+      check(criticalMagic.getRequest().getAttackRoll().getDamage()==launchedDamage,"launch-owned lucky amount survives equipment removal and later stagger");
       check(
           AttackState.pendingStaggers(caster) == 1 && AttackState.recoveryAttacks(caster) == 0,
           "in-flight impact cannot consume new stagger");

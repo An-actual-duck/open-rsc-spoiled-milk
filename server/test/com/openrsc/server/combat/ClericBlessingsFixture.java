@@ -441,6 +441,9 @@ public final class ClericBlessingsFixture {
       h.random().reset(1);
       h.random().scriptDoubles(0.0);
       int melee = com.openrsc.server.event.rsc.impl.combat.CombatFormula.doMeleeDamage(crit, n);
+      java.util.regex.Matcher bound=java.util.regex.Pattern.compile("int\\((\\d+)\\)").matcher(h.random().describeState());
+      check(bound.find(),"baseline melee uses actual random maximum");
+      int ordinaryMaximum=Integer.parseInt(bound.group(1));
       h.random().reset(1);
       h.random().scriptDoubles(0.0);
       int ranged =
@@ -462,10 +465,9 @@ public final class ClericBlessingsFixture {
       cast(c, crit, 20);
       h.random().reset(1);
       h.random().scriptDoubles(0.0);
-      check(
-          com.openrsc.server.event.rsc.impl.combat.CombatFormula.doMeleeDamage(crit, n)
-              >= 0,
-          "actual melee amount remains valid under maximum bonus");
+      com.openrsc.server.event.rsc.impl.combat.CombatFormula.doMeleeDamage(crit,n);
+      bound=java.util.regex.Pattern.compile("int\\((\\d+)\\)").matcher(h.random().describeState());
+      check(bound.find()&&Integer.parseInt(bound.group(1))==ClericDirectCombatRuntime.addMaximumPercent(ordinaryMaximum,15),"actual melee sampler receives boosted maximum before damage and mitigation");
       h.random().reset(1);
       h.random().scriptDoubles(0.0);
       check(

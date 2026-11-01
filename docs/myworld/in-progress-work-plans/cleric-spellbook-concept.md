@@ -200,8 +200,8 @@ The effect labels are retained; higher spell tiers include the earlier effects.
 
 The selected chains use mounting fear for Guthix, escalating divine judgment
 and bodily unraveling for Saradomin, and increasingly destructive intent for
-Zamorak. Naming approval does not resolve outstanding timing, balance or Cosmic
-robe decisions, and no hostile recipient flavor messages are added.
+Zamorak. Naming approval does not resolve outstanding hostile timing, balance or
+trigger-eligibility decisions, and no hostile recipient flavor messages are added.
 
 Flavor imagery adds no mechanics: it does not make healing instant, guarantee
 ailment immunity, grant accuracy, or set a lifesteal activation threshold.
@@ -362,7 +362,7 @@ integration with the separate hit-splat topic branch at final collection.
 
 ### Owner-selected Zamorak debuffs — October 31, 2026
 
-**Design recorded; not implemented. Activation awaits the owner's luck-centered Cosmic redesign.** These owner-selected
+**Design recorded; not implemented. Cosmic combat luck is now selected and implemented; hostile hit/execution boundaries still require a separate decision.** These owner-selected
 components replace the earlier manager suggestions for Zamorak. Higher tiers
 retain the earlier components, using the shared Holy Power thresholds and
 tier caps **2/4/6**. The quoted names below are the owner's effect labels;
@@ -418,6 +418,17 @@ damage still has its older direct death path. Those compatibility helpers do
 not have complete critical provenance and are not approved hostile-trigger
 boundaries. Primary outcome propagation is complete; it does not silently
 finalize future offhand/secondary debuff eligibility.
+
+Cosmic combat luck now gives1percentage point per equipped piece tier, capped50%.
+Each reviewed outgoing damage amount, own defense mitigation, or beneficial
+combat-effect/critical check can independently roll one additional pure candidate
+and keep the favorable result. A10% check becomes14.5% at50% luck;15% becomes
+21.375%. No whole attack/effect is replayed. Loot/skilling, incomparable random
+choices, healing quantities and recurring curse checks (including Molecular
+Antipode) are excluded. NPCs/summons do not inherit owner equipment luck. Shared
+Stagger, phase and additive delay rules remain unchanged. The optional OSRS
+profile retains its separate formula/cape mechanics. See the [source-family and
+verification review](cosmic-combat-luck-review.md) for exact integration boundaries.
 
 Before hostile implementation, resolve: aggregation with existing critical
 equipment; offhand/secondary/multi-hit eligibility; the HP checkpoint used for

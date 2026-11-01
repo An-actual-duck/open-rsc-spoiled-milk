@@ -115,12 +115,13 @@ Apply the same-god no-stack/no-downgrade policy; different gods may coexist.
   layered sprites, animations, selection, name/health/hit overlays and both
   software/OpenGL paths. No replacement sprite set or art archive is needed.
 
-### Explicitly held: Zamorak hostile activation and Cosmic redesign
+### Subsequent Cosmic decision; Zamorak hostile activation remains held
 
 The nine debuff flavor names are approved. **Do not activate Expose Weakness,
-Weak Legs or Weak Constitution while Cosmic's rework/aggregation is undecided.**
-Do not rebalance the robes yourself or add the proposed15% to their existing
-50% chance. Preserve current crit values. Record the remaining dependency and
+Weak Legs or Weak Constitution as part of the Cosmic replacement.**
+The owner subsequently approved combat luck instead of robe critical chance;
+see [the scoped review](cosmic-combat-luck-review.md). The proposed15% hostile
+critical source is not activated or combined automatically. Record the remaining dependency and
 keep incomplete spells out of the castable roster. Do not claim this finishes
 the complete hostile book. No extra legacy secondary critical migration here.
 
@@ -155,7 +156,7 @@ Never operate the public server, accounts, owner maps, installed toolkit or
 The scoped source candidate is complete. See [the implementation review](cleric-consistency-implementation-review.md)
 for exact identities, nature classification, lifetime/rounding policy and durable
 validation receipts. All A buffs/presentation and six B Guthix/Saradomin hostile
-spells are implemented; Zamorak hostile activation and Cosmic's unselected
-luck-centered redesign remain deferred. Private gameplay and manager integration/
+spells are implemented; Cosmic's approved combat-luck replacement follows separately.
+Zamorak hostile activation/eligible-hit/execution decisions remain deferred. Private gameplay and manager integration/
 prepared-package refresh are separate. No owner world, account or game session
 was modified by this worker.
