@@ -78,7 +78,9 @@ public final class ClericCriticalRuntime {
     if (!primary(request) || request.isAttackSuppressed() || request.getResolvedDamage()<=0
         || request.getAttackRoll().getDamage()<=0
         || request.getAttackRoll().getCritical()!=AttackRoll.Critical.AUTHORED
-        || !eligible(request.getSource(),request.getTarget(),request.getStyle())) return request;
+        || !eligible(request.getSource(),request.getTarget(),request.getStyle())
+        || !request.getSourceSnapshot().matches(request.getSource())
+        || !request.getTargetSnapshot().matches(request.getTarget())) return request;
     Npc target=(Npc)request.getTarget();
     synchronized(target) {
       int hp=target.getLevel(Skill.HITS.id());

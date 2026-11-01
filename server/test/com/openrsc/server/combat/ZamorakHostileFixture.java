@@ -22,9 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import com.openrsc.server.plugins.triggers.KillNpcTrigger;
-import com.openrsc.server.plugins.authentic.quests.members.WitchesHouse;
 
-/** Real curse packets, primary producers and ordinary death/reward ownership. No listeners/DB. */
+/** Real curse packets, primary producers and death/reward ownership. No listeners or owner data. */
 public final class ZamorakHostileFixture {
   static int checks;
   static void check(boolean value,String message) { checks++; if(!value)throw new AssertionError(message); }
@@ -115,11 +114,14 @@ public final class ZamorakHostileFixture {
       check(ClericHostileRuntime.effect(n,ClericEffectFamily.ZAMORAK_HOSTILE).getPower()==6,"real packet P6 Ruin");
       for(ClericResourceCost cost:ClericSpellCatalog.fromCode(30).getResourceCosts())
         check(ClericBlessingsFixture.count(c,cost.getItemId())==100-cost.getCount(),"cast spends each sigil once");
-      for(ClericResourceCost cost:ClericSpellCatalog.fromCode(30).getResourceCosts()) {
+      ClericBlessingsFixture.fund(c,ClericSpellCatalog.fromCode(28));
+      for(ClericResourceCost cost:ClericSpellCatalog.fromCode(28).getResourceCosts()) {
         int count=ClericBlessingsFixture.count(c,cost.getItemId());
         ClericBlessingsFixture.packet(c,28);
         check(ClericBlessingsFixture.count(c,cost.getItemId())==count,"lower-tier cast cannot spend/downgrade");
       }
+      check(ClericHostileRuntime.effect(n,ClericEffectFamily.ZAMORAK_HOSTILE).getTier()==3,
+          "funded lower tier leaves stronger god slot intact");
       h.random().reset(1);h.random().scriptDoubles(0.0);
       AttackRoll roll=CombatFormula.rollMeleeDamage(p,n);
       check(roll.isCritical() && roll.getCritical()==AttackRoll.Critical.AUTHORED,"another player's real primary melee authored critical");
@@ -258,7 +260,9 @@ public final class ZamorakHostileFixture {
         check(spell==Spells.WIND_STRIKE ? result.getActualDamage()==9 : result.getActualDamage()==250,
             "special Magic retains Salarin restriction or ordinary execution "+spell);
       }
-      WitchesHouse actualQuest=new WitchesHouse();CountDownLatch transformed=new CountDownLatch(1);
+      KillNpcTrigger actualQuest=(KillNpcTrigger)Class.forName(
+          "com.openrsc.server.plugins.authentic.quests.members.WitchesHouse").getConstructor().newInstance();
+      CountDownLatch transformed=new CountDownLatch(1);
       AtomicInteger transformations=new AtomicInteger();
       h.installPlugin(KillNpcTrigger.class,new KillNpcTrigger() {
         public boolean blockKillNpc(Player who,Npc target) {return actualQuest.blockKillNpc(who,target);}
@@ -275,10 +279,67 @@ public final class ZamorakHostileFixture {
           "normal killing critical dispatches actual quest transformation exactly once");
       check(h.world().getNpcs().stream().anyMatch(next->next.getID()==245 && next!=witch && !next.isRemoved()),
           "Witch experiment advances one form instead of skipping encounter");
+      // Exact P1-P6 chance boundaries through real packet snapshots and settlement.
+      for(int power=1;power<=6;power++) {
+        ClericBlessingsFixture.skill(c,Skill.PRAYER,ClericBlessingContract.powerThreshold(power-1),99);
+        Npc boundary=npc(h,NpcId.GREATER_DEMON.id(),452,450);curse(c,30);
+        ClericHostileMagnitude m=ClericHostileRuntime.effect(boundary,ClericEffectFamily.ZAMORAK_HOSTILE);
+        check(m!=null && m.getPower()==power,"actual Holy Power threshold chooses curse rank "+power);
+        AtomicInteger ordinary=new AtomicInteger();
+        h.random().reset(20+power);h.random().scriptDoubles(m.criticalChance()/100.0D-0.00001D);
+        check(ClericCriticalRuntime.primaryRoll(p,boundary,10,true,CombatStyle.MELEE,
+            ()->{ordinary.incrementAndGet();return 3;}).isCritical() && ordinary.get()==0,"critical strict lower boundary "+power);
+        h.random().reset(20+power);h.random().scriptDoubles(m.criticalChance()/100.0D);
+        check(!ClericCriticalRuntime.primaryRoll(p,boundary,10,true,CombatStyle.MELEE,
+            ()->{ordinary.incrementAndGet();return 3;}).isCritical() && ordinary.get()==1,"critical exact boundary keeps one ordinary roll "+power);
+        h.random().reset(20+power);h.random().scriptDoubles(m.staggerChance()/100.0D-0.00001D);
+        hit(h,p,boundary,1,critical(1));check(AttackState.pendingStaggers(boundary)==1,"Stagger lower chance boundary "+power);
+        AttackState.clearStagger(boundary);h.random().reset(20+power);h.random().scriptDoubles(m.staggerChance()/100.0D);
+        hit(h,p,boundary,1,critical(1));check(AttackState.pendingStaggers(boundary)==0,"Stagger exact chance boundary "+power);
+        int threshold=m.executionThreshold()*10;hp(boundary,threshold,1000);
+        h.random().reset(20+power);h.random().scriptDoubles(m.executionChance()/100.0D,0.99D);
+        check(!hit(h,p,boundary,1,critical(1)).isTargetTerminal(),"execution exact probability is failure "+power);
+        hp(boundary,threshold,1000);h.random().reset(20+power);
+        h.random().scriptDoubles(m.executionChance()/100.0D-0.00001D);
+        check(hit(h,p,boundary,1,critical(1)).getActualDamage()==threshold,"execution lower chance and inclusive HP threshold "+power);
+      }
+      ClericBlessingsFixture.skill(c,Skill.PRAYER,160,99);
+      Npc ordinaryTarget=npc(h,NpcId.GREATER_DEMON.id(),453,450);
+      AtomicInteger ordinaryCount=new AtomicInteger();h.random().reset(30);
+      check(!ClericCriticalRuntime.primaryRoll(p,ordinaryTarget,10,true,CombatStyle.MELEE,
+          ()->{ordinaryCount.incrementAndGet();return 10;}).isCritical(),"unafflicted maximum stays ordinary");
+      check(ordinaryCount.get()==1 && !h.random().describeState().contains("double=")
+          && ordinaryTarget.getAttribute("cleric_hostile_state",null)==null,
+          "unafflicted path adds no chance RNG or hostile state installation");
+      Npc lucky=npc(h,NpcId.GREATER_DEMON.id(),452,450);curse(c,30);
+      h.equip(p,com.openrsc.server.content.EnchantingItemEffects.getWoolRobeProduct(
+          com.openrsc.server.content.EnchantingItemEffects.COSMIC_ALTAR,ItemId.WOOL_WIZARD_HAT.id(),10),1);
+      check(p.getCombatLuckChance()==0.1D,"real Cosmic piece supplies ten percent luck, no base critical chance");
+      h.random().reset(40);h.random().scriptDoubles(0.9D,0.0D,0.0D);
+      check(ClericCriticalRuntime.primaryRoll(p,lucky,10,true,CombatStyle.MELEE,()->1).isCritical(),
+          "Cosmic salvages exactly one pure critical chance candidate");
+      check(h.random().describeState().split("double=",-1).length==4,"critical selection has three draws, no attack replay");
+      h.random().reset(41);h.random().scriptDoubles(0.9D,0.0D,0.0D);
+      hit(h,p,lucky,1,critical(1));check(AttackState.pendingStaggers(lucky)==1,"Cosmic salvages Stagger chance");
+      check(h.random().describeState().split("double=",-1).length==4,"one Stagger callback after pure selection");
+      AttackState.clearStagger(lucky);hp(lucky,25,100);
+      h.random().reset(42);h.random().scriptDoubles(0.9D,0.0D,0.0D);
+      check(hit(h,p,lucky,1,critical(1)).getActualDamage()==25,"Cosmic salvages one execution chance");
+      check(h.random().describeState().split("double=",-1).length==4 && AttackState.pendingStaggers(lucky)==0,
+          "successful execution adds no Stagger roll or second callback");
+      Player gone=player(h,"critgone",450,450);Npc registered=npc(h,NpcId.GREATER_DEMON.id(),452,450);curse(c,30);
+      h.logout(gone);h.random().reset(43);ordinaryCount.set(0);
+      check(!ClericCriticalRuntime.primaryRoll(gone,registered,10,true,CombatStyle.MELEE,
+          ()->{ordinaryCount.incrementAndGet();return 5;}).isCritical()
+          && ordinaryCount.get()==1 && !h.random().describeState().contains("double="),
+          "unregistered attacker gains no authored roll or new RNG");
       // Casting resources and active slots stay transient across expiry/lifecycle.
       Npc expiry=npc(h,NpcId.GREATER_DEMON.id(),451,450);curse(c,30);
+      check(AttackState.stagger(expiry,1) && AttackState.commitAttack(expiry).isSuppressed(),"expiry recovery fixture");
       h.clock().advanceMillis(60_001);
       check(ClericHostileRuntime.effect(expiry,ClericEffectFamily.ZAMORAK_HOSTILE)==null,"60 second common expiry");
+      check(AttackState.recoveryAttacks(expiry)==5,"curse expiry cannot clear shared recovery");
+      curse(c,30);check(AttackState.recoveryAttacks(expiry)==5,"recasting cannot reset/bypass immunity");
       curse(c,30);expiry.advanceCombatLifecycle();
       check(ClericHostileRuntime.effect(expiry,ClericEffectFamily.ZAMORAK_HOSTILE)==null,"NPC lifecycle retires critical vulnerability");
       System.out.println("PASS "+checks+" Zamorak hostile packet/combat/attribution assertions");

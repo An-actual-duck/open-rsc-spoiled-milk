@@ -29,7 +29,7 @@ public final class CriticalHitResolver {
     return chance > 0 && random.getAsDouble() < chance;
   }
 
-  /** Current ordinary attacks have no enabled critical chance; normal maxima remain noncritical. */
+  /** Unmodified fallback when no authored critical provider applies; never infers a critical. */
   public static AttackRoll ordinary(Mob source, int maximum, IntSupplier ordinaryRoll) {
     return AttackRoll.normal(ordinaryRoll.getAsInt());
   }
@@ -43,7 +43,7 @@ public final class CriticalHitResolver {
   }
 
   /**
-   * Future authored critical sources can benefit without enabling any current critical provider.
+   * Authored critical checks can benefit from Cosmic luck without replaying the ordinary roll.
    */
   public static AttackRoll resolve(
       Mob beneficiary,

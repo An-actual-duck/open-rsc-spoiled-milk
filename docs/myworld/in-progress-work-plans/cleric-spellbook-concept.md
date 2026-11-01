@@ -224,7 +224,7 @@ attributes, sounds and Crumble Undead quest/classic admission remain unchanged.
 The candidate consistently exposes spell title, inherited named effects and
 numeric descriptions; Sap Blood groups its two mechanics beneath one label.
 All nine approved recipient messages follow the revised tier associations.
-Schema4/client10055 carries typed components, recipient flavor and target kind.
+Schema5/client10056 carries typed components, recipient flavor and target kind.
 Old icon keys such as Mend, Purify, Zeal or Rally do not independently select
 new effect names. Unify and Greater Unify retain those spell names and movement
 descriptions, with no bespoke recipient flavor line currently defined.

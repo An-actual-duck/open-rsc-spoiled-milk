@@ -48,57 +48,68 @@
     {
       "filename": "aegis.png",
       "sha256": "ff71b497b5422383a7ef845fe7350dcd42d3fe2897d4c66b1f01086339510e4f",
-      "temporary": true
+      "temporary": false,
+      "retiredAtGameplayCutover": true
     },
     {
       "filename": "fervor.png",
       "sha256": "ed3d8d2f4424ad1e3da2bddc94e4a90a34fa0ddf373e71686c4a7dcc7be4939b",
-      "temporary": true
+      "temporary": false,
+      "retiredAtGameplayCutover": true
     },
     {
       "filename": "greater-mend.png",
       "sha256": "adb16823683c8b45d05211a45e0bcf97d3e9075e00d3dc6338b5533848219af0",
-      "temporary": true
+      "temporary": false,
+      "retiredAtGameplayCutover": true
     },
     {
       "filename": "mend.png",
       "sha256": "b527e3acebc690e303ed103cfcd647c874ed735742952aa5eb31d7cc083d1671",
-      "temporary": true
+      "temporary": false,
+      "retiredAtGameplayCutover": true
     },
     {
       "filename": "purify.png",
       "sha256": "0365c4360707d1de18a3b39f8bfc4288d94932b518ea43529b2d6f42ccddece9",
-      "temporary": true
+      "temporary": false,
+      "retiredAtGameplayCutover": true
     },
     {
       "filename": "rally.png",
       "sha256": "fb420fb6e90234227d7e16577a0310b5d0b7bf69badb02ec948dc4493c5a65d0",
-      "temporary": true
+      "temporary": false,
+      "retiredAtGameplayCutover": true
     },
     {
       "filename": "respite.png",
       "sha256": "4a28c3ffda721bf3f6c49921d99ee34b37a24a39ec9c82f1aaf8915cf2fed584",
-      "temporary": true
+      "temporary": false,
+      "retiredAtGameplayCutover": true
     },
     {
       "filename": "restore.png",
       "sha256": "608e9cba17a4c2c3aa686902740e70ddcce23c7862136c1825d59c45e40c5e89",
-      "temporary": true
+      "temporary": false,
+      "retiredAtGameplayCutover": true
     },
     {
       "filename": "thorns.png",
       "sha256": "8dafc32f9ed17522cf1312337e85f38ad2a3cc6bff96b9f9918b23560d91ebf1",
-      "temporary": true
+      "temporary": false,
+      "retiredAtGameplayCutover": true
     },
     {
       "filename": "ward.png",
       "sha256": "5fa93e62e17ec3f5664b0774a319dbdee45715173b7a5cd4c7129f7e0f3e1af4",
-      "temporary": true
+      "temporary": false,
+      "retiredAtGameplayCutover": true
     },
     {
       "filename": "zeal.png",
       "sha256": "8ff708f1214927e262bf8b3cda21a7a349edd4ded669e438eba8c9e643da93f7",
-      "temporary": true
+      "temporary": false,
+      "retiredAtGameplayCutover": true
     }
   ],
   "existingCredits": "dev/myworld/assets/credit",
@@ -670,5 +681,6 @@
     "versionedPngPathsCompared": 3010,
     "matchingOwnerIcons": 10,
     "comparison": "Exact serialized PNG bytes, verified by SHA-256 against matching Git blobs; unmatched icons remain owner-provided without newly asserted artist or licence."
-  }
+  },
+  "compatibilityStatus": "Retired at schema5 twenty-spell gameplay cutover; list retained as historical provenance only"
 }

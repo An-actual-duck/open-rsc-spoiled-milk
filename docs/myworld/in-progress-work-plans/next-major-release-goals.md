@@ -128,7 +128,7 @@ the normal integration/release gates remain required.
 
 This supersedes the older four-primary/neutral-altar, Unholy-carving recipe and
 Curse-sigil/ichor-river proposals. The shipped twelve-spell book is the historical
-reuse baseline; the current private implementation has seventeen spells.
+reuse baseline; the current private implementation has twenty spells.
 
 ### Well visuals and edge access
 
@@ -186,7 +186,7 @@ independent of Holy Power. The universal curve selects rank; each component
 uses its own approved incremental values. Standalone Tier 1 caps at P2; its
 inherited component inside Tier 3 can reach P6. The owner approved the revised
 values below on October 31, superseding earlier `3P`/`2P` proposals and the
-former Saradomin `P+1` draft. The private implementation candidate exposes seventeen
+former Saradomin `P+1` draft. The private implementation candidate exposes twenty
 spells; retired launch IDs remain reserved and are refused. All blessings last
 **60 seconds**, with one composite snapshot/expiry per god.
 

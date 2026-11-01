@@ -564,7 +564,7 @@ public final class ClericBlessingsFixture {
           "dead player cannot heal through blessing lifesteal");
       ClericSpellbookStruct payload = new ClericSpellbookStruct();
       payload.setOpcode(OpcodeOut.SEND_CLERIC_SPELLBOOK);
-      payload.schemaVersion = 4;
+      payload.schemaVersion = com.openrsc.server.net.rsc.ClericBlessingContract.SCHEMA_VERSION;
       payload.gameTickMilliseconds = h.server().getConfig().GAME_TICK;
       payload.definitions = ClericSpellCatalog.getAll().toArray(new ClericSpellDefinition[0]);
       Packet wire = new PayloadCustomGenerator().generate(payload, c);

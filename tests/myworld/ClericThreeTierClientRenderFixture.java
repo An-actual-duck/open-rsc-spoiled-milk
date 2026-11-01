@@ -127,7 +127,7 @@ public final class ClericThreeTierClientRenderFixture {
     png(surface, out.resolve("native-guide-row.png"));
     Files.write(out.resolve("native-font-widths.txt"), measurements);
     System.out.println(
-        "PASS native font bounds for all17 names, actual mudclient compact tooltip/HUD rendering and"
+        "PASS native font bounds for all20 names, actual mudclient compact tooltip/HUD rendering and"
             + " detailed guide row: "
             + out);
   }
