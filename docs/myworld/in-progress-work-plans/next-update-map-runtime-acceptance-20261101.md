@@ -4,6 +4,10 @@ The latest frozen export is **not accepted yet**. The maintained runtime found
 inaccessible Ichor shores and four unsafe gem-cave ladder return approaches.
 No map, owner save, gameplay code, account or public server was changed.
 
+The manager's subsequent **separate repair preview passes all510 offline
+checks**. That preview remains a review copy; the original export still fails
+the same checker. See the exact preview identity and safety results below.
+
 ## Inputs and reproduction
 
 The manager exported the frozen generation4748 save with the installed toolkit.
@@ -103,6 +107,41 @@ corridor connected to stairs41 at `(338,614,L-1)`. Actual upward travel reaches
 `(341,614,L0)`; stairs42 returns to `(337,614,L-1)`; the reciprocal ladder then
 reaches the gem cave. Thus a functioning surface round trip exists, while
 ordinary admitted exit approaches remain unsafe.
+
+## Separate repair preview — offline pass
+
+The manager prepared a separate preview export with64 overlay changes:60
+Ichor-area void255→brown land0 cells in the existing outlined area, and four
+gem-cave return24→23 floor cells. The manager reports that heights, ground
+colour, walls, roofs, placements and the frozen/original save remain unchanged.
+This worker changed no map bytes.
+
+- Preview fingerprint: `b95ffa30c9076b8f351b7ff62c9b1aa73179d0837da5281b391d36295f50dbd1`.
+- Preview manifest: `581d1093185c950ee2287ebfa884d953b3390cf351632f01b62b913860f9ad5b`.
+- Test source: `838a9c2482bc191ec4ff5dde1b6dfc52dff7d026`; production runtime
+  and effective definitions remain those from published `1e43ed177`.
+- Full strict run: **510 checks,0 failures**, exit0. The baseline portion now
+  runs405 checks because all five cave contacts can execute the additional
+  surface-round-trip assertions, and all405 pass.
+- Ichor: all eight contacts on L-1 and all eight on L0 have clear destinations,
+  admit the reverse action, and return to the exact source tile. Every contact's
+  underground64-tile runtime component reaches all five Dip markers. No residual
+  wall trap was found. The actual pair remains5/6 at `(108,681)` on L-1/L0.
+- Gem cave: all five exit contacts now land safely on L-1 and connect through
+  the actual reciprocal ladder/stair surface route. All prior passing tower,
+  associate, dragon, egg and Divine checks still pass.
+
+Evidence directory:
+`/home/justin/.local/share/next-update-map-acceptance-20261101/runtime-repair-preview-01/`.
+`build.log` records a successful JDK8/512MiB/SerialGC build; `runtime.log` records
+the full pass. `original-counterexample.log` uses the **same final compiled
+checker** against the untouched original export: baseline389/9, total422/23,
+exit1. Both original1143… and previewb95f… package inventories were rehashed
+after these runs and remain byte-identical to their addressed fingerprints.
+
+This proves the explicit preview's offline access repair, not installation,
+owner visual acceptance or public activation. The review-only copy was not
+promoted by this worker.
 
 ## Limits
 
