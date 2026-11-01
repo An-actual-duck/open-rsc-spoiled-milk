@@ -311,8 +311,15 @@ manager_release_check() {
       if [[ "$branch" != DETACHED ]]; then
         ai_warn "Live worktree is attached to branch $branch instead of detached."
         problems=1
-      elif ! git -C "$path" merge-base --is-ancestor "$head" "$published_ref"; then
-        ai_warn "Live worktree commit $head is not published-main history."
+      elif ! git -C "$path" merge-base --is-ancestor "$head" "$published_ref" \
+          && ! (
+            # Approved fixes-only releases deliberately sit outside main. Use
+            # the same exact remote launch-tag verification as live-status;
+            # keep its environment setup local to this read-only check.
+            source "$SCRIPT_ROOT/scripts/lib/myworld-common.sh"
+            [[ "$(myworld_git_commit_publication_state "$path" "$head")" == release ]]
+          ); then
+        ai_warn "Live worktree commit $head is neither published-main history nor its verified published launch release."
         problems=1
       fi
       continue

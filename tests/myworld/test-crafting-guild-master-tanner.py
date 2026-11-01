@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -66,22 +67,23 @@ def main() -> None:
         if snippet not in tanner_text:
             fail(f"Master tanner plugin behavior is missing: {snippet}")
 
-    required_stock = [
-        "WOLF_LEATHER",
-        "HELLHOUND_LEATHER",
-        "CURED_SPIDER_CARAPACE",
-        "CURED_MAGIC_SPIDER_CARAPACE",
-        "CURED_SCORPION_CARAPACE",
-        "GIANT_LEATHER",
-        "MOSS_GIANT_LEATHER",
-        "ICE_GIANT_LEATHER",
-        "FIRE_GIANT_LEATHER",
-        "THREAD",
-        "NEEDLE",
-    ]
-    for item in required_stock:
-        if f"ItemId.{item}.id()" not in tanner_text:
-            fail(f"Master tanner shop should stock {item}")
+    # Giant-family hides/leathers are grandfathered owned items, not stock.
+    # Check this particular shop and quantities, rather than any ItemId mention.
+    master_stock = re.search(r"private final Shop masterShop = new Shop\((.*?)\);", tanner_text, re.S)
+    if master_stock is None:
+        fail("Master tanner shop definition is missing")
+    rows = re.findall(r"new Item\(ItemId\.([A-Z_]+)\.id\(\), (\d+)\)", master_stock.group(1))
+    required_stock = {
+        "WOLF_LEATHER": 10,
+        "HELLHOUND_LEATHER": 10,
+        "CURED_SPIDER_CARAPACE": 10,
+        "CURED_MAGIC_SPIDER_CARAPACE": 10,
+        "CURED_SCORPION_CARAPACE": 10,
+        "THREAD": 100,
+        "NEEDLE": 10,
+    }
+    if len(rows) != len(required_stock) or {name: int(quantity) for name, quantity in rows} != required_stock:
+        fail("Master tanner stock must match retained materials/tools and exclude retired giant leathers")
 
     client_text = CLIENT_DEFS.read_text(encoding="utf-8")
     for snippet in (
