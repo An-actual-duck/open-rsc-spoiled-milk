@@ -68,12 +68,13 @@ public final class FloatingHitSplatRenderer {
     }
 
     public void draw(MudClientGraphics surface) {
+        Renderer2DFrame.Phase previousPhase = surface.getRenderer2DPhase();
         surface.setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
         try {
             for (Placement p : layout(surface.width2, surface.height2)) {
                 surface.drawSprite(p.sprite, p.x, p.y, p.width, p.height, 5924, p.opacity);
             }
-        } finally { surface.setRenderer2DPhase(Renderer2DFrame.Phase.SCENE); }
+        } finally { surface.setRenderer2DPhase(previousPhase); }
     }
 
     private Sprite sprite(int type, int amount, MudClientGraphics surface) {

@@ -12,7 +12,8 @@ with tempfile.TemporaryDirectory(prefix='hitsplat-check-') as build:
     subprocess.run(['javac', '-J-Xmx384m', '-cp', cp, '-d', build,
                     str(root / 'tests/myworld/FloatingHitSplatFixture.java'),
                     str(root / 'tests/myworld/HitSplatSettingsFixture.java'),
-                    str(root / 'tests/myworld/HitSplatCenteringFixture.java')], check=True)
+                    str(root / 'tests/myworld/HitSplatCenteringFixture.java'),
+                    str(root / 'tests/myworld/PracticeHudFixture.java')], check=True)
     for profile in ['software', 'phased', 'native-ui']:
         command = ['java', '-Xmx384m', '-Djava.awt.headless=true']
         if profile != 'software':
@@ -26,6 +27,8 @@ with tempfile.TemporaryDirectory(prefix='hitsplat-check-') as build:
         if profile == 'software' and len(sys.argv) > 1:
             command += [str(Path(sys.argv[1]).resolve())]
         subprocess.run(command, cwd=root, check=True)
+        hud = command[:command.index('orsc.FloatingHitSplatFixture')] + ['orsc.PracticeHudFixture', str(root)]
+        subprocess.run(hud, cwd=root, check=True)
 
     with tempfile.TemporaryDirectory(prefix='hitsplat-local-settings-') as settings_dir:
         for mode in ['write', 'reload']:

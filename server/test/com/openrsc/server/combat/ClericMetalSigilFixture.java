@@ -44,8 +44,10 @@ public final class ClericMetalSigilFixture {
     private static ProductionSession menu(Player p, GameObject furnace) {
         new Smelting().onOpLoc(p,furnace,"Smelt");
         ProductionSession categories=p.getAttribute("production_session",null);
-        check(categories.getRecipeByItemId(3433)!=null,"furnace exposes normal blank-sigil category");
-        check(Smelting.beginFurnaceCategoryFromInterface(p,categories,3433,1),"ordinary category callback opens blank menu");
+        check(categories.getRecipeByItemId(3431)!=null,"furnace displays the blank silver sigil product");
+        check(categories.getRecipeByItemId(3433)==null,"furnace does not display the mould as its product");
+        check(categories.getRecipeByItemId(3431).getIngredientItemIds()[0]==3433,"product category retains the reusable mould requirement");
+        check(Smelting.beginFurnaceCategoryFromInterface(p,categories,3431,1),"ordinary category callback opens blank menu");
         return p.getAttribute("production_session",null);
     }
     public static void main(String[] args) throws Exception {
