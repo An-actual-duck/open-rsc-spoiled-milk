@@ -26,29 +26,31 @@ Existing Elder Green/KBD content and the implemented gem dragons stay in scope.
 | --- | --- | --- |
 | Slayer Tower and gem-dragon cave | Owner-authored layouts and placement work are finished | Refresh the frozen export from the latest owner save; verify the assembled map and bindings |
 | Slayer encounters, capacity, guards, Slow/poison/antidotes and all 15 battleaxe coatings | Implemented/integrated; prior approved content retains its approvals | Combined private gameplay/acquisition checks and migration |
-| Gem dragons and Crafting loot | Five variants, drops and equipment behavior implemented | Glove icon approval, finished worn monocle visual, combined private gameplay |
+| Gem dragons and Crafting loot | Five variants, drops and equipment behavior implemented | Combined private gameplay; glove icon and no worn monocle visual approved |
 | Cleric, Grace/Blight wells and Cosmic combat luck | Current stage complete and accepted for release scope | Ordinary combined release QA; no additional spell tiers required |
 | Floating hit numbers | Owner-approved and integrated | Ordinary combined release QA |
 | Three additional bosses and Ante | Deferred | No work required before this release |
 
 ### Remaining release work, in order
 
-1. Close the two recorded gem-equipment art loose ends: glove icon approval and
-   a dedicated worn jeweller's loupe/monocle; its inventory icon is already approved.
-2. Prepare matching server/client map exports from the **latest authored save**,
+The owner approved the thumb-hidden v2 glove icon and accepted no worn monocle
+visual. Both equipment art loose ends are closed; the approved loupe inventory
+icon remains unchanged.
+
+1. Prepare matching server/client map exports from the **latest authored save**,
    preserving the original and current work. The existing staged export is older.
    Recheck tower entrance/upward-stair bindings, stationary associates, gem cave
    placements, owner-added egg spawns/respawns and reachable well shorelines.
    An old blocked-shore report is a recheck item, not proof the latest map is broken.
-3. Run one coordinated private release-candidate pass: access/travel, combat,
+2. Run one coordinated private release-candidate pass: access/travel, combat,
    Slow/poison/coatings and ingredient collection, gem rewards/equipment, sigil
    infusion/Cleric/Cosmic, hit numbers, saving and persistence. Fix demonstrated
    issues; do not reopen already accepted content as a broad redesign backlog.
-4. Finish release assembly: exact paired artifacts, relevant regression checks,
+3. Finish release assembly: exact paired artifacts, relevant regression checks,
    migration/backups/rollback, outstanding branch/handoff disposition and normal
    launch/update behavior. Preserve parked or unrelated work rather than merging
    it merely to clear a list.
-5. Let the owner decide the release label, including whether this is beta.
+4. Let the owner decide the release label, including whether this is beta.
    Public activation remains a separate maintenance window requiring fresh
    shutdown authorization and the normal in-game warning.
 
@@ -400,8 +402,8 @@ potential hides and associated armor sets should be designed before resuming the
 - Complete combined private testing/owner acceptance and final map migration
   with the update package. Do not invent new access requirements or re-author
   the owner's underground layout while doing integration.
-- The remaining recorded equipment art work is the glove icon's approval and
-  replacing the provisional eye-patch worn visual with a dedicated monocle/loupe.
+- Both equipment art loose ends are closed: the owner approved the thumb-hidden
+  v2 glove icon and chose no worn monocle visual. No dedicated worn art is required.
   Its inventory icon is already approved; the dragon model is also approved.
 
 References: [gem-dragon implementation](gem-dragon-family-review.md),

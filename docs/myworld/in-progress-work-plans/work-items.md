@@ -10,17 +10,19 @@ cave and accepts the current Cleric stage. Existing Slayer approvals remain
 valid; release separation is not a new development/reapproval backlog.
 The [current release checklist](next-major-release-goals.md) governs scope.
 
-1. Close the two recorded gem-equipment art loose ends: glove icon approval and
-   a dedicated worn monocle visual. Its inventory icon is already approved.
-2. Export the latest owner-authored map into the paired private candidate;
+The owner approved the thumb-hidden v2 glove icon and accepted no worn monocle
+visual. Both equipment art loose ends are closed; the approved loupe inventory
+icon remains unchanged.
+
+1. Export the latest owner-authored map into the paired private candidate;
    preserve existing saves and verify guards/stairs, cave placements, egg spawns
    and well access. The staged map snapshot is older than the current saved work.
-3. Run combined private gameplay/acquisition/persistence checks for the assembled
+2. Run combined private gameplay/acquisition/persistence checks for the assembled
    content. Fix observed failures rather than reopening completed systems.
-4. Finish release assembly, paired build and relevant regression checks,
+3. Finish release assembly, paired build and relevant regression checks,
    migration/backups/rollback and launch/update validation; resolve handoff
    bookkeeping without merging unrelated preserved work.
-5. Let the owner choose the release label/beta transition after readiness is
+4. Let the owner choose the release label/beta transition after readiness is
    established. Public activation needs separate fresh maintenance authorization.
 
 **Not required for this release:** Mystic Blue Dragon, Fierce Red Dragon,

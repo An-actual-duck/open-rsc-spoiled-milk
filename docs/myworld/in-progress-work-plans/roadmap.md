@@ -6,8 +6,8 @@ roadmap defines priorities, milestone boundaries, and release progression.
 
 ## Latest owner release checkpoint — October 31, 2026
 
-The next major release is now in **assembly and acceptance**, with a small
-remaining art pass. The owner has completed the Slayer Tower and Crafting Guild
+The next major release is now in **assembly and acceptance**; both gem-equipment
+art loose ends are closed. The owner has completed the Slayer Tower and Crafting Guild
 gem-dragon cave in the saved editor map and accepts the current Cleric stage.
 Use the [current release checklist](next-major-release-goals.md) as the source
 of truth; older regional milestones below do not automatically expand its scope.
@@ -21,12 +21,15 @@ old preserved branch does not make approved content a fresh development backlog.
 
 Remaining work:
 
-1. Finish the gem-cutter glove icon approval and dedicated worn monocle visual.
-2. Refresh the paired map export from the latest saved work, preserving it;
+The owner approved the thumb-hidden v2 glove icon and accepted no worn monocle
+visual. Both equipment art loose ends are closed; the approved loupe inventory
+icon remains unchanged.
+
+1. Refresh the paired map export from the latest saved work, preserving it;
    verify tower access/stairs, associates, gem cave, egg spawns and well shores.
-3. Test the assembled private candidate, then complete release/migration,
+2. Test the assembled private candidate, then complete release/migration,
    backup/rollback and launch/update checks. Address demonstrated issues.
-4. Let the owner decide whether the resulting release is the beta milestone.
+3. Let the owner decide whether the resulting release is the beta milestone.
 
 **Deferred:** Mystic Blue Dragon, Fierce Red Dragon and Corporeal Beast need
 worthwhile boss drops and potential hide/armor-set designs before resuming.

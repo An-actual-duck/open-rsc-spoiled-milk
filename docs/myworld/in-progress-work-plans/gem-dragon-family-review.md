@@ -144,10 +144,49 @@ No additional ring-of-wealth multiplication is added to these hidden rolls.
 - The 48×32 inventory/ground icons are integrated from Core's Aseprite work.
   The owner approved the monocle's jeweller's loupe v2 icon; the October 28
   update copies its PNG exactly (see guaranteed-gems review for source/hash).
-  Glove icon approval remains a separate visual gate. Worn glove geometry reuses the existing
-  leather glove appearance. The monocle currently uses the existing eye-patch
-  worn geometry as a provisional visual: it is **not an approved finished worn
-  monocle**, and should receive a dedicated visual before final release.
+  The owner approved the thumb-hidden v2 glove icon after reviewing the
+  comparison (October 31). Worn glove geometry reuses the existing
+  leather glove appearance. The owner explicitly chose **no worn monocle visual**
+  (October 31): appearance `0` (`AppearanceId.NOTHING`) removes the eye-patch
+  placeholder while retaining wearable head slot `5`, the5% cutting effect and
+  the approved inventory/ground loupe icon. Dedicated worn monocle art is no
+  longer a release requirement; both equipment art loose ends are closed.
+
+### October 31: owner chose no worn monocle visual
+
+Only item3409's `appearanceID` changes164→0. Slot5 is the hat overlay;
+`Player.updateWornItems` writes that slot independently of base head/hair slot0,
+and `mudclient.drawPlayer` skips zero animation layers. No equip admission or
+Crafting code changes. The inventory/ground loupe and glove assets are untouched.
+
+Existing appearance-definition gate passes. Existing native gem equip/cutting
+fixture passes224 assertions, and the client definition/render fixture passes
+in source and packaged-only contexts, after omitting only obsolete assertions
+that3400–3407 remain reserved. Those IDs already belong to antidotes at baseline;
+the unmodified entrypoints stop there before completing. No tests were added or
+changed. Original failures and external-copy successes are preserved under
+`/home/justin/.local/share/gem-monocle-no-worn-visual-review-20261031`.
+
+### Glove thumb correction: owner approved
+
+The owner requested removal of the hanging thumb on the left-handed glove,
+which should be hidden. The native Aseprite correction erases only seven pixels
+at zero-based canvas coordinates `(25..29,23)` and `(26..27,24)`. All other1,529
+RGBA pixels, the48×32canvas, cuffs, fingers, palette and offsets are unchanged.
+The original editable source is immutable. The versioned Aseprite candidate,
+native PNG, pixel diff and before/after proofs are preserved under
+`/home/justin/.local/share/gem-equipment-review-20261031/glove-thumb-v2`.
+The corrected PNG is installed at the existing game-owned asset path; no archive,
+item identity or gameplay change is involved. Root accepted the targeted removal, and the owner explicitly approved the
+corrected comparison: ‘yep good, that works’. The glove icon is approved.
+Tested implementation checkpoint: `d1fe3d560fec187cbd3d4b3c45f22ec83fe54eb0`;
+the subsequent owner approval changes documentation only.
+The bounded Java8 client build passes and its packaged glove PNG is byte-identical
+to the corrected native asset. Existing client source/packaged definition and
+render checks pass with the same baseline reservation exception described above;
+the prior224native equip/effect/cutting checks remain valid (only art changed).
+Approved edited Aseprite SHA-256: `1eae896ec88751a06a67e02f3ee37acbf8fdf1c723ef893a7f16350896508c7f`.
+Authoritative PNG SHA-256: `4a12e92b75269e53143cdf1e50b0841b14a1ce7d341dbc40c9f48a3113a3e79d`.
 
 ## Visual provenance and discovery
 
