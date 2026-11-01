@@ -494,6 +494,9 @@ periodic and reflected damage remain outside this chain. The disabled optional
 OSRS formula/cape profile is unchanged and has no Zamorak critical provider.
 No new PvP permission or live activation is implied.
 
+See [the native implementation and verification review](zamorak-hostile-implementation-review.md)
+for exact primary-source, scripted-encounter and lifecycle boundaries.
+
 **Implemented specialization:** Zamorak maximum/dealt bonuses apply to melee,
 Barkskin to ranged defense; lifesteal retains its existing direct-hit scope.
 The candidate includes Saradomin's undead damage/tier-order revision and the

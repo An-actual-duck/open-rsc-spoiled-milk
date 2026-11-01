@@ -60,6 +60,13 @@ change the supplied source PNGs.
 
 ## Verification
 
+The unified schema-5/client-10056 gameplay build now passes all twenty native
+spell/code/icon bindings, exact source/JAR bytes and the actual embedded-only
+mudclient cache (162 checks). The final resource inventory is twenty canonical
+PNGs and zero legacy compatibility PNGs. Spellbook and guide rendering cover
+all twenty definitions in both supported desktop layouts; the compact hover
+layout is preserved. This is offline UI proof, not private gameplay acceptance.
+
 `python3 tests/myworld/test-cleric-spell-icons.py --source-only` requires a
 complete twenty-icon receipt and checks exact bytes, dimensions, RGBA pixels,
 alpha, visible bounds and the explicit compatibility inventory.

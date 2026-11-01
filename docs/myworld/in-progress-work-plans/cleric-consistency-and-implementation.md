@@ -161,6 +161,8 @@ The owner subsequently required Zamorak's Malice/Cruelty/Ruin for this release
 on November 1. That separate implementation completes all nine hostile spells
 using primary authored criticals, shared Stagger and ordinary-enemy execution;
 Tier 4 remains deferred. See the governing concept's confirmed boundaries.
+The [Zamorak implementation review](zamorak-hostile-implementation-review.md)
+records the completed primary-hit/ordinary-execution scope and offline gates.
 Private gameplay and manager integration/
 prepared-package refresh are separate. No owner world, account or game session
 was modified by this worker.

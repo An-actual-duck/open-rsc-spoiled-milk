@@ -333,6 +333,23 @@ public final class ZamorakHostileFixture {
           ()->{ordinaryCount.incrementAndGet();return 5;}).isCritical()
           && ordinaryCount.get()==1 && !h.random().describeState().contains("double="),
           "unregistered attacker gains no authored roll or new RNG");
+      // Retained requests cannot borrow a new lifetime/session's valid curse.
+      for(int stale=0;stale<3;stale++) {
+        Npc guarded=npc(h,NpcId.GREATER_DEMON.id(),452,450);curse(c,30);hp(guarded,25,100);
+        DamageRequest retained=DamageRequest.resolvedLegacy(p,guarded,
+            DamageRequest.SourceCategory.ACTOR,"pvm-melee-primary",1)
+            .style(CombatStyle.MELEE).attackRoll(critical(1)).build();
+        if(stale==0) {guarded.advanceCombatLifecycle();curse(c,30);}
+        else if(stale==1)p.advanceCombatLifecycle();
+        else p.sessionId++;
+        check(ClericHostileRuntime.effect(guarded,ClericEffectFamily.ZAMORAK_HOSTILE)!=null,
+            "stale request fixture has a valid current curse");
+        h.random().reset(44+stale);h.random().scriptDoubles(0.0D);
+        DamageResult result=h.server().getResolvedDamageTransaction().apply(retained);
+        check(result.getActualDamage()==1 && AttackState.pendingStaggers(guarded)==0,
+            "stale request cannot acquire execution/Stagger from new identity "+stale);
+        check(!h.random().describeState().contains("double="),"stale critical callback consumes no RNG "+stale);
+      }
       // Casting resources and active slots stay transient across expiry/lifecycle.
       Npc expiry=npc(h,NpcId.GREATER_DEMON.id(),451,450);curse(c,30);
       check(AttackState.stagger(expiry,1) && AttackState.commitAttack(expiry).isSuppressed(),"expiry recovery fixture");

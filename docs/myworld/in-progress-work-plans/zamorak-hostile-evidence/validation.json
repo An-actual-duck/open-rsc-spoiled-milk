@@ -1,0 +1,320 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "productionCheckpoint": "e4ede109ab4c1b8784b79aa2a53eb2a3d5435f29",
+  "protocol": {
+    "schema": 5,
+    "clientVersion": 10056,
+    "definitions": 20,
+    "newStableCodes": [
+      28,
+      29,
+      30
+    ],
+    "nativePayloadBytes": 6050
+  },
+  "artifactSha256": {
+    "server/core.jar": "7468574f7edacb8b6eb8cec24c892bb3cb4d592d81e57032a5b15f3c5e1520e5",
+    "server/core-gameplay-overlay.jar": "5db7fa8851866f35ef00102d107395e0b6233b2875af5f61a06f9d22fe60f8bd",
+    "server/plugins.jar": "5e89b2489ebc2b5240767d7aa4f9c90a1bf220175a8272608e49d6d3067388e8",
+    "Client_Base/Open_RSC_Client.jar": "d53177c056af3aaded8f22e3034ab6162a1cdc03432b50a919978da143201d1c"
+  },
+  "sourceHashes": {
+    "server/src/com/openrsc/server/content/cleric/runtime/ClericCriticalRuntime.java": "62c4dd45476ec85ebc5b43b3065a2fc4f80ac0d547ad0f69a306521bac3d3a07",
+    "server/src/com/openrsc/server/runtime/ResolvedDamageTransaction.java": "03e313571ac2fc05c4220562bc098a49260b9fe649480099b9851b5ee50de9b7",
+    "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java": "14249af66e576d2d9525b7a7e25d2053eaa35bd3e9de4518f8d4a40a9bce697a",
+    "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java": "44e96eac2f3058fb44c2577d1c3ff8e2870e52af80f0c40baa9a13e6367f8444",
+    "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java": "4d28816997ef772ef5394e2c400755f0a4baa5a496dedfedef4241faea5827b3",
+    "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java": "d5ae377853707746c83a2e230406b240e8caa1add1e77d387c1500b00a36faed",
+    "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java": "7377c5deadd6711eecebab72e5631e3fd080ca03200efab75e14c68c2f7adb4b",
+    "tools/protocol/ClericBlessingContract.java": "71b73f87b4a2f10ff1f6d959737ea3240119dfeae1bebd19790e36992438794f"
+  },
+  "finalZamorakAssertions": 264,
+  "independentAdversarialAssertions": 27,
+  "independentVerifiedSource": "e4ede109ab4c1b8784b79aa2a53eb2a3d5435f29",
+  "independentBlockingFindingsRemaining": 0,
+  "canonicalIconResources": 20,
+  "legacyIconResources": 0,
+  "ownerPngBytesAltered": false,
+  "heavyJobsSerialized": true,
+  "java": "Java 8;512MiB;SerialGC",
+  "gates": [
+    {
+      "name": "build-server",
+      "command": [
+        "./scripts/build-server.sh"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS matching NPC capacity contracts",
+        "PASS matching Cleric blessing protocol contracts",
+        "PASS: shipped Ant build/classpath inventory is internally consistent"
+      ],
+      "logSha256": "62a8df77cb9e7f8b2473663da54088fbe1d807120234f014a97e0b01725badbf",
+      "initialBatchSeconds": 10.78
+    },
+    {
+      "name": "build-client",
+      "command": [
+        "./scripts/build-client.sh"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS matching NPC capacity contracts",
+        "PASS matching Cleric blessing protocol contracts"
+      ],
+      "logSha256": "80c8fd4363db02aadb66c8c1edde0ed2a21953e1ca097ac82e4253d9c9a02c94",
+      "initialBatchSeconds": 3.97
+    },
+    {
+      "name": "test-zamorak-hostile",
+      "command": [
+        "python3",
+        "tests/myworld/test-zamorak-hostile.py"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS 264 Zamorak hostile packet/combat/attribution assertions"
+      ],
+      "logSha256": "4aa5f57940996bfcc9eaf3cc67b241afa4abe3d796c2b6da2c5bda902ea2bda2",
+      "initialBatchSeconds": 1.77,
+      "additionalTestOnlyRerun": "264 assertions after adding three retained-request lifecycle/session cases"
+    },
+    {
+      "name": "test-cleric-spellbook-foundation",
+      "command": [
+        "python3",
+        "tests/myworld/test-cleric-spellbook-foundation.py"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS 262 composite Cleric stable catalog/magnitude/retirement checks"
+      ],
+      "logSha256": "4d5856fa0fa2cc89ae6c9d38ce5ee1ba43128d5fa898950d25098482aa5a12a6",
+      "initialBatchSeconds": 0.56
+    },
+    {
+      "name": "test-cleric-blessings",
+      "command": [
+        "python3",
+        "tests/myworld/test-cleric-blessings.py"
+      ],
+      "exitCode": 0,
+      "initialExitCode": 1,
+      "rerunReason": "Fixture writer schema header updated to the current contract constant; recorded old payload retained for rejection tests",
+      "passMarkers": [
+        "PASS 376 active Cleric catalog/packet/mixedcost/potency/composite/cadence/lifecycle/combat/Unify/wire checks"
+      ],
+      "logSha256": "19c9a20530277880f07e0c847b1bcfabd0f37d550f677c4010f5a7ea1cae7bd6",
+      "initialBatchSeconds": 1.62
+    },
+    {
+      "name": "test-cleric-consistency-buffs",
+      "command": [
+        "python3",
+        "tests/myworld/test-cleric-consistency-buffs.py"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS 88 Cleric consistency buff checks"
+      ],
+      "logSha256": "c25cb08f3e03ad11e691c41ee044f3fe99422a2a767feab2b895acc5adcef434",
+      "initialBatchSeconds": 1.62
+    },
+    {
+      "name": "test-cleric-hostile",
+      "command": [
+        "python3",
+        "tests/myworld/test-cleric-hostile.py"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS 121 Cleric hostile and phase checks"
+      ],
+      "logSha256": "9d77feaef951d3af11d23ad18104697d6e08187be150ef321799f3b4ff6d130f",
+      "initialBatchSeconds": 1.52
+    },
+    {
+      "name": "test-cleric-hostile-producers",
+      "command": [
+        "python3",
+        "tests/myworld/test-cleric-hostile-producers.py"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS 24 real summon and reflection weakness producer assertions"
+      ],
+      "logSha256": "3c45dd0288aaa4954422af2ebf3a7750d822989e6d6290c8b00d7c1f3a312b8f",
+      "initialBatchSeconds": 1.62
+    },
+    {
+      "name": "test-cleric-projectile",
+      "command": [
+        "python3",
+        "tests/myworld/test-cleric-projectile.py"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS 30 real Cleric projectile and phase assertions"
+      ],
+      "logSha256": "52ea286574742455f1c2b1646a0b4e198a23935b9b56e69e276a00604aab3521",
+      "initialBatchSeconds": 1.67
+    },
+    {
+      "name": "test-cleric-metal-sigils",
+      "command": [
+        "python3",
+        "tests/myworld/test-cleric-metal-sigils.py"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS 218 native metal-sigil production, inventory, charging and mixed-cost assertions"
+      ],
+      "logSha256": "f96a7bb444d05609551f357ff9e03df305115b3287eccc2a0fd5a7510690e5c9",
+      "initialBatchSeconds": 1.62
+    },
+    {
+      "name": "test-shared-attack-state",
+      "command": [
+        "python3",
+        "tests/myworld/test-shared-attack-state.py"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS 88 shared attack-state assertions"
+      ],
+      "logSha256": "e6f7da76cc6a9e7c74e6a3800412799bb21b6e44cf4dfebdd7fdd574401dfc85",
+      "initialBatchSeconds": 0.41
+    },
+    {
+      "name": "test-shared-attack-runtime",
+      "command": [
+        "python3",
+        "tests/myworld/test-shared-attack-runtime.py"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS 173 shared Stagger/Crit/delay native event and real launch assertions"
+      ],
+      "logSha256": "d4cd767e4884c93433581519c6a01bb57d00d0a58b0067c2b4831f522f823218",
+      "initialBatchSeconds": 1.57
+    },
+    {
+      "name": "test-combat-luck",
+      "command": [
+        "python3",
+        "tests/myworld/test-combat-luck.py"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS 32 semantic Combat Luck candidate/probability/call-count assertions"
+      ],
+      "logSha256": "f9a5fcd34ef2190f2a0a027b6401f6b9fb378dd0e668e3fc1edcb8681bfc4665",
+      "initialBatchSeconds": 0.41
+    },
+    {
+      "name": "test-combat-luck-runtime",
+      "command": [
+        "python3",
+        "tests/myworld/test-combat-luck-runtime.py"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS 90 native Combat Luck ownership/formula/state assertions"
+      ],
+      "logSha256": "ae88a594ba7c2e81a2b28110d6d1fac7c0cf64f2c75787f26830908443124941",
+      "initialBatchSeconds": 1.57
+    },
+    {
+      "name": "client-icons",
+      "command": [
+        "python3",
+        "tests/myworld/test-cleric-spell-icons.py",
+        "--wire",
+        "output/zamorak-hostile-review/cleric-schema5.bin"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS actual 20-spell wire mapping and mudclient embedded icon cache",
+        "PASS native source/embedded sprites and native-font render; checks=162",
+        "PASS 20 approved exact source/JAR PNGs and native sprite/font rendering"
+      ],
+      "logSha256": "92e84fc055a9177bcf4149023936f85bbe933817b02108c1a6760d96d2a49d7e",
+      "initialBatchSeconds": 0.61
+    },
+    {
+      "name": "client-render",
+      "command": [
+        "python3",
+        "tests/myworld/test-cleric-three-tier-client.py",
+        "--render",
+        "output/zamorak-hostile-review/render"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS Cleric schema5 client all: 7696 checks; actual server bytes and no networking",
+        "PASS native font bounds for all20 names, actual mudclient compact tooltip/HUD rendering and detailed guide row: /home/justin/Core-Framework-ai-2/output/zamorak-hostile-review/render",
+        "PASS 63492 real spellbook/guide text, cost, viewport, input and final-page navigation assertions; 33 guide pages",
+        "PASS generic mixed-status HUD compatibility: 68 checks (legacy prefix/corruption/counter/overflow/lifecycle, independent of retired spell balance)"
+      ],
+      "logSha256": "7d800185ad846362d27e4aace4ab98320b81234a330585edc34e80fb6df42956",
+      "initialBatchSeconds": 2.72
+    },
+    {
+      "name": "combat145",
+      "command": [
+        "./server/test_combat"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS plugin_owned_npc_death_remains_an_explicit_compatibility_path",
+        "PASS tutorial_and_logged_out_player_death_compatibility_is_preserved",
+        "PASS both_primary_melee_paths_preserve_shared_hits_mitigation",
+        "PASS damage_observer_failure_cannot_change_current_settlement",
+        "PASS=145 SCENARIOS=145"
+      ],
+      "logSha256": "8b4eabc4d093de5165684c7d64f4c1bb68cb5c02b3a206573c00d0448d7b9c39",
+      "initialBatchSeconds": 16.79
+    },
+    {
+      "name": "slayer-slow-coatings",
+      "command": [
+        "sh",
+        "tools/vendor/apache-ant-1.10.5/bin/ant",
+        "-f",
+        "server/build.xml",
+        "test_slayer_leather_effects",
+        "test_slayer_rewards",
+        "test_slayer_mobility_shield",
+        "test_abyssal_demon_combat",
+        "test_dark_beast_combat",
+        "test_bloodveld_combat",
+        "test_terror_dog_combat",
+        "test_naga_combat",
+        "test_thunder_spell_casting",
+        "test_slow",
+        "test_battleaxe_coatings",
+        "test_antidote_cleansing"
+      ],
+      "exitCode": 0,
+      "passMarkers": [
+        "PASS legacy NPC ranged: cleared/gained Slow retarget deadlines, exact due ticks, ordinary cadence and replacement lifetime",
+        "PASS: retained Earth Dragon/KBD/sword/Ogre damage and RNG characterizations",
+        "PASS: shared Slow caps, decay, lifetimes, HUD, melee/range, dagger, special cooldowns, combat cast deadline",
+        "PASS battleaxe coatings: 1042 assertions; all15 templates, atomic recipe/apply/wipe, actual primary damage and poison paths",
+        "PASS: Titan poison families, antidote tiers/refresh/rejection, 33 cleansing, safe cure, recipes/doses/HUD; 102 assertions"
+      ],
+      "logSha256": "b4d6c4d8ad3617f4656de08b4e61469ef2090927ed0ea9bde8c2249fd944d12b",
+      "initialBatchSeconds": 145.86
+    }
+  ],
+  "boundaries": {
+    "privateGameplayAcceptance": false,
+    "publicOperations": false,
+    "ownerMapsChanged": false,
+    "ownerAccountsOrDatabasesUsed": false,
+    "osrsProfileCriticalProvider": false,
+    "secondaryCriticalChainEnabled": false
+  },
+  "productionSourceAndArtifactHashesUnchangedAfterCheckpoint": true
+}
