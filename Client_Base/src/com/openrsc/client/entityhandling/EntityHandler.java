@@ -5672,7 +5672,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3399, new ItemDef("Ectoplasm", "A cold, quivering remnant of a banshee's spirit.", "",
 			0, 262, "items:262", true, false, 0, 0xB5A4CF, false, false, false, 3399));
 		setCustomItemDefinition(3341, new ItemDef("Sticky Saliva Gland", "A giant frog's gland, still oozing sticky saliva.", "",
-			0, 116, "items:116", false, false, 0, 0x80A65B, false, false, true, 3341));
+			0, -1, "external-png:sticky-saliva-gland@16x18", false, false, 0, 0, false, false, true, 3341));
 		setCustomItemDefinition(3342, new ItemDef("Cockatrice Eye", "A lifeless eye with an unsettling stare.", "",
 			0, 116, "items:116", false, false, 0, 0xB9A65B, false, false, true, 3342));
 		setCustomItemDefinition(3343, new ItemDef("Frozen Tear", "A banshee's sorrow, crystallized into a single tear.", "",

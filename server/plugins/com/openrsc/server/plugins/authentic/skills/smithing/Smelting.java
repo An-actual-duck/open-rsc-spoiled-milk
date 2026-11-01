@@ -55,7 +55,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	public static final int FURNACE_CATEGORY_DARTS = ItemId.TIN_DART_TIPS.id();
 	public static final int FURNACE_CATEGORY_THROWING_KNIVES = ItemId.TIN_THROWING_KNIFE.id();
 	public static final int FURNACE_CATEGORY_SHURIKEN = ItemId.TIN_SHURIKEN.id();
-	public static final int FURNACE_CATEGORY_SIGIL_BLANKS = ClericMetalSigils.SIGIL_MOULD;
+	public static final int FURNACE_CATEGORY_SIGIL_BLANKS = ClericMetalSigils.BLANK_SILVER_SIGIL;
 	public static final int FURNACE_CATEGORY_CANNONBALLS = ItemId.MULTI_CANNON_BALL.id();
 
 	private static final int[] NORMAL_SMELTING_ITEMS = {

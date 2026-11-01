@@ -641,7 +641,7 @@ public final class DoSkillInterface {
 				return "Shuriken";
 			case 1041:
 				return "Cannonballs";
-			case 3433:
+			case 3431:
 				return "Blank sigils";
 			default:
 				return EntityHandler.getItemDef(itemId).getName();

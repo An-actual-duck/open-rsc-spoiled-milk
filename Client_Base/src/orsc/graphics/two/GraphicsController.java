@@ -226,6 +226,10 @@ public class GraphicsController {
 		renderer2DPhase = phase == null ? Renderer2DFrame.Phase.UNKNOWN : phase;
 	}
 
+	public final Renderer2DFrame.Phase getRenderer2DPhase() {
+		return renderer2DPhase;
+	}
+
 	public final Renderer2DFrame consumeRenderer2DFrame() {
 		if (!Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
 			beginRenderer2DFrame();

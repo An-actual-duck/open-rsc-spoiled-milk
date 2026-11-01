@@ -88,13 +88,8 @@ public final class BattleaxeCoatingCatalog {
     for v in variants:
         raw=entries['items','272' if v['baseId']==2752 else '84']['frames'][0][0]
         images[assetroot/f"viscous-battleaxe-{v['baseId']}.png"]=art.edge_candidate(raw,raw,v['baseId']==2752)[0]
-    bottle=Image.open(ROOT/'dev/myworld/reference-library/items/consumables/potions-and-bottles/id-02202.png').convert('RGBA')
-    # One full single-use container: no obsolete three-dose fill-band semantics.
-    p=bottle.load()
-    for y in range(bottle.height):
-        for x in range(bottle.width):
-            r,g,b,a=p[x,y]
-            if a and g>r*1.2 and g>b*1.2:p[x,y]=(14,max(50,g*180//255),max(45,g*166//255),a)
+    # Reviewed native Aseprite art: retain the murky teal potion silhouette.
+    bottle=Image.open(ROOT/'dev/myworld/practice-feedback/art/png/viscous-coating.png').convert('RGBA')
     images[assetroot/'viscous-coating.png']=bottle
     for n,(raw,meta) in enumerate(rawframes):
         im=art.edge_candidate(raw,raw)[0];held.append((im,meta));images[authored/f'held-{n:02}.png']=im
