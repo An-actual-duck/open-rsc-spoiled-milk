@@ -8,6 +8,7 @@ python3 tests/myworld/test-npc-capacity-profile-configs.py
 ./scripts/build-client.sh
 python3 tests/myworld/test-entity-list-safety.py
 python3 tests/myworld/test-npc-capacity-production.py
+python3 tests/myworld/test-layered-actor-scene.py
 python3 tests/myworld/test-npc-overlap-layout.py
 python3 tests/myworld/test-packet-shape-guards.py
 python3 tests/myworld/test-client-custom-movement-stability.py

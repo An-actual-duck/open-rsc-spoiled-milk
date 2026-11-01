@@ -473,10 +473,11 @@ public final class GameStateUpdater {
 		 * coordinate packets must therefore start with zero old locals, rather
 		 * than removals indexed into the cache it just discarded. Terrain-center
 		 * shifts keep those identities; their context generation is separate.
+		 * The first context establishes a complete baseline as well.
 		 * A failed terrain reference can quarantine already emitted actor deltas,
 		 * so an explicit resync also needs a complete actor baseline.
 		 */
-		if (previous != null && !previous.equals(next)
+		if (previous == null || !previous.equals(next)
 			|| player.getAttribute(LAYERED_ACTOR_BASELINE_RESET_ATTRIBUTE, false)) {
 			player.getLocalNpcs().clear();
 			player.getLocalPlayers().clear();

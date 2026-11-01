@@ -51,6 +51,16 @@ with tempfile.TemporaryDirectory(prefix="layered-actor-scene-") as directory:
     env.update(OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH=str(package),
                OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256=manifest_hash,
                OPENRSC_LAYERED_NATIVE_WORLD_RUNTIME_PROFILE="native-additive", OPENRSC_SYNC_SCENE_BASELINE="true")
+    # Copy versioned runtime definitions/configuration only; no local config,
+    # installed map selection, credentials, database, accounts or source assets.
+    fixture = work / "server"
+    names = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "-z",
+        "server/conf", "server/database/mysql/queries", "server/database/sqlite/queries",
+        "server/database/sql_queries.xsd", "server/myworld.conf", "server/connections.conf"], text=True).split("\0")
+    for name in filter(None, names):
+        destination = fixture / Path(name).relative_to("server")
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes((ROOT / name).read_bytes())
     cp = os.pathsep.join(map(str, [core, client]))
     support = ROOT / "server/test/com/openrsc/server/combat"
     sources = [support / (name + ".java") for name in ["CurrentCombatHarness", "MutableGameClock", "SeededGameRandom"]]
@@ -59,4 +69,4 @@ with tempfile.TemporaryDirectory(prefix="layered-actor-scene-") as directory:
     subprocess.run(["java", "-Xms128m", "-Xmx512m", "-XX:+UseSerialGC", "-Djava.awt.headless=true",
                     "-Dopenrsc.worldBuilderInstalledClientProfile=" + str(profile),
                     "-cp", directory + os.pathsep + cp,
-                    "com.openrsc.server.combat.LayeredActorSceneFixture"], cwd=ROOT / "server", env=env, check=True)
+                    "com.openrsc.server.combat.LayeredActorSceneFixture"], cwd=fixture, env=env, check=True)
