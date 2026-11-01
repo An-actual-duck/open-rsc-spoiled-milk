@@ -9,13 +9,17 @@ superseding checkpoint `cddcab99c458c591e99fde62526c972426b611e4`. Source was
 read with `git show` and exact-commit diffs. No production source, other worker,
 database, server, map, account or installed toolkit was changed by this review.
 
-Corrected source reviewed: `b8c2e96289d466fca123bb33f1d49573874ed189`.
-Both substantive findings below are resolved in that checkpoint. No further
-substantive blocker was found in the scoped source review. Final auction READY
-`a37668ee77a27baaa178d2be92b525160b0699ae` adds only its review/evidence documents;
-the production and fixture source is identical to the corrected checkpoint.
+Primary corrections were reviewed at
+`b8c2e96289d466fca123bb33f1d49573874ed189`; its first READY
+`a37668ee77a27baaa178d2be92b525160b0699ae` added only review/evidence documents.
+Core then raised the unresolved-COMMIT login question below, and independent
+source review confirmed a third blocker. Its complete correction is reviewed at
+`200e804bdbe8a467977afaf682402493368073b8`, superseding that first acceptance.
+All three findings are resolved. Fixture completion checks were reviewed at
+`c708855e8672df162cabdfef30570546b14b9538`; final auction READY
+`5d2e81973df03a98a5b70ea7bc319c7329454ae5` adds only review/evidence documents.
 That exact READY is acceptable for manager integration and final combined gates.
-The initial checkpoints above should not be integrated by themselves.
+Earlier checkpoints should not be integrated by themselves.
 
 ## Findings in the reviewed checkpoints
 
@@ -76,6 +80,37 @@ table. Real equip and unequip since the previous save are followed by auction
 commit and ordinary reload; rollback preserves the previous coherent durable
 state. Precommit and postcommit process-halt/reload checks also include equipment.
 
+**P1 — unresolved remote settlement can outlive the detached session.**
+Core's final recovery question exposed a remaining gap in the first READY.
+After a COMMIT timeout, JDBC rollback/socket close does not prove that the remote
+database has finished committing or aborting. The resolver deliberately uses a
+bounded locking receipt read and can time out while the original transaction
+still owns its actor-row lock. Detaching the old Player only revokes that object.
+Ordinary login then performed plain consistent reads, which can return the old
+balances while an InnoDB transaction is pending. Activating a successor from
+that snapshot could make stale balances spendable or save them over the eventual
+commit. Earlier crash/reload tests used already-settled transactions, so their
+success did not cover this window.
+
+**Resolved at 200e804b:** `AccountLoadBarrier` waits on an owned fresh current
+actor-row read before constructing a Player or starting its ordinary snapshot.
+MySQL uses `FOR UPDATE`; SQLite uses bounded `BEGIN IMMEDIATE`. A timeout or
+unavailable database rejects entry; no auction-enabled switch or receipt-table
+DDL is involved. The barrier releases its read-only transaction before the new
+profile snapshot. `PlayerService` rejects incomplete `atomically` results and
+changed account IDs. `LoginRequest` acknowledges success only after the complete
+load, and releases validation's reservation on failure.
+
+Compatibility review also caught binary SQLite `username=?` versus existing
+case-insensitive `LIKE` loads and use of an initial request hash after accepted
+former-name redirection. The correction uses prepared, escaped `LIKE` and the
+final validated name normalized exactly like Player construction. Tests seed
+noncanonical stored case and a redirect whose initial hash differs. A strict
+modern validation-success whitelist now controls load admission before legacy
+wire translation, so modern failure 0 or generic failure 100 cannot be mistaken
+for old-client success. Denials on both classic/current clients and a positive
+authenticated classic load are covered.
+
 ## Other paths inspected
 
 The new transaction design stages detached item/container state, commits listing
@@ -109,18 +144,23 @@ missing-SQLite-file refusal without creating a replacement file.
 ## Verification and limits
 
 This reviewer ran preflight/status, exact source/diff inspection and focused
-cross-reference searches only. Existing worker evidence under ignored
+cross-reference searches. A minimal in-memory SQLite check using the tracked
+production username-column shape confirmed that a mixed-case stored name matched
+the old `LIKE` query but not the first barrier's binary equality query. The
+repository-owned seed schema was inspected read-only; no account rows were read.
+Existing worker evidence under ignored
 `Core-Framework-ai-1/output/market-atomicity-*` was inspected as implementation
 evidence and is not relabeled as independently executed tests. The manager owns
 the synthetic MariaDB service receipt. No duplicate database service or heavy
 test batch was started by this reviewer.
 
-Final worker evidence inspected for the unchanged b8c2e962 source:
+Final worker evidence inspected for production source 200e804b and fixtures
+c708855e:
 
 | Engine / evidence directory under ai1 `output/` | Result |
 |---|---|
-| SQLite, `market-atomicity-2af6bd6c57` | Test exit 0, 194 assertions; precommit halt 77/recovery 0 (3 assertions); postcommit halt 77/recovery 0 (3 assertions) |
-| MariaDB, `market-atomicity-bf8ae2cec8` | Test exit 0, 194 assertions; precommit halt 77/recovery 0 (3 assertions); postcommit halt 77/recovery 0 (3 assertions) |
+| SQLite, `market-atomicity-42efba9e72` | Test exit 0, 252 assertions; precommit halt 77/recovery 0 (4 assertions); postcommit halt 77/recovery 0 (4 assertions) |
+| MariaDB, `market-atomicity-19b0b1d960` | Test exit 0, 252 assertions; precommit halt 77/recovery 0 (4 assertions); postcommit halt 77/recovery 0 (4 assertions) |
 
 The fixtures also exercise failed and replayed operations, uncertain commits,
 bounded locking resolution, seller conservation, competing buyers, ordinary
@@ -131,12 +171,23 @@ focused integration tests, not exhaustive crash/fault injection of the whole
 economy. Real-account migration, real network sessions, long-running load and
 all legacy gameplay save races remain outside this review.
 
+The new login cases hold an actual uncommitted actor transaction across a login
+attempt and demonstrate rejection before a profile snapshot or success response.
+Both later COMMIT and later ROLLBACK permit a fresh login with their exact
+balances, even with auctions disabled. Known-committed publication failure,
+incomplete profile snapshots, stored-case/alias compatibility and classic/current
+admission are covered. Authentication and non-economic profile fields are
+synthetic fixture scaffolding; actual LoginRequest/PlayerService control flow
+and production economic reads run against the real engines. Final runner checks
+reject unexpected scheduler exceptions as well as bad exits/missing markers;
+none appeared in the inspected final logs.
+
 The final worker report also records source build, combat 145/145, Slow 115 plus
 adapters and capacity packet checks. Its adjacent
 `auction-transaction-safety-evidence.json` records command/result/log/artifact
-hashes. This reviewer inspected the exact final document-only delta and the two
-final engine result ledgers/log markers; no new feature source changed after the
-corrected review.
+hashes. This reviewer inspected the exact final document-only delta and both
+engine result ledgers/log markers. No production source changed after the
+accepted 200e804b review.
 
 Combined lint, paired release acceptance, real-account upgrade/restore and
 deployment remain manager gates. This report approves the scoped corrected
