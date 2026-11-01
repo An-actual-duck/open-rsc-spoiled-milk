@@ -142,6 +142,10 @@ public final class GameStateUpdater {
 	private static final String CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE = "custom_movement_client_mid_y";
 	private static final String LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE =
 		"layered_scene_context_scope";
+	private static final String LAYERED_ACTOR_SCENE_SCOPE_ATTRIBUTE =
+		"layered_actor_scene_scope";
+	private static final String LAYERED_ACTOR_BASELINE_RESET_ATTRIBUTE =
+		"layered_actor_baseline_reset";
 	private static final String LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE =
 		"layered_scene_context_sequence";
 	private static final String LAYERED_SCENE_CONTEXT_PROTOCOL_ATTRIBUTE =
@@ -402,6 +406,7 @@ public final class GameStateUpdater {
 				OpcodeOut.SEND_LAYERED_SCENE_CONTEXT, context, player)) {
 			return false;
 		}
+		synchronizeLayeredActorScene(player, context);
 		clearNativeTerrainStage(player);
 		/*
 		 * A queued packet is not proof of client residency. Keep its exact LRU
@@ -457,6 +462,31 @@ public final class GameStateUpdater {
 		return true;
 	}
 
+	private void synchronizeLayeredActorScene(
+		final Player player,
+		final LayeredSceneContextStruct context) {
+		final LayeredActorSceneScope next = new LayeredActorSceneScope(context);
+		final LayeredActorSceneScope previous = player.getAttribute(
+			LAYERED_ACTOR_SCENE_SCOPE_ATTRIBUTE, null);
+		/*
+		 * The client clears actor identities on a real scope change. Its next
+		 * coordinate packets must therefore start with zero old locals, rather
+		 * than removals indexed into the cache it just discarded. Terrain-center
+		 * shifts keep those identities; their context generation is separate.
+		 * The first context establishes a complete baseline as well.
+		 * A failed terrain reference can quarantine already emitted actor deltas,
+		 * so an explicit resync also needs a complete actor baseline.
+		 */
+		if (previous == null || !previous.equals(next)
+			|| player.getAttribute(LAYERED_ACTOR_BASELINE_RESET_ATTRIBUTE, false)) {
+			player.getLocalNpcs().clear();
+			player.getLocalPlayers().clear();
+			player.getKnownPlayerAppearanceIDs().clear();
+		}
+		player.setAttribute(LAYERED_ACTOR_SCENE_SCOPE_ATTRIBUTE, next);
+		player.removeAttribute(LAYERED_ACTOR_BASELINE_RESET_ATTRIBUTE);
+	}
+
 	public void acceptLayeredTerrainReady(
 		final Player player,
 		final LayeredTerrainReadyStruct receipt) {
@@ -474,6 +504,7 @@ public final class GameStateUpdater {
 			player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
 			player.removeAttribute(NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE);
 			player.removeAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE);
+			player.setAttribute(LAYERED_ACTOR_BASELINE_RESET_ATTRIBUTE, Boolean.TRUE);
 			return;
 		}
 		if (receipt.protocolVersion != LAYERED_TERRAIN_READY_PROTOCOL_VERSION) {
@@ -2884,6 +2915,45 @@ public final class GameStateUpdater {
 			return Arrays.copyOf(buffer, length);
 		} finally {
 			compressor.end();
+		}
+	}
+
+	/** Matches the identity boundary in LayeredSceneContextState, excluding chunk centers. */
+	private static final class LayeredActorSceneScope {
+		private final String worldSpace;
+		private final int level;
+		private final String projectionId;
+		private final String packageId;
+		private final String packageVersion;
+		private final String manifestSha256;
+
+		private LayeredActorSceneScope(final LayeredSceneContextStruct context) {
+			worldSpace = context.worldSpace;
+			level = context.logicalLevel;
+			projectionId = context.projectionId;
+			packageId = context.nativePackageId;
+			packageVersion = context.nativePackageVersion;
+			manifestSha256 = context.nativeManifestSha256;
+		}
+
+		@Override
+		public boolean equals(final Object other) {
+			if (!(other instanceof LayeredActorSceneScope)) {
+				return false;
+			}
+			final LayeredActorSceneScope scope = (LayeredActorSceneScope)other;
+			return level == scope.level
+				&& Objects.equals(worldSpace, scope.worldSpace)
+				&& Objects.equals(projectionId, scope.projectionId)
+				&& Objects.equals(packageId, scope.packageId)
+				&& Objects.equals(packageVersion, scope.packageVersion)
+				&& Objects.equals(manifestSha256, scope.manifestSha256);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(worldSpace, level, projectionId,
+				packageId, packageVersion, manifestSha256);
 		}
 	}
 
