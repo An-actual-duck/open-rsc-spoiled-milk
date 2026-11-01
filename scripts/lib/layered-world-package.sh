@@ -341,7 +341,13 @@ layered_world_require_pinned_live_package() {
 }
 
 layered_world_enable_private_production_profile() {
-  local package_root="$1"
+  local package_root="$1" manifest_sha
+
+  # The caller has just validated/generated this exact package. Its selected
+  # identity can differ from the separately guarded historical fallback.
+  manifest_sha="$(layered_world_manifest_sha256 "$package_root")" || return 1
+  [[ "$manifest_sha" =~ ^[0-9a-f]{64}$ ]] \
+    || { layered_world_fail "Validated private package manifest is missing or unreadable"; return 1; }
 
   export OPENRSC_LAYERED_PLAYER_LOCATION_AUTHORITY=true
   export OPENRSC_LAYERED_SPATIAL_RUNTIME_AUTHORITY=true
@@ -355,7 +361,7 @@ layered_world_enable_private_production_profile() {
   export OPENRSC_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION=true
   export OPENRSC_SYNC_SCENE_BASELINE=true
   export OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH="$package_root"
-  export OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256="$SPOILED_MILK_LAYERED_MANIFEST_SHA256"
+  export OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256="$manifest_sha"
   export OPENRSC_LAYERED_NATIVE_WORLD_RUNTIME_PROFILE=world-builder-installed
   export SPOILED_MILK_LAYERED_RUNTIME_MODE=production
 }

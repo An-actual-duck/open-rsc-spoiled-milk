@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import sys
+import json
+import subprocess
 from pathlib import Path
 
 
@@ -28,12 +30,17 @@ def main() -> None:
     require(hosted, "want_feature_websockets: false", "websocket listener disabled")
     require(hosted, "max_players: 25", "limited alpha player cap")
     require(hosted, "max_players_per_ip: 3", "limited alpha per-IP player cap")
-    require(
-        hosted,
-        "layered_native_terrain_manifest_sha256: "
-        "f3489503d2c323e669ab3004345271c6137a58698cc8c0bf0b0fb2587eb52b29",
-        "installed World Builder manifest identity",
+    # The installed source pair is authoritative; the shell's historical pin
+    # remains an explicit fallback, not the current hosted map identity.
+    selection = subprocess.run(
+        [sys.executable, str(ROOT / "scripts/installed-map-selection.py"), str(ROOT)],
+        capture_output=True, text=True,
     )
+    if selection.returncode:
+        fail("Installed source pair is invalid: " + selection.stdout + selection.stderr)
+    manifest = json.loads(selection.stdout)["manifestSha256"]
+    require(hosted, "layered_native_terrain_manifest_sha256: " + manifest,
+            "source-selected World Builder manifest identity")
 
     runner = RUN_HOSTED.read_text(encoding="utf-8")
     require(runner, "myworld_live_database_path", "hosted DB path resolution")
