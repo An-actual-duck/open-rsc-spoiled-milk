@@ -131,7 +131,7 @@ public abstract class LoginRequest extends LoginExecutorProcess{
         ValidatedLogin vl = validateLogin();
         int loginResponse = vl.responseCode;
         Player candidate = null;
-        if (!isSimLogin && isLoginSuccessful(loginResponse)) {
+        if (!isSimLogin && isValidatedLoginSuccessful(loginResponse)) {
             candidate = getServer().getPlayerService().loadPlayer(this);
             if (candidate == null) {
                 // Never acknowledge success before the settlement barrier and
@@ -297,6 +297,13 @@ public abstract class LoginRequest extends LoginExecutorProcess{
 		getServer().getPacketFilter().addLoggedInPlayer(getIpAddress(), getUsernameHash());
 		return new ValidatedLogin(LoginResponse.LOGIN_SUCCESSFUL[groupId]);
 	}
+
+    /** validateLogin returns modern response codes; legacy wire codes must never admit a load. */
+    private static boolean isValidatedLoginSuccessful(int response) {
+        if (response == LoginResponse.RECONNECT_SUCCESFUL) return true;
+        for (int success : LoginResponse.LOGIN_SUCCESSFUL) if (response == success) return true;
+        return false;
+    }
 
 	public boolean isLoginSuccessful(int loginResponse) {
 		return (loginResponse & 0x40) != LoginResponse.LOGIN_UNSUCCESSFUL ||

@@ -252,7 +252,7 @@ public final class MarketAtomicityFixture {
         @Override public PlayerData queryLoadPlayerData(Player p){
             snapshots++;
             if(failSnapshot)throw new IllegalStateException("injected incomplete ordinary snapshot");
-            try(PreparedStatement s=provider.c.prepareStatement("SELECT id,username FROM "+P+"players WHERE username=?")){
+            try(PreparedStatement s=provider.c.prepareStatement("SELECT id,username FROM "+P+"players WHERE username LIKE ?")){
                 s.setString(1,p.getUsername());try(ResultSet r=s.executeQuery()){
                     if(!r.next())throw new IllegalStateException("missing synthetic profile");
                     PlayerData d=new PlayerData();d.playerId=r.getInt(1);d.username=r.getString(2);d.groupId=10;d.xLocation=449;d.yLocation=450;d.headSprite=1;d.bodySprite=2;d.male=true;d.loginIp="127.0.0.1";return d;
@@ -271,13 +271,15 @@ public final class MarketAtomicityFixture {
         @Override public PlayerNpcKills[] queryLoadPlayerNpcKills(Player p){return new PlayerNpcKills[0];}
     }
     static final class RecordingLogin extends LoginRequest {
-        final CurrentCombatHarness h;int response=-999;Player completed;
-        RecordingLogin(CurrentCombatHarness h,String name){super(h.server(),loginChannel(),name,"synthetic-unused",false,h.server().getConfig().CLIENT_VERSION,false,null);this.h=h;}
+        final CurrentCombatHarness h;int response=-999;Player completed;String redirect;int authCode=LoginResponse.LOGIN_SUCCESSFUL[10];
+        RecordingLogin(CurrentCombatHarness h,String name){this(h,name,h.server().getConfig().CLIENT_VERSION);}
+        RecordingLogin(CurrentCombatHarness h,String name,int version){super(h.server(),loginChannel(),name,"synthetic-unused",false,version,false,null);this.h=h;}
         @Override public ValidatedLogin validateLogin(){
             // Authentication alone is a synthetic fixture boundary. The actual
             // processInternal, PlayerService and economic provider reads run.
-            getServer().getPacketFilter().addLoggedInPlayer(getIpAddress(),getUsernameHash());
-            return new ValidatedLogin(LoginResponse.LOGIN_SUCCESSFUL[10]);
+            if(redirect!=null)setUsername(redirect); // model accepted former-name redirect; initial hash remains the alias
+            if(authCode==LoginResponse.LOGIN_SUCCESSFUL[10]||authCode==LoginResponse.RECONNECT_SUCCESFUL)getServer().getPacketFilter().addLoggedInPlayer(getIpAddress(),getUsernameHash());
+            return new ValidatedLogin(authCode);
         }
         @Override public void loginValidated(int code){check(response==-999,"one login response only");response=code;}
         @Override public void loadingComplete(Player p){completed=p;h.world().getPlayers().add(p);p.updateRegion();}
@@ -299,6 +301,7 @@ public final class MarketAtomicityFixture {
             set(h.server(),Server.class,"database",db);set(h.server(),Server.class,"playerService",service);
             for(boolean commit:Arrays.asList(true,false)) {
                 Player p=player(h);h.logout(p);p.closePersistenceSession();int snapshotsBefore=db.snapshots;
+                sql("UPDATE "+P+"players SET username='aUcTiOn"+p.getDatabaseID()+"' WHERE id="+p.getDatabaseID());
                 Connection pending=open();pending.setAutoCommit(false);
                 try(PreparedStatement s=pending.prepareStatement("UPDATE "+P+"players SET username=username WHERE id=?")){s.setInt(1,p.getDatabaseID());s.executeUpdate();}
                 try(PreparedStatement s=pending.prepareStatement("UPDATE "+P+"itemstatuses SET amount=900 WHERE itemID IN (SELECT itemID FROM "+P+"invitems WHERE playerID=?) AND catalogID=10")){s.setInt(1,p.getDatabaseID());s.executeUpdate();}
@@ -316,8 +319,21 @@ public final class MarketAtomicityFixture {
                 RecordingLogin settled=new RecordingLogin(h,p.getUsername().toUpperCase(Locale.ROOT));settled.process();h.advanceOneCombatTick();h.advanceOneCombatTick();
                 check(settled.isLoginSuccessful(settled.response)&&settled.completed!=null,"settled current actor row permits ordinary LoginRequest load");
                 check(settled.completed.getCarriedItems().getInventory().countId(10)==(commit?900:1000),"fresh login snapshot reflects exact commit or rollback outcome");
+                check(settled.completed.getUsername().equals("aUcTiOn"+p.getDatabaseID()),"stored mixed-case account survives ordinary case-insensitive lookup");
                 h.server().getPacketFilter().removeLoggedInPlayer("127.0.0.1",p.getUsernameHash());h.logout(settled.completed);
             }
+            Player redirected=player(h);h.logout(redirected);
+            RecordingLogin alias=new RecordingLogin(h,"formername");alias.redirect=redirected.getUsername();long oldHash=alias.getUsernameHash();alias.process();h.advanceOneCombatTick();h.advanceOneCombatTick();
+            check(alias.completed!=null&&alias.completed.getDatabaseID()==redirected.getDatabaseID()&&oldHash!=alias.completed.getUsernameHash(),"accepted renamed-account redirect settles final username instead of initial alias hash");
+            h.server().getPacketFilter().removeLoggedInPlayer("127.0.0.1",alias.getUsernameHash());h.logout(alias.completed);
+            Player denied=player(h);h.logout(denied);int authSnapshots=db.snapshots;
+            for(int version:new int[]{204,h.server().getConfig().CLIENT_VERSION})for(int code:new int[]{0,3,8,16,100}){
+                RecordingLogin denial=new RecordingLogin(h,denied.getUsername(),version);denial.authCode=code;denial.process();
+                check(db.snapshots==authSnapshots&&denial.completed==null&&h.world().getPlayer(denied.getUsernameHash())==null,"modern validation denial never loads/activates classic or modern client");
+            }
+            RecordingLogin legacy=new RecordingLogin(h,denied.getUsername(),204);legacy.process();h.advanceOneCombatTick();h.advanceOneCombatTick();
+            check(legacy.completed!=null&&legacy.completed.getDatabaseID()==denied.getDatabaseID(),"authenticated classic client still loads before legacy wire success");
+            h.server().getPacketFilter().removeLoggedInPlayer("127.0.0.1",denied.getUsernameHash());h.logout(legacy.completed);
             Player p=player(h);h.logout(p);sql("DROP TABLE "+P+"market_operations");
             db.failSnapshot=true;RecordingLogin incomplete=new RecordingLogin(h,p.getUsername());incomplete.process();
             check(incomplete.response==LoginResponse.LOGINSERVER_OFFLINE&&incomplete.completed==null,"atomically false rejects partial profile without success response");
@@ -427,7 +443,7 @@ public final class MarketAtomicityFixture {
                 Player p=player(h);equipFromInventory(p);int id=listing(999,1,1,100);Store s=new Store();s.failure=mode.endsWith("before")?"before-commit":"after-commit";s.halt=true;run(s,h,op(MarketOperation.Kind.BUY,p,id,0,1,0));throw new AssertionError("halt missing");
             }else if(mode.startsWith("recover")){
                 h.server().getConfig().SPAWN_AUCTION_NPCS=false;
-                check(com.openrsc.server.service.AccountLoadBarrier.await(h.server().getDatabase(),P,"auction101")==101,"fresh JVM login barrier settles actor without process-local flags");
+                check(com.openrsc.server.service.AccountLoadBarrier.await(h.server().getDatabase(),P,"Auction101")==101,"fresh JVM login barrier settles actor without process-local flags");
                 Player p=h.player("auction101",449,450);p.setDatabaseID(101);reloadContainers(h,p);
                 boolean before=mode.endsWith("before");
                 check(p.getCarriedItems().getInventory().countId(10)==(before?1000:900)&&p.getCarriedItems().getInventory().countId(384,Optional.empty())==(before?0:1),"fresh process provider reload after crash");

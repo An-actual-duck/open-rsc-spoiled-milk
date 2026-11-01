@@ -28,8 +28,10 @@ public final class AccountLoadBarrier {
                 else { s.execute("SET SESSION innodb_lock_wait_timeout=2"); c.setAutoCommit(false); }
             }
             try {
-                try (PreparedStatement s = c.prepareStatement("SELECT id FROM `" + prefix + "players` WHERE username=?" + (sqlite ? "" : " FOR UPDATE"))) {
-                    s.setString(1, username);
+                try (PreparedStatement s = c.prepareStatement("SELECT id FROM `" + prefix + "players` WHERE username LIKE ? ESCAPE '='" + (sqlite ? "" : " FOR UPDATE"))) {
+                    // Match the established auth/profile LIKE case semantics while
+                    // keeping all user-supplied wildcard characters literal.
+                    s.setString(1, username.replace("=", "==").replace("%", "=%").replace("_", "=_"));
                     try (ResultSet r = s.executeQuery()) {
                         if (!r.next()) throw new SQLException("Account no longer exists");
                         int id = r.getInt(1);

@@ -61,7 +61,8 @@ public class PlayerService implements IPlayerService {
     public Player loadPlayer(final LoginRequest rq) {
         try {
             final int settledAccountId = AccountLoadBarrier.await(database, configuration.DB_TABLE_PREFIX,
-                    com.openrsc.server.util.rsc.DataConversions.hashToUsername(rq.getUsernameHash()));
+                    com.openrsc.server.util.rsc.DataConversions.hashToUsername(
+                        com.openrsc.server.util.rsc.DataConversions.usernameToHash(rq.getUsername())));
             final Player loaded = new Player(world, rq);
 
             boolean complete = database.atomically(() -> {
