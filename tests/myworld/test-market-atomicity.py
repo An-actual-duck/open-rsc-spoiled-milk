@@ -20,8 +20,9 @@ env.update(MARKET_TEST_JDBC='jdbc:sqlite:'+str(output/'market-test.sqlite'), MAR
 backend = 'sqlite'
 if a.mysql_manifest:
     m = json.loads(a.mysql_manifest.read_text())
-    assert m['name'] == 'core-auction-test-8f1ffb86f4' and m['host']=='127.0.0.1' and m['port']==32768 and m['database']=='auction_test'
-    env.update(MARKET_TEST_JDBC=m['jdbcUrl'], MARKET_TEST_USER=m['user'], MARKET_TEST_PASSWORD=m['password'])
+    assert m['name'] == 'core-auction-test-8f1ffb86f4' and m['host']=='127.0.0.1' and m['database']=='auction_test' and m['id']=='d60fea0ef551015f40412a5a8e4f19dd6f36b70bb63e8c59ac86237c2b393f65' and isinstance(m['port'],int)
+    assert m['jdbcUrl'].startswith(f"jdbc:mysql://127.0.0.1:{m['port']}/auction_test?")
+    env.update(MARKET_TEST_JDBC=m['jdbcUrl'], MARKET_TEST_USER=m['user'], MARKET_TEST_PASSWORD=m['password'], MARKET_TEST_PORT=str(m['port']))
     backend = 'mysql-mariadb'
 classpath = os.pathsep.join(str(x) for x in [root/'output/combat-test/test-classes', root/'output/combat-test/core-classes', *sorted((root/'server/lib').glob('*.jar'))])
 java = pathlib.Path(os.environ.get('JAVA_HOME','/home/justin/jdk8u482-b08'))/'bin/java'
@@ -31,7 +32,7 @@ for mode, expected in [('test',0),('crash-before',77),('recover-before',0),('cra
     with log.open('w') as stream:
         result=subprocess.run([str(java),'-Xmx512m','-XX:+UseSerialGC','-cp',classpath,'com.openrsc.server.combat.MarketAtomicityFixture',mode],cwd=runtime,env=env,stdout=stream,stderr=subprocess.STDOUT,timeout=180)
     results.append(dict(mode=mode, exit=result.returncode, expected=expected, seconds=round(time.monotonic()-start,2), log=str(log)))
-    if result.returncode != expected or (not mode.startswith('crash') and ('PASS market ' not in log.read_text() or 'java.lang.AssertionError' in log.read_text())):
+    if result.returncode != expected or (not mode.startswith('crash') and ('PASS market ' not in log.read_text() or 'java.lang.AssertionError' in log.read_text() or 'Exception while executing GameTickEvent' in log.read_text())):
         print(log.read_text()[-8000:]); raise SystemExit('Market fixture failed: '+mode+'; evidence '+str(output))
 (output/'results.json').write_text(json.dumps(dict(backend=backend, results=results),indent=2)+'\n')
 for mode in ['test','recover-before','recover']:

@@ -60,10 +60,14 @@ public class PlayerService implements IPlayerService {
     @Override
     public Player loadPlayer(final LoginRequest rq) {
         try {
+            final int settledAccountId = AccountLoadBarrier.await(database, configuration.DB_TABLE_PREFIX,
+                    com.openrsc.server.util.rsc.DataConversions.hashToUsername(
+                        com.openrsc.server.util.rsc.DataConversions.usernameToHash(rq.getUsername())));
             final Player loaded = new Player(world, rq);
 
-            database.atomically(() -> {
+            boolean complete = database.atomically(() -> {
                 loadPlayerData(loaded);
+                if (loaded.getDatabaseID() != settledAccountId) throw new IllegalStateException("Account identity changed during load");
                 loadPlayerSkills(loaded);
                 loadPlayerLastRecoveryChangeRequest(loaded);
                 loadPlayerEquipment(loaded);
@@ -80,6 +84,7 @@ public class PlayerService implements IPlayerService {
                 loadPlayerLastSpellCast(loaded);
                 loadPlayerNpcKills(loaded);
             });
+            if (!complete) return null;
 
 			loadPlayerLanguage(loaded);
 			updateUnlockedPlayerSkins(loaded);
