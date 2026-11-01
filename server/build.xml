@@ -325,6 +325,13 @@
         </javac>
     </target>
 
+    <target name="test_legacy_player_location_bootstrap" depends="compile_combat_tests"
+            description="Verify full account loading from original packed location receipts">
+        <exec executable="python3" failonerror="true" dir="${basedir}/..">
+            <arg value="tests/myworld/test-legacy-player-location-bootstrap.py"/>
+        </exec>
+    </target>
+
     <target name="test_market_atomicity" depends="compile_combat_tests"
             description="Disposable SQLite auction failure, retry, session and crash/reload checks">
         <exec executable="python3" failonerror="true" dir="${basedir}/..">

@@ -242,7 +242,7 @@ public final class MarketAtomicityFixture {
         h.advanceOneCombatTick();h.advanceOneCombatTick();
         check(p.getCarriedItems().getInventory().countId(384)==1&&persisted(p.getDatabaseID(),"invitems",10)==900,"ordinary game-event task settles durable transaction");
     }
-    static final class LoginDatabase extends MySqlGameDatabase {
+    static class LoginDatabase extends MySqlGameDatabase {
         final Provider provider;int snapshots;boolean failSnapshot;
         LoginDatabase(Server s,Provider p){super(s);provider=p;}
         @Override public JDBCDatabaseConnection getConnection(){return provider;}
