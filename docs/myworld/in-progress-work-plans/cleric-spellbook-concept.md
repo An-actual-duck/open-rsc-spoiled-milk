@@ -14,9 +14,21 @@ is a historical launch record. The owner separately authorized the buff
 implementation now tracked in [the candidate review](cleric-three-tier-buffs-review.md).
 Map imports and public activation remain separate operations.
 
+### Accepted release stage — October 31, 2026
+
+The owner considers the current Cleric stage complete for the next release:
+nine blessings, Unify/Greater Unify, six Guthix/Saradomin hostile spells,
+Grace/Blight production and the Cosmic combat-luck replacement. **Tier 4 and the
+unimplemented Zamorak hostile chain are later work, not release requirements.**
+Preserve their designs without activating them or requiring further Cleric
+expansion before release. Ordinary combined release-candidate testing remains;
+this scope acceptance does not claim unrun gameplay coverage. The active
+[release checklist](next-major-release-goals.md#current-release-checkpoint--october-31-2026)
+governs what is still required.
+
 ### Active overhaul: three ordinary tiers and six power levels — October 30, 2026
 
-This is the latest owner-confirmed **future design**, superseding the old
+This is the owner-confirmed **implemented baseline for the accepted stage**, superseding the old
 individually unlocked twelve-spell roster and spell-specific rank tables as the
 desired overhaul. The implementation candidate now exposes the nine god
 blessings, Unify, Greater Unify and six Guthix/Saradomin hostile spells; retired launch codes stay reserved and fail
@@ -108,8 +120,8 @@ gates. Stats, artwork, alignment and god-staff requirements remain unchanged.
 ### Confirmed blessing names and recipient flavor
 
 These selected messages belong to the named component added by the spell.
-The revised Saradomin associations below follow the owner-selected tier move;
-they are design changes, not yet runtime changes. The current implementation
+The revised Saradomin associations below implement the owner-selected tier move.
+The current implementation
 sends the line for the spell actually applied, rather than repeating every
 inherited lower-tier line.
 
@@ -355,14 +367,16 @@ No new names, costs or runtime effects are approved beyond the owner's choices.
 
 The candidate uses an independent appearance16 flag and50% color/opacity transform
 through the existing NPC sprite pipeline. Spirit-summon opacity remains separate;
-no sprite set is replaced. Both software/OpenGL
-paths and layered NPCs still need verification. Do not reuse the spirit-summon
-gameplay flag as the non-corporeal state. Coordinate any shared client-file
-integration with the separate hit-splat topic branch at final collection.
+no sprite set is replaced. Packet/alpha and software/OpenGL paths were checked
+offline, including integration with the completed floating hit-number work;
+ordinary combined private gameplay QA remains. The non-corporeal state uses its
+own flag and does not reuse the spirit-summon gameplay flag.
 
 ### Owner-selected Zamorak debuffs — October 31, 2026
 
-**Design recorded; not implemented. Cosmic combat luck is now selected and implemented; hostile hit/execution boundaries still require a separate decision.** These owner-selected
+**Deferred beyond this release stage; design recorded, not implemented.**
+Cosmic combat luck is implemented; hostile hit/execution boundaries remain a
+later decision. These owner-selected
 components replace the earlier manager suggestions for Zamorak. Higher tiers
 retain the earlier components, using the shared Holy Power thresholds and
 tier caps **2/4/6**. The quoted names below are the owner's effect labels;
@@ -452,7 +466,7 @@ God+Grace/God+Blight are exchanged atomically once per useful cast. Unify's
 confirmed quantity is2Grace and Greater Unify6Grace (current initial grade: stone).
 No public activation is authorized by this implementation.
 
-### Owner direction — October 29, 2026
+### Historical owner direction — October 29, 2026
 
 - Keep the **three god sigils: Saradomin, Guthix and Zamorak**. Their existing
   stone/silver carving, god-altar blessing and production process stay unchanged.
@@ -485,7 +499,7 @@ No public activation is authorized by this implementation.
   allies, hostile spells affect enemies. Existing PvP exclusions remain; this
   direction does not introduce new PvP behavior.
 
-**Current implementation boundary (October 30):** Grace/Blight carving and well
+**Historical implementation boundary (October 30):** Grace/Blight carving and well
 infusion are implemented as described in [the infusion review](grace-blight-well-infusion-review.md).
 Stone uses Rune stone + chisel (Crafting1,5XP), and silver uses Silver nugget +
 chisel (Crafting20,10XP), for both purposes. Infusion requires Blessing1/16,

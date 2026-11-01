@@ -1,5 +1,14 @@
 # Slayer Tower final placement and NPC capacity
 
+**Historical investigation, superseded by implementation.** The 16,384-NPC
+capacity foundation and tower entrance/upward-stair guards are implemented and
+integrated; the six stationary associates are in the saved-map continuation.
+The owner subsequently completed the tower and gem-dragon cave. Use
+[the implemented guard review](slayer-tower-stair-guard-migration-review.md) and
+[the current release checklist](next-major-release-goals.md) for remaining
+combined testing and latest-map migration. The old findings and proposed work
+below are preserved as investigation history, not an instruction to redo them.
+
 Owner update, October 26, 2026: tower decoration is satisfactory. Preserve it;
 remaining work includes capacity, passage bindings, dialogue and release assembly.
 

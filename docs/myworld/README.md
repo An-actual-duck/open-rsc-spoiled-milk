@@ -46,6 +46,9 @@ into one of the category folders, not directly into `docs/myworld/`.
   hypotheses, and profile-tweak-compare results.
 - [Roadmap](in-progress-work-plans/roadmap.md): high-level alpha milestone and
   version progression.
+- [Next release checklist](in-progress-work-plans/next-major-release-goals.md):
+  current scope and remaining art, latest-map migration and combined acceptance;
+  Cleric's current stage is complete, and the three additional bosses are deferred.
 - [Work items](in-progress-work-plans/work-items.md): active work list and
   implemented-state summary.
 - [Change history](info/change-history.md): consolidated record of major
@@ -78,11 +81,11 @@ into one of the category folders, not directly into `docs/myworld/`.
   task-owner and source-test matrices, dynamic-surface inventory, duplicate-name
   hazards, and AI-safe change-routing guidance.
 - [cleric-spellbook-concept.md](in-progress-work-plans/cleric-spellbook-concept.md):
-  active collaborative concept for a Worship-tiered support spellbook, carved
-  and blessed sigils, Holy Power, and an expanded Devotion economy.
+  accepted current seventeen-spell stage, Grace/Blight and Holy Power contracts;
+  further Zamorak hostile spells and Tier 4 are later work.
 - [ante-risk-reward-plan.md](in-progress-work-plans/ante-risk-reward-plan.md):
-  confirmed player-authored PvM death risk, combat-scaled common/rare reward
-  rates, personal-loot composition, dedicated UI, and economy-safe rollout.
+  parked PvM risk/reward concept awaiting the owner's reconsideration; not a
+  current release requirement or authorized implementation assignment.
 - [dragon-gear-crafting-plan.md](in-progress-work-plans/dragon-gear-crafting-plan.md):
   dragon gear crafting route, lava forge repair, black dragon scales, dragon
   metal drops, and purified rune forge relocation.

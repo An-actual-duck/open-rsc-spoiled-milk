@@ -4,56 +4,38 @@ This document tracks the high-level path from the current alpha toward beta.
 Detailed implementation plans remain in their subject-specific documents; this
 roadmap defines priorities, milestone boundaries, and release progression.
 
-## Latest owner planning update — October 24, 2026
+## Latest owner release checkpoint — October 31, 2026
 
-After completing the Slayer Tower, the owner intends a substantial push toward
-the next major release and may consider it the beta milestone. Beta designation
-and its final scope are not yet decided. The older milestone ordering and
-release-status statements below require reconciliation with current code; they
-are not automatic requirements to finish every planned region before beta.
+The next major release is now in **assembly and acceptance**, with a small
+remaining art pass. The owner has completed the Slayer Tower and Crafting Guild
+gem-dragon cave in the saved editor map and accepts the current Cleric stage.
+Use the [current release checklist](next-major-release-goals.md) as the source
+of truth; older regional milestones below do not automatically expand its scope.
 
-The owner's [immediate next-release goals](next-major-release-goals.md) now
-define the active content list: finish Slayer Tower/placement and axe coatings;
-expand Cleric buffs/debuffs through Curse sigils and underground ichor rivers;
-add Mystic Blue and Fierce Red boss dragons; add gem dragons beneath the
-Crafting Guild; and add the dual-form Corporeal Beast Slayer boss. The owner
-will supply remaining Cleric tiers and unresolved encounter details.
+Implemented/integrated work includes the tower's capacity and stair guards,
+the five gem dragons and their loot/equipment behavior, poison/antidotes/shared
+Slow, all 15 coated battleaxes, the seventeen-spell Cleric stage with
+Grace/Blight wells, Cosmic combat luck and owner-approved floating hit numbers.
+Existing content approvals remain valid. Fixes-only release separation or an
+old preserved branch does not make approved content a fresh development backlog.
 
-Explicit priorities are reliable poison/cleansing and shared Slow, the planned
-**axe-based Slow coatings**, and expansion of Cleric buff/debuff spells. Shared
-Slow is now integrated on main (`892701caf`) with offline regression acceptance;
-private gameplay acceptance remains separate. The launch twelve-spell Cleric
-book is already shipped; its later enemy-debuff/Unholy expansion remains design
-work. See the governing Cleric concept and Slayer equipment/coating design.
+Remaining work:
 
-### Owner clarification: Slayer completion and release separation
+1. Finish the gem-cutter glove icon approval and dedicated worn monocle visual.
+2. Refresh the paired map export from the latest saved work, preserving it;
+   verify tower access/stairs, associates, gem cave, egg spawns and well shores.
+3. Test the assembled private candidate, then complete release/migration,
+   backup/rollback and launch/update checks. Address demonstrated issues.
+4. Let the owner decide whether the resulting release is the beta milestone.
 
-Most of the Slayer content has already been approved and tested. It was kept
-separate so unrelated fixes could be released while the tower was being built.
-Presence on a preserved branch or absence from current main is not evidence of
-unfinished implementation or missing owner approval. Do not turn release
-assembly into another broad content-development or reapproval pass.
+**Deferred:** Mystic Blue Dragon, Fierce Red Dragon and Corporeal Beast need
+worthwhile boss drops and potential hide/armor-set designs before resuming.
+Cleric Tier 4 and the unimplemented Zamorak hostile chain are follow-up work;
+the current stage is complete for this release. Ante remains on hold for the
+owner's balance/honesty reconsideration. Neither those systems nor the older
+terrain, renderer or Server R2 plans are automatic release requirements.
 
-The two principal remaining Slayer pieces are:
-
-1. **Slayer Tower construction and final NPC placement**, owned by the owner in
-   the editor, followed by Core's planned door/rank bindings and final testing.
-2. **The axe-based Slow coating**, including its remaining design decisions and
-   implementation on the reconciled Slow foundation.
-
-Assemble the approved content into a coherent release candidate and run normal
-integration/migration checks without silently replacing it with historical code.
-Preserved approved work includes the antidote lineage
-`4d98e17833135ae3f150f7ad953099b184fe91d1`; concrete open decisions should be
-tracked in their subject plans rather than treating the whole system as new.
-Cleric expansion and the effect-standardization review remain separate planned
-work for the larger release push.
-
-**Ante is on hold while the owner reconsiders balance and whether the system can
-represent risk honestly.** Do not assign its implementation, foundation or
-simulator as current work. It is not a Slayer completion or beta requirement.
-The older proposal is preserved for reconsideration, not approved execution.
-No release planning note authorizes restarting or deploying the public server.
+No planning or packaging note authorizes a public-server shutdown or activation.
 
 ## Versioning
 
@@ -82,35 +64,28 @@ The packager, updater scripts, release tests, fixtures, and artifact naming now
 support the normal semantic-version release sequence. GitHub updates use normal
 releases so the auto-updater can resolve the latest published tag.
 
-## Current Phase: Post-Monster-Slayer Stabilization And Runtime Refinement
+## Current Phase: Next Major Release Assembly And Acceptance
 
-The Monster Slayer foundation, Cleric/Blessing launch, combat A01-A11
-modernization, and production layered-world loader are now shipped. The
-immediate phase is to stabilize those large additions, improve the remaining
-renderer/world-boundary hitch behavior, and keep documentation aligned before
-starting another large gameplay system.
+Feature development for the narrowed owner-defined release is largely complete.
+Finish the small art remainder, assemble the latest authored map with the tested
+code/content, and run combined private acceptance. Source implementation,
+owner-authored map completion, final exported-map freshness, gameplay acceptance
+and public deployment are distinct states; keep their records accurate.
 
-Current priorities:
+Concrete regressions still take priority. Final QA should cover the ordinary
+player experience without development commands, including access, combat,
+rewards, production, persistence and updating. Do not turn that pass into a new
+architecture, boss-design or already-approved-content reapproval project.
 
-- Treat concrete regressions in the layered loader, combat, or Monster Slayer
-  progression as the first priority and add focused regression coverage with
-  each correction.
-- Gather Monster Slayer task, point-economy, satchel-cost, and shop feedback;
-  keep unique reward design deferred until that evidence exists.
-- Continue renderer and boundary-transition profiling, especially CPU spikes
-  and the remaining visible hitch during residency changes.
-- Keep Server R2 moving as a separately gated productization effort without
-  letting it displace live-game reliability work.
-- Finish smaller terrain and Cosmic Altar polish after the higher-impact
-  stabilization work, without reopening the accepted layered-loader design.
-
-This phase is continuing through the `v0.2.x` patch releases. Its completion
-should coincide with the next minor-version milestone.
+The private package is maintained at `/home/justin/spoiled-milk-next-update`.
+Its saved export is frozen and older than the owner's latest authoring work;
+refreshing and verifying it remains a deliberate migration task. Public
+activation follows separately, with fresh permission and the warning window.
 
 General terrain workflow and Wilderness requirements are maintained in
 [`terrain-expansion-plan.md`](terrain-expansion-plan.md).
 
-## Major Alpha Milestones
+## Longer-Term Milestones — Not Automatic Gates For This Release
 
 ### Deferred follow-up: after the Slayer Tower
 

@@ -4,38 +4,30 @@ This is the active planning list. Scope labels describe implementation size, not
 
 ## Recommended Next Work Order
 
-**October 24 owner update:** the remaining major Slayer pieces are the tower
-and final NPC placement, plus axe-based Slow coatings. Most other Slayer work
-is already approved/tested and was separated for fixes-only releases. Use the
-latest roadmap clarification when older ordering/status notes below disagree.
+**October 31 owner checkpoint:** feature development for the narrowed next
+release is largely complete. The owner has finished the tower and gem-dragon
+cave and accepts the current Cleric stage. Existing Slayer approvals remain
+valid; release separation is not a new development/reapproval backlog.
+The [current release checklist](next-major-release-goals.md) governs scope.
 
-The [immediate next-major-release goals](next-major-release-goals.md) also add
-Cleric Curse sigils/underground ichor and remaining buff/debuff tiers, Mystic
-Blue and Fierce Red boss dragons, Crafting Guild gem dragons, and the
-physical/spirit-form Corporeal Beast Slayer boss. That owner-defined list
-governs the current release scope; older backlogs are not automatic additions.
+1. Close the two recorded gem-equipment art loose ends: glove icon approval and
+   a dedicated worn monocle visual. Its inventory icon is already approved.
+2. Export the latest owner-authored map into the paired private candidate;
+   preserve existing saves and verify guards/stairs, cave placements, egg spawns
+   and well access. The staged map snapshot is older than the current saved work.
+3. Run combined private gameplay/acquisition/persistence checks for the assembled
+   content. Fix observed failures rather than reopening completed systems.
+4. Finish release assembly, paired build and relevant regression checks,
+   migration/backups/rollback and launch/update validation; resolve handoff
+   bookkeeping without merging unrelated preserved work.
+5. Let the owner choose the release label/beta transition after readiness is
+   established. Public activation needs separate fresh maintenance authorization.
 
-This order was reconciled against published `main` and release `v0.2.75` on
-2026-08-21. Field-testing and balance changes should continue to be driven by
-observed play data rather than speculative rewrites.
-
-1. Stabilize the newly shipped Monster Slayer progression and layered-runtime
-   behavior. Concrete task, shop, satchel, location, collision, and transition
-   regressions take precedence over new systems.
-2. Continue the renderer-performance investigation with emphasis on boundary
-   hitches and reported CPU spikes. Prefer measurements and bounded fixes over
-   additional renderer architecture.
-3. Keep player-facing documentation current for Monster Slayer,
-   Cleric/Blessing, production controls, layered maps, and projectile cover.
-4. Resume Server R2 through its existing acceptance gates when no live-game
-   regression is waiting. It is the highest-value strategic backend stream,
-   but not a reason to delay player-impacting fixes.
-5. Refine Ante's unresolved thresholds, caps, death/recovery transaction, and
-   LootShare math only after the owner resumes the concept. Ante is on hold
-   (October 24, 2026); do not assign implementation, foundation or simulator
-   work, or make it a beta prerequisite.
-6. Complete the Slayer Tower/placement and axe-coating work, then assemble the
-   already approved Slayer content for release with normal integration checks.
+**Not required for this release:** Mystic Blue Dragon, Fierce Red Dragon,
+Corporeal Beast, Cleric Tier 4, the remaining Zamorak hostile spell chain and
+Ante. Boss additions need reward/hide/armor-set design before resuming. Older
+renderer, terrain and Server R2 plans remain separately prioritized work, not
+automatic additions to this release.
 
 ## Implemented State
 

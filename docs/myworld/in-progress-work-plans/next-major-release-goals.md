@@ -1,7 +1,7 @@
 # Immediate goals for the next major release
 
 Owner direction recorded October 24, 2026. These are the immediate content
-goals before the next release. Beta designation remains a later decision.
+goals before the next release, as narrowed by the owner checkpoint below. Beta designation remains a later decision.
 This records intent and confirmed mechanics; it does not settle unspecified
 balance values or authorize public deployment.
 
@@ -10,13 +10,60 @@ gem-dragon cave are authored in the latest saved editor map. Both await final
 migration with the coordinated update package; do not replace or re-author
 that saved map while finishing gameplay and release integration.
 
-## 1. Complete the Slayer Tower and associated content
+## Current release checkpoint — October 31, 2026
+
+The owner accepts the **current Cleric stage as complete for this release**.
+Tier 4 and the unimplemented Zamorak hostile spell chain are follow-up work,
+not release blockers. This closes feature expansion for this Cleric stage; it
+does not claim a private gameplay test that has not happened.
+
+**Mystic Blue Dragon, Fierce Red Dragon and Corporeal Beast are deferred.**
+Before resuming them, design worthwhile boss rewards, including their potential
+hides and associated armor sets. Preserve their encounter concepts below.
+Existing Elder Green/KBD content and the implemented gem dragons stay in scope.
+
+| Workstream | Current state | Remaining for this release |
+| --- | --- | --- |
+| Slayer Tower and gem-dragon cave | Owner-authored layouts and placement work are finished | Refresh the frozen export from the latest owner save; verify the assembled map and bindings |
+| Slayer encounters, capacity, guards, Slow/poison/antidotes and all 15 battleaxe coatings | Implemented/integrated; prior approved content retains its approvals | Combined private gameplay/acquisition checks and migration |
+| Gem dragons and Crafting loot | Five variants, drops and equipment behavior implemented | Glove icon approval, finished worn monocle visual, combined private gameplay |
+| Cleric, Grace/Blight wells and Cosmic combat luck | Current stage complete and accepted for release scope | Ordinary combined release QA; no additional spell tiers required |
+| Floating hit numbers | Owner-approved and integrated | Ordinary combined release QA |
+| Three additional bosses and Ante | Deferred | No work required before this release |
+
+### Remaining release work, in order
+
+1. Close the two recorded gem-equipment art loose ends: glove icon approval and
+   a dedicated worn jeweller's loupe/monocle; its inventory icon is already approved.
+2. Prepare matching server/client map exports from the **latest authored save**,
+   preserving the original and current work. The existing staged export is older.
+   Recheck tower entrance/upward-stair bindings, stationary associates, gem cave
+   placements, owner-added egg spawns/respawns and reachable well shorelines.
+   An old blocked-shore report is a recheck item, not proof the latest map is broken.
+3. Run one coordinated private release-candidate pass: access/travel, combat,
+   Slow/poison/coatings and ingredient collection, gem rewards/equipment, sigil
+   infusion/Cleric/Cosmic, hit numbers, saving and persistence. Fix demonstrated
+   issues; do not reopen already accepted content as a broad redesign backlog.
+4. Finish release assembly: exact paired artifacts, relevant regression checks,
+   migration/backups/rollback, outstanding branch/handoff disposition and normal
+   launch/update behavior. Preserve parked or unrelated work rather than merging
+   it merely to clear a list.
+5. Let the owner decide the release label, including whether this is beta.
+   Public activation remains a separate maintenance window requiring fresh
+   shutdown authorization and the normal in-game warning.
+
+The feature-development push is largely complete. The active milestone is now
+**release assembly, final art and combined acceptance**, not another large system.
+
+## 1. Slayer Tower and associated content — implemented; final assembly
 
 - The owner accepted the tower decoration on October 26. Preserve the authored map.
 - Core will guard initial entry and the later **upward stairs**, with associates
   in safe rooms behind freely accessible auto-closing doors. Final migration must
   include the reviewed NPC-capacity work and completed placement/binding; see
-  [final tower placement and capacity](slayer-tower-final-placement-and-capacity.md).
+  [implemented tower bindings](slayer-tower-stair-guard-migration-review.md).
+  The [initial capacity investigation](slayer-tower-final-placement-and-capacity.md)
+  is historical, not a fresh implementation backlog.
 - The axe-based coating implementation is integrated into Core and staged;
   owner visual/private-gameplay review remains. Preserve the approved October 29
   design rather than reopen its recipe, application and balance decisions.
@@ -33,7 +80,13 @@ that saved map while finishing gameplay and release integration.
 References: [coating design](../rough-drafts/slayer-unique-equipment-design.md),
 [Slow foundation](shared-slow-foundation.md), and the existing tower plans.
 
-## 2. Expand Cleric buffs and add the hostile debuff branch
+## 2. Cleric — current release stage complete
+
+Owner acceptance covers the current seventeen-spell book: nine blessings,
+Unify/Greater Unify and six Guthix/Saradomin hostile spells, together with
+Grace/Blight production and Cosmic combat luck. The remaining Zamorak hostile
+chain and Tier 4 stay documented for a later stage. No further Cleric design or
+implementation is required to satisfy this release's feature scope.
 
 ### Confirmed overhaul direction — October 29, 2026
 
@@ -66,8 +119,8 @@ References: [coating design](../rough-drafts/slayer-unique-equipment-design.md),
   existing PvP exclusions remain in force.
 
 This supersedes the older four-primary/neutral-altar, Unholy-carving recipe and
-Curse-sigil/ichor-river proposals. The shipped twelve-spell book is the current
-runtime and reuse baseline, not a completed implementation of this overhaul.
+Curse-sigil/ichor-river proposals. The shipped twelve-spell book is the historical
+reuse baseline; the current private implementation has seventeen spells.
 
 ### Well visuals and edge access
 
@@ -107,13 +160,13 @@ See [the implementation and validation review](grace-blight-well-infusion-review
 Production and the mixed-resource overhaul are implemented in the candidate.
 The launch twelve-spell roster is historical; the active candidate has17 spells.
 
-### Confirmed future progression — three tiers, six power levels
+### Implemented progression — three tiers, six power levels
 
 The new ordinary book has three tiers, each with one blessing per god and a
 future debuff per god. Later blessings add the next god component to the earlier
 ones. Tier unlocks use **Worship**, not Blessing. Tier 3 targets roughly Worship
 40, matching elemental single-element tiers 1/20/40 (dual-element 10/30/50).
-Cleric tier 1/2 unlocks 1/20 are a planning baseline pending explicit finalization.
+Cleric tier 1/2 unlocks 1/20 are the implemented baseline accepted for this stage.
 Tier 4 unique buffs/debuffs remain deferred.
 
 Ordinary god buffs and future god debuffs have tier radii **2/3/4** (`tier + 1`),
@@ -293,10 +346,11 @@ compatible grades); Unify/Greater use 2/6 Stone Grace and initial mixed-cost def
 above. Production and the scoped hostile casting branch are complete in source;
 Core integration/private gameplay acceptance are separate.
 
-### Decisions still needed
+### Later follow-up, not current release gates
 
-Later cost/economy refinement and private gameplay balance review; Zamorak hostile
-activation and remaining eligible-hit/execution decisions.
+Optional later cost/economy refinement, Zamorak hostile activation and its
+remaining eligible-hit/execution decisions. General release gameplay QA remains
+part of the combined candidate pass; it does not reopen this accepted stage.
 Unify and Greater
 Unify behavior/unlocks are settled; the old neutral Respite remains excluded.
 Tier 4 unique spells remain later work.
@@ -315,16 +369,16 @@ Rearm requires a tangible attack attempt and a following tick before another rol
 Matched schema4/client10055 is required; owner maps and public activation remain
 separate. See [implementation review](cleric-consistency-implementation-review.md).
 
-Zamorak hostile activation remains deferred. The approved Cosmic replacement is
+Zamorak hostile activation remains deferred beyond this release stage. The implemented Cosmic replacement is
 **combat luck**:1percentage point per equipped robe tier, capped50%. Named damage/
 defense rolls and beneficial combat checks can select one favorable extra candidate;
 loot, skilling, random choices and recurring curse checks are excluded. No Expose Weakness/Weak Legs/Weak Constitution
 mechanics or proposed penetration redesign are activated.
 
-## 3. Round out the boss-dragon roster
+## 3. Boss-dragon expansion — deferred beyond this release
 
 The **Elder Green Dragon** is already added, and the **King Black Dragon** is
-the existing staple. Complete the intended roster with:
+the existing staple. The later roster expansion preserves these candidates:
 
 - **Mystic Blue Dragon**.
 - **Fierce Red Dragon**.
@@ -332,8 +386,10 @@ the existing staple. Complete the intended roster with:
 Encounter mechanics, stats, drops, locations and access requirements for the
 new dragons need their own specifications. Their names alone do not establish
 attack-style or balance rules, or authorize reworking the existing two bosses.
+The owner has removed both additions from the next release. Worthwhile drops,
+potential hides and associated armor sets should be designed before resuming them.
 
-## 4. Finish gem-dragon acceptance and migrate the Crafting Guild cave
+## 4. Gem dragons — implemented; final art, acceptance and migration
 
 - **Sapphire, Emerald, Ruby, Diamond and Dragonstone dragons** are implemented
   and staged, with the approved native gem-dragon model, scaling defenses,
@@ -344,12 +400,20 @@ attack-style or balance rules, or authorize reworking the existing two bosses.
 - Complete combined private testing/owner acceptance and final map migration
   with the update package. Do not invent new access requirements or re-author
   the owner's underground layout while doing integration.
+- The remaining recorded equipment art work is the glove icon's approval and
+  replacing the provisional eye-patch worn visual with a dedicated monocle/loupe.
+  Its inventory icon is already approved; the dragon model is also approved.
 
 References: [gem-dragon implementation](gem-dragon-family-review.md),
 [guaranteed gems](gem-dragon-guaranteed-gems-review.md) and
 [normal rare Scrap outcome](gem-dragon-normal-scrap-review.md).
 
-## 5. Add the Corporeal Beast as a Slayer boss
+## 5. Corporeal Beast — deferred beyond this release
+
+The owner has removed this boss from the next release. Resume only after its
+worthwhile rewards, potential hide and armor-set direction are established.
+The design below is preserved; no new boss/item implementation is authorized by
+its presence here. Existing shared non-corporeal support remains in the game.
 
 The boss phases between a **physical form** and a **spirit form**.
 
