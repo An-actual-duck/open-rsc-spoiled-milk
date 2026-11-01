@@ -3,6 +3,9 @@ package com.openrsc.server.combat;
 import com.google.common.collect.Multimap;
 import com.openrsc.server.Server;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.database.JDBCDatabaseConnection;
+import com.openrsc.server.database.impl.mysql.MySqlGameDatabase;
+import com.openrsc.server.database.struct.ItemDrop;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.combat.CombatTick;
 import com.openrsc.server.model.Point;
@@ -29,9 +32,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
@@ -52,6 +58,7 @@ final class CurrentCombatHarness implements AutoCloseable {
 	private final List<Player> players = new ArrayList<Player>();
 	private final List<Npc> npcs = new ArrayList<Npc>();
 	private ThreadPoolExecutor pluginExecutor;
+	private RecordingDropDatabase recordingDropDatabase;
 	private boolean closed;
 
 	CurrentCombatHarness() throws IOException {
@@ -75,6 +82,49 @@ final class CurrentCombatHarness implements AutoCloseable {
 
 	Server server() {
 		return server;
+	}
+
+	/** Opt-in drop-only boundary. Other fixtures keep their original database. */
+	void recordDropLogs() throws ReflectiveOperationException {
+		ensureOpen();
+		if (recordingDropDatabase != null) throw new IllegalStateException("Drop recorder already installed");
+		recordingDropDatabase = new RecordingDropDatabase(server);
+		final Field databaseField = Server.class.getDeclaredField("database");
+		databaseField.setAccessible(true);
+		databaseField.set(server, recordingDropDatabase);
+	}
+
+	/** FIFO barrier: the production logger has completed every preceding drop. */
+	int awaitRecordedDropLogs() throws Exception {
+		if (recordingDropDatabase == null) throw new IllegalStateException("No drop recorder installed");
+		server.submitSqlLogging(() -> {}).get(10, TimeUnit.SECONDS);
+		recordingDropDatabase.requireNoUnexpectedOperations();
+		return recordingDropDatabase.drops.size();
+	}
+
+	private static final class RecordingDropDatabase extends MySqlGameDatabase {
+		private final List<ItemDrop> drops = Collections.synchronizedList(new ArrayList<ItemDrop>());
+		private final AtomicInteger rejectedOperations = new AtomicInteger();
+
+		RecordingDropDatabase(Server server) { super(server); }
+
+		@Override public void queryAddDropLog(ItemDrop drop) {
+			if (drop.amount <= 0 || drop.itemId < 0 || drop.npcId < 0) {
+				rejectedOperations.incrementAndGet();
+				throw new AssertionError("Invalid production drop log");
+			}
+			drops.add(drop);
+		}
+
+		@Override public JDBCDatabaseConnection getConnection() {
+			rejectedOperations.incrementAndGet();
+			throw new AssertionError("Drop-only fixture attempted JDBC access");
+		}
+
+		void requireNoUnexpectedOperations() {
+			if (rejectedOperations.get() != 0)
+				throw new AssertionError("Unexpected JDBC access or invalid drop log in offline fixture");
+		}
 	}
 
 	World world() {
@@ -348,19 +398,38 @@ final class CurrentCombatHarness implements AutoCloseable {
 			return;
 		}
 		closed = true;
-		for (GameTickEvent event : server.getGameEventHandler().getEvents()) {
-			event.stop();
+		try {
+			if (recordingDropDatabase != null) {
+				final Field field = Server.class.getDeclaredField("sqlLoggingThreadPool");
+				field.setAccessible(true);
+				final ExecutorService logging = (ExecutorService) field.get(server);
+				logging.shutdown();
+				if (!logging.awaitTermination(10, TimeUnit.SECONDS)) {
+					logging.shutdownNow();
+					throw new IllegalStateException("Offline drop logging did not finish");
+				}
+				recordingDropDatabase.requireNoUnexpectedOperations();
+			}
+		} catch (InterruptedException failure) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException("Interrupted while finishing offline drop logging", failure);
+		} catch (ReflectiveOperationException failure) {
+			throw new IllegalStateException("Unable to finish test-only drop logger", failure);
+		} finally {
+			for (GameTickEvent event : server.getGameEventHandler().getEvents()) {
+				event.stop();
+			}
+			server.getGameEventHandler().cleanupEvents();
+			world.getPlayers().clear();
+			world.getNpcs().clear();
+			world.getNpcDrops().unload();
+			server.getEntityHandler().unload();
+			shutdown(pluginExecutor);
+			shutdownServerExecutor("sqlLoggingThreadPool");
+			shutdownServerExecutor("sqlThreadPool");
+			shutdownServerExecutor("onlineMonitorThreadPool");
+			Server.serversList.remove(server.getName(), server);
 		}
-		server.getGameEventHandler().cleanupEvents();
-		world.getPlayers().clear();
-		world.getNpcs().clear();
-		world.getNpcDrops().unload();
-		server.getEntityHandler().unload();
-		shutdown(pluginExecutor);
-		shutdownServerExecutor("sqlLoggingThreadPool");
-		shutdownServerExecutor("sqlThreadPool");
-		shutdownServerExecutor("onlineMonitorThreadPool");
-		Server.serversList.remove(server.getName(), server);
 	}
 
 	private void shutdownServerExecutor(final String fieldName) {

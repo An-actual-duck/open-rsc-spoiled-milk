@@ -282,7 +282,7 @@ public final class PartyInterface {
 				}
 			}
 		}
-		if (!mc.party.inParty() || (mc.party.isPartyLeader() && mc.party.inParty())) {
+		if (!mc.party.inParty() || mc.party.isPartyLeader()) {
 			drawButton(graphics, x + 131, y + 18, 125, 22, "Party Setup", partyActivePanel == 1, new ButtonHandler() {
 				@Override
 				void handle() {

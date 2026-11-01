@@ -8,14 +8,21 @@ spec=importlib.util.spec_from_file_location('coatings',ROOT/'scripts/generate-ba
 subprocess.run(['python3',str(ROOT/'scripts/generate-battleaxe-coatings.py'),'--check'],check=True)
 manifest=json.loads((ROOT/'dev/myworld/battleaxe-coatings/manifest.json').read_text());rows=manifest['variants']
 assert len(rows)==15 and {r['coatedId']for r in rows}==set(range(3411,3426))
+# Approved well textures were appended after the coating preservation baseline.
+# Validate their source-owned payloads, not just an allow-list of anonymous IDs.
+wells=json.loads((ROOT/'dev/myworld/cleric-wells/installation.json').read_text())
+subprocess.run(['python3',str(ROOT/'scripts/install-cleric-well-assets.py'),'--check'],check=True)
+well_custom={'textures:'+str(row['textureIndex'])for row in wells['textures'].values()}
+well_classic={str(row['nativeSprite'])for row in wells['textures'].values()}
+well_classic.update(str(row['nativeSprite'])for row in wells['supplementalOriginalCustomTextures'].values())
 before=subprocess.check_output(['git','show','3925067ce:Client_Base/Cache/video/Custom_Sprites.osar'],cwd=ROOT)
 old={g+':'+k:hashlib.sha256(b).hexdigest()for g,e in gen.archive(gzip.decompress(before))for k,b in e}
 new={g+':'+k:hashlib.sha256(b).hexdigest()for g,e in gen.archive(gzip.decompress((ROOT/'Client_Base/Cache/video/Custom_Sprites.osar').read_bytes()))for k,b in e}
-assert set(new)-set(old)=={'equipment:viscousbattleaxe'}
+assert set(new)-set(old)=={'equipment:viscousbattleaxe'}|well_custom
 assert all(new[k]==v for k,v in old.items()),'unrelated serialized sprite entries changed'
 authentic=subprocess.check_output(['git','show','3925067ce:Client_Base/Cache/video/Authentic_Sprites.orsc'],cwd=ROOT)
 with zipfile.ZipFile(__import__('io').BytesIO(authentic))as a,zipfile.ZipFile(ROOT/'Client_Base/Cache/video/Authentic_Sprites.orsc')as b:
- assert set(b.namelist())-set(a.namelist())=={str(i)for i in range(4000,4018)}
+ assert set(b.namelist())-set(a.namelist())=={str(i)for i in range(4000,4018)}|well_classic
  assert authentic[:a.start_dir]==(ROOT/'Client_Base/Cache/video/Authentic_Sprites.orsc').read_bytes()[:a.start_dir], 'all original local headers/compressed bytes retained'
  for name in a.namelist():
   assert a.read(name)==b.read(name),'original classic payload changed'

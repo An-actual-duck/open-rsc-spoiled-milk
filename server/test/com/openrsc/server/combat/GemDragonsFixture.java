@@ -57,8 +57,11 @@ public final class GemDragonsFixture {
                 check(h.world().getNpcDrops().rollHiddenUniqueDrops(npc.getID(),1.0).isEmpty(),"unique probability exclusive boundary");
                 clearEquipment(p);
             }
-            // Reserved antidote holes must stay absent server-side.
-            for(int id=3400;id<=3407;id++)check(h.server().getEntityHandler().getItemDef(id)==null,"reserved item hole preserved");
+            // These formerly reserved holes are now the integrated egg/antidote family.
+            String[] antidotes={"Giant Spider Eggs","Jungle Spider Eggs","Weak Antidote","Weak Antidote",
+                "Weak Antidote","Strong Antidote","Strong Antidote","Strong Antidote"};
+            for(int i=0;i<antidotes.length;i++)check(h.server().getEntityHandler().getItemDef(3400+i).getName().equals(antidotes[i]),
+                "neighboring antidote identity preserved");
             check(!GemCuttingEquipment.preventsFailure(p),"no glove effect when unequipped");
             h.equip(p,3408,1);check(GemCuttingEquipment.preventsFailure(p),"equipped gloves prevent failures");
             clearEquipment(p);check(!GemCuttingEquipment.preventsFailure(p),"unequipping immediately removes gloves effect");

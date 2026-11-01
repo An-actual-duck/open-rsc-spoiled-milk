@@ -48,6 +48,7 @@ public final class GemDragonStandardLootFixture {
     }
     public static void main(String[] args)throws Exception {
         try(CurrentCombatHarness h=new CurrentCombatHarness()) {
+            h.recordDropLogs();
             h.server().getConfig().VALUABLE_DROP_MESSAGES=false;
             h.server().getConfig().WANT_CUSTOM_QUESTS=false;
             h.server().getConfig().MEMBER_WORLD=true;
@@ -118,6 +119,7 @@ public final class GemDragonStandardLootFixture {
                 check(count(player,npc,3408)==1&&count(player,npc,3409)==1&&count(player,npc,SCRAP)==1&&count(player,npc,UNCUT[0])==1,"all independent rare wins and guaranteed gem coexist");
                 clearGround(h,player);
             }
+            check(h.awaitRecordedDropLogs()>0,"real asynchronous drop logging completed through the offline recorder");
         }
         System.out.println("Gem dragon standard loot: PASS "+assertions+" assertions; 10240 common/rune combinations plus 2688 rare gate tickets and "+deliveries+" complete necklace/personal deliveries");
     }
