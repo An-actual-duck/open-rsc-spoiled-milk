@@ -13,22 +13,31 @@ if (-not $releases -or $releases.Count -lt 1) {
     throw "Unable to determine the latest version from GitHub."
 }
 
+function Get-NumberSortKey($number) {
+    $digits = $number.TrimStart('0')
+    if ($digits.Length -eq 0) { $digits = "0" }
+    return "{0:D6}:{1}" -f $digits.Length, $digits
+}
+
 function Get-VersionSortKey($tagName) {
     $match = [regex]::Match($tagName, '^v(\d+)\.(\d+)\.(\d+)(?:-alpha\.(\d+))?$')
     if (-not $match.Success) {
         return $null
     }
 
-    $alphaRank = 999999
+    $stableRank = 1
+    $alphaRank = "0"
     if ($match.Groups[4].Success) {
-        $alphaRank = [int]$match.Groups[4].Value
+        $stableRank = 0
+        $alphaRank = $match.Groups[4].Value
     }
 
-    return "{0:D6}.{1:D6}.{2:D6}.{3:D6}" -f `
-        [int]$match.Groups[1].Value, `
-        [int]$match.Groups[2].Value, `
-        [int]$match.Groups[3].Value, `
-        $alphaRank
+    return "{0}.{1}.{2}.{3}.{4}" -f `
+        (Get-NumberSortKey $match.Groups[1].Value), `
+        (Get-NumberSortKey $match.Groups[2].Value), `
+        (Get-NumberSortKey $match.Groups[3].Value), `
+        $stableRank, `
+        (Get-NumberSortKey $alphaRank)
 }
 
 $latest = $releases |
@@ -41,6 +50,15 @@ if (-not $latest) {
 $latestVersion = $latest.tag_name
 if ($latestVersion -eq $CurrentVersion) {
     Write-Host "Spoiled Milk is up to date ($CurrentVersion)."
+    exit 0
+}
+
+$currentKey = Get-VersionSortKey $CurrentVersion
+if (-not $currentKey) {
+    throw "The installed version is unreadable; keeping the installed client."
+}
+if ([string]::CompareOrdinal((Get-VersionSortKey $latestVersion), $currentKey) -le 0) {
+    Write-Host "Installed version $CurrentVersion is newer than $latestVersion; keeping it."
     exit 0
 }
 

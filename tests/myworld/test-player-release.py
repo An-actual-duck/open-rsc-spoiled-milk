@@ -597,6 +597,29 @@ def test_uid_first_run_state_is_not_packaged_or_reused() -> None:
         fail("standalone client should use Spoiled Milk as its initial window title")
 
 
+def current_item_asset_receipts() -> dict:
+    """Fixed reviewed inventory; never permit every file merely because it exists."""
+    receipt = json.loads((ROOT / "tests/myworld/fixtures/player-release-current-item-art.json").read_text())
+    source_root = "dev/myworld/assets/sprites/items/inventory-ground"
+    if receipt["schemaVersion"] != 1 or receipt["sourceRoot"] != source_root:
+        fail("unsupported current item art receipt")
+    files = receipt["files"]
+    for name, digest in files.items():
+        relative = Path(name)
+        if relative.is_absolute() or ".." in relative.parts or relative.suffix != ".png":
+            fail(f"unsafe item art receipt path: {name}")
+        source = ROOT / source_root / relative
+        if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != digest:
+            fail(f"approved current item art bytes changed or missing: {name}")
+    for provenance in receipt["provenance"]:
+        if not (ROOT / provenance).is_file():
+            fail(f"current item art provenance is missing: {provenance}")
+    return {
+        "myworld-assets/sprites/items/inventory-ground/" + name: ROOT / source_root / name
+        for name in files
+    }
+
+
 def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
     build = subprocess.run(
         ["./scripts/build-client.sh"],
@@ -660,10 +683,14 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         "myworld-assets/sprites/items/inventory-ground/tools/shuriken-mould.png",
         "myworld-assets/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
     }
-    required |= CLERIC_SIGIL_JAR_ENTRIES
+    current_items = current_item_asset_receipts()
+    required |= CLERIC_SIGIL_JAR_ENTRIES | set(current_items)
     with zipfile.ZipFile(ROOT / "Client_Base" / "Open_RSC_Client.jar") as jar:
         names = set(jar.namelist())
         missing = required - names
+        for name, source in current_items.items():
+            if name in names and jar.read(name) != source.read_bytes():
+                fail(f"packaged current item art differs from approved source: {name}")
     if missing:
         fail(f"client jar is missing embedded runtime art: {sorted(missing)}")
     forbidden_prefixes = [
@@ -719,7 +746,7 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         "myworld-assets/sprites/items/inventory-ground/tools/shuriken-mould.png",
         "myworld-assets/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
     }
-    allowed_item_asset_names |= CLERIC_SIGIL_JAR_ENTRIES
+    allowed_item_asset_names |= CLERIC_SIGIL_JAR_ENTRIES | set(current_items)
     unexpected_item_assets = sorted(
         name for name in names
         if name.startswith("myworld-assets/sprites/items/")
@@ -780,7 +807,7 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/shuriken-mould.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
     }
-    allowed_item_sprite_paths |= CLERIC_SIGIL_SOURCE_PATHS
+    allowed_item_sprite_paths |= CLERIC_SIGIL_SOURCE_PATHS | set(current_items.values())
     item_sprite_root = ROOT / "dev/myworld/assets/sprites/items"
     if item_sprite_root.exists():
         unexpected_item_sprites = sorted(

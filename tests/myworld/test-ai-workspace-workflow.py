@@ -17,6 +17,8 @@ WORKFLOW_FILES = [
     Path("scripts/ai-manager.sh"),
     Path("scripts/create-ai-workspace.sh"),
     Path("scripts/lib/ai-workspace-common.sh"),
+    Path("scripts/lib/myworld-common.sh"),
+    Path("scripts/lib/layered-world-package.sh"),
 ]
 
 
@@ -73,6 +75,34 @@ class WorkflowFixture:
     def close(self) -> None:
         self.temp.cleanup()
 
+    def published_release_live(self, publish=True):
+        # Rebind only copied fixture scripts to a private temporary live path.
+        # Production identity constants and real public paths are never changed.
+        live = self.base / "live-fixture"
+        for relative in ("scripts/lib/ai-workspace-common.sh", "scripts/lib/myworld-common.sh"):
+            script = self.root / relative
+            script.write_text(script.read_text().replace("/tmp/spoiled-milk-live-main", str(live)))
+        build = self.root / "server/build.xml"
+        build.parent.mkdir()
+        build.write_text("<project/>\n")
+        self.git("add", ".")
+        self.git("commit", "-m", "Bind disposable live fixture")
+        self.git("push", "spoiled-milk", "main")
+        self.git("worktree", "add", "--detach", str(live), "HEAD")
+        (live / "release-only.txt").write_text("published fixes outside main\n")
+        self.git("add", "release-only.txt", cwd=live)
+        self.git("commit", "-m", "Detached fixes-only release", cwd=live)
+        commit = self.git("rev-parse", "HEAD", cwd=live).stdout.strip()
+        self.git("tag", "-a", "v1.2.3", "-m", "Fixture release", commit)
+        if publish:
+            self.git("push", "spoiled-milk", "refs/tags/v1.2.3")
+        with (self.root / ".git/info/exclude").open("a") as stream:
+            stream.write("\n/server/run/\n")
+        marker = live / "server/run/server-43605.env"
+        marker.parent.mkdir()
+        marker.write_text("marker_release_tag=v1.2.3\n")
+        return live, commit, marker
+
     def git(self, *args: str, cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             ["git", *args],
@@ -122,6 +152,44 @@ class AiWorkspaceWorkflowTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.fixture.close()
+
+    def test_release_accepts_exact_remotely_published_live_tag(self):
+        f = self.fixture
+        live, commit, _ = f.published_release_live()
+        self.assertNotEqual(0, f.git("merge-base", "--is-ancestor", commit, "spoiled-milk/main", check=False).returncode)
+        before = f.git("status", "--porcelain", cwd=live).stdout
+        f.run("ai-manager.sh", "release-check")
+        self.assertEqual(before, f.git("status", "--porcelain", cwd=live).stdout)
+        self.assertEqual(commit, f.git("rev-parse", "HEAD", cwd=live).stdout.strip())
+
+    def test_release_refuses_local_only_live_tag(self):
+        f = self.fixture
+        f.published_release_live(publish=False)
+        result = f.run("ai-manager.sh", "release-check", check=False)
+        self.assertNotEqual(0, result.returncode)
+
+    def test_release_refuses_drifted_remote_live_tag(self):
+        f = self.fixture
+        f.published_release_live()
+        f.git("push", "--force", "spoiled-milk", "main:refs/tags/v1.2.3")
+        result = f.run("ai-manager.sh", "release-check", check=False)
+        self.assertNotEqual(0, result.returncode)
+
+    def test_release_refuses_wrong_or_missing_live_launch_tag(self):
+        f = self.fixture
+        _, _, marker = f.published_release_live()
+        for contents in ("", "marker_release_tag=main\n", "marker_release_tag=v9.9.9\n"):
+            marker.write_text(contents)
+            result = f.run("ai-manager.sh", "release-check", check=False)
+            self.assertNotEqual(0, result.returncode)
+
+    def test_release_still_refuses_dirty_verified_release_live_tree(self):
+        f = self.fixture
+        live, _, _ = f.published_release_live()
+        (live / "unreviewed.txt").write_text("do not approve\n")
+        result = f.run("ai-manager.sh", "release-check", check=False)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("dirty", result.stderr.lower())
 
     def ready_to_park(self) -> tuple[Path, str, str]:
         f = self.fixture

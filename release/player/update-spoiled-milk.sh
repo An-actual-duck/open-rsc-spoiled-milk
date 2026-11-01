@@ -15,16 +15,36 @@ need_command() {
   fi
 }
 
+sort_versions() {
+  # Compare numeric components before prerelease status. Length-prefixed digits
+  # avoid numeric overflow and work with the POSIX sort shipped on macOS too.
+  awk '
+    function number_key(value) {
+      sub(/^0+/, "", value)
+      if (value == "") value = "0"
+      return sprintf("%06d:%s", length(value), value)
+    }
+    {
+      original = $0
+      sub(/^v/, "")
+      count = split($0, parts, /[.-]/)
+      stable = count == 3 ? 1 : 0
+      print number_key(parts[1]) "." number_key(parts[2]) "." number_key(parts[3]) "." stable "." number_key(parts[5]) " " original
+    }
+  ' | sort -k1,1 | cut -d ' ' -f2
+}
+
 find_latest_version() {
   printf '%s\n' "$1" \
     | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\(v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\(-alpha\.[0-9][0-9]*\)\?\)".*/\1/p' \
-    | sort -V \
+    | sort_versions \
     | tail -n 1
 }
 
 need_command curl
 need_command unzip
 need_command sort
+need_command awk
 
 printf 'Checking for Spoiled Milk updates...\n'
 release_json="$(curl -fsSL "$API_URL")"
@@ -37,6 +57,12 @@ fi
 
 if [ "$latest_version" = "$CURRENT_VERSION" ]; then
   printf 'Spoiled Milk is up to date (%s).\n' "$CURRENT_VERSION"
+  exit 0
+fi
+
+newest_version="$(printf '%s\n' "$CURRENT_VERSION" "$latest_version" | sort_versions | tail -n 1)"
+if [ "$newest_version" = "$CURRENT_VERSION" ]; then
+  printf 'Installed version %s is newer than %s; keeping it.\n' "$CURRENT_VERSION" "$latest_version"
   exit 0
 fi
 
