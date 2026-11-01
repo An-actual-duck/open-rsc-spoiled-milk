@@ -33,7 +33,7 @@ material/placement/collision-footprint/capacity preflight, then populates the re
 World. It never calls `Server.init()`, starts listeners, reads accounts, uses
 installed owner-map selectors or includes owner/synthetic maps in Git.
 
-The strict exit status is 1 for this candidate: **389 checks, 9 failures**. The
+The original focused run exits 1: **389 checks, 9 failures**. The
 external package fingerprint is unchanged after the run. Build and runtime logs:
 `/home/justin/.local/share/next-update-map-acceptance-20261101/runtime-acceptance-02/`.
 
@@ -65,6 +65,22 @@ the markers nor the local ladder5 at `(108,681,L-1)`. That ladder and all eight
 neighbors are overlay255/blocked terrain, so it also has no safe local approach.
 This provides a bounded authoring reference, not proof that a one-tile fix is
 sufficient. Any repair is a separate manager/owner-reviewed map operation.
+
+The subsequently requested ladder-safety extension preserves the original
+`BASELINE_RESULT` and adds both-direction contact/round-trip/shore connectivity
+checks. The original map returns **422 checks,23 failures** overall: the same
+nine baseline failures, plus14 checks exposing the Ichor access problem. The
+pair is confirmed as ladder5 at `(108,681,L-1)` and ladder6 at `(108,681,L0)`.
+No underground land contact is valid. All eight surface land contacts descend
+to blocked overlay255: `(107,680–682)`, `(108,680)`, `(108,682)`,
+`(109,680–682)`, all L-1. A preview repair must support every ordinary contact,
+return safely, and connect each underground arrival component to all five
+Ichor markers. Original extended evidence: `runtime-acceptance-02/original-extended.log`.
+
+A mismatched manifest hash is refused by the maintained runtime contract before
+definition loading/population; the refusal smoke exits1 and records
+`Selected native package does not match the configured manifest SHA-256` in
+`runtime-acceptance-02/manifest-mismatch-refusal.log`.
 
 ## Gem-cave return blocker
 

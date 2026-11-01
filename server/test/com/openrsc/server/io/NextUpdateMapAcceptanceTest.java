@@ -394,22 +394,34 @@ public final class NextUpdateMapAcceptanceTest {
                 if(!returned)continue;
                 safe++;
                 WorldLocation below=upward?from:destination;
-                reachableFromLadder.addAll(flood(below,85,120,645,690));
+                Set<Long> component=flood(below,85,120,645,690);
+                reachableFromLadder.addAll(component);
+                int totalWells=0,connectedWells=0;
+                for(NativeLayeredPlacementSet set:map.getPlacementSets().values())for(NativeLayeredSceneryPlacement placement:set.getScenery()){
+                    if(placement.getSceneryId()!=1354)continue;totalWells++;
+                    if(ichorShoreReachable(placement,component))connectedWells++;
+                }
+                check(totalWells>0&&connectedWells==totalWells,"Ichor each ladder contact reaches every shore from="+from+" connected="+connectedWells+"/"+totalWells);
+                System.out.println("ICHOR_LADDER_CONTACT_COMPONENT from="+from+" below="+below+" tiles="+component.size()+" connectedWells="+connectedWells+"/"+totalWells);
             }
             System.out.println("ICHOR_LADDER_CONTACTS at="+source.getWorldLocation()+" admitted="+contacts.size()+" safeRoundTrips="+safe);
         }
         for(NativeLayeredPlacementSet set:map.getPlacementSets().values())for(NativeLayeredSceneryPlacement placement:set.getScenery()){
             if(placement.getSceneryId()!=1354)continue;
-            boolean reachable=false;GameObject well=scenery(placement.getLocation());
-            for(int dx=-1;dx<=1;dx++)for(int dy=-1;dy<=1;dy++){
-                if(dx==0&&dy==0)continue;WorldLocation land=offset(placement.getLocation(),dx,dy);
-                WorldCoordinate c=land.getCoordinate();
-                if(!reachableFromLadder.contains(key(c.getX(),c.getY())))continue;
-                move(land);if(ClericWellInteraction.canInteract(player,well))reachable=true;
-            }
+            boolean reachable=ichorShoreReachable(placement,reachableFromLadder);
             check(reachable,"Ichor Dip shore connected to a safe ladder round trip "+placement.getLocation());
         }
         System.out.println("ICHOR_LADDER_CONNECTED_TILES count="+reachableFromLadder.size());
+    }
+
+    private boolean ichorShoreReachable(NativeLayeredSceneryPlacement placement,Set<Long> component){
+        GameObject well=scenery(placement.getLocation());
+        for(int dx=-1;dx<=1;dx++)for(int dy=-1;dy<=1;dy++){
+            if(dx==0&&dy==0)continue;WorldLocation land=offset(placement.getLocation(),dx,dy);WorldCoordinate c=land.getCoordinate();
+            if(!component.contains(key(c.getX(),c.getY())))continue;
+            move(land);if(ClericWellInteraction.canInteract(player,well))return true;
+        }
+        return false;
     }
 
     private GameObject scenery(WorldLocation location) { return server.getWorld().getRegionManager().findNativeLayeredScenery(location); }
