@@ -93,17 +93,17 @@ public final class ClericSigilItemIdentityFixture {
 
 	public static void main(String[] args) {
 		ClericSigilItemId[] identities = ClericSigilItemId.values();
-		check(identities.length == 16, "sigil identity count drift");
+		check(identities.length == 24, "sigil identity count drift");
 		for (int index = 0; index < identities.length; index++) {
 			ClericSigilItemId identity = identities[index];
-			int expectedItemId = 3293 + index;
+			int expectedItemId = index < 16 ? 3293 + index : 3434 + index - 16;
 			check(identity.getItemId() == expectedItemId, "item ID drift " + identity);
 			check(ClericSigilItemId.fromItemId(expectedItemId) == identity,
 				"item lookup drift " + identity);
 			check(identity.getMaterial() == (index < 8
-				? ClericSigilMaterial.STONE : ClericSigilMaterial.SILVER),
+				? ClericSigilMaterial.STONE : index < 16 ? ClericSigilMaterial.SILVER : ClericSigilMaterial.MOONSILVER),
 				"material drift " + identity);
-			check(identity.getAlignment() == ALIGNMENTS[index], "alignment drift " + identity);
+			check(identity.getAlignment() == ALIGNMENTS[index % 8], "alignment drift " + identity);
 			check(identity.isBlessed() == (index % 2 == 1), "blessing-state drift " + identity);
 		}
 		try {
@@ -131,7 +131,7 @@ def require(condition: bool, message: str) -> None:
 def validate_definitions_and_scope() -> None:
     payload = json.loads(SERVER_ITEMS.read_text(encoding="utf-8"))["items"]
     entries = {int(entry["id"]): entry for entry in payload}
-    require(max(entries) == 3429, "custom definitions must include the current contiguous item range")
+    require(max(entries) == 3443, "custom definitions must include the current contiguous item range")
     require(set(range(3293, 3309)) <= entries.keys(), "server sigil definition range is incomplete")
 
     legacy_constants = LEGACY_ITEM_IDS.read_text(encoding="utf-8")
@@ -193,11 +193,20 @@ def validate_definitions_and_scope() -> None:
 
 
 def validate_source_assets() -> None:
+    receipt = json.loads((ROOT / "dev/myworld/moonsilver-sigil-production/manifest.json").read_text())
+    require(receipt["status"] == "owner-approved" and receipt["fileRoot"] == "repository", "approved Moonsilver receipt root")
+    for name, expected in receipt["files"].items():
+        path = ROOT / name
+        require(path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest() == expected,
+                "Moonsilver maintained asset receipt mismatch: " + name)
     actual_pngs = {path.name for path in ASSET_DIR.glob("*.png")}
     expected_pngs = set(SOURCE_HASHES) | {
         f"silver-{name}" for name in SOURCE_HASHES if name != "stone.png"
     }
     expected_pngs |= {f"blight-{material}-{state}.png" for material in ("stone", "silver") for state in ("uninfused", "infused")}
+    expected_pngs |= {"moonsilver-bar.png", "blank-silver-sigil.png", "blank-moonsilver-sigil.png", "sigil-mould.png"}
+    expected_pngs |= {f"moonsilver-{state}-{god}-sigil.png" for state in ("unblessed", "blessed") for god in ("sara", "guth", "zam", "neutral")}
+    expected_pngs |= {f"moonsilver-{state}-blight-sigil.png" for state in ("uninfused", "infused")}
     require(actual_pngs == expected_pngs,
             f"sigil PNG inventory drift: expected {sorted(expected_pngs)}, got {sorted(actual_pngs)}")
     for name, expected_hash in SOURCE_HASHES.items():
@@ -277,7 +286,7 @@ public final class ClericSigilItemAssetFixture {
 		Path root = Paths.get(args[0]);
 		Path assets = root.resolve("dev/myworld/assets/sprites/items/inventory-ground/resources/sigils");
 		EntityHandler.load(true);
-		check(EntityHandler.itemCount() == 3430, "client item count drift");
+		check(EntityHandler.itemCount() == 3444, "client item count drift");
 
 		ClientExternalAssetLoader local = new ClientExternalAssetLoader(root, mudclient.class);
 		ClientExternalAssetLoader packaged = new ClientExternalAssetLoader(
@@ -314,6 +323,20 @@ public final class ClericSigilItemAssetFixture {
             check(first != null && second != null, "Blight local/classpath assets " + id);
             int[] box = visibleBounds(first);
             check(box[2] <= (id < 3428 ? 28 : 24) && box[3] <= (id < 3428 ? 25 : 21), "Blight native render size " + id);
+        }
+
+        for (int id = 3430; id <= 3443; id++) {
+            ItemDef item = EntityHandler.getItemDef(id);
+            check(item != null && item.id == id, "new metal-sigil identity " + id);
+            int fallback = id == 3430 ? 79 : id == 3433 ? 127 : 134;
+            check(item.getSpriteID() == fallback, "new metal-sigil native fallback " + id);
+            check(item.isStackable() == (id >= 3434 && id % 2 == 1), "new blank/carved/charged stackability " + id);
+            Sprite first = local.getExternalItemSprite(item), second = packaged.getExternalItemSprite(item);
+            check(first != null && second != null && java.util.Arrays.equals(first.getPixels(), second.getPixels()),
+                "new source/packaged actual pixels identical " + id);
+            int[] box = visibleBounds(first);
+            check(box[2] <= (id == 3430 || id == 3433 ? 46 : 24) && box[3] <= (id == 3430 || id == 3433 ? 30 : 21),
+                "new metal-sigil render scale " + id);
         }
 
 		ItemDef missing = new ItemDef("Missing", "Missing", "", 0, 443,

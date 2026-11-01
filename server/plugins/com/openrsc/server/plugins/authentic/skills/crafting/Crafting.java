@@ -3,6 +3,8 @@ package com.openrsc.server.plugins.authentic.skills.crafting;
 import com.google.common.collect.ImmutableMap;
 import com.openrsc.server.ServerConfiguration;
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.content.cleric.ClericMetalSigils;
+import com.openrsc.server.plugins.custom.myworld.skills.blessing.SigilMoulding;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.constants.Skill;
@@ -323,6 +325,7 @@ public class Crafting implements UseInvTrigger,
 	@Override
 	public void onUseLoc(final Player player, GameObject obj, final Item item) {
 		if (!craftingChecks(obj, item, player)) return;
+		SigilMoulding.rememberFurnace(player, obj);
 		beginCrafting(item, player);
 	}
 
@@ -362,7 +365,8 @@ public class Crafting implements UseInvTrigger,
 
 	private boolean craftingTypeChecks(final GameObject obj, final Item item, final Player player) {
 		boolean furnace = obj.getID() == SceneryId.FURNACE.id()|| obj.getID() == SceneryId.FURNACE_UNDERGROUND_PASS.id();
-		boolean furnaceItem = DataConversions.inArray(itemsFurnance, item.getCatalogId());
+		boolean furnaceItem = DataConversions.inArray(itemsFurnance, item.getCatalogId())
+			|| item.getCatalogId() == ClericMetalSigils.MOONSILVER_BAR || item.getCatalogId() == ClericMetalSigils.SIGIL_MOULD;
 		boolean rangedCastingBar = isModernMetalBar(item.getCatalogId());
 		boolean jewelryBar = item.getCatalogId() == ItemId.SILVER_BAR.id() || item.getCatalogId() == ItemId.GOLD_BAR.id();
 		boolean potteryOven = obj.getID() == SceneryId.POTTERY_OVEN.id();
@@ -377,6 +381,10 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private void beginCrafting(final Item item, final Player player) {
+		if (item.getCatalogId() == ClericMetalSigils.MOONSILVER_BAR || item.getCatalogId() == ClericMetalSigils.SIGIL_MOULD) {
+			SigilMoulding.openInterface(player);
+			return;
+		}
 		if (item.getCatalogId() == ItemId.SODA_ASH.id() || item.getCatalogId() == ItemId.SAND.id()) {
 			doGlassMaking(item, player);
 			return;
@@ -1842,6 +1850,8 @@ public class Crafting implements UseInvTrigger,
 		Crafting crafting = new Crafting();
 		int inputId = session.getInputItemId();
 		if (inputId == ItemId.SILVER_BAR.id()) {
+			if (itemId == ClericMetalSigils.BLANK_SILVER_SIGIL)
+				return SigilMoulding.beginProductionFromInterface(player, session, itemId, quantity);
 			int type = crafting.getSilverJewelryProductionType(player, itemId);
 			if (type < 0) {
 				player.message("Nothing interesting happens");
@@ -2236,8 +2246,9 @@ public class Crafting implements UseInvTrigger,
 				new int[]{ItemId.SILVER_BAR.id(), silver_moulds[type]},
 				new int[]{-1, -1}, new int[]{1, 1}));
 		}
+		if (onlyType < 0 && player.getConfig().WANT_MYWORLD) recipes.add(SigilMoulding.silverBlankRecipe(player));
 		return recipes.isEmpty() ? null
-			: new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose silver jewelry to craft", ItemId.SILVER_BAR.id(), recipes);
+			: new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose silver items to craft", ItemId.SILVER_BAR.id(), recipes);
 	}
 
 	private void doRangedMouldCasting(final Item bar, final Player player) {

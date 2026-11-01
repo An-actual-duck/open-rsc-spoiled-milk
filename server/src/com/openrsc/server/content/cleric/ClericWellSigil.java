@@ -5,7 +5,9 @@ public enum ClericWellSigil {
     STONE_GRACE(ClericSigilMaterial.STONE, Purpose.GRACE, 3299, 3300),
     SILVER_GRACE(ClericSigilMaterial.SILVER, Purpose.GRACE, 3307, 3308),
     STONE_BLIGHT(ClericSigilMaterial.STONE, Purpose.BLIGHT, 3426, 3427),
-    SILVER_BLIGHT(ClericSigilMaterial.SILVER, Purpose.BLIGHT, 3428, 3429);
+    SILVER_BLIGHT(ClericSigilMaterial.SILVER, Purpose.BLIGHT, 3428, 3429),
+    MOONSILVER_GRACE(ClericSigilMaterial.MOONSILVER, Purpose.GRACE, 3440, 3441),
+    MOONSILVER_BLIGHT(ClericSigilMaterial.MOONSILVER, Purpose.BLIGHT, 3442, 3443);
 
     public enum Purpose {
         GRACE("Grace", 1355, "a Divine wellspring"),
@@ -30,6 +32,10 @@ public enum ClericWellSigil {
     public int getRawItemId() { return rawId; }
     public int getInfusedItemId() { return infusedId; }
     public boolean acceptsWell(int id) { return purpose.getWellId()==id; }
+    public static ClericWellSigil get(ClericSigilMaterial material, Purpose purpose) {
+        for (ClericWellSigil sigil : values()) if (sigil.material == material && sigil.purpose == purpose) return sigil;
+        throw new IllegalArgumentException("Unsupported sigil material/purpose");
+    }
     public static ClericWellSigil fromRaw(int id) { for(ClericWellSigil sigil:values())if(sigil.rawId==id)return sigil;return null; }
     public static ClericWellSigil fromAny(int id) { for(ClericWellSigil sigil:values())if(sigil.rawId==id||sigil.infusedId==id)return sigil;return null; }
 }

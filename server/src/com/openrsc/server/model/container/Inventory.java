@@ -447,6 +447,38 @@ public class Inventory {
 		return false;
 	}
 
+	/**
+	 * Replaces one exact nonstacked instance with a bounded number of nonstacked
+	 * copies. Capacity and client admission are checked before allocating IDs or
+	 * changing inventory; this is used when moulding a bar into three sigil blanks.
+	 */
+	public boolean replaceExactWithCopies(Item source, int outputId, int count, boolean sendInventory) {
+		if (source == null || source.getItemId() == Item.ITEM_ID_UNASSIGNED
+			|| source.getAmount() != 1 || source.getNoted() || source.isWielded()
+			|| count < 1 || count > MAX_SUPPORTED_SIZE) return false;
+		ItemDefinition output = player.getWorld().getServer().getEntityHandler().getItemDef(outputId);
+		if (output == null || output.isStackable()
+			|| player.getClientLimitations().maxItemId < outputId
+			|| (player.getConfig().RESTRICT_ITEM_ID >= 0 && player.getConfig().RESTRICT_ITEM_ID < outputId)) return false;
+		synchronized (list) {
+			if (list.size() - 1 + count > getCapacity()) return false;
+			for (int index = 0; index < list.size(); index++) {
+				Item existing = list.get(index);
+				if (existing.getItemId() != source.getItemId() || existing.getCatalogId() != source.getCatalogId()
+					|| existing.getNoted() || existing.getAmount() != 1 || existing.isWielded()) continue;
+				List<Item> replacements = new ArrayList<Item>(count);
+				replacements.add(new Item(outputId, 1).copyWithItemId(existing.getItemId()));
+				for (int n = 1; n < count; n++) replacements.add(new Item(outputId, 1).copyWithItemId(
+					player.getWorld().getServer().getDatabase().incrementMaxItemId(player)));
+				list.set(index, replacements.get(0));
+				list.addAll(replacements.subList(1, replacements.size()));
+				if (sendInventory) ActionSender.sendInventory(player);
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/** Returns whether an all-matching stack conversion can commit atomically. */
 	public boolean canReplaceAllCatalogStacked(Item sourceItems, Item newItem) {
 		if (!isSupportedStackReplacement(sourceItems, newItem)

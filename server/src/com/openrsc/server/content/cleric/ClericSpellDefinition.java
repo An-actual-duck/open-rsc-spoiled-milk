@@ -119,27 +119,24 @@ public final class ClericSpellDefinition {
     return primarySigilCost;
   }
 
-  /** Initial private-build cost vector; one exact exchange per cast, never per recipient. */
+  /** One atomic exchange per useful cast, using its current and previous material grades. */
   public java.util.List<ClericResourceCost> getResourceCosts() {
     java.util.List<ClericResourceCost> result = new java.util.ArrayList<ClericResourceCost>();
-    if (id == ClericSpellId.UNIFY || id == ClericSpellId.GREATER_UNIFY) {
-      result.add(new ClericResourceCost(3300, id == ClericSpellId.UNIFY ? 2 : 6));
+    if (id == ClericSpellId.UNIFY) {
+      result.add(new ClericResourceCost(3300, 2));
+    } else if (id == ClericSpellId.GREATER_UNIFY) {
+      result.add(new ClericResourceCost(3300, 3));
+      result.add(new ClericResourceCost(3308, 3));
     } else {
-      ClericSigilMaterial material =
-          spellTier == 3 ? ClericSigilMaterial.SILVER : ClericSigilMaterial.STONE;
-      int count = spellTier == 1 ? 1 : 2;
-      result.add(
-          new ClericResourceCost(
-              ClericSigilItemId.get(material, alignment, true).getItemId(), count));
-      result.add(
-          new ClericResourceCost(
-              isHostile()
-                  ? (material == ClericSigilMaterial.STONE
-                          ? ClericWellSigil.STONE_BLIGHT
-                          : ClericWellSigil.SILVER_BLIGHT)
-                      .getInfusedItemId()
-                  : ClericSigilItemId.get(material, ClericAlignment.NEUTRAL, true).getItemId(),
-              count));
+      for (ClericSigilMaterial material : ClericSigilMaterial.values()) {
+        int count = primarySigilCost.getCount(material);
+        if (count == 0) continue;
+        result.add(new ClericResourceCost(
+            ClericSigilItemId.get(material, alignment, true).getItemId(), count));
+        result.add(new ClericResourceCost(
+            ClericWellSigil.get(material, isHostile()
+                ? ClericWellSigil.Purpose.BLIGHT : ClericWellSigil.Purpose.GRACE).getInfusedItemId(), count));
+      }
     }
     return java.util.Collections.unmodifiableList(result);
   }

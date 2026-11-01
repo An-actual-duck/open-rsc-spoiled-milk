@@ -283,7 +283,7 @@ public final class ClericHostileFixture {
       check(ClericBlessingsFixture.count(solo, 3427) == 100, "summon exclusion keeps resources");
       admission.removeAttribute("myworld_summon_owner");
       cast(solo, 24);
-      check(ClericBlessingsFixture.count(solo, 3429) == 98, "solo eligible NPC succeeds");
+      check(ClericBlessingsFixture.count(solo, 3429) == 99, "solo eligible NPC succeeds");
       cast(solo, 22);
       check(
           ClericBlessingsFixture.count(solo, 3427) == 100,

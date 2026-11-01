@@ -37,7 +37,7 @@ public final class GraceBlightWellInfusionFixture {
   GameObject ichor=h.world().getRegionManager().findNativeLayeredScenery(WorldLocation.global(new WorldCoordinate(440,440,0)));
   GameObject divine=h.world().getRegionManager().findNativeLayeredScenery(WorldLocation.global(new WorldCoordinate(440,448,0)));
   for(PrayerCatalog.GodLine g:PrayerCatalog.GodLine.values())Devotion.setDevotionLevel(p,g,500);
-  for(ClericWellSigil sigil:ClericWellSigil.values())for(int n:new int[]{0,1,10,11,15,16,25,26,99}){
+  for(ClericWellSigil sigil:ClericWellSigil.values())for(int n:new int[]{0,1,10,11,15,16,25,26,39,40,49,50,99}){
    clear(p);level(p,n);GameObject o=sigil.acceptsWell(1354)?ichor:divine;p.teleport(o.getX()+1,o.getY(),false);inv(p).add(new Item(sigil.getRawItemId(),3));double before=xp(p);int[] gods=devotion(p);
    plugin.onOpLoc(p,o,"Dip sigils");int mult=ClericSigilProductionCatalog.getOutputMultiplier(n,sigil.getMaterial());
    check(count(p,sigil.getInfusedItemId())==3*mult,"correct output "+sigil+" level"+n);check(count(p,sigil.getRawItemId())==(mult==0?3:0),"exact raw consumption "+sigil+" level"+n+" raw"+count(p,sigil.getRawItemId())+" mult"+mult);
@@ -66,7 +66,7 @@ public final class GraceBlightWellInfusionFixture {
   }
   p.setClientVersion(10065);p.getClientLimitations().maxItemId=Integer.MAX_VALUE;
   for(ClericSigilMaterial material:ClericSigilMaterial.values()){
-   int output=material==ClericSigilMaterial.STONE?3426:3428;
+   int output=ClericWellSigil.get(material,ClericWellSigil.Purpose.BLIGHT).getRawItemId();
    for(int crafting:new int[]{material.getCraftingLevel()-1,material.getCraftingLevel()}){
     clear(p);p.getSkills().setExperienceAndLevel(Skill.CRAFTING.id(),p.getSkills().experienceForLevel(Math.max(1,crafting)),crafting,false);
     inv(p).add(new Item(com.openrsc.server.constants.ItemId.CHISEL.id()));inv(p).add(new Item(material.getSourceItemId()));

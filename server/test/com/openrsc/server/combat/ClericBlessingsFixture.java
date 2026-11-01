@@ -294,7 +294,7 @@ public final class ClericBlessingsFixture {
       r.teleport(455, 450, false);
       fund(c, ClericSpellCatalog.fromCode(21));
       packet(c, 21);
-      check(r.getX() == 452 && count(c, 3300) == 94, "Greater radius5 three steps cost6");
+      check(r.getX() == 452 && count(c, 3300) == 97 && count(c, 3308) == 97, "Greater radius5 three steps cost6");
       r.teleport(456, 450, false);
       fund(c, ClericSpellCatalog.fromCode(21));
       packet(c, 21);

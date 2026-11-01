@@ -5904,6 +5904,62 @@ public class EntityHandler {
 			"Silver Blight sigil", "A silver Blight sigil infused with ichor", "",
 			0, 134, "external-png:blight-silver-infused@24x21", true, false, 0, 0,
 			false, false, false, 3429));
+		setCustomItemDefinition(3430, new ItemDef(
+			"Moonsilver bar", "An alloy of silver and mithril, dark blue with a silvery sheen", "",
+			450, 79, "external-png:moonsilver-bar", false, false, 0, 0,
+			false, false, true, 3430));
+		setCustomItemDefinition(3431, new ItemDef(
+			"Blank Silver Sigils", "A blank silver sigil ready to carve", "",
+			0, 134, "external-png:blank-silver-sigil@24x21", false, false, 0, 0,
+			false, false, false, 3431));
+		setCustomItemDefinition(3432, new ItemDef(
+			"Blank Moonsilver Sigils", "A blank Moonsilver sigil ready to carve", "",
+			0, 134, "external-png:blank-moonsilver-sigil@24x21", false, false, 0, 0,
+			false, false, false, 3432));
+		setCustomItemDefinition(3433, new ItemDef(
+			"Sigil mould", "A reusable mould for casting three blank metal sigils", "",
+			50, 127, "external-png:sigil-mould", false, false, 0, 0,
+			false, false, false, 3433));
+		setCustomItemDefinition(3434, new ItemDef(
+			"Unblessed Moonsilver sigil of Saradomin", "A carved Moonsilver sigil awaiting Saradomin's blessing", "",
+			0, 134, "external-png:moonsilver-unblessed-sara-sigil@24x21", false, false, 0, 0,
+			false, false, false, 3434));
+		setCustomItemDefinition(3435, new ItemDef(
+			"Moonsilver sigil of Saradomin", "A Moonsilver sigil blessed by Saradomin", "",
+			0, 134, "external-png:moonsilver-blessed-sara-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3435));
+		setCustomItemDefinition(3436, new ItemDef(
+			"Unblessed Moonsilver sigil of Guthix", "A carved Moonsilver sigil awaiting Guthix's blessing", "",
+			0, 134, "external-png:moonsilver-unblessed-guth-sigil@24x21", false, false, 0, 0,
+			false, false, false, 3436));
+		setCustomItemDefinition(3437, new ItemDef(
+			"Moonsilver sigil of Guthix", "A Moonsilver sigil blessed by Guthix", "",
+			0, 134, "external-png:moonsilver-blessed-guth-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3437));
+		setCustomItemDefinition(3438, new ItemDef(
+			"Unblessed Moonsilver sigil of Zamorak", "A carved Moonsilver sigil awaiting Zamorak's blessing", "",
+			0, 134, "external-png:moonsilver-unblessed-zam-sigil@24x21", false, false, 0, 0,
+			false, false, false, 3438));
+		setCustomItemDefinition(3439, new ItemDef(
+			"Moonsilver sigil of Zamorak", "A Moonsilver sigil blessed by Zamorak", "",
+			0, 134, "external-png:moonsilver-blessed-zam-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3439));
+		setCustomItemDefinition(3440, new ItemDef(
+			"Uninfused Moonsilver Grace sigil", "A carved Moonsilver Grace sigil awaiting divine water", "",
+			0, 134, "external-png:moonsilver-unblessed-neutral-sigil@24x21", false, false, 0, 0,
+			false, false, false, 3440));
+		setCustomItemDefinition(3441, new ItemDef(
+			"Moonsilver Grace sigil", "A Moonsilver Grace sigil infused with divine water", "",
+			0, 134, "external-png:moonsilver-blessed-neutral-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3441));
+		setCustomItemDefinition(3442, new ItemDef(
+			"Uninfused Moonsilver Blight sigil", "A carved Moonsilver Blight sigil awaiting ichor", "",
+			0, 134, "external-png:moonsilver-uninfused-blight-sigil@24x21", false, false, 0, 0,
+			false, false, false, 3442));
+		setCustomItemDefinition(3443, new ItemDef(
+			"Moonsilver Blight sigil", "A Moonsilver Blight sigil infused with ichor", "",
+			0, 134, "external-png:moonsilver-infused-blight-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3443));
 	}
 
 	private static void applyBangleVisuals() {

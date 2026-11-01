@@ -26,6 +26,40 @@ this scope acceptance does not claim unrun gameplay coverage. The active
 [release checklist](next-major-release-goals.md#current-release-checkpoint--october-31-2026)
 governs what is still required.
 
+### Current sigil materials and casting costs — October 31, 2026
+
+The owner selected **Moonsilver**, an alloy of silver and mithril, as the third
+sigil grade. This supersedes the earlier Silver-nugget carving path and initial
+private-build cost defaults throughout this historical design document.
+
+- Stone stays unchanged: Rune stone plus chisel → one carved sigil.
+- At a furnace, one Silver bar and a reusable Sigil mould make **three Blank
+  Silver Sigils**. One Moonsilver bar and the same mould make **three Blank
+  Moonsilver Sigils**. Carve each blank with a chisel into Saradomin, Guthix,
+  Zamorak, Grace or Blight, then charge it at its god altar or correct well.
+- The initial alloy recipe is one Silver bar + one Mithril bar → one Moonsilver
+  bar, Smithing 38. Silver moulding/carving requires Crafting 20, charging Blessing 16;
+  Moonsilver moulding/carving requires Crafting 40, charging Blessing 40.
+  These numeric production defaults are reviewable; the owner specified the
+  material, blank→carved→charged flow and three-blank yield.
+- Existing carved/charged Silver identities and all old stocks remain valid.
+  Raw Silver nuggets still smelt normally, but no longer carve directly.
+- Increased altar/well output and diminishing XP retain the established formula.
+
+| Spell tier | Matching god sigils | Grace for blessings / Blight for hostile spells |
+| --- | --- | --- |
+| 1 | 1 Stone | 1 Stone |
+| 2 | 1 Stone + 1 Silver | 1 Stone + 1 Silver |
+| 3 | 1 Silver + 1 Moonsilver | 1 Silver + 1 Moonsilver |
+
+Each cast spends its complete vector once, only on useful application. Tier 3
+uses no Stone. **Unify costs2 Stone Grace; Greater Unify costs3 Stone Grace plus
+3 Silver Grace**, explicitly approved by the owner. No neutral Blight spell,
+Zamorak hostile spell or Tier 4 is enabled by this material addition.
+
+See [production and validation](cleric-metal-sigil-production-review.md) for
+identities, actual XP units, recipe defaults, asset provenance and tests.
+
 ### Active overhaul: three ordinary tiers and six power levels — October 30, 2026
 
 This is the owner-confirmed **implemented baseline for the accepted stage**, superseding the old
@@ -233,20 +267,20 @@ It uses Worship 3, radius 3, party allies excluding the caster, with at most
 one safe ordinary walking step toward the caster, stopping within two tiles.
 Same-level/world and line-of-effect restrictions remain, PvP remains disabled,
 and Unify has no Holy Power ranks. Its base unlock and movement remain unchanged.
-Two Grace is the confirmed flat quantity; the initial private-build grade is
-Stone Grace 3300, a reviewable manager default rather than a separate owner
-approval of the full material-grade plan.
+Two Stone Grace (3300) is the owner-confirmed flat cost. Greater Unify's
+current owner-approved grade split is three Stone Grace plus three Silver Grace.
 
 **Greater Unify — exactly one additional tier:** Worship 30, radius 5, at most
 three safe ordinary walking steps toward the caster, stopping within two tiles.
-Its flat cost is **six Stone Grace sigils per cast**, triple base Unify, no god
+Its flat cost is **three Stone Grace plus three Silver Grace sigils per cast**,
+triple base Unify by total quantity, no god
 sigil and no Holy Power scaling. Existing party, same-world/level, line-of-effect
 and PvP exclusions remain. No further Unify tiers are introduced.
 
-**Initial private-build costs:** Tier 1 uses one stone god sigil + one Stone
-Grace; Tier 2 uses two stone god sigils + two Stone Grace; Tier 3 uses two silver
-god sigils + two Silver Grace. These material/count vectors are manager defaults
-for the initial private build, not separately owner-specified economic balance.
+**Current owner-approved costs:** Tier1 uses one Stone god sigil plus one Stone
+purpose sigil; Tier2 uses one Stone and one Silver of both god and purpose;
+Tier 3 uses one Silver and one Moonsilver of both god and purpose, with no Stone.
+Grace is the blessing purpose and Blight the hostile purpose.
 The whole mixed vector commits atomically once per cast; no eligible/useful
 recipient means no resource cost. Different gods coexist; same-god tier/potency
 precedence prevents stacking or downgrade, and equal strength safely refreshes.
@@ -461,9 +495,9 @@ pending separate eligible-hit/execution decisions; Cosmic combat luck is impleme
 
 The old neutral Respite stays absent from the active17-entry candidate. This
 does not remove Saradomin regeneration, other equipment/potion regeneration,
-assets or item identities. Initial manager cost vectors remain reviewable;
+assets or item identities. The owner-approved current/previous-grade costs above replace the initial manager vectors;
 God+Grace/God+Blight are exchanged atomically once per useful cast. Unify's
-confirmed quantity is2Grace and Greater Unify6Grace (current initial grade: stone).
+confirmed cost is2 Stone Grace, and Greater Unify3 Stone Grace plus3 Silver Grace.
 No public activation is authorized by this implementation.
 
 ### Historical owner direction — October 29, 2026
@@ -502,7 +536,7 @@ No public activation is authorized by this implementation.
 **Historical implementation boundary (October 30):** Grace/Blight carving and well
 infusion are implemented as described in [the infusion review](grace-blight-well-infusion-review.md).
 Stone uses Rune stone + chisel (Crafting1,5XP), and silver uses Silver nugget +
-chisel (Crafting20,10XP), for both purposes. Infusion requires Blessing1/16,
+chisel (Crafting 20,10XP), for both purposes. Infusion requires Blessing1/16,
 base5/10XP, and exactly the existing altar yield/diminishing-XP progression.
 Purpose wells charge no Devotion. Grace retains IDs3299/3300/3307/3308 and all
 stock/art; Blight uses3426–3429. Grace now uses Divine wellsprings instead of
@@ -1936,7 +1970,7 @@ a `48`-pixel maximum presentation footprint and Thorns uses `32` to keep group
 casting unobtrusive. Missing or unsupported visual assets remain a safe client-
 only no-animation fallback and never affect gameplay.
 
-### 2026-08-03: Stone and silver carving inputs
+### 2026-08-03: Stone and silver carving inputs — historical Silver source superseded
 
 Confirmed that a stone recipe consumes one Rune stone and produces one
 unblessed stone sigil, while a silver recipe consumes one existing Silver
