@@ -1,7 +1,8 @@
 # Auction transaction safety — Core review
 
-Status: **verification in progress; prior READY superseded**. Tested code checkpoint:
-`b8c2e96289d466fca123bb33f1d49573874ed189`. The final handoff adds only this
+Status: **READY for Core review**. Tested code/fixture checkpoint:
+`c708855e8672df162cabdfef30570546b14b9538` (production source finalized at
+`200e804bdbe8a467977afaf682402493368073b8`). The final handoff adds only this
 report and its evidence manifest. No server operations, account databases,
 credentials, owner maps, imports, integration or deployment were performed.
 
@@ -29,8 +30,14 @@ transaction rather than trusting an ordinary SELECT that can miss an unfinished
 remote COMMIT. Unavailable/ambiguous resolution, or failed live publication,
 revokes and detaches the old session; queued old saves cannot overwrite the
 committed state or a replacement session. Ordinary provider loading recovers
-current equipment, inventory and bank. Login's online check uses the live World
-registry, which revocation removes, rather than a stale database online flag.
+current equipment, inventory and bank. Before any successor Player is created,
+AccountLoadBarrier takes a fresh bounded current lock on the account row, waiting
+for an earlier still-inflight remote COMMIT. This applies after process restart
+and with auctions disabled, without requiring receipt-table creation. Failure
+denies login before any success response or economic snapshot. Normal loading
+starts a fresh transaction only after the barrier; false transaction results or
+changed account IDs cannot return a partial actor. Login's online check uses the
+live World registry, which revocation removes, rather than a stale database bit.
 
 ## Ownership, containers and independent review corrections
 
@@ -106,10 +113,10 @@ python3 tests/myworld/test-market-atomicity.py --mysql-manifest \
 - Shared Slow: **115 boundary assertions**, adapters, legacy ranged cadence,
   retained damage/RNG and committed magic deadlines passed.
 - Inventory-capacity packet compatibility passed.
-- Actual SQLite: **194 assertions**, plus **3** precommit-crash recovery and **3**
+- Actual SQLite: **252 assertions**, plus **4** precommit-crash recovery and **4**
   postcommit-crash recovery assertions.
 - Actual MySQL JDBC driver against the specifically assigned disposable MariaDB
-  11.4.13: the same **194 + 3 + 3** assertions passed.
+  11.4.13: the same **252 + 4 + 4** assertions passed.
 - Real-engine cases cover all settlement paths, eight precommit failure points,
   replay, seller/buyer conservation, competing buyers, lost COMMIT acknowledgement,
   a resolver blocked by the original uncommitted receipt, resolver timeout,
@@ -118,6 +125,17 @@ python3 tests/myworld/test-market-atomicity.py --mysql-manifest \
   non-InnoDB refusal, classic optional-table compatibility, default lazy market
   construction/game-event task, and configured provider connection isolation.
   Missing SQLite files are rejected without creating substitute databases.
+- Successor-login proofs hold the original actor/receipt transaction open while
+  demonstrating that plain reads still expose old balances. Actual
+  LoginRequest/PlayerService execution waits and denies admission before any
+  snapshot or success response; after either COMMIT or ROLLBACK, retry loads the
+  exact corresponding state. Tests also cover known-committed publication-failure
+  recovery, fresh-JVM barriers, disabled auctions/no receipt DDL, noncanonical
+  stored username case, final validated name after an accepted alias redirect,
+  incomplete snapshot rejection and strict modern-code admission for classic and
+  modern clients (denials never load; positive classic authentication still does).
+  Authentication and non-economic profile scaffolding are synthetic; economic
+  container queries and transaction locks are real production providers.
 - Child JVMs halt without cleanup at both sides of COMMIT; a separate fresh JVM
   loads the ordinary production equipment/inventory/bank providers afterward.
 - The runner requires the completion marker as well as exit status, preventing
@@ -128,30 +146,31 @@ python3 tests/myworld/test-market-atomicity.py --mysql-manifest \
 
 Retained final local evidence:
 
-- `/tmp/auction-regressions-final.log`
-- `output/market-atomicity-2af6bd6c57/` (SQLite)
-- `output/market-atomicity-bf8ae2cec8/` (MySQL/MariaDB)
+- `/tmp/auction-barrier-regressions.log`
+- `output/market-atomicity-42efba9e72/` (SQLite)
+- `output/market-atomicity-19b0b1d960/` (MySQL/MariaDB)
 - `output/auction-server-spotbugs/` (predecessor analysis)
 
 `auction-transaction-safety-evidence.json` records the final commands, result
 manifests, log hashes and artifacts. Synthetic fixture data remains ignored local
 review evidence, not game content or account input.
 
-Limits: no socket/password login or private/public gameplay was run. Recovery
-exercises actual ordinary provider container loading and exact registry/session
-cleanup. JDBC failure checkpoints and transaction-lock tests are not a claim of
+Limits: no socket/password login or private/public gameplay was run. Login flow
+coverage uses the actual LoginRequest/PlayerService flow with synthetic
+credential-validation/profile scaffolding; all economic loading uses real JDBC
+providers. Recovery also exercises exact registry/session cleanup. JDBC failure checkpoints and transaction-lock tests are not a claim of
 exhaustive network/storage fault testing or general database correctness. External
 notifications were source-reviewed and are emitted only after commit; no Discord
 service was contacted. No lint baseline or production content values changed.
 
-## Successor-login correction in progress
+## Final review corrections
 
-Final manager review identified that a timed-out receipt resolver cannot prove
-the original remote COMMIT has finished. AccountLoadBarrier now waits on a fresh
-current actor-row lock before Player construction or an ordinary load snapshot.
-It applies after restart and with auctions disabled, uses the same canonical
-username as Player loading, and never creates receipt tables. Timeout/unavailable
-settlement denies login. LoginRequest now sends success only after a complete
-load, removes its validation reservation on failure and sends the existing retry
-response; a false atomically result never returns a partial Player. Updated
-real-engine proofs and final evidence are being completed.
+Final manager review identified a third blocker in the earlier READY: a timed-out
+receipt resolver did not prove the remote COMMIT had finished, so an ordinary
+nonlocking successor load could expose old balances. The account-row login
+barrier and fail-closed response order above resolve that gap. Compatibility
+review additionally required existing case-insensitive LIKE semantics, final
+validated-name normalization (an initial alias hash can be stale), and a strict
+modern validation-code whitelist before legacy wire translation. These were
+corrected and independently source-reviewed. The original public legacy-wire
+success helper is no longer used to decide whether an account may load.
