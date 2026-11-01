@@ -4,11 +4,13 @@ package com.openrsc.server.plugins.authentic.npcs.rimmington;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
-import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.plugins.authentic.defaults.Ladders;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
@@ -16,7 +18,14 @@ import static com.openrsc.server.plugins.Functions.*;
 
 public class MasterCrafter implements TalkNpcTrigger, OpLocTrigger {
 	private static final int CRAFTING_GUILD_EXTENSION_STAIRS = 42;
-	private static final Point CRAFTING_GUILD_EXTENSION_STAIRS_LOCATION = Point.location(338, 614);
+	private static final int CRAFTING_GUILD_CAVES_LEVEL = 70;
+	private static final WorldLocation CRAFTING_GUILD_EXTENSION_STAIRS_LOCATION =
+		WorldLocation.global(new WorldCoordinate(338, 614, 0));
+	private static final String CAVES_REQUIREMENT =
+		"You need level 70 Crafting to enter the caves below the guild";
+	private static final String CAVES_WARNING =
+		"Gem dragons lurk down there. Be prepared for a dangerous fight";
+	private static final Ladders LADDERS = new Ladders();
 
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
@@ -62,20 +71,52 @@ public class MasterCrafter implements TalkNpcTrigger, OpLocTrigger {
 
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
-		Npc master = player.getWorld().getNpc(NpcId.MASTER_CRAFTER.id(), 341, 349, 599, 612);
+		if (!blockOpLoc(player, obj, command)) {
+			return;
+		}
+		if (getMaxLevel(player, Skill.CRAFTING.id()) >= CRAFTING_GUILD_CAVES_LEVEL) {
+			player.message(CAVES_WARNING);
+			LADDERS.onObjectAction(obj, command, player);
+			return;
+		}
+		Npc master = findGuildMaster(player);
 		if (master != null) {
-			npcsay(player, master,
-				"That area is currently off limits",
-				"We're still preparing the guild extension");
+			npcsay(player, master, CAVES_REQUIREMENT, CAVES_WARNING);
 		} else {
-			player.message("The Crafting Guild extension is currently off limits");
+			player.message(CAVES_REQUIREMENT);
+			player.message(CAVES_WARNING);
 		}
 	}
 
 	@Override
 	public boolean blockOpLoc(Player player, GameObject obj, String command) {
 		return obj.getID() == CRAFTING_GUILD_EXTENSION_STAIRS
-			&& obj.getLocation().equals(CRAFTING_GUILD_EXTENSION_STAIRS_LOCATION)
-			&& command.equals("go down");
+			&& command.equals("go down")
+			&& isCaveStairLocation(obj.getWorldLocation())
+			&& player.getWorldLocation().getWorldSpace().equals(
+				CRAFTING_GUILD_EXTENSION_STAIRS_LOCATION.getWorldSpace())
+			&& player.getWorldLocation().getCoordinate().getLevel() == 0;
+	}
+
+	private static boolean isCaveStairLocation(WorldLocation location) {
+		return CRAFTING_GUILD_EXTENSION_STAIRS_LOCATION.equals(location);
+	}
+
+	private static Npc findGuildMaster(Player player) {
+		for (Npc npc : player.getWorld().getNpcs()) {
+			if (npc.getID() != NpcId.MASTER_CRAFTER.id()
+				|| npc.isRemoved() || npc.isRespawning()) {
+				continue;
+			}
+			WorldLocation location = npc.getWorldLocation();
+			WorldCoordinate coordinate = location.getCoordinate();
+			if (location.getWorldSpace().equals(player.getWorldLocation().getWorldSpace())
+				&& coordinate.getLevel() == 0
+				&& coordinate.getX() >= 341 && coordinate.getX() <= 349
+				&& coordinate.getY() >= 599 && coordinate.getY() <= 612) {
+				return npc;
+			}
+		}
+		return null;
 	}
 }
