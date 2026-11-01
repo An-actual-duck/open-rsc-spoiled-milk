@@ -48,7 +48,7 @@ public final class ClericSigilProductionFixture {
 	}
 
 	public static void main(String[] args) {
-		check(ClericSigilProductionCatalog.getUnblessedIdentities().size() == 8,
+		check(ClericSigilProductionCatalog.getUnblessedIdentities().size() == 12,
 			"launch production identity count drift");
 		check(ClericSigilProductionCatalog.getUnblessedIdentities(ClericSigilMaterial.STONE).size() == 4,
 			"stone production identity count drift");
@@ -60,7 +60,7 @@ public final class ClericSigilProductionFixture {
 		check(ClericSigilMaterial.STONE.getBlessingLevel() == 1, "stone Blessing level drift");
 		check(ClericSigilMaterial.STONE.getBaseCraftingExperience() == 5, "stone Crafting XP drift");
 		check(ClericSigilMaterial.STONE.getBaseBlessingExperience() == 5, "stone Blessing XP drift");
-		check(ClericSigilMaterial.SILVER.getSourceItemId() == 383, "silver nugget source drift");
+		check(ClericSigilMaterial.SILVER.getSourceItemId() == 3431, "blank silver source drift");
 		check(ClericSigilMaterial.SILVER.getCraftingLevel() == 20, "silver Crafting level drift");
 		check(ClericSigilMaterial.SILVER.getBlessingLevel() == 16, "silver Blessing level drift");
 		check(ClericSigilMaterial.SILVER.getBaseCraftingExperience() == 10, "silver Crafting XP drift");
@@ -78,7 +78,7 @@ public final class ClericSigilProductionFixture {
 		}
 		reject(() -> ClericSigilProductionCatalog.fromUnblessedItemId(3294),
 			"blessed item as production input");
-		reject(() -> ClericSigilProductionCatalog.fromSourceItemId(235),
+		reject(() -> ClericSigilProductionCatalog.fromSourceItemId(383),
 			"silver bar as production source");
 
 		check(ClericSigilProductionCatalog.getOutputMultiplier(0, ClericSigilMaterial.STONE) == 0,

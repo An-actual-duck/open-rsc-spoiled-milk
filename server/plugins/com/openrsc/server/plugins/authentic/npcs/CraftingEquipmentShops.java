@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.authentic.npcs;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.content.cleric.ClericMetalSigils;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.model.Point;
@@ -116,6 +117,7 @@ public final class CraftingEquipmentShops extends AbstractShop {
 				new Item(ItemId.THROWING_KNIFE_MOULD.id(), 2),
 				new Item(ItemId.ARROWHEAD_MOULD.id(), 2),
 				new Item(ItemId.SHURIKEN_MOULD.id(), 2));
+			if (world.getServer().getConfig().WANT_MYWORLD) shopItems.add(new Item(ClericMetalSigils.SIGIL_MOULD, 4));
 			if (world.getServer().getConfig().BASED_CONFIG_DATA >= 28) {
 				Collections.addAll(shopItems,
 					new Item(ItemId.NEEDLE.id(), 3),

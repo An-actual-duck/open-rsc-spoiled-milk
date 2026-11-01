@@ -1211,10 +1211,11 @@ public final class SkillGuideInterface {
 		skillMenuEntries.add(new SkillMenuItem(3293, "", "Blessing follows the standard level 1-99 experience curve"));
 		skillMenuEntries.add(new SkillMenuItem(3293, "", "Altar conversion awards Blessing experience"));
 		skillMenuEntries.add(new SkillMenuItem(3293, "", "Carving sigils awards Crafting experience"));
+		skillMenuEntries.add(new SkillMenuItem(3431, "", "Mould three silver or Moonsilver blanks per bar, then carve"));
 		skillMenuEntries.add(new SkillMenuItem(3293, "", "Production does not award Worship experience"));
         skillMenuEntries.add(new SkillMenuItem(3300, "", "Grace: dip uninfused sigils in Divine wellsprings"));
         skillMenuEntries.add(new SkillMenuItem(3427, "", "Blight: dip uninfused sigils in Ichor wells"));
-        skillMenuEntries.add(new SkillMenuItem(3300, "1", "Stone infusion; silver infusion needs Blessing 16"));
+        skillMenuEntries.add(new SkillMenuItem(3300, "1", "Stone infusion; silver 16; Moonsilver 40"));
         skillMenuEntries.add(new SkillMenuItem(3429, "", "Extra output every 10 levels above the requirement"));
         skillMenuEntries.add(new SkillMenuItem(3300, "", "Well infusion awards Blessing XP and spends no Devotion"));
         skillMenuEntries.add(new SkillMenuItem(3294, "", "God sigils still need their god's altar and Devotion"));
@@ -1727,6 +1728,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(2753, "22", "Pig Iron bar - recovered from failed iron"));
 			skillMenuEntries.add(new SkillMenuItem(171, "30", "Steel bar - 1 iron or pig iron and 1 coal"));
 			skillMenuEntries.add(new SkillMenuItem(173, "38", "Mithril bar - 1 mithril ore and 2 coal"));
+			skillMenuEntries.add(new SkillMenuItem(3430, "38", "Moonsilver bar - 1 silver bar and 1 mithril bar"));
 			skillMenuEntries.add(new SkillMenuItem(172, "40", "Gold bar - 1 gold nugget"));
 			skillMenuEntries.add(new SkillMenuItem(1957, "46", "Titan steel bar - mithril, silver, and 3 coal"));
 			skillMenuEntries.add(new SkillMenuItem(174, "54", "Adamantite bar - 1 adamantite ore and 4 coal"));

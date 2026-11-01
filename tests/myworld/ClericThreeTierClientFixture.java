@@ -128,7 +128,9 @@ public final class ClericThreeTierClientFixture {
           "tier cap");
     }
     check(
-        spell(1).getCosts().get(0).getCount() == 2 && spell(21).getCosts().get(0).getCount() == 6,
+        spell(1).getCosts().get(0).getCount() == 2 && spell(21).getCosts().size() == 2
+            && spell(21).getCosts().get(0).getItemId() == 3300 && spell(21).getCosts().get(0).getCount() == 3
+            && spell(21).getCosts().get(1).getItemId() == 3308 && spell(21).getCosts().get(1).getCount() == 3,
         "flat Unify costs");
     check(spell(1).getRadius() == 3 && spell(21).getRadius() == 5, "Unify radii");
     for (int length = 0; length < packet.length; length++) {
@@ -264,7 +266,8 @@ public final class ClericThreeTierClientFixture {
             "all power ranks");
       if (e.getStableCode() == 21)
         check(
-            e.getLines().toString().contains("6 Sigil 3300")
+            e.getLines().toString().contains("3 Sigil 3300")
+                && e.getLines().toString().contains("3 Sigil 3308")
                 && e.getArea().contains("5 tiles")
                 && !e.getLines().toString().contains("tier cap"),
             "Greater Unify fixed");

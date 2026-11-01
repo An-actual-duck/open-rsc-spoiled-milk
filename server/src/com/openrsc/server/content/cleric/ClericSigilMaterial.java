@@ -1,9 +1,10 @@
 package com.openrsc.server.content.cleric;
 
-/** Confirmed primary-sigil materials in the two-tier launch scope. */
+/** Sigil carving inputs and charging progression. Metal bars are first moulded into blanks. */
 public enum ClericSigilMaterial {
 	STONE("stone", 1299, 1, 1, 5, 5),
-	SILVER("silver", 383, 20, 16, 10, 10);
+	SILVER("silver", 3431, 20, 16, 10, 10),
+	MOONSILVER("moonsilver", 3432, 40, 40, 15, 15);
 
 	private final String key;
 	private final int sourceItemId;

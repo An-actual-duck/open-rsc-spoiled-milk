@@ -6,6 +6,8 @@ import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.FoundryDragonSmeltingCost;
+import com.openrsc.server.content.cleric.ClericMetalSigils;
+import com.openrsc.server.plugins.custom.myworld.skills.blessing.SigilMoulding;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.production.ProductionRecipe;
 import com.openrsc.server.content.production.ProductionSession;
@@ -53,6 +55,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	public static final int FURNACE_CATEGORY_DARTS = ItemId.TIN_DART_TIPS.id();
 	public static final int FURNACE_CATEGORY_THROWING_KNIVES = ItemId.TIN_THROWING_KNIFE.id();
 	public static final int FURNACE_CATEGORY_SHURIKEN = ItemId.TIN_SHURIKEN.id();
+	public static final int FURNACE_CATEGORY_SIGIL_BLANKS = ClericMetalSigils.SIGIL_MOULD;
 	public static final int FURNACE_CATEGORY_CANNONBALLS = ItemId.MULTI_CANNON_BALL.id();
 
 	private static final int[] NORMAL_SMELTING_ITEMS = {
@@ -74,6 +77,8 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		new SmeltRecipe(ItemId.MITHRIL_BAR.id(), 38, 120, 1,
 			ingredient(ItemId.MITHRIL_ORE.id(), 1), ingredient(ItemId.COAL.id(), 2)),
 		new SmeltRecipe(ItemId.GOLD_BAR.id(), 40, 90, 1, ingredient(ItemId.GOLD.id(), 1)),
+		new SmeltRecipe(ClericMetalSigils.MOONSILVER_BAR, ClericMetalSigils.MOONSILVER_SMITHING_LEVEL, 60, 1,
+			ingredient(ItemId.SILVER_BAR.id(), 1), ingredient(ItemId.MITHRIL_BAR.id(), 1)),
 		new SmeltRecipe(ItemId.TITAN_STEEL_BAR.id(), 46, 170, 1,
 			ingredient(ItemId.MITHRIL_ORE.id(), 1), ingredient(ItemId.SILVER.id(), 1), ingredient(ItemId.COAL.id(), 3)),
 		new SmeltRecipe(ItemId.ADAMANTITE_BAR.id(), 54, 150, 1,
@@ -115,7 +120,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		if (ShiloFurnaceAccess.isShiloFurnace(obj) && !ShiloFurnaceAccess.ensureUnlocked(player)) {
 			return;
 		}
-		openSmeltingInterface(player);
+		openSmeltingInterface(player, obj);
 	}
 
 	@Override
@@ -148,7 +153,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 				return;
 			}
 			if (shouldOpenSmeltingChoice(item.getCatalogId()) && !ActionSender.isRetroClient(player)) {
-				openSmeltingInterface(player);
+				openSmeltingInterface(player, obj);
 				return;
 			}
 			SmeltRecipe directRecipe = getDirectOreRecipe(item.getCatalogId());
@@ -238,7 +243,8 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		return player.getCarriedItems().getInventory().countId(itemId, Optional.of(false));
 	}
 
-	private void openSmeltingInterface(Player player) {
+	private void openSmeltingInterface(Player player, GameObject obj) {
+		SigilMoulding.rememberFurnace(player, obj);
 		if (ActionSender.isRetroClient(player)) {
 			player.message("Use ore on the furnace to smelt with this client");
 			return;
@@ -261,6 +267,8 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	private ProductionSession createFurnaceCategorySession(Player player) {
 		List<ProductionRecipe> recipes = new ArrayList<>();
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_BARS, true, -1));
+		if (player.getConfig().WANT_MYWORLD) recipes.add(categoryRecipe(FURNACE_CATEGORY_SIGIL_BLANKS,
+			has(player, ClericMetalSigils.SIGIL_MOULD), ClericMetalSigils.SIGIL_MOULD));
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_RINGS, has(player, ItemId.RING_MOULD.id()), ItemId.RING_MOULD.id()));
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_NECKLACES, has(player, ItemId.NECKLACE_MOULD.id()), ItemId.NECKLACE_MOULD.id()));
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_BANGLES, has(player, MyWorldItemId.BANGLE_MOULD), MyWorldItemId.BANGLE_MOULD));
@@ -291,6 +299,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	private ProductionSession createSmeltingProductionSession(Player player) {
 		List<ProductionRecipe> recipes = new ArrayList<>();
 		for (SmeltRecipe recipe : RECIPES) {
+			if (recipe.barId == ClericMetalSigils.MOONSILVER_BAR && !player.getConfig().WANT_MYWORLD) continue;
 			recipes.add(new ProductionRecipe(recipe.barId, recipe.requiredLevel,
 				recipe.totalInputAmount(player), recipe.outputAmount,
 				getCurrentLevel(player, Skill.SMITHING.id()) >= recipe.requiredLevel,
@@ -372,6 +381,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			ActionSender.showProductionInterface(player, smeltingSession);
 			return true;
 		}
+		if (itemId == FURNACE_CATEGORY_SIGIL_BLANKS) return SigilMoulding.openInterface(player);
 		if (itemId == FURNACE_CATEGORY_CANNONBALLS) {
 			return smelting.openCannonballProduction(player);
 		}
@@ -414,6 +424,9 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	}
 
 	private boolean makeSmeltingProduction(Player player, SmeltRecipe recipe, int requestedCount) {
+		if (recipe.barId == ClericMetalSigils.MOONSILVER_BAR && (!player.getConfig().WANT_MYWORLD
+			|| player.getClientLimitations().maxItemId < recipe.barId
+			|| (player.getConfig().RESTRICT_ITEM_ID >= 0 && player.getConfig().RESTRICT_ITEM_ID < recipe.barId))) return false;
 		if (getCurrentLevel(player, Skill.SMITHING.id()) < recipe.requiredLevel) {
 			player.playerServerMessage(MessageType.QUEST,
 				"You need to be at least level-" + recipe.requiredLevel + " smithing to smelt "

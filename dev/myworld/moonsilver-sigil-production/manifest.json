@@ -1,0 +1,128 @@
+{
+  "status": "owner-approved",
+  "authoring": "Aseprite1.3.18.5 Lua; native shape/palette derivation; original files untouched",
+  "recipePreview": "bar and mould ->3 blanks ->carve ->god altar or correct well",
+  "material": "Moonsilver silver+mithril alloy, navy shadows through silvery-blue highlights",
+  "barCanvas": [
+    48,
+    32
+  ],
+  "barAlphaAndPlacementExact": true,
+  "sigilCanvas": [
+    28,
+    25
+  ],
+  "sigilRuntimePresentation": [
+    24,
+    21
+  ],
+  "blankSource": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/stone.png",
+  "blankSourceSha256": "387da42b21bd3bef4640c9ade132ee44707d5ee238f876576395deb0931afc75",
+  "symbolDerivation": [
+    {
+      "source": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-blessed-sara-sigil.png",
+      "sourceSha256": "b33d0fdfc46c523f5e3f5960b430afd63347300c0f5c7db7ca9a16a91e014127",
+      "derived": "moonsilver-blessed-sara-sigil.png",
+      "glyphPixelsUnchanged": true,
+      "alphaAndCanvasUnchanged": true
+    },
+    {
+      "source": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-unblessed-sara-sigil.png",
+      "sourceSha256": "67ab54aae2113df0603bc31877ea63e9ce761c0fbbc26cecf6ba58c6bd0f92fb",
+      "derived": "moonsilver-unblessed-sara-sigil.png",
+      "glyphPixelsUnchanged": true,
+      "alphaAndCanvasUnchanged": true
+    },
+    {
+      "source": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-blessed-guth-sigil.png",
+      "sourceSha256": "20aaf37e7682756ebdfd32d3edfb7e3fc03c00dbf551423a1e478f7ee51fae9a",
+      "derived": "moonsilver-blessed-guth-sigil.png",
+      "glyphPixelsUnchanged": true,
+      "alphaAndCanvasUnchanged": true
+    },
+    {
+      "source": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-unblessed-guth-sigil.png",
+      "sourceSha256": "c4aad44d33cfa3cfc03540fc0e81d2a1d687e9da2841b4ea56327046544f2202",
+      "derived": "moonsilver-unblessed-guth-sigil.png",
+      "glyphPixelsUnchanged": true,
+      "alphaAndCanvasUnchanged": true
+    },
+    {
+      "source": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-blessed-zam-sigil.png",
+      "sourceSha256": "1064d326133e5f064c5ca996109bddb8fdcbfe3e6f9737beab8988169de6849f",
+      "derived": "moonsilver-blessed-zam-sigil.png",
+      "glyphPixelsUnchanged": true,
+      "alphaAndCanvasUnchanged": true
+    },
+    {
+      "source": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-unblessed-zam-sigil.png",
+      "sourceSha256": "a03f4607562b595454115be947a48cb0c73214957706e7caabbfbce7d3908295",
+      "derived": "moonsilver-unblessed-zam-sigil.png",
+      "glyphPixelsUnchanged": true,
+      "alphaAndCanvasUnchanged": true
+    },
+    {
+      "source": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-blessed-neutral-sigil.png",
+      "sourceSha256": "02a96f5f6bfbeadf5922a36090b4477286ab17b7e288fbd7c6d4eb8bbcef9047",
+      "derived": "moonsilver-blessed-neutral-sigil.png",
+      "glyphPixelsUnchanged": true,
+      "alphaAndCanvasUnchanged": true
+    },
+    {
+      "source": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-unblessed-neutral-sigil.png",
+      "sourceSha256": "8b5c25120ca4d2bc8dd19b4d2909b7c4221de711b5a404f43cad247c99469d10",
+      "derived": "moonsilver-unblessed-neutral-sigil.png",
+      "glyphPixelsUnchanged": true,
+      "alphaAndCanvasUnchanged": true
+    },
+    {
+      "source": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/blight-silver-infused.png",
+      "sourceSha256": "3d7e394a919e0f2aa3d27ac7d6a548d99fa507dbc71bd37e52f42b3492a3d3d6",
+      "derived": "moonsilver-infused-blight-sigil.png",
+      "glyphPixelsUnchanged": true,
+      "alphaAndCanvasUnchanged": true
+    },
+    {
+      "source": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/blight-silver-uninfused.png",
+      "sourceSha256": "8e0663623a055c113d3bb733632cffb916bf89038870c2983961e71deddfd8b2",
+      "derived": "moonsilver-uninfused-blight-sigil.png",
+      "glyphPixelsUnchanged": true,
+      "alphaAndCanvasUnchanged": true
+    }
+  ],
+  "files": {
+    "review-native.png": "f52ceafc22f1f667b924db6dc1be743860b27c7b283516bcd7ca419f1d186579",
+    "review-4x.png": "375d3e53386c351a3f0eaca71899173eee7e58b2fbc0cab3e0d4473eff113146",
+    "author.lua": "f69bb6cb9d08e78f013d3f9a73c7e7eae9b8d267111761e4efa6a30d9f006e47",
+    "png/moonsilver-blessed-sara-sigil.png": "be6cae4ccd0642a488e675401be1a0117ea8dba346923ac0ee9b45c54bf84600",
+    "png/blank-moonsilver-sigil.png": "67673ec82ed5fa983aa4880956323aabd62a1400f2a1a3984285190135bf0743",
+    "png/sigil-mould.png": "d1be01f9e160162d2e83721bfab83185bd793393c02cdf1d28a24f033b2d9c39",
+    "png/moonsilver-blessed-neutral-sigil.png": "f774f24469b15c817fd541fb3f4b03c411089947244fabb1f330d366b355e74e",
+    "png/moonsilver-bar.png": "75c1a87f7be1292fb9c80a6a9826d1eb5618f320dffd15cc79209107b37223c1",
+    "png/moonsilver-uninfused-blight-sigil.png": "07156173d599f45b37b1f27799780d0f66148de9128161566d9d80ebdf87349c",
+    "png/moonsilver-unblessed-zam-sigil.png": "accc49011d95cdba27020bef60733d7e5d3519ade373dae0e565eaf813104a59",
+    "png/moonsilver-blessed-guth-sigil.png": "ef4730c1b5126df1e00a820a928eccbf2f6c8987756848242c8b5f185f77973f",
+    "png/moonsilver-unblessed-guth-sigil.png": "59b131856316456f7ab1f5c51ce430d035b5d6e955ad6ab4b7eb9d6ece42ef81",
+    "png/moonsilver-blessed-zam-sigil.png": "4fee7858ff582b0bc84af3ef3f520e515d215981b7fa80757347c3c8373c5bdb",
+    "png/moonsilver-unblessed-sara-sigil.png": "4dcad9d741b32b56bcb8a523b8c2f6d035fbaf87448a258d60afafad014fbf88",
+    "png/moonsilver-unblessed-neutral-sigil.png": "10cdf2b8adf5ce92c67cae000e167d8453b0e698b3ba3bfdac271eb12289c6c7",
+    "png/blank-silver-sigil.png": "91a78237edec82af74d3d67e603499eda870f40ee231be59980796f0b22cd49c",
+    "png/moonsilver-infused-blight-sigil.png": "2058e4cabd3c3f85e17822719fe50335e497e8e213c9ddab1080f5a97dc15467",
+    "aseprite/moonsilver-blessed-zam-sigil.aseprite": "f10009486d22ecd94f18cde21c0459a254501e531185979360a023a8abce17ba",
+    "aseprite/blank-silver-sigil.aseprite": "9978c7cfeaacee083ff5f9235d2e66abe3d999cbf05dc6bda758ff00851d1204",
+    "aseprite/moonsilver-blessed-neutral-sigil.aseprite": "27c3095a7a72501736552cde779b66eb710250fd1a8162456197a39c5637ebb4",
+    "aseprite/moonsilver-blessed-sara-sigil.aseprite": "4ce8ef6ef9c64ca993af16231b0b546e2f4d49aff0d3971576589cac232af1bb",
+    "aseprite/moonsilver-blessed-guth-sigil.aseprite": "4444cfc5fed222883ef44be7f9f12f71c57122f7e78d6153a836e833212a4971",
+    "aseprite/moonsilver-infused-blight-sigil.aseprite": "b12ab9bc7daa01a604c6b3e7a5ac25b6e4d01fbc96a54d5f545d16a6d185bf3e",
+    "aseprite/sigil-mould.aseprite": "b2576b5ce3bd1b7fa3bc20bbe0881923239ede72cdbb8a7fa1243aa63b66d82c",
+    "aseprite/moonsilver-unblessed-guth-sigil.aseprite": "1c89c3b1d1840b4748e53d9e3a5a68ec7fabeb9ecaf3428c69a0863ede0d94ed",
+    "aseprite/moonsilver-unblessed-neutral-sigil.aseprite": "3e90582f462c7c86f395496833501aa4d29358d80c2ac64cb5a64ac75e25e941",
+    "aseprite/moonsilver-bar.aseprite": "b30b468cf7e6f7100dc4c2d7160b7b16e75a4bae0cc4f267a31f2084267b7cc7",
+    "aseprite/moonsilver-unblessed-zam-sigil.aseprite": "c3f18a28e9a4b771120077136be12a2bb86d765664afebc486857d952ab44cd7",
+    "aseprite/blank-moonsilver-sigil.aseprite": "b88e0230274cdcdf6d0ac3f4bb5c58b041c6943f632821f7c698dcd56e7f358b",
+    "aseprite/moonsilver-unblessed-sara-sigil.aseprite": "499c35abdc5088c7143890f17862f59ce919412f8513921e44e09b86ebb685af",
+    "aseprite/moonsilver-uninfused-blight-sigil.aseprite": "5f22243cfd68d904b7821e385c1027f3925dd387e83712fd7322d74a3fe3dfc4"
+  },
+  "mouldRevision": "v2: upper recesses raised1px, lower recess raised2px; recessedrim directional NWshadow and SEhighlight under upperleftlighting",
+  "approval": "Yes,use the revised mould"
+}

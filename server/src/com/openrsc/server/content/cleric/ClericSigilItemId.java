@@ -28,7 +28,15 @@ public enum ClericSigilItemId {
 	UNBLESSED_SILVER_ZAMORAK_SIGIL(3305, ClericSigilMaterial.SILVER, ClericAlignment.ZAMORAK, false),
 	BLESSED_SILVER_ZAMORAK_SIGIL(3306, ClericSigilMaterial.SILVER, ClericAlignment.ZAMORAK, true),
 	UNBLESSED_SILVER_NEUTRAL_SIGIL(3307, ClericSigilMaterial.SILVER, ClericAlignment.NEUTRAL, false),
-	BLESSED_SILVER_NEUTRAL_SIGIL(3308, ClericSigilMaterial.SILVER, ClericAlignment.NEUTRAL, true);
+	BLESSED_SILVER_NEUTRAL_SIGIL(3308, ClericSigilMaterial.SILVER, ClericAlignment.NEUTRAL, true),
+	UNBLESSED_MOONSILVER_SARADOMIN_SIGIL(3434, ClericSigilMaterial.MOONSILVER, ClericAlignment.SARADOMIN, false),
+	BLESSED_MOONSILVER_SARADOMIN_SIGIL(3435, ClericSigilMaterial.MOONSILVER, ClericAlignment.SARADOMIN, true),
+	UNBLESSED_MOONSILVER_GUTHIX_SIGIL(3436, ClericSigilMaterial.MOONSILVER, ClericAlignment.GUTHIX, false),
+	BLESSED_MOONSILVER_GUTHIX_SIGIL(3437, ClericSigilMaterial.MOONSILVER, ClericAlignment.GUTHIX, true),
+	UNBLESSED_MOONSILVER_ZAMORAK_SIGIL(3438, ClericSigilMaterial.MOONSILVER, ClericAlignment.ZAMORAK, false),
+	BLESSED_MOONSILVER_ZAMORAK_SIGIL(3439, ClericSigilMaterial.MOONSILVER, ClericAlignment.ZAMORAK, true),
+	UNBLESSED_MOONSILVER_NEUTRAL_SIGIL(3440, ClericSigilMaterial.MOONSILVER, ClericAlignment.NEUTRAL, false),
+	BLESSED_MOONSILVER_NEUTRAL_SIGIL(3441, ClericSigilMaterial.MOONSILVER, ClericAlignment.NEUTRAL, true);
 
 	private static final Map<Integer, ClericSigilItemId> BY_ITEM_ID;
 	private static final Map<String, ClericSigilItemId> BY_PRODUCTION_KEY;
