@@ -1,0 +1,58 @@
+{
+  "status": "PASS",
+  "sourceCommit": "0eea4c88a4cb23fec4a048f8d357196565a4c196",
+  "oldSourceCommit": "a5043328f99995f1e77681b5b06f84dac72a9f9c",
+  "fixtureCommit": "0eea4c88a4cb23fec4a048f8d357196565a4c196",
+  "fixtureSourceSha256": "ed594e54610dcad967d7f2d44590d6869218ec020dc48cb9dc70ef441f461393",
+  "runnerSourceSha256": "8dfe0e25dfc07bd0a07c48323b93c58b9108a78463e633a2e4dd219a7ae5359d",
+  "oldRelease": "v0.2.89",
+  "existingProfiles": 60,
+  "syntheticProfiles": 1,
+  "oldRosterVersion": 1,
+  "newRosterVersion": 3,
+  "sourceOnlyDowngradeRejectedProfiles": 61,
+  "mapFingerprint": "e343c03b026920ab0f6dd6e9fdd8d9601d1992177f24510f1d21a266e22e58cf",
+  "assertions": 1198,
+  "allInputFilesUnchanged": true,
+  "networkAllowed": false,
+  "serverStarted": false,
+  "oldArtifactSha256": {
+    "server/core.jar": "901faf81fcfe871964fff83f4acdcace574be0e96438d98da5b6b208023abd44",
+    "server/core-gameplay-overlay.jar": "ec06f8826377af30cea812205fccb9c237933963af316a291ce98e9975bcde6b",
+    "server/plugins.jar": "9168a8681f35cf66da0632e7a9d109604a37177644a9741eb34b144f6f5689eb"
+  },
+  "candidateServerArtifactSha256": {
+    "server/core.jar": "14c95feb65ce94be78b8f43709d94e6675608d354e5b00cab590ee68b2e36eff",
+    "server/core-gameplay-overlay.jar": "73bac9e6489f7255540549ce218031090a543ac59ce3690f26a543df9f245bad",
+    "server/plugins.jar": "70998948e8944245ed0fa29e3c7196f5a796d9efce07be2baf5e9145703e605e"
+  },
+  "oldMapFingerprint": "f699e5a37709a0f127d676d91f07f64e256825bef6d65a7a4ccd13c8310f3b75",
+  "candidateMapManifestSha256": "c12686677f3bc49956af7957e1a7ec2916cffa622c4e4af8290c11a6451bacbb",
+  "additiveTables": [
+    "market_operations"
+  ],
+  "runtimeDependencyJars": 21,
+  "legacyGraceProbeIds": [
+    3299,
+    3300,
+    3307,
+    3308
+  ],
+  "fullRollbackVerified": true,
+  "currentGraceDefinitionNames": [
+    "Uninfused stone Grace sigil",
+    "Stone Grace sigil",
+    "Uninfused silver Grace sigil",
+    "Silver Grace sigil"
+  ],
+  "acceptedUndergroundBootstrapCorrections": 2,
+  "otherExistingLocationsPreserved": 58,
+  "activeTaskMigrationProfiles": 0,
+  "clientRollbackTested": false,
+  "postUpgradeProgressionRetainedByRollback": false,
+  "inheritedNormalizationGroups": [
+    "skills",
+    "currentSkills",
+    "presets"
+  ]
+}
