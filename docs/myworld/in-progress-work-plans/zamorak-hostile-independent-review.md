@@ -1,6 +1,6 @@
 # Independent Zamorak hostile review
 
-Status: **in progress**, November 1, 2026. Reviewer branch:
+Status: **code review passed at the guarded checkpoint; final READY documentation delta pending**, November 1, 2026. Reviewer branch:
 `test/zamorak-hostile-review`, based on published `02e060c50`.
 This is review and adversarial-test work only. No production fixes, game assets,
 owner maps/accounts, toolkit, staging package or public operations are changed.
@@ -29,8 +29,8 @@ JAR was tested and the implementation worktree was not opened or edited.
 
 ## Preliminary finding — stale request callback fence
 
-**Confirmed at the ACTIVE checkpoint; implementation worker already has the
-matching fix in progress.** `ClericCriticalRuntime.beforeSettlement` checks live
+**Confirmed at the first ACTIVE checkpoint; fixed and independently verified
+at `e4ede109ab4c1b8784b79aa2a53eb2a3d5435f29`.** `ClericCriticalRuntime.beforeSettlement` checks live
 source/target eligibility and the current curse, but does not compare the
 request's captured combat-participant snapshots. Retain a positive AUTHORED
 primary request, advance the target lifetime and reapply a valid curse, then
@@ -87,13 +87,57 @@ a fresh synthetic map, and uses the real in-memory server/world without calling
 server startup, opening accounts or binding listeners. Java 8 work is serialized
 under `/home/justin/.local/share/core-heavy-build.lock`, with 512 MiB SerialGC.
 
-## Remaining review gates
+## Guarded checkpoint and delta audit
 
-This report is not final acceptance. Audit the implementation's final exact
-READY commit and every delta from the preliminary checkpoint; rerun independent
-adversarial checks on its own copied fixed artifacts. Confirm final resource
-retirement and twenty distinct canonical source/JAR icons, schema 5/client 10056
-metadata, the accepted concise spellbook UI, and reported core/client gates.
-Private gameplay, rendering on real desktop platforms, broader economy balancing
-and every legacy script are not proven by this scoped offline review. No new
-architecture, unrelated gameplay rework or public deployment is authorized.
+The next exact pushed checkpoint is
+`e4ede109ab4c1b8784b79aa2a53eb2a3d5435f29`. Its source and immutable artifact
+copies are separately preserved under `snapshot-e4ede109a/` and
+`artifacts-e4ede109a/`; the original failure evidence remains unchanged.
+
+| Copied guarded artifact | SHA-256 |
+| --- | --- |
+| `server/core.jar` | `7468574f7edacb8b6eb8cec24c892bb3cb4d592d81e57032a5b15f3c5e1520e5` |
+| `server/core-gameplay-overlay.jar` | `5db7fa8851866f35ef00102d107395e0b6233b2875af5f61a06f9d22fe60f8bd` |
+| `server/plugins.jar` | `5e89b2489ebc2b5240767d7aa4f9c90a1bf220175a8272608e49d6d3067388e8` |
+| `Client_Base/Open_RSC_Client.jar` | `d53177c056af3aaded8f22e3034ab6162a1cdc03432b50a919978da143201d1c` |
+
+The semantic combat change since the first checkpoint adds both captured-source
+and captured-target snapshot checks before critical callbacks. The same
+independent fixture ran unchanged: **27/27 passed**, including all three
+previous failures. It deliberately leaves ordinary damage admission with its
+existing producer; it asserts stale requests cannot acquire new-lifetime
+execution/Stagger callbacks, not that this transaction is a universal packet
+admission boundary.
+
+The remaining delta integrates the already reviewed icon art, retires the
+eleven compatibility files, preserves the accepted concise book UI, improves
+guide wording, and fixes test schema headers/core-only quest-plugin fixture
+loading. `CriticalHitResolver` changes since the first checkpoint are comments,
+not another RNG implementation. The added implementation tests exercise all
+power/chance boundaries, no-curse paths, Cosmic candidates and expiry/recast
+immunity. No further confirmed semantic defect was found in this delta.
+
+The reviewer independently checked the guarded **unified** actual client JAR,
+exact exported canonical PNGs and schema-5 6,050-byte golden packet. Result:
+**162 native client/art assertions passed**, all twenty code/icon bindings and
+embedded cache entries present, twenty source/JAR byte matches, and zero legacy
+PNG resources. Native sprite/font rendering also passes. This supersedes the
+earlier art task's separate-build integration limit for this exact guarded JAR.
+
+Evidence: `checkpoint-e4ede109a.json`, `adversarial-e4ede109a/step-2.log`,
+`e4ede109a-art-review.log`, `e4ede109a-schema5.bin` and the native render directory
+under `output/zamorak-independent-review/`. Hashes were verified before/after
+adversarial execution. Worker-reported full gates include 145 combat scenarios,
+255 new Zamorak assertions, the focused Slayer/Slow/Cleric/client suites and
+native UI/render checks; these broad suites were not all independently rerun
+by this reviewer. Core retains its final combined validation responsibility.
+
+## Remaining review gates and limits
+
+No confirmed blocker remains at the guarded code snapshot. The final exact READY
+commit and its documentation-only delta must still be checked before formal
+review handoff; a later gameplay change would require renewed affected review.
+Private gameplay, real desktop rendering, broad economy balancing and every
+legacy script are outside this scoped offline proof. The boss authority remains
+the approved existing policy rather than a speculative new full-NPC audit.
+No public release or shutdown is authorized by this review.
