@@ -98,6 +98,8 @@ public final class NextUpdateMapAcceptanceTest {
                 + " npc=" + test.map.getNpcPlacementCount() + " items=" + test.map.getGroundItemPlacementCount()
                 + " scenery=" + test.map.getSceneryPlacementCount() + " boundaries=" + test.map.getBoundaryPlacementCount());
             test.tower(); test.dragons(); test.eggs(); test.wells();
+            System.out.println("BASELINE_RESULT checks=" + test.checks + " failures=" + test.failures.size());
+            test.ichorLadder();
             System.out.println("RESULT checks=" + test.checks + " failures=" + test.failures.size());
             System.out.println("LIMITS: offline in-memory runtime; no client rendering, live player/rank acceptance, combat, saving or database persistence proof");
             if (!test.failures.isEmpty()) throw new AssertionError("Candidate map acceptance failed: " + test.failures.size());
@@ -345,6 +347,69 @@ public final class NextUpdateMapAcceptanceTest {
         Set<Long> corridor=flood(at(109,674,-1),85,120,645,690);
         System.out.println("ICHOR_EXISTING_CORRIDOR origin="+at(109,674,-1)+" connectedTiles="+corridor.size());
         for(int y=665;y<=686;y++)for(int x=98;x<=114;x++)if(corridor.contains(key(x,y)))System.out.println("ICHOR_CORRIDOR_LAND "+at(x,y,-1)+" "+tile(at(x,y,-1)));
+    }
+
+    /** A shoreline repair must also leave every ordinary ladder contact safe. */
+    private void ichorLadder(){
+        GameObject up=scenery(at(108,681,-1)),down=scenery(at(108,681,0));
+        check(up!=null&&upCommand(up)!=null,"Ichor authored upward ladder at108,681,L-1");
+        check(down!=null&&downCommand(down)!=null,"Ichor reciprocal downward ladder at108,681,L0");
+        System.out.println("ICHOR_LADDER_PAIR up="+(up==null?"missing":up.getID()+"@"+up.getWorldLocation())
+            +" down="+(down==null?"missing":down.getID()+"@"+down.getWorldLocation()));
+        if(up==null||down==null||upCommand(up)==null||downCommand(down)==null)return;
+        Set<Long> reachableFromLadder=new HashSet<Long>();
+        for(GameObject source:new GameObject[]{up,down}){
+            boolean upward=source==up;GameObject inverse=upward?down:up;
+            String command=upward?upCommand(source):downCommand(source);
+            String inverseCommand=upward?downCommand(inverse):upCommand(inverse);
+            List<WorldLocation> contacts=new ArrayList<WorldLocation>();
+            WorldCoordinate origin=source.getWorldLocation().getCoordinate();
+            for(int dx=-4;dx<=4;dx++)for(int dy=-4;dy<=4;dy++){
+                WorldLocation candidate=at(origin.getX()+dx,origin.getY()+dy,origin.getLevel());
+                if(!standing(candidate))continue;
+                move(candidate);
+                WalkToObjectAction action=new WalkToObjectAction(player,source){public void executeInternal(){}};
+                if(action.shouldExecute())contacts.add(candidate);
+            }
+            check(!contacts.isEmpty(),"Ichor ladder has an admissible land contact "+source.getWorldLocation());
+            int safe=0;
+            for(WorldLocation from:contacts){
+                check(exits(from)>0,"Ichor ladder source footing has a movement exit "+from);
+                move(from);new Ladders().onObjectAction(source,command,player);
+                WorldLocation destination=player.getWorldLocation();
+                WorldCoordinate c=from.getCoordinate();WorldLocation expected=at(c.getX(),c.getY(),c.getLevel()+(upward?1:-1));
+                check(destination.equals(expected),"Ichor actual ladder destination from="+from+" got="+destination+" expected="+expected);
+                boolean clear=standing(destination)&&exits(destination)>0;
+                check(clear,"Ichor admitted ladder contact lands blocked from="+from+" destination="+destination+" "+tile(destination));
+                System.out.println("ICHOR_LADDER_TRAVEL id="+source.getID()+" from="+from+" destination="+destination+" safe="+clear+" "+tile(destination));
+                if(!clear)continue;
+                move(destination);
+                WalkToObjectAction reverse=new WalkToObjectAction(player,inverse){public void executeInternal(){}};
+                boolean returnAdmitted=reverse.shouldExecute();
+                check(returnAdmitted,"Ichor destination admits reciprocal ladder from="+destination+" inverse="+inverse.getWorldLocation());
+                if(!returnAdmitted)continue;
+                new Ladders().onObjectAction(inverse,inverseCommand,player);
+                boolean returned=player.getWorldLocation().equals(from)&&standing(player.getWorldLocation());
+                check(returned,"Ichor exact ladder round trip from="+from+" returned="+player.getWorldLocation());
+                if(!returned)continue;
+                safe++;
+                WorldLocation below=upward?from:destination;
+                reachableFromLadder.addAll(flood(below,85,120,645,690));
+            }
+            System.out.println("ICHOR_LADDER_CONTACTS at="+source.getWorldLocation()+" admitted="+contacts.size()+" safeRoundTrips="+safe);
+        }
+        for(NativeLayeredPlacementSet set:map.getPlacementSets().values())for(NativeLayeredSceneryPlacement placement:set.getScenery()){
+            if(placement.getSceneryId()!=1354)continue;
+            boolean reachable=false;GameObject well=scenery(placement.getLocation());
+            for(int dx=-1;dx<=1;dx++)for(int dy=-1;dy<=1;dy++){
+                if(dx==0&&dy==0)continue;WorldLocation land=offset(placement.getLocation(),dx,dy);
+                WorldCoordinate c=land.getCoordinate();
+                if(!reachableFromLadder.contains(key(c.getX(),c.getY())))continue;
+                move(land);if(ClericWellInteraction.canInteract(player,well))reachable=true;
+            }
+            check(reachable,"Ichor Dip shore connected to a safe ladder round trip "+placement.getLocation());
+        }
+        System.out.println("ICHOR_LADDER_CONNECTED_TILES count="+reachableFromLadder.size());
     }
 
     private GameObject scenery(WorldLocation location) { return server.getWorld().getRegionManager().findNativeLayeredScenery(location); }
