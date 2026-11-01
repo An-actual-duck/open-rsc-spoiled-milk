@@ -409,9 +409,8 @@ crit against ordinary enemies at 25% HP or lower. These are conditional proc
 chances, not additional guaranteed effects on every normal attack.
 
 The shared critical foundation carries an immutable explicit outcome through
-ordinary melee, bow/throwing, and combat Magic launch/impact settlement. Cosmic
-remains the only enabled modern critical-chance source, with its existing values
-and cap. A normal maximum is not a critical; a Stagger-forced zero is not a
+ordinary melee, bow/throwing, and combat Magic launch/impact settlement. Cosmic now supplies combat luck instead of critical chance (approved October31).
+Each robe tier contributes1percentage point, capped50% over all pieces. A normal maximum is not a critical; a Stagger-forced zero is not a
 critical. Existing secondary/offhand damage eligibility is retained, without
 permission to trigger these future hostile components. Remaining legacy integer-only secondary/death helpers retain their historical
 damage/RNG and attribution ordering. In particular, lethal God/Iban secondary
@@ -433,7 +432,7 @@ decisions. No new PvP permission or live activation is implied.
 Barkskin to ranged defense; lifesteal retains its existing direct-hit scope.
 The candidate includes Saradomin's undead damage/tier-order revision and the
 six Guthix/Saradomin hostile spells. Zamorak hostile activation remains deferred
-pending the owner's unselected luck-centered Cosmic redesign.
+pending separate eligible-hit/execution decisions; Cosmic combat luck is implemented without enabling this chain.
 
 The old neutral Respite stays absent from the active17-entry candidate. This
 does not remove Saradomin regeneration, other equipment/potion regeneration,

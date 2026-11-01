@@ -83,7 +83,7 @@ public class PoisonEvent extends GameTickEvent {
 		if (mob.isPlayer()&&!com.openrsc.server.model.combat.NonCorporealState.blocks(source,mob,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)) {
 			final Player player = (Player) mob;
 			player.setAttribute("last_damage_taken_at", System.currentTimeMillis());
-			resolvedDamage = player.applyGoblinTenacity(resolvedDamage);
+			resolvedDamage = player.applyGoblinTenacity(resolvedDamage,true);
 		}
 		resolvedDamage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(mob, resolvedDamage);
 		final DamageRequest request = DamageRequest.resolvedLegacy(source, mob,

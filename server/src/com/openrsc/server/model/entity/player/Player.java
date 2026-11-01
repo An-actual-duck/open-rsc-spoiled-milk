@@ -2535,10 +2535,14 @@ public final class Player extends Mob {
 	}
 
 	public int applyGoblinTenacity(final int damage) {
+        return applyGoblinTenacity(damage,false);
+    }
+
+    public int applyGoblinTenacity(final int damage,final boolean combatLuck) {
 		final int currentHits = getSkills().getLevel(Skill.HITS.id());
 		final double procChance = getCarriedItems().getEquipment().getGoblinTenacityProcChance();
 		if (damage < currentHits || currentHits <= 1 || procChance <= 0.0D
-			|| !com.openrsc.server.model.combat.CombatLuck.favorable(this,procChance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<procChance)) {
+			|| !(combatLuck ? com.openrsc.server.model.combat.CombatLuck.favorable(this,procChance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<procChance) : DataConversions.getRandom().nextDouble()<procChance)) {
 			return damage;
 		}
 		message("@yel@Goblin's Tenacity keeps you standing.");
@@ -2791,7 +2795,7 @@ public final class Player extends Mob {
 	}
 
     public double getCombatLuckChance() {
-        return Math.min(0.50D,getCarriedItems().getEquipment().getCosmicRobeTierTotal()*0.01D);
+        return Math.min(0.50D, getCarriedItems().getEquipment().getCosmicRobeTierTotal() * 0.01D);
     }
 
     /** Retired compatibility accessor: Cosmic robes no longer supply any critical chance. */

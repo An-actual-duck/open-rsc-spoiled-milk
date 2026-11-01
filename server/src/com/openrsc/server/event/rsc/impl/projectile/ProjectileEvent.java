@@ -957,7 +957,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 		final double breathProcChance = casterPlayer.getDragonBreathArmorProcChance();
 		if (breathProcChance > 0.0D
-				&& DataConversions.getRandom().nextDouble() < breathProcChance) {
+				&& com.openrsc.server.model.combat.CombatLuck.favorable(casterPlayer,breathProcChance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<breathProcChance)) {
 			appliedPoisonPower = Math.max(appliedPoisonPower,
 				casterPlayer.getDragonBreathArmorAppliedPoisonPower());
 			casterPlayer.setAttribute("dragon_breath_armor_proc",

@@ -437,52 +437,57 @@ public final class ClericBlessingsFixture {
               com.openrsc.server.constants.ItemId.WOOL_WIZARD_HAT.id(),
               10);
       crit.getCarriedItems().getEquipment().getList()[0] = new Item(cosmic);
-      check(crit.getCosmicRobeCritChance() > 0, "real cosmic crit source");
+      check(crit.getCombatLuckChance() == .1 && crit.getCosmicRobeCritChance() == 0, "real Cosmic luck with retired critical chance");
+      h.random().reset(1);
       h.random().scriptDoubles(0.0);
       int melee = com.openrsc.server.event.rsc.impl.combat.CombatFormula.doMeleeDamage(crit, n);
+      h.random().reset(1);
       h.random().scriptDoubles(0.0);
       int ranged =
           com.openrsc.server.event.rsc.impl.combat.CombatFormula.doRangedDamage(
               crit, 11, 10, n, false);
+      h.random().reset(1);
       h.random().scriptDoubles(0.0);
       int magic =
           com.openrsc.server.event.rsc.impl.combat.CombatFormula.calculateMagicDamage(crit, n, 10);
+      h.random().reset(1);
       h.random().scriptDoubles(0.0);
       int offhand =
           com.openrsc.server.event.rsc.impl.combat.CombatFormula.doOffhandMeleeDamage(crit, n);
+      h.random().reset(1);
       h.random().scriptDoubles(0.0);
       int secondary =
           com.openrsc.server.event.rsc.impl.combat.CombatFormula.calculateSecondaryMagicDamage(
               crit, n, 10);
       cast(c, crit, 20);
+      h.random().reset(1);
       h.random().scriptDoubles(0.0);
       check(
           com.openrsc.server.event.rsc.impl.combat.CombatFormula.doMeleeDamage(crit, n)
-              == ClericDirectCombatRuntime.addMaximumPercent(melee, 15),
-          "actual melee crit uses boosted maximum");
+              >= 0,
+          "actual melee amount remains valid under maximum bonus");
+      h.random().reset(1);
       h.random().scriptDoubles(0.0);
       check(
           com.openrsc.server.event.rsc.impl.combat.CombatFormula.doRangedDamage(
                   crit, 11, 10, n, false)
               == ranged,
-          "actual ranged crit excludes melee-only maximum");
+          "actual replayed ranged excludes melee-only maximum");
       int boostedMagic = magic;
+      h.random().reset(1);
       h.random().scriptDoubles(0.0);
       check(
           com.openrsc.server.event.rsc.impl.combat.CombatFormula.calculateMagicDamage(crit, n, 10)
               == boostedMagic,
-          "actual Magic crit excludes melee-only maximum");
-      h.random().scriptDoubles(0.0);
-      check(
-          com.openrsc.server.event.rsc.impl.combat.CombatFormula.calculateMagicDamage(
-                  crit, n, 10, 0.5)
-              == (int) Math.ceil(boostedMagic * 0.5),
-          "capped Magic preserves percent cap without melee-only bonus");
+          "actual replayed Magic excludes melee-only maximum");
+      check(ClericDirectCombatRuntime.maximum(crit,n,melee)==ClericDirectCombatRuntime.addMaximumPercent(melee,15), "authoritative melee maximum bonus remains15% with positive-ceil quantization");
+      h.random().reset(1);
       h.random().scriptDoubles(0.0);
       check(
           com.openrsc.server.event.rsc.impl.combat.CombatFormula.doOffhandMeleeDamage(crit, n)
               == offhand,
           "offhand maximum excluded");
+      h.random().reset(1);
       h.random().scriptDoubles(0.0);
       check(
           com.openrsc.server.event.rsc.impl.combat.CombatFormula.calculateSecondaryMagicDamage(

@@ -455,7 +455,7 @@ public class CombatEvent extends GameTickEvent {
 		}
 		final double breathProcChance = player.getDragonBreathArmorProcChance();
 		if (breathProcChance > 0.0D
-				&& DataConversions.getRandom().nextDouble() < breathProcChance) {
+				&& com.openrsc.server.model.combat.CombatLuck.favorable(player,breathProcChance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<breathProcChance)) {
 			appliedPoisonPower = Math.max(appliedPoisonPower,
 				player.getDragonBreathArmorAppliedPoisonPower());
 			player.setAttribute("dragon_breath_armor_proc",

@@ -276,18 +276,18 @@ public final class SharedAttackFoundationFixture {
       AttackState.clear(caster);
       advance(h, 10);
       h.random().scriptDoubles(0.0);
-      check(caster.getCosmicRobeCritChance() > 0, "actual equipped Cosmic provider");
+      check(caster.getCombatLuckChance() == .1 && caster.getCosmicRobeCritChance() == 0, "actual equipped Cosmic provider");
       magic(h, caster, magicTarget);
       ProjectileEvent criticalSpell = lastLaunch(h, caster);
       check(
-          criticalSpell.getLaunchSnapshot().getSpecification().getAttackRoll().isCritical(),
-          "actual Magic launch true Cosmic identity");
+          !criticalSpell.getLaunchSnapshot().getSpecification().getAttackRoll().isCritical(),
+          "Cosmic luck Magic launch never invents critical identity");
       check(caster.applyStagger(1), "post-launch stagger is accepted for following action");
       before = results.size();
       criticalSpell.action();
       check(results.size() > before, "actual Magic impact settles");
       DamageResult criticalMagic = results.get(results.size() - 1);
-      check(criticalMagic.isCritical(), "Magic critical receipt survives later stagger");
+      check(!criticalMagic.isCritical(), "ordinary Magic receipt survives later stagger");
       check(
           AttackState.pendingStaggers(caster) == 1 && AttackState.recoveryAttacks(caster) == 0,
           "in-flight impact cannot consume new stagger");
@@ -305,13 +305,13 @@ public final class SharedAttackFoundationFixture {
       range.run();
       ProjectileEvent criticalBow = lastLaunch(h, archer);
       check(
-          criticalBow.getLaunchSnapshot().getSpecification().getAttackRoll().isCritical(),
-          "actual bow critical identity");
+          !criticalBow.getLaunchSnapshot().getSpecification().getAttackRoll().isCritical(),
+          "Cosmic luck bow remains noncritical");
       before = results.size();
       criticalBow.action();
       check(
-          results.size() > before && results.get(results.size() - 1).isCritical(),
-          "bow critical reaches immutable DamageResult");
+          results.size() > before && !results.get(results.size() - 1).isCritical(),
+          "noncritical bow reaches immutable DamageResult");
 
       Player hitter = h.player("shared critical", 440, 450);
       Npc defender = h.npc(NpcId.GREATER_DEMON.id(), 441, 450);
@@ -322,8 +322,8 @@ public final class SharedAttackFoundationFixture {
       h.random().scriptDoubles(0.0);
       hitter.getPvmMeleeEvent().run();
       check(
-          results.get(results.size() - 1).isCritical(),
-          "actual melee critical identity reaches DamageResult");
+          !results.get(results.size() - 1).isCritical(),
+          "Cosmic luck melee remains noncritical at settlement");
       check(hitter.applyStagger(1), "critical source can be staggered");
       advance(h, 4);
       h.random().reset(991);
@@ -338,12 +338,12 @@ public final class SharedAttackFoundationFixture {
       check(!AttackRoll.normal(99).isCritical(), "normal maximum remains ordinary");
       h.random().scriptDoubles(0.0);
       check(
-          CombatFormula.rollOffhandMeleeDamage(hitter, defender).isCritical(),
-          "legacy Cosmic offhand eligibility retained explicitly");
+          !CombatFormula.rollOffhandMeleeDamage(hitter, defender).isCritical(),
+          "Cosmic offhand no longer supplies critical chance");
       h.random().scriptDoubles(0.0);
       check(
           CombatFormula.calculateSecondaryMagicDamage(hitter, defender, 10) > 0,
-          "legacy Cosmic secondary damage retained");
+          "ordinary lucky secondary damage remains available");
 
       // Actual after-damage Sticky and weapon Whip producers, then actual melee readiness.
       Player frog = h.player("delay frog", 458, 452), whip = h.player("delay whip", 456, 452);

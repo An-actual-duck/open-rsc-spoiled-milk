@@ -1129,7 +1129,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			target.getUpdateFlags().setProjectile(new Projectile(player, target, Projectile.ACID_ARMOR_PROC));
 		}
 		final double breathProcChance = player.getDragonBreathArmorProcChance();
-		if (breathProcChance > 0.0D && combatRandom().nextDouble() < breathProcChance) {
+		if (breathProcChance > 0.0D && com.openrsc.server.model.combat.CombatLuck.roll(player,breathProcChance,combatRandom())) {
 			appliedPoisonPower = Math.max(appliedPoisonPower,
 				player.getDragonBreathArmorAppliedPoisonPower());
 			player.setAttribute("dragon_breath_armor_proc",

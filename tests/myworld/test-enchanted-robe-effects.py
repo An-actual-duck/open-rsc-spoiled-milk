@@ -101,11 +101,11 @@ def main() -> None:
 		"private static AttackRoll rollMeleeDamage(",
 		"public static AttackRoll rollRangedDamage(",
 	):
-		require(java_method_body(combat_formula, signature), "CriticalHitResolver.cosmic(",
-			"Cosmic robe crit should enter the shared resolver for each main style")
-	require(critical_resolver, "getCosmicRobeCritChance()", "Shared critical source should use authored Cosmic chance")
+		require(java_method_body(combat_formula, signature), "CriticalHitResolver.ordinary(",
+			"Ordinary styles preserve explicit noncritical outcomes after Cosmic replacement")
+	require(critical_resolver, "CombatLuck.roll(beneficiary", "Authored generic critical checks opt into combat luck")
 	require(player, "Math.min(0.50D, getCarriedItems().getEquipment().getCosmicRobeTierTotal() * 0.01D)",
-		"Cosmic chance and cap remain unchanged pending redesign")
+		"Cosmic luck aggregates robe tiers with50% cap")
 	require(combat_formula, "getChaosRobeSurroundedDamageMultiplier()", "Chaos robe adjacency bonus should enter damage multiplier")
 	for retired in (
 		"getLawRobeExtraDamageRolls",

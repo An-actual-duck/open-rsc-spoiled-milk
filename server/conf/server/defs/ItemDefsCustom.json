@@ -19024,7 +19024,7 @@
     {
       "id": 2079,
       "name": "Beginner's Cosmic Wizard Hat",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -19323,7 +19323,7 @@
     {
       "id": 2092,
       "name": "Beginner's Cosmic Robe Top",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -19622,7 +19622,7 @@
     {
       "id": 2105,
       "name": "Beginner's Cosmic Robe Skirt",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -26062,7 +26062,7 @@
     {
       "id": 2385,
       "name": "Novice Cosmic Wizard Hat",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -26085,7 +26085,7 @@
     {
       "id": 2386,
       "name": "Apprentice Cosmic Wizard Hat",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -26108,7 +26108,7 @@
     {
       "id": 2387,
       "name": "Adept Cosmic Wizard Hat",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -26131,7 +26131,7 @@
     {
       "id": 2388,
       "name": "Expert Cosmic Wizard Hat",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -26154,7 +26154,7 @@
     {
       "id": 2389,
       "name": "Master Cosmic Wizard Hat",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -26177,7 +26177,7 @@
     {
       "id": 2390,
       "name": "Mystic Cosmic Wizard Hat",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -26200,7 +26200,7 @@
     {
       "id": 2391,
       "name": "Arcane Cosmic Wizard Hat",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -26223,7 +26223,7 @@
     {
       "id": 2392,
       "name": "Elder Cosmic Wizard Hat",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -26246,7 +26246,7 @@
     {
       "id": 2393,
       "name": "Mythic Cosmic Wizard Hat",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -28753,7 +28753,7 @@
     {
       "id": 2502,
       "name": "Novice Cosmic Robe Top",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -28776,7 +28776,7 @@
     {
       "id": 2503,
       "name": "Apprentice Cosmic Robe Top",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -28799,7 +28799,7 @@
     {
       "id": 2504,
       "name": "Adept Cosmic Robe Top",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -28822,7 +28822,7 @@
     {
       "id": 2505,
       "name": "Expert Cosmic Robe Top",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -28845,7 +28845,7 @@
     {
       "id": 2506,
       "name": "Master Cosmic Robe Top",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -28868,7 +28868,7 @@
     {
       "id": 2507,
       "name": "Mystic Cosmic Robe Top",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -28891,7 +28891,7 @@
     {
       "id": 2508,
       "name": "Arcane Cosmic Robe Top",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -28914,7 +28914,7 @@
     {
       "id": 2509,
       "name": "Elder Cosmic Robe Top",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -28937,7 +28937,7 @@
     {
       "id": 2510,
       "name": "Mythic Cosmic Robe Top",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -31444,7 +31444,7 @@
     {
       "id": 2619,
       "name": "Novice Cosmic Robe Skirt",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -31467,7 +31467,7 @@
     {
       "id": 2620,
       "name": "Apprentice Cosmic Robe Skirt",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -31490,7 +31490,7 @@
     {
       "id": 2621,
       "name": "Adept Cosmic Robe Skirt",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -31513,7 +31513,7 @@
     {
       "id": 2622,
       "name": "Expert Cosmic Robe Skirt",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -31536,7 +31536,7 @@
     {
       "id": 2623,
       "name": "Master Cosmic Robe Skirt",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -31559,7 +31559,7 @@
     {
       "id": 2624,
       "name": "Mystic Cosmic Robe Skirt",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -31582,7 +31582,7 @@
     {
       "id": 2625,
       "name": "Arcane Cosmic Robe Skirt",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -31605,7 +31605,7 @@
     {
       "id": 2626,
       "name": "Elder Cosmic Robe Skirt",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -31628,7 +31628,7 @@
     {
       "id": 2627,
       "name": "Mythic Cosmic Robe Skirt",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -36895,7 +36895,7 @@
     {
       "id": 2856,
       "name": "Beginner's Cosmic Wizard Gloves",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -36918,7 +36918,7 @@
     {
       "id": 2857,
       "name": "Novice Cosmic Wizard Gloves",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -36941,7 +36941,7 @@
     {
       "id": 2858,
       "name": "Apprentice Cosmic Wizard Gloves",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -36964,7 +36964,7 @@
     {
       "id": 2859,
       "name": "Adept Cosmic Wizard Gloves",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -36987,7 +36987,7 @@
     {
       "id": 2860,
       "name": "Expert Cosmic Wizard Gloves",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -37010,7 +37010,7 @@
     {
       "id": 2861,
       "name": "Master Cosmic Wizard Gloves",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -37033,7 +37033,7 @@
     {
       "id": 2862,
       "name": "Mystic Cosmic Wizard Gloves",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -37056,7 +37056,7 @@
     {
       "id": 2863,
       "name": "Arcane Cosmic Wizard Gloves",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -37079,7 +37079,7 @@
     {
       "id": 2864,
       "name": "Elder Cosmic Wizard Gloves",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -37102,7 +37102,7 @@
     {
       "id": 2865,
       "name": "Mythic Cosmic Wizard Gloves",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -40115,7 +40115,7 @@
     {
       "id": 2996,
       "name": "Beginner's Cosmic Wizard Boots",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -40138,7 +40138,7 @@
     {
       "id": 2997,
       "name": "Novice Cosmic Wizard Boots",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -40161,7 +40161,7 @@
     {
       "id": 2998,
       "name": "Apprentice Cosmic Wizard Boots",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -40184,7 +40184,7 @@
     {
       "id": 2999,
       "name": "Adept Cosmic Wizard Boots",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -40207,7 +40207,7 @@
     {
       "id": 3000,
       "name": "Expert Cosmic Wizard Boots",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -40230,7 +40230,7 @@
     {
       "id": 3001,
       "name": "Master Cosmic Wizard Boots",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -40253,7 +40253,7 @@
     {
       "id": 3002,
       "name": "Mystic Cosmic Wizard Boots",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -40276,7 +40276,7 @@
     {
       "id": 3003,
       "name": "Arcane Cosmic Wizard Boots",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -40299,7 +40299,7 @@
     {
       "id": 3004,
       "name": "Elder Cosmic Wizard Boots",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -40322,7 +40322,7 @@
     {
       "id": 3005,
       "name": "Mythic Cosmic Wizard Boots",
-      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.",
+      "description": "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
