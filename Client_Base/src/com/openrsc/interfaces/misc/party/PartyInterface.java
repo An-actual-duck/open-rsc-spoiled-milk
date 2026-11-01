@@ -263,23 +263,21 @@ public final class PartyInterface {
 		graphics.drawLineHoriz(x, y + 43, width, 0x6E5D4E);
 		// CONTENT
 		if (mc.party.inParty()) {
-			if (mc.party.inParty()) {
-				drawButton(graphics, x + 3, y + 18, 125, 22, "Partymates", partyActivePanel == 2, new ButtonHandler() {
+			drawButton(graphics, x + 3, y + 18, 125, 22, "Partymates", partyActivePanel == 2, new ButtonHandler() {
+				@Override
+				void handle() {
+					partyActivePanel = 2;
+					resetAll();
+				}
+			});
+			if (mc.party.isAllowed(1) && !mc.party.isPartyLeader()) {
+				drawSubmitButton(graphics, x + 280, y + 18, 125, 22, 15, 1, "Invite Player", false, new ButtonHandler() {
 					@Override
 					void handle() {
-						partyActivePanel = 2;
-						resetAll();
+						mc.showItemModX(InputXPrompt.partyInvite, InputXAction.INVITE_PARTY_PLAYER, true);
+						mc.showUiTab = 0;
 					}
 				});
-				if (mc.party.isAllowed(1) && !mc.party.isPartyLeader()) {
-					drawSubmitButton(graphics, x + 280, y + 18, 125, 22, 15, 1, "Invite Player", false, new ButtonHandler() {
-						@Override
-						void handle() {
-							mc.showItemModX(InputXPrompt.partyInvite, InputXAction.INVITE_PARTY_PLAYER, true);
-							mc.showUiTab = 0;
-						}
-					});
-				}
 			}
 		}
 		if (!mc.party.inParty() || mc.party.isPartyLeader()) {
