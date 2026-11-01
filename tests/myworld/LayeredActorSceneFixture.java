@@ -64,7 +64,8 @@ public final class LayeredActorSceneFixture {
     @SuppressWarnings("unchecked") static List<Packet> packets(Player p) throws Exception { return (List<Packet>)get(p,"outgoingPackets"); }
     static void input(PacketHandler h, Packet p) throws Exception {
         RSBuffer_Bits b = h.getPacketsIncoming();
-        b.dataBuffer = new byte[p.getLength()+1]; b.dataBuffer[0] = (byte)p.getID();
+        // Retain normal transport headroom, including the handler's error dump.
+        b.dataBuffer = new byte[Math.max(65536,p.getLength()+64)]; b.dataBuffer[0] = (byte)p.getID();
         p.getBuffer().getBytes(0,b.dataBuffer,1,p.getLength()); b.packetEnd = 1;
     }
     static void deliver(PacketHandler h, Packet p) throws Exception {
