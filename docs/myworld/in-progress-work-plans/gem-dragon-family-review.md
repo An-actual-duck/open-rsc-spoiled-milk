@@ -145,9 +145,26 @@ No additional ring-of-wealth multiplication is added to these hidden rolls.
   The owner approved the monocle's jeweller's loupe v2 icon; the October 28
   update copies its PNG exactly (see guaranteed-gems review for source/hash).
   Glove icon approval remains a separate visual gate. Worn glove geometry reuses the existing
-  leather glove appearance. The monocle currently uses the existing eye-patch
-  worn geometry as a provisional visual: it is **not an approved finished worn
-  monocle**, and should receive a dedicated visual before final release.
+  leather glove appearance. The owner explicitly chose **no worn monocle visual**
+  (October 31): appearance `0` (`AppearanceId.NOTHING`) removes the eye-patch
+  placeholder while retaining wearable head slot `5`, the5% cutting effect and
+  the approved inventory/ground loupe icon. Dedicated worn monocle art is no
+  longer a release requirement; glove icon review remains open.
+
+### October 31: owner chose no worn monocle visual
+
+Only item3409's `appearanceID` changes164→0. Slot5 is the hat overlay;
+`Player.updateWornItems` writes that slot independently of base head/hair slot0,
+and `mudclient.drawPlayer` skips zero animation layers. No equip admission or
+Crafting code changes. The inventory/ground loupe and glove assets are untouched.
+
+Existing appearance-definition gate passes. Existing native gem equip/cutting
+fixture passes224 assertions, and the client definition/render fixture passes
+in source and packaged-only contexts, after omitting only obsolete assertions
+that3400–3407 remain reserved. Those IDs already belong to antidotes at baseline;
+the unmodified entrypoints stop there before completing. No tests were added or
+changed. Original failures and external-copy successes are preserved under
+`/home/justin/.local/share/gem-monocle-no-worn-visual-review-20261031`.
 
 ## Visual provenance and discovery
 

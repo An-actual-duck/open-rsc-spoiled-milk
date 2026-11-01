@@ -26,15 +26,15 @@ Existing Elder Green/KBD content and the implemented gem dragons stay in scope.
 | --- | --- | --- |
 | Slayer Tower and gem-dragon cave | Owner-authored layouts and placement work are finished | Refresh the frozen export from the latest owner save; verify the assembled map and bindings |
 | Slayer encounters, capacity, guards, Slow/poison/antidotes and all 15 battleaxe coatings | Implemented/integrated; prior approved content retains its approvals | Combined private gameplay/acquisition checks and migration |
-| Gem dragons and Crafting loot | Five variants, drops and equipment behavior implemented | Glove icon approval, finished worn monocle visual, combined private gameplay |
+| Gem dragons and Crafting loot | Five variants, drops and equipment behavior implemented | Glove icon approval, combined private gameplay; owner chose no worn monocle visual |
 | Cleric, Grace/Blight wells and Cosmic combat luck | Current stage complete and accepted for release scope | Ordinary combined release QA; no additional spell tiers required |
 | Floating hit numbers | Owner-approved and integrated | Ordinary combined release QA |
 | Three additional bosses and Ante | Deferred | No work required before this release |
 
 ### Remaining release work, in order
 
-1. Close the two recorded gem-equipment art loose ends: glove icon approval and
-   a dedicated worn jeweller's loupe/monocle; its inventory icon is already approved.
+1. Review the gem-cutter glove icon with the owner. The monocle inventory icon is
+   approved; the owner chose no worn monocle visual, so dedicated worn art is not required.
 2. Prepare matching server/client map exports from the **latest authored save**,
    preserving the original and current work. The existing staged export is older.
    Recheck tower entrance/upward-stair bindings, stationary associates, gem cave
@@ -400,8 +400,8 @@ potential hides and associated armor sets should be designed before resuming the
 - Complete combined private testing/owner acceptance and final map migration
   with the update package. Do not invent new access requirements or re-author
   the owner's underground layout while doing integration.
-- The remaining recorded equipment art work is the glove icon's approval and
-  replacing the provisional eye-patch worn visual with a dedicated monocle/loupe.
+- The remaining equipment art gate is the glove icon's owner review. The owner
+  chose no worn monocle visual; the eye-patch placeholder is removed and no dedicated worn art is required.
   Its inventory icon is already approved; the dragon model is also approved.
 
 References: [gem-dragon implementation](gem-dragon-family-review.md),
