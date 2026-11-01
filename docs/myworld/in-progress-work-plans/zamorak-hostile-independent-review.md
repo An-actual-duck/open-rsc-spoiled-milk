@@ -1,6 +1,6 @@
 # Independent Zamorak hostile review
 
-Status: **code review passed at the guarded checkpoint; final READY documentation delta pending**, November 1, 2026. Reviewer branch:
+Status: **review complete; no confirmed blocker remains**, November 1, 2026. Reviewer branch:
 `test/zamorak-hostile-review`, based on published `02e060c50`.
 This is review and adversarial-test work only. No production fixes, game assets,
 owner maps/accounts, toolkit, staging package or public operations are changed.
@@ -132,12 +132,40 @@ adversarial execution. Worker-reported full gates include 145 combat scenarios,
 native UI/render checks; these broad suites were not all independently rerun
 by this reviewer. Core retains its final combined validation responsibility.
 
-## Remaining review gates and limits
+## Final exact READY audit
 
-No confirmed blocker remains at the guarded code snapshot. The final exact READY
-commit and its documentation-only delta must still be checked before formal
-review handoff; a later gameplay change would require renewed affected review.
-Private gameplay, real desktop rendering, broad economy balancing and every
-legacy script are outside this scoped offline proof. The boss authority remains
-the approved existing policy rather than a speculative new full-NPC audit.
+Final implementation handoff reviewed:
+**`238fe68b490700d5680e58fb2b3bb32c1191f220`**. Its pushed remote tracking tip
+matches the supplied exact commit. Compared with the independently tested guarded
+checkpoint, it changes five documentation/evidence files and adds seventeen
+fixture lines for the three retained-request regressions. Production Java,
+plugins, client code, protocol, configuration and PNG bytes are unchanged.
+The source hashes and four artifact hashes in its versioned validation receipt
+match the frozen production snapshot and the reviewer's own copied artifacts.
+
+The final fixture additionally asserts that a current valid curse still exists
+in each stale-request case, preventing a vacuous pass caused by unrelated curse
+cleanup. It then verifies ordinary damage, no pending Stagger and no callback
+RNG. The worker reports **264** final authored assertions (the previous 255 plus
+nine assertions for these three cases). The reviewer audited that test delta;
+it introduces no gameplay change. No redundant rerun of the unchanged guarded
+production was needed: the independent **27/27** and unified client **162**
+results apply to its exact same production bytes.
+
+The final implementation review accurately separates offline verification from
+private gameplay, map/package assembly and public activation. This review is
+ready for Core integration of the exact implementation handoff. No further
+production correction is requested.
+
+## Coverage limits
+
+The full worker gates were reviewed as supplied evidence, not all independently
+rerun. The independent runtime assertions use real production classes and fixed
+artifacts but synthetic actors/terrain and in-memory infrastructure. Ordinary
+attack-producer/death/quest coverage is corroborated by source tracing and the
+worker's real producer fixtures; the reviewer does not claim exhaustive proof
+of every legacy script or arbitrary simultaneous actor mutation. Private
+playtesting, real desktop rendering, economy balancing and Core's final rebuilt
+paired package remain separate gates. The approved boss/script authority was
+preserved rather than replaced with a new speculative NPC roster.
 No public release or shutdown is authorized by this review.
