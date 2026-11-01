@@ -24,7 +24,7 @@ public final class OgreStaggeringBlowProc {
     }
     // Ogre is physical contact even when the delivering attack deals magical damage.
     if (NonCorporealState.blocks(source, target, CombatHarmNature.NONMAGICAL)) return false;
-    if (random.nextDouble() >= source.getOgreStaggeringBlowProcChance()) {
+    if (!CombatLuck.roll(source,source.getOgreStaggeringBlowProcChance(),random)) {
       return false;
     }
     return target.applyStagger(1);

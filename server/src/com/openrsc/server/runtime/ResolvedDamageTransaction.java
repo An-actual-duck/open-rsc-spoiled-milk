@@ -43,7 +43,8 @@ public final class ResolvedDamageTransaction {
             Skill.HITS.id(),
             checkedRequest.getResolvedDamage(),
             false,
-            checkedRequest.shouldApplyGoblinTenacity());
+            checkedRequest.shouldApplyGoblinTenacity(),
+            checkedRequest.getHarmNature()!=com.openrsc.server.model.combat.CombatHarmNature.NON_COMBAT);
     target.getUpdateFlags().setDamage(new Damage(target, checkedRequest.getResolvedDamage()));
     if (checkedRequest.getPresentation() == DamageRequest.Presentation.DAMAGE_AND_HITSPLAT) {
       target

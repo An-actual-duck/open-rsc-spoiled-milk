@@ -27,7 +27,7 @@ public final class BabyDragonSmokeProc {
 		if (smokePercent <= 0) {
 			return false;
 		}
-		if (random.nextDouble() >= source.getBabyDragonSmokeProcChance()) {
+		if (!CombatLuck.roll(source,source.getBabyDragonSmokeProcChance(),random)) {
 			return false;
 		}
 		target.getUpdateFlags().setProjectile(

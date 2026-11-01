@@ -296,7 +296,7 @@ Core integration/private gameplay acceptance are separate.
 ### Decisions still needed
 
 Later cost/economy refinement and private gameplay balance review; Zamorak hostile
-activation and the unselected luck-centered Cosmic redesign.
+activation and remaining eligible-hit/execution decisions.
 Unify and Greater
 Unify behavior/unlocks are settled; the old neutral Respite remains excluded.
 Tier 4 unique spells remain later work.
@@ -315,9 +315,10 @@ Rearm requires a tangible attack attempt and a following tick before another rol
 Matched schema4/client10055 is required; owner maps and public activation remain
 separate. See [implementation review](cleric-consistency-implementation-review.md).
 
-Zamorak hostile activation remains deferred. The owner explicitly wants Cosmic's
-future redesign centered on **luck** and has not selected a replacement; current
-Cosmic chance/cap is unchanged. No Expose Weakness/Weak Legs/Weak Constitution
+Zamorak hostile activation remains deferred. The approved Cosmic replacement is
+**combat luck**:1percentage point per equipped robe tier, capped50%. Named damage/
+defense rolls and beneficial combat checks can select one favorable extra candidate;
+loot, skilling, random choices and recurring curse checks are excluded. No Expose Weakness/Weak Legs/Weak Constitution
 mechanics or proposed penetration redesign are activated.
 
 ## 3. Round out the boss-dragon roster
@@ -394,8 +395,7 @@ count toward recovery; polls, incoming hits and elapsed time do not. NPCs and
 the existing NPC-to-player Startle path share the rule, without new PvP admission.
 
 Critical hits now have explicit immutable per-hit identity across ordinary
-melee, player ranged/throwing, and Magic launch/settlement. Cosmic keeps its
-existing chance/cap; no Expose Weakness, Weak Legs or Weak Constitution effects
+melee, player ranged/throwing, and Magic launch/settlement. Cosmic supplies combat luck rather than critical chance; no Expose Weakness, Weak Legs or Weak Constitution effects
 are enabled. Their balance and eligible-hit decisions remain future work.
 Whip/Sticky extra attack delays compose separately from Stagger, preserving
 normal style/base cooldown ownership and existing movement/utility scope.

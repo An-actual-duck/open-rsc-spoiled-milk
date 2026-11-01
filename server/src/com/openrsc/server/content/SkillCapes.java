@@ -59,6 +59,15 @@ public class SkillCapes {
 		return false;
 	}
 
+    /** Only admitted combat cape checks opt in; the shared skilling/utility entrypoints stay unchanged. */
+    public static boolean shouldActivateForCombat(Player player,ItemId cape) {
+        if(cape!=ItemId.RANGED_CAPE&&cape!=ItemId.MAGIC_CAPE)throw new IllegalArgumentException("Unreviewed combat cape");
+        boolean eligible=player.getConfig().WANT_CUSTOM_SPRITES&&!player.getConfig().WANT_OPENPK_POINTS
+            &&player.getCarriedItems().getEquipment().hasEquipped(cape.id());
+        return com.openrsc.server.model.combat.CombatLuck.favorable(player,eligible?0.10:0,
+            ()->com.openrsc.server.util.rsc.DataConversions.getRandom().nextDouble(),()->shouldActivate(player,cape));
+    }
+
 	public static int shouldActivateInt(Player player, ItemId cape) {
 		if (!player.getConfig().WANT_CUSTOM_SPRITES || player.getConfig().WANT_OPENPK_POINTS)
 			return -1;

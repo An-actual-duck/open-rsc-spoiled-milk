@@ -166,7 +166,7 @@ public class RangeEvent extends GameTickEvent {
 			reset(ProjectileFailureReason.OUT_OF_AMMO);
 			return;
 		}
-			boolean skillCape = SkillCapes.shouldActivate(player, ItemId.RANGED_CAPE);
+			boolean skillCape = SkillCapes.shouldActivateForCombat(player, ItemId.RANGED_CAPE);
 		int delay = 3;
 		if (skillCape) {
       player.playerServerMessage(

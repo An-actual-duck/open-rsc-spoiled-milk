@@ -1854,11 +1854,20 @@ public abstract class Mob extends Entity {
 	 * effects and lethal overkill are accounted for.
 	 */
 	public int damageAndGetActualDamage(final int damage, final int hitSplatType) {
+        return damageAndGetActualDamage(damage,hitSplatType,false);
+    }
+
+    /** Explicit legacy combat adapter: same settlement/death order, combat-only equipment chance. */
+    public void damageFromCombat(final int damage) {
+        damageAndGetActualDamage(damage,HitSplat.TYPE_STANDARD,true);
+    }
+
+    private int damageAndGetActualDamage(final int damage,final int hitSplatType,final boolean combatLuck) {
 		int appliedDamage = damage;
 		if (appliedDamage > 0 && this.isPlayer()) {
 			Player player = (Player) this;
 			player.setAttribute("last_damage_taken_at", System.currentTimeMillis());
-			appliedDamage = player.applyGoblinTenacity(appliedDamage);
+			appliedDamage = player.applyGoblinTenacity(appliedDamage,combatLuck);
 		}
 		final int currentHp = Math.max(0, skills.getLevel(Skill.HITS.id()));
 		final int actualDamage = Math.min(Math.max(0, appliedDamage), currentHp);

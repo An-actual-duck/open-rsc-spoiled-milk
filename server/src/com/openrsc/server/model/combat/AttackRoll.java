@@ -4,7 +4,8 @@ package com.openrsc.server.model.combat;
 public final class AttackRoll {
   public enum Critical {
     NONE,
-    COSMIC
+    COSMIC,
+    AUTHORED
   }
 
   private final int damage;

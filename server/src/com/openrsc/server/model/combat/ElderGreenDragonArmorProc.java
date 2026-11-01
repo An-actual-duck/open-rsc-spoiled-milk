@@ -27,11 +27,10 @@ public final class ElderGreenDragonArmorProc {
 				|| source.getElderGreenDragonArmorProcChance() <= 0.0D) {
 			return false;
 		}
-		if (random.nextDouble() >= source.getElderGreenDragonArmorProcChance()) {
+		if (!CombatLuck.roll(source,source.getElderGreenDragonArmorProcChance(),random)) {
 			return false;
 		}
-		procPayload.apply(random.nextIntInclusive(0,
-			ElderGreenDragonArmorEffect.MAX_TRUE_DAMAGE));
+		procPayload.apply(CombatLuck.higher(source,random,()->random.nextIntInclusive(0,ElderGreenDragonArmorEffect.MAX_TRUE_DAMAGE)));
 		return true;
 	}
 }

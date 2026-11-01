@@ -103,7 +103,7 @@ public class DragonFireBreath implements OnCombatStartScript {
 				player.message("You are fried");
 			}
 			// Explicit magical combat harm: non-corporeal form permits it. Preserve legacy settlement/death order.
-			player.damage(fireDamage);
+			player.damageFromCombat(fireDamage);
 
 			//reduce ranged level (case for KBD if engaging with melee or ranging)
 			if (dragon.getID() == NpcId.KING_BLACK_DRAGON.id() && (player.isRanging() || attacker.isPlayer())) {

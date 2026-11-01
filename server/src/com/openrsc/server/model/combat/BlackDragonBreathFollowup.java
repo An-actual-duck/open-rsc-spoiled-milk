@@ -34,7 +34,7 @@ public final class BlackDragonBreathFollowup {
 			return false;
 		}
 		final int rolledDamage =
-			random.nextIntInclusive(0, MAX_PROC_DAMAGE);
+			CombatLuck.higher(source,random,()->random.nextIntInclusive(0,MAX_PROC_DAMAGE));
 		if (rolledDamage > 0) {
 			auxiliaryTrueDamage.apply(rolledDamage);
 		}

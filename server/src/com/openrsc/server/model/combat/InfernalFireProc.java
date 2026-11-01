@@ -35,13 +35,15 @@ public final class InfernalFireProc {
 			return Result.notConfigured(maxHit);
 		}
 		final double chance = source.getInfernalFireProcChance();
-		final double roll = random.nextDouble();
-		if (roll >= chance) {
+        final double[] firstRoll={1};
+        boolean success=CombatLuck.favorable(source,chance,random::nextDouble,()->{double value=random.nextDouble();firstRoll[0]=Math.min(firstRoll[0],value);return value<chance;});
+        final double roll=firstRoll[0];
+		if (!success) {
 			return Result.failed(maxHit, chance, roll);
 		}
 		target.getUpdateFlags().setCombatEffect(new CombatEffect(target,
 			CombatEffect.infernalEffectForMaxHit(maxHit)));
-		final int rolledDamage = random.nextIntInclusive(0, maxHit);
+		final int rolledDamage = CombatLuck.higher(source,random,()->random.nextIntInclusive(0,maxHit));
 		final int damageDealt = auxiliaryMagicDamage.apply(rolledDamage);
 		target.applyInfernalFireDefenseDebuff(
 			source.getInfernalFireDefenseDebuffPercent());

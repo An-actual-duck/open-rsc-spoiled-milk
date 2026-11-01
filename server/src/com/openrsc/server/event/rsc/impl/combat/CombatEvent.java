@@ -285,10 +285,10 @@ public class CombatEvent extends GameTickEvent {
 				final Player targetPlayer = (Player) target;
 				final double recoilChance = targetPlayer.getCarriedItems().getEquipment().getChaosRecoilChance();
 				if (recoilChance > 0.0D) {
-					final double recoilRoll = DataConversions.getRandom().nextDouble();
+					final boolean recoilSuccess=com.openrsc.server.model.combat.CombatLuck.favorable(targetPlayer,recoilChance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<recoilChance);
 					final int divisor = targetPlayer.getCarriedItems().getEquipment().getChaosRecoilDamageDivisor();
 					final int reflectedDamage = damage <= 0 ? 0 : Math.max(1, damage / divisor);
-					final boolean proc = recoilRoll < recoilChance;
+					final boolean proc = recoilSuccess;
 					if (proc && reflectedDamage > 0) {
 						inflictMeleeJewelryRecoilDamage(
 							target, hitter, reflectedDamage);
@@ -455,7 +455,7 @@ public class CombatEvent extends GameTickEvent {
 		}
 		final double breathProcChance = player.getDragonBreathArmorProcChance();
 		if (breathProcChance > 0.0D
-				&& DataConversions.getRandom().nextDouble() < breathProcChance) {
+				&& com.openrsc.server.model.combat.CombatLuck.favorable(player,breathProcChance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<breathProcChance)) {
 			appliedPoisonPower = Math.max(appliedPoisonPower,
 				player.getDragonBreathArmorAppliedPoisonPower());
 			player.setAttribute("dragon_breath_armor_proc",

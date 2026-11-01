@@ -198,7 +198,7 @@ public class ThrowingEvent extends GameTickEvent {
 			return;
 		}*/
 
-		boolean skillCape = SkillCapes.shouldActivate(player, ItemId.RANGED_CAPE);
+		boolean skillCape = SkillCapes.shouldActivateForCombat(player, ItemId.RANGED_CAPE);
 
 		int delay = 3;
 		if (skillCape) {

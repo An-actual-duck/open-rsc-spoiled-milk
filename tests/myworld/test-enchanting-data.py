@@ -715,7 +715,7 @@ def ensure_enchanted_wool_robes_have_effect_examine(items: dict[int, dict[str, A
         2074: "10% chance to not use earth runes with casting\nReduces earth magic damage by 2% per robe tier.",
         2075: "10% chance to not use fire runes with casting\nReduces fire magic damage by 2% per robe tier.",
         2077: "10% chance to not use body runes with casting\nDamage taken grants up to +1 weapon power per robe tier.",
-        2079: "10% chance to not use cosmic runes with casting\nGrants 1% crit chance per robe tier.",
+        2079: "10% chance to not use cosmic runes with casting\nMakes you 1% luckier in a fight per tier.\nCombat luck can roll your damage, defense and beneficial combat chances twice, keeping the better result.",
         2078: "10% chance to not use chaos runes with casting\nAdjacent enemies increase damage by 2% per robe tier.",
         2080: "10% chance to not use nature runes with casting\nPotions are 2% stronger and last 2% longer per robe tier.",
         2081: "10% chance to not use law runes with casting\nRunecrafting yields 2% more runes per robe tier.",

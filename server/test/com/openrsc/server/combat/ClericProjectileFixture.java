@@ -24,6 +24,7 @@ public final class ClericProjectileFixture {
   static ProjectileEvent launch(CurrentCombatHarness h, Player p, Npc npc, int style)
       throws Exception {
     SharedAttackFoundationFixture.advance(h, 12);
+    h.random().reset(1);
     h.random().scriptDoubles(0.0);
     if (style == 0) {
       RangeEvent event = new RangeEvent(h.world(), p, 0, npc);
@@ -95,15 +96,15 @@ public final class ClericProjectileFixture {
         ClericBlessingsFixture.party(h, c, p);
         DamageResult baseline = settle(h, launch(h, p, npc, style), results);
         check(
-            baseline.getActualDamage() > 0 && baseline.isCritical(),
-            "positive real critical baseline style" + style);
+            baseline.getActualDamage() > 0 && !baseline.isCritical(),
+            "positive real lucky noncritical baseline style" + style);
         ClericBlessingsFixture.cast(c, p, 14);
         DamageResult blessed = settle(h, launch(h, p, npc, style), results);
         check(
             blessed.getActualDamage()
                 == baseline.getActualDamage() + baseline.getActualDamage() * 75 / 100,
             "actual Hallowed impact style" + style);
-        check(blessed.isCritical(), "Hallowed retains explicit critical identity");
+        check(!blessed.isCritical(), "Hallowed does not invent critical identity");
         ProjectileEvent inFlight = launch(h, p, npc, style);
         int recovery = AttackState.recoveryAttacks(p);
         Object owner = new Object();
@@ -118,7 +119,7 @@ public final class ClericProjectileFixture {
             "settlement-time phase preserves Magic exception style" + style);
         check(AttackState.recoveryAttacks(p) == recovery, "impact does not commit another attack");
         check(
-            inFlight.getLaunchSnapshot().getSpecification().getAttackRoll().isCritical(),
+            !inFlight.getLaunchSnapshot().getSpecification().getAttackRoll().isCritical(),
             "phase never mutates launch roll");
         NonCorporealState.clearOwned(npc, owner);
         DamageRequest secondary =

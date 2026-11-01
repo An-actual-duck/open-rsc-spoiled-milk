@@ -40,7 +40,8 @@ public final class PoisonProcChance {
 			failedAttempts = 0;
 		}
 
-		final boolean proc = DataConversions.getRandom().nextInt(100) < currentChance;
+		final int selectedChance=currentChance;
+        final boolean proc=com.openrsc.server.model.combat.CombatLuck.favorable(player,selectedChance/100.0,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextInt(100)<selectedChance);
 		int nextChance = currentChance;
 		int nextFailures = failedAttempts;
 		if (proc) {

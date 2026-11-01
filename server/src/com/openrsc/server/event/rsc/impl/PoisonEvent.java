@@ -77,13 +77,18 @@ public class PoisonEvent extends GameTickEvent {
 		if (poisonPower == 0) mob.curePoison();
 	}
 
+    private boolean hasCombatProvenance() {
+        return provenance!=null && (provenance.isPlayer()
+            || provenance.getSourceKind()==com.openrsc.server.model.combat.dot.PeriodicEffectSourceKind.NPC);
+    }
+
 	private int settleTypedPoisonDamage(final int requestedDamage) {
         final Mob source = resolveLiveSource();
 		int resolvedDamage = requestedDamage;
 		if (mob.isPlayer()&&!com.openrsc.server.model.combat.NonCorporealState.blocks(source,mob,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)) {
 			final Player player = (Player) mob;
 			player.setAttribute("last_damage_taken_at", System.currentTimeMillis());
-			resolvedDamage = player.applyGoblinTenacity(resolvedDamage);
+			resolvedDamage = player.applyGoblinTenacity(resolvedDamage,hasCombatProvenance());
 		}
 		resolvedDamage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(mob, resolvedDamage);
 		final DamageRequest request = DamageRequest.resolvedLegacy(source, mob,

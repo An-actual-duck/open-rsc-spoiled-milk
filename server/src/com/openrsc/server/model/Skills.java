@@ -330,12 +330,16 @@ public class Skills {
 	 */
 	public void subtractLevel(int skill, int amount, boolean update,
 			boolean applyGoblinTenacity) {
+        subtractLevel(skill,amount,update,applyGoblinTenacity,false);
+    }
+
+    public void subtractLevel(int skill,int amount,boolean update,boolean applyGoblinTenacity,boolean combatLuck) {
 		if (isHiddenAutoMaxedSkill(skill)) {
 			return;
 		}
 		if (applyGoblinTenacity && skill == Skill.HITS.id() && amount > 0
 				&& mob instanceof Player) {
-			amount = ((Player) mob).applyGoblinTenacity(amount);
+			amount = ((Player) mob).applyGoblinTenacity(amount,combatLuck);
 		}
 		levels[skill] = levels[skill] - amount;
 		if (levels[skill] <= 0) {

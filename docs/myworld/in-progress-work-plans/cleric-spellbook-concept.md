@@ -200,8 +200,8 @@ The effect labels are retained; higher spell tiers include the earlier effects.
 
 The selected chains use mounting fear for Guthix, escalating divine judgment
 and bodily unraveling for Saradomin, and increasingly destructive intent for
-Zamorak. Naming approval does not resolve outstanding timing, balance or Cosmic
-robe decisions, and no hostile recipient flavor messages are added.
+Zamorak. Naming approval does not resolve outstanding hostile timing, balance or
+trigger-eligibility decisions, and no hostile recipient flavor messages are added.
 
 Flavor imagery adds no mechanics: it does not make healing instant, guarantee
 ailment immunity, grant accuracy, or set a lifesteal activation threshold.
@@ -362,7 +362,7 @@ integration with the separate hit-splat topic branch at final collection.
 
 ### Owner-selected Zamorak debuffs — October 31, 2026
 
-**Design recorded; not implemented. Activation awaits the owner's luck-centered Cosmic redesign.** These owner-selected
+**Design recorded; not implemented. Cosmic combat luck is now selected and implemented; hostile hit/execution boundaries still require a separate decision.** These owner-selected
 components replace the earlier manager suggestions for Zamorak. Higher tiers
 retain the earlier components, using the shared Holy Power thresholds and
 tier caps **2/4/6**. The quoted names below are the owner's effect labels;
@@ -409,9 +409,8 @@ crit against ordinary enemies at 25% HP or lower. These are conditional proc
 chances, not additional guaranteed effects on every normal attack.
 
 The shared critical foundation carries an immutable explicit outcome through
-ordinary melee, bow/throwing, and combat Magic launch/impact settlement. Cosmic
-remains the only enabled modern critical-chance source, with its existing values
-and cap. A normal maximum is not a critical; a Stagger-forced zero is not a
+ordinary melee, bow/throwing, and combat Magic launch/impact settlement. Cosmic now supplies combat luck instead of critical chance (approved October31).
+Each robe tier contributes1percentage point, capped50% over all pieces. A normal maximum is not a critical; a Stagger-forced zero is not a
 critical. Existing secondary/offhand damage eligibility is retained, without
 permission to trigger these future hostile components. Remaining legacy integer-only secondary/death helpers retain their historical
 damage/RNG and attribution ordering. In particular, lethal God/Iban secondary
@@ -419,6 +418,17 @@ damage still has its older direct death path. Those compatibility helpers do
 not have complete critical provenance and are not approved hostile-trigger
 boundaries. Primary outcome propagation is complete; it does not silently
 finalize future offhand/secondary debuff eligibility.
+
+Cosmic combat luck now gives1percentage point per equipped piece tier, capped50%.
+Each reviewed outgoing damage amount, own defense mitigation, or beneficial
+combat-effect/critical check can independently roll one additional pure candidate
+and keep the favorable result. A10% check becomes14.5% at50% luck;15% becomes
+21.375%. No whole attack/effect is replayed. Loot/skilling, incomparable random
+choices, healing quantities and recurring curse checks (including Molecular
+Antipode) are excluded. NPCs/summons do not inherit owner equipment luck. Shared
+Stagger, phase and additive delay rules remain unchanged. The optional OSRS
+profile retains its separate formula/cape mechanics. See the [source-family and
+verification review](cosmic-combat-luck-review.md) for exact integration boundaries.
 
 Before hostile implementation, resolve: aggregation with existing critical
 equipment; offhand/secondary/multi-hit eligibility; the HP checkpoint used for
@@ -433,7 +443,7 @@ decisions. No new PvP permission or live activation is implied.
 Barkskin to ranged defense; lifesteal retains its existing direct-hit scope.
 The candidate includes Saradomin's undead damage/tier-order revision and the
 six Guthix/Saradomin hostile spells. Zamorak hostile activation remains deferred
-pending the owner's unselected luck-centered Cosmic redesign.
+pending separate eligible-hit/execution decisions; Cosmic combat luck is implemented without enabling this chain.
 
 The old neutral Respite stays absent from the active17-entry candidate. This
 does not remove Saradomin regeneration, other equipment/potion regeneration,

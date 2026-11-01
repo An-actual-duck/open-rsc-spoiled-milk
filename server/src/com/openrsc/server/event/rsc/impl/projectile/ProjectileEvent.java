@@ -517,10 +517,10 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (recoilChance <= 0.0D) {
 			return;
 		}
-		final double recoilRoll = DataConversions.getRandom().nextDouble();
+		final boolean recoilSuccess=com.openrsc.server.model.combat.CombatLuck.favorable(opponent,recoilChance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<recoilChance);
 		final int divisor = opponent.getCarriedItems().getEquipment().getChaosRecoilDamageDivisor();
 		int reflectedDamage = damage <= 0 ? 0 : Math.max(1, damage / divisor);
-		final boolean proc = recoilRoll < recoilChance;
+		final boolean proc = recoilSuccess;
 		if (!proc || reflectedDamage == 0)
 			return;
 
@@ -828,7 +828,7 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private boolean rollsPercent(int chancePercent) {
-		return chancePercent > 0 && DataConversions.getRandom().nextDouble() < chancePercent / 100.0D;
+		return chancePercent > 0 && com.openrsc.server.model.combat.CombatLuck.favorable(caster,chancePercent/100.0D,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<chancePercent/100.0D);
 	}
 
 	private int applyFrostbiteReflection(final Mob hitter, final Mob target, int incomingDamage) {
@@ -957,7 +957,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 		final double breathProcChance = casterPlayer.getDragonBreathArmorProcChance();
 		if (breathProcChance > 0.0D
-				&& DataConversions.getRandom().nextDouble() < breathProcChance) {
+				&& com.openrsc.server.model.combat.CombatLuck.favorable(casterPlayer,breathProcChance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<breathProcChance)) {
 			appliedPoisonPower = Math.max(appliedPoisonPower,
 				casterPlayer.getDragonBreathArmorAppliedPoisonPower());
 			casterPlayer.setAttribute("dragon_breath_armor_proc",

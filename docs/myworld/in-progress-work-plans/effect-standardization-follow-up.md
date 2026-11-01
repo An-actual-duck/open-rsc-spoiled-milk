@@ -11,10 +11,10 @@ at melee strike, projectile launch or custom telegraph commitment. An already
 committed projectile/telegraph is not retroactively canceled by a new Stagger.
 Death/respawn/logout lifetimes clear the state.
 
-Ogre's full-set 20% chance and Thunder Startle's 7/15/25% remain unchanged and
-independent of critical hits. Current Cosmic chance/cap is the sole modern crit
-source; explicit immutable outcomes distinguish true crits, normal maxima and
-forced zero. Future hostile spell triggers remain disabled.
+Ogre's full-set20% and Thunder Startle's7/15/25% authored base chances remain
+independent of critical hits. Eligible Player-owned checks now receive combat luck;
+the existing Stagger recovery/admission rules still prevent stacked applications. Cosmic now supplies combat luck, not critical chance; explicit immutable outcomes distinguish true crits, normal maxima and
+forced zero. Future Zamorak hostile critical/Stagger/execution triggers remain disabled.
 
 Whip keeps its 10% proc, one-tick movement pause and three following immunity
 ticks. Sticky keeps its 10% qualifying-hit, next-attack-only delay. Each source
