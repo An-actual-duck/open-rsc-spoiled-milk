@@ -3,6 +3,9 @@ package com.openrsc.server.combat;
 import com.openrsc.server.Server;
 import com.openrsc.server.content.market.*;
 import com.openrsc.server.database.*;
+import com.openrsc.server.database.struct.*;
+import com.openrsc.server.login.*;
+import com.openrsc.server.util.rsc.LoginResponse;
 import com.openrsc.server.database.impl.mysql.MySqlGameDatabase;
 import com.openrsc.server.database.impl.sqlite.SqliteGameDatabase;
 import com.openrsc.server.model.container.*;
@@ -20,6 +23,7 @@ public final class MarketAtomicityFixture {
     static final String P = "qa_";
     static int checks, playerNumber = 100;
     static boolean mysql;
+    static int endpointPort;
     static void check(boolean ok, String message) { checks++; if (!ok) throw new AssertionError(message); }
     static Connection open() throws SQLException { return DriverManager.getConnection(url + (mysql ? "&connectTimeout=2000&socketTimeout=3000" : ""), user, password); }
     static void sql(String sql) throws SQLException { try (Connection c = open(); Statement s = c.createStatement()) { s.executeUpdate(sql); } }
@@ -152,7 +156,7 @@ public final class MarketAtomicityFixture {
         check(n("SELECT COUNT(*) FROM "+P+"expired_auctions WHERE playerID=992")==0,"moderation failure returns nothing prematurely");
         run(moderation,h,moderate);run(moderation,h,moderate);
         check(n("SELECT SUM(item_amount) FROM "+P+"expired_auctions WHERE playerID=992")==4,"moderation returns remainder once to seller");
-        bankPins(h);equipmentTransitions(h);saveLockOrder(h);admission(h);concurrentBuy(h);gameQueue(h);engineSafety(h);legacyStorage(h);providerConnections(h);
+        bankPins(h);equipmentTransitions(h);saveLockOrder(h);admission(h);concurrentBuy(h);gameQueue(h);engineSafety(h);loginBarrier(h);legacyStorage(h);providerConnections(h);
     }
     static void bankPins(CurrentCombatHarness h)throws Exception {
         Player p=player(h);Bank bank=p.getBank();check(bank.add(new Item(384,1),false),"pin seed");
@@ -238,13 +242,99 @@ public final class MarketAtomicityFixture {
         h.advanceOneCombatTick();h.advanceOneCombatTick();
         check(p.getCarriedItems().getInventory().countId(384)==1&&persisted(p.getDatabaseID(),"invitems",10)==900,"ordinary game-event task settles durable transaction");
     }
+    static final class LoginDatabase extends MySqlGameDatabase {
+        final Provider provider;int snapshots;boolean failSnapshot;
+        LoginDatabase(Server s,Provider p){super(s);provider=p;}
+        @Override public JDBCDatabaseConnection getConnection(){return provider;}
+        @Override protected void startTransaction(){try{provider.c.setAutoCommit(false);}catch(SQLException e){throw new RuntimeException(e);}}
+        @Override protected void commitTransaction(){try{provider.c.commit();provider.c.setAutoCommit(true);}catch(SQLException e){throw new RuntimeException(e);}}
+        @Override protected void rollbackTransaction(){try{provider.c.rollback();provider.c.setAutoCommit(true);}catch(SQLException e){throw new RuntimeException(e);}}
+        @Override public PlayerData queryLoadPlayerData(Player p){
+            snapshots++;
+            if(failSnapshot)throw new IllegalStateException("injected incomplete ordinary snapshot");
+            try(PreparedStatement s=provider.c.prepareStatement("SELECT id,username FROM "+P+"players WHERE username=?")){
+                s.setString(1,p.getUsername());try(ResultSet r=s.executeQuery()){
+                    if(!r.next())throw new IllegalStateException("missing synthetic profile");
+                    PlayerData d=new PlayerData();d.playerId=r.getInt(1);d.username=r.getString(2);d.groupId=10;d.xLocation=449;d.yLocation=450;d.headSprite=1;d.bodySprite=2;d.male=true;d.loginIp="127.0.0.1";return d;
+                }
+            }catch(SQLException e){throw new RuntimeException(e);}
+        }
+        @Override public PlayerSkills[] queryLoadPlayerSkills(Player p,boolean max){PlayerSkills[] result=new PlayerSkills[server.getConstants().getSkills().getSkillsCount()];for(int i=0;i<result.length;i++){result[i]=new PlayerSkills();result[i].skillId=i;result[i].skillLevel=40;}return result;}
+        @Override public PlayerExperience[] queryLoadPlayerExperience(int id){PlayerExperience[] result=new PlayerExperience[server.getConstants().getSkills().getSkillsCount()];for(int i=0;i<result.length;i++){result[i]=new PlayerExperience();result[i].skillId=i;result[i].experience=40000;}return result;}
+        @Override public PlayerExperienceCapped[] queryLoadPlayerExperienceCapped(int id){return new PlayerExperienceCapped[0];}
+        @Override public PlayerRecoveryQuestions[] queryPlayerRecoveryChanges(Player p){return new PlayerRecoveryQuestions[0];}
+        @Override public PlayerBankPreset[] queryLoadPlayerBankPresets(Player p){return new PlayerBankPreset[0];}
+        @Override public PlayerFriend[] queryLoadPlayerFriends(Player p){return new PlayerFriend[0];}
+        @Override public PlayerIgnore[] queryLoadPlayerIgnored(Player p){return new PlayerIgnore[0];}
+        @Override public PlayerQuest[] queryLoadPlayerQuests(Player p){return new PlayerQuest[0];}
+        @Override public PlayerCache[] queryLoadPlayerCache(Player p){return new PlayerCache[0];}
+        @Override public PlayerNpcKills[] queryLoadPlayerNpcKills(Player p){return new PlayerNpcKills[0];}
+    }
+    static final class RecordingLogin extends LoginRequest {
+        final CurrentCombatHarness h;int response=-999;Player completed;
+        RecordingLogin(CurrentCombatHarness h,String name){super(h.server(),loginChannel(),name,"synthetic-unused",false,h.server().getConfig().CLIENT_VERSION,false,null);this.h=h;}
+        @Override public ValidatedLogin validateLogin(){
+            // Authentication alone is a synthetic fixture boundary. The actual
+            // processInternal, PlayerService and economic provider reads run.
+            getServer().getPacketFilter().addLoggedInPlayer(getIpAddress(),getUsernameHash());
+            return new ValidatedLogin(LoginResponse.LOGIN_SUCCESSFUL[10]);
+        }
+        @Override public void loginValidated(int code){check(response==-999,"one login response only");response=code;}
+        @Override public void loadingComplete(Player p){completed=p;h.world().getPlayers().add(p);p.updateRegion();}
+    }
+    static io.netty.channel.Channel loginChannel(){
+        return (io.netty.channel.Channel)Proxy.newProxyInstance(io.netty.channel.Channel.class.getClassLoader(),new Class<?>[]{io.netty.channel.Channel.class},(proxy,method,args)->{
+            if(method.getName().equals("remoteAddress"))return new java.net.InetSocketAddress("127.0.0.1",12345);
+            if(method.getName().equals("isOpen")||method.getName().equals("isActive")||method.getName().equals("isWritable"))return true;
+            if(method.getName().equals("hashCode"))return System.identityHashCode(proxy);
+            if(method.getName().equals("equals"))return args[0]==proxy;
+            return null;
+        });
+    }
+    static void loginBarrier(CurrentCombatHarness h)throws Exception {
+        GameDatabase originalDatabase=h.server().getDatabase();Object originalService=h.server().getPlayerService();
+        boolean auctionEnabled=h.server().getConfig().SPAWN_AUCTION_NPCS;
+        try(Provider provider=new Provider()) {
+            LoginDatabase db=new LoginDatabase(h.server(),provider);PlayerService service=new PlayerService(h.world(),h.server().getConfig(),db);
+            set(h.server(),Server.class,"database",db);set(h.server(),Server.class,"playerService",service);
+            for(boolean commit:Arrays.asList(true,false)) {
+                Player p=player(h);h.logout(p);p.closePersistenceSession();int snapshotsBefore=db.snapshots;
+                Connection pending=open();pending.setAutoCommit(false);
+                try(PreparedStatement s=pending.prepareStatement("UPDATE "+P+"players SET username=username WHERE id=?")){s.setInt(1,p.getDatabaseID());s.executeUpdate();}
+                try(PreparedStatement s=pending.prepareStatement("UPDATE "+P+"itemstatuses SET amount=900 WHERE itemID IN (SELECT itemID FROM "+P+"invitems WHERE playerID=?) AND catalogID=10")){s.setInt(1,p.getDatabaseID());s.executeUpdate();}
+                try(PreparedStatement s=pending.prepareStatement("INSERT INTO "+P+"market_operations VALUES(?,?,?,?,?)")){s.setString(1,UUID.randomUUID().toString());s.setInt(2,p.getDatabaseID());s.setString(3,"BUY");s.setString(4,"held-login-fixture");s.setLong(5,0);s.executeUpdate();}
+                // A plain read really can see old coins while remote settlement owns its locks.
+                check(persisted(p.getDatabaseID(),"invitems",10)==1000,"unsettled transaction exposes old state to plain reads");
+                h.server().getConfig().SPAWN_AUCTION_NPCS=false;
+                RecordingLogin blocked=new RecordingLogin(h,p.getUsername().toUpperCase(Locale.ROOT));
+                long start=System.nanoTime();blocked.process();
+                check(blocked.response==LoginResponse.LOGINSERVER_OFFLINE&&blocked.completed==null,"pending settlement denies login before success");
+                check(db.snapshots==snapshotsBefore&&h.world().getPlayer(p.getUsernameHash())==null,"barrier timeout creates no snapshot or spendable actor");
+                check(h.server().getPacketFilter().getPlayersCount("127.0.0.1")==0,"denied login releases validation reservation");
+                check(TimeUnit.NANOSECONDS.toSeconds(System.nanoTime()-start)<7,"login settlement barrier bounded");
+                if(commit)pending.commit();else pending.rollback();pending.close();
+                RecordingLogin settled=new RecordingLogin(h,p.getUsername().toUpperCase(Locale.ROOT));settled.process();h.advanceOneCombatTick();h.advanceOneCombatTick();
+                check(settled.isLoginSuccessful(settled.response)&&settled.completed!=null,"settled current actor row permits ordinary LoginRequest load");
+                check(settled.completed.getCarriedItems().getInventory().countId(10)==(commit?900:1000),"fresh login snapshot reflects exact commit or rollback outcome");
+                h.server().getPacketFilter().removeLoggedInPlayer("127.0.0.1",p.getUsernameHash());h.logout(settled.completed);
+            }
+            Player p=player(h);h.logout(p);sql("DROP TABLE "+P+"market_operations");
+            db.failSnapshot=true;RecordingLogin incomplete=new RecordingLogin(h,p.getUsername());incomplete.process();
+            check(incomplete.response==LoginResponse.LOGINSERVER_OFFLINE&&incomplete.completed==null,"atomically false rejects partial profile without success response");
+            db.failSnapshot=false;RecordingLogin clean=new RecordingLogin(h,p.getUsername().toUpperCase(Locale.ROOT));clean.process();h.advanceOneCombatTick();h.advanceOneCombatTick();
+            check(clean.completed!=null&&clean.completed.getCarriedItems().getInventory().countId(10)==1000,"disabled auction profile can load after incomplete-snapshot rollback");
+            String tables=mysql?"SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='qa_market_operations'":"SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='qa_market_operations'";
+            check(n(tables)==0,"login barrier does not create receipt schema");
+            h.server().getPacketFilter().removeLoggedInPlayer("127.0.0.1",p.getUsernameHash());h.logout(clean.completed);
+        }finally{h.server().getConfig().SPAWN_AUCTION_NPCS=auctionEnabled;set(h.server(),Server.class,"database",originalDatabase);set(h.server(),Server.class,"playerService",originalService);}
+    }
     static void providerConnections(CurrentCombatHarness h)throws Exception {
         com.openrsc.server.ServerConfiguration cfg=h.server().getConfig();
         String oldName=cfg.DB_NAME,oldHost=cfg.DB_HOST,oldUser=cfg.DB_USER,oldPass=cfg.DB_PASS;
         try {
             JDBCDatabaseConnection factory;
             if(mysql){
-                cfg.DB_HOST="127.0.0.1:32768";cfg.DB_NAME="auction_test";cfg.DB_USER=user;cfg.DB_PASS=password;
+                cfg.DB_HOST="127.0.0.1:"+endpointPort;cfg.DB_NAME="auction_test";cfg.DB_USER=user;cfg.DB_PASS=password;
                 factory=new com.openrsc.server.database.impl.mysql.MySQLDatabaseConnection(h.server());
             }else{
                 java.nio.file.Path directory=java.nio.file.Paths.get("inc/sqlite");java.nio.file.Files.createDirectories(directory);
@@ -326,9 +416,9 @@ public final class MarketAtomicityFixture {
     }
     public static void main(String[] args)throws Exception{
         url=System.getenv("MARKET_TEST_JDBC");user=System.getenv("MARKET_TEST_USER");password=System.getenv("MARKET_TEST_PASSWORD");
-        if(url==null)throw new IllegalArgumentException("Explicit disposable MARKET_TEST_JDBC required");mysql=url.startsWith("jdbc:mysql:");
-        if(mysql&&!url.startsWith("jdbc:mysql://127.0.0.1:32768/auction_test?"))throw new IllegalArgumentException("Only assigned disposable MySQL endpoint permitted");
-        System.setSecurityManager(new SecurityManager(){public void checkPermission(Permission p){} public void checkListen(int port){throw new AssertionError("Listeners forbidden");}public void checkConnect(String host,int port){if(mysql&&host.equals("127.0.0.1")&&(port==32768||port==-1))return;if(port<0)throw new SecurityException("No hostname lookup");throw new AssertionError("Unassigned network access "+host+":"+port);}});
+        if(url==null)throw new IllegalArgumentException("Explicit disposable MARKET_TEST_JDBC required");mysql=url.startsWith("jdbc:mysql:");endpointPort=mysql?Integer.parseInt(System.getenv("MARKET_TEST_PORT")):0;
+        if(mysql&&!url.startsWith("jdbc:mysql://127.0.0.1:"+endpointPort+"/auction_test?"))throw new IllegalArgumentException("Only assigned disposable MySQL endpoint permitted");
+        System.setSecurityManager(new SecurityManager(){public void checkPermission(Permission p){} public void checkListen(int port){throw new AssertionError("Listeners forbidden");}public void checkConnect(String host,int port){if(mysql&&host.equals("127.0.0.1")&&(port==endpointPort||port==-1))return;if(port<0)throw new SecurityException("No hostname lookup");throw new AssertionError("Unassigned network access "+host+":"+port);}});
         String mode=args.length==0?"test":args[0];
         if(!mode.startsWith("recover"))schema();
         try(CurrentCombatHarness h=new CurrentCombatHarness();Provider provider=new Provider()){
@@ -336,6 +426,8 @@ public final class MarketAtomicityFixture {
             if(mode.startsWith("crash")){
                 Player p=player(h);equipFromInventory(p);int id=listing(999,1,1,100);Store s=new Store();s.failure=mode.endsWith("before")?"before-commit":"after-commit";s.halt=true;run(s,h,op(MarketOperation.Kind.BUY,p,id,0,1,0));throw new AssertionError("halt missing");
             }else if(mode.startsWith("recover")){
+                h.server().getConfig().SPAWN_AUCTION_NPCS=false;
+                check(com.openrsc.server.service.AccountLoadBarrier.await(h.server().getDatabase(),P,"auction101")==101,"fresh JVM login barrier settles actor without process-local flags");
                 Player p=h.player("auction101",449,450);p.setDatabaseID(101);reloadContainers(h,p);
                 boolean before=mode.endsWith("before");
                 check(p.getCarriedItems().getInventory().countId(10)==(before?1000:900)&&p.getCarriedItems().getInventory().countId(384,Optional.empty())==(before?0:1),"fresh process provider reload after crash");

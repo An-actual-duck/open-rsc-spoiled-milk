@@ -127,33 +127,37 @@ public abstract class LoginRequest extends LoginExecutorProcess{
 
 	public abstract void loadingComplete(Player loadedPlayer);
 
-	protected void processInternal() {
-		ValidatedLogin vl = validateLogin();
-		int loginResponse = vl.responseCode;
-
-		if (clientVersion <= 204) {
-			loginResponse = RegisterLoginResponse.translateNewToOld(loginResponse, clientVersion, false);
-		}
-		loginValidated(loginResponse);
-
-		if (!isSimLogin && isLoginSuccessful(loginResponse)) {
-			final Player loadedPlayer = getServer().getPlayerService().loadPlayer(this);
-			loadedPlayer.setLoggedIn(true);
-
-			LOGGER.info("Player Loaded: " + getUsername() +  String.format("; Client Version: %d", clientVersion));
-
-			getServer().getGameEventHandler().add(new ImmediateEvent(getServer().getWorld(), "Login Player") {
-				@Override
-				public void action() {
-					loadingComplete(loadedPlayer);
-					loadedPlayer.desertHeatInit();
-					ActionSender.sendReleasedNameExplanation(loadedPlayer, usernameChangeType);
-				}
-			});
-
-		}
-		LOGGER.info("Processed login request for " + getUsername() + " response: " + loginResponse);
-	}
+    protected void processInternal() {
+        ValidatedLogin vl = validateLogin();
+        int loginResponse = vl.responseCode;
+        Player candidate = null;
+        if (!isSimLogin && isLoginSuccessful(loginResponse)) {
+            candidate = getServer().getPlayerService().loadPlayer(this);
+            if (candidate == null) {
+                // Never acknowledge success before the settlement barrier and
+                // complete account snapshot succeed. Release validation's slot.
+                getServer().getPacketFilter().removeLoggedInPlayer(getIpAddress(), getUsernameHash());
+                loginResponse = LoginResponse.LOGINSERVER_OFFLINE;
+            }
+        }
+        if (clientVersion <= 204) {
+            loginResponse = RegisterLoginResponse.translateNewToOld(loginResponse, clientVersion, false);
+        }
+        loginValidated(loginResponse);
+        if (candidate != null) {
+            final Player loadedPlayer = candidate;
+            loadedPlayer.setLoggedIn(true);
+            LOGGER.info("Player Loaded: " + getUsername() + String.format("; Client Version: %d", clientVersion));
+            getServer().getGameEventHandler().add(new ImmediateEvent(getServer().getWorld(), "Login Player") {
+                @Override public void action() {
+                    loadingComplete(loadedPlayer);
+                    loadedPlayer.desertHeatInit();
+                    ActionSender.sendReleasedNameExplanation(loadedPlayer, usernameChangeType);
+                }
+            });
+        }
+        LOGGER.info("Processed login request for " + getUsername() + " response: " + loginResponse);
+    }
 
 	public ValidatedLogin validateLogin() {
         // Wire compatibility is mandatory, including administrators and disabled version enforcement.

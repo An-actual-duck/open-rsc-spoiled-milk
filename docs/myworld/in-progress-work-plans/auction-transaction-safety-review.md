@@ -1,6 +1,6 @@
 # Auction transaction safety — Core review
 
-Status: **READY for Core review**. Tested code checkpoint:
+Status: **verification in progress; prior READY superseded**. Tested code checkpoint:
 `b8c2e96289d466fca123bb33f1d49573874ed189`. The final handoff adds only this
 report and its evidence manifest. No server operations, account databases,
 credentials, owner maps, imports, integration or deployment were performed.
@@ -143,3 +143,15 @@ cleanup. JDBC failure checkpoints and transaction-lock tests are not a claim of
 exhaustive network/storage fault testing or general database correctness. External
 notifications were source-reviewed and are emitted only after commit; no Discord
 service was contacted. No lint baseline or production content values changed.
+
+## Successor-login correction in progress
+
+Final manager review identified that a timed-out receipt resolver cannot prove
+the original remote COMMIT has finished. AccountLoadBarrier now waits on a fresh
+current actor-row lock before Player construction or an ordinary load snapshot.
+It applies after restart and with auctions disabled, uses the same canonical
+username as Player loading, and never creates receipt tables. Timeout/unavailable
+settlement denies login. LoginRequest now sends success only after a complete
+load, removes its validation reservation on failure and sends the existing retry
+response; a false atomically result never returns a partial Player. Updated
+real-engine proofs and final evidence are being completed.
