@@ -1,6 +1,6 @@
 # Cosmic combat luck implementation review
 
-Work in progress, October31,2026. This replaces Cosmic robes' critical chance;
+Completed source candidate, October31,2026. This replaces Cosmic robes' critical chance;
 Zamorak hostile critical/Stagger/execution spells remain inactive. The active
 Cleric roster remains17. No item identities, art, archives or protocol change.
 
@@ -49,6 +49,48 @@ this change does not redesign that profile or its Strength-cape critical label.
 
 ## Verification
 
-Pending final native and broad regression receipts. Current meaningful gates:
-semantic32, native ownership/formula/adaptive61, actual Stagger/launch171;
-Java8 bounded server builds passed. These are interim results, not READY.
+Durable evidence: `/home/justin/.local/share/cosmic-combat-luck-review-20261031/worker-evidence`.
+`artifact-and-preservation.json` records the four matched artifact hashes and
+preservation assertions. All50Cosmic inventory definitions change description
+only: IDs, other fields, row count and art remain unchanged. No asset/archive,
+map, configuration or protocol edits. No game/client/server session was launched.
+
+Both maintained Java8 builds passed with512MiB SerialGC, followed by these
+bounded offline gates (actual source/runtime, not live accounts):
+
+- `test-combat-luck.py`:32 exact probability, threshold, sampler-count and
+  candidate/tie/critical assertions.
+- `test-combat-luck-runtime.py`:90 native checks: real robe aggregation,
+  offense/defender ownership, authored critical source, adaptive poison once,
+  Whip immunity, defensive pendant chance+amount effect once, durable poison
+  actor/trap scope and base survival RNG, actual damaging SpellHandler packet
+  versus utility Alchemy while fighting with exact inventory removal updates.
+- `test-shared-attack-state.py`:88; `test-shared-attack-runtime.py`:173 actual
+  melee/bow/thrown/Magic commitments and flight settlement, suppression,
+  additive deadlines and launch-owned lucky damage surviving equipment removal.
+- `test-enchanting-data.py` and `test-enchanted-robe-effects.py`:pass.
+- `test-cleric-blessings.py`:361; `test-cleric-projectile.py`:30;
+  `test-cleric-hostile-producers.py`:24, preserving17active entries, typed
+  damage, phase, hostile effects and packet/resource boundaries.
+- `test-floating-hit-splats.py`:all gates pass, including fresh-JVM settings3
+  and9,216pixel/glyph/text-only appearance assertions.
+- Ant `test_combat`:145 native characterization scenarios pass. AllnineSlayer
+  targets pass (`test_slayer_leather_effects`, `test_slayer_rewards`,
+  `test_slayer_mobility_shield`, `test_abyssal_demon_combat`,
+  `test_dark_beast_combat`, `test_bloodveld_combat`, `test_terror_dog_combat`,
+  `test_naga_combat`, `test_thunder_spell_casting`). Slow115, battleaxe coating
+  runtime1,042 and antidote102 also pass.
+
+Commands use `JAVA_HOME=/home/justin/jdk8u482-b08`, Python entrypoints under
+`tests/myworld`, and `ANT_OPTS='-Xmx512m -XX:+UseSerialGC'` with
+`scripts/build-server.sh` / `scripts/build-client.sh`. Ant targets run through
+`myworld_ant_build` after sourcing `scripts/lib/myworld-common.sh`; forked
+fixtures also use the512MiB SerialGC bound. Heavy jobs run serially. Failure
+logs from fixture development are preserved alongside final success receipts.
+
+Actual supported-profile producer paths, generic authored critical behavior,
+zero-luck replay and exclusion boundaries are exercised; this is not a live
+balance/playtest or a claim of a stochastic frequency benchmark. OptionalOSRS,
+source-less legacy amounts, summon inheritance and all excluded families above
+remain intentionally outside this implementation. Zamorak hostile activation
+remains separate. Manager integration/private package activation follow review.
