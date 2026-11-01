@@ -9,6 +9,7 @@ import orsc.mudclient;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
+import java.io.IOException;
 
 import java.util.ArrayList;
 
@@ -60,6 +61,7 @@ public final class DoSkillInterface {
 	/* Standard sprite-mask shades: bronze, iron, steel, mithril, adamant, rune. */
 	private static final int[] SLAYER_POINT_COIN_TINTS = {0x996633, 0xA8A8A8, 0x666666, 0x4F7F7F, 0x3F6F3F, 0x4A5FB5};
 	private static Sprite slayerPointCoin;
+	private static boolean slayerPointCoinLoadAttempted;
 	private String pointCoinHover = "";
 
 	public DoSkillInterface(mudclient mc) {
@@ -739,10 +741,14 @@ public final class DoSkillInterface {
 	/** Shared material tint selected when the bundled grayscale coin sprite is drawn. */
 	private int pointCoinTint(int code) { return code >= 0 && code < SLAYER_POINT_COIN_TINTS.length ? SLAYER_POINT_COIN_TINTS[code] : 0; }
 	private Sprite slayerPointCoin() {
-		if (slayerPointCoin != null) return slayerPointCoin;
+		if (slayerPointCoinLoadAttempted) return slayerPointCoin;
+		slayerPointCoinLoadAttempted = true;
 		try (InputStream in = DoSkillInterface.class.getClassLoader().getResourceAsStream("res/myworld/slayer-points-coin.png")) {
 			BufferedImage image = in == null ? null : ImageIO.read(in);
-			if (image == null) return null;
+			if (image == null) {
+				System.err.println("Slayer point coin image is missing or unreadable; using the text fallback.");
+				return null;
+			}
 			// The legacy and AWT nearest-neighbour scalers both omit the final
 			// source interval. Scale explicitly with endpoint mapping instead, so
 			// the final destination column/row is the authored right/bottom edge.
@@ -758,7 +764,8 @@ public final class DoSkillInterface {
 			}
 			slayerPointCoin = new Sprite(pixels, POINT_COIN_WIDTH, POINT_COIN_HEIGHT);
 			return slayerPointCoin;
-		} catch (Exception ignored) {
+		} catch (IOException failure) {
+			System.err.println("Unable to read the Slayer point coin image; using the text fallback: " + failure.getMessage());
 			return null;
 		}
 	}

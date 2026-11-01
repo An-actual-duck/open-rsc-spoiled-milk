@@ -105,7 +105,10 @@ public final class GemDragonClientFixture {
             }
             x0+=widths[column];
         }
-        for(int id=3400;id<=3407;id++)check(EntityHandler.getItemDef(id).getName().equals("Unobtanium"),"reserved sparse IDs remain placeholders");
+        String[] antidotes={"Giant Spider Eggs","Jungle Spider Eggs","Weak Antidote","Weak Antidote",
+            "Weak Antidote","Strong Antidote","Strong Antidote","Strong Antidote"};
+        for(int i=0;i<antidotes.length;i++)check(EntityHandler.getItemDef(3400+i).getName().equals(antidotes[i]),
+            "neighboring antidote identities remain intact rather than being consumed by gem content");
         check(EntityHandler.getItemDef(3408).getName().equals("Gem cutter gloves"),"gloves definition");
         check(EntityHandler.getItemDef(3409).getName().equals("Gem cutter's monocle"),"monocle definition");
         System.out.println("PASS one shared neutral sheet, five native tints, actual authentic alias allocation, named/classic sprite selection, all 18 frames, software/OpenGL texture parity, sparse IDs and stat parity");

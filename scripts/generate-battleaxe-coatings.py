@@ -89,8 +89,10 @@ public final class BattleaxeCoatingCatalog {
         raw=entries['items','272' if v['baseId']==2752 else '84']['frames'][0][0]
         images[assetroot/f"viscous-battleaxe-{v['baseId']}.png"]=art.edge_candidate(raw,raw,v['baseId']==2752)[0]
     # Reviewed native Aseprite art: retain the murky teal potion silhouette.
-    bottle=Image.open(ROOT/'dev/myworld/practice-feedback/art/png/viscous-coating.png').convert('RGBA')
-    images[assetroot/'viscous-coating.png']=bottle
+    # Native Aseprite is the reviewed PNG encoder for this artwork. Preserve its
+    # complete bytes rather than introducing Pillow-only compression churn.
+    emit(assetroot/'viscous-coating.png',
+         (ROOT/'dev/myworld/practice-feedback/art/png/viscous-coating.png').read_bytes())
     for n,(raw,meta) in enumerate(rawframes):
         im=art.edge_candidate(raw,raw)[0];held.append((im,meta));images[authored/f'held-{n:02}.png']=im
     for path,im in images.items():
@@ -153,7 +155,17 @@ public final class BattleaxeCoatingCatalog {
     with zipfile.ZipFile(classic) as z:
         assert {i.filename:hashlib.sha256(z.read(i)).hexdigest() for i in z.infolist() if i.filename not in desired}==classic_before
     preservation['Authentic_Sprites.orsc']=classic_before
-    emit('dev/myworld/battleaxe-coatings/archive-entry-hashes.json',json.dumps(preservation,indent=2)+'\n')
+    receipt='dev/myworld/battleaxe-coatings/archive-entry-hashes.json'
+    if args.check:
+        # This is the installation-time preservation receipt, not a roster of
+        # all future game content. Later reviewed additions must not invalidate
+        # hashes of the pre-coating entries that this receipt protects.
+        recorded=json.loads((ROOT/receipt).read_text())
+        assert set(recorded)==set(preservation), 'Preservation archive domain changed'
+        for name,entries in recorded.items():
+            assert all(preservation[name].get(key)==digest for key,digest in entries.items()), 'Preserved entry changed: '+name
+    else:
+        emit(receipt,json.dumps(preservation,indent=2)+'\n')
     # Editable Aseprite authoring files use the same native canvases, not a
     # normalized animation sheet. PNGs remain the deterministic packer input.
     if not args.check:

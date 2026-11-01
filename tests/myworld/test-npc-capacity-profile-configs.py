@@ -9,9 +9,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SERVER_CONTRACT = ROOT / "server/src/com/openrsc/server/net/rsc/NpcCapacityContract.java"
 CLIENT_CONTRACT = ROOT / "Client_Base/src/orsc/NpcCapacityContract.java"
+SERVER_SPELL_CONTRACT = ROOT / "server/src/com/openrsc/server/net/rsc/ClericBlessingContract.java"
+CLIENT_SPELL_CONTRACT = ROOT / "Client_Base/src/orsc/ClericBlessingContract.java"
 contract = json.loads((ROOT / "runtime-contract/npc-capacity-v1.json").read_text())
 constants = contract["constants"]
-expected_version = constants["FIRST_EXPANDED_CLIENT_VERSION"]
+first_expanded_version = constants["FIRST_EXPANDED_CLIENT_VERSION"]
+# The NPC contract is a capability floor, not the release's current wire version.
+spell_contract = (ROOT / "tools/protocol/ClericBlessingContract.java").read_text()
+expected_version = int(re.search(r"CLIENT_VERSION\s*=\s*(\d+)\s*;", spell_contract).group(1))
 expected_capacity = constants["TARGET_CAPACITY"]
 expected_reserve = constants["TRANSIENT_HEADROOM"]
 
@@ -35,8 +40,8 @@ for name in ("myworld.conf", "myworld-host.conf"):
     arguments.extend((name, str(version), configured or "default"))
 
 client_config = (ROOT / "Client_Base/src/orsc/Config.java").read_text()
-if not re.search(r"CLIENT_VERSION\s*=\s*NpcCapacityContract\.FIRST_EXPANDED_CLIENT_VERSION\s*;", client_config):
-    raise AssertionError("Maintained client version must use the paired expanded contract")
+if not re.search(r"CLIENT_VERSION\s*=\s*ClericBlessingContract\.CLIENT_VERSION\s*;", client_config):
+    raise AssertionError("Maintained client version must use the current paired spell contract")
 
 HARNESS = r"""
 import com.openrsc.server.net.rsc.NpcCapacityContract;
@@ -45,12 +50,20 @@ public final class NpcCapacityProfileFixture {
         int expectedVersion=Integer.parseInt(args[0]);
         int expectedCapacity=Integer.parseInt(args[1]);
         int reserve=Integer.parseInt(args[2]);
-        if(NpcCapacityContract.FIRST_EXPANDED_CLIENT_VERSION != expectedVersion
-                || orsc.NpcCapacityContract.FIRST_EXPANDED_CLIENT_VERSION != expectedVersion
+        int firstExpanded=Integer.parseInt(args[3]);
+        if(com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION != expectedVersion
+                || orsc.ClericBlessingContract.CLIENT_VERSION != expectedVersion
+                || NpcCapacityContract.FIRST_EXPANDED_CLIENT_VERSION != firstExpanded
+                || orsc.NpcCapacityContract.FIRST_EXPANDED_CLIENT_VERSION != firstExpanded
                 || NpcCapacityContract.TARGET_CAPACITY != expectedCapacity
                 || NpcCapacityContract.TRANSIENT_HEADROOM != reserve)
             throw new AssertionError("Generated server/client release contracts differ");
-        for(int i=3;i<args.length;i+=3) {
+        if (!NpcCapacityContract.expanded(firstExpanded)
+                || NpcCapacityContract.expanded(firstExpanded-1)
+                || NpcCapacityContract.supports(firstExpanded-1,expectedCapacity)
+                || NpcCapacityContract.supportsWorld(firstExpanded-1,expectedVersion,expectedCapacity))
+            throw new AssertionError("Expanded capacity floor must reject older incompatible clients");
+        for(int i=4;i<args.length;i+=3) {
             String profile=args[i];int version=Integer.parseInt(args[i+1]);
             int capacity=args[i+2].equals("default")
                 ? NpcCapacityContract.defaultCapacity(version) : Integer.parseInt(args[i+2]);
@@ -70,6 +83,8 @@ public final class NpcCapacityProfileFixture {
 with tempfile.TemporaryDirectory(prefix="npc-capacity-profiles-") as directory:
     source = Path(directory) / "NpcCapacityProfileFixture.java"
     source.write_text(HARNESS)
-    subprocess.run(["javac", "-d", directory, str(SERVER_CONTRACT), str(CLIENT_CONTRACT), str(source)], check=True)
+    subprocess.run(["javac", "-d", directory, str(SERVER_CONTRACT), str(CLIENT_CONTRACT),
+                    str(SERVER_SPELL_CONTRACT), str(CLIENT_SPELL_CONTRACT), str(source)], check=True)
     subprocess.run(["java", "-Xmx128m", "-cp", directory, "NpcCapacityProfileFixture",
-                    str(expected_version), str(expected_capacity), str(expected_reserve), *arguments], check=True)
+                    str(expected_version), str(expected_capacity), str(expected_reserve),
+                    str(first_expanded_version), *arguments], check=True)

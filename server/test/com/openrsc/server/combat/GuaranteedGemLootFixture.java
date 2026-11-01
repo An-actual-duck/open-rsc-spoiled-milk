@@ -48,6 +48,7 @@ public final class GuaranteedGemLootFixture {
     }
     public static void main(String[] args)throws Exception {
         try(CurrentCombatHarness h=new CurrentCombatHarness()) {
+            h.recordDropLogs();
             verifyEveryTicket();
             h.server().getConfig().VALUABLE_DROP_MESSAGES=false;
             h.server().getConfig().WANT_CUSTOM_QUESTS=false;
@@ -97,6 +98,7 @@ public final class GuaranteedGemLootFixture {
                 verifyBanking(h,player,npc,personal);
                 verifyWorldEligibility(h,player,npc);
             }
+            check(h.awaitRecordedDropLogs()>0,"real asynchronous drop logging completed through the offline recorder");
         }
         System.out.println("Guaranteed gem loot: PASS "+assertions+" assertions; all 897 tickets and 258 normal/personal necklace deliveries");
     }

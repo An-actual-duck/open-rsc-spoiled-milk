@@ -85,12 +85,31 @@ import java.util.*;
 import com.openrsc.server.content.cleric.effect.*;
 public final class ClericSpellbookFoundationFixture {
  static int checks;static void check(boolean b,String s){checks++;if(!b)throw new AssertionError(s);}
+ static void checkCosts(ClericSpellDefinition d) {
+  Map<Integer,Integer> actual=new LinkedHashMap<Integer,Integer>();
+  for(ClericResourceCost cost:d.getResourceCosts())check(actual.put(cost.getItemId(),cost.getCount())==null,"unique resource identities");
+  Map<Integer,Integer> expected=new LinkedHashMap<Integer,Integer>();
+  if(d.getId()==ClericSpellId.UNIFY)expected.put(3300,2);
+  else if(d.getId()==ClericSpellId.GREATER_UNIFY){expected.put(3300,3);expected.put(3308,3);}
+  else {
+   int tier=d.getSpellTier();
+   ClericSigilMaterial[] grades=tier==1?new ClericSigilMaterial[]{ClericSigilMaterial.STONE}:
+    tier==2?new ClericSigilMaterial[]{ClericSigilMaterial.STONE,ClericSigilMaterial.SILVER}:
+    new ClericSigilMaterial[]{ClericSigilMaterial.SILVER,ClericSigilMaterial.MOONSILVER};
+   for(ClericSigilMaterial grade:grades){
+    expected.put(ClericSigilItemId.get(grade,d.getAlignment(),true).getItemId(),1);
+    expected.put(ClericWellSigil.get(grade,d.isHostile()?ClericWellSigil.Purpose.BLIGHT:ClericWellSigil.Purpose.GRACE).getInfusedItemId(),1);
+   }
+  }
+  check(actual.equals(expected),"exact current-and-previous-grade vector, with purpose and neutral quantities");
+ }
  public static void main(String[] args){
-  check(ClericSpellCatalog.SCHEMA_VERSION==4,"schema3");check(ClericSpellCatalog.getAll().size()==17,"active book eleven");
+  check(ClericSpellCatalog.SCHEMA_VERSION==4,"schema4");check(ClericSpellCatalog.getAll().size()==17,"active seventeen-spell book");
   Set<Integer> ids=new HashSet<Integer>();Set<String> keys=new HashSet<String>();
   for(ClericSpellDefinition d:ClericSpellCatalog.getAll()){
    check(ids.add(d.getStableCode())&&keys.add(d.getStableKey()),"unique stable identities");check(ClericSpellCatalog.fromKey(d.getStableKey())==d&&ClericSpellCatalog.fromCode(d.getStableCode())==d,"identity lookup");
    check(!d.affectsCaster(),"caster exclusion");
+   checkCosts(d);
    if(d.getId().isBlessing()){
     int tier=d.getSpellTier();check(d.getWorshipLevel()==(tier==1?1:tier==2?20:40)&&d.getRadius()==tier+1,"tier unlock and radius");
     check(d.getEffectRankCount()==tier*2&&d.resolveEffectRank(163)==tier*2&&d.resolveEffectRank(0)==1,"cap raises maximum not minimum");
@@ -101,8 +120,7 @@ public final class ClericSpellbookFoundationFixture {
      if(d.getAlignment()==ClericAlignment.ZAMORAK)check(m.maxDamagePercent()==3+2*power&&m.dealtDamagePercent()==(tier>=2?power+2:0)&&m.lifestealPercent()==(tier>=3?power+4:0),"Zam incremental values");
      check(ClericEffectCatalog.get(d.getId(),power).getDuration().toMilliseconds(640)==60000,"shared60s");
     }
-    check(d.getResourceCosts().size()==2,"mixed god+Grace");for(ClericResourceCost cost:d.getResourceCosts())check(cost.getCount()==(tier==1?1:2),"reviewable initial private costs");
-   }else if(d.isHostile()) check(d.getStableCode()>=22&&d.getStableCode()<=27&&d.getResourceCosts().size()==2,"appended hostile identities and mixed God+Blight costs");
+   }else if(d.isHostile()) check(d.getStableCode()>=22&&d.getStableCode()<=27,"appended hostile identities");
    else check(d.getId()==ClericSpellId.UNIFY||d.getId()==ClericSpellId.GREATER_UNIFY,"only generic utilities");
   }
   for(int code:new int[]{0,2,3,4,5,6,7,8,9,10,11,-1,65535}){try{ClericSpellCatalog.fromCode(code);throw new AssertionError("retired code accepted");}catch(IllegalArgumentException expected){checks++;}}
