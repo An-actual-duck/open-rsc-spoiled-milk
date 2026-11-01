@@ -364,8 +364,38 @@ public final class Player extends Mob {
 	 * The time of the last spell cast, used as a throttle
 	 */
 	private long lastSpellCast = 0;
-	private long nextCombatCastMillis;
-	private com.openrsc.server.model.combat.CombatParticipantSnapshot combatCastLifetime;
+	private static final class CombatCastDeadline {
+		final com.openrsc.server.model.combat.CombatParticipantSnapshot lifetime;
+		final long millis;
+		CombatCastDeadline(com.openrsc.server.model.combat.CombatParticipantSnapshot lifetime, long millis) {
+			this.lifetime = lifetime;
+			this.millis = millis;
+		}
+	}
+	private volatile CombatCastDeadline combatCastDeadline;
+	private final Object economicStateLock = new Object();
+	private volatile boolean persistenceSessionClosed;
+
+	public Object getEconomicStateLock() { return economicStateLock; }
+	public boolean isPersistenceSessionClosed() { return persistenceSessionClosed; }
+	public void closePersistenceSession() { persistenceSessionClosed = true; }
+
+	/** An unresolved database COMMIT must never leave stale, spendable state online. */
+	public void requireEconomicReload() {
+		persistenceSessionClosed = true;
+        try {
+            if (getWorld().getPlayer(getUsernameHash()) == this) {
+                resetAll();
+                clearTransientEffectsAndRefreshStatus();
+                new PlayerSaveRequest(getWorld().getServer(), this, true).logoutSaveSuccess();
+            }
+        } finally {
+            // Even ancillary logout cleanup failure must revoke the stale actor.
+            setLoggedIn(false);
+            getWorld().getPlayers().remove(this);
+            if (getChannel() != null) getChannel().close();
+        }
+	}
 	/**
 	 * The time the player had a skull status from combat
 	 */
@@ -969,21 +999,22 @@ public final class Player extends Mob {
 
 	/** Combat-only scheduled deadline; utility casts keep their original timer. */
 	public boolean combatCastTimer(boolean allowRapid) {
-		return castTimer(allowRapid) && (combatCastLifetime == null || !combatCastLifetime.matches(this)
-			|| getWorld().getServer().getGameClock().currentTimeMillis() >= nextCombatCastMillis);
+		CombatCastDeadline deadline = combatCastDeadline;
+		return castTimer(allowRapid) && (deadline == null || !deadline.lifetime.matches(this)
+			|| getWorld().getServer().getGameClock().currentTimeMillis() >= deadline.millis);
 	}
 	public void scheduleCombatCast() {
 		final int slowTier = com.openrsc.server.content.Slow.tier(this);
         com.openrsc.server.content.Slow.capture(this, com.openrsc.server.content.Slow.Cadence.MAGIC, slowTier);
 		if (slowTier == 0) {
-			combatCastLifetime = null;
-			nextCombatCastMillis = 0;
+			combatCastDeadline = null;
 			return;
 		}
-		combatCastLifetime = com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(this);
-		nextCombatCastMillis = getWorld().getServer().getGameClock().currentTimeMillis()
+		combatCastDeadline = new CombatCastDeadline(
+			com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(this),
+			getWorld().getServer().getGameClock().currentTimeMillis()
 			+ (getConfig().RAPID_CAST_SPELLS ? 0L : getSpellCastHoldTimerMillis())
-			+ (long)slowTier * getConfig().GAME_TICK;
+			+ (long)slowTier * getConfig().GAME_TICK);
 	}
 
 	public boolean addOwnedPlugin(final PluginTask plugin) {
@@ -4868,6 +4899,7 @@ public final class Player extends Mob {
 	}
 
 	public void save(boolean logout, boolean force) {
+		if (persistenceSessionClosed) return;
 		//If we want to log out (but we already mass-saved earlier in the same tick), we prioritize logging out over mass-saves so the player can log out the same tick. We make sure to check if they are already logging out in the same tick so that we only have one logout save per tick per player. Force saves always save.
 		if ((!logout || isLoggingOut()) && isSaving() && !force) {
 			return;

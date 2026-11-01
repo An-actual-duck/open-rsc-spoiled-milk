@@ -30,6 +30,13 @@ public class SqliteGameDatabaseConnection extends JDBCDatabaseConnection {
     }
 
     @Override
+    public Connection openIsolatedConnection() throws SQLException {
+        File file = new File(getDBPath(server.getConfig().DB_NAME));
+        if (!file.isFile()) throw new SQLException("Configured SQLite database does not exist");
+        return DriverManager.getConnection("jdbc:sqlite:" + file.getPath());
+    }
+
+    @Override
     public synchronized boolean open() {
         // Close the old connection before attempting to open a new connection.
         close();

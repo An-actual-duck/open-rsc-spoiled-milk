@@ -86,6 +86,16 @@ public class MySQLDatabaseConnection extends JDBCDatabaseConnection {
 	}
 
 	@Override
+	public Connection openIsolatedConnection() throws SQLException {
+		// No automatic reconnect: a failed COMMIT must be resolved by its receipt,
+		// never silently continued on a different physical connection.
+		return DriverManager.getConnection("jdbc:mysql://" + server.getConfig().DB_HOST
+			+ "/" + server.getConfig().DB_NAME
+			+ "?useSSL=false&serverTimezone=UTC&connectTimeout=2000&socketTimeout=3000",
+			server.getConfig().DB_USER, server.getConfig().DB_PASS);
+	}
+
+	@Override
 	protected boolean checkConnection() {
 		try {
 			getStatement().executeQuery("SELECT CURRENT_DATE");

@@ -477,6 +477,34 @@ public class Bank {
 		}
 	}
 
+	/** Economic staging includes pin reservations but cannot mutate live bank state. */
+	public Bank copyForTransaction() {
+		synchronized (list) {
+			Bank copy = new Bank(player);
+			for (Item item : list) copy.list.add(item.copyForTransaction());
+			copy.pinnedSlots.putAll(pinnedSlots);
+			return copy;
+		}
+	}
+
+	public void publishTransaction(Bank staged) {
+		if (staged.player != player) throw new IllegalArgumentException("Different bank owner");
+		synchronized (list) {
+			java.util.Map<Long, Item> original = new java.util.HashMap<>();
+			for (Item item : list) original.put(item.getItemId(), item);
+			List<Item> committed = new ArrayList<>();
+			for (Item item : staged.list) {
+				Item existing = original.get(item.getItemId());
+				if (existing != null) {
+					existing.setItemStatus(item.copyForTransaction().getItemStatus());
+					committed.add(existing);
+				} else committed.add(item);
+			}
+			list.clear();
+			list.addAll(committed);
+		}
+	}
+
 	public int getRequiredSlots(Item item) {
 		synchronized(list) {
 			//Check if there's a stack that can be added to

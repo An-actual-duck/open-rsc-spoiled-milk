@@ -325,6 +325,13 @@
         </javac>
     </target>
 
+    <target name="test_market_atomicity" depends="compile_combat_tests"
+            description="Disposable SQLite auction failure, retry, session and crash/reload checks">
+        <exec executable="python3" failonerror="true" dir="${basedir}/..">
+            <arg value="tests/myworld/test-market-atomicity.py"/>
+        </exec>
+    </target>
+
     <target name="test_slayer_retirement" depends="compile_core,compile_plugins,compile_combat_tests">
         <java classname="com.openrsc.server.combat.SlayerRetirementFixture" fork="true" failonerror="true" dir="${basedir}">
             <classpath>
