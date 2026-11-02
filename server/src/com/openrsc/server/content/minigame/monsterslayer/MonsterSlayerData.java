@@ -160,7 +160,15 @@ public final class MonsterSlayerData {
 			if (!towerEnabled) return retired;
 			applyRetirement(base);
 			MonsterSlayerData current = parse(base, catalog);
-			return new MonsterSlayerData(current.families, current.contacts, current.tasks, current.shops, retired);
+			MonsterSlayerData towerRetired = new MonsterSlayerData(current.families, current.contacts,
+				current.tasks, current.shops, retired);
+			// v1-v4 are immutable migration inputs. New release tasks start at v5.
+			JSONObject release = new JSONObject(new String(Files.readAllBytes(
+				path.resolveSibling("MonsterSlayerRelease.json")), StandardCharsets.UTF_8));
+			applyReleaseTasks(base, release);
+			MonsterSlayerData released = parse(base, catalog);
+			return new MonsterSlayerData(released.families, released.contacts,
+				released.tasks, released.shops, towerRetired);
 		} catch (RuntimeException ex) {
 			throw new IllegalArgumentException("Invalid Monster Slayer definitions at " + path + ": "
 				+ ex.getMessage(), ex);
@@ -239,6 +247,37 @@ public final class MonsterSlayerData {
 				contact.getJSONArray("repeatableTasks").put(repeatable);
 			}
 			if (!inserted) throw new IllegalArgumentException("Unknown tower insertion point for " + owner);
+		}
+	}
+
+	/** Task-only additions to existing families; never alter the historical roster files. */
+	private static void applyReleaseTasks(JSONObject base, JSONObject release) {
+		requireFields(release, "release tasks", "schemaVersion", "additions");
+		if (release.getInt("schemaVersion") != 1) throw new IllegalArgumentException("Unsupported release task schema");
+		JSONArray additions = release.getJSONArray("additions");
+		for (int i = 0; i < additions.length(); i++) {
+			JSONObject addition = additions.getJSONObject(i);
+			requireFields(addition, "release task", "contactKey", "beforeTaskKey", "task");
+			String owner = addition.getString("contactKey");
+			JSONObject task = addition.getJSONObject("task");
+			boolean inserted = false;
+			JSONArray contacts = base.getJSONArray("contacts");
+			for (int c = 0; c < contacts.length(); c++) {
+				JSONObject contact = contacts.getJSONObject(c);
+				if (!owner.equals(contact.getString("key"))) continue;
+				JSONArray old = contact.getJSONArray("mandatoryTasks"), updated = new JSONArray();
+				for (int t = 0; t < old.length(); t++) {
+					JSONObject existing = old.getJSONObject(t);
+					if (addition.getString("beforeTaskKey").equals(existing.getString("key"))) {
+						updated.put(task); inserted = true;
+					}
+					updated.put(existing);
+				}
+				contact.put("mandatoryTasks", updated);
+				contact.getJSONArray("repeatableTasks").put(new JSONObject(task.toString())
+					.put("key", task.getString("key") + ".repeatable").put("weight", 1));
+			}
+			if (!inserted) throw new IllegalArgumentException("Unknown release insertion point for " + owner);
 		}
 	}
 

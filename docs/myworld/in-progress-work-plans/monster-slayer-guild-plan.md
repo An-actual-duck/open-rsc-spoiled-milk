@@ -1,5 +1,27 @@
 # The Monster Slayer's Guild Plan
 
+## Next release completion (2026-11-02; prepared, not deployed)
+
+The finished tower map is now paired with an enabled task roster in both
+`myworld.conf` and `myworld-host.conf`. The eight tower creature assignments and
+their ordinary repeatable tasks are active in these release profiles. Death
+wings also join the fourth-tier Champions contact: 20 kills for 18 Elite points,
+with an equal-weight repeatable assignment. Six Death wings on tower level 3
+provide access without Legends Quest; the eight existing underground spawns
+remain unchanged. This supersedes the old post-Legend-only possibility below.
+
+Release roster v5 adds Death wings after the immutable v1-v4 roster history.
+Existing completed ranks, points, purchases, promotion acknowledgements and
+unfinished surviving assignments retain their progress; already completed ranks
+do not acquire new mandatory work or receive another reward. Players still
+working through Champions receive the new assignment before promotion, after any
+surviving in-flight task. An explicitly disabled tower profile remains v3;
+switching back after a v5 save is unsupported and fails closed.
+
+See [release activation review](slayer-release-task-activation-review.md) for
+the exact map, migration evidence, commands and private gameplay limits.
+The earlier shipped-foundation status and design discussion below are historical.
+
 Status: **the playable guild foundation is implemented and shipped. Rank/state
 migration, authoritative task progression and top-damage kill credit, the
 approved 35-task roster, six contact routes and promotions, NPC placement,
@@ -432,8 +454,9 @@ Repository density and behavior impose these tuning constraints:
   repeatable boss assignment, never a mandatory replacement; its precise
   challenge/rank placement remains undecided rather than fixed post-`Legend`.
 
-Death Wings remain possible post-`Legend` randomized content because their
-Legends Quest access and level 80 would break the mandatory level curve.
+Historical decision, superseded by the 2026-11-02 tower release above: Death
+Wings were considered possible post-`Legend` randomized content because their
+original Legends Quest access and level 80 would break the mandatory level curve.
 Blessed Spiders and Dungeon Rats remain excluded from mandatory progression due
 to Underground Pass/Clock Tower access coupling. Otherworldly Beings would add
 an unrelated Lost City gate. Balrog remains excluded from the mandatory line

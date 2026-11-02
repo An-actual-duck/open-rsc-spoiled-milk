@@ -35,6 +35,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(data);
 		failureDiagnosticsAreDuplicateSuppressedAndBounded();
 		MonsterSlayerTowerCharacterization.run();
+		MonsterSlayerReleaseCharacterization.run();
 
 		System.out.println("Monster Slayer player-state characterization: PASS");
 	}

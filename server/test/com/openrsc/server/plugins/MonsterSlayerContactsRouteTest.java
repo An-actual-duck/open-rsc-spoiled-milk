@@ -109,7 +109,7 @@ public final class MonsterSlayerContactsRouteTest {
 	}
 
 	private static void towerPreparationAndPreviewRoutes(Server server) throws Exception {
-		assertFalse(server.getConfig().WANT_SLAYER_TOWER_TASKS, "production rollout remains disabled");
+		assertTrue(server.getConfig().WANT_SLAYER_TOWER_TASKS, "finished-map production profile enables tower tasks");
 		MonsterSlayerData previous = server.getWorld().getMonsterSlayerData();
 		MonsterSlayerTaskService previousTasks = server.getWorld().getMonsterSlayerTaskService();
 		MonsterSlayerData data = MonsterSlayerData.load(Paths.get("conf/server/defs/extras/MonsterSlayer.json"),
@@ -127,7 +127,8 @@ public final class MonsterSlayerContactsRouteTest {
 			for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) {
 				for (int cursor = 0; cursor < contact.getMandatoryTasks().size(); cursor++) {
 					com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task = contact.getMandatoryTasks().get(cursor);
-					if (data.getFamily(task.getFamilyKey()).getNpcIds().get(0) < 863) continue;
+					if (data.getFamily(task.getFamilyKey()).getNpcIds().get(0) < 863
+						&& !"death_wing".equals(task.getFamilyKey())) continue;
 					assertTrue(MonsterSlayerContacts.branAssignmentRemark(task, 0).length() > 0, "Bran handles tower metadata");
 					assertTrue(MonsterSlayerContacts.doranAssignmentRemark(task, 0).length() > 0, "Doran handles tower metadata");
 					for (boolean shortcut : new boolean[] {false, true}) {
