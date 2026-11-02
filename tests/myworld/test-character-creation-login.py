@@ -2,6 +2,7 @@
 """Guard new-character appearance flow across server and client login."""
 
 from pathlib import Path
+import re
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -78,12 +79,22 @@ def main() -> None:
         "\t\t\t\t}",
         "appearance panel input warmup guard",
     )
-    require(
+    renderer_ready = re.search(
+        r"public boolean isRenderer3DWorldReady\(\)\s*\{([^}]+)\}",
         mudclient,
-        "&& !this.loadingArea\n"
-        "\t\t\t&& !this.isFullScreenModalUiActive();",
-        "renderer-v2 world disabled during full-screen modal UI",
     )
+    if renderer_ready is None:
+        fail("missing renderer world-readiness method")
+    readiness = renderer_ready.group(1)
+    for condition in (
+        "this.currentViewMode == GameMode.GAME",
+        "this.hasCompletedInitialRegionLoad",
+        "!this.loadingArea",
+        "!this.layeredSceneActivationPending",
+        "!this.isFullScreenModalUiActive()",
+    ):
+        require(readiness, condition, "renderer world-readiness guard")
+    forbid(readiness, "||", "renderer readiness bypass")
     require(
         mudclient,
         "public boolean isFullScreenModalUiActive() {\n"
