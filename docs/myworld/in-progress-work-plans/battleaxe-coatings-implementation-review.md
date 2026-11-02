@@ -163,3 +163,23 @@ owner art acceptance and actual private gameplay remain explicit Core/owner gate
 
 Both authored map areas stay untouched. This task performs no live operations,
 main integration, account access, owner map import or installed-toolkit change.
+
+
+## November 2: coating descriptions and deliberate cleaning
+
+Owner feedback replaces the vial and all 15 coated-weapon examine texts with
+flavor descriptions. Generated server and client definitions both omit the
+right-click Wipe clean command. Using ordinary wool (item 145) on an unwielded,
+unnoted coated battleaxe now removes its coating, consuming one wool and
+returning the original weapon with its instance identity and durability intact.
+The coating is not refunded. Either item-use order works, including with a full
+inventory. Noted, wielded, stale, unsupported and disabled-world attempts leave
+both inputs intact. The earlier right-click wipe descriptions above are historical.
+
+Verification: 1,122 server coating assertions pass, including full-inventory
+application/cleaning for all 15 weapons and both use orders, rejection without
+input loss, existing recipe/combat/poison behavior, and persistence snapshots.
+The server artifact audit and desktop client build pass. The paired packaged
+client fixture passes in both sprite modes, checking the exact examine text,
+absent wipe command, retained Wield behavior and unchanged native artwork.
+Generator reproduction and original archive-preservation checks also pass.

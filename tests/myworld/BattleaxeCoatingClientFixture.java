@@ -34,14 +34,15 @@ public final class BattleaxeCoatingClientFixture {
             Config.S_WANT_CUSTOM_SPRITES=custom;EntityHandler.load(true);
             check(EntityHandler.animationCount()==1112,"stable appended alias IDs in both renderer modes");
             ItemDef dose=EntityHandler.getItemDef(3410);check(dose.command==null&&!dose.wieldable&&!dose.stackable&&dose.basePrice==300&&dose.membersItem,"single-use inert dose, no Drink or decant forms");
+            check(dose.description.equals("When applied to a battle axe it will slow down and mildly poison opponents"),"approved vial examine");
             check(loader.getExternalItemSprite(dose)!=null,"packaged coating icon");
             AnimationDef[] aliases=new AnimationDef[15];
             for(int n=0;n<15;n++) {
                 ItemDef base=EntityHandler.getItemDef(BASES[n]),coated=EntityHandler.getItemDef(3411+n);
                 check(coated.name.equalsIgnoreCase("Viscous "+base.name)&&coated.basePrice==base.basePrice+300,"effective client identity/value parity "+BASES[n]+" base="+base.name+"/"+base.basePrice+" coated="+coated.name+"/"+coated.basePrice);
                 check(coated.wieldable==base.wieldable&&coated.wearableID==base.wearableID&&coated.membersItem==base.membersItem&&coated.untradeable==base.untradeable&&coated.noteable==base.noteable&&!coated.stackable,"actual final client policy fields inherit base");
-                check(coated.command.length==1&&coated.command[0].equals("Wipe clean")&&coated.wieldable,"Wield affordance and explicit Wipe command coexist");
-                check(coated.description.contains("Slow1")&&!coated.description.contains("cap 12"),"plain-language Slow tier tooltip");
+                check(coated.command==null&&coated.wieldable,"Wield remains available without a wipe menu entry");
+                check(coated.description.equals("Covered in a viscous slime that stings the skin. Will slow down your opponents attacks and apply a weak poison."),"approved coated-weapon examine");
                 Sprite inventory=loader.getExternalItemSprite(coated);
                 check(inventory!=null&&coated.getPictureMask()==base.getPictureMask(),"native inventory palette mask inherited exactly");
                 Entry original=null;
