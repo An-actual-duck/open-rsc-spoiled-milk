@@ -185,3 +185,9 @@ Backups/*.zip
 Deployment_Scripts/.discordstaffmonitorwebhook
 server/ipbans.txt
 server/ipbans.temp
+
+# Local installed companion applications and their downloaded distributions.
+# Source and authoring projects belong to their independently managed repositories.
+/RSC Development Toolkit/
+/RSC Sprite Baker/
+/rsc-development-toolkit-*.zip

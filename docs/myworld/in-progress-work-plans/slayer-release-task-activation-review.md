@@ -71,7 +71,7 @@ flock /home/justin/.local/share/core-heavy-build.lock env \
 ```
 
 `test_slayer_release` copies configurations, definitions and the reviewed package
-into ignored `output/tests/slayer-release/runtime`. It never uses an owner
+into ignored `output/slayer-release-test/runtime`. It never uses an owner
 `local.conf`, server listeners, account data or JDBC. A security guard rejects
 network access, writes outside the copied fixture and explicit process exit.
 The target requires a newly written final success receipt, so an early exit
@@ -111,17 +111,17 @@ The retirement return check, after the combined Ant invocation above, was:
 ```bash
 flock /home/justin/.local/share/core-heavy-build.lock \
   /home/justin/jdk8u482-b08/bin/javac -J-Xmx512m -J-XX:+UseSerialGC \
-  -cp 'output/tests/combat/test-classes:output/tests/combat/core-classes:server/plugins.jar:server/lib/*' \
-  -d output/reviews/slayer-release-evidence output/reviews/slayer-release-evidence/RetirementEvidence.java
+  -cp 'output/combat-test/test-classes:output/combat-test/core-classes:server/plugins.jar:server/lib/*' \
+  -d output/slayer-release-evidence output/slayer-release-evidence/RetirementEvidence.java
 cd server
 flock /home/justin/.local/share/core-heavy-build.lock \
   /home/justin/jdk8u482-b08/bin/java -Xmx512m -XX:+UseSerialGC \
-  -cp '../output/reviews/slayer-release-evidence:../output/tests/combat/test-classes:../output/tests/combat/core-classes:plugins.jar:lib/*' \
+  -cp '../output/slayer-release-evidence:../output/combat-test/test-classes:../output/combat-test/core-classes:plugins.jar:lib/*' \
   RetirementEvidence
 ```
 
 Evidence logs and copied synthetic runtime remain under
-`output/reviews/slayer-release-evidence/` and `output/tests/slayer-release/` in this worker.
+`output/slayer-release-evidence/` and `output/slayer-release-test/` in this worker.
 Initial fixture logging under the security guard obscured the success output;
 the final target now requires the independent success receipt and prints through
 the original stream. This was fixture hardening, not a production workaround.

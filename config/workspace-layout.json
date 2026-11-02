@@ -84,5 +84,47 @@
     "world-builder-tools": "builds/world-builder",
     "zamorak-independent-review": "reviews/zamorak-independent-review"
   },
-  "policy": "New writers must choose a category; no loose files or task folders directly under output. Historical reports retain original paths and are resolved through the migration index."
+  "policy": "New writers must choose a category; no loose files or task folders directly under output. Historical reports retain original paths and are resolved through the migration index.",
+  "compatibilityFiles": [
+    ".gitignore",
+    "Makefile",
+    "README.md",
+    "benchmark-foundation-matrix.sh",
+    "benchmark-foundation.sh",
+    "compile-server.sh",
+    "doctor.sh",
+    "init-sqlite.sh",
+    "run-server-zgc.sh",
+    "run-server.sh",
+    "start-fresh.sh",
+    "test-all.sh",
+    "test-smoke.sh"
+  ],
+  "externalOutputPaths": {
+    "Client_Base/renderer-v2-captures": "diagnostics/renderer/legacy-captures"
+  },
+  "sourcePathMigrations": {
+    "dev/myworld/assets/sprites/UI": "dev/myworld/assets/runtime/ui",
+    "dev/myworld/assets/ui/world-editor": "dev/myworld/assets/runtime/ui/world-editor",
+    "dev/myworld/assets/sprites/npcs/slayer-movement-preview": "dev/myworld/assets/runtime/sprites/npcs/slayer-monsters",
+    "dev/myworld/assets/sprites": "dev/myworld/assets/runtime/sprites",
+    "dev/myworld/assets/animations": "dev/myworld/assets/runtime/animations",
+    "dev/myworld/assets/legacy animation folder": "dev/myworld/assets/runtime/legacy-animations",
+    "dev/myworld/assets/remastered-sprites": "dev/myworld/assets/authoring/remastered-sprites",
+    "dev/myworld/assets/credit": "dev/myworld/assets/CREDITS.txt",
+    "dev/myworld/reference-library": "dev/myworld/assets/references",
+    "dev/myworld/battleaxe-coatings": "dev/myworld/assets/authoring/equipment/battleaxe-coatings",
+    "dev/myworld/blight-sigil-candidate": "dev/myworld/assets/authoring/items/blight-sigil/candidates",
+    "dev/myworld/blight-sigil-production": "dev/myworld/assets/authoring/items/blight-sigil",
+    "dev/myworld/moonsilver-sigil-production": "dev/myworld/assets/authoring/items/moonsilver-sigils",
+    "dev/myworld/practice-feedback": "dev/myworld/assets/authoring/items/coating-reagents",
+    "dev/myworld/cleric-wells": "dev/myworld/assets/authoring/world/cleric-wells",
+    "Client_Base/src/res/myworld/slayer-points-coin.png": "dev/myworld/assets/runtime/ui/slayer/slayer-points-coin.png",
+    "dev/myworld/rangers-guild-plan.md": "docs/myworld/rough-drafts/rangers-guild-plan.md",
+    "dev/myworld/combat-projectile-hard-cover-fix.md": "docs/combat/combat-projectile-hard-cover-fix.md",
+    "output/battleaxe-coatings-review/SHA256SUMS": "docs/myworld/evidence/battleaxe-coatings-phase1/SHA256SUMS",
+    "output/battleaxe-coatings-review/battleaxe-matrix.csv": "docs/myworld/evidence/battleaxe-coatings-phase1/battleaxe-matrix.csv",
+    "output/battleaxe-coatings-review/coverage.json": "docs/myworld/evidence/battleaxe-coatings-phase1/coverage.json",
+    "output/battleaxe-coatings-review/review.html": "docs/myworld/evidence/battleaxe-coatings-phase1/review.html"
+  }
 }

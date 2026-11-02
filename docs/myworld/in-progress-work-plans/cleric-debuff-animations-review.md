@@ -94,7 +94,7 @@ heavy-build lock with Java 8):
 ```sh
 python3 tests/myworld/test-cleric-debuff-animations.py \
   --old-client /path/to/retained-pre-curse-10056.jar \
-  --wire output/tests/cleric/debuff-animations/cleric-schema5.bin
+  --wire output/cleric-debuff-animations/cleric-schema5.bin
 ```
 
 `--output` chooses a diagnostic output folder. Without `--wire`, compatibility
@@ -110,7 +110,7 @@ previously documented unrelated substring guards were not rerun. Whole-program
 CPD/SpotBugs were not repeated for this focused cosmetic task; no new whole-program
 analysis result is claimed.
 
-Ignored evidence: `output/tests/cleric/debuff-animations/` contains per-gate logs, fresh
+Ignored evidence: `output/cleric-debuff-animations/` contains per-gate logs, fresh
 wire, source/embedded native frame PNGs, three cumulative GIFs, a nine-effect
 comparison sheet, UI/guide renders, source-check/compiler-lint reports and
 artifact SHA receipts. The actual drawNPC software output and WORLD_OVERLAY

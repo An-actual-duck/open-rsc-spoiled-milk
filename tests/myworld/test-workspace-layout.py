@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Exercise output relocation preservation and canonical asset/build boundaries."""
 import importlib.util
-import json
 import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -39,18 +38,37 @@ with tempfile.TemporaryDirectory(prefix='workspace-layout-') as directory:
     original.mkdir()
     payload = b'Fixture bytes and metadata must survive a directory relocation.\n'
     (original / 'result.bin').write_bytes(payload)
+    (original / 'licenses').mkdir()
+    (original / 'licenses/reference').symlink_to('../result.bin')
     image = root / 'output/Medallion.png'
     image.write_bytes(b'Unchanged draft artwork fixture')
+    historical = root / 'Client_Base/renderer-v2-captures/session-old'
+    historical.mkdir(parents=True)
+    (historical / 'frame.png').write_bytes(b'Historical capture stays intact')
     plan = layout.migrate_outputs(False, root)
-    assert len(plan) == 2 and (original / 'result.bin').read_bytes() == payload
+    assert len(plan) == 3 and (original / 'result.bin').read_bytes() == payload
     before = (original / 'result.bin').stat()
     layout.migrate_outputs(True, root)
     moved = root / 'output/tests/combat/result.bin'
     assert moved.read_bytes() == payload and moved.stat().st_ino == before.st_ino
+    assert (moved.parent / 'licenses/reference').is_symlink()
+    assert (moved.parent / 'licenses/reference').readlink() == Path('../result.bin')
+    assert (moved.parent / 'licenses/reference').read_bytes() == payload
     assert (root / 'output/art/items/medallion/Medallion.png').read_bytes() == b'Unchanged draft artwork fixture'
     assert not original.exists() and not image.exists()
+    assert (root / 'output/diagnostics/renderer/legacy-captures/session-old/frame.png').read_bytes() == b'Historical capture stays intact'
     assert len(list((root / 'output/archive/layout-migrations').glob('*/completed.jsonl'))) == 1
     assert not layout.check(root)
+    (root / 'scripts').mkdir()
+    writer = root / 'scripts/emit.py'
+    writer.write_text("from pathlib import Path\nout = Path('.') / 'output' / 'loose-feature'\n")
+    assert any('noncanonical pathlib output' in message for message in layout.check(root))
+    writer.write_text("from pathlib import Path\nout = Path('.') / 'output' / 'art' / 'my-feature'\n")
+    assert not layout.check(root)
+    stray = root / 'dev/myworld/new-art-project'
+    stray.mkdir()
+    assert any('New work belongs in assets' in message for message in layout.check(root))
+    stray.rmdir()
     bad = root / 'dev/myworld/assets/runtime/editable.aseprite'
     bad.write_bytes(b'Working master belongs in authoring')
     assert any('Authoring/work file' in message for message in layout.check(root))

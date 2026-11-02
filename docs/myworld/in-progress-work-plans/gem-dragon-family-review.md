@@ -190,7 +190,7 @@ Authoritative PNG SHA-256: `4a12e92b75269e53143cdf1e50b0841b14a1ce7d341dbc40c9f4
 
 ## Visual provenance and discovery
 
-`dev/myworld/assets/runtime/sprites/npcs/gem-dragons/base-frames` contains the exact
+`dev/myworld/assets/sprites/npcs/gem-dragons/base-frames` contains the exact
 18 approved native PNGs. `provenance.json` records their source hashes and the
 shared neutral sheet hash. Native walk canvases are 226×163, attack 335×163.
 The shared directional sheet is 1465×489: widths 226/226/226/226/226/335 and three rows.
@@ -205,7 +205,7 @@ fixed. The existing native >>8 tint/global-transform arithmetic applies. All spr
 the normal client asset packaging rules. Build from approved inputs with:
 
 ```
-aseprite -b --script-param input="$PWD/dev/myworld/assets/runtime/sprites/npcs/gem-dragons/base-frames" --script-param output="$PWD/dev/myworld/assets/runtime/sprites/npcs/gem-dragons" --script tools/myworld/pack-gem-dragons.lua
+aseprite -b --script-param input="$PWD/dev/myworld/assets/sprites/npcs/gem-dragons/base-frames" --script-param output="$PWD/dev/myworld/assets/sprites/npcs/gem-dragons" --script tools/myworld/pack-gem-dragons.lua
 ```
 
 Server definitions are ordinary game-owned `GemDragonNpcDefs.json`, loaded after

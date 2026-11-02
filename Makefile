@@ -4,7 +4,7 @@
 
 PYTHON ?= python3
 
-.PHONY: help build-client build-server build compile run run-server run-client run-hosted-server run-zgc start-fresh check test smoke pre-field-test download-windows-jre package-player-release generators sync-generated list dry-run benchmark benchmark-matrix combat-check prayer-check items-check npcs-check generator-tests layout-check boundary-check start-linux combined-install get-updates
+.PHONY: help build-client build-server build compile run run-server run-client run-hosted-server run-zgc start-fresh check test smoke pre-field-test download-windows-jre package-player-release generators sync-generated list dry-run benchmark benchmark-matrix combat-check prayer-check items-check npcs-check generator-tests asset-output-check layout-check boundary-check start-linux combined-install get-updates
 
 help:
 	@printf '%s\n' \
@@ -34,6 +34,7 @@ help:
 		'  make items-check       # validate only item generated artifacts' \
 		'  make npcs-check        # validate only npc generated artifacts' \
 		'  make generator-tests   # generator regression harness' \
+		'  make asset-output-check # validate visual asset and generated-output placement' \
 		'  make layout-check      # MyWorld plugin namespace regression check' \
 		'  make boundary-check    # MyWorld import boundary regression check' \
 		'' \
@@ -143,3 +144,7 @@ combined-install:
 
 get-updates:
 	@printf '%s\n' 'Legacy Deployment_Scripts have been archived under legacy/docs/inherited-openrsc/legacy-launchers/. Use git pull plus the root MyWorld targets.'
+
+asset-output-check:
+	$(PYTHON) scripts/workspace-layout.py check
+	$(PYTHON) tests/myworld/test-workspace-layout.py

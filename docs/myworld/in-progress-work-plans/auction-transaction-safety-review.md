@@ -147,9 +147,9 @@ python3 tests/myworld/test-market-atomicity.py --mysql-manifest \
 Retained final local evidence:
 
 - `/tmp/auction-barrier-regressions.log`
-- `output/tests/market-atomicity/42efba9e72/` (SQLite)
-- `output/tests/market-atomicity/19b0b1d960/` (MySQL/MariaDB)
-- `output/diagnostics/auction-server-spotbugs/` (predecessor analysis)
+- `output/market-atomicity-42efba9e72/` (SQLite)
+- `output/market-atomicity-19b0b1d960/` (MySQL/MariaDB)
+- `output/auction-server-spotbugs/` (predecessor analysis)
 
 `auction-transaction-safety-evidence.json` records the final commands, result
 manifests, log hashes and artifacts. Synthetic fixture data remains ignored local

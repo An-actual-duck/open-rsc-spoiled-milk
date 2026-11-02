@@ -55,15 +55,15 @@ Existing NPC IDs, including Gorak 861 and Green Dragon 862, remain unchanged.
 Abyssal demon uses its final approved sunken-abdomen stab frames and approved
 color-matched spike strip. Sources are preserved in ../abyssal-spikes/ and
 packed losslessly by tools/myworld/PackAbyssalSpikes.java. See the
-[combat contract](../../../../../../docs/myworld/rough-drafts/abyssal-demon-combat-test.md).
+[combat contract](../../../../../../../docs/myworld/rough-drafts/abyssal-demon-combat-test.md).
 
 Dark beast uses the approved normalized 120×110 base and an added lightning
 column, packed by `tools/myworld/PackDarkBeastLightning.java`. Source art and
 registration are preserved in `../dark-beast-lightning/` and described in the
-[combat contract](../../../../../../docs/myworld/rough-drafts/dark-beast-combat-test.md).
+[combat contract](../../../../../../../docs/myworld/rough-drafts/dark-beast-combat-test.md).
 
 Giant frog now has a first ranged combat implementation; see
-[the combat test contract](../../../../../../docs/myworld/rough-drafts/giant-frog-combat-test.md).
+[the combat test contract](../../../../../../../docs/myworld/rough-drafts/giant-frog-combat-test.md).
 
 Acceptance: watch all directions and camera rotations; check facing, mirrored
 directions, ground alignment, size, clipping, leg alternation and the complete

@@ -743,7 +743,7 @@ public final class DoSkillInterface {
 	private Sprite slayerPointCoin() {
 		if (slayerPointCoinLoadAttempted) return slayerPointCoin;
 		slayerPointCoinLoadAttempted = true;
-		try (InputStream in = DoSkillInterface.class.getClassLoader().getResourceAsStream("res/myworld/slayer-points-coin.png")) {
+		try (InputStream in = DoSkillInterface.class.getClassLoader().getResourceAsStream("myworld-assets/ui/slayer/slayer-points-coin.png")) {
 			BufferedImage image = in == null ? null : ImageIO.read(in);
 			if (image == null) {
 				System.err.println("Slayer point coin image is missing or unreadable; using the text fallback.");

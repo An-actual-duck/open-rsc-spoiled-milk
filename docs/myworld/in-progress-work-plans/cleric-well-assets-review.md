@@ -35,7 +35,7 @@ and no undocumented owner raw-material reference was interpreted as a glyph.
 
 ### Blight candidate
 
-`dev/myworld/assets/authoring/items/blight-sigil/candidates/review/index.html` shows existing Grace and
+`dev/myworld/blight-sigil-candidate/review/index.html` shows existing Grace and
 Zamorak with the carved/infused Thorn at1×/6×. It preserves the owner-authored
 28×25 stone outside44 symbol pixels and alpha everywhere. Full48×32 canvases
 use13,4 placement matching the native blank rune reference. Editable Aseprite
@@ -52,11 +52,11 @@ python3 scripts/install-cleric-well-assets.py --check
 python3 scripts/audit-cleric-well-archives.py
 ANT_OPTS='-Xmx512m -XX:+UseSerialGC' ROOT_DIR="$PWD" bash scripts/build-client.sh
 ANT_OPTS='-Xmx512m -XX:+UseSerialGC' ANT_HOME="$PWD/tools/vendor/apache-ant-1.10.5" sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml compile
-mkdir -p output/tests/cleric-well
-javac -cp Client_Base/build -d output/tests/cleric-well server/test/com/openrsc/server/io/ClericWellAssetsTest.java
-java -Xmx256m -XX:+UseSerialGC -Djava.awt.headless=true -cp output/tests/cleric-well:Client_Base/build com.openrsc.server.io.ClericWellAssetsTest .
-javac -cp Client_Base/build:server/core.jar -d output/tests/cleric-well server/test/com/openrsc/server/io/TallStoneWindowTest.java
-java -Xmx256m -XX:+UseSerialGC -Djava.awt.headless=true -cp output/tests/cleric-well:Client_Base/build:server/core.jar com.openrsc.server.io.TallStoneWindowTest server/conf/server/defs/DoorDef.xml
+mkdir -p output/cleric-well-tests
+javac -cp Client_Base/build -d output/cleric-well-tests server/test/com/openrsc/server/io/ClericWellAssetsTest.java
+java -Xmx256m -XX:+UseSerialGC -Djava.awt.headless=true -cp output/cleric-well-tests:Client_Base/build com.openrsc.server.io.ClericWellAssetsTest .
+javac -cp Client_Base/build:server/core.jar -d output/cleric-well-tests server/test/com/openrsc/server/io/TallStoneWindowTest.java
+java -Xmx256m -XX:+UseSerialGC -Djava.awt.headless=true -cp output/cleric-well-tests:Client_Base/build:server/core.jar com.openrsc.server.io.TallStoneWindowTest server/conf/server/defs/DoorDef.xml
 ```
 
 - Client/source and server/core+plugins builds passed. No server/client launched.

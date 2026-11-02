@@ -149,7 +149,7 @@ production username-column shape confirmed that a mixed-case stored name matched
 the old `LIKE` query but not the first barrier's binary equality query. The
 repository-owned seed schema was inspected read-only; no account rows were read.
 Existing worker evidence under ignored
-`Core-Framework-ai-1/output/tests/market-atomicity/*` was inspected as implementation
+`Core-Framework-ai-1/output/market-atomicity-*` was inspected as implementation
 evidence and is not relabeled as independently executed tests. The manager owns
 the synthetic MariaDB service receipt. No duplicate database service or heavy
 test batch was started by this reviewer.

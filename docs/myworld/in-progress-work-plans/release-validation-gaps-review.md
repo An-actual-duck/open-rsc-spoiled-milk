@@ -32,7 +32,7 @@ could proceed, it exposed a second stale layer: its historical archive receipt
 predated approved Cleric well textures. The historical receipt remains unchanged;
 all its original entries must still exist with identical serialized payloads.
 The independent asset check permits only the later entries declared by
-`dev/myworld/assets/authoring/world/cleric-wells/installation.json`, and invokes the well installer in
+`dev/myworld/cleric-wells/installation.json`, and invokes the well installer in
 read-only `--check` mode to verify their actual approved payloads. These are
 custom texture entries 67–72 and native records 4100–4117 (12 earlier custom
 textures made available in classic mode and six new well textures). Unexpected

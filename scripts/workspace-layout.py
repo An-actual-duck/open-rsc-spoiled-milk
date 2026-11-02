@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import datetime
 import hashlib
 import json
@@ -74,7 +75,13 @@ def inventory(path: Path) -> dict:
     paths = sorted(path.rglob('*')) if path.is_dir() else [path]
     for p in paths:
         if p.is_symlink():
-            raise ValueError('Review symlinks before moving output: ' + str(p))
+            link = os.readlink(p)
+            if Path(link).is_absolute() or not p.resolve(strict=True).is_relative_to(path.resolve()):
+                raise ValueError('Review escaping/absolute symlinks before moving output: ' + str(p))
+            s = p.lstat()
+            records.append([str(p.relative_to(path)), s.st_dev, s.st_ino,
+                            s.st_size, s.st_mtime_ns, s.st_mode, 'internal-symlink', link])
+            continue
         if p.is_file():
             s = p.stat()
             records.append([str(p.relative_to(path)) if p != path else '.', s.st_dev,
@@ -91,7 +98,7 @@ def assert_inactive(paths: list[Path]) -> None:
         try:
             if proc.stat().st_uid != os.getuid():
                 continue
-            refs = [os.readlink(proc / 'cwd')]
+            refs = [os.readlink(proc / 'cwd'), os.readlink(proc / 'exe')]
             for fd in (proc / 'fd').iterdir():
                 try:
                     refs.append(os.readlink(fd))
@@ -134,7 +141,7 @@ def migrate_outputs(apply: bool, root: Path = ROOT) -> list[dict]:
     if readme.exists() and not readme.read_text().startswith('GENERATED OUTPUTS\n'):
         raise ValueError('Preserve the existing output README before migration')
     moves = []
-    for p in sorted(out.iterdir()):
+    for p in sorted(out.iterdir()) if out.exists() else []:
         if p.name in layout['outputCategories'] or p.name == 'README.txt':
             continue
         relative = legacy_destination(p.name, layout)
@@ -146,9 +153,23 @@ def migrate_outputs(apply: bool, root: Path = ROOT) -> list[dict]:
             raise ValueError('Non-canonical migration target')
         moves.append({'old': str(p.relative_to(root)), 'new': str(target.relative_to(root)),
                       'inventory': inventory(p)})
+    for old, relative in layout.get('externalOutputPaths', {}).items():
+        if old != 'Client_Base/renderer-v2-captures':
+            raise ValueError('Unsupported external output relocation: ' + old)
+        source = root / old
+        if not source.exists() and not source.is_symlink():
+            continue
+        category, *parts = Path(relative).parts
+        target = output_path(category, parts, root)
+        if target.exists() or target.is_symlink():
+            raise ValueError('External output destination already exists: ' + str(target))
+        moves.append({'old': old, 'new': str(target.relative_to(root)), 'inventory': inventory(source)})
     assert_inactive([root / m['old'] for m in moves])
     if not apply:
         return moves
+    if not moves:
+        initialize_output(root)
+        return []
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
     journal = out / 'archive/layout-migrations' / stamp
     journal.mkdir(parents=True)
@@ -174,6 +195,10 @@ def migrate_outputs(apply: bool, root: Path = ROOT) -> list[dict]:
 def check(root: Path = ROOT) -> list[str]:
     layout = load_layout(root)
     errors = []
+    compatibility = root / 'dev/myworld'
+    for p in compatibility.iterdir():
+        if p.name != 'assets' and p.name not in layout['compatibilityFiles']:
+            errors.append('New work belongs in assets or its owning module, not dev/myworld: ' + p.name)
     assets = root / layout['assetRoot']
     for p in assets.iterdir():
         if p.name not in {'runtime', 'authoring', 'references', 'README.md', 'CREDITS.txt'}:
@@ -192,7 +217,51 @@ def check(root: Path = ROOT) -> list[str]:
     for old in ['sprites/UI', 'sprites/ui']:
         if (root / layout['runtimeAssets'] / old).exists():
             errors.append('Game UI belongs in runtime/ui, not under sprites: ' + old)
+    errors.extend(check_writer_defaults(root, layout))
+    for old in layout.get('externalOutputPaths', {}):
+        if (root / old).exists():
+            errors.append('Legacy diagnostic output requires relocation: ' + old)
     return errors
+
+
+def check_writer_defaults(root: Path, layout: dict) -> list[str]:
+    """Catch new ad hoc output defaults in maintained producers, including pathlib joins."""
+    allowed = set(layout['outputCategories'])
+    errors = set()
+    sources = [*root.glob('scripts/**/*.py'), *root.glob('scripts/**/*.sh'),
+               *root.glob('tools/**/*.py'), *root.glob('tools/**/*.sh'),
+               root / 'Client_Base/build.xml', root / 'server/build.xml']
+    sources = [p for p in sources if not any(x in p.parts for x in ('workspace', 'build', 'vendor', '__pycache__'))]
+
+    def parts(node):
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+            return parts(node.left) + parts(node.right)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            return [node.value]
+        return [None]
+
+    for p in sources:
+        if not p.is_file():
+            continue
+        text = p.read_text()
+        if p.suffix == '.py':
+            tree = ast.parse(text, filename=str(p))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    for match in re.finditer(r'(?:^|/)output/([a-zA-Z][a-zA-Z0-9_-]*)', node.value):
+                        if match.group(1) not in allowed:
+                            errors.add(str(p.relative_to(root)) + ': noncanonical output default ' + match.group(1))
+                if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+                    values = parts(node)
+                    for index, value in enumerate(values[:-1]):
+                        child = values[index + 1]
+                        if value == 'output' and isinstance(child, str) and child.split('/')[0] not in allowed:
+                            errors.add(str(p.relative_to(root)) + ': noncanonical pathlib output default ' + child)
+        else:
+            for match in re.finditer(r'output/([a-zA-Z][a-zA-Z0-9_-]*)', text):
+                if match.group(1) not in allowed:
+                    errors.add(str(p.relative_to(root)) + ': noncanonical output default ' + match.group(1))
+    return sorted(errors)
 
 
 def main() -> int:

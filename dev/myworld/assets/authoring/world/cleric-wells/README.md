@@ -88,7 +88,7 @@ OpenGL/gameplay proof and does not replace owner in-game art acceptance. Existin
 
 ## Follow-up interaction is deliberately not implemented
 
-See the [governing concept](../../../docs/myworld/in-progress-work-plans/cleric-spellbook-concept.md#well-assets-and-shoreline-interaction--confirmed-october-29)
+See the [governing concept](../../../../../../docs/myworld/in-progress-work-plans/cleric-spellbook-concept.md#well-assets-and-shoreline-interaction--confirmed-october-29)
 for the entire-edge, nonblocking Dip sigils interaction and the current transparent
 picking blocker. A missing/empty/transparent model is **not** a proven clickable
 shoreline object. Runtime metadata/pick-proxy and generic editor helpers need a

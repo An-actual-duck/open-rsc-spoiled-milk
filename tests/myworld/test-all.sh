@@ -6,6 +6,7 @@ ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 cd "$ROOT_DIR"
 
 ./scripts/check.sh
+python3 ./tests/myworld/test-workspace-layout.py
 ./tests/myworld/test-smoke.sh
 python3 ./tests/myworld/test-server-build-source-of-truth.py
 python3 ./tests/myworld/test-server-r2-boundary-audit.py
@@ -256,3 +257,5 @@ python3 ./tests/myworld/test-summon-health-restoration.py
 python3 ./tests/myworld/test-summoning-spawn-placement.py
 python3 ./tests/myworld/test-summon-friendly-fire.py
 python3 ./tests/myworld/test-tier-rebalance.py
+
+python3 ./scripts/workspace-layout.py check

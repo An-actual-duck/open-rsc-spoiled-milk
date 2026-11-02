@@ -101,7 +101,7 @@ antidote cleansing, ownership, persistence and lifecycle code are unchanged.
 
 ## Native art and discovery
 
-`dev/myworld/assets/authoring/equipment/battleaxe-coatings/manifest.json` is the single maintained roster and
+`dev/myworld/battleaxe-coatings/manifest.json` is the single maintained roster and
 balance/asset allocation input. `scripts/generate-battleaxe-coatings.py` derives
 server definitions, client definitions/aliases, explicit gameplay mapping and
 sprite outputs. IDs 3410–3425 are appended after gem equipment 3408/3409; historical
@@ -153,7 +153,7 @@ was introduced. Independent logs are copied beside this review.
  `battleaxe-coatings-implementation-evidence/`.
 
 Portable review folder:
-`output/reviews/battleaxe-coatings/implementation/` — self-contained `review.html`
+`output/battleaxe-coatings-implementation-review/` — self-contained `review.html`
 embeds all images; the folder also has inventory contact and held/mirror sheets.
 Reproduce with `python3 scripts/review-battleaxe-coatings.py`. Core may copy the
 whole folder into staged `art/battleaxe-coatings`. Native/zoom inventory and

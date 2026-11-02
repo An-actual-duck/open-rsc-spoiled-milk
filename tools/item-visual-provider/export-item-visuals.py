@@ -480,11 +480,11 @@ def resolve_external_asset(spec: ExternalSpec, packaged_entries: dict[str, str])
             f"External PNG specification {spec.specification!r} has no source asset. Searched: {searched}"
         )
     try:
-        asset_relative = source.relative_to(ROOT / "dev/myworld/assets")
+        asset_relative = source.relative_to(ROOT / "dev/myworld/assets/runtime")
     except ValueError as failure:
         raise ExportError(
             f"External PNG {spec.specification!r} resolves to {source}, which is not in the client-packaged "
-            "dev/myworld/assets tree"
+            "dev/myworld/assets/runtime tree"
         ) from failure
     packaged_resource = "myworld-assets/" + asset_relative.as_posix()
     source_hash = sha256_file(source)
@@ -948,7 +948,7 @@ def portable_external_path(external: dict[str, object]) -> str:
     source_path = external.get("sourcePath")
     if not isinstance(source_path, str):
         raise ExportError("External PNG record has no sourcePath")
-    prefix = "dev/myworld/assets/"
+    prefix = "dev/myworld/assets/runtime/"
     if not source_path.startswith(prefix):
         raise ExportError(f"External PNG source is outside the portable asset root: {source_path!r}")
     relative = safe_provider_path(source_path[len(prefix):], "external PNG source")

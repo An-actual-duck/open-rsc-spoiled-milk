@@ -118,7 +118,7 @@ public final class ClientExternalAssetLoaderFixture {
 			new String[] {"dev/equipment", "output/equipment"}, "hood", "numbered");
 		assertPath(directory, selectedDirectory.toPath(), "nested directory precedence");
 
-		File mapped = working.resolve("dev/myworld/assets/icons/test.png").toFile();
+		File mapped = working.resolve("dev/myworld/assets/runtime/icons/test.png").toFile();
 		assertEquals("myworld-assets/icons/test.png", loader.getEmbeddedAssetResource(mapped),
 			"development resource mapping");
 		assertEquals(null, loader.getEmbeddedAssetResource(working.resolve("output/icons/test.png").toFile()),
@@ -406,7 +406,7 @@ public final class ClientExternalAssetLoaderFixture {
 		Path working = root.resolve("packaged-working");
 		ClientExternalAssetLoader loader = new ClientExternalAssetLoader(working, anchor);
 
-		File icon = working.resolve("dev/myworld/assets/icons/icon.png").toFile();
+		File icon = working.resolve("dev/myworld/assets/runtime/icons/icon.png").toFile();
 		assertTrue(loader.assetFileExists(icon), "packaged file exists");
 		BufferedImage decoded = loader.readAssetImage(icon);
 		assertEquals(2, decoded.getWidth(), "packaged image width");
@@ -671,8 +671,8 @@ def verify_source_ownership() -> None:
     remastered = REMASTERED.read_text(encoding="utf-8")
 
     for contract in (
-        "legacy-output, and packaged client locations",
-        'DEVELOPMENT_ASSET_ROOT = "dev/myworld/assets/"',
+        "development and packaged client locations",
+        'DEVELOPMENT_ASSET_ROOT = "dev/myworld/assets/runtime/"',
         'EMBEDDED_ASSET_ROOT = "myworld-assets/"',
         'resolve("../Core-Framework")',
         "getAssetCandidateBases(",
@@ -687,6 +687,10 @@ def verify_source_ownership() -> None:
         "appendExternalAnimationNativeGridSheetFrames(",
     ):
         require(contract in owner, f"external asset owner is missing {contract}")
+
+    for legacy_output in ('"output/pngs"', '"output/icons"', '"output/equipment"',
+                          '"output/animations/"', '"output/legacy animations"'):
+        require(legacy_output not in owner + mudclient, 'runtime must not depend on review/output artwork: ' + legacy_output)
 
     for retired in (
         "externalItemSpriteCache",

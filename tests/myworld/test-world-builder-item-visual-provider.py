@@ -73,7 +73,7 @@ def assert_manifest_shape(payload: dict, expected_ids: list[int], expected_kind:
     assert payload["selection"]["itemCount"] == len(expected_ids)
     visuals = payload["itemVisuals"]
     assert [entry["itemId"] for entry in visuals] == expected_ids
-    assert payload["provider"]["catalogItemCount"] == 3318
+    assert payload["provider"]["catalogItemCount"] == 3444
     assert len(payload["provider"]["catalogSha256"]) == 64
     assert len(payload["selection"]["mappingSha256"]) == 64
     for entry in visuals:
@@ -358,7 +358,7 @@ def main() -> None:
     Draft202012Validator(schema).validate(full)
     Draft202012Validator(schema).validate(compatibility)
     Draft202012Validator(npc_schema).validate(npc)
-    assert_manifest_shape(full, list(range(3318)), "complete-final-catalog")
+    assert_manifest_shape(full, list(range(3444)), "complete-final-catalog")
     assert_manifest_shape(compatibility, list(range(3309, 3318)), "filtered-compatibility")
     assert full["provider"] == compatibility["provider"]
     assert full["assetProviders"] == compatibility["assetProviders"]

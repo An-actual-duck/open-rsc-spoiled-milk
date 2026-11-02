@@ -92,7 +92,7 @@ java -Xmx384m -Djava.awt.headless=true \
   -cp output/pointed-window-native/classes:/home/justin/collapsed-wall-private-8vInKUKb/Client_Base/build \
   orsc.graphics.three.PointedWindowNativeHarness \
   Client_Base/Cache/video/models.orsc output/pointed-window-native-relief-002 \
-  /home/justin/Core-Framework/output/art/exports/sprite-png/20260702-154351/authentic-sprites/textures/id-03227.png
+  /home/justin/Core-Framework/output/sprite-png-export-20260702-154351/authentic-sprites/textures/id-03227.png
 ```
 
 Bounded regression checks cover all prior model entries and server definitions,

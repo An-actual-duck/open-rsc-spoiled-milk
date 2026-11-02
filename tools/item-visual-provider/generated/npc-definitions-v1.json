@@ -4,13 +4,13 @@
   "provider": {
     "identity": "spoiled-milk-core-final-client-npc-definitions",
     "definitionMode": "members-enabled-post-override",
-    "finalClientNpcCount": 863,
-    "finalClientNpcCatalogSha256": "daf7184059ebbe1a7b39a47a93b68680d1a17e2851af30dbac95d46b8397ad27",
+    "finalClientNpcCount": 882,
+    "finalClientNpcCatalogSha256": "0da9666c8bdd5946bd5a55b06bb36d3a881a376da456ed5bf801ec6816637d44",
     "sources": [
       {
         "role": "final-client-definition-runtime",
         "identity": "EntityHandler.java",
-        "sha256": "52286567cd06c7c8626dfa5060d61c2beafd4eaccb2152d658724494de38411a"
+        "sha256": "207f1bd1a236a53cd756a77f8297649025234f7a214547328a0c8677fa21ee37"
       },
       {
         "role": "final-client-definition-runtime",
@@ -47,13 +47,13 @@
   "assetProviders": {
     "customSpriteArchive": {
       "path": "assets/archives/Custom_Sprites.osar",
-      "sha256": "f334d99403c6db0b2baa629ddfbd959e741aaf62265650eacdc4db5d9a9c7a92",
-      "entryCount": 1002
+      "sha256": "0883c7d1957b5bb4b70f0001770e4aac8d3145d77b2ff1a470d574e4718c426e",
+      "entryCount": 1009
     },
     "authenticSpriteArchive": {
       "path": "assets/archives/Authentic_Sprites.orsc",
-      "sha256": "cf861efa7307556b5e5ba4c20b838f17753faba8b530f85dca38e8c2839d5e69",
-      "numericEntryCount": 2259
+      "sha256": "fdfd0a164151a55edbe2746696f24b42a0bb2ee506396fe6f7b13156c7c6b442",
+      "numericEntryCount": 2295
     }
   },
   "selection": {

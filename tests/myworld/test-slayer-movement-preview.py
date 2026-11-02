@@ -30,7 +30,7 @@ for entry, npc in zip(manifest, defs):
     assert (npc['hits'], npc['combatlvl']) == {863: (30, 20), 864: (45, 35), 865: (60, 50), 866: (75, 60), 867: (90, 75), 868: (150, 85), 869: (200, 105), 870: (250, 125)}[npc['id']]
     assert [npc['sprites' + str(i)] for i in range(1, 13)] == [0] + [-1] * 11
     with zipfile.ZipFile(JAR) as jar:
-        assert jar.read('myworld-assets/sprites/npcs/slayer-movement-preview/' + entry['key'] + '.png') == data
+        assert jar.read('myworld-assets/sprites/npcs/slayer-monsters/' + entry['key'] + '.png') == data
 
 # These stable sprite identities are now production encounters. Only the explicit
 # Banshee undead-classification overlay is approved outside their base definitions.

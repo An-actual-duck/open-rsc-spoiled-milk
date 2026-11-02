@@ -63,7 +63,7 @@ It is the owner-approved jeweller's loupe v2, 48×32. SHA-256:
 `4f68d9aadad4a3b45ff586edffcc7362ec493b28ddd769beb0b3fc919bf2db05`
 
 Destination:
-`dev/myworld/assets/runtime/sprites/items/inventory-ground/gem-cutters-monocle.png`.
+`dev/myworld/assets/sprites/items/inventory-ground/gem-cutters-monocle.png`.
 The client was rebuilt once and packaged bytes verified. The existing worn
 eye-patch placeholder is unchanged; this task does not claim completed worn
 monocle artwork or new approval for the glove icon.

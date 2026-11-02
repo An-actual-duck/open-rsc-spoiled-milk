@@ -25,4 +25,4 @@ The sheets are 3x nearest-neighbour previews on a checkerboard. Individual PNGs 
 
 ## Also inspect
 
-- [Dagger - shared base — items:80](../../weapons/daggers/id-02230.png)
+- [Dagger - shared base — items:80](../daggers/id-02230.png)

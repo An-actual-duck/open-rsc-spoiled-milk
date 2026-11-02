@@ -97,7 +97,7 @@ Those failures are not counted as passing tests. Unrelated stale expectations
 were not rewritten as part of cosmetic implementation. Existing gameplay and
 source guard behavior were preserved.
 
-Evidence stays in ignored `output/tests/cleric/buff-animations/`: per-gate logs,
+Evidence stays in ignored `output/cleric-buff-animations/`: per-gate logs,
 fresh native wire, source/embedded native frame PNGs, three cumulative GIFs,
 UI/guide renders, artifact SHA receipts and static-analysis reports. Native
 WORLD_OVERLAY command capture and the existing phased integration gate verify

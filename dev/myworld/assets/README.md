@@ -1,53 +1,75 @@
-# MyWorld Assets
+# Spoiled Milk visual assets
 
-This directory is the source of truth for distributable MyWorld visual assets.
-Use `output/` for generated exports, diagnostics, and manual review images.
+All maintained visual assets and their authoring records live in this tree.
+Choose a role first, then the subject. Use lowercase directory names for new
+folders; preserve supplied artwork filenames when provenance depends on them.
 
-## Layout
+```text
+assets/
+  runtime/                 files read by the game and packaged into the client
+    ui/                    Cleric, Magic, Prayer, summons, equipment and editor UI
+    sprites/               equipment, inventory items, NPCs and world sprites
+    animations/            moving projectiles, static projectiles and on-entity VFX
+    legacy-animations/     explicitly retained specialty-effect fallbacks
+    remastered-sprites/    generated ready frames; the user-facing option is hidden
+  authoring/               editable masters, source inputs, recipes and provenance
+    equipment/
+    items/
+    world/
+    animations/
+    remastered-sprites/
+  references/              preserved reference exports and contact sheets
+    items/
+  CREDITS.txt              existing attribution record
+```
 
-- `sprites/equipment/`: player equipment sprite sources and numbered frame sets.
-- `sprites/UI/prayer/`: royalty-free prayer UI icons used for power, protection,
-  and faction skill-XP prayer tiers.
-- `sprites/UI/summon/`: summon menu icons named after their display names.
-- `sprites/UI/magic/`: magic menu icons named after their display names.
-- `animations/`: preferred animation library grouped by `projectile-moving`,
-  `projectile-static`, and `on-entity`. Promoted runtime effects use generic
-  catalog keys such as `water-basic`, not names tied to one spell or NPC.
-- `legacy animation folder/`: temporary migration fallback for explicitly
-  unmigrated specialty effects. Do not add new effects here.
-- `remastered-sprites/`: contributor-friendly authored workspace for optional
-  sprite and texture improvements. Named leaf sets separate runtime-ready
-  frames from incoming, source, and work files; see its README before adding or
-  moving art.
+## Where new work goes
 
-The client loads promoted projectile spritesheets from the new animation
-catalog and consults the legacy folder only for an explicit fallback. PNG
-spritesheets are runtime inputs; editable files such as `.aseprite` sources are
-kept for asset work but are not packaged into the client.
+- Put Aseprite/PSD masters, supplied originals, derivation scripts and source
+  provenance under `authoring/<subject>/<asset>/`. Keep a short README and a
+  manifest with source and approved-output identities. Existing project-specific
+  historical approval records remain with their projects.
+- Put generated drafts, comparisons, contact sheets and temporary exports in
+  `output/art/<subject>/` or a complete `output/reviews/<topic>/` bundle.
+  An output folder must never be the only retained copy of an editable master.
+- Promote owner-approved game-ready PNGs to `runtime/`. Reference files are
+  examples, not production definitions. Promotion preserves approved bytes and
+  records the destination in the project's manifest.
+- All UI artwork belongs under `runtime/ui/`; do not recreate `sprites/UI`,
+  `sprites/ui`, or another parallel UI tree. Editor icons occupy `ui/world-editor/`.
+- Runtime animation folders describe rendering behavior rather than a particular
+  spell or NPC. Preserve the maintained animation catalog and explicit legacy
+  exceptions. New effects go in `runtime/animations/`.
+- Add references under `references/`. Read the item library's README and family
+  notes before designing an inventory/ground icon; preserve full-canvas anchors.
+- The client build reads only `runtime/`. Editable sources, incoming deliveries,
+  project templates, reference sheets and review outputs are excluded.
 
-## Credits And Provenance
+## Existing pipelines
 
-- Pimen supplied the included added animation assets and has confirmed
-  distribution with source code available.
-- The owner-approved Cleric mapping of Pimen animation sheets is recorded in
-  the Cleric concept and implementation plans; the source paths remain generic
-  reusable asset identities rather than being renamed after spells.
-- The project author created additional original sprites, including the fishing
-  rod equipment sprites and the Bangle/Medallion item and wrist-slot graphics.
-- Held shears equipment sprites are planned author-created work and are not yet
-  part of the current asset set.
-- Prayer UI power, protection, enchanting XP, smithing XP, and crafting XP icons
-  are sourced from a royalty-free repository.
-- Summon UI icon provenance is tracked in `dev/myworld/assets/CREDITS.txt`.
-- Magic UI icon provenance is tracked in `dev/myworld/assets/CREDITS.txt`.
-- Cleric UI icon provenance is tracked in `dev/myworld/assets/CREDITS.txt`.
-- ThatKidBobo supplied the initial remastered sprite, item, and texture batch.
-  Detailed mappings and staging status are tracked in
-  `remastered-sprites/CREDITS.md` and each leaf `set.json`.
-- CraftPix-derived icons and Phoenix/Kraken animations were removed because
-  their redistribution terms do not permit extractable downloadable assets.
+The remastered authoring workspace retains its descriptors, imported originals,
+work frames and credits under `authoring/remastered-sprites/`. The existing
+`./scripts/remastered-sprites.sh generate` command publishes only cataloged
+ready frames and the manifest to `runtime/remastered-sprites/`. `--check`
+verifies both the authoring catalog and runtime publication. The hidden option
+and its default remain unchanged; this move does not change contributor rights.
 
-Source links:
+Approved item/well projects live under `authoring/equipment`, `authoring/items`
+and `authoring/world`. Their scripts and receipts point to the current paths.
+Historical intake paths and versioned lineage remain historical records.
 
-- Pimen: https://pimen.itch.io/
-- Pixerelia: https://pixerelia.itch.io/
+Native game archives remain in `Client_Base/Cache/video/`; those are game inputs,
+not disposable downloads. Application bootstrap icons remain with the client
+module in `Client_Base/src/res/`. These are deliberate module boundaries.
+
+## Validation and credits
+
+Run `python3 scripts/workspace-layout.py check` and the feature's maintained
+asset/source/embedded-resource checks after promotion. Build the client to
+verify the real packaged resources. Folder reorganization never authorizes
+image resizing, palette changes, gameplay changes or a public-server restart.
+
+The existing attribution record is [CREDITS.txt](CREDITS.txt). Pimen supplied the
+added animation collection; Atelier Pixerellia supplied the selected Cleric
+icons. Detailed contributor records remain beside the affected assets and in
+`release/player/ASSET-SOURCES.txt`. Preserve those records when moving files.
