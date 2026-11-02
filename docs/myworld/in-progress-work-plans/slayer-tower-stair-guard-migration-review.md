@@ -4,6 +4,34 @@ Owner direction, October 26, 2026: preserve the finished tower and prepare one
 coordinated future update. No import into the official server or public restart
 is part of this task.
 
+## Private review correction — November 2, 2026
+
+Clicking a rank-restricted entrance or upward staircase now triggers the nearby
+associate's ordinary NPC speech, like the existing restricted guild entrances.
+Previously the object action sent the associate's refusal as a plain player
+interaction message, while direct Talk-to already used NPC dialogue.
+
+The object action uses the existing nearby-visible-NPC helper and its normal
+script interaction/cleanup, selecting the corresponding associate on that floor.
+Rank checks remain independent of NPC availability. A missing or busy associate
+produces a neutral retry notice; it cannot grant access or steal an existing
+conversation. Qualified players retain the ordinary door/stair transport.
+
+The regression fixture reproduced the old failure at the actual entrance, then
+passed production NPC lookup/chat/script binding and cleanup for all six mapped
+guards, qualified passage, and busy-guard fallback. Existing direct Talk-to,
+rank/floor, free-exit, room-door and player-state checks also pass. The release
+gate passed against the exact owner-generation-4855 map, including its actual
+configuration, placements, contacts and version-5 progression. Compiler checks
+passed with no new gated warnings. Source data, map placements and client code
+are unchanged by this correction; private visual acceptance remains separate.
+
+Evidence and exact commands:
+`/home/justin/.local/share/tower-guard-dialogue-fix-20261102/`.
+The initial combined command stopped because its release target lacked the
+mandatory explicit package argument; that log is preserved. The release gate
+was rerun successfully with the reviewed package and manifest hash.
+
 ## Bindings
 
 The game-owned `MonsterSlayerTowerPassages` class restricts only these authored

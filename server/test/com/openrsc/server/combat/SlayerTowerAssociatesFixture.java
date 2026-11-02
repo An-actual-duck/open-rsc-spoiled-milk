@@ -8,6 +8,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.world.coordinate.*;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.event.rsc.PluginTask;
 import java.lang.reflect.*;
 import java.nio.file.Paths;
 import java.util.*;
@@ -145,7 +146,83 @@ public final class SlayerTowerAssociatesFixture {
 			check(MonsterSlayerDialoguePlan.promotion(1).stream().anyMatch(step -> step.getText().contains("this button"))
 				&& MonsterSlayerTowerAccess.VETERAN.getRefusal().contains("Veteran button")
 				&& !MonsterSlayerTowerAccess.VETERAN.getRefusal().contains("crest"), "Veteran flavor matches promotion");
+			passageNpcSpeech(h, data, pluginType);
 			System.out.println("PASS: six tower definitions, tier armor, all rank/floor combinations, approved dialogue branches, cancellation, fail-closed state, exact entrance and upward stairs, free exits and room doors, no progression changes");
+		}
+	}
+
+	/** Exercise the production NPC lookup/chat helpers, not the recording dialogue seam. */
+	@SuppressWarnings("unchecked")
+	private static void passageNpcSpeech(CurrentCombatHarness h, MonsterSlayerData data, Class<?> pluginType) throws Exception {
+		h.world().getRegionManager().preflightNativeLayeredPlacements();
+		h.world().getRegionManager().populateNativeLayeredPlacements();
+		Object plugin = pluginType.newInstance();
+		Method passage = pluginType.getMethod("onOpLoc", Player.class, GameObject.class, String.class);
+		Method blocked = pluginType.getMethod("blockOpLoc", Player.class, GameObject.class, String.class);
+		Field field = PluginTask.class.getDeclaredField("tasksMap"); field.setAccessible(true);
+		Map<String, PluginTask> contexts = (Map<String, PluginTask>) field.get(null);
+		for (MonsterSlayerTowerAccess access : MonsterSlayerTowerAccess.values()) {
+			int level = Math.max(0, access.ordinal() - 1);
+			int x = access == MonsterSlayerTowerAccess.FLEDGLING ? 22 : level % 2 == 0 ? 6 : 37;
+			int y = access == MonsterSlayerTowerAccess.FLEDGLING ? 474 : 472;
+			Player player = h.player("gatevoice" + access.ordinal(), 450, 450);
+			player.teleportLayered(at(x, y + 1, level), false);
+			setRank(player, data, MonsterSlayerRank.UNSTAMPED);
+			h.recordOutgoingPackets(player);
+			GameObject object = h.world().getRegionManager().findNativeLayeredScenery(at(x, y, level));
+			check(object != null, "actual authored passage exists " + access);
+			Npc guard = null;
+			for (Npc candidate : player.getViewArea().getNpcsInView())
+				if (candidate.getID() == access.getNpcId() && candidate.sharesSpatialDomain(player)) guard = candidate;
+			check(guard != null, "actual same-floor guard exists " + access);
+			String command = access == MonsterSlayerTowerAccess.FLEDGLING ? "open" : "climb-up";
+			guard.getUpdateFlags().setChatMessage(null);
+			WorldLocation before = player.getWorldLocation();
+			Map<String, Object> cache = new HashMap<>(player.getCache().getCacheMap());
+			int packets = player.getOutgoingPacketQueueSize();
+			final int[] pauses = {0};
+			PluginTask task = new PluginTask(h.world(), player, "useinv", new Object[0]) {
+				public int action() { return 0; }
+				public synchronized void pause(int ticks) { pauses[0]++; }
+			};
+			PluginTask previous = contexts.put(Thread.currentThread().getName(), task);
+			try {
+				check((Boolean) blocked.invoke(plugin, player, object, command), "object remains rank restricted " + access);
+				passage.invoke(plugin, player, object, command);
+				check(guard.getUpdateFlags().getChatMessage() != null, "blocked object triggers actual NPC speech " + access);
+				check(guard.getUpdateFlags().getChatMessage().getMessageString().equals(access.getRefusal()), "NPC speaks the correct refusal " + access);
+				check(task.getScriptContext().getInteractingNpc() == guard && player.getInteractingNpc() == guard,
+					"normal script/NPC conversation is bound to the correct guard " + access);
+				check(pauses[0] == 1 && player.getOutgoingPacketQueueSize() == packets, "NPC speech delay replaces plain interaction message " + access);
+				check(player.getWorldLocation().equals(before) && player.getCache().getCacheMap().equals(cache), "denial changes no location or Slayer progress " + access);
+			} finally {
+				task.getScriptContext().endScript();
+				if (previous == null) contexts.remove(Thread.currentThread().getName()); else contexts.put(Thread.currentThread().getName(), previous);
+			}
+			check(!guard.isBusy() && player.getInteractingNpc() == null, "normal dialogue cleanup releases the guard " + access);
+			guard.getUpdateFlags().setChatMessage(null);
+			setRank(player, data, MonsterSlayerRank.HERO);
+			passage.invoke(plugin, player, object, command);
+			check(guard.getUpdateFlags().getChatMessage() == null, "qualified passage does not interrupt with a conversation " + access);
+			setRank(player, data, MonsterSlayerRank.UNSTAMPED);
+			guard.setBusy(true);
+			PluginTask unavailable = new PluginTask(h.world(), player, "useinv", new Object[0]) {
+				public int action() { return 0; }
+			};
+			previous = contexts.put(Thread.currentThread().getName(), unavailable);
+			packets = player.getOutgoingPacketQueueSize();
+			try {
+				passage.invoke(plugin, player, object, command);
+				check((Boolean) blocked.invoke(plugin, player, object, command) && player.getWorldLocation().equals(before),
+					"busy guard cannot bypass the passage restriction " + access);
+				check(guard.isBusy() && guard.getUpdateFlags().getChatMessage() == null && unavailable.getScriptContext().getInteractingNpc() == null,
+					"busy guard conversation is not stolen " + access);
+				check(player.getOutgoingPacketQueueSize() == packets + 1, "unavailable guard produces a neutral retry notice " + access);
+			} finally {
+				unavailable.getScriptContext().endScript();
+				guard.setBusy(false);
+				if (previous == null) contexts.remove(Thread.currentThread().getName()); else contexts.put(Thread.currentThread().getName(), previous);
+			}
 		}
 	}
 

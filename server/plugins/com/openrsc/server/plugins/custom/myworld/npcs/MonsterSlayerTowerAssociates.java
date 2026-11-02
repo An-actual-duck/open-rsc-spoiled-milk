@@ -9,6 +9,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
+import static com.openrsc.server.plugins.Functions.ifnearvisnpc;
 import static com.openrsc.server.plugins.Functions.multi;
 import static com.openrsc.server.plugins.Functions.npcsay;
 import static com.openrsc.server.plugins.Functions.say;
@@ -36,7 +37,12 @@ public final class MonsterSlayerTowerAssociates implements TalkNpcTrigger, OpLoc
 	@Override public void onOpLoc(Player player, GameObject object, String command) {
 		MonsterSlayerTowerAccess access = MonsterSlayerTowerPassages.passage(player, object, command);
 		if (access == null || access.allows(player)) return;
-		player.message(MonsterSlayerTowerAccess.readRank(player) == null
+		Npc associate = ifnearvisnpc(player, access.getNpcId(), 8);
+		if (associate == null) {
+			player.message("The Monster Slayer Associate is unavailable. Please try again shortly.");
+			return;
+		}
+		dialogue.npc(player, associate, MonsterSlayerTowerAccess.readRank(player) == null
 			? "I can't verify your Slayer rank right now. Please try again later."
 			: access.getRefusal());
 	}
