@@ -443,7 +443,14 @@ myworld_write_launch_marker() {
 }
 
 myworld_require_hosted_conf() {
-  local conf_name="$1"
+  local conf_name="$1" selection manifest_sha
+
+  # Hosted installed mode uses the exact reviewed PRIMARY pair. The historical
+  # no-selector package pin is not the identity of a later selected map.
+  selection="$(python3 "$ROOT_DIR/scripts/installed-map-selection.py" "$ROOT_DIR")" \
+    || myworld_fail "Hosted launch requires a valid matching installed map pair."
+  manifest_sha="$(python3 -c 'import json,sys;print(json.loads(sys.argv[1])["manifestSha256"])' "$selection")" \
+    || myworld_fail "Unable to read the selected hosted manifest identity."
 
   myworld_require_conf_value "$conf_name" db_name spoiled_milk_alpha
   myworld_require_conf_value "$conf_name" server_name "Spoiled Milk"
@@ -460,7 +467,7 @@ myworld_require_hosted_conf() {
   myworld_require_conf_value "$conf_name" want_layered_native_terrain_symmetric_residency true
   myworld_require_conf_value "$conf_name" want_layered_native_terrain_atomic_activation true
   myworld_require_conf_value "$conf_name" want_sync_scene_baseline true
-  myworld_require_conf_value "$conf_name" layered_native_terrain_manifest_sha256 "$SPOILED_MILK_LAYERED_MANIFEST_SHA256"
+  myworld_require_conf_value "$conf_name" layered_native_terrain_manifest_sha256 "$manifest_sha"
   myworld_require_conf_value "$conf_name" layered_native_world_runtime_profile world-builder-installed
 }
 
