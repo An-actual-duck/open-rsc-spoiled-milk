@@ -10,55 +10,79 @@ gem-dragon cave are authored in the latest saved editor map. Both await final
 migration with the coordinated update package; do not replace or re-author
 that saved map while finishing gameplay and release integration.
 
-## Current release checkpoint — November 1, 2026
+<a id="current-release-checkpoint--october-31-2026"></a>
+<a id="current-release-checkpoint--november-1-2026"></a>
 
-The owner accepts the **current Cleric stage as complete for this release**.
-Tier 4 and the unimplemented Zamorak hostile spell chain are follow-up work,
-not release blockers. This closes feature expansion for this Cleric stage; it
-does not claim a private gameplay test that has not happened.
+## Current release checkpoint — November 2, 2026
 
-**Mystic Blue Dragon, Fierce Red Dragon and Corporeal Beast are deferred.**
-Before resuming them, design worthwhile boss rewards, including their potential
-hides and associated armor sets. Preserve their encounter concepts below.
-Existing Elder Green/KBD content and the implemented gem dragons stay in scope.
+This is the current release scope and closeout checklist. It supersedes earlier
+17-spell, Zamorak-deferred, unselected-icon and undecided-coating summaries.
+Source implementation, selected map, offline validation, owner acceptance and
+public activation are separate states.
 
-| Workstream | Current state | Remaining for this release |
-| --- | --- | --- |
-| Slayer Tower and gem-dragon cave | Owner-authored layouts finished; verified repaired pair selected in source for private acceptance | Combined private gameplay/visual acceptance and coordinated migration |
-| Slayer encounters, capacity, guards, Slow/poison/antidotes and all 15 battleaxe coatings | Implemented/integrated; prior approved content retains its approvals | Combined private gameplay/acquisition checks and migration |
-| Gem dragons and Crafting loot | Five variants, drops and equipment behavior implemented | Combined private gameplay; glove icon and no worn monocle visual approved |
-| Cleric, Grace/Blight wells and Cosmic combat luck | Current stage complete and accepted for release scope | Ordinary combined release QA; no additional spell tiers required |
-| Floating hit numbers | Owner-approved and integrated | Ordinary combined release QA |
-| Three additional bosses and Ante | Deferred | No work required before this release |
+The accepted source scope includes **20 Cleric spells**: nine blessings, all
+nine god-aligned curses (including Zamorak's Malice/Cruelty/Ruin), Unify and
+Greater Unify. All 20 owner-selected spell icons are approved and installed.
+The 18 god spells have selected cumulative effect animations; Unify remains
+animationless. Buff effects are recipient-only; curse effects appear on NPCs
+for nearby observers. The accepted concise spellbook and detailed guide remain.
+See the [blessing](cleric-buff-animations-review.md) and
+[curse animation](cleric-debuff-animations-review.md) receipts.
 
-### Remaining release work, in order
+All 15 permanent single-use battleaxe coatings, shared Slow, poison/antidotes,
+Grace/Blight/Moonsilver production, Cosmic combat luck, gem dragons and floating
+hit numbers are implemented. The owner approved the thumb-hidden glove icon
+and accepted no worn monocle visual; those are closed art decisions. The tower
+and gem cave are authored, with repaired paired map `e343c03b…e58cf` selected for
+private acceptance. Existing content approvals remain valid.
 
-The owner approved the thumb-hidden v2 glove icon and accepted no worn monocle
-visual. Both equipment art loose ends are closed; the approved loupe inventory
-icon remains unchanged.
+The November 2 audit's tower-task and Deathwing omissions are implemented and
+independently reviewed in exact commit
+`9fe259238491933940f0e45a6aa75e283d14c4a6`; see the
+[Slayer activation review](slayer-release-task-activation-review.md). Both next-update
+production profiles enable the eight tower families, and the enabled roster is
+version 5 with mandatory/repeatable Champions-tier Death wings. Historical
+progress migration and contact/stair-route checks are included. Final paired
+candidate verification and package-ledger bookkeeping remain pending; reviewed
+source completion is not ordinary-player acceptance or live activation.
 
-1. Complete the owner's Cleric spell-icon choice and final paired private
-   acceptance. Map assembly is prepared: exact repaired pair `e343c03b…e58cf`
-   is selected in source, with 1,787 sectors, nine levels and 34,598 placements.
-   Tower bindings, associates, cave placements, eggs and reachable well/ladder
-   routes are covered by the map acceptance checks; owner gameplay/visual
-   acceptance of this assembled candidate remains. The original editable save
-   and prior map packages are retained. See
-   [the assembly record](next-update-candidate-assembly-review.md).
-2. Run one coordinated private release-candidate pass: access/travel, combat,
-   Slow/poison/coatings and ingredient collection, gem rewards/equipment, sigil
-   infusion/Cleric/Cosmic, hit numbers, saving and persistence. Fix demonstrated
-   issues; do not reopen already accepted content as a broad redesign backlog.
-3. Finish release assembly: exact paired artifacts, relevant regression checks,
-   migration/backups/rollback, outstanding branch/handoff disposition and normal
-   launch/update behavior. Preserve parked or unrelated work rather than merging
-   it merely to clear a list.
-4. Let the owner decide the release label, including whether this is beta.
-   Public activation remains a separate maintenance window requiring fresh
-   shutdown authorization and the normal in-game warning.
+**Deferred:** Cleric Tier 4, Mystic Blue Dragon, Fierce Red Dragon, Corporeal
+Beast and Ante. Boss rewards/hide sets and Ante's balance/honesty design remain
+future work. No broader system, terrain or art expansion is required here.
 
-The feature-development push is largely complete. The active milestone is now
-**release assembly, final art and combined acceptance**, not another large system.
+### Release closeout checklist
+
+- [ ] Verify the final paired candidate against the completed reviewed source
+  corrections in `9fe2592…`: both prepared production profiles must enable
+  `want_slayer_tower_tasks`, all eight tower families and Champions-tier Death
+  wings must be assignable, and fresh/existing players must use the reviewed
+  version-5 migration and contact/stair routes. Record the actual configuration,
+  roster and source in the package ledger; a test-only flag override is not proof.
+- [ ] Run the final combined commit through maintained regressions, the five
+  repaired supplemental gates, compiler checks and whole-program static review.
+  Preserve failures and investigate new findings individually; a stale fixture
+  or an unfinished analyzer is not a passing gate. Serialize heavy JVM jobs and
+  give the final analyzer adequate heap and a bounded run window.
+- [ ] Build paired artifacts and the exact source-selected map, then perform
+  the final **ordinary-player** private walkthrough: assignment/access/travel,
+  encounter combat, reagent and egg acquisition, coating recipe/apply/use/wipe,
+  gem drops/equipment, sigil alloy/mould/carve/charge, Cleric/Cosmic interactions,
+  all selected visuals, hit numbers, saving, reconnecting and restarting. Keep
+  development-command checks separate from normal-account acceptance.
+- [ ] Record owner gameplay/visual acceptance and any bounded exclusions against
+  that exact candidate. Preserve the original editable map and prior packages;
+  do not reopen approved content as a broad redesign/reapproval backlog.
+- [ ] Complete final artifact/map hashes, migration rehearsal, backups/rollback,
+  normal launcher/updater checks and exact source bookkeeping. Refresh staging
+  after corrections; do not call earlier evidence current after changing inputs.
+- [ ] Obtain the owner's final release label. Public activation requires a
+  separate maintenance window, fresh explicit shutdown permission and the normal
+  in-game warning/countdown. Preparation or publication does not authorize it.
+
+The manager maintains `/home/justin/spoiled-milk-next-update`. See the
+[candidate assembly](next-update-candidate-assembly-review.md) and
+[migration package](next-update-migration-package.md) records. The active work is
+bounded release closeout and combined acceptance, not feature expansion.
 
 ## 1. Slayer Tower and associated content — implemented; final assembly
 
@@ -170,18 +194,18 @@ their existing production and Devotion rules.
 
 See [the implementation and validation review](grace-blight-well-infusion-review.md).
 Production and the mixed-resource overhaul are implemented in the candidate.
-The launch twelve-spell roster is historical; the active candidate has17 spells.
+The launch twelve-spell roster is historical; the active source has 20 spells, including all nine curses.
 
 ### Implemented progression — three tiers, six power levels
 
-The new ordinary book has three tiers, each with one blessing per god and a
-future debuff per god. Later blessings add the next god component to the earlier
+The ordinary book has three tiers, each with one blessing and one implemented
+curse per god. Later blessings add the next god component to the earlier
 ones. Tier unlocks use **Worship**, not Blessing. Tier 3 targets roughly Worship
 40, matching elemental single-element tiers 1/20/40 (dual-element 10/30/50).
 Cleric tier 1/2 unlocks 1/20 are the implemented baseline accepted for this stage.
 Tier 4 unique buffs/debuffs remain deferred.
 
-Ordinary god buffs and future god debuffs have tier radii **2/3/4** (`tier + 1`),
+Ordinary god buffs and implemented god debuffs have tier radii **2/3/4** (`tier + 1`),
 independent of Holy Power. The universal curve selects rank; each component
 uses its own approved incremental values. Standalone Tier 1 caps at P2; its
 inherited component inside Tier 3 can reach P6. The owner approved the revised
@@ -311,13 +335,15 @@ Unease/Dread/Terror; Saradomin's Censure/Condemnation/Unmaking; Zamorak's
 Malice/Cruelty/Ruin. The governing Cleric document maps each title to its effect.
 The candidate implements the approved presentation model for all active spells.
 
-Owner's order: **review power strengths/inherited P6 combinations → Greater
-Unify → return to debuffs**. The latest buff review is now approved and implemented; Guthix/Saradomin hostile spells are also implemented, pending private gameplay acceptance.
+The owner's earlier order was **review power strengths/inherited P6 combinations →
+Greater Unify → return to debuffs**. All three god curse lines are now implemented;
+combined ordinary-player acceptance remains on the current checklist above.
 
 ### Zamorak critical-hit debuffs — owner direction, October 31
 
-Design only, not yet implemented. Higher tiers inherit earlier components
-under the existing shared Holy Power curve and power caps2/4/6:
+Implemented and required for this release following the owner's November 1
+confirmation. The earlier temporary hold is superseded. Higher tiers inherit
+earlier components under the shared Holy Power curve and power caps 2/4/6:
 
 - **Expose Weakness:** melee/ranged/Magic damage rolls can become maximum-damage
   critical hits; chance5% +2 percentage points per power step, reaching15% atP6.
@@ -332,13 +358,13 @@ under the existing shared Holy Power curve and power caps2/4/6:
   instant kill**, explicitly confirmed by the owner.
 
 See the [governing debuff design](cleric-spellbook-concept.md#owner-selected-zamorak-debuffs--october-31-2026)
-for all six values, conditional proc semantics and outstanding critical/stagger
-integration choices. Do not infer boss immunity to all three components from
+for all six values, conditional proc semantics and the completed shared
+critical/Stagger integration. Do not infer boss immunity to all three components from
 the execution restriction, or count five ticks as five completed NPC attacks.
 
-The isolated implementation now narrows Zamorak's maximum/dealt bonuses to melee
-and Barkskin to ranged defense. Blood Hunger retains its existing eligible
-direct-hit scope. The prepared package is updated separately after Core review.
+The integrated implementation narrows Zamorak's maximum/dealt bonuses to melee
+and Barkskin to ranged defense. Blood Hunger retains its eligible direct-hit
+scope. The prepared package must track the final reviewed combined commit.
 Saradomin's hostile effect names are now selected: **Magical Allergy**
 (Magic-defense reduction), **Muscular Atrophy** (maximum-melee-damage reduction)
 and **Molecular Antipode** (temporary reusable non-corporeal state, with Magic
@@ -352,8 +378,8 @@ with native packet and software/OpenGL alpha checks. Private gameplay acceptance
 remains. See the governing Cleric document for decisions and open boundaries.
 Other hostile suggestions remain unselected.
 
-God+Grace buffs, the six implemented god+Blight debuffs and atomic joint resource
-consumption are present in the candidate. Generic purpose-only costs replace the god
+God+Grace buffs, all nine implemented god+Blight debuffs and atomic joint resource
+consumption are present in the integrated source. Generic purpose-only costs replace the god
 share with extra purpose sigils (`A god + B Grace` becomes `A+B Grace` within
 compatible grades); Unify uses 2 Stone Grace and Greater Unify uses 3 Stone
 Grace +3 Silver Grace. The approved mixed-grade vectors are recorded above.
@@ -362,9 +388,10 @@ Core integration/private gameplay acceptance are separate.
 
 ### Later follow-up, not current release gates
 
-Optional later cost/economy refinement, Zamorak hostile activation and its
-remaining eligible-hit/execution decisions. General release gameplay QA remains
-part of the combined candidate pass; it does not reopen this accepted stage.
+Optional later cost/economy refinement and Tier 4 remain follow-up work.
+Zamorak activation and its eligible-critical/execution decisions are implemented
+required content. General release gameplay QA remains part of the combined
+candidate pass; it does not reopen this accepted stage.
 Unify and Greater
 Unify behavior/unlocks are settled; the old neutral Respite remains excluded.
 Tier 4 unique spells remain later work.
@@ -469,9 +496,9 @@ remain preserved; they do not automatically enlarge this release's scope.
 New visual assets remain game-owned content discovered by the editor, rather
 than a roster or asset bundle built into the editor itself.
 
-### Shared Stagger and critical-hit foundation — October 31 candidate
+### Implemented shared Stagger and critical-hit foundation
 
-The implementation candidate consolidates Ogre/Startle into one actor-owned
+The integrated foundation consolidates Ogre/Startle into one actor-owned
 Stagger authority: the next attack deals zero without surrendering its normal
 turn/cadence, followed by five actual unstaggered attacks before reapplication.
 Pending multi-attack losses cannot be replaced or queued. Natural zero attacks
@@ -479,8 +506,10 @@ count toward recovery; polls, incoming hits and elapsed time do not. NPCs and
 the existing NPC-to-player Startle path share the rule, without new PvP admission.
 
 Critical hits now have explicit immutable per-hit identity across ordinary
-melee, player ranged/throwing, and Magic launch/settlement. Cosmic supplies combat luck rather than critical chance; no Expose Weakness, Weak Legs or Weak Constitution effects
-are enabled. Their balance and eligible-hit decisions remain future work.
+melee, player ranged/throwing, and Magic launch/settlement. Cosmic supplies combat luck rather than critical chance. Expose Weakness, Weak
+Legs and Weak Constitution are implemented and enabled through the Zamorak
+curse line, with ordinary-enemy execution restrictions and the shared recovery
+rules. Their accepted values are recorded above.
 Whip/Sticky extra attack delays compose separately from Stagger, preserving
 normal style/base cooldown ownership and existing movement/utility scope.
 Fresh uncaptured Slow affects the upcoming attack, adding only its new tier

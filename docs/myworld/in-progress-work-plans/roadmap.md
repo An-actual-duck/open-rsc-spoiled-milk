@@ -4,48 +4,44 @@ This document tracks the high-level path from the current alpha toward beta.
 Detailed implementation plans remain in their subject-specific documents; this
 roadmap defines priorities, milestone boundaries, and release progression.
 
-## Latest release assembly checkpoint — November 1, 2026
+## Latest release closeout checkpoint — November 2, 2026
 
-The next major release is now in **assembly and acceptance**; both gem-equipment
-art loose ends are closed. The owner has completed the Slayer Tower and Crafting Guild
-gem-dragon cave in the saved editor map and accepts the current Cleric stage.
-Use the [current release checklist](next-major-release-goals.md) as the source
-of truth; older regional milestones below do not automatically expand its scope.
+The narrowed release is in **closeout and ordinary-player acceptance**. Use the
+[current release checklist](next-major-release-goals.md#release-closeout-checklist)
+as the single current checklist; older regional milestones below do not expand
+this release's scope.
 
-Implemented/integrated work includes the tower's capacity and stair guards,
-the five gem dragons and their loot/equipment behavior, poison/antidotes/shared
-Slow, all 15 coated battleaxes, the seventeen-spell Cleric stage with
-Grace/Blight wells, Cosmic combat luck and owner-approved floating hit numbers.
-Existing content approvals remain valid. Fixes-only release separation or an
-old preserved branch does not make approved content a fresh development backlog.
+Implemented source includes tower capacity/stair guards, five gem dragons and
+crafting loot, poison/antidotes/shared Slow, all 15 coated battleaxes, the
+20-spell Cleric book (nine blessings, nine curses and both Unify spells),
+Grace/Blight/Moonsilver production, Cosmic combat luck and floating hit numbers.
+All 20 Cleric icons are approved/installed; 18 cumulative god-spell effect
+animations are selected/implemented. The glove icon is approved and no worn
+monocle visual is required. Preserve existing approvals and the concise
+spellbook/detailed guide; final assembled visual acceptance is still required.
 
-Remaining work:
+The tower-task activation, Champions-tier Death wing assignment and version-5
+progression corrections are implemented and independently reviewed in exact
+commit `9fe259238491933940f0e45a6aa75e283d14c4a6`; see the
+[Slayer activation review](slayer-release-task-activation-review.md). Final paired
+candidate verification/bookkeeping must confirm both prepared production
+profiles and the actual task registry, rather than rely on a test flag override.
+Ordinary-player acceptance and rollout remain separate.
 
-The owner approved the thumb-hidden v2 glove icon and accepted no worn monocle
-visual. Both equipment art loose ends are closed; the approved loupe inventory
-icon remains unchanged.
+The repaired source-selected map pair is `e343c03b…e58cf`: 1,787 sectors across
+nine levels and 34,598 placements, including the authored tower/gem cave, eggs,
+well/ladder repairs and isolated ground-colour corrections. Four grey cosmetic
+joins remain accepted limitations. Original editable work and earlier exports
+are preserved. See the [candidate assembly record](next-update-candidate-assembly-review.md).
 
-1. Finish the owner's Cleric spell-icon selection; preserve the accepted concise
-   spellbook presentation and guide. No icon choice is inferred.
-2. Test the assembled private candidate, then complete exact release artifacts,
-   migration/backups/rollback and final gameplay acceptance. Address demonstrated
-   issues; retain the offline packaging and migration evidence.
-3. Let the owner choose the final release version and whether it marks beta.
+Final combined regressions/static review, paired private packaging, the ordinary-
+player walkthrough/owner acceptance and final provenance/migration/backups/rollback
+remain on the checklist. The owner decides the release
+label; no alpha/beta decision or live activation follows automatically.
 
-The verified repaired map pair is now selected in source for **private final
-acceptance**: fingerprint `e343c03b…e58cf`, 1,787 sectors across nine levels and
-34,598 placements. This includes the tower, gem cave, egg spawns, reviewed well
-shore/ladder repairs and three isolated ground-colour corrections. Four grey
-cosmetic joins remain intentionally unchanged. The owner's editable project and
-older exported packages are preserved. See the
-[candidate assembly record](next-update-candidate-assembly-review.md).
-
-**Deferred:** Mystic Blue Dragon, Fierce Red Dragon and Corporeal Beast need
-worthwhile boss drops and potential hide/armor-set designs before resuming.
-Cleric Tier 4 and the unimplemented Zamorak hostile chain are follow-up work;
-the current stage is complete for this release. Ante remains on hold for the
-owner's balance/honesty reconsideration. Neither those systems nor the older
-terrain, renderer or Server R2 plans are automatic release requirements.
+**Deferred:** Mystic Blue Dragon, Fierce Red Dragon, Corporeal Beast, Cleric
+Tier 4 and Ante. Zamorak's three curses are implemented release content, not a
+follow-up item. Broader effect/terrain/renderer plans remain separate.
 
 No planning or packaging note authorizes a public-server shutdown or activation.
 
@@ -81,8 +77,9 @@ releases so the auto-updater can resolve the latest published tag.
 ## Current Phase: Next Major Release Assembly And Acceptance
 
 Feature development for the narrowed owner-defined release is largely complete.
-Finish the small art remainder, assemble the latest authored map with the tested
-code/content, and run combined private acceptance. Source implementation,
+Finish the identified closeout corrections, validate the final configuration and
+registry, assemble the latest authored map with the tested code/content, and run
+combined ordinary-player private acceptance. Source implementation,
 owner-authored map completion, final exported-map freshness, gameplay acceptance
 and public deployment are distinct states; keep their records accurate.
 

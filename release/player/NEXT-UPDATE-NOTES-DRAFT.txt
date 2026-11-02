@@ -13,7 +13,7 @@ Slow, coatings and antidotes
 Battleaxes can receive a permanent, single-dose Viscous coating, with an option to wipe it clean. Shared Slow and weaker poison contributions work with the existing combat systems. New spider-egg ingredients and antidotes provide more gathering and cleansing options.
 
 Cleric overhaul
-Three growing blessing and curse tiers for Saradomin, Guthix and Zamorak combine their effects as stronger tiers are unlocked. Zamorak's curses expose enemies to critical hits, Stagger and executions; bosses and protected encounters cannot be executed. Unify and Greater Unify help parties regroup. Holy Power controls spell strength within each tier. The in-game guide explains effects, power thresholds and costs.
+Three growing blessing and curse tiers for Saradomin, Guthix and Zamorak combine their effects as stronger tiers are unlocked. Zamorak's curses expose enemies to critical hits, Stagger and executions; bosses and protected encounters cannot be executed. Unify and Greater Unify help parties regroup. Holy Power controls spell strength within each tier. All twenty spells have their approved icons, and each god's blessing and curse tiers build up matching visual effects. The in-game guide explains effects, power thresholds and costs.
 
 Grace, Blight and Moonsilver
 Existing neutral sigils become Grace without replacing players’ stocks. Charge Grace at Divine wellsprings and Blight at Ichor wells; god sigils still use their god altars. Silver and Moonsilver sigils start from moulded blanks, producing three blanks per bar before carving and infusion. Spell costs now use the appropriate combination of sigil grades.

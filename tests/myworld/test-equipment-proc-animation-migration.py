@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import struct
 from pathlib import Path
+from animation_contract_checks import validate_projectile_slots
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -73,6 +74,9 @@ def main() -> int:
     server_projectile = read("server/src/com/openrsc/server/model/entity/update/Projectile.java")
     client_handler = read("Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java")
     client = read("Client_Base/src/orsc/mudclient.java")
+    validate_projectile_slots(client,
+        read("Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"),
+        read("server/src/com/openrsc/server/model/entity/update/Projectile.java"))
     asset_loader = read("Client_Base/src/orsc/ClientExternalAssetLoader.java")
     require(server_effect, ("DRAGON_WEAPON_SLASH_2 = 66",), "CombatEffect.java")
     require(server_projectile, (
@@ -86,7 +90,7 @@ def main() -> int:
     require(client, (
         "COMBAT_EFFECT_DRAGON_WEAPON_SLASH_2 = 66",
         "COMBAT_EFFECT_COUNT = 115",
-        "CUSTOM_PROJECTILE_COUNT = 34",
+
         "if (effectType == COMBAT_EFFECT_HELLS_INFERNO)",
         "return 336;",
         "return Math.max(1, (baseSize * 3) / 2);",
