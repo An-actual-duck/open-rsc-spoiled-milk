@@ -680,7 +680,7 @@
     "sourceCommit": "508a059081009584d0174c4d2abf40d66c4d8c3d",
     "versionedPngPathsCompared": 3010,
     "matchingOwnerIcons": 10,
-    "comparison": "Exact serialized PNG bytes, verified by SHA-256 against matching Git blobs; unmatched icons remain owner-provided without newly asserted artist or licence."
+    "comparison": "Original intake comparison: exact serialized PNG bytes verified by SHA-256 against matching Git blobs; unmatched icons were owner-provided with no artist or licence newly asserted at that time. The later owner-confirmed artist is recorded in attribution."
   },
   "compatibilityStatus": "Retired at schema5 twenty-spell gameplay cutover; list retained as historical provenance only",
   "attribution": {
