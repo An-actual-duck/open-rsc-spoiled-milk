@@ -27,8 +27,9 @@ Core workers and exact READY handoffs; integration/tests use the manager workflo
   gameplay sessions may use separately located disposable account copies.
 - Keep the private pre-alpha editor separate from player release assets. It
   discovers server-owned content; gameplay assets/IDs are not built into it.
-- Mark incomplete components and unrun acceptance explicitly. A prepared map is
-  not proof that every tower restriction or pending weapon coating is finished.
+- Mark incomplete fixes and unrun acceptance explicitly. A prepared map or
+  visible NPC spawn is not proof that task assignment, progression or ordinary
+  player acquisition works with the actual release configuration.
 
 ## Source-selected private candidate — November 1, 2026
 
@@ -57,10 +58,24 @@ The public deployment remains `v0.2.89` / `a5043328f`. Provisional private
 
 The independent migration rehearsal is reviewed and integrated in manager
 revision `02243c3c398cff507504969b3b77317c287a9e4b`; its disposable database
-fixtures and evidence are separate from this map copy. Remaining gates are the
-owner's Cleric icon selection, actual paired private artifacts and owner
-gameplay/visual acceptance. Preserve the accepted concise Cleric UI.
-Deferred bosses, Ante, Tier 4 and Zamorak hostile activation are not release gates.
+fixtures and evidence are separate from this map copy. Current source has all
+20 Cleric spells (including all nine curses), 20 approved icons, 18 selected
+cumulative god-spell animations and all 15 coatings. Glove art and the omitted
+worn monocle visual are owner-approved. Preserve the accepted concise Cleric UI.
+
+The November 2 audit identified the prepared disabled tower-task flag and missing
+Deathwing assignment. Corrections and versioned progression migration are in
+progress under a separate focused handoff; this record does not claim them
+integrated. Final artifacts must be refreshed after integration and must prove
+`want_slayer_tower_tasks` is enabled in the actual prepared configuration, the
+eight new families and Deathwing are assignable, and existing players migrate
+idempotently. A test-only flag override is insufficient.
+
+The [current closeout checklist](next-major-release-goals.md#release-closeout-checklist)
+tracks final combined static/regression validation, paired artifacts, ordinary-
+player private walkthrough and owner gameplay/visual acceptance. Boss additions,
+Ante and Tier 4 remain deferred; Zamorak hostile activation is implemented
+required content, not a deferral.
 
 ## Tower candidate additions
 
@@ -79,9 +94,11 @@ mandatory tiers are preserved by the established Slayer migration rules.
 2. Build paired server/client artifacts from the exact reviewed Core revision;
    validate map terrain/materials, definitions, placements, NPC capacity/reserve,
    guard bindings and the relevant progression/combat/content gates.
-3. Run an isolated private session using that exact revision and map. Obtain
-   owner gameplay/visual acceptance of tower routes, NPC behavior and final
-   content; record known exclusions and preserve the accepted candidate.
+3. Run an isolated ordinary-player private session using that exact revision,
+   configuration and map. Exercise task acquisition/progression and production
+   through normal player routes as well as combat, travel and persistence.
+   Obtain owner gameplay/visual acceptance, record bounded exclusions and preserve
+   the accepted candidate; development-command fixtures do not replace this pass.
 4. Prepare normal player packaging/provenance checks. Immediately before actual
    migration, compare against the current public revision and fresh live state;
    never replace the live account database with a test copy.

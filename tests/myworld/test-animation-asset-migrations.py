@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+from animation_contract_checks import validate_projectile_slots
 import struct
 
 
@@ -88,9 +89,12 @@ def main():
         assert png_size(path) == expected, f"{path} changed from expected sheet geometry"
 
     client = read("Client_Base/src/orsc/mudclient.java")
+    validate_projectile_slots(client,
+        read("Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"),
+        read("server/src/com/openrsc/server/model/entity/update/Projectile.java"))
     require(client, [
         "public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;",
-		"public static final int CUSTOM_PROJECTILE_COUNT = 34;",
+
         "public static final int PROJECTILE_EFFECT_SCENE_RANGE = CUSTOM_PROJECTILE_COUNT * PROJECTILE_EFFECT_FRAME_SLOTS;",
         "public static final int spriteProjectileEffectMirrorBase = spriteProjectileEffectBase + PROJECTILE_EFFECT_SCENE_RANGE;",
         "public static final int spriteProjectileStaticMirrorBase =",

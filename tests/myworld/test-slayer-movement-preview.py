@@ -32,23 +32,34 @@ for entry, npc in zip(manifest, defs):
     with zipfile.ZipFile(JAR) as jar:
         assert jar.read('myworld-assets/sprites/npcs/slayer-movement-preview/' + entry['key'] + '.png') == data
 
-# New IDs must not overlap any other definition file, nor gain permanent spawns.
+# These stable sprite identities are now production encounters. Only the explicit
+# Banshee undead-classification overlay is approved outside their base definitions.
+# Do not broadly exempt other files or silently accept duplicate gameplay records.
+allowed_overrides = {865: {'id': 865, 'undead': True}}
+seen_overrides = set()
 for path in (ROOT / 'server/conf/server/defs').rglob('*.json'):
     if path.name == 'SlayerMovementPreviewNpcDefs.json':
         continue
     content = json.loads(path.read_text())
     if isinstance(content, dict):
         for npc in content.get('npcs', []):
-            assert npc.get('id') not in range(863, 871), str(path)
+            npc_id = npc.get('id')
+            if npc_id in range(863, 871):
+                assert path.name == 'NpcDefsMyWorld.json', f'Unapproved production definition overlap: {path}'
+                assert npc_id in allowed_overrides and npc == allowed_overrides[npc_id], f'Unreviewed Slayer override: {npc}'
+                assert npc_id not in seen_overrides, f'Duplicate Slayer override: {npc_id}'
+                seen_overrides.add(npc_id)
+assert seen_overrides == set(allowed_overrides), 'Approved Banshee undead metadata is missing'
 handler = (ROOT / 'server/src/com/openrsc/server/external/EntityHandler.java').read_text()
 assert handler.index('/defs/MyWorldNpcDefs.json') < handler.index('/defs/SlayerMovementPreviewNpcDefs.json')
+assert handler.index('/defs/SlayerMovementPreviewNpcDefs.json') < handler.index('applyOptionalNpcOverrides(getServer().getConfig().CONFIG_DIR + "/defs/NpcDefsMyWorld.json")')
 client = (ROOT / 'Client_Base/src/orsc/mudclient.java').read_text()
 assert client.count('loadSlayerMovementPreviewSprites();') == 2
 assert 'preview.movementFrame(npc.stepFrame, def.getWalkModel(), moving)' in client
 with tempfile.TemporaryDirectory(prefix='slayer-movement-test-') as scratch:
-    subprocess.run(['javac', '-cp', str(JAR), '-d', scratch,
+    subprocess.run(['javac', '-J-Xmx128m', '-cp', str(JAR), '-d', scratch,
                     str(ROOT / 'tests/myworld/SlayerMovementPreviewFixture.java')], check=True)
     for cwd in (str(ROOT), scratch):
-        subprocess.run(['java', '-Djava.awt.headless=true', '-cp', scratch + ':' + str(JAR),
+        subprocess.run(['java', '-Xmx256m', '-XX:+UseSerialGC', '-Djava.awt.headless=true', '-cp', scratch + ':' + str(JAR),
                         'orsc.SlayerMovementPreviewFixture', cwd], cwd=cwd, check=True)
-print('PASS manifest hashes, packaged assets, harmless isolated server definitions, disk/JAR loading')
+print('PASS manifest hashes, packaged assets, stable production sprite definitions, exact undead overlay, native poses and disk/JAR loading')

@@ -213,7 +213,12 @@ def main() -> None:
     require_text(combat_formula, "applyElementalSwordProcDebuff", "Elemental sword proc debuff selector")
     require_text(combat_formula, "target.applyFireDefenseDebuff(ELEMENTAL_SWORD_FIRE_DEBUFF_PERCENT)", "Fire sword proc debuff")
     require_text(combat_formula, "target.applyWaterMaxHitDebuff(ELEMENTAL_SWORD_WATER_DEBUFF_PERCENT)", "Ice sword proc debuff")
-    require_text(combat_formula, "target.applyEarthAttackSpeedDebuff(ELEMENTAL_SWORD_EARTH_DEBUFF_PERCENT)", "Earth sword proc debuff")
+    earth_case = re.search(r"case CombatEffect\.EARTH_SWORD:(.*?)break;", combat_formula, re.DOTALL)
+    if earth_case is None:
+        fail("Earth sword proc no longer has its dedicated settlement case")
+    require_text(earth_case.group(1), "com.openrsc.server.content.Slow.apply(target, 10, com.openrsc.server.content.Slow.CAP_ONE)",
+                 "Earth sword must apply 10 shared Slow power with the standard cap-12 buffer")
+    forbid_text(earth_case.group(1), "applyEarthAttackSpeedDebuff", "Retired Earth percentage-speed adapter")
     require_text(combat_formula, "Math.ceil(damage * 1.5D)", "Fire sword elemental multiplier")
     require_text(combat_formula, "NpcId.BLUE_DRAGON", "Fire sword blue target eligibility")
     require_text(combat_formula, "NpcId.ICE_GIANT", "Fire sword ice target eligibility")

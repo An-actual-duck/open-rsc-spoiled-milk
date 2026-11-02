@@ -128,7 +128,8 @@ def main() -> None:
 	require(behavior, "int fireDefenseDebuffPercent = magicAttack.getFireDefenseDebuffPercent();", "NPC projectile should carry selected fire debuff")
 	require(behavior, ".elementalDebuffs(0, 0, 0, fireDefenseDebuffPercent)", "NPC projectile fire debuff should match selected element")
 	require(behavior, ".magicElement(magicAttack.getElement())", "NPC projectile should carry selected element")
-	require(behavior, ".dualElementProcs(startleProcChancePercent,\n\t\t\t\t\t\tacidPoisonPower, 0, splinterProcChancePercent)", "NPC projectile should carry selected dual-element procs")
+	require_regex(behavior, r"\.dualElementProcs\(\s*startleProcChancePercent\s*,\s*acidPoisonPower\s*,\s*0\s*,\s*splinterProcChancePercent\s*\)",
+        "NPC projectile must retain selected Startle/acid/Splinter procs and no Frostbite")
 
 	require(projectile, "protected NpcMagicElement magicElement = NpcMagicElement.NONE;", "Projectile should default to untyped magic")
 	require(projectile, "applyRobeDamageMitigation(damage, magicElement)", "Projectile damage should pass element to robe resistance")

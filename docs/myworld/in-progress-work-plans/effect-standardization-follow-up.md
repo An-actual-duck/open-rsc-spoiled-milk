@@ -1,8 +1,25 @@
 # Effect timing and numerical-rule standardization
 
-## October 31 shared attack foundation candidate
+## Current implemented boundary — November 2, 2026
 
-The current implementation task replaces separate Ogre/Startle loss flags with
+Shared Stagger/critical outcomes, Cosmic combat luck and the bounded Whip/Sticky
+attack-delay interaction are integrated. Zamorak's Malice/Cruelty/Ruin now use
+the shared critical/Stagger/execution paths and are required release content.
+All 15 battleaxe coatings are implemented: one level-46 single-use recipe,
+permanent application/wiping, 4 Slow power with flat cap 12, and half-standard
+weapon poison contributions. Shared Slow and poison/antidote cleansing are
+implemented; their broader standardization remains a separate follow-up.
+
+Use the [current release checklist](next-major-release-goals.md#release-closeout-checklist)
+for the bounded task-activation/Deathwing corrections, combined validation and
+ordinary-player acceptance. This document's older proposals do not create new
+release requirements or reopen settled recipes/values. See the
+[coating implementation](battleaxe-coatings-implementation-review.md) and
+[Zamorak implementation](zamorak-hostile-implementation-review.md) for current receipts.
+
+## Implemented shared attack foundation
+
+The integrated attack foundation replaces separate Ogre/Startle loss flags with
 one actor-owned Stagger state. All existing sources retain one attack; the API
 accepts an explicit count and rejects replacement while losses or five normal
 recovery attacks remain. Count actual admitted attacks, including natural zero;
@@ -14,7 +31,8 @@ Death/respawn/logout lifetimes clear the state.
 Ogre's full-set20% and Thunder Startle's7/15/25% authored base chances remain
 independent of critical hits. Eligible Player-owned checks now receive combat luck;
 the existing Stagger recovery/admission rules still prevent stacked applications. Cosmic now supplies combat luck, not critical chance; explicit immutable outcomes distinguish true crits, normal maxima and
-forced zero. Future Zamorak hostile critical/Stagger/execution triggers remain disabled.
+forced zero. The implemented Zamorak hostile chain uses those explicit outcomes;
+only eligible authored criticals can trigger its Stagger/execution components.
 
 Whip keeps its 10% proc, one-tick movement pause and three following immunity
 ticks. Sticky keeps its 10% qualifying-hit, next-attack-only delay. Each source
@@ -38,8 +56,11 @@ Historical proposals below remain context rather than approval of a larger
 game-wide status overhaul.
 
 
-Status: deferred owner-requested follow-up; not part of current Slayer Tower work.
-Recorded: 2026-09-21.
+## Historical broader follow-up request — September 21, 2026
+
+Status: the broader owner-requested review remains deferred. The dated proposals
+below are preserved history; bounded implemented exceptions are summarized above.
+They are not unfinished prerequisites for this release.
 
 ## Reminder trigger
 
@@ -123,9 +144,10 @@ References: `server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java`,
 The approved rule is 10 power per tier, bounded source caps 12/22, and two power
 removed every four game ticks, affecting subsequent combat action cadence only.
 See [shared Slow foundation](shared-slow-foundation.md). Earlier 20/50-power and all-action examples
-remain design history, not current behavior. Weapon coating is still deferred:
-herb, recipe level/yield, per-hit poison/Slow amounts, cap and lifetime/charges
-remain undecided. The broader post-Slayer review reminder remains active.
+remain design history, not current behavior. The coating recipe, single-use
+output, permanent application/wipe and exact Slow/poison values are now
+implemented as summarized above. The broader post-Slayer review reminder remains
+active; the illustrative proposal below does not supersede that implementation.
 
 
 The future coating applies accumulating **slowing power**. As it accumulates,
@@ -186,7 +208,7 @@ paths, explicit ICE versus WATER NPC profiles, and player ice/fire producer
 tags. See [implementation coverage](../rough-drafts/slayer-leather-effects-implementation.md).
 The global audit of scripted/secondary/periodic sources remains open.
 
-## Current-work boundary
+## Historical leather-design boundary and later bounded decisions
 
 ### Explicit owner directions added during leather design
 
@@ -203,14 +225,16 @@ The global audit of scripted/secondary/periodic sources remains open.
   procs and removes magic-spider's leather magic-penalty exception.
 
 The owner subsequently approved the bounded carapace +2/+3/+5 additive
-cleansing rules on 2026-09-22. Global stacking caps, potion scaling and
-accumulating Slow immunity rules remain undecided; this does not authorize
-the deferred game-wide overhaul now.
+cleansing rules on 2026-09-22. Later bounded antidote/coating/Slow choices are
+implemented as summarized above. A global stacking/cap or accumulating-Slow
+immunity redesign remains separate; this does not authorize that overhaul.
 
 The bounded [Slayer leather coverage/theme review](../rough-drafts/slayer-hide-and-leather-overhaul.md#material-coverage-and-shared-armor-themes)
-is current planning work. In particular, all carapace families are intended to
+records that historical planning and its bounded implemented rules. All carapace
+families are intended to
 increase the wearer's poison cleanse rate. Full-set +2/+3/+5 additive removal
 is now owner-approved (2026-09-22) for scorpion/spider/magic-spider;
-future potion strengths and global stacking/caps remain undecided. That does
-not bring this game-wide standardization project into
+later antidote strengths have since been implemented; any broader global
+stacking/cap redesign remains deferred. That does not bring this game-wide
+standardization project into
 the tower's scope or make it a prerequisite for finishing the tower.
