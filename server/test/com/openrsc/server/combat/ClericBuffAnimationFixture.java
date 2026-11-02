@@ -1,15 +1,18 @@
 package com.openrsc.server.combat;
 
 import com.openrsc.server.constants.Skill;
-import com.openrsc.server.content.cleric.*;
+import com.openrsc.server.content.cleric.ClericResourceCost;
+import com.openrsc.server.content.cleric.ClericSpellCatalog;
+import com.openrsc.server.content.cleric.ClericSpellDefinition;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.net.Packet;
 import com.openrsc.server.net.rsc.ClericBlessingContract;
-import java.lang.reflect.*;
-import java.nio.file.*;
-import java.util.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Real accepted/refused casts and appearance encoders, offline without server startup. */
 public final class ClericBuffAnimationFixture {
@@ -36,34 +39,37 @@ public final class ClericBuffAnimationFixture {
     try(CurrentCombatHarness h=new CurrentCombatHarness()) {
       h.server().getConfig().WANT_MYWORLD=true;h.server().getConfig().WANT_FATIGUE=false;
       h.world().getRegionManager().preflightNativeLayeredPlacements();h.world().getRegionManager().populateNativeLayeredPlacements();
-      Player caster=h.player("vfxcaster",450,450),recipient=h.player("vfxrecipient",451,450),observer=h.player("vfxobserver",452,450);
-      for(Player p:new Player[]{caster,recipient,observer}) {
+      Player caster=h.player("vfxcaster",450,450),recipient=h.player("vfxrecipient",451,450),observer=h.player("vfxobserver",452,450),ally=h.player("vfxally",451,451);
+      for(Player p:new Player[]{caster,recipient,observer,ally}) {
         p.getSettings().setAppearance(new com.openrsc.server.model.PlayerAppearance(0,0,0,0,1,2));
         p.setClientVersion(ClericBlessingContract.CLIENT_VERSION);p.getClientLimitations().maxItemId=65535;h.recordOutgoingPackets(p);
         ClericBlessingsFixture.skill(p,Skill.HITS,100,1000);ClericBlessingsFixture.skill(p,Skill.PRAYER,160,99);
       }
-      ClericBlessingsFixture.party(h,caster,recipient);
-      observer.getLocalPlayers().add(recipient);caster.getLocalPlayers().add(recipient);
+      ClericBlessingsFixture.party(h,caster,recipient,ally);
+      observer.getLocalPlayers().add(recipient);observer.getLocalPlayers().add(ally);
+      caster.getLocalPlayers().add(recipient);caster.getLocalPlayers().add(ally);
+      recipient.getLocalPlayers().add(ally);ally.getLocalPlayers().add(recipient);
       int[] ids={86,95,96,89,97,98,92,99,100};
       for(int code=12;code<=20;code++) {
-        ClericBlessingsFixture.clear(caster);ClericBlessingsFixture.clear(recipient);
-        for(Player p:new Player[]{caster,recipient,observer})p.resetAfterUpdate();
+        ClericBlessingsFixture.clear(caster);ClericBlessingsFixture.clear(recipient);ClericBlessingsFixture.clear(ally);
+        for(Player p:new Player[]{caster,recipient,observer,ally})p.resetAfterUpdate();
         ClericSpellDefinition spell=ClericSpellCatalog.fromCode(code);ClericBlessingsFixture.fund(caster,spell);ClericBlessingsFixture.packet(caster,code);
+        check(ally.getUpdateFlags().getCombatEffects().size()==1,"second party recipient has its own sequence");
         check(recipient.getUpdateFlags().getCombatEffects().size()==1,"one sequence per accepted composite blessing");
         check(recipient.getUpdateFlags().getCombatEffects().get(0).getEffectType()==ids[code-12],"component mapping");
         check(!caster.getUpdateFlags().hasCombatEffect()&&!observer.getUpdateFlags().hasCombatEffect(),"caster/uninvolved not recipient");
         for(ClericResourceCost cost:spell.getResourceCosts())check(ClericBlessingsFixture.count(caster,cost.getItemId())==100-cost.getCount(),"resources once");
-        appearances(h,recipient,ids[code-12]);appearances(h,observer);appearances(h,caster);
+        appearances(h,ally,ids[code-12]);appearances(h,recipient,ids[code-12]);appearances(h,observer);appearances(h,caster);
         recipient.getUpdateFlags().setCombatEffect(new CombatEffect(recipient,34));
         appearances(h,recipient,ids[code-12],34);appearances(h,observer,34);appearances(h,caster,34);
         if(spell.getSpellTier()==3) {
-          recipient.resetAfterUpdate();caster.resetAfterUpdate();
+          recipient.resetAfterUpdate();ally.resetAfterUpdate();caster.resetAfterUpdate();
           ClericSpellDefinition lower=ClericSpellCatalog.fromCode(code-2);ClericBlessingsFixture.fund(caster,lower);ClericBlessingsFixture.packet(caster,code-2);
           check(!recipient.getUpdateFlags().hasCombatEffect(),"refused tier downgrade stays silent");
           for(ClericResourceCost cost:lower.getResourceCosts())check(ClericBlessingsFixture.count(caster,cost.getItemId())==100,"no-op consumes no sigils");
         }
       }
-      ClericBlessingsFixture.clear(recipient);recipient.resetAfterUpdate();caster.resetAfterUpdate();
+      ClericBlessingsFixture.clear(recipient);recipient.resetAfterUpdate();ally.resetAfterUpdate();caster.resetAfterUpdate();
       caster.getCarriedItems().getInventory().getItems().clear();ClericBlessingsFixture.packet(caster,12);
       check(!recipient.getUpdateFlags().hasCombatEffect(),"unfunded cast stays silent");
       for(ClericSpellDefinition d:ClericSpellCatalog.getAll())check(d.getPresentation().hasOnEntityAnimation()==d.getId().isBlessing(),"curses and Unify stay animationless");

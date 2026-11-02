@@ -13,6 +13,7 @@ with zipfile.ZipFile(jar) as z:
  for folder in folders:
   path=art/folder/(folder+'.png');data=path.read_bytes();assert z.read('myworld-assets/animations/on-entity/'+folder+'/'+folder+'.png')==data
  assert not any('Holy VFX 03/' in p or '/thorns/' in p for p in z.namelist())
+assert hashlib.sha256((art/'bark/bark.png').read_bytes()).hexdigest()=='eb4178166b94c347ebb5ad1db98cb6f5f232a7df68b794c8783f7cf57f632088'
 assert hashlib.sha256((art/'holy-sword/holy-sword.png').read_bytes()).hexdigest()=='9eefe1c88c66b0b54e1f058c80997ba66c054a289fee6117cb2b7c5635e1674e'
 assert hashlib.sha256((art/'lightning-buff/lightning-buff.png').read_bytes()).hexdigest()=='2b97e83235213404045ffb6a02ec0f79aff2b3058fa2692155186985a531f953'
 print('PASS exact approved nine embedded animation sheets; duplicate art retired',flush=True)

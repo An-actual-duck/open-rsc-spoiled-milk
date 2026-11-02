@@ -37,6 +37,11 @@ public final class ClericBuffAnimationClientFixture {
     BufferedImage image=new BufferedImage(s.width2,s.height2,BufferedImage.TYPE_INT_RGB);
     image.setRGB(0,0,s.width2,s.height2,s.pixelData,0,s.width2);ImageIO.write(image,"png",out.toFile());
   }
+  static int[] bounds(int[] pixels,int width,int background){
+    int minX=width,minY=width,maxX=-1,maxY=-1;
+    for(int i=0;i<pixels.length;i++)if(pixels[i]!=background){int x=i%width,y=i/width;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}
+    return new int[]{maxX<minX?0:maxX-minX+1,maxY<minY?0:maxY-minY+1};
+  }
   public static void main(String[]args)throws Exception{
     Path root=Paths.get(args[0]),empty=Paths.get(args[1]),out=Paths.get(args[2]);Files.createDirectories(out);
     Config.S_WANT_CUSTOM_SPRITES=true;
@@ -55,6 +60,8 @@ public final class ClericBuffAnimationClientFixture {
           Sprite a=mc.getCombatEffectSprite(id,offset),b=packed.getCombatEffectSprite(id,offset);
           check(a!=null&&b!=null&&Arrays.equals(a.getPixels(),b.getPixels()),"source/embedded native sprite parity "+id+":"+offset);
           check(Arrays.equals(a.getPixels(),mc.getCombatEffectSprite(part,f).getPixels()),"concatenated component frame order");
+          int limit=CombatEffectAnimationCatalog.getDefinition(part).getMaxTargetSize();int[] box=bounds(a.getPixels(),64,0);
+          check(box[0]<=limit&&box[1]<=limit,"approved visible 48px/Bark32 footprint retained");
           check((Integer)call(mc,"getCombatEffectCurrentFrame",new Class<?>[]{int.class,int.class},id,count*3-offset*3)==offset,"frame start boundary");
           check((Integer)call(mc,"getCombatEffectCurrentFrame",new Class<?>[]{int.class,int.class},id,count*3-offset*3-2)==offset,"frame end boundary");offset++;
         }
@@ -74,6 +81,8 @@ public final class ClericBuffAnimationClientFixture {
     for(int i=0;i<42;i++)q.tick();check(q.getEffectType()==96&&q.getRemainingTicks()==165,"pending upgrade survives refresh/lower sequence");
     q.clear();q.enqueue(86,0);q.enqueue(85,50);check(q.getEffectType()==0&&q.getPendingCount()==0,"missing asset/unknown ID safely omitted");
     q.enqueue(96,165);p.clearTransientVisualState();check(q.getEffectType()==0,"actor replacement transient reset");
+    set(mc,"players",new ORSCharacter[10]);set(mc,"knownPlayers",new ORSCharacter[10]);
+    mc.applyCombatEffectUpdate(p,96);check(mc.createPlayer(64,5,64,0,orsc.enumerations.ORSCharacterDirection.NORTH)==p&&q.getEffectType()==0,"actual player slot reuse clears cosmetic queue");
     mc.applyCombatEffectUpdate(p,96);mc.clearClericSpellbook();check(q.getEffectType()==0,"logout/reconnect/book reset");
     // Draw every frame through the same software renderer and native replay capture route.
     MudClientGraphics surface=new MudClientGraphics(96,96,1);mc.setSurface(surface);
@@ -93,6 +102,8 @@ public final class ClericBuffAnimationClientFixture {
           check(command.getSprite()==source,"native command uses exact software sprite");
           int changed=0;for(int pixel:surface.pixelData)if(pixel!=0x252930)changed++;
           check(changed>0,"visible software pixels");
+          int[] srcBox=bounds(source.getPixels(),64,0),drawBox=bounds(surface.pixelData,96,0x252930);
+          check(Arrays.equals(srcBox,drawBox),"software visible footprint equals native sprite: no double scale");
         }
         png(surface,out.resolve(id+"-"+String.format("%02d",frame)+".png"));
         for(int t=0;t<3;t++)q.tick();
@@ -100,6 +111,13 @@ public final class ClericBuffAnimationClientFixture {
       check(q.getEffectType()==0,"sequence finishes exactly after last frame");
     }
     check(p.combatEffectType==0&&p.combatEffectTime==0,"cosmetics never install ordinary overlay");
+    p.combatEffectType=34;p.combatEffectTime=21;p.pendingCombatEffectType=30;
+    mc.applyCombatEffectUpdate(p,96);for(int t=0;t<36;t++)q.tick();
+    surface.beginRenderer2DFrame();call(mc,"drawCombatEffectOverlay",new Class<?>[]{ORSCharacter.class,int.class,int.class,int.class,int.class},p,16,16,64,64);
+    int anchorX=p.combatEffectScreenX,anchorY=p.combatEffectScreenY;
+    call(mc,"drawClericBuffOverlay",new Class<?>[]{ORSCharacter.class,int.class,int.class,int.class,int.class},p,16,16,64,64);
+    Renderer2DFrame both=surface.consumeRenderer2DFrame();check(both.getSpriteCommands().length==2,"ordinary and buff both render in same native replay frame");
+    check(p.combatEffectType==34&&p.combatEffectTime==21&&p.pendingCombatEffectType==30&&p.combatEffectScreenX==anchorX&&p.combatEffectScreenY==anchorY,"separate overlay draw preserves ordinary fields and anchors");
     System.out.println("PASS "+checks+" native Cleric sequence/packet/queue/source+embedded/software+OpenGL-capture checks");
   }
 }
