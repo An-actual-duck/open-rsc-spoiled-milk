@@ -62,7 +62,8 @@ public final class ClericStackingFixture {
           == 100 - (useful ? cost.getCount() : 0),
           "one useful-cast cost or no-op refund for " + spell.getDisplayName());
     for (Mob actor : actors)
-      check(!actor.getUpdateFlags().hasCombatEffect(), "no unassigned cast animation on recipient/caster");
+      check(spell.getId().isBlessing() && useful || !actor.getUpdateFlags().hasCombatEffect(),
+          "refused buffs, curses and uninvolved actors cannot emit animations");
   }
 
   private static void line(CurrentCombatHarness h, Player first, Player second,
@@ -160,7 +161,7 @@ public final class ClericStackingFixture {
       for (int god = 0; god < 3; god++)
         line(h, first, second, enemy, curseCodes[god], curses[god], god + 1, actors);
       System.out.println("PASS " + checks
-          + " real multi-Cleric god-slot/replacement/cost/silent-cast checks");
+          + " real multi-Cleric god-slot/replacement/cost/cast-visual checks");
     }
   }
 }

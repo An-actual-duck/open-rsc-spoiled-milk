@@ -31,6 +31,82 @@ public final class ClericBlessingContract {
   public static final int LAST_COMPONENT_KIND = CRITICAL_EXECUTION;
   public static final int HOSTILE_PRESENTATION = 9;
 
+  // Optional recipient-only cosmetics. 67..77 are legacy aliases; 78..85 are NPC poses.
+  public static final int BUFF_HALLOWED_STRIKES = 86;
+  public static final int BUFF_QUICKENED_PULSE = 87;
+  public static final int BUFF_MENDING_FLESH = 88;
+  public static final int BUFF_SAP_BLOOD = 89;
+  public static final int BUFF_BARKSKIN = 90;
+  public static final int BUFF_THORNS = 91;
+  public static final int BUFF_UNNATURAL_MIGHT = 92;
+  public static final int BUFF_BLOODRAGE = 93;
+  public static final int BUFF_BLOOD_HUNGER = 94;
+  public static final int BUFF_SARADOMIN_2 = 95;
+  public static final int BUFF_SARADOMIN_3 = 96;
+  public static final int BUFF_GUTHIX_2 = 97;
+  public static final int BUFF_GUTHIX_3 = 98;
+  public static final int BUFF_ZAMORAK_2 = 99;
+  public static final int BUFF_ZAMORAK_3 = 100;
+  public static final int LAST_BUFF_ANIMATION = BUFF_ZAMORAK_3;
+
+  public static boolean isRecipientOnlyBuffAnimation(int id) {
+    return id >= BUFF_HALLOWED_STRIKES && id <= LAST_BUFF_ANIMATION;
+  }
+
+  public static int componentAnimation(int kind) {
+    switch (kind) {
+      case UNDEAD_DAMAGE: return BUFF_HALLOWED_STRIKES;
+      case REGENERATION: return BUFF_QUICKENED_PULSE;
+      case HEALING_PULSE: return BUFF_MENDING_FLESH;
+      case POISON_CLEANSING:
+      case STAT_RESTORATION: return BUFF_SAP_BLOOD;
+      case DEFENSE: return BUFF_BARKSKIN;
+      case REFLECTION: return BUFF_THORNS;
+      case MAX_DAMAGE: return BUFF_UNNATURAL_MIGHT;
+      case DEALT_DAMAGE: return BUFF_BLOODRAGE;
+      case LIFESTEAL: return BUFF_BLOOD_HUNGER;
+      default: return -1;
+    }
+  }
+
+  /** The canonical component order, independent of spell names and numerical power. */
+  public static int[] buffAnimationSequence(int id) {
+    switch (id) {
+      case BUFF_SARADOMIN_2: return new int[] {86, 87};
+      case BUFF_SARADOMIN_3: return new int[] {86, 87, 88};
+      case BUFF_GUTHIX_2: return new int[] {89, 90};
+      case BUFF_GUTHIX_3: return new int[] {89, 90, 91};
+      case BUFF_ZAMORAK_2: return new int[] {92, 93};
+      case BUFF_ZAMORAK_3: return new int[] {92, 93, 94};
+      default: return isRecipientOnlyBuffAnimation(id) ? new int[] {id} : new int[0];
+    }
+  }
+
+  public static int buffAnimationGod(int id) {
+    if (id >= 86 && id <= 94) return (id - 86) / 3;
+    if (id >= 95 && id <= 100) return (id - 95) / 2;
+    return -1;
+  }
+
+  /** Sap Blood's two numerical components deliberately share one visual. */
+  public static int animationForComponents(int[] kinds) {
+    java.util.LinkedHashSet<Integer> effects = new java.util.LinkedHashSet<Integer>();
+    for (int kind : kinds) {
+      int id = componentAnimation(kind);
+      if (id < 0) return -1;
+      effects.add(id);
+    }
+    for (int id = BUFF_HALLOWED_STRIKES; id <= LAST_BUFF_ANIMATION; id++) {
+      int[] sequence = buffAnimationSequence(id);
+      if (sequence.length != effects.size()) continue;
+      int i = 0;
+      boolean matches = true;
+      for (int effect : effects) if (sequence[i++] != effect) matches = false;
+      if (matches) return id;
+    }
+    return -1;
+  }
+
   public static String componentName(int kind) {
     switch (kind) {
       case REGENERATION:

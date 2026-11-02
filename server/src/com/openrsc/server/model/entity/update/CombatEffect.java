@@ -107,6 +107,12 @@ public class CombatEffect {
 		this.effectType = effectType;
 	}
 
+	/** Filter before packet counts: blessing cosmetics belong only to their recipient. */
+	public boolean isVisibleTo(com.openrsc.server.model.entity.player.Player viewer) {
+		return !com.openrsc.server.net.rsc.ClericBlessingContract.isRecipientOnlyBuffAnimation(effectType)
+			|| target == viewer;
+	}
+
 	public Mob getTarget() {
 		return target;
 	}

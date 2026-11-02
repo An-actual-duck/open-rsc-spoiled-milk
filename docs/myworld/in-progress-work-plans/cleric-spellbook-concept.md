@@ -2565,12 +2565,12 @@ These are existing recipient-owned registry rules, not new per-caster slots
 or queued fallback effects. Direct multi-caster packet tests cover all three
 blessing and all three curse lines.
 
-The previous single-animation assignments were carried over from retired
-spells and are now unassigned for blessings and curses. Original animation
-assets, identifiers and loading support remain preserved. Gameplay, named
-status icons, recipient messages and non-corporeal transparency remain active.
-The owner will choose replacement animations. The intended future presentation
-is cumulative by tier: Tier 1 shows its effect; Tier 2 shows Tier 1 and Tier 2;
-Tier 3 shows Tier 1, Tier 2 and Tier 3. No replacement art, playback timing or
-animation sequence is approved or assigned by this change. Unify and Greater
-Unify remain animationless.
+The owner subsequently approved cumulative recipient-only blessing animations.
+Tier 1 shows its first named effect; Tier 2 shows the first and second in order;
+Tier 3 shows all three. These optional cosmetics have their own bounded local
+playback queue, independent of combat overlays. Sap Blood plays once despite
+its two numerical components. Curses, Unify and Greater Unify remain
+animationless. See [the animation implementation review](cleric-buff-animations-review.md)
+for the approved component mappings, retained aliases, byte receipts and tests.
+Gameplay, named status icons, recipient messages and non-corporeal transparency
+remain unchanged.

@@ -3945,7 +3945,9 @@ public final class GameStateUpdater {
 				npcBubblesNeedingDisplayed.add(bubble);
 			}
 			if (player.isUsingCustomClient() && updateFlags.hasCombatEffect()) {
-				npcCombatEffectsNeedingDisplayed.addAll(updateFlags.getCombatEffects());
+				for (CombatEffect effect : updateFlags.getCombatEffects()) {
+					if (effect.isVisibleTo(player)) npcCombatEffectsNeedingDisplayed.add(effect);
+				}
 			}
 			if (player.isUsingCustomClient() && updateFlags.hasHitSplats()) {
 				npcHitSplatsNeedingDisplayed.addAll(updateFlags.getHitSplats());
@@ -4141,7 +4143,9 @@ public final class GameStateUpdater {
 			playersNeedingHpUpdate.add(hpUpdate);
 		}
 		if (viewerUsesCustomClient && player.getUpdateFlags().hasCombatEffect()) {
-			combatEffectsNeedingDisplayed.addAll(player.getUpdateFlags().getCombatEffects());
+			for (CombatEffect effect : player.getUpdateFlags().getCombatEffects()) {
+					if (effect.isVisibleTo(player)) combatEffectsNeedingDisplayed.add(effect);
+				}
 		}
 		if (viewerUsesCustomClient && player.getUpdateFlags().hasHitSplats()) {
 			hitSplatsNeedingDisplayed.addAll(player.getUpdateFlags().getHitSplats());
@@ -4185,7 +4189,9 @@ public final class GameStateUpdater {
 				playersNeedingHpUpdate.add(hpUpdate);
 			}
 			if (viewerUsesCustomClient && updateFlags.hasCombatEffect()) {
-				combatEffectsNeedingDisplayed.addAll(updateFlags.getCombatEffects());
+				for (CombatEffect effect : updateFlags.getCombatEffects()) {
+					if (effect.isVisibleTo(player)) combatEffectsNeedingDisplayed.add(effect);
+				}
 			}
 			if (viewerUsesCustomClient && updateFlags.hasHitSplats()) {
 				hitSplatsNeedingDisplayed.addAll(updateFlags.getHitSplats());

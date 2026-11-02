@@ -99,6 +99,15 @@ public final class ClericSpellCatalog {
         (id.isBlessing() || id.isHostile())
             ? ClericBlessingContract.powerThresholds(tier * 2)
             : new int[] {0};
+    int animation = ClericSpellPresentation.NONE;
+    if (id.isBlessing()) {
+      java.util.List<com.openrsc.server.content.cleric.effect.ClericBlessingComponent> components =
+          new com.openrsc.server.content.cleric.effect.ClericBlessingMagnitude(god, tier, 1).components();
+      int[] kinds = new int[components.size()];
+      for (int i = 0; i < kinds.length; i++) kinds[i] = components.get(i).getKind();
+      animation = ClericBlessingContract.animationForComponents(kinds);
+      if (animation < 0) throw new IllegalStateException("Missing blessing component animation");
+    }
     return new ClericSpellDefinition(
         id,
         name,
@@ -113,7 +122,7 @@ public final class ClericSpellCatalog {
             ClericSigilItemId.get(ClericSigilMaterial.STONE, god, true).getItemId(),
             icon,
             ClericSpellPresentation.NONE,
-            ClericSpellPresentation.NONE),
+            animation),
         thresholds);
   }
 

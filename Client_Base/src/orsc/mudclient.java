@@ -226,7 +226,7 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_EXPLOSION = COMBAT_EFFECT_FIRE_BOMB;
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
-	public static final int COMBAT_EFFECT_COUNT = 77;
+	public static final int COMBAT_EFFECT_COUNT = 100; // Through ClericBlessingContract.LAST_BUFF_ANIMATION.
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 64;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_FRAME_TICKS = 3;
@@ -3385,6 +3385,7 @@ public final class mudclient implements Runnable {
 					c.waypointsZ[i] = zPosition;
 				}
 			} else {
+				if (c.clericBuffPlayback != null) c.clericBuffPlayback.clear();
 				c.serverIndex = serverIndex;
 				c.waypointsX[0] = c.currentX = xPosition;
 				c.waypointIndexCurrent = 0;
@@ -10957,6 +10958,25 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private void drawClericBuffOverlay(ORSCharacter character, int x, int y, int width, int height) {
+		if (character != this.localPlayer || character == null || character.clericBuffPlayback == null) return;
+		ClericBuffPlayback playback = character.clericBuffPlayback;
+		int type = playback.getEffectType();
+		if (playback.getRemainingTicks() <= 0) return;
+		int frame = getCombatEffectCurrentFrame(type, playback.getRemainingTicks());
+		Sprite effect = getCombatEffectSprite(type, frame);
+		if (effect == null) return;
+		this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
+		try {
+			// Loader retains a 64px canvas; its artwork already fits 48px (Barkskin 32px).
+			int size = COMBAT_EFFECT_STANDARD_SCREEN_SIZE;
+			this.getSurface().drawSprite(effect, x + width / 2 - size / 2,
+				y + height / 2 - size / 2, size, size, 5924, 224);
+		} finally {
+			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
+		}
+	}
+
 	private void drawCombatEffectOverlay(ORSCharacter character, int x, int y, int width, int height) {
 		if (character == null || character.combatEffectTime <= 0) {
 			return;
@@ -11203,6 +11223,7 @@ public final class mudclient implements Runnable {
 					drawActionProgressBar(x + width / 2, y, overlayMovement);
 				}
 				drawCombatEffectOverlay(player, x, y, width, height);
+				drawClericBuffOverlay(player, x, y, width, height);
 				if (isCombatDirection(player.direction) || player.combatTimeout != 0) {
 					if (player.combatTimeout > 0) {
 						int var14 = x + getCombatScreenOffset(player.direction, overlayMovement, 20);
@@ -14095,7 +14116,12 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private void clearClericBuffPlayback() {
+		if (localPlayer != null && localPlayer.clericBuffPlayback != null) localPlayer.clericBuffPlayback.clear();
+	}
+
 	public void clearClericSpellbook() {
+		clearClericBuffPlayback();
 		this.clericSpellbook.clear();
         this.clericHolyPowerKnown=false;
 		this.clericIconSprites.clear();
@@ -18341,6 +18367,7 @@ public final class mudclient implements Runnable {
 					MiscFunctions.netsock_s_M = 0;
 				}
 
+				if (localPlayer != null && localPlayer.clericBuffPlayback != null) localPlayer.clericBuffPlayback.tick();
 				for (updateIndex = 0; updateIndex < this.playerCount; ++updateIndex) {
 					updateEntity = this.players[updateIndex];
 					tickProjectileVisual(updateEntity);
@@ -21412,6 +21439,7 @@ public final class mudclient implements Runnable {
 					this.world.playerAlive = true;
 					return false;
 				} else {
+					clearClericBuffPlayback();
 					long transitionStartNanos = System.nanoTime();
 					int oldBaseX = this.midRegionBaseX;
 					int oldBaseZ = this.midRegionBaseZ;
@@ -22588,6 +22616,7 @@ public final class mudclient implements Runnable {
 				}
 			}
 			String effectName = getCombatEffectName(effectType);
+			if ("unknown".equals(effectName)) continue;
 			String assetName = getCombatEffectAssetName(effectName);
 			File effectFolder = getLegacyExternalAnimationFolder("On Player", effectName);
 			if (!this.externalAssetLoader.assetDirectoryExists(effectFolder)) {
@@ -23357,6 +23386,10 @@ public final class mudclient implements Runnable {
 	}
 
 	public String getCombatEffectName(int effectType) {
+		if (ClericBlessingContract.isRecipientOnlyBuffAnimation(effectType)) {
+			CombatEffectAnimationCatalog.Definition definition = CombatEffectAnimationCatalog.getDefinition(effectType);
+			return definition == null ? "unknown" : definition.getKey();
+		}
 		if (effectType <= 0 || effectType >= combatEffectNames.length) {
 			return "unknown";
 		}
@@ -27511,6 +27544,13 @@ public final class mudclient implements Runnable {
 
 	public void applyCombatEffectUpdate(ORSCharacter character, int effectType) {
 		if (character == null) {
+			return;
+		}
+		if (ClericBlessingContract.isRecipientOnlyBuffAnimation(effectType)) {
+			if (character == this.localPlayer) {
+				if (character.clericBuffPlayback == null) character.clericBuffPlayback = new ClericBuffPlayback();
+				character.clericBuffPlayback.enqueue(effectType, getCombatEffectDuration(effectType));
+			}
 			return;
 		}
 		// Server-authoritative per-tick charge poses; not a 600ms projectile pose.

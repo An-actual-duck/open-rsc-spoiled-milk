@@ -125,15 +125,34 @@ public final class CombatEffectAnimationCatalog {
 		define(definitions, 72, "cleric-greater-mend", ON_ENTITY,
 			"greater-heal-alt/greater-heal-alt.png", 19, 1, 0, 19, 48);
 		define(definitions, 73, "cleric-zeal", ON_ENTITY,
-			"Holy VFX 03/Holy VFX 03(64x80).png", 25, 1, 0, 25, 48);
-		define(definitions, 74, "cleric-thorns", ON_ENTITY,
-			"thorns/thorns.png", 21, 1, 0, 21, 32);
+			"holy-sword/holy-sword.png", 25, 1, 0, 25, 48);
+		define(definitions, 74, "bark", ON_ENTITY,
+			"bark/bark.png", 21, 1, 0, 21, 32);
 		define(definitions, 75, "cleric-aegis", ON_ENTITY,
 			"Holy VFX 04/Holy VFX 04(48x48).png", 17, 1, 0, 17, 48);
 		define(definitions, 76, "cleric-rally", ON_ENTITY,
 			"sword-clash/sword-clash.png", 11, 1, 0, 11, 48);
 		define(definitions, 77, "cleric-respite", ON_ENTITY,
 			"heart-pop/heart-pop.png", 18, 1, 0, 18, 48);
+
+		define(definitions, 86, "hallowed-strikes", ON_ENTITY,
+			"holy-sword/holy-sword.png", 25, 1, 0, 25, 48);
+		define(definitions, 87, "quickened-pulse", ON_ENTITY,
+			"holy-bells/holy-bells.png", 13, 1, 0, 13, 48);
+		define(definitions, 88, "mending-flesh", ON_ENTITY,
+			"holy-shield/holy-shield.png", 17, 1, 0, 17, 48);
+		define(definitions, 89, "sap-blood", ON_ENTITY,
+			"cleanse 2/cleanse 2.png", 17, 1, 0, 17, 48);
+		define(definitions, 90, "barkskin", ON_ENTITY,
+			"bark/bark.png", 21, 1, 0, 21, 32);
+		define(definitions, 91, "thorns", ON_ENTITY,
+			"sword-clash/sword-clash.png", 11, 1, 0, 11, 48);
+		define(definitions, 92, "unnatural-might", ON_ENTITY,
+			"fist/fist.png", 14, 1, 0, 14, 48);
+		define(definitions, 93, "bloodrage", ON_ENTITY,
+			"sword/sword.png", 11, 1, 0, 11, 48);
+		define(definitions, 94, "blood-hunger", ON_ENTITY,
+			"lightning-buff/lightning-buff.png", 17, 1, 0, 17, 48);
 
 		LinkedHashMap<Integer, Definition[]> sequences = new LinkedHashMap<Integer, Definition[]>();
 		for (Map.Entry<Integer, Definition> entry : definitions.entrySet()) {
@@ -160,6 +179,14 @@ public final class CombatEffectAnimationCatalog {
 				"thunder-explosion/Start Explosion wo blur.png", 13, 1, 0, 13, 64),
 			definition("thunder-explosion", ON_ENTITY,
 				"thunder-explosion/Explosion wo blur.png", 14, 1, 0, 14, 64));
+		for (int id = orsc.ClericBlessingContract.BUFF_SARADOMIN_2;
+				id <= orsc.ClericBlessingContract.LAST_BUFF_ANIMATION; id++) {
+			int[] ids = orsc.ClericBlessingContract.buffAnimationSequence(id);
+			Definition[] parts = new Definition[ids.length];
+			for (int i = 0; i < ids.length; i++) parts[i] = definitions.get(ids[i]);
+			defineSequence(definitions, sequences, id, parts);
+		}
+
 		DEFINITIONS = Collections.unmodifiableMap(definitions);
 		SEQUENCES = Collections.unmodifiableMap(sequences);
 	}

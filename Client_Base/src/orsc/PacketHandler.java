@@ -4181,7 +4181,8 @@ public class PacketHandler {
 			} else if (updateType == 10) {
 				int effectType = packetsIncoming.getUnsignedByte();
 					if (npc != null) {
-						if (effectType > 0 && !DarkBeastChargePose.isPose(npc, effectType)) {
+						if (effectType > 0 && !ClericBlessingContract.isRecipientOnlyBuffAnimation(effectType)
+							&& !DarkBeastChargePose.isPose(npc, effectType)) {
 							mc.detachNpcCombatEffect(npc);
 						}
 						mc.applyCombatEffectUpdate(npc, effectType);
@@ -5080,7 +5081,7 @@ public class PacketHandler {
 			} else if (updateType == 10) {
 				int effectType = packetsIncoming.getUnsignedByte();
 					if (player != null) {
-						if (effectType > 0) {
+						if (effectType > 0 && !ClericBlessingContract.isRecipientOnlyBuffAnimation(effectType)) {
 							mc.detachPlayerCombatEffect(player);
 						}
 						mc.applyCombatEffectUpdate(player, effectType);
