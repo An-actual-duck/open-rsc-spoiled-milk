@@ -4,6 +4,8 @@ import java.util.Locale;
 import java.util.Properties;
 
 public final class RemasteredSpriteSettings {
+	// Owner pause: retain the catalog/art, but do not offer or render these overrides.
+	private static final boolean AVAILABLE = false;
 	public static final String PROPERTY_KEY = "remastered_sprites";
 	private static final String RUNTIME_PROPERTY = "spoiledmilk.remasteredSprites";
 	private static final String RUNTIME_ENV = "SPOILED_MILK_REMASTERED_SPRITES";
@@ -15,8 +17,12 @@ public final class RemasteredSpriteSettings {
 	private RemasteredSpriteSettings() {
 	}
 
+	public static boolean isAvailable() {
+		return AVAILABLE;
+	}
+
 	public static boolean isEnabled() {
-		return enabled;
+		return AVAILABLE && enabled;
 	}
 
 	public static boolean hasRuntimeOverride() {
@@ -31,7 +37,7 @@ public final class RemasteredSpriteSettings {
 		if (!runtimeOverride) {
 			enabled = next;
 		}
-		return enabled;
+		return isEnabled();
 	}
 
 	public static boolean applyClassicProfile() {
@@ -47,13 +53,14 @@ public final class RemasteredSpriteSettings {
 
 	public static void saveToClientSettings(Properties properties) {
 		if (properties != null) {
-			properties.setProperty(PROPERTY_KEY, Boolean.toString(enabled));
+			properties.setProperty(PROPERTY_KEY, Boolean.toString(isEnabled()));
 		}
 
 	}
 
 	public static String description() {
-		return (enabled ? "enabled" : "disabled")
+		return (isEnabled() ? "enabled" : "disabled")
+			+ (AVAILABLE ? "" : " (temporarily unavailable)")
 			+ (runtimeOverride ? " (runtime override)" : "")
 			+ " catalog=" + RemasteredSpriteCatalog.revision();
 	}

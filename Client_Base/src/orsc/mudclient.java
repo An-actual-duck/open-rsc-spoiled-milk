@@ -15695,9 +15695,10 @@ public final class mudclient implements Runnable {
 		}
 
 		index = addSettingsSection(index, "Interface");
-		// Android retains its existing sprite option in General. Desktop exposes
-		// all visual settings through the dedicated Graphics tab.
-		if (isAndroid() && !ScaledWindow.isOpenGLPrimaryWindowEnabled()) {
+		// Keep the Android row subject to the same temporary availability gate
+		// as desktop Graphics.
+		if (RemasteredSpriteSettings.isAvailable()
+			&& isAndroid() && !ScaledWindow.isOpenGLPrimaryWindowEnabled()) {
 			index = addSettingsRow(index, "@whi@Sprites: "
 				+ (RemasteredSpriteSettings.isEnabled() ? "@cya@Enhanced" : "@gre@Classic"),
 				RendererSettingsPanel.REMASTERED_SPRITES);
@@ -17664,6 +17665,9 @@ public final class mudclient implements Runnable {
 	}
 
 	void toggleRemasteredSprites() {
+		if (!RemasteredSpriteSettings.isAvailable()) {
+			return;
+		}
 		boolean previous = RemasteredSpriteSettings.isEnabled();
 		boolean enabled = RemasteredSpriteSettings.toggle();
 		if (enabled != previous) {

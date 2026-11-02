@@ -1,5 +1,12 @@
 # Remastered Sprite Workspace
 
+The owner has temporarily paused the optional remastered sprites, including
+ThatKidBobo's contributions, while checking whether to continue using them.
+The desktop and Android sprite choices are hidden, and the runtime availability
+gate keeps overrides off even for previously saved or environment-enabled
+settings. Sources, catalog descriptors and historical credits are preserved;
+this pause does not change other renderer settings or project-made custom art.
+
 This directory is the authored source of truth for optional remastered game
 art. The original sprite archives remain canonical and every runtime override
 must be able to fall back to its original sprite or animation frame.

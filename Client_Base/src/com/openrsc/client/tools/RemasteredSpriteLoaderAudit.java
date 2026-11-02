@@ -16,7 +16,8 @@ public final class RemasteredSpriteLoaderAudit {
 		Properties settings = new Properties();
 		settings.setProperty(RemasteredSpriteSettings.PROPERTY_KEY, "true");
 		RemasteredSpriteSettings.loadFromClientSettings(settings);
-		require(RemasteredSpriteSettings.isEnabled(), "persisted true setting was not loaded");
+		require(RemasteredSpriteSettings.isEnabled() == RemasteredSpriteSettings.isAvailable(),
+			"persisted true bypassed sprite availability");
 		settings.setProperty(RemasteredSpriteSettings.PROPERTY_KEY, "false");
 		RemasteredSpriteSettings.loadFromClientSettings(settings);
 		require(!RemasteredSpriteSettings.isEnabled(), "persisted false setting was not loaded");
@@ -36,6 +37,17 @@ public final class RemasteredSpriteLoaderAudit {
 		require(resolver.resolve(key, canonical) == canonical, "disabled mode changed canonical identity");
 
 		RemasteredSpriteSettings.setEnabled(true);
+		if (!RemasteredSpriteSettings.isAvailable()) {
+			require(!RemasteredSpriteSettings.isEnabled(), "manual enable bypassed owner pause");
+			require(!RemasteredSpriteSettings.toggle(), "toggle bypassed owner pause");
+			require(resolver.resolve(key, canonical) == canonical, "paused catalog changed canonical identity");
+			Properties saved = new Properties();
+			RemasteredSpriteSettings.saveToClientSettings(saved);
+			require("false".equals(saved.getProperty(RemasteredSpriteSettings.PROPERTY_KEY)),
+				"paused sprite setting was not saved off");
+			System.out.println("PASS: remastered sprites paused; canonical fallback " + resolver.diagnostics());
+			return;
+		}
 		Sprite override = resolver.resolve(key, canonical);
 		require(override != canonical, "enabled mode did not select a side-by-side override");
 		require(hasVisiblePixel(override), "decoded override contains no visible pixels");

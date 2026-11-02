@@ -104,15 +104,17 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix="remastered-loader-audit-") as temporary:
         for key in ("sprite/items/0/0", "sprite/npc/demon/0"):
-            audit = run([
-                "java", "-cp", str(JAR),
-                "com.openrsc.client.tools.RemasteredSpriteLoaderAudit", key,
-            ], cwd=Path(temporary))
-            assert "PASS: remastered sprite side-by-side loader" in audit
-            assert "loaded=1" in audit
-            assert "decodes=1" in audit
+            for prefix in (["java"], ["java", "-Dspoiledmilk.remasteredSprites=true"],
+                           ["env", "SPOILED_MILK_REMASTERED_SPRITES=true", "java"]):
+                audit = run([
+                    *prefix, "-cp", str(JAR),
+                    "com.openrsc.client.tools.RemasteredSpriteLoaderAudit", key,
+                ], cwd=Path(temporary))
+                assert "PASS: remastered sprites paused; canonical fallback" in audit
+                assert "loaded=0" in audit
+                assert "decodes=0" in audit
 
-    print("PASS: remastered sprite loader, fallback, and package boundary validated")
+    print("PASS: paused remastered sprites, runtime override refusal, canonical fallback and preserved package boundary validated")
 
 
 if __name__ == "__main__":

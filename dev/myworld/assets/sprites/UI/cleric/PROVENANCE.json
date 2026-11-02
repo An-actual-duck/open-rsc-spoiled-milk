@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "status": "complete",
-  "source": "Owner supplied and approved final named Cleric icon PNGs; creator/licence not newly specified by this intake.",
+  "source": "Owner supplied final named Cleric icon PNGs and identified their artist as Atelier Pixerellia.",
   "sourceRoot": "/home/justin/Core-Framework/dev/myworld/assets/sprites/UI/cleric",
   "productionRoot": "dev/myworld/assets/sprites/UI/cleric",
   "sourceFilesReadOnly": true,
@@ -680,7 +680,13 @@
     "sourceCommit": "508a059081009584d0174c4d2abf40d66c4d8c3d",
     "versionedPngPathsCompared": 3010,
     "matchingOwnerIcons": 10,
-    "comparison": "Exact serialized PNG bytes, verified by SHA-256 against matching Git blobs; unmatched icons remain owner-provided without newly asserted artist or licence."
+    "comparison": "Original intake comparison: exact serialized PNG bytes verified by SHA-256 against matching Git blobs; unmatched icons were owner-provided with no artist or licence newly asserted at that time. The later owner-confirmed artist is recorded in attribution."
   },
-  "compatibilityStatus": "Retired at schema5 twenty-spell gameplay cutover; list retained as historical provenance only"
+  "compatibilityStatus": "Retired at schema5 twenty-spell gameplay cutover; list retained as historical provenance only",
+  "attribution": {
+    "artist": "Atelier Pixerellia",
+    "source": "Owner confirmation, November 1, 2026",
+    "scope": "All twenty canonical Cleric spell icons in entries",
+    "license": "No new licence grant or terms asserted by this attribution update."
+  }
 }

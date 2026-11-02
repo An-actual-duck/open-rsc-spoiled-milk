@@ -41,15 +41,16 @@ they are not treated as deferred content in this intake.
 
 ## Provenance and review
 
-The owner supplied the final choices. This intake adds no artist attribution
-or licence grant. Existing `dev/myworld/assets/credit` and all other credit/
-catalog records remain unchanged; their existing attribution is preserved.
-The provenance receipt records its hash at intake and the old tracked icon
-hashes from `508a059081009584d0174c4d2abf40d66c4d8c3d`. A comparison against all
-3,010 PNG paths versioned at that base records exact-byte matching source paths
-where found, verified against the original Git blobs by SHA-256. Unmatched inputs
-remain owner-provided choices with no newly asserted artist or licence; absence
-of a serialized-byte match is not a judgement about their appearance or rights.
+The owner supplied the final choices and subsequently confirmed **Atelier
+Pixerellia** as the artist for all twenty canonical Cleric icons. The artist is
+recorded in `PROVENANCE.json`, `dev/myworld/assets/credit` and the packaged
+`release/player/ASSET-SOURCES.txt`. This attribution does not invent a new
+licence grant or change the PNG bytes.
+
+The original intake's credit-file hash and old tracked icon hashes remain
+historical evidence. The recorded comparison against all 3,010 PNG paths at
+`508a059081009584d0174c4d2abf40d66c4d8c3d` is unchanged. Exact-byte matches and
+unmatched inputs are preserved without being treated as proof of new rights.
 
 Review images, native renders, build logs and source-read preservation evidence
 remain in ignored `output/cleric-spell-icons/`. Contact sheets use native 1× and
