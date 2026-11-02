@@ -1,5 +1,33 @@
 # Next-update source candidate assembly
 
+## Final owner-approved map — November 2, 2026
+
+The final source selection now matches the owner-tested private map: owner
+checkpoint4855 with the approved one-tile diagonal-corner correction in
+derivative4856. Owner overall gameplay and the Ichor correction are accepted.
+This supersedes the older e343 selection described below; earlier exports and
+the original editable save remain preserved.
+
+- Fingerprint: `567449d3590b4e1b197a11e517d928a316ba4e92b4322d2526ca6f66455541ae`.
+- Manifest: `55fae68af8e8e7e606708876f9cde5e54c2667c84562f0dd2a12528b202a4323`.
+- Exact paired package copies come from
+  `/home/justin/.local/share/ichor-corner-20261102/export/`.
+- All566 runtime/route checks pass, including every admitted approach to both
+  Crafting Guild cave ladders. The repair changes only the ground colour at
+  (105,675,-1),70 to198; elevations, walls, collision, liquid and placements
+  are unchanged relative to owner4855. The actual packaged-client terrain
+  producer reproduces the old green and verifies the brown replacement.
+- The source selectors and server manifest requirements select these exact
+  bytes. No local ports, credentials, accounts, editor catalog or save history
+  are copied. Current production source includes all20 Cleric spells, all15
+  coatings and wool-based removal; former deferral statements below are dated
+  history, not the current release scope.
+
+Final combined tests, analysis, exact-source packaging and migration rehearsal
+are separate recorded gates. Selecting this map authorizes no public shutdown
+or deployment. The release label is still an owner decision.
+
+
 Prepared November 1, 2026, in `Core-Framework-ai-1` on
 `chore/next-update-candidate`, based on published `8aa187a14`.
 This selects an already verified map copy for **private final acceptance**.
