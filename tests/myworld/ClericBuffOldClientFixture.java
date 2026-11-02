@@ -2,7 +2,7 @@ package orsc;
 import java.lang.reflect.*;
 import java.nio.file.*;
 import java.util.*;
-/** Compile and execute only against the retained pre-animation 10056 client JAR. */
+/** Compile against retained10056 count77 or count100 JARs, never the new115 client. */
 public final class ClericBuffOldClientFixture {
  public static void main(String[]args)throws Exception {
   int retainedCount=args.length>1?Integer.parseInt(args[1]):77;int firstUnknown=retainedCount==77?86:101;
@@ -27,8 +27,16 @@ public final class ClericBuffOldClientFixture {
    handler.getPacketsIncoming().dataBuffer=new byte[]{0,1,0,5,10,(byte)id};handler.getPacketsIncoming().packetEnd=0;appearance.invoke(handler);
    if(actor.combatEffectTime!=0||detached.getInt(mc)!=before+1||actor.pendingCombatEffectType!=0)throw new AssertionError("old actual packet fallback/detached overlay behavior changed");
   }
+  Field npcs=mudclient.class.getDeclaredField("npcsServer");npcs.setAccessible(true);npcs.set(mc,actors);
+  Method npcAppearance=PacketHandler.class.getDeclaredMethod("updateNPCAppearances");npcAppearance.setAccessible(true);
+  for(int id=101;id<=115;id++){
+   actor.combatEffectType=34;actor.combatEffectTime=39;actor.pendingCombatEffectType=30;
+   int before=detached.getInt(mc);
+   handler.getPacketsIncoming().dataBuffer=new byte[]{0,1,0,5,10,(byte)id};handler.getPacketsIncoming().packetEnd=0;npcAppearance.invoke(handler);
+   if(actor.combatEffectTime!=0||detached.getInt(mc)!=Math.min(32,before+1)||actor.pendingCombatEffectType!=0)throw new AssertionError("old NPC packet unknown-curse fallback");
+  }
   int assigned=0;for(com.openrsc.client.entityhandling.defs.ClericSpellDef d:defs)if(d.hasOnEntityAnimation())assigned++;
   if(assigned!=18)throw new AssertionError("old client accepts all eighteen optional cosmetics without schema bump");
-  System.out.println("PASS retained10056 client: real schema5 metadata20, optional animations18, unknown-ID duration/update+actual packet fallback vectors (legacy detachment and pending-impact clearing documented)");
+  System.out.println("PASS retained10056 client: real schema5 metadata20, optional animations18, unknown-ID duration/update+actual player+NPC packet fallback vectors (legacy detachment and pending-impact clearing documented)");
  }
 }

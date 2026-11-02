@@ -87,6 +87,7 @@ public final class ClericDebuffAnimationClientFixture {
   // Actual removal wire is the authoritative death/despawn boundary.
   h.getPacketsIncoming().dataBuffer=new byte[]{0,1,(byte)0xf0};h.getPacketsIncoming().packetEnd=0;call(h,"showNPCs",new Class<?>[]{int.class},3);check(q.getEffectType()==0&&q.getPendingCount()==0,"actual NPC removal clears death/despawn playback");
   set(mc,"npcCacheCount",0);check(mc.createNpc(0,3,64,64,5)==npc&&q.getEffectType()==0,"actual slot reuse remains clear");effect(h,111);mc.clearClericSpellbook();check(q.getEffectType()==0,"logout/reconnect clears NPC playback");
+  effect(h,111);mc.setNpcFromCache(0,npc);set(mc,"npcCacheCount",1);set(mc,"npcCount",0);check(mc.createNpc(0,4,64,64,5)==npc&&q.getEffectType()==0,"continued-cache definition replacement clears old curse");
   effect(h,111);set(mc,"groundItemAreaEpoch",new GroundItemAreaEpoch());set(mc,"sceneInstanceStore",new ClientSceneInstanceStore());mc.beginAreaLoad();check(q.getEffectType()==0,"actual scene/area reset clears NPC playback");
   ClericCursePlayback missing=new ClericCursePlayback();missing.enqueue(111,0);missing.enqueue(96,165);check(missing.getEffectType()==0,"missing duration and role mismatch safely ignored");
   System.out.println("PASS "+checks+" native curse packet/drawNPC/source+embedded/frame/resampling/queue/lifecycle/coexistence assertions");

@@ -2569,8 +2569,20 @@ The owner subsequently approved cumulative recipient-only blessing animations.
 Tier 1 shows its first named effect; Tier 2 shows the first and second in order;
 Tier 3 shows all three. These optional cosmetics have their own bounded local
 playback queue, independent of combat overlays. Sap Blood plays once despite
-its two numerical components. Curses, Unify and Greater Unify remain
-animationless. See [the animation implementation review](cleric-buff-animations-review.md)
-for the approved component mappings, retained aliases, byte receipts and tests.
+its two numerical components. See [the blessing animation review](cleric-buff-animations-review.md)
+for those approved component mappings, retained aliases, byte receipts and tests.
+
+The owner also approved cumulative observer-visible NPC curse animations:
+Saradomin uses Magical Allergy (magic defense down), Muscular Atrophy (melee
+down), then Molecular Antipode (bubble pop); Guthix uses Toxiphobia (heart down),
+Agrizoophobia (poison snake), then Hematophobia (cut); Zamorak uses Expose
+Weakness (accuracy down), Weak Legs (break defense), then Weak Constitution
+(skull down). These small, fast visuals fit 24px and use 2 client ticks per frame.
+The two longer Guthix sheets alone are resampled across their full start-to-end
+range into 12 frames (480ms each); source PNGs and the other seven native frame
+counts are preserved. Each NPC has its own bounded queue, independent of normal
+combat effects, projectiles, non-corporeal state and special poses. See [the curse
+animation review](cleric-debuff-animations-review.md) for exact paths, timing,
+provenance and native/server proof. Unify and Greater Unify remain animationless.
 Gameplay, named status icons, recipient messages and non-corporeal transparency
 remain unchanged.
