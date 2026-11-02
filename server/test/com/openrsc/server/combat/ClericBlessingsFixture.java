@@ -108,9 +108,9 @@ public final class ClericBlessingsFixture {
       skill(c, Skill.PRAYER, 160, 99);
       for (ClericSpellDefinition spell : ClericSpellCatalog.getAll())
         check(
-            spell.getPresentation().hasOnEntityAnimation() == spell.getId().isBlessing()
+            spell.getPresentation().hasOnEntityAnimation() == (spell.getId().isBlessing() || spell.isHostile())
                 && !spell.getPresentation().hasCasterIcon(),
-            "Only approved blessing recipients have cast animations");
+            "Approved blessing and hostile recipients have cast animations");
       check(ClericSpellCatalog.getAll().size() == 20, "active20 book");
       int[] thresholds = {0, 20, 45, 75, 115, 160};
       for (ClericSpellDefinition d : ClericSpellCatalog.getAll()) {

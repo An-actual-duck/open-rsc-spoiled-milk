@@ -85,7 +85,7 @@ def main() -> int:
     ), "EntityHandler.java")
     require(client, (
         "COMBAT_EFFECT_DRAGON_WEAPON_SLASH_2 = 66",
-        "COMBAT_EFFECT_COUNT = 100",
+        "COMBAT_EFFECT_COUNT = 115",
         "CUSTOM_PROJECTILE_COUNT = 34",
         "if (effectType == COMBAT_EFFECT_HELLS_INFERNO)",
         "return 336;",

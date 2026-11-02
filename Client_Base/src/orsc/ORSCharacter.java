@@ -33,6 +33,8 @@ public final class ORSCharacter {
 	public int combatTimeout = 0;
 	// Allocated only for the local recipient, never for the 16K NPC registry.
 	public ClericBuffPlayback clericBuffPlayback;
+	// Lazy: no queue arrays are allocated for un-afflicted NPC registry slots.
+	public ClericCursePlayback clericCursePlayback;
 	public int combatEffectType = 0;
 	public int combatEffectTime = 0;
 	public int pendingCombatEffectType = 0;
@@ -96,6 +98,7 @@ public final class ORSCharacter {
 
 	public void clearTransientVisualState() {
 		if (clericBuffPlayback != null) clericBuffPlayback.clear();
+		if (clericCursePlayback != null) clericCursePlayback.clear();
 		bubbleItem = 0;
 		bubbleTimeout = 0;
 		combatTimeout = 0;

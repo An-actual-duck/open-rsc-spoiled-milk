@@ -226,7 +226,7 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_EXPLOSION = COMBAT_EFFECT_FIRE_BOMB;
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
-	public static final int COMBAT_EFFECT_COUNT = 100; // Through ClericBlessingContract.LAST_BUFF_ANIMATION.
+	public static final int COMBAT_EFFECT_COUNT = 115; // Through ClericBlessingContract.LAST_CURSE_ANIMATION.
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 64;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_FRAME_TICKS = 3;
@@ -3292,6 +3292,7 @@ public final class mudclient implements Runnable {
 			if (var8) {
 				invalidateCustomNpcMovementTarget(serverIndex);
 				character.animationNext = sprite;
+				if (character.npcId != type && character.clericCursePlayback != null) character.clericCursePlayback.clear();
 				character.npcId = type;
 				waypointIdx = character.waypointIndexCurrent;
 				if (x != character.waypointsX[waypointIdx] || y != character.waypointsZ[waypointIdx]) {
@@ -10901,6 +10902,7 @@ public final class mudclient implements Runnable {
 			}
 
 			drawCombatEffectOverlay(npc, x, y, width1, height);
+			drawClericCurseOverlay(npc, x, y, width1, height);
 
 			if (npc.messageTimeout > 0) {
 				ensureCharacterDialogCapacity(this.characterDialogCount + 1);
@@ -10960,7 +10962,15 @@ public final class mudclient implements Runnable {
 
 	private void drawClericBuffOverlay(ORSCharacter character, int x, int y, int width, int height) {
 		if (character != this.localPlayer || character == null || character.clericBuffPlayback == null) return;
-		ClericBuffPlayback playback = character.clericBuffPlayback;
+		drawClericEffectOverlay(character.clericBuffPlayback, x, y, width, height);
+	}
+
+	private void drawClericCurseOverlay(ORSCharacter npc, int x, int y, int width, int height) {
+		if (npc == null || npc == localPlayer || npc.clericCursePlayback == null) return;
+		drawClericEffectOverlay(npc.clericCursePlayback, x, y, width, height);
+	}
+
+	private void drawClericEffectOverlay(ClericEffectPlayback playback, int x, int y, int width, int height) {
 		int type = playback.getEffectType();
 		if (playback.getRemainingTicks() <= 0) return;
 		int frame = getCombatEffectCurrentFrame(type, playback.getRemainingTicks());
@@ -10968,7 +10978,7 @@ public final class mudclient implements Runnable {
 		if (effect == null) return;
 		this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
 		try {
-			// Loader retains a 64px canvas; its artwork already fits 48px (Barkskin 32px).
+			// Keep the 64px canvas: loaded artwork already fits its 48/32/24px bound.
 			int size = COMBAT_EFFECT_STANDARD_SCREEN_SIZE;
 			this.getSurface().drawSprite(effect, x + width / 2 - size / 2,
 				y + height / 2 - size / 2, size, size, 5924, 224);
@@ -14116,12 +14126,19 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private void clearClericCursePlaybacks() {
+		if (npcs == null) return;
+		for (int i = 0; i < npcCount && i < npcs.length; i++)
+			if (npcs[i] != null && npcs[i].clericCursePlayback != null) npcs[i].clericCursePlayback.clear();
+	}
+
 	private void clearClericBuffPlayback() {
 		if (localPlayer != null && localPlayer.clericBuffPlayback != null) localPlayer.clericBuffPlayback.clear();
 	}
 
 	public void clearClericSpellbook() {
 		clearClericBuffPlayback();
+		clearClericCursePlaybacks();
 		this.clericSpellbook.clear();
         this.clericHolyPowerKnown=false;
 		this.clericIconSprites.clear();
@@ -18379,6 +18396,7 @@ public final class mudclient implements Runnable {
 
 				for (updateIndex = 0; updateIndex < this.npcCount; ++updateIndex) {
 					updateEntity = this.npcs[updateIndex];
+					if (updateEntity.clericCursePlayback != null) updateEntity.clericCursePlayback.tick();
 					tickProjectileVisual(updateEntity);
 					if (updateEntity.combatEffectTime > 0 && --updateEntity.combatEffectTime <= 0) {
 						updateEntity.combatEffectType = 0;
@@ -21440,6 +21458,7 @@ public final class mudclient implements Runnable {
 					return false;
 				} else {
 					clearClericBuffPlayback();
+					clearClericCursePlaybacks();
 					long transitionStartNanos = System.nanoTime();
 					int oldBaseX = this.midRegionBaseX;
 					int oldBaseZ = this.midRegionBaseZ;
@@ -22608,7 +22627,7 @@ public final class mudclient implements Runnable {
 					loadedFrames = this.externalAssetLoader.appendExternalAnimationGridSheetFrames(
 						sheet, this.combatEffectSprites[effectType], definition.getMaxTargetSize(),
 						definition.getColumns(), definition.getRows(), definition.getFirstFrame(),
-						definition.getFrameCount(), loadedFrames);
+						definition.getFrameCount(), loadedFrames, definition.getPlaybackFrameCount());
 				}
 				this.combatEffectFrameCounts[effectType] = loadedFrames;
 				if (this.combatEffectFrameCounts[effectType] > 0) {
@@ -23379,6 +23398,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getCombatEffectFrameTicks(int effectType) {
+		if (ClericBlessingContract.isNpcCurseAnimation(effectType)) return 2;
 		if (effectType == COMBAT_EFFECT_LESSER_HEAL) {
 			return LESSER_HEAL_FRAME_TICKS;
 		}
@@ -23386,7 +23406,8 @@ public final class mudclient implements Runnable {
 	}
 
 	public String getCombatEffectName(int effectType) {
-		if (ClericBlessingContract.isRecipientOnlyBuffAnimation(effectType)) {
+		if (ClericBlessingContract.isRecipientOnlyBuffAnimation(effectType)
+				|| ClericBlessingContract.isNpcCurseAnimation(effectType)) {
 			CombatEffectAnimationCatalog.Definition definition = CombatEffectAnimationCatalog.getDefinition(effectType);
 			return definition == null ? "unknown" : definition.getKey();
 		}
@@ -26125,6 +26146,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void beginAreaLoad() {
+		clearClericCursePlaybacks();
 		this.loadingArea = true;
 		this.groundItemCount = this.groundItemAreaEpoch.begin();
 		this.sceneInstanceStore.clearPendingAreaLoadMarks();
@@ -27542,7 +27564,21 @@ public final class mudclient implements Runnable {
 		return this.projectileMaxRange;
 	}
 
+	/** Only the NPC packet path admits observer-visible curse cosmetics. */
+	public void applyNpcCombatEffectUpdate(ORSCharacter npc, int effectType) {
+		if (!ClericBlessingContract.isNpcCurseAnimation(effectType)) {
+			applyCombatEffectUpdate(npc, effectType);
+			return;
+		}
+		if (npc == null || npc == localPlayer || npc.serverIndex < 0
+				|| npcsServer == null || npc.serverIndex >= npcsServer.length
+				|| npcsServer[npc.serverIndex] != npc) return;
+		if (npc.clericCursePlayback == null) npc.clericCursePlayback = new ClericCursePlayback();
+		npc.clericCursePlayback.enqueue(effectType, getCombatEffectDuration(effectType));
+	}
+
 	public void applyCombatEffectUpdate(ORSCharacter character, int effectType) {
+		if (ClericBlessingContract.isNpcCurseAnimation(effectType)) return;
 		if (character == null) {
 			return;
 		}

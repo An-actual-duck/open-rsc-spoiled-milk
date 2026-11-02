@@ -708,12 +708,19 @@ final class ClientExternalAssetLoader {
 
 	int appendExternalAnimationGridSheetFrames(File sourceFile, Sprite[] targetFrames, int maxTargetSize,
 			int columns, int rows, int firstFrameIndex, int frameCount, int loadedFrames) {
+		return appendExternalAnimationGridSheetFrames(sourceFile, targetFrames, maxTargetSize,
+			columns, rows, firstFrameIndex, frameCount, loadedFrames, frameCount);
+	}
+
+	int appendExternalAnimationGridSheetFrames(File sourceFile, Sprite[] targetFrames, int maxTargetSize,
+			int columns, int rows, int firstFrameIndex, int frameCount, int loadedFrames, int playbackFrames) {
 		try {
 			BufferedImage source = readAssetImage(sourceFile);
 			if (source == null || columns <= 0 || rows <= 0 || firstFrameIndex < 0 || frameCount <= 0
 				|| firstFrameIndex + frameCount > columns * rows) {
 				return loadedFrames;
 			}
+			if (playbackFrames < 1 || playbackFrames > frameCount) return loadedFrames;
 			int frameWidth = source.getWidth() / columns;
 			int frameHeight = source.getHeight() / rows;
 			if (frameWidth <= 0 || frameHeight <= 0 || frameWidth * columns != source.getWidth()
@@ -721,8 +728,10 @@ final class ClientExternalAssetLoader {
 				return loadedFrames;
 			}
 			int sourceMaxSize = Math.max(frameWidth, frameHeight);
-			for (int frameIndex = 0; frameIndex < frameCount && loadedFrames < targetFrames.length; frameIndex++) {
-				int sheetFrameIndex = firstFrameIndex + frameIndex;
+			for (int frameIndex = 0; frameIndex < playbackFrames && loadedFrames < targetFrames.length; frameIndex++) {
+				int sourceOffset = playbackFrames == 1 ? 0
+					: (frameIndex * (frameCount - 1) + (playbackFrames - 1) / 2) / (playbackFrames - 1);
+				int sheetFrameIndex = firstFrameIndex + sourceOffset;
 				BufferedImage frame = source.getSubimage(
 					(sheetFrameIndex % columns) * frameWidth,
 					(sheetFrameIndex / columns) * frameHeight, frameWidth, frameHeight);
