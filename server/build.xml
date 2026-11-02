@@ -144,11 +144,14 @@
             <arg value="--tower"/>
             <classpath><pathelement location="${slayer.release.output}/classes"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
+        <delete file="${slayer.release.output}/runtime/slayer-release-result.txt"/>
         <java classname="com.openrsc.server.io.SlayerReleaseActivationTest"
               fork="true" maxmemory="512m" failonerror="true" dir="${slayer.release.output}/runtime">
             <jvmarg value="-XX:+UseSerialGC"/><arg value="${slayer.release.output}/runtime/map"/><arg value="${slayer.manifest.sha256}"/>
             <classpath><pathelement location="${slayer.release.output}/classes"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
+        <available property="slayer.release.completed" file="${slayer.release.output}/runtime/slayer-release-result.txt"/>
+        <fail unless="slayer.release.completed" message="Release activation fixture did not reach its final success receipt"/>
     </target>
 
     <target name="test_monster_slayer_tower_routes" depends="compile_core,compile_plugins"

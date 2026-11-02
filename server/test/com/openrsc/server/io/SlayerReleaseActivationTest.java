@@ -28,6 +28,9 @@ public final class SlayerReleaseActivationTest {
         "champions.death_wings", "heroes.dark_beast", "legends.abyssal_demon"};
 
     public static void main(String[] args) throws Exception {
+        final java.io.PrintStream evidence = System.out;
+        Thread.setDefaultUncaughtExceptionHandler((thread, failure) -> failure.printStackTrace(evidence));
+        System.setProperty("log4j2.disable.jmx", "true");
         if (args.length != 2 || !args[1].matches("[0-9a-f]{64}")) throw new IllegalArgumentException("Copied map and manifest hash required");
         final Path root = Paths.get("").toRealPath();
         check(Files.exists(root.resolve(".offline-slayer-release")), "disposable fixture marker required");
@@ -36,6 +39,7 @@ public final class SlayerReleaseActivationTest {
         check(map.startsWith(root), "map must be a disposable copy inside fixture");
         System.setSecurityManager(new SecurityManager() {
             @Override public void checkPermission(Permission permission) { }
+            @Override public void checkExit(int status) { throw new SecurityException("Unexpected fixture process exit " + status); }
             @Override public void checkListen(int port) { throw new SecurityException("No Slayer fixture listeners"); }
             @Override public void checkConnect(String host, int port) { throw new SecurityException("No Slayer fixture network"); }
             @Override public void checkWrite(String file) {
@@ -85,7 +89,9 @@ public final class SlayerReleaseActivationTest {
             for (Contact contact : data.getContacts()) check(spawns.getOrDefault(contact.getNpcId(), 0) > 0, "real contact is placed " + contact.getKey());
             progression(server, data, tasks);
             disabledProfile(server);
-            System.out.println("PASS Slayer release activation: " + checks + " assertions; exact manifest=" + args[1]);
+            String receipt = "PASS Slayer release activation: " + checks + " assertions; exact manifest=" + args[1];
+            Files.write(root.resolve("slayer-release-result.txt"), receipt.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            evidence.println(receipt);
             System.out.println("LIMITS: synthetic player caches and offline eligible-kill API, not live accounts, NPC combat, rendering or JDBC save/restart");
         } finally {
             for (GameTickEvent event : new ArrayList<GameTickEvent>(server.getGameEventHandler().getEvents())) event.stop();

@@ -63,8 +63,13 @@ public final class MonsterSlayerReleaseCharacterization {
         }
         MonsterSlayerBalances balances = MonsterSlayerBalances.zero();
         for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) balances = balances.credit(challenge, 321);
-        return MonsterSlayerState.create(2, MonsterSlayerRank.fromCode(tier + 1), balances, counts, active, kills,
+        MonsterSlayerState.Snapshot state = MonsterSlayerState.create(2, MonsterSlayerRank.fromCode(tier + 1), balances, counts, active, kills,
             500, 3, 1, MonsterSlayerState.LegacyStatus.COMPLETED_CLAIMED, 2, data);
+        // Include mixed acknowledged/unacknowledged earned promotions, not just zero masks.
+        for (Contact contact : data.getContactsInChallengeOrder())
+            if (state.getRank().isAtLeast(contact.getAwardedRank()) && contact.getChallenge().getCode() % 2 == 0)
+                state = MonsterSlayerState.acknowledgePromotion(state, data, contact.getKey());
+        return state;
     }
 
     private static void verify(MonsterSlayerData old, MonsterSlayerData current, MonsterSlayerState.Snapshot before) {
