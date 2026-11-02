@@ -105,8 +105,54 @@
         <delete dir="buildplugins"/>
     </target>
 
+    <target name="test_slayer_release" depends="compile_core,compile_plugins"
+            description="Offline v1-v5 migration and release profile/contact/progression checks over a disposable map copy">
+        <fail unless="slayer.package.path" message="Pass -Dslayer.package.path with the reviewed package directory; it is read and copied only"/>
+        <fail unless="slayer.manifest.sha256" message="Pass -Dslayer.manifest.sha256 with the exact reviewed manifest hash"/>
+        <property name="slayer.release.output" location="../output/slayer-release-test"/>
+        <mkdir dir="${slayer.release.output}/classes"/>
+        <mkdir dir="${slayer.release.output}/runtime"/>
+        <copy todir="${slayer.release.output}/runtime/conf"><fileset dir="conf"/></copy>
+        <copy todir="${slayer.release.output}/runtime/database"><fileset dir="database"/></copy>
+        <copy todir="${slayer.release.output}/runtime">
+            <fileset dir="." includes="myworld.conf,myworld-host.conf,connections.conf"/>
+        </copy>
+        <copy file="myworld.conf" tofile="${slayer.release.output}/runtime/classic-fixture.conf" overwrite="true">
+            <filterchain><tokenfilter>
+                <replacestring from="want_myworld: true" to="want_myworld: false"/>
+                <replacestring from="want_slayer_tower_tasks: true" to="# tower tasks unspecified in classic profile"/>
+            </tokenfilter></filterchain>
+        </copy>
+        <copy todir="${slayer.release.output}/runtime/map"><fileset dir="${slayer.package.path}"/></copy>
+        <touch file="${slayer.release.output}/runtime/.offline-slayer-release"/>
+        <javac srcdir="${test.src}" destdir="${slayer.release.output}/classes" debug="on"
+               includes="com/openrsc/server/content/minigame/monsterslayer/*.java,com/openrsc/server/io/SlayerReleaseActivationTest.java,com/openrsc/server/plugins/MonsterSlayerContactsRouteTest.java"
+               includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+            <classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </javac>
+        <java classname="com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerPlayerStateCharacterization"
+              fork="true" maxmemory="512m" failonerror="true" dir="${slayer.release.output}/runtime">
+            <jvmarg value="-XX:+UseSerialGC"/>
+            <classpath><pathelement location="${slayer.release.output}/classes"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </java>
+        <java classname="com.openrsc.server.plugins.MonsterSlayerContactsRouteTest"
+              fork="true" maxmemory="512m" failonerror="true" dir="${slayer.release.output}/runtime">
+            <jvmarg value="-XX:+UseSerialGC"/>
+            <jvmarg value="-Dopenrsc.layeredNativeTerrainPackagePath=${slayer.release.output}/runtime/map"/>
+            <jvmarg value="-Dopenrsc.layeredNativeTerrainManifestSha256=${slayer.manifest.sha256}"/>
+            <jvmarg value="-Dopenrsc.layeredNativeWorldRuntimeProfile=native-replacement"/>
+            <arg value="--tower"/>
+            <classpath><pathelement location="${slayer.release.output}/classes"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </java>
+        <java classname="com.openrsc.server.io.SlayerReleaseActivationTest"
+              fork="true" maxmemory="512m" failonerror="true" dir="${slayer.release.output}/runtime">
+            <jvmarg value="-XX:+UseSerialGC"/><arg value="${slayer.release.output}/runtime/map"/><arg value="${slayer.manifest.sha256}"/>
+            <classpath><pathelement location="${slayer.release.output}/classes"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </java>
+    </target>
+
     <target name="test_monster_slayer_tower_routes" depends="compile_core,compile_plugins"
-            description="Test staged tower task advice/preview routes without map-placement assumptions">
+            description="Test enabled tower task advice/preview routes without map-placement assumptions">
         <mkdir dir="../output/monster-slayer-tower-test"/>
         <javac srcdir="${test.src}" destdir="../output/monster-slayer-tower-test" debug="on"
                includes="com/openrsc/server/plugins/MonsterSlayerContactsRouteTest.java"

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "additions": [
+    {
+      "contactKey": "champions",
+      "beforeTaskKey": "champions.greater_demons",
+      "task": {
+        "key": "champions.death_wings",
+        "familyKey": "death_wing",
+        "requiredKills": 20,
+        "pointReward": 18
+      }
+    }
+  ]
+}
