@@ -32,7 +32,7 @@ final class RendererSettingsPanel {
 	private static final int SCALE_MINUS_X_OFFSET = 96;
 	private static final int SCALE_LABEL_X_OFFSET = 73;
 	private static final int SCALE_PLUS_X_OFFSET = 45;
-	private static final int LEGACY_SCALING_ROW_INDEX = 3;
+	private static final int LEGACY_SCALING_ROW_INDEX = RemasteredSpriteSettings.isAvailable() ? 3 : 2;
 
 	private static final int ACTION_SCALING_ROW = 49;
 	private static final int ACTION_SCALING_TYPE = 46;
@@ -324,8 +324,10 @@ final class RendererSettingsPanel {
 		if (state.openGLPrimary) {
 			addRow(rows, "@whi@Preset - " + state.rendererProfileLabel, ACTION_RENDERER_PROFILE);
 		}
-		addRow(rows, "@whi@Sprites: "
-			+ (state.remasteredSprites ? "@cya@Enhanced" : "@gre@Classic"), REMASTERED_SPRITES);
+		if (RemasteredSpriteSettings.isAvailable()) {
+			addRow(rows, "@whi@Sprites: "
+				+ (state.remasteredSprites ? "@cya@Enhanced" : "@gre@Classic"), REMASTERED_SPRITES);
+		}
 		addRow(rows, "@whi@Middle mouse - " + state.middleMouseLabel, MIDDLE_MOUSE);
 
 		if (!state.openGLPrimary) {
@@ -393,7 +395,7 @@ final class RendererSettingsPanel {
 			}
 		}
 		if (selectedAction == REMASTERED_SPRITES) {
-			return Action.REMASTERED_SPRITES;
+			return RemasteredSpriteSettings.isAvailable() ? Action.REMASTERED_SPRITES : null;
 		}
 		if (selectedAction == MIDDLE_MOUSE) {
 			return Action.MIDDLE_MOUSE;

@@ -9,6 +9,8 @@ sprites.
 
 ThatKidBobo supplied the remastered player, NPC, inventory/ground item, and
 equipment sprite artwork included by the optional remastered-sprite catalog.
+The optional remastered-sprite option is temporarily hidden and disabled at
+the owner's request. The sources, historical credits and catalog are preserved.
 Per-set mappings and provenance are tracked under
 dev/myworld/assets/remastered-sprites/.
 
@@ -21,7 +23,12 @@ dev/myworld/cleric-wells/. The tower's project-authored scenery exports are
 recorded in the corresponding native model reviews under docs/myworld/in-progress-work-plans/.
 Adaptations retain the underlying game's provenance and redistribution
 constraints; project authorship and the source-code licence do not grant new
-rights to Jagex's base artwork. Final Cleric icon choices are not assumed here.
+rights to Jagex's base artwork.
+
+The twenty final Cleric spell icons are by Atelier Pixerellia, as identified
+by the project owner. Exact supplied PNGs and their attribution are recorded in
+dev/myworld/assets/sprites/UI/cleric/PROVENANCE.json. This artist credit does
+not assert a new licence grant; existing asset terms remain applicable.
 
 Prayer UI icon assets are sourced from a royalty-free repository.
 

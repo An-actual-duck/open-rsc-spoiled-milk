@@ -178,7 +178,7 @@ public final class RendererProfileApplierFixture {
 
 		RemasteredSpriteSettings.setEnabled(true);
 		manual.markCustomAndPersist(RendererProfileApplier.Change.REMASTERED_SPRITES);
-		assertProperty(read(manualPath), "remastered_sprites", "true");
+		assertProperty(read(manualPath), "remastered_sprites", "false");
 		assertEquals(1, manualHost.appearanceCount, "manual sprite appearance count");
 		assertEquals(2, manualStore.loads, "manual transaction load count");
 		assertEquals(2, manualStore.saves, "manual transaction save count");
@@ -302,7 +302,7 @@ public final class RendererProfileApplierFixture {
 			"runtime fog load precedence");
 		assertEquals(RendererToneSettings.Mode.COOL_NIGHT, RendererToneSettings.getMode(),
 			"runtime tone load precedence");
-		assertTrue(RemasteredSpriteSettings.isEnabled(), "runtime sprite load precedence");
+		assertTrue(!RemasteredSpriteSettings.isEnabled(), "owner pause overrides runtime sprite load");
 	}
 
 	private static void runtimeSpriteOverride(Path path) {
@@ -310,9 +310,9 @@ public final class RendererProfileApplierFixture {
 		Host host = new Host();
 		RendererProfileApplier applier = new RendererProfileApplier(store, host);
 		applier.apply(RendererProfileSettings.Mode.CLASSIC);
-		assertTrue(RemasteredSpriteSettings.isEnabled(),
-			"Classic must not overwrite enhanced-sprite runtime override");
-		assertProperty(read(path), "remastered_sprites", "true");
+		assertTrue(!RemasteredSpriteSettings.isEnabled(),
+			"owner pause also blocks enhanced-sprite runtime override");
+		assertProperty(read(path), "remastered_sprites", "false");
 		assertEquals(1, host.appearanceCount, "runtime sprite Classic refresh count");
 	}
 
@@ -335,7 +335,7 @@ public final class RendererProfileApplierFixture {
 		assertEquals(RendererLightingSettings.Mode.DIRECTIONAL, RendererLightingSettings.getMode(),
 			"restart lighting");
 		assertEquals(RendererToneSettings.Mode.CYCLE, RendererToneSettings.getMode(), "restart tone");
-		assertTrue(RemasteredSpriteSettings.isEnabled(), "restart sprites");
+		assertTrue(!RemasteredSpriteSettings.isEnabled(), "paused sprites remain off after restart");
 		assertTuning(10, 10, 10, 10, 10, 10, "restart tuning");
 	}
 
