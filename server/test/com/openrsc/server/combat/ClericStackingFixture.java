@@ -62,8 +62,13 @@ public final class ClericStackingFixture {
           == 100 - (useful ? cost.getCount() : 0),
           "one useful-cast cost or no-op refund for " + spell.getDisplayName());
     for (Mob actor : actors)
-      check(spell.getId().isBlessing() && useful || !actor.getUpdateFlags().hasCombatEffect(),
-          "refused buffs, curses and uninvolved actors cannot emit animations");
+      check(!actor.getUpdateFlags().hasCombatEffect() || useful
+          && (spell.getId().isBlessing() && actor instanceof Player
+              || spell.isHostile() && actor instanceof Npc)
+          && actor.getUpdateFlags().getCombatEffects().size() == 1
+          && actor.getUpdateFlags().getCombatEffects().get(0).getEffectType()
+              == spell.getPresentation().getOnEntityAnimationId(),
+          "only useful recipients receive one role-appropriate component sequence");
   }
 
   private static void line(CurrentCombatHarness h, Player first, Player second,

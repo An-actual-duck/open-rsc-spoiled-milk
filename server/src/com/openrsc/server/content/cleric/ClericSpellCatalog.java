@@ -107,6 +107,13 @@ public final class ClericSpellCatalog {
       for (int i = 0; i < kinds.length; i++) kinds[i] = components.get(i).getKind();
       animation = ClericBlessingContract.animationForComponents(kinds);
       if (animation < 0) throw new IllegalStateException("Missing blessing component animation");
+    } else if (id.isHostile()) {
+      java.util.List<com.openrsc.server.content.cleric.effect.ClericBlessingComponent> components =
+          new com.openrsc.server.content.cleric.effect.ClericHostileMagnitude(god, tier, 1).components();
+      int[] kinds = new int[components.size()];
+      for (int i = 0; i < kinds.length; i++) kinds[i] = components.get(i).getKind();
+      animation = ClericBlessingContract.curseAnimationForComponents(kinds);
+      if (animation < 0) throw new IllegalStateException("Missing curse component animation");
     }
     return new ClericSpellDefinition(
         id,

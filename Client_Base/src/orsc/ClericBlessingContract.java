@@ -107,6 +107,69 @@ public final class ClericBlessingContract {
     return -1;
   }
 
+  // NPC-only, observer-visible curse cosmetics. Existing buff and pose IDs stay unchanged.
+  public static final int CURSE_MAGICAL_ALLERGY = 101;
+  public static final int CURSE_MUSCULAR_ATROPHY = 102;
+  public static final int CURSE_MOLECULAR_ANTIPODE = 103;
+  public static final int CURSE_TOXIPHOBIA = 104;
+  public static final int CURSE_AGRIZOOPHOBIA = 105;
+  public static final int CURSE_HEMATOPHOBIA = 106;
+  public static final int CURSE_EXPOSE_WEAKNESS = 107;
+  public static final int CURSE_WEAK_LEGS = 108;
+  public static final int CURSE_WEAK_CONSTITUTION = 109;
+  public static final int CURSE_SARADOMIN_2 = 110;
+  public static final int CURSE_SARADOMIN_3 = 111;
+  public static final int CURSE_GUTHIX_2 = 112;
+  public static final int CURSE_GUTHIX_3 = 113;
+  public static final int CURSE_ZAMORAK_2 = 114;
+  public static final int CURSE_ZAMORAK_3 = 115;
+  public static final int LAST_CURSE_ANIMATION = CURSE_ZAMORAK_3;
+
+  public static boolean isNpcCurseAnimation(int id) {
+    return id >= CURSE_MAGICAL_ALLERGY && id <= LAST_CURSE_ANIMATION;
+  }
+
+  public static int curseComponentAnimation(int kind) {
+    switch (kind) {
+      case MAGIC_DEFENSE_REDUCTION: return CURSE_MAGICAL_ALLERGY;
+      case MAX_MELEE_REDUCTION: return CURSE_MUSCULAR_ATROPHY;
+      case NON_CORPOREAL: return CURSE_MOLECULAR_ANTIPODE;
+      case POISON_WEAKNESS: return CURSE_TOXIPHOBIA;
+      case SUMMON_WEAKNESS: return CURSE_AGRIZOOPHOBIA;
+      case RECOIL_WEAKNESS: return CURSE_HEMATOPHOBIA;
+      case CRITICAL_VULNERABILITY: return CURSE_EXPOSE_WEAKNESS;
+      case CRITICAL_STAGGER: return CURSE_WEAK_LEGS;
+      case CRITICAL_EXECUTION: return CURSE_WEAK_CONSTITUTION;
+      default: return -1;
+    }
+  }
+
+  public static int[] curseAnimationSequence(int id) {
+    switch (id) {
+      case CURSE_SARADOMIN_2: return new int[] {101, 102};
+      case CURSE_SARADOMIN_3: return new int[] {101, 102, 103};
+      case CURSE_GUTHIX_2: return new int[] {104, 105};
+      case CURSE_GUTHIX_3: return new int[] {104, 105, 106};
+      case CURSE_ZAMORAK_2: return new int[] {107, 108};
+      case CURSE_ZAMORAK_3: return new int[] {107, 108, 109};
+      default: return isNpcCurseAnimation(id) ? new int[] {id} : new int[0];
+    }
+  }
+
+  public static int curseAnimationGod(int id) {
+    if (id >= 101 && id <= 109) return (id - 101) / 3;
+    if (id >= 110 && id <= 115) return (id - 110) / 2;
+    return -1;
+  }
+
+  public static int curseAnimationForComponents(int[] kinds) {
+    int[] effects = new int[kinds.length];
+    for (int i = 0; i < kinds.length; i++) effects[i] = curseComponentAnimation(kinds[i]);
+    for (int id = CURSE_MAGICAL_ALLERGY; id <= LAST_CURSE_ANIMATION; id++)
+      if (java.util.Arrays.equals(effects, curseAnimationSequence(id))) return id;
+    return -1;
+  }
+
   public static String componentName(int kind) {
     switch (kind) {
       case REGENERATION:

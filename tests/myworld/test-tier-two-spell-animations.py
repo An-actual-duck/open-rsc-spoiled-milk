@@ -155,7 +155,7 @@ def main() -> int:
     client = read("Client_Base/src/orsc/mudclient.java")
     require(client, (
         "public static final int COMBAT_EFFECT_TELEPORT = 65;",
-		"public static final int COMBAT_EFFECT_COUNT = 100;",
+		"public static final int COMBAT_EFFECT_COUNT = 115;",
         '"true-defense", "teleport"',
         "ProjectileStaticAnimationCatalog.getDefinition(projectile.id)",
         "drawQueuedStaticProjectiles()",
@@ -206,7 +206,7 @@ def main() -> int:
 
     packet_handler = read("Client_Base/src/orsc/PacketHandler.java")
     require(packet_handler, (
-        "mc.applyCombatEffectUpdate(npc, effectType);",
+        "mc.applyNpcCombatEffectUpdate(npc, effectType);",
         "mc.applyCombatEffectUpdate(player, effectType);",
         "pendingCombatEffectType = 0;",
     ), "PacketHandler.java")

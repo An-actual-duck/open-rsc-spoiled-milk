@@ -1,5 +1,9 @@
 # Cleric blessing recipient animations
 
+This records the completed blessing-only checkpoint. The later [curse animation
+review](cleric-debuff-animations-review.md) documents the current eighteen
+assigned god-line visuals; the original receipts below remain historical.
+
 Status: implementation complete; exact READY checkpoint is recorded by the worker handoff.
 
 Nine owner-selected cosmetics attach to named blessing components, independent of

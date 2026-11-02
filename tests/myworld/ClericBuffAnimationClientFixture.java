@@ -47,8 +47,8 @@ public final class ClericBuffAnimationClientFixture {
     Config.S_WANT_CUSTOM_SPRITES=true;
     mudclient mc=client(root),packed=client(empty);
     int[] expectedCounts={25,13,17,17,21,11,14,11,17,38,55,38,49,25,42};
-    check(mudclient.COMBAT_EFFECT_COUNT==ClericBlessingContract.LAST_BUFF_ANIMATION,"authoritative range bound");
-    check(mudclient.spriteProjectileEffectBase==51200+100*64,"projectiles follow expanded combat sprite slots");
+    check(mudclient.COMBAT_EFFECT_COUNT==ClericBlessingContract.LAST_CURSE_ANIMATION,"authoritative range bound");
+    check(mudclient.spriteProjectileEffectBase==51200+115*64,"projectiles follow expanded combat sprite slots");
     check(mudclient.spriteProjectileStaticMirrorBase+256<65536,"all ranges fit 16-bit scene sprite namespace");
     check(mc.getCombatEffectFrameCount(78)==0&&mc.getCombatEffectDuration(85)==0,"NPC pose reservations remain outside sprite animations");
     for(int id=86;id<=100;id++){

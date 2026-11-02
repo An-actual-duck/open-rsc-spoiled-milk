@@ -72,7 +72,7 @@ public final class ClericBuffAnimationFixture {
       ClericBlessingsFixture.clear(recipient);recipient.resetAfterUpdate();ally.resetAfterUpdate();caster.resetAfterUpdate();
       caster.getCarriedItems().getInventory().getItems().clear();ClericBlessingsFixture.packet(caster,12);
       check(!recipient.getUpdateFlags().hasCombatEffect(),"unfunded cast stays silent");
-      for(ClericSpellDefinition d:ClericSpellCatalog.getAll())check(d.getPresentation().hasOnEntityAnimation()==d.getId().isBlessing(),"curses and Unify stay animationless");
+      for(ClericSpellDefinition d:ClericSpellCatalog.getAll())check(d.getPresentation().hasOnEntityAnimation()==(d.getId().isBlessing()||d.isHostile()),"all god lines animated; Unify stays animationless");
       Npc npc=h.npc(3,451,451);npc.resetAfterUpdate();observer.resetAfterUpdate();observer.getLocalNpcs().add(npc);
       Method npcs=h.server().getGameUpdater().getClass().getDeclaredMethod("updateNpcAppearances",Player.class);npcs.setAccessible(true);
       npcs.invoke(h.server().getGameUpdater(),observer); // Initial independent phase-state receipt.

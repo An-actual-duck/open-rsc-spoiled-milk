@@ -72,7 +72,7 @@ def validate_sources() -> None:
         require(f", {frames}, {max_size});" in animation_catalog,
                 f"compact animation metadata drift: {spell}")
 
-    require("public static final int COMBAT_EFFECT_COUNT = 100;" in client,
+    require("public static final int COMBAT_EFFECT_COUNT = 115;" in client,
             "client combat-effect capacity drift")
     require('"cleric-mend"' in client and '"cleric-respite"' in client,
             "client effect-name parity missing")

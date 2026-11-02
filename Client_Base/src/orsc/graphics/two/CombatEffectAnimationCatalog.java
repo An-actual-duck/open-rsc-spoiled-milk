@@ -19,9 +19,16 @@ public final class CombatEffectAnimationCatalog {
 		private final int firstFrame;
 		private final int frameCount;
 		private final int maxTargetSize;
+		private final int playbackFrameCount;
 
 		private Definition(String key, String category, String sheetPath, int columns, int rows,
 				int firstFrame, int frameCount, int maxTargetSize) {
+			this(key, category, sheetPath, columns, rows, firstFrame, frameCount, maxTargetSize, frameCount);
+		}
+
+		private Definition(String key, String category, String sheetPath, int columns, int rows,
+				int firstFrame, int frameCount, int maxTargetSize, int playbackFrameCount) {
+			this.playbackFrameCount = playbackFrameCount;
 			this.key = key;
 			this.category = category;
 			this.sheetPath = sheetPath;
@@ -40,6 +47,7 @@ public final class CombatEffectAnimationCatalog {
 		public int getFirstFrame() { return firstFrame; }
 		public int getFrameCount() { return frameCount; }
 		public int getMaxTargetSize() { return maxTargetSize; }
+		public int getPlaybackFrameCount() { return playbackFrameCount; }
 	}
 
 	private static final Map<Integer, Definition> DEFINITIONS;
@@ -154,6 +162,23 @@ public final class CombatEffectAnimationCatalog {
 		define(definitions, 94, "blood-hunger", ON_ENTITY,
 			"lightning-buff/lightning-buff.png", 17, 1, 0, 17, 48);
 
+		define(definitions, 101, "magical-allergy", ON_ENTITY,
+			"general-buffs-debuffs/defense/mag-def-down.png", 11, 1, 0, 11, 24);
+		define(definitions, 102, "muscular-atrophy", ON_ENTITY,
+			"general-buffs-debuffs/melee/melee-down.png", 10, 1, 0, 10, 24);
+		define(definitions, 103, "molecular-antipode", ON_ENTITY,
+			"general-buffs-debuffs/bubble-pop/bubble-pop.png", 12, 1, 0, 12, 24);
+		define(definitions, 104, "toxiphobia", ON_ENTITY,
+			"general-buffs-debuffs/heart/heart-down.png", 9, 1, 0, 9, 24);
+		defineResampled(definitions, 105, "agrizoophobia", "poison-snake/poison-snake.png", 28, 12);
+		defineResampled(definitions, 106, "hematophobia", "cut/cut.png", 15, 12);
+		define(definitions, 107, "expose-weakness", ON_ENTITY,
+			"general-buffs-debuffs/accuracy/accuracy-down.png", 10, 1, 0, 10, 24);
+		define(definitions, 108, "weak-legs", ON_ENTITY,
+			"general-buffs-debuffs/break-defense/break-defense.png", 12, 1, 0, 12, 24);
+		define(definitions, 109, "weak-constitution", ON_ENTITY,
+			"general-buffs-debuffs/skull/skull-down.png", 13, 1, 0, 13, 24);
+
 		LinkedHashMap<Integer, Definition[]> sequences = new LinkedHashMap<Integer, Definition[]>();
 		for (Map.Entry<Integer, Definition> entry : definitions.entrySet()) {
 			sequences.put(entry.getKey(), new Definition[] {entry.getValue()});
@@ -187,11 +212,27 @@ public final class CombatEffectAnimationCatalog {
 			defineSequence(definitions, sequences, id, parts);
 		}
 
+		for (int id = orsc.ClericBlessingContract.CURSE_SARADOMIN_2;
+				id <= orsc.ClericBlessingContract.LAST_CURSE_ANIMATION; id++) {
+			int[] ids = orsc.ClericBlessingContract.curseAnimationSequence(id);
+			Definition[] parts = new Definition[ids.length];
+			for (int i = 0; i < ids.length; i++) parts[i] = definitions.get(ids[i]);
+			defineSequence(definitions, sequences, id, parts);
+		}
+
 		DEFINITIONS = Collections.unmodifiableMap(definitions);
 		SEQUENCES = Collections.unmodifiableMap(sequences);
 	}
 
 	private CombatEffectAnimationCatalog() {
+	}
+
+	private static void defineResampled(Map<Integer, Definition> definitions, int id,
+			String key, String path, int sourceFrames, int playbackFrames) {
+		if (playbackFrames < 2 || playbackFrames > sourceFrames || definitions.containsKey(id))
+			throw new IllegalArgumentException("Invalid resampled animation");
+		definitions.put(id, new Definition(key, ON_ENTITY, path, sourceFrames, 1, 0,
+			sourceFrames, 24, playbackFrames));
 	}
 
 	private static void define(Map<Integer, Definition> definitions, int effectType, String key,
