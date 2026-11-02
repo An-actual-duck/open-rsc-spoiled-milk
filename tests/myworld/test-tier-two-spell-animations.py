@@ -155,7 +155,7 @@ def main() -> int:
     client = read("Client_Base/src/orsc/mudclient.java")
     require(client, (
         "public static final int COMBAT_EFFECT_TELEPORT = 65;",
-		"public static final int COMBAT_EFFECT_COUNT = 77;",
+		"public static final int COMBAT_EFFECT_COUNT = 100;",
         '"true-defense", "teleport"',
         "ProjectileStaticAnimationCatalog.getDefinition(projectile.id)",
         "drawQueuedStaticProjectiles()",

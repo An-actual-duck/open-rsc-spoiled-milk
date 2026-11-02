@@ -23,8 +23,8 @@ ANIMATIONS = {
     "RESTORE": (70, "cleanse/cleanse.png", 816, 64, 17, 48),
     "WARD": (71, "wall-shield/Buff n Debuff P4 04.png", 1472, 64, 23, 48),
     "GREATER_MEND": (72, "greater-heal-alt/greater-heal-alt.png", 1216, 64, 19, 48),
-    "ZEAL": (73, "Holy VFX 03/Holy VFX 03(64x80).png", 1600, 80, 25, 48),
-    "THORNS": (74, "thorns/thorns.png", 672, 32, 21, 32),
+    "ZEAL": (73, "holy-sword/holy-sword.png", 1600, 80, 25, 48),
+    "THORNS": (74, "bark/bark.png", 672, 32, 21, 32),
     "AEGIS": (75, "Holy VFX 04/Holy VFX 04(48x48).png", 816, 48, 17, 48),
     "RALLY": (76, "sword-clash/sword-clash.png", 704, 64, 11, 48),
     "RESPITE": (77, "heart-pop/heart-pop.png", 864, 64, 18, 48),
@@ -72,13 +72,13 @@ def validate_sources() -> None:
         require(f", {frames}, {max_size});" in animation_catalog,
                 f"compact animation metadata drift: {spell}")
 
-    require("public static final int COMBAT_EFFECT_COUNT = 77;" in client,
+    require("public static final int COMBAT_EFFECT_COUNT = 100;" in client,
             "client combat-effect capacity drift")
     require('"cleric-mend"' in client and '"cleric-respite"' in client,
             "client effect-name parity missing")
     require("int[][] animations" not in catalog
-            and "ClericSpellPresentation.NONE" in catalog,
-            "current cast animations must remain unassigned pending owner selections")
+            and "ClericBlessingContract.animationForComponents(kinds)" in catalog,
+            "current animations must derive from components")
     require("hasOnEntityAnimation" in presentation and "getOnEntityAnimationId" in presentation,
             "server presentation lacks recipient-animation semantics")
     require("hasOnEntityAnimation" in client_def and "getOnEntityAnimationId" in client_def,
@@ -132,7 +132,7 @@ public final class ClericAnimationCatalogFixture {
 			"heal-alt/heal-alt.png", "fist/fist.png", "cleanse 2/cleanse 2.png",
 			"cleanse/cleanse.png", "wall-shield/Buff n Debuff P4 04.png",
 			"greater-heal-alt/greater-heal-alt.png",
-			"Holy VFX 03/Holy VFX 03(64x80).png", "thorns/thorns.png",
+			"holy-sword/holy-sword.png", "bark/bark.png",
 			"Holy VFX 04/Holy VFX 04(48x48).png", "sword-clash/sword-clash.png",
 			"heart-pop/heart-pop.png"
 		};
@@ -169,7 +169,7 @@ def run_compiled_catalog_fixture() -> None:
         classes.mkdir()
         source.write_text(textwrap.dedent(JAVA_FIXTURE), encoding="utf-8")
         subprocess.run(
-            ["javac", "-encoding", "UTF-8", "-d", str(classes), str(catalog), str(source)],
+            ["javac", "-encoding", "UTF-8", "-d", str(classes), str(catalog), str(CLIENT / "orsc/ClericBlessingContract.java"), str(source)],
             cwd=ROOT,
             check=True,
         )
@@ -183,7 +183,7 @@ def run_compiled_catalog_fixture() -> None:
 def main() -> None:
     validate_sources()
     run_compiled_catalog_fixture()
-    print("PASS legacy C12 animation assets preserved; current cast mappings unassigned")
+    print("PASS legacy C12 animation assets preserved; active component mappings tested separately")
 
 
 if __name__ == "__main__":

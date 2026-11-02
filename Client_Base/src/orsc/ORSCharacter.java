@@ -31,6 +31,8 @@ public final class ORSCharacter {
 	public int colourSkin;
 	public int colourTop;
 	public int combatTimeout = 0;
+	// Allocated only for the local recipient, never for the 16K NPC registry.
+	public ClericBuffPlayback clericBuffPlayback;
 	public int combatEffectType = 0;
 	public int combatEffectTime = 0;
 	public int pendingCombatEffectType = 0;
@@ -93,6 +95,7 @@ public final class ORSCharacter {
     public void tickHitSplats() { floatingHitSplats.advance(FloatingHitSplatState.now()); }
 
 	public void clearTransientVisualState() {
+		if (clericBuffPlayback != null) clericBuffPlayback.clear();
 		bubbleItem = 0;
 		bubbleTimeout = 0;
 		combatTimeout = 0;

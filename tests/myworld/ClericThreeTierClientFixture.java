@@ -113,7 +113,7 @@ public final class ClericThreeTierClientFixture {
         catalog.codeAtIndex(-1) == -1 && catalog.codeAtIndex(20) == -1 && catalog.get(0) == null,
         "unknown identity");
     for (ClericSpellDef d : definitions) {
-      check(!d.hasOnEntityAnimation() && !d.hasCasterIcon(), "unassigned cast visuals " + d.getName());
+      check(d.hasOnEntityAnimation() == (d.getStableCode() >= 12 && d.getStableCode() <= 20) && !d.hasCasterIcon(), "approved blessing-only cast visuals " + d.getName());
       Map<Integer, Integer> inventory = new HashMap<Integer, Integer>();
       for (ClericCostDef c : d.getCosts()) inventory.put(c.getItemId(), c.getCount());
       check(d.hasResources(id -> inventory.getOrDefault(id, 0)), "all costs");
