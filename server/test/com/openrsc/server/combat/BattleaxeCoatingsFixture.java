@@ -32,7 +32,8 @@ public final class BattleaxeCoatingsFixture {
         try(CurrentCombatHarness h=new CurrentCombatHarness()) {
             h.server().getConfig().MEMBER_WORLD=true;h.server().getConfig().WANT_FATIGUE=false;
             Object actions=Class.forName("com.openrsc.server.plugins.custom.itemactions.BattleaxeCoatingActions").getConstructor().newInstance();
-            UseInvTrigger use=(UseInvTrigger)actions;OpInvTrigger op=(OpInvTrigger)actions;
+            UseInvTrigger use=(UseInvTrigger)actions;
+            check(!(actions instanceof OpInvTrigger),"no right-click wipe handler remains");
             for(int n=0;n<BASES.length;n++) {
                 int base=BASES[n],coated=3411+n;
                 check(BattleaxeCoatingCatalog.coated(base)==coated&&BattleaxeCoatingCatalog.base(coated)==base,"explicit full roster mapping");
@@ -53,9 +54,14 @@ public final class BattleaxeCoatingsFixture {
                     check(find(p,base)==null&&find(p,3410)==null&&find(p,ItemId.EMPTY_VIAL.id())!=null,"one dose for one weapon and empty vial");
                     check(!BattleaxeCoatings.apply(p,dose,weapon),"stale refs cannot duplicate application");
                     snapshot(p,result);
-                    check(op.blockOpInv(p,0,result,"Wipe clean"),"explicit wipe action");op.onOpInv(p,0,result,"Wipe clean");
+                    p.getCarriedItems().remove(find(p,ItemId.EMPTY_VIAL.id()));
+                    Item wool=add(p,ItemId.WOOL.id());
+                    check(p.getCarriedItems().getInventory().size()==p.getCarriedItems().getInventory().getCapacity(),"cleaning starts with full inventory");
+                    check(use.blockUseInv(p,0,reverse?result:wool,reverse?wool:result),"both wool-cleaning orders routed");
+                    use.onUseInv(p,0,reverse?result:wool,reverse?wool:result);
                     check(find(p,base)!=null&&find(p,base).getItemId()==identity&&find(p,3410)==null,"wipe returns base with no refund");
-                    check(!BattleaxeCoatings.wipe(p,result),"stale wipe cannot duplicate");
+                    check(find(p,ItemId.WOOL.id())==null&&find(p,base).getItemStatus().getDurability()==73,"one wool consumed; weapon durability retained");
+                    check(!BattleaxeCoatings.wipe(p,result,wool),"stale wipe cannot duplicate");
                 }
                 // Invalid, noted, equipped, unsupported and identical coating cases preserve all inputs.
                 for(int mode=0;mode<6;mode++) {
@@ -91,6 +97,7 @@ public final class BattleaxeCoatingsFixture {
                 Npc dying=h.npc(3,441,440);dying.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),1,1,false);
                 hit.invoke(event,p,dying,10,false,false);check(Slow.power(dying)==0,"killing hit never applies Slow");
             }
+            cleaningRejections(h,use);
             recipes(h,use);
             poisonBoundaries(h);
             armorPoisonPolicy(h);
@@ -98,6 +105,28 @@ public final class BattleaxeCoatingsFixture {
             policyAndSnapshot(h);
         }
         System.out.println("PASS battleaxe coatings: "+assertions+" assertions; all15 templates, atomic recipe/apply/wipe, actual primary damage and poison paths");
+    }
+
+    private static void cleaningRejections(CurrentCombatHarness h,UseInvTrigger use)throws Exception {
+        for(int mode=0;mode<9;mode++) {
+            Player p=player(h,"badwipe"+mode);
+            Item weapon=add(p,mode==6?89:BattleaxeCoatingCatalog.coated(89));
+            Item wool=add(p,mode==7?ItemId.BALL_OF_WOOL.id():ItemId.WOOL.id());
+            if(mode==0)weapon.getItemStatus().setNoted(true);
+            if(mode==1)wool.getItemStatus().setNoted(true);
+            if(mode==2)weapon.setWielded(true);
+            Item suppliedWeapon=mode==3?weapon.copy():weapon;
+            Item suppliedWool=mode==4?wool.copy():wool;
+            if(mode==5)p.getClientLimitations().maxItemId=0;
+            boolean enabled=p.getConfig().WANT_MYWORLD;
+            if(mode==8)p.getConfig().WANT_MYWORLD=false;
+            try {
+                check(!BattleaxeCoatings.wipe(p,suppliedWeapon,suppliedWool),"unsafe cleaning rejected "+mode);
+                if(mode==8)check(!use.blockUseInv(p,0,weapon,wool),"cleaning disabled outside MyWorld");
+                check(p.getCarriedItems().getInventory().size()==2&&find(p,weapon.getCatalogId())==weapon
+                    &&find(p,wool.getCatalogId())==wool,"rejected cleaning preserves both identities "+mode);
+            } finally {p.getConfig().WANT_MYWORLD=enabled;}
+        }
     }
 
     private static void recipes(CurrentCombatHarness h,UseInvTrigger use)throws Exception {

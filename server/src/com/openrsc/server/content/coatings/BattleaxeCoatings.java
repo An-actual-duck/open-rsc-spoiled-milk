@@ -38,6 +38,11 @@ public final class BattleaxeCoatings {
             || (a==EYE&&b==GLAND) || (a==GLAND&&b==EYE);
     }
 
+    public static boolean cleaningPair(int a,int b) {
+        return (BattleaxeCoatingCatalog.isCoated(a)&&b==ItemId.WOOL.id())
+            || (BattleaxeCoatingCatalog.isCoated(b)&&a==ItemId.WOOL.id());
+    }
+
     private static Item ingredient(Player player,int id) {
         for(Item item:player.getCarriedItems().getInventory().getItems())
             if(item.getCatalogId()==id&&!item.getNoted()&&!item.isWielded()&&item.getAmount()==1)return item;
@@ -106,10 +111,11 @@ public final class BattleaxeCoatings {
         return changed;
     }
 
-    public static boolean wipe(Player player,Item weapon) {
-        if(weapon==null||!BattleaxeCoatingCatalog.isCoated(weapon.getCatalogId()))return false;
-        boolean changed=exchange(player,new Item[]{weapon},BattleaxeCoatingCatalog.base(weapon.getCatalogId()));
-        if(changed)player.message("You wipe the coating away. It cannot be recovered.");
+    public static boolean wipe(Player player,Item weapon,Item wool) {
+        if(weapon==null||wool==null||!BattleaxeCoatingCatalog.isCoated(weapon.getCatalogId())
+                ||wool.getCatalogId()!=ItemId.WOOL.id())return false;
+        boolean changed=exchange(player,new Item[]{weapon,wool},BattleaxeCoatingCatalog.base(weapon.getCatalogId()));
+        if(changed)player.message("You wipe the coating away with the wool. Neither can be recovered.");
         return changed;
     }
 }
