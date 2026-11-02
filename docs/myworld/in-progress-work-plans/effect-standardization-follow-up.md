@@ -11,8 +11,8 @@ weapon poison contributions. Shared Slow and poison/antidote cleansing are
 implemented; their broader standardization remains a separate follow-up.
 
 Use the [current release checklist](next-major-release-goals.md#release-closeout-checklist)
-for the bounded task-activation/Deathwing corrections, combined validation and
-ordinary-player acceptance. This document's older proposals do not create new
+for final verification of the reviewed task-activation/Deathwing corrections,
+combined validation and ordinary-player acceptance. This document's older proposals do not create new
 release requirements or reopen settled recipes/values. See the
 [coating implementation](battleaxe-coatings-implementation-review.md) and
 [Zamorak implementation](zamorak-hostile-implementation-review.md) for current receipts.

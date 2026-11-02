@@ -20,11 +20,13 @@ animations are selected/implemented. The glove icon is approved and no worn
 monocle visual is required. Preserve existing approvals and the concise
 spellbook/detailed guide; final assembled visual acceptance is still required.
 
-The audit identified prepared tower-task activation and missing Deathwing
-assignments. Owner-approved corrections and progression-version migration are
-in progress in a focused worker; they are not claimed integrated here. Final
-validation must use the actual prepared configuration and task registry rather
-than a fixture that merely forces the desired flag on.
+The tower-task activation, Champions-tier Death wing assignment and version-5
+progression corrections are implemented and independently reviewed in exact
+commit `9fe259238491933940f0e45a6aa75e283d14c4a6`; see the
+[Slayer activation review](slayer-release-task-activation-review.md). Final paired
+candidate verification/bookkeeping must confirm both prepared production
+profiles and the actual task registry, rather than rely on a test flag override.
+Ordinary-player acceptance and rollout remain separate.
 
 The repaired source-selected map pair is `e343c03b…e58cf`: 1,787 sectors across
 nine levels and 34,598 placements, including the authored tower/gem cave, eggs,
@@ -32,9 +34,9 @@ well/ladder repairs and isolated ground-colour corrections. Four grey cosmetic
 joins remain accepted limitations. Original editable work and earlier exports
 are preserved. See the [candidate assembly record](next-update-candidate-assembly-review.md).
 
-After exact closeout handoffs integrate, complete combined regressions and static
-review, paired private packaging, ordinary-player walkthrough/owner acceptance,
-then final provenance/migration/backups/rollback. The owner decides the release
+Final combined regressions/static review, paired private packaging, the ordinary-
+player walkthrough/owner acceptance and final provenance/migration/backups/rollback
+remain on the checklist. The owner decides the release
 label; no alpha/beta decision or live activation follows automatically.
 
 **Deferred:** Mystic Blue Dragon, Fierce Red Dragon, Corporeal Beast, Cleric

@@ -63,13 +63,17 @@ fixtures and evidence are separate from this map copy. Current source has all
 cumulative god-spell animations and all 15 coatings. Glove art and the omitted
 worn monocle visual are owner-approved. Preserve the accepted concise Cleric UI.
 
-The November 2 audit identified the prepared disabled tower-task flag and missing
-Deathwing assignment. Corrections and versioned progression migration are in
-progress under a separate focused handoff; this record does not claim them
-integrated. Final artifacts must be refreshed after integration and must prove
-`want_slayer_tower_tasks` is enabled in the actual prepared configuration, the
-eight new families and Deathwing are assignable, and existing players migrate
-idempotently. A test-only flag override is insufficient.
+The November 2 tower-task and Deathwing corrections are implemented and
+independently reviewed in exact commit
+`9fe259238491933940f0e45a6aa75e283d14c4a6`; see the
+[Slayer activation review](slayer-release-task-activation-review.md). Both production
+profiles enable the tower families; the release roster is version 5 with the
+Champions-tier Death wing assignments and historical-progress migration.
+Refresh the paired artifacts to the final combined source and record actual
+configuration/roster checks in the package ledger. Confirm all eight families,
+Death wings, idempotent existing-player migration and contact/stair routes in
+that candidate. A test-only flag override is insufficient; source review does
+not complete private acceptance or public activation.
 
 The [current closeout checklist](next-major-release-goals.md#release-closeout-checklist)
 tracks final combined static/regression validation, paired artifacts, ordinary-

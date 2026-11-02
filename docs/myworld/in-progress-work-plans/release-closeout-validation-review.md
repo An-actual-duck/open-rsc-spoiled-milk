@@ -3,13 +3,22 @@
 Source base: `807afc243ca497896a60c97183283980af7a8cbd`.
 Worker: `fix/release-checklist-and-validation` in Core ai-2.
 Status: focused implementation and tests complete; exact READY commit is recorded
-by the worker handoff. Manager integration and final combined review are separate.
+by the worker handoff. Final combined validation and acceptance remain separate.
+
+November 2 handoff refinement: after the initial `0bae18ff…` handoff, Core
+independently reviewed and locally integrated the Slayer corrections from exact
+`9fe259238491933940f0e45a6aa75e283d14c4a6`; see the
+[Slayer activation review](slayer-release-task-activation-review.md). The current
+checklist now records implementation/review as complete and leaves final paired
+candidate verification/package-ledger bookkeeping pending. The changes in this
+refinement are documentation only; no heavy gate was repeated or newly claimed.
 
 This branch changes documentation and supplemental tests only. It does not
 change gameplay, numeric balance, configuration, task data, map selections,
-artwork, accounts, staging or public processes. The separate tower-task and
-Deathwing/progression/contact-route corrections remain in progress until their
-own exact handoff is reviewed and integrated.
+artwork, accounts, staging or public processes. At this branch's initial
+`0bae18ff…` handoff, the separate tower-task and Deathwing/progression/contact-route
+corrections were still in progress. That historical status is superseded by the
+reviewed source completion recorded above.
 
 ## Current release record
 

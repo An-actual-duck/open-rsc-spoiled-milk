@@ -36,12 +36,15 @@ and accepted no worn monocle visual; those are closed art decisions. The tower
 and gem cave are authored, with repaired paired map `e343c03b…e58cf` selected for
 private acceptance. Existing content approvals remain valid.
 
-The November 2 audit found two release-closeout omissions: the prepared
-`want_slayer_tower_tasks: false` setting excludes the eight new task families,
-and Deathwing has placed NPCs/family data but no assignment. The owner approved
-corrections. Those fixes and versioned progression migration are **in progress**
-on `fix/slayer-release-task-activation`; they are not claimed integrated or
-accepted by this documentation. Supplemental test repair is reviewed separately.
+The November 2 audit's tower-task and Deathwing omissions are implemented and
+independently reviewed in exact commit
+`9fe259238491933940f0e45a6aa75e283d14c4a6`; see the
+[Slayer activation review](slayer-release-task-activation-review.md). Both next-update
+production profiles enable the eight tower families, and the enabled roster is
+version 5 with mandatory/repeatable Champions-tier Death wings. Historical
+progress migration and contact/stair-route checks are included. Final paired
+candidate verification and package-ledger bookkeeping remain pending; reviewed
+source completion is not ordinary-player acceptance or live activation.
 
 **Deferred:** Cleric Tier 4, Mystic Blue Dragon, Fierce Red Dragon, Corporeal
 Beast and Ante. Boss rewards/hide sets and Ante's balance/honesty design remain
@@ -49,11 +52,12 @@ future work. No broader system, terrain or art expansion is required here.
 
 ### Release closeout checklist
 
-- [ ] Integrate exact reviewed closeout handoffs. Confirm the prepared release
-  configuration actually enables `want_slayer_tower_tasks`, all eight new
-  families are assignable and Deathwing appears at the intended tier. Validate
-  fresh and existing-player progression/version migration and contact/stair
-  routes. Tests that force the flag on do not prove the shipped configuration.
+- [ ] Verify the final paired candidate against the completed reviewed source
+  corrections in `9fe2592…`: both prepared production profiles must enable
+  `want_slayer_tower_tasks`, all eight tower families and Champions-tier Death
+  wings must be assignable, and fresh/existing players must use the reviewed
+  version-5 migration and contact/stair routes. Record the actual configuration,
+  roster and source in the package ledger; a test-only flag override is not proof.
 - [ ] Run the final combined commit through maintained regressions, the five
   repaired supplemental gates, compiler checks and whole-program static review.
   Preserve failures and investigate new findings individually; a stale fixture
