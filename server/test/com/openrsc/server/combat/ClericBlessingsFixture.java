@@ -106,16 +106,11 @@ public final class ClericBlessingsFixture {
       }
       party(h, c, r);
       skill(c, Skill.PRAYER, 160, 99);
-      int[] animationIds = {67, 72, 75, 69, 70, 74, 68, 73, 76};
-      for (int i = 0; i < animationIds.length; i++)
+      for (ClericSpellDefinition spell : ClericSpellCatalog.getAll())
         check(
-            ClericSpellCatalog.fromCode(12 + i).getPresentation().getOnEntityAnimationId()
-                == animationIds[i],
-            "active blessing maps approved existing animation");
-      check(
-          !ClericSpellCatalog.fromCode(1).getPresentation().hasOnEntityAnimation()
-              && !ClericSpellCatalog.fromCode(21).getPresentation().hasOnEntityAnimation(),
-          "both Unify forms stay animationless");
+            !spell.getPresentation().hasOnEntityAnimation()
+                && !spell.getPresentation().hasCasterIcon(),
+            "Cleric cast visuals remain unassigned until owner selects replacements");
       check(ClericSpellCatalog.getAll().size() == 20, "active20 book");
       int[] thresholds = {0, 20, 45, 75, 115, 160};
       for (ClericSpellDefinition d : ClericSpellCatalog.getAll()) {

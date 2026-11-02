@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Validate the approved C12 Cleric on-entity animation contract."""
+"""Preserve legacy C12 animation assets and the unassigned current cast visuals."""
 
 from __future__ import annotations
 
 import struct
-import re
 import subprocess
 import tempfile
 import textwrap
@@ -77,8 +76,9 @@ def validate_sources() -> None:
             "client combat-effect capacity drift")
     require('"cleric-mend"' in client and '"cleric-respite"' in client,
             "client effect-name parity missing")
-    require(re.search(r'"unify"\s*,\s*-1', catalog) is not None,
-            "Unify must remain animationless")
+    require("int[][] animations" not in catalog
+            and "ClericSpellPresentation.NONE" in catalog,
+            "current cast animations must remain unassigned pending owner selections")
     require("hasOnEntityAnimation" in presentation and "getOnEntityAnimationId" in presentation,
             "server presentation lacks recipient-animation semantics")
     require("hasOnEntityAnimation" in client_def and "getOnEntityAnimationId" in client_def,
@@ -183,7 +183,7 @@ def run_compiled_catalog_fixture() -> None:
 def main() -> None:
     validate_sources()
     run_compiled_catalog_fixture()
-    print("Cleric C12 on-entity animation checks passed")
+    print("PASS legacy C12 animation assets preserved; current cast mappings unassigned")
 
 
 if __name__ == "__main__":

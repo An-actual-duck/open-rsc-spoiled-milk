@@ -113,6 +113,7 @@ public final class ClericThreeTierClientFixture {
         catalog.codeAtIndex(-1) == -1 && catalog.codeAtIndex(20) == -1 && catalog.get(0) == null,
         "unknown identity");
     for (ClericSpellDef d : definitions) {
+      check(!d.hasOnEntityAnimation() && !d.hasCasterIcon(), "unassigned cast visuals " + d.getName());
       Map<Integer, Integer> inventory = new HashMap<Integer, Integer>();
       for (ClericCostDef c : d.getCosts()) inventory.put(c.getItemId(), c.getCount());
       check(d.hasResources(id -> inventory.getOrDefault(id, 0)), "all costs");
@@ -265,6 +266,14 @@ public final class ClericThreeTierClientFixture {
     List<ClericSpellGuideCatalog.Entry> entries =
         ClericSpellGuideCatalog.build(definitions, id -> "Sigil " + id);
     check(entries.size() >= 17, "guide contains all spells with bounded pages");
+    StringBuilder stacking = new StringBuilder();
+    for (ClericSpellGuideCatalog.Entry e : entries)
+      if (e.getStableCode() == -4) for (String line : e.getLines()) stacking.append(line).append(' ');
+    String rules = stacking.toString().replaceAll("\\s+", " ");
+    check(rules.contains("Only one blessing from each god") && rules.contains("Different Clerics share")
+        && rules.contains("A lower tier never replaces a higher tier")
+        && rules.contains("Equal strength refreshes") && rules.contains("can coexist"),
+        "guide explains shared per-god stacking and replacement rules");
     for (ClericSpellGuideCatalog.Entry e : entries) {
       check(e.getLines().size() <= 12, "bounded guide row");
       check(e.getLines().isEmpty()||!e.getLines().get(0).matches("[0-9]+/[0-9]+.*"),"guide pages do not orphan an effect values table");

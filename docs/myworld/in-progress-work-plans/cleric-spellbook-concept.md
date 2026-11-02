@@ -2548,3 +2548,29 @@ checks remain mandatory; the editor does not automatically create safe shores.
 No god, Devotion fee, item exchange, map edit, casting change or new spell is
 introduced at wells. The exact identities, arithmetic, asset provenance and
 offline evidence are in [the implementation review](grace-blight-well-infusion-review.md).
+
+
+### 2026-11-01: God-line exclusivity and replacement cast visuals
+
+The owner confirmed one active blessing per god on a player and one active
+curse per god on an enemy, shared by every Cleric. Higher tiers replace lower
+tiers; lower tiers never downgrade an active higher tier. Within the same
+tier, higher Holy Power potency replaces lower potency and equal strength
+refreshes duration. Saradomin, Guthix and Zamorak can coexist. A higher-tier
+spell already includes the lower-tier gameplay components; separate casts do
+not multiply them. Rejected casts leave the stronger effect and its expiry
+unchanged. A cast with no useful recipients consumes no sigils.
+
+These are existing recipient-owned registry rules, not new per-caster slots
+or queued fallback effects. Direct multi-caster packet tests cover all three
+blessing and all three curse lines.
+
+The previous single-animation assignments were carried over from retired
+spells and are now unassigned for blessings and curses. Original animation
+assets, identifiers and loading support remain preserved. Gameplay, named
+status icons, recipient messages and non-corporeal transparency remain active.
+The owner will choose replacement animations. The intended future presentation
+is cumulative by tier: Tier 1 shows its effect; Tier 2 shows Tier 1 and Tier 2;
+Tier 3 shows Tier 1, Tier 2 and Tier 3. No replacement art, playback timing or
+animation sequence is approved or assigned by this change. Unify and Greater
+Unify remain animationless.

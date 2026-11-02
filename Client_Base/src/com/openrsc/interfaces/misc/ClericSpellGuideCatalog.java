@@ -92,6 +92,15 @@ public final class ClericSpellGuideCatalog {
     add(lines, "Unify and Greater Unify use Grace alone. Their movement is fixed and does not scale with Holy Power.");
     add(lines, "Each spell's pages give its targets, sigil cost and effect values. Scroll to continue through the guide.");
     addPages(entries, new Entry(-3, "God lines and sigils", "", "", "", lines));
+
+    DocumentLines stacking = new DocumentLines();
+    add(stacking, "Only one blessing from each god can be active on you.");
+    add(stacking, "The same rule applies to each god's curses on an enemy.");
+    add(stacking, "Different Clerics share these limits; extra casts do not stack.");
+    add(stacking, "Higher tiers replace lower tiers. A lower tier never replaces a higher tier.");
+    add(stacking, "Within the same tier, stronger power replaces weaker power. Equal strength refreshes the duration.");
+    add(stacking, "Saradomin, Guthix and Zamorak effects can coexist.");
+    addPages(entries, new Entry(-4, "Which effects can be active?", "", "", "", stacking));
   }
 
   private static Entry format(ClericSpellDef d, IntFunction<String> names) {
