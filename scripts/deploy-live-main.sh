@@ -116,7 +116,7 @@ printf '  Live root: %s\n' "$MYWORLD_LIVE_ROOT"
 printf '  Commit:    %s\n' "$deployed_commit"
 printf '  Database:  %s -> %s\n' "$checkout_db" "$external_db"
 printf '  Layered world: %s\n' "$live_layered_package"
-printf '  Layered manifest: %s\n' "$SPOILED_MILK_LAYERED_MANIFEST_SHA256"
+printf '  Layered manifest: %s\n' "$(layered_world_manifest_sha256 "$live_layered_package")"
 
 printf 'The public port was verified stopped throughout deployment.\n'
 printf 'Start the hosted server from the fixed live checkout when ready.\n'
