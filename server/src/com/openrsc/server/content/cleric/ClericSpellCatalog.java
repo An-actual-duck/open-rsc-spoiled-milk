@@ -22,8 +22,7 @@ public final class ClericSpellCatalog {
             3,
             1,
             3,
-            "unify",
-            -1));
+            "unify"));
     ClericAlignment[] gods = {
       ClericAlignment.SARADOMIN, ClericAlignment.GUTHIX, ClericAlignment.ZAMORAK
     };
@@ -32,7 +31,6 @@ public final class ClericSpellCatalog {
       {"guthixs_respite", "guthixs_protection", "guthixs_vengeance"},
       {"zamoraks_fervor", "zamoraks_fury", "zamoraks_wrath"}
     };
-    int[][] animations = {{67, 72, 75}, {69, 70, 74}, {68, 73, 76}};
     for (int tier = 1; tier <= 3; tier++)
       for (int god = 0; god < 3; god++) {
         ClericSpellId id = ClericSpellId.fromCode(12 + god * 3 + tier - 1);
@@ -45,8 +43,7 @@ public final class ClericSpellCatalog {
                 tier == 1 ? 1 : tier == 2 ? 20 : 40,
                 tier,
                 tier + 1,
-                icons[god][tier - 1],
-                animations[god][tier - 1]));
+                icons[god][tier - 1]));
       }
     defs.add(
         make(
@@ -57,8 +54,7 @@ public final class ClericSpellCatalog {
             30,
             2,
             5,
-            "greater_unify",
-            -1));
+            "greater_unify"));
     String[][] hostileNames = {
       {"Guthix's Unease", "Guthix's Dread", "Guthix's Terror"},
       {"Saradomin's Censure", "Saradomin's Condemnation", "Saradomin's Unmaking"},
@@ -82,8 +78,7 @@ public final class ClericSpellCatalog {
                 tier == 1 ? 1 : tier == 2 ? 20 : 40,
                 tier,
                 tier + 1,
-                hostileIcons[god][tier - 1],
-                animations[god == 0 ? 1 : god == 1 ? 0 : 2][tier - 1]));
+                hostileIcons[god][tier - 1]));
       }
     for (ClericSpellDefinition d : defs)
       if (BY_CODE.put(d.getStableCode(), d) != null)
@@ -99,8 +94,7 @@ public final class ClericSpellCatalog {
       int level,
       int tier,
       int radius,
-      String icon,
-      int animation) {
+      String icon) {
     int[] thresholds =
         (id.isBlessing() || id.isHostile())
             ? ClericBlessingContract.powerThresholds(tier * 2)
@@ -118,8 +112,8 @@ public final class ClericSpellCatalog {
         new ClericSpellPresentation(
             ClericSigilItemId.get(ClericSigilMaterial.STONE, god, true).getItemId(),
             icon,
-            -1,
-            animation),
+            ClericSpellPresentation.NONE,
+            ClericSpellPresentation.NONE),
         thresholds);
   }
 
