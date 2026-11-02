@@ -87,15 +87,15 @@ public final class SlayerMovementPreviewFixture {
 			require(npc.id == preview.npcId && npc.getName().equals(preview.displayName), "NPC identity");
 			require(npc.isAttackable() == preview.combatEnabled() && npc.getCamera1() == preview.cameraWidth()
 				&& npc.getCamera2() == preview.cameraHeight(), "NPC presentation and harmlessness");
-			File source = loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/slayer-movement-preview"}, preview.assetName + ".png");
+			File source = loader.findFirstFile(new String[]{"dev/myworld/assets/runtime/sprites/npcs/slayer-monsters"}, preview.assetName + ".png");
 			BufferedImage image = loader.readAssetImage(source);
 			Entry entry = loader.loadExternalNpcDirectionSheet(source, preview.animationName(), preview.columnWidths(), 3);
 			require(entry != null && image != null, "Missing " + preview.assetName);
 			entry = preview.withCombatFrames(entry);
 			if (preview == SlayerMovementPreview.ABYSSAL_DEMON) {
 				require(preview.loadedFrameCount()==21 && preview.frameHeight()==112, "both Abyssal attacks loaded");
-				BufferedImage base=loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/abyssal-spikes"},"approved-base.png"));
-				BufferedImage strip=loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/abyssal-spikes"},"approved-spikes-strip.png"));
+				BufferedImage base=loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/runtime/sprites/npcs/abyssal-spikes"},"approved-base.png"));
+				BufferedImage strip=loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/runtime/sprites/npcs/abyssal-spikes"},"approved-spikes-strip.png"));
 				for(int row=0;row<3;row++) {
 					for(int y=0;y<100;y++) for(int x=0;x<612;x++)
 						require(base.getRGB(x,row*100+y)==image.getRGB(x,row*112+6+y),"approved base pixels preserved");
@@ -110,8 +110,8 @@ public final class SlayerMovementPreviewFixture {
 			}
 			if (preview == SlayerMovementPreview.DARK_BEAST) {
 				require(preview.loadedFrameCount()==21 && preview.frameHeight()==110,"Dark beast two attack columns");
-				BufferedImage base=loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/dark-beast-lightning"},"approved-base.png"));
-				BufferedImage strip=loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/dark-beast-lightning"},"approved-charge-strip.png"));
+				BufferedImage base=loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/runtime/sprites/npcs/dark-beast-lightning"},"approved-base.png"));
+				BufferedImage strip=loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/runtime/sprites/npcs/dark-beast-lightning"},"approved-charge-strip.png"));
 				for(int y=0;y<330;y++) for(int x=0;x<720;x++) require(base.getRGB(x,y)==image.getRGB(x,y),"approved normalized base untouched");
 				for(int row=0;row<3;row++) for(int y=0;y<110;y++) for(int x=0;x<120;x++) {
 					int sx=(int)Math.floor((x+0.5)*7), sy=(int)Math.floor((y-8+0.5)*7);
@@ -121,7 +121,7 @@ public final class SlayerMovementPreviewFixture {
 			}
 			if (preview == SlayerMovementPreview.BLOODVELD) {
 				require(preview.loadedFrameCount() == 21, "Bloodveld retains bite and tongue");
-				BufferedImage base = loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/bloodveld-tongue"}, "approved-base.png"));
+				BufferedImage base = loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/runtime/sprites/npcs/bloodveld-tongue"}, "approved-base.png"));
 				for (int y=0;y<330;y++) for(int x=0;x<720;x++) require(base.getRGB(x,y)==image.getRGB(x,y), "approved base unchanged");
 				for (int row=0;row<3;row++) {
 					require(preview.projectileAttackFrame(row*200)==18+row, "tongue sequence");

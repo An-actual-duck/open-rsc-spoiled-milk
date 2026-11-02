@@ -38,9 +38,9 @@ kept for asset work but are not packaged into the client.
   part of the current asset set.
 - Prayer UI power, protection, enchanting XP, smithing XP, and crafting XP icons
   are sourced from a royalty-free repository.
-- Summon UI icon provenance is tracked in `dev/myworld/assets/credit`.
-- Magic UI icon provenance is tracked in `dev/myworld/assets/credit`.
-- Cleric UI icon provenance is tracked in `dev/myworld/assets/credit`.
+- Summon UI icon provenance is tracked in `dev/myworld/assets/CREDITS.txt`.
+- Magic UI icon provenance is tracked in `dev/myworld/assets/CREDITS.txt`.
+- Cleric UI icon provenance is tracked in `dev/myworld/assets/CREDITS.txt`.
 - ThatKidBobo supplied the initial remastered sprite, item, and texture batch.
   Detailed mappings and staging status are tracked in
   `remastered-sprites/CREDITS.md` and each leaf `set.json`.

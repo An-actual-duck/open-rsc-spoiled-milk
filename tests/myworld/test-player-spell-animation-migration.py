@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-ASSETS = ROOT / "dev/myworld/assets/animations/on-entity"
+ASSETS = ROOT / "dev/myworld/assets/runtime/animations/on-entity"
 
 
 def read(relative_path: str) -> str:

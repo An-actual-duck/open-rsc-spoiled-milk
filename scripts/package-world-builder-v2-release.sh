@@ -174,7 +174,7 @@ validate_runtime "Linux" "$LINUX_JRE" "bin/java" "Linux"
 validate_runtime "Windows" "$WINDOWS_JRE" "bin/java.exe" "Windows"
 
 PACKAGE_ASSETS="$ROOT_DIR/release/world-builder-v2"
-ICON_CREDITS="$ROOT_DIR/dev/myworld/assets/ui/world-editor/CREDITS.md"
+ICON_CREDITS="$ROOT_DIR/dev/myworld/assets/runtime/ui/world-editor/CREDITS.md"
 if [[ "$SKIP_BUILD" != true && ! -f "$PACKAGE_ASSETS/RELEASE-READY" ]]; then
 	fail "World Builder 2 public packaging remains locked until layered export/import and final release validation are accepted"
 fi
@@ -203,7 +203,7 @@ if find "$LAYERED_PACKAGE" -type l -print -quit | grep -q .; then
 fi
 
 CLIENT_JAR="$ROOT_DIR/Client_Base/Open_RSC_Client.jar"
-TOOLS_JAR="$ROOT_DIR/output/world-builder-tools/world-builder-tools.jar"
+TOOLS_JAR="$ROOT_DIR/output/builds/world-builder/world-builder-tools.jar"
 SERVER_JAR="$ROOT_DIR/server/core.jar"
 PLUGINS_JAR="$ROOT_DIR/server/plugins.jar"
 SEED_DATABASE="$ROOT_DIR/server/inc/sqlite/myworld_seed.db"

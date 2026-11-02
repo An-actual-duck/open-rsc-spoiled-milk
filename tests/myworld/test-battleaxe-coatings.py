@@ -6,11 +6,11 @@ from PIL import Image
 ROOT=Path(__file__).resolve().parents[2]
 spec=importlib.util.spec_from_file_location('coatings',ROOT/'scripts/generate-battleaxe-coatings.py');gen=importlib.util.module_from_spec(spec);spec.loader.exec_module(gen)
 subprocess.run(['python3',str(ROOT/'scripts/generate-battleaxe-coatings.py'),'--check'],check=True)
-manifest=json.loads((ROOT/'dev/myworld/battleaxe-coatings/manifest.json').read_text());rows=manifest['variants']
+manifest=json.loads((ROOT/'dev/myworld/assets/authoring/equipment/battleaxe-coatings/manifest.json').read_text());rows=manifest['variants']
 assert len(rows)==15 and {r['coatedId']for r in rows}==set(range(3411,3426))
 # Approved well textures were appended after the coating preservation baseline.
 # Validate their source-owned payloads, not just an allow-list of anonymous IDs.
-wells=json.loads((ROOT/'dev/myworld/cleric-wells/installation.json').read_text())
+wells=json.loads((ROOT/'dev/myworld/assets/authoring/world/cleric-wells/installation.json').read_text())
 subprocess.run(['python3',str(ROOT/'scripts/install-cleric-well-assets.py'),'--check'],check=True)
 well_custom={'textures:'+str(row['textureIndex'])for row in wells['textures'].values()}
 well_classic={str(row['nativeSprite'])for row in wells['textures'].values()}
@@ -29,7 +29,7 @@ with zipfile.ZipFile(__import__('io').BytesIO(authentic))as a,zipfile.ZipFile(RO
   x,y=a.getinfo(name),b.getinfo(name)
   for field in ['date_time','compress_type','comment','extra','external_attr','internal_attr','create_system','create_version','extract_version','flag_bits','file_size','CRC','compress_size','header_offset']:
    assert getattr(x,field)==getattr(y,field),('original classic metadata changed',name,field)
-asset=ROOT/'dev/myworld/assets/sprites';art=ROOT/'dev/myworld/battleaxe-coatings/art'
+asset=ROOT/'dev/myworld/assets/runtime/sprites';art=ROOT/'dev/myworld/assets/authoring/equipment/battleaxe-coatings/art'
 entries=gen.art.archive_entries(ROOT/'Client_Base/Cache/video/Custom_Sprites.osar')
 base=entries['equipment','battleaxe'];coated=entries['equipment','viscousbattleaxe']
 assert base['kind']==coated['kind'] and base['layer']==coated['layer']==3

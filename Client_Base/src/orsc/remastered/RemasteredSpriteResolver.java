@@ -19,7 +19,7 @@ import java.util.Set;
 
 public final class RemasteredSpriteResolver {
 	private static final String RESOURCE_ROOT = "myworld-assets/remastered-sprites/";
-	private static final String DEVELOPMENT_ROOT = "dev/myworld/assets/remastered-sprites";
+	private static final String DEVELOPMENT_ROOT = "dev/myworld/assets/authoring/remastered-sprites";
 
 	private final Map<String, Sprite> loaded = new HashMap<String, Sprite>();
 	private final Set<String> invalid = new HashSet<String>();

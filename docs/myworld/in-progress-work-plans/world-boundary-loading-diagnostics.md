@@ -146,7 +146,7 @@ distributions, case dimensions, and the five worst correlated traces.
 ## Baseline Evidence from the Last Visual Session
 
 This is a baseline from
-`output/renderer-diagnostics/session-20260730-202915-412829`, not a final
+`output/diagnostics/renderer/sessions/session-20260730-202915-412829`, not a final
 finding from the new suite.
 
 - There were 18 world-section transitions and 17 client-region transitions.
@@ -208,7 +208,7 @@ After closing the client:
 
 ```bash
 python3 scripts/analyze-renderer-session.py \
-  output/renderer-diagnostics/<session> --strict \
+  output/diagnostics/renderer/sessions/<session> --strict \
   --server-log server/logs/<private-current-log>
 ```
 
@@ -269,7 +269,7 @@ The generated `ai-summary.md` is the decision record. Retain the raw
 ## Diagonal Stress Crash and Exact Transport Cause
 
 Session
-`output/renderer-diagnostics/session-20260803-220210-3973356` contains several
+`output/diagnostics/renderer/sessions/session-20260803-220210-3973356` contains several
 successful true diagonal crossings followed by a client game crash during the
 next prediction. This was not a JVM, GPU, native-driver, or out-of-memory
 crash. The maintained client's game-crash handler caught:
@@ -373,7 +373,7 @@ publication or premature timeout, and verifies alignment of the following
 frame.
 
 In diagnostic session
-`output/renderer-diagnostics/session-20260803-231456-52833`, the exact stalled
+`output/diagnostics/renderer/sessions/session-20260803-231456-52833`, the exact stalled
 frame completed as 2,805 plus 3,414 bytes immediately after this change. All
 remaining baseline pages arrived, atomic activation reported player/static
 receipt `ok/ok` in 399 ms, the structure stage completed, and both socket queues
@@ -384,7 +384,7 @@ case remain required before declaring the transport milestone complete.
 ## Corrected-Profile Multi-Level Evidence
 
 Session
-`output/renderer-diagnostics/session-20260802-154618-2791426` contains the
+`output/diagnostics/renderer/sessions/session-20260802-154618-2791426` contains the
 production-equivalent validation and the marked `boundary-multilevel` phase
 from 19:54:44 through 19:55:30 UTC. The player completed four full circuits:
 ground to first, first to second, second to first, and first to ground. The
@@ -427,7 +427,7 @@ world update.
 ## First Marked Cold-Case Evidence
 
 Session
-`output/renderer-diagnostics/session-20260802-104354-2428779` captured one
+`output/diagnostics/renderer/sessions/session-20260802-104354-2428779` captured one
 settled first-visit cardinal crossing under `boundary-cold`. This run predates
 the added client-loop/retained-frame/presenter-wait fields, but its existing
 offset arrays and atomic events establish the following timeline:
@@ -464,7 +464,7 @@ submission-queue time on the next run.
 ## Warm Cardinal Directional Evidence
 
 Session
-`output/renderer-diagnostics/session-20260802-110206-2437601` measured repeated
+`output/diagnostics/renderer/sessions/session-20260802-110206-2437601` measured repeated
 return crossings between centers `(11,11)` and `(11,12)` under
 `boundary-warm-cardinal`. The player reported that one direction had an easy to
 capture stutter while the reverse was nearly imperceptible. All 11 return
@@ -491,7 +491,7 @@ received:
 - static-baseline completion at 633.8 ms and presentation release at 654.7 ms.
 
 Page-level confirmation in
-`output/renderer-diagnostics/session-20260802-111800-2459330` removed the one
+`output/diagnostics/renderer/sessions/session-20260802-111800-2459330` removed the one
 remaining inference. The fast `(11,11)` product has exactly eight data pages:
 two gameplay-scenery pages, one gameplay-wall page, four presentation-scenery
 pages, and one presentation-wall page. With its fence, all nine packets arrived
@@ -799,7 +799,7 @@ private cases, and do not publish or deploy based on automated results alone.
 ### Private atomic-baseline acceptance and next renderer gate (2026-08-04)
 
 Session
-`output/renderer-diagnostics/session-20260804-111401-620485` used private port
+`output/diagnostics/renderer/sessions/session-20260804-111401-620485` used private port
 43615, the production-equivalent `spoiled-milk-replacement` layered package,
 renderer diagnostics with frame capture disabled, and server delivery
 diagnostics from `server/logs/spoiled_milk_dev_98.log`. The owner reported that
@@ -855,7 +855,7 @@ preparation remains a separate follow-up after residency is corrected.
 ### Storage-identity prototype correction (2026-08-04)
 
 The first storage-key prototype was visually exercised in
-`output/renderer-diagnostics/session-20260804-113602-643012`. The first two of
+`output/diagnostics/renderer/sessions/session-20260804-113602-643012`. The first two of
 eight Ctrl+F8 records were explicitly identified by the tester as accidental
 markers and are excluded. The six valid markers correspond to diagonal return
 traces 9 and 11--15.
@@ -887,7 +887,7 @@ signature of success is a one-time population cost followed by near-zero
 chunk uploads on repeated returns.
 
 The first validation of that correction,
-`output/renderer-diagnostics/session-20260804-115856-745238`, exposed a second
+`output/diagnostics/renderer/sessions/session-20260804-115856-745238`, exposed a second
 ownership error. Nine marked hitches continued to coincide with 75--84 chunk,
 135.776--165.979 MiB upload bursts on the repeated `(11,11)`/`(12,12)` route.
 Console telemetry simultaneously reported a steady-state pattern of one chunk
@@ -904,7 +904,7 @@ proves different animated frame signatures resolve to one stable positional
 entry. A new private run must confirm the steady eviction stream is gone before
 the residency prototype can be accepted.
 
-Session `output/renderer-diagnostics/session-20260804-120427-758407` confirms
+Session `output/diagnostics/renderer/sessions/session-20260804-120427-758407` confirms
 that correction. The first two marker/crossing observations were explicitly
 identified as missing warm-ups and excluded. From the third marker onward,
 return crossings uploaded only 7--12 dynamic chunks, 0.904--1.404 MiB, in
@@ -935,7 +935,7 @@ accepted.
 ### Static-shadow acceptance and residual scenery cost (2026-08-04)
 
 Private session
-`output/renderer-diagnostics/session-20260804-121724-799028` exercised the
+`output/diagnostics/renderer/sessions/session-20260804-121724-799028` exercised the
 static-shadow ownership build at `980c74b12` on the repeated
 `(11,11)`/`(12,12)` route. The tester described the remaining hitch as very
 minimal. The attempted final Ctrl+F8 marker did not reach the bounded event
@@ -980,7 +980,7 @@ and door changes, and boundary timing before this optimization is retained.
 ### Batched-scene acceptance and diagonal prediction miss (2026-08-04)
 
 Private session
-`output/renderer-diagnostics/session-20260804-123424-922780` accepted the
+`output/diagnostics/renderer/sessions/session-20260804-123424-922780` accepted the
 batched legacy scene delta implementation at `82bd92042`: no visual, scenery,
 door, or interaction errors were observed. `packet.opcode-48` fell from the
 previous 22.676--29.494 ms warm range to 4.360 ms p50, 7.113 ms p95, and
@@ -1016,7 +1016,7 @@ terrain products before accounting for that memory would be needlessly risky.
 ### Diagonal-prediction acceptance and integration boundary (2026-08-04)
 
 Private layered-runtime session
-`output/renderer-diagnostics/session-20260804-125659-995982` exercised commit
+`output/diagnostics/renderer/sessions/session-20260804-125659-995982` exercised commit
 `8cc1f483a` on the same repeated cardinal/diagonal route. The first manual
 Ctrl+F8 marker was explicitly identified as a misclick and is excluded. The
 tester reported no visual errors, described the remaining hitch as harder to
@@ -1107,7 +1107,7 @@ ranked `context.scope-apply` path rather than micro-tuning removal further.
 ### Integrated owner route and residual observations (2026-08-25)
 
 Production-equivalent private session
-`output/renderer-diagnostics/session-20260825-220623-2839085` exercised current
+`output/diagnostics/renderer/sessions/session-20260825-220623-2839085` exercised current
 `main` revision `0107fc11a` with the replacement layered package, prediction,
 symmetric residency, readiness, and atomic activation enabled. The owner
 accepted the route as good. Every inspected transition used native authority,

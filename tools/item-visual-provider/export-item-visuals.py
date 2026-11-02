@@ -25,9 +25,9 @@ TOOL_DIR = Path(__file__).resolve().parent
 CLIENT_JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
 CUSTOM_ARCHIVE = ROOT / "Client_Base/Cache/video/Custom_Sprites.osar"
 AUTHENTIC_ARCHIVE = ROOT / "Client_Base/Cache/video/Authentic_Sprites.orsc"
-DEFAULT_FULL_OUTPUT = TOOL_DIR / "generated/item-visuals-full-v1.json"
-DEFAULT_COMPAT_OUTPUT = TOOL_DIR / "generated/item-visuals-3309-3317-v1.json"
-DEFAULT_NPC_OUTPUT = TOOL_DIR / "generated/npc-definitions-v1.json"
+DEFAULT_FULL_OUTPUT = ROOT / "output/art/exports/item-visual-provider/item-visuals-full-v1.json"
+DEFAULT_COMPAT_OUTPUT = ROOT / "output/art/exports/item-visual-provider/item-visuals-3309-3317-v1.json"
+DEFAULT_NPC_OUTPUT = ROOT / "output/art/exports/item-visual-provider/npc-definitions-v1.json"
 BUNDLE_DIRECTORY_NAME = "world-builder-provider"
 BUNDLE_PACKAGE_MANIFEST = "package-manifest-v1.json"
 BUNDLE_FULL_MANIFEST = "item-visuals-full-v1.json"
@@ -42,13 +42,12 @@ COMPATIBILITY_IDS = tuple(range(3309, 3318))
 SUPPORTED_OSAR_TYPES_WITH_LAYER = {1, 2, 3}
 EXTERNAL_PREFIX = "external-png:"
 EXTERNAL_ASSET_DIRS = (
-    "dev/myworld/assets/sprites/items/inventory-ground/agility-pouches",
-    "dev/myworld/assets/sprites/items/inventory-ground/tools",
-    "dev/myworld/assets/sprites/items/inventory-ground/weapons",
-    "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils",
-    "dev/myworld/assets/sprites/items/inventory-ground/resources",
-    "dev/myworld/assets/sprites/items/inventory-ground",
-    "output/pngs",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/agility-pouches",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground",
 )
 PROVIDER_INPUTS = (
     "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java",

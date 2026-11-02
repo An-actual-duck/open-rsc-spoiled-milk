@@ -52,7 +52,7 @@ an earlier random charge. A one-tick recovery preserves the discharge pose.
 
 ## Approved art and transport
 
-`dev/myworld/assets/sprites/npcs/dark-beast-lightning/` preserves the approved
+`dev/myworld/assets/runtime/sprites/npcs/dark-beast-lightning/` preserves the approved
 normalized base and final horn-lightened charge strip. `PackDarkBeastLightning`
 copies the first six columns unchanged and samples the final strip at 1/7 scale,
 origin (0,8) in a 120×110 cell. This matches the accepted comparison's reference

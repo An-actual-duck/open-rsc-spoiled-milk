@@ -1,6 +1,6 @@
 <project name="world-builder-tools" default="jar" basedir=".">
     <property name="src" location="src"/>
-    <property name="output" location="../../output/world-builder-tools"/>
+    <property name="output" location="../../output/builds/world-builder"/>
     <property name="classes" location="${output}/classes"/>
     <property name="jar" location="${output}/world-builder-tools.jar"/>
     <property name="javac.source" value="1.8"/>

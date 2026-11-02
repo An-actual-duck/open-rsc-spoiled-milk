@@ -22,7 +22,7 @@ SERVER_ITEMS = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 SERVER_OVERRIDES = ROOT / "server/conf/server/defs/ItemDefsMyWorld.json"
 ASSET_LOADER = ROOT / "Client_Base/src/orsc/ClientExternalAssetLoader.java"
 CLIENT_BUILD = ROOT / "Client_Base/build.xml"
-ASSET_DIR = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils"
+ASSET_DIR = ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils"
 SERVER_CLERIC_ROOT = ROOT / "server/src/com/openrsc/server/content/cleric"
 
 SIGILS = (
@@ -181,10 +181,10 @@ def validate_definitions_and_scope() -> None:
                         f"C02 item became reachable from production code: {path.relative_to(ROOT)}")
 
     loader = ASSET_LOADER.read_text(encoding="utf-8")
-    sigil_path = '"dev/myworld/assets/sprites/items/inventory-ground/resources/sigils"'
+    sigil_path = '"dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils"'
     require(sigil_path in loader, "external loader does not search the maintained sigil folder")
     require(loader.index(sigil_path) < loader.index(
-        '"dev/myworld/assets/sprites/items/inventory-ground/resources"'),
+        '"dev/myworld/assets/runtime/sprites/items/inventory-ground/resources"'),
         "specific sigil folder must precede the general resource folder")
     require("return getSurface().spriteSelect(item);" in (ROOT / "Client_Base/src/orsc/mudclient.java").read_text(encoding="utf-8"),
             "missing external-item fallback must still delegate to canonical sprite selection")
@@ -193,7 +193,7 @@ def validate_definitions_and_scope() -> None:
 
 
 def validate_source_assets() -> None:
-    receipt = json.loads((ROOT / "dev/myworld/moonsilver-sigil-production/manifest.json").read_text())
+    receipt = json.loads((ROOT / "dev/myworld/assets/authoring/items/moonsilver-sigils/manifest.json").read_text())
     require(receipt["status"] == "owner-approved" and receipt["fileRoot"] == "repository", "approved Moonsilver receipt root")
     for name, expected in receipt["files"].items():
         path = ROOT / name
@@ -284,7 +284,7 @@ public final class ClericSigilItemAssetFixture {
 
 	public static void main(String[] args) throws Exception {
 		Path root = Paths.get(args[0]);
-		Path assets = root.resolve("dev/myworld/assets/sprites/items/inventory-ground/resources/sigils");
+		Path assets = root.resolve("dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils");
 		EntityHandler.load(true);
 		check(EntityHandler.itemCount() == 3444, "client item count drift");
 

@@ -28,7 +28,7 @@ item or addition to `::slayergimmicks`. No permanent spawns, shops or drops adde
 ## Art
 
 Owner approved tongue strip v3 on 2026-09-20. Original approved sheet retained
-as `dev/myworld/assets/sprites/npcs/bloodveld-tongue/approved-base.png`; generated
+as `dev/myworld/assets/runtime/sprites/npcs/bloodveld-tongue/approved-base.png`; generated
 source retained beside it as `approved-tongue-strip.png`.
 `tools/myworld/PackBloodveldTongue.java` appends a 220x110 attack column using a
 fixed nearest-neighbor 4.8:1 scale and common baseline. The original 720x330

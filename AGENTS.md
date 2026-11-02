@@ -108,7 +108,7 @@ contributor rescue command before cleanup. The beginner-safe workflow is in
 ## Inventory / Ground Sprite References
 
 - Before designing a new inventory/ground icon, read
-  `dev/myworld/reference-library/items/README.md`, then the requested visual
+  `dev/myworld/assets/references/items/README.md`, then the requested visual
   family's notes and contact sheet (for example `weapons/daggers`).
 - Inspect the individual full-canvas PNG as the scale/position anchor. These
   are visual references, not gameplay item definitions or production assets.

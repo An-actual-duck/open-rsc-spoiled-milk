@@ -4,8 +4,8 @@ from pathlib import Path
 import hashlib,json,subprocess,tempfile,zipfile
 from PIL import Image
 ROOT=Path(__file__).resolve().parents[2]
-BASE=ROOT/'dev/myworld/blight-sigil-production'
-ASSETS=ROOT/'dev/myworld/assets/sprites/items/inventory-ground/resources/sigils'
+BASE=ROOT/'dev/myworld/assets/authoring/items/blight-sigil'
+ASSETS=ROOT/'dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils'
 manifest=json.loads((BASE/'manifest.json').read_text())
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 for name,digest in manifest['files'].items():assert sha(ROOT/name)==digest,name
@@ -22,7 +22,7 @@ with tempfile.TemporaryDirectory(prefix='blight-sigil-export-') as directory:
    assert list(Image.open(out).convert('RGBA').getdata())==list(image.getdata()),name
  for state,candidate in [('uninfused','carved'),('infused','infused')]:
   stone=Image.open(ASSETS/f'blight-stone-{state}.png').convert('RGBA')
-  approved=Image.open(ROOT/f'dev/myworld/blight-sigil-candidate/blight-thorn-{candidate}-28x25.png').convert('RGBA')
+  approved=Image.open(ROOT/f'dev/myworld/assets/authoring/items/blight-sigil/candidates/blight-thorn-{candidate}-28x25.png').convert('RGBA')
   assert list(stone.getdata())==list(approved.getdata()),'approved stone artwork changed'
   silver=Image.open(ASSETS/f'blight-silver-{state}.png').convert('RGBA')
   palette=dict(zip([(65,74,86),(91,87,98),(95,102,112),(111,120,131),(129,134,145),(143,152,163),(159,168,179),(181,174,195)],[55,75,95,115,190,215,235,255]))

@@ -525,7 +525,7 @@ final class RendererDiagnosticSession {
 		if (configured != null && !configured.trim().isEmpty()) {
 			return absoluteFile(configured.trim());
 		}
-		File root = absoluteFile("output/renderer-diagnostics");
+		File root = absoluteFile("output/diagnostics/renderer/sessions");
 		String generatedId = "session-" + DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
 			.withZone(java.time.ZoneId.systemDefault())
 			.format(Instant.now());

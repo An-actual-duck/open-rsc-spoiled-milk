@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-ANIMATIONS = ROOT / "dev/myworld/assets/animations"
+ANIMATIONS = ROOT / "dev/myworld/assets/runtime/animations"
 
 
 def read(relative_path: str) -> str:
@@ -236,7 +236,7 @@ def main() -> int:
         "perspective-aware warping",
         "current polish wave into that renderer experiment.",
     ), "animation-asset-migration-plan.md")
-    legacy_root = ROOT / "dev/myworld/assets/legacy animation folder/On Enemy"
+    legacy_root = ROOT / "dev/myworld/assets/runtime/legacy-animations/On Enemy"
     assert len(list((legacy_root / "ice-burst").glob("*.png"))) == 35
     assert len(list((legacy_root / "ice-crystal").glob("*.png"))) == 34
 

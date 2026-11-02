@@ -27,7 +27,7 @@ import java.util.Map;
 public final class WorldEditorDefinitionCatalog {
 	private static final String SCHEMA = "# world-editor-definition-catalog-v1";
 	private static final String DEVELOPMENT_PATH =
-		"dev/myworld/assets/ui/world-editor/definition-catalog-v1.tsv";
+		"dev/myworld/assets/runtime/ui/world-editor/definition-catalog-v1.tsv";
 	private static final String RESOURCE_PATH =
 		"myworld-assets/ui/world-editor/definition-catalog-v1.tsv";
 	private static final String[] FLOOR_TEXTURE_LABELS = {

@@ -10,7 +10,7 @@ CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 PLAN = ROOT / "docs/myworld/in-progress-work-plans/summoning-plan.md"
-SUMMON_ICON_DIR = ROOT / "dev/myworld/assets/sprites/UI/summon"
+SUMMON_ICON_DIR = ROOT / "dev/myworld/assets/runtime/ui/summon"
 
 SUMMON_NAMES = [
     "Broodling Spider",
@@ -52,7 +52,7 @@ def main() -> int:
         if name not in plan:
             failures.append(f"summoning plan missing {name}")
 
-    if "dev/myworld/assets/sprites/UI/summon" not in client:
+    if "dev/myworld/assets/runtime/ui/summon" not in client:
         failures.append("client must load summon icons from the current UI summon folder")
     if "getExternalSummoningIconFile(iconName)" not in client:
         failures.append("client must use a dedicated summon icon lookup")

@@ -5,7 +5,7 @@ from pathlib import Path
 from PIL import Image
 
 ROOT=Path(__file__).resolve().parents[1]
-SPEC=ROOT/'dev/myworld/battleaxe-coatings/manifest.json'
+SPEC=ROOT/'dev/myworld/assets/authoring/equipment/battleaxe-coatings/manifest.json'
 spec=importlib.util.spec_from_file_location('coating_art',ROOT/'scripts/audit-battleaxe-coatings.py')
 art=importlib.util.module_from_spec(spec);spec.loader.exec_module(art)
 
@@ -82,8 +82,8 @@ public final class BattleaxeCoatingCatalog {
     # The reviewed Phase1 edge transform operates on native pixels only.
     custom=ROOT/'Client_Base/Cache/video/Custom_Sprites.osar';entries=art.archive_entries(custom)
     rawframes=entries['equipment','battleaxe']['frames'];held=[]
-    assetroot=Path('dev/myworld/assets/sprites/items/inventory-ground')
-    authored=Path('dev/myworld/battleaxe-coatings/art')
+    assetroot=Path('dev/myworld/assets/runtime/sprites/items/inventory-ground')
+    authored=Path('dev/myworld/assets/authoring/equipment/battleaxe-coatings/art')
     images={}
     for v in variants:
         raw=entries['items','272' if v['baseId']==2752 else '84']['frames'][0][0]
@@ -92,7 +92,7 @@ public final class BattleaxeCoatingCatalog {
     # Native Aseprite is the reviewed PNG encoder for this artwork. Preserve its
     # complete bytes rather than introducing Pillow-only compression churn.
     emit(assetroot/'viscous-coating.png',
-         (ROOT/'dev/myworld/practice-feedback/art/png/viscous-coating.png').read_bytes())
+         (ROOT/'dev/myworld/assets/authoring/items/coating-reagents/art/png/viscous-coating.png').read_bytes())
     for n,(raw,meta) in enumerate(rawframes):
         im=art.edge_candidate(raw,raw)[0];held.append((im,meta));images[authored/f'held-{n:02}.png']=im
     for path,im in images.items():
@@ -155,7 +155,7 @@ public final class BattleaxeCoatingCatalog {
     with zipfile.ZipFile(classic) as z:
         assert {i.filename:hashlib.sha256(z.read(i)).hexdigest() for i in z.infolist() if i.filename not in desired}==classic_before
     preservation['Authentic_Sprites.orsc']=classic_before
-    receipt='dev/myworld/battleaxe-coatings/archive-entry-hashes.json'
+    receipt='dev/myworld/assets/authoring/equipment/battleaxe-coatings/archive-entry-hashes.json'
     if args.check:
         # This is the installation-time preservation receipt, not a roster of
         # all future game content. Later reviewed additions must not invalidate

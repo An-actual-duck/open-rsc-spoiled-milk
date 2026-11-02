@@ -80,11 +80,11 @@ def main() -> None:
     require('new AnimationDef("guthsymbol", "equipment"' in client, "Guthix worn symbol animation missing")
     require('loadExternalNeckEquipmentSprite("guthsymbol"' in mudclient, "Guthix worn symbol external loader missing")
     for path in [
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/guthix-symbol-mould.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/unstrung-symbol-of-guthix.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/unblessed-symbol-of-guthix.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/symbol-of-guthix.png",
-        ROOT / "dev/myworld/assets/sprites/equipment/guthix-symbol/numbered/17.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/guthix-symbol-mould.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/unstrung-symbol-of-guthix.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/unblessed-symbol-of-guthix.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/symbol-of-guthix.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/equipment/guthix-symbol/numbered/17.png",
     ]:
         require(path.is_file(), f"missing Guthix symbol asset {path.relative_to(ROOT)}")
 

@@ -20,7 +20,7 @@ import java.util.Map;
 public final class WorldEditorIconRegistry {
 	public static final int ICON_SIZE = 24;
 	private static final int ALPHA_THRESHOLD = 64;
-	private static final String DEVELOPMENT_ROOT = "dev/myworld/assets/ui/world-editor";
+	private static final String DEVELOPMENT_ROOT = "dev/myworld/assets/runtime/ui/world-editor";
 	private static final String RESOURCE_ROOT = "myworld-assets/ui/world-editor/";
 
 	public enum Key {

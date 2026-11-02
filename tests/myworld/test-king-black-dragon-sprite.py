@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 DEFS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
-SHEET = ROOT / "dev/myworld/assets/sprites/npcs/king-black-dragon/king-black-dragon-sprite-sheet.png"
+SHEET = ROOT / "dev/myworld/assets/runtime/sprites/npcs/king-black-dragon/king-black-dragon-sprite-sheet.png"
 JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
 
 

@@ -1,0 +1,693 @@
+{
+  "schemaVersion": 1,
+  "status": "complete",
+  "source": "Owner supplied final named Cleric icon PNGs and identified their artist as Atelier Pixerellia.",
+  "sourceRoot": "/home/justin/Core-Framework/dev/myworld/assets/sprites/UI/cleric",
+  "productionRoot": "dev/myworld/assets/runtime/ui/cleric",
+  "sourceFilesReadOnly": true,
+  "transform": "Filename normalization only; serialized PNG bytes, canvas, pixels and alpha unchanged.",
+  "expectedIconKeys": [
+    "unify",
+    "saradomins_light",
+    "saradomins_aura",
+    "saradomins_resplendence",
+    "guthixs_respite",
+    "guthixs_protection",
+    "guthixs_vengeance",
+    "zamoraks_fervor",
+    "zamoraks_fury",
+    "zamoraks_wrath",
+    "greater_unify",
+    "guthixs_unease",
+    "guthixs_dread",
+    "guthixs_terror",
+    "saradomins_censure",
+    "saradomins_condemnation",
+    "saradomins_unmaking",
+    "zamoraks_malice",
+    "zamoraks_cruelty",
+    "zamoraks_ruin"
+  ],
+  "pendingSourceFiles": [],
+  "legacySourceCommit": "508a059081009584d0174c4d2abf40d66c4d8c3d",
+  "legacyFiles": {
+    "aegis.png": "ff71b497b5422383a7ef845fe7350dcd42d3fe2897d4c66b1f01086339510e4f",
+    "fervor.png": "ed3d8d2f4424ad1e3da2bddc94e4a90a34fa0ddf373e71686c4a7dcc7be4939b",
+    "greater-mend.png": "adb16823683c8b45d05211a45e0bcf97d3e9075e00d3dc6338b5533848219af0",
+    "mend.png": "b527e3acebc690e303ed103cfcd647c874ed735742952aa5eb31d7cc083d1671",
+    "purify.png": "0365c4360707d1de18a3b39f8bfc4288d94932b518ea43529b2d6f42ccddece9",
+    "rally.png": "fb420fb6e90234227d7e16577a0310b5d0b7bf69badb02ec948dc4493c5a65d0",
+    "respite.png": "4a28c3ffda721bf3f6c49921d99ee34b37a24a39ec9c82f1aaf8915cf2fed584",
+    "restore.png": "608e9cba17a4c2c3aa686902740e70ddcce23c7862136c1825d59c45e40c5e89",
+    "thorns.png": "8dafc32f9ed17522cf1312337e85f38ad2a3cc6bff96b9f9918b23560d91ebf1",
+    "unify.png": "a3c1df0c9a1a99fb1a51c52cdccb67cb430c4ae44082fc40b1e9684295d57d78",
+    "ward.png": "5fa93e62e17ec3f5664b0774a319dbdee45715173b7a5cd4c7129f7e0f3e1af4",
+    "zeal.png": "8ff708f1214927e262bf8b3cda21a7a349edd4ded669e438eba8c9e643da93f7"
+  },
+  "temporaryCompatibilityAssets": [
+    {
+      "filename": "aegis.png",
+      "sha256": "ff71b497b5422383a7ef845fe7350dcd42d3fe2897d4c66b1f01086339510e4f",
+      "temporary": false,
+      "retiredAtGameplayCutover": true
+    },
+    {
+      "filename": "fervor.png",
+      "sha256": "ed3d8d2f4424ad1e3da2bddc94e4a90a34fa0ddf373e71686c4a7dcc7be4939b",
+      "temporary": false,
+      "retiredAtGameplayCutover": true
+    },
+    {
+      "filename": "greater-mend.png",
+      "sha256": "adb16823683c8b45d05211a45e0bcf97d3e9075e00d3dc6338b5533848219af0",
+      "temporary": false,
+      "retiredAtGameplayCutover": true
+    },
+    {
+      "filename": "mend.png",
+      "sha256": "b527e3acebc690e303ed103cfcd647c874ed735742952aa5eb31d7cc083d1671",
+      "temporary": false,
+      "retiredAtGameplayCutover": true
+    },
+    {
+      "filename": "purify.png",
+      "sha256": "0365c4360707d1de18a3b39f8bfc4288d94932b518ea43529b2d6f42ccddece9",
+      "temporary": false,
+      "retiredAtGameplayCutover": true
+    },
+    {
+      "filename": "rally.png",
+      "sha256": "fb420fb6e90234227d7e16577a0310b5d0b7bf69badb02ec948dc4493c5a65d0",
+      "temporary": false,
+      "retiredAtGameplayCutover": true
+    },
+    {
+      "filename": "respite.png",
+      "sha256": "4a28c3ffda721bf3f6c49921d99ee34b37a24a39ec9c82f1aaf8915cf2fed584",
+      "temporary": false,
+      "retiredAtGameplayCutover": true
+    },
+    {
+      "filename": "restore.png",
+      "sha256": "608e9cba17a4c2c3aa686902740e70ddcce23c7862136c1825d59c45e40c5e89",
+      "temporary": false,
+      "retiredAtGameplayCutover": true
+    },
+    {
+      "filename": "thorns.png",
+      "sha256": "8dafc32f9ed17522cf1312337e85f38ad2a3cc6bff96b9f9918b23560d91ebf1",
+      "temporary": false,
+      "retiredAtGameplayCutover": true
+    },
+    {
+      "filename": "ward.png",
+      "sha256": "5fa93e62e17ec3f5664b0774a319dbdee45715173b7a5cd4c7129f7e0f3e1af4",
+      "temporary": false,
+      "retiredAtGameplayCutover": true
+    },
+    {
+      "filename": "zeal.png",
+      "sha256": "8ff708f1214927e262bf8b3cda21a7a349edd4ded669e438eba8c9e643da93f7",
+      "temporary": false,
+      "retiredAtGameplayCutover": true
+    }
+  ],
+  "existingCredits": "dev/myworld/assets/credit",
+  "existingCreditsSha256AtIntake": "bab22c73b7621631151f430347fd6722638beeb5e125acbe54a70319fd02dfc3",
+  "entries": [
+    {
+      "stableCode": 1,
+      "iconKey": "unify",
+      "sourceFilename": "unify.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/unify.png",
+      "sha256": "6ae5b151ec4be694f0d4357054fa9f22016fe78eb9bbc97c21815aecae5633e3",
+      "pngBytes": 205,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "d57f042bf575472bcfd4d6a460ac29d1840aed6d5b20da9a2888c7b92ce36be5",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [],
+      "knownVersionedByteIdenticalPaths": []
+    },
+    {
+      "stableCode": 12,
+      "iconKey": "saradomins_light",
+      "sourceFilename": "saradomins_light.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/saradomins_light.png",
+      "sha256": "608e9cba17a4c2c3aa686902740e70ddcce23c7862136c1825d59c45e40c5e89",
+      "pngBytes": 225,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "b0718829a52aaf948a2282f7d84297c2223c428d1cfef97b8f0e9f62ca3edac7",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [
+        "restore.png"
+      ],
+      "knownVersionedByteIdenticalPaths": [
+        "dev/myworld/assets/sprites/UI/cleric/restore.png"
+      ]
+    },
+    {
+      "stableCode": 13,
+      "iconKey": "saradomins_aura",
+      "sourceFilename": "saradomins_aura.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/saradomins_aura.png",
+      "sha256": "0365c4360707d1de18a3b39f8bfc4288d94932b518ea43529b2d6f42ccddece9",
+      "pngBytes": 185,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "9d4b8b7ff2ec52fce6bb63038d43b6655ecfd1c9f65228a7171d453e26b3b173",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [
+        "purify.png"
+      ],
+      "knownVersionedByteIdenticalPaths": [
+        "dev/myworld/assets/sprites/UI/cleric/purify.png"
+      ]
+    },
+    {
+      "stableCode": 14,
+      "iconKey": "saradomins_resplendence",
+      "sourceFilename": "saradomins_resplendence.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/saradomins_resplendence.png",
+      "sha256": "adb16823683c8b45d05211a45e0bcf97d3e9075e00d3dc6338b5533848219af0",
+      "pngBytes": 180,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "9eeac7719479054945043ba5b235a9cdbc8b891387d1810b4d633bc5ed03ca10",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [
+        "greater-mend.png"
+      ],
+      "knownVersionedByteIdenticalPaths": [
+        "dev/myworld/assets/sprites/UI/cleric/greater-mend.png"
+      ]
+    },
+    {
+      "stableCode": 15,
+      "iconKey": "guthixs_respite",
+      "sourceFilename": "guthix_respite.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/guthixs_respite.png",
+      "sha256": "4a28c3ffda721bf3f6c49921d99ee34b37a24a39ec9c82f1aaf8915cf2fed584",
+      "pngBytes": 220,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "0a9b11c2f912c589c8704573e5018f91608b4fbf453c2d9190a9a424239c8ce6",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [
+        "respite.png"
+      ],
+      "knownVersionedByteIdenticalPaths": [
+        "dev/myworld/assets/sprites/UI/cleric/respite.png"
+      ]
+    },
+    {
+      "stableCode": 16,
+      "iconKey": "guthixs_protection",
+      "sourceFilename": "guthixs_protection.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/guthixs_protection.png",
+      "sha256": "5fa93e62e17ec3f5664b0774a319dbdee45715173b7a5cd4c7129f7e0f3e1af4",
+      "pngBytes": 225,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "bc2f748e5567665f79a0b112a6d4668fe65480d3ef02dbc517c7da168c9361cb",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [
+        "ward.png"
+      ],
+      "knownVersionedByteIdenticalPaths": [
+        "dev/myworld/assets/sprites/UI/cleric/ward.png"
+      ]
+    },
+    {
+      "stableCode": 17,
+      "iconKey": "guthixs_vengeance",
+      "sourceFilename": "guthixs_vengence.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/guthixs_vengeance.png",
+      "sha256": "8dafc32f9ed17522cf1312337e85f38ad2a3cc6bff96b9f9918b23560d91ebf1",
+      "pngBytes": 267,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "700649b771dc2dae78ea1d01ad64501412a009d07b934609008aa486c319662f",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [
+        "thorns.png"
+      ],
+      "knownVersionedByteIdenticalPaths": [
+        "dev/myworld/assets/sprites/UI/cleric/thorns.png"
+      ]
+    },
+    {
+      "stableCode": 18,
+      "iconKey": "zamoraks_fervor",
+      "sourceFilename": "zamoraks_fervor.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/zamoraks_fervor.png",
+      "sha256": "ed3d8d2f4424ad1e3da2bddc94e4a90a34fa0ddf373e71686c4a7dcc7be4939b",
+      "pngBytes": 213,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "af33cbd4dd5bcc8a85b74df165d089e55179e35415b38d19e19597e585a7c17b",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [
+        "fervor.png"
+      ],
+      "knownVersionedByteIdenticalPaths": [
+        "dev/myworld/assets/sprites/UI/cleric/fervor.png"
+      ]
+    },
+    {
+      "stableCode": 19,
+      "iconKey": "zamoraks_fury",
+      "sourceFilename": "zamoraks_fury.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/zamoraks_fury.png",
+      "sha256": "fb420fb6e90234227d7e16577a0310b5d0b7bf69badb02ec948dc4493c5a65d0",
+      "pngBytes": 204,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "078aa6dd50c7d570ffdbf89aeb5147db35c38305bd5f1a951c3e63919b726b7b",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [
+        "rally.png"
+      ],
+      "knownVersionedByteIdenticalPaths": [
+        "dev/myworld/assets/sprites/UI/cleric/rally.png"
+      ]
+    },
+    {
+      "stableCode": 20,
+      "iconKey": "zamoraks_wrath",
+      "sourceFilename": "zamoraks_wrath.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/zamoraks_wrath.png",
+      "sha256": "8ff708f1214927e262bf8b3cda21a7a349edd4ded669e438eba8c9e643da93f7",
+      "pngBytes": 252,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "1a769941a58d11e134a84738b6f08665ce4baffb6ec25e46c2b8ec1a55e7eb41",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [
+        "zeal.png"
+      ],
+      "knownVersionedByteIdenticalPaths": [
+        "dev/myworld/assets/sprites/UI/cleric/zeal.png"
+      ]
+    },
+    {
+      "stableCode": 21,
+      "iconKey": "greater_unify",
+      "sourceFilename": "greater_unify.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/greater_unify.png",
+      "sha256": "a3c1df0c9a1a99fb1a51c52cdccb67cb430c4ae44082fc40b1e9684295d57d78",
+      "pngBytes": 204,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "4f98e30816045faba0b23ce3ac50c8dcc2ccd8899a0d1b24dc5f585ab05d843f",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [
+        "unify.png"
+      ],
+      "knownVersionedByteIdenticalPaths": [
+        "dev/myworld/assets/sprites/UI/cleric/unify.png"
+      ]
+    },
+    {
+      "stableCode": 22,
+      "iconKey": "guthixs_unease",
+      "sourceFilename": "guthixs_unease.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/guthixs_unease.png",
+      "sha256": "b2cda5b0e29425cacdf82242366c11ca386d9d7770909f5de9aebbe06f13e964",
+      "pngBytes": 279,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "6d853b6abb28aa2d1938fd12b7e47260762a0ba2c3d0b3497cd48aa8bd1b03ef",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [],
+      "knownVersionedByteIdenticalPaths": []
+    },
+    {
+      "stableCode": 23,
+      "iconKey": "guthixs_dread",
+      "sourceFilename": "guthixs_dread.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/guthixs_dread.png",
+      "sha256": "e48cf4f792e5849c5c32244ce3f775fe30afe8608f907b8d716214c95e64c960",
+      "pngBytes": 243,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "16466f61be9ad6647fc9c497582ae9b0012303ea0d174b808c3c121cbbb6a382",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [],
+      "knownVersionedByteIdenticalPaths": []
+    },
+    {
+      "stableCode": 24,
+      "iconKey": "guthixs_terror",
+      "sourceFilename": "guthixs_terror.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/guthixs_terror.png",
+      "sha256": "e8fbfea7a45a4a0fc1f6168ab184a6348cba3b8ace757331a3affd759dca737b",
+      "pngBytes": 192,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "978b9b9848361d39ae8a630b726229a5d8af87c20f72d6174c71984cfb8ac91e",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [],
+      "knownVersionedByteIdenticalPaths": []
+    },
+    {
+      "stableCode": 25,
+      "iconKey": "saradomins_censure",
+      "sourceFilename": "saradomins_censure.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/saradomins_censure.png",
+      "sha256": "b4ff894d9c26fbc269bef900acc81a08381131a79a775da1abe066e172ecceb2",
+      "pngBytes": 206,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "7d8192a98ddcb3e12fdb55f5367ec07915006fdfac7c67c7fd1ca05aa116d5db",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [],
+      "knownVersionedByteIdenticalPaths": []
+    },
+    {
+      "stableCode": 26,
+      "iconKey": "saradomins_condemnation",
+      "sourceFilename": "saradomins_condemnation.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/saradomins_condemnation.png",
+      "sha256": "51186817a3485d253dbb5b0aede11ccbe006c4b0e620283edb602d8817483dfa",
+      "pngBytes": 220,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "87fae9867ed19801a1dab3173cc1cc8c86411b6df482c45638d2d0fabc8bf2fe",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [],
+      "knownVersionedByteIdenticalPaths": []
+    },
+    {
+      "stableCode": 27,
+      "iconKey": "saradomins_unmaking",
+      "sourceFilename": "saradomins_unmaking.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/saradomins_unmaking.png",
+      "sha256": "a91eba488bfad6b24df4af38a61c9f04c323ae8872b80d04fb2f0575dc66dc59",
+      "pngBytes": 277,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "74b7b0f6aad2449bbc3bf9cb75a92c59129a15ad5c5d1a3708c9ea19061aa678",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [],
+      "knownVersionedByteIdenticalPaths": []
+    },
+    {
+      "stableCode": 28,
+      "iconKey": "zamoraks_malice",
+      "sourceFilename": "zamoraks_malice.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/zamoraks_malice.png",
+      "sha256": "b23b57473cecc341b257582d66b8a00087584ee999dde169e2802968e7704a2d",
+      "pngBytes": 308,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "4194af802d1d382cc54fc6603e3b2520ae5be3fbe6ab20eb5836d077c2b2999a",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [],
+      "knownVersionedByteIdenticalPaths": []
+    },
+    {
+      "stableCode": 29,
+      "iconKey": "zamoraks_cruelty",
+      "sourceFilename": "zamoraks_cruelty.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/zamoraks_cruelty.png",
+      "sha256": "bcccdc8422c8e08867408d948d3f504e75b9b324a86a272e886151446b972039",
+      "pngBytes": 209,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "4b066f77cc033ce9a271bc4ddcecd0a150048bc91ea62ce5ca9e69a13d2f8d2c",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [],
+      "knownVersionedByteIdenticalPaths": []
+    },
+    {
+      "stableCode": 30,
+      "iconKey": "zamoraks_ruin",
+      "sourceFilename": "zamoraks_ruin.png",
+      "productionPath": "dev/myworld/assets/runtime/ui/cleric/zamoraks_ruin.png",
+      "sha256": "6215accb31888543d02f0f6e9a321dcae35a12ad405fd68e76e6030ba0185a49",
+      "pngBytes": 246,
+      "dimensions": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "rgbaSha256": "f1cb675bb54d2741a340236f1058167222e33379145f37bd6840d14d0aee3d41",
+      "visibleBounds": [
+        1,
+        1,
+        15,
+        15
+      ],
+      "transparentPixels": 64,
+      "partialAlphaPixels": 0,
+      "opaquePixels": 192,
+      "sourceBytesUnchanged": true,
+      "previousTrackedByteMatches": [],
+      "knownVersionedByteIdenticalPaths": []
+    }
+  ],
+  "curatedLineageCheck": {
+    "sourceCommit": "508a059081009584d0174c4d2abf40d66c4d8c3d",
+    "versionedPngPathsCompared": 3010,
+    "matchingOwnerIcons": 10,
+    "comparison": "Original intake comparison: exact serialized PNG bytes verified by SHA-256 against matching Git blobs; unmatched icons were owner-provided with no artist or licence newly asserted at that time. The later owner-confirmed artist is recorded in attribution."
+  },
+  "compatibilityStatus": "Retired at schema5 twenty-spell gameplay cutover; list retained as historical provenance only",
+  "attribution": {
+    "artist": "Atelier Pixerellia",
+    "source": "Owner confirmation, November 1, 2026",
+    "scope": "All twenty canonical Cleric spell icons in entries",
+    "license": "No new licence grant or terms asserted by this attribution update."
+  },
+  "currentSourceRoot": "/home/justin/Core-Framework/dev/myworld/assets/runtime/ui/cleric"
+}

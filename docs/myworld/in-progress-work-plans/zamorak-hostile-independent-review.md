@@ -15,7 +15,7 @@ against later art-only main are not treated as an art regression before the
 implementation worker's planned main merge and eleven-file retirement.
 
 Read-only source was exported with `git archive` into the reviewer's ignored
-`output/zamorak-independent-review/snapshot-a807eeafe/`. The worker-provided
+`output/reviews/zamorak-independent-review/snapshot-a807eeafe/`. The worker-provided
 immutable checkpoint JARs were copied into the reviewer's own evidence tree and
 verified against the supplied SHA-256 receipts before use. No mutable worktree
 JAR was tested and the implementation worktree was not opened or edited.
@@ -46,7 +46,7 @@ validator already checks launch participant snapshots. The producer still owns
 ordinary damage admission. The final review must rerun these unchanged cases
 against the completed snapshot guards and check the exact source delta.
 
-Evidence: `output/zamorak-independent-review/adversarial-a807eeafe/step-2.log`.
+Evidence: `output/reviews/zamorak-independent-review/adversarial-a807eeafe/step-2.log`.
 Result: **27 independent assertions, 24 passed, 3 failed** (the three stale
 request variants). This is retained failure-first evidence, not a passing gate.
 
@@ -126,7 +126,7 @@ earlier art task's separate-build integration limit for this exact guarded JAR.
 
 Evidence: `checkpoint-e4ede109a.json`, `adversarial-e4ede109a/step-2.log`,
 `e4ede109a-art-review.log`, `e4ede109a-schema5.bin` and the native render directory
-under `output/zamorak-independent-review/`. Hashes were verified before/after
+under `output/reviews/zamorak-independent-review/`. Hashes were verified before/after
 adversarial execution. Worker-reported full gates include 145 combat scenarios,
 255 new Zamorak assertions, the focused Slayer/Slow/Cleric/client suites and
 native UI/render checks; these broad suites were not all independently rerun

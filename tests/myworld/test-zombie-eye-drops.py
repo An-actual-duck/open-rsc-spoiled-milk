@@ -13,7 +13,7 @@ ITEM_ID = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
 ITEM_DEFS_CUSTOM = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 NPC_DROPS = ROOT / "server/src/com/openrsc/server/constants/NpcDrops.java"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
-ZOMBIE_EYE_SPRITE = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/zombie-eye.png"
+ZOMBIE_EYE_SPRITE = ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/zombie-eye.png"
 
 
 def fail(message: str) -> None:

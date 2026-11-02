@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
   "scope": "Approved current-update inventory/ground PNG additions; exact serialized source and packaged bytes. This is a release receipt, not approval of new artwork.",
-  "sourceRoot": "dev/myworld/assets/sprites/items/inventory-ground",
+  "sourceRoot": "dev/myworld/assets/runtime/sprites/items/inventory-ground",
   "provenance": [
-    "dev/myworld/blight-sigil-production/manifest.json",
-    "dev/myworld/moonsilver-sigil-production/manifest.json",
-    "dev/myworld/practice-feedback/manifest.json",
+    "dev/myworld/assets/authoring/items/blight-sigil/manifest.json",
+    "dev/myworld/assets/authoring/items/moonsilver-sigils/manifest.json",
+    "dev/myworld/assets/authoring/items/coating-reagents/manifest.json",
     "docs/myworld/in-progress-work-plans/gem-dragon-family-review.md",
     "docs/myworld/in-progress-work-plans/gem-dragon-guaranteed-gems-review.md",
     "docs/myworld/in-progress-work-plans/antidote-cleansing-reconciliation-review.md",
-    "dev/myworld/battleaxe-coatings/manifest.json",
+    "dev/myworld/assets/authoring/equipment/battleaxe-coatings/manifest.json",
     "docs/myworld/in-progress-work-plans/battleaxe-coatings-implementation-review.md"
   ],
   "files": {

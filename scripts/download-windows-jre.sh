@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ROOT_DIR="${ROOT_DIR:-$SCRIPT_ROOT}"
-OUTPUT_DIR="${1:-$ROOT_DIR/output/runtimes}"
+OUTPUT_DIR="${1:-$ROOT_DIR/output/cache/java}"
 
 JAVA_VERSION="17"
 RUNTIME_NAME="temurin-${JAVA_VERSION}-windows-x64-jre"

@@ -131,7 +131,7 @@ git diff --check
 
 Build/combat/final rendering logs and combat summary are retained locally in
 `/home/justin/Documents/Codex/2026-10-31/task/hitsplat-final-evidence/`.
-The normal ignored receipt is `output/combat-test/summary.properties`.
+The normal ignored receipt is `output/tests/combat/summary.properties`.
 
 Known pre-existing supplemental failures: `python3 tests/myworld/test-summon-lifesteal.py`
 fails its combat-XP-distribution source guard; `python3 tests/myworld/test-combat-runtime-invariants.py`

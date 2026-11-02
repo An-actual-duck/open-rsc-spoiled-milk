@@ -14,7 +14,7 @@ HARVESTING = ROOT / "server/plugins/com/openrsc/server/plugins/custom/skills/har
 CLIENT_DEFS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 SKILL_GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
-ASSET_ROOT = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/resources"
+ASSET_ROOT = ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources"
 
 
 BRAWN_HARVESTABLES = {

@@ -79,7 +79,7 @@ The lightweight navigation map and optional helper are now provided by
    plans. Link it from `docs/myworld/README.md` and workspace guidance.
 2. The committed helper generates a non-committed local index. It checks for
    Universal Ctags and runs `ctags --languages=Java --fields=+n
-   --extras=+q -R` over maintained Java roots into `output/navigation/tags`.
+   --extras=+q -R` over maintained Java roots into `output/diagnostics/navigation/tags`.
    Rebuild it on demand; never consume it as authority for reflection,
    configuration, JSON/XML definitions, or plugin discovery.
 3. Keep `rg`, `git log -S/-G`, compiler errors, and focused tests as the

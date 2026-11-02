@@ -22,7 +22,7 @@ SPELLS = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.jav
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 PLAN = ROOT / "docs/myworld/in-progress-work-plans/summoning-plan.md"
-ICON = ROOT / "dev/myworld/assets/sprites/UI/summon/guard-dog.png"
+ICON = ROOT / "dev/myworld/assets/runtime/ui/summon/guard-dog.png"
 
 
 def fail(message: str) -> None:

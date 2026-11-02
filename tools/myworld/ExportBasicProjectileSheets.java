@@ -28,14 +28,14 @@ public final class ExportBasicProjectileSheets {
 	public static void main(String[] args) throws Exception {
 		Path root = args.length == 0 ? Paths.get(".").toAbsolutePath().normalize()
 			: Paths.get(args[0]).toAbsolutePath().normalize();
-		Path animationRoot = root.resolve("dev/myworld/assets/animations/projectile-moving");
+		Path animationRoot = root.resolve("dev/myworld/assets/runtime/animations/projectile-moving");
 
 		BufferedImage knife = loadThrowingKnife(root);
 		writeRotationSheet(knife,
 			animationRoot.resolve("throwing-knife-basic/throwing-knife-basic.png"));
 
 		BufferedImage shuriken = readRequiredImage(root.resolve(
-			"dev/myworld/assets/sprites/items/inventory-ground/shuriken-thrown.png"));
+			"dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-thrown.png"));
 		writeRotationSheet(shuriken,
 			animationRoot.resolve("shuriken-basic/shuriken-basic.png"));
 	}

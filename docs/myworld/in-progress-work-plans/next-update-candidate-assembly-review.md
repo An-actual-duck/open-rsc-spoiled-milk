@@ -107,7 +107,7 @@ v3/v4 contract unchanged. No client or game-runtime source change was needed.
 
 ## Verification and limits
 
-Evidence remains in ignored `output/next-update-candidate/`, including exact
+Evidence remains in ignored `output/reviews/next-update-candidate/`, including exact
 copied inventory, selection/config receipts, before/after validation logs,
 commands, runtime artifact hashes and preservation checks. Heavy Java work ran
 serially under `/home/justin/.local/share/core-heavy-build.lock`, Java 8 with
@@ -192,7 +192,7 @@ historical fallback private-profile hashes are both exercised. The complete
 promotion fixture is run from a clean checkpoint using a freshly generated exact
 selected-package receipt, preserving the real clean-source approval requirement.
 Evidence and the final command results accompany the READY handoff under
-`output/next-update-candidate/hosting-validation/`.
+`output/reviews/next-update-candidate/hosting-validation/`.
 
 The nearest hosted safety/selection consumers retain their existing security
 checks. Historical native-package generation baselines and retired editor-draft

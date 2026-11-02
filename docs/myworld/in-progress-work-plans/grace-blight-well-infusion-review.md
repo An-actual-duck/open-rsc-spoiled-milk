@@ -67,10 +67,10 @@ readiness, properties and art remain unchanged. The original sixteen
 Blight is a **purpose**, not an added god alignment.
 
 The four new Blight assets use the approved Thorn design in
-`dev/myworld/blight-sigil-candidate`. Stone pixels are exact approved pixels;
+`dev/myworld/assets/authoring/items/blight-sigil/candidates`. Stone pixels are exact approved pixels;
 silver changes only the established eight-tone substrate palette. All44 glyph
 pixels and alpha remain unchanged. Editable Aseprite documents and derivation
-script are in `dev/myworld/blight-sigil-production`; its manifest records hashes.
+script are in `dev/myworld/assets/authoring/items/blight-sigil`; its manifest records hashes.
 
 The established external-PNG item selector supplies local and packaged sprites,
 with canonical native fallback443/134. Stone renders28×25; silver renders24×21

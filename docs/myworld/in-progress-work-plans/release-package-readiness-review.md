@@ -78,7 +78,7 @@ packager mutation was necessary.
 Heavy tests/builds ran serially under
 `/home/justin/.local/share/core-heavy-build.lock`, with Java 8 and 512 MiB
 SerialGC. Evidence, baseline failures, runners and logs are preserved in the
-ignored `output/release-package-readiness/` directory.
+ignored `output/reviews/release-package-readiness/` directory.
 
 | Command (`python3 tests/myworld/…`) | Result |
 | --- | --- |

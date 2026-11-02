@@ -6142,7 +6142,7 @@ public final class mudclient implements Runnable {
 			if (!wristEquipmentSlotSpriteLoadAttempted) {
 				wristEquipmentSlotSpriteLoadAttempted = true;
 				File sourceFile = this.externalAssetLoader.findFirstFile(new String[] {
-					"dev/myworld/assets/sprites/UI/equipment"
+					"dev/myworld/assets/runtime/ui/equipment"
 				}, "bangle-slot.png");
 				wristEquipmentSlotSprite = this.externalAssetLoader.loadExternalInterfaceSprite(sourceFile, 48, 32);
 			}
@@ -15188,7 +15188,7 @@ public final class mudclient implements Runnable {
 		}
 		autoAttackHudSpriteLoaded = true;
 		File sourceFile = new File(ClientExternalAssetLoader.DEVELOPMENT_ASSET_ROOT
-			+ "sprites/UI/auto-attack.png");
+			+ "ui/auto-attack.png");
 		try {
 			BufferedImage source = this.externalAssetLoader.readAssetImage(sourceFile);
 			if (source != null) {
@@ -22164,8 +22164,7 @@ public final class mudclient implements Runnable {
 			? new String[] {"law-glyph.png", "law-rune.png"}
 			: new String[] {element + "-glyph.png"};
 		return this.externalAssetLoader.findFirstFile(new String[] {
-			"dev/myworld/assets/sprites/world/rune-altars/glyphs",
-			"output/pngs"
+			"dev/myworld/assets/runtime/sprites/world/rune-altars/glyphs"
 		}, candidateNames);
 	}
 
@@ -22176,47 +22175,43 @@ public final class mudclient implements Runnable {
 			? new String[] {"orb-of-blood.png", "orb-of-blood-alt.png"}
 			: new String[] {"orb-of-" + element + ".png"};
 		return this.externalAssetLoader.findFirstFile(new String[] {
-			"dev/myworld/assets/sprites/world/rune-altars/orbs",
-			"output/pngs"
+			"dev/myworld/assets/runtime/sprites/world/rune-altars/orbs"
 		}, candidateNames);
 	}
 
 	private File getLegacyExternalAnimationFolder(String category, String animationName) {
 		return this.externalAssetLoader.findFirstDirectory(new String[] {
-			"dev/myworld/assets/legacy animation folder",
-			"output/legacy animations"
+			"dev/myworld/assets/runtime/legacy-animations"
 		}, category, animationName);
 	}
 
 	private File getExternalAnimationSheet(String category, String relativePath) {
 		return this.externalAssetLoader.findFirstFile(new String[] {
-			"dev/myworld/assets/animations/" + category,
-			"output/animations/" + category
+			"dev/myworld/assets/runtime/animations/" + category
 		}, relativePath);
 	}
 
 	private File getExternalEquipmentNumberedFolder(String equipmentName) {
 		return this.externalAssetLoader.findFirstDirectory(new String[] {
-			"dev/myworld/assets/sprites/equipment",
-			"output/equipment"
+			"dev/myworld/assets/runtime/sprites/equipment"
 		}, equipmentName, "numbered");
 	}
 
 	private File getExternalFoundryDragonSpriteSheet() {
 		return this.externalAssetLoader.findFirstFile(new String[] {
-			"dev/myworld/assets/sprites/npcs/foundry-dragon"
+			"dev/myworld/assets/runtime/sprites/npcs/foundry-dragon"
 		}, "foundry-dragon-sprite-sheet.png");
 	}
 
 	private File getExternalKingBlackDragonSpriteSheet() {
 		return this.externalAssetLoader.findFirstFile(new String[] {
-			"dev/myworld/assets/sprites/npcs/king-black-dragon"
+			"dev/myworld/assets/runtime/sprites/npcs/king-black-dragon"
 		}, "king-black-dragon-sprite-sheet.png");
 	}
 
 	private File getExternalGorakSpriteSheet() {
 		return this.externalAssetLoader.findFirstFile(new String[] {
-			"dev/myworld/assets/sprites/npcs/gorak"
+			"dev/myworld/assets/runtime/sprites/npcs/gorak"
 		}, "gorak-sprite-sheet.png");
 	}
 
@@ -22281,7 +22276,7 @@ public final class mudclient implements Runnable {
 
 	private void loadGemDragonSprites() {
 		File source = this.externalAssetLoader.findFirstFile(
-			new String[]{"dev/myworld/assets/sprites/npcs/gem-dragons"}, "gemdragon.png");
+			new String[]{"dev/myworld/assets/runtime/sprites/npcs/gem-dragons"}, "gemdragon.png");
 		orsc.graphics.two.SpriteArchive.Entry entry = this.externalAssetLoader.loadExternalNpcDirectionSheet(
 			source, "gemdragon", new int[]{226,226,226,226,226,335}, 3);
 		if (entry == null) { System.out.println("Missing gem dragon sprite sheet"); return; }
@@ -22327,7 +22322,7 @@ public final class mudclient implements Runnable {
 		for (com.openrsc.client.entityhandling.SlayerMovementPreview preview
 				: com.openrsc.client.entityhandling.SlayerMovementPreview.values()) {
 			File source = this.externalAssetLoader.findFirstFile(new String[] {
-				"dev/myworld/assets/sprites/npcs/slayer-movement-preview"
+				"dev/myworld/assets/runtime/sprites/npcs/slayer-monsters"
 			}, preview.assetName + ".png");
 			orsc.graphics.two.SpriteArchive.Entry entry =
 				this.externalAssetLoader.loadExternalNpcDirectionSheet(source,
@@ -22518,26 +22513,20 @@ public final class mudclient implements Runnable {
 
 	private File getExternalIconFile(String iconName) {
 		return this.externalAssetLoader.findFirstFile(new String[] {
-			"dev/myworld/assets/sprites/UI/magic",
-			"dev/myworld/assets/sprites/UI/prayer",
-			"dev/myworld/assets/sprites/ui/magic-icons",
-			"dev/myworld/assets/sprites/ui/prayer-icons",
-			"dev/myworld/assets/sprites/ui/menu-icons",
-			"output/icons"
+			"dev/myworld/assets/runtime/ui/magic",
+			"dev/myworld/assets/runtime/ui/prayer"
 		}, iconName + ".png");
 	}
 
 	private File getExternalSummoningIconFile(String iconName) {
 		return this.externalAssetLoader.findFirstFile(new String[] {
-			"dev/myworld/assets/sprites/UI/summon",
-			"dev/myworld/assets/sprites/ui/summon-icons",
-			"output/icons/summon-icons"
+			"dev/myworld/assets/runtime/ui/summon"
 		}, iconName + ".png");
 	}
 
 	private File getExternalClericIconFile(String iconName) {
 		return this.externalAssetLoader.findFirstFile(new String[] {
-			"dev/myworld/assets/sprites/UI/cleric"
+			"dev/myworld/assets/runtime/ui/cleric"
 		}, iconName + ".png");
 	}
 

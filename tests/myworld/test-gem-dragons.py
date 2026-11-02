@@ -4,7 +4,7 @@ from pathlib import Path
 import hashlib,json,subprocess,tempfile,zipfile
 from PIL import Image
 ROOT=Path(__file__).resolve().parents[2]
-ASSET=ROOT/'dev/myworld/assets/sprites/npcs/gem-dragons'
+ASSET=ROOT/'dev/myworld/assets/runtime/sprites/npcs/gem-dragons'
 manifest=json.loads((ASSET/'provenance.json').read_text())
 assert set(manifest['sha256'])=={'gemdragon.png'}
 for name,digest in manifest['sha256'].items():assert hashlib.sha256((ASSET/name).read_bytes()).hexdigest()==digest
@@ -27,7 +27,7 @@ with zipfile.ZipFile(ROOT/'Client_Base/Open_RSC_Client.jar')as jar:
  for obsolete in ['sapphire','emerald','ruby','diamond','dragonstone']:
   assert 'myworld-assets/sprites/npcs/gem-dragons/'+obsolete+'.png'not in jar.namelist(),'no duplicated precolored runtime sheets'
  for name in ['gem-cutter-gloves','gem-cutters-monocle']:
-  p=ROOT/'dev/myworld/assets/sprites/items/inventory-ground'/f'{name}.png';assert Image.open(p).size==(48,32)
+  p=ROOT/'dev/myworld/assets/runtime/sprites/items/inventory-ground'/f'{name}.png';assert Image.open(p).size==(48,32)
   assert jar.read('myworld-assets/sprites/items/inventory-ground/'+name+'.png')==p.read_bytes()
 npcs=json.loads((ROOT/'server/conf/server/defs/GemDragonNpcDefs.json').read_text())['npcs']
 expected=';'.join(','.join(str(n[k])for k in ['attack','strength','hits','defense'])for n in npcs)

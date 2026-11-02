@@ -39,7 +39,7 @@ completed milestones should be reflected in both documents where relevant.
 ## Target Diagnostic Bundle
 
 An explicitly enabled diagnostic launch should create one ignored,
-timestamped session directory under `output/renderer-diagnostics/`:
+timestamped session directory under `output/diagnostics/renderer/sessions/`:
 
 ```text
 session-YYYYMMDD-HHMMSS/
@@ -88,7 +88,7 @@ embedding large tables or images in the telemetry log.
 - [x] Write `manifest.json` with schema version, session identifier, start/end
       state, client commit/branch supplied by the launcher, target mode,
       Java/OS details, and a privacy-filtered active renderer setting inventory.
-- [x] Keep output under ignored `output/renderer-diagnostics/` and make the
+- [x] Keep output under ignored `output/diagnostics/renderer/sessions/` and make the
       chosen absolute session path obvious at launch.
 - [x] Flush at report and capture boundaries. Avoid per-frame filesystem I/O.
 - [x] Bound structured and console logs with a configurable byte budget. Keep
@@ -106,7 +106,7 @@ Acceptance:
 Implementation checkpoint:
 
 - `./scripts/run-client.sh --live --renderer-diagnostics` creates a session
-  under `output/renderer-diagnostics/`, enables renderer telemetry and
+  under `output/diagnostics/renderer/sessions/`, enables renderer telemetry and
   `Ctrl+F9`, redirects the existing runtime log, and mirrors visible client
   output through a bounded console log.
 - The Java session owner writes versioned manifests/events, filters sensitive
@@ -220,7 +220,7 @@ Usage:
 ```bash
 ./scripts/run-client.sh --live --renderer-diagnostics
 python3 scripts/analyze-renderer-session.py \
-  output/renderer-diagnostics/session-... --strict --analyze-captures
+  output/diagnostics/renderer/sessions/session-... --strict --analyze-captures
 ```
 
 The analyzer always prints its Markdown report and writes `ai-summary.md`

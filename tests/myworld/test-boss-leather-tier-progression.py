@@ -221,10 +221,10 @@ def main() -> int:
     asset_loader = read("Client_Base/src/orsc/ClientExternalAssetLoader.java")
     assert "Math.min(64, maxTargetSize)" in asset_loader
     assert png_size(
-        "dev/myworld/assets/animations/on-entity/fire-orb-explosion/Fire Orb Explosion(48x48).png"
+        "dev/myworld/assets/runtime/animations/on-entity/fire-orb-explosion/Fire Orb Explosion(48x48).png"
     ) == (864, 48)
     assert png_size(
-        "dev/myworld/assets/animations/on-entity/explosions/Explosion VFX 1(32x32).png"
+        "dev/myworld/assets/runtime/animations/on-entity/explosions/Explosion VFX 1(32x32).png"
     ) == (320, 32)
 
     print("PASS: KBD tier 10, Balrog tier 11 AOE, Elder Breath AOE/burn, and Balrog impact validated")

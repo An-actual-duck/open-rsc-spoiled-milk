@@ -4,7 +4,7 @@ import argparse, gzip, hashlib, importlib.util, json, struct, zipfile
 from pathlib import Path
 from PIL import Image
 ROOT=Path(__file__).resolve().parents[1]
-OUT=ROOT/'dev/myworld/cleric-wells'
+OUT=ROOT/'dev/myworld/assets/authoring/world/cleric-wells'
 sha=lambda b:hashlib.sha256(b).hexdigest()
 spec=importlib.util.spec_from_file_location('coatings_generator',ROOT/'scripts/generate-battleaxe-coatings.py')
 g=importlib.util.module_from_spec(spec);spec.loader.exec_module(g)
@@ -86,6 +86,6 @@ def main():
  region('server/conf/server/defs/TileDef.xml','<!-- CLERIC WELL FLOORS', ''.join('  <TileDef><colour>%d</colour><unknown>3</unknown><objectType>1</objectType></TileDef>\n'%i for i in [67,68]))
  region('server/conf/server/defs/DoorDef.xml','<!-- CLERIC WELL WALLS',wallxml)
  evidence={'status':'Owner-approved art installed offline; private gameplay and shoreline interaction pending','textures':{name:{'textureIndex':67+i,'nativeSprite':4112+i,'pngSha256':sha((OUT/'candidates'/f'{name}.png').read_bytes())} for i,name in enumerate(NAMES)},'floorValues':{'ichor':27,'divineWater':28},'wallIds':list(range(220,228)),'preservedCustomEntries':{n+':'+k:v for (n,k),v in original.items()},'preservedAuthenticEntries':before,'supplementalOriginalCustomTextures':{str(i):{'nativeSprite':4100+i-55,'serializedSha256':sha(textures[str(i)])} for i in range(55,67)}}
- emit('dev/myworld/cleric-wells/installation.json',json.dumps(evidence,indent=2)+'\n')
+ emit('dev/myworld/assets/authoring/world/cleric-wells/installation.json',json.dumps(evidence,indent=2)+'\n')
  print('PASS73 textures in both modes;6 approved palettes;18 native records;2 blocked floors;8 walls; preexisting payloads preserved')
 if __name__=='__main__':main()

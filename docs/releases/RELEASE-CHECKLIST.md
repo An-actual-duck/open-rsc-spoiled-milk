@@ -10,7 +10,7 @@ GitHub release assets are created locally and uploaded manually. Replace
 - Record the royalty-free source and applicable license for the prayer UI
   power, protection, enchanting XP, smithing XP, and crafting XP icons.
 - Retain the recorded creator permissions and license notes for Pixerelia and
-  the other credited UI icon sources used in `dev/myworld/assets/credit`.
+  the other credited UI icon sources used in `dev/myworld/assets/CREDITS.txt`.
 - Confirm the packaged jar has no removed CraftPix icon or Phoenix/Kraken
   animation resources.
 - Before public source distribution, confirm repository history does not
@@ -45,7 +45,7 @@ RELEASE_COMMIT=$(git rev-parse HEAD)
   --version RELEASE_VERSION \
   --host YOUR_PUBLIC_HOST_OR_IP \
   --port 43605 \
-  --windows-jre output/runtimes/temurin-17-windows-x64-jre \
+  --windows-jre output/cache/java/temurin-17-windows-x64-jre \
   --assets-cleared
 ```
 

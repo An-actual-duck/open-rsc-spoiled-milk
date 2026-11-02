@@ -18,7 +18,7 @@ if [[ -n "${SPOILED_MILK_JAVAC_LINT:-}" ]]; then
 fi
 
 if [[ "${SPOILED_MILK_RELEASE_BUILD:-0}" == 1 ]]; then
-  RELEASE_MARKER_DIR="$ROOT_DIR/output/release-build"
+  RELEASE_MARKER_DIR="$ROOT_DIR/output/builds/release-marker"
   RELEASE_MARKER_FILE="$RELEASE_MARKER_DIR/spoiled-milk-release-build.marker"
   mkdir -p "$RELEASE_MARKER_DIR"
   printf 'release-build=true\n' > "$RELEASE_MARKER_FILE"

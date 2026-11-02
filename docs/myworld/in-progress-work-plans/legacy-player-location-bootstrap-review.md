@@ -58,10 +58,10 @@ the runner requires a completion marker and rejects unexpected scheduler errors.
 MarketAtomicityFixture.LoginDatabase merely becomes subclassable for this reuse;
 no market implementation changes occur.
 
-Pre-fix proof: `output/player-location-bootstrap-2ca2533470/login.log`.
-Corrected proof: `output/player-location-bootstrap-9f608174e7/login.log`.
+Pre-fix proof: `output/tests/player-location-bootstrap/2ca2533470/login.log`.
+Corrected proof: `output/tests/player-location-bootstrap/9f608174e7/login.log`.
 Regression log: `/tmp/location-bootstrap-regressions.log`.
-Auction regression: `output/market-atomicity-85327b5436/`.
+Auction regression: `output/tests/market-atomicity/85327b5436/`.
 Hashes and result metadata are in `legacy-player-location-bootstrap-evidence.json`.
 
 Limits: no public/private server operations, real account databases, owner map

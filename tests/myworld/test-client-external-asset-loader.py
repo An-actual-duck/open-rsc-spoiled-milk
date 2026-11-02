@@ -140,7 +140,7 @@ public final class ClientExternalAssetLoaderFixture {
 			itemImage.setRGB(3, y, opaque(RED));
 		}
 		Path itemPath = working.resolve(
-			"dev/myworld/assets/sprites/items/inventory-ground/fixture.png");
+			"dev/myworld/assets/runtime/sprites/items/inventory-ground/fixture.png");
 		writeImage(itemPath, itemImage);
 		ItemDef item = new ItemDef("Fixture", "Fixture", 0, "external-png:fixture@14x10", 0);
 		Sprite first = loader.getExternalItemSprite(item);
@@ -230,7 +230,7 @@ public final class ClientExternalAssetLoaderFixture {
 
 	private static void frameOrderAndSlicing(Path root) throws Exception {
 		Path working = root.resolve("frame-work");
-		Path frames = working.resolve("dev/myworld/assets/legacy animation folder/Projectiles/order");
+		Path frames = working.resolve("dev/myworld/assets/runtime/legacy-animations/Projectiles/order");
 		writeImage(frames.resolve("frame10.png"), solid(4, 4, opaque(BLUE)));
 		writeImage(frames.resolve("nested/frame2.png"), solid(2, 2, opaque(RED)));
 		writeImage(frames.resolve("alpha.png"), solid(3, 3, opaque(GREEN)));
@@ -359,7 +359,7 @@ public final class ClientExternalAssetLoaderFixture {
 		ClientExternalAssetLoader loader = new ClientExternalAssetLoader(
 			root, ClientExternalAssetLoaderFixture.class);
 		File source = root.resolve(
-			"dev/myworld/assets/sprites/npcs/foundry-dragon/foundry-dragon-sprite-sheet.png")
+			"dev/myworld/assets/runtime/sprites/npcs/foundry-dragon/foundry-dragon-sprite-sheet.png")
 			.toFile();
 		int[] widths = {228, 203, 263, 215, 218, 338};
 		Entry entry = loader.loadExternalNpcDirectionSheet(source, "foundrydragon", widths, 3);
@@ -380,7 +380,7 @@ public final class ClientExternalAssetLoaderFixture {
 		ClientExternalAssetLoader loader = new ClientExternalAssetLoader(
 			root, ClientExternalAssetLoaderFixture.class);
 		File source = root.resolve(
-			"dev/myworld/assets/sprites/npcs/king-black-dragon/king-black-dragon-sprite-sheet.png")
+			"dev/myworld/assets/runtime/sprites/npcs/king-black-dragon/king-black-dragon-sprite-sheet.png")
 			.toFile();
 		int[] widths = {230, 209, 263, 222, 208, 333};
 		Entry entry = loader.loadExternalNpcDirectionSheet(source, "kingblackdragon", widths, 3, 0x6BEE36);
@@ -412,7 +412,7 @@ public final class ClientExternalAssetLoaderFixture {
 		assertEquals(2, decoded.getWidth(), "packaged image width");
 		assertTrue(classLoader.streamClosed, "packaged image input stream closed");
 
-		File directory = working.resolve("dev/myworld/assets/animations/fixture").toFile();
+		File directory = working.resolve("dev/myworld/assets/runtime/animations/fixture").toFile();
 		assertTrue(loader.assetDirectoryExists(directory), "packaged directory exists");
 		Set<String> resources = loader.getEmbeddedAssetResources();
 		assertTrue(resources == loader.getEmbeddedAssetResources(), "archive inventory cached");

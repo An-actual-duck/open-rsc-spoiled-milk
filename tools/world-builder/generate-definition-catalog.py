@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFS = ROOT / "server/conf/server/defs"
 EXTRAS = DEFS / "extras"
 CONSTANTS = ROOT / "server/src/com/openrsc/server/constants"
-DEFAULT_OUTPUT = ROOT / "dev/myworld/assets/ui/world-editor/definition-catalog-v1.tsv"
+DEFAULT_OUTPUT = ROOT / "dev/myworld/assets/runtime/ui/world-editor/definition-catalog-v1.tsv"
 DEFAULT_AUDIT = ROOT / "docs/myworld/info/world-builder-definition-catalog.md"
 DEFAULT_OVERRIDES = ROOT / "tools/world-builder/definition-label-overrides.json"
 SCHEMA = "world-editor-definition-catalog-v1"
@@ -498,7 +498,7 @@ def render_audit(scenery: list[Definition], boundaries: list[Definition], rows: 
         "",
         "This is a generated audit for World Builder 2's editor-only definition",
         "catalog. Regenerate it together with",
-        "`dev/myworld/assets/ui/world-editor/definition-catalog-v1.tsv` by running:",
+        "`dev/myworld/assets/runtime/ui/world-editor/definition-catalog-v1.tsv` by running:",
         "",
         "```bash",
         "python3 tools/world-builder/generate-definition-catalog.py",

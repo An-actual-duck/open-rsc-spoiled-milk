@@ -1,7 +1,7 @@
 const fs=require('fs'),path=require('path'),os=require('os'),assert=require('assert/strict'),{execFileSync:run}=require('child_process');
 const root=path.resolve(__dirname,'../..'),jar=path.join(root,'Client_Base/Open_RSC_Client.jar'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'antidote-icons-'));
 const read=f=>run('ffmpeg',['-v','error','-i',f,'-f','rawvideo','-pix_fmt','rgba','-']);
-const ref=read(path.join(root,'dev/myworld/reference-library/items/materials/bones-and-monster-parts/id-02250.png'));
+const ref=read(path.join(root,'dev/myworld/assets/references/items/materials/bones-and-monster-parts/id-02250.png'));
 for(const [name,green] of [['giant-spider-eggs',false],['jungle-spider-eggs',true]]){
  const rel='sprites/items/inventory-ground/resources/'+name+'.png',f=path.join(root,'dev/myworld/assets',rel),p=read(f);
  assert.ok(fs.readFileSync(f).equals(run('unzip',['-p',jar,'myworld-assets/'+rel])),'packaged PNG');

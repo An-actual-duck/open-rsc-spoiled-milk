@@ -72,7 +72,7 @@ retract in its one-tick cycle. Recovery cleanup cannot replace a fresh stab.
 
 ## Artwork
 
-The approved-base.png in dev/myworld/assets/sprites/npcs/abyssal-spikes comes
+The approved-base.png in dev/myworld/assets/runtime/sprites/npcs/abyssal-spikes comes
 from Sprite Trainer output abyssal-cosmic-demon-attack-v6-sunken-abdomen/full-sheet.png.
 Its first five columns exactly match the previous movement import; the 259
 changed attack pixels are the later owner-approved sunken-abdomen correction.

@@ -21,19 +21,19 @@ Reproduce independent evidence:
 
 ```bash
 python3 scripts/audit-battleaxe-coatings.py
-python3 scripts/audit-battleaxe-coatings.py --output output/battleaxe-coatings-review-repeat
+python3 scripts/audit-battleaxe-coatings.py --output docs/myworld/evidence/battleaxe-coatings-phase1-repeat
 ```
 
 Review outputs:
 
-- `output/battleaxe-coatings-review/review.html`: self-contained browser sheet,
+- `docs/myworld/evidence/battleaxe-coatings-phase1/review.html`: self-contained browser sheet,
   embedded inventory/dose/held images, no server or network dependency.
-- `output/battleaxe-coatings-review/coverage.json`: merged before-state
+- `docs/myworld/evidence/battleaxe-coatings-phase1/coverage.json`: merged before-state
   definitions, client inventory masks, held palettes, source/output SHA256s,
   all 1,002 custom archive-entry hashes and held geometry.
-- `output/battleaxe-coatings-review/SHA256SUMS`: hashes of all generated files
+- `docs/myworld/evidence/battleaxe-coatings-phase1/SHA256SUMS`: hashes of all generated files
   (including local PNGs, portable HTML and coverage data).
-- `output/battleaxe-coatings-review/battleaxe-matrix.csv`: all 15 base items,
+- `docs/myworld/evidence/battleaxe-coatings-phase1/battleaxe-matrix.csv`: all 15 base items,
   requirements, offenses, legacy aim/power, prayer, speeds, values, palette and
   appearance mappings, proposed counterpart names and exceptions.
 - `inventory-contact.png`: all 15 base/candidate inventory pairs at nearest4×;

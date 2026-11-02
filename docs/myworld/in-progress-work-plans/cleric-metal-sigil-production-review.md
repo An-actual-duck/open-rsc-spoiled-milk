@@ -88,7 +88,7 @@ the Silver source 28×25 canvas and 24×21 presentation. Only substrate tones ar
 recolored from dark blue through silvery blue; existing glyphs and alpha are
 preserved. Fourteen editable Aseprite sources, reproducible authoring and exact
 maintained hashes are recorded in
-[`dev/myworld/moonsilver-sigil-production`](../../../dev/myworld/moonsilver-sigil-production/README.md).
+[`dev/myworld/assets/authoring/items/moonsilver-sigils`](../../../dev/myworld/assets/authoring/items/moonsilver-sigils/README.md).
 Original Stone/Silver PNGs and native archives are untouched.
 
 ## Transaction and validation boundary
@@ -109,7 +109,7 @@ combat-fixture compilation target. Its own Python entrypoint compiles it
 against the actual server/plugins and a fresh isolated fixture. No repository
 test assertion is skipped or patched externally.
 
-Worker evidence is retained under `output/moonsilver-sigil-review/`. Exact
+Worker evidence is retained under `output/reviews/moonsilver-sigil-review/`. Exact
 commands/results are below; builds and fixtures run sequentially with Java8,
 `ANT_OPTS='-Xmx512m -XX:+UseSerialGC'`, and 512 MiB or smaller fixture heaps.
 
@@ -123,7 +123,7 @@ commands/results are below; builds and fixtures run sequentially with Java8,
 | `python3 tests/myworld/test-cleric-consistency-buffs.py` | PASS: 88 native consistency assertions and packet export |
 | `python3 tests/myworld/test-cleric-hostile.py` | PASS: 121 native hostile/phase assertions and packet export |
 | `python3 tests/myworld/test-cleric-blessings.py` | PASS: 373 active catalog/packet/cost/composite/lifecycle/combat/Unify assertions |
-| `python3 tests/myworld/test-cleric-three-tier-client.py --wire /tmp/cleric-schema4.bin --render output/moonsilver-sigil-review/client-proof` | PASS: 6,551 actual-packet/client checks (5,068 truncations and 1,483 other assertions), 68 generic HUD assertions, native-font render bounds |
+| `python3 tests/myworld/test-cleric-three-tier-client.py --wire /tmp/cleric-schema4.bin --render output/reviews/moonsilver-sigil-review/client-proof` | PASS: 6,551 actual-packet/client checks (5,068 truncations and 1,483 other assertions), 68 generic HUD assertions, native-font render bounds |
 | `python3 tests/myworld/test-cleric-sigil-item-assets.py` | PASS maintained receipts, old/native artwork, 3,444 definitions, all 14 new source/packaged sprites, render scales and canonical fallback IDs |
 | `python3 tests/myworld/test-furnace-mould-flow.py` | PASS unchanged existing furnace category flow |
 | `python3 tests/myworld/test-smithing-production-coverage.py` | PASS existing Smithing production coverage |

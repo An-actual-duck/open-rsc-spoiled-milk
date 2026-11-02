@@ -18,7 +18,7 @@ for key,value in {'layered_native_terrain_manifest_sha256':hashlib.sha256(data).
     config=re.sub(r'(?m)^([ \t]*)'+key+r':.*$',lambda m:f'{m[1]}{key}: {value}',config)
 (runtime/'myworld.conf').write_text(config)
 env=os.environ.copy();env['LOCATION_TEST_JDBC']='jdbc:sqlite:'+str(out/'location-test.sqlite')
-cp=os.pathsep.join(str(x) for x in [root/'output/combat-test/test-classes',root/'output/combat-test/core-classes',*sorted((root/'server/lib').glob('*.jar'))])
+cp=os.pathsep.join(str(x) for x in [root/'output/tests/combat/test-classes',root/'output/tests/combat/core-classes',*sorted((root/'server/lib').glob('*.jar'))])
 java=pathlib.Path(os.environ.get('JAVA_HOME','/home/justin/jdk8u482-b08'))/'bin/java';log=out/'login.log'
 with log.open('w') as f:
     result=subprocess.run([str(java),'-Xmx512m','-XX:+UseSerialGC','-cp',cp,'com.openrsc.server.combat.LegacyPlayerLocationBootstrapFixture',*(['reproduce'] if a.reproduce else [])],cwd=runtime,env=env,stdout=f,stderr=subprocess.STDOUT,timeout=120)

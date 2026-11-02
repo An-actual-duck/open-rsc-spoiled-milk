@@ -88,10 +88,10 @@ presence in that folder does not automatically make them fallbacks.
 
 At the start of implementation:
 
-1. Rename the existing `dev/myworld/assets/animations` directory to
-   `dev/myworld/assets/legacy animation folder`.
+1. Rename the existing `dev/myworld/assets/runtime/animations` directory to
+   `dev/myworld/assets/runtime/legacy-animations`.
 2. Rename `dev/myworld/assets/replacement animations folder` to
-   `dev/myworld/assets/animations`.
+   `dev/myworld/assets/runtime/animations`.
 3. Make the new `animations` directory the preferred runtime lookup path.
 4. Fall back to `legacy animation folder` only for an explicitly documented
    specialty effect that has not yet been migrated.

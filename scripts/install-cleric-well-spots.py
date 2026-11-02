@@ -14,7 +14,7 @@ def main():
  model+=bytes([4])+struct.pack('>hh',32767,32767)+bytes([0,0,1,2,3])
  archive=ROOT/'Client_Base/Cache/video/models.orsc';data=archive.read_bytes();entries=native.archive_entries(data);key=native.name_hash('interaction_spot.ob3')
  owned=[(h,payload) for h,payload in entries if int.from_bytes(h[:4],'big')==key]
- manifest=ROOT/'dev/myworld/cleric-wells/interaction-spots.json'
+ manifest=ROOT/'dev/myworld/assets/authoring/world/cleric-wells/interaction-spots.json'
  if not owned:
   assert not a.check,'Missing interaction footprint'
   original={h.hex():sha(payload) for h,payload in entries};assert len(original)==len(entries)

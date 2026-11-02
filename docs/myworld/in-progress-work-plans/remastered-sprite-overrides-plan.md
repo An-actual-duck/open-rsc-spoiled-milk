@@ -60,7 +60,7 @@ Use a dedicated authored workspace beside the existing `sprites/` and
 `animations/` trees:
 
 ```text
-dev/myworld/assets/remastered-sprites/
+dev/myworld/assets/authoring/remastered-sprites/
   README.md
   CREDITS.md
   _schema/
@@ -117,7 +117,7 @@ Each leaf set is self-describing and independently reviewable:
 - `work/`: incomplete crops, experiments, or not-yet-approved frames; never
   packaged; and
 - generated comparisons, contact sheets, and reports go under
-  `output/remastered-sprites/`, never back into the authored set.
+  `output/art/remastered-sprites/`, never back into the authored set.
 
 An 18-frame set should normally use `frames/00.png` through `frames/17.png`.
 The descriptor may instead declare a spritesheet plus rectangles when that is
@@ -141,7 +141,7 @@ A deterministic generator scans those descriptors and produces:
 
 - the root `manifest.json` used for audits and packaging;
 - a generated Java catalog data class used by the client; and
-- a coverage/inventory report under `output/remastered-sprites/`.
+- a coverage/inventory report under `output/art/remastered-sprites/`.
 
 The generated root manifest and Java data must be committed or regenerated in
 the established project workflow and checked for drift. Never author the same
@@ -432,7 +432,7 @@ without opening `mudclient.java`.
    and notes in `set.json`.
 7. Run set validation and generate the root manifest/catalog.
 8. Generate canonical/remastered contact sheets and a coverage report under
-   `output/remastered-sprites/` for human review.
+   `output/art/remastered-sprites/` for human review.
 9. Checkpoint the coherent set and remove its redundant `incoming/` copy. A
    failed or uncertain classification remains in incoming/work and never
    becomes a silent runtime override.
@@ -456,7 +456,7 @@ Provide one documented wrapper, tentatively
 - `generate`: deterministically rebuild root manifest and Java catalog data;
   and
 - `report`: write coverage, orphan, size, provenance, and package-delta reports
-  under `output/remastered-sprites/`.
+  under `output/art/remastered-sprites/`.
 
 The classifier should understand known legacy offsets only as import adapters,
 then confirm candidates with canonical dimensions, alpha/visible-pixel bounds,
@@ -735,7 +735,7 @@ be compared to the exact asset set.
 
 ### Phase 0B: Authoring workspace foundation
 
-- [x] Create `dev/myworld/assets/remastered-sprites/` with its README, schema,
+- [x] Create `dev/myworld/assets/authoring/remastered-sprites/` with its README, schema,
   templates, category folders, incoming boundary, and output rules.
 - [x] Add its human-readable contributor index and connect it to
   `dev/myworld/assets/README.md`.
@@ -943,7 +943,7 @@ and development client only.
 
 ## Acceptance Criteria
 
-- `dev/myworld/assets/remastered-sprites/` is a documented, navigable source of
+- `dev/myworld/assets/authoring/remastered-sprites/` is a documented, navigable source of
   truth organized by category and named related-frame sets.
 - A collaborator drop can be inventoried, classified, scaffolded, validated,
   reported, and promoted without editing renderer code or a giant central
@@ -1006,7 +1006,7 @@ without asking the manager to authorize every small adjustment. It should:
   authentic array offsets remain fallback implementation details.
 - 2026-07-11: Treat the final post-pack/post-injection object as canonical and
   preserve it unchanged.
-- 2026-07-11: Use `dev/myworld/assets/remastered-sprites/` as a clean authored
+- 2026-07-11: Use `dev/myworld/assets/authoring/remastered-sprites/` as a clean authored
   workspace beside `sprites/` and `animations/`, organized by category and
   named related-frame sets such as `npcs/demon/`.
 - 2026-07-11: Make distributed leaf `set.json` descriptors authoritative and

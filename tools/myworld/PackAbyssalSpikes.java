@@ -6,7 +6,7 @@ import javax.imageio.ImageIO;
 public final class PackAbyssalSpikes {
 	public static void main(String[] args) throws Exception {
 		File root = new File(args.length == 0 ? "." : args[0]);
-		String folder = "dev/myworld/assets/sprites/npcs/";
+		String folder = "dev/myworld/assets/runtime/sprites/npcs/";
 		BufferedImage base = ImageIO.read(new File(root, folder + "abyssal-spikes/approved-base.png"));
 		BufferedImage strip = ImageIO.read(new File(root, folder + "abyssal-spikes/approved-spikes-strip.png"));
 		if (base.getWidth() != 612 || base.getHeight() != 300 || strip.getWidth() != 432 || strip.getHeight() != 112)

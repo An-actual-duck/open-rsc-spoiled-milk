@@ -12,14 +12,14 @@ equipment sprite artwork included by the optional remastered-sprite catalog.
 The optional remastered-sprite option is temporarily hidden and disabled at
 the owner's request. The sources, historical credits and catalog are preserved.
 Per-set mappings and provenance are tracked under
-dev/myworld/assets/remastered-sprites/.
+dev/myworld/assets/authoring/remastered-sprites/.
 
 Next-update gem-dragon, sigil, coating and well artwork includes project-made
 additions and adaptations of existing RuneScape Classic artwork. Provenance and
-approved asset receipts are recorded under dev/myworld/assets/sprites/npcs/gem-dragons/,
-dev/myworld/moonsilver-sigil-production/, dev/myworld/blight-sigil-production/,
-dev/myworld/battleaxe-coatings/, dev/myworld/practice-feedback/ and
-dev/myworld/cleric-wells/. The tower's project-authored scenery exports are
+approved asset receipts are recorded under dev/myworld/assets/runtime/sprites/npcs/gem-dragons/,
+dev/myworld/assets/authoring/items/moonsilver-sigils/, dev/myworld/assets/authoring/items/blight-sigil/,
+dev/myworld/assets/authoring/equipment/battleaxe-coatings/, dev/myworld/assets/authoring/items/coating-reagents/ and
+dev/myworld/assets/authoring/world/cleric-wells/. The tower's project-authored scenery exports are
 recorded in the corresponding native model reviews under docs/myworld/in-progress-work-plans/.
 Adaptations retain the underlying game's provenance and redistribution
 constraints; project authorship and the source-code licence do not grant new
@@ -27,12 +27,12 @@ rights to Jagex's base artwork.
 
 The twenty final Cleric spell icons are by Atelier Pixerellia, as identified
 by the project owner. Exact supplied PNGs and their attribution are recorded in
-dev/myworld/assets/sprites/UI/cleric/PROVENANCE.json. This artist credit does
+dev/myworld/assets/runtime/ui/cleric/PROVENANCE.json. This artist credit does
 not assert a new licence grant; existing asset terms remain applicable.
 
 Prayer UI icon assets are sourced from a royalty-free repository.
 
-Summon UI icon provenance is tracked in dev/myworld/assets/credit.
+Summon UI icon provenance is tracked in dev/myworld/assets/CREDITS.txt.
 
 Source:
 - https://pimen.itch.io/

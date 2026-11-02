@@ -83,20 +83,20 @@ DO_SKILL = CLIENT / "com/openrsc/interfaces/misc/DoSkillInterface.java"
 
 ASSETS = {
     "bangle": (
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         (19, 15),
     ),
     "mould": (
         ROOT
-        / "dev/myworld/assets/sprites/items/inventory-ground/tools/bangle-mould.png",
+        / "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools/bangle-mould.png",
         (27, 26),
     ),
     "slot": (
-        ROOT / "dev/myworld/assets/sprites/UI/equipment/bangle-slot.png",
+        ROOT / "dev/myworld/assets/runtime/ui/equipment/bangle-slot.png",
         (49, 34),
     ),
     "medallion": (
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/medallion.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/medallion.png",
         (14, 13),
     ),
 }

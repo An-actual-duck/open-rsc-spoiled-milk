@@ -94,7 +94,7 @@ through the shared foundation once per eligible resolved hit, never through
 secondary damage or readiness polls. Use existing poison policies and account
 for intrinsic effects without duplicate or lost applications.
 
-Read `dev/myworld/reference-library/items/README.md`, then relevant axe and
+Read `dev/myworld/assets/references/items/README.md`, then relevant axe and
 potion notes/contact sheets and individual full-canvas anchors before icon work.
 Inspect current authentic/custom held battleaxe assets, not longsword fallback.
 Read local asset instructions before touching caches. Prefer controlled palette

@@ -20,9 +20,9 @@ UPDATE_FLAGS = ROOT / "server/src/com/openrsc/server/model/entity/update/UpdateF
 GAME_STATE_UPDATER = ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
 MOB = ROOT / "server/src/com/openrsc/server/model/entity/Mob.java"
 PROJECTILE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
-SHURIKEN_BASIC = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png"
-SHURIKEN_POISON = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png"
-SHURIKEN_THROWN = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/shuriken-thrown.png"
+SHURIKEN_BASIC = ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic.png"
+SHURIKEN_POISON = ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic-poison.png"
+SHURIKEN_THROWN = ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-thrown.png"
 
 
 def fail(message: str) -> None:

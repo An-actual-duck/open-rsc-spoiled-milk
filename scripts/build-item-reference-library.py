@@ -11,7 +11,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
-LIBRARY = ROOT / 'dev/myworld/reference-library/items'
+LIBRARY = ROOT / 'dev/myworld/assets/references/items'
 
 
 def aliases():
@@ -211,7 +211,7 @@ The exported originals remain untouched in their original output directory.
 From the repository root (Pillow 12.2 used for the initial build):
 
 ```sh
-python3 scripts/build-item-reference-library.py --source output/sprite-png-export-20260702-154351
+python3 scripts/build-item-reference-library.py --source output/art/exports/sprite-png/20260702-154351
 python3 scripts/build-item-reference-library.py --check
 ```
 

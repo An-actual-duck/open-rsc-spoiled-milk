@@ -37,7 +37,7 @@ public final class ClericDebuffAnimationClientFixture {
    int offset=0;
    for(int part:ClericBlessingContract.curseAnimationSequence(id)){
     CombatEffectAnimationCatalog.Definition d=CombatEffectAnimationCatalog.getDefinition(part);Sprite[] full=new Sprite[64];
-    int authored=loader.appendExternalAnimationGridSheetFrames(loader.findFirstFile(new String[]{"dev/myworld/assets/animations/on-entity"},d.getSheetPath()),full,24,d.getColumns(),1,0,d.getFrameCount(),0);
+    int authored=loader.appendExternalAnimationGridSheetFrames(loader.findFirstFile(new String[]{"dev/myworld/assets/runtime/animations/on-entity"},d.getSheetPath()),full,24,d.getColumns(),1,0,d.getFrameCount(),0);
     check(authored==d.getFrameCount(),"native full source preserved "+part);
     for(int frame=0;frame<d.getPlaybackFrameCount();frame++,offset++){
      int selected=(frame*(authored-1)+(d.getPlaybackFrameCount()-1)/2)/(d.getPlaybackFrameCount()-1);

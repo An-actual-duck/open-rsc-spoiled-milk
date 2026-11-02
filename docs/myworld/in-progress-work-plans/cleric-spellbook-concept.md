@@ -583,7 +583,7 @@ way to the floor**. Preserve masonry/earth shading outside the localized flow;
 no blanket tint or separate pasted-on wall structure. Ordinary 192-unit and
 tall 275-unit walls keep their existing geometry and correct texture mapping.
 
-[Six native visual candidates and provenance](../../../dev/myworld/cleric-wells/README.md)
+[Six native visual candidates and provenance](../../../dev/myworld/assets/authoring/world/cleric-wells/README.md)
 are prepared for owner review: two water recolors and four liquid/material wall
 combinations, with editable Aseprite layers, reproducible masks, native/nearest
 comparisons and actual offline software wall/floor contexts. They are not yet
@@ -2533,7 +2533,7 @@ is not yet available. There are no inventory, XP, recipe or Devotion changes.
 Final Grace/Blight infusion behavior remains part of the Cleric overhaul.
 
 The owner also approved the native **Thorn** carved/infused Blight visual.
-`dev/myworld/blight-sigil-candidate` is the approved artwork source; production
+`dev/myworld/assets/authoring/items/blight-sigil/candidates` is the approved artwork source; production
 Blight item identities/material tiers/recipes still await their own task.
 
 

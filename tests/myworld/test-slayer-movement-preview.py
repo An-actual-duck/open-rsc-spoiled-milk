@@ -9,7 +9,7 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-ASSETS = ROOT / 'dev/myworld/assets/sprites/npcs/slayer-movement-preview'
+ASSETS = ROOT / 'dev/myworld/assets/runtime/sprites/npcs/slayer-monsters'
 JAR = ROOT / 'Client_Base/Open_RSC_Client.jar'
 manifest = json.loads((ASSETS / 'provenance.json').read_text())['entries']
 defs = json.loads((ROOT / 'server/conf/server/defs/SlayerMovementPreviewNpcDefs.json').read_text())['npcs']

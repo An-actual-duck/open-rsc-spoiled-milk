@@ -49,7 +49,7 @@ Severity here measures release/maintenance impact: P2 means address in a focused
 
 **Confidence: high for check failure; no visual corruption demonstrated.**
 
-`scripts/generate-battleaxe-coatings.py:92` reads the approved practice-feedback bottle, then line98 re-encodes it with Pillow; `emit` at line37 requires exact compressed PNG bytes. `python3 tests/myworld/test-battleaxe-coatings.py` fails in the generator check on `dev/myworld/assets/sprites/items/inventory-ground/viscous-coating.png`, before its archive-preservation and client-renderer tests run.
+`scripts/generate-battleaxe-coatings.py:92` reads the approved practice-feedback bottle, then line98 re-encodes it with Pillow; `emit` at line37 requires exact compressed PNG bytes. `python3 tests/myworld/test-battleaxe-coatings.py` fails in the generator check on `dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-coating.png`, before its archive-preservation and client-renderer tests run.
 
 With installed Pillow 12.2.0, the committed image is 905 bytes and the generated encoding is 898 bytes. Both decode to exactly the same 48×32 RGBA pixels. This establishes an encoding/reproducibility mismatch, not a changed silhouette. The potion and generator were both deliberately revised in `23a69d5b7`.
 

@@ -31,25 +31,23 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Discovers and decodes maintained external PNG assets from development,
- * legacy-output, and packaged client locations. Content catalogs, destination
+ * Discovers and decodes maintained external PNG assets from development and packaged client locations. Content catalogs, destination
  * sprite indexes, procedural fallbacks, and animation timing remain with the
  * client coordinator.
  */
 final class ClientExternalAssetLoader {
-	static final String DEVELOPMENT_ASSET_ROOT = "dev/myworld/assets/";
+	static final String DEVELOPMENT_ASSET_ROOT = "dev/myworld/assets/runtime/";
 	static final String EMBEDDED_ASSET_ROOT = "myworld-assets/";
 	private static final String EXTERNAL_ITEM_PREFIX = "external-png:";
 	private static final int PRAYER_ICON_ALPHA_THRESHOLD = 128;
 	private static final Pattern FIRST_NUMBER = Pattern.compile("(\\d+)");
 	private static final String[] ITEM_ASSET_PATHS = new String[] {
-		"dev/myworld/assets/sprites/items/inventory-ground/agility-pouches",
-		"dev/myworld/assets/sprites/items/inventory-ground/tools",
-		"dev/myworld/assets/sprites/items/inventory-ground/weapons",
-		"dev/myworld/assets/sprites/items/inventory-ground/resources/sigils",
-		"dev/myworld/assets/sprites/items/inventory-ground/resources",
-		"dev/myworld/assets/sprites/items/inventory-ground",
-		"output/pngs"
+		"dev/myworld/assets/runtime/sprites/items/inventory-ground/agility-pouches",
+		"dev/myworld/assets/runtime/sprites/items/inventory-ground/tools",
+		"dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons",
+		"dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils",
+		"dev/myworld/assets/runtime/sprites/items/inventory-ground/resources",
+		"dev/myworld/assets/runtime/sprites/items/inventory-ground"
 	};
 
 	private final Path userDirectory;

@@ -19,12 +19,13 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[3]
 ASSETS = Path(os.environ.get(
     "REMASTERED_SPRITE_ASSETS_ROOT",
-    ROOT / "dev" / "myworld" / "assets" / "remastered-sprites",
+    ROOT / "dev" / "myworld" / "assets" / "authoring" / "remastered-sprites",
 )).resolve()
 ARCHIVE = ROOT / "Client_Base" / "Cache" / "video" / "Custom_Sprites.osar"
 MANIFEST = ASSETS / "manifest.json"
+RUNTIME = ROOT / "dev/myworld/assets/runtime/remastered-sprites"
 JAVA_CATALOG = ROOT / "Client_Base/src/orsc/remastered/RemasteredSpriteCatalogData.java"
-OUTPUT = ROOT / "output" / "remastered-sprites"
+OUTPUT = ROOT / "output" / "art/remastered-sprites"
 ALLOWED_CATEGORIES = {"npcs", "players", "equipment", "items", "textures", "ui", "static"}
 ALLOWED_STATUSES = {"work", "ready", "retired"}
 SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -391,6 +392,13 @@ def command_generate(args: argparse.Namespace) -> int:
     expected_java = rendered_java_catalog(entries)
     for warning in warnings:
         print(f"WARN: {warning}")
+    runtime_files = {"manifest.json": expected_manifest.encode("utf-8")}
+    for entry in entries:
+        runtime_files[entry["png"]] = (ASSETS / entry["png"]).read_bytes()
+    # Authoring descriptors, incoming deliveries, work frames and templates never
+    # enter the client bundle. Publish only the explicit ready catalog payload.
+    canonical_authoring = ROOT / "dev/myworld/assets/authoring/remastered-sprites"
+    publish_runtime = ASSETS == canonical_authoring
     if args.check:
         actual_manifest = MANIFEST.read_text(encoding="utf-8") if MANIFEST.exists() else ""
         actual_java = JAVA_CATALOG.read_text(encoding="utf-8") if JAVA_CATALOG.exists() else ""
@@ -399,6 +407,14 @@ def command_generate(args: argparse.Namespace) -> int:
             stale.append(str(MANIFEST.relative_to(ROOT)))
         if actual_java != expected_java:
             stale.append(str(JAVA_CATALOG.relative_to(ROOT)))
+        if publish_runtime:
+            for relative, payload in runtime_files.items():
+                path = RUNTIME / relative
+                if not path.is_file() or path.read_bytes() != payload:
+                    stale.append(str(path.relative_to(ROOT)))
+            actual_pngs = {p.relative_to(RUNTIME).as_posix() for p in RUNTIME.rglob("*.png")}
+            if actual_pngs != set(runtime_files) - {"manifest.json"}:
+                stale.append("runtime remastered PNG inventory")
         if stale:
             raise WorkspaceError("generated outputs are stale: " + ", ".join(stale) + "; run generate")
         print(f"PASS: generated manifest and Java catalog are current ({len(entries)} entries)")
@@ -406,6 +422,14 @@ def command_generate(args: argparse.Namespace) -> int:
     MANIFEST.write_text(expected_manifest, encoding="utf-8")
     JAVA_CATALOG.parent.mkdir(parents=True, exist_ok=True)
     JAVA_CATALOG.write_text(expected_java, encoding="utf-8")
+    if publish_runtime:
+        unexpected = {p.relative_to(RUNTIME).as_posix() for p in RUNTIME.rglob("*.png")} - set(runtime_files)
+        if unexpected:
+            raise WorkspaceError("retire unexpected runtime frames explicitly before generation: " + ", ".join(sorted(unexpected)))
+        for relative, payload in runtime_files.items():
+            path = RUNTIME / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(payload)
     print(f"WROTE: {MANIFEST.relative_to(ROOT)} and {JAVA_CATALOG.relative_to(ROOT)} ({len(entries)} entries)")
     return 0
 
@@ -419,7 +443,7 @@ def command_inventory(_: argparse.Namespace) -> int:
         png_counts[path.parent.relative_to(ASSETS).parts[0]] += len(list(path.parent.glob("frames/*.png")))
         png_counts[path.parent.relative_to(ASSETS).parts[0]] += len(list(path.parent.glob("work/*.png")))
     incoming = len(list((ASSETS / "incoming").glob("**/*.png")))
-    legacy = ROOT / "dev" / "myworld" / "assets" / "bobo-resprites"
+    legacy = ROOT / "dev" / "myworld" / "assets" / "runtime" / "bobo-resprites"
     legacy_count = len(list(legacy.glob("**/*.png"))) if legacy.exists() else 0
     print(f"sets={sum(counts.values())} ready={counts['ready']} work={counts['work']} retired={counts['retired']}")
     print("category_pngs=" + ", ".join(f"{name}:{png_counts[name]}" for name in sorted(png_counts)))

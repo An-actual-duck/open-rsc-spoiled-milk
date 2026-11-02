@@ -37,7 +37,7 @@ fixture source root to `compile_core` or `compile_plugins`. A successful run
 removes those class directories and leaves this machine-readable receipt:
 
 ```text
-output/combat-test/summary.properties
+output/tests/combat/summary.properties
 ```
 
 The Ant gate requires the receipt and a positive integer

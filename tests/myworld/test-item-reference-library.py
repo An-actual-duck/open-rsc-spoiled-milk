@@ -8,7 +8,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 module = runpy.run_path(str(ROOT / 'scripts/build-item-reference-library.py'))
-library = ROOT / 'dev/myworld/reference-library/items'
+library = ROOT / 'dev/myworld/assets/references/items'
 module['check'](library)
 config, groups = module['classification']()
 records = json.loads((library / 'catalog.json').read_text())['sprites']
