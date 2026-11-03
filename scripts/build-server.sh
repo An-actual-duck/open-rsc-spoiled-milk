@@ -4,6 +4,8 @@ set -euo pipefail
 SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 python3 "$SCRIPT_ROOT/scripts/generate-npc-capacity-contract.py" --check
 python3 "$SCRIPT_ROOT/scripts/generate-cleric-blessing-contract.py" --check
+python3 "$SCRIPT_ROOT/tools/generators/generate-slayer-art-appearances.py" --check
+python3 "$SCRIPT_ROOT/tools/generators/generate-held-equipment-families.py" --check
 ROOT_DIR="${ROOT_DIR:-$SCRIPT_ROOT}"
 source "$SCRIPT_ROOT/scripts/lib/myworld-common.sh"
 

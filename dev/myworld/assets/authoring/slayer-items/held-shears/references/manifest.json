@@ -1,0 +1,458 @@
+{
+  "pickaxe": [
+    {
+      "frame": 0,
+      "width": 6,
+      "height": 27,
+      "xShift": 16,
+      "yShift": 32,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-00.png"
+    },
+    {
+      "frame": 1,
+      "width": 6,
+      "height": 22,
+      "xShift": 16,
+      "yShift": 36,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-01.png"
+    },
+    {
+      "frame": 2,
+      "width": 6,
+      "height": 26,
+      "xShift": 16,
+      "yShift": 39,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-02.png"
+    },
+    {
+      "frame": 3,
+      "width": 22,
+      "height": 20,
+      "xShift": 22,
+      "yShift": 48,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-03.png"
+    },
+    {
+      "frame": 4,
+      "width": 22,
+      "height": 18,
+      "xShift": 25,
+      "yShift": 42,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-04.png"
+    },
+    {
+      "frame": 5,
+      "width": 21,
+      "height": 20,
+      "xShift": 26,
+      "yShift": 39,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-05.png"
+    },
+    {
+      "frame": 6,
+      "width": 37,
+      "height": 20,
+      "xShift": 23,
+      "yShift": 47,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-06.png"
+    },
+    {
+      "frame": 7,
+      "width": 34,
+      "height": 26,
+      "xShift": 29,
+      "yShift": 38,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-07.png"
+    },
+    {
+      "frame": 8,
+      "width": 30,
+      "height": 31,
+      "xShift": 33,
+      "yShift": 33,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-08.png"
+    },
+    {
+      "frame": 9,
+      "width": 28,
+      "height": 23,
+      "xShift": 38,
+      "yShift": 39,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-09.png"
+    },
+    {
+      "frame": 10,
+      "width": 22,
+      "height": 27,
+      "xShift": 43,
+      "yShift": 36,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-10.png"
+    },
+    {
+      "frame": 11,
+      "width": 17,
+      "height": 30,
+      "xShift": 46,
+      "yShift": 31,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-11.png"
+    },
+    {
+      "frame": 12,
+      "width": 6,
+      "height": 15,
+      "xShift": 43,
+      "yShift": 49,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-12.png"
+    },
+    {
+      "frame": 13,
+      "width": 6,
+      "height": 27,
+      "xShift": 44,
+      "yShift": 36,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-13.png"
+    },
+    {
+      "frame": 14,
+      "width": 6,
+      "height": 30,
+      "xShift": 45,
+      "yShift": 32,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/pickaxe/frame-14.png"
+    }
+  ],
+  "sword": [
+    {
+      "frame": 0,
+      "width": 6,
+      "height": 36,
+      "xShift": 17,
+      "yShift": 27,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-00.png"
+    },
+    {
+      "frame": 1,
+      "width": 12,
+      "height": 33,
+      "xShift": 15,
+      "yShift": 29,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-01.png"
+    },
+    {
+      "frame": 2,
+      "width": 18,
+      "height": 34,
+      "xShift": 13,
+      "yShift": 27,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-02.png"
+    },
+    {
+      "frame": 3,
+      "width": 19,
+      "height": 33,
+      "xShift": 18,
+      "yShift": 32,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-03.png"
+    },
+    {
+      "frame": 4,
+      "width": 12,
+      "height": 34,
+      "xShift": 21,
+      "yShift": 31,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-04.png"
+    },
+    {
+      "frame": 5,
+      "width": 6,
+      "height": 36,
+      "xShift": 25,
+      "yShift": 28,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-05.png"
+    },
+    {
+      "frame": 6,
+      "width": 20,
+      "height": 34,
+      "xShift": 27,
+      "yShift": 30,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-06.png"
+    },
+    {
+      "frame": 7,
+      "width": 13,
+      "height": 34,
+      "xShift": 32,
+      "yShift": 29,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-07.png"
+    },
+    {
+      "frame": 8,
+      "width": 6,
+      "height": 36,
+      "xShift": 36,
+      "yShift": 27,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-08.png"
+    },
+    {
+      "frame": 9,
+      "width": 10,
+      "height": 35,
+      "xShift": 44,
+      "yShift": 28,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-09.png"
+    },
+    {
+      "frame": 10,
+      "width": 5,
+      "height": 34,
+      "xShift": 49,
+      "yShift": 24,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-10.png"
+    },
+    {
+      "frame": 11,
+      "width": 10,
+      "height": 30,
+      "xShift": 44,
+      "yShift": 25,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-11.png"
+    },
+    {
+      "frame": 12,
+      "width": 9,
+      "height": 17,
+      "xShift": 40,
+      "yShift": 41,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-12.png"
+    },
+    {
+      "frame": 13,
+      "width": 10,
+      "height": 26,
+      "xShift": 41,
+      "yShift": 36,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-13.png"
+    },
+    {
+      "frame": 14,
+      "width": 6,
+      "height": 36,
+      "xShift": 42,
+      "yShift": 23,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework/output/sprite-png-export-20260702-154351/custom-sprites/equipment/sword/frame-14.png"
+    }
+  ],
+  "shears": [
+    {
+      "frame": 0,
+      "width": 6,
+      "height": 48,
+      "xShift": 17,
+      "yShift": 27,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/00.png"
+    },
+    {
+      "frame": 1,
+      "width": 6,
+      "height": 48,
+      "xShift": 15,
+      "yShift": 29,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/01.png"
+    },
+    {
+      "frame": 2,
+      "width": 4,
+      "height": 48,
+      "xShift": 13,
+      "yShift": 27,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/02.png"
+    },
+    {
+      "frame": 3,
+      "width": 23,
+      "height": 48,
+      "xShift": 18,
+      "yShift": 32,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/03.png"
+    },
+    {
+      "frame": 4,
+      "width": 22,
+      "height": 48,
+      "xShift": 21,
+      "yShift": 31,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/04.png"
+    },
+    {
+      "frame": 5,
+      "width": 18,
+      "height": 48,
+      "xShift": 25,
+      "yShift": 28,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/05.png"
+    },
+    {
+      "frame": 6,
+      "width": 36,
+      "height": 48,
+      "xShift": 27,
+      "yShift": 30,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/06.png"
+    },
+    {
+      "frame": 7,
+      "width": 33,
+      "height": 48,
+      "xShift": 32,
+      "yShift": 29,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/07.png"
+    },
+    {
+      "frame": 8,
+      "width": 26,
+      "height": 48,
+      "xShift": 36,
+      "yShift": 27,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/08.png"
+    },
+    {
+      "frame": 9,
+      "width": 26,
+      "height": 48,
+      "xShift": 44,
+      "yShift": 28,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/09.png"
+    },
+    {
+      "frame": 10,
+      "width": 21,
+      "height": 48,
+      "xShift": 49,
+      "yShift": 24,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/10.png"
+    },
+    {
+      "frame": 11,
+      "width": 17,
+      "height": 48,
+      "xShift": 44,
+      "yShift": 25,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/11.png"
+    },
+    {
+      "frame": 12,
+      "width": 3,
+      "height": 48,
+      "xShift": 40,
+      "yShift": 41,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/12.png"
+    },
+    {
+      "frame": 13,
+      "width": 4,
+      "height": 48,
+      "xShift": 41,
+      "yShift": 36,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/13.png"
+    },
+    {
+      "frame": 14,
+      "width": 4,
+      "height": 48,
+      "xShift": 42,
+      "yShift": 23,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "source": "/home/justin/Core-Framework-ai-3/dev/myworld/assets/sprites/equipment/shears/numbered/14.png"
+    }
+  ]
+}

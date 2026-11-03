@@ -1,0 +1,17 @@
+PRESERVED SLAYER ART PROJECT
+
+Recovered from exact READY handoff 85ed0e8a05c13143d318336f680e786849a0b75a.
+The original project files, prompts and approval history are preserved unchanged.
+They contain historical paths and appearance numbers from September 2026.
+Use RECOVERY-INDEX.json for current runtime paths and source identities.
+
+Historical packaging scripts in this preserved project are reference recipes.
+Their old destination paths are not the active asset layout. The maintained
+game now uses assets/runtime, assets/authoring and assets/references.
+Appearance IDs are reallocated by tools/generators/slayer-art-appearances.json
+and held-equipment-families.json to preserve the newer Gem Dragon/coating IDs.
+
+The older gland candidate is retained here as history. The later owner-approved
+Aseprite gland under authoring/items/coating-reagents remains authoritative.
+Pending/rejected draft variants are preserved; only the selected recovered
+runtime files listed in RECOVERY-INDEX.json are installed.

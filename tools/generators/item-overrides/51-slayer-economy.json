@@ -1,0 +1,161 @@
+{
+  "description": "Slayer Tower base values: rarity premiums only on approved unique equipment. Materials use ordinary material values; dose values scale with remaining uses. Existing tier-priced leather armor remains unchanged.",
+  "items": [
+    {
+      "id": 3318,
+      "basePrice": 60
+    },
+    {
+      "id": 3319,
+      "basePrice": 40
+    },
+    {
+      "id": 3320,
+      "basePrice": 20
+    },
+    {
+      "id": 3321,
+      "basePrice": 120
+    },
+    {
+      "id": 3322,
+      "basePrice": 80
+    },
+    {
+      "id": 3323,
+      "basePrice": 40
+    },
+    {
+      "id": 3324,
+      "basePrice": 180
+    },
+    {
+      "id": 3325,
+      "basePrice": 120
+    },
+    {
+      "id": 3326,
+      "basePrice": 60
+    },
+    {
+      "id": 3327,
+      "basePrice": 240
+    },
+    {
+      "id": 3328,
+      "basePrice": 160
+    },
+    {
+      "id": 3329,
+      "basePrice": 80
+    },
+    {
+      "id": 3330,
+      "basePrice": 300
+    },
+    {
+      "id": 3331,
+      "basePrice": 200
+    },
+    {
+      "id": 3332,
+      "basePrice": 100
+    },
+    {
+      "id": 3333,
+      "basePrice": 35
+    },
+    {
+      "id": 3335,
+      "basePrice": 385
+    },
+    {
+      "id": 3336,
+      "basePrice": 980
+    },
+    {
+      "id": 3337,
+      "basePrice": 980
+    },
+    {
+      "id": 3338,
+      "basePrice": 2100
+    },
+    {
+      "id": 3339,
+      "basePrice": 5
+    },
+    {
+      "id": 3340,
+      "basePrice": 50
+    },
+    {
+      "id": 3341,
+      "basePrice": 20
+    },
+    {
+      "id": 3342,
+      "basePrice": 30
+    },
+    {
+      "id": 3343,
+      "basePrice": 250
+    },
+    {
+      "id": 3344,
+      "basePrice": 400
+    },
+    {
+      "id": 3345,
+      "basePrice": 600
+    },
+    {
+      "id": 3346,
+      "basePrice": 1200
+    },
+    {
+      "id": 3347,
+      "basePrice": 600
+    },
+    {
+      "id": 3348,
+      "basePrice": 1500
+    },
+    {
+      "id": 3349,
+      "basePrice": 40000
+    },
+    {
+      "id": 3350,
+      "basePrice": 600000
+    },
+    {
+      "id": 3351,
+      "basePrice": 450000
+    },
+    {
+      "id": 3352,
+      "basePrice": 300000
+    },
+    {
+      "id": 3353,
+      "basePrice": 150000
+    },
+    {
+      "id": 3354,
+      "basePrice": 150000
+    },
+    {
+      "id": 3355,
+      "basePrice": 100000
+    },
+    {
+      "id": 3392,
+      "basePrice": 175
+    },
+    {
+      "id": 3399,
+      "basePrice": 60
+    }
+  ]
+}
