@@ -44,12 +44,20 @@ public final class DoubleDoorPassageIntegrationTest {
 						WorldLocation source = side(closed.getWorldLocation(), direction, lane, side);
 						WorldLocation target = side(closed.getWorldLocation(), direction, lane, 1 - side);
 						player.teleportLayered(source, false);
+						player.setTeleporting(false);
+						player.setHasMoved(false);
+						player.setSprite(5); // The step must face across the door even after an oblique approach.
 						int sourceMask = mask(server, source), targetMask = mask(server, target);
 						check(sourceMask != 0 && targetMask != 0, "both halves block before passage");
 						check(plugin.blockObjectAction(closed, "open", player), "normal door plugin owns generic action");
 						plugin.onObjectAction(closed, "open", player);
 						GameObject open = find(server, x, y, level);
 						check(player.getWorldLocation().equals(target), "lane/side/cardinal/signed passage " + direction + "/" + lane + "/" + side + "/" + level);
+						check(player.hasMoved() && !player.isTeleporting(), "passage uses walking update, not teleport " + direction + "/" + lane + "/" + side + "/" + level);
+						int expectedSprite = source.getCoordinate().getX() == target.getCoordinate().getX()
+							? (source.getCoordinate().getY() > target.getCoordinate().getY() ? 0 : 4)
+							: (source.getCoordinate().getX() > target.getCoordinate().getX() ? 6 : 2);
+						check(player.getSprite() == expectedSprite, "walking direction points across door " + direction + "/" + side);
 						check(open.getID() == SceneryId.DOORS_GENERIC_PASS_OPEN.id() && open != closed, "existing open model is live");
 						check(mask(server, source) == sourceMask && mask(server, target) == targetMask, "followers cannot cross during open visual");
 						check(open.getLoc().getNativeLayeredGameObjectIdentity().equals(closed.getLoc().getNativeLayeredGameObjectIdentity()), "native placement identity retained");

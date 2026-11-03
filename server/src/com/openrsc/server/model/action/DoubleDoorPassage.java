@@ -6,6 +6,7 @@ import com.openrsc.server.external.GameObjectDef;
 import com.openrsc.server.external.TileDef;
 import com.openrsc.server.io.NativeLayeredTerrainTile;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
+import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GameObjectCollisionRegistrationState;
 import com.openrsc.server.model.entity.player.Player;
@@ -52,10 +53,16 @@ public final class DoubleDoorPassage {
 		try {
 			closed.getWorld().replaceGameObject(closed, open);
 			player.playSound("opendoor");
-			// Same immediate passage as doGate; retain the lane and explicit signed level.
-			int sprite = player.getSprite();
-			player.teleport(destination.getCoordinate().getX(), destination.getCoordinate().getY(), destination.getCoordinate().getLevel(), false);
-			player.setSprite(sprite);
+			// Like doGate's boundary movement, send a walking step rather than a teleport.
+			// Keep the lane and signed level, and discard the approach path after crossing.
+			Point step = player.getWorld().getRegionManager().toRuntimeCompatibilityPoint(destination);
+			player.face(step);
+			if (player.isLayeredLocationAuthorityEnabled()) {
+				player.setLayeredLocation(destination, false);
+			} else {
+				player.setLocation(step, false);
+			}
+			player.resetPath();
 		} catch (RuntimeException failure) {
 			close.stop();
 			if (current(open)) open.getWorld().replaceGameObject(open, new GameObject(closed.getWorld(), closed.getLoc()));
