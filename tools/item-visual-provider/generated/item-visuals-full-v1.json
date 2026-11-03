@@ -5,7 +5,7 @@
     "identity": "spoiled-milk-core-final-client-item-definitions",
     "definitionMode": "members-enabled-post-override",
     "catalogItemCount": 3444,
-    "catalogSha256": "7f148bd893f9ce2415ccafc82bba2e80605c8039191f2660ad3afe7fe59686d9",
+    "catalogSha256": "37885c3239a8239715058a6e14701347278b4eb071dcadea6bc786de2a985d11",
     "inputs": [
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java",
@@ -39,7 +39,7 @@
     },
     "externalPngPackaging": {
       "clientJarPath": "Client_Base/Open_RSC_Client.jar",
-      "packagedPngCount": 3180,
+      "packagedPngCount": 3181,
       "resourceRoot": "myworld-assets/"
     }
   },
@@ -47,7 +47,7 @@
     "kind": "complete-final-catalog",
     "itemCount": 3444,
     "itemIdsSha256": "8c009d4181e55e4c267059a8229fc044db37b8a5e5bc8c6948b9802e0b98cbba",
-    "mappingSha256": "fd8f00a2c9236c2ed7475b43580c652a8824952ba93b62fd800450ff4f0d0664",
+    "mappingSha256": "aecd3b1c0e2ca1b686b4fa7c6c743cccaff4a5e0feca220c861170b1143d5403",
     "minimumItemId": 0,
     "maximumItemId": 3443
   },
@@ -1255,22 +1255,22 @@
     {
       "itemId": 60,
       "diagnosticName": "Crossbow",
-      "spriteLocation": "items:49",
-      "spriteId": 49,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2199,
-        "entrySha256": "b6191dd5298caddd535d0afd7eefe8a5d22fb81dea0d27dfe5cda19b0a4dbcfd"
+      "spriteLocation": "external-png:crossbow-wood-base@40x27",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "crossbow-wood-base@40x27",
+        "assetName": "crossbow-wood-base",
+        "targetWidth": 40,
+        "targetHeight": 27,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/crossbows/crossbow-wood-base.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/weapons/crossbows/crossbow-wood-base.png",
+        "sha256": "7fcb31ff4eeef5577b72963480c3935c7197adbbf892286a88665515d2c3c1f6"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "49",
-        "baseArchiveEntrySha256": "1d66c81cf1612f9fd0b058e27239b68be26ae0a6e239ae1784b5b81e1a85d2fa",
-        "spritepackOverrideKey": "items:49"
-      },
-      "externalPng": null,
-      "pictureMask": 65280,
-      "blueMask": 8538658
+      "pictureMask": 0,
+      "blueMask": 12087344
     },
     {
       "itemId": 61,
@@ -41561,80 +41561,80 @@
     {
       "itemId": 2111,
       "diagnosticName": "Pine Logs",
-      "spriteLocation": "items:14",
-      "spriteId": 14,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2164,
-        "entrySha256": "2531b42fd150320ffe6378440f36f4bb12eef843c0a061b13ab09568532f1496"
+      "spriteLocation": "external-png:log-wood-base@44x30",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "log-wood-base@44x30",
+        "assetName": "log-wood-base",
+        "targetWidth": 44,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/materials/wood/log-wood-base.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/materials/wood/log-wood-base.png",
+        "sha256": "0420aaa24d95fdd31cd7e06be6b61f51005199ce7bb16da15813ce5422c11225"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "14",
-        "baseArchiveEntrySha256": "4a52928154a8d2edaf6b951cb47c3f0cdb20e0943a2f5133bd134b53e45cd311",
-        "spritepackOverrideKey": "items:14"
-      },
-      "externalPng": null,
       "pictureMask": 13412915,
       "blueMask": 0
     },
     {
       "itemId": 2112,
       "diagnosticName": "Palm Logs",
-      "spriteLocation": "items:14",
-      "spriteId": 14,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2164,
-        "entrySha256": "2531b42fd150320ffe6378440f36f4bb12eef843c0a061b13ab09568532f1496"
+      "spriteLocation": "external-png:log-wood-base@44x30",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "log-wood-base@44x30",
+        "assetName": "log-wood-base",
+        "targetWidth": 44,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/materials/wood/log-wood-base.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/materials/wood/log-wood-base.png",
+        "sha256": "0420aaa24d95fdd31cd7e06be6b61f51005199ce7bb16da15813ce5422c11225"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "14",
-        "baseArchiveEntrySha256": "4a52928154a8d2edaf6b951cb47c3f0cdb20e0943a2f5133bd134b53e45cd311",
-        "spritepackOverrideKey": "items:14"
-      },
-      "externalPng": null,
       "pictureMask": 13077578,
       "blueMask": 0
     },
     {
       "itemId": 2113,
       "diagnosticName": "Ebony Logs",
-      "spriteLocation": "items:14",
-      "spriteId": 14,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2164,
-        "entrySha256": "2531b42fd150320ffe6378440f36f4bb12eef843c0a061b13ab09568532f1496"
+      "spriteLocation": "external-png:log-wood-base@44x30",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "log-wood-base@44x30",
+        "assetName": "log-wood-base",
+        "targetWidth": 44,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/materials/wood/log-wood-base.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/materials/wood/log-wood-base.png",
+        "sha256": "0420aaa24d95fdd31cd7e06be6b61f51005199ce7bb16da15813ce5422c11225"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "14",
-        "baseArchiveEntrySha256": "4a52928154a8d2edaf6b951cb47c3f0cdb20e0943a2f5133bd134b53e45cd311",
-        "spritepackOverrideKey": "items:14"
-      },
-      "externalPng": null,
       "pictureMask": 3355443,
       "blueMask": 0
     },
     {
       "itemId": 2114,
       "diagnosticName": "Blood Logs",
-      "spriteLocation": "items:14",
-      "spriteId": 14,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2164,
-        "entrySha256": "2531b42fd150320ffe6378440f36f4bb12eef843c0a061b13ab09568532f1496"
+      "spriteLocation": "external-png:log-wood-base@44x30",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "log-wood-base@44x30",
+        "assetName": "log-wood-base",
+        "targetWidth": 44,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/materials/wood/log-wood-base.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/materials/wood/log-wood-base.png",
+        "sha256": "0420aaa24d95fdd31cd7e06be6b61f51005199ce7bb16da15813ce5422c11225"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "14",
-        "baseArchiveEntrySha256": "4a52928154a8d2edaf6b951cb47c3f0cdb20e0943a2f5133bd134b53e45cd311",
-        "spritepackOverrideKey": "items:14"
-      },
-      "externalPng": null,
       "pictureMask": 13378082,
       "blueMask": 0
     },
@@ -42730,7 +42730,7 @@
         "sha256": "7fcb31ff4eeef5577b72963480c3935c7197adbbf892286a88665515d2c3c1f6"
       },
       "pictureMask": 0,
-      "blueMask": 12155479
+      "blueMask": 12418912
     },
     {
       "itemId": 2170,
@@ -42750,7 +42750,7 @@
         "sha256": "7fcb31ff4eeef5577b72963480c3935c7197adbbf892286a88665515d2c3c1f6"
       },
       "pictureMask": 0,
-      "blueMask": 8231770
+      "blueMask": 10256979
     },
     {
       "itemId": 2171,
@@ -42790,7 +42790,7 @@
         "sha256": "7fcb31ff4eeef5577b72963480c3935c7197adbbf892286a88665515d2c3c1f6"
       },
       "pictureMask": 0,
-      "blueMask": 10506797
+      "blueMask": 11018240
     },
     {
       "itemId": 2173,
@@ -42810,7 +42810,7 @@
         "sha256": "7fcb31ff4eeef5577b72963480c3935c7197adbbf892286a88665515d2c3c1f6"
       },
       "pictureMask": 0,
-      "blueMask": 7032618
+      "blueMask": 8536610
     },
     {
       "itemId": 2174,
@@ -42850,7 +42850,7 @@
         "sha256": "7fcb31ff4eeef5577b72963480c3935c7197adbbf892286a88665515d2c3c1f6"
       },
       "pictureMask": 0,
-      "blueMask": 4927107
+      "blueMask": 11308897
     },
     {
       "itemId": 2176,

@@ -5,7 +5,7 @@
     "identity": "spoiled-milk-core-final-client-item-definitions",
     "definitionMode": "members-enabled-post-override",
     "catalogItemCount": 3444,
-    "catalogSha256": "7f148bd893f9ce2415ccafc82bba2e80605c8039191f2660ad3afe7fe59686d9",
+    "catalogSha256": "37885c3239a8239715058a6e14701347278b4eb071dcadea6bc786de2a985d11",
     "inputs": [
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java",
@@ -39,7 +39,7 @@
     },
     "externalPngPackaging": {
       "clientJarPath": "Client_Base/Open_RSC_Client.jar",
-      "packagedPngCount": 3180,
+      "packagedPngCount": 3181,
       "resourceRoot": "myworld-assets/"
     }
   },
