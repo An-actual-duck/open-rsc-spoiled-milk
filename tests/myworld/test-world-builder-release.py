@@ -66,7 +66,7 @@ def make_fixture(
     )
     make_jar(root / "server/plugins.jar", ("fixture/Plugin.class",))
     make_jar(
-        root / "output/world-builder-tools/world-builder-tools.jar",
+        root / "output/builds/world-builder/world-builder-tools.jar",
         ("com/openrsc/worldbuilder/WorldBuilderCli.class",),
     )
     write(root / "Client_Base/Cache/audio/audio.dat", "audio")
@@ -99,7 +99,7 @@ def make_fixture(
         if resolved_icons
         else "All editor icons | Pending confirmation | not release-ready\n"
     )
-    write(root / "dev/myworld/assets/ui/world-editor/CREDITS.md", credits)
+    write(root / "dev/myworld/assets/runtime/ui/world-editor/CREDITS.md", credits)
 
     linux_runtime = root / "temurin-linux-jre"
     write(

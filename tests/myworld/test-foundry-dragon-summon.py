@@ -19,7 +19,7 @@ NPC_DEFS = ROOT / "server/conf/server/defs/NpcDefsCustom.json"
 SMELTING_DEFS = ROOT / "server/conf/server/defs/extras/ItemSmeltingDef.xml"
 FOUNDRY_DRAGON_SHEET = (
     ROOT
-    / "dev/myworld/assets/sprites/npcs/foundry-dragon/foundry-dragon-sprite-sheet.png"
+    / "dev/myworld/assets/runtime/sprites/npcs/foundry-dragon/foundry-dragon-sprite-sheet.png"
 )
 
 

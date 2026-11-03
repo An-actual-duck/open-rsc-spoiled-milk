@@ -46,7 +46,7 @@ def main() -> None:
         require(f'setCustomItemDefinition({item_id_value}, new ItemDef("{name}"' in client_defs, f"Client missing {name}")
         require(f'"external-png:{icon}"' in client_defs, f"Client should use external icon for {name}")
         require(f'new AnimationDef("mace", "equipment", {animation_color}, 0, true, false, 0)); // {animation_index} - {name}' in client_defs, f"Client should use recolored mace animation for {name}")
-        require((ROOT / f"dev/myworld/assets/sprites/items/inventory-ground/weapons/{icon}.png").is_file(), f"Missing icon asset for {name}")
+        require((ROOT / f"dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/{icon}.png").is_file(), f"Missing icon asset for {name}")
 
         for source_name, items in (("ItemDefsCustom", custom_items), ("ItemDefsMyWorld", myworld_items)):
             item = items.get(item_id_value)

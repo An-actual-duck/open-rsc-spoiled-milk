@@ -98,11 +98,11 @@ def main() -> None:
         "Combat equipment should retain one render bound per frame",
     )
 
-    pitchfork_frames = sorted((ROOT / "dev/myworld/assets/sprites/equipment/demon-pitchfork/numbered").glob("*.png"))
+    pitchfork_frames = sorted((ROOT / "dev/myworld/assets/runtime/sprites/equipment/demon-pitchfork/numbered").glob("*.png"))
     require(len(pitchfork_frames) == 18, "Demon pitchfork should have 18 numbered equipment frames")
-    require((ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons/demon-pitchfork-icon.png").is_file(),
+    require((ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/demon-pitchfork-icon.png").is_file(),
         "Demon pitchfork should have an external inventory/ground icon")
-    shears_frames = sorted((ROOT / "dev/myworld/assets/sprites/equipment/shears/numbered").glob("*.png"))
+    shears_frames = sorted((ROOT / "dev/myworld/assets/runtime/sprites/equipment/shears/numbered").glob("*.png"))
     require(len(shears_frames) == 15, "Universal shears should have 15 no-combat equipment frames")
     require('loadExternalMainHandEquipmentSprite("shears", getExternalEquipmentNumberedFolder("shears"))' in mudclient,
         "Client should load the external universal shears frames")

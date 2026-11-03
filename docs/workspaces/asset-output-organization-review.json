@@ -1,0 +1,257 @@
+{
+  "scope": "Repository asset/output organization and broader folder audit",
+  "baselineCommit": "bf7c09dda192121982a8744804f966cddb193ad9",
+  "ownerSelectedLayout": [
+    "runtime",
+    "authoring",
+    "references"
+  ],
+  "movedArtworkFilesByteIdentical": 3693,
+  "packagedVisualPreservation": {
+    "status": "PASS",
+    "releasedClient": "v0.3.2 sealed Java archive",
+    "allPackagedPngsPreserved": 2993,
+    "allPixelsAndEncodedBytesUnchanged": true,
+    "newPngPayloadsAdded": 0,
+    "resourceNamesUpdatedByDeclaredFolderMoves": true
+  },
+  "releasedDefinitionComparison": {
+    "status": "PASS",
+    "releasedSource": "bf7c09dda192121982a8744804f966cddb193ad9",
+    "releasedClient": "v0.3.2 sealed archive",
+    "itemCount": 3444,
+    "allItemDefinitionFieldsUnchanged": true,
+    "externalPngBytesAndGeometryUnchanged": true,
+    "npcDefinitionsUnchanged": true,
+    "animationDefinitionsUnchanged": true,
+    "placedNpcIds": [
+      846,
+      847,
+      848,
+      849,
+      850,
+      852,
+      853,
+      854,
+      855,
+      856,
+      857,
+      858,
+      859,
+      860,
+      862
+    ],
+    "placementCount": 18,
+    "olderCheckedInProviderSnapshotWasStale": true,
+    "publicServerAccessed": false
+  },
+  "checks": [
+    {
+      "name": "./scripts/build-client.sh",
+      "exitCode": 0,
+      "seconds": 4.2,
+      "log": "output/tests/asset-output-organization/final-path-checks/build-client.log"
+    },
+    {
+      "name": "./scripts/build-server.sh",
+      "exitCode": 0,
+      "seconds": 11.41,
+      "log": "output/tests/asset-output-organization/round1/build-server.sh.log"
+    },
+    {
+      "name": "test-workspace-layout.py",
+      "exitCode": 0,
+      "seconds": 0.58,
+      "log": "output/tests/asset-output-organization/final-path-checks/layout.log"
+    },
+    {
+      "name": "test-client-external-asset-loader.py",
+      "exitCode": 0,
+      "seconds": 1.09,
+      "log": "output/tests/asset-output-organization/round3/test-client-external-asset-loader.py.log"
+    },
+    {
+      "name": "test-cleric-spell-icons.py",
+      "exitCode": 0,
+      "seconds": 0.6,
+      "log": "output/tests/asset-output-organization/round1/test-cleric-spell-icons.py.log"
+    },
+    {
+      "name": "test-animation-asset-migrations.py",
+      "exitCode": 0,
+      "seconds": 0.03,
+      "log": "output/tests/asset-output-organization/round1/test-animation-asset-migrations.py.log"
+    },
+    {
+      "name": "test-equipment-proc-animation-migration.py",
+      "exitCode": 0,
+      "seconds": 0.02,
+      "log": "output/tests/asset-output-organization/round1/test-equipment-proc-animation-migration.py.log"
+    },
+    {
+      "name": "test-cleric-c12-on-entity-animations.py",
+      "exitCode": 0,
+      "seconds": 0.34,
+      "log": "output/tests/asset-output-organization/round1/test-cleric-c12-on-entity-animations.py.log"
+    },
+    {
+      "name": "test-item-reference-library.py",
+      "exitCode": 0,
+      "seconds": 0.1,
+      "log": "output/tests/asset-output-organization/round1/test-item-reference-library.py.log"
+    },
+    {
+      "name": "test-remastered-sprite-workspace.py",
+      "exitCode": 0,
+      "seconds": 0.36,
+      "log": "output/tests/asset-output-organization/round1/test-remastered-sprite-workspace.py.log"
+    },
+    {
+      "name": "test-remastered-sprite-loader.py",
+      "exitCode": 0,
+      "seconds": 4.55,
+      "log": "output/tests/asset-output-organization/round1/test-remastered-sprite-loader.py.log"
+    },
+    {
+      "name": "test-gem-dragons.py",
+      "exitCode": 0,
+      "seconds": 1.32,
+      "log": "output/tests/asset-output-organization/round1/test-gem-dragons.py.log"
+    },
+    {
+      "name": "test-battleaxe-coatings.py",
+      "exitCode": 0,
+      "seconds": 6.36,
+      "log": "output/tests/asset-output-organization/round1/test-battleaxe-coatings.py.log"
+    },
+    {
+      "name": "test-practice-item-art.py",
+      "exitCode": 0,
+      "seconds": 0.67,
+      "log": "output/tests/asset-output-organization/round1/test-practice-item-art.py.log"
+    },
+    {
+      "name": "test-blight-sigil-assets.py",
+      "exitCode": 0,
+      "seconds": 0.11,
+      "log": "output/tests/asset-output-organization/round1/test-blight-sigil-assets.py.log"
+    },
+    {
+      "name": "test-cleric-sigil-item-assets.py",
+      "exitCode": 0,
+      "seconds": 6.01,
+      "log": "output/tests/asset-output-organization/round1/test-cleric-sigil-item-assets.py.log"
+    },
+    {
+      "name": "test-bangle-jewelry.py",
+      "exitCode": 0,
+      "seconds": 1.36,
+      "log": "output/tests/asset-output-organization/round1/test-bangle-jewelry.py.log"
+    },
+    {
+      "name": "test-summoning-display-names.py",
+      "exitCode": 0,
+      "seconds": 0.02,
+      "log": "output/tests/asset-output-organization/round1/test-summoning-display-names.py.log"
+    },
+    {
+      "name": "test-prayer-ui.py",
+      "exitCode": 0,
+      "seconds": 0.02,
+      "log": "output/tests/asset-output-organization/round1/test-prayer-ui.py.log"
+    },
+    {
+      "name": "test-slayer-movement-preview.py",
+      "exitCode": 0,
+      "seconds": 1.56,
+      "log": "output/tests/asset-output-organization/round2/test-slayer-movement-preview.py.log"
+    },
+    {
+      "name": "test-gorak-visual-npc.py",
+      "exitCode": 0,
+      "seconds": 0.03,
+      "log": "output/tests/asset-output-organization/round1/test-gorak-visual-npc.py.log"
+    },
+    {
+      "name": "test-cleric-well-spots.py",
+      "exitCode": 0,
+      "seconds": 2.21,
+      "log": "output/tests/asset-output-organization/round1/test-cleric-well-spots.py.log"
+    },
+    {
+      "name": "test-player-release.py",
+      "exitCode": 0,
+      "seconds": 5.12,
+      "log": "output/tests/asset-output-organization/round1/test-player-release.py.log"
+    },
+    {
+      "name": "test-world-builder-item-visual-provider.py",
+      "exitCode": 0,
+      "seconds": 9.62,
+      "log": "output/tests/asset-output-organization/final-path-checks/provider.log"
+    },
+    {
+      "name": "test-combat-scenarios.py",
+      "exitCode": 0,
+      "seconds": 0.04,
+      "log": "output/tests/asset-output-organization/round1/test-combat-scenarios.py.log"
+    },
+    {
+      "name": "publish-provider",
+      "exitCode": 0,
+      "seconds": 1.05,
+      "log": "output/tests/asset-output-organization/final-path-checks/publish-provider.log"
+    },
+    {
+      "name": "test-production-ui.py",
+      "exitCode": 0,
+      "seconds": 0.02,
+      "log": "output/tests/asset-output-organization/final-path-checks/production-ui.log"
+    },
+    {
+      "name": "test-client-fat-jar-archive.py",
+      "exitCode": 0,
+      "seconds": 4.2,
+      "log": "output/tests/asset-output-organization/final-path-checks/fat-jar.log"
+    },
+    {
+      "name": "test-antidote-icons.cjs",
+      "exitCode": 0,
+      "log": "output/tests/asset-output-organization/final-verification/antidote-icons.log"
+    }
+  ],
+  "additionalVerification": [
+    "Current new-tool Ruff: no findings",
+    "66 changed Python files compile; 7 changed shell files pass syntax checks",
+    "Ready-frame publication preflight rejects unexpected runtime data before any source/runtime write",
+    "Internal relative JRE links preserved; escaping/absolute symlinks rejected",
+    "Destination collisions and active-file moves rejected without data loss",
+    "Supplemental egg-icon fixture updated to the canonical runtime root; actual native and embedded pixels passed"
+  ],
+  "compiler": {
+    "result": "PASS no new gated javac warnings",
+    "observedWarnings": 44,
+    "reportWarnings": 327
+  },
+  "staticAnalysis": {
+    "result": "PASS no new SpotBugs findings",
+    "existingSpotBugs": 384,
+    "checkstyleReportFindings": 14,
+    "pmdReportFindings": 10,
+    "shellcheckReportFindings": 4,
+    "ruffReportFindings": 6,
+    "baselineRewritten": false
+  },
+  "historicalReceiptsPreserved": 20,
+  "outputMigration": {
+    "worker": "completed with identical file identity inventories",
+    "main": "reviewed dry-run: 74 moves, 47344 file/link entries; apply after integration"
+  },
+  "evidenceRoot": "output/tests/asset-output-organization",
+  "staticEvidenceRoot": "output/diagnostics/static-analysis/asset-output-organization",
+  "generalAudit": "docs/workspaces/asset-output-organization.txt",
+  "publicShutdownOrDeployment": false,
+  "mapOrGameplayDataChanges": false,
+  "managerApplication": "Exact main integration and local relocation recorded in the local organization audit index; no further deletion is authorized by this task",
+  "reviewedProductionCodeCommit": "0472518c6fcbf13d75ad93edaf8f46776624dcd3"
+}

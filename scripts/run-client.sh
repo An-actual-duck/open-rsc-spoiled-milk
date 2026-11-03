@@ -88,7 +88,7 @@ if [[ "$RENDERER_DIAGNOSTICS" == true ]]; then
   ((RENDERER_DIAGNOSTIC_MAX_LOG_MB >= 1)) \
     || myworld_fail "SPOILED_MILK_RENDERER_DIAGNOSTIC_MAX_LOG_MB must be at least 1"
   RENDERER_DIAGNOSTIC_MAX_LOG_BYTES=$((RENDERER_DIAGNOSTIC_MAX_LOG_MB * 1024 * 1024))
-  RENDERER_DIAGNOSTIC_SESSION_DIR="$ROOT_DIR/output/renderer-diagnostics/session-$(date +%Y%m%d-%H%M%S)-$$"
+  RENDERER_DIAGNOSTIC_SESSION_DIR="$ROOT_DIR/output/diagnostics/renderer/sessions/session-$(date +%Y%m%d-%H%M%S)-$$"
   mkdir -p "$RENDERER_DIAGNOSTIC_SESSION_DIR/captures"
   export SPOILED_MILK_RENDERER_DIAGNOSTICS=true
   export SPOILED_MILK_RENDERER_TELEMETRY=true

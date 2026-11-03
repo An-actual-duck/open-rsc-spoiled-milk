@@ -3,7 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
-GLYPHS = ROOT / "dev/myworld/assets/sprites/world/rune-altars/glyphs"
+GLYPHS = ROOT / "dev/myworld/assets/runtime/sprites/world/rune-altars/glyphs"
 
 
 def require(condition: bool, message: str) -> None:

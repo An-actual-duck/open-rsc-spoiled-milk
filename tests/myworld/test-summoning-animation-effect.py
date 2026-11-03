@@ -9,11 +9,11 @@ CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 COMBAT_EFFECT = ROOT / "server/src/com/openrsc/server/model/entity/update/CombatEffect.java"
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
-SUMMON_CHARGE_ASSET_DIR = ROOT / "dev/myworld/assets/legacy animation folder/On Player/summon"
+SUMMON_CHARGE_ASSET_DIR = ROOT / "dev/myworld/assets/runtime/legacy-animations/On Player/summon"
 SUMMON_ARRIVAL_ASSET_DIRS = [
-    ROOT / "dev/myworld/assets/legacy animation folder/on summon/summon-combat",
-    ROOT / "dev/myworld/assets/legacy animation folder/on summon/summon-support",
-    ROOT / "dev/myworld/assets/legacy animation folder/on summon/summon-utility",
+    ROOT / "dev/myworld/assets/runtime/legacy-animations/on summon/summon-combat",
+    ROOT / "dev/myworld/assets/runtime/legacy-animations/on summon/summon-support",
+    ROOT / "dev/myworld/assets/runtime/legacy-animations/on summon/summon-utility",
 ]
 
 

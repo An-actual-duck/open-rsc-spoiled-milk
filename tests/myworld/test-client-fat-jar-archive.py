@@ -20,7 +20,7 @@ REQUIRED_ENTRIES = {
     "org/lwjgl/Version.class",
     "org/lwjgl/glfw/GLFW.class",
     "myworld-assets/remastered-sprites/manifest.json",
-    "myworld-assets/sprites/UI/summon/broodling-spider.png",
+    "myworld-assets/ui/summon/broodling-spider.png",
     "spoiled-milk-release-build.marker",
 }
 

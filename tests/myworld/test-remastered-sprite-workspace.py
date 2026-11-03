@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-ASSETS = ROOT / "dev/myworld/assets/remastered-sprites"
+ASSETS = ROOT / "dev/myworld/assets/authoring/remastered-sprites"
 WRAPPER = ROOT / "scripts/remastered-sprites.sh"
 
 
@@ -73,8 +73,8 @@ def main():
     assert not any(entry["png"].startswith("textures/") for entry in manifest["entries"])
     assert not any("/work/" in entry["png"] for entry in manifest["entries"])
 
-    output = ROOT / "output"
-    output.mkdir(exist_ok=True)
+    output = ROOT / "output" / "tests/remastered-sprites"
+    output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="remastered-classify-", dir=output) as temporary:
         delivery = Path(temporary)
         shutil.copyfile(ASSETS / "items/mace-entry-000/frames/00.png", delivery / "id-02150.png")

@@ -1,0 +1,2971 @@
+{
+  "catalogRevision": "dfe0b76dc874196e7c2e1f6ce650bba3834634926554dd06a01fcf36e4cf32b3",
+  "entries": [
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 23,
+        "pixelWidth": 36,
+        "requiresShift": true,
+        "shiftX": 6,
+        "shiftY": 4
+      },
+      "key": "sprite/items/0/0",
+      "png": "items/mace-entry-000/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-mace-entry-000",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 23,
+        "pixelWidth": 41,
+        "requiresShift": true,
+        "shiftX": 4,
+        "shiftY": 4
+      },
+      "key": "sprite/items/1/0",
+      "png": "items/short-sword-entry-001/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-short-sword-entry-001",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 26,
+        "pixelWidth": 21,
+        "requiresShift": true,
+        "shiftX": 14,
+        "shiftY": 3
+      },
+      "key": "sprite/items/103/0",
+      "png": "items/rope-entry-103/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-rope-entry-103",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 30,
+        "pixelWidth": 31,
+        "requiresShift": true,
+        "shiftX": 9,
+        "shiftY": 2
+      },
+      "key": "sprite/items/108/0",
+      "png": "items/banana-entry-108/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-banana-entry-108",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 29,
+        "pixelWidth": 25,
+        "requiresShift": true,
+        "shiftX": 14,
+        "shiftY": 3
+      },
+      "key": "sprite/items/109/0",
+      "png": "items/cooking-apple-entry-109/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-cooking-apple-entry-109",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 22,
+        "pixelWidth": 35,
+        "requiresShift": true,
+        "shiftX": 3,
+        "shiftY": 7
+      },
+      "key": "sprite/items/110/0",
+      "png": "items/pie-dish-entry-110/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-pie-dish-entry-110",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 22,
+        "pixelWidth": 36,
+        "requiresShift": true,
+        "shiftX": 2,
+        "shiftY": 7
+      },
+      "key": "sprite/items/111/0",
+      "png": "items/pie-shell-entry-111/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-pie-shell-entry-111",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 22,
+        "pixelWidth": 36,
+        "requiresShift": true,
+        "shiftX": 8,
+        "shiftY": 8
+      },
+      "key": "sprite/items/113/0",
+      "png": "items/half-pie-entry-113/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-half-pie-entry-113",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 31,
+        "pixelWidth": 23,
+        "requiresShift": true,
+        "shiftX": 3,
+        "shiftY": 1
+      },
+      "key": "sprite/items/114/0",
+      "png": "items/portrait-entry-114/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-portrait-entry-114",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 23,
+        "pixelWidth": 41,
+        "requiresShift": true,
+        "shiftX": 6,
+        "shiftY": 8
+      },
+      "key": "sprite/items/115/0",
+      "png": "items/excalibur-entry-115/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-excalibur-entry-115",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 11,
+        "pixelWidth": 11,
+        "requiresShift": true,
+        "shiftX": 18,
+        "shiftY": 14
+      },
+      "key": "sprite/items/116/0",
+      "png": "items/eye-and-fire-sword-entry-116/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-eye-and-fire-sword-entry-116",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 10,
+        "pixelWidth": 40,
+        "requiresShift": true,
+        "shiftX": 7,
+        "shiftY": 19
+      },
+      "key": "sprite/items/117/0",
+      "png": "items/rat-tail-entry-117/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-rat-tail-entry-117",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 27,
+        "pixelWidth": 47,
+        "requiresShift": true,
+        "shiftX": 1,
+        "shiftY": 5
+      },
+      "key": "sprite/items/118/0",
+      "png": "items/goblin-armour-entry-118/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-goblin-armour-entry-118",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 25,
+        "pixelWidth": 41,
+        "requiresShift": true,
+        "shiftX": 3,
+        "shiftY": 4
+      },
+      "key": "sprite/items/12/0",
+      "png": "items/hatchet-entry-012/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-hatchet-entry-012",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 23,
+        "pixelWidth": 42,
+        "requiresShift": true,
+        "shiftX": 6,
+        "shiftY": 7
+      },
+      "key": "sprite/items/125/0",
+      "png": "items/gemmed-amulet-entry-125/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-gemmed-amulet-entry-125",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 18,
+        "pixelWidth": 19,
+        "requiresShift": true,
+        "shiftX": 22,
+        "shiftY": 9
+      },
+      "key": "sprite/items/126/0",
+      "png": "items/amulet-and-superchisel-entry-126/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-amulet-and-superchisel-entry-126",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 22,
+        "pixelWidth": 36,
+        "requiresShift": true,
+        "shiftX": 6,
+        "shiftY": 5
+      },
+      "key": "sprite/items/13/0",
+      "png": "items/knife-entry-013/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-knife-entry-013",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 31,
+        "pixelWidth": 16,
+        "requiresShift": true,
+        "shiftX": 11,
+        "shiftY": 1
+      },
+      "key": "sprite/items/131/0",
+      "png": "items/karamja-rum-entry-131/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-karamja-rum-entry-131",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 12,
+        "pixelWidth": 23,
+        "requiresShift": true,
+        "shiftX": 7,
+        "shiftY": 13
+      },
+      "key": "sprite/items/134/0",
+      "png": "items/silver-entry-134/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-silver-entry-134",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 30,
+        "pixelWidth": 44,
+        "requiresShift": true,
+        "shiftX": 3,
+        "shiftY": 1
+      },
+      "key": "sprite/items/14/0",
+      "png": "items/logs-entry-014/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-logs-entry-014",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 19,
+        "pixelWidth": 36,
+        "requiresShift": true,
+        "shiftX": 6,
+        "shiftY": 8
+      },
+      "key": "sprite/items/143/0",
+      "png": "items/anti-dragon-shield-entry-143/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-anti-dragon-shield-entry-143",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 20,
+        "pixelWidth": 36,
+        "requiresShift": true,
+        "shiftX": 6,
+        "shiftY": 11
+      },
+      "key": "sprite/items/147/0",
+      "png": "items/pestle-and-mortar-entry-147/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-pestle-and-mortar-entry-147",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 16,
+        "pixelWidth": 15,
+        "requiresShift": true,
+        "shiftX": 17,
+        "shiftY": 7
+      },
+      "key": "sprite/items/151/0",
+      "png": "items/tomato-entry-151/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-tomato-entry-151",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 26,
+        "pixelWidth": 35,
+        "requiresShift": true,
+        "shiftX": 6,
+        "shiftY": 3
+      },
+      "key": "sprite/items/164/0",
+      "png": "items/small-fish-entry-164/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-small-fish-entry-164",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 24,
+        "pixelWidth": 44,
+        "requiresShift": true,
+        "shiftX": 1,
+        "shiftY": 2
+      },
+      "key": "sprite/items/165/0",
+      "png": "items/salmon-trout-and-cod-entry-165/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-salmon-trout-and-cod-entry-165",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 17,
+        "pixelWidth": 44,
+        "requiresShift": true,
+        "shiftX": 1,
+        "shiftY": 7
+      },
+      "key": "sprite/items/166/0",
+      "png": "items/herring-mackerel-and-pike-entry-166/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-herring-mackerel-and-pike-entry-166",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 26,
+        "pixelWidth": 47,
+        "requiresShift": true,
+        "shiftX": 1,
+        "shiftY": 2
+      },
+      "key": "sprite/items/167/0",
+      "png": "items/tuna-and-bass-entry-167/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-tuna-and-bass-entry-167",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 27,
+        "pixelWidth": 48,
+        "requiresShift": true,
+        "shiftX": 0,
+        "shiftY": 2
+      },
+      "key": "sprite/items/168/0",
+      "png": "items/swordfish-entry-168/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-swordfish-entry-168",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 32,
+        "pixelWidth": 40,
+        "requiresShift": true,
+        "shiftX": 2,
+        "shiftY": 0
+      },
+      "key": "sprite/items/169/0",
+      "png": "items/lobster-entry-169/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-lobster-entry-169",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 26,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 5,
+        "shiftY": 5
+      },
+      "key": "sprite/items/177/0",
+      "png": "items/cake-tin-entry-177/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-cake-tin-entry-177",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 26,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 5,
+        "shiftY": 5
+      },
+      "key": "sprite/items/178/0",
+      "png": "items/uncooked-cake-entry-178/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-uncooked-cake-entry-178",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 29,
+        "pixelWidth": 29,
+        "requiresShift": true,
+        "shiftX": 10,
+        "shiftY": 1
+      },
+      "key": "sprite/items/183/0",
+      "png": "items/ball-entry-183/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-ball-entry-183",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 30,
+        "pixelWidth": 25,
+        "requiresShift": true,
+        "shiftX": 8,
+        "shiftY": 1
+      },
+      "key": "sprite/items/184/0",
+      "png": "items/magnet-entry-184/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-magnet-entry-184",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 32,
+        "pixelWidth": 44,
+        "requiresShift": true,
+        "shiftX": 3,
+        "shiftY": 0
+      },
+      "key": "sprite/items/185/0",
+      "png": "items/shark-entry-185/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-shark-entry-185",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 27,
+        "pixelWidth": 38,
+        "requiresShift": true,
+        "shiftX": 5,
+        "shiftY": 2
+      },
+      "key": "sprite/items/187/0",
+      "png": "items/casket-and-pouches-entry-187/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-casket-and-pouches-entry-187",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 20,
+        "pixelWidth": 13,
+        "requiresShift": true,
+        "shiftX": 16,
+        "shiftY": 7
+      },
+      "key": "sprite/items/19/0",
+      "png": "items/egg-entry-019/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-egg-entry-019",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 17,
+        "pixelWidth": 27,
+        "requiresShift": true,
+        "shiftX": 12,
+        "shiftY": 11
+      },
+      "key": "sprite/items/193/0",
+      "png": "items/master-thief-armband-entry-193/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-master-thief-armband-entry-193",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 17,
+        "pixelWidth": 44,
+        "requiresShift": true,
+        "shiftX": 1,
+        "shiftY": 8
+      },
+      "key": "sprite/items/194/0",
+      "png": "items/lava-eel-entry-194/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-lava-eel-entry-194",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 26,
+        "pixelWidth": 41,
+        "requiresShift": true,
+        "shiftX": 3,
+        "shiftY": 3
+      },
+      "key": "sprite/items/2/0",
+      "png": "items/paladin-shield-entry-002/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-paladin-shield-entry-002",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 25,
+        "pixelWidth": 28,
+        "requiresShift": true,
+        "shiftX": 5,
+        "shiftY": 6
+      },
+      "key": "sprite/items/200/0",
+      "png": "items/blood-rune-entry-200/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-blood-rune-entry-200",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 19,
+        "pixelWidth": 40,
+        "requiresShift": true,
+        "shiftX": 4,
+        "shiftY": 12
+      },
+      "key": "sprite/items/204/0",
+      "png": "items/molten-glass-entry-204/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-molten-glass-entry-204",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 21,
+        "pixelWidth": 31,
+        "requiresShift": true,
+        "shiftX": 9,
+        "shiftY": 5
+      },
+      "key": "sprite/items/207/0",
+      "png": "items/arrowheads-entry-207/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-arrowheads-entry-207",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 32,
+        "pixelWidth": 21,
+        "requiresShift": true,
+        "shiftX": 8,
+        "shiftY": 0
+      },
+      "key": "sprite/items/210/0",
+      "png": "items/easter-egg-entry-210/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-easter-egg-entry-210",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 30,
+        "pixelWidth": 23,
+        "requiresShift": true,
+        "shiftX": 16,
+        "shiftY": 2
+      },
+      "key": "sprite/items/229/0",
+      "png": "items/holy-grail-entry-229/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-holy-grail-entry-229",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 31,
+        "pixelWidth": 23,
+        "requiresShift": true,
+        "shiftX": 11,
+        "shiftY": 1
+      },
+      "key": "sprite/items/233/0",
+      "png": "items/picture-entry-233/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-picture-entry-233",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 25,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 4,
+        "shiftY": 4
+      },
+      "key": "sprite/items/237/0",
+      "png": "items/corpse-remains-entry-237/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-corpse-remains-entry-237",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 31,
+        "pixelWidth": 28,
+        "requiresShift": true,
+        "shiftX": 9,
+        "shiftY": 1
+      },
+      "key": "sprite/items/26/0",
+      "png": "items/skull-entry-026/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-skull-entry-026",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 24,
+        "pixelWidth": 36,
+        "requiresShift": true,
+        "shiftX": 10,
+        "shiftY": 8
+      },
+      "key": "sprite/items/27/0",
+      "png": "items/grain-entry-027/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-grain-entry-027",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 26,
+        "pixelWidth": 30,
+        "requiresShift": true,
+        "shiftX": 8,
+        "shiftY": 5
+      },
+      "key": "sprite/items/271/0",
+      "png": "items/dragon-medium-helmet-entry-271/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-dragon-medium-helmet-entry-271",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 30,
+        "pixelWidth": 41,
+        "requiresShift": true,
+        "shiftX": 5,
+        "shiftY": 1
+      },
+      "key": "sprite/items/272/0",
+      "png": "items/dragon-battle-axe-entry-272/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-dragon-battle-axe-entry-272",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 26,
+        "pixelWidth": 46,
+        "requiresShift": true,
+        "shiftX": 2,
+        "shiftY": 6
+      },
+      "key": "sprite/items/273/0",
+      "png": "items/dragon-sword-entry-273/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-dragon-sword-entry-273",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 23,
+        "pixelWidth": 26,
+        "requiresShift": true,
+        "shiftX": 5,
+        "shiftY": 3
+      },
+      "key": "sprite/items/290/0",
+      "png": "items/lemon-entry-290/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-lemon-entry-290",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 23,
+        "pixelWidth": 23,
+        "requiresShift": true,
+        "shiftX": 7,
+        "shiftY": 2
+      },
+      "key": "sprite/items/294/0",
+      "png": "items/lime-entry-294/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-lime-entry-294",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 22,
+        "pixelWidth": 48,
+        "requiresShift": true,
+        "shiftX": 0,
+        "shiftY": 5
+      },
+      "key": "sprite/items/3/0",
+      "png": "items/square-shield-entry-003/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-square-shield-entry-003",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 26,
+        "pixelWidth": 33,
+        "requiresShift": true,
+        "shiftX": 7,
+        "shiftY": 1
+      },
+      "key": "sprite/items/328/0",
+      "png": "items/arrow-entry-328/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-arrow-entry-328",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 26,
+        "pixelWidth": 35,
+        "requiresShift": true,
+        "shiftX": 4,
+        "shiftY": 0
+      },
+      "key": "sprite/items/329/0",
+      "png": "items/lit-arrow-entry-329/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-lit-arrow-entry-329",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 29,
+        "pixelWidth": 37,
+        "requiresShift": true,
+        "shiftX": 5,
+        "shiftY": 2
+      },
+      "key": "sprite/items/365/0",
+      "png": "items/ogre-relic-part-entry-365/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-ogre-relic-part-entry-365",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 16,
+        "pixelWidth": 27,
+        "requiresShift": true,
+        "shiftX": 10,
+        "shiftY": 8
+      },
+      "key": "sprite/items/385/0",
+      "png": "items/poisoned-throwing-knife-entry-385/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-poisoned-throwing-knife-entry-385",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 23,
+        "pixelWidth": 40,
+        "requiresShift": true,
+        "shiftX": 4,
+        "shiftY": 4
+      },
+      "key": "sprite/items/4/0",
+      "png": "items/wooden-shield-entry-004/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-wooden-shield-entry-004",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 26,
+        "pixelWidth": 26,
+        "requiresShift": true,
+        "shiftX": 14,
+        "shiftY": 3
+      },
+      "key": "sprite/items/43/0",
+      "png": "items/unstrung-saradomin-symbol-entry-043/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-unstrung-saradomin-symbol-entry-043",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 31,
+        "pixelWidth": 36,
+        "requiresShift": true,
+        "shiftX": 8,
+        "shiftY": 1
+      },
+      "key": "sprite/items/434/0",
+      "png": "items/scythe-entry-434/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-scythe-entry-434",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 31,
+        "pixelWidth": 34,
+        "requiresShift": true,
+        "shiftX": 9,
+        "shiftY": 1
+      },
+      "key": "sprite/items/44/0",
+      "png": "items/saradomin-symbol-entry-044/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-saradomin-symbol-entry-044",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 22,
+        "pixelWidth": 21,
+        "requiresShift": true,
+        "shiftX": 14,
+        "shiftY": 6
+      },
+      "key": "sprite/items/5/0",
+      "png": "items/coif-entry-005/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-coif-entry-005",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 27,
+        "pixelWidth": 23,
+        "requiresShift": true,
+        "shiftX": 16,
+        "shiftY": 3
+      },
+      "key": "sprite/items/51/0",
+      "png": "items/fish-food-entry-051/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-fish-food-entry-051",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 31,
+        "pixelWidth": 16,
+        "requiresShift": true,
+        "shiftX": 17,
+        "shiftY": 1
+      },
+      "key": "sprite/items/52/0",
+      "png": "items/poison-entry-052/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-poison-entry-052",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 22,
+        "pixelWidth": 30,
+        "requiresShift": true,
+        "shiftX": 8,
+        "shiftY": 10
+      },
+      "key": "sprite/items/53/0",
+      "png": "items/spinach-roll-entry-053/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-spinach-roll-entry-053",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 22,
+        "pixelWidth": 34,
+        "requiresShift": true,
+        "shiftX": 6,
+        "shiftY": 5
+      },
+      "key": "sprite/items/60/0",
+      "png": "items/meat-entry-060/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-meat-entry-060",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 29,
+        "pixelWidth": 25,
+        "requiresShift": true,
+        "shiftX": 11,
+        "shiftY": 2
+      },
+      "key": "sprite/items/61/0",
+      "png": "items/pot-entry-061/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-pot-entry-061",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 29,
+        "pixelWidth": 25,
+        "requiresShift": true,
+        "shiftX": 11,
+        "shiftY": 2
+      },
+      "key": "sprite/items/62/0",
+      "png": "items/flour-and-spice-entry-062/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-flour-and-spice-entry-062",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 19,
+        "pixelWidth": 32,
+        "requiresShift": true,
+        "shiftX": 8,
+        "shiftY": 7
+      },
+      "key": "sprite/items/63/0",
+      "png": "items/dough-entry-063/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-dough-entry-063",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 25,
+        "pixelWidth": 25,
+        "requiresShift": true,
+        "shiftX": 11,
+        "shiftY": 4
+      },
+      "key": "sprite/items/65/0",
+      "png": "items/jug-entry-065/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-jug-entry-065",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 18,
+        "pixelWidth": 34,
+        "requiresShift": true,
+        "shiftX": 7,
+        "shiftY": 7
+      },
+      "key": "sprite/items/7/0",
+      "png": "items/chainmail-and-cuirass-entry-007/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-chainmail-and-cuirass-entry-007",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 30,
+        "pixelWidth": 44,
+        "requiresShift": true,
+        "shiftX": 2,
+        "shiftY": 2
+      },
+      "key": "sprite/items/72/0",
+      "png": "items/pickaxe-entry-072/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-pickaxe-entry-072",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 26,
+        "pixelWidth": 34,
+        "requiresShift": true,
+        "shiftX": 6,
+        "shiftY": 2
+      },
+      "key": "sprite/items/78/0",
+      "png": "items/hammer-and-blue-wizard-hat-entry-078/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-hammer-and-blue-wizard-hat-entry-078",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 16,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 4,
+        "shiftY": 8
+      },
+      "key": "sprite/items/79/0",
+      "png": "items/metal-bar-entry-079/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-metal-bar-entry-079",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 16,
+        "pixelWidth": 27,
+        "requiresShift": true,
+        "shiftX": 10,
+        "shiftY": 8
+      },
+      "key": "sprite/items/80/0",
+      "png": "items/dagger-and-throwing-knife-entry-080/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-dagger-and-throwing-knife-entry-080",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 25,
+        "pixelWidth": 46,
+        "requiresShift": true,
+        "shiftX": 2,
+        "shiftY": 2
+      },
+      "key": "sprite/items/81/0",
+      "png": "items/long-sword-entry-081/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-long-sword-entry-081",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 25,
+        "pixelWidth": 45,
+        "requiresShift": true,
+        "shiftX": 1,
+        "shiftY": 5
+      },
+      "key": "sprite/items/82/0",
+      "png": "items/two-handed-sword-entry-082/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-two-handed-sword-entry-082",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 29,
+        "pixelWidth": 40,
+        "requiresShift": true,
+        "shiftX": 3,
+        "shiftY": 2
+      },
+      "key": "sprite/items/83/0",
+      "png": "items/scimitar-entry-083/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-scimitar-entry-083",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 30,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 5,
+        "shiftY": 1
+      },
+      "key": "sprite/items/84/0",
+      "png": "items/battle-axe-entry-084/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-battle-axe-entry-084",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 28,
+        "pixelWidth": 36,
+        "requiresShift": true,
+        "shiftX": 8,
+        "shiftY": 4
+      },
+      "key": "sprite/items/85/0",
+      "png": "items/staff-and-hatchet-entry-085/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-staff-and-hatchet-entry-085",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 20,
+        "pixelWidth": 43,
+        "requiresShift": true,
+        "shiftX": 2,
+        "shiftY": 12
+      },
+      "key": "sprite/items/94/0",
+      "png": "items/oil-can-entry-094/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-oil-can-entry-094",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 29,
+        "pixelWidth": 35,
+        "requiresShift": true,
+        "shiftX": 7,
+        "shiftY": 3
+      },
+      "key": "sprite/items/97/0",
+      "png": "items/rubber-tube-entry-097/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-rubber-tube-entry-097",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 32,
+        "boundWidth": 48,
+        "frame": 0,
+        "pixelHeight": 26,
+        "pixelWidth": 36,
+        "requiresShift": true,
+        "shiftX": 9,
+        "shiftY": 3
+      },
+      "key": "sprite/items/98/0",
+      "png": "items/stake-entry-098/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "item-stake-entry-098",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 0,
+        "pixelHeight": 97,
+        "pixelWidth": 50,
+        "requiresShift": true,
+        "shiftX": 24,
+        "shiftY": 0
+      },
+      "key": "sprite/npc/demon/0",
+      "png": "npcs/demon/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 1,
+        "pixelHeight": 95,
+        "pixelWidth": 55,
+        "requiresShift": true,
+        "shiftX": 22,
+        "shiftY": 2
+      },
+      "key": "sprite/npc/demon/1",
+      "png": "npcs/demon/frames/01.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 10,
+        "pixelHeight": 90,
+        "pixelWidth": 59,
+        "requiresShift": true,
+        "shiftX": 17,
+        "shiftY": 4
+      },
+      "key": "sprite/npc/demon/10",
+      "png": "npcs/demon/frames/10.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 11,
+        "pixelHeight": 90,
+        "pixelWidth": 78,
+        "requiresShift": true,
+        "shiftX": 10,
+        "shiftY": 5
+      },
+      "key": "sprite/npc/demon/11",
+      "png": "npcs/demon/frames/11.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 12,
+        "pixelHeight": 95,
+        "pixelWidth": 50,
+        "requiresShift": true,
+        "shiftX": 28,
+        "shiftY": 4
+      },
+      "key": "sprite/npc/demon/12",
+      "png": "npcs/demon/frames/12.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 13,
+        "pixelHeight": 96,
+        "pixelWidth": 48,
+        "requiresShift": true,
+        "shiftX": 31,
+        "shiftY": 3
+      },
+      "key": "sprite/npc/demon/13",
+      "png": "npcs/demon/frames/13.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 14,
+        "pixelHeight": 96,
+        "pixelWidth": 49,
+        "requiresShift": true,
+        "shiftX": 27,
+        "shiftY": 5
+      },
+      "key": "sprite/npc/demon/14",
+      "png": "npcs/demon/frames/14.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 15,
+        "pixelHeight": 97,
+        "pixelWidth": 83,
+        "requiresShift": true,
+        "shiftX": 0,
+        "shiftY": 2
+      },
+      "key": "sprite/npc/demon/15",
+      "png": "npcs/demon/frames/15.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 16,
+        "pixelHeight": 84,
+        "pixelWidth": 101,
+        "requiresShift": true,
+        "shiftX": 4,
+        "shiftY": 14
+      },
+      "key": "sprite/npc/demon/16",
+      "png": "npcs/demon/frames/16.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 17,
+        "pixelHeight": 96,
+        "pixelWidth": 81,
+        "requiresShift": true,
+        "shiftX": 19,
+        "shiftY": 0
+      },
+      "key": "sprite/npc/demon/17",
+      "png": "npcs/demon/frames/17.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 2,
+        "pixelHeight": 98,
+        "pixelWidth": 49,
+        "requiresShift": true,
+        "shiftX": 26,
+        "shiftY": 1
+      },
+      "key": "sprite/npc/demon/2",
+      "png": "npcs/demon/frames/02.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 3,
+        "pixelHeight": 97,
+        "pixelWidth": 82,
+        "requiresShift": true,
+        "shiftX": 17,
+        "shiftY": 2
+      },
+      "key": "sprite/npc/demon/3",
+      "png": "npcs/demon/frames/03.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 4,
+        "pixelHeight": 93,
+        "pixelWidth": 42,
+        "requiresShift": true,
+        "shiftX": 28,
+        "shiftY": 3
+      },
+      "key": "sprite/npc/demon/4",
+      "png": "npcs/demon/frames/04.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 5,
+        "pixelHeight": 97,
+        "pixelWidth": 35,
+        "requiresShift": true,
+        "shiftX": 32,
+        "shiftY": 2
+      },
+      "key": "sprite/npc/demon/5",
+      "png": "npcs/demon/frames/05.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 6,
+        "pixelHeight": 95,
+        "pixelWidth": 93,
+        "requiresShift": true,
+        "shiftX": 5,
+        "shiftY": 3
+      },
+      "key": "sprite/npc/demon/6",
+      "png": "npcs/demon/frames/06.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 7,
+        "pixelHeight": 95,
+        "pixelWidth": 78,
+        "requiresShift": true,
+        "shiftX": 0,
+        "shiftY": 4
+      },
+      "key": "sprite/npc/demon/7",
+      "png": "npcs/demon/frames/07.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 8,
+        "pixelHeight": 99,
+        "pixelWidth": 100,
+        "requiresShift": true,
+        "shiftX": 0,
+        "shiftY": 0
+      },
+      "key": "sprite/npc/demon/8",
+      "png": "npcs/demon/frames/08.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 101,
+        "boundWidth": 106,
+        "frame": 9,
+        "pixelHeight": 94,
+        "pixelWidth": 40,
+        "requiresShift": true,
+        "shiftX": 30,
+        "shiftY": 6
+      },
+      "key": "sprite/npc/demon/9",
+      "png": "npcs/demon/frames/09.png",
+      "recolorPolicy": "inherit",
+      "setId": "npc-demon",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 0,
+        "pixelHeight": 38,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 13,
+        "shiftY": 25
+      },
+      "key": "sprite/player/body1/0",
+      "png": "players/body1/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 1,
+        "pixelHeight": 37,
+        "pixelWidth": 40,
+        "requiresShift": true,
+        "shiftX": 12,
+        "shiftY": 25
+      },
+      "key": "sprite/player/body1/1",
+      "png": "players/body1/frames/01.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 10,
+        "pixelHeight": 38,
+        "pixelWidth": 38,
+        "requiresShift": true,
+        "shiftX": 15,
+        "shiftY": 23
+      },
+      "key": "sprite/player/body1/10",
+      "png": "players/body1/frames/10.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 11,
+        "pixelHeight": 36,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 15,
+        "shiftY": 23
+      },
+      "key": "sprite/player/body1/11",
+      "png": "players/body1/frames/11.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 12,
+        "pixelHeight": 39,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 12,
+        "shiftY": 24
+      },
+      "key": "sprite/player/body1/12",
+      "png": "players/body1/frames/12.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 13,
+        "pixelHeight": 38,
+        "pixelWidth": 40,
+        "requiresShift": true,
+        "shiftX": 12,
+        "shiftY": 24
+      },
+      "key": "sprite/player/body1/13",
+      "png": "players/body1/frames/13.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 14,
+        "pixelHeight": 39,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 13,
+        "shiftY": 24
+      },
+      "key": "sprite/player/body1/14",
+      "png": "players/body1/frames/14.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 84,
+        "frame": 15,
+        "pixelHeight": 37,
+        "pixelWidth": 21,
+        "requiresShift": true,
+        "shiftX": 7,
+        "shiftY": 23
+      },
+      "key": "sprite/player/body1/15",
+      "png": "players/body1/frames/15.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 84,
+        "frame": 16,
+        "pixelHeight": 37,
+        "pixelWidth": 29,
+        "requiresShift": true,
+        "shiftX": 11,
+        "shiftY": 23
+      },
+      "key": "sprite/player/body1/16",
+      "png": "players/body1/frames/16.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 84,
+        "frame": 17,
+        "pixelHeight": 37,
+        "pixelWidth": 34,
+        "requiresShift": true,
+        "shiftX": 15,
+        "shiftY": 23
+      },
+      "key": "sprite/player/body1/17",
+      "png": "players/body1/frames/17.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 2,
+        "pixelHeight": 38,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 12,
+        "shiftY": 25
+      },
+      "key": "sprite/player/body1/2",
+      "png": "players/body1/frames/02.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 3,
+        "pixelHeight": 39,
+        "pixelWidth": 40,
+        "requiresShift": true,
+        "shiftX": 14,
+        "shiftY": 25
+      },
+      "key": "sprite/player/body1/3",
+      "png": "players/body1/frames/03.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 4,
+        "pixelHeight": 39,
+        "pixelWidth": 36,
+        "requiresShift": true,
+        "shiftX": 14,
+        "shiftY": 25
+      },
+      "key": "sprite/player/body1/4",
+      "png": "players/body1/frames/04.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 5,
+        "pixelHeight": 38,
+        "pixelWidth": 34,
+        "requiresShift": true,
+        "shiftX": 14,
+        "shiftY": 25
+      },
+      "key": "sprite/player/body1/5",
+      "png": "players/body1/frames/05.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 6,
+        "pixelHeight": 39,
+        "pixelWidth": 21,
+        "requiresShift": true,
+        "shiftX": 22,
+        "shiftY": 23
+      },
+      "key": "sprite/player/body1/6",
+      "png": "players/body1/frames/06.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 7,
+        "pixelHeight": 40,
+        "pixelWidth": 18,
+        "requiresShift": true,
+        "shiftX": 22,
+        "shiftY": 23
+      },
+      "key": "sprite/player/body1/7",
+      "png": "players/body1/frames/07.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 8,
+        "pixelHeight": 38,
+        "pixelWidth": 21,
+        "requiresShift": true,
+        "shiftX": 22,
+        "shiftY": 23
+      },
+      "key": "sprite/player/body1/8",
+      "png": "players/body1/frames/08.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 9,
+        "pixelHeight": 39,
+        "pixelWidth": 35,
+        "requiresShift": true,
+        "shiftX": 15,
+        "shiftY": 23
+      },
+      "key": "sprite/player/body1/9",
+      "png": "players/body1/frames/09.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-body1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 0,
+        "pixelHeight": 38,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 13,
+        "shiftY": 25
+      },
+      "key": "sprite/player/fbody1/0",
+      "png": "players/fbody1/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 1,
+        "pixelHeight": 37,
+        "pixelWidth": 38,
+        "requiresShift": true,
+        "shiftX": 13,
+        "shiftY": 25
+      },
+      "key": "sprite/player/fbody1/1",
+      "png": "players/fbody1/frames/01.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 10,
+        "pixelHeight": 38,
+        "pixelWidth": 36,
+        "requiresShift": true,
+        "shiftX": 17,
+        "shiftY": 23
+      },
+      "key": "sprite/player/fbody1/10",
+      "png": "players/fbody1/frames/10.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 11,
+        "pixelHeight": 36,
+        "pixelWidth": 38,
+        "requiresShift": true,
+        "shiftX": 16,
+        "shiftY": 23
+      },
+      "key": "sprite/player/fbody1/11",
+      "png": "players/fbody1/frames/11.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 12,
+        "pixelHeight": 39,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 12,
+        "shiftY": 24
+      },
+      "key": "sprite/player/fbody1/12",
+      "png": "players/fbody1/frames/12.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 13,
+        "pixelHeight": 38,
+        "pixelWidth": 40,
+        "requiresShift": true,
+        "shiftX": 12,
+        "shiftY": 24
+      },
+      "key": "sprite/player/fbody1/13",
+      "png": "players/fbody1/frames/13.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 14,
+        "pixelHeight": 39,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 13,
+        "shiftY": 24
+      },
+      "key": "sprite/player/fbody1/14",
+      "png": "players/fbody1/frames/14.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 84,
+        "frame": 15,
+        "pixelHeight": 37,
+        "pixelWidth": 21,
+        "requiresShift": true,
+        "shiftX": 7,
+        "shiftY": 23
+      },
+      "key": "sprite/player/fbody1/15",
+      "png": "players/fbody1/frames/15.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 84,
+        "frame": 16,
+        "pixelHeight": 37,
+        "pixelWidth": 28,
+        "requiresShift": true,
+        "shiftX": 12,
+        "shiftY": 23
+      },
+      "key": "sprite/player/fbody1/16",
+      "png": "players/fbody1/frames/16.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 84,
+        "frame": 17,
+        "pixelHeight": 37,
+        "pixelWidth": 33,
+        "requiresShift": true,
+        "shiftX": 16,
+        "shiftY": 23
+      },
+      "key": "sprite/player/fbody1/17",
+      "png": "players/fbody1/frames/17.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 2,
+        "pixelHeight": 38,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 12,
+        "shiftY": 25
+      },
+      "key": "sprite/player/fbody1/2",
+      "png": "players/fbody1/frames/02.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 3,
+        "pixelHeight": 39,
+        "pixelWidth": 39,
+        "requiresShift": true,
+        "shiftX": 15,
+        "shiftY": 25
+      },
+      "key": "sprite/player/fbody1/3",
+      "png": "players/fbody1/frames/03.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 4,
+        "pixelHeight": 39,
+        "pixelWidth": 35,
+        "requiresShift": true,
+        "shiftX": 15,
+        "shiftY": 25
+      },
+      "key": "sprite/player/fbody1/4",
+      "png": "players/fbody1/frames/04.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 5,
+        "pixelHeight": 38,
+        "pixelWidth": 32,
+        "requiresShift": true,
+        "shiftX": 16,
+        "shiftY": 25
+      },
+      "key": "sprite/player/fbody1/5",
+      "png": "players/fbody1/frames/05.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 6,
+        "pixelHeight": 39,
+        "pixelWidth": 21,
+        "requiresShift": true,
+        "shiftX": 22,
+        "shiftY": 23
+      },
+      "key": "sprite/player/fbody1/6",
+      "png": "players/fbody1/frames/06.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 7,
+        "pixelHeight": 40,
+        "pixelWidth": 18,
+        "requiresShift": true,
+        "shiftX": 22,
+        "shiftY": 23
+      },
+      "key": "sprite/player/fbody1/7",
+      "png": "players/fbody1/frames/07.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 8,
+        "pixelHeight": 38,
+        "pixelWidth": 21,
+        "requiresShift": true,
+        "shiftX": 22,
+        "shiftY": 23
+      },
+      "key": "sprite/player/fbody1/8",
+      "png": "players/fbody1/frames/08.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 9,
+        "pixelHeight": 39,
+        "pixelWidth": 33,
+        "requiresShift": true,
+        "shiftX": 17,
+        "shiftY": 23
+      },
+      "key": "sprite/player/fbody1/9",
+      "png": "players/fbody1/frames/09.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-fbody1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 0,
+        "pixelHeight": 43,
+        "pixelWidth": 26,
+        "requiresShift": true,
+        "shiftX": 17,
+        "shiftY": 58
+      },
+      "key": "sprite/player/legs1/0",
+      "png": "players/legs1/frames/00.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 1,
+        "pixelHeight": 42,
+        "pixelWidth": 26,
+        "requiresShift": true,
+        "shiftX": 19,
+        "shiftY": 58
+      },
+      "key": "sprite/player/legs1/1",
+      "png": "players/legs1/frames/01.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 10,
+        "pixelHeight": 44,
+        "pixelWidth": 23,
+        "requiresShift": true,
+        "shiftX": 20,
+        "shiftY": 56
+      },
+      "key": "sprite/player/legs1/10",
+      "png": "players/legs1/frames/10.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 11,
+        "pixelHeight": 45,
+        "pixelWidth": 22,
+        "requiresShift": true,
+        "shiftX": 20,
+        "shiftY": 56
+      },
+      "key": "sprite/player/legs1/11",
+      "png": "players/legs1/frames/11.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 12,
+        "pixelHeight": 43,
+        "pixelWidth": 26,
+        "requiresShift": true,
+        "shiftX": 19,
+        "shiftY": 58
+      },
+      "key": "sprite/player/legs1/12",
+      "png": "players/legs1/frames/12.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 13,
+        "pixelHeight": 42,
+        "pixelWidth": 26,
+        "requiresShift": true,
+        "shiftX": 19,
+        "shiftY": 58
+      },
+      "key": "sprite/player/legs1/13",
+      "png": "players/legs1/frames/13.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 14,
+        "pixelHeight": 43,
+        "pixelWidth": 25,
+        "requiresShift": true,
+        "shiftX": 20,
+        "shiftY": 58
+      },
+      "key": "sprite/player/legs1/14",
+      "png": "players/legs1/frames/14.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 84,
+        "frame": 15,
+        "pixelHeight": 43,
+        "pixelWidth": 34,
+        "requiresShift": true,
+        "shiftX": 0,
+        "shiftY": 57
+      },
+      "key": "sprite/player/legs1/15",
+      "png": "players/legs1/frames/15.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 84,
+        "frame": 16,
+        "pixelHeight": 44,
+        "pixelWidth": 31,
+        "requiresShift": true,
+        "shiftX": 3,
+        "shiftY": 56
+      },
+      "key": "sprite/player/legs1/16",
+      "png": "players/legs1/frames/16.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 84,
+        "frame": 17,
+        "pixelHeight": 45,
+        "pixelWidth": 27,
+        "requiresShift": true,
+        "shiftX": 7,
+        "shiftY": 55
+      },
+      "key": "sprite/player/legs1/17",
+      "png": "players/legs1/frames/17.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 2,
+        "pixelHeight": 43,
+        "pixelWidth": 26,
+        "requiresShift": true,
+        "shiftX": 21,
+        "shiftY": 58
+      },
+      "key": "sprite/player/legs1/2",
+      "png": "players/legs1/frames/02.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 3,
+        "pixelHeight": 44,
+        "pixelWidth": 21,
+        "requiresShift": true,
+        "shiftX": 22,
+        "shiftY": 56
+      },
+      "key": "sprite/player/legs1/3",
+      "png": "players/legs1/frames/03.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 4,
+        "pixelHeight": 44,
+        "pixelWidth": 23,
+        "requiresShift": true,
+        "shiftX": 22,
+        "shiftY": 56
+      },
+      "key": "sprite/player/legs1/4",
+      "png": "players/legs1/frames/04.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 5,
+        "pixelHeight": 44,
+        "pixelWidth": 29,
+        "requiresShift": true,
+        "shiftX": 20,
+        "shiftY": 56
+      },
+      "key": "sprite/player/legs1/5",
+      "png": "players/legs1/frames/05.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 6,
+        "pixelHeight": 42,
+        "pixelWidth": 30,
+        "requiresShift": true,
+        "shiftX": 15,
+        "shiftY": 58
+      },
+      "key": "sprite/player/legs1/6",
+      "png": "players/legs1/frames/06.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 7,
+        "pixelHeight": 42,
+        "pixelWidth": 17,
+        "requiresShift": true,
+        "shiftX": 24,
+        "shiftY": 58
+      },
+      "key": "sprite/player/legs1/7",
+      "png": "players/legs1/frames/07.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 8,
+        "pixelHeight": 42,
+        "pixelWidth": 25,
+        "requiresShift": true,
+        "shiftX": 19,
+        "shiftY": 58
+      },
+      "key": "sprite/player/legs1/8",
+      "png": "players/legs1/frames/08.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    },
+    {
+      "alphaThreshold": 128,
+      "contributorId": "thatkidbobo",
+      "expectedCanonical": {
+        "boundHeight": 102,
+        "boundWidth": 64,
+        "frame": 9,
+        "pixelHeight": 44,
+        "pixelWidth": 27,
+        "requiresShift": true,
+        "shiftX": 18,
+        "shiftY": 56
+      },
+      "key": "sprite/player/legs1/9",
+      "png": "players/legs1/frames/09.png",
+      "recolorPolicy": "inherit",
+      "setId": "player-legs1",
+      "sizePolicy": "exact-canonical"
+    }
+  ],
+  "entryCount": 156,
+  "schemaVersion": 1
+}

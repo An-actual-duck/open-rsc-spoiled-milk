@@ -160,7 +160,7 @@ ownership checks above.
    <owner-root>`. Expand one adjacent owner at a time, and search data/config
    separately for numeric IDs and keys.
 4. **Keep Ctags optional (P2).** `scripts/generate-code-tags.sh` already checks
-   for Universal Ctags and writes only ignored `output/navigation/tags`; do not
+   for Universal Ctags and writes only ignored `output/diagnostics/navigation/tags`; do not
    install packages or add a tracked index. A language server can be evaluated
    later for a specific editor workflow, not imposed as repository authority.
 

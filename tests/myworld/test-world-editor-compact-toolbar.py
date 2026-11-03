@@ -106,7 +106,7 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
 
     def test_icon_registry_caches_valid_png_and_bounds_malformed_assets(self):
         with tempfile.TemporaryDirectory() as working:
-            icon_root = Path(working) / "dev/myworld/assets/ui/world-editor"
+            icon_root = Path(working) / "dev/myworld/assets/runtime/ui/world-editor"
             icon_root.mkdir(parents=True)
             (icon_root / "mode-navigate.png").write_bytes(rgba_png(24, 24))
             (icon_root / "mode-inspect.png").write_bytes(rgba_png(12, 12))
@@ -164,14 +164,14 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
         self.assertEqual(expected, set(re.findall(r'\("([a-z0-9-]+\.png)"', source)))
         build = (ROOT / "Client_Base/build.xml").read_text()
         self.assertIn('<include name="ui/world-editor/**"/>', build)
-        readme = (ROOT / "dev/myworld/assets/ui/world-editor/README.md").read_text()
-        credits = (ROOT / "dev/myworld/assets/ui/world-editor/CREDITS.md").read_text()
+        readme = (ROOT / "dev/myworld/assets/runtime/ui/world-editor/README.md").read_text()
+        credits = (ROOT / "dev/myworld/assets/runtime/ui/world-editor/CREDITS.md").read_text()
         for contract in ("24x24", "RGBA", "kebab-case", "myworld-assets/ui/world-editor"):
             self.assertIn(contract, readme)
         for heading in ("Source", "Author", "License", "Modifications"):
             self.assertIn(heading, credits)
 
-        asset_root = ROOT / "dev/myworld/assets/ui/world-editor"
+        asset_root = ROOT / "dev/myworld/assets/runtime/ui/world-editor"
         for filename in expected:
             data = (asset_root / filename).read_bytes()
             self.assertEqual(b"\x89PNG\r\n\x1a\n", data[:8], filename)

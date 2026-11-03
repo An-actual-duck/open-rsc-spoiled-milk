@@ -1,0 +1,135 @@
+SPOILED MILK ASSET AND OUTPUT ORGANIZATION
+Adopted with the owner on November 2, 2026.
+
+ONE VISUAL LIBRARY
+  dev/myworld/assets/runtime/     game-ready files; the client packages this tree
+  dev/myworld/assets/authoring/   editable masters, source inputs, recipes, provenance
+  dev/myworld/assets/references/  preserved examples and contact sheets
+  dev/myworld/assets/CREDITS.txt existing attribution record
+
+Use the role first and the subject second. Game UI has one lowercase home:
+assets/runtime/ui/{magic,prayer,cleric,summon,equipment,slayer,world-editor}.
+Equipment, items, NPCs and world sprites live under runtime/sprites/.
+Runtime animations keep their three established rendering categories. The
+legacy specialty-animation fallback has the explicit name legacy-animations.
+
+All feature-art projects formerly beside assets/ now live under authoring/.
+The original PNGs, Aseprite masters, source inputs and approval records remain.
+Historical intake paths/versioned hashes remain historical; production paths
+identify the current files. Do not rewrite old provenance as a new intake.
+
+The remastered source workspace lives under authoring/remastered-sprites/.
+Its generate command publishes only the explicit ready catalog and frame PNGs
+to runtime/remastered-sprites/; work frames, descriptors, incoming deliveries,
+templates and references do not enter the client. Its hidden/default-off state
+and contributor attribution are unchanged.
+
+A source asset is not a generated preview. Keep editable work in authoring/;
+put working exports and comparisons under output/art/ or output/reviews/;
+promote approved bytes deliberately into runtime/. Existing curated approval
+records are preserved rather than discarded as scratch.
+
+CATEGORIZED GENERATED OUTPUT
+  output/art/<subject>/          sprite exports, compositions and previews
+  output/reviews/<topic>/        related review images/reports/logs together
+  output/tests/<suite>/<run>/    classes, fixtures, test databases and results
+  output/diagnostics/<topic>/    captures, profiles and static analysis
+  output/builds/<tool>/          compiled development tools and build markers
+  output/releases/<version>/    Java/Windows/world release archives
+  output/cache/<tool>/           reusable downloads and Java runtimes
+  output/benchmarks/<suite>/     measurements
+  output/logs/                   general command logs; job logs stay with the job
+  output/archive/<topic>/        indexed historical outputs
+  output/scratch/<experiment>/   temporary experiments, never the sole art master
+
+A job may contain several file formats. Keep its inputs/frames/report/logs
+coherent rather than splitting it into global folders by extension. Name
+repeatable review/diagnostic runs explicitly. Do not create another task folder
+or loose image directly under output/.
+
+The machine-readable contract is config/workspace-layout.json. Resolve a path:
+  python3 scripts/workspace-layout.py path reviews my-feature/run-001 --mkdir
+  python3 scripts/workspace-layout.py path tests my-feature --mkdir
+Validate placement and exercise preservation checks:
+  make asset-output-check
+  python3 scripts/workspace-layout.py check
+
+The check rejects duplicate UI/asset hierarchies, authoring/work files in
+runtime assets, new feature folders under dev/myworld, unclassified output
+roots and ad hoc output defaults in maintained producer scripts/build files.
+AGENTS.md records the rule for future contributors and AI workers. The combined
+test runner includes the layout test and a final placement check.
+
+RELOCATION AND HISTORY
+Existing output folders can be inspected and relocated without deletion:
+  python3 scripts/workspace-layout.py migrate-output
+  python3 scripts/workspace-layout.py migrate-output --apply
+This is a one-time workspace operation, not an automatic cleanup. It preserves
+file identities/bytes and records old/new paths plus inventories under
+output/archive/layout-migrations/. It rejects active files, escaping/absolute symlinks, unclassified folders and
+destination collisions. Relative links wholly inside a moved tree (such as JRE
+license links) retain their exact link targets and are verified after moving.
+Review an old worker's outputs when it next receives this source version; do
+not delete them merely because they predate the current structure.
+
+Tracked historical battleaxe review evidence was moved out of ignored output/
+to docs/myworld/evidence/battleaxe-coatings-phase1/. Its bytes remain unchanged.
+The sourcePathMigrations and legacyOutputPaths tables resolve historical source
+and output references. Old exact-commit reports keep their original evidence.
+The asset/output reorganization itself is versioned in Git; it does not retag
+or modify any published release or public deployment.
+
+REPOSITORY-WIDE AUDIT
+Resolved in this task:
+- Parallel UI roots and case differences: consolidated into runtime/ui/.
+- Feature art beside assets/: consolidated under authoring by subject.
+- Reference art outside the visual library: moved to assets/references/.
+- Runtime lookup of ad hoc output artwork: removed after maintained asset and
+  embedded-only loading checks. Preview exports are no longer game inputs.
+- Custom Slayer UI coin outside the library: moved into runtime/ui/slayer/.
+- Tracked review artifacts inside ignored output/: moved into documentation.
+- Old output defaults: routed by category, preserving related job files.
+- Historical Client_Base/renderer-v2-captures/: moved to
+  output/diagnostics/renderer/legacy-captures/ with the same identity inventory.
+- Two plans in dev/myworld/: Rangers design moved to docs/myworld/rough-drafts/;
+  the projectile-cover contract moved to docs/combat/.
+- Provider export defaults: temporary exports now use output/art/exports/;
+  reviewed, checked-in provider contracts remain explicit promotion targets.
+
+Other areas requiring a separate, deliberate follow-up:
+- docs/myworld/in-progress-work-plans/ holds more than 100 direct documents,
+  including completed-release reviews. Archive completed groups and refresh
+  their index while preserving links/evidence; do not infer completion from age.
+- tests/myworld/ has more than 750 direct files. A feature-based source/fixture
+  split would improve navigation but needs its own runner/classpath migration.
+- tools/layered-maps/workspace/ holds older package/deployment workspaces.
+  Consolidate their retention separately from authored map projects and rollback
+  records. It is not an ordinary source folder or a blanket deletion target.
+- Root-level Toolkit/Sprite Baker installations and local package ZIPs are
+  applications/user data. A later relocation should update their launchers and
+  discovery paths in the owning repositories. They were left in place here.
+- tmp/imagegen/ and old manual art outputs need provenance/promotion decisions
+  before being treated as disposable. Unique drafts are preserved.
+
+Deliberate module boundaries, retained:
+- Client_Base/Cache/video/ contains authoritative native game archives despite
+  the Cache name. These are not disposable download caches.
+- Client_Base/src/res/ holds application bootstrap icons; game UI belongs in the
+  central library. Android/legacy source assets remain with their own modules.
+- runtime-contract/ contains shared client/server map protocol resources.
+- tools/generators/ owns authored definitions and their generator manifest;
+  generated server/client definitions remain at their required runtime paths.
+- tools/item-visual-provider/generated/ holds reviewed versioned export contracts,
+  not casual default output. New ad hoc exports no longer overwrite them.
+- server databases, live state/backups, installed map packages, saved editor
+  projects and source histories keep their established preservation boundaries.
+
+VALIDATION
+See the exact-commit integration receipt for final results. Evidence is kept
+under output/tests/asset-output-organization/. The released v0.3.2 client and
+frozen source were used to distinguish the old provider snapshot's stale
+3,318-item count from the actual 3,444-item game catalog. Current definition,
+external-PNG, NPC and animation data were compared before refreshing contracts.
+No gameplay, combat balance, maps, player data or public-server activation is
+part of this organization task. Showcase masters/approved media retain their
+separate home at /home/justin/Spoiled-Milk-Showcase/.

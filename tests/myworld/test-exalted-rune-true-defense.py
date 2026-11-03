@@ -82,7 +82,7 @@ def main() -> int:
     require(item_defs, "5% True Defense chance", "server item descriptions mention true defense", failures)
     require(client_items, "5% True Defense chance", "client item descriptions mention true defense", failures)
 
-    asset = ROOT / "dev/myworld/assets/legacy animation folder/On Player/true-defense/true-defense.png"
+    asset = ROOT / "dev/myworld/assets/runtime/legacy-animations/On Player/true-defense/true-defense.png"
     if not asset.exists():
         failures.append("true-defense animation asset must exist")
 

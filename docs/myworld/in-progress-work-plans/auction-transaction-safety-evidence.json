@@ -19,35 +19,35 @@
           "exit": 0,
           "expected": 0,
           "seconds": 10.73,
-          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-42efba9e72/test.log"
+          "log": "/home/justin/Core-Framework-ai-1/output/tests/market-atomicity/42efba9e72/test.log"
         },
         {
           "mode": "crash-before",
           "exit": 77,
           "expected": 77,
           "seconds": 1.42,
-          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-42efba9e72/crash-before.log"
+          "log": "/home/justin/Core-Framework-ai-1/output/tests/market-atomicity/42efba9e72/crash-before.log"
         },
         {
           "mode": "recover-before",
           "exit": 0,
           "expected": 0,
           "seconds": 1.22,
-          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-42efba9e72/recover-before.log"
+          "log": "/home/justin/Core-Framework-ai-1/output/tests/market-atomicity/42efba9e72/recover-before.log"
         },
         {
           "mode": "crash",
           "exit": 77,
           "expected": 77,
           "seconds": 1.52,
-          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-42efba9e72/crash.log"
+          "log": "/home/justin/Core-Framework-ai-1/output/tests/market-atomicity/42efba9e72/crash.log"
         },
         {
           "mode": "recover",
           "exit": 0,
           "expected": 0,
           "seconds": 1.22,
-          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-42efba9e72/recover.log"
+          "log": "/home/justin/Core-Framework-ai-1/output/tests/market-atomicity/42efba9e72/recover.log"
         }
       ],
       "engine": "SQLite",
@@ -72,35 +72,35 @@
           "exit": 0,
           "expected": 0,
           "seconds": 14.84,
-          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-19b0b1d960/test.log"
+          "log": "/home/justin/Core-Framework-ai-1/output/tests/market-atomicity/19b0b1d960/test.log"
         },
         {
           "mode": "crash-before",
           "exit": 77,
           "expected": 77,
           "seconds": 1.57,
-          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-19b0b1d960/crash-before.log"
+          "log": "/home/justin/Core-Framework-ai-1/output/tests/market-atomicity/19b0b1d960/crash-before.log"
         },
         {
           "mode": "recover-before",
           "exit": 0,
           "expected": 0,
           "seconds": 1.27,
-          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-19b0b1d960/recover-before.log"
+          "log": "/home/justin/Core-Framework-ai-1/output/tests/market-atomicity/19b0b1d960/recover-before.log"
         },
         {
           "mode": "crash",
           "exit": 77,
           "expected": 77,
           "seconds": 1.62,
-          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-19b0b1d960/crash.log"
+          "log": "/home/justin/Core-Framework-ai-1/output/tests/market-atomicity/19b0b1d960/crash.log"
         },
         {
           "mode": "recover",
           "exit": 0,
           "expected": 0,
           "seconds": 1.27,
-          "log": "/home/justin/Core-Framework-ai-1/output/market-atomicity-19b0b1d960/recover.log"
+          "log": "/home/justin/Core-Framework-ai-1/output/tests/market-atomicity/19b0b1d960/recover.log"
         }
       ],
       "engine": "MySQL JDBC / MariaDB 11.4.13",
@@ -121,7 +121,7 @@
   "artifacts": {
     "server/core.jar": "2bef979298851e43f9b2e15c926d8c0ec1bac7806f9bccae5bd62d5c5d3c6a58",
     "server/core-gameplay-overlay.jar": "3be3809c30f544c70c26330fe5b43707fce96e7bcbdc2f558facc1683369fc94",
-    "output/combat-test/test-classes/com/openrsc/server/combat/MarketAtomicityFixture.class": "e02414043a88efc8791a8d9737a4d7756125bb4c3160a5f0226d92b822348096",
+    "output/tests/combat/test-classes/com/openrsc/server/combat/MarketAtomicityFixture.class": "e02414043a88efc8791a8d9737a4d7756125bb4c3160a5f0226d92b822348096",
     "/tmp/auction-barrier-regressions.log": "26723f242a33afe11912b3d0632245e482e89bd14feb594ba3a4de70ca80eef4"
   },
   "productionSourceCommit": "200e804bdbe8a467977afaf682402493368073b8",

@@ -24,7 +24,7 @@ public final class GemDragonClientFixture {
         String[] expectedStats=args[1].split(";");
         String[] gems={"sapphire","emerald","ruby","diamond","dragonstone"};
         ClientExternalAssetLoader loader=new ClientExternalAssetLoader(Paths.get(args[0]),GemDragonClientFixture.class);
-        File source=loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/gem-dragons"},"gemdragon.png");
+        File source=loader.findFirstFile(new String[]{"dev/myworld/assets/runtime/sprites/npcs/gem-dragons"},"gemdragon.png");
         BufferedImage sheet=loader.readAssetImage(source);
         int[] widths={226,226,226,226,226,335};
         Entry entry=loader.loadExternalNpcDirectionSheet(source,"gemdragon",widths,3);

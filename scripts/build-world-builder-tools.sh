@@ -20,4 +20,4 @@ fi
   ANT_HOME="$ANT_HOME" sh "$ANT_BIN" "${ANT_ARGS[@]}"
 )
 
-printf 'Built %s\n' "$SCRIPT_ROOT/output/world-builder-tools/world-builder-tools.jar"
+printf 'Built %s\n' "$SCRIPT_ROOT/output/builds/world-builder/world-builder-tools.jar"

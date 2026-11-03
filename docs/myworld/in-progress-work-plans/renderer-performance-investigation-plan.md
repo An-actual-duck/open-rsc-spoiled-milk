@@ -1688,7 +1688,7 @@ Screenshots were used only for controlled navigation and final visual review;
 telemetry and JFR supplied the performance evidence.
 
 The baseline session was
-`output/renderer-diagnostics/session-20260821-194732-3127165`. Its two steady
+`output/diagnostics/renderer/sessions/session-20260821-194732-3127165`. Its two steady
 phases averaged 0.408 process cores and 279.03 MiB/s of Java allocation. The
 two warm crossing phases averaged 0.566 cores and 410.93 MiB/s; their OpenGL
 render p99 values were 12.619/12.021 ms and world p99 values were
@@ -1699,7 +1699,7 @@ paid a distinct 44.656 ms / 62.4 MB GPU upload and a 130.171 ms maximum frame
 interval.
 
 The bounded JFR profile
-`output/renderer-diagnostics/session-20260821-195531-3130763/client-profile.jfr`
+`output/diagnostics/renderer/sessions/session-20260821-195531-3130763/client-profile.jfr`
 identified the dominant steady-state defect: every hot
 `NativeLayeredTerrainSnapshot.packageIdentity()` call rebuilt the same
 concatenated identity. Character arrays from that path accounted for roughly
@@ -1707,14 +1707,14 @@ concatenated identity. Character arrays from that path accounted for roughly
 299 MiB/s steady allocation. Caching the validated immutable value reduced
 steady allocation to 50.12/50.44 MiB/s (about 82%) and crossing allocation by
 about 40% in session
-`output/renderer-diagnostics/session-20260821-202416-3150757`. Steady CPU was
+`output/diagnostics/renderer/sessions/session-20260821-202416-3150757`. Steady CPU was
 effectively unchanged at 0.404 versus 0.408 cores, so no CPU improvement is
 claimed.
 
 After re-ranking, warm boundary shadow-mask rebuilds were the largest isolated
 renderer cost. Replacing per-pixel boxed `Long` hash lookups with an immutable
 rectangular primitive-index caster grid preserved caster order and mask bytes.
-In session `output/renderer-diagnostics/session-20260821-203639-3156000`, the
+In session `output/diagnostics/renderer/sessions/session-20260821-203639-3156000`, the
 mean observed shadow rebuild maximum fell from 7.306 to 5.670 ms (22.4%),
 OpenGL p99 from 13.156 to 12.700 ms (3.5%), and world p99 from 11.110 to
 10.623 ms (4.4%). CPU and allocation totals from this later wall-clock run are
@@ -1732,7 +1732,7 @@ applied: identity caching was retained for its material allocation reduction,
 shadow lookup was retained for a greater-than-1% end-to-end tail improvement,
 and no sub-millisecond blur or raster micro-tuning was pursued afterward.
 
-Final session `output/renderer-diagnostics/session-20260821-204051-3163511`
+Final session `output/diagnostics/renderer/sessions/session-20260821-204051-3163511`
 provided an in-world visual review at the profiled scene and two deliberate
 strict diagnostic capture frames. Both captures completed with all indexed
 artifacts present, zero failed frames, and zero client exceptions. This final
@@ -1781,7 +1781,7 @@ run should compare those two values directly before ranking context
 The owner tested published `main` revision `0107fc11a` with the current server
 runtime optimizations and the production-equivalent
 `spoiled-milk-replacement` layered profile. The valid diagnostic record is
-`output/renderer-diagnostics/session-20260825-220623-2839085`; the earlier
+`output/diagnostics/renderer/sessions/session-20260825-220623-2839085`; the earlier
 `session-20260825-220222-2828394` used the legacy-default private profile and
 is explicitly invalid for renderer/boundary acceptance.
 

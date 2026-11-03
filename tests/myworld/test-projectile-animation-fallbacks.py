@@ -7,8 +7,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-ANIMATIONS = ROOT / "dev/myworld/assets/animations"
-LEGACY_ANIMATIONS = ROOT / "dev/myworld/assets/legacy animation folder"
+ANIMATIONS = ROOT / "dev/myworld/assets/runtime/animations"
+LEGACY_ANIMATIONS = ROOT / "dev/myworld/assets/runtime/legacy-animations"
 CATALOG_PATH = ROOT / "Client_Base/src/orsc/graphics/two/ProjectileAnimationCatalog.java"
 CLIENT_PATH = ROOT / "Client_Base/src/orsc/mudclient.java"
 SPELL_HANDLER_PATH = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
@@ -319,7 +319,7 @@ def main() -> None:
 
     build = BUILD_PATH.read_text(encoding="utf-8")
     for include in ('<include name="animations/**/*.png"/>',
-                    '<include name="legacy animation folder/**/*.png"/>'):
+                    '<include name="legacy-animations/**/*.png"/>'):
         if include not in build:
             fail(f"client packaging missing temporary animation input: {include}")
 

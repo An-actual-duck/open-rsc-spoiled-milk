@@ -6,7 +6,7 @@ import javax.imageio.ImageIO;
 public final class PackBloodveldTongue {
 	public static void main(String[] args) throws Exception {
 		File root = new File(args.length == 0 ? "." : args[0]);
-		String folder = "dev/myworld/assets/sprites/npcs/";
+		String folder = "dev/myworld/assets/runtime/sprites/npcs/";
 		BufferedImage base = ImageIO.read(new File(root, folder + "bloodveld-tongue/approved-base.png"));
 		BufferedImage strip = ImageIO.read(new File(root, folder + "bloodveld-tongue/approved-tongue-strip.png"));
 		if (base.getWidth() != 720 || base.getHeight() != 330 || strip.getWidth() != 2172 || strip.getHeight() != 724)

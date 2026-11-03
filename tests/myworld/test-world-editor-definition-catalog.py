@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GENERATOR = ROOT / "tools/world-builder/generate-definition-catalog.py"
-CATALOG = ROOT / "dev/myworld/assets/ui/world-editor/definition-catalog-v1.tsv"
+CATALOG = ROOT / "dev/myworld/assets/runtime/ui/world-editor/definition-catalog-v1.tsv"
 AUDIT = ROOT / "docs/myworld/info/world-builder-definition-catalog.md"
 CLIENT_JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
 SCENERY_XML = ROOT / "server/conf/server/defs/GameObjectDef.xml"
@@ -69,7 +69,7 @@ class WorldEditorDefinitionCatalogTest(unittest.TestCase):
             text=True,
         )
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn("Validated dev/myworld/assets/ui/world-editor/definition-catalog-v1.tsv", result.stdout)
+        self.assertIn("Validated dev/myworld/assets/runtime/ui/world-editor/definition-catalog-v1.tsv", result.stdout)
         self.assertIn("Explicit ID fallback rows still needing semantic review", AUDIT.read_text(encoding="utf-8"))
 
     def test_catalog_covers_every_stable_scenery_and_boundary_id(self) -> None:

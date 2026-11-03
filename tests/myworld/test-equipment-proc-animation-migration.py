@@ -5,7 +5,7 @@ from animation_contract_checks import validate_projectile_slots
 
 
 ROOT = Path(__file__).resolve().parents[2]
-ANIMATIONS = ROOT / "dev/myworld/assets/animations"
+ANIMATIONS = ROOT / "dev/myworld/assets/runtime/animations"
 
 
 def read(relative_path: str) -> str:

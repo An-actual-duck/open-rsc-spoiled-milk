@@ -153,3 +153,17 @@ See [ai-slot.md](ai-slot.md), [manager.md](manager.md), and
 External contributors do not use these maintainer slots or commands. Their
 portable topic-branch, checkpoint, pull-request, and exact-commit handoff flow
 is documented in [external-contributor.md](external-contributor.md).
+
+## Asset and output placement
+
+The visual library uses `dev/myworld/assets/runtime`, `authoring`, and
+`references`. Runtime UI artwork has one lowercase `runtime/ui` home. Editable
+projects and reference libraries never enter the client package. The full
+contract, migration details and repository audit are in
+[asset-output-organization.txt](asset-output-organization.txt).
+
+Generated work uses categories from `config/workspace-layout.json`. Resolve
+an output directory with `python3 scripts/workspace-layout.py path tests
+my-feature --mkdir`; run `make asset-output-check` to validate placement and
+exercise the preservation checks. Existing output relocations are recorded
+under `output/archive/layout-migrations/`. No cleanup or pruning is implicit.

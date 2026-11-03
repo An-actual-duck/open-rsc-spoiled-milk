@@ -24,7 +24,7 @@ from xml.etree import ElementTree
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config" / "static-analysis"
-DEFAULT_REPORTS = ROOT / "output" / "static-analysis"
+DEFAULT_REPORTS = ROOT / "output" / "diagnostics/static-analysis"
 TOOLS_MANIFEST = CONFIG / "tools.json"
 JAVAC_BASELINE = CONFIG / "baseline" / "javac.txt"
 SPOTBUGS_BASELINE = CONFIG / "baseline" / "spotbugs.txt"
@@ -52,7 +52,7 @@ JAVAC_GATED_CATEGORIES = {"fallthrough", "overloads", "overrides", "unchecked", 
 PRODUCT_ARTIFACTS = {
     "client": ("Client_Base/Open_RSC_Client.jar",),
     "server": ("server/core.jar", "server/plugins.jar"),
-    "world-builder": ("output/world-builder-tools/world-builder-tools.jar",),
+    "world-builder": ("output/builds/world-builder/world-builder-tools.jar",),
 }
 SPOTBUGS_APPLICATION_PACKAGES = {
     "client": "orsc.-,com.openrsc.-",

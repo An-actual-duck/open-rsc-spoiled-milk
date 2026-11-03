@@ -5,7 +5,7 @@
     <property name="lib" location="lib"/>
     <property name="jar" location="core.jar"/>
     <property name="gameplay.overlay.jar" location="core-gameplay-overlay.jar"/>
-    <property name="combat.output.root" location="../output/combat-test"/>
+    <property name="combat.output.root" location="../output/tests/combat"/>
     <property name="combat.build.core" location="${combat.output.root}/core-classes"/>
     <property name="combat.build.test" location="${combat.output.root}/test-classes"/>
     <property name="combat.summary.file" location="${combat.output.root}/summary.properties"/>
@@ -51,15 +51,15 @@
 
     <target name="test_configurable_agility" depends="compile_core"
             description="Offline configurable shortcut parser, landing and scheduled gameplay lifecycle regression">
-        <mkdir dir="../output/configurable-agility-test"/>
-        <javac srcdir="${test.src}" destdir="../output/configurable-agility-test" debug="on"
+        <mkdir dir="../output/tests/configurable-agility"/>
+        <javac srcdir="${test.src}" destdir="../output/tests/configurable-agility" debug="on"
                includes="com/openrsc/server/io/ConfiguredAgilityShortcutTest.java,com/openrsc/server/io/ConfiguredAgilityRuntimeIntegrationTest.java" includeantruntime="false"
                target="${javac.target}" source="${javac.source}" encoding="UTF-8">
             <classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </javac>
         <java classname="com.openrsc.server.io.ConfiguredAgilityShortcutTest" fork="true" maxmemory="384m" failonerror="true" dir="${basedir}">
             <jvmarg value="-XX:+UseSerialGC"/>
-            <classpath><pathelement location="../output/configurable-agility-test"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+            <classpath><pathelement location="../output/tests/configurable-agility"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
     </target>
 
@@ -67,22 +67,22 @@
         <fail unless="agility.fixture.dir" message="Pass -Dagility.fixture.dir with a disposable prepared fixture, never a server root"/>
         <java classname="com.openrsc.server.io.ConfiguredAgilityRuntimeIntegrationTest" fork="true" maxmemory="512m" failonerror="true" dir="${agility.fixture.dir}">
             <jvmarg value="-XX:+UseSerialGC"/>
-            <classpath><pathelement location="../output/configurable-agility-test"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+            <classpath><pathelement location="../output/tests/configurable-agility"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
     </target>
 
     <target name="test_double_door_passage" depends="compile_core,compile_plugins"
             description="Offline real generic double-door plugin/helper/collision lifecycle checks">
         <fail unless="door.fixture.dir" message="Pass -Ddoor.fixture.dir with a disposable prepared fixture, never a server root"/>
-        <mkdir dir="../output/double-door-test"/>
-        <javac srcdir="${test.src}" destdir="../output/double-door-test" debug="on"
+        <mkdir dir="../output/tests/double-door"/>
+        <javac srcdir="${test.src}" destdir="../output/tests/double-door" debug="on"
                includes="com/openrsc/server/io/DoubleDoorPassageIntegrationTest.java" includeantruntime="false"
                target="${javac.target}" source="${javac.source}" encoding="UTF-8">
             <classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </javac>
         <java classname="com.openrsc.server.io.DoubleDoorPassageIntegrationTest" fork="true" maxmemory="512m" failonerror="true" dir="${door.fixture.dir}">
             <jvmarg value="-XX:+UseSerialGC"/>
-            <classpath><pathelement location="../output/double-door-test"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+            <classpath><pathelement location="../output/tests/double-door"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
     </target>
 
@@ -109,7 +109,7 @@
             description="Offline v1-v5 migration and release profile/contact/progression checks over a disposable map copy">
         <fail unless="slayer.package.path" message="Pass -Dslayer.package.path with the reviewed package directory; it is read and copied only"/>
         <fail unless="slayer.manifest.sha256" message="Pass -Dslayer.manifest.sha256 with the exact reviewed manifest hash"/>
-        <property name="slayer.release.output" location="../output/slayer-release-test"/>
+        <property name="slayer.release.output" location="../output/tests/slayer-release"/>
         <mkdir dir="${slayer.release.output}/classes"/>
         <mkdir dir="${slayer.release.output}/runtime"/>
         <copy todir="${slayer.release.output}/runtime/conf"><fileset dir="conf"/></copy>
@@ -156,119 +156,119 @@
 
     <target name="test_monster_slayer_tower_routes" depends="compile_core,compile_plugins"
             description="Test enabled tower task advice/preview routes without map-placement assumptions">
-        <mkdir dir="../output/monster-slayer-tower-test"/>
-        <javac srcdir="${test.src}" destdir="../output/monster-slayer-tower-test" debug="on"
+        <mkdir dir="../output/tests/monster-slayer-tower"/>
+        <javac srcdir="${test.src}" destdir="../output/tests/monster-slayer-tower" debug="on"
                includes="com/openrsc/server/plugins/MonsterSlayerContactsRouteTest.java"
                includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
             <classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </javac>
         <java classname="com.openrsc.server.plugins.MonsterSlayerContactsRouteTest" fork="true" failonerror="true" dir="${basedir}">
             <arg value="--tower"/>
-            <classpath><pathelement location="../output/monster-slayer-tower-test"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+            <classpath><pathelement location="../output/tests/monster-slayer-tower"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
     </target>
 
     <target name="test_monster_slayer_placement" depends="compile_core,compile_plugins"
             description="Validate Heroes' Guild NPC roaming against the configured terrain, independently of dialogue">
-        <mkdir dir="../output/monster-slayer-placement-test"/>
-        <javac srcdir="${test.src}" destdir="../output/monster-slayer-placement-test" debug="on"
+        <mkdir dir="../output/tests/monster-slayer-placement"/>
+        <javac srcdir="${test.src}" destdir="../output/tests/monster-slayer-placement" debug="on"
                includes="com/openrsc/server/plugins/MonsterSlayerContactsRouteTest.java"
                includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
             <classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </javac>
         <java classname="com.openrsc.server.plugins.MonsterSlayerContactsRouteTest" fork="true" failonerror="true" dir="${basedir}">
             <arg value="--placement"/>
-            <classpath><pathelement location="../output/monster-slayer-placement-test"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+            <classpath><pathelement location="../output/tests/monster-slayer-placement"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
     </target>
 
     <target name="test_monster_slayer_contact_routes" depends="compile_core,compile_plugins">
-        <delete dir="../output/monster-slayer-contact-test"/>
-        <mkdir dir="../output/monster-slayer-contact-test"/>
-        <javac srcdir="${test.src}" destdir="../output/monster-slayer-contact-test" debug="on"
+        <delete dir="../output/tests/monster-slayer-contact"/>
+        <mkdir dir="../output/tests/monster-slayer-contact"/>
+        <javac srcdir="${test.src}" destdir="../output/tests/monster-slayer-contact" debug="on"
                includes="com/openrsc/server/plugins/MonsterSlayerContactsRouteTest.java,com/openrsc/server/plugins/MonsterSlayerInfluenceGuildAccessTest.java"
                includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
             <classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </javac>
         <java classname="com.openrsc.server.plugins.MonsterSlayerContactsRouteTest" fork="true" failonerror="true" dir="${basedir}">
-            <classpath><pathelement location="../output/monster-slayer-contact-test"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+            <classpath><pathelement location="../output/tests/monster-slayer-contact"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
-        <copy file="myworld.conf" tofile="../output/monster-slayer-contact-test/influence-myworld.conf"/>
-        <copy file="connections.conf" tofile="../output/monster-slayer-contact-test/connections.conf"/>
-        <copy todir="../output/monster-slayer-contact-test/database"><fileset dir="database"/></copy>
-        <copy todir="../output/monster-slayer-contact-test/conf"><fileset dir="conf"/></copy>
-        <java classname="com.openrsc.server.plugins.MonsterSlayerInfluenceGuildAccessTest" fork="true" failonerror="true" dir="../output/monster-slayer-contact-test">
+        <copy file="myworld.conf" tofile="../output/tests/monster-slayer-contact/influence-myworld.conf"/>
+        <copy file="connections.conf" tofile="../output/tests/monster-slayer-contact/connections.conf"/>
+        <copy todir="../output/tests/monster-slayer-contact/database"><fileset dir="database"/></copy>
+        <copy todir="../output/tests/monster-slayer-contact/conf"><fileset dir="conf"/></copy>
+        <java classname="com.openrsc.server.plugins.MonsterSlayerInfluenceGuildAccessTest" fork="true" failonerror="true" dir="../output/tests/monster-slayer-contact">
             <!-- Its copied config still refers to this checkout's installed-map profile/package. -->
             <sysproperty key="openrsc.worldBuilderTargetRoot" value="${basedir}/.."/>
-            <classpath><pathelement location="../output/monster-slayer-contact-test"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+            <classpath><pathelement location="../output/tests/monster-slayer-contact"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
     </target>
 
 	<target name="test_crafting_guild_cave_access" depends="compile_core,compile_plugins">
-		<mkdir dir="../output/crafting-guild-cave-test"/>
-		<javac srcdir="${test.src}" destdir="../output/crafting-guild-cave-test" debug="on"
+		<mkdir dir="../output/tests/crafting-guild-cave"/>
+		<javac srcdir="${test.src}" destdir="../output/tests/crafting-guild-cave" debug="on"
 			includes="com/openrsc/server/combat/CraftingGuildCaveAccessFixture.java,com/openrsc/server/combat/CurrentCombatHarness.java,com/openrsc/server/combat/MutableGameClock.java,com/openrsc/server/combat/SeededGameRandom.java"
 			includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
 			<classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
 		</javac>
 		<java classname="com.openrsc.server.combat.CraftingGuildCaveAccessFixture" fork="true" failonerror="true" dir="${basedir}">
 			<jvmarg value="-Xmx512m"/><jvmarg value="-XX:+UseSerialGC"/>
-			<classpath><pathelement location="../output/crafting-guild-cave-test"/><pathelement location="${gameplay.overlay.jar}"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+			<classpath><pathelement location="../output/tests/crafting-guild-cave"/><pathelement location="${gameplay.overlay.jar}"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
 		</java>
 	</target>
 
 	<target name="test_legends_guild_gate_shortcut" depends="compile_core,compile_plugins">
-		<delete dir="../output/legends-guild-gate-test"/>
-		<mkdir dir="../output/legends-guild-gate-test"/>
-		<javac srcdir="${test.src}" destdir="../output/legends-guild-gate-test" debug="on"
+		<delete dir="../output/tests/legends-guild-gate"/>
+		<mkdir dir="../output/tests/legends-guild-gate"/>
+		<javac srcdir="${test.src}" destdir="../output/tests/legends-guild-gate" debug="on"
 			includes="com/openrsc/server/plugins/LegendsGuildGateShortcutTest.java"
 			includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
 			<classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
 		</javac>
 		<java classname="com.openrsc.server.plugins.LegendsGuildGateShortcutTest" fork="true" failonerror="true" dir="${basedir}">
-			<classpath><pathelement location="../output/legends-guild-gate-test"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+			<classpath><pathelement location="../output/tests/legends-guild-gate"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
 		</java>
 	</target>
 
 	<target name="test_network_encoder" depends="compile_core">
-		<delete dir="../output/network-encoder-test"/>
-		<mkdir dir="../output/network-encoder-test"/>
-		<javac srcdir="${test.src}" destdir="../output/network-encoder-test" debug="on"
+		<delete dir="../output/tests/network-encoder"/>
+		<mkdir dir="../output/tests/network-encoder"/>
+		<javac srcdir="${test.src}" destdir="../output/tests/network-encoder" debug="on"
 			includes="com/openrsc/server/net/RSCProtocolEncoderWireTest.java"
 			includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
 			<classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
 		</javac>
 		<java classname="com.openrsc.server.net.RSCProtocolEncoderWireTest" fork="true"
 			failonerror="true" dir="${basedir}">
-			<classpath><pathelement location="../output/network-encoder-test"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+			<classpath><pathelement location="../output/tests/network-encoder"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
 		</java>
 	</target>
 
 	<target name="test_network_decoder" depends="compile_core">
-		<delete dir="../output/network-decoder-test"/>
-		<mkdir dir="../output/network-decoder-test"/>
-		<javac srcdir="${test.src}" destdir="../output/network-decoder-test" debug="on"
+		<delete dir="../output/tests/network-decoder"/>
+		<mkdir dir="../output/tests/network-decoder"/>
+		<javac srcdir="${test.src}" destdir="../output/tests/network-decoder" debug="on"
 			includes="com/openrsc/server/net/RSCProtocolDecoderWireTest.java"
 			includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
 			<classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
 		</javac>
 		<java classname="com.openrsc.server.net.RSCProtocolDecoderWireTest" fork="true"
 			failonerror="true" dir="${basedir}">
-			<classpath><pathelement location="../output/network-decoder-test"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+			<classpath><pathelement location="../output/tests/network-decoder"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
 		</java>
 	</target>
 
 	<target name="test_native_terrain_wire" depends="compile_core">
-		<delete dir="../output/native-terrain-wire-test"/>
-		<mkdir dir="../output/native-terrain-wire-test"/>
-		<javac srcdir="${test.src}" destdir="../output/native-terrain-wire-test" debug="on"
+		<delete dir="../output/tests/native-terrain-wire"/>
+		<mkdir dir="../output/tests/native-terrain-wire"/>
+		<javac srcdir="${test.src}" destdir="../output/tests/native-terrain-wire" debug="on"
 			includes="com/openrsc/server/io/NativeLayeredTerrainWireTest.java"
 			includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
 			<classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
 		</javac>
 		<java classname="com.openrsc.server.io.NativeLayeredTerrainWireTest" fork="true"
 			failonerror="true" dir="${basedir}">
-			<classpath><pathelement location="../output/native-terrain-wire-test"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+			<classpath><pathelement location="../output/tests/native-terrain-wire"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
 		</java>
 	</target>
 
@@ -312,44 +312,44 @@
     </target>
 
     <target name="test_inventory_capacity_packets" depends="compile_core">
-        <delete dir="../output/inventory-capacity-packet-test"/>
-        <mkdir dir="../output/inventory-capacity-packet-test"/>
-        <javac srcdir="${test.src}" destdir="../output/inventory-capacity-packet-test" debug="on"
+        <delete dir="../output/tests/inventory-capacity-packet"/>
+        <mkdir dir="../output/tests/inventory-capacity-packet"/>
+        <javac srcdir="${test.src}" destdir="../output/tests/inventory-capacity-packet" debug="on"
                includes="com/openrsc/server/net/rsc/InventoryCapacityPacketsTest.java"
                includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
             <classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </javac>
         <java classname="com.openrsc.server.net.rsc.InventoryCapacityPacketsTest" fork="true"
               failonerror="true" dir="${basedir}">
-            <classpath><pathelement location="../output/inventory-capacity-packet-test"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+            <classpath><pathelement location="../output/tests/inventory-capacity-packet"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
     </target>
 
     <target name="test_world_builder_inventory_overlay" depends="compile_core">
-        <delete dir="../output/world-builder-inventory-overlay-test"/>
-        <mkdir dir="../output/world-builder-inventory-overlay-test"/>
-        <javac srcdir="${test.src}" destdir="../output/world-builder-inventory-overlay-test" debug="on"
+        <delete dir="../output/tests/world-builder-inventory-overlay"/>
+        <mkdir dir="../output/tests/world-builder-inventory-overlay"/>
+        <javac srcdir="${test.src}" destdir="../output/tests/world-builder-inventory-overlay" debug="on"
                includes="com/openrsc/server/net/rsc/WorldBuilderInventoryOverlayTest.java"
                includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
             <classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </javac>
         <java classname="com.openrsc.server.net.rsc.WorldBuilderInventoryOverlayTest" fork="true"
               failonerror="true" dir="${basedir}">
-            <classpath><pathelement location="../output/world-builder-inventory-overlay-test"/><pathelement location="${gameplay.overlay.jar}"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+            <classpath><pathelement location="../output/tests/world-builder-inventory-overlay"/><pathelement location="${gameplay.overlay.jar}"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
     </target>
 
 	<target name="test_world_builder_rangers_guild_linkage" depends="compile_core">
-		<delete dir="../output/world-builder-rangers-guild-linkage-test"/>
-		<mkdir dir="../output/world-builder-rangers-guild-linkage-test"/>
-		<javac srcdir="${test.src}" destdir="../output/world-builder-rangers-guild-linkage-test" debug="on"
+		<delete dir="../output/tests/world-builder-rangers-guild-linkage"/>
+		<mkdir dir="../output/tests/world-builder-rangers-guild-linkage"/>
+		<javac srcdir="${test.src}" destdir="../output/tests/world-builder-rangers-guild-linkage" debug="on"
 			includes="com/openrsc/server/content/WorldBuilderRangersGuildLinkageTest.java"
 			includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
 			<classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
 		</javac>
 		<java classname="com.openrsc.server.content.WorldBuilderRangersGuildLinkageTest" fork="true"
 			failonerror="true" dir="${basedir}">
-			<classpath><pathelement location="../output/world-builder-rangers-guild-linkage-test"/><pathelement location="${gameplay.overlay.jar}"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+			<classpath><pathelement location="../output/tests/world-builder-rangers-guild-linkage"/><pathelement location="${gameplay.overlay.jar}"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
 		</java>
 	</target>
 

@@ -2,7 +2,7 @@
 
 This is a generated audit for World Builder 2's editor-only definition
 catalog. Regenerate it together with
-`dev/myworld/assets/ui/world-editor/definition-catalog-v1.tsv` by running:
+`dev/myworld/assets/runtime/ui/world-editor/definition-catalog-v1.tsv` by running:
 
 ```bash
 python3 tools/world-builder/generate-definition-catalog.py

@@ -79,7 +79,7 @@ conversion, the final empty vial, and rejection of replayed inventory actions:
 ```sh
 sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml compile_combat_tests
 cd server
-java -cp '../output/combat-test/test-classes:../output/combat-test/core-classes:plugins.jar:lib/*' com.openrsc.server.combat.CurrentGiantFrogCharacterization
+java -cp '../output/tests/combat/test-classes:../output/tests/combat/core-classes:plugins.jar:lib/*' com.openrsc.server.combat.CurrentGiantFrogCharacterization
 ```
 
 The full combat characterization gate currently stops at the existing

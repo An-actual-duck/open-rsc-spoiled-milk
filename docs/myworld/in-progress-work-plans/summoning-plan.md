@@ -71,7 +71,7 @@ Summons use distinct player-facing names rather than directly copying their NPC
 source names. `Pack Rat` is the model: it still uses a rat NPC source visually
 and mechanically, but the summon reads as its own ability.
 
-Summon icon files live in `dev/myworld/assets/sprites/UI/summon` and are named
+Summon icon files live in `dev/myworld/assets/runtime/ui/summon` and are named
 from the summon display name in lowercase with spaces converted to dashes:
 `broodling-spider.png`, `mischief-imp.png`, `loot-goblin.png`,
 `ironhide-bear.png`, `sacred-unicorn.png`, `duskwind-bat.png`, `pack-rat.png`,

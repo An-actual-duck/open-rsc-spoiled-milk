@@ -100,7 +100,7 @@ Validation:
   legacy deduplication/fallback, fade/expiry, bounds, owner movement, crowd spacing,
   duplicate scene calls, lifebar clearance and full/faded native sprite capture.
 - Authoritative combat gate PASS: 144/144 scenarios. Receipt is the task-local
-  ignored `output/combat-test/summary.properties`.
+  ignored `output/tests/combat/summary.properties`.
 - Renderer phased-overlay guard PASS; `git diff --check` PASS.
 - Supplemental `test-summon-lifesteal.py` fails its old combat-XP-distribution
   source guard; `test-combat-runtime-invariants.py` fails its old NpcBehavior

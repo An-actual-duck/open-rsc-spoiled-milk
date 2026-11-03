@@ -607,7 +607,7 @@ Published `main` revision `0107fc11a` was launched on the private database and
 port with the production-equivalent `spoiled-milk-replacement` layered profile.
 This means all accepted server runtime optimizations in this plan were active
 during renderer session
-`output/renderer-diagnostics/session-20260825-220623-2839085`. The route
+`output/diagnostics/renderer/sessions/session-20260825-220623-2839085`. The route
 exercised real client authentication, network framing, movement, layered scene
 delivery, visibility/world updates, and ordinary NPC presence without a
 reported server failure. Native scene activation completed with matching

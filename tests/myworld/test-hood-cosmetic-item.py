@@ -9,8 +9,8 @@ ITEM_ID = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
 CUSTOM_ITEMS = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 CLIENT_MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
-HOOD_WORN = ROOT / "dev/myworld/assets/sprites/equipment/hood/numbered"
-HOOD_ICON = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/hood.png"
+HOOD_WORN = ROOT / "dev/myworld/assets/runtime/sprites/equipment/hood/numbered"
+HOOD_ICON = ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/hood.png"
 
 
 def fail(message: str) -> NoReturn:

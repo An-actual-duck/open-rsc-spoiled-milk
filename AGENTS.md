@@ -105,10 +105,34 @@ contributor rescue command before cleanup. The beginner-safe workflow is in
 - See [`docs/workspaces/rsc-model-studio.md`](docs/workspaces/rsc-model-studio.md)
   for routing, ownership and the initial scope.
 
+## Asset and Output Organization
+
+- All maintained visual work belongs under `dev/myworld/assets/`: `runtime/`
+  for game-ready assets, `authoring/` for editable masters/source recipes and
+  provenance, and `references/` for preserved reference libraries. Do not add
+  another feature-art directory directly under `dev/myworld`.
+- Use `assets/runtime/ui/` for UI artwork. Do not create parallel `UI`,
+  `sprites/UI` or `sprites/ui` trees. Preserve approved artwork bytes and credits.
+- Client packaging must read only `assets/runtime/`; it must not package
+  authoring projects, incoming deliveries or references. Game loaders must not
+  depend on `output/` artwork fallbacks.
+- New generated outputs go under a category declared in
+  `config/workspace-layout.json`, then a subject/suite/run directory. Do not put
+  loose images or new task folders directly in `output/`.
+- Resolve a destination with `python3 scripts/workspace-layout.py path CATEGORY
+  SUBJECT --mkdir`. Use `art` for visual exports, `reviews` for review bundles,
+  `tests` for fixtures/results, `diagnostics` for captures/profiles, `builds` for
+  compiled tools, and the remaining declared categories for their stated roles.
+- Keep each task's images, reports and logs together. Preserve editable masters
+  before pruning exports; ignored files are not automatically disposable.
+- Run `python3 scripts/workspace-layout.py check` after adding assets or output
+  writers. See `docs/workspaces/asset-output-organization.txt` for the directory
+  contract, migration records and deliberately retained module boundaries.
+
 ## Inventory / Ground Sprite References
 
 - Before designing a new inventory/ground icon, read
-  `dev/myworld/reference-library/items/README.md`, then the requested visual
+  `dev/myworld/assets/references/items/README.md`, then the requested visual
   family's notes and contact sheet (for example `weapons/daggers`).
 - Inspect the individual full-canvas PNG as the scale/position anchor. These
   are visual references, not gameplay item definitions or production assets.

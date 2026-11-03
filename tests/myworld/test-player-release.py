@@ -72,7 +72,7 @@ CLERIC_SIGIL_JAR_ENTRIES = {
     for name in CLERIC_SIGIL_ASSET_FILES
 }
 CLERIC_SIGIL_SOURCE_PATHS = {
-    ROOT / "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils" / name
+    ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils" / name
     for name in CLERIC_SIGIL_ASSET_FILES
 }
 
@@ -565,7 +565,7 @@ def test_windows_runtime_download_helper_is_documented() -> None:
     checklist = (ROOT / "docs" / "releases" / "RELEASE-CHECKLIST.md").read_text(encoding="utf-8")
     for snippet in [
         "./scripts/download-windows-jre.sh",
-        "--windows-jre output/runtimes/temurin-17-windows-x64-jre",
+        "--windows-jre output/cache/java/temurin-17-windows-x64-jre",
         "Windows is only needed for final",
     ]:
         if snippet not in checklist:
@@ -600,7 +600,7 @@ def test_uid_first_run_state_is_not_packaged_or_reused() -> None:
 def current_item_asset_receipts() -> dict:
     """Fixed reviewed inventory; never permit every file merely because it exists."""
     receipt = json.loads((ROOT / "tests/myworld/fixtures/player-release-current-item-art.json").read_text())
-    source_root = "dev/myworld/assets/sprites/items/inventory-ground"
+    source_root = "dev/myworld/assets/runtime/sprites/items/inventory-ground"
     if receipt["schemaVersion"] != 1 or receipt["sourceRoot"] != source_root:
         fail("unsupported current item art receipt")
     files = receipt["files"]
@@ -697,8 +697,8 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         "myworld-assets/sprites/ui/",
         "myworld-assets/animations/On Enemy/phoenix/",
         "myworld-assets/animations/On Enemy/kraken/",
-        "myworld-assets/legacy animation folder/On Enemy/phoenix/",
-        "myworld-assets/legacy animation folder/On Enemy/kraken/",
+        "myworld-assets/legacy-animations/On Enemy/phoenix/",
+        "myworld-assets/legacy-animations/On Enemy/kraken/",
     ]
     included_forbidden = sorted(
         name for name in names if any(name.startswith(prefix) for prefix in forbidden_prefixes)
@@ -757,58 +757,58 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         fail(f"client jar contains unexpected item art: {unexpected_item_assets[:5]}")
 
     for removed_path in [
-        ROOT / "dev/myworld/assets/sprites/ui",
+        ROOT / "dev/myworld/assets/runtime/sprites/ui",
         ROOT / "dev/myworld/assets/archive",
-        ROOT / "dev/myworld/assets/animations/On Enemy/phoenix",
-        ROOT / "dev/myworld/assets/animations/On Enemy/kraken",
-        ROOT / "dev/myworld/assets/legacy animation folder/On Enemy/phoenix",
-        ROOT / "dev/myworld/assets/legacy animation folder/On Enemy/kraken",
+        ROOT / "dev/myworld/assets/runtime/animations/On Enemy/phoenix",
+        ROOT / "dev/myworld/assets/runtime/animations/On Enemy/kraken",
+        ROOT / "dev/myworld/assets/runtime/legacy-animations/On Enemy/phoenix",
+        ROOT / "dev/myworld/assets/runtime/legacy-animations/On Enemy/kraken",
     ]:
         if removed_path.exists():
             fail(f"removed CraftPix source path still exists: {removed_path.relative_to(ROOT)}")
     allowed_item_sprite_paths = {
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/bolt.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/dragon-hatchet.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons/demon-pitchfork-icon.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons/earth-sword-icon.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons/fire-sword-icon.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons/guthix-mace-icon.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons/ice-sword-icon.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons/saradomin-mace-icon.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons/zamorak-mace-icon.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/geode.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/geode@14x14.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/geode@18x18.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/geode@24x24.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/geode@30x30.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/guthix-symbol-mould.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/hatchet-generic.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/hood.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/hood@35x27.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/medallion.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/raw-dragon-metal.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/resources/blue-flower.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/resources/fern-leaf.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/resources/fungus.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/resources/mushroom.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/resources/red-flower.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/shuriken-thrown.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/symbol-of-guthix.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/unblessed-symbol-of-guthix.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/unstrung-symbol-of-guthix.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/zombie-eye.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/arrowhead-mould.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/bangle-mould.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/bolt-mould.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/dart-mould.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/shuriken-mould.png",
-        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/bolt.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/dragon-hatchet.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/demon-pitchfork-icon.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/earth-sword-icon.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/fire-sword-icon.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/guthix-mace-icon.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/ice-sword-icon.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/saradomin-mace-icon.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/zamorak-mace-icon.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/geode.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/geode@14x14.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/geode@18x18.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/geode@24x24.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/geode@30x30.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/guthix-symbol-mould.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/hatchet-generic.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/hood.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/hood@35x27.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/medallion.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/raw-dragon-metal.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/blue-flower.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/fern-leaf.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/fungus.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/mushroom.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/red-flower.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic-poison.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-thrown.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/symbol-of-guthix.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/unblessed-symbol-of-guthix.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/unstrung-symbol-of-guthix.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/zombie-eye.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools/arrowhead-mould.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools/bangle-mould.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools/bolt-mould.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools/dart-mould.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools/shuriken-mould.png",
+        ROOT / "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
     }
     allowed_item_sprite_paths |= CLERIC_SIGIL_SOURCE_PATHS | set(current_items.values())
-    item_sprite_root = ROOT / "dev/myworld/assets/sprites/items"
+    item_sprite_root = ROOT / "dev/myworld/assets/runtime/sprites/items"
     if item_sprite_root.exists():
         unexpected_item_sprites = sorted(
             path.relative_to(ROOT).as_posix()

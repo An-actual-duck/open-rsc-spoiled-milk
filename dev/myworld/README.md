@@ -2,7 +2,7 @@
 
 This directory retains compatibility wrappers for older MyWorld development
 commands. The primary command workflow lives at the repository root, while
-`assets/` remains the active client visual-asset source.
+`assets/` contains the runtime, authoring and reference visual libraries.
 
 ## What it uses
 
@@ -178,8 +178,8 @@ Architecture overview:
 - Benchmark summaries include both integer millisecond fields such as `avgUpdateClientsMs` and decimal fields such as `avgUpdateClientsMsPrecise` for smaller packet/update changes.
 - `benchmark-foundation-matrix.sh` runs repeatable `short`, `soak`, and optional `players` scenarios so changes can be compared against both the no-player NPC baseline and a synthetic player-load sample.
 - `docs/myworld/README.md` is the entry point for current MyWorld planning and documentation.
-- `dev/myworld/assets/` remains the live source tree for client visual assets;
-  it is not a compatibility-only wrapper path.
+- `dev/myworld/assets/runtime/` is the client visual source. Editable projects
+  and references live under `assets/authoring/` and `assets/references/`.
 - `output/logs`, `output/benchmarks`, and Python `__pycache__` directories are treated as local scratch/output areas and are ignored.
 - The initial NPC split groups entries into `strength-overrides-and-bosses`, `melee-resistant`, `ranged-resistant`, `magic-resistant`, and `mixed-and-balanced` source files.
 - Both generators fail on duplicate ids, reject unknown entry fields, and print per-source summaries so balance edits are easier to audit before the merged runtime files are written.

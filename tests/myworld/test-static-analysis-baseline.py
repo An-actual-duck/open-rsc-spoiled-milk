@@ -40,7 +40,7 @@ def main() -> int:
         '"Client_Base/Open_RSC_Client.jar"',
         '"server/core.jar"',
         '"server/plugins.jar"',
-        '"output/world-builder-tools/world-builder-tools.jar"',
+        '"output/builds/world-builder/world-builder-tools.jar"',
     ):
         require(artifact in lint, f"Ant artifact is absent from SpotBugs scope: {artifact}")
     for boundary in (
@@ -107,7 +107,7 @@ def main() -> int:
         "./scripts/lint.sh self-test --offline",
         "./scripts/lint.sh analyze --offline",
         "Client_Base/Open_RSC_Client.jar",
-        "output/world-builder-tools/world-builder-tools.jar",
+        "output/builds/world-builder/world-builder-tools.jar",
     ):
         require(statement in workflow, f"CI lane is missing: {statement}")
 

@@ -4,16 +4,16 @@
   "provider": {
     "identity": "spoiled-milk-core-final-client-item-definitions",
     "definitionMode": "members-enabled-post-override",
-    "catalogItemCount": 3318,
-    "catalogSha256": "baf08c6684751901458b113a9ff454bc6b8be73c4af348b0991964017f95c710",
+    "catalogItemCount": 3444,
+    "catalogSha256": "90d7515c5a9c0fa3ea1c31981b854def66cd8b2060bc8d11567178ed3f230817",
     "inputs": [
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java",
-        "sha256": "52286567cd06c7c8626dfa5060d61c2beafd4eaccb2152d658724494de38411a"
+        "sha256": "207f1bd1a236a53cd756a77f8297649025234f7a214547328a0c8677fa21ee37"
       },
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/MyWorldItemOverrides.java",
-        "sha256": "8ce4c00ad166aab805a62c13bb4172c0c2c3214ad349ba4b4a1397ef83884b05"
+        "sha256": "52a2cb2f632ca4be2ef148f1055bb48edf0d88644ab38bff68705acf5e234e88"
       },
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/defs/ItemDef.java",
@@ -21,35 +21,35 @@
       },
       {
         "path": "Client_Base/src/orsc/Config.java",
-        "sha256": "c5e849a25858c253db7d4cd10d0a2fa126ceb5fc4e27dafaa15487fbed6e25a4"
+        "sha256": "ec79406616a5af8a0e72cdf8d574a242924dc5ddbc7fa5f2985e9b152542e5d8"
       }
     ]
   },
   "assetProviders": {
     "customSpriteArchive": {
       "path": "Client_Base/Cache/video/Custom_Sprites.osar",
-      "sha256": "f334d99403c6db0b2baa629ddfbd959e741aaf62265650eacdc4db5d9a9c7a92",
-      "entryCount": 1002
+      "sha256": "0883c7d1957b5bb4b70f0001770e4aac8d3145d77b2ff1a470d574e4718c426e",
+      "entryCount": 1009
     },
     "authenticSpriteArchive": {
       "path": "Client_Base/Cache/video/Authentic_Sprites.orsc",
-      "sha256": "cf861efa7307556b5e5ba4c20b838f17753faba8b530f85dca38e8c2839d5e69",
-      "numericEntryCount": 2259,
+      "sha256": "fdfd0a164151a55edbe2746696f24b42a0bb2ee506396fe6f7b13156c7c6b442",
+      "numericEntryCount": 2295,
       "itemArchiveBaseId": 2150
     },
     "externalPngPackaging": {
       "clientJarPath": "Client_Base/Open_RSC_Client.jar",
-      "packagedPngCount": 2896,
+      "packagedPngCount": 2988,
       "resourceRoot": "myworld-assets/"
     }
   },
   "selection": {
     "kind": "complete-final-catalog",
-    "itemCount": 3318,
-    "itemIdsSha256": "6709fed40b87e5584e59fc0e7547298c560e4c21001e39c1a6da8217ad022af0",
-    "mappingSha256": "75cb99052d42aefedf9c73fe2260c1b074b0e89c36f04d0160d1bb92e6e31a95",
+    "itemCount": 3444,
+    "itemIdsSha256": "8c009d4181e55e4c267059a8229fc044db37b8a5e5bc8c6948b9802e0b98cbba",
+    "mappingSha256": "c04148e8b3d981e884ac8b745de41eb13d986970583a8876f5cf5474e56f49b5",
     "minimumItemId": 0,
-    "maximumItemId": 3317
+    "maximumItemId": 3443
   },
   "itemVisuals": [
     {
@@ -6345,7 +6345,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -6365,7 +6365,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -6385,7 +6385,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -6405,7 +6405,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -11945,7 +11945,7 @@
         "assetName": "dragon-hatchet",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/dragon-hatchet.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/dragon-hatchet.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/dragon-hatchet.png",
         "sha256": "3568372087bd430118459fc31fa68a21acaad5571ab253c13b26a34cd6ed0972"
       },
@@ -12005,7 +12005,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31283,7 +31283,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31303,7 +31303,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31323,7 +31323,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31343,7 +31343,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31363,7 +31363,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31383,7 +31383,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31403,7 +31403,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31423,7 +31423,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31443,7 +31443,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31463,7 +31463,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31483,7 +31483,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31503,7 +31503,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31523,7 +31523,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31543,7 +31543,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31563,7 +31563,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31583,7 +31583,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31603,7 +31603,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31623,7 +31623,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31643,7 +31643,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -31663,7 +31663,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33603,7 +33603,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33623,7 +33623,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33643,7 +33643,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33663,7 +33663,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33683,7 +33683,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33803,7 +33803,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33823,7 +33823,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33843,7 +33843,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33863,7 +33863,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33883,7 +33883,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33903,7 +33903,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33923,7 +33923,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33943,7 +33943,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33963,7 +33963,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -33983,7 +33983,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34003,7 +34003,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34023,7 +34023,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34043,7 +34043,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34063,7 +34063,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34083,7 +34083,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34103,7 +34103,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34123,7 +34123,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34143,7 +34143,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34163,7 +34163,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34183,7 +34183,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34203,7 +34203,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34223,7 +34223,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34243,7 +34243,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34263,7 +34263,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34283,7 +34283,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34303,7 +34303,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34323,7 +34323,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34343,7 +34343,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34363,7 +34363,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34383,7 +34383,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34403,7 +34403,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34423,7 +34423,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34443,7 +34443,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34463,7 +34463,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34483,7 +34483,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34503,7 +34503,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34523,7 +34523,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34543,7 +34543,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34563,7 +34563,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -34583,7 +34583,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -42885,7 +42885,7 @@
         "assetName": "bolt-mould",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/tools/bolt-mould.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools/bolt-mould.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/tools/bolt-mould.png",
         "sha256": "340dceef483c72e6f652cfc1e5529242388e9f52e0f993396e4fe6fe8c86e270"
       },
@@ -43425,7 +43425,7 @@
         "assetName": "dart-mould",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/tools/dart-mould.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools/dart-mould.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/tools/dart-mould.png",
         "sha256": "8da62b627ce993bbea71fdae27b230c0f7359eb174646459f9c81191cadcb85e"
       },
@@ -43445,7 +43445,7 @@
         "assetName": "throwing-knife-mould",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
         "sha256": "2e2513b2743dd89818921cf9042b5cc0a6934cf971e3055efbb46f44191733ab"
       },
@@ -43465,7 +43465,7 @@
         "assetName": "arrowhead-mould",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/tools/arrowhead-mould.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools/arrowhead-mould.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/tools/arrowhead-mould.png",
         "sha256": "c3b731c5a6c51a234361c807fbd89de85f99d33538eda580951a4d4c1ae181dd"
       },
@@ -61465,7 +61465,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -61485,7 +61485,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -61505,7 +61505,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -61525,7 +61525,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -61545,7 +61545,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -62779,7 +62779,7 @@
         "assetName": "guthix-symbol-mould",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/guthix-symbol-mould.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/guthix-symbol-mould.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/guthix-symbol-mould.png",
         "sha256": "643c38899981326510fb594cdcc4f91e50aaf90449bac16260832d650ea30580"
       },
@@ -62799,7 +62799,7 @@
         "assetName": "unstrung-symbol-of-guthix",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/unstrung-symbol-of-guthix.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/unstrung-symbol-of-guthix.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/unstrung-symbol-of-guthix.png",
         "sha256": "431a39c7da2dd296b710c440d52af761fcfc40a36e9b21c29ac646d74a92356c"
       },
@@ -62819,7 +62819,7 @@
         "assetName": "unblessed-symbol-of-guthix",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/unblessed-symbol-of-guthix.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/unblessed-symbol-of-guthix.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/unblessed-symbol-of-guthix.png",
         "sha256": "c2fcfaf208d1eff5b8b88e4b4bd0c861a7bda0e57ea1330e573852e63c2f75c3"
       },
@@ -62839,7 +62839,7 @@
         "assetName": "symbol-of-guthix",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/symbol-of-guthix.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/symbol-of-guthix.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/symbol-of-guthix.png",
         "sha256": "c2fcfaf208d1eff5b8b88e4b4bd0c861a7bda0e57ea1330e573852e63c2f75c3"
       },
@@ -62879,7 +62879,7 @@
         "assetName": "geode",
         "targetWidth": 14,
         "targetHeight": 14,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/geode.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/geode.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/geode.png",
         "sha256": "64cf2799c76ac92485812c21c2b0bec1d7b258dee56390c1f2524f72f030fe05"
       },
@@ -62899,7 +62899,7 @@
         "assetName": "geode",
         "targetWidth": 18,
         "targetHeight": 18,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/geode.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/geode.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/geode.png",
         "sha256": "64cf2799c76ac92485812c21c2b0bec1d7b258dee56390c1f2524f72f030fe05"
       },
@@ -62919,7 +62919,7 @@
         "assetName": "geode",
         "targetWidth": 24,
         "targetHeight": 24,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/geode.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/geode.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/geode.png",
         "sha256": "64cf2799c76ac92485812c21c2b0bec1d7b258dee56390c1f2524f72f030fe05"
       },
@@ -62939,7 +62939,7 @@
         "assetName": "geode",
         "targetWidth": 30,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/geode.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/geode.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/geode.png",
         "sha256": "64cf2799c76ac92485812c21c2b0bec1d7b258dee56390c1f2524f72f030fe05"
       },
@@ -63159,7 +63159,7 @@
         "assetName": "hood",
         "targetWidth": 35,
         "targetHeight": 27,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/hood.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/hood.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/hood.png",
         "sha256": "bf7af632bb5f585f2ac282b27514c5956a9166b9b3be96bdde275551230f76ca"
       },
@@ -63479,7 +63479,7 @@
         "assetName": "shuriken-mould",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/tools/shuriken-mould.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools/shuriken-mould.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/tools/shuriken-mould.png",
         "sha256": "b2e8a760cc8482f6a2e15ee1c3307cbe2ceceeff01a24b159366c7fec47b7d44"
       },
@@ -63499,7 +63499,7 @@
         "assetName": "shuriken-basic",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic.png",
         "sha256": "da4477ae777d6a7d2f9d3c4d829e0b1c40533fba7f09a825f041e89c3eecebd8"
       },
@@ -63519,7 +63519,7 @@
         "assetName": "shuriken-basic",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic.png",
         "sha256": "da4477ae777d6a7d2f9d3c4d829e0b1c40533fba7f09a825f041e89c3eecebd8"
       },
@@ -63539,7 +63539,7 @@
         "assetName": "shuriken-basic",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic.png",
         "sha256": "da4477ae777d6a7d2f9d3c4d829e0b1c40533fba7f09a825f041e89c3eecebd8"
       },
@@ -63559,7 +63559,7 @@
         "assetName": "shuriken-basic",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic.png",
         "sha256": "da4477ae777d6a7d2f9d3c4d829e0b1c40533fba7f09a825f041e89c3eecebd8"
       },
@@ -63579,7 +63579,7 @@
         "assetName": "shuriken-basic",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic.png",
         "sha256": "da4477ae777d6a7d2f9d3c4d829e0b1c40533fba7f09a825f041e89c3eecebd8"
       },
@@ -63599,7 +63599,7 @@
         "assetName": "shuriken-basic",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic.png",
         "sha256": "da4477ae777d6a7d2f9d3c4d829e0b1c40533fba7f09a825f041e89c3eecebd8"
       },
@@ -63619,7 +63619,7 @@
         "assetName": "shuriken-basic",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic.png",
         "sha256": "da4477ae777d6a7d2f9d3c4d829e0b1c40533fba7f09a825f041e89c3eecebd8"
       },
@@ -63639,7 +63639,7 @@
         "assetName": "shuriken-basic",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic.png",
         "sha256": "da4477ae777d6a7d2f9d3c4d829e0b1c40533fba7f09a825f041e89c3eecebd8"
       },
@@ -63659,7 +63659,7 @@
         "assetName": "shuriken-basic",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic.png",
         "sha256": "da4477ae777d6a7d2f9d3c4d829e0b1c40533fba7f09a825f041e89c3eecebd8"
       },
@@ -63679,7 +63679,7 @@
         "assetName": "shuriken-basic",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic.png",
         "sha256": "da4477ae777d6a7d2f9d3c4d829e0b1c40533fba7f09a825f041e89c3eecebd8"
       },
@@ -63699,7 +63699,7 @@
         "assetName": "shuriken-basic-poison",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "sha256": "3fee74b4dbaeb403e64ee2e74d423dc8c6654c9b9af5d50f53df88abc9832e5d"
       },
@@ -63719,7 +63719,7 @@
         "assetName": "shuriken-basic-poison",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "sha256": "3fee74b4dbaeb403e64ee2e74d423dc8c6654c9b9af5d50f53df88abc9832e5d"
       },
@@ -63739,7 +63739,7 @@
         "assetName": "shuriken-basic-poison",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "sha256": "3fee74b4dbaeb403e64ee2e74d423dc8c6654c9b9af5d50f53df88abc9832e5d"
       },
@@ -63759,7 +63759,7 @@
         "assetName": "shuriken-basic-poison",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "sha256": "3fee74b4dbaeb403e64ee2e74d423dc8c6654c9b9af5d50f53df88abc9832e5d"
       },
@@ -63779,7 +63779,7 @@
         "assetName": "shuriken-basic-poison",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "sha256": "3fee74b4dbaeb403e64ee2e74d423dc8c6654c9b9af5d50f53df88abc9832e5d"
       },
@@ -63799,7 +63799,7 @@
         "assetName": "shuriken-basic-poison",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "sha256": "3fee74b4dbaeb403e64ee2e74d423dc8c6654c9b9af5d50f53df88abc9832e5d"
       },
@@ -63819,7 +63819,7 @@
         "assetName": "shuriken-basic-poison",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "sha256": "3fee74b4dbaeb403e64ee2e74d423dc8c6654c9b9af5d50f53df88abc9832e5d"
       },
@@ -63839,7 +63839,7 @@
         "assetName": "shuriken-basic-poison",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "sha256": "3fee74b4dbaeb403e64ee2e74d423dc8c6654c9b9af5d50f53df88abc9832e5d"
       },
@@ -63859,7 +63859,7 @@
         "assetName": "shuriken-basic-poison",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "sha256": "3fee74b4dbaeb403e64ee2e74d423dc8c6654c9b9af5d50f53df88abc9832e5d"
       },
@@ -63879,7 +63879,7 @@
         "assetName": "shuriken-basic-poison",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/shuriken-basic-poison.png",
         "sha256": "3fee74b4dbaeb403e64ee2e74d423dc8c6654c9b9af5d50f53df88abc9832e5d"
       },
@@ -63899,7 +63899,7 @@
         "assetName": "raw-dragon-metal",
         "targetWidth": 43,
         "targetHeight": 27,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/raw-dragon-metal.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/raw-dragon-metal.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/raw-dragon-metal.png",
         "sha256": "bf12a187b7828e4238b56df64c0dfcb553b7e4e676e20b619f33e2b9c144f2bc"
       },
@@ -64039,7 +64039,7 @@
         "assetName": "fire-sword-icon",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/weapons/fire-sword-icon.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/fire-sword-icon.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/weapons/fire-sword-icon.png",
         "sha256": "fcef71009ff1676b82fac571ac7bb2055d930c278323036b1aac38c006fd9dd5"
       },
@@ -64059,7 +64059,7 @@
         "assetName": "ice-sword-icon",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/weapons/ice-sword-icon.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/ice-sword-icon.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/weapons/ice-sword-icon.png",
         "sha256": "4e27d26b36962fad70d6676aabd78ab36e4c9e154a8f41301f400423d97acd4e"
       },
@@ -64079,7 +64079,7 @@
         "assetName": "earth-sword-icon",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/weapons/earth-sword-icon.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/earth-sword-icon.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/weapons/earth-sword-icon.png",
         "sha256": "901e8bdc517871d6e9a8b35b4b48599b020873496880452f69972046c1dfab4c"
       },
@@ -64099,7 +64099,7 @@
         "assetName": "zombie-eye",
         "targetWidth": 11,
         "targetHeight": 11,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/zombie-eye.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/zombie-eye.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/zombie-eye.png",
         "sha256": "a7f49af8c8a4c61d717a23886af2b5d2edce179f358dc648e6af114081190c36"
       },
@@ -64119,7 +64119,7 @@
         "assetName": "demon-pitchfork-icon",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/weapons/demon-pitchfork-icon.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/demon-pitchfork-icon.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/weapons/demon-pitchfork-icon.png",
         "sha256": "efac538848c395132e97ddcc723e0e85d71292981fb86d3f3eae5c2cc6564c79"
       },
@@ -64364,7 +64364,7 @@
         "assetName": "saradomin-mace-icon",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/weapons/saradomin-mace-icon.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/saradomin-mace-icon.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/weapons/saradomin-mace-icon.png",
         "sha256": "3c0a7dce23e1be3e7720a6bbb8cbe26f95b91b4e5ee905c2034956e5db55e5e7"
       },
@@ -64384,7 +64384,7 @@
         "assetName": "zamorak-mace-icon",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/weapons/zamorak-mace-icon.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/zamorak-mace-icon.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/weapons/zamorak-mace-icon.png",
         "sha256": "ddfcc5a53a86b9ed7ff48f41103a174560f3823a53a6a18d3e995d4495ccfe7f"
       },
@@ -64404,7 +64404,7 @@
         "assetName": "guthix-mace-icon",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/weapons/guthix-mace-icon.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/guthix-mace-icon.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/weapons/guthix-mace-icon.png",
         "sha256": "7197a4fac68697638401ae436ba698da21dc4fa8a108c192750ac60d613d42ee"
       },
@@ -64444,7 +64444,7 @@
         "assetName": "fern-leaf",
         "targetWidth": 17,
         "targetHeight": 19,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/fern-leaf.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/fern-leaf.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/fern-leaf.png",
         "sha256": "914de1153dfc14753e81a4f1571985550f91897895a6ee8c4d1bb40067ad233f"
       },
@@ -64464,7 +64464,7 @@
         "assetName": "mushroom",
         "targetWidth": 18,
         "targetHeight": 18,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/mushroom.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/mushroom.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/mushroom.png",
         "sha256": "4dec327767e869ebb4b28f5d7579b3c6f138f6c37667a9e8ec448e0a64c8fdeb"
       },
@@ -64484,7 +64484,7 @@
         "assetName": "fungus",
         "targetWidth": 14,
         "targetHeight": 18,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/fungus.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/fungus.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/fungus.png",
         "sha256": "72a4bd7f419d9d21328c0cb3a749c9579439aaf07c479eb48ca942dea70b4699"
       },
@@ -64504,7 +64504,7 @@
         "assetName": "red-flower",
         "targetWidth": 15,
         "targetHeight": 18,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/red-flower.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/red-flower.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/red-flower.png",
         "sha256": "f0e02c56038bae122d537d9b1633d32e1a06b2afdc616ffe31c6ba9f170b0128"
       },
@@ -64524,7 +64524,7 @@
         "assetName": "blue-flower",
         "targetWidth": 15,
         "targetHeight": 18,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/blue-flower.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/blue-flower.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/blue-flower.png",
         "sha256": "194be699c6af317423c25f0d8a8481ccedc3e4f389fcb0647c849abd4bb1f948"
       },
@@ -64944,7 +64944,7 @@
         "assetName": "bangle-mould",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/tools/bangle-mould.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools/bangle-mould.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/tools/bangle-mould.png",
         "sha256": "a8f8add253ab4e8e90982e7bc3686914d6bf4eebda1d9d6729bdb035612bedae"
       },
@@ -64964,7 +64964,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -64984,7 +64984,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -65004,7 +65004,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -65024,7 +65024,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -65044,7 +65044,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -65064,7 +65064,7 @@
         "assetName": "medallion",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/medallion.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/medallion.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/medallion.png",
         "sha256": "b0381094cf0cc302a3917c081b85d53d34608f0422da01973f4ce184aa54a129"
       },
@@ -65084,7 +65084,7 @@
         "assetName": "medallion",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/medallion.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/medallion.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/medallion.png",
         "sha256": "b0381094cf0cc302a3917c081b85d53d34608f0422da01973f4ce184aa54a129"
       },
@@ -65104,7 +65104,7 @@
         "assetName": "medallion",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/medallion.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/medallion.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/medallion.png",
         "sha256": "b0381094cf0cc302a3917c081b85d53d34608f0422da01973f4ce184aa54a129"
       },
@@ -65124,7 +65124,7 @@
         "assetName": "medallion",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/medallion.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/medallion.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/medallion.png",
         "sha256": "b0381094cf0cc302a3917c081b85d53d34608f0422da01973f4ce184aa54a129"
       },
@@ -65144,7 +65144,7 @@
         "assetName": "medallion",
         "targetWidth": 46,
         "targetHeight": 30,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/medallion.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/medallion.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/medallion.png",
         "sha256": "b0381094cf0cc302a3917c081b85d53d34608f0422da01973f4ce184aa54a129"
       },
@@ -65164,7 +65164,7 @@
         "assetName": "bangle",
         "targetWidth": 19,
         "targetHeight": 15,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/bangle.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/bangle.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/bangle.png",
         "sha256": "7b9464792ff07bf4923772cb45d5822b02335cb1b9a3c8af7640a8f4cef528fc"
       },
@@ -65187,7 +65187,7 @@
         "assetName": "unblessed-sara-sigil",
         "targetWidth": 28,
         "targetHeight": 25,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/unblessed-sara-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/unblessed-sara-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/unblessed-sara-sigil.png",
         "sha256": "02f96b0bdae5682f68675a08145c3003963c471ab20b5989df98f3b3646886b3"
       },
@@ -65210,7 +65210,7 @@
         "assetName": "blessed-sara-sigil",
         "targetWidth": 28,
         "targetHeight": 25,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/blessed-sara-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/blessed-sara-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/blessed-sara-sigil.png",
         "sha256": "d85e8101251fdf40571910f30b1f4f4a1c4a0eeea5cd01da8f92c78c51212927"
       },
@@ -65233,7 +65233,7 @@
         "assetName": "unblessed-guth-sigil",
         "targetWidth": 28,
         "targetHeight": 25,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/unblessed-guth-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/unblessed-guth-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/unblessed-guth-sigil.png",
         "sha256": "1b343020349006201335182d68969f38bd21e370e427d26ca57629567e9b2160"
       },
@@ -65256,7 +65256,7 @@
         "assetName": "blessed-guth-sigil",
         "targetWidth": 28,
         "targetHeight": 25,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/blessed-guth-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/blessed-guth-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/blessed-guth-sigil.png",
         "sha256": "18649360697a88bd1d737c4d68c622de590e1b40e4238559fb7bf2c8df38e2aa"
       },
@@ -65279,7 +65279,7 @@
         "assetName": "unblessed-zam-sigil",
         "targetWidth": 28,
         "targetHeight": 25,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/unblessed-zam-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/unblessed-zam-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/unblessed-zam-sigil.png",
         "sha256": "7b215d0e54774f7fa4d015ac6c95352bd1275fe41a22c8f4495819efd7cae628"
       },
@@ -65302,7 +65302,7 @@
         "assetName": "blessed-zam-sigil",
         "targetWidth": 28,
         "targetHeight": 25,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/blessed-zam-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/blessed-zam-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/blessed-zam-sigil.png",
         "sha256": "1aade7dfe74426dde9e4b33a9aa99a3e87d9cc70636805440eec01323928c9bd"
       },
@@ -65311,7 +65311,7 @@
     },
     {
       "itemId": 3299,
-      "diagnosticName": "Unblessed neutral stone sigil",
+      "diagnosticName": "Uninfused stone Grace sigil",
       "spriteLocation": "external-png:unblessed-neutral-sigil@28x25",
       "spriteId": 443,
       "resolvedBaseSourceRole": "external-png",
@@ -65325,7 +65325,7 @@
         "assetName": "unblessed-neutral-sigil",
         "targetWidth": 28,
         "targetHeight": 25,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/unblessed-neutral-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/unblessed-neutral-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/unblessed-neutral-sigil.png",
         "sha256": "3e2f4b0a53aaed522d104dcc86d46801cd1f4aa881998fedf70a077e7767845c"
       },
@@ -65334,7 +65334,7 @@
     },
     {
       "itemId": 3300,
-      "diagnosticName": "Neutral stone sigil",
+      "diagnosticName": "Stone Grace sigil",
       "spriteLocation": "external-png:blessed-neutral-sigil@28x25",
       "spriteId": 443,
       "resolvedBaseSourceRole": "external-png",
@@ -65348,7 +65348,7 @@
         "assetName": "blessed-neutral-sigil",
         "targetWidth": 28,
         "targetHeight": 25,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/blessed-neutral-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/blessed-neutral-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/blessed-neutral-sigil.png",
         "sha256": "2d96ad98466468c22f00446b35672d88337d72824f07b308ddfe04bb7b30e9c0"
       },
@@ -65371,7 +65371,7 @@
         "assetName": "silver-unblessed-sara-sigil",
         "targetWidth": 24,
         "targetHeight": 21,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-unblessed-sara-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/silver-unblessed-sara-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/silver-unblessed-sara-sigil.png",
         "sha256": "67ab54aae2113df0603bc31877ea63e9ce761c0fbbc26cecf6ba58c6bd0f92fb"
       },
@@ -65394,7 +65394,7 @@
         "assetName": "silver-blessed-sara-sigil",
         "targetWidth": 24,
         "targetHeight": 21,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-blessed-sara-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/silver-blessed-sara-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/silver-blessed-sara-sigil.png",
         "sha256": "b33d0fdfc46c523f5e3f5960b430afd63347300c0f5c7db7ca9a16a91e014127"
       },
@@ -65417,7 +65417,7 @@
         "assetName": "silver-unblessed-guth-sigil",
         "targetWidth": 24,
         "targetHeight": 21,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-unblessed-guth-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/silver-unblessed-guth-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/silver-unblessed-guth-sigil.png",
         "sha256": "c4aad44d33cfa3cfc03540fc0e81d2a1d687e9da2841b4ea56327046544f2202"
       },
@@ -65440,7 +65440,7 @@
         "assetName": "silver-blessed-guth-sigil",
         "targetWidth": 24,
         "targetHeight": 21,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-blessed-guth-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/silver-blessed-guth-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/silver-blessed-guth-sigil.png",
         "sha256": "20aaf37e7682756ebdfd32d3edfb7e3fc03c00dbf551423a1e478f7ee51fae9a"
       },
@@ -65463,7 +65463,7 @@
         "assetName": "silver-unblessed-zam-sigil",
         "targetWidth": 24,
         "targetHeight": 21,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-unblessed-zam-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/silver-unblessed-zam-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/silver-unblessed-zam-sigil.png",
         "sha256": "a03f4607562b595454115be947a48cb0c73214957706e7caabbfbce7d3908295"
       },
@@ -65486,7 +65486,7 @@
         "assetName": "silver-blessed-zam-sigil",
         "targetWidth": 24,
         "targetHeight": 21,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-blessed-zam-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/silver-blessed-zam-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/silver-blessed-zam-sigil.png",
         "sha256": "1064d326133e5f064c5ca996109bddb8fdcbfe3e6f9737beab8988169de6849f"
       },
@@ -65495,7 +65495,7 @@
     },
     {
       "itemId": 3307,
-      "diagnosticName": "Unblessed neutral silver sigil",
+      "diagnosticName": "Uninfused silver Grace sigil",
       "spriteLocation": "external-png:silver-unblessed-neutral-sigil@24x21",
       "spriteId": 134,
       "resolvedBaseSourceRole": "external-png",
@@ -65509,7 +65509,7 @@
         "assetName": "silver-unblessed-neutral-sigil",
         "targetWidth": 24,
         "targetHeight": 21,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-unblessed-neutral-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/silver-unblessed-neutral-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/silver-unblessed-neutral-sigil.png",
         "sha256": "8b5c25120ca4d2bc8dd19b4d2909b7c4221de711b5a404f43cad247c99469d10"
       },
@@ -65518,7 +65518,7 @@
     },
     {
       "itemId": 3308,
-      "diagnosticName": "Neutral silver sigil",
+      "diagnosticName": "Silver Grace sigil",
       "spriteLocation": "external-png:silver-blessed-neutral-sigil@24x21",
       "spriteId": 134,
       "resolvedBaseSourceRole": "external-png",
@@ -65532,7 +65532,7 @@
         "assetName": "silver-blessed-neutral-sigil",
         "targetWidth": 24,
         "targetHeight": 21,
-        "sourcePath": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/silver-blessed-neutral-sigil.png",
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/silver-blessed-neutral-sigil.png",
         "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/silver-blessed-neutral-sigil.png",
         "sha256": "02a96f5f6bfbeadf5922a36090b4477286ab17b7e288fbd7c6d4eb8bbcef9047"
       },
@@ -65714,6 +65714,2559 @@
       },
       "externalPng": null,
       "pictureMask": 2828826,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3318,
+      "diagnosticName": "Slime Solvent (3)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 5289585,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3319,
+      "diagnosticName": "Slime Solvent (2)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 5289585,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3320,
+      "diagnosticName": "Slime Solvent (1)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 5289585,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3321,
+      "diagnosticName": "Eye Drops (3)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 7976910,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3322,
+      "diagnosticName": "Eye Drops (2)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 7976910,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3323,
+      "diagnosticName": "Eye Drops (1)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 7976910,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3324,
+      "diagnosticName": "Wax earplugs (3)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 14729344,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3325,
+      "diagnosticName": "Wax earplugs (2)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 14729344,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3326,
+      "diagnosticName": "Wax earplugs (1)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 14729344,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3327,
+      "diagnosticName": "Dog Treats (3)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 11241806,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3328,
+      "diagnosticName": "Dog Treats (2)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 11241806,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3329,
+      "diagnosticName": "Dog Treats (1)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 11241806,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3330,
+      "diagnosticName": "Static discharge wipe (3)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 14729344,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3331,
+      "diagnosticName": "Static discharge wipe (2)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 14729344,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3332,
+      "diagnosticName": "Static discharge wipe (1)",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 14729344,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3333,
+      "diagnosticName": "Giant frog hide",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 3640195,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3334,
+      "diagnosticName": "Banshee hide",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 10849451,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3335,
+      "diagnosticName": "Naga hide",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 5666110,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3336,
+      "diagnosticName": "Terror dog hide",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 6642001,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3337,
+      "diagnosticName": "Bloodveld hide",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 10190949,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3338,
+      "diagnosticName": "Dark beast hide",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 3748389,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3339,
+      "diagnosticName": "Cockatrice Feathers",
+      "spriteLocation": "items:176",
+      "spriteId": 176,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2326,
+        "entrySha256": "07441b8cdaafb82676b94895851dee4a85b88ba03c620521bedbfdd5a000f8b8"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "176",
+        "baseArchiveEntrySha256": "f7a818ce00ccf7d99fa4e4a9da65c1eba18ebd63ebdac04dc3f5580e95e27693",
+        "spritepackOverrideKey": "items:176"
+      },
+      "externalPng": null,
+      "pictureMask": 9411419,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3340,
+      "diagnosticName": "Slimey Residue",
+      "spriteLocation": "items:262",
+      "spriteId": 262,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2412,
+        "entrySha256": "37f38d340d345930d46a167cbe2f3dea82d912da713ab5c975adc78cef44576b"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "262",
+        "baseArchiveEntrySha256": "0edbf5f6203d1015ea664da6d8bcd33ed3974ef34011ad4ab9af5d2a12a22343",
+        "spritepackOverrideKey": "items:262"
+      },
+      "externalPng": null,
+      "pictureMask": 6453644,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3341,
+      "diagnosticName": "Sticky Saliva Gland",
+      "spriteLocation": "external-png:sticky-saliva-gland@16x18",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "sticky-saliva-gland@16x18",
+        "assetName": "sticky-saliva-gland",
+        "targetWidth": 16,
+        "targetHeight": 18,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/sticky-saliva-gland.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/sticky-saliva-gland.png",
+        "sha256": "94e933aacd51a9c368ec240a6ac642309ae7e144c92fdf766751bdc0892034da"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3342,
+      "diagnosticName": "Cockatrice Eye",
+      "spriteLocation": "items:116",
+      "spriteId": 116,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2266,
+        "entrySha256": "5ecb1e90022e0e9c0a698a0224cdd8b4ecd6a3321a3bb53c5380d039e4171926"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "116",
+        "baseArchiveEntrySha256": "3650a19e94bfe7028026a19f28182886040ebaad98f423f81c1a4b21c944aaa2",
+        "spritepackOverrideKey": "items:116"
+      },
+      "externalPng": null,
+      "pictureMask": 12166747,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3343,
+      "diagnosticName": "Frozen Tear",
+      "spriteLocation": "items:74",
+      "spriteId": 74,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2224,
+        "entrySha256": "954d63f625fa3d6aca979a0415830e9cf44742e9b799be549bcf596e1eaf2563"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "74",
+        "baseArchiveEntrySha256": "f008e5749602c0c5a29f82ba2c381eaffc8ad1a35c831aabbd5e9af6d7e8aad1",
+        "spritepackOverrideKey": "items:74"
+      },
+      "externalPng": null,
+      "pictureMask": 10079709,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3344,
+      "diagnosticName": "Terror Fang",
+      "spriteLocation": "items:145",
+      "spriteId": 145,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2295,
+        "entrySha256": "b763502754c0177bd9d5ecea649c54adeb259ba7e0e83534aa5925ced8e33103"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "145",
+        "baseArchiveEntrySha256": "0959f0f02950f8352d0e8d96ac0c5bdce3dc3062d8a1be75a3f8d72844fb7145",
+        "spritepackOverrideKey": "items:145"
+      },
+      "externalPng": null,
+      "pictureMask": 14075296,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3345,
+      "diagnosticName": "Leach Tongue",
+      "spriteLocation": "items:103",
+      "spriteId": 103,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2253,
+        "entrySha256": "15ac03fea308340b7852311194ffae3b7e6fe92f383a8574140116dd795bdd11"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "103",
+        "baseArchiveEntrySha256": "da042fb6e9e29d638d1f9a808d66f21e2f27790ae72fba1d1d8a8922716c7f65",
+        "spritepackOverrideKey": "items:103"
+      },
+      "externalPng": null,
+      "pictureMask": 11493986,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3346,
+      "diagnosticName": "Lightning Horn",
+      "spriteLocation": "items:145",
+      "spriteId": 145,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2295,
+        "entrySha256": "b763502754c0177bd9d5ecea649c54adeb259ba7e0e83534aa5925ced8e33103"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "145",
+        "baseArchiveEntrySha256": "0959f0f02950f8352d0e8d96ac0c5bdce3dc3062d8a1be75a3f8d72844fb7145",
+        "spritepackOverrideKey": "items:145"
+      },
+      "externalPng": null,
+      "pictureMask": 14204001,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3347,
+      "diagnosticName": "Abyssal Vertibrae",
+      "spriteLocation": "items:20",
+      "spriteId": 20,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2170,
+        "entrySha256": "f5de0f20595be0f39a35cc488daa3483c63ade50e9bb384304d9d0aeb3f5662c"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "20",
+        "baseArchiveEntrySha256": "fae47c5d099b1e4708aee24271c61cfd1e9fe5b180807dd6676c50b009948d4c",
+        "spritepackOverrideKey": "items:20"
+      },
+      "externalPng": null,
+      "pictureMask": 9544882,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3348,
+      "diagnosticName": "Abyssal Rib",
+      "spriteLocation": "items:137",
+      "spriteId": 137,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2287,
+        "entrySha256": "188661f25fdd43452115df5dda31c66ea5519c5e655950069af4806bd8f5179e"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "137",
+        "baseArchiveEntrySha256": "0cfc0784c1d7a4eb197fa428ebd83db37ea7f075d223a82d6a28dae4d91511c8",
+        "spritepackOverrideKey": "items:137"
+      },
+      "externalPng": null,
+      "pictureMask": 8493482,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3349,
+      "diagnosticName": "Shield of Mobility",
+      "spriteLocation": "items:3",
+      "spriteId": 3,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2153,
+        "entrySha256": "2ae9deb160f46258cbf022cf6e1914a7062d767cbfd77034560d13960f228f27"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "3",
+        "baseArchiveEntrySha256": "92e4d75866bd3cbdeef64f4d5b18e7dd8c9498034e37e6021fb4868fd3ccf0a6",
+        "spritepackOverrideKey": "items:3"
+      },
+      "externalPng": null,
+      "pictureMask": 9082485,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3350,
+      "diagnosticName": "Abyssal Whip",
+      "spriteLocation": "items:81",
+      "spriteId": 81,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2231,
+        "entrySha256": "478d91b0c62de3e643d044db7d2758ce1a4cdec0e6f61f8801bdf668a54732f7"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "81",
+        "baseArchiveEntrySha256": "c36b49c7428774d5170f53480c3cc73d92820f38a046ffd50fe706628198bd68",
+        "spritepackOverrideKey": "items:81"
+      },
+      "externalPng": null,
+      "pictureMask": 8493482,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3351,
+      "diagnosticName": "Thunder Spire Staff",
+      "spriteLocation": "items:123",
+      "spriteId": 123,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2273,
+        "entrySha256": "584eecf041d75135f1e3b15aaa9a5f1d5aaba1814981ef55a7df591841fb9b0a"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "123",
+        "baseArchiveEntrySha256": "63c8fad0247653ef160b123bc4b4d7a78f644eed08e1fd5c0de3068a9c6fa595",
+        "spritepackOverrideKey": "items:123"
+      },
+      "externalPng": null,
+      "pictureMask": 14204001,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3352,
+      "diagnosticName": "Leaching Bow",
+      "spriteLocation": "items:54",
+      "spriteId": 54,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2204,
+        "entrySha256": "88ffb0d7606332aae589cae9829429288edbe3f5d7d44204d232d7e192d59dba"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "54",
+        "baseArchiveEntrySha256": "0d64a72720df00ade23e7500af7cf3b70e61df7cb3efe9f40e154e2bb03e211b",
+        "spritepackOverrideKey": "items:54"
+      },
+      "externalPng": null,
+      "pictureMask": 11493986,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3353,
+      "diagnosticName": "Dagger of Terror",
+      "spriteLocation": "items:80",
+      "spriteId": 80,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2230,
+        "entrySha256": "59ce2de8a7d032b047be83a17fbb31f4f012789407138cf0a7e53ca133347175"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "80",
+        "baseArchiveEntrySha256": "b7c4b8f8964f160a437093590714a78625ed9d1d03751a2d4a77bcaa588f3f76",
+        "spritepackOverrideKey": "items:80"
+      },
+      "externalPng": null,
+      "pictureMask": 14075296,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3354,
+      "diagnosticName": "Poisoned Dagger of Terror",
+      "spriteLocation": "items:80",
+      "spriteId": 80,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2230,
+        "entrySha256": "59ce2de8a7d032b047be83a17fbb31f4f012789407138cf0a7e53ca133347175"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "80",
+        "baseArchiveEntrySha256": "b7c4b8f8964f160a437093590714a78625ed9d1d03751a2d4a77bcaa588f3f76",
+        "spritepackOverrideKey": "items:80"
+      },
+      "externalPng": null,
+      "pictureMask": 9082485,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3355,
+      "diagnosticName": "Sullen Pendant",
+      "spriteLocation": "items:24",
+      "spriteId": 24,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2174,
+        "entrySha256": "ad9f3a224cb1ca71188147cd35e69913a58c1dd40398010c7ce68375230c0e7e"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "24",
+        "baseArchiveEntrySha256": "b90b0b939392c52f9890cf93d43486c74b48a9f7f92aebfa3c5f72fee4b46cb2",
+        "spritepackOverrideKey": "items:24"
+      },
+      "externalPng": null,
+      "pictureMask": 10079709,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3356,
+      "diagnosticName": "Giant frog leather",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 3640195,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3357,
+      "diagnosticName": "Giant-frog-hide coif",
+      "spriteLocation": "items:5",
+      "spriteId": 5,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2155,
+        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "5",
+        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
+        "spritepackOverrideKey": "items:5"
+      },
+      "externalPng": null,
+      "pictureMask": 3640195,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3358,
+      "diagnosticName": "Giant-frog-hide gloves",
+      "spriteLocation": "items:17",
+      "spriteId": 17,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2167,
+        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "17",
+        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
+        "spritepackOverrideKey": "items:17"
+      },
+      "externalPng": null,
+      "pictureMask": 3640195,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3359,
+      "diagnosticName": "Giant-frog-hide boots",
+      "spriteLocation": "items:223",
+      "spriteId": 223,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2373,
+        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "223",
+        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
+        "spritepackOverrideKey": "items:223"
+      },
+      "externalPng": null,
+      "pictureMask": 3640195,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3360,
+      "diagnosticName": "Giant-frog-hide chaps",
+      "spriteLocation": "items:590",
+      "spriteId": 590,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": null,
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "590",
+        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
+        "spritepackOverrideKey": "items:590"
+      },
+      "externalPng": null,
+      "pictureMask": 3640195,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3361,
+      "diagnosticName": "Giant-frog-hide cuirass",
+      "spriteLocation": "items:7",
+      "spriteId": 7,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2157,
+        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "7",
+        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
+        "spritepackOverrideKey": "items:7"
+      },
+      "externalPng": null,
+      "pictureMask": 3640195,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3362,
+      "diagnosticName": "Banshee leather",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 10849451,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3363,
+      "diagnosticName": "Banshee-hide coif",
+      "spriteLocation": "items:5",
+      "spriteId": 5,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2155,
+        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "5",
+        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
+        "spritepackOverrideKey": "items:5"
+      },
+      "externalPng": null,
+      "pictureMask": 10849451,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3364,
+      "diagnosticName": "Banshee-hide gloves",
+      "spriteLocation": "items:17",
+      "spriteId": 17,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2167,
+        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "17",
+        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
+        "spritepackOverrideKey": "items:17"
+      },
+      "externalPng": null,
+      "pictureMask": 10849451,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3365,
+      "diagnosticName": "Banshee-hide boots",
+      "spriteLocation": "items:223",
+      "spriteId": 223,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2373,
+        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "223",
+        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
+        "spritepackOverrideKey": "items:223"
+      },
+      "externalPng": null,
+      "pictureMask": 10849451,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3366,
+      "diagnosticName": "Banshee-hide chaps",
+      "spriteLocation": "items:590",
+      "spriteId": 590,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": null,
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "590",
+        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
+        "spritepackOverrideKey": "items:590"
+      },
+      "externalPng": null,
+      "pictureMask": 10849451,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3367,
+      "diagnosticName": "Banshee-hide cuirass",
+      "spriteLocation": "items:7",
+      "spriteId": 7,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2157,
+        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "7",
+        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
+        "spritepackOverrideKey": "items:7"
+      },
+      "externalPng": null,
+      "pictureMask": 10849451,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3368,
+      "diagnosticName": "Naga leather",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 5666110,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3369,
+      "diagnosticName": "Naga-hide coif",
+      "spriteLocation": "items:5",
+      "spriteId": 5,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2155,
+        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "5",
+        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
+        "spritepackOverrideKey": "items:5"
+      },
+      "externalPng": null,
+      "pictureMask": 5666110,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3370,
+      "diagnosticName": "Naga-hide gloves",
+      "spriteLocation": "items:17",
+      "spriteId": 17,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2167,
+        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "17",
+        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
+        "spritepackOverrideKey": "items:17"
+      },
+      "externalPng": null,
+      "pictureMask": 5666110,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3371,
+      "diagnosticName": "Naga-hide boots",
+      "spriteLocation": "items:223",
+      "spriteId": 223,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2373,
+        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "223",
+        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
+        "spritepackOverrideKey": "items:223"
+      },
+      "externalPng": null,
+      "pictureMask": 5666110,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3372,
+      "diagnosticName": "Naga-hide chaps",
+      "spriteLocation": "items:590",
+      "spriteId": 590,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": null,
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "590",
+        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
+        "spritepackOverrideKey": "items:590"
+      },
+      "externalPng": null,
+      "pictureMask": 5666110,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3373,
+      "diagnosticName": "Naga-hide cuirass",
+      "spriteLocation": "items:7",
+      "spriteId": 7,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2157,
+        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "7",
+        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
+        "spritepackOverrideKey": "items:7"
+      },
+      "externalPng": null,
+      "pictureMask": 5666110,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3374,
+      "diagnosticName": "Terror dog leather",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 6642001,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3375,
+      "diagnosticName": "Terror-dog-hide coif",
+      "spriteLocation": "items:5",
+      "spriteId": 5,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2155,
+        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "5",
+        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
+        "spritepackOverrideKey": "items:5"
+      },
+      "externalPng": null,
+      "pictureMask": 6642001,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3376,
+      "diagnosticName": "Terror-dog-hide gloves",
+      "spriteLocation": "items:17",
+      "spriteId": 17,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2167,
+        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "17",
+        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
+        "spritepackOverrideKey": "items:17"
+      },
+      "externalPng": null,
+      "pictureMask": 6642001,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3377,
+      "diagnosticName": "Terror-dog-hide boots",
+      "spriteLocation": "items:223",
+      "spriteId": 223,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2373,
+        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "223",
+        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
+        "spritepackOverrideKey": "items:223"
+      },
+      "externalPng": null,
+      "pictureMask": 6642001,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3378,
+      "diagnosticName": "Terror-dog-hide chaps",
+      "spriteLocation": "items:590",
+      "spriteId": 590,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": null,
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "590",
+        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
+        "spritepackOverrideKey": "items:590"
+      },
+      "externalPng": null,
+      "pictureMask": 6642001,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3379,
+      "diagnosticName": "Terror-dog-hide cuirass",
+      "spriteLocation": "items:7",
+      "spriteId": 7,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2157,
+        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "7",
+        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
+        "spritepackOverrideKey": "items:7"
+      },
+      "externalPng": null,
+      "pictureMask": 6642001,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3380,
+      "diagnosticName": "Bloodveld leather",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 10190949,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3381,
+      "diagnosticName": "Bloodveld-hide coif",
+      "spriteLocation": "items:5",
+      "spriteId": 5,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2155,
+        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "5",
+        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
+        "spritepackOverrideKey": "items:5"
+      },
+      "externalPng": null,
+      "pictureMask": 10190949,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3382,
+      "diagnosticName": "Bloodveld-hide gloves",
+      "spriteLocation": "items:17",
+      "spriteId": 17,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2167,
+        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "17",
+        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
+        "spritepackOverrideKey": "items:17"
+      },
+      "externalPng": null,
+      "pictureMask": 10190949,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3383,
+      "diagnosticName": "Bloodveld-hide boots",
+      "spriteLocation": "items:223",
+      "spriteId": 223,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2373,
+        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "223",
+        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
+        "spritepackOverrideKey": "items:223"
+      },
+      "externalPng": null,
+      "pictureMask": 10190949,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3384,
+      "diagnosticName": "Bloodveld-hide chaps",
+      "spriteLocation": "items:590",
+      "spriteId": 590,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": null,
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "590",
+        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
+        "spritepackOverrideKey": "items:590"
+      },
+      "externalPng": null,
+      "pictureMask": 10190949,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3385,
+      "diagnosticName": "Bloodveld-hide cuirass",
+      "spriteLocation": "items:7",
+      "spriteId": 7,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2157,
+        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "7",
+        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
+        "spritepackOverrideKey": "items:7"
+      },
+      "externalPng": null,
+      "pictureMask": 10190949,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3386,
+      "diagnosticName": "Dark beast leather",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 3748389,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3387,
+      "diagnosticName": "Dark-beast-hide coif",
+      "spriteLocation": "items:5",
+      "spriteId": 5,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2155,
+        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "5",
+        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
+        "spritepackOverrideKey": "items:5"
+      },
+      "externalPng": null,
+      "pictureMask": 3748389,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3388,
+      "diagnosticName": "Dark-beast-hide gloves",
+      "spriteLocation": "items:17",
+      "spriteId": 17,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2167,
+        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "17",
+        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
+        "spritepackOverrideKey": "items:17"
+      },
+      "externalPng": null,
+      "pictureMask": 3748389,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3389,
+      "diagnosticName": "Dark-beast-hide boots",
+      "spriteLocation": "items:223",
+      "spriteId": 223,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2373,
+        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "223",
+        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
+        "spritepackOverrideKey": "items:223"
+      },
+      "externalPng": null,
+      "pictureMask": 3748389,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3390,
+      "diagnosticName": "Dark-beast-hide chaps",
+      "spriteLocation": "items:590",
+      "spriteId": 590,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": null,
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "590",
+        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
+        "spritepackOverrideKey": "items:590"
+      },
+      "externalPng": null,
+      "pictureMask": 3748389,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3391,
+      "diagnosticName": "Dark-beast-hide cuirass",
+      "spriteLocation": "items:7",
+      "spriteId": 7,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2157,
+        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "7",
+        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
+        "spritepackOverrideKey": "items:7"
+      },
+      "externalPng": null,
+      "pictureMask": 3748389,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3392,
+      "diagnosticName": "Ugthanki hide",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 12163696,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3393,
+      "diagnosticName": "Ugthanki leather",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 9729620,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3394,
+      "diagnosticName": "Ugthanki-hide coif",
+      "spriteLocation": "items:5",
+      "spriteId": 5,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2155,
+        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "5",
+        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
+        "spritepackOverrideKey": "items:5"
+      },
+      "externalPng": null,
+      "pictureMask": 9729620,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3395,
+      "diagnosticName": "Ugthanki-hide gloves",
+      "spriteLocation": "items:17",
+      "spriteId": 17,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2167,
+        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "17",
+        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
+        "spritepackOverrideKey": "items:17"
+      },
+      "externalPng": null,
+      "pictureMask": 9729620,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3396,
+      "diagnosticName": "Ugthanki-hide boots",
+      "spriteLocation": "items:223",
+      "spriteId": 223,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2373,
+        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "223",
+        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
+        "spritepackOverrideKey": "items:223"
+      },
+      "externalPng": null,
+      "pictureMask": 9729620,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3397,
+      "diagnosticName": "Ugthanki-hide chaps",
+      "spriteLocation": "items:590",
+      "spriteId": 590,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": null,
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "590",
+        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
+        "spritepackOverrideKey": "items:590"
+      },
+      "externalPng": null,
+      "pictureMask": 9729620,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3398,
+      "diagnosticName": "Ugthanki-hide cuirass",
+      "spriteLocation": "items:7",
+      "spriteId": 7,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2157,
+        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "7",
+        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
+        "spritepackOverrideKey": "items:7"
+      },
+      "externalPng": null,
+      "pictureMask": 9729620,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3399,
+      "diagnosticName": "Ectoplasm",
+      "spriteLocation": "items:262",
+      "spriteId": 262,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2412,
+        "entrySha256": "37f38d340d345930d46a167cbe2f3dea82d912da713ab5c975adc78cef44576b"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "262",
+        "baseArchiveEntrySha256": "0edbf5f6203d1015ea664da6d8bcd33ed3974ef34011ad4ab9af5d2a12a22343",
+        "spritepackOverrideKey": "items:262"
+      },
+      "externalPng": null,
+      "pictureMask": 11904207,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3400,
+      "diagnosticName": "Giant Spider Eggs",
+      "spriteLocation": "external-png:giant-spider-eggs@21x15",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "giant-spider-eggs@21x15",
+        "assetName": "giant-spider-eggs",
+        "targetWidth": 21,
+        "targetHeight": 15,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/giant-spider-eggs.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/giant-spider-eggs.png",
+        "sha256": "3f482e701a332401670a05ac0335429d8cfffbcaa7cfa209698bb4c4852ecb8c"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3401,
+      "diagnosticName": "Jungle Spider Eggs",
+      "spriteLocation": "external-png:jungle-spider-eggs@21x15",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "jungle-spider-eggs@21x15",
+        "assetName": "jungle-spider-eggs",
+        "targetWidth": 21,
+        "targetHeight": 15,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/jungle-spider-eggs.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/jungle-spider-eggs.png",
+        "sha256": "42d8b66b8027978c8a24001ece3f6dfdac281b046a7dff47c5afd907519649b1"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3402,
+      "diagnosticName": "Weak Antidote",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 14207047,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3403,
+      "diagnosticName": "Weak Antidote",
+      "spriteLocation": "items:436",
+      "spriteId": 436,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2586,
+        "entrySha256": "810ed24ecba15fb128ef2f8e511a8cda5c5b9ecf6941fb3e231861acbc9ffc6a"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "436",
+        "baseArchiveEntrySha256": "cd22e2335f92da2b524c2968033be9ad7166b4fc6c0fcf576e4435481f8b0791",
+        "spritepackOverrideKey": "items:436"
+      },
+      "externalPng": null,
+      "pictureMask": 14207047,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3404,
+      "diagnosticName": "Weak Antidote",
+      "spriteLocation": "items:437",
+      "spriteId": 437,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2587,
+        "entrySha256": "e03ee1e593f52186b07906e85c06d046d236ef14c40100e10ee89999ed96d26a"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "437",
+        "baseArchiveEntrySha256": "bfbb27881261ddd9610e3276916d9b4fac5eb0d9ffa902429f94534e28230070",
+        "spritepackOverrideKey": "items:437"
+      },
+      "externalPng": null,
+      "pictureMask": 14207047,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3405,
+      "diagnosticName": "Strong Antidote",
+      "spriteLocation": "items:48",
+      "spriteId": 48,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2198,
+        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "48",
+        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
+        "spritepackOverrideKey": "items:48"
+      },
+      "externalPng": null,
+      "pictureMask": 4372570,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3406,
+      "diagnosticName": "Strong Antidote",
+      "spriteLocation": "items:436",
+      "spriteId": 436,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2586,
+        "entrySha256": "810ed24ecba15fb128ef2f8e511a8cda5c5b9ecf6941fb3e231861acbc9ffc6a"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "436",
+        "baseArchiveEntrySha256": "cd22e2335f92da2b524c2968033be9ad7166b4fc6c0fcf576e4435481f8b0791",
+        "spritepackOverrideKey": "items:436"
+      },
+      "externalPng": null,
+      "pictureMask": 4372570,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3407,
+      "diagnosticName": "Strong Antidote",
+      "spriteLocation": "items:437",
+      "spriteId": 437,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2587,
+        "entrySha256": "e03ee1e593f52186b07906e85c06d046d236ef14c40100e10ee89999ed96d26a"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "437",
+        "baseArchiveEntrySha256": "bfbb27881261ddd9610e3276916d9b4fac5eb0d9ffa902429f94534e28230070",
+        "spritepackOverrideKey": "items:437"
+      },
+      "externalPng": null,
+      "pictureMask": 4372570,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3408,
+      "diagnosticName": "Gem cutter gloves",
+      "spriteLocation": "external-png:gem-cutter-gloves",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "gem-cutter-gloves",
+        "assetName": "gem-cutter-gloves",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/gem-cutter-gloves.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/gem-cutter-gloves.png",
+        "sha256": "4a12e92b75269e53143cdf1e50b0841b14a1ce7d341dbc40c9f48a3113a3e79d"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3409,
+      "diagnosticName": "Gem cutter's monocle",
+      "spriteLocation": "external-png:gem-cutters-monocle",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "gem-cutters-monocle",
+        "assetName": "gem-cutters-monocle",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/gem-cutters-monocle.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/gem-cutters-monocle.png",
+        "sha256": "4f68d9aadad4a3b45ff586edffcc7362ec493b28ddd769beb0b3fc919bf2db05"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3410,
+      "diagnosticName": "Viscous weapon coating",
+      "spriteLocation": "external-png:viscous-coating",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-coating",
+        "assetName": "viscous-coating",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-coating.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-coating.png",
+        "sha256": "aa40916102e1a06e759bad54f7858979280324caa8dd849174f5536d283269ca"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3411,
+      "diagnosticName": "Viscous Iron battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-89",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-89",
+        "assetName": "viscous-battleaxe-89",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-89.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-89.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 15654365,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3412,
+      "diagnosticName": "Viscous Steel battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-90",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-90",
+        "assetName": "viscous-battleaxe-90",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-90.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-90.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 15658734,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3413,
+      "diagnosticName": "Viscous Mithril battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-91",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-91",
+        "assetName": "viscous-battleaxe-91",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-91.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-91.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 10072780,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3414,
+      "diagnosticName": "Viscous Adamantite battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-92",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-92",
+        "assetName": "viscous-battleaxe-92",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-92.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-92.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 11717785,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3415,
+      "diagnosticName": "Viscous Rune battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-93",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-93",
+        "assetName": "viscous-battleaxe-93",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-93.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-93.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 65535,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3416,
+      "diagnosticName": "Viscous Bronze battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-205",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-205",
+        "assetName": "viscous-battleaxe-205",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-205.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-205.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 16737817,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3417,
+      "diagnosticName": "Viscous Black battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-429",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-429",
+        "assetName": "viscous-battleaxe-429",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-429.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-429.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 3158064,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3418,
+      "diagnosticName": "Viscous Tin battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-2002",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-2002",
+        "assetName": "viscous-battleaxe-2002",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-2002.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-2002.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 12044761,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3419,
+      "diagnosticName": "Viscous Copper battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-2013",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-2013",
+        "assetName": "viscous-battleaxe-2013",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-2013.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-2013.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 13134379,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3420,
+      "diagnosticName": "Viscous Titan Steel battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-2024",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-2024",
+        "assetName": "viscous-battleaxe-2024",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-2024.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-2024.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 9348795,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3421,
+      "diagnosticName": "Viscous Orichalcum battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-2035",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-2035",
+        "assetName": "viscous-battleaxe-2035",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-2035.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-2035.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 5914493,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3422,
+      "diagnosticName": "Viscous White battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-2156",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-2156",
+        "assetName": "viscous-battleaxe-2156",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-2156.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-2156.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 15196886,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3423,
+      "diagnosticName": "Viscous Dragon battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-2752",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-2752",
+        "assetName": "viscous-battleaxe-2752",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-2752.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-2752.png",
+        "sha256": "d0638b94dad55523f4deaea5d8deca3dc23ffde44cafbdb7cb0b93de07f67e4a"
+      },
+      "pictureMask": 16711748,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3424,
+      "diagnosticName": "Viscous Grey battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-3118",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-3118",
+        "assetName": "viscous-battleaxe-3118",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-3118.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-3118.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 10397087,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3425,
+      "diagnosticName": "Viscous Exalted Rune battle Axe",
+      "spriteLocation": "external-png:viscous-battleaxe-3269",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "viscous-battleaxe-3269",
+        "assetName": "viscous-battleaxe-3269",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-3269.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/viscous-battleaxe-3269.png",
+        "sha256": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f"
+      },
+      "pictureMask": 14221311,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3426,
+      "diagnosticName": "Uninfused stone Blight sigil",
+      "spriteLocation": "external-png:blight-stone-uninfused@28x25",
+      "spriteId": 443,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2593,
+        "entrySha256": "6a355f29f65da5908aff0eec2a056fb45d4b8dd629507a45da902ceb15b13b14"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "blight-stone-uninfused@28x25",
+        "assetName": "blight-stone-uninfused",
+        "targetWidth": 28,
+        "targetHeight": 25,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/blight-stone-uninfused.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/blight-stone-uninfused.png",
+        "sha256": "3525032555175807048964dd8f0ddb45c268c2b3bc99fbb530b2a513443c8867"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3427,
+      "diagnosticName": "Stone Blight sigil",
+      "spriteLocation": "external-png:blight-stone-infused@28x25",
+      "spriteId": 443,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2593,
+        "entrySha256": "6a355f29f65da5908aff0eec2a056fb45d4b8dd629507a45da902ceb15b13b14"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "blight-stone-infused@28x25",
+        "assetName": "blight-stone-infused",
+        "targetWidth": 28,
+        "targetHeight": 25,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/blight-stone-infused.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/blight-stone-infused.png",
+        "sha256": "feb3a761fc555c72efc158eff1dbfc98e9642a37f0d8526defaaeebcdb3141a9"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3428,
+      "diagnosticName": "Uninfused silver Blight sigil",
+      "spriteLocation": "external-png:blight-silver-uninfused@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "blight-silver-uninfused@24x21",
+        "assetName": "blight-silver-uninfused",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/blight-silver-uninfused.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/blight-silver-uninfused.png",
+        "sha256": "8e0663623a055c113d3bb733632cffb916bf89038870c2983961e71deddfd8b2"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3429,
+      "diagnosticName": "Silver Blight sigil",
+      "spriteLocation": "external-png:blight-silver-infused@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "blight-silver-infused@24x21",
+        "assetName": "blight-silver-infused",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/blight-silver-infused.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/blight-silver-infused.png",
+        "sha256": "3d7e394a919e0f2aa3d27ac7d6a548d99fa507dbc71bd37e52f42b3492a3d3d6"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3430,
+      "diagnosticName": "Moonsilver bar",
+      "spriteLocation": "external-png:moonsilver-bar",
+      "spriteId": 79,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2229,
+        "entrySha256": "1129c833723b0509ca3ba2f649e19a680ffda163e6e7d8f1b35c3b31aecfb803"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "moonsilver-bar",
+        "assetName": "moonsilver-bar",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/moonsilver-bar.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/moonsilver-bar.png",
+        "sha256": "75c1a87f7be1292fb9c80a6a9826d1eb5618f320dffd15cc79209107b37223c1"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3431,
+      "diagnosticName": "Blank Silver Sigils",
+      "spriteLocation": "external-png:blank-silver-sigil@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "blank-silver-sigil@24x21",
+        "assetName": "blank-silver-sigil",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/blank-silver-sigil.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/blank-silver-sigil.png",
+        "sha256": "91a78237edec82af74d3d67e603499eda870f40ee231be59980796f0b22cd49c"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3432,
+      "diagnosticName": "Blank Moonsilver Sigils",
+      "spriteLocation": "external-png:blank-moonsilver-sigil@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "blank-moonsilver-sigil@24x21",
+        "assetName": "blank-moonsilver-sigil",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/blank-moonsilver-sigil.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/blank-moonsilver-sigil.png",
+        "sha256": "67673ec82ed5fa983aa4880956323aabd62a1400f2a1a3984285190135bf0743"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3433,
+      "diagnosticName": "Sigil mould",
+      "spriteLocation": "external-png:sigil-mould",
+      "spriteId": 127,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2277,
+        "entrySha256": "4d928fa61a828f85c1d3955b0e853268d907571d42627871372468ae88617889"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "sigil-mould",
+        "assetName": "sigil-mould",
+        "targetWidth": 46,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/sigil-mould.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/sigil-mould.png",
+        "sha256": "d1be01f9e160162d2e83721bfab83185bd793393c02cdf1d28a24f033b2d9c39"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3434,
+      "diagnosticName": "Unblessed Moonsilver sigil of Saradomin",
+      "spriteLocation": "external-png:moonsilver-unblessed-sara-sigil@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "moonsilver-unblessed-sara-sigil@24x21",
+        "assetName": "moonsilver-unblessed-sara-sigil",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/moonsilver-unblessed-sara-sigil.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/moonsilver-unblessed-sara-sigil.png",
+        "sha256": "4dcad9d741b32b56bcb8a523b8c2f6d035fbaf87448a258d60afafad014fbf88"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3435,
+      "diagnosticName": "Moonsilver sigil of Saradomin",
+      "spriteLocation": "external-png:moonsilver-blessed-sara-sigil@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "moonsilver-blessed-sara-sigil@24x21",
+        "assetName": "moonsilver-blessed-sara-sigil",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/moonsilver-blessed-sara-sigil.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/moonsilver-blessed-sara-sigil.png",
+        "sha256": "be6cae4ccd0642a488e675401be1a0117ea8dba346923ac0ee9b45c54bf84600"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3436,
+      "diagnosticName": "Unblessed Moonsilver sigil of Guthix",
+      "spriteLocation": "external-png:moonsilver-unblessed-guth-sigil@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "moonsilver-unblessed-guth-sigil@24x21",
+        "assetName": "moonsilver-unblessed-guth-sigil",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/moonsilver-unblessed-guth-sigil.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/moonsilver-unblessed-guth-sigil.png",
+        "sha256": "59b131856316456f7ab1f5c51ce430d035b5d6e955ad6ab4b7eb9d6ece42ef81"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3437,
+      "diagnosticName": "Moonsilver sigil of Guthix",
+      "spriteLocation": "external-png:moonsilver-blessed-guth-sigil@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "moonsilver-blessed-guth-sigil@24x21",
+        "assetName": "moonsilver-blessed-guth-sigil",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/moonsilver-blessed-guth-sigil.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/moonsilver-blessed-guth-sigil.png",
+        "sha256": "ef4730c1b5126df1e00a820a928eccbf2f6c8987756848242c8b5f185f77973f"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3438,
+      "diagnosticName": "Unblessed Moonsilver sigil of Zamorak",
+      "spriteLocation": "external-png:moonsilver-unblessed-zam-sigil@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "moonsilver-unblessed-zam-sigil@24x21",
+        "assetName": "moonsilver-unblessed-zam-sigil",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/moonsilver-unblessed-zam-sigil.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/moonsilver-unblessed-zam-sigil.png",
+        "sha256": "accc49011d95cdba27020bef60733d7e5d3519ade373dae0e565eaf813104a59"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3439,
+      "diagnosticName": "Moonsilver sigil of Zamorak",
+      "spriteLocation": "external-png:moonsilver-blessed-zam-sigil@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "moonsilver-blessed-zam-sigil@24x21",
+        "assetName": "moonsilver-blessed-zam-sigil",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/moonsilver-blessed-zam-sigil.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/moonsilver-blessed-zam-sigil.png",
+        "sha256": "4fee7858ff582b0bc84af3ef3f520e515d215981b7fa80757347c3c8373c5bdb"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3440,
+      "diagnosticName": "Uninfused Moonsilver Grace sigil",
+      "spriteLocation": "external-png:moonsilver-unblessed-neutral-sigil@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "moonsilver-unblessed-neutral-sigil@24x21",
+        "assetName": "moonsilver-unblessed-neutral-sigil",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/moonsilver-unblessed-neutral-sigil.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/moonsilver-unblessed-neutral-sigil.png",
+        "sha256": "10cdf2b8adf5ce92c67cae000e167d8453b0e698b3ba3bfdac271eb12289c6c7"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3441,
+      "diagnosticName": "Moonsilver Grace sigil",
+      "spriteLocation": "external-png:moonsilver-blessed-neutral-sigil@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "moonsilver-blessed-neutral-sigil@24x21",
+        "assetName": "moonsilver-blessed-neutral-sigil",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/moonsilver-blessed-neutral-sigil.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/moonsilver-blessed-neutral-sigil.png",
+        "sha256": "f774f24469b15c817fd541fb3f4b03c411089947244fabb1f330d366b355e74e"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3442,
+      "diagnosticName": "Uninfused Moonsilver Blight sigil",
+      "spriteLocation": "external-png:moonsilver-uninfused-blight-sigil@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "moonsilver-uninfused-blight-sigil@24x21",
+        "assetName": "moonsilver-uninfused-blight-sigil",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/moonsilver-uninfused-blight-sigil.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/moonsilver-uninfused-blight-sigil.png",
+        "sha256": "07156173d599f45b37b1f27799780d0f66148de9128161566d9d80ebdf87349c"
+      },
+      "pictureMask": 0,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3443,
+      "diagnosticName": "Moonsilver Blight sigil",
+      "spriteLocation": "external-png:moonsilver-infused-blight-sigil@24x21",
+      "spriteId": 134,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": {
+        "archiveId": 2284,
+        "entrySha256": "9aa4004823ab76421076f668c76f2f6ca68bc4cd3ed8641e884725cd3ac3e476"
+      },
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "moonsilver-infused-blight-sigil@24x21",
+        "assetName": "moonsilver-infused-blight-sigil",
+        "targetWidth": 24,
+        "targetHeight": 21,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils/moonsilver-infused-blight-sigil.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/sigils/moonsilver-infused-blight-sigil.png",
+        "sha256": "2058e4cabd3c3f85e17822719fe50335e497e8e213c9ddab1080f5a97dc15467"
+      },
+      "pictureMask": 0,
       "blueMask": 0
     }
   ]

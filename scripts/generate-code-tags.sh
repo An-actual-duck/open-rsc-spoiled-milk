@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUTPUT_DIR="$ROOT_DIR/output/navigation"
+OUTPUT_DIR="$ROOT_DIR/output/diagnostics/navigation"
 TAGS_FILE="$OUTPUT_DIR/tags"
 
 if ! command -v ctags >/dev/null 2>&1; then

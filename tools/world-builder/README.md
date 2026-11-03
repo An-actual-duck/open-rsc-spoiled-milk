@@ -24,7 +24,7 @@ Read-only target discovery remains available independently:
 
 ```bash
 ./scripts/build-world-builder-tools.sh
-java -jar output/world-builder-tools/world-builder-tools.jar discover \
+java -jar output/builds/world-builder/world-builder-tools.jar discover \
   --server-root /path/to/private-server
 ```
 
@@ -40,7 +40,7 @@ Builder server/client pair:
 ./scripts/build-client.sh
 ./scripts/build-world-builder-tools.sh
 
-java -jar output/world-builder-tools/world-builder-tools.jar launch \
+java -jar output/builds/world-builder/world-builder-tools.jar launch \
   --server-root /path/to/private-server \
   --runtime-root /path/to/world-builder-release \
   --workspace /path/to/world-builder-project \
@@ -79,7 +79,7 @@ editing. With the layered Builder closed, create a workspace-owned signed
 level around a geographic anchor:
 
 ```bash
-java -jar output/world-builder-tools/world-builder-tools.jar create-level \
+java -jar output/builds/world-builder/world-builder-tools.jar create-level \
   --workspace /path/to/world-builder-project \
   --level -3 \
   --anchor-x 140 \
@@ -153,7 +153,7 @@ After closing the Builder, export the saved working map with explicit release
 provenance:
 
 ```bash
-java -jar output/world-builder-tools/world-builder-tools.jar export \
+java -jar output/builds/world-builder/world-builder-tools.jar export \
   --workspace /path/to/world-builder-project \
   --builder-version v0.2.39 \
   --source-commit 0123456789abcdef0123456789abcdef01234567
@@ -171,7 +171,7 @@ unsafe paths, incomplete data, and tampered existing exports are refused.
 Preview an import while the target private server is offline:
 
 ```bash
-java -jar output/world-builder-tools/world-builder-tools.jar import \
+java -jar output/builds/world-builder/world-builder-tools.jar import \
   --workspace /path/to/world-builder-project \
   --export /path/to/world-builder-project/exports/export-0123456789abcdef \
   --target-root /path/to/private-server \
@@ -188,7 +188,7 @@ restores the prior bytes and prior file absence before reporting failure.
 Preview or apply the newest eligible receipt-based undo with:
 
 ```bash
-java -jar output/world-builder-tools/world-builder-tools.jar undo-import \
+java -jar output/builds/world-builder/world-builder-tools.jar undo-import \
   --workspace /path/to/world-builder-project \
   --target-root /path/to/private-server \
   --dry-run

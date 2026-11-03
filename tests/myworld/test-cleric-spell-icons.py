@@ -15,8 +15,8 @@ import zipfile
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
-ART = ROOT / 'dev/myworld/assets/sprites/UI/cleric'
-PREFIX = 'myworld-assets/sprites/UI/cleric/'
+ART = ROOT / 'dev/myworld/assets/runtime/ui/cleric'
+PREFIX = 'myworld-assets/ui/cleric/'
 
 HARNESS = r'''
 package orsc;
@@ -57,7 +57,7 @@ public final class ClericIconArtFixture {
   ClientExternalAssetLoader packed=new ClientExternalAssetLoader(sourceCatalog?root:empty,ClericIconArtFixture.class);
   Map<Integer,Sprite> sprites=new LinkedHashMap<Integer,Sprite>();
   for(Map.Entry<Integer,String> entry:expected.entrySet()){
-   String key=entry.getValue();String[] folders={"dev/myworld/assets/sprites/UI/cleric"};
+   String key=entry.getValue();String[] folders={"dev/myworld/assets/runtime/ui/cleric"};
    Sprite a=dev.loadExternalWorldSprite(dev.findFirstFile(folders,key+".png"),56);
    Sprite b=packed.loadExternalWorldSprite(packed.findFirstFile(folders,key+".png"),56);
    check(a!=null&&b!=null,"native source and embedded icon "+key);
@@ -132,7 +132,7 @@ def main():
     parser.add_argument('--client-jar', type=Path, default=ROOT / 'Client_Base/Open_RSC_Client.jar')
     parser.add_argument('--wire', type=Path, help='Fresh authoritative twenty-spell PayloadCustomGenerator packet')
     parser.add_argument('--catalog-client-jar', type=Path, help='Optional separate actual gameplay client build for source-backed wire/cache checks before the art-first merge')
-    parser.add_argument('--render', type=Path, default=ROOT / 'output/cleric-spell-icons/native-render')
+    parser.add_argument('--render', type=Path, default=ROOT / 'output/reviews/cleric-spell-icons/native-render')
     parser.add_argument('--owner-source', type=Path, help='Optional read-only comparison with original owner filenames')
     args = parser.parse_args()
     entries = verify_sources()

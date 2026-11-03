@@ -24,7 +24,7 @@ if a.mysql_manifest:
     assert m['jdbcUrl'].startswith(f"jdbc:mysql://127.0.0.1:{m['port']}/auction_test?")
     env.update(MARKET_TEST_JDBC=m['jdbcUrl'], MARKET_TEST_USER=m['user'], MARKET_TEST_PASSWORD=m['password'], MARKET_TEST_PORT=str(m['port']))
     backend = 'mysql-mariadb'
-classpath = os.pathsep.join(str(x) for x in [root/'output/combat-test/test-classes', root/'output/combat-test/core-classes', *sorted((root/'server/lib').glob('*.jar'))])
+classpath = os.pathsep.join(str(x) for x in [root/'output/tests/combat/test-classes', root/'output/tests/combat/core-classes', *sorted((root/'server/lib').glob('*.jar'))])
 java = pathlib.Path(os.environ.get('JAVA_HOME','/home/justin/jdk8u482-b08'))/'bin/java'
 results=[]
 for mode, expected in [('test',0),('crash-before',77),('recover-before',0),('crash',77),('recover',0)]:

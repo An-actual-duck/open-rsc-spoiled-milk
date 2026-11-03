@@ -5,8 +5,8 @@ import struct
 
 
 ROOT = Path(__file__).resolve().parents[2]
-ASSETS = ROOT / "dev" / "myworld" / "assets" / "legacy animation folder"
-MAGIC_UI_ASSETS = ROOT / "dev" / "myworld" / "assets" / "sprites" / "UI" / "magic"
+ASSETS = ROOT / "dev" / "myworld" / "assets" / "runtime" / "legacy-animations"
+MAGIC_UI_ASSETS = ROOT / "dev" / "myworld" / "assets" / "runtime" / "ui" / "magic"
 
 
 def read(path):
@@ -215,7 +215,7 @@ def main():
         "queuedCombatEffectX[queuedCombatEffectCount] = x + (width / 2) - (drawWidth / 2)",
     ], "mudclient.java")
     require(client, [
-        '"dev/myworld/assets/sprites/UI/magic"',
+        '"dev/myworld/assets/runtime/ui/magic"',
         '"spore", "bolt", "enemy-fire-basic", "holy-magic",',
         '"summon-bat-vampirism-reverse", "shuriken", "enemy-air-basic", "enemy-water-basic", "blue-dragon-magic",',
         '"chain-lightning/A", "chain-lightning/B", "chain-lightning/C"',

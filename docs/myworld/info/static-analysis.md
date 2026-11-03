@@ -27,7 +27,7 @@ configuration-only feature is dead.
 | --- | --- | --- | --- |
 | Desktop client | `Client_Base/src`, `PC_Client/src` | `scripts/build-client.sh` | `Client_Base/Open_RSC_Client.jar` |
 | Server | `server/src`, `server/plugins` | `scripts/build-server.sh` | `server/core.jar`, `server/plugins.jar` |
-| World Builder tools | `tools/world-builder/src` | `scripts/build-world-builder-tools.sh` | `output/world-builder-tools/world-builder-tools.jar` |
+| World Builder tools | `tools/world-builder/src` | `scripts/build-world-builder-tools.sh` | `output/builds/world-builder/world-builder-tools.jar` |
 
 `tools/myworld/ExportBasicProjectileSheets.java` is source-analyzed when it
 changes, but is not a compiled product because it has no maintained build
@@ -91,7 +91,7 @@ Run both phases locally:
 
 Use `--offline` after the verified cache is populated. Machine-readable XML,
 JSON, logs, fingerprints, and run metadata are written beneath
-`output/static-analysis/` by default. `--reports` may select another ignored
+`output/diagnostics/static-analysis/` by default. `--reports` may select another ignored
 output directory.
 
 For an occasional full, report-only source scan plus whole-program comparison:

@@ -9,7 +9,7 @@
     <property name="build" location="build"/>
     <property name="lib" location="../PC_Client/lib"/>
     <property name="jar" location="Open_RSC_Client.jar"/>
-    <property name="release.marker.file" location="../output/release-build-marker-disabled"/>
+    <property name="release.marker.file" location="../output/builds/release-build-marker-disabled"/>
     <property name="javac.source" value="1.8"/>
     <property name="javac.target" value="1.8"/>
     <property name="javac.lint" value="-Xlint:unchecked"/>
@@ -44,12 +44,13 @@
             <fileset dir="src/res"/>
         </copy>
         <copy todir="${build}/myworld-assets">
-            <fileset dir="../dev/myworld/assets">
+            <fileset dir="../dev/myworld/assets/runtime">
                 <include name="animations/**/*.png"/>
-                <include name="legacy animation folder/**/*.png"/>
+                <include name="legacy-animations/**/*.png"/>
                 <include name="remastered-sprites/**/frames/*.png"/>
                 <include name="remastered-sprites/manifest.json"/>
                 <include name="sprites/**/*.png"/>
+                <include name="ui/**/*.png"/>
                 <include name="ui/world-editor/**"/>
             </fileset>
         </copy>

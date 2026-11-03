@@ -4,10 +4,10 @@ from pathlib import Path
 import argparse,hashlib,os,subprocess,tempfile,zipfile
 from PIL import Image
 ROOT=Path(__file__).resolve().parents[2]
-parser=argparse.ArgumentParser();parser.add_argument('--old-client',type=Path,help='Retained pre-animation10056 client JAR for compatibility proof');parser.add_argument('--wire',type=Path,default=ROOT/'tests/myworld/fixtures/cleric-schema5-payload.hex');parser.add_argument('--output',type=Path,default=ROOT/'output/cleric-buff-animations');args=parser.parse_args();args.output.mkdir(parents=True,exist_ok=True)
+parser=argparse.ArgumentParser();parser.add_argument('--old-client',type=Path,help='Retained pre-animation10056 client JAR for compatibility proof');parser.add_argument('--wire',type=Path,default=ROOT/'tests/myworld/fixtures/cleric-schema5-payload.hex');parser.add_argument('--output',type=Path,default=ROOT/'output/tests/cleric/buff-animations');args=parser.parse_args();args.output.mkdir(parents=True,exist_ok=True)
 java=Path(os.environ.get('JAVA_HOME','/home/justin/jdk8u482-b08'))/'bin'
 def run(cmd,**kw):subprocess.run([str(x) for x in cmd],check=True,**kw)
-art=ROOT/'dev/myworld/assets/animations/on-entity';jar=ROOT/'Client_Base/Open_RSC_Client.jar'
+art=ROOT/'dev/myworld/assets/runtime/animations/on-entity';jar=ROOT/'Client_Base/Open_RSC_Client.jar'
 folders=['holy-sword','holy-bells','holy-shield','cleanse 2','bark','sword-clash','fist','sword','lightning-buff']
 with zipfile.ZipFile(jar) as z:
  for folder in folders:

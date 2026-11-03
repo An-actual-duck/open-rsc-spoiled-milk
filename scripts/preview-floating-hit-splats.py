@@ -6,7 +6,7 @@ import sys
 from PIL import Image
 
 root = Path(__file__).resolve().parents[1]
-out = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else root / 'output/hitsplat-preview'
+out = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else root / 'output/art/combat/hit-numbers'
 subprocess.run([sys.executable, str(root / 'tests/myworld/test-floating-hit-splats.py'), str(out)], check=True)
 frames = [Image.open(out / f'frame-{i:03d}.png').convert('RGB') for i in range(151)]
 frames[0].save(out / 'floating-styles.gif', save_all=True, append_images=frames[1:], duration=40, loop=0, optimize=False)

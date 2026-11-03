@@ -7,7 +7,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
-ICON = ROOT / "dev/myworld/assets/sprites/UI/auto-attack.png"
+ICON = ROOT / "dev/myworld/assets/runtime/ui/auto-attack.png"
 
 
 def fail(message: str) -> None:
@@ -25,7 +25,7 @@ def main() -> int:
         "private void toggleAutoRetaliate()",
         "bufferBits.putByte(47)",
         "C_AUTO_RETALIATE ? 1 : 0",
-        'sprites/UI/auto-attack.png',
+        'ui/auto-attack.png',
         "AUTO_ATTACK_HUD_SIZE - 4,\n\t\t\t\t5924);",
     )
     for snippet in required:

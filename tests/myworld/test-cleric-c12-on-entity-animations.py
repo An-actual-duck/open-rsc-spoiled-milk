@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SERVER = ROOT / "server/src/com/openrsc/server"
 CLIENT = ROOT / "Client_Base/src"
-ASSETS = ROOT / "dev/myworld/assets/animations/on-entity"
+ASSETS = ROOT / "dev/myworld/assets/runtime/animations/on-entity"
 
 
 ANIMATIONS = {

@@ -10,7 +10,7 @@ PRAYER_DEF = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/defs/Pray
 PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
 ACTION_SENDER = ROOT / "server/src/com/openrsc/server/net/rsc/ActionSender.java"
 CUSTOM_GENERATOR = ROOT / "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java"
-PRAYER_ASSETS = ROOT / "dev/myworld/assets/sprites/UI/prayer"
+PRAYER_ASSETS = ROOT / "dev/myworld/assets/runtime/ui/prayer"
 
 
 def require(condition, message):
@@ -60,7 +60,7 @@ def main():
             and '"divine-retribution".equals(assetName)' in mudclient
             and '"corrosive-aura".equals(assetName)' in mudclient,
             "Prayer icon loader should support single-file special prayer icons")
-    require('"dev/myworld/assets/sprites/UI/prayer"' in mudclient,
+    require('"dev/myworld/assets/runtime/ui/prayer"' in mudclient,
             "Prayer icon loader should search the current UI prayer asset folder")
     require("getExternalIconFile(assetName + tier)" in mudclient,
             "Prayer icon loader should support numbered tier names like magic-power1.png")

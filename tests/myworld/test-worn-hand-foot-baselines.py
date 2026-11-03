@@ -8,7 +8,7 @@ CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandlin
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 ITEM_DEFS = ROOT / "server/conf/server/defs/ItemDefs.json"
 CUSTOM_ITEM_DEFS = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
-EQUIPMENT_ASSETS = ROOT / "dev/myworld/assets/sprites/equipment"
+EQUIPMENT_ASSETS = ROOT / "dev/myworld/assets/runtime/sprites/equipment"
 
 
 def fail(message: str) -> None:

@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-ASSETS = ROOT / "dev/myworld/assets/remastered-sprites"
+ASSETS = ROOT / "dev/myworld/assets/runtime/remastered-sprites"
 JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
 
 

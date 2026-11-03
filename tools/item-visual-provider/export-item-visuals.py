@@ -25,9 +25,9 @@ TOOL_DIR = Path(__file__).resolve().parent
 CLIENT_JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
 CUSTOM_ARCHIVE = ROOT / "Client_Base/Cache/video/Custom_Sprites.osar"
 AUTHENTIC_ARCHIVE = ROOT / "Client_Base/Cache/video/Authentic_Sprites.orsc"
-DEFAULT_FULL_OUTPUT = TOOL_DIR / "generated/item-visuals-full-v1.json"
-DEFAULT_COMPAT_OUTPUT = TOOL_DIR / "generated/item-visuals-3309-3317-v1.json"
-DEFAULT_NPC_OUTPUT = TOOL_DIR / "generated/npc-definitions-v1.json"
+DEFAULT_FULL_OUTPUT = ROOT / "output/art/exports/item-visual-provider/item-visuals-full-v1.json"
+DEFAULT_COMPAT_OUTPUT = ROOT / "output/art/exports/item-visual-provider/item-visuals-3309-3317-v1.json"
+DEFAULT_NPC_OUTPUT = ROOT / "output/art/exports/item-visual-provider/npc-definitions-v1.json"
 BUNDLE_DIRECTORY_NAME = "world-builder-provider"
 BUNDLE_PACKAGE_MANIFEST = "package-manifest-v1.json"
 BUNDLE_FULL_MANIFEST = "item-visuals-full-v1.json"
@@ -42,13 +42,12 @@ COMPATIBILITY_IDS = tuple(range(3309, 3318))
 SUPPORTED_OSAR_TYPES_WITH_LAYER = {1, 2, 3}
 EXTERNAL_PREFIX = "external-png:"
 EXTERNAL_ASSET_DIRS = (
-    "dev/myworld/assets/sprites/items/inventory-ground/agility-pouches",
-    "dev/myworld/assets/sprites/items/inventory-ground/tools",
-    "dev/myworld/assets/sprites/items/inventory-ground/weapons",
-    "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils",
-    "dev/myworld/assets/sprites/items/inventory-ground/resources",
-    "dev/myworld/assets/sprites/items/inventory-ground",
-    "output/pngs",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/agility-pouches",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground",
 )
 PROVIDER_INPUTS = (
     "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java",
@@ -481,11 +480,11 @@ def resolve_external_asset(spec: ExternalSpec, packaged_entries: dict[str, str])
             f"External PNG specification {spec.specification!r} has no source asset. Searched: {searched}"
         )
     try:
-        asset_relative = source.relative_to(ROOT / "dev/myworld/assets")
+        asset_relative = source.relative_to(ROOT / "dev/myworld/assets/runtime")
     except ValueError as failure:
         raise ExportError(
             f"External PNG {spec.specification!r} resolves to {source}, which is not in the client-packaged "
-            "dev/myworld/assets tree"
+            "dev/myworld/assets/runtime tree"
         ) from failure
     packaged_resource = "myworld-assets/" + asset_relative.as_posix()
     source_hash = sha256_file(source)
@@ -949,7 +948,7 @@ def portable_external_path(external: dict[str, object]) -> str:
     source_path = external.get("sourcePath")
     if not isinstance(source_path, str):
         raise ExportError("External PNG record has no sourcePath")
-    prefix = "dev/myworld/assets/"
+    prefix = "dev/myworld/assets/runtime/"
     if not source_path.startswith(prefix):
         raise ExportError(f"External PNG source is outside the portable asset root: {source_path!r}")
     relative = safe_provider_path(source_path[len(prefix):], "external PNG source")

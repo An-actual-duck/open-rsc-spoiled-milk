@@ -99,7 +99,7 @@ reviewed those comparisons and confirmed this meets the agreed header approach.
 The owner subsequently approved official inclusion on October 23, 2026.
 
 Read-only texture reference PNGs come from the existing Core export folder:
-`output/sprite-png-export-20260702-154351/authentic-sprites/textures/`.
+`output/art/exports/sprite-png/20260702-154351/authentic-sprites/textures/`.
 No PNG copy is added to source or an editor asset bundle.
 
 | Texture | Export filename | SHA256 |
@@ -221,7 +221,7 @@ texture reference folder and a fresh output path:
 
 ```sh
 python3 tests/myworld/test-wall-cap-texture-mapping.py \
-  output/sprite-png-export-20260702-154351/authentic-sprites/textures \
+  output/art/exports/sprite-png/20260702-154351/authentic-sprites/textures \
   output/wall-cap-stone-review
 ```
 
@@ -239,7 +239,7 @@ modified by this Core worker.
 Core main204dffe2a integrates the exact READY source fix. A fresh maintained
 client build and independent718mapping,901window,1389header checks passed,
 along with the seven native scenery tests and combat projectile policy. The
-manager inspected actual-stone comparisons under `output/wall-cap-manager-review/`.
+manager inspected actual-stone comparisons under `output/reviews/wall-cap-manager-review/`.
 The corrected private client JAR is staged for later game review; no server
 restart is necessary for this client-only correction.
 

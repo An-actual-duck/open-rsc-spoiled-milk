@@ -4,16 +4,16 @@
   "provider": {
     "identity": "spoiled-milk-core-final-client-item-definitions",
     "definitionMode": "members-enabled-post-override",
-    "catalogItemCount": 3318,
-    "catalogSha256": "baf08c6684751901458b113a9ff454bc6b8be73c4af348b0991964017f95c710",
+    "catalogItemCount": 3444,
+    "catalogSha256": "90d7515c5a9c0fa3ea1c31981b854def66cd8b2060bc8d11567178ed3f230817",
     "inputs": [
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java",
-        "sha256": "52286567cd06c7c8626dfa5060d61c2beafd4eaccb2152d658724494de38411a"
+        "sha256": "207f1bd1a236a53cd756a77f8297649025234f7a214547328a0c8677fa21ee37"
       },
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/MyWorldItemOverrides.java",
-        "sha256": "8ce4c00ad166aab805a62c13bb4172c0c2c3214ad349ba4b4a1397ef83884b05"
+        "sha256": "52a2cb2f632ca4be2ef148f1055bb48edf0d88644ab38bff68705acf5e234e88"
       },
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/defs/ItemDef.java",
@@ -21,25 +21,25 @@
       },
       {
         "path": "Client_Base/src/orsc/Config.java",
-        "sha256": "c5e849a25858c253db7d4cd10d0a2fa126ceb5fc4e27dafaa15487fbed6e25a4"
+        "sha256": "ec79406616a5af8a0e72cdf8d574a242924dc5ddbc7fa5f2985e9b152542e5d8"
       }
     ]
   },
   "assetProviders": {
     "customSpriteArchive": {
       "path": "Client_Base/Cache/video/Custom_Sprites.osar",
-      "sha256": "f334d99403c6db0b2baa629ddfbd959e741aaf62265650eacdc4db5d9a9c7a92",
-      "entryCount": 1002
+      "sha256": "0883c7d1957b5bb4b70f0001770e4aac8d3145d77b2ff1a470d574e4718c426e",
+      "entryCount": 1009
     },
     "authenticSpriteArchive": {
       "path": "Client_Base/Cache/video/Authentic_Sprites.orsc",
-      "sha256": "cf861efa7307556b5e5ba4c20b838f17753faba8b530f85dca38e8c2839d5e69",
-      "numericEntryCount": 2259,
+      "sha256": "fdfd0a164151a55edbe2746696f24b42a0bb2ee506396fe6f7b13156c7c6b442",
+      "numericEntryCount": 2295,
       "itemArchiveBaseId": 2150
     },
     "externalPngPackaging": {
       "clientJarPath": "Client_Base/Open_RSC_Client.jar",
-      "packagedPngCount": 2896,
+      "packagedPngCount": 2988,
       "resourceRoot": "myworld-assets/"
     }
   },

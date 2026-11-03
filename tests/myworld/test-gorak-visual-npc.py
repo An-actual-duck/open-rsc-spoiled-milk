@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SHEET = ROOT / "dev/myworld/assets/sprites/npcs/gorak/gorak-sprite-sheet.png"
+SHEET = ROOT / "dev/myworld/assets/runtime/sprites/npcs/gorak/gorak-sprite-sheet.png"
 ASSET_README = SHEET.with_name("README.md")
 SERVER_DEFS = ROOT / "server/conf/server/defs/VisualTestNpcDefs.json"
 BASE_SERVER_DEFS = ROOT / "server/conf/server/defs/NpcDefsCustom.json"
@@ -108,7 +108,7 @@ def main() -> None:
     client = CLIENT.read_text(encoding="utf-8")
     for expected in (
         "getExternalGorakSpriteSheet()",
-        '"dev/myworld/assets/sprites/npcs/gorak"',
+        '"dev/myworld/assets/runtime/sprites/npcs/gorak"',
         '"gorak-sprite-sheet.png"',
         'getExternalGorakSpriteSheet(), "gorak", 6,',
         "NpcDirectionalAnimationMapping.FRAMES_PER_DIRECTION",
