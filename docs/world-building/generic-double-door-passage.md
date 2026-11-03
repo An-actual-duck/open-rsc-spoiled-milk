@@ -34,8 +34,10 @@ checks subtract only this door's exact recorded contribution from a detached
 copy, and then reject full blockers or another wall across the passage.
 Continuing side walls are allowed and no runtime collision is removed.
 
-The actor passes immediately, as with `doGate`; the temporary visual closes
-after two game ticks. An owner-independent, `ALLOW_MULTIPLE` callback closes
+The actor passes with a normal one-tile movement update, as with `doGate`, so
+the client shows a walking step rather than a teleport. The approach path is
+cleared after crossing, and the temporary visual closes after two game ticks.
+An owner-independent, `ALLOW_MULTIPLE` callback closes
 only the exact still-current temporary object. Logout/reset does not prevent
 closure; removal, replacement or a changed native generation cannot resurrect
 or overwrite a door. No player busy flag or pending token is created.
@@ -54,7 +56,8 @@ ANT_OPTS='-Xmx512m -XX:+UseSerialGC' bash tools/vendor/apache-ant-1.10.5/bin/ant
 ```
 
 The fixture tests both sides and both lanes in all cardinal directions on
-levels 0, 1, 2, 3 and -3; collisions before/during/after passage; duplicate
+levels 0, 1, 2, 3 and -3; walking rather than teleport updates;
+collisions before/during/after passage; duplicate
 clicks; continuing side walls; unrelated blocking scenery and overlapping
 wall edges; narrow upper corridors and empty rendered half floors; missing
 authored support; reset/logout; simultaneous doors; and stale close callbacks.
