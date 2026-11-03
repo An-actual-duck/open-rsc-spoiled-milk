@@ -399,6 +399,10 @@ def command_generate(args: argparse.Namespace) -> int:
     # enter the client bundle. Publish only the explicit ready catalog payload.
     canonical_authoring = ROOT / "dev/myworld/assets/authoring/remastered-sprites"
     publish_runtime = ASSETS == canonical_authoring
+    if publish_runtime and not args.check:
+        unexpected = {p.relative_to(RUNTIME).as_posix() for p in RUNTIME.rglob("*.png")} - set(runtime_files)
+        if unexpected:
+            raise WorkspaceError("retire unexpected runtime frames explicitly before generation: " + ", ".join(sorted(unexpected)))
     if args.check:
         actual_manifest = MANIFEST.read_text(encoding="utf-8") if MANIFEST.exists() else ""
         actual_java = JAVA_CATALOG.read_text(encoding="utf-8") if JAVA_CATALOG.exists() else ""
@@ -423,9 +427,6 @@ def command_generate(args: argparse.Namespace) -> int:
     JAVA_CATALOG.parent.mkdir(parents=True, exist_ok=True)
     JAVA_CATALOG.write_text(expected_java, encoding="utf-8")
     if publish_runtime:
-        unexpected = {p.relative_to(RUNTIME).as_posix() for p in RUNTIME.rglob("*.png")} - set(runtime_files)
-        if unexpected:
-            raise WorkspaceError("retire unexpected runtime frames explicitly before generation: " + ", ".join(sorted(unexpected)))
         for relative, payload in runtime_files.items():
             path = RUNTIME / relative
             path.parent.mkdir(parents=True, exist_ok=True)
