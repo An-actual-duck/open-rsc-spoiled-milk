@@ -278,6 +278,7 @@ public final class EntityHandler {
 			applyOptionalItemOverrides(getServer().getConfig().CONFIG_DIR + "/defs/ItemDefsMyWorld.json");
             loadItems(getServer().getConfig().CONFIG_DIR + "/defs/BattleaxeCoatingItemDefs.json");
 		}
+		applyRecoveredEquipmentAppearances();
 		LOGGER.info("Loaded " + items.size() + " item definitions");
 
 		doors = (DoorDef[]) getPersistenceManager().load("defs/DoorDef.xml");
@@ -1035,6 +1036,25 @@ public final class EntityHandler {
 				items.get(ItemId.MAGIC_FISHING_ROD.id()).setAppearanceId(123);
 				items.get(ItemId.BLOOD_FISHING_ROD.id()).setAppearanceId(123);
 			}
+		}
+	}
+
+	/** Final visual pass after every current item override, with authentic-mode fallbacks. */
+	private void applyRecoveredEquipmentAppearances() {
+		if (getServer().getConfig().WANT_MYWORLD) {
+			for (SlayerArtAppearances.Mapping mapping : SlayerArtAppearances.MAPPINGS) {
+				setItemAppearance(mapping.itemId, getServer().getConfig().WANT_CUSTOM_SPRITES
+					? mapping.appearanceId : mapping.fallbackAppearance);
+			}
+		}
+		applyHeldEquipmentAppearanceOverrides();
+	}
+
+	private void applyHeldEquipmentAppearanceOverrides() {
+		for (HeldEquipmentFamilies.Mapping mapping : HeldEquipmentFamilies.MAPPINGS) {
+			if (mapping.itemId >= 1900 && !getServer().getConfig().WANT_MYWORLD) continue;
+			setItemAppearance(mapping.itemId, getServer().getConfig().WANT_CUSTOM_SPRITES
+				? mapping.appearanceId : mapping.fallbackAppearance);
 		}
 	}
 

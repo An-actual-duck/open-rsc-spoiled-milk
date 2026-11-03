@@ -1,0 +1,175 @@
+{
+  "status": "review candidate; not installed",
+  "source": "Custom_Sprites.osar equipment:longbow",
+  "stringPalette": {
+    "e7dfdb": "b83f46"
+  },
+  "previewWoodTint": "333333",
+  "frames": [
+    {
+      "frame": 0,
+      "source": "custom-sprites/equipment/longbow/frame-00.png",
+      "width": 12,
+      "height": 55,
+      "xShift": 39,
+      "yShift": 29,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 43
+    },
+    {
+      "frame": 1,
+      "source": "custom-sprites/equipment/longbow/frame-01.png",
+      "width": 10,
+      "height": 60,
+      "xShift": 40,
+      "yShift": 28,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 48
+    },
+    {
+      "frame": 2,
+      "source": "custom-sprites/equipment/longbow/frame-02.png",
+      "width": 10,
+      "height": 64,
+      "xShift": 39,
+      "yShift": 27,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 52
+    },
+    {
+      "frame": 3,
+      "source": "custom-sprites/equipment/longbow/frame-03.png",
+      "width": 19,
+      "height": 65,
+      "xShift": 34,
+      "yShift": 23,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 53
+    },
+    {
+      "frame": 4,
+      "source": "custom-sprites/equipment/longbow/frame-04.png",
+      "width": 22,
+      "height": 63,
+      "xShift": 28,
+      "yShift": 26,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 51
+    },
+    {
+      "frame": 5,
+      "source": "custom-sprites/equipment/longbow/frame-05.png",
+      "width": 25,
+      "height": 65,
+      "xShift": 24,
+      "yShift": 24,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 54
+    },
+    {
+      "frame": 6,
+      "source": "custom-sprites/equipment/longbow/frame-06.png",
+      "width": 15,
+      "height": 64,
+      "xShift": 27,
+      "yShift": 17,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 52
+    },
+    {
+      "frame": 7,
+      "source": "custom-sprites/equipment/longbow/frame-07.png",
+      "width": 19,
+      "height": 65,
+      "xShift": 22,
+      "yShift": 18,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 53
+    },
+    {
+      "frame": 8,
+      "source": "custom-sprites/equipment/longbow/frame-08.png",
+      "width": 22,
+      "height": 63,
+      "xShift": 13,
+      "yShift": 19,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 51
+    },
+    {
+      "frame": 9,
+      "source": "custom-sprites/equipment/longbow/frame-09.png",
+      "width": 16,
+      "height": 64,
+      "xShift": 12,
+      "yShift": 17,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 52
+    },
+    {
+      "frame": 10,
+      "source": "custom-sprites/equipment/longbow/frame-10.png",
+      "width": 19,
+      "height": 65,
+      "xShift": 8,
+      "yShift": 19,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 53
+    },
+    {
+      "frame": 11,
+      "source": "custom-sprites/equipment/longbow/frame-11.png",
+      "width": 22,
+      "height": 63,
+      "xShift": 3,
+      "yShift": 22,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 51
+    },
+    {
+      "frame": 12,
+      "source": "custom-sprites/equipment/longbow/frame-12.png",
+      "width": 10,
+      "height": 64,
+      "xShift": 13,
+      "yShift": 24,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 52
+    },
+    {
+      "frame": 13,
+      "source": "custom-sprites/equipment/longbow/frame-13.png",
+      "width": 10,
+      "height": 60,
+      "xShift": 14,
+      "yShift": 28,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 48
+    },
+    {
+      "frame": 14,
+      "source": "custom-sprites/equipment/longbow/frame-14.png",
+      "width": 12,
+      "height": 55,
+      "xShift": 15,
+      "yShift": 32,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "stringPixelsChanged": 43
+    }
+  ]
+}

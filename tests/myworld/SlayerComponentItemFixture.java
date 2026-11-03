@@ -1,10 +1,10 @@
 import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.entityhandling.defs.ItemDef;
-import java.util.HashSet;
-import java.util.Set;
 
 public final class SlayerComponentItemFixture {
+	private static final java.util.Map<Integer, String[]> approved = new java.util.HashMap<>();
 	public static void main(String[] args) {
+		for (String arg : args) { String[] fields = arg.split("\\|"); approved.put(Integer.parseInt(fields[0]), fields); }
 		orsc.Config.S_WANT_BANK_NOTES = true;
 		orsc.Config.S_WANT_CERT_AS_NOTES = true;
 		EntityHandler.load(true);
@@ -25,18 +25,19 @@ public final class SlayerComponentItemFixture {
 		check(3346, "Lightning Horn", "A dark beast's horn, prickling with static.", 145, 0xD8BC61, false);
 		check(3347, "Abyssal Vertibrae", "A segment of an abyssal demon's spine, slick with residue.", 20, 0x91A4B2, false);
 		check(3348, "Abyssal Rib", "A curved abyssal rib, held together by clinging flesh.", 137, 0x8199AA, false);
-		Set<Integer> hideTints = new HashSet<>();
-		for (int id = 3333; id <= 3338; id++) hideTints.add(EntityHandler.getItemDef(id).getPictureMask());
-		if (hideTints.size() != 6) throw new AssertionError("Hides need distinct colors");
-		System.out.println("PASS: 17 Slayer client materials including retained Banshee hide and new Ectoplasm, sprite references, tint colors, names, flags and note forms");
+		if (approved.size() != 16) throw new AssertionError("Missing approved material mappings");
+		System.out.println("PASS: 17 Slayer materials, approved artwork, effective prices, flags and notes; retired Banshee hide preserved");
 	}
 	private static void check(int id, String name, String description, int sprite, int mask, boolean stackable) {
 		ItemDef item = EntityHandler.getItemDef(id);
+		String location = "items:" + sprite;
+		int price = 0;
+		if (approved.containsKey(id)) { sprite = -1; mask = 0; location = approved.get(id)[1]; price = Integer.parseInt(approved.get(id)[2]); }
 		if (item == null || item.id != id || !name.equals(item.getName())
 			|| !description.equals(item.getDescription()) || item.spriteID != sprite
-			|| !("items:" + sprite).equals(item.spriteLocation) || item.getPictureMask() != mask
+			|| !location.equals(item.spriteLocation) || item.getPictureMask() != mask
 			|| item.stackable != stackable || item.wieldable || item.untradeable
-			|| item.membersItem || item.noteable == stackable || item.basePrice != 0)
+			|| item.membersItem || item.noteable == stackable || item.basePrice != price)
 			throw new AssertionError("Component mismatch: " + id);
 		if (!stackable) {
 			ItemDef note = EntityHandler.getItemDef(id, true);

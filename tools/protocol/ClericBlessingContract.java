@@ -1,7 +1,7 @@
 /** Versioned numeric metadata only; no executable expressions cross the wire. */
 public final class ClericBlessingContract {
   public static final int SCHEMA_VERSION = 5;
-  public static final int CLIENT_VERSION = 10056;
+  public static final int CLIENT_VERSION = 10057;
   public static final int MAX_DEFINITIONS = 32;
   public static final int MAX_COSTS = 4;
   public static final int MAX_COMPONENTS = 9;

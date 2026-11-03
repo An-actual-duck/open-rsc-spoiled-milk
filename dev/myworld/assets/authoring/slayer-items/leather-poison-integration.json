@@ -1,0 +1,370 @@
+{
+  "armor": [
+    {
+      "itemId": 3357,
+      "family": "giant-frog",
+      "slot": "coif",
+      "color": 2330623,
+      "animation": "mediumhelm",
+      "appearanceId": 1099,
+      "icon": "giant-frog-coif",
+      "width": 21,
+      "height": 22
+    },
+    {
+      "itemId": 3358,
+      "family": "giant-frog",
+      "slot": "gloves",
+      "color": 2330623,
+      "animation": "hidegloves",
+      "appearanceId": 1100,
+      "icon": "giant-frog-gloves",
+      "width": 24,
+      "height": 18
+    },
+    {
+      "itemId": 3359,
+      "family": "giant-frog",
+      "slot": "boots",
+      "color": 2330623,
+      "animation": "hideboots",
+      "appearanceId": 1101,
+      "icon": "giant-frog-boots",
+      "width": 33,
+      "height": 30
+    },
+    {
+      "itemId": 3360,
+      "family": "giant-frog",
+      "slot": "chaps",
+      "color": 2330623,
+      "animation": "chainmaillegs",
+      "appearanceId": 1102,
+      "icon": "giant-frog-chaps",
+      "width": 33,
+      "height": 24
+    },
+    {
+      "itemId": 3361,
+      "family": "giant-frog",
+      "slot": "cuirass",
+      "color": 2330623,
+      "animation": "chainmail",
+      "appearanceId": 1103,
+      "icon": "giant-frog-cuirass",
+      "width": 34,
+      "height": 18
+    },
+    {
+      "itemId": 3369,
+      "family": "naga",
+      "slot": "coif",
+      "color": 5807424,
+      "animation": "mediumhelm",
+      "appearanceId": 1104,
+      "icon": "naga-coif",
+      "width": 21,
+      "height": 22
+    },
+    {
+      "itemId": 3370,
+      "family": "naga",
+      "slot": "gloves",
+      "color": 5807424,
+      "animation": "hidegloves",
+      "appearanceId": 1105,
+      "icon": "naga-gloves",
+      "width": 24,
+      "height": 18
+    },
+    {
+      "itemId": 3371,
+      "family": "naga",
+      "slot": "boots",
+      "color": 5807424,
+      "animation": "hideboots",
+      "appearanceId": 1106,
+      "icon": "naga-boots",
+      "width": 33,
+      "height": 30
+    },
+    {
+      "itemId": 3372,
+      "family": "naga",
+      "slot": "chaps",
+      "color": 5807424,
+      "animation": "chainmaillegs",
+      "appearanceId": 1107,
+      "icon": "naga-chaps",
+      "width": 33,
+      "height": 24
+    },
+    {
+      "itemId": 3373,
+      "family": "naga",
+      "slot": "cuirass",
+      "color": 5807424,
+      "animation": "chainmail",
+      "appearanceId": 1108,
+      "icon": "naga-cuirass",
+      "width": 34,
+      "height": 18
+    },
+    {
+      "itemId": 3375,
+      "family": "terror-dog",
+      "slot": "coif",
+      "color": 13845816,
+      "animation": "mediumhelm",
+      "appearanceId": 1109,
+      "icon": "terror-dog-coif",
+      "width": 21,
+      "height": 22
+    },
+    {
+      "itemId": 3376,
+      "family": "terror-dog",
+      "slot": "gloves",
+      "color": 13845816,
+      "animation": "hidegloves",
+      "appearanceId": 1110,
+      "icon": "terror-dog-gloves",
+      "width": 24,
+      "height": 18
+    },
+    {
+      "itemId": 3377,
+      "family": "terror-dog",
+      "slot": "boots",
+      "color": 13845816,
+      "animation": "hideboots",
+      "appearanceId": 1111,
+      "icon": "terror-dog-boots",
+      "width": 33,
+      "height": 30
+    },
+    {
+      "itemId": 3378,
+      "family": "terror-dog",
+      "slot": "chaps",
+      "color": 13845816,
+      "animation": "chainmaillegs",
+      "appearanceId": 1112,
+      "icon": "terror-dog-chaps",
+      "width": 33,
+      "height": 24
+    },
+    {
+      "itemId": 3379,
+      "family": "terror-dog",
+      "slot": "cuirass",
+      "color": 13845816,
+      "animation": "chainmail",
+      "appearanceId": 1113,
+      "icon": "terror-dog-cuirass",
+      "width": 34,
+      "height": 18
+    },
+    {
+      "itemId": 3381,
+      "family": "bloodveld",
+      "slot": "coif",
+      "color": 14923162,
+      "animation": "mediumhelm",
+      "appearanceId": 1114,
+      "icon": "bloodveld-coif",
+      "width": 21,
+      "height": 22
+    },
+    {
+      "itemId": 3382,
+      "family": "bloodveld",
+      "slot": "gloves",
+      "color": 14923162,
+      "animation": "hidegloves",
+      "appearanceId": 1115,
+      "icon": "bloodveld-gloves",
+      "width": 24,
+      "height": 18
+    },
+    {
+      "itemId": 3383,
+      "family": "bloodveld",
+      "slot": "boots",
+      "color": 14923162,
+      "animation": "hideboots",
+      "appearanceId": 1116,
+      "icon": "bloodveld-boots",
+      "width": 33,
+      "height": 30
+    },
+    {
+      "itemId": 3384,
+      "family": "bloodveld",
+      "slot": "chaps",
+      "color": 14923162,
+      "animation": "chainmaillegs",
+      "appearanceId": 1117,
+      "icon": "bloodveld-chaps",
+      "width": 33,
+      "height": 24
+    },
+    {
+      "itemId": 3385,
+      "family": "bloodveld",
+      "slot": "cuirass",
+      "color": 14923162,
+      "animation": "chainmail",
+      "appearanceId": 1118,
+      "icon": "bloodveld-cuirass",
+      "width": 34,
+      "height": 18
+    },
+    {
+      "itemId": 3387,
+      "family": "dark-beast",
+      "slot": "coif",
+      "color": 5592666,
+      "animation": "mediumhelm",
+      "appearanceId": 1119,
+      "icon": "dark-beast-coif",
+      "width": 21,
+      "height": 22
+    },
+    {
+      "itemId": 3388,
+      "family": "dark-beast",
+      "slot": "gloves",
+      "color": 5592666,
+      "animation": "hidegloves",
+      "appearanceId": 1120,
+      "icon": "dark-beast-gloves",
+      "width": 24,
+      "height": 18
+    },
+    {
+      "itemId": 3389,
+      "family": "dark-beast",
+      "slot": "boots",
+      "color": 5592666,
+      "animation": "hideboots",
+      "appearanceId": 1121,
+      "icon": "dark-beast-boots",
+      "width": 33,
+      "height": 30
+    },
+    {
+      "itemId": 3390,
+      "family": "dark-beast",
+      "slot": "chaps",
+      "color": 5592666,
+      "animation": "chainmaillegs",
+      "appearanceId": 1122,
+      "icon": "dark-beast-chaps",
+      "width": 33,
+      "height": 24
+    },
+    {
+      "itemId": 3391,
+      "family": "dark-beast",
+      "slot": "cuirass",
+      "color": 5592666,
+      "animation": "chainmail",
+      "appearanceId": 1123,
+      "icon": "dark-beast-cuirass",
+      "width": 34,
+      "height": 18
+    },
+    {
+      "itemId": 3394,
+      "family": "ugthanki",
+      "slot": "coif",
+      "color": 15716427,
+      "animation": "mediumhelm",
+      "appearanceId": 1124,
+      "icon": "ugthanki-coif",
+      "width": 21,
+      "height": 22
+    },
+    {
+      "itemId": 3395,
+      "family": "ugthanki",
+      "slot": "gloves",
+      "color": 15716427,
+      "animation": "hidegloves",
+      "appearanceId": 1125,
+      "icon": "ugthanki-gloves",
+      "width": 24,
+      "height": 18
+    },
+    {
+      "itemId": 3396,
+      "family": "ugthanki",
+      "slot": "boots",
+      "color": 15716427,
+      "animation": "hideboots",
+      "appearanceId": 1126,
+      "icon": "ugthanki-boots",
+      "width": 33,
+      "height": 30
+    },
+    {
+      "itemId": 3397,
+      "family": "ugthanki",
+      "slot": "chaps",
+      "color": 15716427,
+      "animation": "chainmaillegs",
+      "appearanceId": 1127,
+      "icon": "ugthanki-chaps",
+      "width": 33,
+      "height": 24
+    },
+    {
+      "itemId": 3398,
+      "family": "ugthanki",
+      "slot": "cuirass",
+      "color": 15716427,
+      "animation": "chainmail",
+      "appearanceId": 1128,
+      "icon": "ugthanki-cuirass",
+      "width": 34,
+      "height": 18
+    }
+  ],
+  "poison": {
+    "itemId": 3354,
+    "appearanceId": 1098,
+    "tipCounts": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "palette": {
+      "887165": [
+        63,
+        108,
+        40
+      ],
+      "f4e7ce": [
+        139,
+        199,
+        74
+      ]
+    }
+  }
+}

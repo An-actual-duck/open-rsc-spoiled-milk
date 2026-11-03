@@ -1,0 +1,340 @@
+{
+  "description": "Recover approved Slayer held/worn artwork after published aliases, with authentic fallback and no existing ID shifts.",
+  "sourceCommit": "85ed0e8a05c13143d318336f680e786849a0b75a",
+  "baseAnimationCount": 1112,
+  "definitions": [
+    {
+      "itemId": 3353,
+      "appearanceId": 1113,
+      "sourceAppearanceId": 1093,
+      "family": "daggerofterror",
+      "mask": 0,
+      "hasCombat": true,
+      "fallbackAppearance": 50
+    },
+    {
+      "itemId": 3352,
+      "appearanceId": 1114,
+      "sourceAppearanceId": 1094,
+      "family": "leachingbow",
+      "mask": 3355443,
+      "hasCombat": false,
+      "fallbackAppearance": 108
+    },
+    {
+      "itemId": 3351,
+      "appearanceId": 1115,
+      "sourceAppearanceId": 1095,
+      "family": "thunderspirestaff",
+      "mask": 0,
+      "hasCombat": true,
+      "fallbackAppearance": 123
+    },
+    {
+      "itemId": 3355,
+      "appearanceId": 1116,
+      "sourceAppearanceId": 1096,
+      "family": "sullenpendant",
+      "mask": 0,
+      "hasCombat": true,
+      "fallbackAppearance": 80
+    },
+    {
+      "itemId": 3349,
+      "appearanceId": 1117,
+      "sourceAppearanceId": 1097,
+      "family": "shieldofmobility",
+      "mask": 0,
+      "hasCombat": true,
+      "fallbackAppearance": 98
+    },
+    {
+      "itemId": 3354,
+      "appearanceId": 1118,
+      "sourceAppearanceId": 1098,
+      "family": "daggerofterrorpoisoned",
+      "mask": 0,
+      "hasCombat": true,
+      "fallbackAppearance": 50
+    },
+    {
+      "itemId": 3357,
+      "appearanceId": 1119,
+      "sourceAppearanceId": 1099,
+      "family": "mediumhelm",
+      "mask": 2330623,
+      "hasCombat": true,
+      "fallbackAppearance": 562
+    },
+    {
+      "itemId": 3358,
+      "appearanceId": 1120,
+      "sourceAppearanceId": 1100,
+      "family": "hidegloves",
+      "mask": 2330623,
+      "hasCombat": true,
+      "fallbackAppearance": 580
+    },
+    {
+      "itemId": 3359,
+      "appearanceId": 1121,
+      "sourceAppearanceId": 1101,
+      "family": "hideboots",
+      "mask": 2330623,
+      "hasCombat": true,
+      "fallbackAppearance": 586
+    },
+    {
+      "itemId": 3360,
+      "appearanceId": 1122,
+      "sourceAppearanceId": 1102,
+      "family": "chainmaillegs",
+      "mask": 2330623,
+      "hasCombat": true,
+      "fallbackAppearance": 574
+    },
+    {
+      "itemId": 3361,
+      "appearanceId": 1123,
+      "sourceAppearanceId": 1103,
+      "family": "chainmail",
+      "mask": 2330623,
+      "hasCombat": true,
+      "fallbackAppearance": 568
+    },
+    {
+      "itemId": 3369,
+      "appearanceId": 1124,
+      "sourceAppearanceId": 1104,
+      "family": "mediumhelm",
+      "mask": 5807424,
+      "hasCombat": true,
+      "fallbackAppearance": 596
+    },
+    {
+      "itemId": 3370,
+      "appearanceId": 1125,
+      "sourceAppearanceId": 1105,
+      "family": "hidegloves",
+      "mask": 5807424,
+      "hasCombat": true,
+      "fallbackAppearance": 650
+    },
+    {
+      "itemId": 3371,
+      "appearanceId": 1126,
+      "sourceAppearanceId": 1106,
+      "family": "hideboots",
+      "mask": 5807424,
+      "hasCombat": true,
+      "fallbackAppearance": 668
+    },
+    {
+      "itemId": 3372,
+      "appearanceId": 1127,
+      "sourceAppearanceId": 1107,
+      "family": "chainmaillegs",
+      "mask": 5807424,
+      "hasCombat": true,
+      "fallbackAppearance": 632
+    },
+    {
+      "itemId": 3373,
+      "appearanceId": 1128,
+      "sourceAppearanceId": 1108,
+      "family": "chainmail",
+      "mask": 5807424,
+      "hasCombat": true,
+      "fallbackAppearance": 614
+    },
+    {
+      "itemId": 3375,
+      "appearanceId": 1129,
+      "sourceAppearanceId": 1109,
+      "family": "mediumhelm",
+      "mask": 13845816,
+      "hasCombat": true,
+      "fallbackAppearance": 598
+    },
+    {
+      "itemId": 3376,
+      "appearanceId": 1130,
+      "sourceAppearanceId": 1110,
+      "family": "hidegloves",
+      "mask": 13845816,
+      "hasCombat": true,
+      "fallbackAppearance": 652
+    },
+    {
+      "itemId": 3377,
+      "appearanceId": 1131,
+      "sourceAppearanceId": 1111,
+      "family": "hideboots",
+      "mask": 13845816,
+      "hasCombat": true,
+      "fallbackAppearance": 670
+    },
+    {
+      "itemId": 3378,
+      "appearanceId": 1132,
+      "sourceAppearanceId": 1112,
+      "family": "chainmaillegs",
+      "mask": 13845816,
+      "hasCombat": true,
+      "fallbackAppearance": 634
+    },
+    {
+      "itemId": 3379,
+      "appearanceId": 1133,
+      "sourceAppearanceId": 1113,
+      "family": "chainmail",
+      "mask": 13845816,
+      "hasCombat": true,
+      "fallbackAppearance": 616
+    },
+    {
+      "itemId": 3381,
+      "appearanceId": 1134,
+      "sourceAppearanceId": 1114,
+      "family": "mediumhelm",
+      "mask": 14923162,
+      "hasCombat": true,
+      "fallbackAppearance": 598
+    },
+    {
+      "itemId": 3382,
+      "appearanceId": 1135,
+      "sourceAppearanceId": 1115,
+      "family": "hidegloves",
+      "mask": 14923162,
+      "hasCombat": true,
+      "fallbackAppearance": 652
+    },
+    {
+      "itemId": 3383,
+      "appearanceId": 1136,
+      "sourceAppearanceId": 1116,
+      "family": "hideboots",
+      "mask": 14923162,
+      "hasCombat": true,
+      "fallbackAppearance": 670
+    },
+    {
+      "itemId": 3384,
+      "appearanceId": 1137,
+      "sourceAppearanceId": 1117,
+      "family": "chainmaillegs",
+      "mask": 14923162,
+      "hasCombat": true,
+      "fallbackAppearance": 634
+    },
+    {
+      "itemId": 3385,
+      "appearanceId": 1138,
+      "sourceAppearanceId": 1118,
+      "family": "chainmail",
+      "mask": 14923162,
+      "hasCombat": true,
+      "fallbackAppearance": 616
+    },
+    {
+      "itemId": 3387,
+      "appearanceId": 1139,
+      "sourceAppearanceId": 1119,
+      "family": "mediumhelm",
+      "mask": 5592666,
+      "hasCombat": true,
+      "fallbackAppearance": 601
+    },
+    {
+      "itemId": 3388,
+      "appearanceId": 1140,
+      "sourceAppearanceId": 1120,
+      "family": "hidegloves",
+      "mask": 5592666,
+      "hasCombat": true,
+      "fallbackAppearance": 655
+    },
+    {
+      "itemId": 3389,
+      "appearanceId": 1141,
+      "sourceAppearanceId": 1121,
+      "family": "hideboots",
+      "mask": 5592666,
+      "hasCombat": true,
+      "fallbackAppearance": 673
+    },
+    {
+      "itemId": 3390,
+      "appearanceId": 1142,
+      "sourceAppearanceId": 1122,
+      "family": "chainmaillegs",
+      "mask": 5592666,
+      "hasCombat": true,
+      "fallbackAppearance": 637
+    },
+    {
+      "itemId": 3391,
+      "appearanceId": 1143,
+      "sourceAppearanceId": 1123,
+      "family": "chainmail",
+      "mask": 5592666,
+      "hasCombat": true,
+      "fallbackAppearance": 619
+    },
+    {
+      "itemId": 3394,
+      "appearanceId": 1144,
+      "sourceAppearanceId": 1124,
+      "family": "mediumhelm",
+      "mask": 15716427,
+      "hasCombat": true,
+      "fallbackAppearance": 594
+    },
+    {
+      "itemId": 3395,
+      "appearanceId": 1145,
+      "sourceAppearanceId": 1125,
+      "family": "hidegloves",
+      "mask": 15716427,
+      "hasCombat": true,
+      "fallbackAppearance": 648
+    },
+    {
+      "itemId": 3396,
+      "appearanceId": 1146,
+      "sourceAppearanceId": 1126,
+      "family": "hideboots",
+      "mask": 15716427,
+      "hasCombat": true,
+      "fallbackAppearance": 666
+    },
+    {
+      "itemId": 3397,
+      "appearanceId": 1147,
+      "sourceAppearanceId": 1127,
+      "family": "chainmaillegs",
+      "mask": 15716427,
+      "hasCombat": true,
+      "fallbackAppearance": 630
+    },
+    {
+      "itemId": 3398,
+      "appearanceId": 1148,
+      "sourceAppearanceId": 1128,
+      "family": "chainmail",
+      "mask": 15716427,
+      "hasCombat": true,
+      "fallbackAppearance": 612
+    },
+    {
+      "itemId": 3350,
+      "appearanceId": 1149,
+      "sourceAppearanceId": 1129,
+      "family": "abyssalwhip",
+      "mask": 0,
+      "hasCombat": true,
+      "fallbackAppearance": 53
+    }
+  ]
+}

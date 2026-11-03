@@ -1,0 +1,392 @@
+[
+  {
+    "family": "giant-frog",
+    "slot": "coif",
+    "color": "#238fff",
+    "file": "giant-frog-coif.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 412,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "giant-frog",
+    "slot": "cuirass",
+    "color": "#238fff",
+    "file": "giant-frog-cuirass.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 584,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "giant-frog",
+    "slot": "gloves",
+    "color": "#238fff",
+    "file": "giant-frog-gloves.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 316,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "giant-frog",
+    "slot": "boots",
+    "color": "#238fff",
+    "file": "giant-frog-boots.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 702,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "giant-frog",
+    "slot": "chaps",
+    "color": "#238fff",
+    "file": "giant-frog-chaps.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 572,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "naga",
+    "slot": "coif",
+    "color": "#589d40",
+    "file": "naga-coif.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 412,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "naga",
+    "slot": "cuirass",
+    "color": "#589d40",
+    "file": "naga-cuirass.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 584,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "naga",
+    "slot": "gloves",
+    "color": "#589d40",
+    "file": "naga-gloves.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 316,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "naga",
+    "slot": "boots",
+    "color": "#589d40",
+    "file": "naga-boots.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 702,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "naga",
+    "slot": "chaps",
+    "color": "#589d40",
+    "file": "naga-chaps.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 572,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "terror-dog",
+    "slot": "coif",
+    "color": "#d34538",
+    "file": "terror-dog-coif.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 412,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "terror-dog",
+    "slot": "cuirass",
+    "color": "#d34538",
+    "file": "terror-dog-cuirass.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 584,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "terror-dog",
+    "slot": "gloves",
+    "color": "#d34538",
+    "file": "terror-dog-gloves.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 316,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "terror-dog",
+    "slot": "boots",
+    "color": "#d34538",
+    "file": "terror-dog-boots.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 702,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "terror-dog",
+    "slot": "chaps",
+    "color": "#d34538",
+    "file": "terror-dog-chaps.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 572,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "bloodveld",
+    "slot": "coif",
+    "color": "#e3b59a",
+    "file": "bloodveld-coif.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 412,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "bloodveld",
+    "slot": "cuirass",
+    "color": "#e3b59a",
+    "file": "bloodveld-cuirass.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 584,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "bloodveld",
+    "slot": "gloves",
+    "color": "#e3b59a",
+    "file": "bloodveld-gloves.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 316,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "bloodveld",
+    "slot": "boots",
+    "color": "#e3b59a",
+    "file": "bloodveld-boots.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 702,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "bloodveld",
+    "slot": "chaps",
+    "color": "#e3b59a",
+    "file": "bloodveld-chaps.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 572,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "dark-beast",
+    "slot": "coif",
+    "color": "#55565a",
+    "file": "dark-beast-coif.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 412,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "dark-beast",
+    "slot": "cuirass",
+    "color": "#55565a",
+    "file": "dark-beast-cuirass.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 584,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "dark-beast",
+    "slot": "gloves",
+    "color": "#55565a",
+    "file": "dark-beast-gloves.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 316,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "dark-beast",
+    "slot": "boots",
+    "color": "#55565a",
+    "file": "dark-beast-boots.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 702,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "dark-beast",
+    "slot": "chaps",
+    "color": "#55565a",
+    "file": "dark-beast-chaps.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 572,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "ugthanki",
+    "slot": "coif",
+    "color": "#efd04b",
+    "file": "ugthanki-coif.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 412,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "ugthanki",
+    "slot": "cuirass",
+    "color": "#efd04b",
+    "file": "ugthanki-cuirass.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 584,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "ugthanki",
+    "slot": "gloves",
+    "color": "#efd04b",
+    "file": "ugthanki-gloves.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 316,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "ugthanki",
+    "slot": "boots",
+    "color": "#efd04b",
+    "file": "ugthanki-boots.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 702,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  },
+  {
+    "family": "ugthanki",
+    "slot": "chaps",
+    "color": "#efd04b",
+    "file": "ugthanki-chaps.png",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 572,
+    "alphaUnchanged": true,
+    "coloredTrimUnchanged": true
+  }
+]

@@ -1,0 +1,1430 @@
+{
+  "sourceCommit": "85ed0e8a05c13143d318336f680e786849a0b75a",
+  "installed": [
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/00.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/00.png",
+      "status": "missing",
+      "stagedSha256": "795bf084de46a6354838e81d509248b9214503c74de3b8861d64336731144182",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/01.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/01.png",
+      "status": "missing",
+      "stagedSha256": "33a6d3bb15cecf4a1db7ae5ec86206a5c6931461f8c453421b104914af979c6f",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/02.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/02.png",
+      "status": "missing",
+      "stagedSha256": "ff931adc4a62e230063f7faed7e8a615c0efb66d8ab928ce303163ae0cc68e8d",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/03.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/03.png",
+      "status": "missing",
+      "stagedSha256": "4f8f36ab3cdcf99f6304d5ba26372fc772e9544c6abb8de521212c836bf6aa44",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/04.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/04.png",
+      "status": "missing",
+      "stagedSha256": "3f0f94f3e3b982f7f8c7d0f295b1a4adf6c6d1f439dcd18ef9b230add86ba0fb",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/05.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/05.png",
+      "status": "missing",
+      "stagedSha256": "3ddccaa4a419dce5648532a7bd1f64512cc1183ba93fbad7901c76ed7a4a273e",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/06.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/06.png",
+      "status": "missing",
+      "stagedSha256": "80b6e8eeaca163538fc887f20b0c3fd5bdee990442faa44eb03f015cd157ae59",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/07.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/07.png",
+      "status": "missing",
+      "stagedSha256": "5bf37c427f50754ccf8e93306af4b2afd9a5f0b3b7a784e4a415cb888fb887ee",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/08.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/08.png",
+      "status": "missing",
+      "stagedSha256": "5305ea1e9246d78d96bf94a8a2da043fac3f1b1373dd96c30de99bb7b4943c9a",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/09.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/09.png",
+      "status": "missing",
+      "stagedSha256": "1a803514bdc379583b745454cfcc36c6451c0a700d335384bb9df86446353612",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/10.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/10.png",
+      "status": "missing",
+      "stagedSha256": "5cc4250a678b71dcfa96787732c213ff4c8ee2d1324d848c60d968fc54870662",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/11.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/11.png",
+      "status": "missing",
+      "stagedSha256": "8c782968170a4e2d6ac22c4d2a1f33bf4b42581b710e310924e3e2f1dd9f6b63",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/12.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/12.png",
+      "status": "missing",
+      "stagedSha256": "56fe8770d49315790c86d4354980849392873e878aa79c857a4da43277b6e0d2",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/13.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/13.png",
+      "status": "missing",
+      "stagedSha256": "e0a22d858f7329337d8314d1f8e27258d36f32d8e71ef29e8fc3d38182abd70a",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/14.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/14.png",
+      "status": "missing",
+      "stagedSha256": "11a2caa63f446de60d3653456669b4e810406d76de38d7659a314a6c683135b0",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/15.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/15.png",
+      "status": "missing",
+      "stagedSha256": "eae8ce9b6fc4c7fedf842297bcd09b1d8fdcfb2090eb9b70d6c0d4b904450238",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/16.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/16.png",
+      "status": "missing",
+      "stagedSha256": "689e6f145d799b33207fe29f3b1946e5d4c149a405863418710f4a2cf21dc3b6",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/17.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/17.png",
+      "status": "missing",
+      "stagedSha256": "5b4e829fb75b1690fbc89f121f3a46e6c3b3b920ddf0694cfe886a8db384cb9f",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/00.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/00.png",
+      "status": "missing",
+      "stagedSha256": "7e8a770cf8c2e6e82b5caaa01178fe577b2f85405a8b07256dec0b7ade62a758",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/01.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/01.png",
+      "status": "missing",
+      "stagedSha256": "0e070499254da867decf8c24cb1787d1e55f67b036e57ee3c7f183817c573527",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/02.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/02.png",
+      "status": "missing",
+      "stagedSha256": "0e070499254da867decf8c24cb1787d1e55f67b036e57ee3c7f183817c573527",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/03.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/03.png",
+      "status": "missing",
+      "stagedSha256": "d5708a7925efe5e999f51a0d1bddc8302302c3cd74198a4244d6f4ecb64ab3da",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/04.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/04.png",
+      "status": "missing",
+      "stagedSha256": "55b2288ad2deb15c090d6670a0fbb2ed36ef89c13a883a034cb8f88fbf3ce439",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/05.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/05.png",
+      "status": "missing",
+      "stagedSha256": "7e8a770cf8c2e6e82b5caaa01178fe577b2f85405a8b07256dec0b7ade62a758",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/06.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/06.png",
+      "status": "missing",
+      "stagedSha256": "326f6f4f4f1520fadf7dc965b481486dbd1e5f66b8fe392e5cecd76e9bdae856",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/07.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/07.png",
+      "status": "missing",
+      "stagedSha256": "d728a2e8f181ec6b242859459ee23520bad972edbae2aa7352e6c98f59f7ea74",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/08.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/08.png",
+      "status": "missing",
+      "stagedSha256": "7e8a770cf8c2e6e82b5caaa01178fe577b2f85405a8b07256dec0b7ade62a758",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/09.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/09.png",
+      "status": "missing",
+      "stagedSha256": "8ddf1d01e9c26d1cd39dde7aae9678111086f9a4f769ba2e487c8cabe672ffdd",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/10.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/10.png",
+      "status": "missing",
+      "stagedSha256": "479acf621c077674e1b7c9e4d2029cd11883294784678f1a0d64d35665ecf990",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/11.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/11.png",
+      "status": "missing",
+      "stagedSha256": "d1d54f501edeadcd64ee610f68a05d0206306b5a59f8e0c6beaf133919dadecb",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/12.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/12.png",
+      "status": "missing",
+      "stagedSha256": "199c63c08f54636dd981a52b9268d9d3db78f1dee2cf5006ae23a9ccf045f8bf",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/13.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/13.png",
+      "status": "missing",
+      "stagedSha256": "efc6b113f7a85a29293ed60bed0464b04a223b343c19329cd8245460473eaa37",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/14.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/14.png",
+      "status": "missing",
+      "stagedSha256": "aaa1cba079968bad48ab454aa5e7b48b4daed35950b88099ad59fc11180c9adf",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/15.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/15.png",
+      "status": "missing",
+      "stagedSha256": "d9654df5763d1f1d396a353b44d5aee4fafd9ae5456812a0fc233806698639fe",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/16.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/16.png",
+      "status": "missing",
+      "stagedSha256": "0e070499254da867decf8c24cb1787d1e55f67b036e57ee3c7f183817c573527",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/17.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/17.png",
+      "status": "missing",
+      "stagedSha256": "4c7b322b283ffb328430a1ff573a5b5eaa5150e39914b32f19f8e0d93fb66fbb",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/00.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/00.png",
+      "status": "missing",
+      "stagedSha256": "790794afcf18eba31399e79c899be3539d01d1679fe3117c187a6df0994142a6",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/01.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/01.png",
+      "status": "missing",
+      "stagedSha256": "e27d7e413ae235e53686c34c956963a2b4981be0fd8569d74638fa82c80a8138",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/02.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/02.png",
+      "status": "missing",
+      "stagedSha256": "e27d7e413ae235e53686c34c956963a2b4981be0fd8569d74638fa82c80a8138",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/03.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/03.png",
+      "status": "missing",
+      "stagedSha256": "35f074003a1178373dc3d78c9eb26726d290457f40c3cbcb0c50880753735b1a",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/04.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/04.png",
+      "status": "missing",
+      "stagedSha256": "32d43ffc77e5b066c38bc26575bf6ba1ce7c1f0afe7ad7744c286aa6ead05a76",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/05.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/05.png",
+      "status": "missing",
+      "stagedSha256": "790794afcf18eba31399e79c899be3539d01d1679fe3117c187a6df0994142a6",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/06.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/06.png",
+      "status": "missing",
+      "stagedSha256": "40441f03ba7e7c84efc8ef5fb2c0b1e365b88b169ee37e8635f0f07dd38f60a1",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/07.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/07.png",
+      "status": "missing",
+      "stagedSha256": "db486b7d481f5530febe6a0a103e16b3d284e3e954769133709816b215bdc3de",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/08.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/08.png",
+      "status": "missing",
+      "stagedSha256": "790794afcf18eba31399e79c899be3539d01d1679fe3117c187a6df0994142a6",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/09.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/09.png",
+      "status": "missing",
+      "stagedSha256": "7fa2079638370db11e7b9f6ed28a4917ab2325e864828d95e8d142c2ae320472",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/10.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/10.png",
+      "status": "missing",
+      "stagedSha256": "4aab8ad41b02ce03cb0589113c827e4bf80207101d9268f4a16c9930f456e3a3",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/11.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/11.png",
+      "status": "missing",
+      "stagedSha256": "4649603ee5ea62c39d689b82d07e356644bf49961fc370202e7245e5830f41fb",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/12.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/12.png",
+      "status": "missing",
+      "stagedSha256": "86e42dcabbafb6388b90fbdc65a817af504de51e585e09f1919d1f62b135b4cc",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/13.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/13.png",
+      "status": "missing",
+      "stagedSha256": "3a699f01f1988058a05b113bfea19cb0a0cd972c19d053f5aa447b570f94ffd3",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/14.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/14.png",
+      "status": "missing",
+      "stagedSha256": "e69f64459f2bcf7991e899f6ba0e9ff5d275dadc81009d7f7705782e84c2b1ca",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/15.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/15.png",
+      "status": "missing",
+      "stagedSha256": "f31b690f2fccd98deb6e7ed3c1645e4849ce11deea928201620bfbc8f75d643d",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/16.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/16.png",
+      "status": "missing",
+      "stagedSha256": "e27d7e413ae235e53686c34c956963a2b4981be0fd8569d74638fa82c80a8138",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/17.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/17.png",
+      "status": "missing",
+      "stagedSha256": "5cd6490c1bcbca2e07060f665c791052c6a41634d56e9096b77fa3ec6f36b32d",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/00.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/00.png",
+      "status": "missing",
+      "stagedSha256": "ea6a62b1385d97b3fa8207efced3aa44af2b8f84f5c697a8b4bafe8271a944cb",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/01.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/01.png",
+      "status": "missing",
+      "stagedSha256": "4ffaee66c37059bbeec3753dbd8be81a583bdd8a773d7189ac630791cae2575c",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/02.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/02.png",
+      "status": "missing",
+      "stagedSha256": "3b8c96aadc82ac9029a2db6f86337b56f10824452c6dc33c6e64e28fb3e56155",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/03.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/03.png",
+      "status": "missing",
+      "stagedSha256": "7a29ec23b9df6594756e40a0b96f228342acf09d5e724ff3efc90058eb1c927b",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/04.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/04.png",
+      "status": "missing",
+      "stagedSha256": "935ba026b4e49c312c75343407bc147b34a32163c84b5643cd63351203d7ed0a",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/05.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/05.png",
+      "status": "missing",
+      "stagedSha256": "df77580aa5997a34a54ff9b5d77596d8feb08c6f1a8ac5757970e54babbb6e3e",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/06.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/06.png",
+      "status": "missing",
+      "stagedSha256": "9a6f6e700ee697b34c0d955192f2521b148f6603acd25352d4a348f9be28a33e",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/07.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/07.png",
+      "status": "missing",
+      "stagedSha256": "0f7fd3179dced8a1fd77d2557869ebd91e7f4a4d3e330a9be6907a6a4f895cba",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/08.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/08.png",
+      "status": "missing",
+      "stagedSha256": "a0bad4de222d8e7be461ee2a680f1d682789c65208721066c1f7323a8d982199",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/09.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/09.png",
+      "status": "missing",
+      "stagedSha256": "bc75f768874935a07a7ca36382bf4a28e1cb223149ea5b7aeb656321cd9e4e66",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/10.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/10.png",
+      "status": "missing",
+      "stagedSha256": "1f71103ba456cfda2d02983dfa8a55a31f2f37daf367fc419c20274de1f88bfb",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/11.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/11.png",
+      "status": "missing",
+      "stagedSha256": "08ca665b5b3e3fdde306a5888b254139ba57c68128faf6117a8f8679846cb6a6",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/12.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/12.png",
+      "status": "missing",
+      "stagedSha256": "7d57fd10b9dd928f33b26f7a88d46f8578b5b8ee5a6fe70c8df02ae40cc6ccdd",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/13.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/13.png",
+      "status": "missing",
+      "stagedSha256": "77fff14cea93e7f0a6c65b56fe5395b572be3913dae5847caa6972d4c88736db",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/14.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/14.png",
+      "status": "missing",
+      "stagedSha256": "c44dc08cb31139cb88b121a2c61bf1e53821bb44958fb006fdf33a133c04499d",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/00.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/00.png",
+      "status": "different",
+      "stagedSha256": "ee639574a63aa4369228cc1352e0809d456882c6989218c9a1b7525256e3fc28",
+      "mainSha256": "d68c4ce17bb29e8dc5d9cad76ecc093831f6cee2e9876256265661c1bc03958b"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/01.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/01.png",
+      "status": "different",
+      "stagedSha256": "599995b77709bdeebffcc71464d8995e42dd553ca9f863e6062891983b493a71",
+      "mainSha256": "5b1a2a9b5248d0a0dded13508990ad4b55a1e44ac2421cbf049133ba6062e4e7"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/02.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/02.png",
+      "status": "different",
+      "stagedSha256": "587748052caffe4f008fa1ec1132690990cc212b36b2012e6a44b4f4b4b4dacd",
+      "mainSha256": "f86f80b819c93143a253d991bb97a322cfc9912d0234871fa663bc6b0cbfc7b0"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/03.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/03.png",
+      "status": "different",
+      "stagedSha256": "3410b6354e0bdb1a6a91c7745b9bf7fbd06d34f385de5a26840a4d6875fa32e1",
+      "mainSha256": "3c9a358d6d6787017c6b6756ae746f66fcd72b131ab436ec88b0c626509881ca"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/04.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/04.png",
+      "status": "different",
+      "stagedSha256": "b766d36120cd9aebaff6400a22937e57e0096d71bed1afbfb108e7c15afb184e",
+      "mainSha256": "d7a2e4f91162b8a439a5868a20331891b44b6847480a29c32237bc5273255f74"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/05.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/05.png",
+      "status": "different",
+      "stagedSha256": "332e84dbabe48325c0949c2860bcffba2a1f61ce6cd586812c5bb01fc85bffe5",
+      "mainSha256": "bd53d51ed9ee8b10b734e5f6f8bb56f1e109bf6d72cd07fa8dd0f2c4852fdea9"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/06.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/06.png",
+      "status": "different",
+      "stagedSha256": "b3cca4992f1ce5fa28e5dec8b847ddd45ccad30ac3359c97649fb377f216d6f5",
+      "mainSha256": "bf21c548847fdb441c60d01a4946e271f231e20c2d074fe38b0afa8438fd37a6"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/07.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/07.png",
+      "status": "different",
+      "stagedSha256": "dabbf60ba4c689f9884cc5b0dab4a5b355e5e2ec2f3569a45c8c5a7831cf4d6e",
+      "mainSha256": "dbb8da30dc11822dad82cb0679ae6dff755fb210a06da26ad9f7dee7b3bb4c2a"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/08.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/08.png",
+      "status": "different",
+      "stagedSha256": "ff7a98a6b42f1053181895a2dcc306cab575170e0017f29fd57340ca0b634d94",
+      "mainSha256": "71ff1f4e2c51ff4f8bd03f1826d13b196c3cc540269a3c804550d49c2c2797bc"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/09.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/09.png",
+      "status": "different",
+      "stagedSha256": "d7ec9112422998e4cfdd7d246b26ace65c7b33c671f89092147be772836af306",
+      "mainSha256": "43f7cae5af10aab0a2eedde6894407ffa25c5d20957049283e198f013c218212"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/10.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/10.png",
+      "status": "different",
+      "stagedSha256": "0d9f0ac1b2ea777aa9a1470c04e9bff4ac0c36cd8e30ef4bf960e69595b7163e",
+      "mainSha256": "a32da2b082cfea0331b7287464256b321e6cb972892965a351cad5ed3e90113a"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/11.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/11.png",
+      "status": "different",
+      "stagedSha256": "e271594301b17410b6ef5b3f505a1f24b7f34b26f97c1be2aaed20b835f3c793",
+      "mainSha256": "7db9e546bebad1452de8811a1ecfff91d2242e51444bc25b950870ee0b5800e5"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/12.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/12.png",
+      "status": "different",
+      "stagedSha256": "2aab69f26494a8a1a7d6bdec04067dcc65c4c48f04ec8999efc149e21405c9c3",
+      "mainSha256": "d9b3465ce7b1a9446d7a6c296a20cb849e8ecde03088445b8c758d34926def1f"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/13.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/13.png",
+      "status": "different",
+      "stagedSha256": "e1e4d97546317f9801b456ac318143d15e47b5f726375602b2ce5a4a8d8f8499",
+      "mainSha256": "888324d2707ca4a1a84806af3a1ab5aa963c833ab2771cc663aba4864397e2af"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shears/numbered/14.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/14.png",
+      "status": "different",
+      "stagedSha256": "da0b5523da19f585ea28a7bbf722b90bc1bedf4b4fe7d3989dc94d862330f5b8",
+      "mainSha256": "2deabbffce490eec178e3407cc2e729ff0a797dca73e8c5aa20fa4b299422d73"
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/00.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/00.png",
+      "status": "missing",
+      "stagedSha256": "03f85ba2210d37e035ff5645904b9fa7af10eec33af2f9aec619e86385cad5b4",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/01.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/01.png",
+      "status": "missing",
+      "stagedSha256": "18816e655a4d8ecd41c7fc71fa669f12041a210721b78a3b718473a2634970cb",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/02.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/02.png",
+      "status": "missing",
+      "stagedSha256": "2ed81b23a1a11084432b21996b1359bde5c74575af5392d1e52870d4a98af91e",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/03.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/03.png",
+      "status": "missing",
+      "stagedSha256": "be8a072d21ea4dca082e027f3d5e8c725a7753067672f4b047ad758347fca20c",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/04.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/04.png",
+      "status": "missing",
+      "stagedSha256": "1f6ed6e377674f031b350ce51b1ebf7fe58c88471d9693ac42aa8c82f61d71e7",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/05.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/05.png",
+      "status": "missing",
+      "stagedSha256": "4cea85d3ecee42235d7e26f07ba45a4ba6c3a4ad04c812eead90dab98b0916fe",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/06.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/06.png",
+      "status": "missing",
+      "stagedSha256": "6c64611ef8cba0f6f3cc3eeafd18bb4ea1af65c2c3e7d23c9c96718afa992847",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/07.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/07.png",
+      "status": "missing",
+      "stagedSha256": "1ee88c1a7ead51fc756c5b6b87c1c4a69884d2ebdae44dc7ed188ea3d95b948e",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/08.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/08.png",
+      "status": "missing",
+      "stagedSha256": "1c0879d65fdb2d1a4cc1d091d518d8c12ca3f8cb6862229d0f16f10e5fff0695",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/09.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/09.png",
+      "status": "missing",
+      "stagedSha256": "d2ccec36a177050f443ce0a8de312bfec8bcd1cf1a20da44c43e83c23dccd87b",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/10.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/10.png",
+      "status": "missing",
+      "stagedSha256": "81e8ff4c2e790f14e2a6a7b511173e9294720035dd8d3a0cf6d9be72a2475cea",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/11.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/11.png",
+      "status": "missing",
+      "stagedSha256": "75b5d88e243857ceb557214777b02e3e48428ca848b7a3ff0e8810608b63c76c",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/12.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/12.png",
+      "status": "missing",
+      "stagedSha256": "f0f69211489b5f9b5d08964f0fa890ab91d6e17274c656ff00967f50169fe0e9",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/13.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/13.png",
+      "status": "missing",
+      "stagedSha256": "125e32906a4c1363382785d4d8f4ece9ce91bc09ac373209c79f8ce5944a95d0",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/14.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/14.png",
+      "status": "missing",
+      "stagedSha256": "45846e3f4aae5ae60fc22caf8ae0de0b693d7359b15d09d9fa4061aca6cbe72f",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/15.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/15.png",
+      "status": "missing",
+      "stagedSha256": "e99dcc281da6a8dc956f5162cf31405489cb77061bfb30c59a4aaf6f4fba8ebc",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/16.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/16.png",
+      "status": "missing",
+      "stagedSha256": "edca20797ef6d27e2ec298989312ca768577fd6f74115e40e2eda44a4c5258df",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/17.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/17.png",
+      "status": "missing",
+      "stagedSha256": "e801c688fca1c21043fe0f537227518f705c25276813d62a05a340fb5963cbe6",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/00.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/00.png",
+      "status": "missing",
+      "stagedSha256": "c5cb3fd30e43b1b3745a4b8599598d93711d7af79d78ee129b8348a548047f14",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/01.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/01.png",
+      "status": "missing",
+      "stagedSha256": "c5cb3fd30e43b1b3745a4b8599598d93711d7af79d78ee129b8348a548047f14",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/02.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/02.png",
+      "status": "missing",
+      "stagedSha256": "c5cb3fd30e43b1b3745a4b8599598d93711d7af79d78ee129b8348a548047f14",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/03.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/03.png",
+      "status": "missing",
+      "stagedSha256": "3c368c5d6836b0c85ddfd438674e0ad14a5a26c61714072c8478280d4b99e0f8",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/04.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/04.png",
+      "status": "missing",
+      "stagedSha256": "3c368c5d6836b0c85ddfd438674e0ad14a5a26c61714072c8478280d4b99e0f8",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/05.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/05.png",
+      "status": "missing",
+      "stagedSha256": "3c368c5d6836b0c85ddfd438674e0ad14a5a26c61714072c8478280d4b99e0f8",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/06.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/06.png",
+      "status": "missing",
+      "stagedSha256": "43eb294355c34989c81907a6c1749de81abe261e8dc8bc6385f7c83658fa5ef8",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/07.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/07.png",
+      "status": "missing",
+      "stagedSha256": "43eb294355c34989c81907a6c1749de81abe261e8dc8bc6385f7c83658fa5ef8",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/08.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/08.png",
+      "status": "missing",
+      "stagedSha256": "43eb294355c34989c81907a6c1749de81abe261e8dc8bc6385f7c83658fa5ef8",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/09.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/09.png",
+      "status": "missing",
+      "stagedSha256": "696df45178a1882292f0e740c0c58dd084b36a105132a0bb489a319bf8c32a7f",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/10.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/10.png",
+      "status": "missing",
+      "stagedSha256": "696df45178a1882292f0e740c0c58dd084b36a105132a0bb489a319bf8c32a7f",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/11.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/11.png",
+      "status": "missing",
+      "stagedSha256": "696df45178a1882292f0e740c0c58dd084b36a105132a0bb489a319bf8c32a7f",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/12.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/12.png",
+      "status": "missing",
+      "stagedSha256": "5938d03ef2853992efba5bd0aa72fb86f581d76b702346409ed4839433aa6ccd",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/13.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/13.png",
+      "status": "missing",
+      "stagedSha256": "5938d03ef2853992efba5bd0aa72fb86f581d76b702346409ed4839433aa6ccd",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/14.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/14.png",
+      "status": "missing",
+      "stagedSha256": "5938d03ef2853992efba5bd0aa72fb86f581d76b702346409ed4839433aa6ccd",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/15.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/15.png",
+      "status": "missing",
+      "stagedSha256": "99006484c30287b4e6e21fcbdffed88af134d81b0070f6400f2c9285e2a008f7",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/16.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/16.png",
+      "status": "missing",
+      "stagedSha256": "76280a4ed5c26d9d2efcdbe1dfe9bd68f0b0a0f9f75c6aef96abcf62978cd6ff",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/17.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/17.png",
+      "status": "missing",
+      "stagedSha256": "935c5a546af92e8b195819d9e9234c7bfc298dd17053f0c959b87cbdab3953c5",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/00.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/00.png",
+      "status": "missing",
+      "stagedSha256": "3afb95ee38b8e0f1d5be5cc847b8f7be1bf32219695da074dbd9db103476e1fc",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/01.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/01.png",
+      "status": "missing",
+      "stagedSha256": "35ffa80e31b8217b9d0de34edd3a15bf662b8b65b2beffa1162c051e9d654742",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/02.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/02.png",
+      "status": "missing",
+      "stagedSha256": "381731c14f0386dc921cda1e0eb16b6f1c916eea35c472a36bffc059b594483c",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/03.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/03.png",
+      "status": "missing",
+      "stagedSha256": "13837caf9c650bf2a9f417d8dd70b7c9ffc852df1be116ef0f4b4f9b32f51632",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/04.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/04.png",
+      "status": "missing",
+      "stagedSha256": "15a12ab0c8a78e0d143e454df5e02152ca71c4b1dd1afdb2eb8f396ec26cb3df",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/05.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/05.png",
+      "status": "missing",
+      "stagedSha256": "6f128daaf1320f936d464e6a4e2e104c7c9a44052e67af7ecea600c51fd360de",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/06.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/06.png",
+      "status": "missing",
+      "stagedSha256": "d4d7c58b5372709cde5c248fea88a7fb0d8853768fe38b7d301cdf7df5726e81",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/07.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/07.png",
+      "status": "missing",
+      "stagedSha256": "f241fdb6ed390c2a850d9aab7635ef84acf96970e0e859511571b0b0bcf2ffac",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/08.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/08.png",
+      "status": "missing",
+      "stagedSha256": "215e34e5f3bb91df2765f505193cb2f4616733749c89977896ca22d8f3bc861a",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/09.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/09.png",
+      "status": "missing",
+      "stagedSha256": "4af9478f616dd172475053ec9ff6bf081035fed32f2505281efbbfa3f6346408",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/10.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/10.png",
+      "status": "missing",
+      "stagedSha256": "394c7053e65444e9fa8fd6dc7ce576b3e8a6d9b287d94b36a8c1141b33fe9eef",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/11.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/11.png",
+      "status": "missing",
+      "stagedSha256": "450a61e151748bb727917c21801e45faec31216c858b5cbfb0bb2e8cc3c5d222",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/12.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/12.png",
+      "status": "missing",
+      "stagedSha256": "d970f3a2659318a6d757422c64b2da0d61e255e49bf9017658d087a04b3aa1a4",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/13.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/13.png",
+      "status": "missing",
+      "stagedSha256": "db35d8c1b6cbd0c09dc752f33c32e431cb09ab992b5649937538b6d3ff1fdb87",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/14.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/14.png",
+      "status": "missing",
+      "stagedSha256": "a29a4d366cbebca139ec4b3cd18f68e27ebb4a6b7edb4b90924106a377b0f2a0",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/15.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/15.png",
+      "status": "missing",
+      "stagedSha256": "3a2dcc70fab19a46a0a4b4645d6af667cd459fb5e9f7a7e468b862c382ea8621",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/16.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/16.png",
+      "status": "missing",
+      "stagedSha256": "eb61058dc0119bbbcbeeaadfb11d4de713ddc90f6b5cc39aad30117ae59335ab",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/17.png",
+      "current": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/17.png",
+      "status": "missing",
+      "stagedSha256": "f96873a48202cfd574d4bf4c34df59ec0cfb02d2bf97bfce18da90859c53223a",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/bloodveld-boots.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-boots.png",
+      "status": "missing",
+      "stagedSha256": "c5111c737a56645dd6475e7f6ece9204792adedfbec819c8cd3d30715069d84c",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/bloodveld-chaps.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-chaps.png",
+      "status": "missing",
+      "stagedSha256": "f78783928cd6a017299003a6bb75ff92cddfae0044d23289f6d3a2f139bddab7",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/bloodveld-coif.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-coif.png",
+      "status": "missing",
+      "stagedSha256": "87f2e081a6f5e24fab3248097d48ab66109aab30b7654bb728c6ee38d113030c",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/bloodveld-cuirass.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-cuirass.png",
+      "status": "missing",
+      "stagedSha256": "324dafb5002b35bd5c858d37731decd7b87dbd8210c321af4717b075dd7ac5dc",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/bloodveld-gloves.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-gloves.png",
+      "status": "missing",
+      "stagedSha256": "e3918e4c19a0a899852d6313a3c4a3492b4793bcde077a11c9295311eda72ae7",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/dark-beast-boots.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-boots.png",
+      "status": "missing",
+      "stagedSha256": "ae4f8f9f0d5e3464bb93cdc912e3f8e09a41d7de8cc01026c838e882acd0e6d3",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/dark-beast-chaps.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-chaps.png",
+      "status": "missing",
+      "stagedSha256": "8d40f03c1a306e2f4b220e530f82ecaf694af11350f527485b0337f88eac0b9f",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/dark-beast-coif.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-coif.png",
+      "status": "missing",
+      "stagedSha256": "cafd665dee1016cccf32dbcbbd41b5c7cf61f3e9a8144455e35136273c06958e",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/dark-beast-cuirass.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-cuirass.png",
+      "status": "missing",
+      "stagedSha256": "acb762f0cd54b9503e66eaab0288871c15aae10b9760860624f1daf8160c6905",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/dark-beast-gloves.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-gloves.png",
+      "status": "missing",
+      "stagedSha256": "8ba0f0afd075ecd799934fb570a39488f5619bf5e23ca4226963abdd8359e1d3",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/giant-frog-boots.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-boots.png",
+      "status": "missing",
+      "stagedSha256": "08cf85009154dfeed7f31add1657ab0ec6623347f08e2a5dea7ad4fdae67cddd",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/giant-frog-chaps.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-chaps.png",
+      "status": "missing",
+      "stagedSha256": "2e632c0765e88300156ad414360f260379490bbfeec1227f72399363b5827b20",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/giant-frog-coif.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-coif.png",
+      "status": "missing",
+      "stagedSha256": "45d698b26fc5c13a85e124c663bf868b0080d43493eaeb9b9ffebc08d9f262a9",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/giant-frog-cuirass.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-cuirass.png",
+      "status": "missing",
+      "stagedSha256": "09b25dc7fd44209c22956bb9c4eb25b70702ac4dfcda81035e4e5245c333c4b8",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/giant-frog-gloves.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-gloves.png",
+      "status": "missing",
+      "stagedSha256": "7285ff9850fa9b752ece0b15c6d249fb99ecbf64cff46c6210f56deaf50d4fee",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/naga-boots.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-boots.png",
+      "status": "missing",
+      "stagedSha256": "f64fbf2930505d73e769fc2e79e198d027e2d266e3712142c17ffc83c1e16d68",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/naga-chaps.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-chaps.png",
+      "status": "missing",
+      "stagedSha256": "8cebc1760075ee3522e89af39549c96113591e0b7da951d675a2618ba0eb5775",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/naga-coif.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-coif.png",
+      "status": "missing",
+      "stagedSha256": "f72e6e1bc03c1b0ebe43a4c6098c3f0e1992acf9b849f9ec4bdd4443eee63c46",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/naga-cuirass.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-cuirass.png",
+      "status": "missing",
+      "stagedSha256": "4de67e92726822c08169e9ba1aa98450bd9af0c61732650cb3bb22abe58512b9",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/naga-gloves.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-gloves.png",
+      "status": "missing",
+      "stagedSha256": "fd2060985cb740c78167dd5b1137b5dc2224c5c9e5040cc32daf40e6daf9e862",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/shield-of-mobility-icon.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/shield-of-mobility-icon.png",
+      "status": "missing",
+      "stagedSha256": "9c6da9e5645bd57a784ead0e92ea3beee049d4c3a6887168334118e9b7a98bfa",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/terror-dog-boots.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-boots.png",
+      "status": "missing",
+      "stagedSha256": "04ac36a9837eb82bc253384f61138a6203d8e731f01362e5bd72035d6e3522ff",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/terror-dog-chaps.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-chaps.png",
+      "status": "missing",
+      "stagedSha256": "2fbba6e94effb67927e4146fbb4220b4f5b6028c5e785170ed88b37597e25dd0",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/terror-dog-coif.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-coif.png",
+      "status": "missing",
+      "stagedSha256": "7cf797127c87b7a341c3e2d8a24b918cec5bd9749406a3658b0bb13e17a11b45",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/terror-dog-cuirass.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-cuirass.png",
+      "status": "missing",
+      "stagedSha256": "8c7d4ac27bd823a7fd2d3e3ef9dcfc66b3f1991f9728169da70eaa8ba86957e5",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/terror-dog-gloves.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-gloves.png",
+      "status": "missing",
+      "stagedSha256": "783eef721b91c123a7226572ec7cfd8f7d602974b2acb465ec304ecfc05b4671",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/ugthanki-boots.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-boots.png",
+      "status": "missing",
+      "stagedSha256": "2be27efaecb588f66fef8b434649d3de9de711fb3986b9c31573bdbc41e4a4eb",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/ugthanki-chaps.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-chaps.png",
+      "status": "missing",
+      "stagedSha256": "888d8b5ae68c17be667be238007d718e82aae5562e4a5e70d91d4a13b109582c",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/ugthanki-coif.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-coif.png",
+      "status": "missing",
+      "stagedSha256": "980c80e2f896f606c76b13df9bf216c8dd35113d4d3b16ef5b421c36b9b357c8",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/ugthanki-cuirass.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-cuirass.png",
+      "status": "missing",
+      "stagedSha256": "5969f52fc4804312c6a52b10512f0a0191f295df303ce42df63b7b3b30fd8eb0",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/armor/ugthanki-gloves.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-gloves.png",
+      "status": "missing",
+      "stagedSha256": "50c3aa4c60b885beb4f9bab8fb698713f6afa0480499f333d1fc304af1896a61",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/jewelry/sullen-pendant-icon.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/jewelry/sullen-pendant-icon.png",
+      "status": "missing",
+      "stagedSha256": "7bcab55cb8bfddc1f1884e62f0f114269eac9b44c77f8e2d03d06fb5e2001777",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/abyssal-rib.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/abyssal-rib.png",
+      "status": "missing",
+      "stagedSha256": "ea3f32f4c44d617bb4dc5a3fa3c876afb9c6f953ec08b7a3139f62cbda3f9453",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/abyssal-vertibrae.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/abyssal-vertibrae.png",
+      "status": "missing",
+      "stagedSha256": "f82d3817bcbc52cc5a317bb578de6575a4cb4205cd9955b99af2b3518996f3f8",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/bloodveld-hide.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/bloodveld-hide.png",
+      "status": "missing",
+      "stagedSha256": "746d4e5151e979c33e97f2a52f8a7113615ac917915a209151ad7f1b23711629",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/bloodveld-leather.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/bloodveld-leather.png",
+      "status": "missing",
+      "stagedSha256": "b9d4f7e19f186d31eac912ca811556d3f25d86ceb6218052e83ecc9c3af6133c",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/cockatrice-eye.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/cockatrice-eye.png",
+      "status": "missing",
+      "stagedSha256": "8d65cb1f24dc08ba5ba418781f10cb8292837b2748f8e2fdce6fc0c0999593b9",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/cockatrice-feathers.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/cockatrice-feathers.png",
+      "status": "missing",
+      "stagedSha256": "8e00956091b392d66336f2f385631c923473afa629718de50728bf55a9d40610",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/dark-beast-hide.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/dark-beast-hide.png",
+      "status": "missing",
+      "stagedSha256": "923b68bbe6ab50d1ff581fd3612fd751d50e46f59ccf3c22b3cd0a3e9c86f60a",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/dark-beast-leather.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/dark-beast-leather.png",
+      "status": "missing",
+      "stagedSha256": "53bb1736cd3d0e6434c8dafc0a8c744225b1fd2ea5862caf7af7121147dcfaa6",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/dog-treats.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/dog-treats.png",
+      "status": "missing",
+      "stagedSha256": "4a0e1355f72d48f521e95e4c016a45f94430c2b3a794fe1cc372bb14be2b26f9",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/ectoplasm.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/ectoplasm.png",
+      "status": "missing",
+      "stagedSha256": "003861359a3bb16dabc9f1e435c64f82fa4cec1962d131e0cf0067aa6beb6de9",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/eye-drops.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/eye-drops.png",
+      "status": "missing",
+      "stagedSha256": "e72c9b03bf190b8d4ca4bc8a19b6992dd6897db297e5de3618c66a3a3b2e8c46",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/frozen-tear.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/frozen-tear.png",
+      "status": "missing",
+      "stagedSha256": "0514ae607a5d129117bc1872797bf1ee0f98f86f63381562fabc893b99d17e17",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/giant-frog-hide.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/giant-frog-hide.png",
+      "status": "missing",
+      "stagedSha256": "52b96c76f3e445d1d094bd826e94905986ae547099f949267f86ee499a60d160",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/giant-frog-leather.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/giant-frog-leather.png",
+      "status": "missing",
+      "stagedSha256": "42c5b973585a205f8b56417b9cdd236f826780698c9cc5ecec7ed26e03c9becf",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/leach-tongue.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/leach-tongue.png",
+      "status": "missing",
+      "stagedSha256": "a6af015fb1b839e33a305e37bd086620e69253b9c13cf8934b961445d31e7462",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/lightning-horn.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/lightning-horn.png",
+      "status": "missing",
+      "stagedSha256": "e9330eba4a02d94e99a823d1fcedb7f8501652ad5f1ce40286584e03c06400e8",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/naga-hide.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/naga-hide.png",
+      "status": "missing",
+      "stagedSha256": "a8c5d80a1bbaa377d0eddc26aa44b0d19e59b1789c6c1f6580b492191d5b3d9f",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/naga-leather.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/naga-leather.png",
+      "status": "missing",
+      "stagedSha256": "58dd6ddc5414058edf66b9d9abe2a70b8325e9748f787ec39e46605d85747d06",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/slime-solvent.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/slime-solvent.png",
+      "status": "missing",
+      "stagedSha256": "f569dfb93dcae86f492205d5d008e6d2d93c2cf5b01f93e70d23b3397a856f69",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/slimey-residue.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/slimey-residue.png",
+      "status": "missing",
+      "stagedSha256": "470d590579fa1e7bef2dbaa2fc42e3edcbc55ccf69d4ed46fa4eb8643be51a6c",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/static-wipes.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/static-wipes.png",
+      "status": "missing",
+      "stagedSha256": "b6c20ec40ca50c99beca359459b87536a6cca625d24685d1cd01008a43e04fa7",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/terror-dog-hide.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/terror-dog-hide.png",
+      "status": "missing",
+      "stagedSha256": "90c5fdc61cb39dc34bde0150684fcec3d868b5f33dbfbaac1daf81bb943470a9",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/terror-dog-leather.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/terror-dog-leather.png",
+      "status": "missing",
+      "stagedSha256": "46c95ab7341b90a1c4ce864ea6aa0b4cbc5c9c8f46aa21d15d1a9e1b55eadc58",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/terror-fang.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/terror-fang.png",
+      "status": "missing",
+      "stagedSha256": "1ecdf6ee7973e51b99d299a0b407ba2f79f42f9e0c9543cbffe34e279c6f9315",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/ugthanki-hide.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/ugthanki-hide.png",
+      "status": "missing",
+      "stagedSha256": "850719312eadefd8eefd47dde88bf9f547d6a36d8793d95adf1877eeb3d7878f",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/ugthanki-leather.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/ugthanki-leather.png",
+      "status": "missing",
+      "stagedSha256": "788dac8e2e495c5a89e38fd70228cacf2006b9e8e68bd391d0693fedc843a594",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/wax-earplugs.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/wax-earplugs.png",
+      "status": "missing",
+      "stagedSha256": "13032613960c51988b3d24b897327d9c9581dd3953fa439dcaf21288eab85526",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/weapons/abyssal-whip-icon.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/abyssal-whip-icon.png",
+      "status": "missing",
+      "stagedSha256": "299ce54e34ec6a847db9b051472e131a9bd43349d3c343844285cf96bfa8e5a9",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/weapons/dagger-of-terror-icon.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/dagger-of-terror-icon.png",
+      "status": "missing",
+      "stagedSha256": "11adb419c2e65b5151c369d0d45cde68d9349cbe6576c055b0b6261ca7a853b4",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/weapons/dagger-of-terror-poisoned-icon.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/dagger-of-terror-poisoned-icon.png",
+      "status": "missing",
+      "stagedSha256": "ed84aee1a5197062ae86ce288889097a4b20c57ee051983aceafaaac262c55aa",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/weapons/leaching-bow-icon.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/leaching-bow-icon.png",
+      "status": "missing",
+      "stagedSha256": "3ed596aa0071c5e2179f0960671488cde2bd1a8efb2b205427bbefc846019443",
+      "mainSha256": null
+    },
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/weapons/thunder-spire-staff-icon.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/thunder-spire-staff-icon.png",
+      "status": "missing",
+      "stagedSha256": "cc5bce9de3cf00f948f710472352c3c6e43276d50dc3d9c15a15016c77bdf962",
+      "mainSha256": null
+    }
+  ],
+  "preservedLaterRevisions": [
+    {
+      "old": "dev/myworld/assets/sprites/items/inventory-ground/resources/sticky-saliva-gland.png",
+      "current": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sticky-saliva-gland.png",
+      "status": "missing",
+      "stagedSha256": "88b3bfc6f2cb8456e800f558faebb1d9d19139c2f0a33b84efa6ecee545a3e53",
+      "mainSha256": null,
+      "reason": "Later owner-approved Aseprite gland at inventory-ground/sticky-saliva-gland.png must remain authoritative; avoid higher-priority duplicate name."
+    }
+  ],
+  "authoringRoot": "dev/myworld/assets/authoring/slayer-items"
+}

@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "testedSourceCommit": "7b5f688a4a74b6129b0cbec937adb21f9113e463",
+  "base": "b283d3e0f7f3c396c9a039bf3f95212ed887adc1",
+  "clientVersion": 10057,
+  "checks": [
+    {
+      "suite": "builds",
+      "results": [
+        {
+          "name": "client",
+          "exitCode": 0,
+          "seconds": 4.23
+        },
+        {
+          "name": "server",
+          "exitCode": 0,
+          "seconds": 11.91
+        }
+      ]
+    },
+    {
+      "suite": "asset-checks",
+      "results": [
+        {
+          "check": "abyssal-whip-assets",
+          "exitCode": 0,
+          "seconds": 0.65
+        },
+        {
+          "check": "terror-dagger-assets",
+          "exitCode": 0,
+          "seconds": 0.06
+        },
+        {
+          "check": "leaching-bow-assets",
+          "exitCode": 0,
+          "seconds": 0.05
+        },
+        {
+          "check": "thunder-spire-assets",
+          "exitCode": 0,
+          "seconds": 0.06
+        },
+        {
+          "check": "mobility-shield-assets",
+          "exitCode": 0,
+          "seconds": 0.06
+        },
+        {
+          "check": "sullen-pendant-assets",
+          "exitCode": 0,
+          "seconds": 0.06
+        },
+        {
+          "check": "leather-poison-assets",
+          "exitCode": 0,
+          "seconds": 1.31
+        },
+        {
+          "check": "held-equipment-families",
+          "exitCode": 0,
+          "seconds": 0.54
+        },
+        {
+          "check": "held-shears",
+          "exitCode": 1,
+          "seconds": 0.38
+        },
+        {
+          "check": "slayer-material-icons",
+          "exitCode": 0,
+          "seconds": 0.52
+        },
+        {
+          "check": "slayer-pricing",
+          "exitCode": 0,
+          "seconds": 0.02
+        }
+      ]
+    },
+    {
+      "suite": "continuity-checks",
+      "results": [
+        {
+          "check": "test-battleaxe-coatings.py",
+          "exitCode": 0
+        },
+        {
+          "check": "test-gem-dragons.py",
+          "exitCode": 0
+        },
+        {
+          "check": "test-practice-item-art.py",
+          "exitCode": 1
+        },
+        {
+          "check": "test-slayer-movement-preview.py",
+          "exitCode": 0
+        },
+        {
+          "check": "test-client-external-asset-loader.py",
+          "exitCode": 0
+        },
+        {
+          "check": "test-cleric-spell-icons.py",
+          "exitCode": 0
+        },
+        {
+          "check": "test-monster-slayer-foundation.py",
+          "exitCode": 1
+        },
+        {
+          "check": "test-slayer-component-items.py",
+          "exitCode": 1
+        }
+      ]
+    },
+    {
+      "suite": "final-focused-checks",
+      "results": [
+        {
+          "name": "compile-client-fixture",
+          "exitCode": 0
+        },
+        {
+          "name": "client-recovery",
+          "exitCode": 0
+        },
+        {
+          "name": "client-authentic",
+          "exitCode": 0
+        },
+        {
+          "name": "test-practice-item-art.py",
+          "exitCode": 0
+        },
+        {
+          "name": "test-monster-slayer-foundation.py",
+          "exitCode": 0
+        },
+        {
+          "name": "test-slayer-component-items.py",
+          "exitCode": 0
+        }
+      ]
+    },
+    {
+      "suite": "final-contract-checks",
+      "results": [
+        {
+          "name": "provider-refresh",
+          "exitCode": 0,
+          "seconds": 1.05
+        },
+        {
+          "name": "world-builder-item-visual-provider",
+          "exitCode": 0,
+          "seconds": 10.02
+        },
+        {
+          "name": "player-release",
+          "exitCode": 0,
+          "seconds": 5.19
+        },
+        {
+          "name": "npc-capacity-profile-configs",
+          "exitCode": 0,
+          "seconds": 0.35
+        },
+        {
+          "name": "npc-capacity-production",
+          "exitCode": 0,
+          "seconds": 4.79
+        },
+        {
+          "name": "player-login-policy",
+          "exitCode": 0,
+          "seconds": 0.02
+        },
+        {
+          "name": "slayer-art-recovery",
+          "exitCode": 0,
+          "seconds": 0.81
+        }
+      ]
+    }
+  ],
+  "resolvedInitialFailures": [
+    "held shears fixture catalog count; successful final rerun",
+    "later coating reagent icon fixture expected placeholder; successful final focused check",
+    "Slayer component fixture expected placeholders/zero prices; successful final focused check",
+    "Slayer foundation fixture omitted existing movement-definition source; successful final focused check",
+    "provider omitted armor/jewelry icon roots; successful final contract check",
+    "player package fixed SHA receipts omitted recovered icons; successful final contract check",
+    "four wildcard imports in recovered server fixtures; corrected and static gates passed",
+    "CPD exceeded original 512MiB process heap; analysis completed with 2GiB cap, no baseline changes",
+    "invalid NPC-capacity test filename; correct production and profile suites passed"
+  ],
+  "finalRuntimeAppearanceFixturePassed": true,
+  "combatGate": {
+    "passed": 145,
+    "scenarios": 145
+  },
+  "staticAnalysis": {
+    "compiler": "PASS: no new gated warnings",
+    "changedLineChecks": "PASS: Checkstyle, PMD, ShellCheck, Ruff",
+    "spotbugs": "PASS: no new findings; 384 existing findings",
+    "duplication": "report only; completed",
+    "baselineChanged": false
+  },
+  "logSha256": {
+    "final-analysis.log": "058b2c109a2599800dab0861580b7b02790124b97a94001a581e94762b7e3a7b",
+    "final-lint.log": "be1dabc1c2eabba1346b4b61815aea7ae25d141b42ad40e22a59d8c272020e71",
+    "server-runtime-checks.log": "86ca0cbb3b08bffcfbbdd57e0434fc0d0696fd64d56615319df87e013cf8a302",
+    "final-runtime-checks.log": "56d845af97997f51139496d098d28c8f32dbdd0874339bf6eb14b6cf5f569abc",
+    "asset-checks/held-shears-final.log": "24df97597e194f8119efba694140b102ddc05479cb51ae057e073dba560686f2"
+  },
+  "privatePreview": {
+    "endpoint": "127.0.0.1:43631",
+    "loopbackOnly": true,
+    "loginObserved": true,
+    "ownerApproval": "everything showed up correctly",
+    "artifactContentsMatchTestedBuild": {
+      "Client_Base/Open_RSC_Client.jar": {
+        "allArchiveEntriesMatch": true,
+        "entryCount": 5219,
+        "privateSha256": "9afffe672593ff031a20416d731178ef5b917be37c78ad0fc74471d6ce150a49"
+      },
+      "server/core.jar": {
+        "allArchiveEntriesMatch": true,
+        "entryCount": 16814,
+        "privateSha256": "48483b342ef66c1e03dec59a609505a86baa34c2bc49b6d9b806a1537e82bf6e"
+      },
+      "server/core-gameplay-overlay.jar": {
+        "allArchiveEntriesMatch": true,
+        "entryCount": 19,
+        "privateSha256": "abc19a39881142845f5a1a35eadef04c7347a2b6a965bc931bee6e5a651ea597"
+      },
+      "server/plugins.jar": {
+        "allArchiveEntriesMatch": true,
+        "entryCount": 769,
+        "privateSha256": "fa2aec2df7eabf7dc991bc4e91dcb54efb588ffa54dad5cfa244be24d02ceb2d"
+      }
+    },
+    "database": "prior private test database only; online SQLite backup",
+    "publicChanged": false
+  }
+}

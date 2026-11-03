@@ -1,0 +1,294 @@
+{
+  "status": "New design review candidate; not installed. Mirror views are orientation previews, not full renderer body composites.",
+  "scale": 0.22,
+  "frames": [
+    {
+      "frame": 0,
+      "width": 16,
+      "height": 44,
+      "xShift": 17,
+      "yShift": 39,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 19.48152617990277,
+      "handY": 57.7499431191226,
+      "sourceGrip": [
+        112,
+        157
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 1,
+      "width": 19,
+      "height": 44,
+      "xShift": 14,
+      "yShift": 38,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 17.968458139329513,
+      "handY": 57.253818045211595,
+      "sourceGrip": [
+        418,
+        162
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 2,
+      "width": 23,
+      "height": 44,
+      "xShift": 13,
+      "yShift": 37,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 16.498499583544856,
+      "handY": 55.259424712622824,
+      "sourceGrip": [
+        721,
+        158
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 3,
+      "width": 35,
+      "height": 39,
+      "xShift": 20,
+      "yShift": 41,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 22.51985979307447,
+      "handY": 60.269727603183654,
+      "sourceGrip": [
+        99,
+        449
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 4,
+      "width": 35,
+      "height": 39,
+      "xShift": 20,
+      "yShift": 40,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 23.963954744174586,
+      "handY": 59.25249386599106,
+      "sourceGrip": [
+        414,
+        450
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 5,
+      "width": 33,
+      "height": 39,
+      "xShift": 24,
+      "yShift": 39,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 27.48152617990277,
+      "handY": 58.7499431191226,
+      "sourceGrip": [
+        709,
+        450
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 6,
+      "width": 20,
+      "height": 44,
+      "xShift": 29,
+      "yShift": 38,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 32.5274724783942,
+      "handY": 58.27334936297015,
+      "sourceGrip": [
+        130,
+        733
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 7,
+      "width": 18,
+      "height": 44,
+      "xShift": 33,
+      "yShift": 37,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 35.73112622106849,
+      "handY": 57.338087631326026,
+      "sourceGrip": [
+        420,
+        733
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 8,
+      "width": 22,
+      "height": 44,
+      "xShift": 35,
+      "yShift": 37,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 38.48369589295822,
+      "handY": 57.74995569568845,
+      "sourceGrip": [
+        725,
+        733
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 9,
+      "width": 25,
+      "height": 43,
+      "xShift": 41,
+      "yShift": 43,
+      "boundWidth": 66,
+      "boundHeight": 102,
+      "handX": 44.75,
+      "handY": 61.75,
+      "sourceGrip": [
+        127,
+        1010
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 10,
+      "width": 25,
+      "height": 43,
+      "xShift": 47,
+      "yShift": 36,
+      "boundWidth": 72,
+      "boundHeight": 102,
+      "handX": 51.66355670851663,
+      "handY": 54.810892010584915,
+      "sourceGrip": [
+        432,
+        1010
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 11,
+      "width": 30,
+      "height": 43,
+      "xShift": 49,
+      "yShift": 33,
+      "boundWidth": 79,
+      "boundHeight": 102,
+      "handX": 53.30912317111999,
+      "handY": 52.68507313304826,
+      "sourceGrip": [
+        732,
+        1012
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 12,
+      "width": 12,
+      "height": 47,
+      "xShift": 44,
+      "yShift": 36,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 47.48683473712977,
+      "handY": 58.26652093943222,
+      "sourceGrip": [
+        142,
+        1308
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 13,
+      "width": 12,
+      "height": 48,
+      "xShift": 45,
+      "yShift": 34,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 47.0571130989961,
+      "handY": 57.246197147193904,
+      "sourceGrip": [
+        438,
+        1310
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 14,
+      "width": 13,
+      "height": 47,
+      "xShift": 42,
+      "yShift": 31,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 44.53690766460577,
+      "handY": 53.749772962124524,
+      "sourceGrip": [
+        737,
+        1310
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 15,
+      "width": 30,
+      "height": 34,
+      "xShift": 15,
+      "yShift": 7,
+      "boundWidth": 84,
+      "boundHeight": 102,
+      "handX": 18.501500416455144,
+      "handY": 34.259424712622824,
+      "sourceGrip": [
+        101,
+        1630
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 16,
+      "width": 49,
+      "height": 29,
+      "xShift": 33,
+      "yShift": 16,
+      "boundWidth": 84,
+      "boundHeight": 102,
+      "handX": 35.498499583544856,
+      "handY": 37.259424712622824,
+      "sourceGrip": [
+        325,
+        1628
+      ],
+      "gripAlpha": 0
+    },
+    {
+      "frame": 17,
+      "width": 64,
+      "height": 20,
+      "xShift": 41,
+      "yShift": 30,
+      "boundWidth": 105,
+      "boundHeight": 102,
+      "handX": 44.740575287377176,
+      "handY": 42.501500416455144,
+      "sourceGrip": [
+        598,
+        1628
+      ],
+      "gripAlpha": 0
+    }
+  ]
+}

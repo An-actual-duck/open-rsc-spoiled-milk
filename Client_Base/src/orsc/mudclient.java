@@ -11150,7 +11150,10 @@ public final class mudclient implements Runnable {
 							int something2 = sprite.getSomething2();
 							int something3 = this.spriteSelect(EntityHandler.getAnimationDef(animID), 0).getSomething1();
 							if (something1 != 0 && something2 != 0 && something3 != 0) {
-								int xOffset = (spriteOffsetX * width) / something1;
+								// Whip padding expands the canvas, not the canonical mirrored hand offset.
+								int handOffsetBound = "abyssalwhip".equals(EntityHandler.getAnimationDef(animID).getName())
+									? (mySpriteOffset < 15 ? 64 : 84) : something1;
+								int xOffset = (spriteOffsetX * width) / handOffsetBound;
 								int yOffset = (spriteOffsetY * height) / something2;
 								int spriteWidth = (something1 * width) / something3;
 								xOffset -= (spriteWidth - width) / 2;
@@ -22347,8 +22350,24 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadExternalEquipmentSprites() {
+		loadExternalLayeredEquipmentSprite("abyssalwhip", getExternalEquipmentNumberedFolder("abyssal-whip"),
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.MAIN_HAND, ABYSSAL_WHIP_OFFSET_X, ABYSSAL_WHIP_OFFSET_Y,
+			ABYSSAL_WHIP_BOUND_WIDTH);
+		loadExternalCombatMainHandEquipmentSprite("daggerofterrorpoisoned", getExternalEquipmentNumberedFolder("dagger-of-terror-poisoned"),
+			SWORD_EQUIPMENT_OFFSET_X, SWORD_EQUIPMENT_OFFSET_Y);
+		loadExternalLayeredEquipmentSprite("shieldofmobility", getExternalEquipmentNumberedFolder("shield-of-mobility"),
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.OFF_HAND, MOBILITY_SHIELD_OFFSET_X, MOBILITY_SHIELD_OFFSET_Y,
+			COMBAT_MAIN_HAND_EQUIPMENT_BOUND_WIDTH);
+		loadExternalNeckEquipmentSprite("sullenpendant", getExternalEquipmentNumberedFolder("sullen-pendant"));
+		loadExternalCombatMainHandEquipmentSprite("thunderspirestaff", getExternalEquipmentNumberedFolder("thunder-spire-staff"),
+			STAFF_EQUIPMENT_OFFSET_X, STAFF_EQUIPMENT_OFFSET_Y);
+		loadExternalLeachingBowSprite();
+		// Custom dagger uses the same canonical hand anchors as the sword family.
+		loadExternalCombatMainHandEquipmentSprite("daggerofterror", getExternalEquipmentNumberedFolder("dagger-of-terror"),
+			SWORD_EQUIPMENT_OFFSET_X, SWORD_EQUIPMENT_OFFSET_Y);
 		loadExternalMainHandEquipmentSprite("fishingpole", getExternalEquipmentNumberedFolder("fishing-pole"));
-		loadExternalMainHandEquipmentSprite("shears", getExternalEquipmentNumberedFolder("shears"));
+		// Shears candidate is already registered on full 64x102 native canvases.
+		loadExternalMainHandEquipmentSprite("shears", getExternalEquipmentNumberedFolder("shears"), new int[15], new int[15]);
 		loadExternalCombatMainHandEquipmentSprite("firesword", getExternalEquipmentNumberedFolder("fire-sword"),
 			SWORD_EQUIPMENT_OFFSET_X, SWORD_EQUIPMENT_OFFSET_Y);
 		loadExternalCombatMainHandEquipmentSprite("icesword", getExternalEquipmentNumberedFolder("ice-sword"),
@@ -22373,13 +22392,20 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadExternalMainHandEquipmentSprite(String spriteName, File numberedFolder) {
+		loadExternalMainHandEquipmentSprite(spriteName, numberedFolder,
+			new int[] {17, 15, 13, 18, 21, 25, 27, 32, 36, 44, 49, 44, 40, 41, 42},
+			new int[] {27, 29, 27, 32, 31, 28, 30, 29, 27, 28, 24, 25, 41, 36, 23});
+	}
+
+	private void loadExternalMainHandEquipmentSprite(String spriteName, File numberedFolder, int[] offsetX, int[] offsetY) {
 		Map<String, orsc.graphics.two.SpriteArchive.Entry> equipmentSprites = getSurface().spriteTree.get("equipment");
 		if (equipmentSprites == null || !this.externalAssetLoader.assetDirectoryExists(numberedFolder)) {
 			return;
 		}
 		final int frameCount = 15;
-		final int[] offsetX = new int[] {17, 15, 13, 18, 21, 25, 27, 32, 36, 44, 49, 44, 40, 41, 42};
-		final int[] offsetY = new int[] {27, 29, 27, 32, 31, 28, 30, 29, 27, 28, 24, 25, 41, 36, 23};
+		if (offsetX.length != frameCount || offsetY.length != frameCount) {
+			throw new IllegalArgumentException("Noncombat equipment requires 15 frame offsets");
+		}
 		orsc.graphics.two.SpriteArchive.Entry spriteEntry = new orsc.graphics.two.SpriteArchive.Entry(
 			spriteName,
 			orsc.graphics.two.SpriteArchive.Entry.TYPE.PLAYER_EQUIPPABLE_NOCOMBAT,
@@ -22433,11 +22459,37 @@ public final class mudclient implements Runnable {
 	}
 
 	private static final int[] SWORD_EQUIPMENT_OFFSET_X = new int[] {17, 15, 13, 18, 21, 25, 27, 32, 36, 44, 49, 44, 40, 41, 42, 5, 32, 40};
+	// Fresh slender whip: transparent fist grips, symmetric padding preserves centered rendering.
+	private static final int[] ABYSSAL_WHIP_OFFSET_X = new int[] {17, 14, 13, 20, 20, 24, 29, 33, 35, 43, 55, 64, 44, 45, 42, 15, 33, 62};
+	private static final int[] ABYSSAL_WHIP_OFFSET_Y = new int[] {39, 38, 37, 41, 40, 39, 38, 37, 37, 43, 36, 33, 36, 34, 31, 7, 16, 30};
+	private static final int[] ABYSSAL_WHIP_BOUND_WIDTH = new int[] {64, 64, 64, 64, 64, 64, 64, 64, 64, 68, 80, 94, 64, 64, 64, 84, 84, 126};
+	private static final int[] MOBILITY_SHIELD_OFFSET_X = new int[] {34, 35, 34, 32, 33, 35, 40, 37, 34, 13, 12, 12, 1, 1, 1, 22, 21, 24};
+	private static final int[] MOBILITY_SHIELD_OFFSET_Y = new int[] {50, 49, 46, 45, 44, 43, 42, 42, 42, 43, 44, 44, 42, 43, 44, 31, 31, 31};
+	private static final int[] STAFF_EQUIPMENT_OFFSET_X = new int[] {16, 15, 14, 5, 13, 24, 15, 27, 37, 30, 39, 48, 44, 43, 42, 7, 20, 7};
+	private static final int[] STAFF_EQUIPMENT_OFFSET_Y = new int[] {21, 21, 21, 23, 22, 20, 24, 21, 19, 24, 21, 18, 25, 22, 16, 1, 5, 31};
 	private static final int[] SWORD_EQUIPMENT_OFFSET_Y = new int[] {27, 29, 27, 32, 31, 28, 30, 29, 27, 28, 24, 25, 41, 36, 23, 6, 9, 29};
 	// Register the tightly cropped fork frames to the canonical spear hand/shaft anchors.
 	private static final int[] DEMON_PITCHFORK_EQUIPMENT_OFFSET_X = new int[] {13, 12, 11, 8, 10, 22, 17, 25, 35, 32, 37, 46, 41, 41, 41, 3, 22, 2};
 	private static final int[] DEMON_PITCHFORK_EQUIPMENT_OFFSET_Y = new int[] {16, 15, 13, 15, 15, 14, 16, 16, 14, 15, 13, 13, 15, 14, 11, -7, -4, 31};
 	private static final int[] COMBAT_MAIN_HAND_EQUIPMENT_BOUND_WIDTH = new int[] {64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 84, 84, 84};
+
+	private void loadExternalLeachingBowSprite() {
+		Map<String, orsc.graphics.two.SpriteArchive.Entry> equipmentSprites = getSurface().spriteTree.get("equipment");
+		File folder = getExternalEquipmentNumberedFolder("leaching-bow");
+		if (equipmentSprites == null || !this.externalAssetLoader.assetDirectoryExists(folder)) return;
+		final int[] offsetX = {39, 40, 39, 34, 28, 24, 27, 22, 13, 12, 8, 3, 13, 14, 15};
+		final int[] offsetY = {29, 28, 27, 23, 26, 24, 17, 18, 19, 17, 19, 22, 24, 28, 32};
+		orsc.graphics.two.SpriteArchive.Entry entry = new orsc.graphics.two.SpriteArchive.Entry(
+			"leachingbow", orsc.graphics.two.SpriteArchive.Entry.TYPE.PLAYER_EQUIPPABLE_NOCOMBAT,
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.OFF_HAND, 15);
+		for (int i = 0; i < 15; i++) {
+			orsc.graphics.two.SpriteArchive.Frame frame = this.externalAssetLoader.loadExternalEquipmentFrame(
+				new File(folder, String.format(Locale.ENGLISH, "%02d.png", i)), offsetX[i], offsetY[i]);
+			if (frame == null) return;
+			entry.getFrames()[i] = frame;
+		}
+		equipmentSprites.put("leachingbow", entry);
+	}
 
 	private void loadExternalNeckEquipmentSprite(String spriteName, File numberedFolder) {
 		Map<String, orsc.graphics.two.SpriteArchive.Entry> equipmentSprites = getSurface().spriteTree.get("equipment");

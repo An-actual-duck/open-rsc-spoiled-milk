@@ -1,0 +1,1424 @@
+{
+  "sourceCommit": "85ed0e8a05c13143d318336f680e786849a0b75a",
+  "historicalProject": "dev/myworld/art-candidates/slayer-items",
+  "currentAuthoringRoot": "dev/myworld/assets/authoring/slayer-items",
+  "sourceFilesPreservedWithoutModification": true,
+  "runtimeAssets": [
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/00.png",
+      "sha256": "795bf084de46a6354838e81d509248b9214503c74de3b8861d64336731144182",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-00.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/00.png",
+      "preservedSourceGitBlob": "41e013fcecea915459da800eba09e257cc7d5a27"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/01.png",
+      "sha256": "33a6d3bb15cecf4a1db7ae5ec86206a5c6931461f8c453421b104914af979c6f",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-01.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/01.png",
+      "preservedSourceGitBlob": "32f5ba4033ba7e1a0f4de727714ea0666ad3b249"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/02.png",
+      "sha256": "ff931adc4a62e230063f7faed7e8a615c0efb66d8ab928ce303163ae0cc68e8d",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-02.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/02.png",
+      "preservedSourceGitBlob": "25eb8ce3f2d61d1df063416b91b94430af8121bb"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/03.png",
+      "sha256": "4f8f36ab3cdcf99f6304d5ba26372fc772e9544c6abb8de521212c836bf6aa44",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-03.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/03.png",
+      "preservedSourceGitBlob": "954f0381f937882eda801fa3e65650af1de4841c"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/04.png",
+      "sha256": "3f0f94f3e3b982f7f8c7d0f295b1a4adf6c6d1f439dcd18ef9b230add86ba0fb",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-04.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/04.png",
+      "preservedSourceGitBlob": "e1992d2d9a3eb9987e8c77c77979b4965201e5cb"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/05.png",
+      "sha256": "3ddccaa4a419dce5648532a7bd1f64512cc1183ba93fbad7901c76ed7a4a273e",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-05.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/05.png",
+      "preservedSourceGitBlob": "2ee8c1948e0907bbb365719606d5d6b3063d95b9"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/06.png",
+      "sha256": "80b6e8eeaca163538fc887f20b0c3fd5bdee990442faa44eb03f015cd157ae59",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-06.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/06.png",
+      "preservedSourceGitBlob": "7f62d51e211a7127fe36c01c8d579dd46e4d14f8"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/07.png",
+      "sha256": "5bf37c427f50754ccf8e93306af4b2afd9a5f0b3b7a784e4a415cb888fb887ee",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-07.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/07.png",
+      "preservedSourceGitBlob": "8b468fb58e45c3898aac6a45e65326e4dfaef804"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/08.png",
+      "sha256": "5305ea1e9246d78d96bf94a8a2da043fac3f1b1373dd96c30de99bb7b4943c9a",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-08.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/08.png",
+      "preservedSourceGitBlob": "75b7a460827a054cbbfc1cd585c2b9e89164d7de"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/09.png",
+      "sha256": "1a803514bdc379583b745454cfcc36c6451c0a700d335384bb9df86446353612",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-09.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/09.png",
+      "preservedSourceGitBlob": "bfac70e4ea494935f27bfe267e3b688189a17079"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/10.png",
+      "sha256": "5cc4250a678b71dcfa96787732c213ff4c8ee2d1324d848c60d968fc54870662",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-10.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/10.png",
+      "preservedSourceGitBlob": "5ffc13b88ca55071c65fa2a9a36a715d7a39b135"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/11.png",
+      "sha256": "8c782968170a4e2d6ac22c4d2a1f33bf4b42581b710e310924e3e2f1dd9f6b63",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-11.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/11.png",
+      "preservedSourceGitBlob": "91da6c7f9df5006b4250cd08693235c2e2f605d9"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/12.png",
+      "sha256": "56fe8770d49315790c86d4354980849392873e878aa79c857a4da43277b6e0d2",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-12.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/12.png",
+      "preservedSourceGitBlob": "466c5d11aa7cc8894aca32d99655adfc2191d435"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/13.png",
+      "sha256": "e0a22d858f7329337d8314d1f8e27258d36f32d8e71ef29e8fc3d38182abd70a",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-13.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/13.png",
+      "preservedSourceGitBlob": "1a6a6595b38db21f69579c37b0ac54bc20559cbc"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/14.png",
+      "sha256": "11a2caa63f446de60d3653456669b4e810406d76de38d7659a314a6c683135b0",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-14.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/14.png",
+      "preservedSourceGitBlob": "b5a3fde861dbdda86d5eb57bc3f95b269d1015cb"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/15.png",
+      "sha256": "eae8ce9b6fc4c7fedf842297bcd09b1d8fdcfb2090eb9b70d6c0d4b904450238",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-15.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/15.png",
+      "preservedSourceGitBlob": "dcf809c641a027e61873bf6bf1be3f938a187f2c"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/16.png",
+      "sha256": "689e6f145d799b33207fe29f3b1946e5d4c149a405863418710f4a2cf21dc3b6",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-16.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/16.png",
+      "preservedSourceGitBlob": "3b8a4fced84755c3bbd0ec8b24438aed3686818c"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/abyssal-whip/numbered/17.png",
+      "sha256": "5b4e829fb75b1690fbc89f121f3a46e6c3b3b920ddf0694cfe886a8db384cb9f",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-abyssal-whip-v3/frames/frame-17.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/abyssal-whip/numbered/17.png",
+      "preservedSourceGitBlob": "3ae901682739f545b8f92c94b0556764766b3a9e"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/00.png",
+      "sha256": "7e8a770cf8c2e6e82b5caaa01178fe577b2f85405a8b07256dec0b7ade62a758",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/00.png",
+      "preservedSourceGitBlob": "b32255c1daadc9cb087a8bdeaf2dca2fd5b89d75"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/01.png",
+      "sha256": "0e070499254da867decf8c24cb1787d1e55f67b036e57ee3c7f183817c573527",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/01.png",
+      "preservedSourceGitBlob": "34df0aa224436b100fe2b335008c130c76270dbd"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/02.png",
+      "sha256": "0e070499254da867decf8c24cb1787d1e55f67b036e57ee3c7f183817c573527",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/02.png",
+      "preservedSourceGitBlob": "34df0aa224436b100fe2b335008c130c76270dbd"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/03.png",
+      "sha256": "d5708a7925efe5e999f51a0d1bddc8302302c3cd74198a4244d6f4ecb64ab3da",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/03.png",
+      "preservedSourceGitBlob": "41fa98d161e4c38e136a9e48092139a7ff220aee"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/04.png",
+      "sha256": "55b2288ad2deb15c090d6670a0fbb2ed36ef89c13a883a034cb8f88fbf3ce439",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/04.png",
+      "preservedSourceGitBlob": "e61c58df14d4bf59657ac33bc5a58027e7f81c47"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/05.png",
+      "sha256": "7e8a770cf8c2e6e82b5caaa01178fe577b2f85405a8b07256dec0b7ade62a758",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/05.png",
+      "preservedSourceGitBlob": "b32255c1daadc9cb087a8bdeaf2dca2fd5b89d75"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/06.png",
+      "sha256": "326f6f4f4f1520fadf7dc965b481486dbd1e5f66b8fe392e5cecd76e9bdae856",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/06.png",
+      "preservedSourceGitBlob": "f1ced9291a0391069248eebf18c8de3e2d334a61"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/07.png",
+      "sha256": "d728a2e8f181ec6b242859459ee23520bad972edbae2aa7352e6c98f59f7ea74",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/07.png",
+      "preservedSourceGitBlob": "73027a138ae79c8603d61dfb6f068c65ec923514"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/08.png",
+      "sha256": "7e8a770cf8c2e6e82b5caaa01178fe577b2f85405a8b07256dec0b7ade62a758",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/08.png",
+      "preservedSourceGitBlob": "b32255c1daadc9cb087a8bdeaf2dca2fd5b89d75"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/09.png",
+      "sha256": "8ddf1d01e9c26d1cd39dde7aae9678111086f9a4f769ba2e487c8cabe672ffdd",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/09.png",
+      "preservedSourceGitBlob": "321398a78fded7e9ad373974985d4008b511d39d"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/10.png",
+      "sha256": "479acf621c077674e1b7c9e4d2029cd11883294784678f1a0d64d35665ecf990",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/10.png",
+      "preservedSourceGitBlob": "17a9e5bf36a5e2fe71d9b1c32b35fc938f0fc057"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/11.png",
+      "sha256": "d1d54f501edeadcd64ee610f68a05d0206306b5a59f8e0c6beaf133919dadecb",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/11.png",
+      "preservedSourceGitBlob": "1bab258d1830c42ec151e2bbde80533c3c5cb832"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/12.png",
+      "sha256": "199c63c08f54636dd981a52b9268d9d3db78f1dee2cf5006ae23a9ccf045f8bf",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/12.png",
+      "preservedSourceGitBlob": "fb26061afdd1189aec109560248b24ab0b4818ce"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/13.png",
+      "sha256": "efc6b113f7a85a29293ed60bed0464b04a223b343c19329cd8245460473eaa37",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/13.png",
+      "preservedSourceGitBlob": "89d1a55a900e2b8412e10dbac9fdd454f2fddf28"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/14.png",
+      "sha256": "aaa1cba079968bad48ab454aa5e7b48b4daed35950b88099ad59fc11180c9adf",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/14.png",
+      "preservedSourceGitBlob": "67961ec22bfbbedfa435214e94efaf676f9aaefa"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/15.png",
+      "sha256": "d9654df5763d1f1d396a353b44d5aee4fafd9ae5456812a0fc233806698639fe",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/15.png",
+      "preservedSourceGitBlob": "6a330f60b19209c7c25ee3da1ca3d6f400f2bb32"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/16.png",
+      "sha256": "0e070499254da867decf8c24cb1787d1e55f67b036e57ee3c7f183817c573527",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/16.png",
+      "preservedSourceGitBlob": "34df0aa224436b100fe2b335008c130c76270dbd"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror-poisoned/numbered/17.png",
+      "sha256": "4c7b322b283ffb328430a1ff573a5b5eaa5150e39914b32f19f8e0d93fb66fbb",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror-poisoned/numbered/17.png",
+      "preservedSourceGitBlob": "454839f0494d5e94f57daea2cf99dfd15315f7de"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/00.png",
+      "sha256": "790794afcf18eba31399e79c899be3539d01d1679fe3117c187a6df0994142a6",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-00.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/00.png",
+      "preservedSourceGitBlob": "f5619520890393eb6278afc891c0404ad8b827ee"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/01.png",
+      "sha256": "e27d7e413ae235e53686c34c956963a2b4981be0fd8569d74638fa82c80a8138",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-01.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/01.png",
+      "preservedSourceGitBlob": "3e773c1accdc6bd8908ff3ad47a428be237d71dd"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/02.png",
+      "sha256": "e27d7e413ae235e53686c34c956963a2b4981be0fd8569d74638fa82c80a8138",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-01.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/02.png",
+      "preservedSourceGitBlob": "3e773c1accdc6bd8908ff3ad47a428be237d71dd"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/03.png",
+      "sha256": "35f074003a1178373dc3d78c9eb26726d290457f40c3cbcb0c50880753735b1a",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-03.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/03.png",
+      "preservedSourceGitBlob": "1db845b74d97fa4e991365269761e469235505eb"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/04.png",
+      "sha256": "32d43ffc77e5b066c38bc26575bf6ba1ce7c1f0afe7ad7744c286aa6ead05a76",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-04.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/04.png",
+      "preservedSourceGitBlob": "d2b9503817aa8f2740527643c89fda7390bb6d48"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/05.png",
+      "sha256": "790794afcf18eba31399e79c899be3539d01d1679fe3117c187a6df0994142a6",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-00.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/05.png",
+      "preservedSourceGitBlob": "f5619520890393eb6278afc891c0404ad8b827ee"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/06.png",
+      "sha256": "40441f03ba7e7c84efc8ef5fb2c0b1e365b88b169ee37e8635f0f07dd38f60a1",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-06.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/06.png",
+      "preservedSourceGitBlob": "a5e2433e8d9f057f1700f6acd239d05cf20d5301"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/07.png",
+      "sha256": "db486b7d481f5530febe6a0a103e16b3d284e3e954769133709816b215bdc3de",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-07.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/07.png",
+      "preservedSourceGitBlob": "8b69fbbfb941cd6feb95ca8706e0bd0223faf090"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/08.png",
+      "sha256": "790794afcf18eba31399e79c899be3539d01d1679fe3117c187a6df0994142a6",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-00.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/08.png",
+      "preservedSourceGitBlob": "f5619520890393eb6278afc891c0404ad8b827ee"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/09.png",
+      "sha256": "7fa2079638370db11e7b9f6ed28a4917ab2325e864828d95e8d142c2ae320472",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-09.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/09.png",
+      "preservedSourceGitBlob": "bdd9f846fcceba5d4496cc63af6a3fdc6412e960"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/10.png",
+      "sha256": "4aab8ad41b02ce03cb0589113c827e4bf80207101d9268f4a16c9930f456e3a3",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-10.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/10.png",
+      "preservedSourceGitBlob": "2633c9005b3870c2862304c084bb481ce35ea3f5"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/11.png",
+      "sha256": "4649603ee5ea62c39d689b82d07e356644bf49961fc370202e7245e5830f41fb",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-11.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/11.png",
+      "preservedSourceGitBlob": "492d0df125e8750e1de8dbc68e8530f3354eb002"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/12.png",
+      "sha256": "86e42dcabbafb6388b90fbdc65a817af504de51e585e09f1919d1f62b135b4cc",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-12.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/12.png",
+      "preservedSourceGitBlob": "0cd05d4fa000df7cca3d29428adea696503600d8"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/13.png",
+      "sha256": "3a699f01f1988058a05b113bfea19cb0a0cd972c19d053f5aa447b570f94ffd3",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-13.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/13.png",
+      "preservedSourceGitBlob": "0a0fe60afc3d253ed1fc5278b65e1478110d636e"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/14.png",
+      "sha256": "e69f64459f2bcf7991e899f6ba0e9ff5d275dadc81009d7f7705782e84c2b1ca",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-14.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/14.png",
+      "preservedSourceGitBlob": "175fc0f30b1643d46a0fc55647a9376ea784c3a8"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/15.png",
+      "sha256": "f31b690f2fccd98deb6e7ed3c1645e4849ce11deea928201620bfbc8f75d643d",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-15.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/15.png",
+      "preservedSourceGitBlob": "89333e10918a73a471b3bc66257e823cc154205c"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/16.png",
+      "sha256": "e27d7e413ae235e53686c34c956963a2b4981be0fd8569d74638fa82c80a8138",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-01.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/16.png",
+      "preservedSourceGitBlob": "3e773c1accdc6bd8908ff3ad47a428be237d71dd"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/dagger-of-terror/numbered/17.png",
+      "sha256": "5cd6490c1bcbca2e07060f665c791052c6a41634d56e9096b77fa3ec6f36b32d",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-dagger-of-terror/frames/frame-17.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/17.png",
+      "preservedSourceGitBlob": "35c768fc7a4eec0a94705c1fb21fff7d0def59c5"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/00.png",
+      "sha256": "ea6a62b1385d97b3fa8207efced3aa44af2b8f84f5c697a8b4bafe8271a944cb",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-00.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/00.png",
+      "preservedSourceGitBlob": "2de69782569d60c0d58f466e09daedf933d581e5"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/01.png",
+      "sha256": "4ffaee66c37059bbeec3753dbd8be81a583bdd8a773d7189ac630791cae2575c",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-01.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/01.png",
+      "preservedSourceGitBlob": "018e23231ec07604fd1ee5443e04fc02e264c6ab"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/02.png",
+      "sha256": "3b8c96aadc82ac9029a2db6f86337b56f10824452c6dc33c6e64e28fb3e56155",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-02.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/02.png",
+      "preservedSourceGitBlob": "82503a088bc88dc3046b1412c74085b15790770b"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/03.png",
+      "sha256": "7a29ec23b9df6594756e40a0b96f228342acf09d5e724ff3efc90058eb1c927b",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-03.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/03.png",
+      "preservedSourceGitBlob": "c4b722d3a9200f27ef5564a6f54dc35d1aa3d44e"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/04.png",
+      "sha256": "935ba026b4e49c312c75343407bc147b34a32163c84b5643cd63351203d7ed0a",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-04.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/04.png",
+      "preservedSourceGitBlob": "a1a1ea8bf5870e032c2d2d514b5667b2116bb7fc"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/05.png",
+      "sha256": "df77580aa5997a34a54ff9b5d77596d8feb08c6f1a8ac5757970e54babbb6e3e",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-05.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/05.png",
+      "preservedSourceGitBlob": "71c543db47b2628475a518b041ec2706c376b372"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/06.png",
+      "sha256": "9a6f6e700ee697b34c0d955192f2521b148f6603acd25352d4a348f9be28a33e",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-06.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/06.png",
+      "preservedSourceGitBlob": "e71cd8e76133fb0a32b7393c81ad92106d9ca918"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/07.png",
+      "sha256": "0f7fd3179dced8a1fd77d2557869ebd91e7f4a4d3e330a9be6907a6a4f895cba",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-07.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/07.png",
+      "preservedSourceGitBlob": "b7fe35397163cc5f2382d5426b91ef21eec6299b"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/08.png",
+      "sha256": "a0bad4de222d8e7be461ee2a680f1d682789c65208721066c1f7323a8d982199",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-08.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/08.png",
+      "preservedSourceGitBlob": "3f661796d9edc43c3389325795b67229bba17559"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/09.png",
+      "sha256": "bc75f768874935a07a7ca36382bf4a28e1cb223149ea5b7aeb656321cd9e4e66",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-09.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/09.png",
+      "preservedSourceGitBlob": "1ef8d91c1e170d965c793783016cbf0013b59cf7"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/10.png",
+      "sha256": "1f71103ba456cfda2d02983dfa8a55a31f2f37daf367fc419c20274de1f88bfb",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-10.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/10.png",
+      "preservedSourceGitBlob": "638886153c9af8fec56f5d7eb7f190d186c13694"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/11.png",
+      "sha256": "08ca665b5b3e3fdde306a5888b254139ba57c68128faf6117a8f8679846cb6a6",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-11.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/11.png",
+      "preservedSourceGitBlob": "3d1f8a44e0888ad4261cf7fae24905f5274dffbb"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/12.png",
+      "sha256": "7d57fd10b9dd928f33b26f7a88d46f8578b5b8ee5a6fe70c8df02ae40cc6ccdd",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-12.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/12.png",
+      "preservedSourceGitBlob": "f5f2bbc0aafccb2c753ada0c948faeb2cd7a7dae"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/13.png",
+      "sha256": "77fff14cea93e7f0a6c65b56fe5395b572be3913dae5847caa6972d4c88736db",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-13.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/13.png",
+      "preservedSourceGitBlob": "492806f43f9c83542d9ffa0037961f439bc3a658"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/leaching-bow/numbered/14.png",
+      "sha256": "c44dc08cb31139cb88b121a2c61bf1e53821bb44958fb006fdf33a133c04499d",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-leaching-bow/frames/frame-14.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/leaching-bow/numbered/14.png",
+      "preservedSourceGitBlob": "352f3077e95eb7c59a019348a163969d5ebaabb0"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/00.png",
+      "sha256": "ee639574a63aa4369228cc1352e0809d456882c6989218c9a1b7525256e3fc28",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-00.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/00.png",
+      "preservedSourceGitBlob": "dbb84261fcd0d89461faa6e81bdc89fa9dbf483f"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/01.png",
+      "sha256": "599995b77709bdeebffcc71464d8995e42dd553ca9f863e6062891983b493a71",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-01.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/01.png",
+      "preservedSourceGitBlob": "bc4cf5523130316051613e924194f15e91bdb2c3"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/02.png",
+      "sha256": "587748052caffe4f008fa1ec1132690990cc212b36b2012e6a44b4f4b4b4dacd",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-02.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/02.png",
+      "preservedSourceGitBlob": "80da17effd5256b0b13862fe8e4a6e8b74570afe"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/03.png",
+      "sha256": "3410b6354e0bdb1a6a91c7745b9bf7fbd06d34f385de5a26840a4d6875fa32e1",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-03.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/03.png",
+      "preservedSourceGitBlob": "1fa1a1199d9217cb9dfb755a9b4a3badb83f968b"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/04.png",
+      "sha256": "b766d36120cd9aebaff6400a22937e57e0096d71bed1afbfb108e7c15afb184e",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-04.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/04.png",
+      "preservedSourceGitBlob": "953ce6766769eaa64a4d5f973720ffc8b0095082"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/05.png",
+      "sha256": "332e84dbabe48325c0949c2860bcffba2a1f61ce6cd586812c5bb01fc85bffe5",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-05.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/05.png",
+      "preservedSourceGitBlob": "b241828e392fa01fe6cbbf66eb3eae44274f79f9"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/06.png",
+      "sha256": "b3cca4992f1ce5fa28e5dec8b847ddd45ccad30ac3359c97649fb377f216d6f5",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-06.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/06.png",
+      "preservedSourceGitBlob": "93737aa0a07b6e0206589b1c28beaf8eb136ba11"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/07.png",
+      "sha256": "dabbf60ba4c689f9884cc5b0dab4a5b355e5e2ec2f3569a45c8c5a7831cf4d6e",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-07.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/07.png",
+      "preservedSourceGitBlob": "604c63c98b700c906ba6ef2c3f4aa69cd849f6f4"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/08.png",
+      "sha256": "ff7a98a6b42f1053181895a2dcc306cab575170e0017f29fd57340ca0b634d94",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-08.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/08.png",
+      "preservedSourceGitBlob": "e1d78c406e50a960733a271490adbaa8076db450"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/09.png",
+      "sha256": "d7ec9112422998e4cfdd7d246b26ace65c7b33c671f89092147be772836af306",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-09.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/09.png",
+      "preservedSourceGitBlob": "d5d2c8bb8960e6477d041f98276d07f9fc8a1007"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/10.png",
+      "sha256": "0d9f0ac1b2ea777aa9a1470c04e9bff4ac0c36cd8e30ef4bf960e69595b7163e",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-10.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/10.png",
+      "preservedSourceGitBlob": "d341a011919ef5e2145d3f6bb1d2d26f85508aa9"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/11.png",
+      "sha256": "e271594301b17410b6ef5b3f505a1f24b7f34b26f97c1be2aaed20b835f3c793",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-11.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/11.png",
+      "preservedSourceGitBlob": "7f16ccd6156d41c7838e177f6c179939f840715b"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/12.png",
+      "sha256": "2aab69f26494a8a1a7d6bdec04067dcc65c4c48f04ec8999efc149e21405c9c3",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-12.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/12.png",
+      "preservedSourceGitBlob": "807901e45754d547c1d0408d7042b7a3304728e5"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/13.png",
+      "sha256": "e1e4d97546317f9801b456ac318143d15e47b5f726375602b2ce5a4a8d8f8499",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-13.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/13.png",
+      "preservedSourceGitBlob": "55773e8b540bd9a4559bb75a7a7ff29ab72ae968"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shears/numbered/14.png",
+      "sha256": "da0b5523da19f585ea28a7bbf722b90bc1bedf4b4fe7d3989dc94d862330f5b8",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shears/full-canvas/frame-14.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shears/numbered/14.png",
+      "preservedSourceGitBlob": "4d4efc6bd5483bf737caae4315d24e4ffa5529aa"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/00.png",
+      "sha256": "03f85ba2210d37e035ff5645904b9fa7af10eec33af2f9aec619e86385cad5b4",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-00.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/00.png",
+      "preservedSourceGitBlob": "cfd2b3c2cf15b55f248e4502ab1816df414fc045"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/01.png",
+      "sha256": "18816e655a4d8ecd41c7fc71fa669f12041a210721b78a3b718473a2634970cb",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-01.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/01.png",
+      "preservedSourceGitBlob": "13b85edeb79408c65e17952dc2403fea2372ab77"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/02.png",
+      "sha256": "2ed81b23a1a11084432b21996b1359bde5c74575af5392d1e52870d4a98af91e",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-02.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/02.png",
+      "preservedSourceGitBlob": "c6add72a24a7f9e11c49b569df38531a9272c102"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/03.png",
+      "sha256": "be8a072d21ea4dca082e027f3d5e8c725a7753067672f4b047ad758347fca20c",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-03.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/03.png",
+      "preservedSourceGitBlob": "3000a87709e7613c0376202c1a9de02d9ac43eb5"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/04.png",
+      "sha256": "1f6ed6e377674f031b350ce51b1ebf7fe58c88471d9693ac42aa8c82f61d71e7",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-04.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/04.png",
+      "preservedSourceGitBlob": "7f0cdfc512c876e40cd5eb15be8eed8542353edb"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/05.png",
+      "sha256": "4cea85d3ecee42235d7e26f07ba45a4ba6c3a4ad04c812eead90dab98b0916fe",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-05.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/05.png",
+      "preservedSourceGitBlob": "275c10eb82e7e13211a008494bdfff8ad67574f7"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/06.png",
+      "sha256": "6c64611ef8cba0f6f3cc3eeafd18bb4ea1af65c2c3e7d23c9c96718afa992847",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-06.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/06.png",
+      "preservedSourceGitBlob": "0f028d6ce5b6a3b3e5e2c7a6a1fde5a550bf40e0"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/07.png",
+      "sha256": "1ee88c1a7ead51fc756c5b6b87c1c4a69884d2ebdae44dc7ed188ea3d95b948e",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-07.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/07.png",
+      "preservedSourceGitBlob": "e187fa7d1bd3c7c28e5ffd29934bce09ae33eac2"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/08.png",
+      "sha256": "1c0879d65fdb2d1a4cc1d091d518d8c12ca3f8cb6862229d0f16f10e5fff0695",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-08.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/08.png",
+      "preservedSourceGitBlob": "7cc3c2e32f4262aebee638892d1f336665b923d4"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/09.png",
+      "sha256": "d2ccec36a177050f443ce0a8de312bfec8bcd1cf1a20da44c43e83c23dccd87b",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-09.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/09.png",
+      "preservedSourceGitBlob": "b11b2a2c36c15ee7016b31d8c034514f76baeaee"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/10.png",
+      "sha256": "81e8ff4c2e790f14e2a6a7b511173e9294720035dd8d3a0cf6d9be72a2475cea",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-10.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/10.png",
+      "preservedSourceGitBlob": "40fa0182dabe867aac4da8d08ba11f6b0d60ca9b"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/11.png",
+      "sha256": "75b5d88e243857ceb557214777b02e3e48428ca848b7a3ff0e8810608b63c76c",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-11.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/11.png",
+      "preservedSourceGitBlob": "bad3936e5f4cd5b984e60e01cdf4fc49c4c00d3b"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/12.png",
+      "sha256": "f0f69211489b5f9b5d08964f0fa890ab91d6e17274c656ff00967f50169fe0e9",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-12.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/12.png",
+      "preservedSourceGitBlob": "9acfa7d506380156b259b8da38b1c35bc35cbe5d"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/13.png",
+      "sha256": "125e32906a4c1363382785d4d8f4ece9ce91bc09ac373209c79f8ce5944a95d0",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-13.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/13.png",
+      "preservedSourceGitBlob": "db0d55daced04bfa82fd00aa29738fac8a562723"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/14.png",
+      "sha256": "45846e3f4aae5ae60fc22caf8ae0de0b693d7359b15d09d9fa4061aca6cbe72f",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-14.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/14.png",
+      "preservedSourceGitBlob": "bd034199849171287b7e1199d450a67b008440f5"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/15.png",
+      "sha256": "e99dcc281da6a8dc956f5162cf31405489cb77061bfb30c59a4aaf6f4fba8ebc",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-15.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/15.png",
+      "preservedSourceGitBlob": "202bcd9ebab734f4848e623f1c077519fae65e1b"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/16.png",
+      "sha256": "edca20797ef6d27e2ec298989312ca768577fd6f74115e40e2eda44a4c5258df",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-16.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/16.png",
+      "preservedSourceGitBlob": "63d0ece6397a750b4f18a022de415916a147928a"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/shield-of-mobility/numbered/17.png",
+      "sha256": "e801c688fca1c21043fe0f537227518f705c25276813d62a05a340fb5963cbe6",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/held-shield-of-mobility/frames/frame-17.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/shield-of-mobility/numbered/17.png",
+      "preservedSourceGitBlob": "57dd41b50487331cbe8fd9913a3b3ccdbd4b12b9"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/00.png",
+      "sha256": "c5cb3fd30e43b1b3745a4b8599598d93711d7af79d78ee129b8348a548047f14",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-00.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/00.png",
+      "preservedSourceGitBlob": "5b47aca0830e7755404209cfc11a841c14cd40eb"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/01.png",
+      "sha256": "c5cb3fd30e43b1b3745a4b8599598d93711d7af79d78ee129b8348a548047f14",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-00.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/01.png",
+      "preservedSourceGitBlob": "5b47aca0830e7755404209cfc11a841c14cd40eb"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/02.png",
+      "sha256": "c5cb3fd30e43b1b3745a4b8599598d93711d7af79d78ee129b8348a548047f14",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-00.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/02.png",
+      "preservedSourceGitBlob": "5b47aca0830e7755404209cfc11a841c14cd40eb"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/03.png",
+      "sha256": "3c368c5d6836b0c85ddfd438674e0ad14a5a26c61714072c8478280d4b99e0f8",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-03.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/03.png",
+      "preservedSourceGitBlob": "d058086e5c04caacd81a214eed1c27628aef8179"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/04.png",
+      "sha256": "3c368c5d6836b0c85ddfd438674e0ad14a5a26c61714072c8478280d4b99e0f8",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-03.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/04.png",
+      "preservedSourceGitBlob": "d058086e5c04caacd81a214eed1c27628aef8179"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/05.png",
+      "sha256": "3c368c5d6836b0c85ddfd438674e0ad14a5a26c61714072c8478280d4b99e0f8",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-03.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/05.png",
+      "preservedSourceGitBlob": "d058086e5c04caacd81a214eed1c27628aef8179"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/06.png",
+      "sha256": "43eb294355c34989c81907a6c1749de81abe261e8dc8bc6385f7c83658fa5ef8",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-06.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/06.png",
+      "preservedSourceGitBlob": "bdc0109b69876445558fcc047650cf6092e35f5a"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/07.png",
+      "sha256": "43eb294355c34989c81907a6c1749de81abe261e8dc8bc6385f7c83658fa5ef8",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-06.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/07.png",
+      "preservedSourceGitBlob": "bdc0109b69876445558fcc047650cf6092e35f5a"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/08.png",
+      "sha256": "43eb294355c34989c81907a6c1749de81abe261e8dc8bc6385f7c83658fa5ef8",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-06.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/08.png",
+      "preservedSourceGitBlob": "bdc0109b69876445558fcc047650cf6092e35f5a"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/09.png",
+      "sha256": "696df45178a1882292f0e740c0c58dd084b36a105132a0bb489a319bf8c32a7f",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-09.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/09.png",
+      "preservedSourceGitBlob": "0704c0e7706f07b9bd0783a1b963365a9aecef71"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/10.png",
+      "sha256": "696df45178a1882292f0e740c0c58dd084b36a105132a0bb489a319bf8c32a7f",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-09.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/10.png",
+      "preservedSourceGitBlob": "0704c0e7706f07b9bd0783a1b963365a9aecef71"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/11.png",
+      "sha256": "696df45178a1882292f0e740c0c58dd084b36a105132a0bb489a319bf8c32a7f",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-09.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/11.png",
+      "preservedSourceGitBlob": "0704c0e7706f07b9bd0783a1b963365a9aecef71"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/12.png",
+      "sha256": "5938d03ef2853992efba5bd0aa72fb86f581d76b702346409ed4839433aa6ccd",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-12.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/12.png",
+      "preservedSourceGitBlob": "28ecfca7966cd97084b424b5b9002455dcc3c526"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/13.png",
+      "sha256": "5938d03ef2853992efba5bd0aa72fb86f581d76b702346409ed4839433aa6ccd",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-12.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/13.png",
+      "preservedSourceGitBlob": "28ecfca7966cd97084b424b5b9002455dcc3c526"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/14.png",
+      "sha256": "5938d03ef2853992efba5bd0aa72fb86f581d76b702346409ed4839433aa6ccd",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-12.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/14.png",
+      "preservedSourceGitBlob": "28ecfca7966cd97084b424b5b9002455dcc3c526"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/15.png",
+      "sha256": "99006484c30287b4e6e21fcbdffed88af134d81b0070f6400f2c9285e2a008f7",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-15.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/15.png",
+      "preservedSourceGitBlob": "044fbc34c16263c532fe0144fdfaf39cf51c2069"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/16.png",
+      "sha256": "76280a4ed5c26d9d2efcdbe1dfe9bd68f0b0a0f9f75c6aef96abcf62978cd6ff",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-16.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/16.png",
+      "preservedSourceGitBlob": "4471ffe6338f7b311ecafa07218368fd54d0eb60"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/sullen-pendant/numbered/17.png",
+      "sha256": "935c5a546af92e8b195819d9e9234c7bfc298dd17053f0c959b87cbdab3953c5",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/worn-sullen-pendant/frames/frame-17.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/sullen-pendant/numbered/17.png",
+      "preservedSourceGitBlob": "b18157a9505f08115efbd1af4e6126906d0b090d"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/00.png",
+      "sha256": "3afb95ee38b8e0f1d5be5cc847b8f7be1bf32219695da074dbd9db103476e1fc",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/00.png",
+      "preservedSourceGitBlob": "a061b56e9224f466a1b9d1f5822134031e97876a"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/01.png",
+      "sha256": "35ffa80e31b8217b9d0de34edd3a15bf662b8b65b2beffa1162c051e9d654742",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/01.png",
+      "preservedSourceGitBlob": "6e6a4c673df598b8855b758ee00dc11e94258122"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/02.png",
+      "sha256": "381731c14f0386dc921cda1e0eb16b6f1c916eea35c472a36bffc059b594483c",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/02.png",
+      "preservedSourceGitBlob": "ddaf8262f5fc50b3e0b2531dec8485414e1fdb80"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/03.png",
+      "sha256": "13837caf9c650bf2a9f417d8dd70b7c9ffc852df1be116ef0f4b4f9b32f51632",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/03.png",
+      "preservedSourceGitBlob": "108bcff795618170b612daae23156d8cd6f07967"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/04.png",
+      "sha256": "15a12ab0c8a78e0d143e454df5e02152ca71c4b1dd1afdb2eb8f396ec26cb3df",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/04.png",
+      "preservedSourceGitBlob": "eb7002f55372d7c3a4cf0ff8c88ac31ae411cd4a"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/05.png",
+      "sha256": "6f128daaf1320f936d464e6a4e2e104c7c9a44052e67af7ecea600c51fd360de",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/05.png",
+      "preservedSourceGitBlob": "d4d6d047471a2e520db9bee208b9e7ef574746a7"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/06.png",
+      "sha256": "d4d7c58b5372709cde5c248fea88a7fb0d8853768fe38b7d301cdf7df5726e81",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/06.png",
+      "preservedSourceGitBlob": "fc98dab9dc23bbf83fc75f15a17aefbf0be72ce5"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/07.png",
+      "sha256": "f241fdb6ed390c2a850d9aab7635ef84acf96970e0e859511571b0b0bcf2ffac",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/07.png",
+      "preservedSourceGitBlob": "f3c7f904bc6f763bac93f3160f08ae542ada145a"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/08.png",
+      "sha256": "215e34e5f3bb91df2765f505193cb2f4616733749c89977896ca22d8f3bc861a",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/08.png",
+      "preservedSourceGitBlob": "6586dc950bc5c21c247542fa99b4139eaced4899"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/09.png",
+      "sha256": "4af9478f616dd172475053ec9ff6bf081035fed32f2505281efbbfa3f6346408",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/09.png",
+      "preservedSourceGitBlob": "432cedd9d74a58be303331f1f8610da31add7712"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/10.png",
+      "sha256": "394c7053e65444e9fa8fd6dc7ce576b3e8a6d9b287d94b36a8c1141b33fe9eef",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/10.png",
+      "preservedSourceGitBlob": "3879c5941db87565074e5dc72bd678fc2bfc4c9b"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/11.png",
+      "sha256": "450a61e151748bb727917c21801e45faec31216c858b5cbfb0bb2e8cc3c5d222",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/11.png",
+      "preservedSourceGitBlob": "0155df432235fd3bb6369d326a297a16f90db7b5"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/12.png",
+      "sha256": "d970f3a2659318a6d757422c64b2da0d61e255e49bf9017658d087a04b3aa1a4",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/12.png",
+      "preservedSourceGitBlob": "689f54f69190af238c4ab48df21d03df40368c57"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/13.png",
+      "sha256": "db35d8c1b6cbd0c09dc752f33c32e431cb09ab992b5649937538b6d3ff1fdb87",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/13.png",
+      "preservedSourceGitBlob": "7cf6657a8360148f6c71f3e09ad8e2efb13b432f"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/14.png",
+      "sha256": "a29a4d366cbebca139ec4b3cd18f68e27ebb4a6b7edb4b90924106a377b0f2a0",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/14.png",
+      "preservedSourceGitBlob": "14ea79b8e861fd8224b34151a1ecfe7fe3957b5e"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/15.png",
+      "sha256": "3a2dcc70fab19a46a0a4b4645d6af667cd459fb5e9f7a7e468b862c382ea8621",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/15.png",
+      "preservedSourceGitBlob": "f4615d56006e31831b111922b835e7d31d7a5905"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/16.png",
+      "sha256": "eb61058dc0119bbbcbeeaadfb11d4de713ddc90f6b5cc39aad30117ae59335ab",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/16.png",
+      "preservedSourceGitBlob": "a55f5a66ecbdef621ce7dc9724a46a20ab24d951"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/equipment/thunder-spire-staff/numbered/17.png",
+      "sha256": "f96873a48202cfd574d4bf4c34df59ec0cfb02d2bf97bfce18da90859c53223a",
+      "preservedSource": null,
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/equipment/thunder-spire-staff/numbered/17.png",
+      "preservedSourceGitBlob": "ca3da211f377d265d33ef09e5c023208551e0ca3"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-boots.png",
+      "sha256": "c5111c737a56645dd6475e7f6ece9204792adedfbec819c8cd3d30715069d84c",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/bloodveld-boots.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/bloodveld-boots.png",
+      "preservedSourceGitBlob": "f445f0ed6a3bf69a0314b0777eb002441bd72bc6"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-chaps.png",
+      "sha256": "f78783928cd6a017299003a6bb75ff92cddfae0044d23289f6d3a2f139bddab7",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/bloodveld-chaps.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/bloodveld-chaps.png",
+      "preservedSourceGitBlob": "afb1a51c162943a24ee6a94a7d5e0517d3ee4d8d"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-coif.png",
+      "sha256": "87f2e081a6f5e24fab3248097d48ab66109aab30b7654bb728c6ee38d113030c",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/bloodveld-coif.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/bloodveld-coif.png",
+      "preservedSourceGitBlob": "1b01b7439c66622f66b6d9b01148dccf0ae069e0"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-cuirass.png",
+      "sha256": "324dafb5002b35bd5c858d37731decd7b87dbd8210c321af4717b075dd7ac5dc",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/bloodveld-cuirass.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/bloodveld-cuirass.png",
+      "preservedSourceGitBlob": "20047769f39ae9aee0f0d2b76bbf5244a1edcef1"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-gloves.png",
+      "sha256": "e3918e4c19a0a899852d6313a3c4a3492b4793bcde077a11c9295311eda72ae7",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/bloodveld-gloves.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/bloodveld-gloves.png",
+      "preservedSourceGitBlob": "2bae1e9501f7f6e8145c3a45fe3048cab76cdd73"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-boots.png",
+      "sha256": "ae4f8f9f0d5e3464bb93cdc912e3f8e09a41d7de8cc01026c838e882acd0e6d3",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/dark-beast-boots.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/dark-beast-boots.png",
+      "preservedSourceGitBlob": "b1b233bef604edac855424efec933dae5c266fef"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-chaps.png",
+      "sha256": "8d40f03c1a306e2f4b220e530f82ecaf694af11350f527485b0337f88eac0b9f",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/dark-beast-chaps.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/dark-beast-chaps.png",
+      "preservedSourceGitBlob": "55a25b01fb7fd6122d68dfed6e8c6fc47a83f126"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-coif.png",
+      "sha256": "cafd665dee1016cccf32dbcbbd41b5c7cf61f3e9a8144455e35136273c06958e",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/dark-beast-coif.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/dark-beast-coif.png",
+      "preservedSourceGitBlob": "af36acde31d81f256f2fb3ded110dab60b7a2757"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-cuirass.png",
+      "sha256": "acb762f0cd54b9503e66eaab0288871c15aae10b9760860624f1daf8160c6905",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/dark-beast-cuirass.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/dark-beast-cuirass.png",
+      "preservedSourceGitBlob": "5aa6d86f4c8690b60aac1e8b04cb54bb3a6a2dec"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-gloves.png",
+      "sha256": "8ba0f0afd075ecd799934fb570a39488f5619bf5e23ca4226963abdd8359e1d3",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/dark-beast-gloves.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/dark-beast-gloves.png",
+      "preservedSourceGitBlob": "18e74e652393ece3b0c048e6d79f5e7fce845583"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-boots.png",
+      "sha256": "08cf85009154dfeed7f31add1657ab0ec6623347f08e2a5dea7ad4fdae67cddd",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/giant-frog-boots.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/giant-frog-boots.png",
+      "preservedSourceGitBlob": "a11d6cadadbcc30c1f0bd27ddf3fdbac3ca3f690"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-chaps.png",
+      "sha256": "2e632c0765e88300156ad414360f260379490bbfeec1227f72399363b5827b20",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/giant-frog-chaps.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/giant-frog-chaps.png",
+      "preservedSourceGitBlob": "0629f27b5b7dab9dec6b09ec47da2235e4876a78"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-coif.png",
+      "sha256": "45d698b26fc5c13a85e124c663bf868b0080d43493eaeb9b9ffebc08d9f262a9",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/giant-frog-coif.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/giant-frog-coif.png",
+      "preservedSourceGitBlob": "ff17fe9bf428cdbe28be3e3ca5e073a22435a255"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-cuirass.png",
+      "sha256": "09b25dc7fd44209c22956bb9c4eb25b70702ac4dfcda81035e4e5245c333c4b8",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/giant-frog-cuirass.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/giant-frog-cuirass.png",
+      "preservedSourceGitBlob": "90d090393406caf126dafa4df67743933b4231dc"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-gloves.png",
+      "sha256": "7285ff9850fa9b752ece0b15c6d249fb99ecbf64cff46c6210f56deaf50d4fee",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/giant-frog-gloves.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/giant-frog-gloves.png",
+      "preservedSourceGitBlob": "f768f1bf6c88a6486f29eb1164cb915caf6c7c7a"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-boots.png",
+      "sha256": "f64fbf2930505d73e769fc2e79e198d027e2d266e3712142c17ffc83c1e16d68",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/naga-boots.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/naga-boots.png",
+      "preservedSourceGitBlob": "787952ea4e1f7b7488895bbdddb7180d41ccd86c"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-chaps.png",
+      "sha256": "8cebc1760075ee3522e89af39549c96113591e0b7da951d675a2618ba0eb5775",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/naga-chaps.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/naga-chaps.png",
+      "preservedSourceGitBlob": "1af297a67b948fb840d58ee42a2d37b527f84e82"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-coif.png",
+      "sha256": "f72e6e1bc03c1b0ebe43a4c6098c3f0e1992acf9b849f9ec4bdd4443eee63c46",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/naga-coif.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/naga-coif.png",
+      "preservedSourceGitBlob": "26772b4bb8fdfe153af9cc17b48636771e5ab7c9"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-cuirass.png",
+      "sha256": "4de67e92726822c08169e9ba1aa98450bd9af0c61732650cb3bb22abe58512b9",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/naga-cuirass.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/naga-cuirass.png",
+      "preservedSourceGitBlob": "e764a3178882f6c59a28982d47bd003f08167a8c"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-gloves.png",
+      "sha256": "fd2060985cb740c78167dd5b1137b5dc2224c5c9e5040cc32daf40e6daf9e862",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/naga-gloves.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/naga-gloves.png",
+      "preservedSourceGitBlob": "c9563cf8912e5088e6736b65b8064b0b76ebdc76"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/shield-of-mobility-icon.png",
+      "sha256": "9c6da9e5645bd57a784ead0e92ea3beee049d4c3a6887168334118e9b7a98bfa",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/shield-of-mobility-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/shield-of-mobility-icon.png",
+      "preservedSourceGitBlob": "d133b1c100196bdf1875ee1d6aa81ff3b9af10e6"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-boots.png",
+      "sha256": "04ac36a9837eb82bc253384f61138a6203d8e731f01362e5bd72035d6e3522ff",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/terror-dog-boots.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/terror-dog-boots.png",
+      "preservedSourceGitBlob": "7bb7068f739c83bafde200b64914581a3e46532e"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-chaps.png",
+      "sha256": "2fbba6e94effb67927e4146fbb4220b4f5b6028c5e785170ed88b37597e25dd0",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/terror-dog-chaps.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/terror-dog-chaps.png",
+      "preservedSourceGitBlob": "faf32702279b67cd4de7f9f115ae44afde902a08"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-coif.png",
+      "sha256": "7cf797127c87b7a341c3e2d8a24b918cec5bd9749406a3658b0bb13e17a11b45",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/terror-dog-coif.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/terror-dog-coif.png",
+      "preservedSourceGitBlob": "0ff04fa63c6e108b1b43a2c4b45c67383c4a6f4d"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-cuirass.png",
+      "sha256": "8c7d4ac27bd823a7fd2d3e3ef9dcfc66b3f1991f9728169da70eaa8ba86957e5",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/terror-dog-cuirass.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/terror-dog-cuirass.png",
+      "preservedSourceGitBlob": "b15f3f119b1f5f59373d8e5daa4f0c7f86074d69"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-gloves.png",
+      "sha256": "783eef721b91c123a7226572ec7cfd8f7d602974b2acb465ec304ecfc05b4671",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/terror-dog-gloves.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/terror-dog-gloves.png",
+      "preservedSourceGitBlob": "d79e7213e7fb32bd595349ab1fe7b00677120257"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-boots.png",
+      "sha256": "2be27efaecb588f66fef8b434649d3de9de711fb3986b9c31573bdbc41e4a4eb",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/ugthanki-boots.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/ugthanki-boots.png",
+      "preservedSourceGitBlob": "fdda4382f83d38578e824e5e3f7ab871255dd3f8"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-chaps.png",
+      "sha256": "888d8b5ae68c17be667be238007d718e82aae5562e4a5e70d91d4a13b109582c",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/ugthanki-chaps.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/ugthanki-chaps.png",
+      "preservedSourceGitBlob": "dbbdf5393809c4c83a117b78d57dcf76f4aa7801"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-coif.png",
+      "sha256": "980c80e2f896f606c76b13df9bf216c8dd35113d4d3b16ef5b421c36b9b357c8",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/ugthanki-coif.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/ugthanki-coif.png",
+      "preservedSourceGitBlob": "46f1deae7c4c07a629d693d2e3f1e9a9a82d9fa2"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-cuirass.png",
+      "sha256": "5969f52fc4804312c6a52b10512f0a0191f295df303ce42df63b7b3b30fd8eb0",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/ugthanki-cuirass.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/ugthanki-cuirass.png",
+      "preservedSourceGitBlob": "fe85a1ed5c059d4c8a3f20cc7081a5e195ee7312"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-gloves.png",
+      "sha256": "50c3aa4c60b885beb4f9bab8fb698713f6afa0480499f333d1fc304af1896a61",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leather-sets/ugthanki-gloves.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/armor/ugthanki-gloves.png",
+      "preservedSourceGitBlob": "31e16aa3a1fd3f6114c6630794f6a95e6f4fa899"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/jewelry/sullen-pendant-icon.png",
+      "sha256": "7bcab55cb8bfddc1f1884e62f0f114269eac9b44c77f8e2d03d06fb5e2001777",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/sullen-pendant-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/jewelry/sullen-pendant-icon.png",
+      "preservedSourceGitBlob": "bba635177859880df946e2f1045af391124419ed"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/abyssal-rib.png",
+      "sha256": "ea3f32f4c44d617bb4dc5a3fa3c876afb9c6f953ec08b7a3139f62cbda3f9453",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/abyssal-rib-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/abyssal-rib.png",
+      "preservedSourceGitBlob": "85b1fdf22b6d2b5f4af573637d68bded51bd9f12"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/abyssal-vertibrae.png",
+      "sha256": "f82d3817bcbc52cc5a317bb578de6575a4cb4205cd9955b99af2b3518996f3f8",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/abyssal-vertibrae-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/abyssal-vertibrae.png",
+      "preservedSourceGitBlob": "ffe6b131e7d373af65f0fff811ae808963fb7f77"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/bloodveld-hide.png",
+      "sha256": "746d4e5151e979c33e97f2a52f8a7113615ac917915a209151ad7f1b23711629",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/hide-leathers-v2/bloodveld-hide.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/bloodveld-hide.png",
+      "preservedSourceGitBlob": "58b475d03e3d56c393fb2f061a48023c8b0361a8"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/bloodveld-leather.png",
+      "sha256": "b9d4f7e19f186d31eac912ca811556d3f25d86ceb6218052e83ecc9c3af6133c",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/hide-leathers-v2/bloodveld-leather.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/bloodveld-leather.png",
+      "preservedSourceGitBlob": "4aa408bec06299f0b60e0f9fe50b1a8344bc809d"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/cockatrice-eye.png",
+      "sha256": "8d65cb1f24dc08ba5ba418781f10cb8292837b2748f8e2fdce6fc0c0999593b9",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/cockatrice-eye-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/cockatrice-eye.png",
+      "preservedSourceGitBlob": "dbd4711e9f501e0a4613b2de4373106bcd2f25a0"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/cockatrice-feathers.png",
+      "sha256": "8e00956091b392d66336f2f385631c923473afa629718de50728bf55a9d40610",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/cockatrice-feathers-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/cockatrice-feathers.png",
+      "preservedSourceGitBlob": "9fc0e7f6d72442d58f1b2eef4595182aa942e839"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/dark-beast-hide.png",
+      "sha256": "923b68bbe6ab50d1ff581fd3612fd751d50e46f59ccf3c22b3cd0a3e9c86f60a",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/hide-leathers-v2/dark-beast-hide.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/dark-beast-hide.png",
+      "preservedSourceGitBlob": "b0ba0711358d19bd255f05db6075d6df22969997"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/dark-beast-leather.png",
+      "sha256": "53bb1736cd3d0e6434c8dafc0a8c744225b1fd2ea5862caf7af7121147dcfaa6",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/hide-leathers-v2/dark-beast-leather.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/dark-beast-leather.png",
+      "preservedSourceGitBlob": "612175c8b0a7a7f6486c57d8664d3cf7883bcd96"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/dog-treats.png",
+      "sha256": "4a0e1355f72d48f521e95e4c016a45f94430c2b3a794fe1cc372bb14be2b26f9",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/dog-treats-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/dog-treats.png",
+      "preservedSourceGitBlob": "51f4a2cb393e3cd522fba640af7e03001aeaaa1b"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/ectoplasm.png",
+      "sha256": "003861359a3bb16dabc9f1e435c64f82fa4cec1962d131e0cf0067aa6beb6de9",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/ectoplasm-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/ectoplasm.png",
+      "preservedSourceGitBlob": "9c0554382d8a543ddfa79e4afc27adfe7e0e0b73"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/eye-drops.png",
+      "sha256": "e72c9b03bf190b8d4ca4bc8a19b6992dd6897db297e5de3618c66a3a3b2e8c46",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/eye-drops-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/eye-drops.png",
+      "preservedSourceGitBlob": "13c92aec4f3c536dba36fe822faac4ef9fa2128d"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/frozen-tear.png",
+      "sha256": "0514ae607a5d129117bc1872797bf1ee0f98f86f63381562fabc893b99d17e17",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/frozen-tear-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/frozen-tear.png",
+      "preservedSourceGitBlob": "19218a3f0daaeea69cac471f2df033894b9bd063"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/giant-frog-hide.png",
+      "sha256": "52b96c76f3e445d1d094bd826e94905986ae547099f949267f86ee499a60d160",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/hide-leathers-v2/giant-frog-hide.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/giant-frog-hide.png",
+      "preservedSourceGitBlob": "93a79f021d471d8c291ad82f241bf7c4b05bfdc2"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/giant-frog-leather.png",
+      "sha256": "42c5b973585a205f8b56417b9cdd236f826780698c9cc5ecec7ed26e03c9becf",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/hide-leathers-v2/giant-frog-leather.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/giant-frog-leather.png",
+      "preservedSourceGitBlob": "0a6e143c91078fccde624b2a691591db89d977a7"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/leach-tongue.png",
+      "sha256": "a6af015fb1b839e33a305e37bd086620e69253b9c13cf8934b961445d31e7462",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leach-tongue-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/leach-tongue.png",
+      "preservedSourceGitBlob": "85446e419b15d2744728c43df3b2e58a9b339397"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/lightning-horn.png",
+      "sha256": "e9330eba4a02d94e99a823d1fcedb7f8501652ad5f1ce40286584e03c06400e8",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/lightning-horn-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/lightning-horn.png",
+      "preservedSourceGitBlob": "cf11f0130fac6f5f74029c79d44fb21befea6933"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/naga-hide.png",
+      "sha256": "a8c5d80a1bbaa377d0eddc26aa44b0d19e59b1789c6c1f6580b492191d5b3d9f",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/hide-leathers-v2/naga-hide.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/naga-hide.png",
+      "preservedSourceGitBlob": "7fb828d6a4ee5ae517c38086e40d3b8ff28d400d"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/naga-leather.png",
+      "sha256": "58dd6ddc5414058edf66b9d9abe2a70b8325e9748f787ec39e46605d85747d06",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/hide-leathers-v2/naga-leather.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/naga-leather.png",
+      "preservedSourceGitBlob": "417c980f6d1bb5d1dc2cc7a70a32eb7078beaeef"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/slime-solvent.png",
+      "sha256": "f569dfb93dcae86f492205d5d008e6d2d93c2cf5b01f93e70d23b3397a856f69",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/slime-solvent-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/slime-solvent.png",
+      "preservedSourceGitBlob": "a11e6313930918e4911f61b7aaf9356dce0cdcef"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/slimey-residue.png",
+      "sha256": "470d590579fa1e7bef2dbaa2fc42e3edcbc55ccf69d4ed46fa4eb8643be51a6c",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/slimey-residue-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/slimey-residue.png",
+      "preservedSourceGitBlob": "3b70fdd739d8dd2401ce3915392f4dfff82a99e2"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/static-wipes.png",
+      "sha256": "b6c20ec40ca50c99beca359459b87536a6cca625d24685d1cd01008a43e04fa7",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/static-wipes-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/static-wipes.png",
+      "preservedSourceGitBlob": "21a27530810ff0a40080537ff03318c0f1135bb4"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/terror-dog-hide.png",
+      "sha256": "90c5fdc61cb39dc34bde0150684fcec3d868b5f33dbfbaac1daf81bb943470a9",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/hide-leathers-v2/terror-dog-hide.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/terror-dog-hide.png",
+      "preservedSourceGitBlob": "d5b549da9447427d8f7fa5c45f0c45a303371d7d"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/terror-dog-leather.png",
+      "sha256": "46c95ab7341b90a1c4ce864ea6aa0b4cbc5c9c8f46aa21d15d1a9e1b55eadc58",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/hide-leathers-v2/terror-dog-leather.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/terror-dog-leather.png",
+      "preservedSourceGitBlob": "521eb09494a98ef9a22d5bae9585806f94789dc4"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/terror-fang.png",
+      "sha256": "1ecdf6ee7973e51b99d299a0b407ba2f79f42f9e0c9543cbffe34e279c6f9315",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/terror-fang-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/terror-fang.png",
+      "preservedSourceGitBlob": "1f168580fe910a945ca105c495e3e2ae66c3b13d"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/ugthanki-hide.png",
+      "sha256": "850719312eadefd8eefd47dde88bf9f547d6a36d8793d95adf1877eeb3d7878f",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/hide-leathers-v2/ugthanki-hide.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/ugthanki-hide.png",
+      "preservedSourceGitBlob": "d836bae98776f7eb459f6c4b60647e9a22969aff"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/ugthanki-leather.png",
+      "sha256": "788dac8e2e495c5a89e38fd70228cacf2006b9e8e68bd391d0693fedc843a594",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/hide-leathers-v2/ugthanki-leather.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/ugthanki-leather.png",
+      "preservedSourceGitBlob": "95ec6be7acf624a8a4996024a0fa60cd7683ee70"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/wax-earplugs.png",
+      "sha256": "13032613960c51988b3d24b897327d9c9581dd3953fa439dcaf21288eab85526",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/wax-earplugs-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/resources/wax-earplugs.png",
+      "preservedSourceGitBlob": "67cf6adabf56d9ac209ac897227848d184cdeb36"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/abyssal-whip-icon.png",
+      "sha256": "299ce54e34ec6a847db9b051472e131a9bd43349d3c343844285cf96bfa8e5a9",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/abyssal-whip-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/weapons/abyssal-whip-icon.png",
+      "preservedSourceGitBlob": "9fda0882c993cba20d1858533087f317bc9a6fc9"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/dagger-of-terror-icon.png",
+      "sha256": "11adb419c2e65b5151c369d0d45cde68d9349cbe6576c055b0b6261ca7a853b4",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/dagger-of-terror-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/weapons/dagger-of-terror-icon.png",
+      "preservedSourceGitBlob": "71011d2d82fa070687c2332f92bb8af3e960fd70"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/dagger-of-terror-poisoned-icon.png",
+      "sha256": "ed84aee1a5197062ae86ce288889097a4b20c57ee051983aceafaaac262c55aa",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/dagger-of-terror-poisoned-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/weapons/dagger-of-terror-poisoned-icon.png",
+      "preservedSourceGitBlob": "11b3909720e1cdeba8c786c4495d108781cf1741"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/leaching-bow-icon.png",
+      "sha256": "3ed596aa0071c5e2179f0960671488cde2bd1a8efb2b205427bbefc846019443",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/leaching-bow-ebony-candidate.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/weapons/leaching-bow-icon.png",
+      "preservedSourceGitBlob": "5ae16a1a876cd98af2beeed96ea7495b0439abaa"
+    },
+    {
+      "runtime": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/thunder-spire-staff-icon.png",
+      "sha256": "cc5bce9de3cf00f948f710472352c3c6e43276d50dc3d9c15a15016c77bdf962",
+      "preservedSource": "dev/myworld/assets/authoring/slayer-items/thunder-spire-staff-approved.png",
+      "preservedSourceGitPath": "dev/myworld/assets/sprites/items/inventory-ground/weapons/thunder-spire-staff-icon.png",
+      "preservedSourceGitBlob": "60a1c1c79edaa0581a6f2ea08e0e627c2f883951"
+    }
+  ],
+  "excludedOlderGland": "Later approved inventory-ground/sticky-saliva-gland.png remains the runtime authority.",
+  "currentAppearanceManifest": "tools/generators/slayer-art-appearances.json"
+}
