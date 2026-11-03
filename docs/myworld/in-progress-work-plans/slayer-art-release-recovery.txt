@@ -98,7 +98,10 @@ client loading in separate custom/authentic JVMs, 11 recovered asset suites,
 current equipment/coating/gem-dragon/movement/reagent checks, player packaging,
 editor provider reproducibility/bundle validation, client version/capacity and
 login policy checks are recorded in the accompanying evidence directory.
-The complete combat regression gate passed 145/145 scenarios.
+The complete combat regression gate passed 145/145 scenarios. Compiler and
+changed-line Checkstyle/PMD/ShellCheck/Ruff gates passed, with no new SpotBugs
+findings (384 existing findings; baselines unchanged). CPD completed after
+increasing its process heap cap from 512 MiB to 2 GiB.
 
 Stale fixture expectations were corrected to the reviewed artwork/current IDs;
 checks were not bypassed. The general Slayer foundation fixture now includes
