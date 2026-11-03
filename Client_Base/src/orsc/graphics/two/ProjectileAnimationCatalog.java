@@ -118,6 +118,7 @@ public final class ProjectileAnimationCatalog {
 		define(definitions, "shuriken-basic", "Shuriken", "shuriken-basic/shuriken-basic.png", 8, 1, 0, 8);
 		define(definitions, "thunder-2", "Thunder bird", "thunder-2/Projectile/Projectile 2 wo blur.png", 16, 1, 0, 16);
 		define(definitions, "acid-basic-2", "Acid armor proc", "acid-basic-2/Acid VFX 03(56x48).png", 16, 1, 0, 16);
+		define(definitions, "electric-disc-basic", "Electric Disc", "Eletric Disc (32x32)/Eletricity Disc wo blur.png", 13, 1, 7, 6);
 		DEFINITIONS = Collections.unmodifiableMap(definitions);
 
 		LinkedHashMap<String, Segment[]> startupSegments = new LinkedHashMap<String, Segment[]>();
@@ -125,6 +126,8 @@ public final class ProjectileAnimationCatalog {
 			segment("ice-basic/Ice VFX 1 Start.png", 3, 1, 0, 3));
 		phases(startupSegments, "holy-basic",
 			segment("holy-basic/Holy VFX 01 Initial.png", 2, 1, 0, 2));
+		phases(startupSegments, "electric-disc-basic",
+			segment("Eletric Disc (32x32)/Eletricity Disc wo blur.png", 13, 1, 0, 6));
 		STARTUP_SEGMENTS = Collections.unmodifiableMap(startupSegments);
 
 		LinkedHashMap<String, Segment[]> impactSegments = new LinkedHashMap<String, Segment[]>();
@@ -185,6 +188,7 @@ public final class ProjectileAnimationCatalog {
 		fallback(fallbacks, PROJECTILE_TYPES.ACID_LEAD_2, "acid-basic");
 		fallback(fallbacks, PROJECTILE_TYPES.WOOD_LEAD_2, "wood-basic");
 		fallback(fallbacks, PROJECTILE_TYPES.ACID_ARMOR_PROC, "acid-basic-2");
+		fallback(fallbacks, PROJECTILE_TYPES.ELECTRIC_DISC, "electric-disc-basic");
 		PROJECTILE_FALLBACKS = Collections.unmodifiableMap(fallbacks);
 	}
 

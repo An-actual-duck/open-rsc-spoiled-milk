@@ -39,6 +39,7 @@ def main() -> int:
         "on-entity/fire-2/Fire Claw.png": (288, 32),
         "projectile-moving/thunder-2/Projectile/Projectile 2 wo blur.png": (768, 48),
         "projectile-moving/thunder-2/Hit/Thunder hit wo blur.png": (192, 32),
+        "projectile-moving/Eletric Disc (32x32)/Eletricity Disc wo blur.png": (416, 32),
         "on-entity/ice-2/Ice VFX 3(48x48).png": (1056, 48),
         "on-entity/acid-2/Acid VFX 09(72x80).png": (1656, 80),
         "on-entity/wood-2/Wood VFX 04(32x48).png": (512, 48),
@@ -220,7 +221,7 @@ def main() -> int:
     ), "ORSCharacter.java")
 
     assert re.search(
-        r"\.presentation\s*\(\s*Projectile\.SKULL\s*,\s*CombatEffect\.IBAN_BLAST\s*,\s*true\s*\)",
+        r"\.presentation\s*\(\s*Projectile\.ELECTRIC_DISC\s*,\s*CombatEffect\.IBAN_BLAST\s*,\s*true\s*\)",
         spell_handler,
     ), "Iban blast must render its projectile before its impact"
     assert re.search(

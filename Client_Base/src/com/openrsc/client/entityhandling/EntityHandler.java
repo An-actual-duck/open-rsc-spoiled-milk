@@ -465,7 +465,8 @@ public class EntityHandler {
 		WOOD_LEAD_2(38),
 		ACID_ARMOR_PROC(39),
 		ICE_SWORD_STAB(40),
-		NAGA_SCIMITAR(41);
+		NAGA_SCIMITAR(41),
+		ELECTRIC_DISC(42);
 
 		private final int value;
 
@@ -529,6 +530,7 @@ public class EntityHandler {
 		projectiles.add(new SpriteDef("acid armor proc projectile", mudclient.spriteProjectile + 1, "projectiles:1", 39));
 		projectiles.add(new SpriteDef("ice sword stab projectile", mudclient.spriteProjectile + 1, "projectiles:1", 40));
 		projectiles.add(new SpriteDef("naga scimitar projectile", mudclient.spriteProjectile + 6, "projectiles:6", 41));
+		projectiles.add(new SpriteDef("electric disc projectile", mudclient.spriteProjectile + 1, "projectiles:1", 42));
 	}
 
 	public enum GUIPARTS {

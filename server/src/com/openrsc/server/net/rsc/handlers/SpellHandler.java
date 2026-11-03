@@ -2062,7 +2062,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 									ProjectileLaunchSpecification.Producer.PLAYER_IBAN_MAGIC,
 									ibanPrimaryDamage, 4)
 									.chase(setChasing)
-									.presentation(Projectile.SKULL,
+									.presentation(Projectile.ELECTRIC_DISC,
 										CombatEffect.IBAN_BLAST, true)
 									.attackCommitment(ibanAttack).attackRoll(ibanRoll).build(), ibanResources));
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "Iban blast area effect") {
