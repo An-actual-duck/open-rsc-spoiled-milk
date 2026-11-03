@@ -108,6 +108,14 @@ public final class CurrentCombatCharacterizationTest {
 			new RecordingDamageObserver();
 		try (CurrentCombatHarness harness = new CurrentCombatHarness(
 				damageObserver)) {
+			run(harness, "incoming_npc_projectiles_start_selected_iban_autocast",
+				CurrentProjectileRetaliationCharacterization::incomingStyles);
+			run(harness, "projectile_retaliation_keeps_living_target_and_replaces_dead_target",
+				CurrentProjectileRetaliationCharacterization::targetDeath);
+			run(harness, "projectile_retaliation_respects_disabled_setting_and_manual_intent",
+				CurrentProjectileRetaliationCharacterization::playerChoices);
+			run(harness, "cancelled_and_terminal_projectiles_do_not_start_retaliation",
+				CurrentProjectileRetaliationCharacterization::rejectedAndTerminal);
 			run(harness, "giant_frog_explicit_stats_refresh_and_solvent_immunity",
 				CurrentGiantFrogCharacterization::effectsAndStats);
 			run(harness, "stat_restore_protects_all_temporary_drains_until_expiry",

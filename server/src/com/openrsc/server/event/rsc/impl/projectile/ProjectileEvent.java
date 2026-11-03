@@ -787,6 +787,33 @@ public class ProjectileEvent extends SingleTickEvent {
 					npc.setChasing(preferredThreatTarget != null ? preferredThreatTarget : player);
 				}
 			}
+			tryAutoRetaliateAfterIncomingProjectile();
+		}
+	}
+
+	private void tryAutoRetaliateAfterIncomingProjectile() {
+		if (!isPrimaryProjectileAttackType()
+			|| !caster.isNpc() || !opponent.isPlayer()
+			|| Summoning.isSummon(caster)) {
+			return;
+		}
+		final Player player = (Player) opponent;
+		if (!player.loggedIn() || player.isRemoved()
+			|| !player.getAutoRetaliate()
+			|| player.getSkills().getLevel(Skill.HITS.id()) <= 0
+			|| caster.isRemoved()
+			|| caster.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return;
+		}
+		// Incoming attacks must not repeatedly replace a living selected target.
+		// The next settled attack can resume combat after that target dies.
+		final Mob currentTarget = player.getOutgoingCombatTarget();
+		if (currentTarget != null && !currentTarget.isRemoved()
+			&& currentTarget.getSkills().getLevel(Skill.HITS.id()) > 0) {
+			return;
+		}
+		if (player.checkAttack(caster, false)) {
+			player.startPvmCounterCombat(caster);
 		}
 	}
 
