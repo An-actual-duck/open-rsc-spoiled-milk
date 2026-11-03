@@ -1,7 +1,6 @@
 {
   "scope": "Repository asset/output organization and broader folder audit",
   "baselineCommit": "bf7c09dda192121982a8744804f966cddb193ad9",
-  "reviewedCodeCommit": "0472518c6fcbf13d75ad93edaf8f46776624dcd3",
   "ownerSelectedLayout": [
     "runtime",
     "authoring",
@@ -214,6 +213,11 @@
       "exitCode": 0,
       "seconds": 4.2,
       "log": "output/tests/asset-output-organization/final-path-checks/fat-jar.log"
+    },
+    {
+      "name": "test-antidote-icons.cjs",
+      "exitCode": 0,
+      "log": "output/tests/asset-output-organization/final-verification/antidote-icons.log"
     }
   ],
   "additionalVerification": [
@@ -221,7 +225,8 @@
     "66 changed Python files compile; 7 changed shell files pass syntax checks",
     "Ready-frame publication preflight rejects unexpected runtime data before any source/runtime write",
     "Internal relative JRE links preserved; escaping/absolute symlinks rejected",
-    "Destination collisions and active-file moves rejected without data loss"
+    "Destination collisions and active-file moves rejected without data loss",
+    "Supplemental egg-icon fixture updated to the canonical runtime root; actual native and embedded pixels passed"
   ],
   "compiler": {
     "result": "PASS no new gated javac warnings",
@@ -247,5 +252,6 @@
   "generalAudit": "docs/workspaces/asset-output-organization.txt",
   "publicShutdownOrDeployment": false,
   "mapOrGameplayDataChanges": false,
-  "managerApplication": "Exact main integration and local relocation recorded in the local organization audit index; no further deletion is authorized by this task"
+  "managerApplication": "Exact main integration and local relocation recorded in the local organization audit index; no further deletion is authorized by this task",
+  "reviewedProductionCodeCommit": "0472518c6fcbf13d75ad93edaf8f46776624dcd3"
 }
