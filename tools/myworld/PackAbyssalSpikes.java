@@ -16,6 +16,6 @@ public final class PackAbyssalSpikes {
 			out.setRGB(0, row*112+6, 612, 100, base.getRGB(0,row*100,612,100,null,0,612),0,612);
 			out.setRGB(612, row*112, 144, 112, strip.getRGB(row*144,0,144,112,null,0,144),0,144);
 		}
-		ImageIO.write(out, "png", new File(root, folder + "slayer-movement-preview/abyssal-demon.png"));
+		ImageIO.write(out, "png", new File(root, folder + "slayer-monsters/abyssal-demon.png"));
 	}
 }

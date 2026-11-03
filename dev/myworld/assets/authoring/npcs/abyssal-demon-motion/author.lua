@@ -46,6 +46,19 @@ revised.name = 'Side + diagonal rear upper-body rocking — v1'
 sprite:newCel(revised, 1, result, Point(0, 0))
 sprite:saveAs(out .. '/abyssal-demon-motion-v1.aseprite')
 sprite:saveCopyAs(out .. '/abyssal-demon-motion-v1.png')
+-- Export the compact source expected by the established lossless packer.
+-- Padding and the separate spike strip are restored by that packer.
+local base = Sprite(612, 300, ColorMode.RGB)
+local baseImage = base.cels[1].image
+for row = 0, 2 do
+  for y = 0, 99 do
+    for x = 0, 611 do
+      baseImage:putPixel(x, row * 100 + y, result:getPixel(x, row * 112 + 6 + y))
+    end
+  end
+end
+base:saveCopyAs(out .. '/approved-base.png')
+base:close()
 -- Before/after comparison, with each original frame's common ground anchor.
 local board = Sprite(400, 336, ColorMode.RGB)
 local image = board.cels[1].image

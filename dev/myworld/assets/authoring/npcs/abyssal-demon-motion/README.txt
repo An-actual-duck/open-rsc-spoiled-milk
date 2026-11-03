@@ -18,4 +18,6 @@ The Lua recipe rotates the upper body by opposite 2.3-degree offsets, blended
 into the unchanged lower torso. It uses the source palette and native nearest
 neighbour pixels. The walk sequence remains 0,1,0,2.
 
-Status: awaiting owner visual review. Runtime artwork has not been replaced.
+Status: owner approved November 2, 2026; promoted into the game runtime sheet.
+The compact base is exported by author.lua and assembled without recoloring by
+tools/myworld/PackAbyssalSpikes.java.
