@@ -1,0 +1,357 @@
+{
+  "count": 39,
+  "onlyChangedField": "basePrice",
+  "changes": [
+    {
+      "id": 3318,
+      "changes": {
+        "basePrice": [
+          null,
+          60
+        ]
+      }
+    },
+    {
+      "id": 3319,
+      "changes": {
+        "basePrice": [
+          null,
+          40
+        ]
+      }
+    },
+    {
+      "id": 3320,
+      "changes": {
+        "basePrice": [
+          null,
+          20
+        ]
+      }
+    },
+    {
+      "id": 3321,
+      "changes": {
+        "basePrice": [
+          null,
+          120
+        ]
+      }
+    },
+    {
+      "id": 3322,
+      "changes": {
+        "basePrice": [
+          null,
+          80
+        ]
+      }
+    },
+    {
+      "id": 3323,
+      "changes": {
+        "basePrice": [
+          null,
+          40
+        ]
+      }
+    },
+    {
+      "id": 3324,
+      "changes": {
+        "basePrice": [
+          null,
+          180
+        ]
+      }
+    },
+    {
+      "id": 3325,
+      "changes": {
+        "basePrice": [
+          null,
+          120
+        ]
+      }
+    },
+    {
+      "id": 3326,
+      "changes": {
+        "basePrice": [
+          null,
+          60
+        ]
+      }
+    },
+    {
+      "id": 3327,
+      "changes": {
+        "basePrice": [
+          null,
+          240
+        ]
+      }
+    },
+    {
+      "id": 3328,
+      "changes": {
+        "basePrice": [
+          null,
+          160
+        ]
+      }
+    },
+    {
+      "id": 3329,
+      "changes": {
+        "basePrice": [
+          null,
+          80
+        ]
+      }
+    },
+    {
+      "id": 3330,
+      "changes": {
+        "basePrice": [
+          null,
+          300
+        ]
+      }
+    },
+    {
+      "id": 3331,
+      "changes": {
+        "basePrice": [
+          null,
+          200
+        ]
+      }
+    },
+    {
+      "id": 3332,
+      "changes": {
+        "basePrice": [
+          null,
+          100
+        ]
+      }
+    },
+    {
+      "id": 3333,
+      "changes": {
+        "basePrice": [
+          null,
+          35
+        ]
+      }
+    },
+    {
+      "id": 3335,
+      "changes": {
+        "basePrice": [
+          null,
+          385
+        ]
+      }
+    },
+    {
+      "id": 3336,
+      "changes": {
+        "basePrice": [
+          null,
+          980
+        ]
+      }
+    },
+    {
+      "id": 3337,
+      "changes": {
+        "basePrice": [
+          null,
+          980
+        ]
+      }
+    },
+    {
+      "id": 3338,
+      "changes": {
+        "basePrice": [
+          null,
+          2100
+        ]
+      }
+    },
+    {
+      "id": 3339,
+      "changes": {
+        "basePrice": [
+          null,
+          5
+        ]
+      }
+    },
+    {
+      "id": 3340,
+      "changes": {
+        "basePrice": [
+          null,
+          50
+        ]
+      }
+    },
+    {
+      "id": 3341,
+      "changes": {
+        "basePrice": [
+          null,
+          20
+        ]
+      }
+    },
+    {
+      "id": 3342,
+      "changes": {
+        "basePrice": [
+          null,
+          30
+        ]
+      }
+    },
+    {
+      "id": 3343,
+      "changes": {
+        "basePrice": [
+          null,
+          250
+        ]
+      }
+    },
+    {
+      "id": 3344,
+      "changes": {
+        "basePrice": [
+          null,
+          400
+        ]
+      }
+    },
+    {
+      "id": 3345,
+      "changes": {
+        "basePrice": [
+          null,
+          600
+        ]
+      }
+    },
+    {
+      "id": 3346,
+      "changes": {
+        "basePrice": [
+          null,
+          1200
+        ]
+      }
+    },
+    {
+      "id": 3347,
+      "changes": {
+        "basePrice": [
+          null,
+          600
+        ]
+      }
+    },
+    {
+      "id": 3348,
+      "changes": {
+        "basePrice": [
+          null,
+          1500
+        ]
+      }
+    },
+    {
+      "id": 3349,
+      "changes": {
+        "basePrice": [
+          null,
+          40000
+        ]
+      }
+    },
+    {
+      "id": 3350,
+      "changes": {
+        "basePrice": [
+          null,
+          600000
+        ]
+      }
+    },
+    {
+      "id": 3351,
+      "changes": {
+        "basePrice": [
+          null,
+          450000
+        ]
+      }
+    },
+    {
+      "id": 3352,
+      "changes": {
+        "basePrice": [
+          null,
+          300000
+        ]
+      }
+    },
+    {
+      "id": 3353,
+      "changes": {
+        "basePrice": [
+          null,
+          150000
+        ]
+      }
+    },
+    {
+      "id": 3354,
+      "changes": {
+        "basePrice": [
+          null,
+          150000
+        ]
+      }
+    },
+    {
+      "id": 3355,
+      "changes": {
+        "basePrice": [
+          null,
+          100000
+        ]
+      }
+    },
+    {
+      "id": 3392,
+      "changes": {
+        "basePrice": [
+          null,
+          175
+        ]
+      }
+    },
+    {
+      "id": 3399,
+      "changes": {
+        "basePrice": [
+          null,
+          60
+        ]
+      }
+    }
+  ]
+}

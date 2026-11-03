@@ -5,15 +5,15 @@
     "identity": "spoiled-milk-core-final-client-item-definitions",
     "definitionMode": "members-enabled-post-override",
     "catalogItemCount": 3444,
-    "catalogSha256": "90d7515c5a9c0fa3ea1c31981b854def66cd8b2060bc8d11567178ed3f230817",
+    "catalogSha256": "d31345e3d4476e0d4a3afa1ca9af743bdfc46b2cecd63dd017b33dd14e341026",
     "inputs": [
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java",
-        "sha256": "207f1bd1a236a53cd756a77f8297649025234f7a214547328a0c8677fa21ee37"
+        "sha256": "2cffa11345cd842370b3e22aa063047f9695a50744343ca07997a61213ca42c3"
       },
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/MyWorldItemOverrides.java",
-        "sha256": "52a2cb2f632ca4be2ef148f1055bb48edf0d88644ab38bff68705acf5e234e88"
+        "sha256": "7d2755fdb56dea36906ff348f6c3ad1703e76b132252f0f32dc2a4131fd185da"
       },
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/defs/ItemDef.java",
@@ -39,7 +39,7 @@
     },
     "externalPngPackaging": {
       "clientJarPath": "Client_Base/Open_RSC_Client.jar",
-      "packagedPngCount": 2988,
+      "packagedPngCount": 3175,
       "resourceRoot": "myworld-assets/"
     }
   },

@@ -1,0 +1,16 @@
+{
+  "baseline": "b283d3e0f7f3c396c9a039bf3f95212ed887adc1",
+  "sourceCommit": "85ed0e8a05c13143d318336f680e786849a0b75a",
+  "recoveredRuntimeFilesVerified": 202,
+  "protectedUnchangedPrefixes": [
+    "server/world-builder/",
+    "Client_Base/world-builder/",
+    "server/world-builder-fallback/",
+    "Client_Base/world-builder-fallback/",
+    "dev/myworld/assets/runtime/sprites/npcs/",
+    "dev/myworld/assets/runtime/ui/",
+    "server/src/com/openrsc/server/model/combat/",
+    "server/plugins/"
+  ],
+  "rawItemDefsCustomUnchanged": true
+}

@@ -1,0 +1,386 @@
+[
+  {
+    "identity": "itemId",
+    "nameExpression": "\"Slime Solvent (\" + dose + \")\"",
+    "oldSprite": "\"items:48\"",
+    "newSprite": "\"external-png:slime-solvent@20x29\""
+  },
+  {
+    "identity": "itemId",
+    "nameExpression": "\"Eye Drops (\" + dose + \")\"",
+    "oldSprite": "\"items:48\"",
+    "newSprite": "\"external-png:eye-drops@14x22\""
+  },
+  {
+    "identity": "itemId",
+    "nameExpression": "\"Wax earplugs (\" + uses + \")\"",
+    "oldSprite": "\"items:48\"",
+    "newSprite": "\"external-png:wax-earplugs@30x15\""
+  },
+  {
+    "identity": "itemId",
+    "nameExpression": "\"Dog Treats (\" + uses + \")\"",
+    "oldSprite": "\"items:48\"",
+    "newSprite": "\"external-png:dog-treats@34x28\""
+  },
+  {
+    "identity": "itemId",
+    "nameExpression": "\"Static discharge wipe (\" + uses + \")\"",
+    "oldSprite": "\"items:48\"",
+    "newSprite": "\"external-png:static-wipes@30x27\""
+  },
+  {
+    "identity": "3333",
+    "nameExpression": "\"Giant frog hide\"",
+    "oldSprite": "\"items:69\"",
+    "newSprite": "\"external-png:giant-frog-hide@38x24\""
+  },
+  {
+    "identity": "3335",
+    "nameExpression": "\"Naga hide\"",
+    "oldSprite": "\"items:69\"",
+    "newSprite": "\"external-png:naga-hide@38x24\""
+  },
+  {
+    "identity": "3336",
+    "nameExpression": "\"Terror dog hide\"",
+    "oldSprite": "\"items:69\"",
+    "newSprite": "\"external-png:terror-dog-hide@38x24\""
+  },
+  {
+    "identity": "3337",
+    "nameExpression": "\"Bloodveld hide\"",
+    "oldSprite": "\"items:69\"",
+    "newSprite": "\"external-png:bloodveld-hide@38x24\""
+  },
+  {
+    "identity": "3338",
+    "nameExpression": "\"Dark beast hide\"",
+    "oldSprite": "\"items:69\"",
+    "newSprite": "\"external-png:dark-beast-hide@38x24\""
+  },
+  {
+    "identity": "3339",
+    "nameExpression": "\"Cockatrice Feathers\"",
+    "oldSprite": "\"items:176\"",
+    "newSprite": "\"external-png:cockatrice-feathers@35x16\""
+  },
+  {
+    "identity": "3340",
+    "nameExpression": "\"Slimey Residue\"",
+    "oldSprite": "\"items:262\"",
+    "newSprite": "\"external-png:slimey-residue@34x14\""
+  },
+  {
+    "identity": "3399",
+    "nameExpression": "\"Ectoplasm\"",
+    "oldSprite": "\"items:262\"",
+    "newSprite": "\"external-png:ectoplasm@34x14\""
+  },
+  {
+    "identity": "3342",
+    "nameExpression": "\"Cockatrice Eye\"",
+    "oldSprite": "\"items:116\"",
+    "newSprite": "\"external-png:cockatrice-eye@11x10\""
+  },
+  {
+    "identity": "3343",
+    "nameExpression": "\"Frozen Tear\"",
+    "oldSprite": "\"items:74\"",
+    "newSprite": "\"external-png:frozen-tear@15x22\""
+  },
+  {
+    "identity": "3344",
+    "nameExpression": "\"Terror Fang\"",
+    "oldSprite": "\"items:145\"",
+    "newSprite": "\"external-png:terror-fang@27x22\""
+  },
+  {
+    "identity": "3345",
+    "nameExpression": "\"Leach Tongue\"",
+    "oldSprite": "\"items:103\"",
+    "newSprite": "\"external-png:leach-tongue@38x9\""
+  },
+  {
+    "identity": "3346",
+    "nameExpression": "\"Lightning Horn\"",
+    "oldSprite": "\"items:145\"",
+    "newSprite": "\"external-png:lightning-horn@32x20\""
+  },
+  {
+    "identity": "3347",
+    "nameExpression": "\"Abyssal Vertibrae\"",
+    "oldSprite": "\"items:20\"",
+    "newSprite": "\"external-png:abyssal-vertibrae@10x11\""
+  },
+  {
+    "identity": "3348",
+    "nameExpression": "\"Abyssal Rib\"",
+    "oldSprite": "\"items:137\"",
+    "newSprite": "\"external-png:abyssal-rib@32x20\""
+  },
+  {
+    "identity": "3349",
+    "nameExpression": "\"Shield of Mobility\"",
+    "oldSprite": "\"items:3\"",
+    "newSprite": "\"external-png:shield-of-mobility-icon@34x26\""
+  },
+  {
+    "identity": "3350",
+    "nameExpression": "\"Abyssal Whip\"",
+    "oldSprite": "\"items:81\"",
+    "newSprite": "\"external-png:abyssal-whip-icon@40x22\""
+  },
+  {
+    "identity": "3351",
+    "nameExpression": "\"Thunder Spire Staff\"",
+    "oldSprite": "\"items:123\"",
+    "newSprite": "\"external-png:thunder-spire-staff-icon@34x30\""
+  },
+  {
+    "identity": "3352",
+    "nameExpression": "\"Leaching Bow\"",
+    "oldSprite": "\"items:54\"",
+    "newSprite": "\"external-png:leaching-bow-icon@39x25\""
+  },
+  {
+    "identity": "3353",
+    "nameExpression": "\"Dagger of Terror\"",
+    "oldSprite": "\"items:80\"",
+    "newSprite": "\"external-png:dagger-of-terror-icon@28x19\""
+  },
+  {
+    "identity": "3354",
+    "nameExpression": "\"Poisoned Dagger of Terror\"",
+    "oldSprite": "\"items:80\"",
+    "newSprite": "\"external-png:dagger-of-terror-poisoned-icon@28x19\""
+  },
+  {
+    "identity": "3355",
+    "nameExpression": "\"Sullen Pendant\"",
+    "oldSprite": "\"items:24\"",
+    "newSprite": "\"external-png:sullen-pendant-icon@26x25\""
+  },
+  {
+    "identity": "3392",
+    "nameExpression": "\"Ugthanki hide\"",
+    "oldSprite": "\"items:69\"",
+    "newSprite": "\"external-png:ugthanki-hide@38x24\""
+  },
+  {
+    "identity": "3393",
+    "nameExpression": "\"Ugthanki leather\"",
+    "oldSprite": "\"items:69\"",
+    "newSprite": "\"external-png:ugthanki-leather@38x24\""
+  },
+  {
+    "identity": "3394",
+    "nameExpression": "\"Ugthanki-hide coif\"",
+    "oldSprite": "\"items:5\"",
+    "newSprite": "\"external-png:ugthanki-coif@21x22\""
+  },
+  {
+    "identity": "3395",
+    "nameExpression": "\"Ugthanki-hide gloves\"",
+    "oldSprite": "\"items:17\"",
+    "newSprite": "\"external-png:ugthanki-gloves@24x18\""
+  },
+  {
+    "identity": "3396",
+    "nameExpression": "\"Ugthanki-hide boots\"",
+    "oldSprite": "\"items:223\"",
+    "newSprite": "\"external-png:ugthanki-boots@33x30\""
+  },
+  {
+    "identity": "3397",
+    "nameExpression": "\"Ugthanki-hide chaps\"",
+    "oldSprite": "\"items:590\"",
+    "newSprite": "\"external-png:ugthanki-chaps@33x24\""
+  },
+  {
+    "identity": "3398",
+    "nameExpression": "\"Ugthanki-hide cuirass\"",
+    "oldSprite": "\"items:7\"",
+    "newSprite": "\"external-png:ugthanki-cuirass@34x18\""
+  },
+  {
+    "identity": "3356",
+    "nameExpression": "\"Giant frog leather\"",
+    "oldSprite": "\"items:69\"",
+    "newSprite": "\"external-png:giant-frog-leather@38x24\""
+  },
+  {
+    "identity": "3357",
+    "nameExpression": "\"Giant-frog-hide coif\"",
+    "oldSprite": "\"items:5\"",
+    "newSprite": "\"external-png:giant-frog-coif@21x22\""
+  },
+  {
+    "identity": "3358",
+    "nameExpression": "\"Giant-frog-hide gloves\"",
+    "oldSprite": "\"items:17\"",
+    "newSprite": "\"external-png:giant-frog-gloves@24x18\""
+  },
+  {
+    "identity": "3359",
+    "nameExpression": "\"Giant-frog-hide boots\"",
+    "oldSprite": "\"items:223\"",
+    "newSprite": "\"external-png:giant-frog-boots@33x30\""
+  },
+  {
+    "identity": "3360",
+    "nameExpression": "\"Giant-frog-hide chaps\"",
+    "oldSprite": "\"items:590\"",
+    "newSprite": "\"external-png:giant-frog-chaps@33x24\""
+  },
+  {
+    "identity": "3361",
+    "nameExpression": "\"Giant-frog-hide cuirass\"",
+    "oldSprite": "\"items:7\"",
+    "newSprite": "\"external-png:giant-frog-cuirass@34x18\""
+  },
+  {
+    "identity": "3368",
+    "nameExpression": "\"Naga leather\"",
+    "oldSprite": "\"items:69\"",
+    "newSprite": "\"external-png:naga-leather@38x24\""
+  },
+  {
+    "identity": "3369",
+    "nameExpression": "\"Naga-hide coif\"",
+    "oldSprite": "\"items:5\"",
+    "newSprite": "\"external-png:naga-coif@21x22\""
+  },
+  {
+    "identity": "3370",
+    "nameExpression": "\"Naga-hide gloves\"",
+    "oldSprite": "\"items:17\"",
+    "newSprite": "\"external-png:naga-gloves@24x18\""
+  },
+  {
+    "identity": "3371",
+    "nameExpression": "\"Naga-hide boots\"",
+    "oldSprite": "\"items:223\"",
+    "newSprite": "\"external-png:naga-boots@33x30\""
+  },
+  {
+    "identity": "3372",
+    "nameExpression": "\"Naga-hide chaps\"",
+    "oldSprite": "\"items:590\"",
+    "newSprite": "\"external-png:naga-chaps@33x24\""
+  },
+  {
+    "identity": "3373",
+    "nameExpression": "\"Naga-hide cuirass\"",
+    "oldSprite": "\"items:7\"",
+    "newSprite": "\"external-png:naga-cuirass@34x18\""
+  },
+  {
+    "identity": "3374",
+    "nameExpression": "\"Terror dog leather\"",
+    "oldSprite": "\"items:69\"",
+    "newSprite": "\"external-png:terror-dog-leather@38x24\""
+  },
+  {
+    "identity": "3375",
+    "nameExpression": "\"Terror-dog-hide coif\"",
+    "oldSprite": "\"items:5\"",
+    "newSprite": "\"external-png:terror-dog-coif@21x22\""
+  },
+  {
+    "identity": "3376",
+    "nameExpression": "\"Terror-dog-hide gloves\"",
+    "oldSprite": "\"items:17\"",
+    "newSprite": "\"external-png:terror-dog-gloves@24x18\""
+  },
+  {
+    "identity": "3377",
+    "nameExpression": "\"Terror-dog-hide boots\"",
+    "oldSprite": "\"items:223\"",
+    "newSprite": "\"external-png:terror-dog-boots@33x30\""
+  },
+  {
+    "identity": "3378",
+    "nameExpression": "\"Terror-dog-hide chaps\"",
+    "oldSprite": "\"items:590\"",
+    "newSprite": "\"external-png:terror-dog-chaps@33x24\""
+  },
+  {
+    "identity": "3379",
+    "nameExpression": "\"Terror-dog-hide cuirass\"",
+    "oldSprite": "\"items:7\"",
+    "newSprite": "\"external-png:terror-dog-cuirass@34x18\""
+  },
+  {
+    "identity": "3380",
+    "nameExpression": "\"Bloodveld leather\"",
+    "oldSprite": "\"items:69\"",
+    "newSprite": "\"external-png:bloodveld-leather@38x24\""
+  },
+  {
+    "identity": "3381",
+    "nameExpression": "\"Bloodveld-hide coif\"",
+    "oldSprite": "\"items:5\"",
+    "newSprite": "\"external-png:bloodveld-coif@21x22\""
+  },
+  {
+    "identity": "3382",
+    "nameExpression": "\"Bloodveld-hide gloves\"",
+    "oldSprite": "\"items:17\"",
+    "newSprite": "\"external-png:bloodveld-gloves@24x18\""
+  },
+  {
+    "identity": "3383",
+    "nameExpression": "\"Bloodveld-hide boots\"",
+    "oldSprite": "\"items:223\"",
+    "newSprite": "\"external-png:bloodveld-boots@33x30\""
+  },
+  {
+    "identity": "3384",
+    "nameExpression": "\"Bloodveld-hide chaps\"",
+    "oldSprite": "\"items:590\"",
+    "newSprite": "\"external-png:bloodveld-chaps@33x24\""
+  },
+  {
+    "identity": "3385",
+    "nameExpression": "\"Bloodveld-hide cuirass\"",
+    "oldSprite": "\"items:7\"",
+    "newSprite": "\"external-png:bloodveld-cuirass@34x18\""
+  },
+  {
+    "identity": "3386",
+    "nameExpression": "\"Dark beast leather\"",
+    "oldSprite": "\"items:69\"",
+    "newSprite": "\"external-png:dark-beast-leather@38x24\""
+  },
+  {
+    "identity": "3387",
+    "nameExpression": "\"Dark-beast-hide coif\"",
+    "oldSprite": "\"items:5\"",
+    "newSprite": "\"external-png:dark-beast-coif@21x22\""
+  },
+  {
+    "identity": "3388",
+    "nameExpression": "\"Dark-beast-hide gloves\"",
+    "oldSprite": "\"items:17\"",
+    "newSprite": "\"external-png:dark-beast-gloves@24x18\""
+  },
+  {
+    "identity": "3389",
+    "nameExpression": "\"Dark-beast-hide boots\"",
+    "oldSprite": "\"items:223\"",
+    "newSprite": "\"external-png:dark-beast-boots@33x30\""
+  },
+  {
+    "identity": "3390",
+    "nameExpression": "\"Dark-beast-hide chaps\"",
+    "oldSprite": "\"items:590\"",
+    "newSprite": "\"external-png:dark-beast-chaps@33x24\""
+  },
+  {
+    "identity": "3391",
+    "nameExpression": "\"Dark-beast-hide cuirass\"",
+    "oldSprite": "\"items:7\"",
+    "newSprite": "\"external-png:dark-beast-cuirass@34x18\""
+  }
+]

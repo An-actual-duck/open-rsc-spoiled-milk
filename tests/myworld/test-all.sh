@@ -65,6 +65,7 @@ python3 ./tests/myworld/test-enchanting-data.py
 python3 ./tests/myworld/test-layered-spell-teleport-destinations.py
 python3 ./tests/myworld/test-bangle-jewelry.py
 python3 ./tests/myworld/test-equipment-worn-appearances.py
+python3 ./tests/myworld/test-slayer-art-recovery.py
 python3 ./tests/myworld/test-ingame-hiscores.py
 python3 ./tests/myworld/test-jewelry-runtime-effects.py
 python3 ./tests/myworld/test-bank-filters.py

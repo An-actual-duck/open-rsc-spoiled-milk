@@ -1,0 +1,131 @@
+Slayer art release recovery
+==========================
+
+Purpose
+-------
+Recover the completed pre-release Slayer equipment/material artwork omitted
+from published main and v0.3.2, without restoring superseded gameplay code.
+This is a paired client/server patch candidate, not a public activation.
+
+Reviewed sources
+----------------
+Current published base: b283d3e0f7f3c396c9a039bf3f95212ed887adc1.
+Preserved READY art handoff: 85ed0e8a05c13143d318336f680e786849a0b75a,
+art/slayer-item-sprite-candidates. That branch was never integrated. It is
+62 commits ahead and 273 behind the current baseline, so a wholesale merge
+would also restore old assumptions and unrelated work.
+
+The Whip's completed slender rebuild is in 3740ff18f336d117765298f9a305ce3080681174;
+157ae04bffe3c90e456cfc337ebed65c282f4592 and
+4d35387e187d85c8c47f2fbe53f695cece02421c preserve earlier integration/rebuild.
+Source handoff records include slayer-sprite-completion-plan,
+slayer-abyssal-whip-visual-integration, slayer-leather-poison-visual-integration,
+slayer-material-icon-integration and slayer-item-pricing in its rough-drafts.
+
+The released client had no held or inventory Whip PNGs. Its item 3350 still
+used appearance 53 (rune sword) and a tinted items81 inventory placeholder.
+The completed work existed in the privately tested art branch, explaining
+why the owner saw it before release.
+
+Recovered content
+-----------------
+* Abyssal Whip, Dagger of Terror and its poisoned variant, Leaching Bow,
+  Thunder Spire Staff, Shield of Mobility and Sullen Pendant appearances.
+* All 30 pieces in the six approved five-piece leather armour palettes:
+  Giant Frog, Naga, Terror Dog, Bloodveld, Dark Beast and Ugthanki.
+* 64 inventory/ground sprite selectors, covering 74 effective item IDs when
+  the three-use consumable variants are expanded.
+* 202 runtime PNGs: 187 additions and 15 corrected full-canvas shears frames.
+  Existing sprite PNGs outside those shears frames are byte-identical.
+* 36 previously approved held weapon-family corrections, represented by
+  21 appended palette variants. Existing poisoned-knife/pickaxe/hatchet and
+  Slayer appearances are not overwritten by this separate mapping pass.
+* Previously approved base coin values for 39 material/consumable/equipment
+  entries. The generated item data changes only basePrice. Example unique
+  values: Shield 40,000; Pendant 100,000; Dagger 150,000; Bow 300,000;
+  Staff 450,000; Whip 600,000. These also affect ordinary alchemy/shop value.
+  No Slayer currency cost, recipe, drop rate or combat stat changes.
+
+The 639-file editable art project is preserved byte-for-byte under
+assets/authoring/slayer-items. READ-FIRST.txt marks its scripts as historical;
+they still contain old paths/IDs and are not active packaging instructions.
+RECOVERY-INDEX.json ties every installed PNG to the exact source Git path,
+blob and SHA-256. Runtime files use the current normalized assets/runtime
+layout. The client and standalone visual provider both discover the recovered
+armor and jewelry icon directories.
+
+ID and compatibility handling
+-----------------------------
+Published Gem Dragon aliases 1092-1096 and coating aliases 1097-1111 retain
+their existing zero-based IDs. The 37 recovered Slayer appearances append at
+one-based 1113-1149; held-family variants append at 1150-1170. Whip is 1149.
+The previous art branch's overlapping IDs were not reused.
+
+Paired generators produce both server/client tables from reviewed manifests.
+Build scripts reject stale tables. The server applies appearances after all
+current item overrides, with authentic-mode fallback and MyWorld isolation.
+Only appearance fields change in that final pass; current stats remain.
+The retained balance includes Bow ranged offense 44 and Staff magic offense 56.
+
+Paired client version increases from 10056 to 10057. The protocol schema and
+Cleric payloads are unchanged. Both MyWorld release profiles enforce the new
+version so older clients cannot receive an unknown appearance catalog.
+NPC capacity remains 16,384 with its existing capability floor.
+
+The web avatar exporter has a smaller legacy catalog. New held-family aliases
+resolve against existing frame families; Slayer armour resolves with the
+approved palette. Its seven external-PNG families retain a legacy silhouette
+fallback rather than indexing outside that catalog. Full web-avatar export is
+not proven: the inherited legacy archive-unpacking failure remains outside
+this art patch. The private/public MyWorld profiles disable avatar generation.
+This limitation does not affect the game client's actual external PNG loader.
+
+Preserved or deliberately excluded
+---------------------------------
+* Later approved coating potion/gland art and the gland's 16x18 selector.
+  The older source branch's competing gland PNG is not installed.
+* Current Slow, antidote, Cleric, Cosmic combat, stagger and coating behavior;
+  old source-branch gameplay and old fixture assumptions are not restored.
+* All current maps, terrain fixes, NPC sprites (including the recently approved
+  Abyssal Demon motion), Cleric icons and animation assignments.
+* Retired Banshee armour remains retired. No Abyssal armour set is invented.
+* The unapproved Naga middle-pose art draft stays preserved in the old branch.
+
+Validation and review
+---------------------
+Builds, exact source-blob checks, runtime appearance fixtures, actual packaged
+client loading in separate custom/authentic JVMs, 11 recovered asset suites,
+current equipment/coating/gem-dragon/movement/reagent checks, player packaging,
+editor provider reproducibility/bundle validation, client version/capacity and
+login policy checks are recorded in the accompanying evidence directory.
+The complete combat regression gate passed 145/145 scenarios.
+
+Stale fixture expectations were corrected to the reviewed artwork/current IDs;
+checks were not bypassed. The general Slayer foundation fixture now includes
+the movement-definition source used by production. Provider source discovery
+and fixed release-art SHA receipts now include the recovered artwork. A new
+packaged-client recovery check is part of tests/myworld/test-all.sh.
+
+Machine-readable scope, PNG delta, economy delta and per-suite results are in
+../evidence/slayer-art-release-recovery. Full generated analyzer/build logs and
+private process metadata remain under output/reviews/slayer-art-release-recovery
+and output/tests/slayer-art-release-recovery respectively.
+
+Private candidate
+-----------------
+A separate loopback-only server/client pair uses client version 10057 and the
+current selected native map. Only the previous private SQLite database is
+copied using online backup; no live database is copied. Test login equips
+Dark Beast armour and Whip, gives alternate weapons in inventory and stores
+other armour palettes in the private bank. No gameplay helper enters source.
+The private build embeds runtime PNGs and has no development-art directory.
+
+Remaining release actions
+-------------------------
+The owner confirmed all recovered visuals displayed correctly in the private
+client on 2026-11-02. Remaining: exact READY integration and official patch
+packaging.
+The old source-art branch remains preserved; do not merge it wholesale or delete
+it as part of this focused recovery. No release tag, public asset upload,
+public shutdown or live activation is part of this preparation. Public activation
+requires fresh explicit shutdown permission and the normal warning window.

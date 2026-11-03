@@ -2,8 +2,14 @@ package com.openrsc.server.combat;
 
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.external.HeldEquipmentFamilies;
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 public final class HeldEquipmentAppearanceFixture {
  public static void main(String[] args) throws Exception {

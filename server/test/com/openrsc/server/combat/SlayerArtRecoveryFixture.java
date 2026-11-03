@@ -2,8 +2,16 @@ package com.openrsc.server.combat;
 
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.external.SlayerArtAppearances;
-import java.lang.reflect.*;
-import java.util.*;
+import com.openrsc.server.avatargenerator.AvatarFormat.AnimationDef;
+import com.openrsc.server.avatargenerator.HeldEquipmentAvatarAnimations;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 /** Effective server assignments after all overrides; render-mode changes cannot alter gameplay. */
 public final class SlayerArtRecoveryFixture {
@@ -28,6 +36,17 @@ public final class SlayerArtRecoveryFixture {
    check(h.server().getEntityHandler().getItemDef(3351).getMagicOffense()==56,"current staff balance preserved");
    check(h.server().getEntityHandler().getItemDef(3352).getRangedOffense()==44,"current bow balance preserved");
    check(h.server().getEntityHandler().getItemDef(3350).getDefaultPrice()==600000,"approved whip value");
+   java.util.List<AnimationDef> avatarBases=new ArrayList<>();
+   for(int i=0;i<508;i++)avatarBases.add(new AnimationDef("legacy"+i,"equipment",0,0,true,false,i));
+   for(String family:new String[]{"mediumhelm","hidegloves","hideboots","chainmaillegs","chainmail"})
+    avatarBases.add(new AnimationDef(family,"equipment",0,0,true,false,42));
+   for(SlayerArtAppearances.Mapping m:SlayerArtAppearances.MAPPINGS) {
+    AnimationDef resolved=HeldEquipmentAvatarAnimations.resolve(avatarBases,m.appearanceId-1);
+    if(m.family.equals("mediumhelm")||m.family.equals("hidegloves")||m.family.equals("hideboots")
+       ||m.family.equals("chainmaillegs")||m.family.equals("chainmail"))
+     check(resolved.getName().equals(m.family)&&resolved.getGrayMask()==m.mask&&resolved.getNumber()==42,"legacy avatar palette "+m.itemId);
+    else check(resolved==avatarBases.get(m.fallbackAppearance-1),"legacy web-avatar PNG fallback "+m.itemId);
+   }
    System.out.println("PASS: 37 effective final Slayer appearances, authentic fallbacks, unchanged gameplay metadata, current bow/staff balance and restored whip value");
   }
  }

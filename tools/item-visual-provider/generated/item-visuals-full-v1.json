@@ -5,15 +5,15 @@
     "identity": "spoiled-milk-core-final-client-item-definitions",
     "definitionMode": "members-enabled-post-override",
     "catalogItemCount": 3444,
-    "catalogSha256": "90d7515c5a9c0fa3ea1c31981b854def66cd8b2060bc8d11567178ed3f230817",
+    "catalogSha256": "d31345e3d4476e0d4a3afa1ca9af743bdfc46b2cecd63dd017b33dd14e341026",
     "inputs": [
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java",
-        "sha256": "207f1bd1a236a53cd756a77f8297649025234f7a214547328a0c8677fa21ee37"
+        "sha256": "2cffa11345cd842370b3e22aa063047f9695a50744343ca07997a61213ca42c3"
       },
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/MyWorldItemOverrides.java",
-        "sha256": "52a2cb2f632ca4be2ef148f1055bb48edf0d88644ab38bff68705acf5e234e88"
+        "sha256": "7d2755fdb56dea36906ff348f6c3ad1703e76b132252f0f32dc2a4131fd185da"
       },
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/defs/ItemDef.java",
@@ -39,7 +39,7 @@
     },
     "externalPngPackaging": {
       "clientJarPath": "Client_Base/Open_RSC_Client.jar",
-      "packagedPngCount": 2988,
+      "packagedPngCount": 3175,
       "resourceRoot": "myworld-assets/"
     }
   },
@@ -47,7 +47,7 @@
     "kind": "complete-final-catalog",
     "itemCount": 3444,
     "itemIdsSha256": "8c009d4181e55e4c267059a8229fc044db37b8a5e5bc8c6948b9802e0b98cbba",
-    "mappingSha256": "c04148e8b3d981e884ac8b745de41eb13d986970583a8876f5cf5474e56f49b5",
+    "mappingSha256": "61a460b9e7803bf1b1983aa0a3642a31cfcb08c9297edec7a79002c760b48b6c",
     "minimumItemId": 0,
     "maximumItemId": 3443
   },
@@ -65719,321 +65719,321 @@
     {
       "itemId": 3318,
       "diagnosticName": "Slime Solvent (3)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:slime-solvent@20x29",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "slime-solvent@20x29",
+        "assetName": "slime-solvent",
+        "targetWidth": 20,
+        "targetHeight": 29,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/slime-solvent.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/slime-solvent.png",
+        "sha256": "f569dfb93dcae86f492205d5d008e6d2d93c2cf5b01f93e70d23b3397a856f69"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 5289585,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3319,
       "diagnosticName": "Slime Solvent (2)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:slime-solvent@20x29",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "slime-solvent@20x29",
+        "assetName": "slime-solvent",
+        "targetWidth": 20,
+        "targetHeight": 29,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/slime-solvent.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/slime-solvent.png",
+        "sha256": "f569dfb93dcae86f492205d5d008e6d2d93c2cf5b01f93e70d23b3397a856f69"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 5289585,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3320,
       "diagnosticName": "Slime Solvent (1)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:slime-solvent@20x29",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "slime-solvent@20x29",
+        "assetName": "slime-solvent",
+        "targetWidth": 20,
+        "targetHeight": 29,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/slime-solvent.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/slime-solvent.png",
+        "sha256": "f569dfb93dcae86f492205d5d008e6d2d93c2cf5b01f93e70d23b3397a856f69"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 5289585,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3321,
       "diagnosticName": "Eye Drops (3)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:eye-drops@14x22",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "eye-drops@14x22",
+        "assetName": "eye-drops",
+        "targetWidth": 14,
+        "targetHeight": 22,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/eye-drops.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/eye-drops.png",
+        "sha256": "e72c9b03bf190b8d4ca4bc8a19b6992dd6897db297e5de3618c66a3a3b2e8c46"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 7976910,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3322,
       "diagnosticName": "Eye Drops (2)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:eye-drops@14x22",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "eye-drops@14x22",
+        "assetName": "eye-drops",
+        "targetWidth": 14,
+        "targetHeight": 22,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/eye-drops.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/eye-drops.png",
+        "sha256": "e72c9b03bf190b8d4ca4bc8a19b6992dd6897db297e5de3618c66a3a3b2e8c46"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 7976910,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3323,
       "diagnosticName": "Eye Drops (1)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:eye-drops@14x22",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "eye-drops@14x22",
+        "assetName": "eye-drops",
+        "targetWidth": 14,
+        "targetHeight": 22,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/eye-drops.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/eye-drops.png",
+        "sha256": "e72c9b03bf190b8d4ca4bc8a19b6992dd6897db297e5de3618c66a3a3b2e8c46"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 7976910,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3324,
       "diagnosticName": "Wax earplugs (3)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:wax-earplugs@30x15",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "wax-earplugs@30x15",
+        "assetName": "wax-earplugs",
+        "targetWidth": 30,
+        "targetHeight": 15,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/wax-earplugs.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/wax-earplugs.png",
+        "sha256": "13032613960c51988b3d24b897327d9c9581dd3953fa439dcaf21288eab85526"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 14729344,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3325,
       "diagnosticName": "Wax earplugs (2)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:wax-earplugs@30x15",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "wax-earplugs@30x15",
+        "assetName": "wax-earplugs",
+        "targetWidth": 30,
+        "targetHeight": 15,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/wax-earplugs.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/wax-earplugs.png",
+        "sha256": "13032613960c51988b3d24b897327d9c9581dd3953fa439dcaf21288eab85526"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 14729344,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3326,
       "diagnosticName": "Wax earplugs (1)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:wax-earplugs@30x15",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "wax-earplugs@30x15",
+        "assetName": "wax-earplugs",
+        "targetWidth": 30,
+        "targetHeight": 15,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/wax-earplugs.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/wax-earplugs.png",
+        "sha256": "13032613960c51988b3d24b897327d9c9581dd3953fa439dcaf21288eab85526"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 14729344,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3327,
       "diagnosticName": "Dog Treats (3)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:dog-treats@34x28",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "dog-treats@34x28",
+        "assetName": "dog-treats",
+        "targetWidth": 34,
+        "targetHeight": 28,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/dog-treats.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/dog-treats.png",
+        "sha256": "4a0e1355f72d48f521e95e4c016a45f94430c2b3a794fe1cc372bb14be2b26f9"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 11241806,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3328,
       "diagnosticName": "Dog Treats (2)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:dog-treats@34x28",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "dog-treats@34x28",
+        "assetName": "dog-treats",
+        "targetWidth": 34,
+        "targetHeight": 28,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/dog-treats.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/dog-treats.png",
+        "sha256": "4a0e1355f72d48f521e95e4c016a45f94430c2b3a794fe1cc372bb14be2b26f9"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 11241806,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3329,
       "diagnosticName": "Dog Treats (1)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:dog-treats@34x28",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "dog-treats@34x28",
+        "assetName": "dog-treats",
+        "targetWidth": 34,
+        "targetHeight": 28,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/dog-treats.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/dog-treats.png",
+        "sha256": "4a0e1355f72d48f521e95e4c016a45f94430c2b3a794fe1cc372bb14be2b26f9"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 11241806,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3330,
       "diagnosticName": "Static discharge wipe (3)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:static-wipes@30x27",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "static-wipes@30x27",
+        "assetName": "static-wipes",
+        "targetWidth": 30,
+        "targetHeight": 27,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/static-wipes.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/static-wipes.png",
+        "sha256": "b6c20ec40ca50c99beca359459b87536a6cca625d24685d1cd01008a43e04fa7"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 14729344,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3331,
       "diagnosticName": "Static discharge wipe (2)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:static-wipes@30x27",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "static-wipes@30x27",
+        "assetName": "static-wipes",
+        "targetWidth": 30,
+        "targetHeight": 27,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/static-wipes.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/static-wipes.png",
+        "sha256": "b6c20ec40ca50c99beca359459b87536a6cca625d24685d1cd01008a43e04fa7"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 14729344,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3332,
       "diagnosticName": "Static discharge wipe (1)",
-      "spriteLocation": "items:48",
-      "spriteId": 48,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2198,
-        "entrySha256": "dba4e0ff72d4706a22a28113e7a69c09e39f692c423fa199b400ac0117bf8606"
+      "spriteLocation": "external-png:static-wipes@30x27",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "static-wipes@30x27",
+        "assetName": "static-wipes",
+        "targetWidth": 30,
+        "targetHeight": 27,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/static-wipes.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/static-wipes.png",
+        "sha256": "b6c20ec40ca50c99beca359459b87536a6cca625d24685d1cd01008a43e04fa7"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "48",
-        "baseArchiveEntrySha256": "49e347491c4686e3c515c9864fac839e4ab253bd12023f00a23a1a253b96afd9",
-        "spritepackOverrideKey": "items:48"
-      },
-      "externalPng": null,
-      "pictureMask": 14729344,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3333,
       "diagnosticName": "Giant frog hide",
-      "spriteLocation": "items:69",
-      "spriteId": 69,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2219,
-        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      "spriteLocation": "external-png:giant-frog-hide@38x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "giant-frog-hide@38x24",
+        "assetName": "giant-frog-hide",
+        "targetWidth": 38,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/giant-frog-hide.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/giant-frog-hide.png",
+        "sha256": "52b96c76f3e445d1d094bd826e94905986ae547099f949267f86ee499a60d160"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "69",
-        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
-        "spritepackOverrideKey": "items:69"
-      },
-      "externalPng": null,
-      "pictureMask": 3640195,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
@@ -66059,121 +66059,121 @@
     {
       "itemId": 3335,
       "diagnosticName": "Naga hide",
-      "spriteLocation": "items:69",
-      "spriteId": 69,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2219,
-        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      "spriteLocation": "external-png:naga-hide@38x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "naga-hide@38x24",
+        "assetName": "naga-hide",
+        "targetWidth": 38,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/naga-hide.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/naga-hide.png",
+        "sha256": "a8c5d80a1bbaa377d0eddc26aa44b0d19e59b1789c6c1f6580b492191d5b3d9f"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "69",
-        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
-        "spritepackOverrideKey": "items:69"
-      },
-      "externalPng": null,
-      "pictureMask": 5666110,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3336,
       "diagnosticName": "Terror dog hide",
-      "spriteLocation": "items:69",
-      "spriteId": 69,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2219,
-        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      "spriteLocation": "external-png:terror-dog-hide@38x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "terror-dog-hide@38x24",
+        "assetName": "terror-dog-hide",
+        "targetWidth": 38,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/terror-dog-hide.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/terror-dog-hide.png",
+        "sha256": "90c5fdc61cb39dc34bde0150684fcec3d868b5f33dbfbaac1daf81bb943470a9"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "69",
-        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
-        "spritepackOverrideKey": "items:69"
-      },
-      "externalPng": null,
-      "pictureMask": 6642001,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3337,
       "diagnosticName": "Bloodveld hide",
-      "spriteLocation": "items:69",
-      "spriteId": 69,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2219,
-        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      "spriteLocation": "external-png:bloodveld-hide@38x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "bloodveld-hide@38x24",
+        "assetName": "bloodveld-hide",
+        "targetWidth": 38,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/bloodveld-hide.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/bloodveld-hide.png",
+        "sha256": "746d4e5151e979c33e97f2a52f8a7113615ac917915a209151ad7f1b23711629"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "69",
-        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
-        "spritepackOverrideKey": "items:69"
-      },
-      "externalPng": null,
-      "pictureMask": 10190949,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3338,
       "diagnosticName": "Dark beast hide",
-      "spriteLocation": "items:69",
-      "spriteId": 69,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2219,
-        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      "spriteLocation": "external-png:dark-beast-hide@38x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "dark-beast-hide@38x24",
+        "assetName": "dark-beast-hide",
+        "targetWidth": 38,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/dark-beast-hide.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/dark-beast-hide.png",
+        "sha256": "923b68bbe6ab50d1ff581fd3612fd751d50e46f59ccf3c22b3cd0a3e9c86f60a"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "69",
-        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
-        "spritepackOverrideKey": "items:69"
-      },
-      "externalPng": null,
-      "pictureMask": 3748389,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3339,
       "diagnosticName": "Cockatrice Feathers",
-      "spriteLocation": "items:176",
-      "spriteId": 176,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2326,
-        "entrySha256": "07441b8cdaafb82676b94895851dee4a85b88ba03c620521bedbfdd5a000f8b8"
+      "spriteLocation": "external-png:cockatrice-feathers@35x16",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "cockatrice-feathers@35x16",
+        "assetName": "cockatrice-feathers",
+        "targetWidth": 35,
+        "targetHeight": 16,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/cockatrice-feathers.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/cockatrice-feathers.png",
+        "sha256": "8e00956091b392d66336f2f385631c923473afa629718de50728bf55a9d40610"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "176",
-        "baseArchiveEntrySha256": "f7a818ce00ccf7d99fa4e4a9da65c1eba18ebd63ebdac04dc3f5580e95e27693",
-        "spritepackOverrideKey": "items:176"
-      },
-      "externalPng": null,
-      "pictureMask": 9411419,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3340,
       "diagnosticName": "Slimey Residue",
-      "spriteLocation": "items:262",
-      "spriteId": 262,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2412,
-        "entrySha256": "37f38d340d345930d46a167cbe2f3dea82d912da713ab5c975adc78cef44576b"
+      "spriteLocation": "external-png:slimey-residue@34x14",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "slimey-residue@34x14",
+        "assetName": "slimey-residue",
+        "targetWidth": 34,
+        "targetHeight": 14,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/slimey-residue.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/slimey-residue.png",
+        "sha256": "470d590579fa1e7bef2dbaa2fc42e3edcbc55ccf69d4ed46fa4eb8643be51a6c"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "262",
-        "baseArchiveEntrySha256": "0edbf5f6203d1015ea664da6d8bcd33ed3974ef34011ad4ab9af5d2a12a22343",
-        "spritepackOverrideKey": "items:262"
-      },
-      "externalPng": null,
-      "pictureMask": 6453644,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
@@ -66199,398 +66199,401 @@
     {
       "itemId": 3342,
       "diagnosticName": "Cockatrice Eye",
-      "spriteLocation": "items:116",
-      "spriteId": 116,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2266,
-        "entrySha256": "5ecb1e90022e0e9c0a698a0224cdd8b4ecd6a3321a3bb53c5380d039e4171926"
+      "spriteLocation": "external-png:cockatrice-eye@11x10",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "cockatrice-eye@11x10",
+        "assetName": "cockatrice-eye",
+        "targetWidth": 11,
+        "targetHeight": 10,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/cockatrice-eye.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/cockatrice-eye.png",
+        "sha256": "8d65cb1f24dc08ba5ba418781f10cb8292837b2748f8e2fdce6fc0c0999593b9"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "116",
-        "baseArchiveEntrySha256": "3650a19e94bfe7028026a19f28182886040ebaad98f423f81c1a4b21c944aaa2",
-        "spritepackOverrideKey": "items:116"
-      },
-      "externalPng": null,
-      "pictureMask": 12166747,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3343,
       "diagnosticName": "Frozen Tear",
-      "spriteLocation": "items:74",
-      "spriteId": 74,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2224,
-        "entrySha256": "954d63f625fa3d6aca979a0415830e9cf44742e9b799be549bcf596e1eaf2563"
+      "spriteLocation": "external-png:frozen-tear@15x22",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "frozen-tear@15x22",
+        "assetName": "frozen-tear",
+        "targetWidth": 15,
+        "targetHeight": 22,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/frozen-tear.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/frozen-tear.png",
+        "sha256": "0514ae607a5d129117bc1872797bf1ee0f98f86f63381562fabc893b99d17e17"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "74",
-        "baseArchiveEntrySha256": "f008e5749602c0c5a29f82ba2c381eaffc8ad1a35c831aabbd5e9af6d7e8aad1",
-        "spritepackOverrideKey": "items:74"
-      },
-      "externalPng": null,
-      "pictureMask": 10079709,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3344,
       "diagnosticName": "Terror Fang",
-      "spriteLocation": "items:145",
-      "spriteId": 145,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2295,
-        "entrySha256": "b763502754c0177bd9d5ecea649c54adeb259ba7e0e83534aa5925ced8e33103"
+      "spriteLocation": "external-png:terror-fang@27x22",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "terror-fang@27x22",
+        "assetName": "terror-fang",
+        "targetWidth": 27,
+        "targetHeight": 22,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/terror-fang.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/terror-fang.png",
+        "sha256": "1ecdf6ee7973e51b99d299a0b407ba2f79f42f9e0c9543cbffe34e279c6f9315"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "145",
-        "baseArchiveEntrySha256": "0959f0f02950f8352d0e8d96ac0c5bdce3dc3062d8a1be75a3f8d72844fb7145",
-        "spritepackOverrideKey": "items:145"
-      },
-      "externalPng": null,
-      "pictureMask": 14075296,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3345,
       "diagnosticName": "Leach Tongue",
-      "spriteLocation": "items:103",
-      "spriteId": 103,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2253,
-        "entrySha256": "15ac03fea308340b7852311194ffae3b7e6fe92f383a8574140116dd795bdd11"
+      "spriteLocation": "external-png:leach-tongue@38x9",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "leach-tongue@38x9",
+        "assetName": "leach-tongue",
+        "targetWidth": 38,
+        "targetHeight": 9,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/leach-tongue.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/leach-tongue.png",
+        "sha256": "a6af015fb1b839e33a305e37bd086620e69253b9c13cf8934b961445d31e7462"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "103",
-        "baseArchiveEntrySha256": "da042fb6e9e29d638d1f9a808d66f21e2f27790ae72fba1d1d8a8922716c7f65",
-        "spritepackOverrideKey": "items:103"
-      },
-      "externalPng": null,
-      "pictureMask": 11493986,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3346,
       "diagnosticName": "Lightning Horn",
-      "spriteLocation": "items:145",
-      "spriteId": 145,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2295,
-        "entrySha256": "b763502754c0177bd9d5ecea649c54adeb259ba7e0e83534aa5925ced8e33103"
+      "spriteLocation": "external-png:lightning-horn@32x20",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "lightning-horn@32x20",
+        "assetName": "lightning-horn",
+        "targetWidth": 32,
+        "targetHeight": 20,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/lightning-horn.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/lightning-horn.png",
+        "sha256": "e9330eba4a02d94e99a823d1fcedb7f8501652ad5f1ce40286584e03c06400e8"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "145",
-        "baseArchiveEntrySha256": "0959f0f02950f8352d0e8d96ac0c5bdce3dc3062d8a1be75a3f8d72844fb7145",
-        "spritepackOverrideKey": "items:145"
-      },
-      "externalPng": null,
-      "pictureMask": 14204001,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3347,
       "diagnosticName": "Abyssal Vertibrae",
-      "spriteLocation": "items:20",
-      "spriteId": 20,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2170,
-        "entrySha256": "f5de0f20595be0f39a35cc488daa3483c63ade50e9bb384304d9d0aeb3f5662c"
+      "spriteLocation": "external-png:abyssal-vertibrae@10x11",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "abyssal-vertibrae@10x11",
+        "assetName": "abyssal-vertibrae",
+        "targetWidth": 10,
+        "targetHeight": 11,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/abyssal-vertibrae.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/abyssal-vertibrae.png",
+        "sha256": "f82d3817bcbc52cc5a317bb578de6575a4cb4205cd9955b99af2b3518996f3f8"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "20",
-        "baseArchiveEntrySha256": "fae47c5d099b1e4708aee24271c61cfd1e9fe5b180807dd6676c50b009948d4c",
-        "spritepackOverrideKey": "items:20"
-      },
-      "externalPng": null,
-      "pictureMask": 9544882,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3348,
       "diagnosticName": "Abyssal Rib",
-      "spriteLocation": "items:137",
-      "spriteId": 137,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2287,
-        "entrySha256": "188661f25fdd43452115df5dda31c66ea5519c5e655950069af4806bd8f5179e"
+      "spriteLocation": "external-png:abyssal-rib@32x20",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "abyssal-rib@32x20",
+        "assetName": "abyssal-rib",
+        "targetWidth": 32,
+        "targetHeight": 20,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/abyssal-rib.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/abyssal-rib.png",
+        "sha256": "ea3f32f4c44d617bb4dc5a3fa3c876afb9c6f953ec08b7a3139f62cbda3f9453"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "137",
-        "baseArchiveEntrySha256": "0cfc0784c1d7a4eb197fa428ebd83db37ea7f075d223a82d6a28dae4d91511c8",
-        "spritepackOverrideKey": "items:137"
-      },
-      "externalPng": null,
-      "pictureMask": 8493482,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3349,
       "diagnosticName": "Shield of Mobility",
-      "spriteLocation": "items:3",
-      "spriteId": 3,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2153,
-        "entrySha256": "2ae9deb160f46258cbf022cf6e1914a7062d767cbfd77034560d13960f228f27"
+      "spriteLocation": "external-png:shield-of-mobility-icon@34x26",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "shield-of-mobility-icon@34x26",
+        "assetName": "shield-of-mobility-icon",
+        "targetWidth": 34,
+        "targetHeight": 26,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/shield-of-mobility-icon.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/shield-of-mobility-icon.png",
+        "sha256": "9c6da9e5645bd57a784ead0e92ea3beee049d4c3a6887168334118e9b7a98bfa"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "3",
-        "baseArchiveEntrySha256": "92e4d75866bd3cbdeef64f4d5b18e7dd8c9498034e37e6021fb4868fd3ccf0a6",
-        "spritepackOverrideKey": "items:3"
-      },
-      "externalPng": null,
-      "pictureMask": 9082485,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3350,
       "diagnosticName": "Abyssal Whip",
-      "spriteLocation": "items:81",
-      "spriteId": 81,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2231,
-        "entrySha256": "478d91b0c62de3e643d044db7d2758ce1a4cdec0e6f61f8801bdf668a54732f7"
+      "spriteLocation": "external-png:abyssal-whip-icon@40x22",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "abyssal-whip-icon@40x22",
+        "assetName": "abyssal-whip-icon",
+        "targetWidth": 40,
+        "targetHeight": 22,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/abyssal-whip-icon.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/weapons/abyssal-whip-icon.png",
+        "sha256": "299ce54e34ec6a847db9b051472e131a9bd43349d3c343844285cf96bfa8e5a9"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "81",
-        "baseArchiveEntrySha256": "c36b49c7428774d5170f53480c3cc73d92820f38a046ffd50fe706628198bd68",
-        "spritepackOverrideKey": "items:81"
-      },
-      "externalPng": null,
-      "pictureMask": 8493482,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3351,
       "diagnosticName": "Thunder Spire Staff",
-      "spriteLocation": "items:123",
-      "spriteId": 123,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2273,
-        "entrySha256": "584eecf041d75135f1e3b15aaa9a5f1d5aaba1814981ef55a7df591841fb9b0a"
+      "spriteLocation": "external-png:thunder-spire-staff-icon@34x30",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "thunder-spire-staff-icon@34x30",
+        "assetName": "thunder-spire-staff-icon",
+        "targetWidth": 34,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/thunder-spire-staff-icon.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/weapons/thunder-spire-staff-icon.png",
+        "sha256": "cc5bce9de3cf00f948f710472352c3c6e43276d50dc3d9c15a15016c77bdf962"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "123",
-        "baseArchiveEntrySha256": "63c8fad0247653ef160b123bc4b4d7a78f644eed08e1fd5c0de3068a9c6fa595",
-        "spritepackOverrideKey": "items:123"
-      },
-      "externalPng": null,
-      "pictureMask": 14204001,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3352,
       "diagnosticName": "Leaching Bow",
-      "spriteLocation": "items:54",
-      "spriteId": 54,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2204,
-        "entrySha256": "88ffb0d7606332aae589cae9829429288edbe3f5d7d44204d232d7e192d59dba"
+      "spriteLocation": "external-png:leaching-bow-icon@39x25",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "leaching-bow-icon@39x25",
+        "assetName": "leaching-bow-icon",
+        "targetWidth": 39,
+        "targetHeight": 25,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/leaching-bow-icon.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/weapons/leaching-bow-icon.png",
+        "sha256": "3ed596aa0071c5e2179f0960671488cde2bd1a8efb2b205427bbefc846019443"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "54",
-        "baseArchiveEntrySha256": "0d64a72720df00ade23e7500af7cf3b70e61df7cb3efe9f40e154e2bb03e211b",
-        "spritepackOverrideKey": "items:54"
-      },
-      "externalPng": null,
-      "pictureMask": 11493986,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3353,
       "diagnosticName": "Dagger of Terror",
-      "spriteLocation": "items:80",
-      "spriteId": 80,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2230,
-        "entrySha256": "59ce2de8a7d032b047be83a17fbb31f4f012789407138cf0a7e53ca133347175"
+      "spriteLocation": "external-png:dagger-of-terror-icon@28x19",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "dagger-of-terror-icon@28x19",
+        "assetName": "dagger-of-terror-icon",
+        "targetWidth": 28,
+        "targetHeight": 19,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/dagger-of-terror-icon.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/weapons/dagger-of-terror-icon.png",
+        "sha256": "11adb419c2e65b5151c369d0d45cde68d9349cbe6576c055b0b6261ca7a853b4"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "80",
-        "baseArchiveEntrySha256": "b7c4b8f8964f160a437093590714a78625ed9d1d03751a2d4a77bcaa588f3f76",
-        "spritepackOverrideKey": "items:80"
-      },
-      "externalPng": null,
-      "pictureMask": 14075296,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3354,
       "diagnosticName": "Poisoned Dagger of Terror",
-      "spriteLocation": "items:80",
-      "spriteId": 80,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2230,
-        "entrySha256": "59ce2de8a7d032b047be83a17fbb31f4f012789407138cf0a7e53ca133347175"
+      "spriteLocation": "external-png:dagger-of-terror-poisoned-icon@28x19",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "dagger-of-terror-poisoned-icon@28x19",
+        "assetName": "dagger-of-terror-poisoned-icon",
+        "targetWidth": 28,
+        "targetHeight": 19,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/dagger-of-terror-poisoned-icon.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/weapons/dagger-of-terror-poisoned-icon.png",
+        "sha256": "ed84aee1a5197062ae86ce288889097a4b20c57ee051983aceafaaac262c55aa"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "80",
-        "baseArchiveEntrySha256": "b7c4b8f8964f160a437093590714a78625ed9d1d03751a2d4a77bcaa588f3f76",
-        "spritepackOverrideKey": "items:80"
-      },
-      "externalPng": null,
-      "pictureMask": 9082485,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3355,
       "diagnosticName": "Sullen Pendant",
-      "spriteLocation": "items:24",
-      "spriteId": 24,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2174,
-        "entrySha256": "ad9f3a224cb1ca71188147cd35e69913a58c1dd40398010c7ce68375230c0e7e"
+      "spriteLocation": "external-png:sullen-pendant-icon@26x25",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "sullen-pendant-icon@26x25",
+        "assetName": "sullen-pendant-icon",
+        "targetWidth": 26,
+        "targetHeight": 25,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/jewelry/sullen-pendant-icon.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/jewelry/sullen-pendant-icon.png",
+        "sha256": "7bcab55cb8bfddc1f1884e62f0f114269eac9b44c77f8e2d03d06fb5e2001777"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "24",
-        "baseArchiveEntrySha256": "b90b0b939392c52f9890cf93d43486c74b48a9f7f92aebfa3c5f72fee4b46cb2",
-        "spritepackOverrideKey": "items:24"
-      },
-      "externalPng": null,
-      "pictureMask": 10079709,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3356,
       "diagnosticName": "Giant frog leather",
-      "spriteLocation": "items:69",
-      "spriteId": 69,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2219,
-        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      "spriteLocation": "external-png:giant-frog-leather@38x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "giant-frog-leather@38x24",
+        "assetName": "giant-frog-leather",
+        "targetWidth": 38,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/giant-frog-leather.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/giant-frog-leather.png",
+        "sha256": "42c5b973585a205f8b56417b9cdd236f826780698c9cc5ecec7ed26e03c9becf"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "69",
-        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
-        "spritepackOverrideKey": "items:69"
-      },
-      "externalPng": null,
-      "pictureMask": 3640195,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3357,
       "diagnosticName": "Giant-frog-hide coif",
-      "spriteLocation": "items:5",
-      "spriteId": 5,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2155,
-        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      "spriteLocation": "external-png:giant-frog-coif@21x22",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "giant-frog-coif@21x22",
+        "assetName": "giant-frog-coif",
+        "targetWidth": 21,
+        "targetHeight": 22,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-coif.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/giant-frog-coif.png",
+        "sha256": "45d698b26fc5c13a85e124c663bf868b0080d43493eaeb9b9ffebc08d9f262a9"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "5",
-        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
-        "spritepackOverrideKey": "items:5"
-      },
-      "externalPng": null,
-      "pictureMask": 3640195,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3358,
       "diagnosticName": "Giant-frog-hide gloves",
-      "spriteLocation": "items:17",
-      "spriteId": 17,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2167,
-        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      "spriteLocation": "external-png:giant-frog-gloves@24x18",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "giant-frog-gloves@24x18",
+        "assetName": "giant-frog-gloves",
+        "targetWidth": 24,
+        "targetHeight": 18,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-gloves.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/giant-frog-gloves.png",
+        "sha256": "7285ff9850fa9b752ece0b15c6d249fb99ecbf64cff46c6210f56deaf50d4fee"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "17",
-        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
-        "spritepackOverrideKey": "items:17"
-      },
-      "externalPng": null,
-      "pictureMask": 3640195,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3359,
       "diagnosticName": "Giant-frog-hide boots",
-      "spriteLocation": "items:223",
-      "spriteId": 223,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2373,
-        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      "spriteLocation": "external-png:giant-frog-boots@33x30",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "giant-frog-boots@33x30",
+        "assetName": "giant-frog-boots",
+        "targetWidth": 33,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-boots.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/giant-frog-boots.png",
+        "sha256": "08cf85009154dfeed7f31add1657ab0ec6623347f08e2a5dea7ad4fdae67cddd"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "223",
-        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
-        "spritepackOverrideKey": "items:223"
-      },
-      "externalPng": null,
-      "pictureMask": 3640195,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3360,
       "diagnosticName": "Giant-frog-hide chaps",
-      "spriteLocation": "items:590",
-      "spriteId": 590,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "spriteLocation": "external-png:giant-frog-chaps@33x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
       "authenticArchive": null,
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "590",
-        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
-        "spritepackOverrideKey": "items:590"
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "giant-frog-chaps@33x24",
+        "assetName": "giant-frog-chaps",
+        "targetWidth": 33,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-chaps.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/giant-frog-chaps.png",
+        "sha256": "2e632c0765e88300156ad414360f260379490bbfeec1227f72399363b5827b20"
       },
-      "externalPng": null,
-      "pictureMask": 3640195,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3361,
       "diagnosticName": "Giant-frog-hide cuirass",
-      "spriteLocation": "items:7",
-      "spriteId": 7,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2157,
-        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      "spriteLocation": "external-png:giant-frog-cuirass@34x18",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "giant-frog-cuirass@34x18",
+        "assetName": "giant-frog-cuirass",
+        "targetWidth": 34,
+        "targetHeight": 18,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/giant-frog-cuirass.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/giant-frog-cuirass.png",
+        "sha256": "09b25dc7fd44209c22956bb9c4eb25b70702ac4dfcda81035e4e5245c333c4b8"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "7",
-        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
-        "spritepackOverrideKey": "items:7"
-      },
-      "externalPng": null,
-      "pictureMask": 3640195,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
@@ -66713,626 +66716,641 @@
     {
       "itemId": 3368,
       "diagnosticName": "Naga leather",
-      "spriteLocation": "items:69",
-      "spriteId": 69,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2219,
-        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      "spriteLocation": "external-png:naga-leather@38x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "naga-leather@38x24",
+        "assetName": "naga-leather",
+        "targetWidth": 38,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/naga-leather.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/naga-leather.png",
+        "sha256": "58dd6ddc5414058edf66b9d9abe2a70b8325e9748f787ec39e46605d85747d06"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "69",
-        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
-        "spritepackOverrideKey": "items:69"
-      },
-      "externalPng": null,
-      "pictureMask": 5666110,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3369,
       "diagnosticName": "Naga-hide coif",
-      "spriteLocation": "items:5",
-      "spriteId": 5,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2155,
-        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      "spriteLocation": "external-png:naga-coif@21x22",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "naga-coif@21x22",
+        "assetName": "naga-coif",
+        "targetWidth": 21,
+        "targetHeight": 22,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-coif.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/naga-coif.png",
+        "sha256": "f72e6e1bc03c1b0ebe43a4c6098c3f0e1992acf9b849f9ec4bdd4443eee63c46"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "5",
-        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
-        "spritepackOverrideKey": "items:5"
-      },
-      "externalPng": null,
-      "pictureMask": 5666110,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3370,
       "diagnosticName": "Naga-hide gloves",
-      "spriteLocation": "items:17",
-      "spriteId": 17,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2167,
-        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      "spriteLocation": "external-png:naga-gloves@24x18",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "naga-gloves@24x18",
+        "assetName": "naga-gloves",
+        "targetWidth": 24,
+        "targetHeight": 18,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-gloves.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/naga-gloves.png",
+        "sha256": "fd2060985cb740c78167dd5b1137b5dc2224c5c9e5040cc32daf40e6daf9e862"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "17",
-        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
-        "spritepackOverrideKey": "items:17"
-      },
-      "externalPng": null,
-      "pictureMask": 5666110,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3371,
       "diagnosticName": "Naga-hide boots",
-      "spriteLocation": "items:223",
-      "spriteId": 223,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2373,
-        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      "spriteLocation": "external-png:naga-boots@33x30",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "naga-boots@33x30",
+        "assetName": "naga-boots",
+        "targetWidth": 33,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-boots.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/naga-boots.png",
+        "sha256": "f64fbf2930505d73e769fc2e79e198d027e2d266e3712142c17ffc83c1e16d68"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "223",
-        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
-        "spritepackOverrideKey": "items:223"
-      },
-      "externalPng": null,
-      "pictureMask": 5666110,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3372,
       "diagnosticName": "Naga-hide chaps",
-      "spriteLocation": "items:590",
-      "spriteId": 590,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "spriteLocation": "external-png:naga-chaps@33x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
       "authenticArchive": null,
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "590",
-        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
-        "spritepackOverrideKey": "items:590"
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "naga-chaps@33x24",
+        "assetName": "naga-chaps",
+        "targetWidth": 33,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-chaps.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/naga-chaps.png",
+        "sha256": "8cebc1760075ee3522e89af39549c96113591e0b7da951d675a2618ba0eb5775"
       },
-      "externalPng": null,
-      "pictureMask": 5666110,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3373,
       "diagnosticName": "Naga-hide cuirass",
-      "spriteLocation": "items:7",
-      "spriteId": 7,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2157,
-        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      "spriteLocation": "external-png:naga-cuirass@34x18",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "naga-cuirass@34x18",
+        "assetName": "naga-cuirass",
+        "targetWidth": 34,
+        "targetHeight": 18,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/naga-cuirass.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/naga-cuirass.png",
+        "sha256": "4de67e92726822c08169e9ba1aa98450bd9af0c61732650cb3bb22abe58512b9"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "7",
-        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
-        "spritepackOverrideKey": "items:7"
-      },
-      "externalPng": null,
-      "pictureMask": 5666110,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3374,
       "diagnosticName": "Terror dog leather",
-      "spriteLocation": "items:69",
-      "spriteId": 69,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2219,
-        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      "spriteLocation": "external-png:terror-dog-leather@38x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "terror-dog-leather@38x24",
+        "assetName": "terror-dog-leather",
+        "targetWidth": 38,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/terror-dog-leather.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/terror-dog-leather.png",
+        "sha256": "46c95ab7341b90a1c4ce864ea6aa0b4cbc5c9c8f46aa21d15d1a9e1b55eadc58"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "69",
-        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
-        "spritepackOverrideKey": "items:69"
-      },
-      "externalPng": null,
-      "pictureMask": 6642001,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3375,
       "diagnosticName": "Terror-dog-hide coif",
-      "spriteLocation": "items:5",
-      "spriteId": 5,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2155,
-        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      "spriteLocation": "external-png:terror-dog-coif@21x22",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "terror-dog-coif@21x22",
+        "assetName": "terror-dog-coif",
+        "targetWidth": 21,
+        "targetHeight": 22,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-coif.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/terror-dog-coif.png",
+        "sha256": "7cf797127c87b7a341c3e2d8a24b918cec5bd9749406a3658b0bb13e17a11b45"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "5",
-        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
-        "spritepackOverrideKey": "items:5"
-      },
-      "externalPng": null,
-      "pictureMask": 6642001,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3376,
       "diagnosticName": "Terror-dog-hide gloves",
-      "spriteLocation": "items:17",
-      "spriteId": 17,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2167,
-        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      "spriteLocation": "external-png:terror-dog-gloves@24x18",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "terror-dog-gloves@24x18",
+        "assetName": "terror-dog-gloves",
+        "targetWidth": 24,
+        "targetHeight": 18,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-gloves.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/terror-dog-gloves.png",
+        "sha256": "783eef721b91c123a7226572ec7cfd8f7d602974b2acb465ec304ecfc05b4671"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "17",
-        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
-        "spritepackOverrideKey": "items:17"
-      },
-      "externalPng": null,
-      "pictureMask": 6642001,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3377,
       "diagnosticName": "Terror-dog-hide boots",
-      "spriteLocation": "items:223",
-      "spriteId": 223,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2373,
-        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      "spriteLocation": "external-png:terror-dog-boots@33x30",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "terror-dog-boots@33x30",
+        "assetName": "terror-dog-boots",
+        "targetWidth": 33,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-boots.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/terror-dog-boots.png",
+        "sha256": "04ac36a9837eb82bc253384f61138a6203d8e731f01362e5bd72035d6e3522ff"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "223",
-        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
-        "spritepackOverrideKey": "items:223"
-      },
-      "externalPng": null,
-      "pictureMask": 6642001,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3378,
       "diagnosticName": "Terror-dog-hide chaps",
-      "spriteLocation": "items:590",
-      "spriteId": 590,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "spriteLocation": "external-png:terror-dog-chaps@33x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
       "authenticArchive": null,
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "590",
-        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
-        "spritepackOverrideKey": "items:590"
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "terror-dog-chaps@33x24",
+        "assetName": "terror-dog-chaps",
+        "targetWidth": 33,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-chaps.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/terror-dog-chaps.png",
+        "sha256": "2fbba6e94effb67927e4146fbb4220b4f5b6028c5e785170ed88b37597e25dd0"
       },
-      "externalPng": null,
-      "pictureMask": 6642001,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3379,
       "diagnosticName": "Terror-dog-hide cuirass",
-      "spriteLocation": "items:7",
-      "spriteId": 7,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2157,
-        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      "spriteLocation": "external-png:terror-dog-cuirass@34x18",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "terror-dog-cuirass@34x18",
+        "assetName": "terror-dog-cuirass",
+        "targetWidth": 34,
+        "targetHeight": 18,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/terror-dog-cuirass.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/terror-dog-cuirass.png",
+        "sha256": "8c7d4ac27bd823a7fd2d3e3ef9dcfc66b3f1991f9728169da70eaa8ba86957e5"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "7",
-        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
-        "spritepackOverrideKey": "items:7"
-      },
-      "externalPng": null,
-      "pictureMask": 6642001,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3380,
       "diagnosticName": "Bloodveld leather",
-      "spriteLocation": "items:69",
-      "spriteId": 69,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2219,
-        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      "spriteLocation": "external-png:bloodveld-leather@38x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "bloodveld-leather@38x24",
+        "assetName": "bloodveld-leather",
+        "targetWidth": 38,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/bloodveld-leather.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/bloodveld-leather.png",
+        "sha256": "b9d4f7e19f186d31eac912ca811556d3f25d86ceb6218052e83ecc9c3af6133c"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "69",
-        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
-        "spritepackOverrideKey": "items:69"
-      },
-      "externalPng": null,
-      "pictureMask": 10190949,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3381,
       "diagnosticName": "Bloodveld-hide coif",
-      "spriteLocation": "items:5",
-      "spriteId": 5,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2155,
-        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      "spriteLocation": "external-png:bloodveld-coif@21x22",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "bloodveld-coif@21x22",
+        "assetName": "bloodveld-coif",
+        "targetWidth": 21,
+        "targetHeight": 22,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-coif.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/bloodveld-coif.png",
+        "sha256": "87f2e081a6f5e24fab3248097d48ab66109aab30b7654bb728c6ee38d113030c"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "5",
-        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
-        "spritepackOverrideKey": "items:5"
-      },
-      "externalPng": null,
-      "pictureMask": 10190949,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3382,
       "diagnosticName": "Bloodveld-hide gloves",
-      "spriteLocation": "items:17",
-      "spriteId": 17,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2167,
-        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      "spriteLocation": "external-png:bloodveld-gloves@24x18",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "bloodveld-gloves@24x18",
+        "assetName": "bloodveld-gloves",
+        "targetWidth": 24,
+        "targetHeight": 18,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-gloves.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/bloodveld-gloves.png",
+        "sha256": "e3918e4c19a0a899852d6313a3c4a3492b4793bcde077a11c9295311eda72ae7"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "17",
-        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
-        "spritepackOverrideKey": "items:17"
-      },
-      "externalPng": null,
-      "pictureMask": 10190949,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3383,
       "diagnosticName": "Bloodveld-hide boots",
-      "spriteLocation": "items:223",
-      "spriteId": 223,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2373,
-        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      "spriteLocation": "external-png:bloodveld-boots@33x30",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "bloodveld-boots@33x30",
+        "assetName": "bloodveld-boots",
+        "targetWidth": 33,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-boots.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/bloodveld-boots.png",
+        "sha256": "c5111c737a56645dd6475e7f6ece9204792adedfbec819c8cd3d30715069d84c"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "223",
-        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
-        "spritepackOverrideKey": "items:223"
-      },
-      "externalPng": null,
-      "pictureMask": 10190949,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3384,
       "diagnosticName": "Bloodveld-hide chaps",
-      "spriteLocation": "items:590",
-      "spriteId": 590,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "spriteLocation": "external-png:bloodveld-chaps@33x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
       "authenticArchive": null,
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "590",
-        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
-        "spritepackOverrideKey": "items:590"
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "bloodveld-chaps@33x24",
+        "assetName": "bloodveld-chaps",
+        "targetWidth": 33,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-chaps.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/bloodveld-chaps.png",
+        "sha256": "f78783928cd6a017299003a6bb75ff92cddfae0044d23289f6d3a2f139bddab7"
       },
-      "externalPng": null,
-      "pictureMask": 10190949,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3385,
       "diagnosticName": "Bloodveld-hide cuirass",
-      "spriteLocation": "items:7",
-      "spriteId": 7,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2157,
-        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      "spriteLocation": "external-png:bloodveld-cuirass@34x18",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "bloodveld-cuirass@34x18",
+        "assetName": "bloodveld-cuirass",
+        "targetWidth": 34,
+        "targetHeight": 18,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/bloodveld-cuirass.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/bloodveld-cuirass.png",
+        "sha256": "324dafb5002b35bd5c858d37731decd7b87dbd8210c321af4717b075dd7ac5dc"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "7",
-        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
-        "spritepackOverrideKey": "items:7"
-      },
-      "externalPng": null,
-      "pictureMask": 10190949,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3386,
       "diagnosticName": "Dark beast leather",
-      "spriteLocation": "items:69",
-      "spriteId": 69,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2219,
-        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      "spriteLocation": "external-png:dark-beast-leather@38x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "dark-beast-leather@38x24",
+        "assetName": "dark-beast-leather",
+        "targetWidth": 38,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/dark-beast-leather.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/dark-beast-leather.png",
+        "sha256": "53bb1736cd3d0e6434c8dafc0a8c744225b1fd2ea5862caf7af7121147dcfaa6"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "69",
-        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
-        "spritepackOverrideKey": "items:69"
-      },
-      "externalPng": null,
-      "pictureMask": 3748389,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3387,
       "diagnosticName": "Dark-beast-hide coif",
-      "spriteLocation": "items:5",
-      "spriteId": 5,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2155,
-        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      "spriteLocation": "external-png:dark-beast-coif@21x22",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "dark-beast-coif@21x22",
+        "assetName": "dark-beast-coif",
+        "targetWidth": 21,
+        "targetHeight": 22,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-coif.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/dark-beast-coif.png",
+        "sha256": "cafd665dee1016cccf32dbcbbd41b5c7cf61f3e9a8144455e35136273c06958e"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "5",
-        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
-        "spritepackOverrideKey": "items:5"
-      },
-      "externalPng": null,
-      "pictureMask": 3748389,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3388,
       "diagnosticName": "Dark-beast-hide gloves",
-      "spriteLocation": "items:17",
-      "spriteId": 17,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2167,
-        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      "spriteLocation": "external-png:dark-beast-gloves@24x18",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "dark-beast-gloves@24x18",
+        "assetName": "dark-beast-gloves",
+        "targetWidth": 24,
+        "targetHeight": 18,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-gloves.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/dark-beast-gloves.png",
+        "sha256": "8ba0f0afd075ecd799934fb570a39488f5619bf5e23ca4226963abdd8359e1d3"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "17",
-        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
-        "spritepackOverrideKey": "items:17"
-      },
-      "externalPng": null,
-      "pictureMask": 3748389,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3389,
       "diagnosticName": "Dark-beast-hide boots",
-      "spriteLocation": "items:223",
-      "spriteId": 223,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2373,
-        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      "spriteLocation": "external-png:dark-beast-boots@33x30",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "dark-beast-boots@33x30",
+        "assetName": "dark-beast-boots",
+        "targetWidth": 33,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-boots.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/dark-beast-boots.png",
+        "sha256": "ae4f8f9f0d5e3464bb93cdc912e3f8e09a41d7de8cc01026c838e882acd0e6d3"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "223",
-        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
-        "spritepackOverrideKey": "items:223"
-      },
-      "externalPng": null,
-      "pictureMask": 3748389,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3390,
       "diagnosticName": "Dark-beast-hide chaps",
-      "spriteLocation": "items:590",
-      "spriteId": 590,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "spriteLocation": "external-png:dark-beast-chaps@33x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
       "authenticArchive": null,
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "590",
-        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
-        "spritepackOverrideKey": "items:590"
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "dark-beast-chaps@33x24",
+        "assetName": "dark-beast-chaps",
+        "targetWidth": 33,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-chaps.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/dark-beast-chaps.png",
+        "sha256": "8d40f03c1a306e2f4b220e530f82ecaf694af11350f527485b0337f88eac0b9f"
       },
-      "externalPng": null,
-      "pictureMask": 3748389,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3391,
       "diagnosticName": "Dark-beast-hide cuirass",
-      "spriteLocation": "items:7",
-      "spriteId": 7,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2157,
-        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      "spriteLocation": "external-png:dark-beast-cuirass@34x18",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "dark-beast-cuirass@34x18",
+        "assetName": "dark-beast-cuirass",
+        "targetWidth": 34,
+        "targetHeight": 18,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/dark-beast-cuirass.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/dark-beast-cuirass.png",
+        "sha256": "acb762f0cd54b9503e66eaab0288871c15aae10b9760860624f1daf8160c6905"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "7",
-        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
-        "spritepackOverrideKey": "items:7"
-      },
-      "externalPng": null,
-      "pictureMask": 3748389,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3392,
       "diagnosticName": "Ugthanki hide",
-      "spriteLocation": "items:69",
-      "spriteId": 69,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2219,
-        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      "spriteLocation": "external-png:ugthanki-hide@38x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "ugthanki-hide@38x24",
+        "assetName": "ugthanki-hide",
+        "targetWidth": 38,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/ugthanki-hide.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/ugthanki-hide.png",
+        "sha256": "850719312eadefd8eefd47dde88bf9f547d6a36d8793d95adf1877eeb3d7878f"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "69",
-        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
-        "spritepackOverrideKey": "items:69"
-      },
-      "externalPng": null,
-      "pictureMask": 12163696,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3393,
       "diagnosticName": "Ugthanki leather",
-      "spriteLocation": "items:69",
-      "spriteId": 69,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2219,
-        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      "spriteLocation": "external-png:ugthanki-leather@38x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "ugthanki-leather@38x24",
+        "assetName": "ugthanki-leather",
+        "targetWidth": 38,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/ugthanki-leather.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/ugthanki-leather.png",
+        "sha256": "788dac8e2e495c5a89e38fd70228cacf2006b9e8e68bd391d0693fedc843a594"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "69",
-        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
-        "spritepackOverrideKey": "items:69"
-      },
-      "externalPng": null,
-      "pictureMask": 9729620,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3394,
       "diagnosticName": "Ugthanki-hide coif",
-      "spriteLocation": "items:5",
-      "spriteId": 5,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2155,
-        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      "spriteLocation": "external-png:ugthanki-coif@21x22",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "ugthanki-coif@21x22",
+        "assetName": "ugthanki-coif",
+        "targetWidth": 21,
+        "targetHeight": 22,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-coif.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/ugthanki-coif.png",
+        "sha256": "980c80e2f896f606c76b13df9bf216c8dd35113d4d3b16ef5b421c36b9b357c8"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "5",
-        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
-        "spritepackOverrideKey": "items:5"
-      },
-      "externalPng": null,
-      "pictureMask": 9729620,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3395,
       "diagnosticName": "Ugthanki-hide gloves",
-      "spriteLocation": "items:17",
-      "spriteId": 17,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2167,
-        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      "spriteLocation": "external-png:ugthanki-gloves@24x18",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "ugthanki-gloves@24x18",
+        "assetName": "ugthanki-gloves",
+        "targetWidth": 24,
+        "targetHeight": 18,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-gloves.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/ugthanki-gloves.png",
+        "sha256": "50c3aa4c60b885beb4f9bab8fb698713f6afa0480499f333d1fc304af1896a61"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "17",
-        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
-        "spritepackOverrideKey": "items:17"
-      },
-      "externalPng": null,
-      "pictureMask": 9729620,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3396,
       "diagnosticName": "Ugthanki-hide boots",
-      "spriteLocation": "items:223",
-      "spriteId": 223,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2373,
-        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      "spriteLocation": "external-png:ugthanki-boots@33x30",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "ugthanki-boots@33x30",
+        "assetName": "ugthanki-boots",
+        "targetWidth": 33,
+        "targetHeight": 30,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-boots.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/ugthanki-boots.png",
+        "sha256": "2be27efaecb588f66fef8b434649d3de9de711fb3986b9c31573bdbc41e4a4eb"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "223",
-        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
-        "spritepackOverrideKey": "items:223"
-      },
-      "externalPng": null,
-      "pictureMask": 9729620,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3397,
       "diagnosticName": "Ugthanki-hide chaps",
-      "spriteLocation": "items:590",
-      "spriteId": 590,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "spriteLocation": "external-png:ugthanki-chaps@33x24",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
       "authenticArchive": null,
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "590",
-        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
-        "spritepackOverrideKey": "items:590"
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "ugthanki-chaps@33x24",
+        "assetName": "ugthanki-chaps",
+        "targetWidth": 33,
+        "targetHeight": 24,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-chaps.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/ugthanki-chaps.png",
+        "sha256": "888d8b5ae68c17be667be238007d718e82aae5562e4a5e70d91d4a13b109582c"
       },
-      "externalPng": null,
-      "pictureMask": 9729620,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3398,
       "diagnosticName": "Ugthanki-hide cuirass",
-      "spriteLocation": "items:7",
-      "spriteId": 7,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2157,
-        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      "spriteLocation": "external-png:ugthanki-cuirass@34x18",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "ugthanki-cuirass@34x18",
+        "assetName": "ugthanki-cuirass",
+        "targetWidth": 34,
+        "targetHeight": 18,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor/ugthanki-cuirass.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/armor/ugthanki-cuirass.png",
+        "sha256": "5969f52fc4804312c6a52b10512f0a0191f295df303ce42df63b7b3b30fd8eb0"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "7",
-        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
-        "spritepackOverrideKey": "items:7"
-      },
-      "externalPng": null,
-      "pictureMask": 9729620,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {
       "itemId": 3399,
       "diagnosticName": "Ectoplasm",
-      "spriteLocation": "items:262",
-      "spriteId": 262,
-      "resolvedBaseSourceRole": "custom-sprite-archive",
-      "authenticArchive": {
-        "archiveId": 2412,
-        "entrySha256": "37f38d340d345930d46a167cbe2f3dea82d912da713ab5c975adc78cef44576b"
+      "spriteLocation": "external-png:ectoplasm@34x14",
+      "spriteId": -1,
+      "resolvedBaseSourceRole": "external-png",
+      "authenticArchive": null,
+      "customOrSpritepack": null,
+      "externalPng": {
+        "specification": "ectoplasm@34x14",
+        "assetName": "ectoplasm",
+        "targetWidth": 34,
+        "targetHeight": 14,
+        "sourcePath": "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/ectoplasm.png",
+        "packagedResource": "myworld-assets/sprites/items/inventory-ground/resources/ectoplasm.png",
+        "sha256": "003861359a3bb16dabc9f1e435c64f82fa4cec1962d131e0cf0067aa6beb6de9"
       },
-      "customOrSpritepack": {
-        "subspace": "items",
-        "entry": "262",
-        "baseArchiveEntrySha256": "0edbf5f6203d1015ea664da6d8bcd33ed3974ef34011ad4ab9af5d2a12a22343",
-        "spritepackOverrideKey": "items:262"
-      },
-      "externalPng": null,
-      "pictureMask": 11904207,
+      "pictureMask": 0,
       "blueMask": 0
     },
     {

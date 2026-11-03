@@ -45,6 +45,8 @@ EXTERNAL_ASSET_DIRS = (
     "dev/myworld/assets/runtime/sprites/items/inventory-ground/agility-pouches",
     "dev/myworld/assets/runtime/sprites/items/inventory-ground/tools",
     "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/jewelry",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/armor",
     "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources/sigils",
     "dev/myworld/assets/runtime/sprites/items/inventory-ground/resources",
     "dev/myworld/assets/runtime/sprites/items/inventory-ground",
