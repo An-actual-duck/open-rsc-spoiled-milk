@@ -29,7 +29,7 @@ public final class PracticeItemArtFixture {
     if(sprite.getPixels()[(y+7)*48+x+16]!=expected)throw new AssertionError("gland native pixels "+x+","+y);
    }
   }
-  if(!EntityHandler.getItemDef(3342).getSpriteLocation().equals("items:116"))throw new AssertionError("eye changed");
-  System.out.println("PASS packaged potion/gland selectors and native gland pixels/potion palette; eye unchanged; custom="+args[2]);
+  if(!EntityHandler.getItemDef(3342).getSpriteLocation().equals("external-png:cockatrice-eye@11x10"))throw new AssertionError("approved eye selector");
+  System.out.println("PASS packaged potion/gland selectors and native gland pixels/potion palette; approved eye art retained; custom="+args[2]);
  }
 }

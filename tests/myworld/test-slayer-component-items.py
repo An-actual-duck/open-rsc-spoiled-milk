@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check server material identities and the built client's actual placeholder definitions."""
+"""Check server material identities and the built client's actual approved-art definitions."""
 import json
 import re
 import subprocess
@@ -38,7 +38,18 @@ def main():
     with tempfile.TemporaryDirectory(prefix="slayer-component-items-") as output:
         subprocess.run(["javac", "-cp", str(jar), "-d", output,
                         str(ROOT / "tests/myworld/SlayerComponentItemFixture.java")], check=True)
-        subprocess.run(["java", "-cp", f"{output}:{jar}", "SlayerComponentItemFixture"],
+        approved = json.loads((ROOT / "dev/myworld/assets/authoring/slayer-items/material-icons-integration.json").read_text())
+        effective = dict(definitions)
+        for override in json.loads((ROOT / "server/conf/server/defs/ItemDefsMyWorld.json").read_text())["items"]:
+            if override["id"] in effective:
+                effective[override["id"]] = {**effective[override["id"]], **override}
+        arguments = []
+        for entry in approved:
+            for item_id in entry["ids"]:
+                if item_id in range(3333, 3349) or item_id == 3399:
+                    sprite = "external-png:sticky-saliva-gland@16x18" if item_id == 3341 else entry["sprite"]
+                    arguments.append(f"{item_id}|{sprite}|{effective[item_id]['basePrice']}")
+        subprocess.run(["java", "-cp", f"{output}:{jar}", "SlayerComponentItemFixture", *arguments],
                        cwd=ROOT / "Client_Base", check=True)
     print("PASS: server/client Slayer component identities and inert scope")
 

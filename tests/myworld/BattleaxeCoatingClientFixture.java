@@ -32,7 +32,7 @@ public final class BattleaxeCoatingClientFixture {
         MudClientGraphics surface=new MudClientGraphics(180,170,4501);client.setSurface(surface);
         for(boolean custom:new boolean[]{Boolean.parseBoolean(args[1])}) {
             Config.S_WANT_CUSTOM_SPRITES=custom;EntityHandler.load(true);
-            check(EntityHandler.animationCount()==1112,"stable appended alias IDs in both renderer modes");
+            check(EntityHandler.animationCount()==(custom?1170:1112),"stable appended alias IDs in both renderer modes");
             ItemDef dose=EntityHandler.getItemDef(3410);check(dose.command==null&&!dose.wieldable&&!dose.stackable&&dose.basePrice==300&&dose.membersItem,"single-use inert dose, no Drink or decant forms");
             check(dose.description.equals("When applied to a battle axe it will slow down and mildly poison opponents"),"approved vial examine");
             check(loader.getExternalItemSprite(dose)!=null,"packaged coating icon");
