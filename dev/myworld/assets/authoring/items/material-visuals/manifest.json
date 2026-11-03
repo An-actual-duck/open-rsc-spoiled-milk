@@ -1,0 +1,24 @@
+{
+  "sourceCommit": "55ed30a6fa3f2bc732214c7ec93f3c1e0c252e7c",
+  "canvas": [
+    48,
+    32
+  ],
+  "method": "Native Aseprite palette-mask conversion; preserved source silhouettes; gray primary mask, blue wood mask",
+  "files": {
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/staves/staff-wood-base.png": "9986ed2b9c4cadec02b4cc4564ef272c2686a835c8bf2b42d1f64ad16b970d6b",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/staves/staff-orb-base.png": "143950450808d82038ac34b679ac7dabef6d5625e97c71f804705937ad8e0752",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/crossbows/crossbow-wood-base.png": "7fcb31ff4eeef5577b72963480c3935c7197adbbf892286a88665515d2c3c1f6",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/ammunition/bolts/metal-bolts-base.png": "04d96e3f722152da7c8ef5a0c3084c6652a23c033d38aa57ccbb70475287d076",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/ammunition/bolts/metal-bolts-poison-base.png": "7d6d3f5a145fae93c8528d527eaaea026994401e31430ea061183be0b1eac101",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/materials/wood/log-wood-base.png": "0420aaa24d95fdd31cd7e06be6b61f51005199ce7bb16da15813ce5422c11225"
+  },
+  "sources": [
+    "weapons/staves/id-02235.png",
+    "weapons/staves/id-02241.png",
+    "weapons/crossbows/id-02199.png",
+    "ammunition/bolts/id-02206.png",
+    "materials/wood/id-02164.png"
+  ],
+  "sourcesRoot": "dev/myworld/assets/references/items"
+}

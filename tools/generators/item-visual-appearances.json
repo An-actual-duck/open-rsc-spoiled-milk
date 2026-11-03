@@ -1,0 +1,2302 @@
+{
+  "description": "Repair stale one-based server appearance references. Existing client catalog IDs remain immutable.",
+  "baseCommit": "55ed30a6fa3f2bc732214c7ec93f3c1e0c252e7c",
+  "mappings": [
+    {
+      "itemId": 698,
+      "legacyAppearanceId": 1000,
+      "appearanceId": 1001,
+      "family": "gauntlets",
+      "mask": 15658734
+    },
+    {
+      "itemId": 699,
+      "legacyAppearanceId": 1006,
+      "appearanceId": 1007,
+      "family": "gauntlets",
+      "mask": 16777130
+    },
+    {
+      "itemId": 700,
+      "legacyAppearanceId": 1007,
+      "appearanceId": 1008,
+      "family": "gauntlets",
+      "mask": 14540253
+    },
+    {
+      "itemId": 701,
+      "legacyAppearanceId": 1008,
+      "appearanceId": 1009,
+      "family": "gauntlets",
+      "mask": 16755370
+    },
+    {
+      "itemId": 1006,
+      "legacyAppearanceId": 1009,
+      "appearanceId": 1010,
+      "family": "gauntlets",
+      "mask": 12303291
+    },
+    {
+      "itemId": 1960,
+      "legacyAppearanceId": 996,
+      "appearanceId": 997,
+      "family": "gauntlets",
+      "mask": 12044761
+    },
+    {
+      "itemId": 1966,
+      "legacyAppearanceId": 997,
+      "appearanceId": 998,
+      "family": "gauntlets",
+      "mask": 13134379
+    },
+    {
+      "itemId": 1972,
+      "legacyAppearanceId": 1002,
+      "appearanceId": 1003,
+      "family": "gauntlets",
+      "mask": 9348795
+    },
+    {
+      "itemId": 1978,
+      "legacyAppearanceId": 1004,
+      "appearanceId": 1005,
+      "family": "gauntlets",
+      "mask": 5914493
+    },
+    {
+      "itemId": 1983,
+      "legacyAppearanceId": 998,
+      "appearanceId": 999,
+      "family": "gauntlets",
+      "mask": 16737817
+    },
+    {
+      "itemId": 1985,
+      "legacyAppearanceId": 999,
+      "appearanceId": 1000,
+      "family": "gauntlets",
+      "mask": 15654365
+    },
+    {
+      "itemId": 1989,
+      "legacyAppearanceId": 1001,
+      "appearanceId": 1002,
+      "family": "gauntlets",
+      "mask": 10072780
+    },
+    {
+      "itemId": 1991,
+      "legacyAppearanceId": 1003,
+      "appearanceId": 1004,
+      "family": "gauntlets",
+      "mask": 11717785
+    },
+    {
+      "itemId": 1993,
+      "legacyAppearanceId": 1005,
+      "appearanceId": 1006,
+      "family": "gauntlets",
+      "mask": 65535
+    },
+    {
+      "itemId": 2161,
+      "legacyAppearanceId": 1031,
+      "appearanceId": 1032,
+      "family": "squareshield",
+      "mask": 15196886
+    },
+    {
+      "itemId": 2162,
+      "legacyAppearanceId": 1025,
+      "appearanceId": 1026,
+      "family": "kiteshield",
+      "mask": 15196886
+    },
+    {
+      "itemId": 2224,
+      "legacyAppearanceId": 1027,
+      "appearanceId": 1028,
+      "family": "squareshield",
+      "mask": 12044761
+    },
+    {
+      "itemId": 2225,
+      "legacyAppearanceId": 1028,
+      "appearanceId": 1029,
+      "family": "squareshield",
+      "mask": 13134379
+    },
+    {
+      "itemId": 2226,
+      "legacyAppearanceId": 1029,
+      "appearanceId": 1030,
+      "family": "squareshield",
+      "mask": 9348795
+    },
+    {
+      "itemId": 2227,
+      "legacyAppearanceId": 1030,
+      "appearanceId": 1031,
+      "family": "squareshield",
+      "mask": 5914493
+    },
+    {
+      "itemId": 2794,
+      "legacyAppearanceId": 977,
+      "appearanceId": 978,
+      "family": "woolgloves",
+      "mask": 16777215
+    },
+    {
+      "itemId": 2795,
+      "legacyAppearanceId": 978,
+      "appearanceId": 979,
+      "family": "woolboots",
+      "mask": 16777215
+    },
+    {
+      "itemId": 2796,
+      "legacyAppearanceId": 949,
+      "appearanceId": 950,
+      "family": "woolgloves",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2797,
+      "legacyAppearanceId": 949,
+      "appearanceId": 950,
+      "family": "woolgloves",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2798,
+      "legacyAppearanceId": 949,
+      "appearanceId": 950,
+      "family": "woolgloves",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2799,
+      "legacyAppearanceId": 949,
+      "appearanceId": 950,
+      "family": "woolgloves",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2800,
+      "legacyAppearanceId": 949,
+      "appearanceId": 950,
+      "family": "woolgloves",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2801,
+      "legacyAppearanceId": 949,
+      "appearanceId": 950,
+      "family": "woolgloves",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2802,
+      "legacyAppearanceId": 949,
+      "appearanceId": 950,
+      "family": "woolgloves",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2803,
+      "legacyAppearanceId": 949,
+      "appearanceId": 950,
+      "family": "woolgloves",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2804,
+      "legacyAppearanceId": 949,
+      "appearanceId": 950,
+      "family": "woolgloves",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2805,
+      "legacyAppearanceId": 949,
+      "appearanceId": 950,
+      "family": "woolgloves",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2806,
+      "legacyAppearanceId": 950,
+      "appearanceId": 951,
+      "family": "woolgloves",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2807,
+      "legacyAppearanceId": 950,
+      "appearanceId": 951,
+      "family": "woolgloves",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2808,
+      "legacyAppearanceId": 950,
+      "appearanceId": 951,
+      "family": "woolgloves",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2809,
+      "legacyAppearanceId": 950,
+      "appearanceId": 951,
+      "family": "woolgloves",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2810,
+      "legacyAppearanceId": 950,
+      "appearanceId": 951,
+      "family": "woolgloves",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2811,
+      "legacyAppearanceId": 950,
+      "appearanceId": 951,
+      "family": "woolgloves",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2812,
+      "legacyAppearanceId": 950,
+      "appearanceId": 951,
+      "family": "woolgloves",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2813,
+      "legacyAppearanceId": 950,
+      "appearanceId": 951,
+      "family": "woolgloves",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2814,
+      "legacyAppearanceId": 950,
+      "appearanceId": 951,
+      "family": "woolgloves",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2815,
+      "legacyAppearanceId": 950,
+      "appearanceId": 951,
+      "family": "woolgloves",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2816,
+      "legacyAppearanceId": 951,
+      "appearanceId": 952,
+      "family": "woolgloves",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2817,
+      "legacyAppearanceId": 951,
+      "appearanceId": 952,
+      "family": "woolgloves",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2818,
+      "legacyAppearanceId": 951,
+      "appearanceId": 952,
+      "family": "woolgloves",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2819,
+      "legacyAppearanceId": 951,
+      "appearanceId": 952,
+      "family": "woolgloves",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2820,
+      "legacyAppearanceId": 951,
+      "appearanceId": 952,
+      "family": "woolgloves",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2821,
+      "legacyAppearanceId": 951,
+      "appearanceId": 952,
+      "family": "woolgloves",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2822,
+      "legacyAppearanceId": 951,
+      "appearanceId": 952,
+      "family": "woolgloves",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2823,
+      "legacyAppearanceId": 951,
+      "appearanceId": 952,
+      "family": "woolgloves",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2824,
+      "legacyAppearanceId": 951,
+      "appearanceId": 952,
+      "family": "woolgloves",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2825,
+      "legacyAppearanceId": 951,
+      "appearanceId": 952,
+      "family": "woolgloves",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2826,
+      "legacyAppearanceId": 952,
+      "appearanceId": 953,
+      "family": "woolgloves",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2827,
+      "legacyAppearanceId": 952,
+      "appearanceId": 953,
+      "family": "woolgloves",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2828,
+      "legacyAppearanceId": 952,
+      "appearanceId": 953,
+      "family": "woolgloves",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2829,
+      "legacyAppearanceId": 952,
+      "appearanceId": 953,
+      "family": "woolgloves",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2830,
+      "legacyAppearanceId": 952,
+      "appearanceId": 953,
+      "family": "woolgloves",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2831,
+      "legacyAppearanceId": 952,
+      "appearanceId": 953,
+      "family": "woolgloves",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2832,
+      "legacyAppearanceId": 952,
+      "appearanceId": 953,
+      "family": "woolgloves",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2833,
+      "legacyAppearanceId": 952,
+      "appearanceId": 953,
+      "family": "woolgloves",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2834,
+      "legacyAppearanceId": 952,
+      "appearanceId": 953,
+      "family": "woolgloves",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2835,
+      "legacyAppearanceId": 952,
+      "appearanceId": 953,
+      "family": "woolgloves",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2836,
+      "legacyAppearanceId": 953,
+      "appearanceId": 954,
+      "family": "woolgloves",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2837,
+      "legacyAppearanceId": 953,
+      "appearanceId": 954,
+      "family": "woolgloves",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2838,
+      "legacyAppearanceId": 953,
+      "appearanceId": 954,
+      "family": "woolgloves",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2839,
+      "legacyAppearanceId": 953,
+      "appearanceId": 954,
+      "family": "woolgloves",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2840,
+      "legacyAppearanceId": 953,
+      "appearanceId": 954,
+      "family": "woolgloves",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2841,
+      "legacyAppearanceId": 953,
+      "appearanceId": 954,
+      "family": "woolgloves",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2842,
+      "legacyAppearanceId": 953,
+      "appearanceId": 954,
+      "family": "woolgloves",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2843,
+      "legacyAppearanceId": 953,
+      "appearanceId": 954,
+      "family": "woolgloves",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2844,
+      "legacyAppearanceId": 953,
+      "appearanceId": 954,
+      "family": "woolgloves",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2845,
+      "legacyAppearanceId": 953,
+      "appearanceId": 954,
+      "family": "woolgloves",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2846,
+      "legacyAppearanceId": 954,
+      "appearanceId": 955,
+      "family": "woolgloves",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2847,
+      "legacyAppearanceId": 954,
+      "appearanceId": 955,
+      "family": "woolgloves",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2848,
+      "legacyAppearanceId": 954,
+      "appearanceId": 955,
+      "family": "woolgloves",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2849,
+      "legacyAppearanceId": 954,
+      "appearanceId": 955,
+      "family": "woolgloves",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2850,
+      "legacyAppearanceId": 954,
+      "appearanceId": 955,
+      "family": "woolgloves",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2851,
+      "legacyAppearanceId": 954,
+      "appearanceId": 955,
+      "family": "woolgloves",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2852,
+      "legacyAppearanceId": 954,
+      "appearanceId": 955,
+      "family": "woolgloves",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2853,
+      "legacyAppearanceId": 954,
+      "appearanceId": 955,
+      "family": "woolgloves",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2854,
+      "legacyAppearanceId": 954,
+      "appearanceId": 955,
+      "family": "woolgloves",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2855,
+      "legacyAppearanceId": 954,
+      "appearanceId": 955,
+      "family": "woolgloves",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2856,
+      "legacyAppearanceId": 955,
+      "appearanceId": 956,
+      "family": "woolgloves",
+      "mask": 14730049
+    },
+    {
+      "itemId": 2857,
+      "legacyAppearanceId": 955,
+      "appearanceId": 956,
+      "family": "woolgloves",
+      "mask": 14730049
+    },
+    {
+      "itemId": 2858,
+      "legacyAppearanceId": 955,
+      "appearanceId": 956,
+      "family": "woolgloves",
+      "mask": 14730049
+    },
+    {
+      "itemId": 2859,
+      "legacyAppearanceId": 955,
+      "appearanceId": 956,
+      "family": "woolgloves",
+      "mask": 14730049
+    },
+    {
+      "itemId": 2860,
+      "legacyAppearanceId": 955,
+      "appearanceId": 956,
+      "family": "woolgloves",
+      "mask": 14730049
+    },
+    {
+      "itemId": 2861,
+      "legacyAppearanceId": 955,
+      "appearanceId": 956,
+      "family": "woolgloves",
+      "mask": 14730049
+    },
+    {
+      "itemId": 2862,
+      "legacyAppearanceId": 955,
+      "appearanceId": 956,
+      "family": "woolgloves",
+      "mask": 14730049
+    },
+    {
+      "itemId": 2863,
+      "legacyAppearanceId": 955,
+      "appearanceId": 956,
+      "family": "woolgloves",
+      "mask": 14730049
+    },
+    {
+      "itemId": 2864,
+      "legacyAppearanceId": 955,
+      "appearanceId": 956,
+      "family": "woolgloves",
+      "mask": 14730049
+    },
+    {
+      "itemId": 2865,
+      "legacyAppearanceId": 955,
+      "appearanceId": 956,
+      "family": "woolgloves",
+      "mask": 14730049
+    },
+    {
+      "itemId": 2866,
+      "legacyAppearanceId": 956,
+      "appearanceId": 957,
+      "family": "woolgloves",
+      "mask": 16088064
+    },
+    {
+      "itemId": 2867,
+      "legacyAppearanceId": 956,
+      "appearanceId": 957,
+      "family": "woolgloves",
+      "mask": 16088064
+    },
+    {
+      "itemId": 2868,
+      "legacyAppearanceId": 956,
+      "appearanceId": 957,
+      "family": "woolgloves",
+      "mask": 16088064
+    },
+    {
+      "itemId": 2869,
+      "legacyAppearanceId": 956,
+      "appearanceId": 957,
+      "family": "woolgloves",
+      "mask": 16088064
+    },
+    {
+      "itemId": 2870,
+      "legacyAppearanceId": 956,
+      "appearanceId": 957,
+      "family": "woolgloves",
+      "mask": 16088064
+    },
+    {
+      "itemId": 2871,
+      "legacyAppearanceId": 956,
+      "appearanceId": 957,
+      "family": "woolgloves",
+      "mask": 16088064
+    },
+    {
+      "itemId": 2872,
+      "legacyAppearanceId": 956,
+      "appearanceId": 957,
+      "family": "woolgloves",
+      "mask": 16088064
+    },
+    {
+      "itemId": 2873,
+      "legacyAppearanceId": 956,
+      "appearanceId": 957,
+      "family": "woolgloves",
+      "mask": 16088064
+    },
+    {
+      "itemId": 2874,
+      "legacyAppearanceId": 956,
+      "appearanceId": 957,
+      "family": "woolgloves",
+      "mask": 16088064
+    },
+    {
+      "itemId": 2875,
+      "legacyAppearanceId": 956,
+      "appearanceId": 957,
+      "family": "woolgloves",
+      "mask": 16088064
+    },
+    {
+      "itemId": 2876,
+      "legacyAppearanceId": 957,
+      "appearanceId": 958,
+      "family": "woolgloves",
+      "mask": 3046706
+    },
+    {
+      "itemId": 2877,
+      "legacyAppearanceId": 957,
+      "appearanceId": 958,
+      "family": "woolgloves",
+      "mask": 3046706
+    },
+    {
+      "itemId": 2878,
+      "legacyAppearanceId": 957,
+      "appearanceId": 958,
+      "family": "woolgloves",
+      "mask": 3046706
+    },
+    {
+      "itemId": 2879,
+      "legacyAppearanceId": 957,
+      "appearanceId": 958,
+      "family": "woolgloves",
+      "mask": 3046706
+    },
+    {
+      "itemId": 2880,
+      "legacyAppearanceId": 957,
+      "appearanceId": 958,
+      "family": "woolgloves",
+      "mask": 3046706
+    },
+    {
+      "itemId": 2881,
+      "legacyAppearanceId": 957,
+      "appearanceId": 958,
+      "family": "woolgloves",
+      "mask": 3046706
+    },
+    {
+      "itemId": 2882,
+      "legacyAppearanceId": 957,
+      "appearanceId": 958,
+      "family": "woolgloves",
+      "mask": 3046706
+    },
+    {
+      "itemId": 2883,
+      "legacyAppearanceId": 957,
+      "appearanceId": 958,
+      "family": "woolgloves",
+      "mask": 3046706
+    },
+    {
+      "itemId": 2884,
+      "legacyAppearanceId": 957,
+      "appearanceId": 958,
+      "family": "woolgloves",
+      "mask": 3046706
+    },
+    {
+      "itemId": 2885,
+      "legacyAppearanceId": 957,
+      "appearanceId": 958,
+      "family": "woolgloves",
+      "mask": 3046706
+    },
+    {
+      "itemId": 2886,
+      "legacyAppearanceId": 958,
+      "appearanceId": 959,
+      "family": "woolgloves",
+      "mask": 1804943
+    },
+    {
+      "itemId": 2887,
+      "legacyAppearanceId": 958,
+      "appearanceId": 959,
+      "family": "woolgloves",
+      "mask": 1804943
+    },
+    {
+      "itemId": 2888,
+      "legacyAppearanceId": 958,
+      "appearanceId": 959,
+      "family": "woolgloves",
+      "mask": 1804943
+    },
+    {
+      "itemId": 2889,
+      "legacyAppearanceId": 958,
+      "appearanceId": 959,
+      "family": "woolgloves",
+      "mask": 1804943
+    },
+    {
+      "itemId": 2890,
+      "legacyAppearanceId": 958,
+      "appearanceId": 959,
+      "family": "woolgloves",
+      "mask": 1804943
+    },
+    {
+      "itemId": 2891,
+      "legacyAppearanceId": 958,
+      "appearanceId": 959,
+      "family": "woolgloves",
+      "mask": 1804943
+    },
+    {
+      "itemId": 2892,
+      "legacyAppearanceId": 958,
+      "appearanceId": 959,
+      "family": "woolgloves",
+      "mask": 1804943
+    },
+    {
+      "itemId": 2893,
+      "legacyAppearanceId": 958,
+      "appearanceId": 959,
+      "family": "woolgloves",
+      "mask": 1804943
+    },
+    {
+      "itemId": 2894,
+      "legacyAppearanceId": 958,
+      "appearanceId": 959,
+      "family": "woolgloves",
+      "mask": 1804943
+    },
+    {
+      "itemId": 2895,
+      "legacyAppearanceId": 958,
+      "appearanceId": 959,
+      "family": "woolgloves",
+      "mask": 1804943
+    },
+    {
+      "itemId": 2896,
+      "legacyAppearanceId": 959,
+      "appearanceId": 960,
+      "family": "woolgloves",
+      "mask": 2236962
+    },
+    {
+      "itemId": 2897,
+      "legacyAppearanceId": 959,
+      "appearanceId": 960,
+      "family": "woolgloves",
+      "mask": 2236962
+    },
+    {
+      "itemId": 2898,
+      "legacyAppearanceId": 959,
+      "appearanceId": 960,
+      "family": "woolgloves",
+      "mask": 2236962
+    },
+    {
+      "itemId": 2899,
+      "legacyAppearanceId": 959,
+      "appearanceId": 960,
+      "family": "woolgloves",
+      "mask": 2236962
+    },
+    {
+      "itemId": 2900,
+      "legacyAppearanceId": 959,
+      "appearanceId": 960,
+      "family": "woolgloves",
+      "mask": 2236962
+    },
+    {
+      "itemId": 2901,
+      "legacyAppearanceId": 959,
+      "appearanceId": 960,
+      "family": "woolgloves",
+      "mask": 2236962
+    },
+    {
+      "itemId": 2902,
+      "legacyAppearanceId": 959,
+      "appearanceId": 960,
+      "family": "woolgloves",
+      "mask": 2236962
+    },
+    {
+      "itemId": 2903,
+      "legacyAppearanceId": 959,
+      "appearanceId": 960,
+      "family": "woolgloves",
+      "mask": 2236962
+    },
+    {
+      "itemId": 2904,
+      "legacyAppearanceId": 959,
+      "appearanceId": 960,
+      "family": "woolgloves",
+      "mask": 2236962
+    },
+    {
+      "itemId": 2905,
+      "legacyAppearanceId": 959,
+      "appearanceId": 960,
+      "family": "woolgloves",
+      "mask": 2236962
+    },
+    {
+      "itemId": 2906,
+      "legacyAppearanceId": 960,
+      "appearanceId": 961,
+      "family": "woolgloves",
+      "mask": 8330525
+    },
+    {
+      "itemId": 2907,
+      "legacyAppearanceId": 960,
+      "appearanceId": 961,
+      "family": "woolgloves",
+      "mask": 8330525
+    },
+    {
+      "itemId": 2908,
+      "legacyAppearanceId": 960,
+      "appearanceId": 961,
+      "family": "woolgloves",
+      "mask": 8330525
+    },
+    {
+      "itemId": 2909,
+      "legacyAppearanceId": 960,
+      "appearanceId": 961,
+      "family": "woolgloves",
+      "mask": 8330525
+    },
+    {
+      "itemId": 2910,
+      "legacyAppearanceId": 960,
+      "appearanceId": 961,
+      "family": "woolgloves",
+      "mask": 8330525
+    },
+    {
+      "itemId": 2911,
+      "legacyAppearanceId": 960,
+      "appearanceId": 961,
+      "family": "woolgloves",
+      "mask": 8330525
+    },
+    {
+      "itemId": 2912,
+      "legacyAppearanceId": 960,
+      "appearanceId": 961,
+      "family": "woolgloves",
+      "mask": 8330525
+    },
+    {
+      "itemId": 2913,
+      "legacyAppearanceId": 960,
+      "appearanceId": 961,
+      "family": "woolgloves",
+      "mask": 8330525
+    },
+    {
+      "itemId": 2914,
+      "legacyAppearanceId": 960,
+      "appearanceId": 961,
+      "family": "woolgloves",
+      "mask": 8330525
+    },
+    {
+      "itemId": 2915,
+      "legacyAppearanceId": 960,
+      "appearanceId": 961,
+      "family": "woolgloves",
+      "mask": 8330525
+    },
+    {
+      "itemId": 2916,
+      "legacyAppearanceId": 961,
+      "appearanceId": 962,
+      "family": "woolgloves",
+      "mask": 9414857
+    },
+    {
+      "itemId": 2917,
+      "legacyAppearanceId": 961,
+      "appearanceId": 962,
+      "family": "woolgloves",
+      "mask": 9414857
+    },
+    {
+      "itemId": 2918,
+      "legacyAppearanceId": 961,
+      "appearanceId": 962,
+      "family": "woolgloves",
+      "mask": 9414857
+    },
+    {
+      "itemId": 2919,
+      "legacyAppearanceId": 961,
+      "appearanceId": 962,
+      "family": "woolgloves",
+      "mask": 9414857
+    },
+    {
+      "itemId": 2920,
+      "legacyAppearanceId": 961,
+      "appearanceId": 962,
+      "family": "woolgloves",
+      "mask": 9414857
+    },
+    {
+      "itemId": 2921,
+      "legacyAppearanceId": 961,
+      "appearanceId": 962,
+      "family": "woolgloves",
+      "mask": 9414857
+    },
+    {
+      "itemId": 2922,
+      "legacyAppearanceId": 961,
+      "appearanceId": 962,
+      "family": "woolgloves",
+      "mask": 9414857
+    },
+    {
+      "itemId": 2923,
+      "legacyAppearanceId": 961,
+      "appearanceId": 962,
+      "family": "woolgloves",
+      "mask": 9414857
+    },
+    {
+      "itemId": 2924,
+      "legacyAppearanceId": 961,
+      "appearanceId": 962,
+      "family": "woolgloves",
+      "mask": 9414857
+    },
+    {
+      "itemId": 2925,
+      "legacyAppearanceId": 961,
+      "appearanceId": 962,
+      "family": "woolgloves",
+      "mask": 9414857
+    },
+    {
+      "itemId": 2926,
+      "legacyAppearanceId": 962,
+      "appearanceId": 963,
+      "family": "woolgloves",
+      "mask": 15914842
+    },
+    {
+      "itemId": 2927,
+      "legacyAppearanceId": 962,
+      "appearanceId": 963,
+      "family": "woolgloves",
+      "mask": 15914842
+    },
+    {
+      "itemId": 2928,
+      "legacyAppearanceId": 962,
+      "appearanceId": 963,
+      "family": "woolgloves",
+      "mask": 15914842
+    },
+    {
+      "itemId": 2929,
+      "legacyAppearanceId": 962,
+      "appearanceId": 963,
+      "family": "woolgloves",
+      "mask": 15914842
+    },
+    {
+      "itemId": 2930,
+      "legacyAppearanceId": 962,
+      "appearanceId": 963,
+      "family": "woolgloves",
+      "mask": 15914842
+    },
+    {
+      "itemId": 2931,
+      "legacyAppearanceId": 962,
+      "appearanceId": 963,
+      "family": "woolgloves",
+      "mask": 15914842
+    },
+    {
+      "itemId": 2932,
+      "legacyAppearanceId": 962,
+      "appearanceId": 963,
+      "family": "woolgloves",
+      "mask": 15914842
+    },
+    {
+      "itemId": 2933,
+      "legacyAppearanceId": 962,
+      "appearanceId": 963,
+      "family": "woolgloves",
+      "mask": 15914842
+    },
+    {
+      "itemId": 2934,
+      "legacyAppearanceId": 962,
+      "appearanceId": 963,
+      "family": "woolgloves",
+      "mask": 15914842
+    },
+    {
+      "itemId": 2935,
+      "legacyAppearanceId": 962,
+      "appearanceId": 963,
+      "family": "woolgloves",
+      "mask": 15914842
+    },
+    {
+      "itemId": 2936,
+      "legacyAppearanceId": 963,
+      "appearanceId": 964,
+      "family": "woolboots",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2937,
+      "legacyAppearanceId": 963,
+      "appearanceId": 964,
+      "family": "woolboots",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2938,
+      "legacyAppearanceId": 963,
+      "appearanceId": 964,
+      "family": "woolboots",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2939,
+      "legacyAppearanceId": 963,
+      "appearanceId": 964,
+      "family": "woolboots",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2940,
+      "legacyAppearanceId": 963,
+      "appearanceId": 964,
+      "family": "woolboots",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2941,
+      "legacyAppearanceId": 963,
+      "appearanceId": 964,
+      "family": "woolboots",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2942,
+      "legacyAppearanceId": 963,
+      "appearanceId": 964,
+      "family": "woolboots",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2943,
+      "legacyAppearanceId": 963,
+      "appearanceId": 964,
+      "family": "woolboots",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2944,
+      "legacyAppearanceId": 963,
+      "appearanceId": 964,
+      "family": "woolboots",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2945,
+      "legacyAppearanceId": 963,
+      "appearanceId": 964,
+      "family": "woolboots",
+      "mask": 8900331
+    },
+    {
+      "itemId": 2946,
+      "legacyAppearanceId": 964,
+      "appearanceId": 965,
+      "family": "woolboots",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2947,
+      "legacyAppearanceId": 964,
+      "appearanceId": 965,
+      "family": "woolboots",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2948,
+      "legacyAppearanceId": 964,
+      "appearanceId": 965,
+      "family": "woolboots",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2949,
+      "legacyAppearanceId": 964,
+      "appearanceId": 965,
+      "family": "woolboots",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2950,
+      "legacyAppearanceId": 964,
+      "appearanceId": 965,
+      "family": "woolboots",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2951,
+      "legacyAppearanceId": 964,
+      "appearanceId": 965,
+      "family": "woolboots",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2952,
+      "legacyAppearanceId": 964,
+      "appearanceId": 965,
+      "family": "woolboots",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2953,
+      "legacyAppearanceId": 964,
+      "appearanceId": 965,
+      "family": "woolboots",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2954,
+      "legacyAppearanceId": 964,
+      "appearanceId": 965,
+      "family": "woolboots",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2955,
+      "legacyAppearanceId": 964,
+      "appearanceId": 965,
+      "family": "woolboots",
+      "mask": 9128507
+    },
+    {
+      "itemId": 2956,
+      "legacyAppearanceId": 965,
+      "appearanceId": 966,
+      "family": "woolboots",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2957,
+      "legacyAppearanceId": 965,
+      "appearanceId": 966,
+      "family": "woolboots",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2958,
+      "legacyAppearanceId": 965,
+      "appearanceId": 966,
+      "family": "woolboots",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2959,
+      "legacyAppearanceId": 965,
+      "appearanceId": 966,
+      "family": "woolboots",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2960,
+      "legacyAppearanceId": 965,
+      "appearanceId": 966,
+      "family": "woolboots",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2961,
+      "legacyAppearanceId": 965,
+      "appearanceId": 966,
+      "family": "woolboots",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2962,
+      "legacyAppearanceId": 965,
+      "appearanceId": 966,
+      "family": "woolboots",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2963,
+      "legacyAppearanceId": 965,
+      "appearanceId": 966,
+      "family": "woolboots",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2964,
+      "legacyAppearanceId": 965,
+      "appearanceId": 966,
+      "family": "woolboots",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2965,
+      "legacyAppearanceId": 965,
+      "appearanceId": 966,
+      "family": "woolboots",
+      "mask": 2051724
+    },
+    {
+      "itemId": 2966,
+      "legacyAppearanceId": 966,
+      "appearanceId": 967,
+      "family": "woolboots",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2967,
+      "legacyAppearanceId": 966,
+      "appearanceId": 967,
+      "family": "woolboots",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2968,
+      "legacyAppearanceId": 966,
+      "appearanceId": 967,
+      "family": "woolboots",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2969,
+      "legacyAppearanceId": 966,
+      "appearanceId": 967,
+      "family": "woolboots",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2970,
+      "legacyAppearanceId": 966,
+      "appearanceId": 967,
+      "family": "woolboots",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2971,
+      "legacyAppearanceId": 966,
+      "appearanceId": 967,
+      "family": "woolboots",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2972,
+      "legacyAppearanceId": 966,
+      "appearanceId": 967,
+      "family": "woolboots",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2973,
+      "legacyAppearanceId": 966,
+      "appearanceId": 967,
+      "family": "woolboots",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2974,
+      "legacyAppearanceId": 966,
+      "appearanceId": 967,
+      "family": "woolboots",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2975,
+      "legacyAppearanceId": 966,
+      "appearanceId": 967,
+      "family": "woolboots",
+      "mask": 8016432
+    },
+    {
+      "itemId": 2976,
+      "legacyAppearanceId": 967,
+      "appearanceId": 968,
+      "family": "woolboots",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2977,
+      "legacyAppearanceId": 967,
+      "appearanceId": 968,
+      "family": "woolboots",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2978,
+      "legacyAppearanceId": 967,
+      "appearanceId": 968,
+      "family": "woolboots",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2979,
+      "legacyAppearanceId": 967,
+      "appearanceId": 968,
+      "family": "woolboots",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2980,
+      "legacyAppearanceId": 967,
+      "appearanceId": 968,
+      "family": "woolboots",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2981,
+      "legacyAppearanceId": 967,
+      "appearanceId": 968,
+      "family": "woolboots",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2982,
+      "legacyAppearanceId": 967,
+      "appearanceId": 968,
+      "family": "woolboots",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2983,
+      "legacyAppearanceId": 967,
+      "appearanceId": 968,
+      "family": "woolboots",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2984,
+      "legacyAppearanceId": 967,
+      "appearanceId": 968,
+      "family": "woolboots",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2985,
+      "legacyAppearanceId": 967,
+      "appearanceId": 968,
+      "family": "woolboots",
+      "mask": 12986408
+    },
+    {
+      "itemId": 2986,
+      "legacyAppearanceId": 968,
+      "appearanceId": 969,
+      "family": "woolboots",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2987,
+      "legacyAppearanceId": 968,
+      "appearanceId": 969,
+      "family": "woolboots",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2988,
+      "legacyAppearanceId": 968,
+      "appearanceId": 969,
+      "family": "woolboots",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2989,
+      "legacyAppearanceId": 968,
+      "appearanceId": 969,
+      "family": "woolboots",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2990,
+      "legacyAppearanceId": 968,
+      "appearanceId": 969,
+      "family": "woolboots",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2991,
+      "legacyAppearanceId": 968,
+      "appearanceId": 969,
+      "family": "woolboots",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2992,
+      "legacyAppearanceId": 968,
+      "appearanceId": 969,
+      "family": "woolboots",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2993,
+      "legacyAppearanceId": 968,
+      "appearanceId": 969,
+      "family": "woolboots",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2994,
+      "legacyAppearanceId": 968,
+      "appearanceId": 969,
+      "family": "woolboots",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2995,
+      "legacyAppearanceId": 968,
+      "appearanceId": 969,
+      "family": "woolboots",
+      "mask": 12756346
+    },
+    {
+      "itemId": 2996,
+      "legacyAppearanceId": 969,
+      "appearanceId": 970,
+      "family": "woolboots",
+      "mask": 14730049
+    },
+    {
+      "itemId": 2997,
+      "legacyAppearanceId": 969,
+      "appearanceId": 970,
+      "family": "woolboots",
+      "mask": 14730049
+    },
+    {
+      "itemId": 2998,
+      "legacyAppearanceId": 969,
+      "appearanceId": 970,
+      "family": "woolboots",
+      "mask": 14730049
+    },
+    {
+      "itemId": 2999,
+      "legacyAppearanceId": 969,
+      "appearanceId": 970,
+      "family": "woolboots",
+      "mask": 14730049
+    },
+    {
+      "itemId": 3000,
+      "legacyAppearanceId": 969,
+      "appearanceId": 970,
+      "family": "woolboots",
+      "mask": 14730049
+    },
+    {
+      "itemId": 3001,
+      "legacyAppearanceId": 969,
+      "appearanceId": 970,
+      "family": "woolboots",
+      "mask": 14730049
+    },
+    {
+      "itemId": 3002,
+      "legacyAppearanceId": 969,
+      "appearanceId": 970,
+      "family": "woolboots",
+      "mask": 14730049
+    },
+    {
+      "itemId": 3003,
+      "legacyAppearanceId": 969,
+      "appearanceId": 970,
+      "family": "woolboots",
+      "mask": 14730049
+    },
+    {
+      "itemId": 3004,
+      "legacyAppearanceId": 969,
+      "appearanceId": 970,
+      "family": "woolboots",
+      "mask": 14730049
+    },
+    {
+      "itemId": 3005,
+      "legacyAppearanceId": 969,
+      "appearanceId": 970,
+      "family": "woolboots",
+      "mask": 14730049
+    },
+    {
+      "itemId": 3006,
+      "legacyAppearanceId": 970,
+      "appearanceId": 971,
+      "family": "woolboots",
+      "mask": 16088064
+    },
+    {
+      "itemId": 3007,
+      "legacyAppearanceId": 970,
+      "appearanceId": 971,
+      "family": "woolboots",
+      "mask": 16088064
+    },
+    {
+      "itemId": 3008,
+      "legacyAppearanceId": 970,
+      "appearanceId": 971,
+      "family": "woolboots",
+      "mask": 16088064
+    },
+    {
+      "itemId": 3009,
+      "legacyAppearanceId": 970,
+      "appearanceId": 971,
+      "family": "woolboots",
+      "mask": 16088064
+    },
+    {
+      "itemId": 3010,
+      "legacyAppearanceId": 970,
+      "appearanceId": 971,
+      "family": "woolboots",
+      "mask": 16088064
+    },
+    {
+      "itemId": 3011,
+      "legacyAppearanceId": 970,
+      "appearanceId": 971,
+      "family": "woolboots",
+      "mask": 16088064
+    },
+    {
+      "itemId": 3012,
+      "legacyAppearanceId": 970,
+      "appearanceId": 971,
+      "family": "woolboots",
+      "mask": 16088064
+    },
+    {
+      "itemId": 3013,
+      "legacyAppearanceId": 970,
+      "appearanceId": 971,
+      "family": "woolboots",
+      "mask": 16088064
+    },
+    {
+      "itemId": 3014,
+      "legacyAppearanceId": 970,
+      "appearanceId": 971,
+      "family": "woolboots",
+      "mask": 16088064
+    },
+    {
+      "itemId": 3015,
+      "legacyAppearanceId": 970,
+      "appearanceId": 971,
+      "family": "woolboots",
+      "mask": 16088064
+    },
+    {
+      "itemId": 3016,
+      "legacyAppearanceId": 971,
+      "appearanceId": 972,
+      "family": "woolboots",
+      "mask": 3046706
+    },
+    {
+      "itemId": 3017,
+      "legacyAppearanceId": 971,
+      "appearanceId": 972,
+      "family": "woolboots",
+      "mask": 3046706
+    },
+    {
+      "itemId": 3018,
+      "legacyAppearanceId": 971,
+      "appearanceId": 972,
+      "family": "woolboots",
+      "mask": 3046706
+    },
+    {
+      "itemId": 3019,
+      "legacyAppearanceId": 971,
+      "appearanceId": 972,
+      "family": "woolboots",
+      "mask": 3046706
+    },
+    {
+      "itemId": 3020,
+      "legacyAppearanceId": 971,
+      "appearanceId": 972,
+      "family": "woolboots",
+      "mask": 3046706
+    },
+    {
+      "itemId": 3021,
+      "legacyAppearanceId": 971,
+      "appearanceId": 972,
+      "family": "woolboots",
+      "mask": 3046706
+    },
+    {
+      "itemId": 3022,
+      "legacyAppearanceId": 971,
+      "appearanceId": 972,
+      "family": "woolboots",
+      "mask": 3046706
+    },
+    {
+      "itemId": 3023,
+      "legacyAppearanceId": 971,
+      "appearanceId": 972,
+      "family": "woolboots",
+      "mask": 3046706
+    },
+    {
+      "itemId": 3024,
+      "legacyAppearanceId": 971,
+      "appearanceId": 972,
+      "family": "woolboots",
+      "mask": 3046706
+    },
+    {
+      "itemId": 3025,
+      "legacyAppearanceId": 971,
+      "appearanceId": 972,
+      "family": "woolboots",
+      "mask": 3046706
+    },
+    {
+      "itemId": 3026,
+      "legacyAppearanceId": 972,
+      "appearanceId": 973,
+      "family": "woolboots",
+      "mask": 1804943
+    },
+    {
+      "itemId": 3027,
+      "legacyAppearanceId": 972,
+      "appearanceId": 973,
+      "family": "woolboots",
+      "mask": 1804943
+    },
+    {
+      "itemId": 3028,
+      "legacyAppearanceId": 972,
+      "appearanceId": 973,
+      "family": "woolboots",
+      "mask": 1804943
+    },
+    {
+      "itemId": 3029,
+      "legacyAppearanceId": 972,
+      "appearanceId": 973,
+      "family": "woolboots",
+      "mask": 1804943
+    },
+    {
+      "itemId": 3030,
+      "legacyAppearanceId": 972,
+      "appearanceId": 973,
+      "family": "woolboots",
+      "mask": 1804943
+    },
+    {
+      "itemId": 3031,
+      "legacyAppearanceId": 972,
+      "appearanceId": 973,
+      "family": "woolboots",
+      "mask": 1804943
+    },
+    {
+      "itemId": 3032,
+      "legacyAppearanceId": 972,
+      "appearanceId": 973,
+      "family": "woolboots",
+      "mask": 1804943
+    },
+    {
+      "itemId": 3033,
+      "legacyAppearanceId": 972,
+      "appearanceId": 973,
+      "family": "woolboots",
+      "mask": 1804943
+    },
+    {
+      "itemId": 3034,
+      "legacyAppearanceId": 972,
+      "appearanceId": 973,
+      "family": "woolboots",
+      "mask": 1804943
+    },
+    {
+      "itemId": 3035,
+      "legacyAppearanceId": 972,
+      "appearanceId": 973,
+      "family": "woolboots",
+      "mask": 1804943
+    },
+    {
+      "itemId": 3036,
+      "legacyAppearanceId": 973,
+      "appearanceId": 974,
+      "family": "woolboots",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3037,
+      "legacyAppearanceId": 973,
+      "appearanceId": 974,
+      "family": "woolboots",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3038,
+      "legacyAppearanceId": 973,
+      "appearanceId": 974,
+      "family": "woolboots",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3039,
+      "legacyAppearanceId": 973,
+      "appearanceId": 974,
+      "family": "woolboots",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3040,
+      "legacyAppearanceId": 973,
+      "appearanceId": 974,
+      "family": "woolboots",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3041,
+      "legacyAppearanceId": 973,
+      "appearanceId": 974,
+      "family": "woolboots",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3042,
+      "legacyAppearanceId": 973,
+      "appearanceId": 974,
+      "family": "woolboots",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3043,
+      "legacyAppearanceId": 973,
+      "appearanceId": 974,
+      "family": "woolboots",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3044,
+      "legacyAppearanceId": 973,
+      "appearanceId": 974,
+      "family": "woolboots",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3045,
+      "legacyAppearanceId": 973,
+      "appearanceId": 974,
+      "family": "woolboots",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3046,
+      "legacyAppearanceId": 974,
+      "appearanceId": 975,
+      "family": "woolboots",
+      "mask": 8330525
+    },
+    {
+      "itemId": 3047,
+      "legacyAppearanceId": 974,
+      "appearanceId": 975,
+      "family": "woolboots",
+      "mask": 8330525
+    },
+    {
+      "itemId": 3048,
+      "legacyAppearanceId": 974,
+      "appearanceId": 975,
+      "family": "woolboots",
+      "mask": 8330525
+    },
+    {
+      "itemId": 3049,
+      "legacyAppearanceId": 974,
+      "appearanceId": 975,
+      "family": "woolboots",
+      "mask": 8330525
+    },
+    {
+      "itemId": 3050,
+      "legacyAppearanceId": 974,
+      "appearanceId": 975,
+      "family": "woolboots",
+      "mask": 8330525
+    },
+    {
+      "itemId": 3051,
+      "legacyAppearanceId": 974,
+      "appearanceId": 975,
+      "family": "woolboots",
+      "mask": 8330525
+    },
+    {
+      "itemId": 3052,
+      "legacyAppearanceId": 974,
+      "appearanceId": 975,
+      "family": "woolboots",
+      "mask": 8330525
+    },
+    {
+      "itemId": 3053,
+      "legacyAppearanceId": 974,
+      "appearanceId": 975,
+      "family": "woolboots",
+      "mask": 8330525
+    },
+    {
+      "itemId": 3054,
+      "legacyAppearanceId": 974,
+      "appearanceId": 975,
+      "family": "woolboots",
+      "mask": 8330525
+    },
+    {
+      "itemId": 3055,
+      "legacyAppearanceId": 974,
+      "appearanceId": 975,
+      "family": "woolboots",
+      "mask": 8330525
+    },
+    {
+      "itemId": 3056,
+      "legacyAppearanceId": 975,
+      "appearanceId": 976,
+      "family": "woolboots",
+      "mask": 9414857
+    },
+    {
+      "itemId": 3057,
+      "legacyAppearanceId": 975,
+      "appearanceId": 976,
+      "family": "woolboots",
+      "mask": 9414857
+    },
+    {
+      "itemId": 3058,
+      "legacyAppearanceId": 975,
+      "appearanceId": 976,
+      "family": "woolboots",
+      "mask": 9414857
+    },
+    {
+      "itemId": 3059,
+      "legacyAppearanceId": 975,
+      "appearanceId": 976,
+      "family": "woolboots",
+      "mask": 9414857
+    },
+    {
+      "itemId": 3060,
+      "legacyAppearanceId": 975,
+      "appearanceId": 976,
+      "family": "woolboots",
+      "mask": 9414857
+    },
+    {
+      "itemId": 3061,
+      "legacyAppearanceId": 975,
+      "appearanceId": 976,
+      "family": "woolboots",
+      "mask": 9414857
+    },
+    {
+      "itemId": 3062,
+      "legacyAppearanceId": 975,
+      "appearanceId": 976,
+      "family": "woolboots",
+      "mask": 9414857
+    },
+    {
+      "itemId": 3063,
+      "legacyAppearanceId": 975,
+      "appearanceId": 976,
+      "family": "woolboots",
+      "mask": 9414857
+    },
+    {
+      "itemId": 3064,
+      "legacyAppearanceId": 975,
+      "appearanceId": 976,
+      "family": "woolboots",
+      "mask": 9414857
+    },
+    {
+      "itemId": 3065,
+      "legacyAppearanceId": 975,
+      "appearanceId": 976,
+      "family": "woolboots",
+      "mask": 9414857
+    },
+    {
+      "itemId": 3066,
+      "legacyAppearanceId": 976,
+      "appearanceId": 977,
+      "family": "woolboots",
+      "mask": 15914842
+    },
+    {
+      "itemId": 3067,
+      "legacyAppearanceId": 976,
+      "appearanceId": 977,
+      "family": "woolboots",
+      "mask": 15914842
+    },
+    {
+      "itemId": 3068,
+      "legacyAppearanceId": 976,
+      "appearanceId": 977,
+      "family": "woolboots",
+      "mask": 15914842
+    },
+    {
+      "itemId": 3069,
+      "legacyAppearanceId": 976,
+      "appearanceId": 977,
+      "family": "woolboots",
+      "mask": 15914842
+    },
+    {
+      "itemId": 3070,
+      "legacyAppearanceId": 976,
+      "appearanceId": 977,
+      "family": "woolboots",
+      "mask": 15914842
+    },
+    {
+      "itemId": 3071,
+      "legacyAppearanceId": 976,
+      "appearanceId": 977,
+      "family": "woolboots",
+      "mask": 15914842
+    },
+    {
+      "itemId": 3072,
+      "legacyAppearanceId": 976,
+      "appearanceId": 977,
+      "family": "woolboots",
+      "mask": 15914842
+    },
+    {
+      "itemId": 3073,
+      "legacyAppearanceId": 976,
+      "appearanceId": 977,
+      "family": "woolboots",
+      "mask": 15914842
+    },
+    {
+      "itemId": 3074,
+      "legacyAppearanceId": 976,
+      "appearanceId": 977,
+      "family": "woolboots",
+      "mask": 15914842
+    },
+    {
+      "itemId": 3075,
+      "legacyAppearanceId": 976,
+      "appearanceId": 977,
+      "family": "woolboots",
+      "mask": 15914842
+    },
+    {
+      "itemId": 3123,
+      "legacyAppearanceId": 1032,
+      "appearanceId": 1033,
+      "family": "squareshield",
+      "mask": 10397087
+    },
+    {
+      "itemId": 3124,
+      "legacyAppearanceId": 1026,
+      "appearanceId": 1027,
+      "family": "kiteshield",
+      "mask": 10397087
+    },
+    {
+      "itemId": 3131,
+      "legacyAppearanceId": 989,
+      "appearanceId": 990,
+      "family": "gauntlets",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3132,
+      "legacyAppearanceId": 990,
+      "appearanceId": 991,
+      "family": "greaves",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3133,
+      "legacyAppearanceId": 991,
+      "appearanceId": 992,
+      "family": "gauntlets",
+      "mask": 15790320
+    },
+    {
+      "itemId": 3134,
+      "legacyAppearanceId": 992,
+      "appearanceId": 993,
+      "family": "greaves",
+      "mask": 15790320
+    },
+    {
+      "itemId": 3135,
+      "legacyAppearanceId": 993,
+      "appearanceId": 994,
+      "family": "gauntlets",
+      "mask": 10397087
+    },
+    {
+      "itemId": 3136,
+      "legacyAppearanceId": 994,
+      "appearanceId": 995,
+      "family": "greaves",
+      "mask": 10397087
+    },
+    {
+      "itemId": 3137,
+      "legacyAppearanceId": 1010,
+      "appearanceId": 1011,
+      "family": "wizardshat",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3138,
+      "legacyAppearanceId": 1011,
+      "appearanceId": 1012,
+      "family": "wizardsrobe",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3139,
+      "legacyAppearanceId": 1012,
+      "appearanceId": 1013,
+      "family": "skirt",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3140,
+      "legacyAppearanceId": 1013,
+      "appearanceId": 1014,
+      "family": "woolgloves",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3141,
+      "legacyAppearanceId": 1014,
+      "appearanceId": 1015,
+      "family": "woolboots",
+      "mask": 2236962
+    },
+    {
+      "itemId": 3142,
+      "legacyAppearanceId": 1015,
+      "appearanceId": 1016,
+      "family": "wizardshat",
+      "mask": 15790320
+    },
+    {
+      "itemId": 3143,
+      "legacyAppearanceId": 1016,
+      "appearanceId": 1017,
+      "family": "wizardsrobe",
+      "mask": 15790320
+    },
+    {
+      "itemId": 3144,
+      "legacyAppearanceId": 1017,
+      "appearanceId": 1018,
+      "family": "skirt",
+      "mask": 15790320
+    },
+    {
+      "itemId": 3145,
+      "legacyAppearanceId": 1018,
+      "appearanceId": 1019,
+      "family": "woolgloves",
+      "mask": 15790320
+    },
+    {
+      "itemId": 3146,
+      "legacyAppearanceId": 1019,
+      "appearanceId": 1020,
+      "family": "woolboots",
+      "mask": 15790320
+    },
+    {
+      "itemId": 3147,
+      "legacyAppearanceId": 1020,
+      "appearanceId": 1021,
+      "family": "wizardshat",
+      "mask": 10397087
+    },
+    {
+      "itemId": 3148,
+      "legacyAppearanceId": 1021,
+      "appearanceId": 1022,
+      "family": "wizardsrobe",
+      "mask": 10397087
+    },
+    {
+      "itemId": 3149,
+      "legacyAppearanceId": 1022,
+      "appearanceId": 1023,
+      "family": "skirt",
+      "mask": 10397087
+    },
+    {
+      "itemId": 3150,
+      "legacyAppearanceId": 1023,
+      "appearanceId": 1024,
+      "family": "woolgloves",
+      "mask": 10397087
+    },
+    {
+      "itemId": 3151,
+      "legacyAppearanceId": 1024,
+      "appearanceId": 1025,
+      "family": "woolboots",
+      "mask": 10397087
+    },
+    {
+      "itemId": 3174,
+      "legacyAppearanceId": 995,
+      "appearanceId": 996,
+      "family": "guthsymbol",
+      "mask": 0
+    },
+    {
+      "itemId": 3175,
+      "legacyAppearanceId": 995,
+      "appearanceId": 996,
+      "family": "guthsymbol",
+      "mask": 0
+    },
+    {
+      "itemId": 3191,
+      "legacyAppearanceId": 1034,
+      "appearanceId": 1035,
+      "family": "hood",
+      "mask": 0
+    }
+  ]
+}

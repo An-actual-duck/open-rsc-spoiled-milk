@@ -1047,6 +1047,10 @@ public final class EntityHandler {
 					? mapping.appearanceId : mapping.fallbackAppearance);
 			}
 		}
+		if (getServer().getConfig().WANT_MYWORLD && getServer().getConfig().WANT_CUSTOM_SPRITES) {
+			for (ItemVisualAppearances.Mapping mapping : ItemVisualAppearances.MAPPINGS)
+				setItemAppearance(mapping.itemId, mapping.appearanceId);
+		}
 		applyHeldEquipmentAppearanceOverrides();
 	}
 
