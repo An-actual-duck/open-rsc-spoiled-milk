@@ -53,7 +53,11 @@ non-aggressive. No tower placements, new drops or access gates are supplied.
 Existing NPC IDs, including Gorak 861 and Green Dragon 862, remain unchanged.
 
 Abyssal demon uses its final approved sunken-abdomen stab frames and approved
-color-matched spike strip. Sources are preserved in ../abyssal-spikes/ and
+color-matched spike strip. The owner-approved November 2 motion correction adds
+subtle connected head/shoulder rocking to side and diagonal-rear strides;
+the other directions, idle poses, feet and attacks retain their approved pixels.
+Its editable project and original sheet are preserved under
+assets/authoring/npcs/abyssal-demon-motion/. Packing sources are in ../abyssal-spikes/ and
 packed losslessly by tools/myworld/PackAbyssalSpikes.java. See the
 [combat contract](../../../../../../../docs/myworld/rough-drafts/abyssal-demon-combat-test.md).
 

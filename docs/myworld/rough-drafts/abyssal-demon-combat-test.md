@@ -72,10 +72,14 @@ retract in its one-tick cycle. Recovery cleanup cannot replace a fresh stab.
 
 ## Artwork
 
-The approved-base.png in dev/myworld/assets/runtime/sprites/npcs/abyssal-spikes comes
-from Sprite Trainer output abyssal-cosmic-demon-attack-v6-sunken-abdomen/full-sheet.png.
-Its first five columns exactly match the previous movement import; the 259
-changed attack pixels are the later owner-approved sunken-abdomen correction.
+The approved-base.png in dev/myworld/assets/runtime/sprites/npcs/abyssal-spikes
+originated from Sprite Trainer output
+abyssal-cosmic-demon-attack-v6-sunken-abdomen/full-sheet.png, including the 259
+owner-approved sunken-abdomen attack-pixel corrections. On November 2 the owner
+also approved subtle connected head/shoulder rocking for the side and diagonal
+rear strides. The editable Aseprite project and exact pre-correction sheet are
+preserved in dev/myworld/assets/authoring/npcs/abyssal-demon-motion/. Other
+directions, idle poses, feet and both attack columns remain pixel-identical.
 The approved-spikes-strip.png is the approved
 abyssal-cosmic-demon-aoe-v2-color-match/strip.png.
 

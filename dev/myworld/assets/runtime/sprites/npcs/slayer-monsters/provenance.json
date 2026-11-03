@@ -115,8 +115,8 @@
       "id": 870,
       "key": "abyssal-demon",
       "sourceOutput": "abyssal-cosmic-demon-attack-v6-sunken-abdomen/full-sheet.png",
-      "extension": "Owner-approved abyssal-cosmic-demon-aoe-v2-color-match/strip.png; PackAbyssalSpikes.java; base pixels unchanged, +6px vertical padding per 112px row",
-      "sha256": "bae344d2d888f94ece163639bc4831b2b9d272bfabab4c3d26ea27fdef7e07e8",
+      "extension": "Owner-approved color-matched spike strip, lossless PackAbyssalSpikes.java packing and 6px row padding; November 2 approved Aseprite upper-body rocking on side and diagonal-rear strides only.",
+      "sha256": "1b9458f03121666614507f6d85edf96d1a6ee3eccccc983441f569b904f37285",
       "columns": [
         100,
         100,
@@ -126,7 +126,9 @@
         112,
         144
       ],
-      "height": 336
+      "height": 336,
+      "motionSource": "dev/myworld/assets/authoring/npcs/abyssal-demon-motion",
+      "motionApproval": "2026-11-02: yeah that small change helps a lot, let's use those"
     }
   ]
 }
