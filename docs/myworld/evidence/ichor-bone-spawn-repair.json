@@ -1,0 +1,51 @@
+{
+  "status": "PASS",
+  "previousFingerprint": "567449d3590b4e1b197a11e517d928a316ba4e92b4322d2526ca6f66455541ae",
+  "fingerprint": "7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc",
+  "manifestSha256": "42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b",
+  "placementIds": [
+    "edit-1e1b9b1d-2c7f-476c-a44e-c0982e228929",
+    "edit-c6f2650c-bc99-4894-a5a2-911eacdd9393"
+  ],
+  "positions": [
+    {
+      "x": 111,
+      "y": 670,
+      "level": -1
+    },
+    {
+      "x": 111,
+      "y": 671,
+      "level": -1
+    }
+  ],
+  "previousItemId": 3347,
+  "correctedItemId": 20,
+  "ordinaryBoneSpawnsBefore": 183,
+  "ordinaryBoneSpawnsAfter": 185,
+  "vertebraeSpawnsBefore": 2,
+  "vertebraeSpawnsAfter": 0,
+  "totalGroundItemSpawns": 926,
+  "changedPackageFiles": [
+    "manifest.json",
+    "placements/global/lm1.json"
+  ],
+  "terrainByteIdentical": true,
+  "allOtherPlacementsUnchanged": true,
+  "pairedInventoryIdentical": true,
+  "sourceCheckpoint": "/home/justin/.local/share/ichor-corner-20261102/checkpoint",
+  "correctedCheckpoint": "/home/justin/.local/share/ichor-bones-20261103/checkpoint",
+  "sourceExportDecodedContentsVerified": true,
+  "serializationOrderPreserved": true,
+  "publicOperations": false,
+  "runtimeChecks": 515,
+  "runtimeFailures": 0,
+  "actualBoneRegistrationVerified": true,
+  "genericPackageCheck": "PASS",
+  "correctedCheckpointGeneration": 4857,
+  "originalOwnerSaveUnchanged": true,
+  "correctedCheckpointCurrentStateOnlyTwoItemIds": true,
+  "probableCause": "The two placements selected item 3347 while its old placeholder sprite was items:20; the later dedicated vertebrae artwork exposed the wrong item IDs. This is an inference from map IDs and recorded sprite-selector history.",
+  "scope": "Selected current native map: all 9 placement sets; 926 total ground-item placements. Historical packages are preserved.",
+  "runtimeLimits": "Offline maintained runtime registration and map acceptance; no public deployment or client visual inspection."
+}

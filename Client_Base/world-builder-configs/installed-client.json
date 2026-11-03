@@ -1,10 +1,10 @@
 {
   "active": true,
-  "manifestSha256": "55fae68af8e8e7e606708876f9cde5e54c2667c84562f0dd2a12528b202a4323",
+  "manifestSha256": "42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b",
   "manifestType": "world-builder-installed-client-profile",
-  "packageFingerprintSha256": "567449d3590b4e1b197a11e517d928a316ba4e92b4322d2526ca6f66455541ae",
+  "packageFingerprintSha256": "7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc",
   "packageId": "rsc-remastered.spoiled-milk-layered-world",
-  "packageRelativePath": "world-builder/packages/567449d3590b4e1b197a11e517d928a316ba4e92b4322d2526ca6f66455541ae/package",
+  "packageRelativePath": "world-builder/packages/7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc/package",
   "packageVersion": "0.5.0",
   "schemaVersion": 1
 }
