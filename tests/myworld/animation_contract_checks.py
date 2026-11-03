@@ -19,7 +19,7 @@ def validate_projectile_slots(client: str, entity_handler: str, server_projectil
     assert first == definitions['BLANK'] + 1, 'Custom sprite boundary no longer follows native projectile IDs'
     custom = {value for value in definitions.values() if value >= first}
     assert custom == set(range(first, first + count)), 'Client sprite slots do not match all custom wire IDs'
-    for name in ('ACID_ARMOR_PROC', 'ICE_SWORD_STAB', 'NAGA_SCIMITAR'):
+    for name in ('ACID_ARMOR_PROC', 'ICE_SWORD_STAB', 'NAGA_SCIMITAR', 'ELECTRIC_DISC'):
         assert definitions[name] == integer_constant(server_projectiles, name), f'Client/server projectile mismatch: {name}'
     assert integer_constant(client, 'PROJECTILE_EFFECT_FRAME_SLOTS') == 36, 'Native per-projectile frame allocation changed'
     # Combat sprites precede projectile, mirrored and static-mirror allocations.

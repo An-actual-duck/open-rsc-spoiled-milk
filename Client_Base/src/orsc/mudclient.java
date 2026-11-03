@@ -251,7 +251,7 @@ public final class mudclient implements Runnable {
 	private static final int CHAIN_LIGHTNING_PROJECTILE_SCENE_SIZE = 96;
 	private static final int SUMMON_ARRIVAL_CIRCLE_Y_OFFSET_PERCENT = 34;
 	private static final int CUSTOM_PROJECTILE_FIRST = 7;
-	public static final int CUSTOM_PROJECTILE_COUNT = 35;
+	public static final int CUSTOM_PROJECTILE_COUNT = 36;
 	public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;
 	private static final int PROJECTILE_IMPACT_FRAME_SLOTS = 36;
 	private static final int PROJECTILE_IMPACT_FRAME_TICKS = 3;
@@ -1198,7 +1198,7 @@ public final class mudclient implements Runnable {
 		"summon-bat-vampirism-reverse", "shuriken", "enemy-air-basic", "enemy-water-basic", "blue-dragon-magic",
 		"chain-lightning/A", "chain-lightning/B", "chain-lightning/C", "wind-static-2", "water-static-2",
 		"thunder-bird", "earth-lead-2", "fire-lead-2", "ice-lead-2", "acid-lead-2", "wood-lead-2",
-		"acid-armor-proc", "ice-sword-stab", "naga-scimitar"
+		"acid-armor-proc", "ice-sword-stab", "naga-scimitar", "electric-disc-basic"
 	};
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
 	private final java.util.Map<Integer,Sprite> clericIconSprites = new java.util.HashMap<Integer,Sprite>();
@@ -27725,7 +27725,9 @@ public final class mudclient implements Runnable {
 				|| effectType == COMBAT_EFFECT_SARADOMIN_SOUL_SLASH
 				|| effectType == COMBAT_EFFECT_CLAW_OF_GUTHIX;
 		}
-		return projectileId == PROJECTILE_TYPES.SKULL.id() && effectType == COMBAT_EFFECT_IBAN_BLAST;
+		return (projectileId == PROJECTILE_TYPES.SKULL.id()
+			|| projectileId == PROJECTILE_TYPES.ELECTRIC_DISC.id())
+			&& effectType == COMBAT_EFFECT_IBAN_BLAST;
 	}
 
 	private boolean isCustomProjectile(SpriteDef projectile) {
@@ -27883,6 +27885,7 @@ public final class mudclient implements Runnable {
 		}
 		return projectile.id == PROJECTILE_TYPES.MAGIC.id()
 			|| projectile.id == PROJECTILE_TYPES.SKULL.id()
+			|| projectile.id == PROJECTILE_TYPES.ELECTRIC_DISC.id()
 			|| projectile.id == PROJECTILE_TYPES.BLOW_SMOKE.id()
 			|| projectile.id == PROJECTILE_TYPES.FIREBALL.id()
 			|| projectile.id == PROJECTILE_TYPES.WIND_ARROW.id()
