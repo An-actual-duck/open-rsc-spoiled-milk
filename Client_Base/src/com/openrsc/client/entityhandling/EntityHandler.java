@@ -5906,7 +5906,7 @@ public class EntityHandler {
 			false, false, false, 3429));
 		setCustomItemDefinition(3430, new ItemDef(
 			"Moonsilver bar", "An alloy of silver and mithril, dark blue with a silvery sheen", "",
-			450, 79, "external-png:moonsilver-bar", false, false, 0, 0,
+			450, 79, "external-png:moonsilver-bar@39x16", false, false, 0, 0,
 			false, false, true, 3430));
 		setCustomItemDefinition(3431, new ItemDef(
 			"Blank Silver Sigils", "A blank silver sigil ready to carve", "",
@@ -8115,12 +8115,12 @@ public class EntityHandler {
 			// Preserve the published appearance-number contract: custom staves begin at 789.
 			animations.add(new AnimationDef("nothing", "equipment", 0, 0, true, false, 0));//788 - reserved
 			for (int woodColor : MYWORLD_STAFF_WOOD_COLORS) {
-				animations.add(new AnimationDef("staff", "equipment", woodColor, 0, true, false, 0));
+				animations.add(new AnimationDef("materialstaff", "equipment", woodColor, 0, true, false, 0));
 			}
 			for (int runeIndex = 0; runeIndex < MYWORLD_RUNE_STAFF_STABLE_COLOR_COUNT; runeIndex++) {
 				int runeColor = MYWORLD_STAFF_RUNE_COLORS[runeIndex];
 				for (int woodColor : MYWORLD_STAFF_WOOD_COLORS) {
-					animations.add(new AnimationDef("elementalstaff", "equipment", runeColor, woodColor, 0, true, false, 0));
+					animations.add(new AnimationDef("materialelementalstaff", "equipment", runeColor, woodColor, 0, true, false, 0));
 				}
 			}
 			for (int runeColor : MYWORLD_RUNE_CLOTH_COLORS) {
@@ -8201,7 +8201,7 @@ public class EntityHandler {
 				 runeIndex < MYWORLD_STAFF_RUNE_COLORS.length; runeIndex++) {
 				int runeColor = MYWORLD_STAFF_RUNE_COLORS[runeIndex];
 				for (int woodColor : MYWORLD_STAFF_WOOD_COLORS) {
-					animations.add(new AnimationDef("elementalstaff", "equipment", runeColor, woodColor, 0, true, false, 0));
+					animations.add(new AnimationDef("materialelementalstaff", "equipment", runeColor, woodColor, 0, true, false, 0));
 				}
 			}
 			verifyAnimationDefinition(1050, "scythe", EXALTED_RUNE_COLOR);
@@ -10381,6 +10381,8 @@ public class EntityHandler {
 			for (int[] range : new int[][]{{1807,1816},{1875,1884},{1895,1904},{1915,1919}})
 				for (int id = range[0]; id <= range[1]; id++) items.get(id).untradeable = true;
 			applyBangleVisuals();
+			MaterialItemVisuals.apply(items, MYWORLD_STAFF_BASE_IDS, MYWORLD_RUNE_STAFF_IDS,
+				MYWORLD_STAFF_WOOD_COLORS, MYWORLD_STAFF_RUNE_COLORS);
 		loadTextureDefinitions();
 		loadAnimationDefinitions();
 		loadSpellDefinitions();

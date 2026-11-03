@@ -11,9 +11,12 @@
     "docs/myworld/in-progress-work-plans/antidote-cleansing-reconciliation-review.md",
     "dev/myworld/assets/authoring/equipment/battleaxe-coatings/manifest.json",
     "docs/myworld/in-progress-work-plans/battleaxe-coatings-implementation-review.md",
-    "dev/myworld/assets/authoring/slayer-items/RECOVERY-INDEX.json"
+    "dev/myworld/assets/authoring/slayer-items/RECOVERY-INDEX.json",
+    "dev/myworld/assets/authoring/items/material-visuals/manifest.json"
   ],
   "files": {
+    "ammunition/bolts/metal-bolts-base.png": "04d96e3f722152da7c8ef5a0c3084c6652a23c033d38aa57ccbb70475287d076",
+    "ammunition/bolts/metal-bolts-poison-base.png": "7d6d3f5a145fae93c8528d527eaaea026994401e31430ea061183be0b1eac101",
     "armor/bloodveld-boots.png": "c5111c737a56645dd6475e7f6ece9204792adedfbec819c8cd3d30715069d84c",
     "armor/bloodveld-chaps.png": "f78783928cd6a017299003a6bb75ff92cddfae0044d23289f6d3a2f139bddab7",
     "armor/bloodveld-coif.png": "87f2e081a6f5e24fab3248097d48ab66109aab30b7654bb728c6ee38d113030c",
@@ -48,6 +51,7 @@
     "gem-cutter-gloves.png": "4a12e92b75269e53143cdf1e50b0841b14a1ce7d341dbc40c9f48a3113a3e79d",
     "gem-cutters-monocle.png": "4f68d9aadad4a3b45ff586edffcc7362ec493b28ddd769beb0b3fc919bf2db05",
     "jewelry/sullen-pendant-icon.png": "7bcab55cb8bfddc1f1884e62f0f114269eac9b44c77f8e2d03d06fb5e2001777",
+    "materials/wood/log-wood-base.png": "0420aaa24d95fdd31cd7e06be6b61f51005199ce7bb16da15813ce5422c11225",
     "resources/abyssal-rib.png": "ea3f32f4c44d617bb4dc5a3fa3c876afb9c6f953ec08b7a3139f62cbda3f9453",
     "resources/abyssal-vertibrae.png": "f82d3817bcbc52cc5a317bb578de6575a4cb4205cd9955b99af2b3518996f3f8",
     "resources/bloodveld-hide.png": "746d4e5151e979c33e97f2a52f8a7113615ac917915a209151ad7f1b23711629",
@@ -113,9 +117,12 @@
     "viscous-battleaxe-93.png": "d1fedc5d011448c7f5f3ca538d4dc4cb470ada8586f8dd20d72dfaaa7d47276f",
     "viscous-coating.png": "aa40916102e1a06e759bad54f7858979280324caa8dd849174f5536d283269ca",
     "weapons/abyssal-whip-icon.png": "299ce54e34ec6a847db9b051472e131a9bd43349d3c343844285cf96bfa8e5a9",
+    "weapons/crossbows/crossbow-wood-base.png": "7fcb31ff4eeef5577b72963480c3935c7197adbbf892286a88665515d2c3c1f6",
     "weapons/dagger-of-terror-icon.png": "11adb419c2e65b5151c369d0d45cde68d9349cbe6576c055b0b6261ca7a853b4",
     "weapons/dagger-of-terror-poisoned-icon.png": "ed84aee1a5197062ae86ce288889097a4b20c57ee051983aceafaaac262c55aa",
     "weapons/leaching-bow-icon.png": "3ed596aa0071c5e2179f0960671488cde2bd1a8efb2b205427bbefc846019443",
+    "weapons/staves/staff-orb-base.png": "143950450808d82038ac34b679ac7dabef6d5625e97c71f804705937ad8e0752",
+    "weapons/staves/staff-wood-base.png": "9986ed2b9c4cadec02b4cc4564ef272c2686a835c8bf2b42d1f64ad16b970d6b",
     "weapons/thunder-spire-staff-icon.png": "cc5bce9de3cf00f948f710472352c3c6e43276d50dc3d9c15a15016c77bdf962"
   }
 }

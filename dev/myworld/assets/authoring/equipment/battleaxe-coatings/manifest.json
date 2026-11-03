@@ -133,5 +133,6 @@
       "appearanceId": 1111
     }
   ],
-  "classicSpriteStart": 4000
+  "classicSpriteStart": 4000,
+  "appearanceIndexing": "appearanceStart and variant appearanceId are zero-based client animation indices; server equipment appearance IDs add one"
 }

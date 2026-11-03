@@ -22350,6 +22350,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadExternalEquipmentSprites() {
+		MaterialEquipmentSprites.install(getSurface().spriteTree.get("equipment"));
 		loadExternalLayeredEquipmentSprite("abyssalwhip", getExternalEquipmentNumberedFolder("abyssal-whip"),
 			orsc.graphics.two.SpriteArchive.Frame.LAYER.MAIN_HAND, ABYSSAL_WHIP_OFFSET_X, ABYSSAL_WHIP_OFFSET_Y,
 			ABYSSAL_WHIP_BOUND_WIDTH);
