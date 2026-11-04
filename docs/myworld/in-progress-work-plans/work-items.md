@@ -590,3 +590,11 @@ is deferred until limited-release field sessions.
 - Combat presentation follow-up:
   - reopen intermittent player-side standard combat animation investigation
     only if it is reproduced during limited-release sessions
+
+## Future dueling arena (November 3 owner direction)
+
+Traditional dueling stays disabled and its player right-click entry is hidden.
+Replace it later with an arena designed for the independent combat system:
+record each consenting participant's complete return location, teleport them
+into the match, and return them when it ends. Team duels, royal rumbles and
+clan duels are potential formats. Arena implementation is future work.
