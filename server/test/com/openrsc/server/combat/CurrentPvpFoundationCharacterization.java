@@ -65,9 +65,11 @@ public final class CurrentPvpFoundationCharacterization {
             checkCase(h,"legacy_pk_mode_cannot_enable_myworld_safe_zone_pvp", CurrentPvpFoundationCharacterization::pkModeSafety, failures);
             checkCase(h,"safe_zone_keeps_pve_damage_and_blocks_orphan_player_dot", CurrentPvpFoundationCharacterization::pveSafety, failures);
             checkCase(h,"player_poison_cleanses_without_damage_in_safety", CurrentPvpFoundationCharacterization::poisonBoundary, failures);
+            checkCase(h,"shuriken_boundary_excludes_safe_players_and_stale_locks", CurrentPvpFoundationCharacterization::shurikenBoundary, failures);
+            checkCase(h,"border_splash_and_shuriken_impacts_recheck_each_player", CurrentPvpFoundationCharacterization::borderImpacts, failures);
         }
         if (!failures.isEmpty()) throw new AssertionError("PvP foundation failures: " + failures);
-        System.out.println("PASS: 17 PvP foundation scenarios");
+        System.out.println("PASS: 19 PvP foundation scenarios");
     }
 
     private interface Scenario { void run(CurrentCombatHarness h) throws Exception; }
@@ -238,6 +240,63 @@ public final class CurrentPvpFoundationCharacterization {
         List<com.openrsc.server.model.entity.Mob> targets=(List<com.openrsc.server.model.entity.Mob>)method.invoke(event,p[0],ItemId.TIN_SHURIKEN.id(),6);
         require(targets.size()==3 && targets.contains(p[1]) && targets.contains(p[2]) && targets.contains(extra),"three distinct eligible player targets use the normal shuriken cap");
         require(!targets.contains(p[3])&&!targets.contains(p[4]),"shuriken selection excludes party and clan");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void shurikenBoundary(CurrentCombatHarness h) throws Exception {
+        h.openCombatProjectileRectangle(176,186,422,431);
+        Player a=player(h,"pvp border a",180,426,false),primary=player(h,"pvp border p",181,426,false),
+            secondary=player(h,"pvp border e",182,425,false);
+        Player safe=h.player("pvp border s",182,427);
+        safe.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),250,250,false);
+        ThrowingEvent event=new ThrowingEvent(h.world(),a,1,primary);
+        Method select=ThrowingEvent.class.getDeclaredMethod("selectThrowingTargets",Player.class,int.class,int.class);
+        select.setAccessible(true);
+        Method remember=ThrowingEvent.class.getDeclaredMethod("rememberShurikenTargets",Player.class,List.class,int.class);
+        remember.setAccessible(true);
+        List<com.openrsc.server.model.entity.Mob> selected=(List<com.openrsc.server.model.entity.Mob>)
+            select.invoke(event,a,ItemId.TIN_SHURIKEN.id(),6);
+        require(selected.size()==2 && selected.contains(primary) && selected.contains(secondary) && !selected.contains(safe),
+            "an unfilled third shuriken slot must never pick the nearby safe-zone player");
+        remember.invoke(event,a,selected,6);
+        secondary.setLocation(Point.location(182,427),false);
+        selected=(List<com.openrsc.server.model.entity.Mob>)select.invoke(event,a,ItemId.TIN_SHURIKEN.id(),6);
+        require(selected.size()==1 && selected.contains(primary),"a previously locked secondary is excluded after crossing into safety");
+        List<com.openrsc.server.model.entity.Mob> locks=(List<com.openrsc.server.model.entity.Mob>)
+            CurrentCombatHarness.readPrivateField(event,"shurikenTargetLock");
+        require(!locks.contains(secondary),"the stale safe-zone lock is pruned, not merely skipped for one volley");
+        primary.setLocation(Point.location(181,427),false);
+        selected=(List<com.openrsc.server.model.entity.Mob>)select.invoke(event,a,ItemId.TIN_SHURIKEN.id(),6);
+        require(selected.isEmpty(),"a primary crossing into safety cannot survive the selection fallback");
+        primary.setLocation(Point.location(181,426),false);a.setLocation(Point.location(180,427),false);
+        selected=(List<com.openrsc.server.model.entity.Mob>)select.invoke(event,a,ItemId.TIN_SHURIKEN.id(),6);
+        require(selected.isEmpty(),"a source crossing into safety cannot retain a player target");
+    }
+
+    private static void borderImpacts(CurrentCombatHarness h) throws Exception {
+        h.openCombatProjectileRectangle(176,186,422,431);
+        Player a=player(h,"pvp splash edge",180,426,false),primary=player(h,"pvp splash main",181,426,false),
+            secondary=player(h,"pvp splash inner",180,425,false);
+        Player safe=h.player("pvp splash outer",180,427);
+        safe.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),250,250,false);
+        Method splash=SpellHandler.class.getDeclaredMethod("applyIbanBlastAreaEffects",Player.class,
+            com.openrsc.server.model.entity.Mob.class,UUID.class);
+        splash.setAccessible(true);
+        for(int i=0;i<16;i++)splash.invoke(new SpellHandler(),a,primary,UUID.randomUUID());
+        require(secondary.getLevel(Skill.HITS.id())<250,"real border splash still hits a legal inside player");
+        require(safe.getLevel(Skill.HITS.id())==250,"real border splash cannot reach a player one tile outside Wilderness");
+        ProjectileLaunchSpecification shot=ProjectileLaunchSpecification.builder(
+            ProjectileLaunchSpecification.Producer.PLAYER_SHURIKEN,6,2).build();
+        ProjectileEvent queued=new ProjectileEvent(h.world(),a,primary,shot);
+        primary.setLocation(Point.location(181,427),false);queued.action();
+        require(primary.getLevel(Skill.HITS.id())==250,"an already launched shuriken cannot hit a player who steps into safety");
+        primary.setLocation(Point.location(181,426),false);
+        ProjectileEvent sourceMoves=new ProjectileEvent(h.world(),a,primary,shot);
+        a.setLocation(Point.location(180,427),false);sourceMoves.action();
+        require(primary.getLevel(Skill.HITS.id())==250,"a queued shuriken is rejected when its source crosses into safety");
+        a.setLocation(Point.location(180,426),false);
+        new ProjectileEvent(h.world(),a,primary,shot).action();
+        require(primary.getLevel(Skill.HITS.id())==244,"the same shuriken deals its normal damage with both players inside");
     }
 
     private static void poisonBoundary(CurrentCombatHarness h) {

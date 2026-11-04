@@ -339,6 +339,13 @@ public class ThrowingEvent extends GameTickEvent {
 
 	private List<Mob> selectThrowingTargets(Player player, int throwingID, int attackRadius) {
 		List<Mob> targets = new ArrayList<>();
+        // Revalidate before every fallback: a player may have crossed into safety
+        // since primary-target resolution, and must not consume an automatic throw.
+        if (target instanceof Player && !com.openrsc.server.model.combat.PlayerPvpCombat.eligible(
+                player, (Player) target, com.openrsc.server.model.combat.CombatStyle.THROWING)) {
+            shurikenTargetLock.clear();
+            return targets;
+        }
 		if (Summoning.isPlayerAreaEffectSuppressed(player)
 			|| !RangeUtils.SHURIKENS.contains(throwingID)
 			|| (!target.isNpc() && !com.openrsc.server.model.combat.PlayerPvpCombat.applies(player,target))) {
