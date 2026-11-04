@@ -21,7 +21,8 @@ public final class ProjectileImpactDecision {
 		LAUNCH_DOMAIN_DEPARTURE,
 		OUTSIDE_LAUNCH_ORIGIN_RANGE,
 		IMPACT_PATH_BLOCKED,
-		DUPLICATE_CALLBACK
+		DUPLICATE_CALLBACK,
+		PVP_TARGET_NO_LONGER_ATTACKABLE
 	}
 
 	private final ProjectileLaunchSnapshot launchSnapshot;

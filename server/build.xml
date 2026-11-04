@@ -672,6 +672,18 @@
         <delete dir="${combat.build.test}"/>
     </target>
 
+    <target name="test_pvp_foundation" depends="compile_combat_tests"
+            description="Exercise private MyWorld player-versus-player combat without sockets or accounts">
+        <java classname="com.openrsc.server.combat.CurrentPvpFoundationCharacterization"
+              fork="true" failonerror="true" maxmemory="768m" dir="${basedir}">
+            <classpath>
+                <pathelement location="${combat.build.test}"/>
+                <pathelement location="${combat.build.core}"/>
+                <fileset dir="${lib}" includes="*.jar"/>
+            </classpath>
+        </java>
+    </target>
+
     <target name="test_combat" depends="run_combat_characterization"
             description="Run the current-state combat characterization harness"/>
 

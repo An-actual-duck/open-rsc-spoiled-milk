@@ -28,6 +28,12 @@ public final class ChainLightningTraversalPolicy {
 	private ChainLightningTraversalPolicy() {
 	}
 
+    public static Mob selectCombatant(final Player owner,final Mob anchor,final GameRandom random) {
+        if (!(anchor instanceof Player)) return selectNext(owner,anchor,random);
+        List<Player> targets=com.openrsc.server.util.rsc.CombatEffectUtil.findPlayerOwnedPvpSplashTargets(owner,(Player)anchor,RADIUS);
+        return targets.isEmpty()?null:targets.get(Objects.requireNonNull(random,"random").nextInt(targets.size()));
+    }
+
 	public static Npc selectNext(final Player owner, final Mob anchor,
 			final GameRandom random) {
 		if (anchor == null || !anchor.isNpc()) {

@@ -41,7 +41,7 @@ public final class ClericSpellText {
     for (ClericBlessingComponent c :
         new com.openrsc.server.content.cleric.effect.ClericHostileMagnitude(god, tier, 1)
             .components()) names.add(ClericBlessingContract.componentName(c.getKind()));
-    return String.join("; ", names) + ". Afflicts eligible enemy NPCs.";
+    return String.join("; ", names) + ". Afflicts eligible enemies.";
   }
 
   public static String blessingDescription(ClericAlignment god, int tier) {

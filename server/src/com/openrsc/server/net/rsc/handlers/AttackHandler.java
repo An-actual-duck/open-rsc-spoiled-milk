@@ -49,7 +49,8 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 			return;
 		}
 
-		boolean retargetingNpcWhileInCombat = canRetargetNpcWhileInCombat(player, affectedMob);
+		boolean retargetingNpcWhileInCombat = canRetargetNpcWhileInCombat(player, affectedMob)
+			|| com.openrsc.server.model.combat.PlayerPvpCombat.canReplaceMelee(player,affectedMob);
 
 		boolean retargetingNpcWithRangedWhileInCombat = player.inCombat()
 			&& affectedMob.isNpc()
@@ -82,7 +83,7 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 			assert affectedMob instanceof Player;
 			Player pl = (Player) affectedMob;
 			//Immune players cannot be attacked until their immunity wears off.
-			if (!pl.canBeReattacked()) {
+			if (!player.getConfig().WANT_MYWORLD && !pl.canBeReattacked()) {
 				if (pl.getLocation().inWilderness() || player.getConfig().USES_PK_MODE) {
 					player.resetPath();
 				}
@@ -135,7 +136,7 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 				affectedMob, CombatStyle.MELEE, AttackIntent.Channel.MELEE,
 				AttackIntent.Source.MANUAL, null);
 
-			if (affectedMob.isPlayer() && !player.finishedPath() && !affectedMob.finishedPath()) {
+			if (!player.getConfig().WANT_MYWORLD && affectedMob.isPlayer() && !player.finishedPath() && !affectedMob.finishedPath()) {
 				int pidlessCatchingDistanceOffset = 0;
 				if (player.getConfig().PIDLESS_CATCHING && !player.willBeProcessedBefore((Player)affectedMob)) {
 					// other player has already moved this tick, meaning the gap is 1 more than is rendered on either person's client
@@ -242,12 +243,13 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 			player.setFollowing(affectedMob, walkRadius, false);
 			final WalkToMobAction approach = new WalkToMobAction(player, affectedMob, walkRadius, false, ActionType.ATTACK) {
 				public void executeInternal() {
-					boolean retargetingNpcWithRanged = getPlayer().inCombat()
+					final boolean retargetingNpcWithRanged = (getPlayer().inCombat()
 						&& getMob().isNpc()
 						&& getPlayer().getOpponent() != null
 						&& getPlayer().getOpponent().isNpc()
 						&& !getPlayer().getOpponent().equals(getMob())
-						&& !getPlayer().getDuel().isDueling();
+						&& !getPlayer().getDuel().isDueling())
+						|| com.openrsc.server.model.combat.PlayerPvpCombat.canReplaceMelee(getPlayer(),getMob());
 					if (getPlayer().isBusy() || (getPlayer().inCombat() && !retargetingNpcWithRanged)) {
 						getPlayer().getAttackTransaction().cancel(intent,
 							AttackTransactionResult.Reason.ELIGIBILITY_REJECTED);

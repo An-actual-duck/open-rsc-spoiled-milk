@@ -56,7 +56,7 @@ public final class ClericTimedEffectRuntime {
         || player.isRemoved()
         || player.isUnregistering()
         || player.getSkills().getLevel(Skill.HITS.id()) <= 0
-        || ClericSupportCasting.isPvpContext(player)
+        || !ClericSupportCasting.canUseInCombatContext(player)
         || !(player.getTransientEffectState() instanceof ClericEffectRegistry)) return null;
     Optional<ClericEffectEntry> entry =
         ((ClericEffectRegistry) player.getTransientEffectState())
@@ -107,7 +107,7 @@ public final class ClericTimedEffectRuntime {
 
   private static void settlePeriodic(Player player, ClericEffectEntry entry) {
     if (player.getSkills().getLevel(Skill.HITS.id()) <= 0
-        || ClericSupportCasting.isPvpContext(player)) return;
+        || !ClericSupportCasting.canUseInCombatContext(player)) return;
     ClericBlessingMagnitude m = (ClericBlessingMagnitude) entry.getDefinition().getMagnitude();
     if (m.healingPerPulse() > 0) heal(player, m.healingPerPulse());
     if (m.restoreIntervalSeconds() > 0) {

@@ -13,13 +13,13 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.runtime.GameRandom;
 import java.util.function.IntSupplier;
 
-/** NPC-owned critical vulnerability. Never replays an attack or a secondary effect. */
+/** Target-owned critical vulnerability. Never replays an attack or a secondary effect. */
 public final class ClericCriticalRuntime {
   private ClericCriticalRuntime() {}
 
   private static boolean eligible(Mob source, Mob target, CombatStyle style) {
-    return source instanceof Player && target instanceof Npc
-        && !ClericSupportCasting.isPvpContext((Player) source)
+    return source instanceof Player && (target instanceof Npc || target instanceof Player)
+        && ClericSupportCasting.canUseInCombatContext((Player) source)
         && CombatEligibility.evaluate(CombatEligibilityRequest.builder(source, target,
             CombatEligibilityPhase.COMMIT, style)
             .currentParticipants(true).registration(true).sameSpatialDomain(true)
@@ -29,8 +29,8 @@ public final class ClericCriticalRuntime {
   /** Launch-time primary roll. Other players benefit from the victim's same god slot. */
   public static AttackRoll primaryRoll(Mob source, Mob target, int maximum,
       boolean primary, CombatStyle style, IntSupplier ordinary) {
-    ClericHostileMagnitude effect = primary && source instanceof Player && target instanceof Npc
-        ? ClericHostileRuntime.effect((Npc) target,ClericEffectFamily.ZAMORAK_HOSTILE) : null;
+    ClericHostileMagnitude effect = primary && source instanceof Player && target != null
+        ? ClericHostileRuntime.effect(target,ClericEffectFamily.ZAMORAK_HOSTILE) : null;
     if (effect == null || !eligible(source,target,style))
       return CriticalHitResolver.ordinary(source,maximum,ordinary);
     return CriticalHitResolver.resolve(source,maximum,effect.criticalChance()/100.0D,
@@ -81,14 +81,14 @@ public final class ClericCriticalRuntime {
         || !eligible(request.getSource(),request.getTarget(),request.getStyle())
         || !request.getSourceSnapshot().matches(request.getSource())
         || !request.getTargetSnapshot().matches(request.getTarget())) return request;
-    Npc target=(Npc)request.getTarget();
+    Mob target=request.getTarget();
     synchronized(target) {
       int hp=target.getLevel(Skill.HITS.id());
       if(request.getResolvedDamage()>=hp) return request;
       ClericHostileMagnitude effect=ClericHostileRuntime.effect(target,ClericEffectFamily.ZAMORAK_HOSTILE);
       if(effect==null) return request;
       GameRandom random=target.getWorld().getServer().getCombatRandom();
-      if(effect.executionChance()>0 && !executionImmune(target)
+      if(effect.executionChance()>0 && (!(target instanceof Npc)||!executionImmune((Npc)target))
           && (long)hp*100L<=(long)target.getSkills().getMaxStat(Skill.HITS.id())*effect.executionThreshold()
           && CombatLuck.roll(request.getSource(),effect.executionChance()/100.0D,random))
         return request.withResolvedDamage(hp);

@@ -23,6 +23,11 @@ public final class ResolvedDamageTransaction {
     DamageRequest checkedRequest = Objects.requireNonNull(request, "request");
     final Mob target = checkedRequest.getTarget();
     final int hitsBefore = target.getLevel(Skill.HITS.id());
+    if (com.openrsc.server.model.combat.PlayerCombatSafety.blocks(checkedRequest)) {
+      DamageResult blocked = DamageResult.blockedPvpSafety(checkedRequest, hitsBefore);
+      CombatDamageObservation.publish(blocked);
+      return blocked;
+    }
     if (com.openrsc.server.model.combat.NonCorporealState.blocks(
         checkedRequest.getSource(), target, checkedRequest.getHarmNature())) {
       target.getUpdateFlags().setDamage(new Damage(target, 0));

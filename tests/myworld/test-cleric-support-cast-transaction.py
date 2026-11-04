@@ -250,7 +250,7 @@ def validate_runtime_boundaries() -> None:
         "candidate.getParty() == party",
         "candidate.isLoggedIn()",
         "!candidate.isUnregistering()",
-        "!isPvpContext(candidate)",
+        "canUseInCombatContext(candidate)",
         "candidate.getWorldLocation().getWorldSpace()",
         "candidate.getWorldLocation().getCoordinate().getLevel()",
         "PathValidation.checkPath(",
@@ -272,9 +272,11 @@ def validate_runtime_boundaries() -> None:
     require("player.getDuel().isDuelActive()" in runtime
             and "player.getLocation().inWilderness()" in runtime
             and "player.getConfig().USES_PK_MODE" in runtime,
-            "caster and recipient PvP exclusion must cover active PvP contexts")
-    require("ClericSupportCasting.isPvpContext(player)" in handler,
-            "request handler must preserve the shared C07 PvP boundary")
+            "the legacy PvP-context classifier must retain its full scope")
+    require("ClericSupportCasting.canUseInCombatContext(player)" in handler,
+            "request handler must preserve the shared combat-context boundary")
+    require("player.getConfig().WANT_MYWORLD || !isPvpContext(player)" in runtime,
+            "MyWorld must allow Wilderness support while legacy worlds retain their exclusion")
 
     atomic_method = carried_items.split(
         "public boolean removeWithStateChange", 1

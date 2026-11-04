@@ -99,7 +99,7 @@ public final class ClericBlessingsFixture {
       h.world().getRegionManager().populateNativeLayeredPlacements();
       Player c = h.player("clericcast", 450, 450), r = h.player("clerically", 451, 450);
       for (Player p : new Player[] {c, r}) {
-        p.setClientVersion(10056);
+        p.setClientVersion(com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION);
         p.getClientLimitations().maxItemId = 65535;
         h.recordOutgoingPackets(p);
         skill(p, Skill.HITS, 100, 1000);
@@ -166,7 +166,7 @@ public final class ClericBlessingsFixture {
       c.setClientVersion(10053);
       packet(c, 12);
       check(count(c, 3294) == 100, "old maintained client failclosed");
-      c.setClientVersion(10056);
+      c.setClientVersion(com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION);
       clear(r);
       fund(c, ClericSpellCatalog.fromCode(12));
       inv(c).getItems().removeIf(item -> item.getCatalogId() == 3300);
@@ -421,7 +421,7 @@ public final class ClericBlessingsFixture {
           r.getCurrentPoisonPower() == 70, "actual poison pulse adds baseline3,antidote20,Guthix7");
       r.curePoison();
       Player crit = h.player("clericcrit", 451, 450);
-      crit.setClientVersion(10056);
+      crit.setClientVersion(com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION);
       crit.getClientLimitations().maxItemId = 65535;
       h.recordOutgoingPackets(crit);
       skill(crit, Skill.HITS, 100, 1000);

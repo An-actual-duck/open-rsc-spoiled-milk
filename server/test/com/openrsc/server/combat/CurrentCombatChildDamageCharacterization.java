@@ -114,14 +114,12 @@ final class CurrentCombatChildDamageCharacterization {
 		invoke(magic, "inflictChainLightningDamage",
 			new Class<?>[] {Player.class, Mob.class, int.class},
 			caster, mitigated, Integer.valueOf(8));
-		assertEquals(36, mitigated.getLevel(Skill.HITS.id()),
-			"projectile chain retains style-specific potion mitigation");
-		assertHit(mitigated, 4, HitSplat.TYPE_ARMOR_PROC,
-			"projectile chain mitigated player presentation");
-		assertDamageResult(result(harness, 4), caster, mitigated,
-			"projectile-chain-lightning", CombatStyle.MAGIC,
-			4, 4, 0, false, HitSplat.TYPE_ARMOR_PROC, true,
-			"projectile mitigated chain transaction");
+        assertEquals(40, mitigated.getLevel(Skill.HITS.id()),
+            "player-owned chain cannot damage a player outside Wilderness");
+        assertEquals(0, mitigated.getUpdateFlags().getHitSplats().size(),
+            "safe-zone chain emits no damage hitsplat");
+        assertEquals(4,CurrentCombatCharacterizationTest.observedDamageResults(harness).size(),
+            "unsafe child callbacks are rejected before producing a damage transaction");
 
 		final boolean previousLayered = harness.server().getConfig()
 			.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
@@ -153,7 +151,7 @@ final class CurrentCombatChildDamageCharacterization {
 			harness.server().getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY =
 				previousLayered;
 		}
-		assertEquals(5, results(harness).size(),
+		assertEquals(4, results(harness).size(),
 			"chain-lightning transaction cardinality");
 	}
 

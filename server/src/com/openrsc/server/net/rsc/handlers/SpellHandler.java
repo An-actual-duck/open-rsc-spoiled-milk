@@ -1607,7 +1607,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		if (affectedMob.isPlayer()) {
 			Player other = (Player) affectedMob;
 			boolean isInPkZone = player.getLocation().inWilderness() || player.getConfig().USES_PK_MODE;
-			if (isInPkZone && !other.canBeReattacked()) {
+			if (!player.getConfig().WANT_MYWORLD && isInPkZone && !other.canBeReattacked()) {
 				magicDebug(player, "mobcast_reject reason=pvp_target_reattack target=" + describeMob(affectedMob));
 				player.resetPath();
 				// Effectively remove the attack timer from the player casting
@@ -1615,7 +1615,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				player.resetRanAwayTimer();
 				return;
 			}
-			if (isInPkZone && !player.canBeReattacked()) {
+			if (!player.getConfig().WANT_MYWORLD && isInPkZone && !player.canBeReattacked()) {
 				magicDebug(player, "mobcast_reject reason=pvp_self_reattack target=" + describeMob(affectedMob));
 				player.resetPath();
 				// TODO: ...? should probably display a message here instead of dying silently...?
@@ -2469,6 +2469,16 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			applyGodSpellSpecialEffect(caster, npc, spellEnum, appliedDamage, false);
 		}
 
+		if(primaryTarget instanceof Player) {
+			for(Player target:com.openrsc.server.util.rsc.CombatEffectUtil.findPlayerOwnedPvpSplashTargets(caster,(Player)primaryTarget,2)) {
+				com.openrsc.server.model.combat.AttackRoll roll=CombatFormula.rollSecondaryMagicDamage(caster,target,secondaryMax);
+				int applied=com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage(caster,primaryTarget,target,
+					roll.getDamage(),com.openrsc.server.model.combat.CombatStyle.MAGIC,
+					SecondaryEffectPolicy.DELAYED_GOD_SPELL_SECONDARY.getStableKey(),eventId,roll);
+				totalDamage+=applied;
+				applyGodSpellSpecialEffect(caster,target,spellEnum,applied,false);
+			}
+		}
 		applyGodSpellSpecialEffect(caster, primaryTarget, spellEnum, primaryDamage, true);
 		applyGodSpellLifesteal(caster, spellEnum, totalDamage);
 	}
@@ -2489,6 +2499,15 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
             final int damage = secondaryRoll.getDamage();
 			applyGodSpellSecondaryDamage(caster, npc, damage,
 				SecondaryEffectPolicy.DELAYED_IBAN_BLAST_SECONDARY, eventId, secondaryRoll);
+		}
+		if(primaryTarget instanceof Player) {
+			for(Player target:com.openrsc.server.util.rsc.CombatEffectUtil.findPlayerOwnedPvpSplashTargets(caster,(Player)primaryTarget,2)) {
+				com.openrsc.server.model.combat.AttackRoll roll=CombatFormula.rollSecondaryMagicDamage(caster,target,secondaryMax,
+					SpellClassification.getSpellDamageCapPercent(Spells.IBAN_BLAST));
+				com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage(caster,primaryTarget,target,
+					roll.getDamage(),com.openrsc.server.model.combat.CombatStyle.MAGIC,
+					SecondaryEffectPolicy.DELAYED_IBAN_BLAST_SECONDARY.getStableKey(),eventId,roll);
+			}
 		}
 	}
 

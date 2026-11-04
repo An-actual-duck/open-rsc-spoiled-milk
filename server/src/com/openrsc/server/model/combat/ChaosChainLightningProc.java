@@ -23,7 +23,7 @@ public final class ChaosChainLightningProc {
 	public static void tryApply(final Player source, final Mob primaryTarget,
 			final int primaryDamage, final GameRandom random,
 			final TargetSelector targetSelector, final ChildDamage childDamage) {
-		if (primaryDamage <= 0 || !primaryTarget.isNpc()
+		if (primaryDamage <= 0 || primaryTarget == null
 			|| Summoning.isPlayerAreaEffectSuppressed(source)) return;
 		final double chance = source.getCarriedItems().getEquipment()
 			.getChaosNecklaceChainLightningChance();

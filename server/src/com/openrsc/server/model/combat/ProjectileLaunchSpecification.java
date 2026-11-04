@@ -106,6 +106,7 @@ public final class ProjectileLaunchSpecification {
 
   private final AttackCommitment attackCommitment;
   private final AttackRoll attackRoll;
+	private final boolean automaticTarget;
 	private final Producer producer;
 	private final int proposedDamage;
 	private final int attackType;
@@ -136,6 +137,7 @@ public final class ProjectileLaunchSpecification {
                 ? AttackRoll.normal(builder.proposedDamage)
                 : builder.attackRoll)
             .committed(attackCommitment);
+    this.automaticTarget = builder.automaticTarget;
     this.producer = builder.producer;
     this.proposedDamage = attackCommitment.resolveDamage(builder.proposedDamage);
 		this.attackType = builder.attackType;
@@ -172,6 +174,9 @@ public final class ProjectileLaunchSpecification {
   public AttackRoll getAttackRoll() {
     return attackRoll;
   }
+
+	/** Automatic collateral must recheck new party/clan relationships at impact. */
+    public boolean isAutomaticTarget() { return automaticTarget; }
 
 	public Producer getProducer() {
 		return producer;
@@ -282,6 +287,7 @@ public final class ProjectileLaunchSpecification {
 		private int windAccuracyDebuffPercent;
 		private int waterMaxHitDebuffPercent;
 		private int earthAttackSpeedDebuffPercent;
+		private boolean automaticTarget;
 		private int fireDefenseDebuffPercent;
 		private int projectileType;
 		private int impactEffectType;
@@ -318,6 +324,11 @@ public final class ProjectileLaunchSpecification {
       this.attackRoll = java.util.Objects.requireNonNull(value);
       return this;
     }
+
+        public Builder automaticTarget(final boolean automaticTarget) {
+            this.automaticTarget = automaticTarget;
+            return this;
+        }
 
 		public Builder chase(final boolean shouldChase) {
 			this.shouldChase = shouldChase;

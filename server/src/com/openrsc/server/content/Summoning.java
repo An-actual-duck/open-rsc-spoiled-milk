@@ -563,14 +563,26 @@ public final class Summoning {
 	}
 
 	public static boolean canSummonAttack(final Mob attacker, final Mob target) {
-		if (isSummon(attacker) && target != null && target.isPlayer()) {
-			return false;
-		}
+        if (isSummon(attacker) && target instanceof Player) {
+            Player owner=getSummonOwner((Npc)attacker);
+            return owner!=null && attacker.sharesSpatialDomain(target)
+                && attacker.getLocation().inWilderness()
+                && com.openrsc.server.model.combat.PlayerPvpCombat.eligibleEnemy(owner,(Player)target);
+        }
 		if (attacker == null || !attacker.isNpc() || target == null || !target.isPlayer()) {
 			return true;
 		}
 		return guardDogAllowsEnemy((Player) target, (Npc) attacker);
 	}
+
+    /** Combat summons retain their owner's player kill attribution. */
+    public static Mob killCredit(Mob source) {
+        if(isSummon(source)) {
+            Player owner=getSummonOwner((Npc)source);
+            if(owner!=null && owner.isLoggedIn() && !owner.isRemoved())return owner;
+        }
+        return source;
+    }
 
 	public static boolean isPlayerAreaEffectSuppressed(final Player player) {
 		return getActiveGuardDog(player) != null;
@@ -747,7 +759,7 @@ public final class Summoning {
 	}
 
 	public static boolean canSummonUseCrowdedAssistReach(final Mob attacker, final Mob target) {
-		if (!isSummon(attacker) || target == null || !target.isNpc() || target.isRemoved()
+		if (!isSummon(attacker) || target == null || target.isRemoved()
 			|| target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return false;
 		}
@@ -1001,7 +1013,7 @@ public final class Summoning {
 	}
 
 	public static int applySummonDamageAbsorption(final Player owner, final Mob attacker, final int damage) {
-		if (owner == null || attacker == null || damage <= 0 || !attacker.isNpc()) {
+		if (owner == null || attacker == null || damage <= 0) {
 			return damage;
 		}
 		final Npc summon = owner.getAttribute(MANUAL_SUMMON_KEY, null);
@@ -1700,7 +1712,8 @@ public final class Summoning {
 		return target != null
 			&& target != owner
 			&& target != summon
-			&& !target.isPlayer()
+            && (!(target instanceof Player) || canSummonAttack(summon,target))
+            && summon.sharesSpatialDomain(target)
 			&& !target.isRemoved()
 			&& target.getSkills().getLevel(Skill.HITS.id()) > 0
 			&& target.withinRange(owner, SUMMON_ASSIST_TARGET_RANGE);
@@ -1729,6 +1742,7 @@ public final class Summoning {
 	}
 
 	private static boolean ownerHasDamagedTarget(final Player owner, final Mob target) {
+        if(target instanceof Player)return ((Player)target).getTrackedDamage(owner)>0;
 		if (target == null || !target.isNpc()) {
 			return false;
 		}

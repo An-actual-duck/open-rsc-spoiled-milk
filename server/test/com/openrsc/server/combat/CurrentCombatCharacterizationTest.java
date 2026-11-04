@@ -215,13 +215,13 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "generic_poison_source_relog_preserves_credit_and_leach_identity",
 				CurrentCombatDotLifecycleCharacterization
 					::poisonSourceRelogRetainsCreditAndLeachBoundaries);
-			run(harness, "generic_poison_thresholds_and_live_decay_equipment_are_characterized",
+			runPvp(harness, "generic_poison_thresholds_and_live_decay_equipment_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::poisonThresholdsAndLiveDecayEquipment);
 			run(harness, "generic_poison_legacy_restore_and_orphan_cleanup_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::poisonPersistenceAndOrphanCompatibility);
-			run(harness, "generic_poison_leach_uses_factual_overkill_and_tenacity_damage",
+			runPvp(harness, "generic_poison_leach_uses_factual_overkill_and_tenacity_damage",
 				CurrentCombatDotLifecycleCharacterization
 					::poisonFactualDamageBoundaries);
 			run(harness, "generic_poison_applies_goblin_tenacity_once_at_settlement",
@@ -272,7 +272,7 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "dot_target_death_and_poison_lethal_attribution_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::targetDeathAndLethalAttributionBoundaries);
-			run(harness, "player_target_poison_lethal_attribution_is_characterized",
+			run(harness, "player_target_poison_respects_safety_and_npc_source_attribution",
 				CurrentCombatDotLifecycleCharacterization
 					::playerTargetLethalAttributionBoundaries);
 			run(harness, "core_combat_poison_producers_have_success_and_miss_parity",
@@ -333,15 +333,15 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatSecondaryDamageCharacterization::auxiliarySettlementAcrossEvents);
 			run(harness, "all_auxiliary_helpers_preserve_magic_and_true_mitigation_asymmetry",
 				CurrentCombatSecondaryDamageCharacterization::auxiliaryMitigationAcrossEvents);
-			run(harness, "frostbite_reflection_preserves_pending_hit_and_magic_attribution",
+			runPvp(harness, "frostbite_reflection_preserves_pending_hit_and_magic_attribution",
 				CurrentCombatReflectionCharacterization::frostbitePolicies);
 			run(harness, "cleric_composite_reflection_primary_order_without_dead_procs",
 				CurrentCombatReflectionCharacterization::clericThornsPolicies);
-			run(harness, "melee_jewelry_recoil_preserves_combat_attribution_and_death_adapters",
+			runPvp(harness, "melee_jewelry_recoil_preserves_combat_attribution_and_death_adapters",
 				CurrentCombatReflectionCharacterization::meleeJewelryRecoilPolicies);
-			run(harness, "projectile_recoil_preserves_ring_of_life_and_ranged_reset",
+			runPvp(harness, "projectile_recoil_preserves_ring_of_life_and_ranged_reset",
 				CurrentCombatReflectionCharacterization::projectileRecoilPolicies);
-			run(harness, "divine_retribution_preserves_result_and_caller_owned_death",
+			runPvp(harness, "divine_retribution_preserves_result_and_caller_owned_death",
 				CurrentCombatReflectionCharacterization::divineRetributionPolicies);
 			run(harness, "chain_traversal_preserves_revisits_rng_cap_removal_and_geometry",
 				CurrentCombatChainRandomTraversalCharacterization
@@ -420,7 +420,7 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatOwnedDamageCharacterization::kingBlackDragonSetProfile);
 			run(harness, "elder_green_dragon_preserves_style_tracking_packets_and_reflection_order",
 				CurrentCombatOwnedDamageCharacterization::elderGreenDragonPolicies);
-			run(harness, "summon_bonus_preserves_style_mitigation_credit_and_caller_death",
+			runPvp(harness, "summon_bonus_preserves_style_mitigation_credit_and_caller_death",
 				CurrentCombatOwnedDamageCharacterization::summonBonusDamagePolicies);
 			run(harness, "delayed_god_spell_preserves_scheduling_resources_lifesteal_and_death_order",
 				CurrentCombatDelayedSpellCharacterization::godSpellAreaPolicies);
@@ -2759,6 +2759,18 @@ public final class CurrentCombatCharacterizationTest {
 		}
 		return party;
 	}
+
+    /** Positive player-damage fixtures must explicitly opt into a PvP test world. */
+    private static void runPvp(final CurrentCombatHarness harness,
+            final String name, final Scenario scenario) throws Exception {
+        boolean previous = harness.server().getConfig().WANT_PVP;
+        harness.server().getConfig().WANT_PVP = true;
+        try {
+            run(harness, name, scenario);
+        } finally {
+            harness.server().getConfig().WANT_PVP = previous;
+        }
+    }
 
 	private static void run(final CurrentCombatHarness harness,
 			final String name, final Scenario scenario) throws Exception {

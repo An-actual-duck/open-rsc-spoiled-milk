@@ -91,7 +91,7 @@ public final class SlayerRewardCombat {
 		if (SlayerRewardBosses.isBoss(attacker)) {
       wearer.message("Is uneffected");
       return false; }
-		int percent = com.openrsc.server.model.combat.CombatLuck.higher(wearer,wearer.getWorld().getServer().getCombatRandom(),()->1+wearer.getWorld().getServer().getCombatRandom().nextInt(attacker.isPlayer()?5:10));
+		int percent = com.openrsc.server.model.combat.CombatLuck.higher(wearer,wearer.getWorld().getServer().getCombatRandom(),()->1+wearer.getWorld().getServer().getCombatRandom().nextInt(10));
 		int damage = Math.max(1, (int)((long)attacker.getSkills().getMaxStat(Skill.HITS.id()) * percent / 100));
 		// Defense bypass is not immunity/mitigation bypass.
 		damage = DarkBeastCombat.mitigate(attacker, damage);
@@ -109,7 +109,7 @@ public final class SlayerRewardCombat {
 		if (target instanceof Player) {
 			Player victim = (Player)target;
 			if (!source.getConfig().WANT_PVP || !source.getLocation().inWilderness() || !victim.getLocation().inWilderness()
-				|| source.getClan() != null && source.getClan() == victim.getClan()) return false;
+				|| com.openrsc.server.util.rsc.CombatEffectUtil.arePvpAllies(source,victim)) return false;
 		}
 		return CombatEligibility.evaluate(CombatEligibilityRequest.builder(source, target,
 			CombatEligibilityPhase.COMPATIBILITY, CombatStyle.MAGIC)
@@ -127,6 +127,8 @@ public final class SlayerRewardCombat {
 	}
 	public static boolean thunderTarget(Player source, Mob primary, Mob candidate, int radius) {
 		return primary != null && candidate != null && candidate != primary && radius >= 1 && radius <= 3
+			&& (!(candidate instanceof Player)
+				|| com.openrsc.server.util.rsc.CombatEffectUtil.isPlayerOwnedPvpSplashTarget(source,primary,candidate))
 			&& primary.sharesSpatialDomain(candidate)
 			&& primary.getLocation().withinRange(candidate.getLocation(), radius) && legalSecondary(source, candidate);
 	}
@@ -143,6 +145,12 @@ public final class SlayerRewardCombat {
         CombatFormula.rollSecondaryMagicDamage(
             caster, target, thunderSecondaryPower(tier, spellPower));
     int damage = roll.getDamage();
+        if (target instanceof Player) {
+            Player victim = (Player) target;
+            damage = victim.applyPotionMagicDamageReduction(
+                victim.applyRobeDamageMitigation(damage, com.openrsc.server.model.entity.npc.NpcMagicElement.THUNDER));
+            damage = com.openrsc.server.content.TrueDefense.apply(victim, damage);
+        }
 		damage = DarkBeastCombat.mitigate(target, damage);
     DamageResult result =
         target
@@ -165,6 +173,13 @@ public final class SlayerRewardCombat {
 			if (!npc.isChasing() && !npc.inCombat()
 				&& npc.getCombatState() != com.openrsc.server.model.states.CombatState.RUNNING) npc.setChasing(caster);
 		} else ActionSender.sendStat((Player)target, Skill.HITS.id());
-		if (result.isTargetTerminal()) target.killedBy(caster);
+        if (target instanceof Player && !result.isPvpSafetyBlocked()) {
+            com.openrsc.server.model.combat.PlayerPvpCombat.recordPrimaryDamage(caster, (Player)target, result.getActualDamage());
+            com.openrsc.server.model.combat.PlayerPvpCombat.retaliate((Player)target, caster);
+        }
+        if (result.isTargetTerminal()) {
+            caster.setKillType(com.openrsc.server.model.entity.KillType.MAGIC);
+            target.killedBy(caster);
+        }
 	}
 }

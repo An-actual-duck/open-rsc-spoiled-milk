@@ -331,8 +331,8 @@ final class CurrentCombatDotLifecycleCharacterization {
 		assertEquals(17, twenty.getCurrentPoisonPower(),
 			"power twenty ordinary decay");
 
-		final Player source = harness.player("dot decay src", 618, 680);
-		final Player cleansed = harness.player("dot decay tgt", 619, 680);
+		final Player source = harness.player("dot decay src", 180, 280);
+		final Player cleansed = harness.player("dot decay tgt", 181, 280);
 		setHits(cleansed, 40, 40);
 		cleansed.applyPoison(30, 30, source);
 		final PoisonEvent liveEquipmentEvent = cleansed.getAttribute(
@@ -409,11 +409,11 @@ final class CurrentCombatDotLifecycleCharacterization {
 
 	static void poisonFactualDamageBoundaries(
 			final CurrentCombatHarness harness) throws Exception {
-		final Player source = harness.player("dot actual src", 626, 680);
+		final Player source = harness.player("dot actual src", 180, 282);
 		harness.equip(source, DRAGONSTONE_NECKLACE_OF_LEACH, 1);
 
 		setHits(source, 20, 40);
-		final Player tenacious = harness.player("dot tenacity", 627, 680);
+		final Player tenacious = harness.player("dot tenacity", 181, 282);
 		for (ItemId item : new ItemId[] {
 			ItemId.GOBLIN_HIDE_COIF,
 			ItemId.GOBLIN_HIDE_GLOVES,
@@ -1175,10 +1175,12 @@ final class CurrentCombatDotLifecycleCharacterization {
 		ownedEvent.run();
 		final DeathLifecycleSnapshot ownedDeath =
 			playerOwnedVictim.getDeathLifecycleSnapshot();
-		assertTrue(ownedDeath.getContext().getKiller() == poisonOwner,
-			"player-owned lethal poison credits its durable owner");
-		assertTrue(ownedDeath.getContext().getKiller() != engagedNpc,
-			"player-owned lethal poison ignores the victim's unrelated opponent");
+        assertEquals(4, playerOwnedVictim.getLevel(Skill.HITS.id()),
+            "player-owned poison cannot damage a player outside Wilderness");
+        assertNull(ownedDeath.getContext(),
+            "safe-zone poison cannot create a death or credit an unrelated opponent");
+        assertEquals(37, playerOwnedVictim.getCurrentPoisonPower(),
+            "blocked player poison still decays normally");
 
 		final Npc poisonNpc = harness.npc(
 			NpcId.DUNGEON_SPIDER.id(), 684, 680);

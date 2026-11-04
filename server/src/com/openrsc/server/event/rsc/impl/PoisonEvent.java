@@ -63,7 +63,7 @@ public class PoisonEvent extends GameTickEvent {
 			poisonDrain += com.openrsc.server.content.AntidoteCleansing.bonus(player);
             poisonDrain += com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.poisonCleanse(player);
 		}
-		if(mob instanceof Npc)poisonDrain=com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.poisonCleanse((Npc)mob,poisonDrain);
+		poisonDrain=com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.poisonCleanse(mob,poisonDrain);
 		poisonPower = PoisonPowerReduction.remainingPower(poisonPower, poisonDrain);
 		mob.setPoisonDamage(poisonPower);
         final int actualDamage=damage>0?settleTypedPoisonDamage(damage):0;
@@ -85,7 +85,9 @@ public class PoisonEvent extends GameTickEvent {
 	private int settleTypedPoisonDamage(final int requestedDamage) {
         final Mob source = resolveLiveSource();
 		int resolvedDamage = requestedDamage;
-		if (mob.isPlayer()&&!com.openrsc.server.model.combat.NonCorporealState.blocks(source,mob,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)) {
+		if (mob.isPlayer()
+                && !com.openrsc.server.model.combat.PlayerCombatSafety.blocks(source,mob,provenance)
+                && !com.openrsc.server.model.combat.NonCorporealState.blocks(source,mob,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)) {
 			final Player player = (Player) mob;
 			player.setAttribute("last_damage_taken_at", System.currentTimeMillis());
 			resolvedDamage = player.applyGoblinTenacity(resolvedDamage,hasCombatProvenance());

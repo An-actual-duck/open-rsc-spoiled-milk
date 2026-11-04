@@ -9,7 +9,7 @@ import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
 
-/** Primary direct PvE hits only. Terminal reflection never returns through these hooks. */
+/** Primary direct combat hits only. Terminal reflection never returns through these hooks. */
 public final class ClericDirectCombatRuntime {
   private ClericDirectCombatRuntime() {}
 
@@ -31,7 +31,8 @@ public final class ClericDirectCombatRuntime {
     if (!eligible(attacker, defender) || !(attacker instanceof Player)) return maximum;
     ClericBlessingMagnitude m =
         ClericTimedEffectRuntime.blessing((Player) attacker, ClericEffectFamily.ZAMORAK_BLESSING);
-    return addMaximumPercent(maximum, m == null ? 0 : m.maxDamagePercent());
+    return ClericHostileRuntime.reduceMaximumMelee(attacker,
+        addMaximumPercent(maximum, m == null ? 0 : m.maxDamagePercent()));
   }
 
   /** Native maxima are already integer-quantized; a positive low-level buff must raise the cap. */
@@ -99,7 +100,7 @@ public final class ClericDirectCombatRuntime {
         && !p.isRemoved()
         && !p.isUnregistering()
         && p.getSkills().getLevel(Skill.HITS.id()) > 0
-        && !ClericSupportCasting.isPvpContext(p);
+        && ClericSupportCasting.canUseInCombatContext(p);
   }
 
   private static boolean eligible(Mob a, Mob d) {
@@ -107,7 +108,8 @@ public final class ClericDirectCombatRuntime {
         && d != null
         && !Summoning.isSummon(a)
         && !Summoning.isSummon(d)
-        && !(a instanceof Player && d instanceof Player)
+        && (!(a instanceof Player && d instanceof Player)
+            || com.openrsc.server.model.combat.PlayerPvpCombat.eligible((Player) a, (Player) d, CombatStyle.MELEE))
         && (!(a instanceof Player) || usable((Player) a))
         && (!(d instanceof Player) || usable((Player) d));
   }

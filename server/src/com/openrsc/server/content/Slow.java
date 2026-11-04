@@ -158,7 +158,8 @@ public final class Slow {
   }
 
   /**
-   * Preserve a slowed commitment across event replacement/retargeting, independently of the pool.
+   * Preserve committed melee cadence (including unslowed attacks) across retargeting,
+   * and slowed commitments independently of the pool.
    */
   public static void commit(Mob mob, Cadence cadence, int adjustedTicks) {
     commit(mob, cadence, adjustedTicks, tier(mob));
@@ -168,7 +169,7 @@ public final class Slow {
     synchronized (mob) {
       capture(mob, cadence, includedTier);
       String key = "combat_slow_deadline_" + cadence;
-      if (includedTier > 0) mob.setAttribute(key, new Deadline(mob, adjustedTicks));
+      if (includedTier > 0 || cadence == Cadence.MELEE) mob.setAttribute(key, new Deadline(mob, adjustedTicks));
       else mob.removeAttribute(key);
     }
   }

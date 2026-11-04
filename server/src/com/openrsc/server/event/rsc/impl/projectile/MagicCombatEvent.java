@@ -67,6 +67,8 @@ public class MagicCombatEvent extends GameTickEvent {
 			intent, new PlayerAttackTransaction.CommitAction() {
 				@Override
 				public boolean commit() {
+					if (com.openrsc.server.model.combat.PlayerPvpCombat.canReplaceMelee(player,target))
+						player.resetCombatEvent();
 					player.setWalkToAction(null);
 					player.resetFollowing();
 					player.resetRange();

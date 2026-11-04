@@ -5088,6 +5088,10 @@ public class PacketHandler {
 						}
 						mc.applyCombatEffectUpdate(player, effectType);
 					}
+            } else if (updateType == ClericBlessingContract.PLAYER_PHASE_UPDATE) {
+                int value=packetsIncoming.getUnsignedByte();
+                if(value>1)throw new IllegalArgumentException("Invalid player phase flag");
+                if(player!=null)player.nonCorporeal=value==1;
 			} else if (updateType == 11) {
 				int hitSplatType = packetsIncoming.getUnsignedByte();
 				int amount = packetsIncoming.getUnsignedByte();

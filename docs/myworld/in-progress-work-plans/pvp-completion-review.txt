@@ -1,0 +1,103 @@
+MyWorld Wilderness PvP completion — November 4, 2026
+
+Agreed behavior
+
+Player combat uses the same authored mechanics and values as PvE. Player
+recipients must remain legally attackable in the Wilderness, including at
+projectile impact and final damage settlement. Walking cancels the walker's
+own attack; opponents can continue chasing. There is no walking immunity.
+
+Explicit player attacks can affect other eligible enemy players. An NPC-primary
+attack cannot acquire player collateral. Automatic and area targeting excludes
+party and clan allies, including distinct Clan objects with the same stored ID.
+Traditional dueling remains disabled and its player-menu option stays hidden;
+a future arena is separate work. The summon homage is named Inner Demon.
+
+Implementation
+
+Actor-owned melee, ranged, throwing and autocast retain independent targets.
+Shared Slow, additive delays, stagger recovery, crits, coatings and mobility
+use their PvE values. Retargeting preserves melee cadence, including unslowed
+attacks. Both packet entry and ongoing combat bypass the old retreat immunity.
+
+Scythe, shurikens, Iban/god spell splash, Thunder, chain lightning, Splinter,
+Blood/Death robes and charged equipment admit filtered player recipients.
+Shuriken volleys retain three targets and one ammo cost per projectile; pending
+automatic throws recheck new party/clan relationships. Terminal area effects
+retain the actual death location despite immediate respawn relocation.
+
+Cleric blessings work in Wilderness. Hostile casts are explicit attacks against
+all eligible enemies in range, excluding party/clan. God-slot precedence,
+power curves, poison/summon/recoil weaknesses, crit/stagger/execution and phase
+behavior remain shared. Player curses use the existing animation pipeline.
+Non-corporeal players receive the existing translucent rendering via a new
+player appearance record. Client/server version 10059 is required for the
+paired release; generated schema-5 spell/effect definitions remain aligned.
+
+Summons assist against legal player enemies and revalidate their owner at
+impact. Victims retaliate toward the owner. Support summons absorb player
+attacks using their normal values. Kills resolve to the owner. Player deaths,
+loot ownership, kill records and equipment kill resources use the existing
+once-only death transition. Melee kill XP is preserved without granting stale
+melee XP for projectile or summon kills.
+
+The final damage boundary blocks player-owned damage outside Wilderness,
+including queued hits, procs, recoil and poison. Existing NPC/environmental PvE
+damage continues there. Poison cleanses normally without delayed catch-up.
+Both maintained MyWorld configurations now enable the completed Wilderness
+combat path; publication/activation is a separate manager operation.
+
+Validation
+
+39 focused production-runtime PvP scenarios pass. They cover packet-driven
+style switching, independent targets and movement, boundary transitions,
+party/clan protection, real shuriken ammo/projectile receipts, primary and
+secondary kills, actual SQLite PK/death records, ownership/reward deduplication,
+Cleric buffs/curses, phase packets, crit/stagger/execution, summon assist and
+absorption, coating Slow, Thunder deaths and retarget cadence.
+
+149 existing combat characterization scenarios pass. Additional checks pass:
+121 hostile Cleric/phase assertions; 24 real summon/reflection producer checks;
+581 multi-Cleric stacking/cost/visual checks; 1,694 client curse packet/render
+and lifecycle assertions; and coating client/asset validation (192,181 checks
+per renderer mode). Active older Cleric fixtures now use the current contract
+version; deliberate unsupported-client test cases retain their older versions.
+The reviewed death-owner inventory now includes the existing Slayer adapters
+and the new player secondary-damage adapter.
+
+Logs and rendering evidence:
+/home/justin/Core-Framework/output/tests/pvp-readiness/baseline
+Static-analysis reports:
+/home/justin/Core-Framework/output/tests/pvp-readiness/lint
+
+Private playtest
+
+Local copy:
+/home/justin/Core-Framework/output/tests/pvp-readiness/private-20261104
+Game endpoint: 127.0.0.1:43635
+Controls: http://127.0.0.1:47409/
+
+Four supplied kits: melee (scythe and coated axe), shurikens, Iban magic, Cleric.
+Three registered Player opponents use ordinary production combat and can be
+started, paused, restyled or moved across the boundary from the browser.
+Ally controls assign party/clan protection for collateral tests. Presets/reset
+restock and reposition the private character; previous private items are banked.
+All kits and opponent attackability validate against the running native map.
+The private map/database are copied; the public account database is not used.
+The controller and supplied items are test support, not production commands.
+
+Coverage limits
+
+Automated fixtures exercise production packet handlers, events, settlement,
+wire encoding and client rendering. They do not establish human PvP balance,
+latency fairness, or how multiple remote clients feel in play. The single-client
+private setup is intended for the owner's final gameplay/visual check before
+live activation. Arena duels are intentionally deferred, as requested.
+
+Deployment state
+
+No public restart, release, tag or live activation has occurred for this branch.
+The public process was already stopped by the owner. Its pre-update SQLite
+backup passed integrity_check and is recorded in the release-preflight.json
+under output/reviews/pvp-readiness. Manager local overrides remain separately
+preserved; no unrelated art branch is included.

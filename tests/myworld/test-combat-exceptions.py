@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate reviewed MyWorld combat exceptions and PvM-only guardrails."""
+"""Validate reviewed MyWorld combat death owners and combat entry gates."""
 
 import re
 import sys
@@ -18,6 +18,12 @@ PK_BOT = SERVER / "plugins" / "com" / "openrsc" / "server" / "plugins" / "custom
 ALLOWED_KILLED_BY_FILES = {
     "server/src/com/openrsc/server/Server.java",
     "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java",
+    # Reviewed typed damage -> once-only death adapters. Current PvP fixtures
+    # exercise player children; Slayer recovery/attack tests exercise NPC paths.
+    "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
+    "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+    "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
+    "server/src/com/openrsc/server/model/combat/PlayerPvpCombat.java",
     "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
     "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
     "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
@@ -64,7 +70,7 @@ def require_regex(path: Path, pattern: str, description: str) -> None:
 def require_config_false(key: str) -> None:
     text = read(MYWORLD_CONF)
     if not re.search(rf"^\s*{re.escape(key)}:\s*false\b", text, re.MULTILINE):
-        fail(f"server/myworld.conf must keep {key}: false for the PvM-only world")
+        fail(f"server/myworld.conf must keep {key}: false for the maintained MyWorld profile")
 
 
 def validate_no_external_drop_items_calls() -> None:
@@ -93,7 +99,9 @@ def validate_killed_by_call_sites_are_reviewed() -> None:
 
 
 def main() -> None:
-    require_config_false("want_pvp")
+    for profile in (MYWORLD_CONF, SERVER / "myworld-host.conf"):
+        require_regex(profile, r"(?:^|\n)[ \t]*want_pvp:[ \t]*true\b", "Wilderness PvP is enabled in both maintained profiles")
+    require_contains(SERVER / "src/com/openrsc/server/model/combat/PlayerCombatSafety.java", ".inWilderness()")
     require_config_false("want_openpk_points")
     require_config_false("want_pk_bots")
     require_config_false("want_openpk_presets")

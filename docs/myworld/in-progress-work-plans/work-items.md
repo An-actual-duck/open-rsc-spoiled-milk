@@ -2,6 +2,29 @@
 
 This is the active planning list. Scope labels describe implementation size, not importance.
 
+## November 3: PvP readiness before advertising
+
+- Rename the former Abyssal Demon summon to **Inner Demon**; server, menu,
+  guide, icon lookup and artist credit are updated on published main.
+- Carry PvE combat behavior and effect strengths into Wilderness PvP. Do not
+  introduce separate PvP reductions for Slow, stagger, mobility or other effects
+  without later owner feedback.
+- PvP is active only in the Wilderness. Outside it, player splash damage is
+  always negated, including damage against unrelated players. Recheck the
+  boundary at impact/settlement; legacy PK mode and dueling cannot bypass it.
+- Explicit player attacks may splash onto other legally attackable players.
+  Check Wilderness eligibility for every recipient; NPC attacks must never
+  incidentally splash onto players. Splash excludes party members and clanmates.
+- Walking away stops only the walker's attack; pursuers retain their attacks.
+  Moving must not grant classic retreat immunity.
+- Keep traditional dueling disabled and hide its player right-click option.
+  A future arena should record complete return locations, teleport consenting
+  participants into a separate match, and return them afterward. Team duels,
+  royal rumbles and clan duels belong to that later design.
+- Automate registered-player combat scenarios, then provide a private opponent
+  controllable without switching between player clients. Public PvP remains
+  disabled until the combined system has passed private review.
+
 ## Recommended Next Work Order
 
 **October 31 owner checkpoint:** feature development for the narrowed next

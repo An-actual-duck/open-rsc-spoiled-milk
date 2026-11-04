@@ -94,7 +94,7 @@ public final class SlayerLeatherEffects {
 		Charge charge = player.getAttribute(CHARGE, null);
 		return charge != null && charge.lifetime.matches(player) ? charge.power : 0;
 	}
-	private static void chargedHit(Player player) {
+	private static void chargedHit(Player player,Mob attacker) {
 		if (!hasSet(player, MyWorldItemId.DARK_BEAST_COIF)) return;
 		Charge charge = player.getAttribute(CHARGE, null);
 		if (charge == null || !charge.lifetime.matches(player)) {
@@ -106,8 +106,10 @@ public final class SlayerLeatherEffects {
 		player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.THUNDER_SPLASH));
 		if (Summoning.isPlayerAreaEffectSuppressed(player)) return;
 		for (Npc npc : player.getViewArea().getNpcsInView()) discharge(player, npc);
-		if (player.getConfig().WANT_PVP)
-			for (Player target : player.getViewArea().getPlayersInView()) discharge(player, target);
+		if (attacker instanceof Player && player.getConfig().WANT_PVP)
+			for (Player target : player.getViewArea().getPlayersInView())
+				if(target==attacker || com.openrsc.server.util.rsc.CombatEffectUtil
+					.isPlayerOwnedPvpSplashTarget(player,attacker,target)) discharge(player,target);
 	}
 	private static void discharge(Player player, Mob target) {
 		if (target == player || !player.withinRange(target, 2) || !SlayerRewardCombat.legalSecondary(player, target)) return;
@@ -120,6 +122,7 @@ public final class SlayerLeatherEffects {
 		if (target instanceof Player) {
 			Player victim = (Player)target;
 			damage = victim.applyPotionMagicDamageReduction(victim.applyRobeDamageMitigation(damage, NpcMagicElement.THUNDER));
+            damage = com.openrsc.server.content.TrueDefense.apply(victim, damage);
 		}
 		damage = DarkBeastCombat.mitigate(target, damage);
 		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.THUNDER_SPLASH));
@@ -143,7 +146,14 @@ public final class SlayerLeatherEffects {
 			Npc npc = (Npc)target; npc.addMageDamage(player, result.getActualDamage());
 			if (!result.isTargetTerminal() && !npc.isChasing() && !npc.inCombat()) npc.setChasing(player);
 		} else ActionSender.sendStat((Player)target, Skill.HITS.id());
-		if (result.isTargetTerminal()) target.killedBy(player);
+        if (target instanceof Player && !result.isPvpSafetyBlocked()) {
+            com.openrsc.server.model.combat.PlayerPvpCombat.recordPrimaryDamage(player, (Player)target, result.getActualDamage());
+            com.openrsc.server.model.combat.PlayerPvpCombat.retaliate((Player)target, player);
+        }
+        if (result.isTargetTerminal()) {
+            player.setKillType(com.openrsc.server.model.entity.KillType.MAGIC);
+            target.killedBy(player);
+        }
 	}
 
 	/** Apply once in the elemental mitigation path, after other existing resistance. */
@@ -163,7 +173,7 @@ public final class SlayerLeatherEffects {
 			Player wearer = (Player)target;
 			if (wearer.loggedIn() && !wearer.isRemoved() && !wearer.killed) {
 				stickyHit(wearer, source);
-				chargedHit(wearer);
+				chargedHit(wearer,source);
 			}
 		}
 		Player owner = source instanceof Player ? (Player)source

@@ -72,6 +72,7 @@ public final class ClericSpellGuideCatalog {
   private static void addOverview(List<Entry> entries) {
     DocumentLines tiers = new DocumentLines();
     add(tiers, "Worship unlocks Cleric spells. Holy Power determines their power level.");
+    add(tiers, "Hostile spells can affect enemy players in the Wilderness. Party and clan allies are excluded, and each target must be legally attackable.");
     add(tiers, "A spell's tier sets its maximum strength, not its minimum strength.");
     add(tiers, "Tier 1 allows power levels 1-2; Tier 2 allows 1-4; Tier 3 allows 1-6.");
     add(tiers, "Each new spell tier adds two possible power levels. You still need enough Holy Power to reach them.");
@@ -107,7 +108,7 @@ public final class ClericSpellGuideCatalog {
     String header =
         "Lvl " + d.getWorshipLevel() + "  " + d.getName() + " (Tier " + d.getSpellTier() + ")";
     String area =
-        (d.isHostile() ? "Area: enemy NPCs within " : "Area: party allies within ")
+        (d.isHostile() ? "Area: enemies within " : "Area: party allies within ")
             + d.getRadius()
             + " tiles; "
             + (d.affectsCaster() ? "includes caster" : "caster excluded");
