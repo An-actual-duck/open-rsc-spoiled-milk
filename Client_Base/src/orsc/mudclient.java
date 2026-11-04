@@ -2224,6 +2224,20 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+    private boolean isPvpMenuAlly(ORSCharacter player) {
+        String key = StringUtil.displayNameToKey(player.displayName);
+        if (key == null || key.isEmpty()) return false;
+        for (int i = 0; i < Math.min(SocialLists.friendListCount, SocialLists.friendList.length); i++)
+            if (key.equals(StringUtil.displayNameToKey(SocialLists.friendList[i]))) return true;
+        if (party != null && party.inParty())
+            for (int i = 0; i < Math.min(SocialLists.partyListCount, party.username.length); i++)
+                if (key.equals(StringUtil.displayNameToKey(party.username[i]))) return true;
+        if (clan != null && clan.inClan())
+            for (int i = 0; i < Math.min(SocialLists.clanListCount, clan.username.length); i++)
+                if (key.equals(StringUtil.displayNameToKey(clan.username[i]))) return true;
+        return false;
+    }
+
 	private void addPlayerToMenu(int index) {
 		try {
 
@@ -2288,8 +2302,10 @@ public final class mudclient implements Runnable {
 
 				if (var5 > 0
 					&& getCharacterWildernessDepth(player) > 0) {
-					this.menuCommon.addCharacterItem(player.serverIndex, levelDelta >= 0 && levelDelta < 5
-							? MenuItemAction.PLAYER_ATTACK_SIMILAR : MenuItemAction.PLAYER_ATTACK_DIVERGENT, "Attack",
+					this.menuCommon.addCharacterItem(player.serverIndex, isPvpMenuAlly(player)
+                            ? MenuItemAction.PLAYER_ATTACK_ALLY
+                            : levelDelta >= 0 && levelDelta < 5
+                                ? MenuItemAction.PLAYER_ATTACK_SIMILAR : MenuItemAction.PLAYER_ATTACK_DIVERGENT, "Attack",
 						"@whi@" + name + level);
 				}
 
@@ -19938,6 +19954,7 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case PLAYER_ATTACK_DIVERGENT:
+				case PLAYER_ATTACK_ALLY:
 					case PLAYER_ATTACK_SIMILAR: {
 						character = this.getServerPlayer(indexOrX);
 						if (character == null) {

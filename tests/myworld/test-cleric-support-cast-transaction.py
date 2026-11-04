@@ -256,8 +256,8 @@ def validate_runtime_boundaries() -> None:
         "PathValidation.checkPath(",
         "ClericUnifyStepPlanner.plan(",
         "PathValidation.checkAdjacent(",
-        "recipient.resetPath();",
-        "recipient.setLocation(step, false);",
+        "recipient.teleportLayered(destination, false);",
+        "recipient.teleport(landing.getX(), landing.getY(), false);",
         "caster.getCarriedItems().removeWithStateChange(",
         "definition.getResourceCosts()",
         "applicationCommit.run();",
@@ -265,8 +265,9 @@ def validate_runtime_boundaries() -> None:
     ):
         require(snippet in runtime, f"C07 runtime boundary missing: {snippet}")
     require("id.isActive()" in runtime, "only active spell identities may enter casting")
-    require("teleport(" not in runtime and "teleportLayer" not in runtime,
-            "Unify must never use teleport movement")
+    require("recipient.setLocation(step, false)" not in runtime
+            and "recipient.stepIncrementActivity()" not in runtime,
+            "Unify must teleport once to its safe landing rather than record walking steps")
     require("addExperience" not in runtime,
             "Cleric casting must not award Worship XP")
     require("player.getDuel().isDuelActive()" in runtime

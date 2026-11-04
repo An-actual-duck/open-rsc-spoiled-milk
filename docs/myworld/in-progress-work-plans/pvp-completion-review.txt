@@ -9,7 +9,8 @@ own attack; opponents can continue chasing. There is no walking immunity.
 
 Explicit player attacks can affect other eligible enemy players. An NPC-primary
 attack cannot acquire player collateral. Automatic and area targeting excludes
-party and clan allies, including distinct Clan objects with the same stored ID.
+party and clan allies, including distinct Clan objects with the same stored ID,
+and friends listed by the source player.
 Traditional dueling remains disabled and its player-menu option stays hidden;
 a future arena is separate work. The summon homage is named Inner Demon.
 
@@ -23,11 +24,11 @@ attacks. Both packet entry and ongoing combat bypass the old retreat immunity.
 Scythe, shurikens, Iban/god spell splash, Thunder, chain lightning, Splinter,
 Blood/Death robes and charged equipment admit filtered player recipients.
 Shuriken volleys retain three targets and one ammo cost per projectile; pending
-automatic throws recheck new party/clan relationships. Terminal area effects
+automatic throws recheck new party/clan/friend relationships. Terminal area effects
 retain the actual death location despite immediate respawn relocation.
 
 Cleric blessings work in Wilderness. Hostile casts are explicit attacks against
-all eligible enemies in range, excluding party/clan. God-slot precedence,
+all eligible enemies in range, excluding party/clan/source-listed friends. God-slot precedence,
 power curves, poison/summon/recoil weaknesses, crit/stagger/execution and phase
 behavior remain shared. Player curses use the existing animation pipeline.
 Non-corporeal players receive the existing translucent rendering via a new
@@ -49,7 +50,7 @@ combat path; publication/activation is a separate manager operation.
 
 Validation
 
-39 focused production-runtime PvP scenarios pass. They cover packet-driven
+40 focused production-runtime PvP scenarios pass. They cover packet-driven
 style switching, independent targets and movement, boundary transitions,
 party/clan protection, real shuriken ammo/projectile receipts, primary and
 secondary kills, actual SQLite PK/death records, ownership/reward deduplication,
@@ -86,7 +87,7 @@ leave teammates passive. The browser can deliberately select all-enemy mode,
 and the selected mode survives kit changes and resets. Presets/reset restock
 and reposition the private character; previous private items are banked.
 All kits, rosters, splash protection and a real party blessing validate at
-startup. test-private-pvp-teammates.py adds 31 focused controller checks without
+startup. test-private-pvp-teammates.py adds 36 focused controller checks without
 starting a network listener or loading accounts. Test clans remain transient.
 The private map/database are copied; the public account database is not used.
 The controller and supplied items are test support, not production commands.
@@ -106,3 +107,32 @@ The public process was already stopped by the owner. Its pre-update SQLite
 backup passed integrity_check and is recorded in the release-preflight.json
 under output/reviews/pvp-readiness. Manager local overrides remain separately
 preserved; no unrelated art branch is included.
+
+Private-playtest corrections: Unify and friendly targeting
+
+Unify and Greater Unify now teleport once to the existing safe pull destination
+(one/three tiles closer, stopping within two), preserving range, costs and safe
+landing selection. The explicit world and signed floor are preserved. They no
+longer emit forced walking steps. The guide descriptions reflect teleportation.
+
+Friends, party members and clanmates always receive a lower-priority Attack
+menu entry, below non-combat actions even when no ground action is available.
+Enemy level-based priorities remain unchanged. Client roster checks use current
+member counts so removed members cannot be mistaken for current allies.
+
+Hostile area/automatic effects use only the source player's friend list in
+addition to shared party/clan checks. Adding another player protects that player
+from your effects; it never prevents their effects from hitting you. Queued
+automatic projectiles recheck this rule at impact, as do hostile Cleric casts.
+Explicit primary attacks remain available via the secondary menu.
+
+Focused proof: 30 native teleport checks on levels 0, 2, -3; 162 actual client menu
+construction/sorting checks across relationships, levels and ground availability;
+and source-owned friendship cases in the 40-scenario PvP suite. Existing 149
+combat scenarios, 387 Cleric runtime assertions and Cleric cast-transaction
+tests pass.
+
+The private controls can set either direction of one-way friendship with Blue,
+without requiring saved bot accounts or a second client. Select all-enemy mode
+to isolate friendship from party/clan membership. Clearing test friendships
+restores both lists. The private map and public deployment are unchanged.

@@ -90,7 +90,7 @@ public final class ClericSpellGuideCatalog {
     add(lines, "Saradomin, Guthix and Zamorak have distinct god lines.");
     add(lines, "Within a god's blessing or curse line, each higher-tier spell includes the effects from the tiers below.");
     add(lines, "God sigils select the line. Grace fuels blessings; Blight fuels curses. They are consumed together when casting.");
-    add(lines, "Unify and Greater Unify use Grace alone. Their movement is fixed and does not scale with Holy Power.");
+    add(lines, "Unify and Greater Unify use Grace alone. Their teleport distance is fixed and does not scale with Holy Power.");
     add(lines, "Each spell's pages give its targets, sigil cost and effect values. Scroll to continue through the guide.");
     addPages(entries, new Entry(-3, "God lines and sigils", "", "", "", lines));
 

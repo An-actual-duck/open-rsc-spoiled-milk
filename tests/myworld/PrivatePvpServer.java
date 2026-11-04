@@ -52,7 +52,7 @@ public final class PrivatePvpServer {
     static Path root; static Server server; static Player human;
     static final List<Player> bots=new ArrayList<>();
     static String preset="melee",style="melee",lastStatus="",message="Ready to log in";
-    static boolean active,validated,failed,teammates=true;static long serial;static int x=180,y=200,edgeX=180;
+    static boolean active,validated,failed,teammates=true,friendBlue,blueFriendsYou;static long serial;static int x=180,y=200,edgeX=180;
     static final String BOT="private_pvp_opponent";
     public static void main(String[] args)throws Exception {
         root=Paths.get("..").toRealPath();
@@ -123,6 +123,7 @@ public final class PrivatePvpServer {
         for(Player bot:bots){bot.resetAll();bot.resetCombatEvent();bot.resetRange();bot.setAutoCastSpell(null);bot.resetPath();bot.resetFollowing();bot.getCache().store("setting_auto_retaliate",false);}
     }
     static void removeBots() {
+        clearPracticeFriendship();
         clearTeams();
         for(Player p:bots){p.setLoggedIn(false);p.remove();server.getWorld().getPlayers().remove(p);server.getWorld().removePlayer(p.getUsernameHash());}
         bots.clear();
@@ -139,6 +140,9 @@ public final class PrivatePvpServer {
         else if(action.equals("edge") && human!=null){pause();human.teleport(edgeX,426,false);for(int i=0;i<bots.size();i++)bots.get(i).teleport(edgeX+1+i,426,false);message="Wilderness edge: y426 is Wilderness; y427 is safe.";}
         else if(action.equals("allies")){teammates=true;pause();assignTeams();message="Pvp Blue is in your party; Pvp Gold is in your clan. Pvp Red is the enemy.";}
         else if(action.equals("no-allies")){teammates=false;pause();assignTeams();message="All three practice players are enemies. This setting carries across kits.";}
+        else if(action.equals("friend-blue")){pause();friendBlue=true;blueFriendsYou=false;applyPracticeFriendship();message="Blue is on your friend list only. Your area effects exclude Blue; Blue's effects can still hit you. Use all-enemy mode to isolate this test.";}
+        else if(action.equals("blue-friends-you")){pause();friendBlue=false;blueFriendsYou=true;applyPracticeFriendship();message="You are on Blue's friend list only. Blue's area effects exclude you; your effects can still hit Blue. Use all-enemy mode to isolate this test.";}
+        else if(action.equals("no-friends")){pause();friendBlue=false;blueFriendsYou=false;applyPracticeFriendship();message="One-way test friendships removed.";}
     }
     static void stats(Player p) {
         for(int skill=0;skill<server.getConstants().getSkills().getSkillsCount();skill++)p.getSkills().setTemporaryLevelAndMaxStat(skill,99,99,false);
@@ -185,6 +189,7 @@ public final class PrivatePvpServer {
         bot("Pvp Red",x+1,y,1);bot("Pvp Blue",x+1,y+1,2);bot("Pvp Gold",x,y+1,3);
         for(Player p:bots)configureBot(p,"melee");
         assignTeams();
+        applyPracticeFriendship();
         ActionSender.sendInventory(human);ActionSender.sendEquipment(human);ActionSender.sendEquipmentStats(human);ActionSender.sendStats(human);ActionSender.sendFatigue(human);
         message="Ready: "+preset+". "+(teammates?"Blue is your party teammate; Gold is your clan teammate; Red is the enemy.":"All three practice players are enemies.");human.message(message);
     }
@@ -221,11 +226,23 @@ public final class PrivatePvpServer {
         }
         clan.updateClanGUI();clan.updateClanSettings();
     }
+    static void clearPracticeFriendship() {
+        if(human==null || bots.size()<2)return;
+        human.getSocial().removeFriend(bots.get(1).getUsernameHash());
+        bots.get(1).getSocial().removeFriend(human.getUsernameHash());
+    }
+    static void applyPracticeFriendship() {
+        if(human==null || bots.size()!=3)return;
+        clearPracticeFriendship();Player blue=bots.get(1);
+        if(friendBlue)human.getSocial().addFriend(blue.getUsernameHash(),0,blue.getUsername(),"");
+        if(blueFriendsYou)blue.getSocial().addFriend(human.getUsernameHash(),0,human.getUsername(),"");
+        ActionSender.sendFriendList(human);
+    }
     static void validateKits()throws Exception {
         Player probe=bot("Pvp Preview",x,y,0);bots.remove(probe);human=probe;JSONArray checked=new JSONArray();
-        boolean previousMode=teammates;
+        boolean previousMode=teammates,previousFriend=friendBlue,previousReverse=blueFriendsYou;
         try {
-            teammates=true;
+            teammates=true;friendBlue=false;blueFriendsYou=false;
             for(String kit:new String[]{"melee","ranged","magic","cleric"}) {
                 preset=kit;reset();
                 if(bots.size()!=3 || !human.getLocation().inWilderness())throw new IllegalStateException("Private scene incomplete");
@@ -242,7 +259,7 @@ public final class PrivatePvpServer {
             for(Player target:bots)if(!PlayerPvpCombat.eligibleEnemy(human,target))throw new IllegalStateException("All-enemy mode did not restore enemies");
             preset="magic";reset();
             if(teammates || human.getParty()!=null || human.getClan()!=null)throw new IllegalStateException("Kit switch changed selected team mode");
-        } finally {pause();removeBots();teammates=previousMode;probe.setLoggedIn(false);probe.remove();server.getWorld().getPlayers().remove(probe);server.getWorld().removePlayer(probe.getUsernameHash());human=null;preset="melee";message="Ready to log in";}
+        } finally {pause();removeBots();teammates=previousMode;friendBlue=previousFriend;blueFriendsYou=previousReverse;probe.setLoggedIn(false);probe.remove();server.getWorld().getPlayers().remove(probe);server.getWorld().removePlayer(probe.getUsernameHash());human=null;preset="melee";message="Ready to log in";}
         Files.write(root.resolve("test-support/kit-validation.json"),checked.toString(2).getBytes("UTF-8"));
     }
     static void validateTeams() {
@@ -262,10 +279,11 @@ public final class PrivatePvpServer {
     static String role(Player player) {
         if(human!=null && player.getParty()!=null && player.getParty()==human.getParty())return "Party teammate";
         if(human!=null && player.getClan()!=null && player.getClan()==human.getClan())return "Clan teammate";
+        if(human!=null && human.getSocial().isFriendsWith(player.getUsernameHash()))return "Friend (your list)";
         return "Enemy";
     }
     static void writeStatus()throws Exception {
-        JSONObject status=new JSONObject().put("ready",validated).put("failed",failed).put("teammates",teammates).put("preset",preset).put("active",active).put("message",message).put("online",human==null?0:1).put("x",x).put("y",y);
+        JSONObject status=new JSONObject().put("ready",validated).put("failed",failed).put("teammates",teammates).put("friendBlue",friendBlue).put("blueFriendsYou",blueFriendsYou).put("preset",preset).put("active",active).put("message",message).put("online",human==null?0:1).put("x",x).put("y",y);
         JSONArray opponents=new JSONArray();for(Player p:bots)opponents.put(new JSONObject().put("name",p.getUsername()).put("role",role(p)).put("hp",p.getLevel(Skill.HITS.id())).put("x",p.getX()).put("y",p.getY()));status.put("opponents",opponents);
         String body=status.toString();if(!body.equals(lastStatus)){Files.write(root.resolve("test-support/status.json"),body.getBytes("UTF-8"));lastStatus=body;}
     }

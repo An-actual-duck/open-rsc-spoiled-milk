@@ -19,6 +19,8 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.combat.AttackRoll;
 import com.openrsc.server.model.combat.PlayerPvpCombat;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.util.rsc.CombatEffectUtil;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
@@ -50,6 +52,7 @@ final class CurrentPvpRuntimeCharacterization {
         checkCase(h,"pvp_retarg_cannot_bypass_melee_cadence",CurrentPvpRuntimeCharacterization::cadence,failures);
         checkCase(h,"pvp_coated_battleaxe_applies_shared_slow",CurrentPvpRuntimeCharacterization::coating,failures);
         checkCase(h,"pvp_thunder_children_preserve_kill_style",x->thunder(x,logs),failures);
+        checkCase(h,"pvp_friend_exclusions_are_source_owned",CurrentPvpRuntimeCharacterization::friends,failures);
     }
     private static void request(Player source,Player target)throws Exception {
         TargetMobStruct payload=new TargetMobStruct();payload.setOpcode(OpcodeIn.PLAYER_ATTACK);payload.serverIndex=target.getIndex();
@@ -154,6 +157,30 @@ final class CurrentPvpRuntimeCharacterization {
         for(int i=0;i<30&&!p[2].killed;i++)com.openrsc.server.content.monsterslayer.SlayerRewardCombat.thunderSplash(p[0],p[1],3,100);
         require(p[2].killed && logs.count()==before+1 && p[0].getKillType()==KillType.MAGIC,"real Thunder secondary kill has one Magic PK record");
         require(p[3].getLevel(Skill.HITS.id())==250 && p[4].getLevel(Skill.HITS.id())==250,"Thunder excludes party and clan allies");
+    }
+
+    private static void friends(CurrentCombatHarness h)throws Exception {
+        Player a=player(h,"friends a",180,200,false),b=player(h,"friends b",181,200,false),primary=player(h,"friends c",180,201,false);
+        a.getSocial().addFriend(b.getUsernameHash(),1,b.getUsername(),"");
+        require(CombatEffectUtil.arePvpAllies(a,b) && !CombatEffectUtil.arePvpAllies(b,a),"friendship excludes outgoing effects only");
+        require(!CombatEffectUtil.isPlayerOwnedPvpSplashTarget(a,primary,b),"own friend is excluded from splash");
+        require(CombatEffectUtil.isPlayerOwnedPvpSplashTarget(b,primary,a),"being added cannot grant immunity from the other player's splash");
+        require(PlayerPvpCombat.secondaryDamage(a,primary,b,5,CombatStyle.MELEE,"pvm-melee-scythe-cleave",UUID.randomUUID(),AttackRoll.normal(5))==0,"own friend receives no area damage");
+        require(PlayerPvpCombat.secondaryDamage(b,primary,a,5,CombatStyle.MELEE,"pvm-melee-scythe-cleave",UUID.randomUUID(),AttackRoll.normal(5))==5,"reverse splash still settles normal damage");
+        require(cast(a,ClericSpellId.GUTHIX_UNEASE)==ClericSupportCasting.Outcome.SUCCESS,"hostile cast still has an unrelated enemy recipient");
+        require(ClericHostileRuntime.effect(b,ClericEffectFamily.GUTHIX_HOSTILE)==null,"own friend is excluded from hostile Cleric abilities");
+        require(cast(b,ClericSpellId.GUTHIX_UNEASE)==ClericSupportCasting.Outcome.SUCCESS
+                && ClericHostileRuntime.effect(a,ClericEffectFamily.GUTHIX_HOSTILE)!=null,"reverse hostile Cleric ability is not blocked by its victim's friend list");
+        a.getSocial().removeFriend(b.getUsernameHash());
+        ProjectileLaunchSpecification automatic=ProjectileLaunchSpecification.builder(ProjectileLaunchSpecification.Producer.PLAYER_SHURIKEN,7,2).automaticTarget(true).build();
+        ProjectileEvent outward=new ProjectileEvent(h.world(),a,b,automatic),inward=new ProjectileEvent(h.world(),b,a,automatic);
+        a.getSocial().addFriend(b.getUsernameHash(),1,b.getUsername(),"");
+        int aHp=a.getLevel(Skill.HITS.id()),bHp=b.getLevel(Skill.HITS.id());
+        outward.action();inward.action();
+        require(b.getLevel(Skill.HITS.id())==bHp && a.getLevel(Skill.HITS.id())==aHp-7,"pending automatic throws recheck the attacker's list without reverse immunity");
+        require(PlayerPvpCombat.eligible(a,b,CombatStyle.MELEE),"explicit primary attacks remain available through the secondary menu");
+        a.getSocial().removeFriend(b.getUsernameHash());
+        require(!CombatEffectUtil.arePvpAllies(a,b),"removing a friend restores automatic targeting eligibility");
     }
 
 }
