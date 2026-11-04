@@ -452,7 +452,7 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void applyChaosAmuletChainLightning() {
-		if (!caster.isPlayer() || secondaryEffectDamage <= 0 || !opponent.isNpc()) {
+		if (!caster.isPlayer() || secondaryEffectDamage <= 0) {
 			return;
 		}
 		ChaosChainLightningProc.tryApply((Player) caster, opponent,
@@ -464,11 +464,17 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	private Mob selectChaosChainLightningTarget(final Player player,
 			final Mob anchor) {
-		return ChainLightningTraversalPolicy.selectNext(
+		return ChainLightningTraversalPolicy.selectCombatant(
 			player, anchor, ProductionGameRandom.INSTANCE);
 	}
 
 	private void inflictChainLightningDamage(final Player casterPlayer, final Mob chainTarget, int chainDamage) {
+        if (chainTarget instanceof Player) {
+            com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage(casterPlayer,casterPlayer,(Player)chainTarget,chainDamage,
+                type==1||type==4?CombatStyle.MAGIC:CombatStyle.RANGED,CHAIN_LIGHTNING_POLICY.getStableKey(),getUUID(),
+                com.openrsc.server.model.combat.AttackRoll.normal(chainDamage));
+            return;
+        }
 		if (chainDamage <= 0 || chainTarget.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
@@ -653,6 +659,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			opponent.getUpdateFlags().setCombatEffect(new CombatEffect(opponent, impactEffectType));
 		}
 		final int slayerActualDamage = Math.max(0, lastHits - opponent.getLevel(Skill.HITS.id()));
+        if(opponent instanceof Player)com.openrsc.server.model.combat.PlayerPvpCombat.recordPrimaryDamage(caster,(Player)opponent,slayerActualDamage);
 		if (leachingBowAtLaunch && !attackSuppressed)
 			com.openrsc.server.content.monsterslayer.SlayerRewardCombat.leachingBowHit((Player)caster, slayerActualDamage);
 		if (thunderSpireTier > 0 && caster instanceof Player && !attackSuppressed)
@@ -743,9 +750,8 @@ public class ProjectileEvent extends SingleTickEvent {
 
     if (!attackSuppressed
         && caster.isPlayer()
-        && opponent.isNpc()
         && opponent.getSkills().getLevel(Skill.HITS.id()) > 0
-        && ((Player) caster).applyDeathRingChargeHit((Npc) opponent)) {
+        && ((Player) caster).applyDeathRingChargeHit(opponent)) {
 			handleDeath();
 			return;
 		}
@@ -754,7 +760,12 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (opponent.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			if (caster.isPlayer() && opponent.isNpc()) {
 				applyDeathRobeOverkillSplash((Player) caster, (Npc) opponent, damage - lastHits);
-			}
+			} else if(caster instanceof Player && opponent instanceof Player) {
+                DeathRobeOverkillSplash.applyPlayers((Player)caster,(Player)opponent,damage-lastHits,
+                    (child,amount)->com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage((Player)caster,opponent,child,amount,
+                        type==1||type==4?CombatStyle.MAGIC:CombatStyle.RANGED,DEATH_ROBE_OVERKILL_POLICY.getStableKey(),getUUID(),
+                        com.openrsc.server.model.combat.AttackRoll.normal(amount)));
+            }
 			handleDeath();
 		} else {
       if (!attackSuppressed && Summoning.applySummonOnHitEffects(caster, opponent, damage)) {
@@ -798,7 +809,7 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	private void tryAutoRetaliateAfterIncomingProjectile() {
 		if (isPrimaryProjectileAttackType()
-			&& com.openrsc.server.model.combat.PlayerPvpCombat.applies(caster,opponent)) {
+			&& com.openrsc.server.model.combat.PlayerPvpCombat.applies(Summoning.killCredit(caster),opponent)) {
 			com.openrsc.server.model.combat.PlayerPvpCombat.retaliate((Player)opponent,caster);
 			return;
 		}
@@ -909,13 +920,22 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void applySplinter() {
-		if (!caster.isPlayer() || !opponent.isNpc()) {
+		if (!caster.isPlayer()) {
 			return;
 		}
 		final Player casterPlayer = (Player) caster;
 		if (Summoning.isPlayerAreaEffectSuppressed(casterPlayer)) {
 			return;
 		}
+        if (opponent instanceof Player) {
+            Mob child=SplinterTargetSelectionPolicy.selectCombatant(casterPlayer,opponent,ProductionGameRandom.INSTANCE);
+            if (child instanceof Player) {
+                int amount=Math.max(1,(int)Math.ceil(secondaryEffectDamage/2.0D));
+                com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage(casterPlayer,opponent,(Player)child,amount,
+                    CombatStyle.MAGIC,SPLINTER_POLICY.getStableKey(),getUUID(),com.openrsc.server.model.combat.AttackRoll.normal(amount));
+            }
+            return;
+        }
 		final Npc splinterTarget = selectSplinterTarget(casterPlayer, opponent);
 		if (splinterTarget == null) {
 			return;
@@ -1030,10 +1050,13 @@ public class ProjectileEvent extends SingleTickEvent {
 			casterPlayer, opponent, ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryMagicDamage(caster, opponent, procDamage),
 			procDamageDealt -> {
-				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT
-						&& opponent.isNpc()) {
-					applyHellsInfernoSplash(casterPlayer, (Npc) opponent, procDamageDealt);
-				}
+				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT) {
+                    if(opponent instanceof Npc)applyHellsInfernoSplash(casterPlayer,(Npc)opponent,procDamageDealt);
+                    else if(opponent instanceof Player)HellsInfernoNpcSplash.applyPlayers(casterPlayer,(Player)opponent,procDamageDealt,
+                        (child,amount)->com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage(casterPlayer,opponent,child,amount,
+                            CombatStyle.MAGIC,AUXILIARY_MAGIC_DAMAGE_POLICY.getStableKey(),getUUID(),
+                            com.openrsc.server.model.combat.AttackRoll.normal(amount)));
+                }
 			});
 		if (infernal.isConfigured()) {
       CombatEffectUtil.sendInfernalProcDebug(
@@ -1117,7 +1140,7 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	private void applyBloodRobeSplash(final Player casterPlayer, final int damageDealt) {
 		if (Summoning.isPlayerAreaEffectSuppressed(casterPlayer)
-			|| !bloodSpell || opponent == null || !opponent.isNpc()) {
+			|| !bloodSpell || opponent == null) {
 			return;
 		}
 		final double splashPercent = casterPlayer.getBloodRobeSpellSplashPercent();
@@ -1125,6 +1148,12 @@ public class ProjectileEvent extends SingleTickEvent {
 			return;
 		}
 		final int splashDamage = Math.max(1, (int) Math.floor(damageDealt * splashPercent));
+        if (opponent instanceof Player) {
+            for (Player child:CombatEffectUtil.findPlayerOwnedPvpSplashTargets(casterPlayer,(Player)opponent,2))
+                com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage(casterPlayer,opponent,child,splashDamage,
+                    CombatStyle.MAGIC,BLOOD_ROBE_SPLASH_POLICY.getStableKey(),getUUID(),com.openrsc.server.model.combat.AttackRoll.normal(splashDamage));
+            return;
+        }
 		for (Npc npc : PlayerOwnedNpcRadiusSelection.aroundPrimary(
 				casterPlayer, (Npc) opponent, 2)) {
 			inflictBloodRobeSplashDamage(casterPlayer, npc, splashDamage);

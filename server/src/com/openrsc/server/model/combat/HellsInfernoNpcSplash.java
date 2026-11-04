@@ -19,4 +19,14 @@ public final class HellsInfernoNpcSplash {
 			auxiliaryMagicDamage.apply(target, splashDamage);
 		}
 	}
+    public static void applyPlayers(final Player source,final Player primary,final int primaryDamage,
+            final java.util.function.BiConsumer<Player,Integer> damage) {
+        int amount=CombatEffectUtil.hellsInfernoSplashDamage(primaryDamage);
+        if(amount<=0)return;
+        for(Player target:CombatEffectUtil.findPlayerOwnedPvpSplashTargets(source,primary,CombatEffectUtil.HELLS_INFERNO_SPLASH_RADIUS)) {
+            target.getUpdateFlags().setCombatEffect(new CombatEffect(target,CombatEffect.HELLS_INFERNO));
+            damage.accept(target,amount);
+        }
+    }
+
 }

@@ -62,6 +62,10 @@ public final class ProjectileImpactValidator {
 				.playerAttackRules(true).build()).isAllowed()) {
 			return ProjectileImpactDecision.Reason.PVP_TARGET_NO_LONGER_ATTACKABLE;
 		}
+        if (launchSnapshot.getKind()==ProjectileLaunchSnapshot.Kind.DAMAGING
+                && com.openrsc.server.content.Summoning.isSummon(source) && target instanceof Player
+                && !com.openrsc.server.content.Summoning.canSummonAttack(source,target))
+            return ProjectileImpactDecision.Reason.PVP_TARGET_NO_LONGER_ATTACKABLE;
 		return ProjectileImpactDecision.Reason.CURRENT_POLICY_ACCEPTED;
 	}
 

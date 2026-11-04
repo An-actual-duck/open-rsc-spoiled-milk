@@ -67,7 +67,7 @@ public final class CombatEligibility {
 			if (Summoning.isSummon(target)) {
 				return denied(request, CombatEligibilityReason.TARGET_IS_SUMMON);
 			}
-			if (Summoning.isSummon(source) && target.isPlayer()) {
+			if (Summoning.isSummon(source) && target.isPlayer() && !Summoning.canSummonAttack(source,target)) {
 				return denied(request, CombatEligibilityReason.SUMMON_CANNOT_ATTACK_PLAYER);
 			}
 		}
@@ -138,7 +138,7 @@ public final class CombatEligibility {
 			&& victim.equals(source.getOpponent())) {
 			return allowed(request);
 		}
-		if ((request.getStyle() == CombatStyle.MELEE || source.getConfig().WANT_MYWORLD)
+		if (!source.getConfig().WANT_MYWORLD && request.getStyle() == CombatStyle.MELEE
 			&& !victim.canBeReattacked()) {
 			return denied(request, CombatEligibilityReason.TARGET_REATTACK_PROTECTED);
 		}

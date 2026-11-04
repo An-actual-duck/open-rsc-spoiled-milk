@@ -118,8 +118,8 @@ final class CurrentCombatChildDamageCharacterization {
             "player-owned chain cannot damage a player outside Wilderness");
         assertEquals(0, mitigated.getUpdateFlags().getHitSplats().size(),
             "safe-zone chain emits no damage hitsplat");
-        assertTrue(result(harness, 4).isPvpSafetyBlocked(),
-            "even a direct child callback cannot bypass Wilderness safety");
+        assertEquals(4,CurrentCombatCharacterizationTest.observedDamageResults(harness).size(),
+            "unsafe child callbacks are rejected before producing a damage transaction");
 
 		final boolean previousLayered = harness.server().getConfig()
 			.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;

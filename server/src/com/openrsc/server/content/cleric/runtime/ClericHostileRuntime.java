@@ -26,6 +26,8 @@ public final class ClericHostileRuntime {
       List<Mob> candidates = new ArrayList<Mob>();
       for (Npc npc : caster.getViewArea().getNpcsInView())
         if (eligible(caster, npc, spell.getRadius())) candidates.add(npc);
+      for(Player target:caster.getViewArea().getPlayersInView())
+        if(eligible(caster,target,spell.getRadius()))candidates.add(target);
       if (candidates.isEmpty()) return result(ClericSupportCasting.Outcome.NO_USEFUL_RECIPIENT, 0);
       List<Item> costs = new ArrayList<Item>();
       for (ClericResourceCost cost : spell.getResourceCosts())
@@ -58,6 +60,10 @@ public final class ClericHostileRuntime {
                                         npc, spell.getPresentation().getOnEntityAnimationId()));
                           state.pruneOrigins();
                           state.ensureTick();
+                          if(npc instanceof Player) {
+                            caster.setSkulledOn((Player)npc);caster.setCombatTimer();npc.setCombatTimer();
+                            com.openrsc.server.model.combat.PlayerPvpCombat.retaliate((Player)npc,caster);
+                          }
                           // Match authentic hostile non-damaging spell retaliation without
                           // replacing an existing fight.
                           if (npc instanceof Npc && !((Npc)npc).isChasing()
@@ -107,6 +113,7 @@ public final class ClericHostileRuntime {
 
   public static boolean eligible(Player caster, Mob npc, int radius) {
     if (caster == null || npc == null || !ClericSupportCasting.canUseInCombatContext(caster)) return false;
+    if(npc instanceof Player && !PlayerPvpCombat.eligibleEnemy(caster,(Player)npc))return false;
     if (!CombatEligibility.evaluate(
             CombatEligibilityRequest.builder(
                     caster, npc, CombatEligibilityPhase.COMMIT, CombatStyle.MAGIC)
@@ -252,8 +259,7 @@ public final class ClericHostileRuntime {
                   && !((Npc)target).isRespawning()
                   && !com.openrsc.server.content.Summoning.isSummon(target)
                   && ((Npc)target).getDef().isAttackable()
-              : com.openrsc.server.util.rsc.CombatEffectUtil
-                  .isPlayerOwnedPvpSplashTarget(caster,caster,target))
+              : PlayerPvpCombat.eligibleEnemy(caster,(Player)target))
           && !target.isRemoved()
           && !target.isUnregistering()
           && !target.killed

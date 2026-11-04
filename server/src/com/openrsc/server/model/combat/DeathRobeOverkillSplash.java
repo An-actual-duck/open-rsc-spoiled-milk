@@ -27,6 +27,15 @@ public final class DeathRobeOverkillSplash {
 		}
 	}
 
+    public static void applyPlayers(final Player source,final Player primary,
+            final int overkill,final java.util.function.BiConsumer<Player,Integer> damage) {
+        double percent=source.getDeathRobeOverkillSplashPercent();
+        if (Summoning.isPlayerAreaEffectSuppressed(source) || overkill<=0 || percent<=0) return;
+        int amount=calculateDamage(overkill,percent);
+        for(Player target:com.openrsc.server.util.rsc.CombatEffectUtil.findPlayerOwnedPvpSplashTargets(source,primary,RADIUS))
+            damage.accept(target,amount);
+    }
+
 	/** Preserves the historical floor-with-minimum-one terminal payload. */
 	public static int calculateDamage(final int overkillDamage,
 			final double splashPercent) {

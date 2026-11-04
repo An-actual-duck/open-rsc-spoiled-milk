@@ -2385,10 +2385,10 @@ public final class Player extends Mob {
 	}
 
 	public void applyDeathAmuletBurst(final Mob killed) {
-		if (Summoning.isPlayerAreaEffectSuppressed(this) || killed == null || !killed.isNpc()) {
+		if (Summoning.isPlayerAreaEffectSuppressed(this) || killed == null) {
 			return;
 		}
-		final Npc killedNpc = (Npc) killed;
+		final int killedLevel=killed instanceof Npc?((Npc)killed).getNPCCombatLevel():((Player)killed).getCombatLevel();
 		final Item deathAmulet = getCarriedItems().getEquipment().getEquippedWristItem();
 		if (deathAmulet == null || !EnchantingItemEffects.isDeathAmulet(deathAmulet.getCatalogId())) {
 			return;
@@ -2399,7 +2399,7 @@ public final class Player extends Mob {
 		if (radius <= 0 || minDamage <= 0 || maxDamage < minDamage) {
 			return;
 		}
-		final int gainedChargePoints = EnchantingItemEffects.getDeathAmuletBurstChargePointsForNpc(killedNpc.getNPCCombatLevel());
+		final int gainedChargePoints = EnchantingItemEffects.getDeathAmuletBurstChargePointsForNpc(killedLevel);
 		if (gainedChargePoints <= 0) {
 			return;
 		}
@@ -2411,6 +2411,15 @@ public final class Player extends Mob {
 		}
 		EnchantingItemEffects.setDeathAmuletBurstChargePoints(this, deathAmulet, nextChargePoints - requiredChargePoints);
 		final Point center = getLocation();
+        if(killed instanceof Player)for(Player target:getViewArea().getPlayersInView()) {
+            if(!com.openrsc.server.util.rsc.CombatEffectUtil.isPlayerOwnedPvpSplashTarget(this,killed,target)
+                || !target.withinRange(center,radius))continue;
+            int damage=com.openrsc.server.model.combat.CombatLuck.higher(this,com.openrsc.server.runtime.ProductionGameRandom.INSTANCE,
+                ()->minDamage+DataConversions.getRandom().nextInt(maxDamage-minDamage+1));
+            com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage(this,killed,target,damage,CombatStyle.MELEE,
+                SecondaryEffectPolicy.PLAYER_DEATH_AMULET_BURST.getStableKey(),java.util.UUID.randomUUID(),
+                com.openrsc.server.model.combat.AttackRoll.normal(damage));
+        }
 		for (Npc npc : PlayerOwnedNpcRadiusSelection.aroundFixedPoint(
 				this, center, killed, radius)) {
 			final int damage = com.openrsc.server.model.combat.CombatLuck.higher(this,com.openrsc.server.runtime.ProductionGameRandom.INSTANCE,()->minDamage+DataConversions.getRandom().nextInt(maxDamage-minDamage+1));
@@ -2430,7 +2439,9 @@ public final class Player extends Mob {
 		}
 	}
 
-	public void chargeDeathRingFromKill(final Npc killed) {
+	public void chargeDeathRingFromKill(final Npc killed) { chargeDeathRingFromKill((Mob)killed); }
+
+    public void chargeDeathRingFromKill(final Mob killed) {
 		if (killed == null) {
 			return;
 		}
@@ -2448,11 +2459,14 @@ public final class Player extends Mob {
 		setAttribute(DEATH_RING_CHARGE_LAST_DECAY_KEY, System.currentTimeMillis());
 	}
 
-	public boolean applyDeathRingChargeHit(final Npc target) {
-		if (target == null || target.isRemoved() || target.isRespawning()
+	public boolean applyDeathRingChargeHit(final Npc target) { return applyDeathRingChargeHit((Mob)target); }
+
+    public boolean applyDeathRingChargeHit(final Mob target) {
+		if (target == null || target.isRemoved() || target instanceof Npc && ((Npc)target).isRespawning()
 			|| target.getSkills().getLevel(Skill.HITS.id()) <= 0 || Summoning.isSummon(target)) {
 			return false;
 		}
+        if(target instanceof Player && !com.openrsc.server.model.combat.PlayerPvpCombat.eligible(this,(Player)target,CombatStyle.MELEE))return false;
 		final Item deathRing = getCarriedItems().getEquipment().getEquippedRingItem();
 		final int bonusDamage = EnchantingItemEffects.getDeathRingChargeDamage(this, deathRing);
 		if (bonusDamage <= 0) {
@@ -2468,12 +2482,15 @@ public final class Player extends Mob {
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
 		final int damageDealt = damageResult.getLegacyDamageDealt();
-		target.addCombatDamage(this, damageDealt);
+		if(target instanceof Npc)((Npc)target).addCombatDamage(this, damageDealt);
+        else if(target instanceof Player)ActionSender.sendStat((Player)target,Skill.HITS.id());
 		Summoning.recordOwnerCombatSummonDamage(this, target, damageDealt);
 		return target.getSkills().getLevel(Skill.HITS.id()) <= 0;
 	}
 
-	public void applySoulAmuletBurst(final Npc killed) {
+	public void applySoulAmuletBurst(final Npc killed) { applySoulAmuletBurst((Mob)killed); }
+
+    public void applySoulAmuletBurst(final Mob killed) {
 		if (killed == null) {
 			return;
 		}
@@ -2487,7 +2504,7 @@ public final class Player extends Mob {
 		if (radius <= 0 || minHeal <= 0 || maxHeal < minHeal) {
 			return;
 		}
-		final int gainedChargePoints = EnchantingItemEffects.getSoulAmuletBurstChargePointsForNpc(killed.getNPCCombatLevel());
+		final int gainedChargePoints = EnchantingItemEffects.getSoulAmuletBurstChargePointsForNpc(killed instanceof Npc?((Npc)killed).getNPCCombatLevel():((Player)killed).getCombatLevel());
 		if (gainedChargePoints <= 0) {
 			return;
 		}
@@ -2512,7 +2529,7 @@ public final class Player extends Mob {
 	}
 
 	private void healSoulBurstTarget(final Player target, final int minHeal, final int maxHeal) {
-		if (target == null || minHeal <= 0 || maxHeal < minHeal) {
+		if (target == null || target.killed || target.getLevel(Skill.HITS.id())<=0 || minHeal <= 0 || maxHeal < minHeal) {
 			return;
 		}
 		final int maxHits = target.getHealingMaximumHits();
@@ -4346,6 +4363,8 @@ public final class Player extends Mob {
 
 	@Override
 	public void killedBy(final Mob mob) {
+        Mob credited=Summoning.killCredit(mob);
+        if(credited!=mob) { killedBy(credited);return; }
 		if (!isLoggedIn()) return;
 		if (killed) return;
 		final DeathTransition transition = tryBeginDeathLifecycle(mob);
@@ -4413,6 +4432,11 @@ public final class Player extends Mob {
 				getWorld().sendKilledUpdate(getUsernameHash(), player.getUsernameHash(), killTypeId);
 				player.incKills();
 				incDeaths();
+                if(getConfig().WANT_MYWORLD) {
+                    player.chargeDeathRingFromKill((Mob)this);
+                    player.applyDeathAmuletBurst(this);
+                    player.applySoulAmuletBurst((Mob)this);
+                }
 				getWorld().getServer().getGameLogger().addQuery(new LiveFeedLog(player, String.format("has PKed %s", getUsername())));
 			}
 

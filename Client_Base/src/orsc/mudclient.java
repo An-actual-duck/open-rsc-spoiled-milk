@@ -11165,7 +11165,7 @@ public final class mudclient implements Runnable {
 								}
 
 								int colorMask2 = this.getPlayerSkinColors()[player.colourSkin];
-								int colourTransform = 0xFFFFFFFF;
+								int colourTransform = player.nonCorporeal ? 0x80FFFFFF : 0xFFFFFFFF;
 
 								if (player.isInvisible)
 									colourTransform &= 0x80FFFFFF;

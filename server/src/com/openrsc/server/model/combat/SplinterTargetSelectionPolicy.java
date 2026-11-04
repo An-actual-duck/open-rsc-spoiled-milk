@@ -26,6 +26,12 @@ public final class SplinterTargetSelectionPolicy {
 	private SplinterTargetSelectionPolicy() {
 	}
 
+    public static Mob selectCombatant(final Player owner,final Mob primary,final GameRandom random) {
+        if (!(primary instanceof Player)) return select(owner,primary,random);
+        List<Player> targets=com.openrsc.server.util.rsc.CombatEffectUtil.findPlayerOwnedPvpSplashTargets(owner,(Player)primary,RADIUS);
+        return targets.isEmpty()?null:targets.get(Objects.requireNonNull(random,"random").nextInt(targets.size()));
+    }
+
 	public static Npc select(final Player owner, final Mob primaryTarget,
 			final GameRandom random) {
 		if (!primaryTarget.isNpc()) {

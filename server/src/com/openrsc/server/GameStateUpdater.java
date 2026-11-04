@@ -4200,14 +4200,35 @@ public final class GameStateUpdater {
 				playersNeedingAppearanceUpdate.add(otherPlayer);
 			}
 		}
+        Queue<Player> phases=collectPlayerPhaseFlags(player);
 		issuePlayerAppearanceUpdatePacket(player, bubblesNeedingDisplayed, chatMessagesNeedingDisplayed,
 			projectilesNeedingDisplayed, playersNeedingDamageUpdate, playersNeedingHpUpdate, playersNeedingAppearanceUpdate,
-			combatEffectsNeedingDisplayed, hitSplatsNeedingDisplayed);
+			combatEffectsNeedingDisplayed, hitSplatsNeedingDisplayed, phases);
 		if (selfAppearancePending) {
 			player.removeAttribute(
 				NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE);
 		}
 	}
+
+    private Queue<Player> collectPlayerPhaseFlags(Player viewer) {
+        Queue<Player> changed=new ArrayDeque<>();
+        if(!viewer.isUsingCustomClient() || viewer.getClientVersion()<com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION)return changed;
+        boolean fresh=viewer.getAttribute("player_phase_display_session",null)!=viewer.getTransientEffectSessionToken();
+        java.util.Map<java.util.UUID,Boolean> cache=fresh?null:viewer.getAttribute("player_phase_display_cache",null);
+        if(cache==null)cache=new java.util.HashMap<>();
+        viewer.setAttribute("player_phase_display_session",viewer.getTransientEffectSessionToken());
+        viewer.setAttribute("player_phase_display_cache",cache);
+        java.util.Set<java.util.UUID> current=new java.util.HashSet<>();
+        List<Player> visible=new ArrayList<>(viewer.getLocalPlayers());visible.add(viewer);
+        for(Player target:visible) {
+            if(!current.add(target.getUUID()))continue;
+            boolean active=com.openrsc.server.model.combat.NonCorporealState.isActive(target);
+            Boolean previous=cache.put(target.getUUID(),active);
+            if(previous==null || previous.booleanValue()!=active)changed.add(target);
+        }
+        cache.keySet().retainAll(current);
+        return changed;
+    }
 
 	private void issuePlayerAppearanceUpdatePacket(final Player player, final Queue<Bubble> bubblesNeedingDisplayed,
 												   final Queue<ChatMessage> chatMessagesNeedingDisplayed, final Queue<Projectile> projectilesNeedingDisplayed,
@@ -4215,7 +4236,8 @@ public final class GameStateUpdater {
 
 												   final Queue<Player> playersNeedingAppearanceUpdate,
 												   final Queue<CombatEffect> combatEffectsNeedingDisplayed,
-												   final Queue<HitSplat> hitSplatsNeedingDisplayed) {
+												   final Queue<HitSplat> hitSplatsNeedingDisplayed,
+                                                   final Queue<Player> phaseFlags) {
 
 		if (player.loggedIn()) {
 			final int playersNeedingAppearanceUpdateSize = playersNeedingAppearanceUpdate.size();
@@ -4223,7 +4245,7 @@ public final class GameStateUpdater {
 			final int hitSplatsNeedingDisplayedSize = player.isUsingCustomClient() ? hitSplatsNeedingDisplayed.size() : 0;
 			final int updateSize = bubblesNeedingDisplayed.size() + chatMessagesNeedingDisplayed.size()
 				+ playersNeedingDamageUpdate.size() + projectilesNeedingDisplayed.size()
-				+ playersNeedingAppearanceUpdateSize + combatEffectsNeedingDisplayedSize + hitSplatsNeedingDisplayedSize;
+				+ playersNeedingAppearanceUpdateSize + combatEffectsNeedingDisplayedSize + hitSplatsNeedingDisplayedSize + phaseFlags.size();
 
 			// TODO: needs to be later revised for mc38
 			if (updateSize > 0) {
@@ -4590,6 +4612,13 @@ public final class GameStateUpdater {
 						updatesMain.add((byte) hitSplat.getCurHits());
 						updatesMain.add((byte) hitSplat.getMaxHits());
 					}
+
+                    Player phased;
+                    while((phased=phaseFlags.poll())!=null) {
+                        updatesMain.add((short)phased.getIndex());
+                        updatesMain.add((byte)com.openrsc.server.net.rsc.ClericBlessingContract.PLAYER_PHASE_UPDATE);
+                        updatesMain.add((byte)(com.openrsc.server.model.combat.NonCorporealState.isActive(phased)?1:0));
+                    }
 
 					// Non authentic type 9. In authentic network protocol, this information is just in type 2.
 					HpUpdate playerNeedingHpUpdate;

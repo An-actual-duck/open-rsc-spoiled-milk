@@ -64,10 +64,12 @@ public final class CombatEffectUtil {
 			|| Summoning.isPlayerAreaEffectSuppressed(player)) {
 			return Collections.emptyList();
 		}
+        final com.openrsc.server.model.Point center = playerAreaCenter(player,primaryTarget);
+        if (center == null) return Collections.emptyList();
 		final List<Player> targets = new ArrayList<>();
 		for (Player candidate : player.getViewArea().getPlayersInView()) {
 			if (!isPlayerOwnedPvpSplashTarget(player,primaryTarget,candidate)
-				|| !candidate.withinRange(primaryTarget.getLocation(), radius)) {
+				|| !candidate.withinRange(center, radius)) {
 				continue;
 			}
 			targets.add(candidate);
@@ -87,10 +89,13 @@ public final class CombatEffectUtil {
 
 	/** NPC-primary attacks never admit player collateral; every recipient must remain legal. */
 	public static boolean isPlayerOwnedPvpSplashTarget(Player source,Mob primary,Mob candidate) {
-		if(source==null || !(primary instanceof Player) || !(candidate instanceof Player)
+        final com.openrsc.server.model.world.coordinate.WorldLocation origin = playerAreaLocation(source,primary);
+		if(source==null || origin==null || !(primary instanceof Player) || !(candidate instanceof Player)
 			|| candidate==source || candidate==primary || !source.getConfig().WANT_PVP
 			|| source.getDuel().isDuelActive() || ((Player)candidate).getDuel().isDuelActive()
-			|| !source.sharesSpatialDomain(primary) || !primary.getLocation().inWilderness()
+            || !source.getWorldLocation().getWorldSpace().equals(origin.getWorldSpace())
+            || source.getWorldLocation().getCoordinate().getLevel()!=origin.getCoordinate().getLevel()
+            || !primary.getWorld().getRegionManager().toRuntimeCompatibilityPoint(origin).inWilderness()
 			|| !source.getLocation().inWilderness() || !candidate.getLocation().inWilderness()
 			|| arePvpAllies(source,(Player)candidate)
 			|| Summoning.isPlayerAreaEffectSuppressed(source))return false;
@@ -99,6 +104,22 @@ public final class CombatEffectUtil {
 			.currentParticipants(true).registration(true).sameSpatialDomain(true)
 			.summonRules(true).playerAttackRules(true).build()).isAllowed();
 	}
+
+    /** A same-tick killing hit keeps its impact center after the victim is moved to respawn. */
+    public static com.openrsc.server.model.world.coordinate.WorldLocation playerAreaLocation(Player source,Mob primary) {
+        if (source==null || primary==null) return null;
+        if (!(primary instanceof Player) || !primary.killed) return primary.getWorldLocation();
+        com.openrsc.server.model.entity.death.DeathContext death=primary.getDeathLifecycleSnapshot().getContext();
+        if (death==null || death.getStartTick()!=source.getWorld().getServer().getCurrentTick()) return null;
+        Mob killer=death.getKiller();
+        if (killer!=source && (!(killer instanceof Npc) || Summoning.getSummonOwner((Npc)killer)!=source)) return null;
+        return death.getLocation();
+    }
+
+    public static com.openrsc.server.model.Point playerAreaCenter(Player source,Mob primary) {
+        com.openrsc.server.model.world.coordinate.WorldLocation location=playerAreaLocation(source,primary);
+        return location==null ? null : primary.getWorld().getRegionManager().toRuntimeCompatibilityPoint(location);
+    }
 
 	private static boolean isLegacyMeleeStat(int skillId) {
 		return skillId == Skill.ATTACK.id()

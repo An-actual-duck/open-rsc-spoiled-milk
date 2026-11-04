@@ -91,7 +91,7 @@ public final class SlayerRewardCombat {
 		if (SlayerRewardBosses.isBoss(attacker)) {
       wearer.message("Is uneffected");
       return false; }
-		int percent = com.openrsc.server.model.combat.CombatLuck.higher(wearer,wearer.getWorld().getServer().getCombatRandom(),()->1+wearer.getWorld().getServer().getCombatRandom().nextInt(attacker.isPlayer()?5:10));
+		int percent = com.openrsc.server.model.combat.CombatLuck.higher(wearer,wearer.getWorld().getServer().getCombatRandom(),()->1+wearer.getWorld().getServer().getCombatRandom().nextInt(10));
 		int damage = Math.max(1, (int)((long)attacker.getSkills().getMaxStat(Skill.HITS.id()) * percent / 100));
 		// Defense bypass is not immunity/mitigation bypass.
 		damage = DarkBeastCombat.mitigate(attacker, damage);

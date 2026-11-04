@@ -116,6 +116,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			return false;
 		}
 		Player targetPlayer = (Player) targetMob;
+        if(com.openrsc.server.model.combat.PlayerPvpCombat.applies(Summoning.killCredit(attackerMob),targetMob))return false;
 		if (targetPlayer.getAutoRetaliate()) {
 			return false;
 		}
@@ -518,6 +519,7 @@ public class PvmMeleeEvent extends GameTickEvent {
         if (damageResult.isPvpSafetyBlocked()) return damageResult;
 		final int damageDealt = damageResult.getLegacyDamageDealt();
 		damage = damageResult.getRequest().getResolvedDamage();
+        if(target instanceof Player)com.openrsc.server.model.combat.PlayerPvpCombat.recordPrimaryDamage(hitter,(Player)target,damageResult.getActualDamage());
 		if (!offhand && !attackSuppressed) com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipHit(
 			hitter, target, damageResult.getActualDamage());
 		if (!attackSuppressed) com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.onDamage(
@@ -539,6 +541,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 				return damageResult;
 			}
 		}
+        if(!attackSuppressed && target instanceof Player && hitter instanceof Player
+            && target.getLevel(Skill.HITS.id())>0 && ((Player)hitter).applyDeathRingChargeHit(target)) {
+            onDeath(target,hitter);return damageResult;
+        }
 		if (hitter.isPlayer()) {
 			((Player) hitter).applyBloodAmuletLifesteal(damageDealt);
 		}
@@ -598,7 +604,12 @@ public class PvmMeleeEvent extends GameTickEvent {
 		} else {
 			if (target.isNpc() && hitter.isPlayer()) {
 				applyDeathRobeOverkillSplash((Player) hitter, (Npc) target, rawDamage - lastHits);
-			}
+			} else if (target instanceof Player && hitter instanceof Player) {
+                com.openrsc.server.model.combat.DeathRobeOverkillSplash.applyPlayers((Player)hitter,(Player)target,
+                    rawDamage-lastHits,(child,amount)->com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage(
+                        (Player)hitter,target,child,amount,CombatStyle.MELEE,DEATH_ROBE_OVERKILL_POLICY.getStableKey(),getUUID(),
+                        com.openrsc.server.model.combat.AttackRoll.normal(amount)));
+            }
 			onDeath(target, hitter);
 		}
 		if (!offhand && !damageResult.isTargetTerminal()) {
@@ -633,7 +644,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void tryAutoRetaliateAfterIncomingAttack(final Mob hitter, final Mob target) {
-		if (com.openrsc.server.model.combat.PlayerPvpCombat.applies(hitter,target)) {
+		if (com.openrsc.server.model.combat.PlayerPvpCombat.applies(Summoning.killCredit(hitter),target)) {
 			com.openrsc.server.model.combat.PlayerPvpCombat.retaliate((Player)target,hitter);
 			return;
 		}
@@ -715,10 +726,13 @@ public class PvmMeleeEvent extends GameTickEvent {
 			target, combatRandom(),
 			procDamage -> inflictAuxiliaryMagicDamage(hitter, target, procDamage),
 			procDamageDealt -> {
-				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT
-						&& target.isNpc()) {
-					applyHellsInfernoSplash(player, (Npc) target, procDamageDealt);
-				}
+				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT) {
+                    if(target instanceof Npc)applyHellsInfernoSplash(player,(Npc)target,procDamageDealt);
+                    else if(target instanceof Player)HellsInfernoNpcSplash.applyPlayers(player,(Player)target,procDamageDealt,
+                        (child,amount)->com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage(player,target,child,amount,
+                            CombatStyle.MAGIC,AUXILIARY_MAGIC_DAMAGE_POLICY.getStableKey(),getUUID(),
+                            com.openrsc.server.model.combat.AttackRoll.normal(amount)));
+                }
 			});
 		if (infernal.isConfigured()) {
       CombatEffectUtil.sendInfernalProcDebug(
@@ -1066,7 +1080,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void applyChaosAmuletChainLightning(final Mob hitter, final Mob target, final int baseDamage) {
-		if (!hitter.isPlayer() || baseDamage <= 0 || !target.isNpc()) {
+		if (!hitter.isPlayer() || baseDamage <= 0) {
 			return;
 		}
 		ChaosChainLightningProc.tryApply((Player) hitter, target, baseDamage,
@@ -1077,11 +1091,16 @@ public class PvmMeleeEvent extends GameTickEvent {
 
 	private Mob selectChaosChainLightningTarget(final Player player,
 			final Mob primaryTarget) {
-		return ChainLightningTraversalPolicy.selectNext(
+		return ChainLightningTraversalPolicy.selectCombatant(
 			player, primaryTarget, combatRandom());
 	}
 
 	private void inflictChainLightningDamage(final Mob hitter, final Mob target, final int damage) {
+        if (hitter instanceof Player && target instanceof Player) {
+            com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage((Player)hitter,hitter,(Player)target,damage,
+                CombatStyle.MELEE,CHAIN_LIGHTNING_POLICY.getStableKey(),getUUID(),com.openrsc.server.model.combat.AttackRoll.normal(damage));
+            return;
+        }
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}

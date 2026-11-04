@@ -305,7 +305,7 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private void applyChaosAmuletChainLightning(final Mob hitter, final Mob target, final int baseDamage) {
-		if (!hitter.isPlayer() || baseDamage <= 0 || !target.isNpc()) {
+		if (!hitter.isPlayer() || baseDamage <= 0) {
 			return;
 		}
 		ChaosChainLightningProc.tryApply((Player) hitter, target, baseDamage,
@@ -317,11 +317,16 @@ public class CombatEvent extends GameTickEvent {
 
 	private Mob selectChaosChainLightningTarget(final Player player,
 			final Mob primaryTarget) {
-		return ChainLightningTraversalPolicy.selectNext(
+		return ChainLightningTraversalPolicy.selectCombatant(
 			player, primaryTarget, ProductionGameRandom.INSTANCE);
 	}
 
 	private void inflictChainLightningDamage(final Mob hitter, final Mob target, final int damage) {
+        if (hitter instanceof Player && target instanceof Player) {
+            com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage((Player)hitter,hitter,(Player)target,damage,
+                CombatStyle.MELEE,CHAIN_LIGHTNING_POLICY.getStableKey(),getUUID(),com.openrsc.server.model.combat.AttackRoll.normal(damage));
+            return;
+        }
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
@@ -650,6 +655,7 @@ public class CombatEvent extends GameTickEvent {
         if (damageResult.isPvpSafetyBlocked()) return damageResult;
 		final int damageDealt = damageResult.getLegacyDamageDealt();
 		damage = damageResult.getRequest().getResolvedDamage();
+        if(target instanceof Player)com.openrsc.server.model.combat.PlayerPvpCombat.recordPrimaryDamage(hitter,(Player)target,damageResult.getActualDamage());
 		if (!offhand && !attackSuppressed) com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipHit(
 			hitter, target, damageResult.getActualDamage());
 		if (!attackSuppressed) com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.onDamage(
@@ -727,7 +733,12 @@ public class CombatEvent extends GameTickEvent {
 		else {
 			if (target.isNpc() && hitter.isPlayer()) {
 				applyDeathRobeOverkillSplash((Player) hitter, (Npc) target, rawDamage - lastHits);
-			}
+			} else if (target instanceof Player && hitter instanceof Player) {
+                com.openrsc.server.model.combat.DeathRobeOverkillSplash.applyPlayers((Player)hitter,(Player)target,
+                    rawDamage-lastHits,(child,amount)->com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage(
+                        (Player)hitter,target,child,amount,CombatStyle.MELEE,DEATH_ROBE_OVERKILL_POLICY.getStableKey(),getUUID(),
+                        com.openrsc.server.model.combat.AttackRoll.normal(amount)));
+            }
 			onDeath(target, hitter);
 		}
 		if (!offhand && !damageResult.isTargetTerminal()) {

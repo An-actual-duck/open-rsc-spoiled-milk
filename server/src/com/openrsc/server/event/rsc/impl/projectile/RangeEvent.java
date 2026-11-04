@@ -83,7 +83,7 @@ public class RangeEvent extends GameTickEvent {
 		final int weaponId = player.getRangeEquip();
 
 		if (weaponId == -1 ||
-			(player.inCombat() && !(target.isNpc()
+			(player.inCombat() && !player.getConfig().WANT_MYWORLD && !(target.isNpc()
 				&& player.getOpponent() != null
 				&& player.getOpponent().isNpc()
 				&& !player.getOpponent().equals(target))) ||

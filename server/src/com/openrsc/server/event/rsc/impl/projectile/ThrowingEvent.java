@@ -98,7 +98,7 @@ public class ThrowingEvent extends GameTickEvent {
 			return;
 		}
 
-		if (!player.loggedIn() || (player.inCombat() && !(target.isNpc()
+		if (!player.loggedIn() || (player.inCombat() && !player.getConfig().WANT_MYWORLD && !(target.isNpc()
 				&& player.getOpponent() != null
 				&& player.getOpponent().isNpc()
 				&& !player.getOpponent().equals(target)))
@@ -276,7 +276,7 @@ public class ThrowingEvent extends GameTickEvent {
 			return true;
 		}
 
-		Npc fallback = findAutoRetaliatePrimaryTarget(player);
+		Mob fallback = findAutoRetaliatePrimaryTarget(player);
 		if (fallback == null) {
 			return false;
 		}
@@ -298,7 +298,11 @@ public class ThrowingEvent extends GameTickEvent {
 		return player.withinRange(candidate) && player.checkAttack(candidate, true);
 	}
 
-	private Npc findAutoRetaliatePrimaryTarget(Player player) {
+	private Mob findAutoRetaliatePrimaryTarget(Player player) {
+        if(target instanceof Player)for(Player candidate:player.getViewArea().getPlayersInView()) {
+            if(com.openrsc.server.model.combat.PlayerPvpCombat.eligibleEnemy(player,candidate)
+                && isValidPrimaryTarget(player,candidate) && isAggroedToPlayer(candidate,player))return candidate;
+        }
 		Npc firstThreat = null;
 		for (Npc npc : player.getViewArea().getNpcsInView()) {
 			if (!isValidPrimaryTarget(player, npc) || !isAggroedToPlayer(npc, player)) {
@@ -407,7 +411,7 @@ public class ThrowingEvent extends GameTickEvent {
 				boolean eligible=candidate==target
 					?com.openrsc.server.model.combat.PlayerPvpCombat.eligible(player,candidate,
 						com.openrsc.server.model.combat.CombatStyle.THROWING)
-					:com.openrsc.server.util.rsc.CombatEffectUtil.isPlayerOwnedPvpSplashTarget(player,target,candidate);
+					:com.openrsc.server.util.rsc.CombatEffectUtil.isPlayerOwnedPvpSplashTarget(player,player,candidate);
 				if(eligible && player.withinRange(candidate,attackRadius)
 					&& PathValidation.checkCombatProjectilePath(getWorld(),player.getWorldLocation(),candidate.getWorldLocation()))
 					candidates.add(candidate);
