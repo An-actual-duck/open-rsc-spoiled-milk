@@ -57,7 +57,7 @@ levels `1-70`.
 | 58 | Delivery Camel | Utility | 335 |
 | 61 | Foundry Dragon | Support | 365 |
 | 64 | Astral Wraith | Combat, magic | 395 |
-| 70 | Abyssal Demon | Combat, melee or magic | 460 |
+| 70 | Inner Demon | Combat, melee or magic | 460 |
 
 The exact levels can be tuned, but this should remain the baseline progression
 until a larger summon catalog exists.
@@ -77,7 +77,7 @@ from the summon display name in lowercase with spaces converted to dashes:
 `ironhide-bear.png`, `sacred-unicorn.png`, `duskwind-bat.png`, `pack-rat.png`,
 `bound-battleaxe.png`, `mourning-unicorn.png`, `restless-shade.png`,
 `guard-dog.png`, `delivery-camel.png`, `foundry-dragon.png`,
-`astral-wraith.png`, and `abyssal-demon.png`. Guard Dog uses its purpose-made `guard-dog.png` icon
+`astral-wraith.png`, and `inner-demon.png`. Guard Dog uses its purpose-made `guard-dog.png` icon
 by Atelier Pixerelia. Foundry Dragon uses its purpose-made
 `foundry-dragon.png` icon by KURAI.
 
@@ -320,7 +320,7 @@ by Atelier Pixerelia. Foundry Dragon uses its purpose-made
 - damage absorption: `25%`
 - trait: `Spell Echo`; `15%` chance to deal a second magic hit up to `3`
 
-### Abyssal Demon
+### Inner Demon
 
 - level: `70`
 - role: combat, melee or magic
@@ -404,7 +404,7 @@ The first proof implementation has already established the core summon runtime.
   attacks and procs, and restores normal targeting immediately when inactive.
 - Ranged and magic combat summons use projectile attacks with owner kill/XP
   credit preserved.
-- `Abyssal Demon` uses a mixed melee/magic attack pattern.
+- `Inner Demon` uses a mixed melee/magic attack pattern.
 
 ## Existing Codebase Support
 
