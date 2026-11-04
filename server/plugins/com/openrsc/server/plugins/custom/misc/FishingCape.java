@@ -26,6 +26,10 @@ public class FishingCape implements OpInvTrigger, UseInvTrigger {
 	@Override
 	public void onOpInv(Player player, Integer invIndex, Item item, String command) {
 		if (item.getCatalogId() == ItemId.FISHING_CAPE.id()) {
+			if (com.openrsc.server.util.rsc.TeleportRestrictions.isDuelBlocked(player)) {
+				player.message("You cannot teleport during a duel.");
+				return;
+			}
 			mes("@dcy@You think deeply of your experiences with the fish...");
 			delay(3);
 
@@ -63,13 +67,17 @@ public class FishingCape implements OpInvTrigger, UseInvTrigger {
 				}
 
 				charges--;
-				player.getCache().put("fishing_cape_charges", charges);
 				if (charges > 0) {
 					mes("one of the sharks falls out of your cape, but there's still " + charges + " left.");
 				} else {
 					mes("one of the sharks falls out of your cape");
 				}
 				delay(3);
+				if (com.openrsc.server.util.rsc.TeleportRestrictions.isDuelBlocked(player)) {
+					player.message("You cannot teleport during a duel.");
+					return;
+				}
+				player.getCache().put("fishing_cape_charges", charges);
 				player.teleport(586, 522, 0, true);
 				if (charges == 0) {
 					mes("@red@Ah!! that was the last shark!!");

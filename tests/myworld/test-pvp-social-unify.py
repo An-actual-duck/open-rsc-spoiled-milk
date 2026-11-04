@@ -22,10 +22,15 @@ with tempfile.TemporaryDirectory(prefix='pvp-social-unify-') as folder:
     subprocess.run([
         str(java / 'javac'), '-proc:none', '-cp', classpath, '-sourcepath', str(ROOT / 'server/test'),
         '-d', str(classes), str(ROOT / 'server/test/com/openrsc/server/combat/ClericUnifyTeleportFixture.java'),
+        str(ROOT / 'server/test/com/openrsc/server/combat/ClericTeleportRestrictionsFixture.java'),
     ], check=True)
     subprocess.run([
         str(java / 'java'), '-Xmx768m', '-XX:+UseSerialGC', '-Djava.awt.headless=true',
         '-cp', str(classes) + ':' + classpath, 'com.openrsc.server.combat.ClericUnifyTeleportFixture',
+    ], cwd=runtime, check=True)
+    subprocess.run([
+        str(java / 'java'), '-Xmx768m', '-XX:+UseSerialGC', '-Djava.awt.headless=true',
+        '-cp', str(classes) + ':' + classpath, 'com.openrsc.server.combat.ClericTeleportRestrictionsFixture',
     ], cwd=runtime, check=True)
     client = ROOT / 'Client_Base/Open_RSC_Client.jar'
     subprocess.run([str(java / 'javac'), '-cp', str(client), '-d', str(classes),

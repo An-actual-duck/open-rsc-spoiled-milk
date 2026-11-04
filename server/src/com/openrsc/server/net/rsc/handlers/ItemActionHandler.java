@@ -93,6 +93,11 @@ public class ItemActionHandler implements PayloadProcessor<ItemCommandStruct, Op
 		}
 
 		final String command = item.getDef(player.getWorld()).getCommand()[commandIndex];
+        if (com.openrsc.server.util.rsc.TeleportRestrictions.isDuelItemTeleportBlocked(
+                player, command)) {
+            player.message("You cannot teleport during a duel.");
+            return;
+        }
 		final boolean combatConsumableAction = isCombatConsumableAction(item, command, player);
 
 		if (player.inCombat() && !combatConsumableAction) {

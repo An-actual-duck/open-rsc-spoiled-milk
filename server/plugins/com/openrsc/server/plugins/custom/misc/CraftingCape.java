@@ -10,6 +10,10 @@ import static com.openrsc.server.plugins.Functions.*;
 public class CraftingCape implements OpInvTrigger {
 
 	private boolean canTeleport(Player player) {
+		if (com.openrsc.server.util.rsc.TeleportRestrictions.isDuelBlocked(player)) {
+			player.message("You cannot teleport during a duel.");
+			return false;
+		}
 		if (player.getLocation().wildernessLevel() >= 30 || player.getLocation().isInFisherKingRealm()
 			|| player.getLocation().isInsideGrandTreeGround()
 			|| (player.getLocation().inModRoom() && !player.isAdmin())) {
@@ -46,6 +50,10 @@ public class CraftingCape implements OpInvTrigger {
 		if (command.equalsIgnoreCase("Teleport") && canTeleport(player)) {
 			mes("With a swish of your cape");
 			delay(3);
+			if (com.openrsc.server.util.rsc.TeleportRestrictions.isDuelBlocked(player)) {
+				player.message("You cannot teleport during a duel.");
+				return;
+			}
 			checkPlagueSample(player);
 			if (item.getCatalogId() == ItemId.CRAFTING_CAPE.id()) {
 				player.teleport(347, 599, 0, true);

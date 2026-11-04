@@ -2648,9 +2648,11 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
 	private boolean canTeleport(Player player, SpellDef spell, Spells spellEnum) {
 		boolean canTeleport = true;
-		if (player.getLocation().wildernessLevel() >= 20 || player.getLocation().isInFisherKingRealm()
-			|| player.getLocation().isInsideGrandTreeGround()
-			|| (player.getLocation().inModRoom() && !player.isAdmin())) {
+        if (com.openrsc.server.util.rsc.TeleportRestrictions.isDuelBlocked(player)) {
+            player.message("You cannot teleport during a duel.");
+            return false;
+        }
+        if (com.openrsc.server.util.rsc.TeleportRestrictions.isLocationBlocked(player.getLocation())) {
 			player.message("A mysterious force blocks your teleport spell!");
 			player.message("You can't use teleport after level 20 wilderness");
 			canTeleport = false;
@@ -2706,6 +2708,10 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	private void completeTeleport(Player player, SpellDef spell, Spells spellEnum) {
+        if (com.openrsc.server.util.rsc.TeleportRestrictions.isBlocked(player)) {
+            player.message("A mysterious force blocks your teleport spell!");
+            return;
+        }
 		if (player.getLocation().inKaramja() || player.getLocation().inBrimhaven()) {
 			while (player.getCarriedItems().getInventory().countId(ItemId.KARAMJA_RUM.id()) > 0) {
 				player.getCarriedItems().remove(new Item(ItemId.KARAMJA_RUM.id()));

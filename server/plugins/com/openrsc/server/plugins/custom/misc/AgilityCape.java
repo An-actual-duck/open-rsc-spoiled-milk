@@ -12,6 +12,10 @@ import static com.openrsc.server.plugins.RuneScript.*;
 public class AgilityCape implements OpInvTrigger {
 
 	private boolean canTeleport(Player player) {
+		if (com.openrsc.server.util.rsc.TeleportRestrictions.isDuelBlocked(player)) {
+			player.message("You cannot teleport during a duel.");
+			return false;
+		}
 		if (player.getLocation().wildernessLevel() >= 30 || player.getLocation().isInFisherKingRealm()
 			|| player.getLocation().isInsideGrandTreeGround()
 			|| (player.getLocation().inModRoom() && !player.isAdmin())) {
@@ -36,6 +40,10 @@ public class AgilityCape implements OpInvTrigger {
 		if (canTeleport(player)) {
 			mes("You turn on the spot");
 			delay(3);
+			if (com.openrsc.server.util.rsc.TeleportRestrictions.isDuelBlocked(player)) {
+				player.message("You cannot teleport during a duel.");
+				return;
+			}
 			if (ifrandom(2)) {
 				mes("And trip!");
 				player.damage(1);

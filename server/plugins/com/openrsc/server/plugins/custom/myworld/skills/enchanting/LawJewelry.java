@@ -345,7 +345,8 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 	}
 
 	private boolean isTeleportBlocked(final Player player) {
-		return player.getLocation().wildernessLevel() >= Constants.GLORY_TELEPORT_LIMIT
+		return com.openrsc.server.util.rsc.TeleportRestrictions.isDuelBlocked(player)
+			|| player.getLocation().wildernessLevel() >= Constants.GLORY_TELEPORT_LIMIT
 			|| player.getLocation().isInFisherKingRealm()
 			|| player.getLocation().isInsideGrandTreeGround()
 			|| (player.getLocation().inModRoom() && !player.isAdmin());
