@@ -78,11 +78,16 @@ Game endpoint: 127.0.0.1:43635
 Controls: http://127.0.0.1:47409/
 
 Four supplied kits: melee (scythe and coated axe), shurikens, Iban magic, Cleric.
-Three registered Player opponents use ordinary production combat and can be
-started, paused, restyled or moved across the boundary from the browser.
-Ally controls assign party/clan protection for collateral tests. Presets/reset
-restock and reposition the private character; previous private items are banked.
-All kits and opponent attackability validate against the running native map.
+Three registered practice Players use ordinary production combat. Every kit
+starts with Pvp Red as the enemy, Pvp Blue in the user's actual party roster,
+and Pvp Gold in the actual clan roster. Blue receives party Cleric buffs;
+both teammates are excluded from the user's collateral damage. Enemy controls
+leave teammates passive. The browser can deliberately select all-enemy mode,
+and the selected mode survives kit changes and resets. Presets/reset restock
+and reposition the private character; previous private items are banked.
+All kits, rosters, splash protection and a real party blessing validate at
+startup. test-private-pvp-teammates.py adds 31 focused controller checks without
+starting a network listener or loading accounts. Test clans remain transient.
 The private map/database are copied; the public account database is not used.
 The controller and supplied items are test support, not production commands.
 
