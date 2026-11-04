@@ -1240,7 +1240,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(13, "58", "Delivery Camel - Utility; 1 life, 2 body, 2 law, 2 nature");
 			addSummonGuide(845, "61", "Foundry Dragon - Support; 2 life, 5 fire, nature, soul, dragon bones");
 			addSummonGuide(298, "64", "Astral Wraith - Combat; 2 life, 4 cosmic, soul, bones");
-			addSummonGuide(184, "70", "Abyssal Demon - Combat; 3 life, blood, soul, demon ash");
+			addSummonGuide(184, "70", "Inner Demon - Combat; 3 life, blood, soul, demon ash");
 		} else if (curTab == 1) {
 			addSummonGuide(23, "1", "Broodling Spider - Hits 2 +1/10; dmg 1 +1/24");
 			addSummonGuide(114, "7", "Mischief Imp - Does not engage in combat");
@@ -1256,7 +1256,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(13, "58", "Delivery Camel - Does not engage in combat");
 			addSummonGuide(845, "61", "Foundry Dragon - Does not engage in combat");
 			addSummonGuide(298, "64", "Astral Wraith - Hits 10 +1/8; dmg 7 +1/14");
-			addSummonGuide(184, "70", "Abyssal Demon - Hits 18 +1/7; dmg 9 +1/12");
+			addSummonGuide(184, "70", "Inner Demon - Hits 18 +1/7; dmg 9 +1/12");
 		} else if (curTab == 2) {
 			addSummonGuide(23, "1", "None - introductory combat summon");
 			addSummonGuide(114, "7", "Mischievous - prevents enemy aggro until you attack");

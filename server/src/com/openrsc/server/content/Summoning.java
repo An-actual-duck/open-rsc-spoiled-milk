@@ -223,7 +223,7 @@ public final class Summoning {
 		cost(ItemId.BONES.id(), 1)
 	);
 	private static final SummonProfile GREATER_DEMON_PROFILE = combatProfile(
-		"Abyssal Demon", 70, 460, NpcId.GREATER_DEMON.id(), KIND_GREATER_DEMON, 18, 7, 9, 12, 35, TRAIT_HELLFIRE,
+		"Inner Demon", 70, 460, NpcId.GREATER_DEMON.id(), KIND_GREATER_DEMON, 18, 7, 9, 12, 35, TRAIT_HELLFIRE,
 		cost(ItemId.LIFE_RUNE.id(), 3),
 		cost(ItemId.BLOOD_RUNE.id(), 1),
 		cost(ItemId.SOUL_RUNE.id(), 1),

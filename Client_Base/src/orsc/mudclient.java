@@ -293,7 +293,7 @@ public final class mudclient implements Runnable {
 	private static final String[] SUMMONING_NAMES = {
 		"Broodling Spider", "Mischief Imp", "Loot Goblin", "Ironhide Bear", "Sacred Unicorn",
 		"Duskwind Bat", "Pack Rat", "Bound Battleaxe", "Mourning Unicorn",
-		"Restless Shade", "Guard Dog", "Delivery Camel", "Foundry Dragon", "Astral Wraith", "Abyssal Demon"
+		"Restless Shade", "Guard Dog", "Delivery Camel", "Foundry Dragon", "Astral Wraith", "Inner Demon"
 	};
 	private static final String[] SUMMONING_DESCRIPTIONS = {
 		"A small melee companion",

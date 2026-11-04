@@ -27,7 +27,7 @@ SUMMON_NAMES = [
     "Delivery Camel",
     "Foundry Dragon",
     "Astral Wraith",
-    "Abyssal Demon",
+    "Inner Demon",
 ]
 
 

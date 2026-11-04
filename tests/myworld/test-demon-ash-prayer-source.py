@@ -68,8 +68,8 @@ def main() -> int:
 
     greater_demon = re.search(r"GREATER_DEMON_PROFILE\s*=.*?;\n", summoning, re.S)
     require(greater_demon is not None and "ItemId.DEMON_ASH.id()" in greater_demon.group(0), "Greater Demon summon must consume Demon ash", failures)
-    require("{37, 619, 825, 3112}" in client_mudclient, "Abyssal Demon summon tooltip must count Demon ash", failures)
-    require("Abyssal Demon - Combat; 3 life, blood, soul, demon ash" in skill_guide, "Summoning guide must list Demon ash for Abyssal Demon", failures)
+    require("{37, 619, 825, 3112}" in client_mudclient, "Inner Demon summon tooltip must count Demon ash", failures)
+    require("Inner Demon - Combat; 3 life, blood, soul, demon ash" in skill_guide, "Summoning guide must list Demon ash for Inner Demon", failures)
     require("case DEMON_ASH:" in summoning, "Black Unicorn prayer-drop handling must include Demon ash", failures)
     require(re.search(r"offering == ItemId\.DEMON_ASH\).*?return 3;", black_unicorn_effect, re.S) is not None,
             "Black Unicorn Demon ash offering healing must stay at 3", failures)
