@@ -54,6 +54,14 @@ public final class ProjectileImpactValidator {
 				target.getWorldLocation())) {
 			return ProjectileImpactDecision.Reason.IMPACT_PATH_BLOCKED;
 		}
+		if (launchSnapshot.getKind()==ProjectileLaunchSnapshot.Kind.DAMAGING
+			&& PlayerPvpCombat.applies(source,target)
+			&& !CombatEligibility.evaluate(CombatEligibilityRequest.builder(source,target,
+				CombatEligibilityPhase.COMPATIBILITY,CombatStyle.MAGIC)
+				.currentParticipants(false).registration(true).sameSpatialDomain(true)
+				.playerAttackRules(true).build()).isAllowed()) {
+			return ProjectileImpactDecision.Reason.PVP_TARGET_NO_LONGER_ATTACKABLE;
+		}
 		return ProjectileImpactDecision.Reason.CURRENT_POLICY_ACCEPTED;
 	}
 

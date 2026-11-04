@@ -4,8 +4,11 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.entity.KillType;
+import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.states.HostileState;
 import com.openrsc.server.net.rsc.ActionSender;
+import java.util.UUID;
 
 /** MyWorld player combat uses the same actor-owned melee event as PvM. */
 public final class PlayerPvpCombat {
@@ -73,5 +76,31 @@ public final class PlayerPvpCombat {
         for (Mob attacker:player.getIncomingCombatAttackers())
             if(attacker instanceof Player) return true;
         return false;
+    }
+
+    /** Player recipients of an existing PvE secondary-damage family. */
+    public static int secondaryDamage(Player source,Mob primary,Player target,int damage,
+            CombatStyle style,String effectKey,UUID eventId,AttackRoll roll) {
+        if(!com.openrsc.server.util.rsc.CombatEffectUtil
+                .isPlayerOwnedPvpSplashTarget(source,primary,target))return 0;
+		source.setSkulledOn(target);
+		target.setCombatTimer();
+        damage=target.applyRobeDamageMitigation(Math.max(0,damage));
+        if(style==CombatStyle.MAGIC)damage=target.applyPotionMagicDamageReduction(damage);
+        else if(style==CombatStyle.MELEE) {
+            damage=target.applyPotionMeleeDamageReduction(damage);
+            damage=com.openrsc.server.content.TrueDefense.apply(target,damage);
+        }
+        DamageResult result=target.getWorld().getServer().getResolvedDamageTransaction().apply(
+            DamageRequest.resolvedLegacy(source,target,DamageRequest.SourceCategory.OWNED_EFFECT,
+                effectKey,damage).eventId(eventId).style(style)
+                .hitSplatType(HitSplat.TYPE_STANDARD).attackRoll(roll).build());
+        ActionSender.sendStat(target,Skill.HITS.id());
+        if(result.isTargetTerminal()) {
+            source.setKillType(style==CombatStyle.MAGIC?KillType.MAGIC
+                :style==CombatStyle.MELEE?KillType.COMBAT:KillType.RANGED);
+            target.killedBy(source);
+        } else retaliate(target,source);
+        return result.getActualDamage();
     }
 }

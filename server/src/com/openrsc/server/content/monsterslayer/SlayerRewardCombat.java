@@ -109,7 +109,7 @@ public final class SlayerRewardCombat {
 		if (target instanceof Player) {
 			Player victim = (Player)target;
 			if (!source.getConfig().WANT_PVP || !source.getLocation().inWilderness() || !victim.getLocation().inWilderness()
-				|| source.getClan() != null && source.getClan() == victim.getClan()) return false;
+				|| com.openrsc.server.util.rsc.CombatEffectUtil.arePvpAllies(source,victim)) return false;
 		}
 		return CombatEligibility.evaluate(CombatEligibilityRequest.builder(source, target,
 			CombatEligibilityPhase.COMPATIBILITY, CombatStyle.MAGIC)
@@ -127,6 +127,8 @@ public final class SlayerRewardCombat {
 	}
 	public static boolean thunderTarget(Player source, Mob primary, Mob candidate, int radius) {
 		return primary != null && candidate != null && candidate != primary && radius >= 1 && radius <= 3
+			&& (!(candidate instanceof Player)
+				|| com.openrsc.server.util.rsc.CombatEffectUtil.isPlayerOwnedPvpSplashTarget(source,primary,candidate))
 			&& primary.sharesSpatialDomain(candidate)
 			&& primary.getLocation().withinRange(candidate.getLocation(), radius) && legalSecondary(source, candidate);
 	}

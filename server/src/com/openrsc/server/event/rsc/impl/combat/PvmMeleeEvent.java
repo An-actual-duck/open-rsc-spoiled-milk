@@ -333,6 +333,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (!effectsSuppressed && attackerMob.isPlayer() && targetMob.isNpc()) {
 			scytheTargetsHit += applyScytheNpcCleave((Player) attackerMob, (Npc) targetMob);
 		}
+		if(!effectsSuppressed && attackerMob instanceof Player && targetMob instanceof Player)
+			scytheTargetsHit+=applyScythePvpCleave((Player)attackerMob,(Player)targetMob);
 		if (!effectsSuppressed && targetMob.isPlayer()) {
 			final Player targetPlayer = (Player) targetMob;
 			final double recoilChance = targetPlayer.getCarriedItems().getEquipment().getChaosRecoilChance();
@@ -856,6 +858,35 @@ public class PvmMeleeEvent extends GameTickEvent {
 			}
 		}
 		return false;
+	}
+
+	private int applyScythePvpCleave(Player player,Player primary) {
+		if(Summoning.isPlayerAreaEffectSuppressed(player)||!isScytheEquipped(player))return 0;
+		int count=0;
+		for(Player target:player.getViewArea().getPlayersInView()) {
+			if(!CombatEffectUtil.isPlayerOwnedPvpSplashTarget(player,primary,target)
+				||!player.withinRange(target,1)
+				||target.getX()==player.getX()&&target.getY()==player.getY())continue;
+			int damage=getWorld().getServer().getConfig().OSRS_COMBAT_MELEE
+				?OSRSCombatFormula.Melee.doSecondaryMeleeDamage(player,target)
+				:CombatFormula.doSecondaryMeleeDamage(player,target);
+			damage=Summoning.applySummonOutgoingDamage(player,applyPlayerMeleeDamageBuff(player,damage));
+			int dealt=com.openrsc.server.model.combat.PlayerPvpCombat.secondaryDamage(player,primary,target,damage,
+				CombatStyle.MELEE,SCYTHE_CLEAVE_POLICY.getStableKey(),getUUID(),
+				com.openrsc.server.model.combat.AttackRoll.normal(damage));
+			DivineGrace.apply(player,dealt);
+			player.applyBloodAmuletLifesteal(dealt);
+			Summoning.applySummonLifesteal(player,target,dealt);
+			applyBearMaulSecondHit(player,target,damage);
+			if(!getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
+				applyDragonWeaponBreathDamage(player,target);
+				applyElementalSwordProc(player,target);
+			}
+			applyWeaponPoison(player,target,damage);
+			count++;
+			if(player.getLevel(Skill.HITS.id())<=0)break;
+		}
+		return count;
 	}
 
 	private boolean isValidScytheCleaveTarget(final Player player, final Npc primaryTarget, final Npc npc) {

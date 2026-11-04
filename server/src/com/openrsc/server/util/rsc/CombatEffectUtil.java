@@ -66,26 +66,38 @@ public final class CombatEffectUtil {
 		}
 		final List<Player> targets = new ArrayList<>();
 		for (Player candidate : player.getViewArea().getPlayersInView()) {
-			if (candidate == null || candidate == player || candidate == primaryTarget
-				|| (player.getClan()!=null && candidate.getClan()!=null
-					&& (player.getClan()==candidate.getClan()
-						|| player.getClan().getClanID()>0
-							&& player.getClan().getClanID()==candidate.getClan().getClanID()))
+			if (!isPlayerOwnedPvpSplashTarget(player,primaryTarget,candidate)
 				|| !candidate.withinRange(primaryTarget.getLocation(), radius)) {
 				continue;
 			}
-			if (CombatEligibility.evaluate(CombatEligibilityRequest.builder(
-				player, candidate, CombatEligibilityPhase.COMPATIBILITY, CombatStyle.MAGIC)
-				.currentParticipants(true)
-				.registration(true)
-				.sameSpatialDomain(true)
-				.summonRules(true)
-				.playerAttackRules(true)
-				.build()).isAllowed()) {
-				targets.add(candidate);
-			}
+			targets.add(candidate);
 		}
 		return targets;
+	}
+
+	/** Friendship is checked by persistent clan identity, including reloaded clan objects. */
+	public static boolean arePvpAllies(Player source,Player target) {
+		if(source==null||target==null)return false;
+		if(source.getParty()!=null&&source.getParty()==target.getParty())return true;
+		return source.getClan()!=null && target.getClan()!=null
+			&&(source.getClan()==target.getClan()
+				|| source.getClan().getClanID()>0
+					&& source.getClan().getClanID()==target.getClan().getClanID());
+	}
+
+	/** NPC-primary attacks never admit player collateral; every recipient must remain legal. */
+	public static boolean isPlayerOwnedPvpSplashTarget(Player source,Mob primary,Mob candidate) {
+		if(source==null || !(primary instanceof Player) || !(candidate instanceof Player)
+			|| candidate==source || candidate==primary || !source.getConfig().WANT_PVP
+			|| source.getDuel().isDuelActive() || ((Player)candidate).getDuel().isDuelActive()
+			|| !source.sharesSpatialDomain(primary) || !primary.getLocation().inWilderness()
+			|| !source.getLocation().inWilderness() || !candidate.getLocation().inWilderness()
+			|| arePvpAllies(source,(Player)candidate)
+			|| Summoning.isPlayerAreaEffectSuppressed(source))return false;
+		return CombatEligibility.evaluate(CombatEligibilityRequest.builder(source,candidate,
+			CombatEligibilityPhase.COMPATIBILITY,CombatStyle.MAGIC)
+			.currentParticipants(true).registration(true).sameSpatialDomain(true)
+			.summonRules(true).playerAttackRules(true).build()).isAllowed();
 	}
 
 	private static boolean isLegacyMeleeStat(int skillId) {
