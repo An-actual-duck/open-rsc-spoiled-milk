@@ -2291,9 +2291,6 @@ public final class mudclient implements Runnable {
 					this.menuCommon.addCharacterItem(player.serverIndex, levelDelta >= 0 && levelDelta < 5
 							? MenuItemAction.PLAYER_ATTACK_SIMILAR : MenuItemAction.PLAYER_ATTACK_DIVERGENT, "Attack",
 						"@whi@" + name + level);
-				} else if (wantMembers()) {
-					this.menuCommon.addCharacterItem(player.serverIndex, MenuItemAction.PLAYER_DUEL, "Duel with",
-						"@whi@" + name + level);
 				}
 
 
@@ -19955,9 +19952,7 @@ public final class mudclient implements Runnable {
 						break;
 				}
 				case PLAYER_DUEL: {
-					this.packetHandler.getClientStream().newPacket(103);
-					this.packetHandler.getClientStream().bufferBits.putShort(indexOrX);
-					this.packetHandler.getClientStream().finishPacket();
+					// Traditional dueling is retired pending a dedicated arena system.
 					break;
 				}
 				case PLAYER_TRADE: {

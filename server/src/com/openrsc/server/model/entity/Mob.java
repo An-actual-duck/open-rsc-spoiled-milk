@@ -972,6 +972,10 @@ public abstract class Mob extends Entity {
 		Mob lock = this.getUUID().compareTo(victim.getUUID()) > 0 ? this : victim;
 		synchronized (lock) {
 			if (this.isPlayer() && victim.isPlayer()) {
+				if (getConfig().WANT_MYWORLD) {
+					com.openrsc.server.model.combat.PlayerPvpCombat.startMelee((Player)this,(Player)victim);
+					return;
+				}
 				if (this.inCombat() || victim.inCombat()) return;
 				startReciprocalCombat(victim);
 				return;
@@ -1219,14 +1223,16 @@ public abstract class Mob extends Entity {
 			return;
 		}
 
-		if (this.isPlayer() && attacker.isNpc() && !((Player) this).getAutoRetaliate()) {
+		if (this.isPlayer() && (attacker.isNpc() || getConfig().WANT_MYWORLD)
+			&& !((Player) this).getAutoRetaliate()) {
 			setLastOpponent(attacker);
 			setCombatTimer();
 			clearPassivePvmVictimState((Player) this);
 			return;
 		}
 
-		if (this.isPlayer() && attacker.isNpc() && ((Player) this).getAutoCastSpell() != null) {
+		if (this.isPlayer() && (attacker.isNpc() || getConfig().WANT_MYWORLD)
+			&& ((Player) this).getAutoCastSpell() != null) {
 			if (MagicCombatEvent.start((Player) this, attacker,
 				AttackIntent.Source.RETALIATION)) {
 				return;
@@ -1298,7 +1304,7 @@ public abstract class Mob extends Entity {
 	}
 
 	private boolean startPlayerRangedPvmCounterCombat(final Mob attacker) {
-		if (!this.isPlayer() || !attacker.isNpc()) {
+		if (!this.isPlayer() || (!attacker.isNpc() && !getConfig().WANT_MYWORLD)) {
 			return false;
 		}
 

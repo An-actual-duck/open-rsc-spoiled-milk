@@ -792,6 +792,11 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void tryAutoRetaliateAfterIncomingProjectile() {
+		if (isPrimaryProjectileAttackType()
+			&& com.openrsc.server.model.combat.PlayerPvpCombat.applies(caster,opponent)) {
+			com.openrsc.server.model.combat.PlayerPvpCombat.retaliate((Player)opponent,caster);
+			return;
+		}
 		if (!isPrimaryProjectileAttackType()
 			|| !caster.isNpc() || !opponent.isPlayer()
 			|| Summoning.isSummon(caster)) {

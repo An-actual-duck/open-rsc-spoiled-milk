@@ -67,6 +67,10 @@ public final class CombatEffectUtil {
 		final List<Player> targets = new ArrayList<>();
 		for (Player candidate : player.getViewArea().getPlayersInView()) {
 			if (candidate == null || candidate == player || candidate == primaryTarget
+				|| (player.getClan()!=null && candidate.getClan()!=null
+					&& (player.getClan()==candidate.getClan()
+						|| player.getClan().getClanID()>0
+							&& player.getClan().getClanID()==candidate.getClan().getClanID()))
 				|| !candidate.withinRange(primaryTarget.getLocation(), radius)) {
 				continue;
 			}

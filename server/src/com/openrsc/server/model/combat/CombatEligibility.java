@@ -137,7 +137,7 @@ public final class CombatEligibility {
 			&& victim.equals(source.getOpponent())) {
 			return allowed(request);
 		}
-		if (request.getStyle() == CombatStyle.MELEE
+		if ((request.getStyle() == CombatStyle.MELEE || source.getConfig().WANT_MYWORLD)
 			&& !victim.canBeReattacked()) {
 			return denied(request, CombatEligibilityReason.TARGET_REATTACK_PROTECTED);
 		}

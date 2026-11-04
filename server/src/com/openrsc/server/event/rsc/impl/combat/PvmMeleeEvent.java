@@ -374,6 +374,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (!attackerMob.isCurrentPvmMeleeEvent(this)) {
 			return false;
 		}
+		if (com.openrsc.server.model.combat.PlayerPvpCombat.applies(attackerMob,targetMob)
+			&& !com.openrsc.server.model.combat.PlayerPvpCombat.eligible(
+				(Player)attackerMob,(Player)targetMob,CombatStyle.MELEE)) return false;
 		boolean attackerLoggedIn = !attackerMob.isPlayer() || ((Player) attackerMob).loggedIn();
 		boolean targetLoggedIn = !targetMob.isPlayer() || ((Player) targetMob).loggedIn();
 		boolean attackerRespawning = attackerMob.isNpc() && ((Npc) attackerMob).isRespawning();
@@ -625,6 +628,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void tryAutoRetaliateAfterIncomingAttack(final Mob hitter, final Mob target) {
+		if (com.openrsc.server.model.combat.PlayerPvpCombat.applies(hitter,target)) {
+			com.openrsc.server.model.combat.PlayerPvpCombat.retaliate((Player)target,hitter);
+			return;
+		}
 		if (!hitter.isNpc() || !target.isPlayer()) {
 			return;
 		}

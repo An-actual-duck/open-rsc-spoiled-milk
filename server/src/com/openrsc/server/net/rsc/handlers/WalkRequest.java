@@ -35,6 +35,7 @@ public class WalkRequest implements PayloadProcessor<WalkStruct, OpcodeIn> {
 		}
 
 		boolean retreatedFromCombat = false;
+		boolean directionalPvp=com.openrsc.server.model.combat.PlayerPvpCombat.hasPlayerEngagement(player);
 		player.resetMagicCombat();
 
 		if (player.isHostile()) {
@@ -44,7 +45,7 @@ public class WalkRequest implements PayloadProcessor<WalkStruct, OpcodeIn> {
 				}
 				player.resetCombatEvent();
 				player.clearHostility();
-				player.setRanAwayTimer();
+				if (!directionalPvp) player.setRanAwayTimer();
 			} else if (packetOpcode == OpcodeIn.WALK_TO_POINT) {
 				Mob opponent = player.getHostileTarget();
 				if (opponent == null) {
