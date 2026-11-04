@@ -9,6 +9,9 @@ This is the active planning list. Scope labels describe implementation size, not
 - Carry PvE combat behavior and effect strengths into Wilderness PvP. Do not
   introduce separate PvP reductions for Slow, stagger, mobility or other effects
   without later owner feedback.
+- PvP is active only in the Wilderness. Outside it, player splash damage is
+  always negated, including damage against unrelated players. Recheck the
+  boundary at impact/settlement; legacy PK mode and dueling cannot bypass it.
 - Explicit player attacks may splash onto other legally attackable players.
   Check Wilderness eligibility for every recipient; NPC attacks must never
   incidentally splash onto players. Splash excludes party members and clanmates.

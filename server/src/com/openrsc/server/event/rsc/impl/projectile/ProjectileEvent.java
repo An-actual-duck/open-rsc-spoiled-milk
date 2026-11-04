@@ -546,6 +546,11 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void projectileDamage() {
+        if (com.openrsc.server.model.combat.PlayerCombatSafety.blocks(caster, opponent)) {
+            damage = 0;
+            secondaryEffectDamage = 0;
+            return;
+        }
 		if (!Summoning.canSummonAttack(caster, opponent)) {
 			return;
 		}

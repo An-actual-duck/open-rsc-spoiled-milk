@@ -132,7 +132,8 @@ public final class CombatEligibility {
 			&& source.getParty() == victim.getParty()) {
 			return denied(request, CombatEligibilityReason.PARTY_MEMBER);
 		}
-		if (source.inCombat() && source.getDuel().isDuelActive()
+		if (!source.getConfig().WANT_MYWORLD
+			&& source.inCombat() && source.getDuel().isDuelActive()
 			&& victim.inCombat() && victim.getDuel().isDuelActive()
 			&& victim.equals(source.getOpponent())) {
 			return allowed(request);
@@ -141,7 +142,7 @@ public final class CombatEligibility {
 			&& !victim.canBeReattacked()) {
 			return denied(request, CombatEligibilityReason.TARGET_REATTACK_PROTECTED);
 		}
-		if (source.getConfig().USES_PK_MODE) {
+		if (source.getConfig().USES_PK_MODE && !source.getConfig().WANT_MYWORLD) {
 			if (source.getPkMode() == 0 || victim.getPkMode() == 0) {
 				return denied(request, CombatEligibilityReason.PK_MODE_DISABLED);
 			}

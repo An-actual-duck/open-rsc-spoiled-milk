@@ -533,7 +533,9 @@ final class CurrentCombatOwnedDamageCharacterization {
 		assertEquals(0, npcDeaths.get(),
 			"Summon bonus returns lethality without owning NPC death");
 
-		final Player magicTarget = harness.player("bonus magic", 783, 820);
+        owner.setLocation(com.openrsc.server.model.Point.location(180,280), false);
+        summon.setLocation(com.openrsc.server.model.Point.location(181,280), false);
+		final Player magicTarget = harness.player("bonus magic", 182, 280);
 		magicTarget.activateMagicResistancePotion(50, 60_000L);
 		magicTarget.activateMeleeResistancePotion(75, 60_000L);
 		harness.recordOutgoingPackets(magicTarget);
@@ -546,7 +548,7 @@ final class CurrentCombatOwnedDamageCharacterization {
 			magicTarget, OpcodeOut.SEND_STAT),
 			"Summon Magic bonus sends one Hits packet");
 
-		final Player meleeTarget = harness.player("bonus melee", 784, 820);
+		final Player meleeTarget = harness.player("bonus melee", 183, 280);
 		meleeTarget.activateMagicResistancePotion(75, 60_000L);
 		meleeTarget.activateMeleeResistancePotion(50, 60_000L);
 		assertFalse(inflictSummonBonusDamage(
@@ -555,7 +557,7 @@ final class CurrentCombatOwnedDamageCharacterization {
 		assertEquals(36, meleeTarget.getLevel(Skill.HITS.id()),
 			"Summon Melee bonus applies only Melee potion mitigation");
 
-		final Player lethalPlayer = harness.player("bonus lethal", 785, 820);
+		final Player lethalPlayer = harness.player("bonus lethal", 184, 280);
 		lethalPlayer.getSkills().setTemporaryLevelAndMaxStat(
 			Skill.HITS.id(), 5, 40, false);
 		assertTrue(inflictSummonBonusDamage(

@@ -121,9 +121,9 @@ final class CurrentCombatReflectionCharacterization {
 				path + " lethal Frostbite transaction");
 
 			final Player playerAttacker = harness.player(
-				"frost player " + path.ordinal(), x + 1, 626);
+				"frost player " + path.ordinal(), 181 + path.ordinal()*5, 280);
 			final Player playerSource = harness.player(
-				"frost packet " + path.ordinal(), x, 626);
+				"frost packet " + path.ordinal(), 180 + path.ordinal()*5, 280);
 			final Npc playerDefender = npcWithHits(
 				harness, x + 2, 626, 20);
 			harness.recordOutgoingPackets(playerAttacker);
@@ -253,8 +253,9 @@ final class CurrentCombatReflectionCharacterization {
 				defender, chainTarget, 2, 2, 0, false,
 				path + " chain-lightning A05.4C transaction");
 
+            defender.setLocation(com.openrsc.server.model.Point.location(180 + path.ordinal()*3,280), false);
 			final Player playerAttacker = harness.player(
-				"recoil player " + path.ordinal(), x + 2, 623);
+				"recoil player " + path.ordinal(), 181 + path.ordinal()*3, 280);
 			harness.recordOutgoingPackets(playerAttacker);
 			invoke(event, "inflictMeleeJewelryRecoilDamage",
 				new Class<?>[] {Mob.class, Mob.class, int.class},
@@ -275,9 +276,9 @@ final class CurrentCombatReflectionCharacterization {
 	static void projectileRecoilPolicies(final CurrentCombatHarness harness)
 			throws Exception {
 		CurrentCombatCharacterizationTest.resetDamageObserver(harness);
-		final Player recoilOwner = harness.player("projectile recoil", 750, 620);
+		final Player recoilOwner = harness.player("projectile recoil", 200, 380);
 		harness.equip(recoilOwner, DRAGONSTONE_RING_OF_RECOIL, 1);
-		final Player savedCaster = harness.player("recoil saved", 751, 620);
+		final Player savedCaster = harness.player("recoil saved", 201, 380);
 		harness.equip(savedCaster, ItemId.RING_OF_LIFE.id(), 1);
 		savedCaster.getSkills().setTemporaryLevelAndMaxStat(
 			Skill.HITS.id(), 4, 40, false);
@@ -298,9 +299,9 @@ final class CurrentCombatReflectionCharacterization {
 			recoilOwner, savedCaster, 2, 2, 0, false,
 			"nonlethal projectile recoil transaction");
 
-		final Player plainOwner = harness.player("recoil plain", 752, 620);
+		final Player plainOwner = harness.player("recoil plain", 202, 380);
 		harness.equip(plainOwner, DRAGONSTONE_RING_OF_RECOIL, 1);
-		final Player plainCaster = harness.player("recoil no packet", 753, 620);
+		final Player plainCaster = harness.player("recoil no packet", 203, 380);
 		harness.recordOutgoingPackets(plainCaster);
 		forceNextLegacyDoubleBelow(0.90D);
 		final ProjectileEvent plainEvent = new ProjectileEvent(
@@ -409,8 +410,9 @@ final class CurrentCombatReflectionCharacterization {
 		assertEquals(1, deaths.get(),
 			"Divine Retribution caller owns the death adapter");
 
+        defender.setLocation(com.openrsc.server.model.Point.location(180,280), false);
 		final Player playerAttacker = harness.player(
-			"divine packet", 768, 620);
+			"divine packet", 181, 280);
 		harness.recordOutgoingPackets(playerAttacker);
 		forceNextLegacyDoubleBelow(0.20D);
 		final DivineRetribution.Result playerResult = DivineRetribution.apply(

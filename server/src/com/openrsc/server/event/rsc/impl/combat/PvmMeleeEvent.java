@@ -310,8 +310,10 @@ public class PvmMeleeEvent extends GameTickEvent {
         false,
         committedPrimaryWeapon,
         primaryRoll);
-        final boolean effectsSuppressed=attackSuppressed;
-        if(primarySettlement!=null&&primarySettlement.isNonCorporealBlocked())damage=0;
+        final boolean effectsSuppressed=attackSuppressed
+            || primarySettlement!=null && primarySettlement.isPvpSafetyBlocked();
+        if(primarySettlement!=null && (primarySettlement.isNonCorporealBlocked()
+            || primarySettlement.isPvpSafetyBlocked())) damage=0;
 		if (com.openrsc.server.content.monsterslayer.NagaCombat.canOffhand(attackerMob, targetMob, effectsSuppressed)) {
       com.openrsc.server.model.combat.AttackRoll offhandRoll =
           CombatFormula.rollOffhandMeleeDamage(attackerMob, targetMob);
@@ -513,6 +515,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			.getResolvedDamageTransaction().apply(damageRequest);
         if(!offhand&&!attackSuppressed)com.openrsc.server.content.coatings.BattleaxeCoatings.primaryHit(
             hitter,target,committedCoatingWeapon,damageResult.getActualDamage());
+        if (damageResult.isPvpSafetyBlocked()) return damageResult;
 		final int damageDealt = damageResult.getLegacyDamageDealt();
 		damage = damageResult.getRequest().getResolvedDamage();
 		if (!offhand && !attackSuppressed) com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipHit(
@@ -1144,6 +1147,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void applyWeaponPoison(final Mob hitter, final Mob target, final int damage) {
+        if (com.openrsc.server.model.combat.PlayerCombatSafety.blocks(hitter,target)) return;
 		if (!hitter.isPlayer()) {
 			return;
 		}

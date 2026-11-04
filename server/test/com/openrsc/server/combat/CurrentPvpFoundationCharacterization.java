@@ -26,6 +26,9 @@ import com.openrsc.server.model.combat.CombatEligibility;
 import com.openrsc.server.model.combat.CombatEligibilityPhase;
 import com.openrsc.server.model.combat.CombatEligibilityRequest;
 import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.dot.PeriodicEffectProvenance;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.handlers.WalkRequest;
@@ -58,9 +61,13 @@ public final class CurrentPvpFoundationCharacterization {
             checkCase(h,"iban_splash_hits_only_enemy_players", CurrentPvpFoundationCharacterization::ibanArea, failures);
             checkCase(h,"shuriken_keeps_three_legal_player_targets", CurrentPvpFoundationCharacterization::shurikenArea, failures);
             checkCase(h,"cleric_party_blessing_keeps_pve_values_in_wilderness", CurrentPvpFoundationCharacterization::clericBlessings, failures);
+            checkCase(h,"safe_zone_blocks_all_player_owned_damage", CurrentPvpFoundationCharacterization::safeSettlement, failures);
+            checkCase(h,"legacy_pk_mode_cannot_enable_myworld_safe_zone_pvp", CurrentPvpFoundationCharacterization::pkModeSafety, failures);
+            checkCase(h,"safe_zone_keeps_pve_damage_and_blocks_orphan_player_dot", CurrentPvpFoundationCharacterization::pveSafety, failures);
+            checkCase(h,"player_poison_cleanses_without_damage_in_safety", CurrentPvpFoundationCharacterization::poisonBoundary, failures);
         }
         if (!failures.isEmpty()) throw new AssertionError("PvP foundation failures: " + failures);
-        System.out.println("PASS: 13 PvP foundation scenarios");
+        System.out.println("PASS: 17 PvP foundation scenarios");
     }
 
     private interface Scenario { void run(CurrentCombatHarness h) throws Exception; }
@@ -231,6 +238,99 @@ public final class CurrentPvpFoundationCharacterization {
         List<com.openrsc.server.model.entity.Mob> targets=(List<com.openrsc.server.model.entity.Mob>)method.invoke(event,p[0],ItemId.TIN_SHURIKEN.id(),6);
         require(targets.size()==3 && targets.contains(p[1]) && targets.contains(p[2]) && targets.contains(extra),"three distinct eligible player targets use the normal shuriken cap");
         require(!targets.contains(p[3])&&!targets.contains(p[4]),"shuriken selection excludes party and clan");
+    }
+
+    private static void poisonBoundary(CurrentCombatHarness h) {
+        Player a=player(h,"pvp toxin a",180,425,false), b=player(h,"pvp toxin b",181,426,false);
+        b.applyPoison(50,50,a);
+        com.openrsc.server.event.rsc.impl.PoisonEvent poison=b.getAttribute("poisonEvent",null);
+        require(poison!=null,"fixture owns a real poison event");
+        poison.run();
+        require(b.getLevel(Skill.HITS.id())==245 && b.getCurrentPoisonPower()==47,
+            "poison uses the PvE damage and cleansing rate in Wilderness");
+        b.setLocation(Point.location(181,427),false);
+        poison.run();
+        require(b.getLevel(Skill.HITS.id())==245 && b.getCurrentPoisonPower()==44,
+            "crossing into safety prevents damage while cleansing continues");
+        h.logout(a);poison.run();
+        require(b.getLevel(Skill.HITS.id())==245 && b.getCurrentPoisonPower()==41,
+            "owner logout cannot erase provenance and bypass safety");
+    }
+
+    private static void safeSettlement(CurrentCombatHarness h) {
+        Player a=player(h,"pvp final a",180,425,false), b=player(h,"pvp final b",181,426,false);
+        Player primary=player(h,"pvp final p",181,425,false);
+        DamageRequest pending=DamageRequest.resolvedLegacy(a,b,DamageRequest.SourceCategory.OWNED_EFFECT,
+            "projectile-iban-area",20).style(CombatStyle.MAGIC).build();
+        b.setLocation(Point.location(181,427),false);
+        Party party=new Party(h.world());Clan clan=new Clan(h.world());clan.setClanID(71);
+        for(int affiliation=0;affiliation<4;affiliation++) {
+            a.setParty((affiliation&1)!=0?party:null);b.setParty(a.getParty());
+            a.setClan((affiliation&2)!=0?clan:null);b.setClan(a.getClan());
+            int splats=b.getUpdateFlags().getHitSplats().size();
+            DamageResult result=h.server().getResolvedDamageTransaction().apply(pending);
+            require(result.isPvpSafetyBlocked() && result.isAttackSuppressed(),"every affiliation is blocked outside Wilderness");
+            require(result.getActualDamage()==0 && result.getLegacyDamageDealt()==0 && result.getOverkillDamage()==0
+                && !result.isTargetTerminal(),"blocked splash cannot supply damage, overkill, lifesteal or a kill");
+            require(b.getLevel(Skill.HITS.id())==250 && b.getUpdateFlags().getHitSplats().size()==splats,
+                "blocked splash changes neither HP nor hitsplats");
+            require(!CombatEffectUtil.isPlayerOwnedPvpSplashTarget(a,primary,b),"safe player never enters splash selection");
+        }
+        a.setParty(null);b.setParty(null);a.setClan(null);b.setClan(null);
+        b.setLocation(Point.location(181,426),false);a.setLocation(Point.location(180,427),false);
+        require(h.server().getResolvedDamageTransaction().apply(pending).isPvpSafetyBlocked(),
+            "source also cannot fire across the Wilderness boundary from safety");
+        a.setLocation(Point.location(180,425),false);
+        DamageResult legal=h.server().getResolvedDamageTransaction().apply(pending);
+        require(legal.getActualDamage()==20 && !legal.isPvpSafetyBlocked(),"same damage settles unchanged with both players in Wilderness");
+        h.server().getConfig().WANT_PVP=false;
+        try {
+            require(h.server().getResolvedDamageTransaction().apply(pending).isPvpSafetyBlocked(),
+                "disabled PvP also blocks a previously prepared indirect hit");
+        } finally {h.server().getConfig().WANT_PVP=true;}
+    }
+
+    private static void pkModeSafety(CurrentCombatHarness h) {
+        Player a=player(h,"pvp pk a",180,425,false),b=player(h,"pvp pk b",181,426,false);
+        h.server().getConfig().USES_PK_MODE=true;
+        try {
+            a.setLocation(Point.location(180,427),false);b.setLocation(Point.location(181,427),false);
+            require(!CombatEligibility.evaluate(CombatEligibilityRequest.builder(a,b,
+                CombatEligibilityPhase.COMMIT,CombatStyle.MAGIC).playerAttackRules(true).build()).isAllowed(),
+                "legacy PK mode cannot authorize a safe-zone MyWorld attack");
+            require(h.server().getResolvedDamageTransaction().apply(DamageRequest.resolvedLegacy(a,b,
+                DamageRequest.SourceCategory.OWNED_EFFECT,"pvp-test-legacy-pk",9).build()).isPvpSafetyBlocked(),
+                "legacy PK mode cannot authorize a safe-zone MyWorld proc");
+        } finally {h.server().getConfig().USES_PK_MODE=false;}
+    }
+
+    private static void pveSafety(CurrentCombatHarness h) {
+        Player a=player(h,"pvp pve a",180,425,false);a.setLocation(Point.location(180,427),false);
+        Npc enemy=h.npc(3,181,427);enemy.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),50,50,false);
+        require(h.server().getResolvedDamageTransaction().apply(DamageRequest.resolvedLegacy(enemy,a,
+            DamageRequest.SourceCategory.ACTOR,"pvp-test-pve-incoming",3).build()).getActualDamage()==3,
+            "ordinary NPC damage still works outside Wilderness");
+        require(h.server().getResolvedDamageTransaction().apply(DamageRequest.resolvedLegacy(a,enemy,
+            DamageRequest.SourceCategory.OWNED_EFFECT,"pvp-test-pve-splash",4).build()).getActualDamage()==4,
+            "PvE splash still works outside Wilderness");
+        Player bystander=player(h,"pvp pve b",181,425,false);
+        bystander.setLocation(Point.location(181,427),false);
+        enemy.setAttribute("myworld_summon_owner",a.getUsernameHash());
+        require(h.server().getResolvedDamageTransaction().apply(DamageRequest.resolvedLegacy(enemy,bystander,
+            DamageRequest.SourceCategory.OWNED_EFFECT,"summon-bonus-melee",4).build()).isPvpSafetyBlocked(),
+            "a player-owned NPC cannot bypass the safe-zone boundary");
+        require(h.server().getResolvedDamageTransaction().apply(DamageRequest.resolvedLegacy(null,a,
+            DamageRequest.SourceCategory.DOT,"generic-poison",8)
+            .periodicProvenance(PeriodicEffectProvenance.player(UUID.randomUUID())).build()).isPvpSafetyBlocked(),
+            "logout cannot erase player provenance to bypass safety");
+        require(h.server().getResolvedDamageTransaction().apply(DamageRequest.resolvedLegacy(null,a,
+            DamageRequest.SourceCategory.ENVIRONMENT,"pvp-test-environment",2).build()).getActualDamage()==2,
+            "environmental damage still works outside Wilderness");
+        a.setLocation(Point.location(180,425),false);
+        require(h.server().getResolvedDamageTransaction().apply(DamageRequest.resolvedLegacy(null,a,
+            DamageRequest.SourceCategory.DOT,"generic-poison",2)
+            .periodicProvenance(PeriodicEffectProvenance.player(UUID.randomUUID())).build()).getActualDamage()==2,
+            "owner logout preserves the PvE poison lifetime while the victim remains in Wilderness");
     }
 
     private static void clericBlessings(CurrentCombatHarness h) throws Exception {

@@ -7,7 +7,8 @@ public final class DamageResult {
   public enum Status {
     OBSERVED_CURRENT_PATH,
     APPLIED_CURRENT_PATH,
-    BLOCKED_NON_CORPOREAL
+    BLOCKED_NON_CORPOREAL,
+    BLOCKED_PVP_SAFETY
   }
 
   private final Status status;
@@ -37,14 +38,14 @@ public final class DamageResult {
     this.hitsAfter = hitsAfter;
     actualDamage = hitsBefore - hitsAfter;
     legacyDamageDealt =
-        status == Status.BLOCKED_NON_CORPOREAL
+        (status == Status.BLOCKED_NON_CORPOREAL || status == Status.BLOCKED_PVP_SAFETY)
             ? 0
             : Math.min(request.getResolvedDamage(), hitsBefore);
     overkillDamage =
-        status == Status.BLOCKED_NON_CORPOREAL
+        (status == Status.BLOCKED_NON_CORPOREAL || status == Status.BLOCKED_PVP_SAFETY)
             ? 0
             : Math.max(0, request.getResolvedDamage() - hitsBefore);
-    targetTerminal = hitsAfter == 0;
+    targetTerminal = hitsAfter == 0 && status != Status.BLOCKED_PVP_SAFETY;
   }
 
   public static DamageResult observedCurrentPath(
@@ -61,12 +62,20 @@ public final class DamageResult {
     return new DamageResult(Status.BLOCKED_NON_CORPOREAL, request, hits, hits);
   }
 
+  public static DamageResult blockedPvpSafety(DamageRequest request, int hits) {
+    return new DamageResult(Status.BLOCKED_PVP_SAFETY, request, hits, hits);
+  }
+
+  public boolean isPvpSafetyBlocked() {
+    return status == Status.BLOCKED_PVP_SAFETY;
+  }
+
   public boolean isNonCorporealBlocked() {
     return status == Status.BLOCKED_NON_CORPOREAL;
   }
 
   public boolean isAttackSuppressed() {
-    return request.isAttackSuppressed() || isNonCorporealBlocked();
+    return request.isAttackSuppressed() || isNonCorporealBlocked() || isPvpSafetyBlocked();
   }
 
   public boolean isCritical() {

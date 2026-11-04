@@ -85,7 +85,9 @@ public class PoisonEvent extends GameTickEvent {
 	private int settleTypedPoisonDamage(final int requestedDamage) {
         final Mob source = resolveLiveSource();
 		int resolvedDamage = requestedDamage;
-		if (mob.isPlayer()&&!com.openrsc.server.model.combat.NonCorporealState.blocks(source,mob,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)) {
+		if (mob.isPlayer()
+                && !com.openrsc.server.model.combat.PlayerCombatSafety.blocks(source,mob,provenance)
+                && !com.openrsc.server.model.combat.NonCorporealState.blocks(source,mob,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)) {
 			final Player player = (Player) mob;
 			player.setAttribute("last_damage_taken_at", System.currentTimeMillis());
 			resolvedDamage = player.applyGoblinTenacity(resolvedDamage,hasCombatProvenance());

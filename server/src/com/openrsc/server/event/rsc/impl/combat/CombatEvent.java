@@ -263,8 +263,10 @@ public class CombatEvent extends GameTickEvent {
 
 			if(!com.openrsc.server.model.combat.NonCorporealState.blocks(hitter,target,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)) applyWeaponPoison(hitter, target, damage);
       final DamageResult primarySettlement=inflictDamage(hitter, target, damage, attackSuppressed, false, primaryRoll);
-        final boolean effectsSuppressed=attackSuppressed;
-        if(primarySettlement!=null&&primarySettlement.isNonCorporealBlocked())damage=0;
+        final boolean effectsSuppressed=attackSuppressed
+            || primarySettlement!=null && primarySettlement.isPvpSafetyBlocked();
+        if(primarySettlement!=null && (primarySettlement.isNonCorporealBlocked()
+            || primarySettlement.isPvpSafetyBlocked())) damage=0;
 			if (com.openrsc.server.content.monsterslayer.NagaCombat.canOffhand(hitter, target, effectsSuppressed)) {
         com.openrsc.server.model.combat.AttackRoll offhandRoll =
             CombatFormula.rollOffhandMeleeDamage(hitter, target);
@@ -424,6 +426,7 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private void applyWeaponPoison(final Mob hitter, final Mob target, final int damage) {
+        if (com.openrsc.server.model.combat.PlayerCombatSafety.blocks(hitter,target)) return;
 		if (!hitter.isPlayer()) {
 			return;
 		}
@@ -644,6 +647,7 @@ public class CombatEvent extends GameTickEvent {
             .build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
+        if (damageResult.isPvpSafetyBlocked()) return damageResult;
 		final int damageDealt = damageResult.getLegacyDamageDealt();
 		damage = damageResult.getRequest().getResolvedDamage();
 		if (!offhand && !attackSuppressed) com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipHit(
