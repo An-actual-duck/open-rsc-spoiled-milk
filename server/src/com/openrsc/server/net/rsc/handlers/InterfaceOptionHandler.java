@@ -187,6 +187,11 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 				player.message("There are no eligible " + (definition.isHostile()?"enemies":"party members") + " for "
 					+ definition.getDisplayName());
 				break;
+            case TELEPORT_RESTRICTED:
+                player.message("You cannot cast " + definition.getDisplayName()
+                    + " from a teleport-restricted area or while carrying Ana.");
+                player.message("Teleport spells are blocked at Wilderness level 20 and above.");
+                break;
 			case INSUFFICIENT_SIGILS:
 				player.message("You do not have the blessed sigils required to cast "
 					+ definition.getDisplayName());

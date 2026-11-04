@@ -136,3 +136,37 @@ The private controls can set either direction of one-way friendship with Blue,
 without requiring saved bot accounts or a second client. Select all-enemy mode
 to isolate friendship from party/clan membership. Clearing test friendships
 restores both lists. The private map and public deployment are unchanged.
+
+Unify teleport restrictions
+
+Parties remain capped at five total players (including the leader), and Cleric
+support still targets only the party. Unify/Greater Unify share the ordinary
+spell teleport cutoff: Wilderness level 20 and above. The caster and every
+recipient are checked independently; a shallow caster cannot extract a deeper
+party member. Existing blocked teleport regions and Ana-in-a-barrel restrictions
+also apply. Restricted recipients stay in place; no sigils are spent if nobody
+can be moved. Other party blessings remain available in deep Wilderness.
+
+Active duels block Unify and ordinary magical/item teleports. Item packets check
+before reset code could clear duel state; item plugins also guard their own
+entry/commit points. Charged spell teleports recheck before completing. Forced
+respawn/return movement is not governed by the voluntary spell policy.
+
+Traditional dueling remains disabled in MyWorld. No arena region exists yet.
+When the future arena is implemented, its authoritative arena membership must
+also feed TeleportRestrictions.isDuelBlocked for the entire visit, including
+pre-fight/post-fight states; entry/exit/return movement must remain controlled
+by the arena lifecycle. Do not infer arena membership from combat alone.
+
+Teleport item audit: the maintained Law Bangles, Agility cape, Crafting cape and
+Fishing cape use Teleport item commands and are covered at the packet and plugin
+boundaries. The unused legacy TeleportStone plugin refers to ID 2107, which is
+currently a Law robe skirt without an item command; it is not enabled or reused.
+
+Restriction validation: 77 production-runtime boundary/duel/quest-item and
+spell/item teleport checks pass, along with the existing 30 native teleport
+checks, 162 client menu checks, 40 PvP scenarios, 149 combat scenarios and 387
+Cleric runtime assertions. Cast-transaction, layered teleport destination,
+protocol/layout checks and changed-code static analysis pass. The private
+server was refreshed after logout using a verified private-only SQLite backup;
+the client binary and public deployment were not changed.

@@ -36,6 +36,10 @@ for level in [0,2,-3]:
  manifest['terrainSectors'].append({'worldSpace':'global','level':level,'sectorX':9,'sectorY':9,'encoding':'rle-layered-sector-v1','path':name,'sha256':digest})
  name=f'placements-{level}.json';digest=write(name,{'schemaVersion':5,'encoding':'layered-world-placements-v5','worldSpace':'global','level':level,'npcs':[],'groundItems':[],'scenery':scenery,'boundaries':[]})
  manifest['placementSets'].append({'id':f'placements-{level}'.replace('--','-minus-'),'worldSpace':'global','level':level,'encoding':'layered-world-placements-v5','path':name,'sha256':digest})
+# Open test-only surface terrain across Wilderness levels 19/20 for teleport eligibility.
+name='terrain-wilderness.json'
+digest=write(name,{'schemaVersion':1,'encoding':'rle-layered-sector-v1','size':48,'tileOrder':'x-major-y-minor','runs':[{'count':48*48,'tile':base}]})
+manifest['terrainSectors'].append({'worldSpace':'global','level':0,'sectorX':4,'sectorY':6,'encoding':'rle-layered-sector-v1','path':name,'sha256':digest})
 digest=write('manifest.json',manifest);config=(root/'server/myworld.conf').read_text()
 for key,value in {'layered_native_terrain_package_path':str(package),'layered_native_terrain_manifest_sha256':digest,'layered_native_world_runtime_profile':'native-replacement','want_discord_bot':'false'}.items():
  config,count=re.subn(r'(?m)^([ \t]*)'+key+r':.*$',lambda m:f'{m[1]}{key}: {value}',config)

@@ -17,6 +17,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.util.rsc.TeleportRestrictions;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +39,10 @@ public final class ClericSupportCasting {
 			return CastResult.notImplemented();
 		}
 
+        if (isUnify(definition) && TeleportRestrictions.isBlocked(caster)) {
+            return new CastResult(Outcome.TELEPORT_RESTRICTED, 0);
+        }
+
 		if (definition.isHostile()) return ClericHostileRuntime.cast(caster, definition);
 
 		final Party party = caster.getParty();
@@ -54,7 +59,7 @@ public final class ClericSupportCasting {
 				caster.getCarriedItems().getEquipment().getHolyPower()) : 0;
 		for (Player target : targets) {
 			final ClericCastTransaction.PreparedApplication application;
-            if (definition.getId() == ClericSpellId.UNIFY || definition.getId() == ClericSpellId.GREATER_UNIFY) {
+            if (isUnify(definition)) {
                 application = prepareUnify(target, caster, definition);
             } else {
                 application = ClericTimedEffectRuntime.prepare(caster,target,definition,effectRank);
@@ -107,6 +112,11 @@ public final class ClericSupportCasting {
 
     private static boolean isImplemented(final ClericSpellId id) { return id != null && id.isActive(); }
 
+    private static boolean isUnify(ClericSpellDefinition definition) {
+        return definition.getId() == ClericSpellId.UNIFY
+            || definition.getId() == ClericSpellId.GREATER_UNIFY;
+    }
+
 	private static List<Player> snapshotPartyPlayers(Party party) {
 		final List<PartyPlayer> members = new ArrayList<PartyPlayer>(party.getPlayers());
 		final List<Player> players = new ArrayList<Player>(members.size());
@@ -120,6 +130,9 @@ public final class ClericSupportCasting {
 
 	private static ClericCastTransaction.PreparedApplication prepareUnify(
 			final Player recipient, final Player caster, final ClericSpellDefinition definition) {
+        if (TeleportRestrictions.isBlocked(recipient)) {
+            return IneffectiveApplication.INSTANCE;
+        }
 		final Point start = recipient.getLocation();
 		final Point destination = caster.getLocation();
 		final List<ClericUnifyStepPlanner.Step> planned = ClericUnifyStepPlanner.plan(
@@ -141,6 +154,9 @@ public final class ClericSupportCasting {
 		}
         final ClericUnifyStepPlanner.Step last = planned.get(planned.size() - 1);
         final Point landing = Point.location(last.getX(), last.getY());
+        if (TeleportRestrictions.isLocationBlocked(landing)) {
+            return IneffectiveApplication.INSTANCE;
+        }
         final WorldLocation destinationLocation = recipient.getWorld().getRegionManager()
             .fromRuntimeCompatibilityPoint(landing, recipient.getWorldLocation(), true);
         return new UnifyApplication(recipient, landing, destinationLocation);
@@ -271,6 +287,7 @@ public final class ClericSupportCasting {
 		SUCCESS,
 		NO_USEFUL_RECIPIENT,
 		INSUFFICIENT_SIGILS,
+		TELEPORT_RESTRICTED,
 		NOT_IMPLEMENTED
 	}
 
