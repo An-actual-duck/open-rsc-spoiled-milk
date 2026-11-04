@@ -1,10 +1,16 @@
 package com.openrsc.server.combat;
 
 import com.openrsc.server.Server;
-import com.openrsc.server.database.*;
-import com.openrsc.server.database.impl.mysql.*;
+import com.openrsc.server.database.DatabaseType;
+import com.openrsc.server.database.JDBCDatabaseConnection;
+import com.openrsc.server.database.impl.mysql.MySqlGameDatabase;
+import com.openrsc.server.database.impl.mysql.MySqlGameLogger;
 import java.lang.reflect.Field;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /** Real production PK logger against an isolated in-memory SQLite database. */
 final class PvpSqliteLog implements AutoCloseable {

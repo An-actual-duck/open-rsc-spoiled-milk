@@ -52,7 +52,7 @@ public final class ClericHostileFixture {
       h.world().getRegionManager().preflightNativeLayeredPlacements();
       h.world().getRegionManager().populateNativeLayeredPlacements();
       Player c = h.player("hostilecleric", 450, 450);
-      c.setClientVersion(10056);
+      c.setClientVersion(com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION);
       c.getClientLimitations().maxItemId = 65535;
       h.recordOutgoingPackets(c);
       ClericBlessingsFixture.skill(c, Skill.HITS, 100, 100);
@@ -258,11 +258,11 @@ public final class ClericHostileFixture {
           ((java.util.Map<?, ?>) origins.get(retainedState)).isEmpty(),
           "expired state retains no caster references");
       c.setLoggedIn(true);
-      c.setClientVersion(10056);
+      c.setClientVersion(com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION);
       // A separate solo area makes all no-target outcomes observable at the real packet resource
       // boundary.
       Player solo = h.player("admissioncleric", 490, 490);
-      solo.setClientVersion(10056);
+      solo.setClientVersion(com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION);
       solo.getClientLimitations().maxItemId = 65535;
       h.recordOutgoingPackets(solo);
       ClericBlessingsFixture.skill(solo, Skill.HITS, 100, 100);

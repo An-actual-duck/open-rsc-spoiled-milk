@@ -68,14 +68,14 @@ public final class ClericProjectileFixture {
               ItemId.WOOL_WIZARD_HAT.id(),
               10);
       Player c = h.player("projectilecleric", 450, 449);
-      c.setClientVersion(10056);
+      c.setClientVersion(com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION);
       c.getClientLimitations().maxItemId = 65535;
       ClericBlessingsFixture.skill(c, Skill.HITS, 1000, 1000);
       ClericBlessingsFixture.skill(c, Skill.PRAYER, 160, 99);
       h.recordOutgoingPackets(c);
       for (int style = 0; style < 3; style++) {
         Player p = h.player("holylaunch" + style, 450, 450);
-        p.setClientVersion(10056);
+        p.setClientVersion(com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION);
         p.getClientLimitations().maxItemId = 65535;
         h.recordOutgoingPackets(p);
         ClericBlessingsFixture.skill(p, Skill.HITS, 1000, 1000);
@@ -185,7 +185,7 @@ public final class ClericProjectileFixture {
       Player poisoned = h.player("phasepoisoned", 492, 491);
       SharedAttackFoundationFixture.healthy(poisoner);
       SharedAttackFoundationFixture.healthy(poisoned);
-      poisoned.setClientVersion(10056);
+      poisoned.setClientVersion(com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION);
       h.recordOutgoingPackets(poisoned);
       NonCorporealState.tryEnter(poisoner, phaseOwner, 100, 3, () -> true);
       poisoned.applyPoison(100, 100, poisoner);

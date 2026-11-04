@@ -36,7 +36,7 @@ public final class ClericConsistencyBuffFixture {
       Player caster = h.player("consistencycaster", 450, 450);
       Player ally = h.player("consistencyally", 451, 450);
       for (Player p : new Player[] {caster, ally}) {
-        p.setClientVersion(10056);
+        p.setClientVersion(com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION);
         p.getClientLimitations().maxItemId = 65535;
         h.recordOutgoingPackets(p);
         ClericBlessingsFixture.skill(p, Skill.HITS, 100, 1000);

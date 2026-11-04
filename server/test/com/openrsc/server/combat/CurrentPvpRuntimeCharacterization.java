@@ -1,24 +1,42 @@
 package com.openrsc.server.combat;
 
-import com.openrsc.server.constants.*;
-import com.openrsc.server.content.*;
-import com.openrsc.server.content.cleric.*;
-import com.openrsc.server.content.cleric.effect.*;
-import com.openrsc.server.content.cleric.runtime.*;
-import com.openrsc.server.content.clan.Clan;
+import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.Spells;
+import com.openrsc.server.content.Slow;
+import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.cleric.ClericResourceCost;
+import com.openrsc.server.content.cleric.ClericSpellCatalog;
+import com.openrsc.server.content.cleric.ClericSpellDefinition;
+import com.openrsc.server.content.cleric.ClericSpellId;
+import com.openrsc.server.content.cleric.effect.ClericEffectFamily;
+import com.openrsc.server.content.cleric.runtime.ClericHostileRuntime;
+import com.openrsc.server.content.cleric.runtime.ClericSupportCasting;
 import com.openrsc.server.event.rsc.GameTickEvent;
-import com.openrsc.server.event.rsc.impl.projectile.*;
+import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
+import com.openrsc.server.event.rsc.impl.projectile.ThrowingEvent;
 import com.openrsc.server.model.Point;
-import com.openrsc.server.model.combat.*;
+import com.openrsc.server.model.combat.AttackRoll;
+import com.openrsc.server.model.combat.PlayerPvpCombat;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.container.Item;
-import com.openrsc.server.model.entity.*;
+import com.openrsc.server.model.entity.KillType;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.handlers.AttackHandler;
 import com.openrsc.server.net.rsc.struct.incoming.TargetMobStruct;
-import java.util.*;
-import static com.openrsc.server.combat.CurrentPvpFoundationCharacterization.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import static com.openrsc.server.combat.CurrentPvpFoundationCharacterization.areaPlayers;
+import static com.openrsc.server.combat.CurrentPvpFoundationCharacterization.checkCase;
+import static com.openrsc.server.combat.CurrentPvpFoundationCharacterization.player;
+import static com.openrsc.server.combat.CurrentPvpFoundationCharacterization.require;
 
 /** Real packet requests, volleys, resource receipts and player effect lifetimes. */
 final class CurrentPvpRuntimeCharacterization {

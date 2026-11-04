@@ -1,32 +1,49 @@
+import org.json.JSONArray;
+import org.json.JSONObject;
 import com.openrsc.server.Server;
 import com.openrsc.server.config.ServerConfigurationLoader;
-import com.openrsc.server.constants.*;
+import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.Spells;
 import com.openrsc.server.content.clan.Clan;
 import com.openrsc.server.content.party.Party;
-import com.openrsc.server.content.cleric.*;
+import com.openrsc.server.content.cleric.ClericResourceCost;
+import com.openrsc.server.content.cleric.ClericSpellCatalog;
+import com.openrsc.server.content.cleric.ClericSpellDefinition;
 import com.openrsc.server.database.DatabaseType;
-import com.openrsc.server.event.rsc.*;
+import com.openrsc.server.event.rsc.DuplicationStrategy;
+import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.PlayerAppearance;
-import com.openrsc.server.model.container.*;
+import com.openrsc.server.model.container.Bank;
+import com.openrsc.server.model.container.Equipment;
+import com.openrsc.server.model.container.Inventory;
+import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.Mob;
-import com.openrsc.server.net.rsc.*;
+import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.net.rsc.ClientLimitations;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.handlers.AttackHandler;
 import com.openrsc.server.net.rsc.struct.incoming.TargetMobStruct;
 import com.openrsc.server.util.rsc.DataConversions;
 import java.lang.reflect.Field;
-import java.nio.file.*;
-import java.util.*;
-import org.json.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 
 /** Local-only controller. Opponents are registered Players using normal game combat. */
 public final class PrivatePvpServer {
     static Path root; static Server server; static Player human;
     static final List<Player> bots=new ArrayList<>();
     static String preset="melee",style="melee",lastStatus="",message="Ready to log in";
-    static boolean active,validated;static long serial;static int x=180,y=200;
+    static boolean active,validated,failed;static long serial;static int x=180,y=200,edgeX=180;
     static final String BOT="private_pvp_opponent";
     public static void main(String[] args)throws Exception {
         root=Paths.get("..").toRealPath();
@@ -35,9 +52,9 @@ public final class PrivatePvpServer {
         com.openrsc.server.ServerConfiguration cfg=loaded.getLegacyConfiguration();
         if(cfg.DB_TYPE!=DatabaseType.SQLITE || !cfg.DB_NAME.equals("myworld_dev") || loaded.getProcessNetwork().getServerPort()!=43635 || !cfg.SERVER_BIND_ADDRESS.equals("127.0.0.1") || cfg.WANT_FEATURE_WEBSOCKETS || !cfg.WANT_PVP)throw new IllegalStateException("Private endpoint refused");
         if(cfg.WANT_DISCORD_BOT || cfg.WANT_DISCORD_GENERAL_LOGGING || cfg.WANT_DISCORD_AUCTION_UPDATES || cfg.WANT_DISCORD_ITEM_SHOWCASE || cfg.WANT_DISCORD_MONITORING_UPDATES)throw new IllegalStateException("External services must be disabled");
-        server=Server.startServer("myworld.conf");findArena();
+        server=Server.startServer("myworld.conf");
         server.getGameEventHandler().add(new GameTickEvent(server.getWorld(),null,1,"Private PvP control",DuplicationStrategy.ONE_PER_SERVER) {
-            public void run(){try{tick();}catch(Exception e){e.printStackTrace();message=e.toString();try{writeStatus();}catch(Exception ignored){}}}
+            public void run(){try{PrivatePvpServer.tick();}catch(Exception e){failed=true;e.printStackTrace();message=e.toString();try{writeStatus();}catch(Exception ignored){}}}
         });
         boolean stopping=false;
         while(server.isRunning()) {
@@ -46,9 +63,18 @@ public final class PrivatePvpServer {
         }
         System.exit(0);
     }
-    static boolean clear(int px,int py) {
-        com.openrsc.server.model.world.region.TileValue tile=server.getWorld().getTile(Point.location(px,py));
-        return (tile.traversalMask&255)==0 && (tile.overlay&255)!=10 && Point.location(px,py).inWilderness();
+    static boolean tileClear(int px,int py) {
+        com.openrsc.server.model.world.region.TileValue tile=server.getWorld().getTile(com.openrsc.server.model.world.coordinate.WorldLocation.global(new com.openrsc.server.model.world.coordinate.WorldCoordinate(px,py,0)));
+        return (tile.traversalMask&255)==0 && (tile.overlay&255)!=10;
+    }
+    static boolean clear(int px,int py) { return Point.location(px,py).inWilderness() && tileClear(px,py); }
+    static void findEdge() {
+        for(int candidate=150;candidate<220;candidate++) {
+            boolean ok=true;
+            for(int dx=0;dx<4;dx++)for(int py=425;py<=428;py++)ok &= tileClear(candidate+dx,py);
+            if(ok){edgeX=candidate;return;}
+        }
+        throw new IllegalStateException("No clear Wilderness edge");
     }
     static void findArena() {
         for(int radius=0;radius<30;radius++)for(int dx=-radius;dx<=radius;dx++)for(int dy=-radius;dy<=radius;dy++) {
@@ -59,7 +85,8 @@ public final class PrivatePvpServer {
         throw new IllegalStateException("No clear Wilderness arena");
     }
     static void tick()throws Exception {
-        if(!validated){validateKits();validated=true;}
+        if(failed)return;
+        if(!validated){findArena();findEdge();validateKits();validated=true;}
         Player logged=null;
         for(Player p:server.getWorld().getPlayers())if(p.isLoggedIn()&&!p.getAttribute(BOT,false)){logged=p;break;}
         if(logged!=human) {
@@ -96,11 +123,11 @@ public final class PrivatePvpServer {
         else if(action.startsWith("attack-")) {
             style=action.substring(7);pause();if(human!=null){for(Player bot:bots)configureBot(bot,style);active=true;message="Opponents attacking with "+style+".";}
         }
-        else if(action.equals("safe-opponent") && !bots.isEmpty()) {bots.get(0).teleport(180,427,false);message="Pvp Red moved outside Wilderness. Queued hits must stop.";}
-        else if(action.equals("safe-self") && human!=null){human.teleport(181,427,false);message="You moved outside Wilderness. Player-owned damage must stop.";}
-        else if(action.equals("edge") && human!=null){pause();human.teleport(180,426,false);for(int i=0;i<bots.size();i++)bots.get(i).teleport(181+i,426,false);message="Wilderness edge: y426 is Wilderness; y427 is safe.";}
+        else if(action.equals("safe-opponent") && !bots.isEmpty()) {bots.get(0).teleport(edgeX,427,false);message="Pvp Red moved outside Wilderness. Queued hits must stop.";}
+        else if(action.equals("safe-self") && human!=null){human.teleport(edgeX+1,427,false);message="You moved outside Wilderness. Player-owned damage must stop.";}
+        else if(action.equals("edge") && human!=null){pause();human.teleport(edgeX,426,false);for(int i=0;i<bots.size();i++)bots.get(i).teleport(edgeX+1+i,426,false);message="Wilderness edge: y426 is Wilderness; y427 is safe.";}
         else if(action.equals("allies") && human!=null && bots.size()==3){Party party=new Party(server.getWorld());human.setParty(party);bots.get(1).setParty(party);Clan clan=new Clan(server.getWorld());clan.setClanID(9876);human.setClan(clan);bots.get(2).setClan(clan);message="Pvp Blue is a party ally; Pvp Gold is a clan ally. Only Pvp Red should take collateral damage.";}
-        else if(action.equals("no-allies") && human!=null){human.setParty(null);human.setClan(null);for(Player bot:bots){bot.setParty(null);bot.setClan(null);}message="All opponents are enemies again.";}
+        else if(action.equals("no-allies") && human!=null){human.setParty(null);human.setClan(null);groupOpponents();message="All opponents are enemies again.";}
     }
     static void stats(Player p) {
         for(int skill=0;skill<server.getConstants().getSkills().getSkillsCount();skill++)p.getSkills().setTemporaryLevelAndMaxStat(skill,99,99,false);
@@ -145,9 +172,14 @@ public final class PrivatePvpServer {
         else {equip(human,ItemId.RUNE_CHAIN_MAIL_BODY.id(),1);equip(human,ItemId.RUNE_PLATE_MAIL_LEGS.id(),1);equip(human,ItemId.TIN_SCYTHE.id(),1);add(human,3411,1);}
         add(human,ItemId.LOBSTER.id(),10);
         bot("Pvp Red",x+1,y,1);bot("Pvp Blue",x+1,y+1,2);bot("Pvp Gold",x,y+1,3);
+        groupOpponents();
         for(Player p:bots)configureBot(p,"melee");
         ActionSender.sendInventory(human);ActionSender.sendEquipment(human);ActionSender.sendEquipmentStats(human);ActionSender.sendStats(human);ActionSender.sendFatigue(human);
         message="Ready: "+preset+". Opponents are passive; use browser controls to start their attacks.";human.message(message);
+    }
+    static void groupOpponents() {
+        Party party=new Party(server.getWorld());Clan clan=new Clan(server.getWorld());clan.setClanID(9875);
+        for(Player bot:bots){bot.setParty(party);bot.setClan(clan);}
     }
     static void validateKits()throws Exception {
         Player probe=bot("Pvp Preview",x,y,0);bots.remove(probe);human=probe;JSONArray checked=new JSONArray();
@@ -163,7 +195,7 @@ public final class PrivatePvpServer {
         Files.write(root.resolve("test-support/kit-validation.json"),checked.toString(2).getBytes("UTF-8"));
     }
     static void writeStatus()throws Exception {
-        JSONObject status=new JSONObject().put("ready",true).put("preset",preset).put("active",active).put("message",message).put("online",human==null?0:1).put("x",x).put("y",y);
+        JSONObject status=new JSONObject().put("ready",validated).put("failed",failed).put("preset",preset).put("active",active).put("message",message).put("online",human==null?0:1).put("x",x).put("y",y);
         JSONArray opponents=new JSONArray();for(Player p:bots)opponents.put(new JSONObject().put("name",p.getUsername()).put("hp",p.getLevel(Skill.HITS.id())).put("x",p.getX()).put("y",p.getY()));status.put("opponents",opponents);
         String body=status.toString();if(!body.equals(lastStatus)){Files.write(root.resolve("test-support/status.json"),body.getBytes("UTF-8"));lastStatus=body;}
     }

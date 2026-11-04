@@ -70,7 +70,7 @@ def require_regex(path: Path, pattern: str, description: str) -> None:
 def require_config_false(key: str) -> None:
     text = read(MYWORLD_CONF)
     if not re.search(rf"^\s*{re.escape(key)}:\s*false\b", text, re.MULTILINE):
-        fail(f"server/myworld.conf must keep {key}: false for the PvM-only world")
+        fail(f"server/myworld.conf must keep {key}: false for the maintained MyWorld profile")
 
 
 def validate_no_external_drop_items_calls() -> None:
@@ -99,7 +99,9 @@ def validate_killed_by_call_sites_are_reviewed() -> None:
 
 
 def main() -> None:
-    require_config_false("want_pvp")
+    for profile in (MYWORLD_CONF, SERVER / "myworld-host.conf"):
+        require_regex(profile, r"(?:^|\n)[ \t]*want_pvp:[ \t]*true\b", "Wilderness PvP is enabled in both maintained profiles")
+    require_contains(SERVER / "src/com/openrsc/server/model/combat/PlayerCombatSafety.java", ".inWilderness()")
     require_config_false("want_openpk_points")
     require_config_false("want_pk_bots")
     require_config_false("want_openpk_presets")
