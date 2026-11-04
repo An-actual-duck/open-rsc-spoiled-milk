@@ -877,6 +877,12 @@ public class PvmMeleeEvent extends GameTickEvent {
 			DivineGrace.apply(player,dealt);
 			player.applyBloodAmuletLifesteal(dealt);
 			Summoning.applySummonLifesteal(player,target,dealt);
+            if (!CombatEffectUtil.isPlayerOwnedPvpSplashTarget(player,primary,target)) {
+                count++;
+                continue;
+            }
+            if (com.openrsc.server.model.combat.NonCorporealState.blocks(player,target,
+                    com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)) damage=0;
 			applyBearMaulSecondHit(player,target,damage);
 			if(!getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 				applyDragonWeaponBreathDamage(player,target);

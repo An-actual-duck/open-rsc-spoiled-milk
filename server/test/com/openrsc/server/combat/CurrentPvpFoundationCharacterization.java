@@ -5,6 +5,13 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.event.rsc.impl.projectile.ThrowingEvent;
 import com.openrsc.server.net.rsc.handlers.SpellHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
+import com.openrsc.server.content.party.PartyPlayer;
+import com.openrsc.server.content.party.PartyRank;
+import com.openrsc.server.content.cleric.*;
+import com.openrsc.server.content.cleric.effect.*;
+import com.openrsc.server.content.cleric.runtime.*;
+import com.openrsc.server.model.container.Item;
 import java.util.UUID;
 import com.openrsc.server.content.Slow;
 import com.openrsc.server.content.clan.Clan;
@@ -50,9 +57,10 @@ public final class CurrentPvpFoundationCharacterization {
             checkCase(h,"scythe_cleave_hits_only_enemy_players", CurrentPvpFoundationCharacterization::scytheArea, failures);
             checkCase(h,"iban_splash_hits_only_enemy_players", CurrentPvpFoundationCharacterization::ibanArea, failures);
             checkCase(h,"shuriken_keeps_three_legal_player_targets", CurrentPvpFoundationCharacterization::shurikenArea, failures);
+            checkCase(h,"cleric_party_blessing_keeps_pve_values_in_wilderness", CurrentPvpFoundationCharacterization::clericBlessings, failures);
         }
         if (!failures.isEmpty()) throw new AssertionError("PvP foundation failures: " + failures);
-        System.out.println("PASS: 12 PvP foundation scenarios");
+        System.out.println("PASS: 13 PvP foundation scenarios");
     }
 
     private interface Scenario { void run(CurrentCombatHarness h) throws Exception; }
@@ -223,6 +231,51 @@ public final class CurrentPvpFoundationCharacterization {
         List<com.openrsc.server.model.entity.Mob> targets=(List<com.openrsc.server.model.entity.Mob>)method.invoke(event,p[0],ItemId.TIN_SHURIKEN.id(),6);
         require(targets.size()==3 && targets.contains(p[1]) && targets.contains(p[2]) && targets.contains(extra),"three distinct eligible player targets use the normal shuriken cap");
         require(!targets.contains(p[3])&&!targets.contains(p[4]),"shuriken selection excludes party and clan");
+    }
+
+    private static void clericBlessings(CurrentCombatHarness h) throws Exception {
+        Player caster=player(h,"pvp cleric c",180,200,false),recipient=player(h,"pvp cleric r",181,200,false),
+            enemy=player(h,"pvp cleric e",181,201,false);
+        Party party=new Party(h.world());
+        Constructor<PartyPlayer> constructor=PartyPlayer.class.getDeclaredConstructor(String.class);
+        constructor.setAccessible(true);
+        Method reference=PartyPlayer.class.getDeclaredMethod("setPlayerReference",Player.class);
+        reference.setAccessible(true);
+        for(Player p:new Player[]{caster,recipient}) {
+            p.setParty(party);
+            PartyPlayer member=constructor.newInstance(p.getUsername());reference.invoke(member,p);
+            member.setRank(p==caster?PartyRank.LEADER:PartyRank.NORMAL);party.getPlayers().add(member);
+            if(p==caster)party.setLeader(member);
+        }
+        caster.getSkills().setTemporaryLevelAndMaxStat(Skill.PRAYER.id(),163,163,false);
+        caster.getClientLimitations().maxItemId=65535;
+        for(ClericSpellId id:new ClericSpellId[]{ClericSpellId.ZAMORAK_WRATH,ClericSpellId.GUTHIX_VENGEANCE}) {
+            ClericSpellDefinition spell=ClericSpellCatalog.get(id);
+            for(ClericResourceCost cost:spell.getResourceCosts())
+                require(caster.getCarriedItems().getInventory().add(new Item(cost.getItemId(),cost.getCount())),"fixture funds sigil "+cost.getItemId());
+            ClericSupportCasting.CastResult result=ClericSupportCasting.cast(caster,spell);
+            require(result.getOutcome()==ClericSupportCasting.Outcome.SUCCESS
+                && result.getAffectedRecipientCount()==1,"real Wilderness cast affects only the party ally: "+id+" result="+result.getOutcome()+" count="+result.getAffectedRecipientCount()+" power="+caster.getCarriedItems().getEquipment().getHolyPower());
+            for(ClericResourceCost cost:spell.getResourceCosts())
+                require(caster.getCarriedItems().getInventory().countId(cost.getItemId())==0,"successful cast consumes exact sigil vector");
+        }
+        require(ClericTimedEffectRuntime.blessing(recipient,ClericEffectFamily.ZAMORAK_BLESSING).getPower()==6,
+            "holy-power thresholds retain PvE P6");
+        require(ClericDirectCombatRuntime.maximum(recipient,enemy,20)==23,"P6 maximum bonus remains 15% in PvP");
+        require(ClericDirectCombatRuntime.beforeDirectDamage(recipient,enemy,20).getDamage()==21,
+            "P6 damage bonus keeps PvE fractional carry");
+        recipient.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),40,100,false);
+        require(ClericDirectCombatRuntime.afterExistingLifesteal(recipient,enemy,10).getRallyHealing()==1,
+            "P6 lifesteal keeps PvE threshold and amount");
+        require(ClericDirectCombatRuntime.afterExistingLifesteal(enemy,recipient,20).getThornsDamage()==2,
+            "P6 thorns keeps PvE 10% reflection against players");
+        require(ClericTimedEffectRuntime.blessing(enemy,ClericEffectFamily.GUTHIX_BLESSING)==null,
+            "nearby enemy receives no party blessing");
+        require(ClericTimedEffectRuntime.blessing(caster,ClericEffectFamily.GUTHIX_BLESSING)==null,
+            "casting retains the existing no-self-buff rule");
+        caster.setParty(null);
+        require(ClericTimedEffectRuntime.blessing(recipient,ClericEffectFamily.GUTHIX_BLESSING)==null,
+            "party departure invalidates the blessing in PvP too");
     }
 
     private static void require(boolean condition,String message) {

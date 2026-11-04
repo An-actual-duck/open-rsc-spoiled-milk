@@ -8,11 +8,12 @@ import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.combat.*;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.ActionSender;
 import java.util.*;
 
-/** NPC-owned hostile god slots. No party, raw-coordinate, or already-in-combat requirement. */
+/** Combatant-owned hostile god slots. No party, raw-coordinate, or already-in-combat requirement. */
 public final class ClericHostileRuntime {
   private static final String KEY = "cleric_hostile_state";
 
@@ -22,7 +23,7 @@ public final class ClericHostileRuntime {
     synchronized (caster) {
       int power = spell.resolveEffectRank(caster.getCarriedItems().getEquipment().getHolyPower());
       ClericEffectRankDefinition<?> definition = ClericEffectCatalog.get(spell.getId(), power);
-      List<Npc> candidates = new ArrayList<Npc>();
+      List<Mob> candidates = new ArrayList<Mob>();
       for (Npc npc : caster.getViewArea().getNpcsInView())
         if (eligible(caster, npc, spell.getRadius())) candidates.add(npc);
       if (candidates.isEmpty()) return result(ClericSupportCasting.Outcome.NO_USEFUL_RECIPIENT, 0);
@@ -37,7 +38,7 @@ public final class ClericHostileRuntime {
                   costs.toArray(new Item[0]),
                   false,
                   () -> {
-                    for (Npc npc : candidates)
+                    for (Mob npc : candidates)
                       synchronized (npc) {
                         if (!eligible(caster, npc, spell.getRadius())) continue;
                         State state = state(npc, true);
@@ -59,11 +60,11 @@ public final class ClericHostileRuntime {
                           state.ensureTick();
                           // Match authentic hostile non-damaging spell retaliation without
                           // replacing an existing fight.
-                          if (!npc.isChasing()
+                          if (npc instanceof Npc && !((Npc)npc).isChasing()
                               && !npc.inCombat()
                               && npc.getCombatState()
                                   != com.openrsc.server.model.states.CombatState.RUNNING)
-                            npc.setChasing(caster);
+                            ((Npc)npc).setChasing(caster);
                         } else state.origins.remove(origin);
                       }
                     return applied[0] > 0;
@@ -80,8 +81,8 @@ public final class ClericHostileRuntime {
   }
 
   private static boolean allIneffective(
-      Player caster, List<Npc> candidates, ClericEffectRankDefinition<?> definition, int radius) {
-    for (Npc npc : candidates)
+      Player caster, List<Mob> candidates, ClericEffectRankDefinition<?> definition, int radius) {
+    for (Mob npc : candidates)
       synchronized (npc) {
         if (!eligible(caster, npc, radius)) continue;
         State state = state(npc, false);
@@ -104,8 +105,8 @@ public final class ClericHostileRuntime {
     return new ClericSupportCasting.CastResult(outcome, count);
   }
 
-  public static boolean eligible(Player caster, Npc npc, int radius) {
-    if (caster == null || npc == null || ClericSupportCasting.isPvpContext(caster)) return false;
+  public static boolean eligible(Player caster, Mob npc, int radius) {
+    if (caster == null || npc == null || !ClericSupportCasting.canUseInCombatContext(caster)) return false;
     if (!CombatEligibility.evaluate(
             CombatEligibilityRequest.builder(
                     caster, npc, CombatEligibilityPhase.COMMIT, CombatStyle.MAGIC)
@@ -132,7 +133,7 @@ public final class ClericHostileRuntime {
             caster.getWorld(), caster.getWorldLocation(), npc.getWorldLocation(), false);
   }
 
-  public static ClericHostileMagnitude effect(Npc npc, ClericEffectFamily family) {
+  public static ClericHostileMagnitude effect(Mob npc, ClericEffectFamily family) {
     synchronized (npc) {
       State state = state(npc, false);
       if (state == null) return null;
@@ -143,12 +144,12 @@ public final class ClericHostileRuntime {
     }
   }
 
-  public static int reduceMagicDefense(Npc npc, int base) {
+  public static int reduceMagicDefense(Mob npc, int base) {
     ClericHostileMagnitude effect = effect(npc, ClericEffectFamily.SARADOMIN_HOSTILE);
     return reducePercent(base, effect == null ? 0 : effect.magicDefenseReduction());
   }
 
-  public static int reduceMaximumMelee(Npc npc, int maximum) {
+  public static int reduceMaximumMelee(Mob npc, int maximum) {
     ClericHostileMagnitude effect = effect(npc, ClericEffectFamily.SARADOMIN_HOSTILE);
     return maximum <= 0
         ? 0
@@ -161,7 +162,7 @@ public final class ClericHostileRuntime {
         base - (int) Math.min(Integer.MAX_VALUE, ((long) Math.max(0, base) * percent + 99) / 100));
   }
 
-  public static int poisonCleanse(Npc npc, int base) {
+  public static int poisonCleanse(Mob npc, int base) {
     ClericHostileMagnitude effect = effect(npc, ClericEffectFamily.GUTHIX_HOSTILE);
     return base <= 0
         ? base
@@ -172,8 +173,8 @@ public final class ClericHostileRuntime {
    * Exactly one family amplification at settlement, without child effects or reflection recursion.
    */
   public static DamageRequest amplify(DamageRequest request) {
-    if (!(request.getTarget() instanceof Npc) || request.getResolvedDamage() <= 0) return request;
-    Npc npc = (Npc) request.getTarget();
+    if (request.getResolvedDamage() <= 0) return request;
+    Mob npc = request.getTarget();
     synchronized (npc) {
       ClericHostileMagnitude effect = effect(npc, ClericEffectFamily.GUTHIX_HOSTILE);
       if (effect == null) return request;
@@ -206,7 +207,7 @@ public final class ClericHostileRuntime {
     }
   }
 
-  private static State state(Npc npc, boolean install) {
+  private static State state(Mob npc, boolean install) {
     synchronized (npc) {
       State state = npc.getAttribute(KEY, null);
       if (state != null && !state.life.matches(npc)) {
@@ -225,13 +226,13 @@ public final class ClericHostileRuntime {
     final Player caster;
     final CombatParticipantSnapshot casterLife, targetLife;
 
-    Source(Player caster, Npc target) {
+    Source(Player caster, Mob target) {
       this.caster = caster;
       casterLife = CombatParticipantSnapshot.capture(caster);
       targetLife = CombatParticipantSnapshot.capture(target);
     }
 
-    boolean current(Npc target, ClericEffectOrigin origin) {
+    boolean current(Mob target, ClericEffectOrigin origin) {
       return casterLife.matches(caster)
           && targetLife.matches(target)
           && caster.getTransientEffectSessionToken() == origin.getCasterSession()
@@ -245,20 +246,23 @@ public final class ClericHostileRuntime {
           && !caster.isRemoved()
           && !caster.isUnregistering()
           && caster.getLevel(Skill.HITS.id()) > 0
-          && !ClericSupportCasting.isPvpContext(caster)
-          && target.getWorld().getNpcByUUID(target.getUUID()) == target
+          && ClericSupportCasting.canUseInCombatContext(caster)
+          && (target instanceof Npc
+              ? target.getWorld().getNpcByUUID(target.getUUID()) == target
+                  && !((Npc)target).isRespawning()
+                  && !com.openrsc.server.content.Summoning.isSummon(target)
+                  && ((Npc)target).getDef().isAttackable()
+              : com.openrsc.server.util.rsc.CombatEffectUtil
+                  .isPlayerOwnedPvpSplashTarget(caster,caster,target))
           && !target.isRemoved()
           && !target.isUnregistering()
-          && !target.isRespawning()
-          && !com.openrsc.server.content.Summoning.isSummon(target)
-          && target.getDef().isAttackable()
           && !target.killed
           && target.getLevel(Skill.HITS.id()) > 0;
     }
   }
 
   private static final class State {
-    final Npc npc;
+    final Mob npc;
     final CombatParticipantSnapshot life;
     final ClericEffectRegistry registry;
     final Map<ClericEffectOrigin, Source> origins =
@@ -266,7 +270,7 @@ public final class ClericHostileRuntime {
     final ClericEffectOriginValidator validator;
     boolean ticking;
 
-    State(Npc npc) {
+    State(Mob npc) {
       this.npc = npc;
       life = CombatParticipantSnapshot.capture(npc);
       registry =

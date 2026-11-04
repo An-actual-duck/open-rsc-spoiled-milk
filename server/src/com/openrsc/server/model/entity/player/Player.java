@@ -3002,7 +3002,8 @@ public final class Player extends Mob {
 
 	@Override
 	public int getMagicDefense() {
-		return applyFireDefenseDebuffToValue(com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.defense(this,getCarriedItems().getEquipment().getMagicDefense(),com.openrsc.server.model.combat.CombatStyle.MAGIC));
+		return com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.reduceMagicDefense(this,
+			applyFireDefenseDebuffToValue(com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.defense(this,getCarriedItems().getEquipment().getMagicDefense(),com.openrsc.server.model.combat.CombatStyle.MAGIC)));
 	}
 
 	@Override

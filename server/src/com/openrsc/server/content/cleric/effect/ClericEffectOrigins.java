@@ -48,7 +48,7 @@ public final class ClericEffectOrigins {
 		if (origin == null || party == null || !recipient.isLoggedIn() || recipient.isRemoved()
                 || !origin.matchesScope(recipient.getWorldLocation().getWorldSpace(),recipient.getWorldLocation().getCoordinate().getLevel())
                 || recipient.getSkills().getLevel(com.openrsc.server.constants.Skill.HITS.id()) <= 0
-                || com.openrsc.server.content.cleric.runtime.ClericSupportCasting.isPvpContext(recipient)
+                || !com.openrsc.server.content.cleric.runtime.ClericSupportCasting.canUseInCombatContext(recipient)
 				|| recipient.getTransientEffectMembershipToken()
 					!= origin.getRecipientMembership()) {
 			return false;
@@ -58,7 +58,7 @@ public final class ClericEffectOrigins {
 			if (caster != null && caster.isLoggedIn() && !caster.isRemoved() && !caster.isUnregistering()
 					&& caster.getParty() == party
                     && caster.getSkills().getLevel(com.openrsc.server.constants.Skill.HITS.id()) > 0
-                    && !com.openrsc.server.content.cleric.runtime.ClericSupportCasting.isPvpContext(caster)
+                    && com.openrsc.server.content.cleric.runtime.ClericSupportCasting.canUseInCombatContext(caster)
                     && caster.getWorldLocation().getWorldSpace().equals(recipient.getWorldLocation().getWorldSpace())
                     && caster.getWorldLocation().getCoordinate().getLevel() == recipient.getWorldLocation().getCoordinate().getLevel()
 					&& caster.getTransientEffectSessionToken() == origin.getCasterSession()

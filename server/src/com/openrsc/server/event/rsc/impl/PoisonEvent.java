@@ -63,7 +63,7 @@ public class PoisonEvent extends GameTickEvent {
 			poisonDrain += com.openrsc.server.content.AntidoteCleansing.bonus(player);
             poisonDrain += com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.poisonCleanse(player);
 		}
-		if(mob instanceof Npc)poisonDrain=com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.poisonCleanse((Npc)mob,poisonDrain);
+		poisonDrain=com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.poisonCleanse(mob,poisonDrain);
 		poisonPower = PoisonPowerReduction.remainingPower(poisonPower, poisonDrain);
 		mob.setPoisonDamage(poisonPower);
         final int actualDamage=damage>0?settleTypedPoisonDamage(damage):0;

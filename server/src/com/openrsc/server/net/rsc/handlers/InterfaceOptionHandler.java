@@ -165,8 +165,8 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			return;
 		}
 
-		if (ClericSupportCasting.isPvpContext(player)) {
-			player.message("Cleric spells cannot be cast in PvP areas");
+		if (!ClericSupportCasting.canUseInCombatContext(player)) {
+			player.message("Cleric spells cannot be cast during a duel");
 			return;
 		}
 		if (player.getSkills().getMaxStat(Skill.PRAYER.id()) < definition.getWorshipLevel()) {

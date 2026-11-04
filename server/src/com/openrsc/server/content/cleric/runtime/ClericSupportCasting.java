@@ -32,7 +32,7 @@ public final class ClericSupportCasting {
 		if (caster == null || definition == null) {
 			throw new IllegalArgumentException("Cleric casting requires a player and definition");
 		}
-        if (caster.getSkills().getLevel(Skill.HITS.id())<=0 || isPvpContext(caster)
+        if (caster.getSkills().getLevel(Skill.HITS.id())<=0 || !canUseInCombatContext(caster)
             || caster.getSkills().getMaxStat(Skill.PRAYER.id()) < definition.getWorshipLevel()) return new CastResult(Outcome.NO_USEFUL_RECIPIENT,0);
         if (!isImplemented(definition.getId())) {
 			return CastResult.notImplemented();
@@ -99,6 +99,12 @@ public final class ClericSupportCasting {
 			|| player.getDuel().isDuelActive();
 	}
 
+	/** MyWorld uses the same Cleric rules in PvE and Wilderness combat. */
+	public static boolean canUseInCombatContext(final Player player) {
+		return !player.getDuel().isDuelActive()
+			&& (player.getConfig().WANT_MYWORLD || !isPvpContext(player));
+	}
+
     private static boolean isImplemented(final ClericSpellId id) { return id != null && id.isActive(); }
 
 	private static List<Player> snapshotPartyPlayers(Party party) {
@@ -162,7 +168,7 @@ public final class ClericSupportCasting {
 				&& candidate.isLoggedIn()
 				&& !candidate.isRemoved()
 				&& !candidate.isUnregistering()
-				&& !isPvpContext(candidate);
+				&& canUseInCombatContext(candidate);
 		}
 
 		@Override
