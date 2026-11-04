@@ -17,7 +17,7 @@ public final class ClericSpellCatalog {
         make(
             ClericSpellId.UNIFY,
             "Unify",
-            "Pulls party allies up to one safe walking step, stopping within two tiles.",
+            "Teleports party allies up to one safe tile closer, stopping within two tiles.",
             ClericAlignment.NEUTRAL,
             3,
             1,
@@ -49,7 +49,7 @@ public final class ClericSpellCatalog {
         make(
             ClericSpellId.GREATER_UNIFY,
             "Greater Unify",
-            "Pulls party allies up to three safe walking steps, stopping within two tiles.",
+            "Teleports party allies up to three safe tiles closer, stopping within two tiles.",
             ClericAlignment.NEUTRAL,
             30,
             2,

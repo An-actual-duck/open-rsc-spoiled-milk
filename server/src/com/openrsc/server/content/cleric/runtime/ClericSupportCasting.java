@@ -139,11 +139,11 @@ public final class ClericSupportCasting {
 		if (planned.isEmpty()) {
 			return IneffectiveApplication.INSTANCE;
 		}
-		final List<Point> steps = new ArrayList<Point>(planned.size());
-		for (ClericUnifyStepPlanner.Step step : planned) {
-			steps.add(Point.location(step.getX(), step.getY()));
-		}
-		return new UnifyApplication(recipient, steps);
+        final ClericUnifyStepPlanner.Step last = planned.get(planned.size() - 1);
+        final Point landing = Point.location(last.getX(), last.getY());
+        final WorldLocation destinationLocation = recipient.getWorld().getRegionManager()
+            .fromRuntimeCompatibilityPoint(landing, recipient.getWorldLocation(), true);
+        return new UnifyApplication(recipient, landing, destinationLocation);
 	}
 
     private static Item[] createCost(ClericSpellDefinition definition) {
@@ -243,12 +243,14 @@ public final class ClericSupportCasting {
 	private static final class UnifyApplication
 			implements ClericCastTransaction.PreparedApplication {
 		private final Player recipient;
-		private final List<Point> steps;
+        private final Point landing;
+        private final WorldLocation destination;
 
-		private UnifyApplication(Player recipient, List<Point> steps) {
-			this.recipient = recipient;
-			this.steps = Collections.unmodifiableList(new ArrayList<Point>(steps));
-		}
+        private UnifyApplication(Player recipient, Point landing, WorldLocation destination) {
+            this.recipient = recipient;
+            this.landing = landing;
+            this.destination = destination;
+        }
 
 		@Override
 		public boolean isUseful() {
@@ -257,12 +259,10 @@ public final class ClericSupportCasting {
 
 		@Override
 		public void commit() {
-			recipient.resetPath();
-			for (Point step : steps) {
-				recipient.face(step);
-				recipient.setLocation(step, false);
-				recipient.stepIncrementActivity();
-			}
+            recipient.face(landing);
+            if (recipient.getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY)
+                recipient.teleportLayered(destination, false);
+            else recipient.teleport(landing.getX(), landing.getY(), false);
 		}
 	}
 

@@ -285,11 +285,11 @@ public final class ClericBlessingsFixture {
       r.teleport(453, 450, false);
       fund(c, ClericSpellCatalog.fromCode(1));
       packet(c, 1);
-      check(r.getX() == 452 && count(c, 3300) == 98, "Unify radius3 actualone step cost2");
+      check(r.getX() == 452 && count(c, 3300) == 98, "Unify radius3 one-tile teleport cost2");
       r.teleport(455, 450, false);
       fund(c, ClericSpellCatalog.fromCode(21));
       packet(c, 21);
-      check(r.getX() == 452 && count(c, 3300) == 97 && count(c, 3308) == 97, "Greater radius5 three steps cost6");
+      check(r.getX() == 452 && count(c, 3300) == 97 && count(c, 3308) == 97, "Greater radius5 three-tile teleport cost6");
       r.teleport(456, 450, false);
       fund(c, ClericSpellCatalog.fromCode(21));
       packet(c, 21);
@@ -324,10 +324,15 @@ public final class ClericBlessingsFixture {
               new com.openrsc.server.model.world.coordinate.WorldCoordinate(451, 450, 0)),
           false);
       cast(c, r, 14);
+      double existingRegenBonus = ClericTimedEffectRuntime.getRespiteSpeedBonus(r);
       h.server().getConfig().USES_PK_MODE = true;
       check(
-          ClericTimedEffectRuntime.getRespiteSpeedBonus(r) == 0,
-          "PvP transition disables existing blessing");
+          existingRegenBonus > 0 && ClericTimedEffectRuntime.getRespiteSpeedBonus(r) == existingRegenBonus,
+          "MyWorld PvP keeps existing blessing values");
+      h.server().getConfig().WANT_MYWORLD = false;
+      check(ClericTimedEffectRuntime.getRespiteSpeedBonus(r) == 0,
+          "legacy worlds retain their PvP blessing exclusion");
+      h.server().getConfig().WANT_MYWORLD = true;
       h.server().getConfig().USES_PK_MODE = false;
       cast(c, r, 14);
       c.setLoggedIn(false);

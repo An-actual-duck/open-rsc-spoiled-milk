@@ -54,6 +54,17 @@ public final class PrivatePvpTeammatesFixture {
             check(!field("teammates").getBoolean(null) && human.getParty()==null && human.getClan()==null,"all-enemy control removes teammate membership");
             call("command",new Class<?>[]{String.class},"preset-melee");
             check(!field("teammates").getBoolean(null) && human.getParty()==null,"explicit all-enemy mode survives a kit change");
+            call("command",new Class<?>[]{String.class},"friend-blue");
+            Player blue=bots.get(1),red=bots.get(0);
+            check(human.getSocial().isFriendsWith(blue.getUsernameHash()) && !blue.getSocial().isFriendsWith(human.getUsernameHash()),"one-way friend control changes only your list");
+            check(!com.openrsc.server.util.rsc.CombatEffectUtil.isPlayerOwnedPvpSplashTarget(human,red,blue)
+                && com.openrsc.server.util.rsc.CombatEffectUtil.isPlayerOwnedPvpSplashTarget(blue,red,human),"own friendship excludes outward splash without reverse immunity");
+            call("command",new Class<?>[]{String.class},"blue-friends-you");
+            check(!human.getSocial().isFriendsWith(blue.getUsernameHash()) && blue.getSocial().isFriendsWith(human.getUsernameHash()),"reverse friend control changes only Blue's list");
+            check(com.openrsc.server.util.rsc.CombatEffectUtil.isPlayerOwnedPvpSplashTarget(human,red,blue)
+                && !com.openrsc.server.util.rsc.CombatEffectUtil.isPlayerOwnedPvpSplashTarget(blue,red,human),"reverse-only friendship cannot shield Blue from your splash");
+            call("command",new Class<?>[]{String.class},"no-friends");
+            check(!human.getSocial().isFriendsWith(blue.getUsernameHash()) && !blue.getSocial().isFriendsWith(human.getUsernameHash()),"friend controls cleanly restore both lists");
             call("command",new Class<?>[]{String.class},"allies");call("validateTeams",new Class<?>[0]);
             call("command",new Class<?>[]{String.class},"reset");call("validateTeams",new Class<?>[0]);
             check(field("teammates").getBoolean(null),"teammate mode survives reset");

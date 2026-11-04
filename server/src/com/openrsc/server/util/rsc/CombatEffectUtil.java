@@ -77,9 +77,12 @@ public final class CombatEffectUtil {
 		return targets;
 	}
 
-	/** Friendship is checked by persistent clan identity, including reloaded clan objects. */
+	/** Source-owned friendship is directional; party/clan identity is shared. */
 	public static boolean arePvpAllies(Player source,Player target) {
 		if(source==null||target==null)return false;
+        // Adding somebody protects them from your automatic/area effects only.
+        // Never consult the recipient's list: that would grant unilateral immunity.
+        if(source.getSocial().isFriendsWith(target.getUsernameHash()))return true;
 		if(source.getParty()!=null&&source.getParty()==target.getParty())return true;
 		return source.getClan()!=null && target.getClan()!=null
 			&&(source.getClan()==target.getClan()
