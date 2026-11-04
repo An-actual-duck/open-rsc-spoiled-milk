@@ -145,6 +145,12 @@ public final class SlayerRewardCombat {
         CombatFormula.rollSecondaryMagicDamage(
             caster, target, thunderSecondaryPower(tier, spellPower));
     int damage = roll.getDamage();
+        if (target instanceof Player) {
+            Player victim = (Player) target;
+            damage = victim.applyPotionMagicDamageReduction(
+                victim.applyRobeDamageMitigation(damage, com.openrsc.server.model.entity.npc.NpcMagicElement.THUNDER));
+            damage = com.openrsc.server.content.TrueDefense.apply(victim, damage);
+        }
 		damage = DarkBeastCombat.mitigate(target, damage);
     DamageResult result =
         target
@@ -167,6 +173,13 @@ public final class SlayerRewardCombat {
 			if (!npc.isChasing() && !npc.inCombat()
 				&& npc.getCombatState() != com.openrsc.server.model.states.CombatState.RUNNING) npc.setChasing(caster);
 		} else ActionSender.sendStat((Player)target, Skill.HITS.id());
-		if (result.isTargetTerminal()) target.killedBy(caster);
+        if (target instanceof Player && !result.isPvpSafetyBlocked()) {
+            com.openrsc.server.model.combat.PlayerPvpCombat.recordPrimaryDamage(caster, (Player)target, result.getActualDamage());
+            com.openrsc.server.model.combat.PlayerPvpCombat.retaliate((Player)target, caster);
+        }
+        if (result.isTargetTerminal()) {
+            caster.setKillType(com.openrsc.server.model.entity.KillType.MAGIC);
+            target.killedBy(caster);
+        }
 	}
 }

@@ -898,6 +898,12 @@ public class PvmMeleeEvent extends GameTickEvent {
                 count++;
                 continue;
             }
+            if (player.applyDeathRingChargeHit(target)) {
+                player.setKillType(KillType.COMBAT);
+                target.killedBy(player);
+                count++;
+                continue;
+            }
             if (com.openrsc.server.model.combat.NonCorporealState.blocks(player,target,
                     com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)) damage=0;
 			applyBearMaulSecondHit(player,target,damage);
@@ -1072,6 +1078,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		killed.setLastCombatState(CombatState.LOST);
 		killer.setLastCombatState(CombatState.WON);
 		killer.setKillType(KillType.COMBAT);
+        Summoning.killCredit(killer).setKillType(KillType.COMBAT);
 		killed.killedBy(killer);
 		if (killer.isPlayer() && killer != attackerMob) {
 			updateParty((Player) killer);

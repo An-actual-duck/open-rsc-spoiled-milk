@@ -4362,9 +4362,8 @@ public final class Player extends Mob {
 	}
 
 	@Override
-	public void killedBy(final Mob mob) {
-        Mob credited=Summoning.killCredit(mob);
-        if(credited!=mob) { killedBy(credited);return; }
+	public void killedBy(final Mob killSource) {
+        final Mob mob = Summoning.killCredit(killSource);
 		if (!isLoggedIn()) return;
 		if (killed) return;
 		final DeathTransition transition = tryBeginDeathLifecycle(mob);
@@ -4401,6 +4400,16 @@ public final class Player extends Mob {
 		getCache().store("last_death", System.currentTimeMillis());
 
 		final Player player = mob instanceof Player ? (Player) mob : null;
+
+        // Preserve classic melee kill XP at the once-only death transition. Summon
+        // kills retain summon ownership without awarding the owner's melee XP.
+        if (getConfig().WANT_MYWORLD && player != null && killSource instanceof Player
+                && player.getKillType() == KillType.COMBAT) {
+            final int[] distribution = new int[Skill.maxId(Skill.MELEE.name(), Skill.HITS.name()) + 1];
+            distribution[Skill.MELEE.id()] = 3;
+            distribution[Skill.HITS.id()] = 1;
+            player.incExp(distribution, Formulae.combatExperience(this), true);
+        }
 
 		if (player != null) {
 			player.message(String.format("You have defeated %s!", getUsername()));

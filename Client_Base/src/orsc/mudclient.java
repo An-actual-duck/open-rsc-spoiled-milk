@@ -10963,7 +10963,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawClericCurseOverlay(ORSCharacter npc, int x, int y, int width, int height) {
-		if (npc == null || npc == localPlayer || npc.clericCursePlayback == null) return;
+		if (npc == null || npc.clericCursePlayback == null) return;
 		drawClericEffectOverlay(npc.clericCursePlayback, x, y, width, height);
 	}
 
@@ -11234,6 +11234,7 @@ public final class mudclient implements Runnable {
 				}
 				drawCombatEffectOverlay(player, x, y, width, height);
 				drawClericBuffOverlay(player, x, y, width, height);
+                drawClericCurseOverlay(player, x, y, width, height);
 				if (isCombatDirection(player.direction) || player.combatTimeout != 0) {
 					if (player.combatTimeout > 0) {
 						int var14 = x + getCombatScreenOffset(player.direction, overlayMovement, 20);
@@ -14127,6 +14128,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private void clearClericCursePlaybacks() {
+        if(localPlayer!=null && localPlayer.clericCursePlayback!=null)localPlayer.clericCursePlayback.clear();
+        if(players!=null)for(int i=0;i<playerCount && i<players.length;i++)
+            if(players[i]!=null && players[i].clericCursePlayback!=null)players[i].clericCursePlayback.clear();
 		if (npcs == null) return;
 		for (int i = 0; i < npcCount && i < npcs.length; i++)
 			if (npcs[i] != null && npcs[i].clericCursePlayback != null) npcs[i].clericCursePlayback.clear();
@@ -18387,6 +18391,7 @@ public final class mudclient implements Runnable {
 				if (localPlayer != null && localPlayer.clericBuffPlayback != null) localPlayer.clericBuffPlayback.tick();
 				for (updateIndex = 0; updateIndex < this.playerCount; ++updateIndex) {
 					updateEntity = this.players[updateIndex];
+                    if(updateEntity.clericCursePlayback!=null)updateEntity.clericCursePlayback.tick();
 					tickProjectileVisual(updateEntity);
 					if (updateEntity.combatEffectTime > 0 && --updateEntity.combatEffectTime <= 0) {
 						updateEntity.combatEffectType = 0;
@@ -27615,7 +27620,13 @@ public final class mudclient implements Runnable {
 	}
 
 	public void applyCombatEffectUpdate(ORSCharacter character, int effectType) {
-		if (ClericBlessingContract.isNpcCurseAnimation(effectType)) return;
+        if (ClericBlessingContract.isNpcCurseAnimation(effectType)) {
+            if(character==null || character.serverIndex<0 || playerServer==null
+                || character.serverIndex>=playerServer.length || playerServer[character.serverIndex]!=character)return;
+            if(character.clericCursePlayback==null)character.clericCursePlayback=new ClericCursePlayback();
+            character.clericCursePlayback.enqueue(effectType,getCombatEffectDuration(effectType));
+            return;
+        }
 		if (character == null) {
 			return;
 		}

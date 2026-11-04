@@ -83,7 +83,7 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 			assert affectedMob instanceof Player;
 			Player pl = (Player) affectedMob;
 			//Immune players cannot be attacked until their immunity wears off.
-			if (!pl.canBeReattacked()) {
+			if (!player.getConfig().WANT_MYWORLD && !pl.canBeReattacked()) {
 				if (pl.getLocation().inWilderness() || player.getConfig().USES_PK_MODE) {
 					player.resetPath();
 				}
@@ -136,7 +136,7 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 				affectedMob, CombatStyle.MELEE, AttackIntent.Channel.MELEE,
 				AttackIntent.Source.MANUAL, null);
 
-			if (affectedMob.isPlayer() && !player.finishedPath() && !affectedMob.finishedPath()) {
+			if (!player.getConfig().WANT_MYWORLD && affectedMob.isPlayer() && !player.finishedPath() && !affectedMob.finishedPath()) {
 				int pidlessCatchingDistanceOffset = 0;
 				if (player.getConfig().PIDLESS_CATCHING && !player.willBeProcessedBefore((Player)affectedMob)) {
 					// other player has already moved this tick, meaning the gap is 1 more than is rendered on either person's client

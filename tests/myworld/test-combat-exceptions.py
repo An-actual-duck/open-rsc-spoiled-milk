@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate reviewed MyWorld combat exceptions and PvM-only guardrails."""
+"""Validate reviewed MyWorld combat death owners and combat entry gates."""
 
 import re
 import sys
@@ -18,6 +18,12 @@ PK_BOT = SERVER / "plugins" / "com" / "openrsc" / "server" / "plugins" / "custom
 ALLOWED_KILLED_BY_FILES = {
     "server/src/com/openrsc/server/Server.java",
     "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java",
+    # Reviewed typed damage -> once-only death adapters. Current PvP fixtures
+    # exercise player children; Slayer recovery/attack tests exercise NPC paths.
+    "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
+    "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+    "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
+    "server/src/com/openrsc/server/model/combat/PlayerPvpCombat.java",
     "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
     "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
     "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",

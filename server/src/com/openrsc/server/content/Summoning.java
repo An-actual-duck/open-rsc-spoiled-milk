@@ -1013,7 +1013,7 @@ public final class Summoning {
 	}
 
 	public static int applySummonDamageAbsorption(final Player owner, final Mob attacker, final int damage) {
-		if (owner == null || attacker == null || damage <= 0 || !attacker.isNpc()) {
+		if (owner == null || attacker == null || damage <= 0) {
 			return damage;
 		}
 		final Npc summon = owner.getAttribute(MANUAL_SUMMON_KEY, null);

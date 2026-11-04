@@ -151,7 +151,7 @@ final class CurrentCombatChildDamageCharacterization {
 			harness.server().getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY =
 				previousLayered;
 		}
-		assertEquals(5, results(harness).size(),
+		assertEquals(4, results(harness).size(),
 			"chain-lightning transaction cardinality");
 	}
 

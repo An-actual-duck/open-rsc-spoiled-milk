@@ -25,11 +25,13 @@ public final class BattleaxeCoatings {
 
     /** Item ID is snapshotted at primary-hit commitment, before damage callbacks. */
     public static void primaryHit(Mob source, Mob target, int committedWeaponId, int actualDamage) {
-        if (!(source instanceof Player) || !(target instanceof Npc) || actualDamage<=0
+        if (!(source instanceof Player) || target == null || actualDamage<=0
                 || !source.getConfig().WANT_MYWORLD || !BattleaxeCoatingCatalog.isCoated(committedWeaponId)
                 || !((Player)source).loggedIn() || source.isRemoved() || source.killed || source.getLevel(Skill.HITS.id())<=0
                 || target.isRemoved() || target.killed || target.getLevel(Skill.HITS.id())<=0
-                || ((Npc)target).isRespawning()) return;
+                || target instanceof Npc && ((Npc)target).isRespawning()
+                || target instanceof Player && !com.openrsc.server.model.combat.PlayerPvpCombat.eligible(
+                    (Player)source,(Player)target,com.openrsc.server.model.combat.CombatStyle.MELEE)) return;
         Slow.apply(target,4,Slow.CAP_ONE);
     }
 

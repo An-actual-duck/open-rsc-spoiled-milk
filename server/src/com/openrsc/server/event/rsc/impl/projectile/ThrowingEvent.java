@@ -533,6 +533,10 @@ public class ThrowingEvent extends GameTickEvent {
 		}
 	}
 
+    private boolean isShurikenTarget(int throwingID, Mob hitTarget) {
+        return RangeUtils.SHURIKENS.contains(throwingID) && hitTarget != target;
+    }
+
   private void applyThrowingHit(
       Player player,
       int throwingID,
@@ -601,6 +605,7 @@ public class ThrowingEvent extends GameTickEvent {
                 hitTarget,
                 ProjectileLaunchSpecification.builder(projectileProducer, damage, 2)
                     .chase(true)
+                    .automaticTarget(isShurikenTarget(throwingID, hitTarget))
                     .poisonWeaponId(throwingID)
                     .presentation(projectileType, 0, showProjectile)
                     .duplicationStrategy(projectileDuplicationStrategy)

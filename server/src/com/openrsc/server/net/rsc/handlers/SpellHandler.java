@@ -1607,7 +1607,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		if (affectedMob.isPlayer()) {
 			Player other = (Player) affectedMob;
 			boolean isInPkZone = player.getLocation().inWilderness() || player.getConfig().USES_PK_MODE;
-			if (isInPkZone && !other.canBeReattacked()) {
+			if (!player.getConfig().WANT_MYWORLD && isInPkZone && !other.canBeReattacked()) {
 				magicDebug(player, "mobcast_reject reason=pvp_target_reattack target=" + describeMob(affectedMob));
 				player.resetPath();
 				// Effectively remove the attack timer from the player casting
@@ -1615,7 +1615,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				player.resetRanAwayTimer();
 				return;
 			}
-			if (isInPkZone && !player.canBeReattacked()) {
+			if (!player.getConfig().WANT_MYWORLD && isInPkZone && !player.canBeReattacked()) {
 				magicDebug(player, "mobcast_reject reason=pvp_self_reattack target=" + describeMob(affectedMob));
 				player.resetPath();
 				// TODO: ...? should probably display a message here instead of dying silently...?

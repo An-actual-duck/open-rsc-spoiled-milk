@@ -116,6 +116,7 @@ public final class PlayerPvpCombat {
             DamageRequest.resolvedLegacy(source,target,DamageRequest.SourceCategory.OWNED_EFFECT,
                 effectKey,damage).eventId(eventId).style(style)
                 .hitSplatType(HitSplat.TYPE_STANDARD).attackRoll(roll).build());
+        if (!result.isPvpSafetyBlocked()) recordPrimaryDamage(source,target,result.getActualDamage());
         ActionSender.sendStat(target,Skill.HITS.id());
         if(result.isTargetTerminal()) {
             source.setKillType(style==CombatStyle.MAGIC?KillType.MAGIC

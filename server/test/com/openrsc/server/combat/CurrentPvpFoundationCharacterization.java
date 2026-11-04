@@ -40,10 +40,11 @@ import java.util.List;
 /** Real registered players and production combat events; no sockets or account database. */
 public final class CurrentPvpFoundationCharacterization {
     private CurrentPvpFoundationCharacterization() { }
+    private static int executed;
 
     public static void main(String[] args) throws Exception {
         List<String> failures = new ArrayList<String>();
-        try (CurrentCombatHarness h = new CurrentCombatHarness()) {
+        try (CurrentCombatHarness h = new CurrentCombatHarness(); PvpSqliteLog logs=new PvpSqliteLog(h.server())) {
             h.server().getConfig().WANT_PVP = true;
             h.server().getConfig().SHUFFLE_PID_ORDER = false;
             h.server().getConfig().USES_PK_MODE = false;
@@ -67,13 +68,16 @@ public final class CurrentPvpFoundationCharacterization {
             checkCase(h,"player_poison_cleanses_without_damage_in_safety", CurrentPvpFoundationCharacterization::poisonBoundary, failures);
             checkCase(h,"shuriken_boundary_excludes_safe_players_and_stale_locks", CurrentPvpFoundationCharacterization::shurikenBoundary, failures);
             checkCase(h,"border_splash_and_shuriken_impacts_recheck_each_player", CurrentPvpFoundationCharacterization::borderImpacts, failures);
+            CurrentPvpParityCharacterization.register(h,logs,failures);
+            CurrentPvpRuntimeCharacterization.register(h,logs,failures);
         }
         if (!failures.isEmpty()) throw new AssertionError("PvP foundation failures: " + failures);
-        System.out.println("PASS: 19 PvP foundation scenarios");
+        System.out.println("PASS: "+executed+" PvP foundation scenarios");
     }
 
-    private interface Scenario { void run(CurrentCombatHarness h) throws Exception; }
-    private static void checkCase(CurrentCombatHarness h,String name, Scenario scenario, List<String> failures) throws Exception {
+    interface Scenario { void run(CurrentCombatHarness h) throws Exception; }
+    static void checkCase(CurrentCombatHarness h,String name, Scenario scenario, List<String> failures) throws Exception {
+        executed++;
         try {
             scenario.run(h);
             System.out.println("PASS " + name);
@@ -89,9 +93,11 @@ public final class CurrentPvpFoundationCharacterization {
         }
     }
 
-    private static Player player(CurrentCombatHarness h, String name, int x, int y, boolean retaliate) {
+    static Player player(CurrentCombatHarness h, String name, int x, int y, boolean retaliate) {
         h.openCombatProjectileRectangle(x-2,x+2,y-2,y+2);
         Player p=h.player(name,x,y);
+        for(Player other:h.world().getPlayers())require(other==p || !other.getUUID().equals(p.getUUID()),"fixture names must remain unique after RSC truncation: "+name);
+        p.getSettings().setAppearance(new com.openrsc.server.model.PlayerAppearance(0,0,0,0,1,2));
         p.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),250,250,false);
         p.getCache().store("setting_auto_retaliate",retaliate);
         require(p.getLocation().inWilderness(),"fixture must be in Wilderness");
@@ -202,7 +208,7 @@ public final class CurrentPvpFoundationCharacterization {
         require(b.getOutgoingCombatTarget()==a,"player projectile starts the chosen retaliation path");
     }
 
-    private static Player[] areaPlayers(CurrentCombatHarness h,String name) {
+    static Player[] areaPlayers(CurrentCombatHarness h,String name) {
         h.openCombatProjectileRectangle(176,186,196,205);
         Player a=player(h,name+" a",180,200,false),b=player(h,name+" b",181,200,false),
             enemy=player(h,name+" e",180,201,false),ally=player(h,name+" p",179,200,false),
@@ -437,7 +443,7 @@ public final class CurrentPvpFoundationCharacterization {
             "party departure invalidates the blessing in PvP too");
     }
 
-    private static void require(boolean condition,String message) {
+    static void require(boolean condition,String message) {
         if(!condition)throw new AssertionError(message);
     }
 }

@@ -122,6 +122,7 @@ public final class SlayerLeatherEffects {
 		if (target instanceof Player) {
 			Player victim = (Player)target;
 			damage = victim.applyPotionMagicDamageReduction(victim.applyRobeDamageMitigation(damage, NpcMagicElement.THUNDER));
+            damage = com.openrsc.server.content.TrueDefense.apply(victim, damage);
 		}
 		damage = DarkBeastCombat.mitigate(target, damage);
 		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.THUNDER_SPLASH));
@@ -145,7 +146,14 @@ public final class SlayerLeatherEffects {
 			Npc npc = (Npc)target; npc.addMageDamage(player, result.getActualDamage());
 			if (!result.isTargetTerminal() && !npc.isChasing() && !npc.inCombat()) npc.setChasing(player);
 		} else ActionSender.sendStat((Player)target, Skill.HITS.id());
-		if (result.isTargetTerminal()) target.killedBy(player);
+        if (target instanceof Player && !result.isPvpSafetyBlocked()) {
+            com.openrsc.server.model.combat.PlayerPvpCombat.recordPrimaryDamage(player, (Player)target, result.getActualDamage());
+            com.openrsc.server.model.combat.PlayerPvpCombat.retaliate((Player)target, player);
+        }
+        if (result.isTargetTerminal()) {
+            player.setKillType(com.openrsc.server.model.entity.KillType.MAGIC);
+            target.killedBy(player);
+        }
 	}
 
 	/** Apply once in the elemental mitigation path, after other existing resistance. */

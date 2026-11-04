@@ -1333,6 +1333,9 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void handleDeath() {
+        // The credited owner must carry the projectile's style into PK feeds.
+        Summoning.killCredit(caster).setKillType(
+            type == 1 || type == 4 ? KillType.MAGIC : KillType.RANGED);
 		if (caster.isPlayer()) {
 			Player player = (Player) caster;
 			if (type == 2 || type == 5) {

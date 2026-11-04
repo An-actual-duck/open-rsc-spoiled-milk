@@ -64,13 +64,22 @@ public final class ClericDebuffAnimationClientFixture {
   packet(h,0,1,0,5,11,0,1,0,232);check(q.getEffectType()==101,"typed high-HP zero alias also preserves curse");npc.floatingHitSplats.clear();npc.combatTimeout=0;
   effect(h,104);effect(h,107);effect(h,110);effect(h,111);effect(h,110);for(int i=0;i<100;i++){effect(h,104);effect(h,107);}
   check(q.getPendingCount()==3,"three god pending bound");for(int i=0;i<22;i++)q.tick();check(q.getEffectType()==104,"Guthix FIFO");for(int i=0;i<18;i++)q.tick();check(q.getEffectType()==107,"Zamorak FIFO");for(int i=0;i<20;i++)q.tick();check(q.getEffectType()==111,"upgrade retained through lower refresh");
-  int saved=npc.pendingCombatEffectType;mc.applyCombatEffectUpdate(mc.localPlayer,111);check(mc.localPlayer.clericCursePlayback==null,"generic/player receiver refuses curse");
+  int saved=npc.pendingCombatEffectType;mc.applyCombatEffectUpdate(mc.localPlayer,111);check(mc.localPlayer.clericCursePlayback!=null&&mc.localPlayer.clericCursePlayback.getEffectType()==111,"generic player receiver accepts hostile Cleric cosmetics");
   h.getPacketsIncoming().dataBuffer=new byte[]{0,1,0,5,10,111};h.getPacketsIncoming().packetEnd=0;mc.localPlayer.combatEffectType=34;mc.localPlayer.combatEffectTime=21;mc.localPlayer.pendingCombatEffectType=30;call(h,"drawNearbyPlayers",new Class<?>[0]);
-  check(mc.localPlayer.clericCursePlayback==null&&mc.localPlayer.pendingCombatEffectType==30&&mc.localPlayer.combatEffectTime==21,"actual player packet defensively refuses curse without detachment");
+  check(mc.localPlayer.clericCursePlayback.getEffectType()==111&&mc.localPlayer.pendingCombatEffectType==30&&mc.localPlayer.combatEffectTime==21,"actual player curse packet preserves independent ordinary VFX");
+  ClericBuffAnimationClientFixture.packet(mc,h,6,113);check(mc.getPlayerFromServer(6).clericCursePlayback.getEffectType()==113,"remote player curse is observer-visible");
+  h.getPacketsIncoming().dataBuffer=new byte[]{0,1,0,5,12,1};h.getPacketsIncoming().packetEnd=0;call(h,"drawNearbyPlayers",new Class<?>[0]);check(mc.localPlayer.nonCorporeal,"actual phase wire makes a player non-corporeal");
+  h.getPacketsIncoming().dataBuffer=new byte[]{0,1,0,5,12,0};h.getPacketsIncoming().packetEnd=0;call(h,"drawNearbyPlayers",new Class<?>[0]);check(!mc.localPlayer.nonCorporeal,"actual phase wire restores solid rendering state");
   effect(h,96);check(npc.clericBuffPlayback==null&&npc.pendingCombatEffectType==saved,"NPC receiver refuses recipient-only buff");
   // All frames use actual drawNPC; body layers are suppressed in this fixture only to isolate the VFX pixels.
   NPCDef def=EntityHandler.getNpcDef(3);int[] original=def.sprites;def.sprites=new int[12];Arrays.fill(def.sprites,-1);MudClientGraphics surface=new MudClientGraphics(96,96,1);mc.setSurface(surface);
   try{
+   ORSCharacter local=mc.localPlayer;local.direction=ORSCharacterDirection.NORTH;local.combatEffectTime=0;local.pendingCombatEffectType=0;local.combatTimeout=0;
+   ORSCharacter[] playerView=new ORSCharacter[10];playerView[0]=local;playerView[1]=mc.getPlayerFromServer(6);set(mc,"players",playerView);set(mc,"playerCount",2);
+   surface.beginRenderer2DFrame();((FloatingHitSplatRenderer)get(mc,"floatingHitSplatRenderer")).beginFrame();mc.drawPlayer(0,16,16,64,64,0,20,100);
+   Renderer2DFrame playerCapture=surface.consumeRenderer2DFrame();check(playerCapture.getSpriteCommands().length==1,"actual player draw includes its hostile Cleric overlay");
+   check(playerCapture.getSpriteCommands()[0].getPhase()==Renderer2DFrame.Phase.WORLD_OVERLAY,"player curse uses the same native overlay path as NPC curses");
+   ClericBuffAnimationClientFixture.png(surface,out.resolve("player-curse.png"));
    npc.combatEffectTime=0;npc.hasCombatEffectScreenAnchor=false;
    for(int id:new int[]{111,113,115}){
     q.clear();effect(h,id);int count=mc.getCombatEffectFrameCount(id);
@@ -86,7 +95,7 @@ public final class ClericDebuffAnimationClientFixture {
   }finally{def.sprites=original;}
   // Actual removal wire is the authoritative death/despawn boundary.
   h.getPacketsIncoming().dataBuffer=new byte[]{0,1,(byte)0xf0};h.getPacketsIncoming().packetEnd=0;call(h,"showNPCs",new Class<?>[]{int.class},3);check(q.getEffectType()==0&&q.getPendingCount()==0,"actual NPC removal clears death/despawn playback");
-  set(mc,"npcCacheCount",0);check(mc.createNpc(0,3,64,64,5)==npc&&q.getEffectType()==0,"actual slot reuse remains clear");effect(h,111);mc.clearClericSpellbook();check(q.getEffectType()==0,"logout/reconnect clears NPC playback");
+  set(mc,"npcCacheCount",0);check(mc.createNpc(0,3,64,64,5)==npc&&q.getEffectType()==0,"actual slot reuse remains clear");effect(h,111);mc.clearClericSpellbook();check(q.getEffectType()==0,"logout/reconnect clears NPC playback");check(mc.localPlayer.clericCursePlayback.getEffectType()==0&&mc.getPlayerFromServer(6).clericCursePlayback.getEffectType()==0,"logout/reconnect also clears both player curse queues");
   effect(h,111);mc.setNpcFromCache(0,npc);set(mc,"npcCacheCount",1);set(mc,"npcCount",0);check(mc.createNpc(0,4,64,64,5)==npc&&q.getEffectType()==0,"continued-cache definition replacement clears old curse");
   effect(h,111);set(mc,"groundItemAreaEpoch",new GroundItemAreaEpoch());set(mc,"sceneInstanceStore",new ClientSceneInstanceStore());mc.beginAreaLoad();check(q.getEffectType()==0,"actual scene/area reset clears NPC playback");
   ClericCursePlayback missing=new ClericCursePlayback();missing.enqueue(111,0);missing.enqueue(96,165);check(missing.getEffectType()==0,"missing duration and role mismatch safely ignored");
