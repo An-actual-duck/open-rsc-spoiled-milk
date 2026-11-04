@@ -9,20 +9,20 @@ assert ROOT.is_relative_to(Path('/home/justin/Core-Framework/output/tests/pvp-re
 assert (ROOT/'PRIVATE-PVP.json').is_file()
 ACTIONS={
  'preset-melee':'Melee kit','preset-ranged':'Shuriken kit','preset-magic':'Magic kit','preset-cleric':'Cleric kit',
- 'attack-melee':'Opponents use melee','attack-ranged':'Opponents use shurikens','attack-magic':'Opponents use magic',
- 'pause':'Pause opponents','reset':'Reset scene and restock','allies':'Protect Blue (party) and Gold (clan)',
+ 'attack-melee':'Enemies use melee','attack-ranged':'Enemies use shurikens','attack-magic':'Enemies use magic',
+ 'pause':'Pause opponents','reset':'Reset scene and restock','allies':'Use premade teammates (default)',
  'no-allies':'Make all three enemies','edge':'Move everyone to Wilderness edge','safe-opponent':'Move Red into safety','safe-self':'Move yourself into safety'}
 PAGE='''<!doctype html><meta charset="utf-8"><title>Private PvP test</title><style>
 body{font:17px system-ui;background:#172122;color:#e7eeee;max-width:960px;margin:40px auto;padding:0 24px}h1{font-size:28px}button{font:inherit;color:inherit;background:#31474b;border:1px solid #637779;border-radius:6px;padding:12px;margin:5px;cursor:pointer}button:hover{background:#476368}section{margin:22px 0}#status{padding:18px;background:#253436;border-radius:6px;min-height:70px}small{color:#bfcecf}#reply{min-height:24px;color:#f2cf86}</style>
-<h1>Private PvP test</h1><p>One game client, three real player opponents. Changes here apply while logged in.</p>
+<h1>Private PvP test</h1><p>One game client, three real practice players. Changes here apply while logged in.</p>
 <div id="status">Starting private server…</div><section>'''+''.join('<button data-action="'+key+'">'+title+'</button>' for key,title in ACTIONS.items())+'''</section>
 <button id="client">Open private game client</button><p id="reply"></p>
-<p>Start with a kit, then attack an opponent in game. They begin passive. Use the opponent buttons to test incoming attacks and auto-retaliation.</p>
-<p>For splash protection, enable allies and attack Red. Blue and Gold should be excluded. For boundary tests, move everyone to the edge, then move Red or yourself into safety while attacks are pending.</p>
-<p><small>Reset restores health, equipment and opponents. Switching kits resets the scene. Your previous private items are banked. This uses a copied private database and map; the public server is untouched.</small></p>
+<p>Every kit starts with Blue in your party and Gold in your clan. Attack Red to test combat. The enemy-attack buttons leave your teammates passive. No second client is needed.</p>
+<p>Blue and Gold should be excluded from your splash damage. Blue also appears in your party panel and receives party Cleric buffs. Use Make all three enemies to test larger enemy groups. For boundary tests, move everyone to the edge, then move Red or yourself into safety while attacks are pending.</p>
+<p><small>Reset restores health, equipment and opponents. Switching kits resets the scene and keeps your selected team mode. Your previous private items are banked. This uses a copied private database and map; the public server is untouched.</small></p>
 <script>async function send(path,data){try{let r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data||{})});document.querySelector('#reply').textContent=(await r.json()).message}catch(e){document.querySelector('#reply').textContent=String(e)}}
 for(let b of document.querySelectorAll('[data-action]'))b.onclick=()=>send('/action',{action:b.dataset.action});document.querySelector('#client').onclick=()=>send('/client');
-async function refresh(){try{let s=await(await fetch('/status',{cache:'no-store'})).json();document.querySelector('#status').textContent=(s.online?'Logged in · ':'Log in to start · ')+(s.preset||'melee')+' kit · '+(s.message||'Starting')+' '+(s.opponents||[]).map(p=>p.name+': '+p.hp+' HP ('+p.x+', '+p.y+')').join(' · ')}catch(e){}}refresh();setInterval(refresh,1000);</script>'''
+async function refresh(){try{let s=await(await fetch('/status',{cache:'no-store'})).json();document.querySelector('[data-action=allies]').style.background=s.teammates?'#476368':'';document.querySelector('[data-action=no-allies]').style.background=s.teammates?'':'#476368';document.querySelector('#status').textContent=(s.online?'Logged in · ':'Log in to start · ')+(s.preset||'melee')+' kit · '+(s.message||'Starting')+' '+(s.opponents||[]).map(p=>p.name+' ['+(p.role||'Enemy')+']: '+p.hp+' HP ('+p.x+', '+p.y+')').join(' · ')}catch(e){}}refresh();setInterval(refresh,1000);</script>'''
 def status():
  try:return json.loads((SUPPORT/'status.json').read_text())
  except (OSError,ValueError):return {}

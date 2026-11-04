@@ -6,10 +6,19 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Spells;
 import com.openrsc.server.content.clan.Clan;
+import com.openrsc.server.content.clan.ClanPlayer;
+import com.openrsc.server.content.clan.ClanRank;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.cleric.ClericResourceCost;
 import com.openrsc.server.content.cleric.ClericSpellCatalog;
 import com.openrsc.server.content.cleric.ClericSpellDefinition;
+import com.openrsc.server.content.cleric.ClericSpellId;
+import com.openrsc.server.content.cleric.effect.ClericEffectFamily;
+import com.openrsc.server.content.cleric.runtime.ClericSupportCasting;
+import com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.PlayerPvpCombat;
+import com.openrsc.server.util.rsc.CombatEffectUtil;
 import com.openrsc.server.database.DatabaseType;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
@@ -43,7 +52,7 @@ public final class PrivatePvpServer {
     static Path root; static Server server; static Player human;
     static final List<Player> bots=new ArrayList<>();
     static String preset="melee",style="melee",lastStatus="",message="Ready to log in";
-    static boolean active,validated,failed;static long serial;static int x=180,y=200,edgeX=180;
+    static boolean active,validated,failed,teammates=true;static long serial;static int x=180,y=200,edgeX=180;
     static final String BOT="private_pvp_opponent";
     public static void main(String[] args)throws Exception {
         root=Paths.get("..").toRealPath();
@@ -100,7 +109,8 @@ public final class PrivatePvpServer {
         }
         if(human!=null) {
             if(human.killed){pause();message="Your test character died. Reset the scene to restock and return.";}
-            if(active)for(Player bot:bots)if(!bot.killed && bot.getLevel(Skill.HITS.id())>0 && bot.getOutgoingCombatTarget()==null)attack(bot,human);
+            if(active)for(Player bot:bots)if(!bot.killed && bot.getLevel(Skill.HITS.id())>0
+                    && bot.getOutgoingCombatTarget()==null && PlayerPvpCombat.eligibleEnemy(bot,human))attack(bot,human);
         }
         writeStatus();
     }
@@ -113,6 +123,7 @@ public final class PrivatePvpServer {
         for(Player bot:bots){bot.resetAll();bot.resetCombatEvent();bot.resetRange();bot.setAutoCastSpell(null);bot.resetPath();bot.resetFollowing();bot.getCache().store("setting_auto_retaliate",false);}
     }
     static void removeBots() {
+        clearTeams();
         for(Player p:bots){p.setLoggedIn(false);p.remove();server.getWorld().getPlayers().remove(p);server.getWorld().removePlayer(p.getUsernameHash());}
         bots.clear();
     }
@@ -121,13 +132,13 @@ public final class PrivatePvpServer {
         else if(action.equals("reset")){if(human!=null)reset();}
         else if(action.equals("pause")){pause();message="Opponents paused. You can still attack them.";}
         else if(action.startsWith("attack-")) {
-            style=action.substring(7);pause();if(human!=null){for(Player bot:bots)configureBot(bot,style);active=true;message="Opponents attacking with "+style+".";}
+            style=action.substring(7);pause();if(human!=null){for(Player bot:bots)if(PlayerPvpCombat.eligibleEnemy(bot,human))configureBot(bot,style);active=true;message="Enemy players attacking with "+style+". Teammates remain passive.";}
         }
         else if(action.equals("safe-opponent") && !bots.isEmpty()) {bots.get(0).teleport(edgeX,427,false);message="Pvp Red moved outside Wilderness. Queued hits must stop.";}
         else if(action.equals("safe-self") && human!=null){human.teleport(edgeX+1,427,false);message="You moved outside Wilderness. Player-owned damage must stop.";}
         else if(action.equals("edge") && human!=null){pause();human.teleport(edgeX,426,false);for(int i=0;i<bots.size();i++)bots.get(i).teleport(edgeX+1+i,426,false);message="Wilderness edge: y426 is Wilderness; y427 is safe.";}
-        else if(action.equals("allies") && human!=null && bots.size()==3){Party party=new Party(server.getWorld());human.setParty(party);bots.get(1).setParty(party);Clan clan=new Clan(server.getWorld());clan.setClanID(9876);human.setClan(clan);bots.get(2).setClan(clan);message="Pvp Blue is a party ally; Pvp Gold is a clan ally. Only Pvp Red should take collateral damage.";}
-        else if(action.equals("no-allies") && human!=null){human.setParty(null);human.setClan(null);groupOpponents();message="All opponents are enemies again.";}
+        else if(action.equals("allies")){teammates=true;pause();assignTeams();message="Pvp Blue is in your party; Pvp Gold is in your clan. Pvp Red is the enemy.";}
+        else if(action.equals("no-allies")){teammates=false;pause();assignTeams();message="All three practice players are enemies. This setting carries across kits.";}
     }
     static void stats(Player p) {
         for(int skill=0;skill<server.getConstants().getSkills().getSkillsCount();skill++)p.getSkills().setTemporaryLevelAndMaxStat(skill,99,99,false);
@@ -172,31 +183,90 @@ public final class PrivatePvpServer {
         else {equip(human,ItemId.RUNE_CHAIN_MAIL_BODY.id(),1);equip(human,ItemId.RUNE_PLATE_MAIL_LEGS.id(),1);equip(human,ItemId.TIN_SCYTHE.id(),1);add(human,3411,1);}
         add(human,ItemId.LOBSTER.id(),10);
         bot("Pvp Red",x+1,y,1);bot("Pvp Blue",x+1,y+1,2);bot("Pvp Gold",x,y+1,3);
-        groupOpponents();
         for(Player p:bots)configureBot(p,"melee");
+        assignTeams();
         ActionSender.sendInventory(human);ActionSender.sendEquipment(human);ActionSender.sendEquipmentStats(human);ActionSender.sendStats(human);ActionSender.sendFatigue(human);
-        message="Ready: "+preset+". Opponents are passive; use browser controls to start their attacks.";human.message(message);
+        message="Ready: "+preset+". "+(teammates?"Blue is your party teammate; Gold is your clan teammate; Red is the enemy.":"All three practice players are enemies.");human.message(message);
     }
-    static void groupOpponents() {
-        Party party=new Party(server.getWorld());Clan clan=new Clan(server.getWorld());clan.setClanID(9875);
-        for(Player bot:bots){bot.setParty(party);bot.setClan(clan);}
+    static void clearTeams() {
+        if(human!=null){
+            if(human.getParty()!=null)ActionSender.sendLeaveParty(human);
+            if(human.getClan()!=null)ActionSender.sendLeaveClan(human);
+            human.setParty(null);human.setClan(null);
+        }
+        for(Player bot:bots){bot.setParty(null);bot.setClan(null);}
+    }
+    static void assignTeams() {
+        clearTeams();
+        if(human==null || bots.size()!=3)return;
+        if(teammates){
+            Party party=new Party(server.getWorld());party.setPartyName("PvP test party");party.setPartyTag("TEST");
+            party.addPlayer(human);party.addPlayer(bots.get(1));
+            practiceClan(9876,"PvP test clan",human,bots.get(2));
+        }else{
+            Party enemies=new Party(server.getWorld());
+            for(Player bot:bots)enemies.addPlayer(bot);
+            practiceClan(9875,"Practice opponents",bots.toArray(new Player[0]));
+        }
+    }
+    /** Real roster and UI, kept transient so repeated presets cannot write fake clan accounts. */
+    static void practiceClan(int id,String name,Player... members) {
+        Clan clan=new Clan(server.getWorld());clan.setClanID(id);clan.setClanName(name);clan.setClanTag("TEST");
+        clan.setKickSetting(1);clan.setInviteSetting(1);
+        for(Player player:members){
+            ClanPlayer member=new ClanPlayer(player.getUsername());member.setPlayerReference(player);
+            member.setRank(clan.getPlayers().isEmpty()?ClanRank.LEADER:ClanRank.NORMAL);
+            if(clan.getPlayers().isEmpty())clan.setLeader(member);
+            clan.getPlayers().add(member);player.setClan(clan);
+        }
+        clan.updateClanGUI();clan.updateClanSettings();
     }
     static void validateKits()throws Exception {
         Player probe=bot("Pvp Preview",x,y,0);bots.remove(probe);human=probe;JSONArray checked=new JSONArray();
+        boolean previousMode=teammates;
         try {
+            teammates=true;
             for(String kit:new String[]{"melee","ranged","magic","cleric"}) {
                 preset=kit;reset();
                 if(bots.size()!=3 || !human.getLocation().inWilderness())throw new IllegalStateException("Private scene incomplete");
                 checked.put(new JSONObject().put("kit",kit).put("inventorySlots",human.getCarriedItems().getInventory().size())
                     .put("combatLevel",human.getCombatLevel()).put("opponentCombatLevel",bots.get(0).getCombatLevel()));
-                for(Player target:bots)if(!com.openrsc.server.model.combat.PlayerPvpCombat.eligible(human,target,com.openrsc.server.model.combat.CombatStyle.MELEE))throw new IllegalStateException("Private opponents are not legally attackable");
+                validateTeams();
+                if(kit.equals("cleric"))validatePartyBlessing();
+                checked.getJSONObject(checked.length()-1).put("partyTeammate",bots.get(1).getUsername()).put("clanTeammate",bots.get(2).getUsername())
+                    .put("partyRosterSize",human.getParty().getPlayers().size()).put("clanRosterSize",human.getClan().getPlayers().size())
+                    .put("partyBuffVerified",kit.equals("cleric"));
             }
-        } finally {pause();removeBots();probe.setLoggedIn(false);probe.remove();server.getWorld().getPlayers().remove(probe);server.getWorld().removePlayer(probe.getUsernameHash());human=null;preset="melee";message="Ready to log in";}
+            teammates=false;reset();
+            if(human.getParty()!=null || human.getClan()!=null)throw new IllegalStateException("All-enemy mode left teammate membership");
+            for(Player target:bots)if(!PlayerPvpCombat.eligibleEnemy(human,target))throw new IllegalStateException("All-enemy mode did not restore enemies");
+            preset="magic";reset();
+            if(teammates || human.getParty()!=null || human.getClan()!=null)throw new IllegalStateException("Kit switch changed selected team mode");
+        } finally {pause();removeBots();teammates=previousMode;probe.setLoggedIn(false);probe.remove();server.getWorld().getPlayers().remove(probe);server.getWorld().removePlayer(probe.getUsernameHash());human=null;preset="melee";message="Ready to log in";}
         Files.write(root.resolve("test-support/kit-validation.json"),checked.toString(2).getBytes("UTF-8"));
     }
+    static void validateTeams() {
+        Player red=bots.get(0),blue=bots.get(1),gold=bots.get(2);
+        if(!PlayerPvpCombat.eligibleEnemy(human,red) || PlayerPvpCombat.eligibleEnemy(human,blue) || PlayerPvpCombat.eligibleEnemy(human,gold))throw new IllegalStateException("Practice team targeting is wrong");
+        if(blue.getParty()!=human.getParty() || human.getParty().getPlayers().size()!=2
+                || human.getParty().getPlayer(blue.getUsername())==null || blue.getClan()!=null)throw new IllegalStateException("Party teammate roster is incomplete");
+        if(gold.getClan()!=human.getClan() || human.getClan().getPlayers().size()!=2
+                || human.getClan().getPlayer(gold.getUsername())==null || gold.getParty()!=null)throw new IllegalStateException("Clan teammate roster is incomplete");
+        if(CombatEffectUtil.isPlayerOwnedPvpSplashTarget(human,red,blue) || CombatEffectUtil.isPlayerOwnedPvpSplashTarget(human,red,gold))throw new IllegalStateException("Teammates are not excluded from splash");
+    }
+    static void validatePartyBlessing() {
+        if(ClericSupportCasting.cast(human,ClericSpellCatalog.get(ClericSpellId.GUTHIX_RESPITE)).getOutcome()!=ClericSupportCasting.Outcome.SUCCESS
+                || ClericTimedEffectRuntime.blessing(bots.get(1),ClericEffectFamily.GUTHIX_BLESSING)==null
+                || ClericTimedEffectRuntime.blessing(bots.get(2),ClericEffectFamily.GUTHIX_BLESSING)!=null)throw new IllegalStateException("Cleric party recipient setup failed");
+    }
+    static String role(Player player) {
+        if(human!=null && player.getParty()!=null && player.getParty()==human.getParty())return "Party teammate";
+        if(human!=null && player.getClan()!=null && player.getClan()==human.getClan())return "Clan teammate";
+        return "Enemy";
+    }
     static void writeStatus()throws Exception {
-        JSONObject status=new JSONObject().put("ready",validated).put("failed",failed).put("preset",preset).put("active",active).put("message",message).put("online",human==null?0:1).put("x",x).put("y",y);
-        JSONArray opponents=new JSONArray();for(Player p:bots)opponents.put(new JSONObject().put("name",p.getUsername()).put("hp",p.getLevel(Skill.HITS.id())).put("x",p.getX()).put("y",p.getY()));status.put("opponents",opponents);
+        JSONObject status=new JSONObject().put("ready",validated).put("failed",failed).put("teammates",teammates).put("preset",preset).put("active",active).put("message",message).put("online",human==null?0:1).put("x",x).put("y",y);
+        JSONArray opponents=new JSONArray();for(Player p:bots)opponents.put(new JSONObject().put("name",p.getUsername()).put("role",role(p)).put("hp",p.getLevel(Skill.HITS.id())).put("x",p.getX()).put("y",p.getY()));status.put("opponents",opponents);
         String body=status.toString();if(!body.equals(lastStatus)){Files.write(root.resolve("test-support/status.json"),body.getBytes("UTF-8"));lastStatus=body;}
     }
 }
