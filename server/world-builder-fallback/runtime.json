@@ -13,7 +13,10 @@
   "definitionCatalogId": "spoiled-milk-definition-catalog-v1",
   "definitionCatalogSha256": "7c19e84ef0683d6482703a25086ea8779e7e2cba9c5728c141777ade207948aa",
   "encodingVersions": [
-    1
+    1,
+    2,
+    3,
+    4
   ],
   "loaderId": "spoiled-milk-native-layered-loader-v1",
   "manifestType": "world-builder-runtime-evidence",

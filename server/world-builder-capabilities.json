@@ -76,7 +76,10 @@
   "manifestType": "world-builder-target-capability",
   "map": {
     "encodingVersions": [
-      1
+      1,
+      2,
+      3,
+      4
     ],
     "formatId": "legacy-packed-orsc-v1",
     "packageSchemaId": "layered-world-package-v1"
