@@ -8,6 +8,8 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.authentic.quests.members.undergroundpass.npcs.UndergroundPassKoftik;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
@@ -26,6 +28,9 @@ public class UndergroundPassObstaclesMap1 implements OpLocTrigger {
 	public static int FIRST_SWAMP = 754;
 	public static int PILE_OF_MUD_MAP_LEVEL_1 = 767;
 	public static int LEVER = 733;
+	private static final int BRIDGE_CLOSED = 726;
+	private static final int BRIDGE_OPEN = 727;
+	private static final int UNDERGROUND_PASS_LEVEL = -1;
 	public static int BLESSED_SPIDER_SWAMP_OBJ = 795;
 	public static int CLEAR_ROCKS = 772;
 	public static int DROP_DOWN_LEDGE = 812;
@@ -181,15 +186,22 @@ public class UndergroundPassObstaclesMap1 implements OpLocTrigger {
 			delay(3);
 			mes("the bridge slowly lowers");
 			delay(3);
-			GameObject bridge_open = new GameObject(obj.getWorld(), Point.location(704, 3417), 727, 2, 0);
-			GameObject bridge_closed = new GameObject(obj.getWorld(), Point.location(704, 3417), 726, 2, 0);
-			bridge_open.getWorld().registerGameObject(bridge_open);
-			bridge_closed.getWorld().delayedSpawnObject(bridge_closed.getLoc(), 10000);
-			player.teleport(709, 3420);
+			GameObject bridge = findBridge(player, obj);
+			if (bridge == null || (bridge.getID() != BRIDGE_CLOSED && bridge.getID() != BRIDGE_OPEN)) {
+				player.message("the bridge mechanism does not respond");
+				return;
+			}
+			if (bridge.getID() == BRIDGE_CLOSED) {
+				GameObject lowered = new GameObject(bridge.getWorld(), bridge.getLocation(),
+					BRIDGE_OPEN, bridge.getDirection(), bridge.getType());
+				bridge.getWorld().replaceGameObject(bridge, lowered);
+				bridge.getWorld().delayedSpawnObject(bridge.getLoc(), 10000);
+			}
+			player.teleport(709, 588, UNDERGROUND_PASS_LEVEL, false);
 			delay();
-			player.teleport(706, 3420);
+			player.teleport(706, 588, UNDERGROUND_PASS_LEVEL, false);
 			delay();
-			player.teleport(703, 3420);
+			player.teleport(703, 588, UNDERGROUND_PASS_LEVEL, false);
 			player.message("you cross the bridge");
 		}
 		else if (obj.getID() == BLESSED_SPIDER_SWAMP_OBJ) {
@@ -274,6 +286,16 @@ public class UndergroundPassObstaclesMap1 implements OpLocTrigger {
 			player.message("you drop down to the cave floor");
 			player.teleport(706, 3439);
 		}
+	}
+
+	private static GameObject findBridge(final Player player, final GameObject lever) {
+		if (player.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			WorldLocation origin = lever.getWorldLocation();
+			return lever.getWorld().getRegionManager().findNativeLayeredScenery(
+				new WorldLocation(origin.getWorldSpace(),
+					new WorldCoordinate(704, 585, origin.getCoordinate().getLevel())));
+		}
+		return player.getViewArea().getGameObject(Point.location(704, 3417));
 	}
 
 	boolean succeed(Player player, int req) {

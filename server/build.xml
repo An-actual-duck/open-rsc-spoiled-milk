@@ -71,6 +71,21 @@
         </java>
     </target>
 
+    <target name="test_underground_pass_bridge" depends="compile_core,compile_plugins"
+            description="Offline real Underground Pass lever/arrow bridge and signed-layer restoration checks">
+        <fail unless="bridge.fixture.dir" message="Pass -Dbridge.fixture.dir with a disposable prepared fixture, never a server root"/>
+        <mkdir dir="../output/tests/underground-pass-bridge/classes"/>
+        <javac srcdir="${test.src}" destdir="../output/tests/underground-pass-bridge/classes" debug="on"
+               includes="com/openrsc/server/io/UndergroundPassBridgeIntegrationTest.java" includeantruntime="false"
+               target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+            <classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </javac>
+        <java classname="com.openrsc.server.io.UndergroundPassBridgeIntegrationTest" fork="true" maxmemory="768m" failonerror="true" dir="${bridge.fixture.dir}">
+            <jvmarg value="-Djava.awt.headless=true"/>
+            <classpath><pathelement location="../output/tests/underground-pass-bridge/classes"/><pathelement location="plugins.jar"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </java>
+    </target>
+
     <target name="test_double_door_passage" depends="compile_core,compile_plugins"
             description="Offline real generic double-door plugin/helper/collision lifecycle checks">
         <fail unless="door.fixture.dir" message="Pass -Ddoor.fixture.dir with a disposable prepared fixture, never a server root"/>
