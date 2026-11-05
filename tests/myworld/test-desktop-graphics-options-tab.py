@@ -86,7 +86,7 @@ def main() -> None:
         ("Scaling type - ", "ACTION_SCALING_TYPE"),
         ("Preset - ", "ACTION_RENDERER_PROFILE"),
         ("Aspect Ratio - ", "ACTION_RENDER_SURFACE"),
-        ("Borderless - ", "ACTION_WINDOW_MODE"),
+        ("Window mode - ", "ACTION_WINDOW_MODE"),
         ("Lighting - ", "ACTION_LIGHTING"),
         ("Geometry - ", "ACTION_GEOMETRY"),
         ("Terrain Variation - ", "ACTION_TERRAIN_VARIATION"),
@@ -114,7 +114,8 @@ def main() -> None:
         forbid(general, visual_owner, "desktop visual setting in General")
 
     # Android keeps the visual rows it already exposed through General.
-    require(general, "if (isAndroid() && !ScaledWindow.isOpenGLPrimaryWindowEnabled())",
+    require(general, "if (RemasteredSpriteSettings.isAvailable()\n"
+            "\t\t\t&& isAndroid() && !ScaledWindow.isOpenGLPrimaryWindowEnabled())",
             "Android sprite compatibility guard")
     require(general, "if (isAndroid() && S_SHOW_ROOF_TOGGLE)", "Android roof compatibility guard")
     require(general, "if (isAndroid() && S_SHOW_UNDERGROUND_FLICKER_TOGGLE)",

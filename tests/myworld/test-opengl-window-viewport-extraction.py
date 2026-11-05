@@ -268,6 +268,12 @@ def verify_window_behavior() -> None:
             final int GLFW_VISIBLE = 2;
             final int GLFW_RESIZABLE = 3;
             final int GLFW_DECORATED = 4;
+            final int GLFW_DONT_CARE = -1;
+            long monitor;
+            int refreshRate;
+            int monitorChanges;
+            int monitorRefreshRate = 75;
+            boolean monitorAvailable = true;
             int x;
             int y;
             int width;
@@ -321,9 +327,21 @@ def verify_window_behavior() -> None:
             void glfwSetWindowAttrib(long window, int attribute, int value) {
                 if (attribute == GLFW_DECORATED) decorated = value;
             }
+            void glfwSetWindowMonitor(long window, long monitor, int x, int y,
+                    int width, int height, int refreshRate) {
+                this.monitor = monitor;
+                this.refreshRate = refreshRate;
+                this.x = monitor == 0L ? x : 100;
+                this.y = monitor == 0L ? y : 50;
+                this.width = width;
+                this.height = height;
+                monitorChanges++;
+            }
             MonitorMode getPrimaryMonitorMode() {
                 primaryMonitorQueries++;
-                return new MonitorMode(100, 50, 1920, 1080);
+                return monitorAvailable
+                    ? new MonitorMode(99L, 100, 50, 1920, 1080, monitorRefreshRate)
+                    : new MonitorMode(100, 50, 1920, 1080);
             }
             void glfwGetWindowSize(long window, int[] width, int[] height) {
                 width[0] = this.width;
@@ -399,6 +417,45 @@ def verify_window_behavior() -> None:
                     "windowed bounds restored after borderless");
                 require(gl.decorated == gl.GLFW_TRUE, "restored decorations");
 
+                OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.FULLSCREEN);
+                surface = controller.prepareFrame(960, 540);
+                require(gl.monitor == 99L && gl.refreshRate == 75,
+                    "fullscreen attaches the primary monitor at its desktop refresh rate");
+                require(surface.windowWidth == 1920 && surface.windowHeight == 1080
+                        && surface.framebufferWidth == 3840 && surface.framebufferHeight == 2160,
+                    "fullscreen reports monitor bounds and HiDPI framebuffer");
+                require(gl.decorated == gl.GLFW_FALSE, "fullscreen has no decorations");
+                OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.WINDOWED);
+                controller.prepareFrame(960, 540);
+                require(gl.monitor == 0L && gl.x == 140 && gl.y == 150
+                        && gl.width == 900 && gl.height == 700
+                        && gl.decorated == gl.GLFW_TRUE,
+                    "leaving fullscreen detaches the monitor and restores windowed bounds");
+                OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
+                controller.prepareFrame(960, 540);
+                OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.FULLSCREEN);
+                controller.prepareFrame(960, 540);
+                require(gl.monitor == 99L, "borderless to fullscreen attaches monitor");
+                OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
+                controller.prepareFrame(960, 540);
+                require(gl.monitor == 0L && gl.decorated == gl.GLFW_FALSE
+                        && gl.width == 1920 && gl.height == 1080,
+                    "fullscreen to borderless detaches monitor without decorations");
+                OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.WINDOWED);
+                controller.prepareFrame(960, 540);
+                require(gl.x == 140 && gl.y == 150 && gl.width == 900 && gl.height == 700,
+                    "three-mode round trip preserves original window bounds");
+                require(delegate.contexts == 1,
+                    "mode transitions retain the same OpenGL context");
+                gl.monitorRefreshRate = 0;
+                OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.FULLSCREEN);
+                controller.prepareFrame(960, 540);
+                require(gl.refreshRate == gl.GLFW_DONT_CARE,
+                    "unknown desktop refresh rate does not request an artificial video mode");
+                OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.WINDOWED);
+                controller.prepareFrame(960, 540);
+                gl.monitorRefreshRate = 75;
+
                 gl.x = 200;
                 gl.y = 210;
                 gl.width = 1000;
@@ -414,6 +471,32 @@ def verify_window_behavior() -> None:
                 require(gl.destroyCalls == 1 && gl.terminateCalls == 1,
                     "idempotent window shutdown");
                 require(delegate.closes == 0, "programmatic close must not close client twice");
+
+                OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.FULLSCREEN);
+                LwjglBindings startupGl = new LwjglBindings();
+                Delegate startupDelegate = new Delegate();
+                OpenGLWindowController startup =
+                    new OpenGLWindowController(startupGl, "fullscreen startup", true, startupDelegate);
+                require(startup.initializeGlfw(), "fullscreen startup GLFW init");
+                startup.createWindow(512, 346, false);
+                require(startupGl.monitor == 99L, "saved fullscreen applies at startup");
+                startup.shutdown(true);
+
+                OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.FULLSCREEN);
+                LwjglBindings unavailableGl = new LwjglBindings();
+                unavailableGl.monitorAvailable = false;
+                Delegate unavailableDelegate = new Delegate();
+                OpenGLWindowController unavailable =
+                    new OpenGLWindowController(unavailableGl, "no monitor", true, unavailableDelegate);
+                require(unavailable.initializeGlfw(), "no-monitor GLFW init");
+                unavailable.createWindow(512, 346, false);
+                require(OpenGLWindowSettings.getMode()
+                        == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN
+                        && unavailableGl.monitorChanges == 0,
+                    "missing monitor falls back to borderless without invalid native attachment");
+                require(unavailableDelegate.saves == 1,
+                    "unavailable fullscreen fallback is saved");
+                unavailable.shutdown(true);
 
                 OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.WINDOWED);
                 LwjglBindings failingGl = new LwjglBindings();
@@ -445,12 +528,63 @@ def verify_window_behavior() -> None:
     )
     require(output == "window-ok", "window fixture did not complete")
 
+def verify_window_mode_settings() -> None:
+    fixture = r"""
+        package orsc;
+        import java.util.Properties;
+        public final class WindowModeSettingsFixture {
+            private static void require(boolean condition, String message) {
+                if (!condition) throw new AssertionError(message);
+            }
+            public static void main(String[] args) {
+                require(OpenGLWindowSettings.getMode()
+                    == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN,
+                    "fresh installation defaults to borderless");
+                require(OpenGLWindowSettings.Mode.from(null)
+                    == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN,
+                    "missing mode defaults to borderless");
+                require(OpenGLWindowSettings.Mode.from("borderless")
+                    == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN
+                    && OpenGLWindowSettings.Mode.from("borderless-fullscreen")
+                    == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN,
+                    "existing borderless settings remain compatible");
+                OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.WINDOWED);
+                require(OpenGLWindowSettings.cycleMode()
+                    == OpenGLWindowSettings.Mode.FULLSCREEN, "windowed to fullscreen");
+                require(OpenGLWindowSettings.cycleMode()
+                    == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN, "fullscreen to borderless");
+                require(OpenGLWindowSettings.cycleMode()
+                    == OpenGLWindowSettings.Mode.WINDOWED, "borderless to windowed");
+                Properties saved = new Properties();
+                for (OpenGLWindowSettings.Mode mode : OpenGLWindowSettings.Mode.values()) {
+                    OpenGLWindowSettings.setMode(mode);
+                    OpenGLWindowSettings.saveToClientSettings(saved);
+                    require(mode.id.equals(saved.getProperty("opengl_window_mode")), "saved mode");
+                    OpenGLWindowSettings.setMode(null);
+                    OpenGLWindowSettings.loadFromClientSettings(saved);
+                    require(OpenGLWindowSettings.getMode() == mode, "restored mode");
+                }
+                require(OpenGLWindowSettings.Mode.from("fullscreen")
+                    == OpenGLWindowSettings.Mode.FULLSCREEN,
+                    "fullscreen is a distinct persisted selection");
+                System.out.println("settings-ok");
+            }
+        }
+    """
+    output = run_java_fixture(
+        "WindowModeSettingsFixture",
+        {"WindowModeSettingsFixture.java": fixture},
+        [WINDOW_SETTINGS],
+    )
+    require(output == "settings-ok", "window-mode settings fixture did not complete")
+
 
 def main() -> None:
     verify_source_ownership()
     verify_viewport_behavior()
     verify_renderer_replacement_readiness()
     verify_window_behavior()
+    verify_window_mode_settings()
     print("PASS: OpenGL window lifecycle and viewport presentation have focused owners")
 
 

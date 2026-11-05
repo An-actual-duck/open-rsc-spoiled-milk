@@ -728,9 +728,11 @@ renderer-v2 layer:
     OpenGL-primary ignores this setting and always uses automatic aspect-fit
     presentation with black bars when the window and selected resolution do not
     match.
-- `SPOILED_MILK_OPENGL_WINDOW_MODE=windowed|borderless-fullscreen`
-  - Selects the OpenGL primary-window mode. `borderless-fullscreen` uses the
-    primary monitor's current desktop mode without changing monitor resolution.
+- `SPOILED_MILK_OPENGL_WINDOW_MODE=windowed|fullscreen|borderless-fullscreen`
+  - Selects Windowed, Fullscreen, or Borderless. Borderless remains the default
+    and keeps the existing undecorated desktop-window behavior. Fullscreen
+    attaches to the primary monitor at its current resolution and refresh rate
+    to cover the desktop taskbar. Windowed restores its saved size and position.
 - `SPOILED_MILK_OPENGL_UI_FONT=legacy|h11p|h12p|h13b|h14b`
   - Selects the OpenGL-primary UI body-font policy. `legacy` keeps the old
     `h12b.jf` body font. The other modes remap legacy body text to the named
@@ -853,7 +855,7 @@ renderer-v2 layer:
     after-frame sprite overlay replay.
 
 When the OpenGL-primary path is active, the in-game general options panel
-exposes player-facing renderer rows under `Graphics`: `Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`,
+exposes player-facing renderer rows under `Graphics`: `Preset`, `Aspect Ratio`, `Window mode`, `Lighting`, `Geometry`,
 `Terrain Variation`, and `Fog`, followed by two-line `Terrain shading`,
 `Object shading`, `Brightness / dimness`, `Contrast`, `Gamma`, and `Saturation`
 sliders. The old `Video` section,
@@ -2505,7 +2507,7 @@ Classic visual ordering, entity occlusion, and sprite composition correct.
       testing controls are grouped for release-facing use without changing the
       existing click IDs or settings persistence.
 - [x] Collapse the OpenGL-primary player-facing render options to
-      `Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`,
+      `Preset`, `Aspect Ratio`, `Window mode`, `Lighting`, `Geometry`,
       `Terrain Variation`, and `Fog`, followed by persisted relief, dimness,
       contrast, gamma, and saturation sliders under `Graphics`. The manual `Tone`, superseded
       `Brightness`, and release-facing font rows were retired.

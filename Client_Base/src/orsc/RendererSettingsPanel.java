@@ -161,7 +161,7 @@ final class RendererSettingsPanel {
 		final float renderingScalar;
 		final List<Float> scalingOptions;
 		final String aspectLabel;
-		final boolean borderless;
+		final String windowModeLabel;
 		final String lightingLabel;
 		final String geometryLabel;
 		final String terrainVariationLabel;
@@ -180,7 +180,7 @@ final class RendererSettingsPanel {
 		State(boolean openGLPrimary, String rendererProfileLabel, boolean remasteredSprites,
 			  String middleMouseLabel,
 			  ScalingAlgorithm scalingType, float renderingScalar, List<Float> scalingOptions,
-			  String aspectLabel, boolean borderless, String lightingLabel, String geometryLabel,
+			  String aspectLabel, String windowModeLabel, String lightingLabel, String geometryLabel,
 			  String terrainVariationLabel, String fogLabel, int terrainReliefLevel,
 			  int objectReliefLevel, int dimnessLevel, int contrastLevel, int gammaLevel,
 			  int saturationLevel, boolean roofToggleAvailable, boolean roofsHidden,
@@ -193,7 +193,7 @@ final class RendererSettingsPanel {
 			this.renderingScalar = renderingScalar;
 			this.scalingOptions = scalingOptions;
 			this.aspectLabel = aspectLabel;
-			this.borderless = borderless;
+			this.windowModeLabel = windowModeLabel;
 			this.lightingLabel = lightingLabel;
 			this.geometryLabel = geometryLabel;
 			this.terrainVariationLabel = terrainVariationLabel;
@@ -224,7 +224,7 @@ final class RendererSettingsPanel {
 				renderingScalar,
 				scalingOptions,
 				RenderSurfaceSettings.getAspectLabel(),
-				OpenGLWindowSettings.getMode() == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN,
+				OpenGLWindowSettings.getMode().label,
 				RendererLightingSettings.getMode().label,
 				RendererGeometrySettings.getMode().label,
 				RendererTerrainVariationSettings.getMode().label,
@@ -336,7 +336,7 @@ final class RendererSettingsPanel {
 				ACTION_SCALING_TYPE);
 		} else {
 			addRow(rows, "@whi@Aspect Ratio - " + state.aspectLabel, ACTION_RENDER_SURFACE);
-			addRow(rows, "@whi@Borderless - " + (state.borderless ? "@gre@On" : "@red@Off"),
+			addRow(rows, "@whi@Window mode - " + state.windowModeLabel,
 				ACTION_WINDOW_MODE);
 			addRow(rows, "@whi@Lighting - " + state.lightingLabel, ACTION_LIGHTING);
 			addRow(rows, "@whi@Geometry - " + state.geometryLabel, ACTION_GEOMETRY);
