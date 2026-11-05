@@ -69,7 +69,8 @@ public class UndergroundPassMechanismMap1 implements UseInvTrigger, UseLocTrigge
 		else if (item.getCatalogId() == ItemId.LIT_ARROW.id() && obj.getID() == OLD_BRIDGE) {
 			if (hasABow(player)) {
 				player.getCarriedItems().remove(new Item(ItemId.LIT_ARROW.id()));
-				if ((getCurrentLevel(player, Skill.RANGED.id()) < 25) || (player.getY() != 3417 && player.getX() < 701)) {
+				if ((getCurrentLevel(player, Skill.RANGED.id()) < 25)
+					|| (player.getWorldLocation().getCoordinate().getY() != 585 && player.getX() < 701)) {
 					mes("you fire the lit arrow at the bridge");
 					delay(3);
 					mes("it burns out and has little effect");
@@ -93,11 +94,11 @@ public class UndergroundPassMechanismMap1 implements UseInvTrigger, UseLocTrigge
 							new GameObject(obj.getWorld(), obj.getLocation(), 727, obj.getDirection(), obj
 								.getType()));
 						player.getWorld().delayedSpawnObject(obj.getLoc(), 10000);
-						player.teleport(702, 3420);
+						teleportUnderground(player, 702, 588);
 						delay(2);
-						player.teleport(706, 3420);
+						teleportUnderground(player, 706, 588);
 						delay();
-						player.teleport(709, 3420);
+						teleportUnderground(player, 709, 588);
 						player.message("you rush across the bridge");
 					}
 				}
