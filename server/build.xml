@@ -82,7 +82,16 @@
         </javac>
         <java classname="com.openrsc.server.io.UndergroundPassBridgeIntegrationTest" fork="true" maxmemory="768m" failonerror="true" dir="${bridge.fixture.dir}">
             <jvmarg value="-Djava.awt.headless=true"/>
-            <classpath><pathelement location="../output/tests/underground-pass-bridge/classes"/><pathelement location="plugins.jar"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+            <classpath>
+                <!-- Match production: the maintained Log4j jars precede the fat core's legacy copy. -->
+                <pathelement location="${lib}/log4j-api-2.17.0.jar"/>
+                <pathelement location="${lib}/log4j-core-2.17.0.jar"/>
+                <pathelement location="${lib}/log4j-iostreams-2.17.0.jar"/>
+                <pathelement location="../output/tests/underground-pass-bridge/classes"/>
+                <pathelement location="plugins.jar"/>
+                <pathelement location="core.jar"/>
+                <fileset dir="${lib}" includes="*.jar"/>
+            </classpath>
         </java>
     </target>
 
