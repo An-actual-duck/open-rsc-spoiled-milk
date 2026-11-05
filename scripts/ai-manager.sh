@@ -378,9 +378,10 @@ manager_release_check() {
 }
 
 manager_release() {
-  local argument version="" previous=""
+  local argument version="" previous="" consolidate_existing=false
 
   for argument in "$@"; do
+    [[ "$argument" != --consolidate-existing ]] || consolidate_existing=true
     [[ "$argument" != --skip-build ]] \
       || ai_fail "Manager releases cannot use --skip-build; release provenance requires a fresh client build."
     if [[ "$previous" == --version ]]; then
@@ -392,6 +393,7 @@ manager_release() {
     || ai_fail "Manager releases require --version so the layered-world artifact can share exact provenance."
   manager_release_check
   "$SCRIPT_ROOT/scripts/package-player-release.sh" "$@"
+  [[ "$consolidate_existing" != true ]] || return 0
   "$SCRIPT_ROOT/scripts/package-layered-world-release.sh" --version "$version"
 }
 

@@ -258,7 +258,8 @@ def test_packaged_archives_are_clean_and_configured() -> None:
         generic = output / f"spoiled-milk-{VERSION}-java.zip"
         windows = output / f"spoiled-milk-{VERSION}-windows-x64.zip"
         checksum_file = output / "SHA256SUMS.txt"
-        for artifact in [generic, windows, checksum_file]:
+        universal = output / "spoiled-milk-client.zip"
+        for artifact in [generic, windows, universal, checksum_file]:
             if not artifact.exists():
                 fail(f"packager did not create {artifact.name}")
 
@@ -352,7 +353,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     'if exist "%~dp0Spoiled_Milk_Client.jar" del /q',
                     'if exist "%~dp0Cache" rmdir /s /q',
                     'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0game-files\\update-spoiled-milk.ps1"',
-                    "if errorlevel 1 pause & exit /b 1",
+                    "if errorlevel 1 (\n  pause\n  exit /b 1\n)",
                     'cd /d "%~dp0game-files"',
                     "Spoiled_Milk_Client.jar",
                     *CLIENT_JVM_MEMORY_FLAGS,
@@ -444,7 +445,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
         for line in checksum_file.read_text(encoding="utf-8").splitlines():
             digest, name = line.split(maxsplit=1)
             expected[name] = digest
-        for archive in [generic, windows]:
+        for archive in [generic, windows, universal]:
             digest = hashlib.sha256(archive.read_bytes()).hexdigest()
             if expected.get(archive.name) != digest:
                 fail(f"checksum output does not match {archive.name}")

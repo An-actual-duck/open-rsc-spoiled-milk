@@ -558,6 +558,13 @@ class AiWorkspaceWorkflowTest(unittest.TestCase):
         )
         capture.unlink()
         layered_capture.unlink()
+        f.run("ai-manager.sh", "release", "--version", "v1.2.3", "--consolidate-existing", "--assets-cleared")
+        self.assertEqual(
+            capture.read_text(encoding="utf-8").splitlines(),
+            ["--version", "v1.2.3", "--consolidate-existing", "--assets-cleared"],
+        )
+        self.assertFalse(layered_capture.exists())
+        capture.unlink()
         blocked = f.run("ai-manager.sh", "release", "--skip-build", "--assets-cleared", check=False)
         self.assertNotEqual(blocked.returncode, 0)
         self.assertIn("cannot use --skip-build", blocked.stderr)
