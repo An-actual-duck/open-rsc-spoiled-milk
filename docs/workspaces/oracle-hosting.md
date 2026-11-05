@@ -12,11 +12,12 @@ public worlds against diverging player databases.
 | Game port | TCP `43605` |
 | VM | `VM.Standard.A1.Flex`, 1 OCPU, 6 GB RAM, ARM64 |
 | OS / Java | Ubuntu 26.04.1 LTS / OpenJDK 17 |
-| Release | `v0.3.6` |
-| Game source | `85950f34a1ba4ea4318ea668d123d38c5c0f43c3` |
+| Server release tag | `v0.3.7` (Underground Pass bridge fix) |
+| Published client release | `v0.3.6` (compatible; no new client needed for this patch) |
+| Game source | `d396c8577ac0a733b9d59de9a037785fdaaafd07` |
 | Client protocol | `10059` |
 | Public service | `spoiled-milk.service`, enabled at boot |
-| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.6` |
+| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.7` |
 | Guarded live path | `/tmp/spoiled-milk-live-main` |
 | Git object repository | `/home/ubuntu/spoiled-milk/repository.git` |
 | External state | `/home/ubuntu/.local/share/spoiled-milk/live` |
@@ -27,7 +28,7 @@ The service requires that mount. The source is a clean detached checkout of the
 exact published tag; it is never a development workspace.
 
 The service calls `scripts/run-hosted-server.sh` with
-`MYWORLD_HOSTED_RELEASE_TAG=v0.3.6`. Existing exact-tag, clean-source, installed
+`MYWORLD_HOSTED_RELEASE_TAG=v0.3.7`. Existing exact-tag, clean-source, installed
 map, generator, external-database, and occupied-port guards remain active.
 `JAVA_TOOL_OPTIONS` caps the heap at 3 GiB. The unit uses `Restart=on-failure`;
 a successful in-game shutdown exits normally and stays stopped.
@@ -35,6 +36,10 @@ a successful in-game shutdown exits normally and stays stopped.
 The VM firewall and Oracle subnet security list permit TCP 43605. The client
 uses the public IPv4 address directly; an address change needs a client endpoint
 update. This deployment does not depend on the owner's PC staying online.
+
+`v0.3.7` is a published source tag for a server-only patch. It has no player
+release entry; the website and updater correctly remain on compatible client
+v0.3.6. Never publish a newer player release without its updater assets.
 
 ## Access and read-only status
 

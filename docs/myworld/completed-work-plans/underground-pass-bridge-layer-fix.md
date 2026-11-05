@@ -56,3 +56,14 @@ change does not audit the remaining quest's
 obstacles or exercise the complete quest in a legacy runtime. No map, client,
 database, or live Oracle deployment changes are included. Public activation
 requires a separate authorized server update.
+
+Host verification also ran all 26 checks on Oracle ARM with Java 17. The
+fixture classpath must put the explicitly shipped Log4j jars before the legacy
+copy inside the fat core, matching production's dependency order. Otherwise
+modern JVMs fail during logger initialization before the bridge test starts.
+The Ant fixture target now uses that order; production startup already did.
+The updated target also passes all 26 assertions under Java 21.
+
+The gameplay fix was activated on Oracle as server-only source tag `v0.3.7`
+(`d396c8577ac0a733b9d59de9a037785fdaaafd07`) after the owner confirmed the full
+shutdown countdown completed. The compatible public client remains v0.3.6.
