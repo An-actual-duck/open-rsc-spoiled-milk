@@ -33,6 +33,8 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -73,6 +75,8 @@ public final class ClientExternalAssetLoaderFixture {
 			actualFoundryDragonAsset(root);
 		} else if ("king-black-dragon-asset".equals(scenario)) {
 			actualKingBlackDragonAsset(root);
+		} else if ("duskwind-bat-asset".equals(scenario)) {
+			actualDuskwindBatAsset(root);
 		} else if ("jar".equals(scenario)) {
 			packagedJarInventoryAndReads(root);
 		} else if ("diagnostics".equals(scenario)) {
@@ -394,6 +398,55 @@ public final class ClientExternalAssetLoaderFixture {
 				"tracked King Black Dragon frame contains artwork " + frame);
 			assertEquals(0, count(entry.getFrames()[frame].getSprite(), 0x6BEE36),
 				"tracked King Black Dragon guide pixels must be transparent " + frame);
+		}
+	}
+
+	private static void actualDuskwindBatAsset(Path root) throws Exception {
+		String relative = "dev/myworld/assets/runtime/legacy-animations/Projectiles/"
+			+ "summon-bat-vampirism-reverse";
+		BufferedImage sheet = ImageIO.read(root.resolve(relative)
+			.resolve("summon-bat-vampirism-reverse.png").toFile());
+		assertEquals(256, sheet.getWidth(), "bat source sheet width");
+		assertEquals(32, sheet.getHeight(), "bat source sheet height");
+		Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+		Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
+		unsafeField.setAccessible(true);
+		Object unsafe = unsafeField.get(null);
+		Method allocate = unsafeClass.getMethod("allocateInstance", Class.class);
+		Method load = mudclient.class.getDeclaredMethod("loadExternalAnimationFrames",
+			File.class, Sprite[].class, int.class, String.class, String.class);
+		load.setAccessible(true);
+		Field loaderField = mudclient.class.getDeclaredField("externalAssetLoader");
+		loaderField.setAccessible(true);
+		Path empty = Files.createTempDirectory("bat-packaged-assets-");
+		try {
+			for (Path working : new Path[] {root, empty}) {
+				// Use the actual client dispatcher without starting its UI or networking.
+				Object client = allocate.invoke(unsafe, mudclient.class);
+				loaderField.set(client, new ClientExternalAssetLoader(working, mudclient.class));
+				Sprite[] frames = new Sprite[40];
+				int loaded = (Integer) load.invoke(client, working.resolve(relative).toFile(),
+					frames, 64, "LEGACY_PROJECTILE_EFFECT_ASSET", "summon-bat-vampirism-reverse");
+				assertEquals(8, loaded, "bat sheet must decode into eight frames, not one strip");
+				for (int frame = 0; frame < loaded; frame++) {
+					assertSpriteMetadata(frames[frame], 64, 64, "bat frame " + frame);
+					int[] expected = new int[64 * 64];
+					for (int y = 0; y < 64; y++) {
+						for (int x = 0; x < 64; x++) {
+							int argb = sheet.getRGB(frame * 32 + x / 2, y / 2);
+							int rgb = argb & 0xFFFFFF;
+							expected[y * 64 + x] = (argb >>> 24) < 64 ? 0
+								: (rgb == 0 ? 0x010101 : rgb);
+						}
+					}
+					assertArray(expected, frames[frame].getPixels(), "bat frame pixels/order " + frame);
+				}
+				assertTrue(!Arrays.equals(frames[0].getPixels(), frames[1].getPixels()),
+					"bat animation advances to different artwork");
+				assertEquals(null, frames[8], "bat frame list ends at the sheet boundary");
+			}
+		} finally {
+			Files.delete(empty);
 		}
 	}
 
@@ -788,6 +841,19 @@ def main() -> None:
                 "orsc.ClientExternalAssetLoaderFixture",
                 str(ROOT),
                 "king-black-dragon-asset",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+        subprocess.run(
+            [
+                "java",
+                "-Djava.awt.headless=true",
+                "-cp",
+                f"{temp}:{CLIENT_JAR}",
+                "orsc.ClientExternalAssetLoaderFixture",
+                str(ROOT),
+                "duskwind-bat-asset",
             ],
             cwd=ROOT,
             check=True,
