@@ -188,7 +188,14 @@ final class OpenGLWindowController {
 
 		delegate.releaseInputState();
 		delegate.suppressKeysUntilRelease();
-		if (desiredMode == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN) {
+		if (desiredMode == OpenGLWindowSettings.Mode.FULLSCREEN) {
+			if (!enterFullscreen()) {
+				desiredMode = OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN;
+				OpenGLWindowSettings.setMode(desiredMode);
+				enterBorderlessFullscreen();
+				delegate.saveWindowSettings();
+			}
+		} else if (desiredMode == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN) {
 			enterBorderlessFullscreen();
 		} else {
 			enterWindowedMode(targetWidth, targetHeight);
@@ -200,6 +207,10 @@ final class OpenGLWindowController {
 		captureWindowedBounds(true);
 		MonitorMode monitorMode = gl.getPrimaryMonitorMode();
 		gl.glfwSetWindowAttrib(window, gl.GLFW_DECORATED, gl.GLFW_FALSE);
+		if (appliedWindowMode == OpenGLWindowSettings.Mode.FULLSCREEN) {
+			gl.glfwSetWindowMonitor(window, 0L, monitorMode.x, monitorMode.y,
+				monitorMode.width, monitorMode.height, gl.GLFW_DONT_CARE);
+		}
 		gl.glfwSetWindowPos(window, monitorMode.x, monitorMode.y);
 		gl.glfwSetWindowSize(window, monitorMode.width, monitorMode.height);
 		windowWidth = monitorMode.width;
@@ -210,6 +221,26 @@ final class OpenGLWindowController {
 				+ "x"
 				+ monitorMode.height
 				+ ".");
+	}
+
+	private boolean enterFullscreen() throws Exception {
+		MonitorMode monitorMode = gl.getPrimaryMonitorMode();
+		if (monitorMode.monitor == 0L) {
+			delegate.log("Fullscreen unavailable without a monitor; using Borderless.");
+			return false;
+		}
+		captureWindowedBounds(true);
+		gl.glfwSetWindowAttrib(window, gl.GLFW_DECORATED, gl.GLFW_FALSE);
+		int refreshRate = monitorMode.refreshRate > 0 ? monitorMode.refreshRate : gl.GLFW_DONT_CARE;
+		gl.glfwSetWindowMonitor(window, monitorMode.monitor, 0, 0,
+			monitorMode.width, monitorMode.height, refreshRate);
+		windowWidth = monitorMode.width;
+		windowHeight = monitorMode.height;
+		delegate.log("OpenGL window mode: fullscreen "
+			+ windowWidth + "x" + windowHeight
+			+ (monitorMode.refreshRate > 0 ? " at " + monitorMode.refreshRate + " Hz."
+				: " using desktop refresh rate."));
+		return true;
 	}
 
 	private void enterWindowedMode(int targetWidth, int targetHeight) throws Exception {
@@ -225,13 +256,19 @@ final class OpenGLWindowController {
 			restoreY = monitorMode.y + Math.max(0, (monitorMode.height - restoreHeight) / 2);
 		}
 
-		if (appliedWindowMode == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN) {
+		boolean leavingScreenMode = appliedWindowMode != null
+			&& appliedWindowMode != OpenGLWindowSettings.Mode.WINDOWED;
+		if (leavingScreenMode) {
 			gl.glfwHideWindow(window);
 		}
 		gl.glfwSetWindowAttrib(window, gl.GLFW_DECORATED, gl.GLFW_TRUE);
+		if (appliedWindowMode == OpenGLWindowSettings.Mode.FULLSCREEN) {
+			gl.glfwSetWindowMonitor(window, 0L, restoreX, restoreY,
+				Math.max(1, restoreWidth), Math.max(1, restoreHeight), gl.GLFW_DONT_CARE);
+		}
 		gl.glfwSetWindowSize(window, Math.max(1, restoreWidth), Math.max(1, restoreHeight));
 		gl.glfwSetWindowPos(window, restoreX, restoreY);
-		if (appliedWindowMode == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN) {
+		if (leavingScreenMode) {
 			gl.glfwShowWindow(window);
 		}
 		windowWidth = Math.max(1, restoreWidth);

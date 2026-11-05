@@ -143,6 +143,7 @@ final class OpenGLWindowSettings {
 
 	enum Mode {
 		WINDOWED("windowed", "@gre@Windowed", "Windowed"),
+		FULLSCREEN("fullscreen", "@cya@Fullscreen", "Fullscreen"),
 		BORDERLESS_FULLSCREEN("borderless-fullscreen", "@yel@Borderless", "Borderless");
 
 		final String id;
@@ -166,7 +167,7 @@ final class OpenGLWindowSettings {
 			}
 
 			String normalized = value.trim().toLowerCase().replace('_', '-');
-			if ("fullscreen".equals(normalized) || "borderless".equals(normalized)) {
+			if ("borderless".equals(normalized)) {
 				return BORDERLESS_FULLSCREEN;
 			}
 			for (Mode mode : values()) {

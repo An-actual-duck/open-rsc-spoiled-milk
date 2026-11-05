@@ -45,6 +45,7 @@ final class LwjglBindings {
 	private final Method glfwGetWindowPos;
 	private final Method glfwSetWindowPos;
 	private final Method glfwSetWindowAttrib;
+	private final Method glfwSetWindowMonitor;
 	private final Method glfwGetPrimaryMonitor;
 	private final Method glfwGetMonitorPos;
 	private final Method glfwGetVideoMode;
@@ -150,6 +151,7 @@ final class LwjglBindings {
 	final int GLFW_VISIBLE;
 	final int GLFW_FOCUSED;
 	final int GLFW_DECORATED;
+	final int GLFW_DONT_CARE;
 	final int GLFW_PRESS;
 	final int GLFW_RELEASE;
 	final int GLFW_REPEAT;
@@ -273,6 +275,8 @@ final class LwjglBindings {
 		glfwGetWindowPos = method(glfwClass, "glfwGetWindowPos", long.class, int[].class, int[].class);
 		glfwSetWindowPos = method(glfwClass, "glfwSetWindowPos", long.class, int.class, int.class);
 		glfwSetWindowAttrib = method(glfwClass, "glfwSetWindowAttrib", long.class, int.class, int.class);
+		glfwSetWindowMonitor = method(glfwClass, "glfwSetWindowMonitor",
+			long.class, long.class, int.class, int.class, int.class, int.class, int.class);
 		glfwGetPrimaryMonitor = method(glfwClass, "glfwGetPrimaryMonitor");
 		glfwGetMonitorPos = method(glfwClass, "glfwGetMonitorPos", long.class, int[].class, int[].class);
 		glfwGetVideoMode = method(glfwClass, "glfwGetVideoMode", long.class);
@@ -438,6 +442,7 @@ final class LwjglBindings {
 		GLFW_VISIBLE = constant(glfwClass, "GLFW_VISIBLE");
 		GLFW_FOCUSED = constant(glfwClass, "GLFW_FOCUSED");
 		GLFW_DECORATED = constant(glfwClass, "GLFW_DECORATED");
+		GLFW_DONT_CARE = constant(glfwClass, "GLFW_DONT_CARE");
 		GLFW_PRESS = constant(glfwClass, "GLFW_PRESS");
 		GLFW_RELEASE = constant(glfwClass, "GLFW_RELEASE");
 		GLFW_REPEAT = constant(glfwClass, "GLFW_REPEAT");
@@ -584,6 +589,11 @@ final class LwjglBindings {
 		invoke(glfwSetWindowAttrib, window, attribute, value);
 	}
 
+	void glfwSetWindowMonitor(long window, long monitor, int x, int y,
+							  int width, int height, int refreshRate) throws Exception {
+		invoke(glfwSetWindowMonitor, window, monitor, x, y, width, height, refreshRate);
+	}
+
 	MonitorMode getPrimaryMonitorMode() throws Exception {
 		long monitor = ((Long) invoke(glfwGetPrimaryMonitor)).longValue();
 		if (monitor == 0L) {
@@ -599,10 +609,12 @@ final class LwjglBindings {
 		}
 
 		return new MonitorMode(
+			monitor,
 			x[0],
 			y[0],
 			videoModeInt(videoMode, "width"),
-			videoModeInt(videoMode, "height"));
+			videoModeInt(videoMode, "height"),
+			videoModeInt(videoMode, "refreshRate"));
 	}
 
 	private void glfwGetMonitorPos(long monitor, int[] x, int[] y) throws Exception {

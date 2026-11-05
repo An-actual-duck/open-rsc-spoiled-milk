@@ -98,7 +98,7 @@ def main() -> None:
             f"{label} settings row",
         )
         require(settings_panel, action, f"{label} stable action")
-    require(settings_panel, 'addRow(rows, "@whi@Borderless - "', "Borderless settings row")
+    require(settings_panel, 'addRow(rows, "@whi@Window mode - "', "Window mode settings row")
 
     for current_value in (
         "RendererProfileSettings.getMode().label",
@@ -202,7 +202,7 @@ def main() -> None:
 
     require(
         plan,
-        "`Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`,\n`Terrain Variation`, and `Fog`, followed by two-line `Terrain shading`,\n`Object shading`, `Brightness / dimness`, `Contrast`, `Gamma`, and `Saturation`\nsliders",
+        "`Preset`, `Aspect Ratio`, `Window mode`, `Lighting`, `Geometry`,\n`Terrain Variation`, and `Fog`, followed by two-line `Terrain shading`,\n`Object shading`, `Brightness / dimness`, `Contrast`, `Gamma`, and `Saturation`\nsliders",
         "current Graphics row contract",
     )
     require(plan, "`Preset` provides `Classic`, `Remaster`, and `Custom`.", "preset contract")

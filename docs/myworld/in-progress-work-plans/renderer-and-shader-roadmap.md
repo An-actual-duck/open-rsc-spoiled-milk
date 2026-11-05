@@ -37,8 +37,8 @@ The current accepted player-facing renderer baseline is:
   not the desired long-term rendering owner.
 - `Classic`, `Remaster`, and `Custom` graphics presets.
 - `Aspect Ratio` instead of a long resolution list.
-- `Borderless` as a player-facing Graphics toggle, default-on for Classic and
-  Remaster.
+- `Window mode` with `Windowed`, `Fullscreen`, and `Borderless` selections;
+  Borderless is the default for fresh settings, Classic, and Remaster.
 - Server-owned 60-minute day/night cycle.
 - Directional/remaster lighting path with movable sun azimuth/elevation.
 - Strengthened dawn/dusk/night tone filters driven by server time.

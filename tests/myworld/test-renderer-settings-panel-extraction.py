@@ -84,6 +84,7 @@ public final class RendererSettingsPanelFixture {
 
 	public static void main(String[] args) {
 		assertOpenGLRows();
+		assertWindowModeRows();
 		assertSoftwareRowsAndScroll();
 		assertStableActionDispatch();
 		assertSliderClickAndDrag();
@@ -99,7 +100,7 @@ public final class RendererSettingsPanelFixture {
 			2.0f,
 			Arrays.asList(1.0f, 2.0f, 3.0f),
 			"@gre@4:3",
-			true,
+			"@yel@Borderless",
 			"@yel@Directional",
 			"@gre@Smooth",
 			"@gre@On",
@@ -133,7 +134,7 @@ public final class RendererSettingsPanelFixture {
 			"@whi@Preset - @yel@Test",
 			"@whi@Middle mouse - @gre@With tilt",
 			"@whi@Aspect Ratio - @gre@4:3",
-			"@whi@Borderless - @gre@On",
+			"@whi@Window mode - @yel@Borderless",
 			"@whi@Lighting - @yel@Directional",
 			"@whi@Geometry - @gre@Smooth",
 			"@whi@Terrain Variation - @gre@On",
@@ -196,6 +197,25 @@ public final class RendererSettingsPanelFixture {
 		scrolled.scroll = 4;
 		PANEL.draw(scrolled, state(false, true, true), input(0, 0, 0, 0), 800, (short) 184, 803, 66);
 		assertEquals(0, countScalingDraws(scrolled.drawn), "scrolled scaling controls");
+	}
+
+	private static void assertWindowModeRows() {
+		for (OpenGLWindowSettings.Mode mode : OpenGLWindowSettings.Mode.values()) {
+			OpenGLWindowSettings.setMode(mode);
+			RendererSettingsPanel.State captured = RendererSettingsPanel.State.capture(
+				true, ScaledWindow.ScalingAlgorithm.INTEGER_SCALING, 2.0f,
+				Arrays.asList(1.0f, 2.0f), true, false, true, false);
+			boolean found = false;
+			for (RendererSettingsPanel.Row row : RendererSettingsPanel.rows(captured)) {
+				if (row.action == 63) {
+					assertEquals("@whi@Window mode - " + mode.label, row.label,
+						"selected display mode label");
+					found = true;
+				}
+			}
+			assertEquals(true, found, "display mode selector");
+		}
+		OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
 	}
 
 	private static int countScalingDraws(List<String> drawn) {
