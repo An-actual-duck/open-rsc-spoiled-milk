@@ -149,6 +149,7 @@ python3 ./tests/myworld/test-hosted-alpha-config.py
 python3 ./tests/myworld/test-hosted-server-safety.py
 python3 ./tests/myworld/test-client-fat-jar-archive.py
 python3 ./tests/myworld/test-player-release.py
+python3 ./tests/myworld/test-universal-player-package.py
 python3 ./tests/myworld/test-release-hotkey-guard.py
 python3 ./tests/myworld/test-foundation-optimization-guards.py
 python3 ./tests/myworld/test-authenticated-network-benchmark.py

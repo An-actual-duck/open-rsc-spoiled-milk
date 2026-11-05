@@ -10,6 +10,7 @@ PORT=""
 WINDOWS_JRE=""
 ASSETS_CLEARED=false
 SKIP_BUILD=false
+CONSOLIDATE_EXISTING=false
 SOURCE_COMMIT=""
 FIXES_ONLY_BRANCH=""
 FIXES_ONLY_COMMIT=""
@@ -38,11 +39,16 @@ Options:
                     assets were checked before creating publishable archives.
   --skip-build      Use an already-built client jar. Intended for packaging
                     regression tests only.
+  --consolidate-existing
+                    Add the single-download ZIP to an existing tagged release.
+                    Reuse its exact player payloads; do not rebuild the game.
 EOF
 }
 
 while (($#)); do
   case "$1" in
+    --consolidate-existing)
+      CONSOLIDATE_EXISTING=true; shift ;;
     --fixes-only-source)
       [[ $# -ge 2 ]] || fail "--fixes-only-source requires a branch"
       FIXES_ONLY_BRANCH="$2"; shift 2 ;;
@@ -89,6 +95,7 @@ done
 
 [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+)?$ ]] \
   || fail "Version must use semantic form, for example v0.1.1 or v0.1.0-alpha.84"
+if [[ "$CONSOLIDATE_EXISTING" != true ]]; then
 [[ "$HOST" =~ ^[A-Za-z0-9.-]+$ ]] || fail "Host must be a DNS name or IPv4 address"
 case "${HOST,,}" in
   localhost|127.*|0.0.0.0)
@@ -97,6 +104,7 @@ case "${HOST,,}" in
 esac
 [[ "$PORT" =~ ^[0-9]+$ ]] && ((PORT >= 1 && PORT <= 65535)) \
   || fail "Port must be between 1 and 65535"
+fi
 [[ "$ASSETS_CLEARED" == true ]] \
   || fail "Confirm redistribution terms for packaged third-party visual assets before packaging with --assets-cleared"
 if [[ "$SKIP_BUILD" == true && "${SPOILED_MILK_RELEASE_TEST_MODE:-}" != 1 ]]; then
@@ -167,6 +175,29 @@ require_release_git_state() {
 }
 
 require_release_git_state
+
+if [[ "$CONSOLIDATE_EXISTING" == true ]]; then
+  [[ -z "$HOST$PORT$WINDOWS_JRE$FIXES_ONLY_BRANCH$FIXES_ONLY_COMMIT" && "$SKIP_BUILD" == false ]] \
+    || fail "--consolidate-existing accepts only --version and --assets-cleared"
+  tagged_commit="$(git -C "$ROOT_DIR" rev-parse --verify "refs/tags/$VERSION^{commit}")" \
+    || fail "Existing release must have an immutable local version tag"
+  git -C "$ROOT_DIR" merge-base --is-ancestor "$tagged_commit" "$SOURCE_COMMIT" \
+    || fail "Existing release tag is not contained in published main"
+  existing_output="$ROOT_DIR/output/releases/$VERSION"
+  python3 "$SCRIPT_ROOT/scripts/package-universal-player.py" \
+    --version "$VERSION" --directory "$existing_output" \
+    --templates "$ROOT_DIR/release/player" \
+    --expected-source-commit "$tagged_commit"
+  (
+    cd "$existing_output"
+    archives=("spoiled-milk-$VERSION-java.zip" "spoiled-milk-$VERSION-windows-x64.zip")
+    [[ ! -f "spoiled-milk-$VERSION-layered-world.zip" ]] \
+      || archives+=("spoiled-milk-$VERSION-layered-world.zip")
+    sha256sum "${archives[@]}" spoiled-milk-client.zip > SHA256SUMS.txt
+  )
+  printf 'Consolidated existing release: %s/spoiled-milk-client.zip\n' "$existing_output"
+  exit 0
+fi
 
 [[ -d "$WINDOWS_JRE" ]] || fail "Windows JRE directory does not exist: $WINDOWS_JRE"
 [[ -f "$WINDOWS_JRE/bin/java.exe" ]] || fail "Windows JRE must contain bin/java.exe"
@@ -401,14 +432,18 @@ require_release_git_state "$SOURCE_COMMIT"
   zip -qr "$OUTPUT_DIR/$JAVA_NAME.zip" "$JAVA_NAME"
   zip -qr "$OUTPUT_DIR/$WINDOWS_NAME.zip" "$WINDOWS_NAME"
 )
+python3 "$SCRIPT_ROOT/scripts/package-universal-player.py" \
+  --version "$VERSION" --directory "$OUTPUT_DIR" \
+  --templates "$PACKAGE_ASSETS" --expected-source-commit "$SOURCE_COMMIT"
 (
   cd "$OUTPUT_DIR"
-  sha256sum "$JAVA_NAME.zip" "$WINDOWS_NAME.zip" > SHA256SUMS.txt
+  sha256sum "$JAVA_NAME.zip" "$WINDOWS_NAME.zip" spoiled-milk-client.zip > SHA256SUMS.txt
 )
 
 rm -rf "$STAGING_DIR"
 
 printf 'Created player release artifacts:\n'
+printf '  %s\n' "$OUTPUT_DIR/spoiled-milk-client.zip (website download)"
 printf '  %s\n' "$OUTPUT_DIR/$JAVA_NAME.zip"
 printf '  %s\n' "$OUTPUT_DIR/$WINDOWS_NAME.zip"
 printf '  %s\n' "$OUTPUT_DIR/SHA256SUMS.txt"

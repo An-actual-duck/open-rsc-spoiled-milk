@@ -21,7 +21,7 @@ Usage:
   ./scripts/package-layered-world-release.sh --version v0.2.59
 
 Creates the exact validated Spoiled Milk layered-world server artifact beside
-the player archives and adds all three ZIP files to SHA256SUMS.txt.
+the player archives and adds the player and server ZIP files to SHA256SUMS.txt.
 For an approved fixes-only source, pass --fixes-only-source BRANCH and
 --source-commit HASH together. Default packaging still requires published main.
 EOF
@@ -152,9 +152,10 @@ rm -rf "$staging_dir"
 
 (
   cd "$output_dir"
+  player_archives=("$(basename "$java_archive")" "$(basename "$windows_archive")")
+  [[ ! -f spoiled-milk-client.zip ]] || player_archives+=(spoiled-milk-client.zip)
   sha256sum \
-    "$(basename "$java_archive")" \
-    "$(basename "$windows_archive")" \
+    "${player_archives[@]}" \
     "$(basename "$archive")" \
     > SHA256SUMS.txt
 )

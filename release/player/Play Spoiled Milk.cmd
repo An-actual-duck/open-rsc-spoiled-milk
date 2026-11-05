@@ -13,7 +13,10 @@ if exist "%~dp0game-files\Spoiled_Milk_Client.jar" (
   if exist "%~dp0updates" rmdir /s /q "%~dp0updates" >nul 2>nul
 )
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0game-files\update-spoiled-milk.ps1"
-if errorlevel 1 pause & exit /b 1
+if errorlevel 1 (
+  pause
+  exit /b 1
+)
 cd /d "%~dp0game-files"
 java ^
   -Xms512m ^
