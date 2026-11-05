@@ -1,5 +1,20 @@
 # Live Deployment
 
+The authoritative public server moved to **Oracle `132.145.137.142`** with
+v0.3.6 on November 5, 2026. Use the [Oracle hosting runbook](oracle-hosting.md)
+for its SSH access, service, database, backups, and maintenance procedure.
+The owner's PC deployment is preserved and stopped for rollback. Running
+`live-status.sh` on the PC reports that stopped copy, not the public server.
+Do not start it while Oracle is live.
+
+The remaining commands on this page describe the historical PC deployment
+workflow and shared deployment guards. They are not remote orchestration;
+do not use the PC start/stop/deploy commands to maintain Oracle. The public
+shutdown permission and in-game warning requirements remain mandatory on the
+active host.
+
+## Historical PC deployment and shared guards
+
 The live server uses `/tmp/spoiled-milk-live-main`, but that worktree is
 detached at an exact published `spoiled-milk/main` commit. It does not own the
 `main` branch and never receives development edits.

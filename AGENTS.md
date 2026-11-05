@@ -29,8 +29,11 @@ On other systems, use `python3` instead of `py -3`.
 - `/home/justin/Core-Framework-ai-1` through `-ai-3` are neutral worker slots.
   A worker may edit only after the manager starts a focused topic branch in
   that slot.
-- `/tmp/spoiled-milk-live-main` is the detached live deployment. Never edit,
-  commit, build experimental work, or switch branches there.
+- The authoritative public server is Oracle `ubuntu@132.145.137.142`, using
+  `/tmp/spoiled-milk-live-main` as its guarded detached deployment. The same
+  path on the owner's PC is now a stopped rollback copy, not the public host.
+  Never edit, commit, build experimental work, or switch branches in a live
+  deployment. See [`docs/workspaces/oracle-hosting.md`](docs/workspaces/oracle-hosting.md).
 
 ## External AI Contributors
 
@@ -140,6 +143,9 @@ contributor rescue command before cleanup. The beginner-safe workflow is in
 
 ## Public Server Shutdown Gate
 
+- These rules apply to the active Oracle public server. Local PC status,
+  start, stop, and deploy scripts do not operate Oracle; never start the
+  preserved PC copy while Oracle is live. Follow the host-specific runbook.
 - Building, tagging, uploading, publishing, or being asked to "release" or
   "deploy" does **not** authorize stopping or restarting the public server.
 - Never initiate a public-server shutdown without fresh, explicit user
