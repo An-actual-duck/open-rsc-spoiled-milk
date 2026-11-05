@@ -54,7 +54,10 @@ public final class UndergroundPassBridgeIntegrationTest {
         long millis = ticks * server.getConfig().GAME_TICK;
         check(millis >= 10000 && millis < 10000 + server.getConfig().GAME_TICK,
             "ten-second restoration rounded to the next game tick");
-        for (long i = 0; i < ticks; i++) event.doRun();
+        for (long i = 0; i < ticks; i++) {
+            server.getGameEventHandler().processNonPlayerEvents();
+            server.getGameEventHandler().cleanupEvents();
+        }
         server.getGameEventHandler().cleanupEvents();
         check(find(server, 704, 585, -1).getID() == 726, "bridge closes on the underground floor");
         check(restorations(server).isEmpty(), "restoration event completes");
@@ -99,6 +102,8 @@ public final class UndergroundPassBridgeIntegrationTest {
             check(lowered.getWorldLocation().equals(at(704, 585, -1)), "replacement preserves signed level");
             check(lowered.getLoc().getNativeLayeredGameObjectIdentity() != null, "replacement keeps native ownership");
             check(player.getWorldLocation().equals(at(703, 588, -1)), "lever crosses west without packed Y");
+            check(player.getViewArea().getGameObjectsInView().contains(lowered), "lowered bridge is visible to underground player");
+            check(!player.getViewArea().getGameObjectsInView().contains(surface), "surface bridge is excluded from underground view");
             check(find(server, 704, 585, 0) == surface, "same-XY surface bridge stays untouched");
             player.teleport(711, 587, -1, false);
             player.setBusy(false);

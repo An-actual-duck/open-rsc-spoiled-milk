@@ -32,7 +32,7 @@ replacement transaction, and delayed-event implementation. Dialogue waits are
 suppressed in the isolated test context; no listeners or player database start.
 The original plugin reproduced the exact live exception in this fixture.
 
-The corrected fixture passes 24 assertions covering lowering, native identity,
+The corrected fixture passes 26 assertions covering lowering, native identity,
 west/east crossing, ten-second reset rounded to a game tick, repeated pulls,
 and absent-bridge refusal. A second bridge at identical XY on the surface
 remains the same instance throughout. The fixture preparer also checks that the
@@ -49,8 +49,10 @@ ANT_HOME="$PWD/tools/vendor/apache-ant-1.10.5" \
   -Dbridge.fixture.dir="$PWD/output/tests/underground-pass-bridge/review"
 ```
 
-The existing four Underground Pass swamp-shortcut checks and the compiler
-warning gate pass. This focused change does not audit the remaining quest's
+The existing four Underground Pass swamp-shortcut checks, compiler warning
+gate, and server artifact audit pass. Static analysis reports no new SpotBugs
+findings; PMD and Ruff report no findings for the changed scope. This focused
+change does not audit the remaining quest's
 obstacles or exercise the complete quest in a legacy runtime. No map, client,
 database, or live Oracle deployment changes are included. Public activation
 requires a separate authorized server update.
