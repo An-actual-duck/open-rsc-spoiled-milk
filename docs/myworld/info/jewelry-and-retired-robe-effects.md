@@ -86,6 +86,11 @@ pulse. Rune preservation and longer upkeep do not alter this cadence. Removing
 the necklace, dismissing the summon, or logging out pauses the remaining time;
 re-equipping or re-summoning resumes it without a fresh pulse.
 
+Ordinary support upkeep separately grants 10 base Summoning XP whenever a
+Life-rune payment is actually consumed. This is a flat award per payment,
+including escalated payments, and requires no necklace. Failed payments and
+preserved runes grant no upkeep XP; the necklace's independent pulse is unchanged.
+
 ### Air
 
 Ring/necklace:
