@@ -95,6 +95,32 @@
         </java>
     </target>
 
+    <target name="test_underground_pass_layers" depends="compile_core,compile_plugins"
+            description="Offline real Underground Pass rope/cage-lever signed-layer checks">
+        <property name="pass.test.scenario" value="all"/>
+        <property name="pass.test.maxmemory" value="768m"/>
+        <fail unless="pass.fixture.dir" message="Pass -Dpass.fixture.dir with a disposable prepared fixture, never a server root"/>
+        <mkdir dir="../output/tests/underground-pass-layer-audit/classes"/>
+        <javac srcdir="${test.src}" destdir="../output/tests/underground-pass-layer-audit/classes" debug="on"
+               includes="com/openrsc/server/io/UndergroundPassLayerIntegrationTest.java" includeantruntime="false"
+               target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+            <classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </javac>
+        <java classname="com.openrsc.server.io.UndergroundPassLayerIntegrationTest" fork="true" maxmemory="${pass.test.maxmemory}" failonerror="true" dir="${pass.fixture.dir}">
+            <jvmarg value="-Djava.awt.headless=true"/>
+            <arg value="${pass.test.scenario}"/>
+            <classpath>
+                <pathelement location="${lib}/log4j-api-2.17.0.jar"/>
+                <pathelement location="${lib}/log4j-core-2.17.0.jar"/>
+                <pathelement location="${lib}/log4j-iostreams-2.17.0.jar"/>
+                <pathelement location="../output/tests/underground-pass-layer-audit/classes"/>
+                <pathelement location="plugins.jar"/>
+                <pathelement location="core.jar"/>
+                <fileset dir="${lib}" includes="*.jar"/>
+            </classpath>
+        </java>
+    </target>
+
     <target name="test_double_door_passage" depends="compile_core,compile_plugins"
             description="Offline real generic double-door plugin/helper/collision lifecycle checks">
         <fail unless="door.fixture.dir" message="Pass -Ddoor.fixture.dir with a disposable prepared fixture, never a server root"/>

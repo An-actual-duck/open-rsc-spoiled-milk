@@ -4,6 +4,8 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
 
 import static com.openrsc.server.plugins.Functions.*;
@@ -15,6 +17,7 @@ public class UndergroundPassPuzzle implements OpLocTrigger {
 	public static int FAIL_GRILL = 782;
 	public static int LEVER = 801;
 	public static int CAGE = 802;
+	private static final int UNDERGROUND_PASS_LEVEL = -1;
 
 	/**
 	 * Tile puzzle grills
@@ -46,14 +49,30 @@ public class UndergroundPassPuzzle implements OpLocTrigger {
 			delay(3);
 			mes("you hear a loud mechanical churning");
 			delay(3);
-			GameObject cage_closed = new GameObject(player.getWorld(), Point.location(690, 3449), CAGE, 6, 0);
-			GameObject cage_open = new GameObject(player.getWorld(), Point.location(690, 3449), CAGE + 1, 6, 0);
-			player.getWorld().registerGameObject(cage_open);
-			player.getWorld().delayedSpawnObject(cage_closed.getLoc(), 5000);
+			GameObject cage = findCage(player, obj);
+			if (cage == null || (cage.getID() != CAGE && cage.getID() != CAGE + 1)) {
+				player.message("the cage mechanism does not respond");
+				return;
+			}
+			if (cage.getID() == CAGE) {
+				player.getWorld().replaceGameObject(cage,
+					new GameObject(cage.getWorld(), cage.getLocation(), CAGE + 1, cage.getDirection(), cage.getType()));
+				player.getWorld().delayedSpawnObject(cage.getLoc(), 5000);
+			}
 			player.message("as the huge railing raises to the cave roof");
 			player.message("the cage lowers behind you");
-			player.teleport(690, 3451);
+			player.teleport(690, 619, UNDERGROUND_PASS_LEVEL, false);
 		}
+	}
+
+	private static GameObject findCage(final Player player, final GameObject lever) {
+		if (player.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			WorldLocation origin = lever.getWorldLocation();
+			return lever.getWorld().getRegionManager().findNativeLayeredScenery(
+				new WorldLocation(origin.getWorldSpace(),
+					new WorldCoordinate(690, 617, origin.getCoordinate().getLevel())));
+		}
+		return player.getViewArea().getGameObject(Point.location(690, 3449));
 	}
 
 	private void trap(Player player, GameObject obj) {
