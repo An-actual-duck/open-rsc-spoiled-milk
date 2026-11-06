@@ -10,17 +10,23 @@ import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopServic
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBalances;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.RuneCostPreservation;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.container.Inventory;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.content.market.MarketInventoryAdmission;
 import com.openrsc.server.net.rsc.handlers.PlayerTradeHandler;
+import com.openrsc.server.net.rsc.enums.OpcodeOut;
+import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.model.entity.player.Player;
 import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,6 +39,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		h.installMonsterSlayerData(data);
 		risingSunAleTransactionOutcomes(h, data);
 		supportCommandExperienceUsesActiveMinutePulses(h);
+		supportUpkeepAwardsExperienceForConsumedRunes(h);
 		basicRedemptionAndRollback(h, data);
 		rankIndependentShopAndOrderedCapacityAccess(h, data);
 		everyShopDeductsItsTypedCost(h, data);
@@ -87,6 +94,75 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		Method method = Summoning.class.getDeclaredMethod("pulseSupportCommandExperience", Player.class);
 		method.setAccessible(true);
 		method.invoke(null, owner);
+	}
+
+	private static void supportUpkeepAwardsExperienceForConsumedRunes(CurrentCombatHarness h)
+		throws Exception {
+		Method consume = Summoning.class.getDeclaredMethod("consumeLifeRunes", Player.class, int.class);
+		consume.setAccessible(true);
+		Player owner = h.player("upkeep xp", 891, 790);
+		owner.getClientLimitations().maxItemId = Integer.MAX_VALUE;
+		assertTrue(owner.getCarriedItems().getInventory().add(new Item(ItemId.LIFE_RUNE.id(), 5)),
+			"upkeep fixture receives life runes");
+		owner.getClientLimitations().maxSkillId = Integer.MAX_VALUE;
+		h.recordOutgoingPackets(owner);
+		int before = owner.getSkills().getExperience(Skill.SUMMONING.id());
+		int updates = h.countOutgoingPackets(owner, OpcodeOut.SEND_STAT);
+		assertTrue((Boolean) consume.invoke(null, owner, 1), "ordinary support upkeep succeeds");
+		assertEquals(4, owner.getCarriedItems().getInventory().countId(ItemId.LIFE_RUNE.id(), Optional.of(false)),
+			"ordinary upkeep consumes its life rune");
+		assertEquals(before + 40, owner.getSkills().getExperience(Skill.SUMMONING.id()),
+			"consumed upkeep grants 10 displayed Summoning XP without a necklace");
+		assertEquals(updates + 1, h.countOutgoingPackets(owner, OpcodeOut.SEND_STAT),
+			"upkeep XP sends the client a skill update");
+		assertTrue((Boolean) consume.invoke(null, owner, 3), "escalated upkeep succeeds");
+		assertEquals(before + 80, owner.getSkills().getExperience(Skill.SUMMONING.id()),
+			"escalated upkeep retains the original flat 10 displayed XP per payment");
+		assertTrue(!(Boolean) consume.invoke(null, owner, 2), "insufficient runes refuse upkeep");
+		assertEquals(before + 80, owner.getSkills().getExperience(Skill.SUMMONING.id()),
+			"failed upkeep grants no XP");
+
+		h.equip(owner, 3101, 1); // Sapphire Necklace of Support Command.
+		Summoning.summonTestUnicorn(owner);
+		String nextKey = "myworld_support_command_xp_next_pulse";
+		long deadline = owner.getCache().getLong(nextKey);
+		assertTrue((Boolean) consume.invoke(null, owner, 1), "necklace wearer can pay ordinary upkeep");
+		assertEquals(before + 120, owner.getSkills().getExperience(Skill.SUMMONING.id()),
+			"upkeep does not duplicate the necklace's separate XP award");
+		assertTrue(deadline == owner.getCache().getLong(nextKey), "upkeep leaves the command timer unchanged");
+		owner.getCache().store(nextKey, System.currentTimeMillis() - 1L);
+		invokeSupportCommandPulse(owner);
+		assertEquals(before + 180, owner.getSkills().getExperience(Skill.SUMMONING.id()),
+			"necklace still grants its separate 15 displayed XP pulse");
+		Summoning.dismissManualSummon(owner);
+
+		Player preserved = h.player("upkeep saved", 892, 790);
+		preserved.getClientLimitations().maxItemId = Integer.MAX_VALUE;
+		assertTrue(preserved.getCarriedItems().getInventory().add(new Item(ItemId.LIFE_RUNE.id(), 1)),
+			"preservation fixture receives its life rune");
+		h.equip(preserved, 2764, 1); // Life-enchanted wool equipment.
+		assertTrue(RuneCostPreservation.getChance(preserved, ItemId.LIFE_RUNE.id()) > 0.0D,
+			"preservation fixture wears life equipment");
+		Field randomField = DataConversions.class.getDeclaredField("rand");
+		randomField.setAccessible(true);
+		Random original = (Random) randomField.get(null);
+		final AtomicInteger rolls = new AtomicInteger();
+		int preservedBefore = preserved.getSkills().getExperience(Skill.SUMMONING.id());
+		try {
+			randomField.set(null, new Random(0L) {
+				@Override public double nextDouble() { rolls.incrementAndGet(); return 0.0D; }
+			});
+			assertTrue((Boolean) consume.invoke(null, preserved, 1), "preservation sustains the summon");
+			assertEquals(1, preserved.getCarriedItems().getInventory().countId(ItemId.LIFE_RUNE.id(), Optional.of(false)),
+				"preserved upkeep leaves the life rune in inventory");
+			assertEquals(preservedBefore, preserved.getSkills().getExperience(Skill.SUMMONING.id()),
+				"preserved upkeep grants no consumption XP");
+			preserved.getCarriedItems().remove(new Item(ItemId.LIFE_RUNE.id(), 1));
+			assertTrue(!(Boolean) consume.invoke(null, preserved, 1), "preservation still requires an available rune");
+			assertEquals(1, rolls.get(), "missing runes refuse upkeep before a preservation roll");
+		} finally {
+			randomField.set(null, original);
+		}
 	}
 
 	private static void rankIndependentShopAndOrderedCapacityAccess(CurrentCombatHarness h,

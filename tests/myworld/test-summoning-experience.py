@@ -25,7 +25,7 @@ def main() -> None:
     npc = NPC.read_text(encoding="utf-8")
     attack_handler = ATTACK_HANDLER.read_text(encoding="utf-8")
 
-    require(summoning, "SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP = 10", "support command pulse XP base")
+    require(summoning, "SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP = 10", "support upkeep and command pulse XP base")
     require(summoning, "SUPPORT_COMMAND_XP_PULSE_MS = 60000", "support command one-minute pulse")
     require(summoning, "PACK_RAT_UTILITY_BASE_DISPLAYED_XP = 75", "pack rat base XP")
     require(summoning, "PACK_RAT_UTILITY_PER_ITEM_DISPLAYED_XP = 5", "pack rat per-item XP")
@@ -47,8 +47,11 @@ def main() -> None:
         fail("support command XP must use independent active-time pulse")
     consume_start = summoning.index("private static boolean consumeLifeRunes")
     consume_end = summoning.index("private static int getSupportCommandDisplayedExperience")
-    if "awardDisplayedSummoningExperience" in summoning[consume_start:consume_end]:
+    consume = summoning[consume_start:consume_end]
+    if "getSupportCommandDisplayedExperience" in consume:
         fail("support command XP must not be tied to life-rune consumption")
+    require(consume, "awardDisplayedSummoningExperience(owner, SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP);",
+            "ordinary XP for consumed support upkeep")
     require(
         summoning,
         "awardDisplayedSummoningExperience(player, DELIVERY_CAMEL_UTILITY_DISPLAYED_XP);",

@@ -95,7 +95,9 @@ def main() -> None:
     require("Math.ceil(maxHit * (bonusPercent / 100.0D))" in method_body(summoning, "getScaledMaxHit"), "combat damage must be percentage-based")
     require("getLifeNecklaceSupportDurationPercent()" in method_body(summoning, "getDurationTicks"), "support duration must use the Necklace")
     consume = method_body(summoning, "consumeLifeRunes")
-    require("awardDisplayedSummoningExperience" not in consume, "Life-rune consumption must not award Necklace command XP")
+    require("getSupportCommandDisplayedExperience" not in consume, "Life-rune consumption must not duplicate Necklace command XP")
+    require("awardDisplayedSummoningExperience(owner, SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP);" in consume,
+            "consumed support upkeep must still award its ordinary XP")
     pulse = method_body(summoning, "pulseSupportCommandExperience")
     require("getLifeNecklaceSupportUpkeepXpBonusPercent()" in pulse, "command XP must require the Necklace")
     require("awardDisplayedSummoningExperience(owner, getSupportCommandDisplayedExperience(owner));" in pulse, "command XP must award on its own pulse")

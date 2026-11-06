@@ -2057,6 +2057,7 @@ public final class Summoning {
 		final boolean consumed = owner.getCarriedItems().remove(new Item(ItemId.LIFE_RUNE.id(), amount), false) != -1;
 		if (consumed) {
 			ActionSender.sendInventory(owner);
+			awardDisplayedSummoningExperience(owner, SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP);
 		}
 		return consumed;
 	}
