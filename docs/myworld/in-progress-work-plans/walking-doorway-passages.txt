@@ -1,4 +1,4 @@
-Doorway walking repair — in progress
+Doorway walking repair — ready for manager review
 ===================================
 
 Reported: old walk-through/close-behind passages now snap, including Al Kharid.
@@ -41,7 +41,25 @@ Maintained server build and its artifact/source audit pass.
 Workspace layout still reports the same 76 inherited ignored-file findings;
 no new output location or asset writer is introduced outside declared categories.
 
-Remaining before READY
-----------------------
-- Finish production-classpath verification and final exact-commit review.
-- Review/install only in a newly authorized public maintenance window.
+Final artifact verification
+---------------------------
+After the workstation restart, preserved source 8092421f9 was rebuilt through
+scripts/build-server.sh (generator check mode). Its source/artifact audit passes.
+The full 498-check doorway fixture also passes on the actual production JAR
+classpath. Verbose class loading confirms Functions and DoorwayWalk come from
+the maintained core.jar; test classes do not shadow production classes. Evidence:
+output/reviews/walking-doorway-passages/production-classpath-resumed-java8/.
+
+The final review preserves Shilo's separate clamber obstacle as a teleport and
+uses the existing timed door helper for its physical tomb doors, allowing the
+walking crossing to finish before the temporary frame closes. No map, asset,
+client protocol, quest requirement or destination is changed.
+
+Limits and activation
+---------------------
+This proves server-side walking flags, adjacent per-tick movement, facing,
+world-info packet behavior and relevant entry/closing controls. It is not a
+fresh private-client visual acceptance or full playthrough of every affected
+quest. Existing unrelated legacy layer/quest-coordinate assumptions remain.
+No public server has been stopped, restarted or changed for this task. Live
+activation requires a new explicitly authorized warning/countdown window.
