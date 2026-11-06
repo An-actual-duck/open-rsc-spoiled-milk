@@ -12,12 +12,12 @@ public worlds against diverging player databases.
 | Game port | TCP `43605` |
 | VM | `VM.Standard.A1.Flex`, 1 OCPU, 6 GB RAM, ARM64 |
 | OS / Java | Ubuntu 26.04.1 LTS / OpenJDK 17 |
-| Server release tag | `v0.3.10` (Slayer Tower door plugin-context repair) |
+| Server release tag | `v0.3.11` (interaction movement after shuriken combat) |
 | Published client release | `v0.3.8` (Duskwind Bat projectile frame fix) |
-| Game source | `2b5ebafd46dd619b9b1f9df2eaf76d0c087b1793` |
+| Game source | `53adcce6e09d7e2a74862cee989dac7355a2837a` |
 | Client protocol | `10059` |
 | Public service | `spoiled-milk.service`, enabled at boot |
-| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.10` |
+| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.11` |
 | Guarded live path | `/tmp/spoiled-milk-live-main` |
 | Git object repository | `/home/ubuntu/spoiled-milk/repository.git` |
 | External state | `/home/ubuntu/.local/share/spoiled-milk/live` |
@@ -28,7 +28,7 @@ The service requires that mount. The source is a clean detached checkout of the
 exact published tag; it is never a development workspace.
 
 The service calls `scripts/run-hosted-server.sh` with
-`MYWORLD_HOSTED_RELEASE_TAG=v0.3.10`. Existing exact-tag, clean-source, installed
+`MYWORLD_HOSTED_RELEASE_TAG=v0.3.11`. Existing exact-tag, clean-source, installed
 map, generator, external-database, and occupied-port guards remain active.
 `JAVA_TOOL_OPTIONS` caps the heap at 3 GiB. The unit uses `Restart=on-failure`;
 a successful in-game shutdown exits normally and stays stopped.
@@ -37,12 +37,21 @@ The VM firewall and Oracle subnet security list permit TCP 43605. The client
 uses the public IPv4 address directly; an address change needs a client endpoint
 update. This deployment does not depend on the owner's PC staying online.
 
-`v0.3.7`, `v0.3.9`, and `v0.3.10` are server-only source tags with no player
-release entries.
+`v0.3.7`, `v0.3.9`, `v0.3.10`, and `v0.3.11` are server-only source tags with
+no player release entries.
 The website and updater remain on compatible client `v0.3.8`, which includes
 the projectile correction, single-download ZIP and platform updater assets.
 The current server patch needs no client changes, and protocol 10059 is
 unchanged. Never publish a newer player release without its updater assets.
+
+The v0.3.11 activation preserved the database and its 66 existing accounts,
+with verified backup copies on Oracle and the owner's PC. The v0.3.10 source
+is retained for rollback. After startup, all 84 offline interaction checks
+passed against the installed Java 17 server JARs: pickup, door opening and NPC
+conversation after active and completed shuriken combat. The class-loading
+check confirms the movement handler comes from the installed core JAR. Receipts
+are under `output/reviews/shuriken-interaction-movement/activation/` and
+`/home/ubuntu/spoiled-milk/verification/v0.3.11/activation/` on Oracle.
 
 The v0.3.10 activation preserved all 62 accounts and the existing database,
 with verified backup copies on Oracle and the owner's PC. The v0.3.9 source is
