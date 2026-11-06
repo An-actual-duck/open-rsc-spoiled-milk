@@ -132,15 +132,18 @@ public final class CurrentPvpFoundationCharacterization {
     }
 
     private static void walking(CurrentCombatHarness h) throws Exception {
-        Player a=player(h,"pvp walk a",180,200,false), b=player(h,"pvp walk b",181,200,false);
-        a.startCombat(b); b.startCombat(a);
-        PvmMeleeEvent pursuer=b.getPvmMeleeEvent();
-        require(pursuer!=null,"pursuer has its own attack event");
-        WalkStruct walk=new WalkStruct();walk.setOpcode(OpcodeIn.WALK_TO_POINT);walk.firstStep=Point.location(179,200);
-        new WalkRequest().process(walk,a);
-        require(a.getPvmMeleeEvent()==null,"walking stops the walker's outgoing attack");
-        require(b.getPvmMeleeEvent()==pursuer && pursuer.isRunning(),"walking must leave the pursuer's attack running");
-        require(a.canBeReattacked(),"walking must not grant retreat immunity");
+        for (OpcodeIn opcode : new OpcodeIn[]{OpcodeIn.WALK_TO_POINT, OpcodeIn.WALK_TO_ENTITY}) {
+            Player a=player(h,"pvp walk a"+opcode.ordinal(),180,200,false), b=player(h,"pvp walk b"+opcode.ordinal(),181,200,false);
+            a.startCombat(b); b.startCombat(a);
+            PvmMeleeEvent pursuer=b.getPvmMeleeEvent();
+            require(pursuer!=null,"pursuer has its own attack event");
+            WalkStruct walk=new WalkStruct();walk.setOpcode(opcode);walk.firstStep=Point.location(179,200);
+            new WalkRequest().process(walk,a);
+            require(a.getPvmMeleeEvent()==null,"walking stops the walker's outgoing attack");
+            require(b.getPvmMeleeEvent()==pursuer && pursuer.isRunning(),"walking must leave the pursuer's attack running");
+            require(a.canBeReattacked(),"walking must not grant retreat immunity");
+            require(!a.finishedPath(),"both direct and interaction walks queue movement");
+        }
     }
 
     private static void independentCadence(CurrentCombatHarness h) throws Exception {
