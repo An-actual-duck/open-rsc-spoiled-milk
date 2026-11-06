@@ -48,3 +48,22 @@ fixed/expanded-runtime.log, regressions.log). The package fingerprint remains
 These are offline runtime checks, not an in-game visual acceptance. Public
 activation requires a fresh authorized maintenance window and complete warning
 countdown. The compatible v0.3.8 client needs no update.
+
+Oracle test-harness follow-up
+-----------------------------
+The first staged Oracle run exposed a scheduler timing gap in the new test:
+its drain helper advanced only ownerless events. PluginTickEvent can observe
+an action's pause/completion notification just before its Future reports done,
+so the completed Default event legitimately remains until the next player
+event tick. Omitting player-event processing could leave that old event queued
+and reject a later simulated click. Real server ticks process both kinds.
+The test now advances both player and ownerless events before cleanup. This
+follow-up changes only the fixture, not the v0.3.10 production artifacts or tag.
+Initial Oracle logs are preserved alongside the corrected validation evidence.
+The corrected fixture passes all 547 checks on both local Java 8 and Oracle
+Java 17/ARM64 using the production classpath and the staged v0.3.10 artifacts.
+Class-loading evidence confirms the maintained helper, packet handler, plugin
+task and default plugin are loaded from those exact release JARs. The public
+v0.3.9 service remained running with the same PID and zero restarts throughout.
+Oracle evidence: /home/ubuntu/spoiled-milk/verification/v0.3.10/validation.json;
+local receipt: output/reviews/slayer-door-plugin-context/oracle/validation.json.
