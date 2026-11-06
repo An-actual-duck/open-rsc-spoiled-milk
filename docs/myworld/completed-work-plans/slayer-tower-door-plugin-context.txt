@@ -1,0 +1,50 @@
+Slayer Tower front-door plugin context repair
+============================================
+
+Reported behavior
+-----------------
+On public v0.3.9, an eligible player could click the front door at (22,474,0),
+reach its edge and trigger Default.onOpLoc, but the door never opened. Narrow
+read-only live logs confirmed the correct object, command and edge position.
+
+Cause and correction
+--------------------
+ScriptContext.startScript marks the player busy before invoking a plugin.
+DoubleDoorPassage.begin rejected every busy player, including the player whose
+own object-action script was currently opening the door. This silently stopped
+the interaction. The earlier approach correction was necessary, but its tests
+called DoorAction directly and skipped the script lifecycle that revealed this
+second problem.
+
+The helper now accepts a busy player only when the current plugin context is
+that player's sole owned object-action script. Unrelated busy states and other
+script types remain blocked. Busy state is never cleared early. Existing rank,
+terrain, native-identity, collision, walking and automatic-close rules remain.
+No client files, definitions, authored map or player data changed.
+
+Regression coverage
+-------------------
+NextUpdateMapAcceptanceTest now sends a real GameObjectAction payload through
+the production walk-to action, rank plugin, PluginTickEvent/PluginTask and
+Default.onOpLoc on the actual installed map. Both lanes enter as an eligible
+rank and exit without membership. Each opens the visual, walks across without
+teleporting, closes and releases script ownership. Additional checks exercise
+an already-busy packet, the helper outside a script, an unrelated real inventory
+script, and an unqualified click that triggers the actual nearby NPC refusal.
+
+Before the fix, the packet-path test reproduced four failed open/crossings and
+10 failed checks. After the fix, all 547 actual-map checks pass. The independent
+generic double-door fixture covers 1,143 checks, including cardinals, signed
+levels, collision, stale instances, closing and logout. The tower-associate
+fixture passes rank and dialogue behavior. All 149 full combat scenarios pass.
+The built-artifact audit passes. The workspace-layout check still reports 76
+inherited ignored asset/output entries in this reused worker; this task adds
+no artwork or output writer, and its evidence uses the declared tests category.
+
+Evidence: output/tests/slayer-door-plugin-context/ (baseline/runtime.log,
+fixed/expanded-runtime.log, regressions.log). The package fingerprint remains
+7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc.
+
+These are offline runtime checks, not an in-game visual acceptance. Public
+activation requires a fresh authorized maintenance window and complete warning
+countdown. The compatible v0.3.8 client needs no update.

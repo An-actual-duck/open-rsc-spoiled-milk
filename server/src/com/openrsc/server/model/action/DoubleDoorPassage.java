@@ -2,6 +2,7 @@ package com.openrsc.server.model.action;
 
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.SingleTickEvent;
+import com.openrsc.server.event.rsc.PluginTask;
 import com.openrsc.server.external.GameObjectDef;
 import com.openrsc.server.external.TileDef;
 import com.openrsc.server.io.NativeLayeredTerrainTile;
@@ -10,6 +11,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GameObjectCollisionRegistrationState;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.states.Action;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.RegionManager;
@@ -23,7 +25,7 @@ public final class DoubleDoorPassage {
 	private DoubleDoorPassage() {}
 
 	public static void begin(final Player player, final GameObject closed, final int openId) {
-		if (player.getWorld() != closed.getWorld() || !player.isLoggedIn() || player.isRemoved() || player.isBusy()
+		if (player.getWorld() != closed.getWorld() || !player.isLoggedIn() || player.isRemoved() || busyWithAnotherAction(player)
 			|| closed.isRemoved() || !current(closed)) return;
 		GameObjectDef original = closed.getGameObjectDef();
 		GameObjectDef opened = player.getWorld().getServer().getEntityHandler().getGameObjectDef(openId);
@@ -69,6 +71,17 @@ public final class DoubleDoorPassage {
 			throw failure;
 		}
 		// No player-owned delayed callback or busy token: logout/reset cannot strand the door open.
+	}
+
+	private static boolean busyWithAnotherAction(Player player) {
+		if (!player.isBusy()) return false;
+		// ScriptContext marks the player busy before Default.onOpLoc runs.
+		// Allow only that player's sole, currently executing object-action script;
+		// never clear the busy flag or admit an unrelated/background action.
+		PluginTask task = PluginTask.getContextPluginTask();
+		return task == null || task.getScriptContext().getContextPlayer() != player
+			|| task.getScriptContext().getCurrentAction() != Action.oploc
+			|| player.getOwnedPlugins().size() != 1 || !player.getOwnedPlugins().contains(task);
 	}
 
 	/** Two lanes, either side, only cardinal directions; never snap an end-on click sideways. */
