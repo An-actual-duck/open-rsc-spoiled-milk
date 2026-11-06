@@ -1,0 +1,38 @@
+Doorway walking repair — in progress
+===================================
+
+Reported: old walk-through/close-behind passages now snap, including Al Kharid.
+The border guard explicitly uses teleport(..., false), whose flag disables
+bubbles rather than teleport movement. Common doDoor/tent/wall routines also
+explicitly teleport. doGate uses false-location updates but jumps several tiles,
+which Mob correctly classifies as a teleport. These calls predate loader work.
+
+Worker: Core ai-2, fix/walking-doorway-passages. No public deployment changes.
+
+Implemented so far
+------------------
+DoorwayWalk supplies bounded same-domain, adjacent steps with per-tick yields.
+It preserves signed layers, waits if an ordinary approach already moved this
+tick, and stops if the player logs out, dies or is moved elsewhere. No general
+teleport API is changed. Shared door/tent/wall/gate routines now use it. Gate
+closing has a finally path and exact-current-instance guard. Al Kharid opens
+its real gate and preserves quest/free/toll rules. Rangers and Legends overrides
+use explicit walking destinations. Other clear local quest-door teleports were
+converted; special travel is being audited individually.
+
+Evidence so far
+---------------
+The executable native fixture uses actual plugin tasks, per-tick location/flag
+traces, signed levels 0/1/2/3/-3 and gate/boundary frames. It reproduced 38 failed
+walking crossings before the change. The corrected suite passes 283 checks,
+including both Al Kharid directions, completed/stage-3/free/paid, refusal and
+insufficient coins. See output/tests/walking-doorway-passages/.
+
+Remaining before READY
+----------------------
+- Add tests for the individual Rangers/Legends overrides and real-teleport,
+  chained-step, interrupted-crossing and packet controls.
+- Finish classifying the 79 nearby door/gate teleport candidates; retain actual
+  portals, instances, ladders, magical travel and narrative remote relocations.
+- Check broad combat/PvP/shared-door regressions and production classpath.
+- Review/install only in a newly authorized public maintenance window.

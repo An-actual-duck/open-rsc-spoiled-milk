@@ -1290,15 +1290,15 @@ public class DoorAction {
 					if (player.getX() >= 388) {
 						mes("The gates open very slowly.");
 						delay(3);
-						player.teleport(387, 852);
+						com.openrsc.server.plugins.Functions.walkThroughDoorway(player, 387, 852);
 						player.message("You manage to drag your battered body back through the gates.");
 					} else {
 						mes("The gates open very slowly...");
 						delay(3);
-						player.teleport(389, 852);
+						com.openrsc.server.plugins.Functions.walkThroughDoorway(player, 389, 852);
 						mes("As soon as the gates open, the Zombies grab you and start dragging you inside!");
 						delay(3);
-						player.teleport(391, 852);
+						com.openrsc.server.plugins.Functions.walkThroughDoorway(player, 391, 852);
 						say(player, null, "Oh no, I'm done for!");
 					}
 				} else if (menu == 1) {

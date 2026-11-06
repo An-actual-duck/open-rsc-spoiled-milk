@@ -1394,7 +1394,7 @@ public class GrandTree implements QuestInterface, TalkNpcTrigger, OpLocTrigger, 
 				say(player, worker, "ka lu min");
 				npcsay(player, worker, "i'm sorry to have kept you",
 					"but obviously high security is essential");
-				player.teleport(402, 760);
+				com.openrsc.server.plugins.Functions.walkThroughDoorway(player, 402, 760);
 				player.message("the worker opens the gate");
 				player.message("you walk through");
 				npcsay(player, worker, "you'll need to speak to the foreman",
@@ -1525,7 +1525,7 @@ public class GrandTree implements QuestInterface, TalkNpcTrigger, OpLocTrigger, 
 				player.message("you open the gate");
 				player.message("and walk through");
 				doGate(player, obj, 623);
-				player.teleport(401, 763);
+				com.openrsc.server.plugins.Functions.walkThroughDoorway(player, 401, 763);
 			}
 		}
 		else if (obj.getID() == STRONGHOLD_GATE) {

@@ -534,10 +534,10 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 				player.message("You go through the door");
 				if (player.getY() >= 533) {
 					doDoor(obj, player);
-					player.teleport(148, 532, false);
+					com.openrsc.server.plugins.Functions.walkThroughDoorway(player, 148, 532);
 				} else {
 					doDoor(obj, player);
-					player.teleport(148, 533, false);
+					com.openrsc.server.plugins.Functions.walkThroughDoorway(player, 148, 533);
 				}
 			} else {
 				player.message("The door won't open");
@@ -555,10 +555,10 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 						player.message("You go through the door");
 						if (legacyPackedY(player) <= 3369) {
 							doDoor(obj, player);
-							player.teleport(player.getX(), player.getY() + 1, false);
+							com.openrsc.server.plugins.Functions.walkThroughDoorway(player, player.getX(), player.getY() + 1);
 						} else {
 							doDoor(obj, player);
-							player.teleport(player.getX(), player.getY() - 1, false);
+							com.openrsc.server.plugins.Functions.walkThroughDoorway(player, player.getX(), player.getY() - 1);
 						}
 					} else {
 						if (legacyPackedY(player) <= 3369) {
@@ -570,7 +570,7 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 							}
 						} else {
 							doDoor(obj, player);
-							player.teleport(player.getX(), player.getY() - 1, false);
+							com.openrsc.server.plugins.Functions.walkThroughDoorway(player, player.getX(), player.getY() - 1);
 						}
 					}
 				}

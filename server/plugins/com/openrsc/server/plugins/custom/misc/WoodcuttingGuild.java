@@ -39,7 +39,7 @@ public class WoodcuttingGuild implements TalkNpcTrigger {
 				delay(3);
 				if (player.getSkills().getLevel(Skill.WOODCUTTING.id()) >= 55) {
 					mes("The gate swings open and you walk through");
-					player.teleport(560, 472);
+					com.openrsc.server.plugins.Functions.walkThroughDoorway(player, 560, 472);
 				} else {
 					mes("The forester puts out his hand to stop you");
 					delay(3);

@@ -1745,38 +1745,47 @@ public class Functions {
 		}
 	}
 
+    /** Caller must already have authorized this local door or gate crossing. */
+    public static void walkThroughDoorway(Player player, int x, int y) {
+        walkThroughDoorway(player, Point.location(x,y));
+    }
+
+    public static void walkThroughDoorway(Player player, Point destination) {
+        com.openrsc.server.model.action.DoorwayWalk.cross(player,destination);
+    }
+
 	public static void doTentDoor(final GameObject object, final Player player) {
 		if (object.getDirection() == 0) {
 			if (object.getLocation().equals(player.getLocation())) {
-				teleport(player, object.getX(), object.getY() - 1);
+				walkThroughDoorway(player, object.getX(), object.getY() - 1);
 			} else {
-				teleport(player, object.getX(), object.getY());
+				walkThroughDoorway(player, object.getX(), object.getY());
 			}
 		}
 		if (object.getDirection() == 1) {
 			if (object.getLocation().equals(player.getLocation())) {
-				teleport(player, object.getX() - 1, object.getY());
+				walkThroughDoorway(player, object.getX() - 1, object.getY());
 			} else {
-				teleport(player, object.getX(), object.getY());
+				walkThroughDoorway(player, object.getX(), object.getY());
 			}
 		}
 		if (object.getDirection() == 2) {
 			// DIAGONAL
 			// front
 			if (object.getX() == player.getX() && object.getY() == player.getY() + 1) {
-				teleport(player, object.getX(), object.getY() + 1);
+				walkThroughDoorway(player, object.getX(), object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
-				teleport(player, object.getX() - 1, object.getY());
+				walkThroughDoorway(player, object.getX() - 1, object.getY());
 			}
 			// back
 			else if (object.getX() == player.getX() && object.getY() == player.getY() - 1) {
-				teleport(player, object.getX(), object.getY() - 1);
+				walkThroughDoorway(player, object.getX(), object.getY() - 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
-				teleport(player, object.getX() + 1, object.getY());
+				walkThroughDoorway(player, object.getX() + 1, object.getY());
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY() + 1) {
-				teleport(player, object.getX() + 1, object.getY() + 1);
+				walkThroughDoorway(player, object.getX() + 1, object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY() - 1) {
-				teleport(player, object.getX() - 1, object.getY() - 1);
+				walkThroughDoorway(player, object.getX() - 1, object.getY() - 1);
 			}
 		}
 		if (object.getDirection() == 3) {
@@ -1784,16 +1793,16 @@ public class Functions {
 			// front
 			if (object.getX() == player.getX() && object.getY() == player.getY() - 1) {
 
-				teleport(player, object.getX(), object.getY() - 1);
+				walkThroughDoorway(player, object.getX(), object.getY() - 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
-				teleport(player, object.getX() + 1, object.getY());
+				walkThroughDoorway(player, object.getX() + 1, object.getY());
 			}
 
 			// back
 			else if (object.getX() == player.getX() && object.getY() == player.getY() + 1) {
-				teleport(player, object.getX(), object.getY() + 1);
+				walkThroughDoorway(player, object.getX(), object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
-				teleport(player, object.getX() - 1, object.getY());
+				walkThroughDoorway(player, object.getX() - 1, object.getY());
 			}
 
 		}
@@ -1816,55 +1825,55 @@ public class Functions {
 		}
 		if (object.getDirection() == 0) {
 			if (object.getLocation().equals(player.getLocation())) {
-				teleport(player, object.getX(), object.getY() - 1);
+				walkThroughDoorway(player, object.getX(), object.getY() - 1);
 			} else {
-				teleport(player, object.getX(), object.getY());
+				walkThroughDoorway(player, object.getX(), object.getY());
 			}
 		}
 		if (object.getDirection() == 1) {
 			if (object.getLocation().equals(player.getLocation())) {
-				teleport(player, object.getX() - 1, object.getY());
+				walkThroughDoorway(player, object.getX() - 1, object.getY());
 			} else {
-				teleport(player, object.getX(), object.getY());
+				walkThroughDoorway(player, object.getX(), object.getY());
 			}
 		}
 		if (object.getDirection() == 2) {
 			// DIAGONAL
 			// front
 			if (object.getX() == player.getX() && object.getY() == player.getY() + 1) {
-				teleport(player, object.getX(), object.getY() + 1);
+				walkThroughDoorway(player, object.getX(), object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
-				teleport(player, object.getX() - 1, object.getY());
+				walkThroughDoorway(player, object.getX() - 1, object.getY());
 			}
 			// back
 			else if (object.getX() == player.getX() && object.getY() == player.getY() - 1) {
-				teleport(player, object.getX(), object.getY() - 1);
+				walkThroughDoorway(player, object.getX(), object.getY() - 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
-				teleport(player, object.getX() + 1, object.getY());
+				walkThroughDoorway(player, object.getX() + 1, object.getY());
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY() + 1) {
-				teleport(player, object.getX() + 1, object.getY() + 1);
+				walkThroughDoorway(player, object.getX() + 1, object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY() - 1) {
-				teleport(player, object.getX() - 1, object.getY() - 1);
+				walkThroughDoorway(player, object.getX() - 1, object.getY() - 1);
 			}
 		}
 		if (object.getDirection() == 3) {
 
 			// front
 			if (object.getX() == player.getX() && object.getY() == player.getY() - 1) {
-				teleport(player, object.getX(), object.getY() - 1);
+				walkThroughDoorway(player, object.getX(), object.getY() - 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
-				teleport(player, object.getX() + 1, object.getY());
+				walkThroughDoorway(player, object.getX() + 1, object.getY());
 			}
 
 			// back
 			else if (object.getX() == player.getX() && object.getY() == player.getY() + 1) {
-				teleport(player, object.getX(), object.getY() + 1);
+				walkThroughDoorway(player, object.getX(), object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
-				teleport(player, object.getX() - 1, object.getY());
+				walkThroughDoorway(player, object.getX() - 1, object.getY());
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY() + 1) {
-				teleport(player, object.getX() - 1, object.getY() + 1);
+				walkThroughDoorway(player, object.getX() - 1, object.getY() + 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY() - 1) {
-				teleport(player, object.getX() + 1, object.getY() - 1);
+				walkThroughDoorway(player, object.getX() + 1, object.getY() - 1);
 			}
 		}
 	}
@@ -1878,6 +1887,10 @@ public class Functions {
 	}
 
 	public static void doDoor(final GameObject object, final Player player, int replaceID) {
+        doDoor(object, player, replaceID, null);
+    }
+
+    public static void doDoor(final GameObject object, final Player player, int replaceID, Point destination) {
 		/* For the odd looking walls. */
 		GameObject newObject = new GameObject(object.getWorld(), object.getLocation(), replaceID, object.getDirection(), object.getType());
 		if (object.getID() == replaceID) {
@@ -1891,39 +1904,43 @@ public class Functions {
 			changeloc(object, newObject);
 		}
 		addloc(object.getWorld(), object.getLoc(), 3000);
+        if (destination != null) {
+            walkThroughDoorway(player, destination);
+            return;
+        }
 
 		if (object.getDirection() == 0) {
 			if (object.getLocation().equals(player.getLocation())) {
-				teleport(player, object.getX(), object.getY() - 1);
+				walkThroughDoorway(player, object.getX(), object.getY() - 1);
 			} else {
-				teleport(player, object.getX(), object.getY());
+				walkThroughDoorway(player, object.getX(), object.getY());
 			}
 		}
 		if (object.getDirection() == 1) {
 			if (object.getLocation().equals(player.getLocation())) {
-				teleport(player, object.getX() - 1, object.getY());
+				walkThroughDoorway(player, object.getX() - 1, object.getY());
 			} else {
-				teleport(player, object.getX(), object.getY());
+				walkThroughDoorway(player, object.getX(), object.getY());
 			}
 		}
 		if (object.getDirection() == 2) {
 			// front
 			if (object.getX() == player.getX() && object.getY() == player.getY() + 1) {
 
-				teleport(player, object.getX(), object.getY() + 1);
+				walkThroughDoorway(player, object.getX(), object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
-				teleport(player, object.getX() - 1, object.getY());
+				walkThroughDoorway(player, object.getX() - 1, object.getY());
 			}
 
 			// back
 			else if (object.getX() == player.getX() && object.getY() == player.getY() - 1) {
-				teleport(player, object.getX(), object.getY() - 1);
+				walkThroughDoorway(player, object.getX(), object.getY() - 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
-				teleport(player, object.getX() + 1, object.getY());
+				walkThroughDoorway(player, object.getX() + 1, object.getY());
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY() + 1) {
-				teleport(player, object.getX() + 1, object.getY() + 1);
+				walkThroughDoorway(player, object.getX() + 1, object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY() - 1) {
-				teleport(player, object.getX() - 1, object.getY() - 1);
+				walkThroughDoorway(player, object.getX() - 1, object.getY() - 1);
 			}
 		}
 		if (object.getDirection() == 3) {
@@ -1931,20 +1948,20 @@ public class Functions {
 			// front
 			if (object.getX() == player.getX() && object.getY() == player.getY() - 1) {
 
-				teleport(player, object.getX(), object.getY() - 1);
+				walkThroughDoorway(player, object.getX(), object.getY() - 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
-				teleport(player, object.getX() + 1, object.getY());
+				walkThroughDoorway(player, object.getX() + 1, object.getY());
 			}
 
 			// back
 			else if (object.getX() == player.getX() && object.getY() == player.getY() + 1) {
-				teleport(player, object.getX(), object.getY() + 1);
+				walkThroughDoorway(player, object.getX(), object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
-				teleport(player, object.getX() - 1, object.getY());
+				walkThroughDoorway(player, object.getX() - 1, object.getY());
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY() + 1) {
-				teleport(player, object.getX() - 1, object.getY() + 1);
+				walkThroughDoorway(player, object.getX() - 1, object.getY() + 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY() - 1) {
-				teleport(player, object.getX() + 1, object.getY() - 1);
+				walkThroughDoorway(player, object.getX() + 1, object.getY() - 1);
 			}
 
 		}
@@ -2012,40 +2029,45 @@ public class Functions {
 			object.getDirection(), object.getType());
 		changeloc(object, openGate);
 
+		try {
 		int dir = object.getDirection();
-		int pdir = player.getSprite();
 		if (destination != null && Math.abs(player.getX() - destination.getX()) <= 5 && Math.abs(player.getY() - destination.getY()) <= 5) {
-			boundaryTeleport(player, Point.location(destination.getX(), destination.getY()));
+			walkThroughDoorway(player, Point.location(destination.getX(), destination.getY()));
 		} else if (dir == 0) {
 			if (player.getX() >= object.getX()) {
-				boundaryTeleport(player, Point.location(object.getX() - 1, object.getY()));
+				walkThroughDoorway(player, Point.location(object.getX() - 1, object.getY()));
 			} else {
-				boundaryTeleport(player, Point.location(object.getX(), object.getY()));
+				walkThroughDoorway(player, Point.location(object.getX(), object.getY()));
 			}
 		} else if (dir == 2) {
 			if (player.getY() <= object.getY()) {
-				boundaryTeleport(player, Point.location(object.getX(), object.getY() + 1));
+				walkThroughDoorway(player, Point.location(object.getX(), object.getY() + 1));
 			} else {
-				boundaryTeleport(player, Point.location(object.getX(), object.getY()));
+				walkThroughDoorway(player, Point.location(object.getX(), object.getY()));
 			}
 		} else if (dir == 4) {
 			if (player.getX() > object.getX()) {
-				boundaryTeleport(player, Point.location(object.getX(), object.getY()));
+				walkThroughDoorway(player, Point.location(object.getX(), object.getY()));
 			} else {
-				boundaryTeleport(player, Point.location(object.getX() + 1, object.getY()));
+				walkThroughDoorway(player, Point.location(object.getX() + 1, object.getY()));
 			}
 		} else if (dir == 6) {
 			if (player.getY() >= object.getY()) {
-				boundaryTeleport(player, Point.location(object.getX(), object.getY() - 1));
+				walkThroughDoorway(player, Point.location(object.getX(), object.getY() - 1));
 			} else {
-				boundaryTeleport(player, Point.location(object.getX(), object.getY()));
+				walkThroughDoorway(player, Point.location(object.getX(), object.getY()));
 			}
 		} else {
 			player.message("Failure - Contact an administrator");
 		}
-		player.setSprite(pdir);
 		delay(2);
-		addloc(new GameObject(object.getWorld(), object.getLoc()));
+        } finally {
+            // Closing is independent of the player surviving the scripted walk.
+            // Do not overwrite a gate another callback has already replaced.
+            if (object.getWorld().getRegionManager().findInteractionScenery(openGate.getLocation(),openGate)==openGate) {
+                addloc(new GameObject(object.getWorld(), object.getLoc()));
+            }
+        }
 	}
 
 	/**

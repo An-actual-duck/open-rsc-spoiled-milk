@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -24,9 +25,9 @@ public final class BorderGuard implements
 				"You may pass for free, you are a friend of Al Kharid");
 			player.message("The gate swings open");
 			if (player.getX() > 91)
-				player.teleport(90, 649, false);
+				crossTollGate(player, 90, 649);
 			else
-				player.teleport(93, 649, false);
+				crossTollGate(player, 93, 649);
 			return;
 		}
 		say(player, n, "Can I come through this gate?");
@@ -44,6 +45,10 @@ public final class BorderGuard implements
 				break;
 			case 2:
 				say(player, n, "Yes ok");
+                if (tollGate(player) == null) {
+                    player.message("The gate is unavailable. Please try again shortly.");
+                    return;
+                }
 				if (player.getCarriedItems().remove(new Item(ItemId.COINS.id(), 10)) > -1) {
 					player.message("You pay the guard");
 					npcsay(player, n, "You may pass");
@@ -67,8 +72,23 @@ public final class BorderGuard implements
 		while (!player.getWalkingQueue().finished()) {
 			delay();
 		}
-		player.teleport(x2, y2, bubble);
+		crossTollGate(player, x2, y2);
 	}
+
+    private static GameObject tollGate(Player player) {
+        GameObject gate = player.getWorld().getRegionManager().findInteractionScenery(Point.location(92,649), player);
+        return gate != null && (gate.getID()==180 || gate.getID()==181) ? gate : null;
+    }
+
+    private static void crossTollGate(Player player, int x, int y) {
+        GameObject gate = tollGate(player);
+        if (gate == null) {
+            player.message("The gate is unavailable. Please try again shortly.");
+            return;
+        }
+        if (gate.getID()==180) doGate(player,gate,181,Point.location(x,y));
+        else walkThroughDoorway(player,x,y);
+    }
 
 	@Override
 	public boolean blockTalkNpc(Player player, Npc n) {
