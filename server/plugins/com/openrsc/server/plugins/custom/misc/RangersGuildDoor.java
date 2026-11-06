@@ -45,7 +45,7 @@ public final class RangersGuildDoor implements OpLocTrigger {
 
 		boolean entering = player.getY() <= DOOR_Y;
 		int targetX = player.getX() <= DOOR_X ? DOOR_X : DOOR_X + 1;
-        doDoor(obj, player, OPEN_DOUBLE_DOORS, Point.location(targetX, entering ? DOOR_Y + 1 : DOOR_Y - 1));
+		doDoor(obj, player, OPEN_DOUBLE_DOORS, Point.location(targetX, entering ? DOOR_Y + 1 : DOOR_Y - 1));
 	}
 
 	private boolean isRangersGuildDoor(GameObject obj) {

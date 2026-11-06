@@ -22,9 +22,9 @@ public class LegendsQuestGates implements OpLocTrigger {
 		if (obj.getID() == LEGENDS_HALL_DOOR) {
 			if (command.equalsIgnoreCase("open")) {
 				if (player.getQuestStage(Quests.LEGENDS_QUEST) >= 11 || player.getQuestStage(Quests.LEGENDS_QUEST) == -1) {
-                    int destinationY = player.getY() <= 539 ? 541 : 539;
-                    doDoor(obj, player, 497, Point.location(513,destinationY));
-                    player.message("You open the impressive wooden doors.");
+					int destinationY = player.getY() <= 539 ? 541 : 539;
+					doDoor(obj, player, 497, Point.location(513, destinationY));
+					player.message("You open the impressive wooden doors.");
 				} else {
 					mes("You need to complete the Legends Guild Quest");
 					delay(2);

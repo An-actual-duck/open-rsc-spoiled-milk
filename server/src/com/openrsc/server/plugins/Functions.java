@@ -1745,14 +1745,14 @@ public class Functions {
 		}
 	}
 
-    /** Caller must already have authorized this local door or gate crossing. */
-    public static void walkThroughDoorway(Player player, int x, int y) {
-        walkThroughDoorway(player, Point.location(x,y));
-    }
+	/** Caller must already have authorized this local door or gate crossing. */
+	public static void walkThroughDoorway(Player player, int x, int y) {
+		walkThroughDoorway(player, Point.location(x, y));
+	}
 
-    public static void walkThroughDoorway(Player player, Point destination) {
-        com.openrsc.server.model.action.DoorwayWalk.cross(player,destination);
-    }
+	public static void walkThroughDoorway(Player player, Point destination) {
+		com.openrsc.server.model.action.DoorwayWalk.cross(player, destination);
+	}
 
 	public static void doTentDoor(final GameObject object, final Player player) {
 		if (object.getDirection() == 0) {
@@ -1887,10 +1887,10 @@ public class Functions {
 	}
 
 	public static void doDoor(final GameObject object, final Player player, int replaceID) {
-        doDoor(object, player, replaceID, null);
-    }
+		doDoor(object, player, replaceID, null);
+	}
 
-    public static void doDoor(final GameObject object, final Player player, int replaceID, Point destination) {
+	public static void doDoor(final GameObject object, final Player player, int replaceID, Point destination) {
 		/* For the odd looking walls. */
 		GameObject newObject = new GameObject(object.getWorld(), object.getLocation(), replaceID, object.getDirection(), object.getType());
 		if (object.getID() == replaceID) {
@@ -1904,10 +1904,10 @@ public class Functions {
 			changeloc(object, newObject);
 		}
 		addloc(object.getWorld(), object.getLoc(), 3000);
-        if (destination != null) {
-            walkThroughDoorway(player, destination);
-            return;
-        }
+		if (destination != null) {
+			walkThroughDoorway(player, destination);
+			return;
+		}
 
 		if (object.getDirection() == 0) {
 			if (object.getLocation().equals(player.getLocation())) {
@@ -2030,44 +2030,45 @@ public class Functions {
 		changeloc(object, openGate);
 
 		try {
-		int dir = object.getDirection();
-		if (destination != null && Math.abs(player.getX() - destination.getX()) <= 5 && Math.abs(player.getY() - destination.getY()) <= 5) {
-			walkThroughDoorway(player, Point.location(destination.getX(), destination.getY()));
-		} else if (dir == 0) {
-			if (player.getX() >= object.getX()) {
-				walkThroughDoorway(player, Point.location(object.getX() - 1, object.getY()));
+			int dir = object.getDirection();
+			if (destination != null && Math.abs(player.getX() - destination.getX()) <= 5 && Math.abs(player.getY() - destination.getY()) <= 5) {
+				walkThroughDoorway(player, Point.location(destination.getX(), destination.getY()));
+			} else if (dir == 0) {
+				if (player.getX() >= object.getX()) {
+					walkThroughDoorway(player, Point.location(object.getX() - 1, object.getY()));
+				} else {
+					walkThroughDoorway(player, Point.location(object.getX(), object.getY()));
+				}
+			} else if (dir == 2) {
+				if (player.getY() <= object.getY()) {
+					walkThroughDoorway(player, Point.location(object.getX(), object.getY() + 1));
+				} else {
+					walkThroughDoorway(player, Point.location(object.getX(), object.getY()));
+				}
+			} else if (dir == 4) {
+				if (player.getX() > object.getX()) {
+					walkThroughDoorway(player, Point.location(object.getX(), object.getY()));
+				} else {
+					walkThroughDoorway(player, Point.location(object.getX() + 1, object.getY()));
+				}
+			} else if (dir == 6) {
+				if (player.getY() >= object.getY()) {
+					walkThroughDoorway(player, Point.location(object.getX(), object.getY() - 1));
+				} else {
+					walkThroughDoorway(player, Point.location(object.getX(), object.getY()));
+				}
 			} else {
-				walkThroughDoorway(player, Point.location(object.getX(), object.getY()));
+				player.message("Failure - Contact an administrator");
 			}
-		} else if (dir == 2) {
-			if (player.getY() <= object.getY()) {
-				walkThroughDoorway(player, Point.location(object.getX(), object.getY() + 1));
-			} else {
-				walkThroughDoorway(player, Point.location(object.getX(), object.getY()));
+			delay(2);
+		} finally {
+			// Closing is independent of the player surviving the scripted walk.
+			// Do not overwrite a gate another callback has already replaced.
+			if (object.getWorld().getRegionManager()
+				.findInteractionScenery(openGate.getLocation(), openGate) == openGate) {
+				addloc(new GameObject(object.getWorld(), object.getLoc()));
 			}
-		} else if (dir == 4) {
-			if (player.getX() > object.getX()) {
-				walkThroughDoorway(player, Point.location(object.getX(), object.getY()));
-			} else {
-				walkThroughDoorway(player, Point.location(object.getX() + 1, object.getY()));
-			}
-		} else if (dir == 6) {
-			if (player.getY() >= object.getY()) {
-				walkThroughDoorway(player, Point.location(object.getX(), object.getY() - 1));
-			} else {
-				walkThroughDoorway(player, Point.location(object.getX(), object.getY()));
-			}
-		} else {
-			player.message("Failure - Contact an administrator");
 		}
-		delay(2);
-        } finally {
-            // Closing is independent of the player surviving the scripted walk.
-            // Do not overwrite a gate another callback has already replaced.
-            if (object.getWorld().getRegionManager().findInteractionScenery(openGate.getLocation(),openGate)==openGate) {
-                addloc(new GameObject(object.getWorld(), object.getLoc()));
-            }
-        }
 	}
 
 	/**

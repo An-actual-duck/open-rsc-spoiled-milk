@@ -375,9 +375,9 @@ public class LegendsQuestGameObjects implements TakeObjTrigger, OpLocTrigger, Us
 						delay(2);
 						changeloc(obj, config().GAME_TICK * 3, 181);
 						if (player.getY() <= 3717) {
-							player.teleport(441, 3719);
+							walkThroughDoorway(player, 441, 3719);
 						} else {
-							player.teleport(441, 3717);
+							walkThroughDoorway(player, 441, 3717);
 						}
 					} else {
 						mes("but run out of steam before you're able to force the gates open.");
@@ -455,7 +455,7 @@ public class LegendsQuestGameObjects implements TakeObjTrigger, OpLocTrigger, Us
 					mes("You push the doors open and walk through.");
 					delay(2);
 					changeloc(obj, config().GAME_TICK * 3, 497);
-					player.teleport(442, 3701);
+					walkThroughDoorway(player, 442, 3701);
 					delay(3);
 					player.message("The doors make a satisfying 'CLICK' sound as they close.");
 				} else {
@@ -470,7 +470,7 @@ public class LegendsQuestGameObjects implements TakeObjTrigger, OpLocTrigger, Us
 					mes("You see a lever which you pull on to open the door.");
 					delay(2);
 					changeloc(obj, config().GAME_TICK * 3, 497);
-					player.teleport(442, 3701);
+					walkThroughDoorway(player, 442, 3701);
 					mes("You walk through the door.");
 					delay(2);
 					player.message("The doors make a satisfying 'CLICK' sound as they close.");
@@ -500,7 +500,7 @@ public class LegendsQuestGameObjects implements TakeObjTrigger, OpLocTrigger, Us
 							delay(2);
 							player.incExp(Skill.THIEVING.id(), 100, true);
 							changeloc(obj, config().GAME_TICK * 3, 497);
-							player.teleport(441, 3703);
+							walkThroughDoorway(player, 441, 3703);
 						} else {
 							player.message("...but you don't manage to pick the lock.");
 						}

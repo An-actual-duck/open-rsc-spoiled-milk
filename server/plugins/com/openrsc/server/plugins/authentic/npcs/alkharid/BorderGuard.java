@@ -45,19 +45,19 @@ public final class BorderGuard implements
 				break;
 			case 2:
 				say(player, n, "Yes ok");
-                if (tollGate(player) == null) {
-                    player.message("The gate is unavailable. Please try again shortly.");
-                    return;
-                }
+				if (tollGate(player) == null) {
+					player.message("The gate is unavailable. Please try again shortly.");
+					return;
+				}
 				if (player.getCarriedItems().remove(new Item(ItemId.COINS.id(), 10)) > -1) {
 					player.message("You pay the guard");
 					npcsay(player, n, "You may pass");
 					player.message("The gate swings open");
 					if (player.getX() > 91) {
-						walkThenTeleport(player, 92, 649, 91, 649, false);
+						approachAndCross(player, 92, 649, 91, 649);
 					}
 					else {
-						walkThenTeleport(player, 91, 649, 92, 649, false);
+						approachAndCross(player, 91, 649, 92, 649);
 					}
 				} else {
 					say(player, n,
@@ -67,7 +67,7 @@ public final class BorderGuard implements
 		}
 	}
 
-	public static void walkThenTeleport(final Player player, final int x1, final int y1, final int x2, final int y2, final boolean bubble) {
+	private static void approachAndCross(final Player player, final int x1, final int y1, final int x2, final int y2) {
 		player.walk(x1, y1);
 		while (!player.getWalkingQueue().finished()) {
 			delay();
@@ -75,20 +75,20 @@ public final class BorderGuard implements
 		crossTollGate(player, x2, y2);
 	}
 
-    private static GameObject tollGate(Player player) {
-        GameObject gate = player.getWorld().getRegionManager().findInteractionScenery(Point.location(92,649), player);
-        return gate != null && (gate.getID()==180 || gate.getID()==181) ? gate : null;
-    }
+	private static GameObject tollGate(Player player) {
+		GameObject gate = player.getWorld().getRegionManager().findInteractionScenery(Point.location(92, 649), player);
+		return gate != null && (gate.getID() == 180 || gate.getID() == 181) ? gate : null;
+	}
 
-    private static void crossTollGate(Player player, int x, int y) {
-        GameObject gate = tollGate(player);
-        if (gate == null) {
-            player.message("The gate is unavailable. Please try again shortly.");
-            return;
-        }
-        if (gate.getID()==180) doGate(player,gate,181,Point.location(x,y));
-        else walkThroughDoorway(player,x,y);
-    }
+	private static void crossTollGate(Player player, int x, int y) {
+		GameObject gate = tollGate(player);
+		if (gate == null) {
+			player.message("The gate is unavailable. Please try again shortly.");
+			return;
+		}
+		if (gate.getID() == 180) doGate(player, gate, 181, Point.location(x, y));
+		else walkThroughDoorway(player, x, y);
+	}
 
 	@Override
 	public boolean blockTalkNpc(Player player, Npc n) {

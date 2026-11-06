@@ -234,9 +234,9 @@ public class SheepHerder implements QuestInterface, TalkNpcTrigger,
 			if (wearingProtectiveClothing(player) || !wearingProtectiveClothing(player) && player.getX() == 589) {
 				openGatey(obj, player);
 				if (player.getX() <= 588) {
-					com.openrsc.server.plugins.Functions.walkThroughDoorway(player, 589, 541);
+					walkThroughDoorway(player, 589, 541);
 				} else {
-					com.openrsc.server.plugins.Functions.walkThroughDoorway(player, 588, 540);
+					walkThroughDoorway(player, 588, 540);
 				}
 			} else {
 				mes("this is a restricted area");

@@ -958,7 +958,7 @@ public class PlagueCity implements QuestInterface, TalkNpcTrigger,
 						.getDirection(), obj.getType()));
 				player.getWorld().delayedSpawnObject(obj.getLoc(), 2000);
 				player.message("you go through the gate");
-				com.openrsc.server.plugins.Functions.walkThroughDoorway(player, 637, 3447);
+				walkThroughDoorway(player, 637, 3447);
 			} else {
 				if (player.getCarriedItems().hasCatalogID(ItemId.LITTLE_KEY.id(), Optional.of(false))) {
 					player.message("The gate is locked");

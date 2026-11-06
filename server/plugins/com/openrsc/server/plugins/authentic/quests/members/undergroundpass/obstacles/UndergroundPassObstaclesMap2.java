@@ -225,9 +225,9 @@ public class UndergroundPassObstaclesMap2 implements OpLocTrigger, OpBoundTrigge
 				changeloc(obj, new GameObject(obj.getWorld(), obj.getLocation(), 723, obj.getDirection(), obj
 					.getType()));
 				addloc(obj.getWorld(), obj.getLoc(), 3000);
-				player.teleport(766, 3417);
+				walkThroughDoorway(player, 766, 3417);
 				delay(2);
-				player.teleport(770, 3417);
+				walkThroughDoorway(player, 770, 3417);
 				player.message("you walk into the darkness");
 			} else {
 				player.message("the door refuses to open");
@@ -237,10 +237,10 @@ public class UndergroundPassObstaclesMap2 implements OpLocTrigger, OpBoundTrigge
 			changeloc(obj, new GameObject(obj.getWorld(), obj.getLocation(), 723, obj.getDirection(), obj
 				.getType()));
 			addloc(obj.getWorld(), obj.getLoc(), 3000);
-			player.teleport(766, 3417);
+			walkThroughDoorway(player, 766, 3417);
 			mes("you open the huge wooden door");
 			delay(3);
-			player.teleport(763, 3417);
+			walkThroughDoorway(player, 763, 3417);
 			player.message("and walk through");
 		}
 		else if (obj.getID() == FLAMES_OF_ZAMORAK) {

@@ -10,6 +10,7 @@ import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
 import static com.openrsc.server.plugins.Functions.validatebankpin;
+import static com.openrsc.server.plugins.Functions.walkThroughDoorway;
 import static com.openrsc.server.plugins.RuneScript.*;
 
 public class WoodcuttingGuild implements TalkNpcTrigger {
@@ -39,7 +40,7 @@ public class WoodcuttingGuild implements TalkNpcTrigger {
 				delay(3);
 				if (player.getSkills().getLevel(Skill.WOODCUTTING.id()) >= 55) {
 					mes("The gate swings open and you walk through");
-					com.openrsc.server.plugins.Functions.walkThroughDoorway(player, 560, 472);
+					walkThroughDoorway(player, 560, 472);
 				} else {
 					mes("The forester puts out his hand to stop you");
 					delay(3);
