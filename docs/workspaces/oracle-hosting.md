@@ -12,12 +12,12 @@ public worlds against diverging player databases.
 | Game port | TCP `43605` |
 | VM | `VM.Standard.A1.Flex`, 1 OCPU, 6 GB RAM, ARM64 |
 | OS / Java | Ubuntu 26.04.1 LTS / OpenJDK 17 |
-| Server release tag | `v0.3.8` (Underground Pass exits, routes and mechanisms) |
+| Server release tag | `v0.3.9` (Summoning upkeep XP and Slayer Tower door) |
 | Published client release | `v0.3.8` (Duskwind Bat projectile frame fix) |
-| Game source | `69b3e154072774e68c061abf61aefc86d1e5e975` |
+| Game source | `808a0de2ed16e7b0d2373b58a214e57dd8e04a77` |
 | Client protocol | `10059` |
 | Public service | `spoiled-milk.service`, enabled at boot |
-| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.8` |
+| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.9` |
 | Guarded live path | `/tmp/spoiled-milk-live-main` |
 | Git object repository | `/home/ubuntu/spoiled-milk/repository.git` |
 | External state | `/home/ubuntu/.local/share/spoiled-milk/live` |
@@ -28,7 +28,7 @@ The service requires that mount. The source is a clean detached checkout of the
 exact published tag; it is never a development workspace.
 
 The service calls `scripts/run-hosted-server.sh` with
-`MYWORLD_HOSTED_RELEASE_TAG=v0.3.8`. Existing exact-tag, clean-source, installed
+`MYWORLD_HOSTED_RELEASE_TAG=v0.3.9`. Existing exact-tag, clean-source, installed
 map, generator, external-database, and occupied-port guards remain active.
 `JAVA_TOOL_OPTIONS` caps the heap at 3 GiB. The unit uses `Restart=on-failure`;
 a successful in-game shutdown exits normally and stays stopped.
@@ -37,11 +37,11 @@ The VM firewall and Oracle subnet security list permit TCP 43605. The client
 uses the public IPv4 address directly; an address change needs a client endpoint
 update. This deployment does not depend on the owner's PC staying online.
 
-`v0.3.7` remains a historical server-only source tag with no player release.
-`v0.3.8` publishes both the server fixes and the client projectile correction,
-including the single-download ZIP and platform updater assets. The client
-protocol remains 10059. Never publish a newer player release without its
-updater assets.
+`v0.3.7` and `v0.3.9` are server-only source tags with no player release entries.
+The website and updater remain on compatible client `v0.3.8`, which includes
+the projectile correction, single-download ZIP and platform updater assets.
+The current server patch needs no client changes, and protocol 10059 is
+unchanged. Never publish a newer player release without its updater assets.
 
 ## Access and read-only status
 
