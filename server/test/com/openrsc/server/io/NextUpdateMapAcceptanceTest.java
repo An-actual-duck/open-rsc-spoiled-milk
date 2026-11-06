@@ -621,7 +621,14 @@ public final class NextUpdateMapAcceptanceTest {
             if(command.equalsIgnoreCase("climb-down")||command.equalsIgnoreCase("climb down")||command.equalsIgnoreCase("go down"))return command.toLowerCase(java.util.Locale.ROOT);
         return null;
     }
-    private void drain() { clock.millis+=server.getConfig().GAME_TICK; server.getGameEventHandler().processNonPlayerEvents(); server.getGameEventHandler().cleanupEvents(); }
+    private void drain() {
+        clock.millis += server.getConfig().GAME_TICK;
+        server.getGameEventHandler().processNonPlayerEvents();
+        // A real tick also retires completed player plugin events. Omitting this
+        // can leave a prior Default.onOpLoc queued and reject the next test click.
+        server.getGameEventHandler().runPlayerEvents(player);
+        server.getGameEventHandler().cleanupEvents();
+    }
     private static long key(int x,int y) { return ((long)x<<32)|(y&0xffffffffL); }
     private static WorldLocation offset(WorldLocation location,int dx,int dy) {
         WorldCoordinate c=location.getCoordinate(); return new WorldLocation(location.getWorldSpace(),new WorldCoordinate(c.getX()+dx,c.getY()+dy,c.getLevel()));
