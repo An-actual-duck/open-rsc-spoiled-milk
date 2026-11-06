@@ -1,0 +1,51 @@
+Interaction walking after shuriken combat
+========================================
+
+Report and reproduction
+-----------------------
+After throwing shuriken, pickup, door and NPC interaction clicks failed until
+the player clicked the ground to move. This also persisted after the opponent
+was defeated and the throwing event had ended.
+
+The client sends WALK_TO_ENTITY before its pickup/object/talk action packet.
+WalkRequest rejected that approach packet whenever MyWorld combat hostility
+was set, while accepting a direct WALK_TO_POINT. The following interaction
+handler could create its action, but its approach path had already been lost.
+The existing post-combat hostility state made the same guard reject movement
+even after the throwing target was removed.
+
+Correction
+----------
+The MyWorld hostility branch accepts both normal movement packet types. The
+existing cancellation/reset path stops the player's own outgoing attack,
+clears hostility and queues the interaction approach. The following ordinary
+interaction handler can then activate at its usual range. The unchanged
+movement queue supplies walking, collision and terrain validation.
+
+This is a shared interaction correction, not a shuriken-only special case.
+Legacy-profile restrictions remain. An unrelated busy action stays blocked.
+Incoming enemies retain their own attacks, and directional PvP walking still
+grants no retreat immunity. Client code, targeting rules, combat balance,
+items, maps and player data are unchanged.
+
+Verification
+------------
+ShurikenInteractionFixture starts real NPC combat, throws an equipped shuriken,
+then submits the client-order movement and action payloads to the maintained
+handlers. It checks real movement, default pickup/inventory mutation and
+logging, default door opening, and NPC speech through the normal plugin thread.
+Each action runs while throwing and again after target removal/event cleanup.
+All six cases fail on the original approach guard, then pass after the fix.
+The corrected suite passes 84 checks, including busy/legacy/ordinary-walk
+controls. Pickup logs use an isolated in-memory SQLite database.
+
+The existing PvP walking test now covers both packet types, preserving the
+pursuer's running attack and checking that no immunity is granted. All 40 PvP
+foundation scenarios and all 149 combat scenarios pass. The server artifact
+audit passes. Historical ignored asset/output layout findings are preserved.
+
+Run: Ant target test_shuriken_interactions, then test_pvp_foundation and
+test_combat_strict with Java 8 and the normal heavy-build lock.
+Evidence: output/tests/shuriken-interaction-movement/baseline-complete.log and
+fixed-and-regressions.log. No public server or account was changed. Live
+activation requires a separately authorized maintenance window.

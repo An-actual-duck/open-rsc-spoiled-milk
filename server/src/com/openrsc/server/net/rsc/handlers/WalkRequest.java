@@ -40,7 +40,9 @@ public class WalkRequest implements PayloadProcessor<WalkStruct, OpcodeIn> {
 
 		if (player.isHostile()) {
 			if (player.getConfig().WANT_MYWORLD) {
-				if (packetOpcode != OpcodeIn.WALK_TO_POINT) {
+				// Interaction clicks send an approach packet before their action packet.
+				// It must release our attack just like a direct ground click does.
+				if (packetOpcode != OpcodeIn.WALK_TO_POINT && packetOpcode != OpcodeIn.WALK_TO_ENTITY) {
 					return;
 				}
 				player.resetCombatEvent();
