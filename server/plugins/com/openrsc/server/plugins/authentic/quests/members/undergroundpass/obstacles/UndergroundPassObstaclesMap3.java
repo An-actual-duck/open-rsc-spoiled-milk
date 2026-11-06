@@ -133,9 +133,9 @@ public class UndergroundPassObstaclesMap3 implements OpLocTrigger {
 					&& player.getCarriedItems().getEquipment().hasEquipped(ItemId.ZAMORAK_WOOL_ROBE_BOTTOM.id())) {
 					changeloc(obj, new GameObject(obj.getWorld(), obj.getLocation(), 914, obj.getDirection(), obj.getType()));
 					addloc(obj.getWorld(), obj.getLoc(), 3000);
-					player.teleport(792, 3469);
+					walkThroughDoorway(player, 792, 3469);
 					delay();
-					player.teleport(795, 3469);
+					walkThroughDoorway(player, 795, 3469);
 					mes("you pull open the large doors");
 					delay(3);
 					player.message("and walk into the temple");
@@ -218,9 +218,9 @@ public class UndergroundPassObstaclesMap3 implements OpLocTrigger {
 			} else {
 				changeloc(obj, new GameObject(obj.getWorld(), obj.getLocation(), 914, obj.getDirection(), obj.getType()));
 				addloc(obj.getWorld(), obj.getLoc(), config().GAME_TICK * 5);
-				player.teleport(794, 3469);
+				walkThroughDoorway(player, 794, 3469);
 				delay();
-				player.teleport(791, 3469);
+				walkThroughDoorway(player, 791, 3469);
 				delay(2);
 				player.message("you pull open the large doors");
 				player.message("and walk out of the temple");

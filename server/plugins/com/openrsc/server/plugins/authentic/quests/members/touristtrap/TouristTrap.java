@@ -3311,9 +3311,9 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 							player.getCarriedItems().remove(new Item(ItemId.ROCKS.id()));
 						}
 						npcsay(player, n, "Ok, ok, come on out.");
-						player.teleport(71, 3626);
+						walkThroughDoorway(player, 71, 3626);
 						player.message("The guard unlocks the gate and lets you out.");
-						player.teleport(69, 3625);
+						walkThroughDoorway(player, 69, 3625);
 					}
 				} else {
 					npcsay(player, n, "Hey, move away from that gate!");
@@ -3323,7 +3323,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 			if (legacyPackedY(player) >= 3617) {
 				if (player.getCarriedItems().hasCatalogID(ItemId.WROUGHT_IRON_KEY.id(), Optional.of(false))) {
 					player.message("You use the wrought iron key to unlock the gate.");
-					player.teleport(player.getX(), player.getY() - 1);
+					walkThroughDoorway(player, player.getX(), player.getY() - 1);
 				} else {
 					mes("You need a key to unlock this door,");
 					delay(3);
@@ -3332,7 +3332,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 				}
 			} else {
 				player.message("You push the gate open and walk through.");
-				player.teleport(player.getX(), player.getY() + 1);
+				walkThroughDoorway(player, player.getX(), player.getY() + 1);
 			}
 		}
 	}

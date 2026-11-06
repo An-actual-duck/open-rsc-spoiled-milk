@@ -550,12 +550,12 @@ public class Observatory implements QuestInterface, TalkNpcTrigger,
 			if (player.getCache().hasKey("keep_key_gate")
 				|| player.getQuestStage(getQuestId()) == -1) {
 				if (player.getY() <= 3513) {
-					player.teleport(690, 3514, false);
+					walkThroughDoorway(player, 690, 3514);
 					say(player, null, "I'd better be quick",
 						"There may be more guards about");
 				} else {
 					player.message("you go through the gate");
-					player.teleport(690, 3513, false);
+					walkThroughDoorway(player, 690, 3513);
 				}
 			} else {
 				player.message("The gate is locked");

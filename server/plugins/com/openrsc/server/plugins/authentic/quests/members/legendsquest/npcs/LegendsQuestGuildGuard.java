@@ -232,7 +232,7 @@ public class LegendsQuestGuildGuard implements TalkNpcTrigger, OpLocTrigger {
 		if (the_gate.getID() == MITHRIL_GATES) {
 			changeloc(the_gate, config().GAME_TICK * 4, 181);
 		}
-		player.teleport(513, 549);
+		walkThroughDoorway(player, 513, 549);
 	}
 
 	@Override
@@ -266,7 +266,7 @@ public class LegendsQuestGuildGuard implements TalkNpcTrigger, OpLocTrigger {
 					return;
 				}
 				changeloc(obj, config().GAME_TICK * 4, 181);
-				player.teleport(513, outerGateDestinationY(route));
+				walkThroughDoorway(player, 513, outerGateDestinationY(route));
 
 			} else if (command.equals("search")) {
 				mes("The gates to the Legends Guild are made from wrought Mithril.");

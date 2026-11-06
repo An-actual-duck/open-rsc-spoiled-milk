@@ -1,0 +1,65 @@
+Doorway walking repair — ready for manager review
+===================================
+
+Reported: old walk-through/close-behind passages now snap, including Al Kharid.
+The border guard explicitly uses teleport(..., false), whose flag disables
+bubbles rather than teleport movement. Common doDoor/tent/wall routines also
+explicitly teleport. doGate uses false-location updates but jumps several tiles,
+which Mob correctly classifies as a teleport. These calls predate loader work.
+
+Worker: Core ai-2, fix/walking-doorway-passages. No public deployment changes.
+
+Implemented so far
+------------------
+DoorwayWalk supplies bounded same-domain, adjacent steps with per-tick yields.
+It preserves signed layers, waits if an ordinary approach already moved this
+tick, and stops if the player logs out, dies or is moved elsewhere. No general
+teleport API is changed. Shared door/tent/wall/gate routines now use it. Gate
+closing has a finally path and exact-current-instance guard. Al Kharid opens
+its real gate and preserves quest/free/toll rules. Rangers and Legends overrides
+use explicit walking destinations. Other clear local quest-door teleports were
+converted; special travel is being audited individually.
+
+Evidence so far
+---------------
+The executable native fixture uses actual plugin tasks, per-tick location/flag
+traces, signed levels 0/1/2/3/-3 and gate/boundary frames. It reproduced 38 failed
+walking crossings before the change. The expanded suite passes 498 checks,
+including both Al Kharid directions, completed/stage-3/free/paid, refusal and
+insufficient coins; Rangers/Legends overrides and access controls; chained
+crossings; interrupted walks and gate restoration; real teleport controls;
+facing and world-info packet checks. See output/tests/walking-doorway-passages/.
+
+Regression gates passed: 84 shuriken interaction checks; 40 PvP scenarios;
+1,143 generic double-door assertions; Slayer Tower associate dialogue/doors;
+149 strict combat scenarios. The 79 baseline keyword-audit candidates were
+classified individually (42 local passages converted, 37 real travel/cutscene
+relocations retained); extra filename/context scans covered Rangers, Watchtower,
+prison transfer and Waterfall ejection. This is not full quest playthrough proof.
+Maintained server build and its artifact/source audit pass.
+
+Workspace layout still reports the same 76 inherited ignored-file findings;
+no new output location or asset writer is introduced outside declared categories.
+
+Final artifact verification
+---------------------------
+After the workstation restart, preserved source 8092421f9 was rebuilt through
+scripts/build-server.sh (generator check mode). Its source/artifact audit passes.
+The full 498-check doorway fixture also passes on the actual production JAR
+classpath. Verbose class loading confirms Functions and DoorwayWalk come from
+the maintained core.jar; test classes do not shadow production classes. Evidence:
+output/reviews/walking-doorway-passages/production-classpath-resumed-java8/.
+
+The final review preserves Shilo's separate clamber obstacle as a teleport and
+uses the existing timed door helper for its physical tomb doors, allowing the
+walking crossing to finish before the temporary frame closes. No map, asset,
+client protocol, quest requirement or destination is changed.
+
+Limits and activation
+---------------------
+This proves server-side walking flags, adjacent per-tick movement, facing,
+world-info packet behavior and relevant entry/closing controls. It is not a
+fresh private-client visual acceptance or full playthrough of every affected
+quest. Existing unrelated legacy layer/quest-coordinate assumptions remain.
+No public server has been stopped, restarted or changed for this task. Live
+activation requires a new explicitly authorized warning/countdown window.

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.authentic.quests.members.legendsquest.obstacl
 
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
 
@@ -21,13 +22,9 @@ public class LegendsQuestGates implements OpLocTrigger {
 		if (obj.getID() == LEGENDS_HALL_DOOR) {
 			if (command.equalsIgnoreCase("open")) {
 				if (player.getQuestStage(Quests.LEGENDS_QUEST) >= 11 || player.getQuestStage(Quests.LEGENDS_QUEST) == -1) {
-					doDoor(obj, player, 497);
+					int destinationY = player.getY() <= 539 ? 541 : 539;
+					doDoor(obj, player, 497, Point.location(513, destinationY));
 					player.message("You open the impressive wooden doors.");
-					if (player.getY() <= 539) {
-						player.teleport(513, 541);
-					} else {
-						player.teleport(513, 539);
-					}
 				} else {
 					mes("You need to complete the Legends Guild Quest");
 					delay(2);

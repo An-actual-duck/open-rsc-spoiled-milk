@@ -59,11 +59,9 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 			if (command.equalsIgnoreCase("Open")) {
 				if (player.getCache().hasKey("tomb_door_shilo")) {
 					if (player.getY() >= 3632) {
-						changeloc(obj, 800, 497);
-						player.teleport(377, 3631);
+						doDoor(obj, player, 497, Point.location(377, 3631));
 					} else {
-						changeloc(obj, 800, 497);
-						player.teleport(377, 3633);
+						doDoor(obj, player, 497, Point.location(377, 3633));
 					}
 					return;
 				}
@@ -126,7 +124,7 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 			if (command.equalsIgnoreCase("Open")) {
 				if (player.getY() >= 3616) {
 					changeloc(obj, config().GAME_TICK * 3, 181);
-					player.teleport(348, 3614);
+					walkThroughDoorway(player, 348, 3614);
 					return;
 				}
 				player.message("The gates feel unearthly cold to the touch!");
@@ -137,12 +135,12 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 				if (menu == 0) {
 					if (!player.getCarriedItems().getEquipment().hasEquipped(ItemId.BEADS_OF_THE_DEAD.id())) {
 						changeloc(obj, config().GAME_TICK * 3, 181);
-						player.teleport(348, 3616);
+						walkThroughDoorway(player, 348, 3616);
 						player.damage(getCurrentLevel(player, Skill.HITS.id()) / 2 + 1);
 						if (getCurrentLevel(player, Skill.HITS.id()) > 0) {
 							mes("@red@You feel invisible hands starting to choke you...");
 							delay(3);
-							player.teleport(348, 3614);
+							walkThroughDoorway(player, 348, 3614);
 							delay(2);
 							say(player, null, "*Cough*",
 								"*Choke*");
@@ -154,12 +152,12 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 						}
 					} else {
 						changeloc(obj, config().GAME_TICK * 3, 181);
-						player.teleport(348, 3616);
+						walkThroughDoorway(player, 348, 3616);
 						displayTeleportBubble(player, player.getX(), player.getY(), false);
 						player.message("@red@The Beads of the dead start to glow...");
 					}
 				} else if (menu == 1) {
-					player.teleport(348, 3614);
+					walkThroughDoorway(player, 348, 3614);
 					player.message("You manage to pull your spineless body away from the ancient gates.");
 				}
 			} else if (command.equalsIgnoreCase("Search")) {
@@ -634,8 +632,7 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 				delay(3);
 				mes("Stepping out of the door, with grinning teeth they push the huge doors open.");
 				delay(3);
-				changeloc(obj, 800, 497);
-				player.teleport(377, 3631);
+				doDoor(obj, player, 497, Point.location(377, 3631));
 				if (!player.getCache().hasKey("tomb_door_shilo")) {
 					player.getCache().store("tomb_door_shilo", true);
 				}

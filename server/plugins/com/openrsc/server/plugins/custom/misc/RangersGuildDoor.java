@@ -4,6 +4,7 @@ import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.RangersGuildArea;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
@@ -44,8 +45,7 @@ public final class RangersGuildDoor implements OpLocTrigger {
 
 		boolean entering = player.getY() <= DOOR_Y;
 		int targetX = player.getX() <= DOOR_X ? DOOR_X : DOOR_X + 1;
-		doDoor(obj, player, OPEN_DOUBLE_DOORS);
-		player.teleport(targetX, entering ? DOOR_Y + 1 : DOOR_Y - 1);
+		doDoor(obj, player, OPEN_DOUBLE_DOORS, Point.location(targetX, entering ? DOOR_Y + 1 : DOOR_Y - 1));
 	}
 
 	private boolean isRangersGuildDoor(GameObject obj) {
