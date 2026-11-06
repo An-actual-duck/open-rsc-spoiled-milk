@@ -3,14 +3,25 @@ package com.openrsc.server.io;
 import com.openrsc.server.Server;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.cleric.ClericWellInteraction;
-import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTowerPassages;
+import com.openrsc.server.content.minigame.monsterslayer.*;
 import com.openrsc.server.database.JDBCDatabaseConnection;
 import com.openrsc.server.database.impl.mysql.MySqlGameDatabase;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.event.rsc.PluginTask;
+import com.openrsc.server.event.rsc.PluginTickEvent;
+import com.openrsc.server.model.action.DoubleDoorPassage;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.Path;
+import com.openrsc.server.model.action.WalkToAction;
 import com.openrsc.server.model.action.WalkToObjectAction;
+import com.openrsc.server.model.world.World;
+import com.openrsc.server.net.rsc.handlers.GameObjectAction;
+import com.openrsc.server.net.rsc.enums.OpcodeIn;
+import com.openrsc.server.net.rsc.struct.incoming.TargetObjectStruct;
+import com.openrsc.server.plugins.handler.PluginHandler;
+import com.openrsc.server.plugins.triggers.OpLocTrigger;
+import com.google.common.collect.Multimap;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -19,7 +30,6 @@ import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ClientLimitations;
-import com.openrsc.server.plugins.authentic.defaults.DoorAction;
 import com.openrsc.server.plugins.authentic.defaults.Ladders;
 import com.openrsc.server.runtime.DeterministicGameRandom;
 import com.openrsc.server.runtime.GameClock;
@@ -32,7 +42,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Release-specific acceptance over an explicitly selected external package.
@@ -102,10 +115,13 @@ public final class NextUpdateMapAcceptanceTest {
             System.out.println("BASELINE_RESULT checks=" + test.checks + " failures=" + test.failures.size());
             test.ichorLadder();
             System.out.println("RESULT checks=" + test.checks + " failures=" + test.failures.size());
-            System.out.println("LIMITS: offline in-memory runtime; no client rendering, live player/rank acceptance, combat, saving or database persistence proof");
+            System.out.println("LIMITS: offline in-memory runtime; real door packet/plugin/rank path covered offline; no client rendering, live-player acceptance, combat, saving or database persistence proof");
             if (!test.failures.isEmpty()) throw new AssertionError("Candidate map acceptance failed: " + test.failures.size());
         } finally {
             for (GameTickEvent event : new ArrayList<GameTickEvent>(server.getGameEventHandler().getEvents())) event.stop();
+            Field executor = PluginHandler.class.getDeclaredField("executor"); executor.setAccessible(true);
+            ExecutorService plugins = (ExecutorService) executor.get(server.getPluginHandler());
+            if (plugins != null) plugins.shutdownNow();
             server.getGameEventHandler().cleanupEvents(); server.getWorld().getPlayers().clear(); server.getEntityHandler().unload();
             for (String name : new String[]{"sqlLoggingThreadPool", "sqlThreadPool", "onlineMonitorThreadPool"}) {
                 Field field = Server.class.getDeclaredField(name); field.setAccessible(true);
@@ -115,9 +131,10 @@ public final class NextUpdateMapAcceptanceTest {
         }
     }
 
-    private void tower() {
-        DoorAction door = new DoorAction();
+    private void tower() throws Exception {
+        installDoorPlugins();
         for (int lane = 0; lane < 2; lane++) {
+            setTowerRank(MonsterSlayerRank.HERO);
             WorldLocation outside = at(22 + lane, 474, 0), inside = at(22 + lane, 473, 0);
             GameObject object = scenery(at(22, 474, 0));
             check(object != null && object.getID() == 1337 && object.getDirection() == 6, "tower entrance binding " + object);
@@ -125,16 +142,18 @@ public final class NextUpdateMapAcceptanceTest {
             move(at(22 + lane, 475, 0));
             check(MonsterSlayerTowerPassages.passage(player, object, "open") != null, "tower entrance rank binding lane " + lane);
             check(PathValidation.checkAdjacent(player, 22 + lane, 475, 22 + lane, 474), "tower exterior approach lane " + lane);
-            approachDoor(door, object, at(22 + lane, 475, 0), outside);
+            approachDoor(object, at(22 + lane, 475, 0), outside);
             check(player.getWorldLocation().equals(inside), "actual entrance crossing lane " + lane + " got " + player.getWorldLocation());
             drain(); drain();
             object = scenery(at(22, 474, 0));
             check(object.getID() == 1337, "tower entrance auto-close lane " + lane);
             check(MonsterSlayerTowerPassages.passage(player, object, "open") == null, "tower free exit rank binding lane " + lane);
-            approachDoor(door, object, at(22 + lane, 472, 0), inside);
+            setTowerRank(MonsterSlayerRank.UNSTAMPED); // Leaving remains free, even without membership.
+            approachDoor(object, at(22 + lane, 472, 0), inside);
             check(player.getWorldLocation().equals(outside), "actual entrance exit lane " + lane);
             drain(); drain();
         }
+        rejectedDoorActions();
         Ladders ladders = new Ladders();
         for (int level = 0; level < 5; level++) {
             int x = level % 2 == 0 ? 6 : 37;
@@ -182,17 +201,15 @@ public final class NextUpdateMapAcceptanceTest {
         }
     }
 
-    private void approachDoor(final DoorAction door, final GameObject object,
-            WorldLocation approach, WorldLocation edge) {
+    /** Exercise the real packet, walk-to action, rank dispatch, plugin thread and default handler. */
+    private void approachDoor(final GameObject object, WorldLocation approach, WorldLocation edge) throws Exception {
         move(approach);
         player.setTeleporting(false);
-        WalkToObjectAction action = new WalkToObjectAction(player, object) {
-            @Override public void executeInternal() {
-                getPlayer().resetAll();
-                door.onObjectAction(object, "open", getPlayer());
-            }
-        };
-        player.setWalkToAction(action);
+        player.setHasMoved(false);
+        clickDoor(object);
+        WalkToAction action = player.getWalkToAction();
+        check(action != null, "real door packet schedules an approach");
+        if (action == null) return;
         server.getGameUpdater().executeWalkToActions(player);
         check(!action.isExecuted(), "tower door does not activate before the approach finishes from " + approach);
         Path path = new Path(player, Path.PathType.WALK_TO_POINT);
@@ -203,7 +220,103 @@ public final class NextUpdateMapAcceptanceTest {
             server.getGameUpdater().executeWalkToActions(player);
         }
         check(action.isExecuted(), "tower door activates after walking to its edge");
-        check(!player.isTeleporting(), "tower door crosses with a walking update");
+        check(server.getGameEventHandler().getEvents().stream().anyMatch(event ->
+            event.getDescriptor().equals("Default.onOpLoc") && !event.shouldRemove()),
+            "eligible rank reaches real default plugin");
+        server.getGameEventHandler().runPlayerEvents(player);
+        server.getGameEventHandler().cleanupEvents();
+        check(player.hasMoved() && !player.isTeleporting(), "tower door crosses with a walking update");
+        check(scenery(object.getWorldLocation()).getID() == 1338, "packet/plugin path opens the door");
+        check(!player.isBusy() && player.getOwnedPlugins().isEmpty(), "door script releases its busy ownership");
+    }
+
+    private void clickDoor(GameObject object) throws Exception {
+        TargetObjectStruct click = new TargetObjectStruct();
+        click.setOpcode(OpcodeIn.OBJECT_COMMAND);
+        click.coordObject = object.getLocation();
+        new GameObjectAction().process(click, player);
+    }
+
+    private void rejectedDoorActions() throws Exception {
+        final GameObject object = scenery(at(22, 474, 0));
+        WorldLocation edge = object.getWorldLocation();
+        move(edge);
+        setTowerRank(MonsterSlayerRank.HERO);
+        player.setBusy(true);
+        clickDoor(object);
+        check(player.getWalkToAction() == null && player.isBusy(), "busy player packet remains blocked");
+        DoubleDoorPassage.begin(player, object, 1338);
+        check(scenery(edge) == object && player.getWorldLocation().equals(edge) && player.isBusy(),
+            "helper cannot bypass unrelated busy state or clear it");
+        player.setBusy(false);
+        PluginTask unrelated = new PluginTask(server.getWorld(), player, "useinv", new Object[0]) {
+            public int action() {
+                check(player.isBusy(), "real inventory script owns busy state");
+                DoubleDoorPassage.begin(player, object, 1338);
+                return 0;
+            }
+        };
+        server.getGameEventHandler().add(new PluginTickEvent(server.getWorld(), player,
+            "Unrelated inventory action", null, unrelated));
+        server.getGameEventHandler().runPlayerEvents(player);
+        server.getGameEventHandler().cleanupEvents();
+        check(scenery(edge) == object && player.getWorldLocation().equals(edge) && !player.isBusy(),
+            "unrelated executing script cannot use the door busy exception");
+
+        setTowerRank(MonsterSlayerRank.UNSTAMPED);
+        Npc guard = null;
+        for (Npc candidate : player.getViewArea().getNpcsInView()) if (candidate.getID() == 871) guard = candidate;
+        check(guard != null, "entrance guard available for real denied click");
+        if (guard != null) guard.getUpdateFlags().setChatMessage(null);
+        clickDoor(object);
+        server.getGameUpdater().executeWalkToActions(player);
+        check(server.getGameEventHandler().getEvents().stream().anyMatch(event ->
+            event.getDescriptor().equals("MonsterSlayerTowerAssociates.onOpLoc") && !event.shouldRemove()),
+            "ineligible real door click reaches rank refusal instead of default");
+        for (int tick = 0; tick < 10; tick++) {
+            server.getGameEventHandler().runPlayerEvents(player);
+            server.getGameEventHandler().cleanupEvents();
+        }
+        check(scenery(edge) == object && player.getWorldLocation().equals(edge), "rank refusal leaves entrance closed");
+        check(guard != null && guard.getUpdateFlags().getChatMessage() != null
+            && guard.getUpdateFlags().getChatMessage().getMessageString().equals(MonsterSlayerTowerAccess.FLEDGLING.getRefusal()),
+            "denied door click produces the actual nearby NPC refusal");
+        check(!player.isBusy() && player.getOwnedPlugins().isEmpty() && guard != null && !guard.isBusy(),
+            "denied dialogue releases player and NPC busy ownership");
+    }
+
+    @SuppressWarnings("unchecked")
+    private void installDoorPlugins() throws Exception {
+        // Same real default and rank plugins as production; no Server.init/listeners or shop registrars.
+        PluginHandler handler = server.getPluginHandler();
+        Field reloading = PluginHandler.class.getDeclaredField("reloading"); reloading.setAccessible(true);
+        reloading.setBoolean(handler, false);
+        Field defaults = PluginHandler.class.getDeclaredField("defaultHandler"); defaults.setAccessible(true);
+        defaults.set(handler, Class.forName("com.openrsc.server.plugins.authentic.defaults.Default").newInstance());
+        Field instances = PluginHandler.class.getDeclaredField("triggerTypeToInstance"); instances.setAccessible(true);
+        ((Multimap<Class<?>, Object>) instances.get(handler)).put(OpLocTrigger.class,
+            Class.forName("com.openrsc.server.plugins.custom.myworld.npcs.MonsterSlayerTowerAssociates").newInstance());
+        ExecutorService pluginExecutor = Executors.newFixedThreadPool(1);
+        Field executor = PluginHandler.class.getDeclaredField("executor"); executor.setAccessible(true);
+        executor.set(handler, pluginExecutor);
+        MonsterSlayerData data = MonsterSlayerData.load(Paths.get("conf/server/defs/extras/MonsterSlayer.json"),
+            new MonsterSlayerData.ReferenceCatalog() {
+                public boolean npcExists(int id) { return server.getEntityHandler().getNpcDef(id) != null; }
+                public boolean npcAttackable(int id) { return server.getEntityHandler().getNpcDef(id).isAttackable(); }
+                public boolean npcSpawned(int id) { for (Npc npc : server.getWorld().getNpcs()) if (npc.getID() == id) return true; return false; }
+                public boolean itemExists(int id) { return server.getEntityHandler().getItemDef(id) != null; }
+            });
+        Field slayer = World.class.getDeclaredField("monsterSlayerData"); slayer.setAccessible(true);
+        slayer.set(server.getWorld(), data);
+    }
+
+    private void setTowerRank(MonsterSlayerRank rank) {
+        MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+        Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+        for (MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder())
+            cursors.put(contact.getKey(), rank.isAtLeast(contact.getAwardedRank()) ? contact.getMandatoryTasks().size() : 0);
+        MonsterSlayerState.write(player.getCache(), data, MonsterSlayerState.create(rank == MonsterSlayerRank.UNSTAMPED ? 0 : 2,
+            rank, MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
     }
 
     private void dragons() {

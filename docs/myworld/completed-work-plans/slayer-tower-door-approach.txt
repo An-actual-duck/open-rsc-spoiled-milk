@@ -42,3 +42,10 @@ Evidence: output/tests/slayer-tower-door-approach/ (baseline.log, fixed.log,
 rank-checks.log, actual-map/runtime.log). Tests use disposable server contexts;
 no public server, player account, database or authored package was changed.
 Live activation requires a separately authorized maintenance window.
+
+Follow-up
+---------
+Public v0.3.9 confirmed that the corrected approach reached the proper edge,
+but a separate busy-state guard still rejected the real plugin callback. See
+slayer-tower-door-plugin-context.txt for the subsequent repair and the test
+upgrade that executes the complete packet/plugin lifecycle.
