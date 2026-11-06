@@ -59,11 +59,9 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 			if (command.equalsIgnoreCase("Open")) {
 				if (player.getCache().hasKey("tomb_door_shilo")) {
 					if (player.getY() >= 3632) {
-						changeloc(obj, 800, 497);
-						walkThroughDoorway(player, 377, 3631);
+						doDoor(obj, player, 497, Point.location(377, 3631));
 					} else {
-						changeloc(obj, 800, 497);
-						walkThroughDoorway(player, 377, 3633);
+						doDoor(obj, player, 497, Point.location(377, 3633));
 					}
 					return;
 				}
@@ -102,7 +100,7 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 			if (ShiloVillageUtils.succeed(player, 32)) {
 				delay(2);
 				if (obj.getY() == 3619) {
-					walkThroughDoorway(player, 348, 3616);
+					player.teleport(348, 3616);
 					delay(2);
 					player.message("You manage to carefully clamber up.");
 				} else {
@@ -634,8 +632,7 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 				delay(3);
 				mes("Stepping out of the door, with grinning teeth they push the huge doors open.");
 				delay(3);
-				changeloc(obj, 800, 497);
-				walkThroughDoorway(player, 377, 3631);
+				doDoor(obj, player, 497, Point.location(377, 3631));
 				if (!player.getCache().hasKey("tomb_door_shilo")) {
 					player.getCache().store("tomb_door_shilo", true);
 				}
