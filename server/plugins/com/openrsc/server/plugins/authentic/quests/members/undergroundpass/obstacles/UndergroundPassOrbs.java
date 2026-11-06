@@ -8,6 +8,9 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.region.RegionManager;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
 import com.openrsc.server.plugins.triggers.TakeObjTrigger;
 import com.openrsc.server.plugins.triggers.UseLocTrigger;
@@ -178,9 +181,7 @@ public class UndergroundPassOrbs implements OpLocTrigger, UseLocTrigger, TakeObj
 			player.message("you carefully place the planks over the pressure triggers");
 			player.message("you walk across the wooden planks");
 			player.getCarriedItems().remove(new Item(ItemId.PLANK.id()));
-			GameObject object = new GameObject(player.getWorld(), Point.location(728, 3435), 827, 0, 0);
-			object.getWorld().registerGameObject(object);
-			object.getWorld().delayedRemoveObject(object, config().GAME_TICK * 5);
+			showTemporaryPlanks(player, obj);
 			player.teleport(728, 3438);
 			delay(2);
 			if (obj.getID() == NORTH_PASSAGE[0]) {
@@ -226,6 +227,28 @@ public class UndergroundPassOrbs implements OpLocTrigger, UseLocTrigger, TakeObj
 				}
 			}
 		}
+	}
+
+	private static void showTemporaryPlanks(final Player player, final GameObject passage) {
+		RegionManager regions = player.getWorld().getRegionManager();
+		GameObject planks;
+		if (regions.isNativeLayeredGameObject(passage)) {
+			WorldLocation origin = passage.getWorldLocation();
+			WorldLocation location = new WorldLocation(origin.getWorldSpace(),
+				new WorldCoordinate(728, 603, origin.getCoordinate().getLevel()));
+			// Reuse active planks and never overwrite unrelated authored scenery.
+			if (regions.findNativeLayeredScenery(location) != null) {
+				return;
+			}
+			planks = new GameObject(player.getWorld(), Point.location(728, 603), 827, 0, 0);
+			planks.setInitialWorldLocation(location);
+			regions.markNativeLayeredPlacement(planks,
+				"underground-pass.planks." + origin.getCoordinate().getLevel(), RegionManager.NATIVE_LAYERED_SCENERY_KIND);
+		} else {
+			planks = new GameObject(player.getWorld(), Point.location(728, 3435), 827, 0, 0);
+		}
+		player.getWorld().registerGameObject(planks);
+		player.getWorld().delayedRemoveObject(planks, config().GAME_TICK * 5);
 	}
 
 	@Override

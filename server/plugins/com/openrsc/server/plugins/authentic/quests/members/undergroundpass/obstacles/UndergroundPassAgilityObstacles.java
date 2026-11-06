@@ -62,12 +62,13 @@ public class UndergroundPassAgilityObstacles implements OpLocTrigger {
 			}
 		}
 		else if (obj.getID() == NORTH_STONE_STEP) {
+			// The lower cave floor used legacy plane zero; it is not the catwalk's current level.
 			if (player.getQuestStage(Quests.UNDERGROUND_PASS) == 4) {
 				failBlackAreaObstacle(player, obj); // fail directly, to get stage 5.
 			} else {
 				mes("you walk down the stone steps");
 				delay(3);
-				player.teleport(766, 585);
+				player.teleport(766, 585, 0, false);
 
 			}
 		}
@@ -76,7 +77,7 @@ public class UndergroundPassAgilityObstacles implements OpLocTrigger {
 			delay(3);
 			mes("they lead to a ladder, you climb down");
 			delay(3);
-			player.teleport(739, 667);
+			player.teleport(739, 667, 0, false);
 		}
 		else if (obj.getID() == FIRST_REMAINING_BRIDGE) {
 			mes("you attempt to walk over the remaining bridge..");
@@ -164,62 +165,62 @@ public class UndergroundPassAgilityObstacles implements OpLocTrigger {
 		switch (obj.getID()) {
 			case NORTH_STONE_STEP:
 			case FIRST_REMAINING_BRIDGE:
-				player.teleport(738, 584);
+				player.teleport(738, 584, 0, false);
 				break;
 			case 898:
-				player.teleport(756, 591);
+				player.teleport(756, 591, 0, false);
 				break;
 			case 893:
-				player.teleport(753, 608);
+				player.teleport(753, 608, 0, false);
 				break;
 			case 892:
-				player.teleport(734, 596);
+				player.teleport(734, 596, 0, false);
 				break;
 			case 896:
-				player.teleport(734, 610);
+				player.teleport(734, 610, 0, false);
 				break;
 			case 910:
-				player.teleport(734, 662);
+				player.teleport(734, 662, 0, false);
 				break;
 			case 907:
-				player.teleport(733, 646);
+				player.teleport(733, 646, 0, false);
 				break;
 			case 906:
-				player.teleport(731, 639);
+				player.teleport(731, 639, 0, false);
 				break;
 			case 905:
 			case 904:
-				player.teleport(742, 630);
+				player.teleport(742, 630, 0, false);
 				break;
 			case 908:
-				player.teleport(760, 638);
+				player.teleport(760, 638, 0, false);
 				break;
 			case 909:
-				player.teleport(745, 656);
+				player.teleport(745, 656, 0, false);
 				break;
 			case 902:
-				player.teleport(759, 664);
+				player.teleport(759, 664, 0, false);
 				break;
 			case 903:
-				player.teleport(761, 613);
+				player.teleport(761, 613, 0, false);
 				break;
 			case 901:
-				player.teleport(727, 617);
+				player.teleport(727, 617, 0, false);
 				break;
 			case 895:
-				player.teleport(727, 618);
+				player.teleport(727, 618, 0, false);
 				break;
 			case 899:
-				player.teleport(734, 619);
+				player.teleport(734, 619, 0, false);
 				break;
 			case 900:
-				player.teleport(734, 666);
+				player.teleport(734, 666, 0, false);
 				break;
 			case 894:
-				player.teleport(763, 613);
+				player.teleport(763, 613, 0, false);
 				break;
 			case 897:
-				player.teleport(753, 585);
+				player.teleport(753, 585, 0, false);
 				break;
 		}
 	}

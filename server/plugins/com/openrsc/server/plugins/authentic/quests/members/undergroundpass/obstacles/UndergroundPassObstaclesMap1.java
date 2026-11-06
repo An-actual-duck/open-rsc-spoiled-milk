@@ -109,7 +109,7 @@ public class UndergroundPassObstaclesMap1 implements OpLocTrigger {
 		else if (obj.getID() == CRUMBLED_ROCK) {
 			mes("you climb the rock pile");
 			delay(3);
-			player.teleport(713, 581);
+			player.teleport(713, 581, 0, false);
 		}
 		else if (inArray(obj.getID(), READ_ROCKS)) {
 			mes("the writing seems to have been scracthed...");
