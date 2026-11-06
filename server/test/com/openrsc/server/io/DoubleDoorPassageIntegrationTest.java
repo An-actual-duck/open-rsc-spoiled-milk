@@ -5,7 +5,9 @@ import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.Path;
 import com.openrsc.server.model.action.DoubleDoorPassage;
+import com.openrsc.server.model.action.WalkToObjectAction;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
@@ -40,17 +42,36 @@ public final class DoubleDoorPassageIntegrationTest {
 				for (int index = 0; index < 4; index++) {
 					int direction = index * 2, x = 12 + index * 8, y = 12;
 					for (int lane = 0; lane < 2; lane++) for (int side = 0; side < 2; side++) {
-						GameObject closed = find(server, x, y, level);
+						final GameObject closed = find(server, x, y, level);
 						WorldLocation source = side(closed.getWorldLocation(), direction, lane, side);
 						WorldLocation target = side(closed.getWorldLocation(), direction, lane, 1 - side);
-						player.teleportLayered(source, false);
+						WorldLocation approach = at(2 * source.getCoordinate().getX() - target.getCoordinate().getX(),
+							2 * source.getCoordinate().getY() - target.getCoordinate().getY(), level);
+						player.teleportLayered(approach, false);
 						player.setTeleporting(false);
 						player.setHasMoved(false);
 						player.setSprite(5); // The step must face across the door even after an oblique approach.
 						int sourceMask = mask(server, source), targetMask = mask(server, target);
 						check(sourceMask != 0 && targetMask != 0, "both halves block before passage");
 						check(plugin.blockObjectAction(closed, "open", player), "normal door plugin owns generic action");
-						plugin.onObjectAction(closed, "open", player);
+						WalkToObjectAction action = new WalkToObjectAction(player, closed) {
+							@Override public void executeInternal() {
+								getPlayer().resetPath();
+								plugin.onObjectAction(closed, "open", getPlayer());
+							}
+						};
+						player.setWalkToAction(action);
+						server.getGameUpdater().executeWalkToActions(player);
+						check(!action.isExecuted() && player.getWorldLocation().equals(approach),
+							"door click waits for approach instead of cancelling it early " + direction + "/" + lane + "/" + side + "/" + level);
+						Path path = new Path(player, Path.PathType.WALK_TO_POINT);
+						path.addStep(source.getCoordinate().getX(), source.getCoordinate().getY());
+						player.getWalkingQueue().setPath(path);
+						for (int step = 0; step < 3 && !action.isExecuted(); step++) {
+							player.getWalkingQueue().processNextMovement();
+							server.getGameUpdater().executeWalkToActions(player);
+						}
+						check(action.isExecuted(), "normal walk reaches and activates the door");
 						GameObject open = find(server, x, y, level);
 						check(player.getWorldLocation().equals(target), "lane/side/cardinal/signed passage " + direction + "/" + lane + "/" + side + "/" + level);
 						check(player.hasMoved() && !player.isTeleporting(), "passage uses walking update, not teleport " + direction + "/" + lane + "/" + side + "/" + level);
