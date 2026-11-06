@@ -1,0 +1,44 @@
+Slayer Tower front-door approach repair
+======================================
+
+The reported entrance is the generic pass-through double door, scenery 1337,
+at (22,474,0), facing 6. Eligible players correctly pass the Slayer-rank
+check, but an ordinary approach from either outside lane could stop without
+opening the door.
+
+Cause
+-----
+The client targets rows 473..474 for this door. The server calculated its
+interaction rectangle as rows 473..475: after moving the minimum for a
+negative facing, it still calculated the maximum from the original origin.
+At row 475, WalkToObjectAction therefore executed early, reset the remaining
+walking path, and called a passage helper that correctly refused a crossing
+from that distant tile. Direct tests starting at row 474 missed the failure.
+The same mismatch affected the negative-X facing of this generic door pair.
+
+Change
+------
+For generic passage doors 1337/1338 with the expected type-2, 1x2 definition,
+the server now calculates the interaction maximum from the adjusted minimum,
+matching the client. The existing movement queue finishes the approach before
+the existing open/walk/close helper runs. Other scenery interaction rectangles,
+rank rules, movement/closing logic, definitions and authored maps are unchanged.
+
+Verification
+------------
+The updated double-door test reproduces the early execution before the fix.
+It now drives the production movement queue and WalkToObjectAction boundary
+before calling the existing door plugin, covering both sides and lanes, every
+cardinal facing, signed levels, walking updates, automatic closure, stale
+objects, collision and logout safety: 1,143 assertions pass.
+
+The full installed-map acceptance test now approaches the actual Slayer Tower
+door from rows 475 and 472, rather than teleporting to the door edge before
+calling its helper. All 522 map checks pass; the package fingerprint remains
+7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc.
+The separate tower-associate fixture verifies the existing rank restrictions.
+
+Evidence: output/tests/slayer-tower-door-approach/ (baseline.log, fixed.log,
+rank-checks.log, actual-map/runtime.log). Tests use disposable server contexts;
+no public server, player account, database or authored package was changed.
+Live activation requires a separately authorized maintenance window.

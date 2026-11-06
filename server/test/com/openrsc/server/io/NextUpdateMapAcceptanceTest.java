@@ -9,6 +9,7 @@ import com.openrsc.server.database.impl.mysql.MySqlGameDatabase;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.Path;
 import com.openrsc.server.model.action.WalkToObjectAction;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
@@ -121,16 +122,16 @@ public final class NextUpdateMapAcceptanceTest {
             GameObject object = scenery(at(22, 474, 0));
             check(object != null && object.getID() == 1337 && object.getDirection() == 6, "tower entrance binding " + object);
             if (object == null) continue;
-            move(outside);
+            move(at(22 + lane, 475, 0));
             check(MonsterSlayerTowerPassages.passage(player, object, "open") != null, "tower entrance rank binding lane " + lane);
             check(PathValidation.checkAdjacent(player, 22 + lane, 475, 22 + lane, 474), "tower exterior approach lane " + lane);
-            door.onObjectAction(object, "open", player);
+            approachDoor(door, object, at(22 + lane, 475, 0), outside);
             check(player.getWorldLocation().equals(inside), "actual entrance crossing lane " + lane + " got " + player.getWorldLocation());
             drain(); drain();
             object = scenery(at(22, 474, 0));
             check(object.getID() == 1337, "tower entrance auto-close lane " + lane);
             check(MonsterSlayerTowerPassages.passage(player, object, "open") == null, "tower free exit rank binding lane " + lane);
-            door.onObjectAction(object, "open", player);
+            approachDoor(door, object, at(22 + lane, 472, 0), inside);
             check(player.getWorldLocation().equals(outside), "actual entrance exit lane " + lane);
             drain(); drain();
         }
@@ -179,6 +180,30 @@ public final class NextUpdateMapAcceptanceTest {
                 "associate reachable from passage approach id="+id+" at="+expected);
             System.out.println("ASSOCIATE id=" + id + " count=" + count + " at=" + expected + " exits=" + exits(expected));
         }
+    }
+
+    private void approachDoor(final DoorAction door, final GameObject object,
+            WorldLocation approach, WorldLocation edge) {
+        move(approach);
+        player.setTeleporting(false);
+        WalkToObjectAction action = new WalkToObjectAction(player, object) {
+            @Override public void executeInternal() {
+                getPlayer().resetAll();
+                door.onObjectAction(object, "open", getPlayer());
+            }
+        };
+        player.setWalkToAction(action);
+        server.getGameUpdater().executeWalkToActions(player);
+        check(!action.isExecuted(), "tower door does not activate before the approach finishes from " + approach);
+        Path path = new Path(player, Path.PathType.WALK_TO_POINT);
+        path.addStep(edge.getCoordinate().getX(), edge.getCoordinate().getY());
+        player.getWalkingQueue().setPath(path);
+        for (int step = 0; step < 3 && !action.isExecuted(); step++) {
+            player.getWalkingQueue().processNextMovement();
+            server.getGameUpdater().executeWalkToActions(player);
+        }
+        check(action.isExecuted(), "tower door activates after walking to its edge");
+        check(!player.isTeleporting(), "tower door crosses with a walking update");
     }
 
     private void dragons() {

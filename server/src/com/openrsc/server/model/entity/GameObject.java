@@ -1,5 +1,6 @@
 package com.openrsc.server.model.entity;
 
+import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.external.DoorDef;
 import com.openrsc.server.external.GameObjectDef;
 import com.openrsc.server.external.GameObjectLoc;
@@ -157,8 +158,15 @@ public class GameObject extends Entity {
 				if (dir == 4) {
 					++worldWidth;
 				}
-				maxX = worldWidth + getX() - 1;
-				maxY = worldHeight + getY() - 1;
+				// Match the client rectangle for these passage doors. For negative
+				// facings the minimum has moved; using the old origin activates the
+				// click one tile early and cancels the remaining approach path.
+				boolean passageDoor = (getID() == SceneryId.DOORS_GENERIC_PASS_CLOSED.id()
+					|| getID() == SceneryId.DOORS_GENERIC_PASS_OPEN.id())
+					&& getGameObjectDef().getType() == 2
+					&& getGameObjectDef().getWidth() == 1 && getGameObjectDef().getHeight() == 2;
+				maxX = worldWidth + (passageDoor ? minX : getX()) - 1;
+				maxY = worldHeight + (passageDoor ? minY : getY()) - 1;
 			}
 		} else if (isBoundary()) {
 
