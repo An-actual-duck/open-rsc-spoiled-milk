@@ -325,7 +325,7 @@ public class UndergroundPassKoftik implements QuestInterface, TalkNpcTrigger {
 					say(player, n, "at last!, i've had enough of caves");
 					mes("koftik leads you back up through the winding caverns");
 					delay(3);
-					player.teleport(714, 581);
+					player.teleport(714, 581, 0, false);
 					player.message("and back to the cave entrance");
 					break;
 			}

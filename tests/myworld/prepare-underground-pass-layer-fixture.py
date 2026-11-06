@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Extend the disposable bridge fixture with real rope/puzzle placements."""
+"""Offline Underground Pass exits, ropes, levers, planks and quest-route fixture.
+
+The default creates a small overlapping-floor map. --installed-map reads the
+complete installed map through an isolated Server context without changing it.
+"""
 import hashlib
 import json
 from pathlib import Path

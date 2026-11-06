@@ -2,6 +2,7 @@ package com.openrsc.server.io;
 
 import com.openrsc.server.Server;
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.event.rsc.GameTickEvent;
@@ -9,6 +10,7 @@ import com.openrsc.server.event.rsc.PluginTask;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
@@ -18,6 +20,8 @@ import com.openrsc.server.plugins.authentic.quests.members.undergroundpass.obsta
 import com.openrsc.server.plugins.authentic.quests.members.undergroundpass.obstacles.UndergroundPassPuzzle;
 import com.openrsc.server.plugins.authentic.quests.members.undergroundpass.obstacles.UndergroundPassOrbs;
 import com.openrsc.server.plugins.authentic.quests.members.undergroundpass.obstacles.UndergroundPassDungeonFloor;
+import com.openrsc.server.plugins.authentic.quests.members.undergroundpass.obstacles.UndergroundPassAgilityObstacles;
+import com.openrsc.server.plugins.authentic.quests.members.undergroundpass.npcs.UndergroundPassKoftik;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.CollisionFlag;
 import java.lang.reflect.Field;
@@ -26,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-/** Real rope/puzzle callbacks and signed-layer scenery over a disposable map. */
+/** Real exits, ropes, cage levers, planks and quest-route callbacks without network/accounts. */
 public final class UndergroundPassLayerIntegrationTest {
     private static int checks;
     private static Runnable pauseCheck;
@@ -225,6 +229,61 @@ public final class UndergroundPassLayerIntegrationTest {
         System.out.println("PASS crumbled-rock exit and quest entry; landing (713,581,0), traversal mask " + mask + ", walking exits " + exits);
     }
 
+    private static void escort(Server server, Player player) {
+        Npc koftik = null;
+        for (Npc npc : server.getWorld().getNpcs()) {
+            if (npc.getID() == NpcId.KOFTIK_RECOVERED.id()) { koftik = npc; break; }
+        }
+        check(koftik != null, "actual installed recovered Koftik exists");
+        player.teleportLayered(koftik.getWorldLocation(), false);
+        player.setBusy(false);
+        player.setQuestStage(Quests.UNDERGROUND_PASS, 8);
+        UndergroundPassKoftik plugin = new UndergroundPassKoftik();
+        check(plugin.blockTalkNpc(player, koftik), "recovered Koftik owns dialogue");
+        plugin.onTalkNpc(player, koftik);
+        check(player.getWorldLocation().equals(at(714, 581, 0)), "Koftik escorts the player to the surface entrance");
+        check(player.getQuestStage(Quests.UNDERGROUND_PASS) == 8, "escort does not change quest progression");
+    }
+
+    private static void stepsAndFalls(Server server, Player player) {
+        UndergroundPassAgilityObstacles plugin = new UndergroundPassAgilityObstacles();
+        player.setQuestStage(Quests.UNDERGROUND_PASS, 0);
+        stand(player, 772, 586);
+        plugin.onOpLoc(player, find(server, 773, 586, -1), "walk down");
+        check(player.getWorldLocation().equals(at(766, 585, 0)), "north stone steps descend to original plane-zero cave floor");
+        stand(player, 782, 717);
+        plugin.onOpLoc(player, find(server, 783, 717, -1), "walk down");
+        check(player.getWorldLocation().equals(at(739, 667, 0)), "south stone steps descend to original plane-zero cave floor");
+        // Below the level-one requirement, every actual agility callback takes its failure branch.
+        player.getSkills().setTemporaryLevelAndMaxStat(Skill.AGILITY.id(), 0, 1, false);
+        int[][] routes = {
+            {774,585,738,584}, {804,594,756,591}, {801,606,753,608},
+            {782,593,734,596}, {782,607,734,610}, {782,708,734,662},
+            {777,695,733,646}, {780,687,731,639}, {787,678,742,630},
+            {777,673,742,630}, {808,680,760,638}, {795,700,745,656},
+            {804,664,759,664}, {809,658,761,613}, {778,665,727,617},
+            {777,615,727,618}, {777,628,734,619}, {777,646,734,666},
+            {808,613,763,613}, {808,585,753,585}
+        };
+        for (int[] route : routes) {
+            stand(player, route[0] - 1, route[1]);
+            player.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), 99, 99, false);
+            GameObject obstacle = find(server, route[0], route[1], -1);
+            check(obstacle != null, "installed catwalk obstacle exists at " + route[0] + "," + route[1]);
+            plugin.onOpLoc(player, obstacle, "cross");
+            check(player.getWorldLocation().equals(at(route[2], route[3], 0)),
+                "fall reaches original plane-zero cave floor for obstacle " + obstacle.getID());
+            check(player.getSkills().getLevel(Skill.HITS.id()) == 75, "fall retains its original damage");
+        }
+        // The quest's forced first failure remains a stage-four to stage-five transition.
+        stand(player, 772, 586);
+        player.setQuestStage(Quests.UNDERGROUND_PASS, 4);
+        player.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), 99, 99, false);
+        plugin.onOpLoc(player, find(server, 773, 586, -1), "walk down");
+        check(player.getWorldLocation().equals(at(738, 584, 0)), "forced first failure lands on the correct cave floor");
+        check(player.getQuestStage(Quests.UNDERGROUND_PASS) == 5, "forced first failure preserves quest progression");
+    }
+
     @SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
         Server server = new Server("myworld.conf");
@@ -260,6 +319,11 @@ public final class UndergroundPassLayerIntegrationTest {
                 tomb(server, player);
             } else if ("exit".equals(scenario)) {
                 exit(server, player);
+            } else if ("escort".equals(scenario)) {
+                escort(server, player);
+            } else if ("transitions".equals(scenario)) {
+                stepsAndFalls(server, player);
+                escort(server, player);
             } else {
                 ropes(server, player);
                 puzzle(server, player);
@@ -267,8 +331,8 @@ public final class UndergroundPassLayerIntegrationTest {
                 tomb(server, player);
                 exit(server, player);
             }
-            System.out.println("PASS Underground Pass layer audit: " + checks
-                + " assertions; actual rope and both cage-lever plugins, native replacement, crossing, timed reset and floor isolation; no listeners or player database");
+            System.out.println("PASS Underground Pass layer audit [" + scenario + "]: " + checks
+                + " assertions; actual selected quest callbacks and signed-layer locations/scenery; no listeners or player database");
         } finally {
             contexts.remove(Thread.currentThread().getName());
             for (GameTickEvent event : new ArrayList<GameTickEvent>(server.getGameEventHandler().getEvents())) event.stop();

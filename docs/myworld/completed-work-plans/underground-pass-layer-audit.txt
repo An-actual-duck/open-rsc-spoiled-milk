@@ -1,0 +1,159 @@
+Underground Pass signed-layer audit
+==================================
+
+Scope and map identity
+----------------------
+This follows the owner's reported stalactite at (681,603,-1), request to check
+the remaining levers, and subsequent report that the crumbled-rock exit fails.
+Implementation is confined to demonstrated quest-handler location/scenery
+defects. No authored map, runtime infrastructure, item definition, database,
+account, live server, or client changes are included.
+
+The worker and manager both resolve the installed server map to:
+  server/world-builder/packages/
+  7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc/package
+Manifest SHA-256:
+  42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b
+
+The actual-map checks load that complete package read-only through a disposable
+Server context: 4081 NPC, 926 ground-item, 28612 scenery and 979 boundary
+placements. Server.init(), listeners, login, player database initialization and
+account persistence do not run. Dialogue waits are suppressed for these tests.
+
+Reported rocks and lever inventory
+---------------------------------
+The object at (681,603,-1) is stalactite 798, not a normal climbable rock.
+Its ordinary action is WalkTo. Using a rope activates the existing crossing.
+Actual callbacks confirm these unchanged, reusable-rope routes:
+  798 at (681,603,-1) -> (677,603,-1)
+  799 at (679,603,-1) -> (682,604,-1)
+  771 at (697,603,-1) -> (695,603,-1)
+No quest or item requirement was removed to make the obstacle passable.
+
+Across all authored signed levels in the Underground Pass region
+(global, X 650..850, Y 500..1000), the full map contains exactly three levers:
+  733 at (711,586,-1): bridge (704,585,-1), previously repaired.
+  801 at (689,612,-1): puzzle cage (690,617,-1).
+  801 at (689,621,-1): same puzzle cage.
+The source audit across all Underground Pass map/mechanism files finds only
+these two lever-handler types. Both cage levers now replace the existing
+native cage 802 with 803, retain its authored ownership and restore it after
+five seconds rounded to a game tick. Repeated pulls reuse the raised cage
+without duplicate reset events. Missing/unrelated scenery refuses the crossing
+without selecting a same-XY surface decoy. The original crossing destination
+is preserved explicitly as (690,619,-1).
+
+Confirmed fixes
+---------------
+1. The crumbled rock is 728 at (672,588,-1). It previously called
+   teleport(713,581), whose compatibility overload keeps the current native
+   level when terrain exists there. It therefore stayed underground. The
+   callback now explicitly targets (713,581,0). The complete real map confirms
+   that landing has traversal mask 0 and four legal adjacent walking exits.
+   Stage-zero entrance refusal remains, both before Biohazard completion and
+   before starting Underground Pass. Stages 2 and completed (-1) still enter
+   at (673,588,-1), and the exit works for both.
+
+2. The puzzle levers manufactured detached cage objects using packed Y 3449
+   and registered them directly. The real callback reproduced the same
+   'Entity legacy Point differs from its WorldLocation' error as the bridge.
+   They now use the existing native lookup/replacement/restoration APIs.
+
+3. Using a plank on northern passage 825/829 previously consumed the plank,
+   then threw at direct registration of its packed-Y temporary visual. The
+   temporary planks now get an explicit native location and package-owned
+   identity through existing APIs, with the original five-game-tick removal.
+   Repeated crossings reuse the active visual, and unrelated scenery is not
+   overwritten. Both directions, visibility, floor isolation and removal pass.
+
+4. Recovered Koftik's stage-eight escort had the same implicit-current-level
+   destination defect as the crumbled rock. Its original surface entrance
+   landing (714,581,0) is now explicit; the quest stage remains eight.
+
+5. The north/south stone steps and the catwalk fall table used legacy plane-
+   zero hard destinations. The compatibility overload instead retained the
+   catwalk's native -1 level. Twenty-one hardcoded destination calls now name
+   level zero explicitly. These are original lower cave-floor locations, not
+   newly selected positions. Actual callbacks cover both stairs, twenty
+   obstacle fall routes, the original fall damage, and forced quest-stage
+   4-to-5 progression. Success rolls and relative catwalk crossings are unchanged.
+
+The Iban tomb candidate was checked and left unchanged: the actual tomb is
+at (724,654,0), and its existing temporary claws correctly appear on that
+floor, deal the original 24 damage at 99 HP, and disappear afterward. It does
+not need a rewrite merely to use native ownership instead of the working
+surface compatibility path.
+
+Verification and reproduction
+----------------------------
+Run from a worker/manager checkout with fresh fixture directory names:
+
+  python3 tests/myworld/prepare-underground-pass-layer-fixture.py \
+    output/tests/underground-pass-layer-audit/review-small
+  python3 tests/myworld/prepare-underground-pass-layer-fixture.py \
+    output/tests/underground-pass-layer-audit/review-installed --installed-map
+  python3 tests/myworld/prepare-underground-pass-bridge-fixture.py \
+    output/tests/underground-pass-layer-audit/review-bridge
+
+Use bundled Ant, with heavy Java work under the shared lock:
+
+  flock /home/justin/.local/share/core-heavy-build.lock \
+    sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml \
+    test_underground_pass_layers \
+    -Dpass.fixture.dir="$PWD/output/tests/underground-pass-layer-audit/review-small"
+
+  flock /home/justin/.local/share/core-heavy-build.lock \
+    sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml \
+    test_underground_pass_layers -Dpass.test.scenario=exit \
+    -Dpass.test.maxmemory=2048m \
+    -Dpass.fixture.dir="$PWD/output/tests/underground-pass-layer-audit/review-installed"
+
+  flock /home/justin/.local/share/core-heavy-build.lock \
+    sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml \
+    test_underground_pass_layers -Dpass.test.scenario=transitions \
+    -Dpass.test.maxmemory=2048m \
+    -Dpass.fixture.dir="$PWD/output/tests/underground-pass-layer-audit/review-installed"
+
+  flock /home/justin/.local/share/core-heavy-build.lock \
+    sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml \
+    test_underground_pass_bridge \
+    -Dbridge.fixture.dir="$PWD/output/tests/underground-pass-layer-audit/review-bridge"
+
+Expected focused results: 63 small-map assertions, 9 actual-map exit assertions,
+68 actual-map route assertions, and the existing 26 bridge assertions. The new
+target places the maintained Log4j jars first, matching production dependency
+order for modern JVMs. The four existing swamp-shortcut tests and bounded
+layered-location follow-up test also pass.
+
+Evidence is preserved under output/tests/underground-pass-layer-audit/:
+  baseline-v2.log: real cage callback failure before its fix.
+  planks-baseline.log: real plank registration failure before its fix.
+  exit-baseline.log: wrong exit level against the complete installed map.
+  transitions-baseline.log: wrong north-stair level against the complete map.
+  escort-baseline.log: wrong recovered-Koftik escort level.
+  tomb-baseline-actual.log: working original tomb callback (no production edit).
+  final-synthetic.log, exit-fixed.log, transitions-fixed.log,
+  bridge-regression.log: corrected runtime checks.
+
+Coverage limits
+---------------
+This is not a complete quest walkthrough. The lever inventory is complete for
+the stated installed-map region and all Underground Pass lever handlers were
+checked. Other dialogue branches, menus, every obstacle's success path, and a
+legacy-runtime quest playthrough are not claimed. In particular, the broader
+source scan noted old packed-Y special-case conditions in Map1 clear-rock and
+Map2 rope-grill handlers; those branches need focused intent/reproduction work
+before deciding whether to change their side restrictions. They are outside
+the verified lever/exit/route changes above.
+
+Quality gates: client/server/world-builder compilation passes the maintained
+warning gate (no new gated warnings). Changed-source static analysis passes:
+no PMD/Ruff findings and no new SpotBugs findings. Existing Checkstyle findings
+are reported outside newly changed lines. The server artifact audit and diff
+whitespace check pass. Workspace-layout checking reports pre-existing ignored
+output-root directories retained in this recycled worker; this task adds its
+outputs only beneath the declared output/tests category and preserves those
+older directories.
+
+Public activation requires a separately authorized server maintenance window.
+No public process was stopped or restarted by this worker.

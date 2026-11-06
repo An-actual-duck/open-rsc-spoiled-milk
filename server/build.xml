@@ -96,7 +96,7 @@
     </target>
 
     <target name="test_underground_pass_layers" depends="compile_core,compile_plugins"
-            description="Offline real Underground Pass rope/cage-lever signed-layer checks">
+            description="Offline Underground Pass exits, levers, planks, ropes and quest-route layer checks">
         <property name="pass.test.scenario" value="all"/>
         <property name="pass.test.maxmemory" value="768m"/>
         <fail unless="pass.fixture.dir" message="Pass -Dpass.fixture.dir with a disposable prepared fixture, never a server root"/>
