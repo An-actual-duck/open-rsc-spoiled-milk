@@ -158,20 +158,30 @@ public final class RendererBenchmarkClient {
      * Scene.getRenderer3DFrame can still be inside endScene, before chunks attach.
      * Chunk/texture data is immutable and not part of the released face-storage pool.
      */
-    private static Renderer3DFrame publishedFrame(OpenGLFramePresenter presenter) throws Exception {
+    private static Renderer3DFrame tryPublishedFrame(OpenGLFramePresenter presenter) throws Exception {
         Object lock=field(presenter,OpenGLFramePresenter.class,"frameLock");
+        synchronized(lock) {
+            Object pending=field(presenter,OpenGLFramePresenter.class,"pendingFrame");
+            if(pending!=null) {
+                Renderer3DFrame frame=(Renderer3DFrame)field(pending,pending.getClass(),"renderer3DFrame");
+                if(frame!=null && frame.getWorldChunkFrame().getChunkCount()>0) return frame;
+            }
+        }
+        return null; // The renderer may already have consumed this ephemeral queue.
+    }
+    private static Renderer3DFrame publishedFrame(OpenGLFramePresenter presenter) throws Exception {
         long deadline=System.nanoTime()+3000000000L;
         while(System.nanoTime()<deadline) {
-            synchronized(lock) {
-                Object pending=field(presenter,OpenGLFramePresenter.class,"pendingFrame");
-                if(pending!=null) {
-                    Renderer3DFrame frame=(Renderer3DFrame)field(pending,pending.getClass(),"renderer3DFrame");
-                    if(frame!=null && frame.getWorldChunkFrame().getChunkCount()>0) return frame;
-                }
-            }
+            Renderer3DFrame frame=tryPublishedFrame(presenter);
+            if(frame!=null) return frame;
             Thread.sleep(1);
         }
-        throw new IllegalStateException("No published immutable world frame for benchmark observation");
+        throw new IllegalStateException("No published immutable world frame for requested exact export");
+    }
+    private static String frameObservationsJson(Renderer3DFrame frame) {
+        if(frame==null) return "\"publishedFrameAvailable\":false,\"publishedFrameUnavailableReason\":\"no-pending-published-frame\",\"roof\":null,\"onScreenProjectedActorCandidates\":null";
+        return "\"publishedFrameAvailable\":true,\"publishedFrameUnavailableReason\":null,\"roof\":"+roofState(frame)
+            +",\"onScreenProjectedActorCandidates\":"+onScreenActors(frame);
     }
     /** Exports verified native cutout materials, including all non-terrain kinds; no GL readback or mutation. */
     private static void dumpFences(mudclient client, OpenGLFramePresenter presenter, Path capture) throws Exception {
@@ -327,14 +337,13 @@ public final class RendererBenchmarkClient {
             if(Files.exists(run.resolve("FIXTURE-FAILED"))) throw new IllegalStateException("Private fixture setup failed; aborting measurement");
             client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));
             if (phase.contains("camera")) client.cameraRotation = (rotation + second * 3) & 255;
-            Renderer3DFrame sampledFrame=publishedFrame(presenter);
+            Renderer3DFrame sampledFrame=tryPublishedFrame(presenter);
             RendererDayNightCycle.Presentation light = RendererDayNightCycle.currentPresentation();
             String sample = "{\"seconds\":" + second + ",\"mode\":\"" + field(client, mudclient.class, "currentViewMode")
                 + "\",\"players\":" + client.getPlayerCount() + ",\"npcs\":" + client.getNpcCount()
-                + ",\"gpuFarPollEveryFrame\":" + farPollEveryFrame() + ",\"roof\":" + roofState(sampledFrame)
+                + ",\"gpuFarPollEveryFrame\":" + farPollEveryFrame() + "," + frameObservationsJson(sampledFrame)
                 + ",\"hideRoofs\":" + Config.C_HIDE_ROOFS + ",\"gameObjects\":" + client.getGameObjectInstanceCount() + ",\"wallObjects\":" + client.getWallObjectInstanceCount()
                 + ",\"serverState\":" + new String(Files.readAllBytes(run.resolve("status.json")), StandardCharsets.UTF_8)
-                + ",\"onScreenProjectedActorCandidates\":" + onScreenActors(sampledFrame)
                 + ",\"activeProjectileActors\":" + activeProjectiles(client) + ",\"windowState\":" + windowState(presenter)
                 + ",\"cameraRotation\":" + client.cameraRotation + ",\"zoomSetting\":" + osConfig.C_LAST_ZOOM
                 + ",\"windowMode\":\"" + OpenGLWindowSettings.getMode() + "\",\"logicalWidth\":" + RenderSurfaceSettings.getWidth() + ",\"logicalHeight\":" + RenderSurfaceSettings.getHeight()

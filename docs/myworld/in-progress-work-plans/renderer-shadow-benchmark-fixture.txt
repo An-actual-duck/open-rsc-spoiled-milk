@@ -199,11 +199,12 @@ Optional checked fence export
   and the explicit temporal/performance limits of the short fixed-sun case.
 
 Published-frame observer regression (November 7, 2026)
-  Each timed sample now obtains one already-published frame and uses that same
-  reference for actor and roof observations. Terrain and roof-metadata exports
+  Each timed sample tries one already-published frame and uses that same
+  reference for actor and roof observations when available. Terrain and roof-metadata exports
   also avoid the raw Scene frame, which is exposed before construction finishes.
-  The existing three-second publication wait throws explicitly if no eligible
-  frame appears; it never substitutes an actor count of zero. Its lock covers
+  Requested exact exports retain a three-second publication wait and throw
+  explicitly if no eligible frame appears. Optional sample observations do not
+  wait; absence is explicit null, never an actor count of zero. The lock covers
   only the pending-frame read, without iteration, file I/O or GL calls.
 
   CharacterSprite fields are final; the character list is appended only during
@@ -216,8 +217,8 @@ Published-frame observer regression (November 7, 2026)
   frame exactly as the Scene pointer does, forces the old iterator's concurrent
   append and verifies ConcurrentModificationException. The corrected observer
   repeatedly reads the stable published frame, survives its face-storage release,
-  and observes the next frame only after publication. A missing published frame
-  is explicitly rejected within the bounded wait. This models the construction
+  and observes the next frame only after publication. A requested exact export
+  without a published frame is rejected within the bounded wait. This models the construction
   race; it does not replace a subsequent full native gameplay capture.
 
   The same fixture checks old nine-value shadow snapshot compatibility and the
@@ -232,3 +233,27 @@ Published-frame observer regression (November 7, 2026)
     java -Djava.awt.headless=true -cp BUILD_DIR:CLIENT_JAR \
       orsc.RendererBenchmarkFrameObserverFixture
   Result: PASS, including old-fail/new-pass construction race and bounded timeout.
+
+Nonblocking optional observations (November 7, 2026)
+  A published pending frame can disappear immediately when the render thread
+  consumes it. Optional once-per-second metadata must not spin, delay a sample
+  or abort healthy rendering merely because that queue is empty. Samples now
+  make one tryPublishedFrame read under the existing publication lock. With no
+  eligible frame they emit publishedFrameAvailable=false, an explicit reason,
+  and null roof/onScreenProjectedActorCandidates. No raw or stale frame is used.
+  Exact requested exports alone use the bounded acquisition helper.
+
+  Reports exclude null from available-value sets and separately count available,
+  unknown and genuinely measured-zero observations. allActorProjectionSamplesAvailable
+  stays false whenever a sample is unknown. Actor receipt and native submitted
+  sprite/scene counters remain separate evidence. An unavailable-frame sample
+  that claims an actor or roof value, including zero, is rejected as contradictory.
+  Historical samples without the availability marker are counted separately.
+
+  Focused headless tests pass: 100 absent-queue reads complete without polling;
+  absent metadata serializes null while a real empty projection serializes zero.
+  The retained old-CME/new-published regression and old9/new12 snapshot checks
+  still pass. A mixed valid/null/zero report succeeds without sorting None against
+  integers, preserves available values [0,4], counts one unknown and rejects
+  a false zero substituted for it. No native client, GPU or public server was
+  started for this follow-up.

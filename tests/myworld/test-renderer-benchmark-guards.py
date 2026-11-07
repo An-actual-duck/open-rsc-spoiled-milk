@@ -139,7 +139,8 @@ class GuardTests(unittest.TestCase):
             (capture/"events.jsonl").write_text("".join(json.dumps(r)+"\n" for r in events))
             telemetry=dict(trigger="periodic",sessionElapsedNanos=5_000_000_000,**{"stage.openGLFrameInterval.window.samplesNanos":[16_000_000,18_000_000],"counter.openGLWorldChunkTriangle.recent.latest":123})
             (capture/"telemetry.jsonl").write_text(json.dumps(telemetry)+"\n")
-            (capture/"client-samples.jsonl").write_text('{"contentViewportWidth":1849,"contentViewportHeight":1040,"surface":{"framebufferWidth":1920,"framebufferHeight":1040,"windowWidth":1920,"windowHeight":1040},"windowState":1}\n')
+            client_samples=[dict(contentViewportWidth=1849,contentViewportHeight=1040,surface=dict(framebufferWidth=1920,framebufferHeight=1040,windowWidth=1920,windowHeight=1040),windowState=1,publishedFrameAvailable=True,onScreenProjectedActorCandidates=0,roof=dict(visibility="VISIBLE",residentRoofTriangles=0)),dict(publishedFrameAvailable=False,publishedFrameUnavailableReason="no-pending-published-frame",onScreenProjectedActorCandidates=None,roof=None),dict(publishedFrameAvailable=True,onScreenProjectedActorCandidates=4,roof=dict(visibility="VISIBLE",residentRoofTriangles=2))]
+            (capture/"client-samples.jsonl").write_text("".join(json.dumps(row)+"\n" for row in client_samples))
             (capture/"gpu-samples.csv").write_text("pass,sequence,sessionElapsedNanos,gpuNanos\nframe-render,1,100000000,1000000\nframe-render,2,2000000000,2000000\nframe-render,2,2000000000,2000000\nframe-render,3,9500000000,3000000\n")
             with contextlib.redirect_stdout(io.StringIO()): benchmark.report(SimpleNamespace(capture=capture))
             summary=json.loads((capture/"benchmark-summary.json").read_text())
@@ -153,6 +154,18 @@ class GuardTests(unittest.TestCase):
             self.assertTrue(summary["visiblePreview"])
             self.assertFalse(summary["fullClientPresentation60FpsAccepted"])
             self.assertEqual(summary["sceneInventory"]["openGLWorldChunkTriangle"]["min"],123)
+            self.assertEqual(summary["context"]["onScreenProjectedActorCandidates"],[0,4])
+            coverage=summary["observationCoverage"]
+            self.assertEqual(coverage["actorProjectionAvailableSamples"],2)
+            self.assertEqual(coverage["actorProjectionUnknownSamples"],1)
+            self.assertEqual(coverage["actorProjectionMeasuredZeroSamples"],1)
+            self.assertFalse(coverage["allActorProjectionSamplesAvailable"])
+            self.assertEqual(coverage["roofUnknownSamples"],1)
+            self.assertEqual(coverage["unavailableReasons"],{"no-pending-published-frame":1})
+            client_samples[1]["onScreenProjectedActorCandidates"]=0
+            (capture/"client-samples.jsonl").write_text("".join(json.dumps(row)+"\n" for row in client_samples))
+            with self.assertRaisesRegex(ValueError,"including zero"):
+                with contextlib.redirect_stdout(io.StringIO()): benchmark.report(SimpleNamespace(capture=capture))
 
 
 if __name__ == "__main__": unittest.main()

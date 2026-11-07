@@ -85,10 +85,20 @@ public final class RendererBenchmarkFrameObserverFixture {
         String newJson=observer("shadowSnapshotJson",long[].class).invoke(null,new long[]{1,1,0,3,4,5,6,7,8,4096,1,750}).toString();
         require(newJson.contains("\"farMapSize\":4096") && newJson.contains("\"historyActive\":true") && newJson.contains("\"blendPermille\":750"),"new12 snapshot metadata");
         field(OpenGLFramePresenter.class,"pendingFrame").set(presenter,null);
+        long optionalBegan=System.nanoTime();
+        Method optional=observer("tryPublishedFrame",OpenGLFramePresenter.class);
+        for(int i=0;i<100;i++) require(optional.invoke(null,presenter)==null,"empty queue invented a frame");
+        require(System.nanoTime()-optionalBegan<1000000000L,"optional observations waited for a frame");
+        Method json=observer("frameObservationsJson",Renderer3DFrame.class);
+        String unknown=json.invoke(null,new Object[]{null}).toString();
+        require(unknown.contains("\"publishedFrameAvailable\":false") && unknown.contains("\"roof\":null")
+            && unknown.contains("\"onScreenProjectedActorCandidates\":null"),"missing observation became zero");
+        String measuredZero=json.invoke(null,frame()).toString();
+        require(measuredZero.contains("\"publishedFrameAvailable\":true") && measuredZero.contains("\"onScreenProjectedActorCandidates\":0"),"real empty projection was not zero");
         long began=System.nanoTime(); boolean missingRejected=false;
         try { observer("publishedFrame",OpenGLFramePresenter.class).invoke(null,presenter); }
         catch(InvocationTargetException e) { missingRejected=e.getCause() instanceof IllegalStateException; }
         require(missingRejected && System.nanoTime()-began<4000000000L,"missing published frame did not fail bounded/explicitly");
-        System.out.println("PASS: old raw Scene CME; published actor/roof stability, release safety, next frame, bounded missing-frame refusal and9/12 shadow snapshots");
+        System.out.println("PASS: old raw Scene CME; published actor/roof stability, release safety, next frame, nonblocking absent/null vs measured-zero observations, bounded exact-export refusal and9/12 shadow snapshots");
     }
 }
