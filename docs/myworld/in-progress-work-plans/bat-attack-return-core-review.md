@@ -39,7 +39,19 @@ adjacent Slayer-only contributor method and incorrectly reported summon damage
 as combat-style XP. Its assertion now stops at the XP contributor method's own
 closing brace. The assertion and production XP behavior are unchanged.
 
-Build and final verification results will be recorded here before READY handoff.
+Final validation passed on November 6, 2026:
+
+- Java 8 `./scripts/build-client.sh` — successful, including generator checks.
+- `python3 tests/myworld/test-bat-attack-return-visual.py` — 1,352 runtime assertions.
+- `python3 tests/myworld/test-summon-lifesteal.py` — passed.
+- `python3 tests/myworld/test-animation-asset-migrations.py` — passed.
+- `python3 tests/myworld/test-projectile-animation-fallbacks.py` — passed.
+- `git diff --check` and Python byte-compilation — passed.
+
+`output/tests/duskwing-attack-return/verification-final.log` contains the combined
+build/runtime/source-check result. The `fixed/receipt.json` pins the actual client
+JAR and unchanged approved bat sheet by SHA-256. The fixture also covers incoming
+player-victim packets. The before/after layout findings match exactly.
 The earlier client JAR failed the new runtime fixture because it lacks the corrected
 travel function; that evidence is retained in the task's ignored test directory.
 
