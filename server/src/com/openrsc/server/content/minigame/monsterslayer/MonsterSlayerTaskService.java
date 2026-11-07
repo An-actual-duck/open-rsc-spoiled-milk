@@ -1,28 +1,47 @@
 package com.openrsc.server.content.minigame.monsterslayer;
 
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.container.Inventory;
+import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.container.ItemStatus;
+import com.openrsc.server.net.rsc.ActionSender;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Narrow server API for future dialogue and NPC-death integration. */
 public final class MonsterSlayerTaskService {
 	private final MonsterSlayerData data;
+	private final AssignmentItemGrant assignmentItems;
+
+	/** Only the detached inventory may be changed before assignment commits. */
+	public interface AssignmentItemGrant { boolean grant(Inventory staged, int itemId); }
 
 	public MonsterSlayerTaskService(MonsterSlayerData data) {
+		this(data, new AssignmentItemGrant() {
+			@Override public boolean grant(Inventory staged, int itemId) { return staged.add(new Item(itemId), false); }
+		});
+	}
+	public MonsterSlayerTaskService(MonsterSlayerData data, AssignmentItemGrant assignmentItems) {
 		if (data == null) throw new IllegalArgumentException("Monster Slayer data is required");
+		if (assignmentItems == null) throw new IllegalArgumentException("Slayer assignment supplies are required");
 		this.data = data;
+		this.assignmentItems = assignmentItems;
 	}
 
 	public MonsterSlayerState.TaskResult assignMandatory(Player player, String contactKey) {
 		player = requirePlayer(player);
-		synchronized (player) { return apply(player, MonsterSlayerState.assignMandatory(
-			MonsterSlayerState.read(player.getCache(), data), data, contactKey)); }
+		synchronized (player) {
+			MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
+			return applyAssignment(player, current, MonsterSlayerState.assignMandatory(current, data, contactKey));
+		}
 	}
 
 	public MonsterSlayerState.TaskResult assignRepeatable(Player player, String contactKey, String taskKey) {
 		player = requirePlayer(player);
 		synchronized (player) {
 			if (!MonsterSlayerBossTasks.eligible(player, taskKey)) throw new IllegalArgumentException("Boss task requires opt-in and access");
-			return apply(player, MonsterSlayerState.assignRepeatable(
-				MonsterSlayerState.read(player.getCache(), data), data, contactKey, taskKey));
+			MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
+			return applyAssignment(player, current, MonsterSlayerState.assignRepeatable(current, data, contactKey, taskKey));
 		}
 	}
 
@@ -158,6 +177,60 @@ public final class MonsterSlayerTaskService {
 	private MonsterSlayerState.TaskResult apply(Player player, MonsterSlayerState.TaskResult result) {
 		if (result.isAccepted()) MonsterSlayerState.write(player.getCache(), data, result.getSnapshot());
 		return result;
+	}
+
+	/** Task state and starter supplies commit together; reminders and failed assignments grant nothing. */
+	private MonsterSlayerState.TaskResult applyAssignment(Player player, MonsterSlayerState.Snapshot current,
+			MonsterSlayerState.TaskResult result) {
+		if (result.getReason() != MonsterSlayerState.TaskResult.Reason.ASSIGNED) return result;
+		List<Integer> supplies = MonsterSlayerTaskSupplies.itemIds(data.getTask(result.getSnapshot().getActiveTaskKey()));
+		if (supplies.isEmpty()) return apply(player, result);
+		Inventory inventory = player.getCarriedItems().getInventory();
+		List<Item> live = inventory.getItems();
+		synchronized (live) {
+			for (int id : supplies) {
+				if (player.getWorld().getServer().getEntityHandler().getItemDef(id) == null
+					|| player.getClientLimitations().maxItemId < id
+					|| (player.getConfig().RESTRICT_ITEM_ID >= 0 && player.getConfig().RESTRICT_ITEM_ID < id))
+					return MonsterSlayerState.TaskResult.rejected(current, MonsterSlayerState.TaskResult.Reason.SUPPLIES_UNAVAILABLE);
+			}
+			int slots = 0;
+			for (int id : supplies) slots += inventory.getRequiredSlots(new Item(id));
+			if (inventory.getCapacity() - inventory.size() < slots)
+				return MonsterSlayerState.TaskResult.rejected(current, MonsterSlayerState.TaskResult.Reason.INVENTORY_FULL);
+			List<Item> original = new ArrayList<Item>(live);
+			List<ItemStatus> statuses = new ArrayList<ItemStatus>();
+			for (Item item : original) statuses.add(item.getItemStatus());
+			boolean committed = false;
+			try {
+				Inventory staged = inventory.copyForTransaction();
+				for (int id : supplies) {
+					int before = usableSupplyCount(staged, id);
+					if (!assignmentItems.grant(staged, id) || usableSupplyCount(staged, id) != Math.addExact(before, 1))
+						return MonsterSlayerState.TaskResult.rejected(current, MonsterSlayerState.TaskResult.Reason.SUPPLIES_FAILED);
+				}
+				inventory.publishTransaction(staged);
+				// write validates first and restores its owned cache keys on any partial write failure.
+				MonsterSlayerState.write(player.getCache(), data, result.getSnapshot());
+				committed = true;
+			} catch (RuntimeException failure) {
+				return MonsterSlayerState.TaskResult.rejected(current, MonsterSlayerState.TaskResult.Reason.SUPPLIES_FAILED);
+			} finally {
+				if (!committed) {
+					live.clear();
+					for (int i = 0; i < original.size(); i++) original.get(i).setItemStatus(statuses.get(i));
+					live.addAll(original);
+				}
+			}
+		}
+		ActionSender.sendInventory(player);
+		return result;
+	}
+	private static int usableSupplyCount(Inventory inventory, int id) {
+		int count = 0;
+		for (Item item : inventory.getItems()) if (item.getCatalogId() == id && !item.getNoted())
+			count = Math.addExact(count, item.getAmount());
+		return count;
 	}
 
 	private static Player requirePlayer(Player player) {

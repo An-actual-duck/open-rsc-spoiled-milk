@@ -9,6 +9,7 @@ import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinition
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskSupplies;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopService;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -165,7 +166,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			if (warnings.length > 0) dialogue.npc(player, npc, warnings);
 		}
 		MonsterSlayerContactService.Result result = service.requestTask(player, CONTACTS[index]);
-		if (!result.isAccepted()) { if (result.getReason().equals("active-task")) { com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task active = data.getTask(state.getActiveTaskKey()); dialogue.npc(player, npc, "Your current task is " + state.getActiveKills() + " of " + active.getRequiredKills() + " " + active.getDisplayName(data.getFamily(active.getFamilyKey()).getDisplayName()) + "."); } else dialogue.npc(player, npc, "Not yet. Your record is not ready for another task."); return; }
+		if (!result.isAccepted()) { if (result.getReason().equals("active-task")) { com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task active = data.getTask(state.getActiveTaskKey()); dialogue.npc(player, npc, "Your current task is " + state.getActiveKills() + " of " + active.getRequiredKills() + " " + active.getDisplayName(data.getFamily(active.getFamilyKey()).getDisplayName()) + "."); } else dialogue.npc(player, npc, taskAssignmentFailureLine(result.getReason())); return; }
 		if (shouldUseHobartFollowUpRemark(index, state.getTasksCompleted())) dialogue.npc(player, npc, hobartFollowUpRemark());
 		if (shouldUseMaraAssignmentRemark(index, state)) dialogue.npc(player, npc, maraAssignmentRemark());
 		String taskKey = MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey();
@@ -173,6 +174,23 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (shouldUseBranAssignmentRemark(index, state)) dialogue.npc(player, npc, branAssignmentRemark(task));
 		if (shouldUseDoranAssignmentRemark(index, state)) dialogue.npc(player, npc, doranAssignmentRemark(task));
 		dialogue.npc(player, npc, "Your next task is to slay " + task.getRequiredKills() + " " + task.getDisplayName(data.getFamily(task.getFamilyKey()).getDisplayName()) + ".");
+		String[] supplies = taskSupplyLines(player, task);
+		if (supplies.length > 0) dialogue.npc(player, npc, supplies);
+	}
+	/** Assignment-only acknowledgement; reminders never promise or grant more supplies. */
+	public static String[] taskSupplyLines(Player player, MonsterSlayerDefinitions.Task task) {
+		java.util.List<Integer> ids = MonsterSlayerTaskSupplies.itemIds(task);
+		if (ids.isEmpty()) return new String[0];
+		java.util.List<String> names = new java.util.ArrayList<String>();
+		for (int id : ids) names.add(player.getWorld().getServer().getEntityHandler().getItemDef(id).getName());
+		return new String[] {"Take these starter supplies: " + String.join(", ", names) + ".",
+			"Each one has three uses. A Slayer associate can sell you more."};
+	}
+	public static String taskAssignmentFailureLine(String reason) {
+		if ("inventory_full".equals(reason)) return "Make room in your inventory for the task supplies, then ask me again.";
+		if ("supplies_unavailable".equals(reason)) return "I can't safely give you the supplies for that task right now. No task was assigned.";
+		if ("supplies_failed".equals(reason)) return "I couldn't prepare your task supplies. No task was assigned. Please try again.";
+		return "Not yet. Your record is not ready for another task.";
 	}
 	private void introduction(Player player, Npc npc, MonsterSlayerContactService service, MonsterSlayerState.Snapshot state, boolean shortcut) {
 		if (shortcut) { npcsay(player, npc, "No stamp, no task. Fetch a Rising Sun ale first."); return; }
