@@ -205,7 +205,7 @@ def main():
         "drawDragonBreathOverlay(character, effect, x, y, width, height, drawWidth);",
         "return \"dragon-breath\";",
         "shouldMirrorDragonBreath(character.direction)",
-        "var3.projectileMirrored = shouldMirrorProjectile(var16, var3);",
+        "var3.projectileMirrored = shouldMirrorProjectile(projectileDef, var16, var3);",
         "return screenX > 0;",
         "return mirrorX ? spriteProjectileStaticMirrorBase + projectile.id : projectile.id + spriteProjectile;",
         "private Sprite getMirroredStaticProjectileSprite(int projectileId)",
