@@ -58,7 +58,7 @@ Local evidence: `output/reviews/in-game-guide-review/` contains the native-font 
 
 **Measured with the actual native font 2:** Thunder's explanation (SG:782) is **603px**, exceeding even the full-width Info budget. The coating recipe (SG:978) is **395px**, exceeding the item-row space. The Mourning Unicorn trait (SG:1269) is **422px** and the Foundry Dragon recipe (SG:1241) is **360px**, both drawn with the NPC text inset. Twenty of 655 sampled literal rows exceed the conservative 335px item budget, but not all twenty are defects because full-width Info rows have more room.
 
-**Recommendation:** Wrap ordinary rows to their actual text-column width and let their height grow, or split/shorten these specific rows first. For example: “Startle staggers for 1 attack.” / “Then 5 unstaggered attacks grant immunity.” Keep the coating ingredients readable across two lines. Add native-font bounds checks for ordinary guide rows as well as Cleric pages. Enlarging only the spellbook dropdown will not fix this separate guide renderer.
+**Recommendation:** Wrap ordinary rows to their actual text-column width and let their height grow, or split/shorten these specific rows first. For example: “Startle staggers for 1 attack.” / “Then 5 unstaggered attacks before reapplication.” Keep the coating ingredients readable across two lines. Add native-font bounds checks for ordinary guide rows as well as Cleric pages. Enlarging only the spellbook dropdown will not fix this separate guide renderer.
 
 ## Useful missing explanations and catalog entries
 
