@@ -9,10 +9,10 @@ The owner approved the broader candidate10 visual direction: "everything looks
 really good". Candidate11 then corrected the specific grazing-terrain artifact;
 Core reviewed the actual exterior image as evenly shaded with contacts retained.
 
-Frozen implementation: d608d7f64939535c6fa3fe08e6393f85192c2d94.
-Immutable private candidate12 client SHA256:
-  b050d1c86f35f665f7b24cc9cf2e9b62162b96209c09bd18190a160b9f89906c
-  output/tests/geometry-shadow-renderer/candidate12-roof-policy-client.jar
+Frozen implementation: 5f6e1dbea25d063ec5396ba810c8ce2b339133b0.
+Immutable private candidate13 client SHA256:
+  883fa6f7fa7f9157e92e234e7cd71e8de1bb092e4f373bf936c07d771c1c4e4d
+  output/tests/geometry-shadow-renderer/candidate13-final-timer-client.jar
 This is not a public release or completed performance acceptance. Later report-
 only commits do not change that compiled renderer. Benchmark tooling/evidence
 belongs to the separate test/renderer-shadow-benchmarks branch in ai-3.
@@ -53,6 +53,21 @@ Behavior and ownership
   when global Hide Roofs omits visible roof meshes. WORLD WALL facades and ROOF
   surfaces are exempt. No wall-flood inference, custom IDs or guessed heights
   are used. Roof-bit source-window origins retain their metadata authority.
+- Same-level declared coverage is proven natively: candidate13 floor pixels
+  (1190,313), (1200,290), (1210,268) hit positive source tiles (81..83,68),
+  mask byte 255, and readable uniform RGB 57..58. However, absent same-level bits
+  do NOT establish open sky. Seers bank tiles 498..504/448..453 have roof 0 on
+  level 0 but roof 1 on level 1 in the authoritative installed native package.
+  Native-only presentation/wire currently supplies only the receiver level;
+  the bank's upper-story roof therefore cannot yet suppress its ground-floor
+  sun shadows. The current mask must not be described as complete multi-story
+  indoor coverage. The owner explicitly selected finishing this renderer pass
+  and a separate authoritative roof-data follow-up; no guessed cross-level
+  projection was added.
+  Evidence: exact immutable final13-high/server/package audit (under ai-3
+  output/tests/renderer-shadow-benchmarks/); manifest.json FILE SHA256
+  42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b,
+  level 1 sector 10,9 SHA 21da75127a56729cfe84231a217adafd7a8c0a879514431b684fd09755568ac8.
 - The mask is 2D. An unusual ground-plane prop protruding above a roof still
   counts as covered; there is no authored roof-height authority to split it.
   Higher-plane receivers do not inherit the lower-plane mask. Exposed roof
@@ -69,6 +84,18 @@ Behavior and ownership
 - Sprite-shaped actors do not cast new geometry silhouettes. Animated scenery
   is present only in the near shadow map. This milestone is not complete
   character-shadow support or a general renderer/asset rewrite.
+
+Selected roof-data follow-up (not implemented here)
+Provide a bounded, render-only overhead-coverage product with explicit known /
+covered state for each receiver plane. Derive it from authoritative physical
+story/roof relationships; do not project all numerically higher signed levels
+onto unrelated worldspaces. Stamp it with package hash, worldspace, signed
+receiver level and native context/sequence so stale data cannot shade a new
+scene. Preserve terrain/static-scene authority and ACK readiness independently.
+Tests should include multi-story bank coverage, truly open courtyards, rooftop
+receivers, independent worldspaces, signed levels and origin rebases, stale
+contexts, old-client compatibility and bounded cache cleanup. The separate
+product or a reviewed snapshot-format extension needs its own protocol review.
 
 Player settings
 Off/Low/High are saved as shadow_quality. Runtime diagnostic override:
@@ -104,7 +131,14 @@ Completed checks include:
   outdoor tiles, metadata origins, planes and cache/session clear. GPU tests
   verify covered floor/props, facade/roof exemptions, another plane, unchanged
   upload caching, texture-state restoration and roof-texture deletion.
-- Unique completed nested GPU timestamps; diagnostic window/viewport ownership,
+- Unique completed nested GPU timestamps; cached far queries are polled every
+  prepared frame without issuing another rebuild/query or waiting. Metadata
+  FAR_QUERY_POLL_EVERY_FRAME=true distinguishes this corrected attribution from
+  old provisional samples read only on a later far rebuild. Sample sequences
+  are unique within each timer instance, not globally across a relog that
+  recreates it; consumers spanning relogs must partition timer lifetimes.
+  All quantitative final runs in this report use fresh single-session fixtures.
+- Diagnostic window/viewport ownership,
   raw actual framebuffer/window dimensions, and completed post-swap intervals.
   Last-completed shadow snapshots allocate only when the observer asks; the GL
   publisher uses tryLock and never waits for diagnostic readers.
@@ -128,22 +162,75 @@ retains all 935 objects / 29 walls through a same-coordinate hard region reload.
 Server sync modernization, baseline delivery policy and static wire-envelope
 checks also pass. No socket/database is used by the focused reset/cache fixture.
 
-Native evidence / acceptance
-Final candidate12 matched legacy/Low/High, moving-camera, sun-motion, maximum-
-distance, roof/day/night/water/relog routes are being collected by ai-3. Do not
-substitute superseded measurements: candidate1 had incorrect object offsets and
-zero actual projectile actors despite requested emitters. Candidate9 still had
-the now-fixed grazing artifact. The first visible candidate10 preview confirmed
-visual direction but used an 1849x1040 content viewport in borderless mode, not
-full 1920x1080; it is not the final 1080 acceptance run. A later fullscreen fixture
-records raw framebuffer, content viewport and internal/UI source separately.
-Resident GL world geometry rasterizes at the physical content viewport; internal
-960x540 describes legacy/UI/projection coordinates, not a half-resolution world.
+Native evidence / acceptance (candidate13)
+The dedicated benchmark branch records full source/machine/settings/zero-account
+seed/map hashes, actual populations, submitted sprites/projectiles, raw unique
+GPU samples, CPU stages, completed post-swap intervals and loading transitions.
+These three fresh native cases use the same frozen client/server/scene/camera:
+30s warmup + 60s busy rotating camera, fixed sun 135/45/day, normal zoom 75,
+1920x1080 actual framebuffer/content, internal/UI 960x540, 17 players (viewer + 16),
+40 NPCs (32 + 8 test bears), and pulsed visual projectiles (observed counts, no damage
+simulation). All 89 resident chunks / 435422 triangles and 935 objects / 29 walls match.
 
-GPU render time, CPU submission/scene time, completed frame intervals and loading
-transitions must be reported separately with median/p95/p99 and misses. Hidden
-throughput is not compositor delivery. No strict all-frame 60 FPS claim, final
-owner-visible cadence acceptance or all-location guarantee has been made.
+                   CPU render ms                 GPU elapsed render ms
+                   median /p95 /p99 /maximum      median /p95 /p99 /maximum
+  Legacy mask      3.531 /4.265 /4.731 /9.191     4.806 /6.211 /6.775 /8.690
+  Low              3.629 /4.405 /5.077 /17.046    5.085 /7.099 /8.028 /17.024
+  High             3.649 /4.466 /5.057 /8.859     5.055 /8.284 /8.962 /9.810
+High and Legacy have zero measured render-work samples above 16.667ms. Low has
+one approximately 17ms event correlated with a 12ms GC pause; it is not evidence
+of consistently slower Low shading. CPU/GPU intervals overlap and must not be
+added. High near GPU p95/p99=1.136/1.316ms; its 23 completed far builds have
+median 1.234ms,p95=4.386ms,max 4.575ms, with corrected every-frame query polling.
+The shared GPU flock prevents these tests overlapping other GPU fixtures.
+
+A separate owner-visible fullscreen High run verifies all 60 samples uniconified
+and actual framebuffer/window/content 1920x1080 (UI/internal 960x540). It completes
+3601 renders in 60.021 seconds (about 60 FPS). CPU render median/p95/p99/max:
+3.713/4.439/4.906/11.654ms; GPU elapsed 5.259/7.324/7.883/10.626ms. No measured
+render work exceeds 16.667ms. Completed post-swap interval median/p95/p99/max:
+16.690/17.644/18.560/24.476ms, zero above 25ms. This proves useful render-budget
+headroom and approximately 60 renders/s, not scanout-perfect cadence or a strict
+all-frame 16.667ms guarantee. The diagnostic fullClientPresentation60FpsAccepted
+flag remains false; frame pacing/GC tails are explicitly retained limitations.
+
+Separate bounded stress cases also pass the measured render budget:
+- Sun motion 60s at normal camera: azimuth range 80.26–86.16 degrees and elevation
+  71.11–71.86 degrees (raw chronological direction is decreasing); GPU p99/max
+  8.039/9.902ms, CPU 4.595/8.894ms, no render-work misses. There are 25 completed
+  far builds (~0.417Hz), maximum 5.084ms. High-elevation vector motion is smaller
+  than azimuth motion, consistent with the 0.08-degree vector threshold / 150 frames.
+- Maximum-distance 30s: requested zoom 900, effective distance cap 2400,
+  draw 40 / fog start 28; actual world fog end 9920 / start 8384. GPU p99/max 8.176/9.855ms,
+  CPU 4.270/8.452ms; 14 far builds and no render-work misses. This remains distinct
+  from the normal-camera acceptance target.
+- Ordinary queued walking, 30s from x502 to x506 at y460: GPU p99/max
+  10.110/18.609ms (one >16.667), CPU 6.334/17.717ms (two >16.667), completed
+  swap maximum 31.356ms (none >33.334). The rare tails remain visible in the
+  evidence; this is not a zero-miss walking guarantee.
+- Neighboring-region transition, ordinary movement x502 to x478: objects change
+  935 to 780 / 25 walls in a valid new region. GPU p99/max 6.782/7.483ms, but CPU
+  maximum 52.973ms and completed swap maximum 121.664ms (two each >50ms).
+  These cold/loading tails are separated from the normal-camera steady phase.
+- Fog Off maximum-distance 30s: actual Off uses 144 tiles/current world clip
+  23232, zoom cap 2400, 435422 resident triangles, 327–369k color triangles and
+  57 projected actors. CPU p99/max 4.035/17.812ms and GPU 7.826/20.309ms (two
+  each >16.667); completed swap maximum 31.007ms, none >33.334. This fog-disabled
+  stress case has real outliers, distinct from the main normal-camera target.
+Bounded roof-on, night/water and relog visual routes are still being completed
+by ai-3. Their exact commands/reports live in
+output/tests/renderer-shadow-benchmarks/final13-* and the maintained benchmark
+handoff. No final all-location or all-loading-transition guarantee is made.
+
+Do not substitute superseded measurements: candidate1 had incorrect object
+shadow offsets and zero actual projectiles despite requested emitters. Candidate9
+still had the fixed grazing artifact. The first visible candidate10 preview
+approved visual direction but used an 1849x1040 content viewport in borderless
+mode; it was not the final 1080 run. Older far-query callbacks were read only on
+later rebuilds and have provisional phase attribution. Candidate13 fixes that.
+Resident GL geometry rasterizes at the physical content viewport; internal/UI
+960x540 is not a half-resolution world. Hidden throughput and completed swap
+intervals are separate evidence from desktop/compositor delivery.
 
 Safety / output
 No Oracle/public server, owner account/database/config/map, runtime artwork bytes
