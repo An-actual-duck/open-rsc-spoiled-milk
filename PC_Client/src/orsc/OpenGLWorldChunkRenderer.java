@@ -1917,7 +1917,6 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			matchedBuffer = true;
 			matchedResidentChunks++;
 			for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
-				if (SHADOW_DIAGNOSTIC_EXCLUDED.contains(batch.kind)) continue;
 				if (batch.indexCount <= 0 || !shouldDrawChunkModelKind(frame, chunk, batch.kind)) {
 					continue;
 				}
