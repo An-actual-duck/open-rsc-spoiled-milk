@@ -43,14 +43,37 @@ Hidden diagnostic windows use spoiledmilk.openglHiddenDiagnostic=true with
 openglHiddenWidth/Height. They are never shown/focused and install no input
 callbacks. Offscreen throughput is not desktop presentation cadence acceptance.
 
-Proof so far: maintained build; exact projection/Y-direction/rebase/persistence
-checks; renderer menu/profile tests; actual RX 6700 XT hidden GPU pixel proof for
-opaque silhouette, alpha-cutout coverage, lit/self-shadow behavior, High/Low/Off,
-program/texture/viewport/depth state restoration; unsupported GL 2 detection.
+Verification completed:
+- Maintained client build, exact projection/Y-direction/rebase/finite-input and
+  persistence checks, renderer menu/profile tests and full renderer guardrails.
+- Actual RX 6700 XT hidden GPU pixel/state fixture: opaque silhouette, alpha
+  cutout, flat/sloped/wall receivers, Low/High/actual-Off transitions, steady far
+  caching, movement/geometry invalidation, idempotent cleanup and texture deletion.
+  It asserts program, framebuffer, VAO/VBO/index, texture unit/binding, viewport,
+  depth function/range/clear/write masks, color masks, culling and polygon offset
+  restoration. Nested timestamp samples are completed and emitted uniquely.
+- An actual GL 2.1 context reports unsupported optional GL 3 capability without
+  creating the geometry pass; the previous ground-mask fallback remains available.
+- Client window diagnostics export cached visible/iconified attributes only when
+  diagnostics are enabled. Observers never call GLFW off the context thread.
+  Raw completed openGLFrameInterval samples are exported for cadence analysis.
 
-Pending: actual maintained map/client images, sun/roof/water/relog/mode visual
-route, full renderer regressions, GPU-state/resource lifecycle expansion and
-controlled busy-scene/frame-time measurements. No 60 FPS claim yet. Dedicated
-benchmark work is isolated in ai-3; source engine/settings remain ai-2. No public
-server, owner account/database or browser fixture is modified. Evidence stays
-under output/tests/geometry-shadow-renderer/ and benchmark-worker diagnostics.
+Preliminary native full-client evidence (candidate1; not final acceptance):
+Seers normal zoom 75, physical 1920x1080 / logical 960x540, fixed sun 135/45/day,
+ordinary RSA login/native scene ACK, RX 6700 XT. Controlled busy scene has 17
+players (viewer plus 16), 40 NPCs (32 plus 8 test bears), 57 submitted actor groups,
+163 sprite layers and 8 visual projectile emitters, no damage simulation. A 60-second
+High run measured CPU render p95/p99 3.822/4.243 ms and GPU render 6.638/7.155 ms;
+no measured render sample exceeded 16.667 ms. This is hidden offscreen throughput,
+not proof of compositor delivery, owner visual approval or all locations.
+Near GPU p95/p99 .443/.742 ms; 23 far rebuilds with maximum 1.031 ms. Submission
+coalescing is deferred because this measured workload leaves budget headroom.
+
+Pending: final matched legacy/Low/High controls, moving-camera/maximum-distance
+stress, day/night/roof/water/relog visual route and owner-visible cadence/quality
+review. Native exterior images are being checked for matched scenery readiness
+and a possible small shadow-edge artifact; do not accept unmatched A/B images.
+Dedicated benchmark work is isolated in ai-3; source engine/settings remain ai-2.
+No public server, owner account/database or browser fixture is modified.
+Evidence stays under output/tests/geometry-shadow-renderer/ and benchmark-worker
+output/tests/renderer-shadow-benchmarks/. No 60 FPS acceptance claim yet.

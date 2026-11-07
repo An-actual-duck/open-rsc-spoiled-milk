@@ -86,9 +86,9 @@ public final class GeometryShadowGpuFixture {
 		gl.glClearColor(.7f,.2f,.2f,1);gl.glClear(gl.GL_COLOR_BUFFER_BIT);gl.glDisable(gl.GL_DEPTH_TEST);
 		gl.glUseProgram(program);pass.bindReceiver(program);
 		gl.glUniform1i(gl.glGetUniformLocation(program,"uWallReceiver"),wallReceiver?1:0);
-		gl.glUniform1f(gl.glGetUniformLocation(program,"uLightDirectionX"),.70710677f);
-		gl.glUniform1f(gl.glGetUniformLocation(program,"uLightDirectionY"),.70710677f);
-		gl.glUniform1f(gl.glGetUniformLocation(program,"uLightDirectionZ"),0);
+		gl.glUniform1f(gl.glGetUniformLocation(program,"uLightDirectionX"),RendererRemasterLightSettings.getLightDirectionX());
+		gl.glUniform1f(gl.glGetUniformLocation(program,"uLightDirectionY"),RendererRemasterLightSettings.getLightDirectionY());
+		gl.glUniform1f(gl.glGetUniformLocation(program,"uLightDirectionZ"),RendererRemasterLightSettings.getLightDirectionZ());
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER,vertices);gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER,indices);
 		gl.glEnableVertexAttribArray(0);gl.glVertexAttribPointer(0,3,gl.GL_FLOAT,false,20,0L);
 		gl.glDrawElements(gl.GL_TRIANGLES,6,gl.GL_UNSIGNED_INT,0L);
@@ -167,6 +167,14 @@ public final class GeometryShadowGpuFixture {
 			ByteBuffer slope=draw(pass,program,output.resolve("slope-card.png"));require(brightness(slope,-240,40)<100,"sloped receiver shadow missing");require(brightness(slope,180,0)>240,"sloped receiver self-shadow");
 			slopeReceiver=false;wallReceiver=true;signature++;mesh();pass.prepare(SCENE,0,0,0);
 			ByteBuffer wall=draw(pass,program,output.resolve("wall-card.png"));require(brightness(wall,40,-100)<100,"wall receiver shadow missing");require(brightness(wall,0,100)>240,"wall receiver self-shadow");
+			wallReceiver=false;slopeReceiver=false;signature++;mesh();
+			for(int elevation:new int[]{5,10,25,45,85}) {
+				RendererRemasterLightSettings.adjustElevation(elevation-RendererRemasterLightSettings.getElevationDegrees());
+				pass.prepare(SCENE,0,0,0);
+				ByteBuffer grazing=draw(pass,program,output.resolve("sun-"+elevation+".png"));
+				for(int x=80;x<=240;x+=10)for(int z=-240;z<=240;z+=10)
+					require(brightness(grazing,x,z)>240,"PCF ground self-shadow at sun "+elevation+" x="+x+" z="+z);
+			}
 			RendererShadowSettings.setQuality(RendererShadowSettings.Quality.OFF);require(!pass.prepare(SCENE,0,0,0),"Off still prepared depth maps");
 			require(pass.nearDrawCalls==0&&pass.farDrawCalls==0&&pass.nearCpuNanos==0&&!pass.farRebuilt,"Off retains stale per-frame diagnostics");
 			ByteBuffer off=draw(pass,program,output.resolve("off.png"));require(brightness(off,40,-100)>240,"disabled shadow persisted");
