@@ -1,8 +1,9 @@
 Private browser in-game proof
 =============================
 
-Current state: gameplay proof achieved; final capture/runtime comparison and
-manager review in progress. This is not a public browser release or deployment.
+Current state: READY for manager review. Actual visible world, authoritative
+walking and scene transitions passed in a fresh 300-second final capture. This
+is not a public browser release or deployment.
 
 Scope and source
 ----------------
@@ -41,7 +42,7 @@ output/tests/browser-gameplay-spike/two-pass-1/
       private-server coordinates; (120,648) through (95,660) and back east.
     world-58.png — visible player/world after welcome was dismissed.
     world-185.png — character at (142,647), different visible scenery.
-    events.jsonl — current protocol8 fences, exact static counts, stage acks.
+    events.jsonl — current protocol 8 fences, exact static counts, stage acks.
 
 Initial atomic scene: objects 1021/1021, walls 35/35, matching hashes. Both halo
 stages complete 16/16 outer sectors, 75,172 terrain / 78,550 structure triangles.
@@ -63,7 +64,7 @@ public constructor controls 8 main + 8 worker, including halo-sized arrays and
 copy isolation. Ordinary JVM and final expanded browser probe both pass.
 Original family-only two-pass browser matrix passed 3400+3400 and public
 controls 4+4; the expanded probe caught the additional kind-normalizer edge.
-Fresh world/movement validation of both final helpers is in progress.
+Fresh validation of both final helpers is recorded separately below.
 
 Focused desktop checks: renderer material-family/classifier, native terrain
 readiness 2, atomic activation 4, object chunk primitive builder, shadow inventory
@@ -79,8 +80,11 @@ Diagnostic entry/exception logging was removed from maintained renderer source.
 
 Private review and reproduction
 -------------------------------
-Final distinct review URL and immutable staged source SHA will be recorded here
-before READY. Existing immutable owner-review JVM 230316 / HTTP 230317 on
+Final review URL: http://127.0.0.1:8093/?mode=software
+Immutable final web stage: output/tests/browser-gameplay-spike/owner-gameplay-final/
+Its stage.json records the exact handoff source commit and client SHA256; the
+artifact inventory and entry-compare report preserve its relation to the tested
+candidate. No stage files are changed after the review HTTP service starts. Existing immutable owner-review JVM 230316 / HTTP 230317 on
 43629/43529/8079 remains unchanged. Worker HTTP stages are separate. Only
 browserdemo  / BrowserProof13 disposable account/data is used; ordinary character
 design is completed via pointer input. Do not connect owner credentials.
@@ -117,3 +121,33 @@ headless Chrome/CDP, never owner browser profiles or physical desktop input.
 workspace-layout check reports inherited unclassified output entries and
 assets/sprites in this reused worktree. New outputs use declared tests
 categories only. No old data was deleted or reorganized.
+
+Final both-helper validation
+----------------------------
+Fresh capture:
+output/tests/browser-gameplay-spike/both-normalizers/
+  software-r5.0-j8-1794074251039/
+The first scripted route pointed into a castle wall, correctly producing no
+movement. A CDP pointer click on visible clear grass at (150,500) then moved the
+player from (138,659) through (139,659), (142,659), (145,659), to (147,660).
+First changed server-coordinate sample arrived within 2 seconds. This action
+and its server samples are in manual-pointer-actions.json; the corresponding
+visible result is after-clear-grass-pointer.png. The full status sample stream
+remains in authoritative-movement.json. This uses pointer input only; it never
+sets player coordinates or skips collision.
+
+At (144,659), native protocol 8 switches window 50,50 -> 51,50. Atomic seq 2 matches
+1181/1181 objects, 35/35 walls, and completes in 965 ms; its radius-two terrain and
+structure stages complete 16/16 sectors. The return to window 50,50 matches
+1021/1021 objects, 35/35 walls, ready seq 3 in 896 ms. Both helpers' code is covered
+by the final normalizer public/reflective matrix described above. Rebuilding
+checkpoint 0cf4242fb produced the same 5,967 JAR entry bytes as the tested staged
+artifact (see final-artifact-rebuild-match.json).
+
+Full final duration, browser errors and sample statistics are recorded in
+output/tests/browser-in-game-proof/final-proof-summary.json after capture ends.
+
+Final capture completed: 285.983 seconds of continuously online samples; 0 JS
+exceptions, no fatal console lines, no post-login transport close, and no Java
+program exit before intentional capture shutdown. Reported world-loop rate
+median 3.0 FPS. 20 distinct server coordinate pairs observed.
