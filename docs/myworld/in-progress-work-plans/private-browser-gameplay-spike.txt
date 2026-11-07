@@ -1,0 +1,99 @@
+Private browser gameplay feasibility spike — diagnostic handoff
+
+Scope
+Current maintained Java client runs locally in a real browser through CDN-loaded
+CheerpJ. This is not remote video streaming and does not touch Oracle, the PC
+rollback server, owner credentials, maps or player databases. Desktop builds,
+defaults and source classes remain unchanged. The diagnostic tooling is ready
+for review. Sustained browser gameplay is NOT accepted or ready for release.
+
+Observed so far
+- Actual LWJGL3 GLFW initialization in CheerpJ 5.0/Java 8 fails with
+  UnsatisfiedLinkError: Failed to locate library: lwjgl.js. The current native
+  GPU renderer is therefore not a drop-in browser option.
+- Explicit software presentation reaches a rendered login screen. Real mouse
+  and keyboard input, ordinary RSA login and the private server's current
+  terrain protocol work. Player sprites and the character-design screen render.
+  The atomic scene fence matched 1021 objects and 35 walls before a later
+  background halo mesh operation failed. GAME state/fence acceptance is NOT
+  evidence of visible world rendering; no stable visible world or movement was
+  accepted. Client-reported login loop rate was 49–50 FPS, not a gameplay or GPU
+  benchmark.
+- Shared material initialization on the bootstrap main thread and retaining CPU
+  geometry capture did not resolve that failure. No readiness/authority gate
+  has been bypassed and no scene has been fabricated.
+- Four direct ChunkMesh constructor controls pass on the main thread and four
+  more on a worker thread BEFORE reflection. The ordinary desktop JVM also
+  passes 3400 main-thread and 3400 worker-thread matrix/constructor cases.
+  A reflective normalizer edge case fails in the browser at repeat=0, count=16,
+  kinds=true, families=false, with a null entry in the supplied kinds array.
+  It fails on CheerpJ 5.0 Java 8, 5.0 Java 17 and prior 4.3 Java 8; experimental
+  WasmGC also fails invocation. This edge case is NOT an isolated root cause of
+  the actual halo failure: the real constructor normalizes kinds first. No
+  vendor/compiler defect is claimed. See the unposted compatibility report.
+
+Local experiment
+  python3 scripts/browser-gameplay/start.py --name MY-FRESH-RUN
+  Open http://127.0.0.1:8079/?mode=software
+  Disposable account: browserdemo / BrowserProof13
+  python3 scripts/browser-gameplay/stop.py OUTPUT-RUN-PATH
+
+start.py performs maintained client/server builds and stages a fresh empty-account
+world. It refuses occupied private ports and existing run names. It serves only
+the copied client files on 127.0.0.1:8079; the separate private server binds TCP
+43629 and WS 43529 on loopback. The game owns WebSocket decoding; a small browser
+SocketImpl/native-method adapter preserves its ordinary byte-stream protocol.
+No Tailscale account, key, tunnel or paid service is used.
+
+The existing OptionalSslHandler needs a non-null SSL context even for plaintext
+WS. The fixture creates its own short-lived localhost certificate solely for
+that handler. It does not install trust or require the browser to accept TLS.
+Private keys, copied game data, DBs, JARs, browser profiles and captures stay in
+ignored output/tests/browser-gameplay-spike/RUN directories, never Git.
+
+Browser captures use a disposable headless Chrome profile and CDP-generated
+mouse/key events, never the owner's browser profile or physical desktop input.
+  node scripts/browser-gameplay/inspect.mjs RUN native-probe 15
+  node scripts/browser-gameplay/inspect.mjs RUN mesh-probe 15
+  node scripts/browser-gameplay/inspect.mjs RUN software 50 --login
+Optional comparisons: --java=11, --java=17, --wasmgc, --runtime=4.3.
+Inspector exit 0 means capture completed, not that compatibility passed. Each
+capture records outcome.json with gameplay/movement/GPU explicitly unaccepted.
+The page itself warns about the known world-entry stop.
+
+The final runnable owner-review fixture is:
+  output/tests/browser-gameplay-spike/owner-review
+It snapshots 24 hashed server/dependency JARs into its own server directory, so
+recycling or rebuilding a worker cannot change code under its JVM. Its server,
+HTTP listener and empty-seed test account are independent of every owner save.
+It remains running for owner inspection. To close it safely:
+  python3 scripts/browser-gameplay/stop.py output/tests/browser-gameplay-spike/owner-review
+
+Evidence is grouped under output/tests/browser-gameplay-spike/. Earlier retained
+first-proof/second-proof attempts explain staging, TLS and runtime comparisons;
+review-proof/ records the first end-to-end guarded start/stop smoke. owner-review/
+is the final fixture with immutable runtime copies, stage/process/marker receipts,
+console/network captures, screenshots and the repeated current-client failure.
+An actual GAME-transition screenshot shows character design, not the world.
+
+Checks
+  node tests/myworld/test-browser-transport.mjs
+Tests cover frame fragmentation, partial reads, a 1 MiB frame, signed byte
+preservation, EOF and the receive-buffer limit. Browser runtime/source and
+renderer evidence are recorded with each capture. Performance numbers from
+this software/headless experiment are not certification of the GPU renderer,
+large battles, mobile devices, browsers or public hosting.
+
+Primary references (checked November 7, 2026)
+https://cheerpj.com/docs/overview
+https://cheerpj.com/docs/guides/Networking
+https://cheerpj.com/docs/guides/implementing-native-methods
+https://cheerpj.com/docs/guides/filesystem
+https://cheerpj.com/docs/reference/cheerpjInit
+https://cheerpj.com/docs/reference/CJ3Library
+https://cheerpj.com/docs/licensing
+
+CheerpJ is loaded from https://cjrtnc.leaningtech.com/5.0/loader.js and credited
+on the local test page. Its proprietary runtime is not copied or self-hosted.
+Personal/FOSS/evaluation eligibility is not a decision about public production
+licensing. Broader release, deployment and a browser renderer remain separate.

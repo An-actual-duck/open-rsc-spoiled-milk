@@ -1,0 +1,61 @@
+Browser compatibility findings — unposted report
+
+This report is retained locally for manager/owner review. No vendor, community
+or third party has been contacted. The actual halo failure is unresolved.
+
+Environment
+Linux, Chrome 152 in a dedicated headless profile; CheerpJ loaded from the
+official 5.0 CDN, Java 8. Runtime comparisons use 5.0 Java 17, experimental
+WasmGC and the official prior 4.3 Java 8 CDN. Desktop controls use the same
+source-built client JAR. No renderer classes are replaced or shadowed.
+
+1. Actual native graphics path
+Calling the current org.lwjgl.glfw.GLFW.glfwInit() from the current client
+fails with UnsatisfiedLinkError: Failed to locate library: lwjgl.js.
+This establishes a native integration gap, not that browser GPU rendering is
+impossible. LWJGL2 game demonstrations do not establish LWJGL3 compatibility.
+
+2. Actual application path
+With test-only software presentation, ordinary browser mouse/keyboard events
+operate the current client. It obtains real server settings, logs in normally
+with RSA against a loopback-only fresh world, receives native terrain and
+accepts the protocol-8 atomic scene fence (1021 objects, 35 walls). Player
+sprite composition and character-design UI render. A subsequent background
+terrain halo build throws NullPointerException with this call chain:
+  Renderer3DWorldChunkFrame$ChunkMesh.normalizeFamilies
+  Renderer3DWorldChunkFrame$ChunkMesh.<init>
+  World$WorldGpuChunkMesh.toRenderer3DWorldPresentationCell
+  World.buildNativeLayeredTerrainHalo
+  World$9.call / FutureTask / ThreadPoolExecutor
+The client closes. No stable visible world rendering, sustained gameplay,
+movement or updated-GPU-renderer acceptance is claimed. Pre-initializing shared
+material types and retaining CPU geometry capture did not resolve this error.
+Native authority/readiness gates remain intact; no scene/fence is fabricated.
+
+3. Narrow compatibility comparisons, with an important limit
+MeshCompatibilityProbe calls the actual maintained class. Before reflection,
+four direct 29-argument ChunkMesh constructor controls pass on the main thread,
+then the same four pass on a worker thread. This remains true in browser Java 8.
+The ordinary JVM additionally passes 3400 matrix/constructor cases on each
+thread. In the browser, the reflective matrix fails at repeat=0, count=16,
+kinds=true, families=false, where the provided kind array includes null.
+The source's fallbackFor(null) is safe and ordinary JVM bytecode has null guards.
+The edge case fails under 5.0 Java 8, 5.0 Java 17, and 4.3 Java 8; WasmGC reports
+an invocation failure too. However, the real constructor first normalizes kinds,
+so this reflective edge case is not a proven root cause or sufficient isolated
+reproducer of the actual application halo failure. No compiler/vendor defect
+is asserted. A captured real failing halo input/replay would be needed next.
+
+Reproduction using the private harness
+  python3 scripts/browser-gameplay/start.py --name NEW-RUN
+  node scripts/browser-gameplay/inspect.mjs RUN native-probe 12
+  node scripts/browser-gameplay/inspect.mjs RUN mesh-probe 12
+  node scripts/browser-gameplay/inspect.mjs RUN software 43 --login
+Optional mesh-only controls: --java=17, --wasmgc, --runtime=4.3.
+The disposable credentials are browserdemo / BrowserProof13. Never use owner
+or public accounts here. Stop using the guarded stop.py command in the handoff.
+
+Console/network events, exact runtime URLs, browser versions, client/JAR hashes,
+captured pixels and explicit NOT_ACCEPTED outcomes are retained under
+output/tests/browser-gameplay-spike/. The current owner-review fixture contains
+its own hashed runtime dependencies; later worker builds cannot change its code.
