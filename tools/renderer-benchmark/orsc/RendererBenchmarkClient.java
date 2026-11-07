@@ -49,10 +49,7 @@ public final class RendererBenchmarkClient {
             try {
                 Method snapshotMethod=pass.getClass().getDeclaredMethod("diagnosticSnapshot"); snapshotMethod.setAccessible(true);
                 long[] snapshot=(long[]) snapshotMethod.invoke(pass);
-                StringBuilder json=new StringBuilder("{\"sequence\":"+snapshot[0]+",\"active\":"+(snapshot[1]!=0)+",\"farRebuilt\":"+(snapshot[2]!=0));
-                String[] keys={"nearCpuNanos","farCpuNanos","nearDrawCalls","nearTriangles","farDrawCalls","farTriangles"};
-                for(int i=0;i<keys.length;i++) json.append(",\"").append(keys[i]).append("\":").append(snapshot[i+3]);
-                return json.append(",\"coherent\":true}").toString();
+                return shadowSnapshotJson(snapshot);
             } catch (NoSuchMethodException olderCandidate) { /* Retain explicit non-atomic legacy diagnostics. */ }
             Method active = pass.getClass().getDeclaredMethod("isActive"); active.setAccessible(true);
             StringBuilder json = new StringBuilder("{\"coherent\":false,\"active\":" + active.invoke(pass));
@@ -61,6 +58,15 @@ public final class RendererBenchmarkClient {
             }
             return json.append('}').toString();
         } catch (NoSuchMethodException baseline) { return "{\"instrumentation\":false}"; }
+    }
+    private static String shadowSnapshotJson(long[] snapshot) {
+        if(snapshot==null || snapshot.length<9) throw new IllegalArgumentException("Incomplete coherent shadow snapshot");
+        StringBuilder json=new StringBuilder("{\"sequence\":"+snapshot[0]+",\"active\":"+(snapshot[1]!=0)+",\"farRebuilt\":"+(snapshot[2]!=0));
+        String[] keys={"nearCpuNanos","farCpuNanos","nearDrawCalls","nearTriangles","farDrawCalls","farTriangles"};
+        for(int i=0;i<keys.length;i++) json.append(",\"").append(keys[i]).append("\":").append(snapshot[i+3]);
+        if(snapshot.length>=12) json.append(",\"farMapSize\":").append(snapshot[9])
+            .append(",\"historyActive\":").append(snapshot[10]!=0).append(",\"blendPermille\":").append(snapshot[11]);
+        return json.append(",\"coherent\":true}").toString();
     }
     private static Object field(Object owner, Class<?> type, String name) throws Exception {
         Field f = type.getDeclaredField(name); f.setAccessible(true); return f.get(owner);
@@ -106,18 +112,14 @@ public final class RendererBenchmarkClient {
         try { return Boolean.TRUE.equals(field(null,Class.forName("orsc.OpenGLGpuTimer"),"FAR_QUERY_POLL_EVERY_FRAME")); }
         catch(ClassNotFoundException | NoSuchFieldException older) { return false; }
     }
-    private static String roofState(mudclient client) throws Exception {
-        Renderer3DFrame frame=((Scene)field(client,mudclient.class,"scene")).getRenderer3DFrame();
+    private static String roofState(Renderer3DFrame frame) {
         int roofTriangles=0,maxCovered=0;
         for(Renderer3DWorldChunkFrame.ChunkMesh chunk:frame.getWorldChunkFrame().getChunks()) {
             roofTriangles+=chunk.getRoofTriangles(); maxCovered=Math.max(maxCovered,chunk.getRoofCoveredTileCount());
         }
         return "{\"visibility\":\""+frame.getRoofVisibility()+"\",\"residentRoofTriangles\":"+roofTriangles+",\"maximumSourceCoveredTiles\":"+maxCovered+"}";
     }
-    private static int onScreenActors(mudclient client) throws Exception {
-        Scene scene=(Scene)field(client,mudclient.class,"scene");
-        Renderer3DFrame frame=scene.getRenderer3DFrame();
-        if(frame==null) return 0;
+    private static int onScreenActors(Renderer3DFrame frame) {
         int count=0;
         for(Renderer3DFrame.CharacterSprite actor:frame.getCharacterSprites()) {
             if(actor.isProjected() && actor.getDrawWidth()>0 && actor.getDrawHeight()>0
@@ -127,8 +129,7 @@ public final class RendererBenchmarkClient {
         return count; // Projection candidates; depth occlusion can still hide pixels.
     }
     private static void dumpTerrain(mudclient client, OpenGLFramePresenter presenter, Path capture) throws Exception {
-        Scene scene=(Scene)field(client,mudclient.class,"scene");
-        Renderer3DFrame frame=scene.getRenderer3DFrame();
+        Renderer3DFrame frame=publishedFrame(presenter);
         Renderer3DWorldChunkFrame chunks=frame.getWorldChunkFrame();
         if(chunks==null || chunks.getChunkCount()==0) throw new IllegalStateException("No immutable resident terrain to export");
         int exported=0, chunkIndex=0;
@@ -170,7 +171,7 @@ public final class RendererBenchmarkClient {
             }
             Thread.sleep(1);
         }
-        throw new IllegalStateException("No published immutable world frame for fence export");
+        throw new IllegalStateException("No published immutable world frame for benchmark observation");
     }
     /** Exports verified native cutout materials, including all non-terrain kinds; no GL readback or mutation. */
     private static void dumpFences(mudclient client, OpenGLFramePresenter presenter, Path capture) throws Exception {
@@ -250,7 +251,7 @@ public final class RendererBenchmarkClient {
             metadata.append('"').append(name).append("\":").append(field(mask,mask.getClass(),name));
         }
         Files.write(capture.resolve("roof-mask.json"),metadata.append(",\"coveredPixels\":").append(covered).append("}\n").toString().getBytes(StandardCharsets.UTF_8));
-        writeFrameMetadata(((Scene)field(client,mudclient.class,"scene")).getRenderer3DFrame(),presenter,capture.resolve("roof-frame.json"),-1);
+        writeFrameMetadata(publishedFrame(presenter),presenter,capture.resolve("roof-frame.json"),-1);
     }
     private static void applyDiagnosticFog() {
         RendererFogSettings.setMode("off".equals(System.getProperty("renderer.benchmark.fog","on")) ? RendererFogSettings.Mode.OFF : RendererFogSettings.Mode.ON);
@@ -326,13 +327,14 @@ public final class RendererBenchmarkClient {
             if(Files.exists(run.resolve("FIXTURE-FAILED"))) throw new IllegalStateException("Private fixture setup failed; aborting measurement");
             client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));
             if (phase.contains("camera")) client.cameraRotation = (rotation + second * 3) & 255;
+            Renderer3DFrame sampledFrame=publishedFrame(presenter);
             RendererDayNightCycle.Presentation light = RendererDayNightCycle.currentPresentation();
             String sample = "{\"seconds\":" + second + ",\"mode\":\"" + field(client, mudclient.class, "currentViewMode")
                 + "\",\"players\":" + client.getPlayerCount() + ",\"npcs\":" + client.getNpcCount()
-                + ",\"gpuFarPollEveryFrame\":" + farPollEveryFrame() + ",\"roof\":" + roofState(client)
+                + ",\"gpuFarPollEveryFrame\":" + farPollEveryFrame() + ",\"roof\":" + roofState(sampledFrame)
                 + ",\"hideRoofs\":" + Config.C_HIDE_ROOFS + ",\"gameObjects\":" + client.getGameObjectInstanceCount() + ",\"wallObjects\":" + client.getWallObjectInstanceCount()
                 + ",\"serverState\":" + new String(Files.readAllBytes(run.resolve("status.json")), StandardCharsets.UTF_8)
-                + ",\"onScreenProjectedActorCandidates\":" + onScreenActors(client)
+                + ",\"onScreenProjectedActorCandidates\":" + onScreenActors(sampledFrame)
                 + ",\"activeProjectileActors\":" + activeProjectiles(client) + ",\"windowState\":" + windowState(presenter)
                 + ",\"cameraRotation\":" + client.cameraRotation + ",\"zoomSetting\":" + osConfig.C_LAST_ZOOM
                 + ",\"windowMode\":\"" + OpenGLWindowSettings.getMode() + "\",\"logicalWidth\":" + RenderSurfaceSettings.getWidth() + ",\"logicalHeight\":" + RenderSurfaceSettings.getHeight()
