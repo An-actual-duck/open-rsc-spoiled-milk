@@ -10,9 +10,9 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		long staticSignature();
 		void drawDepth(OpenGLGeometryShadows pass, DirectionalShadowProjection projection, boolean staticOnly) throws Exception;
 	}
-	static final String VERTEX_DECLARATIONS = "varying vec3 vShadowWorldPosition;\n";
+	static final String VERTEX_DECLARATIONS = "varying vec3 vShadowWorldPosition;\nuniform float uGeometryShadowWorldOffsetX;\nuniform float uGeometryShadowWorldOffsetZ;\n";
 	static final String VERTEX_ASSIGNMENT =
-		"vShadowWorldPosition = worldPosition.xyz + vec3(uTerrainWorldOffsetX, 0.0, uTerrainWorldOffsetZ);\n";
+		"vShadowWorldPosition = worldPosition.xyz + vec3(uGeometryShadowWorldOffsetX, 0.0, uGeometryShadowWorldOffsetZ);\n";
 	static final String FRAGMENT_SOURCE = String.join("\n",
 		"varying vec3 vShadowWorldPosition;",
 		"uniform int uGeometryShadows;",

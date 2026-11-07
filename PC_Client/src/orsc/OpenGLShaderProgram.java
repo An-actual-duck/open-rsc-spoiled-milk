@@ -401,6 +401,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	private final LwjglBindings gl;
 	private final int programId;
 	private final int geometryShadowEnabledUniform, nearGeometrySamplerUniform, farGeometrySamplerUniform;
+	private final int geometryShadowWorldOffsetXUniform, geometryShadowWorldOffsetZUniform;
 	private final int projectionMatrixUniformLocation;
 	private final int worldViewMatrixUniformLocation;
 	private final int chunkOffsetXUniformLocation;
@@ -507,6 +508,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		this.gl = gl;
 		this.programId = programId;
 		geometryShadowEnabledUniform = gl.glGetUniformLocation(programId, "uGeometryShadows");
+		geometryShadowWorldOffsetXUniform = gl.glGetUniformLocation(programId, "uGeometryShadowWorldOffsetX");
+		geometryShadowWorldOffsetZUniform = gl.glGetUniformLocation(programId, "uGeometryShadowWorldOffsetZ");
 		nearGeometrySamplerUniform = gl.glGetUniformLocation(programId, "uNearGeometryShadow");
 		farGeometrySamplerUniform = gl.glGetUniformLocation(programId, "uFarGeometryShadowMap");
 		this.projectionMatrixUniformLocation = projectionMatrixUniformLocation;
@@ -941,6 +944,11 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		if (fogBlueUniformLocation >= 0) {
 			gl.glUniform1f(fogBlueUniformLocation, presentation.fogBlue);
 		}
+	}
+
+	void setGeometryShadowWorldOffsets(float x, float z) throws Exception {
+		gl.glUniform1f(geometryShadowWorldOffsetXUniform, x);
+		gl.glUniform1f(geometryShadowWorldOffsetZUniform, z);
 	}
 
 	void bindGeometryShadows(OpenGLGeometryShadows shadows) throws Exception {

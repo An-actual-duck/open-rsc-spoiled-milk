@@ -2,20 +2,14 @@ package orsc;
 
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
 
-/** Converts presentation-local vertices, not object-cell identity, to world space. */
+/** All submitted vertices share the primary presentation basis. Cell origins
+ * identify native halo/object residency; they must not translate vertices twice. */
 final class GeometryShadowCoordinates {
 	private GeometryShadowCoordinates() {}
-	static int worldOffsetX(Renderer3DWorldChunkFrame frame, Renderer3DWorldChunkFrame.ChunkMesh chunk) {
-		return coordinateAnchor(frame, chunk).getLogicalWorldOffsetX();
+	static int worldOffsetX(Renderer3DWorldChunkFrame frame) {
+		return frame.getChunks().get(0).getLogicalWorldOffsetX();
 	}
-	static int worldOffsetZ(Renderer3DWorldChunkFrame frame, Renderer3DWorldChunkFrame.ChunkMesh chunk) {
-		return coordinateAnchor(frame, chunk).getLogicalWorldOffsetZ();
-	}
-	private static Renderer3DWorldChunkFrame.ChunkMesh coordinateAnchor(
-		Renderer3DWorldChunkFrame frame, Renderer3DWorldChunkFrame.ChunkMesh chunk) {
-		// Object origins identify resident cells. Their raw vertices already
-		// include that cell's presentation-local translation. World meshes use
-		// their own origin; objects use the primary presentation-world anchor.
-		return chunk.isObjectChunk() ? frame.getChunks().get(0) : chunk;
+	static int worldOffsetZ(Renderer3DWorldChunkFrame frame) {
+		return frame.getChunks().get(0).getLogicalWorldOffsetZ();
 	}
 }
