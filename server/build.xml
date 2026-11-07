@@ -95,6 +95,29 @@
         </java>
     </target>
 
+    <target name="test_gnome_agility_layers" depends="compile_core,compile_plugins"
+            description="Offline Gnome course callbacks and signed-layer landings on installed terrain">
+        <fail unless="gnome.fixture.dir" message="Pass -Dgnome.fixture.dir with a disposable prepared fixture, never a server root"/>
+        <mkdir dir="../output/tests/gnome-agility-layer-landings/classes"/>
+        <javac srcdir="${test.src}" destdir="../output/tests/gnome-agility-layer-landings/classes" debug="on"
+               includes="com/openrsc/server/io/GnomeAgilityLayerIntegrationTest.java" includeantruntime="false"
+               target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+            <classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </javac>
+        <java classname="com.openrsc.server.io.GnomeAgilityLayerIntegrationTest" fork="true" maxmemory="768m" failonerror="true" dir="${gnome.fixture.dir}">
+            <jvmarg value="-Djava.awt.headless=true"/>
+            <classpath>
+                <pathelement location="${lib}/log4j-api-2.17.0.jar"/>
+                <pathelement location="${lib}/log4j-core-2.17.0.jar"/>
+                <pathelement location="${lib}/log4j-iostreams-2.17.0.jar"/>
+                <pathelement location="../output/tests/gnome-agility-layer-landings/classes"/>
+                <pathelement location="plugins.jar"/>
+                <pathelement location="core.jar"/>
+                <fileset dir="${lib}" includes="*.jar"/>
+            </classpath>
+        </java>
+    </target>
+
     <target name="test_underground_pass_layers" depends="compile_core,compile_plugins"
             description="Offline Underground Pass exits, levers, planks, ropes and quest-route layer checks">
         <property name="pass.test.scenario" value="all"/>
