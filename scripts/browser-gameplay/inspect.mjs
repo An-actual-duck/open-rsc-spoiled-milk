@@ -11,6 +11,8 @@ const login = process.argv.includes('--login');
 const javaVersion = process.argv.find(arg => arg.startsWith('--java='))?.split('=')[1] || '8';
 const wasmGC = process.argv.includes('--wasmgc');
 const runtime = process.argv.find(arg => arg.startsWith('--runtime='))?.split('=')[1] || '5.0';
+const port = Number(process.argv.find(arg => arg.startsWith('--port='))?.split('=')[1] || '8079');
+if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Invalid --port');
 if (!['5.0', '4.3'].includes(runtime)) throw new Error('Choose --runtime=5.0 or 4.3');
 if (!['8', '11', '17'].includes(javaVersion)) throw new Error('Choose --java=8, 11 or 17');
 if (!fs.existsSync(path.join(run, 'stage.json'))) throw new Error('Use a staged private run');
@@ -52,7 +54,12 @@ try {
   };
   ws.onclose = () => { for (const request of pending.values()) request.reject(new Error('Dedicated test browser closed')); pending.clear(); };
   for (const domain of ['Runtime', 'Log', 'Page', 'Network']) await call(domain + '.enable');
-  await call('Page.navigate', {url: `http://127.0.0.1:8079/?mode=${mode}&runtime=${runtime}&java=${javaVersion}${wasmGC ? '&wasmgc=1' : ''}`});
+  await call('Page.navigate', {url: `http://127.0.0.1:${port}/?mode=${mode}&runtime=${runtime}&java=${javaVersion}${wasmGC ? '&wasmgc=1' : ''}`});
+  await delay(500);
+  const startButton = await call('Runtime.evaluate', {expression: 'JSON.stringify((()=>{const r=document.querySelector("#start").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})())', returnByValue: true});
+  const startPoint = JSON.parse(startButton.result.value);
+  await call('Input.dispatchMouseEvent', {type: 'mousePressed', ...startPoint, button: 'left', clickCount: 1});
+  await call('Input.dispatchMouseEvent', {type: 'mouseReleased', ...startPoint, button: 'left', clickCount: 1});
   async function screenshot(name) {
     const image = await call('Page.captureScreenshot', {format: 'png'});
     fs.writeFileSync(path.join(capture, name + '.png'), Buffer.from(image.data, 'base64'));
@@ -78,7 +85,7 @@ try {
     if (readiness?.result.value) {
       didLogin = true;
       await screenshot('login-ready');
-      const result = await call('Runtime.evaluate', {expression: 'JSON.stringify(Array.from(document.querySelectorAll("canvas")).map(c=>{const r=c.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}}).sort((a,b)=>b.w*b.h-a.w*a.h)[0])', returnByValue: true});
+      const result = await call('Runtime.evaluate', {expression: 'JSON.stringify((()=>{const f=document.querySelector("#runtime"),o=f.getBoundingClientRect();return Array.from(f.contentDocument.querySelectorAll("canvas")).map(c=>{const r=c.getBoundingClientRect();return {x:o.x+r.x,y:o.y+r.y,w:r.width,h:r.height}}).sort((a,b)=>b.w*b.h-a.w*a.h)[0]})())', returnByValue: true});
       const r = JSON.parse(result.result.value); fs.writeFileSync(path.join(capture, 'canvas-rect.json'), JSON.stringify(r));
       await click(r.x + r.w / 2 + 100, r.y + r.h / 2 + 123);
       await click(r.x + r.w / 2 - 116, r.y + r.h / 2 + 98); await type('browserdemo');

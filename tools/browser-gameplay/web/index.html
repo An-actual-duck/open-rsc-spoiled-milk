@@ -1,18 +1,11 @@
 <!doctype html>
 <html lang="en"><meta charset="utf-8"><title>Spoiled Milk — private browser feasibility test</title>
-<style>body{margin:0;background:#182026;color:#eee;font:15px system-ui}header{padding:12px}a{color:#9fd7ff}#status{white-space:pre-wrap}#display{height:650px}small{display:block;margin-top:5px}</style>
+<style>body{margin:0;background:#182026;color:#eee;font:15px system-ui}header{padding:12px}a{color:#9fd7ff}#status{white-space:pre-wrap}iframe{width:100%;height:660px;border:0}small{display:block;margin-top:5px}button{margin:10px 8px 10px 0;padding:8px 14px}</style>
 <header><strong>Private browser feasibility test</strong> · <a href="?mode=software">software client</a> · <a href="?mode=native-probe">native graphics probe</a>
 <small>Software mode is a compatibility experiment; it does not reproduce the current GPU renderer. Loopback server only. Java runs in your browser through <a href="https://cheerpj.com/">CheerpJ by Leaning Technologies</a>.</small>
 <small><strong>Known compatibility stop:</strong> entering the world currently stops this browser client. Login, input and initial world streaming have been tested; sustained gameplay and movement are not supported yet. Use only the disposable test account.</small>
-<div id="status">Loading browser Java runtime…</div></header><div id="display"></div>
-<script type="module">
-const requested = new URLSearchParams(location.search).get('runtime') || '5.0';
-if (!['5.0', '4.3'].includes(requested)) throw new Error('Choose runtime 5.0 or 4.3');
-window.browserRuntimeVersion = requested;
-await new Promise((resolve, reject) => {
-  const script = document.createElement('script'); script.src = `https://cjrtnc.leaningtech.com/${requested}/loader.js`;
-  script.onload = resolve; script.onerror = reject; document.head.append(script);
-});
-await import('./browser.js');
-</script>
+<small>The runtime starts only when requested. Stop, Escape, leaving the test or hiding this tab ends the session. Restarting creates a new runtime. This is a lifecycle precaution; the reported desktop-wide keyboard failure has not been reproduced or diagnosed.</small>
+<button id="start" type="button">Start private test</button><button id="stop" type="button" disabled>Stop private test</button>
+<div id="status" role="status">Stopped. Java has not been loaded.</div></header><main id="session"></main>
+<script type="module" src="./session.js"></script>
 </html>

@@ -1,10 +1,11 @@
 // Application-owned private WebSocket transport; no Tailscale/vendor backend.
 export function createTransport(WebSocketType, report, url = 'ws://127.0.0.1:43529/') {
-  const connections = new Map(); let next = 1;
+  const connections = new Map(); let next = 1, disposed = false;
   const LIMIT = 32 * 1024 * 1024;
   return {
     connections,
     async open() {
+      if (disposed) return -1;
       const id = next++;
       try {
         const socket = new WebSocketType(url, 'binary'); socket.binaryType = 'arraybuffer';
@@ -42,6 +43,10 @@ export function createTransport(WebSocketType, report, url = 'ws://127.0.0.1:435
     close(id) {
       const entry = connections.get(id); if (!entry) return;
       entry.closed = true; entry.waiter?.(); entry.socket.close(); connections.delete(id);
+    },
+    dispose() {
+      disposed = true;
+      for (const id of [...connections.keys()]) this.close(id);
     },
   };
 }

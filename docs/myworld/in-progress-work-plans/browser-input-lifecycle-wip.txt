@@ -1,0 +1,37 @@
+Deferred WIP — browser input lifecycle (November 7, 2026)
+
+User reports the desktop-wide keyboard problem no longer reproduces and asks
+to defer this investigation until it recurs. This branch is preservation only,
+NOT READY, NOT accepted and must not be integrated as a completed fix.
+
+Implemented draft: explicit Start/Stop outside a disposable same-origin
+sandboxed frame; stop on Escape, focus departure, hidden page, Java exit/error;
+transport disposal; opt out of input methods and system clipboard. No original
+desktop client/game code or vendor runtime was edited. The same-origin sandbox
+is lifecycle containment, not a security boundary against its own scripts.
+
+Passed before deferral: headless Chrome/CDP lifecycle tests with a MOCKED Java
+runtime, including nested keyboard input, teardown, restart and typing outside
+afterward. Transport unit checks including disposal passed. These tests do not
+reproduce or diagnose the reported cross-application keyboard failure.
+
+Actual CheerpJ smoke is NOT accepted: startup currently triggers focus-loss
+teardown just after Browser Java ready, before visible login. Latest attempted
+distinction between inner-frame and outer focus did not resolve this. Preserve
+as unfinished; do not assume iframe isolation is compatible with the runtime.
+
+Evidence stays in ignored output/tests/browser-input-lifecycle/ and
+output/tests/browser-gameplay-spike/input-lifecycle-review/. The separate :8089
+HTTP listener was stopped on deferral; dedicated automated browsers exit after
+capture. The original immutable owner-review fixture on :8079 and its private
+server were not modified by this WIP. No physical desktop automation occurred.
+
+Official references checked:
+https://cheerpj.com/docs/reference/cheerpjInit
+  enableInputMethods defaults true from 4.0; overrideShortcuts defaults to
+  browser shortcuts; clipboardMode java is default.
+https://cheerpj.com/docs/reference/cheerpjRunMain
+  completion returns exit code; reference signature has no cancellation handle.
+https://developer.mozilla.org/en-US/docs/Web/API/Keyboard/lock
+  keyboard lock requires an active top-level context and user activation.
+No keyboard lock API was called or deliberately tested.
