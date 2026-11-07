@@ -10,14 +10,17 @@ const run = path.resolve(runArg), seconds = Math.min(300, Math.max(5, Number(sec
 const login = process.argv.includes('--login');
 const javaVersion = process.argv.find(arg => arg.startsWith('--java='))?.split('=')[1] || '8';
 const wasmGC = process.argv.includes('--wasmgc');
+const runtime = process.argv.find(arg => arg.startsWith('--runtime='))?.split('=')[1] || '5.0';
+if (!['5.0', '4.3'].includes(runtime)) throw new Error('Choose --runtime=5.0 or 4.3');
 if (!['8', '11', '17'].includes(javaVersion)) throw new Error('Choose --java=8, 11 or 17');
 if (!fs.existsSync(path.join(run, 'stage.json'))) throw new Error('Use a staged private run');
-const capture = path.join(run, `${mode}-j${javaVersion}${wasmGC ? '-gc' : ''}-${Date.now()}`); fs.mkdirSync(capture);
+const capture = path.join(run, `${mode}-r${runtime}-j${javaVersion}${wasmGC ? '-gc' : ''}-${Date.now()}`); fs.mkdirSync(capture);
 const profile = path.join(capture, 'chrome-profile');
 const browser = spawn('/usr/bin/google-chrome', ['--headless=new', '--no-first-run', '--no-default-browser-check', '--disable-dev-shm-usage',
-  '--remote-debugging-address=127.0.0.1', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--window-size=1200,800', 'about:blank'], {stdio: 'ignore'});
+  '--remote-debugging-address=127.0.0.1', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--window-size=1200,950', 'about:blank'], {stdio: 'ignore'});
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 let ws, seq = 0; const pending = new Map();
+let gameCapture;
 const log = fs.createWriteStream(path.join(capture, 'events.jsonl'));
 function call(method, params = {}) {
   return new Promise((resolve, reject) => { const id = ++seq; pending.set(id, {resolve, reject}); ws.send(JSON.stringify({id, method, params})); });
@@ -39,11 +42,17 @@ try {
     if (value.id) {
       const request = pending.get(value.id); pending.delete(value.id);
       if (value.error) request?.reject(new Error(JSON.stringify(value.error))); else request?.resolve(value.result);
-    } else log.write(JSON.stringify(value) + '\n');
+    } else {
+      log.write(JSON.stringify(value) + '\n');
+      if (!gameCapture && value.method === 'Runtime.consoleAPICalled' && value.params.args[0]?.value === 'BROWSER_PROOF_STATE') {
+        const state = JSON.parse(value.params.args[1].value);
+        if (state.mode === 'GAME') gameCapture = call('Page.captureScreenshot', {format: 'png'}).then(image => fs.writeFileSync(path.join(capture, 'initial-game-state.png'), Buffer.from(image.data, 'base64'))).catch(error => fs.writeFileSync(path.join(capture, 'initial-game-state-capture-error.txt'), String(error)));
+      }
+    }
   };
   ws.onclose = () => { for (const request of pending.values()) request.reject(new Error('Dedicated test browser closed')); pending.clear(); };
   for (const domain of ['Runtime', 'Log', 'Page', 'Network']) await call(domain + '.enable');
-  await call('Page.navigate', {url: `http://127.0.0.1:8079/?mode=${mode}&java=${javaVersion}${wasmGC ? '&wasmgc=1' : ''}`});
+  await call('Page.navigate', {url: `http://127.0.0.1:8079/?mode=${mode}&runtime=${runtime}&java=${javaVersion}${wasmGC ? '&wasmgc=1' : ''}`});
   async function screenshot(name) {
     const image = await call('Page.captureScreenshot', {format: 'png'});
     fs.writeFileSync(path.join(capture, name + '.png'), Buffer.from(image.data, 'base64'));
@@ -85,9 +94,17 @@ try {
   }
   const snapshot = await call('Runtime.evaluate', {expression: 'JSON.stringify({proof:window.browserProof,text:document.body.innerText,resources:performance.getEntriesByType("resource").map(r=>({name:r.name,duration:r.duration,transfer:r.transferSize})),canvases:Array.from(document.querySelectorAll("canvas")).map(c=>({width:c.width,height:c.height}))})', returnByValue: true});
   fs.writeFileSync(path.join(capture, 'page.json'), snapshot.result.value);
+  const page = JSON.parse(snapshot.result.value);
+  fs.writeFileSync(path.join(capture, 'outcome.json'), JSON.stringify({captureCompleted: true, mode, runtime, javaVersion: Number(javaVersion), wasmGC,
+    probeReportedBlocked: page.proof?.events.some(event => event.message.includes(':blocked:')) || false,
+    javaProgramEnded: page.proof?.ended || false,
+    observedClientModes: [...new Set((page.proof?.samples || []).map(sample => sample.mode))],
+    gameplayAcceptance: 'NOT_ACCEPTED', movementAcceptance: 'NOT_ACCEPTED', gpuRendererAcceptance: 'NOT_ACCEPTED',
+    note: 'Exit 0 means capture completed; inspect compatibility results. A GAME state is not proof of visible world rendering.'}, null, 2));
   const image = await call('Page.captureScreenshot', {format: 'png'});
   fs.writeFileSync(path.join(capture, 'screenshot.png'), Buffer.from(image.data, 'base64'));
   fs.writeFileSync(path.join(capture, 'browser-version.json'), JSON.stringify(await call('Browser.getVersion'), null, 2));
+  if (gameCapture) await gameCapture;
   console.log('Capture:', capture);
 } finally {
   try { if (ws?.readyState === WebSocket.OPEN) await call('Browser.close'); } catch {}

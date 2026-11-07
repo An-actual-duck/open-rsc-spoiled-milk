@@ -54,14 +54,6 @@ public final class BrowserBootstrap {
         for (String name : off) System.setProperty("spoiledmilk." + name, "false");
         System.setProperty("spoiledmilk.directFramebuffer", "true");
         System.setProperty("user.dir", "/files");
-        // Native terrain still builds CPU presentation metadata with software
-        // output. Initialize shared material types before background halo work.
-        if (orsc.graphics.three.Renderer3DMaterialClassifier.fallbackFor(
-                orsc.graphics.three.Renderer3DModelKind.UNCLASSIFIED) == null
-                || orsc.graphics.three.Renderer3DMaterialFamily.values().length == 0
-                || orsc.graphics.three.Renderer3DWorldChunkFrame.EMPTY.getChunkCount() != 0) {
-            throw new IllegalStateException("Material bootstrap failed");
-        }
         Socket.setSocketImplFactory(new SocketImplFactory() {
             public SocketImpl createSocketImpl() { return new BrowserSocket(); }
         });

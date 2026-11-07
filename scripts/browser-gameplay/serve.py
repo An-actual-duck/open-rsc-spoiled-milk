@@ -8,11 +8,14 @@ import re
 
 
 class Handler(SimpleHTTPRequestHandler):
+    def do_HEAD(self):
+        self.do_GET()
+
     def do_GET(self):
         file = Path(self.translate_path(self.path)).resolve()
         root = Path(self.directory).resolve()
         if file.is_relative_to(root) and file.is_dir():
-            return super().do_GET()
+            return super().do_HEAD() if self.command == 'HEAD' else super().do_GET()
         if not file.is_relative_to(root) or not file.is_file():
             if self.path.split('?', 1)[0] == '/':
                 file = root / 'index.html'
@@ -36,6 +39,8 @@ class Handler(SimpleHTTPRequestHandler):
         if range_header:
             self.send_header('Content-Range', f'bytes {start}-{end}/{size}')
         self.end_headers()
+        if self.command == 'HEAD':
+            return
         with file.open('rb') as source:
             source.seek(start)
             remaining = end - start + 1

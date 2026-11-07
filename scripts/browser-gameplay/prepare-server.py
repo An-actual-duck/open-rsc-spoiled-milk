@@ -48,10 +48,23 @@ def main():
     shutil.copy2(seed, dbdir / 'browser_spike_dev.db')
     (dbdir / 'browser_spike_dev.db').chmod(0o600)
     (server / 'BROWSER-PRIVATE.json').write_text(json.dumps(dict(source=str(ROOT), seedAccounts=0, seedSha256=hashlib.sha256(seed.read_bytes()).hexdigest(), mapManifest=selection['manifestSha256']), indent=2) + '\n')
-    lib = ROOT / 'server/lib'
+    # A future worker rebuild/recycle cannot change classes under this JVM.
+    artifacts = []
+    for name in ('core.jar', 'plugins.jar', 'core-gameplay-overlay.jar'):
+        source = ROOT / 'server' / name
+        shutil.copy2(source, server / name)
+        artifacts.append(dict(path=name, sha256=hashlib.sha256(source.read_bytes()).hexdigest()))
+    lib = server / 'lib'; lib.mkdir()
+    for source in sorted((ROOT / 'server/lib').glob('*.jar')):
+        shutil.copy2(source, lib / source.name)
+        artifacts.append(dict(path='lib/' + source.name, sha256=hashlib.sha256(source.read_bytes()).hexdigest()))
+    marker = json.loads((server / 'BROWSER-PRIVATE.json').read_text())
+    marker['sourceCommit'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    marker['artifacts'] = artifacts
+    (server / 'BROWSER-PRIVATE.json').write_text(json.dumps(marker, indent=2) + '\n')
     ordered = ['log4j-api-2.17.0.jar', 'log4j-core-2.17.0.jar', 'log4j-iostreams-2.17.0.jar', 'xpp3-1.1.4c.jar', 'mysql-connector-j-9.4.0.jar', 'commons-lang-2.6.jar']
     classes = run / 'server-classes'; classes.mkdir()
-    cp = ':'.join([str(lib / name) for name in ordered] + [str(ROOT / 'server/core-gameplay-overlay.jar'), str(ROOT / 'server/core.jar'), str(ROOT / 'server/plugins.jar'), str(lib / '*'), str(classes)])
+    cp = ':'.join([str(lib / name) for name in ordered] + [str(server / 'core-gameplay-overlay.jar'), str(server / 'core.jar'), str(server / 'plugins.jar'), str(lib / '*'), str(classes)])
     subprocess.run(['javac', '-source', '8', '-target', '8', '-cp', cp, '-d', str(classes), str(ROOT / 'tools/browser-gameplay/src/BrowserPrivateServer.java')], check=True)
     (run / 'server-command.json').write_text(json.dumps(dict(cwd=str(server), command=['java', '-Xmx2g', '-XX:+UseSerialGC', '-cp', cp, 'BrowserPrivateServer']), indent=2) + '\n')
     print('Prepared private server. Disposable credentials: browserdemo / BrowserProof13')

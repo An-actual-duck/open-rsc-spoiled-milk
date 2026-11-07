@@ -23,8 +23,9 @@ def main():
         else: parser.error('Private server did not finish graceful shutdown; inspect logs. No signal was sent.')
     pid = processes['http']; proc = Path('/proc') / str(pid)
     if proc.exists():
-        command = (proc / 'cmdline').read_bytes()
-        if b'scripts/browser-gameplay/serve.py' not in command or str(run / 'web').encode() not in command: parser.error('Recorded HTTP PID no longer belongs to this fixture')
+        command = (proc / 'cmdline').read_text().split('\0')
+        cwd = (proc / 'cwd').resolve()
+        if len(command) < 3 or (cwd / command[1]).resolve() != Path(processes['root']) / 'scripts/browser-gameplay/serve.py' or (cwd / command[2]).resolve() != run / 'web': parser.error('Recorded HTTP PID no longer belongs to this fixture')
         os.kill(pid, signal.SIGTERM)
     print('Private browser fixture stopped. All data and evidence retained: ' + str(run))
 

@@ -42,7 +42,7 @@ def main():
     (cache / 'config.txt').write_bytes(config)
     (cache / 'ip.txt').write_text('127.0.0.1\n')
     (cache / 'port.txt').write_text('43629\n')
-    (cache / 'credentials.txt').write_text('')
+    (cache / 'credentials.txt').write_text('\n')
     (cache / 'discord_inuse.txt').write_text('1\n')
     (cache / 'uid.dat').write_bytes(bytes(8))
     profile = ROOT / 'Client_Base/world-builder-configs/installed-client.json'
