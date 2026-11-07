@@ -42,8 +42,8 @@ public final class GeometryShadowGpuFixture {
 		require(gl.glGetShaderi(shader, gl.GL_COMPILE_STATUS) != 0, gl.glGetShaderInfoLog(shader)); return shader;
 	}
 	private static int receiver() throws Exception {
-		int v = compile(gl.GL_VERTEX_SHADER, "#version 120\nattribute vec3 aPosition; uniform int uWallReceiver; varying vec3 vShadowWorldPosition; void main(){vShadowWorldPosition=aPosition; gl_Position=uWallReceiver!=0?vec4(aPosition.z/320.0,-aPosition.y/320.0,0.0,1.0):vec4(aPosition.x/320.0,aPosition.z/320.0,0.0,1.0);}");
-		int f = compile(gl.GL_FRAGMENT_SHADER, "#version 120\nuniform float uLightDirectionX;uniform float uLightDirectionY;uniform float uLightDirectionZ;\n"
+		int v = compile(gl.GL_VERTEX_SHADER, "#version 120\nattribute vec3 aPosition; uniform int uWallReceiver; varying vec3 vShadowWorldPosition;varying float vModelKind; void main(){vShadowWorldPosition=aPosition;vModelKind=uWallReceiver!=0?2.0:1.0; gl_Position=uWallReceiver!=0?vec4(aPosition.z/320.0,-aPosition.y/320.0,0.0,1.0):vec4(aPosition.x/320.0,aPosition.z/320.0,0.0,1.0);}");
+		int f = compile(gl.GL_FRAGMENT_SHADER, "#version 120\nvarying float vModelKind;uniform float uLightDirectionX;uniform float uLightDirectionY;uniform float uLightDirectionZ;\n"
 			+ OpenGLGeometryShadows.FRAGMENT_SOURCE + "void main(){gl_FragColor=vec4(vec3(geometryShadowVisibility()),1.0);}");
 		int p = gl.glCreateProgram(); gl.glAttachShader(p,v); gl.glAttachShader(p,f); gl.glBindAttribLocation(p,0,"aPosition"); gl.glLinkProgram(p);
 		require(gl.glGetProgrami(p,gl.GL_LINK_STATUS)!=0,gl.glGetProgramInfoLog(p));gl.glDeleteShader(v);gl.glDeleteShader(f);return p;

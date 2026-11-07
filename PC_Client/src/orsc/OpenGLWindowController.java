@@ -56,6 +56,9 @@ final class OpenGLWindowController {
 	// A coherent cached snapshot: -1 unknown, bit 0 visible, bit 1 iconified.
 	// Only the context thread calls GLFW; diagnostic observers read this value.
 	private volatile int diagnosticWindowFlags = -1;
+	private final java.util.concurrent.locks.ReentrantLock diagnosticSurfaceLock = new java.util.concurrent.locks.ReentrantLock();
+	private int diagnosticFramebufferWidth, diagnosticFramebufferHeight;
+	private int diagnosticWindowWidth, diagnosticWindowHeight;
 
 	OpenGLWindowController(
 		LwjglBindings gl,
@@ -114,6 +117,14 @@ final class OpenGLWindowController {
 		return diagnosticWindowFlags;
 	}
 
+	/** Raw queried framebuffer/window dimensions, copied only on observer request. */
+	int[] diagnosticSurfaceSize() {
+		diagnosticSurfaceLock.lock();
+		try { return new int[] {diagnosticFramebufferWidth, diagnosticFramebufferHeight,
+			diagnosticWindowWidth, diagnosticWindowHeight}; }
+		finally { diagnosticSurfaceLock.unlock(); }
+	}
+
 	boolean hasWindow() {
 		return window != 0L;
 	}
@@ -160,8 +171,14 @@ final class OpenGLWindowController {
 		if (RendererDiagnosticSession.isEnabled()) {
 			int visible = gl.glfwGetWindowAttrib(window, gl.GLFW_VISIBLE);
 			int iconified = gl.glfwGetWindowAttrib(window, gl.GLFW_ICONIFIED);
-			diagnosticWindowFlags = (visible == gl.GLFW_TRUE ? 1 : 0)
-				| (iconified == gl.GLFW_TRUE ? 2 : 0);
+			if (diagnosticSurfaceLock.tryLock()) {
+				try {
+					diagnosticFramebufferWidth = framebufferWidth[0]; diagnosticFramebufferHeight = framebufferHeight[0];
+					diagnosticWindowWidth = actualWindowWidth[0]; diagnosticWindowHeight = actualWindowHeight[0];
+					diagnosticWindowFlags = (visible == gl.GLFW_TRUE ? 1 : 0)
+						| (iconified == gl.GLFW_TRUE ? 2 : 0);
+				} finally { diagnosticSurfaceLock.unlock(); }
+			}
 		}
 
 		return new SurfaceSize(

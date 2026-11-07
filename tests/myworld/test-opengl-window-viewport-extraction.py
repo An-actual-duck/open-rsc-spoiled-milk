@@ -410,6 +410,9 @@ def verify_window_behavior() -> None:
                 RendererDiagnosticSession.enabled = true;
                 controller.prepareFrame(960, 540);
                 require(controller.diagnosticWindowFlags() == 1, "visible diagnostic snapshot");
+                int[] dimensions = controller.diagnosticSurfaceSize();
+                require(dimensions[0] == 1600 && dimensions[1] == 1200 && dimensions[2] == 800 && dimensions[3] == 600,
+                    "diagnostic framebuffer dimensions must remain distinct from window/content dimensions");
                 gl.iconified = gl.GLFW_TRUE;
                 controller.prepareFrame(960, 540);
                 require(controller.diagnosticWindowFlags() == 3, "iconified diagnostic snapshot");
