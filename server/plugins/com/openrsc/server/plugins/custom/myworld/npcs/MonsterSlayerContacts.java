@@ -158,21 +158,26 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			if (shouldUseRadimusFirstTaskWelcome(index, state)
 				&& !renderDialoguePlan(player, npc, MonsterSlayerDialoguePlan.radimusFirstTaskWelcome())) return;
 		}
-		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task preview = service.previewTask(player, CONTACTS[index]);
-		if (preview != null) {
-			if (!shortcut && shouldUseSellaAssignmentRemark(index, state)) dialogue.npc(player, npc, sellaAssignmentRemark());
-			if (!shortcut && shouldUseRadimusAssignmentRemark(index, state)) dialogue.npc(player, npc, radimusAssignmentRemark());
-			String[] warnings = hazardWarningLines(preview);
-			if (warnings.length > 0) dialogue.npc(player, npc, warnings);
-		}
 		MonsterSlayerContactService.Result result = service.requestTask(player, CONTACTS[index]);
-		if (!result.isAccepted()) { if (result.getReason().equals("active-task")) { com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task active = data.getTask(state.getActiveTaskKey()); dialogue.npc(player, npc, "Your current task is " + state.getActiveKills() + " of " + active.getRequiredKills() + " " + active.getDisplayName(data.getFamily(active.getFamilyKey()).getDisplayName()) + "."); } else dialogue.npc(player, npc, taskAssignmentFailureLine(result.getReason())); return; }
+		if (!result.isAccepted()) {
+			if (result.getReason().equals("active-task")) {
+				MonsterSlayerDefinitions.Task active = data.getTask(state.getActiveTaskKey());
+				String[] warnings = hazardWarningLines(active);
+				if (warnings.length > 0) dialogue.npc(player, npc, warnings);
+				dialogue.npc(player, npc, "Your current task is " + state.getActiveKills() + " of " + active.getRequiredKills() + " " + active.getDisplayName(data.getFamily(active.getFamilyKey()).getDisplayName()) + ".");
+			} else dialogue.npc(player, npc, taskAssignmentFailureLine(result.getReason()));
+			return;
+		}
 		if (shouldUseHobartFollowUpRemark(index, state.getTasksCompleted())) dialogue.npc(player, npc, hobartFollowUpRemark());
 		if (shouldUseMaraAssignmentRemark(index, state)) dialogue.npc(player, npc, maraAssignmentRemark());
 		String taskKey = MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey();
 		MonsterSlayerDefinitions.Task task = data.getTask(taskKey);
 		if (shouldUseBranAssignmentRemark(index, state)) dialogue.npc(player, npc, branAssignmentRemark(task));
 		if (shouldUseDoranAssignmentRemark(index, state)) dialogue.npc(player, npc, doranAssignmentRemark(task));
+		if (!shortcut && shouldUseSellaAssignmentRemark(index, state)) dialogue.npc(player, npc, sellaAssignmentRemark());
+		if (!shortcut && shouldUseRadimusAssignmentRemark(index, state)) dialogue.npc(player, npc, radimusAssignmentRemark());
+		String[] warnings = hazardWarningLines(task);
+		if (warnings.length > 0) dialogue.npc(player, npc, warnings);
 		dialogue.npc(player, npc, "Your next task is to slay " + task.getRequiredKills() + " " + task.getDisplayName(data.getFamily(task.getFamilyKey()).getDisplayName()) + ".");
 		String[] supplies = taskSupplyLines(player, task);
 		if (supplies.length > 0) dialogue.npc(player, npc, supplies);
@@ -397,8 +402,8 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			"The desert heat is part of the fight! Prepare for it!"
 		};
 		case WILDERNESS: return new String[] {
-			"Wilderness work! Keep your wits about you!",
-			"You're headed into the Wilderness! Go prepared!"
+			"The Wilderness has plenty of them! Mind the risk!",
+			"Try the Wilderness if you dare! Go prepared!"
 		};
 		case PRAYER_DRAIN: return new String[] {
 			"They drain Worship! Plan your supplies around it!",
@@ -487,8 +492,8 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			"Hot work ahead! Pack for the desert heat!"
 		};
 		case WILDERNESS: return new String[] {
-			"Wilderness work! Stay sharp and get it done!",
-			"Into the Wilderness! Keep your wits about you!"
+			"Plenty of them in the Wilderness! Stay sharp if you go!",
+			"Try the Wilderness if you like! Keep your wits about you!"
 		};
 		case PRAYER_DRAIN: return new String[] {
 			"Worship drain! Plan your supplies around it!",
@@ -609,7 +614,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		switch (hazard) {
 		case PRAYER_DRAIN: return "You should expect Worship drain.";
 		case DESERT_HEAT: return "You should prepare for the desert heat.";
-		case WILDERNESS: return "You should know this work is in the Wilderness.";
+		case WILDERNESS: return "If you're willing to risk it, the best place to find them is in the Wilderness.";
 		case POISON: return "You should bring an antidote for poison.";
 		case DRAGON_FIRE: return "You should prepare for dragon fire.";
 		default: throw new IllegalArgumentException("Unsupported Monster Slayer hazard");

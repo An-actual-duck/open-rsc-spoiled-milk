@@ -1,0 +1,36 @@
+Holy Power equipment display and Slayer dialogue ordering
+
+Scope
+- Equipment.getEquipmentHolyPower() exposes only the strongest equipped holy
+  staff bonus. ActionSender uses it for the existing equipment-stat field.
+- Equipment.getHolyPower() remains current Worship plus that equipment bonus;
+  ClericSupportCasting and ClericHostileRuntime keep using the combined total.
+- Successful Slayer assignments now render personality remarks, all task
+  warnings in definition order, then the assignment and existing supply lines.
+  This covers all six contacts and both Talk-to and Task routes without adding
+  flavor to routes that previously omitted it.
+- Active task reminders retain their warnings and progress. Failed assignments
+  do not promise a task or supplies. Selection and supply transactions remain
+  in the existing services; the contact no longer needs a separate preview.
+- Generic and Bran/Doran Wilderness advice describes an optional hunting
+  location instead of requiring the Wilderness.
+
+Validation (all passed)
+- scripts/build-server.sh (core/plugins, generated contracts, artifact audit).
+- tests/myworld/test-cleric-holy-power-equipment.py: definition and protocol
+  compatibility checks plus 24 real Player/Equipment/ActionSender packet cases:
+  equipment-tab and legacy wield modes; Worship 1/30/60/99; empty, equipped
+  blessed staff, and unequipped/unwielded states. Casting total keeps Worship.
+- Bundled Ant test_monster_slayer_contact_routes: existing full contact,
+  promotion, supplies/reminder/failure, tower and Influence guild-access checks;
+  new 60 actual mandatory/repeatable Talk-to/Task ordering cases across all
+  six contacts. Earlier mandatory first-task welcome checks remain intact.
+- python3 scripts/workspace-layout.py check and git diff --check.
+
+Evidence: output/tests/holy-equipment-slayer-dialogue/{build,holy-power,
+contact-routes,layout}.log (local ignored outputs).
+
+Limits
+No client protocol change or client source changes. No live UI capture was
+performed; actual emitted stats packets and production dialogue routes were
+verified offline. No private/public server was started, deployed or restarted.
