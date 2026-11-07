@@ -63,11 +63,11 @@ def main() -> None:
     handler = SPELL_HANDLER.read_text(encoding="utf-8")
     classification = SPELL_CLASSIFICATION.read_text(encoding="utf-8")
 
-    require(guide, "Spells using mind runes will do damage equal to chaos runes", "Magic guide chaos gauntlet line")
-    require(guide, "Thunder spells can Startle and negate the next attack", "Magic guide Thunder dual-effect line")
+    require(guide, "Chaos gauntlets raise mind-rune combat spells to the chaos-rune damage cap", "Magic guide chaos gauntlet line")
+    require(guide, "Thunder can Startle: staggers for 1 attack; then 5 unstaggered attacks before reapplication", "Magic guide Thunder dual-effect line")
     require(guide, "Acid spells can Corrode and apply poison", "Magic guide Acid dual-effect line")
     require(guide, "Ice spells can Frostbite and reflect damage", "Magic guide Ice dual-effect line")
-    require(guide, "Wood spells can Splinter to hit another NPC", "Magic guide Wood dual-effect line")
+    require(guide, "Wood spells can Splinter to hit another eligible enemy", "Magic guide Wood dual-effect line")
 
     mind_combat_spells = get_regular_mind_combat_spell_names()
     if mind_combat_spells != set(MIND_COMBAT_SPELLS):

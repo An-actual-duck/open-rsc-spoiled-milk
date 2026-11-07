@@ -18,6 +18,12 @@ public final class ClericSpellGuideCatalog {
 
   public static List<Entry> build(
       List<ClericSpellDef> definitions, IntFunction<String> resourceName) {
+    return build(definitions, resourceName, "all");
+  }
+
+  /** A guide-only god-line filter; spell metadata and spellbook ordering are unchanged. */
+  public static List<Entry> build(
+      List<ClericSpellDef> definitions, IntFunction<String> resourceName, String alignment) {
     if (definitions == null || definitions.isEmpty()) return Collections.emptyList();
     ArrayList<ClericSpellDef> ordered = new ArrayList<ClericSpellDef>(definitions);
     Collections.sort(
@@ -27,9 +33,10 @@ public final class ClericSpellGuideCatalog {
           return level != 0 ? level : Integer.compare(a.getStableCode(), b.getStableCode());
         });
     ArrayList<Entry> entries = new ArrayList<Entry>();
-    addOverview(entries);
+    if ("all".equals(alignment)) addOverview(entries);
     for (ClericSpellDef d : ordered) {
-      addPages(entries, format(d, resourceName));
+      if ("all".equals(alignment) || d.getAlignment().equals(alignment))
+        addPages(entries, format(d, resourceName));
     }
     return Collections.unmodifiableList(entries);
   }
@@ -72,7 +79,8 @@ public final class ClericSpellGuideCatalog {
   private static void addOverview(List<Entry> entries) {
     DocumentLines tiers = new DocumentLines();
     add(tiers, "Worship unlocks Cleric spells. Holy Power determines their power level.");
-    add(tiers, "Hostile spells can affect enemy players in the Wilderness. Party and clan allies are excluded, and each target must be legally attackable.");
+    add(tiers, "Hostile spells can affect enemy players in the Wilderness. Party members, clanmates and players on your friends list are excluded. Each target must be legally attackable.");
+    add(tiers, "Adding a friend protects them from your area attacks and curses; it does not protect you from theirs. Deliberate direct attacks are separate.");
     add(tiers, "A spell's tier sets its maximum strength, not its minimum strength.");
     add(tiers, "Tier 1 allows power levels 1-2; Tier 2 allows 1-4; Tier 3 allows 1-6.");
     add(tiers, "Each new spell tier adds two possible power levels. You still need enough Holy Power to reach them.");
@@ -91,7 +99,8 @@ public final class ClericSpellGuideCatalog {
     add(lines, "Within a god's blessing or curse line, each higher-tier spell includes the effects from the tiers below.");
     add(lines, "God sigils select the line. Grace fuels blessings; Blight fuels curses. They are consumed together when casting.");
     add(lines, "Unify and Greater Unify use Grace alone. Their teleport distance is fixed and does not scale with Holy Power.");
-    add(lines, "Each spell's pages give its targets, sigil cost and effect values. Scroll to continue through the guide.");
+    add(lines, "Unify follows teleport restrictions: no use at Wilderness level 20 or higher, during a duel, or in other teleport-restricted places. Caster, recipients and landing places must all qualify.");
+    add(lines, "Choose a god line above to filter its spells, or All for the full guide. Scroll for each spell's targets, sigil cost and effect values.");
     addPages(entries, new Entry(-3, "God lines and sigils", "", "", "", lines));
 
     DocumentLines stacking = new DocumentLines();
@@ -124,6 +133,7 @@ public final class ClericSpellGuideCatalog {
     if (d.getEffectRanks().isEmpty()) {
       add(lines, d.getDescription());
       add(lines, "Fixed effect: no Holy Power scaling. Stops within 2 tiles.");
+      add(lines, "Follows teleport restrictions, including no use at Wilderness level 20 or higher or during a duel. Caster, recipients and landing places must qualify.");
     } else {
       int cap = d.getEffectRanks().size();
       add(lines, "Holy Power = current Worship + strongest applicable holy staff.");

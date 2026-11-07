@@ -22,7 +22,7 @@ def main() -> None:
 
     require(guide, "safeQuestGuideLines(mc.getQuestGuideRequirement())", "safe requirement iteration")
     require(guide, "safeQuestGuideLines(mc.getQuestGuideReward())", "safe reward iteration")
-    require(guide, "for (int i = 0; i <= questItems.size(); i++)", "scroll list starts at zero")
+    require(guide, "for (int i = 0; i < questItems.size() + trailingRows; i++)", "native scrollbar includes final-window padding")
     require(guide, "for (int i = 0; i < questItems.size(); i++)", "render list starts at zero")
     require(guide, "int maxTextWidth = width - 16;", "stable quest guide wrap width")
     require(guide, "customAdd(text.substring(split).trim(), font, color);", "recursive trimmed wrapping")
