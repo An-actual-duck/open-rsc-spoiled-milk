@@ -3,6 +3,7 @@ package orsc;
 import java.lang.reflect.*;
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
+import orsc.graphics.three.*;
 
 /** Test-only client driver; all login/scene packets retain their ordinary paths. */
 public final class RendererBenchmarkClient {
@@ -93,6 +94,41 @@ public final class RendererBenchmarkClient {
         }
         return count;
     }
+    private static void dumpTerrain(mudclient client, OpenGLFramePresenter presenter, Path capture) throws Exception {
+        Scene scene=(Scene)field(client,mudclient.class,"scene");
+        Renderer3DFrame frame=scene.getRenderer3DFrame();
+        Renderer3DWorldChunkFrame chunks=frame.getWorldChunkFrame();
+        if(chunks==null || chunks.getChunkCount()==0) throw new IllegalStateException("No immutable resident terrain to export");
+        int exported=0, chunkIndex=0;
+        try(java.io.BufferedWriter writer=Files.newBufferedWriter(capture.resolve("terrain-triangles.tsv"),StandardCharsets.UTF_8)) {
+            writer.write("chunkIndex\tplane\tchunkRole\toriginWorldX\toriginWorldZ\tvertexOffsetX\tvertexOffsetZ\tlogicalOffsetX\tlogicalOffsetZ\ttriangleIndex\ttexture\tfallbackColor");
+            for(int corner=0;corner<3;corner++) writer.write("\tx"+corner+"\ty"+corner+"\tz"+corner+"\tu"+corner+"\tv"+corner+"\tnx"+corner+"\tny"+corner+"\tnz"+corner);
+            writer.write("\n");
+            for(Renderer3DWorldChunkFrame.ChunkMesh chunk:chunks.getChunks()) {
+                for(int triangle=0;triangle<chunk.getTriangleCount();triangle++) {
+                    if(chunk.getTriangleModelKind(triangle)!=Renderer3DModelKind.TERRAIN) continue;
+                    StringBuilder row=new StringBuilder().append(chunkIndex).append('\t').append(chunk.getPlane()).append('\t').append(chunk.getChunkRole()).append('\t').append(chunk.getOriginWorldX()).append('\t').append(chunk.getOriginWorldZ()).append('\t').append(chunk.getVertexOffsetX()).append('\t').append(chunk.getVertexOffsetZ()).append('\t').append(chunk.getLogicalWorldOffsetX()).append('\t').append(chunk.getLogicalWorldOffsetZ()).append('\t').append(triangle).append('\t').append(chunk.getTriangleTexture(triangle)).append('\t').append(chunk.getTriangleFallbackColor(triangle));
+                    for(int corner=0;corner<3;corner++) {
+                        int vertex=chunk.getIndex(triangle*3+corner);
+                        for(int axis=0;axis<3;axis++) row.append('\t').append(chunk.getVertexCoord(vertex*3+axis));
+                        row.append('\t').append(chunk.getVertexTextureU(vertex)).append('\t').append(chunk.getVertexTextureV(vertex)).append('\t').append(chunk.getVertexNormalX(vertex)).append('\t').append(chunk.getVertexNormalY(vertex)).append('\t').append(chunk.getVertexNormalZ(vertex));
+                    }
+                    writer.write(row.append('\n').toString()); exported++;
+                }
+                chunkIndex++;
+            }
+        }
+        StringBuilder metadata=new StringBuilder("{\"terrainTriangles\":"+exported+",\"residentTriangles\":"+chunks.getTotalTriangleCount()+",\"chunks\":"+chunks.getChunkCount()+",\"sunAzimuth\":"+RendererRemasterLightSettings.getAzimuthDegrees()+",\"sunElevation\":"+RendererRemasterLightSettings.getElevationDegrees());
+        String[] methods={"getViewportWidth","getViewportHeight","getCenterX","getCenterY","getCameraOffsetX","getCameraOffsetY","getCameraOffsetZ","getCameraRotationX","getCameraRotationY","getCameraRotationZ","getPerspectiveShift","getNearPlane","getFogDistance","getFogStartDistance","getActivePlane"};
+        for(String name:methods) metadata.append(",\"").append(name).append("\":").append(Renderer3DFrame.class.getMethod(name).invoke(frame));
+        Object renderer=field(presenter,OpenGLFramePresenter.class,"worldChunkRenderer");
+        for(String name:new String[]{"worldViewMatrix","projectionMatrix"}) {
+            Method matrix=renderer.getClass().getDeclaredMethod(name,Renderer3DFrame.class); matrix.setAccessible(true);
+            metadata.append(",\"").append(name).append("\":").append(java.util.Arrays.toString((float[])matrix.invoke(renderer,frame)));
+        }
+        Files.write(capture.resolve("terrain-frame.json"),metadata.append("}\n").toString().getBytes(StandardCharsets.UTF_8));
+        System.out.println("Exported immutable TERRAIN triangles="+exported);
+    }
     public static void main(String[] args) {
         try { runFixture(); }
         catch (Throwable failure) {
@@ -169,6 +205,7 @@ public final class RendererBenchmarkClient {
             Thread.sleep(1000);
         }
         System.out.println(RendererPerformanceDiagnostics.handleCommand("::pf stop " + phase));
+        if (Boolean.getBoolean("renderer.benchmark.dumpTerrain")) dumpTerrain(client,presenter,capture);
         if (Boolean.getBoolean("renderer.benchmark.snapshot")) {
             Method request = OpenGLFramePresenter.class.getDeclaredMethod("requestFrameCaptureBurst");
             request.setAccessible(true); request.invoke(presenter);

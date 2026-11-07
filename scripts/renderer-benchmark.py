@@ -168,7 +168,7 @@ def capture(args):
             time.sleep(.25)
     name = args.phase + "-" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     capture = run / name; capture.mkdir()
-    (capture / "scenario.json").write_text(json.dumps(dict(phase=args.phase, requestedViewer=[args.x,args.y,0], zoom=args.zoom, initialRotation=args.rotation, quality=args.quality, legacyMask=args.legacy_mask, sunAzimuth=args.sun_azimuth, sunElevation=args.sun_elevation, normalRateServerSun=args.phase == "sun-motion", visiblePreview=visible,excludedCasterKinds=args.exclude_caster),indent=2)+"\n")
+    (capture / "scenario.json").write_text(json.dumps(dict(phase=args.phase, requestedViewer=[args.x,args.y,0], zoom=args.zoom, initialRotation=args.rotation, quality=args.quality, legacyMask=args.legacy_mask, sunAzimuth=args.sun_azimuth, sunElevation=args.sun_elevation, normalRateServerSun=args.phase == "sun-motion", visiblePreview=visible,excludedCasterKinds=args.exclude_caster,dumpTerrain=args.dump_terrain),indent=2)+"\n")
     request = run / "request.next"
     request.write_text(json.dumps(dict(busy=args.phase.startswith("busy") or args.phase == "sun-motion", phase=args.phase, x=args.x, y=args.y)))
     os.replace(request, run / "request.json")
@@ -177,6 +177,7 @@ def capture(args):
     props["spoiledmilk.openglHiddenDiagnostic"] = str(not visible).lower()
     if visible: props["spoiledmilk.openglWindowMode"] = "borderless-fullscreen"
     props["spoiledmilk.shadowGpuTimings"] = "true"
+    props["renderer.benchmark.dumpTerrain"] = str(args.dump_terrain).lower()
     props["renderer.benchmark.rotation"] = str(args.rotation)
     if args.legacy_mask: props["spoiledmilk.shadowBenchmarkLegacyMask"] = "true"
     if args.exclude_caster: props["spoiledmilk.shadowDiagnosticExclude"] = ",".join(args.exclude_caster)
@@ -273,6 +274,7 @@ def report(args):
     result = dict(schema=1, capture=str(capture), artifact=json.loads((run / MARKER).read_text()), phase=start_event["label"], durationSeconds=(end-start)/1e9, partialRecords=partial_telemetry or partial_events or partial_samples, stages=stages, gpu={key:summary(values) for key,values in gpu.items()}, gpuDuplicateSamples=duplicates, context=context, openGL={key:manifest.get("openGL."+key) for key in ("renderer","version","vendor")}, fullClientPresentation60FpsAccepted=False, limitation="Hidden native window: frame-work/GPU workload measurements, not owner-visible presentation cadence or visual approval.")
     scenario = json.loads((capture / "scenario.json").read_text()) if (capture / "scenario.json").is_file() else {}
     effects = [sample["activeProjectileActors"] for sample in samples if "activeProjectileActors" in sample]
+    result["manifestReceipt"] = {key:manifest.get(key) for key in ("branch","commit","targetMode","runtime.javaVersion","runtime.javaVendor","runtime.vmName","runtime.osName","runtime.osVersion","runtime.osArch","runtime.availableProcessors")}
     result["cameraContext"] = {key:sorted({row[key] for row in distributions if key in row}) for key in ("camera.zoomSetting","camera.baseZoom","camera.effectiveZoom","camera.pitch","camera.rotation","camera.fogMode","camera.drawDistanceWorldUnits","camera.fogStartDistanceWorldUnits","camera.drawDistanceTiles","camera.fogStartDistanceTiles")}
     result["effectCoverage"] = dict(samples=len(effects), nonzeroSamples=sum(value>0 for value in effects), maxActiveActors=max(effects,default=0),meanActiveActors=sum(effects)/len(effects) if effects else None)
     result["runtimeValidation"] = movement
@@ -299,7 +301,7 @@ def main():
         p = sub.add_parser(name); p.add_argument("run", type=Path)
         if name in ("capture", "preview"):
             p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "transition", "same-position", "visual"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--legacy-mask", action="store_true")
-            p.add_argument("--exclude-caster", choices=["TERRAIN","WALL","ROOF","GAME_OBJECT","WALL_OBJECT"],action="append",default=[]); p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
+            p.add_argument("--dump-terrain",action="store_true"); p.add_argument("--exclude-caster", choices=["TERRAIN","WALL","ROOF","GAME_OBJECT","WALL_OBJECT"],action="append",default=[]); p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
     p = sub.add_parser("report"); p.add_argument("capture", type=Path)
     args = parser.parse_args()
     if args.action in ("capture", "preview") and not 5 <= args.seconds <= 600: parser.error("Duration must be5..600 seconds")

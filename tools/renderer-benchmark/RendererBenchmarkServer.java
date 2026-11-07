@@ -96,10 +96,10 @@ public final class RendererBenchmarkServer {
         int[][] axes = {{1,0},{0,1},{-1,0},{0,-1}};
         for (int[] axis : axes) {
             boolean corridor = true;
-            for (int step=0;step<=4;step++) corridor &= clear(502+axis[0]*step,453+axis[1]*step);
+            for (int step=1;step<=4;step++) corridor &= clear(viewerX+axis[0]*step,viewerY+axis[1]*step);
             if (corridor) {
                 int step = (tick / 16) % 2 == 0 ? 0 : 4;
-                viewer.walk(502+axis[0]*step,453+axis[1]*step); return;
+                viewer.walk(viewerX+axis[0]*step,viewerY+axis[1]*step); return;
             }
         }
         throw new IllegalStateException("No authored4-tile viewer walk corridor");
