@@ -1323,6 +1323,11 @@ public final class GameStateUpdater {
 				NATIVE_LAYERED_CHUNK_RADIUS);
 	}
 
+	/** A local delivery reset must rescan even when location and world version match. */
+	public static void invalidateStaticSceneScan(final Player player) {
+		player.removeAttribute(STATIC_SCENE_SCAN_KEY_ATTRIBUTE);
+	}
+
 	private boolean canSkipStaticSceneScan(final Player player, final VisibilitySnapshot packetVisibility) {
 		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_SCENE_BASELINE) {
 			return false;
