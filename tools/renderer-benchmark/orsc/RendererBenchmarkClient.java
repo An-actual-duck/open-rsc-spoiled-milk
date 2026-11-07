@@ -75,6 +75,14 @@ public final class RendererBenchmarkClient {
             return String.valueOf(snapshot.invoke(window));
         } catch (NoSuchMethodException unavailable) { return "null"; }
     }
+    private static String surfaceState(OpenGLFramePresenter presenter) throws Exception {
+        Object window=field(presenter,OpenGLFramePresenter.class,"windowController");
+        try {
+            Method snapshot=window.getClass().getDeclaredMethod("diagnosticSurfaceSnapshot"); snapshot.setAccessible(true);
+            int[] size=(int[])snapshot.invoke(window);
+            return "{\"framebufferWidth\":"+size[0]+",\"framebufferHeight\":"+size[1]+",\"windowWidth\":"+size[2]+",\"windowHeight\":"+size[3]+"}";
+        } catch(NoSuchMethodException unavailable) { return "null"; }
+    }
     private static String shadowQuality() throws Exception {
         try {
             Class<?> settings=Class.forName("orsc.RendererShadowSettings");
@@ -93,6 +101,18 @@ public final class RendererBenchmarkClient {
             if (actor != null && (actor.projectileRange>0 || actor.projectileImpactTime>0)) count++;
         }
         return count;
+    }
+    private static int onScreenActors(mudclient client) throws Exception {
+        Scene scene=(Scene)field(client,mudclient.class,"scene");
+        Renderer3DFrame frame=scene.getRenderer3DFrame();
+        if(frame==null) return 0;
+        int count=0;
+        for(Renderer3DFrame.CharacterSprite actor:frame.getCharacterSprites()) {
+            if(actor.isProjected() && actor.getDrawWidth()>0 && actor.getDrawHeight()>0
+                && actor.getDrawX()<frame.getViewportWidth() && actor.getDrawY()<frame.getViewportHeight()
+                && actor.getDrawX()+actor.getDrawWidth()>0 && actor.getDrawY()+actor.getDrawHeight()>0) count++;
+        }
+        return count; // Projection candidates; depth occlusion can still hide pixels.
     }
     private static void dumpTerrain(mudclient client, OpenGLFramePresenter presenter, Path capture) throws Exception {
         Scene scene=(Scene)field(client,mudclient.class,"scene");
@@ -173,7 +193,7 @@ public final class RendererBenchmarkClient {
                 && !field(client, mudclient.class, "currentViewMode").toString().equals("GAME")) Thread.sleep(500);
         if (!field(client, mudclient.class, "currentViewMode").toString().equals("GAME")) throw new IllegalStateException("Ordinary login failed");
         set(client, mudclient.class, "welcomeScreenShown", false);
-        Thread.sleep(15000);
+        Thread.sleep(Integer.getInteger("renderer.benchmark.warmupSeconds",15)*1000L);
         client.setShowDialogMessage(false);
         Config.C_HIDE_LOGIN_BOX = true;
         client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));
@@ -194,10 +214,11 @@ public final class RendererBenchmarkClient {
                 + "\",\"players\":" + client.getPlayerCount() + ",\"npcs\":" + client.getNpcCount()
                 + ",\"hideRoofs\":" + Config.C_HIDE_ROOFS + ",\"gameObjects\":" + client.getGameObjectInstanceCount() + ",\"wallObjects\":" + client.getWallObjectInstanceCount()
                 + ",\"serverState\":" + new String(Files.readAllBytes(run.resolve("status.json")), StandardCharsets.UTF_8)
+                + ",\"onScreenProjectedActorCandidates\":" + onScreenActors(client)
                 + ",\"activeProjectileActors\":" + activeProjectiles(client) + ",\"windowState\":" + windowState(presenter)
                 + ",\"cameraRotation\":" + client.cameraRotation + ",\"zoomSetting\":" + osConfig.C_LAST_ZOOM
                 + ",\"logicalWidth\":" + RenderSurfaceSettings.getWidth() + ",\"logicalHeight\":" + RenderSurfaceSettings.getHeight()
-                + ",\"framebufferWidth\":" + viewport.framebufferViewport().width + ",\"framebufferHeight\":" + viewport.framebufferViewport().height
+                + ",\"contentViewportWidth\":" + viewport.framebufferViewport().width + ",\"contentViewportHeight\":" + viewport.framebufferViewport().height + ",\"surface\":" + surfaceState(presenter)
                 + ",\"sunAzimuth\":" + RendererRemasterLightSettings.getAzimuthDegrees() + ",\"sunElevation\":" + RendererRemasterLightSettings.getElevationDegrees()
                 + ",\"brightness\":" + light.brightnessMultiplier + ",\"tone\":\"" + light.debugLabel
                 + "\",\"lighting\":\"" + RendererLightingSettings.getMode() + "\",\"profile\":\"" + RendererProfileSettings.getMode()

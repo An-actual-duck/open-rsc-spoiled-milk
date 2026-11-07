@@ -115,3 +115,37 @@ raw unique GPU query samples and preserved old records remain authoritative.
 Opt-in --exclude-caster is solely a diagnostic isolation control; it must never
 be enabled for final full-caster performance/visual acceptance. Candidate7's
 initial isolation bug was caught before interpretation and its run was aborted.
+
+Provisional visible preview evidence, not final acceptance:
+Candidate10 source1a1172562ca9940e35c019b63150d0b6464b413d was shown with the
+ordinary default borderless mode. The owner said "everything looks really good"
+(via manager), approving the visual direction with the known terrain-stripe
+caveat. All60 sampled window flags were1 (visible, uniconified), but content
+viewport was1849x1040, not1920x1080: the borderless window was constrained by the
+work area. Historical framebufferWidth/Height fields measured that content
+viewport. New records distinguish actual cached GLFW surface/window dimensions
+from contentViewportWidth/Height. Do not alter old raw evidence to rename fields.
+Final physical1080 visible work must explicitly use --window-mode fullscreen.
+
+That provisional60s phase had3597 completed frames and0 ownqueue drops. CPUrender
+p95/p99 4.514/5.213ms, GPUframe5.413/5.932ms. Completed post-swap p99 was18.578ms,
+with a114.001ms maximum. The first~5s window had clientLoop113.150ms and95ms GC
+(85ms MarkSweep +10ms Scavenge), while GLrender max was6.740ms. This strongly
+suggests a producer/GC pause but per-STW timestamps were unavailable. Preserve
+this startup-tail evidence; zero ownqueue drops does not mean zero scanout gaps.
+Final steady controls will explicitly use --warmup-seconds30 identically across
+modes; the default15 and all old receipts remain intact. No forced GC or JVM
+heap changes hide pauses: Xms512m/Xmx2g match production defaults on JDK1.8_482.
+
+Candidate9 corrected-object/halo High busy-camera hidden60s evidence is also
+provisional: CPUrender p95/p994.681/5.479ms, GPUframe6.715/7.478ms, each had1
+sample over16.667ms. Its23 far rebuilds max2.433ms;17players40NPCs and89 resident
+chunks435422triangles stayed constant, active projectiles averaged5.8/max8.
+The19.122ms CPU and18.427ms GPUtimeline outlier aligned with a5s window reporting
+14ms Scavenge; near GPU was0.448ms and no far query within5ms. Causation is not
+proved. See grouped benchmark-summary/outlier-attribution files under each run.
+
+New onScreenProjectedActorCandidates records actor bounds intersecting the
+viewport, separately from received actors and submitted snapshot layers. It does
+not claim pixel visibility through scenery. Maximum-camera cases must report
+this distinction and actual fog distances instead of implying identical density.
