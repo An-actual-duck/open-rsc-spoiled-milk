@@ -838,7 +838,8 @@ public final class MonsterSlayerState {
 	public static final class TaskResult {
 		public enum Reason {
 			ASSIGNED, PROGRESSED, COMPLETED, UNKNOWN_CONTACT, ACTIVE_TASK, RANK,
-			MANDATORY_COMPLETE, INVALID_REPEATABLE, NO_ACTIVE_TASK, WRONG_NPC, INVALID_STATE
+			MANDATORY_COMPLETE, INVALID_REPEATABLE, NO_ACTIVE_TASK, WRONG_NPC, INVALID_STATE,
+			INVENTORY_FULL, SUPPLIES_UNAVAILABLE, SUPPLIES_FAILED
 		}
 		private final Snapshot snapshot;
 		private final Reason reason;
@@ -856,7 +857,7 @@ public final class MonsterSlayerState {
 		private static TaskResult completed(Snapshot snapshot, long points, MonsterSlayerChallenge challenge) {
 			return new TaskResult(snapshot, Reason.COMPLETED, points, challenge);
 		}
-		private static TaskResult rejected(Snapshot snapshot, Reason reason) { return new TaskResult(snapshot, reason, 0L, null); }
+		static TaskResult rejected(Snapshot snapshot, Reason reason) { return new TaskResult(snapshot, reason, 0L, null); }
 		public Snapshot getSnapshot() { return snapshot; }
 		public Reason getReason() { return reason; }
 		public long getAwardedPoints() { return awardedPoints; }

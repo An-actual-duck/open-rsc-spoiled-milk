@@ -1,6 +1,28 @@
 # Slayer protection supplies in shops
 
-Updated: 2026-09-21. Implemented and tested; no deployment or restart.
+Updated: 2026-11-06. Implemented and tested; no deployment or restart.
+
+## Starter supplies on task assignment
+
+Each newly assigned mandatory or repeatable gimmick task now includes one full
+three-use counter item, even if the player already owns one. Giant frogs and
+Abyssal demons receive Slime Solvent; cockatrices receive Eye Drops; banshees
+receive Wax earplugs; terror dogs receive Dog Treats; dark beasts receive a
+Static discharge wipe. Associates explain the starter gift and where to buy
+more after announcing the task. The existing encounter warning explains its use.
+
+Talk and Task shortcuts use the same assignment service. Task state and all
+required starter items commit together; without enough inventory space, the
+associate asks the player to make room and no task is assigned. Reminders,
+reconnection and unsuccessful requests grant nothing. Already active tasks are
+not retroactively refilled. Ordinary environmental hazards and strategy-only
+tasks do not receive extra items. Shop availability and prices below remain
+unchanged.
+
+`test_slayer_task_supplies` exercises real inventories and cache persistence,
+all six encounters, repeated and concurrent requests, full inventories,
+unsupported clients, injected grant/cache failures and distinct multi-counter
+tasks. `test_monster_slayer_tower_routes` covers both dialogue entry points.
 
 ## Approved pricing
 

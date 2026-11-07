@@ -9,6 +9,7 @@ import com.openrsc.server.constants.Quests;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskSupplies;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopService;
 import com.openrsc.server.event.custom.MonsterSlayerShopRestockEvent;
 import com.openrsc.server.model.Point;
@@ -146,8 +147,23 @@ public final class MonsterSlayerContactsRouteTest {
 						RecordingDialogue dialogue = new RecordingDialogue(0);
 						Npc npc = new Npc(server.getWorld(), contact.getNpcId(), 290, 600);
 						MonsterSlayerContacts routes = new MonsterSlayerContacts(dialogue);
+						if (!MonsterSlayerTaskSupplies.itemIds(task).isEmpty()) {
+							while (player.getCarriedItems().getInventory().size() < player.getCarriedItems().getInventory().getCapacity())
+								assertTrue(player.getCarriedItems().getInventory().add(new com.openrsc.server.model.container.Item(259), false), "fill inventory");
+							if (shortcut) routes.onOpNpc(player, npc, "Task"); else routes.onTalkNpc(player, npc);
+							assertTrue(MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey() == null, "no assignment without gift space");
+							assertTrue(dialogue.events.contains("N:Make room in your inventory for the task supplies, then ask me again."), "both routes explain inventory refusal");
+							for (String line : MonsterSlayerContacts.taskSupplyLines(player, task)) assertFalse(dialogue.events.contains("N:" + line), "failed assignment promises no gift");
+							player.getCarriedItems().getInventory().getItems().clear();
+							dialogue = new RecordingDialogue(0); routes = new MonsterSlayerContacts(dialogue);
+						}
 						if (shortcut) routes.onOpNpc(player, npc, "Task"); else routes.onTalkNpc(player, npc);
 						assertEquals(task.getKey(), MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey(), "tower committed assignment");
+						for (int supply : MonsterSlayerTaskSupplies.itemIds(task)) assertEquals(1, player.getCarriedItems().getInventory().countId(supply), "both dialogue routes hand over one required supply");
+						for (String line : MonsterSlayerContacts.taskSupplyLines(player, task)) {
+							assertTrue(dialogue.events.contains("N:" + line), "task giver acknowledges supplied counter");
+							assertTrue(line.length() <= 255, "supply dialogue wire bound");
+						}
 						for (String line : MonsterSlayerContacts.hazardWarningLines(task)) {
 							assertTrue(dialogue.events.contains("N:" + line), "preparation on both routes");
 							assertTrue(line.length() <= 255, "wire text bound");
@@ -160,6 +176,8 @@ public final class MonsterSlayerContactsRouteTest {
 						assertEquals(1, MonsterSlayerState.read(player.getCache(), data).getActiveKills(), "reminder keeps progress");
 						for (String line : MonsterSlayerContacts.hazardWarningLines(task)) assertTrue(dialogue.events.contains("N:" + line), "active task preparation reminder");
 						assertTrue(dialogue.events.toString().contains("Your current task is 1 of"), "progress reminder remains");
+						for (int supply : MonsterSlayerTaskSupplies.itemIds(task)) assertEquals(1, player.getCarriedItems().getInventory().countId(supply), "active dialogue does not supply again");
+						for (String line : MonsterSlayerContacts.taskSupplyLines(player, task)) assertFalse(dialogue.events.contains("N:" + line), "reminder does not claim another gift");
 
 						// Deterministic repeatable preview must not be resampled when committed.
 						counts.put(contact.getKey(), contact.getMandatoryTasks().size());
@@ -173,6 +191,7 @@ public final class MonsterSlayerContactsRouteTest {
 								bound -> calls[0]++ == 0 ? chosen : 0);
 						assertEquals(task.getKey() + ".repeatable", service.previewTask(player, contact.getKey()).getKey(), "preview selects new repeatable");
 						assertTrue(service.requestTask(player, contact.getKey()).isAccepted(), "repeatable committed");
+						for (int supply : MonsterSlayerTaskSupplies.itemIds(task)) assertEquals(2, player.getCarriedItems().getInventory().countId(supply), "repeatable supplies added to existing items");
 						assertEquals(1, calls[0], "preview not rerolled");
 						assertEquals(task.getKey() + ".repeatable", service.previewTask(player, contact.getKey()).getKey(), "active repeatable preview is actual task");
 						assertEquals(1, calls[0], "active reminder does not roll another task");
@@ -2063,6 +2082,8 @@ public final class MonsterSlayerContactsRouteTest {
 		int clientVersion = Math.max(10052, server.getConfig().CLIENT_VERSION);
 		player.setClientVersion(clientVersion);
 		player.setClientLimitations(ClientLimitations.forVersion(clientVersion));
+		// A real modern login negotiates the installed item roster separately.
+		player.getClientLimitations().maxItemId = server.getEntityHandler().getItemCount() - 1;
 		player.setInitialLocation(Point.location(x, y));
 		server.getWorld().getPlayers().add(player); player.updateRegion(); player.setBusy(false); player.setLoggedIn(true);
 		return player;
