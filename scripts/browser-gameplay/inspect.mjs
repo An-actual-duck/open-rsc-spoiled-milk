@@ -14,6 +14,7 @@ const wasmGC = process.argv.includes('--wasmgc');
 const runtime = process.argv.find(arg => arg.startsWith('--runtime='))?.split('=')[1] || '5.0';
 if (!['5.0', '4.3'].includes(runtime)) throw new Error('Choose --runtime=5.0 or 4.3');
 if (!['8', '11', '17'].includes(javaVersion)) throw new Error('Choose --java=8, 11 or 17');
+if (!Number.isInteger(httpPort) || httpPort < 1 || httpPort > 65535) throw new Error('Invalid --port');
 if (!fs.existsSync(path.join(run, 'stage.json'))) throw new Error('Use a staged private run');
 const capture = path.join(run, `${mode}-r${runtime}-j${javaVersion}${wasmGC ? '-gc' : ''}-${Date.now()}`); fs.mkdirSync(capture);
 const profile = path.join(capture, 'chrome-profile');
@@ -87,6 +88,14 @@ try {
       await delay(20);
     }
   }
+  const serverStatus = process.argv.find(arg=>arg.startsWith('--server-status='))?.slice('--server-status='.length);
+  const movement = [];
+  function serverSample(action) {
+    if (!serverStatus) return;
+    const state = JSON.parse(fs.readFileSync(serverStatus, 'utf8'));
+    movement.push({milliseconds: Date.now(), action, ...state});
+    fs.writeFileSync(path.join(capture, 'authoritative-movement.json'), JSON.stringify(movement, null, 2));
+  }
   let didLogin = false, didAccept = false;
   for (let i = 0; i < seconds; i++) {
     await delay(1000);
@@ -107,6 +116,16 @@ try {
       if (mode.result.value === 'GAME') { await screenshot('character-design'); await click(275, 491); didAccept = true; }
     }
     if (login && i === 35) await screenshot('after-login');
+    if (process.argv.includes('--walk-proof')) {
+      serverSample('sample');
+      const actions = {40:[500,514,'close-welcome'],50:[650,558,'walk-1'],65:[820,580,'walk-2'],85:[850,600,'walk-3'],110:[860,570,'walk-4'],140:[830,590,'walk-5'],170:[790,580,'walk-6'],200:[790,580,'walk-7'],230:[790,580,'walk-8']};
+      if (actions[i]) {
+        const [x,y,name] = actions[i]; serverSample('before-'+name);
+        await screenshot('before-'+name); await click(x,y); serverSample('after-pointer-'+name);
+      }
+      if ([45,58,75,95,125,155,185,215,245,275].includes(i)) await screenshot('world-'+i);
+    }
+
     if (i % 10 === 9) {
       const snapshot = await call('Runtime.evaluate', {expression: 'JSON.stringify({proof:window.browserProof&&{state:window.browserProof.state,events:window.browserProof.events},text:document.body.innerText.slice(-600),canvases:document.querySelectorAll("canvas").length})', returnByValue: true});
       console.log(i + 1, snapshot.result.value);
@@ -119,7 +138,7 @@ try {
     probeReportedBlocked: page.proof?.events.some(event => event.message.includes(':blocked:')) || false,
     javaProgramEnded: page.proof?.ended || false,
     observedClientModes: [...new Set((page.proof?.samples || []).map(sample => sample.mode))],
-    gameplayAcceptance: 'NOT_ACCEPTED', movementAcceptance: 'NOT_ACCEPTED', gpuRendererAcceptance: 'NOT_ACCEPTED',
+    gameplayAcceptance: 'REQUIRES_VISUAL_REVIEW', movementAcceptance: movement.some(v=>v.online && movement.some(w=>w.online && (w.x!==v.x || w.y!==v.y))) ? 'AUTHORITATIVE_COORDINATE_CHANGE_OBSERVED' : 'NOT_ACCEPTED', gpuRendererAcceptance: 'NOT_ACCEPTED',
     note: 'Exit 0 means capture completed; inspect compatibility results. A GAME state is not proof of visible world rendering.'}, null, 2));
   const image = await call('Page.captureScreenshot', {format: 'png'});
   fs.writeFileSync(path.join(capture, 'screenshot.png'), Buffer.from(image.data, 'base64'));

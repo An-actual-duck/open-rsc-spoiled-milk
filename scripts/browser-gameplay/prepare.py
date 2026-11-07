@@ -14,7 +14,10 @@ ROOT = Path(__file__).resolve().parents[2]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--name', default=datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ'))
+    parser.add_argument('--http-port', type=int, default=8079)
     args = parser.parse_args()
+    if not 1 <= args.http_port <= 65535:
+        parser.error('Port must be between 1 and 65535')
     if not args.name or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in args.name):
         parser.error('Use a simple run name')
     category = subprocess.check_output(['python3', str(ROOT / 'scripts/workspace-layout.py'), 'path', 'tests', 'browser-gameplay-spike', '--mkdir'], text=True).strip()
@@ -59,7 +62,7 @@ def main():
     (web / 'bootstrap-files.txt').write_text('\n'.join(files) + '\n')
     report = dict(root=str(ROOT), run=str(run), web=str(web), sourceCommit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                   clientSha256=hashlib.sha256(client.read_bytes()).hexdigest(), runtime='CheerpJ 5.0, Java 8, CDN',
-                  http='127.0.0.1:8079', tcp='127.0.0.1:43629', websocket='127.0.0.1:43529', credentialsCopied=False)
+                  http='127.0.0.1:' + str(args.http_port), tcp='127.0.0.1:43629', websocket='127.0.0.1:43529', credentialsCopied=False)
     (run / 'stage.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
 

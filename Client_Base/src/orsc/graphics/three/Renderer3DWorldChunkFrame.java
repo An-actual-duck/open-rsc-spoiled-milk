@@ -1209,19 +1209,21 @@ public final class Renderer3DWorldChunkFrame {
 			Renderer3DModelKind[] kinds,
 			int count) {
 			Renderer3DMaterialFamily[] normalized = new Renderer3DMaterialFamily[count];
-            java.util.Arrays.fill(normalized, Renderer3DMaterialFamily.UNCLASSIFIED);
-            if (kinds != null) {
-                int kindCount = Math.min(count, kinds.length);
-                for (int i = 0; i < kindCount; i++) {
-                    normalized[i] = Renderer3DMaterialClassifier.fallbackFor(kinds[i]);
-                }
-            }
-            if (families != null) {
-                int familyCount = Math.min(count, families.length);
-                for (int i = 0; i < familyCount; i++) {
-                    if (families[i] != null) normalized[i] = families[i];
-                }
-            }
+			// Keep nullable arrays in separate passes: browser JVM translation of
+			// the combined per-element conditional can fail during halo cropping.
+			java.util.Arrays.fill(normalized, Renderer3DMaterialFamily.UNCLASSIFIED);
+			if (kinds != null) {
+				int kindCount = Math.min(count, kinds.length);
+				for (int i = 0; i < kindCount; i++) {
+					normalized[i] = Renderer3DMaterialClassifier.fallbackFor(kinds[i]);
+				}
+			}
+			if (families != null) {
+				int familyCount = Math.min(count, families.length);
+				for (int i = 0; i < familyCount; i++) {
+					if (families[i] != null) normalized[i] = families[i];
+				}
+			}
 			return normalized;
 		}
 

@@ -58,6 +58,8 @@ def main():
     parser.add_argument('--port', type=int, default=8079)
 
     args = parser.parse_args()
+    if not 1 <= args.port <= 65535:
+        parser.error('Port must be between 1 and 65535')
     web = args.web.resolve()
     if not (web / 'browser-spike.jar').is_file():
         parser.error('Select a staged web directory from prepare.py')

@@ -3,7 +3,7 @@ const status = document.querySelector('#status');
 const options = new URLSearchParams(location.search);
 const javaVersion = Number(options.get('java') || '8');
 if (![8, 11, 17].includes(javaVersion)) throw new Error('Private probe supports Java 8, 11 or 17');
-window.browserProof = {events: [], started, mode: options.get('mode') || 'software', javaVersion, wasmGC: options.has('wasmgc'), runtimeVersion: window.browserRuntimeVersion};
+window.browserProof = {events: [], started, renderer: "AWT software / direct framebuffer", mode: options.get('mode') || 'software', javaVersion, wasmGC: options.has('wasmgc'), runtimeVersion: window.browserRuntimeVersion};
 function report(message) {
   const event = {milliseconds: Math.round(performance.now() - started), message};
   window.browserProof.events.push(event); status.textContent = message; console.log('BROWSER_PROOF', JSON.stringify(event));
@@ -18,7 +18,7 @@ const natives = {
     window.browserProof.state = state;
     (window.browserProof.samples ||= []).push(state);
     if (window.browserProof.samples.length > 300) window.browserProof.samples.shift();
-    status.textContent = `Software client · ${mode} · ${fps} game frames/s · private loopback world`;
+    status.textContent = `Software client · ${mode} · ${fps} reported loop frames/s · private loopback world`;
   },
   async Java_orsc_browser_BrowserBootstrap_wsOpen() { return transport.open(); },
   async Java_orsc_browser_BrowserBootstrap_wsAvailable(lib, id) { return transport.available(id); },

@@ -1,42 +1,110 @@
-Browser in-game proof — WORK IN PROGRESS, not READY
-=================================================
+Private browser in-game proof
+=============================
 
-Scope: isolated loopback browser gameplay using current maintained software
-client, visible terrain/player, pointer walking and server-authoritative movement.
-No public operations. Keyboard lifecycle work is explicitly deferred and remains
-on its separate ai1 branch; it is not imported here.
+Current state: gameplay proof achieved; final capture/runtime comparison and
+manager review in progress. This is not a public browser release or deployment.
 
-Baseline: acb16e5c8bcd982d873addc5a49ffc89ddf0c863.
-Existing immutable owner-review JVM/HTTP and private database are unchanged.
-Only browserdemo / BrowserProof13 disposable account is used. Its ordinary
-character-design Accept was clicked through the UI.
+Scope and source
+----------------
+Baseline acb16e5c8bcd982d873addc5a49ffc89ddf0c863. Shared source change is a
+semantics-preserving two-pass material-family normalizer. The prior combined
+nullable-array loop fails inside CheerpJ during actual halo cropping. Real
+initial 43,788-triangle mesh succeeds, then the first 4,608-triangle presentation
+cell enters with families=null and kinds.length=4608 and fails NPE. Ordinary
+JVM does not reproduce it. Explicit nested branches alone did not resolve it;
+separate kind fallback and supplied-family override passes do.
 
-Evidence: output/tests/browser-gameplay-spike/actual-halo-diag-{1,2}/ and
-output/tests/browser-in-game-proof/. Staged jars are immutable per experiment.
-Separate worker HTTP stages use 8087, 8088, 8091, 8092; original 8079 remains.
+This does not establish a specific vendor/compiler root cause. It is a focused
+source compatibility change with the same fallback mapping and copy semantics.
+No runtime engine files or large maintained classes were replaced or shadowed.
 
-Actual failing call captured: real initial mesh normalizes 43788 triangles with
-null families, then full families, successfully. First cropped halo presentation
-cell enters normalizer with count=4608, families=null, kinds.length=4608 and
-fails NPE. Instrumented Java catch around loop did not report its handler.
-Instrumentation was removed from maintained code; preserved diagnostic staged
-jar and logs remain. This has not yet isolated the actual failing operation.
-Replacing nested ternaries with explicit branches did not fix real halo failure.
+Native terrain/atomic scene authority, readiness, collision and stage
+acknowledgements remain required. No halo build is skipped. Current terrain,
+objects, NPCs, sprites and content are used. Desktop GPU defaults are unchanged;
+the browser bootstrap alone selects AWT software/direct framebuffer.
 
-Current normalizer diff is an equivalent TWO-PASS EXPERIMENT, not an accepted
-fix. Ordinary JVM constructor/reflection matrix previously passed 3400 main and
-3400 worker assertions; focused browser proof for this variant is pending.
+The unrelated keyboard/lifecycle WIP is explicitly deferred on ai1 and has not
+been imported. No Oracle/public server, owner account or hosted DB was accessed.
 
-Browser capture additions: separate explicit HTTP port, optional ordinary
-character Accept, optional first real JS-exception capture with generated frame
-source. CheerpJContinue and CheerpJStub are internal control throws and filtered.
-These diagnostics do not bypass scene readiness. Runtime debug slowdowns are
-not gameplay performance results.
+Actual gameplay evidence
+------------------------
+output/tests/browser-gameplay-spike/two-pass-1/
+  software-r5.0-j8-1794073613056/after-accept-world.png
+    Ordinary pointer Accept produces real current world (welcome still open).
+  software-r5.0-j8-1794073729878/
+    authoritative-movement.json — timestamped ground clicks and read-only
+      private-server coordinates; (120,648) through (95,660) and back east.
+    world-58.png — visible player/world after welcome was dismissed.
+    world-185.png — character at (142,647), different visible scenery.
+    events.jsonl — current protocol8 fences, exact static counts, stage acks.
 
-The halo is required by protocol stage acknowledgements; do not skip it,
-force scene ready, bypass collision/authority or suppress a failure and call it
-success. No visible-world or movement acceptance yet.
+Initial atomic scene: objects 1021/1021, walls 35/35, matching hashes. Both halo
+stages complete 16/16 outer sectors, 75,172 terrain / 78,550 structure triangles.
+Pointer walking triggers native authoritative window 49,50 at (95,660), atomic
+ready seq 2, then window 50,50 at (100,658), ready seq 3. Predicted halo stages 3–6
+are materialized and acknowledged normally. These are actual server movement
+and scene transitions, not reflected GAME enum values alone.
 
-workspace-layout check currently reports inherited unclassified output entries
-and assets/sprites in this reused worktree; new outputs use declared tests
+Software world rendering is slow: roughly 2–3 reported client-loop frames/sec
+in this detailed 960x540 scene, versus 49–50 while in menus/designer. That metric
+is not a GPU benchmark. Terrain arrival/rebuild temporarily lowers it further.
+Use for compatibility inspection, not a claim of production usability.
+
+Tests
+-----
+Maintained client build passes. Expanded exact enum-normalization matrix:
+4,200 main + 4,200 worker cases (null/short/mixed arrays, counts 0/1/16/1024/4608),
+public constructor controls 8 main + 8 worker, including halo-sized arrays and
+copy isolation. Ordinary JVM passes; final expanded browser run is pending.
+Original two-pass browser matrix passed 3400+3400 and public controls 4+4.
+
+Focused desktop checks: renderer material-family/classifier, native terrain
+readiness 2, atomic activation 4, object chunk primitive builder, shadow inventory
+cache. Browser transport test passes fragmented/partial/signed bytes, 1 MiB
+frame, EOF and receive limit. Python/JS syntax and invalid port rejection pass.
+Logs: output/tests/browser-in-game-proof/.
+
+Diagnostic JS all-exception tracing is optional and records generated sources
+only to ignored local evidence. Internal CheerpJContinue/Stub throws are
+filtered. Tracing proved too intrusive for gameplay timing and caused a
+separate private socket timeout; that run is excluded from stability evidence.
+Diagnostic entry/exception logging was removed from maintained renderer source.
+
+Private review and reproduction
+-------------------------------
+Final distinct review URL and immutable staged source SHA will be recorded here
+before READY. Existing immutable owner-review JVM 230316 / HTTP 230317 on
+43629/43529/8079 remains unchanged. Worker HTTP stages are separate. Only
+browserdemo  / BrowserProof13 disposable account/data is used; ordinary character
+design is completed via pointer input. Do not connect owner credentials.
+
+Fresh standalone reproduction when the diagnostic ports are free:
+  python3 scripts/browser-gameplay/start.py --name NEW-RUN
+  node scripts/browser-gameplay/inspect.mjs RUN mesh-probe 25
+  node scripts/browser-gameplay/inspect.mjs RUN software 300 --login \
+    --accept-character --walk-proof --server-status=RUN/status.json
+
+Separate browser staging while reusing an existing immutable private server:
+  python3 scripts/browser-gameplay/prepare.py --name NEW-WEB --http-port 8093
+  python3 scripts/browser-gameplay/serve.py RUN/web --port 8093
+  node scripts/browser-gameplay/inspect.mjs RUN software 300 --login \
+    --port=8093 --walk-proof --server-status=PRIVATE-RUN/status.json
+
+Runtime is loaded/credited from CheerpJ's official CDN, not redistributed:
+https://cheerpj.com/docs/reference/cheerpjInit
+https://cheerpj.com/docs/guides/cheerpj-debug.html
+WasmGC is documented experimental. Both 25-second and 75-second probes
+initialized its runtime but did not complete entry into our probe main; it is
+not enabled for the review URL. This is an observed timeout, not a diagnosis
+of the experimental engine or a gameplay performance measurement.
+
+Known limitations
+-----------------
+AWT/software only. Native LWJGL browser path still lacks lwjgl.js and has not
+been ported. No production networking/security/distribution acceptance, no
+full content/combat audit or keyboard-lifecycle claim. Tests use isolated
+headless Chrome/CDP, never owner browser profiles or physical desktop input.
+
+workspace-layout check reports inherited unclassified output entries and
+assets/sprites in this reused worktree. New outputs use declared tests
 categories only. No old data was deleted or reorganized.

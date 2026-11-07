@@ -28,7 +28,33 @@ public final class MeshCompatibilityProbe {
                 }
             }
         }
-        return 4;
+        int checks = 4;
+        for (int count : new int[]{16, 4608}) {
+            Renderer3DModelKind[] kinds = new Renderer3DModelKind[count];
+            for (int i = 0; i < count; i++) kinds[i] = Renderer3DModelKind.TERRAIN;
+            // Mirrors real halo cropping: full normalized kinds and either
+            // absent families or supplied per-triangle material overrides.
+            for (boolean supplyFamilies : new boolean[]{false, true}) {
+                Renderer3DMaterialFamily[] families = supplyFamilies
+                    ? new Renderer3DMaterialFamily[]{Renderer3DMaterialFamily.WATER, null} : null;
+                Renderer3DWorldChunkFrame.ChunkMesh mesh = new Renderer3DWorldChunkFrame.ChunkMesh(
+                    0, 0, 0, 0, 0, new int[0], new float[0], new float[0], new int[0], new int[0], new int[0],
+                    new int[0], new int[count], new int[count], kinds, families,
+                    null, null, new int[count], new long[0], 0, 0, count, 0, 0, false, 0, 0L);
+                for (int i = 0; i < count; i++) {
+                    Renderer3DMaterialFamily expected = supplyFamilies && i == 0
+                        ? Renderer3DMaterialFamily.WATER : Renderer3DMaterialFamily.TERRAIN;
+                    if (mesh.getTriangleMaterialFamily(i) != expected) throw new AssertionError("Halo-size material mismatch at " + i);
+                }
+                kinds[0] = Renderer3DModelKind.WALL;
+                if (families != null) families[0] = Renderer3DMaterialFamily.SCENERY;
+                Renderer3DMaterialFamily first = supplyFamilies ? Renderer3DMaterialFamily.WATER : Renderer3DMaterialFamily.TERRAIN;
+                if (mesh.getTriangleMaterialFamily(0) != first) throw new AssertionError("Mesh leaked source family array");
+                kinds[0] = Renderer3DModelKind.TERRAIN;
+                checks++;
+            }
+        }
+        return checks;
     }
     public static String run() throws Exception {
         // Both direct controls finish before any reflective invocation.
@@ -46,7 +72,7 @@ public final class MeshCompatibilityProbe {
             public Integer call() throws Exception {
                 int assertions = 0;
                 for (int repeat = 0; repeat < 200; repeat++) {
-                    for (int count : new int[]{0, 1, 16, 1024}) {
+                    for (int count : new int[]{0, 1, 16, 1024, 4608}) {
                         for (boolean provideKinds : new boolean[]{false, true}) {
                             Renderer3DModelKind[] kinds = provideKinds ? new Renderer3DModelKind[]{Renderer3DModelKind.TERRAIN, null} : null;
                             for (boolean provideFamilies : new boolean[]{false, true}) {
@@ -55,7 +81,13 @@ public final class MeshCompatibilityProbe {
                                 try { result = (Renderer3DMaterialFamily[]) method.invoke(null, new Object[]{families, kinds, count}); }
                                 catch (Throwable error) { throw new IllegalStateException("Normalizer failed: repeat=" + repeat + " count=" + count + " kinds=" + provideKinds + " families=" + provideFamilies, error); }
                                 if (result.length != count) throw new AssertionError("Wrong normalizer length");
-                                for (Renderer3DMaterialFamily family : result) if (family == null) throw new AssertionError("Null normalized family");
+                                for (int i = 0; i < result.length; i++) {
+                                    Renderer3DMaterialFamily expected = provideFamilies && i == 0
+                                        ? Renderer3DMaterialFamily.WATER
+                                        : provideKinds && i == 0 ? Renderer3DMaterialFamily.TERRAIN
+                                        : Renderer3DMaterialFamily.UNCLASSIFIED;
+                                    if (result[i] != expected) throw new AssertionError("Material mismatch at " + i);
+                                }
                                 assertions++;
                             }
                         }
