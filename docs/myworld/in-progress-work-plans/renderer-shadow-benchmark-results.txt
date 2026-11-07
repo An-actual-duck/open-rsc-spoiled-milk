@@ -1,0 +1,161 @@
+Native geometry-shadow benchmark results — READY for Core review
+
+The recorded High normal-camera workload has substantial render-work headroom
+at physical1920x1080/fullscreen and logical960x540 on this PC. The real visible
+60s run completed3601 frames (~60/s), with no CPU/GPU render sample over16.667ms.
+Completed post-swap intervals p99=18.560ms, max=24.476ms; none exceeded25ms.
+These are completed-render/event intervals, not proof of scanout-perfect60FPS.
+Rare GC/submission and loading tails remain in other cases; no universal-world
+or cold-loading60FPS claim is made.
+
+Frozen runtime and workload
+  Client source: 5f6e1dbea25d063ec5396ba810c8ce2b339133b0
+  Client SHA256: 883fa6f7fa7f9157e92e234e7cd71e8de1bb092e4f373bf936c07d771c1c4e4d
+  Server fix source: 7cba3d710045b4a3f96c70824260c678fa6dae81
+  Map manifest SHA256: 42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b
+  Parent CPU inventory: Ryzen7900X;24 logical CPUs.
+  GL renderer: AMD Radeon RX 6700 XT (radeonsi, navi22, LLVM 20.1.2, DRM 3.64, 7.0.0-30-generic)
+  GL version: 4.6 (Compatibility Profile) Mesa 25.2.8-0ubuntu0.24.04.2
+  Java: Temurin1.8.0_482, Xms512m/Xmx2g matching production. No forced GC,
+  heap/governor changes or owner process modifications. Desktop/editor background
+  work may exist; initial host load is saved in each command.json.
+  The four main runs have identical client JAR, compiled bootstrap classes,
+  server JARs, map and seed identities (asserted by the report aggregation).
+  All use normal zoom75/effective750, fixed sun135/45, observed day tone,
+  30s warmup, draw40/fog-start28 tiles. Normal protocol/RSA authentication and
+  atomic scene readiness are retained; no fake GAME/scene ACK shortcut.
+  Each busy world has16 equipped registered dummy players,32 NPCs,8 actual
+  test bear familiars plus the viewer:17 players/40 NPCs received.935 game
+  objects/29 wallobjects and89 resident chunks/435422 triangles stay constant.
+  Owned snapshot groups/layers are57–58/163–164, compatibility fallback0.
+  Eight normal outgoing projectile emitters produce real client effects:
+  main samples49/60 nonzero, max8, mean5.8 active projectile actors. This is
+  rendering workload, not a damage-combat/server-throughput benchmark.
+
+Quantitative results (milliseconds; sample distributions, not additive CPU+GPU)
+Case                  CPU p95/p99/max     GPU p95/p99/max    CPU/GPU >16.667
+High hidden           4.466/5.057/ 8.859   8.284/8.962/ 9.810    0/0
+Low hidden            4.405/5.077/17.046   7.099/8.028/17.024    1/1
+Legacy hidden         4.265/4.731/ 9.191   6.211/6.775/ 8.690    0/0
+High fullscreen       4.439/4.906/11.654   7.324/7.883/10.626    0/0
+Normal sun            4.083/4.595/ 8.894   7.382/8.039/ 9.902    0/0
+Max camera/fog on     3.728/4.270/ 8.452   7.184/8.176/ 9.855    0/0
+Normal walk           5.834/6.334/17.717   7.975/10.110/18.609    2/1
+Neighbor load         2.226/2.706/52.973   5.987/6.782/ 7.483    2/0
+Max camera/fog off    3.739/4.035/17.812   7.244/7.826/20.309    2/2
+
+Completed post-swap cadence and exact evidence directories
+Case                  interval p99/max   >25/>33.334   ownqueue drops
+High hidden           18.825/ 23.028    0/0            0
+  /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-high/busy-camera-20261107T205446Z
+Low hidden            18.732/ 31.422    12/0            0
+  /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-low/busy-camera-20261107T205913Z
+Legacy hidden         18.377/ 22.680    0/0            0
+  /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-legacy/busy-camera-20261107T210221Z
+High fullscreen       18.560/ 24.476    0/0            0
+  /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-fullscreen/busy-camera-20261107T210609Z
+Normal sun            18.493/ 21.962    0/0            0
+  /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-sun/sun-motion-20261107T211014Z
+Max camera/fog on     18.511/ 22.568    0/0            0
+  /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-max-camera/busy-camera-20261107T211603Z
+Normal walk           20.267/ 31.356    5/0            0
+  /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-walk/busy-walk-20261107T211941Z
+Neighbor load         18.317/121.664    3/2            5
+  /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-transition/transition-20261107T212521Z
+Max camera/fog off    18.249/ 31.007    5/0            0
+  /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-max-fog-off/busy-camera-20261107T212751Z
+
+Interpretation and bounded coverage
+- Hidden runs measure real native CPU/GPU work but do not establish visible
+  presentation. Fullscreen visibility flags are1 for all60 samples, actual
+  window/framebuffer/content1920x1080, modeFULLSCREEN and logical960x540.
+  The fixture reapplies the ordinary window setting after profile login; it
+  does not change production borderless/profile behavior. Default borderless
+  preview10 used1849x1040 content and cannot count as1080 acceptance. The owner
+  approved that preview visual direction; the manager reviewed focused fixes.
+- Low has one17ms CPU/GPU tail aligned with12ms young GC; timing correlation
+  does not prove an exact STW cause. Walk and FogOff have rare work tails too.
+  Loading has2 CPU render samples>50ms and max121.664ms completed interval.
+  Ownqueue0drops never means no display gaps. GPU elapsed timeline may include
+  CPU submission starvation and must not be summed with CPU submission time.
+- Startup15s-warmup preview10 had114.001ms completed interval and113.150ms
+  producer interval in the window reporting85ms full+10ms young GC. That
+  evidence remains intact; final steady runs use identical30s warmup.
+- Normal-rate sun60 changes az86.164->80.261/elevation71.861->71.107, rate1.
+  It records25 far rebuild completions/60s (~0.417Hz), max5.084ms. Final13
+  polls completions every prepared frame;1s edge trim and retained/excluded
+  counts are explicit. Old far polling could lag2.5s, so earlier far phase
+  attribution is provisional. Raw CSVs and all negative attempts are retained.
+- Maximum UI camera requests900 but clamps effective/base zoom2400. FogOn
+  has40/28 tile draw/start and9920/8384 world clip/start. Ordinary FogOff
+  exposes144/144 tiles and23232/23232 world units. Both retain57 projected
+  actor candidates, but pixel size and color triangle coverage differ. This
+  tests current supported view settings, not a custom160-tile horizon.
+- Walking genuinely traverses502..506 at460,4 tiles through ordinary queues.
+  Neighbor loading moves502->478,453 and restores the correct different scene
+  population935->780 objects/29->25 walls. No fixture exception was accepted.
+- Normal night samples minute45 of the actual60-minute server cycle, rate1, unoverridden
+  Cycle tone/light: night-deep, az~267/elevation10. Manager reviewed readable
+  palette/UI and expected grazing shadows. Roof-on ordinary account preference
+  yieldshideRoofs=false/visibilityVISIBLE and1634 resident roof triangles,
+  compared with default0. Off removes shadows while water/geometry remain;
+  High preserves aligned contact silhouettes and water. Images are below.
+- Roof policy uses positive same-level declared bits. Actual GPU receiver mask
+  exports423 covered cells with camera matrices; engine ray analysis verifies
+  covered floor pixels with ambient retained. Raw Scene snapshots may precede
+  presentation/coverage attachment, so their transient0 is not policy proof.
+  Bank L0 bits are0 while42 upper-level roof tiles exist. Multi-storey data
+  propagation is explicitly deferred by the owner; do not infer open sky or
+  full multi-storey sunlight occlusion from this current policy.
+- Fresh paired login/relogin uses another JVM/CSV against the same isolated
+  server, preserving935 objects/29 walls and89 chunks/435422 triangles exactly.
+  It is not a claim about in-process logout/relogin GPU timer-ID uniqueness.
+  Existing neighbor-transition CSV has0 duplicate timer samples.
+
+Visual/readiness evidence (5s phases, no performance acceptance from these)
+  final13-night-cycle / night: /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-night-cycle/night-20261107T213133Z
+    raw /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-night-cycle/night-20261107T213133Z/captures/capture-20261107-163201-496-001/07-final.png
+  final13-roof-on / visual: /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-roof-on/visual-20261107T213539Z
+    raw /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-roof-on/visual-20261107T213539Z/captures/capture-20261107-163607-961-001/07-final.png
+  final13-off-water / visual: /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-off-water/visual-20261107T213851Z
+    raw /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-off-water/visual-20261107T213851Z/captures/capture-20261107-163920-355-001/07-final.png
+  final13-water / visual: /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-water/visual-20261107T213940Z
+    raw /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-water/visual-20261107T213940Z/captures/capture-20261107-164009-160-001/07-final.png
+  final13-relog-proof / relog: /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-relog-proof/relog-20261107T214641Z
+    raw /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-relog-proof/relog-20261107T214641Z/captures/capture-20261107-164710-010-001/07-final.png
+    PASS object, wallobject, resident chunk and triangle parity.
+  final13-relog-proof / visual: /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-relog-proof/visual-20261107T214610Z
+    raw /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-relog-proof/visual-20261107T214610Z/captures/capture-20261107-164638-725-001/07-final.png
+
+Safety, tests and handoff boundaries
+- Maintained tooling only: scripts/renderer-benchmark.py, two test-only Java
+  bootstraps, guard/report tests and documentation. No production renderer
+  sources or authored assets/maps were edited in this worker.
+- Loopback43639/43539, copied immutable JARs/runtime content, checked zero-account
+  SQLite seed and registered disposable account. External services disabled.
+  No owner/live account DB, Oracle host, preserved PC rollback or release touched.
+- Fourteen safety/report tests pass, Java8 bootstraps compile and run normal
+  private logins, Python compilation and diff whitespace checks pass.
+  Tests cover unmarked/symlink/changed-artifact refusal, strict relog history,
+  fixture exceptions/real movement, buffered report completion, GPU edge/duplicate
+  accounting and viewport/surface distinction, unrelated PID refusal, exited
+  zombie handling, live listener refusal and completed-connection TIME_WAIT.
+- Linux-only private process control uses pidfd stable descriptors, exact cwd
+  and entrypoint ownership. Exited/zombie races are skipped, unrelated processes
+  refused; only own client can receive SIGTERM. Own server uses graceful STOP
+  and waits for process exit, never a server signal. Port probe ignores closed
+  TIME_WAIT via reuse-address but refuses live listeners. GPU flock waits at
+  most10s; an earlier pre-diagnostic refusal was preserved and a fresh paired
+  proof used rather than weakening history guards.
+- All own processes are stopped, loopback test ports released; data/evidence
+  preserved. Existing browser fixture JVM230316 was not touched and remains
+  running. No integration, production release or deployment occurred.
+- Workspace-layout check has inherited unclassified old output-root entries in
+  ai3; new outputs use declared tests/builds categories only. No old data deleted.
+- Bounded captures may cap the ordinary12-frame diagnostic burst to1–2 complete
+  frames after timing; these are not strict12-frame visual proofs. Default12
+  behavior is unchanged. See fixture documentation for commands and negative cases.
+
+Machine-readable aggregation: /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/final13-results/measurements.json
+Raw records, command/scenario receipts, hardware/settings, GPU CSV, captures and
+per-run SHA/class receipts are grouped under the exact directories above.
