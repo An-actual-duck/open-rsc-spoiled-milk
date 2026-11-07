@@ -53,10 +53,20 @@ public final class ThinShadowTemporalGpuFixture {
                 try(java.io.BufferedReader reader=Files.newBufferedReader(Paths.get(args[1]))){reader.readLine();String row;while((row=reader.readLine())!=null){String[] values=row.split("\\t");if(!values[0].equals("12"))continue;require(values[1].equals("128")&&values[2].equals("128"),"Unexpected native texture12 canvas");int x=Integer.parseInt(values[4]),y=Integer.parseInt(values[5]),at=y*128+x;require(!seen[at],"Duplicate native alpha pixel");seen[at]=true;loaded++;long rgba=Long.parseLong(values[6]);for(int c=0;c<4;c++)cutout.put(at*4+c,(byte)(rgba>>((3-c)*8)));}}
                 require(loaded==128*128,"Incomplete native texture12 export");
             }
+            if(args.length==1){
+                Properties properties=new Properties();
+                try(java.io.InputStream source=Files.newInputStream(Paths.get("tests/myworld/fixtures/native-railing-alpha.properties"))){properties.load(source);}
+                require(properties.getProperty("texture").equals("12") && properties.getProperty("width").equals("128") && properties.getProperty("height").equals("128"),"Checked native railing fixture metadata");
+                byte[] bits=Base64.getDecoder().decode(properties.getProperty("alphaBits"));require(bits.length==2048,"Checked native railing mask length");
+                nativeFence=true;textureSize=128;cutout=ByteBuffer.allocateDirect(128*128*4);int opaque=0;
+                for(int i=0;i<128*128;i++){boolean solid=(bits[i/8]&(1<<(i%8)))!=0;if(solid)opaque++;cutout.put((byte)255).put((byte)255).put((byte)255).put(solid?(byte)255:0);}cutout.flip();
+                require(opaque==4444,"Checked native railing coverage changed");
+            }
             gl.glTexImage2D(gl.GL_TEXTURE_2D,0,gl.GL_RGBA,textureSize,textureSize,0,gl.GL_RGBA,gl.GL_UNSIGNED_BYTE,cutout);
             String vertex="#version 120\nattribute vec3 aPosition;uniform float uCenterX,uCenterZ,uSpanX,uSpanZ;varying vec3 vShadowWorldPosition;varying float vModelKind;void main(){vShadowWorldPosition=aPosition;vModelKind=1.0;gl_Position=vec4((aPosition.x-uCenterX)*2.0/uSpanX,(aPosition.z-uCenterZ)*2.0/uSpanZ,0.0,1.0);}";
             int vs=compile(gl.GL_VERTEX_SHADER,vertex),fs=compile(gl.GL_FRAGMENT_SHADER,"#version 120\nvarying float vModelKind;uniform float uLightDirectionX,uLightDirectionY,uLightDirectionZ;"+OpenGLGeometryShadows.FRAGMENT_SOURCE+"void main(){gl_FragColor=vec4(vec3(geometryShadowVisibility()),1.0);}");program=gl.glCreateProgram();gl.glAttachShader(program,vs);gl.glAttachShader(program,fs);gl.glBindAttribLocation(program,0,"aPosition");gl.glLinkProgram(program);require(gl.glGetProgrami(program,gl.GL_LINK_STATUS)!=0,gl.glGetProgramInfoLog(program));gl.glDeleteShader(vs);gl.glDeleteShader(fs);
             pass=new OpenGLGeometryShadows(gl,functions);RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);
+            double nearMean=-1;
             StringBuilder csv=new StringBuilder("case,cutout,frame,azimuth,farRebuilt,shadowArea\n");
             for(boolean cut:new boolean[]{false,true})for(String mode:new String[]{"static","camera-near","camera-far","sun-rebuild","sun-cached","blend","cascade-motion"}){
                 alpha=cut;signature++;RendererRemasterLightSettings.adjustAzimuth(90-RendererRemasterLightSettings.getAzimuthDegrees());fenceZ=mode.equals("camera-near")?1000:(mode.equals("blend")||mode.equals("cascade-motion"))?5100:6500;mesh();double total=0,min=Double.POSITIVE_INFINITY,max=0,delta=0,previous=0;int frames=mode.equals("sun-cached")?180:64;byte[] previousPixels=new byte[W*H];double residual=0,maxResidual=0;
@@ -77,6 +87,19 @@ public final class ThinShadowTemporalGpuFixture {
                     }
                     System.arraycopy(gray,0,previousPixels,0,gray.length);
                     total+=energy;min=Math.min(min,energy);max=Math.max(max,energy);if(i>0)delta=Math.max(delta,Math.abs(energy-previous));previous=energy;
+                }
+                double mean=total/frames;
+                Files.write(output.resolve("temporal.csv"),csv.toString().getBytes("UTF-8"));
+                require(mean>0,"Shadow was removed instead of stabilized: "+mode);
+                if(mode.equals("static"))require(max-min<.01,"Stationary camera/sun shadows are not stable");
+                if(cut && mode.equals("camera-near"))nearMean=mean;
+                if(cut && mode.equals("sun-cached")){
+                    // Analytic native mask area is128*192*4444/16384=6666 before receiver bias.
+                    if(functions.integer(0x0D33)>=4096) {
+                        require(mean>5000 && mean<8000,"Native thin shadow energy lost/inflated: "+mean);
+                        require(delta/mean<.035,"Cached sun shadow visibly pops: "+delta/mean);
+                    }else require(delta/mean<.10,"Capability-bounded cached sun shadow pops: "+delta/mean);
+                    require(nearMean>5700 && nearMean<6200,"Close native cutout coverage changed: "+nearMean);
                 }
                 System.out.println(mode+" cutout="+cut+" mean="+total/frames+" min="+min+" max="+max+" maxFrameDelta="+delta+" reprojectedMean="+residual/(frames-1)+" reprojectedMax="+maxResidual);
             }

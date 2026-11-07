@@ -76,6 +76,10 @@ public final class TerrainDirectionalLightingGpuFixture {
                     require(flat-towardSlope>=10 && flat-awaySlope>=10,"Overhead slopes lost shape at sun"+elevation);
                     require(sample(.7071068f,.7071068f,0,2,1,100,2)>awaySlope+8,"Terrain Shading has no meaningful overhead slope control");
                 }else require(towardSlope>awaySlope+35,"Low/diagonal sunlight lost facing-slope contrast at sun"+elevation);
+                if(elevation<=10){
+                    value("uLightIntensity",0);int ambient=sample(.7071068f,.7071068f,0,2,1,100,8);value("uLightIntensity",.65f);
+                    require(Math.abs(awaySlope-ambient)<=1,"Physical away-facing low-sun slope must retain ambient darkness");
+                }
             }
             value("uLightIntensity",0);
             int nightToward=sample(-.6f,.8f,0,2,1,0,8),nightAway=sample(.6f,.8f,0,2,1,255,8);

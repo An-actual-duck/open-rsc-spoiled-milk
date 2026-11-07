@@ -21,6 +21,7 @@ public final class GeometryShadowGpuFixture {
 	private static int vertices, indices, alphaTexture;
 	private static boolean alpha;
 	private static boolean slopeReceiver, wallReceiver, contactCard;
+    private static float slopeGradient=-.25f;
 	private static int receiverPlane;
 	private static float receiverKind=1;
 	private static GeometryShadowRoofMask roofMask=GeometryShadowRoofMask.EMPTY;
@@ -63,7 +64,7 @@ public final class GeometryShadowGpuFixture {
 			0,-128,-64,0,0, 0,-128,64,1,0, 0,-256,64,1,1,
 			0,-128,-64,0,0, 0,-256,64,1,1, 0,-256,-64,0,1};
 		for(int i=0;i<6;i++) {
-			if(slopeReceiver)geometry[i*5+1]=geometry[i*5]*-.25f;
+			if(slopeReceiver)geometry[i*5+1]=geometry[i*5]*slopeGradient;
 			if(wallReceiver){geometry[i*5+1]=geometry[i*5];geometry[i*5]=-300;}
 		}
 		if(contactCard)for(int i=6;i<12;i++)geometry[i*5+1]+=128;
@@ -196,11 +197,22 @@ public final class GeometryShadowGpuFixture {
 				for(int x=80;x<=240;x+=10)for(int z=-240;z<=240;z+=10)
 					require(brightness(grazing,x,z)>240,"grazing ground self-shadow at sun "+elevation);
 			}
+            for(boolean sloped:new boolean[]{false,true})for(int elevation:new int[]{5,10,25,45,85}) {
+                slopeReceiver=sloped;slopeGradient=elevation<25?.25f:-.25f;signature++;mesh();RendererRemasterLightSettings.adjustElevation(elevation-RendererRemasterLightSettings.getElevationDegrees());
+                pass.prepare(SCENE,0,0,-6000);
+                ByteBuffer farSlope=draw(pass,program,null);
+                for(int x=80;x<=240;x+=10)for(int z=-240;z<=240;z+=10)
+                    require(brightness(farSlope,x,z)>240,"far receiver self-shadow at sun"+elevation+" slope="+sloped+" x="+x+" z="+z+" value="+brightness(farSlope,x,z));
+            }
 			slopeReceiver=false;contactCard=true;signature++;mesh();RendererRemasterLightSettings.adjustElevation(45-RendererRemasterLightSettings.getElevationDegrees());
 			pass.prepare(SCENE,0,0,0);ByteBuffer contact=draw(pass,program,output.resolve("contact-card.png"));
 			require(brightness(contact,-12,0)<100,"shadow detached more than0.1tile from contact");
 			require(brightness(contact,20,0)>240,"contact bias spread onto lit side");
 			require(brightness(contact,-96,0)<100&&brightness(contact,-180,0)>240,"contact silhouette extent changed");
+            signature++;pass.prepare(SCENE,0,0,-6000);ByteBuffer farContact=draw(pass,program,output.resolve("far-contact-card.png"));
+            require(brightness(farContact,-12,0)<100,"far shadow detached more than0.1tile from contact");
+            require(brightness(farContact,20,0)>240,"far contact bias spread onto lit side");
+            require(brightness(farContact,-96,0)<100&&brightness(farContact,-180,0)>240,"far contact silhouette extent changed");
 			GeometryShadowRoofMask.Cache roofCache=new GeometryShadowRoofMask.Cache();
 			roofMask=roofCache.get(GeometryShadowRoofMaskFixture.frame(1L<<2,false,101),0);
 			gl.glActiveTexture(gl.GL_TEXTURE0+5);gl.glBindTexture(gl.GL_TEXTURE_2D,alphaTexture);pass.prepare(SCENE,0,0,0);
@@ -247,12 +259,15 @@ public final class GeometryShadowGpuFixture {
             pass.prepare(SCENE,3600,0,0);pass.suspend();require(textureId(pass,"previousFar")==0&&previousProjection.get(pass)==null,"suspend retained history");
             pass.prepare(SCENE,3600,0,0);require(previousProjection.get(pass)==null,"re-enable reused suspended history");
             require(OpenGLGeometryShadows.supportedFarSize(2048)==2048&&OpenGLGeometryShadows.supportedFarSize(4096)==4096,"far capability clamp");
-			int nearTexture=textureId(pass,"near"),farTexture=textureId(pass,"far");
+			pass.prepare(SCENE,4200,0,0);
+            int retainedHistoryTexture=textureId(pass,"previousFar");require(retainedHistoryTexture!=0,"final live history missing before deletion check");
+            int nearTexture=textureId(pass,"near"),farTexture=textureId(pass,"far");
 			require(nearTexture!=0&&farTexture!=0,"Off bounded texture retention contract");
 			pass.close();pass.close();pass=null;
 			require(!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,nearTexture)
 				&&!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,farTexture)
-				&&!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,roofTexture),"shadow textures leaked on close");
+				&&!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,roofTexture)
+                &&!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,retainedHistoryTexture),"shadow textures leaked on close");
 			System.out.println("PASS depth silhouette, cutout alpha, floor/slope/wall bias, cache invalidation, High/Low/Off, cleanup and GL state restoration");
 		} finally {
 			OpenGLGpuTimer.setDiagnosticSink(null);if(frameTimer!=null)frameTimer.close();

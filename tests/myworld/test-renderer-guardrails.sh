@@ -14,6 +14,7 @@ renderer_tests=(
   test-desktop-graphics-options-tab.py
   test-opengl-geometry-modes.py
   test-geometry-shadow-projection.py
+  test-shadow-context-epoch.py
   test-geometry-shadow-coordinates.py
   test-geometry-shadow-roof-mask.py
 	test-opengl-below-terrain.py
