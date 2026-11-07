@@ -1585,7 +1585,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			|| RendererLightingSettings.getMode() != RendererLightingSettings.Mode.DIRECTIONAL
 			|| RendererShadowSettings.getQuality() == RendererShadowSettings.Quality.OFF
 			|| Boolean.getBoolean("spoiledmilk.shadowBenchmarkLegacyMask")) {
-			if (geometryShadows != null) geometryShadows.publishDiagnosticFrame();
+			if (geometryShadows != null) { geometryShadows.pollGpuTimers(); geometryShadows.publishDiagnosticFrame(); }
 			return false;
 		}
 		if (!geometryShadowCapabilityChecked) {

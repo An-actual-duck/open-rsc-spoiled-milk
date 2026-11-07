@@ -213,6 +213,11 @@ public final class GeometryShadowGpuFixture {
 			roofMask=roofCache.get(GeometryShadowRoofMaskFixture.frame(0,false,102),0);pass.prepare(SCENE,0,0,0);
 			require(brightness(draw(pass,program,null),180,40)>240,"unknown/outdoor coverage inferred indoor shadow");
 			java.lang.reflect.Field roofField=OpenGLGeometryShadows.class.getDeclaredField("roofTexture");roofField.setAccessible(true);int roofTexture=roofField.getInt(pass);
+			signature++;pass.prepare(SCENE,0,0,0);draw(pass,program,null);
+			long farSamplesBefore=pass.farGpuSamples();pass.pollGpuTimers();
+			require(pass.farGpuSamples()>farSamplesBefore,"completed far query waited for another rebuild");
+			long farSamplesAfter=pass.farGpuSamples();pass.pollGpuTimers();
+			require(pass.farGpuSamples()==farSamplesAfter,"poll repeated an already completed far sample");
 			RendererShadowSettings.setQuality(RendererShadowSettings.Quality.OFF);require(!pass.prepare(SCENE,0,0,0),"Off still prepared depth maps");
 			require(pass.nearDrawCalls==0&&pass.farDrawCalls==0&&pass.nearCpuNanos==0&&!pass.farRebuilt,"Off retains stale per-frame diagnostics");
 			require(pass.diagnosticSnapshot()[1]==0&&pass.diagnosticSnapshot()[5]==0,"Off snapshot retains stale active/draw state");

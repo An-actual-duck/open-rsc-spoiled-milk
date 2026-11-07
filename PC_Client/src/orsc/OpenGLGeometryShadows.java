@@ -163,6 +163,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 
 	boolean prepare(Scene scene, double centerX, double centerY, double centerZ) throws Exception {
 		if (closed) throw new IllegalStateException("Shadow resources already closed");
+		pollGpuTimers();
 		clearPrepared();
 		quality = RendererShadowSettings.getQuality();
 		if (quality == RendererShadowSettings.Quality.OFF) { publishDiagnosticFrame(); return false; }
@@ -337,6 +338,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		} finally { diagnosticLock.unlock(); }
 	}
 	boolean isActive() { return active; }
+	void pollGpuTimers() throws Exception { farTimer.pollCompleted(); }
 	long nearGpuNanos() { return nearTimer.lastNanos(); }
 	long farGpuNanos() { return farTimer.lastNanos(); }
 	long nearGpuSamples() { return nearTimer.samples(); }

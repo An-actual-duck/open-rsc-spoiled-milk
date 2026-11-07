@@ -2,6 +2,7 @@ package orsc;
 
 /** Timestamp pairs allow nested pass measurement; results are never waited on. */
 final class OpenGLGpuTimer implements AutoCloseable {
+	static final boolean FAR_QUERY_POLL_EVERY_FRAME = true;
 	interface SampleSink { void sample(String pass, long sequence, long gpuNanos); }
 	private static volatile SampleSink diagnosticSink;
 	static void setDiagnosticSink(SampleSink sink) { diagnosticSink = sink; }
@@ -32,6 +33,12 @@ final class OpenGLGpuTimer implements AutoCloseable {
 	void begin() throws Exception {
 		if (functions == null || !functions.timerSupported) return;
 		if (active) throw new IllegalStateException("GPU timer already active");
+		pollCompleted();
+		if (pending[cursor]) { skippedSamples++; return; }
+		functions.timestamp(starts[cursor]); sequences[cursor] = ++submittedSamples; active = true;
+	}
+	void pollCompleted() throws Exception {
+		if (functions == null || !functions.timerSupported) return;
 		for (int i = 0; i < RING_SIZE; i++) {
 			if (pending[i] && functions.available(ends[i])) {
 				long finish = functions.result(ends[i]);
@@ -41,8 +48,6 @@ final class OpenGLGpuTimer implements AutoCloseable {
 				if (sink != null) sink.sample(label, sequences[i], lastNanos);
 			}
 		}
-		if (pending[cursor]) { skippedSamples++; return; }
-		functions.timestamp(starts[cursor]); sequences[cursor] = ++submittedSamples; active = true;
 	}
 	void end() throws Exception {
 		if (!active) return;
