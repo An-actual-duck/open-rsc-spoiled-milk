@@ -99,6 +99,14 @@ public final class BatAttackReturnClientFixture {
         check(enemy.projectileRange == 40 && bat.projectileRange == 0, "existing incoming-projectile lifetime is unchanged");
         check(enemy.npcProjectileAttackStartedMillis == 0,
             "draining a Naga does not falsely trigger that enemy's attack pose");
+        ORSCharacter player = new ORSCharacter(); player.serverIndex = 2;
+        ORSCharacter[] players = new ORSCharacter[3]; players[2] = player; set(client, "playerServer", players);
+        handler.getPacketsIncoming().dataBuffer = new byte[] {0,1,0,2,3,0,(byte)drain.id,0,1};
+        handler.getPacketsIncoming().packetEnd = 0;
+        call(handler, "drawNearbyPlayers", new Class<?>[0]);
+        check(player.attackingNpcServerIndex == 1 && player.incomingProjectileSprite.id == drain.id,
+            "player-victim packets retain the same bat as logical shooter");
+        check(player.projectileRange == 40, "player-victim drain uses the same original animation lifetime");
         System.out.println("PASS " + checks + " bat return trajectory, facing, frame-clock and packet ownership checks");
     }
 }

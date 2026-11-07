@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
@@ -15,6 +16,10 @@ args = parser.parse_args()
 jar, output = args.client_jar.resolve(), args.output.resolve()
 output.mkdir(parents=True, exist_ok=True)
 java = Path(os.environ.get("JAVA_HOME", "/home/justin/jdk8u482-b08")) / "bin"
+sheet = "legacy-animations/Projectiles/summon-bat-vampirism-reverse/summon-bat-vampirism-reverse.png"
+sheet_bytes = (ROOT / "dev/myworld/assets/runtime" / sheet).read_bytes()
+with zipfile.ZipFile(jar) as archive:
+    assert archive.read("myworld-assets/" + sheet) == sheet_bytes, "built client must preserve the approved bat sheet"
 source = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()
 for arguments in ("var5, var8", "var7, var10", "var6, var9"):
     assert source.count(f"getProjectileTravelCoordinate(projectileDef, {arguments}, var3.projectileRange)") == 2, \
@@ -35,4 +40,5 @@ if result.returncode:
 assert "PASS " in result.stdout
 (output / "receipt.json").write_text(json.dumps({"clientJar": str(jar),
     "sha256": hashlib.sha256(jar.read_bytes()).hexdigest(), "passed": True,
+    "batSheetSha256": hashlib.sha256(sheet_bytes).hexdigest(),
     "scope": "actual client helpers and packet parser; headless, no graphical owner review"}, indent=2) + "\n")
