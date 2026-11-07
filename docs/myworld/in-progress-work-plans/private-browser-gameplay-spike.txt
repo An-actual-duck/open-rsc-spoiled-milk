@@ -1,3 +1,9 @@
+Historical diagnostic status — November 7, 2026
+The observations below describe the initial, blocked feasibility phase.
+For the subsequent shared-source compatibility fix, actual visible world,
+authoritative walking/scene transitions and current private review URL,
+see browser-in-game-proof.txt. Preserve this earlier evidence as history.
+
 Private browser gameplay feasibility spike — diagnostic handoff
 
 Scope
