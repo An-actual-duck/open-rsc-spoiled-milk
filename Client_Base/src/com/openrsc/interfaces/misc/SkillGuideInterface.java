@@ -1359,25 +1359,26 @@ public final class SkillGuideInterface {
 	}
 
 	private void addRuneTierGuide() {
-		addAltarGuide(33, 1, "Air Rune", "306,593");
-		addAltarGuide(32, 1, "Water Rune", "147,684");
-		addAltarGuide(34, 1, "Earth Rune", "62,464");
-		addAltarGuide(31, 1, "Fire Rune", "50,633");
-		addAltarGuide(37, 1, "Life Rune", "283,694");
-		addAltarGuide(35, 8, "Mind Rune", "297,438");
-		addAltarGuide(36, 15, "Body Rune", "259,503");
-		addAltarGuide(41, 22, "Chaos Rune", "232,375");
-		addAltarGuide(46, 30, "Cosmic Rune", "104,3556");
-		addAltarGuide(40, 38, "Nature Rune", "392,804");
-		addAltarGuide(42, 46, "Law Rune", "409,534");
-		addAltarGuide(38, 54, "Death Rune", "395,3541");
-		addAltarGuide(825, 62, "Soul Rune", "611,3599");
-		addAltarGuide(619, 70, "Blood Rune", "247,102");
+		// Global logical coordinates and signed levels, matching the Tile HUD.
+		addAltarGuide(33, 1, "Air Rune", 306, 593, 0);
+		addAltarGuide(32, 1, "Water Rune", 147, 684, 0);
+		addAltarGuide(34, 1, "Earth Rune", 62, 464, 0);
+		addAltarGuide(31, 1, "Fire Rune", 50, 633, 0);
+		addAltarGuide(37, 1, "Life Rune", 283, 694, 0);
+		addAltarGuide(35, 8, "Mind Rune", 297, 438, 0);
+		addAltarGuide(36, 15, "Body Rune", 259, 503, 0);
+		addAltarGuide(41, 22, "Chaos Rune", 232, 375, 0);
+		addAltarGuide(46, 30, "Cosmic Rune", 104, 724, 10);
+		addAltarGuide(40, 38, "Nature Rune", 392, 804, 0);
+		addAltarGuide(42, 46, "Law Rune", 409, 534, 0);
+		addAltarGuide(38, 54, "Death Rune", 392, 708, -1);
+		addAltarGuide(825, 62, "Soul Rune", 611, 767, -1);
+		addAltarGuide(619, 70, "Blood Rune", 247, 102, 0);
 	}
 
-	private void addAltarGuide(int itemId, int level, String runeName, String coordinate) {
+	private void addAltarGuide(int itemId, int level, String runeName, int x, int y, int worldLevel) {
 		skillMenuEntries.add(new SkillMenuItem(itemId, String.valueOf(level),
-			runeName + " - altar at " + coordinate));
+			runeName + " - altar at (" + x + "," + y + ",L" + worldLevel + ")"));
 	}
 
 	private void addRobeTierGuide() {
