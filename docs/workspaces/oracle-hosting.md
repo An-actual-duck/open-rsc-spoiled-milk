@@ -12,12 +12,12 @@ public worlds against diverging player databases.
 | Game port | TCP `43605` |
 | VM | `VM.Standard.A1.Flex`, 1 OCPU, 6 GB RAM, ARM64 |
 | OS / Java | Ubuntu 26.04.1 LTS / OpenJDK 17 |
-| Server release tag | `v0.3.11` (interaction movement after shuriken combat) |
-| Published client release | `v0.3.8` (Duskwind Bat projectile frame fix) |
-| Game source | `53adcce6e09d7e2a74862cee989dac7355a2837a` |
+| Server release tag | `v0.3.12` (agility, doorway, Slayer and altar fixes) |
+| Published client release | `v0.3.12` (bat return-flight and altar guide corrections) |
+| Game source | `b8e352d05a53eb0399dade93748ec0b42c8e59d5` |
 | Client protocol | `10059` |
 | Public service | `spoiled-milk.service`, enabled at boot |
-| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.11` |
+| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.12` |
 | Guarded live path | `/tmp/spoiled-milk-live-main` |
 | Git object repository | `/home/ubuntu/spoiled-milk/repository.git` |
 | External state | `/home/ubuntu/.local/share/spoiled-milk/live` |
@@ -28,7 +28,7 @@ The service requires that mount. The source is a clean detached checkout of the
 exact published tag; it is never a development workspace.
 
 The service calls `scripts/run-hosted-server.sh` with
-`MYWORLD_HOSTED_RELEASE_TAG=v0.3.11`. Existing exact-tag, clean-source, installed
+`MYWORLD_HOSTED_RELEASE_TAG=v0.3.12`. Existing exact-tag, clean-source, installed
 map, generator, external-database, and occupied-port guards remain active.
 `JAVA_TOOL_OPTIONS` caps the heap at 3 GiB. The unit uses `Restart=on-failure`;
 a successful in-game shutdown exits normally and stays stopped.
@@ -39,10 +39,24 @@ update. This deployment does not depend on the owner's PC staying online.
 
 `v0.3.7`, `v0.3.9`, `v0.3.10`, and `v0.3.11` are server-only source tags with
 no player release entries.
-The website and updater remain on compatible client `v0.3.8`, which includes
-the projectile correction, single-download ZIP and platform updater assets.
-The current server patch needs no client changes, and protocol 10059 is
-unchanged. Never publish a newer player release without its updater assets.
+The website and updater now serve client `v0.3.12`, including the single-download
+ZIP and both platform updater assets. Protocol 10059 is unchanged. The actual
+published v0.3.8 POSIX updater successfully installed v0.3.12 and preserved its
+settings. Native Windows launch/update execution was not available in this
+maintenance window. Never publish a newer player release without its updater
+assets.
+
+The v0.3.12 activation preserved all 66 accounts and the existing installed map.
+Verified database backups are retained on Oracle and the owner's PC; the
+v0.3.11 source remains available for rollback. Before activation, the actual
+Oracle Java 17 server JARs passed 86 Gnome course, 498 walking-doorway and 125
+Slayer starter-supply assertions. After startup, the installed JARs passed the
+86 course and 498 doorway checks again using isolated fixture configurations.
+The public TCP/login path, external database link, launch attestation, automatic
+backup timer and zero automatic restarts were verified. The uploaded archives
+were downloaded and checksum-checked. Local receipts are under
+`output/reviews/oracle-release-v0.3.12/`; Oracle receipts are under
+`/home/ubuntu/spoiled-milk/verification/v0.3.12/`.
 
 The v0.3.11 activation preserved the database and its 66 existing accounts,
 with verified backup copies on Oracle and the owner's PC. The v0.3.10 source
