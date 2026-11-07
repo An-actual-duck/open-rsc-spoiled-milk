@@ -212,6 +212,9 @@ public final class GuideUpdateClientFixture {
         ClericThreeTierClientFixture.set(mc, "questGuideRequirement", new String[]{"10 Crafting", "20 Smithing", "Ability to defeat a level 47 enemy"});
         ClericThreeTierClientFixture.set(mc, "questGuideProgress", 3);
         guide.questGuide.resetScrollIndex(guide.questGuideScroll);
+        // The compact quest backdrop uses the previous frame's measured height.
+        // Settle it before taking a standalone screenshot with no underlying game frame.
+        guide.onRender(mc.getSurface());
         Arrays.fill(mc.getSurface().pixelData, 0x22262b);mc.getSurface().beginRenderer2DFrame();
         guide.onRender(mc.getSurface());
         ClericThreeTierClientRenderFixture.png((MudClientGraphics) mc.getSurface(),
@@ -235,7 +238,7 @@ public final class GuideUpdateClientFixture {
             clericFilters(mc, definitions, out);
             questPages(mc, out);
         }
-        System.out.println("PASS guide updates: " + checks + " assertions; " + tabs + " skill tabs, " + windows
+        System.out.println("PASS guide updates: " + checks + " assertions; " + tabs + " tab/viewport combinations, " + windows
             + " native scroll windows, all filters and quest states at 512x334 and 960x528");
     }
 }

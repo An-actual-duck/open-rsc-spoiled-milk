@@ -1,0 +1,89 @@
+In-game guide updates — Core review handoff
+Base: published main 2fffc5b5fff17dd65777e396c2e733bd17b52090
+Branch: fix/in-game-guide-updates; exact pushed commit is in the READY record.
+
+Approved recommendation checklist
+
+Implemented the five corrections from in-game-guide-review-recommendations.md:
+- Name Chaos gauntlets as the mind-rune damage-cap condition.
+- Correct Tourist Trap's normal-route reward choices to Crafting, Agility,
+  Smithing and Thieving. Preserve (level + 1) * 150 displayed XP per choice.
+  Also correct its normal-route requirements to Crafting 10 and Smithing 20.
+- Explain that positive Devotion XP scales with offering type; list the current
+  bones/ashes, big bones, bat bones, demon ash and dragon bones multipliers.
+- Correct Bronze, Iron, Steel, Mithril, Adamantite and Rune scythe-row icons.
+- Wrap ordinary and Magic guide columns using the actual native font's pixel
+  widths, grow row heights, and calculate the final scrollbar window from the
+  actual row heights. The old 100-entry render cap is removed.
+
+Implemented the practical additions:
+- All six missing hide families; label every hide family with its starting level.
+- Wool gloves and boots; use the existing White cape product name.
+- Sigil chisel/furnace workflow, three blanks per bar, and separate Crafting
+  1/20/40 and Blessing 1/16/40 requirements for Stone/Silver/Moonsilver.
+- Summon automatic life-rune upkeep, leaving when upkeep cannot be paid,
+  10 base XP per successful consumption (not per rune), and Command XP.
+- Coating application, Slow buildup/weak poison, persistence and wool cleaning.
+- One-way friends, party/clan area protection, deliberate direct attacks, player
+  primary-target requirement and independent Wilderness splash eligibility.
+- Unify teleport restrictions, including Wilderness level 20+ and active duels.
+
+Implemented the optional improvements approved with the report:
+- Level-70 Crafting Guild caves and gem-cutting equipment pointers.
+- A short Melee Info pointer to Hobart and Slayer starter/replacement supplies.
+- Active quests retain start contact and requirements, with a truthful notice
+  that a detailed walkthrough is unavailable. Rewards remain visible. Quest
+  final-row padding/footer positioning is corrected for the longer content.
+- Compact All/Saradomin/Guthix/Zamorak/Unify filters in the Cleric guide header.
+  Each filter retains complete metadata-driven spell pages and resets scroll.
+
+Evidence and behavior preservation
+
+The Tourist Trap mechanism dispatches object 1006 through makeDartTip from
+OpLoc and UseLoc (bronze bar); that method requires Smithing 20. UseInv with
+feathers and a prototype dart tip dispatches attachFeathersToPrototype, which
+requires Crafting 10. These ordinary routes have no MyWorld exclusion; the
+optional already-done shortcut dialogue remains separate. The quest reward
+registrar supplies 600 base + 600 per level in quarter-XP units, matching the
+unchanged displayed formula. No quest gameplay was edited.
+
+Existing Cleric names, effects, generated per-cast costs, power thresholds,
+sigil costs and spellbook hover behavior are preserved. All 20 current spells
+remain accessible. The already-corrected 14 rune-altar listings and levels are
+preserved. No maps, assets, gameplay server source, live processes or accounts
+were changed.
+
+Verification
+
+- Java8 maintained client build passed under the shared heavy-build lock.
+- New test-in-game-guide-updates.py: authoritative recipe/quest/offering source
+  comparisons, 103 skill/tab combinations at both 512x334 and 960x528, and
+  3,340 native scrolling windows. Every current row fits the 222px guide body;
+  native glyphs remain inside the panel. All Cleric filters and active/completed/
+  unstarted quest states are tested, including long-content final rewards.
+- Existing Cleric schema5 guide fixture: 421 checks. The complete UI/native
+  rendering fixture passes 63,527 checks and reaches the final of 36 pages.
+- Existing rune-altar fixture: all 14 listings/levels and native final scroll
+  pass; longest coordinate row is 203/335px.
+- skill-guides, magic-guide-and-chaos-gauntlets, quest-guide-ui,
+  skill-guide-info-pass, guide-text-polish and thieving-guide-runtime pass.
+- Updated retired Antidote, Thunder, old altar-coordinate and affected scythe/
+  condition expectations; checks were retained with current intended values.
+- Python compilation, git diff --check and canonical workspace layout pass.
+
+Local evidence (not packaged): output/tests/in-game-guide-updates/
+- native-verification.log: build plus existing/new native fixtures.
+- native-final.log: final clean screenshot verification.
+- verification-summary.json: recorded passing interactive source/runtime gates.
+- render/: native previews including wrapped potion/Magic rows, Blessing,
+  Guthix filter, active quest summary and final quest rows at both viewports.
+
+Coverage limits
+
+The native client tests run the real built client and fonts offscreen, with
+recorded schema5 server metadata and test-only allocation that skips login.
+No network, live player account or manual graphical owner test was used. This
+is not an exhaustive audit of every old quest requirement/reward or a new quest
+walkthrough. Existing quest shortcut rewards and broader quest content remain
+unchanged. The fixture settles the legacy compact quest backdrop height before
+standalone screenshots, just as a normal continuously drawn UI does.
