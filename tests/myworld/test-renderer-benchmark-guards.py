@@ -59,6 +59,20 @@ class GuardTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"matched core"):
             benchmark.prepare(args)
 
+    def test_fixture_runtime_exception_rejected(self):
+        with tempfile.TemporaryDirectory() as name:
+            run=Path(name); (run/"server.log").write_text("java.lang.IllegalStateException: No authored corridor\n")
+            with self.assertRaisesRegex(ValueError,"Unexpected server runtime"):
+                benchmark.validate_runtime(run,[],"busy-walk")
+
+    def test_walk_requires_actual_four_tile_movement(self):
+        with tempfile.TemporaryDirectory() as name:
+            run=Path(name)
+            with self.assertRaisesRegex(ValueError,"actual viewer"):
+                benchmark.validate_runtime(run,[dict(serverState=dict(x=502,y=453))],"busy-walk")
+            result=benchmark.validate_runtime(run,[dict(serverState=dict(x=x,y=453)) for x in (502,506)],"busy-walk")
+            self.assertEqual(result["maxAxisDistanceTiles"],4)
+
     def test_report_requires_complete_client(self):
         with tempfile.TemporaryDirectory() as name:
             run = Path(name); (run / benchmark.MARKER).write_text("{}")

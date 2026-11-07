@@ -45,8 +45,16 @@ public final class RendererBenchmarkClient {
             Method diagnostics = renderer.getClass().getDeclaredMethod("geometryShadowDiagnostics"); diagnostics.setAccessible(true);
             Object pass = diagnostics.invoke(renderer);
             if (pass == null) return "{\"active\":false}";
+            try {
+                Method snapshotMethod=pass.getClass().getDeclaredMethod("diagnosticSnapshot"); snapshotMethod.setAccessible(true);
+                long[] snapshot=(long[]) snapshotMethod.invoke(pass);
+                StringBuilder json=new StringBuilder("{\"sequence\":"+snapshot[0]+",\"active\":"+(snapshot[1]!=0)+",\"farRebuilt\":"+(snapshot[2]!=0));
+                String[] keys={"nearCpuNanos","farCpuNanos","nearDrawCalls","nearTriangles","farDrawCalls","farTriangles"};
+                for(int i=0;i<keys.length;i++) json.append(",\"").append(keys[i]).append("\":").append(snapshot[i+3]);
+                return json.append(",\"coherent\":true}").toString();
+            } catch (NoSuchMethodException olderCandidate) { /* Retain explicit non-atomic legacy diagnostics. */ }
             Method active = pass.getClass().getDeclaredMethod("isActive"); active.setAccessible(true);
-            StringBuilder json = new StringBuilder("{\"active\":" + active.invoke(pass));
+            StringBuilder json = new StringBuilder("{\"coherent\":false,\"active\":" + active.invoke(pass));
             for (String name : new String[]{"nearCpuNanos", "farCpuNanos", "nearDrawCalls", "nearTriangles", "farDrawCalls", "farTriangles", "farRebuilt"}) {
                 json.append(",\"").append(name).append("\":").append(field(pass, pass.getClass(), name));
             }
@@ -65,6 +73,13 @@ public final class RendererBenchmarkClient {
             Method snapshot = window.getClass().getDeclaredMethod("diagnosticWindowFlags"); snapshot.setAccessible(true);
             return String.valueOf(snapshot.invoke(window));
         } catch (NoSuchMethodException unavailable) { return "null"; }
+    }
+    private static String shadowQuality() throws Exception {
+        try {
+            Class<?> settings=Class.forName("orsc.RendererShadowSettings");
+            Method quality=settings.getDeclaredMethod("getQuality"); quality.setAccessible(true);
+            return String.valueOf(quality.invoke(null));
+        } catch (ClassNotFoundException baseline) { return "unavailable"; }
     }
     private static int activeProjectiles(mudclient client) {
         int count = 0;
@@ -149,7 +164,7 @@ public final class RendererBenchmarkClient {
                 + ",\"sunAzimuth\":" + RendererRemasterLightSettings.getAzimuthDegrees() + ",\"sunElevation\":" + RendererRemasterLightSettings.getElevationDegrees()
                 + ",\"brightness\":" + light.brightnessMultiplier + ",\"tone\":\"" + light.debugLabel
                 + "\",\"lighting\":\"" + RendererLightingSettings.getMode() + "\",\"profile\":\"" + RendererProfileSettings.getMode()
-                + "\",\"geometry\":\"" + RendererGeometrySettings.getMode() + "\",\"geometryShadow\":" + shadowStats(presenter) + "}";
+                + "\",\"geometry\":\"" + RendererGeometrySettings.getMode() + "\",\"shadowQuality\":\"" + shadowQuality() + "\",\"geometryShadow\":" + shadowStats(presenter) + "}";
             Files.write(capture.resolve("client-samples.jsonl"), (sample + "\n").getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             Thread.sleep(1000);
         }

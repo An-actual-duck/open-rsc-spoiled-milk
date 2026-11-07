@@ -202,7 +202,12 @@ public final class RendererBenchmarkServer {
                         .put("cycleLengthMillis", server.getWorldDayNightClock().getCycleMillis()).put("cycleRate", server.getWorldDayNightClock().getRateMultiplier());
                     Path next = run.resolve("status.next"); Files.write(next, state.toString().getBytes("UTF-8"));
                     Files.move(next, run.resolve("status.json"), StandardCopyOption.REPLACE_EXISTING);
-                } catch (Exception error) { error.printStackTrace(); }
+                } catch (Exception error) {
+                    System.err.println("RENDERER_FIXTURE_SETUP_FAILURE " + error);
+                    error.printStackTrace();
+                    try { Files.write(run.resolve("FIXTURE-FAILED"), error.toString().getBytes("UTF-8")); }
+                    catch (Exception writeFailure) { writeFailure.printStackTrace(); }
+                }
             }
         });
         boolean stopping = false;

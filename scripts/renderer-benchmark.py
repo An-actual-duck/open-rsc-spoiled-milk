@@ -218,6 +218,22 @@ def stop(args):
     print("Stopped own private processes; all data retained:", run)
 
 
+def validate_runtime(run, samples, phase):
+    if (run / "FIXTURE-FAILED").exists():
+        raise ValueError("Fixture setup/runtime failure; reject this run")
+    log = (run / "server.log").read_text(errors="replace") if (run / "server.log").is_file() else ""
+    for line in log.splitlines():
+        if "java.io.IOException: Connection reset by peer" in line:
+            continue  # Expected own-client exit; no gameplay setup exception is exempt.
+        if "RENDERER_FIXTURE_SETUP_FAILURE" in line or re.search(r"(?:^|[\s:])(?:[A-Za-z_$][\w$]*\.)*[A-Za-z_$][\w$]*(?:Exception|Error)(?::|$)", line):
+            raise ValueError("Unexpected server runtime exception; reject this run: " + line[:240])
+    positions = sorted({(sample["serverState"]["x"],sample["serverState"]["y"]) for sample in samples if isinstance(sample.get("serverState"),dict) and "x" in sample["serverState"] and "y" in sample["serverState"]})
+    distance = max(max(p[axis] for p in positions)-min(p[axis] for p in positions) for axis in (0,1)) if positions else 0
+    if phase == "busy-walk" and distance < 4:
+        raise ValueError("Busy-walk failed to move the actual viewer at least4tiles")
+    return dict(positions=positions,maxAxisDistanceTiles=distance,fixtureRuntimeExceptions=False)
+
+
 def report(args):
     capture = args.capture.resolve(); run = marked(capture.parent)
     if not (capture / "CLIENT-DONE").is_file():
@@ -249,11 +265,15 @@ def report(args):
                 if start+1e9 <= int(sample["sessionElapsedNanos"]) <= end-1e9:
                     gpu.setdefault(sample["pass"], []).append(int(sample["gpuNanos"]))
     samples, partial_samples = analyzer.read_jsonl(capture / "client-samples.jsonl")
-    keys = ("logicalWidth", "logicalHeight", "framebufferWidth", "framebufferHeight", "zoomSetting", "players", "npcs", "sunAzimuth", "sunElevation", "brightness", "tone", "lighting", "profile", "geometry", "activeProjectileActors", "windowState", "gameObjects", "wallObjects")
+    keys = ("logicalWidth", "logicalHeight", "framebufferWidth", "framebufferHeight", "zoomSetting", "players", "npcs", "sunAzimuth", "sunElevation", "brightness", "tone", "lighting", "profile", "geometry", "shadowQuality", "activeProjectileActors", "windowState", "gameObjects", "wallObjects")
     context = {key:sorted({sample[key] for sample in samples if key in sample}) for key in keys}
+    movement = validate_runtime(run, samples, start_event["label"])
     manifest = json.loads((capture / "manifest.json").read_text())
     result = dict(schema=1, capture=str(capture), artifact=json.loads((run / MARKER).read_text()), phase=start_event["label"], durationSeconds=(end-start)/1e9, partialRecords=partial_telemetry or partial_events or partial_samples, stages=stages, gpu={key:summary(values) for key,values in gpu.items()}, gpuDuplicateSamples=duplicates, context=context, openGL={key:manifest.get("openGL."+key) for key in ("renderer","version","vendor")}, fullClientPresentation60FpsAccepted=False, limitation="Hidden native window: frame-work/GPU workload measurements, not owner-visible presentation cadence or visual approval.")
     scenario = json.loads((capture / "scenario.json").read_text()) if (capture / "scenario.json").is_file() else {}
+    effects = [sample["activeProjectileActors"] for sample in samples if "activeProjectileActors" in sample]
+    result["effectCoverage"] = dict(samples=len(effects), nonzeroSamples=sum(value>0 for value in effects), maxActiveActors=max(effects,default=0),meanActiveActors=sum(effects)/len(effects) if effects else None)
+    result["runtimeValidation"] = movement
     result["visiblePreview"] = scenario.get("visiblePreview", False)
     if result["visiblePreview"]:
         result["limitation"] = "Owner-visible private preview. Post-swap interval distributions are evidence; final60FPS acceptance and visual approval require manager review."
