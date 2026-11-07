@@ -3106,6 +3106,7 @@ public final class RenderTelemetry {
 			|| "sceneDepthExport".equals(name)
 			|| "sceneLegacyDraw".equals(name)
 			|| "openGLRender".equals(name)
+			|| "openGLFrameInterval".equals(name)
 			|| "openGLWorld".equals(name)
 			|| "openGLWorldChunkUploadPhase".equals(name)
 			|| "openGLWorldChunkDrawPhase".equals(name)

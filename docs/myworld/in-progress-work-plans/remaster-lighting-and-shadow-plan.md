@@ -4,6 +4,13 @@ This document is the forward path for Spoiled Milk's remaster lighting work.
 It exists so future AI sessions can start from the accepted raw-material
 baseline instead of reopening old Classic-lighting and shadow-proof experiments.
 
+Owner update, November 7, 2026: geometry-based directional depth shadows are now
+an intentional architecture swing. See
+[geometry-shadow-renderer.txt](geometry-shadow-renderer.txt) for the active
+High/Low implementation, explicit caster/receiver policies, tests and measured
+60 FPS acceptance limits. The old pause below remains historical baseline
+context, not a restriction on this new approved work.
+
 For the combined renderer and shader status map, start with
 [renderer-and-shader-roadmap.md](renderer-and-shader-roadmap.md). This mini plan
 remains the focused implementation ledger for remaster lighting and shadows.

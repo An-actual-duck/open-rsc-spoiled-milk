@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
@@ -32,6 +33,10 @@ public final class GeometryShadowGpuFixture {
 		b.put(values).flip(); return b;
 	}
 	private static void require(boolean ok, String why) { if (!ok) throw new AssertionError(why); }
+	private static int textureId(OpenGLGeometryShadows pass,String name)throws Exception {
+		java.lang.reflect.Field field=OpenGLGeometryShadows.class.getDeclaredField(name);field.setAccessible(true);Object map=field.get(pass);
+		java.lang.reflect.Field texture=map.getClass().getDeclaredField("texture");texture.setAccessible(true);return texture.getInt(map);
+	}
 	private static int compile(int type, String source) throws Exception {
 		int shader = gl.glCreateShader(type); gl.glShaderSource(shader, source); gl.glCompileShader(shader);
 		require(gl.glGetShaderi(shader, gl.GL_COMPILE_STATUS) != 0, gl.glGetShaderInfoLog(shader)); return shader;
@@ -135,6 +140,9 @@ public final class GeometryShadowGpuFixture {
 			ByteBuffer masks=ByteBuffer.allocateDirect(4);gl11.getMethod("glGetBooleanv",int.class,ByteBuffer.class).invoke(null,0x0C23,masks);
 			require(masks.get(0)==0&&masks.get(1)!=0&&masks.get(2)==0&&masks.get(3)!=0,"color mask leaked");
 			require(!(Boolean)gl11.getMethod("glGetBoolean",int.class).invoke(null,0x0B72),"depth write mask leaked");
+			DoubleBuffer depthRange=ByteBuffer.allocateDirect(16).order(ByteOrder.nativeOrder()).asDoubleBuffer();gl11.getMethod("glGetDoublev",int.class,DoubleBuffer.class).invoke(null,0x0B70,depthRange);
+			require(Math.abs(depthRange.get(0)-.2)<.000001&&Math.abs(depthRange.get(1)-.7)<.000001,"depth range leaked");
+			require((Double)gl11.getMethod("glGetDouble",int.class).invoke(null,0x0B73)==.25,"clear depth leaked");
 			require((Boolean)gl11.getMethod("glIsEnabled",int.class).invoke(null,gl.GL_CULL_FACE),"cull enable leaked");
 			require(functions.integer(0x0B45)==0x0404,"cull face leaked");
 			require((Boolean)gl11.getMethod("glIsEnabled",int.class).invoke(null,gl.GL_POLYGON_OFFSET_FILL),"polygon offset enable leaked");
@@ -164,7 +172,11 @@ public final class GeometryShadowGpuFixture {
 			ByteBuffer off=draw(pass,program,output.resolve("off.png"));require(brightness(off,40,-100)>240,"disabled shadow persisted");
 			frameTimer.begin();frameTimer.end();require(gpuSamples.size()>2,"completed GPU samples missing");
 			int error=(Integer)gl11.getMethod("glGetError").invoke(null);require(error==0,"GL error "+error);
+			int nearTexture=textureId(pass,"near"),farTexture=textureId(pass,"far");
+			require(nearTexture!=0&&farTexture!=0,"Off bounded texture retention contract");
 			pass.close();pass.close();pass=null;
+			require(!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,nearTexture)
+				&&!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,farTexture),"shadow textures leaked on close");
 			System.out.println("PASS depth silhouette, cutout alpha, floor/slope/wall bias, cache invalidation, High/Low/Off, cleanup and GL state restoration");
 		} finally {
 			OpenGLGpuTimer.setDiagnosticSink(null);if(frameTimer!=null)frameTimer.close();
