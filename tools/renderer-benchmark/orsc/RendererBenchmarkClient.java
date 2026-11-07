@@ -153,6 +153,70 @@ public final class RendererBenchmarkClient {
         writeFrameMetadata(frame,presenter,capture.resolve("terrain-frame.json"),exported);
         System.out.println("Exported immutable TERRAIN triangles="+exported);
     }
+    /** Read an already-published frame under its existing publication lock.
+     * Scene.getRenderer3DFrame can still be inside endScene, before chunks attach.
+     * Chunk/texture data is immutable and not part of the released face-storage pool.
+     */
+    private static Renderer3DFrame publishedFrame(OpenGLFramePresenter presenter) throws Exception {
+        Object lock=field(presenter,OpenGLFramePresenter.class,"frameLock");
+        long deadline=System.nanoTime()+3000000000L;
+        while(System.nanoTime()<deadline) {
+            synchronized(lock) {
+                Object pending=field(presenter,OpenGLFramePresenter.class,"pendingFrame");
+                if(pending!=null) {
+                    Renderer3DFrame frame=(Renderer3DFrame)field(pending,pending.getClass(),"renderer3DFrame");
+                    if(frame!=null && frame.getWorldChunkFrame().getChunkCount()>0) return frame;
+                }
+            }
+            Thread.sleep(1);
+        }
+        throw new IllegalStateException("No published immutable world frame for fence export");
+    }
+    /** Exports verified native cutout materials, including all non-terrain kinds; no GL readback or mutation. */
+    private static void dumpFences(mudclient client, OpenGLFramePresenter presenter, Path capture) throws Exception {
+        Renderer3DFrame frame=publishedFrame(presenter);
+        java.util.Set<Integer> textures=new java.util.TreeSet<Integer>();
+        int exported=0,chunkIndex=0;
+        Object renderer=field(presenter,OpenGLFramePresenter.class,"worldChunkRenderer");
+        Method material=renderer.getClass().getDeclaredMethod("effectiveChunkTextureId",Renderer3DFrame.class,int.class,int.class); material.setAccessible(true);
+        try(java.io.BufferedWriter writer=Files.newBufferedWriter(capture.resolve("fence-triangles.tsv"),StandardCharsets.UTF_8)) {
+            writer.write("chunkIndex\tplane\tkind\tmaterialFamily\toriginWorldX\toriginWorldZ\tvertexOffsetX\tvertexOffsetZ\ttriangleIndex\ttexture\tfallbackColor\teffectiveTexture");
+            for(int corner=0;corner<3;corner++) writer.write("\tx"+corner+"\ty"+corner+"\tz"+corner+"\tu"+corner+"\tv"+corner+"\tnx"+corner+"\tny"+corner+"\tnz"+corner);
+            writer.write("\n");
+            for(Renderer3DWorldChunkFrame.ChunkMesh chunk:frame.getWorldChunkFrame().getChunks()) {
+                for(int t=0;t<chunk.getTriangleCount();t++) {
+                    int texture=chunk.getTriangleTexture(t);
+                    Renderer3DModelKind kind=chunk.getTriangleModelKind(t);
+                    if(kind==Renderer3DModelKind.TERRAIN) continue;
+                    int fallback=chunk.getTriangleFallbackColor(t);
+                    int effective=((Number)material.invoke(renderer,frame,texture,fallback)).intValue();
+                    if(effective!=10 && effective!=12) continue;
+                    textures.add(effective);
+                    StringBuilder row=new StringBuilder().append(chunkIndex).append('\t').append(chunk.getPlane()).append('\t').append(kind).append('\t').append(chunk.getTriangleMaterialFamily(t)).append('\t').append(chunk.getOriginWorldX()).append('\t').append(chunk.getOriginWorldZ()).append('\t').append(chunk.getVertexOffsetX()).append('\t').append(chunk.getVertexOffsetZ()).append('\t').append(t).append('\t').append(texture).append('\t').append(fallback).append('\t').append(effective);
+                    for(int corner=0;corner<3;corner++) {
+                        int v=chunk.getIndex(t*3+corner);
+                        for(int axis=0;axis<3;axis++) row.append('\t').append(chunk.getVertexCoord(v*3+axis));
+                        row.append('\t').append(chunk.getVertexTextureU(v)).append('\t').append(chunk.getVertexTextureV(v)).append('\t').append(chunk.getVertexNormalX(v)).append('\t').append(chunk.getVertexNormalY(v)).append('\t').append(chunk.getVertexNormalZ(v));
+                    }
+                    writer.write(row.append('\n').toString()); exported++;
+                }
+                chunkIndex++;
+            }
+        }
+        if(exported==0) throw new IllegalStateException("No actual native wall caster triangles");
+        try(java.io.BufferedWriter writer=Files.newBufferedWriter(capture.resolve("fence-textures.tsv"),StandardCharsets.UTF_8)) {
+            writer.write("texture\twidth\theight\tsignature\tx\ty\trgba\n");
+            for(int id:textures) {
+                Renderer3DTextureData texture=frame.getTexture(id);
+                if(texture==null) throw new IllegalStateException("Missing referenced native fence texture"+id);
+                int[] pixels=texture.getRgbaPixels();
+                for(int y=0;y<texture.getHeight();y++) for(int x=0;x<texture.getWidth();x++)
+                    writer.write(id+"\t"+texture.getWidth()+"\t"+texture.getHeight()+"\t"+texture.getSignature()+"\t"+x+"\t"+y+"\t"+Integer.toUnsignedString(pixels[y*texture.getWidth()+x])+"\n");
+            }
+        }
+        writeFrameMetadata(frame,presenter,capture.resolve("fence-frame.json"),-1);
+        System.out.println("Exported actual native fence triangles="+exported+" textures="+textures);
+    }
     private static void writeFrameMetadata(Renderer3DFrame frame, OpenGLFramePresenter presenter, Path destination, int exported) throws Exception {
         Renderer3DWorldChunkFrame chunks=frame.getWorldChunkFrame();
         StringBuilder metadata=new StringBuilder("{\"terrainTriangles\":"+exported+",\"residentTriangles\":"+chunks.getTotalTriangleCount()+",\"chunks\":"+chunks.getChunkCount()+",\"sunAzimuth\":"+RendererRemasterLightSettings.getAzimuthDegrees()+",\"sunElevation\":"+RendererRemasterLightSettings.getElevationDegrees());
@@ -283,6 +347,7 @@ public final class RendererBenchmarkClient {
         System.out.println(RendererPerformanceDiagnostics.handleCommand("::pf stop " + phase));
         if (Boolean.getBoolean("renderer.benchmark.dumpRoofMask")) dumpRoofMask(client,presenter,capture);
         if (Boolean.getBoolean("renderer.benchmark.dumpTerrain")) dumpTerrain(client,presenter,capture);
+        if (Boolean.getBoolean("renderer.benchmark.dumpFences")) dumpFences(client,presenter,capture);
         if (Boolean.getBoolean("renderer.benchmark.snapshot")) {
             Method request = OpenGLFramePresenter.class.getDeclaredMethod("requestFrameCaptureBurst");
             request.setAccessible(true); request.invoke(presenter);

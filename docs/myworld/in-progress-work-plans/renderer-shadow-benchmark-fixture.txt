@@ -188,3 +188,12 @@ cover both cases and an exited/zombie child. The shared GPU flock waits at most
 false startup failure. Earlier refused attempts remain preserved; a fresh paired
 relog proof was used instead of relaxing session history. Final14 guard/report
 regressions pass. No production/public process control is provided by this tool.
+
+Optional checked fence export
+  Add --dump-fences to a capture/preview command to export native material10/12
+  triangles, exact texture RGBA and source-frame metadata after timing. This
+  observes a published immutable frame with a bounded deadline; it does not
+  change scene readiness. Analyze with:
+    python3 tools/renderer-benchmark/analyze-fence-export.py CAPTURE
+  See thin-shadow-native-evidence.txt for placement provenance, complete proof
+  and the explicit temporal/performance limits of the short fixed-sun case.
