@@ -9,8 +9,12 @@ November 7, 2026: the owner explicitly reopened shadow architecture work, with
 geometry-faithful shadows and a 60 FPS target at 1920x1080 in busy normal-camera
 scenes. Maximum distance is a separate stress test. The in-progress High/Low
 geometry-depth implementation and measured acceptance ledger are recorded in
-[geometry-shadow-renderer.txt](geometry-shadow-renderer.txt). Earlier statements
-that shadow work is paused describe the previously accepted mask baseline;
+[geometry-shadow-renderer.txt](geometry-shadow-renderer.txt). The subsequent
+terrain correctness pass and maximum-distance validation are in
+[terrain-shadow-artifacts.txt](terrain-shadow-artifacts.txt); it supersedes the
+initial face-wide terrain backface gate and fixed terrain relief multiplier.
+Earlier statements that shadow work is paused describe the previously accepted
+mask baseline;
 they do not prohibit this approved replacement work. No new renderer is accepted
 solely on a screenshot or isolated GPU throughput result.
 
