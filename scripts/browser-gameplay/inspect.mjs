@@ -7,6 +7,7 @@ import {spawn} from 'node:child_process';
 const [runArg, mode = 'native-probe', secondsArg = '90'] = process.argv.slice(2);
 if (!runArg || !['native-probe', 'mesh-probe', 'software'].includes(mode)) throw new Error('Usage: inspect.mjs RUN [native-probe|mesh-probe|software] [seconds]');
 const run = path.resolve(runArg), seconds = Math.min(300, Math.max(5, Number(secondsArg)));
+const httpPort = Number(process.argv.find(arg => arg.startsWith('--port='))?.split('=')[1] || '8079');
 const login = process.argv.includes('--login');
 const javaVersion = process.argv.find(arg => arg.startsWith('--java='))?.split('=')[1] || '8';
 const wasmGC = process.argv.includes('--wasmgc');
@@ -21,6 +22,7 @@ const browser = spawn('/usr/bin/google-chrome', ['--headless=new', '--no-first-r
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 let ws, seq = 0; const pending = new Map();
 let gameCapture;
+let debugArmed = false;
 const log = fs.createWriteStream(path.join(capture, 'events.jsonl'));
 function call(method, params = {}) {
   return new Promise((resolve, reject) => { const id = ++seq; pending.set(id, {resolve, reject}); ws.send(JSON.stringify({id, method, params})); });
@@ -44,15 +46,29 @@ try {
       if (value.error) request?.reject(new Error(JSON.stringify(value.error))); else request?.resolve(value.result);
     } else {
       log.write(JSON.stringify(value) + '\n');
+      if (value.method === 'Debugger.paused') {
+        (async () => {
+          if (value.params.data?.type === 'string' && String(value.params.data.value).startsWith('CheerpJ')) { await call('Debugger.resume'); return; }
+          await call('Debugger.setPauseOnExceptions', {state:'none'});
+          fs.writeFileSync(path.join(capture, 'paused-exception.json'), JSON.stringify(value.params, null, 2));
+          for (const [index, frame] of value.params.callFrames.slice(0, 8).entries()) {
+            const source = await call('Debugger.getScriptSource', {scriptId:frame.location.scriptId});
+            fs.writeFileSync(path.join(capture, `exception-frame-${index}.js`), source.scriptSource);
+          }
+          await call('Debugger.resume');
+        })().catch(console.error);
+      }
+
       if (!gameCapture && value.method === 'Runtime.consoleAPICalled' && value.params.args[0]?.value === 'BROWSER_PROOF_STATE') {
         const state = JSON.parse(value.params.args[1].value);
+        if (state.mode === 'GAME' && process.argv.includes('--debug-exceptions') && !debugArmed) { debugArmed=true; call('Debugger.enable').then(()=>call('Debugger.setPauseOnExceptions', {state:'all'})); }
         if (state.mode === 'GAME') gameCapture = call('Page.captureScreenshot', {format: 'png'}).then(image => fs.writeFileSync(path.join(capture, 'initial-game-state.png'), Buffer.from(image.data, 'base64'))).catch(error => fs.writeFileSync(path.join(capture, 'initial-game-state-capture-error.txt'), String(error)));
       }
     }
   };
   ws.onclose = () => { for (const request of pending.values()) request.reject(new Error('Dedicated test browser closed')); pending.clear(); };
   for (const domain of ['Runtime', 'Log', 'Page', 'Network']) await call(domain + '.enable');
-  await call('Page.navigate', {url: `http://127.0.0.1:8079/?mode=${mode}&runtime=${runtime}&java=${javaVersion}${wasmGC ? '&wasmgc=1' : ''}`});
+  await call('Page.navigate', {url: `http://127.0.0.1:${httpPort}/?mode=${mode}&runtime=${runtime}&java=${javaVersion}${wasmGC ? '&wasmgc=1' : ''}`});
   async function screenshot(name) {
     const image = await call('Page.captureScreenshot', {format: 'png'});
     fs.writeFileSync(path.join(capture, name + '.png'), Buffer.from(image.data, 'base64'));
@@ -71,7 +87,7 @@ try {
       await delay(20);
     }
   }
-  let didLogin = false;
+  let didLogin = false, didAccept = false;
   for (let i = 0; i < seconds; i++) {
     await delay(1000);
     const readiness = login && !didLogin && i >= 18 ? await call('Runtime.evaluate', {expression: '(window.browserProof?.state?.fps || 0) >= 10', returnByValue: true}) : null;
@@ -85,6 +101,10 @@ try {
       await click(r.x + r.w / 2 - 46, r.y + r.h / 2 + 146); await type('BrowserProof13');
       await screenshot('login-form');
       await click(r.x + r.w / 2 + 154, r.y + r.h / 2 + 83);
+    }
+    if (process.argv.includes('--accept-character') && didLogin && !didAccept) {
+      const mode = await call('Runtime.evaluate', {expression: 'window.browserProof?.state?.mode', returnByValue: true});
+      if (mode.result.value === 'GAME') { await screenshot('character-design'); await click(275, 491); didAccept = true; }
     }
     if (login && i === 35) await screenshot('after-login');
     if (i % 10 === 9) {

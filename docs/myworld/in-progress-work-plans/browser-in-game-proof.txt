@@ -1,0 +1,42 @@
+Browser in-game proof — WORK IN PROGRESS, not READY
+=================================================
+
+Scope: isolated loopback browser gameplay using current maintained software
+client, visible terrain/player, pointer walking and server-authoritative movement.
+No public operations. Keyboard lifecycle work is explicitly deferred and remains
+on its separate ai1 branch; it is not imported here.
+
+Baseline: acb16e5c8bcd982d873addc5a49ffc89ddf0c863.
+Existing immutable owner-review JVM/HTTP and private database are unchanged.
+Only browserdemo / BrowserProof13 disposable account is used. Its ordinary
+character-design Accept was clicked through the UI.
+
+Evidence: output/tests/browser-gameplay-spike/actual-halo-diag-{1,2}/ and
+output/tests/browser-in-game-proof/. Staged jars are immutable per experiment.
+Separate worker HTTP stages use 8087, 8088, 8091, 8092; original 8079 remains.
+
+Actual failing call captured: real initial mesh normalizes 43788 triangles with
+null families, then full families, successfully. First cropped halo presentation
+cell enters normalizer with count=4608, families=null, kinds.length=4608 and
+fails NPE. Instrumented Java catch around loop did not report its handler.
+Instrumentation was removed from maintained code; preserved diagnostic staged
+jar and logs remain. This has not yet isolated the actual failing operation.
+Replacing nested ternaries with explicit branches did not fix real halo failure.
+
+Current normalizer diff is an equivalent TWO-PASS EXPERIMENT, not an accepted
+fix. Ordinary JVM constructor/reflection matrix previously passed 3400 main and
+3400 worker assertions; focused browser proof for this variant is pending.
+
+Browser capture additions: separate explicit HTTP port, optional ordinary
+character Accept, optional first real JS-exception capture with generated frame
+source. CheerpJContinue and CheerpJStub are internal control throws and filtered.
+These diagnostics do not bypass scene readiness. Runtime debug slowdowns are
+not gameplay performance results.
+
+The halo is required by protocol stage acknowledgements; do not skip it,
+force scene ready, bypass collision/authority or suppress a failure and call it
+success. No visible-world or movement acceptance yet.
+
+workspace-layout check currently reports inherited unclassified output entries
+and assets/sprites in this reused worktree; new outputs use declared tests
+categories only. No old data was deleted or reorganized.

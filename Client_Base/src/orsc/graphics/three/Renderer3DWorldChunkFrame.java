@@ -1209,15 +1209,19 @@ public final class Renderer3DWorldChunkFrame {
 			Renderer3DModelKind[] kinds,
 			int count) {
 			Renderer3DMaterialFamily[] normalized = new Renderer3DMaterialFamily[count];
-			for (int i = 0; i < normalized.length; i++) {
-				Renderer3DMaterialFamily family = families == null || i >= families.length ? null : families[i];
-				Renderer3DModelKind kind = kinds == null || i >= kinds.length
-					? Renderer3DModelKind.UNCLASSIFIED
-					: kinds[i];
-				normalized[i] = family == null
-					? Renderer3DMaterialClassifier.fallbackFor(kind)
-					: family;
-			}
+            java.util.Arrays.fill(normalized, Renderer3DMaterialFamily.UNCLASSIFIED);
+            if (kinds != null) {
+                int kindCount = Math.min(count, kinds.length);
+                for (int i = 0; i < kindCount; i++) {
+                    normalized[i] = Renderer3DMaterialClassifier.fallbackFor(kinds[i]);
+                }
+            }
+            if (families != null) {
+                int familyCount = Math.min(count, families.length);
+                for (int i = 0; i < familyCount; i++) {
+                    if (families[i] != null) normalized[i] = families[i];
+                }
+            }
 			return normalized;
 		}
 
