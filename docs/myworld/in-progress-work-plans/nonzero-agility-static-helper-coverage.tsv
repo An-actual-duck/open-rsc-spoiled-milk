@@ -1,0 +1,159 @@
+evidence	group	placementId	id	object xyz	direction	approach	start xyz	start visible floor	start terrain walkable	success xyz	success visible floor	success terrain walkable	success blocking scenery	failure
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024293	738	[674, 584, -1]	0	west	[673, 584, -1]	True	True	[675, 584, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024293	738	[674, 584, -1]	0	east	[675, 584, -1]	True	True	[673, 584, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024293	738	[674, 584, -1]	0	north	[674, 583, -1]	True	True	[674, 585, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024293	738	[674, 584, -1]	0	south	[674, 585, -1]	True	True	[674, 583, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024286	739	[677, 582, -1]	0	west	[676, 582, -1]	True	True	[678, 582, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024286	739	[677, 582, -1]	0	east	[678, 582, -1]	True	True	[676, 582, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024286	739	[677, 582, -1]	0	north	[677, 581, -1]	True	True	[677, 583, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024286	739	[677, 582, -1]	0	south	[677, 583, -1]	True	True	[677, 581, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024350	745	[677, 592, -1]	0	west	[676, 592, -1]	True	True	[678, 592, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024350	745	[677, 592, -1]	0	east	[678, 592, -1]	True	True	[676, 592, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024350	745	[677, 592, -1]	0	north	[677, 591, -1]	True	True	[677, 593, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024350	745	[677, 592, -1]	0	south	[677, 593, -1]	True	True	[677, 591, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024290	740	[678, 583, -1]	0	west	[677, 583, -1]	True	True	[679, 583, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024290	740	[678, 583, -1]	0	east	[679, 583, -1]	True	True	[677, 583, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024290	740	[678, 583, -1]	0	north	[678, 582, -1]	True	True	[678, 584, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024290	740	[678, 583, -1]	0	south	[678, 584, -1]	True	True	[678, 582, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024278	741	[685, 578, -1]	0	west	[684, 578, -1]	True	True	[686, 578, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024278	741	[685, 578, -1]	0	east	[686, 578, -1]	True	True	[684, 578, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024278	741	[685, 578, -1]	0	north	[685, 577, -1]	True	True	[685, 579, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024278	741	[685, 578, -1]	0	south	[685, 579, -1]	True	True	[685, 577, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024279	742	[688, 578, -1]	0	west	[687, 578, -1]	True	True	[689, 578, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024279	742	[688, 578, -1]	0	east	[689, 578, -1]	True	True	[687, 578, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024279	742	[688, 578, -1]	0	north	[688, 577, -1]	True	True	[688, 579, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024279	742	[688, 578, -1]	0	south	[688, 579, -1]	True	True	[688, 577, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024370	746	[689, 597, -1]	4	west	[688, 597, -1]	True	True	[690, 597, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024370	746	[689, 597, -1]	4	east	[690, 597, -1]	True	True	[688, 597, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024370	746	[689, 597, -1]	4	north	[689, 596, -1]	True	True	[690, 597, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024370	746	[689, 597, -1]	4	south	[689, 598, -1]	True	True	[690, 597, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024283	743	[692, 580, -1]	0	west	[691, 580, -1]	True	True	[693, 580, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024283	743	[692, 580, -1]	0	east	[693, 580, -1]	True	True	[691, 580, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024283	743	[692, 580, -1]	0	north	[692, 579, -1]	True	True	[692, 581, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024283	743	[692, 580, -1]	0	south	[692, 581, -1]	True	True	[692, 579, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024371	747	[692, 597, -1]	2	west	[691, 597, -1]	True	True	[693, 597, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024371	747	[692, 597, -1]	2	east	[693, 597, -1]	True	True	[691, 597, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024371	747	[692, 597, -1]	2	north	[692, 596, -1]	True	True	[693, 597, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024371	747	[692, 597, -1]	2	south	[692, 598, -1]	True	True	[693, 597, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024287	744	[696, 582, -1]	0	west	[695, 582, -1]	True	True	[697, 582, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024287	744	[696, 582, -1]	0	east	[697, 582, -1]	True	True	[695, 582, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024287	744	[696, 582, -1]	0	north	[696, 581, -1]	True	True	[696, 583, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024287	744	[696, 582, -1]	0	south	[696, 583, -1]	True	True	[696, 581, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024363	748	[697, 594, -1]	3	west	[696, 594, -1]	True	True	[698, 594, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024363	748	[697, 594, -1]	3	east	[698, 594, -1]	True	True	[696, 594, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024363	748	[697, 594, -1]	3	north	[697, 593, -1]	True	True	[698, 594, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024363	748	[697, 594, -1]	3	south	[697, 595, -1]	True	True	[698, 594, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024304	731	[699, 585, -1]	0	west	[698, 585, -1]	True	True	[700, 585, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024304	731	[699, 585, -1]	0	east	[700, 585, -1]	True	True	[698, 585, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024304	731	[699, 585, -1]	0	north	[699, 584, -1]	True	True	[699, 586, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024304	731	[699, 585, -1]	0	south	[699, 586, -1]	True	True	[699, 584, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024346	749	[699, 591, -1]	2	west	[698, 591, -1]	True	True	[700, 591, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024346	749	[699, 591, -1]	2	east	[700, 591, -1]	True	True	[698, 591, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024346	749	[699, 591, -1]	2	north	[699, 590, -1]	True	True	[699, 592, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024346	749	[699, 591, -1]	2	south	[699, 592, -1]	True	True	[699, 590, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024298	737	[701, 584, -1]	0	west	[700, 584, -1]	True	True	[702, 584, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024298	737	[701, 584, -1]	0	east	[702, 584, -1]	True	True	[700, 584, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024298	737	[701, 584, -1]	0	north	[701, 583, -1]	True	True	[701, 585, -1]	True	True	[]	same start
+static source+installed terrain	main-rocks	spoiled-milk.scenery.scenerylocs-json.024298	737	[701, 584, -1]	0	south	[701, 585, -1]	True	True	[701, 583, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024277	750	[682, 577, -1]	2	west	[681, 577, -1]	True	True	[683, 577, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024277	750	[682, 577, -1]	2	east	[683, 577, -1]	True	True	[681, 577, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024374	753	[684, 598, -1]	2	west	[683, 598, -1]	True	True	[686, 598, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024374	753	[684, 598, -1]	2	east	[685, 598, -1]	True	True	[682, 598, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024375	753	[685, 598, -1]	6	west	[684, 598, -1]	True	True	[687, 598, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024375	753	[685, 598, -1]	6	east	[686, 598, -1]	True	True	[683, 598, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024303	751	[696, 585, -1]	0	north	[696, 584, -1]	True	True	[696, 586, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024303	751	[696, 585, -1]	0	south	[696, 586, -1]	True	True	[696, 584, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024292	732	[700, 583, -1]	2	west	[699, 583, -1]	True	True	[701, 583, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024292	732	[700, 583, -1]	2	east	[701, 583, -1]	True	True	[699, 583, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024364	752	[700, 594, -1]	4	north	[700, 593, -1]	True	True	[700, 595, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024364	752	[700, 594, -1]	4	south	[700, 595, -1]	True	True	[700, 593, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024365	752	[701, 594, -1]	4	north	[701, 593, -1]	True	True	[701, 595, -1]	True	True	[]	same start
+static source+installed terrain	main-ledges	spoiled-milk.scenery.scenerylocs-json.024365	752	[701, 594, -1]	4	south	[701, 595, -1]	True	True	[701, 593, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025126	766	[675, 635, -1]	4	west	[674, 635, -1]	True	True	[676, 635, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025126	766	[675, 635, -1]	4	east	[676, 635, -1]	True	True	[674, 635, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025126	766	[675, 635, -1]	4	north	[675, 634, -1]	True	True	[676, 635, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025126	766	[675, 635, -1]	4	south	[675, 636, -1]	True	True	[676, 635, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025095	765	[677, 631, -1]	2	west	[676, 631, -1]	True	True	[678, 631, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025095	765	[677, 631, -1]	2	east	[678, 631, -1]	True	True	[676, 631, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025095	765	[677, 631, -1]	2	north	[677, 630, -1]	True	True	[678, 631, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025095	765	[677, 631, -1]	2	south	[677, 632, -1]	True	True	[678, 631, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025104	763	[679, 632, -1]	1	west	[678, 632, -1]	True	True	[680, 632, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025104	763	[679, 632, -1]	1	east	[680, 632, -1]	True	True	[678, 632, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025104	763	[679, 632, -1]	1	north	[679, 631, -1]	True	True	[680, 632, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025104	763	[679, 632, -1]	1	south	[679, 633, -1]	True	True	[680, 632, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025112	764	[679, 633, -1]	7	west	[678, 633, -1]	True	True	[680, 633, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025112	764	[679, 633, -1]	7	east	[680, 633, -1]	True	True	[678, 632, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025112	764	[679, 633, -1]	7	north	[679, 632, -1]	True	True	[679, 634, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025112	764	[679, 633, -1]	7	south	[679, 634, -1]	True	True	[680, 633, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025088	762	[680, 630, -1]	0	west	[679, 630, -1]	True	True	[681, 630, -1]	True	True	[{'id': 730, 'name': 'stalagmite'}]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025088	762	[680, 630, -1]	0	east	[681, 630, -1]	True	True	[679, 630, -1]	True	True	[{'id': 729, 'name': 'stalagmite'}]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025088	762	[680, 630, -1]	0	north	[680, 629, -1]	True	True	[680, 631, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025088	762	[680, 630, -1]	0	south	[680, 631, -1]	True	True	[680, 629, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025069	760	[681, 627, -1]	6	west	[680, 627, -1]	True	True	[681, 628, -1]	True	True	[{'id': 760, 'name': 'Rocks'}]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025069	760	[681, 627, -1]	6	east	[682, 627, -1]	True	True	[682, 628, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025069	760	[681, 627, -1]	6	north	[681, 626, -1]	True	True	[681, 628, -1]	True	True	[{'id': 760, 'name': 'Rocks'}]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025069	760	[681, 627, -1]	6	south	[681, 628, -1]	True	True	[681, 626, -1]	True	True	[{'id': 729, 'name': 'stalagmite'}]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025075	760	[681, 628, -1]	0	west	[680, 628, -1]	True	True	[682, 628, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025075	760	[681, 628, -1]	0	east	[682, 628, -1]	True	True	[680, 628, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025075	760	[681, 628, -1]	0	north	[681, 627, -1]	True	True	[681, 629, -1]	True	True	[{'id': 940, 'name': 'column'}]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025075	760	[681, 628, -1]	0	south	[681, 629, -1]	True	True	[681, 627, -1]	True	True	[{'id': 760, 'name': 'Rocks'}]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025097	759	[682, 631, -1]	6	west	[681, 631, -1]	True	True	[682, 632, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025097	759	[682, 631, -1]	6	east	[683, 631, -1]	True	True	[683, 632, -1]	True	True	[{'id': 730, 'name': 'stalagmite'}]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025097	759	[682, 631, -1]	6	north	[682, 630, -1]	True	True	[682, 632, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025097	759	[682, 631, -1]	6	south	[682, 632, -1]	True	True	[682, 630, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025099	758	[686, 631, -1]	4	west	[685, 631, -1]	True	True	[687, 631, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025099	758	[686, 631, -1]	4	east	[687, 631, -1]	True	True	[685, 631, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025099	758	[686, 631, -1]	4	north	[686, 630, -1]	True	True	[687, 631, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025099	758	[686, 631, -1]	4	south	[686, 632, -1]	True	True	[687, 631, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025083	757	[688, 629, -1]	2	west	[687, 629, -1]	True	True	[689, 629, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025083	757	[688, 629, -1]	2	east	[689, 629, -1]	True	True	[687, 629, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025083	757	[688, 629, -1]	2	north	[688, 628, -1]	True	True	[689, 629, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025083	757	[688, 629, -1]	2	south	[688, 630, -1]	True	True	[689, 629, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025077	756	[689, 628, -1]	1	west	[688, 628, -1]	True	True	[690, 628, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025077	756	[689, 628, -1]	1	east	[690, 628, -1]	True	True	[688, 628, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025077	756	[689, 628, -1]	1	north	[689, 627, -1]	True	True	[690, 628, -1]	True	True	[]	same start
+static source+installed terrain	swamp-rocks	spoiled-milk.scenery.scenerylocs-json.025077	756	[689, 628, -1]	1	south	[689, 629, -1]	True	True	[690, 628, -1]	True	True	[]	same start
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025250	859	[731, 649, -1]	0	west	[730, 649, -1]	True	True	[732, 649, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025250	859	[731, 649, -1]	0	east	[732, 649, -1]	True	True	[730, 649, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025250	859	[731, 649, -1]	0	north	[731, 648, -1]	True	True	[731, 650, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025250	859	[731, 649, -1]	0	south	[731, 650, -1]	True	True	[731, 648, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025214	858	[732, 643, -1]	0	west	[731, 643, -1]	True	True	[733, 643, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025214	858	[732, 643, -1]	0	east	[733, 643, -1]	True	True	[731, 643, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025214	858	[732, 643, -1]	0	north	[732, 642, -1]	True	True	[732, 644, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025214	858	[732, 643, -1]	0	south	[732, 644, -1]	True	True	[732, 642, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025217	857	[734, 644, -1]	0	west	[733, 644, -1]	True	True	[735, 644, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025217	857	[734, 644, -1]	0	east	[735, 644, -1]	True	True	[733, 644, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025217	857	[734, 644, -1]	0	north	[734, 643, -1]	True	True	[734, 645, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025217	857	[734, 644, -1]	0	south	[734, 645, -1]	True	True	[734, 643, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025203	854	[738, 640, -1]	0	west	[737, 640, -1]	True	True	[739, 640, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025203	854	[738, 640, -1]	0	east	[739, 640, -1]	True	True	[737, 640, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025203	854	[738, 640, -1]	0	north	[738, 639, -1]	True	True	[738, 641, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025203	854	[738, 640, -1]	0	south	[738, 641, -1]	True	True	[738, 639, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025241	855	[738, 647, -1]	0	west	[737, 647, -1]	True	True	[739, 647, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025241	855	[738, 647, -1]	0	east	[739, 647, -1]	True	True	[737, 647, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025241	855	[738, 647, -1]	0	north	[738, 646, -1]	True	True	[738, 648, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025241	855	[738, 647, -1]	0	south	[738, 648, -1]	True	True	[738, 646, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025226	853	[740, 645, -1]	0	west	[739, 645, -1]	True	True	[741, 645, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025226	853	[740, 645, -1]	0	east	[741, 645, -1]	True	True	[739, 645, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025226	853	[740, 645, -1]	0	north	[740, 644, -1]	True	True	[740, 646, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025226	853	[740, 645, -1]	0	south	[740, 646, -1]	True	True	[740, 644, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025253	852	[741, 649, -1]	0	west	[740, 649, -1]	True	True	[742, 649, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025253	852	[741, 649, -1]	0	east	[742, 649, -1]	True	True	[740, 649, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025253	852	[741, 649, -1]	0	north	[741, 648, -1]	True	True	[741, 650, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025253	852	[741, 649, -1]	0	south	[741, 650, -1]	True	True	[741, 648, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025271	851	[743, 651, -1]	0	west	[742, 651, -1]	True	True	[744, 651, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025271	851	[743, 651, -1]	0	east	[744, 651, -1]	True	True	[742, 651, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025271	851	[743, 651, -1]	0	north	[743, 650, -1]	True	True	[743, 652, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025271	851	[743, 651, -1]	0	south	[743, 652, -1]	True	True	[743, 650, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025254	860	[744, 649, -1]	0	west	[743, 649, -1]	True	True	[745, 649, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025254	860	[744, 649, -1]	0	east	[745, 649, -1]	True	True	[743, 649, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025254	860	[744, 649, -1]	0	north	[744, 648, -1]	True	True	[744, 650, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025254	860	[744, 649, -1]	0	south	[744, 650, -1]	True	True	[744, 648, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025244	850	[745, 648, -1]	0	west	[744, 648, -1]	True	True	[746, 648, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025244	850	[745, 648, -1]	0	east	[746, 648, -1]	True	True	[744, 648, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025244	850	[745, 648, -1]	0	north	[745, 647, -1]	True	True	[745, 649, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025244	850	[745, 648, -1]	0	south	[745, 649, -1]	True	True	[745, 647, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025221	849	[750, 644, -1]	0	west	[749, 644, -1]	True	True	[751, 644, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025221	849	[750, 644, -1]	0	east	[751, 644, -1]	True	True	[749, 644, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025221	849	[750, 644, -1]	0	north	[750, 643, -1]	True	True	[750, 645, -1]	True	True	[]	spike group below
+static source+installed terrain	map2-rocks	spoiled-milk.scenery.scenerylocs-json.025221	849	[750, 644, -1]	0	south	[750, 645, -1]	True	True	[750, 643, -1]	True	True	[]	spike group below

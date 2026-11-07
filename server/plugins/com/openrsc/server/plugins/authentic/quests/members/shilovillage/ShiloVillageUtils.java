@@ -39,7 +39,7 @@ public class ShiloVillageUtils implements DropObjTrigger, OpInvTrigger, UseInvTr
 				delay(3);
 				player.message("you realise that there is a huge drop underneath you");
 				player.message("You begin falling....");
-				player.teleport(380, 3692);
+				player.teleport(380, 860, -1, false);
 				delay();
 				say(player, null, "Ahhhhh!");
 				player.damage(1);
@@ -47,7 +47,7 @@ public class ShiloVillageUtils implements DropObjTrigger, OpInvTrigger, UseInvTr
 				say(player, null, "Ooooff!");
 				player.damage(1);
 				delay();
-				player.teleport(352, 3650);
+				player.teleport(352, 818, -1, false);
 				player.damage((int) (getCurrentLevel(player, Skill.HITS.id()) * 0.2 + 10));
 				mes("You hit the floor and it knocks the wind out of you!");
 				delay(3);
@@ -61,7 +61,7 @@ public class ShiloVillageUtils implements DropObjTrigger, OpInvTrigger, UseInvTr
 				mes("yourself to the floor.");
 				delay(3);
 				say(player, null, "Yay!");
-				player.teleport(352, 3650);
+				player.teleport(352, 818, -1, false);
 			}
 			player.incExp(Skill.AGILITY.id(), 30, true);
 			if(player.getQuestStage(Quests.SHILO_VILLAGE) == 2) {

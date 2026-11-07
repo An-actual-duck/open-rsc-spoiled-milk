@@ -1,0 +1,199 @@
+NONZERO AGILITY LANDINGS — CORE REVIEW HANDOFF
+
+Task: audit agility obstacles and shortcuts involving underground or upper
+floors, including surface-origin routes and success, failure and intermediate
+landings. Branch: fix/agility-nonzero-layer-landings. Source base:
+2fffc5b5fff17dd65777e396c2e733bd17b52090. No authored map changes.
+
+RESULT
+
+Confirmed layered-coordinate defects are fixed in Barbarian ledge falls,
+Legends cave stair direction tests, Shilo cave rocks/rubble direction tests,
+Shilo surface exits, Digsite rope ascents, and lava-crossing facing targets.
+Other packed destinations in those agility routes now explicitly state their
+signed floor. Already-correct Gnome and Underground Pass controls remain intact.
+Requirements, odds, XP, damage, messages and original movement type are retained.
+
+The two-coordinate teleport overload preserves a native player's current level
+for ordinary logical Y, whereas a legacy packed underground/upper-floor Y can
+still decode correctly. Consequently this audit does not treat every old packed
+teleport as a reproduced defect. Old packed directional predicates do fail on
+native logical Y. Existing legacyPackedY(entity) keeps those comparisons valid
+for both native and classic coordinates; explicit x/y/level teleport overloads
+also retain their classic projection. No loader or global teleport API changed.
+
+INSTALLED MAP AUTHORITY
+
+Package fingerprint:
+7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc
+Manifest SHA-256:
+42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b
+
+The fixture reads the selected installed package and verifies placement/terrain
+payload digests. It uses all 1,787 global terrain sectors and actual scenery and
+boundary placements around tested routes. There are no account loads, listeners,
+NPCs, ground-item inventories, live credentials or database initialization.
+The disposable fixture records its source package and manifest in source-world.json.
+
+RUNTIME COVERAGE — 279 CASES, 145 INSTALLED PLACEMENTS
+
+The companion nonzero-agility-layer-coverage.tsv lists each installed identity,
+source floor, approach, actual final/intermediate observations, damage and exit
+proof. Counts below include duplicates where an installed object shares a route.
+
+Owner                           Cases  Placements  Relevant IDs
+BarbarianAgilityCourse               8      6       675,677,678,679
+WildernessAgilityCourse             14      7       706,708
+AgilityShortcuts                    26     17       614,615,627,628,633,636,
+                                                   656,657,658,684,685,1237,
+                                                   1291,1292
+LegendsQuestCaveAgility             24      8       558-561,1114,1123-1125
+LegendsQuestWallObjects              4      1       boundary211
+LegendsQuestGameObjects              6      3       1151
+ShiloVillageObjects                34     18       651,670,688,690,696,719
+GrandTree                           2      2       635,646
+DigsiteWinch                        3      2       1053,1095
+DigsiteObjects                      4      4       1097,1098 (paired recovery)
+GnomeAgilityCourse                  6      6       647-650 (existing controls)
+UP AgilityObstacles               103     31       862-866,872,889,891-910,921
+UP ObstaclesMap1                   36     36       754,767,812 (recovery/drop)
+UP ObstaclesMap2                    7      2       837,856
+Configured shortcuts                2      2       1333, crawl65, level5
+
+Tests call real production obstacle callbacks and Player transitions. Existing
+DataConversions' Random is temporarily replaced in the isolated fixture JVM,
+then restored in finally, to force the relevant low/high outcomes; production
+randomness, odds and APIs are untouched. No retry-until-success tests are used.
+Success/failure and both directions are covered where the route has them;
+Legends quest-stage variants, Digsite shaft variants, Shilo rope/no-rope and
+both lava-crossing directions are included. Intermediate observations are taken
+at actual pause callbacks and at completion, not by replacing Player methods.
+The lava crossing also asserts actual facing sprites at its turning points.
+
+Every final landing has native terrain, no authored void overlay (8/250/255),
+and actual upper-floor floor where applicable. Production PathValidation proves
+at least one outward walking step for 271 cases. Eight Legends jump-platform
+cases instead prove that the player can reach and execute a next authored
+scripted obstacle callback; these are intentionally separated in the TSV.
+No UP case required this exception. This proves a continuation, not a full quest
+walkthrough. Spike pits, mud and Shilo waterfall bank-edge outputs were retained:
+they have actual legal outward movement despite landing collision flags.
+
+Configured level5 crawls at (36,449,5) and (36,448,5) have 100% success chance.
+The actual handler validates both success/failure destinations before activation;
+the success callbacks are run through their event scheduler. Failure execution
+is unreachable under the installed configuration and is not claimed as forced
+runtime coverage. Their endpoints are respectively (36,447,5)/(36,450,5) and
+(36,450,5)/(36,447,5).
+
+STATIC COVERAGE — SHARED UP HELPERS
+
+The manager independently derived all doRock/doLedge branches against installed
+terrain and scenery: 43 placements, 158 directional source approaches, all on
+level -1. This is STATIC evidence, not 158 additional runtime tests. Details:
+nonzero-agility-static-helper-coverage.tsv. Full manager evidence is preserved at:
+/home/justin/Core-Framework/output/reviews/nonzero-agility-manager-static/underground-shared-helper-endpoints.json
+and copied to this worker's output/reviews/agility-nonzero-layer-landings/.
+It records source hashes and the same installed manifest fingerprint.
+
+Groups: 14 main rocks (IDs731,737-749); 7 main ledge placements (732,750-753);
+11 swamp recovery rocks (756-760,762-766); 11 Map2 rocks (849-855,857-860).
+The relative-coordinate helper branches do not compare packed Y to logical Y.
+No visible-floor approach, including approaches covered by blocking scenery,
+has a success endpoint in authored void. The TSV deliberately retains invalid
+or blocked approach classifications rather than calling every direction
+reachable. Main and swamp failure branches remain at their start. The five
+Map2 fixed failures, all level -1, are:
+(743,643), (748,650), (738,651), (736,643), (730,646).
+Each has authored visible terrain, zero wall fields, no blocking scenery or
+nearby boundary, and 3-4 clear adjacent static terrain/scenery candidates.
+Those are static exit candidates, not a substitute for runtime pathfinding.
+
+INVENTORY CLASSIFICATION / EXCLUSIONS
+
+The inventory combined installed placements, source users of Agility, shared
+helper callers and a name/ID sweep. Twenty-four Skill.AGILITY source users were
+classified. Additional Map2 helper calls and paired Digsite recoveries are
+included even though they do not directly mention that skill.
+
+- Taverley pipe1236 has no installed placement. Its signed destination was
+  converted alongside the actual return1237, but no installed callback is
+  claimed for1236. Other AgilityShortcuts branches have only surface placements
+  and surface destinations; they are not nonzero obstacle routes.
+- Barbarian HANDHOLDS679 are surface objects, not underground escape objects.
+  They are runtime surface controls. LEDGE678 at499,562,1 is a decorative second
+  segment intentionally ignored by the callback; this no-movement case is tested.
+- Nonzero log-bridge scenery418/426/574/578/579 is passive Grand Tree walkway
+  geometry (54 placements); no skill callback was identified. Ledge529 at
+  500,562,1 is explicitly LEDGE_STRAIGHT_UNCROSSABLE. Rope590 at687,508,2 is
+  ROPESWING_GNOME_UNCROSSABLE. These decorate separately tested course routes.
+  Four underground central stones1289 are passive intermediates for1291/1292,
+  whose actual multi-step callbacks are tested. Object names alone are not
+  interaction authority.
+- WatchTowerObstacles' Agility crossing uses surface rocks/destinations.
+  Its unrelated ladders/caverns and non-Agility quest transport are outside
+  this task. LumbridgeAlKharidSteppingStones is surface-only. AgilityCape's
+  explicit surface teleport is already safe and is not an obstacle.
+- AgilityUtils does reward/lap management. Gunnjorn, GnomeBall/GnomeNpcs,
+  TouristTrap, LegendsQuestSirRadimusErkle, QuestRewardRegistrar,
+  MyWorldQuestShortcuts and ABoneToPick use Agility for dialogue, training,
+  prerequisites or reward selection; they do not add nonzero obstacle routes.
+- Other Underground Pass puzzle doors, wall grills, combat traps and quest
+  object dialogues are not certified by this agility audit. The prior accepted
+  UP layer patch remains unchanged. This is not a complete quest walkthrough.
+
+REPRODUCTION / VALIDATION
+
+Final Java8 build: test_nonzero_agility_layers passed all279 cases /2443 checks.
+The fixture rejects zero matches if its optional direct-JVM scenario filter is
+misspelled. Native placement preflight and actual endpoint collision checks ran.
+
+A separate ignored class directory compiles the 11 changed plugin files from
+base2fffc5b5 against the same current core, then shadows only those plugin
+classes in a fresh JVM. On the original243-case matrix, the old sources produce
+28 failures; fixed sources produce zero. Baseline failures match Barbarian
+wrong floor; Legends stair wrong direction; Shilo wrong direction/surface exit;
+Digsite underground-to-surface rope exits; and lava-facing sprite direction.
+They are duplicate installed placements/outcomes, not28 distinct bug classes.
+The additional36 final cases cover unchanged Map1 drop/swamp recovery controls.
+Baseline sources never replaced the working tree or packaged plugins.jar.
+
+Evidence under output/tests/agility-nonzero-layer-landings/:
+  fixture-final/scenarios.json, source-world.json, results.json
+  verification-final.log
+  baseline/{compile.log,runtime.log,results.json,summary.json}
+Earlier failed fixture iterations are preserved as development evidence; they
+were corrected test assumptions (bridge orientation, intentional collision,
+callback context), not additional production-map defects.
+
+Focused source suites passed:
+  tests/myworld/test-agility-pouches.py
+  tests/myworld/test-layered-underground-pass-swamp-shortcuts.py (4 tests)
+  tests/myworld/test-layered-spell-teleport-destinations.py (3 tests)
+Additional final checks: git diff --check and Python syntax passed.
+workspace-layout check was run and fails on inherited ignored legacy output
+entries and assets/sprites already present in this worker. Those preserved files
+were not moved or deleted. All new task output uses declared tests/reviews
+categories; no new asset-root or loose output-root entries were added.
+
+Reproduce from repository root with a NEW disposable fixture path:
+  python3 tests/myworld/prepare-nonzero-agility-fixture.py output/tests/agility-nonzero-layer-landings/review-run
+  cd server
+  JAVA_HOME=/home/justin/jdk8u482-b08 bash ../tools/vendor/apache-ant-1.10.5/bin/ant -Dagility.fixture.dir=/ABSOLUTE/PATH/TO/review-run test_nonzero_agility_layers
+Use the shared core-heavy-build.lock for heavy builds in maintainer workspaces.
+Never point agility.fixture.dir at a server root. No service is started.
+
+LIMITS / SEPARATE FOLLOW-UP
+
+No live deployment, map authoring, user database work, client animation review,
+complete approach pathfinding/quest playthrough, or RNG distribution/balance
+change was performed. Static helper branches are explicitly separated from
+forced callback tests. Legacy compatibility is preserved through existing
+projection APIs and source review; the full fixture runs native installed maps.
+
+Adjacent source inspection found packed-Y predicates in Shilo tomb doors794
+and metallic gate577. Those are separate door/quest interactions and were not
+changed or runtime-reproduced in this task. They should receive a focused door
+review later rather than be silently folded into this agility patch.
+
+READY means ready for manager review and integration only, not live activation.

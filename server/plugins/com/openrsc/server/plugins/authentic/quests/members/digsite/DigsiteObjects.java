@@ -69,9 +69,9 @@ public class DigsiteObjects implements OpLocTrigger, UseLocTrigger{
 		else if (obj.getID() == CLIMB_UP_ROPE_SMALL_CAVE || obj.getID() == CLIMB_UP_ROPE_BIG_CAVE) {
 			player.message("You climb the ladder");
 			if (obj.getID() == CLIMB_UP_ROPE_BIG_CAVE) {
-				player.teleport(25, 515);
+				player.teleport(25, 515, 0, false);
 			} else if (obj.getID() == CLIMB_UP_ROPE_SMALL_CAVE) {
-				player.teleport(14, 506);
+				player.teleport(14, 506, 0, false);
 			}
 		}
 		else if (obj.getID() == TENT_CHEST_LOCKED) {

@@ -650,7 +650,7 @@ public class LegendsQuestGameObjects implements TakeObjTrigger, OpLocTrigger, Us
 						delay(2);
 						mes("After some time, you find a small cave opening...and walk through.");
 						delay(2);
-						player.teleport(461, 3700);
+						player.teleport(461, 868, -1, false);
 						if (player.getCache().hasKey("legends_cavern")) {
 							player.getCache().remove("legends_cavern");
 							player.updateQuestStage(Quests.LEGENDS_QUEST, 2);

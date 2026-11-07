@@ -96,22 +96,22 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 				return;
 			}
 			player.message("You carefully pick your way through the rocks.");
-			player.teleport(349, 3618);
+			player.teleport(349, 786, -1, false);
 			if (ShiloVillageUtils.succeed(player, 32)) {
 				delay(2);
-				if (obj.getY() == 3619) {
-					player.teleport(348, 3616);
+				if (legacyPackedY(obj) == 3619) {
+					player.teleport(348, 784, -1, false);
 					delay(2);
 					player.message("You manage to carefully clamber up.");
 				} else {
-					player.teleport(348, 3620);
+					player.teleport(348, 788, -1, false);
 					delay(2);
 					player.message("You manage to carefully clamber down.");
 				}
 			} else {
 				player.message("@red@You fall!");
 				delay(2);
-				player.teleport(348, 3620);
+				player.teleport(348, 788, -1, false);
 				player.message("You take damage!");
 				player.damage(3);
 				delay(2);
@@ -220,20 +220,20 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 			delay(3);
 			if (ShiloVillageUtils.succeed(player, 32)) {
 				player.message("You push your way through a cunningly designed trap door..");
-				player.teleport(471, 836);
+				player.teleport(471, 836, 0, false);
 				delay();
 				player.message("And appear in bright sunshine and the salty sea air.");
 			} else {
 				player.message("You get halfway but loose your grip.");
 				mes("You fall back to the floor.");
 				delay(3);
-				player.teleport(380, 3692);
+				player.teleport(380, 860, -1, false);
 				say(player, null, "Ahhhhh!");
 				player.damage(getCurrentLevel(player, Skill.HITS.id()) / 10);
 				mes("And it knocks the wind out of you.");
 				delay(3);
 				player.damage(getCurrentLevel(player, Skill.HITS.id()) / 10);
-				player.teleport(467, 3674);
+				player.teleport(467, 842, -1, false);
 				say(player, null, "Oooff!");
 			}
 		}
@@ -259,7 +259,7 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 						if (ShiloVillageUtils.succeed(player, 32)) {
 							mes("You struggle through the narrow crevice in the rocks");
 							delay(3);
-							player.teleport(471, 3658);
+							player.teleport(471, 826, -1, false);
 							player.message("and drop to your feet into a narrow underground corridor");
 							if (player.getQuestStage(Quests.SHILO_VILLAGE) == 5) {
 								player.updateQuestStage(Quests.SHILO_VILLAGE, 6);
@@ -408,7 +408,7 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 			if (m == 0) {
 				mes("You start searching for handholds in the slippery cave entrance...");
 				delay(3);
-				player.teleport(342, 3684);
+				player.teleport(342, 852, -1, false);
 				if (ShiloVillageUtils.succeed(player, 32)) {
 					mes("@red@*** YOU FALL ***");
 					delay(3);
@@ -418,7 +418,7 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 					delay(3);
 					mes("you against the rocks...");
 					delay(3);
-					player.teleport(339, 808);
+					player.teleport(339, 808, 0, false);
 					mes("You are washed onto the waterfall river bank");
 					delay(3);
 					player.message("barely alive!");
@@ -429,7 +429,7 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 					delay(3);
 					mes("and avoid falling into the water below.");
 					delay(3);
-					player.teleport(344, 808);
+					player.teleport(344, 808, 0, false);
 					mes("You make it out of the cave");
 					delay(3);
 					player.message("and into the warmth of the jungle.");
@@ -544,10 +544,10 @@ public class ShiloVillageObjects implements OpLocTrigger, UseLocTrigger {
 				"No, I'll stay here.");
 			if (menu == 0) {
 				player.message("You manage to wriggle through the rubble");
-				if (obj.getX() == 348 && obj.getY() == 3708) {
-					player.teleport(356, 3667);
-				} else if (obj.getX() == 357 && obj.getY() == 3668) {
-					player.teleport(347, 3709);
+				if (obj.getX() == 348 && legacyPackedY(obj) == 3708) {
+					player.teleport(356, 835, -1, false);
+				} else if (obj.getX() == 357 && legacyPackedY(obj) == 3668) {
+					player.teleport(347, 877, -1, false);
 				}
 				player.incExp(Skill.AGILITY.id(), 10, true);
 			} else if (menu == 1) {

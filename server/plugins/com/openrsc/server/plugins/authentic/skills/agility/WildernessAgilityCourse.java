@@ -114,7 +114,7 @@ public class WildernessAgilityCourse implements OpLocTrigger {
 					delay(2);
 				}
 				int damage = (int) Math.round((player.getSkills().getLevel(Skill.HITS.id())) * 0.15D);
-				teleport(player, 293, 2942);
+				player.teleport(293, 110, -1, false);
 				player.message("You land painfully on the spikes");
 				say(player, null, "ouch");
 				player.damage(damage);
@@ -165,7 +165,7 @@ public class WildernessAgilityCourse implements OpLocTrigger {
 					player.message("you lose your footing and fall to the level below");
 					delay(2);
 					int ledgeDamage = (int) Math.round((player.getSkills().getLevel(Skill.HITS.id())) * 0.25D);
-					teleport(player, 298, 2945);
+					player.teleport(298, 113, -1, false);
 					player.message("You land painfully on the spikes");
 					say(player, null, "ouch");
 					player.damage(ledgeDamage);
