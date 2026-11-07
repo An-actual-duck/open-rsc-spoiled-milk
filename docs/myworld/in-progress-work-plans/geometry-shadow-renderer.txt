@@ -69,11 +69,14 @@ Verification completed:
   diagnostics are enabled. Observers never call GLFW off the context thread.
   Raw completed openGLFrameInterval samples are exported for cadence analysis.
 
-Preliminary native full-client evidence (candidate1; not final acceptance):
+Superseded preliminary native evidence (candidate1; not acceptance):
 Seers normal zoom 75, physical 1920x1080 / logical 960x540, fixed sun 135/45/day,
 ordinary RSA login/native scene ACK, RX 6700 XT. Controlled busy scene has 17
 players (viewer plus 16), 40 NPCs (32 plus 8 test bears), 57 submitted actor groups,
-163 sprite layers and 8 visual projectile emitters, no damage simulation. A 60-second
+163 sprite layers. Eight emitters were requested, but later observation found
+zero actual projectile actors in this preliminary run. No damage was simulated.
+This artifact also had the object-cell shadow-offset defect described above, so
+these timings must not stand in for corrected full-workload acceptance. A 60-second
 High run measured CPU render p95/p99 3.822/4.243 ms and GPU render 6.638/7.155 ms;
 no measured render sample exceeded 16.667 ms. This is hidden offscreen throughput,
 not proof of compositor delivery, owner visual approval or all locations.

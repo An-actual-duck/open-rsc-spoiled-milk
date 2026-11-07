@@ -29,6 +29,19 @@ import java.util.Set;
  */
 final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private static final int LEGACY_TRANSPARENT_TEXTURE = 12345678;
+	// Controlled caster isolation for real-frame diagnosis; never a player mode.
+	private static final Set<Renderer3DModelKind> SHADOW_DIAGNOSTIC_EXCLUDED = diagnosticShadowExclusions();
+	private static Set<Renderer3DModelKind> diagnosticShadowExclusions() {
+		Set<Renderer3DModelKind> result = java.util.EnumSet.noneOf(Renderer3DModelKind.class);
+		if (RendererDiagnosticSession.isEnabled()) {
+			for (String name : System.getProperty("spoiledmilk.shadowDiagnosticExclude", "").split(",")) {
+				if (name.trim().isEmpty()) continue;
+				try { result.add(Renderer3DModelKind.valueOf(name.trim())); }
+				catch (IllegalArgumentException error) { throw new IllegalArgumentException("Unknown diagnostic shadow caster kind: " + name, error); }
+			}
+		}
+		return result;
+	}
 	private static final int NO_FALLBACK_COLOR = Integer.MIN_VALUE;
 	private static final int MAX_RESIDENT_CHUNKS = 256;
 	private static final int MAX_UPLOAD_DIAGNOSTIC_CHUNKS_PER_ROLE = 24;
@@ -1569,7 +1582,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			|| shouldDrawProjectedShadowProof()
 			|| RendererLightingSettings.getMode() != RendererLightingSettings.Mode.DIRECTIONAL
 			|| RendererShadowSettings.getQuality() == RendererShadowSettings.Quality.OFF
-			|| Boolean.getBoolean("spoiledmilk.shadowBenchmarkLegacyMask")) return false;
+			|| Boolean.getBoolean("spoiledmilk.shadowBenchmarkLegacyMask")) {
+			if (geometryShadows != null) geometryShadows.publishDiagnosticFrame();
+			return false;
+		}
 		if (!geometryShadowCapabilityChecked) {
 			geometryShadowCapabilityChecked = true;
 			try {
@@ -1642,6 +1658,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			pass.bindChunk(buffer.vertexBufferId, buffer.materialIndexBufferId, STRIDE_BYTES,
 				TEXTURE_COORD_OFFSET_BYTES, offsetX, offsetZ);
 			for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
+				if (SHADOW_DIAGNOSTIC_EXCLUDED.contains(batch.kind)) continue;
 				if (batch.indexCount <= 0 || (batch.hasBounds() && !projection.intersects(
 					batch.minX + offsetX, batch.minY, batch.minZ + offsetZ,
 					batch.maxX + offsetX, batch.maxY, batch.maxZ + offsetZ))) continue;
@@ -1900,6 +1917,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			matchedBuffer = true;
 			matchedResidentChunks++;
 			for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
+				if (SHADOW_DIAGNOSTIC_EXCLUDED.contains(batch.kind)) continue;
 				if (batch.indexCount <= 0 || !shouldDrawChunkModelKind(frame, chunk, batch.kind)) {
 					continue;
 				}

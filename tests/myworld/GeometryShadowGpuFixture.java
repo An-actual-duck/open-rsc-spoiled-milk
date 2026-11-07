@@ -106,6 +106,7 @@ public final class GeometryShadowGpuFixture {
 	}
 	public static void main(String[] args)throws Exception {
 		Path output=Paths.get(args[0]).toAbsolutePath();Files.createDirectories(output);
+		System.setProperty("spoiledmilk.rendererDiagnostics","true");
 		System.setProperty("spoiledmilk.remasterLightAzimuth","0");System.setProperty("spoiledmilk.remasterLightElevation","45");
 		gl=LwjglBindings.load();require(gl.glfwInit(),"GLFW init");long window=0;OpenGLGeometryShadows pass=null;OpenGLGpuTimer frameTimer=null;int program=0,controlVao=0,drawFbo=0,readFbo=0;
 		try {
@@ -130,6 +131,9 @@ public final class GeometryShadowGpuFixture {
 			frameTimer.begin();
 			pass.prepare(SCENE,0,0,0);
 			require(pass.farRebuilt&&pass.nearDrawCalls>0,"initial maps not built");
+			long[] completed=pass.diagnosticSnapshot();require(completed[0]>0&&completed[1]==1&&completed[5]>0,"completed diagnostic snapshot missing");
+			pass.clearPrepared();require(pass.diagnosticSnapshot()[1]==1,"transient prepare state leaked to observer");
+			pass.prepare(SCENE,0,0,0);
 			require(functions.integer(OpenGLShadowBindings.CURRENT_PROGRAM)==program,"program state leaked");
 			require(functions.integer(OpenGLShadowBindings.ACTIVE_TEXTURE)==gl.GL_TEXTURE0+5,"active texture leaked");
 			require(functions.integer(0x8069)==alphaTexture,"texture binding leaked");
@@ -177,6 +181,7 @@ public final class GeometryShadowGpuFixture {
 			}
 			RendererShadowSettings.setQuality(RendererShadowSettings.Quality.OFF);require(!pass.prepare(SCENE,0,0,0),"Off still prepared depth maps");
 			require(pass.nearDrawCalls==0&&pass.farDrawCalls==0&&pass.nearCpuNanos==0&&!pass.farRebuilt,"Off retains stale per-frame diagnostics");
+			require(pass.diagnosticSnapshot()[1]==0&&pass.diagnosticSnapshot()[5]==0,"Off snapshot retains stale active/draw state");
 			ByteBuffer off=draw(pass,program,output.resolve("off.png"));require(brightness(off,40,-100)>240,"disabled shadow persisted");
 			frameTimer.begin();frameTimer.end();require(gpuSamples.size()>2,"completed GPU samples missing");
 			int error=(Integer)gl11.getMethod("glGetError").invoke(null);require(error==0,"GL error "+error);

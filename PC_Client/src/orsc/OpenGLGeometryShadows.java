@@ -88,6 +88,11 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 	int nearDrawCalls, nearTriangles, farDrawCalls, farTriangles;
 	private int currentDrawCalls, currentTriangles;
 	boolean farRebuilt;
+	private final java.util.concurrent.locks.ReentrantLock diagnosticLock = new java.util.concurrent.locks.ReentrantLock();
+	private long diagnosticSequence;
+	private boolean diagnosticActive, diagnosticFarRebuilt;
+	private long diagnosticNearCpu, diagnosticFarCpu;
+	private int diagnosticNearDraws, diagnosticNearTriangles, diagnosticFarDraws, diagnosticFarTriangles;
 
 	OpenGLGeometryShadows(LwjglBindings gl, OpenGLShadowBindings functions) throws Exception {
 		this.gl = gl; this.functions = functions;
@@ -139,7 +144,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		if (closed) throw new IllegalStateException("Shadow resources already closed");
 		clearPrepared();
 		quality = RendererShadowSettings.getQuality();
-		if (quality == RendererShadowSettings.Quality.OFF) return false;
+		if (quality == RendererShadowSettings.Quality.OFF) { publishDiagnosticFrame(); return false; }
 		float lx = RendererRemasterLightSettings.getLightDirectionX();
 		float ly = RendererRemasterLightSettings.getLightDirectionY();
 		float lz = RendererRemasterLightSettings.getLightDirectionZ();
@@ -196,6 +201,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 			gl.glPopAttrib();
 			gl.glActiveTexture(oldTexture);
 		}
+		publishDiagnosticFrame();
 		return active;
 	}
 
@@ -259,6 +265,30 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		nearDrawCalls = nearTriangles = farDrawCalls = farTriangles = 0;
 		farRebuilt = false;
 	}
+	/** Last completed frame, coherent for an observer on another thread.
+	 * Returns sequence/active/farRebuilt/nearCpu/farCpu/nearCalls/nearTriangles/
+	 * farCalls/farTriangles. Allocation occurs only when the observer asks. */
+	long[] diagnosticSnapshot() {
+		diagnosticLock.lock();
+		try {
+			return new long[] {diagnosticSequence, diagnosticActive ? 1L : 0L,
+				diagnosticFarRebuilt ? 1L : 0L, diagnosticNearCpu, diagnosticFarCpu,
+				diagnosticNearDraws, diagnosticNearTriangles,
+				diagnosticFarDraws, diagnosticFarTriangles};
+		} finally { diagnosticLock.unlock(); }
+	}
+	void publishDiagnosticFrame() {
+		// A diagnostic observer cannot block the rendering thread. If it owns
+		// the tiny copy lock, retain the previous completed frame until next time.
+		if (!RendererDiagnosticSession.isEnabled() || !diagnosticLock.tryLock()) return;
+		try {
+			diagnosticActive = active; diagnosticFarRebuilt = farRebuilt;
+			diagnosticNearCpu = nearCpuNanos; diagnosticFarCpu = farCpuNanos;
+			diagnosticNearDraws = nearDrawCalls; diagnosticNearTriangles = nearTriangles;
+			diagnosticFarDraws = farDrawCalls; diagnosticFarTriangles = farTriangles;
+			diagnosticSequence++;
+		} finally { diagnosticLock.unlock(); }
+	}
 	boolean isActive() { return active; }
 	long nearGpuNanos() { return nearTimer.lastNanos(); }
 	long farGpuNanos() { return farTimer.lastNanos(); }
@@ -292,7 +322,8 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 	public void close() throws Exception {
 		if (closed) return;
 		closed = true;
-		active = false;
+		clearPrepared();
+		publishDiagnosticFrame();
 		destroyTexture(near); destroyTexture(far); nearTimer.close(); farTimer.close();
 		functions.deleteVertexArray(vao); gl.glDeleteProgram(program);
 	}
