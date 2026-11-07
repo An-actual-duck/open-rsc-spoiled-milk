@@ -267,6 +267,10 @@ def verify_window_behavior() -> None:
             final int GLFW_TRUE = 1;
             final int GLFW_VISIBLE = 2;
             final int GLFW_FOCUSED = 5;
+            final int GLFW_ICONIFIED = 6;
+            int windowAttribQueries;
+            int visible = GLFW_TRUE;
+            int iconified = GLFW_FALSE;
             final int GLFW_RESIZABLE = 3;
             final int GLFW_DECORATED = 4;
             final int GLFW_DONT_CARE = -1;
@@ -304,6 +308,10 @@ def verify_window_behavior() -> None:
             void glfwMakeContextCurrent(long window) {}
             void createCapabilities() {}
             void glfwSwapInterval(int interval) {}
+            int glfwGetWindowAttrib(long window, int attribute) {
+                windowAttribQueries++;
+                return attribute == GLFW_VISIBLE ? visible : iconified;
+            }
             void glfwShowWindow(long window) {}
             void glfwHideWindow(long window) {}
             boolean glfwWindowShouldClose(long window) { return false; }
@@ -397,6 +405,15 @@ def verify_window_behavior() -> None:
                 OpenGLWindowController.SurfaceSize surface = controller.prepareFrame(960, 540);
                 require(surface.windowWidth == 800 && surface.windowHeight == 600,
                     "primary window keeps user size");
+                require(controller.diagnosticWindowFlags() == -1 && gl.windowAttribQueries == 0,
+                    "normal client avoids diagnostic attribute queries");
+                RendererDiagnosticSession.enabled = true;
+                controller.prepareFrame(960, 540);
+                require(controller.diagnosticWindowFlags() == 1, "visible diagnostic snapshot");
+                gl.iconified = gl.GLFW_TRUE;
+                controller.prepareFrame(960, 540);
+                require(controller.diagnosticWindowFlags() == 3, "iconified diagnostic snapshot");
+                RendererDiagnosticSession.enabled = false;
                 require(surface.framebufferWidth == 1600 && surface.framebufferHeight == 1200,
                     "framebuffer size query");
 
@@ -524,6 +541,7 @@ def verify_window_behavior() -> None:
         {
             "LwjglBindings.java": bindings,
             "WindowFixture.java": fixture,
+            "RendererDiagnosticSession.java": "package orsc; final class RendererDiagnosticSession { static boolean enabled; static boolean isEnabled() { return enabled; } }",
         },
         [WINDOW_SETTINGS, MONITOR_MODE, WINDOW],
     )

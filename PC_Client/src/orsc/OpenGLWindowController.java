@@ -53,6 +53,9 @@ final class OpenGLWindowController {
 	private boolean hasWindowedBounds = OpenGLWindowSettings.hasWindowedBounds();
 	private boolean windowedBoundsDirty;
 	private boolean shutdownPrepared;
+	// A coherent cached snapshot: -1 unknown, bit 0 visible, bit 1 iconified.
+	// Only the context thread calls GLFW; diagnostic observers read this value.
+	private volatile int diagnosticWindowFlags = -1;
 
 	OpenGLWindowController(
 		LwjglBindings gl,
@@ -107,6 +110,10 @@ final class OpenGLWindowController {
 		return window;
 	}
 
+	int diagnosticWindowFlags() {
+		return diagnosticWindowFlags;
+	}
+
 	boolean hasWindow() {
 		return window != 0L;
 	}
@@ -150,6 +157,13 @@ final class OpenGLWindowController {
 			captureWindowedBounds(false);
 		}
 
+		if (RendererDiagnosticSession.isEnabled()) {
+			int visible = gl.glfwGetWindowAttrib(window, gl.GLFW_VISIBLE);
+			int iconified = gl.glfwGetWindowAttrib(window, gl.GLFW_ICONIFIED);
+			diagnosticWindowFlags = (visible == gl.GLFW_TRUE ? 1 : 0)
+				| (iconified == gl.GLFW_TRUE ? 2 : 0);
+		}
+
 		return new SurfaceSize(
 			Math.max(1, framebufferWidth[0]),
 			Math.max(1, framebufferHeight[0]),
@@ -181,6 +195,7 @@ final class OpenGLWindowController {
 			logCleanupFailure("destroy window", t);
 		} finally {
 			window = 0L;
+			diagnosticWindowFlags = -1;
 		}
 
 		try {
