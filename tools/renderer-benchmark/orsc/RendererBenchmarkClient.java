@@ -102,6 +102,18 @@ public final class RendererBenchmarkClient {
         }
         return count;
     }
+    private static boolean farPollEveryFrame() throws Exception {
+        try { return Boolean.TRUE.equals(field(null,Class.forName("orsc.OpenGLGpuTimer"),"FAR_QUERY_POLL_EVERY_FRAME")); }
+        catch(ClassNotFoundException | NoSuchFieldException older) { return false; }
+    }
+    private static String roofState(mudclient client) throws Exception {
+        Renderer3DFrame frame=((Scene)field(client,mudclient.class,"scene")).getRenderer3DFrame();
+        int roofTriangles=0,maxCovered=0;
+        for(Renderer3DWorldChunkFrame.ChunkMesh chunk:frame.getWorldChunkFrame().getChunks()) {
+            roofTriangles+=chunk.getRoofTriangles(); maxCovered=Math.max(maxCovered,chunk.getRoofCoveredTileCount());
+        }
+        return "{\"visibility\":\""+frame.getRoofVisibility()+"\",\"residentRoofTriangles\":"+roofTriangles+",\"maximumSourceCoveredTiles\":"+maxCovered+"}";
+    }
     private static int onScreenActors(mudclient client) throws Exception {
         Scene scene=(Scene)field(client,mudclient.class,"scene");
         Renderer3DFrame frame=scene.getRenderer3DFrame();
@@ -138,6 +150,11 @@ public final class RendererBenchmarkClient {
                 chunkIndex++;
             }
         }
+        writeFrameMetadata(frame,presenter,capture.resolve("terrain-frame.json"),exported);
+        System.out.println("Exported immutable TERRAIN triangles="+exported);
+    }
+    private static void writeFrameMetadata(Renderer3DFrame frame, OpenGLFramePresenter presenter, Path destination, int exported) throws Exception {
+        Renderer3DWorldChunkFrame chunks=frame.getWorldChunkFrame();
         StringBuilder metadata=new StringBuilder("{\"terrainTriangles\":"+exported+",\"residentTriangles\":"+chunks.getTotalTriangleCount()+",\"chunks\":"+chunks.getChunkCount()+",\"sunAzimuth\":"+RendererRemasterLightSettings.getAzimuthDegrees()+",\"sunElevation\":"+RendererRemasterLightSettings.getElevationDegrees());
         String[] methods={"getViewportWidth","getViewportHeight","getCenterX","getCenterY","getCameraOffsetX","getCameraOffsetY","getCameraOffsetZ","getCameraRotationX","getCameraRotationY","getCameraRotationZ","getPerspectiveShift","getNearPlane","getFogDistance","getFogStartDistance","getActivePlane"};
         for(String name:methods) metadata.append(",\"").append(name).append("\":").append(Renderer3DFrame.class.getMethod(name).invoke(frame));
@@ -146,8 +163,34 @@ public final class RendererBenchmarkClient {
             Method matrix=renderer.getClass().getDeclaredMethod(name,Renderer3DFrame.class); matrix.setAccessible(true);
             metadata.append(",\"").append(name).append("\":").append(java.util.Arrays.toString((float[])matrix.invoke(renderer,frame)));
         }
-        Files.write(capture.resolve("terrain-frame.json"),metadata.append("}\n").toString().getBytes(StandardCharsets.UTF_8));
-        System.out.println("Exported immutable TERRAIN triangles="+exported);
+        Files.write(destination,metadata.append("}\n").toString().getBytes(StandardCharsets.UTF_8));
+    }
+    private static void dumpRoofMask(mudclient client,OpenGLFramePresenter presenter,Path capture) throws Exception {
+        Object renderer=field(presenter,OpenGLFramePresenter.class,"worldChunkRenderer");
+        Method diagnostics=renderer.getClass().getDeclaredMethod("geometryShadowDiagnostics"); diagnostics.setAccessible(true);
+        Object shadows=diagnostics.invoke(renderer), mask=field(shadows,shadows.getClass(),"roofMask");
+        Method pixels=mask.getClass().getDeclaredMethod("pixels"); pixels.setAccessible(true);
+        java.nio.ByteBuffer rgba=(java.nio.ByteBuffer)pixels.invoke(mask);
+        int width=((Number)field(mask,mask.getClass(),"width")).intValue(),height=((Number)field(mask,mask.getClass(),"height")).intValue();
+        int minX=((Number)field(mask,mask.getClass(),"minX")).intValue(),minZ=((Number)field(mask,mask.getClass(),"minZ")).intValue(),covered=0;
+        try(java.io.BufferedWriter writer=Files.newBufferedWriter(capture.resolve("roof-mask.tsv"),StandardCharsets.UTF_8)) {
+            writer.write("tileX\ttileZ\tworldCenterX\tworldCenterZ\tred\n");
+            if(rgba!=null) for(int z=0;z<height;z++) for(int x=0;x<width;x++) {
+                int red=rgba.get((z*width+x)*4)&255; if(red>0) covered++;
+                writer.write(x+"\t"+z+"\t"+(minX+x*128+64)+"\t"+(minZ+z*128+64)+"\t"+red+"\n");
+            }
+        }
+        StringBuilder metadata=new StringBuilder("{");
+        for(String name:new String[]{"plane","minX","minZ","width","height","signature"}) {
+            if(metadata.length()>1) metadata.append(',');
+            metadata.append('"').append(name).append("\":").append(field(mask,mask.getClass(),name));
+        }
+        Files.write(capture.resolve("roof-mask.json"),metadata.append(",\"coveredPixels\":").append(covered).append("}\n").toString().getBytes(StandardCharsets.UTF_8));
+        writeFrameMetadata(((Scene)field(client,mudclient.class,"scene")).getRenderer3DFrame(),presenter,capture.resolve("roof-frame.json"),-1);
+    }
+    private static void applyPreviewWindowMode() {
+        if(Boolean.getBoolean("renderer.benchmark.visiblePreview"))
+            OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.from(System.getProperty("spoiledmilk.openglWindowMode","borderless-fullscreen")));
     }
     public static void main(String[] args) {
         try { runFixture(); }
@@ -193,7 +236,10 @@ public final class RendererBenchmarkClient {
                 && !field(client, mudclient.class, "currentViewMode").toString().equals("GAME")) Thread.sleep(500);
         if (!field(client, mudclient.class, "currentViewMode").toString().equals("GAME")) throw new IllegalStateException("Ordinary login failed");
         set(client, mudclient.class, "welcomeScreenShown", false);
-        Thread.sleep(Integer.getInteger("renderer.benchmark.warmupSeconds",15)*1000L);
+        for(int warm=0;warm<Integer.getInteger("renderer.benchmark.warmupSeconds",15);warm++) {
+            applyPreviewWindowMode(); Thread.sleep(1000);
+        }
+        applyPreviewWindowMode();
         client.setShowDialogMessage(false);
         Config.C_HIDE_LOGIN_BOX = true;
         client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));
@@ -212,12 +258,13 @@ public final class RendererBenchmarkClient {
             RendererDayNightCycle.Presentation light = RendererDayNightCycle.currentPresentation();
             String sample = "{\"seconds\":" + second + ",\"mode\":\"" + field(client, mudclient.class, "currentViewMode")
                 + "\",\"players\":" + client.getPlayerCount() + ",\"npcs\":" + client.getNpcCount()
+                + ",\"gpuFarPollEveryFrame\":" + farPollEveryFrame() + ",\"roof\":" + roofState(client)
                 + ",\"hideRoofs\":" + Config.C_HIDE_ROOFS + ",\"gameObjects\":" + client.getGameObjectInstanceCount() + ",\"wallObjects\":" + client.getWallObjectInstanceCount()
                 + ",\"serverState\":" + new String(Files.readAllBytes(run.resolve("status.json")), StandardCharsets.UTF_8)
                 + ",\"onScreenProjectedActorCandidates\":" + onScreenActors(client)
                 + ",\"activeProjectileActors\":" + activeProjectiles(client) + ",\"windowState\":" + windowState(presenter)
                 + ",\"cameraRotation\":" + client.cameraRotation + ",\"zoomSetting\":" + osConfig.C_LAST_ZOOM
-                + ",\"logicalWidth\":" + RenderSurfaceSettings.getWidth() + ",\"logicalHeight\":" + RenderSurfaceSettings.getHeight()
+                + ",\"windowMode\":\"" + OpenGLWindowSettings.getMode() + "\",\"logicalWidth\":" + RenderSurfaceSettings.getWidth() + ",\"logicalHeight\":" + RenderSurfaceSettings.getHeight()
                 + ",\"contentViewportWidth\":" + viewport.framebufferViewport().width + ",\"contentViewportHeight\":" + viewport.framebufferViewport().height + ",\"surface\":" + surfaceState(presenter)
                 + ",\"sunAzimuth\":" + RendererRemasterLightSettings.getAzimuthDegrees() + ",\"sunElevation\":" + RendererRemasterLightSettings.getElevationDegrees()
                 + ",\"brightness\":" + light.brightnessMultiplier + ",\"tone\":\"" + light.debugLabel
@@ -227,16 +274,24 @@ public final class RendererBenchmarkClient {
             Thread.sleep(1000);
         }
         System.out.println(RendererPerformanceDiagnostics.handleCommand("::pf stop " + phase));
+        if (Boolean.getBoolean("renderer.benchmark.dumpRoofMask")) dumpRoofMask(client,presenter,capture);
         if (Boolean.getBoolean("renderer.benchmark.dumpTerrain")) dumpTerrain(client,presenter,capture);
         if (Boolean.getBoolean("renderer.benchmark.snapshot")) {
             Method request = OpenGLFramePresenter.class.getDeclaredMethod("requestFrameCaptureBurst");
             request.setAccessible(true); request.invoke(presenter);
+            int captureFrames=Integer.getInteger("renderer.benchmark.captureFrames",12);
+            if(captureFrames==1) {
+                // Own test process, post-phase only: cap the existing volatile diagnostic burst.
+                // A frame already in flight can yield2 completed images; wait for burst completion.
+                set(presenter,OpenGLFramePresenter.class,"frameCaptureBurstRemaining",1);
+            }
             long captureDeadline = System.currentTimeMillis() + 90000;
             Path index = capture.resolve("captures/capture-index.jsonl");
             while (System.currentTimeMillis() < captureDeadline) {
                 if (Files.isRegularFile(index)) {
                     try (java.util.stream.Stream<String> lines = Files.lines(index)) {
-                        if (lines.filter(line -> line.contains("\"status\":\"completed\"") || line.contains("\"status\":\"failed\"")).count() >= 12) break;
+                        if (lines.filter(line -> line.contains("\"status\":\"completed\"") || line.contains("\"status\":\"failed\"")).count() >= captureFrames
+                            && new String(Files.readAllBytes(capture.resolve("events.jsonl")),StandardCharsets.UTF_8).contains("\"eventType\":\"capture.burst.completed\"")) break;
                     }
                 }
                 Thread.sleep(500);

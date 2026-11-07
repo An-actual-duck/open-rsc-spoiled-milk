@@ -147,6 +147,14 @@ public final class RendererBenchmarkServer {
         try (java.sql.Connection c = java.sql.DriverManager.getConnection("jdbc:sqlite:" + root.resolve("inc/sqlite/renderer_benchmark_dev.db"));
              java.sql.PreparedStatement st = c.prepareStatement("UPDATE players SET login_date=1,x=502,y=453 WHERE username=?")) {
             st.setString(1, "renderdemo"); st.executeUpdate();
+            // Ordinary account preference, seeded before login and packet26; no renderer flags are forced.
+            boolean hideRoofs=new JSONObject(new String(Files.readAllBytes(run.resolve("RENDERER-BENCHMARK.json")),"UTF-8")).optBoolean("hideRoofsPreference",true);
+            try(java.sql.PreparedStatement remove=c.prepareStatement("DELETE FROM player_cache WHERE playerID=(SELECT id FROM players WHERE username=?) AND `key`=?")) {
+                remove.setString(1,"renderdemo"); remove.setString(2,"setting_showroof"); remove.executeUpdate();
+            }
+            try(java.sql.PreparedStatement preference=c.prepareStatement("INSERT INTO player_cache (playerID,type,`key`,value) SELECT id,2,?,? FROM players WHERE username=?")) {
+                preference.setString(1,"setting_showroof"); preference.setString(2,String.valueOf(hideRoofs)); preference.setString(3,"renderdemo"); preference.executeUpdate();
+            }
         }
         server.getGameEventHandler().add(new GameTickEvent(server.getWorld(), null, 1, "Renderer benchmark status", DuplicationStrategy.ONE_PER_SERVER) {
             public void run() {

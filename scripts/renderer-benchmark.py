@@ -131,7 +131,7 @@ def prepare(args):
     cp = classpath(server, classes)
     subprocess.run(["javac", "-source", "8", "-target", "8", "-cp", cp, "-d", str(classes), str(sources / "RendererBenchmarkServer.java")], check=True)
     subprocess.run(["javac", "-source", "8", "-target", "8", "-cp", str(client / "client.jar"), "-d", str(classes), str(sources / "RendererBenchmarkClient.java")], check=True)
-    marker = dict(schema=1, sourceCommit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(), clientSourceCommit=resolve_source(args.client_source), clientSourceBranch=args.client_branch, clientSha256=sha(client / "client.jar"), seedSha256=sha(seed), seedAccounts=0, mapManifest=selection["manifestSha256"], artifacts=artifacts, private=True, tcp=PORTS[0], websocket=PORTS[1], source=str(ROOT))
+    marker = dict(schema=1, sourceCommit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(), clientSourceCommit=resolve_source(args.client_source), clientSourceBranch=args.client_branch, clientSha256=sha(client / "client.jar"), seedSha256=sha(seed), seedAccounts=0, mapManifest=selection["manifestSha256"], artifacts=artifacts, private=True, hideRoofsPreference=not args.show_roofs, tcp=PORTS[0], websocket=PORTS[1], source=str(ROOT))
     marker["serverSourceCommit"] = resolve_source(args.server_source) if args.server_source else marker["sourceCommit"]
     marker["toolSources"] = {p.name:sha(p) for p in sources.iterdir()}
     marker["compiledClasses"] = {p.relative_to(classes).as_posix():sha(p) for p in classes.rglob("*.class")}
@@ -168,7 +168,7 @@ def capture(args):
             time.sleep(.25)
     name = args.phase + "-" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     capture = run / name; capture.mkdir()
-    (capture / "scenario.json").write_text(json.dumps(dict(phase=args.phase, requestedViewer=[args.x,args.y,0], zoom=args.zoom, initialRotation=args.rotation, quality=args.quality, legacyMask=args.legacy_mask, sunAzimuth=args.sun_azimuth, sunElevation=args.sun_elevation, normalRateServerSun=args.phase == "sun-motion", visiblePreview=visible,excludedCasterKinds=args.exclude_caster,dumpTerrain=args.dump_terrain,requestedWindowMode=args.window_mode if visible else "diagnostic-hidden",warmupSeconds=args.warmup_seconds),indent=2)+"\n")
+    (capture / "scenario.json").write_text(json.dumps(dict(phase=args.phase, requestedViewer=[args.x,args.y,0], zoom=args.zoom, initialRotation=args.rotation, quality=args.quality, legacyMask=args.legacy_mask, sunAzimuth=args.sun_azimuth, sunElevation=args.sun_elevation, normalRateServerSun=args.phase == "sun-motion", visiblePreview=visible,excludedCasterKinds=args.exclude_caster,dumpTerrain=args.dump_terrain,requestedWindowMode=args.window_mode if visible else "diagnostic-hidden",warmupSeconds=args.warmup_seconds,snapshotFrames=args.snapshot_frames,tonePreview=args.tone_preview),indent=2)+"\n")
     request = run / "request.next"
     request.write_text(json.dumps(dict(busy=args.phase.startswith("busy") or args.phase == "sun-motion", phase=args.phase, x=args.x, y=args.y)))
     os.replace(request, run / "request.json")
@@ -177,13 +177,15 @@ def capture(args):
     props["spoiledmilk.openglHiddenDiagnostic"] = str(not visible).lower()
     if visible: props["spoiledmilk.openglWindowMode"] = args.window_mode
     props["spoiledmilk.shadowGpuTimings"] = "true"
+    props["renderer.benchmark.dumpRoofMask"] = str(args.dump_roof_mask).lower()
+    props["renderer.benchmark.captureFrames"] = str(args.snapshot_frames)
     props["renderer.benchmark.warmupSeconds"] = str(args.warmup_seconds)
     props["renderer.benchmark.dumpTerrain"] = str(args.dump_terrain).lower()
     props["renderer.benchmark.rotation"] = str(args.rotation)
     if args.legacy_mask: props["spoiledmilk.shadowBenchmarkLegacyMask"] = "true"
     if args.exclude_caster: props["spoiledmilk.shadowDiagnosticExclude"] = ",".join(args.exclude_caster)
     if args.phase != "sun-motion":
-        props.update({"spoiledmilk.remasterLightAzimuth":str(args.sun_azimuth), "spoiledmilk.remasterLightElevation":str(args.sun_elevation), "spoiledmilk.openglTonePreview":"day"})
+        props.update({"spoiledmilk.remasterLightAzimuth":str(args.sun_azimuth), "spoiledmilk.remasterLightElevation":str(args.sun_elevation), "spoiledmilk.openglTonePreview":args.tone_preview})
     props.update({"spoiledmilk.openglFrameCapture":str(args.snapshot).lower(), "renderer.benchmark.snapshot":str(args.snapshot).lower(), "spoiledmilk.openglFrameCaptureDir":str(capture / "captures")})
     common_git = Path(subprocess.check_output(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], cwd=ROOT, text=True).strip())
     gpu_lock = common_git / "ai-workspaces/renderer-gpu-benchmark.lock"
@@ -268,7 +270,7 @@ def report(args):
                 if start+1e9 <= int(sample["sessionElapsedNanos"]) <= end-1e9:
                     gpu.setdefault(sample["pass"], []).append(int(sample["gpuNanos"]))
     samples, partial_samples = analyzer.read_jsonl(capture / "client-samples.jsonl")
-    keys = ("logicalWidth", "logicalHeight", "framebufferWidth", "framebufferHeight", "contentViewportWidth", "contentViewportHeight", "zoomSetting", "players", "npcs", "sunAzimuth", "sunElevation", "brightness", "tone", "lighting", "profile", "geometry", "shadowQuality", "hideRoofs", "onScreenProjectedActorCandidates", "activeProjectileActors", "windowState", "gameObjects", "wallObjects")
+    keys = ("logicalWidth", "logicalHeight", "framebufferWidth", "framebufferHeight", "contentViewportWidth", "contentViewportHeight", "zoomSetting", "players", "npcs", "sunAzimuth", "sunElevation", "brightness", "tone", "lighting", "profile", "geometry", "shadowQuality", "hideRoofs", "gpuFarPollEveryFrame", "onScreenProjectedActorCandidates", "activeProjectileActors", "windowMode", "windowState", "gameObjects", "wallObjects")
     context = {key:sorted({sample[key] for sample in samples if key in sample}) for key in keys}
     movement = validate_runtime(run, samples, start_event["label"])
     manifest = json.loads((capture / "manifest.json").read_text())
@@ -290,7 +292,8 @@ def report(args):
     result["visiblePreview"] = scenario.get("visiblePreview", False)
     if result["visiblePreview"]:
         result["limitation"] = "Owner-visible private preview. Post-swap interval distributions are evidence; final60FPS acceptance and visual approval require manager review."
-    result["gpuCoverage"] = dict(trimAtEachPhaseEdgeNanos=1_000_000_000, reason="GPU queries are read asynchronously; completion timestamps near phase boundaries are excluded to avoid neighboring-work attribution. Raw CSV retains every collected sample.", passes={label:dict(allPhaseUniqueSamples=count, retainedSamples=len(gpu.get(label, [])), phaseEdgeExcludedSamples=count-len(gpu.get(label, []))) for label,count in gpu_phase_counts.items()})
+    result["roofContext"] = {key:sorted({sample["roof"][key] for sample in samples if isinstance(sample.get("roof"),dict) and key in sample["roof"]}) for key in ("visibility","residentRoofTriangles","maximumSourceCoveredTiles")}
+    result["gpuCoverage"] = dict(farPhaseAttributionVerified=bool(samples) and all(sample.get("gpuFarPollEveryFrame") is True for sample in samples), farAttributionNote="Older engines polled far queries only on cache rebuild, so completion could lag2.5s and1s trim was insufficient. Earlier far phase counts are provisional; rawsamples remain untouched. Verified per-frame polling is required for final phase attribution.", trimAtEachPhaseEdgeNanos=1_000_000_000, reason="GPU queries are read asynchronously; completion timestamps near phase boundaries are excluded to avoid neighboring-work attribution. Raw CSV retains every collected sample.", passes={label:dict(allPhaseUniqueSamples=count, retainedSamples=len(gpu.get(label, [])), phaseEdgeExcludedSamples=count-len(gpu.get(label, []))) for label,count in gpu_phase_counts.items()})
     result["timingMeaning"] = dict(clientLoop="Paced loop intervals; tiny overruns of16.667ms are scheduling jitter, not independently proven missed presentation frames.", openGLRender="CPU submission/render work including swap; compare GPU timeline separately, do not add overlapping CPU/GPU durations.", gpu="Elapsed GPU timeline including possible submission starvation. Far-map samples describe rebuilds only, not every frame.")
     if distributions:
         first = min(telemetry, key=lambda row:abs(row.get("sessionElapsedNanos",0)-start))
@@ -305,12 +308,12 @@ def report(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__); sub = parser.add_subparsers(dest="action", required=True)
-    p = sub.add_parser("prepare"); p.add_argument("--name", required=True); p.add_argument("--client-jar", type=Path, required=True); p.add_argument("--client-source", required=True); p.add_argument("--client-branch", default="unspecified-artifact-branch"); p.add_argument("--server-core", type=Path); p.add_argument("--server-overlay", type=Path); p.add_argument("--server-source")
+    p = sub.add_parser("prepare"); p.add_argument("--name", required=True); p.add_argument("--client-jar", type=Path, required=True); p.add_argument("--client-source", required=True); p.add_argument("--client-branch", default="unspecified-artifact-branch"); p.add_argument("--server-core", type=Path); p.add_argument("--server-overlay", type=Path); p.add_argument("--server-source"); p.add_argument("--show-roofs",action="store_true")
     for name in ("start", "stop", "capture", "preview"):
         p = sub.add_parser(name); p.add_argument("run", type=Path)
         if name in ("capture", "preview"):
-            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "transition", "same-position", "visual"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--legacy-mask", action="store_true")
-            p.add_argument("--warmup-seconds",type=int,default=15); p.add_argument("--window-mode",choices=["windowed","fullscreen","borderless-fullscreen"],default="borderless-fullscreen"); p.add_argument("--dump-terrain",action="store_true"); p.add_argument("--exclude-caster", choices=["TERRAIN","WALL","ROOF","GAME_OBJECT","WALL_OBJECT"],action="append",default=[]); p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
+            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "transition", "same-position", "visual"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--snapshot-frames",type=int,choices=[1,12],default=12); p.add_argument("--legacy-mask", action="store_true")
+            p.add_argument("--tone-preview",choices=["day","cycle","sunrise-amber","dawn-gold","rose-dusk","cool-night","deep-blue"],default="day"); p.add_argument("--warmup-seconds",type=int,default=15); p.add_argument("--window-mode",choices=["windowed","fullscreen","borderless-fullscreen"],default="borderless-fullscreen"); p.add_argument("--dump-terrain",action="store_true"); p.add_argument("--dump-roof-mask",action="store_true"); p.add_argument("--exclude-caster", choices=["TERRAIN","WALL","ROOF","GAME_OBJECT","WALL_OBJECT"],action="append",default=[]); p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
     p = sub.add_parser("report"); p.add_argument("capture", type=Path)
     args = parser.parse_args()
     if args.action in ("capture", "preview") and not 5 <= args.warmup_seconds <= 120: parser.error("Warmup must be5..120 seconds")
