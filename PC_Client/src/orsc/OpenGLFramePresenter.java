@@ -290,6 +290,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	final List<LegacyEntitySpriteDepthEvaluation> legacyEntitySpriteDepthEvaluations =
 		new ArrayList<LegacyEntitySpriteDepthEvaluation>();
 	private OpenGLInputBridge inputBridge;
+	private OpenGLGpuTimer frameGpuTimer;
 	private int worldCompositeDebugLogs;
 	private volatile boolean frameCaptureRequested;
 	private volatile int frameCaptureBurstRemaining;
@@ -442,6 +443,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 			windowController.createWindow(INITIAL_WIDTH, INITIAL_HEIGHT, OPENGL_VSYNC_ENABLED);
 			initializeOpenGLResources();
+			if (Boolean.getBoolean("spoiledmilk.shadowGpuTimings")) {
+				frameGpuTimer = new OpenGLGpuTimer(OpenGLShadowBindings.create(), "frame-render");
+			}
 			initializeInputBridge();
 			Renderer3DSettings.setOpenGLPresentationAvailable(true);
 			log("OpenGL presenter active.");
@@ -707,6 +711,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void renderFrame(Frame frame) throws Exception {
+		if (frameGpuTimer != null) frameGpuTimer.begin();
 		RenderTelemetry.recordBoundaryOpenGLFrameDequeued(
 			frame.submittedNanos);
 		OpenGLWindowController.SurfaceSize surface =
@@ -787,6 +792,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		activeFrameCapture = null;
 
 		long swapStart = RenderTelemetry.now();
+		if (frameGpuTimer != null) frameGpuTimer.end();
 		windowController.swapBuffers();
 		long swapNanos = RenderTelemetry.elapsedSince(swapStart);
 		windowController.pollEvents();
@@ -1637,7 +1643,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 					|| residentChunkReplacementComposite
 					|| residentChunksReadyThisFrame
 					|| drawResidentChunkFallback);
-		if (shouldDrawRemasterTerrainShadowMask()
+		boolean geometryShadowsPrepared = drawResidentChunkDiagnostic && worldChunkRenderer != null
+			&& worldChunkRenderer.prepareGeometryShadows(frame.renderer3DFrame);
+		if (!geometryShadowsPrepared && shouldDrawRemasterTerrainShadowMask()
 			&& drawResidentChunkDiagnostic
 			&& worldChunkRenderer != null
 			&& frame.renderer3DFrame != null
@@ -1693,7 +1701,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			useSourceProjection(frame.sourceWidth, frame.sourceHeight);
 		}
 		boolean explicitRemasterShadowRequested =
-			shouldDrawRemasterTerrainShadowMask()
+			!geometryShadowsPrepared && shouldDrawRemasterTerrainShadowMask()
 				&& worldChunkRenderer != null
 				&& frame.renderer3DFrame != null
 				&& !remasterTerrainShadowMaskPrepared;
@@ -4064,6 +4072,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 		try {
 			if (gl != null && windowController != null && windowController.hasWindow()) {
+				if (frameGpuTimer != null) { frameGpuTimer.close(); frameGpuTimer = null; }
 				if (spriteTextureCache != null) {
 					spriteTextureCache.close();
 					spriteTextureCache = null;
@@ -4188,6 +4197,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 	private static boolean shouldDrawRemasterTerrainShadowMask() {
 		return REMASTER_TERRAIN_SHADOW_MASK
+			&& RendererShadowSettings.getQuality() != RendererShadowSettings.Quality.OFF
 			&& RendererLightingSettings.getMode() == RendererLightingSettings.Mode.DIRECTIONAL;
 	}
 

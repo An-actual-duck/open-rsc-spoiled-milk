@@ -158,6 +158,15 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private int remasterShadowMaskTextureHeight;
 	private long remasterShadowMaskUploadedSignature;
 	private final RemasterShadowMaskBuilder remasterShadowMaskBuilder = new RemasterShadowMaskBuilder();
+	private OpenGLGeometryShadows geometryShadows;
+	private boolean geometryShadowCapabilityChecked;
+	private Renderer3DFrame geometryShadowFrame;
+	private final OpenGLGeometryShadows.Scene geometryShadowScene = new OpenGLGeometryShadows.Scene() {
+		public long staticSignature() { return geometryShadowStaticSignature(geometryShadowFrame); }
+		public void drawDepth(OpenGLGeometryShadows pass, DirectionalShadowProjection projection, boolean staticOnly) throws Exception {
+			drawGeometryShadowCasters(geometryShadowFrame, pass, projection, staticOnly);
+		}
+	};
 	private RemasterTerrainShadowMask activeRemasterShadowMask;
 	private int remasterGlowMaskTextureId;
 	private int remasterGlowMaskTextureWidth;
@@ -1553,6 +1562,100 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		}
 	}
 
+	boolean prepareGeometryShadows(Renderer3DFrame frame) throws Exception {
+		if (geometryShadows != null) geometryShadows.clearPrepared();
+		if (frame == null || frame.getWorldChunkFrame().getChunkCount() == 0
+			|| !remasterLightingShaderEnabled || rawMaterialShaderEnabled
+			|| shouldDrawProjectedShadowProof()
+			|| RendererLightingSettings.getMode() != RendererLightingSettings.Mode.DIRECTIONAL
+			|| RendererShadowSettings.getQuality() == RendererShadowSettings.Quality.OFF
+			|| Boolean.getBoolean("spoiledmilk.shadowBenchmarkLegacyMask")) return false;
+		if (!geometryShadowCapabilityChecked) {
+			geometryShadowCapabilityChecked = true;
+			try {
+				OpenGLShadowBindings functions = OpenGLShadowBindings.create();
+				if (functions != null) geometryShadows = new OpenGLGeometryShadows(gl, functions);
+				System.out.println("[renderer-v2] Geometry shadows " + (geometryShadows == null
+					? "unavailable; retaining terrain-mask fallback" : "available (depth geometry / stable sun projection)"));
+			} catch (Exception error) {
+				System.err.println("[renderer-v2] Geometry shadows unavailable; retaining terrain-mask fallback: " + error);
+			}
+		}
+		if (geometryShadows == null) return false;
+		Renderer3DWorldChunkFrame.ChunkMesh anchor = frame.getWorldChunkFrame().getChunks().get(0);
+		geometryShadowFrame = frame;
+		try {
+			return geometryShadows.prepare(geometryShadowScene,
+				(double) frame.getCameraOffsetX() + anchor.getLogicalWorldOffsetX(),
+				frame.getCameraOffsetY(),
+				(double) frame.getCameraOffsetZ() + anchor.getLogicalWorldOffsetZ());
+		} catch (Exception error) {
+			System.err.println("[renderer-v2] Geometry shadow pass failed; retaining terrain-mask fallback: " + error);
+			geometryShadows.close(); geometryShadows = null;
+			return false;
+		} finally { geometryShadowFrame = null; }
+	}
+
+	private long geometryShadowStaticSignature(Renderer3DFrame frame) {
+		long signature = 1469598103934665603L;
+		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : frame.getWorldChunkFrame().getChunks()) {
+			if (chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS) continue;
+			signature = (signature ^ chunk.getStorageSignature()) * 1099511628211L;
+			signature = (signature ^ chunk.getOriginWorldX()) * 1099511628211L;
+			signature = (signature ^ chunk.getOriginWorldZ()) * 1099511628211L;
+			signature = (signature ^ chunk.getPlane()) * 1099511628211L;
+			WorldChunkBuffer buffer = shadowChunkBuffer(chunk);
+			signature = (signature ^ (buffer == null ? 0 : buffer.vertexBufferId)) * 1099511628211L;
+			if (buffer == null) continue;
+			for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
+				OpenGLTextureRegion region = textureRegionForBatch(frame, batch);
+				if (region != null && region.hasTransparency()) {
+					int id = effectiveChunkTextureId(frame, batch.textureId, batch.fallbackColor);
+					Renderer3DTextureData texture = frame.getTexture(id);
+					if (texture != null) signature = (signature ^ texture.getSignature()) * 1099511628211L;
+				}
+			}
+		}
+		return signature;
+	}
+
+	private WorldChunkBuffer shadowChunkBuffer(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+		WorldChunkBuffer buffer = residentChunks.get(WorldChunkBufferKey.from(chunk, true, 0L));
+		return buffer != null && buffer.matches(chunkBufferSignature(chunk, true),
+			chunk.getVertexCount(), chunk.getIndexCount(), chunk.getTriangleCount(), true,
+			currentBrightnessBits(), currentFogModeBits(), currentLightingModeBits(), currentGeometryModeBits(),
+			replacementCompositeEnabled, 0L) ? buffer : null;
+	}
+
+	private void drawGeometryShadowCasters(Renderer3DFrame frame, OpenGLGeometryShadows pass,
+		DirectionalShadowProjection projection, boolean staticOnly) throws Exception {
+		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : frame.getWorldChunkFrame().getChunks()) {
+			// Far maps contain static geometry only; animated scenery is refreshed
+			// in the near map every frame. Camera roof hiding does not remove a
+			// physical roof caster: interiors retain ambient light, not direct sun.
+			if (staticOnly && chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS) continue;
+			if (chunk.isObjectChunk() && !residentObjectsEnabled) continue;
+			WorldChunkBuffer buffer = shadowChunkBuffer(chunk);
+			if (buffer == null) continue;
+			int offsetX = chunk.getVertexOffsetX() - buffer.uploadedVertexOffsetX + chunk.getLogicalWorldOffsetX();
+			int offsetZ = chunk.getVertexOffsetZ() - buffer.uploadedVertexOffsetZ + chunk.getLogicalWorldOffsetZ();
+			pass.bindChunk(buffer.vertexBufferId, buffer.materialIndexBufferId, STRIDE_BYTES,
+				TEXTURE_COORD_OFFSET_BYTES, offsetX, offsetZ);
+			for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
+				if (batch.indexCount <= 0 || (batch.hasBounds() && !projection.intersects(
+					batch.minX + offsetX, batch.minY, batch.minZ + offsetZ,
+					batch.maxX + offsetX, batch.maxY, batch.maxZ + offsetZ))) continue;
+				WorldChunkBatchDrawState state = chunkBatchDrawState(frame, batch, true);
+				if (state.bindResult == WorldChunkBatchBindResult.SKIPPED) continue;
+				OpenGLTextureRegion region = textureRegionForBatch(frame, batch);
+				pass.drawRange(state.textureEnabled ? state.textureId : 0,
+					state.textureEnabled && region != null && region.hasTransparency(), batch.startIndex, batch.indexCount);
+			}
+		}
+	}
+
+	OpenGLGeometryShadows geometryShadowDiagnostics() { return geometryShadows; }
+
 	boolean prepareRemasterTerrainShadowMask(Renderer3DFrame frame) throws Exception {
 		activeRemasterShadowMask = null;
 		Renderer3DWorldChunkFrame chunkFrame = frame == null ? null : frame.getWorldChunkFrame();
@@ -2434,6 +2537,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			frame,
 			activeRemasterShadowMask,
 			activeRemasterGlowMask);
+		residentChunkShader.bindGeometryShadows(geometryShadows);
 		bindPreparedRemasterShadowMask();
 		bindPreparedRemasterGlowMask();
 	}
@@ -3777,6 +3881,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	}
 
 	private void clearResidentResources() throws Exception {
+		if (geometryShadows != null) { geometryShadows.close(); geometryShadows = null; }
+		geometryShadowCapabilityChecked = false;
 		for (WorldChunkBuffer buffer : residentChunks.values()) {
 			buffer.close(gl);
 		}

@@ -40,6 +40,7 @@ final class RendererSettingsPanel {
 	private static final int ACTION_RENDERER_PROFILE = 59;
 	private static final int ACTION_FOG = 60;
 	private static final int ACTION_LIGHTING = 61;
+	private static final int ACTION_SHADOW_QUALITY = 74;
 	private static final int ACTION_GEOMETRY = 62;
 	private static final int ACTION_WINDOW_MODE = 63;
 	private static final int ACTION_TERRAIN_VARIATION = 64;
@@ -54,6 +55,7 @@ final class RendererSettingsPanel {
 		RENDERER_PROFILE,
 		FOG,
 		LIGHTING,
+		SHADOW_QUALITY,
 		GEOMETRY,
 		WINDOW_MODE,
 		TERRAIN_VARIATION,
@@ -163,6 +165,7 @@ final class RendererSettingsPanel {
 		final String aspectLabel;
 		final String windowModeLabel;
 		final String lightingLabel;
+		final String shadowQualityLabel;
 		final String geometryLabel;
 		final String terrainVariationLabel;
 		final String fogLabel;
@@ -195,6 +198,7 @@ final class RendererSettingsPanel {
 			this.aspectLabel = aspectLabel;
 			this.windowModeLabel = windowModeLabel;
 			this.lightingLabel = lightingLabel;
+			this.shadowQualityLabel = RendererShadowSettings.getQuality().label;
 			this.geometryLabel = geometryLabel;
 			this.terrainVariationLabel = terrainVariationLabel;
 			this.fogLabel = fogLabel;
@@ -339,6 +343,7 @@ final class RendererSettingsPanel {
 			addRow(rows, "@whi@Window mode - " + state.windowModeLabel,
 				ACTION_WINDOW_MODE);
 			addRow(rows, "@whi@Lighting - " + state.lightingLabel, ACTION_LIGHTING);
+			addRow(rows, "@whi@Shadows - " + state.shadowQualityLabel, ACTION_SHADOW_QUALITY);
 			addRow(rows, "@whi@Geometry - " + state.geometryLabel, ACTION_GEOMETRY);
 			addRow(rows, "@whi@Terrain Variation - " + state.terrainVariationLabel,
 				ACTION_TERRAIN_VARIATION);
@@ -384,6 +389,8 @@ final class RendererSettingsPanel {
 					return Action.FOG;
 				case ACTION_LIGHTING:
 					return Action.LIGHTING;
+				case ACTION_SHADOW_QUALITY:
+					return Action.SHADOW_QUALITY;
 				case ACTION_GEOMETRY:
 					return Action.GEOMETRY;
 				case ACTION_WINDOW_MODE:

@@ -127,6 +127,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		+ "}\n";
 	private static final String RESIDENT_CHUNK_PARITY_VERTEX_SHADER =
 		"#version 120\n"
+			+ OpenGLGeometryShadows.VERTEX_DECLARATIONS
 			+ "uniform mat4 uProjectionMatrix;\n"
 			+ "uniform mat4 uWorldViewMatrix;\n"
 			+ "uniform float uChunkOffsetX;\n"
@@ -160,6 +161,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "void main() {\n"
 			+ "\tvec3 rebasedPosition = aPosition + vec3(uChunkOffsetX, 0.0, uChunkOffsetZ);\n"
 			+ "\tvec4 worldPosition = vec4(rebasedPosition, 1.0);\n"
+			+ OpenGLGeometryShadows.VERTEX_ASSIGNMENT
 			+ "\tgl_Position = uProjectionMatrix * worldPosition;\n"
 			+ "\tvTexCoord = aTexCoord;\n"
 			+ "\tvWorldXZ = rebasedPosition.xz;\n"
@@ -233,6 +235,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "varying vec3 vTerrainBlendColor;\n"
 			+ "varying float vTerrainBlendStrength;\n"
 			+ "varying float vCameraDepth;\n"
+			+ OpenGLGeometryShadows.FRAGMENT_SOURCE
 			+ "vec3 remasterNormal() {\n"
 			+ "\tfloat normalLengthSquared = dot(vNormal, vNormal);\n"
 			+ "\tif (normalLengthSquared <= 0.0001) {\n"
@@ -374,7 +377,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\t}\n"
 			+ "\tif (uRemasterLightingEnabled != 0) {\n"
 			+ "\t\tvec3 lightDirection = normalize(vec3(uLightDirectionX, uLightDirectionY, uLightDirectionZ));\n"
-			+ "\t\tfloat diffuse = remasterDiffuse(lightDirection);\n"
+			+ "\t\tfloat diffuse = remasterDiffuse(lightDirection) * geometryShadowVisibility();\n"
 			+ "\t\tcolor.rgb = applyTerrainTransitionBlend(color.rgb);\n"
 			+ "\t\tcolor.rgb = applyTargetedTerrainVariation(color.rgb);\n"
 			+ "\t\tcolor.rgb *= remasterClassicShadeFactor(diffuse);\n"
@@ -397,6 +400,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 
 	private final LwjglBindings gl;
 	private final int programId;
+	private final int geometryShadowEnabledUniform, nearGeometrySamplerUniform, farGeometrySamplerUniform;
 	private final int projectionMatrixUniformLocation;
 	private final int worldViewMatrixUniformLocation;
 	private final int chunkOffsetXUniformLocation;
@@ -502,6 +506,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		int fogBlueUniformLocation) throws Exception {
 		this.gl = gl;
 		this.programId = programId;
+		geometryShadowEnabledUniform = gl.glGetUniformLocation(programId, "uGeometryShadows");
+		nearGeometrySamplerUniform = gl.glGetUniformLocation(programId, "uNearGeometryShadow");
+		farGeometrySamplerUniform = gl.glGetUniformLocation(programId, "uFarGeometryShadowMap");
 		this.projectionMatrixUniformLocation = projectionMatrixUniformLocation;
 		this.worldViewMatrixUniformLocation = worldViewMatrixUniformLocation;
 		this.chunkOffsetXUniformLocation =
@@ -760,6 +767,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			throw new IllegalArgumentException("world shader requires an explicit projection matrix");
 		}
 		gl.glUseProgram(programId);
+		gl.glUniform1i(geometryShadowEnabledUniform, 0);
+		gl.glUniform1i(nearGeometrySamplerUniform, 3);
+		gl.glUniform1i(farGeometrySamplerUniform, 4);
 		if (projectionMatrixUniformLocation >= 0) {
 			gl.glUniformMatrix4fv(projectionMatrixUniformLocation, false, projectionMatrix);
 		}
@@ -931,6 +941,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		if (fogBlueUniformLocation >= 0) {
 			gl.glUniform1f(fogBlueUniformLocation, presentation.fogBlue);
 		}
+	}
+
+	void bindGeometryShadows(OpenGLGeometryShadows shadows) throws Exception {
+		if (shadows != null) shadows.bindReceiver(programId);
 	}
 
 	void setTextureEnabled(boolean textureEnabled) throws Exception {

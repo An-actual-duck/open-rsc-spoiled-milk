@@ -71,6 +71,12 @@ final class OpenGLWindowController {
 	}
 
 	void createWindow(int width, int height, boolean vsyncEnabled) throws Exception {
+		if (HIDDEN_DIAGNOSTIC) {
+			width = Math.max(64, Math.min(8192,
+				Integer.getInteger("spoiledmilk.openglHiddenWidth", width)));
+			height = Math.max(64, Math.min(8192,
+				Integer.getInteger("spoiledmilk.openglHiddenHeight", height)));
+		}
 		gl.glfwDefaultWindowHints();
 		gl.glfwWindowHint(gl.GLFW_VISIBLE, gl.GLFW_FALSE);
 		if (HIDDEN_DIAGNOSTIC) {
@@ -120,10 +126,6 @@ final class OpenGLWindowController {
 	SurfaceSize prepareFrame(int targetWidth, int targetHeight) throws Exception {
 		if (!HIDDEN_DIAGNOSTIC) {
 			syncWindowMode(targetWidth, targetHeight);
-		} else if (targetWidth != windowWidth || targetHeight != windowHeight) {
-			gl.glfwSetWindowSize(window, targetWidth, targetHeight);
-			windowWidth = targetWidth;
-			windowHeight = targetHeight;
 		}
 
 		if (appliedWindowMode == OpenGLWindowSettings.Mode.WINDOWED
