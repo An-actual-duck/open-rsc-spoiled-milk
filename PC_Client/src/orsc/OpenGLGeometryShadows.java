@@ -8,6 +8,7 @@ import java.nio.FloatBuffer;
 final class OpenGLGeometryShadows implements AutoCloseable {
 	interface Scene {
 		long staticSignature();
+		default GeometryShadowRoofMask roofMask() { return GeometryShadowRoofMask.EMPTY; }
 		void drawDepth(OpenGLGeometryShadows pass, DirectionalShadowProjection projection, boolean staticOnly) throws Exception;
 	}
 	static final String VERTEX_DECLARATIONS = "varying vec3 vShadowWorldPosition;\nuniform float uGeometryShadowWorldOffsetX;\nuniform float uGeometryShadowWorldOffsetZ;\n";
@@ -16,6 +17,12 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 	static final String FRAGMENT_SOURCE = String.join("\n",
 		"varying vec3 vShadowWorldPosition;",
 		"uniform int uGeometryShadows;",
+		"uniform int uGeometryRoofReceivers;",
+		"uniform sampler2D uGeometryRoofMask;",
+		"uniform float uGeometryRoofMinX;",
+		"uniform float uGeometryRoofMinZ;",
+		"uniform float uGeometryRoofInvSpanX;",
+		"uniform float uGeometryRoofInvSpanZ;",
 		"uniform int uFarGeometryShadow;",
 		"uniform int uGeometryShadowRadius;",
 		"uniform sampler2DShadow uNearGeometryShadow;",
@@ -40,6 +47,10 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		"}",
 		"float geometryShadowVisibility() {",
 		"  if (uGeometryShadows == 0) return 1.0;",
+		"  if (uGeometryRoofReceivers != 0 && ((vModelKind > 0.5 && vModelKind < 1.5) || vModelKind > 3.5)) {",
+		"    vec2 roofUv = (vShadowWorldPosition.xz - vec2(uGeometryRoofMinX, uGeometryRoofMinZ)) * vec2(uGeometryRoofInvSpanX, uGeometryRoofInvSpanZ);",
+		"    if (min(roofUv.x, roofUv.y) >= 0.0 && max(roofUv.x, roofUv.y) < 1.0 && texture2D(uGeometryRoofMask, roofUv).r > 0.5) return 0.0;",
+		"  }",
 		"  vec3 geometricNormal = cross(dFdx(vShadowWorldPosition), dFdy(vShadowWorldPosition));",
 		"  float magnitude = length(geometricNormal);",
 		"  geometricNormal = magnitude > 0.00001 ? geometricNormal / magnitude : vec3(0.0, -1.0, 0.0);",
@@ -84,6 +95,10 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 	private DirectionalShadowProjection nearProjection, farProjection;
 	private RendererShadowSettings.Quality quality;
 	private int receiverProgram;
+	private int roofTexture, roofReceiverUniform, roofMinXUniform, roofMinZUniform, roofInvSpanXUniform, roofInvSpanZUniform;
+	private long uploadedRoofSignature;
+	private GeometryShadowRoofMask roofMask=GeometryShadowRoofMask.EMPTY;
+	int roofUploads;
 	private int nearMatrixUniform, farMatrixUniform, enabledUniform, farEnabledUniform, radiusUniform;
 	private int nearTexelUniform, farTexelUniform, nearWorldTexelUniform, farWorldTexelUniform;
 	private long farSignature;
@@ -157,6 +172,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		nearProjection = new DirectionalShadowProjection(centerX, centerY, centerZ, lx, ly, lz,
 			quality.nearRadiusTiles * 128.0f, quality.nearSize);
 		long signature = scene.staticSignature();
+		roofMask = scene.roofMask();
 		farAge++;
 		farRebuilt = quality == RendererShadowSettings.Quality.HIGH
 			&& (farProjection == null || farSignature != signature || farAge >= 150
@@ -179,6 +195,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 			gl.glDisable(gl.GL_BLEND); gl.glDisable(gl.GL_ALPHA_TEST); gl.glDisable(gl.GL_CULL_FACE);
 			gl.glDisable(gl.GL_SCISSOR_TEST); gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL);
 			gl.glEnable(gl.GL_POLYGON_OFFSET_FILL); gl.glPolygonOffset(1.5f, 2.0f);
+			ensureRoofTexture();
 			ensureTexture(near, quality.nearSize);
 			long start = System.nanoTime();
 			nearTimer.begin();
@@ -237,6 +254,10 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		if (receiverProgram != receiver) {
 			receiverProgram = receiver;
 			enabledUniform = gl.glGetUniformLocation(receiver, "uGeometryShadows");
+			roofReceiverUniform = gl.glGetUniformLocation(receiver, "uGeometryRoofReceivers");
+			roofMinXUniform=gl.glGetUniformLocation(receiver,"uGeometryRoofMinX");roofMinZUniform=gl.glGetUniformLocation(receiver,"uGeometryRoofMinZ");
+			roofInvSpanXUniform=gl.glGetUniformLocation(receiver,"uGeometryRoofInvSpanX");roofInvSpanZUniform=gl.glGetUniformLocation(receiver,"uGeometryRoofInvSpanZ");
+			gl.glUniform1i(gl.glGetUniformLocation(receiver, "uGeometryRoofMask"), 5);
 			farEnabledUniform = gl.glGetUniformLocation(receiver, "uFarGeometryShadow");
 			radiusUniform = gl.glGetUniformLocation(receiver, "uGeometryShadowRadius");
 			nearMatrixUniform = gl.glGetUniformLocation(receiver, "uNearGeometryLight");
@@ -249,7 +270,13 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 			gl.glUniform1i(gl.glGetUniformLocation(receiver, "uFarGeometryShadowMap"), 4);
 		}
 		gl.glUniform1i(enabledUniform, active ? 1 : 0);
+		gl.glUniform1i(roofReceiverUniform, 0);
 		if (!active) return;
+		if(!roofMask.isEmpty()) {
+			gl.glUniform1f(roofMinXUniform,roofMask.minX);gl.glUniform1f(roofMinZUniform,roofMask.minZ);
+			gl.glUniform1f(roofInvSpanXUniform,1.0f/(roofMask.width*128));gl.glUniform1f(roofInvSpanZUniform,1.0f/(roofMask.height*128));
+			gl.glActiveTexture(gl.GL_TEXTURE0+5);gl.glBindTexture(gl.GL_TEXTURE_2D,roofTexture);
+		}
 		gl.glUniform1i(farEnabledUniform, farProjection != null ? 1 : 0);
 		gl.glUniform1i(radiusUniform, quality.filterRadius);
 		gl.glUniformMatrix4fv(nearMatrixUniform, false, nearProjection.put(matrixBuffer));
@@ -264,6 +291,20 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		// Shadow sampler types must have their own texture unit even when disabled.
 		gl.glActiveTexture(gl.GL_TEXTURE0 + 4); gl.glBindTexture(gl.GL_TEXTURE_2D, farProjection != null ? far.texture : near.texture);
 		gl.glActiveTexture(gl.GL_TEXTURE0);
+	}
+	void setReceiverPlane(int plane) throws Exception {
+		gl.glUniform1i(roofReceiverUniform,active&&!roofMask.isEmpty()&&roofMask.plane==plane?1:0);
+	}
+	private void ensureRoofTexture() throws Exception {
+		if(roofMask.isEmpty()||(roofTexture!=0&&uploadedRoofSignature==roofMask.signature)) return;
+		if(roofTexture==0)roofTexture=gl.glGenTextures();
+		gl.glActiveTexture(gl.GL_TEXTURE0+5);gl.glBindTexture(gl.GL_TEXTURE_2D,roofTexture);
+		gl.glTexParameteri(gl.GL_TEXTURE_2D,gl.GL_TEXTURE_MIN_FILTER,gl.GL_NEAREST);
+		gl.glTexParameteri(gl.GL_TEXTURE_2D,gl.GL_TEXTURE_MAG_FILTER,gl.GL_NEAREST);
+		gl.glTexParameteri(gl.GL_TEXTURE_2D,gl.GL_TEXTURE_WRAP_S,gl.GL_CLAMP_TO_EDGE);
+		gl.glTexParameteri(gl.GL_TEXTURE_2D,gl.GL_TEXTURE_WRAP_T,gl.GL_CLAMP_TO_EDGE);
+		gl.glTexImage2D(gl.GL_TEXTURE_2D,0,gl.GL_RGBA,roofMask.width,roofMask.height,0,gl.GL_RGBA,gl.GL_UNSIGNED_BYTE,roofMask.pixels());
+		uploadedRoofSignature=roofMask.signature;roofUploads++;gl.glActiveTexture(gl.GL_TEXTURE0);
 	}
 	void clearPrepared() {
 		active = false;
@@ -330,6 +371,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		closed = true;
 		clearPrepared();
 		publishDiagnosticFrame();
+		if(roofTexture!=0){gl.glDeleteTextures(roofTexture);roofTexture=0;}
 		destroyTexture(near); destroyTexture(far); nearTimer.close(); farTimer.close();
 		functions.deleteVertexArray(vao); gl.glDeleteProgram(program);
 	}

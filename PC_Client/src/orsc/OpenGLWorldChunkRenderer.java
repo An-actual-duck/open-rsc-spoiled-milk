@@ -172,10 +172,12 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private long remasterShadowMaskUploadedSignature;
 	private final RemasterShadowMaskBuilder remasterShadowMaskBuilder = new RemasterShadowMaskBuilder();
 	private OpenGLGeometryShadows geometryShadows;
+	private final GeometryShadowRoofMask.Cache geometryRoofMaskCache=new GeometryShadowRoofMask.Cache();
 	private boolean geometryShadowCapabilityChecked;
 	private Renderer3DFrame geometryShadowFrame;
 	private final OpenGLGeometryShadows.Scene geometryShadowScene = new OpenGLGeometryShadows.Scene() {
 		public long staticSignature() { return geometryShadowStaticSignature(geometryShadowFrame); }
+		public GeometryShadowRoofMask roofMask() { return geometryRoofMaskCache.get(geometryShadowFrame.getWorldChunkFrame(), geometryShadowFrame.getActivePlane()); }
 		public void drawDepth(OpenGLGeometryShadows pass, DirectionalShadowProjection projection, boolean staticOnly) throws Exception {
 			drawGeometryShadowCasters(geometryShadowFrame, pass, projection, staticOnly);
 		}
@@ -2384,6 +2386,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 					? chunk.getVertexOffsetZ() - buffer.uploadedVertexOffsetZ
 					: 0;
 				if (shaderActive) {
+					if(geometryShadows!=null)geometryShadows.setReceiverPlane(chunk.getPlane());
 					residentChunkShader.setChunkOffsets(
 						drawOffsetX,
 						drawOffsetZ,
@@ -3903,6 +3906,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private void clearResidentResources() throws Exception {
 		if (geometryShadows != null) { geometryShadows.close(); geometryShadows = null; }
 		geometryShadowCapabilityChecked = false;
+		geometryRoofMaskCache.clear();
 		for (WorldChunkBuffer buffer : residentChunks.values()) {
 			buffer.close(gl);
 		}

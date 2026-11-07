@@ -1550,6 +1550,8 @@ public final class Renderer3DWorldChunkFrame {
 			return roofCoverageAxis > 0;
 		}
 
+		public int getRoofCoverageAxis() { return roofCoverageAxis; }
+
 		public int getRoofCoveredTileCount() {
 			return roofCoveredTileCount;
 		}

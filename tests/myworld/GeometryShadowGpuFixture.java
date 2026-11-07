@@ -21,6 +21,9 @@ public final class GeometryShadowGpuFixture {
 	private static int vertices, indices, alphaTexture;
 	private static boolean alpha;
 	private static boolean slopeReceiver, wallReceiver, contactCard;
+	private static int receiverPlane;
+	private static float receiverKind=1;
+	private static GeometryShadowRoofMask roofMask=GeometryShadowRoofMask.EMPTY;
 	private static long signature;
 	private static final Set<String> gpuSamples = new HashSet<String>();
 	private static final int SIZE = 512;
@@ -42,7 +45,7 @@ public final class GeometryShadowGpuFixture {
 		require(gl.glGetShaderi(shader, gl.GL_COMPILE_STATUS) != 0, gl.glGetShaderInfoLog(shader)); return shader;
 	}
 	private static int receiver() throws Exception {
-		int v = compile(gl.GL_VERTEX_SHADER, "#version 120\nattribute vec3 aPosition; uniform int uWallReceiver; varying vec3 vShadowWorldPosition;varying float vModelKind; void main(){vShadowWorldPosition=aPosition;vModelKind=uWallReceiver!=0?2.0:1.0; gl_Position=uWallReceiver!=0?vec4(aPosition.z/320.0,-aPosition.y/320.0,0.0,1.0):vec4(aPosition.x/320.0,aPosition.z/320.0,0.0,1.0);}");
+		int v = compile(gl.GL_VERTEX_SHADER, "#version 120\nattribute vec3 aPosition; uniform int uWallReceiver;uniform float uReceiverKind; varying vec3 vShadowWorldPosition;varying float vModelKind; void main(){vShadowWorldPosition=aPosition;vModelKind=uWallReceiver!=0?2.0:uReceiverKind; gl_Position=uWallReceiver!=0?vec4(aPosition.z/320.0,-aPosition.y/320.0,0.0,1.0):vec4(aPosition.x/320.0,aPosition.z/320.0,0.0,1.0);}");
 		int f = compile(gl.GL_FRAGMENT_SHADER, "#version 120\nvarying float vModelKind;uniform float uLightDirectionX;uniform float uLightDirectionY;uniform float uLightDirectionZ;\n"
 			+ OpenGLGeometryShadows.FRAGMENT_SOURCE + "void main(){gl_FragColor=vec4(vec3(geometryShadowVisibility()),1.0);}");
 		int p = gl.glCreateProgram(); gl.glAttachShader(p,v); gl.glAttachShader(p,f); gl.glBindAttribLocation(p,0,"aPosition"); gl.glLinkProgram(p);
@@ -75,6 +78,7 @@ public final class GeometryShadowGpuFixture {
 	}
 	private static final OpenGLGeometryShadows.Scene SCENE = new OpenGLGeometryShadows.Scene() {
 		public long staticSignature(){return signature;}
+		public GeometryShadowRoofMask roofMask(){return roofMask;}
 		public void drawDepth(OpenGLGeometryShadows pass,DirectionalShadowProjection projection,boolean staticOnly)throws Exception {
 			pass.bindChunk(vertices,indices,20,12,0,0);
 			pass.drawRange(0,false,0,6); pass.drawRange(alphaTexture,alpha,6,6);
@@ -85,8 +89,9 @@ public final class GeometryShadowGpuFixture {
 		gl.glViewport(0,0,SIZE,SIZE);gl.glColorMask(true,true,true,true);
 		gl.glDisable(gl.GL_CULL_FACE);gl.glDisable(gl.GL_POLYGON_OFFSET_FILL);
 		gl.glClearColor(.7f,.2f,.2f,1);gl.glClear(gl.GL_COLOR_BUFFER_BIT);gl.glDisable(gl.GL_DEPTH_TEST);
-		gl.glUseProgram(program);pass.bindReceiver(program);
+		gl.glUseProgram(program);pass.bindReceiver(program);pass.setReceiverPlane(receiverPlane);
 		gl.glUniform1i(gl.glGetUniformLocation(program,"uWallReceiver"),wallReceiver?1:0);
+		gl.glUniform1f(gl.glGetUniformLocation(program,"uReceiverKind"),receiverKind);
 		gl.glUniform1f(gl.glGetUniformLocation(program,"uLightDirectionX"),RendererRemasterLightSettings.getLightDirectionX());
 		gl.glUniform1f(gl.glGetUniformLocation(program,"uLightDirectionY"),RendererRemasterLightSettings.getLightDirectionY());
 		gl.glUniform1f(gl.glGetUniformLocation(program,"uLightDirectionZ"),RendererRemasterLightSettings.getLightDirectionZ());
@@ -192,6 +197,22 @@ public final class GeometryShadowGpuFixture {
 			require(brightness(contact,-12,0)<100,"shadow detached more than0.1tile from contact");
 			require(brightness(contact,20,0)>240,"contact bias spread onto lit side");
 			require(brightness(contact,-96,0)<100&&brightness(contact,-180,0)>240,"contact silhouette extent changed");
+			GeometryShadowRoofMask.Cache roofCache=new GeometryShadowRoofMask.Cache();
+			roofMask=roofCache.get(GeometryShadowRoofMaskFixture.frame(1L<<2,false,101),0);
+			gl.glActiveTexture(gl.GL_TEXTURE0+5);gl.glBindTexture(gl.GL_TEXTURE_2D,alphaTexture);pass.prepare(SCENE,0,0,0);
+			require(functions.integer(OpenGLShadowBindings.ACTIVE_TEXTURE)==gl.GL_TEXTURE0+5&&functions.integer(0x8069)==alphaTexture,"roof upload leaked texture state");
+			require(functions.integer(OpenGLShadowBindings.CURRENT_PROGRAM)==program,"roof upload leaked program");
+			int uploads=pass.roofUploads;require(uploads>0,"roof mask not uploaded");
+			ByteBuffer indoor=draw(pass,program,output.resolve("roof-covered-floor.png"));
+			require(brightness(indoor,180,40)==0,"roofed floor still receives patterned direct sun");
+			require(brightness(indoor,180,-100)>240,"roof mask spread onto outdoor tile");
+			pass.prepare(SCENE,0,0,0);require(pass.roofUploads==uploads,"unchanged roof metadata uploaded again");
+			for(float kind:new float[]{4,5}){receiverKind=kind;require(brightness(draw(pass,program,null),180,40)==0,"covered prop retains direct sun");}
+			for(float kind:new float[]{2,3}){receiverKind=kind;require(brightness(draw(pass,program,null),180,40)>240,"facade/roof top was treated as interior");}
+			receiverKind=1;receiverPlane=1;require(brightness(draw(pass,program,null),180,40)>240,"roof mask leaked onto another plane");receiverPlane=0;
+			roofMask=roofCache.get(GeometryShadowRoofMaskFixture.frame(0,false,102),0);pass.prepare(SCENE,0,0,0);
+			require(brightness(draw(pass,program,null),180,40)>240,"unknown/outdoor coverage inferred indoor shadow");
+			java.lang.reflect.Field roofField=OpenGLGeometryShadows.class.getDeclaredField("roofTexture");roofField.setAccessible(true);int roofTexture=roofField.getInt(pass);
 			RendererShadowSettings.setQuality(RendererShadowSettings.Quality.OFF);require(!pass.prepare(SCENE,0,0,0),"Off still prepared depth maps");
 			require(pass.nearDrawCalls==0&&pass.farDrawCalls==0&&pass.nearCpuNanos==0&&!pass.farRebuilt,"Off retains stale per-frame diagnostics");
 			require(pass.diagnosticSnapshot()[1]==0&&pass.diagnosticSnapshot()[5]==0,"Off snapshot retains stale active/draw state");
@@ -202,7 +223,8 @@ public final class GeometryShadowGpuFixture {
 			require(nearTexture!=0&&farTexture!=0,"Off bounded texture retention contract");
 			pass.close();pass.close();pass=null;
 			require(!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,nearTexture)
-				&&!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,farTexture),"shadow textures leaked on close");
+				&&!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,farTexture)
+				&&!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,roofTexture),"shadow textures leaked on close");
 			System.out.println("PASS depth silhouette, cutout alpha, floor/slope/wall bias, cache invalidation, High/Low/Off, cleanup and GL state restoration");
 		} finally {
 			OpenGLGpuTimer.setDiagnosticSink(null);if(frameTimer!=null)frameTimer.close();
