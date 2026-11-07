@@ -1,0 +1,59 @@
+Native renderer shadow benchmark fixture — WORK IN PROGRESS, not READY
+
+This tooling stages an empty-account, loopback-only native world and a supplied
+immutable diagnostic client. It does not read owner accounts, use the public
+server, edit authored maps, or depend on the browser fixture. Server and client
+runtime files are copied into a unique declared output/tests run directory.
+
+The diagnostic client must explicitly support a hidden GLFW window. Its window
+is never shown/focused and input callbacks are disabled. Tests hold the common
+renderer GPU flock so shader proofs in another worker cannot overlap timings.
+Client authentication and native terrain/atomic readiness remain ordinary code.
+
+First maintained client control:
+  python3 scripts/renderer-benchmark.py prepare --name UNIQUE \
+    --client-jar ABSOLUTE-JAR --client-source EXACT-SOURCE-OR-SNAPSHOT-LABEL
+  python3 scripts/renderer-benchmark.py start RUN
+  python3 scripts/renderer-benchmark.py capture RUN --phase dense-idle \
+    --seconds 60 --snapshot
+  python3 scripts/renderer-benchmark.py report RUN/CAPTURE
+  python3 scripts/renderer-benchmark.py stop RUN
+
+Private bindings are 127.0.0.1 TCP43639/WS43539, with renderer_benchmark_dev
+SQLite copied only from a checked zero-account seed. Disposable login is
+renderdemo / RendererProof13. Public ports, owner data and other test services
+are not targets. Stop validates PID command/cwd ownership and uses a private
+STOP marker for graceful server shutdown; it never signals a public server.
+
+Current workloads use the maintained Seers scene at (502,453,0), normal zoom75
+or separate maximum zoom900. The framebuffer is1920x1080; logical surface960x540.
+Every sample records actual viewport, camera setting, actor counts, sunlight,
+tone and brightness. Dense phases remove map NPC instances in the disposable
+world so geometry tests are repeatable. Busy phases add16 equipped dummy players,
+32 NPCs,8 real test bear summons and8 visual projectile emitters. Projectiles use
+ordinary outgoing update flags; no damage combat is simulated. Actors move with
+ordinary walking queues on authored walkable tiles. Report actual visible and
+submitted counts, not only requested server population. Authored scenery and
+terrain are unchanged. Sun-motion uses the normal-rate server day/night clock;
+other phases fix sun135/elevation45/day tone for a controlled comparison.
+
+Optional candidate instrumentation records buffered nonblocking GPU query
+samples for frame-render, shadow-near and shadow-far. GPU elapsed timeline and
+CPU submission times overlap and must not be added as independent frame costs.
+The original frozen client has no query helper and is marked unavailable.
+Candidate --legacy-mask is the correct timed old-mask control with the same JAR;
+--quality off is a distinct case, not an old-shadow baseline.
+
+All captures occur after the timed phase. Initial harness attempts (server
+startup race, login-settings zoom race, partial burst waits) are retained as
+negative evidence. They are not final controlled comparisons.
+
+A hidden native run establishes workload/CPU/GPU evidence, not owner-visible
+presentation cadence, visual approval, or unconditional60FPS acceptance.
+The current first corrected static control completed60s/3601 frames: CPU GLrender
+p95/p99 1.885/2.101ms, world1.117/1.273ms; fixed viewport/camera/light verified.
+Busy cases and candidate A/B remain pending. Final report will identify exact
+source/artifact hashes and limitations. This branch has not been integrated.
+
+Inherited output-root entries from older ai3 tasks fail workspace-layout check;
+new outputs use only the declared tests category. No historical data was deleted.
