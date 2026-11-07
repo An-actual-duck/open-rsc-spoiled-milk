@@ -20,7 +20,7 @@ public final class GeometryShadowGpuFixture {
 	private static OpenGLShadowBindings functions;
 	private static int vertices, indices, alphaTexture;
 	private static boolean alpha;
-	private static boolean slopeReceiver, wallReceiver;
+	private static boolean slopeReceiver, wallReceiver, contactCard;
 	private static long signature;
 	private static final Set<String> gpuSamples = new HashSet<String>();
 	private static final int SIZE = 512;
@@ -62,6 +62,7 @@ public final class GeometryShadowGpuFixture {
 			if(slopeReceiver)geometry[i*5+1]=geometry[i*5]*-.25f;
 			if(wallReceiver){geometry[i*5+1]=geometry[i*5];geometry[i*5]=-300;}
 		}
+		if(contactCard)for(int i=6;i<12;i++)geometry[i*5+1]+=128;
 		gl.glBufferData(gl.GL_ARRAY_BUFFER,floats(geometry), gl.GL_STATIC_DRAW);
 		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER,indices);
 		gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER,ints(0,1,2,3,4,5,6,7,8,9,10,11),gl.GL_STATIC_DRAW);
@@ -172,13 +173,25 @@ public final class GeometryShadowGpuFixture {
 			slopeReceiver=false;wallReceiver=true;signature++;mesh();pass.prepare(SCENE,0,0,0);
 			ByteBuffer wall=draw(pass,program,output.resolve("wall-card.png"));require(brightness(wall,40,-100)<100,"wall receiver shadow missing");require(brightness(wall,0,100)>240,"wall receiver self-shadow");
 			wallReceiver=false;slopeReceiver=false;signature++;mesh();
-			for(int elevation:new int[]{5,10,25,45,85}) {
+			for(boolean sloped:new boolean[]{false,true})for(int elevation:new int[]{25,45,85}) {
+				slopeReceiver=sloped;signature++;mesh();
 				RendererRemasterLightSettings.adjustElevation(elevation-RendererRemasterLightSettings.getElevationDegrees());
 				pass.prepare(SCENE,0,0,0);
-				ByteBuffer grazing=draw(pass,program,output.resolve("sun-"+elevation+".png"));
+				ByteBuffer grazing=draw(pass,program,output.resolve("sun-"+elevation+(sloped?"-slope":"-flat")+".png"));
 				for(int x=80;x<=240;x+=10)for(int z=-240;z<=240;z+=10)
 					require(brightness(grazing,x,z)>240,"PCF ground self-shadow at sun "+elevation+" x="+x+" z="+z);
 			}
+			for(int elevation:new int[]{5,10}) {
+				slopeReceiver=false;signature++;mesh();RendererRemasterLightSettings.adjustElevation(elevation-RendererRemasterLightSettings.getElevationDegrees());
+				pass.prepare(SCENE,0,0,0);ByteBuffer grazing=draw(pass,program,output.resolve("sun-"+elevation+"-flat.png"));
+				for(int x=80;x<=240;x+=10)for(int z=-240;z<=240;z+=10)
+					require(brightness(grazing,x,z)>240,"grazing ground self-shadow at sun "+elevation);
+			}
+			slopeReceiver=false;contactCard=true;signature++;mesh();RendererRemasterLightSettings.adjustElevation(45-RendererRemasterLightSettings.getElevationDegrees());
+			pass.prepare(SCENE,0,0,0);ByteBuffer contact=draw(pass,program,output.resolve("contact-card.png"));
+			require(brightness(contact,-12,0)<100,"shadow detached more than0.1tile from contact");
+			require(brightness(contact,20,0)>240,"contact bias spread onto lit side");
+			require(brightness(contact,-96,0)<100&&brightness(contact,-180,0)>240,"contact silhouette extent changed");
 			RendererShadowSettings.setQuality(RendererShadowSettings.Quality.OFF);require(!pass.prepare(SCENE,0,0,0),"Off still prepared depth maps");
 			require(pass.nearDrawCalls==0&&pass.farDrawCalls==0&&pass.nearCpuNanos==0&&!pass.farRebuilt,"Off retains stale per-frame diagnostics");
 			require(pass.diagnosticSnapshot()[1]==0&&pass.diagnosticSnapshot()[5]==0,"Off snapshot retains stale active/draw state");

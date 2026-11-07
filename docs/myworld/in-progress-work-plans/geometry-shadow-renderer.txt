@@ -29,8 +29,11 @@ Receiver bias uses actual derivative geometry normals, preserving accepted
 lighting normals. Sampling only attenuates direct sun, not ambient or glow.
 
 Camera visibility/culling is not caster authority. The depth pass culls against
-the light frustum and retains physical roof casters when roofs are camera-hidden.
-Interior geometry receives ambient light where the roof blocks direct sunlight.
+the light frustum and retains submitted physical roof casters when the camera
+hides them. Global Hide Roofs is different: World currently omits those source
+meshes, so absent roofs cannot cast. This work does not alter source readiness or
+that loader policy. Interior geometry receives ambient light when a submitted
+roof blocks direct sunlight.
 Far shadows of animated scenery and sprite-shaped actors are not yet represented;
 the static scenery milestone must not be described as complete character shadows.
 
@@ -68,6 +71,25 @@ Verification completed:
 - Client window diagnostics export cached visible/iconified attributes only when
   diagnostics are enabled. Observers never call GLFW off the context thread.
   Raw completed openGLFrameInterval samples are exported for cadence analysis.
+- Last-completed shadow statistics are copied through a diagnostic-only lock;
+  the GL writer uses tryLock and never waits for an observer. The observer alone
+  allocates its requested snapshot, avoiding per-frame diagnostic allocation.
+
+Repeatable optional GPU proof (hardware GL display required):
+  ./scripts/build-client.sh
+  DISPLAY=:0 tests/myworld/test-geometry-shadow-gpu.sh
+  DISPLAY=:0 tests/myworld/test-geometry-shadow-gpu.sh --unsupported
+The runner compiles the fixture, acquires the common renderer GPU lock and writes
+pixel/state logs and PNGs under the declared tests/geometry-shadow-renderer run
+category. It creates an unfocused hidden window and never installs input/grabs.
+The unsupported variant requests Mesa GL2.1 and verifies capability detection;
+it is not a complete full-client fallback-route proof.
+
+Controlled real-frame caster isolation, diagnostic sessions only:
+  -Dspoiledmilk.shadowDiagnosticExclude=TERRAIN
+(or comma-separated WALL,ROOF,GAME_OBJECT,WALL_OBJECT). This filters depth caster
+submission only, preserving color geometry and authority/readiness. It is not a
+player option and is excluded from final performance/quality comparisons.
 
 Superseded preliminary native evidence (candidate1; not acceptance):
 Seers normal zoom 75, physical 1920x1080 / logical 960x540, fixed sun 135/45/day,

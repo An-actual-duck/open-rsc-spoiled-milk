@@ -27,7 +27,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		"uniform float uNearGeometryWorldTexel;",
 		"uniform float uFarGeometryWorldTexel;",
 		"float geometryShadowSample(sampler2DShadow shadowMap, mat4 lightMatrix, float texel, float worldTexel, vec3 normal) {",
-		"  vec3 at = (lightMatrix * vec4(vShadowWorldPosition + normal * worldTexel * 0.65, 1.0)).xyz * 0.5 + 0.5;",
+		"  vec3 at = (lightMatrix * vec4(vShadowWorldPosition + normal * worldTexel * 1.5, 1.0)).xyz * 0.5 + 0.5;",
 		"  if (min(at.x, at.y) <= 0.002 || max(at.x, at.y) >= 0.998 || at.z <= 0.0 || at.z >= 1.0) return 1.0;",
 		"  float value = 0.0; float count = 0.0;",
 		"  for (int x = -1; x <= 1; x++) for (int y = -1; y <= 1; y++) {",
