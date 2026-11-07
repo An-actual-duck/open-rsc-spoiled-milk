@@ -137,7 +137,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 
 	boolean prepare(Scene scene, double centerX, double centerY, double centerZ) throws Exception {
 		if (closed) throw new IllegalStateException("Shadow resources already closed");
-		active = false;
+		clearPrepared();
 		quality = RendererShadowSettings.getQuality();
 		if (quality == RendererShadowSettings.Quality.OFF) return false;
 		float lx = RendererRemasterLightSettings.getLightDirectionX();
@@ -253,7 +253,12 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		gl.glActiveTexture(gl.GL_TEXTURE0 + 4); gl.glBindTexture(gl.GL_TEXTURE_2D, farProjection != null ? far.texture : near.texture);
 		gl.glActiveTexture(gl.GL_TEXTURE0);
 	}
-	void clearPrepared() { active = false; }
+	void clearPrepared() {
+		active = false;
+		nearCpuNanos = farCpuNanos = 0;
+		nearDrawCalls = nearTriangles = farDrawCalls = farTriangles = 0;
+		farRebuilt = false;
+	}
 	boolean isActive() { return active; }
 	long nearGpuNanos() { return nearTimer.lastNanos(); }
 	long farGpuNanos() { return farTimer.lastNanos(); }

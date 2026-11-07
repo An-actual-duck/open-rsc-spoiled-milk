@@ -1,7 +1,7 @@
 Geometry shadow renderer — WIP, not READY
 
-Owner request (November 7, 2026): improve shadow fidelity while targeting60FPS
-on the owner's1920x1080 normal gameplay view. Maximum camera distance is a
+Owner request (November 7, 2026): improve shadow fidelity while targeting 60 FPS
+on the owner's 1920x1080 normal gameplay view. Maximum camera distance is a
 separate stress case. High and Low quality modes are authorized. This deliberate
 new architecture work supersedes the earlier pause on shadow tuning.
 
@@ -12,11 +12,11 @@ independent glow and day/night presentation retain their existing ownership.
 Classic is untouched. Off/Low/High are saved as shadow_quality in client settings.
 Runtime override: spoiledmilk.shadowQuality / SPOILED_MILK_SHADOW_QUALITY.
 
-High:2048 near map,32-tile half extent,3x3 comparison-filter taps;2048 far map,
-96-tile half extent. Low:1024 near map,48-tile half extent,one hardware comparison
+High: 2048 near map, 32-tile half extent, 3x3 comparison-filter taps; 2048 far map,
+96-tile half extent. Low: 1024 near map, 48-tile half extent, one hardware comparison
 tap. The near map refreshes every rendered frame, including animated scenery.
 Far contains static geometry only; changes in true static mesh/material alpha,
-4tiles of center movement,0.08degrees of sun movement or150 rendered frames
+4 tiles of center movement, 0.08 degrees of sun movement or 150 rendered frames
 invalidate it. Its texture and projection are updated together. Geometry uses
 true logical-world X/Z anchoring across native origin rebases; RSC positions
 are Y-down, so sun projection explicitly converts from lighting's Y-up vector.
@@ -29,14 +29,14 @@ Interior geometry receives ambient light where the roof blocks direct sunlight.
 Far shadows of animated scenery and sprite-shaped actors are not yet represented;
 the static scenery milestone must not be described as complete character shadows.
 
-GL3 framebuffer/VAO support is optional. Absent support, shader initialization or
+GL 3 framebuffer/VAO support is optional. Absent support, shader initialization or
 runtime pass failure logs an explicit fallback to the existing terrain mask.
 Off executes no shadow pass. Bounded existing map textures are retained while
 Off, then released on a quality resize, relog/session clear or context cleanup.
 
 Opt-in GPU timestamps (spoiledmilk.shadowGpuTimings=true) use a nonblocking ring
 and report each completed unique sample through OpenGLGpuTimer.SampleSink:
-frame-render,shadow-near,shadow-far. Normal clients create no timer queries.
+frame-render, shadow-near, shadow-far. Normal clients create no timer queries.
 spoiledmilk.shadowBenchmarkLegacyMask=true is an explicit diagnostic old-mask
 control for matched renderer A/B; it is not a player-facing mode.
 Hidden diagnostic windows use spoiledmilk.openglHiddenDiagnostic=true with
@@ -44,13 +44,13 @@ openglHiddenWidth/Height. They are never shown/focused and install no input
 callbacks. Offscreen throughput is not desktop presentation cadence acceptance.
 
 Proof so far: maintained build; exact projection/Y-direction/rebase/persistence
-checks; renderer menu/profile tests; actual RX6700XT hidden GPU pixel proof for
+checks; renderer menu/profile tests; actual RX 6700 XT hidden GPU pixel proof for
 opaque silhouette, alpha-cutout coverage, lit/self-shadow behavior, High/Low/Off,
-program/texture/viewport/depth state restoration; unsupported GL2 detection.
+program/texture/viewport/depth state restoration; unsupported GL 2 detection.
 
 Pending: actual maintained map/client images, sun/roof/water/relog/mode visual
 route, full renderer regressions, GPU-state/resource lifecycle expansion and
-controlled busy-scene/frame-time measurements. No60FPS claim yet. Dedicated
-benchmark work is isolated in ai3; source engine/settings remain ai2. No public
+controlled busy-scene/frame-time measurements. No 60 FPS claim yet. Dedicated
+benchmark work is isolated in ai-3; source engine/settings remain ai-2. No public
 server, owner account/database or browser fixture is modified. Evidence stays
 under output/tests/geometry-shadow-renderer/ and benchmark-worker diagnostics.

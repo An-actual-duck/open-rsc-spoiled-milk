@@ -266,6 +266,7 @@ def verify_window_behavior() -> None:
             final int GLFW_FALSE = 0;
             final int GLFW_TRUE = 1;
             final int GLFW_VISIBLE = 2;
+            final int GLFW_FOCUSED = 5;
             final int GLFW_RESIZABLE = 3;
             final int GLFW_DECORATED = 4;
             final int GLFW_DONT_CARE = -1;

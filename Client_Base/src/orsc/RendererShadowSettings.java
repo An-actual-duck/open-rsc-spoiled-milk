@@ -18,8 +18,12 @@ final class RendererShadowSettings {
 	static void setQuality(Quality value) { quality = value == null ? Quality.HIGH : value; }
 	static void applyProfileDefault(Quality value) { if (override.isEmpty()) setQuality(value); }
 	static void loadFromClientSettings(Properties properties) {
-		if (override.isEmpty() && properties != null && properties.containsKey(SETTINGS_KEY)) {
-			quality = Quality.from(properties.getProperty(SETTINGS_KEY));
+		if (override.isEmpty() && properties != null) {
+			if (properties.containsKey(SETTINGS_KEY)) {
+				quality = Quality.from(properties.getProperty(SETTINGS_KEY));
+			} else if ("classic".equals(properties.getProperty(RendererProfileSettings.PROFILE_PROPERTY_KEY))) {
+				quality = Quality.OFF;
+			}
 		}
 	}
 	static void saveToClientSettings(Properties properties) {

@@ -44,6 +44,9 @@ public final class GeometryShadowProjectionFixture {
   require(RendererShadowSettings.getQuality()==RendererShadowSettings.Quality.LOW,"quality persistence");
   require(RendererShadowSettings.cycle()==RendererShadowSettings.Quality.HIGH,"low->high");
   require(RendererShadowSettings.cycle()==RendererShadowSettings.Quality.OFF,"high->off");
+  Properties oldClassic=new Properties();oldClassic.setProperty(RendererProfileSettings.PROFILE_PROPERTY_KEY,"classic");
+  RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);RendererShadowSettings.loadFromClientSettings(oldClassic);
+  require(RendererShadowSettings.getQuality()==RendererShadowSettings.Quality.OFF,"old Classic setting migration");
   System.out.println("PASS stable projection, sun-ray occlusion, rebase and quality persistence");
  }
 }
@@ -57,7 +60,8 @@ def main():
         fixture.write_text(SOURCE)
         subprocess.run(["javac", "-source", "8", "-target", "8", "-d", str(folder),
                         str(ROOT / "PC_Client/src/orsc/DirectionalShadowProjection.java"),
-                        str(ROOT / "Client_Base/src/orsc/RendererShadowSettings.java"), str(fixture)], check=True)
+                        str(ROOT / "Client_Base/src/orsc/RendererShadowSettings.java"),
+                        str(ROOT / "Client_Base/src/orsc/RendererProfileSettings.java"), str(fixture)], check=True)
         subprocess.run(["java", "-cp", str(folder), "orsc.GeometryShadowProjectionFixture"], check=True)
 
 
