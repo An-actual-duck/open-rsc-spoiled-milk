@@ -91,3 +91,27 @@ the caster update flags; actual active-projectile samples exposed0effects. The
 fixture now follows ordinary server logic and attaches updates to the victim.
 Earlier busy measurements therefore describe actors only, not actor+effect
 acceptance. No actual damage combat is simulated in any fixture.
+
+Artifact receipts record the full client source commit and supplied source branch,
+server core/overlay hashes and source, harness source commit, copied Java source
+hashes and compiled bootstrap class hashes. Explicit matched server overrides
+require --server-core, --server-overlay and --server-source together. They are
+copied into a fresh fixture, never installed over an existing runtime. Diagnostic
+manifest source ENV fields are populated; earlier unknown/generic fields remain
+unchanged in preserved old evidence and are superseded by artifact receipts.
+
+Reports reject fixture failure markers and unexpected server Java exceptions.
+The known TCP connection reset when our client exits is separately exempted.
+Busy-walk must show actual sampled server viewer positions at least4 tiles apart,
+otherwise it fails. Requested phase names alone never prove movement or density.
+Normal server clock rate/cycle, actual shadow quality, hide-roofs setting, logical
+and physical dimensions, active projectile counts and fog/camera fields are saved.
+Maximum zoom900 is a maximum-camera stress case at the currently supported draw
+and fog distances; it is not evidence for an unimplemented160-tile horizon.
+
+The shadow stats observer prefers the engine's coherent last-completed snapshot.
+Earlier non-atomic fields could transiently read inactive/zero during prepare;
+raw unique GPU query samples and preserved old records remain authoritative.
+Opt-in --exclude-caster is solely a diagnostic isolation control; it must never
+be enabled for final full-caster performance/visual acceptance. Candidate7's
+initial isolation bug was caught before interpretation and its run was aborted.

@@ -131,7 +131,7 @@ def prepare(args):
     cp = classpath(server, classes)
     subprocess.run(["javac", "-source", "8", "-target", "8", "-cp", cp, "-d", str(classes), str(sources / "RendererBenchmarkServer.java")], check=True)
     subprocess.run(["javac", "-source", "8", "-target", "8", "-cp", str(client / "client.jar"), "-d", str(classes), str(sources / "RendererBenchmarkClient.java")], check=True)
-    marker = dict(schema=1, sourceCommit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(), clientSourceCommit=resolve_source(args.client_source), clientSha256=sha(client / "client.jar"), seedSha256=sha(seed), seedAccounts=0, mapManifest=selection["manifestSha256"], artifacts=artifacts, private=True, tcp=PORTS[0], websocket=PORTS[1], source=str(ROOT))
+    marker = dict(schema=1, sourceCommit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(), clientSourceCommit=resolve_source(args.client_source), clientSourceBranch=args.client_branch, clientSha256=sha(client / "client.jar"), seedSha256=sha(seed), seedAccounts=0, mapManifest=selection["manifestSha256"], artifacts=artifacts, private=True, tcp=PORTS[0], websocket=PORTS[1], source=str(ROOT))
     marker["serverSourceCommit"] = resolve_source(args.server_source) if args.server_source else marker["sourceCommit"]
     marker["toolSources"] = {p.name:sha(p) for p in sources.iterdir()}
     marker["compiledClasses"] = {p.relative_to(classes).as_posix():sha(p) for p in classes.rglob("*.class")}
@@ -168,7 +168,7 @@ def capture(args):
             time.sleep(.25)
     name = args.phase + "-" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     capture = run / name; capture.mkdir()
-    (capture / "scenario.json").write_text(json.dumps(dict(phase=args.phase, requestedViewer=[args.x,args.y,0], zoom=args.zoom, initialRotation=args.rotation, quality=args.quality, legacyMask=args.legacy_mask, sunAzimuth=args.sun_azimuth, sunElevation=args.sun_elevation, normalRateServerSun=args.phase == "sun-motion", visiblePreview=visible),indent=2)+"\n")
+    (capture / "scenario.json").write_text(json.dumps(dict(phase=args.phase, requestedViewer=[args.x,args.y,0], zoom=args.zoom, initialRotation=args.rotation, quality=args.quality, legacyMask=args.legacy_mask, sunAzimuth=args.sun_azimuth, sunElevation=args.sun_elevation, normalRateServerSun=args.phase == "sun-motion", visiblePreview=visible,excludedCasterKinds=args.exclude_caster),indent=2)+"\n")
     request = run / "request.next"
     request.write_text(json.dumps(dict(busy=args.phase.startswith("busy") or args.phase == "sun-motion", phase=args.phase, x=args.x, y=args.y)))
     os.replace(request, run / "request.json")
@@ -179,6 +179,7 @@ def capture(args):
     props["spoiledmilk.shadowGpuTimings"] = "true"
     props["renderer.benchmark.rotation"] = str(args.rotation)
     if args.legacy_mask: props["spoiledmilk.shadowBenchmarkLegacyMask"] = "true"
+    if args.exclude_caster: props["spoiledmilk.shadowDiagnosticExclude"] = ",".join(args.exclude_caster)
     if args.phase != "sun-motion":
         props.update({"spoiledmilk.remasterLightAzimuth":str(args.sun_azimuth), "spoiledmilk.remasterLightElevation":str(args.sun_elevation), "spoiledmilk.openglTonePreview":"day"})
     props.update({"spoiledmilk.openglFrameCapture":str(args.snapshot).lower(), "renderer.benchmark.snapshot":str(args.snapshot).lower(), "spoiledmilk.openglFrameCaptureDir":str(capture / "captures")})
@@ -187,7 +188,7 @@ def capture(args):
     argv = ["flock", "-n", "-F", str(gpu_lock), "java", "-Xms512m", "-Xmx2g", *["-D"+k+"="+v for k,v in props.items()], "-cp", str(run / "classes") + os.pathsep + str(run / "client/client.jar"), "orsc.RendererBenchmarkClient"]
     (capture / "command.json").write_text(json.dumps(dict(argv=argv, cwd=str(run / "client"), settings=props, hiddenOffscreen=not visible, initialHostLoadAverage=os.getloadavg()), indent=2)+"\n")
     environment = {key:value for key,value in os.environ.items() if not key.startswith(("SPOILED_MILK_", "OPENRSC_"))}
-    environment.update(SPOILED_MILK_CLIENT_COMMIT=props["spoiledmilk.clientCommit"], SPOILED_MILK_CLIENT_BRANCH="renderer-benchmark-artifact", SPOILED_MILK_CLIENT_TARGET_MODE="private-renderer-benchmark")
+    environment.update(SPOILED_MILK_CLIENT_COMMIT=props["spoiledmilk.clientCommit"], SPOILED_MILK_CLIENT_BRANCH=json.loads((run / MARKER).read_text()).get("clientSourceBranch","unspecified-artifact-branch"), SPOILED_MILK_CLIENT_TARGET_MODE="private-renderer-benchmark")
     with (capture / "console.log").open("ab") as log:
         proc = subprocess.Popen(argv, cwd=run / "client", env=environment, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
     time.sleep(.1)
@@ -265,13 +266,14 @@ def report(args):
                 if start+1e9 <= int(sample["sessionElapsedNanos"]) <= end-1e9:
                     gpu.setdefault(sample["pass"], []).append(int(sample["gpuNanos"]))
     samples, partial_samples = analyzer.read_jsonl(capture / "client-samples.jsonl")
-    keys = ("logicalWidth", "logicalHeight", "framebufferWidth", "framebufferHeight", "zoomSetting", "players", "npcs", "sunAzimuth", "sunElevation", "brightness", "tone", "lighting", "profile", "geometry", "shadowQuality", "activeProjectileActors", "windowState", "gameObjects", "wallObjects")
+    keys = ("logicalWidth", "logicalHeight", "framebufferWidth", "framebufferHeight", "zoomSetting", "players", "npcs", "sunAzimuth", "sunElevation", "brightness", "tone", "lighting", "profile", "geometry", "shadowQuality", "hideRoofs", "activeProjectileActors", "windowState", "gameObjects", "wallObjects")
     context = {key:sorted({sample[key] for sample in samples if key in sample}) for key in keys}
     movement = validate_runtime(run, samples, start_event["label"])
     manifest = json.loads((capture / "manifest.json").read_text())
     result = dict(schema=1, capture=str(capture), artifact=json.loads((run / MARKER).read_text()), phase=start_event["label"], durationSeconds=(end-start)/1e9, partialRecords=partial_telemetry or partial_events or partial_samples, stages=stages, gpu={key:summary(values) for key,values in gpu.items()}, gpuDuplicateSamples=duplicates, context=context, openGL={key:manifest.get("openGL."+key) for key in ("renderer","version","vendor")}, fullClientPresentation60FpsAccepted=False, limitation="Hidden native window: frame-work/GPU workload measurements, not owner-visible presentation cadence or visual approval.")
     scenario = json.loads((capture / "scenario.json").read_text()) if (capture / "scenario.json").is_file() else {}
     effects = [sample["activeProjectileActors"] for sample in samples if "activeProjectileActors" in sample]
+    result["cameraContext"] = {key:sorted({row[key] for row in distributions if key in row}) for key in ("camera.zoomSetting","camera.baseZoom","camera.effectiveZoom","camera.pitch","camera.rotation","camera.fogMode","camera.drawDistanceWorldUnits","camera.fogStartDistanceWorldUnits","camera.drawDistanceTiles","camera.fogStartDistanceTiles")}
     result["effectCoverage"] = dict(samples=len(effects), nonzeroSamples=sum(value>0 for value in effects), maxActiveActors=max(effects,default=0),meanActiveActors=sum(effects)/len(effects) if effects else None)
     result["runtimeValidation"] = movement
     result["visiblePreview"] = scenario.get("visiblePreview", False)
@@ -284,7 +286,7 @@ def report(args):
         last = min(telemetry, key=lambda row:abs(row.get("sessionElapsedNanos",0)-end))
         result["frameCounters"] = {name:max(0,last.get("openGL."+name+".lifetime",0)-first.get("openGL."+name+".lifetime",0)) for name in ("frames","droppedFrames")}
         result["submittedSprites"] = {key:last.get(key) for key in ("counter.openGLWorldSpriteSnapshotGroup.recent.latest","counter.openGLWorldSpriteSnapshotLayer.recent.latest","counter.openGLWorldSpriteSnapshotCompatibilityFallback.recent.latest")}
-    geometry_keys = ("openGLWorldChunk", "openGLWorldChunkTriangle", "openGLWorldChunkDraw", "openGLWorldChunkDrawTriangle", "openGLWorldChunkDrawGameObject", "openGLWorldChunkDrawWallObject", "openGLWorldChunkDrawTerrain", "openGLWorldChunkDrawWall", "openGLWorldChunkDrawCall", "openGLWorldSpriteSnapshotGroup", "openGLWorldSpriteSnapshotLayer", "openGLWorldSpriteSnapshotCompatibilityFallback")
+    geometry_keys = ("openGLWorldChunk", "openGLWorldChunkTriangle", "openGLWorldChunkDraw", "openGLWorldChunkDrawTriangle", "openGLWorldChunkDrawGameObject", "openGLWorldChunkDrawWallObject", "openGLWorldChunkDrawTerrain", "openGLWorldChunkDrawWall", "openGLWorldChunkDrawRoof", "openGLWorldChunkDrawCall", "openGLWorldSpriteSnapshotGroup", "openGLWorldSpriteSnapshotLayer", "openGLWorldSpriteSnapshotCompatibilityFallback")
     result["sceneInventory"] = {key:dict(min=min(values), max=max(values), last=values[-1]) for key in geometry_keys if (values := [record["counter."+key+".recent.latest"] for record in distributions if "counter."+key+".recent.latest" in record])}
     (capture / "benchmark-summary.json").write_text(json.dumps(result,indent=2)+"\n")
     print(json.dumps({key:result[key] for key in ("phase","durationSeconds","stages","gpu","context","fullClientPresentation60FpsAccepted")},indent=2))
@@ -292,12 +294,12 @@ def report(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__); sub = parser.add_subparsers(dest="action", required=True)
-    p = sub.add_parser("prepare"); p.add_argument("--name", required=True); p.add_argument("--client-jar", type=Path, required=True); p.add_argument("--client-source", required=True); p.add_argument("--server-core", type=Path); p.add_argument("--server-overlay", type=Path); p.add_argument("--server-source")
+    p = sub.add_parser("prepare"); p.add_argument("--name", required=True); p.add_argument("--client-jar", type=Path, required=True); p.add_argument("--client-source", required=True); p.add_argument("--client-branch", default="unspecified-artifact-branch"); p.add_argument("--server-core", type=Path); p.add_argument("--server-overlay", type=Path); p.add_argument("--server-source")
     for name in ("start", "stop", "capture", "preview"):
         p = sub.add_parser(name); p.add_argument("run", type=Path)
         if name in ("capture", "preview"):
             p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "transition", "same-position", "visual"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--legacy-mask", action="store_true")
-            p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
+            p.add_argument("--exclude-caster", choices=["TERRAIN","WALL","ROOF","GAME_OBJECT","WALL_OBJECT"],action="append",default=[]); p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
     p = sub.add_parser("report"); p.add_argument("capture", type=Path)
     args = parser.parse_args()
     if args.action in ("capture", "preview") and not 5 <= args.seconds <= 600: parser.error("Duration must be5..600 seconds")
