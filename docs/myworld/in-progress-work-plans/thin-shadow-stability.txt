@@ -43,8 +43,10 @@ free previous history and invalidate the current projection; bounded current
 map storage may remain cached, but is rebuilt before reuse. Cleanup frees all.
 
 A4096 D24 map commonly occupies64MiB. High's near+current+previous maximum is
-about144MiB versus the old32MiB (driver storage dependent); previous is allocated
-only after a pose refresh. Low remains about4MiB. During an active transition
+about144MiB versus the old32MiB (driver storage dependent). The second far
+texture is allocated on later refreshes and retained bounded in High. The2048
+capability fallback is about48MiB with history; Low remains about4MiB. During an
+active transition
 there is one additional far9-tap PCF sample, for at most12frames per refresh.
 The coherent diagnostic snapshot preserves its first9 fields and appends:
 9farMapSize,10historyActive,11blendPermille. CPU observer updates are optional;
@@ -125,7 +127,11 @@ normal1080 busy-camera case are pending with the frozen candidate. An initial
 attempt was rejected before samples because the benchmark observer iterated a
 raw Scene under construction; there was no production renderer exception. Ai3
 owns the published-frame observer fix and backward-compatible diagnostic fields.
-No timed performance claim will be based on that failed run.
+No timed performance claim will be based on that failed run. A subsequent run
+with published-frame observations collected23samples then correctly refused a
+3second optional pending-frame observation timeout; it is also not accepted as
+a complete performance cohort. Ai3's nonblocking optional-observation follow-up
+is isolated tooling work. The candidate renderer/JAR remains unchanged.
 
 Validation notes
 The expanded low-sun sloped test uses a physically sun-facing slope. A14degree
@@ -134,3 +140,13 @@ new assertion incorrectly expected it lit and was corrected in the fixture only.
 Production directional-light probes separately retain away-facing low-sun ambient
 darkness, and the real terrain-depression / genuine cast-occluder checks remain.
 No production bias or terrain-rule change was made to satisfy that invalid test.
+
+Completed local checks
+The self-contained native temporal runner, actual Scene epoch test, complete
+renderer guardrails, expanded hardware GPU suite and GL2 capability detection
+all pass. Final logs are under output/tests/thin-shadow-stability/:
+  temporal-final.log, gpu-final-complete.log, gpu-fallback-final.log,
+  guardrails-final.log, checked-baseline-failure.log.
+The existing workspace-layout check still reports inherited ignored sprites /
+historical unclassified output roots; they were preserved. All new evidence
+writers use declared test output categories. No public operation occurred.

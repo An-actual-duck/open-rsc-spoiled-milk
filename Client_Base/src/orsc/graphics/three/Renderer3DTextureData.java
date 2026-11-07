@@ -17,6 +17,7 @@ public final class Renderer3DTextureData {
 	private final int transparentPixelCount;
 	private final int averageOpaqueRgb;
 	private final long signature;
+	private final boolean animationIntent;
 
 	private Renderer3DTextureData(
 		int textureId,
@@ -30,7 +31,8 @@ public final class Renderer3DTextureData {
 		int opaquePixelCount,
 		int transparentPixelCount,
 		int averageOpaqueRgb,
-		long signature) {
+		long signature,
+		boolean animationIntent) {
 		this.textureId = textureId;
 		this.width = width;
 		this.height = height;
@@ -43,9 +45,13 @@ public final class Renderer3DTextureData {
 		this.transparentPixelCount = transparentPixelCount;
 		this.averageOpaqueRgb = averageOpaqueRgb;
 		this.signature = signature;
+		this.animationIntent = animationIntent;
 	}
 
 	static Renderer3DTextureData fromLegacyPalette(int textureId, int[] palette, int textureType, byte[] sourceIndices) {
+        return fromLegacyPalette(textureId, palette, textureType, sourceIndices, false);
+    }
+    static Renderer3DTextureData fromLegacyPalette(int textureId, int[] palette, int textureType, byte[] sourceIndices, boolean animationIntent) {
 		int width = textureType != 0 ? 128 : 64;
 		int height = width;
 		int pixelCount = width * height;
@@ -55,10 +61,13 @@ public final class Renderer3DTextureData {
 			System.arraycopy(sourceIndices, 0, indices, 0, Math.min(sourceIndices.length, indices.length));
 		}
 
-		return fromRgbaPixels(textureId, width, height, textureType, paletteRgb, indices, buildRgbaPixels(paletteRgb, indices));
+		return fromRgbaPixels(textureId, width, height, textureType, paletteRgb, indices, buildRgbaPixels(paletteRgb, indices), animationIntent);
 	}
 
 	static Renderer3DTextureData fromLegacyResource(int textureId, int textureType, int[] resourcePixels) {
+        return fromLegacyResource(textureId, textureType, resourcePixels, false);
+    }
+    static Renderer3DTextureData fromLegacyResource(int textureId, int textureType, int[] resourcePixels, boolean animationIntent) {
 		int width = textureType != 0 ? 128 : 64;
 		int height = width;
 		int pixelCount = width * height;
@@ -71,7 +80,7 @@ public final class Renderer3DTextureData {
 					: (rgb & RendererTransparency.RGB_MASK) << 8 | 0xFF;
 			}
 		}
-		return fromRgbaPixels(textureId, width, height, textureType, new int[0], new byte[pixelCount], rgbaPixels);
+		return fromRgbaPixels(textureId, width, height, textureType, new int[0], new byte[pixelCount], rgbaPixels, animationIntent);
 	}
 
 	private static int[] buildRgbaPixels(int[] paletteRgb, byte[] indices) {
@@ -93,7 +102,8 @@ public final class Renderer3DTextureData {
 		int textureType,
 		int[] paletteRgb,
 		byte[] indices,
-		int[] rgbaPixels) {
+		int[] rgbaPixels,
+        boolean animationIntent) {
 		int opaquePixels = 0;
 		int transparentPixels = 0;
 		long redTotal = 0L;
@@ -130,7 +140,7 @@ public final class Renderer3DTextureData {
 			opaquePixels,
 			transparentPixels,
 			averageOpaqueRgb,
-			computeSignature(textureId, width, height, textureType, rgbaPixels));
+			computeSignature(textureId, width, height, textureType, rgbaPixels), animationIntent);
 	}
 
 	private static long computeSignature(int textureId, int width, int height, int textureType, int[] rgbaPixels) {
@@ -160,6 +170,14 @@ public final class Renderer3DTextureData {
 		}
 		return copy;
 	}
+
+    /** Intent is immutable and independent of RGB/alpha bytes and asset identity. */
+    Renderer3DTextureData withAnimationIntent() {
+        return animationIntent ? this : new Renderer3DTextureData(textureId, width, height, textureType,
+            paletteRgb, indices, rgbaPixels, hasTransparency, opaquePixelCount, transparentPixelCount,
+            averageOpaqueRgb, signature, true);
+    }
+    public boolean hasAnimatedAlpha() { return animationIntent && hasTransparency; }
 
 	public int getTextureId() {
 		return textureId;

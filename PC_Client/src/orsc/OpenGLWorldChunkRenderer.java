@@ -1628,6 +1628,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			signature = (signature ^ (buffer == null ? 0 : buffer.vertexBufferId)) * 1099511628211L;
 			if (buffer == null) continue;
 			for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
+                int material = effectiveChunkTextureId(frame, batch.textureId, batch.fallbackColor);
+                if (!RendererShadowCasterPolicy.isFarCaster(frame.getTexture(material))) continue;
 				OpenGLTextureRegion region = textureRegionForBatch(frame, batch);
 				if (region != null && region.hasTransparency()) {
 					int id = effectiveChunkTextureId(frame, batch.textureId, batch.fallbackColor);
@@ -1663,6 +1665,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				TEXTURE_COORD_OFFSET_BYTES, offsetX, offsetZ);
 			for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
 				if (SHADOW_DIAGNOSTIC_EXCLUDED.contains(batch.kind)) continue;
+                int material = effectiveChunkTextureId(frame, batch.textureId, batch.fallbackColor);
+                if (staticOnly && !RendererShadowCasterPolicy.isFarCaster(frame.getTexture(material))) continue;
 				if (batch.indexCount <= 0 || (batch.hasBounds() && !projection.intersects(
 					batch.minX + offsetX, batch.minY, batch.minZ + offsetZ,
 					batch.maxX + offsetX, batch.maxY, batch.maxZ + offsetZ))) continue;
