@@ -20,6 +20,11 @@ Far contains static geometry only; changes in true static mesh/material alpha,
 invalidate it. Its texture and projection are updated together. Geometry uses
 true logical-world X/Z anchoring across native origin rebases; RSC positions
 are Y-down, so sun projection explicitly converts from lighting's Y-up vector.
+Object-cell origins are identity metadata, not vertex translations: real object
+meshes retain full presentation-local model vertices. Depth casters and receiving
+objects therefore share the primary world presentation anchor; world meshes use
+their own offset. An actual RSModel-builder regression caught the former double
+cell offset and covers static/animated objects and signed-level origin rebases.
 Receiver bias uses actual derivative geometry normals, preserving accepted
 lighting normals. Sampling only attenuates direct sun, not ambient or glow.
 
@@ -54,6 +59,12 @@ Verification completed:
   restoration. Nested timestamp samples are completed and emitted uniquely.
 - An actual GL 2.1 context reports unsupported optional GL 3 capability without
   creating the geometry pass; the previous ground-mask fallback remains available.
+- Native benchmark exposed a pre-existing same-position teleport scenery reset:
+  clearing local delivery sets retained a matching static scan key, suppressing
+  the needed resend. Separate commit 7cba3d710 invalidates only that owned key at
+  Player.resetLocalObjectState. Real reset/cache methods failed before and pass
+  afterward (steady/version/region/level checks); native private proof retains
+  all 935 scenery objects / 29 wall objects through the same-coordinate rebase.
 - Client window diagnostics export cached visible/iconified attributes only when
   diagnostics are enabled. Observers never call GLFW off the context thread.
   Raw completed openGLFrameInterval samples are exported for cadence analysis.
