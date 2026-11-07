@@ -188,6 +188,9 @@ public final class RendererBenchmarkClient {
         Files.write(capture.resolve("roof-mask.json"),metadata.append(",\"coveredPixels\":").append(covered).append("}\n").toString().getBytes(StandardCharsets.UTF_8));
         writeFrameMetadata(((Scene)field(client,mudclient.class,"scene")).getRenderer3DFrame(),presenter,capture.resolve("roof-frame.json"),-1);
     }
+    private static void applyDiagnosticFog() {
+        RendererFogSettings.setMode("off".equals(System.getProperty("renderer.benchmark.fog","on")) ? RendererFogSettings.Mode.OFF : RendererFogSettings.Mode.ON);
+    }
     private static void applyDiagnosticTone() {
         String tone=System.getProperty("spoiledmilk.openglTonePreview");
         if(tone!=null) RendererToneSettings.setMode(RendererToneSettings.Mode.from(tone));
@@ -241,9 +244,9 @@ public final class RendererBenchmarkClient {
         if (!field(client, mudclient.class, "currentViewMode").toString().equals("GAME")) throw new IllegalStateException("Ordinary login failed");
         set(client, mudclient.class, "welcomeScreenShown", false);
         for(int warm=0;warm<Integer.getInteger("renderer.benchmark.warmupSeconds",15);warm++) {
-            applyPreviewWindowMode(); applyDiagnosticTone(); Thread.sleep(1000);
+            applyPreviewWindowMode(); applyDiagnosticTone(); applyDiagnosticFog(); Thread.sleep(1000);
         }
-        applyPreviewWindowMode(); applyDiagnosticTone();
+        applyPreviewWindowMode(); applyDiagnosticTone(); applyDiagnosticFog();
         client.setShowDialogMessage(false);
         Config.C_HIDE_LOGIN_BOX = true;
         client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));
@@ -271,7 +274,7 @@ public final class RendererBenchmarkClient {
                 + ",\"windowMode\":\"" + OpenGLWindowSettings.getMode() + "\",\"logicalWidth\":" + RenderSurfaceSettings.getWidth() + ",\"logicalHeight\":" + RenderSurfaceSettings.getHeight()
                 + ",\"contentViewportWidth\":" + viewport.framebufferViewport().width + ",\"contentViewportHeight\":" + viewport.framebufferViewport().height + ",\"surface\":" + surfaceState(presenter)
                 + ",\"sunAzimuth\":" + RendererRemasterLightSettings.getAzimuthDegrees() + ",\"sunElevation\":" + RendererRemasterLightSettings.getElevationDegrees()
-                + ",\"toneMode\":\"" + RendererToneSettings.getMode() + "\",\"brightness\":" + light.brightnessMultiplier + ",\"tone\":\"" + light.debugLabel
+                + ",\"fogMode\":\"" + RendererFogSettings.getMode() + "\",\"toneMode\":\"" + RendererToneSettings.getMode() + "\",\"brightness\":" + light.brightnessMultiplier + ",\"tone\":\"" + light.debugLabel
                 + "\",\"lighting\":\"" + RendererLightingSettings.getMode() + "\",\"profile\":\"" + RendererProfileSettings.getMode()
                 + "\",\"geometry\":\"" + RendererGeometrySettings.getMode() + "\",\"shadowQuality\":\"" + shadowQuality() + "\",\"geometryShadow\":" + shadowStats(presenter) + "}";
             Files.write(capture.resolve("client-samples.jsonl"), (sample + "\n").getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND);

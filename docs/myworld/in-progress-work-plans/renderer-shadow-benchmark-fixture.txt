@@ -1,4 +1,4 @@
-Native renderer shadow benchmark fixture — WORK IN PROGRESS, not READY
+Native renderer shadow benchmark fixture — ready for Core review
 
 This tooling stages an empty-account, loopback-only native world and a supplied
 immutable diagnostic client. It does not read owner accounts, use the public
@@ -80,7 +80,8 @@ and excluded counts, and raw CSV remains unchanged. A report requires the client
 to finish so buffered GPU output is complete.
 The current first corrected static control completed60s/3601 frames: CPU GLrender
 p95/p99 1.885/2.101ms, world1.117/1.273ms; fixed viewport/camera/light verified.
-Busy cases and candidate A/B remain pending. Final report will identify exact
+Final accepted-scope measurements are in renderer-shadow-benchmark-results.txt;
+that report identifies exact
 source/artifact hashes and limitations. This branch has not been integrated.
 
 Inherited output-root entries from older ai3 tasks fail workspace-layout check;
@@ -175,3 +176,15 @@ Final tooling controls and attribution:
   The mask is same-level positive roof data, not room-enclosure inference. Bank
   same-level bits are0 while42 upper-level roof tiles exist; multi-storey input
   propagation remains a separate follow-up, not a claim that the bank is open sky.
+
+Process-lifecycle safety is Linux-only: pidfd descriptors bind client signals to
+an inspected process instance; exact cwd and entrypoint argument must match.
+Exited/zombie races are ignored without a signal, unrelated live processes are
+refused. Own server shutdown uses only the private graceful STOP marker and waits
+for both its PID marker and process exit. Port probes use reuse-address only to
+ignore completed TIME_WAIT connections; a real listener remains refused. Tests
+cover both cases and an exited/zombie child. The shared GPU flock waits at most
+10s, preventing a transient prior-context release from becoming an immediate
+false startup failure. Earlier refused attempts remain preserved; a fresh paired
+relog proof was used instead of relaxing session history. Final14 guard/report
+regressions pass. No production/public process control is provided by this tool.

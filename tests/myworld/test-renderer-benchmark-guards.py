@@ -7,6 +7,9 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import socket
+import subprocess
+import time
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -46,10 +49,39 @@ class GuardTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as name:
             run = Path(name); (run / benchmark.MARKER).write_text("{}")
             (run / "processes.json").write_text(json.dumps(dict(client=os.getpid(), server=os.getpid())))
-            with patch.object(benchmark.os, "kill") as kill:
+            with patch.object(benchmark.os, "kill") as kill, patch.object(benchmark.signal,"pidfd_send_signal") as send:
                 with self.assertRaisesRegex(ValueError, "Client PID ownership mismatch"):
                     benchmark.stop(SimpleNamespace(run=run))
-                kill.assert_not_called()
+                kill.assert_not_called(); send.assert_not_called()
+
+    def test_exited_zombie_client_is_not_signaled(self):
+        child=subprocess.Popen(["python3","-c","pass"])
+        try:
+            deadline=time.monotonic()+2
+            while time.monotonic()<deadline:
+                status=(Path("/proc")/str(child.pid)/"stat").read_text().rsplit(") ",1)[1].split()[0]
+                if status=="Z": break
+                time.sleep(.01)
+            with patch.object(benchmark.signal,"pidfd_send_signal") as send:
+                benchmark.signal_owned_client(child.pid,Path("/not-owned"))
+                send.assert_not_called()
+        finally: child.wait(timeout=2)
+
+    def test_port_probe_refuses_live_listener(self):
+        with socket.socket() as listener:
+            listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+            listener.bind(("127.0.0.1",0)); listener.listen(1)
+            with patch.object(benchmark,"PORTS",(listener.getsockname()[1],)):
+                with self.assertRaises(OSError): benchmark.free_ports()
+
+    def test_port_probe_allows_own_closed_connection_time_wait(self):
+        with socket.socket() as listener:
+            listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+            listener.bind(("127.0.0.1",0)); listener.listen(1); port=listener.getsockname()[1]
+            with socket.create_connection(("127.0.0.1",port)) as client:
+                connection,_=listener.accept()
+                connection.shutdown(socket.SHUT_WR); client.recv(1); connection.close()
+        with patch.object(benchmark,"PORTS",(port,)): benchmark.free_ports()
 
     def test_changed_immutable_server_jar_refused(self):
         with tempfile.TemporaryDirectory() as name:
