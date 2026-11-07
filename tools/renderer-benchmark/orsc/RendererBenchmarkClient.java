@@ -186,6 +186,7 @@ public final class RendererBenchmarkClient {
         OpenGLViewportPresenter viewport = (OpenGLViewportPresenter) field(presenter, OpenGLFramePresenter.class, "viewportPresenter");
         System.out.println(RendererPerformanceDiagnostics.handleCommand("::pf start " + phase));
         for (int second = 0; second < seconds; second++) {
+            if(Files.exists(run.resolve("FIXTURE-FAILED"))) throw new IllegalStateException("Private fixture setup failed; aborting measurement");
             client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));
             if (phase.contains("camera")) client.cameraRotation = (rotation + second * 3) & 255;
             RendererDayNightCycle.Presentation light = RendererDayNightCycle.currentPresentation();
