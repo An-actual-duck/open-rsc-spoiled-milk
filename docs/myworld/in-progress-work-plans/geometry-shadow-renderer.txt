@@ -218,8 +218,8 @@ Separate bounded stress and lifecycle cases retain the following results:
   57 projected actors. CPU p99/max 4.035/17.812ms and GPU 7.826/20.309ms (two
   each >16.667); completed swap maximum 31.007ms, none >33.334. This fog-disabled
   stress case has real outliers, distinct from the main normal-camera target.
-- Actual normal-rate night cycle (night-deep, server 45-minute cycle, sun about
-  azimuth 267.3 / elevation 10 degrees): Core reviewed the native raw image as
+- Actual normal-rate night cycle (night-deep, about 45-minute position in the
+  60-minute server cycle, sun azimuth about 267.3 / elevation 10 degrees): Core reviewed the native raw image as
   readable, with a consistent night palette and long low-angle geometry shadows;
   no missing geometry or catastrophic lighting was observed. This is a bounded
   visual/readiness check, not a new timed performance cohort.
