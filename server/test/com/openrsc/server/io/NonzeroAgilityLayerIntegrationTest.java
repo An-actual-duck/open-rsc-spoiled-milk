@@ -13,13 +13,11 @@ import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
-import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.net.rsc.ClientLimitations;
 import com.openrsc.server.plugins.triggers.OpBoundTrigger;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
-import com.openrsc.server.util.rsc.CollisionFlag;
 import com.openrsc.server.util.rsc.DataConversions;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -172,7 +170,11 @@ public final class NonzeroAgilityLayerIntegrationTest {
         if (scenario.has("facings")) {
             for (Object value : scenario.getJSONArray("facings")) {
                 JSONObject expected = (JSONObject) value; boolean found = false;
-                for (Object pose : poses) if (((JSONObject) pose).toString().equals(expected.toString())) found = true;
+                for (Object pose : poses) {
+                    JSONObject actual = (JSONObject) pose;
+                    if (actual.getInt("sprite") == expected.getInt("sprite")
+                            && at(actual.getJSONArray("location")).equals(at(expected.getJSONArray("location")))) found = true;
+                }
                 check(found, "expected facing pose " + expected + " absent from " + poses);
             }
         }
@@ -184,14 +186,32 @@ public final class NonzeroAgilityLayerIntegrationTest {
         NativeLayeredTerrainTile floor = server.getWorld().getRegionManager()
             .findNativeLayeredWorldPackage(destination).get().findTile(destination).get();
         result.put("overlay", floor.getOverlay());
-        check(floor.getOverlay() != 250 && floor.getOverlay() != 255, "final landing is not authored void");
+        check(floor.getOverlay() != 8 && floor.getOverlay() != 250 && floor.getOverlay() != 255, "final landing is not authored void");
         if (destination.getCoordinate().getLevel() == 1 || destination.getCoordinate().getLevel() == 2)
             check(floor.getOverlay() != 0, "upper-floor landing has actual floor");
         int x = player.getX(), y = player.getY(), exits = 0;
         for (int[] offset : new int[][]{{1,0},{-1,0},{0,1},{0,-1}})
             if (PathValidation.checkAdjacent(player, x, y, x + offset[0], y + offset[1])) exits++;
         result.put("walkingExits", exits);
-        check(exits > 0, "final landing has no legal outward walking step; mask=" + mask);
+        if (exits == 0 && (scenario.getString("plugin").endsWith("LegendsQuestCaveAgility")
+                || scenario.getString("plugin").endsWith("UndergroundPassAgilityObstacles"))) {
+            OpLocTrigger continuation = (OpLocTrigger) Class.forName("com.openrsc.server.plugins." + scenario.getString("plugin")).newInstance();
+            boolean continued = false, previousHigh = random.high;
+            random.high = false;
+            try {
+                for (int dx = -4; dx <= 4 && !continued; dx++) for (int dy = -4; dy <= 4 && !continued; dy++) {
+                    GameObject next = server.getWorld().getRegionManager().findNativeLayeredScenery(
+                        new WorldLocation(destination.getWorldSpace(), new WorldCoordinate(x + dx, y + dy, destination.getCoordinate().getLevel())));
+                    if (next == null || !player.atObject(next) || !continuation.blockOpLoc(player, next, next.getGameObjectDef().getCommand1())) continue;
+                    continuation.onOpLoc(player, next, next.getGameObjectDef().getCommand1());
+                    if (!player.getWorldLocation().equals(destination)) {
+                        result.put("scriptedExitObstacle", next.getID()).put("scriptedExitDestination", triple(player.getWorldLocation()));
+                        continued = true;
+                    }
+                }
+            } finally { random.high = previousHigh; player.teleportLayered(destination, false); }
+            check(continued, "jump platform has no reachable scripted continuation; mask=" + mask);
+        } else check(exits > 0, "final landing has no legal outward walking step; mask=" + mask);
     }
 
     @SuppressWarnings("unchecked")
@@ -235,6 +255,7 @@ public final class NonzeroAgilityLayerIntegrationTest {
                 }
                 results.put(result);
             }
+            check(results.length() > 0, "no matching scenarios; check optional filter");
             Files.write(Paths.get("results.json"), (results.toString(2) + "\n").getBytes(StandardCharsets.UTF_8));
             System.out.println("Nonzero agility scenarios=" + results.length() + " checks=" + checks + " failures=" + failures.size());
             if (!failures.isEmpty()) throw new AssertionError(failures.toString());

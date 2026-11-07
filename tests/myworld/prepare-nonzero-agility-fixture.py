@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 import shutil
 import sys
+import xml.etree.ElementTree as ET
 
 from installed_world_package import ROOT, manifest, package_root
 
@@ -34,6 +35,7 @@ def location(obj):
     return [obj["position"]["x"], obj["position"]["y"], obj["level"]]
 
 
+object_defs = ET.parse(ROOT / "server/conf/server/defs/GameObjectDef.xml").getroot()
 scenarios = []
 
 
@@ -56,7 +58,7 @@ for obj in objects(677):
     route(barbarian, obj, [496, 564, 0], [496, 563, 1], "Barbarian net", trace=[[496, 563, 1]])
 for obj in objects(678):
     if obj["position"]["x"] != 498:
-        route(barbarian, obj, [500, 562, 1], [500, 562, 1], "Barbarian inactive ledge segment", trace=[])
+        route(barbarian, obj, [501, 562, 1], [501, 562, 1], "Barbarian inactive ledge segment", trace=[])
         continue
     for edge, dest, damage in (("low", [501, 562, 1], 0), ("high", [499, 563, 0], 15)):
         route(barbarian, obj, [497, 562, 1], dest, "Barbarian ledge " + edge,
@@ -208,8 +210,13 @@ falls = {889: (738, 584), 891: (738, 584), 898: (756, 591), 893: (753, 608),
 for identity in sorted(set(falls) - {889}):
     for obj in objects(identity):
         x, y, level = location(obj)
-        # Bridge footprints rotate as authored: dir0/4 runs east-west, dir2/6 north-south.
-        horizontal = obj["direction"] in (0, 4)
+        # Derive the long axis from the native definition and installed rotation.
+        definition = object_defs[identity]
+        width, height = int(definition.findtext("width")), int(definition.findtext("height"))
+        if obj["direction"] not in (0, 4):
+            width, height = height, width
+        assert max(width, height) == 3 and min(width, height) == 1
+        horizontal = width > height
         if identity == 891:
             horizontal = True
         starts = [[x - 1, y, level], [x + 3, y, level]] if horizontal else [[x, y - 1, level], [x, y + 3, level]]
@@ -232,6 +239,33 @@ for identity, xs in ((862, [730]), (864, [734, 751]), (863, [763]),
                   setup=setup, trace=[[x, y, -1]], damage=0)
         route(up, obj, location(obj), location(obj), "Underground Pass ledge failure",
               setup=["underground-pass"], edge="high", trace=[], damage=2)
+
+# The fixed Map1 drop and swamp-recovery chain are same-layer controls.
+up1 = "authentic.quests.members.undergroundpass.obstacles.UndergroundPassObstaclesMap1"
+for obj in objects(812):
+    route(up1, obj, [706, 609, -1], [706, 607, -1], "UP Map1 ledge drop", trace=[[706, 607, -1]])
+for obj in objects(754):
+    route(up1, obj, location(obj), [690, 629, -1], "UP Map1 swamp fall", damage=6,
+          trace=[[674, 630, -1], [677, 630, -1], [680, 633, -1], [682, 630, -1],
+                 [683, 633, -1], [685, 632, -1], [687, 630, -1], [690, 629, -1]])
+for obj in objects(767):
+    route(up1, obj, location(obj), [685, 588, -1], "UP Map1 mud recovery", trace=[[685, 588, -1]])
+
+# Shared Map2 helpers retain the cave level, including their forced slip branches.
+up2 = "authentic.quests.members.undergroundpass.obstacles.UndergroundPassObstaclesMap2"
+for obj in objects(837):
+    route(up2, obj, [764, 633, -1], [764, 631, -1], "UP Map2 ledge climb success",
+          command="climb up", edge="high", damage=0, trace=[[764, 631, -1]])
+    route(up2, obj, [764, 633, -1], [764, 633, -1], "UP Map2 ledge climb slip",
+          command="climb up", damage=3, trace=[])
+    route(up2, obj, [764, 631, -1], [764, 635, -1], "UP Map2 doomed ledge jump",
+          command="jump", damage=24, trace=[[764, 629, -1], [764, 635, -1]])
+for obj in objects(856):
+    for side, (start, dest) in enumerate((([734, 648, -1], [735, 647, -1]),
+                                         ([735, 647, -1], [734, 648, -1]))):
+        route(up2, obj, start, dest, "UP Map2 hijack rock success " + str(side), damage=0, trace=[dest])
+        route(up2, obj, start, [734, 651, -1], "UP Map2 hijack rock slip " + str(side),
+              edge="high", damage=24, trace=[[734, 651, -1]])
 
 # Actual configured crawl placements retain their signed destinations and safety proof.
 for obj in placements:
@@ -260,6 +294,7 @@ for directory in ("conf", "database"):
 for filename in ("badwords.txt", "goodwords.txt", "globalrules.txt", "alertwords.txt"):
     shutil.copy2(ROOT / "server" / filename, target / filename)
 (target / "connections.conf").write_text("db_type: sqlite\n")
+(target / "source-world.json").write_text(json.dumps(dict(package=str(source), manifestSha256=hashlib.sha256((source / "manifest.json").read_bytes()).hexdigest(), placementCount=len(placements)), indent=2) + "\n")
 (target / "scenarios.json").write_text(json.dumps(scenarios, indent=2) + "\n")
 package = target / "package"
 package.mkdir()

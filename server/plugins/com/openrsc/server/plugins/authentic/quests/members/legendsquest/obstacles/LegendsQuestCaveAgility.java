@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.authentic.quests.members.legendsquest.obstacl
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.Formulae;
@@ -39,7 +40,8 @@ public class LegendsQuestCaveAgility implements OpLocTrigger {
 				}
 				if (succeed(player, 50)) {
 					player.message("You manage to keep your balance.");
-					player.teleport(obj.getX(), obj.getY(), obj.getWorldLocation().getCoordinate().getLevel(), false);
+					WorldCoordinate destination = obj.getWorldLocation().getCoordinate();
+					player.teleport(destination.getX(), destination.getY(), destination.getLevel(), false);
 					player.incExp(Skill.AGILITY.id(), 20, true);
 				} else {
 					player.teleport(421, 867, -1, false);
