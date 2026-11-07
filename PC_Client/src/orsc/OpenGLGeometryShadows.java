@@ -56,11 +56,10 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		"  geometricNormal = magnitude > 0.00001 ? geometricNormal / magnitude : vec3(0.0, -1.0, 0.0);",
 		"  vec3 physicalSun = vec3(uLightDirectionX, -uLightDirectionY, uLightDirectionZ);",
 		// Native terrain is a heightfield: outward is physical Y-up (negative Y).
-		// Preserve true back-facing terrain occlusion instead of flipping its
-		// bias normal toward the sun and leaking PCF light at grazing slopes.
+		// Keep the bias normal outward. Sun-relative terrain diffuse handles the
+		// smooth lighting terminator; a face-wide zero here creates tile silhouettes.
 		"  if (vModelKind > 0.5 && vModelKind < 1.5) {",
 		"    if (geometricNormal.y > 0.0) geometricNormal = -geometricNormal;",
-		"    if (dot(geometricNormal, physicalSun) <= 0.0) return 0.0;",
 		"  } else if (dot(geometricNormal, physicalSun) < 0.0) geometricNormal = -geometricNormal;",
 		"  float nearVisibility = geometryShadowSample(uNearGeometryShadow, uNearGeometryLight, uNearGeometryTexel, uNearGeometryWorldTexel, geometricNormal);",
 		"  vec3 nearAt = (uNearGeometryLight * vec4(vShadowWorldPosition, 1.0)).xyz;",
