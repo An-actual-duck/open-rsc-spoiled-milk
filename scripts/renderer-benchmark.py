@@ -150,11 +150,21 @@ def start(args):
     print("Private renderer server PID", proc.pid)
 
 
+def capture_history(run, phase):
+    previous = sorted(path.parent for path in run.glob("*/command.json"))
+    if phase == "relog":
+        if len(previous)!=1 or not (previous[0]/"CLIENT-DONE").is_file():
+            raise ValueError("Relog proof requires exactly one completed first login")
+        return previous[0]
+    if previous:
+        raise ValueError("Use one fresh server fixture per capture; reconnect geometry parity is not assumed")
+    return None
+
+
 def capture(args):
     run = marked(args.run); validate_artifacts(run)
     visible = args.action == "preview"
-    if any(run.glob("*/command.json")):
-        raise ValueError("Use one fresh server fixture per capture; reconnect geometry parity is not assumed")
+    previous_capture = capture_history(run,args.phase)
     processes = json.loads((run / "processes.json").read_text())
     old_client = Path("/proc") / str(processes.get("client", 0))
     if old_client.exists() and b"orsc.RendererBenchmarkClient" in (old_client / "cmdline").read_bytes():
@@ -168,7 +178,7 @@ def capture(args):
             time.sleep(.25)
     name = args.phase + "-" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     capture = run / name; capture.mkdir()
-    (capture / "scenario.json").write_text(json.dumps(dict(phase=args.phase, requestedViewer=[args.x,args.y,0], zoom=args.zoom, initialRotation=args.rotation, quality=args.quality, legacyMask=args.legacy_mask, sunAzimuth=args.sun_azimuth, sunElevation=args.sun_elevation, normalRateServerSun=args.phase == "sun-motion", visiblePreview=visible,excludedCasterKinds=args.exclude_caster,dumpTerrain=args.dump_terrain,requestedWindowMode=args.window_mode if visible else "diagnostic-hidden",warmupSeconds=args.warmup_seconds,snapshotFrames=args.snapshot_frames,tonePreview=args.tone_preview),indent=2)+"\n")
+    (capture / "scenario.json").write_text(json.dumps(dict(phase=args.phase, requestedViewer=[args.x,args.y,0], zoom=args.zoom, initialRotation=args.rotation, quality=args.quality, legacyMask=args.legacy_mask, sunAzimuth=args.sun_azimuth, sunElevation=args.sun_elevation, normalRateServerSun=args.phase in ("sun-motion","night"),relogFrom=str(previous_capture) if previous_capture else None, visiblePreview=visible,excludedCasterKinds=args.exclude_caster,dumpTerrain=args.dump_terrain,requestedWindowMode=args.window_mode if visible else "diagnostic-hidden",warmupSeconds=args.warmup_seconds,snapshotFrames=args.snapshot_frames,tonePreview=args.tone_preview),indent=2)+"\n")
     request = run / "request.next"
     request.write_text(json.dumps(dict(busy=args.phase.startswith("busy") or args.phase == "sun-motion", phase=args.phase, x=args.x, y=args.y)))
     os.replace(request, run / "request.json")
@@ -184,7 +194,7 @@ def capture(args):
     props["renderer.benchmark.rotation"] = str(args.rotation)
     if args.legacy_mask: props["spoiledmilk.shadowBenchmarkLegacyMask"] = "true"
     if args.exclude_caster: props["spoiledmilk.shadowDiagnosticExclude"] = ",".join(args.exclude_caster)
-    if args.phase != "sun-motion":
+    if args.phase not in ("sun-motion","night"):
         props.update({"spoiledmilk.remasterLightAzimuth":str(args.sun_azimuth), "spoiledmilk.remasterLightElevation":str(args.sun_elevation), "spoiledmilk.openglTonePreview":args.tone_preview})
     props.update({"spoiledmilk.openglFrameCapture":str(args.snapshot).lower(), "renderer.benchmark.snapshot":str(args.snapshot).lower(), "spoiledmilk.openglFrameCaptureDir":str(capture / "captures")})
     common_git = Path(subprocess.check_output(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], cwd=ROOT, text=True).strip())
@@ -292,6 +302,11 @@ def report(args):
     result["visiblePreview"] = scenario.get("visiblePreview", False)
     if result["visiblePreview"]:
         result["limitation"] = "Owner-visible private preview. Post-swap interval distributions are evidence; final60FPS acceptance and visual approval require manager review."
+    capture_records, capture_partial = analyzer.read_jsonl(capture / "captures/capture-index.jsonl") if (capture / "captures/capture-index.jsonl").is_file() else ([],False)
+    completed_captures=sum(row.get("status")=="completed" for row in capture_records); failed_captures=sum(row.get("status")=="failed" for row in capture_records)
+    result["captureEvidence"] = dict(requestedBudget=scenario.get("snapshotFrames",12),completedFrames=completed_captures,failedFrames=failed_captures,partialIndex=capture_partial,strictTwelveFrameProof=scenario.get("snapshotFrames",12)==12 and completed_captures==12 and failed_captures==0 and not capture_partial,note="Bounded post-phase fixture capture can cap the ordinary12-frame diagnostic burst to1–2completed frames; this is not a strict12-frame proof.")
+    result["roofMaskExport"] = json.loads((capture / "roof-mask.json").read_text()) if (capture / "roof-mask.json").is_file() else None
+    result["roofContextMeaning"] = "roofContext samples the raw Scene source frame, which may transiently precede its presentation/coverage attachment. Exported roofMaskExport is the authoritative immutable GPU receiver mask; do not infer final policy from room walls or a transient raw-frame zero."
     result["roofContext"] = {key:sorted({sample["roof"][key] for sample in samples if isinstance(sample.get("roof"),dict) and key in sample["roof"]}) for key in ("visibility","residentRoofTriangles","maximumSourceCoveredTiles")}
     result["gpuCoverage"] = dict(farPhaseAttributionVerified=bool(samples) and all(sample.get("gpuFarPollEveryFrame") is True for sample in samples), farAttributionNote="Older engines polled far queries only on cache rebuild, so completion could lag2.5s and1s trim was insufficient. Earlier far phase counts are provisional; rawsamples remain untouched. Verified per-frame polling is required for final phase attribution.", trimAtEachPhaseEdgeNanos=1_000_000_000, reason="GPU queries are read asynchronously; completion timestamps near phase boundaries are excluded to avoid neighboring-work attribution. Raw CSV retains every collected sample.", passes={label:dict(allPhaseUniqueSamples=count, retainedSamples=len(gpu.get(label, [])), phaseEdgeExcludedSamples=count-len(gpu.get(label, []))) for label,count in gpu_phase_counts.items()})
     result["timingMeaning"] = dict(clientLoop="Paced loop intervals; tiny overruns of16.667ms are scheduling jitter, not independently proven missed presentation frames.", openGLRender="CPU submission/render work including swap; compare GPU timeline separately, do not add overlapping CPU/GPU durations.", gpu="Elapsed GPU timeline including possible submission starvation. Far-map samples describe rebuilds only, not every frame.")
@@ -302,6 +317,14 @@ def report(args):
         result["submittedSprites"] = {key:last.get(key) for key in ("counter.openGLWorldSpriteSnapshotGroup.recent.latest","counter.openGLWorldSpriteSnapshotLayer.recent.latest","counter.openGLWorldSpriteSnapshotCompatibilityFallback.recent.latest")}
     geometry_keys = ("openGLWorldChunk", "openGLWorldChunkTriangle", "openGLWorldChunkDraw", "openGLWorldChunkDrawTriangle", "openGLWorldChunkDrawGameObject", "openGLWorldChunkDrawWallObject", "openGLWorldChunkDrawTerrain", "openGLWorldChunkDrawWall", "openGLWorldChunkDrawRoof", "openGLWorldChunkDrawCall", "openGLWorldSpriteSnapshotGroup", "openGLWorldSpriteSnapshotLayer", "openGLWorldSpriteSnapshotCompatibilityFallback")
     result["sceneInventory"] = {key:dict(min=min(values), max=max(values), last=values[-1]) for key in geometry_keys if (values := [record["counter."+key+".recent.latest"] for record in distributions if "counter."+key+".recent.latest" in record])}
+    if result["phase"] == "relog":
+        previous=Path(scenario["relogFrom"]).resolve()
+        if previous.parent!=run: raise ValueError("Relog receipt is outside this fixture")
+        earlier,earlier_partial=analyzer.read_jsonl(previous/"client-samples.jsonl")
+        parity={key:dict(before=sorted({sample[key] for sample in earlier if key in sample}),after=context.get(key,[])) for key in ("gameObjects","wallObjects")}
+        if earlier_partial or any(not item["before"] or item["before"]!=item["after"] for item in parity.values()):
+            raise ValueError("Relog changed actual object population; reject scene parity")
+        result["relogParity"]=parity
     (capture / "benchmark-summary.json").write_text(json.dumps(result,indent=2)+"\n")
     print(json.dumps({key:result[key] for key in ("phase","durationSeconds","stages","gpu","context","fullClientPresentation60FpsAccepted")},indent=2))
 
@@ -312,7 +335,7 @@ def main():
     for name in ("start", "stop", "capture", "preview"):
         p = sub.add_parser(name); p.add_argument("run", type=Path)
         if name in ("capture", "preview"):
-            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "transition", "same-position", "visual"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--snapshot-frames",type=int,choices=[1,12],default=12); p.add_argument("--legacy-mask", action="store_true")
+            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "night", "transition", "same-position", "relog", "visual"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--snapshot-frames",type=int,choices=[1,12],default=12); p.add_argument("--legacy-mask", action="store_true")
             p.add_argument("--tone-preview",choices=["day","cycle","sunrise-amber","dawn-gold","rose-dusk","cool-night","deep-blue"],default="day"); p.add_argument("--warmup-seconds",type=int,default=15); p.add_argument("--window-mode",choices=["windowed","fullscreen","borderless-fullscreen"],default="borderless-fullscreen"); p.add_argument("--dump-terrain",action="store_true"); p.add_argument("--dump-roof-mask",action="store_true"); p.add_argument("--exclude-caster", choices=["TERRAIN","WALL","ROOF","GAME_OBJECT","WALL_OBJECT"],action="append",default=[]); p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
     p = sub.add_parser("report"); p.add_argument("capture", type=Path)
     args = parser.parse_args()

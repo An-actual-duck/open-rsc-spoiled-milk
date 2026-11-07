@@ -173,7 +173,7 @@ public final class RendererBenchmarkServer {
                         busy = command.optBoolean("busy", false); phase = command.optString("phase", "dense-idle");
                         viewerX = command.optInt("x", 502); viewerY = command.optInt("y", 453);
                         viewer = null; tick = 0;
-                        server.getWorldDayNightClock().setCurrentCycleMillis(900000);
+                        server.getWorldDayNightClock().setCurrentCycleMillis(phase.equals("night") ? 2700000 : 900000);
                         if (player != null) ActionSender.sendWorldTime(player);
                     }
                     if (player != viewer) {

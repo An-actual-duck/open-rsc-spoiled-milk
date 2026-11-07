@@ -149,3 +149,29 @@ New onScreenProjectedActorCandidates records actor bounds intersecting the
 viewport, separately from received actors and submitted snapshot layers. It does
 not claim pixel visibility through scenery. Maximum-camera cases must report
 this distinction and actual fog distances instead of implying identical density.
+
+Final tooling controls and attribution:
+- --snapshot-frames1 caps only this own client's existing volatile post-phase
+  diagnostic burst immediately after requesting it. A frame already in flight
+  can yield2 images. The driver waits for the ordinary burst-completed event;
+  indexed complete/failed counts are reported. This is not a strict12-frame proof.
+  Default12 and production hotkey behavior remain unchanged.
+- --show-roofs at prepare time seeds only the registered disposable account's
+  ordinary setting_showroof boolean before first login/packet26. It never forces
+  renderer readiness or flips a global setting after scene generation.
+- The explicit relog phase permits exactly one reconnect after a completed first
+  session, retains all receipts and requires equal actual game/wallobject sets.
+  Other repeated captures remain refused. This tests the real cache-reset repair.
+- The night phase seeds the normal server clock at2700000/3600000ms, rate1, uses
+  ordinary Cycle presentation and does not force a noon sun. Tone-preview options
+  are applied as ordinary diagnostic settings during warmup after profile login.
+- Older far queries were polled only on cache rebuild, allowing2.5s completion
+  lag. Their phase counts are provisional despite the old1s edge trim; raw rows
+  remain unchanged. Final13 records FAR_QUERY_POLL_EVERY_FRAME=true and verified
+  unique nonblocking completions, making its phase attribution valid.
+- Source Scene-frame roof visibility/coverage can transiently precede presentation
+  attachment. Exported immutable GPU roof mask is authoritative: final13 High
+  exported423 declared covered cells, plus matched camera matrices and pixels.
+  The mask is same-level positive roof data, not room-enclosure inference. Bank
+  same-level bits are0 while42 upper-level roof tiles exist; multi-storey input
+  propagation remains a separate follow-up, not a claim that the bank is open sky.

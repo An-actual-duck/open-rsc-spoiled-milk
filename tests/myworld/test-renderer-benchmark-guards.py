@@ -25,6 +25,23 @@ class GuardTests(unittest.TestCase):
                     with self.assertRaises(ValueError): command(args)
                 spawn.assert_not_called(); kill.assert_not_called()
 
+    def test_relog_requires_completed_first_session(self):
+        with tempfile.TemporaryDirectory() as name:
+            run=Path(name)
+            with self.assertRaisesRegex(ValueError,"completed first login"): benchmark.capture_history(run,"relog")
+            first=run/"visual-first"; first.mkdir(); (first/"command.json").write_text("{}")
+            with self.assertRaisesRegex(ValueError,"completed first login"): benchmark.capture_history(run,"relog")
+            with self.assertRaisesRegex(ValueError,"fresh server"): benchmark.capture_history(run,"visual")
+            (first/"CLIENT-DONE").touch()
+            self.assertEqual(benchmark.capture_history(run,"relog"),first)
+
+    def test_relog_does_not_allow_unbounded_reuse(self):
+        with tempfile.TemporaryDirectory() as name:
+            run=Path(name)
+            for subject in ("first","second"):
+                capture=run/subject; capture.mkdir(); (capture/"command.json").write_text("{}"); (capture/"CLIENT-DONE").touch()
+            with self.assertRaisesRegex(ValueError,"exactly one"): benchmark.capture_history(run,"relog")
+
     def test_stale_pid_never_signals_unrelated_process(self):
         with tempfile.TemporaryDirectory() as name:
             run = Path(name); (run / benchmark.MARKER).write_text("{}")
