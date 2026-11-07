@@ -331,7 +331,8 @@ def ensure_source_mappings_exist() -> None:
         "LawJewelry::teleportToRuneAltar",
         "RuneAltarDestination.values()",
         "AIR(ItemId.AIR_RUNE.id(), 305, 593, 0)",
-        "COSMIC(ItemId.COSMIC_RUNE.id(), 104, 724, -1)",
+        "COSMIC(ItemId.COSMIC_RUNE.id(), 103, 724, 10)",
+        "DEATH(ItemId.DEATH_RUNE.id(), 391, 708, -1)",
         "SOUL(ItemId.SOUL_RUNE.id(), 610, 767, -1)",
         "LIFE(ItemId.LIFE_RUNE.id(), 282, 694, 0)",
     ):

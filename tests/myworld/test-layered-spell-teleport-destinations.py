@@ -198,7 +198,8 @@ class LayeredSpellTeleportDestinationTest(unittest.TestCase):
         ).read_text(encoding="utf-8")
         for snippet in (
             'CRAFTING_GUILD("Crafting Guild", 347, 599, 0)',
-            "COSMIC(ItemId.COSMIC_RUNE.id(), 104, 724, -1)",
+            "COSMIC(ItemId.COSMIC_RUNE.id(), 103, 724, 10)",
+            "DEATH(ItemId.DEATH_RUNE.id(), 391, 708, -1)",
             "SOUL(ItemId.SOUL_RUNE.id(), 610, 767, -1)",
             "player.teleport(destination.x, destination.y, destination.level, true);",
         ):
