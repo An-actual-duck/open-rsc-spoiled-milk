@@ -1,0 +1,110 @@
+Thin fence shadow evidence — native content export
+
+This worker adds an opt-in, post-phase native fence material export to the
+private renderer fixture. It supplies real affected geometry and alpha data to
+the renderer worker's temporal tests. It changes no production renderer code.
+
+Complete native proof
+  /home/justin/Core-Framework-ai-3/output/tests/renderer-shadow-benchmarks/
+    thin-fence-native-published/visual-20261107T230341Z
+
+That fresh private run completed ordinary authentication, the five-second
+visual phase, the export, a normal diagnostic capture and CLIENT-DONE. The
+fixture report passed. Its own client and server then exited; test ports were
+released. No public server, owner account, saved map or existing browser fixture
+was touched. The hidden window never showed or acquired input.
+
+Frozen inputs
+  Client source: 49f0406ec6902216dc1bdb54538494340d85249a
+  Client JAR SHA256:
+    ceb71e6c55cb16565c3ec53deeb979b4910978e315a392b9f19de3a62b4084e5
+  Source artifact:
+    /home/justin/Core-Framework/output/builds/renderer-public-client/
+      20261107T224647Z/client.jar
+  Private server source: 7cba3d710045b4a3f96c70824260c678fa6dae81
+  Installed map manifest SHA256:
+    42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b
+
+The run marker retains copied runtime, map, seed, source and compiled-bootstrap
+hashes. Source landscape bytes came only from Core-owned client Cache/video;
+no 2009scape or other protected reference cache was accessed.
+
+Exported files within the complete proof directory
+- fence-triangles.tsv: 1,586 actual native triangles, preserving chunk/plane,
+  kind, material family, origin/vertex offsets, raw/fallback/effective material,
+  presentation-local XYZ, UV and normals. SHA256:
+    fbbb92f8fc6b6cee3ef80aaf934517c65b787d1e4d090fb01dd02cd544d6de38
+- fence-textures.tsv: every exact RRGGBBAA pixel for materials 10 and 12,
+  dimensions and native signatures. 20,480 pixels. SHA256:
+    e20340c7e8811f2ff632f572c16f13e76794e9edb1344795612569fb82842930
+- fence-frame.json: the same immutable source frame's camera, pure view and
+  projection matrices, active plane, fixed sun 315/25 and 89 resident chunks /
+  435,422 triangles. The reused terrainTriangles=-1 field means not a terrain
+  export; actual fence counts are in fence-summary.json.
+- fence-summary.json: validated completeness, alpha run distributions and hashes.
+- fence-provenance.json: exact authored placement checks and source-file hashes.
+- captures/capture-20261107-180410-737-001/07-final.png: untouched native image.
+
+Checked real placements and feature scale
+  At authored (514,469,0), the raw horizontal and vertical wall fields are both
+  6. Native wall IDs are one based: DoorDef index 5 is railings, height 192,
+  front/back material 12. Native triangles 42400/42401 form the vertical edge
+  from tile (514,469) to (514,470). Their endpoints have lower Y -156/-126 and
+  upper Y -348/-318, matching the terrain slope and 192-unit wall height.
+  U follows height, V follows the horizontal edge; the quad is 128 units wide.
+
+  At (490,481,0), raw horizontal wall 5 resolves to DoorDef index 4, Fence,
+  height 192 and material 10. Native triangle 41951 matches that authored edge.
+  Diagonal samples elsewhere are 128*sqrt(2) units wide, not 128.
+
+  Material 12 is 128x128 with 27.124% opaque pixels. The source contains many
+  five-pixel runs plus one/two-pixel details. Along the checked 128-unit edge,
+  a five-pixel V feature is five world units before sun projection. High near
+  resolution is four world units per shadow texel; the old far map is twelve.
+  This makes a real railing feature narrower than one old far shadow texel.
+  The figures identify a sampling risk, not a standalone temporal diagnosis.
+
+  Material 10 is 64x64 with 79.199% opaque pixels. The full subset contains
+  878 material-10 and 708 material-12 triangles across all non-terrain kinds;
+  this includes furniture/other objects sharing the same materials. The
+  verified wall placements, rather than the texture name alone, establish
+  real fence provenance.
+
+Implementation and tests
+  capture/preview --dump-fences enables the export; default behavior is unchanged.
+  It resolves effective materials through the actual renderer helper, then
+  selects checked materials 10/12 from every non-terrain kind. It never assumes
+  the raw texture ID alone identifies the GPU material.
+
+  Scene.getRenderer3DFrame can expose a frame while endScene is still building
+  it, before resident chunks are attached. The new exporter instead polls for
+  an already-published pending frame under the existing presenter frameLock,
+  with a three-second deadline. The lock covers only a pointer/eligibility read;
+  no file I/O, GL calls or copying occurs under it. Exported chunks and textures
+  are immutable and separate from released pooled face storage. This is an
+  observer correction, not a gameplay readiness or ACK change.
+
+  tools/renderer-benchmark/analyze-fence-export.py CAPTURE writes a JSON summary
+  to stdout and rejects missing references, duplicate pixels and incomplete
+  texture grids. Four focused tests validate these guards and source alpha runs.
+  The existing fourteen private process/report guards still pass. Python syntax,
+  Java 8 bootstrap compilation and git whitespace checks pass. The complete
+  native export validates the new flag and publication observer end to end.
+
+  Workspace-layout check still reports inherited old ai3 output-root entries.
+  New outputs use only declared tests/builds categories; no old data was deleted.
+
+Preserved negative attempts and limits
+  thin-fence-native-baseline and thin-fence-native-final correctly refused an
+  in-construction raw Scene snapshot with no eligible triangles. The broad
+  thin-fence-native-effective export produced useful geometry/real textures but
+  then refused the untextured sentinel as a nonexistent texture; it is partial,
+  not a successful whole run. Its checked subset was shared early as provisional
+  input. thin-fence-native-materials was staged but never launched. All are kept.
+
+  The successful five-second case uses fixed sun and a hidden window. It proves
+  exact native input, placement and reproducible capture, not standing-still
+  temporal stability, visible presentation or a 60 FPS performance target.
+  The owner subsequently confirmed flicker while standing still; the renderer
+  worker owns normal-sun cached-refresh old/new temporal tests using this real
+  alpha/UV input. The Core manager owns final native visual/performance review.
