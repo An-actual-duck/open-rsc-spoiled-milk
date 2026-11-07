@@ -33,6 +33,7 @@ public final class RendererBenchmarkServer {
     private static boolean configured;
     private static int tick;
     private static int removedMapNpcs;
+    private static int samePositionTeleports;
     private static long serial;
     private static String phase = "dense-idle";
     private static int viewerX = 502, viewerY = 453;
@@ -178,6 +179,10 @@ public final class RendererBenchmarkServer {
                         }
                     }
                     driveActors(); driveViewer(); tick++;
+                    if (viewer != null && phase.equals("same-position") && tick == 50) {
+                        viewer.teleport(viewer.getX(), viewer.getY(), false); samePositionTeleports++;
+                        System.out.println("BENCHMARK same-position teleport x="+viewer.getX()+" y="+viewer.getY()+" tick="+tick);
+                    }
                     if (viewer != null && phase.equals("transition") && (tick == 50 || tick == 100)) {
                         int targetX = tick == 50 ? 478 : 502;
                         boolean moved = false;
@@ -190,10 +195,11 @@ public final class RendererBenchmarkServer {
                     }
                     JSONObject state = new JSONObject().put("online", player != null).put("private", true);
                     if (player != null) state.put("x", player.getX()).put("y", player.getY()).put("level", player.getWorldLocation().getCoordinate().getLevel());
-                    state.put("phase", phase).put("controlledPlayers", actors.size()).put("controlledNpcs", npcs.size())
+                    state.put("phase", phase).put("phaseTick", tick).put("samePositionTeleports", samePositionTeleports).put("controlledPlayers", actors.size()).put("controlledNpcs", npcs.size())
                         .put("summonsRequested", actors.isEmpty() ? 0 : 8).put("visualProjectileEmitters", actors.isEmpty() ? 0 : 8)
                         .put("visualProjectilesDamage", false).put("removedMapNpcs", removedMapNpcs)
-                        .put("cycleMillis", server.getWorldDayNightClock().getCurrentCycleMillis());
+                        .put("cycleMillis", server.getWorldDayNightClock().getCurrentCycleMillis())
+                        .put("cycleLengthMillis", server.getWorldDayNightClock().getCycleMillis()).put("cycleRate", server.getWorldDayNightClock().getRateMultiplier());
                     Path next = run.resolve("status.next"); Files.write(next, state.toString().getBytes("UTF-8"));
                     Files.move(next, run.resolve("status.json"), StandardCopyOption.REPLACE_EXISTING);
                 } catch (Exception error) { error.printStackTrace(); }

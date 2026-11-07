@@ -75,6 +75,9 @@ def resolve_source(source):
 def prepare(args):
     if not re.fullmatch(r"[A-Za-z0-9_-]+", args.name):
         raise ValueError("Use a simple unique run name")
+    overrides = (args.server_core, args.server_overlay, args.server_source)
+    if any(overrides) and not all(overrides):
+        raise ValueError("Server override requires matched core, gameplay overlay and source receipt")
     jar = args.client_jar.resolve()
     with zipfile.ZipFile(jar) as archive:
         if b"spoiledmilk.openglHiddenDiagnostic" not in archive.read("orsc/OpenGLWindowController.class"):
@@ -108,7 +111,8 @@ def prepare(args):
     artifacts = []
     for source in [*(ROOT / "server" / n for n in ("core.jar", "plugins.jar", "core-gameplay-overlay.jar")), *sorted((ROOT / "server/lib").glob("*.jar"))]:
         relative = source.relative_to(ROOT / "server"); target = server / relative; target.parent.mkdir(exist_ok=True)
-        shutil.copy2(source, target); artifacts.append(dict(path=str(relative), sha256=sha(target)))
+        actual = args.server_core if relative.as_posix() == "core.jar" and args.server_core else args.server_overlay if relative.as_posix() == "core-gameplay-overlay.jar" and args.server_overlay else source
+        shutil.copy2(actual, target); artifacts.append(dict(path=str(relative), sha256=sha(target)))
     shutil.copy2(jar, client / "client.jar")
     cache = client / "Cache"; cache.mkdir()
     for name in ("audio", "video"): shutil.copytree(ROOT / "Client_Base/Cache" / name, cache / name)
@@ -128,6 +132,7 @@ def prepare(args):
     subprocess.run(["javac", "-source", "8", "-target", "8", "-cp", cp, "-d", str(classes), str(sources / "RendererBenchmarkServer.java")], check=True)
     subprocess.run(["javac", "-source", "8", "-target", "8", "-cp", str(client / "client.jar"), "-d", str(classes), str(sources / "RendererBenchmarkClient.java")], check=True)
     marker = dict(schema=1, sourceCommit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(), clientSourceCommit=resolve_source(args.client_source), clientSha256=sha(client / "client.jar"), seedSha256=sha(seed), seedAccounts=0, mapManifest=selection["manifestSha256"], artifacts=artifacts, private=True, tcp=PORTS[0], websocket=PORTS[1], source=str(ROOT))
+    marker["serverSourceCommit"] = resolve_source(args.server_source) if args.server_source else marker["sourceCommit"]
     marker["toolSources"] = {p.name:sha(p) for p in sources.iterdir()}
     marker["compiledClasses"] = {p.relative_to(classes).as_posix():sha(p) for p in classes.rglob("*.class")}
     (run / MARKER).write_text(json.dumps(marker, indent=2) + "\n")
@@ -267,11 +272,11 @@ def report(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__); sub = parser.add_subparsers(dest="action", required=True)
-    p = sub.add_parser("prepare"); p.add_argument("--name", required=True); p.add_argument("--client-jar", type=Path, required=True); p.add_argument("--client-source", required=True)
+    p = sub.add_parser("prepare"); p.add_argument("--name", required=True); p.add_argument("--client-jar", type=Path, required=True); p.add_argument("--client-source", required=True); p.add_argument("--server-core", type=Path); p.add_argument("--server-overlay", type=Path); p.add_argument("--server-source")
     for name in ("start", "stop", "capture", "preview"):
         p = sub.add_parser(name); p.add_argument("run", type=Path)
         if name in ("capture", "preview"):
-            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "transition", "visual"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--legacy-mask", action="store_true")
+            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "transition", "same-position", "visual"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--legacy-mask", action="store_true")
             p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
     p = sub.add_parser("report"); p.add_argument("capture", type=Path)
     args = parser.parse_args()

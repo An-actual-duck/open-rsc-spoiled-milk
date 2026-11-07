@@ -54,6 +54,11 @@ class GuardTests(unittest.TestCase):
                 benchmark.validate_artifacts(run, include_client=False)
             self.assertEqual(data.read_bytes(), b"must remain untouched")
 
+    def test_partial_server_override_refused_before_staging(self):
+        args=SimpleNamespace(name="unused",server_core=Path("missing.jar"),server_overlay=None,server_source=None)
+        with self.assertRaisesRegex(ValueError,"matched core"):
+            benchmark.prepare(args)
+
     def test_report_requires_complete_client(self):
         with tempfile.TemporaryDirectory() as name:
             run = Path(name); (run / benchmark.MARKER).write_text("{}")
