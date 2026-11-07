@@ -125,7 +125,7 @@ public final class RendererSettingsPanelFixture {
 	private static void assertOpenGLRows() {
 		List<RendererSettingsPanel.Row> rows = RendererSettingsPanel.rows(state(true, true, true));
 		int[] expectedActions = {
-			-1000, 59, 73, 56, 63, 61, 62, 64, 60,
+			-1000, 59, 73, 56, 63, 61, 74, 62, 64, 60,
 			-1000, 66, -1000, 67, -1000, 68, -1000, 69,
 			-1000, 70, -1000, 71, -1000, 26, 42
 		};
@@ -136,6 +136,7 @@ public final class RendererSettingsPanelFixture {
 			"@whi@Aspect Ratio - @gre@4:3",
 			"@whi@Window mode - @yel@Borderless",
 			"@whi@Lighting - @yel@Directional",
+			"@whi@Shadows - @gre@High",
 			"@whi@Geometry - @gre@Smooth",
 			"@whi@Terrain Variation - @gre@On",
 			"@whi@Fog - @gre@On",
@@ -168,8 +169,8 @@ public final class RendererSettingsPanelFixture {
 		}
 
 		List<RendererSettingsPanel.Row> disabled = RendererSettingsPanel.rows(state(true, false, false));
-		assertEquals(22, disabled.size(), "visibility-disabled OpenGL row count");
-		assertEquals("@yel@Visibility", disabled.get(21).label, "visibility section remains");
+		assertEquals(23, disabled.size(), "visibility-disabled OpenGL row count");
+		assertEquals("@yel@Visibility", disabled.get(22).label, "visibility section remains");
 	}
 
 	private static void assertSoftwareRowsAndScroll() {
@@ -229,12 +230,13 @@ public final class RendererSettingsPanelFixture {
 	}
 
 	private static void assertStableActionDispatch() {
-		int[] ids = {56, 59, 60, 61, 62, 63, 64, 73, 26, 42};
+		int[] ids = {56, 59, 60, 61, 74, 62, 63, 64, 73, 26, 42};
 		RendererSettingsPanel.Action[] expected = {
 			RendererSettingsPanel.Action.RENDER_SURFACE,
 			RendererSettingsPanel.Action.RENDERER_PROFILE,
 			RendererSettingsPanel.Action.FOG,
 			RendererSettingsPanel.Action.LIGHTING,
+			RendererSettingsPanel.Action.SHADOW_QUALITY,
 			RendererSettingsPanel.Action.GEOMETRY,
 			RendererSettingsPanel.Action.WINDOW_MODE,
 			RendererSettingsPanel.Action.TERRAIN_VARIATION,

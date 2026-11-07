@@ -1564,7 +1564,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 
 	boolean prepareGeometryShadows(Renderer3DFrame frame) throws Exception {
 		if (geometryShadows != null) geometryShadows.clearPrepared();
-		if (frame == null || frame.getWorldChunkFrame().getChunkCount() == 0
+		if (frame == null || frame.getWorldChunkFrame() == null || frame.getWorldChunkFrame().getChunkCount() == 0
 			|| !remasterLightingShaderEnabled || rawMaterialShaderEnabled
 			|| shouldDrawProjectedShadowProof()
 			|| RendererLightingSettings.getMode() != RendererLightingSettings.Mode.DIRECTIONAL

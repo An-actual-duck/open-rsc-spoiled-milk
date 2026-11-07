@@ -31,7 +31,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		"  if (min(at.x, at.y) <= 0.002 || max(at.x, at.y) >= 0.998 || at.z <= 0.0 || at.z >= 1.0) return 1.0;",
 		"  float value = 0.0; float count = 0.0;",
 		"  for (int x = -1; x <= 1; x++) for (int y = -1; y <= 1; y++) {",
-		"    if (abs(x) <= uGeometryShadowRadius && abs(y) <= uGeometryShadowRadius) {",
+		"    if (x >= -uGeometryShadowRadius && x <= uGeometryShadowRadius && y >= -uGeometryShadowRadius && y <= uGeometryShadowRadius) {",
 		"      value += shadow2D(shadowMap, vec3(at.xy + vec2(float(x), float(y)) * texel, at.z - 0.000015)).r;",
 		"      count += 1.0;",
 		"    }",
@@ -83,6 +83,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 	private long farSignature;
 	private int farAge;
 	private boolean active;
+	private boolean closed;
 	long nearCpuNanos, farCpuNanos;
 	int nearDrawCalls, nearTriangles, farDrawCalls, farTriangles;
 	private int currentDrawCalls, currentTriangles;
@@ -135,6 +136,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 	}
 
 	boolean prepare(Scene scene, double centerX, double centerY, double centerZ) throws Exception {
+		if (closed) throw new IllegalStateException("Shadow resources already closed");
 		active = false;
 		quality = RendererShadowSettings.getQuality();
 		if (quality == RendererShadowSettings.Quality.OFF) return false;
@@ -283,6 +285,8 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		map.size = 0;
 	}
 	public void close() throws Exception {
+		if (closed) return;
+		closed = true;
 		active = false;
 		destroyTexture(near); destroyTexture(far); nearTimer.close(); farTimer.close();
 		functions.deleteVertexArray(vao); gl.glDeleteProgram(program);
