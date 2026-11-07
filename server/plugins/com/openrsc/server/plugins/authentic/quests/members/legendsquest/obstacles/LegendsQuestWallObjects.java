@@ -122,9 +122,9 @@ public class LegendsQuestWallObjects implements OpBoundTrigger, UseBoundTrigger 
 				say(player, null, "Ughhh!");
 			}
 			if (legacyPackedY(player) >= 3729) {
-				player.teleport(457, 3727);
+				player.teleport(457, 895, -1, false);
 			} else {
-				player.teleport(455, 3729);
+				player.teleport(455, 897, -1, false);
 			}
 		}
 		else if (obj.getID() == FLAME_WALL) {

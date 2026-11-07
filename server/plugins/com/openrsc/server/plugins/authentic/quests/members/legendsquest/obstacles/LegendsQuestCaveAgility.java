@@ -39,10 +39,10 @@ public class LegendsQuestCaveAgility implements OpLocTrigger {
 				}
 				if (succeed(player, 50)) {
 					player.message("You manage to keep your balance.");
-					player.teleport(obj.getX(), obj.getY());
+					player.teleport(obj.getX(), obj.getY(), obj.getWorldLocation().getCoordinate().getLevel(), false);
 					player.incExp(Skill.AGILITY.id(), 20, true);
 				} else {
-					player.teleport(421, 3699);
+					player.teleport(421, 867, -1, false);
 					player.message("You slip and fall...");
 					int failScene = DataConversions.random(0, 10);
 					if (failScene == 0) {
@@ -79,24 +79,24 @@ public class LegendsQuestCaveAgility implements OpLocTrigger {
 				if (succeed(player, 50)) {
 					if (player.getX() <= 419) {
 						player.message("You climb down the steps.");
-						player.teleport(421, 3707);
+						player.teleport(421, 875, -1, false);
 						delay();
 						player.incExp(Skill.AGILITY.id(), 20, true);
-						player.teleport(423, 3707);
+						player.teleport(423, 875, -1, false);
 					} else {
 						player.message("You climb up the stairs.");
-						player.teleport(421, 3707);
+						player.teleport(421, 875, -1, false);
 						delay();
 						player.incExp(Skill.AGILITY.id(), 20, true);
-						player.teleport(419, 3707);
+						player.teleport(419, 875, -1, false);
 					}
 				} else {
 					player.message("You slip and fall...");
 					player.damage(DataConversions.random(2, 3));
-					player.teleport(421, 3707);
+					player.teleport(421, 875, -1, false);
 					delay();
 					player.incExp(Skill.AGILITY.id(), 5, true);
-					player.teleport(423, 3707);
+					player.teleport(423, 875, -1, false);
 				}
 				break;
 			case ROCK_HEWN_STAIRS_3:
@@ -105,26 +105,26 @@ public class LegendsQuestCaveAgility implements OpLocTrigger {
 					return;
 				}
 				if (succeed(player, 50)) {
-					if (player.getY() <= 3702) {
+					if (legacyPackedY(player) <= 3702) {
 						player.message("You climb down the steps.");
-						player.teleport(419, 3704);
+						player.teleport(419, 872, -1, false);
 						delay();
 						player.incExp(Skill.AGILITY.id(), 20, true);
-						player.teleport(419, 3706);
+						player.teleport(419, 874, -1, false);
 					} else {
 						player.message("You climb up the stairs.");
-						player.teleport(419, 3704);
+						player.teleport(419, 872, -1, false);
 						delay();
 						player.incExp(Skill.AGILITY.id(), 20, true);
-						player.teleport(419, 3702);
+						player.teleport(419, 870, -1, false);
 					}
 				} else {
 					player.message("You slip and fall...");
 					player.damage(DataConversions.random(2, 3));
-					player.teleport(419, 3704);
+					player.teleport(419, 872, -1, false);
 					delay();
 					player.incExp(Skill.AGILITY.id(), 5, true);
-					player.teleport(419, 3706);
+					player.teleport(419, 874, -1, false);
 				}
 				break;
 			case ROCK_HEWN_STAIRS_2:
@@ -135,24 +135,24 @@ public class LegendsQuestCaveAgility implements OpLocTrigger {
 				if (succeed(player, 50)) {
 					if (player.getX() >= 426) {
 						player.message("You climb down the steps.");
-						player.teleport(424, 3702);
+						player.teleport(424, 870, -1, false);
 						delay();
 						player.incExp(Skill.AGILITY.id(), 20, true);
-						player.teleport(422, 3702);
+						player.teleport(422, 870, -1, false);
 					} else {
 						player.message("You climb up the stairs.");
-						player.teleport(424, 3702);
+						player.teleport(424, 870, -1, false);
 						delay();
 						player.incExp(Skill.AGILITY.id(), 20, true);
-						player.teleport(426, 3702);
+						player.teleport(426, 870, -1, false);
 					}
 				} else {
 					player.message("You slip and fall...");
 					player.damage(DataConversions.random(2, 3));
-					player.teleport(424, 3702);
+					player.teleport(424, 870, -1, false);
 					delay();
 					player.incExp(Skill.AGILITY.id(), 5, true);
-					player.teleport(422, 3702);
+					player.teleport(422, 870, -1, false);
 				}
 				break;
 			case ROCK_HEWN_STAIRS_1:
@@ -161,26 +161,26 @@ public class LegendsQuestCaveAgility implements OpLocTrigger {
 					return;
 				}
 				if (succeed(player, 50)) {
-					if (player.getY() >= 3706) {
+					if (legacyPackedY(player) >= 3706) {
 						player.message("You climb down the steps.");
-						player.teleport(426, 3704);
+						player.teleport(426, 872, -1, false);
 						delay();
 						player.incExp(Skill.AGILITY.id(), 20, true);
-						player.teleport(426, 3702);
+						player.teleport(426, 870, -1, false);
 					} else {
 						player.message("You climb up the stairs.");
-						player.teleport(426, 3704);
+						player.teleport(426, 872, -1, false);
 						delay();
 						player.incExp(Skill.AGILITY.id(), 20, true);
-						player.teleport(426, 3706);
+						player.teleport(426, 874, -1, false);
 					}
 				} else {
 					player.message("You slip and fall...");
 					player.damage(DataConversions.random(2, 3));
-					player.teleport(426, 3704);
+					player.teleport(426, 872, -1, false);
 					delay();
 					player.incExp(Skill.AGILITY.id(), 5, true);
-					player.teleport(426, 3702);
+					player.teleport(426, 870, -1, false);
 				}
 				break;
 		}

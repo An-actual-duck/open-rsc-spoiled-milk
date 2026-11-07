@@ -29,7 +29,7 @@ public class DigsiteWinch implements OpLocTrigger, UseLocTrigger {
 			switch (player.getQuestStage(Quests.DIGSITE)) {
 				case -1:
 					player.playerServerMessage(MessageType.QUEST, "You find yourself in a cavern...");
-					player.teleport(19, 3385);
+					player.teleport(19, 553, -1, false);
 					break;
 				case 0:
 				case 1:
@@ -55,7 +55,7 @@ public class DigsiteWinch implements OpLocTrigger, UseLocTrigger {
 							mes("You lower yourself into the shaft");
 							delay(3);
 							player.incExp(Skill.AGILITY.id(), 20, true);
-							player.teleport(26, 3346);
+							player.teleport(26, 514, -1, false);
 							player.playerServerMessage(MessageType.QUEST, "You find yourself in a cavern...");
 						}
 
@@ -79,9 +79,9 @@ public class DigsiteWinch implements OpLocTrigger, UseLocTrigger {
 							delay(3);
 							player.incExp(Skill.AGILITY.id(), 20, true);
 							if (player.getQuestStage(Quests.DIGSITE) >= 6) {
-								player.teleport(19, 3385);
+								player.teleport(19, 553, -1, false);
 							} else {
-								player.teleport(19, 3337);
+								player.teleport(19, 505, -1, false);
 							}
 							player.playerServerMessage(MessageType.QUEST, "You find yourself in a cavern...");
 						}

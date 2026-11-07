@@ -118,6 +118,29 @@
         </java>
     </target>
 
+    <target name="test_nonzero_agility_layers" depends="compile_core,compile_plugins"
+            description="Offline nonzero agility branch landings on installed terrain">
+        <fail unless="agility.fixture.dir" message="Pass -Dagility.fixture.dir with a disposable prepared fixture, never a server root"/>
+        <mkdir dir="../output/tests/agility-nonzero-layer-landings/classes"/>
+        <javac srcdir="${test.src}" destdir="../output/tests/agility-nonzero-layer-landings/classes" debug="on"
+               includes="com/openrsc/server/io/NonzeroAgilityLayerIntegrationTest.java" includeantruntime="false"
+               target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+            <classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </javac>
+        <java classname="com.openrsc.server.io.NonzeroAgilityLayerIntegrationTest" fork="true" maxmemory="768m" failonerror="true" dir="${agility.fixture.dir}">
+            <jvmarg value="-Djava.awt.headless=true"/>
+            <classpath>
+                <pathelement location="${lib}/log4j-api-2.17.0.jar"/>
+                <pathelement location="${lib}/log4j-core-2.17.0.jar"/>
+                <pathelement location="${lib}/log4j-iostreams-2.17.0.jar"/>
+                <pathelement location="../output/tests/agility-nonzero-layer-landings/classes"/>
+                <pathelement location="plugins.jar"/>
+                <pathelement location="core.jar"/>
+                <fileset dir="${lib}" includes="*.jar"/>
+            </classpath>
+        </java>
+    </target>
+
     <target name="test_underground_pass_layers" depends="compile_core,compile_plugins"
             description="Offline Underground Pass exits, levers, planks, ropes and quest-route layer checks">
         <property name="pass.test.scenario" value="all"/>

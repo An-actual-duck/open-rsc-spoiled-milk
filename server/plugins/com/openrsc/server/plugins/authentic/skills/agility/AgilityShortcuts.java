@@ -215,7 +215,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					return;
 				}
 				delay(2);
-				teleport(player, 207, 3221);
+				player.teleport(207, 389, -1, false);
 				player.message("You skillfully swing across the hole");
 				player.incExp(Skill.AGILITY.id(), 40, true);
 				break;
@@ -225,7 +225,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					return;
 				}
 				delay(2);
-				teleport(player, 206, 3225);
+				player.teleport(206, 393, -1, false);
 				player.message("You skillfully swing across the hole");
 				player.incExp(Skill.AGILITY.id(), 40, true);
 				break;
@@ -271,10 +271,10 @@ public class AgilityShortcuts implements OpLocTrigger,
 				delay(2);
 				if (!succeed(player, 57, 77)) {
 					mes("You miss the opposite side and fall to the level below");
-					teleport(player, 596, 3534);
+					player.teleport(596, 702, -1, false);
 					return;
 				}
-				teleport(player, 596, 3581);
+				player.teleport(596, 749, -1, false);
 				player.message("You skillfully swing across the hole");
 				player.incExp(Skill.AGILITY.id(), 110, true);
 				break;
@@ -293,10 +293,10 @@ public class AgilityShortcuts implements OpLocTrigger,
 				delay(2);
 				if (!succeed(player, 57, 77)) {
 					mes("You miss the opposite side and fall to the level below");
-					teleport(player, 598, 3536);
+					player.teleport(598, 704, -1, false);
 					return;
 				}
-				teleport(player, 598, 3585);
+				player.teleport(598, 753, -1, false);
 				player.message("You skillfully swing across the hole");
 				player.incExp(Skill.AGILITY.id(), 110, true);
 				break;
@@ -316,11 +316,11 @@ public class AgilityShortcuts implements OpLocTrigger,
 				delay(3);
 				if (!succeed(player, 40, 65)) {
 					mes("you lose your footing and fall to the level below");
-					teleport(player, 603, 3520);
+					player.teleport(603, 688, -1, false);
 					player.damage((int)(getCurrentLevel(player, Skill.HITS.id()) * 0.2D)); // unknown if should depend on current hits (very likely) was taken at 47 hits
 					return;
 				}
-				teleport(player, 601, 3563);
+				player.teleport(601, 731, -1, false);
 				player.message("You skillfully balance across the hole");
 				player.incExp(Skill.AGILITY.id(), 90, true);
 				break;
@@ -339,11 +339,11 @@ public class AgilityShortcuts implements OpLocTrigger,
 				delay(3);
 				if (!succeed(player, 40, 65)) {
 					mes("you lose your footing and fall to the level below");
-					teleport(player, 603, 3520);
+					player.teleport(603, 688, -1, false);
 					player.damage((int)(getCurrentLevel(player, Skill.HITS.id()) * 0.2D)); // unknown if should depend on current hits (very likely) was taken at 47 hits
 					return;
 				}
-				teleport(player, 601, 3557);
+				player.teleport(601, 725, -1, false);
 				player.message("You skillfully balance across the hole");
 				player.incExp(Skill.AGILITY.id(), 90, true);
 				break;
@@ -353,7 +353,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					player.message("You need an agility level of 67 to attempt to climb down the rubble");
 					return;
 				}
-				teleport(player, 580, 3525);
+				player.teleport(580, 693, -1, false);
 				player.message("You climb down the pile of rubble");
 				break;
 			case SHORTCUT_YANILLE_PILE_OF_RUBBLE_UP:
@@ -367,7 +367,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 						return;
 					}
 				}
-				teleport(player, 582, 3573);
+				player.teleport(582, 741, -1, false);
 				player.message("You climb up the pile of rubble");
 				player.incExp(Skill.AGILITY.id(), 54, true);
 				break;
@@ -385,7 +385,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 				}
 				player.message("You squeeze through the pipe");
 				delay(2);
-				teleport(player, 608, 3568);
+				player.teleport(608, 736, -1, false);
 				player.incExp(Skill.AGILITY.id(), 30, true);
 				break;
 			case SHORTCUT_YANILLE_PIPE_BACK:
@@ -401,7 +401,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 				}
 				player.message("You squeeze through the pipe");
 				delay(2);
-				teleport(player, 605, 3568);
+				player.teleport(605, 736, -1, false);
 				player.incExp(Skill.AGILITY.id(), 30, true);
 				break;
 			case GREW_ISLAND_ROPE_ATTACHED:
@@ -531,7 +531,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					return;
 				}
 				player.message("You climb up the wall");
-				player.teleport(637, 1680);
+				player.teleport(637, 736, 1, false);
 				player.message("And climb in through the window");
 				player.incExp(Skill.AGILITY.id(), 50, true);
 				break;
@@ -548,7 +548,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					}
 				}
 				player.message("You squeeze through the pipe");
-				teleport(player, 372, 3352);
+				player.teleport(372, 520, -1, false);
 				player.incExp(Skill.AGILITY.id(), 30, true);
 				break;
 
@@ -564,7 +564,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					}
 				}
 				player.message("You squeeze through the pipe");
-				teleport(player, 375, 3352);
+				player.teleport(375, 520, -1, false);
 				player.incExp(Skill.AGILITY.id(), 30, true);
 				break;
 			case ENTRANA_RUBBLE:
@@ -680,28 +680,28 @@ public class AgilityShortcuts implements OpLocTrigger,
 						return;
 					}
 				}
-				player.teleport(280,3015);
-				player.face(274, 3015);
+				player.teleport(280, 183, -1, false);
+				player.face(274, player.getY());
 				player.message("You focus on not slipping...");
 				delay(4);
 				if (Formulae.calcProductionSuccessfulLegacy(19, getCurrentLevel(player, Skill.AGILITY.id()) - 48, false, 58, 26)
 					|| wearingSkillcape(player)) {
-					player.teleport(278, 3015);
+					player.teleport(278, 183, -1, false);
 					delay(3);
-					player.teleport(276, 3015);
+					player.teleport(276, 183, -1, false);
 					delay(3);
-					player.teleport(274, 3015);
+					player.teleport(274, 183, -1, false);
 					delay(3);
-					player.teleport(272, 3015);
-					player.face(272, 3013);
+					player.teleport(272, 183, -1, false);
+					player.face(player.getX(), player.getY() - 2);
 					delay(3);
-					player.teleport(272,3012);
+					player.teleport(272, 180, -1, false);
 					player.message("and skillfully cross the lava");
 					player.incExp(Skill.AGILITY.id(), 160, true);
 				} else {
 					player.message("but fall into the lava");
 					int lavaDamage = (int) Math.round((player.getSkills().getLevel(Skill.HITS.id())) * 0.21D);
-					player.teleport(281, 3016);
+					player.teleport(281, 184, -1, false);
 					player.damage(lavaDamage);
 				}
 
@@ -717,28 +717,28 @@ public class AgilityShortcuts implements OpLocTrigger,
 						return;
 					}
 				}
-				player.teleport(272,3013);
-				player.face(272, 3015);
+				player.teleport(272, 181, -1, false);
+				player.face(player.getX(), player.getY() + 2);
 				player.message("You focus on not slipping...");
 				delay(4);
 				if (Formulae.calcProductionSuccessfulLegacy(19, getCurrentLevel(player, Skill.AGILITY.id()) - 48, false, 58, 26)
 					|| wearingSkillcape(player)) {
-					player.teleport(272, 3015);
-					player.face(280, 3015);
+					player.teleport(272, 183, -1, false);
+					player.face(280, player.getY());
 					delay(3);
-					player.teleport(274, 3015);
+					player.teleport(274, 183, -1, false);
 					delay(3);
-					player.teleport(276, 3015);
+					player.teleport(276, 183, -1, false);
 					delay(3);
-					player.teleport(278, 3015);
+					player.teleport(278, 183, -1, false);
 					delay(3);
-					player.teleport(281, 3015);
+					player.teleport(281, 183, -1, false);
 					player.message("and skillfully cross the lava");
 					player.incExp(Skill.AGILITY.id(), 160, true);
 				} else {
 					player.message("but fall into the lava");
 					int lavaDamage = (int) Math.round((player.getSkills().getLevel(Skill.HITS.id())) * 0.21D);
-					player.teleport(271, 3012);
+					player.teleport(271, 180, -1, false);
 					player.damage(lavaDamage);
 				}
 
