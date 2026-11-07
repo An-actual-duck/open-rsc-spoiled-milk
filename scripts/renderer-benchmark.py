@@ -165,7 +165,7 @@ def capture(args):
     capture = run / name; capture.mkdir()
     (capture / "scenario.json").write_text(json.dumps(dict(phase=args.phase, requestedViewer=[args.x,args.y,0], zoom=args.zoom, initialRotation=args.rotation, quality=args.quality, legacyMask=args.legacy_mask, sunAzimuth=args.sun_azimuth, sunElevation=args.sun_elevation, normalRateServerSun=args.phase == "sun-motion", visiblePreview=visible),indent=2)+"\n")
     request = run / "request.next"
-    request.write_text(json.dumps(dict(busy=args.phase.startswith("busy"), phase=args.phase, x=args.x, y=args.y)))
+    request.write_text(json.dumps(dict(busy=args.phase.startswith("busy") or args.phase == "sun-motion", phase=args.phase, x=args.x, y=args.y)))
     os.replace(request, run / "request.json")
     props = {"spoiledmilk.openglHiddenDiagnostic":"true", "spoiledmilk.openglHiddenWidth":"1920", "spoiledmilk.openglHiddenHeight":"1080", "spoiledmilk.rendererDiagnostics":"true", "spoiledmilk.rendererTelemetry":"true", "spoiledmilk.rendererDiagnosticSessionDir":str(capture), "spoiledmilk.rendererDiagnosticMaxLogBytes":str(128*1024*1024), "spoiledmilk.clientLog":str(capture / "runtime.log"), "spoiledmilk.clientCommit":json.loads((run / MARKER).read_text())["clientSourceCommit"], "spoiledmilk.openglVsync":"false", "renderer.benchmark.seconds":str(args.seconds), "renderer.benchmark.phase":args.phase, "renderer.benchmark.zoom":str(args.zoom), "spoiledmilk.openglRendererProfile":"remaster", "spoiledmilk.shadowQuality":args.quality}
     props["renderer.benchmark.visiblePreview"] = str(visible).lower()
@@ -229,7 +229,7 @@ def report(args):
     distributions = [record for record in selected if record.get("trigger") in ("periodic", "slow-frame", "performance-phase-stop")]
     def summary(samples):
         if not samples: return None
-        return dict(count=len(samples), p50ms=analyzer.percentile(samples,.50)/1e6, p95ms=analyzer.percentile(samples,.95)/1e6, p99ms=analyzer.percentile(samples,.99)/1e6, maxms=max(samples)/1e6, meanms=sum(samples)/len(samples)/1e6, over16_667ms=sum(value>1e9/60 for value in samples))
+        return dict(count=len(samples), p50ms=analyzer.percentile(samples,.50)/1e6, p95ms=analyzer.percentile(samples,.95)/1e6, p99ms=analyzer.percentile(samples,.99)/1e6, maxms=max(samples)/1e6, meanms=sum(samples)/len(samples)/1e6, over16_667ms=sum(value>1e9/60 for value in samples), over25ms=sum(value>25_000_000 for value in samples), over33_334ms=sum(value>1e9/30 for value in samples), over50ms=sum(value>50_000_000 for value in samples))
     stages = {name:summary(analyzer.stage_samples(distributions, name)) for name in ("clientLoop", "sceneRender", "openGLRender", "openGLWorld", "openGLFrameInterval")}
     gpu = {}; seen = set(); duplicates = 0; gpu_phase_counts = {}
     if (capture / "gpu-samples.csv").is_file():
@@ -244,7 +244,7 @@ def report(args):
                 if start+1e9 <= int(sample["sessionElapsedNanos"]) <= end-1e9:
                     gpu.setdefault(sample["pass"], []).append(int(sample["gpuNanos"]))
     samples, partial_samples = analyzer.read_jsonl(capture / "client-samples.jsonl")
-    keys = ("logicalWidth", "logicalHeight", "framebufferWidth", "framebufferHeight", "zoomSetting", "players", "npcs", "sunAzimuth", "sunElevation", "brightness", "tone", "lighting", "profile", "geometry", "activeProjectileActors", "windowState")
+    keys = ("logicalWidth", "logicalHeight", "framebufferWidth", "framebufferHeight", "zoomSetting", "players", "npcs", "sunAzimuth", "sunElevation", "brightness", "tone", "lighting", "profile", "geometry", "activeProjectileActors", "windowState", "gameObjects", "wallObjects")
     context = {key:sorted({sample[key] for sample in samples if key in sample}) for key in keys}
     manifest = json.loads((capture / "manifest.json").read_text())
     result = dict(schema=1, capture=str(capture), artifact=json.loads((run / MARKER).read_text()), phase=start_event["label"], durationSeconds=(end-start)/1e9, partialRecords=partial_telemetry or partial_events or partial_samples, stages=stages, gpu={key:summary(values) for key,values in gpu.items()}, gpuDuplicateSamples=duplicates, context=context, openGL={key:manifest.get("openGL."+key) for key in ("renderer","version","vendor")}, fullClientPresentation60FpsAccepted=False, limitation="Hidden native window: frame-work/GPU workload measurements, not owner-visible presentation cadence or visual approval.")
@@ -271,7 +271,7 @@ def main():
     for name in ("start", "stop", "capture", "preview"):
         p = sub.add_parser(name); p.add_argument("run", type=Path)
         if name in ("capture", "preview"):
-            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "sun-motion", "transition", "visual"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--legacy-mask", action="store_true")
+            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "transition", "visual"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--legacy-mask", action="store_true")
             p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
     p = sub.add_parser("report"); p.add_argument("capture", type=Path)
     args = parser.parse_args()

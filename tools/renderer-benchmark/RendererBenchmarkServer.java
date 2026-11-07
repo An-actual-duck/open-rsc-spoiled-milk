@@ -89,6 +89,20 @@ public final class RendererBenchmarkServer {
         for (int index = 0; index < 8; index++) Summoning.summonTestBear(actors.get(index));
     }
 
+    private static void driveViewer() {
+        if (viewer == null || !phase.equals("busy-walk") || tick % 16 != 0) return;
+        // A short authored, obstruction-free corridor, traversed through normal queues.
+        int[][] axes = {{1,0},{0,1},{-1,0},{0,-1}};
+        for (int[] axis : axes) {
+            boolean corridor = true;
+            for (int step=0;step<=4;step++) corridor &= clear(502+axis[0]*step,453+axis[1]*step);
+            if (corridor) {
+                int step = (tick / 16) % 2 == 0 ? 0 : 4;
+                viewer.walk(502+axis[0]*step,453+axis[1]*step); return;
+            }
+        }
+        throw new IllegalStateException("No authored4-tile viewer walk corridor");
+    }
     private static void driveActors() {
         if (!busy || actors.isEmpty()) return;
         for (int index = 0; index < actors.size(); index++) {
@@ -99,7 +113,8 @@ public final class RendererBenchmarkServer {
             }
             if (index < 8 && tick % 2 == 0) {
                 int[] types = {Projectile.THUNDER_BALL, Projectile.ICICLE_SHOT, Projectile.WOOD_LEAD_2, Projectile.ELECTRIC_DISC};
-                actor.getUpdateFlags().setProjectile(new Projectile(actor, npcs.get(index * 3), types[index % types.length]));
+                Npc target = npcs.get(index * 3);
+                target.getUpdateFlags().setProjectile(new Projectile(actor, target, types[index % types.length]));
             }
         }
     }
@@ -162,7 +177,7 @@ public final class RendererBenchmarkServer {
                             if (busy) createActors();
                         }
                     }
-                    driveActors(); tick++;
+                    driveActors(); driveViewer(); tick++;
                     if (viewer != null && phase.equals("transition") && (tick == 50 || tick == 100)) {
                         int targetX = tick == 50 ? 478 : 502;
                         boolean moved = false;

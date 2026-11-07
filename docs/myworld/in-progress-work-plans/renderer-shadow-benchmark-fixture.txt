@@ -5,7 +5,13 @@ immutable diagnostic client. It does not read owner accounts, use the public
 server, edit authored maps, or depend on the browser fixture. Server and client
 runtime files are copied into a unique declared output/tests run directory.
 
-The diagnostic client must explicitly support a hidden GLFW window. Its window
+The supplied diagnostic client must explicitly support a hidden GLFW window.
+Normal capture stays hidden. The separate preview command explicitly opens an
+owner-visible private borderless window, auto-logs in, runs the same phase,
+captures afterward and exits its own client; never invoke it without coordinating
+with the manager/owner. It uses no physical/global input automation.
+
+The normal diagnostic client uses a hidden GLFW window. Its window
 is never shown/focused and input callbacks are disabled. Tests hold the common
 renderer GPU flock so shader proofs in another worker cannot overlap timings.
 Client authentication and native terrain/atomic readiness remain ordinary code.
@@ -18,6 +24,22 @@ First maintained client control:
     --seconds 60 --snapshot
   python3 scripts/renderer-benchmark.py report RUN/CAPTURE
   python3 scripts/renderer-benchmark.py stop RUN
+
+Use one fresh prepared server/client fixture per capture. A re-login followed by
+a same-position teleport exposed an existing native scene resend defect:935
+inner objects were acknowledged but then disappeared, leaving only outer
+presentation objects. The mismatched screenshot is retained as negative evidence.
+Exact resident geometry and per-role color triangle inventories must match in
+A/B comparisons; a scene ACK alone is not proof of parity. The manager/engine
+worker owns the separate production regression fix.
+
+Coordinated owner-visible example (prepare/start a unique fresh run first):
+  python3 scripts/renderer-benchmark.py preview RUN --phase busy-camera \
+    --seconds 60 --quality high
+The default preview records12 post-phase frames then auto-exits; the own server
+remains until the guarded stop command. Window flags are sampled on the GL
+thread and cached: bit0 visible, bit1 iconified, -1 unsupported/unknown.
+The observer thread never calls GLFW to query window state.
 
 Private bindings are 127.0.0.1 TCP43639/WS43539, with renderer_benchmark_dev
 SQLite copied only from a checked zero-account seed. Disposable login is
@@ -50,6 +72,12 @@ negative evidence. They are not final controlled comparisons.
 
 A hidden native run establishes workload/CPU/GPU evidence, not owner-visible
 presentation cadence, visual approval, or unconditional60FPS acceptance.
+Completed post-swap intervals are reported separately from CPU work and paced
+client-loop intervals, with counts above16.667/25/33.334/50ms. Tiny scheduling
+overshoots do not automatically mean a missed refresh. GPU completion timestamps
+are trimmed1s at each phase edge (2s total); reports show raw phase, retained
+and excluded counts, and raw CSV remains unchanged. A report requires the client
+to finish so buffered GPU output is complete.
 The current first corrected static control completed60s/3601 frames: CPU GLrender
 p95/p99 1.885/2.101ms, world1.117/1.273ms; fixed viewport/camera/light verified.
 Busy cases and candidate A/B remain pending. Final report will identify exact
@@ -57,3 +85,9 @@ source/artifact hashes and limitations. This branch has not been integrated.
 
 Inherited output-root entries from older ai3 tasks fail workspace-layout check;
 new outputs use only the declared tests category. No historical data was deleted.
+
+Additional negative fixture coverage: initial requested projectile emitters used
+the caster update flags; actual active-projectile samples exposed0effects. The
+fixture now follows ordinary server logic and attaches updates to the victim.
+Earlier busy measurements therefore describe actors only, not actor+effect
+acceptance. No actual damage combat is simulated in any fixture.

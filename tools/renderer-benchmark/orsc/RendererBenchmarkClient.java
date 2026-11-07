@@ -78,7 +78,16 @@ public final class RendererBenchmarkClient {
         }
         return count;
     }
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
+        try { runFixture(); }
+        catch (Throwable failure) {
+            failure.printStackTrace();
+            try { closeGpuSink(); } catch (Exception ignored) { }
+            RendererDiagnosticSession.close();
+            System.exit(1); // Never leave a failed private game thread/window running.
+        }
+    }
+    private static void runFixture() throws Exception {
         final Path clientRoot = Paths.get(".").toRealPath();
         final Path run = clientRoot.getParent();
         if (!Files.isRegularFile(run.resolve("RENDERER-BENCHMARK.json"))
@@ -131,6 +140,8 @@ public final class RendererBenchmarkClient {
             RendererDayNightCycle.Presentation light = RendererDayNightCycle.currentPresentation();
             String sample = "{\"seconds\":" + second + ",\"mode\":\"" + field(client, mudclient.class, "currentViewMode")
                 + "\",\"players\":" + client.getPlayerCount() + ",\"npcs\":" + client.getNpcCount()
+                + ",\"gameObjects\":" + client.getGameObjectInstanceCount() + ",\"wallObjects\":" + client.getWallObjectInstanceCount()
+                + ",\"serverState\":" + new String(Files.readAllBytes(run.resolve("status.json")), StandardCharsets.UTF_8)
                 + ",\"activeProjectileActors\":" + activeProjectiles(client) + ",\"windowState\":" + windowState(presenter)
                 + ",\"cameraRotation\":" + client.cameraRotation + ",\"zoomSetting\":" + osConfig.C_LAST_ZOOM
                 + ",\"logicalWidth\":" + RenderSurfaceSettings.getWidth() + ",\"logicalHeight\":" + RenderSurfaceSettings.getHeight()
