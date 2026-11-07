@@ -78,7 +78,7 @@ public final class RendererBenchmarkClient {
     private static String surfaceState(OpenGLFramePresenter presenter) throws Exception {
         Object window=field(presenter,OpenGLFramePresenter.class,"windowController");
         try {
-            Method snapshot=window.getClass().getDeclaredMethod("diagnosticSurfaceSnapshot"); snapshot.setAccessible(true);
+            Method snapshot=window.getClass().getDeclaredMethod("diagnosticSurfaceSize"); snapshot.setAccessible(true);
             int[] size=(int[])snapshot.invoke(window);
             return "{\"framebufferWidth\":"+size[0]+",\"framebufferHeight\":"+size[1]+",\"windowWidth\":"+size[2]+",\"windowHeight\":"+size[3]+"}";
         } catch(NoSuchMethodException unavailable) { return "null"; }

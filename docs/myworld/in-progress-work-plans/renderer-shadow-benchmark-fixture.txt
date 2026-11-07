@@ -137,8 +137,8 @@ Final steady controls will explicitly use --warmup-seconds30 identically across
 modes; the default15 and all old receipts remain intact. No forced GC or JVM
 heap changes hide pauses: Xms512m/Xmx2g match production defaults on JDK1.8_482.
 
-Candidate9 corrected-object/halo High busy-camera hidden60s evidence is also
-provisional: CPUrender p95/p994.681/5.479ms, GPUframe6.715/7.478ms, each had1
+Candidate9 High busy-camera hidden60s (object offsets corrected, halo offset fix
+not yet applied) evidence is also provisional: CPUrender p95/p994.681/5.479ms, GPUframe6.715/7.478ms, each had1
 sample over16.667ms. Its23 far rebuilds max2.433ms;17players40NPCs and89 resident
 chunks435422triangles stayed constant, active projectiles averaged5.8/max8.
 The19.122ms CPU and18.427ms GPUtimeline outlier aligned with a5s window reporting
