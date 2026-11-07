@@ -1657,6 +1657,12 @@ public class Equipment {
 	 * selection remains bounded even if legacy wield state has multiple hands.
 	 */
 	public int getHolyPower() {
+		return EquipmentStatCalculator.combinedHolyPower(
+			player.getSkills().getLevel(Skill.PRAYER.id()), getEquipmentHolyPower());
+	}
+
+	/** Equipment-only contribution for the equipment stats panel. */
+	public int getEquipmentHolyPower() {
 		int strongest = 0;
 		if (player.getConfig().WANT_EQUIPMENT_TAB) {
 			synchronized (list) {
@@ -1673,8 +1679,7 @@ public class Equipment {
 				}
 			}
 		}
-		return EquipmentStatCalculator.combinedHolyPower(
-			player.getSkills().getLevel(Skill.PRAYER.id()), strongest);
+		return strongest;
 	}
 
 	private int getHolyPower(final Item item) {

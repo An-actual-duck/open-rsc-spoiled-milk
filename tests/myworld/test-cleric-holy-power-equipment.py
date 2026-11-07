@@ -120,7 +120,7 @@ def verify_source_boundaries() -> None:
             "god staves must use the tier-eleven Holy Power value")
     require(equipment.count("ActionSender.sendEquipmentStats(player, request.item.getDef(player.getWorld()).getWieldPosition())") >= 2,
             "equip and unequip must both refresh derived Holy Power")
-    require("struct.holyPowerPoints = player.getCarriedItems().getEquipment().getHolyPower();" in action_sender,
+    require("struct.holyPowerPoints = player.getCarriedItems().getEquipment().getEquipmentHolyPower();" in action_sender,
             "server packet must derive Holy Power from current equipment")
 
     require("loadPlayerEquipment(loaded);" in player_service,
@@ -203,6 +203,16 @@ FIXTURE = r"""
 package com.openrsc.server.model.container;
 
 import com.openrsc.server.net.Packet;
+import com.openrsc.server.Server;
+import com.openrsc.server.model.Point;
+import com.openrsc.server.constants.Skill;
+import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.net.rsc.ClientLimitations;
+import java.lang.reflect.Field;
+import java.lang.reflect.Proxy;
+import io.netty.channel.Channel;
+import java.util.List;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.net.rsc.generators.PayloadGenerator;
 import com.openrsc.server.net.rsc.generators.impl.*;
@@ -212,7 +222,8 @@ public final class ClericHolyPowerEquipmentFixture {
 	private ClericHolyPowerEquipmentFixture() {
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+		verifyEquipmentAndDisplay();
 		int[] firstIds = {2228, 3152, 3162};
 		for (int firstId : firstIds) {
 			for (int tier = 0; tier < 10; tier++) {
@@ -269,7 +280,65 @@ public final class ClericHolyPowerEquipmentFixture {
 		check(authentic.readUnsignedByte() == 9, "authentic hiding stat changed");
 		check(authentic.getReadableBytes() == 0, "authentic packet gained trailing fields");
 
-		System.out.println("PASS: Cleric Holy Power equipment mapping and packets validated");
+		System.out.println("PASS: Cleric Holy Power equipment mapping and packets validated; 24 live equipment/total/packet cases across 4 Worship levels and both equipment modes");
+	}
+
+	private static void verifyEquipmentAndDisplay() throws Exception {
+		Server server = new Server("myworld.conf");
+		server.getEntityHandler().load();
+		for (boolean equipmentTab : new boolean[] {true, false}) {
+			server.getConfig().WANT_EQUIPMENT_TAB = equipmentTab;
+			Player player = new Player(server.getWorld(), 1L);
+			player.setInitialLocation(Point.location(290, 600));
+			recordPackets(player);
+			player.setClientVersion(server.getConfig().CLIENT_VERSION);
+			player.setClientLimitations(ClientLimitations.forVersion(server.getConfig().CLIENT_VERSION));
+			player.getClientLimitations().maxItemId = server.getEntityHandler().getItemCount() - 1;
+			Equipment equipment = player.getCarriedItems().getEquipment();
+			Item staff = new Item(3153); // Tier-two Saradomin blessed staff: 12 Holy Power.
+			for (int worship : new int[] {1, 30, 60, 99}) {
+				player.getSkills().setTemporaryLevelAndMaxStat(Skill.PRAYER.id(), worship, worship, false);
+				checkEquipmentPacket(player, 0, worship);
+				if (equipmentTab) equipment.getList()[4] = staff;
+				else { staff.setWielded(true); player.getCarriedItems().getInventory().getItems().add(staff); }
+				checkEquipmentPacket(player, 12, worship + 12);
+				if (equipmentTab) equipment.getList()[4] = null;
+				else staff.setWielded(false);
+				checkEquipmentPacket(player, 0, worship);
+				player.getCarriedItems().getInventory().getItems().clear();
+			}
+		}
+	}
+
+	private static void checkEquipmentPacket(Player player, int equipmentPower, int totalPower) throws Exception {
+		Equipment equipment = player.getCarriedItems().getEquipment();
+		check(equipment.getEquipmentHolyPower() == equipmentPower, "equipment contribution includes skill/unwielded gear");
+		check(equipment.getHolyPower() == totalPower, "casting total lost Worship or equipped staff");
+		List<Packet> packets = packets(player);
+		packets.clear();
+		ActionSender.sendDerivedEquipmentStats(player);
+		check(packets.size() == 1, "actual equipment packet was not generated");
+		Packet packet = packets.get(0);
+		for (int index = 0; index < 5; index++) packet.readUnsignedByte();
+		for (int index = 0; index < 7; index++) packet.readInt();
+		check(packet.readInt() == equipmentPower, "actual stats packet includes Worship");
+		check(packet.getReadableBytes() == 0, "unexpected stats packet tail");
+	}
+
+	private static void recordPackets(Player player) throws Exception {
+		Channel channel = (Channel) Proxy.newProxyInstance(Channel.class.getClassLoader(), new Class<?>[] {Channel.class},
+			(proxy, method, arguments) -> "isOpen".equals(method.getName()) ? Boolean.TRUE : null);
+		Field field = Player.class.getDeclaredField("channel");
+		field.setAccessible(true);
+		field.set(player, channel);
+		player.setLoggedIn(true);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static List<Packet> packets(Player player) throws Exception {
+		Field field = Player.class.getDeclaredField("outgoingPackets");
+		field.setAccessible(true);
+		return (List<Packet>) field.get(player);
 	}
 
 	private static EquipmentStatsStruct stats() {
@@ -318,12 +387,12 @@ def run_compiled_fixture() -> None:
         source.parent.mkdir(parents=True)
         source.write_text(FIXTURE, encoding="utf-8")
         subprocess.run(
-            ["javac", "-cp", str(SERVER_JAR), "-d", str(temp), str(source)],
+            ["javac", "-cp", f"{SERVER_JAR}:{ROOT / 'server/lib'}/*", "-d", str(temp), str(source)],
             cwd=ROOT,
             check=True,
         )
         result = subprocess.run(
-            ["java", "-cp", f"{temp}:{SERVER_JAR}",
+            ["java", "-cp", f"{temp}:{SERVER_JAR}:{ROOT / 'server/lib'}/*",
              "com.openrsc.server.model.container.ClericHolyPowerEquipmentFixture"],
             cwd=ROOT / "server",
             text=True,

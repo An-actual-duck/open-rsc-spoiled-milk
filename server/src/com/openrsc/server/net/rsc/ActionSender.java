@@ -572,7 +572,7 @@ public class ActionSender {
 		struct.hidingPoints = player.getHidingPoints();
 		struct.rangedPoints = player.getCarriedItems().getEquipment().getDisplayedRangedOffense();
 		struct.magicPowerPoints = player.getCarriedItems().getEquipment().getDisplayedMagicOffense();
-		struct.holyPowerPoints = player.getCarriedItems().getEquipment().getHolyPower();
+		struct.holyPowerPoints = player.getCarriedItems().getEquipment().getEquipmentHolyPower();
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_EQUIPMENT_STATS, struct, player);
     }
 

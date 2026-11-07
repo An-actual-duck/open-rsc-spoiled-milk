@@ -51,6 +51,7 @@ public final class MonsterSlayerContactsRouteTest {
 		}
 		if (args.length == 1 && "--tower".equals(args[0])) {
 			towerPreparationAndPreviewRoutes(server);
+			assignmentWarningsFollowFlavorAcrossContacts(server);
 			System.out.println("Monster Slayer tower contact routes: PASS");
 			return;
 		}
@@ -104,6 +105,7 @@ public final class MonsterSlayerContactsRouteTest {
 		radimusDialogueUsesAuthoritativeHeroProgression(server);
 		legendsSectReusesRadimusAndRuneAssociate(server);
 		hazardWarningsAreNaturalOrderedDialogue(server);
+		assignmentWarningsFollowFlavorAcrossContacts(server);
 		developmentCompletionUsesNormalSlayerProgression(server);
 		towerPreparationAndPreviewRoutes(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
@@ -953,6 +955,54 @@ public final class MonsterSlayerContactsRouteTest {
 		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:No, not today."), afterPromotion.events, "acknowledged Mara promotion does not repeat");
 	}
 
+	/** Real Talk-to and Task routes must put every warning immediately before the task. */
+	private static void assignmentWarningsFollowFlavorAcrossContacts(Server server) {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		MonsterSlayerRank[] ranks = {MonsterSlayerRank.FLEDGLING, MonsterSlayerRank.INITIATE,
+			MonsterSlayerRank.VETERAN, MonsterSlayerRank.ELITE, MonsterSlayerRank.CHAMPION, MonsterSlayerRank.HERO};
+		int[] npcIds = {846, 847, 848, 849, 850, 785};
+		int contactIndex = 0;
+		int assignments = 0;
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) {
+			for (int cursor = 1; cursor <= contact.getMandatoryTasks().size(); cursor++) {
+				boolean repeatable = cursor == contact.getMandatoryTasks().size();
+				for (boolean shortcut : new boolean[] {false, true}) {
+					Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+					int before = 0;
+					for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact other : data.getContactsInChallengeOrder())
+						cursors.put(other.getKey(), before++ < contactIndex ? other.getMandatoryTasks().size() : other == contact ? cursor : 0);
+					Player player = player(server, "slayerorder" + assignments++, 290, 600);
+					player.setQuestPoints(999);
+					player.setQuestStage(Quests.HEROS_QUEST, -1);
+					player.setQuestStage(Quests.LEGENDS_QUEST, -1);
+					MonsterSlayerState.Snapshot state = MonsterSlayerState.create(2,
+						repeatable ? contact.getAwardedRank() : ranks[contactIndex], MonsterSlayerBalances.zero(), cursors, null, 0, 1L, 0, 1,
+						MonsterSlayerState.LegacyStatus.NONE, 0, data);
+					if (repeatable) state = MonsterSlayerState.acknowledgePromotion(state, data, contact.getKey());
+					MonsterSlayerState.write(player.getCache(), data, state);
+					RecordingDialogue dialogue = new RecordingDialogue(0);
+					MonsterSlayerContacts routes = new MonsterSlayerContacts(dialogue);
+					Npc npc = new Npc(server.getWorld(), npcIds[contactIndex], 290, 600);
+					if (shortcut) routes.onOpNpc(player, npc, "Task"); else routes.onTalkNpc(player, npc);
+					String taskKey = MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey();
+					assertTrue(taskKey != null, "dialogue-order task assigned for " + contact.getKey());
+					com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task = data.getTask(taskKey);
+					if (!repeatable) assertEquals(contact.getMandatoryTasks().get(cursor).getKey(), taskKey, "mandatory task choice unchanged");
+					String assignment = "N:Your next task is to slay " + task.getRequiredKills() + " " + task.getDisplayName(data.getFamily(task.getFamilyKey()).getDisplayName()) + ".";
+					int assignmentIndex = dialogue.events.indexOf(assignment);
+					String[] warnings = MonsterSlayerContacts.hazardWarningLines(task);
+					assertTrue(assignmentIndex >= warnings.length, "task and warnings rendered " + task.getKey());
+					for (int index = 0; index < warnings.length; index++)
+						assertEquals("N:" + warnings[index], dialogue.events.get(assignmentIndex - warnings.length + index), "all flavor precedes warnings " + task.getKey());
+					if (!shortcut || contactIndex < 4)
+						assertTrue(assignmentIndex > warnings.length, "assignment flavor precedes warnings " + task.getKey());
+				}
+			}
+			contactIndex++;
+		}
+		System.out.println("Slayer assignment ordering: " + assignments + " mandatory/repeatable Talk-to/Task cases passed");
+	}
+
 	private static void hazardWarningsAreNaturalOrderedDialogue(Server server) {
 		assertEquals("You should expect Worship drain.", MonsterSlayerContacts.hazardWarningLine(
 			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.PRAYER_DRAIN),
@@ -960,7 +1010,7 @@ public final class MonsterSlayerContactsRouteTest {
 		assertEquals("You should prepare for the desert heat.", MonsterSlayerContacts.hazardWarningLine(
 			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.DESERT_HEAT),
 			"desert heat warning");
-		assertEquals("You should know this work is in the Wilderness.", MonsterSlayerContacts.hazardWarningLine(
+		assertEquals("If you're willing to risk it, the best place to find them is in the Wilderness.", MonsterSlayerContacts.hazardWarningLine(
 			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.WILDERNESS),
 			"Wilderness warning");
 		assertEquals("You should bring an antidote for poison.", MonsterSlayerContacts.hazardWarningLine(
@@ -974,7 +1024,7 @@ public final class MonsterSlayerContactsRouteTest {
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task multiHazard =
 			data.getTask("heroes.green_dragons");
 		assertEquals(java.util.Arrays.asList(
-			"You should know this work is in the Wilderness.",
+			"If you're willing to risk it, the best place to find them is in the Wilderness.",
 			"You should prepare for dragon fire."),
 			java.util.Arrays.asList(MonsterSlayerContacts.hazardWarningLines(multiHazard)),
 			"multiple hazards remain separate and preserve definition order");
@@ -1000,7 +1050,7 @@ public final class MonsterSlayerContactsRouteTest {
 		RecordingDialogue dialogue = new RecordingDialogue();
 		new MonsterSlayerContacts(dialogue).onOpNpc(player,
 			new Npc(server.getWorld(), 850, 287, 600), "Task");
-		assertEquals("N:You should know this work is in the Wilderness.", dialogue.events.get(0),
+		assertEquals("N:If you're willing to risk it, the best place to find them is in the Wilderness.", dialogue.events.get(0),
 			"first hazard renders before assignment");
 		assertEquals("N:You should prepare for dragon fire.", dialogue.events.get(1),
 			"second hazard renders separately before assignment");
@@ -1112,7 +1162,7 @@ public final class MonsterSlayerContactsRouteTest {
 		};
 		String[][] hazardRemarks = {
 			{"Hot work! Prepare for the desert heat!", "The desert heat is part of the fight! Prepare for it!"},
-			{"Wilderness work! Keep your wits about you!", "You're headed into the Wilderness! Go prepared!"},
+			{"The Wilderness has plenty of them! Mind the risk!", "Try the Wilderness if you dare! Go prepared!"},
 			{"They drain Worship! Plan your supplies around it!", "Expect Worship drain! Don't rely on full Worship points!"},
 			{"Poison on this one! Bring an antidote and keep swinging!", "Pack an antidote! Be ready before the poison sets in!"},
 			{"Dragon fire! Take the right protection!", "Expect dragon fire! Prepare before you face it!"}
@@ -1158,10 +1208,10 @@ public final class MonsterSlayerContactsRouteTest {
 		new MonsterSlayerContacts(poisonDialogue).onTalkNpc(poison, new Npc(server.getWorld(), 848, 294, 600));
 		int warningIndex = poisonDialogue.events.indexOf("N:You should bring an antidote for poison.");
 		int assignmentIndex = poisonDialogue.events.indexOf("N:Your next task is to slay 35 Poison spiders.");
-		assertTrue(warningIndex >= 0 && assignmentIndex == warningIndex + 2,
-			"authoritative poison warning, Bran advice, and assignment retain their order");
-		assertTrue(poisonDialogue.events.get(warningIndex + 1).equals("N:" + hazardRemarks[3][0])
-			|| poisonDialogue.events.get(warningIndex + 1).equals("N:" + hazardRemarks[3][1]),
+		assertTrue(warningIndex >= 0 && assignmentIndex == warningIndex + 1,
+			"Bran advice precedes the authoritative poison warning and assignment");
+		assertTrue(poisonDialogue.events.get(warningIndex - 1).equals("N:" + hazardRemarks[3][0])
+			|| poisonDialogue.events.get(warningIndex - 1).equals("N:" + hazardRemarks[3][1]),
 			"poison metadata selects only accurate antidote advice");
 
 		Map<String, Integer> promotedCursors = veteranCursors(data,
@@ -1285,7 +1335,7 @@ public final class MonsterSlayerContactsRouteTest {
 		};
 		String[][] hazardRemarks = {
 			{"Desert heat! Prepare for it, then get moving!", "Hot work ahead! Pack for the desert heat!"},
-			{"Wilderness work! Stay sharp and get it done!", "Into the Wilderness! Keep your wits about you!"},
+			{"Plenty of them in the Wilderness! Stay sharp if you go!", "Try the Wilderness if you like! Keep your wits about you!"},
 			{"Worship drain! Plan your supplies around it!", "Expect Worship drain! Prepare, then press on!"},
 			{"Poison! Bring an antidote and you'll manage!", "Pack an antidote! No sense losing to poison!"},
 			{"Dragon fire! Take the right protection!", "Expect dragon fire! Prepare before you charge in!"}
