@@ -1637,8 +1637,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			if (chunk.isObjectChunk() && !residentObjectsEnabled) continue;
 			WorldChunkBuffer buffer = shadowChunkBuffer(chunk);
 			if (buffer == null) continue;
-			int offsetX = chunk.getVertexOffsetX() - buffer.uploadedVertexOffsetX + chunk.getLogicalWorldOffsetX();
-			int offsetZ = chunk.getVertexOffsetZ() - buffer.uploadedVertexOffsetZ + chunk.getLogicalWorldOffsetZ();
+			int offsetX = chunk.getVertexOffsetX() - buffer.uploadedVertexOffsetX + GeometryShadowCoordinates.worldOffsetX(frame.getWorldChunkFrame(), chunk);
+			int offsetZ = chunk.getVertexOffsetZ() - buffer.uploadedVertexOffsetZ + GeometryShadowCoordinates.worldOffsetZ(frame.getWorldChunkFrame(), chunk);
 			pass.bindChunk(buffer.vertexBufferId, buffer.materialIndexBufferId, STRIDE_BYTES,
 				TEXTURE_COORD_OFFSET_BYTES, offsetX, offsetZ);
 			for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
@@ -2370,8 +2370,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 					residentChunkShader.setChunkOffsets(
 						drawOffsetX,
 						drawOffsetZ,
-						chunk.getLogicalWorldOffsetX(),
-						chunk.getLogicalWorldOffsetZ());
+						GeometryShadowCoordinates.worldOffsetX(chunkFrame, chunk),
+						GeometryShadowCoordinates.worldOffsetZ(chunkFrame, chunk));
 				}
 				accumulator.recordConsideredChunk(key);
 				gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer.vertexBufferId);
