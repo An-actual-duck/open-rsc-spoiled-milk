@@ -59,12 +59,32 @@ public final class RendererBenchmarkClient {
     private static void set(Object owner, Class<?> type, String name, Object value) throws Exception {
         Field f = type.getDeclaredField(name); f.setAccessible(true); f.set(owner, value);
     }
+    private static String windowState(OpenGLFramePresenter presenter) throws Exception {
+        Object window = field(presenter, OpenGLFramePresenter.class, "windowController");
+        try {
+            Method snapshot = window.getClass().getDeclaredMethod("diagnosticWindowFlags"); snapshot.setAccessible(true);
+            return String.valueOf(snapshot.invoke(window));
+        } catch (NoSuchMethodException unavailable) { return "null"; }
+    }
+    private static int activeProjectiles(mudclient client) {
+        int count = 0;
+        for (int i=0; i<client.getPlayerCount(); i++) {
+            ORSCharacter actor=client.getPlayer(i);
+            if (actor != null && (actor.projectileRange>0 || actor.projectileImpactTime>0)) count++;
+        }
+        for (int i=0; i<client.getNpcCount(); i++) {
+            ORSCharacter actor=client.getNpc(i);
+            if (actor != null && (actor.projectileRange>0 || actor.projectileImpactTime>0)) count++;
+        }
+        return count;
+    }
     public static void main(String[] args) throws Exception {
         final Path clientRoot = Paths.get(".").toRealPath();
         final Path run = clientRoot.getParent();
         if (!Files.isRegularFile(run.resolve("RENDERER-BENCHMARK.json"))
-                || !Boolean.getBoolean("spoiledmilk.openglHiddenDiagnostic")) {
-            throw new IllegalStateException("Marked, hidden renderer fixture required");
+                || (!Boolean.getBoolean("spoiledmilk.openglHiddenDiagnostic")
+                    && !Boolean.getBoolean("renderer.benchmark.visiblePreview"))) {
+            throw new IllegalStateException("Marked hidden fixture or explicit visible preview required");
         }
         if (!"127.0.0.1".equals(new String(Files.readAllBytes(clientRoot.resolve("Cache/ip.txt")), StandardCharsets.UTF_8).trim())
                 || !"43639".equals(new String(Files.readAllBytes(clientRoot.resolve("Cache/port.txt")), StandardCharsets.UTF_8).trim())) {
@@ -111,6 +131,7 @@ public final class RendererBenchmarkClient {
             RendererDayNightCycle.Presentation light = RendererDayNightCycle.currentPresentation();
             String sample = "{\"seconds\":" + second + ",\"mode\":\"" + field(client, mudclient.class, "currentViewMode")
                 + "\",\"players\":" + client.getPlayerCount() + ",\"npcs\":" + client.getNpcCount()
+                + ",\"activeProjectileActors\":" + activeProjectiles(client) + ",\"windowState\":" + windowState(presenter)
                 + ",\"cameraRotation\":" + client.cameraRotation + ",\"zoomSetting\":" + osConfig.C_LAST_ZOOM
                 + ",\"logicalWidth\":" + RenderSurfaceSettings.getWidth() + ",\"logicalHeight\":" + RenderSurfaceSettings.getHeight()
                 + ",\"framebufferWidth\":" + viewport.framebufferViewport().width + ",\"framebufferHeight\":" + viewport.framebufferViewport().height
