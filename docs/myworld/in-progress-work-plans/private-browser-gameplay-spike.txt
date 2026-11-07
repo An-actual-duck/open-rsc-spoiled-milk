@@ -61,15 +61,17 @@ Inspector exit 0 means capture completed, not that compatibility passed. Each
 capture records outcome.json with gameplay/movement/GPU explicitly unaccepted.
 The page itself warns about the known world-entry stop.
 
-The final runnable owner-review fixture is:
-  output/tests/browser-gameplay-spike/owner-review
+The final runnable owner-review fixture remains in its original worker folder:
+  /home/justin/Core-Framework-ai-1/output/tests/browser-gameplay-spike/owner-review
 It snapshots 24 hashed server/dependency JARs into its own server directory, so
 recycling or rebuilding a worker cannot change code under its JVM. Its server,
 HTTP listener and empty-seed test account are independent of every owner save.
 It remains running for owner inspection. To close it safely:
-  python3 scripts/browser-gameplay/stop.py output/tests/browser-gameplay-spike/owner-review
+  python3 /home/justin/Core-Framework/scripts/browser-gameplay/stop.py \
+    /home/justin/Core-Framework-ai-1/output/tests/browser-gameplay-spike/owner-review
 
-Evidence is grouped under output/tests/browser-gameplay-spike/. Earlier retained
+Recorded worker evidence is grouped under
+/home/justin/Core-Framework-ai-1/output/tests/browser-gameplay-spike/. Earlier retained
 first-proof/second-proof attempts explain staging, TLS and runtime comparisons;
 review-proof/ records the first end-to-end guarded start/stop smoke. owner-review/
 is the final fixture with immutable runtime copies, stage/process/marker receipts,
