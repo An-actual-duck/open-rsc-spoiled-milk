@@ -312,7 +312,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 	OpenGLFramePresenter(String title, boolean inputEnabled, boolean primaryWindow) {
 		this.title = title;
-		this.inputEnabled = inputEnabled;
+		this.inputEnabled = inputEnabled && !OpenGLWindowController.HIDDEN_DIAGNOSTIC;
 		this.primaryWindow = primaryWindow;
 		viewportPresenter = new OpenGLViewportPresenter(primaryWindow, INITIAL_WIDTH, INITIAL_HEIGHT);
 	}

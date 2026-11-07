@@ -5,6 +5,9 @@ package orsc;
  * windowed bounds, event/swap lifecycle, and best-effort native shutdown.
  */
 final class OpenGLWindowController {
+	/** Opt-in offscreen diagnostic window; never focuses or installs input. */
+	static final boolean HIDDEN_DIAGNOSTIC =
+		Boolean.getBoolean("spoiledmilk.openglHiddenDiagnostic");
 	interface Delegate {
 		void contextCreated();
 
@@ -70,6 +73,9 @@ final class OpenGLWindowController {
 	void createWindow(int width, int height, boolean vsyncEnabled) throws Exception {
 		gl.glfwDefaultWindowHints();
 		gl.glfwWindowHint(gl.GLFW_VISIBLE, gl.GLFW_FALSE);
+		if (HIDDEN_DIAGNOSTIC) {
+			gl.glfwWindowHint(gl.GLFW_FOCUSED, gl.GLFW_FALSE);
+		}
 		gl.glfwWindowHint(gl.GLFW_RESIZABLE, gl.GLFW_TRUE);
 		gl.glfwWindowHint(gl.GLFW_DECORATED, gl.GLFW_TRUE);
 
@@ -85,8 +91,10 @@ final class OpenGLWindowController {
 		delegate.contextCreated();
 		gl.glfwSwapInterval(vsyncEnabled ? 1 : 0);
 		delegate.log("OpenGL vsync: " + (vsyncEnabled ? "enabled" : "disabled") + ".");
-		syncWindowMode(width, height);
-		gl.glfwShowWindow(window);
+		if (!HIDDEN_DIAGNOSTIC) {
+			syncWindowMode(width, height);
+			gl.glfwShowWindow(window);
+		}
 	}
 
 	long window() {
@@ -110,7 +118,13 @@ final class OpenGLWindowController {
 	}
 
 	SurfaceSize prepareFrame(int targetWidth, int targetHeight) throws Exception {
-		syncWindowMode(targetWidth, targetHeight);
+		if (!HIDDEN_DIAGNOSTIC) {
+			syncWindowMode(targetWidth, targetHeight);
+		} else if (targetWidth != windowWidth || targetHeight != windowHeight) {
+			gl.glfwSetWindowSize(window, targetWidth, targetHeight);
+			windowWidth = targetWidth;
+			windowHeight = targetHeight;
+		}
 
 		if (appliedWindowMode == OpenGLWindowSettings.Mode.WINDOWED
 			&& !primaryWindow
@@ -130,7 +144,9 @@ final class OpenGLWindowController {
 		gl.glfwGetWindowSize(window, actualWindowWidth, actualWindowHeight);
 		windowWidth = Math.max(1, actualWindowWidth[0]);
 		windowHeight = Math.max(1, actualWindowHeight[0]);
-		captureWindowedBounds(false);
+		if (!HIDDEN_DIAGNOSTIC) {
+			captureWindowedBounds(false);
+		}
 
 		return new SurfaceSize(
 			Math.max(1, framebufferWidth[0]),
