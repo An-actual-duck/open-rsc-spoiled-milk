@@ -26344,6 +26344,7 @@ public final class mudclient implements Runnable {
 				"Unsupported layered scene compatibility plane: " + legacyPlane);
 		}
 		if (scopeChanged) {
+            if (this.getScene() != null) this.getScene().advanceRendererShadowContext();
 			resetLayeredSceneIdentityCaches();
 		}
 		if (nativeTerrainSnapshot == null) {

@@ -177,6 +177,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private Renderer3DFrame geometryShadowFrame;
 	private final OpenGLGeometryShadows.Scene geometryShadowScene = new OpenGLGeometryShadows.Scene() {
 		public long staticSignature() { return geometryShadowStaticSignature(geometryShadowFrame); }
+        public long historyContext() { return geometryShadowFrame.getShadowContextEpoch(); }
+        public int receiverPlane() { return geometryShadowFrame.getActivePlane(); }
 		public GeometryShadowRoofMask roofMask() { return geometryRoofMaskCache.get(geometryShadowFrame.getWorldChunkFrame(), geometryShadowFrame.getActivePlane()); }
 		public void drawDepth(OpenGLGeometryShadows pass, DirectionalShadowProjection projection, boolean staticOnly) throws Exception {
 			drawGeometryShadowCasters(geometryShadowFrame, pass, projection, staticOnly);
@@ -1585,7 +1587,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			|| RendererLightingSettings.getMode() != RendererLightingSettings.Mode.DIRECTIONAL
 			|| RendererShadowSettings.getQuality() == RendererShadowSettings.Quality.OFF
 			|| Boolean.getBoolean("spoiledmilk.shadowBenchmarkLegacyMask")) {
-			if (geometryShadows != null) { geometryShadows.pollGpuTimers(); geometryShadows.publishDiagnosticFrame(); }
+			if (geometryShadows != null) { geometryShadows.suspend(); geometryShadows.pollGpuTimers(); geometryShadows.publishDiagnosticFrame(); }
 			return false;
 		}
 		if (!geometryShadowCapabilityChecked) {

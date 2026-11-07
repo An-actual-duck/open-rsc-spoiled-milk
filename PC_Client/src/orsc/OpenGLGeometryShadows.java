@@ -8,6 +8,8 @@ import java.nio.FloatBuffer;
 final class OpenGLGeometryShadows implements AutoCloseable {
 	interface Scene {
 		long staticSignature();
+		default long historyContext() { return 0; }
+        default int receiverPlane() { return 0; }
 		default GeometryShadowRoofMask roofMask() { return GeometryShadowRoofMask.EMPTY; }
 		void drawDepth(OpenGLGeometryShadows pass, DirectionalShadowProjection projection, boolean staticOnly) throws Exception;
 	}
@@ -24,6 +26,10 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		"uniform float uGeometryRoofInvSpanX;",
 		"uniform float uGeometryRoofInvSpanZ;",
 		"uniform int uFarGeometryShadow;",
+        "uniform int uPreviousFarGeometryShadow;",
+        "uniform sampler2DShadow uPreviousFarGeometryShadowMap;",
+        "uniform mat4 uPreviousFarGeometryLight;",
+        "uniform float uFarGeometryBlend;",
 		"uniform int uGeometryShadowRadius;",
 		"uniform sampler2DShadow uNearGeometryShadow;",
 		"uniform sampler2DShadow uFarGeometryShadowMap;",
@@ -67,7 +73,11 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		"  float blend = smoothstep(0.78, 0.94, nearEdge);",
 		"  if (uFarGeometryShadow == 0) return mix(nearVisibility, 1.0, blend);",
 		"  float farVisibility = geometryShadowSample(uFarGeometryShadowMap, uFarGeometryLight, uFarGeometryTexel, uFarGeometryWorldTexel, geometricNormal);",
-		"  return mix(nearVisibility, farVisibility, blend);",
+		"  if (uPreviousFarGeometryShadow != 0) {",
+        "    float previousVisibility = geometryShadowSample(uPreviousFarGeometryShadowMap, uPreviousFarGeometryLight, uFarGeometryTexel, uFarGeometryWorldTexel, geometricNormal);",
+        "    farVisibility = mix(previousVisibility, farVisibility, uFarGeometryBlend);",
+        "  }",
+        "  return mix(nearVisibility, farVisibility, blend);",
 		"}", "");
 	private static final String DEPTH_VERTEX = String.join("\n",
 		"#version 120", "attribute vec3 aPosition;", "attribute vec2 aTexCoord;",
@@ -80,18 +90,22 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		"varying vec2 vTexCoord;", "void main() {",
 		"if (uAlphaTest != 0 && texture2D(uTexture, vTexCoord).a <= 0.5) discard;",
 		"}", "");
-	private static final int FAR_SIZE = 2048;
+	private static final int FAR_SIZE = 4096;
+    static final int FAR_BLEND_FRAMES = 12;
+    static int supportedFarSize(int maximumTextureSize) { return maximumTextureSize >= FAR_SIZE ? FAR_SIZE : 2048; }
 	private static final float FAR_HALF = 96.0f * 128.0f;
 	private static final float FAR_MOVE = 4.0f * 128.0f;
 	private static final double FAR_SUN_COSINE = Math.cos(Math.toRadians(0.08));
 	private final LwjglBindings gl;
 	private final OpenGLShadowBindings functions;
 	private final FloatBuffer matrixBuffer = ByteBuffer.allocateDirect(64).order(ByteOrder.nativeOrder()).asFloatBuffer();
-	private final MapTexture near = new MapTexture(), far = new MapTexture();
+	private final MapTexture near = new MapTexture();
+    private MapTexture far = new MapTexture(), previousFar = new MapTexture();
+    private final int farSize;
 	private final int program, lightUniform, offsetXUniform, offsetZUniform, alphaUniform;
 	private final int vao;
 	private final OpenGLGpuTimer nearTimer, farTimer;
-	private DirectionalShadowProjection nearProjection, farProjection;
+	private DirectionalShadowProjection nearProjection, farProjection, previousFarProjection;
 	private RendererShadowSettings.Quality quality;
 	private int receiverProgram;
 	private int roofTexture, roofReceiverUniform, roofMinXUniform, roofMinZUniform, roofInvSpanXUniform, roofInvSpanZUniform;
@@ -100,7 +114,10 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 	int roofUploads;
 	private int nearMatrixUniform, farMatrixUniform, enabledUniform, farEnabledUniform, radiusUniform;
 	private int nearTexelUniform, farTexelUniform, nearWorldTexelUniform, farWorldTexelUniform;
-	private long farSignature;
+	private long farSignature, farContext, farRoofSignature;
+    private int farPlane;
+    private int farBlendAge;
+    private int previousFarEnabledUniform, previousFarMatrixUniform, farBlendUniform;
 	private int farAge;
 	private boolean active;
 	private boolean closed;
@@ -111,11 +128,14 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 	private final java.util.concurrent.locks.ReentrantLock diagnosticLock = new java.util.concurrent.locks.ReentrantLock();
 	private long diagnosticSequence;
 	private boolean diagnosticActive, diagnosticFarRebuilt;
+    private boolean diagnosticPreviousFar;
+    private int diagnosticFarBlendPermille;
 	private long diagnosticNearCpu, diagnosticFarCpu;
 	private int diagnosticNearDraws, diagnosticNearTriangles, diagnosticFarDraws, diagnosticFarTriangles;
 
 	OpenGLGeometryShadows(LwjglBindings gl, OpenGLShadowBindings functions) throws Exception {
 		this.gl = gl; this.functions = functions;
+        farSize = supportedFarSize(functions.integer(0x0D33));
 		int vertex = 0, fragment = 0, madeProgram = 0, madeVao = 0;
 		OpenGLGpuTimer madeNearTimer = null, madeFarTimer = null;
 		try {
@@ -164,8 +184,11 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		if (closed) throw new IllegalStateException("Shadow resources already closed");
 		pollGpuTimers();
 		clearPrepared();
-		quality = RendererShadowSettings.getQuality();
-		if (quality == RendererShadowSettings.Quality.OFF) { publishDiagnosticFrame(); return false; }
+        RendererShadowSettings.Quality nextQuality = RendererShadowSettings.getQuality();
+        if (quality != nextQuality) { invalidateFarHistory(); farProjection = null; }
+        quality = nextQuality;
+        if (quality == RendererShadowSettings.Quality.OFF) { suspend(); publishDiagnosticFrame(); return false; }
+        if (previousFarProjection != null && ++farBlendAge >= FAR_BLEND_FRAMES) previousFarProjection = null;
 		float lx = RendererRemasterLightSettings.getLightDirectionX();
 		float ly = RendererRemasterLightSettings.getLightDirectionY();
 		float lz = RendererRemasterLightSettings.getLightDirectionZ();
@@ -173,9 +196,11 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 			quality.nearRadiusTiles * 128.0f, quality.nearSize);
 		long signature = scene.staticSignature();
 		roofMask = scene.roofMask();
-		farAge++;
+        long context = scene.historyContext();
+        int plane = scene.receiverPlane();
+        farAge++;
 		farRebuilt = quality == RendererShadowSettings.Quality.HIGH
-			&& (farProjection == null || farSignature != signature || farAge >= 150
+			&& (farProjection == null || farSignature != signature || farContext != context || farPlane != plane || farRoofSignature != roofMask.signature || farAge >= 150
 				|| Math.hypot(centerX - farProjection.centerX, centerZ - farProjection.centerZ) >= FAR_MOVE
 				|| lx * farProjection.lightX - ly * farProjection.lightY + lz * farProjection.lightZ < FAR_SUN_COSINE);
 		int oldDrawFbo = functions.integer(OpenGLShadowBindings.DRAW_FRAMEBUFFER_BINDING);
@@ -203,16 +228,24 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 			nearCpuNanos = System.nanoTime() - start; nearDrawCalls = currentDrawCalls; nearTriangles = currentTriangles;
 			farCpuNanos = 0;
 			if (quality == RendererShadowSettings.Quality.HIGH) {
-				ensureTexture(far, FAR_SIZE);
-				if (farRebuilt) {
-					DirectionalShadowProjection next = new DirectionalShadowProjection(centerX, centerY, centerZ, lx, ly, lz, FAR_HALF, FAR_SIZE);
-					start = System.nanoTime(); farTimer.begin();
-					try { drawMap(scene, far, next, true); } finally { farTimer.end(); }
-					farCpuNanos = System.nanoTime() - start; farDrawCalls = currentDrawCalls; farTriangles = currentTriangles;
-					farProjection = next; farSignature = signature; farAge = 0;
-				}
+                ensureTexture(far, farSize);
+                if (farRebuilt) {
+                    DirectionalShadowProjection next = new DirectionalShadowProjection(centerX, centerY, centerZ, lx, ly, lz, FAR_HALF, farSize);
+                    boolean sameScene = farProjection != null && farSignature == signature && farContext == context && farPlane == plane && farRoofSignature == roofMask.signature;
+                    boolean poseChanged = sameScene && (centerX != farProjection.centerX || centerY != farProjection.centerY || centerZ != farProjection.centerZ
+                        || Math.abs(lx - farProjection.lightX) > 0.000001f || Math.abs(-ly - farProjection.lightY) > 0.000001f || Math.abs(lz - farProjection.lightZ) > 0.000001f);
+                    MapTexture target = farProjection == null ? far : previousFar;
+                    ensureTexture(target, farSize);
+                    start = System.nanoTime(); farTimer.begin();
+                    try { drawMap(scene, target, next, true); } finally { farTimer.end(); }
+                    farCpuNanos = System.nanoTime() - start; farDrawCalls = currentDrawCalls; farTriangles = currentTriangles;
+                    // Commit texture/projection together only after a successful draw.
+                    previousFarProjection = poseChanged ? farProjection : null;
+                    if (target != far) { previousFar = far; far = target; }
+                    farProjection = next; farSignature = signature; farContext = context; farPlane = plane; farRoofSignature = roofMask.signature; farAge = farBlendAge = 0;
+                }
 			} else {
-				destroyTexture(far); farProjection = null; farDrawCalls = farTriangles = 0;
+				destroyTexture(far); invalidateFarHistory(); farProjection = null; farDrawCalls = farTriangles = 0;
 			}
 			active = true;
 		} finally {
@@ -259,6 +292,10 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 			roofInvSpanXUniform=gl.glGetUniformLocation(receiver,"uGeometryRoofInvSpanX");roofInvSpanZUniform=gl.glGetUniformLocation(receiver,"uGeometryRoofInvSpanZ");
 			gl.glUniform1i(gl.glGetUniformLocation(receiver, "uGeometryRoofMask"), 5);
 			farEnabledUniform = gl.glGetUniformLocation(receiver, "uFarGeometryShadow");
+            previousFarEnabledUniform = gl.glGetUniformLocation(receiver, "uPreviousFarGeometryShadow");
+            previousFarMatrixUniform = gl.glGetUniformLocation(receiver, "uPreviousFarGeometryLight");
+            farBlendUniform = gl.glGetUniformLocation(receiver, "uFarGeometryBlend");
+            gl.glUniform1i(gl.glGetUniformLocation(receiver, "uPreviousFarGeometryShadowMap"), 6);
 			radiusUniform = gl.glGetUniformLocation(receiver, "uGeometryShadowRadius");
 			nearMatrixUniform = gl.glGetUniformLocation(receiver, "uNearGeometryLight");
 			farMatrixUniform = gl.glGetUniformLocation(receiver, "uFarGeometryLight");
@@ -270,6 +307,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 			gl.glUniform1i(gl.glGetUniformLocation(receiver, "uFarGeometryShadowMap"), 4);
 		}
 		gl.glUniform1i(enabledUniform, active ? 1 : 0);
+        gl.glUniform1i(previousFarEnabledUniform, active && previousFarProjection != null ? 1 : 0);
 		gl.glUniform1i(roofReceiverUniform, 0);
 		if (!active) return;
 		if(!roofMask.isEmpty()) {
@@ -290,6 +328,12 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		}
 		// Shadow sampler types must have their own texture unit even when disabled.
 		gl.glActiveTexture(gl.GL_TEXTURE0 + 4); gl.glBindTexture(gl.GL_TEXTURE_2D, farProjection != null ? far.texture : near.texture);
+        gl.glActiveTexture(gl.GL_TEXTURE0 + 6); gl.glBindTexture(gl.GL_TEXTURE_2D, previousFarProjection != null ? previousFar.texture : near.texture);
+        if (previousFarProjection != null) {
+            gl.glUniformMatrix4fv(previousFarMatrixUniform, false, previousFarProjection.put(matrixBuffer));
+            float t = Math.min(1.0f, (float) farBlendAge / FAR_BLEND_FRAMES);
+            gl.glUniform1f(farBlendUniform, t * t * (3.0f - 2.0f * t));
+        }
 		gl.glActiveTexture(gl.GL_TEXTURE0);
 	}
 	void setReceiverPlane(int plane) throws Exception {
@@ -306,7 +350,13 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		gl.glTexImage2D(gl.GL_TEXTURE_2D,0,gl.GL_RGBA,roofMask.width,roofMask.height,0,gl.GL_RGBA,gl.GL_UNSIGNED_BYTE,roofMask.pixels());
 		uploadedRoofSignature=roofMask.signature;roofUploads++;gl.glActiveTexture(gl.GL_TEXTURE0);
 	}
-	void clearPrepared() {
+    private void invalidateFarHistory() throws Exception {
+        previousFarProjection = null; farBlendAge = 0; destroyTexture(previousFar);
+    }
+    void suspend() throws Exception {
+        invalidateFarHistory(); farProjection = null; farAge = 0;
+    }
+    void clearPrepared() {
 		active = false;
 		nearCpuNanos = farCpuNanos = 0;
 		nearDrawCalls = nearTriangles = farDrawCalls = farTriangles = 0;
@@ -314,14 +364,15 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 	}
 	/** Last completed frame, coherent for an observer on another thread.
 	 * Returns sequence/active/farRebuilt/nearCpu/farCpu/nearCalls/nearTriangles/
-	 * farCalls/farTriangles. Allocation occurs only when the observer asks. */
+	 * farCalls/farTriangles/farSize/previousFarActive/blendPermille.
+	 * Allocation occurs only when the observer asks. */
 	long[] diagnosticSnapshot() {
 		diagnosticLock.lock();
 		try {
 			return new long[] {diagnosticSequence, diagnosticActive ? 1L : 0L,
 				diagnosticFarRebuilt ? 1L : 0L, diagnosticNearCpu, diagnosticFarCpu,
 				diagnosticNearDraws, diagnosticNearTriangles,
-				diagnosticFarDraws, diagnosticFarTriangles};
+				diagnosticFarDraws, diagnosticFarTriangles, farSize, diagnosticPreviousFar ? 1L : 0L, diagnosticFarBlendPermille};
 		} finally { diagnosticLock.unlock(); }
 	}
 	void publishDiagnosticFrame() {
@@ -333,7 +384,10 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 			diagnosticNearCpu = nearCpuNanos; diagnosticFarCpu = farCpuNanos;
 			diagnosticNearDraws = nearDrawCalls; diagnosticNearTriangles = nearTriangles;
 			diagnosticFarDraws = farDrawCalls; diagnosticFarTriangles = farTriangles;
-			diagnosticSequence++;
+			diagnosticPreviousFar = active && previousFarProjection != null;
+            float t = diagnosticPreviousFar ? Math.min(1.0f, (float) farBlendAge / FAR_BLEND_FRAMES) : 1.0f;
+            diagnosticFarBlendPermille = (int) (1000 * t * t * (3.0f - 2.0f * t));
+            diagnosticSequence++;
 		} finally { diagnosticLock.unlock(); }
 	}
 	boolean isActive() { return active; }
@@ -373,7 +427,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		clearPrepared();
 		publishDiagnosticFrame();
 		if(roofTexture!=0){gl.glDeleteTextures(roofTexture);roofTexture=0;}
-		destroyTexture(near); destroyTexture(far); nearTimer.close(); farTimer.close();
+		destroyTexture(near); destroyTexture(far); destroyTexture(previousFar); nearTimer.close(); farTimer.close();
 		functions.deleteVertexArray(vao); gl.glDeleteProgram(program);
 	}
 	private static final class MapTexture { int texture, framebuffer, size; }

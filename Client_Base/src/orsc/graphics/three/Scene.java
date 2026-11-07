@@ -126,6 +126,10 @@ public final class Scene {
 	private int terrainProjectionTileX;
 	private int terrainProjectionTileZ;
 
+    // Presentation-only generation: never grants scene/readiness authority.
+    private final java.util.concurrent.atomic.AtomicLong rendererShadowContextEpoch = new java.util.concurrent.atomic.AtomicLong();
+    public void advanceRendererShadowContext() { rendererShadowContextEpoch.incrementAndGet(); }
+
 	public Scene(GraphicsController var1, int var2, int maxPolygonCount, int var4) {
 		this.m_Ib = new int[this.m_ib][256];
 		this.m_Nb = 256;
@@ -2900,7 +2904,8 @@ public final class Scene {
 					this.cameraProjZ,
 					this.rot1024_vp_src,
 					this.rot1024_zTop,
-					this.renderer3DTextures)
+					this.renderer3DTextures,
+                    this.rendererShadowContextEpoch.get())
 				: null;
 			this.renderer3DFrame = geometryFrame;
 			boolean forceLegacyWorldRaster = this.forceLegacyWorldRasterOnce;

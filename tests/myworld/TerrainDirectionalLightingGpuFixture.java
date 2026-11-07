@@ -44,7 +44,7 @@ public final class TerrainDirectionalLightingGpuFixture {
             float[] positions={-1,-1,0,1,-1,0,1,1,0,-1,-1,0,1,1,0,-1,1,0};vertices=gl.glGenBuffers();gl.glBindBuffer(gl.GL_ARRAY_BUFFER,vertices);
             gl.glBufferData(gl.GL_ARRAY_BUFFER,TerrainLightingGpuFixture.floats(positions),gl.GL_STATIC_DRAW);gl.glEnableVertexAttribArray(0);gl.glVertexAttribPointer(0,3,gl.GL_FLOAT,false,12,0L);
             IntBuffer order=ByteBuffer.allocateDirect(24).order(ByteOrder.nativeOrder()).asIntBuffer();for(int i=0;i<6;i++)order.put(i);order.flip();indices=gl.glGenBuffers();gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER,indices);gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER,order,gl.GL_STATIC_DRAW);
-            gl.glUniform1i(gl.glGetUniformLocation(program,"uNearGeometryShadow"),3);gl.glUniform1i(gl.glGetUniformLocation(program,"uFarGeometryShadowMap"),4);
+            gl.glUniform1i(gl.glGetUniformLocation(program,"uPreviousFarGeometryShadowMap"),6);gl.glUniform1i(gl.glGetUniformLocation(program,"uNearGeometryShadow"),3);gl.glUniform1i(gl.glGetUniformLocation(program,"uFarGeometryShadowMap"),4);
             gl.glUniform1i(gl.glGetUniformLocation(program,"uRemasterLightingEnabled"),1);
             value("uLightDirectionX",1);value("uLightDirectionY",1);value("uLightDirectionZ",0);value("uLightAmbient",.35f);value("uLightIntensity",.65f);value("uObjectReliefStrength",8);
             int toward=sample(-.6f,.8f,0,1,1,100,8),away=sample(.6f,.8f,0,1,1,100,8);
@@ -88,7 +88,7 @@ public final class TerrainDirectionalLightingGpuFixture {
             int glowProgram=gl.glCreateProgram();gl.glAttachShader(glowProgram,glowVertex);gl.glAttachShader(glowProgram,glowFragment);gl.glBindAttribLocation(glowProgram,0,"aPosition");gl.glLinkProgram(glowProgram);
             require(gl.glGetProgrami(glowProgram,gl.GL_LINK_STATUS)!=0,gl.glGetProgramInfoLog(glowProgram));gl.glDeleteShader(glowVertex);gl.glDeleteShader(glowFragment);
             gl.glUseProgram(glowProgram);program=glowProgram;
-            gl.glUniform1i(gl.glGetUniformLocation(program,"uNearGeometryShadow"),3);gl.glUniform1i(gl.glGetUniformLocation(program,"uFarGeometryShadowMap"),4);
+            gl.glUniform1i(gl.glGetUniformLocation(program,"uPreviousFarGeometryShadowMap"),6);gl.glUniform1i(gl.glGetUniformLocation(program,"uNearGeometryShadow"),3);gl.glUniform1i(gl.glGetUniformLocation(program,"uFarGeometryShadowMap"),4);
             gl.glUniform1i(gl.glGetUniformLocation(program,"uRemasterLightingEnabled"),1);gl.glUniform1i(gl.glGetUniformLocation(program,"uGlowMaskEnabled"),1);gl.glUniform1i(gl.glGetUniformLocation(program,"uGlowMask"),2);
             value("uGlowMaskMinX",-1);value("uGlowMaskMinZ",-1);value("uGlowMaskInvSpanX",.5f);value("uGlowMaskInvSpanZ",.5f);
             value("uBrightness",1);value("uContrast",1);value("uGamma",1);value("uSaturation",1);value("uLightDirectionY",1);
