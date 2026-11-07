@@ -94,7 +94,7 @@ Interpretation and bounded coverage
 - Walking genuinely traverses502..506 at460,4 tiles through ordinary queues.
   Neighbor loading moves502->478,453 and restores the correct different scene
   population935->780 objects/29->25 walls. No fixture exception was accepted.
-- Normal night uses the actual45-minute server cycle, rate1, unoverridden
+- Normal night samples minute45 of the actual60-minute server cycle, rate1, unoverridden
   Cycle tone/light: night-deep, az~267/elevation10. Manager reviewed readable
   palette/UI and expected grazing shadows. Roof-on ordinary account preference
   yieldshideRoofs=false/visibilityVISIBLE and1634 resident roof triangles,
