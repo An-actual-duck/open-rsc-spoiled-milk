@@ -8593,17 +8593,13 @@ public final class mudclient implements Runnable {
 								if (queueStaticProjectile(projectileDef, var16, var3, var3.projectileRange)) {
 									continue;
 								}
-								int var11 = (var8 * (this.projectileMaxRange - var3.projectileRange)
-									+ var5 * var3.projectileRange) / this.projectileMaxRange;
-								int var12 = (var7 * var3.projectileRange
-									+ var10 * (this.projectileMaxRange - var3.projectileRange))
-									/ this.projectileMaxRange;
-								int var13 = ((this.projectileMaxRange - var3.projectileRange) * var9
-									+ var6 * var3.projectileRange) / this.projectileMaxRange;
+								int var11 = getProjectileTravelCoordinate(projectileDef, var5, var8, var3.projectileRange);
+								int var12 = getProjectileTravelCoordinate(projectileDef, var7, var10, var3.projectileRange);
+								int var13 = getProjectileTravelCoordinate(projectileDef, var6, var9, var3.projectileRange);
 								if (!canDrawWorldSpriteAtLocalPixel(var11, var13)) {
 									continue;
 								}
-								var3.projectileMirrored = shouldMirrorProjectile(var16, var3);
+								var3.projectileMirrored = shouldMirrorProjectile(projectileDef, var16, var3);
 								int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
 									var3.projectileMirrored);
 								int projectileSize = getProjectileSceneSize(projectileDef, enemyProjectile);
@@ -8644,17 +8640,13 @@ public final class mudclient implements Runnable {
 								if (queueStaticProjectile(projectileDef, var16, var3, var3.projectileRange)) {
 									continue;
 								}
-								int var11 = (var8 * (this.projectileMaxRange - var3.projectileRange)
-									+ var5 * var3.projectileRange) / this.projectileMaxRange;
-								int var12 = (var7 * var3.projectileRange
-									+ var10 * (this.projectileMaxRange - var3.projectileRange))
-									/ this.projectileMaxRange;
-								int var13 = ((this.projectileMaxRange - var3.projectileRange) * var9
-									+ var6 * var3.projectileRange) / this.projectileMaxRange;
+								int var11 = getProjectileTravelCoordinate(projectileDef, var5, var8, var3.projectileRange);
+								int var12 = getProjectileTravelCoordinate(projectileDef, var7, var10, var3.projectileRange);
+								int var13 = getProjectileTravelCoordinate(projectileDef, var6, var9, var3.projectileRange);
 								if (!canDrawWorldSpriteAtLocalPixel(var11, var13)) {
 									continue;
 								}
-								var3.projectileMirrored = shouldMirrorProjectile(var16, var3);
+								var3.projectileMirrored = shouldMirrorProjectile(projectileDef, var16, var3);
 								int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
 									var3.projectileMirrored);
 								int projectileSize = getProjectileSceneSize(projectileDef, enemyProjectile);
@@ -27801,6 +27793,23 @@ public final class mudclient implements Runnable {
 		}
 		int base = mirrorX ? spriteProjectileEffectMirrorBase : spriteProjectileEffectBase;
 		return base + (projectileIndex * PROJECTILE_EFFECT_FRAME_SLOTS) + frame;
+	}
+
+	/** A drain travels back to its caster; its animation clock and attack ownership stay unchanged. */
+	private boolean isReturningProjectile(SpriteDef projectile) {
+		return projectile != null && projectile.id == PROJECTILE_TYPES.SUMMON_BAT_VAMPIRISM.id();
+	}
+
+	private int getProjectileTravelCoordinate(SpriteDef projectile, int casterCoordinate, int victimCoordinate,
+			int projectileRange) {
+		int remaining = isReturningProjectile(projectile) ? this.projectileMaxRange - projectileRange : projectileRange;
+		return (victimCoordinate * (this.projectileMaxRange - remaining)
+			+ casterCoordinate * remaining) / this.projectileMaxRange;
+	}
+
+	private boolean shouldMirrorProjectile(SpriteDef projectile, ORSCharacter caster, ORSCharacter victim) {
+		return isReturningProjectile(projectile)
+			? shouldMirrorProjectile(victim, caster) : shouldMirrorProjectile(caster, victim);
 	}
 
 	private boolean shouldMirrorProjectile(ORSCharacter caster, ORSCharacter victim) {
