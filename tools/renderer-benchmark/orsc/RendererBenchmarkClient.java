@@ -97,7 +97,8 @@ public final class RendererBenchmarkClient {
         client.setShowDialogMessage(false);
         Config.C_HIDE_LOGIN_BOX = true;
         client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));
-        client.cameraRotation = 128;
+        int rotation = Integer.getInteger("renderer.benchmark.rotation", 128);
+        client.cameraRotation = rotation;
         Thread.sleep(2000);
         int seconds = Integer.getInteger("renderer.benchmark.seconds", 60);
         String phase = System.getProperty("renderer.benchmark.phase", "dense-idle");
@@ -106,7 +107,7 @@ public final class RendererBenchmarkClient {
         System.out.println(RendererPerformanceDiagnostics.handleCommand("::pf start " + phase));
         for (int second = 0; second < seconds; second++) {
             client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));
-            if (phase.contains("camera")) client.cameraRotation = (128 + second * 3) & 255;
+            if (phase.contains("camera")) client.cameraRotation = (rotation + second * 3) & 255;
             RendererDayNightCycle.Presentation light = RendererDayNightCycle.currentPresentation();
             String sample = "{\"seconds\":" + second + ",\"mode\":\"" + field(client, mudclient.class, "currentViewMode")
                 + "\",\"players\":" + client.getPlayerCount() + ",\"npcs\":" + client.getNpcCount()
@@ -114,7 +115,9 @@ public final class RendererBenchmarkClient {
                 + ",\"logicalWidth\":" + RenderSurfaceSettings.getWidth() + ",\"logicalHeight\":" + RenderSurfaceSettings.getHeight()
                 + ",\"framebufferWidth\":" + viewport.framebufferViewport().width + ",\"framebufferHeight\":" + viewport.framebufferViewport().height
                 + ",\"sunAzimuth\":" + RendererRemasterLightSettings.getAzimuthDegrees() + ",\"sunElevation\":" + RendererRemasterLightSettings.getElevationDegrees()
-                + ",\"brightness\":" + light.brightnessMultiplier + ",\"tone\":\"" + light.debugLabel + "\",\"geometryShadow\":" + shadowStats(presenter) + "}";
+                + ",\"brightness\":" + light.brightnessMultiplier + ",\"tone\":\"" + light.debugLabel
+                + "\",\"lighting\":\"" + RendererLightingSettings.getMode() + "\",\"profile\":\"" + RendererProfileSettings.getMode()
+                + "\",\"geometry\":\"" + RendererGeometrySettings.getMode() + "\",\"geometryShadow\":" + shadowStats(presenter) + "}";
             Files.write(capture.resolve("client-samples.jsonl"), (sample + "\n").getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             Thread.sleep(1000);
         }

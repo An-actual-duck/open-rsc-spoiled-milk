@@ -6,6 +6,7 @@ import datetime
 import hashlib
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -32,6 +33,25 @@ def marked(run):
     if not (run / MARKER).is_file():
         raise ValueError("A marked renderer benchmark run is required")
     return run
+
+
+def validate_artifacts(run, include_client=True):
+    marker = json.loads((run / MARKER).read_text())
+    if marker.get("schema") != 1 or marker.get("private") is not True or marker.get("tcp") != PORTS[0] or marker.get("websocket") != PORTS[1]:
+        raise ValueError("Private renderer marker identity mismatch")
+    server = run / "server"
+    database = server / "inc/sqlite/renderer_benchmark_dev.db"
+    if not database.is_file() or database.is_symlink(): raise ValueError("Private regular database required")
+    for artifact in marker["artifacts"]:
+        source = server / artifact["path"]
+        if not source.resolve().is_relative_to(server.resolve()) or source.is_symlink() or sha(source) != artifact["sha256"]:
+            raise ValueError("Immutable server artifact mismatch")
+    if include_client and sha(run / "client/client.jar") != marker["clientSha256"]:
+        raise ValueError("Immutable client artifact mismatch")
+    for relative, expected in marker.get("compiledClasses", {}).items():
+        source = run / "classes" / relative
+        if not source.resolve().is_relative_to((run / "classes").resolve()) or sha(source) != expected:
+            raise ValueError("Immutable benchmark bootstrap mismatch")
 
 
 def free_ports():
@@ -103,15 +123,16 @@ def prepare(args):
     subprocess.run(["javac", "-source", "8", "-target", "8", "-cp", str(client / "client.jar"), "-d", str(classes), str(sources / "RendererBenchmarkClient.java")], check=True)
     marker = dict(schema=1, sourceCommit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(), clientSourceCommit=args.client_source, clientSha256=sha(client / "client.jar"), seedSha256=sha(seed), seedAccounts=0, mapManifest=selection["manifestSha256"], artifacts=artifacts, private=True, tcp=PORTS[0], websocket=PORTS[1], source=str(ROOT))
     marker["toolSources"] = {p.name:sha(p) for p in sources.iterdir()}
+    marker["compiledClasses"] = {p.relative_to(classes).as_posix():sha(p) for p in classes.rglob("*.class")}
     (run / MARKER).write_text(json.dumps(marker, indent=2) + "\n")
     (run / "server-command.json").write_text(json.dumps(dict(cwd=str(server), argv=["java", "-Xmx2g", "-XX:+UseSerialGC", "-cp", cp, "RendererBenchmarkServer"]), indent=2) + "\n")
     print(run)
 
 
 def start(args):
-    run = marked(args.run); free_ports()
+    run = marked(args.run); validate_artifacts(run); free_ports()
     if (run / "STOP").exists() or (run / "processes.json").exists(): raise ValueError("Use a fresh prepared run")
-    command = json.loads((run / "server-command.json").read_text())
+    command = dict(cwd=str(run / "server"), argv=["java", "-Xmx2g", "-XX:+UseSerialGC", "-cp", classpath(run / "server", run / "classes"), "RendererBenchmarkServer"])
     with (run / "server.log").open("ab") as log:
         proc = subprocess.Popen(command["argv"], cwd=command["cwd"], stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
     (run / "processes.json").write_text(json.dumps(dict(server=proc.pid), indent=2) + "\n")
@@ -119,7 +140,7 @@ def start(args):
 
 
 def capture(args):
-    run = marked(args.run)
+    run = marked(args.run); validate_artifacts(run)
     deadline = time.monotonic() + 60
     while True:
         try:
@@ -130,22 +151,25 @@ def capture(args):
     name = args.phase + "-" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     capture = run / name; capture.mkdir()
     request = run / "request.next"
-    request.write_text(json.dumps(dict(busy=args.phase.startswith("busy"), phase=args.phase)))
+    request.write_text(json.dumps(dict(busy=args.phase.startswith("busy"), phase=args.phase, x=args.x, y=args.y)))
     os.replace(request, run / "request.json")
     props = {"spoiledmilk.openglHiddenDiagnostic":"true", "spoiledmilk.openglHiddenWidth":"1920", "spoiledmilk.openglHiddenHeight":"1080", "spoiledmilk.rendererDiagnostics":"true", "spoiledmilk.rendererTelemetry":"true", "spoiledmilk.rendererDiagnosticSessionDir":str(capture), "spoiledmilk.rendererDiagnosticMaxLogBytes":str(128*1024*1024), "spoiledmilk.clientLog":str(capture / "runtime.log"), "spoiledmilk.clientCommit":json.loads((run / MARKER).read_text())["clientSourceCommit"], "spoiledmilk.openglVsync":"false", "renderer.benchmark.seconds":str(args.seconds), "renderer.benchmark.phase":args.phase, "renderer.benchmark.zoom":str(args.zoom), "spoiledmilk.openglRendererProfile":"remaster", "spoiledmilk.shadowQuality":args.quality}
     props["spoiledmilk.shadowGpuTimings"] = "true"
+    props["renderer.benchmark.rotation"] = str(args.rotation)
     if args.legacy_mask: props["spoiledmilk.shadowBenchmarkLegacyMask"] = "true"
     if args.phase != "sun-motion":
-        props.update({"spoiledmilk.remasterLightAzimuth":"135", "spoiledmilk.remasterLightElevation":"45", "spoiledmilk.openglTonePreview":"day"})
+        props.update({"spoiledmilk.remasterLightAzimuth":str(args.sun_azimuth), "spoiledmilk.remasterLightElevation":str(args.sun_elevation), "spoiledmilk.openglTonePreview":"day"})
     props.update({"spoiledmilk.openglFrameCapture":str(args.snapshot).lower(), "renderer.benchmark.snapshot":str(args.snapshot).lower(), "spoiledmilk.openglFrameCaptureDir":str(capture / "captures")})
     common_git = Path(subprocess.check_output(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], cwd=ROOT, text=True).strip())
     gpu_lock = common_git / "ai-workspaces/renderer-gpu-benchmark.lock"
     argv = ["flock", "-n", "-F", str(gpu_lock), "java", "-Xms512m", "-Xmx2g", *["-D"+k+"="+v for k,v in props.items()], "-cp", str(run / "classes") + os.pathsep + str(run / "client/client.jar"), "orsc.RendererBenchmarkClient"]
-    (capture / "command.json").write_text(json.dumps(dict(argv=argv, cwd=str(run / "client"), settings=props, hiddenOffscreen=True), indent=2)+"\n")
+    (capture / "command.json").write_text(json.dumps(dict(argv=argv, cwd=str(run / "client"), settings=props, hiddenOffscreen=True, initialHostLoadAverage=os.getloadavg()), indent=2)+"\n")
     environment = {key:value for key,value in os.environ.items() if not key.startswith(("SPOILED_MILK_", "OPENRSC_"))}
     environment.update(SPOILED_MILK_CLIENT_COMMIT=props["spoiledmilk.clientCommit"], SPOILED_MILK_CLIENT_BRANCH="renderer-benchmark-artifact", SPOILED_MILK_CLIENT_TARGET_MODE="private-renderer-benchmark")
     with (capture / "console.log").open("ab") as log:
         proc = subprocess.Popen(argv, cwd=run / "client", env=environment, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+    time.sleep(.1)
+    if proc.poll() is not None: raise ValueError("Private client refused startup/GPU lock; inspect preserved console log")
     processes = json.loads((run / "processes.json").read_text()); processes["client"] = proc.pid; (run / "processes.json").write_text(json.dumps(processes,indent=2)+"\n")
     print(capture); print("Private hidden client PID", proc.pid)
 
@@ -181,23 +205,32 @@ def report(args):
     distributions = [record for record in selected if record.get("trigger") in ("periodic", "slow-frame", "performance-phase-stop")]
     def summary(samples):
         if not samples: return None
-        return dict(count=len(samples), p50ms=analyzer.percentile(samples,.50)/1e6, p95ms=analyzer.percentile(samples,.95)/1e6, p99ms=analyzer.percentile(samples,.99)/1e6, maxms=max(samples)/1e6, meanms=sum(samples)/len(samples)/1e6, over1667ms=sum(value>1e9/60 for value in samples))
+        return dict(count=len(samples), p50ms=analyzer.percentile(samples,.50)/1e6, p95ms=analyzer.percentile(samples,.95)/1e6, p99ms=analyzer.percentile(samples,.99)/1e6, maxms=max(samples)/1e6, meanms=sum(samples)/len(samples)/1e6, over16_667ms=sum(value>1e9/60 for value in samples))
     stages = {name:summary(analyzer.stage_samples(distributions, name)) for name in ("clientLoop", "sceneRender", "openGLRender", "openGLWorld")}
-    gpu = {}; seen = set(); duplicates = 0
+    gpu = {}; seen = set(); duplicates = 0; gpu_phase_counts = {}
     if (capture / "gpu-samples.csv").is_file():
         with (capture / "gpu-samples.csv").open() as stream:
             for sample in csv.DictReader(stream):
                 key = (sample["pass"], int(sample["sequence"]))
                 if key in seen: duplicates += 1; continue
                 seen.add(key)
+                if start <= int(sample["sessionElapsedNanos"]) <= end:
+                    gpu_phase_counts[sample["pass"]] = gpu_phase_counts.get(sample["pass"], 0) + 1
                 # Completion is read asynchronously. Exclude one second at phase edges.
                 if start+1e9 <= int(sample["sessionElapsedNanos"]) <= end-1e9:
                     gpu.setdefault(sample["pass"], []).append(int(sample["gpuNanos"]))
     samples, partial_samples = analyzer.read_jsonl(capture / "client-samples.jsonl")
-    keys = ("logicalWidth", "logicalHeight", "framebufferWidth", "framebufferHeight", "zoomSetting", "players", "npcs", "sunAzimuth", "sunElevation", "brightness", "tone")
+    keys = ("logicalWidth", "logicalHeight", "framebufferWidth", "framebufferHeight", "zoomSetting", "players", "npcs", "sunAzimuth", "sunElevation", "brightness", "tone", "lighting", "profile", "geometry")
     context = {key:sorted({sample[key] for sample in samples if key in sample}) for key in keys}
     manifest = json.loads((capture / "manifest.json").read_text())
     result = dict(schema=1, capture=str(capture), artifact=json.loads((run / MARKER).read_text()), phase=start_event["label"], durationSeconds=(end-start)/1e9, partialRecords=partial_telemetry or partial_events or partial_samples, stages=stages, gpu={key:summary(values) for key,values in gpu.items()}, gpuDuplicateSamples=duplicates, context=context, openGL={key:manifest.get("openGL."+key) for key in ("renderer","version","vendor")}, fullClientPresentation60FpsAccepted=False, limitation="Hidden native window: frame-work/GPU workload measurements, not owner-visible presentation cadence or visual approval.")
+    result["gpuCoverage"] = dict(trimAtEachPhaseEdgeNanos=1_000_000_000, reason="GPU queries are read asynchronously; completion timestamps near phase boundaries are excluded to avoid neighboring-work attribution. Raw CSV retains every collected sample.", passes={label:dict(allPhaseUniqueSamples=count, retainedSamples=len(gpu.get(label, [])), phaseEdgeExcludedSamples=count-len(gpu.get(label, []))) for label,count in gpu_phase_counts.items()})
+    result["timingMeaning"] = dict(clientLoop="Paced loop intervals; tiny overruns of16.667ms are scheduling jitter, not independently proven missed presentation frames.", openGLRender="CPU submission/render work including swap; compare GPU timeline separately, do not add overlapping CPU/GPU durations.", gpu="Elapsed GPU timeline including possible submission starvation. Far-map samples describe rebuilds only, not every frame.")
+    if distributions:
+        first = min(telemetry, key=lambda row:abs(row.get("sessionElapsedNanos",0)-start))
+        last = min(telemetry, key=lambda row:abs(row.get("sessionElapsedNanos",0)-end))
+        result["frameCounters"] = {name:max(0,last.get("openGL."+name+".lifetime",0)-first.get("openGL."+name+".lifetime",0)) for name in ("frames","droppedFrames")}
+        result["submittedSprites"] = {key:last.get(key) for key in ("counter.openGLWorldSpriteSnapshotGroup.recent.latest","counter.openGLWorldSpriteSnapshotLayer.recent.latest","counter.openGLWorldSpriteSnapshotCompatibilityFallback.recent.latest")}
     (capture / "benchmark-summary.json").write_text(json.dumps(result,indent=2)+"\n")
     print(json.dumps({key:result[key] for key in ("phase","durationSeconds","stages","gpu","context","fullClientPresentation60FpsAccepted")},indent=2))
 
@@ -208,10 +241,12 @@ def main():
     for name in ("start", "stop", "capture"):
         p = sub.add_parser(name); p.add_argument("run", type=Path)
         if name == "capture":
-            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "sun-motion", "transition"], default="dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true"); p.add_argument("--legacy-mask", action="store_true")
+            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "sun-motion", "transition", "visual"], default="dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true"); p.add_argument("--legacy-mask", action="store_true")
+            p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
     p = sub.add_parser("report"); p.add_argument("capture", type=Path)
     args = parser.parse_args()
     if args.action == "capture" and not 5 <= args.seconds <= 600: parser.error("Duration must be5..600 seconds")
+    if args.action == "capture" and not (0 <= args.rotation < 256 and 0 <= args.x < 8192 and 0 <= args.y < 8192 and math.isfinite(args.sun_azimuth) and 0 <= args.sun_azimuth < 360 and math.isfinite(args.sun_elevation) and 5 <= args.sun_elevation <= 85): parser.error("Invalid camera/sun coordinate")
     try: globals()[args.action](args)
     except (ValueError,OSError,subprocess.CalledProcessError) as error: parser.exit(1, str(error)+"\n")
 

@@ -35,6 +35,7 @@ public final class RendererBenchmarkServer {
     private static int removedMapNpcs;
     private static long serial;
     private static String phase = "dense-idle";
+    private static int viewerX = 502, viewerY = 453;
 
     private static boolean clear(int x, int y) {
         com.openrsc.server.model.world.region.TileValue tile = worldServer.getWorld().getTile(
@@ -146,13 +147,20 @@ public final class RendererBenchmarkServer {
                         JSONObject command = new JSONObject(new String(Files.readAllBytes(request), "UTF-8"));
                         Files.delete(request); removeActors();
                         busy = command.optBoolean("busy", false); phase = command.optString("phase", "dense-idle");
+                        viewerX = command.optInt("x", 502); viewerY = command.optInt("y", 453);
                         viewer = null; tick = 0;
                         server.getWorldDayNightClock().setCurrentCycleMillis(900000);
                         if (player != null) ActionSender.sendWorldTime(player);
                     }
                     if (player != viewer) {
                         removeActors(); viewer = player; tick = 0;
-                        if (viewer != null && busy) createActors();
+                        if (viewer != null) {
+                            if (viewerX != 502 || viewerY != 453) {
+                                if (!clear(viewerX, viewerY)) throw new IllegalStateException("Requested visual camera tile is not authored walkable ground");
+                                viewer.teleport(viewerX, viewerY, false);
+                            }
+                            if (busy) createActors();
+                        }
                     }
                     driveActors(); tick++;
                     if (viewer != null && phase.equals("transition") && (tick == 50 || tick == 100)) {
