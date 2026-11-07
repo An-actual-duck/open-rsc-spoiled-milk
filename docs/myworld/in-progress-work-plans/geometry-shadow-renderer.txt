@@ -1,4 +1,4 @@
-Geometry shadow renderer — source frozen; final native evidence pending
+Geometry shadow renderer — READY for Core review
 
 Owner scope, November 7, 2026
 Improve desktop geometry shadows while targeting 60 FPS (16.667 ms frame budget)
@@ -13,8 +13,9 @@ Frozen implementation: 5f6e1dbea25d063ec5396ba810c8ce2b339133b0.
 Immutable private candidate13 client SHA256:
   883fa6f7fa7f9157e92e234e7cd71e8de1bb092e4f373bf936c07d771c1c4e4d
   output/tests/geometry-shadow-renderer/candidate13-final-timer-client.jar
-This is not a public release or completed performance acceptance. Later report-
-only commits do not change that compiled renderer. Benchmark tooling/evidence
+This is a private review candidate, not a public release or an all-frame /
+all-location performance guarantee. Later report-only commits do not change
+that compiled renderer. Benchmark tooling/evidence
 belongs to the separate test/renderer-shadow-benchmarks branch in ai-3.
 
 Behavior and ownership
@@ -194,7 +195,7 @@ headroom and approximately 60 renders/s, not scanout-perfect cadence or a strict
 all-frame 16.667ms guarantee. The diagnostic fullClientPresentation60FpsAccepted
 flag remains false; frame pacing/GC tails are explicitly retained limitations.
 
-Separate bounded stress cases also pass the measured render budget:
+Separate bounded stress and lifecycle cases retain the following results:
 - Sun motion 60s at normal camera: azimuth range 80.26–86.16 degrees and elevation
   71.11–71.86 degrees (raw chronological direction is decreasing); GPU p99/max
   8.039/9.902ms, CPU 4.595/8.894ms, no render-work misses. There are 25 completed
@@ -217,8 +218,30 @@ Separate bounded stress cases also pass the measured render budget:
   57 projected actors. CPU p99/max 4.035/17.812ms and GPU 7.826/20.309ms (two
   each >16.667); completed swap maximum 31.007ms, none >33.334. This fog-disabled
   stress case has real outliers, distinct from the main normal-camera target.
-Bounded roof-on, night/water and relog visual routes are still being completed
-by ai-3. Their exact commands/reports live in
+- Actual normal-rate night cycle (night-deep, server 45-minute cycle, sun about
+  azimuth 267.3 / elevation 10 degrees): Core reviewed the native raw image as
+  readable, with a consistent night palette and long low-angle geometry shadows;
+  no missing geometry or catastrophic lighting was observed. This is a bounded
+  visual/readiness check, not a new timed performance cohort.
+- Ordinary fake-account roof preference set before login produces actual
+  hideRoofs=false / visible roof presentation and 1634 resident ROOF triangles,
+  versus zero in the default hidden-roof cohort; available source coverage
+  remains 423 cells. Core reviewed the native image: left rooftops/textures
+  remain intact, exposed roofs are not uniformly dark, and tree/building contacts
+  remain normal. This proves available roof meshes participate, not delivery of
+  the deferred bank L1 roof.
+- Matched native water views complete cleanly. Actual Off reports active=false
+  and removes prop shadows while water/geometry remain. Actual High reports
+  active=true with aligned tree/statue contacts, the clean terrain facet and
+  intact water. Core reviewed both raw images and accepted the retained water,
+  textures, scenery and covered-room ambient. These are visual/readiness checks,
+  not timed cohorts.
+- Paired fresh-JVM normal login/relogin, 5s per client in the same private world
+  at (502,460), preserves 935 objects / 29 walls and all 89 resident chunks /
+  435422 triangles exactly. This proves normal reconnect readiness; it is not
+  an in-process repeated logout/login stress test. The initial lock/startup
+  refusal happened before authentication and is retained with the final proof.
+All bounded routes above are complete. Exact commands/reports live in
 output/tests/renderer-shadow-benchmarks/final13-* and the maintained benchmark
 handoff. No final all-location or all-loading-transition guarantee is made.
 
@@ -237,4 +260,8 @@ No Oracle/public server, owner account/database/config/map, runtime artwork byte
 or preserved browser fixture was modified. All new evidence writers use declared
 output categories. Workspace-layout check still reports inherited ai-2 ignored
 assets/sprites and old unclassified output roots; they were preserved, not newly
-introduced or deleted as part of this work.
+introduced or deleted as part of this work. The final renderer guardrail rerun
+passes (output/tests/geometry-shadow-renderer/guardrails-final13.log), and
+candidate13 GPU timer/state/roof/grazing fixtures pass in gpu-final-timer.log.
+All renderer benchmark private clients/servers are stopped and their ports are
+free. The independent preserved browser fixture was not stopped.
