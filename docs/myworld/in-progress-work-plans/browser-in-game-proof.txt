@@ -7,12 +7,17 @@ manager review in progress. This is not a public browser release or deployment.
 Scope and source
 ----------------
 Baseline acb16e5c8bcd982d873addc5a49ffc89ddf0c863. Shared source change is a
-semantics-preserving two-pass material-family normalizer. The prior combined
+semantics-preserving fill/bounded-override normalization for material families
+and model kinds. The prior combined
 nullable-array loop fails inside CheerpJ during actual halo cropping. Real
 initial 43,788-triangle mesh succeeds, then the first 4,608-triangle presentation
 cell enters with families=null and kinds.length=4608 and fails NPE. Ordinary
 JVM does not reproduce it. Explicit nested branches alone did not resolve it;
-separate kind fallback and supplied-family override passes do.
+separate kind fallback and supplied-family override passes do. The expanded
+public-constructor probe then exposed the same nullable-array failure in
+normalizeKinds after main-thread halo-size calls followed by worker calls with
+null kinds. Its equivalent fill/nonnull-copy implementation resolves that
+probe as well.
 
 This does not establish a specific vendor/compiler root cause. It is a focused
 source compatibility change with the same fallback mapping and copy semantics.
@@ -55,8 +60,10 @@ Tests
 Maintained client build passes. Expanded exact enum-normalization matrix:
 4,200 main + 4,200 worker cases (null/short/mixed arrays, counts 0/1/16/1024/4608),
 public constructor controls 8 main + 8 worker, including halo-sized arrays and
-copy isolation. Ordinary JVM passes; final expanded browser run is pending.
-Original two-pass browser matrix passed 3400+3400 and public controls 4+4.
+copy isolation. Ordinary JVM and final expanded browser probe both pass.
+Original family-only two-pass browser matrix passed 3400+3400 and public
+controls 4+4; the expanded probe caught the additional kind-normalizer edge.
+Fresh world/movement validation of both final helpers is in progress.
 
 Focused desktop checks: renderer material-family/classifier, native terrain
 readiness 2, atomic activation 4, object chunk primitive builder, shadow inventory
@@ -93,7 +100,9 @@ Separate browser staging while reusing an existing immutable private server:
 Runtime is loaded/credited from CheerpJ's official CDN, not redistributed:
 https://cheerpj.com/docs/reference/cheerpjInit
 https://cheerpj.com/docs/guides/cheerpj-debug.html
-WasmGC is documented experimental. Both 25-second and 75-second probes
+Java 17 also completed a 100-second world test at a steady reported 3 FPS
+after initial loading, providing no material improvement over Java 8. Default
+remains Java 8. WasmGC is documented experimental. Both 25-second and 75-second probes
 initialized its runtime but did not complete entry into our probe main; it is
 not enabled for the review URL. This is an observed timeout, not a diagnosis
 of the experimental engine or a gameplay performance measurement.

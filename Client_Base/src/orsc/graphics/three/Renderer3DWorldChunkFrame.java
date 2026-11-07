@@ -1248,9 +1248,13 @@ public final class Renderer3DWorldChunkFrame {
 
 		private static Renderer3DModelKind[] normalizeKinds(Renderer3DModelKind[] kinds, int triangleCount) {
 			Renderer3DModelKind[] normalized = new Renderer3DModelKind[triangleCount];
-			for (int i = 0; i < normalized.length; i++) {
-				Renderer3DModelKind kind = kinds == null || i >= kinds.length ? null : kinds[i];
-				normalized[i] = kind == null ? Renderer3DModelKind.UNCLASSIFIED : kind;
+			// As with families, avoid a nullable-array conditional inside the loop.
+			java.util.Arrays.fill(normalized, Renderer3DModelKind.UNCLASSIFIED);
+			if (kinds != null) {
+				int kindCount = Math.min(triangleCount, kinds.length);
+				for (int i = 0; i < kindCount; i++) {
+					if (kinds[i] != null) normalized[i] = kinds[i];
+				}
 			}
 			return normalized;
 		}
