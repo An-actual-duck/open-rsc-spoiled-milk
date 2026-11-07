@@ -25,7 +25,7 @@ package orsc;
 import java.io.File;
 
 public final class RendererDiagnosticSessionFixture {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		RendererDiagnosticSession.start();
 		RendererDiagnosticSession.Record telemetry =
 			RendererDiagnosticSession.newTelemetryRecord("fixture", 42L);
@@ -59,6 +59,9 @@ public final class RendererDiagnosticSessionFixture {
 			2, 0, 2, 0, 0, "steady", 100000L, 1000000L);
 		RenderTelemetry.recordOpenGLWorldChunkUpload(
 			2, 1, 1, 0, 0, "fixture-upload", 250000L, 1000000L);
+		RenderTelemetry.recordOpenGLFrame(100L, 200L);
+		Thread.sleep(2L);
+		RenderTelemetry.recordOpenGLFrame(100L, 200L);
 		RenderTelemetry.recordFrame(
 			2000000L,
 			100000L,
@@ -237,6 +240,9 @@ def validate_runtime_session(tmp: Path) -> None:
                 fail(f"periodic telemetry field {key} is not boolean: {value!r}")
         elif value != expected:
             fail(f"periodic telemetry field {key} expected {expected!r}, got {value!r}")
+    intervals = periodic_record.get("stage.openGLFrameInterval.window.samplesNanos")
+    if not isinstance(intervals, list) or len(intervals) != 1 or intervals[0] <= 0:
+        fail(f"actual completed OpenGL frame interval samples missing: {intervals!r}")
     if not any(
         key.startswith("runtime.memoryPool.") and key.endswith(".collection.usedBytes")
         for key in periodic_record

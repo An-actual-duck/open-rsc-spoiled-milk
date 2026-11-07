@@ -150,6 +150,7 @@ final class LwjglBindings {
 	final int GLFW_RESIZABLE;
 	final int GLFW_VISIBLE;
 	final int GLFW_FOCUSED;
+	final int GLFW_ICONIFIED;
 	final int GLFW_DECORATED;
 	final int GLFW_DONT_CARE;
 	final int GLFW_PRESS;
@@ -441,6 +442,7 @@ final class LwjglBindings {
 		GLFW_RESIZABLE = constant(glfwClass, "GLFW_RESIZABLE");
 		GLFW_VISIBLE = constant(glfwClass, "GLFW_VISIBLE");
 		GLFW_FOCUSED = constant(glfwClass, "GLFW_FOCUSED");
+		GLFW_ICONIFIED = constant(glfwClass, "GLFW_ICONIFIED");
 		GLFW_DECORATED = constant(glfwClass, "GLFW_DECORATED");
 		GLFW_DONT_CARE = constant(glfwClass, "GLFW_DONT_CARE");
 		GLFW_PRESS = constant(glfwClass, "GLFW_PRESS");

@@ -16071,6 +16071,10 @@ public final class mudclient implements Runnable {
 			case LIGHTING:
 				this.cycleOpenGLLightingMode();
 				break;
+			case SHADOW_QUALITY:
+				RendererShadowSettings.cycle();
+				this.rendererProfileApplier.markCustomAndPersist(RendererProfileApplier.Change.SHADOWS);
+				break;
 			case GEOMETRY:
 				this.cycleOpenGLGeometryMode();
 				break;

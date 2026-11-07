@@ -1,5 +1,6 @@
 package com.openrsc.server.model.entity.player;
 
+import com.openrsc.server.GameStateUpdater;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.constants.*;
 import com.openrsc.server.content.EnchantingItemEffects;
@@ -870,6 +871,7 @@ public final class Player extends Mob {
 	}
 
 	public void resetLocalObjectState() {
+		GameStateUpdater.invalidateStaticSceneScan(this);
 		localObjects.clear();
 		localWallObjects.clear();
 		localGroundItems.clear();
