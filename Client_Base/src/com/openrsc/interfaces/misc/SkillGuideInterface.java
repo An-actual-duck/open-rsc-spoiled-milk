@@ -6,6 +6,7 @@ import com.openrsc.client.entityhandling.defs.ItemDef;
 import com.openrsc.client.entityhandling.defs.NPCDef;
 import com.openrsc.client.entityhandling.defs.SpellDef;
 import orsc.Config;
+import orsc.ClericTextLayout;
 import orsc.graphics.gui.Panel;
 import orsc.graphics.two.GraphicsController;
 import orsc.mudclient;
@@ -17,6 +18,10 @@ import java.util.List;
 public final class SkillGuideInterface {
 	private static final int CLERIC_SPELL_GUIDE_ROW_HEIGHT = 190;
 	private static final int CLERIC_SPELL_GUIDE_VISIBLE_ROWS = 1;
+	private static final int GUIDE_LINE_HEIGHT = 13;
+	private static final String[] CLERIC_FILTER_KEYS = {"all", "saradomin", "guthix", "zamorak", "neutral"};
+	private static final String[] CLERIC_FILTER_LABELS = {"All", "Saradomin", "Guthix", "Zamorak", "Unify"};
+	private String clericGuideFilter = "all";
 
 	public int curTab = 0;
 	public int skillGuideScroll;
@@ -44,7 +49,7 @@ public final class SkillGuideInterface {
 
 		skillMenuEntries = new ArrayList<SkillMenuEntry>();
 
-		skillGuideScroll = skillGuide.addScrollingList2(x + 4, y + 79, width - 5, height - 77, 100, 7, true);
+		skillGuideScroll = skillGuide.addScrollingList2(x + 4, y + 79, width - 5, height - 77, 1000, 7, true);
 		hiscoreScroll = skillGuide.addScrollingList2(x + 4, y + 97, width - 5, height - 99, HiscoreData.MAX_ENTRIES + 8, 7, true);
 	}
 
@@ -253,9 +258,13 @@ public final class SkillGuideInterface {
 			return;
 		}
 		if (isClericSpellsTab()) {
-			mc.getSurface().drawString(
-				"Cleric spells - sigils, area, mechanics, and Holy Power",
-				x + 5, y + 94, 0xffffff, 2);
+			for (int i = 0; i < CLERIC_FILTER_KEYS.length; i++) {
+				final String filter = CLERIC_FILTER_KEYS[i];
+				drawButton(x + 5 + i * 83, y + 83, 80, 14, CLERIC_FILTER_LABELS[i], 1,
+					filter.equals(clericGuideFilter), new ButtonHandler() {
+						@Override void handle() { setClericGuideFilter(filter); }
+					});
+			}
 			return;
 		}
 		if (isExpositoryTab()) {
@@ -279,17 +288,37 @@ public final class SkillGuideInterface {
 
 		// Sets up scroll
 		skillGuide.clearList(skillGuideScroll);
-		// The native scrollbar counts font rows, while Cleric displays one full
-		// page at a time. Pad its logical rows so the final real page is reachable.
-		int trailingRows = isClericSpellsTab()
-			? Math.max(0, (height - 82) / mc.getSurface().fontHeight(7) - 1) : 2;
+		// The native control counts font rows. Our rows have icons/wrapped text;
+		// match its final position to the last complete window of actual rows.
+		int visibleAtEnd = 0;
+		int finalHeight = 0;
+		for (int i = skillMenuEntries.size() - 1; i >= 0; i--) {
+			int rowHeight = guideRowHeight(skillMenuEntries.get(i));
+			if (finalHeight + rowHeight > height - 98) break;
+			finalHeight += rowHeight;
+			visibleAtEnd++;
+		}
+		int trailingRows = Math.max(0, (height - 82) / mc.getSurface().fontHeight(7)
+			- Math.max(1, visibleAtEnd));
 		for (int i = 0; i < skillMenuEntries.size() + trailingRows; i++) {
 			skillGuide.setListEntry(skillGuideScroll, i, "", 0, (String) null, (String) null);
 		}
 
 		int listStartPoint = skillGuide.getScrollPosition(skillGuideScroll);
-		int listEndPoint = listStartPoint
-			+ (isClericSpellsTab() ? CLERIC_SPELL_GUIDE_VISIBLE_ROWS - 1 : 5);
+		int maximumStart = Math.max(0, skillMenuEntries.size() - Math.max(1, visibleAtEnd));
+		if (listStartPoint > maximumStart) {
+			skillGuide.resetScrollIndex(skillGuideScroll);
+			skillGuide.scrollMethodList(skillGuideScroll, maximumStart);
+			listStartPoint = maximumStart;
+		}
+		int listEndPoint = listStartPoint - 1;
+		int usedHeight = 0;
+		for (int i = listStartPoint; i < skillMenuEntries.size(); i++) {
+			int rowHeight = guideRowHeight(skillMenuEntries.get(i));
+			if (usedHeight + rowHeight > height - 98) break;
+			usedHeight += rowHeight;
+			listEndPoint = i;
+		}
 
 		int levelX = x + 10;
 		int spriteX = levelX + 15;
@@ -297,14 +326,7 @@ public final class SkillGuideInterface {
 		int allY = 0;
 		allY = y + 82 + 16;
 
-		for (int i = -1; i < skillMenuEntries.size(); i++) {
-			if (i >= 100) {
-				break;
-			}
-
-			if (i < listStartPoint || i > listEndPoint)
-				continue;
-
+		for (int i = listStartPoint; i <= listEndPoint; i++) {
 			SkillMenuEntry curItem = skillMenuEntries.get(i);
 			if (curItem instanceof ClericSpellMenuItem) {
 				drawClericSpellGuideItem((ClericSpellMenuItem) curItem,
@@ -314,19 +336,19 @@ public final class SkillGuideInterface {
 			}
 			if (curItem instanceof MagicSpellMenuItem) {
 				drawMagicSpellGuideItem((MagicSpellMenuItem) curItem, x, allY, i, listEndPoint);
-				allY += 37;
+				allY += guideRowHeight(curItem);
 				continue;
 			}
 
-			int gapHeight = (curItem instanceof SkillMenuItem) ? 37 : 37;
+			int gapHeight = guideRowHeight(curItem);
 
 			mc.getSurface().drawBoxAlpha(detailX - 75, allY, width, gapHeight, 0x45454545, 90);
 			if (!isExpositoryTab()) {
-				drawString(curItem.getLevelReq(), levelX, allY + 25, 2, textColour);
+				drawString(curItem.getLevelReq(), levelX, allY + gapHeight / 2 + 6, 2, textColour);
 			}
 
 			int textX = isExpositoryTab() && !isSummoningInfoTab() ? x + 10 : detailX + 10;
-			drawString(curItem.getSkillDetail(), textX, allY + 25, 2, textColour);
+			drawGuideLines(guideLines(curItem), textX, allY, gapHeight);
 
 			//mc.getSurface().drawLineHoriz(detailX - 75, allY, width, 0);
 			if (i != skillMenuEntries.size() - 1 && i != listEndPoint) {
@@ -340,7 +362,7 @@ public final class SkillGuideInterface {
 					int drawWidth = 48;
 					int drawHeight = 32;
 					int drawX = spriteX + 5;
-					int drawY = allY + 2;
+					int drawY = allY + (gapHeight - 32) / 2;
 					if (itemId == 2328) {
 						drawWidth = 28;
 						drawHeight = 22;
@@ -368,7 +390,7 @@ public final class SkillGuideInterface {
 						width = Math.max(6, width / 2);
 					}
 					int drawX = spriteX + 5 + (48 - width) / 2;
-					int drawY = allY + 2 + (32 - height) / 2;
+					int drawY = allY + (gapHeight - height) / 2;
 					int animDir = isSummonGuideSideFacingNpc(npcId) ? 3 : 0;
 					mc.drawNPCDef(def, drawX, drawY, width, height, animDir);
 				}
@@ -379,6 +401,46 @@ public final class SkillGuideInterface {
 		autoHeight = allY;
 
 		skillGuide.drawPanel();
+	}
+
+	private List<String> guideLines(SkillMenuEntry entry) {
+		int inset = isExpositoryTab() && !isSummoningInfoTab() ? 10 : 85;
+		return ClericTextLayout.wrap(entry.getSkillDetail(), width - inset - 18,
+			text -> mc.getSurface().stringWidth(2, text));
+	}
+
+	private List<String> magicLines(String text, int columnWidth) {
+		return ClericTextLayout.wrap(text, columnWidth, value -> mc.getSurface().stringWidth(2, value));
+	}
+
+	private int guideRowHeight(SkillMenuEntry entry) {
+		if (entry instanceof ClericSpellMenuItem) return CLERIC_SPELL_GUIDE_ROW_HEIGHT;
+		int lines;
+		if (entry instanceof MagicSpellMenuItem) {
+			MagicSpellMenuItem spell = (MagicSpellMenuItem) entry;
+			lines = Math.max(magicLines(spell.getSpellName(), 100).size(),
+				magicLines(spell.getTooltip(), width - 140 - 18).size());
+		} else lines = guideLines(entry).size();
+		return Math.max(37, lines * GUIDE_LINE_HEIGHT + 12);
+	}
+
+	private void drawGuideLines(List<String> lines, int textX, int top, int rowHeight) {
+		int baseline = top + (rowHeight - lines.size() * GUIDE_LINE_HEIGHT) / 2 + 12;
+		for (String line : lines) {
+			drawString(line, textX, baseline, 2, textColour);
+			baseline += GUIDE_LINE_HEIGHT;
+		}
+	}
+
+	public void setClericGuideFilter(String alignment) {
+		for (String key : CLERIC_FILTER_KEYS) {
+			if (key.equals(alignment)) {
+				clericGuideFilter = key;
+				skillGuide.resetScrollIndex(skillGuideScroll);
+				return;
+			}
+		}
+		throw new IllegalArgumentException("Unknown Cleric guide line: " + alignment);
 	}
 
 	private void drawClericSpellGuideItem(ClericSpellMenuItem spellItem,
@@ -395,14 +457,14 @@ public final class SkillGuideInterface {
 	}
 
 	private void drawMagicSpellGuideItem(MagicSpellMenuItem spellItem, int x, int allY, int rowIndex, int listEndPoint) {
-		int gapHeight = 37;
+		int gapHeight = guideRowHeight(spellItem);
 		int levelX = x + 10;
 		int nameX = x + 35;
 		int detailX = x + 140;
 		mc.getSurface().drawBoxAlpha(x, allY, width, gapHeight, 0x45454545, 90);
-		drawString(spellItem.getLevelReq(), levelX, allY + 25, 2, textColour);
-		drawString(spellItem.getSpellName(), nameX, allY + 25, 2, textColour);
-		drawString(spellItem.getTooltip(), detailX, allY + 25, 2, textColour);
+		drawString(spellItem.getLevelReq(), levelX, allY + gapHeight / 2 + 6, 2, textColour);
+		drawGuideLines(magicLines(spellItem.getSpellName(), 100), nameX, allY, gapHeight);
+		drawGuideLines(magicLines(spellItem.getTooltip(), width - 140 - 18), detailX, allY, gapHeight);
 		if (rowIndex != skillMenuEntries.size() - 1 && rowIndex != listEndPoint) {
 			mc.getSurface().drawBoxBorder(x, width, allY, gapHeight + 1, 0);
 		}
@@ -606,6 +668,9 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuEntry("", "2-handers cannot be equipped with a shield"));
 				skillMenuEntries.add(new SkillMenuEntry("", "Scythes hit an area around the player"));
 				skillMenuEntries.add(new SkillMenuEntry("", "Maces give prayer point bonuses"));
+				skillMenuEntries.add(new SkillMenuEntry("", "Speak to Hobart in Falador to begin Slayer tasks"));
+				skillMenuEntries.add(new SkillMenuEntry("", "Gimmick tasks include starter supplies; Slayer associates sell replacements"));
+				addPvpGuideInfo();
 				if (Config.S_WANT_CUSTOM_SPRITES) {
 					addSkillCapeGuide(1374, "Melee");
 				}
@@ -778,11 +843,12 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(34, "", "Slow 1 / Slow 2: delays combat actions by 1 / 2 ticks; fades over time"));
 				skillMenuEntries.add(new SkillMenuItem(31, "", "Scorch lowers defense for 5 attacks"));
 				skillMenuEntries.add(new SkillMenuItem(41, "", "Withering combines all elemental debuffs"));
-				skillMenuEntries.add(new SkillMenuItem(701, "", "Spells using mind runes will do damage equal to chaos runes"));
-				skillMenuEntries.add(new SkillMenuItem(31, "", "Thunder spells can Startle: staggers the opponent for 1 attack, then 5 unstaggered attacks before reapplication"));
+				skillMenuEntries.add(new SkillMenuItem(701, "", "Chaos gauntlets raise mind-rune combat spells to the chaos-rune damage cap"));
+				skillMenuEntries.add(new SkillMenuItem(31, "", "Thunder can Startle: staggers for 1 attack; then 5 unstaggered attacks before reapplication"));
 				skillMenuEntries.add(new SkillMenuItem(34, "", "Acid spells can Corrode and apply poison"));
 				skillMenuEntries.add(new SkillMenuItem(33, "", "Ice spells can Frostbite and reflect damage"));
-				skillMenuEntries.add(new SkillMenuItem(32, "", "Wood spells can Splinter to hit another NPC"));
+				skillMenuEntries.add(new SkillMenuItem(32, "", "Wood spells can Splinter to hit another eligible enemy"));
+				addPvpGuideInfo();
 			}
 		}
 		if (mc.getSkillGuideChosen().equals("Cooking")) {
@@ -976,6 +1042,8 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(1474, "22", "Antidote - Marrentill & red spiders' eggs"));
 				skillMenuEntries.add(new SkillMenuItem(3405, "38", "Strong Antidote - Marrentill & Jungle Spider Eggs"));
                 skillMenuEntries.add(new SkillMenuItem(3410,"46","Viscous coating - Avantoe, Cockatrice Eye & Sticky Saliva Gland; one use"));
+				skillMenuEntries.add(new SkillMenuItem(3410, "", "Apply one dose to an uncoated battleaxe; hits build Slow and can apply weak poison"));
+				skillMenuEntries.add(new SkillMenuItem(3410, "", "Coating lasts until cleaned with wool; cleaning consumes the wool and coating"));
 				skillMenuEntries.add(new SkillMenuItem(1176, "10", "Explosive compound - Nitro & nitrate & charcoal & a. root"));
 				skillMenuEntries.add(new SkillMenuItem(1053, "18", "Ogre potion - Guam leaf, jangerberries, ground bat bones"));
 				skillMenuEntries.add(new SkillMenuItem(1471, "22", "Stat restore - Harralander & ground unicorn horn"));
@@ -1214,7 +1282,10 @@ public final class SkillGuideInterface {
 		skillMenuEntries.add(new SkillMenuItem(3293, "", "Blessing follows the standard level 1-99 experience curve"));
 		skillMenuEntries.add(new SkillMenuItem(3293, "", "Altar conversion awards Blessing experience"));
 		skillMenuEntries.add(new SkillMenuItem(3293, "", "Carving sigils awards Crafting experience"));
-		skillMenuEntries.add(new SkillMenuItem(3431, "", "Mould three silver or Moonsilver blanks per bar, then carve"));
+		skillMenuEntries.add(new SkillMenuItem(3293, "", "Use a chisel on Stone or a blank metal sigil to carve its design"));
+		skillMenuEntries.add(new SkillMenuItem(3431, "", "At a furnace, a sigil mould makes 3 blanks from a Silver or Moonsilver bar"));
+		skillMenuEntries.add(new SkillMenuItem(3431, "", "Carving needs Crafting 1/20/40 for Stone/Silver/Moonsilver"));
+		skillMenuEntries.add(new SkillMenuItem(3300, "", "Infusion needs Blessing 1/16/40 for Stone/Silver/Moonsilver"));
 		skillMenuEntries.add(new SkillMenuItem(3293, "", "Production does not award Worship experience"));
         skillMenuEntries.add(new SkillMenuItem(3300, "", "Grace: dip uninfused sigils in Divine wellsprings"));
         skillMenuEntries.add(new SkillMenuItem(3427, "", "Blight: dip uninfused sigils in Ichor wells"));
@@ -1277,6 +1348,10 @@ public final class SkillGuideInterface {
 			addSummonGuide(23, "", "Combat summons stay until death or dismissal");
 			addSummonGuide(8, "", "Combat summons absorb only their listed share");
 			addSummonGuide(0, "", "Support summons last 1 minute by default");
+			addSummonGuide(0, "", "They automatically consume life runes to renew; without upkeep they leave");
+			addSummonGuide(0, "", "Each successful upkeep consumption gives 10 base Summoning XP, not per rune");
+			addSummonGuide(0, "", "Commanding an active support summon also earns Summoning XP each minute");
+			addSummonGuide(0, "", "Preserved upkeep runes give no consumption XP; Command XP still progresses");
 			addSummonGuide(0, "", "Support upkeep rises every 3 minutes active");
 			addSummonGuide(0, "", "Upkeep recovers 1 step per minute inactive");
 			addSummonGuide(241, "", "Utility uses are spent only on successful tasks");
@@ -1329,10 +1404,19 @@ public final class SkillGuideInterface {
 			addThrownGuide("Orichalcum", 62, 2046, 2029, 3216);
 			addThrownGuide("Rune", 70, 1070, 1080, 3217);
 		} else if (curTab == 3) {
+			addPvpGuideInfo();
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1524, "Ranged");
 			}
 		}
+	}
+
+	private void addPvpGuideInfo() {
+		skillMenuEntries.add(new SkillMenuEntry("", "Player combat is limited to legally attackable targets in the Wilderness"));
+		skillMenuEntries.add(new SkillMenuEntry("", "Player splash requires a player target; NPC attacks never splash players"));
+		skillMenuEntries.add(new SkillMenuEntry("", "Every splash target must qualify separately, including the Wilderness boundary"));
+		skillMenuEntries.add(new SkillMenuEntry("", "Area attacks and curses exclude your party, clanmates and players on your friends list"));
+		skillMenuEntries.add(new SkillMenuEntry("", "Adding a friend protects them from your effects, not you from theirs; direct attacks are separate"));
 	}
 
 	private void addRangedBowGuide(String name, int level, int shortbowId, int longbowId) {
@@ -1486,7 +1570,8 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuEntry("", "Mourning Unicorn and its full hide set each add 50%"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Full hide set heals 1/2/2/3/4 from bones/bat/big/demon/dragon offerings"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Mourning Unicorn auto-offerings also activate the set heal"));
-			skillMenuEntries.add(new SkillMenuEntry("", "+1 Worship XP per offering for each devotion"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Positive Devotion adds Worship XP, scaled by offering type"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Bones/ashes 100%, big bones 120%, bat bones 130%, demon ash 140%, dragon bones 160%; rounded down"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Devotion is tracked separately for each god"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Devotion ranges from -1000 to 1000"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Bless items only at your current god's altar"));
@@ -1521,7 +1606,7 @@ public final class SkillGuideInterface {
 
 	private void addClericSpellGuideEntries() {
 		List<ClericSpellGuideCatalog.Entry> entries = ClericSpellGuideCatalog.build(
-			mc.getClericSpellbookDefinitions(),id->{com.openrsc.client.entityhandling.defs.ItemDef item=EntityHandler.getItemDef(id);return item==null?"item #"+id:item.getName();});
+			mc.getClericSpellbookDefinitions(),id->{com.openrsc.client.entityhandling.defs.ItemDef item=EntityHandler.getItemDef(id);return item==null?"item #"+id:item.getName();}, clericGuideFilter);
 		for (ClericSpellGuideCatalog.Entry entry : entries) {
 			skillMenuEntries.add(new ClericSpellMenuItem(entry));
 		}
@@ -1581,12 +1666,18 @@ public final class SkillGuideInterface {
 			addLeatherGuide(1854, "8", "Bear hide armor");
 			addLeatherGuide(1859, "8", "Black unicorn hide armor");
 			addLeatherGuide(1864, "8", "Scorpion carapace armor");
+			addLeatherGuide(3357, "8", "Giant frog hide armor");
 			addLeatherGuide(1869, "15", "Wolf hide armor");
 			addLeatherGuide(1874, "15", "Spider carapace armor");
 			addLeatherGuide(1889, "22", "Baby dragon hide armor");
+			addLeatherGuide(3394, "22", "Ugthanki hide armor");
 			addLeatherGuide(1894, "30", "Magic spider carapace armor");
+			addLeatherGuide(3369, "30", "Naga hide armor");
 			addLeatherGuide(1909, "38", "Demon hide armor");
+			addLeatherGuide(3375, "38", "Terror dog hide armor");
+			addLeatherGuide(3381, "38", "Bloodveld hide armor");
 			addLeatherGuide(1914, "46", "Hellhound hide armor");
+			addLeatherGuide(3387, "46", "Dark beast hide armor");
 			addLeatherGuide(1924, "46", "Blue dragon hide armor");
 			addLeatherGuide(1929, "46", "Green dragon hide armor");
 			addLeatherGuide(1934, "54", "Red dragon hide armor");
@@ -1599,7 +1690,9 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(2050, "1", "Wool hat - 1 ball of wool"));
 			skillMenuEntries.add(new SkillMenuItem(2051, "1", "Wool robe top - 4 balls of wool"));
 			skillMenuEntries.add(new SkillMenuItem(2052, "1", "Wool robe bottom - 3 balls of wool"));
-			skillMenuEntries.add(new SkillMenuItem(2053, "1", "Wool cape - 2 balls of wool"));
+			skillMenuEntries.add(new SkillMenuItem(2053, "1", "White cape - 2 balls of wool"));
+			skillMenuEntries.add(new SkillMenuItem(2794, "1", "Wool gloves - 2 balls of wool"));
+			skillMenuEntries.add(new SkillMenuItem(2795, "1", "Wool boots - 2 balls of wool"));
 			skillMenuEntries.add(new SkillMenuItem(207, "1", "Ball of Wool"));
 			skillMenuEntries.add(new SkillMenuItem(676, "10", "Bow String"));
 		} else if (curTab == 2) {
@@ -1619,6 +1712,8 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(162, "32", "Ruby"));
 			skillMenuEntries.add(new SkillMenuItem(161, "48", "Diamond"));
 			skillMenuEntries.add(new SkillMenuItem(523, "58", "Dragonstone"));
+			skillMenuEntries.add(new SkillMenuItem(3408, "", "Gem cutter gloves prevent gem-cutting failures while worn"));
+			skillMenuEntries.add(new SkillMenuItem(3409, "", "Gem cutter's monocle: 5% chance of an extra cut gem while worn"));
 			skillMenuEntries.add(new SkillMenuItem(283, "1", "Gold Ring"));
 			skillMenuEntries.add(new SkillMenuItem(288, "3", "Gold Necklace"));
 			skillMenuEntries.add(new SkillMenuItem(3292, "5", "Gold Bangle"));
@@ -1678,6 +1773,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(1996, "", "Throwing knives moved to Crafting and use molds"));
 			skillMenuEntries.add(new SkillMenuItem(3208, "", "Shuriken use Crafting and molds"));
 			skillMenuEntries.add(new SkillMenuItem(191, "", "Crafting Guild can be entered at level 40 with a brown apron"));
+			skillMenuEntries.add(new SkillMenuItem(191, "", "Gem-dragon caves below the guild require 70 Crafting; prepare for dangerous combat"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1384, "Crafting");
 			}
@@ -1685,7 +1781,7 @@ public final class SkillGuideInterface {
 	}
 
 	private void addLeatherGuide(int itemId, String level, String detail) {
-		skillMenuEntries.add(new SkillMenuItem(itemId, level, detail));
+		skillMenuEntries.add(new SkillMenuItem(itemId, level, detail + " - from level " + level));
 	}
 
 	private void addHerblawPotionFamilyGuide(int tier1Id, int tier2Id, int tier3Id, int tier4Id, int tier5Id, int tier6Id,
@@ -1749,17 +1845,17 @@ public final class SkillGuideInterface {
 			addSmithingTier("Tin", 1, 1995, 1997, 1998, 1999, 2000, 2001, 1987, 2002, 2003, 3181, 2207, -1, 1959, 1960, 1961, 2224, 1962, 1963, 1964);
 			addSmithingTier("Copper", 8, 2006, 2008, 2009, 2010, 2011, 2012, 2047, 2013, 2014, 3182, 2208, 2178, 1965, 1966, 1967, 2225, 1968, 1969, 1970);
 		} else if (curTab == 2) {
-			addSmithingTier("Bronze", 15, 62, 66, 70, 82, 76, 87, 156, 205, 3183, 94, 827, 2180, 108, 1983, 1984, 124, 128, 206, 117);
-			addSmithingTier("Iron", 22, 28, 1, 71, 83, 77, 12, 1258, 89, 3184, 0, 1088, 2182, 6, 1985, 1986, 3, 2, 9, 8);
+			addSmithingTier("Bronze", 15, 62, 66, 70, 82, 76, 87, 156, 205, 94, 3183, 827, 2180, 108, 1983, 1984, 124, 128, 206, 117);
+			addSmithingTier("Iron", 22, 28, 1, 71, 83, 77, 12, 1258, 89, 0, 3184, 1088, 2182, 6, 1985, 1986, 3, 2, 9, 8);
 		} else if (curTab == 3) {
-			addSmithingTier("Steel", 30, 63, 67, 72, 84, 78, 88, 1259, 90, 3185, 95, 1089, 2184, 109, 698, 1988, 125, 129, 121, 118);
-			addSmithingTier("Mithril", 38, 64, 68, 73, 85, 79, 203, 1260, 91, 3186, 96, 1090, 2186, 110, 1989, 1990, 126, 130, 122, 119);
+			addSmithingTier("Steel", 30, 63, 67, 72, 84, 78, 88, 1259, 90, 95, 3185, 1089, 2184, 109, 698, 1988, 125, 129, 121, 118);
+			addSmithingTier("Mithril", 38, 64, 68, 73, 85, 79, 203, 1260, 91, 96, 3186, 1090, 2186, 110, 1989, 1990, 126, 130, 122, 119);
 		} else if (curTab == 4) {
 			addSmithingTier("Titan steel", 46, 2017, 2019, 2020, 2021, 2022, 2023, 2048, 2024, 2025, 3187, 2209, 2188, 1971, 1972, 1973, 2226, 1974, 1975, 1976);
-			addSmithingTier("Adamantite", 54, 65, 69, 74, 86, 80, 204, 1261, 92, 3188, 97, 1091, 2190, 111, 1991, 1992, 127, 131, 123, 120);
+			addSmithingTier("Adamantite", 54, 65, 69, 74, 86, 80, 204, 1261, 92, 97, 3188, 1091, 2190, 111, 1991, 1992, 127, 131, 123, 120);
 		} else if (curTab == 5) {
 			addSmithingTier("Orichalcum", 62, 2028, 2030, 2031, 2032, 2033, 2034, 2049, 2035, 2036, 3189, 2210, 2192, 1977, 1978, 1979, 2227, 1980, 1981, 1982);
-			addSmithingTier("Rune", 70, 396, 397, 75, 398, 81, 405, 1262, 93, 3190, 98, 1092, 2194, 112, 1993, 1994, 403, 404, 402, 401);
+			addSmithingTier("Rune", 70, 396, 397, 75, 398, 81, 405, 1262, 93, 98, 3190, 1092, 2194, 112, 1993, 1994, 403, 404, 402, 401);
 		} else if (curTab == 6) {
 			addSmithingTier("Dragon", 80, 1447, -1, 593, -1, 1346, 594, -1, 2752, -1, -1, -1, -1, 1425, -1, -1, 1278, 1426, 1429, 1427);
 			addSmithingTier("Exalted Rune", 90, 3262, 3263, 3264, 3265, 3266, 3267, 3268, 3269, 3271, 3270, 3273, -1, 3274, 3275, 3276, 3277, 3278, 3279, 3280);

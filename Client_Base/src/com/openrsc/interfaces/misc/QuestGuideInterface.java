@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 
 public final class QuestGuideInterface {
+	private static final int VISIBLE_QUEST_ROWS = 17;
 	public int questGuideScroll;
 	public Panel questGuide;
 	int width = 430;
@@ -31,7 +32,7 @@ public final class QuestGuideInterface {
 
 		questItems = new ArrayList<QuestItem>();
 
-		questGuideScroll = questGuide.addScrollingList(x + 4, y + 36, width - 5, height - 37, 100, 2, false);
+		questGuideScroll = questGuide.addScrollingList(x + 4, y + 36, width - 5, height - 37, 1000, 2, false);
 	}
 
 	public void reposition() {
@@ -75,8 +76,10 @@ public final class QuestGuideInterface {
 
 		questItems.clear();
 
-		if (mc.getQuestGuideProgress() == 0) {
-			String questStart = "I can start the quest by speaking to " + mc.getQuestGuideStartWho() + " " + mc.getQuestGuideStartWhere() + ".";
+		if (mc.getQuestGuideProgress() >= 0) {
+			String questStart = (mc.getQuestGuideProgress() == 0
+				? "I can start the quest by speaking to " : "Start contact: ")
+				+ mc.getQuestGuideStartWho() + " " + mc.getQuestGuideStartWhere() + ".";
 			customAdd(questStart, 2, textColour);
 
 			customAdd("", 2, textColour);
@@ -85,8 +88,10 @@ public final class QuestGuideInterface {
 			for (String requirement : safeQuestGuideLines(mc.getQuestGuideRequirement())) {
 				customAdd("  - " + requirement, 2, textColour);
 			}
-		} else if (mc.getQuestGuideProgress() > 0) {
-			customAdd("Quest progress coming soon...", 2, textColour);
+			if (mc.getQuestGuideProgress() > 0) {
+				customAdd("", 2, textColour);
+				customAdd("Detailed walkthrough unavailable.", 2, textColour);
+			}
 		} else {
 			customAdd("Congratulations you have completed " + mc.getQuestGuideChosen() + ".", 2, textColour);
 		}
@@ -101,20 +106,23 @@ public final class QuestGuideInterface {
 
 		questGuide.clearList(questGuideScroll);
 
-		for (int i = 0; i <= questItems.size(); i++) {
+		int trailingRows = Math.max(0, (height - 37) / mc.getSurface().fontHeight(2) - VISIBLE_QUEST_ROWS);
+		for (int i = 0; i < questItems.size() + trailingRows; i++) {
 			questGuide.setListEntry(questGuideScroll, i, "", 0, (String) null, (String) null);
 		}
 
 		int listStartPoint = questGuide.getScrollPosition(questGuideScroll);
-		int listEndPoint = listStartPoint + 17;
+		int maximumStart = Math.max(0, questItems.size() - VISIBLE_QUEST_ROWS);
+		if (listStartPoint > maximumStart) {
+			questGuide.resetScrollIndex(questGuideScroll);
+			questGuide.scrollMethodList(questGuideScroll, maximumStart);
+			listStartPoint = maximumStart;
+		}
+		int listEndPoint = listStartPoint + VISIBLE_QUEST_ROWS - 1;
 
 		trackY = y + 55;
 
 		for (int i = 0; i < questItems.size(); i++) {
-			if (i >= 100) {
-				break;
-			}
-
 			if (i < listStartPoint || i > listEndPoint)
 				continue;
 
@@ -125,9 +133,7 @@ public final class QuestGuideInterface {
 			trackY += 15;
 		}
 
-		// Temporary for tracking
-		drawString("Progress: " + asStringStage(mc.getQuestGuideProgress()) + " (" +
-				Integer.toString(mc.getQuestGuideProgress()) + ")", x + width - 150, trackY, 2, this.textColour);
+		drawString("Progress: " + asStringStage(mc.getQuestGuideProgress()), x + 8, trackY, 2, this.textColour);
 		trackY += 15;
 
 		autoHeight = trackY;
