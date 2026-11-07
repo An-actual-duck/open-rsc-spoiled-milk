@@ -197,3 +197,38 @@ Optional checked fence export
     python3 tools/renderer-benchmark/analyze-fence-export.py CAPTURE
   See thin-shadow-native-evidence.txt for placement provenance, complete proof
   and the explicit temporal/performance limits of the short fixed-sun case.
+
+Published-frame observer regression (November 7, 2026)
+  Each timed sample now obtains one already-published frame and uses that same
+  reference for actor and roof observations. Terrain and roof-metadata exports
+  also avoid the raw Scene frame, which is exposed before construction finishes.
+  The existing three-second publication wait throws explicitly if no eligible
+  frame appears; it never substitutes an actor count of zero. Its lock covers
+  only the pending-frame read, without iteration, file I/O or GL calls.
+
+  CharacterSprite fields are final; the character list is appended only during
+  scene construction. Renderer3DFrame.release releases depth/pooled world-face
+  storage, not character metadata, immutable chunks or textures. These are the
+  only retained frame components read by the corrected observers.
+
+  RendererBenchmarkFrameObserverFixture is a CPU-only, latch-controlled test
+  using real Scene/Renderer3DFrame/list/presenter types. It exposes a constructing
+  frame exactly as the Scene pointer does, forces the old iterator's concurrent
+  append and verifies ConcurrentModificationException. The corrected observer
+  repeatedly reads the stable published frame, survives its face-storage release,
+  and observes the next frame only after publication. A missing published frame
+  is explicitly rejected within the bounded wait. This models the construction
+  race; it does not replace a subsequent full native gameplay capture.
+
+  The same fixture checks old nine-value shadow snapshot compatibility and the
+  optional twelve-value extension: farMapSize, historyActive, blendPermille.
+  No extra fields are emitted when the older snapshot has only nine values.
+
+  Compile the driver and fixture against the reviewed client JAR into a declared
+  builds category, then run headless (no native window or GPU context):
+    javac -source 8 -target 8 -cp CLIENT_JAR -d BUILD_DIR \
+      tools/renderer-benchmark/orsc/RendererBenchmarkClient.java \
+      tests/myworld/RendererBenchmarkFrameObserverFixture.java
+    java -Djava.awt.headless=true -cp BUILD_DIR:CLIENT_JAR \
+      orsc.RendererBenchmarkFrameObserverFixture
+  Result: PASS, including old-fail/new-pass construction race and bounded timeout.
