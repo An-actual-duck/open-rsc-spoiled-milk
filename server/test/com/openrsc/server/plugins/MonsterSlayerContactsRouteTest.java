@@ -147,6 +147,16 @@ public final class MonsterSlayerContactsRouteTest {
 						RecordingDialogue dialogue = new RecordingDialogue(0);
 						Npc npc = new Npc(server.getWorld(), contact.getNpcId(), 290, 600);
 						MonsterSlayerContacts routes = new MonsterSlayerContacts(dialogue);
+						if (!MonsterSlayerTaskSupplies.itemIds(task).isEmpty()) {
+							while (player.getCarriedItems().getInventory().size() < player.getCarriedItems().getInventory().getCapacity())
+								assertTrue(player.getCarriedItems().getInventory().add(new com.openrsc.server.model.container.Item(259), false), "fill inventory");
+							if (shortcut) routes.onOpNpc(player, npc, "Task"); else routes.onTalkNpc(player, npc);
+							assertTrue(MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey() == null, "no assignment without gift space");
+							assertTrue(dialogue.events.contains("N:Make room in your inventory for the task supplies, then ask me again."), "both routes explain inventory refusal");
+							for (String line : MonsterSlayerContacts.taskSupplyLines(player, task)) assertFalse(dialogue.events.contains("N:" + line), "failed assignment promises no gift");
+							player.getCarriedItems().getInventory().getItems().clear();
+							dialogue = new RecordingDialogue(0); routes = new MonsterSlayerContacts(dialogue);
+						}
 						if (shortcut) routes.onOpNpc(player, npc, "Task"); else routes.onTalkNpc(player, npc);
 						assertEquals(task.getKey(), MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey(), "tower committed assignment");
 						for (int supply : MonsterSlayerTaskSupplies.itemIds(task)) assertEquals(1, player.getCarriedItems().getInventory().countId(supply), "both dialogue routes hand over one required supply");
@@ -2072,6 +2082,8 @@ public final class MonsterSlayerContactsRouteTest {
 		int clientVersion = Math.max(10052, server.getConfig().CLIENT_VERSION);
 		player.setClientVersion(clientVersion);
 		player.setClientLimitations(ClientLimitations.forVersion(clientVersion));
+		// A real modern login negotiates the installed item roster separately.
+		player.getClientLimitations().maxItemId = server.getEntityHandler().getItemCount() - 1;
 		player.setInitialLocation(Point.location(x, y));
 		server.getWorld().getPlayers().add(player); player.updateRegion(); player.setBusy(false); player.setLoggedIn(true);
 		return player;

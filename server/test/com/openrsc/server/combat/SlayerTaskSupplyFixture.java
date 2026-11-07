@@ -39,9 +39,15 @@ public final class SlayerTaskSupplyFixture {
     }
     private static void allGimmickAssignmentsAndReminders(CurrentCombatHarness h, MonsterSlayerData data) {
         MonsterSlayerTaskService service = new MonsterSlayerTaskService(data);int families=0;
+        Map<String,Integer> expected = new LinkedHashMap<String,Integer>();
+        expected.put("giant_frog",3318);expected.put("cockatrice",3321);expected.put("banshee",3324);
+        expected.put("terror_dog",3327);expected.put("dark_beast",3330);expected.put("abyssal_demon",3318);
         for (MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) {
             for (MonsterSlayerDefinitions.Task task : contact.getMandatoryTasks()) {
                 List<Integer> supplies = MonsterSlayerTaskSupplies.itemIds(task);
+                check(supplies.equals(expected.containsKey(task.getFamilyKey())
+                    ? Collections.singletonList(expected.get(task.getFamilyKey())) : Collections.emptyList()),
+                    "actual encounter receives its matching combat counter: " + task.getFamilyKey());
                 if (supplies.isEmpty()) continue;
                 families++;
                 Player mandatory = ready(h, data, contact, task, false);
@@ -95,6 +101,7 @@ public final class SlayerTaskSupplyFixture {
     }
     private static void multiCounterTasksAreAtomic(CurrentCombatHarness h,MonsterSlayerData.ReferenceCatalog catalog,Path output)throws Exception {
         Files.copy(DEFINITIONS,output.resolve("MonsterSlayer.json"),StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(DEFINITIONS.resolveSibling("MonsterSlayerRelease.json"),output.resolve("MonsterSlayerRelease.json"),StandardCopyOption.REPLACE_EXISTING);
         JSONObject tower=new JSONObject(new String(Files.readAllBytes(DEFINITIONS.resolveSibling("MonsterSlayerTower.json")),StandardCharsets.UTF_8));
         tower.getJSONArray("additions").getJSONObject(0).getJSONObject("task").put("hazards",new JSONArray().put("FROG_SPIT").put("STICKY_FLESH").put("STONY_GLARE"));
         Files.write(output.resolve("MonsterSlayerTower.json"),tower.toString().getBytes(StandardCharsets.UTF_8));MonsterSlayerData data=MonsterSlayerData.load(output.resolve("MonsterSlayer.json"),catalog,true);h.installMonsterSlayerData(data);
@@ -114,6 +121,6 @@ public final class SlayerTaskSupplyFixture {
     private static void check(boolean value,String message){checks++;if(!value)throw new AssertionError(message);}
     private static final class FailingCache extends Cache {
         boolean fail;
-        @Override public void store(String key,String value){super.store(key,value);if(fail&&key.equals(MonsterSlayerState.ACTIVE_TASK_KEY)){fail=false;throw new IllegalStateException("injected partial cache write");}}
+        @Override public void store(String key,String value){super.store(key,value);if(fail&&key.equals("monster_slayer_active_task")){fail=false;throw new IllegalStateException("injected partial cache write");}}
     }
 }
