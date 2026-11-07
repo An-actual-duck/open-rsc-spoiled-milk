@@ -1,5 +1,9 @@
 Geometry shadow renderer — READY for Core review
 
+Historical initial-pass receipt: the terrain normal/gate and fixed-relief
+behavior below is superseded by terrain-shadow-artifacts.txt. That focused
+follow-up records the corrected production shader and final native evidence.
+
 Owner scope, November 7, 2026
 Improve desktop geometry shadows while targeting 60 FPS (16.667 ms frame budget)
 at the normal gameplay camera, 1920x1080 on the owner's Ryzen 7900X / RX 6700 XT.
