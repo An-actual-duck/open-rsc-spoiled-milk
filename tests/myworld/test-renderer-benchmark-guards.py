@@ -20,6 +20,28 @@ benchmark = importlib.util.module_from_spec(spec); spec.loader.exec_module(bench
 
 
 class GuardTests(unittest.TestCase):
+    def test_full_game_window_lifecycle_requires_all_real_operations_and_recovery(self):
+        actions=["windowed","resize","fullscreen","borderless","windowed-again","iconify","activate-restore","resumed"]
+        events=[dict(action=a,beforeFrames=i*10,afterFrames=i*10+5,gameObjects=935,flags=1,surface=dict(windowWidth=1100,windowHeight=700)) for i,a in enumerate(actions)]
+        self.assertTrue(benchmark.validate_window_lifecycle(events)["worldRetained"])
+        with self.assertRaises(ValueError):benchmark.validate_window_lifecycle([])
+        with self.assertRaises(ValueError):benchmark.validate_window_lifecycle(events[:-1])
+        for owner,key,value in ((events[2],"afterFrames",20),(events[4],"gameObjects",0),(events[-1],"flags",3),(events[1]["surface"],"windowWidth",960)):
+            old=owner[key];owner[key]=value
+            with self.assertRaises(ValueError):benchmark.validate_window_lifecycle(events)
+            owner[key]=old
+
+    def test_real_combat_requires_damage_resources_summons_and_received_visuals(self):
+        with tempfile.TemporaryDirectory() as folder:
+            run=Path(folder)
+            keys=("ice","thunder","wood","ranged","throwing","melee")
+            sample={"serverState":{"realCombat":{"authoritative":True,"creditedDamageByFamily":dict.fromkeys(keys,1),"resourceUnitsSpent":dict.fromkeys(keys,1),"summonsEngaged":1}},"combatVisuals":{"activeHitSplatActors":1},"activeProjectileActors":2}
+            benchmark.validate_runtime(run,[sample],"combat-real")
+            for owner,key,value in ((sample["serverState"]["realCombat"],"authoritative",False),(sample["serverState"]["realCombat"]["creditedDamageByFamily"],"ice",0),(sample["serverState"]["realCombat"]["resourceUnitsSpent"],"wood",0),(sample["serverState"]["realCombat"],"summonsEngaged",0),(sample["combatVisuals"],"activeHitSplatActors",0),(sample,"activeProjectileActors",1)):
+                original=owner[key];owner[key]=value
+                with self.assertRaises(ValueError):benchmark.validate_runtime(run,[sample],"combat-real")
+                owner[key]=original
+
     def test_unmarked_run_refused_before_start_or_signal(self):
         with tempfile.TemporaryDirectory() as name:
             args = SimpleNamespace(run=Path(name))

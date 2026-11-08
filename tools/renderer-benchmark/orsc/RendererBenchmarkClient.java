@@ -108,6 +108,78 @@ public final class RendererBenchmarkClient {
         }
         return count;
     }
+    private static String combatVisuals(mudclient client) {
+        int hits=0,effects=0,damaged=0;
+        for(int i=0;i<client.getNpcCount();i++) {
+            ORSCharacter a=client.getNpc(i);if(a==null)continue;
+            if(a.floatingHitSplats.isActive())hits++;
+            if(a.combatEffectTime>0||a.pendingCombatEffectType!=0)effects++;
+            if(a.healthMax>0&&a.healthCurrent<a.healthMax)damaged++;
+        }
+        return "{\"activeHitSplatActors\":"+hits+",\"activeCombatEffectActors\":"+effects+",\"damagedHealthActors\":"+damaged+"}";
+    }
+    private static long renderedFrames()throws Exception {
+        synchronized(RenderTelemetry.class){return ((Number)field(null,RenderTelemetry.class,"openGLFrames")).longValue();}
+    }
+    private static String ownWindowId;
+    private static String nativeWindowCommand(String...args)throws Exception {
+        Process command=new ProcessBuilder(args).redirectErrorStream(true).start();
+        if(!command.waitFor(5,java.util.concurrent.TimeUnit.SECONDS)){command.destroy();throw new IllegalStateException("Scoped WM command timed out");}
+        String output=new String(readAll(command.getInputStream()),StandardCharsets.UTF_8).trim();
+        if(command.exitValue()!=0)throw new IllegalStateException("Scoped WM command failed: "+output);
+        return output;
+    }
+    private static byte[] readAll(java.io.InputStream in)throws Exception {
+        java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream();byte[] b=new byte[4096];int n;while((n=in.read(b))!=-1)out.write(b,0,n);return out.toByteArray();
+    }
+    private static void visibleLifecycleStep(OpenGLFramePresenter presenter,int second,Path capture)throws Exception {
+        if(second>7 || !Boolean.getBoolean("renderer.benchmark.visiblePreview"))return;
+        Object controller=field(presenter,OpenGLFramePresenter.class,"windowController");
+        String pid=java.lang.management.ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
+        if(ownWindowId==null){String[] ids=nativeWindowCommand("xdotool","search","--onlyvisible","--pid",pid).split("\\s+");if(ids.length!=1)throw new IllegalStateException("Expected exactly one visible window owned by fixture PID");ownWindowId=ids[0];}
+        if(!pid.equals(nativeWindowCommand("xdotool","getwindowpid",ownWindowId)))throw new IllegalStateException("Native window PID ownership changed");
+        long before=renderedFrames();String action="resumed";
+        if(second==0){OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.WINDOWED);action="windowed";}
+        if(second==1){nativeWindowCommand("xdotool","windowsize",ownWindowId,"1100","700");action="resize";}
+        if(second==2){OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.FULLSCREEN);action="fullscreen";}
+        if(second==3){OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);action="borderless";}
+        if(second==4){OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.WINDOWED);action="windowed-again";}
+        if(second==5){nativeWindowCommand("xdotool","windowminimize",ownWindowId);action="iconify";}
+        if(second==6){nativeWindowCommand("xdotool","windowmap",ownWindowId);nativeWindowCommand("xdotool","windowactivate","--sync",ownWindowId);action="activate-restore";}
+        Thread.sleep(800);
+        long after=renderedFrames();
+        Files.write(capture.resolve("window-events.jsonl"),("{\"action\":\""+action+"\",\"beforeFrames\":"+before+",\"afterFrames\":"+after+",\"surface\":"+surfaceState(presenter)+",\"flags\":"+windowState(presenter)+",\"gameObjects\":"+((mudclient)field(null,ORSCApplet.class,"mudclient")).getGameObjectInstanceCount()+"}\n").getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+        if(second!=5 && after<=before)throw new IllegalStateException("World rendering did not resume after "+action);
+        if(second==7 && ((Number)windowFlags(controller)).intValue()!=1)throw new IllegalStateException("Game window did not resume visible/uniconified");
+    }
+    private static Object windowFlags(Object controller)throws Exception {
+        Method m=controller.getClass().getDeclaredMethod("diagnosticWindowFlags");m.setAccessible(true);return m.invoke(controller);
+    }
+    private static void lifecycleStep(mudclient client,OpenGLFramePresenter presenter,int second,Path capture)throws Exception {
+        visibleLifecycleStep(presenter,second,capture);
+        if(second==5||second==10||second==15||second==18) {
+            String motion=second==5?"same":second==10?"area":second==15?"level":"return";
+            Files.write(capture.getParent().resolve("motion-request"),motion.getBytes(StandardCharsets.UTF_8));
+        }
+        if(second%12==0)RendererShadowSettings.setQuality(RendererShadowSettings.Quality.OFF);
+        if(second%12==4)RendererShadowSettings.setQuality(RendererShadowSettings.Quality.LOW);
+        if(second%12==8)RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);
+        if(second==20||second==40) {
+            Files.write(capture.getParent().resolve("logout-request"),"Ordinary server logout confirmation requested\n".getBytes(StandardCharsets.UTF_8));
+            long logoutDeadline=System.currentTimeMillis()+15000;
+            while(System.currentTimeMillis()<logoutDeadline&&!field(client,mudclient.class,"currentViewMode").toString().equals("LOGIN"))Thread.sleep(100);
+            Thread.sleep(2500);
+            if(!field(client,mudclient.class,"currentViewMode").toString().equals("LOGIN"))throw new IllegalStateException("Logout did not return to login");
+            Files.write(capture.resolve("lifecycle-events.jsonl"),("{\"event\":\"logout\",\"second\":"+second+",\"shadow\":"+shadowStats(presenter)+"}\n").getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+            set(client,mudclient.class,"autoLoginTimeout",1);
+            Method login=mudclient.class.getDeclaredMethod("login",int.class,String.class,String.class,boolean.class);login.setAccessible(true);login.invoke(client,-12,"RendererProof13","renderdemo",false);
+            long deadline=System.currentTimeMillis()+30000;
+            while(System.currentTimeMillis()<deadline&&!field(client,mudclient.class,"currentViewMode").toString().equals("GAME"))Thread.sleep(100);
+            if(!field(client,mudclient.class,"currentViewMode").toString().equals("GAME"))throw new IllegalStateException("Same-JVM relog failed");
+            set(client,mudclient.class,"welcomeScreenShown",false);client.setShowDialogMessage(false);
+            Files.write(capture.resolve("lifecycle-events.jsonl"),("{\"event\":\"relogin\",\"second\":"+second+"}\n").getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+        }
+    }
     private static boolean farPollEveryFrame() throws Exception {
         try { return Boolean.TRUE.equals(field(null,Class.forName("orsc.OpenGLGpuTimer"),"FAR_QUERY_POLL_EVERY_FRAME")); }
         catch(ClassNotFoundException | NoSuchFieldException older) { return false; }
@@ -336,6 +408,7 @@ public final class RendererBenchmarkClient {
         for (int second = 0; second < seconds; second++) {
             if(Files.exists(run.resolve("FIXTURE-FAILED"))) throw new IllegalStateException("Private fixture setup failed; aborting measurement");
             client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));
+            if(phase.equals("lifecycle"))lifecycleStep(client,presenter,second,capture);
             if (phase.contains("camera")) client.cameraRotation = (rotation + second * 3) & 255;
             Renderer3DFrame sampledFrame=tryPublishedFrame(presenter);
             RendererDayNightCycle.Presentation light = RendererDayNightCycle.currentPresentation();
@@ -344,7 +417,7 @@ public final class RendererBenchmarkClient {
                 + ",\"gpuFarPollEveryFrame\":" + farPollEveryFrame() + "," + frameObservationsJson(sampledFrame)
                 + ",\"hideRoofs\":" + Config.C_HIDE_ROOFS + ",\"gameObjects\":" + client.getGameObjectInstanceCount() + ",\"wallObjects\":" + client.getWallObjectInstanceCount()
                 + ",\"serverState\":" + new String(Files.readAllBytes(run.resolve("status.json")), StandardCharsets.UTF_8)
-                + ",\"activeProjectileActors\":" + activeProjectiles(client) + ",\"windowState\":" + windowState(presenter)
+                + ",\"combatVisuals\":"+combatVisuals(client)+ ",\"activeProjectileActors\":" + activeProjectiles(client) + ",\"windowState\":" + windowState(presenter)
                 + ",\"cameraRotation\":" + client.cameraRotation + ",\"zoomSetting\":" + osConfig.C_LAST_ZOOM
                 + ",\"windowMode\":\"" + OpenGLWindowSettings.getMode() + "\",\"logicalWidth\":" + RenderSurfaceSettings.getWidth() + ",\"logicalHeight\":" + RenderSurfaceSettings.getHeight()
                 + ",\"contentViewportWidth\":" + viewport.framebufferViewport().width + ",\"contentViewportHeight\":" + viewport.framebufferViewport().height + ",\"surface\":" + surfaceState(presenter)
@@ -379,6 +452,14 @@ public final class RendererBenchmarkClient {
                 }
                 Thread.sleep(500);
             } // Strict captures are outside every timed performance phase.
+        }
+        if(phase.equals("lifecycle")) {
+            RendererShadowSettings.setQuality(RendererShadowSettings.Quality.LOW);
+            RendererProfileApplier.SettingsStore store=(RendererProfileApplier.SettingsStore)field(null,mudclient.class,"RENDERER_PROFILE_SETTINGS_STORE");
+            RendererProfileApplier.persist(store,RendererProfileApplier.Change.SHADOWS,RendererProfileApplier.Change.WINDOW);
+            java.util.Properties saved=new java.util.Properties();try(java.io.InputStream in=Files.newInputStream(clientRoot.resolve("clientSettings.conf"))){saved.load(in);}
+            if(!"low".equals(saved.getProperty("shadow_quality")))throw new IllegalStateException("Actual client setting store did not persist selected shadow quality");
+            Files.write(capture.resolve("SETTINGS-PERSISTED"),"Actual production settings store saved Low shadow preference\n".getBytes(StandardCharsets.UTF_8));
         }
         closeGpuSink();
         RendererDiagnosticSession.close();

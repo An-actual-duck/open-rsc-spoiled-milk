@@ -14,6 +14,11 @@ import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.Spells;
+import com.openrsc.server.external.SpellDef;
+import com.openrsc.server.event.rsc.impl.projectile.MagicCombatEvent;
+import com.openrsc.server.event.rsc.impl.projectile.RangeEvent;
+import com.openrsc.server.event.rsc.impl.projectile.ThrowingEvent;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.ClientLimitations;
@@ -33,9 +38,81 @@ public final class RendererBenchmarkServer {
     private static boolean configured;
     private static int tick;
     private static int removedMapNpcs;
-    private static int samePositionTeleports;
+    private static int samePositionTeleports, areaTeleports, levelTeleports;
     private static long serial;
     private static String phase = "dense-idle";
+    private static final String[] COMBAT_FAMILIES={"ice","thunder","wood","ranged","throwing","melee"};
+    private static final int SURVIVAL_HITS=30000;
+
+    private static boolean realCombat() { return phase.equals("combat-real"); }
+    private static void equipAmount(Player p,int id,int amount)throws Exception {
+        java.lang.reflect.Field f=Equipment.class.getDeclaredField("list");f.setAccessible(true);
+        com.openrsc.server.external.ItemDefinition d=worldServer.getEntityHandler().getItemDef(id);
+        Item item=new Item(id,amount,false,90_000_000L + ++serial);item.setWielded(true);
+        ((Item[])f.get(p.getCarriedItems().getEquipment()))[d.getWieldPosition()]=item;
+        p.updateWornItems(d.getWieldPosition(),d.getAppearanceId(),d.getWearableId(),true);
+    }
+    private static void beginRealCombat()throws Exception {
+        for(Npc n:npcs) {
+            n.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),SURVIVAL_HITS,SURVIVAL_HITS,false);
+        }
+        for(Player p:actors)p.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),SURVIVAL_HITS,SURVIVAL_HITS,false);
+        for(int i=0;i<COMBAT_FAMILIES.length;i++) {
+            Player p=actors.get(i);Npc target=npcs.get(i*3);
+            boolean placed=false;
+            for(int[] d:new int[][]{{1,0},{-1,0},{0,1},{0,-1}})if(!placed&&clear(target.getX()+d[0],target.getY()+d[1])){p.teleport(target.getX()+d[0],target.getY()+d[1],false);placed=true;}
+            if(!placed)throw new IllegalStateException("No walkable adjacent combat tile");
+            java.lang.reflect.Field equipment=Equipment.class.getDeclaredField("list");equipment.setAccessible(true);
+            Arrays.fill((Item[])equipment.get(p.getCarriedItems().getEquipment()),null);
+            p.setWornItems(p.getSettings().getAppearance().getSprites());
+            if(i<3) {
+                equipAmount(p,ItemId.STAFF.id(),1);
+                Spells spell=new Spells[]{Spells.ICE_CRYSTAL,Spells.THUNDER_STRIKE,Spells.BATTERING_RAM}[i];
+                for(Map.Entry<Integer,Integer> rune:worldServer.getEntityHandler().getSpellDef(spell).getRunesRequired())
+                    p.getCarriedItems().getInventory().add(new Item(rune.getKey(),10000),false);
+                p.setAutoCastSpell(spell);
+                if(!MagicCombatEvent.start(p,target))throw new IllegalStateException("Real magic combat did not start "+spell);
+            }else if(i==3) {
+                equipAmount(p,ItemId.SHORTBOW.id(),1);equipAmount(p,ItemId.TIN_ARROWS.id(),10000);
+                RangeEvent event=new RangeEvent(worldServer.getWorld(),p,1L,target);p.setRangeEvent(event);worldServer.getGameEventHandler().add(event);
+            }else if(i==4) {
+                equipAmount(p,ItemId.TIN_SHURIKEN.id(),10000);
+                ThrowingEvent event=new ThrowingEvent(worldServer.getWorld(),p,1L,target);p.setThrowingEvent(event);worldServer.getGameEventHandler().add(event);
+            }else {equipAmount(p,ItemId.RUNE_LONG_SWORD.id(),1);p.startCombat(target);}
+        }
+    }
+    private static JSONObject combatState() throws Exception {
+        JSONObject result=new JSONObject().put("authoritative",realCombat());
+        if(!realCombat()||actors.size()<6)return result;
+        JSONObject damage=new JSONObject(),resources=new JSONObject(),credited=new JSONObject();int summonDamage=0;int damaged=0,active=0,summons=0,summonsEngaged=0;
+        for(int i=0;i<6;i++) {
+            Player p=actors.get(i);Npc target=npcs.get(i*3);
+            damage.put(COMBAT_FAMILIES[i],SURVIVAL_HITS-target.getSkills().getLevel(Skill.HITS.id()));
+            java.lang.reflect.Field ledgerField=Npc.class.getDeclaredField("contributionLedger");ledgerField.setAccessible(true);
+            int contribution=0;
+            for(Npc n:npcs) {
+                com.openrsc.server.model.entity.npc.NpcContributionLedger ledger=(com.openrsc.server.model.entity.npc.NpcContributionLedger)ledgerField.get(n);
+                com.openrsc.server.model.entity.npc.NpcContributionRole role=i<3?com.openrsc.server.model.entity.npc.NpcContributionRole.MAGIC:i<5?com.openrsc.server.model.entity.npc.NpcContributionRole.RANGED:com.openrsc.server.model.entity.npc.NpcContributionRole.MELEE;
+                contribution+=ledger.get(role,p.getUUID()).getDamage();
+                summonDamage+=ledger.get(com.openrsc.server.model.entity.npc.NpcContributionRole.SUMMON,p.getUUID()).getDamage();
+            }
+            credited.put(COMBAT_FAMILIES[i],contribution);
+            if(i<3) {
+                Spells spell=new Spells[]{Spells.ICE_CRYSTAL,Spells.THUNDER_STRIKE,Spells.BATTERING_RAM}[i];
+                int spent=0;for(Map.Entry<Integer,Integer> rune:worldServer.getEntityHandler().getSpellDef(spell).getRunesRequired())spent+=10000-p.getCarriedItems().getInventory().countId(rune.getKey());
+                resources.put(COMBAT_FAMILIES[i],spent);
+            }else if(i<5) {
+                int id=i==3?ItemId.TIN_ARROWS.id():ItemId.TIN_SHURIKEN.id();int remaining=0;
+                int slot=p.getCarriedItems().getEquipment().searchEquipmentForItem(id);Item item=p.getCarriedItems().getEquipment().get(slot);if(item!=null)remaining=item.getAmount();
+                resources.put(COMBAT_FAMILIES[i],10000-remaining);
+            }else resources.put("meleeXp",p.getSkills().getExperience(Skill.MELEE.id()));
+            if(p.getPvmMeleeEvent()!=null||p.getRangeEvent()!=null||p.getThrowingEvent()!=null||p.getMagicCombatEvent()!=null)active++;
+        }
+        for(Npc n:npcs)if(n.getSkills().getLevel(Skill.HITS.id())<SURVIVAL_HITS)damaged++;
+        for(Npc n:worldServer.getWorld().getNpcs())if(Summoning.isSummon(n)) {summons++;if(n.getPvmMeleeEvent()!=null||n.inCombat())summonsEngaged++;}
+        return result.put("primaryDamageByFamily",damage).put("creditedDamageByFamily",credited).put("summonCreditedDamage",summonDamage).put("resourceUnitsSpent",resources).put("damagedTargets",damaged).put("activeChannels",active)
+            .put("summonsPresent",summons).put("summonsEngaged",summonsEngaged);
+    }
     private static int viewerX = 502, viewerY = 453;
 
     private static boolean clear(int x, int y) {
@@ -105,7 +182,7 @@ public final class RendererBenchmarkServer {
         throw new IllegalStateException("No authored4-tile viewer walk corridor");
     }
     private static void driveActors() {
-        if (!busy || actors.isEmpty()) return;
+        if (!busy || actors.isEmpty() || realCombat()) return;
         for (int index = 0; index < actors.size(); index++) {
             Player actor = actors.get(index); Point origin = positions.get(index);
             if (tick % 4 == 0) {
@@ -183,8 +260,28 @@ public final class RendererBenchmarkServer {
                                 if (!clear(viewerX, viewerY)) throw new IllegalStateException("Requested visual camera tile is not authored walkable ground");
                                 viewer.teleport(viewerX, viewerY, false);
                             }
-                            if (busy) createActors();
+                            if (busy) {createActors();if(realCombat())beginRealCombat();}
                         }
+                    }
+                    if(viewer!=null && phase.equals("lifecycle") && Files.isRegularFile(run.resolve("motion-request"))) {
+                        String motion=new String(Files.readAllBytes(run.resolve("motion-request")),"UTF-8").trim();Files.delete(run.resolve("motion-request"));
+                        int x=502,y=453,level=0;
+                        if(motion.equals("same")){x=viewer.getX();y=viewer.getY();level=viewer.getWorldLocation().getCoordinate().getLevel();samePositionTeleports++;}
+                        else if(motion.equals("area")){x=478;y=453;areaTeleports++;}
+                        else if(motion.equals("level")){x=685;y=508;level=2;levelTeleports++;}
+                        else if(!motion.equals("return"))throw new IllegalStateException("Unexpected private motion request");
+                        if(!motion.equals("same")) {
+                            boolean found=false;
+                            for(int radius=0;radius<=5&&!found;radius++)for(int dx=-radius;dx<=radius&&!found;dx++)for(int dy=-radius;dy<=radius&&!found;dy++) {
+                                com.openrsc.server.model.world.region.TileValue tile=server.getWorld().getTile(com.openrsc.server.model.world.coordinate.WorldLocation.global(new com.openrsc.server.model.world.coordinate.WorldCoordinate(x+dx,y+dy,level)));
+                                if((tile.traversalMask&255)==0 && (tile.overlay&255)!=10){x+=dx;y+=dy;found=true;}
+                            }
+                            if(!found)throw new IllegalStateException("No authored walkable lifecycle destination near "+x+","+y+","+level);
+                        }
+                        viewer.teleport(x,y,level,false);
+                    }
+                    if(viewer!=null && phase.equals("lifecycle") && Files.isRegularFile(run.resolve("logout-request"))) {
+                        Files.delete(run.resolve("logout-request"));viewer.logout();
                     }
                     driveActors(); driveViewer(); tick++;
                     if (viewer != null && phase.equals("same-position") && tick == 50) {
@@ -203,9 +300,9 @@ public final class RendererBenchmarkServer {
                     }
                     JSONObject state = new JSONObject().put("online", player != null).put("private", true);
                     if (player != null) state.put("x", player.getX()).put("y", player.getY()).put("level", player.getWorldLocation().getCoordinate().getLevel());
-                    state.put("phase", phase).put("phaseTick", tick).put("samePositionTeleports", samePositionTeleports).put("controlledPlayers", actors.size()).put("controlledNpcs", npcs.size())
-                        .put("summonsRequested", actors.isEmpty() ? 0 : 8).put("visualProjectileEmitters", actors.isEmpty() ? 0 : 8)
-                        .put("visualProjectilesDamage", false).put("removedMapNpcs", removedMapNpcs)
+                    state.put("phase", phase).put("phaseTick", tick).put("samePositionTeleports", samePositionTeleports).put("areaTeleports",areaTeleports).put("levelTeleports",levelTeleports).put("controlledPlayers", actors.size()).put("controlledNpcs", npcs.size())
+                        .put("summonsRequested", actors.isEmpty() ? 0 : 8).put("visualProjectileEmitters", actors.isEmpty() || realCombat() ? 0 : 8)
+                        .put("visualProjectilesDamage", false).put("realCombat",combatState()).put("removedMapNpcs", removedMapNpcs)
                         .put("cycleMillis", server.getWorldDayNightClock().getCurrentCycleMillis())
                         .put("cycleLengthMillis", server.getWorldDayNightClock().getCycleMillis()).put("cycleRate", server.getWorldDayNightClock().getRateMultiplier());
                     Path next = run.resolve("status.next"); Files.write(next, state.toString().getBytes("UTF-8"));

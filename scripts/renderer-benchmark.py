@@ -180,7 +180,7 @@ def capture(args):
     capture = run / name; capture.mkdir()
     (capture / "scenario.json").write_text(json.dumps(dict(phase=args.phase, requestedViewer=[args.x,args.y,0], zoom=args.zoom, initialRotation=args.rotation, quality=args.quality, legacyMask=args.legacy_mask, sunAzimuth=args.sun_azimuth if args.phase not in ("sun-motion","night") else None, sunElevation=args.sun_elevation if args.phase not in ("sun-motion","night") else None, normalRateServerSun=args.phase in ("sun-motion","night"),relogFrom=str(previous_capture) if previous_capture else None, visiblePreview=visible,excludedCasterKinds=args.exclude_caster,dumpTerrain=args.dump_terrain,dumpFences=args.dump_fences,requestedWindowMode=args.window_mode if visible else "diagnostic-hidden",warmupSeconds=args.warmup_seconds,fogRequested=args.fog,snapshotFrames=args.snapshot_frames,tonePreview=args.tone_preview if args.phase not in ("sun-motion","night") else None),indent=2)+"\n")
     request = run / "request.next"
-    request.write_text(json.dumps(dict(busy=args.phase.startswith("busy") or args.phase == "sun-motion", phase=args.phase, x=args.x, y=args.y)))
+    request.write_text(json.dumps(dict(busy=args.phase.startswith("busy") or args.phase in ("sun-motion","combat-real"), phase=args.phase, x=args.x, y=args.y)))
     os.replace(request, run / "request.json")
     props = {"spoiledmilk.openglHiddenDiagnostic":"true", "spoiledmilk.openglHiddenWidth":"1920", "spoiledmilk.openglHiddenHeight":"1080", "spoiledmilk.rendererDiagnostics":"true", "spoiledmilk.rendererTelemetry":"true", "spoiledmilk.rendererDiagnosticSessionDir":str(capture), "spoiledmilk.rendererDiagnosticMaxLogBytes":str(128*1024*1024), "spoiledmilk.clientLog":str(capture / "runtime.log"), "spoiledmilk.clientCommit":json.loads((run / MARKER).read_text())["clientSourceCommit"], "spoiledmilk.openglVsync":"false", "renderer.benchmark.seconds":str(args.seconds), "renderer.benchmark.phase":args.phase, "renderer.benchmark.zoom":str(args.zoom), "spoiledmilk.openglRendererProfile":"remaster", "spoiledmilk.shadowQuality":args.quality}
     props["renderer.benchmark.visiblePreview"] = str(visible).lower()
@@ -201,7 +201,7 @@ def capture(args):
     props.update({"spoiledmilk.openglFrameCapture":str(args.snapshot).lower(), "renderer.benchmark.snapshot":str(args.snapshot).lower(), "spoiledmilk.openglFrameCaptureDir":str(capture / "captures")})
     common_git = Path(subprocess.check_output(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], cwd=ROOT, text=True).strip())
     gpu_lock = common_git / "ai-workspaces/renderer-gpu-benchmark.lock"
-    argv = ["flock", "-w", "10", "-F", str(gpu_lock), "java", "-Xms512m", "-Xmx2g", *["-D"+k+"="+v for k,v in props.items()], "-cp", str(run / "classes") + os.pathsep + str(run / "client/client.jar"), "orsc.RendererBenchmarkClient"]
+    argv = ["flock", "-w", "10", "-F", str(gpu_lock), "java", "-Xms512m", "-Xmx2g", *(["-verbose:gc"] if args.gc_log else []), *["-D"+k+"="+v for k,v in props.items()], "-cp", str(run / "classes") + os.pathsep + str(run / "client/client.jar"), "orsc.RendererBenchmarkClient"]
     (capture / "command.json").write_text(json.dumps(dict(argv=argv, cwd=str(run / "client"), settings=props, hiddenOffscreen=not visible, initialHostLoadAverage=os.getloadavg()), indent=2)+"\n")
     environment = {key:value for key,value in os.environ.items() if not key.startswith(("SPOILED_MILK_", "OPENRSC_"))}
     environment.update(SPOILED_MILK_CLIENT_COMMIT=props["spoiledmilk.clientCommit"], SPOILED_MILK_CLIENT_BRANCH=json.loads((run / MARKER).read_text()).get("clientSourceBranch","unspecified-artifact-branch"), SPOILED_MILK_CLIENT_TARGET_MODE="private-renderer-benchmark")
@@ -267,7 +267,27 @@ def validate_runtime(run, samples, phase):
     distance = max(max(p[axis] for p in positions)-min(p[axis] for p in positions) for axis in (0,1)) if positions else 0
     if phase == "busy-walk" and distance < 4:
         raise ValueError("Busy-walk failed to move the actual viewer at least4tiles")
+    if phase == "combat-real":
+        combat=[s.get("serverState",{}).get("realCombat",{}) for s in samples]
+        if not combat or not all(c.get("authoritative") is True for c in combat):raise ValueError("Missing authoritative combat evidence")
+        last=combat[-1]
+        if any(last.get("creditedDamageByFamily",{}).get(k,0)<=0 for k in ("ice","thunder","wood","ranged","throwing","melee")):raise ValueError("An expected combat family has no authoritative damage contribution")
+        if any(last.get("resourceUnitsSpent",{}).get(k,0)<=0 for k in ("ice","thunder","wood","ranged","throwing")):raise ValueError("An expected combat family consumed no resources")
+        if max(c.get("summonsEngaged",0) for c in combat)<=0:raise ValueError("Summons never engaged production combat")
+        if max(s.get("combatVisuals",{}).get("activeHitSplatActors",0) for s in samples)<=0:raise ValueError("No received active hit splats")
+        if max(s.get("activeProjectileActors",0) for s in samples)<2:raise ValueError("No overlapping received projectiles")
     return dict(positions=positions,maxAxisDistanceTiles=distance,fixtureRuntimeExceptions=False)
+
+
+def validate_window_lifecycle(events):
+    expected=["windowed","resize","fullscreen","borderless","windowed-again","iconify","activate-restore","resumed"]
+    if [e.get("action") for e in events] != expected:raise ValueError("Full native game-window lifecycle evidence is incomplete")
+    for event in events:
+        if event.get("gameObjects",0)<=0:raise ValueError("Window lifecycle lost the actual game world")
+        if event["action"]!="iconify" and event.get("afterFrames",0)<=event.get("beforeFrames",0):raise ValueError("Completed world frames did not resume after native window operation")
+    if events[-2].get("flags")!=1 or events[-1].get("flags")!=1:raise ValueError("Native window activation did not restore visible uniconified rendering")
+    if events[1].get("surface",{}).get("windowWidth")!=1100 or events[1].get("surface",{}).get("windowHeight")!=700:raise ValueError("Native resize dimensions were not observed")
+    return dict(actions=expected,restoredVisibleUniconified=True,completedFramesResume=True,worldRetained=True)
 
 
 def report(args):
@@ -337,7 +357,21 @@ def report(args):
     result["roofMaskExport"] = json.loads((capture / "roof-mask.json").read_text()) if (capture / "roof-mask.json").is_file() else None
     result["roofContextMeaning"] = "New roofContext values use the same published frame as actor projection; missing optional frames are null/unknown, not roof counts of zero. Historical raw Scene observations may precede coverage attachment. Exported roofMaskExport is the authoritative immutable GPU receiver mask; do not infer final policy from room walls or unknown observations."
     result["roofContext"] = {key:sorted({sample["roof"][key] for sample in samples if isinstance(sample.get("roof"),dict) and key in sample["roof"]}) for key in ("visibility","residentRoofTriangles","maximumSourceCoveredTiles")}
-    result["gpuSequenceScope"] = "Per capture/fresh-client JVM CSV. Relog proof opens another JVM/file; this tooling does not claim same-JVM logout/relogin timer-instance uniqueness."
+    if result["phase"] == "lifecycle":
+        if not (capture / "SETTINGS-PERSISTED").is_file():raise ValueError("Production settings persistence not verified")
+        lifecycle,partial_lifecycle=analyzer.read_jsonl(capture / "lifecycle-events.jsonl")
+        if partial_lifecycle or [e.get("event") for e in lifecycle] != ["logout","relogin","logout","relogin"]:raise ValueError("Two ordinary same-JVM relogs not completed")
+        if set(context.get("shadowQuality",[])) != {"OFF","LOW","HIGH"}:raise ValueError("Lifecycle did not exercise all shadow qualities")
+        if not {0,2}.issubset({s.get("serverState",{}).get("level") for s in samples}):raise ValueError("Native signed-level transition not observed")
+        last=samples[-1].get("serverState",{})
+        if not all(last.get(k,0)>0 for k in ("samePositionTeleports","areaTeleports","levelTeleports")):raise ValueError("An expected teleport path did not execute")
+        window_events,partial_window=analyzer.read_jsonl(capture / "window-events.jsonl")
+        if partial_window:raise ValueError("Partial native window lifecycle evidence")
+        window_validation=validate_window_lifecycle(window_events)
+        result["lifecycleValidation"]={"sameJvmRelogs":2,"shadowQualities":context["shadowQuality"],"nativeLevels":[0,2],"samePositionTeleports":last["samePositionTeleports"],"areaTeleports":last["areaTeleports"],"levelTeleports":last["levelTeleports"],"window":window_validation}
+        result["gpu"]={}
+        result["limitation"]="Functional same-JVM lifecycle run with deliberate Off/Low/High, teleports and login pauses. Not a steady 60 FPS performance cohort. GPU timer lifetimes reset at relog, so combined GPU distributions are omitted."
+    result["gpuSequenceScope"] = ("Lifecycle performs ordinary same-JVM logout/relogin. Shadow timer instances may be recreated; combined GPU distributions and cross-lifetime sequence uniqueness are deliberately omitted." if result["phase"]=="lifecycle" else "Per capture/fresh-client JVM CSV. Separate relog phase opens another JVM/file; it does not establish same-JVM timer-instance uniqueness.")
     result["gpuCoverage"] = dict(farPhaseAttributionVerified=bool(samples) and all(sample.get("gpuFarPollEveryFrame") is True for sample in samples), farAttributionNote="Older engines polled far queries only on cache rebuild, so completion could lag2.5s and1s trim was insufficient. Earlier far phase counts are provisional; rawsamples remain untouched. Verified per-frame polling is required for final phase attribution.", trimAtEachPhaseEdgeNanos=1_000_000_000, reason="GPU queries are read asynchronously; completion timestamps near phase boundaries are excluded to avoid neighboring-work attribution. Raw CSV retains every collected sample.", passes={label:dict(allPhaseUniqueSamples=count, retainedSamples=len(gpu.get(label, [])), phaseEdgeExcludedSamples=count-len(gpu.get(label, []))) for label,count in gpu_phase_counts.items()})
     result["timingMeaning"] = dict(clientLoop="Paced loop intervals; tiny overruns of16.667ms are scheduling jitter, not independently proven missed presentation frames.", openGLRender="CPU submission/render work including swap; compare GPU timeline separately, do not add overlapping CPU/GPU durations.", gpu="Elapsed GPU timeline including possible submission starvation. Far-map samples describe rebuilds only, not every frame.")
     if distributions:
@@ -372,8 +406,8 @@ def main():
     for name in ("start", "stop", "capture", "preview"):
         p = sub.add_parser(name); p.add_argument("run", type=Path)
         if name in ("capture", "preview"):
-            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "night", "transition", "same-position", "relog", "visual"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--snapshot-frames",type=int,choices=[1,12],default=12); p.add_argument("--legacy-mask", action="store_true")
-            p.add_argument("--fog",choices=["on","off"],default="on"); p.add_argument("--tone-preview",choices=["day","cycle","sunrise-amber","dawn-gold","rose-dusk","cool-night","deep-blue"],default="day"); p.add_argument("--warmup-seconds",type=int,default=15); p.add_argument("--window-mode",choices=["windowed","fullscreen","borderless-fullscreen"],default="borderless-fullscreen"); p.add_argument("--dump-terrain",action="store_true"); p.add_argument("--dump-fences",action="store_true"); p.add_argument("--dump-roof-mask",action="store_true"); p.add_argument("--exclude-caster", choices=["TERRAIN","WALL","ROOF","GAME_OBJECT","WALL_OBJECT"],action="append",default=[]); p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
+            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "night", "transition", "same-position", "relog", "visual", "combat-real", "lifecycle"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--snapshot-frames",type=int,choices=[1,12],default=12); p.add_argument("--legacy-mask", action="store_true")
+            p.add_argument("--gc-log",action="store_true",help="Retain JVM GC messages in the private console log"); p.add_argument("--fog",choices=["on","off"],default="on"); p.add_argument("--tone-preview",choices=["day","cycle","sunrise-amber","dawn-gold","rose-dusk","cool-night","deep-blue"],default="day"); p.add_argument("--warmup-seconds",type=int,default=15); p.add_argument("--window-mode",choices=["windowed","fullscreen","borderless-fullscreen"],default="borderless-fullscreen"); p.add_argument("--dump-terrain",action="store_true"); p.add_argument("--dump-fences",action="store_true"); p.add_argument("--dump-roof-mask",action="store_true"); p.add_argument("--exclude-caster", choices=["TERRAIN","WALL","ROOF","GAME_OBJECT","WALL_OBJECT"],action="append",default=[]); p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
     p = sub.add_parser("report"); p.add_argument("capture", type=Path)
     args = parser.parse_args()
     if args.action in ("capture", "preview") and not 5 <= args.warmup_seconds <= 120: parser.error("Warmup must be5..120 seconds")
