@@ -6,7 +6,7 @@ public final class RendererWindowLifecycleGpuFixture {
     static int releases,saves;static Path receipt;
     static void require(boolean b,String message){if(!b)throw new AssertionError(message);}
     static void settle(OpenGLWindowController w)throws Exception{
-        for(int n=0;n<15;n++){w.pollEvents();w.prepareFrame(960,540);Thread.sleep(20);}
+        for(int n=0;n<40;n++){w.pollEvents();w.prepareFrame(960,540);Thread.sleep(20);}
     }
     public static void main(String[] args)throws Exception{
         receipt=Paths.get(args[0]);Files.createDirectories(receipt);
@@ -23,7 +23,10 @@ public final class RendererWindowLifecycleGpuFixture {
                 OpenGLWindowSettings.setMode(mode);settle(window);require(OpenGLWindowSettings.getMode()==mode,"Window mode lost");require(window.diagnosticSurfaceSize()[0]>0,"Invalid framebuffer after mode change");System.out.println("mode="+mode+" surface="+java.util.Arrays.toString(window.diagnosticSurfaceSize()));
             }
             glfw.getMethod("glfwIconifyWindow",long.class).invoke(null,handle);settle(window);require((window.diagnosticWindowFlags()&2)!=0,"Window manager did not iconify scoped window");
-            glfw.getMethod("glfwRestoreWindow",long.class).invoke(null,handle);settle(window);require((window.diagnosticWindowFlags()&2)==0,"Window did not restore");
+            System.out.println("iconified cached="+window.diagnosticWindowFlags()+" direct="+gl.glfwGetWindowAttrib(handle,gl.GLFW_ICONIFIED));
+            glfw.getMethod("glfwRestoreWindow",long.class).invoke(null,handle);gl.glfwShowWindow(handle);glfw.getMethod("glfwFocusWindow",long.class).invoke(null,handle);settle(window);
+            System.out.println("restored cached="+window.diagnosticWindowFlags()+" direct="+gl.glfwGetWindowAttrib(handle,gl.GLFW_ICONIFIED)+" mode="+OpenGLWindowSettings.getMode());
+            require((window.diagnosticWindowFlags()&2)==0,"Window did not restore");
             RendererShadowSettings.setQuality(RendererShadowSettings.Quality.LOW);window.prepareForShutdown();
             Properties persisted=new Properties();try(java.io.InputStream in=Files.newInputStream(receipt.resolve("settings.properties"))){persisted.load(in);}require("windowed".equals(persisted.getProperty("opengl_window_mode")),"Window mode not persisted");
             RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);RendererShadowSettings.loadFromClientSettings(persisted);require(RendererShadowSettings.getQuality()==RendererShadowSettings.Quality.LOW,"Shadow preference did not roundtrip");

@@ -271,7 +271,7 @@ def validate_runtime(run, samples, phase):
         combat=[s.get("serverState",{}).get("realCombat",{}) for s in samples]
         if not combat or not all(c.get("authoritative") is True for c in combat):raise ValueError("Missing authoritative combat evidence")
         last=combat[-1]
-        if any(last.get("primaryDamageByFamily",{}).get(k,0)<=0 for k in ("ice","thunder","wood","ranged","throwing","melee")):raise ValueError("An expected combat family did not damage a primary target")
+        if any(last.get("creditedDamageByFamily",{}).get(k,0)<=0 for k in ("ice","thunder","wood","ranged","throwing","melee")):raise ValueError("An expected combat family has no authoritative damage contribution")
         if any(last.get("resourceUnitsSpent",{}).get(k,0)<=0 for k in ("ice","thunder","wood","ranged","throwing")):raise ValueError("An expected combat family consumed no resources")
         if max(c.get("summonsEngaged",0) for c in combat)<=0:raise ValueError("Summons never engaged production combat")
         if max(s.get("combatVisuals",{}).get("activeHitSplatActors",0) for s in samples)<=0:raise ValueError("No received active hit splats")
@@ -346,6 +346,16 @@ def report(args):
     result["roofMaskExport"] = json.loads((capture / "roof-mask.json").read_text()) if (capture / "roof-mask.json").is_file() else None
     result["roofContextMeaning"] = "New roofContext values use the same published frame as actor projection; missing optional frames are null/unknown, not roof counts of zero. Historical raw Scene observations may precede coverage attachment. Exported roofMaskExport is the authoritative immutable GPU receiver mask; do not infer final policy from room walls or unknown observations."
     result["roofContext"] = {key:sorted({sample["roof"][key] for sample in samples if isinstance(sample.get("roof"),dict) and key in sample["roof"]}) for key in ("visibility","residentRoofTriangles","maximumSourceCoveredTiles")}
+    if result["phase"] == "lifecycle":
+        lifecycle,partial_lifecycle=analyzer.read_jsonl(capture / "lifecycle-events.jsonl")
+        if partial_lifecycle or [e.get("event") for e in lifecycle] != ["logout","relogin","logout","relogin"]:raise ValueError("Two ordinary same-JVM relogs not completed")
+        if set(context.get("shadowQuality",[])) != {"OFF","LOW","HIGH"}:raise ValueError("Lifecycle did not exercise all shadow qualities")
+        if not {0,2}.issubset({s.get("serverState",{}).get("level") for s in samples}):raise ValueError("Native signed-level transition not observed")
+        last=samples[-1].get("serverState",{})
+        if not all(last.get(k,0)>0 for k in ("samePositionTeleports","areaTeleports","levelTeleports")):raise ValueError("An expected teleport path did not execute")
+        result["lifecycleValidation"]={"sameJvmRelogs":2,"shadowQualities":context["shadowQuality"],"nativeLevels":[0,2],"samePositionTeleports":last["samePositionTeleports"],"areaTeleports":last["areaTeleports"],"levelTeleports":last["levelTeleports"]}
+        result["gpu"]={}
+        result["limitation"]="Functional same-JVM lifecycle run with deliberate Off/Low/High, teleports and login pauses. Not a steady 60 FPS performance cohort. GPU timer lifetimes reset at relog, so combined GPU distributions are omitted."
     result["gpuSequenceScope"] = "Per capture/fresh-client JVM CSV. Relog proof opens another JVM/file; this tooling does not claim same-JVM logout/relogin timer-instance uniqueness."
     result["gpuCoverage"] = dict(farPhaseAttributionVerified=bool(samples) and all(sample.get("gpuFarPollEveryFrame") is True for sample in samples), farAttributionNote="Older engines polled far queries only on cache rebuild, so completion could lag2.5s and1s trim was insufficient. Earlier far phase counts are provisional; rawsamples remain untouched. Verified per-frame polling is required for final phase attribution.", trimAtEachPhaseEdgeNanos=1_000_000_000, reason="GPU queries are read asynchronously; completion timestamps near phase boundaries are excluded to avoid neighboring-work attribution. Raw CSV retains every collected sample.", passes={label:dict(allPhaseUniqueSamples=count, retainedSamples=len(gpu.get(label, [])), phaseEdgeExcludedSamples=count-len(gpu.get(label, []))) for label,count in gpu_phase_counts.items()})
     result["timingMeaning"] = dict(clientLoop="Paced loop intervals; tiny overruns of16.667ms are scheduling jitter, not independently proven missed presentation frames.", openGLRender="CPU submission/render work including swap; compare GPU timeline separately, do not add overlapping CPU/GPU durations.", gpu="Elapsed GPU timeline including possible submission starvation. Far-map samples describe rebuilds only, not every frame.")

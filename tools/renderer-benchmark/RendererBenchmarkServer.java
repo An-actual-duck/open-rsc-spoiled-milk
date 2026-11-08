@@ -81,13 +81,22 @@ public final class RendererBenchmarkServer {
             }else {equipAmount(p,ItemId.RUNE_LONG_SWORD.id(),1);p.startCombat(target);}
         }
     }
-    private static JSONObject combatState() {
+    private static JSONObject combatState() throws Exception {
         JSONObject result=new JSONObject().put("authoritative",realCombat());
         if(!realCombat()||actors.size()<6)return result;
-        JSONObject damage=new JSONObject(),resources=new JSONObject();int damaged=0,active=0,summons=0,summonsEngaged=0;
+        JSONObject damage=new JSONObject(),resources=new JSONObject(),credited=new JSONObject();int summonDamage=0;int damaged=0,active=0,summons=0,summonsEngaged=0;
         for(int i=0;i<6;i++) {
             Player p=actors.get(i);Npc target=npcs.get(i*3);
             damage.put(COMBAT_FAMILIES[i],SURVIVAL_HITS-target.getSkills().getLevel(Skill.HITS.id()));
+            java.lang.reflect.Field ledgerField=Npc.class.getDeclaredField("contributionLedger");ledgerField.setAccessible(true);
+            int contribution=0;
+            for(Npc n:npcs) {
+                com.openrsc.server.model.entity.npc.NpcContributionLedger ledger=(com.openrsc.server.model.entity.npc.NpcContributionLedger)ledgerField.get(n);
+                com.openrsc.server.model.entity.npc.NpcContributionRole role=i<3?com.openrsc.server.model.entity.npc.NpcContributionRole.MAGIC:i<5?com.openrsc.server.model.entity.npc.NpcContributionRole.RANGED:com.openrsc.server.model.entity.npc.NpcContributionRole.MELEE;
+                contribution+=ledger.get(role,p.getUUID()).getDamage();
+                summonDamage+=ledger.get(com.openrsc.server.model.entity.npc.NpcContributionRole.SUMMON,p.getUUID()).getDamage();
+            }
+            credited.put(COMBAT_FAMILIES[i],contribution);
             if(i<3) {
                 Spells spell=new Spells[]{Spells.ICE_CRYSTAL,Spells.THUNDER_STRIKE,Spells.BATTERING_RAM}[i];
                 int spent=0;for(Map.Entry<Integer,Integer> rune:worldServer.getEntityHandler().getSpellDef(spell).getRunesRequired())spent+=10000-p.getCarriedItems().getInventory().countId(rune.getKey());
@@ -101,7 +110,7 @@ public final class RendererBenchmarkServer {
         }
         for(Npc n:npcs)if(n.getSkills().getLevel(Skill.HITS.id())<SURVIVAL_HITS)damaged++;
         for(Npc n:worldServer.getWorld().getNpcs())if(Summoning.isSummon(n)) {summons++;if(n.getPvmMeleeEvent()!=null||n.inCombat())summonsEngaged++;}
-        return result.put("primaryDamageByFamily",damage).put("resourceUnitsSpent",resources).put("damagedTargets",damaged).put("activeChannels",active)
+        return result.put("primaryDamageByFamily",damage).put("creditedDamageByFamily",credited).put("summonCreditedDamage",summonDamage).put("resourceUnitsSpent",resources).put("damagedTargets",damaged).put("activeChannels",active)
             .put("summonsPresent",summons).put("summonsEngaged",summonsEngaged);
     }
     private static int viewerX = 502, viewerY = 453;
@@ -283,7 +292,7 @@ public final class RendererBenchmarkServer {
                     JSONObject state = new JSONObject().put("online", player != null).put("private", true);
                     if (player != null) state.put("x", player.getX()).put("y", player.getY()).put("level", player.getWorldLocation().getCoordinate().getLevel());
                     state.put("phase", phase).put("phaseTick", tick).put("samePositionTeleports", samePositionTeleports).put("areaTeleports",areaTeleports).put("levelTeleports",levelTeleports).put("controlledPlayers", actors.size()).put("controlledNpcs", npcs.size())
-                        .put("summonsRequested", actors.isEmpty() ? 0 : 8).put("visualProjectileEmitters", actors.isEmpty() ? 0 : 8)
+                        .put("summonsRequested", actors.isEmpty() ? 0 : 8).put("visualProjectileEmitters", actors.isEmpty() || realCombat() ? 0 : 8)
                         .put("visualProjectilesDamage", false).put("realCombat",combatState()).put("removedMapNpcs", removedMapNpcs)
                         .put("cycleMillis", server.getWorldDayNightClock().getCurrentCycleMillis())
                         .put("cycleLengthMillis", server.getWorldDayNightClock().getCycleMillis()).put("cycleRate", server.getWorldDayNightClock().getRateMultiplier());
