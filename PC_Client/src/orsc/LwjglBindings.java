@@ -139,7 +139,7 @@ final class LwjglBindings {
 	private final Method glUseProgram;
 	private final Method glGetUniformLocation;
 	private final MethodHandle glUniform1i;
-	private final Method glUniform1f;
+	private final MethodHandle glUniform1f;
 	private final Method glUniformMatrix4fv;
 	private final MethodHandle glEnableVertexAttribArray;
 	private final MethodHandle glDisableVertexAttribArray;
@@ -423,7 +423,7 @@ final class LwjglBindings {
 		glUseProgram = method(gl20Class, "glUseProgram", int.class);
 		glGetUniformLocation = method(gl20Class, "glGetUniformLocation", int.class, CharSequence.class);
 		glUniform1i = methodHandle(gl20Class, "glUniform1i", int.class, int.class);
-		glUniform1f = method(gl20Class, "glUniform1f", int.class, float.class);
+		glUniform1f = methodHandle(gl20Class, "glUniform1f", int.class, float.class);
 		glUniformMatrix4fv = method(gl20Class, "glUniformMatrix4fv", int.class, boolean.class, FloatBuffer.class);
 		glEnableVertexAttribArray = methodHandle(gl20Class, "glEnableVertexAttribArray", int.class);
 		glDisableVertexAttribArray = methodHandle(gl20Class, "glDisableVertexAttribArray", int.class);
@@ -1169,7 +1169,11 @@ final class LwjglBindings {
 	}
 
 	void glUniform1f(int location, float value) throws Exception {
-		invoke(glUniform1f, location, value);
+		try {
+			glUniform1f.invokeExact(location, value);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glUniformMatrix4fv(int location, boolean transpose, FloatBuffer value) throws Exception {
