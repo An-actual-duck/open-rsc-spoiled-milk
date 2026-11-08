@@ -103,6 +103,7 @@ final class LwjglBindings {
 	private final Method glFogf;
 	private final Method glFogfv;
 	private final Method glGetString;
+	private final Method glGetInteger;
 	private final MethodHandle glMatrixMode;
 	private final MethodHandle glLoadIdentity;
 	private final MethodHandle glLoadMatrixf;
@@ -372,6 +373,7 @@ final class LwjglBindings {
 		glFogf = method(gl11Class, "glFogf", int.class, float.class);
 		glFogfv = method(gl11Class, "glFogfv", int.class, FloatBuffer.class);
 		glGetString = method(gl11Class, "glGetString", int.class);
+		glGetInteger = method(gl11Class, "glGetInteger", int.class);
 		glMatrixMode = methodHandle(gl11Class, "glMatrixMode", int.class);
 		glLoadIdentity = methodHandle(gl11Class, "glLoadIdentity");
 		glLoadMatrixf = methodHandle(gl11Class, "glLoadMatrixf", FloatBuffer.class);
@@ -946,6 +948,8 @@ final class LwjglBindings {
 	void glFogfv(int name, FloatBuffer values) throws Exception {
 		invoke(glFogfv, name, values);
 	}
+
+	int glGetInteger(int name) throws Exception { return ((Integer) invoke(glGetInteger, name)).intValue(); }
 
 	String glGetString(int name) throws Exception {
 		return (String) invoke(glGetString, name);

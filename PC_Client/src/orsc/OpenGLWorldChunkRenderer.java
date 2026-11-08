@@ -145,6 +145,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	};
 
 	private final LwjglBindings gl;
+	private final TerrainDefinitionTexture terrainDefinitionTexture = new TerrainDefinitionTexture();
 	private final OpenGLWorldTextureCache textureCache;
 	private final OpenGLShaderProgram residentChunkShader;
 	private final boolean replacementCompositeEnabled;
@@ -662,6 +663,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			skippedTriangles = accumulator.skippedTriangles;
 		} finally {
 			if (shaderActive && residentChunkShader != null) {
+				terrainDefinitionTexture.unbind(gl);
 				residentChunkShader.unbindWorldTextureAttributes();
 				gl.glUseProgram(0);
 			}
@@ -2563,6 +2565,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			frame,
 			activeRemasterShadowMask,
 			activeRemasterGlowMask);
+		terrainDefinitionTexture.bind(gl, residentChunkShader, frame);
 		residentChunkShader.bindGeometryShadows(geometryShadows);
 		residentChunkShader.setGeometryShadowWorldOffsets(
 			GeometryShadowCoordinates.worldOffsetX(frame.getWorldChunkFrame()),
@@ -3911,6 +3914,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 
 	private void clearResidentResources() throws Exception {
 		if (geometryShadows != null) { geometryShadows.close(); geometryShadows = null; }
+		terrainDefinitionTexture.clear(gl);
 		geometryShadowCapabilityChecked = false;
 		geometryRoofMaskCache.clear();
 		for (WorldChunkBuffer buffer : residentChunks.values()) {
