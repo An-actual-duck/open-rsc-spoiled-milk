@@ -95,7 +95,8 @@ public final class IdleWalkAdmissionFixture {
     private static void freshCoordinator() throws Exception {
         if (candidate) {
             Class<?> type = Class.forName("com.openrsc.server.net.rsc.IdleWalkCommandAdmission");
-            coordinator = type.newInstance(); poll = type.getMethod("poll", com.openrsc.server.model.world.World.class);
+            java.lang.reflect.Constructor<?> constructor=type.getDeclaredConstructor(java.util.function.LongSupplier.class);constructor.setAccessible(true);
+            coordinator=constructor.newInstance((java.util.function.LongSupplier)()->0L);poll=type.getMethod("poll",com.openrsc.server.model.world.World.class);
         }
     }
     private static void advanceTick(CurrentCombatHarness h) throws Exception {
@@ -118,10 +119,10 @@ public final class IdleWalkAdmissionFixture {
             freshCoordinator();
             result.put("phaseSweep", phases(h));
             if (candidate) {
-                barriers(h); approachAndAction(h); ownership(h); connectionAndProfiles(h); budgets(h); cadence(h);
+                barriers(h); approachAndAction(h); ownership(h); trapAndBlink(h); connectionAndProfiles(h); budgets(h); cadence(h);
                 result.put("fair64", fairness(h, 64));
                 result.put("fair256", fairness(h, 256));
-                spamFairness(h); concurrentProducer(h); flood(h);
+                spamFairness(h); concurrentProducer(h); softBudget(h); flood(h);
             }
             result.put("clientVersion", h.server().getConfig().CLIENT_VERSION)
                 .put("npcCapacity", h.server().getConfig().NPC_CAPACITY)
@@ -246,6 +247,22 @@ public final class IdleWalkAdmissionFixture {
         check(admit(h)==0 && !batch.isComplete(),"batch progress not interrupted early");h.logout(p.player);
         p=new Peer(h);p.player.getSkills().setLevel(Skill.HITS.id(),0,false);p.send(walk(187,451,450));check(admit(h)==0,"dead actor never admits walking");h.logout(p.player);
     }
+    private static void trapAndBlink(CurrentCombatHarness h) throws Exception {
+        h.clock().reset(EPOCH);Peer p=new Peer(h);
+        com.openrsc.server.model.entity.npc.Npc demon=h.npc(com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.NPC_ID,449,450);
+        try {
+            com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.onDamage(demon,p.player,1);
+            h.clock().advanceMillis(com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.TRAP_MILLIS-1);
+            check(com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.actionsBlocked(p.player)&&p.player.canLogout(),"real trap independently blocks actions near its expiry");
+            Packet intent=walk(187,451,450);p.send(intent);
+            check(admit(h)==0&&queue(p.player).get(0)==intent,"early intake must defer, not silently consume, a near-expiry trapped walk");
+            h.clock().advanceMillis(1);p.player.processIncomingPackets();p.player.updatePosition();
+            check(p.player.getX()==451&&p.player.getY()==450,"original normal tick can admit the retained intent after trap expiry");
+        }finally{h.logout(p.player);h.world().unregisterNpc(demon);}
+        h.clock().reset(EPOCH);p=new Peer(h);p.player.setAttribute("blink",true);p.send(walk(187,453,450));
+        check(admit(h)==0&&queue(p.player).size()==1,"blink teleports stay on normal command admission");
+        p.player.processIncomingPackets();p.player.updatePosition();check(p.player.getX()==453,"normal blink still performs its existing teleport");h.logout(p.player);
+    }
     private static void connectionAndProfiles(CurrentCombatHarness h) throws Exception {
         for(int state=0;state<3;state++) {
             Peer p=new Peer(h);p.send(walk(187,451,450));
@@ -306,6 +323,33 @@ public final class IdleWalkAdmissionFixture {
         for(int i=0;i<queue(p.player).size();i++)check(queue(p.player).get(i)==sent.get(consumed+i),"concurrent producer retains exact FIFO suffix identities");
         p.player.processIncomingPackets();check(queue(p.player).isEmpty(),"normal drain finishes concurrent suffix");
         check(((List<?>)CurrentCombatHarness.readPrivateField(p.player,"activePackets")).isEmpty(),"shared processing retains active-opcode bookkeeping");h.logout(p.player);
+    }
+    private static void softBudget(CurrentCombatHarness h) throws Exception {
+        Class<?> type=Class.forName("com.openrsc.server.net.rsc.IdleWalkCommandAdmission");
+        java.lang.reflect.Constructor<?> constructor=type.getDeclaredConstructor(java.util.function.LongSupplier.class);constructor.setAccessible(true);
+        for(long origin:new long[]{0L,-1_000_000_000L,Long.MAX_VALUE-1_000_000L}) {
+            java.util.concurrent.atomic.AtomicLong clock=new java.util.concurrent.atomic.AtomicLong(origin);
+            coordinator=constructor.newInstance((java.util.function.LongSupplier)()->clock.getAndAdd(3_000_000L));
+            Peer a=new Peer(h),b=new Peer(h);Packet first=walk(187,451,450),remainder=walk(187,450,451);
+            a.send(first);a.send(remainder);b.send(walk(187,451,450));
+            check(admit(h)==1 && queue(a.player).size()==1 && queue(a.player).get(0)==remainder,
+                "soft budget stops between actual packets with FIFO suffix retained across arbitrary clock origin");
+            check(admit(h)==1 && queue(b.player).isEmpty(),"soft budget rotates to another peer before returning to noisy head");
+            a.player.processIncomingPackets();a.player.updatePosition();
+            check(a.player.getX()==450&&a.player.getY()==451,"ordinary tick drains budget remainder using normal final-intent order");
+            h.logout(a.player);h.logout(b.player);
+        }
+        for(int n:new int[]{64,256}) {
+            java.util.concurrent.atomic.AtomicLong clock=new java.util.concurrent.atomic.AtomicLong();
+            coordinator=constructor.newInstance((java.util.function.LongSupplier)()->clock.getAndAdd(3_000_000L));
+            List<Peer> peers=new ArrayList<>();for(int i=0;i<n;i++){Peer p=new Peer(h);p.send(walk(187,451,450));peers.add(p);}
+            for(int i=0;i<n;i++)check(admit(h)==1,"exhausted soft budget guarantees exactly one eligible command's progress");
+            for(Peer p:peers){check(queue(p.player).isEmpty(),"one-command budget retains rotating fairness for every client");h.logout(p.player);}
+        }
+        java.util.concurrent.atomic.AtomicInteger reads=new java.util.concurrent.atomic.AtomicInteger();
+        coordinator=constructor.newInstance((java.util.function.LongSupplier)()->{reads.incrementAndGet();return 0L;});
+        check(admit(h)==0&&reads.get()==0,"empty registry does not read budget clock");
+        freshCoordinator();
     }
     private static void flood(CurrentCombatHarness h) throws Exception {
         Peer p=new Peer(h);int prior=h.server().getConfig().MAX_PACKETS_PER_SECOND;

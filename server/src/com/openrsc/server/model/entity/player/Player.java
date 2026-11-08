@@ -4806,6 +4806,8 @@ public final class Player extends Mob {
 	private boolean eligibleIdleWalkOwner() {
 		return loggedIn && !isRemoved() && !killed && getLevel(Skill.HITS.id()) > 0
 			&& !isBusy() && !isSleeping() && !isUnregistering() && !hasUnregisterRequest()
+			&& !com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.actionsBlocked(this)
+			&& !getAttribute("blink", false)
 			&& !isLoggingOut() && !isTeleporting() && !hasActiveBatch() && ownedPlugins.isEmpty()
 			&& getMenu() == null && menuHandler == null && getInteractingNpc() == null && getNpcInteraction() == null
 			&& getWalkToAction() == null && !isFollowing() && getPossessing() == null

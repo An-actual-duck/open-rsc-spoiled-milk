@@ -68,7 +68,7 @@ def execute(a):
     for port in [43649,43549]:
         with socket.socket() as s:s.bind(('127.0.0.1',port))
     command=[str(java),'-Xmx2g','-XX:+UseSerialGC','-cp',cp(server,classes),'MovementInputProofServer']
-    proc=None;receipt={'serverCommand':command,'state':'before-launch','clientExit':None,'javaRequested':str(a.java),'javaExecutable':str(java),'javaVersion':version,'compileJavacExecutable':mark.get('javacExecutable'),'compileJavacVersion':mark.get('javacVersion')}
+    proc=None;client_proc=None;receipt={'runnerSha256':sha(Path(__file__)),'serverCommand':command,'state':'before-launch','clientExit':None,'javaRequested':str(a.java),'javaExecutable':str(java),'javaVersion':version,'compileJavacExecutable':mark.get('javacExecutable'),'compileJavacVersion':mark.get('javacVersion')}
     def save():(run/'execution.json').write_text(json.dumps(receipt,indent=2)+'\n')
     save()
     try:
@@ -85,9 +85,13 @@ def execute(a):
         common=Path(subprocess.check_output(['git','rev-parse','--path-format=absolute','--git-common-dir'],cwd=ROOT,text=True).strip());lock=common/'ai-workspaces/renderer-gpu-benchmark.lock'
         argv=['flock','-w','10','-F',str(lock),str(java),'-Xms512m','-Xmx2g',*['-D'+k+'='+v for k,v in properties.items()],'-cp',str(classes)+os.pathsep+str(client/'client.jar'),'orsc.MovementInputProofClient']
         receipt.update(state='client-launch',clientCommand=argv);save()
-        with (run/'client.log').open('w') as log:result=subprocess.run(argv,cwd=client,stdout=log,stderr=subprocess.STDOUT,timeout=240)
-        receipt.update(state='client-finished',clientExit=result.returncode)
-        if result.returncode or not (run/'CLIENT-DONE').exists():raise RuntimeError('Client proof failed; logs retained')
+        with (run/'client.log').open('w') as log:
+            client_proc=subprocess.Popen(argv,cwd=client,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+            receipt['clientPid']=client_proc.pid;save()
+            (run/'processes.json').write_text(json.dumps({'server':proc.pid,'client':client_proc.pid})+'\n')
+            client_exit=client_proc.wait(timeout=240)
+        receipt.update(state='client-finished',clientExit=client_exit)
+        if client_exit or not (run/'CLIENT-DONE').exists():raise RuntimeError('Client proof failed; logs retained')
         settled=[json.loads(line) for line in (run/'settled-samples.jsonl').read_text().splitlines()]
         if len(settled)!=a.samples:raise RuntimeError('Incomplete settled-destination evidence')
         for row in settled:
@@ -99,9 +103,18 @@ def execute(a):
         if len(completed)<2 or not list((run/'captures').rglob('*.png')):raise RuntimeError('Missing completed native capture evidence')
         receipt['completedCaptureRecords']=len(completed)
     except subprocess.TimeoutExpired:
-        receipt.update(state='client-timeout');raise
+        receipt.update(state='client-timeout')
+        snapshot={'monotonicNanos':time.monotonic_ns(),'clientPid':None if client_proc is None else client_proc.pid,'serverPid':None if proc is None else proc.pid}
+        if (run/'status.json').exists():snapshot['statusBeforeStop']=json.loads((run/'status.json').read_text())
+        (run/'timeout-before-stop.json').write_text(json.dumps(snapshot,indent=2)+'\n')
+        raise
     finally:
         save()
+        if client_proc is not None and client_proc.poll() is None:
+            client_proc.terminate()
+            try:client_proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:client_proc.kill();client_proc.wait()
+            receipt['privateClientTerminationFallback']=True;save()
         if proc is not None and proc.poll() is None:
             (run/'STOP').write_text('Private disposable fixture shutdown requested\n')
             try:proc.wait(timeout=20)
