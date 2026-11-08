@@ -21,10 +21,12 @@ public final class GeometryShadowGpuFixture {
 	private static int vertices, indices, alphaTexture;
 	private static boolean alpha;
 	private static boolean slopeReceiver, wallReceiver, contactCard;
+    private static float slopeGradient=-.25f;
 	private static int receiverPlane;
 	private static float receiverKind=1;
 	private static GeometryShadowRoofMask roofMask=GeometryShadowRoofMask.EMPTY;
-	private static long signature;
+	private static long signature, shadowContext;
+    private static int shadowPlane;
 	private static final Set<String> gpuSamples = new HashSet<String>();
 	private static final int SIZE = 512;
 	private static FloatBuffer floats(float... values) {
@@ -62,7 +64,7 @@ public final class GeometryShadowGpuFixture {
 			0,-128,-64,0,0, 0,-128,64,1,0, 0,-256,64,1,1,
 			0,-128,-64,0,0, 0,-256,64,1,1, 0,-256,-64,0,1};
 		for(int i=0;i<6;i++) {
-			if(slopeReceiver)geometry[i*5+1]=geometry[i*5]*-.25f;
+			if(slopeReceiver)geometry[i*5+1]=geometry[i*5]*slopeGradient;
 			if(wallReceiver){geometry[i*5+1]=geometry[i*5];geometry[i*5]=-300;}
 		}
 		if(contactCard)for(int i=6;i<12;i++)geometry[i*5+1]+=128;
@@ -78,6 +80,8 @@ public final class GeometryShadowGpuFixture {
 	}
 	private static final OpenGLGeometryShadows.Scene SCENE = new OpenGLGeometryShadows.Scene() {
 		public long staticSignature(){return signature;}
+        public long historyContext(){return shadowContext;}
+        public int receiverPlane(){return shadowPlane;}
 		public GeometryShadowRoofMask roofMask(){return roofMask;}
 		public void drawDepth(OpenGLGeometryShadows pass,DirectionalShadowProjection projection,boolean staticOnly)throws Exception {
 			pass.bindChunk(vertices,indices,20,12,0,0);
@@ -128,7 +132,7 @@ public final class GeometryShadowGpuFixture {
 			RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);
 			controlVao=functions.genVertexArray();functions.bindVertexArray(controlVao);gl.glBindBuffer(gl.GL_ARRAY_BUFFER,vertices);gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER,indices);
 			drawFbo=functions.genFramebuffer();readFbo=functions.genFramebuffer();functions.bindFramebuffer(OpenGLShadowBindings.DRAW_FRAMEBUFFER,drawFbo);functions.bindFramebuffer(OpenGLShadowBindings.READ_FRAMEBUFFER,readFbo);functions.noColorBuffers();
-			gl.glUseProgram(program);gl.glActiveTexture(gl.GL_TEXTURE0+5);gl.glBindTexture(gl.GL_TEXTURE_2D,alphaTexture);
+			gl.glUseProgram(program);gl.glActiveTexture(gl.GL_TEXTURE0+6);gl.glBindTexture(gl.GL_TEXTURE_2D,alphaTexture);gl.glActiveTexture(gl.GL_TEXTURE0+5);gl.glBindTexture(gl.GL_TEXTURE_2D,alphaTexture);
 			gl.glViewport(7,8,400,401);
 			Class<?> gl11=Class.forName("org.lwjgl.opengl.GL11");Method depthFunc=gl11.getMethod("glDepthFunc",int.class);depthFunc.invoke(null,0x0204);
 			gl.glDepthMask(false);gl.glColorMask(false,true,false,true);gl.glEnable(gl.GL_CULL_FACE);gl.glCullFace(0x0404);gl.glEnable(gl.GL_POLYGON_OFFSET_FILL);gl.glPolygonOffset(3.5f,7);
@@ -143,6 +147,7 @@ public final class GeometryShadowGpuFixture {
 			require(functions.integer(OpenGLShadowBindings.CURRENT_PROGRAM)==program,"program state leaked");
 			require(functions.integer(OpenGLShadowBindings.ACTIVE_TEXTURE)==gl.GL_TEXTURE0+5,"active texture leaked");
 			require(functions.integer(0x8069)==alphaTexture,"texture binding leaked");
+            gl.glActiveTexture(gl.GL_TEXTURE0+6);require(functions.integer(0x8069)==alphaTexture,"history texture unit6 leaked");gl.glActiveTexture(gl.GL_TEXTURE0+5);
 			require(functions.integer(0x0B74)==0x0204,"depth function leaked");
 			require(functions.integer(OpenGLShadowBindings.DRAW_FRAMEBUFFER_BINDING)==drawFbo&&functions.integer(OpenGLShadowBindings.READ_FRAMEBUFFER_BINDING)==readFbo,"framebuffer binding leaked");
 			require(functions.integer(OpenGLShadowBindings.VERTEX_ARRAY_BINDING)==controlVao,"VAO leaked");
@@ -192,11 +197,22 @@ public final class GeometryShadowGpuFixture {
 				for(int x=80;x<=240;x+=10)for(int z=-240;z<=240;z+=10)
 					require(brightness(grazing,x,z)>240,"grazing ground self-shadow at sun "+elevation);
 			}
+            for(boolean sloped:new boolean[]{false,true})for(int elevation:new int[]{5,10,25,45,85}) {
+                slopeReceiver=sloped;slopeGradient=elevation<25?.25f:-.25f;signature++;mesh();RendererRemasterLightSettings.adjustElevation(elevation-RendererRemasterLightSettings.getElevationDegrees());
+                pass.prepare(SCENE,0,0,-6000);
+                ByteBuffer farSlope=draw(pass,program,null);
+                for(int x=80;x<=240;x+=10)for(int z=-240;z<=240;z+=10)
+                    require(brightness(farSlope,x,z)>240,"far receiver self-shadow at sun"+elevation+" slope="+sloped+" x="+x+" z="+z+" value="+brightness(farSlope,x,z));
+            }
 			slopeReceiver=false;contactCard=true;signature++;mesh();RendererRemasterLightSettings.adjustElevation(45-RendererRemasterLightSettings.getElevationDegrees());
 			pass.prepare(SCENE,0,0,0);ByteBuffer contact=draw(pass,program,output.resolve("contact-card.png"));
 			require(brightness(contact,-12,0)<100,"shadow detached more than0.1tile from contact");
 			require(brightness(contact,20,0)>240,"contact bias spread onto lit side");
 			require(brightness(contact,-96,0)<100&&brightness(contact,-180,0)>240,"contact silhouette extent changed");
+            signature++;pass.prepare(SCENE,0,0,-6000);ByteBuffer farContact=draw(pass,program,output.resolve("far-contact-card.png"));
+            require(brightness(farContact,-12,0)<100,"far shadow detached more than0.1tile from contact");
+            require(brightness(farContact,20,0)>240,"far contact bias spread onto lit side");
+            require(brightness(farContact,-96,0)<100&&brightness(farContact,-180,0)>240,"far contact silhouette extent changed");
 			GeometryShadowRoofMask.Cache roofCache=new GeometryShadowRoofMask.Cache();
 			roofMask=roofCache.get(GeometryShadowRoofMaskFixture.frame(1L<<2,false,101),0);
 			gl.glActiveTexture(gl.GL_TEXTURE0+5);gl.glBindTexture(gl.GL_TEXTURE_2D,alphaTexture);pass.prepare(SCENE,0,0,0);
@@ -224,12 +240,34 @@ public final class GeometryShadowGpuFixture {
 			ByteBuffer off=draw(pass,program,output.resolve("off.png"));require(brightness(off,40,-100)>240,"disabled shadow persisted");
 			frameTimer.begin();frameTimer.end();require(gpuSamples.size()>2,"completed GPU samples missing");
 			int error=(Integer)gl11.getMethod("glGetError").invoke(null);require(error==0,"GL error "+error);
-			int nearTexture=textureId(pass,"near"),farTexture=textureId(pass,"far");
+            // Pose-only refresh may blend; content, context and plane changes never do.
+            RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);
+            pass.prepare(SCENE,0,0,0);pass.prepare(SCENE,600,0,0);
+            java.lang.reflect.Field previousProjection=OpenGLGeometryShadows.class.getDeclaredField("previousFarProjection");previousProjection.setAccessible(true);
+            require(previousProjection.get(pass)!=null,"pose refresh did not retain history");
+            int previousTexture=textureId(pass,"previousFar");require(previousTexture!=0,"history texture missing");
+            for(int i=0;i<OpenGLGeometryShadows.FAR_BLEND_FRAMES;i++)pass.prepare(SCENE,600,0,0);
+            require(previousProjection.get(pass)==null,"history exceeds bounded duration");
+            for(int i=0;i<150;i++)pass.prepare(SCENE,600,0,0);
+            require(previousProjection.get(pass)==null,"fixed sun TTL refresh made spurious history");
+            pass.prepare(SCENE,1200,0,0);require(previousProjection.get(pass)!=null,"second pose refresh missing");
+            signature++;pass.prepare(SCENE,1200,0,0);require(previousProjection.get(pass)==null,"geometry change ghosts old scene");
+            pass.prepare(SCENE,1800,0,0);shadowContext++;pass.prepare(SCENE,1800,0,0);require(previousProjection.get(pass)==null,"context change ghosts old worldspace");
+            pass.prepare(SCENE,2400,0,0);shadowPlane++;pass.prepare(SCENE,2400,0,0);require(previousProjection.get(pass)==null,"plane change ghosts lower plane");
+            pass.prepare(SCENE,3000,0,0);RendererShadowSettings.setQuality(RendererShadowSettings.Quality.LOW);pass.prepare(SCENE,3000,0,0);require(textureId(pass,"previousFar")==0,"Low retained history texture");
+            RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);pass.prepare(SCENE,3000,0,0);require(previousProjection.get(pass)==null,"Low->High reused history");
+            pass.prepare(SCENE,3600,0,0);pass.suspend();require(textureId(pass,"previousFar")==0&&previousProjection.get(pass)==null,"suspend retained history");
+            pass.prepare(SCENE,3600,0,0);require(previousProjection.get(pass)==null,"re-enable reused suspended history");
+            require(OpenGLGeometryShadows.supportedFarSize(2048)==2048&&OpenGLGeometryShadows.supportedFarSize(4096)==4096,"far capability clamp");
+			pass.prepare(SCENE,4200,0,0);
+            int retainedHistoryTexture=textureId(pass,"previousFar");require(retainedHistoryTexture!=0,"final live history missing before deletion check");
+            int nearTexture=textureId(pass,"near"),farTexture=textureId(pass,"far");
 			require(nearTexture!=0&&farTexture!=0,"Off bounded texture retention contract");
 			pass.close();pass.close();pass=null;
 			require(!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,nearTexture)
 				&&!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,farTexture)
-				&&!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,roofTexture),"shadow textures leaked on close");
+				&&!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,roofTexture)
+                &&!(Boolean)gl11.getMethod("glIsTexture",int.class).invoke(null,retainedHistoryTexture),"shadow textures leaked on close");
 			System.out.println("PASS depth silhouette, cutout alpha, floor/slope/wall bias, cache invalidation, High/Low/Off, cleanup and GL state restoration");
 		} finally {
 			OpenGLGpuTimer.setDiagnosticSink(null);if(frameTimer!=null)frameTimer.close();

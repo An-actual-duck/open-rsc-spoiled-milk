@@ -13,6 +13,9 @@ geometry-depth implementation and measured acceptance ledger are recorded in
 terrain correctness pass and maximum-distance validation are in
 [terrain-shadow-artifacts.txt](terrain-shadow-artifacts.txt); it supersedes the
 initial face-wide terrain backface gate and fixed terrain relief multiplier.
+The subsequent measured far-cascade coverage and pose-transition follow-up is
+[thin-shadow-stability.txt](thin-shadow-stability.txt); it supersedes the initial
+2048 far-map density while preserving the terrain corrections.
 Earlier statements that shadow work is paused describe the previously accepted
 mask baseline;
 they do not prohibit this approved replacement work. No new renderer is accepted

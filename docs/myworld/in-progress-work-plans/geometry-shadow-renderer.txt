@@ -3,6 +3,8 @@ Geometry shadow renderer — READY for Core review
 Historical initial-pass receipt: the terrain normal/gate and fixed-relief
 behavior below is superseded by terrain-shadow-artifacts.txt. That focused
 follow-up records the corrected production shader and final native evidence.
+The later thin-shadow-stability.txt supersedes far-map density and adds scoped
+pose transitions; this document remains the initial-pass historical receipt.
 
 Owner scope, November 7, 2026
 Improve desktop geometry shadows while targeting 60 FPS (16.667 ms frame budget)

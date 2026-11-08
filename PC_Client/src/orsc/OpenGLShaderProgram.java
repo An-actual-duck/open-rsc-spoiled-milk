@@ -420,7 +420,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 
 	private final LwjglBindings gl;
 	private final int programId;
-	private final int geometryShadowEnabledUniform, nearGeometrySamplerUniform, farGeometrySamplerUniform;
+	private final int geometryShadowEnabledUniform, nearGeometrySamplerUniform, farGeometrySamplerUniform, previousFarGeometrySamplerUniform;
 	private final int geometryShadowWorldOffsetXUniform, geometryShadowWorldOffsetZUniform;
 	private final int projectionMatrixUniformLocation;
 	private final int worldViewMatrixUniformLocation;
@@ -532,6 +532,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		geometryShadowWorldOffsetZUniform = gl.glGetUniformLocation(programId, "uGeometryShadowWorldOffsetZ");
 		nearGeometrySamplerUniform = gl.glGetUniformLocation(programId, "uNearGeometryShadow");
 		farGeometrySamplerUniform = gl.glGetUniformLocation(programId, "uFarGeometryShadowMap");
+        previousFarGeometrySamplerUniform = gl.glGetUniformLocation(programId, "uPreviousFarGeometryShadowMap");
 		this.projectionMatrixUniformLocation = projectionMatrixUniformLocation;
 		this.worldViewMatrixUniformLocation = worldViewMatrixUniformLocation;
 		this.chunkOffsetXUniformLocation =
@@ -793,6 +794,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		gl.glUniform1i(geometryShadowEnabledUniform, 0);
 		gl.glUniform1i(nearGeometrySamplerUniform, 3);
 		gl.glUniform1i(farGeometrySamplerUniform, 4);
+        gl.glUniform1i(previousFarGeometrySamplerUniform, 6);
 		if (projectionMatrixUniformLocation >= 0) {
 			gl.glUniformMatrix4fv(projectionMatrixUniformLocation, false, projectionMatrix);
 		}

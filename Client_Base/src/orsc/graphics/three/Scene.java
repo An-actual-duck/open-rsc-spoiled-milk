@@ -112,6 +112,7 @@ public final class Scene {
 	private RSModel[] models;
 	private Renderer3DFrame renderer3DFrame;
 	private Renderer3DTextureData[] renderer3DTextures = new Renderer3DTextureData[0];
+    private final java.util.Set<Integer> rendererAnimatedTextureIntent = new java.util.HashSet<Integer>();
 	private boolean forceLegacyWorldRasterOnce;
 	private int rot1024_off_x;
 	private int rot1024_off_y;
@@ -125,6 +126,10 @@ public final class Scene {
 	private int terrainProjectionPass;
 	private int terrainProjectionTileX;
 	private int terrainProjectionTileZ;
+
+    // Presentation-only generation: never grants scene/readiness authority.
+    private final java.util.concurrent.atomic.AtomicLong rendererShadowContextEpoch = new java.util.concurrent.atomic.AtomicLong();
+    public void advanceRendererShadowContext() { rendererShadowContextEpoch.incrementAndGet(); }
 
 	public Scene(GraphicsController var1, int var2, int maxPolygonCount, int var4) {
 		this.m_Ib = new int[this.m_ib][256];
@@ -2695,6 +2700,11 @@ public final class Scene {
 	public final void d(int var1, int var2) {
 		try {
 
+            // Record animation intent even while the legacy resource is evicted.
+            // Loading it later must not introduce a suddenly animated far caster.
+            rendererAnimatedTextureIntent.add(var2);
+            if (renderer3DTextures[var2] != null && this.resourceDatabase[var2] == null)
+                renderer3DTextures[var2] = renderer3DTextures[var2].withAnimationIntent();
 			if (null != this.resourceDatabase[var2]) {
 				int[] var3 = this.resourceDatabase[var2];
 
@@ -2728,7 +2738,7 @@ public final class Scene {
 				this.renderer3DTextures[var2] = Renderer3DTextureData.fromLegacyResource(
 					var2,
 					this.m_Hb[var2],
-					this.resourceDatabase[var2]);
+					this.resourceDatabase[var2], true);
 			}
 		} catch (RuntimeException var8) {
 			throw GenUtil.makeThrowable(var8, "lb.OA(" + var1 + ',' + var2 + ')');
@@ -2900,7 +2910,8 @@ public final class Scene {
 					this.cameraProjZ,
 					this.rot1024_vp_src,
 					this.rot1024_zTop,
-					this.renderer3DTextures)
+					this.renderer3DTextures,
+                    this.rendererShadowContextEpoch.get())
 				: null;
 			this.renderer3DFrame = geometryFrame;
 			boolean forceLegacyWorldRaster = this.forceLegacyWorldRasterOnce;
@@ -3657,7 +3668,7 @@ public final class Scene {
 
 			this.m_L[var1] = var3;
 			this.m_Hb[var1] = var4;
-			this.renderer3DTextures[var1] = Renderer3DTextureData.fromLegacyPalette(var1, var3, var4, var5);
+			this.renderer3DTextures[var1] = Renderer3DTextureData.fromLegacyPalette(var1, var3, var4, var5, rendererAnimatedTextureIntent.contains(var1));
 			this.m_D[var1] = 0L;
 			this.m_S[var1] = false;
 			this.resourceDatabase[var1] = null;

@@ -18,6 +18,7 @@ public final class Renderer3DFrame {
 	private static final ArrayDeque<WorldFaceStorage> AVAILABLE_WORLD_FACE_STORAGES =
 		new ArrayDeque<WorldFaceStorage>();
 	private final int sourceModelCount;
+	private final long shadowContextEpoch;
 	private final int fogDistance;
 	private final int fogStartDistance;
 	private final int viewportWidth;
@@ -69,6 +70,28 @@ public final class Renderer3DFrame {
 		int perspectiveShift,
 		int nearPlane,
 		Renderer3DTextureData[] textures) {
+		this(sourceModelCount, fogDistance, fogStartDistance, viewportWidth, viewportHeight, centerX, centerY, cameraOffsetX, cameraOffsetY, cameraOffsetZ, cameraRotationX, cameraRotationY, cameraRotationZ, perspectiveShift, nearPlane, textures, 0L);
+	}
+
+	Renderer3DFrame(
+		int sourceModelCount,
+		int fogDistance,
+		int fogStartDistance,
+		int viewportWidth,
+		int viewportHeight,
+		int centerX,
+		int centerY,
+		int cameraOffsetX,
+		int cameraOffsetY,
+		int cameraOffsetZ,
+		int cameraRotationX,
+		int cameraRotationY,
+		int cameraRotationZ,
+		int perspectiveShift,
+		int nearPlane,
+		Renderer3DTextureData[] textures,
+		long shadowContextEpoch) {
+		this.shadowContextEpoch = shadowContextEpoch;
 		this.worldFaceStorage = acquireWorldFaceStorage();
 		this.worldFaces = worldFaceStorage.worldFaces;
 		this.worldFacesView = worldFaceStorage.worldFacesView;
@@ -631,6 +654,8 @@ public final class Renderer3DFrame {
 	public Renderer3DRoofVisibility getRoofVisibility() {
 		return roofVisibility;
 	}
+
+	public long getShadowContextEpoch() { return shadowContextEpoch; }
 
 	public int getActivePlane() {
 		return activePlane;
