@@ -5,6 +5,14 @@ shader, lighting, shadow, and visual-performance work. It consolidates the
 active state from `renderer-v2-plan.md` and
 `remaster-lighting-and-shadow-plan.md`.
 
+November 8, 2026 (UTC) release checkpoint: owner-approved geometry shadows and terrain
+relief plus valley shading (`RELIEF_AO`) shipped in v0.3.14 at
+`0555b0307bf9a64c96cbe7132777dae3a41ca676`. Older in-progress/mask-baseline
+statements below are historical. The next coordinated programs are
+[client performance and portability](client-performance-portability-plan.md) and
+[movement and action responsiveness](movement-action-responsiveness-plan.md);
+their planning status does not authorize implementation or public deployment.
+
 November 7, 2026: the owner explicitly reopened shadow architecture work, with
 geometry-faithful shadows and a 60 FPS target at 1920x1080 in busy normal-camera
 scenes. Maximum distance is a separate stress test. The in-progress High/Low

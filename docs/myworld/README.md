@@ -44,6 +44,12 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [Renderer performance investigation](in-progress-work-plans/renderer-performance-investigation-plan.md):
   living baselines, controlled workloads, instrumentation gaps, hotspot
   hypotheses, and profile-tweak-compare results.
+- [Client performance and portability](in-progress-work-plans/client-performance-portability-plan.md):
+  next measured optimization pass for CPU/GPU work, memory, startup and UI,
+  with weaker-hardware evidence and unchanged approved visuals.
+- [Movement and action responsiveness](in-progress-work-plans/movement-action-responsiveness-plan.md):
+  coordinated click-to-first-step investigation and action lifecycle improvements,
+  sequenced with the client performance work.
 - [Roadmap](in-progress-work-plans/roadmap.md): high-level alpha milestone and
   version progression.
 - [Next release checklist](in-progress-work-plans/next-major-release-goals.md):

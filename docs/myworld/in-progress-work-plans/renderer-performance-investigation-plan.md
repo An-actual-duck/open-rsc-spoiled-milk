@@ -1,5 +1,12 @@
 # Renderer Performance Investigation Plan
 
+November 8, 2026 (UTC) planning update: the next whole-client optimization sequence is
+defined in [Client performance and portability](client-performance-portability-plan.md),
+coordinated with [Movement and action responsiveness](movement-action-responsiveness-plan.md).
+Retain this document's older measurements and accepted changes as historical
+evidence; remeasure the released v0.3.14 artifacts before selecting new work.
+Later GPU-timer coverage supersedes the historical no-GPU-timers limitation below.
+
 Status: active investigation. Baseline instrumentation is implemented and
 guard-tested; controlled current-branch baseline collection and profile
 attribution are underway, and the first sixteen focused optimizations have

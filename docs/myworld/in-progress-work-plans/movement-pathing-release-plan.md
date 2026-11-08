@@ -1,5 +1,11 @@
 # Movement And Pathing Release Plan
 
+November 8, 2026 (UTC) planning update: use
+[Movement and action responsiveness](movement-action-responsiveness-plan.md) for
+the next click-to-first-step investigation and action lifecycle sequence. This
+earlier diagnosis/proposal ledger is preserved; its measurements and suggested
+steps are not proof of current behavior or automatic new implementation scope.
+
 This document tracks the pre-release movement work separately from renderer
 work. Movement changes are gameplay-visible and should stay compatible with
 older clients unless a protocol break is explicitly chosen for a remaster
