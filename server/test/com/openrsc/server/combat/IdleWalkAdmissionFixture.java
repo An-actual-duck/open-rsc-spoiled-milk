@@ -111,6 +111,7 @@ public final class IdleWalkAdmissionFixture {
         try (CurrentCombatHarness h = new CurrentCombatHarness()) {
             check(h.server().getConfig().configFile.equals("myworld.conf"), "isolated current config, no local override");
             check(h.server().getConfig().CLIENT_VERSION == 10059, "current protocol profile");
+            check(h.server().getConfig().NPC_CAPACITY == 4000, "explicit compatible NPC capacity");
             h.server().getConfig().PLAYER_BLOCKING = 0;
             h.server().getConfig().MAX_WALKING_SPEED = 1;
             h.openCombatProjectileRectangle(445, 470, 445, 455);

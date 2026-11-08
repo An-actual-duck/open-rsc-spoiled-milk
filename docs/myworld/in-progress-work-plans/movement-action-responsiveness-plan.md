@@ -1,11 +1,12 @@
 # Movement And Action Responsiveness
 
-Status: active private implementation; successful-step clock slice technically
-validated and ready for manager review, with packet admission/native proof pending.
+Status: active private implementation; successful-step clock slice integrated.
+Bounded idle ground-walk packet admission and native input proof are in progress.
 Owner: Core manager; one focused worker branch per measured change.
 Planning baseline: `8aa93c01fcfc9d024c634c9181d571399533d048`.
 Released game baseline: v0.3.14, `0555b0307bf9a64c96cbe7132777dae3a41ca676`.
-Current first-slice work: [authoritative first-step implementation](movement-first-step-implementation.md).
+Current implementation: [successful-step clock](movement-first-step-implementation.md),
+[bounded idle packet admission](idle-walk-admission-implementation.md).
 Native owner acceptance and public activation remain separate from technical integration.
 Companion: [Client performance and portability](client-performance-portability-plan.md).
 
