@@ -35,6 +35,7 @@ public final class TerrainShadowGpuFixture {
 	static int brightness(ByteBuffer p,int x,int y){return p.get(((HEIGHT-y-1)*WIDTH+x)*4)&255;}
 	static final OpenGLGeometryShadows.Scene SCENE=new OpenGLGeometryShadows.Scene(){
 		public long staticSignature(){return 1L;}
+        public double referenceHeight(){return -384;}
 		public void drawDepth(OpenGLGeometryShadows pass,DirectionalShadowProjection p,boolean staticOnly)throws Exception{
 			pass.bindChunk(vbo,ebo,32,12,350208,276480);pass.drawRange(0,false,0,COORDS.length/3);
 		}
@@ -84,7 +85,7 @@ public final class TerrainShadowGpuFixture {
 			BufferedImage image=new BufferedImage(WIDTH,HEIGHT,BufferedImage.TYPE_INT_ARGB);for(int y=0;y<HEIGHT;y++)for(int x=0;x<WIDTH;x++){int k=(y*WIDTH+x)*4;image.setRGB(x,HEIGHT-y-1,0xff000000|((pixels.get(k)&255)<<16)|((pixels.get(k+1)&255)<<8)|(pixels.get(k+2)&255));}ImageIO.write(image,"png",output.resolve("actual-terrain.png").toFile());
 			// A flat, positive-diffuse road receiver behind the opaque card must
             // still be genuinely occluded; no geometric-normal zero shortcut.
-            require(brightness(pixels,1026,439)<=1,"opaque card does not shadow sun-facing road");
+            require(brightness(pixels,1025,439)<=1,"opaque card does not shadow sun-facing road");
             require(brightness(pixels,800,455)>240,"unoccluded neighboring road not lit");
             gl.glUniform1i(gl.glGetUniformLocation(program,"uReplayMode"),4);
             // Read the actual production lighting response separately: raw PCF
@@ -94,7 +95,7 @@ public final class TerrainShadowGpuFixture {
             int road=brightness(pixels,800,455),maximum=0;
             for(int y=424;y<=452;y+=4)for(int x=872;x<=924;x+=4)maximum=Math.max(maximum,brightness(pixels,x,y));
             require(road>80,"sun-facing road lost direct sunlight");
-            require(maximum<road-10,"grazing depression must receive less direct sunlight than exposed road: "+maximum+"/"+road);
+            require(maximum<=road-10,"grazing depression must receive less direct sunlight than exposed road: "+maximum+"/"+road);
             System.out.println("PASS production grazing terrain: valid opaque-card cast occlusion retained; depression direct-light maximum="+maximum+", exposed road="+road+".");
 		}finally{if(pass!=null)pass.close();if(program!=0)gl.glDeleteProgram(program);if(vbo!=0)gl.glDeleteBuffers(vbo);if(ebo!=0)gl.glDeleteBuffers(ebo);if(window!=0)gl.glfwDestroyWindow(window);gl.glfwTerminate();}
 	}

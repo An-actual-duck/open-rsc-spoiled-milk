@@ -21,6 +21,15 @@ public final class ShadowContextEpochFixture {
         scene.advanceRendererShadowContext();scene.endScene(0);
         require(scene.getRenderer3DFrame().getShadowContextEpoch()==2,"second scope change lost");
         require(after.getShadowContextEpoch()==1,"intermediate published frame mutated");
+        scene.setCamera(64000,-204,59000,768,0,0,2000,-384);
+        scene.endScene(0);Renderer3DFrame ground=scene.getRenderer3DFrame();
+        require(ground.getShadowReferenceHeight()==-384,"focal ground height not published");
+        require(ground.getCameraOffsetY()!=ground.getShadowReferenceHeight(),"eye height confused with focal ground");
+        scene.setCamera(64000,-820,59000,768,0,0,4000,-1000);
+        scene.endScene(0);require(scene.getRenderer3DFrame().getShadowReferenceHeight()==-1000,"elevated focal ground lost");
+        require(ground.getShadowReferenceHeight()==-384,"published focal height mutated");
+        scene.setCamera(0,-4,0,768,0,0,600);scene.endScene(0);
+        require(scene.getRenderer3DFrame().getShadowReferenceHeight()==-4,"legacy camera focal fallback changed");
         System.out.println("PASS render-only scope epochs: true changes advance, normal frames stable, published frame identity immutable.");
     }
 }

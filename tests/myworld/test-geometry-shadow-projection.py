@@ -60,6 +60,30 @@ public final class GeometryShadowProjectionFixture {
   DirectionalShadowProjection tiny=new DirectionalShadowProjection(64000.01,-256,59000.01,.37f,.67f,.64f,4096,2048,held);
   for(int row=0;row<2;row++)for(int col=0;col<4;col++)require(held.matrix[col*4+row]==tiny.matrix[col*4+row],"tracking subtexel XY drift");
 
+  // Ground-aligned near rows remain constant along sun rays, including upper
+  // floors and moving terrain references. Far constructors above stay unchanged.
+  for(float elevation:new float[]{5,10,45,85,90}) {
+   DirectionalShadowProjection tracked=null;
+   for(int frame=0;frame<2000;frame++) {
+    double az=Math.toRadians(34+frame*.002),el=Math.toRadians(elevation+frame*.00002);
+    float sx=(float)(Math.cos(az)*Math.cos(el)),sy=(float)Math.sin(el),sz=(float)(Math.sin(az)*Math.cos(el));
+    double ground=-1000+Math.sin(frame*.01)*300, x=64000+frame*.3,z=59000+frame*.2;
+    tracked=new DirectionalShadowProjection(x,ground-2000,z,sx,sy,sz,4096,2048,tracked,ground);
+    require(Math.abs(tracked.gridCenterX-x)<=2.001&&Math.abs(tracked.gridCenterZ-z)<=2.001,"height/sun tracking escaped half texel");
+    require(Math.abs(at(tracked,0,x,ground,z))<.001&&Math.abs(at(tracked,1,x,ground,z))<.001,"elevated focal point outside near center");
+    double t=128/sy;
+    for(int row=0;row<2;row++)require(Math.abs(at(tracked,row,x,ground-128,z)-at(tracked,row,x-sx*t,ground,z-sz*t))<.00001,"sheared sun ray not invariant");
+    require(tracked.intersects((float)x-16,(float)ground-192,(float)z-16,(float)x+16,(float)ground,(float)z+16),"elevated focal caster culled");
+   }
+  }
+  DirectionalShadowProjection h0=new DirectionalShadowProjection(64000,-2256,59000,.37f,.67f,.64f,4096,2048,null,-384);
+  DirectionalShadowProjection h1=new DirectionalShadowProjection(64000,-2256,59000,.37f,.67f,.64f,4096,2048,h0,-1000);
+  // Reference-height changes move the footprint by whole texels; they cannot
+  // introduce a fractional sampling phase at a stationary sun.
+  for(int row=0;row<2;row++) {
+   double pixels=(h1.matrix[12+row]-h0.matrix[12+row])*2048/2;
+   require(Math.abs(pixels-Math.rint(pixels))<.002,"height transition changed subtexel phase");
+  }
   Properties props=new Properties();
   RendererShadowSettings.setQuality(RendererShadowSettings.Quality.LOW);
   RendererShadowSettings.saveToClientSettings(props);
