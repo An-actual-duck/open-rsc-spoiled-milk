@@ -8819,8 +8819,9 @@ public final class mudclient implements Runnable {
 
 						centerX = this.cameraPositionX + this.cameraAutoMoveX;
 						centerZ = this.cameraPositionZ + this.cameraAutoMoveZ;
-						this.scene.setCamera(centerX, -this.world.getElevation(centerX, centerZ) + 180, centerZ, this.getCameraPitch(),
-							this.cameraRotation * 4, 0, this.isInFirstPersonView() ? 0 : 2000);
+						int shadowGroundHeight = -this.world.getElevation(centerX, centerZ);
+						this.scene.setCamera(centerX, shadowGroundHeight + 180, centerZ, this.getCameraPitch(),
+							this.cameraRotation * 4, 0, this.isInFirstPersonView() ? 0 : 2000, shadowGroundHeight);
 
 						int zoomMultiplier = 0;
 						if (Config.S_ZOOM_VIEW_TOGGLE)
@@ -8829,10 +8830,10 @@ public final class mudclient implements Runnable {
 						int baseCameraZoom = this.cameraZoom + zoomMultiplier;
 						int scaledCameraZoom = getWorldScaledCameraZoom(baseCameraZoom);
 						applyGameplayFog(scaledCameraZoom);
-						int centerY = -this.world.getElevation(centerX, centerZ) + 180;
+						int centerY = shadowGroundHeight + 180;
 						this.scene.setCamera(centerX, getCameraHeightCompensatedCenterY(centerY, baseCameraZoom, scaledCameraZoom),
 							centerZ, this.getCameraPitch(), this.cameraRotation * 4, 0,
-							this.isInFirstPersonView() ? 0 : scaledCameraZoom * 2);
+							this.isInFirstPersonView() ? 0 : scaledCameraZoom * 2, shadowGroundHeight);
 
 					} else {
 						if (this.optionCameraModeAuto && !this.isInFirstPersonView() && !this.doCameraZoom) {
@@ -8844,10 +8845,11 @@ public final class mudclient implements Runnable {
 						centerZ = this.cameraPositionZ + this.cameraAutoMoveZ;
 
 						int scaledCameraZoom = getWorldScaledCameraZoom(this.cameraZoom);
-						int centerY = -this.world.getElevation(centerX, centerZ) - 180;
+						int shadowGroundHeight = -this.world.getElevation(centerX, centerZ);
+						int centerY = shadowGroundHeight - 180;
 						this.scene.setCamera(centerX, getCameraHeightCompensatedCenterY(centerY, this.cameraZoom, scaledCameraZoom),
 							centerZ, this.getCameraPitch(), this.cameraRotation * 4, 0,
-							this.isInFirstPersonView() ? 0 : scaledCameraZoom * 2);
+							this.isInFirstPersonView() ? 0 : scaledCameraZoom * 2, shadowGroundHeight);
 					}
 
 					if(!worldEditorBuildMode)this.updateSceneryAnimations();

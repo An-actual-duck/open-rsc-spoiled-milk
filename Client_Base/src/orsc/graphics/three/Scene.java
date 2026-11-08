@@ -116,6 +116,7 @@ public final class Scene {
 	private boolean forceLegacyWorldRasterOnce;
 	private int rot1024_off_x;
 	private int rot1024_off_y;
+    private int rendererShadowReferenceHeight;
 	private int rot1024_off_z;
 	private int rot1024_vp_src;
 	private int cameraProjX;
@@ -2911,7 +2912,7 @@ public final class Scene {
 					this.rot1024_vp_src,
 					this.rot1024_zTop,
 					this.renderer3DTextures,
-                    this.rendererShadowContextEpoch.get())
+                    this.rendererShadowContextEpoch.get(), this.rendererShadowReferenceHeight)
 				: null;
 			this.renderer3DFrame = geometryFrame;
 			boolean forceLegacyWorldRaster = this.forceLegacyWorldRasterOnce;
@@ -3784,6 +3785,11 @@ public final class Scene {
 	}
 
 	public final void setCamera(int centerX, int centerY, int centerZ, int xRot, int yRot, int zRot, int offset) {
+        setCamera(centerX,centerY,centerZ,xRot,yRot,zRot,offset,centerY);
+    }
+
+    public final void setCamera(int centerX, int centerY, int centerZ, int xRot, int yRot, int zRot, int offset, int shadowReferenceHeight) {
+        this.rendererShadowReferenceHeight=shadowReferenceHeight;
 		try {
 			zRot &= 1023;
 			xRot &= 1023;

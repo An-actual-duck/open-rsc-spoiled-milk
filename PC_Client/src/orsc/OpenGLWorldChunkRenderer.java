@@ -180,6 +180,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		public long staticSignature() { return geometryShadowStaticSignature(geometryShadowFrame); }
         public long historyContext() { return geometryShadowFrame.getShadowContextEpoch(); }
         public int receiverPlane() { return geometryShadowFrame.getActivePlane(); }
+        public double referenceHeight() { return geometryShadowFrame.getShadowReferenceHeight(); }
 		public GeometryShadowRoofMask roofMask() { return geometryRoofMaskCache.get(geometryShadowFrame.getWorldChunkFrame(), geometryShadowFrame.getActivePlane()); }
 		public void drawDepth(OpenGLGeometryShadows pass, DirectionalShadowProjection projection, boolean staticOnly) throws Exception {
 			drawGeometryShadowCasters(geometryShadowFrame, pass, projection, staticOnly);

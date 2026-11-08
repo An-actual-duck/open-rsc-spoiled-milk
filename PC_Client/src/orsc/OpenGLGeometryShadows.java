@@ -10,6 +10,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		long staticSignature();
 		default long historyContext() { return 0; }
         default int receiverPlane() { return 0; }
+        default double referenceHeight() { return Double.NaN; }
 		default GeometryShadowRoofMask roofMask() { return GeometryShadowRoofMask.EMPTY; }
 		void drawDepth(OpenGLGeometryShadows pass, DirectionalShadowProjection projection, boolean staticOnly) throws Exception;
 	}
@@ -200,8 +201,10 @@ final class OpenGLGeometryShadows implements AutoCloseable {
         if (previousNear != null && (nearContext != context || nearPlane != plane
             || Math.hypot(Math.hypot(centerX-previousNear.centerX,centerZ-previousNear.centerZ),centerY-previousNear.centerY) > quality.nearRadiusTiles*128.0)) previousNear=null;
         int nearSize = quality.nearSize;
+        double referenceHeight = scene.referenceHeight();
         nearProjection = new DirectionalShadowProjection(centerX, centerY, centerZ, lx, ly, lz,
-            quality.nearRadiusTiles * 128.0f, nearSize, previousNear);
+            quality.nearRadiusTiles * 128.0f, nearSize, previousNear,
+            Double.isFinite(referenceHeight) ? referenceHeight : centerY);
         nearContext=context; nearPlane=plane;
         long signature = scene.staticSignature();
         roofMask = scene.roofMask();

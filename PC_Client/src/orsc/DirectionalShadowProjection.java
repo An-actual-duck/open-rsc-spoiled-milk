@@ -12,7 +12,7 @@ final class DirectionalShadowProjection {
 
 	DirectionalShadowProjection(double x, double y, double z,
 		float sunX, float sunY, float sunZ, float half, int size) {
-        this(x,y,z,sunX,sunY,sunZ,half,size,null,false);
+        this(x,y,z,sunX,sunY,sunZ,half,size,null,false,y);
     }
 
     /**
@@ -23,11 +23,17 @@ final class DirectionalShadowProjection {
      */
     DirectionalShadowProjection(double x, double y, double z,
         float sunX, float sunY, float sunZ, float half, int size, DirectionalShadowProjection previous) {
-        this(x,y,z,sunX,sunY,sunZ,half,size,previous,true);
+        this(x,y,z,sunX,sunY,sunZ,half,size,previous,true,y);
+    }
+
+    DirectionalShadowProjection(double x, double y, double z,
+        float sunX, float sunY, float sunZ, float half, int size,
+        DirectionalShadowProjection previous, double referenceHeight) {
+        this(x,y,z,sunX,sunY,sunZ,half,size,previous,true,referenceHeight);
     }
 
     private DirectionalShadowProjection(double x, double y, double z,
-        float sunX, float sunY, float sunZ, float half, int size, DirectionalShadowProjection previous, boolean tracking) {
+        float sunX, float sunY, float sunZ, float half, int size, DirectionalShadowProjection previous, boolean tracking, double referenceHeight) {
 		if (!(half > 0) || !Float.isFinite(half) || size <= 0
 			|| !Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z)
 			|| !Float.isFinite(sunX) || !Float.isFinite(sunY) || !Float.isFinite(sunZ)) {
@@ -63,19 +69,22 @@ final class DirectionalShadowProjection {
         if (!tracking) {
             cx = Math.rint((rx * x + ry * y + rz * z) / worldTexel) * worldTexel;
             cy = Math.rint((ux * x + uy * y + uz * z) / worldTexel) * worldTexel;
-        } else {
+        } else if (Math.abs(sunY) > 0.0001f && Double.isFinite(referenceHeight)) {
+            // World-ground-aligned texels avoid rotating a raster grid through
+            // repeated cutouts. These rows are constant along each sun ray.
+            double shearX=(double)sunX/sunY, shearZ=(double)sunZ/sunY;
+            rx=1;ry=shearX;rz=0;ux=0;uy=shearZ;uz=1;
+            gy=referenceHeight;
             if (previous != null) {
-                double ax=previous.gridCenterX, ay=previous.gridCenterY, az=previous.gridCenterZ;
-                double dx=x-ax, dy=y-ay, dz=z-az;
-                double stepX=Math.rint((rx*dx+ry*dy+rz*dz)/worldTexel)*worldTexel;
-                double stepY=Math.rint((ux*dx+uy*dy+uz*dz)/worldTexel)*worldTexel;
-                double stepDepth=fx*dx+fy*dy+fz*dz;
-                gx=ax+rx*stepX+ux*stepY+fx*stepDepth;
-                gy=ay+ry*stepX+uy*stepY+fy*stepDepth;
-                gz=az+rz*stepX+uz*stepY+fz*stepDepth;
+                double heightDelta=gy-previous.gridCenterY;
+                double stepX=Math.rint((x-previous.gridCenterX+shearX*heightDelta)/worldTexel)*worldTexel;
+                double stepZ=Math.rint((z-previous.gridCenterZ+shearZ*heightDelta)/worldTexel)*worldTexel;
+                gx=previous.gridCenterX+stepX-shearX*heightDelta;
+                gz=previous.gridCenterZ+stepZ-shearZ*heightDelta;
             }
-            cx=rx*gx+ry*gy+rz*gz;
-            cy=ux*gx+uy*gy+uz*gz;
+            cx=gx+shearX*gy;cy=gz+shearZ*gy;
+        } else {
+            cx=rx*x+ry*y+rz*z;cy=ux*x+uy*y+uz*z;
         }
         gridCenterX=gx; gridCenterY=gy; gridCenterZ=gz;
 		row(0, rx, ry, rz, cx, half);

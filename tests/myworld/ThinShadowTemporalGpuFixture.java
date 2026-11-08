@@ -33,6 +33,7 @@ public final class ThinShadowTemporalGpuFixture {
     }
     static final OpenGLGeometryShadows.Scene SCENE=new OpenGLGeometryShadows.Scene(){
         public long staticSignature(){return signature;}
+        public double referenceHeight(){return 0;}
         public long historyContext(){return shadowContext;}
         public void drawDepth(OpenGLGeometryShadows pass,DirectionalShadowProjection projection,boolean staticOnly)throws Exception{
             pass.bindChunk(vbo,ebo,20,12,0,0);pass.drawRange(0,false,0,6);if(!staticOnly||!movingCaster)pass.drawRange(texture,alpha,6,6);

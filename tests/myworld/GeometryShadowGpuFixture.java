@@ -213,6 +213,16 @@ public final class GeometryShadowGpuFixture {
             require(brightness(farContact,-12,0)<100,"far shadow detached more than0.1tile from contact");
             require(brightness(farContact,20,0)>240,"far contact bias spread onto lit side");
             require(brightness(farContact,-96,0)<100&&brightness(farContact,-180,0)>240,"far contact silhouette extent changed");
+            // Near-map shearing must retain real contact and outward bias at low sun,
+            // on both quality paths (Low has no far map to hide missing coverage).
+            for(RendererShadowSettings.Quality q:new RendererShadowSettings.Quality[]{RendererShadowSettings.Quality.LOW,RendererShadowSettings.Quality.HIGH})for(int elevation:new int[]{5,10,25,45}) {
+                RendererShadowSettings.setQuality(q);RendererRemasterLightSettings.adjustElevation(elevation-RendererRemasterLightSettings.getElevationDegrees());
+                signature++;pass.prepare(SCENE,0,0,0);ByteBuffer lowContact=draw(pass,program,output.resolve("contact-"+q+"-"+elevation+".png"));
+                int contactX=elevation>80?-3:-12;
+                require(brightness(lowContact,contactX,0)<100,"low-sun contact detached "+q+"/"+elevation);
+                require(brightness(lowContact,80,0)>240,"low-sun normal bias leaks to lit side "+q+"/"+elevation);
+            }
+            RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);RendererRemasterLightSettings.adjustElevation(45-RendererRemasterLightSettings.getElevationDegrees());
 			GeometryShadowRoofMask.Cache roofCache=new GeometryShadowRoofMask.Cache();
 			roofMask=roofCache.get(GeometryShadowRoofMaskFixture.frame(1L<<2,false,101),0);
 			gl.glActiveTexture(gl.GL_TEXTURE0+5);gl.glBindTexture(gl.GL_TEXTURE_2D,alphaTexture);pass.prepare(SCENE,0,0,0);
