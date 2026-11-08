@@ -819,7 +819,7 @@ public abstract class Mob extends Entity {
 	}
 
 	public void updatePosition() {
-		final long now = System.currentTimeMillis();
+		final long now = getWorld().getServer().getGameClock().currentTimeMillis();
 		final boolean useWalkingTick = getWorld().getServer().getConfig().WANT_CUSTOM_WALK_SPEED
 			|| getWalkingTick() != getWorld().getServer().getConfig().WALKING_TICK;
 		final boolean doWalk = !useWalkingTick || now >= lastMovementTime + getWalkingTick();

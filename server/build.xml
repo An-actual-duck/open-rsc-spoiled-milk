@@ -665,6 +665,22 @@
         <fail unless="gem.standard.completed" message="Standard gem dragon loot fixture exited without its completion marker."/>
     </target>
 
+    <target name="test_movement_first_step" depends="compile_combat_tests"
+            description="Deterministic authoritative first-step phases, cadence, holds and legacy controls">
+        <fail unless="movement.fixture.output" message="Pass a new result path with -Dmovement.fixture.output"/>
+        <property name="movement.fixture.mode" value="candidate"/>
+        <java classname="com.openrsc.server.combat.MovementFirstStepFixture"
+              fork="true" maxmemory="768m" failonerror="true" dir="${basedir}">
+            <arg value="${movement.fixture.mode}"/>
+            <arg value="${movement.fixture.output}"/>
+            <classpath>
+                <pathelement location="${combat.build.test}"/>
+                <pathelement location="${combat.build.core}"/>
+                <fileset dir="${lib}" includes="*.jar"/>
+            </classpath>
+        </java>
+    </target>
+
     <target name="test_slow" depends="compile_combat_tests"
             description="Verify shared Slow power and committed combat deadlines">
         <java classname="com.openrsc.server.combat.SlowFixture"
