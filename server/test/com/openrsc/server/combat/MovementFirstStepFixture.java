@@ -52,6 +52,7 @@ public final class MovementFirstStepFixture {
             cadenceAndReclicks(h);
             recentStopAndReadiness(h);
             collisionAndHolds(h);
+            npcBoundary(h);
             teleportOutcome(h);
             legacyControl(h);
             if (candidate) monotonicEpochs(h);
@@ -125,18 +126,19 @@ public final class MovementFirstStepFixture {
             walk(mob, startX + 1, y);poll(mob);
             check(mob.getX() == startX + 1, "initial authorized step; npc=" + npc);
             int x = startX + 1, steps = 1;
-            for (int t = 1; t <= 1720; t++) {
+            int intervals = 4;
+            for (int t = 1; t <= intervals * 430; t++) {
                 h.clock().advanceMillis(1);
-                walk(mob, x + 1, y);poll(mob);
+                walk(mob, npc ? (x == startX ? startX + 1 : startX) : x + 1, y);poll(mob);
                 if (mob.getX() != x) {
                     check(t % 430 == 0, "reclicks never earn an early step; npc=" + npc);
-                    check(mob.getX() == x + 1 && mob.getY() == y,
+                    check(Math.abs(mob.getX() - x) == 1 && mob.getY() == y,
                         "each committed trajectory is exactly one adjacent tile");
                     x = mob.getX();steps++;
                 }
             }
-            check(steps == 5 && x == startX + 5,
-                "four full intervals produce exactly four more tiles; npc=" + npc);
+            check(steps == intervals + 1 && x == startX + (npc ? 1 : intervals + 1),
+                "elapsed intervals produce exactly one additional tile apiece; npc=" + npc);
         }
     }
     private static void collisionAndHolds(CurrentCombatHarness h) throws Exception {
@@ -182,10 +184,32 @@ public final class MovementFirstStepFixture {
         h.clock().advanceMillis(10);held.updatePosition();
         check(candidate ? held.getX() == 451 : held.getX() == 450, "candidate resumes when actual readiness hold releases");
         h.server().getConfig().WANT_LAYERED_NATIVE_TERRAIN_READINESS = readiness;
+        h.clock().reset(EPOCH);Player stationary = player(h);
+        com.openrsc.server.model.Path noDisplacement = new com.openrsc.server.model.Path(
+            stationary, com.openrsc.server.model.Path.PathType.WALK_TO_POINT);
+        noDisplacement.addDirect(stationary.getX(), stationary.getY());
+        stationary.getWalkingQueue().setPath(noDisplacement);stationary.updatePosition();
+        check(stationary.getX() == 450, "same-tile queued waypoint has no displacement");
+        h.clock().advanceMillis(10);walk(stationary, 451, 450);stationary.updatePosition();
+        check(candidate ? stationary.getX() == 451 : stationary.getX() == 450,
+            "same-tile waypoint does not consume a successful-step interval");
         h.clock().reset(EPOCH);Player staggered = player(h);
         check(staggered.applyStagger(1), "attack stagger precondition");
         walk(staggered, 451, 450);staggered.updatePosition();
         check(staggered.getX() == 451, "attack stagger is not turned into a movement lock");
+    }
+    private static void npcBoundary(CurrentCombatHarness h) throws Exception {
+        h.clock().reset(EPOCH);
+        Npc bounded = new Npc(h.world(), NpcId.MOSS_GIANT.id(), 441, 440,
+            441, 441, 440, 440);
+        h.world().registerNpc(bounded);
+        try {
+            check(com.openrsc.server.model.PathValidation.checkAdjacent(bounded, 441, 440, 442, 440),
+                "boundary control destination passes ordinary terrain collision");
+            walk(bounded, 442, 440);poll(bounded);
+            check(bounded.getX() == 441 && bounded.getY() == 440
+                && bounded.getWalkingQueue().finished(), "NPC roam boundary rejects queued destination");
+        } finally { h.world().unregisterNpc(bounded); }
     }
     private static void teleportOutcome(CurrentCombatHarness h) throws Exception {
         h.clock().reset(EPOCH);Player p = player(h);

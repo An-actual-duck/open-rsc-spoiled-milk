@@ -1,6 +1,7 @@
 # Movement And Action Responsiveness
 
-Status: active private implementation under the owner's autonomous-work approval.
+Status: active private implementation; successful-step clock slice technically
+validated and ready for manager review, with packet admission/native proof pending.
 Owner: Core manager; one focused worker branch per measured change.
 Planning baseline: `8aa93c01fcfc9d024c634c9181d571399533d048`.
 Released game baseline: v0.3.14, `0555b0307bf9a64c96cbe7132777dae3a41ca676`.
@@ -30,7 +31,7 @@ and continuous waypoint starvation, not a measured diagnosis of the owner's
 current first-click delay. This plan owns the next work order and must reconcile
 implemented paths before reusing their proposals or diagnostics.
 
-## Current Source Findings — Not Yet Latency Measurements
+## Baseline Source Findings
 
 - `server/myworld.conf` declares a 640 ms game tick and 430 ms custom walking
   interval. Record effective runtime configuration in each private fixture.

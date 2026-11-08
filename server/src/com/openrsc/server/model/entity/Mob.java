@@ -50,6 +50,7 @@ import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.runtime.GameClock;
 import com.openrsc.server.plugins.triggers.DropObjTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 import com.openrsc.server.util.rsc.CollisionFlag;
@@ -824,11 +825,12 @@ public abstract class Mob extends Entity {
 		if (getConfig().WANT_MYWORLD && getConfig().WANT_CUSTOM_WALK_SPEED) {
 			final WalkingQueue queue = getWalkingQueue();
 			if (!queue.hasPendingMovementWork()) return;
-			final long nowNanos = getWorld().getServer().getGameClock().nanoTime();
+			final GameClock clock = getWorld().getServer().getGameClock();
+			final long nowNanos = clock.nanoTime();
 			final long intervalNanos = (long) getWalkingTick() * 1_000_000L;
 			if (!hasSuccessfulMovement || nowNanos - lastSuccessfulMovementNanos >= intervalNanos) {
 				if (queue.processNextMovementAndReport()) {
-					lastSuccessfulMovementNanos = nowNanos;
+					lastSuccessfulMovementNanos = clock.nanoTime();
 					hasSuccessfulMovement = true;
 				}
 			}
