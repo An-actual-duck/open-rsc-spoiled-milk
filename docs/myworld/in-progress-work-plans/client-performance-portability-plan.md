@@ -233,7 +233,8 @@ The released artifact contains its release-build marker while the candidate is
 a maintained development build; that marker controls developer hotkeys, unused
 by the hidden benchmark. No synthesized hotkey/UI change is part of this test.
 
-Three interleaved native pairs used Java 21 / G1 / 512 MiB initial and 2 GiB
+Three interleaved native pairs, followed by one additional matched control, used
+Java 21 / G1 / 512 MiB initial and 2 GiB
 maximum heap, 1920x1080, zoom 75, rotation 128 with the same rotation route,
 High shadows, RELIEF_AO, fog on, fixed sun 135/45 and daytime tone. Each used
 20-second warmup and a marked 40-second phase. No competing build or benchmark
@@ -247,25 +248,26 @@ world geometry is 89 chunks / 435,422 triangles. Camera timing causes small
 frustum-edge differences in submitted terrain triangles; no geometry or actor
 quality reduction was introduced.
 
-The mean of per-run metrics is below. Resource rates use the inner timed
+The mean of all four per-run metrics is below; the original three-pair summary
+is separately preserved, and no completed run was discarded. Resource rates use the inner timed
 periodic samples, excluding the first five seconds. CPU is process CPU seconds
 per wall second; allocation is ThreadMXBean measured thread allocation, not JFR
 weighted sampling. Direct/heap/RSS occupancy depends on collection timing.
 
 | Metric | Released | Candidate | Change |
 | --- | ---: | ---: | ---: |
-| All-Java-thread allocation | 69.36 MiB/s | 50.99 MiB/s | -26.5% |
-| Presenter thread allocation | 33.41 MiB/s | 15.06 MiB/s | -54.9% |
-| Main client thread allocation | 35.93 MiB/s | 35.91 MiB/s | -0.1% |
-| Process CPU cores | 0.748 | 0.707 | -5.4% observed |
-| Median direct-buffer bytes | 293.26 MiB | 70.92 MiB | -75.8% observed |
-| Median direct-buffer count | 44,543 | 2,586 | -94.2% observed |
-| Median RSS | 2,484 MiB | 2,011 MiB | -19.1% observed |
-| Mean GL work | 3.617 ms | 3.550 ms | -1.8% observed |
-| GL work p99 | 4.890 ms | 4.796 ms | -1.9% observed |
-| GPU frame p99 | 8.173 ms | 8.665 ms | +6.0% observed |
-| Completed-render interval p99 | 18.654 ms | 18.714 ms | +0.3% observed |
-| 1% low completed-render FPS | 46.31 | 47.75 | +3.1% observed |
+| All-Java-thread allocation | 69.49 MiB/s | 51.08 MiB/s | -26.5% |
+| Presenter thread allocation | 33.48 MiB/s | 15.13 MiB/s | -54.8% |
+| Main client thread allocation | 35.99 MiB/s | 35.93 MiB/s | -0.2% |
+| Process CPU cores | 0.737 | 0.719 | -2.4% observed |
+| Median direct-buffer bytes | 265.61 MiB | 69.08 MiB | -74.0% observed |
+| Median direct-buffer count | 39,355 | 2,487 | -93.7% observed |
+| Median RSS | 2,430 MiB | 2,047 MiB | -15.8% observed |
+| Mean GL work | 3.627 ms | 3.564 ms | -1.7% observed |
+| GL work p99 | 4.907 ms | 4.800 ms | -2.2% observed |
+| GPU frame p99 | 8.188 ms | 8.585 ms | +4.8% observed |
+| Completed-render interval p99 | 18.624 ms | 18.674 ms | +0.3% observed |
+| 1% low completed-render FPS | 45.80 | 48.24 | +5.3% observed |
 
 Per-run tails are retained rather than concealed by the average:
 
@@ -277,6 +279,8 @@ Per-run tails are retained rather than concealed by the average:
 | 2 | Candidate | 2401 | 0 | 33.66 | 50.62 | 4.779 | 9.619 |
 | 3 | Released | 2401 | 0 | 38.83 | 46.27 | 4.848 | 8.186 |
 | 3 | Candidate | 2397 | 5 | 122.47 | 41.75 | 4.839 | 8.367 |
+| 4 control | Released | 2401 | 0 | 35.07 | 44.24 | 4.956 | 8.235 |
+| 4 control | Candidate | 2401 | 0 | 34.42 | 49.70 | 4.811 | 8.344 |
 
 The third candidate's five queue drops occurred inside the marked phase, between
 24.664 and 29.665 seconds, before post-phase screenshot capture. In that same
@@ -285,10 +289,13 @@ and sampled GC count/time deltas were zero. The available telemetry cannot
 attribute the 122.47 ms presenter interval to a specific cause; safepoint/OS
 scheduling evidence is insufficient. The second candidate's higher GPU tail
 also remains visible. These observations prevent a claim that frame pacing
-improved universally. Preserve all three pairs and investigate with a further
-matched control after the movement worker's CPU window; do not cherry-pick the
-five cleaner runs. Source is ready for manager review as an allocation/resource
-slice; final pacing acceptance and owner visual acceptance remain pending.
+improved universally. A further matched control with the same frozen JARs and
+settings did not reproduce the outlier: both completed 2,401 renders with zero
+drops, and candidate max interval was 34.42 ms versus baseline 35.07 ms. All four
+pairs are retained; the cause of the earlier isolated interval remains unknown.
+Source is ready for manager review as an allocation/resource slice, with these
+pacing limits explicit; final manager acceptance and owner visual acceptance
+remain pending.
 
 Separate matched 30-second warmup / 60-second JFR profiles support attribution:
 weighted whole-client allocation was 71.59 -> 54.40 MiB/s; the composite builder
@@ -297,29 +304,33 @@ remain). Samples identify packed-RGB frame conversion, software sprite plotting,
 scene preparation/depth construction as remaining CPU costs. Resident scenery
 identity/builders, text/glyph command/key construction, and float-uniform
 reflection remain allocation candidates. JFR is sampled and perturbs execution;
-it was disabled in all three acceptance pairs. Bounded existing telemetry,
+it was disabled in all four comparison pairs. Bounded existing telemetry,
 asynchronous GPU timing and GC logging were enabled equally in those pairs;
 its absolute overhead has not been established with a separate off cohort.
 
 An additional 20-second native functional control selected the physical Raphael
 iGPU (`DRI_PRIME=pci-0000_12_00_0`) and reported its actual Mesa renderer, 1,201
 completed renders and zero queue drops, with native capture. The main three
-pairs used the RX 6700 XT. Both use the same Ryzen 9 7900X and Linux/Mesa driver
+pairs and the additional control used the RX 6700 XT. Both use the same Ryzen 9 7900X and Linux/Mesa driver
 family; this is not proof for a weaker CPU, Windows/macOS or a minimum hardware
 specification. Hidden completed renders are not visible display scanout. No
 cold-storage-cache, large interface matrix or long lifecycle soak is claimed;
 the changed scratch lifetime is instead covered by focused ownership/release,
 padding, grow/shrink and actual-GL fallback fixtures.
 
-One released baseline startup attempt stalled fetching private server configs
-before login, so it has no timed phase and is rejected/preserved separately.
-A bounded thread-dump attempt did not yield useful stacks. Only its identity-
-guarded private leftover was terminated after normal private stop did not exit.
-Its cause is unproven; the resumed driver waits for both private status.json and
-the listener, and all remaining startups completed. A separate stop-helper
-ownership race occurred after one completed run; both registered PIDs, server
-PID file and listener were already gone on inspection. Neither event is
-silently counted as a successful lifecycle test or candidate regression.
+Two startup attempts (one released baseline and one candidate) stalled fetching
+private server configs before login, so they have no timed phases and are
+rejected/preserved separately. Bounded pre-stop and post-stop thread-dump
+attempts did not yield useful stacks. Only identity-guarded private leftovers
+were terminated after normal private stop did not exit. Their cause is unproven;
+waiting for both private status.json and listener did not eliminate the issue.
+The candidate's fresh retry completed normally and is the recorded fourth
+control. This inherited/common startup fragility needs a separate focused
+investigation, without changing protocol or startup behavior in this slice.
+Transient stop-helper ownership races also occurred after completed runs; both
+registered PIDs, server PID file and listener were already gone on inspection.
+These events are not silently counted as successful lifecycle tests or proven
+candidate regressions.
 
 Raw data, driver/analyzer source, immutable JARs, profiles, host inventory,
 per-run hashes, resource samples, rejected runs, native captures and tests are
