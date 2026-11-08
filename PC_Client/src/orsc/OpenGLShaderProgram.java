@@ -207,6 +207,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "uniform float uGamma;\n"
 			+ "uniform float uSaturation;\n"
 			+ "uniform float uTerrainReliefStrength;\n"
+            + "uniform int uTerrainDefinitionMode;\n"
+            + "uniform int uTerrainDefinitionFieldEnabled;\n"
+            + "uniform sampler2D uTerrainDefinitionField;\n"
+            + "uniform float uTerrainDefinitionMinX,uTerrainDefinitionMinZ,uTerrainDefinitionInvWidth,uTerrainDefinitionInvHeight;\n"
 			+ "uniform float uObjectReliefStrength;\n"
 			+ "uniform int uTerrainVariationEnabled;\n"
 			+ "uniform float uTerrainVariationStrength;\n"
@@ -285,6 +289,30 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\tfloat shaped = remasterLightShape(uLightAmbient + diffuse * uLightIntensity);\n"
 			+ "\treturn mix(materialFloor, materialCeiling, shaped);\n"
 			+ "}\n"
+            + "float classicTerrainRelief(float legacy) {\n"
+            + "  float detail=smoothstep(28.0,196.0,clamp(legacy,0.0,255.0));\n"
+            + "  float relief=mix(1.08,0.84,detail);\n"
+            + "  float strength=clamp(uTerrainReliefStrength,0.0,9.5);\n"
+            + "  return clamp(mix(1.0,relief,min(strength,4.5)),0.35,1.25)*pow(relief,max(strength-4.5,0.0));\n"
+            + "}\n"
+            + "float terrainDefinitionFactor() {\n"
+            + "  if(uTerrainDefinitionMode==0 || !(vModelKind>0.5 && vModelKind<1.5)) return 1.0;\n"
+            + "  vec3 normal=remasterNormal();\n"
+            + "  float slope=clamp(length(normal.xz)*4.0,0.0,1.0);\n"
+            + "  // Native flat diffuse is -24 on the existing 96-light base. Normalize\n"
+            + "  // that reference so restoration does not recolor all flat ground.\n"
+            + "  float factor=mix(1.0,clamp(classicTerrainRelief(vBaseLegacyLight)/max(classicTerrainRelief(72.0),0.01),0.60,1.35),slope);\n"
+            + "  if(uTerrainDefinitionMode>=2 && uTerrainDefinitionFieldEnabled!=0) {\n"
+            + "    vec2 uv=(vShadowWorldPosition.xz/128.0-vec2(uTerrainDefinitionMinX,uTerrainDefinitionMinZ)+vec2(0.5))*vec2(uTerrainDefinitionInvWidth,uTerrainDefinitionInvHeight);\n"
+            + "    if(min(uv.x,uv.y)>=0.0 && max(uv.x,uv.y)<=1.0) {\n"
+            + "      vec4 field=texture2D(uTerrainDefinitionField,uv);\n"
+            + "      float strength=clamp(uTerrainReliefStrength/2.0,0.0,1.5)*field.a;\n"
+            + "      if(uTerrainDefinitionMode==2) factor*=1.0-field.r*0.22*strength;\n"
+            + "      else factor*=1.0-clamp((field.g*255.0-128.0)/127.0,-1.0,1.0)*0.12*strength;\n"
+            + "    }\n"
+            + "  }\n"
+            + "  return clamp(factor,0.5,1.4);\n"
+            + "}\n"
 			+ "float remasterLocalReliefFactor() {\n"
 			+ "\tif (uRemasterLightingEnabled != 0 && vModelKind > 0.5 && vModelKind < 1.5) return 1.0;\n"
 			+ "\tfloat legacyDetail = smoothstep(28.0, 196.0, clamp(vBaseLegacyLight, 0.0, 255.0));\n"
@@ -402,6 +430,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\t\tcolor.rgb = applyTargetedTerrainVariation(color.rgb);\n"
 			+ "\t\tcolor.rgb *= remasterClassicShadeFactor(diffuse);\n"
 			+ "\t\tcolor.rgb *= 1.0 - terrainShadowMaskAlpha();\n"
+            + "\t\tcolor.rgb *= terrainDefinitionFactor();\n"
 			+ "\t\tcolor.rgb = clamp(color.rgb + remasterGlowColor(), 0.0, 1.0);\n"
 			+ "\t}\n"
 			+ "\tif (uRawMaterialMode == 0) {\n"
@@ -1005,6 +1034,22 @@ final class OpenGLShaderProgram implements AutoCloseable {
 				terrainWorldOffsetZ);
 		}
 	}
+
+    private int[] terrainDefinitionUniforms;
+    void setTerrainDefinition(int mode, TerrainDefinitionField field) throws Exception {
+        if(terrainDefinitionUniforms==null) {
+            String[] names={"uTerrainDefinitionMode","uTerrainDefinitionFieldEnabled","uTerrainDefinitionField","uTerrainDefinitionMinX","uTerrainDefinitionMinZ","uTerrainDefinitionInvWidth","uTerrainDefinitionInvHeight"};
+            terrainDefinitionUniforms=new int[names.length];
+            for(int i=0;i<names.length;i++)terrainDefinitionUniforms[i]=gl.glGetUniformLocation(programId,names[i]);
+        }
+        gl.glUniform1i(terrainDefinitionUniforms[0],mode);
+        gl.glUniform1i(terrainDefinitionUniforms[1],field==null?0:1);
+        gl.glUniform1i(terrainDefinitionUniforms[2],7);
+        if(field!=null) {
+            gl.glUniform1f(terrainDefinitionUniforms[3],field.minX);gl.glUniform1f(terrainDefinitionUniforms[4],field.minZ);
+            gl.glUniform1f(terrainDefinitionUniforms[5],1.0f/field.width);gl.glUniform1f(terrainDefinitionUniforms[6],1.0f/field.height);
+        }
+    }
 
 	void bindWorldParityAttributes(
 		int positionComponents,

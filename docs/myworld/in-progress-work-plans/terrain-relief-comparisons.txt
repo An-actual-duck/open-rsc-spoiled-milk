@@ -1,0 +1,103 @@
+Terrain relief comparison prototype
+===================================
+
+Owner direction
+Restore the familiar Classic terrain definition lost when Directional Remaster
+terrain stopped using its fixed vertex-light relief. Try a small set of other
+terrain cues for visual comparison. This is a private review candidate, not
+public deployment approval. The owner selected relief-ao from the matched
+32-image comparison; the chosen appearance has not been retuned.
+
+Four finite choices
+-Dspoiledmilk.terrainDefinition=sun-only|classic-relief|relief-ao|relief-curvature
+The owner-selected default is relief-ao (Classic relief plus valley shelter).
+Same-JVM review drivers may call the package-private RendererTerrainDefinitionSettings.setMode(Mode). There is no new
+permanent menu. Existing Terrain Shading levels/setting persistence are retained.
+
+SUN_ONLY preserves the accepted directional terrain/shadow path.
+CLASSIC_RELIEF adds the existing Classic fixed vertex-light shape cue, normalized
+against native flat legacy-light 72 (96 base plus flat diffuse -24). Its slope
+weight preserves truly flat ground colors, and its factor is bounded 0.60..1.35.
+It is intentionally not a pixel-identical rollback: corrected physical normals,
+terrain light response and all near/far shadow fixes remain. Existing sun-relative
+slope contrast remains unchanged; the current Terrain Shading control therefore
+scales both that contrast and the added Classic layer in this initial prototype.
+Owner review should determine whether to separate their controls afterward.
+
+RELIEF_AO adds a cached render-only terrain-height shelter estimate. Eight local
+rays sample 1..4 tiles above the local tangent. This helps sheltered depressions;
+it is not screen-space AO, object contact AO, or a claim of full physical sky
+integration. Maximum extra darkening is 22% at default strength 2, bounded 33% at
+higher strength. Unknown samples contribute no occlusion and incomplete neighbor
+coverage fades toward neutral.
+
+RELIEF_CURVATURE remains an experimental diagnostic only, with no permanent
+menu entry. It instead uses signed local height bending, darkening concavities
+and gently emphasizing ridges. Default extra modulation is bounded +/-12%, with
+a maximum +/-18%. This is an artistic height cue, not another cast shadow.
+
+Both extra fields occupy RG channels of one small world-aligned texture, using
+sampler 7 only when supported. Alpha represents known coverage. Field extent is
+bounded 512x512 (1 MiB RGBA); it is generated from immutable received terrain
+geometry on the matching renderer plane/context. Halo vertices use the primary
+presentation-world anchor, never a second per-halo origin translation.
+SUN_ONLY and CLASSIC_RELIEF do not build this field at all. Lighting, camera and
+animated texture pixels are not field inputs. GPU content is retained until a
+field revision and deleted on renderer/session cleanup. Caller sampler 7 binding
+and active texture unit are restored. No new VBO, asset, map, protocol, loader,
+network authority or player data contract is introduced.
+
+The terrain definition factor applies before additive emission. Object relief,
+Classic/non-directional lighting and the accepted geometry shadow implementation
+are unchanged. This prototype does not attempt the separate minor fence ripple.
+
+Frozen comparison candidate 1
+  source 9ddba29fe601f3b6b880b3730d3446b65179d7fd
+  output/tests/terrain-relief-comparisons/candidate1-9ddba29fe.jar
+  SHA256 338c662a47fd67661316813097d58746ab3c2910e54a9e61636ed885dc56abbe
+Root owns exact matched native scene/camera/sun comparisons and owner preview.
+Primary comparison uses the owner's actual terrain 10/object 11 settings; the
+prior terrain 18 benchmark setting is an additional strength comparison.
+
+Completed checks so far
+- Client build and existing complete renderer guardrails pass.
+- Existing hardware geometry shadow/terrain physical light suite passes without
+  changing accepted normals, contact/alpha/roof/far transition tests.
+- Pure field probes keep flat/planar surfaces neutral, darken a sheltered bowl,
+  distinguish signed ridges, treat unknown coverage neutrally, cache actual
+  immutable frames, reject another plane, survive epoch/session transitions,
+  and retain identical world-aligned pixels across presentation rebasing.
+  Material-only changes and rebasing do not rebuild the field. The bounded
+  256-entry immutable-storage memo only scans new geometry once; its pure height
+  result, placement, active plane and context epoch determine field validity.
+- A stitched native-style halo/chunk surface gives byte-identical fields to an
+  equivalent single surface; no per-chunk curvature/occlusion boundary is added.
+- Production GLSL probes keep flat 128 at all tested strengths and all four modes.
+  At default strength 2, fixed relief probe lit/dark 136/80 versus SUN_ONLY 128/128.
+  Zero strength and non-terrain objects are neutral to this new layer.
+- Controlled AO/curvature/unknown-alpha probes are bounded as stated.
+- The actual full shader retains emission 64 across all three restored modes,
+  both extreme legacy-light values and high strength.
+- Actual TerrainDefinitionTexture/real shader binds its own sampler 7, restores
+  caller texture/active unit, leaves them unchanged in SUN_ONLY, deletes its own
+  texture idempotently and preserves the caller texture. GL error remains 0.
+
+The cache refinement leaves the comparison pixels unchanged. Candidate 1 and the
+final candidate produce byte-identical 9x9 bowl fields (324 bytes), SHA256
+9d633299261fed2003ae4c54b9385c852c9b1cbeead93f9ad21efe172e6aaa46.
+The cache-only refinement also retained byte-identical compiled shader, world
+renderer, mode settings and LWJGL bindings. The 32 native comparison screenshots
+therefore remain valid. After owner selection only the default/fallback mode
+was changed to RELIEF_AO; shader and
+height-field contents remain identical to the reviewed comparison.
+
+Final checks: complete renderer guardrails, focused CPU cache/shape fixture,
+hardware production-GLSL/state fixture, client build and whitespace pass.
+Workspace layout check reports only inherited unclassified output-root entries;
+all new outputs are within the declared tests category. No cleanup of preserved
+historical outputs was attempted.
+
+Evidence is under output/tests/terrain-relief-comparisons/. No public server or
+owner account/database operation is part of this task. The art direction is selected.
+Normal-camera/maximum-distance performance acceptance remains with the manager.
+This is technically ready for review, not approved for integration/deployment.
