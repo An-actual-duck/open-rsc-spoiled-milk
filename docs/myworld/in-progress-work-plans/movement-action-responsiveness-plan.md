@@ -1,8 +1,8 @@
 # Movement And Action Responsiveness
 
-Status: successful-step clock slice integrated; bounded idle ground-walk admission
-and matched native input proof technically validated, awaiting manager integration.
-Owner private acceptance and broader action-lifecycle work remain open.
+Status: successful-step clock and bounded idle ground-walk admission integrated on main.
+Matched native input validation is complete; owner private playtest and broader
+action-lifecycle work remain open.
 Owner: Core manager; one focused worker branch per measured change.
 Planning baseline: `8aa93c01fcfc9d024c634c9181d571399533d048`.
 Released game baseline: v0.3.14, `0555b0307bf9a64c96cbe7132777dae3a41ca676`.

@@ -1,6 +1,6 @@
 # Client Startup Stall Investigation
 
-Status: validated startup-order fix ready for manager review; no public activation.
+Status: startup-order fix integrated and validated; no public activation.
 Started from `087359be83953f70980bed240fdc5dcb89e30a02` on November 8, 2026 UTC.
 Owner authorization covers bounded private investigation and a proven minimal
 fix; public deployment or shutdown is outside this task.

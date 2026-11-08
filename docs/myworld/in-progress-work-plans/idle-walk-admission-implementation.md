@@ -1,7 +1,7 @@
 # Bounded Idle Ground-Walk Command Admission
 
-Status: technical validation complete; ready for manager review. Owner private
-visual acceptance and public activation remain pending. No public runtime changed.
+Status: integrated on main with manager checks passed. Owner private playtest
+and public activation remain pending; no public runtime changed.
 Branch: `fix/idle-walk-command-admission`. Final production receipt identifies
 source `cbb9b63c35421889d9ffa5b7d39b83a6da3edbd4`; subsequent handoff changes are documentation only.
 The [successful-step clock slice](movement-first-step-implementation.md) is an

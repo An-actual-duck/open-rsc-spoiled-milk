@@ -1,6 +1,8 @@
 # Client Performance And Hardware Portability
 
-Status: active measured implementation; owner authorized autonomous worker execution on November 8, 2026 (UTC).
+Status: initial measured improvements integrated on main; owner private playtest pending.
+The accepted allocation and dispatch work is recorded below. The integrated
+[startup-order fix](client-startup-stall-investigation.md) has separate native evidence.
 Owner: Core manager; one focused worker branch per measured change.
 Planning baseline: `8aa93c01fcfc9d024c634c9181d571399533d048`.
 Released game baseline: v0.3.14, `0555b0307bf9a64c96cbe7132777dae3a41ca676`.

@@ -1,6 +1,6 @@
 # Authoritative First-Step Responsiveness
 
-Status: technically READY for manager review; owner native visual acceptance pending.
+Status: integrated and validated; owner private playtest pending.
 No public deployment.
 Worker branch: `fix/movement-first-step-responsiveness`.
 Plan: [Movement and action responsiveness](movement-action-responsiveness-plan.md).

@@ -45,11 +45,13 @@ into one of the category folders, not directly into `docs/myworld/`.
   living baselines, controlled workloads, instrumentation gaps, hotspot
   hypotheses, and profile-tweak-compare results.
 - [Client performance and portability](in-progress-work-plans/client-performance-portability-plan.md):
-  next measured optimization pass for CPU/GPU work, memory, startup and UI,
-  with weaker-hardware evidence and unchanged approved visuals.
+  measured allocation and dispatch improvements, remaining optimization targets,
+  and hardware evidence with the approved visuals preserved.
+- [Client startup ordering](in-progress-work-plans/client-startup-stall-investigation.md):
+  captured native loader deadlock, socket preparation fix and startup controls.
 - [Movement and action responsiveness](in-progress-work-plans/movement-action-responsiveness-plan.md):
-  coordinated click-to-first-step investigation and action lifecycle improvements,
-  sequenced with the client performance work.
+  integrated first-step and idle-command improvements, matched native input evidence,
+  and remaining action lifecycle work.
 - [Roadmap](in-progress-work-plans/roadmap.md): high-level alpha milestone and
   version progression.
 - [Next release checklist](in-progress-work-plans/next-major-release-goals.md):
