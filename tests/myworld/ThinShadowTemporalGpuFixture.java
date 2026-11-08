@@ -15,7 +15,8 @@ public final class ThinShadowTemporalGpuFixture {
     static long signature, shadowContext;
     static float fenceZ=6500;
     static boolean nativeFence;
-    static float worldOffsetX, worldOffsetZ;
+    static float worldOffsetX, worldOffsetZ, casterOffsetX;
+    static boolean movingCaster;
     // Exact native WALL12 quad41704/41705, translated from (6208,-384,64).
     static final float[] NATIVE_QUAD={64,0,-64,0,0,64,-192,-64,1,0,-64,-192,64,1,1,64,0,-64,0,0,-64,-192,64,1,1,-64,0,64,0,1};
     static FloatBuffer floats(float[] a){FloatBuffer b=ByteBuffer.allocateDirect(a.length*4).order(ByteOrder.nativeOrder()).asFloatBuffer();b.put(a).flip();return b;}
@@ -26,7 +27,7 @@ public final class ThinShadowTemporalGpuFixture {
         float[] vertices={-8192,0,-8192,0,0,8192,0,-8192,0,0,8192,0,16000,0,0,-8192,0,-8192,0,0,8192,0,16000,0,0,-8192,0,16000,0,0,
             -64,0,z,0,0,64,0,z,1,0,64,-192,z,1,1,-64,0,z,0,0,64,-192,z,1,1,-64,-192,z,0,1};
         if(nativeFence)for(int i=0;i<6;i++){for(int a=0;a<5;a++)vertices[30+i*5+a]=NATIVE_QUAD[i*5+a];vertices[30+i*5+2]+=fenceZ;}
-        for(int i=0;i<vertices.length;i+=5){vertices[i]+=worldOffsetX;vertices[i+2]+=worldOffsetZ;}
+        for(int i=0;i<vertices.length;i+=5){vertices[i]+=worldOffsetX+(i>=30?casterOffsetX:0);vertices[i+2]+=worldOffsetZ;}
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER,vbo);gl.glBufferData(gl.GL_ARRAY_BUFFER,floats(vertices),gl.GL_STATIC_DRAW);
         gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER,ebo);IntBuffer order=ByteBuffer.allocateDirect(48).order(ByteOrder.nativeOrder()).asIntBuffer();for(int i=0;i<12;i++)order.put(i);order.flip();gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER,order,gl.GL_STATIC_DRAW);
     }
@@ -34,7 +35,7 @@ public final class ThinShadowTemporalGpuFixture {
         public long staticSignature(){return signature;}
         public long historyContext(){return shadowContext;}
         public void drawDepth(OpenGLGeometryShadows pass,DirectionalShadowProjection projection,boolean staticOnly)throws Exception{
-            pass.bindChunk(vbo,ebo,20,12,0,0);pass.drawRange(0,false,0,6);pass.drawRange(texture,alpha,6,6);
+            pass.bindChunk(vbo,ebo,20,12,0,0);pass.drawRange(0,false,0,6);if(!staticOnly||!movingCaster)pass.drawRange(texture,alpha,6,6);
         }
     };
     static double frame(OpenGLGeometryShadows pass,float centerX,float centerZ,float spanX,float spanZ)throws Exception{
@@ -71,16 +72,22 @@ public final class ThinShadowTemporalGpuFixture {
             pass=new OpenGLGeometryShadows(gl,functions);RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);
             double nearMean=-1;
             StringBuilder csv=new StringBuilder("case,cutout,frame,azimuth,farRebuilt,shadowArea\n");
-            for(boolean cut:new boolean[]{false,true})for(String mode:new String[]{"static","camera-near","camera-far","sun-rebuild","sun-cached","blend","cascade-motion","near-sun-origin","near-sun-world"}){
-                worldOffsetX=mode.equals("near-sun-world")?64000:0;worldOffsetZ=mode.equals("near-sun-world")?59000:0;
-                alpha=cut;signature++;shadowContext++;RendererRemasterLightSettings.adjustAzimuth(90-RendererRemasterLightSettings.getAzimuthDegrees());fenceZ=(mode.equals("camera-near")||mode.startsWith("near-sun"))?1000:(mode.equals("blend")||mode.equals("cascade-motion"))?5100:6500;mesh();double total=0,min=Double.POSITIVE_INFINITY,max=0,delta=0,previous=0;int frames=mode.startsWith("near-sun")?360:mode.equals("sun-cached")?180:64;byte[] previousPixels=new byte[W*H];double residual=0,maxResidual=0;
+            for(boolean cut:new boolean[]{false,true})for(String mode:new String[]{"static","camera-near","camera-far","sun-rebuild","sun-cached","blend","cascade-motion","near-sun-origin","near-sun-world","near-fixed-world","near-caster-world"}){
+                worldOffsetX=mode.endsWith("world")?64000:0;worldOffsetZ=mode.endsWith("world")?59000:0;
+                movingCaster=mode.equals("near-caster-world");casterOffsetX=0;
+                alpha=cut;signature++;shadowContext++;RendererRemasterLightSettings.adjustAzimuth(90-RendererRemasterLightSettings.getAzimuthDegrees());fenceZ=(mode.equals("camera-near")||mode.startsWith("near-"))?1000:(mode.equals("blend")||mode.equals("cascade-motion"))?5100:6500;mesh();double total=0,min=Double.POSITIVE_INFINITY,max=0,delta=0,previous=0;int frames=mode.startsWith("near-sun")?360:mode.equals("sun-cached")?180:64;byte[] previousPixels=new byte[W*H];double residual=0,maxResidual=0,firstCentroid=0,lastCentroid=0;
                 for(int i=0;i<frames;i++){
+                    if(movingCaster){casterOffsetX=i*2;mesh();}
                     if(mode.startsWith("sun")||mode.startsWith("near-sun")){RendererRemasterLightSettings.adjustAzimuth(.002f);if(mode.equals("sun-rebuild"))signature++;}
                     float cameraShift=mode.startsWith("camera")?i*.5f:0;
                     float eyeX=mode.equals("cascade-motion")?(float)Math.cos(i*Math.PI/32)*1024:0;
                     float eyeZ=mode.equals("cascade-motion")?(float)Math.sin(i*Math.PI/32)*1024:0;
-                    pass.prepare(SCENE,eyeX+worldOffsetX,-256,eyeZ+worldOffsetZ);float span=(mode.equals("camera-near")||mode.startsWith("near-sun"))?1024:4096;
+                    pass.prepare(SCENE,eyeX+worldOffsetX,-256,eyeZ+worldOffsetZ);float span=(mode.equals("camera-near")||mode.startsWith("near-"))?1024:4096;
                     double energy=frame(pass,cameraShift+worldOffsetX,fenceZ-128+worldOffsetZ,span,span);csv.append(mode).append(',').append(cut).append(',').append(i).append(',').append(RendererRemasterLightSettings.getAzimuthDegrees()).append(',').append(pass.farRebuilt).append(',').append(energy).append('\n');
+                    if(movingCaster) {
+                        double weighted=0,weight=0;for(int y=0;y<H;y++)for(int x=0;x<W;x++){double w=255-(gray[y*W+x]&255);weighted+=w*x;weight+=w;}
+                        double centroid=weighted/Math.max(1,weight)*span/W;if(i==0)firstCentroid=centroid;lastCentroid=centroid;
+                    }
                     if(i>0 && (mode.startsWith("camera")||mode.startsWith("near-sun"))){
                         double shiftPixels=mode.startsWith("camera")?.5*W/span:0,error=0,support=0;
                         for(int y=0;y<H;y++)for(int x=0;x<W-2;x++){
@@ -95,7 +102,8 @@ public final class ThinShadowTemporalGpuFixture {
                 double mean=total/frames;
                 Files.write(output.resolve("temporal.csv"),csv.toString().getBytes("UTF-8"));
                 require(mean>0,"Shadow was removed instead of stabilized: "+mode);
-                if(mode.equals("static"))require(max-min<.01,"Stationary camera/sun shadows are not stable");
+                if(mode.equals("static")||mode.equals("near-fixed-world"))require(max-min<.01,"Stationary camera/sun shadows are not stable");
+                if(movingCaster)require(Math.abs((lastCentroid-firstCentroid)-126)<3,"Moving caster shadow was cached or trailed: "+(lastCentroid-firstCentroid));
                 if(cut && mode.equals("camera-near"))nearMean=mean;
                 if(cut && mode.startsWith("near-sun")) {
                     require(mean>5700 && mean<8000,"Near native shadow lost or inflated: "+mean);

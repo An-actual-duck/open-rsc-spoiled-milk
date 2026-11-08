@@ -258,6 +258,26 @@ public final class GeometryShadowGpuFixture {
             RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);pass.prepare(SCENE,3000,0,0);require(previousProjection.get(pass)==null,"Low->High reused history");
             pass.prepare(SCENE,3600,0,0);pass.suspend();require(textureId(pass,"previousFar")==0&&previousProjection.get(pass)==null,"suspend retained history");
             pass.prepare(SCENE,3600,0,0);require(previousProjection.get(pass)==null,"re-enable reused suspended history");
+            // Near tracking stores only a projection anchor, never depth history.
+            java.lang.reflect.Field nearProjectionField=OpenGLGeometryShadows.class.getDeclaredField("nearProjection");nearProjectionField.setAccessible(true);
+            shadowContext++;pass.prepare(SCENE,64000,-256,59000);
+            DirectionalShadowProjection tracked=(DirectionalShadowProjection)nearProjectionField.get(pass);
+            require(tracked.gridCenterX==64000&&tracked.gridCenterY==-256&&tracked.gridCenterZ==59000,"new context inherited near phase");
+            float[] phase=tracked.matrix.clone();
+            pass.prepare(SCENE,64000.1,-256,59000.1);
+            tracked=(DirectionalShadowProjection)nearProjectionField.get(pass);
+            for(int row=0;row<2;row++)for(int col=0;col<4;col++)
+                require(tracked.matrix[col*4+row]==phase[col*4+row],"subtexel tracking moved near XY phase");
+            shadowPlane++;pass.prepare(SCENE,64000.1,-256,59000.1);
+            tracked=(DirectionalShadowProjection)nearProjectionField.get(pass);
+            require(tracked.gridCenterX==64000.1&&tracked.gridCenterZ==59000.1,"plane change inherited near phase");
+            pass.prepare(SCENE,64000.1,-20000,59000.1);
+            tracked=(DirectionalShadowProjection)nearProjectionField.get(pass);
+            require(tracked.gridCenterY==-20000,"vertical discontinuity inherited near phase");
+            pass.suspend();require(nearProjectionField.get(pass)==null,"suspend retained near phase");
+            pass.prepare(SCENE,64000.25,-256,59000.25);
+            tracked=(DirectionalShadowProjection)nearProjectionField.get(pass);
+            require(tracked.gridCenterX==64000.25&&tracked.gridCenterZ==59000.25,"resume inherited near phase");
             require(OpenGLGeometryShadows.supportedFarSize(2048)==2048&&OpenGLGeometryShadows.supportedFarSize(4096)==4096,"far capability clamp");
 			pass.prepare(SCENE,4200,0,0);
             int retainedHistoryTexture=textureId(pass,"previousFar");require(retainedHistoryTexture!=0,"final live history missing before deletion check");

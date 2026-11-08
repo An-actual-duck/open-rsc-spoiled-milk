@@ -1,0 +1,94 @@
+Near-shadow solar quiver follow-up
+=================================
+
+Owner observation
+The accepted distant-shadow update greatly improved fences at distance, but
+nearby shadows still visibly shake/quiver, including with player/camera still.
+This follows the distant-thin-shadow work at published cbd89824e.
+
+Cause and focused correction
+The near map was freshly built each frame using an absolute light-space
+texel snap. As the sun rotates, dot(axis, world center) changes even though
+the camera is stationary. At actual map coordinates around (64000,59000),
+rounding that value crosses texel boundaries much more often than an otherwise
+identical scene around the origin. The resulting grid phase hops change the
+coverage of narrow alpha-cutout railing bars.
+
+Near projection now retains a world-space grid center. Only camera displacement
+relative to that center is snapped in the current sun basis. Sun rotation alone
+no longer re-snaps the absolute map location. The tracking basis is normalized
+in double precision and the world anchor is advanced using relative increments;
+it is not repeatedly reconstructed from float-normalized absolute coordinates.
+The established absolute far projection constructor is unchanged.
+
+Near texture contents still rebuild every frame. There is no near depth history,
+no actor caching, no filter widening, and no resolution/bias increase. High near
+remains 2048 at radius32 tiles and Low is unchanged. Context/plane changes,
+quality changes, suspend/Off and large 3D camera discontinuities reset the near
+anchor. This also avoids carrying a phase across a vertical teleport.
+
+Frozen production candidate
+  source: 91883581a03ea3c84fd1a126828d69bdb02d1037
+  JAR: output/tests/near-shadow-quiver/candidate-91883581a-client.jar
+  SHA256: 68ac58632c57088dbe475401c1790f246fa5e86ca2d41cf44966c17c8d53aa3c
+Subsequent work is tests/documentation only unless a later explicit freeze is
+recorded. Root owns native throughput validation and the owner-visible client.
+
+Controlled GPU evidence
+The existing checked native railing mask and exact native quad are retained.
+At a fixed camera, the sun advances0.002degrees per frame for360frames. Rendered
+receiver images cover1024x1024world units at512x256pixels. Pixel-change is sum
+of absolute consecutive pixel differences divided by current shadow darkness
+support. It is not a percent of the screen and includes legitimate solar motion.
+
+                         Mean pixel-change/support   Worst pixel-change/support
+Previous origin          1.573%                      10.626%
+Previous (64000,59000)   28.002%                      41.742%
+Tracked origin           1.554%                       9.336%
+Tracked (64000,59000)     1.558%                       9.357%
+
+At the world location, mean instability falls about94.4% and worst about77.6%.
+Maximum consecutive shadow-area change falls from2106.70 to587.01world units
+squared. Mean shadow area remains present (baseline6371.70, tracked6363.13),
+so removing/fading the railing is not the explanation. Origin and translated
+cases initialize a fresh context for each mode in the final regression.
+
+The previous fixture already lacked near stationary-sun coverage; its close
+camera case had fixed sun. New near-origin/world solar cases exercise that gap.
+The original close native coverage bound5700..6200 remains unchanged; measured
+tracked coverage is6080.36world units squared. Distant fixed/cached-sun results
+remain unchanged. Static near-world sun/camera and moving-caster freshness are
+also checked. There is still genuine raster edge aliasing: worst9.36% remaining
+pixel-change/support is not zero flicker or a universal owner-visible guarantee.
+
+Evidence is preserved under output/tests/near-shadow-quiver/:
+  baseline.log, anchor1.log, anchor2.log, temporal-frozen.log,
+  projection.log, gpu-frozen.log, guardrails.log.
+Each temporal log records its full generated evidence directory and rawCSV.
+An experimental4096 near map is preserved in anchor4k-complete.log. It lowered
+worst edge change but changed near coverage/filter footprint and costs more GPU
+work. It was deliberately not retained. One initial4096 run correctly failed
+the unchanged close-coverage assertion; no production assertion was weakened to
+ship that experiment.
+
+CPU projection regression
+20,000frames combine gradual sun movement and camera motion at the origin and
+translated world location; projected relative geometry stays equivalent within
+float matrix precision and the tracked center remains within a texel-scale
+bound of the requested center.100,000fixed-sun frames require bit-identical
+matrices and negligible anchor drift. Subtexel fixed-sun camera movement keeps
+near XY rows stable. Existing sun-ray depth/Y-down ordering, rebasing, culling,
+input validation and quality persistence remain checked.
+
+Validation status
+Build, controlled temporal GPU, physical terrain/alpha/contact/slope/roof/GL
+state/resource-lifecycle GPU checks and full renderer guardrails pass at the
+frozen source. Extended near reset/moving-caster checks pass too. A first reset assertion
+incorrectly compared anchor worldX after depth-axis movement; it was corrected
+to compare the XY matrix rows that determine sampling phase. Production did
+not change. Final test logs: temporal-complete.log, gpu-reset-final.log.
+
+Root owns the separate native throughput evidence and records it with integration
+receipts. No performance acceptance is inferred from these controlled fixtures.
+No public server restart, deployment or map/content mutation is part of this
+follow-up. Owner test client is managed by root, not this worker.
