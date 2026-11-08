@@ -270,8 +270,14 @@ public final class RendererBenchmarkServer {
                         else if(motion.equals("area")){x=478;y=453;areaTeleports++;}
                         else if(motion.equals("level")){x=685;y=508;level=2;levelTeleports++;}
                         else if(!motion.equals("return"))throw new IllegalStateException("Unexpected private motion request");
-                        com.openrsc.server.model.world.region.TileValue tile=server.getWorld().getTile(com.openrsc.server.model.world.coordinate.WorldLocation.global(new com.openrsc.server.model.world.coordinate.WorldCoordinate(x,y,level)));
-                        if((tile.traversalMask&255)!=0 || (tile.overlay&255)==10)throw new IllegalStateException("Authored lifecycle destination is blocked "+x+","+y+","+level);
+                        if(!motion.equals("same")) {
+                            boolean found=false;
+                            for(int radius=0;radius<=5&&!found;radius++)for(int dx=-radius;dx<=radius&&!found;dx++)for(int dy=-radius;dy<=radius&&!found;dy++) {
+                                com.openrsc.server.model.world.region.TileValue tile=server.getWorld().getTile(com.openrsc.server.model.world.coordinate.WorldLocation.global(new com.openrsc.server.model.world.coordinate.WorldCoordinate(x+dx,y+dy,level)));
+                                if((tile.traversalMask&255)==0 && (tile.overlay&255)!=10){x+=dx;y+=dy;found=true;}
+                            }
+                            if(!found)throw new IllegalStateException("No authored walkable lifecycle destination near "+x+","+y+","+level);
+                        }
                         viewer.teleport(x,y,level,false);
                     }
                     driveActors(); driveViewer(); tick++;

@@ -118,7 +118,45 @@ public final class RendererBenchmarkClient {
         }
         return "{\"activeHitSplatActors\":"+hits+",\"activeCombatEffectActors\":"+effects+",\"damagedHealthActors\":"+damaged+"}";
     }
+    private static long renderedFrames()throws Exception {
+        synchronized(RenderTelemetry.class){return ((Number)field(null,RenderTelemetry.class,"openGLFrames")).longValue();}
+    }
+    private static String ownWindowId;
+    private static String nativeWindowCommand(String...args)throws Exception {
+        Process command=new ProcessBuilder(args).redirectErrorStream(true).start();
+        if(!command.waitFor(5,java.util.concurrent.TimeUnit.SECONDS)){command.destroy();throw new IllegalStateException("Scoped WM command timed out");}
+        String output=new String(readAll(command.getInputStream()),StandardCharsets.UTF_8).trim();
+        if(command.exitValue()!=0)throw new IllegalStateException("Scoped WM command failed: "+output);
+        return output;
+    }
+    private static byte[] readAll(java.io.InputStream in)throws Exception {
+        java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream();byte[] b=new byte[4096];int n;while((n=in.read(b))!=-1)out.write(b,0,n);return out.toByteArray();
+    }
+    private static void visibleLifecycleStep(OpenGLFramePresenter presenter,int second,Path capture)throws Exception {
+        if(second>7 || !Boolean.getBoolean("renderer.benchmark.visiblePreview"))return;
+        Object controller=field(presenter,OpenGLFramePresenter.class,"windowController");
+        String pid=java.lang.management.ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
+        if(ownWindowId==null){String[] ids=nativeWindowCommand("xdotool","search","--onlyvisible","--pid",pid).split("\\s+");if(ids.length!=1)throw new IllegalStateException("Expected exactly one visible window owned by fixture PID");ownWindowId=ids[0];}
+        if(!pid.equals(nativeWindowCommand("xdotool","getwindowpid",ownWindowId)))throw new IllegalStateException("Native window PID ownership changed");
+        long before=renderedFrames();String action="resumed";
+        if(second==0){OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.WINDOWED);action="windowed";}
+        if(second==1){nativeWindowCommand("xdotool","windowsize",ownWindowId,"1100","700");action="resize";}
+        if(second==2){OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.FULLSCREEN);action="fullscreen";}
+        if(second==3){OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);action="borderless";}
+        if(second==4){OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.WINDOWED);action="windowed-again";}
+        if(second==5){nativeWindowCommand("xdotool","windowminimize",ownWindowId);action="iconify";}
+        if(second==6){nativeWindowCommand("xdotool","windowmap",ownWindowId);nativeWindowCommand("xdotool","windowactivate","--sync",ownWindowId);action="activate-restore";}
+        Thread.sleep(800);
+        long after=renderedFrames();
+        Files.write(capture.resolve("window-events.jsonl"),("{\"action\":\""+action+"\",\"beforeFrames\":"+before+",\"afterFrames\":"+after+",\"surface\":"+surfaceState(presenter)+",\"flags\":"+windowState(presenter)+",\"gameObjects\":"+((mudclient)field(null,ORSCApplet.class,"mudclient")).getGameObjectInstanceCount()+"}\n").getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+        if(second!=5 && after<=before)throw new IllegalStateException("World rendering did not resume after "+action);
+        if(second==7 && ((Number)windowFlags(controller)).intValue()!=1)throw new IllegalStateException("Game window did not resume visible/uniconified");
+    }
+    private static Object windowFlags(Object controller)throws Exception {
+        Method m=controller.getClass().getDeclaredMethod("diagnosticWindowFlags");m.setAccessible(true);return m.invoke(controller);
+    }
     private static void lifecycleStep(mudclient client,OpenGLFramePresenter presenter,int second,Path capture)throws Exception {
+        visibleLifecycleStep(presenter,second,capture);
         if(second==5||second==10||second==15||second==18) {
             String motion=second==5?"same":second==10?"area":second==15?"level":"return";
             Files.write(capture.getParent().resolve("motion-request"),motion.getBytes(StandardCharsets.UTF_8));
