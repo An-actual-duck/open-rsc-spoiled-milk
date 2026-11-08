@@ -38,12 +38,12 @@ public final class RendererBenchmarkServer {
     private static boolean configured;
     private static int tick;
     private static int removedMapNpcs;
-    private static int samePositionTeleports;
+    private static int samePositionTeleports, areaTeleports, levelTeleports;
     private static long serial;
     private static String phase = "dense-idle";
     private static final String[] COMBAT_FAMILIES={"ice","thunder","wood","ranged","throwing","melee"};
     private static final int SURVIVAL_HITS=30000;
-    private static long combatRestarts;
+
     private static boolean realCombat() { return phase.equals("combat-real"); }
     private static void equipAmount(Player p,int id,int amount)throws Exception {
         java.lang.reflect.Field f=Equipment.class.getDeclaredField("list");f.setAccessible(true);
@@ -59,6 +59,9 @@ public final class RendererBenchmarkServer {
         for(Player p:actors)p.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),SURVIVAL_HITS,SURVIVAL_HITS,false);
         for(int i=0;i<COMBAT_FAMILIES.length;i++) {
             Player p=actors.get(i);Npc target=npcs.get(i*3);
+            boolean placed=false;
+            for(int[] d:new int[][]{{1,0},{-1,0},{0,1},{0,-1}})if(!placed&&clear(target.getX()+d[0],target.getY()+d[1])){p.teleport(target.getX()+d[0],target.getY()+d[1],false);placed=true;}
+            if(!placed)throw new IllegalStateException("No walkable adjacent combat tile");
             java.lang.reflect.Field equipment=Equipment.class.getDeclaredField("list");equipment.setAccessible(true);
             Arrays.fill((Item[])equipment.get(p.getCarriedItems().getEquipment()),null);
             p.setWornItems(p.getSettings().getAppearance().getSprites());
@@ -251,6 +254,17 @@ public final class RendererBenchmarkServer {
                             if (busy) {createActors();if(realCombat())beginRealCombat();}
                         }
                     }
+                    if(viewer!=null && phase.equals("lifecycle") && Files.isRegularFile(run.resolve("motion-request"))) {
+                        String motion=new String(Files.readAllBytes(run.resolve("motion-request")),"UTF-8").trim();Files.delete(run.resolve("motion-request"));
+                        int x=502,y=453,level=0;
+                        if(motion.equals("same")){x=viewer.getX();y=viewer.getY();level=viewer.getWorldLocation().getCoordinate().getLevel();samePositionTeleports++;}
+                        else if(motion.equals("area")){x=478;y=453;areaTeleports++;}
+                        else if(motion.equals("level")){x=685;y=508;level=2;levelTeleports++;}
+                        else if(!motion.equals("return"))throw new IllegalStateException("Unexpected private motion request");
+                        com.openrsc.server.model.world.region.TileValue tile=server.getWorld().getTile(com.openrsc.server.model.world.coordinate.WorldLocation.global(new com.openrsc.server.model.world.coordinate.WorldCoordinate(x,y,level)));
+                        if((tile.traversalMask&255)!=0 || (tile.overlay&255)==10)throw new IllegalStateException("Authored lifecycle destination is blocked "+x+","+y+","+level);
+                        viewer.teleport(x,y,level,false);
+                    }
                     driveActors(); driveViewer(); tick++;
                     if (viewer != null && phase.equals("same-position") && tick == 50) {
                         viewer.teleport(viewer.getX(), viewer.getY(), false); samePositionTeleports++;
@@ -268,7 +282,7 @@ public final class RendererBenchmarkServer {
                     }
                     JSONObject state = new JSONObject().put("online", player != null).put("private", true);
                     if (player != null) state.put("x", player.getX()).put("y", player.getY()).put("level", player.getWorldLocation().getCoordinate().getLevel());
-                    state.put("phase", phase).put("phaseTick", tick).put("samePositionTeleports", samePositionTeleports).put("controlledPlayers", actors.size()).put("controlledNpcs", npcs.size())
+                    state.put("phase", phase).put("phaseTick", tick).put("samePositionTeleports", samePositionTeleports).put("areaTeleports",areaTeleports).put("levelTeleports",levelTeleports).put("controlledPlayers", actors.size()).put("controlledNpcs", npcs.size())
                         .put("summonsRequested", actors.isEmpty() ? 0 : 8).put("visualProjectileEmitters", actors.isEmpty() ? 0 : 8)
                         .put("visualProjectilesDamage", false).put("realCombat",combatState()).put("removedMapNpcs", removedMapNpcs)
                         .put("cycleMillis", server.getWorldDayNightClock().getCurrentCycleMillis())

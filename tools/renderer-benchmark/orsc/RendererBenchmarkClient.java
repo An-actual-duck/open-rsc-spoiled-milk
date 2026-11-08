@@ -119,6 +119,10 @@ public final class RendererBenchmarkClient {
         return "{\"activeHitSplatActors\":"+hits+",\"activeCombatEffectActors\":"+effects+",\"damagedHealthActors\":"+damaged+"}";
     }
     private static void lifecycleStep(mudclient client,OpenGLFramePresenter presenter,int second,Path capture)throws Exception {
+        if(second==5||second==10||second==15||second==18) {
+            String motion=second==5?"same":second==10?"area":second==15?"level":"return";
+            Files.write(capture.getParent().resolve("motion-request"),motion.getBytes(StandardCharsets.UTF_8));
+        }
         if(second%12==0)RendererShadowSettings.setQuality(RendererShadowSettings.Quality.OFF);
         if(second%12==4)RendererShadowSettings.setQuality(RendererShadowSettings.Quality.LOW);
         if(second%12==8)RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);
