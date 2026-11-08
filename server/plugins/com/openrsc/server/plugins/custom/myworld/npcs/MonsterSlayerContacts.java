@@ -179,12 +179,14 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		String[] warnings = hazardWarningLines(task);
 		if (warnings.length > 0) dialogue.npc(player, npc, warnings);
 		dialogue.npc(player, npc, "Your next task is to slay " + task.getRequiredKills() + " " + task.getDisplayName(data.getFamily(task.getFamilyKey()).getDisplayName()) + ".");
-		String[] supplies = taskSupplyLines(player, task);
+		String[] supplies = taskSupplyLines(player, result.getTaskResult().getGrantedStarterItems());
 		if (supplies.length > 0) dialogue.npc(player, npc, supplies);
 	}
 	/** Assignment-only acknowledgement; reminders never promise or grant more supplies. */
 	public static String[] taskSupplyLines(Player player, MonsterSlayerDefinitions.Task task) {
-		java.util.List<Integer> ids = MonsterSlayerTaskSupplies.itemIds(task);
+		return taskSupplyLines(player, MonsterSlayerTaskSupplies.itemIds(task));
+	}
+	public static String[] taskSupplyLines(Player player, java.util.List<Integer> ids) {
 		if (ids.isEmpty()) return new String[0];
 		java.util.List<String> names = new java.util.ArrayList<String>();
 		for (int id : ids) names.add(player.getWorld().getServer().getEntityHandler().getItemDef(id).getName());
