@@ -165,10 +165,13 @@ public final class RendererBenchmarkClient {
         if(second%12==4)RendererShadowSettings.setQuality(RendererShadowSettings.Quality.LOW);
         if(second%12==8)RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);
         if(second==20||second==40) {
-            client.closeConnection(true);
+            Files.write(capture.getParent().resolve("logout-request"),"Ordinary server logout confirmation requested\n".getBytes(StandardCharsets.UTF_8));
+            long logoutDeadline=System.currentTimeMillis()+15000;
+            while(System.currentTimeMillis()<logoutDeadline&&!field(client,mudclient.class,"currentViewMode").toString().equals("LOGIN"))Thread.sleep(100);
             Thread.sleep(2500);
             if(!field(client,mudclient.class,"currentViewMode").toString().equals("LOGIN"))throw new IllegalStateException("Logout did not return to login");
             Files.write(capture.resolve("lifecycle-events.jsonl"),("{\"event\":\"logout\",\"second\":"+second+",\"shadow\":"+shadowStats(presenter)+"}\n").getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+            set(client,mudclient.class,"autoLoginTimeout",1);
             Method login=mudclient.class.getDeclaredMethod("login",int.class,String.class,String.class,boolean.class);login.setAccessible(true);login.invoke(client,-12,"RendererProof13","renderdemo",false);
             long deadline=System.currentTimeMillis()+30000;
             while(System.currentTimeMillis()<deadline&&!field(client,mudclient.class,"currentViewMode").toString().equals("GAME"))Thread.sleep(100);

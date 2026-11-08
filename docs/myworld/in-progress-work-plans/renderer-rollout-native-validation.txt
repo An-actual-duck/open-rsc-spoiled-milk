@@ -1,0 +1,170 @@
+Renderer rollout native combat and lifecycle validation
+======================================================
+
+Scope
+The owner approved the accepted renderer visually and requested all remaining
+pre-rollout checks except the 30–60 minute soak. This task changes optional
+benchmark/test tooling only. Production renderer, gameplay, network authority,
+assets and map files are unchanged. Oracle and the original browser fixture
+are untouched. All native runs use disposable loopback databases/accounts.
+
+Inputs
+Production implementation baseline: 8385412ee48047efc6fe8d30a2eca8972b178a8a.
+Packaged candidate source: 6b5f88229deb691375f5c9d972bde3ab960970b5.
+Root verifies every packaged class matches the approved baseline. Each native
+run records the exact client JAR digest, server artifacts, map/seed hashes,
+compiled test helper digests, runtime and actual GL vendor/renderer/version.
+The test helper source may advance independently of unchanged client classes.
+
+Actual combat workload
+The new combat-real phase disables the old visual-only projectile generator.
+Six ordinary production channels run together: Ice Crystal, Thunder Strike,
+Battering Ram, bow/arrows, tin shuriken and melee, with production bear summons
+assisting. Actors receive survival HP so deaths do not prematurely stop the
+short workload. No map collision is edited: casters use authored walkable tiles
+adjacent to their targets. There are 16 controlled players, 32 controlled NPCs
+and eight requested bears. The viewer authenticates normally and receives the
+ordinary scene/combat packets.
+
+Admission is not accepted as proof of damage. The private observer reads each
+NPC's factual typed contribution ledger on the server game thread, attributing
+positive damage separately to all six casters/channels. Resource consumption,
+NPC HP changes, active summon combat events, client received projectiles,
+active floating hit splats and elemental effect playback are retained too.
+Report validation rejects missing damage contributions/resources, no active
+summon events, no received splats or no overlapping received projectiles.
+Summon contribution credit remains zero in this fixture despite active combat
+events. Thus this is summon animation/engagement stress, not proof of successful
+summon damage attribution or a change to summon reward/credit behavior.
+
+Accepted Java 8 combat run
+  output/tests/renderer-shadow-benchmarks/rollout-combat-accepted/
+    combat-real-20261108T005029Z/benchmark-summary.json
+60.023 seconds, 3599 completed renders, zero queued frame drops, about59.96FPS.
+GPU frame p99/max7.456/20.043ms. Completed frame intervals p99/max18.999/94.492ms:
+14 intervals exceed25ms and one exceeds50ms. This is not hitch-free60FPS.
+The long interval is retained in the final phase window. That window reports
+no GC collection/time change. Root's attribution audit identifies a client-loop
+draw pause rather than a long GPU shadow pass; the cause is not proven from
+coarse telemetry. A supported Java21 repeat with explicit GC logging is separate
+coverage, not permission to erase this result.
+Final sampled factual contributions: ice466/thunder486/wood552/ranged525/
+throwing1051/melee603;12targets damaged, positive resources spent by each ranged/
+magic family, summons engaged. Values vary normally with production RNG.
+
+Window and lifecycle coverage
+The independent RendererWindowLifecycleGpuFixture owns its GLFW context/thread
+and briefly creates its own native window, never input callbacks or grabs. It
+checks real1100x700 resize, windowed/fullscreen/borderless transitions, minimize,
+restore/activation, settings serializer roundtrip and idempotent destruction.
+X11 restore alone did not activate the minimized window; explicit own-window
+show/focus models user activation and passed. This is Linux WM behavior and is
+not reported as a production defect.
+
+The full-game visible lifecycle phase requests window modes through production
+settings, applied by the renderer thread. Resize/minimize/map/activate use
+xdotool targeted to the unique visible XID of the exact current fixture PID;
+each operation rechecks PID ownership. It sends no synthetic keys and installs
+no new callbacks or grabs. Recorded native sizes/flags and completed-render
+counters show the world continues/resumes. Fullscreen modes can auto-minimize
+when focus is lost; this is retained, not called visible acceptance of every
+frame. The final windowed restore must be visible and uniconified.
+
+The same phase cycles Off/Low/High repeatedly, performs same-position/area/
+level2/back teleports, then ordinary server logout confirmation packets and
+normal authentication twice in the same client JVM. It saves the final Low
+preference through the actual production SettingsStore and verifies the file.
+Deliberate window changes, Off periods, loading and login waits make this a
+functional lifecycle test, not a steady-FPS acceptance cohort. GPU query timer
+lifetimes can reset at relog, so combined lifecycle GPU timing is omitted.
+
+Preserved negative probes
+All earlier runs and failed test data remain under declared test output roots.
+Initial combat smoke exposed caster LOS placement, corrected by choosing
+adjacent authored tiles; no gameplay changes. A compile-only prototype used a
+nonexistent Equipment.getItems accessor and never ran. Native window probes
+first assumed restore-without-activation and implicit settings saves; corrected
+fixtures distinguish WM activation and explicit setting serialization.
+The first full-game lifecycle refused an already-existing blocked spawn tile
+for same-position movement. Same-position now preserves the current location;
+new destinations must resolve to a nearby authored walkable tile. Actual level2
+landing is near the maintained Gnome course callback, not an invented upper floor.
+A direct observer-thread closeConnection probe raced the game loop and was
+rejected. The accepted path uses server confirmation processed by the ordinary
+client loop. A subsequent retry omitted the login admission counter normally
+set by UI; corrected tooling sets it before calling the existing login method.
+These harness failures do not establish owner-facing regressions.
+
+Limits
+No soak or leak-freedom claim. No live server/account/database mutation.
+Native hardware/OS and additional release/package checks are coordinated by
+root. Optional pending published-frame actor/roof observations can be unknown;
+unknown is not zero. Received actor counts and renderer submission counters
+remain distinct from visibility through scenery. Final owner visual approval
+is separate from hidden throughput and scripted functional checks.
+
+Accepted full-game lifecycle receipt
+  output/tests/renderer-shadow-benchmarks/rollout-lifecycle-complete/
+    lifecycle-20261108T010044Z/benchmark-summary.json
+The window-events receipt contains all eight expected operations. Window resize
+was1100x700, fullscreen and borderless surfaces1920x1080, and final restore flags1
+(visible/not iconified); each non-minimize step advanced completed-render counts
+and retained935world objects during the window sequence. Actual client logs
+confirm global:L2 ready9/9 at684,508, then a released resident presentation with
+225645triangles, followed by return tolevel0. Thus signed-level evidence includes
+client terrain/readiness/rendering, not just the server's intended location.
+Both logout snapshots report inactive shadows. The two relog pairs completed
+without client/server exceptions. SETTINGS-PERSISTED records the actual
+production SettingsStore disk save of the selected Low preference.
+
+Supported Java21 combat repeat
+  output/tests/renderer-shadow-benchmarks/rollout-combat-java21/
+    combat-real-20261108T010248Z/benchmark-summary.json
+Actual runtime21.0.12 Ubuntu/OpenJDK on Linux, RX6700XT. The ordinary Java8
+server artifacts remain unchanged; only client Java selection is scoped via
+PATH. The exact command records -verbose:gc; raw uptime-stamped G1 messages
+remain in console.log. All six factual damage/resource and received-effect
+admission checks pass again.3603renders/60.0499seconds, about60.000FPS, zero
+queued drops. CPU/GPU frame p99 5.777/7.596ms, maximum24.093/23.724ms. Completed
+frame intervals p99/max18.986/35.978ms;ten>25ms,three>33.334ms,none>50ms.
+The earlier Java8 94.492ms tail did not recur. This supports the current Linux
+runtime without proving a cause for that earlier isolated pause or replacing
+its retained evidence. Both runs remain short hidden throughput checks.
+
+Second physical GPU complete-client check
+  output/tests/renderer-shadow-benchmarks/rollout-igpu-low-accepted/
+    dense-idle-20261108T010445Z/benchmark-summary.json
+DRI_PRIME=pci-0000_12_00_0 selected the physical Raphael integrated GPU. Actual
+manifest renderer is AMD Ryzen9 7900X12-Core Processor, radeonsi/raphael_mendocino,
+Mesa25.2.8, GL4.6 compatibility. Ordinary login and native terrain/readiness
+complete with Low selected and437056resident triangles. This15second functional
+case averaged59.83renders/s but has one70.40ms GPU-frame sample; it is not a
+weak-hardware steady60FPS promise. Low near-shadow GPU p99/max1.885/2.038ms.
+Both GPUs use the same Linux AMD/Mesa stack, not independent vendor/OS coverage.
+Root separately owns capability-limited/full-client fallback and packaging tests.
+
+Final verification
+16 benchmark process/data/acceptance guards pass, including negative tests for
+unattributed damage, no resources, no summons/projectiles/splats and missing/
+frozen/lost-world/unrestored native window evidence. The lifecycle report now
+requires all eight exact operations and the actual settings-persistence marker.
+It explicitly omits combined GPU timing across recreated same-JVM timer
+lifetimes. Four native fence-export evidence guards pass. Both helper classes
+and scoped window fixture compile with source/target8. Workspace layout and
+whitespace checks pass. Four accepted case receipts plus raw reports/logs are
+indexed in output/tests/renderer-rollout-validation/accepted-cases.json.
+All task-owned private clients/servers have exited and their data is preserved.
+The long soak was deliberately not run. No production file or public operation
+is part of the handoff.
+
+Reproduction
+Prepare/start/capture/report/stop remain explicit scripts/renderer-benchmark.py
+commands. Use phase combat-real with capture for short hidden throughput, and
+preview --phase lifecycle --seconds50 for the visible full-game functional
+sequence (Linux/X11 and xdotool required). Wait for CLIENT-DONE before report or
+stop. For Java21 coverage prepend its bin directory only to the client capture
+PATH and pass --gc-log; this adds universally supported -verbose:gc and retains
+messages in the existing private console log. Compatibility Low can be selected
+with --quality low and a scoped DRI_PRIME, verifying actual manifest renderer.
+The independent native-window fixture can be compiled against the candidate JAR
+and run in an isolated JVM under the shared renderer GPU flock.

@@ -20,6 +20,17 @@ benchmark = importlib.util.module_from_spec(spec); spec.loader.exec_module(bench
 
 
 class GuardTests(unittest.TestCase):
+    def test_full_game_window_lifecycle_requires_all_real_operations_and_recovery(self):
+        actions=["windowed","resize","fullscreen","borderless","windowed-again","iconify","activate-restore","resumed"]
+        events=[dict(action=a,beforeFrames=i*10,afterFrames=i*10+5,gameObjects=935,flags=1,surface=dict(windowWidth=1100,windowHeight=700)) for i,a in enumerate(actions)]
+        self.assertTrue(benchmark.validate_window_lifecycle(events)["worldRetained"])
+        with self.assertRaises(ValueError):benchmark.validate_window_lifecycle([])
+        with self.assertRaises(ValueError):benchmark.validate_window_lifecycle(events[:-1])
+        for owner,key,value in ((events[2],"afterFrames",20),(events[4],"gameObjects",0),(events[-1],"flags",3),(events[1]["surface"],"windowWidth",960)):
+            old=owner[key];owner[key]=value
+            with self.assertRaises(ValueError):benchmark.validate_window_lifecycle(events)
+            owner[key]=old
+
     def test_real_combat_requires_damage_resources_summons_and_received_visuals(self):
         with tempfile.TemporaryDirectory() as folder:
             run=Path(folder)

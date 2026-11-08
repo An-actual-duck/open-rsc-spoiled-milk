@@ -280,6 +280,9 @@ public final class RendererBenchmarkServer {
                         }
                         viewer.teleport(x,y,level,false);
                     }
+                    if(viewer!=null && phase.equals("lifecycle") && Files.isRegularFile(run.resolve("logout-request"))) {
+                        Files.delete(run.resolve("logout-request"));viewer.logout();
+                    }
                     driveActors(); driveViewer(); tick++;
                     if (viewer != null && phase.equals("same-position") && tick == 50) {
                         viewer.teleport(viewer.getX(), viewer.getY(), false); samePositionTeleports++;

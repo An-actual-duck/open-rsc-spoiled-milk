@@ -279,6 +279,17 @@ def validate_runtime(run, samples, phase):
     return dict(positions=positions,maxAxisDistanceTiles=distance,fixtureRuntimeExceptions=False)
 
 
+def validate_window_lifecycle(events):
+    expected=["windowed","resize","fullscreen","borderless","windowed-again","iconify","activate-restore","resumed"]
+    if [e.get("action") for e in events] != expected:raise ValueError("Full native game-window lifecycle evidence is incomplete")
+    for event in events:
+        if event.get("gameObjects",0)<=0:raise ValueError("Window lifecycle lost the actual game world")
+        if event["action"]!="iconify" and event.get("afterFrames",0)<=event.get("beforeFrames",0):raise ValueError("Completed world frames did not resume after native window operation")
+    if events[-2].get("flags")!=1 or events[-1].get("flags")!=1:raise ValueError("Native window activation did not restore visible uniconified rendering")
+    if events[1].get("surface",{}).get("windowWidth")!=1100 or events[1].get("surface",{}).get("windowHeight")!=700:raise ValueError("Native resize dimensions were not observed")
+    return dict(actions=expected,restoredVisibleUniconified=True,completedFramesResume=True,worldRetained=True)
+
+
 def report(args):
     capture = args.capture.resolve(); run = marked(capture.parent)
     if not (capture / "CLIENT-DONE").is_file():
@@ -347,16 +358,20 @@ def report(args):
     result["roofContextMeaning"] = "New roofContext values use the same published frame as actor projection; missing optional frames are null/unknown, not roof counts of zero. Historical raw Scene observations may precede coverage attachment. Exported roofMaskExport is the authoritative immutable GPU receiver mask; do not infer final policy from room walls or unknown observations."
     result["roofContext"] = {key:sorted({sample["roof"][key] for sample in samples if isinstance(sample.get("roof"),dict) and key in sample["roof"]}) for key in ("visibility","residentRoofTriangles","maximumSourceCoveredTiles")}
     if result["phase"] == "lifecycle":
+        if not (capture / "SETTINGS-PERSISTED").is_file():raise ValueError("Production settings persistence not verified")
         lifecycle,partial_lifecycle=analyzer.read_jsonl(capture / "lifecycle-events.jsonl")
         if partial_lifecycle or [e.get("event") for e in lifecycle] != ["logout","relogin","logout","relogin"]:raise ValueError("Two ordinary same-JVM relogs not completed")
         if set(context.get("shadowQuality",[])) != {"OFF","LOW","HIGH"}:raise ValueError("Lifecycle did not exercise all shadow qualities")
         if not {0,2}.issubset({s.get("serverState",{}).get("level") for s in samples}):raise ValueError("Native signed-level transition not observed")
         last=samples[-1].get("serverState",{})
         if not all(last.get(k,0)>0 for k in ("samePositionTeleports","areaTeleports","levelTeleports")):raise ValueError("An expected teleport path did not execute")
-        result["lifecycleValidation"]={"sameJvmRelogs":2,"shadowQualities":context["shadowQuality"],"nativeLevels":[0,2],"samePositionTeleports":last["samePositionTeleports"],"areaTeleports":last["areaTeleports"],"levelTeleports":last["levelTeleports"]}
+        window_events,partial_window=analyzer.read_jsonl(capture / "window-events.jsonl")
+        if partial_window:raise ValueError("Partial native window lifecycle evidence")
+        window_validation=validate_window_lifecycle(window_events)
+        result["lifecycleValidation"]={"sameJvmRelogs":2,"shadowQualities":context["shadowQuality"],"nativeLevels":[0,2],"samePositionTeleports":last["samePositionTeleports"],"areaTeleports":last["areaTeleports"],"levelTeleports":last["levelTeleports"],"window":window_validation}
         result["gpu"]={}
         result["limitation"]="Functional same-JVM lifecycle run with deliberate Off/Low/High, teleports and login pauses. Not a steady 60 FPS performance cohort. GPU timer lifetimes reset at relog, so combined GPU distributions are omitted."
-    result["gpuSequenceScope"] = "Per capture/fresh-client JVM CSV. Relog proof opens another JVM/file; this tooling does not claim same-JVM logout/relogin timer-instance uniqueness."
+    result["gpuSequenceScope"] = ("Lifecycle performs ordinary same-JVM logout/relogin. Shadow timer instances may be recreated; combined GPU distributions and cross-lifetime sequence uniqueness are deliberately omitted." if result["phase"]=="lifecycle" else "Per capture/fresh-client JVM CSV. Separate relog phase opens another JVM/file; it does not establish same-JVM timer-instance uniqueness.")
     result["gpuCoverage"] = dict(farPhaseAttributionVerified=bool(samples) and all(sample.get("gpuFarPollEveryFrame") is True for sample in samples), farAttributionNote="Older engines polled far queries only on cache rebuild, so completion could lag2.5s and1s trim was insufficient. Earlier far phase counts are provisional; rawsamples remain untouched. Verified per-frame polling is required for final phase attribution.", trimAtEachPhaseEdgeNanos=1_000_000_000, reason="GPU queries are read asynchronously; completion timestamps near phase boundaries are excluded to avoid neighboring-work attribution. Raw CSV retains every collected sample.", passes={label:dict(allPhaseUniqueSamples=count, retainedSamples=len(gpu.get(label, [])), phaseEdgeExcludedSamples=count-len(gpu.get(label, []))) for label,count in gpu_phase_counts.items()})
     result["timingMeaning"] = dict(clientLoop="Paced loop intervals; tiny overruns of16.667ms are scheduling jitter, not independently proven missed presentation frames.", openGLRender="CPU submission/render work including swap; compare GPU timeline separately, do not add overlapping CPU/GPU durations.", gpu="Elapsed GPU timeline including possible submission starvation. Far-map samples describe rebuilds only, not every frame.")
     if distributions:
