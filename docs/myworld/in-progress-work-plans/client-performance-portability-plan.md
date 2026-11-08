@@ -1,6 +1,6 @@
 # Client Performance And Hardware Portability
 
-Status: planning complete for manager/owner review; implementation has not started.
+Status: active measured implementation; owner authorized autonomous worker execution on November 8, 2026 (UTC).
 Owner: Core manager; one focused worker branch per measured change.
 Planning baseline: `8aa93c01fcfc9d024c634c9181d571399533d048`.
 Released game baseline: v0.3.14, `0555b0307bf9a64c96cbe7132777dae3a41ca676`.
@@ -184,3 +184,147 @@ Completion means demonstrably less work or better tails in the affected cases,
 unchanged approved output and gameplay, bounded diagnostic/resource behavior,
 and an honest hardware-coverage statement. Hand A the accepted integrated
 artifact and its baseline so movement gains are measured independently.
+
+## November 8, 2026 — First Measured Resource Slice
+
+Execution began from published planning commit `c5567fcfa`. No public operation
+is part of this pass. The frozen released v0.3.14 client has SHA256
+`18779f57d12f076413a7222235a6edf8717af9770e68b549733984981b85da28`.
+A fresh loopback-only Java 21 normal-camera busy-scene profile used 30 seconds
+of warmup and a 60-second marked phase. JFR events were filtered by that phase's
+UTC boundaries; startup allocations are excluded. The weighted allocation
+estimate was 71.59 MiB/s, of which character composite pixel arrays accounted
+for 18.26 MiB/s (25.5%). Native direct composite and padding buffers were also
+allocated per synchronous upload; their bytes are not included in that heap
+estimate. Existing scenery identities/builders, text/glyph keys and remaining
+float-uniform reflection are separate ranked follow-ups, not accepted changes.
+
+The initial ranked observations (one sampled baseline, not universal CPU time):
+
+| Rank | Cost | Evidence | Decision |
+| --- | --- | --- | --- |
+| Allocation 1 | Multipart composite arrays | 1,096.17 weighted MiB / 60 s | Bounded scratch reuse selected |
+| Allocation 2 | Resident object canonical identities | 330 weighted MiB / 60 s | Separate scenery-lifetime investigation |
+| Allocation 3 | Colored text and glyph command/key work | Several separate 200–272 MiB groups / 60 s | Separate UI/text ownership investigation |
+| CPU 1 | Frame packed-RGB to RGBA copy | 163 execution samples | Bulk/format path needs its own parity scope |
+| CPU 2 | Masked scaled software sprite plotting | 83 execution samples in leading method | Investigate only with exact image oracle |
+| CPU 3 | Scene.endScene | 82 execution samples | Profile deeper before changing scene construction |
+
+The first candidate retains bounded render-thread scratch for multipart sprite
+composition and atlas-padding upload. Independent-buffer APIs remain independent;
+borrowed buffers are consumed synchronously before the next acquire. Retention
+is capped at 1,048,576 pixels / 4 MiB per buffer, oversized requests use
+independent nonretained storage, and renderer/atlas cleanup releases references.
+
+Checkpoint `86961b57cfb199b2dd66360713ee9e9dd6047857` freezes the initial candidate.
+The released-JAR oracle and candidate match exactly across 1,000 seeded list and
+snapshot composites, including shear, layer order, partial alpha and padding
+(SHA256 `c460a449b004bf6ee0b8f6def7d9b3a9d1a1997364117349f47e1c1b98818098`).
+Ownership, grow/shrink/clear, byte order, independent owners, oversized fallback
+and idempotent release checks pass. Actual hardware GL texture readback proves
+pixel/padding identity, full-atlas retry and oversized rejection/recovery; the
+complete renderer guardrail suite passes.
+
+The frozen candidate JAR is `output/tests/client-portability-pass/workspace-86961b57c.jar`,
+SHA256 `cac7b49f6764a522ab94e43739129f56c518feca61996baceba920cff86dc2e6`.
+It was not rebuilt or substituted between measurements. The candidate was built
+from checkpoint `86961b57c`; this final ledger update changes documentation only.
+The released artifact contains its release-build marker while the candidate is
+a maintained development build; that marker controls developer hotkeys, unused
+by the hidden benchmark. No synthesized hotkey/UI change is part of this test.
+
+Three interleaved native pairs used Java 21 / G1 / 512 MiB initial and 2 GiB
+maximum heap, 1920x1080, zoom 75, rotation 128 with the same rotation route,
+High shadows, RELIEF_AO, fog on, fixed sun 135/45 and daytime tone. Each used
+20-second warmup and a marked 40-second phase. No competing build or benchmark
+ran in accepted timing windows. The map manifest is
+`42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b`;
+all server artifacts, maps, libraries, source receipts, arguments and hashes are
+preserved per capture. Populations were 16 controlled players, 32 controlled
+NPCs and 8 requested summons, with 57 visible multipart snapshot groups /
+163 layers and zero snapshot-compatibility fallback in both variants. Resident
+world geometry is 89 chunks / 435,422 triangles. Camera timing causes small
+frustum-edge differences in submitted terrain triangles; no geometry or actor
+quality reduction was introduced.
+
+The mean of per-run metrics is below. Resource rates use the inner timed
+periodic samples, excluding the first five seconds. CPU is process CPU seconds
+per wall second; allocation is ThreadMXBean measured thread allocation, not JFR
+weighted sampling. Direct/heap/RSS occupancy depends on collection timing.
+
+| Metric | Released | Candidate | Change |
+| --- | ---: | ---: | ---: |
+| All-Java-thread allocation | 69.36 MiB/s | 50.99 MiB/s | -26.5% |
+| Presenter thread allocation | 33.41 MiB/s | 15.06 MiB/s | -54.9% |
+| Main client thread allocation | 35.93 MiB/s | 35.91 MiB/s | -0.1% |
+| Process CPU cores | 0.748 | 0.707 | -5.4% observed |
+| Median direct-buffer bytes | 293.26 MiB | 70.92 MiB | -75.8% observed |
+| Median direct-buffer count | 44,543 | 2,586 | -94.2% observed |
+| Median RSS | 2,484 MiB | 2,011 MiB | -19.1% observed |
+| Mean GL work | 3.617 ms | 3.550 ms | -1.8% observed |
+| GL work p99 | 4.890 ms | 4.796 ms | -1.9% observed |
+| GPU frame p99 | 8.173 ms | 8.665 ms | +6.0% observed |
+| Completed-render interval p99 | 18.654 ms | 18.714 ms | +0.3% observed |
+| 1% low completed-render FPS | 46.31 | 47.75 | +3.1% observed |
+
+Per-run tails are retained rather than concealed by the average:
+
+| Pair | Version | Renders | Queue drops | Interval max ms | 1% low FPS | GL p99 ms | GPU p99 ms |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | Released | 2402 | 0 | 38.01 | 46.99 | 5.007 | 8.204 |
+| 1 | Candidate | 2401 | 0 | 22.25 | 50.88 | 4.771 | 8.010 |
+| 2 | Released | 2401 | 0 | 35.55 | 45.68 | 4.816 | 8.129 |
+| 2 | Candidate | 2401 | 0 | 33.66 | 50.62 | 4.779 | 9.619 |
+| 3 | Released | 2401 | 0 | 38.83 | 46.27 | 4.848 | 8.186 |
+| 3 | Candidate | 2397 | 5 | 122.47 | 41.75 | 4.839 | 8.367 |
+
+The third candidate's five queue drops occurred inside the marked phase, between
+24.664 and 29.665 seconds, before post-phase screenshot capture. In that same
+five-second telemetry interval, GL work max was 5.55 ms, main-loop max 19.14 ms,
+and sampled GC count/time deltas were zero. The available telemetry cannot
+attribute the 122.47 ms presenter interval to a specific cause; safepoint/OS
+scheduling evidence is insufficient. The second candidate's higher GPU tail
+also remains visible. These observations prevent a claim that frame pacing
+improved universally. Preserve all three pairs and investigate with a further
+matched control after the movement worker's CPU window; do not cherry-pick the
+five cleaner runs. Source is ready for manager review as an allocation/resource
+slice; final pacing acceptance and owner visual acceptance remain pending.
+
+Separate matched 30-second warmup / 60-second JFR profiles support attribution:
+weighted whole-client allocation was 71.59 -> 54.40 MiB/s; the composite builder
+fell from 1,096.17 to 15.98 MiB over the phase (-98.5%, small return objects
+remain). Samples identify packed-RGB frame conversion, software sprite plotting,
+scene preparation/depth construction as remaining CPU costs. Resident scenery
+identity/builders, text/glyph command/key construction, and float-uniform
+reflection remain allocation candidates. JFR is sampled and perturbs execution;
+it was disabled in all three acceptance pairs. Bounded existing telemetry,
+asynchronous GPU timing and GC logging were enabled equally in those pairs;
+its absolute overhead has not been established with a separate off cohort.
+
+An additional 20-second native functional control selected the physical Raphael
+iGPU (`DRI_PRIME=pci-0000_12_00_0`) and reported its actual Mesa renderer, 1,201
+completed renders and zero queue drops, with native capture. The main three
+pairs used the RX 6700 XT. Both use the same Ryzen 9 7900X and Linux/Mesa driver
+family; this is not proof for a weaker CPU, Windows/macOS or a minimum hardware
+specification. Hidden completed renders are not visible display scanout. No
+cold-storage-cache, large interface matrix or long lifecycle soak is claimed;
+the changed scratch lifetime is instead covered by focused ownership/release,
+padding, grow/shrink and actual-GL fallback fixtures.
+
+One released baseline startup attempt stalled fetching private server configs
+before login, so it has no timed phase and is rejected/preserved separately.
+A bounded thread-dump attempt did not yield useful stacks. Only its identity-
+guarded private leftover was terminated after normal private stop did not exit.
+Its cause is unproven; the resumed driver waits for both private status.json and
+the listener, and all remaining startups completed. A separate stop-helper
+ownership race occurred after one completed run; both registered PIDs, server
+PID file and listener were already gone on inspection. Neither event is
+silently counted as a successful lifecycle test or candidate regression.
+
+Raw data, driver/analyzer source, immutable JARs, profiles, host inventory,
+per-run hashes, resource samples, rejected runs, native captures and tests are
+under `output/diagnostics/client-portability-pass/`,
+`output/tests/client-portability-pass/` and marked
+`output/tests/renderer-shadow-benchmarks/portability-*` fixtures. The compact
+review bundle is `output/reviews/client-performance-session/`. No public build,
+release, deployment or shutdown occurred.
