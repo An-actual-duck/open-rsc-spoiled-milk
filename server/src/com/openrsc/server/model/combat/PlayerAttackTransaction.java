@@ -148,6 +148,11 @@ public final class PlayerAttackTransaction {
 		pendingApproach = null;
 	}
 
+	/** Ownership inspection without expiring or cancelling the pending transaction. */
+	public synchronized boolean hasPendingIntent() {
+		return pending != null;
+	}
+
 	public synchronized AttackIntent getPending() {
 		expirePendingIfNecessary();
 		return pending;

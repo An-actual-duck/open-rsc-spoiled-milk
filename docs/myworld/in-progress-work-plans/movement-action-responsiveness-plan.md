@@ -1,11 +1,13 @@
 # Movement And Action Responsiveness
 
-Status: active private implementation; successful-step clock slice technically
-validated and ready for manager review, with packet admission/native proof pending.
+Status: successful-step clock slice integrated; bounded idle ground-walk admission
+and matched native input proof technically validated, awaiting manager integration.
+Owner private acceptance and broader action-lifecycle work remain open.
 Owner: Core manager; one focused worker branch per measured change.
 Planning baseline: `8aa93c01fcfc9d024c634c9181d571399533d048`.
 Released game baseline: v0.3.14, `0555b0307bf9a64c96cbe7132777dae3a41ca676`.
-Current first-slice work: [authoritative first-step implementation](movement-first-step-implementation.md).
+Current implementation: [successful-step clock](movement-first-step-implementation.md),
+[bounded idle packet admission](idle-walk-admission-implementation.md).
 Native owner acceptance and public activation remain separate from technical integration.
 Companion: [Client performance and portability](client-performance-portability-plan.md).
 
@@ -73,6 +75,34 @@ private disposable accounts/servers; no live profiling, map/player edits, public
 shutdown or deployment is authorized by this plan. Routine engineering choices
 remain with workers/manager; escalate concrete gameplay changes and final owner
 acceptance, not every ordinary implementation decision.
+
+## Execution Receipt — November 8, 2026
+
+Two independent server slices address the confirmed avoidable waits. The first
+preserves 430 ms cadence while basing eligibility on successful movement rather
+than empty polls. The second uses a strictly gated idle ground-walk FIFO prefix
+on the existing GameThread, with count ceilings and a 2 ms global soft budget.
+Interactions, production and combat cancellation remain world-tick owned.
+
+The final 640-phase decoded-packet fixture gives320/608/640 ms baseline
+p50/p95/max versus5/9/10 ms final admission-to-authoritative first step. An
+ordinary authenticated native Java21 matched pair,13 scoped AWT inputs per side,
+gives observed-interpolation medians415.000 versus45.310 ms. Both use the same
+fixed client; all destinations and completed before/after captures verify.
+These are local quiet-scene observations, not physical-click/scanout or Internet
+latency guarantees. Earlier matched runs and raw phase tails are preserved.
+
+The [implementation receipt](idle-walk-admission-implementation.md) contains
+artifact bindings, 3,135 packet assertions, relevant regression gates,64/256-peer
+fairness/cost results and an explicit ownership transition table. Additional
+intake p95 is about2.2 ms under the bounded saturated 256-peer synthetic case;
+this excludes whole-world work and is not an Oracle/slow-host guarantee.
+
+This completes the narrow causal first-step/admission engineering pass for
+manager review. Large native cohorts, slow hardware/network profiles and owner
+visual acceptance are not marked complete. Broader action replacement should
+continue as separate reproduced defects and focused slices, rather than a
+speculative rewrite of every action owner.
 
 ## A0 — Instrument The Actual Click-To-Movement Path
 

@@ -681,6 +681,19 @@
         </java>
     </target>
 
+    <target name="test_idle_walk_admission" depends="compile_core,compile_combat_tests"
+            description="Exercise bounded idle ground-walk FIFO admission in a fresh private current-protocol world">
+        <fail unless="idle.admission.run" message="Supply -Didle.admission.run=NEW_RUN_LABEL; evidence is never overwritten."/>
+        <property name="idle.admission.core" location="core.jar"/>
+        <property name="idle.admission.mode" value="candidate"/>
+        <exec executable="python3" failonerror="true" dir="${basedir}/..">
+            <arg value="tools/movement-responsiveness/run-admission-fixture.py"/>
+            <arg value="--mode"/><arg value="${idle.admission.mode}"/>
+            <arg value="--core"/><arg value="${idle.admission.core}"/>
+            <arg value="--run"/><arg value="${idle.admission.run}"/>
+        </exec>
+    </target>
+
     <target name="test_slow" depends="compile_combat_tests"
             description="Verify shared Slow power and committed combat deadlines">
         <java classname="com.openrsc.server.combat.SlowFixture"
