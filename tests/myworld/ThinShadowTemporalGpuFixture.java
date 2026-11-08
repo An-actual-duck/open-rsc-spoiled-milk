@@ -12,9 +12,10 @@ public final class ThinShadowTemporalGpuFixture {
     static int vbo,ebo,texture,program;
     static boolean alpha;
     static final byte[] gray = new byte[W*H];
-    static long signature;
+    static long signature, shadowContext;
     static float fenceZ=6500;
     static boolean nativeFence;
+    static float worldOffsetX, worldOffsetZ;
     // Exact native WALL12 quad41704/41705, translated from (6208,-384,64).
     static final float[] NATIVE_QUAD={64,0,-64,0,0,64,-192,-64,1,0,-64,-192,64,1,1,64,0,-64,0,0,-64,-192,64,1,1,-64,0,64,0,1};
     static FloatBuffer floats(float[] a){FloatBuffer b=ByteBuffer.allocateDirect(a.length*4).order(ByteOrder.nativeOrder()).asFloatBuffer();b.put(a).flip();return b;}
@@ -25,11 +26,13 @@ public final class ThinShadowTemporalGpuFixture {
         float[] vertices={-8192,0,-8192,0,0,8192,0,-8192,0,0,8192,0,16000,0,0,-8192,0,-8192,0,0,8192,0,16000,0,0,-8192,0,16000,0,0,
             -64,0,z,0,0,64,0,z,1,0,64,-192,z,1,1,-64,0,z,0,0,64,-192,z,1,1,-64,-192,z,0,1};
         if(nativeFence)for(int i=0;i<6;i++){for(int a=0;a<5;a++)vertices[30+i*5+a]=NATIVE_QUAD[i*5+a];vertices[30+i*5+2]+=fenceZ;}
+        for(int i=0;i<vertices.length;i+=5){vertices[i]+=worldOffsetX;vertices[i+2]+=worldOffsetZ;}
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER,vbo);gl.glBufferData(gl.GL_ARRAY_BUFFER,floats(vertices),gl.GL_STATIC_DRAW);
         gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER,ebo);IntBuffer order=ByteBuffer.allocateDirect(48).order(ByteOrder.nativeOrder()).asIntBuffer();for(int i=0;i<12;i++)order.put(i);order.flip();gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER,order,gl.GL_STATIC_DRAW);
     }
     static final OpenGLGeometryShadows.Scene SCENE=new OpenGLGeometryShadows.Scene(){
         public long staticSignature(){return signature;}
+        public long historyContext(){return shadowContext;}
         public void drawDepth(OpenGLGeometryShadows pass,DirectionalShadowProjection projection,boolean staticOnly)throws Exception{
             pass.bindChunk(vbo,ebo,20,12,0,0);pass.drawRange(0,false,0,6);pass.drawRange(texture,alpha,6,6);
         }
@@ -68,17 +71,18 @@ public final class ThinShadowTemporalGpuFixture {
             pass=new OpenGLGeometryShadows(gl,functions);RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);
             double nearMean=-1;
             StringBuilder csv=new StringBuilder("case,cutout,frame,azimuth,farRebuilt,shadowArea\n");
-            for(boolean cut:new boolean[]{false,true})for(String mode:new String[]{"static","camera-near","camera-far","sun-rebuild","sun-cached","blend","cascade-motion"}){
-                alpha=cut;signature++;RendererRemasterLightSettings.adjustAzimuth(90-RendererRemasterLightSettings.getAzimuthDegrees());fenceZ=mode.equals("camera-near")?1000:(mode.equals("blend")||mode.equals("cascade-motion"))?5100:6500;mesh();double total=0,min=Double.POSITIVE_INFINITY,max=0,delta=0,previous=0;int frames=mode.equals("sun-cached")?180:64;byte[] previousPixels=new byte[W*H];double residual=0,maxResidual=0;
+            for(boolean cut:new boolean[]{false,true})for(String mode:new String[]{"static","camera-near","camera-far","sun-rebuild","sun-cached","blend","cascade-motion","near-sun-origin","near-sun-world"}){
+                worldOffsetX=mode.equals("near-sun-world")?64000:0;worldOffsetZ=mode.equals("near-sun-world")?59000:0;
+                alpha=cut;signature++;shadowContext++;RendererRemasterLightSettings.adjustAzimuth(90-RendererRemasterLightSettings.getAzimuthDegrees());fenceZ=(mode.equals("camera-near")||mode.startsWith("near-sun"))?1000:(mode.equals("blend")||mode.equals("cascade-motion"))?5100:6500;mesh();double total=0,min=Double.POSITIVE_INFINITY,max=0,delta=0,previous=0;int frames=mode.startsWith("near-sun")?360:mode.equals("sun-cached")?180:64;byte[] previousPixels=new byte[W*H];double residual=0,maxResidual=0;
                 for(int i=0;i<frames;i++){
-                    if(mode.startsWith("sun")){RendererRemasterLightSettings.adjustAzimuth(.002f);if(mode.equals("sun-rebuild"))signature++;}
+                    if(mode.startsWith("sun")||mode.startsWith("near-sun")){RendererRemasterLightSettings.adjustAzimuth(.002f);if(mode.equals("sun-rebuild"))signature++;}
                     float cameraShift=mode.startsWith("camera")?i*.5f:0;
                     float eyeX=mode.equals("cascade-motion")?(float)Math.cos(i*Math.PI/32)*1024:0;
                     float eyeZ=mode.equals("cascade-motion")?(float)Math.sin(i*Math.PI/32)*1024:0;
-                    pass.prepare(SCENE,eyeX,-256,eyeZ);float span=mode.equals("camera-near")?1024:4096;
-                    double energy=frame(pass,cameraShift,fenceZ-128,span,span);csv.append(mode).append(',').append(cut).append(',').append(i).append(',').append(RendererRemasterLightSettings.getAzimuthDegrees()).append(',').append(pass.farRebuilt).append(',').append(energy).append('\n');
-                    if(i>0 && mode.startsWith("camera")){
-                        double shiftPixels=.5*W/span,error=0,support=0;
+                    pass.prepare(SCENE,eyeX+worldOffsetX,-256,eyeZ+worldOffsetZ);float span=(mode.equals("camera-near")||mode.startsWith("near-sun"))?1024:4096;
+                    double energy=frame(pass,cameraShift+worldOffsetX,fenceZ-128+worldOffsetZ,span,span);csv.append(mode).append(',').append(cut).append(',').append(i).append(',').append(RendererRemasterLightSettings.getAzimuthDegrees()).append(',').append(pass.farRebuilt).append(',').append(energy).append('\n');
+                    if(i>0 && (mode.startsWith("camera")||mode.startsWith("near-sun"))){
+                        double shiftPixels=mode.startsWith("camera")?.5*W/span:0,error=0,support=0;
                         for(int y=0;y<H;y++)for(int x=0;x<W-2;x++){
                             double expected=(previousPixels[y*W+x]&255)*(1-shiftPixels)+(previousPixels[y*W+x+1]&255)*shiftPixels;
                             int actual=gray[y*W+x]&255;error+=Math.abs(actual-expected);support+=255-actual;
@@ -93,6 +97,10 @@ public final class ThinShadowTemporalGpuFixture {
                 require(mean>0,"Shadow was removed instead of stabilized: "+mode);
                 if(mode.equals("static"))require(max-min<.01,"Stationary camera/sun shadows are not stable");
                 if(cut && mode.equals("camera-near"))nearMean=mean;
+                if(cut && mode.startsWith("near-sun")) {
+                    require(mean>5700 && mean<8000,"Near native shadow lost or inflated: "+mean);
+                    require(residual/(frames-1)<.03 && maxResidual<.12,"Near stationary sun quivers: mean="+residual/(frames-1)+" max="+maxResidual);
+                }
                 if(cut && mode.equals("sun-cached")){
                     // Analytic native mask area is128*192*4444/16384=6666 before receiver bias.
                     if(functions.integer(0x0D33)>=4096) {

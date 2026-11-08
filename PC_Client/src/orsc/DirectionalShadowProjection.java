@@ -6,11 +6,28 @@ import java.nio.FloatBuffer;
 final class DirectionalShadowProjection {
 	final float[] matrix = new float[16]; // column-major, as consumed by GLSL
 	final double centerX, centerY, centerZ;
+    final double gridCenterX, gridCenterY, gridCenterZ;
 	final float worldTexel, halfExtent, depthExtent;
 	final float lightX, lightY, lightZ;
 
 	DirectionalShadowProjection(double x, double y, double z,
 		float sunX, float sunY, float sunZ, float half, int size) {
+        this(x,y,z,sunX,sunY,sunZ,half,size,null,false);
+    }
+
+    /**
+     * Track the near grid in world space. Snapping the absolute light-space
+     * center again as the sun rotates moves the texel phase across the scene,
+     * even with a stationary camera (and more often at large map coordinates).
+     * Only camera displacement is quantized here; caster geometry stays fresh.
+     */
+    DirectionalShadowProjection(double x, double y, double z,
+        float sunX, float sunY, float sunZ, float half, int size, DirectionalShadowProjection previous) {
+        this(x,y,z,sunX,sunY,sunZ,half,size,previous,true);
+    }
+
+    private DirectionalShadowProjection(double x, double y, double z,
+        float sunX, float sunY, float sunZ, float half, int size, DirectionalShadowProjection previous, boolean tracking) {
 		if (!(half > 0) || !Float.isFinite(half) || size <= 0
 			|| !Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z)
 			|| !Float.isFinite(sunX) || !Float.isFinite(sunY) || !Float.isFinite(sunZ)) {
@@ -21,7 +38,10 @@ final class DirectionalShadowProjection {
 		lightX = (float) (sunX / length);
 		lightY = (float) (-sunY / length); // lighting uses Y-up; geometry is Y-down
 		lightZ = (float) (sunZ / length);
-		double fx = -lightX, fy = -lightY, fz = -lightZ;
+		// Double-normalized tracking basis avoids accumulated anchor drift.
+        double fx = tracking ? -sunX/length : -lightX;
+        double fy = tracking ? sunY/length : -lightY;
+        double fz = tracking ? -sunZ/length : -lightZ;
 		double rx, ry, rz;
 		if (Math.abs(fy) > 0.99) { rx = 0; ry = -fz; rz = fy; }
 		else { rx = -fz; ry = 0; rz = fx; }
@@ -37,9 +57,27 @@ final class DirectionalShadowProjection {
 		if (!Float.isFinite(depthExtent) || !Float.isFinite(worldTexel) || worldTexel <= 0) {
 			throw new IllegalArgumentException("Shadow extent exceeds float projection precision");
 		}
-		double cx = Math.rint((rx * x + ry * y + rz * z) / worldTexel) * worldTexel;
-		double cy = Math.rint((ux * x + uy * y + uz * z) / worldTexel) * worldTexel;
-		double cz = fx * x + fy * y + fz * z;
+        double cx, cy;
+        double cz = fx * x + fy * y + fz * z;
+        double gx=x, gy=y, gz=z;
+        if (!tracking) {
+            cx = Math.rint((rx * x + ry * y + rz * z) / worldTexel) * worldTexel;
+            cy = Math.rint((ux * x + uy * y + uz * z) / worldTexel) * worldTexel;
+        } else {
+            if (previous != null) {
+                double ax=previous.gridCenterX, ay=previous.gridCenterY, az=previous.gridCenterZ;
+                double dx=x-ax, dy=y-ay, dz=z-az;
+                double stepX=Math.rint((rx*dx+ry*dy+rz*dz)/worldTexel)*worldTexel;
+                double stepY=Math.rint((ux*dx+uy*dy+uz*dz)/worldTexel)*worldTexel;
+                double stepDepth=fx*dx+fy*dy+fz*dz;
+                gx=ax+rx*stepX+ux*stepY+fx*stepDepth;
+                gy=ay+ry*stepX+uy*stepY+fy*stepDepth;
+                gz=az+rz*stepX+uz*stepY+fz*stepDepth;
+            }
+            cx=rx*gx+ry*gy+rz*gz;
+            cy=ux*gx+uy*gy+uz*gz;
+        }
+        gridCenterX=gx; gridCenterY=gy; gridCenterZ=gz;
 		row(0, rx, ry, rz, cx, half);
 		row(1, ux, uy, uz, cy, half);
 		row(2, fx, fy, fz, cz, depthExtent);
