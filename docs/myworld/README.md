@@ -47,6 +47,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [Client performance and portability](in-progress-work-plans/client-performance-portability-plan.md):
   measured allocation and dispatch improvements, remaining optimization targets,
   and hardware evidence with the approved visuals preserved.
+- [High-quality picket shadows](in-progress-work-plans/picket-shadow-wave.txt):
+  v0.3.15 ground-aligned High sampling, exact Low parity, visual approval and
+  retained sparse-railing limitations.
 - [Client startup ordering](in-progress-work-plans/client-startup-stall-investigation.md):
   captured native loader deadlock, socket preparation fix and startup controls.
 - [Movement and action responsiveness](in-progress-work-plans/movement-action-responsiveness-plan.md):
