@@ -180,7 +180,7 @@ def capture(args):
     capture = run / name; capture.mkdir()
     (capture / "scenario.json").write_text(json.dumps(dict(phase=args.phase, requestedViewer=[args.x,args.y,0], zoom=args.zoom, initialRotation=args.rotation, quality=args.quality, legacyMask=args.legacy_mask, sunAzimuth=args.sun_azimuth if args.phase not in ("sun-motion","night") else None, sunElevation=args.sun_elevation if args.phase not in ("sun-motion","night") else None, normalRateServerSun=args.phase in ("sun-motion","night"),relogFrom=str(previous_capture) if previous_capture else None, visiblePreview=visible,excludedCasterKinds=args.exclude_caster,dumpTerrain=args.dump_terrain,dumpFences=args.dump_fences,requestedWindowMode=args.window_mode if visible else "diagnostic-hidden",warmupSeconds=args.warmup_seconds,fogRequested=args.fog,snapshotFrames=args.snapshot_frames,tonePreview=args.tone_preview if args.phase not in ("sun-motion","night") else None),indent=2)+"\n")
     request = run / "request.next"
-    request.write_text(json.dumps(dict(busy=args.phase.startswith("busy") or args.phase == "sun-motion", phase=args.phase, x=args.x, y=args.y)))
+    request.write_text(json.dumps(dict(busy=args.phase.startswith("busy") or args.phase in ("sun-motion","combat-real"), phase=args.phase, x=args.x, y=args.y)))
     os.replace(request, run / "request.json")
     props = {"spoiledmilk.openglHiddenDiagnostic":"true", "spoiledmilk.openglHiddenWidth":"1920", "spoiledmilk.openglHiddenHeight":"1080", "spoiledmilk.rendererDiagnostics":"true", "spoiledmilk.rendererTelemetry":"true", "spoiledmilk.rendererDiagnosticSessionDir":str(capture), "spoiledmilk.rendererDiagnosticMaxLogBytes":str(128*1024*1024), "spoiledmilk.clientLog":str(capture / "runtime.log"), "spoiledmilk.clientCommit":json.loads((run / MARKER).read_text())["clientSourceCommit"], "spoiledmilk.openglVsync":"false", "renderer.benchmark.seconds":str(args.seconds), "renderer.benchmark.phase":args.phase, "renderer.benchmark.zoom":str(args.zoom), "spoiledmilk.openglRendererProfile":"remaster", "spoiledmilk.shadowQuality":args.quality}
     props["renderer.benchmark.visiblePreview"] = str(visible).lower()
@@ -267,6 +267,15 @@ def validate_runtime(run, samples, phase):
     distance = max(max(p[axis] for p in positions)-min(p[axis] for p in positions) for axis in (0,1)) if positions else 0
     if phase == "busy-walk" and distance < 4:
         raise ValueError("Busy-walk failed to move the actual viewer at least4tiles")
+    if phase == "combat-real":
+        combat=[s.get("serverState",{}).get("realCombat",{}) for s in samples]
+        if not combat or not all(c.get("authoritative") is True for c in combat):raise ValueError("Missing authoritative combat evidence")
+        last=combat[-1]
+        if any(last.get("primaryDamageByFamily",{}).get(k,0)<=0 for k in ("ice","thunder","wood","ranged","throwing","melee")):raise ValueError("An expected combat family did not damage a primary target")
+        if any(last.get("resourceUnitsSpent",{}).get(k,0)<=0 for k in ("ice","thunder","wood","ranged","throwing")):raise ValueError("An expected combat family consumed no resources")
+        if max(c.get("summonsEngaged",0) for c in combat)<=0:raise ValueError("Summons never engaged production combat")
+        if max(s.get("combatVisuals",{}).get("activeHitSplatActors",0) for s in samples)<=0:raise ValueError("No received active hit splats")
+        if max(s.get("activeProjectileActors",0) for s in samples)<2:raise ValueError("No overlapping received projectiles")
     return dict(positions=positions,maxAxisDistanceTiles=distance,fixtureRuntimeExceptions=False)
 
 
@@ -372,7 +381,7 @@ def main():
     for name in ("start", "stop", "capture", "preview"):
         p = sub.add_parser(name); p.add_argument("run", type=Path)
         if name in ("capture", "preview"):
-            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "night", "transition", "same-position", "relog", "visual"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--snapshot-frames",type=int,choices=[1,12],default=12); p.add_argument("--legacy-mask", action="store_true")
+            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "night", "transition", "same-position", "relog", "visual", "combat-real", "lifecycle"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--snapshot-frames",type=int,choices=[1,12],default=12); p.add_argument("--legacy-mask", action="store_true")
             p.add_argument("--fog",choices=["on","off"],default="on"); p.add_argument("--tone-preview",choices=["day","cycle","sunrise-amber","dawn-gold","rose-dusk","cool-night","deep-blue"],default="day"); p.add_argument("--warmup-seconds",type=int,default=15); p.add_argument("--window-mode",choices=["windowed","fullscreen","borderless-fullscreen"],default="borderless-fullscreen"); p.add_argument("--dump-terrain",action="store_true"); p.add_argument("--dump-fences",action="store_true"); p.add_argument("--dump-roof-mask",action="store_true"); p.add_argument("--exclude-caster", choices=["TERRAIN","WALL","ROOF","GAME_OBJECT","WALL_OBJECT"],action="append",default=[]); p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
     p = sub.add_parser("report"); p.add_argument("capture", type=Path)
     args = parser.parse_args()

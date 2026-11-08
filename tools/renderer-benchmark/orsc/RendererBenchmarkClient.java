@@ -108,6 +108,33 @@ public final class RendererBenchmarkClient {
         }
         return count;
     }
+    private static String combatVisuals(mudclient client) {
+        int hits=0,effects=0,damaged=0;
+        for(int i=0;i<client.getNpcCount();i++) {
+            ORSCharacter a=client.getNpc(i);if(a==null)continue;
+            if(a.floatingHitSplats.isActive())hits++;
+            if(a.combatEffectTime>0||a.pendingCombatEffectType!=0)effects++;
+            if(a.healthMax>0&&a.healthCurrent<a.healthMax)damaged++;
+        }
+        return "{\"activeHitSplatActors\":"+hits+",\"activeCombatEffectActors\":"+effects+",\"damagedHealthActors\":"+damaged+"}";
+    }
+    private static void lifecycleStep(mudclient client,OpenGLFramePresenter presenter,int second,Path capture)throws Exception {
+        if(second%12==0)RendererShadowSettings.setQuality(RendererShadowSettings.Quality.OFF);
+        if(second%12==4)RendererShadowSettings.setQuality(RendererShadowSettings.Quality.LOW);
+        if(second%12==8)RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);
+        if(second==20||second==40) {
+            client.closeConnection(true);
+            Thread.sleep(2500);
+            if(!field(client,mudclient.class,"currentViewMode").toString().equals("LOGIN"))throw new IllegalStateException("Logout did not return to login");
+            Files.write(capture.resolve("lifecycle-events.jsonl"),("{\"event\":\"logout\",\"second\":"+second+",\"shadow\":"+shadowStats(presenter)+"}\n").getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+            Method login=mudclient.class.getDeclaredMethod("login",int.class,String.class,String.class,boolean.class);login.setAccessible(true);login.invoke(client,-12,"RendererProof13","renderdemo",false);
+            long deadline=System.currentTimeMillis()+30000;
+            while(System.currentTimeMillis()<deadline&&!field(client,mudclient.class,"currentViewMode").toString().equals("GAME"))Thread.sleep(100);
+            if(!field(client,mudclient.class,"currentViewMode").toString().equals("GAME"))throw new IllegalStateException("Same-JVM relog failed");
+            set(client,mudclient.class,"welcomeScreenShown",false);client.setShowDialogMessage(false);
+            Files.write(capture.resolve("lifecycle-events.jsonl"),("{\"event\":\"relogin\",\"second\":"+second+"}\n").getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+        }
+    }
     private static boolean farPollEveryFrame() throws Exception {
         try { return Boolean.TRUE.equals(field(null,Class.forName("orsc.OpenGLGpuTimer"),"FAR_QUERY_POLL_EVERY_FRAME")); }
         catch(ClassNotFoundException | NoSuchFieldException older) { return false; }
@@ -336,6 +363,7 @@ public final class RendererBenchmarkClient {
         for (int second = 0; second < seconds; second++) {
             if(Files.exists(run.resolve("FIXTURE-FAILED"))) throw new IllegalStateException("Private fixture setup failed; aborting measurement");
             client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));
+            if(phase.equals("lifecycle"))lifecycleStep(client,presenter,second,capture);
             if (phase.contains("camera")) client.cameraRotation = (rotation + second * 3) & 255;
             Renderer3DFrame sampledFrame=tryPublishedFrame(presenter);
             RendererDayNightCycle.Presentation light = RendererDayNightCycle.currentPresentation();
@@ -344,7 +372,7 @@ public final class RendererBenchmarkClient {
                 + ",\"gpuFarPollEveryFrame\":" + farPollEveryFrame() + "," + frameObservationsJson(sampledFrame)
                 + ",\"hideRoofs\":" + Config.C_HIDE_ROOFS + ",\"gameObjects\":" + client.getGameObjectInstanceCount() + ",\"wallObjects\":" + client.getWallObjectInstanceCount()
                 + ",\"serverState\":" + new String(Files.readAllBytes(run.resolve("status.json")), StandardCharsets.UTF_8)
-                + ",\"activeProjectileActors\":" + activeProjectiles(client) + ",\"windowState\":" + windowState(presenter)
+                + ",\"combatVisuals\":"+combatVisuals(client)+ ",\"activeProjectileActors\":" + activeProjectiles(client) + ",\"windowState\":" + windowState(presenter)
                 + ",\"cameraRotation\":" + client.cameraRotation + ",\"zoomSetting\":" + osConfig.C_LAST_ZOOM
                 + ",\"windowMode\":\"" + OpenGLWindowSettings.getMode() + "\",\"logicalWidth\":" + RenderSurfaceSettings.getWidth() + ",\"logicalHeight\":" + RenderSurfaceSettings.getHeight()
                 + ",\"contentViewportWidth\":" + viewport.framebufferViewport().width + ",\"contentViewportHeight\":" + viewport.framebufferViewport().height + ",\"surface\":" + surfaceState(presenter)
