@@ -4066,6 +4066,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 	private void cleanup() {
 		Renderer3DSettings.setOpenGLPresentationAvailable(false);
+		if (worldSpriteDrawController != null) {
+			worldSpriteDrawController.clearScratch();
+			worldSpriteDrawController = null;
+		}
 		releaseInputState();
 		if (windowController != null) {
 			windowController.prepareForShutdown();
