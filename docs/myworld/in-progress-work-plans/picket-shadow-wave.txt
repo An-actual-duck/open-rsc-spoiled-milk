@@ -143,3 +143,11 @@ controls sustain60FPS but do not prove zero GPU cost or overall speedup. Native
 submitted geometry ranges vary with camera sampling; do not claim exact actor/
 submitted-geometry parity from resident counts alone. Manager final wide repeat
 on the guarded artifact is pending; owner visual acceptance is still pending.
+
+Final guarded production freeze: fbdf03948ea81712719d7cb0e47cf4b937eedf97,
+output/tests/picket-shadow-wave/candidate-high-only-ground-grid-fbdf03948.jar,
+SHA2563e72fe2afcf6fc5aee66d2fd521ddc635f194537b28f75a12739a20e50d8a18d.
+The earlier99b37 freeze is preserved experimental evidence; use the guarded
+artifact for the owner preview. See candidate-high-only-freeze.json. Source is
+ready for manager review; further native wide-tail repeat and owner visual
+acceptance remain explicit manager gates before any release decision.
