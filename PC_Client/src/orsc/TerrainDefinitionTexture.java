@@ -11,8 +11,10 @@ final class TerrainDefinitionTexture {
     private Boolean supported;
     void bind(LwjglBindings gl, OpenGLShaderProgram shader, Renderer3DFrame frame) throws Exception {
         if (supported == null) supported = gl.glGetInteger(0x8872) >= 8; // GL_MAX_TEXTURE_IMAGE_UNITS
-        boolean enabled = supported && RendererTerrainDefinitionSettings.getMode().shaderId >= 2 && field.update(frame);
-        shader.setTerrainDefinition(RendererTerrainDefinitionSettings.getMode().shaderId, enabled ? field : null);
+        RendererTerrainDefinitionSettings.Mode mode=RendererTerrainDefinitionSettings.getMode();
+        boolean enabled = supported && mode.shaderId >= 2
+            && RendererLightingSettings.getMode()==RendererLightingSettings.Mode.DIRECTIONAL && field.update(frame);
+        shader.setTerrainDefinition(mode.shaderId, enabled ? field : null);
         if (!enabled) return;
         previousActive=gl.glGetInteger(0x84E0); // GL_ACTIVE_TEXTURE
         gl.glActiveTexture(gl.GL_TEXTURE0+7);

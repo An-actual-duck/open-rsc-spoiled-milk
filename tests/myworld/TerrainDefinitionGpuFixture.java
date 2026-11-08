@@ -36,7 +36,20 @@ public final class TerrainDefinitionGpuFixture {
             pixel(7,field,255,255,0,0);require(sample(0,1,72,1,2,8)==128,"Unknown field alpha not neutral");
             link(true);i("uRemasterLightingEnabled",1);i("uGlowMaskEnabled",1);i("uTerrainDefinitionFieldEnabled",1);f("uGlowMaskInvSpanX",1);f("uGlowMaskInvSpanZ",1);f("uBrightness",1);f("uContrast",1);f("uGamma",1);f("uSaturation",1);pixel(2,glow,64,64,64,255);pixel(7,field,255,255,0,255);
             for(int mode=1;mode<4;mode++)for(float legacy:new float[]{0,255})require(sample(.6f,.8f,legacy,1,mode,8)==64,"Independent glow was modulated by terrain definition");
-            require(gl.glGetInteger(0x0B40)!=0,"Context state unavailable");System.out.println("PASS production GLSL flat palette, default Classic contrast, SUN_ONLY/zero/object neutrality, bounded AO/curvature/unknowns and full-shader independent glow; legacy lit/dark="+lit+"/"+dark);
+            OpenGLShaderProgram nativeShader=OpenGLShaderProgram.createResidentChunkParity(gl);
+            java.lang.reflect.Field programField=OpenGLShaderProgram.class.getDeclaredField("programId");programField.setAccessible(true);gl.glUseProgram(programField.getInt(nativeShader));
+            TerrainDefinitionTexture cacheTexture=new TerrainDefinitionTexture();
+            RendererTerrainDefinitionSettings.setMode(RendererTerrainDefinitionSettings.Mode.RELIEF_AO);
+            orsc.graphics.three.Renderer3DFrame frame=TerrainDefinitionFieldFixture.frame(orsc.graphics.three.Renderer3DWorldChunkFrame.fromChunks(java.util.Collections.singletonList(TerrainDefinitionFieldFixture.mesh(0,99))),1,0);
+            gl.glActiveTexture(gl.GL_TEXTURE0+7);gl.glBindTexture(gl.GL_TEXTURE_2D,field);gl.glActiveTexture(gl.GL_TEXTURE0+2);
+            cacheTexture.bind(gl,nativeShader,frame);require(gl.glGetInteger(0x84E0)==gl.GL_TEXTURE0+2,"Field bind changed active texture");
+            gl.glActiveTexture(gl.GL_TEXTURE0+7);int generated=gl.glGetInteger(0x8069);require(generated!=field&&generated!=0,"Field texture was not bound");gl.glActiveTexture(gl.GL_TEXTURE0+2);
+            cacheTexture.unbind(gl);require(gl.glGetInteger(0x84E0)==gl.GL_TEXTURE0+2,"Field unbind changed active texture");gl.glActiveTexture(gl.GL_TEXTURE0+7);require(gl.glGetInteger(0x8069)==field,"Sampler7 caller binding lost");
+            RendererTerrainDefinitionSettings.setMode(RendererTerrainDefinitionSettings.Mode.SUN_ONLY);cacheTexture.bind(gl,nativeShader,frame);require(gl.glGetInteger(0x8069)==field,"Off mode mutated sampler binding");
+            cacheTexture.clear(gl);cacheTexture.clear(gl);require(!((Boolean)Class.forName("org.lwjgl.opengl.GL11").getMethod("glIsTexture",int.class).invoke(null,generated)),"Field texture leaked after clear");
+            require(((Boolean)Class.forName("org.lwjgl.opengl.GL11").getMethod("glIsTexture",int.class).invoke(null,field)),"Cleanup deleted caller texture");
+            gl.glUseProgram(program);nativeShader.close();gl.glActiveTexture(gl.GL_TEXTURE0);
+            require(((Integer)Class.forName("org.lwjgl.opengl.GL11").getMethod("glGetError").invoke(null))==0,"GL error after field lifecycle");System.out.println("PASS production GLSL flat palette, default Classic contrast, SUN_ONLY/zero/object neutrality, bounded AO/curvature/unknowns and full-shader independent glow; legacy lit/dark="+lit+"/"+dark);
         }finally {if(program!=0)gl.glDeleteProgram(program);if(vbo!=0)gl.glDeleteBuffers(vbo);if(ebo!=0)gl.glDeleteBuffers(ebo);if(field!=0)gl.glDeleteTextures(field);if(glow!=0)gl.glDeleteTextures(glow);if(window!=0)gl.glfwDestroyWindow(window);gl.glfwTerminate();}
     }
 }
