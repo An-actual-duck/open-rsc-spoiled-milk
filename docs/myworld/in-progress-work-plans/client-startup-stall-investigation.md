@@ -1,6 +1,6 @@
 # Client Startup Stall Investigation
 
-Status: native cause captured; minimal startup-order candidate awaiting repeated native verification.
+Status: validated startup-order fix ready for manager review; no public activation.
 Started from `087359be83953f70980bed240fdc5dcb89e30a02` on November 8, 2026 UTC.
 Owner authorization covers bounded private investigation and a proven minimal
 fix; public deployment or shutdown is outside this task.
@@ -119,8 +119,43 @@ additional preparations. Java 8 records no libextnet module and descriptors
 10 -> 10. A public-Socket implementation probe verifies no connect, bind, listen
 or accept and closure on success, IOException and security failure. Startup
 wiring precedes window/native graphics initialization. The default Java 8 build
-and complete renderer guardrail suite pass. Repeated controlled baseline and
-frozen-candidate native startup observations remain required before acceptance.
+and complete renderer guardrail suite pass.
+
+Production checkpoint: `df7fd5304e233d61ff4a00c9510b64f572b89ce0`.
+Frozen JAR: `output/tests/client-startup-stall/startup-df7fd5304.jar`.
+SHA256: `990a4bb67bfb71053adf3a38c457cb133239a27237d7a0b35b2d129fdbb49418`.
+Compiler: Temurin javac 1.8.0_482, source/target 1.8, debug metadata enabled.
+The following native observations use explicit Ubuntu Java 21.0.12, independently
+of that compiler. The candidate JAR was not rebuilt or substituted between cases.
+
+Two further fresh P1 hidden controls both reached configs. Three fixed hidden
+controls and one fixed ordinary-visible control all reached configs at the
+20-second live observation, before STOP or debugger interruption. Matching Java
+21 jcmd completed in every fixed case. All cases preserve the same owned-child
+GDB start-at-first-instruction, detach/untraced bootstrap, live receipt and
+reattach/native-backtrace procedure. Private server/map/fixture inputs and exact
+arguments/hashes remain in each capture.
+
+| Additional observation | Source/JAR cohort | Config completion before STOP |
+| --- | --- | --- |
+| `startup-control-p1-hidden-1` | Frozen P1 / `cac7b49f…` | Yes |
+| `startup-control-p1-hidden-2` | Frozen P1 / `cac7b49f…` | Yes |
+| `startup-control-fixed-hidden-1` | Fixed / `990a4bb6…` | Yes |
+| `startup-control-fixed-hidden-2` | Fixed / `990a4bb6…` | Yes |
+| `startup-control-fixed-hidden-3` | Fixed / `990a4bb6…` | Yes |
+| `startup-control-fixed-ordinary-1` | Fixed / `990a4bb6…` | Yes |
+
+The fresh baseline successes are retained; they do not erase the earlier live
+P1 loader-lock failure. One fresh P1 case hit the known stop-helper
+PID-disappearance guard race after native capture; the batch paused, verified
+both registered PIDs absent and no listener, then resumed. That cleanup anomaly
+is recorded separately from successful config completion. No wrong-PID signal
+or bypass shutdown was used.
+
+These observations support the specific initialization-order fix, not a
+production failure-rate estimate, a universal native-loader guarantee or a long
+lifecycle soak. No Windows/macOS or weaker-CPU behavior is claimed. No protocol,
+rendering quality or gameplay change is part of this fix.
 
 The movement worker has priority over CPU/GPU/native windows. The shared
 renderer-gpu-benchmark.lock protects the diagnostic child lifetime, including
@@ -128,3 +163,18 @@ bounded debugger cleanup; the prepared helper now acquires it before any private
 fixture starts. No global ptrace setting or unrelated process is touched. Every
 live receipt records UTC ordering relative to detach, jcmd, debugger interruption
 and STOP. All historical failed attempts and original receipts remain preserved.
+
+
+## Review Evidence
+
+The compact review bundle is `output/reviews/client-startup-stall/`. It contains
+artifact/compiler/runtime and focused-test receipts, the original failing and
+healthy controls, the six additional observations, raw and readable native
+backtraces, Java dumps, process/socket provenance, and the local reproduction
+helpers. Helpers were extended between diagnostic phases to add cohort/map
+logging; raw MI commands and per-run argv/JAR receipts are the authoritative
+record of each probe, rather than an invented single helper revision.
+
+All own private native children and servers have exited. The CPU/GPU window was
+explicitly released to the movement worker. No public server, account/database,
+release, deployment or shutdown was modified.
