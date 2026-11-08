@@ -412,6 +412,14 @@ public final class RendererBenchmarkClient {
                 Thread.sleep(500);
             } // Strict captures are outside every timed performance phase.
         }
+        if(phase.equals("lifecycle")) {
+            RendererShadowSettings.setQuality(RendererShadowSettings.Quality.LOW);
+            RendererProfileApplier.SettingsStore store=(RendererProfileApplier.SettingsStore)field(null,mudclient.class,"RENDERER_PROFILE_SETTINGS_STORE");
+            RendererProfileApplier.persist(store,RendererProfileApplier.Change.SHADOWS,RendererProfileApplier.Change.WINDOW);
+            java.util.Properties saved=new java.util.Properties();try(java.io.InputStream in=Files.newInputStream(clientRoot.resolve("clientSettings.conf"))){saved.load(in);}
+            if(!"low".equals(saved.getProperty("shadow_quality")))throw new IllegalStateException("Actual client setting store did not persist selected shadow quality");
+            Files.write(capture.resolve("SETTINGS-PERSISTED"),"Actual production settings store saved Low shadow preference\n".getBytes(StandardCharsets.UTF_8));
+        }
         closeGpuSink();
         RendererDiagnosticSession.close();
         Files.write(capture.resolve("CLIENT-DONE"), "Completed private renderer phase\n".getBytes(StandardCharsets.UTF_8));

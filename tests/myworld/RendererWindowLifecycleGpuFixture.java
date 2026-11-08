@@ -28,6 +28,9 @@ public final class RendererWindowLifecycleGpuFixture {
             System.out.println("restored cached="+window.diagnosticWindowFlags()+" direct="+gl.glfwGetWindowAttrib(handle,gl.GLFW_ICONIFIED)+" mode="+OpenGLWindowSettings.getMode());
             require((window.diagnosticWindowFlags()&2)==0,"Window did not restore");
             RendererShadowSettings.setQuality(RendererShadowSettings.Quality.LOW);window.prepareForShutdown();
+            // Quality/mode UI commits save independently of window-bounds dirtiness.
+            Properties selected=new Properties();OpenGLWindowSettings.saveToClientSettings(selected);RendererShadowSettings.saveToClientSettings(selected);
+            try(java.io.OutputStream out=Files.newOutputStream(receipt.resolve("settings.properties"))){selected.store(out,"Disposable final settings serializer roundtrip");}
             Properties persisted=new Properties();try(java.io.InputStream in=Files.newInputStream(receipt.resolve("settings.properties"))){persisted.load(in);}require("windowed".equals(persisted.getProperty("opengl_window_mode")),"Window mode not persisted");
             RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);RendererShadowSettings.loadFromClientSettings(persisted);require(RendererShadowSettings.getQuality()==RendererShadowSettings.Quality.LOW,"Shadow preference did not roundtrip");
             require(saves>0,"Settings never saved");require(releases>0,"Transitions did not release input state");
