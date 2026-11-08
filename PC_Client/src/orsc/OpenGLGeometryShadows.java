@@ -116,6 +116,8 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 	private int nearTexelUniform, farTexelUniform, nearWorldTexelUniform, farWorldTexelUniform;
 	private long farSignature, farContext, farRoofSignature;
     private int farPlane;
+    private long nearContext;
+    private int nearPlane;
     private int farBlendAge;
     private int previousFarEnabledUniform, previousFarMatrixUniform, farBlendUniform;
 	private int farAge;
@@ -185,19 +187,24 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 		pollGpuTimers();
 		clearPrepared();
         RendererShadowSettings.Quality nextQuality = RendererShadowSettings.getQuality();
-        if (quality != nextQuality) { invalidateFarHistory(); farProjection = null; }
+        if (quality != nextQuality) { invalidateFarHistory(); farProjection = null; nearProjection = null; }
         quality = nextQuality;
         if (quality == RendererShadowSettings.Quality.OFF) { suspend(); publishDiagnosticFrame(); return false; }
         if (previousFarProjection != null && ++farBlendAge >= FAR_BLEND_FRAMES) previousFarProjection = null;
 		float lx = RendererRemasterLightSettings.getLightDirectionX();
 		float ly = RendererRemasterLightSettings.getLightDirectionY();
 		float lz = RendererRemasterLightSettings.getLightDirectionZ();
-		nearProjection = new DirectionalShadowProjection(centerX, centerY, centerZ, lx, ly, lz,
-			quality.nearRadiusTiles * 128.0f, quality.nearSize);
-		long signature = scene.staticSignature();
-		roofMask = scene.roofMask();
         long context = scene.historyContext();
         int plane = scene.receiverPlane();
+        DirectionalShadowProjection previousNear = nearProjection;
+        if (previousNear != null && (nearContext != context || nearPlane != plane
+            || Math.hypot(Math.hypot(centerX-previousNear.centerX,centerZ-previousNear.centerZ),centerY-previousNear.centerY) > quality.nearRadiusTiles*128.0)) previousNear=null;
+        int nearSize = quality.nearSize;
+        nearProjection = new DirectionalShadowProjection(centerX, centerY, centerZ, lx, ly, lz,
+            quality.nearRadiusTiles * 128.0f, nearSize, previousNear);
+        nearContext=context; nearPlane=plane;
+        long signature = scene.staticSignature();
+        roofMask = scene.roofMask();
         farAge++;
 		farRebuilt = quality == RendererShadowSettings.Quality.HIGH
 			&& (farProjection == null || farSignature != signature || farContext != context || farPlane != plane || farRoofSignature != roofMask.signature || farAge >= 150
@@ -221,7 +228,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
 			gl.glDisable(gl.GL_SCISSOR_TEST); gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL);
 			gl.glEnable(gl.GL_POLYGON_OFFSET_FILL); gl.glPolygonOffset(1.5f, 2.0f);
 			ensureRoofTexture();
-			ensureTexture(near, quality.nearSize);
+			ensureTexture(near, nearSize);
 			long start = System.nanoTime();
 			nearTimer.begin();
 			try { drawMap(scene, near, nearProjection, false); } finally { nearTimer.end(); }
@@ -354,7 +361,7 @@ final class OpenGLGeometryShadows implements AutoCloseable {
         previousFarProjection = null; farBlendAge = 0; destroyTexture(previousFar);
     }
     void suspend() throws Exception {
-        invalidateFarHistory(); farProjection = null; farAge = 0;
+        invalidateFarHistory(); farProjection = null; nearProjection = null; farAge = 0;
     }
     void clearPrepared() {
 		active = false;
