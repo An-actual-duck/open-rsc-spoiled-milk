@@ -16,6 +16,7 @@ renderer_tests=(
   test-geometry-shadow-projection.py
   test-shadow-context-epoch.py
   test-terrain-definition.py
+  test-sprite-workspace.py
   test-animated-texture-shadow-policy.py
   test-geometry-shadow-coordinates.py
   test-geometry-shadow-roof-mask.py

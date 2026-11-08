@@ -13,6 +13,7 @@ final class OpenGLDynamicTextureAtlas implements AutoCloseable {
 	private int cursorY;
 	private int rowHeight;
 	private boolean closed;
+	private final OpenGLPixelWorkspace uploadWorkspace = new OpenGLPixelWorkspace();
 
 	private OpenGLDynamicTextureAtlas(LwjglBindings gl, int textureId, int width, int height) {
 		this.gl = gl;
@@ -72,7 +73,8 @@ final class OpenGLDynamicTextureAtlas implements AutoCloseable {
 				textureData.pixels(),
 				textureData.width,
 				textureData.height,
-				PADDING));
+				PADDING,
+				uploadWorkspace));
 		return new OpenGLTextureRegion(
 			textureId,
 			placement.x,
@@ -122,6 +124,7 @@ final class OpenGLDynamicTextureAtlas implements AutoCloseable {
 			return;
 		}
 		closed = true;
+		uploadWorkspace.clear();
 		gl.glDeleteTextures(textureId);
 	}
 
