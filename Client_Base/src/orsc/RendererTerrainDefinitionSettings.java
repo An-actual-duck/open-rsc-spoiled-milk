@@ -7,12 +7,12 @@ final class RendererTerrainDefinitionSettings {
         final int shaderId;
         Mode(int id) { shaderId = id; }
     }
-    private static volatile Mode mode = parse(System.getProperty("spoiledmilk.terrainDefinition", "classic-relief"));
+    private static volatile Mode mode = parse(System.getProperty("spoiledmilk.terrainDefinition", "relief-ao"));
     private RendererTerrainDefinitionSettings() { }
     static Mode getMode() { return mode; }
-    static void setMode(Mode next) { mode = next == null ? Mode.CLASSIC_RELIEF : next; }
+    static void setMode(Mode next) { mode = next == null ? Mode.RELIEF_AO : next; }
     private static Mode parse(String value) {
-        if (value == null) return Mode.CLASSIC_RELIEF;
+        if (value == null) return Mode.RELIEF_AO;
         switch (value.trim().toLowerCase(java.util.Locale.ROOT).replace('_', '-')) {
             case "sun-only": return Mode.SUN_ONLY;
             case "classic-relief": return Mode.CLASSIC_RELIEF;

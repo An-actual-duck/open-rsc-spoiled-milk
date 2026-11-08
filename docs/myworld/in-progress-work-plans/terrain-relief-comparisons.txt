@@ -5,12 +5,13 @@ Owner direction
 Restore the familiar Classic terrain definition lost when Directional Remaster
 terrain stopped using its fixed vertex-light relief. Try a small set of other
 terrain cues for visual comparison. This is a private review candidate, not
-approval of an AO/curvature art direction or a public deployment.
+public deployment approval. The owner selected relief-ao from the matched
+32-image comparison; the chosen appearance has not been retuned.
 
 Four finite choices
 -Dspoiledmilk.terrainDefinition=sun-only|classic-relief|relief-ao|relief-curvature
-The default is classic-relief. Same-JVM review drivers may call the package
-private RendererTerrainDefinitionSettings.setMode(Mode). There is no new
+The owner-selected default is relief-ao (Classic relief plus valley shelter).
+Same-JVM review drivers may call the package-private RendererTerrainDefinitionSettings.setMode(Mode). There is no new
 permanent menu. Existing Terrain Shading levels/setting persistence are retained.
 
 SUN_ONLY preserves the accepted directional terrain/shadow path.
@@ -30,7 +31,8 @@ integration. Maximum extra darkening is 22% at default strength 2, bounded 33% a
 higher strength. Unknown samples contribute no occlusion and incomplete neighbor
 coverage fades toward neutral.
 
-RELIEF_CURVATURE instead uses signed local height bending, darkening concavities
+RELIEF_CURVATURE remains an experimental diagnostic only, with no permanent
+menu entry. It instead uses signed local height bending, darkening concavities
 and gently emphasizing ridges. Default extra modulation is bounded +/-12%, with
 a maximum +/-18%. This is an artistic height cue, not another cast shadow.
 
@@ -83,8 +85,11 @@ Completed checks so far
 The cache refinement leaves the comparison pixels unchanged. Candidate 1 and the
 final candidate produce byte-identical 9x9 bowl fields (324 bytes), SHA256
 9d633299261fed2003ae4c54b9385c852c9b1cbeead93f9ad21efe172e6aaa46.
-The compiled shader, world renderer, mode settings and LWJGL bindings are also
-byte-identical. The 32 native comparison screenshots therefore remain valid.
+The cache-only refinement also retained byte-identical compiled shader, world
+renderer, mode settings and LWJGL bindings. The 32 native comparison screenshots
+therefore remain valid. After owner selection only the default/fallback mode
+was changed to RELIEF_AO; shader and
+height-field contents remain identical to the reviewed comparison.
 
 Final checks: complete renderer guardrails, focused CPU cache/shape fixture,
 hardware production-GLSL/state fixture, client build and whitespace pass.
@@ -93,6 +98,6 @@ all new outputs are within the declared tests category. No cleanup of preserved
 historical outputs was attempted.
 
 Evidence is under output/tests/terrain-relief-comparisons/. No public server or
-owner account/database operation is part of this task. Native art selection and
-normal-camera/maximum-distance performance acceptance remain with the manager.
+owner account/database operation is part of this task. The art direction is selected.
+Normal-camera/maximum-distance performance acceptance remains with the manager.
 This is technically ready for review, not approved for integration/deployment.

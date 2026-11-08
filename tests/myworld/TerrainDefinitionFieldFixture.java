@@ -22,6 +22,10 @@ public final class TerrainDefinitionFieldFixture {
         }throw new AssertionError("Frame factory unavailable");
     }
     public static void main(String[] args)throws Exception {
+        require(RendererTerrainDefinitionSettings.getMode()==RendererTerrainDefinitionSettings.Mode.RELIEF_AO,"Owner-selected default lost");
+        RendererTerrainDefinitionSettings.setMode(RendererTerrainDefinitionSettings.Mode.SUN_ONLY);
+        RendererTerrainDefinitionSettings.setMode(null);
+        require(RendererTerrainDefinitionSettings.getMode()==RendererTerrainDefinitionSettings.Mode.RELIEF_AO,"Null review mode must restore selected default");
         int w=11,h=11;int[] flat=new int[w*h],slope=new int[w*h],bowl=new int[w*h],ridge=new int[w*h];
         for(int z=0;z<h;z++)for(int x=0;x<w;x++){int i=z*w+x;slope[i]=x*37+z*19;bowl[i]=300-(x-5)*(x-5)*12-(z-5)*(z-5)*12;ridge[i]=-bowl[i];}
         byte[] f=TerrainDefinitionField.build(flat,w,h),s=TerrainDefinitionField.build(slope,w,h),b=TerrainDefinitionField.build(bowl,w,h),r=TerrainDefinitionField.build(ridge,w,h);
