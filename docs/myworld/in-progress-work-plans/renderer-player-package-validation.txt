@@ -1,0 +1,102 @@
+Renderer rollout: player packaging and update validation
+=======================================================
+
+Scope
+This is validation tooling and evidence only, based on renderer main 8385412ee.
+No production renderer, updater, launcher, map or gameplay file was changed.
+No public server, real account, credentials or database was accessed. The owner
+excluded the 30–60 minute soak from this pass. Final candidate packaging and its
+native Linux launch belong to Core manager; this receipt does not claim those
+operations occurred in the worker.
+
+Existing checks completed
+  python3 tests/myworld/test-player-release.py
+  python3 tests/myworld/test-universal-player-package.py
+  python3 tests/myworld/test-player-updater.py
+  python3 tests/myworld/test-release-hotkey-guard.py
+  python3 tests/myworld/test-installed-map-release-selection.py
+  python3 tests/myworld/test-published-release-identity.py
+
+All pass. Universal packaging has 10 cases; installed-map selection has 13 cases.
+The first updater run passed 8 POSIX cases and skipped 8 PowerShell cases because
+pwsh was absent. Core then supplied its SHA-verified portable Microsoft
+PowerShell 7.6.9 under output/builds/renderer-validation-tools/v7.6.9/runtime.
+Rerunning with that directory first on PATH passes all 16 cases, zero skips.
+PowerShell execution is Linux PowerShell; it is not native Windows validation.
+
+The player release checks include release gates, clean payloads, endpoint,
+platform native entries, embedded runtime artwork, first-run UID behavior and
+launcher defaults. Published-release identity cases use isolated Git doubles;
+they neither query nor change public release refs.
+
+Actual archive rehearsal
+New tests/myworld/rehearse-player-package.py accepts an actual candidate output
+directory, an older Java archive and an exact expected source commit. It reads
+the original archives without modification, verifies their SHA256SUMS and
+consolidation receipt, CRCs, safe member paths, shared client JAR/source/endpoint,
+native payload entries, release marker, ordinary production entry point,
+installed-map manifest and complete package fingerprint. It rejects packaged
+credentials, UIDs, saved client settings and databases.
+
+The untouched POSIX updater is executed from a disposable extracted older
+installation. A PATH-local curl bridge allows exactly the original GitHub feed
+and candidate asset URLs, translating those two to an ephemeral 127.0.0.1 HTTP
+fixture. Other URLs are refused. Proxy and inherited runtime overrides are
+scrubbed. No production updater URL override or source edit was introduced.
+
+Checks cover:
+- Universal clean extraction with all three launchers and bundled Windows JRE.
+- Linux launcher and macOS shell delegation from paths containing spaces.
+- The released older updater installing the actual candidate Java archive.
+- Synthetic saved Low shadow settings, preferences, UID and credentials retained
+  byte-for-byte across upgrade. Off/Low/High settings then remain unchanged on
+  subsequent ordinary launcher runs. No real saved identity is read or copied.
+- API failure, missing asset, download 404 and invalid ZIP refusal before install;
+  every pre-existing installed file remains byte-identical for each case.
+- A newer candidate does not downgrade to the older feed version.
+- Source archive hashes remain unchanged after the full rehearsal.
+
+The Java executable in this helper is an argv recorder. It proves the shipped
+POSIX launch scripts reach the expected JAR, cwd and release options without testing
+flags or a forced shadow quality. It does not start a game, prove native OS/GPU
+compatibility or contact the game's endpoint. Core's actual Java 21 candidate
+startup and renderer native fixtures provide separate coverage.
+
+The helper passed against real existing v0.3.12 -> v0.3.13 archives, including
+source 5b08bef4d1f7a3447f700ad00379b7bbc17b3b6f and 132.145.137.142:43605.
+That verifies the rehearsal with real payloads; it is not acceptance of the
+future renderer candidate. Its final receipt is:
+  output/tests/renderer-player-package-validation/
+    rehearsal-existing-real-archives-checked/summary.json
+
+After Core builds the unpublished renderer candidate, rerun from manager main:
+  python3 tests/myworld/rehearse-player-package.py \
+    --candidate-directory output/releases/v0.3.14-alpha.1 \
+    --previous-java-archive output/releases/v0.3.13/spoiled-milk-v0.3.13-java.zip \
+    --expected-source EXACT_PACKAGED_SOURCE_COMMIT \
+    --host 132.145.137.142 --port 43605 --name renderer-candidate-final
+The CLI resolves its own declared test output category and refuses an existing
+run name, preserving all receipts and original archives.
+
+Runtime and platform limits
+The planned bundled Windows runtime's java.exe -version passes under Wine 9.0:
+Temurin 17.0.20+8. This used a NEW task-owned WINEPREFIX under the declared test
+output, DISPLAY empty, disabled Wine Mono/MSHTML/menu-builder integrations and
+no owner's Wine configuration. Its task-owned Wine processes exited. The exact
+java.exe SHA256 is 5b463cad4fcd8e4c655cc1c6f45a3b2ebb002adac94ebad2fdaa4f43e2aee211.
+This is a Wine CLI/runtime smoke only, not a Windows game or graphics test.
+
+Native Windows and macOS graphics, drivers, focus and their real filesystem
+semantics remain unverified on this Linux-only host. A packaged native library
+being present is distinct from running that platform. The POSIX updater has no
+transactional post-copy rollback; tested failure safety is limited to the
+explicit pre-install refusals above. No unsupported broader rollback guarantee
+is made, and no updater redesign is included.
+
+Evidence and organization
+All raw fixture logs, archive rehearsal installations and Wine receipt remain
+under output/tests/renderer-player-package-validation. No generated payload is
+committed. Python compilation and git diff --check pass. workspace-layout check
+reports the worker's inherited historical unclassified output roots; these were
+preserved. Every new output here uses the declared tests category. Core manager
+must run its own layout check after integration.
