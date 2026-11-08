@@ -202,9 +202,12 @@ final class OpenGLGeometryShadows implements AutoCloseable {
             || Math.hypot(Math.hypot(centerX-previousNear.centerX,centerZ-previousNear.centerZ),centerY-previousNear.centerY) > quality.nearRadiusTiles*128.0)) previousNear=null;
         int nearSize = quality.nearSize;
         double referenceHeight = scene.referenceHeight();
-        nearProjection = new DirectionalShadowProjection(centerX, centerY, centerZ, lx, ly, lz,
-            quality.nearRadiusTiles * 128.0f, nearSize, previousNear,
-            Double.isFinite(referenceHeight) ? referenceHeight : centerY);
+        nearProjection = quality == RendererShadowSettings.Quality.HIGH
+            ? new DirectionalShadowProjection(centerX, centerY, centerZ, lx, ly, lz,
+                quality.nearRadiusTiles * 128.0f, nearSize, previousNear,
+                Double.isFinite(referenceHeight) ? referenceHeight : centerY)
+            : new DirectionalShadowProjection(centerX, centerY, centerZ, lx, ly, lz,
+                quality.nearRadiusTiles * 128.0f, nearSize, previousNear);
         nearContext=context; nearPlane=plane;
         long signature = scene.staticSignature();
         roofMask = scene.roofMask();

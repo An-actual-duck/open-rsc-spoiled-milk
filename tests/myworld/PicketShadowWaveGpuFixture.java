@@ -13,6 +13,9 @@ public final class PicketShadowWaveGpuFixture {
     static boolean alpha;
     static final byte[] gray = new byte[W*H];
     static long signature, shadowContext;
+    static final java.security.MessageDigest PIXEL_HASH = pixelHash();
+    static java.security.MessageDigest pixelHash(){try{return java.security.MessageDigest.getInstance("SHA-256");}catch(java.security.NoSuchAlgorithmException e){throw new AssertionError(e);}}
+    static String pixelDigest(){byte[] digest=PIXEL_HASH.digest(gray);StringBuilder s=new StringBuilder();for(byte b:digest)s.append(String.format("%02x",b&255));return s.toString();}
     static float fenceZ=6500;
     static boolean nativeFence;
     static float worldOffsetX, worldOffsetZ, casterOffsetX;
@@ -82,7 +85,7 @@ public final class PicketShadowWaveGpuFixture {
             int vs=compile(gl.GL_VERTEX_SHADER,vertex),fs=compile(gl.GL_FRAGMENT_SHADER,"#version 120\nvarying float vModelKind;uniform float uLightDirectionX,uLightDirectionY,uLightDirectionZ;"+isolatedSource()+"void main(){gl_FragColor=vec4(vec3(geometryShadowVisibility()),1.0);}");program=gl.glCreateProgram();gl.glAttachShader(program,vs);gl.glAttachShader(program,fs);gl.glBindAttribLocation(program,0,"aPosition");gl.glLinkProgram(program);require(gl.glGetProgrami(program,gl.GL_LINK_STATUS)!=0,gl.glGetProgramInfoLog(program));gl.glDeleteShader(vs);gl.glDeleteShader(fs);
             pass=new OpenGLGeometryShadows(gl,functions);RendererShadowSettings.setQuality(Boolean.getBoolean("probe.low")?RendererShadowSettings.Quality.LOW:RendererShadowSettings.Quality.HIGH);
             double nearMean=-1;
-            StringBuilder csv=new StringBuilder("case,cutout,frame,azimuth,farRebuilt,shadowArea\n");
+            StringBuilder csv=new StringBuilder("case,cutout,frame,azimuth,farRebuilt,shadowArea,pixelSha256\n");
             for(boolean cut:new boolean[]{true})for(String mode:probeModes()){
                 worldOffsetX=mode.endsWith("world")?64000:0;worldOffsetZ=mode.endsWith("world")?59000:0;
                 movingCaster=mode.equals("near-caster-world");casterOffsetX=0;
@@ -97,7 +100,7 @@ public final class PicketShadowWaveGpuFixture {
                     float eyeX=mode.equals("cascade-motion")?(float)Math.cos(i*Math.PI/32)*1024:0;
                     float eyeZ=mode.equals("cascade-motion")?(float)Math.sin(i*Math.PI/32)*1024:0;
                     pass.prepare(SCENE,eyeX+worldOffsetX,-256+worldOffsetY,eyeZ+worldOffsetZ);float span=2048;
-                    double energy=frame(pass,cameraShift+worldOffsetX,fenceZ-128+worldOffsetZ,span,span);csv.append(mode).append(',').append(cut).append(',').append(i).append(',').append(RendererRemasterLightSettings.getAzimuthDegrees()).append(',').append(pass.farRebuilt).append(',').append(energy).append('\n');
+                    double energy=frame(pass,cameraShift+worldOffsetX,fenceZ-128+worldOffsetZ,span,span);csv.append(mode).append(',').append(cut).append(',').append(i).append(',').append(RendererRemasterLightSettings.getAzimuthDegrees()).append(',').append(pass.farRebuilt).append(',').append(energy).append(',').append(pixelDigest()).append('\n');
                     if(movingCaster) {
                         double weighted=0,weight=0;for(int y=0;y<H;y++)for(int x=0;x<W;x++){double w=255-(gray[y*W+x]&255);weighted+=w*x;weight+=w;}
                         double centroid=weighted/Math.max(1,weight)*span/W;if(i==0)firstCentroid=centroid;lastCentroid=centroid;
@@ -119,6 +122,9 @@ public final class PicketShadowWaveGpuFixture {
                 double mean=total/frames;
                 Files.write(output.resolve("temporal.csv"),csv.toString().getBytes("UTF-8"));
                 require(mean>1000,"Shadow was removed instead of stabilized: "+mode);
+                if(mode.equals("near-fixed-world")&&!Boolean.getBoolean("probe.low")&&System.getProperty("probe.elevation","45").equals("45")) {
+                    require(mean>(textureSize==64?130000:45000)&&mean<(textureSize==64?150000:54000),"Native repeated shadow coverage changed: "+mean);
+                }
                 if(mode.equals("cascade-motion")) {
                     require(min>max*.70,"Cascade transition loses shadow coverage: "+min+"/"+max);
                     require(maxResidual<.25,"Cascade transition has an abrupt spatial discontinuity: "+maxResidual);

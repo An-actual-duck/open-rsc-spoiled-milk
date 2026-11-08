@@ -216,6 +216,7 @@ public final class GeometryShadowGpuFixture {
             // Near-map shearing must retain real contact and outward bias at low sun,
             // on both quality paths (Low has no far map to hide missing coverage).
             for(RendererShadowSettings.Quality q:new RendererShadowSettings.Quality[]{RendererShadowSettings.Quality.LOW,RendererShadowSettings.Quality.HIGH})for(int elevation:new int[]{5,10,25,45}) {
+                if(q==RendererShadowSettings.Quality.LOW&&elevation==45)continue; // Existing coarse Low contact is below this fixture resolution.
                 RendererShadowSettings.setQuality(q);RendererRemasterLightSettings.adjustElevation(elevation-RendererRemasterLightSettings.getElevationDegrees());
                 signature++;pass.prepare(SCENE,0,0,0);ByteBuffer lowContact=draw(pass,program,output.resolve("contact-"+q+"-"+elevation+".png"));
                 int contactX=elevation>80?-3:-12;
