@@ -20,6 +20,7 @@ public final class MonsterSlayerState {
 	public static final int MIGRATION_VERSION = 1;
 
 	// Respect the existing MySQL cache's 32-character keys / 150-character values.
+	private static final String STARTER_CLAIM_PREFIX = "monster_slayer_starter_";
 	private static final String COMPLETED_TASKS_KEY = "monster_slayer_done_parts";
 	private static final String COMPLETED_PART_PREFIX = "monster_slayer_done_";
 	private static final int COMPLETED_PART_SIZE = 150, MAX_COMPLETED_PARTS = 16;
@@ -93,13 +94,30 @@ public final class MonsterSlayerState {
 
 	/** Validates the full snapshot before changing any cache entry. */
 	public static void write(Cache cache, MonsterSlayerData data, Snapshot snapshot) {
-		if (cache == null) {
-			throw new IllegalArgumentException("Player cache is required");
-		}
+		writeWithStarterClaims(cache, data, snapshot, Collections.<Integer>emptyList());
+	}
+
+	/** Item identities survive task cancellation, roster changes and ordinary state writes. */
+	static boolean hasStarterClaim(Cache cache, int itemId) {
+		Object value = cache.getCacheMap().get(starterClaimKey(itemId));
+		if (value == null) return false;
+		if (!Boolean.TRUE.equals(value)) throw new ValidationException("Malformed Slayer starter claim");
+		return true;
+	}
+
+	private static String starterClaimKey(int itemId) {
+		if (itemId < 0) throw new ValidationException("Invalid Slayer starter item");
+		return STARTER_CLAIM_PREFIX + itemId;
+	}
+
+	/** Called after delivery, inside the assignment inventory transaction. Never revokes claims. */
+	static void writeWithStarterClaims(Cache cache, MonsterSlayerData data, Snapshot snapshot, List<Integer> itemIds) {
+		if (cache == null) throw new IllegalArgumentException("Player cache is required");
 		validate(snapshot, data);
 		Map<String, Object> values = cache.getCacheMap();
 		Map<String, Object> before = new LinkedHashMap<String, Object>();
 		List<String> keys = ownedKeys(data);
+		for (int id : itemIds) keys.add(starterClaimKey(id));
 		for (String key : keys) {
 			if (values.containsKey(key)) before.put(key, values.get(key));
 		}
@@ -135,6 +153,7 @@ public final class MonsterSlayerState {
 			cache.set(MIGRATION_VERSION_KEY, snapshot.migrationVersion);
 			cache.set(LEGACY_STATUS_KEY, snapshot.legacyStatus.getCode());
 			cache.set(LEGACY_PRESTIGE_KEY, snapshot.legacyPrestige);
+			for (int id : itemIds) cache.store(starterClaimKey(id), Boolean.TRUE);
 		} catch (RuntimeException failure) {
 			// Cache mutators are individually atomic, not a transaction. Restore
 			// only our owned keys directly so unrelated cache evidence survives.
@@ -841,17 +860,25 @@ public final class MonsterSlayerState {
 			MANDATORY_COMPLETE, INVALID_REPEATABLE, NO_ACTIVE_TASK, WRONG_NPC, INVALID_STATE,
 			INVENTORY_FULL, SUPPLIES_UNAVAILABLE, SUPPLIES_FAILED
 		}
+		private final List<Integer> grantedStarterItems;
 		private final Snapshot snapshot;
 		private final Reason reason;
 		private final long awardedPoints;
 		private final MonsterSlayerChallenge awardedChallenge;
 		private TaskResult(Snapshot snapshot, Reason reason, long awardedPoints,
 				MonsterSlayerChallenge awardedChallenge) {
+			this(snapshot, reason, awardedPoints, awardedChallenge, Collections.<Integer>emptyList());
+		}
+		private TaskResult(Snapshot snapshot, Reason reason, long awardedPoints,
+				MonsterSlayerChallenge awardedChallenge, List<Integer> grantedStarterItems) {
+			this.grantedStarterItems = Collections.unmodifiableList(new ArrayList<Integer>(grantedStarterItems));
 			this.snapshot = snapshot;
 			this.reason = reason;
 			this.awardedPoints = awardedPoints;
 			this.awardedChallenge = awardedChallenge;
 		}
+		TaskResult withStarterItems(List<Integer> ids) { return new TaskResult(snapshot, reason, awardedPoints, awardedChallenge, ids); }
+		public List<Integer> getGrantedStarterItems() { return grantedStarterItems; }
 		private static TaskResult assigned(Snapshot snapshot) { return new TaskResult(snapshot, Reason.ASSIGNED, 0L, null); }
 		private static TaskResult progressed(Snapshot snapshot) { return new TaskResult(snapshot, Reason.PROGRESSED, 0L, null); }
 		private static TaskResult completed(Snapshot snapshot, long points, MonsterSlayerChallenge challenge) {

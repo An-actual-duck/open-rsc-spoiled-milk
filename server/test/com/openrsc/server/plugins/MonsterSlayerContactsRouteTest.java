@@ -51,7 +51,6 @@ public final class MonsterSlayerContactsRouteTest {
 		}
 		if (args.length == 1 && "--tower".equals(args[0])) {
 			towerPreparationAndPreviewRoutes(server);
-			assignmentWarningsFollowFlavorAcrossContacts(server);
 			System.out.println("Monster Slayer tower contact routes: PASS");
 			return;
 		}
@@ -105,7 +104,6 @@ public final class MonsterSlayerContactsRouteTest {
 		radimusDialogueUsesAuthoritativeHeroProgression(server);
 		legendsSectReusesRadimusAndRuneAssociate(server);
 		hazardWarningsAreNaturalOrderedDialogue(server);
-		assignmentWarningsFollowFlavorAcrossContacts(server);
 		developmentCompletionUsesNormalSlayerProgression(server);
 		towerPreparationAndPreviewRoutes(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
@@ -181,6 +179,18 @@ public final class MonsterSlayerContactsRouteTest {
 						for (int supply : MonsterSlayerTaskSupplies.itemIds(task)) assertEquals(1, player.getCarriedItems().getInventory().countId(supply), "active dialogue does not supply again");
 						for (String line : MonsterSlayerContacts.taskSupplyLines(player, task)) assertFalse(dialogue.events.contains("N:" + line), "reminder does not claim another gift");
 
+						MonsterSlayerState.write(player.getCache(), data, MonsterSlayerState.cancelTask(
+							MonsterSlayerState.read(player.getCache(), data), data, task.getKey()));
+						dialogue = new RecordingDialogue(0); routes = new MonsterSlayerContacts(dialogue);
+						if (shortcut) routes.onOpNpc(player, npc, "Task"); else routes.onTalkNpc(player, npc);
+						assertEquals(task.getKey(), MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey(), "cancelled task reassigned on both routes");
+						for (String line : MonsterSlayerContacts.taskSupplyLines(player, task))
+							assertFalse(dialogue.events.contains("N:" + line), "reassignment does not announce another starter gift");
+						for (String line : MonsterSlayerContacts.hazardWarningLines(task))
+							assertTrue(dialogue.events.contains("N:" + line), "reassignment preserves preparation warnings");
+						for (int supply : MonsterSlayerTaskSupplies.itemIds(task))
+							assertEquals(1, player.getCarriedItems().getInventory().countId(supply), "reassignment gives no duplicate starter");
+
 						// Deterministic repeatable preview must not be resampled when committed.
 						counts.put(contact.getKey(), contact.getMandatoryTasks().size());
 						MonsterSlayerState.write(player.getCache(), data, MonsterSlayerState.create(2,
@@ -192,14 +202,17 @@ public final class MonsterSlayerContactsRouteTest {
 							new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService(data, tasks,
 								bound -> calls[0]++ == 0 ? chosen : 0);
 						assertEquals(task.getKey() + ".repeatable", service.previewTask(player, contact.getKey()).getKey(), "preview selects new repeatable");
-						assertTrue(service.requestTask(player, contact.getKey()).isAccepted(), "repeatable committed");
-						for (int supply : MonsterSlayerTaskSupplies.itemIds(task)) assertEquals(2, player.getCarriedItems().getInventory().countId(supply), "repeatable supplies added to existing items");
+						com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService.Result repeated = service.requestTask(player, contact.getKey());
+						assertTrue(repeated.isAccepted(), "repeatable committed");
+						assertEquals(0, MonsterSlayerContacts.taskSupplyLines(player, repeated.getTaskResult().getGrantedStarterItems()).length, "repeat assignment promises no starter gift");
+						for (int supply : MonsterSlayerTaskSupplies.itemIds(task)) assertEquals(1, player.getCarriedItems().getInventory().countId(supply), "repeatable preserves first-only starter gift");
 						assertEquals(1, calls[0], "preview not rerolled");
 						assertEquals(task.getKey() + ".repeatable", service.previewTask(player, contact.getKey()).getKey(), "active repeatable preview is actual task");
 						assertEquals(1, calls[0], "active reminder does not roll another task");
 					}
 				}
 			}
+			assignmentWarningsFollowFlavorAcrossContacts(server);
 			optionalBossDialogueRoutes(server);
 		} finally {
 			install(server, "monsterSlayerData", previous); install(server, "monsterSlayerTaskService", previousTasks);

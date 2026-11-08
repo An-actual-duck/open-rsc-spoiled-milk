@@ -1,28 +1,51 @@
 # Slayer protection supplies in shops
 
-Updated: 2026-11-06. Implemented and tested; no deployment or restart.
+Updated: 2026-11-07. Implemented and tested; no deployment or restart.
 
 ## Starter supplies on task assignment
 
-Each newly assigned mandatory or repeatable gimmick task now includes one full
-three-use counter item, even if the player already owns one. Giant frogs and
-Abyssal demons receive Slime Solvent; cockatrices receive Eye Drops; banshees
-receive Wax earplugs; terror dogs receive Dog Treats; dark beasts receive a
-Static discharge wipe. Associates explain the starter gift and where to buy
-more after announcing the task. The existing encounter warning explains its use.
+The first successful mandatory or repeatable assignment requiring a particular
+counter grants one full three-use item, even if the player already owns one.
+Giant frogs and Abyssal demons share a single Slime Solvent starter entitlement;
+cockatrices receive Eye Drops; banshees receive Wax earplugs; terror dogs receive
+Dog Treats; dark beasts receive a Static discharge wipe. Later assignments never
+refill a claimed item. Dropping, selling, banking or consuming it does not reopen
+the entitlement. Replacements remain available from the existing shops.
 
-Talk and Task shortcuts use the same assignment service. Task state and all
-required starter items commit together; without enough inventory space, the
-associate asks the player to make room and no task is assigned. Reminders,
-reconnection and unsuccessful requests grant nothing. Already active tasks are
-not retroactively refilled. Ordinary environmental hazards and strategy-only
-tasks do not receive extra items. Shop availability and prices below remain
-unchanged.
+Talk and Task shortcuts use the same assignment service. Task state, newly owed
+items and their claims commit together. Failed or partial delivery/cache writes
+restore the inventory, task and claims. Full inventories block only gifts still
+owed; freeing space and retrying retains the initial entitlement. An assignment
+whose required gifts are already claimed needs no spare inventory slot. Reminders
+and reconnection grant nothing; already active tasks are not retroactively filled.
+Ordinary environmental hazards and strategy-only tasks receive no extra items.
 
-`test_slayer_task_supplies` exercises real inventories and cache persistence,
-all six encounters, repeated and concurrent requests, full inventories,
-unsupported clients, injected grant/cache failures and distinct multi-counter
-tasks. `test_monster_slayer_tower_routes` covers both dialogue entry points.
+The assignment receipt reports only the starter items actually delivered. The
+contact acknowledges those gifts after the existing personality remarks, hazard
+warnings and task announcement. Reminders retain their warnings and progress.
+
+Claims use Boolean player-cache entries `monster_slayer_starter_<full-item-id>`.
+They fit the existing 32-character key / 150-character value schema and use the
+normal typed cache save/load path. Ordinary state writes, cancellation, progression
+and roster migration preserve these independent item identities. There is no
+schema change, task-position bitmask or inventory-based inference.
+
+Older saves have no dedicated starter-claim indicator. Existing completed-task,
+rank and legacy-migration records do not prove which items were delivered; item
+ownership does not establish a gift either. No historical claims are guessed or
+backfilled. An untracked player can receive one more starter per required item
+on a subsequent successful assignment, then the new claim prevents more. No live
+player data was inspected or changed. Crash durability remains that of the normal
+player save; the assignment transaction guarantees in-memory rollback on failure.
+
+`test_slayer_task_supplies` covers all six encounters, first-only repeatables,
+shared items, cancellation/reassignment, inventory removal and banking, a fresh
+player reconstructed from the cache's typed text representation, full-inventory
+retry, unsupported clients, injected grant/state/claim failures, concurrent requests
+and partly claimed multi-counter tasks. No external database is used by the
+fixture. `test_monster_slayer_tower_routes` covers both dialogue entry points and
+first-only receipts. Shop and durable player-state fixtures cover the unchanged
+replacement and progression mechanics.
 
 ## Approved pricing
 
