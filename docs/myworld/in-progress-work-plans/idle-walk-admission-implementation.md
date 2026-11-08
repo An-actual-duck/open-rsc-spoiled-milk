@@ -171,6 +171,24 @@ The final guard reduces admitted work under contention; this is not improved
 per-command speed. Keep count ceilings unchanged. We have not measured the
 Oracle CPU or slower hosts, and the last command can overrun the soft budget.
 
+## Validation Runner Follow-Up
+
+Manager's Java21 aggregate exposed a runner classpath defect before publication:
+fat `core.jar` preceded supported Log4j2.17.0 jars, allowing its legacy LogManager
+to fail during Server initialization. No gameplay assertion ran or failed in
+that attempt. The failed manager run
+`output/tests/idle-walk-admission/manager-final-20261108` and aggregate log remain
+preserved in the manager checkout.
+
+The fixture driver now puts log4j-api/core/iostreams2.17.0 ahead of core.jar for
+both compilation and execution, matching shipped/native launch order. Receipts
+record the resolved Java and javac executable paths as well as their versions.
+Fresh `runner-log4j-order-java8-1` (8u482) and `runner-log4j-order-java21-1`
+(21.0.12) each pass all **3,135** controls with **5/9/10 ms** phase results, using
+the unchanged frozen final core. Logs and launch receipts are preserved beside
+the earlier evidence. This follow-up changes only the validation driver and this
+note; gameplay artifacts and accepted native proofs remain unchanged.
+
 ## Reproduction Commands
 
 Run from `/home/justin/Core-Framework-ai-3`; use new run names because evidence is

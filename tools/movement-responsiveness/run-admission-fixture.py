@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 
@@ -32,8 +33,14 @@ core = a.core.resolve(strict=True)
 overlay = a.overlay.resolve(strict=True) if a.overlay else None
 classes = out/'fixture-classes'
 classes.mkdir()
+# Fat core.jar contains legacy Log4j; use the supported launcher order on every JVM.
+logging_libs = [ROOT/'server/lib'/name for name in
+    ['log4j-api-2.17.0.jar', 'log4j-core-2.17.0.jar', 'log4j-iostreams-2.17.0.jar']]
 libs = sorted((ROOT/'server/lib').glob('*.jar'))
-common = [ROOT/'output/tests/combat/test-classes', core, *libs]
+other_libs = [path for path in libs if path not in logging_libs]
+java = str(Path(shutil.which('java')).resolve(strict=True))
+javac = str(Path(shutil.which('javac')).resolve(strict=True))
+common = [*logging_libs, ROOT/'output/tests/combat/test-classes', core, *other_libs]
 source = ROOT/'server/test/com/openrsc/server/combat/IdleWalkAdmissionFixture.java'
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -41,8 +48,9 @@ def digest(path):
 receipt = {'mode': a.mode, 'core': str(core), 'coreSha256': digest(core),
     'fixtureSourceSha256': digest(source), 'configSha256': digest(runtime/'myworld.conf'),
     'sourceCommit': subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
-    'javaVersion': subprocess.check_output(['java','-version'],stderr=subprocess.STDOUT,text=True),
-    'javacVersion': subprocess.check_output(['javac','-version'],stderr=subprocess.STDOUT,text=True),
+    'javaExecutable': java, 'javacExecutable': javac,
+    'javaVersion': subprocess.check_output([java,'-version'],stderr=subprocess.STDOUT,text=True),
+    'javacVersion': subprocess.check_output([javac,'-version'],stderr=subprocess.STDOUT,text=True),
     'state': 'before-compile', 'exitCode': None,
     'scope': 'Decoded packet -> unchanged filter -> FIFO -> parser/processor -> authoritative movement; no native input or login'}
 if overlay:
@@ -53,10 +61,11 @@ def save_receipt():
 
 save_receipt()
 try:
-    subprocess.run(['javac', '-source', '8', '-target', '8', '-cp', os.pathsep.join(map(str,common)),
+    subprocess.run([javac, '-source', '8', '-target', '8', '-cp', os.pathsep.join(map(str,common)),
         '-d', str(classes), str(source)], check=True)
-    cp = [classes, ROOT/'output/tests/combat/test-classes', *([overlay] if overlay else []), core, *libs]
-    command = ['java', '-Xmx768m', '-XX:+UseSerialGC', '-cp', os.pathsep.join(map(str,cp)),
+    cp = [*logging_libs, classes, ROOT/'output/tests/combat/test-classes',
+        *([overlay] if overlay else []), core, *other_libs]
+    command = [java, '-Xmx768m', '-XX:+UseSerialGC', '-cp', os.pathsep.join(map(str,cp)),
         'com.openrsc.server.combat.IdleWalkAdmissionFixture', a.mode, str(out/'result.json')]
     receipt.update(command=command,state='before-launch',
         fixtureClasses={str(f.relative_to(classes)): digest(f) for f in sorted(classes.rglob('*.class'))},
