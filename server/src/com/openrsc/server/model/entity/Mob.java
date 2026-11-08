@@ -75,6 +75,8 @@ public abstract class Mob extends Entity {
 	public static final int ATTACK_BASED_DEBUFF_ATTACKS = 5;
 
 	private long lastMovementTime = 0;
+	private long lastSuccessfulMovementNanos;
+	private boolean hasSuccessfulMovement;
 	private final Skills skills = new Skills(this.getWorld(), this);
 	private final WalkingQueue walkingQueue = new WalkingQueue(this);
 	private KillType killType = KillType.COMBAT;
@@ -819,6 +821,19 @@ public abstract class Mob extends Entity {
 	}
 
 	public void updatePosition() {
+		if (getConfig().WANT_MYWORLD && getConfig().WANT_CUSTOM_WALK_SPEED) {
+			final WalkingQueue queue = getWalkingQueue();
+			if (!queue.hasPendingMovementWork()) return;
+			final long nowNanos = getWorld().getServer().getGameClock().nanoTime();
+			final long intervalNanos = (long) getWalkingTick() * 1_000_000L;
+			if (!hasSuccessfulMovement || nowNanos - lastSuccessfulMovementNanos >= intervalNanos) {
+				if (queue.processNextMovementAndReport()) {
+					lastSuccessfulMovementNanos = nowNanos;
+					hasSuccessfulMovement = true;
+				}
+			}
+			return;
+		}
 		final long now = getWorld().getServer().getGameClock().currentTimeMillis();
 		final boolean useWalkingTick = getWorld().getServer().getConfig().WANT_CUSTOM_WALK_SPEED
 			|| getWalkingTick() != getWorld().getServer().getConfig().WALKING_TICK;

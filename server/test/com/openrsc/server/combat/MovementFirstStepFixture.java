@@ -1,10 +1,8 @@
 package com.openrsc.server.combat;
 
 import com.openrsc.server.constants.NpcId;
-import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.content.monsterslayer.CockatriceCombat;
 import com.openrsc.server.model.Point;
-import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -47,11 +45,12 @@ public final class MovementFirstStepFixture {
             h.openCombatProjectileRectangle(440, 470, 440, 455);
             result.put("players", phaseSweep(h, false));
             result.put("npcs", phaseSweep(h, true));
-            Path phases = output.resolveSibling(args[0] + "-phases.json");
+            Path phases = output.resolveSibling(output.getFileName().toString().replaceFirst("\\.json$", "") + "-phases.json");
             if (Files.exists(phases)) throw new IllegalArgumentException("Never overwrite phase evidence");
             Files.createDirectories(phases.toAbsolutePath().getParent());
             Files.write(phases, (result.toString(2) + "\n").getBytes(StandardCharsets.UTF_8));
             cadenceAndReclicks(h);
+            recentStopAndReadiness(h);
             collisionAndHolds(h);
             teleportOutcome(h);
             legacyControl(h);
@@ -119,31 +118,39 @@ public final class MovementFirstStepFixture {
         return values.get(Math.max(0, (int) Math.ceil(values.size() * p) - 1));
     }
     private static void cadenceAndReclicks(CurrentCombatHarness h) throws Exception {
-        h.clock().reset(EPOCH);
-        Player p = player(h);
-        walk(p, 451, 450);p.updatePosition();
-        check(p.getX() == 451, "initial authorized step");
-        int x = 451, steps = 1;
-        for (int t = 1; t <= 1720; t++) {
-            h.clock().advanceMillis(1);
-            walk(p, x + 1, 450);p.updatePosition();
-            if (p.getX() != x) {
-                check(t % 430 == 0, "reclicks never earn an early step");
-                x = p.getX();steps++;
+        for (boolean npc : new boolean[]{false, true}) {
+            h.clock().reset(EPOCH);
+            Mob mob = npc ? h.npc(NpcId.MOSS_GIANT.id(), 441, 440) : player(h);
+            int startX = mob.getX(), y = mob.getY();
+            walk(mob, startX + 1, y);poll(mob);
+            check(mob.getX() == startX + 1, "initial authorized step; npc=" + npc);
+            int x = startX + 1, steps = 1;
+            for (int t = 1; t <= 1720; t++) {
+                h.clock().advanceMillis(1);
+                walk(mob, x + 1, y);poll(mob);
+                if (mob.getX() != x) {
+                    check(t % 430 == 0, "reclicks never earn an early step; npc=" + npc);
+                    check(mob.getX() == x + 1 && mob.getY() == y,
+                        "each committed trajectory is exactly one adjacent tile");
+                    x = mob.getX();steps++;
+                }
             }
+            check(steps == 5 && x == startX + 5,
+                "four full intervals produce exactly four more tiles; npc=" + npc);
         }
-        check(steps == 5 && x == 455, "four full intervals produce exactly four more tiles");
     }
     private static void collisionAndHolds(CurrentCombatHarness h) throws Exception {
         h.clock().reset(EPOCH);
         Player p = player(h);walk(p, 451, 450);
-        GameObject blocker = new GameObject(h.world(), Point.location(451, 450),
-            SceneryId.DOOR_BANK_CLOSED.id(), 0, 0);
-        h.world().registerGameObject(blocker);
+        // Add a real live collision owner after path admission. Native terrain is immutable;
+        // mutating a legacy tile view would not test the authoritative collision route.
+        Player blocker = h.player("block" + serial++, 451, 450);
+        h.server().getConfig().PLAYER_BLOCKING = 2;
         try {
-            p.updatePosition();check(p.getX() == 450, "collision checked at movement commitment");
+            p.updatePosition();check(p.getX() == 450, "live collision checked at movement commitment");
         } finally {
-            h.world().unregisterGameObject(blocker);
+            h.logout(blocker);
+            h.server().getConfig().PLAYER_BLOCKING = 0;
         }
         h.openCombatProjectileRectangle(450, 452, 450, 450);
         h.clock().advanceMillis(10);walk(p, 451, 450);p.updatePosition();
@@ -158,6 +165,27 @@ public final class MovementFirstStepFixture {
         check(!CockatriceCombat.movementBlocked(held), "effect naturally releases");
         held.updatePosition();check(held.getX() == 451, "eligible path resumes after hold");
         held.updatePosition();check(held.getX() == 451, "release cannot create a catch-up burst");
+    }
+    private static void recentStopAndReadiness(CurrentCombatHarness h) throws Exception {
+        h.clock().reset(EPOCH);Player p = player(h);
+        walk(p, 451, 450);p.updatePosition();check(p.getX() == 451, "precondition: previous successful step");
+        h.clock().advanceMillis(430);p.updatePosition(); // finish old path without another successful step
+        h.clock().advanceMillis(1);walk(p, 452, 450);p.updatePosition();
+        check(candidate ? p.getX() == 452 : p.getX() == 451, "idle endpoint cleanup does not restart candidate deadline");
+        h.clock().reset(EPOCH);Player held = player(h);
+        boolean readiness = h.server().getConfig().WANT_LAYERED_NATIVE_TERRAIN_READINESS;
+        h.server().getConfig().WANT_LAYERED_NATIVE_TERRAIN_READINESS = true;
+        held.setAttribute("native_terrain_self_appearance_pending", Boolean.TRUE);
+        walk(held, 451, 450);held.updatePosition();
+        check(held.getX() == 450 && !held.getWalkingQueue().finished(), "terrain readiness preserves queued movement");
+        held.removeAttribute("native_terrain_self_appearance_pending");
+        h.clock().advanceMillis(10);held.updatePosition();
+        check(candidate ? held.getX() == 451 : held.getX() == 450, "candidate resumes when actual readiness hold releases");
+        h.server().getConfig().WANT_LAYERED_NATIVE_TERRAIN_READINESS = readiness;
+        h.clock().reset(EPOCH);Player staggered = player(h);
+        check(staggered.applyStagger(1), "attack stagger precondition");
+        walk(staggered, 451, 450);staggered.updatePosition();
+        check(staggered.getX() == 451, "attack stagger is not turned into a movement lock");
     }
     private static void teleportOutcome(CurrentCombatHarness h) throws Exception {
         h.clock().reset(EPOCH);Player p = player(h);
@@ -184,5 +212,12 @@ public final class MovementFirstStepFixture {
             check(p.getX() == 451, "nanoTime wrap and negative epoch retain deadline");
             nanos(h, origin + 430_000_000L);p.updatePosition();check(p.getX() == 452, "nanoTime elapsed interval is wrap safe");
         }
+        h.clock().reset(EPOCH);nanos(h, 0L);Player p = player(h);
+        walk(p, 451, 450);p.updatePosition();walk(p, 452, 450);
+        Field millis = MutableGameClock.class.getDeclaredField("millis");millis.setAccessible(true);
+        millis.setLong(h.clock(), EPOCH + 86_400_000L);nanos(h, 1L);p.updatePosition();
+        check(p.getX() == 451, "wall-clock forward jump cannot grant an early step");
+        millis.setLong(h.clock(), EPOCH - 86_400_000L);nanos(h, 430_000_000L);p.updatePosition();
+        check(p.getX() == 452, "wall-clock rollback cannot freeze monotonic movement");
     }
 }

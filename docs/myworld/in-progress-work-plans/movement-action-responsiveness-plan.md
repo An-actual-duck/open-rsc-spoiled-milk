@@ -1,9 +1,11 @@
 # Movement And Action Responsiveness
 
-Status: planning complete for manager/owner review; implementation has not started.
+Status: active private implementation under the owner's autonomous-work approval.
 Owner: Core manager; one focused worker branch per measured change.
 Planning baseline: `8aa93c01fcfc9d024c634c9181d571399533d048`.
 Released game baseline: v0.3.14, `0555b0307bf9a64c96cbe7132777dae3a41ca676`.
+Current first-slice work: [authoritative first-step implementation](movement-first-step-implementation.md).
+Native owner acceptance and public activation remain separate from technical integration.
 Companion: [Client performance and portability](client-performance-portability-plan.md).
 
 ## Goal And Boundaries
