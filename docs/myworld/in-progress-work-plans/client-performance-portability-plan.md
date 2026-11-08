@@ -339,3 +339,96 @@ under `output/diagnostics/client-portability-pass/`,
 `output/tests/renderer-shadow-benchmarks/portability-*` fixtures. The compact
 review bundle is `output/reviews/client-performance-session/`. No public build,
 release, deployment or shutdown occurred.
+
+## November 8, 2026 — Typed Float Uniform Dispatch
+
+This second focused slice began from manager commit `2e92a3e39`, after the
+bounded-workspace slice was integrated and its default-compiler output matched
+all 1,977 frozen class files. The prior candidate JFR still attributed 212.43
+weighted MiB / 60 seconds (3.54 MiB/s) to `LwjglBindings.glUniform1f`. That made
+this single remaining reflective hot call a measured, bounded follow-up.
+
+Only `glUniform1f` changes dispatch: it resolves the same public LWJGL
+`void(int,float)` method once into a MethodHandle, then uses `invokeExact` and
+the existing `rethrow` contract, matching the established integer-uniform path.
+No shader code, call order, uniform value, GL state, dependency, rendering
+setting, optional loading behavior or wider binding conversion changes.
+
+Production checkpoint `dbc173fb6152304b7feff8e9f49e2d29ef69ccb4` has frozen JAR
+`output/tests/typed-float-uniform/uniform-dbc173fb6.jar`, SHA256
+`f272554cf761891bb8a7a7c799fea536bb5f31a72eef4e2642d7f6913addb4fc`.
+The P1 comparator remains `workspace-86961b57c.jar`, SHA256
+`cac7b49f6764a522ab94e43739129f56c518feca61996baceba920cff86dc2e6`.
+Both were compiled by Temurin javac **1.8.0_482**, `source=1.8`, `target=1.8`,
+with debug metadata enabled. Benchmark JVM runtime was Ubuntu OpenJDK
+**21.0.12**. Compiler and runtime are separate facts; all eight earlier P1
+native comparisons likewise record runtime 21.0.12 in their manifests.
+The manager's separately compiled Java 21 P1 build was a compatibility control,
+not the artifact substituted into those comparisons.
+
+The P1/P2 class comparison finds 1,971 identical class byte sequences. The six
+changed classes all come from `LwjglBindings.java`: its main class and five
+nested callback classes. Those five nested `javap -c -p` disassemblies are
+identical; their source-line debug positions moved after the inserted dispatch
+lines. No classes were added or removed. The frozen JAR was not replaced after
+measurement; subsequent changes are test/documentation evidence only.
+
+The existing hot-handle test now checks the real LWJGL `void(int,float)`
+signature and exercises ordered negative/fractional arguments, exact checked
+exception and Error identity, and wrapping of a non-Exception Throwable. An
+isolated compilation/classpath contains the binding and its ordinary support
+classes without LWJGL: class loading remains possible and explicit binding load
+fails through checked ClassNotFoundException, preserving the presenter's
+optional-dependency fallback contract. These behavioral probes pass on Java 8
+and 21; the complete renderer guardrail suite passes.
+
+Actual hidden hardware GL tests pass against **both** frozen JARs. They read
+back a negative fractional uniform, prove location `-1` is a no-op, keep two
+programs' uniform states separate, render/read the expected RGBA pixel, and
+observe no GL error. These tests exercise real shader state, not a source-text
+assertion or a mocked GL call.
+
+Three interleaved adapter-allocation controls used the same compiled fixture,
+Java 21 JVM and two million measured calls each, following 500,000 warmup calls.
+The actual frozen wrapper's target is redirected to the same public static
+`void(int,float)` probe, which consumes both arguments through volatile fields.
+This measures adapter overhead while excluding driver cost:
+
+| Adapter | Allocated bytes/call, each of three controls |
+| --- | ---: |
+| P1 reflective float uniform | 31.998976 |
+| P2 exact typed float uniform | 0 |
+
+This is an adapter-only allocation result. It does **not** establish a
+whole-client percentage, a real GL call duration, or a frame-rate improvement.
+No new whole-client JFR or four-pair performance acceptance is claimed here.
+
+A separate native functional stress control used both frozen JARs at
+1920x1080, busy-camera **maximum zoom 900**, High shadows, RELIEF_AO, fog on,
+sun 135/45 and day tone. Both Java 21 clients completed 1,201 renders in the
+20-second phase after ten-second warmup, with zero queue drops. Both retained
+89 world chunks / 435,422 triangles and 57–60 visible multipart snapshot groups;
+16 controlled players, 32 controlled NPCs and eight requested summons were the
+same. Native post-phase captures show the preserved scenery, sprites, shadows
+and relief. Interval p99/max was 18.436/23.124 ms for P1 and 18.741/35.084 ms
+for P2; neither had an interval over 50 ms. This single short stress comparison
+is functional evidence, not a statistically established pacing gain. Main
+normal-camera hardware limits and owner visual acceptance remain as above.
+
+The first P1 wide startup stalled before config completion and produced no timed
+phase, so it is rejected and retained. The fresh P1/P2 controls completed. Its
+private server exited through STOP; its own identity-guarded client required
+termination after TERM did not finish. The socket/thread receipt was collected
+**after** private STOP/TERM (04:46:55 versus STOP 04:46:44 UTC). Its lack of TCP
+sockets and futex waits are post-stop evidence and **cannot** locate the original
+startup stall or exclude an earlier connection. Prior Java 21 attach attempts
+were bounded and did not yield useful stacks. Startup causality needs a separate
+focused investigation with pre-stop receipts; no protocol or startup fix is part
+of this slice.
+
+Evidence, compiler/runtime and class receipts, repeated allocation controls,
+shader readback logs, native summaries/captures, failed startup and exact driver
+source are under `output/tests/typed-float-uniform/` and the marked
+`output/tests/renderer-shadow-benchmarks/typed-uniform-*` fixtures. The compact
+review bundle is `output/reviews/typed-float-uniform/`. No public release,
+deployment, server change or shutdown occurred.
