@@ -69,17 +69,29 @@ final class OpenGLSpriteTextureBuilder {
 
 	static CompositeWorldSpriteTexture buildCompositeCharacterSpriteTexture(
 		List<Renderer2DFrame.SpriteCommand> layerCommands) {
-		return buildCompositeCharacterSpriteTexture(null, layerCommands);
+		return buildCompositeCharacterSpriteTexture(null, layerCommands, null);
 	}
 
 	static CompositeWorldSpriteTexture buildCompositeCharacterSpriteTexture(
 		Renderer3DFrame.WorldSpriteSnapshot snapshot) {
-		return buildCompositeCharacterSpriteTexture(snapshot, null);
+		return buildCompositeCharacterSpriteTexture(snapshot, null, null);
+	}
+
+	/** Borrowed storage; only the synchronous world-sprite upload owner uses this. */
+	static CompositeWorldSpriteTexture buildCompositeCharacterSpriteTexture(
+		Renderer3DFrame.WorldSpriteSnapshot snapshot, OpenGLPixelWorkspace workspace) {
+		return buildCompositeCharacterSpriteTexture(snapshot, null, workspace);
+	}
+
+	static CompositeWorldSpriteTexture buildCompositeCharacterSpriteTexture(
+		List<Renderer2DFrame.SpriteCommand> layers, OpenGLPixelWorkspace workspace) {
+		return buildCompositeCharacterSpriteTexture(null, layers, workspace);
 	}
 
 	private static CompositeWorldSpriteTexture buildCompositeCharacterSpriteTexture(
 		Renderer3DFrame.WorldSpriteSnapshot snapshot,
-		List<Renderer2DFrame.SpriteCommand> layerCommands) {
+		List<Renderer2DFrame.SpriteCommand> layerCommands,
+		OpenGLPixelWorkspace workspace) {
 		int layerCount = snapshot == null
 			? (layerCommands == null ? 0 : layerCommands.size())
 			: snapshot.getLayerCount();
@@ -111,7 +123,9 @@ final class OpenGLSpriteTextureBuilder {
 		}
 		int width = maxX - minX;
 		int height = maxY - minY;
-		int[] compositePixels = new int[width * height];
+		int pixelCount = width * height;
+		int[] compositePixels = workspace == null
+			? new int[pixelCount] : workspace.clearedComposite(pixelCount);
 		int visiblePixelCount = 0;
 		for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
 			Renderer2DFrame.SpriteCommand command = snapshot == null
@@ -125,9 +139,10 @@ final class OpenGLSpriteTextureBuilder {
 		if (visiblePixelCount <= 0) {
 			return null;
 		}
-		ByteBuffer pixels = ByteBuffer.allocateDirect(width * height * 4);
+		ByteBuffer pixels = workspace == null
+			? ByteBuffer.allocateDirect(pixelCount * 4) : workspace.rgba(pixelCount * 4);
 		int finalVisiblePixelCount = 0;
-		for (int i = 0; i < compositePixels.length; i++) {
+		for (int i = 0; i < pixelCount; i++) {
 			int rgba = compositePixels[i];
 			if ((rgba & 0xFF) != 0) {
 				finalVisiblePixelCount++;
