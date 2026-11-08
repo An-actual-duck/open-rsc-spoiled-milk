@@ -132,6 +132,8 @@ public class Server implements Runnable {
 	private final IPlayerService playerService;
 	private final I18NService i18nService;
 	private final MovementStutterDiagnostics movementStutterDiagnostics;
+	private final com.openrsc.server.net.rsc.IdleWalkCommandAdmission idleWalkAdmission =
+		new com.openrsc.server.net.rsc.IdleWalkCommandAdmission();
 	private final GameClock gameClock;
 	private final GameRandom combatRandom;
 	private final CombatDamageObserver combatDamageObserver;
@@ -1441,6 +1443,7 @@ public class Server implements Runnable {
 						final boolean movementDiagnosticsEnabled = movementStutterDiagnostics.isEnabled();
 						final long movementPollStarted = movementDiagnosticsEnabled ? System.nanoTime() : 0L;
 						World world = getWorld();
+						incrementLastIncomingPacketsDuration(bench(() -> idleWalkAdmission.poll(world)));
 						final ArrayList<Player> movedPlayers = new ArrayList<>();
 						for (final Player p : getWorld().getPlayers()) {
 							final int oldX = p.getX();

@@ -287,6 +287,8 @@ public final class Player extends Mob {
 	 * Current active packets - used on packets that should be rated to 1-per-player.
 	 */
 	private final ArrayList<Integer> activePackets = new ArrayList<>();
+	private long idleWalkAdmissionTick = Long.MIN_VALUE;
+	private int idleWalkCommandsThisTick;
 	/**
 	 * The last menu reply this player gave in a quest
 	 */
@@ -4687,56 +4689,7 @@ public final class Player extends Mob {
 			synchronized (incomingPackets) {
 				Packet packet = incomingPackets.poll();
 				while (packet != null) {
-					// Final copied variable needed to pass into lambda
-					final Packet curPacket = packet;
-					final long packetTime = getWorld().getServer().bench(
-						() -> {
-							activePackets.remove(activePackets.indexOf(curPacket.getID()));
-							PayloadParser<com.openrsc.server.net.rsc.enums.OpcodeIn> parser;
-							if (isUsing38CompatibleClient() || isUsing39CompatibleClient()) {
-								parser = new Payload38Parser();
-							} else if (isUsing69CompatibleClient()) {
-								parser = new Payload69Parser();
-							} else if (isUsing233CompatibleClient()) {
-								parser = new Payload235Parser();
-							} else if (isUsing203CompatibleClient()) {
-								parser = new Payload203Parser();
-							} else if (isUsing202CompatibleClient()) {
-								parser = new Payload202Parser();
-							} else if (isUsing201CompatibleClient()) {
-								parser = new Payload201Parser();
-							} else if (isUsing199CompatibleClient()) {
-								parser = new Payload199Parser();
-							} else if (isUsing198CompatibleClient()) {
-								parser = new Payload198Parser();
-							} else if (isUsing196CompatibleClient()) {
-								parser = new Payload196Parser();
-							} else if (isUsing177CompatibleClient()) {
-								parser = new Payload177Parser();
-							} else if (isUsing140CompatibleClient()) {
-								parser = new Payload140Parser();
-							} else if (isUsing115CompatibleClient()) {
-								parser = new Payload115Parser();
-							} else {
-								parser = new PayloadCustomParser();
-							}
-							AbstractStruct<com.openrsc.server.net.rsc.enums.OpcodeIn> res = parser.parse(curPacket, this);
-							if (res != null) {
-								boolean couldProcess;
-								try {
-									couldProcess = PayloadProcessorManager.processed(res, this);
-								} catch (final Exception e) {
-									LOGGER.error("Unable to process incoming packets for player with username: {}", username, e);
-									couldProcess = false;
-								}
-								if (!couldProcess) {
-									unregister(UnregisterForcefulness.WAIT_UNTIL_COMBAT_ENDS, "Malformed packet!");
-								}
-							}
-						}
-					);
-					getWorld().getServer().addIncomingPacketDuration(curPacket.getID(), packetTime);
-					getWorld().getServer().incrementIncomingPacketCount(curPacket.getID());
+					processQueuedIncomingPacket(packet);
 
 					packet = incomingPackets.poll();
 				}
@@ -4744,6 +4697,128 @@ public final class Player extends Mob {
 				incomingPackets.clear();
 			}
 		});
+	}
+
+
+	/** Same parser, processor, malformed response and accounting for both admission paths. */
+	private void processQueuedIncomingPacket(final Packet curPacket) {
+		final long packetTime = getWorld().getServer().bench(
+			() -> {
+				activePackets.remove(activePackets.indexOf(curPacket.getID()));
+				PayloadParser<com.openrsc.server.net.rsc.enums.OpcodeIn> parser;
+				if (isUsing38CompatibleClient() || isUsing39CompatibleClient()) {
+					parser = new Payload38Parser();
+				} else if (isUsing69CompatibleClient()) {
+					parser = new Payload69Parser();
+				} else if (isUsing233CompatibleClient()) {
+					parser = new Payload235Parser();
+				} else if (isUsing203CompatibleClient()) {
+					parser = new Payload203Parser();
+				} else if (isUsing202CompatibleClient()) {
+					parser = new Payload202Parser();
+				} else if (isUsing201CompatibleClient()) {
+					parser = new Payload201Parser();
+				} else if (isUsing199CompatibleClient()) {
+					parser = new Payload199Parser();
+				} else if (isUsing198CompatibleClient()) {
+					parser = new Payload198Parser();
+				} else if (isUsing196CompatibleClient()) {
+					parser = new Payload196Parser();
+				} else if (isUsing177CompatibleClient()) {
+					parser = new Payload177Parser();
+				} else if (isUsing140CompatibleClient()) {
+					parser = new Payload140Parser();
+				} else if (isUsing115CompatibleClient()) {
+					parser = new Payload115Parser();
+				} else {
+					parser = new PayloadCustomParser();
+				}
+				AbstractStruct<com.openrsc.server.net.rsc.enums.OpcodeIn> res = parser.parse(curPacket, this);
+				if (res != null) {
+					boolean couldProcess;
+					try {
+						couldProcess = PayloadProcessorManager.processed(res, this);
+					} catch (final Exception e) {
+						LOGGER.error("Unable to process incoming packets for player with username: {}", username, e);
+						couldProcess = false;
+					}
+					if (!couldProcess) {
+						unregister(UnregisterForcefulness.WAIT_UNTIL_COMBAT_ENDS, "Malformed packet!");
+					}
+				}
+			}
+		);
+		getWorld().getServer().addIncomingPacketDuration(curPacket.getID(), packetTime);
+		getWorld().getServer().incrementIncomingPacketCount(curPacket.getID());
+	}
+
+	/**
+	 * GameThread-only bounded head prefix. All other gameplay remains world-tick bound.
+	 * The network flood filter and queue bound still run before this consumer.
+	 */
+	public int processIdleWalkCommands(final int allowance) {
+		if (allowance <= 0 || !getConfig().WANT_MYWORLD || !getConfig().WANT_CUSTOM_WALK_SPEED
+			|| !isUsingCustomClient() || clientVersion < com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION
+			|| channel == null || !channel.isOpen() || !channel.isActive() || !channel.isWritable()) return 0;
+		synchronized (incomingPackets) {
+			// Empty and raw barriers return before the broader actor-ownership checks.
+			if (!eligibleIdleWalkHead(incomingPackets.peek())) return 0;
+			if (!eligibleIdleWalkOwner()) return 0;
+			long tick = getWorld().getServer().getCurrentTick();
+			if (idleWalkAdmissionTick != tick) {
+				idleWalkAdmissionTick = tick;
+				idleWalkCommandsThisTick = 0;
+			}
+			int limit = Math.min(allowance, Math.min(
+				com.openrsc.server.net.rsc.IdleWalkCommandAdmission.PER_PLAYER_POLL,
+				com.openrsc.server.net.rsc.IdleWalkCommandAdmission.PER_PLAYER_TICK - idleWalkCommandsThisTick));
+			int consumed = 0;
+			while (consumed < limit) {
+				Packet head = incomingPackets.peek();
+				if (!eligibleIdleWalkHead(head) || !eligibleIdleWalkOwner()) break;
+				// Only GameThread consumes; this lock also excludes concurrent producers.
+				if (incomingPackets.poll() != head) throw new IllegalStateException("Incoming FIFO head changed");
+				processQueuedIncomingPacket(head);
+				idleWalkCommandsThisTick++;
+				consumed++;
+			}
+			return consumed;
+		}
+	}
+
+	private boolean eligibleIdleWalkHead(final Packet packet) {
+		if (packet == null) return false;
+		int length = packet.getLength(), offset = packet.getBuffer().readerIndex();
+		if (packet.getReadableBytes() != length) return false;
+		if (packet.getID() == 67) return length == 0; // Custom HEARTBEAT, ordinary no-op processor.
+		if (packet.getID() != 187 || length < 4 || length > 54 || (length & 1) != 0) return false;
+		long x = packet.getBuffer().getShort(offset), y = packet.getBuffer().getShort(offset + 2);
+		long work = Math.max(Math.abs(x - (long)getX()), Math.abs(y - (long)getY()));
+		for (int i = 4; i < length && work <= 24; i += 2) {
+			long nextX = packet.getBuffer().getShort(offset) + (long)packet.getBuffer().getByte(offset + i);
+			long nextY = packet.getBuffer().getShort(offset + 2) + (long)packet.getBuffer().getByte(offset + i + 1);
+			work += Math.max(Math.abs(nextX - x), Math.abs(nextY - y));
+			x = nextX; y = nextY;
+		}
+		return work <= 24;
+	}
+
+	private boolean eligibleIdleWalkOwner() {
+		return loggedIn && !isRemoved() && !killed && getLevel(Skill.HITS.id()) > 0
+			&& !isBusy() && !isSleeping() && !isUnregistering() && !hasUnregisterRequest()
+			&& !isLoggingOut() && !isTeleporting() && !hasActiveBatch() && ownedPlugins.isEmpty()
+			&& getMenu() == null && menuHandler == null && getInteractingNpc() == null && getNpcInteraction() == null
+			&& getWalkToAction() == null && !isFollowing() && getPossessing() == null
+			&& !accessingBank() && !accessingShop() && !getAttribute("auctionhouse", false)
+			&& getAttribute(com.openrsc.server.model.action.ConfiguredAgilityAction.PENDING_ATTRIBUTE) == null
+			&& !getTrade().isTradeActive() && getTrade().getTradeRecipient() == null && getTrade().getTradeOffer().size() == 0
+			&& !getDuel().isDuelActive() && getDuel().getDuelRecipient() == null && getDuel().getDuelOffer().size() == 0
+			&& getDropItemEvent() == null && getTalkToNpcEvent() == null && !isCannonEventActive()
+			&& !isHostile() && !inCombat() && !hasOutgoingAttack() && getOpponent() == null
+			&& getIncomingCombatAttackerCount() == 0
+			&& getCombatEvent() == null && getPvmMeleeEvent() == null && getRangeEvent() == null
+			&& getThrowingEvent() == null && getMagicCombatEvent() == null
+			&& !attackTransaction.hasPendingIntent() && canLogout();
 	}
 
 	public long processOutgoingPackets() {
