@@ -46,6 +46,7 @@ renderer_tests=(
   test-renderer-v2-frame-capture.py
   test-renderer-v2-ground-item-direct-input.py
   test-renderer-v2-lwjgl-hot-handles.py
+  test-client-socket-runtime.py
   test-renderer-v2-object-chunk-primitive-builder.py
   test-renderer-v2-options-cleanup.py
   test-renderer-v2-phased-overlay.py

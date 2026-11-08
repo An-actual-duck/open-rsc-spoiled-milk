@@ -1,13 +1,13 @@
 # Client Startup Stall Investigation
 
-Status: active diagnostic pass; no gameplay/client production fix proposed.
+Status: native cause captured; minimal startup-order candidate awaiting repeated native verification.
 Started from `087359be83953f70980bed240fdc5dcb89e30a02` on November 8, 2026 UTC.
 Owner authorization covers bounded private investigation and a proven minimal
 fix; public deployment or shutdown is outside this task.
 
 ## Observed Failures And Limits
 
-Three preserved private attempts printed `Fetching server configs` and did not
+Four preserved private attempts printed `Fetching server configs` and did not
 reach login or a timed performance phase:
 
 | Fixture | Frozen client | Meaning |
@@ -15,13 +15,14 @@ reach login or a timed performance phase:
 | `portability-scratch-2-base` | Released v0.3.14, `18779f57…` | Failure predates both optimizations |
 | `portability-scratch-r2-4-candidate` | Workspace/P1, `cac7b49f…` | Failure after workspace optimization |
 | `typed-uniform-wide-p1` | Workspace/P1, `cac7b49f…` | Failure during the float-dispatch comparison's P1 control |
+| `startup-detached-p1-hidden-1` | Workspace/P1, `cac7b49f…` | New live pre-STOP witness with native stacks |
 
 Do not relabel the third row as a failed P2 artifact. The typed-float/P2 client
 `f272554cf761891bb8a7a7c799fea536bb5f31a72eef4e2642d7f6913addb4fc`
 completed its wide functional control. Its unchanged startup code makes it a
 useful further diagnostic input, not an already proven failing artifact.
 
-All three failed attempts are excluded from performance acceptance. Waiting for
+All four failed attempts are excluded from performance acceptance. Waiting for
 both private status.json and the TCP listener did not eliminate the symptom.
 Matching Java 21 jcmd attempts were bounded but yielded no useful Java stacks;
 that is an observation, not proof of a JVM or protocol deadlock.
@@ -63,21 +64,67 @@ readable native backtrace, launch/JAR/argument receipts and the pre-stop process
 receipt are in that capture. Exact helper source and private lifecycle logs are
 under `output/diagnostics/client-startup-stall/`.
 
-## Next Bounded Evidence
+## Live Failure And Ordinary Visible Comparison
 
-The movement worker has priority over CPU/GPU/native windows. No Java/GPU probe
-runs concurrently with its native acceptance work. Source preparation may proceed.
+A second probe used frozen P1 and Java 21.0.12. GDB started the verified private
+child at its first native instruction, detached while retaining original-parent
+ownership, and let Java bootstrap run untraced. At 05:17:25 UTC, the receipt
+records config incomplete, no owned TCP socket rows, and `beforeAnyStop=true`.
+There had been no debugger interruption or STOP/TERM. This is a new live
+observation; it does not reuse the earlier post-stop socket inference.
 
-The next prepared helper compares ordinary visible `java -jar` startup with the
-hidden fixture. It may start the same verified private child at its first native
-instruction, detach while GDB remains its original parent, then capture the live
-receipt before any STOP and reattach only that identity-verified child for native
-stacks. This permits ordinary untraced Java bootstrap without a global ptrace
-change. A matching Java 21 jcmd probe remains bounded to six seconds.
+The matching Java 21 jcmd request then timed out after six seconds. GDB
+reattached only its original identity-verified child and captured all native
+thread stacks before cleanup:
 
-Every observation must record UTC timing, original parent/PID/cwd/argv/JAR hash,
-config stage, whether STOP/TERM/debugger interruption had occurred, and its
-actual evidence limits. A failed diagnostic mechanism is not a game defect.
-Stop after a bounded few attempts/time if the hang does not reproduce; preserve
-a report rather than inventing a protocol or rendering fix. A production change
-requires a causal witness and focused regression proof first.
+- The OpenGL presenter was in LWJGL `SharedLibraryUtil_getLibraryPath`, inside
+  `dl_iterate_phdr` and its callback's `dlclose`, waiting at
+  `_rtld_global+2568`.
+- The client loop was inside `JVM_LoadLibrary` / `dlopen` loading the JDK's
+  `libextnet.so`, waiting in `_dl_add_to_namespace_list` at
+  `_rtld_global+2608`.
+- Signal Dispatcher was trying to initialize AttachListener, but thread creation
+  waited in glibc TLS initialization on another native-loader lock. This also
+  explains why a Java attach request could not produce a dump in this witness.
+
+These competing native library-loader paths provide causal evidence for the
+observed startup collision. It is not evidence of a game protocol/session or
+packet problem. The child was then resumed and terminated only through its own
+scoped debugger; the private server exited through STOP.
+
+Capture: `output/tests/renderer-shadow-benchmarks/startup-detached-p1-hidden-1/gdb-20261108T051705Z/`.
+
+The agreed ordinary visible comparison used the same frozen P1 JAR and Java 21
+through normal `java -jar`, with its own isolated private endpoint/settings.
+It reached configs normally at the 20-second observation. Matching jcmd returned
+a full 15.7 KB Java thread dump in 214 ms, so the attach tool is demonstrably
+functional on a healthy control. Its successful startup does not prove the
+racy native collision is confined to hidden launches.
+
+Capture: `output/tests/renderer-shadow-benchmarks/startup-detached-p1-ordinary-1/gdb-20261108T051828Z/`.
+
+## Minimal Candidate And Verification Queue
+
+The candidate prepares the default Java socket implementation on the initial
+thread, before `ScaledWindow.getInstance()` can create/start native graphics.
+It uses an unconnected public `Socket`, sets TCP_NODELAY and closes through
+try-with-resources. It does not connect, bind, name an internal module, modify
+protocol/session behavior or replace a dependency. IOException/security failures
+are logged and the ordinary connection path retains its existing error handling.
+
+Focused tests pass on Java 8u482 and Java 21.0.12. The actual Java 21 map probe
+records libextnet absent before preparation and present afterward, while native
+LWJGL/GLFW libraries remain absent. File descriptors remain 8 -> 8 across 64
+additional preparations. Java 8 records no libextnet module and descriptors
+10 -> 10. A public-Socket implementation probe verifies no connect, bind, listen
+or accept and closure on success, IOException and security failure. Startup
+wiring precedes window/native graphics initialization. The default Java 8 build
+and complete renderer guardrail suite pass. Repeated controlled baseline and
+frozen-candidate native startup observations remain required before acceptance.
+
+The movement worker has priority over CPU/GPU/native windows. The shared
+renderer-gpu-benchmark.lock protects the diagnostic child lifetime, including
+bounded debugger cleanup; the prepared helper now acquires it before any private
+fixture starts. No global ptrace setting or unrelated process is touched. Every
+live receipt records UTC ordering relative to detach, jcmd, debugger interruption
+and STOP. All historical failed attempts and original receipts remain preserved.
