@@ -1,7 +1,8 @@
 Picket shadow wave — focused private-preview candidate, 2026-11-08
 
-Status: implementation and focused hardware contracts complete; manager native
-throughput and owner visual acceptance pending. No public deployment.
+Status: integrated on main after focused hardware contracts, manager native
+throughput checks and owner visual approval on 2026-11-08. Release preparation
+is authorized; public activation is tracked in the Oracle hosting record.
 
 Problem and correction
 ----------------------
@@ -151,3 +152,20 @@ The earlier99b37 freeze is preserved experimental evidence; use the guarded
 artifact for the owner preview. See candidate-high-only-freeze.json. Source is
 ready for manager review; further native wide-tail repeat and owner visual
 acceptance remain explicit manager gates before any release decision.
+
+Manager acceptance — 2026-11-08
+--------------------------------
+Owner approved the final private candidate after observing maintained60FPS and
+low CPU use. All1978 client class bytes in the manager build match the approved
+frozen3e72fe2a artifact. Manager projection, immutable focal/context and full
+renderer guardrails pass. Native busy-camera controls used Java21 at1920x1080,
+20s warmup and40s measured phases: normal baseline/candidate both2401frames,
+zero queuedrops; wide baseline2402/candidate2401, zero queuedrops. Final guarded
+wide repeat rendered2401frames in40.024s, zero queuedrops, CPU render p994.248ms,
+GPU frame p996.932ms and maximum completed interval23.33ms. Earlier noisier
+wide GPU tails remain recorded; no universal speedup or hitch-free guarantee.
+Resident geometry matches89chunks/435422triangles; camera-sampled submitted
+triangle ranges vary. High parity to the experiment and exact Low baseline
+parity are established separately by the preserved per-frame pixel controls.
+Manager receipts: output/reviews/picket-shadow-wave/. The owner authorized the
+v0.3.15 maintenance update after the normal public update countdown.

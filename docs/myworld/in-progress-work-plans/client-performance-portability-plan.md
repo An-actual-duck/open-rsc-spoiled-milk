@@ -1,6 +1,6 @@
 # Client Performance And Hardware Portability
 
-Status: initial measured improvements integrated on main; owner private playtest pending.
+Status: initial measured improvements integrated on main; owner private playtest approved on 2026-11-08.
 The accepted allocation and dispatch work is recorded below. The integrated
 [startup-order fix](client-startup-stall-investigation.md) has separate native evidence.
 Owner: Core manager; one focused worker branch per measured change.

@@ -1,6 +1,6 @@
 # Movement And Action Responsiveness
 
-Status: successful-step clock and bounded idle ground-walk admission integrated on main.
+Status: successful-step clock and bounded idle ground-walk admission integrated on main. Owner approved movement, combat-to-interaction, interrupted routes, blocked paths and location transitions in the private playtest on 2026-11-08.
 Matched native input validation is complete; owner private playtest and broader
 action-lifecycle work remain open.
 Owner: Core manager; one focused worker branch per measured change.
