@@ -112,7 +112,7 @@ def main() -> None:
     )
     require(
         mudclient,
-        "this.ensureGameplayRendererWorldChunkFrame();\n\t\t\t\t\tlong sceneRenderStart = RenderTelemetry.now();",
+        "this.ensureGameplayRendererWorldChunkFrame();\n\t\t\t\t\tlong beforeSceneNanos = RenderTelemetry.elapsedSince(drawPreparationStart);\n\t\t\t\t\tlong sceneRenderStart = RenderTelemetry.now();",
         "gameplay render repairs missing world chunk frame before scene capture",
     )
     require(
