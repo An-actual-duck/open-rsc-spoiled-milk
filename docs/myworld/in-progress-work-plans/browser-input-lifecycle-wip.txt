@@ -1,0 +1,134 @@
+Browser session lifecycle — resumed private browser work (2026-11-09)
+===================================================================
+
+Current status: READY for manager review after actual final-policy controls.
+No public deployment or desktop-client behavior change.
+This work does not reproduce or diagnose the old one-off desktop-wide keyboard
+report. The owner had deferred that report after it stopped reproducing.
+
+Policy
+------
+The outer page has explicit Start/Stop controls. Java runs in a disposable
+same-origin sandboxed iframe so an explicit Stop can remove its listeners and
+VM context. This is lifecycle containment, not a security boundary against its
+own same-origin scripts. No keyboard-lock API is used, system clipboard access
+is not requested, input methods are disabled for this private diagnostic page,
+and browser shortcuts are not overridden by the wrapper.
+
+Only explicit Stop, page exit, or Java completion/bootstrap failure ends the
+session. Escape remains normal game/AWT input; blur and tab hide/restore merely
+record advisory state. The manager explicitly chose these ordinary gameplay
+semantics: changing tabs or closing a menu must not destroy a logged-in client.
+Existing Java/AWT focus handling remains authoritative for game keys; no second
+held-key implementation or desktop/global input hook was introduced.
+
+Explicit disposal closes the application-owned transport and optional GPU
+backend before removing the iframe. It is idempotent and also used on page exit.
+A new Start creates a fresh VM; messages from removed or unrelated contexts are
+ignored through exact frame-window and origin checks. The original Java client,
+public server, owner accounts, and hosted database were not changed.
+
+Initial failure and real gameplay proof
+--------------------------------------
+The preserved 2026-11-07 WIP ended Java on blur. After a normal merge of current
+main (3176761fd), a fresh actual CheerpJ 5.0/Java8 test reproduced this: the outer
+page discarded the runtime about1.2s after Browser Java ready. Mocked-runtime DOM
+tests passed, demonstrating why those tests alone were insufficient.
+
+Removing destructive blur handling then allowed a real current-client login and
+100-second capture: LOGIN and GAME observed, no Java exit before intentional
+browser close, visible unobscured world, and14 distinct authoritative private
+server coordinate triples. The final screenshot shows the character away from
+the starting location. The reported Java software loop stayed about3FPS; this
+is compatibility evidence, never GPU speed or desktop parity evidence.
+
+The successful run used the intermediate policy that still ended on Escape/tab
+hide. The final policy preserves those too; its actual control check passed separately in the serialized test window. Historical failed/intermediate
+captures are retained, not overwritten or presented as final acceptance.
+
+Evidence:
+ output/tests/browser-gameplay-spike/lifecycle-20261109-before/
+ output/tests/browser-gameplay-spike/lifecycle-20261109-after/
+ output/tests/browser-input-lifecycle/
+Each stage has an artifact-inventory.json identifying exact served bytes. Its
+stage.json sourceCommit records HEAD at staging, which alone does not identify
+uncommitted frontend edits at the time. Client JAR bytes are unchanged between
+these runs; web snapshot hashes are the authoritative frontend identity.
+
+The isolated server was made from zero-account seed and maintained content,
+bound only to127.0.0.1 TCP43629 / WS43529. Disposable browserdemo/BrowserProof13 is
+the only account used; the manager and renderer worker share its fixture only
+in serialized login windows. Original8079/8093 historical files were preserved;
+their old processes were already absent at inventory. Public Oracle is untouched.
+
+Optional WebGL frontend seam
+---------------------------
+Only mode=webgl imports the separate renderer worker's webgl.js. Its
+createBrowserWebGL(canvas,report) object supplies natives, stats, canvas and
+dispose. Those natives are merged before cheerpjInit. A pointer-transparent
+canvas is aligned to the game framebuffer inside CheerpJ's AWT window canvas,
+excluding its20px titlebar. Software/native/mesh modes keep their normal path.
+Java-loop FPS and GPU counters remain separate; selecting this mode is not a
+claim that GPU rendering succeeded or matches the desktop renderer.
+
+The implementation of webgl.js and the production bridge belong to the separate
+feat/browser-webgl-renderer handoff. This branch does not contain that module
+and does not advertise a WebGL link until that dependency is integrated. The
+manager will integrate both reviewed branches before exposing the GPU mode.
+The renderer worker borrowed exact frontend checkpoint
+3da4603d183f8b6720ee78e4cdc2ce776641909c into a new ignored immutable test stage;
+its stage records copied file hashes. Such borrowing is test composition, not
+an implicit merge or a claim that either branch alone includes the full GPU mode.
+
+Tests and limits
+----------------
+ node tests/myworld/test-browser-input-lifecycle.mjs
+   Mocked vendor runtime, real isolated headless Chrome/CDP DOM input: explicit
+   start, nested typing, Escape survival, advisory focus departure, outer typing,
+   real tab hide/restore survival, explicit Stop/timer teardown, Java exit/error,
+   restart and untrusted/stale message rejection.
+ node tests/myworld/test-browser-transport.mjs
+   Fragmentation, partial/signed reads,1MiB frame, EOF/receive bound and disposal.
+ node tests/myworld/test-browser-runtime-lifecycle.mjs STAGED-RUN HTTP-PORT
+   Actual unmodified CDN CheerpJ: responsive login, outside typing while Java
+   lives, Stop, restart, Escape and real tab hide/restore survival. Does not log
+   in or emulate the original global keyboard issue.
+ JS syntax, Python compilation, whitespace and workspace-layout checks.
+
+No public hosting/security/distribution acceptance, browser performance promise,
+all-browser/device claim or global keyboard correctness guarantee is made.
+CheerpJ is fetched from its official CDN, not modified or redistributed.
+
+Final actual-policy validation
+------------------------------
+Clean frontend checkpoint55133afb8bd20e645146b3f8688df786ee3f67ee was staged as
+output/tests/browser-gameplay-spike/lifecycle-20261109-final-controls/, HTTP8100.
+Actual unmodified CDN CheerpJ5.0/Java8 in isolated Chrome152 passed responsive
+LOGIN twice, typing into the outer page while Java remains alive, explicit Stop,
+a fresh Start, Escape survival, and real new-tab hide/restore survival with a
+responsive login afterward. No login/account authentication was performed in
+this control; the earlier100-second run separately supplies visible-world and
+authoritative-walking proof. The dedicated Chrome exited and the shared private
+account was confirmed offline before releasing the GPU/login window to ai2.
+Receipt: output/tests/browser-input-lifecycle/actual-runtime-1794249060087/.
+The final real-DOM/mock-vendor matrix also passes, including tab survival.
+
+After that actual control, the frontend gained only sticky GPU-error reporting
+and last-submitted-frame age (performance.now from module stats.lastFrame), so a
+stale Java GAME/FPS observation cannot overwrite a rendering failure. Its real
+frontend API code is exercised by a mocked module/DOM Node VM contract: native
+merge, titlebar-aware placement, pointer transparency, sticky error/age and
+idempotent explicit Stop disposal pass. This is not actual GPU or vendor proof.
+Command: node --experimental-vm-modules tests/myworld/test-browser-webgl-frontend.mjs
+
+The capture tool now supports --hardware-gl for webgl mode only. It requests
+ANGLE/OpenGL/X11 with software rasterization disabled, records actual WebGL
+unmasked renderer data, and refuses a hardware claim without an informative
+recognized adapter or if SwiftShader/software is reported. Flags alone are not
+evidence. Actual GPU tests remain ai2's evidence. WebGL login readiness uses
+gpu.javaFrames rather than the legacy FPS field, which can remain stale at0.
+
+New fresh stages at ports8098 had refused binds because ai2 already owned them;
+the failed HTTP logs and files are retained. No existing process was stopped.
+The final8100 listener was explicitly readiness-checked. Output layout check
+passes. Public Oracle, player data, and historical fixtures remain unchanged.
