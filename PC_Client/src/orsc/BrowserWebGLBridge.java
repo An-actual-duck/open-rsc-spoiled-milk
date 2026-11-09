@@ -107,7 +107,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         if(world.getChunkCount()>MAX_CHUNKS)throw new IllegalStateException("Browser scene exceeds chunk capacity");
         Renderer3DFrame previous=RendererFrameLighting.bind(frame);
         try {
-            // Evict the old view before uploading a new immutable active set.
+            // Evict the old view before uploading the current logical/immutable active set.
             // A count-only cache bound can exceed the byte budget long before 512 chunks.
             Set<WorldChunkBufferKey> active=activeKeys(world);
             evictInactive(active);
@@ -148,6 +148,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         final int[] draws;final int remainingRepacks;
         ChunkDraws(int[] draws,int remainingRepacks){this.draws=draws;this.remainingRepacks=remainingRepacks;}
     }
+    // Production native identity: static chunks retain immutable/rebased storage;
+    // animated chunks own one positional slot and replace its latest exact pose.
     static Set<WorldChunkBufferKey> activeKeys(Renderer3DWorldChunkFrame world) {
         Set<WorldChunkBufferKey> active=new HashSet<WorldChunkBufferKey>();
         for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
@@ -175,6 +177,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         }
         Collections.sort(pending,(a,b)->Long.compare(a.cached.packedAt,b.cached.packedAt));
         for(PendingRepack update:pending) {
+            // Settings-only repacks retain the existing bounded budget. A changed
+            // animation pose must be uploaded now, never drawn from an older pose.
             if(update.cached.signature==update.chunk.getStorageSignature()&&uploaded>0&&uploaded+update.chunk.getVertexCount()>UPLOAD_VERTICES_PER_FRAME){remainingRepacks++;continue;}
             updateChunk(frame,update.chunk,update.cached,packingSettings,update.materials,active);
             uploaded+=update.chunk.getVertexCount();
