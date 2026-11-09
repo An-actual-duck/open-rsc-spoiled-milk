@@ -1584,7 +1584,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 
 	boolean prepareGeometryShadows(Renderer3DFrame frame) throws Exception {
 		if (geometryShadows != null) geometryShadows.clearPrepared();
-		if (frame == null || frame.getWorldChunkFrame() == null || frame.getWorldChunkFrame().getChunkCount() == 0
+		if (frame == null || frame.isUnderground() || frame.getWorldChunkFrame() == null || frame.getWorldChunkFrame().getChunkCount() == 0
 			|| !remasterLightingShaderEnabled || rawMaterialShaderEnabled
 			|| shouldDrawProjectedShadowProof()
 			|| RendererLightingSettings.getMode() != RendererLightingSettings.Mode.DIRECTIONAL
@@ -1686,6 +1686,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 
 	boolean prepareRemasterTerrainShadowMask(Renderer3DFrame frame) throws Exception {
 		activeRemasterShadowMask = null;
+        if (frame != null && frame.isUnderground()) return false;
 		Renderer3DWorldChunkFrame chunkFrame = frame == null ? null : frame.getWorldChunkFrame();
 		if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
 			return false;
