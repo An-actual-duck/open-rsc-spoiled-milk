@@ -54,8 +54,9 @@ public final class BrowserBootstrap {
             "openglWorldSpritesVisible", "skipLegacyWorldRaster", "modernClientLoop"};
         for (String name : off) System.setProperty("spoiledmilk." + name, "false");
         if(webgl) {
-            String[] on={"renderer3DGeometryCapture","renderer3DVisibleWorld","openglWorldMesh","openglWorldMeshTexturedVisible","openglWorldMeshTexturedStaticVisible","openglWorldReplacementComposite","openglWorldChunksTexturedVisible","openglWorldChunksReplacementComposite","openglWorldChunksTrustedReplacement","openglWorldChunksResidentObjects","skipLegacyWorldRaster"};
+            String[] on={"renderer3DGeometryCapture","openglWorldMesh","openglWorldMeshTexturedVisible","openglWorldMeshTexturedStaticVisible","openglWorldReplacementComposite","openglWorldChunksTexturedVisible","openglWorldChunksReplacementComposite","openglWorldChunksTrustedReplacement","openglWorldChunksResidentObjects","skipLegacyWorldRaster"};
             for(String name:on)System.setProperty("spoiledmilk."+name,"true");
+            System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");
             // No native presenter or GLFW initialization; only the browser sink owns GPU submission.
             orsc.BrowserWebGLBridge.install();
         }

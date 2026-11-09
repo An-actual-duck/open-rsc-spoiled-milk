@@ -94,5 +94,10 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
     }
   };
   function dispose(){if(disposed)return;for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);if(overlayTexture)gl.deleteTexture(overlayTexture);if(emptyVAO)gl.deleteVertexArray(emptyVAO);canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
+  for(const name of Object.keys(natives)) {
+    const call=natives[name];natives[name]=async(...args)=>{
+      try{return await call(...args);}catch(error){stats.lastError=String(error);stats.lastErrorAt=performance.now();report('Browser GPU error: '+error);throw error;}
+    };
+  }
   return {natives,stats,dispose,canvas};
 }
