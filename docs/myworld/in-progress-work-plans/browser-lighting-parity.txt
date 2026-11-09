@@ -99,7 +99,9 @@ physical hidden roofs, far animated-role/alpha exclusions, cutout revisions,
 far-history lifecycle, negative suppression, sampler completeness, mask bounds,
 GL state restoration and complete cleanup. It is a fake GL API test, not shader
 execution or a frame-rate proof. Both JS modules pass node --check. New outputs
-use declared output/tests/browser-lighting; layout check passes.
+use declared output/tests/browser-lighting. The layout scan remains nonzero for
+inherited ignored ai3 output-root entries (historical art/analysis/tests); its
+receipt is retained and none of those files was deleted or moved.
 
 Before visual/performance claims the integrated renderer must compile/draw real
 production shaders, compare matched scenes/pixels and exercise transition/context
