@@ -1,0 +1,130 @@
+Browser lighting module — November 9, 2026
+========================================
+
+Scope
+-----
+Independent primitive-data/GL module for the browser renderer. The browser bridge
+owns integration; this branch adds only new files and does not change desktop
+presentation, game rules, maps, accounts, networking or the public server.
+CPU/resource contracts are tested. Actual browser shader/pixel and throughput
+acceptance require the manager's serialized GPU window after integration.
+
+Production reuse
+----------------
+BrowserLightingData uses the real TerrainDefinitionField (owner-selected relief
+plus valley AO), RemasterGlowMaskBuilder and GeometryShadowRoofMask.Cache. Mask
+bytes and their differing coordinate bases are unchanged. It exports only changed
+masks, copying their ByteBuffers into owned byte arrays for synchronous bridge
+upload. High and Low near matrices use DirectionalShadowProjection directly;
+High retains ground-aligned/reference-height tracking and Low retains the
+orthogonal grid. Near32tiles/2048 and Low48tiles/1024 are current production
+settings. Far96tiles uses4096 when supported, otherwise2048, matching desktop.
+Depth vertex and fragment text are read from the actual OpenGLGeometryShadows
+constants; shader adaptation is supplied by the existing browser backend.
+
+The Java export mirrors current far refresh thresholds: static scene/context/
+plane/roof changes, four tiles, .08degree sun rotation or150frames. Pose-only
+refresh exposes the previous projection for the same12frame smoothstep blend.
+Negative signed levels suppress geometry shadows and invalidate projection
+history, while keeping relief/glows. Returning aboveground starts fresh.
+High/Low/Off transitions invalidate history. Unsupported selected shadow
+resolution fails explicitly instead of silently substituting poorer settings.
+
+JS owns WebGL2 depth textures/framebuffers and separate position/UV VAOs over the
+shared resident geometry buffers. Hidden roofs remain physical depth casters;
+color-pass roof visibility does not filter them. Far maps exclude animated-role
+chunks and RendererShadowCasterPolicy's animated-alpha materials. Additional
+GPU draw-set changes during progressive uploads invalidate the cached far map;
+static cutout texture revision changes also invalidate it. Camera visibility,
+opaque texture color animation and excluded animated-alpha revisions do not.
+Projection math and receiver shadow sampling remain production-owned.
+
+API
+---
+Java: new BrowserLightingData(); prepare(Renderer3DFrame,int maxTextureSize)
+returns Frame { public final float[] values; public final Mask[] changes; }.
+Mask {unit,width,height,byte[]rgba,float[]bounds}; depthVertex()/depthFragment()
+provide source strings. The caller binds RendererFrameLighting around prepare,
+uploads arrays synchronously, and calls clear() when its GPU session resets.
+
+JS: createBrowserLighting(gl,{program,stats,chunks,textures,adaptShader}) returns
+initialize(depthVertex,depthFragment), uploadMask(unit,width,height,rgba,bounds),
+prepare(values,draws), bindReceiver(), bindReceiverPlane(plane), dispose().
+Call prepare before the color pass; after gl.useProgram(residentProgram), bind
+receiver state and set the receiver plane for each color chunk. Draw stride8 is
+[id,deltaX,deltaZ,logicalX,logicalZ,visibleKindBits,plane,chunkRole]. Shared chunks
+provide vbo/ibo and batches Int32stride5[textureId,indexStart,indexCount,kind,
+hasTransparency]. Shared textures provide texture and monotonically increasing
+revision. Main texture/geometry ownership stays with the bridge.
+
+Frame schema1: 81fixed floats plus excluded far texture IDs. Offsets:
+0schema,1active,2quality,3nearSize,4farSize,5filterRadius,6farRebuilt,
+7previousFarEnabled,8blend,9worldOffsetX,10worldOffsetZ,11roofEnabled,
+12roofPlane,13AOEnabled,14glowEnabled,15signedLevel,16nearInverseSize,
+17farInverseSize,18nearWorldTexel,19farWorldTexel,20..23roofBounds,
+24..27AOBounds,28..31glowBounds,32..47nearMatrix,48..63farMatrix,
+64..79previousFarMatrix,80excludedCount,81..excludedTextureIDs.
+All matrices are already column-major production matrices. Bounds are
+minX/minZ/inverseSpanX/inverseSpanZ except AO's production tile-coordinate
+minX/minZ/inverseWidth/inverseHeight. Mask units: glow2,roof5,AO7;
+comparison depth sampler units: near3,far4,previous6.
+
+Resource contract
+-----------------
+Depth maps have a separate160MiB budget, preserving current maximum144MiB for
+2048near plus two4096far depth textures. Low frees far/history maps. Off and
+negative levels free all large depth maps. Complete one-pixel comparison/white
+fallbacks use another8bytes and prevent incompatible or incomplete sampler state
+when shadows are disabled. Three mask textures have a separate8MiB bound; source
+sizes cap terrain at512x512, roof at1024x1024 and glow at512x512. Main renderer
+geometry/textures and sprite atlas retain their separate budgets. Counts exclude
+GPU driver/internal/program overhead and therefore are not total VRAM claims.
+Evicted geometry's shadow VAOs are purged; dispose releases all owned objects
+and is idempotent. Context loss still requires the parent renderer's session
+restart policy; this module does not secretly recover using stale Java caches.
+
+Validation and limits
+---------------------
+Maintained Java8 source/target build passes. test-browser-lighting.py passes321
+CPU checks against actual builders: byte/bounds parity for AO/glow/declared roof
+masks; High ground matrix; steady mask cache; far age150; High/Low/Off; deeper
+negative suppression and return; supported far fallback; selected-quality
+refusal; production shader string identity and session clear recovery.
+The initial exact-matrix comparator incorrectly sampled the moving sun at two
+times. Both rejected receipts remain. The final comparator freezes the same
+explicit135/45 light, then compares the actual source projection bytes.
+
+test-browser-lighting.mjs passes instrumented API/state/resource controls for
+physical hidden roofs, far animated-role/alpha exclusions, cutout revisions,
+far-history lifecycle, negative suppression, sampler completeness, mask bounds,
+GL state restoration and complete cleanup. It is a fake GL API test, not shader
+execution or a frame-rate proof. Both JS modules pass node --check. New outputs
+use declared output/tests/browser-lighting. The layout scan remains nonzero for
+inherited ignored ai3 output-root entries (historical art/analysis/tests); its
+receipt is retained and none of those files was deleted or moved.
+
+Before visual/performance claims the integrated renderer must compile/draw real
+production shaders, compare matched scenes/pixels and exercise transition/context
+lifecycles on actual WebGL2 hardware. Browser shadow submission currently draws
+all resident batch ranges and lets the GPU light frustum clip; desktop's optional
+per-batch light-frustum CPU culling is not exported. State-save queries are also
+correctness-first and may have cost. Measure these separately before optimizing;
+no60FPS/no-loss promise follows from this module handoff.
+
+Manager review fixes
+--------------------
+The initial handoff missed absolute world offsets on negative levels and with
+shadows Off. AO's receiver coordinate dependency continues even when sunlight
+shadows are disabled. All populated frames now export the production world
+offsets before that early return, and JS always binds those uniforms. The added
+CPU tests use a nonzero world origin for both negative levels and Off; JS also
+changes the disabled-shadow origin to prove a prior surface offset is replaced.
+
+Shadow map replacement is transactional: validate the full temporary peak
+allocation before creating storage, retain the old map through new framebuffer
+completion and GL storage validation, then replace/debit it only after success.
+Failed new objects are freed without mutating old ownership/accounting, and
+map destruction is idempotent. Instrumented tests now cover invalid resize,
+budget refusal, incomplete framebuffer and storage error, followed by retry
+and double disposal. These failure controls do not claim actual driver OOM
+injection; hardware/browser validation remains the manager integration gate.
