@@ -1,0 +1,56 @@
+Browser display modes — private implementation review
+
+Task: fit-to-tab and browser fullscreen before further FPS optimization.
+Worker: ai-1, feat/browser-display-modes. Public server untouched.
+
+Presentation contract
+- Fit tab is the default; Embedded is an explicit comparison view.
+- The outer document owns the Fullscreen API and keeps a reserved control bar
+  with Stop and Exit fullscreen. Requests occur synchronously from the real
+  button gesture. Denial, unsupported APIs and Escape are handled without
+  destroying or automatically restarting Java. Stop exits owned fullscreen.
+- Browser-only JFrame setup removes virtual native decorations and pins the
+  game window to the virtual desktop origin. Native desktop defaults are intact.
+- The entire Java display, GPU canvas and readiness cover share one aspect-fit
+  CSS transform. CSS resize/fullscreen does not request a larger framebuffer.
+  Internal resolution, actual CSS size, fit offsets and DPR are exposed through
+  runtime browserProof.displayLayout. Parent presentation records the view mode.
+- CheerpJ 5 pointer/wheel dispatch subtracts its canvas client rect but does not
+  divide by a CSS transform. Display capture normalizes clientX/Y before vendor
+  handlers. Window/document readiness gates and the independent middle-button
+  relay see original screen coordinates first. No vendor patch, duplicate
+  synthetic event, keyboard lock, pointer lock or physical desktop input is used.
+- A display/mode/resize transition cancels an active middle-button drag.
+
+References
+https://cheerpj.com/docs/reference/cheerpjCreateDisplay
+https://fullscreen.spec.whatwg.org/
+https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullscreen
+
+CPU checks (passed)
+./scripts/build-client.sh
+node tests/myworld/test-browser-display.mjs
+node tests/myworld/browser-middle-mouse-fixture.mjs
+node --experimental-vm-modules tests/myworld/test-browser-webgl-frontend.mjs
+python3 tests/myworld/test-browser-controls-settings.py
+python3 tests/myworld/test-renderer-settings-panel-extraction.py
+node tests/myworld/test-browser-world-ready.mjs
+python3 tests/myworld/test-browser-world-ready.py
+python3 scripts/workspace-layout.py check
+git diff --check
+
+Evidence / actual browser gate
+Frozen first stage: output/tests/browser-gameplay-spike/browser-display-fit-8117
+Source checkpoint c6de9c920e6a1424f1ea10806aff8e0aceabc015.
+Parent coordinates actual hardware proof; never alter a running frozen stage.
+Required actual checks: all game/HUD pixels including bottom 12px, left/right
+menu targeting, middle orbit/release/cancel, wheel, fit/letterbox sizes, actual
+fullscreen/Escape/Stop and loading-cover alignment. The pure fixtures are not
+proof of vendor input/layout behavior. No FPS improvement is claimed; CSS
+fullscreen of a 960x540 framebuffer is not a 1920x1080 render benchmark.
+
+Known scope
+- Existing keyboard anomaly remains unreproduced and undiagnosed.
+- Fullscreen permission may be denied by embedding or browser policy.
+- A small accumulated integer UI-alpha rounding difference is inherited from
+  the accepted browser renderer, not changed by this presentation task.
