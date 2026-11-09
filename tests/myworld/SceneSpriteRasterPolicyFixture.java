@@ -142,6 +142,8 @@ public final class SceneSpriteRasterPolicyFixture {
         actor.beginRenderer2DFrame();check(actor.getSceneSpriteRasterFailure().isEmpty(),"sticky failure resets next frame");
         actor.rawBox=true;start(actor,Renderer2DFrame.Phase.SCENE,true);draw(actor,frame(),SceneSpriteRasterPolicy.GPU_OWNED);
         check(!actor.getSceneSpriteRasterFailure().isEmpty()&&!actor.borrowWorldOverlayCoverage().valid,"uncaptured software-only actor draw fails closed");
+        String failure=actor.getSceneSpriteRasterFailure();actor.consumeRenderer2DFrame();actor.consumeRenderer2DFrame();
+        check(actor.getSceneSpriteRasterFailure().equals(failure)&&!actor.borrowWorldOverlayCoverage().valid,"consuming commands must not erase actor failure before presenter");
         actor.rawBox=false;actor.explode=true;start(actor,Renderer2DFrame.Phase.SCENE,false);
         boolean thrown=false;try{draw(actor,frame(),SceneSpriteRasterPolicy.GPU_OWNED);}catch(IllegalStateException expected){thrown=true;}
         check(thrown&&graphicsField(actor,"sceneSpriteRasterPolicy")==SceneSpriteRasterPolicy.DEFAULT,"exception restores policy");

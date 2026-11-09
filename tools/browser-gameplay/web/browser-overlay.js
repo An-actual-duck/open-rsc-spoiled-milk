@@ -32,7 +32,7 @@ export function createBrowserOverlay(gl,{stats={}}={}) {
     // A resized retained FULL cannot define the new viewport; release it BEFORE C/T replacements.
     if(reset||width!==w||height!==h)retained.reset();
     if(mode!==0){coverage=textureUpload(coverage,tWidth,tHeight,w,h,gl.R32F,gl.FLOAT,transmittance,UNIT);tWidth=w;tHeight=h;stats.overlayCoverageBytes=w*h*4;}
-    account();pending={w,h,mode,token:{generation,frameSequence},fades};
+    account();stats.overlayDeclaration={width:w,height:h,mode,generation,frameSequence,fades,reset};pending={w,h,mode,token:{generation,frameSequence},fades};
   }
   /** Called after parent clear, before any new world draw. */
   function begin(w,h){alive();if(!pending||pending.w!==w||pending.h!==h)throw new Error('Missing/current coverage declaration');active=pending;pending=null;

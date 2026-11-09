@@ -31,6 +31,8 @@ with tempfile.TemporaryDirectory(prefix='world-overlay-coverage-') as temp:
     assert ordinary.startswith('NATIVE_RGB_SHA256='), ordinary
     print(ordinary.strip(), '(unchanged parent source parity)')
     subprocess.run(command + [str(current) + os.pathsep + str(JAR), main], check=True)
+    for capture in ([], ['-Dspoiledmilk.openglWorldSpritesVisible=true']):
+        subprocess.run([str(JAVA / 'java'), *capture, '-cp', str(current) + os.pathsep + str(JAR), main, 'consume-only'], check=True)
     for properties, mode in ((['-Dspoiledmilk.openglWorldSpritesVisible=true'], 'world'),
                              (['-Dspoiled_milk.opengl_sprite_overlay=true'], 'capture-only'),
                              ([], 'capture-off')):

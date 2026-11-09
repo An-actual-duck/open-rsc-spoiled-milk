@@ -353,3 +353,19 @@ Integrated shared coverage/actor API validation
 - Workspace-layout audit still rejects inherited assets/sprites and legacy loose
   output entries. This task uses declared tests/reviews locations only; no old
   ignored artifacts were deleted or relocated to make that audit green.
+
+Actual game integration defects discovered and repaired
+-8110alpha:false defaultdrawingbuffer cannot copy into retainedRGBA8 on actual
+ AMDWebGL2 (GL_INVALID_OPERATION); controlledsame-device alpha:true copy succeeds.
+ RGBAcontext nownormalizes alphaONLY afterworld/beforeUI; mask/scissor/clearcolor
+ restore.8111diagnostic518400pixels: noRGBchanged, allpostworld/finalalpha255;
+ 3660actualworldFULLcaptures succeeded before nextdistinctlifecycleissue.
+-8111ordinarySleep correctlyexposed command consumption resetting the completed
+ coveragefade count/stickyactorfailure BEFOREsinkexport. Split2Dcommand-state
+ reset fromrealbeginframe; consume preservescoverageepoch/fades/actorfailure.
+ Nativecommands/counters clear asbefore. Added actualbegin->fade->consumeTWICE
+ ->borrow/current tests, captureenabled/disabled,50retainedfades andstickyactor
+ failure. Java8/21 unchangednativeRGBoracle and9.84mcoverage/24.8kactorcontrols
+ pass; phased/overflowandallfocusedScene/depth/teleportcontracts pass.
+-These failedcaptures remainpreserved; no stability/60FPSclaim from their stale
+ observers. Nextactualgameproof must exercise correctedSleep path.
