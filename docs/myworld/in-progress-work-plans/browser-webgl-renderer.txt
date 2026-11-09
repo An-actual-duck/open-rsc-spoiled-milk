@@ -251,3 +251,29 @@ and interaction-occluder exceptions remain. Another2975checks retain exact picks
 relative sprite anchors/draw order, resident mesh data and pixels, exercise88actual
 omitted wall/roof faces, and preserve CPU-depth/default/forced-legacy paths.
 Both controls remain opt-in until actual hardware functional and paired tests.
+
+Sky, native sampling and cache variant integration checkpoint
+--------------------------------------------------------------
+Shared native world-dome geometry/palette export is now wired into the GPU sink,
+with bounded static geometry and per-frame palette/matrix replay. Negative levels
+and menus disable it using the same source policy; screen-space diagnostic sky
+remains outside this adapter. Actual integrated browser checks are pending.
+Native texel-center endpoints now govern standalone world UVs and sprite-atlas UVs.
+82CPUchecks compare native atlas coordinates (including one-pixel, NPOT and mirrored
+samples) and actual material dependency states; JS API tests compare those exported
+native references, copied metadata, fixed-budget in-place repacks and alpha class
+updates/removal. Production pixels are unchanged.
+
+Resident packed variants now track the exact native brightness/fog/lighting/
+geometry tuple and relevant texture presence/dimensions/precomputed average/alpha
+class. RGB-only animated pixel changes update textures without invalidating all
+geometry. Stale entries are repacked oldest-first under the existing vertex budget,
+with VBO/IBO identity and placement bookkeeping retained. Current texture alpha
+classification updates immediately while the bounded Java repack catches up.
+Latest-only actual pose/display metadata supports meaningful native/browser camera
+comparison; requested zoom/rotation alone did not prove matched final pose.
+
+This candidate is a functional checkpoint, not READY. Base resource upload failure
+atomicity/cleanup hardening is still under review; current map allocation failures
+require stopping/restarting the session. Optional sprite cache and UI coverage/
+retained fade integration are later worker slices and are not enabled here.

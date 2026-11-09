@@ -34,6 +34,7 @@ public final class BrowserFrameSinkFixture {
         Constructor<?> constructor=null;for(Constructor<?> c:Renderer3DFrame.SpriteAnchor.class.getDeclaredConstructors())if(c.getParameterTypes().length==17)constructor=c;require(constructor!=null,"Production sprite anchor constructor missing");constructor.setAccessible(true);
         Renderer3DFrame.SpriteAnchor anchor=(Renderer3DFrame.SpriteAnchor)constructor.newInstance(1,5000,1,1,400,0,0,500,16,16,10,4,12,24,1,0,true);
         CompositeWorldSpriteTexture composite=new CompositeWorldSpriteTexture(8,2,16,28,null);float[] quad=BrowserWebGLBridge.spriteQuad(projected,anchor,composite);
+        int[] pose=BrowserWebGLBridge.pose(projected);require(pose.length==14&&pose[0]==projected.getCameraOffsetX()&&pose[5]==projected.getCameraRotationZ()&&pose[8]==projected.getViewportWidth()&&pose[13]==projected.getSignedWorldLevel(),"Latest actual frame pose differs from source frame");
         float scale=1<<projected.getPerspectiveShift();
         for(int n=0;n<4;n++) {
             int x=8+(n==1||n==2?16:0),y=2+(n>=2?28:0);float depth=OpenGLWorldSpriteRenderer.estimateEntitySpriteDepth(anchor,y);

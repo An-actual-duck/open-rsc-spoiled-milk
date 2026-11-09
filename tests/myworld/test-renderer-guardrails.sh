@@ -18,6 +18,7 @@ renderer_tests=(
   test-underground-lighting.py
   test-browser-frame-sink.py
   test-browser-chunk-materials.py
+  test-browser-chunk-variants.py
   test-browser-lighting.py
   test-terrain-definition.py
   test-remaster-glow-mask-bounds.py

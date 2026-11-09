@@ -103,6 +103,7 @@ try {
           width: width * sx + 'px', height: height * sy + 'px',
         });
       }
+      gpu.stats.display={internalWidth:Number(args[1]),internalHeight:Number(args[2]),cssWidth:canvas.style.width,cssHeight:canvas.style.height,devicePixelRatio:window.devicePixelRatio||1};
       return result;
     };
   }

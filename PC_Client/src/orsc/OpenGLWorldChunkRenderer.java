@@ -2910,10 +2910,24 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
         float[] values = new float[vertexUploadBuffer.remaining()];
         vertexUploadBuffer.get(values);
         for (int vertex=0; vertex<chunk.getVertexCount(); vertex++) {
-            values[vertex*FLOATS_PER_VERTEX+7] = clampUnit(chunk.getVertexTextureU(vertex));
-            values[vertex*FLOATS_PER_VERTEX+8] = clampUnit(chunk.getVertexTextureV(vertex));
+            int triangle=vertex/3;
+            int textureId=effectiveChunkTextureId(frame,chunk.getTriangleTexture(triangle),chunk.getTriangleFallbackColor(triangle));
+            Renderer3DTextureData texture=frame==null?null:frame.getTexture(textureId);
+            values[vertex*FLOATS_PER_VERTEX+7] = texture==null?clampUnit(chunk.getVertexTextureU(vertex)):backendTexelCenter(chunk.getVertexTextureU(vertex),texture.getWidth());
+            values[vertex*FLOATS_PER_VERTEX+8] = texture==null?clampUnit(chunk.getVertexTextureV(vertex)):backendTexelCenter(chunk.getVertexTextureV(vertex),texture.getHeight());
         }
         return values;
+    }
+
+    int[] backendPackingSettings() {
+        return new int[]{currentBrightnessBits(),currentFogModeBits(),currentLightingModeBits(),currentGeometryModeBits()};
+    }
+
+    static float backendTexelCenter(float source,int size) {
+        if(size<1)throw new IllegalArgumentException("Texture dimension must be positive");
+        float unit=source<=0?0:source>=1?1:source;
+        float first=.5f/size,last=(size-.5f)/size;
+        return first+(last-first)*unit;
     }
 
     int backendTextureId(Renderer3DFrame frame, int textureId, int fallbackColor) {
