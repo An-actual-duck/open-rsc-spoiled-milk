@@ -71,7 +71,7 @@ public final class UndergroundLightingGpuFixture {
                 try{for(int level:new int[]{0,-1,-8,0,10}){Renderer3DFrame f=frame(level);f.setWorldChunkFrame(GeometryShadowRoofMaskFixture.frame(0,true,1));Object old=scope(f);try{boolean shadows=chunks.prepareGeometryShadows(f);require(shadows==(level>=0),"sunlight shadow lifecycle level"+level);if(level<0)require(!chunks.prepareRemasterTerrainShadowMask(f),"legacy sunlight fallback underground");}finally{endScope(old);}}}finally{chunks.close();}
             }
             require(((Integer)Class.forName("org.lwjgl.opengl.GL11").getMethod("glGetError").invoke(null)).intValue()==0,"GL error");
-            System.out.println("PASS full production shader: signed day/night equality, outside distinction, brightness, slope detail, glows and sunlight lifecycle");
+            System.out.println(baseline?"PASS released shader/tint/fog reference":"PASS full production shader: signed day/night equality, outside distinction, brightness, slope detail, glows and sunlight lifecycle");
         }finally{if(shader!=null)shader.close();if(vbo!=0)gl.glDeleteBuffers(vbo);if(ebo!=0)gl.glDeleteBuffers(ebo);if(glowTexture!=0)gl.glDeleteTextures(glowTexture);if(window!=0)gl.glfwDestroyWindow(window);gl.glfwTerminate();}
     }
 }

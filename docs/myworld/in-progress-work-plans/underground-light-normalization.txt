@@ -94,3 +94,14 @@ history, assets, accounts, databases or runtime files were removed.
 
 Status: source ready for manager review/private preview; owner visual acceptance,
 manager integration and release decisions remain pending. No public deployment.
+
+Frozen preview artifact
+-----------------------
+Production checkpoint85ac86a324bfd7e97560bede65638beb99e0fff9, built before any
+later test/doc-only changes. JAR:
+output/tests/underground-light-normalization/candidate-underground-neutral-85ac86a32.jar
+SHA2565929babeb2d3de0a4f1d0d1ba7610d731827805d7aaf8a50a89868c8a23a77bc.
+Exact8production source hashes and compiler/runtime are in candidate-freeze.json.
+The new CPU contract is included in the standard renderer guardrail list.
+All worker GPU/CPU processes exited before the manager's private native preview.
+No main integration, owner visual acceptance or public activation is claimed.

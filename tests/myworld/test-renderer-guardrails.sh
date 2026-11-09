@@ -15,6 +15,7 @@ renderer_tests=(
   test-opengl-geometry-modes.py
   test-geometry-shadow-projection.py
   test-shadow-context-epoch.py
+  test-underground-lighting.py
   test-terrain-definition.py
   test-sprite-workspace.py
   test-animated-texture-shadow-policy.py
