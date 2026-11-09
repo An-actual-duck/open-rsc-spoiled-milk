@@ -2,6 +2,7 @@ package orsc;
 
 import orsc.graphics.gui.Panel;
 import orsc.graphics.two.MudClientGraphics;
+import orsc.graphics.three.Renderer3DSettings;
 import orsc.remastered.RemasteredSpriteSettings;
 
 import java.util.ArrayList;
@@ -156,6 +157,7 @@ final class RendererSettingsPanel {
 
 	static final class State {
 		final boolean openGLPrimary;
+		final boolean browserGpu;
 		final String rendererProfileLabel;
 		final boolean remasteredSprites;
 		final String middleMouseLabel;
@@ -189,6 +191,7 @@ final class RendererSettingsPanel {
 			  int saturationLevel, boolean roofToggleAvailable, boolean roofsHidden,
 			  boolean undergroundFlickerToggleAvailable, boolean undergroundFlickerHidden) {
 			this.openGLPrimary = openGLPrimary;
+			this.browserGpu = !openGLPrimary && Renderer3DSettings.isBrowserPresentationAvailable();
 			this.rendererProfileLabel = rendererProfileLabel;
 			this.remasteredSprites = remasteredSprites;
 			this.middleMouseLabel = middleMouseLabel;
@@ -267,7 +270,7 @@ final class RendererSettingsPanel {
 			view.setRow(index, row.label, row.action);
 		}
 
-		if (!state.openGLPrimary && view.scrollAmount() <= LEGACY_SCALING_ROW_INDEX) {
+		if (!state.openGLPrimary && !state.browserGpu && view.scrollAmount() <= LEGACY_SCALING_ROW_INDEX) {
 			drawSoftwareScalingControls(view, state, input, y);
 		}
 
@@ -294,7 +297,7 @@ final class RendererSettingsPanel {
 			return true;
 		}
 
-		if (!state.openGLPrimary && view.scrollAmount() <= LEGACY_SCALING_ROW_INDEX) {
+		if (!state.openGLPrimary && !state.browserGpu && view.scrollAmount() <= LEGACY_SCALING_ROW_INDEX) {
 			int yPos = yFromTopDistance
 				+ ((LEGACY_SCALING_ROW_INDEX - view.scrollAmount() + 1) * 15);
 			boolean scaleMinusHover = input.gameWidth - input.mouseX >= SCALE_MINUS_X_OFFSET - 18
@@ -314,7 +317,7 @@ final class RendererSettingsPanel {
 
 		Action action = actionFor(selectedAction, state);
 		if (action == null) {
-			return selectedAction == ACTION_SCALING_ROW && !state.openGLPrimary;
+			return selectedAction == ACTION_SCALING_ROW && !state.openGLPrimary && !state.browserGpu;
 		}
 		if (input.mouseButtonClick == 1) {
 			actions.perform(action);
@@ -334,17 +337,19 @@ final class RendererSettingsPanel {
 		}
 		addRow(rows, "@whi@Middle mouse - " + state.middleMouseLabel, MIDDLE_MOUSE);
 
-		if (!state.openGLPrimary) {
+		if (!state.openGLPrimary && !state.browserGpu) {
 			addRow(rows, "@whi@Scaling - ", ACTION_SCALING_ROW);
 			addRow(rows, "@whi@Scaling type - @gre@" + scalingTypeDescription(state.scalingType),
 				ACTION_SCALING_TYPE);
 		} else {
-			addRow(rows, "@whi@Aspect Ratio - " + state.aspectLabel, ACTION_RENDER_SURFACE);
-			addRow(rows, "@whi@Window mode - " + state.windowModeLabel,
-				ACTION_WINDOW_MODE);
+			if (state.openGLPrimary) {
+				addRow(rows, "@whi@Aspect Ratio - " + state.aspectLabel, ACTION_RENDER_SURFACE);
+				addRow(rows, "@whi@Window mode - " + state.windowModeLabel, ACTION_WINDOW_MODE);
+			}
 			addRow(rows, "@whi@Lighting - " + state.lightingLabel, ACTION_LIGHTING);
 			addRow(rows, "@whi@Shadows - " + state.shadowQualityLabel, ACTION_SHADOW_QUALITY);
-			addRow(rows, "@whi@Geometry - " + state.geometryLabel, ACTION_GEOMETRY);
+			// Browser has no polygon-line implementation; don't offer a WIRE no-op.
+			if (state.openGLPrimary) addRow(rows, "@whi@Geometry - " + state.geometryLabel, ACTION_GEOMETRY);
 			addRow(rows, "@whi@Terrain Variation - " + state.terrainVariationLabel,
 				ACTION_TERRAIN_VARIATION);
 			addRow(rows, "@whi@Fog - " + state.fogLabel, ACTION_FOG);
@@ -376,8 +381,17 @@ final class RendererSettingsPanel {
 	}
 
 	private static Action actionFor(int selectedAction, State state) {
-		if (selectedAction == ACTION_SCALING_TYPE && !state.openGLPrimary) {
+		if (selectedAction == ACTION_SCALING_TYPE && !state.openGLPrimary && !state.browserGpu) {
 			return Action.SCALING_TYPE;
+		}
+		if (state.browserGpu) {
+			switch (selectedAction) {
+				case ACTION_FOG: return Action.FOG;
+				case ACTION_LIGHTING: return Action.LIGHTING;
+				case ACTION_SHADOW_QUALITY: return Action.SHADOW_QUALITY;
+				case ACTION_TERRAIN_VARIATION: return Action.TERRAIN_VARIATION;
+				default: break;
+			}
 		}
 		if (state.openGLPrimary) {
 			switch (selectedAction) {

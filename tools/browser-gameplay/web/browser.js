@@ -1,5 +1,6 @@
 const started = performance.now();
 import {createTransport} from './transport.js';
+import {createBrowserMiddleMouseInput} from './browser-middle-mouse.js';
 const status = document.querySelector('#status');
 const options = new URLSearchParams(location.search);
 const javaVersion = Number(options.get('java') || '8');
@@ -11,7 +12,8 @@ function setStatus(message) {
   if (gpu?.stats.lastError) {
     const age = gpu.stats.lastFrame > 0 ? Math.max(0, Math.round(performance.now() - gpu.stats.lastFrame)) + ' ms ago' : 'none';
     status.textContent = `Browser GPU error: ${gpu.stats.lastError} · last submitted frame: ${age}`;
-  } else status.textContent = message;
+  } else if (window.browserProof.inputError) status.textContent = `Browser input error: ${window.browserProof.inputError}`;
+  else status.textContent = message;
 }
 function publish() {
   if (gpu) window.browserProof.gpu = gpu.stats;
@@ -19,7 +21,7 @@ function publish() {
 }
 function dispose() {
   if (stopped) return;
-  stopped = true; transport.dispose(); gpu?.dispose();
+  stopped = true; pointer?.dispose(); transport.dispose(); gpu?.dispose();
 }
 function finish(reason) {
   if (stopped) return;
@@ -45,8 +47,13 @@ function report(message) {
   window.browserProof.events.push(event); setStatus(message); console.log('BROWSER_PROOF', JSON.stringify(event)); publish();
 }
 const transport = createTransport(WebSocket, report);
+const pointer = window.browserProof.mode === 'webgl' ? createBrowserMiddleMouseInput() : undefined;
+if (pointer) window.browserProof.middleInput = pointer.stats;
 window.browserTransport = transport;
 const natives = {
+  async Java_orsc_browser_BrowserBootstrap_reportInputError(lib, message) {
+    window.browserProof.inputError=String(message).slice(0,512);setStatus(message);publish();
+  },
   async Java_orsc_browser_BrowserBootstrap_report(lib, message) { report(message); },
   async Java_orsc_browser_BrowserBootstrap_reportTelemetry(lib,names,values) {
     const labels=names.split('|'),sample=Array.from(values);
@@ -70,6 +77,7 @@ const natives = {
   async Java_orsc_browser_BrowserBootstrap_wsWrite(lib, id, bytes) { transport.write(id, bytes); },
   async Java_orsc_browser_BrowserBootstrap_wsClose(lib, id) { transport.close(id); },
 };
+if (pointer) Object.assign(natives, pointer.natives);
 try {
   if (window.browserProof.mode==='webgl' && options.has('benchmark')) {
     if(!['active','lru'].includes(options.get('cache')) || !['always','initial'].includes(options.get('underlay')) || !['cpu','gpu'].includes(options.get('depth')||'cpu') || !['legacy','modern'].includes(options.get('loop')||'legacy') || !['late','early'].includes(options.get('cull')||'late') || !['objects','all'].includes(options.get('ownership')||'objects') || !['uncached','cached'].includes(options.get('sprites')||'uncached') || !['marker','coverage'].includes(options.get('overlay')||'marker'))throw new Error('Private benchmark requires explicit cache and underlay policies');
