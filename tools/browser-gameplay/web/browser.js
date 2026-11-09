@@ -11,12 +11,19 @@ function publish() {
   if (gpu) window.browserProof.gpu = gpu.stats;
   if (!stopped) parent.postMessage({type: 'browser-session-proof', proof: window.browserProof, status: status.textContent}, location.origin);
 }
+function dispose() {
+  if (stopped) return;
+  stopped = true; transport.dispose(); gpu?.dispose();
+}
 function finish(reason) {
   if (stopped) return;
-  publish(); stopped = true; transport.dispose(); gpu?.dispose();
+  publish(); dispose();
   document.activeElement?.blur?.();
   parent.postMessage({type: 'browser-session-stop', reason}, location.origin);
 }
+// The outer Stop control disposes app-owned transport/GPU resources before
+// discarding this document. Page exit follows the same idempotent path.
+window.browserSessionDispose = dispose;
 window.addEventListener('blur', () => setTimeout(() => {
   if (!document.hasFocus() && !stopped) parent.postMessage({type: 'browser-session-focus-left'}, location.origin);
 }, 0));
@@ -24,7 +31,7 @@ document.addEventListener('visibilitychange', () => {
   window.browserProof.visibility = document.visibilityState;
   publish();
 });
-window.addEventListener('pagehide', () => { stopped = true; transport.dispose(); gpu?.dispose(); });
+window.addEventListener('pagehide', dispose);
 // Keyboard events, including Escape, remain ordinary game/AWT input. The
 // wrapper does not turn closing a menu into closing a Java session.
 function report(message) {

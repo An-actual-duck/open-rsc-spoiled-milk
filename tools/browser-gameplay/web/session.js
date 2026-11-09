@@ -10,7 +10,10 @@ function end(reason, focusStart = false) {
   const current = frame; frame = null;
   // Best effort app transport cleanup before discarding all runtime listeners,
   // timers, workers and focus state belonging to the embedded document.
-  try { current.contentWindow.browserTransport?.dispose(); } catch {}
+  try {
+    if (current.contentWindow.browserSessionDispose) current.contentWindow.browserSessionDispose();
+    else current.contentWindow.browserTransport?.dispose();
+  } catch {}
   current.remove();
   window.browserProof.lifecycle = 'stopped';
   window.browserProof.stopReason = reason;

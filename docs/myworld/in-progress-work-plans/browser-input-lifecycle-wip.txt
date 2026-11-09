@@ -1,37 +1,101 @@
-Deferred WIP — browser input lifecycle (November 7, 2026)
+Browser session lifecycle — resumed private browser work (2026-11-09)
+===================================================================
 
-User reports the desktop-wide keyboard problem no longer reproduces and asks
-to defer this investigation until it recurs. This branch is preservation only,
-NOT READY, NOT accepted and must not be integrated as a completed fix.
+Current status: focused source candidate; actual final-policy runtime controls
+pending the manager's serialized browser/GPU window. No public deployment.
+This work does not reproduce or diagnose the old one-off desktop-wide keyboard
+report. The owner had deferred that report after it stopped reproducing.
 
-Implemented draft: explicit Start/Stop outside a disposable same-origin
-sandboxed frame; stop on Escape, focus departure, hidden page, Java exit/error;
-transport disposal; opt out of input methods and system clipboard. No original
-desktop client/game code or vendor runtime was edited. The same-origin sandbox
-is lifecycle containment, not a security boundary against its own scripts.
+Policy
+------
+The outer page has explicit Start/Stop controls. Java runs in a disposable
+same-origin sandboxed iframe so an explicit Stop can remove its listeners and
+VM context. This is lifecycle containment, not a security boundary against its
+own same-origin scripts. No keyboard-lock API is used, system clipboard access
+is not requested, input methods are disabled for this private diagnostic page,
+and browser shortcuts are not overridden by the wrapper.
 
-Passed before deferral: headless Chrome/CDP lifecycle tests with a MOCKED Java
-runtime, including nested keyboard input, teardown, restart and typing outside
-afterward. Transport unit checks including disposal passed. These tests do not
-reproduce or diagnose the reported cross-application keyboard failure.
+Only explicit Stop, page exit, or Java completion/bootstrap failure ends the
+session. Escape remains normal game/AWT input; blur and tab hide/restore merely
+record advisory state. The manager explicitly chose these ordinary gameplay
+semantics: changing tabs or closing a menu must not destroy a logged-in client.
+Existing Java/AWT focus handling remains authoritative for game keys; no second
+held-key implementation or desktop/global input hook was introduced.
 
-Actual CheerpJ smoke is NOT accepted: startup currently triggers focus-loss
-teardown just after Browser Java ready, before visible login. Latest attempted
-distinction between inner-frame and outer focus did not resolve this. Preserve
-as unfinished; do not assume iframe isolation is compatible with the runtime.
+Explicit disposal closes the application-owned transport and optional GPU
+backend before removing the iframe. It is idempotent and also used on page exit.
+A new Start creates a fresh VM; messages from removed or unrelated contexts are
+ignored through exact frame-window and origin checks. The original Java client,
+public server, owner accounts, and hosted database were not changed.
 
-Evidence stays in ignored output/tests/browser-input-lifecycle/ and
-output/tests/browser-gameplay-spike/input-lifecycle-review/. The separate :8089
-HTTP listener was stopped on deferral; dedicated automated browsers exit after
-capture. The original immutable owner-review fixture on :8079 and its private
-server were not modified by this WIP. No physical desktop automation occurred.
+Initial failure and real gameplay proof
+--------------------------------------
+The preserved 2026-11-07 WIP ended Java on blur. After a normal merge of current
+main (3176761fd), a fresh actual CheerpJ 5.0/Java8 test reproduced this: the outer
+page discarded the runtime about1.2s after Browser Java ready. Mocked-runtime DOM
+tests passed, demonstrating why those tests alone were insufficient.
 
-Official references checked:
-https://cheerpj.com/docs/reference/cheerpjInit
-  enableInputMethods defaults true from 4.0; overrideShortcuts defaults to
-  browser shortcuts; clipboardMode java is default.
-https://cheerpj.com/docs/reference/cheerpjRunMain
-  completion returns exit code; reference signature has no cancellation handle.
-https://developer.mozilla.org/en-US/docs/Web/API/Keyboard/lock
-  keyboard lock requires an active top-level context and user activation.
-No keyboard lock API was called or deliberately tested.
+Removing destructive blur handling then allowed a real current-client login and
+100-second capture: LOGIN and GAME observed, no Java exit before intentional
+browser close, visible unobscured world, and14 distinct authoritative private
+server coordinate triples. The final screenshot shows the character away from
+the starting location. The reported Java software loop stayed about3FPS; this
+is compatibility evidence, never GPU speed or desktop parity evidence.
+
+The successful run used the intermediate policy that still ended on Escape/tab
+hide. The final policy preserves those too; its actual control check is recorded
+separately after the serialized test window. Historical failed/intermediate
+captures are retained, not overwritten or presented as final acceptance.
+
+Evidence:
+ output/tests/browser-gameplay-spike/lifecycle-20261109-before/
+ output/tests/browser-gameplay-spike/lifecycle-20261109-after/
+ output/tests/browser-input-lifecycle/
+Each stage has an artifact-inventory.json identifying exact served bytes. Its
+stage.json sourceCommit records HEAD at staging, which alone does not identify
+uncommitted frontend edits at the time. Client JAR bytes are unchanged between
+these runs; web snapshot hashes are the authoritative frontend identity.
+
+The isolated server was made from zero-account seed and maintained content,
+bound only to127.0.0.1 TCP43629 / WS43529. Disposable browserdemo/BrowserProof13 is
+the only account used; the manager and renderer worker share its fixture only
+in serialized login windows. Original8079/8093 historical files were preserved;
+their old processes were already absent at inventory. Public Oracle is untouched.
+
+Optional WebGL frontend seam
+---------------------------
+Only mode=webgl imports the separate renderer worker's webgl.js. Its
+createBrowserWebGL(canvas,report) object supplies natives, stats, canvas and
+dispose. Those natives are merged before cheerpjInit. A pointer-transparent
+canvas is aligned to the game framebuffer inside CheerpJ's AWT window canvas,
+excluding its20px titlebar. Software/native/mesh modes keep their normal path.
+Java-loop FPS and GPU counters remain separate; selecting this mode is not a
+claim that GPU rendering succeeded or matches the desktop renderer.
+
+The implementation of webgl.js and the production bridge belong to the separate
+feat/browser-webgl-renderer handoff. This branch does not contain that module
+and does not advertise a WebGL link until that dependency is integrated. The
+manager will integrate both reviewed branches before exposing the GPU mode.
+The renderer worker borrowed exact frontend checkpoint
+3da4603d183f8b6720ee78e4cdc2ce776641909c into a new ignored immutable test stage;
+its stage records copied file hashes. Such borrowing is test composition, not
+an implicit merge or a claim that either branch alone includes the full GPU mode.
+
+Tests and limits
+----------------
+ node tests/myworld/test-browser-input-lifecycle.mjs
+   Mocked vendor runtime, real isolated headless Chrome/CDP DOM input: explicit
+   start, nested typing, Escape survival, advisory focus departure, outer typing,
+   real tab hide/restore survival, explicit Stop/timer teardown, Java exit/error,
+   restart and untrusted/stale message rejection.
+ node tests/myworld/test-browser-transport.mjs
+   Fragmentation, partial/signed reads,1MiB frame, EOF/receive bound and disposal.
+ node tests/myworld/test-browser-runtime-lifecycle.mjs STAGED-RUN HTTP-PORT
+   Actual unmodified CDN CheerpJ: responsive login, outside typing while Java
+   lives, Stop, restart, Escape and real tab hide/restore survival. Does not log
+   in or emulate the original global keyboard issue.
+ JS syntax, Python compilation, whitespace and workspace-layout checks.
+
+No public hosting/security/distribution acceptance, browser performance promise,
+all-browser/device claim or global keyboard correctness guarantee is made.
+CheerpJ is fetched from its official CDN, not modified or redistributed.
