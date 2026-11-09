@@ -1,10 +1,15 @@
 // The outer document owns lifecycle controls; vendor input handlers live in a
 // separate disposable frame. Same-origin is needed for CheerpJ storage/files;
 // this sandbox is lifecycle containment, not an untrusted-code security boundary.
+import {createDisplayModes} from './browser-display-modes.js';
 const start = document.querySelector('#start'), stop = document.querySelector('#stop');
 const status = document.querySelector('#status'), session = document.querySelector('#session');
 let frame;
 window.browserProof = {events: [], lifecycle: 'stopped'};
+const displayModes=createDisplayModes({window,document,player:document.querySelector('#player'),select:document.querySelector('#display-mode'),button:document.querySelector('#fullscreen'),notice:document.querySelector('#display-notice'),onChange:state=>{
+  window.browserProof.presentation=state;
+  frame?.contentWindow.dispatchEvent(new Event('browser-display-change'));
+}});
 function end(reason, focusStart = false) {
   if (!frame) return;
   const current = frame; frame = null;
@@ -15,6 +20,7 @@ function end(reason, focusStart = false) {
     else current.contentWindow.browserTransport?.dispose();
   } catch {}
   current.remove();
+  displayModes.exit();
   window.browserProof.lifecycle = 'stopped';
   window.browserProof.stopReason = reason;
   status.textContent = reason + '\nSession discarded. Choose Start to retry.';
@@ -28,7 +34,7 @@ start.addEventListener('click', () => {
   frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
   frame.setAttribute('allow', "fullscreen 'none'; clipboard-read 'none'; clipboard-write 'none'; keyboard-map 'none'");
   frame.src = './runtime.html' + location.search;
-  window.browserProof = {events: [], lifecycle: 'starting', focus: 'runtime'};
+  window.browserProof = {events: [], lifecycle: 'starting', focus: 'runtime',presentation:displayModes.stats};
   start.disabled = true; stop.disabled = false;
   status.textContent = 'Starting disposable browser Java session…';
   session.append(frame);

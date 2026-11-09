@@ -104,6 +104,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 	}
 
 	private void runInit() {
+		BrowserDisplaySettings.configure(this);
 		// Set window properties
 		setBackground(Color.black);
 		setFocusTraversalKeysEnabled(false);
@@ -193,6 +194,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 	 * available space.
 	 */
 	private void alignWindow() {
+		if (BrowserDisplaySettings.isBorderless()) { setLocation(0, 0); return; }
 		Rectangle currentScreenBounds = getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds();
 
 		int x = ((currentScreenBounds.width - frameWidth) / 2) + currentScreenBounds.x;
@@ -240,7 +242,8 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 			return;
 		}
 
-		setLocationRelativeTo(null);
+		if (BrowserDisplaySettings.isBorderless()) setLocation(0, 0);
+		else setLocationRelativeTo(null);
 		setVisible(true);
 	}
 

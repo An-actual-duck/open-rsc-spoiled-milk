@@ -2,13 +2,14 @@ const started = performance.now();
 import {createTransport} from './transport.js';
 import {createWorldCover} from './browser-world-cover.js';
 import {createBrowserMiddleMouseInput} from './browser-middle-mouse.js';
+import {createBrowserDisplay} from './browser-display.js';
 const status = document.querySelector('#status');
 const options = new URLSearchParams(location.search);
 const javaVersion = Number(options.get('java') || '8');
 if (![8, 11, 17].includes(javaVersion)) throw new Error('Private probe supports Java 8, 11 or 17');
 window.browserProof = {events: [], started, renderer: 'AWT software / direct framebuffer', mode: options.get('mode') || 'software', javaVersion, wasmGC: options.has('wasmgc'), runtimeVersion: window.browserRuntimeVersion};
 let stopped = false;
-let gpu,worldCover,awaitingGameFrame=false;
+let gpu,worldCover,awaitingGameFrame=false,displayLayout;
 window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput;
 function updateWorldCover(){const state=gpu?.stats.worldReadiness,error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null),waiting=awaitingGameFrame&&state?.phase==='login';if(!worldCover||(!waiting&&!error&&!['loading','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;worldCover.update(waiting?{phase:'loading',reason:'Waiting for area data'}:state,gpu?.canvas.style,error);}
 function setStatus(message) {
@@ -26,7 +27,7 @@ function publish() {
 }
 function dispose() {
   if (stopped) return;
-  stopped = true; pointer?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
+  stopped = true; pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
 }
 function finish(reason) {
   if (stopped) return;
@@ -101,7 +102,8 @@ try {
     Object.assign(natives, gpu.natives);
     function alignWorldSurface(width,height){
       const display=document.querySelector('#display'),target=[...display.querySelectorAll('canvas')].filter(c=>c!==canvas).sort((a,b)=>b.width*b.height-a.width*a.height)[0];
-      if(target&&canvas.parentElement){const box=target.getBoundingClientRect(),parentBox=display.getBoundingClientRect(),sx=box.width/target.width,sy=box.height/target.height;Object.assign(canvas.style,{display:'block',left:(box.left-parentBox.left+(target.width-width)*sx/2)+'px',top:(box.top-parentBox.top+(target.height-height)*sy)+'px',width:width*sx+'px',height:height*sy+'px'});}
+      displayLayout?.setSize(width,height);
+      if(target&&canvas.parentElement){const box=target.getBoundingClientRect(),parentBox=display.getBoundingClientRect(),scale=displayLayout?.scale||1,sx=box.width/target.width/scale,sy=box.height/target.height/scale;Object.assign(canvas.style,{display:'block',left:((box.left-parentBox.left)/scale+(target.width-width)*sx/2)+'px',top:((box.top-parentBox.top)/scale+(target.height-height)*sy)+'px',width:width*sx+'px',height:height*sy+'px'});}
       updateWorldCover();
     }
     const progressName='Java_orsc_BrowserWebGLBridge_worldProgress',progress=natives[progressName];
@@ -129,8 +131,10 @@ try {
     javaProperties: ['user.dir=/files', ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])], natives});
   report('Browser Java ready');
   const display = document.querySelector('#display');
-  cheerpjCreateDisplay(1000, 620, display);
-  if (gpu) { display.style.position = 'relative'; display.append(gpu.canvas);worldCover.attach(); }
+  displayLayout=createBrowserDisplay({window,document,display,viewport:document.querySelector('#viewport')});
+  window.browserProof.displayLayout=displayLayout.stats;
+  displayLayout.attachDesktop(cheerpjCreateDisplay(960,540,display));
+  if (gpu) { display.append(gpu.canvas);worldCover.attach(); }
   const code = await cheerpjRunMain('orsc.browser.BrowserBootstrap', '/app/browser-spike.jar:/app/client.jar', window.browserProof.mode);
   window.browserProof.ended = true; report('Java program stopped (exit ' + code + '); see console for compatibility results');
   finish('Java program stopped (exit ' + code + '). See console for compatibility results.');
