@@ -138,6 +138,58 @@ public class GraphicsController {
 	private int[] m_Xb;
 	private ZipFile spriteArchive;
 	private final RemasteredSpriteResolver remasteredSpriteResolver = new RemasteredSpriteResolver();
+	private WorldOverlayCoverage worldOverlayCoverage;
+
+	/** Opt in on the real on-screen surface only; scratch/minimap surfaces stay ordinary RGB. */
+	public final void setWorldOverlayCoverageEnabled(boolean enabled) {
+		if (enabled) {
+			if (worldOverlayCoverage == null) worldOverlayCoverage = new WorldOverlayCoverage();
+		} else {
+			if (worldOverlayCoverage != null) worldOverlayCoverage.reset(true);
+			worldOverlayCoverage = null;
+		}
+	}
+
+	/** Begin only where the Scene deliberately skips the software world raster. */
+	public final boolean beginTransparentWorldOverlay() {
+		return worldOverlayCoverage != null && worldOverlayCoverage.begin(pixelData, width2, height2);
+	}
+
+	/** Before a complete legacy/login/loading image; does not alter ordinary RGB pixels. */
+	public final void beginOpaqueWorldOverlay() {
+		if (worldOverlayCoverage != null) worldOverlayCoverage.reset(false);
+	}
+
+	/** Release retained plane storage on resize/context teardown, preserving opt-in. */
+	public final void clearWorldOverlayCoverage() {
+		if (worldOverlayCoverage != null) worldOverlayCoverage.reset(true);
+	}
+
+	/** Null means disabled; an opaque view means RGB is already the complete image. */
+	public final WorldOverlayCoverage.Frame borrowWorldOverlayCoverage() {
+		return worldOverlayCoverage == null ? null : worldOverlayCoverage.borrow(pixelData, width2, height2);
+	}
+
+	public final boolean isWorldOverlayCoverageCurrent(WorldOverlayCoverage.Frame frame) {
+		return worldOverlayCoverage != null && worldOverlayCoverage.isCurrent(frame, pixelData, width2, height2);
+	}
+
+	/** External raw/Java2D writers must call this before touching an active overlay. */
+	public final void invalidateWorldOverlayCoverage(String reason) {
+		coverageUnsupported(reason == null ? "Unsupported external framebuffer writer" : reason);
+	}
+
+	private void coverageOpaque(int[] destination, int index) {
+		if (worldOverlayCoverage != null) worldOverlayCoverage.opaque(destination, index);
+	}
+
+	private void coverageMultiply(int[] destination, int index, int numerator) {
+		if (worldOverlayCoverage != null) worldOverlayCoverage.multiply(destination, index, numerator);
+	}
+
+	private void coverageUnsupported(String operation) {
+		if (worldOverlayCoverage != null) worldOverlayCoverage.invalidate(operation);
+	}
 
 	GraphicsController(int var1, int var2, int var3) {
 		try {
@@ -161,6 +213,7 @@ public class GraphicsController {
 	}
 
 	public final void beginRenderer2DFrame() {
+		if (worldOverlayCoverage != null) worldOverlayCoverage.beginFrame();
 		renderer2DSpriteCommands.clear();
 		renderer2DTextCommands.clear();
 		renderer2DPrimitiveCommands.clear();
@@ -218,6 +271,7 @@ public class GraphicsController {
 	 * replay their draw commands through the OpenGL overlay bridge.
 	 */
 	public final void beginSoftwareOwnedRenderer2DFrame() {
+		beginOpaqueWorldOverlay();
 		beginRenderer2DFrame();
 		renderer2DCommandCaptureSuppressed = true;
 	}
@@ -418,7 +472,8 @@ public class GraphicsController {
 	}
 
 	private boolean canReplaceRenderer2DNativeUi() {
-		return renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
+		return worldOverlayCoverage == null
+			&& renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
 			&& renderer2DUiBaseCaptured
 			&& !renderer2DNativeUiSoftwareDirty
 			&& Renderer2DSettings.canPresentUiBaseFrame();
@@ -1286,6 +1341,7 @@ public class GraphicsController {
 	}
 
 	public void resize(int width, int height) {
+		clearWorldOverlayCoverage();
 		this.clipBottom = height;
 		this.clipRight = width;
 		this.pixelData = new int[width * height];
@@ -1782,6 +1838,7 @@ public class GraphicsController {
 	}
 
 	public final void a(int var1, int var2, int var3, int var4, int var5, int var6, int var7) {
+		coverageUnsupported("Nonlocal framebuffer blur during GPU world overlay");
 		try {
 			for (int var8 = var4; var8 < var4 + var6; ++var8) {
 				for (int var9 = var3; var3 + var1 > var9; ++var9) {
@@ -1840,9 +1897,11 @@ public class GraphicsController {
 							int var24 = ('\uff60' & var9) >> 8;
 							int var25 = 255 & var9;
 							if (var23 == var24 && var25 == var24) {
+								coverageOpaque(letterPlotTable, var7);
 								letterPlotTable[var7++] = (var23 * var16 >> 8 << 16) + (var17 * var24 >> 8 << 8)
 									+ (var25 * var18 >> 8);
 							} else {
+								coverageOpaque(letterPlotTable, var7);
 								letterPlotTable[var7++] = var9;
 							}
 						} else {
@@ -1884,6 +1943,7 @@ public class GraphicsController {
 								 int[] src, int srcStepY, int destHead) {
 		try {
 			for (int i = negCount; i < 0; ++i) {
+				coverageOpaque(dest, destHead);
 				dest[destHead++] = src[(srcHeadY >> 17) * srcWidth + (srcHeadX >> 17)];
 				srcHeadX += srcStepX;
 				srcHeadY += srcStepY;
@@ -1910,6 +1970,7 @@ public class GraphicsController {
 							++var3;
 						} else {
 							int var16 = var8[var3];
+							coverageMultiply(var8, var3, var13);
 							var8[var3++] = FastMath.bitwiseAnd(16711680,
 								var6 * FastMath.bitwiseAnd(var5, '\uff00')
 									+ var13 * FastMath.bitwiseAnd('\uff00', var16))
@@ -1954,6 +2015,7 @@ public class GraphicsController {
 					// System.out.println("color is black");
 					++destHead;
 				} else {
+					coverageOpaque(var5, destHead);
 					var5[destHead++] = color;
 				}
 
@@ -2001,6 +2063,7 @@ public class GraphicsController {
 					if (var5 == 0) {
 						++var8;
 					} else {
+						coverageOpaque(var2, var8);
 						var2[var8++] = var5;
 					}
 
@@ -2008,11 +2071,13 @@ public class GraphicsController {
 					if (var5 == 0) {
 						++var8;
 					} else {
+						coverageOpaque(var2, var8);
 						var2[var8++] = var5;
 					}
 
 					var5 = var9[var6++];
 					if (var5 != 0) {
+						coverageOpaque(var2, var8);
 						var2[var8++] = var5;
 					} else {
 						++var8;
@@ -2022,6 +2087,7 @@ public class GraphicsController {
 					if (var5 == 0) {
 						++var8;
 					} else {
+						coverageOpaque(var2, var8);
 						var2[var8++] = var5;
 					}
 				}
@@ -2031,6 +2097,7 @@ public class GraphicsController {
 					if (var5 == 0) {
 						++var8;
 					} else {
+						coverageOpaque(var2, var8);
 						var2[var8++] = var5;
 					}
 				}
@@ -2181,6 +2248,7 @@ public class GraphicsController {
 						int color = src[(srcStartX >> 16) + srcRowHead];
 						srcStartX += scaleX;
 						if (RendererTransparency.isVisibleSpritePixel(color)) {
+							coverageOpaque(dest, destHead);
 							dest[destHead++] = color;
 						} else {
 							++destHead;
@@ -2340,6 +2408,7 @@ public class GraphicsController {
 									(((spriteR + canvasR) >> 8) << 16) +
 										(((spriteG + canvasG) >> 8) << 8) +
 										((spriteB + canvasB) >> 8);
+								coverageMultiply(dest, var32 + destRowHead, inverseOpacity);
 								dest[var32 + destRowHead] = finalColour;
 
 								/*if (spritePixelR == spritePixelG && spritePixelB == spritePixelG) {
@@ -2377,6 +2446,7 @@ public class GraphicsController {
 	}
 
 	public final void copyPixelDataToSurface(SPRITE_LAYER layer, int xOffset, int yOffset, int width, int height) {
+		coverageUnsupported("Framebuffer sprite capture during GPU world overlay");
 		try {
 			int[] pixels = new int[width * height];
 			int pixel = 0;
@@ -2485,6 +2555,7 @@ public class GraphicsController {
 						+ (yi * topB + btmB * (height - yi)) / height;
 
 					for (int xi = -width; xi < 0; ++xi) {
+						coverageOpaque(this.pixelData, pxHead);
 						this.pixelData[pxHead++] = color;
 					}
 
@@ -2517,6 +2588,7 @@ public class GraphicsController {
 			int var2 = this.height2 * this.width2;
 			if (var1 == !this.interlace) {
 				for (int i = 0; var2 > i; ++i) {
+					coverageOpaque(this.pixelData, i);
 					this.pixelData[i] = 0;
 				}
 			} else {
@@ -2524,6 +2596,7 @@ public class GraphicsController {
 
 				for (int i = -this.height2; i < 0; i += 2) {
 					for (int j = -this.width2; j < 0; ++j) {
+						coverageOpaque(this.pixelData, head);
 						this.pixelData[head++] = 0;
 					}
 
@@ -2563,6 +2636,7 @@ public class GraphicsController {
 	}
 
 	public final void storeSpriteVert(int index, int startX, int startY, int width, int height) {
+		coverageUnsupported("Login viewport capture during GPU world overlay");
 		int[] pixels = new int[width * height];
 		int pixel = 0;
 		for (int y = startY; y < startY + height; y++) {
@@ -2623,6 +2697,7 @@ public class GraphicsController {
 
 			for (int yi = -height; yi < 0; yi += var8) {
 				for (int xi = -widthh; xi < 0; ++xi) {
+					coverageOpaque(this.pixelData, var10);
 					this.pixelData[var10++] = color;
 				}
 
@@ -2686,6 +2761,7 @@ public class GraphicsController {
 					int o3 = mixOld * ((0xFF0000 & this.pixelData[pxi]) >> 16);
 					int o2 = mixOld * ((0xFF00 & this.pixelData[pxi]) >> 8);
 					int var20 = (o1 + n1 >> 8) + (o2 + n2 >> 8 << 8) + (n3 + o3 >> 8 << 16);
+					coverageMultiply(this.pixelData, pxi, mixOld);
 					this.pixelData[pxi++] = var20;
 				}
 
@@ -2760,6 +2836,7 @@ public class GraphicsController {
 					int destB = destAlpha * ((0xFF00 & this.pixelData[rowStart]) >> 8);
 					int destR = destAlpha * ((this.pixelData[rowStart] & 0xFF0000) >> 16);
 					int finalColor = (destG + srcG >> 8) + (srcB + destB >> 8 << 8) + (srcR + destR >> 8 << 16);
+					coverageMultiply(this.pixelData, rowStart, destAlpha);
 					this.pixelData[rowStart++] = finalColor;
 				}
 			}
@@ -3080,6 +3157,7 @@ public class GraphicsController {
 					}
 
 					for (int xi = 0; width > xi; ++xi) {
+						coverageOpaque(this.pixelData, offset + xi);
 						this.pixelData[offset + xi] = color;
 					}
 
@@ -3109,6 +3187,7 @@ public class GraphicsController {
 				}
 
 				for (int i = 0; height > i; ++i) {
+					coverageOpaque(this.pixelData, pxOffset + this.width2 * i);
 					this.pixelData[pxOffset + this.width2 * i] = color;
 				}
 			}
@@ -3813,6 +3892,7 @@ public class GraphicsController {
 	}
 
 	public final void fade2black(int var1) {
+		if (worldOverlayCoverage != null && worldOverlayCoverage.retainFade(pixelData, width2, height2)) return;
 		try {
 
 			int var4 = this.height2 * this.width2;
@@ -3860,6 +3940,7 @@ public class GraphicsController {
 				for (int i = -height; i < 0; ++i) {
 					for (int j = count2; j < 0; ++j) {
 						if (src[srcHead++] != 0) {
+							coverageOpaque(dest, destHead);
 							dest[destHead++] = color;
 						} else {
 							++destHead;
@@ -3868,16 +3949,19 @@ public class GraphicsController {
 						if (src[srcHead++] == 0) {
 							++destHead;
 						} else {
+							coverageOpaque(dest, destHead);
 							dest[destHead++] = color;
 						}
 
 						if (src[srcHead++] == 0) {
 							++destHead;
 						} else {
+							coverageOpaque(dest, destHead);
 							dest[destHead++] = color;
 						}
 
 						if (src[srcHead++] != 0) {
+							coverageOpaque(dest, destHead);
 							dest[destHead++] = color;
 						} else {
 							++destHead;
@@ -3888,6 +3972,7 @@ public class GraphicsController {
 						if (src[srcHead++] == 0) {
 							++destHead;
 						} else {
+							coverageOpaque(dest, destHead);
 							dest[destHead++] = color;
 						}
 					}
@@ -3921,12 +4006,14 @@ public class GraphicsController {
 					} else if (alpha < 230) {
 						int invAlpha = (256 - alpha);
 						int destColor = dest[destHead];
+						coverageMultiply(dest, destHead, invAlpha);
 						dest[destHead++] = (FastMath.bitwiseAnd(0xFF00FF00,
 							FastMath.bitwiseAnd(0xFF00FF, color) * alpha
 								+ FastMath.bitwiseAnd(destColor, 0xFF00FF) * invAlpha)
 							+ FastMath.bitwiseAnd(invAlpha * FastMath.bitwiseAnd(0xFF00, destColor)
 							+ alpha * FastMath.bitwiseAnd(0xFF00, color), 0xFF0000)) >> 8;
 					} else {
+						coverageOpaque(dest, destHead);
 						dest[destHead++] = color;
 					}
 				}
@@ -3988,6 +4075,7 @@ public class GraphicsController {
 				if (!recordRenderer2DPrimitive(x, y, 1, 1, val, 256)) {
 					markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.PIXEL);
 				}
+				coverageOpaque(this.pixelData, x + this.width2 * y);
 				this.pixelData[x + this.width2 * y] = val;
 			}
 		} catch (RuntimeException var6) {
@@ -4199,6 +4287,7 @@ public class GraphicsController {
 							++destHead;
 						} else {
 							int oldColor = dest[destHead];
+							coverageMultiply(dest, destHead, alphaInverse);
 							dest[destHead++] = FastMath
 								.bitwiseAnd(FastMath.bitwiseAnd(0xFF00, oldColor) * alphaInverse
 									+ FastMath.bitwiseAnd(0xFF00, newColor) * alpha, 0xFF0000)
@@ -4331,6 +4420,7 @@ public class GraphicsController {
 									(((spriteR + canvasR) >> 8) << 16) +
 										(((spriteG + canvasG) >> 8) << 8) +
 										((spriteB + canvasB) >> 8);
+								coverageMultiply(dest, destRowHead + j, inverseOpacity);
 								dest[destRowHead + j] = finalColour;
 
 								/*// Are we a grey?
@@ -4430,9 +4520,11 @@ public class GraphicsController {
 								int newG = newColor >> 8 & 255;
 								// Is grey
 								if (newR == newG && newB == newG) {
+									coverageOpaque(dest, j + destRowHead);
 									dest[j + destRowHead] = (backG * newG >> 8 << 8) + (backR * newR >> 8 << 16)
 										+ (backB * newB >> 8);
 								} else {
+									coverageOpaque(dest, destRowHead + j);
 									dest[destRowHead + j] = newColor;
 								}
 							}
