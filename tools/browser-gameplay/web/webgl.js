@@ -71,11 +71,11 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
       const pixels=typed(pixelInput,Int32Array);if(pixels.length!==width*height)throw new Error('Browser texture dimensions mismatch');
       const rgba=new Uint8Array(pixels.length*4);for(let n=0;n<pixels.length;n++){const c=pixels[n];rgba[n*4]=c>>>24;rgba[n*4+1]=c>>>16;rgba[n*4+2]=c>>>8;rgba[n*4+3]=c;}
       const old=textures.get(id);if(old){gl.deleteTexture(old.texture);stats.gpuBytes-=old.bytes;}
-      const bytes=rgba.length;allocate(bytes);const texture=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);textureParameters();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,rgba);textures.set(id,{texture,bytes});check();
+      const bytes=rgba.length;allocate(bytes);const texture=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);textureParameters();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,rgba);textures.set(id,{texture,bytes,revision:(old?.revision||0)+1});check();
     },
     async Java_orsc_BrowserWebGLBridge_present(lib,width,height,world,matrixInput,uniformInput,drawInput,pixelInput){
       alive();const submitStart=performance.now();
-      if(gpuTimer){while(pendingQueries.length&&gl.getQueryParameter(pendingQueries[0],gl.QUERY_RESULT_AVAILABLE)){const q=pendingQueries.shift();if(!gl.getParameter(gpuTimer.GPU_DISJOINT_EXT)){stats.gpuWorkSamples.push(gl.getQueryParameter(q,gl.QUERY_RESULT)/1e6);if(stats.gpuWorkSamples.length>600)stats.gpuWorkSamples.shift();}gl.deleteQuery(q);}}
+      if(gpuTimer){while(pendingQueries.length&&gl.getQueryParameter(pendingQueries[0],gl.QUERY_RESULT_AVAILABLE)){const q=pendingQueries.shift();if(!gl.getParameter(gpuTimer.GPU_DISJOINT_EXT)){stats.gpuWorkSamples.push(gl.getQueryParameter(q,gl.QUERY_RESULT)/1e6);if(stats.gpuWorkSamples.length>(stats.measurement?4096:600))stats.gpuWorkSamples.shift();}gl.deleteQuery(q);}}
       const timerQuery=gpuTimer&&pendingQueries.length<8?gl.createQuery():null;if(timerQuery)gl.beginQuery(gpuTimer.TIME_ELAPSED_EXT,timerQuery);
       const matrices=typed(matrixInput,Float32Array),u=typed(uniformInput,Float32Array),draws=typed(drawInput,Int32Array),pixels=typed(pixelInput,Int32Array);
       if(width<1||height<1||width*height>MAX_PIXELS||pixels.length!==width*height||matrices.length!==48||u.length!==30||draws.length%8||draws.length>256*8)throw new Error('Browser frame bounds violated');
@@ -104,12 +104,12 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
       gl.pixelStorei(gl.UNPACK_ALIGNMENT,4);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(pixels.buffer,pixels.byteOffset,pixels.byteLength));
       gl.uniform1i(gl.getUniformLocation(overlayProgram,'image'),0);gl.uniform1i(gl.getUniformLocation(overlayProgram,'world'),world?1:0);gl.drawArrays(gl.TRIANGLES,0,3);gl.depthMask(true);check();
       if(timerQuery){gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);pendingQueries.push(timerQuery);}
-      const now=performance.now();stats.jsSubmissionSamples.push(now-submitStart);if(stats.jsSubmissionSamples.length>600)stats.jsSubmissionSamples.shift();
-      if(world){if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);if(stats.worldFrameSamples.length>600)stats.worldFrameSamples.shift();}lastWorld=now;}else lastWorld=0;
+      const now=performance.now();stats.jsSubmissionSamples.push(now-submitStart);if(stats.jsSubmissionSamples.length>(stats.measurement?4096:600))stats.jsSubmissionSamples.shift();
+      if(world){if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);if(stats.worldFrameSamples.length>(stats.measurement?4096:600))stats.worldFrameSamples.shift();}lastWorld=now;}else lastWorld=0;
       stats.javaFrames++;stats.drawCalls=calls;stats.triangles=triangles;stats.activeChunks=draws.length/8;stats.lastFrame=now;
-      if(last){stats.frameSamples.push(now-last);if(stats.frameSamples.length>600)stats.frameSamples.shift();}last=now;
+      if(last){stats.frameSamples.push(now-last);if(stats.frameSamples.length>(stats.measurement?4096:600))stats.frameSamples.shift();}last=now;
     },
-    async Java_orsc_BrowserWebGLBridge_frameWork(lib,values){alive();stats.javaBridgeWorkSamples.push(Array.from(values));if(stats.javaBridgeWorkSamples.length>600)stats.javaBridgeWorkSamples.shift();},
+    async Java_orsc_BrowserWebGLBridge_frameWork(lib,values){alive();stats.javaCacheEntries=values[5];stats.javaCacheResidentBytes=values[6];stats.javaBridgeWorkSamples.push(Array.from(values));if(stats.javaBridgeWorkSamples.length>(stats.measurement?4096:600))stats.javaBridgeWorkSamples.shift();},
     async Java_orsc_BrowserWebGLBridge_deleteChunks(lib,input){
       alive();const ids=typed(input,Int32Array);for(const id of ids){const x=chunks.get(id);if(!x)throw new Error('Eviction references absent GPU chunk');gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);stats.gpuBytes-=x.bytes;chunks.delete(id);}stats.evictedChunks=(stats.evictedChunks||0)+ids.length;
     },

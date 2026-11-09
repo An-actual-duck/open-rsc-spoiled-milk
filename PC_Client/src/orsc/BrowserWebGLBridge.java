@@ -12,10 +12,13 @@ import orsc.graphics.three.*;
 /** Experimental local WebGL2 backend. Native calls synchronously copy/upload borrowed primitive arrays. */
 public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static final int MAX_CHUNKS=256, MAX_VERTICES=524288, MAX_PIXELS=2097152, UPLOAD_VERTICES_PER_FRAME=32768;
-    private final Map<Long,CachedChunk> chunks=new LinkedHashMap<Long,CachedChunk>();
+    private final Map<Long,CachedChunk> chunks=new LinkedHashMap<Long,CachedChunk>(32,.75f,true);
     private final Map<Integer,Long> textures=new HashMap<Integer,Long>();
     private final OpenGLWorldChunkRenderer packing=new OpenGLWorldChunkRenderer(null,null,null,true,true,false,false,true,true,false);
     private final OpenGLPixelWorkspace spriteWorkspace=new OpenGLPixelWorkspace();
+    private static final long CHUNK_BUDGET=224L*1024*1024; // reserve32MiB for the bounded world texture catalog
+    private static final boolean ACTIVE_ONLY="active".equals(System.getProperty("spoiledmilk.browserCachePolicy","lru"));
+    private long residentChunkBytes;
     private int nextId=1;
     private boolean initialized;
     private static native void initialize(String vertex, String fragment);
@@ -27,7 +30,13 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void deleteChunks(int[] ids);
     private static native void beginWorldSprites();
     private static native void uploadWorldSprite(int width,int height,float[] vertices,byte[] rgba);
-    public static void install() { BrowserFrameSinkRegistry.install(new BrowserWebGLBridge()); }
+    public static void install() {
+        if(Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
+            System.setProperty("spoiledmilk.remasterLightAzimuth","135");System.setProperty("spoiledmilk.remasterLightElevation","45");
+            RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);RendererBrightnessSettings.setMode(RendererBrightnessSettings.Mode.HIGH);
+        }
+        BrowserFrameSinkRegistry.install(new BrowserWebGLBridge());
+    }
     private static String shader(String name) throws Exception {
         Field f=OpenGLShaderProgram.class.getDeclaredField(name);f.setAccessible(true);return (String)f.get(null);
     }
@@ -55,7 +64,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks())active.add(chunk.getStorageSignature());
             int[] deleted=new int[chunks.size()];int deletedCount=0;
             Iterator<Map.Entry<Long,CachedChunk>> iterator=chunks.entrySet().iterator();
-            while(iterator.hasNext()){Map.Entry<Long,CachedChunk> entry=iterator.next();if(!active.contains(entry.getKey())){deleted[deletedCount++]=entry.getValue().id;iterator.remove();}}
+            while(iterator.hasNext()){Map.Entry<Long,CachedChunk> entry=iterator.next();if(!active.contains(entry.getKey())){if(ACTIVE_ONLY){deleted[deletedCount++]=entry.getValue().id;residentChunkBytes-=entry.getValue().bytes;iterator.remove();}}}
             if(deletedCount>0)deleteChunks(Arrays.copyOf(deleted,deletedCount));
             for(Renderer3DTextureData texture:frame.getTextures()) {
                 if(texture==null)continue;
@@ -72,7 +81,9 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 long signature=chunk.getStorageSignature();CachedChunk cached=chunks.get(signature);
                 if(cached==null && (uploaded==0||uploaded+chunk.getVertexCount()<=UPLOAD_VERTICES_PER_FRAME)) {
                     if(chunk.getVertexCount()>MAX_VERTICES||chunk.getIndexCount()>MAX_VERTICES*3)throw new IllegalStateException("Browser chunk exceeds capacity");
-                    cached=upload(frame,chunk);chunks.put(signature,cached);uploaded+=chunk.getVertexCount();
+                    long required=(long)chunk.getVertexCount()*28*4+(long)Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3*4;
+                    makeRoom(active,required);
+                    cached=upload(frame,chunk,required);chunks.put(signature,cached);residentChunkBytes+=required;uploaded+=chunk.getVertexCount();
                 }
                 if(cached==null)continue;
                 draws[count++]=cached.id;draws[count++]=chunk.getVertexOffsetX()-cached.x;draws[count++]=chunk.getVertexOffsetZ()-cached.z;
@@ -83,11 +94,11 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             long geometryEnd=System.nanoTime();
             float[] view=OpenGLWorldChunkRenderer.backendWorldViewMatrix(frame);
             float[] clip=OpenGLWorldChunkRenderer.multiply(OpenGLWorldChunkRenderer.projectionMatrix(frame),view);
-            float[] matrices=new float[48];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);columnMajor(OpenGLFramePresenter.cameraToClipProjectionMatrix(frame),matrices,32);
+            float[] matrices=new float[48];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);columnMajor(OpenGLFramePresenter.backendCameraToClipProjectionMatrix(frame),matrices,32);
             uploadSprites(frame);
             long spriteEnd=System.nanoTime();
             present(w,h,true,matrices,uniforms(frame),Arrays.copyOf(draws,count),borrowOverlay(image));
-            long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-spriteEnd)/1000000f});
+            long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-spriteEnd)/1000000f,chunks.size(),residentChunkBytes});
         } finally { RendererFrameLighting.restore(previous); }
     }
     private void uploadSprites(Renderer3DFrame frame) {
@@ -114,7 +125,18 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         return result;
     }
 
-    private CachedChunk upload(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+    private void makeRoom(Set<Long> active,long required) {
+        if(required>CHUNK_BUDGET)throw new IllegalStateException("Browser chunk exceeds resident byte budget");
+        int[] deleted=new int[chunks.size()];int count=0;
+        Iterator<Map.Entry<Long,CachedChunk>> iterator=chunks.entrySet().iterator();
+        while((residentChunkBytes+required>CHUNK_BUDGET||chunks.size()>=MAX_CHUNKS*2)&&iterator.hasNext()) {
+            Map.Entry<Long,CachedChunk> entry=iterator.next();if(active.contains(entry.getKey()))continue;
+            deleted[count++]=entry.getValue().id;residentChunkBytes-=entry.getValue().bytes;iterator.remove();
+        }
+        if(count>0)deleteChunks(Arrays.copyOf(deleted,count));
+        if(residentChunkBytes+required>CHUNK_BUDGET||chunks.size()>=MAX_CHUNKS*2)throw new IllegalStateException("Active browser scene exceeds resident byte budget");
+    }
+    private CachedChunk upload(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk,long bytes) {
         Map<String,List<Integer>> indices=new LinkedHashMap<String,List<Integer>>();
         Map<String,int[]> materials=new LinkedHashMap<String,int[]>();
         int triangles=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3);
@@ -132,7 +154,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             for(Integer value:group.getValue())index[at++]=value;
         }
         int id=nextId++;uploadChunk(id,packing.copyBackendChunkVertices(chunk,frame),index,batch);
-        return new CachedChunk(id,chunk.getVertexOffsetX(),chunk.getVertexOffsetZ());
+        return new CachedChunk(id,chunk.getVertexOffsetX(),chunk.getVertexOffsetZ(),bytes);
     }
     static int[] borrowOverlay(BufferedImage image) {
         if (!(image.getRaster().getDataBuffer() instanceof DataBufferInt)
@@ -161,5 +183,5 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             RendererReliefSettings.getTerrainStrength(),RendererReliefSettings.getObjectStrength(),RendererTerrainVariationSettings.getStrength(),RendererTerrainVariationSettings.getTolerance(),RendererTerrainVariationSettings.getTargetRed(),RendererTerrainVariationSettings.getTargetGreen(),RendererTerrainVariationSettings.getTargetBlue(),
             RendererTerrainDefinitionSettings.getMode().shaderId,RendererTerrainVariationSettings.isEnabled()?1:0,RendererLightingSettings.getMode()==RendererLightingSettings.Mode.DIRECTIONAL?1:0,RendererFogSettings.getMode()!=RendererFogSettings.Mode.OFF?1:0,f.getSignedWorldLevel()};
     }
-    private static final class CachedChunk {final int id,x,z;CachedChunk(int id,int x,int z){this.id=id;this.x=x;this.z=z;}}
+    private static final class CachedChunk {final int id,x,z;final long bytes;CachedChunk(int id,int x,int z,long bytes){this.id=id;this.x=x;this.z=z;this.bytes=bytes;}}
 }

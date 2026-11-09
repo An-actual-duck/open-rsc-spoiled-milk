@@ -75,6 +75,9 @@ public final class BrowserBootstrap {
                     java.lang.reflect.Field fpsField = orsc.mudclient.class.getDeclaredField("FPS"); fpsField.setAccessible(true);
                     while (true) {
                         Object client = clientField.get(null);
+                        if (client != null && webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
+                            orsc.mudclient actual=(orsc.mudclient)client;actual.setCameraZoomSetting(75);actual.cameraRotation=128;
+                        }
                         if (client != null) reportState(String.valueOf(modeField.get(client)), fpsField.getInt(null), orsc.ORSCApplet.globalLoadingPercent);
                         Thread.sleep(1000);
                     }

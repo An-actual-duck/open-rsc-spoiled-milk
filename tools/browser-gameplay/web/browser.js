@@ -64,6 +64,10 @@ const natives = {
   async Java_orsc_browser_BrowserBootstrap_wsClose(lib, id) { transport.close(id); },
 };
 try {
+  if (window.browserProof.mode==='webgl' && options.has('benchmark')) {
+    if(!['active','lru'].includes(options.get('cache')) || !['always','initial'].includes(options.get('underlay')))throw new Error('Private benchmark requires explicit cache and underlay policies');
+    window.browserProof.benchmark={cache:options.get('cache'),underlay:options.get('underlay'),tone:'day',sun:'135/45',brightness:'high',zoom:75,rotation:128};
+  }
   if (window.browserProof.mode === 'webgl') {
     const {createBrowserWebGL} = await import('./webgl.js');
     const canvas = document.createElement('canvas'); canvas.id = 'browser-webgl';
@@ -101,7 +105,7 @@ try {
   });
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
-    javaProperties: ['user.dir=/files'], natives});
+    javaProperties: ['user.dir=/files', ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay')] : [])], natives});
   report('Browser Java ready');
   const display = document.querySelector('#display');
   cheerpjCreateDisplay(1000, 620, display);

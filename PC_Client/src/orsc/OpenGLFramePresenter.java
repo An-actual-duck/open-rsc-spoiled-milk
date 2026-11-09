@@ -3983,7 +3983,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		gl.glLoadIdentity();
 	}
 
-	static float[] cameraToClipProjectionMatrix(Renderer3DFrame frame) {
+	static float[] backendCameraToClipProjectionMatrix(Renderer3DFrame frame) {
+        return cameraToClipProjectionMatrix(frame);
+    }
+
+    private static float[] cameraToClipProjectionMatrix(Renderer3DFrame frame) {
 		float viewportWidth = Math.max(1.0f, frame.getViewportWidth());
 		float viewportHeight = Math.max(1.0f, frame.getViewportHeight());
 		float scale = (float) (1 << Math.max(0, Math.min(24, frame.getPerspectiveShift())));
