@@ -1,0 +1,462 @@
+Browser GPU renderer continuation — private development
+=======================================================
+
+Latest validated private artifact
+---------------------------------
+Frozen6a249f50e115d38fec03ef70b547c9671e296dc4 / JAR
+ df5a5206874ea0d70ff8e63322f69c8518866c65bfad9f136be7d7041e7a3f89
+at loopback8112 passed actual AMD gameplay:3,949 real world frames, ordinary
+bank/inventory alpha UI and2,343 retained Sleep replay frames; no GPU error,
+last189225.1ms versus189224ms observer. A separate normal login returned to the
+real world for1,219 further frames, no error. Sleep was enabled ONLY in the
+preserved disposable fixture; public configuration remains sleep-disabled.
+The sleeping UI reached60FPS; the actual world did NOT. Full60FPS performance,
+matched desktop parity, broader devices and full-content gameplay remain open.
+The manager's complete-build pair measured35.94uncached versus37.73cached real
+worldFPS, at960x540, similarNPCmeans31.60/31.52 and2.33ms medianGPU. This
+single-device result supports the bounded exact cache as the private default;
+it does not establish60FPS, cross-device parity or a universal speed gain.
+
+Scope
+-----
+The maintained Java game now has an optional synchronous browser presentation
+sink at ScaledWindow.setGameImage. Desktop presentation remains the default.
+The sink borrows immutable Renderer3DFrame/Renderer2DFrame snapshots; the registry
+releases pooled 3D ownership in finally on normal, null-image and failure paths.
+WebGL2 receives primitive arrays and uploads/copies them before native calls
+return. This is local Java game execution and browser GPU rendering, with the
+normal private WebSocket server protocol and native world authority intact.
+No desktop video stream, owner account, public server or production DB is used.
+
+Renderer data
+-------------
+Resident geometry uses the production vertex/material/normal packer, camera
+matrix arithmetic and GLSL resident shader strings. A small syntax adapter
+converts GLSL120 to GLSL300es. Chunk storage signatures and presentation rebase
+offsets identify resident GPU buffers. The implementation preserves original
+texture pixels and game sprite artwork. RendererFrameLighting scopes the actual
+immutable frame so signed negative levels retain the current neutral-light rule.
+
+World sprites use the existing owned multipart snapshots, production composite
+texture builder, exact native atlas texel centers and top/bottom depth estimator.
+Camera-space quads receive ordinary GPU depth testing. Explicit per-entity
+GPU_OWNED/FORCE_SOFTWARE policy keeps captured mirrored/skewed actors off the
+software overlay, preserves native DEFAULT and rejects uncaptured GPU frames.
+Completed actor-failure/coverage metadata survives command consumption until the
+next actual begin-frame; native command/counter resets remain unchanged.
+
+Ordinary UI pixels still come from the real software writers. Optional per-owner
+transmittance reconstructs RGB + T * GPUworld using premultiplied blending.
+Legitimate black UI remains opaque. Native integer-rounding differences up to
+one channel step were observed in119 focused raster variants; this is not a
+claim of universal bitwise image identity. Exact retained FULL/BASE GPU images
+handle native packed-integer death/sleep fades without CPU world readback.
+RGBA drawingbuffer alpha is explicitly normalized after world/before UI; every
+final pixel stays opaque. The marker-only earlier path remains a comparison.
+
+Resource ownership
+------------------
+Scene/chunk/viewport/texture and sprite-atlas dimensions are bounded. Geometry
+and world textures have a256MiB budget; separately bounded resources include
+16MiB sprite atlas, up to160MiB shadows,8MiB masks and2MiB Sky peak. Optional
+C/T UI plus retained FULL/BASE textures enforce a combined32MiB peak by freeing
+retained storage before viewport changes; actual960x540 usage is8,294,400bytes.
+These texture/buffer ledgers exclude driver/program overhead. The optional exact
+Java sprite cache is separately bounded16MiB and is a measured control.
+Active chunks are protected; LRU reserves32MiB for textures and evicts inactive
+buffers before uploads exceed the224MiB chunk budget. New buffer allocations
+commit after GL checks; partial in-place failures explicitly require restart.
+No borrowed frame arrays survive the synchronous native upload. Context loss
+and backend errors are surfaced with actual frame age; Stop/restart is required.
+
+Evidence sequence (all earlier failed evidence is retained)
+-----------------------------------------------------------
+1. Sources604ae20fb/7e8b6625d compiled the production resident shader in real
+   browser WebGL. Initial automatically chosen adapter was SwiftShader. Run
+   names containing "hw" do not establish physical hardware; correction JSON
+   explicitly limits those captures. First implementation reached a usable
+   login form. The next ordinary login reached GAME, then resident object
+   construction failed in ChunkMesh.normalizeIntArray.
+2. Semantics-equivalent primitive fill/bounded-copy normalization, matching the
+   earlier enum compatibility work, resolves this activated path. JVM probes
+   pass5000int/float cases on main and5000on worker, enum4200+4200, and direct
+   constructor8+8. Real subsequent browser gameplay constructs resident objects.
+3. Frozen2a119ba4b / JAR0f1ce798bfacb31b54bb1e7cdd39ee91089a0c9a602af084c58093fbbea54378
+   rendered the real world on ANGLE/AMD RX6700XT with authoritative walking.
+   Its old inactive-buffer cache exhausted256MiB at110893ms. Later GAME/FPS
+   observer values were stale, so the180srun is rejected as stability evidence.
+   rejected-stability-summary.json records the failure and30coordinate pairs.
+4. Frozen cfef63c8f / JAR05c32867520d00f6cc493911e5f0e1ed17ddec6749877629253debb1b8229b6a
+   adds actual GPU multipart sprites and active-set eviction. The180sphysical
+   AMD capture completed5391Java frames,3943world frames, fresh last-frame at
+   185357ms, no GPU error, and197595752resident bytes. Four authoritative
+   positions were observed; blocked route clicks are not scene-transition proof.
+   The player is partly occluded by a tree in after-login.png at149643.
+   These mixed-route captures also ran during CPU checks and are functional
+   evidence, not an accepted performance comparison.
+
+All stages are under output/tests/browser-gameplay-spike/; detailed tests and
+frozen JARs are under output/tests/browser-webgl/. The relevant captures are
+webgl-primitive-fix/webgl-r5.0-j8-1794249131438 and
+webgl-depth-prune/webgl-r5.0-j8-1794249908365.
+
+Current measurement candidate
+-----------------------------
+Frozen ff4a705d3a84428011c02122a9544e4f0a833a4c uses
+JAR97afdc70320fe4d48349614d23ccbc2b56ad76a5ed927a8d3c900b3ae1cb2678,
+stage webgl-performance-cohorts. Query benchmark=1 pins day,135/45sun,
+high brightness, camera zoom75/rotation128. cache=active|lru and
+underlay=always|initial select controlled cohorts of the same artifact.
+The normal window/input surface still initializes and resizes. The initial-only
+policy avoids repainting an AWT layer fully covered by the browser GPU surface.
+The manager completed three exclusive 40-second exploratory cohorts. Actual
+new-world-frame rates were 27.37 (active/always), 28.33 (LRU/always) and 31.32
+(LRU/initial). All retained exactly 559094 world triangles, but mean NPC sprite
+groups drifted from 30.10 to 27.52, so these are not a clean causal 14% speedup.
+GPU median work stayed around 1.8 ms. The source frame interval medians were
+36.4, 35.1 and 31.8 ms; Java bridge medians were 8.7, 8.1 and 7.7 ms. Detailed
+phase samples and rejected early harness attempts are preserved in the manager's
+output/reviews/browser-gpu-continuation/benchmarks directory. The browser is
+still below the requested desktop-equivalent 60 FPS target.
+
+Statistics count actual Java-produced frames, with no independent rAF redraw
+inflating client frame counts. Separate arrays record Java world-frame intervals,
+asynchronous GPU work, JS submission wall time and Java bridge spans. The spans
+overlap and must not be summed as serialized work. Pending GPU queries can cross
+phase edges; trim the first8GPU samples and first CPU interval. Measurement rings
+are bounded4096; normal diagnostic rings are bounded600. Captures/profilers and
+parallel builds are excluded from manager timed phases.
+
+Work remaining
+--------------
+Shared production lighting/shadow data and browser modules were reviewed in a
+separate worker slice, merged through published main, and wired into the browser
+bridge. CPU checks pass for 321 production data cases and JS state/resource/
+failure controls. Actual GPU visual checks of this integrated candidate remain
+pending. The Java bridge now reports actual CPU-depth-frame presence in work
+array index7 and lighting-export milliseconds in index8; existing timing indices
+retain their earlier definitions. Geometry lighting binds the immutable frame's
+signed-level policy; menus declare an inactive scene and release large shadow
+maps. Context-loss recovery is explicitly a fresh session, with no unsafe
+independent native cache-reset API.
+A browser-only declaration may omit the unused CPU depth raster only for a sink
+that explicitly opts out. Desktop/editor/visible-world diagnostics retain it.
+The query depth=gpu remains private benchmark opt-in; ordinary browser mode keeps
+CPU depth pending additional interaction proof. A real Scene fixture passes 1982
+checks comparing opaque, transparent and cutout mouse-picking results with and
+without CPU depth. It is included in the pooled-frame sink guardrail.
+
+Frozen source 3cc6c3fa132e6f9a905432cc1520980b9e7e308b / JAR
+ d6d3233f92dbaac4f6ecc841307c63eeb7d765b8d746695ae0b3aa9e0b4904a9
+is staged as webgl-gpu-depth-owned on loopback 8104. An actual AMD hardware run
+with depth=gpu completed 2014 new world frames over its 100-second capture,
+observed authoritative walking from (145,646) to (142,648), retained tree/player
+occlusion and displayed the ordinary Chop/Walk/Examine tree menu. A subsequent
+180-second authored kitchen scene completed 5079 world frames, with a fresh last
+frame at 187045 ms, no GPU error, and 237794624 resident chunk/texture bytes.
+Take-pot and NPC context options were visible, but manual CDP clicks did not
+establish successful pickup, dialogue or door interaction. Those actions are not
+claimed as passed. Both captures used the real normal disposable account, never
+an administrator or owner account. Mixed functional captures are not benchmarks.
+
+The same candidate also restores native resident-world color-pass semantics:
+opaque/transparent batch separation, matching alpha thresholds, object backface
+culling and wall polygon offset. Full renderer guardrails, the sink/depth tests,
+client build and frontend contract tests passed before lighting integration.
+Hardware/browser/device coverage, broader combat/content, context recovery and
+public TLS/networking/distribution acceptance remain future work. This document
+does not claim the owner's full visual/performance goal has been achieved.
+
+Integrated lighting functional checkpoint
+-----------------------------------------
+Frozen2a73a9d5359125fe2f4c44d4a33a5997b6093578 / JAR
+0658072f0d997acbbb21fa5b896d448616fe5c10a5e63c6e27121c9e9a43fc7f
+is preserved as webgl-shared-lighting (8105). Actual AMD hardware rendering
+completed6833worldframes in its300-second functional capture. Last submitted
+frame315710.7ms was fresh against the315728ms Java observer; no GPU error.
+Geometry shadows were active with80MiB depth maps,237794624resident chunk/texture
+bytes, source AO/glow masks and correct negative-level-aware lighting scope.
+Actual cpuDepthFramePresent=false independently confirms the private GPU-depth
+opt-in. The warmed functional scene was roughly24–26FPS, not the60FPS goal.
+
+Held150ms menu clicks successfully dropped and recovered the ordinary Tin Short
+Sword at the player's tile. Inventory changed2/30→1/30→2/30, and the unmodified
+current-game connection carried opcodes246/drop and247/take for item1997 at
+(133,660). This avoids the earlier table-pot reach ambiguity. Ordinary door
+picking sent opcode136 and caused authoritative walking to(130,655); the run
+ended before arrival, so completed door opening is not claimed. Cook moved before
+manual click targets; a static NPC fixture is being prepared by the manager.
+The bounded output-only transport tap starts after GAME, stays on that existing
+connection, stops recording outside observedGAME and always forwards unchanged.
+No authentication/new-connection writes are intentionally captured.
+
+An observed repeated mask upload per world frame costs about8.5ms in Java lighting
+export. The shared glow builder's full-scene signature is under a separate
+focused worker review; no cache invalidation shortcut has been applied here.
+Native-source output equality and actual changed-emitter invalidation are needed.
+
+Next controlled candidate
+--------------------------
+Primitive material grouping removes per-index Integer allocation and per-triangle
+String keys. A two-pass encoder retains byte-identical first-seen batch order and
+index streams:5438checks over300deterministic production ChunkMesh cases pass.
+No performance gain is claimed from allocation changes before browser measurement.
+
+The browser previously remained on the legacy loop despite setting modernClientLoop,
+because the real selector also required the native OpenGL-primary window. A new
+explicit browser capability gate exposes private benchmark loop=legacy|modern;
+legacy remains the default. The same existing modern loop implementation is reused.
+The actual run2 choice is recorded in selectedClientLoopMode and exported by the
+observer, rather than inferred from requested properties. CPU fixtures preserve
+ordinary native-primary and software-desktop/default-browser/teardown policies.
+Actual CheerpJ park/cadence/input proof remains required before changing default.
+
+profile=1 enables production RenderTelemetry before class initialization, with
+interval1200 and rendererSlowFrameMs1000000. One coherent synchronized export per
+second reads19 cumulative StageStats count/total pairs using cached reflection;
+it does not format hundreds of full snapshot fields. Array ownership, schema and
+actual production counters are tested. Telemetry is an instrumented diagnostic,
+not a clean FPS acceptance run. clientLoopDraw covers drawGame, Scene and final
+ORSCApplet draw; sceneRender excludes pre/post scene assembly/UI; frameStats is
+only the final ORSCApplet presentation segment. These nested spans must not be
+summed as independent work. Cohort deltas and counts are required for ranking.
+
+Profile compatibility correction
+--------------------------------
+The244f6d706 candidate proved the actual selected modern loop and received normal
+banker dialogue, but its first profile run is rejected for stability: after73s,
+the automatic full telemetry report called an unavailable CheerpJ OS/JMX service
+(__syscall_times), throwing ArrayIndexOutOfBoundsException in the CPU-load probe.
+Later GAME/FPS observer summaries were stale after Java stopped. The failure and
+full console transcript remain in webgl-cadence-profile; exit0 did not mean success.
+
+The private browser profile now explicitly selects counters-only collection,
+retaining ordinary bounded counter rings and cumulative totals while suppressing
+automatic full OS/JMX reports. Desktop reports remain the default. Optional
+process/system CPU-load reads additionally return the existing-1 unavailable marker
+on RuntimeException; injected tests verify this and preserve OOM/ThreadDeath.
+The browser proof labels this instrumented mode counters-only. The reviewed shared
+glow cache fix has been merged normally from published main and needs a fresh
+actual profile before drawing further performance conclusions.
+
+The rejected run's valid pre-failure50.984–69.164s diagnostic interval contained432
+frames. Mean cumulative deltas were42.04ms loop,6.15ms update and35.88ms draw;
+Scene11.53ms (rotate0.61,cull6.36,legacy/picking/sprite preparation4.20,depth0),
+final presentation17.95ms. These nested scopes are not additive. The source
+profile is useful for ranking; it is not a clean performance or stability pass.
+
+Counters-only functional result and controlled ownership work
+-------------------------------------------------------------
+Frozen0ecf6aa8528e65a1fba59ed3b8e26ab58f7c10e3 / JAR
+487408f3b0ab373155c708c162a5318291afafed9d4e4d9edf567ddfcd3c4abb
+completed180seconds normally on actual AMD hardware:4828worldframes, last frame
+189130.4ms fresh against189147ms observer, no error; actualmodern loop, GPU depth,
+geometry shadows and177counters-only snapshots. Glow uploads dropped to6total and
+Java lighting export to roughly0.1ms. The adjacent authored Doorframe Close command
+sent opcode127at(132,659), moved the player there, changed the mesh to closed Door,
+and exposed its Open option. Final reopen click missed the run deadline and is
+not claimed. Normal banker dialogue passed in the earlier modern run. Drop/re-take,
+ordinary menus and authoritative movement also passed earlier functional captures.
+
+The manager's same-artifact full-lighting unprofiled pair measured30.86legacy and
+30.61modern new world FPS. There was no meaningful loop-only gain at this CPU load;
+legacy remains the default. The cadence control stays available for future work.
+The diagnostic50.6–89.05s profile interval had1213loop samples:31.70ms loop,
+4.57ms accumulated update per loop,27.11ms draw,11.36ms Scene (6.41cull,4.01legacy,
+0.59rotation),9.78ms final presentation. These are nested instrumented means.
+The export now additionally carries clientLoopUpdateCountStats so update-time
+can be normalized by actual update count, not mistaken for time per update.
+
+Private benchmark cull=late|early keeps the existing ownership/picking predicate,
+but early mode applies it before redundant face-frustum vertex scans. Defaultlate
+and desktop behavior remain unchanged. Actual Scene differential checks pass1084
+retained-face/pick/pixel cases with1332near-plane crossings, frustum boundaries,
+transparent/cutout materials, expanded invisible proxies and forced-legacy frames.
+Private ownership=objects|all extends ownership to WALL/ROOF only for a trusted
+installed browser backend explicitly needing no CPU depth frame. The same pointer
+and interaction-occluder exceptions remain. Another2975checks retain exact picks,
+relative sprite anchors/draw order, resident mesh data and pixels, exercise88actual
+omitted wall/roof faces, and preserve CPU-depth/default/forced-legacy paths.
+Both controls remain opt-in until actual hardware functional and paired tests.
+
+Sky, native sampling and cache variant integration checkpoint
+--------------------------------------------------------------
+Shared native world-dome geometry/palette export is now wired into the GPU sink,
+with bounded static geometry and per-frame palette/matrix replay. Negative levels
+and menus disable it using the same source policy; screen-space diagnostic sky
+remains outside this adapter. Actual integrated browser checks are pending.
+Native texel-center endpoints now govern standalone world UVs and sprite-atlas UVs.
+82CPUchecks compare native atlas coordinates (including one-pixel, NPOT and mirrored
+samples) and actual material dependency states; JS API tests compare those exported
+native references, copied metadata, fixed-budget in-place repacks and alpha class
+updates/removal. Production pixels are unchanged.
+
+Resident packed variants now track the exact native brightness/fog/lighting/
+geometry tuple and relevant texture presence/dimensions/precomputed average/alpha
+class. RGB-only animated pixel changes update textures without invalidating all
+geometry. Stale entries are repacked oldest-first under the existing vertex budget,
+with VBO/IBO identity and placement bookkeeping retained. Current texture alpha
+classification updates immediately while the bounded Java repack catches up.
+Latest-only actual pose/display metadata supports meaningful native/browser camera
+comparison; requested zoom/rotation alone did not prove matched final pose.
+
+This candidate is a functional checkpoint, not READY. Base resource upload failure
+atomicity/cleanup hardening is still under review; current map allocation failures
+require stopping/restarting the session. Optional sprite cache and UI coverage/
+retained fade integration are later worker slices and are not enabled here.
+
+Resource update follow-up after immutable 25c84 functional freeze
+- Chunk allocation validates peak budget before GL creation, owns handles until
+  buffers/attributes pass getError, and commits map/ledger only after success.
+- Material textures retain old storage on failed size-changing replacements;
+  equal-sized updates reuse storage with texSubImage2D. Partial in-place update
+  errors explicitly fail the backend until session restart.
+- Tests inject null allocation, thrown buffer/texture operations and GL errors,
+  verify no owned-handle leaks, unchanged failed-allocation ledger, valid old
+  material, idempotent disposal and exact restart requirement after partial writes.
+  These are GL API double controls, not real device-loss/performance evidence.
+
+Full Sky/native-UV/ownership hardware functional checkpoint
+- Exact source25c84d9f6, stagedJAR2620607b4888bb0c7f56a3389b83ef4439e6adb27badfe901351cc4012b264c2, immutableloopback8108.
+- Actual ANGLE AMD RadeonRX6700XT, internal/CSS960x540, DPR1.
+  300s capture11197 source-worldframes, lastframe315620.9ms versus315629ms
+  observer, noGPUerror orJavaexit.237794624B resident chunks/textures,
+  83886080B shadows,357376B Sky. Source scene really drew526944triangles.
+- Shared native Sky, texel-centerUVs, early/full ownership, modernloop and
+  GPUdepth declared by actual runtime. OrdinaryTalk153, DoorOpen with
+  authoritative133660->132659 and opened passage, Drop246/inventory2->1,
+  normal movement136663 observed. Current drop not re-taken; private fixture
+  is disposable and manager has preserved restore backup.
+- Warm steady profiled/nonexclusive cadence40-42FPS is exploratory, not matched
+  performance acceptance. Cull around1ms vs earlier6ms motivates controlled
+  same-artifact cohorts. Tiny native/browser camera drift is explicitly recorded
+  in latest pose stats; no exact image-parity claim. Partial-alpha UI still gap.
+
+Private optional sprite-cache comparison contract
+- benchmark=1 accepts sprites=uncached|cached (defaultuncached), with existing
+  cull=late|early and ownership=objects|all, loop=legacy|modern.
+- Actual cache enabled/hits/misses/ownedbytes export in gpu.spriteCompositeCache,
+  from source frameWork indices10..13. FrameWork0..9 semantics unchanged.
+- Cache result pixels are synchronously uploaded borrowed read-only; current
+  sprite anchor/depth remains production-authoritative. Unsupported optional
+  cache layouts fall back to the existing composite builder. No GPU cache
+  acceleration/performance claim before actual matched measurement.
+
+ACTIVE source-only overlay/actor integration draft after8109 freeze
+- New optional overlay=coverage path uses real per-owner GraphicsController T,
+  premultiplied CPU RGB and blend(ONE,ONE_MINUS_SRC_ALPHA), preserving opaque
+  final alpha. Exact retained FULL/BASE caller uses reviewed standalone module.
+- Current surface is resolved once via cached ORSCApplet client Field, then owner,
+  dimensions and live generation/sequence validity checked after all UI drawing.
+  Invalid coverage/raw debug/editor writes fail closed; no marker fallback after
+  partial RGB has been produced. Actor-capture failure is rejected even with
+  marker-only mode, using forthcoming scoped GraphicsController actor API.
+- Scene source selects GPU_OWNED only for browser GPU-raster ownership and
+  FORCE_SOFTWARE for browser complete software-world paths; native DEFAULT.
+- THIS DRAFT IS NOT BUILT/TESTED: it awaits manager-reviewed GraphicsController
+  coverage/scoped-actor API and the end of exclusive8109 benchmark window.
+  Frozen8109 artifact remainsaff4a9b42 and is unaffected by these source edits.
+
+Overlay draft validation update
+- GL API controls now pass C/T borrowed upload ownership, premultiplied alpha
+  selection, exact FULL/BASE caller sequencing, duplicate-frame handling, opaque
+  mode and owner-reset contracts. No actual compositor GPU claim yet.
+- Combined RGB/T/retained texture peak is self-enforced32MiB (not an assumed
+  retained-only scope): reset retained resources BEFORE any viewport resize,
+  reserve oldC/T plus newreplacementtexture, and reserve retainedpair afterward.
+  Two2Mpixel differently-shaped viewports exercise the full32MiB steady/peak.
+  Program/driver memory remains outside this explicit texture ledger.
+- Ordinary teleport circles are explicitly WORLD_OVERLAY only in browser mode,
+  with previous phase restored even on exceptions. Native raster body unchanged.
+  Production Java regression fixture awaits the reviewed shared actor API build.
+
+Integrated shared coverage/actor API validation
+- Normal main merge includes dc8963838. Fresh clientbuild passes; renderer suite
+  passed through final legacy source-snippet expectation, which required updating
+  two obsolete native-only snippets to the new explicit GPU_OWNED/FORCE_SOFTWARE
+  contract. The corrected final world-geometry check and all other suite checks
+  pass, as do9.84m coverage/24.8k actor controls and56 real teleport checks.
+- JS coverage, resources, frontend, sharedSky and shadow resource controls pass.
+- Workspace-layout audit still rejects inherited assets/sprites and legacy loose
+  output entries. This task uses declared tests/reviews locations only; no old
+  ignored artifacts were deleted or relocated to make that audit green.
+
+Actual game integration defects discovered and repaired
+-8110alpha:false defaultdrawingbuffer cannot copy into retainedRGBA8 on actual
+ AMDWebGL2 (GL_INVALID_OPERATION); controlledsame-device alpha:true copy succeeds.
+ RGBAcontext nownormalizes alphaONLY afterworld/beforeUI; mask/scissor/clearcolor
+ restore.8111diagnostic518400pixels: noRGBchanged, allpostworld/finalalpha255;
+ 3660actualworldFULLcaptures succeeded before nextdistinctlifecycleissue.
+-8111ordinarySleep correctlyexposed command consumption resetting the completed
+ coveragefade count/stickyactorfailure BEFOREsinkexport. Split2Dcommand-state
+ reset fromrealbeginframe; consume preservescoverageepoch/fades/actorfailure.
+ Nativecommands/counters clear asbefore. Added actualbegin->fade->consumeTWICE
+ ->borrow/current tests, captureenabled/disabled,50retainedfades andstickyactor
+ failure. Java8/21 unchangednativeRGBoracle and9.84mcoverage/24.8kactorcontrols
+ pass; phased/overflowandallfocusedScene/depth/teleportcontracts pass.
+-These failedcaptures remainpreserved; no stability/60FPSclaim from their stale
+ observers. Nextactualgameproof must exercise correctedSleep path.
+
+Private default promotion draft (after validated8112 proof)
+- Only BrowserBootstrap WebGL sets missing properties to GPU depth, early/full
+  resident ownership, coverage UI and the existing modern client loop. Explicit
+  benchmark controls win; ordinary desktop/software entrypoints do not change.
+- Modern uses the same native-equivalent update semantics; it did not by itself
+  improve measured throughput and does not change server tick rate.
+- Sprite cache private default is cached after manager's complete-build pair.
+  This source/default draft is not part of immutable8112 measurement artifact.
+
+Final complete-build comparison and scope
+- Frozen8112 sameartifact, explicitcoverage/modern/GPUdepth/early/fullownership,
+  no diagnosticreadbacks: uncached35.94 versuscached37.73actualworldFPS. Similar
+  NPCmeans31.60/31.52; GPUmedian2.33ms both. Bridge10.8->9.5ms, sprite4.2->3.0ms,
+  118967hits/5836misses,4.59MB bounded cache. Exploratory singlefixture/device.
+  Do not reuse earlier less-complete41.43FPS headline for the final code.
+- OrdinaryRub on fixtureitem597(renamedChargedDragonstoneBangle) produced no
+  teleport; no successfulin-gameRub/teleportbubbleclaim.56productionraster/phase
+  teleportchecks pass. Gameplayhandler issue is outside this renderer change.
+- Private normalserver restored sleep:false, normalgroup10/base2items at133660.
+  Finalplain-link smoke uses normal entrypoint defaults, ordinaryinventory/menu,
+  explicitStop/restart/logins and intentionalWebGLcontextloss+restart. Results
+  will be added after execution; syntheticloss is functional, notperformance.
+
+Conservative rendering / strict-parity limits
+- Browser currently submits eligible resident chunks/batches and relies on GPU
+  clip/fog; native also applies camera/fog batch bounds culling and AABB shadow
+  caster culling. These per-pass bounds optimizations are not yet ported. This
+  adds conservative work and remains a strict-parity/performance limitation.
+  GPUmedian~2.33ms in the measured fixture does not identify it as dominant.
+- The repeated264480byte animated upload strongly matches the rotating windmill
+  sail mesh, but no runtimeIDtrace was taken. Native also prepares animated
+  buffers before bounds culling; distance alone does NOT prove that upload is
+  avoidable. Bounded mutable logical-cell buffer reuse is a future measured
+  optimization, not part of this handoff. Animation has not been frozen.
+
+Final plain-link lifecycle / failure recovery acceptance
+- Frozen sourcebc1501946448821eed4807bd11426950d3ad85ef, coreJARdf5a5206...,
+  helperJAR5a4cb91c71e201f095bbdb42cc39e4fabe4d9f4e06c6af06ea4f52926d0a7547,
+  webgl.js7d18d4ab2630e8d1e2ecbaf6fa93f2edbe1d44f5f5a17f419abacf17bd02fbf1.
+- Plain http://127.0.0.1:8113/?mode=webgl uses promoted private defaults without
+  benchmark/profile/diagnostic flags. ActualAMD3normal logins drew161/152/155
+  realworldframes. Inventory/contextmenu and normalStop/restart passed.
+- Intentional WEBGL_lose_context stopped submissions at1927 and surfaced sticky
+  GL_CONTEXT_LOST0x9242. ExplicitStop removediframe/closedaccount; a freshStart
+  loggedin and renderedworldagain. FinalStop confirmedaccountOFFLINE and owned
+  browser exited. No orphan game session. This is functional, not an FPSbenchmark.
+- Full receipts/images/manifest are under
+  output/tests/browser-gameplay-spike/webgl-private-preview/; finalmanifest.json
+  equivalent is final-artifact-manifest.json, smoke=plain-smoke-1794262097406.
+- Runtime code at handoff is exactly the testedbc1501946 checkpoint; subsequent
+  handoff changes update documentation only. Private preview remains available
+  through the loopbackHTTP server; no client is left logged in.
+
+Ready scope and remaining limits
+- Ready for manager review/integration as an EXPERIMENTAL PRIVATE browserGPU
+  backend. Same production rendering data and gameplay authority are retained.
+-60FPS/full-desktop performance is NOT achieved (~38worldFPS on this fixture/PC).
+  Broaderdevices/content, strict image parity, standalone publicWSS/endpoints,
+  caching/distribution and public browser rollout remain separate work.
+- Context loss requires explicitStop/restart. Unexpected unsupported framebuffer
+  operations fail closed; they do not silently pretend full visual compatibility.
+- Inherited workspace-layout findings remain preserved; no map, productionDB,
+  ownercredentials, Oracle, publicserver, release artifact or gameasset changed.

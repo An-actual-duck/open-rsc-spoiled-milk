@@ -8,6 +8,8 @@ public final class BrowserBootstrap {
     private BrowserBootstrap() { }
     public static native void report(String message);
     public static native void reportState(String mode, int fps, int loadingPercent);
+    public static native void reportLoop(String mode,boolean earlyFaceCull,boolean fullResidentOwnership);
+    public static native void reportTelemetry(String names,double[] values);
     private static native int wsOpen();
     private static native byte[] wsRead(int socket, int maximum);
     private static native int wsAvailable(int socket);
@@ -32,7 +34,8 @@ public final class BrowserBootstrap {
             }
             return;
         }
-        report("software-client:copying-private-files");
+        final boolean webgl=args.length>0 && "webgl".equals(args[0]);
+        report((webgl?"webgl-client":"software-client")+":copying-private-files");
         try (BufferedReader index = new BufferedReader(new FileReader("/app/bootstrap-files.txt"))) {
             String relative;
             while ((relative = index.readLine()) != null) {
@@ -52,12 +55,26 @@ public final class BrowserBootstrap {
             "openglWorldChunksResidentObjects", "openglWorldChunksSpatialCull",
             "openglWorldSpritesVisible", "skipLegacyWorldRaster", "modernClientLoop"};
         for (String name : off) System.setProperty("spoiledmilk." + name, "false");
+        if(webgl) {
+            // Private WebGL entrypoint opts into the verified backend. Explicit
+            // comparative javaProperties still win; desktop/software defaults do not change.
+            String[][] defaults={{"browserDepthSource","gpu"},{"browserEarlyFaceCull","true"},
+                {"browserOwnsWallsAndRoofs","true"},{"browserOverlayCoverage","true"},
+                {"browserSpriteCache","cached"},{"browserLoop","modern"}};
+            for(String[] setting:defaults)if(System.getProperty("spoiledmilk."+setting[0])==null)
+                System.setProperty("spoiledmilk."+setting[0],setting[1]);
+            String[] on={"renderer3DGeometryCapture","openglWorldMesh","openglWorldMeshTexturedVisible","openglWorldMeshTexturedStaticVisible","openglWorldReplacementComposite","openglWorldChunksTexturedVisible","openglWorldChunksReplacementComposite","openglWorldChunksTrustedReplacement","openglWorldChunksResidentObjects","openglWorldSpritesVisible","skipLegacyWorldRaster","modernClientLoop"};
+            for(String name:on)System.setProperty("spoiledmilk."+name,"true");
+            System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");
+            // No native presenter or GLFW initialization; only the browser sink owns GPU submission.
+            orsc.BrowserWebGLBridge.install();
+        }
         System.setProperty("spoiledmilk.directFramebuffer", "true");
         System.setProperty("user.dir", "/files");
         Socket.setSocketImplFactory(new SocketImplFactory() {
             public SocketImpl createSocketImpl() { return new BrowserSocket(); }
         });
-        report("software-client:start; networking=loopback-websocket");
+        report((webgl?"webgl-client":"software-client")+":start; networking=loopback-websocket");
         orsc.OpenRSC.main(new String[0]);
         Thread observer = new Thread(new Runnable() {
             public void run() {
@@ -65,9 +82,17 @@ public final class BrowserBootstrap {
                     java.lang.reflect.Field clientField = orsc.ORSCApplet.class.getDeclaredField("mudclient"); clientField.setAccessible(true);
                     java.lang.reflect.Field modeField = orsc.mudclient.class.getDeclaredField("currentViewMode"); modeField.setAccessible(true);
                     java.lang.reflect.Field fpsField = orsc.mudclient.class.getDeclaredField("FPS"); fpsField.setAccessible(true);
+                    java.lang.reflect.Field loopField = orsc.mudclient.class.getDeclaredField("selectedClientLoopMode"); loopField.setAccessible(true);
                     while (true) {
                         Object client = clientField.get(null);
-                        if (client != null) reportState(String.valueOf(modeField.get(client)), fpsField.getInt(null), orsc.ORSCApplet.globalLoadingPercent);
+                        if (client != null && webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
+                            orsc.mudclient actual=(orsc.mudclient)client;actual.setCameraZoomSetting(75);actual.cameraRotation=128;
+                        }
+                        if (client != null) {
+                            if(Boolean.getBoolean("spoiledmilk.browserProfile"))reportTelemetry(orsc.BrowserTelemetryData.names(),orsc.BrowserTelemetryData.snapshot());
+                            reportLoop(String.valueOf(loopField.get(client)),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isEarlyResidentFaceCullEnabled(),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isBrowserFullResidentOwnershipEnabled());
+                            reportState(String.valueOf(modeField.get(client)), fpsField.getInt(null), orsc.ORSCApplet.globalLoadingPercent);
+                        }
                         Thread.sleep(1000);
                     }
                 } catch (Throwable error) { report("observer:stopped:" + error); }

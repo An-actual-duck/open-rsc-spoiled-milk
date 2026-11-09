@@ -118,9 +118,13 @@ public final class WorldOverlayCoverageFixture {
         int[] lastFinal=background(1),lastBase=null;WorldOverlayCoverage.Frame fresh=g.borrowWorldOverlayCoverage();
         long generation=fresh.generation,sequence=fresh.frameSequence;
         check(fresh.mode==WorldOverlayCoverage.MODE_WORLD,"fresh world mode");
+        g.consumeRenderer2DFrame();check(g.isWorldOverlayCoverageCurrent(fresh),"ordinary world survives command consumption");
         // GPU-reference simulation: exact packed fade always reads prior FULL output.
         for(int tick=0;tick<50;tick++){
             g.beginRenderer2DFrame();WorldOverlayCoverage.Frame before=g.borrowWorldOverlayCoverage();g.fade2black(0);
+            WorldOverlayCoverage.Frame completed=g.borrowWorldOverlayCoverage();
+            g.consumeRenderer2DFrame();g.consumeRenderer2DFrame();
+            check(g.isWorldOverlayCoverageCurrent(completed),"consume/present must not advance completed coverage token");
             WorldOverlayCoverage.Frame f=g.borrowWorldOverlayCoverage();
             check(f.valid&&f.mode==WorldOverlayCoverage.MODE_RETAINED_FADE&&f.retainedFadeCount==1,"retained first fade request");
             check(f.frameSequence>sequence&&f.generation==generation,"frame token advances, retained owner stable");
@@ -136,6 +140,7 @@ public final class WorldOverlayCoverageFixture {
         int[] presented=flatten(delta,lastBase);
         g.beginRenderer2DFrame();WorldOverlayCoverage.Frame retained=g.borrowWorldOverlayCoverage();
         check(retained.mode==WorldOverlayCoverage.MODE_RETAINED_BASE&&retained.retainedFadeCount==0,"no-fade retention reuses base");
+        g.consumeRenderer2DFrame();check(g.isWorldOverlayCoverageCurrent(retained),"no-fade BASE survives consume unchanged");
         check(Arrays.equals(presented,flatten(retained,lastBase)),"delta is reapplied to cached base, not previous full image");
         g.fade2black(0);WorldOverlayCoverage.Frame faded=g.borrowWorldOverlayCoverage();
         int[] nextBase=presented.clone();for(int i=0;i<nextBase.length;i++)nextBase[i]=exactFade(nextBase[i]);
@@ -159,6 +164,7 @@ public final class WorldOverlayCoverageFixture {
     public static void main(String[] args)throws Exception{
         Config.S_WANT_CUSTOM_SPRITES=true;List<Draw> ops=operations();
         if(args.length>0&&args[0].equals("native")){System.out.println("NATIVE_RGB_SHA256="+nativeOracle(ops));return;}
+        if(args.length>0&&args[0].equals("consume-only")){retainedProtocol();System.out.println("PASS completed coverage/fade consume order; capture="+orsc.graphics.Renderer2DSettings.isOpenGLSpriteCaptureEnabled());return;}
         retainedProtocol();
         for(boolean interlace:new boolean[]{false,true})for(boolean clip:new boolean[]{false,true})for(Draw op:ops)affine(op,interlace,clip,1);
         // A real UI-like overlap sequence: window, muted panel, sprite, AA label, border.

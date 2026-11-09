@@ -264,6 +264,12 @@ public class GraphicsController {
 	public final void beginRenderer2DFrame() {
 		if (worldOverlayCoverage != null) worldOverlayCoverage.beginFrame();
 		sceneSpriteRasterFailure = "";
+        resetRenderer2DCommandState();
+    }
+
+    /** Consuming draw commands is not the beginning of a new pixel/coverage frame.
+     * The presenter still needs the completed owner's fade token and failure state. */
+    private void resetRenderer2DCommandState() {
 		sceneSpriteLastLayerOwned = false;
 		sceneSpriteLastLayerEmpty = false;
 		renderer2DSpriteCommands.clear();
@@ -340,7 +346,7 @@ public class GraphicsController {
 
 	public final Renderer2DFrame consumeRenderer2DFrame() {
 		if (!Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
-			beginRenderer2DFrame();
+			resetRenderer2DCommandState();
 			return Renderer2DFrame.empty(this.width2, this.height2);
 		}
 
@@ -354,7 +360,7 @@ public class GraphicsController {
 				renderer2DRotatedSpriteCommands,
 				renderer2DCircleCommands,
 				renderer2DCaptureStats());
-		beginRenderer2DFrame();
+		resetRenderer2DCommandState();
 		return frame;
 	}
 

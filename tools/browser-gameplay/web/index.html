@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en"><meta charset="utf-8"><title>Spoiled Milk — private browser feasibility test</title>
 <style>body{margin:0;background:#182026;color:#eee;font:15px system-ui}header{padding:12px}a{color:#9fd7ff}#status{white-space:pre-wrap}iframe{width:100%;height:660px;border:0}small{display:block;margin-top:5px}button{margin:10px 8px 10px 0;padding:8px 14px}</style>
-<header><strong>Private browser feasibility test</strong> · <a href="?mode=software">software client</a> · <a href="?mode=native-probe">native graphics probe</a>
-<small>Software mode is a compatibility experiment; it does not reproduce the current GPU renderer. Loopback server only. Java runs in your browser through <a href="https://cheerpj.com/">CheerpJ by Leaning Technologies</a>.</small>
-<small><strong>Experimental private test:</strong> the current world runs through the software renderer, with low frame rates expected. This is a loopback compatibility test, not a public browser release. Log in with <code>browserdemo</code> / <code>BrowserProof13</code>, the disposable private account.</small>
+<header><strong>Private browser feasibility test</strong> · <a href="?mode=webgl">WebGL prototype</a> · <a href="?mode=software">software compatibility</a> · <a href="?mode=native-probe">native graphics probe</a>
+<small>WebGL mode uses an experimental browser GPU backend; software mode is a slower compatibility reference. Loopback server only. Java runs in your browser through <a href="https://cheerpj.com/">CheerpJ by Leaning Technologies</a>.</small>
+<small><strong>Experimental private test:</strong> the WebGL prototype reuses game geometry, materials and sprite artwork. Shadow fidelity and desktop-equivalent performance are still being developed. This is not a public browser release. Log in with <code>browserdemo</code> / <code>BrowserProof13</code>, the disposable private account.</small>
 <small>The runtime starts only when requested. Stop or closing the page ends the session. Escape, moving focus and switching tabs keep the session running. Restarting creates a new runtime. This is a lifecycle precaution; the reported desktop-wide keyboard failure has not been reproduced or diagnosed.</small>
 <button id="start" type="button">Start private test</button><button id="stop" type="button" disabled>Stop private test</button>
 <div id="status" role="status">Stopped. Java has not been loaded.</div></header><main id="session"></main>

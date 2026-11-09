@@ -30,6 +30,7 @@ public final class RenderTelemetry {
 
 	private static final int RECENT_SAMPLE_LIMIT = 120;
 	private static final boolean RUNTIME_ENABLED = readBoolean(ENABLED_PROPERTY, ENABLED_ENV);
+	private static final boolean RUNTIME_COUNTERS_ONLY = readBoolean("spoiledmilk.rendererTelemetryCountersOnly", "SPOILED_MILK_RENDERER_TELEMETRY_COUNTERS_ONLY");
 	private static final int REPORT_INTERVAL = Math.max(1, readInt(REPORT_INTERVAL_PROPERTY, 300));
 	private static final int WINDOW_SAMPLE_LIMIT = Math.max(512, REPORT_INTERVAL * 2);
 	private static final int RUNTIME_TOP_THREAD_LIMIT = 8;
@@ -440,7 +441,7 @@ public final class RenderTelemetry {
 
 			boolean slowFrame = totalNanos >= SLOW_FRAME_NANOS;
 			long now = System.nanoTime();
-			if (RUNTIME_ENABLED
+			if (RUNTIME_ENABLED && !RUNTIME_COUNTERS_ONLY
 				&& (frameStats.count % REPORT_INTERVAL == 0
 					|| (slowFrame && now - lastReportNanos >= SLOW_REPORT_THROTTLE_NANOS))) {
 				lastReportNanos = now;
@@ -2710,6 +2711,11 @@ public final class RenderTelemetry {
 		RendererDiagnosticSession.writeTelemetry(record);
 	}
 
+	static double optionalRuntimeLoad(java.util.function.DoubleSupplier probe) {
+		try { return probe.getAsDouble(); }
+		catch (RuntimeException unavailable) { return -1.0D; }
+	}
+
 	private static DiagnosticRuntimeSnapshot captureDiagnosticRuntimeSnapshot() {
 		long sampleNanos = System.nanoTime();
 		long sampleWallNanos = diagnosticLastRuntimeSampleNanos < 0L
@@ -2730,8 +2736,8 @@ public final class RenderTelemetry {
 			com.sun.management.OperatingSystemMXBean extended =
 				(com.sun.management.OperatingSystemMXBean) operatingSystem;
 			processCpuTimeNanos = extended.getProcessCpuTime();
-			processLoad = extended.getProcessCpuLoad();
-			systemLoad = extended.getSystemCpuLoad();
+			processLoad = optionalRuntimeLoad(extended::getProcessCpuLoad);
+			systemLoad = optionalRuntimeLoad(extended::getSystemCpuLoad);
 			freePhysicalMemoryBytes = extended.getFreePhysicalMemorySize();
 			totalPhysicalMemoryBytes = extended.getTotalPhysicalMemorySize();
 			freeSwapBytes = extended.getFreeSwapSpaceSize();

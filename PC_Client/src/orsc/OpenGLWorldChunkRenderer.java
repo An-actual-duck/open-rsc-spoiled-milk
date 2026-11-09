@@ -2591,6 +2591,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	}
 
 	private float[] worldViewMatrix(Renderer3DFrame frame) {
+        return backendWorldViewMatrix(frame);
+    }
+
+    static float[] backendWorldViewMatrix(Renderer3DFrame frame) {
 		float[] view = translationMatrix(
 			-frame.getCameraOffsetX(),
 			-frame.getCameraOffsetY(),
@@ -2660,7 +2664,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return visualFogStart + fogRange * FOG_VISUAL_END_FRACTION;
 	}
 
-	private float[] projectionMatrix(Renderer3DFrame frame) {
+	static float[] projectionMatrix(Renderer3DFrame frame) {
 		float viewportWidth = Math.max(1.0f, frame.getViewportWidth());
 		float viewportHeight = Math.max(1.0f, frame.getViewportHeight());
 		float scale = (float) (1 << Math.max(0, Math.min(24, frame.getPerspectiveShift())));
@@ -2676,7 +2680,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		};
 	}
 
-	private float[] translationMatrix(float x, float y, float z) {
+	static float[] translationMatrix(float x, float y, float z) {
 		return new float[] {
 			1.0f, 0.0f, 0.0f, x,
 			0.0f, 1.0f, 0.0f, y,
@@ -2685,7 +2689,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		};
 	}
 
-	private float[] rotationZMatrix(int angle) {
+	static float[] rotationZMatrix(int angle) {
 		float sin = sin1024(angle);
 		float cos = cos1024(angle);
 		return new float[] {
@@ -2696,7 +2700,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		};
 	}
 
-	private float[] rotationYMatrix(int angle) {
+	static float[] rotationYMatrix(int angle) {
 		float sin = sin1024(angle);
 		float cos = cos1024(angle);
 		return new float[] {
@@ -2707,7 +2711,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		};
 	}
 
-	private float[] rotationXMatrix(int angle) {
+	static float[] rotationXMatrix(int angle) {
 		float sin = sin1024(angle);
 		float cos = cos1024(angle);
 		return new float[] {
@@ -2718,7 +2722,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		};
 	}
 
-	private float[] multiply(float[] left, float[] right) {
+	static float[] multiply(float[] left, float[] right) {
 		float[] result = new float[16];
 		for (int row = 0; row < 4; row++) {
 			for (int column = 0; column < 4; column++) {
@@ -2732,11 +2736,11 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return result;
 	}
 
-	private float sin1024(int angle) {
+	private static float sin1024(int angle) {
 		return FastMath.trigTable1024[angle & 1023] / 32768.0f;
 	}
 
-	private float cos1024(int angle) {
+	private static float cos1024(int angle) {
 		return FastMath.trigTable1024[(angle & 1023) + 1024] / 32768.0f;
 	}
 
@@ -2898,6 +2902,37 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		}
 		return capacity;
 	}
+
+    /** Shared production material/normal packing, with standalone source UVs for a non-atlas backend. */
+    float[] copyBackendChunkVertices(Renderer3DWorldChunkFrame.ChunkMesh chunk, Renderer3DFrame frame) {
+        ensureUploadBuffers(chunk.getVertexCount(), chunk.getIndexCount());
+        copyChunkVertices(chunk, frame, chunk.getVertexCount(), false, java.util.Collections.<ShadowProofCaster>emptyList());
+        float[] values = new float[vertexUploadBuffer.remaining()];
+        vertexUploadBuffer.get(values);
+        for (int vertex=0; vertex<chunk.getVertexCount(); vertex++) {
+            int triangle=vertex/3;
+            int textureId=effectiveChunkTextureId(frame,chunk.getTriangleTexture(triangle),chunk.getTriangleFallbackColor(triangle));
+            Renderer3DTextureData texture=frame==null?null:frame.getTexture(textureId);
+            values[vertex*FLOATS_PER_VERTEX+7] = texture==null?clampUnit(chunk.getVertexTextureU(vertex)):backendTexelCenter(chunk.getVertexTextureU(vertex),texture.getWidth());
+            values[vertex*FLOATS_PER_VERTEX+8] = texture==null?clampUnit(chunk.getVertexTextureV(vertex)):backendTexelCenter(chunk.getVertexTextureV(vertex),texture.getHeight());
+        }
+        return values;
+    }
+
+    int[] backendPackingSettings() {
+        return new int[]{currentBrightnessBits(),currentFogModeBits(),currentLightingModeBits(),currentGeometryModeBits()};
+    }
+
+    static float backendTexelCenter(float source,int size) {
+        if(size<1)throw new IllegalArgumentException("Texture dimension must be positive");
+        float unit=source<=0?0:source>=1?1:source;
+        float first=.5f/size,last=(size-.5f)/size;
+        return first+(last-first)*unit;
+    }
+
+    int backendTextureId(Renderer3DFrame frame, int textureId, int fallbackColor) {
+        return effectiveChunkTextureId(frame, textureId, fallbackColor);
+    }
 
 	private void copyChunkVertices(
 		Renderer3DWorldChunkFrame.ChunkMesh chunk,

@@ -17,6 +17,11 @@ import java.util.IdentityHashMap;
 public final class Scene {
 	static final int TRANSPARENT = 12345678;
 	private static final int MIN_EXPANDED_PICK_PADDING_PIXELS = 14;
+	private final boolean browserOverlayCoverage = Boolean.getBoolean("spoiledmilk.browserOverlayCoverage");
+	private final boolean browserEarlyFaceCull = Boolean.getBoolean("spoiledmilk.browserEarlyFaceCull");
+	private final boolean browserOwnsWallsAndRoofs = Boolean.getBoolean("spoiledmilk.browserOwnsWallsAndRoofs");
+	public boolean isBrowserFullResidentOwnershipEnabled() { return browserOwnsWallsAndRoofs && Renderer3DSettings.isBrowserPresentationAvailable() && !Renderer3DSettings.needsCpuDepthFrame(); }
+	public boolean isEarlyResidentFaceCullEnabled() { return browserEarlyFaceCull && Renderer3DSettings.isBrowserPresentationAvailable(); }
 	private RSModel[] m_Ab;
 	private final int[] m_B = new int[40];
 	private int m_db;
@@ -2919,6 +2924,8 @@ public final class Scene {
 			boolean forceLegacyWorldRaster = this.forceLegacyWorldRasterOnce;
 			this.forceLegacyWorldRasterOnce = false;
 			boolean skipProjectedWorldCapture = Renderer3DSettings.canSkipProjectedWorldCapture();
+			boolean earlyResidentFaceCull = isEarlyResidentFaceCullEnabled();
+			boolean browserFullResidentOwnership = isBrowserFullResidentOwnershipEnabled();
 			int var7 = this.m_A * this.fogLandscapeDistance >> this.rot1024_vp_src;
 			MiscFunctions.frustumFarZ = 0;
 			MiscFunctions.frustumNearZ = 0;
@@ -2985,6 +2992,9 @@ public final class Scene {
 					for (var3 = 0; var3 < var2.faceHead; ++var3) {
 						var10 = var2.faceIndexCount[var3];
 						var11 = var2.faceIndices[var3];
+                        if (earlyResidentFaceCull && shouldSkipResidentOwnedProjectedFace(
+                                var2.getRenderer3DModelKind(),var2,var3,var11,var10,
+                                skipProjectedWorldCapture,forceLegacyWorldRaster,browserFullResidentOwnership)) continue;
 						boolean var5 = false;
 
 						int var4;
@@ -3034,14 +3044,14 @@ public final class Scene {
 
 								if (var23 == 3) {
 									Renderer3DModelKind rendererModelKind = var2.getRenderer3DModelKind();
-									if (shouldSkipResidentOwnedProjectedFace(
+									if (!earlyResidentFaceCull && shouldSkipResidentOwnedProjectedFace(
 										rendererModelKind,
 										var2,
 										var3,
 										var11,
 										var10,
 										skipProjectedWorldCapture,
-										forceLegacyWorldRaster)) {
+										forceLegacyWorldRaster,browserFullResidentOwnership)) {
 										continue;
 									}
 									this.ensurePolygonCapacity(this.m_zb + 1);
@@ -3120,6 +3130,10 @@ public final class Scene {
 				}
 			}
 
+            // A GPU backend may explicitly own depth without a CPU raster consumer.
+            // Model transformation, polygon picking, anchors and resident authority remain intact.
+            if (!Renderer3DSettings.needsCpuDepthFrame()) depthWorldKinds=null;
+
 			if (var1 > -99) {
 				this.m_H = (int[]) null;
 			}
@@ -3156,6 +3170,16 @@ public final class Scene {
 			boolean skipLegacyWorldRaster =
 				Renderer3DSettings.canSkipLegacyWorldRaster() && !forceLegacyWorldRaster;
             this.interactionLegacyRaster = !skipLegacyWorldRaster;
+            if (browserOverlayCoverage) {
+                this.graphics.setWorldOverlayCoverageEnabled(Renderer3DSettings.isBrowserPresentationAvailable());
+                if (skipLegacyWorldRaster && Renderer3DSettings.isBrowserPresentationAvailable()) {
+                    if (this.graphics.pixelData != this.pixelData || !this.graphics.beginTransparentWorldOverlay())
+                        throw new IllegalStateException("Browser coverage could not own the current Scene surface");
+                } else this.graphics.beginOpaqueWorldOverlay();
+            } else if (skipLegacyWorldRaster && Renderer3DSettings.isBrowserPresentationAvailable()) {
+                // Marker-only compatibility prototype; genuine black UI remains opaque.
+                java.util.Arrays.fill(this.pixelData, 0x01000000);
+            }
 			long legacyDrawStart = RenderTelemetry.now();
 			if (this.m_zb != 0) {
 				this.setFrustum(0, -1, this.polygons, this.m_zb - 1);
@@ -3240,7 +3264,11 @@ public final class Scene {
 							spritePickIndex,
 							spriteAnchorIndex,
 							spriteDrawOrder,
-							geometryFrame);
+							geometryFrame,
+                            Renderer3DSettings.isBrowserPresentationAvailable()
+                                ? (skipLegacyWorldRaster ? GraphicsController.SceneSpriteRasterPolicy.GPU_OWNED
+                                    : GraphicsController.SceneSpriteRasterPolicy.FORCE_SOFTWARE)
+                                : GraphicsController.SceneSpriteRasterPolicy.DEFAULT);
 						if (this.m_K) {
 							var20 += (this.m_Q[var3] << this.rot1024_vp_src) / var15;
 							if (var21 <= this.m_Wb && var21 + var17 >= this.m_Wb && var20 <= this.m_j
@@ -3437,11 +3465,13 @@ public final class Scene {
 		int[] faceIndices,
 		int vertexCount,
 		boolean skipProjectedWorldCapture,
-		boolean forceLegacyWorldRaster) {
+		boolean forceLegacyWorldRaster,
+        boolean browserFullResidentOwnership) {
 		if (!skipProjectedWorldCapture || forceLegacyWorldRaster) {
 			return false;
 		}
 		boolean residentOwnedProjectedFace = modelKind == Renderer3DModelKind.TERRAIN
+            || (browserFullResidentOwnership && (modelKind == Renderer3DModelKind.WALL || modelKind == Renderer3DModelKind.ROOF))
 			|| (Renderer3DSettings.canUseResidentObjectChunks()
 				&& (modelKind == Renderer3DModelKind.GAME_OBJECT
 					|| modelKind == Renderer3DModelKind.WALL_OBJECT));

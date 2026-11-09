@@ -290,6 +290,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 		BufferedImage renderer2DUiBaseImage,
 		Renderer3DFrame renderer3DFrame,
 		String[] rendererDebugOverlayLines) {
+
 		if (gameImage == null) {
 			if (renderer3DFrame != null) {
 				renderer3DFrame.release();
@@ -317,6 +318,13 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 			}
 			initialRender = false;
 		}
+
+        // Browser GPU output overlays this AWT surface; keep ordinary window sizing,
+        // input geometry and repaint alive. Its synchronous sink already released 3D ownership.
+        if (BrowserFrameSinkRegistry.present(gameImage, renderer2DFrame, renderer3DFrame)) {
+            renderer3DFrame=null;
+            if(!BrowserFrameSinkRegistry.shouldPaintUnderlay(viewportWidth,viewportHeight))return;
+        }
 
 		boolean useRenderer2DUiBaseImage = shouldUseRenderer2DUiBaseImage(renderer2DUiBaseImage, renderer2DFrame);
 		BufferedImage openGLImage = useRenderer2DUiBaseImage

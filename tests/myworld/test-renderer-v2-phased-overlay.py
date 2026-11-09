@@ -177,7 +177,7 @@ def main() -> None:
     )
     require(
         telemetry,
-        "if (RUNTIME_ENABLED\n\t\t\t\t&& (frameStats.count % REPORT_INTERVAL == 0",
+        "if (RUNTIME_ENABLED && !RUNTIME_COUNTERS_ONLY\n\t\t\t\t&& (frameStats.count % REPORT_INTERVAL == 0",
         "F6 performance HUD should not enable periodic console telemetry reports",
     )
     require(

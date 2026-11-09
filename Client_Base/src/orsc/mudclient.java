@@ -116,6 +116,7 @@ public final class mudclient implements Runnable {
 	private static final String MODERN_CLIENT_LOOP_PROPERTY = "spoiledmilk.modernClientLoop";
 	private static final String MODERN_CLIENT_LOOP_ENV = "SPOILED_MILK_MODERN_CLIENT_LOOP";
 	private static final int OPENGL_PRIMARY_TARGET_FPS = 60;
+	private volatile String selectedClientLoopMode = "not-started";
 	private static final int MODERN_LOOP_MAX_CATCH_UP_UPDATES = 5;
 	private static final long NANOS_PER_MILLI = 1_000_000L;
 	private static final long NANOS_PER_SECOND = 1_000_000_000L;
@@ -1688,7 +1689,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean shouldUseModernClientLoop() {
-		return MODERN_CLIENT_LOOP_ENABLED && ScaledWindow.isOpenGLPrimaryWindowEnabled();
+		return MODERN_CLIENT_LOOP_ENABLED && (ScaledWindow.isOpenGLPrimaryWindowEnabled()
+			|| (Renderer3DSettings.isBrowserPresentationAvailable()
+				&& "modern".equals(System.getProperty("spoiledmilk.browserLoop", "legacy"))));
 	}
 
 	private void runModernClientLoop() {
@@ -1827,7 +1830,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private void run2() {
-		if (shouldUseModernClientLoop()) {
+		boolean modern = shouldUseModernClientLoop();
+		this.selectedClientLoopMode = modern ? "modern" : "legacy";
+		if (modern) {
 			runModernClientLoop();
 			return;
 		}
@@ -11518,6 +11523,9 @@ public final class mudclient implements Runnable {
 	}
 
 	public final void drawTeleportBubble(int id, int x, int y, int width, int height, int topPixelSkew, int var7) {
+        Renderer2DFrame.Phase previousPhase = Renderer3DSettings.isBrowserPresentationAvailable()
+            ? this.getSurface().getRenderer2DPhase() : null;
+        if (previousPhase != null) this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
 		try {
 
 			if (var7 != 2) {
@@ -11541,7 +11549,9 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var11) {
 			throw GenUtil.makeThrowable(var11, "client.LB(" + topPixelSkew + ',' + x + ',' + y + ',' + height + ',' + id
 				+ ',' + width + ',' + var7 + ')');
-		}
+		} finally {
+            if (previousPhase != null) this.getSurface().setRenderer2DPhase(previousPhase);
+        }
 	}
 
 	private void drawTextBox(String line2, byte var2, String line1) {

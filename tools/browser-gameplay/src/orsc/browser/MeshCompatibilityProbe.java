@@ -56,7 +56,27 @@ public final class MeshCompatibilityProbe {
         }
         return checks;
     }
+    private static int primitiveChecks() throws Exception {
+        Method ints=Renderer3DWorldChunkFrame.ChunkMesh.class.getDeclaredMethod("normalizeIntArray",int[].class,int.class,int.class);
+        Method floats=Renderer3DWorldChunkFrame.ChunkMesh.class.getDeclaredMethod("normalizeFloatArray",float[].class,int.class,float.class);
+        ints.setAccessible(true);floats.setAccessible(true);int checks=0;
+        for(int repeat=0;repeat<100;repeat++)for(int count:new int[]{0,1,16,1024,4608})for(int length:new int[]{-1,0,1,16,4608}) {
+            int[] iv=length<0?null:new int[length];float[] fv=length<0?null:new float[length];
+            if(iv!=null)for(int n=0;n<length;n++){iv[n]=n*3-7;fv[n]=n*.25f-7;}
+            int[] ia=(int[])ints.invoke(null,new Object[]{iv,count,91});float[] fa=(float[])floats.invoke(null,new Object[]{fv,count,-2.5f});
+            if(ia.length!=count||fa.length!=count)throw new AssertionError("Primitive length mismatch");
+            for(int n=0;n<count;n++) {int wantI=length<0||n>=length?91:n*3-7;float wantF=length<0||n>=length?-2.5f:n*.25f-7;
+                if(ia[n]!=wantI||Float.floatToIntBits(fa[n])!=Float.floatToIntBits(wantF))throw new AssertionError("Primitive copy/fill mismatch");}
+            if(iv!=null&&length>0&&count>0){int old=ia[0];float previous=fa[0];iv[0]=42;fv[0]=42;if(ia[0]!=old||fa[0]!=previous)throw new AssertionError("Primitive array aliases source");}
+            checks+=2;
+        }
+        return checks;
+    }
     public static String run() throws Exception {
+        final int primitiveMain=primitiveChecks();
+        ExecutorService primitiveWorker=Executors.newSingleThreadExecutor();
+        try { System.out.println("mesh-probe:primitives:PASS main="+primitiveMain+" worker="+primitiveWorker.submit(new Callable<Integer>(){public Integer call()throws Exception{return primitiveChecks();}}).get()); }
+        finally { primitiveWorker.shutdownNow(); }
         // Both direct controls finish before any reflective invocation.
         int directMain = directChecks();
         ExecutorService directWorker = Executors.newSingleThreadExecutor();

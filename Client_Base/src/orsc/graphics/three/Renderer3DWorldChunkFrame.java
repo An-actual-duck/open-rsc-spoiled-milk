@@ -1190,9 +1190,10 @@ public final class Renderer3DWorldChunkFrame {
 
 		private static float[] normalizeFloatArray(float[] values, int count, float defaultValue) {
 			float[] normalized = new float[count];
-			for (int i = 0; i < normalized.length; i++) {
-				normalized[i] = values == null || i >= values.length ? defaultValue : values[i];
-			}
+            // Keep null arrays out of element loops; the browser runtime otherwise
+            // fails this path while producing real resident-object geometry.
+            java.util.Arrays.fill(normalized, defaultValue);
+            if (values != null) System.arraycopy(values, 0, normalized, 0, Math.min(count, values.length));
 			return normalized;
 		}
 
@@ -1240,9 +1241,10 @@ public final class Renderer3DWorldChunkFrame {
 
 		private static int[] normalizeIntArray(int[] values, int count, int defaultValue) {
 			int[] normalized = new int[count];
-			for (int i = 0; i < normalized.length; i++) {
-				normalized[i] = values == null || i >= values.length ? defaultValue : values[i];
-			}
+            // Keep null arrays out of element loops; the browser runtime otherwise
+            // fails this path while producing real resident-object geometry.
+            java.util.Arrays.fill(normalized, defaultValue);
+            if (values != null) System.arraycopy(values, 0, normalized, 0, Math.min(count, values.length));
 			return normalized;
 		}
 

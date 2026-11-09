@@ -16,6 +16,10 @@ renderer_tests=(
   test-geometry-shadow-projection.py
   test-shadow-context-epoch.py
   test-underground-lighting.py
+  test-browser-frame-sink.py
+  test-browser-chunk-materials.py
+  test-browser-chunk-variants.py
+  test-browser-lighting.py
   test-terrain-definition.py
   test-remaster-glow-mask-bounds.py
   test-remaster-glow-mask-scratch.py
