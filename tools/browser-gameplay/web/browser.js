@@ -74,7 +74,7 @@ try {
     canvas.setAttribute('aria-hidden', 'true');
     Object.assign(canvas.style, {position: 'absolute', pointerEvents: 'none', display: 'none', zIndex: '1'});
     gpu = createBrowserWebGL(canvas, report);
-    window.browserProof.renderer = 'WebGL2 resident world / software UI and entities (experimental)';
+    window.browserProof.renderer = 'WebGL2 resident world and sprites / software UI (experimental)';
     Object.assign(natives, gpu.natives);
     const presentName = 'Java_orsc_BrowserWebGLBridge_present';
     const present = natives[presentName];

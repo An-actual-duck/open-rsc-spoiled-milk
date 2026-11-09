@@ -82,7 +82,15 @@ high brightness, camera zoom75/rotation128. cache=active|lru and
 underlay=always|initial select controlled cohorts of the same artifact.
 The normal window/input surface still initializes and resizes. The initial-only
 policy avoids repainting an AWT layer fully covered by the browser GPU surface.
-The manager owns the exclusive exploratory comparison; results are pending here.
+The manager completed three exclusive 40-second exploratory cohorts. Actual
+new-world-frame rates were 27.37 (active/always), 28.33 (LRU/always) and 31.32
+(LRU/initial). All retained exactly 559094 world triangles, but mean NPC sprite
+groups drifted from 30.10 to 27.52, so these are not a clean causal 14% speedup.
+GPU median work stayed around 1.8 ms. The source frame interval medians were
+36.4, 35.1 and 31.8 ms; Java bridge medians were 8.7, 8.1 and 7.7 ms. Detailed
+phase samples and rejected early harness attempts are preserved in the manager's
+output/reviews/browser-gpu-continuation/benchmarks directory. The browser is
+still below the requested desktop-equivalent 60 FPS target.
 
 Statistics count actual Java-produced frames, with no independent rAF redraw
 inflating client frame counts. Separate arrays record Java world-frame intervals,
@@ -94,11 +102,40 @@ parallel builds are excluded from manager timed phases.
 
 Work remaining
 --------------
-Shared production lighting/shadow data and browser modules are a separate focused
-worker slice. Their integration and actual GPU visual checks remain pending.
-A browser-only optional declaration to omit an unused CPU depth raster is being
-prepared for a separate old/new test, with desktop/editor/source defaults kept.
-It is not enabled by default before interaction and GPU-occlusion evidence.
+Shared production lighting/shadow data and browser modules were reviewed in a
+separate worker slice, merged through published main, and wired into the browser
+bridge. CPU checks pass for 321 production data cases and JS state/resource/
+failure controls. Actual GPU visual checks of this integrated candidate remain
+pending. The Java bridge now reports actual CPU-depth-frame presence in work
+array index7 and lighting-export milliseconds in index8; existing timing indices
+retain their earlier definitions. Geometry lighting binds the immutable frame's
+signed-level policy; menus declare an inactive scene and release large shadow
+maps. Context-loss recovery is explicitly a fresh session, with no unsafe
+independent native cache-reset API.
+A browser-only declaration may omit the unused CPU depth raster only for a sink
+that explicitly opts out. Desktop/editor/visible-world diagnostics retain it.
+The query depth=gpu remains private benchmark opt-in; ordinary browser mode keeps
+CPU depth pending additional interaction proof. A real Scene fixture passes 1982
+checks comparing opaque, transparent and cutout mouse-picking results with and
+without CPU depth. It is included in the pooled-frame sink guardrail.
+
+Frozen source 3cc6c3fa132e6f9a905432cc1520980b9e7e308b / JAR
+ d6d3233f92dbaac4f6ecc841307c63eeb7d765b8d746695ae0b3aa9e0b4904a9
+is staged as webgl-gpu-depth-owned on loopback 8104. An actual AMD hardware run
+with depth=gpu completed 2014 new world frames over its 100-second capture,
+observed authoritative walking from (145,646) to (142,648), retained tree/player
+occlusion and displayed the ordinary Chop/Walk/Examine tree menu. A subsequent
+180-second authored kitchen scene completed 5079 world frames, with a fresh last
+frame at 187045 ms, no GPU error, and 237794624 resident chunk/texture bytes.
+Take-pot and NPC context options were visible, but manual CDP clicks did not
+establish successful pickup, dialogue or door interaction. Those actions are not
+claimed as passed. Both captures used the real normal disposable account, never
+an administrator or owner account. Mixed functional captures are not benchmarks.
+
+The same candidate also restores native resident-world color-pass semantics:
+opaque/transparent batch separation, matching alpha thresholds, object backface
+culling and wall polygon offset. Full renderer guardrails, the sink/depth tests,
+client build and frontend contract tests passed before lighting integration.
 Hardware/browser/device coverage, broader combat/content, context recovery and
 public TLS/networking/distribution acceptance remain future work. This document
 does not claim the owner's full visual/performance goal has been achieved.

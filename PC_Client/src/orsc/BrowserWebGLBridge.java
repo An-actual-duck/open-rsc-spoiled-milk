@@ -16,17 +16,21 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private final Map<Integer,Long> textures=new HashMap<Integer,Long>();
     private final OpenGLWorldChunkRenderer packing=new OpenGLWorldChunkRenderer(null,null,null,true,true,false,false,true,true,false);
     private final OpenGLPixelWorkspace spriteWorkspace=new OpenGLPixelWorkspace();
+    private final BrowserLightingData lightingData=new BrowserLightingData();
+    private int maxTextureSize;
     private static final long CHUNK_BUDGET=224L*1024*1024; // reserve32MiB for the bounded world texture catalog
     private static final boolean ACTIVE_ONLY="active".equals(System.getProperty("spoiledmilk.browserCachePolicy","lru"));
     private long residentChunkBytes;
     private int nextId=1;
     private boolean initialized;
-    private static native void initialize(String vertex, String fragment);
+    private static native int initialize(String vertex, String fragment);
+    private static native void initializeLighting(String vertex,String fragment);
+    private static native void uploadLightingMask(int unit,int width,int height,byte[] rgba,float[] bounds);
+    private static native void lightingFrame(float[] values);
     private static native void uploadChunk(int id,float[] vertices,int[] indices,int[] batches);
     private static native void uploadTexture(int id,int width,int height,int[] rgba);
     private static native void present(int width,int height,boolean world,float[] matrices,float[] uniforms,int[] draws,int[] overlay);
     private static native void frameWork(float[] milliseconds);
-    private static native void reset();
     private static native void deleteChunks(int[] ids);
     private static native void beginWorldSprites();
     private static native void uploadWorldSprite(int width,int height,float[] vertices,byte[] rgba);
@@ -48,13 +52,17 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         int w=image.getWidth(),h=image.getHeight();
         if(w<1||h<1||(long)w*h>MAX_PIXELS)throw new IllegalStateException("Browser viewport exceeds bounded backend capacity");
         if(!initialized) {
-            try { initialize(shader("RESIDENT_CHUNK_PARITY_VERTEX_SHADER"),shader("RESIDENT_CHUNK_PARITY_FRAGMENT_SHADER")); }
+            try {
+                maxTextureSize=initialize(shader("RESIDENT_CHUNK_PARITY_VERTEX_SHADER"),shader("RESIDENT_CHUNK_PARITY_FRAGMENT_SHADER"));
+                initializeLighting(BrowserLightingData.depthVertex(),BrowserLightingData.depthFragment());
+            }
             catch(Exception e) { throw new IllegalStateException("Browser shader initialization failed",e); }
             initialized=true;
         }
         Renderer3DWorldChunkFrame world=frame==null?null:frame.getWorldChunkFrame();
         boolean hasWorld=world!=null&&world.getChunkCount()>0;
         if(!hasWorld) {
+            exportLighting(null);
             present(w,h,false,new float[48],new float[30],new int[0],borrowOverlay(image));
             return;
         }
@@ -100,9 +108,16 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             float[] matrices=new float[48];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);columnMajor(OpenGLFramePresenter.backendCameraToClipProjectionMatrix(frame),matrices,32);
             uploadSprites(frame);
             long spriteEnd=System.nanoTime();
+            exportLighting(frame);
+            long lightingEnd=System.nanoTime();
             present(w,h,true,matrices,uniforms(frame),Arrays.copyOf(draws,count),borrowOverlay(image));
-            long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-spriteEnd)/1000000f,chunks.size(),residentChunkBytes});
+            long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-lightingEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f});
         } finally { RendererFrameLighting.restore(previous); }
+    }
+    private void exportLighting(Renderer3DFrame frame) {
+        BrowserLightingData.Frame light=lightingData.prepare(frame,maxTextureSize);
+        for(BrowserLightingData.Mask mask:light.changes)uploadLightingMask(mask.unit,mask.width,mask.height,mask.rgba,mask.bounds);
+        lightingFrame(light.values);
     }
     private void uploadSprites(Renderer3DFrame frame) {
         beginWorldSprites();
