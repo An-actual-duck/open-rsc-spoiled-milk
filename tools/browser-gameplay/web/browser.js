@@ -26,7 +26,7 @@ function publish() {
 }
 function dispose() {
   if (stopped) return;
-  stopped = true; pointer?.dispose(); transport.dispose(); gpu?.dispose();
+  stopped = true; pointer?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
 }
 function finish(reason) {
   if (stopped) return;
@@ -97,7 +97,6 @@ try {
     gpu = createBrowserWebGL(canvas, report, {opaqueProof:options.get('alpha-proof')==='1'});
     worldCover=createWorldCover({document,window,display:document.querySelector('#display'),onGateChange:()=>window.dispatchEvent(new Event('browser-world-readinesschange'))});
     window.browserProof.worldLoading=worldCover.stats;
-    window.addEventListener('pagehide',()=>worldCover.dispose(),{once:true});
     window.browserProof.renderer = 'WebGL2 resident world and sprites / software UI (experimental)';
     Object.assign(natives, gpu.natives);
     function alignWorldSurface(width,height){

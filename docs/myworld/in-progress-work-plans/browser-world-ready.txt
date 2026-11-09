@@ -103,3 +103,11 @@ a focused functional proof, not new performance acceptance or a claim of60FPS.
 Existing wider browser limitations remain in browser-webgl-renderer.txt. Real
 area transition/resize/relogin/error state handling also has controlled state
 fixtures; this short combined run primarily exercised initial login readiness.
+
+Explicit disposal review follow-up
+----------------------------------
+Ordinary browserSessionDispose now disposes the loading-cover owner before iframe
+removal, using the same owner path as pagehide. Repeated owner disposal and direct
+cover disposal are idempotent: gate release, listeners and cover DOM are cleaned
+exactly once. Focused frontend and real cover DOM fixtures assert this behavior.
+Historical8115 stage remains unchanged; this follow-up changes cleanup only.

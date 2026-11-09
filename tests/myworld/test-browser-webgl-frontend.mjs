@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, configured;
+let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, configured;
 const status = {textContent:''}, messages = [];
 let layoutReads=0;
 const target = {width:960,height:560,getBoundingClientRect:()=>{layoutReads++;return{left:20,top:40,width:960,height:560}}};
@@ -18,7 +18,7 @@ const context = vm.createContext({window,location:{search:'?mode=webgl',origin:'
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
   cheerpjInit:async o=>{configured=o;},cheerpjCreateDisplay(){},cheerpjRunMain:()=>new Promise(()=>{})});
-let gateChanged;const cover={blocksWorldInput:false,attach(){},dispose(){},update(state){const next=state?.phase==='loading';if(next!==this.blocksWorldInput){this.blocksWorldInput=next;gateChanged();}}};
+let gateChanged;const cover={blocksWorldInput:false,attach(){},dispose(){coverDisposed++;this.blocksWorldInput=false;},update(state){const next=state?.phase==='loading';if(next!==this.blocksWorldInput){this.blocksWorldInput=next;gateChanged();}}};
 const coverModule=new vm.SyntheticModule(['createWorldCover'],function(){this.setExport('createWorldCover',o=>{gateChanged=o.onGateChange;return cover;});},{context});
 const transportModule = new vm.SyntheticModule(['createTransport'],function(){this.setExport('createTransport',()=>({dispose:()=>transportDisposed++}));},{context});
 const middleStats = {presses:0,moves:0,releases:0,cancels:0,coalesced:0};
@@ -68,7 +68,8 @@ await configured.natives.Java_orsc_browser_BrowserBootstrap_reportState(null,'GA
 assert.match(status.textContent,/controlled shader error/);assert.match(status.textContent,/1500 ms ago/);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_report(null,'ordinary successful update');
 assert.match(status.textContent,/controlled shader error/);
-window.browserSessionDispose();window.browserSessionDispose();
+cover.blocksWorldInput=true;window.browserSessionDispose();window.browserSessionDispose();
+assert.equal(coverDisposed,1,'Stop disposes the loading-cover owner exactly once before iframe removal');assert.equal(window.browserWorldInputAllowed(),true,'Stop releases the world input gate');
 assert.equal(gpuDisposed,1);assert.equal(transportDisposed,1);assert.equal(middleDisposed,1,'Stop disposes the middle-input owner exactly once');
 assert.ok(messages.some(m=>m.proof?.gpu?.lastError==='controlled shader error'));
 console.log('PASS mocked frontend contract: GPU/middle native merge, AWT alignment, pointer transparency, sticky input/GPU errors and idempotent owner disposal; no hardware proof');

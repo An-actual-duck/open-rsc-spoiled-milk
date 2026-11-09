@@ -29,6 +29,6 @@ export function createWorldCover({document,window,display,onGateChange=()=>{}}) 
     if(next!==blocked){blocked=next;stats.blocked=next;stats.transitions++;onGateChange();}
   }
   function attach(){if(cover.parentElement!==display)display.append(cover);}
-  function dispose(){disposed=true;for(const type of types)document.removeEventListener(type,gate,true);cover.remove();if(blocked){blocked=false;stats.blocked=false;stats.transitions++;onGateChange();}}
+  function dispose(){if(disposed)return;disposed=true;for(const type of types)document.removeEventListener(type,gate,true);cover.remove();if(blocked){blocked=false;stats.blocked=false;stats.transitions++;onGateChange();}}
   return {stats,update,attach,dispose,get blocksWorldInput(){return blocked;}};
 }
