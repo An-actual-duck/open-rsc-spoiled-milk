@@ -1,0 +1,63 @@
+Scaled browser input: independent diagnostic validation
+
+Branch fix/browser-scaled-input, worker ai-1. This is diagnostic coverage,
+NOT a production input fix. Public/Oracle content and desktop input unchanged.
+
+Concrete result
+The manager's isolated login driver dispatched clicks before the initial
+asset load finished. LOGIN and javaFrames were already reported while the
+visible screen still said Loading 3d models 86%. That condition was too early
+to identify an interactive login menu. Moving the input hook was not justified.
+
+Source inspection of CheerpJ 5 cj3.js confirms its pointer and wheel listeners
+are ordinary element bubble handlers. The existing display capture normalizer
+runs first; the vendor copies clientX/Y into its queue, then subtracts the
+#cheerpjDisplay client rect. Actual DOM origins were equal. Vendor code was
+read-only, never patched.
+
+A real undecorated AWT Canvas independently received press/release at exactly
+580,386 under CSS fit factors 1.25, 0.75 and 1.9. Thus the existing normalizer
+works with real vendor dispatch, not merely synthetic Node fixture events.
+Evidence: output/tests/browser-display-modes/probe-input.log and
+probe-awt-events/probe-{1200,720,1824}.json. This does not independently prove
+every mouse-button, wheel, DPR, page-zoom or four-corner combination.
+
+Production diagnostic Java state (8121, optional observer):
+- ~15.9s: loginScreenNumber=0, mouse=0,0, offsets=0,0, game=512x334;
+  the captured screen was still Loading 3d models 86%.
+- ~16.9s after premature click: mouse=580,386, offsets=0,0, game=960x528;
+  loginScreenNumber remained0. Input coordinates were exact, but initial menu
+  setup was not ready when the driver sent the click.
+- ~24.9s: welcome menu had appeared; the earlier clicks were already gone.
+Evidence: game-input-diag-8121/{before,after-existing,after-login}.{png,json}
+and game-input-diagnostic-8121.log under output/tests/browser-display-modes.
+
+Plain unchanged 8117, no observer or runtime patch:
+The driver waited twenty additional seconds after its early LOGIN/frame gate.
+A normal scaled580,386 click opened Existing User, credentials entered through
+ordinary CDP browser events, and GAME was reached at ~38s. Its isolated browser
+was closed afterward. The synthetic browserdemo account was the only login;
+no owner-created account, public server or preserved fixture data was changed.
+Evidence: game-input-ready-plain/{before,after-existing,after-login}.{png,json}
+and game-input-ready-plain.log under the same output suite.
+
+Private diagnostics added
+- mode=input-probe: creates a 960x540 undecorated AWT Canvas and reports real
+  MouseEvent coordinates. At most128 input event reports per probe runtime.
+- inputdiagnostics=1: optional production-game observer reports login stage,
+  mouse coordinates, screen offsets and game dimensions once/second, at most64
+  samples. Disabled flag is evaluated once outside the observer loop. Ordinary
+  software/WebGL behavior and input dispatch are unchanged.
+- These are opt-in loopback test helpers, not gameplay or FPS instrumentation.
+
+Checks
+Existing display policy and mocked frontend contracts passed after the additions.
+prepare.py compiled the actual private Java probe and observer for 8119/8121;
+real AWT and production-game proofs above exercised them. Final capped source
+was compiled separately after proof (report limits only). Layout/diff checks pass.
+An initial generic boxed-reflection observer attempt stalled and was abandoned;
+8120 and its evidence remain preserved. The final observer uses direct public
+fields and a single primitive getInt for the private login-stage field.
+
+No FPS improvement, global keyboard diagnosis or new input defect is claimed.
+Manager should strengthen its login driver readiness gate before future tests.

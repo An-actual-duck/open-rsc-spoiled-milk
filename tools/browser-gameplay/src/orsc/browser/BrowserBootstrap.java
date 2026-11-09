@@ -19,6 +19,31 @@ public final class BrowserBootstrap {
     private static native void reportInputError(String message);
 
     public static void main(String[] args) throws Exception {
+        if (args.length > 0 && "input-probe".equals(args[0])) {
+            javax.swing.SwingUtilities.invokeAndWait(new Runnable() { public void run() {
+                javax.swing.JFrame frame = new javax.swing.JFrame("Private coordinate probe");
+                frame.setUndecorated(true);
+                java.awt.Canvas canvas = new java.awt.Canvas();
+                canvas.setPreferredSize(new java.awt.Dimension(960, 540));
+                java.awt.event.MouseAdapter input = new java.awt.event.MouseAdapter() {
+                    private int samples;
+                    private void emit(java.awt.event.MouseEvent e) {
+                        if(samples>=128)return;
+                        samples++;
+                        report("input-probe:" + e.getID() + ":" + e.getX() + ":" + e.getY() + ":" + e.getButton());
+                    }
+                    public void mousePressed(java.awt.event.MouseEvent e) { emit(e); }
+                    public void mouseReleased(java.awt.event.MouseEvent e) { emit(e); }
+                    public void mouseMoved(java.awt.event.MouseEvent e) { emit(e); }
+                    public void mouseDragged(java.awt.event.MouseEvent e) { emit(e); }
+                    public void mouseWheelMoved(java.awt.event.MouseWheelEvent e) { emit(e); }
+                };
+                canvas.addMouseListener(input); canvas.addMouseMotionListener(input); canvas.addMouseWheelListener(input);
+                frame.add(canvas); frame.pack(); frame.setLocation(0,0); frame.setVisible(true);
+                report("input-probe:ready");
+            }});
+            return;
+        }
         if (args.length > 0 && "mesh-probe".equals(args[0])) {
             try { report(MeshCompatibilityProbe.run()); }
             catch (Throwable error) { error.printStackTrace(); report("mesh-probe:blocked:" + error); }
@@ -98,6 +123,7 @@ public final class BrowserBootstrap {
             },"Browser middle-button input");
             pointer.setDaemon(true);pointer.start();
         }
+        final boolean inputDiagnostics=Boolean.getBoolean("spoiledmilk.browserInputDiagnostics");
         Thread observer = new Thread(new Runnable() {
             public void run() {
                 try {
@@ -105,12 +131,19 @@ public final class BrowserBootstrap {
                     java.lang.reflect.Field modeField = orsc.mudclient.class.getDeclaredField("currentViewMode"); modeField.setAccessible(true);
                     java.lang.reflect.Field fpsField = orsc.mudclient.class.getDeclaredField("FPS"); fpsField.setAccessible(true);
                     java.lang.reflect.Field loopField = orsc.mudclient.class.getDeclaredField("selectedClientLoopMode"); loopField.setAccessible(true);
+                    int inputDiagnosticSamples=0;
                     while (true) {
                         Object client = clientField.get(null);
                         if (client != null && webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
                             orsc.mudclient actual=(orsc.mudclient)client;actual.setCameraZoomSetting(75);actual.cameraRotation=128;
                         }
                         if (client != null) {
+                            if(inputDiagnostics && inputDiagnosticSamples<64) {
+                                inputDiagnosticSamples++;
+                                orsc.mudclient actual=(orsc.mudclient)client;
+                                java.lang.reflect.Field login=orsc.mudclient.class.getDeclaredField("loginScreenNumber");login.setAccessible(true);
+                                report("input-state:"+login.getInt(client)+":"+actual.mouseX+":"+actual.mouseY+":"+actual.screenOffsetX+":"+actual.screenOffsetY+":"+actual.getGameWidth()+":"+actual.getGameHeight());
+                            }
                             if(Boolean.getBoolean("spoiledmilk.browserProfile"))reportTelemetry(orsc.BrowserTelemetryData.names(),orsc.BrowserTelemetryData.snapshot());
                             reportLoop(String.valueOf(loopField.get(client)),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isEarlyResidentFaceCullEnabled(),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isBrowserFullResidentOwnershipEnabled());
                             reportState(String.valueOf(modeField.get(client)), fpsField.getInt(null), orsc.ORSCApplet.globalLoadingPercent);
