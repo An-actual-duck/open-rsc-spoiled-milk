@@ -14,7 +14,7 @@ import orsc.graphics.two.WorldOverlayCoverage;
 /** Experimental local WebGL2 backend. Native calls synchronously copy/upload borrowed primitive arrays. */
 public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static final int MAX_CHUNKS=256, MAX_VERTICES=524288, MAX_PIXELS=2097152, UPLOAD_VERTICES_PER_FRAME=32768;
-    private final Map<Long,CachedChunk> chunks=new LinkedHashMap<Long,CachedChunk>(32,.75f,true);
+    private final Map<WorldChunkBufferKey,CachedChunk> chunks=new LinkedHashMap<WorldChunkBufferKey,CachedChunk>(32,.75f,true);
     private final Map<Integer,Long> textures=new HashMap<Integer,Long>();
     private final Map<Integer,int[]> textureMetadata=new HashMap<Integer,int[]>();
     private long materialRevision,packingSequence;
@@ -42,6 +42,18 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void initializeSky();
     private static native void uploadSkyGeometry(float[] geometry,int[] ranges,int paletteCount);
     private static native void skyFrame(float[] values,float[] palette);
+    interface ChunkBackend {
+        void upload(int id,float[] vertices,int[] indices,int[] batches);
+        void replace(int id,float[] vertices,int[] indices,int[] batches);
+        void delete(int[] ids);
+    }
+    private final ChunkBackend chunkBackend;
+    public BrowserWebGLBridge() { this(new ChunkBackend() {
+        public void upload(int id,float[] vertices,int[] indices,int[] batches){uploadChunk(id,vertices,indices,batches);}
+        public void replace(int id,float[] vertices,int[] indices,int[] batches){replaceChunk(id,vertices,indices,batches);}
+        public void delete(int[] ids){deleteChunks(ids);}
+    }); }
+    BrowserWebGLBridge(ChunkBackend backend) { if(backend==null)throw new NullPointerException("chunk backend");chunkBackend=backend; }
     private static native void uploadChunk(int id,float[] vertices,int[] indices,int[] batches);
     private static native void uploadTexture(int id,int width,int height,int[] rgba,boolean transparency);
     private static native void replaceChunk(int id,float[] vertices,int[] indices,int[] batches);
@@ -96,14 +108,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         if(world.getChunkCount()>MAX_CHUNKS)throw new IllegalStateException("Browser scene exceeds chunk capacity");
         Renderer3DFrame previous=RendererFrameLighting.bind(frame);
         try {
-            // Evict the old view before uploading a new immutable active set.
+            // Evict the old view before uploading the current logical/immutable active set.
             // A count-only cache bound can exceed the byte budget long before 512 chunks.
-            Set<Long> active=new HashSet<Long>();
-            for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks())active.add(chunk.getStorageSignature());
-            int[] deleted=new int[chunks.size()];int deletedCount=0;
-            Iterator<Map.Entry<Long,CachedChunk>> iterator=chunks.entrySet().iterator();
-            while(iterator.hasNext()){Map.Entry<Long,CachedChunk> entry=iterator.next();if(!active.contains(entry.getKey())){if(ACTIVE_ONLY){deleted[deletedCount++]=entry.getValue().id;residentChunkBytes-=entry.getValue().bytes;iterator.remove();}}}
-            if(deletedCount>0)deleteChunks(Arrays.copyOf(deleted,deletedCount));
+            Set<WorldChunkBufferKey> active=activeKeys(world);
+            evictInactive(active);
             for(Renderer3DTextureData texture:frame.getTextures()) {
                 if(texture==null)continue;
                 int id=texture.getTextureId();Long old=textures.get(id);
@@ -119,37 +127,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             while(materialIterator.hasNext()){int id=materialIterator.next().getKey();if(frame.getTexture(id)==null){removedTextures[removedCount++]=id;materialIterator.remove();textures.remove(id);materialRevision++;}}
             if(removedCount>0)deleteTextures(Arrays.copyOf(removedTextures,removedCount));
             long textureEnd=System.nanoTime();
-            int[] packingSettings=packing.backendPackingSettings();
-            int[] draws=new int[world.getChunkCount()*8];int count=0,uploaded=0,remainingRepacks=0;
-            List<PendingRepack> pending=new ArrayList<PendingRepack>();
-            for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
-                CachedChunk cached=chunks.get(chunk.getStorageSignature());if(cached==null)continue;
-                int[] materialState=cached.materials;
-                if(cached.materialRevision!=materialRevision){materialState=BrowserChunkVariant.materials(frame,chunk);if(Arrays.equals(materialState,cached.materials))cached.materialRevision=materialRevision;}
-                if(!Arrays.equals(cached.settings,packingSettings)||!Arrays.equals(cached.materials,materialState))pending.add(new PendingRepack(cached,chunk,materialState));
-            }
-            Collections.sort(pending,(a,b)->Long.compare(a.cached.packedAt,b.cached.packedAt));
-            for(PendingRepack update:pending) {
-                if(uploaded>0&&uploaded+update.chunk.getVertexCount()>UPLOAD_VERTICES_PER_FRAME){remainingRepacks++;continue;}
-                BrowserChunkMaterials.Buffers buffers=BrowserChunkMaterials.pack(packing,frame,update.chunk);
-                replaceChunk(update.cached.id,packing.copyBackendChunkVertices(update.chunk,frame),buffers.indices,buffers.batches);
-                update.cached.x=update.chunk.getVertexOffsetX();update.cached.z=update.chunk.getVertexOffsetZ();update.cached.settings=packingSettings;update.cached.materials=update.materials;
-                update.cached.materialRevision=materialRevision;update.cached.packedAt=++packingSequence;uploaded+=update.chunk.getVertexCount();
-            }
-            for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
-                long signature=chunk.getStorageSignature();CachedChunk cached=chunks.get(signature);
-                if(cached==null && (uploaded==0||uploaded+chunk.getVertexCount()<=UPLOAD_VERTICES_PER_FRAME)) {
-                    if(chunk.getVertexCount()>MAX_VERTICES||chunk.getIndexCount()>MAX_VERTICES*3)throw new IllegalStateException("Browser chunk exceeds capacity");
-                    long required=(long)chunk.getVertexCount()*28*4+(long)Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3*4;
-                    makeRoom(active,required);
-                    cached=upload(frame,chunk,required,packingSettings);chunks.put(signature,cached);residentChunkBytes+=required;uploaded+=chunk.getVertexCount();
-                }
-                if(cached==null)continue;
-                draws[count++]=cached.id;draws[count++]=chunk.getVertexOffsetX()-cached.x;draws[count++]=chunk.getVertexOffsetZ()-cached.z;
-                draws[count++]=chunk.getLogicalWorldOffsetX();draws[count++]=chunk.getLogicalWorldOffsetZ();
-                int visibility=0;for(Renderer3DModelKind kind:Renderer3DModelKind.values())if(frame.isWorldChunkModelKindVisible(kind,chunk.getPlane()))visibility|=1<<kind.ordinal();
-                draws[count++]=visibility;draws[count++]=chunk.getPlane();draws[count++]=chunk.getChunkRole();
-            }
+            ChunkDraws geometry=prepareChunks(frame,world,active);
+            int[] draws=geometry.draws;int count=draws.length,remainingRepacks=geometry.remainingRepacks;
             long geometryEnd=System.nanoTime();
             float[] view=OpenGLWorldChunkRenderer.backendWorldViewMatrix(frame);
             float[] clip=OpenGLWorldChunkRenderer.multiply(OpenGLWorldChunkRenderer.projectionMatrix(frame),view);
@@ -162,9 +141,85 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             long skyEnd=System.nanoTime();
             prepareOverlay(image,currentSurface);
             worldProgress(loadState.frame(client!=null&&client.isGameView(),client!=null&&client.isFullScreenModalUiActive(),client!=null&&client.isRenderer3DWorldReady(),frame,world.getChunkCount(),count/8,remainingRepacks,spriteGroups,spriteGroups,w,h,textures.size()));
-            present(w,h,true,matrices,uniforms(frame),Arrays.copyOf(draws,count),borrowOverlay(image));
+            present(w,h,true,matrices,uniforms(frame),draws,borrowOverlay(image));
             long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()},pose(frame));
         } finally { RendererFrameLighting.restore(previous); }
+    }
+    static final class ChunkDraws {
+        final int[] draws;final int remainingRepacks;
+        ChunkDraws(int[] draws,int remainingRepacks){this.draws=draws;this.remainingRepacks=remainingRepacks;}
+    }
+    // Production native identity: static chunks retain immutable/rebased storage;
+    // animated chunks own one positional slot and replace its latest exact pose.
+    static Set<WorldChunkBufferKey> activeKeys(Renderer3DWorldChunkFrame world) {
+        Set<WorldChunkBufferKey> active=new HashSet<WorldChunkBufferKey>();
+        for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
+            if(!active.add(WorldChunkBufferKey.from(chunk,true))&&chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS)
+                throw new IllegalStateException("Conflicting animated browser chunk identity");
+        }
+        return active;
+    }
+    void evictInactive(Set<WorldChunkBufferKey> active) {
+        if(!ACTIVE_ONLY)return;
+        int[] deleted=new int[chunks.size()];int count=0;
+        Iterator<Map.Entry<WorldChunkBufferKey,CachedChunk>> iterator=chunks.entrySet().iterator();
+        while(iterator.hasNext()){Map.Entry<WorldChunkBufferKey,CachedChunk> entry=iterator.next();if(!active.contains(entry.getKey())){deleted[count++]=entry.getValue().id;residentChunkBytes-=entry.getValue().bytes;iterator.remove();}}
+        if(count>0)chunkBackend.delete(Arrays.copyOf(deleted,count));
+    }
+    ChunkDraws prepareChunks(Renderer3DFrame frame,Renderer3DWorldChunkFrame world,Set<WorldChunkBufferKey> active) {
+        int[] packingSettings=packing.backendPackingSettings();
+        int[] draws=new int[world.getChunkCount()*8];int count=0,uploaded=0,remainingRepacks=0;
+        List<PendingRepack> pending=new ArrayList<PendingRepack>();
+        for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
+            CachedChunk cached=chunks.get(WorldChunkBufferKey.from(chunk,true));if(cached==null)continue;
+            int[] materialState=cached.materials;
+            if(cached.signature!=chunk.getStorageSignature()||cached.materialRevision!=materialRevision){materialState=BrowserChunkVariant.materials(frame,chunk);if(Arrays.equals(materialState,cached.materials))cached.materialRevision=materialRevision;}
+            if(cached.signature!=chunk.getStorageSignature()||cached.vertices!=chunk.getVertexCount()||cached.indices!=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3||!Arrays.equals(cached.settings,packingSettings)||!Arrays.equals(cached.materials,materialState))pending.add(new PendingRepack(cached,chunk,materialState));
+        }
+        Collections.sort(pending,(a,b)->Long.compare(a.cached.packedAt,b.cached.packedAt));
+        for(PendingRepack update:pending) {
+            // Settings-only repacks retain the existing bounded budget. A changed
+            // animation pose must be uploaded now, never drawn from an older pose.
+            if(update.cached.signature==update.chunk.getStorageSignature()&&uploaded>0&&uploaded+update.chunk.getVertexCount()>UPLOAD_VERTICES_PER_FRAME){remainingRepacks++;continue;}
+            updateChunk(frame,update.chunk,update.cached,packingSettings,update.materials,active);
+            uploaded+=update.chunk.getVertexCount();
+        }
+        for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
+            WorldChunkBufferKey key=WorldChunkBufferKey.from(chunk,true);CachedChunk cached=chunks.get(key);
+            if(cached==null && (uploaded==0||uploaded+chunk.getVertexCount()<=UPLOAD_VERTICES_PER_FRAME)) {
+                long required=chunkBytes(chunk);
+                makeRoom(active,required);
+                cached=upload(frame,chunk,required,packingSettings);chunks.put(key,cached);residentChunkBytes+=required;uploaded+=chunk.getVertexCount();
+            }
+            if(cached==null)continue;
+            draws[count++]=cached.id;draws[count++]=chunk.getVertexOffsetX()-cached.x;draws[count++]=chunk.getVertexOffsetZ()-cached.z;
+            draws[count++]=chunk.getLogicalWorldOffsetX();draws[count++]=chunk.getLogicalWorldOffsetZ();
+            int visibility=0;for(Renderer3DModelKind kind:Renderer3DModelKind.values())if(frame.isWorldChunkModelKindVisible(kind,chunk.getPlane()))visibility|=1<<kind.ordinal();
+            draws[count++]=visibility;draws[count++]=chunk.getPlane();draws[count++]=chunk.getChunkRole();
+        }
+        return new ChunkDraws(Arrays.copyOf(draws,count),remainingRepacks);
+    }
+    private CachedChunk updateChunk(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk,CachedChunk cached,int[] settings,int[] materials,Set<WorldChunkBufferKey> active) {
+        int packedIndices=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3;
+        if(cached.vertices!=chunk.getVertexCount()||cached.indices!=packedIndices) {
+            long required=chunkBytes(chunk);makeRoom(active,required);
+            CachedChunk replacement=upload(frame,chunk,required,settings);
+            // Allocate+validate first. A failed native upload leaves the old cache
+            // entry and accounting intact; it can never masquerade as this pose.
+            chunks.put(WorldChunkBufferKey.from(chunk,true),replacement);
+            residentChunkBytes+=required-cached.bytes;
+            chunkBackend.delete(new int[]{cached.id});
+            return replacement;
+        }
+        BrowserChunkMaterials.Buffers buffers=BrowserChunkMaterials.pack(packing,frame,chunk);
+        chunkBackend.replace(cached.id,packing.copyBackendChunkVertices(chunk,frame),buffers.indices,buffers.batches);
+        cached.x=chunk.getVertexOffsetX();cached.z=chunk.getVertexOffsetZ();cached.settings=settings;cached.materials=materials;
+        cached.signature=chunk.getStorageSignature();cached.materialRevision=materialRevision;cached.packedAt=++packingSequence;
+        return cached;
+    }
+    private static long chunkBytes(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+        if(chunk.getVertexCount()>MAX_VERTICES||chunk.getIndexCount()>MAX_VERTICES*3)throw new IllegalStateException("Browser chunk exceeds capacity");
+        return (long)chunk.getVertexCount()*28*4+(long)Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3*4;
     }
     private mudclient currentClient() {
         try {
@@ -235,21 +290,21 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         return result;
     }
 
-    private void makeRoom(Set<Long> active,long required) {
+    private void makeRoom(Set<WorldChunkBufferKey> active,long required) {
         if(required>CHUNK_BUDGET)throw new IllegalStateException("Browser chunk exceeds resident byte budget");
         int[] deleted=new int[chunks.size()];int count=0;
-        Iterator<Map.Entry<Long,CachedChunk>> iterator=chunks.entrySet().iterator();
+        Iterator<Map.Entry<WorldChunkBufferKey,CachedChunk>> iterator=chunks.entrySet().iterator();
         while((residentChunkBytes+required>CHUNK_BUDGET||chunks.size()>=MAX_CHUNKS*2)&&iterator.hasNext()) {
-            Map.Entry<Long,CachedChunk> entry=iterator.next();if(active.contains(entry.getKey()))continue;
+            Map.Entry<WorldChunkBufferKey,CachedChunk> entry=iterator.next();if(active.contains(entry.getKey()))continue;
             deleted[count++]=entry.getValue().id;residentChunkBytes-=entry.getValue().bytes;iterator.remove();
         }
-        if(count>0)deleteChunks(Arrays.copyOf(deleted,count));
+        if(count>0)chunkBackend.delete(Arrays.copyOf(deleted,count));
         if(residentChunkBytes+required>CHUNK_BUDGET||chunks.size()>=MAX_CHUNKS*2)throw new IllegalStateException("Active browser scene exceeds resident byte budget");
     }
     private CachedChunk upload(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk,long bytes,int[] settings) {
         BrowserChunkMaterials.Buffers materials=BrowserChunkMaterials.pack(packing,frame,chunk);
-        int id=nextId++;uploadChunk(id,packing.copyBackendChunkVertices(chunk,frame),materials.indices,materials.batches);
-        return new CachedChunk(id,chunk.getVertexOffsetX(),chunk.getVertexOffsetZ(),bytes,settings,BrowserChunkVariant.materials(frame,chunk),materialRevision,++packingSequence);
+        int id=nextId++;chunkBackend.upload(id,packing.copyBackendChunkVertices(chunk,frame),materials.indices,materials.batches);
+        return new CachedChunk(id,chunk,bytes,settings,BrowserChunkVariant.materials(frame,chunk),materialRevision,++packingSequence);
     }
     static int[] borrowOverlay(BufferedImage image) {
         if (!(image.getRaster().getDataBuffer() instanceof DataBufferInt)
@@ -283,7 +338,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         PendingRepack(CachedChunk cached,Renderer3DWorldChunkFrame.ChunkMesh chunk,int[] materials){this.cached=cached;this.chunk=chunk;this.materials=materials;}
     }
     private static final class CachedChunk {
-        final int id;int x,z;final long bytes;int[] settings,materials;long materialRevision,packedAt;
-        CachedChunk(int id,int x,int z,long bytes,int[] settings,int[] materials,long materialRevision,long packedAt){this.id=id;this.x=x;this.z=z;this.bytes=bytes;this.settings=settings;this.materials=materials;this.materialRevision=materialRevision;this.packedAt=packedAt;}
+        final int id,vertices,indices;int x,z;final long bytes;int[] settings,materials;long signature,materialRevision,packedAt;
+        CachedChunk(int id,Renderer3DWorldChunkFrame.ChunkMesh chunk,long bytes,int[] settings,int[] materials,long materialRevision,long packedAt){this.id=id;this.x=chunk.getVertexOffsetX();this.z=chunk.getVertexOffsetZ();this.vertices=chunk.getVertexCount();this.indices=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3;this.signature=chunk.getStorageSignature();this.bytes=bytes;this.settings=settings;this.materials=materials;this.materialRevision=materialRevision;this.packedAt=packedAt;}
     }
 }

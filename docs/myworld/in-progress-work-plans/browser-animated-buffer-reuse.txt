@@ -1,0 +1,67 @@
+Browser animated world-buffer reuse
+
+Worker ai-1, fix/browser-animated-buffer-reuse. BrowserWebGLBridge chunk-cache
+methods only; no changes to sprite upload methods, browser JS, desktop rendering,
+gameplay, server state or public deployment.
+
+Problem
+The browser used every animated storage/pose signature as a new resident key.
+A changing windmill pose allocated another VBO/IBO/VAO and retained or evicted
+the prior pose. The geometry still needs packing/uploading for each new pose;
+this change removes allocation/cache churn, not animation work itself.
+
+Identity and current content
+The browser now shares production WorldChunkBufferKey.from(chunk,true):
+- Static storage uses immutable signature/plane/role identity and retains the
+  established draw-offset rebase behavior.
+- Animated storage uses plane, center section, logical origin, object flag and
+  role. Its cached entry records the last accepted exact storage signature,
+  packed shape, material dependencies, settings and vertex offsets.
+- Changed poses replace the existing same-shape buffers via the already-tested
+  native replaceChunk contract. Pose updates bypass the settings-only repack
+  budget so an old animation pose cannot remain on screen behind queued work.
+- A changed pose also recalculates material dependencies even when the global
+  texture metadata revision is unchanged. Material/settings changes still
+  invalidate packing; unchanged content stays resident.
+- Conflicting simultaneous animated chunks with one logical identity are rejected
+  explicitly instead of silently drawing two instances from the final pose.
+  Multiple scenery models already aggregate within their positional chunk.
+
+Shape changes and ownership
+The existing JS replacement API requires equal vertex/index byte lengths.
+A shape change reserves the full additional allocation against the current
+224MiB budget (old resource remains live), uploads/validates a fresh ID, commits
+new Java metadata/accounting, then deletes the old ID. Allocation failure does
+not commit the new pose. In-place GL update failure remains terminal/fail-closed
+under the existing JS backendFailed contract; this does not promise GPU rollback
+or recovery after partially executed bufferSubData. Context/session disposal
+still belongs to the existing browser backend owner.
+The immutable LRU/active policies, count/byte limits and texture cache remain.
+
+Verification
+python3 tests/myworld/test-browser-animated-chunks.py:
+  PASS 992 production bridge checks under LRU, 1506 under active policy.
+The fixture injects only the chunk-native upload boundary into the actual bridge;
+production packing remains real. It checks100 distinct poses and return poses
+against current native-packed float/index/material arrays, stable ID and bytes,
+independent material revisions/settings, topology growth/shrink, negative planes,
+logical origin changes, static rebases, crowded upload budgets, entry/byte bounds,
+recorded failures and bounded allocate/commit/delete ordering.
+Further build/existing regression results are recorded in the final handoff.
+
+Limits
+CPU fixtures and instrumented native boundaries are not GPU timing or visual
+proof. Manager must run the combined immutable browser stage with an animated
+object and check current pose, near shadows, live resource counts and performance.
+No FPS improvement is claimed by this branch.
+
+Final CPU gates passed
+- ./scripts/build-client.sh (BUILD SUCCESSFUL,4s)
+- Animated bridge fixture:992 LRU /1506 active checks.
+- Existing chunk variants:82 native UV/material/packing invalidation checks.
+- Existing JS GPU-cache/native-boundary controls: copied metadata, accounting,
+  alpha refresh/removal, mirrored NPOT UV, GL allocation/update error behavior.
+- Existing material grouping:5438 exact stream/range comparisons across300 cases.
+- Mocked frontend and source/world-readiness contracts.
+- workspace-layout check and git diff --check.
+No browser, GPU benchmark or server operation was run by this worker.
