@@ -8404,7 +8404,7 @@ public final class mudclient implements Runnable {
 					} else if (this.layeredSceneActivationPending) {
 						this.drawLoadingPleaseWaitFrame();
 					} else if (this.world.playerAlive) {
-                        long drawPreparationStart = RenderTelemetry.now();
+						long drawPreparationStart = RenderTelemetry.now();
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 
 						Renderer3DRoofVisibility roofVisibility = this.currentRenderer3DRoofVisibility();
@@ -8865,13 +8865,13 @@ public final class mudclient implements Runnable {
 					this.queuedCombatEffectCount = 0;
 					this.ensureGameplayRendererWorldChunkFrame();
 					long beforeSceneNanos = RenderTelemetry.elapsedSince(drawPreparationStart);
-                    long sceneRenderStart = RenderTelemetry.now();
+					long sceneRenderStart = RenderTelemetry.now();
 					this.scene.setRendererSignedWorldLevel(this.packetHandler.getLogicalWorldLevel(
 						this.midRegionBaseZ + (this.localPlayer == null ? this.playerLocalZ : this.localPlayer.currentZ / this.tileSize)));
 					this.scene.endScene(-113);
 					RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
 					long residentObjectsStart = RenderTelemetry.now();
-                    Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
+					Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
 					if (renderer3DFrame != null) {
 						renderer3DFrame.setRoofVisibility(roofVisibility, this.lastHeightOffset);
 						Renderer3DWorldChunkFrame presentedWorldChunkFrame =
@@ -8908,7 +8908,7 @@ public final class mudclient implements Runnable {
 						this.drawWorldEditorBuildGridLegacy(renderer3DFrame);
 						}
 						long residentObjectsNanos = RenderTelemetry.elapsedSince(residentObjectsStart);
-                        long worldOverlayStart = RenderTelemetry.now();
+						long worldOverlayStart = RenderTelemetry.now();
                         this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
 						this.drawQueuedStaticProjectiles();
 						this.drawQueuedProjectileEffectOverlays();
@@ -9235,7 +9235,7 @@ public final class mudclient implements Runnable {
 						}
 
 						long worldOverlayNanos = RenderTelemetry.elapsedSince(worldOverlayStart);
-                        long uiOverlayStart = RenderTelemetry.now();
+						long uiOverlayStart = RenderTelemetry.now();
                         this.getSurface().captureRenderer2DUiBaseFrame();
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
 						if (this.messageTabSelected == MessageTab.ALL) {
@@ -9306,8 +9306,8 @@ public final class mudclient implements Runnable {
 					this.drawUi(0);
 					this.getSurface().loggedIn = false;
 					this.drawChatMessageTabs(var1 - 8);
-                    RenderTelemetry.recordClientDrawPreparation(beforeSceneNanos, residentObjectsNanos,
-                        worldOverlayNanos, RenderTelemetry.elapsedSince(uiOverlayStart));
+					RenderTelemetry.recordClientDrawPreparation(beforeSceneNanos, residentObjectsNanos,
+						worldOverlayNanos, RenderTelemetry.elapsedSince(uiOverlayStart));
 					// this.getSurface().draw(this.graphics, this.screenOffsetX,
 					// 256, this.screenOffsetY);
 					clientPort.draw();

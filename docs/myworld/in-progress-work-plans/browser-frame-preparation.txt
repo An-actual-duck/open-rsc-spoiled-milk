@@ -1,0 +1,115 @@
+Browser CPU frame preparation: scoped candidate
+==============================================
+
+Scope and evidence
+------------------
+This slice preserves the current native renderer and browser visual authority.
+It does not change Scene geometry, actor pixels, shaders, animation or gameplay.
+No browser/GPU benchmark has been run for this slice. Its performance effect
+must be established with a controlled integrated candidate; a CPU fixture is
+not evidence of 60 FPS.
+
+The prior non-exclusive complete-build source profile has mean loop 27.913 ms,
+draw 24.076 ms, Scene 6.295 ms and presentation 11.011 ms. Subtraction suggests
+about 6.77 ms elsewhere in draw, but is only a hypothesis: these are cumulative
+spans, some nest, and their denominators can differ. It does not identify the
+cost of a writer or justify dropping software UI pixels.
+
+New measurement
+---------------
+Five cumulative StageStats are exported through BrowserTelemetryData:
+
+* clientDrawBeforeSceneStats: live-world branch entry through preparation before
+  Scene.endScene (camera, entity preparation and world-frame readiness included).
+* clientDrawResidentObjectsStats: immediately after Scene.endScene through the
+  resident object chunk frame append, world telemetry and editor legacy grid.
+* clientDrawWorldOverlayStats: world overlay effects, labels and world UI before
+  captureRenderer2DUiBaseFrame.
+* clientDrawUiOverlayStats: UI-base capture and ordinary UI through chat tabs;
+  stops before clientPort.draw/presentation.
+* renderer2DFrameSnapshotStats: consumeRenderer2DFrame immutable DTO snapshot.
+  This is nested in presentation and must not be added to presentation again.
+
+All use the existing rendererTelemetry collection gate, including now() and
+elapsedSince(). Production with diagnostics off takes no new nanoTime calls.
+There are no per-writer timers, formatted payloads, JMX or per-frame reflection
+added to draw. The same existing bounded StageStats report-window reset applies.
+The browser export now has 25 count,total pairs (frontend capacity is 32).
+
+Exact low-risk candidate
+------------------------
+The private property spoiledmilk.browserFramePreparation defaults to true.
+Set it false before Java class initialization for an A/B run of the same jar.
+It only activates when browser presentation is installed AND the individual
+GraphicsController explicitly owns WorldOverlayCoverage. Scratch/minimap
+controllers and native/software-only presentation retain their existing paths.
+A software-owned login/loading frame disables this fast path until the next
+normal beginFrame, preserving its entire command metadata too.
+
+For that browser-owned main surface only:
+
+* Do not capture UI/world-overlay replay commands or snapshot glyph data that
+  the browser bridge never consumes. Continue every original software RGB and
+  coverage/transmittance write. SCENE command capture remains enabled, including
+  the scoped immutable actor snapshots used by GPU sprite replay.
+* Do not copy the unused UI-base framebuffer. Browser compositing consumes RGB
+  plus WorldOverlayCoverage instead of native command replay.
+* Use Arrays.fill for an existing full blackScreen clear. The interlaced clear
+  and native/software clear loops remain unchanged. This replaces a clear loop;
+  it does NOT skip a duplicate clear or assume Scene has already taken ownership.
+
+The Renderer2DFrame snapshot itself and SCENE lists are deliberately retained.
+More invasive clearing/raster changes need evidence from the new phase counters.
+
+Verification
+------------
+Build with ./scripts/build-client.sh, then run:
+
+  python3 tests/myworld/test-browser-frame-preparation.py
+  python3 tests/myworld/test-world-overlay-coverage.py
+  bash tests/myworld/test-renderer-guardrails.sh
+
+The focused fixture compiles actual GraphicsController at the measurement-only
+checkpoint 67cfe60076f5d956c3a240165cf0f8c39a576f5b and current source separately.
+For browser/native/native-with-coverage/software/scratch/login it compares
+original against current
+with the switch disabled, then enabled. Across the actual writer corpus,
+clipped/unclipped and interlaced/non-interlaced cases, it verifies exact RGB and
+float transmittance, retained-fade mode/count, masked/skewed two-layer SCENE
+snapshot/composite fingerprint, and preservation of the SCENE command count.
+Non-browser/software-owned paths compare a canonical complete immutable command
+DTO fingerprint, including source sprite data and capture metadata. Only the
+browser non-SCENE replay stream disappears (243 fixture commands to zero).
+Disabled telemetry clocks and all five new counters are also checked as no-ops.
+
+Outputs are declared under output/tests/browser-frame-preparation/. The existing
+coverage fixture supplies the real writer corpus; it does not emulate the
+production rasterizer. GPU/font presentation and user interaction still require
+an integrated private browser check, especially after combining the parallel
+persistent sprite-residency and display changes.
+
+Benchmark gate
+--------------
+Freeze a fully integrated jar/frontend and use the same 960x540 backing surface,
+scene, camera, telemetry and warmup, with this property on/off. Browser CSS fit
+or fullscreen size must not inflate the backing-resolution comparison. Collect
+source-loop cadence, the five new stages, Scene/presentation, bridge/GPU counters,
+and retained/menu/normal UI correctness. Report bounded differences, not an
+assumed FPS gain. No public server or release changes belong to this branch.
+
+CPU handoff results
+-------------------
+Client build: PASS. Focused original/disabled/enabled parity: PASS for all six
+modes; browser replay commands 243 -> 0 and all five other modes unchanged.
+Full software coverage suite: PASS (9,838,525 coverage checks, 119 raster
+operations; ordinary GPU reconstruction's existing bound is max 1 RGB unit).
+Scoped Scene raster policy suites: PASS (24,848 checks with world replay on and
+24,848 off; native RGB hash unchanged). Entire renderer guardrail suite: PASS.
+git diff --check: PASS. Layout check still reports inherited unclassified
+output-root directories (e.g. remastered-sprites and static-analysis-*);
+this task's files all use the declared tests/browser-frame-preparation subject.
+Those retained historical directories were not changed or removed.
+
+The focused test compares software RGB/T bit-for-bit, rather than claiming the
+existing GPU alpha reconstruction is mathematically bit-perfect. No browser
+hardware, frame-cadence, fullscreen or public-server test was run by this worker.

@@ -14,6 +14,7 @@ import orsc.graphics.Renderer2DSettings;
 import orsc.graphics.RendererSpriteTransform;
 import orsc.graphics.RendererTransparency;
 import orsc.graphics.three.Renderer3DFrame;
+import orsc.graphics.three.Renderer3DSettings;
 import orsc.graphics.two.SpriteArchive.*;
 import orsc.mudclient;
 import orsc.remastered.RemasteredSpriteKey;
@@ -148,12 +149,18 @@ public class GraphicsController {
 	private int[] m_Xb;
 	private ZipFile spriteArchive;
 	private final RemasteredSpriteResolver remasteredSpriteResolver = new RemasteredSpriteResolver();
+	// Private A/B switch; only the installed browser's explicitly opted-in main
+	// software-overlay surface can suppress command streams its sink never reads.
+	private static final boolean BROWSER_FRAME_PREPARATION = !"false".equalsIgnoreCase(
+		System.getProperty("spoiledmilk.browserFramePreparation", "true"));
+	private boolean browserFramePreparationActive;
 	private WorldOverlayCoverage worldOverlayCoverage;
 	private boolean worldOverlayCoverageEnabled;
 
 	/** Opt in on the real on-screen surface only; scratch/minimap surfaces stay ordinary RGB. */
 	public final void setWorldOverlayCoverageEnabled(boolean enabled) {
 		worldOverlayCoverageEnabled = enabled;
+		updateBrowserFramePreparation();
 		if (enabled) {
 			if (worldOverlayCoverage == null) worldOverlayCoverage = new WorldOverlayCoverage();
 		} else {
@@ -262,6 +269,7 @@ public class GraphicsController {
 	}
 
 	public final void beginRenderer2DFrame() {
+		updateBrowserFramePreparation();
 		if (worldOverlayCoverage != null) worldOverlayCoverage.beginFrame();
 		sceneSpriteRasterFailure = "";
         resetRenderer2DCommandState();
@@ -333,6 +341,7 @@ public class GraphicsController {
 		beginOpaqueWorldOverlay();
 		beginRenderer2DFrame();
 		renderer2DCommandCaptureSuppressed = true;
+		browserFramePreparationActive = false;
 	}
 
 	public final void setRenderer2DPhase(Renderer2DFrame.Phase phase) {
@@ -350,7 +359,7 @@ public class GraphicsController {
 			return Renderer2DFrame.empty(this.width2, this.height2);
 		}
 
-        long snapshotStart = RenderTelemetry.now();
+		long snapshotStart = RenderTelemetry.now();
 		Renderer2DFrame frame =
 			Renderer2DFrame.snapshot(
 				this.width2,
@@ -361,13 +370,13 @@ public class GraphicsController {
 				renderer2DRotatedSpriteCommands,
 				renderer2DCircleCommands,
 				renderer2DCaptureStats());
-        RenderTelemetry.recordRenderer2DFrameSnapshot(RenderTelemetry.elapsedSince(snapshotStart));
+		RenderTelemetry.recordRenderer2DFrameSnapshot(RenderTelemetry.elapsedSince(snapshotStart));
 		resetRenderer2DCommandState();
 		return frame;
 	}
 
 	public final void captureRenderer2DUiBaseFrame() {
-		if (!Renderer2DSettings.canPresentUiBaseFrame()
+		if (browserFramePreparationActive || !Renderer2DSettings.canPresentUiBaseFrame()
 			|| pixelData == null
 			|| width2 <= 0
 			|| height2 <= 0
@@ -510,7 +519,7 @@ public class GraphicsController {
 	}
 
 	private void recordRenderer2DTextDraw(int glyphCount) {
-		if (!Renderer2DSettings.isOpenGLSpriteCaptureEnabled() || glyphCount <= 0) {
+		if (skipUnusedBrowserCommands() || !Renderer2DSettings.isOpenGLSpriteCaptureEnabled() || glyphCount <= 0) {
 			return;
 		}
 
@@ -567,8 +576,17 @@ public class GraphicsController {
 			|| canCaptureRenderer2DOpenGLWorldOverlayReplay();
 	}
 
+	private void updateBrowserFramePreparation() {
+		browserFramePreparationActive = BROWSER_FRAME_PREPARATION && worldOverlayCoverageEnabled
+			&& Renderer3DSettings.isBrowserPresentationAvailable();
+	}
+
+	private boolean skipUnusedBrowserCommands() {
+		return browserFramePreparationActive && renderer2DPhase != Renderer2DFrame.Phase.SCENE;
+	}
+
 	private boolean canCaptureRenderer2DNativeUiCommand() {
-		return !renderer2DCommandCaptureSuppressed
+		return !renderer2DCommandCaptureSuppressed && !skipUnusedBrowserCommands()
 			&& (canReplaceRenderer2DNativeUi()
 				|| canCaptureRenderer2DOpenGLWorldOverlayReplay());
 	}
@@ -936,7 +954,7 @@ public class GraphicsController {
 		int alpha,
 		RendererSpriteTransform transform) {
 		sceneSpriteLastLayerEmpty = width <= 0 || height <= 0;
-		if (renderer2DCommandCaptureSuppressed
+		if (renderer2DCommandCaptureSuppressed || skipUnusedBrowserCommands()
 			|| !Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
 			return false;
 		}
@@ -1118,7 +1136,7 @@ public class GraphicsController {
 		boolean mirrorX,
 		RendererSpriteTransform transform) {
 		sceneSpriteLastLayerEmpty = destWidth <= 0 || destHeight <= 0;
-		if (renderer2DCommandCaptureSuppressed
+		if (renderer2DCommandCaptureSuppressed || skipUnusedBrowserCommands()
 			|| !Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
 			return false;
 		}
@@ -2702,6 +2720,10 @@ public class GraphicsController {
 			int var2 = this.height2 * this.width2;
 			if (var1 == !this.interlace) {
 				coverageOpaqueSpan(this.pixelData, 0, var2);
+				if (browserFramePreparationActive) {
+					Arrays.fill(this.pixelData, 0, var2, 0);
+					return;
+				}
 				for (int i = 0; var2 > i; ++i) {
 					this.pixelData[i] = 0;
 				}
