@@ -22,6 +22,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void uploadChunk(int id,float[] vertices,int[] indices,int[] batches);
     private static native void uploadTexture(int id,int width,int height,int[] rgba);
     private static native void present(int width,int height,boolean world,float[] matrices,float[] uniforms,int[] draws,int[] overlay);
+    private static native void frameWork(float[] milliseconds);
     private static native void reset();
     private static native void deleteChunks(int[] ids);
     private static native void beginWorldSprites();
@@ -31,6 +32,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         Field f=OpenGLShaderProgram.class.getDeclaredField(name);f.setAccessible(true);return (String)f.get(null);
     }
     @Override public void present(BufferedImage image,Renderer2DFrame commands,Renderer3DFrame frame) {
+        long frameStart=System.nanoTime();
         int w=image.getWidth(),h=image.getHeight();
         if(w<1||h<1||(long)w*h>MAX_PIXELS)throw new IllegalStateException("Browser viewport exceeds bounded backend capacity");
         if(!initialized) {
@@ -64,6 +66,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 uploadTexture(id,texture.getWidth(),texture.getHeight(),texture.getRgbaPixels());
                 textures.put(id,texture.getSignature());
             }
+            long textureEnd=System.nanoTime();
             int[] draws=new int[world.getChunkCount()*6];int count=0,uploaded=0;
             for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
                 long signature=chunk.getStorageSignature();CachedChunk cached=chunks.get(signature);
@@ -77,11 +80,14 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 int visibility=0;for(Renderer3DModelKind kind:Renderer3DModelKind.values())if(frame.isWorldChunkModelKindVisible(kind,chunk.getPlane()))visibility|=1<<kind.ordinal();
                 draws[count++]=visibility;
             }
+            long geometryEnd=System.nanoTime();
             float[] view=OpenGLWorldChunkRenderer.backendWorldViewMatrix(frame);
             float[] clip=OpenGLWorldChunkRenderer.multiply(OpenGLWorldChunkRenderer.projectionMatrix(frame),view);
             float[] matrices=new float[48];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);columnMajor(OpenGLFramePresenter.cameraToClipProjectionMatrix(frame),matrices,32);
             uploadSprites(frame);
+            long spriteEnd=System.nanoTime();
             present(w,h,true,matrices,uniforms(frame),Arrays.copyOf(draws,count),borrowOverlay(image));
+            long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-spriteEnd)/1000000f});
         } finally { RendererFrameLighting.restore(previous); }
     }
     private void uploadSprites(Renderer3DFrame frame) {

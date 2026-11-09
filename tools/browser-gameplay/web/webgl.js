@@ -14,8 +14,9 @@ function typed(value, Type) { return value instanceof Type ? value : new Type(va
 export function createBrowserWebGL(canvas, report=()=>{}) {
   const gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});
   if(!gl) throw new Error('WebGL2 unavailable: browser GPU proof requires WebGL2');
-  const stats={backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas and <=8MiB overlay; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Geometry shadows not yet activated','UI partial-alpha over geometry is not yet equivalent','Sky backdrop not yet ported','Terrain valley field and glow masks pending'],frameSamples:[]};
-  const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0;
+  const stats={worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas and <=8MiB overlay; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Geometry shadows not yet activated','UI partial-alpha over geometry is not yet equivalent','Sky backdrop not yet ported','Terrain valley field and glow masks pending'],frameSamples:[]};
+  const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0,lastWorld=0;
+  const gpuTimer=gl.getExtension("EXT_disjoint_timer_query_webgl2"),pendingQueries=[];
   let spriteX=0,spriteY=0,spriteRow=0,spriteDraws=[];const SPRITE_ATLAS=2048;
   const uniforms=new Map();
   function alive(){if(disposed||stats.contextLost)throw new Error('Browser GPU backend unavailable; restart the private session');}
@@ -73,7 +74,10 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
       const bytes=rgba.length;allocate(bytes);const texture=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);textureParameters();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,rgba);textures.set(id,{texture,bytes});check();
     },
     async Java_orsc_BrowserWebGLBridge_present(lib,width,height,world,matrixInput,uniformInput,drawInput,pixelInput){
-      alive();const matrices=typed(matrixInput,Float32Array),u=typed(uniformInput,Float32Array),draws=typed(drawInput,Int32Array),pixels=typed(pixelInput,Int32Array);
+      alive();const submitStart=performance.now();
+      if(gpuTimer){while(pendingQueries.length&&gl.getQueryParameter(pendingQueries[0],gl.QUERY_RESULT_AVAILABLE)){const q=pendingQueries.shift();if(!gl.getParameter(gpuTimer.GPU_DISJOINT_EXT)){stats.gpuWorkSamples.push(gl.getQueryParameter(q,gl.QUERY_RESULT)/1e6);if(stats.gpuWorkSamples.length>600)stats.gpuWorkSamples.shift();}gl.deleteQuery(q);}}
+      const timerQuery=gpuTimer&&pendingQueries.length<8?gl.createQuery():null;if(timerQuery)gl.beginQuery(gpuTimer.TIME_ELAPSED_EXT,timerQuery);
+      const matrices=typed(matrixInput,Float32Array),u=typed(uniformInput,Float32Array),draws=typed(drawInput,Int32Array),pixels=typed(pixelInput,Int32Array);
       if(width<1||height<1||width*height>MAX_PIXELS||pixels.length!==width*height||matrices.length!==48||u.length!==30||draws.length%6||draws.length>256*6)throw new Error('Browser frame bounds violated');
       if(canvas.width!==width)canvas.width=width;if(canvas.height!==height)canvas.height=height;
       gl.viewport(0,0,width,height);gl.disable(gl.SCISSOR_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);gl.depthMask(true);gl.clearDepth(1);
@@ -99,9 +103,13 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
       gl.disable(gl.DEPTH_TEST);gl.depthMask(false);gl.useProgram(overlayProgram);gl.bindVertexArray(emptyVAO);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,overlayTexture);
       gl.pixelStorei(gl.UNPACK_ALIGNMENT,4);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(pixels.buffer,pixels.byteOffset,pixels.byteLength));
       gl.uniform1i(gl.getUniformLocation(overlayProgram,'image'),0);gl.uniform1i(gl.getUniformLocation(overlayProgram,'world'),world?1:0);gl.drawArrays(gl.TRIANGLES,0,3);gl.depthMask(true);check();
-      const now=performance.now();stats.javaFrames++;stats.drawCalls=calls;stats.triangles=triangles;stats.activeChunks=draws.length/6;stats.lastFrame=now;
+      if(timerQuery){gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);pendingQueries.push(timerQuery);}
+      const now=performance.now();stats.jsSubmissionSamples.push(now-submitStart);if(stats.jsSubmissionSamples.length>600)stats.jsSubmissionSamples.shift();
+      if(world){if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);if(stats.worldFrameSamples.length>600)stats.worldFrameSamples.shift();}lastWorld=now;}else lastWorld=0;
+      stats.javaFrames++;stats.drawCalls=calls;stats.triangles=triangles;stats.activeChunks=draws.length/6;stats.lastFrame=now;
       if(last){stats.frameSamples.push(now-last);if(stats.frameSamples.length>600)stats.frameSamples.shift();}last=now;
     },
+    async Java_orsc_BrowserWebGLBridge_frameWork(lib,values){alive();stats.javaBridgeWorkSamples.push(Array.from(values));if(stats.javaBridgeWorkSamples.length>600)stats.javaBridgeWorkSamples.shift();},
     async Java_orsc_BrowserWebGLBridge_deleteChunks(lib,input){
       alive();const ids=typed(input,Int32Array);for(const id of ids){const x=chunks.get(id);if(!x)throw new Error('Eviction references absent GPU chunk');gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);stats.gpuBytes-=x.bytes;chunks.delete(id);}stats.evictedChunks=(stats.evictedChunks||0)+ids.length;
     },
@@ -117,7 +125,7 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
       alive();for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);chunks.clear();textures.clear();stats.gpuBytes=0;
     }
   };
-  function dispose(){if(disposed)return;for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);if(overlayTexture)gl.deleteTexture(overlayTexture);if(spriteTexture)gl.deleteTexture(spriteTexture);if(spriteVBO)gl.deleteBuffer(spriteVBO);if(spriteIBO)gl.deleteBuffer(spriteIBO);if(spriteVAO)gl.deleteVertexArray(spriteVAO);if(emptyVAO)gl.deleteVertexArray(emptyVAO);canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
+  function dispose(){if(disposed)return;for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);for(const q of pendingQueries)gl.deleteQuery(q);if(overlayTexture)gl.deleteTexture(overlayTexture);if(spriteTexture)gl.deleteTexture(spriteTexture);if(spriteVBO)gl.deleteBuffer(spriteVBO);if(spriteIBO)gl.deleteBuffer(spriteIBO);if(spriteVAO)gl.deleteVertexArray(spriteVAO);if(emptyVAO)gl.deleteVertexArray(emptyVAO);canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
   for(const name of Object.keys(natives)) {
     const call=natives[name];natives[name]=async(...args)=>{
       try{return await call(...args);}catch(error){stats.lastError=String(error);stats.lastErrorAt=performance.now();report('Browser GPU error: '+error);throw error;}
