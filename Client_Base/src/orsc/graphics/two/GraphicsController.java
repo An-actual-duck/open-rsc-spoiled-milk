@@ -40,6 +40,11 @@ public class GraphicsController {
 		MINIMAP, WORLDMAP, SHOP
 	}
 
+	/** Scoped SCENE ownership only; never permits unordered UI/world-overlay replay. */
+	public enum SceneSpriteRasterPolicy {
+		DEFAULT, GPU_OWNED, FORCE_SOFTWARE
+	}
+
 	private enum Renderer2DNativeUiBlocker {
 		SPRITE,
 		TEXT,
@@ -91,6 +96,11 @@ public class GraphicsController {
 	private int renderer2DSceneSpriteAnchorIndex = -1;
 	private int renderer2DSceneSpriteDrawOrder = -1;
 	private Renderer3DFrame renderer2DSceneFrame;
+	private SceneSpriteRasterPolicy sceneSpriteRasterPolicy = SceneSpriteRasterPolicy.DEFAULT;
+	private boolean guardGpuSceneSoftwareWrites;
+	private boolean sceneSpriteLastLayerOwned;
+	private boolean sceneSpriteLastLayerEmpty;
+	private String sceneSpriteRasterFailure = "";
 	private boolean renderer2DCommandOverflowLogged;
 	private int renderer2DCaptureAttempts;
 	private int renderer2DCaptureAccepted;
@@ -138,6 +148,97 @@ public class GraphicsController {
 	private int[] m_Xb;
 	private ZipFile spriteArchive;
 	private final RemasteredSpriteResolver remasteredSpriteResolver = new RemasteredSpriteResolver();
+	private WorldOverlayCoverage worldOverlayCoverage;
+	private boolean worldOverlayCoverageEnabled;
+
+	/** Opt in on the real on-screen surface only; scratch/minimap surfaces stay ordinary RGB. */
+	public final void setWorldOverlayCoverageEnabled(boolean enabled) {
+		worldOverlayCoverageEnabled = enabled;
+		if (enabled) {
+			if (worldOverlayCoverage == null) worldOverlayCoverage = new WorldOverlayCoverage();
+		} else {
+			if (worldOverlayCoverage != null) {
+				worldOverlayCoverage.discard();
+				// Keep only an invalid metadata tombstone if RGB is still a partial image.
+				if (worldOverlayCoverage.isValid()) worldOverlayCoverage = null;
+			}
+		}
+	}
+
+	/** Begin only where the Scene deliberately skips the software world raster. */
+	public final boolean beginTransparentWorldOverlay() {
+		return worldOverlayCoverageEnabled && worldOverlayCoverage != null
+			&& worldOverlayCoverage.begin(pixelData, width2, height2);
+	}
+
+	/** Before a complete legacy/login/loading image; does not alter ordinary RGB pixels. */
+	public final void beginOpaqueWorldOverlay() {
+		if (worldOverlayCoverage != null) worldOverlayCoverage.reset(false);
+		if (!worldOverlayCoverageEnabled) worldOverlayCoverage = null;
+	}
+
+	/** Release plane storage; a partial RGB image stays invalid until a new complete base. */
+	public final void clearWorldOverlayCoverage() {
+		if (worldOverlayCoverage != null) worldOverlayCoverage.discard();
+	}
+
+	/** Null means disabled with complete RGB; disabled partial images retain an invalid tombstone. */
+	public final WorldOverlayCoverage.Frame borrowWorldOverlayCoverage() {
+		return worldOverlayCoverage == null ? null : worldOverlayCoverage.borrow(pixelData, width2, height2);
+	}
+
+	/** Owner/epoch/mode coherence, not a pixel-content revision check. Ordinary
+	 * same-frame draws mutate the borrowed arrays: borrow after UI and consume now.
+	 */
+	public final boolean isWorldOverlayCoverageCurrent(WorldOverlayCoverage.Frame frame) {
+		return worldOverlayCoverage != null && worldOverlayCoverage.isCurrent(frame, pixelData, width2, height2);
+	}
+
+	/** Sticky until beginRenderer2DFrame; explicit GPU owners must reject failed frames. */
+	public final String getSceneSpriteRasterFailure() { return sceneSpriteRasterFailure; }
+
+	/** External raw/Java2D writers must call this before touching an active overlay. */
+	public final void invalidateWorldOverlayCoverage(String reason) {
+		coverageUnsupported(reason == null ? "Unsupported external framebuffer writer" : reason);
+	}
+
+	private void coverageOpaque(int[] destination, int index) {
+		noteSceneSoftwareWrite(destination);
+		if (worldOverlayCoverage != null) worldOverlayCoverage.opaque(destination, index);
+	}
+
+	private void coverageOpaqueSpan(int[] destination, int start, int end) {
+		if (end > start) noteSceneSoftwareWrite(destination);
+		if (worldOverlayCoverage != null) worldOverlayCoverage.opaqueSpan(destination, start, end);
+	}
+
+	private void coverageMultiply(int[] destination, int index, int numerator) {
+		noteSceneSoftwareWrite(destination);
+		if (worldOverlayCoverage != null) worldOverlayCoverage.multiply(destination, index, numerator);
+	}
+
+	private void noteSceneSoftwareWrite(int[] destination) {
+		if (guardGpuSceneSoftwareWrites && destination == pixelData) {
+			failSceneSpriteOwnership("GPU-owned Scene entity used an uncaptured software writer");
+		}
+	}
+
+	private void updateSceneSoftwareWriteGuard() {
+		guardGpuSceneSoftwareWrites = sceneSpriteRasterPolicy == SceneSpriteRasterPolicy.GPU_OWNED
+			&& renderer2DPhase == Renderer2DFrame.Phase.SCENE;
+	}
+
+	private void failSceneSpriteOwnership(String reason) {
+		if (sceneSpriteRasterFailure.isEmpty()) sceneSpriteRasterFailure = reason;
+		coverageUnsupported(sceneSpriteRasterFailure);
+	}
+
+	private void coverageUnsupported(String operation) {
+		if (guardGpuSceneSoftwareWrites && sceneSpriteRasterFailure.isEmpty()) {
+			sceneSpriteRasterFailure = operation;
+		}
+		if (worldOverlayCoverage != null) worldOverlayCoverage.invalidate(operation);
+	}
 
 	GraphicsController(int var1, int var2, int var3) {
 		try {
@@ -161,6 +262,10 @@ public class GraphicsController {
 	}
 
 	public final void beginRenderer2DFrame() {
+		if (worldOverlayCoverage != null) worldOverlayCoverage.beginFrame();
+		sceneSpriteRasterFailure = "";
+		sceneSpriteLastLayerOwned = false;
+		sceneSpriteLastLayerEmpty = false;
 		renderer2DSpriteCommands.clear();
 		renderer2DTextCommands.clear();
 		renderer2DPrimitiveCommands.clear();
@@ -169,6 +274,7 @@ public class GraphicsController {
 		renderer2DCommandSequence = 0;
 		renderer2DCommandOverflowLogged = false;
 		renderer2DPhase = Renderer2DFrame.Phase.UI_OVERLAY;
+		guardGpuSceneSoftwareWrites = false;
 		renderer2DSceneSpriteAnchorIndex = -1;
 		renderer2DSceneSpriteDrawOrder = -1;
 		renderer2DSceneFrame = null;
@@ -218,12 +324,14 @@ public class GraphicsController {
 	 * replay their draw commands through the OpenGL overlay bridge.
 	 */
 	public final void beginSoftwareOwnedRenderer2DFrame() {
+		beginOpaqueWorldOverlay();
 		beginRenderer2DFrame();
 		renderer2DCommandCaptureSuppressed = true;
 	}
 
 	public final void setRenderer2DPhase(Renderer2DFrame.Phase phase) {
 		renderer2DPhase = phase == null ? Renderer2DFrame.Phase.UNKNOWN : phase;
+		updateSceneSoftwareWriteGuard();
 	}
 
 	public final Renderer2DFrame.Phase getRenderer2DPhase() {
@@ -346,6 +454,18 @@ public class GraphicsController {
 	}
 
 	private boolean shouldReplaceRenderer2DUiSprite(boolean captured, boolean requiresOrderedReplay) {
+		if (renderer2DPhase == Renderer2DFrame.Phase.SCENE) {
+			if (sceneSpriteRasterPolicy == SceneSpriteRasterPolicy.FORCE_SOFTWARE) return false;
+			if (sceneSpriteRasterPolicy == SceneSpriteRasterPolicy.GPU_OWNED) {
+				// Clipped/dimension-empty layers have no pixels and claim no GPU ownership.
+				if (!captured && sceneSpriteLastLayerEmpty) return true;
+				if (!captured || !sceneSpriteLastLayerOwned) {
+					failSceneSpriteOwnership("GPU-owned Scene sprite layer was not captured into its owned snapshot");
+				}
+				// A failed GPU frame is rejected explicitly, never mixed with a CPU overlay.
+				return true;
+			}
+		}
 		boolean replace = captured
 			&& !requiresOrderedReplay
 			&& (canReplaceRenderer2DNativeUi() || canReplaceRenderer2DSceneSprite());
@@ -362,7 +482,9 @@ public class GraphicsController {
 
 	private boolean canReplaceRenderer2DSceneSprite() {
 		return renderer2DPhase == Renderer2DFrame.Phase.SCENE
-			&& Renderer2DSettings.canReplayOpenGLWorldSprites();
+			&& sceneSpriteRasterPolicy != SceneSpriteRasterPolicy.FORCE_SOFTWARE
+			&& (sceneSpriteRasterPolicy == SceneSpriteRasterPolicy.GPU_OWNED
+				|| Renderer2DSettings.canReplayOpenGLWorldSprites());
 	}
 
 	private boolean canCaptureAlphaRenderer2DSprite(int alpha) {
@@ -370,7 +492,8 @@ public class GraphicsController {
 			&& alpha <= Renderer2DFrame.SpriteCommand.FULL_ALPHA
 			&& (alpha == Renderer2DFrame.SpriteCommand.FULL_ALPHA
 				|| (renderer2DPhase == Renderer2DFrame.Phase.SCENE
-					&& Renderer2DSettings.canReplayOpenGLWorldSprites())
+					&& (sceneSpriteRasterPolicy == SceneSpriteRasterPolicy.GPU_OWNED
+						|| Renderer2DSettings.canReplayOpenGLWorldSprites()))
 				|| (renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
 					&& (Renderer2DSettings.canReplaceUiSpritesWithOpenGL()
 						|| canCaptureRenderer2DOpenGLWorldOverlayReplay()))
@@ -418,7 +541,8 @@ public class GraphicsController {
 	}
 
 	private boolean canReplaceRenderer2DNativeUi() {
-		return renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
+		return !worldOverlayCoverageEnabled
+			&& renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
 			&& renderer2DUiBaseCaptured
 			&& !renderer2DNativeUiSoftwareDirty
 			&& Renderer2DSettings.canPresentUiBaseFrame();
@@ -766,6 +890,7 @@ public class GraphicsController {
 		int alpha,
 		RendererSpriteTransform transform) {
 		if (width <= 0 || height <= 0) {
+			sceneSpriteLastLayerEmpty = true;
 			return false;
 		}
 		return recordRenderer2DSprite(
@@ -802,6 +927,7 @@ public class GraphicsController {
 		int sourceScaleY,
 		int alpha,
 		RendererSpriteTransform transform) {
+		sceneSpriteLastLayerEmpty = width <= 0 || height <= 0;
 		if (renderer2DCommandCaptureSuppressed
 			|| !Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
 			return false;
@@ -882,8 +1008,9 @@ public class GraphicsController {
 
 	private void recordCapturedRenderer2DSprite(Renderer2DFrame.SpriteCommand command) {
 		renderer2DSpriteCommands.add(command);
+		sceneSpriteLastLayerOwned = false;
 		if (renderer2DSceneFrame != null) {
-			renderer2DSceneFrame.recordWorldSpriteLayer(
+			sceneSpriteLastLayerOwned = renderer2DSceneFrame.recordWorldSpriteLayer(
 				renderer2DSceneSpriteAnchorIndex,
 				renderer2DSceneSpriteDrawOrder,
 				command);
@@ -924,6 +1051,7 @@ public class GraphicsController {
 		int scaleY,
 		int alpha,
 		RendererSpriteTransform transform) {
+		sceneSpriteLastLayerEmpty = destWidth <= 0 || destHeight <= 0;
 		if (sprite == null || destWidth <= 0 || destHeight <= 0 || this.width2 <= 0) {
 			return false;
 		}
@@ -981,6 +1109,7 @@ public class GraphicsController {
 		int destColumnSkewPerRow,
 		boolean mirrorX,
 		RendererSpriteTransform transform) {
+		sceneSpriteLastLayerEmpty = destWidth <= 0 || destHeight <= 0;
 		if (renderer2DCommandCaptureSuppressed
 			|| !Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
 			return false;
@@ -1011,6 +1140,7 @@ public class GraphicsController {
 			|| minLeft >= this.clipRight
 			|| destY + destHeight <= this.clipTop
 			|| destY >= this.clipBottom) {
+			sceneSpriteLastLayerEmpty = true;
 			renderer2DCaptureSkippedBounds++;
 			return false;
 		}
@@ -1286,11 +1416,15 @@ public class GraphicsController {
 	}
 
 	public void resize(int width, int height) {
+		clearWorldOverlayCoverage();
 		this.clipBottom = height;
 		this.clipRight = width;
 		this.pixelData = new int[width * height];
 		this.height2 = height;
 		this.width2 = width;
+		// The replacement array is a complete opaque black image, not the old partial overlay.
+		if (worldOverlayCoverage != null) worldOverlayCoverage.reset(true);
+		if (!worldOverlayCoverageEnabled) worldOverlayCoverage = null;
 	}
 
 	private void plotCharacter(boolean antiAliased, byte[] fontData, int x, int color, int indexAddr, int y) {
@@ -1741,12 +1875,36 @@ public class GraphicsController {
 		int sceneSpriteAnchorIndex,
 		int sceneSpriteDrawOrder,
 		Renderer3DFrame sceneFrame) {
+		drawSceneEntity(index, x, y, width, height, overlayMovement, topPixelSkew, scenePickIndex,
+			sceneSpriteAnchorIndex, sceneSpriteDrawOrder, sceneFrame, SceneSpriteRasterPolicy.DEFAULT);
+	}
+
+	public final void drawSceneEntity(
+		int index,
+		int x,
+		int y,
+		int width,
+		int height,
+		int overlayMovement,
+		int topPixelSkew,
+		int scenePickIndex,
+		int sceneSpriteAnchorIndex,
+		int sceneSpriteDrawOrder,
+		Renderer3DFrame sceneFrame,
+		SceneSpriteRasterPolicy policy) {
 		int previousAnchorIndex = renderer2DSceneSpriteAnchorIndex;
 		int previousDrawOrder = renderer2DSceneSpriteDrawOrder;
 		Renderer3DFrame previousSceneFrame = renderer2DSceneFrame;
+		SceneSpriteRasterPolicy previousPolicy = sceneSpriteRasterPolicy;
+		boolean previousOwnedLayer = sceneSpriteLastLayerOwned;
+		boolean previousEmptyLayer = sceneSpriteLastLayerEmpty;
 		renderer2DSceneSpriteAnchorIndex = sceneSpriteAnchorIndex;
 		renderer2DSceneSpriteDrawOrder = sceneSpriteDrawOrder;
 		renderer2DSceneFrame = sceneFrame;
+		sceneSpriteRasterPolicy = policy == null ? SceneSpriteRasterPolicy.DEFAULT : policy;
+		updateSceneSoftwareWriteGuard();
+		sceneSpriteLastLayerOwned = false;
+		sceneSpriteLastLayerEmpty = false;
 		try {
 			drawEntity(
 				index,
@@ -1761,6 +1919,10 @@ public class GraphicsController {
 			renderer2DSceneSpriteAnchorIndex = previousAnchorIndex;
 			renderer2DSceneSpriteDrawOrder = previousDrawOrder;
 			renderer2DSceneFrame = previousSceneFrame;
+			sceneSpriteRasterPolicy = previousPolicy;
+			updateSceneSoftwareWriteGuard();
+			sceneSpriteLastLayerOwned = previousOwnedLayer;
+			sceneSpriteLastLayerEmpty = previousEmptyLayer;
 		}
 	}
 
@@ -1782,6 +1944,7 @@ public class GraphicsController {
 	}
 
 	public final void a(int var1, int var2, int var3, int var4, int var5, int var6, int var7) {
+		coverageUnsupported("Nonlocal framebuffer blur during GPU world overlay");
 		try {
 			for (int var8 = var4; var8 < var4 + var6; ++var8) {
 				for (int var9 = var3; var3 + var1 > var9; ++var9) {
@@ -1840,9 +2003,11 @@ public class GraphicsController {
 							int var24 = ('\uff60' & var9) >> 8;
 							int var25 = 255 & var9;
 							if (var23 == var24 && var25 == var24) {
+								coverageOpaque(letterPlotTable, var7);
 								letterPlotTable[var7++] = (var23 * var16 >> 8 << 16) + (var17 * var24 >> 8 << 8)
 									+ (var25 * var18 >> 8);
 							} else {
+								coverageOpaque(letterPlotTable, var7);
 								letterPlotTable[var7++] = var9;
 							}
 						} else {
@@ -1884,6 +2049,7 @@ public class GraphicsController {
 								 int[] src, int srcStepY, int destHead) {
 		try {
 			for (int i = negCount; i < 0; ++i) {
+				coverageOpaque(dest, destHead);
 				dest[destHead++] = src[(srcHeadY >> 17) * srcWidth + (srcHeadX >> 17)];
 				srcHeadX += srcStepX;
 				srcHeadY += srcStepY;
@@ -1910,6 +2076,7 @@ public class GraphicsController {
 							++var3;
 						} else {
 							int var16 = var8[var3];
+							coverageMultiply(var8, var3, var13);
 							var8[var3++] = FastMath.bitwiseAnd(16711680,
 								var6 * FastMath.bitwiseAnd(var5, '\uff00')
 									+ var13 * FastMath.bitwiseAnd('\uff00', var16))
@@ -1954,6 +2121,7 @@ public class GraphicsController {
 					// System.out.println("color is black");
 					++destHead;
 				} else {
+					coverageOpaque(var5, destHead);
 					var5[destHead++] = color;
 				}
 
@@ -2001,6 +2169,7 @@ public class GraphicsController {
 					if (var5 == 0) {
 						++var8;
 					} else {
+						coverageOpaque(var2, var8);
 						var2[var8++] = var5;
 					}
 
@@ -2008,11 +2177,13 @@ public class GraphicsController {
 					if (var5 == 0) {
 						++var8;
 					} else {
+						coverageOpaque(var2, var8);
 						var2[var8++] = var5;
 					}
 
 					var5 = var9[var6++];
 					if (var5 != 0) {
+						coverageOpaque(var2, var8);
 						var2[var8++] = var5;
 					} else {
 						++var8;
@@ -2022,6 +2193,7 @@ public class GraphicsController {
 					if (var5 == 0) {
 						++var8;
 					} else {
+						coverageOpaque(var2, var8);
 						var2[var8++] = var5;
 					}
 				}
@@ -2031,6 +2203,7 @@ public class GraphicsController {
 					if (var5 == 0) {
 						++var8;
 					} else {
+						coverageOpaque(var2, var8);
 						var2[var8++] = var5;
 					}
 				}
@@ -2181,6 +2354,7 @@ public class GraphicsController {
 						int color = src[(srcStartX >> 16) + srcRowHead];
 						srcStartX += scaleX;
 						if (RendererTransparency.isVisibleSpritePixel(color)) {
+							coverageOpaque(dest, destHead);
 							dest[destHead++] = color;
 						} else {
 							++destHead;
@@ -2340,6 +2514,7 @@ public class GraphicsController {
 									(((spriteR + canvasR) >> 8) << 16) +
 										(((spriteG + canvasG) >> 8) << 8) +
 										((spriteB + canvasB) >> 8);
+								coverageMultiply(dest, var32 + destRowHead, inverseOpacity);
 								dest[var32 + destRowHead] = finalColour;
 
 								/*if (spritePixelR == spritePixelG && spritePixelB == spritePixelG) {
@@ -2377,6 +2552,7 @@ public class GraphicsController {
 	}
 
 	public final void copyPixelDataToSurface(SPRITE_LAYER layer, int xOffset, int yOffset, int width, int height) {
+		coverageUnsupported("Framebuffer sprite capture during GPU world overlay");
 		try {
 			int[] pixels = new int[width * height];
 			int pixel = 0;
@@ -2485,6 +2661,7 @@ public class GraphicsController {
 						+ (yi * topB + btmB * (height - yi)) / height;
 
 					for (int xi = -width; xi < 0; ++xi) {
+						coverageOpaque(this.pixelData, pxHead);
 						this.pixelData[pxHead++] = color;
 					}
 
@@ -2516,6 +2693,7 @@ public class GraphicsController {
 
 			int var2 = this.height2 * this.width2;
 			if (var1 == !this.interlace) {
+				coverageOpaqueSpan(this.pixelData, 0, var2);
 				for (int i = 0; var2 > i; ++i) {
 					this.pixelData[i] = 0;
 				}
@@ -2523,6 +2701,7 @@ public class GraphicsController {
 				int head = 0;
 
 				for (int i = -this.height2; i < 0; i += 2) {
+					coverageOpaqueSpan(this.pixelData, head, head + this.width2);
 					for (int j = -this.width2; j < 0; ++j) {
 						this.pixelData[head++] = 0;
 					}
@@ -2563,6 +2742,7 @@ public class GraphicsController {
 	}
 
 	public final void storeSpriteVert(int index, int startX, int startY, int width, int height) {
+		coverageUnsupported("Login viewport capture during GPU world overlay");
 		int[] pixels = new int[width * height];
 		int pixel = 0;
 		for (int y = startY; y < startY + height; y++) {
@@ -2623,6 +2803,7 @@ public class GraphicsController {
 
 			for (int yi = -height; yi < 0; yi += var8) {
 				for (int xi = -widthh; xi < 0; ++xi) {
+					coverageOpaque(this.pixelData, var10);
 					this.pixelData[var10++] = color;
 				}
 
@@ -2686,6 +2867,7 @@ public class GraphicsController {
 					int o3 = mixOld * ((0xFF0000 & this.pixelData[pxi]) >> 16);
 					int o2 = mixOld * ((0xFF00 & this.pixelData[pxi]) >> 8);
 					int var20 = (o1 + n1 >> 8) + (o2 + n2 >> 8 << 8) + (n3 + o3 >> 8 << 16);
+					coverageMultiply(this.pixelData, pxi, mixOld);
 					this.pixelData[pxi++] = var20;
 				}
 
@@ -2760,6 +2942,7 @@ public class GraphicsController {
 					int destB = destAlpha * ((0xFF00 & this.pixelData[rowStart]) >> 8);
 					int destR = destAlpha * ((this.pixelData[rowStart] & 0xFF0000) >> 16);
 					int finalColor = (destG + srcG >> 8) + (srcB + destB >> 8 << 8) + (srcR + destR >> 8 << 16);
+					coverageMultiply(this.pixelData, rowStart, destAlpha);
 					this.pixelData[rowStart++] = finalColor;
 				}
 			}
@@ -3078,6 +3261,7 @@ public class GraphicsController {
 					if (shouldReplaceRenderer2DPrimitive(recordRenderer2DPrimitive(x, y, width, 1, color, 256))) {
 						return;
 					}
+					coverageOpaqueSpan(this.pixelData, offset, offset + width);
 
 					for (int xi = 0; width > xi; ++xi) {
 						this.pixelData[offset + xi] = color;
@@ -3109,6 +3293,7 @@ public class GraphicsController {
 				}
 
 				for (int i = 0; height > i; ++i) {
+					coverageOpaque(this.pixelData, pxOffset + this.width2 * i);
 					this.pixelData[pxOffset + this.width2 * i] = color;
 				}
 			}
@@ -3813,6 +3998,8 @@ public class GraphicsController {
 	}
 
 	public final void fade2black(int var1) {
+		noteSceneSoftwareWrite(pixelData);
+		if (worldOverlayCoverage != null && worldOverlayCoverage.retainFade(pixelData, width2, height2)) return;
 		try {
 
 			int var4 = this.height2 * this.width2;
@@ -3860,6 +4047,7 @@ public class GraphicsController {
 				for (int i = -height; i < 0; ++i) {
 					for (int j = count2; j < 0; ++j) {
 						if (src[srcHead++] != 0) {
+							coverageOpaque(dest, destHead);
 							dest[destHead++] = color;
 						} else {
 							++destHead;
@@ -3868,16 +4056,19 @@ public class GraphicsController {
 						if (src[srcHead++] == 0) {
 							++destHead;
 						} else {
+							coverageOpaque(dest, destHead);
 							dest[destHead++] = color;
 						}
 
 						if (src[srcHead++] == 0) {
 							++destHead;
 						} else {
+							coverageOpaque(dest, destHead);
 							dest[destHead++] = color;
 						}
 
 						if (src[srcHead++] != 0) {
+							coverageOpaque(dest, destHead);
 							dest[destHead++] = color;
 						} else {
 							++destHead;
@@ -3888,6 +4079,7 @@ public class GraphicsController {
 						if (src[srcHead++] == 0) {
 							++destHead;
 						} else {
+							coverageOpaque(dest, destHead);
 							dest[destHead++] = color;
 						}
 					}
@@ -3921,12 +4113,14 @@ public class GraphicsController {
 					} else if (alpha < 230) {
 						int invAlpha = (256 - alpha);
 						int destColor = dest[destHead];
+						coverageMultiply(dest, destHead, invAlpha);
 						dest[destHead++] = (FastMath.bitwiseAnd(0xFF00FF00,
 							FastMath.bitwiseAnd(0xFF00FF, color) * alpha
 								+ FastMath.bitwiseAnd(destColor, 0xFF00FF) * invAlpha)
 							+ FastMath.bitwiseAnd(invAlpha * FastMath.bitwiseAnd(0xFF00, destColor)
 							+ alpha * FastMath.bitwiseAnd(0xFF00, color), 0xFF0000)) >> 8;
 					} else {
+						coverageOpaque(dest, destHead);
 						dest[destHead++] = color;
 					}
 				}
@@ -3988,6 +4182,7 @@ public class GraphicsController {
 				if (!recordRenderer2DPrimitive(x, y, 1, 1, val, 256)) {
 					markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.PIXEL);
 				}
+				coverageOpaque(this.pixelData, x + this.width2 * y);
 				this.pixelData[x + this.width2 * y] = val;
 			}
 		} catch (RuntimeException var6) {
@@ -4007,6 +4202,10 @@ public class GraphicsController {
 
 				if (colorMask2 == 0) {
 					colorMask2 = 0xFFFFFF;
+				}
+				if (guardGpuSceneSoftwareWrites && mirrorX && colorMask2 != 0xFFFFFF && dummy != 1) {
+					failSceneSpriteOwnership("GPU Scene sprite has an unsupported legacy clipping sentinel");
+					return;
 				}
 
 				if (colorMask == 0) {
@@ -4199,6 +4398,7 @@ public class GraphicsController {
 							++destHead;
 						} else {
 							int oldColor = dest[destHead];
+							coverageMultiply(dest, destHead, alphaInverse);
 							dest[destHead++] = FastMath
 								.bitwiseAnd(FastMath.bitwiseAnd(0xFF00, oldColor) * alphaInverse
 									+ FastMath.bitwiseAnd(0xFF00, newColor) * alpha, 0xFF0000)
@@ -4331,6 +4531,7 @@ public class GraphicsController {
 									(((spriteR + canvasR) >> 8) << 16) +
 										(((spriteG + canvasG) >> 8) << 8) +
 										((spriteB + canvasB) >> 8);
+								coverageMultiply(dest, destRowHead + j, inverseOpacity);
 								dest[destRowHead + j] = finalColour;
 
 								/*// Are we a grey?
@@ -4430,9 +4631,11 @@ public class GraphicsController {
 								int newG = newColor >> 8 & 255;
 								// Is grey
 								if (newR == newG && newB == newG) {
+									coverageOpaque(dest, j + destRowHead);
 									dest[j + destRowHead] = (backG * newG >> 8 << 8) + (backR * newR >> 8 << 16)
 										+ (backB * newB >> 8);
 								} else {
+									coverageOpaque(dest, destRowHead + j);
 									dest[destRowHead + j] = newColor;
 								}
 							}
