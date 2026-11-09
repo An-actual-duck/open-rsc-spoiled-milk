@@ -28,6 +28,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static final boolean SPRITE_CACHE="cached".equals(System.getProperty("spoiledmilk.browserSpriteCache","uncached"));
     private final BrowserLightingData lightingData=new BrowserLightingData();
     private final BrowserSkyData skyData=new BrowserSkyData();
+    private final BrowserWorldLoadState loadState=new BrowserWorldLoadState();
     private int maxTextureSize;
     private static final long CHUNK_BUDGET=224L*1024*1024; // reserve32MiB for the bounded world texture catalog
     private static final boolean ACTIVE_ONLY="active".equals(System.getProperty("spoiledmilk.browserCachePolicy","lru"));
@@ -47,6 +48,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void deleteTextures(int[] ids);
     private static native void present(int width,int height,boolean world,float[] matrices,float[] uniforms,int[] draws,int[] overlay);
     private static native void frameWork(float[] milliseconds,int[] pose);
+    private static native void worldProgress(int[] metadata);
     private static native void overlayFrame(int width,int height,int mode,double generation,double frameSequence,int fades,boolean reset,float[] transmittance);
     private static native void deleteChunks(int[] ids);
     private static native void beginWorldSprites();
@@ -66,7 +68,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     }
     @Override public void present(BufferedImage image,Renderer2DFrame commands,Renderer3DFrame frame) {
         long frameStart=System.nanoTime();
-        GraphicsController currentSurface=currentSurface();
+        mudclient client=currentClient();
+        GraphicsController currentSurface=client==null?null:client.getSurface();
         if(currentSurface!=null&&!currentSurface.getSceneSpriteRasterFailure().isEmpty())throw new IllegalStateException("Browser actor capture rejected: "+currentSurface.getSceneSpriteRasterFailure());
         int w=image.getWidth(),h=image.getHeight();
         if(w<1||h<1||(long)w*h>MAX_PIXELS)throw new IllegalStateException("Browser viewport exceeds bounded backend capacity");
@@ -85,6 +88,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             exportLighting(null);
             exportSky(null);
             prepareOverlay(image,currentSurface);
+            worldProgress(loadState.frame(client!=null&&client.isGameView(),client!=null&&client.isFullScreenModalUiActive(),false,frame,0,0,0,0,0,w,h,textures.size()));
             present(w,h,false,new float[48],new float[30],new int[0],borrowOverlay(image));
             return;
         }
@@ -115,7 +119,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             if(removedCount>0)deleteTextures(Arrays.copyOf(removedTextures,removedCount));
             long textureEnd=System.nanoTime();
             int[] packingSettings=packing.backendPackingSettings();
-            int[] draws=new int[world.getChunkCount()*8];int count=0,uploaded=0;
+            int[] draws=new int[world.getChunkCount()*8];int count=0,uploaded=0,remainingRepacks=0;
             List<PendingRepack> pending=new ArrayList<PendingRepack>();
             for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
                 CachedChunk cached=chunks.get(chunk.getStorageSignature());if(cached==null)continue;
@@ -125,7 +129,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             }
             Collections.sort(pending,(a,b)->Long.compare(a.cached.packedAt,b.cached.packedAt));
             for(PendingRepack update:pending) {
-                if(uploaded>0&&uploaded+update.chunk.getVertexCount()>UPLOAD_VERTICES_PER_FRAME)continue;
+                if(uploaded>0&&uploaded+update.chunk.getVertexCount()>UPLOAD_VERTICES_PER_FRAME){remainingRepacks++;continue;}
                 BrowserChunkMaterials.Buffers buffers=BrowserChunkMaterials.pack(packing,frame,update.chunk);
                 replaceChunk(update.cached.id,packing.copyBackendChunkVertices(update.chunk,frame),buffers.indices,buffers.batches);
                 update.cached.x=update.chunk.getVertexOffsetX();update.cached.z=update.chunk.getVertexOffsetZ();update.cached.settings=packingSettings;update.cached.materials=update.materials;
@@ -149,21 +153,22 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             float[] view=OpenGLWorldChunkRenderer.backendWorldViewMatrix(frame);
             float[] clip=OpenGLWorldChunkRenderer.multiply(OpenGLWorldChunkRenderer.projectionMatrix(frame),view);
             float[] matrices=new float[48];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);columnMajor(OpenGLFramePresenter.backendCameraToClipProjectionMatrix(frame),matrices,32);
-            uploadSprites(frame);
+            int spriteGroups=uploadSprites(frame);
             long spriteEnd=System.nanoTime();
             exportLighting(frame);
             long lightingEnd=System.nanoTime();
             exportSky(frame);
             long skyEnd=System.nanoTime();
             prepareOverlay(image,currentSurface);
+            worldProgress(loadState.frame(client!=null&&client.isGameView(),client!=null&&client.isFullScreenModalUiActive(),client!=null&&client.isRenderer3DWorldReady(),frame,world.getChunkCount(),count/8,remainingRepacks,spriteGroups,spriteGroups,w,h,textures.size()));
             present(w,h,true,matrices,uniforms(frame),Arrays.copyOf(draws,count),borrowOverlay(image));
             long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()},pose(frame));
         } finally { RendererFrameLighting.restore(previous); }
     }
-    private GraphicsController currentSurface() {
+    private mudclient currentClient() {
         try {
             if(mainClientField==null){mainClientField=ORSCApplet.class.getDeclaredField("mudclient");mainClientField.setAccessible(true);}
-            mudclient client=(mudclient)mainClientField.get(null);return client==null?null:client.getSurface();
+            return (mudclient)mainClientField.get(null);
         } catch(ReflectiveOperationException e){throw new IllegalStateException("Browser cannot inspect its current surface",e);}
     }
     private void prepareOverlay(BufferedImage image,GraphicsController surface) {
@@ -193,7 +198,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         for(BrowserLightingData.Mask mask:light.changes)uploadLightingMask(mask.unit,mask.width,mask.height,mask.rgba,mask.bounds);
         lightingFrame(light.values);
     }
-    private void uploadSprites(Renderer3DFrame frame) {
+    private int uploadSprites(Renderer3DFrame frame) {
+        int uploadedGroups=0;
         beginWorldSprites();
         if(frame.getWorldSpriteSnapshotCount()>1024)throw new IllegalStateException("Browser world sprite count exceeds capacity");
         for(Renderer3DFrame.WorldSpriteSnapshot snapshot:frame.getWorldSpriteSnapshots()) {
@@ -205,8 +211,9 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             if(cached!=null){composite=new CompositeWorldSpriteTexture(cached.x,cached.y,cached.width,cached.height,null);rgba=cached.rgba;}
             else{composite=OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(snapshot,spriteWorkspace);if(composite==null)continue;ByteBuffer pixels=composite.textureData.pixels();rgba=new byte[pixels.remaining()];pixels.get(rgba);}
             if(composite.width<1||composite.height<1||(long)composite.width*composite.height>MAX_PIXELS)throw new IllegalStateException("Browser world sprite exceeds capacity");
-            uploadWorldSprite(composite.width,composite.height,spriteQuad(frame,snapshot.getAnchor(),composite),rgba);
+            uploadWorldSprite(composite.width,composite.height,spriteQuad(frame,snapshot.getAnchor(),composite),rgba);uploadedGroups++;
         }
+        return uploadedGroups;
     }
     static float[] spriteQuad(Renderer3DFrame frame,Renderer3DFrame.SpriteAnchor anchor,CompositeWorldSpriteTexture composite) {
         float scale=(float)(1<<Math.max(0,Math.min(24,frame.getPerspectiveShift())));

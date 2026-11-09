@@ -1,0 +1,58 @@
+Browser world readiness cover — ACTIVE private follow-up
+=======================================================
+Baseline main73018fa59967c478e5b05f02bd5b4b9ee73baf8b.
+The existing8113 preview is immutable. This task changes only browser readiness
+and frontend loading/input boundaries; no Bootstrap/native input/settings edits.
+
+Source completion
+-----------------
+BrowserWebGLBridge exports a bounded12-int declaration before every presentation:
+version, mode, region epoch, required/uploaded chunks, outstanding packing updates,
+required/uploaded composite groups, core authority-ready, viewport width/height,
+and uploaded material texture count. Frame ownership remains synchronous and the
+existing pooled-frame release contracts are unchanged.
+
+Core isRenderer3DWorldReady() supplies actual region/activation authority. Login
+and full-screen character creation/death/sleep are separate UI modes. Invisible,
+clipped or absent actors do not require a fabricated positive snapshot count.
+Every actually produced composite must be uploaded. Region/layer/rebase identity
+uses source chunk region metadata, not animated content signatures.
+
+Reveal policy
+-------------
+Successful current color/lighting/sprite presentation must match the complete
+source declaration. A nonblocking WebGL2 fence proves the complete initial GPU
+work was processed. The cover then permits a short cadence warm-up: normally
+seven complete source frames with a stable six-interval window; bounded at30
+complete frames, or2.5seconds after at least three complete frames. There is no
+minimum FPS and no timer can reveal missing geometry/materials or a pending GPU
+fence. An unsignaled fence after15seconds becomes a visible retry error.
+
+Only login/core area loading and region/viewport changes restart the cover.
+Ordinary animation signatures, camera motion and live material repacks after a
+ready frame do not keep re-covering gameplay. All Java updates and GPU uploads
+continue underneath. Backend errors/context loss stay visible, requiring Stop
+and restart instead of a blank or stale false-ready view.
+
+Input and lifecycle
+-------------------
+The cover aligns with the actual AWT game buffer, leaving the window titlebar
+and outer Stop control available. Document capture handlers are registered
+before the vendor runtime and suppress world presses/clicks/context menus/wheel.
+Game-focused printable/arrow keydowns are gated, while Tab/Shift+Tab/Escape,
+function keys, browser shortcuts with Ctrl/Meta/Alt and all key/pointer releases
+remain available. This is not a browser/global keyboard lock.
+window.browserWorldInputAllowed() reflects the current gate. A
+browser-world-readinesschange event fires only after gate transitions, allowing
+the separate middle relay to cancel a held gesture immediately.
+
+CPU evidence so far
+-------------------
+Fresh Java8-target client build passes. Actual source-frame fixtures test region,
+signed-level, content churn, relog, missing authority and legitimate modal modes.
+Instrumented GL/DOM tests cover source completeness, fences, warm-up bounds,
+slow devices, live-update stability, resize/login/modal/error states, keyboard
+shortcuts/focus, press/release gating and cleanup. Existing bridge/Scene ownership
+and GPU resource/frontend controls pass after adding the new declaration seam.
+These are CPU/API controls, not a GPU or performance claim. Serialized real
+private hardware proof is pending manager access coordination;8115 is reserved.
