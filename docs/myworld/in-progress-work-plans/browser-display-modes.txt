@@ -38,12 +38,18 @@ node tests/myworld/test-browser-world-ready.mjs
 python3 tests/myworld/test-browser-world-ready.py
 python3 scripts/workspace-layout.py check
 git diff --check
+node tests/myworld/test-browser-input-lifecycle.mjs
+node tests/myworld/test-browser-runtime-lifecycle.mjs STAGE 8117
 
 Evidence / actual browser gate
 Frozen first stage: output/tests/browser-gameplay-spike/browser-display-fit-8117
 Source checkpoint c6de9c920e6a1424f1ea10806aff8e0aceabc015.
-Parent coordinates actual hardware proof; never alter a running frozen stage.
-Required actual checks: all game/HUD pixels including bottom 12px, left/right
+Parent hardware/owner review at frozen 8117: fit-to-tab and fullscreen accepted
+by the owner; AWT and GPU both 960x540 and aligned, health/bottom UI visible.
+Real parent fullscreenElement=player and Escape exit verified. No FPS claim.
+Some automated input attempts overlapped owner use of the visible diagnostic;
+those do not count as independent acceptance. Never alter a frozen stage.
+Remaining broader input matrix (not a claim of completed hardware coverage): all game/HUD pixels including bottom 12px, left/right
 menu targeting, middle orbit/release/cancel, wheel, fit/letterbox sizes, actual
 fullscreen/Escape/Stop and loading-cover alignment. The pure fixtures are not
 proof of vendor input/layout behavior. No FPS improvement is claimed; CSS
@@ -54,3 +60,10 @@ Known scope
 - Fullscreen permission may be denied by embedding or browser policy.
 - A small accumulated integer UI-alpha rounding difference is inherited from
   the accepted browser renderer, not changed by this presentation task.
+
+Actual lifecycle evidence (both passed, fresh isolated Chrome profiles):
+output/tests/browser-input-lifecycle/1794267145077
+output/tests/browser-input-lifecycle/actual-runtime-1794267146390
+The latter uses real CheerpJ 5.0 with software login only, no account login;
+Stop/restart, Escape, outside input and hidden/restored runtime survived.
+These checks do not establish GPU performance or desktop-global input safety.
