@@ -277,3 +277,14 @@ This candidate is a functional checkpoint, not READY. Base resource upload failu
 atomicity/cleanup hardening is still under review; current map allocation failures
 require stopping/restarting the session. Optional sprite cache and UI coverage/
 retained fade integration are later worker slices and are not enabled here.
+
+Resource update follow-up after immutable 25c84 functional freeze
+- Chunk allocation validates peak budget before GL creation, owns handles until
+  buffers/attributes pass getError, and commits map/ledger only after success.
+- Material textures retain old storage on failed size-changing replacements;
+  equal-sized updates reuse storage with texSubImage2D. Partial in-place update
+  errors explicitly fail the backend until session restart.
+- Tests inject null allocation, thrown buffer/texture operations and GL errors,
+  verify no owned-handle leaks, unchanged failed-allocation ledger, valid old
+  material, idempotent disposal and exact restart requirement after partial writes.
+  These are GL API double controls, not real device-loss/performance evidence.

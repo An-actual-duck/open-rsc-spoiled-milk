@@ -26,15 +26,15 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
   const gpuTimer=gl.getExtension("EXT_disjoint_timer_query_webgl2"),pendingQueries=[];
   let spriteX=0,spriteY=0,spriteRow=0,spriteDraws=[];const SPRITE_ATLAS=2048;
   const uniforms=new Map();
-  function alive(){if(disposed||stats.contextLost)throw new Error('Browser GPU backend unavailable; restart the private session');}
+  function alive(){if(disposed||stats.contextLost||stats.backendFailed)throw new Error('Browser GPU backend unavailable; restart the private session');}
   function lost(event){event.preventDefault();stats.contextLost=true;report('WebGL context lost; stop and restart the private session');}
   canvas.addEventListener('webglcontextlost',lost);
-  function shader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){const e=gl.getShaderInfoLog(s);gl.deleteShader(s);throw new Error(e);}shaders.push(s);return s;}
-  function link(v,f){const p=gl.createProgram();gl.attachShader(p,shader(gl.VERTEX_SHADER,v));gl.attachShader(p,shader(gl.FRAGMENT_SHADER,f));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));programs.push(p);return p;}
+  function shader(type,source){const s=gl.createShader(type);if(!s)throw new Error('WebGL shader allocation failed');gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){const e=gl.getShaderInfoLog(s);gl.deleteShader(s);throw new Error(e);}shaders.push(s);return s;}
+  function link(v,f){const p=gl.createProgram();if(!p)throw new Error('WebGL program allocation failed');programs.push(p);gl.attachShader(p,shader(gl.VERTEX_SHADER,v));gl.attachShader(p,shader(gl.FRAGMENT_SHADER,f));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));return p;}
   function loc(name){if(!uniforms.has(name))uniforms.set(name,gl.getUniformLocation(program,name));return uniforms.get(name);}
   function i(name,value){gl.uniform1i(loc(name),value);} function f(name,value){gl.uniform1f(loc(name),value);}
   function check(){const error=gl.getError();if(error!==gl.NO_ERROR)throw new Error('WebGL error 0x'+error.toString(16));}
-  function allocate(bytes){if(bytes<0||stats.gpuBytes+bytes>MAX_GPU_BYTES)throw new Error('Browser GPU resource budget exceeded');stats.gpuBytes+=bytes;stats.uploadedBytes+=bytes;}
+  function reserve(bytes){if(!Number.isSafeInteger(bytes)||bytes<0||stats.gpuBytes+bytes>MAX_GPU_BYTES)throw new Error('Browser GPU resource budget exceeded');}
   function textureParameters(filter=gl.NEAREST){gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,filter);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,filter);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
   function chunkData(vertexInput,indexInput,batchInput) {
     const vertices=typed(vertexInput,Float32Array),indices=typed(indexInput,Int32Array),batches=new Int32Array(batchInput);
@@ -80,29 +80,56 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
     async Java_orsc_BrowserWebGLBridge_uploadChunk(lib,id,vertexInput,indexInput,batchInput){
       alive();if(chunks.size>=MAX_CHUNKS||chunks.has(id))throw new Error('Browser chunk cache limit/identity violation');
       const {vertices,indices,batches}=chunkData(vertexInput,indexInput,batchInput);
-      const bytes=vertices.byteLength+indices.byteLength;allocate(bytes);
-      const vao=gl.createVertexArray(),vbo=gl.createBuffer(),ibo=gl.createBuffer();gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.STATIC_DRAW);
-      for(const [name,size,offset] of ATTRIBUTES){const at=gl.getAttribLocation(program,name);if(at>=0){gl.enableVertexAttribArray(at);gl.vertexAttribPointer(at,size,gl.FLOAT,false,28*4,offset*4);}}
-      chunks.set(id,{vao,vbo,ibo,batches,bytes,vertexBytes:vertices.byteLength,indexBytes:indices.byteLength});stats.uploadedChunks++;check();
+      const bytes=vertices.byteLength+indices.byteLength;reserve(bytes);
+      const previousVAO=gl.getParameter(gl.VERTEX_ARRAY_BINDING),previousArray=gl.getParameter(gl.ARRAY_BUFFER_BINDING);
+      let vao,vbo,ibo,committed=false;
+      try {
+        vao=gl.createVertexArray();vbo=gl.createBuffer();ibo=gl.createBuffer();
+        if(!vao||!vbo||!ibo)throw new Error('WebGL chunk allocation failed');
+        gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.STATIC_DRAW);
+        for(const [name,size,offset] of ATTRIBUTES){const at=gl.getAttribLocation(program,name);if(at>=0){gl.enableVertexAttribArray(at);gl.vertexAttribPointer(at,size,gl.FLOAT,false,28*4,offset*4);}}
+        check();chunks.set(id,{vao,vbo,ibo,batches,bytes,vertexBytes:vertices.byteLength,indexBytes:indices.byteLength});
+        stats.gpuBytes+=bytes;stats.uploadedBytes+=bytes;stats.uploadedChunks++;committed=true;
+      } finally {
+        gl.bindVertexArray(previousVAO);gl.bindBuffer(gl.ARRAY_BUFFER,previousArray);
+        if(!committed){if(vao)gl.deleteVertexArray(vao);if(vbo)gl.deleteBuffer(vbo);if(ibo)gl.deleteBuffer(ibo);}
+      }
       // No Java array is retained: bufferData copied geometry; metadata was explicitly copied.
     },
     async Java_orsc_BrowserWebGLBridge_replaceChunk(lib,id,vertexInput,indexInput,batchInput){
       alive();const chunk=chunks.get(id);if(!chunk)throw new Error('Repack references absent GPU chunk');
       const {vertices,indices,batches}=chunkData(vertexInput,indexInput,batchInput);
       if(vertices.byteLength!==chunk.vertexBytes||indices.byteLength!==chunk.indexBytes)throw new Error('Immutable chunk shape changed during repack');
-      gl.bindVertexArray(chunk.vao);gl.bindBuffer(gl.ARRAY_BUFFER,chunk.vbo);gl.bufferSubData(gl.ARRAY_BUFFER,0,vertices);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,chunk.ibo);gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER,0,indices);
-      chunk.batches=batches;stats.uploadedBytes+=vertices.byteLength+indices.byteLength;stats.repackedChunks=(stats.repackedChunks||0)+1;check();
+      const previousVAO=gl.getParameter(gl.VERTEX_ARRAY_BINDING),previousArray=gl.getParameter(gl.ARRAY_BUFFER_BINDING);
+      try {
+        gl.bindVertexArray(chunk.vao);gl.bindBuffer(gl.ARRAY_BUFFER,chunk.vbo);gl.bufferSubData(gl.ARRAY_BUFFER,0,vertices);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,chunk.ibo);gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER,0,indices);check();
+        chunk.batches=batches;stats.uploadedBytes+=vertices.byteLength+indices.byteLength;stats.repackedChunks=(stats.repackedChunks||0)+1;
+      } catch(error){stats.backendFailed=true;throw error;}
+      finally{gl.bindVertexArray(previousVAO);gl.bindBuffer(gl.ARRAY_BUFFER,previousArray);}
     },
     async Java_orsc_BrowserWebGLBridge_deleteTextures(lib,input){alive();for(const id of typed(input,Int32Array)){const old=textures.get(id);if(!old)throw new Error('Removal references absent browser texture');gl.deleteTexture(old.texture);stats.gpuBytes-=old.bytes;textures.delete(id);for(const chunk of chunks.values())for(let n=0;n<chunk.batches.length;n+=5)if(chunk.batches[n]===id)chunk.batches[n+4]=0;}},
     async Java_orsc_BrowserWebGLBridge_uploadTexture(lib,id,width,height,pixelInput,hasTransparency){
-      alive();if(width<1||height<1||width*height>262144||textures.size>2048)throw new Error('Browser texture limit exceeded');
+      alive();const old=textures.get(id);
+      if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width*height>262144||(!old&&textures.size>=2048))throw new Error('Browser texture limit exceeded');
       const pixels=typed(pixelInput,Int32Array);if(pixels.length!==width*height)throw new Error('Browser texture dimensions mismatch');
       const rgba=new Uint8Array(pixels.length*4);for(let n=0;n<pixels.length;n++){const c=pixels[n];rgba[n*4]=c>>>24;rgba[n*4+1]=c>>>16;rgba[n*4+2]=c>>>8;rgba[n*4+3]=c;}
-      const old=textures.get(id);if(old){gl.deleteTexture(old.texture);stats.gpuBytes-=old.bytes;}
-      const bytes=rgba.length;allocate(bytes);const texture=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);textureParameters();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,rgba);textures.set(id,{texture,bytes,revision:(old?.revision||0)+1,hasTransparency:hasTransparency===true});
-      // Pass classification follows the current texture even while bounded Java repacking catches up.
-      for(const chunk of chunks.values())for(let n=0;n<chunk.batches.length;n+=5)if(chunk.batches[n]===id)chunk.batches[n+4]=hasTransparency?1:0;
-      check();
+      const bytes=rgba.length,reuse=old&&old.width===width&&old.height===height;
+      if(!reuse)reserve(bytes); // Keep the old resource valid until replacement allocation succeeds; bound peak storage.
+      const previousActive=gl.getParameter(gl.ACTIVE_TEXTURE);gl.activeTexture(gl.TEXTURE0);
+      let previousTexture=gl.getParameter(gl.TEXTURE_BINDING_2D),texture=reuse?old.texture:null,committed=false;
+      try {
+        if(!texture)texture=gl.createTexture();if(!texture)throw new Error('WebGL texture allocation failed');
+        gl.bindTexture(gl.TEXTURE_2D,texture);textureParameters();
+        if(reuse)gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,rgba);
+        else gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,rgba);
+        check();textures.set(id,{texture,bytes,width,height,revision:(old?.revision||0)+1,hasTransparency:hasTransparency===true});
+        if(!reuse){stats.gpuBytes+=bytes-(old?.bytes||0);if(old){if(previousTexture===old.texture)previousTexture=texture;gl.deleteTexture(old.texture);}}
+        stats.uploadedBytes+=bytes;committed=true;
+        // Alpha classification follows accepted texture data while bounded Java repacking catches up.
+        if(!old||old.hasTransparency!==(hasTransparency===true))for(const chunk of chunks.values())for(let n=0;n<chunk.batches.length;n+=5)if(chunk.batches[n]===id)chunk.batches[n+4]=hasTransparency?1:0;
+      } catch(error){if(reuse)stats.backendFailed=true;throw error;}
+      finally{gl.bindTexture(gl.TEXTURE_2D,previousTexture);gl.activeTexture(previousActive);if(!committed&&!reuse&&texture)gl.deleteTexture(texture);}
+
     },
     async Java_orsc_BrowserWebGLBridge_present(lib,width,height,world,matrixInput,uniformInput,drawInput,pixelInput){
       alive();const submitStart=performance.now();
@@ -165,7 +192,7 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
       spriteDraws.push(true);spriteX+=width;spriteRow=Math.max(spriteRow,height);check();
     }
   };
-  function dispose(){if(disposed)return;if(lighting)lighting.dispose();if(sky)sky.dispose();for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);for(const q of pendingQueries)gl.deleteQuery(q);if(overlayTexture)gl.deleteTexture(overlayTexture);if(spriteTexture)gl.deleteTexture(spriteTexture);if(spriteVBO)gl.deleteBuffer(spriteVBO);if(spriteIBO)gl.deleteBuffer(spriteIBO);if(spriteVAO)gl.deleteVertexArray(spriteVAO);if(emptyVAO)gl.deleteVertexArray(emptyVAO);canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
+  function dispose(){if(disposed)return;if(lighting)lighting.dispose();if(sky)sky.dispose();for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);for(const q of pendingQueries)gl.deleteQuery(q);if(overlayTexture)gl.deleteTexture(overlayTexture);if(spriteTexture)gl.deleteTexture(spriteTexture);if(spriteVBO)gl.deleteBuffer(spriteVBO);if(spriteIBO)gl.deleteBuffer(spriteIBO);if(spriteVAO)gl.deleteVertexArray(spriteVAO);if(emptyVAO)gl.deleteVertexArray(emptyVAO);chunks.clear();textures.clear();programs.length=shaders.length=baseTextures.length=pendingQueries.length=0;stats.gpuBytes=0;stats.spriteResourceBytes=0;canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
   for(const name of Object.keys(natives)) {
     const call=natives[name];natives[name]=async(...args)=>{
       try{return await call(...args);}catch(error){stats.lastError=String(error);stats.lastErrorAt=performance.now();report('Browser GPU error: '+error);throw error;}
