@@ -30,11 +30,13 @@ public final class SlayerTaskSupplyFixture {
             };
             MonsterSlayerData data = MonsterSlayerData.load(DEFINITIONS, catalog, true);h.installMonsterSlayerData(data);
             allGimmickAssignmentsAndReminders(h, data);
+            claimsSurviveItemLossAndReload(h, data);
+            sharedItemAndExistingOwnership(h, data);
             fullInventoryAndUnsupportedClient(h, data);
             cacheFailureRestoresItemsAndState(h, data);
             concurrentRequestsGrantExactlyOnce(h, data);
             multiCounterTasksAreAtomic(h, catalog, output);
-            System.out.println("PASS Slayer assignment supplies: " + checks + " assertions; all six gimmick tasks, mandatory/repeatable/new-task grants, reminder/reconnect protection, full inventory, unsupported client, failed/partial grants, cache rollback, metadata preservation and concurrent assignment");
+            System.out.println("PASS Slayer assignment supplies: " + checks + " assertions; all six gimmick tasks, first-only mandatory/repeatable grants, shared-item claims, cancellation, item loss/banking and serialized cache reload, reminder protection, full inventory, unsupported client, failed/partial grants, cache rollback, metadata preservation and concurrent assignment");
         }
     }
     private static void allGimmickAssignmentsAndReminders(CurrentCombatHarness h, MonsterSlayerData data) {
@@ -54,6 +56,7 @@ public final class SlayerTaskSupplyFixture {
                 check(service.assignMandatory(mandatory, contact.getKey()).isAccepted(), "mandatory assigned " + task.getKey());
                 for (int id : supplies) {
                     check(mandatory.getCarriedItems().getInventory().countId(id)==1,"one full counter " + id);
+                    check(Boolean.TRUE.equals(cache(mandatory).get("monster_slayer_starter_"+id)),"claim for delivered full three-use item");
                     check(!h.server().getEntityHandler().getItemDef(id).isStackable(),"full counter nonstackable");
                 }
                 check(service.assignMandatory(mandatory, contact.getKey()).getReason()==MonsterSlayerState.TaskResult.Reason.ACTIVE_TASK,"reminder is not another assignment");
@@ -64,7 +67,7 @@ public final class SlayerTaskSupplyFixture {
                 check(service.assignRepeatable(repeat,contact.getKey(),repeatable.getKey()).isAccepted(),"repeatable assigned");
                 check(service.completeActiveTaskForDevelopment(repeat).getReason()==MonsterSlayerState.TaskResult.Reason.COMPLETED,"repeatable completed through normal transition");
                 check(service.assignRepeatable(repeat,contact.getKey(),repeatable.getKey()).isAccepted(),"next repeatable assigned");
-                for(int id:supplies)check(repeat.getCarriedItems().getInventory().countId(id)==2,"each genuinely new assignment receives one item");
+                for(int id:supplies)check(repeat.getCarriedItems().getInventory().countId(id)==1,"later assignments do not repeat the starter gift");
             }
         }
         check(families==6,"all six implemented gimmick encounters covered, including shared solvent");
@@ -72,12 +75,68 @@ public final class SlayerTaskSupplyFixture {
             if(task.getHazards().contains(MonsterSlayerHazard.NAGA_STRATEGY)||task.getHazards().contains(MonsterSlayerHazard.BLOODVELD_STRATEGY))
                 check(MonsterSlayerTaskSupplies.itemIds(task).isEmpty(),"strategy-only task grants no counter");
     }
+    private static void claimsSurviveItemLossAndReload(CurrentCombatHarness h, MonsterSlayerData data) throws Exception {
+        MonsterSlayerTaskService service = new MonsterSlayerTaskService(data);
+        MonsterSlayerDefinitions.Contact contact = data.getContact("falador");
+        MonsterSlayerDefinitions.Task task = data.getTask("falador.giant_frog");
+        for (String destination : Arrays.asList("dropped", "sold", "banked", "consumed")) {
+            Player p = ready(h, data, contact, task, false);
+            check(service.assignMandatory(p, "falador").isAccepted(), "first grant before " + destination);
+            check(Boolean.TRUE.equals(cache(p).get("monster_slayer_starter_3318")), "successful delivery records persistent item claim");
+            Item gift = p.getCarriedItems().getInventory().getItems().remove(0);
+            if (destination.equals("banked")) {
+                p.setBank(new com.openrsc.server.model.container.Bank(p));
+                check(p.getBank().add(gift, false), "gift moved to bank");
+            }
+            MonsterSlayerState.write(p.getCache(), data, MonsterSlayerState.cancelTask(MonsterSlayerState.read(p.getCache(), data), data, task.getKey()));
+            check(service.assignMandatory(p, "falador").isAccepted(), "cancel/reassign after " + destination);
+            check(p.getCarriedItems().getInventory().countId(3318) == 0, "no replacement after " + destination);
+            // Exercise the database cache's persisted text/type representation in a fresh player.
+            Player reloaded = h.player("tasksupply" + serial++, 450, 450);
+            reloaded.getClientLimitations().maxItemId = Integer.MAX_VALUE;
+            for (Map.Entry<String,Object> entry : cache(p).entrySet()) {
+                Object value = entry.getValue(); String text = value.toString();
+                Object decoded;
+                if (value instanceof Boolean) decoded = Boolean.parseBoolean(text);
+                else if (value instanceof Integer) decoded = Integer.valueOf(text);
+                else if (value instanceof Long) decoded = Long.valueOf(text);
+                else decoded = text;
+                reloaded.getCache().put(entry.getKey(), decoded);
+                if (entry.getKey().startsWith("monster_slayer_starter_"))
+                    check(entry.getKey().length() <= 32 && text.length() <= 150, "starter claim fits persistence schema");
+            }
+            MonsterSlayerState.write(reloaded.getCache(), data, MonsterSlayerState.cancelTask(MonsterSlayerState.read(reloaded.getCache(), data), data, task.getKey()));
+            while (reloaded.getCarriedItems().getInventory().size() < reloaded.getCarriedItems().getInventory().getCapacity())
+                check(reloaded.getCarriedItems().getInventory().add(new Item(259), false), "fill reload inventory");
+            check(new MonsterSlayerTaskService(data).assignMandatory(reloaded, "falador").isAccepted(), "claimed task needs no spare slot after reload");
+            check(reloaded.getCarriedItems().getInventory().countId(3318) == 0, "reload cannot reopen entitlement");
+        }
+    }
+    private static void sharedItemAndExistingOwnership(CurrentCombatHarness h, MonsterSlayerData data) {
+        MonsterSlayerTaskService service = new MonsterSlayerTaskService(data);
+        Player p = ready(h, data, data.getContact("falador"), data.getTask("falador.giant_frog"), false);
+        p.getCarriedItems().getInventory().add(new Item(3318), false);
+        check(service.assignMandatory(p, "falador").isAccepted(), "existing purchased/untracked item does not consume starter entitlement");
+        check(p.getCarriedItems().getInventory().countId(3318) == 2, "one starter in addition to existing ownership");
+        for (MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) {
+            for (MonsterSlayerDefinitions.Task task : contact.getMandatoryTasks()) {
+                if (!task.getFamilyKey().equals("abyssal_demon")) continue;
+                Player progress = ready(h, data, contact, task, false);
+                MonsterSlayerState.write(p.getCache(), data, MonsterSlayerState.read(progress.getCache(), data));
+                check(service.assignMandatory(p, contact.getKey()).isAccepted(), "related solvent task assigned");
+                check(p.getCarriedItems().getInventory().countId(3318) == 2, "different task sharing solvent grants no second starter");
+            }
+        }
+    }
     private static void fullInventoryAndUnsupportedClient(CurrentCombatHarness h,MonsterSlayerData data) {
         MonsterSlayerDefinitions.Contact contact=data.getContact("falador");MonsterSlayerDefinitions.Task task=data.getTask("falador.giant_frog");
         Player full=ready(h,data,contact,task,false);while(full.getCarriedItems().getInventory().size()<full.getCarriedItems().getInventory().getCapacity())full.getCarriedItems().getInventory().add(new Item(259),false);
         Map<String,Object> before=cache(full);List<Item> original=new ArrayList<Item>(full.getCarriedItems().getInventory().getItems());
         check(new MonsterSlayerTaskService(data).assignMandatory(full,"falador").getReason()==MonsterSlayerState.TaskResult.Reason.INVENTORY_FULL,"full inventory blocks both assignment and gift");
         check(cache(full).equals(before)&&full.getCarriedItems().getInventory().getItems().equals(original),"full inventory unchanged");
+        full.getCarriedItems().getInventory().getItems().remove(0);
+        check(new MonsterSlayerTaskService(data).assignMandatory(full,"falador").isAccepted(),"freeing a slot retains initial entitlement");
+        check(full.getCarriedItems().getInventory().countId(3318)==1,"capacity retry grants exactly once");
         Player old=ready(h,data,contact,task,false);old.getClientLimitations().maxItemId=3317;before=cache(old);
         check(new MonsterSlayerTaskService(data).assignMandatory(old,"falador").getReason()==MonsterSlayerState.TaskResult.Reason.SUPPLIES_UNAVAILABLE,"unsupported client cannot spill supply onto ground");check(cache(old).equals(before)&&old.getCarriedItems().getInventory().size()==0,"unsupported client state unchanged");
         Player normal=ready(h,data,contact,contact.getMandatoryTasks().get(0),false);check(MonsterSlayerTaskSupplies.itemIds(contact.getMandatoryTasks().get(0)).isEmpty(),"first ordinary task has no counter");
@@ -92,6 +151,11 @@ public final class SlayerTaskSupplyFixture {
         check(cache(p).equals(before),"owned cache keys restored and unrelated evidence retained");check(p.getCarriedItems().getInventory().size()==1&&p.getCarriedItems().getInventory().getItems().get(0)==original,"exact item and order restored");
         check(original.getItemId()==identity&&original.getItemStatus()==status&&status.getDurability()==83,"identity/status/durability preserved");check(p.getCarriedItems().getInventory().countId(3318)==0,"failed cache write leaves no free counter");
         check(new MonsterSlayerTaskService(data).assignMandatory(p,"falador").isAccepted(),"retry after cache failure grants once");check(p.getCarriedItems().getInventory().countId(3318)==1,"retry gets exactly one counter");
+        Player claimPlayer=ready(h,data,data.getContact("falador"),data.getTask("falador.giant_frog"),false);
+        FailingCache claimCache=new FailingCache();claimCache.getCacheMap().putAll(cache(claimPlayer));field.set(claimPlayer,claimCache);before=cache(claimPlayer);claimCache.failClaim=true;
+        check(new MonsterSlayerTaskService(data).assignMandatory(claimPlayer,"falador").getReason()==MonsterSlayerState.TaskResult.Reason.SUPPLIES_FAILED,"failure after claim store rejects assignment");
+        check(cache(claimPlayer).equals(before)&&claimPlayer.getCarriedItems().getInventory().size()==0,"claim failure rolls back claim, task and inventory");
+        check(new MonsterSlayerTaskService(data).assignMandatory(claimPlayer,"falador").isAccepted(),"claim write failure preserves entitlement");
     }
     private static void concurrentRequestsGrantExactlyOnce(CurrentCombatHarness h,MonsterSlayerData data)throws Exception {
         Player p=ready(h,data,data.getContact("falador"),data.getTask("falador.giant_frog"),false);CountDownLatch start=new CountDownLatch(1);AtomicReference<Throwable> failure=new AtomicReference<Throwable>();List<MonsterSlayerState.TaskResult> results=Collections.synchronizedList(new ArrayList<MonsterSlayerState.TaskResult>());
@@ -111,6 +175,12 @@ public final class SlayerTaskSupplyFixture {
         MonsterSlayerTaskService dishonest=new MonsterSlayerTaskService(data,(staged,id)->true);check(!dishonest.assignMandatory(p,"falador").isAccepted()&&p.getCarriedItems().getInventory().size()==0,"grant success without item cannot commit assignment");
         MonsterSlayerTaskService throwing=new MonsterSlayerTaskService(data,(staged,id)->{staged.add(new Item(id),false);throw new IllegalStateException("injected");});check(!throwing.assignMandatory(p,"falador").isAccepted()&&cache(p).equals(before)&&p.getCarriedItems().getInventory().size()==0,"exception after staged add is atomic");
         check(new MonsterSlayerTaskService(data).assignMandatory(p,"falador").isAccepted(),"multi-counter assignment commits together");check(p.getCarriedItems().getInventory().countId(3318)==1&&p.getCarriedItems().getInventory().countId(3321)==1,"one of each distinct full item");
+        Player partlyClaimed=ready(h,data,contact,task,false);partlyClaimed.getCache().store("monster_slayer_starter_3318",Boolean.TRUE);
+        while(partlyClaimed.getCarriedItems().getInventory().size()<partlyClaimed.getCarriedItems().getInventory().getCapacity()-1)partlyClaimed.getCarriedItems().getInventory().add(new Item(259),false);
+        MonsterSlayerState.TaskResult partialResult=new MonsterSlayerTaskService(data).assignMandatory(partlyClaimed,"falador");
+        check(partialResult.isAccepted(),"partly claimed task needs room only for its new starter");
+        check(partialResult.getGrantedStarterItems().equals(Collections.singletonList(3321)),"receipt contains only newly delivered starter");
+        check(partlyClaimed.getCarriedItems().getInventory().countId(3318)==0&&partlyClaimed.getCarriedItems().getInventory().countId(3321)==1,"claimed solvent is not replenished alongside new eye drops");
     }
     private static Player ready(CurrentCombatHarness h,MonsterSlayerData data,MonsterSlayerDefinitions.Contact contact,MonsterSlayerDefinitions.Task task,boolean repeatable) {
         Player p=h.player("tasksupply"+serial++,450,450);p.getClientLimitations().maxItemId=Integer.MAX_VALUE;Map<String,Integer> cursors=new LinkedHashMap<String,Integer>();
@@ -121,6 +191,8 @@ public final class SlayerTaskSupplyFixture {
     private static void check(boolean value,String message){checks++;if(!value)throw new AssertionError(message);}
     private static final class FailingCache extends Cache {
         boolean fail;
+        boolean failClaim;
+        @Override public void store(String key, Boolean value) { super.store(key,value); if(failClaim && key.startsWith("monster_slayer_starter_")) {failClaim=false;throw new IllegalStateException("injected partial claim write");} }
         @Override public void store(String key,String value){super.store(key,value);if(fail&&key.equals("monster_slayer_active_task")){fail=false;throw new IllegalStateException("injected partial cache write");}}
     }
 }

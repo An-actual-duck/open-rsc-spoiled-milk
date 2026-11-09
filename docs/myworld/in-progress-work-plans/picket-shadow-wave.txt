@@ -1,0 +1,171 @@
+Picket shadow wave — focused private-preview candidate, 2026-11-08
+
+Status: integrated on main after focused hardware contracts, manager native
+throughput checks and owner visual approval on 2026-11-08. Release preparation
+is authorized; public activation is tracked in the Oracle hosting record.
+
+Problem and correction
+----------------------
+The prior world-relative near anchor prevents large-coordinate phase resets,
+but its orthonormal XY basis still rotates as the sun moves. Eight repeated
+native timber/picket quads reproduce a traveling area beat in the near map alone;
+a frozen sun is bit-stable. Far caching/history therefore cannot be its sole
+cause. Caster-only bilinear alpha did not materially fix it and was rejected.
+
+The High near map now uses a directional sheared projection whose XY rows are
+world X + sunX/sunY * world Y and world Z + sunZ/sunY * world Y. Points on a sun
+ray retain identical shadow XY, while the texel grid on a horizontal receiver
+no longer rotates through repeated cutout details. Depth ordering is unchanged.
+Far projection/cache/history, caster alpha cutoff and albedo textures, PCF,
+normal bias, resolutions, update cadence, lighting time and gameplay are unchanged.
+
+Camera eye height is not the ground plane. Scene publishes the actual gameplay
+focal terrain height as immutable Renderer3DFrame metadata (no wire/map change).
+When that reference height changes, near anchor compensation keeps its phase
+on whole texels at fixed sun while following the focus within half a texel.
+Old frame/camera constructors remain compatible. Finite horizontal-sun fallback
+uses the original world-relative orthogonal tracker; supported gameplay sun elevations are >=5 degrees.
+
+Sampling tradeoff: the near half-extent now describes a ground-aligned square
+at the focal height, rather than a light-orthogonal square elongated on ground.
+High retains the unchanged far map outside that footprint. Low retains its exact previous world-relative orthogonal near tracker,
+48-tile near radius and no far map. This is not a universal flicker fix: sparse
+binary cutouts can still cross a sampling threshold together, particularly Low.
+
+Measured controlled evidence
+----------------------------
+Frozen baseline f5a694893; candidate built with default javac8u482 and run on
+Java21, AMD RX6700XT. Same resolution, geometry, alpha bytes, receiver, sun path.
+180 frames, eight repeated native quads, world X64000/Z59000,45-degree sun,
+azimuth +0.002 degrees/frame. Raw pixel change/support INCLUDES correct physical
+solar movement; it is not motion-compensated error or an FPS measurement.
+
+Timber10 near: mean .3488035% -> .0051226% (98.5% lower); worst .7993036% ->
+.7461254%; fixed shadow area138785 ->138224 (-0.40%).
+Railing12 near: mean1.4699902% ->.0712659% (95.2% lower); worst3.1578870% ->
+8.0952587%. This rare coherent step is a real regression/tradeoff, preserved in
+raw frames and comparison clip, not hidden by the mean. Fixed area48001 ->49802.
+At referenceY=-1000/sun10 degrees, with azimuth AND elevation moving, timber
+mean .2596118% -> .0955811%, railing1.0857894% ->.4520598%. Shadow coverage remains.
+Far-only matched controls have identical pixels/metrics. Combined controls at
+new and old transition distances retain shadow coverage. New maintained fixture
+also checks actual seam camera motion spatial residual/coverage, height+sun
+motion, moving casters and Low with no far rescue.
+
+Analytic motion reference: for the diagonal coplanar row on a horizontal plane,
+projected area is proportional to abs(cos(azimuth)+sin(azimuth))/tan(elevation).
+Dividing the measured45-degree trajectory by this factor removes legitimate
+aggregate-area change (not a full per-pixel ray oracle). Timber normalized range
+6.844% ->.740%, standard deviation2.276% ->.209%; railing range12.113% ->10.354%,
+std4.230% ->3.726%. Thus the timber breathing exceeds correct sun motion and is
+strongly reduced; sparse railing area fluctuation improves only modestly.
+Railing area steps>1%:24/179 ->3/179; steps>3%:0 ->1 (candidate frame105,7.77%).
+Do not confuse these area-step counts with the raw spatial-change maxima above.
+
+Inputs: native material10 triangles41388/41389 and12 triangles41704/41705 have
+identical translated six positions/UVs,192 world-unit height. They share the
+fixture quad, not merely an approximate box. Timber alpha64x64,3244 opaque pixels,
+RGBA SHA5326051cf84d549d2a4531d0cee3ec0faea78ed4063d7e48e3e2c07cf8331fba.
+Railing128x128,4444 opaque; its prior fixture bytes remain unchanged. Both derive
+from the preserved native fence export e20340c7e8811f2ff632f572c16f13e76794e9edb1344795612569fb82842930.
+Eight repeats are a controlled stress row, not a claim about an entire native row.
+
+Validation / evidence
+---------------------
+Canonical local evidence: output/tests/picket-shadow-wave; review clips:
+output/reviews/picket-shadow-wave/near10-before-after-ground-height.mp4 and
+near12-before-after-ground-height.mp4. Baseline, rejected linear-alpha and
+plane-zero prototypes, failed runs and final logs remain preserved.
+
+PASS build-client, full renderer guardrails, CPU projection/100000-frame anchor
+stability, sun-ray/depth/worldXYZ/height+sun tracking, immutable focal metadata,
+actual GPU High/Low/Off, floor/sloped/vertical receivers,5/10-degree contact,
+roof masks, context/plane/quality/history resets, resource and GL-state cleanup,
+production native grazing terrain, prior sparse railing temporal/coverage checks,
+and new repeated timber/railing GPU fixture.
+
+Physical fixture adaptations: native terrain uses its actual groundY=-384 rather
+than camera eyeY=-1515. The old card edge pixel now2/255, adjacent interior0/255;
+move the opaque-interior assertion one pixel inward with its <=1 threshold intact.
+The depression109/road119 maintains the intended >=10 intensity difference
+(the old strict >10 comparison rejected exactly10). Initial failed receipts kept.
+Extended sub-texel Low overhead contact could not be resolved (Low world texel12;
+new85-degree test failed and baseline also failed an extended45-degree case).
+No claim of improved Low sparse-cutout detail; existing Low coarse aliasing remains.
+
+Run:
+ python3 tests/myworld/test-geometry-shadow-projection.py
+ python3 tests/myworld/test-shadow-context-epoch.py
+ DISPLAY=:0 tests/myworld/test-geometry-shadow-gpu.sh
+ DISPLAY=:0 tests/myworld/test-thin-shadow-temporal-gpu.sh
+ DISPLAY=:0 tests/myworld/test-picket-shadow-wave-gpu.sh
+ tests/myworld/test-renderer-guardrails.sh
+
+Frozen production receipt
+-------------------------
+Source checkpoint99b37e3b8ac8a4c0b2d178bc8258335032d2f11b; frozen JAR
+output/tests/picket-shadow-wave/candidate-ground-grid-99b37e3b8.jar
+SHA2565c4b13bcf3bf4ab5b6c759d61e259100c4f31eee5f52afa116046ea0bbcc5a04.
+Source hashes/compiler/runtime recorded in candidate-freeze.json. Later docs or
+test-only checkpoint changes do not change those frozen production bytes.
+
+Layout check was run and remains nonzero because of preserved historical ai2
+output-root directories and dev/myworld/assets/sprites. New outputs use declared
+tests/reviews categories; no historical ignored assets or evidence were deleted.
+
+Low guard and final private controls
+-----------------------------------
+The initial ground grid applied to both qualities was REJECTED for Low: matched
+material12 near-sun shadow area42121 ->28276 (-32.9%) and worst raw spatial step
+8.61% ->31.82%; height+sun worst16.86% ->64.43%. This is a new regression, not
+merely the old coarse aliasing. Raw low-matched receipts are retained.
+Final source restores the old tracking constructor/math exactly for Low and uses
+the explicit focal-height ground projection for High only. No extra UI setting,
+resolution increase or filtering was introduced. Quality switches already reset
+near phase/history. The newly proposed Low45-degree tiny-contact assertion also
+fails the released baseline, so focused Low contact checks cover5/10/25 degrees;
+High additionally retains45-degree contact and prior floor/wall/grazing checks.
+
+Final matched GPU parity: material10 and12,720 frames each covering frozen sun,
+moving sun, height+sun, moving casters. Every per-frame grayscale pixel SHA256
+and area/cadence CSV field matches: High final vs99b37 candidate, Low final vs
+releasedf5a baseline. All four comparisons zero differing frames. Re-ran full
+renderer guardrails, physical GPU suite, old sparse temporal suite, new repeated
+fixture, projection and focal metadata tests after the guard. All pass.
+See final-projection-parity.json and *high-only-final.log evidence.
+
+Manager short native controls of the first frozen High path: normal both2401
+renders/40.016s,0queue drops; wide baseline2402/40.032s,candidate2401/40.015s,
+0drops. Same89residentchunks/435422residenttriangles. CPU GLrenderp99 normal
+4.642 ->4.573ms, wide3.928 ->4.120ms; totalGPUp99 normal6.034 ->6.509ms,
+wide6.132 ->8.467ms; nearGPUp99 normal.719 ->.581ms, wide.678 ->1.989ms.
+Max completed interval normal28.3 ->34.9ms, wide23.98 ->33.21ms. These short
+controls sustain60FPS but do not prove zero GPU cost or overall speedup. Native
+submitted geometry ranges vary with camera sampling; do not claim exact actor/
+submitted-geometry parity from resident counts alone. Manager final wide repeat
+on the guarded artifact is pending; owner visual acceptance is still pending.
+
+Final guarded production freeze: fbdf03948ea81712719d7cb0e47cf4b937eedf97,
+output/tests/picket-shadow-wave/candidate-high-only-ground-grid-fbdf03948.jar,
+SHA2563e72fe2afcf6fc5aee66d2fd521ddc635f194537b28f75a12739a20e50d8a18d.
+The earlier99b37 freeze is preserved experimental evidence; use the guarded
+artifact for the owner preview. See candidate-high-only-freeze.json. Source is
+ready for manager review; further native wide-tail repeat and owner visual
+acceptance remain explicit manager gates before any release decision.
+
+Manager acceptance — 2026-11-08
+--------------------------------
+Owner approved the final private candidate after observing maintained60FPS and
+low CPU use. All1978 client class bytes in the manager build match the approved
+frozen3e72fe2a artifact. Manager projection, immutable focal/context and full
+renderer guardrails pass. Native busy-camera controls used Java21 at1920x1080,
+20s warmup and40s measured phases: normal baseline/candidate both2401frames,
+zero queuedrops; wide baseline2402/candidate2401, zero queuedrops. Final guarded
+wide repeat rendered2401frames in40.024s, zero queuedrops, CPU render p994.248ms,
+GPU frame p996.932ms and maximum completed interval23.33ms. Earlier noisier
+wide GPU tails remain recorded; no universal speedup or hitch-free guarantee.
+Resident geometry matches89chunks/435422triangles; camera-sampled submitted
+triangle ranges vary. High parity to the experiment and exact Low baseline
+parity are established separately by the preserved per-frame pixel controls.
+Manager receipts: output/reviews/picket-shadow-wave/. The owner authorized the
+v0.3.15 maintenance update after the normal public update countdown.

@@ -11,6 +11,16 @@ final class OpenGLTexturePixels {
 		int contentWidth,
 		int contentHeight,
 		int padding) {
+		return buildPaddedRgbaPixels(sourcePixels, contentWidth, contentHeight, padding, null);
+	}
+
+	/** Borrowed result is consumed by glTexSubImage2D before this owner acquires again. */
+	static ByteBuffer buildPaddedRgbaPixels(
+		ByteBuffer sourcePixels,
+		int contentWidth,
+		int contentHeight,
+		int padding,
+		OpenGLPixelWorkspace workspace) {
 		if (padding <= 0) {
 			ByteBuffer duplicate = sourcePixels.duplicate();
 			duplicate.position(0);
@@ -23,7 +33,9 @@ final class OpenGLTexturePixels {
 		ByteBuffer source = sourcePixels.duplicate();
 		source.position(0);
 		source.limit(contentWidth * contentHeight * 4);
-		ByteBuffer padded = ByteBuffer.allocateDirect(paddedWidth * paddedHeight * 4);
+		int bytes = paddedWidth * paddedHeight * 4;
+		ByteBuffer padded = workspace == null
+			? ByteBuffer.allocateDirect(bytes) : workspace.rgba(bytes);
 		for (int y = -padding; y < contentHeight + padding; y++) {
 			int sourceY = clamp(y, 0, contentHeight - 1);
 			for (int x = -padding; x < contentWidth + padding; x++) {

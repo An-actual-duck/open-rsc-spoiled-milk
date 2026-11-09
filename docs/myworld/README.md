@@ -44,6 +44,20 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [Renderer performance investigation](in-progress-work-plans/renderer-performance-investigation-plan.md):
   living baselines, controlled workloads, instrumentation gaps, hotspot
   hypotheses, and profile-tweak-compare results.
+- [Client performance and portability](in-progress-work-plans/client-performance-portability-plan.md):
+  measured allocation and dispatch improvements, remaining optimization targets,
+  and hardware evidence with the approved visuals preserved.
+- [Underground lighting](in-progress-work-plans/underground-light-normalization.txt):
+  v0.3.16 steady lighting below level0, signed-frame authority, surface parity
+  and private/native/release validation.
+- [High-quality picket shadows](in-progress-work-plans/picket-shadow-wave.txt):
+  v0.3.15 ground-aligned High sampling, exact Low parity, visual approval and
+  retained sparse-railing limitations.
+- [Client startup ordering](in-progress-work-plans/client-startup-stall-investigation.md):
+  captured native loader deadlock, socket preparation fix and startup controls.
+- [Movement and action responsiveness](in-progress-work-plans/movement-action-responsiveness-plan.md):
+  integrated first-step and idle-command improvements, matched native input evidence,
+  and remaining action lifecycle work.
 - [Roadmap](in-progress-work-plans/roadmap.md): high-level alpha milestone and
   version progression.
 - [Next release checklist](in-progress-work-plans/next-major-release-goals.md):

@@ -103,6 +103,7 @@ final class LwjglBindings {
 	private final Method glFogf;
 	private final Method glFogfv;
 	private final Method glGetString;
+	private final Method glGetInteger;
 	private final MethodHandle glMatrixMode;
 	private final MethodHandle glLoadIdentity;
 	private final MethodHandle glLoadMatrixf;
@@ -138,7 +139,7 @@ final class LwjglBindings {
 	private final Method glUseProgram;
 	private final Method glGetUniformLocation;
 	private final MethodHandle glUniform1i;
-	private final Method glUniform1f;
+	private final MethodHandle glUniform1f;
 	private final Method glUniformMatrix4fv;
 	private final MethodHandle glEnableVertexAttribArray;
 	private final MethodHandle glDisableVertexAttribArray;
@@ -150,6 +151,7 @@ final class LwjglBindings {
 	final int GLFW_RESIZABLE;
 	final int GLFW_VISIBLE;
 	final int GLFW_FOCUSED;
+	final int GLFW_ICONIFIED;
 	final int GLFW_DECORATED;
 	final int GLFW_DONT_CARE;
 	final int GLFW_PRESS;
@@ -371,6 +373,7 @@ final class LwjglBindings {
 		glFogf = method(gl11Class, "glFogf", int.class, float.class);
 		glFogfv = method(gl11Class, "glFogfv", int.class, FloatBuffer.class);
 		glGetString = method(gl11Class, "glGetString", int.class);
+		glGetInteger = method(gl11Class, "glGetInteger", int.class);
 		glMatrixMode = methodHandle(gl11Class, "glMatrixMode", int.class);
 		glLoadIdentity = methodHandle(gl11Class, "glLoadIdentity");
 		glLoadMatrixf = methodHandle(gl11Class, "glLoadMatrixf", FloatBuffer.class);
@@ -420,7 +423,7 @@ final class LwjglBindings {
 		glUseProgram = method(gl20Class, "glUseProgram", int.class);
 		glGetUniformLocation = method(gl20Class, "glGetUniformLocation", int.class, CharSequence.class);
 		glUniform1i = methodHandle(gl20Class, "glUniform1i", int.class, int.class);
-		glUniform1f = method(gl20Class, "glUniform1f", int.class, float.class);
+		glUniform1f = methodHandle(gl20Class, "glUniform1f", int.class, float.class);
 		glUniformMatrix4fv = method(gl20Class, "glUniformMatrix4fv", int.class, boolean.class, FloatBuffer.class);
 		glEnableVertexAttribArray = methodHandle(gl20Class, "glEnableVertexAttribArray", int.class);
 		glDisableVertexAttribArray = methodHandle(gl20Class, "glDisableVertexAttribArray", int.class);
@@ -441,6 +444,7 @@ final class LwjglBindings {
 		GLFW_RESIZABLE = constant(glfwClass, "GLFW_RESIZABLE");
 		GLFW_VISIBLE = constant(glfwClass, "GLFW_VISIBLE");
 		GLFW_FOCUSED = constant(glfwClass, "GLFW_FOCUSED");
+		GLFW_ICONIFIED = constant(glfwClass, "GLFW_ICONIFIED");
 		GLFW_DECORATED = constant(glfwClass, "GLFW_DECORATED");
 		GLFW_DONT_CARE = constant(glfwClass, "GLFW_DONT_CARE");
 		GLFW_PRESS = constant(glfwClass, "GLFW_PRESS");
@@ -945,6 +949,8 @@ final class LwjglBindings {
 		invoke(glFogfv, name, values);
 	}
 
+	int glGetInteger(int name) throws Exception { return ((Integer) invoke(glGetInteger, name)).intValue(); }
+
 	String glGetString(int name) throws Exception {
 		return (String) invoke(glGetString, name);
 	}
@@ -1163,7 +1169,11 @@ final class LwjglBindings {
 	}
 
 	void glUniform1f(int location, float value) throws Exception {
-		invoke(glUniform1f, location, value);
+		try {
+			glUniform1f.invokeExact(location, value);
+		} catch (Throwable cause) {
+			rethrow(cause);
+		}
 	}
 
 	void glUniformMatrix4fv(int location, boolean transpose, FloatBuffer value) throws Exception {

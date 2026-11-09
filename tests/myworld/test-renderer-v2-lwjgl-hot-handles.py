@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import subprocess
 import tempfile
 import textwrap
@@ -73,6 +74,7 @@ public final class Renderer3DLwjglHotHandleFixture {
 		assertVoidHandle(gl11, "glBegin", int.class);
 		assertVoidHandle(gl11, "glEnd");
 		assertVoidHandle(gl20, "glUniform1i", int.class, int.class);
+		assertVoidHandle(gl20, "glUniform1f", int.class, float.class);
 
 		System.out.println(
 			"PASS: renderer-v2 measured LWJGL calls use exact typed handles");
@@ -112,6 +114,9 @@ def forbid(source: str, fragment: str, label: str) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--gpu", action="store_true", help="Exercise actual shader pixels in an exclusive hidden native context")
+    args = parser.parse_args()
     if not CLIENT_JAR.exists():
         raise AssertionError(
             f"missing {CLIENT_JAR}; run ./scripts/build-client.sh first"
@@ -167,6 +172,11 @@ def main() -> None:
             "glUniform1i.invokeExact(location, value);",
             "invoke(glUniform1i, location, value);",
         ),
+        (
+            "glUniform1f",
+            "glUniform1f.invokeExact(location, value);",
+            "invoke(glUniform1f, location, value);",
+        ),
     )
     for name, exact_call, reflective_call in calls:
         require(source, f"private final MethodHandle {name};", f"{name} handle field")
@@ -194,6 +204,7 @@ def main() -> None:
                 "-d",
                 str(temp),
                 str(fixture),
+                str(ROOT / "tests/myworld/FloatUniformDispatchFixture.java"),
             ],
             cwd=ROOT,
             capture_output=True,
@@ -224,6 +235,24 @@ def main() -> None:
                 + run_result.stderr
             )
         print(run_result.stdout.strip())
+        subprocess.run(["java", "-cp", f"{temp}:{CLIENT_JAR}",
+                        "orsc.FloatUniformDispatchFixture"], check=True, cwd=ROOT)
+        # Compile only the binding adapter and fixture: no jar/native classes are
+        # on this classpath. Optional rendering must not become static linkage.
+        isolated = temp / "without-lwjgl"
+        isolated.mkdir()
+        subprocess.run(["javac", "-source", "8", "-target", "8", "-d", str(isolated),
+                        str(LWJGL_BINDINGS_SOURCE),
+                        str(ROOT / "PC_Client/src/orsc/MonitorMode.java"),
+                        str(ROOT / "Client_Base/src/orsc/RenderSurfaceSettings.java"),
+                        str(ROOT / "tests/myworld/FloatUniformDispatchFixture.java")], check=True, cwd=ROOT)
+        subprocess.run(["java", "-cp", str(isolated), "orsc.FloatUniformDispatchFixture",
+                        "--without-lwjgl"], check=True, cwd=ROOT)
+        if args.gpu:
+            common = subprocess.check_output(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], cwd=ROOT, text=True).strip()
+            subprocess.run(["flock", "-w", "10", str(Path(common) / "ai-workspaces/renderer-gpu-benchmark.lock"),
+                            "java", "-cp", f"{temp}:{CLIENT_JAR}",
+                            "orsc.FloatUniformDispatchFixture", "--gpu"], check=True, cwd=ROOT)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,230 @@
+Distant thin shadow stability — READY for Core review
+
+Owner report
+The terrain-fixed client49f0406ec had flickering thin/fence shadows, stronger at
+distance and present while standing still. Public Oracle was not modified or
+stopped. The owner closed that client naturally; this task uses isolated native
+fixtures and hidden GPU tests only. Normal1080 busy60FPS remains the target;
+maximum-camera/Fog Off is a separate stress case.
+
+Frozen production candidate 2:48a6ba21d03cbc4b43183acfa5bd3457eef72f9d.
+  output/tests/thin-shadow-stability/candidate2-thin-shadow-client.jar
+  SHA256 7fe9a9d7af310ec5ce4b77fd7c7662e076690ac084dda56dfe1cb3b18c8d2ff5
+Later test/report commits do not alter this compiled renderer.
+
+Cause and bounded implementation
+High's far map covered192tiles at2048 pixels:12world units per depth texel,
+versus4 for the near map. Actual railing material12 has repeated bars about5projected world units wide
+in the controlled orientation, plus1/2pixel alpha details. Width depends on
+quad orientation/UV and sun projection. Binary nearest-sampled alpha during
+caster rasterization therefore changes coverage as the sun rotates. Fixed-sun /
+fixed-camera output is stable, while cached-far refresh changes cause large
+thin-shadow area steps. Receiver PCF cannot restore absent caster coverage.
+
+High now uses4096 far maps (6world units/texel) where GL_MAX_TEXTURE_SIZE permits,
+with2048 capability fallback. The near map, filter kernel, alpha cutoff and bias
+are unchanged. Pose-only far refreshes transition from the previous completed
+map over12 rendered frames (~0.2s at60FPS). Texture/projection commit together
+after a successful draw. This interpolates two valid visibility fields rather
+than removing/fading the thin shadows to hide them.
+
+History is never blended across static geometry/material signature changes,
+roof coverage changes, active planes, render-context epochs, Low/Off, gated /
+empty frames or session cleanup. Renderer context epochs advance only from the
+existing true applyLayeredSceneScope(scopeChanged) path; each published frame
+stores an immutable epoch. No packet, readiness, authority or worldspace rule
+changes. Same-geometry scope changes therefore still hard-cut old history.
+
+Fixed-sun TTL rebuilds do not create unnecessary history (normalized sun vector
+comparison tolerance1e-6). Rapid pose rebuilds reuse exactly two far allocations;
+no recursive history layers or unbounded trail accumulation. Scope/content
+changes immediately use the new map. Low frees both far maps. Off/gated paths
+free previous history and invalidate the current projection; bounded current
+map storage may remain cached, but is rebuilt before reuse. Cleanup frees all.
+
+A4096 D24 map commonly occupies64MiB. High's near+current+previous maximum is
+about144MiB versus the old32MiB (driver storage dependent). The second far
+texture is allocated on later refreshes and retained bounded in High. The2048
+capability fallback is about48MiB with history; Low remains about4MiB. During an
+active transition
+there is one additional far9-tap PCF sample, for at most12frames per refresh.
+The coherent diagnostic snapshot preserves its first9 fields and appends:
+9farMapSize,10historyActive,11blendPermille. CPU observer updates are optional;
+normal clients retain disabled diagnostics by default.
+
+Animated-alpha follow-up required by native evidence
+The first native rotating-camera case revealed1453far rebuilds/58s after a
+texture became loaded. A matched49f baseline has exactly the same late onset
+and1453builds, proving this was inherited rather than introduced by history.
+CPU audit found existing Scene.d scrolling animation: it replaces RGBA texture
+snapshots each update once a resource is loaded. Actual material17 contains
+moving transparent pixels; the old full-RGBA static signature therefore had to
+invalidate every frame, preventing the fence's far transition from operating.
+
+Candidate 2 records generic immutable animation intent from Scene.d, including
+when the resource is not loaded/has been evicted, and preserves it through
+palette/resource factories. RGB/alpha bytes, their content signatures and game
+animation remain unchanged. The shadow renderer has no material-ID special case.
+A shared predicate excludes only animated-alpha materials from BOTH cached far
+caster draws and far signatures. They continue casting in the every-frame near
+map, matching the established near-only animated-scenery policy. Opaque RGB-only
+animation remains far eligible because its depth coverage is static. Static
+railings12/timber10 remain eligible unchanged. No animated-alpha far history is
+blended or ghosted; this is a cache-ownership correction, not a global opacity
+reduction. Old/native candidate1 metrics below are superseded by candidate2.
+
+Checked real content
+Ai3 exported an already-published native Renderer3DFrame, exact wall UVs and
+Renderer3DTextureData. Complete receipt:
+  ai3/output/tests/renderer-shadow-benchmarks/thin-fence-native-published/
+  visual-20261107T230341Z/{fence-triangles.tsv,fence-textures.tsv,fence-summary.json}
+It contains1586 material10/12 triangles and20480 RGBA pixels, with full hashes.
+Railing12 is128square,4444/16384 opaque pixels (27.124%); timber fence10 is64square,
+79.199% opaque. Verified placement(514,469) maps to railings/material12; nearby
+(490,481) maps to timber fence/material10.
+
+The self-contained test fixture retains only the exact binary depth-alpha mask
+of existing game-owned material12 and the six corner/UV records of native
+WALL12 triangles41704/41705, translated into controlled near/far scenes. UV U is
+vertical, V horizontal; original192-height diagonal quad geometry is preserved.
+No RGB artwork or runtime asset was added/modified. Fixture provenance, source
+RGBA hash, signature and byte-order contract are in:
+  tests/myworld/fixtures/native-railing-alpha.properties
+
+Temporal evidence (RX6700XT; not FPS acceptance)
+The controlled shader uses actual production shadow code. Cases separate fixed
+sun/camera, subpixel camera pan, normal cached-sun refresh, signature-forced
+rebuilds, cascade blending and camera-eye rotation. Integrated receiver shadow
+area tracks coverage; camera residuals are reprojected before comparison, not
+just same-pixel image differences. Opaque and close controls prevent a false
+stability win from removing the thin shadows.
+
+With actual material12 and stationary receiver/camera, small sun motion:
+- Old2048 cached-far mean area4168; maximum frame step1627 (~39%).
+-4096 alone mean6351; maximum step755 (~12%).
+-4096 plus scoped transition mean6371; maximum step96 (~1.5%), about94% lower
+  absolute step than the old baseline. The analytic pre-bias cutout reference
+  is128*192*(4444/16384)=6666; receiver bias reduces that expected area slightly.
+  New coverage is restored toward this reference, not reduced to make it stable.
+- Close native control mean5944.83 is unchanged. Fixed sun/camera is bit-stable.
+  Thick opaque controls retain strong shadows; no blanket blur or opacity fade.
+
+Signature-forced every-frame rebuilds intentionally remain hard-cut, because
+those signals represent content changes. The transition is not a promise that
+arbitrarily changing geometry or every possible subpixel texture can be made
+perfectly stationary. Camera-only minification still has finite sampling error;
+we do not claim to eliminate it across every distance/view.
+
+Rejected experiments, preserved only in ignored task evidence:
+A footprint-widened sparse PCF kernel caused flat-receiver self-shadow acne and
+inflated shadow energy. Receiver-plane correction removed that acne, but the
+reprojected camera residual worsened instead of improving. Neither experimental
+kernel nor derivative/bias changes were retained. Global resolution increases,
+blanket blur, actor shadows, focus protocol changes and temporal color history
+are outside this fix. Only the far cascade's measured caster density changed.
+
+Reproduction / checks
+  ./scripts/build-client.sh
+  python3 tests/myworld/test-shadow-context-epoch.py
+  DISPLAY=:0 tests/myworld/test-thin-shadow-temporal-gpu.sh
+  DISPLAY=:0 tests/myworld/test-geometry-shadow-gpu.sh
+  ./tests/myworld/test-renderer-guardrails.sh
+The optional GPU runners create unfocused hidden contexts, hold the shared GPU
+flock and write under declared output/tests categories. No global input/grabs.
+The temporal fixture asserts nonzero/credible native coverage, bounded cached-sun
+steps, stable static output and unchanged close coverage. Baseline49f fails the
+same behavioral checks. The ordinary geometry suite additionally checks:
+-5/10/25/45/85degree far flat/sloped receivers and close/far contact extents;
+- alpha coverage, roof policy, terrain fixes, shader state and textureunit6;
+- pose-only history,12frame bound, steady sun TTL, signature/context/plane hard
+  cuts, Low/Off/re-enable/suspend behavior, capability selection and deletion.
+The actual headless Scene/frame epoch test verifies immutable old frames and
+unchanged epochs on ordinary frames. Scope wiring is checked in its existing
+true-change branch. Multi-story roof data remains the owner-selected follow-up.
+
+Native validation
+Candidate 1 stationary packet-clock / maximum-camera90s completed about59.970
+renders/s, CPU/GPU p99 6.383/10.727ms, two measured render-work misses each;
+post-swap p99/max20.689/69.752ms, two queue drops. History was observed in5/90
+one-Hz samples. The normal-camera case averaged59.997renders/s, no render-work
+misses, but inherited animated-alpha invalidation caused1453far builds/58s and
+prevented history. These are provisional candidate1 evidence, not acceptance of
+candidate2. The69ms interval coincided with a17ms young GC and other timing,
+and is not wholly attributed to GC or the far pass.
+
+Candidate 2 normal rotating-camera native60s is complete:3602renders in
+60.02944s (about60.004renders/s), zero queue drops, CPU render p99/max
+5.690/15.742ms and GPU9.894/15.159ms, no render-work samples above16.667ms.
+Far rebuilds drop from1453/58s in both old cases to23/58s; maximum far GPU2.015ms.
+The actual4096map and active history are observed (6/60one-Hz samples).
+This demonstrates the animated-alpha cache correction end to end.
+
+Post-swap p99/max18.847/33.544ms, ten intervals>25ms and one>33.334ms, none>50ms:
+about60renders/s is not an all-frame or compositor-cadence guarantee. The run
+receives17players /40NPCs and retains89chunks /437056triangles. Optional actor
+projection / roof observations are explicitly unknown in all60samples because
+no pending published frame was available; unknown is not reported as zero.
+
+Candidate 2 stationary real packet-clock / maximum-camera60s is complete:
+3601renders in60.02865s (about59.988renders/s), zero queue drops, actual4096 and
+active history observed in6one-Hz samples. The rate1 server cycle produces raw
+sun azimuth86.2089 ->80.3051, elevation71.8643 ->71.1146. Far25completed retained
+builds, maximum1.662ms. Geometry remains89chunks /437056triangles;17players /
+40NPCs received. Optional projected actors / roofs remain60explicit unknowns.
+
+                         CPU render ms                 GPU elapsed render ms
+                         median /p95 /p99 /maximum      median /p95 /p99 /maximum
+Normal camera60s          4.220 /5.124 /5.690 /15.742    6.492 /8.017 /9.894 /15.159
+Max camera / real sun60s  2.985 /5.702 /6.296 /20.077    4.938 /6.523 /8.406 /20.087
+CPU/GPU intervals overlap and must not be added. Normal has zero render-work
+samples>16.667ms; maximum-camera real-sun has6CPU /4GPU samples above that target.
+Its completed swap p99/max20.189/37.639ms has9intervals>25ms and4>33.334ms, none
+>50ms. These tails remain limitations; the60FPS goal is not a strict all-frame
+or scanout-perfect guarantee. Both cases are HIDDEN native throughput/readiness
+runs with actual1920x1080 framebuffer/world viewport and960x540 legacy/UI source.
+They do not constitute an owner-visible compositor-cadence acceptance run.
+
+Sampled engine counters report54–57sprite groups /157–163layers in the normal
+case,60groups /166layers in the stationary case, zero compatibility fallback.
+These counters are kept distinct from unavailable optional per-actor projection
+observations and received network populations. Root reviewed native screenshots
+as clean with fences/scene retained; no missing-world explanation is substituted
+for improved temporal stability.
+
+Final exact native evidence is under the manager's declared test output root:
+  output/tests/renderer-shadow-benchmarks/thin-shadow-final4-busy-normal-20261107/
+    busy-camera-20261107T235901Z/benchmark-summary.json
+  output/tests/renderer-shadow-benchmarks/thin-shadow-final4-still-sun-20261107/
+    sun-motion-20261108T000153Z/benchmark-summary.json
+Source, JAR, map/seed/settings, machine, raw CPU/GPU samples, actual shader/cache
+state and observation-coverage limits are recorded in each immutable receipt.
+No production change followed the frozen candidate2 validation. An initial
+attempt was rejected before samples because the benchmark observer iterated a
+raw Scene under construction; there was no production renderer exception. Ai3
+owns the published-frame observer fix and backward-compatible diagnostic fields.
+No timed performance claim will be based on that failed run. A subsequent run
+with published-frame observations collected23samples then correctly refused a
+3second optional pending-frame observation timeout; it is also not accepted as
+a complete performance cohort. Ai3's nonblocking optional-observation follow-up
+is isolated tooling work. The candidate renderer/JAR remains unchanged.
+
+Validation notes
+The expanded low-sun sloped test uses a physically sun-facing slope. A14degree
+uphill surface facing away from a5degree sun is legitimately occluded; an initial
+new assertion incorrectly expected it lit and was corrected in the fixture only.
+Production directional-light probes separately retain away-facing low-sun ambient
+darkness, and the real terrain-depression / genuine cast-occluder checks remain.
+No production bias or terrain-rule change was made to satisfy that invalid test.
+
+Completed local checks
+The self-contained native temporal runner, actual Scene epoch test, actual
+Scene.d metadata/policy test, expanded hardware GPU suite and GL2 capability
+detection pass. The complete final guardrail rerun passes and includes the
+narrow updated factory
+call expectations while retaining the legacy factory and pixel tests. Final logs are under output/tests/thin-shadow-stability/:
+  temporal-final.log, gpu-final-complete.log, gpu-fallback-final.log,
+  guardrails-candidate2-final.log, gpu-candidate2.log, temporal-candidate2.log,
+  checked-baseline-failure.log.
+The existing workspace-layout check still reports inherited ignored sprites /
+historical unclassified output roots; they were preserved. All new evidence
+writers use declared test output categories. No public operation occurred.

@@ -43,6 +43,11 @@ final class OpenGLWorldSpriteDrawController {
 	private final OpenGLDynamicTextureAtlas textureAtlas;
 	private final OpenGLWorldSpriteRenderer spriteRenderer;
 	private final Delegate delegate;
+	private final OpenGLPixelWorkspace compositeWorkspace = new OpenGLPixelWorkspace();
+
+	void clearScratch() {
+		compositeWorkspace.clear();
+	}
 
 	OpenGLWorldSpriteDrawController(
 		LwjglBindings gl,
@@ -160,7 +165,7 @@ final class OpenGLWorldSpriteDrawController {
 		Renderer3DFrame.SpriteAnchor anchor,
 		Renderer3DFrame.WorldSpriteSnapshot snapshot) throws Exception {
 		CompositeWorldSpriteTexture compositeTexture =
-			OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(snapshot);
+			OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(snapshot, compositeWorkspace);
 		if (compositeTexture == null) {
 			return false;
 		}
@@ -176,7 +181,7 @@ final class OpenGLWorldSpriteDrawController {
 		Renderer3DFrame.SpriteAnchor anchor,
 		List<Renderer2DFrame.SpriteCommand> layerCommands) throws Exception {
 		CompositeWorldSpriteTexture compositeTexture =
-			OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(layerCommands);
+			OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(layerCommands, compositeWorkspace);
 		if (compositeTexture == null) {
 			return false;
 		}

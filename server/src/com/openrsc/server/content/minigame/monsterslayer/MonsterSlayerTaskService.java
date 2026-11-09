@@ -183,7 +183,9 @@ public final class MonsterSlayerTaskService {
 	private MonsterSlayerState.TaskResult applyAssignment(Player player, MonsterSlayerState.Snapshot current,
 			MonsterSlayerState.TaskResult result) {
 		if (result.getReason() != MonsterSlayerState.TaskResult.Reason.ASSIGNED) return result;
-		List<Integer> supplies = MonsterSlayerTaskSupplies.itemIds(data.getTask(result.getSnapshot().getActiveTaskKey()));
+		List<Integer> supplies = new ArrayList<Integer>(MonsterSlayerTaskSupplies.itemIds(
+			data.getTask(result.getSnapshot().getActiveTaskKey())));
+		supplies.removeIf(id -> MonsterSlayerState.hasStarterClaim(player.getCache(), id));
 		if (supplies.isEmpty()) return apply(player, result);
 		Inventory inventory = player.getCarriedItems().getInventory();
 		List<Item> live = inventory.getItems();
@@ -211,7 +213,7 @@ public final class MonsterSlayerTaskService {
 				}
 				inventory.publishTransaction(staged);
 				// write validates first and restores its owned cache keys on any partial write failure.
-				MonsterSlayerState.write(player.getCache(), data, result.getSnapshot());
+				MonsterSlayerState.writeWithStarterClaims(player.getCache(), data, result.getSnapshot(), supplies);
 				committed = true;
 			} catch (RuntimeException failure) {
 				return MonsterSlayerState.TaskResult.rejected(current, MonsterSlayerState.TaskResult.Reason.SUPPLIES_FAILED);
@@ -224,7 +226,7 @@ public final class MonsterSlayerTaskService {
 			}
 		}
 		ActionSender.sendInventory(player);
-		return result;
+		return result.withStarterItems(supplies);
 	}
 	private static int usableSupplyCount(Inventory inventory, int id) {
 		int count = 0;

@@ -5,6 +5,9 @@ package orsc;
  * windowed bounds, event/swap lifecycle, and best-effort native shutdown.
  */
 final class OpenGLWindowController {
+	/** Opt-in offscreen diagnostic window; never focuses or installs input. */
+	static final boolean HIDDEN_DIAGNOSTIC =
+		Boolean.getBoolean("spoiledmilk.openglHiddenDiagnostic");
 	interface Delegate {
 		void contextCreated();
 
@@ -50,6 +53,12 @@ final class OpenGLWindowController {
 	private boolean hasWindowedBounds = OpenGLWindowSettings.hasWindowedBounds();
 	private boolean windowedBoundsDirty;
 	private boolean shutdownPrepared;
+	// A coherent cached snapshot: -1 unknown, bit 0 visible, bit 1 iconified.
+	// Only the context thread calls GLFW; diagnostic observers read this value.
+	private volatile int diagnosticWindowFlags = -1;
+	private final java.util.concurrent.locks.ReentrantLock diagnosticSurfaceLock = new java.util.concurrent.locks.ReentrantLock();
+	private int diagnosticFramebufferWidth, diagnosticFramebufferHeight;
+	private int diagnosticWindowWidth, diagnosticWindowHeight;
 
 	OpenGLWindowController(
 		LwjglBindings gl,
@@ -68,8 +77,17 @@ final class OpenGLWindowController {
 	}
 
 	void createWindow(int width, int height, boolean vsyncEnabled) throws Exception {
+		if (HIDDEN_DIAGNOSTIC) {
+			width = Math.max(64, Math.min(8192,
+				Integer.getInteger("spoiledmilk.openglHiddenWidth", width)));
+			height = Math.max(64, Math.min(8192,
+				Integer.getInteger("spoiledmilk.openglHiddenHeight", height)));
+		}
 		gl.glfwDefaultWindowHints();
 		gl.glfwWindowHint(gl.GLFW_VISIBLE, gl.GLFW_FALSE);
+		if (HIDDEN_DIAGNOSTIC) {
+			gl.glfwWindowHint(gl.GLFW_FOCUSED, gl.GLFW_FALSE);
+		}
 		gl.glfwWindowHint(gl.GLFW_RESIZABLE, gl.GLFW_TRUE);
 		gl.glfwWindowHint(gl.GLFW_DECORATED, gl.GLFW_TRUE);
 
@@ -85,12 +103,26 @@ final class OpenGLWindowController {
 		delegate.contextCreated();
 		gl.glfwSwapInterval(vsyncEnabled ? 1 : 0);
 		delegate.log("OpenGL vsync: " + (vsyncEnabled ? "enabled" : "disabled") + ".");
-		syncWindowMode(width, height);
-		gl.glfwShowWindow(window);
+		if (!HIDDEN_DIAGNOSTIC) {
+			syncWindowMode(width, height);
+			gl.glfwShowWindow(window);
+		}
 	}
 
 	long window() {
 		return window;
+	}
+
+	int diagnosticWindowFlags() {
+		return diagnosticWindowFlags;
+	}
+
+	/** Raw queried framebuffer/window dimensions, copied only on observer request. */
+	int[] diagnosticSurfaceSize() {
+		diagnosticSurfaceLock.lock();
+		try { return new int[] {diagnosticFramebufferWidth, diagnosticFramebufferHeight,
+			diagnosticWindowWidth, diagnosticWindowHeight}; }
+		finally { diagnosticSurfaceLock.unlock(); }
 	}
 
 	boolean hasWindow() {
@@ -110,7 +142,9 @@ final class OpenGLWindowController {
 	}
 
 	SurfaceSize prepareFrame(int targetWidth, int targetHeight) throws Exception {
-		syncWindowMode(targetWidth, targetHeight);
+		if (!HIDDEN_DIAGNOSTIC) {
+			syncWindowMode(targetWidth, targetHeight);
+		}
 
 		if (appliedWindowMode == OpenGLWindowSettings.Mode.WINDOWED
 			&& !primaryWindow
@@ -130,7 +164,22 @@ final class OpenGLWindowController {
 		gl.glfwGetWindowSize(window, actualWindowWidth, actualWindowHeight);
 		windowWidth = Math.max(1, actualWindowWidth[0]);
 		windowHeight = Math.max(1, actualWindowHeight[0]);
-		captureWindowedBounds(false);
+		if (!HIDDEN_DIAGNOSTIC) {
+			captureWindowedBounds(false);
+		}
+
+		if (RendererDiagnosticSession.isEnabled()) {
+			int visible = gl.glfwGetWindowAttrib(window, gl.GLFW_VISIBLE);
+			int iconified = gl.glfwGetWindowAttrib(window, gl.GLFW_ICONIFIED);
+			if (diagnosticSurfaceLock.tryLock()) {
+				try {
+					diagnosticFramebufferWidth = framebufferWidth[0]; diagnosticFramebufferHeight = framebufferHeight[0];
+					diagnosticWindowWidth = actualWindowWidth[0]; diagnosticWindowHeight = actualWindowHeight[0];
+					diagnosticWindowFlags = (visible == gl.GLFW_TRUE ? 1 : 0)
+						| (iconified == gl.GLFW_TRUE ? 2 : 0);
+				} finally { diagnosticSurfaceLock.unlock(); }
+			}
+		}
 
 		return new SurfaceSize(
 			Math.max(1, framebufferWidth[0]),
@@ -163,6 +212,7 @@ final class OpenGLWindowController {
 			logCleanupFailure("destroy window", t);
 		} finally {
 			window = 0L;
+			diagnosticWindowFlags = -1;
 		}
 
 		try {

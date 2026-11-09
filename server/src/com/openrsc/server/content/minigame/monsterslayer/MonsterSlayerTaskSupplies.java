@@ -11,7 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/** One full protection item per distinct preparation counter when a task is assigned. */
+/** Starter candidates: one full protection item per distinct preparation counter. */
 public final class MonsterSlayerTaskSupplies {
 	private MonsterSlayerTaskSupplies() { }
 

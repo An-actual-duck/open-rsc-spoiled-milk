@@ -5,6 +5,30 @@ shader, lighting, shadow, and visual-performance work. It consolidates the
 active state from `renderer-v2-plan.md` and
 `remaster-lighting-and-shadow-plan.md`.
 
+November 8, 2026 (UTC) release checkpoint: owner-approved geometry shadows and terrain
+relief plus valley shading (`RELIEF_AO`) shipped in v0.3.14 at
+`0555b0307bf9a64c96cbe7132777dae3a41ca676`. Older in-progress/mask-baseline
+statements below are historical. The next coordinated programs are
+[client performance and portability](client-performance-portability-plan.md) and
+[movement and action responsiveness](movement-action-responsiveness-plan.md);
+their planning status does not authorize implementation or public deployment.
+
+November 7, 2026: the owner explicitly reopened shadow architecture work, with
+geometry-faithful shadows and a 60 FPS target at 1920x1080 in busy normal-camera
+scenes. Maximum distance is a separate stress test. The in-progress High/Low
+geometry-depth implementation and measured acceptance ledger are recorded in
+[geometry-shadow-renderer.txt](geometry-shadow-renderer.txt). The subsequent
+terrain correctness pass and maximum-distance validation are in
+[terrain-shadow-artifacts.txt](terrain-shadow-artifacts.txt); it supersedes the
+initial face-wide terrain backface gate and fixed terrain relief multiplier.
+The subsequent measured far-cascade coverage and pose-transition follow-up is
+[thin-shadow-stability.txt](thin-shadow-stability.txt); it supersedes the initial
+2048 far-map density while preserving the terrain corrections.
+Earlier statements that shadow work is paused describe the previously accepted
+mask baseline;
+they do not prohibit this approved replacement work. No new renderer is accepted
+solely on a screenshot or isolated GPU throughput result.
+
 Use this file first when deciding what renderer work to do next. The older
 documents remain detailed implementation ledgers and historical checklists.
 Use

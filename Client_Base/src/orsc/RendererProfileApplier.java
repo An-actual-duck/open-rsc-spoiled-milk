@@ -12,6 +12,7 @@ final class RendererProfileApplier {
 		WINDOW,
 		FOG,
 		LIGHTING,
+		SHADOWS,
 		GEOMETRY,
 		TERRAIN_VARIATION,
 		TONE,
@@ -37,6 +38,7 @@ final class RendererProfileApplier {
 		Change.WINDOW,
 		Change.FOG,
 		Change.LIGHTING,
+		Change.SHADOWS,
 		Change.GEOMETRY,
 		Change.TERRAIN_VARIATION,
 		Change.TONE,
@@ -122,6 +124,7 @@ final class RendererProfileApplier {
 		RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.SVGA);
 		OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
 		RendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);
+		RendererShadowSettings.applyProfileDefault(RendererShadowSettings.Quality.OFF);
 		RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
 		RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.OFF);
 		RendererFogSettings.setMode(RendererFogSettings.Mode.ON);
@@ -134,6 +137,7 @@ final class RendererProfileApplier {
 		RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.WIDE);
 		OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
 		RendererLightingSettings.setMode(RendererLightingSettings.Mode.DIRECTIONAL);
+		RendererShadowSettings.applyProfileDefault(RendererShadowSettings.Quality.HIGH);
 		RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
 		RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.ON);
 		RendererFogSettings.setMode(RendererFogSettings.Mode.ON);
@@ -155,6 +159,9 @@ final class RendererProfileApplier {
 				break;
 			case LIGHTING:
 				RendererLightingSettings.saveToClientSettings(properties);
+				break;
+			case SHADOWS:
+				RendererShadowSettings.saveToClientSettings(properties);
 				break;
 			case GEOMETRY:
 				RendererGeometrySettings.saveToClientSettings(properties);

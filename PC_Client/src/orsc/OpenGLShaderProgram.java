@@ -127,6 +127,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		+ "}\n";
 	private static final String RESIDENT_CHUNK_PARITY_VERTEX_SHADER =
 		"#version 120\n"
+			+ OpenGLGeometryShadows.VERTEX_DECLARATIONS
 			+ "uniform mat4 uProjectionMatrix;\n"
 			+ "uniform mat4 uWorldViewMatrix;\n"
 			+ "uniform float uChunkOffsetX;\n"
@@ -160,6 +161,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "void main() {\n"
 			+ "\tvec3 rebasedPosition = aPosition + vec3(uChunkOffsetX, 0.0, uChunkOffsetZ);\n"
 			+ "\tvec4 worldPosition = vec4(rebasedPosition, 1.0);\n"
+			+ OpenGLGeometryShadows.VERTEX_ASSIGNMENT
 			+ "\tgl_Position = uProjectionMatrix * worldPosition;\n"
 			+ "\tvTexCoord = aTexCoord;\n"
 			+ "\tvWorldXZ = rebasedPosition.xz;\n"
@@ -205,6 +207,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "uniform float uGamma;\n"
 			+ "uniform float uSaturation;\n"
 			+ "uniform float uTerrainReliefStrength;\n"
+            + "uniform int uTerrainDefinitionMode;\n"
+            + "uniform int uTerrainDefinitionFieldEnabled;\n"
+            + "uniform sampler2D uTerrainDefinitionField;\n"
+            + "uniform float uTerrainDefinitionMinX,uTerrainDefinitionMinZ,uTerrainDefinitionInvWidth,uTerrainDefinitionInvHeight;\n"
 			+ "uniform float uObjectReliefStrength;\n"
 			+ "uniform int uTerrainVariationEnabled;\n"
 			+ "uniform float uTerrainVariationStrength;\n"
@@ -233,6 +239,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "varying vec3 vTerrainBlendColor;\n"
 			+ "varying float vTerrainBlendStrength;\n"
 			+ "varying float vCameraDepth;\n"
+			+ OpenGLGeometryShadows.FRAGMENT_SOURCE
 			+ "vec3 remasterNormal() {\n"
 			+ "\tfloat normalLengthSquared = dot(vNormal, vNormal);\n"
 			+ "\tif (normalLengthSquared <= 0.0001) {\n"
@@ -246,24 +253,68 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "float remasterDiffuse(vec3 lightDirection) {\n"
 			+ "\tvec3 normal = remasterNormal();\n"
 			+ "\tif (vModelKind > 0.5 && vModelKind < 1.5) {\n"
-			+ "\t\tvec3 terrainNormal = normalize(mix(vec3(0.0, 1.0, 0.0), normal, 0.85));\n"
+			+ "\t\t// Stored native terrain normals point down in Y-down geometry.\n"
+			+ "\t\t// Reflect the physical outward normal into lighting's Y-up basis.\n"
+			+ "\t\tvec3 terrainNormal = normalize(mix(vec3(0.0, 1.0, 0.0), vec3(-normal.x, normal.y, -normal.z), 0.85));\n"
 			+ "\t\tfloat terrainDiffuse = wrappedDiffuse(terrainNormal, lightDirection, 0.08);\n"
-			+ "\t\treturn smoothstep(0.08, 0.92, terrainDiffuse);\n"
+			+ "\t\tfloat slopeLight = terrainDiffuse;\n"
+			+ "\t\tfloat flatLight = wrappedDiffuse(vec3(0.0, 1.0, 0.0), lightDirection, 0.08);\n"
+			+ "\t\t// Terrain Shading now controls sun-relative slope contrast; flat material stays stable.\n"
+			+ "\t\treturn clamp(mix(flatLight, slopeLight, clamp(uTerrainReliefStrength / 8.0, 0.0, 1.1875)), 0.0, 1.0);\n"
 			+ "\t}\n"
 			+ "\tfloat wrapped = wrappedDiffuse(normal, lightDirection, 0.65);\n"
 			+ "\tfloat twoSided = abs(dot(normal, lightDirection)) * 0.45;\n"
 			+ "\tfloat skyFill = max(lightDirection.y, 0.0) * 0.20;\n"
 			+ "\treturn clamp(max(wrapped, twoSided) + skyFill, 0.0, 1.0);\n"
 			+ "}\n"
+			+ "float remasterLightShape(float directLight) {\n"
+			+ "\tfloat shaped = smoothstep(0.18, 0.92, clamp(directLight, 0.0, 1.0));\n"
+			+ "\treturn shaped * shaped * (3.0 - 2.0 * shaped);\n"
+			+ "}\n"
 			+ "float remasterClassicShadeFactor(float diffuse) {\n"
-			+ "\tfloat directLight = clamp(uLightAmbient + diffuse * uLightIntensity, 0.0, 1.0);\n"
-			+ "\tfloat shaped = smoothstep(0.18, 0.92, directLight);\n"
-			+ "\tshaped = shaped * shaped * (3.0 - 2.0 * shaped);\n"
 			+ "\tfloat materialFloor = uTextureEnabled != 0 ? 0.50 : 0.40;\n"
 			+ "\tfloat materialCeiling = uTextureEnabled != 0 ? 0.90 : 0.82;\n"
+			+ "\tif (vModelKind > 0.5 && vModelKind < 1.5) {\n"
+			+ "\t\tvec3 lightDirection = normalize(vec3(uLightDirectionX, uLightDirectionY, uLightDirectionZ));\n"
+			+ "\t\tfloat flatDiffuse = wrappedDiffuse(vec3(0.0, 1.0, 0.0), lightDirection, 0.08);\n"
+			+ "\t\tfloat ambientShade = mix(materialFloor, materialCeiling, remasterLightShape(uLightAmbient));\n"
+			+ "\t\tfloat flatShade = mix(materialFloor, materialCeiling, remasterLightShape(uLightAmbient + smoothstep(0.08, 0.92, flatDiffuse) * uLightIntensity));\n"
+			+ "\t\t// Keep accepted flat/ambient endpoints without saturating all overhead slopes.\n"
+			+ "\t\tfloat facingShade = mix(materialFloor, materialCeiling, remasterLightShape(uLightAmbient + uLightIntensity));\n"
+			+ "\t\tfloat shade = diffuse <= flatDiffuse\n"
+			+ "\t\t\t? mix(ambientShade, flatShade, diffuse / max(flatDiffuse, 0.0001))\n"
+			+ "\t\t\t: mix(flatShade, facingShade, (diffuse - flatDiffuse) / max(1.0 - flatDiffuse, 0.0001));\n"
+			+ "\t\treturn clamp(shade, materialFloor, materialCeiling);\n"
+			+ "\t}\n"
+			+ "\tfloat shaped = remasterLightShape(uLightAmbient + diffuse * uLightIntensity);\n"
 			+ "\treturn mix(materialFloor, materialCeiling, shaped);\n"
 			+ "}\n"
+            + "float classicTerrainRelief(float legacy) {\n"
+            + "  float detail=smoothstep(28.0,196.0,clamp(legacy,0.0,255.0));\n"
+            + "  float relief=mix(1.08,0.84,detail);\n"
+            + "  float strength=clamp(uTerrainReliefStrength,0.0,9.5);\n"
+            + "  return clamp(mix(1.0,relief,min(strength,4.5)),0.35,1.25)*pow(relief,max(strength-4.5,0.0));\n"
+            + "}\n"
+            + "float terrainDefinitionFactor() {\n"
+            + "  if(uTerrainDefinitionMode==0 || !(vModelKind>0.5 && vModelKind<1.5)) return 1.0;\n"
+            + "  vec3 normal=remasterNormal();\n"
+            + "  float slope=clamp(length(normal.xz)*4.0,0.0,1.0);\n"
+            + "  // Native flat diffuse is -24 on the existing 96-light base. Normalize\n"
+            + "  // that reference so restoration does not recolor all flat ground.\n"
+            + "  float factor=mix(1.0,clamp(classicTerrainRelief(vBaseLegacyLight)/max(classicTerrainRelief(72.0),0.01),0.60,1.35),slope);\n"
+            + "  if(uTerrainDefinitionMode>=2 && uTerrainDefinitionFieldEnabled!=0) {\n"
+            + "    vec2 uv=(vShadowWorldPosition.xz/128.0-vec2(uTerrainDefinitionMinX,uTerrainDefinitionMinZ)+vec2(0.5))*vec2(uTerrainDefinitionInvWidth,uTerrainDefinitionInvHeight);\n"
+            + "    if(min(uv.x,uv.y)>=0.0 && max(uv.x,uv.y)<=1.0) {\n"
+            + "      vec4 field=texture2D(uTerrainDefinitionField,uv);\n"
+            + "      float strength=clamp(uTerrainReliefStrength/2.0,0.0,1.5)*field.a;\n"
+            + "      if(uTerrainDefinitionMode==2) factor*=1.0-field.r*0.22*strength;\n"
+            + "      else factor*=1.0-clamp((field.g*255.0-128.0)/127.0,-1.0,1.0)*0.12*strength;\n"
+            + "    }\n"
+            + "  }\n"
+            + "  return clamp(factor,0.5,1.4);\n"
+            + "}\n"
 			+ "float remasterLocalReliefFactor() {\n"
+			+ "\tif (uRemasterLightingEnabled != 0 && vModelKind > 0.5 && vModelKind < 1.5) return 1.0;\n"
 			+ "\tfloat legacyDetail = smoothstep(28.0, 196.0, clamp(vBaseLegacyLight, 0.0, 255.0));\n"
 			+ "\tfloat detailFloor = vModelKind > 0.5 && vModelKind < 1.5 ? 0.84 : 0.89;\n"
 			+ "\tfloat detailCeiling = vModelKind > 0.5 && vModelKind < 1.5 ? 1.08 : 1.04;\n"
@@ -374,11 +425,12 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\t}\n"
 			+ "\tif (uRemasterLightingEnabled != 0) {\n"
 			+ "\t\tvec3 lightDirection = normalize(vec3(uLightDirectionX, uLightDirectionY, uLightDirectionZ));\n"
-			+ "\t\tfloat diffuse = remasterDiffuse(lightDirection);\n"
+			+ "\t\tfloat diffuse = remasterDiffuse(lightDirection) * geometryShadowVisibility();\n"
 			+ "\t\tcolor.rgb = applyTerrainTransitionBlend(color.rgb);\n"
 			+ "\t\tcolor.rgb = applyTargetedTerrainVariation(color.rgb);\n"
 			+ "\t\tcolor.rgb *= remasterClassicShadeFactor(diffuse);\n"
 			+ "\t\tcolor.rgb *= 1.0 - terrainShadowMaskAlpha();\n"
+            + "\t\tcolor.rgb *= terrainDefinitionFactor();\n"
 			+ "\t\tcolor.rgb = clamp(color.rgb + remasterGlowColor(), 0.0, 1.0);\n"
 			+ "\t}\n"
 			+ "\tif (uRawMaterialMode == 0) {\n"
@@ -397,6 +449,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 
 	private final LwjglBindings gl;
 	private final int programId;
+	private final int geometryShadowEnabledUniform, nearGeometrySamplerUniform, farGeometrySamplerUniform, previousFarGeometrySamplerUniform;
+	private final int geometryShadowWorldOffsetXUniform, geometryShadowWorldOffsetZUniform;
 	private final int projectionMatrixUniformLocation;
 	private final int worldViewMatrixUniformLocation;
 	private final int chunkOffsetXUniformLocation;
@@ -502,6 +556,12 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		int fogBlueUniformLocation) throws Exception {
 		this.gl = gl;
 		this.programId = programId;
+		geometryShadowEnabledUniform = gl.glGetUniformLocation(programId, "uGeometryShadows");
+		geometryShadowWorldOffsetXUniform = gl.glGetUniformLocation(programId, "uGeometryShadowWorldOffsetX");
+		geometryShadowWorldOffsetZUniform = gl.glGetUniformLocation(programId, "uGeometryShadowWorldOffsetZ");
+		nearGeometrySamplerUniform = gl.glGetUniformLocation(programId, "uNearGeometryShadow");
+		farGeometrySamplerUniform = gl.glGetUniformLocation(programId, "uFarGeometryShadowMap");
+        previousFarGeometrySamplerUniform = gl.glGetUniformLocation(programId, "uPreviousFarGeometryShadowMap");
 		this.projectionMatrixUniformLocation = projectionMatrixUniformLocation;
 		this.worldViewMatrixUniformLocation = worldViewMatrixUniformLocation;
 		this.chunkOffsetXUniformLocation =
@@ -760,6 +820,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			throw new IllegalArgumentException("world shader requires an explicit projection matrix");
 		}
 		gl.glUseProgram(programId);
+		gl.glUniform1i(geometryShadowEnabledUniform, 0);
+		gl.glUniform1i(nearGeometrySamplerUniform, 3);
+		gl.glUniform1i(farGeometrySamplerUniform, 4);
+        gl.glUniform1i(previousFarGeometrySamplerUniform, 6);
 		if (projectionMatrixUniformLocation >= 0) {
 			gl.glUniformMatrix4fv(projectionMatrixUniformLocation, false, projectionMatrix);
 		}
@@ -933,6 +997,15 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		}
 	}
 
+	void setGeometryShadowWorldOffsets(float x, float z) throws Exception {
+		gl.glUniform1f(geometryShadowWorldOffsetXUniform, x);
+		gl.glUniform1f(geometryShadowWorldOffsetZUniform, z);
+	}
+
+	void bindGeometryShadows(OpenGLGeometryShadows shadows) throws Exception {
+		if (shadows != null) shadows.bindReceiver(programId);
+	}
+
 	void setTextureEnabled(boolean textureEnabled) throws Exception {
 		if (textureEnabledUniformLocation >= 0) {
 			gl.glUniform1i(textureEnabledUniformLocation, textureEnabled ? 1 : 0);
@@ -961,6 +1034,22 @@ final class OpenGLShaderProgram implements AutoCloseable {
 				terrainWorldOffsetZ);
 		}
 	}
+
+    private int[] terrainDefinitionUniforms;
+    void setTerrainDefinition(int mode, TerrainDefinitionField field) throws Exception {
+        if(terrainDefinitionUniforms==null) {
+            String[] names={"uTerrainDefinitionMode","uTerrainDefinitionFieldEnabled","uTerrainDefinitionField","uTerrainDefinitionMinX","uTerrainDefinitionMinZ","uTerrainDefinitionInvWidth","uTerrainDefinitionInvHeight"};
+            terrainDefinitionUniforms=new int[names.length];
+            for(int i=0;i<names.length;i++)terrainDefinitionUniforms[i]=gl.glGetUniformLocation(programId,names[i]);
+        }
+        gl.glUniform1i(terrainDefinitionUniforms[0],mode);
+        gl.glUniform1i(terrainDefinitionUniforms[1],field==null?0:1);
+        gl.glUniform1i(terrainDefinitionUniforms[2],7);
+        if(field!=null) {
+            gl.glUniform1f(terrainDefinitionUniforms[3],field.minX);gl.glUniform1f(terrainDefinitionUniforms[4],field.minZ);
+            gl.glUniform1f(terrainDefinitionUniforms[5],1.0f/field.width);gl.glUniform1f(terrainDefinitionUniforms[6],1.0f/field.height);
+        }
+    }
 
 	void bindWorldParityAttributes(
 		int positionComponents,

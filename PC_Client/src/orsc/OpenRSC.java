@@ -9,6 +9,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Properties;
 
 public class OpenRSC extends ORSCApplet {
@@ -28,6 +29,12 @@ public class OpenRSC extends ORSCApplet {
 		RendererRuntimeDefaults.apply();
 		RendererDiagnosticSession.start();
 		ClientRuntimeLogger.installUncaughtExceptionHandler();
+
+		try {
+			ClientSocketRuntime.prepare();
+		} catch (IOException | SecurityException failure) {
+			ClientRuntimeLogger.logThrowable("Unable to prepare client socket runtime", failure);
+		}
 
 		// MUST do this before anything else runs in order to override OS-level dpi settings
 		// (not applicable to macOS, which implements OS-scaling in a different fashion)
@@ -66,6 +73,7 @@ public class OpenRSC extends ORSCApplet {
 				RendererColorDiagnosticSettings.loadFromClientSettings(props);
 				RendererFogSettings.loadFromClientSettings(props);
 				RendererLightingSettings.loadFromClientSettings(props);
+				RendererShadowSettings.loadFromClientSettings(props);
 				RendererGeometrySettings.loadFromClientSettings(props);
 				RendererTerrainVariationSettings.loadFromClientSettings(props);
 				RendererToneSettings.loadFromClientSettings(props);

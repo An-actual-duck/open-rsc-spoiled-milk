@@ -186,8 +186,8 @@ def main() -> None:
     require(scene, "Renderer3DSettings.isGeometryCaptureEnabled()", "scene geometry capture opt-in")
     require(scene, "private Renderer3DTextureData[] renderer3DTextures", "scene renderer-v2 texture catalog storage")
     require(scene, "this.renderer3DTextures = new Renderer3DTextureData[var4];", "scene renderer-v2 texture catalog allocation")
-    require(scene, "Renderer3DTextureData.fromLegacyPalette(var1, var3, var4, var5)", "scene renderer-v2 texture catalog load")
-    require(scene, "Renderer3DTextureData.fromLegacyResource(\n\t\t\t\t\tvar2,\n\t\t\t\t\tthis.m_Hb[var2],\n\t\t\t\t\tthis.resourceDatabase[var2])", "animated legacy texture refreshes renderer-v2 snapshot")
+    require(scene, "Renderer3DTextureData.fromLegacyPalette(var1, var3, var4, var5, rendererAnimatedTextureIntent.contains(var1))", "scene renderer-v2 texture catalog load preserves animation intent")
+    require(scene, "Renderer3DTextureData.fromLegacyResource(\n\t\t\t\t\tvar2,\n\t\t\t\t\tthis.m_Hb[var2],\n\t\t\t\t\tthis.resourceDatabase[var2], true)", "animated legacy texture refreshes renderer-v2 snapshot with immutable intent")
     require(scene, "geometryFrame.addWorldFace(", "visible world face capture")
     require(scene, "int legacySceneDrawOrder = 0;", "legacy sorted scene draw-order counter")
     require(scene, "geometryFrame.addSpriteAnchor(", "legacy sorted sprite anchor capture")
@@ -225,11 +225,11 @@ def main() -> None:
             "resident object chunks can remove projected object faces from the CPU bridge")
     require(scene, "modelKind == Renderer3DModelKind.WALL_OBJECT",
             "resident object chunks can remove projected wall-object faces from the CPU bridge")
-    require(scene, "&& isProjectedFacePickable(model, faceId)\n\t\t\t&& projectedFaceCouldContainMouse(model, faceIndices, vertexCount)",
+    require(scene, "&& (isProjectedFacePickable(model, faceId) || this.interactionOnlyPickActive)\n\t\t\t&& projectedFaceCouldContainMouse(model, faceIndices, vertexCount)",
             "resident replacement keeps mouse-pickable projected candidates")
     require(scene, "private boolean isProjectedFacePickable(RSModel model, int faceId)",
             "resident replacement checks projected face pickability before keeping a skipped resident-owned face")
-    require(scene, "boolean mouseCouldPickProjectedFace =\n\t\t\t\t\t\t\tthis.m_K\n\t\t\t\t\t\t\t\t&& isProjectedFacePickable(var2, var3)\n\t\t\t\t\t\t\t\t&& projectedFaceCouldContainMouse(var2, var18, var17);", "projected bridge only runs legacy pick scanlines for pickable faces")
+    require(scene, "boolean mouseCouldPickProjectedFace =\n\t\t\t\t\t\t\tthis.m_K\n\t\t\t\t\t\t\t\t&& (isProjectedFacePickable(var2, var3) || this.interactionOnlyPickActive)\n\t\t\t\t\t\t\t\t&& projectedFaceCouldContainMouse(var2, var18, var17);", "projected bridge only runs legacy pick scanlines for pickable faces")
     require(scene, "Renderer3DSettings.canSkipProjectedObjectMeshCapture()", "resident object chunks should suppress unused projected object mesh export")
     require(scene, "EnumSet.noneOf(Renderer3DModelKind.class)", "resident object mesh export can be empty")
     require(scene, "if (meshWorldKinds != null && !meshWorldKinds.isEmpty())", "empty resident object mesh export should skip projected mesh build")
@@ -1122,7 +1122,7 @@ def main() -> None:
     require(geometry_settings, "return canUseResidentObjectChunks();", "renderer-v2 projected object mesh skip mirrors resident object chunks")
     require(geometry_settings, "readBoolean(SKIP_LEGACY_WORLD_RASTER_PROPERTY, SKIP_LEGACY_WORLD_RASTER_ENV, false)", "legacy world pixel raster skip remains opt-in while sprite/order side effects are separated")
     require(scene, "boolean skipLegacyWorldRaster =\n\t\t\t\tRenderer3DSettings.canSkipLegacyWorldRaster() && !forceLegacyWorldRaster;", "scene legacy world raster skip gate")
-    require(scene, "this.setFrustum(0, var3, this.m_B, 0, 0, var2, this.m_yb, this.m_r, 0, 5960, var14);", "scene preserves legacy picking scanline pass")
+    require(scene, "this.setFrustum(0, var3, this.m_B, 0, 0, var2, this.m_yb, this.m_r, 0, 5960, var14, var25.m_b);", "scene preserves legacy picking scanline pass")
     require(scene, "if (!skipLegacyWorldRaster && this.m_Xb < this.m_Cb && var25.m_b != Scene.TRANSPARENT)", "scene skips only redundant legacy pixel raster")
     require(opengl_presenter, "if (!wireframeVisible && !texturedVisible) {", "OpenGL mesh upload-only path")
     require(opengl_presenter, "gl.glDisable(gl.GL_DEPTH_TEST);\n\t\tgl.glDisable(gl.GL_SCISSOR_TEST);\n\t\tgl.glDisable(gl.GL_BLEND);", "base framebuffer GL state reset")

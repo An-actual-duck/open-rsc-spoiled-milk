@@ -13,6 +13,14 @@ renderer_tests=(
   test-client-world-streaming-backend.py
   test-desktop-graphics-options-tab.py
   test-opengl-geometry-modes.py
+  test-geometry-shadow-projection.py
+  test-shadow-context-epoch.py
+  test-underground-lighting.py
+  test-terrain-definition.py
+  test-sprite-workspace.py
+  test-animated-texture-shadow-policy.py
+  test-geometry-shadow-coordinates.py
+  test-geometry-shadow-roof-mask.py
 	test-opengl-below-terrain.py
   test-opengl-input-modifiers.py
 	test-opengl-world-sky.py
@@ -39,6 +47,7 @@ renderer_tests=(
   test-renderer-v2-frame-capture.py
   test-renderer-v2-ground-item-direct-input.py
   test-renderer-v2-lwjgl-hot-handles.py
+  test-client-socket-runtime.py
   test-renderer-v2-object-chunk-primitive-builder.py
   test-renderer-v2-options-cleanup.py
   test-renderer-v2-phased-overlay.py

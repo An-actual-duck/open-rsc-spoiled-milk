@@ -102,6 +102,7 @@ public final class RendererProfileApplierFixture {
 		RendererColorDiagnosticSettings.setGammaLevel(15);
 		RendererColorDiagnosticSettings.setSaturationLevel(16);
 		applier.apply(RendererProfileSettings.Mode.CLASSIC);
+		assertProperty(read(path), "shadow_quality", "off");
 		assertClassic(host);
 		assertEquals(1, store.loads, "Classic load count");
 		assertEquals(1, store.saves, "Classic save count");
@@ -113,6 +114,7 @@ public final class RendererProfileApplierFixture {
 		assertEquals(2, store.saves, "repeated Classic save count");
 
 		applier.apply(RendererProfileSettings.Mode.REMASTER);
+		assertProperty(read(path), "shadow_quality", "high");
 		assertEquals(RendererProfileSettings.Mode.REMASTER, RendererProfileSettings.getMode(),
 			"Remaster profile");
 		assertEquals(RenderSurfaceSettings.Mode.WIDE, RenderSurfaceSettings.getMode(),

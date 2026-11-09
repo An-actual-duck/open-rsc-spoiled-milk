@@ -2609,6 +2609,7 @@ public final class mudclient implements Runnable {
 			}
 			this.closeClientStreamOnly();
 			this.packetHandler.resetLayeredSceneProtocolState();
+			if (this.scene != null) this.scene.setRendererSignedWorldLevel(0);
 			this.stopSoundPlayback();
 
 			this.setUsername("");
@@ -8819,8 +8820,9 @@ public final class mudclient implements Runnable {
 
 						centerX = this.cameraPositionX + this.cameraAutoMoveX;
 						centerZ = this.cameraPositionZ + this.cameraAutoMoveZ;
-						this.scene.setCamera(centerX, -this.world.getElevation(centerX, centerZ) + 180, centerZ, this.getCameraPitch(),
-							this.cameraRotation * 4, 0, this.isInFirstPersonView() ? 0 : 2000);
+						int shadowGroundHeight = -this.world.getElevation(centerX, centerZ);
+						this.scene.setCamera(centerX, shadowGroundHeight + 180, centerZ, this.getCameraPitch(),
+							this.cameraRotation * 4, 0, this.isInFirstPersonView() ? 0 : 2000, shadowGroundHeight);
 
 						int zoomMultiplier = 0;
 						if (Config.S_ZOOM_VIEW_TOGGLE)
@@ -8829,10 +8831,10 @@ public final class mudclient implements Runnable {
 						int baseCameraZoom = this.cameraZoom + zoomMultiplier;
 						int scaledCameraZoom = getWorldScaledCameraZoom(baseCameraZoom);
 						applyGameplayFog(scaledCameraZoom);
-						int centerY = -this.world.getElevation(centerX, centerZ) + 180;
+						int centerY = shadowGroundHeight + 180;
 						this.scene.setCamera(centerX, getCameraHeightCompensatedCenterY(centerY, baseCameraZoom, scaledCameraZoom),
 							centerZ, this.getCameraPitch(), this.cameraRotation * 4, 0,
-							this.isInFirstPersonView() ? 0 : scaledCameraZoom * 2);
+							this.isInFirstPersonView() ? 0 : scaledCameraZoom * 2, shadowGroundHeight);
 
 					} else {
 						if (this.optionCameraModeAuto && !this.isInFirstPersonView() && !this.doCameraZoom) {
@@ -8844,10 +8846,11 @@ public final class mudclient implements Runnable {
 						centerZ = this.cameraPositionZ + this.cameraAutoMoveZ;
 
 						int scaledCameraZoom = getWorldScaledCameraZoom(this.cameraZoom);
-						int centerY = -this.world.getElevation(centerX, centerZ) - 180;
+						int shadowGroundHeight = -this.world.getElevation(centerX, centerZ);
+						int centerY = shadowGroundHeight - 180;
 						this.scene.setCamera(centerX, getCameraHeightCompensatedCenterY(centerY, this.cameraZoom, scaledCameraZoom),
 							centerZ, this.getCameraPitch(), this.cameraRotation * 4, 0,
-							this.isInFirstPersonView() ? 0 : scaledCameraZoom * 2);
+							this.isInFirstPersonView() ? 0 : scaledCameraZoom * 2, shadowGroundHeight);
 					}
 
 					if(!worldEditorBuildMode)this.updateSceneryAnimations();
@@ -8856,6 +8859,8 @@ public final class mudclient implements Runnable {
 					this.queuedCombatEffectCount = 0;
 					this.ensureGameplayRendererWorldChunkFrame();
 					long sceneRenderStart = RenderTelemetry.now();
+					this.scene.setRendererSignedWorldLevel(this.packetHandler.getLogicalWorldLevel(
+						this.midRegionBaseZ + (this.localPlayer == null ? this.playerLocalZ : this.localPlayer.currentZ / this.tileSize)));
 					this.scene.endScene(-113);
 					RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
 					Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
@@ -16070,6 +16075,10 @@ public final class mudclient implements Runnable {
 				break;
 			case LIGHTING:
 				this.cycleOpenGLLightingMode();
+				break;
+			case SHADOW_QUALITY:
+				RendererShadowSettings.cycle();
+				this.rendererProfileApplier.markCustomAndPersist(RendererProfileApplier.Change.SHADOWS);
 				break;
 			case GEOMETRY:
 				this.cycleOpenGLGeometryMode();
@@ -24307,6 +24316,7 @@ public final class mudclient implements Runnable {
 			this.scene.fogZFalloff = 1;
 			this.scene.fogSmoothingStartDistance = 10000;
 			this.scene.setCamera(slide_x, -this.world.getElevation(slide_x, slide_y), slide_y, 912, rotation, 0, zoom_distance * 2);
+			this.scene.setRendererSignedWorldLevel(0);
 			this.scene.forceLegacyWorldRasterOnce();
 			this.scene.endScene(-124);
 			if (var1 >= -48) {
@@ -24343,6 +24353,7 @@ public final class mudclient implements Runnable {
 			this.scene.fogSmoothingStartDistance = 10000;
 			this.scene.fogEntityDistance = 10000;
 			this.scene.setCamera(slide_x, -this.world.getElevation(slide_x, slide_y), slide_y, 912, rotation, 0, zoom_distance * 2);
+			this.scene.setRendererSignedWorldLevel(0);
 			this.scene.forceLegacyWorldRasterOnce();
 			this.scene.endScene(-114);
 			this.getSurface().fade2black(16316665);
@@ -24383,6 +24394,7 @@ public final class mudclient implements Runnable {
 			this.scene.fogZFalloff = 1;
 			this.scene.fogSmoothingStartDistance = 10000;
 			this.scene.setCamera(slide_x, -this.world.getElevation(slide_x, slide_y), slide_y, 912, rotation, 0, zoom_distance * 2);
+			this.scene.setRendererSignedWorldLevel(0);
 			this.scene.forceLegacyWorldRasterOnce();
 			this.scene.endScene(-111);
 
@@ -24413,6 +24425,7 @@ public final class mudclient implements Runnable {
 	private void resetGame(int var1) {
 		try {
 			this.packetHandler.resetLayeredSceneProtocolState();
+			if (this.scene != null) this.scene.setRendererSignedWorldLevel(0);
 			this.systemUpdate = 0;
 			this.elixirTimer = 0;
 			this.clearActivePotionEffects();
@@ -26340,6 +26353,7 @@ public final class mudclient implements Runnable {
 				"Unsupported layered scene compatibility plane: " + legacyPlane);
 		}
 		if (scopeChanged) {
+            if (this.getScene() != null) this.getScene().advanceRendererShadowContext();
 			resetLayeredSceneIdentityCaches();
 		}
 		if (nativeTerrainSnapshot == null) {

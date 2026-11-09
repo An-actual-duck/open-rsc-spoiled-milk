@@ -18,6 +18,9 @@ public final class Renderer3DFrame {
 	private static final ArrayDeque<WorldFaceStorage> AVAILABLE_WORLD_FACE_STORAGES =
 		new ArrayDeque<WorldFaceStorage>();
 	private final int sourceModelCount;
+	private final long shadowContextEpoch;
+    private final double shadowReferenceHeight;
+    private final int signedWorldLevel;
 	private final int fogDistance;
 	private final int fogStartDistance;
 	private final int viewportWidth;
@@ -69,6 +72,74 @@ public final class Renderer3DFrame {
 		int perspectiveShift,
 		int nearPlane,
 		Renderer3DTextureData[] textures) {
+		this(sourceModelCount, fogDistance, fogStartDistance, viewportWidth, viewportHeight, centerX, centerY, cameraOffsetX, cameraOffsetY, cameraOffsetZ, cameraRotationX, cameraRotationY, cameraRotationZ, perspectiveShift, nearPlane, textures, 0L);
+	}
+
+	Renderer3DFrame(
+		int sourceModelCount,
+		int fogDistance,
+		int fogStartDistance,
+		int viewportWidth,
+		int viewportHeight,
+		int centerX,
+		int centerY,
+		int cameraOffsetX,
+		int cameraOffsetY,
+		int cameraOffsetZ,
+		int cameraRotationX,
+		int cameraRotationY,
+		int cameraRotationZ,
+		int perspectiveShift,
+		int nearPlane,
+		Renderer3DTextureData[] textures,
+		long shadowContextEpoch) {
+        this(sourceModelCount, fogDistance, fogStartDistance, viewportWidth, viewportHeight, centerX, centerY, cameraOffsetX, cameraOffsetY, cameraOffsetZ, cameraRotationX, cameraRotationY, cameraRotationZ, perspectiveShift, nearPlane, textures, shadowContextEpoch, Double.NaN);
+    }
+
+	Renderer3DFrame(
+		int sourceModelCount,
+		int fogDistance,
+		int fogStartDistance,
+		int viewportWidth,
+		int viewportHeight,
+		int centerX,
+		int centerY,
+		int cameraOffsetX,
+		int cameraOffsetY,
+		int cameraOffsetZ,
+		int cameraRotationX,
+		int cameraRotationY,
+		int cameraRotationZ,
+		int perspectiveShift,
+		int nearPlane,
+		Renderer3DTextureData[] textures,
+		long shadowContextEpoch,
+        double shadowReferenceHeight) {
+        this(sourceModelCount, fogDistance, fogStartDistance, viewportWidth, viewportHeight, centerX, centerY, cameraOffsetX, cameraOffsetY, cameraOffsetZ, cameraRotationX, cameraRotationY, cameraRotationZ, perspectiveShift, nearPlane, textures, shadowContextEpoch, shadowReferenceHeight, 0);
+    }
+
+	Renderer3DFrame(
+		int sourceModelCount,
+		int fogDistance,
+		int fogStartDistance,
+		int viewportWidth,
+		int viewportHeight,
+		int centerX,
+		int centerY,
+		int cameraOffsetX,
+		int cameraOffsetY,
+		int cameraOffsetZ,
+		int cameraRotationX,
+		int cameraRotationY,
+		int cameraRotationZ,
+		int perspectiveShift,
+		int nearPlane,
+		Renderer3DTextureData[] textures,
+		long shadowContextEpoch,
+        double shadowReferenceHeight, int signedWorldLevel) {
+		this.shadowContextEpoch = shadowContextEpoch;
+        this.shadowReferenceHeight = shadowReferenceHeight;
+        this.signedWorldLevel = signedWorldLevel;
 		this.worldFaceStorage = acquireWorldFaceStorage();
 		this.worldFaces = worldFaceStorage.worldFaces;
 		this.worldFacesView = worldFaceStorage.worldFacesView;
@@ -454,6 +525,12 @@ public final class Renderer3DFrame {
 		return cameraOffsetX;
 	}
 
+    /** Authoritative signed location, independent of compatibility/roof planes. */
+    public int getSignedWorldLevel() { return signedWorldLevel; }
+    public boolean isUnderground() { return signedWorldLevel < 0; }
+
+    public double getShadowReferenceHeight() { return shadowReferenceHeight; }
+
 	public int getCameraOffsetY() {
 		return cameraOffsetY;
 	}
@@ -631,6 +708,8 @@ public final class Renderer3DFrame {
 	public Renderer3DRoofVisibility getRoofVisibility() {
 		return roofVisibility;
 	}
+
+	public long getShadowContextEpoch() { return shadowContextEpoch; }
 
 	public int getActivePlane() {
 		return activePlane;

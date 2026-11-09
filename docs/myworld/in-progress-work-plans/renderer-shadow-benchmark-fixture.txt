@@ -1,0 +1,259 @@
+Native renderer shadow benchmark fixture — ready for Core review
+
+This tooling stages an empty-account, loopback-only native world and a supplied
+immutable diagnostic client. It does not read owner accounts, use the public
+server, edit authored maps, or depend on the browser fixture. Server and client
+runtime files are copied into a unique declared output/tests run directory.
+
+The supplied diagnostic client must explicitly support a hidden GLFW window.
+Normal capture stays hidden. The separate preview command explicitly opens an
+owner-visible private borderless window, auto-logs in, runs the same phase,
+captures afterward and exits its own client; never invoke it without coordinating
+with the manager/owner. It uses no physical/global input automation.
+
+The normal diagnostic client uses a hidden GLFW window. Its window
+is never shown/focused and input callbacks are disabled. Tests hold the common
+renderer GPU flock so shader proofs in another worker cannot overlap timings.
+Client authentication and native terrain/atomic readiness remain ordinary code.
+
+First maintained client control:
+  python3 scripts/renderer-benchmark.py prepare --name UNIQUE \
+    --client-jar ABSOLUTE-JAR --client-source EXACT-SOURCE-OR-SNAPSHOT-LABEL
+  python3 scripts/renderer-benchmark.py start RUN
+  python3 scripts/renderer-benchmark.py capture RUN --phase dense-idle \
+    --seconds 60 --snapshot
+  python3 scripts/renderer-benchmark.py report RUN/CAPTURE
+  python3 scripts/renderer-benchmark.py stop RUN
+
+Use one fresh prepared server/client fixture per capture. A re-login followed by
+a same-position teleport exposed an existing native scene resend defect:935
+inner objects were acknowledged but then disappeared, leaving only outer
+presentation objects. The mismatched screenshot is retained as negative evidence.
+Exact resident geometry and per-role color triangle inventories must match in
+A/B comparisons; a scene ACK alone is not proof of parity. The manager/engine
+worker owns the separate production regression fix.
+
+Coordinated owner-visible example (prepare/start a unique fresh run first):
+  python3 scripts/renderer-benchmark.py preview RUN --phase busy-camera \
+    --seconds 60 --quality high
+The default preview records12 post-phase frames then auto-exits; the own server
+remains until the guarded stop command. Window flags are sampled on the GL
+thread and cached: bit0 visible, bit1 iconified, -1 unsupported/unknown.
+The observer thread never calls GLFW to query window state.
+
+Private bindings are 127.0.0.1 TCP43639/WS43539, with renderer_benchmark_dev
+SQLite copied only from a checked zero-account seed. Disposable login is
+renderdemo / RendererProof13. Public ports, owner data and other test services
+are not targets. Stop validates PID command/cwd ownership and uses a private
+STOP marker for graceful server shutdown; it never signals a public server.
+
+Current workloads use the maintained Seers scene at (502,453,0), normal zoom75
+or separate maximum zoom900. The framebuffer is1920x1080; logical surface960x540.
+Every sample records actual viewport, camera setting, actor counts, sunlight,
+tone and brightness. Dense phases remove map NPC instances in the disposable
+world so geometry tests are repeatable. Busy phases add16 equipped dummy players,
+32 NPCs,8 real test bear summons and8 visual projectile emitters. Projectiles use
+ordinary outgoing update flags; no damage combat is simulated. Actors move with
+ordinary walking queues on authored walkable tiles. Report actual visible and
+submitted counts, not only requested server population. Authored scenery and
+terrain are unchanged. Sun-motion uses the normal-rate server day/night clock;
+other phases fix sun135/elevation45/day tone for a controlled comparison.
+
+Optional candidate instrumentation records buffered nonblocking GPU query
+samples for frame-render, shadow-near and shadow-far. GPU elapsed timeline and
+CPU submission times overlap and must not be added as independent frame costs.
+The original frozen client has no query helper and is marked unavailable.
+Candidate --legacy-mask is the correct timed old-mask control with the same JAR;
+--quality off is a distinct case, not an old-shadow baseline.
+
+All captures occur after the timed phase. Initial harness attempts (server
+startup race, login-settings zoom race, partial burst waits) are retained as
+negative evidence. They are not final controlled comparisons.
+
+A hidden native run establishes workload/CPU/GPU evidence, not owner-visible
+presentation cadence, visual approval, or unconditional60FPS acceptance.
+Completed post-swap intervals are reported separately from CPU work and paced
+client-loop intervals, with counts above16.667/25/33.334/50ms. Tiny scheduling
+overshoots do not automatically mean a missed refresh. GPU completion timestamps
+are trimmed1s at each phase edge (2s total); reports show raw phase, retained
+and excluded counts, and raw CSV remains unchanged. A report requires the client
+to finish so buffered GPU output is complete.
+The current first corrected static control completed60s/3601 frames: CPU GLrender
+p95/p99 1.885/2.101ms, world1.117/1.273ms; fixed viewport/camera/light verified.
+Final accepted-scope measurements are in renderer-shadow-benchmark-results.txt;
+that report identifies exact
+source/artifact hashes and limitations. This branch has not been integrated.
+
+Inherited output-root entries from older ai3 tasks fail workspace-layout check;
+new outputs use only the declared tests category. No historical data was deleted.
+
+Additional negative fixture coverage: initial requested projectile emitters used
+the caster update flags; actual active-projectile samples exposed0effects. The
+fixture now follows ordinary server logic and attaches updates to the victim.
+Earlier busy measurements therefore describe actors only, not actor+effect
+acceptance. No actual damage combat is simulated in any fixture.
+
+Artifact receipts record the full client source commit and supplied source branch,
+server core/overlay hashes and source, harness source commit, copied Java source
+hashes and compiled bootstrap class hashes. Explicit matched server overrides
+require --server-core, --server-overlay and --server-source together. They are
+copied into a fresh fixture, never installed over an existing runtime. Diagnostic
+manifest source ENV fields are populated; earlier unknown/generic fields remain
+unchanged in preserved old evidence and are superseded by artifact receipts.
+
+Reports reject fixture failure markers and unexpected server Java exceptions.
+The known TCP connection reset when our client exits is separately exempted.
+Busy-walk must show actual sampled server viewer positions at least4 tiles apart,
+otherwise it fails. Requested phase names alone never prove movement or density.
+Normal server clock rate/cycle, actual shadow quality, hide-roofs setting, logical
+and physical dimensions, active projectile counts and fog/camera fields are saved.
+Maximum zoom900 is a maximum-camera stress case at the currently supported draw
+and fog distances; it is not evidence for an unimplemented160-tile horizon.
+
+The shadow stats observer prefers the engine's coherent last-completed snapshot.
+Earlier non-atomic fields could transiently read inactive/zero during prepare;
+raw unique GPU query samples and preserved old records remain authoritative.
+Opt-in --exclude-caster is solely a diagnostic isolation control; it must never
+be enabled for final full-caster performance/visual acceptance. Candidate7's
+initial isolation bug was caught before interpretation and its run was aborted.
+
+Provisional visible preview evidence, not final acceptance:
+Candidate10 source1a1172562ca9940e35c019b63150d0b6464b413d was shown with the
+ordinary default borderless mode. The owner said "everything looks really good"
+(via manager), approving the visual direction with the known terrain-stripe
+caveat. All60 sampled window flags were1 (visible, uniconified), but content
+viewport was1849x1040, not1920x1080: the borderless window was constrained by the
+work area. Historical framebufferWidth/Height fields measured that content
+viewport. New records distinguish actual cached GLFW surface/window dimensions
+from contentViewportWidth/Height. Do not alter old raw evidence to rename fields.
+Final physical1080 visible work must explicitly use --window-mode fullscreen.
+
+That provisional60s phase had3597 completed frames and0 ownqueue drops. CPUrender
+p95/p99 4.514/5.213ms, GPUframe5.413/5.932ms. Completed post-swap p99 was18.578ms,
+with a114.001ms maximum. The first~5s window had clientLoop113.150ms and95ms GC
+(85ms MarkSweep +10ms Scavenge), while GLrender max was6.740ms. This strongly
+suggests a producer/GC pause but per-STW timestamps were unavailable. Preserve
+this startup-tail evidence; zero ownqueue drops does not mean zero scanout gaps.
+Final steady controls will explicitly use --warmup-seconds30 identically across
+modes; the default15 and all old receipts remain intact. No forced GC or JVM
+heap changes hide pauses: Xms512m/Xmx2g match production defaults on JDK1.8_482.
+
+Candidate9 High busy-camera hidden60s (object offsets corrected, halo offset fix
+not yet applied) evidence is also provisional: CPUrender p95/p994.681/5.479ms, GPUframe6.715/7.478ms, each had1
+sample over16.667ms. Its23 far rebuilds max2.433ms;17players40NPCs and89 resident
+chunks435422triangles stayed constant, active projectiles averaged5.8/max8.
+The19.122ms CPU and18.427ms GPUtimeline outlier aligned with a5s window reporting
+14ms Scavenge; near GPU was0.448ms and no far query within5ms. Causation is not
+proved. See grouped benchmark-summary/outlier-attribution files under each run.
+
+New onScreenProjectedActorCandidates records actor bounds intersecting the
+viewport, separately from received actors and submitted snapshot layers. It does
+not claim pixel visibility through scenery. Maximum-camera cases must report
+this distinction and actual fog distances instead of implying identical density.
+
+Final tooling controls and attribution:
+- --snapshot-frames1 caps only this own client's existing volatile post-phase
+  diagnostic burst immediately after requesting it. A frame already in flight
+  can yield2 images. The driver waits for the ordinary burst-completed event;
+  indexed complete/failed counts are reported. This is not a strict12-frame proof.
+  Default12 and production hotkey behavior remain unchanged.
+- --show-roofs at prepare time seeds only the registered disposable account's
+  ordinary setting_showroof boolean before first login/packet26. It never forces
+  renderer readiness or flips a global setting after scene generation.
+- The explicit relog phase permits exactly one reconnect after a completed first
+  session, retains all receipts and requires equal actual game/wallobject sets.
+  Other repeated captures remain refused. This tests the real cache-reset repair.
+- The night phase seeds the normal server clock at2700000/3600000ms, rate1, uses
+  ordinary Cycle presentation and does not force a noon sun. Tone-preview options
+  are applied as ordinary diagnostic settings during warmup after profile login.
+- Older far queries were polled only on cache rebuild, allowing2.5s completion
+  lag. Their phase counts are provisional despite the old1s edge trim; raw rows
+  remain unchanged. Final13 records FAR_QUERY_POLL_EVERY_FRAME=true and verified
+  unique nonblocking completions, making its phase attribution valid.
+- Source Scene-frame roof visibility/coverage can transiently precede presentation
+  attachment. Exported immutable GPU roof mask is authoritative: final13 High
+  exported423 declared covered cells, plus matched camera matrices and pixels.
+  The mask is same-level positive roof data, not room-enclosure inference. Bank
+  same-level bits are0 while42 upper-level roof tiles exist; multi-storey input
+  propagation remains a separate follow-up, not a claim that the bank is open sky.
+
+Process-lifecycle safety is Linux-only: pidfd descriptors bind client signals to
+an inspected process instance; exact cwd and entrypoint argument must match.
+Exited/zombie races are ignored without a signal, unrelated live processes are
+refused. Own server shutdown uses only the private graceful STOP marker and waits
+for both its PID marker and process exit. Port probes use reuse-address only to
+ignore completed TIME_WAIT connections; a real listener remains refused. Tests
+cover both cases and an exited/zombie child. The shared GPU flock waits at most
+10s, preventing a transient prior-context release from becoming an immediate
+false startup failure. Earlier refused attempts remain preserved; a fresh paired
+relog proof was used instead of relaxing session history. Final14 guard/report
+regressions pass. No production/public process control is provided by this tool.
+
+Optional checked fence export
+  Add --dump-fences to a capture/preview command to export native material10/12
+  triangles, exact texture RGBA and source-frame metadata after timing. This
+  observes a published immutable frame with a bounded deadline; it does not
+  change scene readiness. Analyze with:
+    python3 tools/renderer-benchmark/analyze-fence-export.py CAPTURE
+  See thin-shadow-native-evidence.txt for placement provenance, complete proof
+  and the explicit temporal/performance limits of the short fixed-sun case.
+
+Published-frame observer regression (November 7, 2026)
+  Each timed sample tries one already-published frame and uses that same
+  reference for actor and roof observations when available. Terrain and roof-metadata exports
+  also avoid the raw Scene frame, which is exposed before construction finishes.
+  Requested exact exports retain a three-second publication wait and throw
+  explicitly if no eligible frame appears. Optional sample observations do not
+  wait; absence is explicit null, never an actor count of zero. The lock covers
+  only the pending-frame read, without iteration, file I/O or GL calls.
+
+  CharacterSprite fields are final; the character list is appended only during
+  scene construction. Renderer3DFrame.release releases depth/pooled world-face
+  storage, not character metadata, immutable chunks or textures. These are the
+  only retained frame components read by the corrected observers.
+
+  RendererBenchmarkFrameObserverFixture is a CPU-only, latch-controlled test
+  using real Scene/Renderer3DFrame/list/presenter types. It exposes a constructing
+  frame exactly as the Scene pointer does, forces the old iterator's concurrent
+  append and verifies ConcurrentModificationException. The corrected observer
+  repeatedly reads the stable published frame, survives its face-storage release,
+  and observes the next frame only after publication. A requested exact export
+  without a published frame is rejected within the bounded wait. This models the construction
+  race; it does not replace a subsequent full native gameplay capture.
+
+  The same fixture checks old nine-value shadow snapshot compatibility and the
+  optional twelve-value extension: farMapSize, historyActive, blendPermille.
+  No extra fields are emitted when the older snapshot has only nine values.
+
+  Compile the driver and fixture against the reviewed client JAR into a declared
+  builds category, then run headless (no native window or GPU context):
+    javac -source 8 -target 8 -cp CLIENT_JAR -d BUILD_DIR \
+      tools/renderer-benchmark/orsc/RendererBenchmarkClient.java \
+      tests/myworld/RendererBenchmarkFrameObserverFixture.java
+    java -Djava.awt.headless=true -cp BUILD_DIR:CLIENT_JAR \
+      orsc.RendererBenchmarkFrameObserverFixture
+  Result: PASS, including old-fail/new-pass construction race and bounded timeout.
+
+Nonblocking optional observations (November 7, 2026)
+  A published pending frame can disappear immediately when the render thread
+  consumes it. Optional once-per-second metadata must not spin, delay a sample
+  or abort healthy rendering merely because that queue is empty. Samples now
+  make one tryPublishedFrame read under the existing publication lock. With no
+  eligible frame they emit publishedFrameAvailable=false, an explicit reason,
+  and null roof/onScreenProjectedActorCandidates. No raw or stale frame is used.
+  Exact requested exports alone use the bounded acquisition helper.
+
+  Reports exclude null from available-value sets and separately count available,
+  unknown and genuinely measured-zero observations. allActorProjectionSamplesAvailable
+  stays false whenever a sample is unknown. Actor receipt and native submitted
+  sprite/scene counters remain separate evidence. An unavailable-frame sample
+  that claims an actor or roof value, including zero, is rejected as contradictory.
+  Historical samples without the availability marker are counted separately.
+
+  Focused headless tests pass: 100 absent-queue reads complete without polling;
+  absent metadata serializes null while a real empty projection serializes zero.
+  The retained old-CME/new-published regression and old9/new12 snapshot checks
+  still pass. A mixed valid/null/zero report succeeds without sorting None against
+  integers, preserves available values [0,4], counts one unknown and rejects
+  a false zero substituted for it. No native client, GPU or public server was
+  started for this follow-up.

@@ -1209,14 +1209,20 @@ public final class Renderer3DWorldChunkFrame {
 			Renderer3DModelKind[] kinds,
 			int count) {
 			Renderer3DMaterialFamily[] normalized = new Renderer3DMaterialFamily[count];
-			for (int i = 0; i < normalized.length; i++) {
-				Renderer3DMaterialFamily family = families == null || i >= families.length ? null : families[i];
-				Renderer3DModelKind kind = kinds == null || i >= kinds.length
-					? Renderer3DModelKind.UNCLASSIFIED
-					: kinds[i];
-				normalized[i] = family == null
-					? Renderer3DMaterialClassifier.fallbackFor(kind)
-					: family;
+			// Keep nullable arrays in separate passes: browser JVM translation of
+			// the combined per-element conditional can fail during halo cropping.
+			java.util.Arrays.fill(normalized, Renderer3DMaterialFamily.UNCLASSIFIED);
+			if (kinds != null) {
+				int kindCount = Math.min(count, kinds.length);
+				for (int i = 0; i < kindCount; i++) {
+					normalized[i] = Renderer3DMaterialClassifier.fallbackFor(kinds[i]);
+				}
+			}
+			if (families != null) {
+				int familyCount = Math.min(count, families.length);
+				for (int i = 0; i < familyCount; i++) {
+					if (families[i] != null) normalized[i] = families[i];
+				}
 			}
 			return normalized;
 		}
@@ -1242,9 +1248,13 @@ public final class Renderer3DWorldChunkFrame {
 
 		private static Renderer3DModelKind[] normalizeKinds(Renderer3DModelKind[] kinds, int triangleCount) {
 			Renderer3DModelKind[] normalized = new Renderer3DModelKind[triangleCount];
-			for (int i = 0; i < normalized.length; i++) {
-				Renderer3DModelKind kind = kinds == null || i >= kinds.length ? null : kinds[i];
-				normalized[i] = kind == null ? Renderer3DModelKind.UNCLASSIFIED : kind;
+			// As with families, avoid a nullable-array conditional inside the loop.
+			java.util.Arrays.fill(normalized, Renderer3DModelKind.UNCLASSIFIED);
+			if (kinds != null) {
+				int kindCount = Math.min(triangleCount, kinds.length);
+				for (int i = 0; i < kindCount; i++) {
+					if (kinds[i] != null) normalized[i] = kinds[i];
+				}
 			}
 			return normalized;
 		}
@@ -1539,6 +1549,8 @@ public final class Renderer3DWorldChunkFrame {
 		public boolean hasRoofCoverageData() {
 			return roofCoverageAxis > 0;
 		}
+
+		public int getRoofCoverageAxis() { return roofCoverageAxis; }
 
 		public int getRoofCoveredTileCount() {
 			return roofCoveredTileCount;

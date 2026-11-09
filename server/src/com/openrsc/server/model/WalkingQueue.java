@@ -65,21 +65,31 @@ public class WalkingQueue {
 	 * Processes the next player's movement.
 	 */
 	public void processNextMovement() {
-		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipBlocked(mob)) return;
-		if (com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.actionsBlocked(mob)) return;
-		if (com.openrsc.server.content.monsterslayer.CockatriceCombat.movementBlocked(mob)) return;
+		processNextMovementAndReport();
+	}
+
+	/** Includes the one-time end-of-path cleanup, without inspecting checked world coordinates. */
+	public boolean hasPendingMovementWork() {
+		return path != null || playerWasWalking;
+	}
+
+	/** Existing void facade remains compatible; only an actual queued displacement earns cadence. */
+	public boolean processNextMovementAndReport() {
+		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipBlocked(mob)) return false;
+		if (com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.actionsBlocked(mob)) return false;
+		if (com.openrsc.server.content.monsterslayer.CockatriceCombat.movementBlocked(mob)) return false;
 		if (path == null) {
 			handlePlayerFinishedWalking();
-			return;
+			return false;
 		} else if (path.isEmpty()) {
 			handlePlayerFinishedWalking();
 			reset();
-			return;
+			return false;
 		}
 		if (mob.isPlayer()
 			&& mob.getWorld().getServer().getGameUpdater()
 				.isNativeTerrainActivationMovementHeld((Player) mob)) {
-			return;
+			return false;
 		}
 
 		// Player is walking if path is not null or empty.
@@ -88,11 +98,12 @@ public class WalkingQueue {
 		Point walkPoint = path.poll();
 
 		if (mob.getAttribute("blink", false)) {
+			Point before = mob.getLocation();
 			if (path.size() >= 1) {
 				walkPoint = path.getLastPoint();
 				((Player) mob).teleport(walkPoint.getX(), walkPoint.getY(), false);
 			}
-			return;
+			return !before.equals(mob.getLocation());
 		}
 
 		int destX = walkPoint.getX();
@@ -102,7 +113,7 @@ public class WalkingQueue {
 		if (!PathValidation.checkAdjacent(mob, startX, startY, destX, destY)) {
 			reset();
 			if (DEBUG && mob.isPlayer()) System.out.println("Failed adjacent check, not pathing.");
-			return;
+			return false;
 		}
 
 		if (mob.isNpc()) {
@@ -114,6 +125,7 @@ public class WalkingQueue {
 				mob.setLocation(Point.location(destX, destY));
 			} else {
 				reset();
+				return false;
 			}
 		}
 		else {
@@ -122,7 +134,7 @@ public class WalkingQueue {
 			player.setLocation(Point.location(destX, destY));
 			player.stepIncrementActivity();
 		}
-
+		return startX != mob.getX() || startY != mob.getY();
 	}
 
 	public Point getNextMovement() {

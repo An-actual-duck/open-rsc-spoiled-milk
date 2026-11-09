@@ -1,0 +1,137 @@
+Terrain shadow artifacts — READY for Core review
+
+Scope
+Owner's maximum-distance Seers view exposed dark tile squares/triangles and
+speckles on hillside receivers, plus flat-looking hills under overhead light.
+This focused follow-up corrects terrain lighting and its shadow terminator.
+It does not change map/content bytes, object lighting, Classic, shadow-map sizes,
+PCF filtering, caster bias, scene authority or the deferred multi-story roof data.
+
+Frozen production source: 8d5854e75a840c16e30088c06002a93643a86646.
+  output/tests/terrain-shadow-artifacts/candidate2-terrain-lighting.jar
+  SHA256 905505ad6e3861eda9958fda9695cf071d13191cc3ac6a542cc31def153ecba7
+Later focused test/report commits do not change this compiled renderer.
+
+Causal findings
+1. Native terrain normals were oriented toward +Y in Y-down model coordinates.
+   Treating their X/Z unchanged as lighting's Y-up normal reversed the slopes'
+   sun-facing direction. Lighting's correct terrain normal is (-nx,ny,-nz).
+   A real hillside pixel (1410,420), triangle19899, had outward geometric sun
+   dot -0.0595 but old interpolated lighting dot +0.9990; corrected dot +0.0387.
+2. The shadow shader forced visibility0 across an entire terrain triangle when
+   geometric dot<=0, while diffuse used the contradictory smoothed normal above.
+   This made nearly identical neighboring slopes switch to hard tile-shaped
+   darkness. Removing the face-wide gate retains smooth normal interpolation.
+   Outward terrain receiver bias remains; prop bias/filtering are unchanged.
+3. Terrain's fixed legacy-light relief multiplier was applied after shader sun,
+   ambient and independent glow. It supplied a second fixed-direction hill light
+   and could modulate emission. Directional Remaster terrain now gets its shape
+   from the corrected sun lighting; objects and non-directional paths keep relief.
+4. The old terrain diffuse smoothstep followed by two shade smoothsteps saturated
+   flat and +/-30/45-degree slopes to the same209/255 at sun85/90 regardless of
+   Terrain Shading strength. A terrain-only bounded response now interpolates
+   ambient -> prior flat-reference sun shade -> fully sun-facing shade. Low-angle
+   sun-facing slopes can brighten beyond the flat reference. Material palette,
+   flat endpoints and ambient shadow darkness remain anchored to the old sun
+   curve before the intentionally removed fixed legacy multiplier.
+   Terrain Shading controls directional slope contrast (strength8 is profile18),
+   not a second fixed baked light. No AO/curvature or object aesthetic retuning.
+
+Evidence and tests
+Actual source export: manager output/tests/renderer-shadow-benchmarks/
+terrain-artifact-before-20261107/busy-idle-20261107T222139Z/
+  terrain-triangles.tsv, terrain-frame.json
+116206 terrain triangles, 89 resident chunks, 437056 total resident triangles;
+Seers502,453, sun135/45, camera yaw200, native1920x1080, internal960x540.
+The replay uses actual production fragment GLSL, camera and normals. Exported
+halo vertices already share the primary presentation basis; distinct halo
+logical origins identify residency, not another translation. The fixture
+requires primarychunk0, plane0, zero rebase offsets and the documented camera.
+It rejects unsupported exports instead of silently mixing coordinate contracts.
+
+  ./scripts/build-client.sh
+  DISPLAY=:0 tests/myworld/test-geometry-shadow-gpu.sh
+  DISPLAY=:0 tests/myworld/test-terrain-lighting-replay.sh EXPORT [BASELINE_JAR]
+  ./tests/myworld/test-renderer-guardrails.sh
+
+The optional replay writes actual receiver visibility, production diffuse and
+production shade images under declared output/tests/terrain-shadow-artifacts/.
+Its assertions check that formerly reversed real hills get low continuous light;
+a supplied baseline JAR must reproduce the old opposite result. The default GPU
+suite also runs small maintained production-GLSL tests without any external map.
+All GPU tests use unfocused hidden contexts and the common GPU flock, no input
+bridge, account, server, fabricated readiness or global keyboard control.
+
+Focused RX6700XT results:
+- Old production JAR fails the physical slope-facing probe (toward40,away255).
+  Corrected production GLSL passes (toward249,away74), including reversed sun.
+- The real hillside's tested current diffuse pixels are53/56/62/51 versus old
+  255/255/255/255. Maximum<64 and range<24 assert smooth corrected response.
+- At sun90 and strength8, flat209 / 30deg200 / 45deg188; strength2 gives
+  flat209 / 30deg207 / 45deg204. Strength0 keeps all at flat209. Sun85 also has
+  meaningful slope contrast. Probes cover sun5/10/45/85/90, both slope signs,
+  stable flat endpoints, night ambient, legacy independence and unchanged object
+  relief. The full production shader main is separately exercised for emission.
+- The 40-triangle depression replay now tests production diffuse*visibility,
+  rather than falsely demanding zero raw PCF visibility on a grazing backface.
+  Depression maximum direct light100/255 versus exposed road119/255. A separate
+  opaque card casts onto a flat positive-diffuse road receiver: visibility0/255.
+  Thus valid cast occlusion is asserted independently of the removed hard gate.
+- Existing silhouette, alpha cutout, slope/wall/contact, modes, cache, GL state
+  restoration and resource deletion fixtures pass with unchanged map/filter/bias.
+
+Failed hypotheses retained, not shipped:
+- Caster polygon slope offset0 did not resolve the grazing comparison footprint;
+  raw maximum remained250/255. Zero/small receiver lift caused flat-road acne.
+  These exploratory classes/images/logs remain in ignored task outputs. Neither
+  global bias nor PCF kernel was changed. Raw comparison visibility alone is not
+  irradiance on a grazing/back-facing receiver; corrected cosine and genuinely
+  occluded positive-diffuse receiver tests keep those responsibilities separate.
+
+Native validation
+Manager's matched before/after1 native images remove all circled squares and
+speckles while retaining hills, crisp prop/building contacts and scenery. Entire
+terrain and roof-mask exports are byte-identical; camera translation differs by
+only2world units (~0.016tile). This is initial visual direction evidence only:
+after1 predates the final bounded overhead-response correction. Final candidate2
+native maximum-distance view is clean and terrain lighting coherent. Its actual
+fullscreen1080 High / Fog Off / maximum-camera90s run completes5402renders in
+90.035s (59.999renders/s), zero dropped measurements, all90 observer samples
+visible/uniconified,89chunks437056resident triangles constant. CPU render p99 /
+maximum4.186/10.142ms; GPU elapsed9.098/11.281ms; no measured render work exceeds
+16.667ms. Completed swap p99/maximum18.445/26.261ms, one>25ms and none>33.334ms.
+This is useful rendering-budget headroom and about60renders/s, not a guarantee
+of scanout-perfect cadence. The owner approved this updated preview ("Looks
+good") and asked whether object shadows had stretched or time changed. Both
+native cases have the same actual sun135/45; camera rotation differed. Object
+shadow length, filtering, map sizes and bias were not changed by this task.
+The owner explicitly accepted that the apparent difference was the camera view
+and that other shadows were unaffected.
+
+The final normal-camera native night view remains readable with preserved glow
+(manager terrain-artifact-final-night-20261107/night-20261107T223845Z).
+The final sun5/az135 maximum-camera Fog Off native image is also coherent,
+without square/speckle patches and with readable local fire glow (manager
+terrain-artifact-final-grazing-20261107/visual-20261107T224016Z). This8s route
+and the night route are visual/readiness checks, not performance cohorts.
+Quantitative case: manager output/tests/renderer-shadow-benchmarks/
+terrain-artifact-final-wide-20261107/busy-camera-20261107T223600Z/ (exact maintained benchmark receipt
+records complete source/settings/seed/machine/runtime provenance).
+
+Limits / preservation
+Smoothed terrain normals are a deliberate smooth-surface shading model; this is
+not terrain subdivision, curvature ambient occlusion or physically based material
+replacement. Deep concavity/AO and higher-story roof coverage remain separate
+work. The earlier geometry-shadow-renderer.txt records the initial release
+candidate; its hard terrain backface gate is superseded by this follow-up.
+No public Oracle operation, owner map/database/account/config change or visible
+preview launch was performed by this worker. Manager coordinates native fixtures.
+
+Final checks and preservation
+The final renderer guardrail suite passes (guardrails-final.log); final hardware
+GPU suite including full-shader emission passes (gpu-final.log), and the optional
+116206-triangle replay runner passes (replay-final-runner.log). The layout
+checker still reports inherited ignored sprites and unclassified historical
+output roots; these were preserved, not introduced or removed here. New output
+writers use declared tests categories. The frozen implementation/JAR above is
+unchanged by final test/report commits. No public deployment occurred.

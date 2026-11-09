@@ -56,12 +56,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('web', type=Path)
     parser.add_argument('--port', type=int, default=8079)
+
     args = parser.parse_args()
+    if not 1 <= args.port <= 65535:
+        parser.error('Port must be between 1 and 65535')
     web = args.web.resolve()
     if not (web / 'browser-spike.jar').is_file():
         parser.error('Select a staged web directory from prepare.py')
-    if not 1024 <= args.port <= 65535:
-        parser.error('Use an unprivileged TCP port')
     server = ThreadingHTTPServer(('127.0.0.1', args.port), functools.partial(Handler, directory=str(web)))
     print(f'Private browser test: http://127.0.0.1:{args.port}', flush=True)
     server.serve_forever()

@@ -12,12 +12,12 @@ public worlds against diverging player databases.
 | Game port | TCP `43605` |
 | VM | `VM.Standard.A1.Flex`, 1 OCPU, 6 GB RAM, ARM64 |
 | OS / Java | Ubuntu 26.04.1 LTS / OpenJDK 17 |
-| Server release tag | `v0.3.13` (Cleric stats, Slayer dialogue, guides and agility fixes) |
-| Published client release | `v0.3.13` (expanded and corrected in-game guides) |
-| Game source | `5b08bef4d1f7a3447f700ad00379b7bbc17b3b6f` |
+| Server release tag | `v0.3.16` (server gameplay unchanged from v0.3.15) |
+| Published client release | `v0.3.16` (steady underground lighting) |
+| Game source | `73752f45d089ebc71ba24d832f85a06590de661c` |
 | Client protocol | `10059` |
 | Public service | `spoiled-milk.service`, enabled at boot |
-| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.13` |
+| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.16` |
 | Guarded live path | `/tmp/spoiled-milk-live-main` |
 | Git object repository | `/home/ubuntu/spoiled-milk/repository.git` |
 | External state | `/home/ubuntu/.local/share/spoiled-milk/live` |
@@ -28,7 +28,7 @@ The service requires that mount. The source is a clean detached checkout of the
 exact published tag; it is never a development workspace.
 
 The service calls `scripts/run-hosted-server.sh` with
-`MYWORLD_HOSTED_RELEASE_TAG=v0.3.13`. Existing exact-tag, clean-source, installed
+`MYWORLD_HOSTED_RELEASE_TAG=v0.3.16`. Existing exact-tag, clean-source, installed
 map, generator, external-database, and occupied-port guards remain active.
 `JAVA_TOOL_OPTIONS` caps the heap at 3 GiB. The unit uses `Restart=on-failure`;
 a successful in-game shutdown exits normally and stays stopped.
@@ -39,12 +39,67 @@ update. This deployment does not depend on the owner's PC staying online.
 
 `v0.3.7`, `v0.3.9`, `v0.3.10`, and `v0.3.11` are server-only source tags with
 no player release entries.
-The website and updater now serve client `v0.3.13`, including the single-download
+The website and updater now serve client `v0.3.16`, including the single-download
 ZIP and both platform updater assets. Protocol 10059 is unchanged. The actual
-published v0.3.12 POSIX updater successfully installed v0.3.13 and preserved its
-settings. Native Windows launch/update execution was not available in this
-maintenance window. Never publish a newer player release without its updater
-assets.
+published v0.3.15 POSIX updater successfully installed v0.3.16 and preserved its
+settings and synthetic identity. Its immediate post-publication attempt saw the
+old GitHub release list; a separate repeat passed once the list propagated.
+Native Windows launch/update execution was not available in this maintenance
+window. Never publish a newer player release without its updater assets.
+
+The v0.3.16 activation preserved all 68 accounts and the installed map. Fresh
+integrity-checked backups are retained on Oracle and the owner's PC; v0.3.15
+source remains for rollback. This client-only lighting patch keeps all signed
+negative levels consistently lit and suppresses underground sunlight shadows,
+while retaining the surface/positive-level cycle and saved brightness. Renderer
+guardrails, controlled CPU/GPU transitions and 18 released-baseline parity cases
+passed; ordinary native Ichor-cave day/night and surface-return images were
+reviewed. All 1,979 packaged client classes match the private preview. All six
+uploaded release assets were downloaded and checksum checked. The actual
+published updater and downloaded native Linux client passed public-config and
+hardware OpenGL startup checks, without authenticating an account. Server
+source/build scripts are unchanged; every staged and installed server class
+matches the previously validated v0.3.15 classes. Gameplay scenarios were not
+repeated for this client-only change. The public listener, enabled service,
+backup timer, database integrity and zero automatic restarts were verified.
+Native Windows/macOS graphics remain untested. Receipts are under
+`output/reviews/release-v0.3.16/` locally and
+`/home/ubuntu/spoiled-milk/verification/v0.3.16/` on Oracle.
+
+The v0.3.15 activation preserved all 66 accounts and the installed map. Verified
+backups are retained on Oracle and the owner's PC; v0.3.14 source remains for
+rollback. The Oracle ARM64/Java 17 staged JARs passed 4,935 movement checks,
+3,135 command-admission checks, 149 combat scenarios and 40 PvP scenarios in
+isolated network namespaces. After activation, all installed server class
+digests matched those staged JARs, and the installed movement/admission checks
+passed again with class-loading proof from the deployed core JAR. The public
+login path, enabled service, backup timer, database integrity and zero automatic
+restarts were verified. All six release assets were downloaded and checksum
+checked. All 1,978 packaged client classes match the owner-approved preview;
+a downloaded Linux client reached the public configuration/login screen with
+hardware OpenGL in a hidden smoke test, without authenticating an account.
+The owner's private tests approved movement, interactions, low CPU use and
+maintained 60 FPS. High's picket wave is substantially reduced; sparse railings
+retain occasional sampling steps, and Low preserves its previous output.
+Native Windows/macOS graphics remain untested. Receipts are under
+`output/reviews/release-v0.3.15/` locally and
+`/home/ubuntu/spoiled-milk/verification/v0.3.15/` on Oracle.
+
+The v0.3.14 activation preserved all 66 accounts and the existing installed map.
+Fresh integrity-checked database backups are retained on Oracle and the owner's
+PC; v0.3.13 source remains available for rollback. The staged ARM64/Java 17 build
+passed 292 starter-supply assertions, all five protection supplies across all
+six shops, and 78 dialogue-order cases. After activation the actual installed
+core JAR passed the 292 starter-supply assertions again in an isolated fixture;
+class-loading evidence confirms the tested service came from that deployed JAR.
+The public login path, external database link, map fingerprint, enabled service,
+backup timer and zero automatic restarts were verified. The actual published
+v0.3.13 updater downloaded v0.3.14 and preserved synthetic settings/identity.
+All 1,976 packaged client classes match the owner-approved terrain/shadow preview.
+Local validation also passed 149 combat scenarios and player-state migration
+checks. Native Windows/macOS graphics remain untested; the deferred long soak
+is not claimed. Receipts are under `output/reviews/release-v0.3.14/` locally and
+`/home/ubuntu/spoiled-milk/verification/v0.3.14/` on Oracle.
 
 The v0.3.13 activation preserved all 66 accounts and the existing installed map.
 Verified database backups are retained on Oracle and the owner's PC; the
