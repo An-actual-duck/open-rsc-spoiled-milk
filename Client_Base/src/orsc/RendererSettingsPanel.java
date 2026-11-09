@@ -12,7 +12,7 @@ import java.util.List;
 import static orsc.ScaledWindow.ScalingAlgorithm;
 
 /**
- * Presents and dispatches the desktop Graphics settings tab.
+ * Presents and dispatches Graphics settings using desktop/browser capabilities.
  *
  * <p>The panel owns stable row identities and pointer interpretation, while
  * the client adapter retains application, persistence, packet, and gameplay
@@ -202,7 +202,9 @@ final class RendererSettingsPanel {
 			this.windowModeLabel = windowModeLabel;
 			this.lightingLabel = lightingLabel;
 			this.shadowQualityLabel = RendererShadowSettings.getQuality().label;
-			this.geometryLabel = geometryLabel;
+			// A legacy saved WIRE uses faceted filled triangles in WebGL, not polygon lines.
+			this.geometryLabel = browserGpu && RendererGeometrySettings.getMode() == RendererGeometrySettings.Mode.WIRE
+				? RendererGeometrySettings.Mode.FACETED.label : geometryLabel;
 			this.terrainVariationLabel = terrainVariationLabel;
 			this.fogLabel = fogLabel;
 			this.terrainReliefLevel = terrainReliefLevel;
@@ -348,8 +350,7 @@ final class RendererSettingsPanel {
 			}
 			addRow(rows, "@whi@Lighting - " + state.lightingLabel, ACTION_LIGHTING);
 			addRow(rows, "@whi@Shadows - " + state.shadowQualityLabel, ACTION_SHADOW_QUALITY);
-			// Browser has no polygon-line implementation; don't offer a WIRE no-op.
-			if (state.openGLPrimary) addRow(rows, "@whi@Geometry - " + state.geometryLabel, ACTION_GEOMETRY);
+			addRow(rows, "@whi@Geometry - " + state.geometryLabel, ACTION_GEOMETRY);
 			addRow(rows, "@whi@Terrain Variation - " + state.terrainVariationLabel,
 				ACTION_TERRAIN_VARIATION);
 			addRow(rows, "@whi@Fog - " + state.fogLabel, ACTION_FOG);
@@ -390,6 +391,7 @@ final class RendererSettingsPanel {
 				case ACTION_LIGHTING: return Action.LIGHTING;
 				case ACTION_SHADOW_QUALITY: return Action.SHADOW_QUALITY;
 				case ACTION_TERRAIN_VARIATION: return Action.TERRAIN_VARIATION;
+				case ACTION_GEOMETRY: return Action.GEOMETRY;
 				default: break;
 			}
 		}

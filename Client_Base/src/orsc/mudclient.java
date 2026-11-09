@@ -17772,7 +17772,8 @@ public final class mudclient implements Runnable {
 	}
 
 	void cycleOpenGLGeometryMode() {
-		RendererGeometrySettings.Mode mode = RendererGeometrySettings.cycleMode();
+		RendererGeometrySettings.Mode mode = Renderer3DSettings.isBrowserPresentationAvailable()
+			? RendererGeometrySettings.cycleBrowserMode() : RendererGeometrySettings.cycleMode();
 		this.rendererProfileApplier.markCustomAndPersist(RendererProfileApplier.Change.GEOMETRY);
 		System.out.println("[renderer-v2] OpenGL geometry: " + mode.id);
 	}
