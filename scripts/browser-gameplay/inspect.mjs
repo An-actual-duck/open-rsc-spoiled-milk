@@ -155,12 +155,12 @@ try {
     if(!canvas)return null;
     const gl=canvas.getContext('webgl2');if(!gl)return null;
     const extension=gl.getExtension('WEBGL_debug_renderer_info');
-    return {vendor:extension?gl.getParameter(extension.UNMASKED_VENDOR_WEBGL):gl.getParameter(gl.VENDOR),
+    return {unmasked:!!extension,vendor:extension?gl.getParameter(extension.UNMASKED_VENDOR_WEBGL):gl.getParameter(gl.VENDOR),
       renderer:extension?gl.getParameter(extension.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),
       version:gl.getParameter(gl.VERSION),width:canvas.width,height:canvas.height};
   })()`, returnByValue:true});
   const actualGpu = gpuResult.result.value;
-  const hardwareVerified = !!actualGpu?.renderer && !/swiftshader|llvmpipe|softpipe|software/i.test(actualGpu.renderer);
+  const hardwareVerified = actualGpu?.unmasked === true && /AMD|Radeon|NVIDIA|GeForce|Intel|Apple|Mali|Adreno/i.test(actualGpu.renderer) && !/swiftshader|llvmpipe|softpipe|software/i.test(actualGpu.renderer);
   fs.writeFileSync(path.join(capture, 'webgl-device.json'), JSON.stringify({hardwareRequested:hardwareGl,hardwareVerified,actualGpu,chromeGraphicsArgs:hardwareArgs},null,2));
   fs.writeFileSync(path.join(capture, 'outcome.json'), JSON.stringify({captureCompleted: true, mode, runtime, javaVersion: Number(javaVersion), wasmGC,
     probeReportedBlocked: page.proof?.events.some(event => event.message.includes(':blocked:')) || false,
