@@ -1,11 +1,15 @@
 <!doctype html>
 <html lang="en"><meta charset="utf-8"><title>Spoiled Milk — private browser feasibility test</title>
-<style>body{margin:0;background:#182026;color:#eee;font:15px system-ui}header{padding:12px}a{color:#9fd7ff}#status{white-space:pre-wrap}iframe{width:100%;height:660px;border:0}small{display:block;margin-top:5px}button{margin:10px 8px 10px 0;padding:8px 14px}</style>
-<header><strong>Private browser feasibility test</strong> · <a href="?mode=webgl">WebGL prototype</a> · <a href="?mode=software">software compatibility</a> · <a href="?mode=native-probe">native graphics probe</a>
+<style>html,body{margin:0;height:100%;background:#101820;color:#eee;font:14px system-ui}#player{height:100dvh;display:flex;flex-direction:column;position:relative;background:#000}header{padding:6px 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#182026}a{color:#9fd7ff}#status,#display-notice{font-size:12px;margin:0;padding:2px 10px;background:#182026}#session{flex:1;min-height:0;position:relative}iframe{width:100%;height:100%;border:0;display:block}details{background:#182026;padding:3px 10px}details small{display:block}button,select{padding:6px 10px}body[data-view=embedded] #player{height:auto;min-height:100%}body[data-view=embedded] #session{flex:none;height:620px;max-width:1100px;width:100%;margin:auto}#player:fullscreen{height:100%;width:100%}#player:fullscreen #session{height:auto;max-width:none;flex:1;margin:0}#player:fullscreen header{position:relative;z-index:20;flex:none}#player:fullscreen details,#player:fullscreen #status,#player:fullscreen #display-notice{display:none}</style>
+<main id="player"><header><strong>Spoiled Milk · private browser test</strong>
+<button id="start" type="button">Start private test</button><button id="stop" type="button" disabled>Stop private test</button>
+<label>View <select id="display-mode"><option value="fit">Fit tab</option><option value="embedded">Embedded</option></select></label>
+<button id="fullscreen" type="button">Fullscreen</button></header>
+<div id="display-notice" role="status"></div><div id="status" role="status">Stopped. Java has not been loaded.</div><div id="session"></div>
+<details><summary>Private test details and login</summary><a href="?mode=webgl">WebGL prototype</a> · <a href="?mode=software">software compatibility</a> · <a href="?mode=native-probe">native graphics probe</a>
 <small>WebGL mode uses an experimental browser GPU backend; software mode is a slower compatibility reference. Loopback server only. Java runs in your browser through <a href="https://cheerpj.com/">CheerpJ by Leaning Technologies</a>.</small>
 <small><strong>Experimental private test:</strong> the WebGL prototype reuses game geometry, materials and sprite artwork. Shadow fidelity and desktop-equivalent performance are still being developed. This is not a public browser release. Log in with <code>browserdemo</code> / <code>BrowserProof13</code>, the disposable private account.</small>
 <small>The runtime starts only when requested. Stop or closing the page ends the session. Escape, moving focus and switching tabs keep the session running. Restarting creates a new runtime. This is a lifecycle precaution; the reported desktop-wide keyboard failure has not been reproduced or diagnosed.</small>
-<button id="start" type="button">Start private test</button><button id="stop" type="button" disabled>Stop private test</button>
-<div id="status" role="status">Stopped. Java has not been loaded.</div></header><main id="session"></main>
+</details></main>
 <script type="module" src="./session.js"></script>
 </html>

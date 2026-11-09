@@ -72,6 +72,7 @@ public final class BrowserBootstrap {
             orsc.BrowserWebGLBridge.install();
         }
         System.setProperty("spoiledmilk.directFramebuffer", "true");
+        System.setProperty("spoiledmilk.browserBorderlessDisplay", "true");
         System.setProperty("user.dir", "/files");
         Socket.setSocketImplFactory(new SocketImplFactory() {
             public SocketImpl createSocketImpl() { return new BrowserSocket(); }

@@ -94,6 +94,7 @@ public class OpenRSC extends ORSCApplet {
 		try {
 			Dimension renderSurfaceSize = RenderSurfaceSettings.getDimensions();
 			jframe = new JFrame(Config.getServerNameWelcome());
+			BrowserDisplaySettings.configure(jframe);
 			applet = new OpenRSC();
 			// Here we add 12 because 12 was added back in 2009 for the skip tutorial line.
 			applet.setPreferredSize(renderSurfaceSize);
@@ -110,7 +111,7 @@ public class OpenRSC extends ORSCApplet {
 			jframe.setIconImage(Utils.getImage("icon.png").getImage());
 			jframe.setTitle(Config.WINDOW_TITLE);
 			jframe.getContentPane().add(applet);
-			jframe.setResizable(true); // true or false based on server sent config
+			jframe.setResizable(!BrowserDisplaySettings.isBorderless());
 			jframe.setVisible(false); // All rendering is forwarded to the ScaledWindow class
 			jframe.setBackground(Color.black);
 			// Just like above, here we add 12 because 12 was added back in 2009 for the skip tutorial line.
