@@ -15,6 +15,8 @@ public final class BrowserBootstrap {
     private static native int wsAvailable(int socket);
     private static native void wsWrite(int socket, byte[] bytes);
     private static native void wsClose(int socket);
+    private static native int[] awaitMiddleMouseEvent();
+    private static native void reportInputError(String message);
 
     public static void main(String[] args) throws Exception {
         if (args.length > 0 && "mesh-probe".equals(args[0])) {
@@ -76,6 +78,25 @@ public final class BrowserBootstrap {
         });
         report((webgl?"webgl-client":"software-client")+":start; networking=loopback-websocket");
         orsc.OpenRSC.main(new String[0]);
+        if(webgl) {
+            Thread pointer = new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        while(true) {
+                            int[] event=awaitMiddleMouseEvent(); // waits without polling while idle
+                            if(event!=null&&event.length==4&&event[0]==-1)break;
+                            orsc.BrowserMiddleMouseInput.dispatch(event);
+                        }
+                    } catch(Exception error) {
+                        reportInputError("Middle-button relay stopped: "+error);
+                    } finally {
+                        try {orsc.BrowserMiddleMouseInput.dispatch(new int[]{0,0,0,0});}
+                        catch(Exception cleanupError) {reportInputError("Middle-button cleanup failed: "+cleanupError);}
+                    }
+                }
+            },"Browser middle-button input");
+            pointer.setDaemon(true);pointer.start();
+        }
         Thread observer = new Thread(new Runnable() {
             public void run() {
                 try {

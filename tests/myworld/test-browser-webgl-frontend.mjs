@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-let clock = 500, gpuDisposed = 0, transportDisposed = 0, configured;
+let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, configured;
 const status = {textContent:''}, messages = [];
 let layoutReads=0;
 const target = {width:960,height:560,getBoundingClientRect:()=>{layoutReads++;return{left:20,top:40,width:960,height:560}}};
@@ -21,16 +21,29 @@ const context = vm.createContext({window,location:{search:'?mode=webgl',origin:'
 let gateChanged;const cover={blocksWorldInput:false,attach(){},dispose(){},update(state){const next=state?.phase==='loading';if(next!==this.blocksWorldInput){this.blocksWorldInput=next;gateChanged();}}};
 const coverModule=new vm.SyntheticModule(['createWorldCover'],function(){this.setExport('createWorldCover',o=>{gateChanged=o.onGateChange;return cover;});},{context});
 const transportModule = new vm.SyntheticModule(['createTransport'],function(){this.setExport('createTransport',()=>({dispose:()=>transportDisposed++}));},{context});
+const middleStats = {presses:0,moves:0,releases:0,cancels:0,coalesced:0};
+const middleNative = async()=>Int32Array.from([1,30,40,0]);
+const middleModule = new vm.SyntheticModule(['createBrowserMiddleMouseInput'],function(){this.setExport('createBrowserMiddleMouseInput',()=>{
+  middleCreated++;return {stats:middleStats,dispose:()=>middleDisposed++,natives:{Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent:middleNative}};
+});},{context});
 const gpuModule = new vm.SyntheticModule(['createBrowserWebGL'],function(){this.setExport('createBrowserWebGL',()=>({canvas,stats,dispose:()=>gpuDisposed++,natives:{
   Java_orsc_BrowserWebGLBridge_worldProgress:async()=>{stats.worldReadiness={phase:stats.declaredPhase||'loading'};},
   Java_orsc_BrowserWebGLBridge_present:async(lib,width,height)=>{canvas.width=width;canvas.height=height;stats.lastFrame=clock;stats.worldReadiness={phase:'ready'};},
 }}));},{context});
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{assert.equal(specifier,'./webgl.js');await gpuModule.link(()=>{});await gpuModule.evaluate();return gpuModule;}});
-await module.link(specifier=>{if(specifier==='./browser-world-cover.js')return coverModule;assert.equal(specifier,'./transport.js');return transportModule;});
+await module.link(specifier=>{
+  if(specifier==='./browser-world-cover.js')return coverModule;
+  if(specifier==='./browser-middle-mouse.js')return middleModule;
+  assert.equal(specifier,'./transport.js');return transportModule;
+});
 module.evaluate();
 for(let i=0;i<30&&!configured;i++)await new Promise(resolve=>setImmediate(resolve));
 assert.ok(configured,'actual frontend did not initialize Java options');
+assert.equal(middleCreated,1,'WebGL frontend creates one middle-input owner');
+assert.equal(window.browserProof.middleInput,middleStats,'proof counters come from the real module seam');
+assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent,middleNative,'Java input consumer is merged into CheerpJ natives');
+assert.deepEqual(Array.from(await configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent(null)),[1,30,40,0]);
 assert.equal(canvas.style.pointerEvents,'none');
 assert.equal(configured.enableInputMethods,false);
 await configured.natives.Java_orsc_BrowserWebGLBridge_worldProgress(null,[1,2,1,4,2,0,0,0,1,960,540,0]);assert.equal(window.browserWorldInputAllowed(),false);
@@ -43,12 +56,19 @@ await configured.natives.Java_orsc_browser_BrowserBootstrap_reportLoop(null,'mod
 assert.equal(window.browserProof.clientLoop,'modern');
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportTelemetry(null,'sceneRenderStats',[1,77]);
 assert.equal(window.browserProof.profiled,true);assert.deepEqual(Array.from(window.browserProof.telemetrySamples[0].values),[1,77]);
+await configured.natives.Java_orsc_browser_BrowserBootstrap_reportInputError(null,'controlled input relay error');
+assert.equal(window.browserProof.inputError,'controlled input relay error');
+assert.match(status.textContent,/controlled input relay error/);
+await configured.natives.Java_orsc_browser_BrowserBootstrap_reportState(null,'GAME',60,100);
+assert.match(status.textContent,/controlled input relay error/,'loop/FPS success cannot conceal a stopped input relay');
+await configured.natives.Java_orsc_browser_BrowserBootstrap_report(null,'ordinary successful update');
+assert.match(status.textContent,/controlled input relay error/);
 stats.lastError='controlled shader error';clock=2000;
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportState(null,'GAME',60,100);
 assert.match(status.textContent,/controlled shader error/);assert.match(status.textContent,/1500 ms ago/);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_report(null,'ordinary successful update');
 assert.match(status.textContent,/controlled shader error/);
 window.browserSessionDispose();window.browserSessionDispose();
-assert.equal(gpuDisposed,1);assert.equal(transportDisposed,1);
+assert.equal(gpuDisposed,1);assert.equal(transportDisposed,1);assert.equal(middleDisposed,1,'Stop disposes the middle-input owner exactly once');
 assert.ok(messages.some(m=>m.proof?.gpu?.lastError==='controlled shader error'));
-console.log('PASS mocked frontend contract: native merge, AWT alignment, pointer transparency, sticky GPU errors/age and idempotent Stop disposal; no hardware proof');
+console.log('PASS mocked frontend contract: GPU/middle native merge, AWT alignment, pointer transparency, sticky input/GPU errors and idempotent owner disposal; no hardware proof');

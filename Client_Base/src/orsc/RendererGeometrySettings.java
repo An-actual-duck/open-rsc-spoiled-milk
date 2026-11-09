@@ -24,6 +24,12 @@ final class RendererGeometrySettings {
 		return next;
 	}
 
+	/** Browser WebGL has filled triangles only; native Wire remains desktop-only. */
+	static Mode cycleBrowserMode() {
+		mode = mode == Mode.SMOOTH ? Mode.FACETED : Mode.SMOOTH;
+		return mode;
+	}
+
 	static Mode setMode(Mode next) {
 		mode = next == null ? Mode.SMOOTH : next;
 		return mode;
