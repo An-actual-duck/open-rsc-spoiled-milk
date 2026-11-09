@@ -1,0 +1,107 @@
+Browser world-sky replay: focused implementation and review handoff
+
+Scope
+The default WORLD_DOME sky uses one shared WorldSkyGeometry source for native
+OpenGL and browser replay. The native state/matrix envelope remains unchanged;
+only its private geometry/color emission moves into this source. BrowserSkyData
+caches the complete dome, Milky Way, stars and clouds, then updates the original
+color slots and native projection/view matrix per source frame. No alternate
+sky appearance or reduced-content replacement is introduced.
+
+Evidence preserved before the native extraction
+Baseline: 958a278453e460d59dcfce6c102adcc42dcfc1d7
+Original OpenGLWorldChunkRenderer.java SHA-256:
+d37f819178f1da7fd3d0136a461863043a773669f060d5b3ce3ba8fb35683fbd
+The ignored output/tests/browser-sky directory preserves the original source,
+receipt, independently generated/compiled reference, and before/after digests.
+Fifteen native command streams (five daylight presentations at three radii)
+match exactly, including raw XYZ/RGBA float bits, begin/end and blend commands.
+The reproducible test regenerates that independent reference from the exact Git
+baseline rather than comparing two delegates to the extracted implementation.
+
+CPU acceptance
+python3 tests/myworld/test-browser-sky.py
+  2,097,891 checks: native command streams; expanded browser triangle XYZ/RGBA;
+  five presentations and three fog distances; cold daytime geometry containing
+  subsequent night/cloud layers; camera rotation and ignored translation;
+  signed-negative suppression; native primary-terrain heuristic; clear/rebuild.
+node tests/myworld/test-browser-sky.mjs
+  Layer selection, borrowed-array lifetime, depth and GL-state restoration,
+  bounded replacement, failed initialization/upload, retry and disposal.
+  Replacement also handles a caller having bound the module's own old VAO/VBO:
+  success follows their replacement; failure restores the still-valid originals.
+python3 tests/myworld/test-opengl-world-sky.py
+  Existing production sky policy and native state/matrix source guards.
+Full renderer guardrails and layout results are recorded in the final handoff.
+These are CPU/source/instrumented-GL tests, not actual shader/pixel/FPS proof.
+
+Integration contract (bridge/main webgl wiring owned by the renderer worker)
+Java: retain one BrowserSkyData. Call prepare(frame) while that immutable source
+frame remains valid. The helper binds/restores RendererFrameLighting itself.
+Frame exposes enabled, values[20], palette[4096], geometry and ranges. Arrays are
+borrowed until the next prepare/clear: upload or copy synchronously, never retain
+them in an asynchronous queue. geometry/ranges are nonnull only after a cache
+build (first enabled frame, radius change or clear).
+
+values: 0 enabled; 1 night layers; 2 cloud layer; 3 palette count; 4..19 native
+projection * translation-free sky-view matrix in column-major order.
+geometry: float stride4 [x,y,z,paletteSlot], expanded triangles.
+ranges: four int stride3 [firstVertex,vertexCount,blendFlag], in order dome,
+Milky Way, stars, clouds. The dome is opaque; all other layers use source alpha.
+
+JS: import createBrowserSky(gl,{stats}); initialize once. On changed geometry,
+call uploadGeometry(geometry,ranges,values[3]); then prepare(values,palette).
+After the parent clears its color/depth attachments, call draw() before world
+geometry. The sky disables depth test/writes, so it does not take ownership of
+the world's depth buffer. draw restores program, VAO, texture unit/binding,
+depth test/write, color mask, culling and blend factors/equations.
+
+Lifecycle and failure rules
+An absent/disabled source frame should call prepare with values[0]=0; do not
+reuse the last visible source frame. Negative signed levels always suppress sky.
+The existing primary-world terrain plane/packed-origin heuristic is preserved
+(including its upper-level limitations). SCREEN legacy sky is unsupported here;
+it is nondefault and should be reported/fallback explicitly, not silently
+represented as WORLD_DOME.
+Viewport resize only changes the native matrix. Fog-distance/radius changes
+rebuild bounded geometry; tone/day/night changes update the color palette and
+layer flags without regenerating vertex positions. Native matrix helpers are
+called through cached reflection, not duplicated browser camera formulas.
+
+A full world-resource/context reset must call BrowserSkyData.clear() before the
+next export. On WebGL context loss, stop presentation, dispose the old module,
+recreate it after restoration, and clear the Java cache to force geometry upload.
+Initialization failure makes the JS instance unusable; dispose/recreate it.
+Geometry replacement failure keeps prior GPU resources valid and accounting
+unchanged. Java has already committed its cache when it exports changed data:
+propagate the upload failure and clear/retry or restart; never silently continue
+with mismatched old GPU geometry/new frame metadata. dispose is idempotent.
+
+Bounds and costs
+One cached geometry radius, at most 65,536 vertices * 16 bytes (1 MiB); palette
+1024 RGBA32F texels (16 KiB). Geometry replacement temporarily permits two such
+buffers plus palette: 2,113,536 accounted bytes maximum. Driver/program/VAO
+bookkeeping is additional and not estimated as zero. The palette texture uses
+unit0 only inside its own program and restores the prior binding. It consumes
+no world-program sampler slots. At most four draw calls per sky frame.
+There are small per-frame Java Frame/palette-sink and native matrix arrays plus
+reflection calls, and JS matrix/value copies; this is not an allocation-free
+claim. Full geometry/trigonometry loops run only at cache rebuilds. Native
+Sink dispatch overhead and actual browser GPU throughput remain unmeasured.
+
+Remaining manager-controlled acceptance
+Integrate the exact READY commit, wire the bridge, compile actual WebGL2 shaders,
+and inspect surface/day/night/transitions plus negative/upper levels, resize,
+fog changes and context reset. Verify world clear ordering, native-vs-browser
+pixels (quad triangulation included), resource/error telemetry and source FPS
+with the full renderer. CPU bit equality does not prove hardware raster parity.
+No browser/GPU/server process, public deployment, Oracle or player data operation
+was performed by this focused sky worker.
+
+Completed final worker checks
+bash tests/myworld/test-renderer-guardrails.sh: PASS, exit0.
+git diff --check: PASS.
+workspace-layout.py check: exit1 due to inherited unclassified output-root
+entries (for example output/remastered-sprites, output/static-analysis*,
+output/combat-test and output/release-build). None were created or deleted by
+this task. New evidence is solely in declared output/tests/browser-sky.
