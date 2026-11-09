@@ -25,11 +25,11 @@ const functions={
   enable:c=>enabled.add(c),disable:c=>enabled.delete(c),isEnabled:c=>enabled.has(c),
   uniform1f:(n,v)=>uniforms.set(n,v),uniform1i:(n,v)=>uniforms.set(n,v),
   drawElements:(mode,count,type,offset)=>calls.push({count,offset,cutoff:uniforms.get('uBrowserAlphaCutoff'),blend:enabled.has(gl.BLEND),texture:uniforms.get('uTextureEnabled')}),
-  getParameter:p=>p===gl.MAX_TEXTURE_SIZE?4096:p===gl.ACTIVE_TEXTURE?active:p===gl.TEXTURE_BINDING_2D?textures.get(active)||null:p===gl.CURRENT_PROGRAM?currentProgram:p===gl.VERTEX_ARRAY_BINDING?currentVAO:p===gl.ARRAY_BUFFER_BINDING?bindings.get(gl.ARRAY_BUFFER)||null:p===gl.VIEWPORT?[0,0,2,2]:p===gl.COLOR_WRITEMASK?[true,true,true,true]:p===gl.DEPTH_WRITEMASK?true:p===gl.VENDOR?'in-memory test double':p===gl.RENDERER?'no hardware claim':0
+  getParameter:p=>p===gl.MAX_TEXTURE_SIZE?4096:p===gl.ACTIVE_TEXTURE?active:p===gl.TEXTURE_BINDING_2D?textures.get(active)||null:p===gl.CURRENT_PROGRAM?currentProgram:p===gl.VERTEX_ARRAY_BINDING?currentVAO:p===gl.ARRAY_BUFFER_BINDING?bindings.get(gl.ARRAY_BUFFER)||null:p===gl.VIEWPORT?[0,0,2,2]:p===gl.COLOR_CLEAR_VALUE?[0,0,0,1]:p===gl.COLOR_WRITEMASK?[true,true,true,true]:p===gl.DEPTH_WRITEMASK?true:p===gl.VENDOR?'in-memory test double':p===gl.RENDERER?'no hardware claim':0
 };
 gl=new Proxy(functions,{get:(o,k)=>{if(/^[A-Z0-9_]+$/.test(k))return constants[k]??=2000+Object.keys(constants).length;return(...args)=>{if(failure?.method===k){const mode=failure.mode;failure=null;if(mode==='null')return null;if(mode==='error')pendingError=gl.OUT_OF_MEMORY;else throw new Error('Injected '+k);}
 const kind=allocationKinds[k],deleted=deletionKinds[k];const value=k in o?o[k](...args):undefined;if(kind&&value){if(!owned.has(kind))owned.set(kind,new Set());owned.get(kind).add(value);}if(deleted&&args[0])assert.equal(owned.get(deleted)?.delete(args[0]),true,'unknown/double resource delete '+k);return value;};}});
-const backend=createBrowserWebGL({getContext:()=>gl,addEventListener(){},removeEventListener(){},width:2,height:2});const n=backend.natives;
+const backend=createBrowserWebGL({getContext:(name,options)=>{assert.equal(options.alpha,true,'retained RGBA8 copy requires RGBA drawingbuffer');return gl;},addEventListener(){},removeEventListener(){},width:2,height:2});const n=backend.natives;
 const v='#version 120\nattribute vec3 aPosition;void main(){gl_Position=vec4(aPosition,1.0);}';
 const f='#version 120\nvoid main(){vec4 color=vec4(1.0);gl_FragColor = color;}';
 assert.equal(await n.Java_orsc_BrowserWebGLBridge_initialize(null,v,f),4096);

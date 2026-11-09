@@ -19,8 +19,14 @@ const FLOAT_UNIFORMS=['uBrightness','uContrast','uGamma','uSaturation','uToneRed
 const ATTRIBUTES=[['aPosition',3,0],['aMaterialColor',4,3],['aTexCoord',2,7],['aRawMaterialColor',3,15],['aBaseLegacyLight',1,14],['aNormal',3,18],['aModelKind',1,21],['aMaterialFamily',1,22],['aTerrainVariationMask',1,23],['aTerrainBlendColor',3,24],['aTerrainBlendStrength',1,27]];
 const MAX_GPU_BYTES=256*1024*1024, MAX_CHUNKS=512, MAX_PIXELS=2097152;
 function typed(value, Type) { return value instanceof Type ? value : new Type(value); }
-export function createBrowserWebGL(canvas, report=()=>{}) {
-  const gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});
+/** Normalize alpha without touching RGB, including after legacy SRC_ALPHA blending. */
+export function normalizeOpaqueCanvas(gl) {
+  const mask=gl.getParameter(gl.COLOR_WRITEMASK),color=gl.getParameter(gl.COLOR_CLEAR_VALUE),scissor=gl.isEnabled(gl.SCISSOR_TEST);
+  try{gl.disable(gl.SCISSOR_TEST);gl.colorMask(false,false,false,true);gl.clearColor(0,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT);}
+  finally{gl.colorMask(...mask);gl.clearColor(...color);if(scissor)gl.enable(gl.SCISSOR_TEST);}
+}
+export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
+  const gl=canvas.getContext('webgl2',{alpha:true,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});
   if(!gl) throw new Error('WebGL2 unavailable: browser GPU proof requires WebGL2');
   const stats={worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas, <=8MiB marker overlay plus optional <=16MiB C/T overlay and <=16MiB retained frames, <=160MiB shadow maps and <=8MiB masks and separately bounded <=2MiB sky peak; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['UI partial-alpha over geometry is not yet equivalent','Browser/device coverage and broader gameplay parity pending'],frameSamples:[]};
   const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0,lastWorld=0,lighting,lightingValues,sky,overlay;
@@ -67,7 +73,7 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
         textureParameters();
       }
       gl.activeTexture(gl.TEXTURE0);check();report('WebGL2 production resident shader ready');
-      const ext=gl.getExtension('WEBGL_debug_renderer_info');stats.vendor=gl.getParameter(ext?ext.UNMASKED_VENDOR_WEBGL:gl.VENDOR);stats.renderer=gl.getParameter(ext?ext.UNMASKED_RENDERER_WEBGL:gl.RENDERER);
+      const ext=gl.getExtension('WEBGL_debug_renderer_info');stats.contextAttributes=gl.getContextAttributes();stats.vendor=gl.getParameter(ext?ext.UNMASKED_VENDOR_WEBGL:gl.VENDOR);stats.renderer=gl.getParameter(ext?ext.UNMASKED_RENDERER_WEBGL:gl.RENDERER);
       lighting=createBrowserLighting(gl,{program,stats,chunks,textures,adaptShader:adaptResidentShader});
       sky=createBrowserSky(gl,{stats});
       return gl.getParameter(gl.MAX_TEXTURE_SIZE);
@@ -176,12 +182,20 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
         stats.worldSpriteGroups=spriteDraws.length;
         stats.javaWorldFrames++;
       }
+      // RGBA drawingbuffer is required for WebGL copy into retained RGBA8 FULL.
+      // Make it visually opaque before UI; legacy world blends can lower alpha.
+      const alphaProof=options.opaqueProof&&world&&stats.javaWorldFrames>=100&&!stats.opaqueAlphaProof;
+      let beforeAlpha;
+      if(alphaProof){beforeAlpha=new Uint8Array(width*height*4);gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,beforeAlpha);}
+      normalizeOpaqueCanvas(gl);
+      if(alphaProof){const after=new Uint8Array(beforeAlpha.length);gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,after);let changedRgb=0,beforeNonOpaque=0,afterNonOpaque=0;for(let n=0;n<after.length;n+=4){for(let c=0;c<3;c++)if(beforeAlpha[n+c]!==after[n+c])changedRgb++;if(beforeAlpha[n+3]!==255)beforeNonOpaque++;if(after[n+3]!==255)afterNonOpaque++;}stats.opaqueAlphaProof={pixels:width*height,changedRgb,beforeNonOpaque,afterNonOpaque,diagnosticReadback:true};}
       if(overlay)overlay.draw(width,height,new Uint8Array(pixels.buffer,pixels.byteOffset,pixels.byteLength));
       else {
         gl.disable(gl.DEPTH_TEST);gl.depthMask(false);gl.useProgram(overlayProgram);gl.bindVertexArray(emptyVAO);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,overlayTexture);
         gl.pixelStorei(gl.UNPACK_ALIGNMENT,4);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(pixels.buffer,pixels.byteOffset,pixels.byteLength));
         gl.uniform1i(gl.getUniformLocation(overlayProgram,'image'),0);gl.uniform1i(gl.getUniformLocation(overlayProgram,'world'),world?1:0);gl.drawArrays(gl.TRIANGLES,0,3);gl.depthMask(true);check();
       }
+      if(alphaProof){const final=new Uint8Array(width*height*4);gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,final);let count=0;for(let n=3;n<final.length;n+=4)if(final[n]!==255)count++;stats.opaqueAlphaProof.finalNonOpaque=count;check();}
       if(timerQuery){gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);pendingQueries.push(timerQuery);}
       const now=performance.now();stats.jsSubmissionSamples.push(now-submitStart);if(stats.jsSubmissionSamples.length>(stats.measurement?4096:600))stats.jsSubmissionSamples.shift();
       if(world&&!retainedWorld){if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);if(stats.worldFrameSamples.length>(stats.measurement?4096:600))stats.worldFrameSamples.shift();}lastWorld=now;}else lastWorld=0;
