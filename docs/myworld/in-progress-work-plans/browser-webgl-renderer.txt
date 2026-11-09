@@ -288,3 +288,29 @@ Resource update follow-up after immutable 25c84 functional freeze
   verify no owned-handle leaks, unchanged failed-allocation ledger, valid old
   material, idempotent disposal and exact restart requirement after partial writes.
   These are GL API double controls, not real device-loss/performance evidence.
+
+Full Sky/native-UV/ownership hardware functional checkpoint
+- Exact source25c84d9f6, stagedJAR2620607b4888bb0c7f56a3389b83ef4439e6adb27badfe901351cc4012b264c2, immutableloopback8108.
+- Actual ANGLE AMD RadeonRX6700XT, internal/CSS960x540, DPR1.
+  300s capture11197 source-worldframes, lastframe315620.9ms versus315629ms
+  observer, noGPUerror orJavaexit.237794624B resident chunks/textures,
+  83886080B shadows,357376B Sky. Source scene really drew526944triangles.
+- Shared native Sky, texel-centerUVs, early/full ownership, modernloop and
+  GPUdepth declared by actual runtime. OrdinaryTalk153, DoorOpen with
+  authoritative133660->132659 and opened passage, Drop246/inventory2->1,
+  normal movement136663 observed. Current drop not re-taken; private fixture
+  is disposable and manager has preserved restore backup.
+- Warm steady profiled/nonexclusive cadence40-42FPS is exploratory, not matched
+  performance acceptance. Cull around1ms vs earlier6ms motivates controlled
+  same-artifact cohorts. Tiny native/browser camera drift is explicitly recorded
+  in latest pose stats; no exact image-parity claim. Partial-alpha UI still gap.
+
+Private optional sprite-cache comparison contract
+- benchmark=1 accepts sprites=uncached|cached (defaultuncached), with existing
+  cull=late|early and ownership=objects|all, loop=legacy|modern.
+- Actual cache enabled/hits/misses/ownedbytes export in gpu.spriteCompositeCache,
+  from source frameWork indices10..13. FrameWork0..9 semantics unchanged.
+- Cache result pixels are synchronously uploaded borrowed read-only; current
+  sprite anchor/depth remains production-authoritative. Unsupported optional
+  cache layouts fall back to the existing composite builder. No GPU cache
+  acceleration/performance claim before actual matched measurement.

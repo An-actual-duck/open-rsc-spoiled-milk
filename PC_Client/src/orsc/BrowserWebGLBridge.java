@@ -18,6 +18,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private long materialRevision,packingSequence;
     private final OpenGLWorldChunkRenderer packing=new OpenGLWorldChunkRenderer(null,null,null,true,true,false,false,true,true,false);
     private final OpenGLPixelWorkspace spriteWorkspace=new OpenGLPixelWorkspace();
+    private final BrowserWorldSpriteCache spriteCache=new BrowserWorldSpriteCache();
+    private static final boolean SPRITE_CACHE="cached".equals(System.getProperty("spoiledmilk.browserSpriteCache","uncached"));
     private final BrowserLightingData lightingData=new BrowserLightingData();
     private final BrowserSkyData skyData=new BrowserSkyData();
     private int maxTextureSize;
@@ -144,7 +146,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             exportSky(frame);
             long skyEnd=System.nanoTime();
             present(w,h,true,matrices,uniforms(frame),Arrays.copyOf(draws,count),borrowOverlay(image));
-            long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f},pose(frame));
+            long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()},pose(frame));
         } finally { RendererFrameLighting.restore(previous); }
     }
     static int[] pose(Renderer3DFrame frame) {
@@ -165,10 +167,13 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         if(frame.getWorldSpriteSnapshotCount()>1024)throw new IllegalStateException("Browser world sprite count exceeds capacity");
         for(Renderer3DFrame.WorldSpriteSnapshot snapshot:frame.getWorldSpriteSnapshots()) {
             if(snapshot==null||snapshot.getAnchor()==null||snapshot.getLayerCount()==0)continue;
-            CompositeWorldSpriteTexture composite=OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(snapshot,spriteWorkspace);
-            if(composite==null)continue;
+            BrowserWorldSpriteCache.Result cached=null;
+            if(SPRITE_CACHE)try{cached=spriteCache.compose(snapshot,spriteWorkspace);}catch(IllegalArgumentException unsupported){/* Retain production builder for unsupported optional-cache layouts. */}
+            CompositeWorldSpriteTexture composite;
+            byte[] rgba;
+            if(cached!=null){composite=new CompositeWorldSpriteTexture(cached.x,cached.y,cached.width,cached.height,null);rgba=cached.rgba;}
+            else{composite=OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(snapshot,spriteWorkspace);if(composite==null)continue;ByteBuffer pixels=composite.textureData.pixels();rgba=new byte[pixels.remaining()];pixels.get(rgba);}
             if(composite.width<1||composite.height<1||(long)composite.width*composite.height>MAX_PIXELS)throw new IllegalStateException("Browser world sprite exceeds capacity");
-            ByteBuffer pixels=composite.textureData.pixels();byte[] rgba=new byte[pixels.remaining()];pixels.get(rgba);
             uploadWorldSprite(composite.width,composite.height,spriteQuad(frame,snapshot.getAnchor(),composite),rgba);
         }
     }
