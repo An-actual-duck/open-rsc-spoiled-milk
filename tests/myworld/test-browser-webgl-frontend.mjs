@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, configured;
+let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, displayDisposed = 0, configured;
 const status = {textContent:''}, messages = [];
 let layoutReads=0;
 const target = {width:960,height:560,getBoundingClientRect:()=>{layoutReads++;return{left:20,top:40,width:960,height:560}}};
@@ -26,6 +26,7 @@ const middleNative = async()=>Int32Array.from([1,30,40,0]);
 const middleModule = new vm.SyntheticModule(['createBrowserMiddleMouseInput'],function(){this.setExport('createBrowserMiddleMouseInput',()=>{
   middleCreated++;return {stats:middleStats,dispose:()=>middleDisposed++,natives:{Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent:middleNative}};
 });},{context});
+const displayModule=new vm.SyntheticModule(['createBrowserDisplay'],function(){this.setExport('createBrowserDisplay',()=>({stats:{},scale:1,setSize(){},attachDesktop(){},dispose(){displayDisposed++;}}));},{context});
 const gpuModule = new vm.SyntheticModule(['createBrowserWebGL'],function(){this.setExport('createBrowserWebGL',()=>({canvas,stats,dispose:()=>gpuDisposed++,natives:{
   Java_orsc_BrowserWebGLBridge_worldProgress:async()=>{stats.worldReadiness={phase:stats.declaredPhase||'loading'};},
   Java_orsc_BrowserWebGLBridge_present:async(lib,width,height)=>{canvas.width=width;canvas.height=height;stats.lastFrame=clock;stats.worldReadiness={phase:'ready'};},
@@ -34,6 +35,7 @@ const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{assert.equal(specifier,'./webgl.js');await gpuModule.link(()=>{});await gpuModule.evaluate();return gpuModule;}});
 await module.link(specifier=>{
   if(specifier==='./browser-world-cover.js')return coverModule;
+  if(specifier==='./browser-display.js')return displayModule;
   if(specifier==='./browser-middle-mouse.js')return middleModule;
   assert.equal(specifier,'./transport.js');return transportModule;
 });
@@ -70,6 +72,6 @@ await configured.natives.Java_orsc_browser_BrowserBootstrap_report(null,'ordinar
 assert.match(status.textContent,/controlled shader error/);
 cover.blocksWorldInput=true;window.browserSessionDispose();window.browserSessionDispose();
 assert.equal(coverDisposed,1,'Stop disposes the loading-cover owner exactly once before iframe removal');assert.equal(window.browserWorldInputAllowed(),true,'Stop releases the world input gate');
-assert.equal(gpuDisposed,1);assert.equal(transportDisposed,1);assert.equal(middleDisposed,1,'Stop disposes the middle-input owner exactly once');
+assert.equal(displayDisposed,1);assert.equal(gpuDisposed,1);assert.equal(transportDisposed,1);assert.equal(middleDisposed,1,'Stop disposes the middle-input owner exactly once');
 assert.ok(messages.some(m=>m.proof?.gpu?.lastError==='controlled shader error'));
 console.log('PASS mocked frontend contract: GPU/middle native merge, AWT alignment, pointer transparency, sticky input/GPU errors and idempotent owner disposal; no hardware proof');

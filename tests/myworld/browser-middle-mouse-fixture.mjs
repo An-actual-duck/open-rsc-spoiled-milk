@@ -31,7 +31,7 @@ for(const name of ['mousedown','mouseup','auxclick','click'])assert.equal(win.fi
 assert.equal(win.fire('auxclick',{button:2}).stopped,undefined);
 win.fire('pointerdown');await next();win.fire('lostpointercapture',{pointerId:8});
 assert.equal(relay.stats.cancels,0);win.fire('lostpointercapture');assert.deepEqual(Array.from(await next()),[0,0,0,0]);
-for(const lose of [()=>win.fire('blur'),()=>{doc.visibilityState='hidden';doc.fire('visibilitychange');doc.visibilityState='visible';},
+for(const lose of [()=>win.fire('browser-display-change'),()=>win.fire('blur'),()=>{doc.visibilityState='hidden';doc.fire('visibilitychange');doc.visibilityState='visible';},
   ()=>{allowed=false;win.fire('browser-world-readinesschange');},()=>win.fire('pointermove',{buttons:0})]){
   allowed=true;win.fire('pointerdown');await next();lose();assert.deepEqual(Array.from(await next()),[0,0,0,0]);
 }

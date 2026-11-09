@@ -71,6 +71,7 @@ export function createBrowserMiddleMouseInput(win = window, doc = document) {
   listen(win,'blur',cancel);
   listen(doc,'visibilitychange',()=>{ if(doc.visibilityState==='hidden')cancel(); });
   listen(win,'browser-world-readinesschange',()=>{ if(!allowed())cancel(); });
+  listen(win,'browser-display-change',cancel);
   return {
     stats,
     natives: { async Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent() {
