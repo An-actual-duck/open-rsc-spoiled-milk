@@ -1,5 +1,6 @@
 const started = performance.now();
 import {createTransport} from './transport.js';
+import {createWorldCover} from './browser-world-cover.js';
 import {createBrowserMiddleMouseInput} from './browser-middle-mouse.js';
 const status = document.querySelector('#status');
 const options = new URLSearchParams(location.search);
@@ -7,21 +8,25 @@ const javaVersion = Number(options.get('java') || '8');
 if (![8, 11, 17].includes(javaVersion)) throw new Error('Private probe supports Java 8, 11 or 17');
 window.browserProof = {events: [], started, renderer: 'AWT software / direct framebuffer', mode: options.get('mode') || 'software', javaVersion, wasmGC: options.has('wasmgc'), runtimeVersion: window.browserRuntimeVersion};
 let stopped = false;
-let gpu;
+let gpu,worldCover,awaitingGameFrame=false;
+window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput;
+function updateWorldCover(){const state=gpu?.stats.worldReadiness,error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null),waiting=awaitingGameFrame&&state?.phase==='login';if(!worldCover||(!waiting&&!error&&!['loading','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;worldCover.update(waiting?{phase:'loading',reason:'Waiting for area data'}:state,gpu?.canvas.style,error);}
 function setStatus(message) {
   if (gpu?.stats.lastError) {
     const age = gpu.stats.lastFrame > 0 ? Math.max(0, Math.round(performance.now() - gpu.stats.lastFrame)) + ' ms ago' : 'none';
     status.textContent = `Browser GPU error: ${gpu.stats.lastError} · last submitted frame: ${age}`;
-  } else if (window.browserProof.inputError) status.textContent = `Browser input error: ${window.browserProof.inputError}`;
+  } else if(gpu?.stats.worldReadiness?.phase==='error')status.textContent=gpu.stats.worldReadiness.reason;
+  else if (window.browserProof.inputError) status.textContent = `Browser input error: ${window.browserProof.inputError}`;
   else status.textContent = message;
 }
 function publish() {
+  updateWorldCover();
   if (gpu) window.browserProof.gpu = gpu.stats;
   if (!stopped) parent.postMessage({type: 'browser-session-proof', proof: window.browserProof, status: status.textContent}, location.origin);
 }
 function dispose() {
   if (stopped) return;
-  stopped = true; pointer?.dispose(); transport.dispose(); gpu?.dispose();
+  stopped = true; pointer?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
 }
 function finish(reason) {
   if (stopped) return;
@@ -63,6 +68,7 @@ const natives = {
   },
   async Java_orsc_browser_BrowserBootstrap_reportLoop(lib,mode,early,full) { window.browserProof.clientLoop=mode;window.browserProof.earlyFaceCull=early===true;window.browserProof.fullResidentOwnership=full===true; },
   async Java_orsc_browser_BrowserBootstrap_reportState(lib, mode, fps, loadingPercent) {
+    if(mode==='GAME'&&window.browserProof.state?.mode!=='GAME')awaitingGameFrame=true;else if(mode!=='GAME')awaitingGameFrame=false;
     const state = {milliseconds: Math.round(performance.now() - started), mode, fps, loadingPercent};
     if (window.browserProof.state?.mode !== mode) console.log('BROWSER_PROOF_STATE', JSON.stringify(state));
     window.browserProof.state = state;
@@ -89,28 +95,27 @@ try {
     canvas.setAttribute('aria-hidden', 'true');
     Object.assign(canvas.style, {position: 'absolute', pointerEvents: 'none', display: 'none', zIndex: '1'});
     gpu = createBrowserWebGL(canvas, report, {opaqueProof:options.get('alpha-proof')==='1'});
+    worldCover=createWorldCover({document,window,display:document.querySelector('#display'),onGateChange:()=>window.dispatchEvent(new Event('browser-world-readinesschange'))});
+    window.browserProof.worldLoading=worldCover.stats;
     window.browserProof.renderer = 'WebGL2 resident world and sprites / software UI (experimental)';
     Object.assign(natives, gpu.natives);
+    function alignWorldSurface(width,height){
+      const display=document.querySelector('#display'),target=[...display.querySelectorAll('canvas')].filter(c=>c!==canvas).sort((a,b)=>b.width*b.height-a.width*a.height)[0];
+      if(target&&canvas.parentElement){const box=target.getBoundingClientRect(),parentBox=display.getBoundingClientRect(),sx=box.width/target.width,sy=box.height/target.height;Object.assign(canvas.style,{display:'block',left:(box.left-parentBox.left+(target.width-width)*sx/2)+'px',top:(box.top-parentBox.top+(target.height-height)*sy)+'px',width:width*sx+'px',height:height*sy+'px'});}
+      updateWorldCover();
+    }
+    const progressName='Java_orsc_BrowserWebGLBridge_worldProgress',progress=natives[progressName];
+    if(typeof progress!=='function')throw new Error('WebGL bridge has no loading protocol');
+    natives[progressName]=async(lib,metadata)=>{const blocked=worldCover.blocksWorldInput;await progress(lib,metadata);awaitingGameFrame=false;if(gpu.stats.worldReadiness?.blocksWorldInput||gpu.stats.worldReadiness?.phase==='loading'||Number(metadata[9])!==gpu.stats.display?.internalWidth||Number(metadata[10])!==gpu.stats.display?.internalHeight)alignWorldSurface(Number(metadata[9]),Number(metadata[10]));else updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();};
     const presentName = 'Java_orsc_BrowserWebGLBridge_present';
     const present = natives[presentName];
     if (typeof present !== 'function') throw new Error('WebGL bridge has no frame presenter');
     natives[presentName] = async (...args) => {
+      const blocked=worldCover.blocksWorldInput;
       const result = await present(...args);
-      // AWT's canvas includes its titlebar. The game framebuffer is bottom
-      // aligned within that canvas; keep pointer input on the original AWT.
-      const display = document.querySelector('#display');
-      const target = [...display.querySelectorAll('canvas')].filter(c => c !== canvas)
-        .sort((a, b) => b.width * b.height - a.width * a.height)[0];
-      if (target && canvas.parentElement) {
-        const box = target.getBoundingClientRect(), parentBox = display.getBoundingClientRect();
-        const sx = box.width / target.width, sy = box.height / target.height;
-        const width = Number(args[1]), height = Number(args[2]);
-        Object.assign(canvas.style, {
-          display: 'block', left: (box.left - parentBox.left + (target.width - width) * sx / 2) + 'px',
-          top: (box.top - parentBox.top + (target.height - height) * sy) + 'px',
-          width: width * sx + 'px', height: height * sy + 'px',
-        });
-      }
+      // Preserve ordinary AWT input; the loading cover shares the game bounds.
+      alignWorldSurface(Number(args[1]),Number(args[2]));
+      if(blocked!==worldCover.blocksWorldInput)publish();
       gpu.stats.display={internalWidth:Number(args[1]),internalHeight:Number(args[2]),cssWidth:canvas.style.width,cssHeight:canvas.style.height,devicePixelRatio:window.devicePixelRatio||1};
       return result;
     };
@@ -125,7 +130,7 @@ try {
   report('Browser Java ready');
   const display = document.querySelector('#display');
   cheerpjCreateDisplay(1000, 620, display);
-  if (gpu) { display.style.position = 'relative'; display.append(gpu.canvas); }
+  if (gpu) { display.style.position = 'relative'; display.append(gpu.canvas);worldCover.attach(); }
   const code = await cheerpjRunMain('orsc.browser.BrowserBootstrap', '/app/browser-spike.jar:/app/client.jar', window.browserProof.mode);
   window.browserProof.ended = true; report('Java program stopped (exit ' + code + '); see console for compatibility results');
   finish('Java program stopped (exit ' + code + '). See console for compatibility results.');

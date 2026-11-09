@@ -17,7 +17,7 @@ const allocationKinds={createBuffer:"buffer",createVertexArray:"vao",createTextu
 const deletionKinds={deleteBuffer:"buffer",deleteVertexArray:"vao",deleteTexture:"texture",deleteShader:"shader",deleteProgram:"program",deleteFramebuffer:"framebuffer"};
 const resources=()=>JSON.stringify([...owned].map(([kind,values])=>[kind,values.size]));
 const functions={
-  getExtension:()=>null,getError:()=>{const e=pendingError;pendingError=0;return e;},getShaderParameter:()=>true,getProgramParameter:()=>true,getAttribLocation:()=>0,getUniformLocation:(p,n)=>n,
+  fenceSync:()=>({}),deleteSync(){},flush(){},clientWaitSync:()=>gl.CONDITION_SATISFIED,getExtension:()=>null,getError:()=>{const e=pendingError;pendingError=0;return e;},getShaderParameter:()=>true,getProgramParameter:()=>true,getAttribLocation:()=>0,getUniformLocation:(p,n)=>n,
   createBuffer:()=>({id:next++}),createVertexArray:()=>({id:next++}),createTexture:()=>({id:next++}),createShader:()=>({id:next++}),createProgram:()=>({id:next++}),createFramebuffer:()=>({id:next++}),
   bindVertexArray:v=>currentVAO=v,bindBuffer:(target,b)=>bindings.set(target,b),bufferData:(target,data)=>buffers.set(bindings.get(target),copy(data)),
   bufferSubData:(target,offset,data)=>{const source=copy(data);buffers.get(bindings.get(target)).set(source,offset);lastSubData={target,offset,bytes:source};},
@@ -52,7 +52,8 @@ for(const mode of ['null','throw','error']) {
 }
 
 const matrix=new Float32Array(48),values=new Float32Array(30),draws=new Int32Array([1,0,0,0,0,2,0,0]);
-async function frame(){calls.length=0;await n.Java_orsc_BrowserWebGLBridge_present(null,2,2,true,matrix,values,draws,new Int32Array(4));return calls.slice();}
+let textureCount=1;
+async function frame(){calls.length=0;await n.Java_orsc_BrowserWebGLBridge_worldProgress(null,new Int32Array([1,2,1,1,1,0,0,0,1,2,2,textureCount]));await n.Java_orsc_BrowserWebGLBridge_present(null,2,2,true,matrix,values,draws,new Int32Array(4));return calls.slice();}
 assert.deepEqual(await frame(),[{count:3,offset:0,cutoff:.5,blend:false,texture:1}]);
 const textureHandlesBefore=resources();await n.Java_orsc_BrowserWebGLBridge_uploadTexture(null,7,1,1,new Int32Array([-1]),true);assert.equal(resources(),textureHandlesBefore,'same-size texture update recreated its GL handle');
 assert.equal(backend.stats.gpuBytes,resident);
@@ -61,7 +62,7 @@ const replacement=new Float32Array(84);replacement[0]=9;const nextBatches=new In
 await n.Java_orsc_BrowserWebGLBridge_replaceChunk(null,1,replacement,indices,nextBatches);nextBatches[2]=0;replacement[0]=100;
 assert.equal(backend.stats.gpuBytes,resident);assert.equal(backend.stats.repackedChunks,1);assert.equal((await frame())[0].count,3,'repack retained borrowed batch metadata');
 await assert.rejects(()=>n.Java_orsc_BrowserWebGLBridge_replaceChunk(null,1,new Float32Array(112),indices,nextBatches),/shape changed/);assert.equal(backend.stats.gpuBytes,resident);
-await n.Java_orsc_BrowserWebGLBridge_deleteTextures(null,new Int32Array([7]));assert.deepEqual(await frame(),[{count:3,offset:0,cutoff:.5,blend:false,texture:0}]);
+await n.Java_orsc_BrowserWebGLBridge_deleteTextures(null,new Int32Array([7]));textureCount=0;assert.deepEqual(await frame(),[{count:3,offset:0,cutoff:.5,blend:false,texture:0}]);
 await n.Java_orsc_BrowserWebGLBridge_beginWorldSprites();const quad=new Float32Array(20);for(let i=0;i<4;i++){quad[i*5+3]=i===0||i===3?1:0;quad[i*5+4]=i<2?0:1;}
 await n.Java_orsc_BrowserWebGLBridge_uploadWorldSprite(null,3,5,quad,new Uint8Array(60));const sampled=new Float32Array(lastSubData.bytes.buffer);
 for(let i=0;i<4;i++){assert.equal(sampled[i*5+3],atlasTexelCenter(0,3,quad[i*5+3],2048));assert.equal(sampled[i*5+4],atlasTexelCenter(0,5,quad[i*5+4],2048));}

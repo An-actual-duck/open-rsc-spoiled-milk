@@ -1,0 +1,113 @@
+Browser world readiness cover — verified private follow-up
+=======================================================
+Baseline main73018fa59967c478e5b05f02bd5b4b9ee73baf8b.
+The existing8113 preview is immutable. This task changes only browser readiness
+and frontend loading/input boundaries; no Bootstrap/native input/settings edits.
+
+Source completion
+-----------------
+BrowserWebGLBridge exports a bounded12-int declaration before every presentation:
+version, mode, region epoch, required/uploaded chunks, outstanding packing updates,
+required/uploaded composite groups, core authority-ready, viewport width/height,
+and uploaded material texture count. Frame ownership remains synchronous and the
+existing pooled-frame release contracts are unchanged.
+
+Core isRenderer3DWorldReady() supplies actual region/activation authority. Login
+and full-screen character creation/death/sleep are separate UI modes. Invisible,
+clipped or absent actors do not require a fabricated positive snapshot count.
+Every actually produced composite must be uploaded. Region/layer/rebase identity
+uses source chunk region metadata, not animated content signatures.
+
+Reveal policy
+-------------
+Successful current color/lighting/sprite presentation must match the complete
+source declaration. A nonblocking WebGL2 fence proves the complete initial GPU
+work was processed. The cover then permits a short cadence warm-up: normally
+seven complete source frames with a stable six-interval window; bounded at30
+complete frames, or2.5seconds after at least three complete frames. There is no
+minimum FPS and no timer can reveal missing geometry/materials or a pending GPU
+fence. An unsignaled fence after15seconds becomes a visible retry error.
+
+Only login/core area loading and region/viewport changes restart the cover.
+Ordinary animation signatures, camera motion and live material repacks after a
+ready frame do not keep re-covering gameplay. All Java updates and GPU uploads
+continue underneath. Backend errors/context loss stay visible, requiring Stop
+and restart instead of a blank or stale false-ready view.
+
+Input and lifecycle
+-------------------
+The cover aligns with the actual AWT game buffer, leaving the window titlebar
+and outer Stop control available. Document capture handlers are registered
+before the vendor runtime and suppress world presses/clicks/context menus/wheel.
+Game-focused printable/arrow keydowns are gated, while Tab/Shift+Tab/Escape,
+function keys, browser shortcuts with Ctrl/Meta/Alt and all key/pointer releases
+remain available. This is not a browser/global keyboard lock.
+window.browserWorldInputAllowed() reflects the current gate. A
+browser-world-readinesschange event fires only after gate transitions, allowing
+the separate middle relay to cancel a held gesture immediately.
+
+CPU evidence so far
+-------------------
+Fresh Java8-target client build passes. Actual source-frame fixtures test region,
+signed-level, content churn, relog, missing authority and legitimate modal modes.
+Instrumented GL/DOM tests cover source completeness, fences, warm-up bounds,
+slow devices, live-update stability, resize/login/modal/error states, keyboard
+shortcuts/focus, press/release gating and cleanup. Existing bridge/Scene ownership
+and GPU resource/frontend controls pass after adding the new declaration seam.
+These CPU/API controls are separate from the hardware proof below.
+
+Steady-state and focus controls
+-------------------------------
+Ready-world declarations do not trigger a second canvas layout query or copy the
+whole proof object to the outer page on every frame. Loading state changes and
+actual presentation still update the cover promptly; ordinary status cadence
+remains unchanged. The frontend test asserts these steady-state boundaries.
+Tab/Shift+Tab, Escape, function keys, Ctrl/Meta/Alt shortcuts and keys outside
+game focus are explicitly tested; all releases pass.
+
+
+Combined private hardware proof
+-------------------------------
+Frozen source df414acd0402d383de3a46a69d4d37954d65bfe1 includes reviewed
+controls main60202480f. JAR SHA256:
+019d6af7d43513feb058e00f44e2a42e80cf28ccf546479f20c6d1f15d01f944.
+Immutable stage output/tests/browser-gameplay-spike/browser-world-ready-proof,
+HTTP127.0.0.1:8115/?mode=webgl. Actual isolated Chrome/ANGLE adapter:
+AMD Radeon RX6700XT, OpenGL4.6; no software fallback. Normal disposable
+browserdemo account only; public host/map/accounts untouched.
+
+Evidence run plain-smoke-1794265328115 includes loading-progression.json,
+00-loading-cover.png, subsequent world/menu/settings captures and result.json.
+165 sampled states record actual authority loading, required chunks expanding
+41 to101, uploads increasing from1 to101, then reveal at101/101, zero pending
+repacks and seven complete source frames. A real CDP world click under the cover
+was suppressed (two pointer events); game updates/uploads kept progressing.
+Cover aligned below the titlebar; outer Stop remained available. Initial cover
+through reveal took approximately14.2seconds in this instrumented functional run;
+this is not a startup-time or FPS benchmark.
+
+After reveal, ordinary left-click inventory and right-click context menu worked.
+Actual middle-button orbit changed yaw512 to320, pitch112 to172; normal release
+worked. A separately labeled gate fault injection while middle was stationary
+incremented cancel immediately. This validates the readiness-event/relay contract;
+it is not evidence of a real map transition while dragging. Geometry visibly
+changed Smooth toFaceted and lighting eventually changed Directional toClassic.
+Those live setting repacks remained uncovered, as intended. The attempted terrain
+slider did not visibly change, so no slider-success claim is made. Settings
+repack actions were asynchronous and the proof stopped before all final live
+repacks completed; no loading-cover or GPU error occurred.
+
+Explicit Stop removed the runtime iframe, closed the dedicated browser and left
+the private account offline. Existing8113/8114 artifacts were preserved. This is
+a focused functional proof, not new performance acceptance or a claim of60FPS.
+Existing wider browser limitations remain in browser-webgl-renderer.txt. Real
+area transition/resize/relogin/error state handling also has controlled state
+fixtures; this short combined run primarily exercised initial login readiness.
+
+Explicit disposal review follow-up
+----------------------------------
+Ordinary browserSessionDispose now disposes the loading-cover owner before iframe
+removal, using the same owner path as pagehide. Repeated owner disposal and direct
+cover disposal are idempotent: gate release, listeners and cover DOM are cleaned
+exactly once. Focused frontend and real cover DOM fixtures assert this behavior.
+Historical8115 stage remains unchanged; this follow-up changes cleanup only.
