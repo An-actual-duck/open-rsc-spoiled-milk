@@ -88,6 +88,7 @@ try {
     Object.assign(canvas.style, {position: 'absolute', pointerEvents: 'none', display: 'none', zIndex: '1'});
     gpu = createBrowserWebGL(canvas, report, {opaqueProof:options.get('alpha-proof')==='1'});
     worldCover=createWorldCover({document,window,display:document.querySelector('#display'),onGateChange:()=>window.dispatchEvent(new Event('browser-world-readinesschange'))});
+    window.browserProof.worldLoading=worldCover.stats;
     window.addEventListener('pagehide',()=>worldCover.dispose(),{once:true});
     window.browserProof.renderer = 'WebGL2 resident world and sprites / software UI (experimental)';
     Object.assign(natives, gpu.natives);

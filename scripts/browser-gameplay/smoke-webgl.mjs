@@ -30,7 +30,7 @@ async function startAndLogin(name){
   await button('start');await delay(18000);
   await until(`(()=>{const p=document.querySelector('#runtime')?.contentWindow.browserProof;return p?.state?.mode==='LOGIN'&&(p.gpu?.javaFrames||0)>=20})()`);
   const r=await bounds();await point(r.x+r.w/2+100,r.y+r.h/2+123);await point(r.x+r.w/2-116,r.y+r.h/2+98);await type('browserdemo');await point(r.x+r.w/2-46,r.y+r.h/2+146);await type('BrowserProof13');await point(r.x+r.w/2+154,r.y+r.h/2+83);
-  await until(`(()=>{const w=document.querySelector('#runtime')?.contentWindow,p=w?.browserProof;return p?.state?.mode==='GAME'&&(p.gpu?.javaWorldFrames||0)>=20&&!p.gpu.lastError&&w.performance.now()-p.gpu.lastFrame<1500})()`,90000);
+  await until(`(()=>{const w=document.querySelector('#runtime')?.contentWindow,p=w?.browserProof;return p?.state?.mode==='GAME'&&(p.gpu?.javaWorldFrames||0)>=20&&(!p.gpu.worldReadiness||p.gpu.worldReadiness.phase==='ready')&&!p.gpu.lastError&&w.performance.now()-p.gpu.lastFrame<1500})()`,90000);
   await gamePoint(480,358);
   await until(`(()=>{const w=document.querySelector('#runtime')?.contentWindow,p=w?.browserProof;return(p?.gpu?.javaWorldFrames||0)>=150&&!p.gpu.lastError&&w.performance.now()-p.gpu.lastFrame<1000})()`);
   const p=await save(name),g=p.gpu;
