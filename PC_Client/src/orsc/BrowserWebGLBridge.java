@@ -67,7 +67,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 textures.put(id,texture.getSignature());
             }
             long textureEnd=System.nanoTime();
-            int[] draws=new int[world.getChunkCount()*6];int count=0,uploaded=0;
+            int[] draws=new int[world.getChunkCount()*8];int count=0,uploaded=0;
             for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
                 long signature=chunk.getStorageSignature();CachedChunk cached=chunks.get(signature);
                 if(cached==null && (uploaded==0||uploaded+chunk.getVertexCount()<=UPLOAD_VERTICES_PER_FRAME)) {
@@ -78,7 +78,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 draws[count++]=cached.id;draws[count++]=chunk.getVertexOffsetX()-cached.x;draws[count++]=chunk.getVertexOffsetZ()-cached.z;
                 draws[count++]=chunk.getLogicalWorldOffsetX();draws[count++]=chunk.getLogicalWorldOffsetZ();
                 int visibility=0;for(Renderer3DModelKind kind:Renderer3DModelKind.values())if(frame.isWorldChunkModelKindVisible(kind,chunk.getPlane()))visibility|=1<<kind.ordinal();
-                draws[count++]=visibility;
+                draws[count++]=visibility;draws[count++]=chunk.getPlane();draws[count++]=chunk.getChunkRole();
             }
             long geometryEnd=System.nanoTime();
             float[] view=OpenGLWorldChunkRenderer.backendWorldViewMatrix(frame);
