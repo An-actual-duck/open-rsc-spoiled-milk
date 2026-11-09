@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import subprocess
+import sys
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -62,10 +64,11 @@ def main() -> None:
         "public void componentResized(ComponentEvent e) {\n\t\tif (!OPENGL_PRIMARY_WINDOW_ENABLED) {",
         "OpenGL-primary Swing resize guard",
     )
-    require(
-        settings_panel,
-        "if (!state.openGLPrimary)",
-        "legacy scaler visibility guard",
+    # Verify actual row/action behavior for software, desktop GPU and browser
+    # GPU instead of pinning the obsolete desktop-only source spelling.
+    subprocess.run(
+        [sys.executable, str(ROOT / "tests/myworld/test-browser-controls-settings.py")],
+        check=True,
     )
     require(
         mudclient,
