@@ -26,7 +26,7 @@ public final class BrowserTeleportOverlayFixture {
             require(graphics.getRenderer2DPhase()==Renderer2DFrame.Phase.SCENE,"Browser Scene phase leaked");
             require(Arrays.equals(baseline,graphics.pixelData),"Browser overlay changed ordinary teleport RGB");
             WorldOverlayCoverage.Frame coverage=graphics.borrowWorldOverlayCoverage();require(coverage.valid&&coverage.transparent,"Teleport invalidated coverage");boolean affected=false;for(float t:coverage.transmittance)affected|=t<1;require(affected,"Teleport did not cover the GPU world");
-            graphics.setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);boolean refused=false;try{client.drawTeleportBubble(99,0,0,1,1,0,2);}catch(RuntimeException expected){refused=true;}
+            graphics.setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);boolean refused=false;java.io.PrintStream stderr=System.err;try{System.setErr(new java.io.PrintStream(new java.io.ByteArrayOutputStream()));client.drawTeleportBubble(99,0,0,1,1,0,2);}catch(RuntimeException expected){refused=true;}finally{System.setErr(stderr);}
             require(refused&&graphics.getRenderer2DPhase()==Renderer2DFrame.Phase.UI_OVERLAY,"Exceptional teleport did not restore previous phase");
             graphics.beginOpaqueWorldOverlay();graphics.setWorldOverlayCoverageEnabled(false);BrowserFrameSinkRegistry.install(null);
         }

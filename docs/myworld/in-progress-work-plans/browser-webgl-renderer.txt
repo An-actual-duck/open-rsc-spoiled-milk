@@ -342,3 +342,14 @@ Overlay draft validation update
 - Ordinary teleport circles are explicitly WORLD_OVERLAY only in browser mode,
   with previous phase restored even on exceptions. Native raster body unchanged.
   Production Java regression fixture awaits the reviewed shared actor API build.
+
+Integrated shared coverage/actor API validation
+- Normal main merge includes dc8963838. Fresh clientbuild passes; renderer suite
+  passed through final legacy source-snippet expectation, which required updating
+  two obsolete native-only snippets to the new explicit GPU_OWNED/FORCE_SOFTWARE
+  contract. The corrected final world-geometry check and all other suite checks
+  pass, as do9.84m coverage/24.8k actor controls and56 real teleport checks.
+- JS coverage, resources, frontend, sharedSky and shadow resource controls pass.
+- Workspace-layout audit still rejects inherited assets/sprites and legacy loose
+  output entries. This task uses declared tests/reviews locations only; no old
+  ignored artifacts were deleted or relocated to make that audit green.
