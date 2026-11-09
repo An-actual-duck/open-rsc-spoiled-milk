@@ -21,6 +21,7 @@ public final class BrowserTelemetryFixture {
         double[] after=BrowserTelemetryData.snapshot();Map<String,Long> expected=new HashMap<String,Long>();
         long[] totals={120,10,20,5,85,77,11,22,33,44,55,90,1,2,3,84};
         for(int n=0;n<totals.length;n++)expected.put(names[n],totals[n]);
+        expected.put("clientLoopUpdateCountStats",1L);
         if(names.length>32||after.length!=names.length*2||before.length!=after.length)throw new AssertionError("Bulk schema bounds changed");
         for(int n=0;n<names.length;n++) {
             long total=expected.containsKey(names[n])?expected.get(names[n]):0;
@@ -28,6 +29,6 @@ public final class BrowserTelemetryFixture {
         }
         double[] copy=BrowserTelemetryData.snapshot();after[0]=-1;
         if(!Arrays.equals(copy,BrowserTelemetryData.snapshot()))throw new AssertionError("Export borrowed mutable production counters");
-        System.out.println("PASS19 actual cumulative stage counters, bulk schema, coherent snapshot and owned array checks");
+        System.out.println("PASS20 actual cumulative stage/update-count counters, bulk schema, coherent snapshot and owned array checks");
     }
 }

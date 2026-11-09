@@ -8,7 +8,7 @@ public final class BrowserBootstrap {
     private BrowserBootstrap() { }
     public static native void report(String message);
     public static native void reportState(String mode, int fps, int loadingPercent);
-    public static native void reportLoop(String mode);
+    public static native void reportLoop(String mode,boolean earlyFaceCull,boolean fullResidentOwnership);
     public static native void reportTelemetry(String names,double[] values);
     private static native int wsOpen();
     private static native byte[] wsRead(int socket, int maximum);
@@ -83,7 +83,7 @@ public final class BrowserBootstrap {
                         }
                         if (client != null) {
                             if(Boolean.getBoolean("spoiledmilk.browserProfile"))reportTelemetry(orsc.BrowserTelemetryData.names(),orsc.BrowserTelemetryData.snapshot());
-                            reportLoop(String.valueOf(loopField.get(client)));
+                            reportLoop(String.valueOf(loopField.get(client)),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isEarlyResidentFaceCullEnabled(),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isBrowserFullResidentOwnershipEnabled());
                             reportState(String.valueOf(modeField.get(client)), fpsField.getInt(null), orsc.ORSCApplet.globalLoadingPercent);
                         }
                         Thread.sleep(1000);

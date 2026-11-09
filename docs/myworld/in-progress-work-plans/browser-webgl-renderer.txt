@@ -217,3 +217,37 @@ frames. Mean cumulative deltas were42.04ms loop,6.15ms update and35.88ms draw;
 Scene11.53ms (rotate0.61,cull6.36,legacy/picking/sprite preparation4.20,depth0),
 final presentation17.95ms. These nested scopes are not additive. The source
 profile is useful for ranking; it is not a clean performance or stability pass.
+
+Counters-only functional result and controlled ownership work
+-------------------------------------------------------------
+Frozen0ecf6aa8528e65a1fba59ed3b8e26ab58f7c10e3 / JAR
+487408f3b0ab373155c708c162a5318291afafed9d4e4d9edf567ddfcd3c4abb
+completed180seconds normally on actual AMD hardware:4828worldframes, last frame
+189130.4ms fresh against189147ms observer, no error; actualmodern loop, GPU depth,
+geometry shadows and177counters-only snapshots. Glow uploads dropped to6total and
+Java lighting export to roughly0.1ms. The adjacent authored Doorframe Close command
+sent opcode127at(132,659), moved the player there, changed the mesh to closed Door,
+and exposed its Open option. Final reopen click missed the run deadline and is
+not claimed. Normal banker dialogue passed in the earlier modern run. Drop/re-take,
+ordinary menus and authoritative movement also passed earlier functional captures.
+
+The manager's same-artifact full-lighting unprofiled pair measured30.86legacy and
+30.61modern new world FPS. There was no meaningful loop-only gain at this CPU load;
+legacy remains the default. The cadence control stays available for future work.
+The diagnostic50.6–89.05s profile interval had1213loop samples:31.70ms loop,
+4.57ms accumulated update per loop,27.11ms draw,11.36ms Scene (6.41cull,4.01legacy,
+0.59rotation),9.78ms final presentation. These are nested instrumented means.
+The export now additionally carries clientLoopUpdateCountStats so update-time
+can be normalized by actual update count, not mistaken for time per update.
+
+Private benchmark cull=late|early keeps the existing ownership/picking predicate,
+but early mode applies it before redundant face-frustum vertex scans. Defaultlate
+and desktop behavior remain unchanged. Actual Scene differential checks pass1084
+retained-face/pick/pixel cases with1332near-plane crossings, frustum boundaries,
+transparent/cutout materials, expanded invisible proxies and forced-legacy frames.
+Private ownership=objects|all extends ownership to WALL/ROOF only for a trusted
+installed browser backend explicitly needing no CPU depth frame. The same pointer
+and interaction-occluder exceptions remain. Another2975checks retain exact picks,
+relative sprite anchors/draw order, resident mesh data and pixels, exercise88actual
+omitted wall/roof faces, and preserve CPU-depth/default/forced-legacy paths.
+Both controls remain opt-in until actual hardware functional and paired tests.
