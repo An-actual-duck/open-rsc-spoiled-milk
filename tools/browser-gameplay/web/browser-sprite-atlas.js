@@ -5,7 +5,7 @@ export function createBrowserSpriteAtlas(gl,{texture,vbo,stats={},extent=2048,ma
   if(!Number.isInteger(extent)||extent<1||extent>2048||!Number.isInteger(maxSprites)||maxSprites<1||maxSprites>1024)throw new Error('Invalid sprite atlas bounds');
   const MAX_RESIDENT=4096;
   let entries=new Map(),free=[{x:0,y:0,w:extent,h:extent}],epoch=0,sequence=0,pending=null,failed=false,disposed=false;
-  Object.assign(stats,{spriteResidentImages:0,spriteDrawReuses:0,spriteUploadedImages:0,spriteUploadedBytes:0,spriteCompactions:0,spriteEvictions:0,spriteDescriptorUploads:0});
+  Object.assign(stats,{spriteResidentImages:0,spriteDrawReuses:0,spriteUploadedImages:0,spriteUploadedBytes:0,spriteCompactions:0,spriteEvictions:0,spriteDescriptorUploads:0,spritePlanCalls:0,spriteCommitCalls:0,spriteSourceImageBytes:0,spriteDescriptorBytes:0});
   function alive(){if(disposed||failed)throw new Error('Sprite atlas unavailable; restart session');}
   function check(){const error=gl.getError();if(error!==gl.NO_ERROR)throw new Error('Sprite atlas GL error '+error);}
   function allocate(rectangles,w,h){
@@ -39,7 +39,9 @@ export function createBrowserSpriteAtlas(gl,{texture,vbo,stats={},extent=2048,ma
     // Touch active images after inactive entries so the Map remains an LRU inventory.
     for(const id of current.keys()){const value=next.get(id);next.delete(id);next.set(id,value);}
     let bytes=0;for(const id of missing){const d=current.get(id);bytes+=d.w*d.h*4;}if(bytes>extent*extent*4)throw new Error('Sprite upload exceeds atlas byte bound');
-    pending={e,s,next,rectangles,missing,order,bytes,evictions,compacted,hits:order.length-missing.length};
+    let sourceBytes=0;for(const id of order){const d=current.get(id);sourceBytes+=d.w*d.h*4;}
+    pending={e,s,next,rectangles,missing,order,bytes,evictions,compacted,hits:order.length-missing.length,sourceBytes};
+    stats.spritePlanCalls++;
     return Int32Array.from(missing); // owns its result; never retain input or Java frame storage
   }catch(error){failed=true;throw error;}}
   function center(position,size,unit){const first=Math.fround((position+.5)/extent),last=Math.fround((position+size-.5)/extent);return Math.fround(first+Math.fround(Math.fround(last-first)*Math.fround(unit)));}
@@ -52,7 +54,7 @@ export function createBrowserSpriteAtlas(gl,{texture,vbo,stats={},extent=2048,ma
     try{gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_ALIGNMENT,4);let offset=0;for(const id of pending.missing){const r=pending.next.get(id),length=r.w*r.h*4;gl.texSubImage2D(gl.TEXTURE_2D,0,r.x,r.y,r.w,r.h,gl.RGBA,gl.UNSIGNED_BYTE,pixels.subarray(offset,offset+length));offset+=length;}gl.bindBuffer(gl.ARRAY_BUFFER,vbo);if(quads.length)gl.bufferSubData(gl.ARRAY_BUFFER,0,quads);check();}
     finally{gl.bindBuffer(gl.ARRAY_BUFFER,array);gl.bindTexture(gl.TEXTURE_2D,binding);gl.pixelStorei(gl.UNPACK_ALIGNMENT,alignment);gl.activeTexture(active);}
     entries=pending.next;free=pending.rectangles;epoch=e;sequence=s;
-    stats.spriteDrawReuses+=pending.hits;stats.spriteUploadedImages+=pending.missing.length;stats.spriteUploadedBytes+=pending.bytes;stats.spriteCompactions+=pending.compacted?1:0;stats.spriteEvictions+=pending.evictions;stats.spriteDescriptorUploads++;stats.spriteResidentImages=entries.size;
+    stats.spriteDrawReuses+=pending.hits;stats.spriteUploadedImages+=pending.missing.length;stats.spriteUploadedBytes+=pending.bytes;stats.spriteCompactions+=pending.compacted?1:0;stats.spriteEvictions+=pending.evictions;stats.spriteDescriptorUploads++;stats.spriteCommitCalls++;stats.spriteDescriptorBytes+=quads.byteLength;stats.spriteSourceImageBytes+=pending.sourceBytes;stats.spriteFrameGroups=pending.order.length;stats.spriteResidentImages=entries.size;
     const count=pending.order.length;pending=null;return count;
   }catch(error){failed=true;throw error;}}
   function assertCommitted(){alive();if(pending){failed=true;throw new Error('Sprite plan was not committed before presentation');}}

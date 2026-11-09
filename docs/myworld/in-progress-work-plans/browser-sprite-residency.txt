@@ -52,6 +52,9 @@ Metrics and limits
 ------------------
 spriteUploadedImages/Bytes are cumulative accepted missing-image uploads;
 spriteDescriptorUploads counts accepted whole-frame VBO commits;
+spritePlanCalls/CommitCalls count accepted bulk calls, spriteSourceImageBytes
+records the old per-instance RGBA upload equivalent and spriteDescriptorBytes
+records actual contiguous quad bytes;
 spriteResidentImages is the live GPU inventory; spriteCompactions/Evictions
 track allocation behavior. spriteDrawReuses counts draw instances not requiring
 a unique image upload, including cold same-frame sharing; it is NOT a unique
@@ -77,5 +80,7 @@ hot zero-image uploads, ordered shared images, pinned eviction, fragmentation
 compaction, borrowed descriptors, stale epochs/sequence, incomplete plans,
 partial-upload failure and disposal. Existing GPU world/material/resource/UV
 contract fixture and native/default Scene ownership/picking guards pass.
+Layout audit reports inherited legacy ai2 loose output/asset entries; no cleanup
+was attempted. This task uses only declared output/tests/browser-sprite-residency.
 All are CPU/API checks. Hardware image comparison, private gameplay smoke and
 controlled FPS acceptance remain pending manager's serialized window.
