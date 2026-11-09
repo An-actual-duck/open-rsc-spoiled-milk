@@ -2992,7 +2992,11 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return buffer;
 	}
 
-	static float[] worldViewMatrix(Renderer3DFrame frame) {
+	private float[] worldViewMatrix(Renderer3DFrame frame) {
+        return backendWorldViewMatrix(frame);
+    }
+
+    static float[] backendWorldViewMatrix(Renderer3DFrame frame) {
 		float[] view = translationMatrix(
 			-frame.getCameraOffsetX(),
 			-frame.getCameraOffsetY(),

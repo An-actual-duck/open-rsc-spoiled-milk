@@ -77,7 +77,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 int visibility=0;for(Renderer3DModelKind kind:Renderer3DModelKind.values())if(frame.isWorldChunkModelKindVisible(kind,chunk.getPlane()))visibility|=1<<kind.ordinal();
                 draws[count++]=visibility;
             }
-            float[] view=OpenGLWorldChunkRenderer.worldViewMatrix(frame);
+            float[] view=OpenGLWorldChunkRenderer.backendWorldViewMatrix(frame);
             float[] clip=OpenGLWorldChunkRenderer.multiply(OpenGLWorldChunkRenderer.projectionMatrix(frame),view);
             float[] matrices=new float[48];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);columnMajor(OpenGLFramePresenter.cameraToClipProjectionMatrix(frame),matrices,32);
             uploadSprites(frame);
