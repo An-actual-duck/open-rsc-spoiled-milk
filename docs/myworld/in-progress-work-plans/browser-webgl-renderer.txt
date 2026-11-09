@@ -193,3 +193,27 @@ not a clean FPS acceptance run. clientLoopDraw covers drawGame, Scene and final
 ORSCApplet draw; sceneRender excludes pre/post scene assembly/UI; frameStats is
 only the final ORSCApplet presentation segment. These nested spans must not be
 summed as independent work. Cohort deltas and counts are required for ranking.
+
+Profile compatibility correction
+--------------------------------
+The244f6d706 candidate proved the actual selected modern loop and received normal
+banker dialogue, but its first profile run is rejected for stability: after73s,
+the automatic full telemetry report called an unavailable CheerpJ OS/JMX service
+(__syscall_times), throwing ArrayIndexOutOfBoundsException in the CPU-load probe.
+Later GAME/FPS observer summaries were stale after Java stopped. The failure and
+full console transcript remain in webgl-cadence-profile; exit0 did not mean success.
+
+The private browser profile now explicitly selects counters-only collection,
+retaining ordinary bounded counter rings and cumulative totals while suppressing
+automatic full OS/JMX reports. Desktop reports remain the default. Optional
+process/system CPU-load reads additionally return the existing-1 unavailable marker
+on RuntimeException; injected tests verify this and preserve OOM/ThreadDeath.
+The browser proof labels this instrumented mode counters-only. The reviewed shared
+glow cache fix has been merged normally from published main and needs a fresh
+actual profile before drawing further performance conclusions.
+
+The rejected run's valid pre-failure50.984–69.164s diagnostic interval contained432
+frames. Mean cumulative deltas were42.04ms loop,6.15ms update and35.88ms draw;
+Scene11.53ms (rotate0.61,cull6.36,legacy/picking/sprite preparation4.20,depth0),
+final presentation17.95ms. These nested scopes are not additive. The source
+profile is useful for ranking; it is not a clean performance or stability pass.
