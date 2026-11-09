@@ -8,6 +8,8 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import orsc.graphics.Renderer2DFrame;
 import orsc.graphics.three.*;
+import orsc.graphics.two.GraphicsController;
+import orsc.graphics.two.WorldOverlayCoverage;
 
 /** Experimental local WebGL2 backend. Native calls synchronously copy/upload borrowed primitive arrays. */
 public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
@@ -16,6 +18,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private final Map<Integer,Long> textures=new HashMap<Integer,Long>();
     private final Map<Integer,int[]> textureMetadata=new HashMap<Integer,int[]>();
     private long materialRevision,packingSequence;
+    private static final boolean OVERLAY_COVERAGE=Boolean.getBoolean("spoiledmilk.browserOverlayCoverage");
+    private Field mainClientField;
+    private int[] overlayOwner;private int overlayWidth,overlayHeight;
+    private long opaqueSequence;
     private final OpenGLWorldChunkRenderer packing=new OpenGLWorldChunkRenderer(null,null,null,true,true,false,false,true,true,false);
     private final OpenGLPixelWorkspace spriteWorkspace=new OpenGLPixelWorkspace();
     private final BrowserWorldSpriteCache spriteCache=new BrowserWorldSpriteCache();
@@ -41,6 +47,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void deleteTextures(int[] ids);
     private static native void present(int width,int height,boolean world,float[] matrices,float[] uniforms,int[] draws,int[] overlay);
     private static native void frameWork(float[] milliseconds,int[] pose);
+    private static native void overlayFrame(int width,int height,int mode,double generation,double frameSequence,int fades,boolean reset,float[] transmittance);
     private static native void deleteChunks(int[] ids);
     private static native void beginWorldSprites();
     private static native void uploadWorldSprite(int width,int height,float[] vertices,byte[] rgba);
@@ -59,6 +66,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     }
     @Override public void present(BufferedImage image,Renderer2DFrame commands,Renderer3DFrame frame) {
         long frameStart=System.nanoTime();
+        GraphicsController currentSurface=currentSurface();
+        if(currentSurface!=null&&!currentSurface.getSceneSpriteRasterFailure().isEmpty())throw new IllegalStateException("Browser actor capture rejected: "+currentSurface.getSceneSpriteRasterFailure());
         int w=image.getWidth(),h=image.getHeight();
         if(w<1||h<1||(long)w*h>MAX_PIXELS)throw new IllegalStateException("Browser viewport exceeds bounded backend capacity");
         if(!initialized) {
@@ -75,6 +84,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         if(!hasWorld) {
             exportLighting(null);
             exportSky(null);
+            prepareOverlay(image,currentSurface);
             present(w,h,false,new float[48],new float[30],new int[0],borrowOverlay(image));
             return;
         }
@@ -145,9 +155,30 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             long lightingEnd=System.nanoTime();
             exportSky(frame);
             long skyEnd=System.nanoTime();
+            prepareOverlay(image,currentSurface);
             present(w,h,true,matrices,uniforms(frame),Arrays.copyOf(draws,count),borrowOverlay(image));
             long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()},pose(frame));
         } finally { RendererFrameLighting.restore(previous); }
+    }
+    private GraphicsController currentSurface() {
+        try {
+            if(mainClientField==null){mainClientField=ORSCApplet.class.getDeclaredField("mudclient");mainClientField.setAccessible(true);}
+            mudclient client=(mudclient)mainClientField.get(null);return client==null?null:client.getSurface();
+        } catch(ReflectiveOperationException e){throw new IllegalStateException("Browser cannot inspect its current surface",e);}
+    }
+    private void prepareOverlay(BufferedImage image,GraphicsController surface) {
+        if(!OVERLAY_COVERAGE)return;
+        int[] pixels=borrowOverlay(image);int width=image.getWidth(),height=image.getHeight();
+        boolean reset=pixels!=overlayOwner||width!=overlayWidth||height!=overlayHeight;
+        WorldOverlayCoverage.Frame coverage=surface==null?null:surface.borrowWorldOverlayCoverage();
+        if(coverage!=null) {
+            if(coverage.transparent&&(RendererDebugSettings.isOverlayEnabled()||WorldEditorBuildSettings.isEnabled()))surface.invalidateWorldOverlayCoverage("Raw debug/editor framebuffer writer is unsupported by browser coverage");
+            if(!coverage.valid||!surface.isWorldOverlayCoverageCurrent(coverage))throw new IllegalStateException("Browser overlay rejected: "+coverage.reason);
+            if(coverage.transparent&&(coverage.ownerPixels!=pixels||coverage.width!=width||coverage.height!=height))throw new IllegalStateException("Browser overlay pixel owner/dimensions changed");
+            if(coverage.generation<0||coverage.generation>9007199254740991L||coverage.frameSequence<0||coverage.frameSequence>9007199254740991L)throw new IllegalStateException("Browser overlay token exceeds exact JavaScript integer range");
+            overlayFrame(width,height,coverage.mode,coverage.generation,coverage.frameSequence,coverage.retainedFadeCount,reset,coverage.transmittance);
+        } else overlayFrame(width,height,WorldOverlayCoverage.MODE_OPAQUE,0,++opaqueSequence,0,reset,null);
+        overlayOwner=pixels;overlayWidth=width;overlayHeight=height;
     }
     static int[] pose(Renderer3DFrame frame) {
         return new int[]{frame.getCameraOffsetX(),frame.getCameraOffsetY(),frame.getCameraOffsetZ(),frame.getCameraRotationX(),frame.getCameraRotationY(),frame.getCameraRotationZ(),frame.getCenterX(),frame.getCenterY(),frame.getViewportWidth(),frame.getViewportHeight(),frame.getPerspectiveShift(),frame.getFogStartDistance(),frame.getFogDistance(),frame.getSignedWorldLevel()};

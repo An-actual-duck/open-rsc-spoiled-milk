@@ -314,3 +314,18 @@ Private optional sprite-cache comparison contract
   sprite anchor/depth remains production-authoritative. Unsupported optional
   cache layouts fall back to the existing composite builder. No GPU cache
   acceleration/performance claim before actual matched measurement.
+
+ACTIVE source-only overlay/actor integration draft after8109 freeze
+- New optional overlay=coverage path uses real per-owner GraphicsController T,
+  premultiplied CPU RGB and blend(ONE,ONE_MINUS_SRC_ALPHA), preserving opaque
+  final alpha. Exact retained FULL/BASE caller uses reviewed standalone module.
+- Current surface is resolved once via cached ORSCApplet client Field, then owner,
+  dimensions and live generation/sequence validity checked after all UI drawing.
+  Invalid coverage/raw debug/editor writes fail closed; no marker fallback after
+  partial RGB has been produced. Actor-capture failure is rejected even with
+  marker-only mode, using forthcoming scoped GraphicsController actor API.
+- Scene source selects GPU_OWNED only for browser GPU-raster ownership and
+  FORCE_SOFTWARE for browser complete software-world paths; native DEFAULT.
+- THIS DRAFT IS NOT BUILT/TESTED: it awaits manager-reviewed GraphicsController
+  coverage/scoped-actor API and the end of exclusive8109 benchmark window.
+  Frozen8109 artifact remainsaff4a9b42 and is unaffected by these source edits.

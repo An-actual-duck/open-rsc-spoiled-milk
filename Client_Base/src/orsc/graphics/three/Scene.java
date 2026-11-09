@@ -17,6 +17,7 @@ import java.util.IdentityHashMap;
 public final class Scene {
 	static final int TRANSPARENT = 12345678;
 	private static final int MIN_EXPANDED_PICK_PADDING_PIXELS = 14;
+	private final boolean browserOverlayCoverage = Boolean.getBoolean("spoiledmilk.browserOverlayCoverage");
 	private final boolean browserEarlyFaceCull = Boolean.getBoolean("spoiledmilk.browserEarlyFaceCull");
 	private final boolean browserOwnsWallsAndRoofs = Boolean.getBoolean("spoiledmilk.browserOwnsWallsAndRoofs");
 	public boolean isBrowserFullResidentOwnershipEnabled() { return browserOwnsWallsAndRoofs && Renderer3DSettings.isBrowserPresentationAvailable() && !Renderer3DSettings.needsCpuDepthFrame(); }
@@ -3169,9 +3170,14 @@ public final class Scene {
 			boolean skipLegacyWorldRaster =
 				Renderer3DSettings.canSkipLegacyWorldRaster() && !forceLegacyWorldRaster;
             this.interactionLegacyRaster = !skipLegacyWorldRaster;
-            if (skipLegacyWorldRaster && Renderer3DSettings.isBrowserPresentationAvailable()) {
-                // The RGB framebuffer has an unused high byte. Mark only freshly
-                // cleared world background, keeping real black artwork/UI opaque.
+            if (browserOverlayCoverage) {
+                this.graphics.setWorldOverlayCoverageEnabled(Renderer3DSettings.isBrowserPresentationAvailable());
+                if (skipLegacyWorldRaster && Renderer3DSettings.isBrowserPresentationAvailable()) {
+                    if (this.graphics.pixelData != this.pixelData || !this.graphics.beginTransparentWorldOverlay())
+                        throw new IllegalStateException("Browser coverage could not own the current Scene surface");
+                } else this.graphics.beginOpaqueWorldOverlay();
+            } else if (skipLegacyWorldRaster && Renderer3DSettings.isBrowserPresentationAvailable()) {
+                // Marker-only compatibility prototype; genuine black UI remains opaque.
                 java.util.Arrays.fill(this.pixelData, 0x01000000);
             }
 			long legacyDrawStart = RenderTelemetry.now();
@@ -3258,7 +3264,11 @@ public final class Scene {
 							spritePickIndex,
 							spriteAnchorIndex,
 							spriteDrawOrder,
-							geometryFrame);
+							geometryFrame,
+                            Renderer3DSettings.isBrowserPresentationAvailable()
+                                ? (skipLegacyWorldRaster ? GraphicsController.SceneSpriteRasterPolicy.GPU_OWNED
+                                    : GraphicsController.SceneSpriteRasterPolicy.FORCE_SOFTWARE)
+                                : GraphicsController.SceneSpriteRasterPolicy.DEFAULT);
 						if (this.m_K) {
 							var20 += (this.m_Q[var3] << this.rot1024_vp_src) / var15;
 							if (var21 <= this.m_Wb && var21 + var17 >= this.m_Wb && var20 <= this.m_j
