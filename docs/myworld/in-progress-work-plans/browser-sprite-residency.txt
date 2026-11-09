@@ -16,7 +16,9 @@ cache entry.
 
 BrowserWorldSpriteBatch gathers strong RGBA references for the entire current
 frame before GPU planning. Thus CPU LRU eviction while gathering later actors
-cannot invalidate earlier actors. Fresh quads retain current source order and
+cannot invalidate earlier actors. The gather rejects a unique working set beyond
+16MiB before retaining another result, so a pathological frame cannot accumulate
+unbounded strong image references before the GPU capacity check. Fresh quads retain current source order and
 camera/depth/tone semantics. Actual null snapshots, absent anchors, empty layers
 and production-compositor-null results retain the old skip policy; no visible
 actor is omitted or reduced to fit resource limits.

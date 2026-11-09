@@ -26,7 +26,7 @@ public final class BrowserWorldSpriteBatchFixture {
         reject(()->frame.add(new BrowserWorldSpriteCache.Result(0,0,1,1,new byte[4],duplicate.id),new float[20]));
         reject(()->frame.add(new BrowserWorldSpriteCache.Result(0,0,1,1,new byte[3],99),new float[20]));
         float[] invalid=new float[20];invalid[0]=Float.NaN;reject(()->frame.add(duplicate,invalid));
-        BrowserWorldSpriteBatch large=new BrowserWorldSpriteBatch();large.add(new BrowserWorldSpriteCache.Result(0,0,2048,2048,new byte[16*1024*1024],100),new float[20]);large.add(new BrowserWorldSpriteCache.Result(0,0,1,1,new byte[4],101),new float[20]);reject(()->large.pixels(new int[]{100,101}));
+        BrowserWorldSpriteBatch large=new BrowserWorldSpriteBatch();large.add(new BrowserWorldSpriteCache.Result(0,0,2048,2048,new byte[16*1024*1024],100),new float[20]);reject(()->large.add(new BrowserWorldSpriteCache.Result(0,0,1,1,new byte[4],101),new float[20]));check(large.size()==1);
         System.out.println("PASS "+checks+" actual sprite frame gather/eviction lifetime, ordered quad ownership, exact-ID dedup, missing-ID validation and16MiB upload bounds");
     }
 }

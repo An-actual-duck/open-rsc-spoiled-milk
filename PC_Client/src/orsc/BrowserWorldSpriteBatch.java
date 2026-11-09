@@ -13,6 +13,7 @@ final class BrowserWorldSpriteBatch {
     private final List<BrowserWorldSpriteCache.Result> images = new ArrayList<>();
     private final List<float[]> quads = new ArrayList<>();
     private final Map<Integer,BrowserWorldSpriteCache.Result> unique = new HashMap<>();
+    private long uniqueImageBytes;
 
     void add(BrowserWorldSpriteCache.Result image, float[] quad) {
         if(images.size()>=1024||image==null||image.id<1||image.width<1||image.height<1
@@ -23,6 +24,10 @@ final class BrowserWorldSpriteBatch {
         BrowserWorldSpriteCache.Result previous=unique.get(image.id);
         if(previous!=null&&(previous.width!=image.width||previous.height!=image.height||previous.rgba!=image.rgba))
             throw new IllegalStateException("Sprite identity does not own one exact image");
+        if(previous==null){
+            if(uniqueImageBytes+image.rgba.length>16L*1024*1024)throw new IllegalStateException("Current sprite images exceed atlas byte capacity");
+            uniqueImageBytes+=image.rgba.length;
+        }
         images.add(image);quads.add(quad.clone());unique.put(image.id,image);
     }
     int size(){return images.size();}
