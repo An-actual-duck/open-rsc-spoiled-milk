@@ -1,0 +1,145 @@
+Browser middle input and current graphics controls
+=================================================
+
+Scope
+-----
+Focused fix/browser-controls-settings, worker ai2. Desktop/native input paths,
+settings defaults, native GLFW/window capability and public service unchanged.
+Browser readiness/Bridge/WebGL rendering changes belong to the separate ai1
+worker. Browser.js edits are narrow module import/creation/native merge/disposal,
+proof counters and sticky input error reporting, coordinated with that worker.
+
+Root causes
+-----------
+1. RendererSettingsPanel.State only considered the native OpenGL primary window.
+   A genuine browser GPU backend therefore got legacy software scaling rows,
+   hiding the current renderer's working lighting/shadow/material controls.
+2. Existing ORSCApplet MouseHandler already handles Java MouseEvent.BUTTON2
+   independently from gameplay clicks. Official CheerpJ5.0 runtime cj3.js input
+   normalization rejects finite event.buttons values greater than2; DOM middle
+   uses button1/buttons4. Middle press/drag was discarded before reaching AWT.
+
+Primary references inspected (no vendor code copied or patched):
+  https://cjrtnc.leaningtech.com/5.0/cj3.js
+  https://cheerpj.com/docs/guides/implementing-native-methods
+  https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
+  https://docs.oracle.com/javase/8/docs/api/java/awt/event/MouseEvent.html
+
+Settings
+--------
+State has a separate browserGpu capability using the installed optional browser
+backend, never enabling native LWJGL/GLFW/window flags. Browser Graphics includes
+Middle mouse, Lighting, Shadows, Geometry, Terrain Variation, Fog, terrain/object
+shading, brightness/dimness, contrast, gamma, saturation, and server-supported
+visibility controls. Existing action adapters retain settings/persistence and
+gameplay authority. Uniform/lighting exporters already read these settings live.
+
+Browser Geometry cycles Smooth <-> Faceted; desktop keeps Smooth/Faceted/Wire.
+A legacy saved Wire preference already renders filled faceted triangles in
+WebGL, so the browser labels it Faceted and its next filtered cycle normalizes
+to Smooth. No unsupported polygon-line rendering is offered. Native window mode,
+aspect/render-surface changes, native profile bundles (which change window and
+surface), and software-only scaling controls are omitted rather than exposed as
+ineffective or unsafe browser controls. No browser fullscreen/resizing feature
+was added. Material changes can require several budgeted repack frames.
+
+Color/relief controls retain desktop semantics: they adjust the world renderer,
+not HUD colors or all actor sprites. Roof hiding retains physical roof shadow
+casters just as the native renderer does.
+
+Middle relay and lifecycle
+--------------------------
+New browser-middle-mouse.js captures only middle gestures within the displayed
+GPU viewport. It preserves DOM button1/buttons4 in bounded proof counters,
+prevents browser autoscroll/paste/auxclick and duplicate vendor input, and queues
+press/drag/release/cancel packets. Left/right and keyboard paths stay ordinary.
+Move packets coalesce, queue length is bounded64, overflow cancels safely, and
+only one native consumer can wait. There is no idle polling: a dedicated Java
+daemon waits on the native Promise until input/disposal is available.
+
+BrowserMiddleMouseInput validates bounded four-int packets, converts game-local
+viewport coordinates to applet coordinates by ADDING current screen offsets
+(the existing handler subtracts them), creates ordinary AWT BUTTON2 events,
+and dispatches through the existing handler on the EDT with backpressure.
+The existing orbit owns camera yaw, tilt/classic zoom and gameplay-button
+suppression. No separate camera formula or direct player movement is introduced.
+
+Blur, hidden page, pointer cancellation/lost capture, readiness false or Stop
+release the gesture. New presses obey browserWorldInputAllowed; release/cancel
+of an active gesture still work while gated. Readiness worker dispatches
+browser-world-readinesschange on gate changes to cancel stationary held input.
+Stop resolves the outstanding wait with a clean sentinel; Java finally releases
+any orbit. Expected dispatch exceptions become sticky inputError status, so
+periodic loop/FPS messages cannot conceal a dead relay. Critical Error subclasses
+are not swallowed. The original one-off desktop-wide keyboard report remains
+undiagnosed and is not claimed fixed by this work.
+
+CPU evidence
+------------
+  python3 tests/myworld/test-browser-controls-settings.py
+  JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
+    python3 tests/myworld/test-browser-controls-settings.py
+  python3 tests/myworld/test-renderer-settings-panel-extraction.py
+  python3 tests/myworld/test-desktop-middle-mouse-camera-orbit.py
+  python3 tests/myworld/test-desktop-graphics-options-tab.py
+  ./scripts/build-client.sh
+
+Focused fixture:67 Java assertions for capability rows/actions, unsupported
+actions, tuning dispatch, actual production WebGL uniform export changes,
+filtered geometry/native cycle, ordinary BUTTON2 events/orbit deltas, cancellation,
+invalid packets and nonzero113/17 letterbox offsets. Node fixture covers actual
+DOM field values, viewport scaling, coalescing, left/right/vendor isolation,
+blur/hidden/readiness/capture loss, bounded wait and disposal. Desktop regression
+fixtures remain unchanged and pass. Full maintained client build passes.
+
+Actual runtime evidence (functional, not performance)
+-----------------------------------------------------
+Immutable8114 stage:
+  output/tests/browser-gameplay-spike/controls-settings-20261109/
+  source c95dd7c15360db15a0b571128f8e0ab0904f2f8f
+  client SHA256 1433f28161d8217999b7d03ed9db0189a79ada991050c0f6889d21a9126161a2
+Capture:
+  webgl-r5.0-j8-1794263913447/
+
+Dedicated private Chrome profile; verified AMD RX6700XT ANGLE/OpenGL hardware
+in webgl-device.json. Disposable browserdemo account was private/offline before
+launch and rechecked immediately before login. Existing8113 owner preview was
+not modified or closed. Private server/database were not stopped or edited.
+
+Ordinary CDP middle input used DOM button1/buttons4. Live camera pose yaw changed
+sceneY512->272 and pitch sceneX112->202. Ordinary mouse move after release kept
+the pose unchanged. Focusing the parent Stop button without clicking cancelled
+an active orbit. Final page.json records3 presses,35 moves,2 releases,1 cancel,
+lastPressButton1/lastPressButtons4, no input/backend error and11,751 world frames.
+before-middle.png, after-middle-yaw.png, after-middle-pitch-release.png and
+middle-blur-cancel-final.png show the actual runtime. No gameplay walk occurred.
+
+graphics-browser.png shows the current Graphics panel. graphics-shadows-off.png
+shows Off and removal of geometry shadows. graphics-fog-off-terrain-high.png
+shows Fog Off; actual exported pose fogEnd changed6620->19932. That filename is
+only a requested test label: terrain slider remained10, so no live slider change
+is claimed. Requested lighting clicks likewise did not establish a Classic-mode
+change; do not infer coverage from those screenshot filenames. The fast CDP
+click sequence was imperfect; actual changes and missed clicks are separated.
+
+Browser exited normally and private status was confirmed offline afterward;
+HTTP8114 is a read-only owned fixture listener. Source files/stage are preserved.
+No performance comparison or FPS claim is made: other worker CPU work was allowed.
+
+Remaining integration checks
+----------------------------
+Root will run a focused combined proof after readiness/UI branch integration:
+  Geometry Smooth/Faceted row (added after immutable8114 capture), live sliders
+  and representative lighting changes using visible GPU-image coordinates with
+  response waits; stationary middle cancellation under the actual loading gate.
+The existing common CPU/export controls are verified; these additional live
+interactions are explicit coverage limits. The standalone worker proof is not
+a public release or a replacement for final integration testing.
+
+Workspace check
+---------------
+git diff --check passes. workspace-layout.py check fails on pre-existing ai2
+assets/sprites and many historical unclassified output-root entries retained
+from earlier tasks. This task creates no such asset path or loose output-root
+writer; its generated evidence uses declared output/tests categories. Historical
+data was not deleted or reorganized as part of this controls fix.

@@ -83,6 +83,10 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		return keyHandler;
 	}
 
+	// Browser relay packets are already game-local; AWT handlers subtract these offsets.
+	final int browserMouseOffsetX() { return mudclient == null ? 0 : mudclient.screenOffsetX; }
+	final int browserMouseOffsetY() { return mudclient == null ? 0 : mudclient.screenOffsetY; }
+
 	boolean isWorldEditorShortcutMode() {
 		return mudclient != null && mudclient.worldEditorInterface != null
 			&& mudclient.worldEditorInterface.isKeyboardShortcutMode();
