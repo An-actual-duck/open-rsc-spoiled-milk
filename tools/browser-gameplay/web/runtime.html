@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Private Java session</title>
+<style>body{margin:0;background:#182026;color:#eee;font:15px system-ui}#status{padding:4px;white-space:pre-wrap}</style>
+<div id="status">Loading browser Java runtime…</div><div id="display"></div>
+<script type="module">
+// This document is a disposable browsing context, never a standalone entry point.
+if (window.parent === window) {
+  document.querySelector('#status').textContent = 'Open the private test index and choose Start.';
+} else {
+  try {
+    const requested = new URLSearchParams(location.search).get('runtime') || '5.0';
+    if (!['5.0', '4.3'].includes(requested)) throw new Error('Choose runtime 5.0 or 4.3');
+    window.browserRuntimeVersion = requested;
+    // Install focus/teardown handlers before loading the vendor runtime.
+    await import('./browser.js');
+  } catch (error) {
+    parent.postMessage({type:'browser-session-stop', reason:'Bootstrap error: ' + error}, location.origin);
+  }
+}
+</script>
+</html>
