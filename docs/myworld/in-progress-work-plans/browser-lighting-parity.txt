@@ -85,7 +85,7 @@ restart policy; this module does not secretly recover using stale Java caches.
 
 Validation and limits
 ---------------------
-Maintained Java8 source/target build passes. test-browser-lighting.py passes318
+Maintained Java8 source/target build passes. test-browser-lighting.py passes321
 CPU checks against actual builders: byte/bounds parity for AO/glow/declared roof
 masks; High ground matrix; steady mask cache; far age150; High/Low/Off; deeper
 negative suppression and return; supported far fallback; selected-quality
@@ -110,3 +110,21 @@ all resident batch ranges and lets the GPU light frustum clip; desktop's optiona
 per-batch light-frustum CPU culling is not exported. State-save queries are also
 correctness-first and may have cost. Measure these separately before optimizing;
 no60FPS/no-loss promise follows from this module handoff.
+
+Manager review fixes
+--------------------
+The initial handoff missed absolute world offsets on negative levels and with
+shadows Off. AO's receiver coordinate dependency continues even when sunlight
+shadows are disabled. All populated frames now export the production world
+offsets before that early return, and JS always binds those uniforms. The added
+CPU tests use a nonzero world origin for both negative levels and Off; JS also
+changes the disabled-shadow origin to prove a prior surface offset is replaced.
+
+Shadow map replacement is transactional: validate the full temporary peak
+allocation before creating storage, retain the old map through new framebuffer
+completion and GL storage validation, then replace/debit it only after success.
+Failed new objects are freed without mutating old ownership/accounting, and
+map destruction is idempotent. Instrumented tests now cover invalid resize,
+budget refusal, incomplete framebuffer and storage error, followed by retry
+and double disposal. These failure controls do not claim actual driver OOM
+injection; hardware/browser validation remains the manager integration gate.

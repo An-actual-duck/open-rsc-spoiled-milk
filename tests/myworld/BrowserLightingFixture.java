@@ -50,10 +50,13 @@ public final class BrowserLightingFixture {
         Renderer3DFrame underground=frame(-8,world);BrowserLightingData.Frame day=prepare(data,underground,4096);RendererDayNightCycle.syncServerTime(3600000,2700000);BrowserLightingData.Frame night=prepare(data,underground,4096);
         require(day.values[1]==0&&night.values[1]==0&&night.values[15]==-8,"negative level sunlight not suppressed");
         require(day.values[13]==1&&day.values[14]==1&&night.values[13]==1&&night.values[14]==1,"underground relief/glow lost");
+        require(offX!=0||offZ!=0,"fixture must exercise nonzero absolute world basis");
+        require(day.values[9]==offX&&day.values[10]==offZ&&night.values[9]==offX&&night.values[10]==offZ,"underground AO absolute world basis lost");
         require(prepare(data,frame,4096).values[6]==1,"surface return reused underground history");
         RendererShadowSettings.setQuality(RendererShadowSettings.Quality.LOW);BrowserLightingData.Frame low=prepare(data,frame,2048);
         require(low.values[3]==1024&&low.values[4]==0&&low.values[5]==0&&low.values[6]==0,"Low policy changed");
-        RendererShadowSettings.setQuality(RendererShadowSettings.Quality.OFF);require(prepare(data,frame,4096).values[1]==0,"Off still shadows");
+        RendererShadowSettings.setQuality(RendererShadowSettings.Quality.OFF);BrowserLightingData.Frame off=prepare(data,frame,4096);require(off.values[1]==0,"Off still shadows");
+        require(off.values[9]==offX&&off.values[10]==offZ&&off.values[13]==1&&off.values[14]==1,"Off lost AO/glow absolute world basis");
         RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);data.clear();require(prepare(data,frame,2048).values[4]==2048,"production far size fallback changed");
         try{prepare(data,frame,1024);throw new AssertionError("unsupported High silently lowered");}catch(IllegalArgumentException expectedLimit){checks++;}
         Field v=OpenGLGeometryShadows.class.getDeclaredField("DEPTH_VERTEX"),f=OpenGLGeometryShadows.class.getDeclaredField("DEPTH_FRAGMENT");v.setAccessible(true);f.setAccessible(true);

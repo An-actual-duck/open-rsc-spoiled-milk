@@ -20,18 +20,27 @@ export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShad
       stats.shadowFallbackBytes=8;
     } finally {gl.bindTexture(gl.TEXTURE_2D,binding);gl.activeTexture(active);}
   }
-  function destroy(map){if(!map)return;gl.deleteFramebuffer(map.framebuffer);gl.deleteTexture(map.texture);stats.shadowResourceBytes-=map.bytes;}
+  function destroy(map){if(!map||map.deleted)return;map.deleted=true;gl.deleteFramebuffer(map.framebuffer);gl.deleteTexture(map.texture);stats.shadowResourceBytes-=map.bytes;}
   function allocate(map,size){
-    if(map&&map.size===size)return map;destroy(map);
-    const bytes=size*size*4;if(size<1||size>gl.getParameter(gl.MAX_TEXTURE_SIZE)||stats.shadowResourceBytes+bytes>MAX_SHADOW_BYTES)throw new Error('Browser production shadow resource limit');
-    const texture=gl.createTexture(),framebuffer=gl.createFramebuffer();gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,texture);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_COMPARE_MODE,gl.COMPARE_REF_TO_TEXTURE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_COMPARE_FUNC,gl.LEQUAL);
-    gl.texImage2D(gl.TEXTURE_2D,0,gl.DEPTH_COMPONENT24,size,size,0,gl.DEPTH_COMPONENT,gl.UNSIGNED_INT,null);
-    gl.bindFramebuffer(gl.FRAMEBUFFER,framebuffer);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,texture,0);gl.drawBuffers([gl.NONE]);gl.readBuffer(gl.NONE);
-    if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE){gl.deleteFramebuffer(framebuffer);gl.deleteTexture(texture);throw new Error('Browser shadow depth framebuffer incomplete');}
-    stats.shadowResourceBytes+=bytes;return {texture,framebuffer,size,bytes};
+    if(map&&!map.deleted&&map.size===size)return map;
+    const bytes=size*size*4;
+    // Validate peak allocation, retaining the old valid map until replacement
+    // storage and its framebuffer are complete. Failure must leave ownership
+    // and accounting unchanged so retry/disposal cannot double-delete it.
+    if(!Number.isInteger(size)||size<1||size>gl.getParameter(gl.MAX_TEXTURE_SIZE)||stats.shadowResourceBytes+bytes>MAX_SHADOW_BYTES)throw new Error('Browser production shadow resource limit');
+    let texture=null,framebuffer=null;
+    try {
+      texture=gl.createTexture();framebuffer=gl.createFramebuffer();if(!texture||!framebuffer)throw new Error('Browser shadow allocation failed');
+      gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,texture);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_COMPARE_MODE,gl.COMPARE_REF_TO_TEXTURE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_COMPARE_FUNC,gl.LEQUAL);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.DEPTH_COMPONENT24,size,size,0,gl.DEPTH_COMPONENT,gl.UNSIGNED_INT,null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER,framebuffer);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,texture,0);gl.drawBuffers([gl.NONE]);gl.readBuffer(gl.NONE);
+      if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw new Error('Browser shadow depth framebuffer incomplete');
+      const error=gl.getError();if(error!==gl.NO_ERROR)throw new Error('Browser shadow storage error 0x'+error.toString(16));
+    } catch(error) {if(framebuffer)gl.deleteFramebuffer(framebuffer);if(texture)gl.deleteTexture(texture);throw error;}
+    const replacement={texture,framebuffer,size,bytes};stats.shadowResourceBytes+=bytes;destroy(map);return replacement;
   }
   function vao(id,chunk){
     let entry=ownedVAOs.get(id);if(entry&&entry.vbo===chunk.vbo&&entry.ibo===chunk.ibo)return entry.vao;
@@ -91,10 +100,13 @@ export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShad
   }
   function bindReceiver(){
     const active=values&&values[1]===1&&near;gl.uniform1i(loc('uGeometryShadows'),active?1:0);gl.uniform1i(loc('uFarGeometryShadow'),active&&far?1:0);gl.uniform1i(loc('uPreviousFarGeometryShadow'),active&&previousActive&&previous?1:0);gl.uniform1i(loc('uGeometryRoofReceivers'),0);
+    // Shared receiver coordinates also drive terrain definition when sunlight
+    // shadows are disabled (negative levels, Off and non-directional modes).
+    gl.uniform1f(loc('uGeometryShadowWorldOffsetX'),values?values[9]:0);gl.uniform1f(loc('uGeometryShadowWorldOffsetZ'),values?values[10]:0);
     if(!active){
       if(emptyDepth)for(const [name,unit]of [['uNearGeometryShadow',3],['uFarGeometryShadowMap',4],['uPreviousFarGeometryShadowMap',6]]){gl.uniform1i(loc(name),unit);gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,emptyDepth);}gl.activeTexture(gl.TEXTURE0);return;
     }
-    gl.uniform1f(loc('uGeometryShadowWorldOffsetX'),values[9]);gl.uniform1f(loc('uGeometryShadowWorldOffsetZ'),values[10]);gl.uniform1i(loc('uGeometryShadowRadius'),values[5]);gl.uniformMatrix4fv(loc('uNearGeometryLight'),false,values.subarray(32,48));
+    gl.uniform1i(loc('uGeometryShadowRadius'),values[5]);gl.uniformMatrix4fv(loc('uNearGeometryLight'),false,values.subarray(32,48));
     gl.uniform1f(loc('uNearGeometryTexel'),values[16]);gl.uniform1f(loc('uNearGeometryWorldTexel'),values[18]);
     if(far){gl.uniformMatrix4fv(loc('uFarGeometryLight'),false,values.subarray(48,64));gl.uniform1f(loc('uFarGeometryTexel'),values[17]);gl.uniform1f(loc('uFarGeometryWorldTexel'),values[19]);}
     if(previousActive&&previous){gl.uniformMatrix4fv(loc('uPreviousFarGeometryLight'),false,values.subarray(64,80));gl.uniform1f(loc('uFarGeometryBlend'),values[8]);}

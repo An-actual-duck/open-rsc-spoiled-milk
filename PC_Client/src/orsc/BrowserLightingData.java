@@ -59,6 +59,9 @@ public final class BrowserLightingData {
         values[80]=excluded.size();for(int n=0;n<excluded.size();n++)values[81+n]=excluded.get(n);
         if(!populated){near=far=previousFar=null;farAge=blendAge=0;return new Frame(values,changes);}
         if(world.getChunkCount()>256)throw new IllegalArgumentException("Browser lighting scene exceeds chunk bound");
+        // AO uses absolute world coordinates even when sunlight shadows are off.
+        int offX=GeometryShadowCoordinates.worldOffsetX(world),offZ=GeometryShadowCoordinates.worldOffsetZ(world);
+        values[9]=offX;values[10]=offZ;
         boolean directional=RendererLightingSettings.getMode()==RendererLightingSettings.Mode.DIRECTIONAL;
         if(directional&&RendererTerrainDefinitionSettings.getMode().shaderId>=2&&terrain.update(frame)) {
             values[13]=1;putBounds(values,24,terrain.minX,terrain.minZ,1f/terrain.width,1f/terrain.height);
@@ -78,8 +81,6 @@ public final class BrowserLightingData {
         if(maxTextureSize<next.nearSize)throw new IllegalArgumentException("Browser texture limit cannot preserve selected shadow quality");
         int farSize=OpenGLGeometryShadows.supportedFarSize(maxTextureSize);
         if(next==RendererShadowSettings.Quality.HIGH&&maxTextureSize<farSize)throw new IllegalArgumentException("Browser cannot allocate production far shadow resolution");
-        int offX=GeometryShadowCoordinates.worldOffsetX(world),offZ=GeometryShadowCoordinates.worldOffsetZ(world);
-        values[9]=offX;values[10]=offZ;
         double x=(double)frame.getCameraOffsetX()+offX,y=frame.getCameraOffsetY(),z=(double)frame.getCameraOffsetZ()+offZ;
         float lx=RendererRemasterLightSettings.getLightDirectionX(),ly=RendererRemasterLightSettings.getLightDirectionY(),lz=RendererRemasterLightSettings.getLightDirectionZ();
         long context=frame.getShadowContextEpoch();int plane=frame.getActivePlane();
