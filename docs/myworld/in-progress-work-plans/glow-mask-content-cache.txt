@@ -1,0 +1,93 @@
+Glow-mask content cache — focused CPU slice, 2026-11-09
+====================================================
+
+Source baseline:4797d4efa9f496fe6acc2e6500bc55a1a23bfa00.
+Scope: shared RemasterGlowMaskBuilder only; no browser backend, shader, map,
+server, gameplay or render-math changes. No public deployment.
+
+Problem and dependency contract
+-------------------------------
+The previous signature mixed every chunk signature/count/triangle count, plane,
+origin and section metadata into a glow mask's identity. Unrelated animated
+geometry therefore forced rebuild/upload even when bounds and light pixels
+were unchanged. It also rounded coordinates/radii/bounds into4-unit buckets,
+allowing different actual masks to share a key.
+
+The mask's actual inputs are texture size, exact float X/Z bounds, and the
+ordered sequence of emitter X,Z,radius,RGB,intensity values. Chunk geometry
+still participates through its final aggregate bounds. Height and model kind
+are not consumed by this2D field; changing them alone produces identical mask
+bytes. Map/plane changes may reuse a mask only when its actual pixel/mapping
+inputs are equal. Emission math, float accumulation and rounding remain intact.
+
+Implementation
+--------------
+A private immutable primitive-input snapshot keys the existing bounded LRU.
+Bounds use Float.floatToIntBits; integer emitter inputs are not quantized.
+Arrays.equals establishes exact equality even when Arrays.hashCode collides.
+Emitter multiplicity and traversal order are preserved, because floating-point
+addition is not associative. Neither whole meshes nor mutable source arrays
+are retained by cache keys.
+
+The mask.signature field is now a positive per-builder upload revision, stable
+on a hit and newly assigned on rebuild. It is not a lossy content hash. Both
+consumers (native OpenGLWorldChunkRenderer and BrowserLightingData) compare
+signatures only inside their own final builder. A->B->cachedA therefore uses
+A's old revision, which differs from B and requests the correct upload. clear()
+retains the sequence, so same-input reconstruction cannot accidentally match
+a stale upload. Math.addExact refuses revision exhaustion before any reuse of
+zero, negative or sentinel identities. This is not a cross-builder/global ID.
+
+Presenter-thread ownership remains unchanged. The LRU limit still defaults16,
+configurable1..64; texture size still defaults256, configurable128..512. Existing
+three fixed float scratch arrays remain private and reused. Rebuilds allocate
+the same immutable direct RGBA buffer; hits avoid that buffer/raster generation.
+Each cached entry adds an exact5+5N-int key snapshot forN eligible emitters.
+This is bounded by the same entry limit and current frame input size. No
+zero-allocation, GPU speedup or browser FPS claim is made by this CPU slice.
+
+Validation
+----------
+Default maintained client build passes with Temurin javac1.8.0_482, target8.
+The new real-production fixture passes83checks on Java8 and Java21:
+
+- Unrelated signatures/planes/origins/chunk count/triangle count reuse the exact
+  mask object when final bounds and ordered emitters remain equal. A fresh
+  builder's RGBA bytes and exact coordinate mapping agree.
+- One-unit X/Z/radius/intensity/vertex-bound changes rebuild and actually change
+  output bytes; RGB, translated world/bounds, multiplicity and order invalidate.
+- A deliberately constructed Java hash collision with different actual pixel
+  bytes does not alias cache entries or upload revisions.
+- A->B->cachedA, clear/same input, two-entry LRU eviction/rebuild, immutable old
+  pixel buffers, empty/zero-intensity inputs and revision exhaustion pass.
+
+128 diverse fresh baseline4797/current production masks were also compared
+byte-for-byte on both Java8 and Java21: RGBA, visibility, texture dimensions and
+all exact mapping floats agree. The old builder was compiled under a distinct
+class name in an ignored output fixture; fresh instances avoid its known cache
+aliasing. Source hash, source/fixture copies and results are preserved under
+output/tests/glow-mask-content-cache/baseline-*.
+
+Existing glow bounds/scratch fixtures pass. BrowserLightingFixture passes321
+CPU checks (production masks/mapping, High/Low/Off, far history, underground and
+surface return). Full renderer guardrails pass with the three glow fixtures now
+included. Workspace-layout and whitespace checks pass. No GPU/browser/server
+was launched; the renderer worker owns subsequent actual browser measurements.
+
+One initial fixture incorrectly tried effectful ChunkMesh.rebasePresentation;
+production correctly refused it. The corrected fixture constructs a complete
+translated mesh+emitter instead. The failure note is preserved, and no
+production rebase guard was changed.
+
+Commands:
+ bash scripts/build-client.sh
+ python3 tests/myworld/test-remaster-glow-mask-content-cache.py
+ python3 tests/myworld/test-remaster-glow-mask-bounds.py
+ python3 tests/myworld/test-remaster-glow-mask-scratch.py
+ python3 tests/myworld/test-browser-lighting.py
+ bash tests/myworld/test-renderer-guardrails.sh
+ python3 scripts/workspace-layout.py check
+
+Evidence: output/tests/glow-mask-content-cache/.
+Status: READY for manager review; native/browser visual and performance changes
+are not claimed. Public state and retained private fixtures are untouched.
