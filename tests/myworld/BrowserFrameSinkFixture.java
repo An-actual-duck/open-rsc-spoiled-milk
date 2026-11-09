@@ -1,5 +1,6 @@
 package orsc;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.lang.reflect.Field;
 import orsc.graphics.three.*;
 import orsc.graphics.two.MudClientGraphics;
@@ -12,6 +13,10 @@ public final class BrowserFrameSinkFixture {
     public static void main(String[] args)throws Exception{
         System.setProperty("spoiledmilk.renderer3DGeometryCapture","true");
         System.setProperty("spoiledmilk.openglWorldMesh","true");System.setProperty("spoiledmilk.openglWorldMeshTexturedVisible","true");System.setProperty("spoiledmilk.openglWorldMeshTexturedStaticVisible","true");System.setProperty("spoiledmilk.skipLegacyWorldRaster","true");
+        BufferedImage overlay=new BufferedImage(3,1,BufferedImage.TYPE_INT_RGB);
+        int[] raw=((DataBufferInt)overlay.getRaster().getDataBuffer()).getData();raw[0]=0x01000000;raw[1]=0;raw[2]=0x112233;
+        require((overlay.getRGB(0,0)&0xffffff)==0,"Background marker altered RGB");
+        require(BrowserWebGLBridge.borrowOverlay(overlay)==raw&&raw[0]!=raw[1]&&raw[1]==0,"Direct overlay lost marked background or legitimate black");
         BufferedImage image=new BufferedImage(32,32,BufferedImage.TYPE_INT_RGB);Renderer3DFrame initial=frame();
         require(!Renderer3DSettings.canSkipLegacyWorldRaster(),"Desktop default falsely reports browser capability");
         require(!BrowserFrameSinkRegistry.present(image,null,initial)&&!released(initial),"Uninstalled seam consumed desktop frame");initial.release();

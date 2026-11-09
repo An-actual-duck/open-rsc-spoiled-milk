@@ -14,7 +14,7 @@ function typed(value, Type) { return value instanceof Type ? value : new Type(va
 export function createBrowserWebGL(canvas, report=()=>{}) {
   const gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
   if(!gl) throw new Error('WebGL2 unavailable: browser GPU proof requires WebGL2');
-  const stats={backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,drawCalls:0,triangles:0,contextLost:false,limitations:['Geometry shadows not yet activated','Software overlay uses black chroma key; sprite depth/black edges are not equivalent','Sky backdrop not yet ported','Terrain valley field and glow masks pending'],frameSamples:[]};
+  const stats={backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"resident chunks and texture pixels only; excludes overlays, programs and driver overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Geometry shadows not yet activated','Software overlay depth/partial-alpha blending is not yet equivalent','Sky backdrop not yet ported','Terrain valley field and glow masks pending'],frameSamples:[]};
   const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,disposed=false,last=0;
   const uniforms=new Map();
   function alive(){if(disposed||stats.contextLost)throw new Error('Browser GPU backend unavailable; restart the private session');}
@@ -31,7 +31,7 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
     async Java_orsc_BrowserWebGLBridge_initialize(lib,vertex,fragment){
       alive();if(program)throw new Error('WebGL backend initialized twice');
       program=link(adaptResidentShader(vertex,false),adaptResidentShader(fragment,true));
-      overlayProgram=link('#version 300 es\nprecision highp float;out vec2 uv;void main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));uv=vec2(p.x,1.0-p.y);gl_Position=vec4(p*2.0-1.0,0,1);}', '#version 300 es\nprecision highp float;uniform sampler2D image;uniform bool world;in vec2 uv;out vec4 color;void main(){vec4 s=texture(image,uv);if(world&&max(s.r,max(s.g,s.b))<0.001)discard;color=vec4(s.bgr,1.0);}');
+      overlayProgram=link('#version 300 es\nprecision highp float;out vec2 uv;void main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));uv=vec2(p.x,1.0-p.y);gl_Position=vec4(p*2.0-1.0,0,1);}', '#version 300 es\nprecision highp float;uniform sampler2D image;uniform bool world;in vec2 uv;out vec4 color;void main(){vec4 s=texture(image,uv);if(world&&s.a>0.003&&s.a<0.005)discard;color=vec4(s.bgr,1.0);}');
       emptyVAO=gl.createVertexArray();overlayTexture=gl.createTexture();
       gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,overlayTexture);textureParameters();
       gl.useProgram(program);

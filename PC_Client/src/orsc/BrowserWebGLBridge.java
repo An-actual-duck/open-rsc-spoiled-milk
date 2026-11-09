@@ -1,6 +1,8 @@
 package orsc;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.awt.image.SinglePixelPackedSampleModel;
 import java.lang.reflect.Field;
 import java.util.*;
 import orsc.graphics.Renderer2DFrame;
@@ -34,7 +36,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         Renderer3DWorldChunkFrame world=frame==null?null:frame.getWorldChunkFrame();
         boolean hasWorld=world!=null&&world.getChunkCount()>0;
         if(!hasWorld) {
-            present(w,h,false,new float[32],new float[30],new int[0],image.getRGB(0,0,w,h,null,0,w));
+            present(w,h,false,new float[32],new float[30],new int[0],borrowOverlay(image));
             return;
         }
         if(world.getChunkCount()>MAX_CHUNKS)throw new IllegalStateException("Browser scene exceeds chunk capacity");
@@ -64,7 +66,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             float[] view=OpenGLWorldChunkRenderer.worldViewMatrix(frame);
             float[] clip=OpenGLWorldChunkRenderer.multiply(OpenGLWorldChunkRenderer.projectionMatrix(frame),view);
             float[] matrices=new float[32];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);
-            present(w,h,true,matrices,uniforms(frame),Arrays.copyOf(draws,count),image.getRGB(0,0,w,h,null,0,w));
+            present(w,h,true,matrices,uniforms(frame),Arrays.copyOf(draws,count),borrowOverlay(image));
         } finally { RendererFrameLighting.restore(previous); }
     }
     private CachedChunk upload(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk) {
@@ -87,6 +89,20 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         int id=nextId++;uploadChunk(id,packing.copyBackendChunkVertices(chunk,frame),index,batch);
         return new CachedChunk(id,chunk.getVertexOffsetX(),chunk.getVertexOffsetZ());
     }
+    static int[] borrowOverlay(BufferedImage image) {
+        if (!(image.getRaster().getDataBuffer() instanceof DataBufferInt)
+            || !(image.getSampleModel() instanceof SinglePixelPackedSampleModel)
+            || ((SinglePixelPackedSampleModel)image.getSampleModel()).getScanlineStride()!=image.getWidth()
+            || image.getRaster().getDataBuffer().getOffset()!=0
+            || image.getRaster().getSampleModelTranslateX()!=0 || image.getRaster().getSampleModelTranslateY()!=0) {
+            throw new IllegalArgumentException("Browser presentation requires a packed direct RGB framebuffer");
+        }
+        int[] pixels=((DataBufferInt)image.getRaster().getDataBuffer()).getData();
+        int count=Math.multiplyExact(image.getWidth(),image.getHeight());
+        if(pixels.length<count)throw new IllegalArgumentException("Browser framebuffer is undersized");
+        return pixels.length==count?pixels:Arrays.copyOf(pixels,count);
+    }
+
     private static void columnMajor(float[] source,float[] target,int offset) {
         for(int col=0;col<4;col++)for(int row=0;row<4;row++)target[offset+col*4+row]=source[row*4+col];
     }

@@ -100,6 +100,8 @@ public final class Renderer3DSettings {
 		return (openGLPresentationAvailable || browserPresentationAvailable) && RESIDENT_CHUNK_OBJECTS_ENABLED;
 	}
 
+    public static boolean isBrowserPresentationAvailable() { return browserPresentationAvailable; }
+
     /** Explicit optional backend capability; false for every ordinary desktop launch. */
     public static void setBrowserPresentationAvailable(boolean available) {
         browserPresentationAvailable = available;

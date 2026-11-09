@@ -3156,6 +3156,11 @@ public final class Scene {
 			boolean skipLegacyWorldRaster =
 				Renderer3DSettings.canSkipLegacyWorldRaster() && !forceLegacyWorldRaster;
             this.interactionLegacyRaster = !skipLegacyWorldRaster;
+            if (skipLegacyWorldRaster && Renderer3DSettings.isBrowserPresentationAvailable()) {
+                // The RGB framebuffer has an unused high byte. Mark only freshly
+                // cleared world background, keeping real black artwork/UI opaque.
+                java.util.Arrays.fill(this.pixelData, 0x01000000);
+            }
 			long legacyDrawStart = RenderTelemetry.now();
 			if (this.m_zb != 0) {
 				this.setFrustum(0, -1, this.polygons, this.m_zb - 1);
