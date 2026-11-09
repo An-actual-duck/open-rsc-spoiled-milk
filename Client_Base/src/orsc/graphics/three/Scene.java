@@ -117,6 +117,7 @@ public final class Scene {
 	private int rot1024_off_x;
 	private int rot1024_off_y;
     private int rendererShadowReferenceHeight;
+    private int rendererSignedWorldLevel;
 	private int rot1024_off_z;
 	private int rot1024_vp_src;
 	private int cameraProjX;
@@ -2912,7 +2913,7 @@ public final class Scene {
 					this.rot1024_vp_src,
 					this.rot1024_zTop,
 					this.renderer3DTextures,
-                    this.rendererShadowContextEpoch.get(), this.rendererShadowReferenceHeight)
+                    this.rendererShadowContextEpoch.get(), this.rendererShadowReferenceHeight, this.rendererSignedWorldLevel)
 				: null;
 			this.renderer3DFrame = geometryFrame;
 			boolean forceLegacyWorldRaster = this.forceLegacyWorldRasterOnce;
@@ -3783,6 +3784,11 @@ public final class Scene {
 		Arrays.fill(this.m_jb, retained, this.modelCount, 0);
 		this.modelCount = retained;
 	}
+
+    /** Render metadata only; never mutates map or server location authority. */
+    public void setRendererSignedWorldLevel(int signedWorldLevel) {
+        this.rendererSignedWorldLevel = signedWorldLevel;
+    }
 
 	public final void setCamera(int centerX, int centerY, int centerZ, int xRot, int yRot, int zRot, int offset) {
         setCamera(centerX,centerY,centerZ,xRot,yRot,zRot,offset,centerY);

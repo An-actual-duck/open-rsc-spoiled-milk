@@ -33,6 +33,10 @@ final class RendererDayNightCycle {
 	}
 
 	static Presentation currentPresentation() {
+        if (RendererFrameLighting.isUnderground()) {
+            return Presentation.fromMode(RendererToneSettings.Mode.DAY,
+                RendererBrightnessSettings.getMode().multiplier, "underground-neutral");
+        }
 		RendererToneSettings.Mode toneMode = RendererToneSettings.getMode();
 		if (toneMode != RendererToneSettings.Mode.CYCLE) {
 			return Presentation.fromMode(

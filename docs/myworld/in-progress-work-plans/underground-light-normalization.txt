@@ -1,0 +1,107 @@
+Underground neutral lighting — private-preview candidate, 2026-11-08
+
+Owner policy
+------------
+Every authoritative signed level <0 receives steady neutral daytime lighting.
+Level0 and all positive levels retain the current outside policy. The server
+clock, location authority, protocol, map, render settings and animations are not
+changed. Player brightness, material colors, terrain/object relief, RELIEF_AO,
+glow emission and ordinary UI coloring remain available. Underground sunlight
+cast shadows and sky backdrop are suppressed; lighting still models shapes.
+
+Implementation
+--------------
+Scene publishes the signed level in a final Renderer3DFrame field, separate from
+activePlane (which is a clamped compatibility/roof plane). Gameplay captures it
+from PacketHandler.getLogicalWorldLevel(compatibilityY): native context preserves
+signed deeper levels and legacy944-band3 correctly maps to−1. It deliberately
+does not use the editor helper or infer negative levels from roof/chunk planes.
+Capture occurs inside assembled gameplay, after the activation retain/loading
+branches. Same-scope retained frames keep their level; cross-scope activation
+uses the existing loading cover and clears old presentation. Previously queued
+frames remain immutable. Login scene captures and protocol-session resets clear
+the producer level to0; old constructors still default to0 for compatibility.
+
+OpenGLFramePresenter binds the dequeued immutable frame in RendererFrameLighting,
+a render-thread-local scope, and always restores the previous binding in finally.
+There is no mutable global player level, no inherited thread scope and no added
+per-frame scope allocation. The common presentation and modeling-light getters
+therefore cover resident/projected shader uniforms, fixed-function mesh/fallback
+materials, cache brightness keys, world/entity sprite tint and fog consistently.
+UI draw colors/settings are unchanged; null/login frames cannot inherit a prior
+negative frame. Exceptions/context failures also restore the previous scope.
+
+Underground presentation is the existing neutral DAY baseline with saved player
+brightness. Modeling light is fixed at azimuth135/elevation45 degrees so slopes
+and normals retain definition without celestial motion. Ambient/intensity,
+relief, diagnostic color settings and glow paths remain unchanged. Both geometry
+sunlight shadows and the old terrain-mask fallback are explicitly guarded by the
+frame's signed level, including suspend/history invalidation on entry. Going
+back outside starts fresh shadows through the existing lifecycle. Underground
+sky uses the authoritative negative sign; existing >=0 sky heuristics are left
+unchanged (their broader positive-floor behavior is outside this task).
+
+Fog choice: DAY retains its existing pale-blue daylight-derived fog color, with
+the preexisting black underground background and no visible sky. This preserves
+the old daytime underground palette rather than inventing a new cave palette.
+The manager/owner native preview should assess distant fog against that black
+background. No claim is made that moving animated scenes become byte-identical:
+intentional texture/effect animation and optional old underground flicker remain.
+
+Validation
+----------
+Build: default javac8u482, source/target8. Focused GPU proofs use Java21 on AMD
+RX6700XT, a hidden unfocused64x64 context, no server/network/input. Evidence is
+output/tests/underground-light-normalization; all original failed receipts kept.
+
+PASS CPU actual Scene/frame publication for−1/deeper, negative↔surface↔positive,
+clamped-plane independence, queued-old-frame immutability, actual presentation
+latch retain/cross-scope decisions, login reset, thread isolation, nested/failing
+scope restoration and all brightness preferences. Underground brightness/tone/
+fog/light vectors are identical at day/night; surface/positive remain different.
+The server clock advances normally and saved preferences are not overwritten.
+
+PASS actual full production resident vertex+fragment shader and production
+uniform setters: levels−1/−8 day/night pixel SHA256 identical at all3 brightness
+settings; real fixed-function world-sprite tint and shader fog uniform readbacks
+also identical. Terrain normal contrast remains3red units in the small controlled
+probe (initial >3 bound rejected exactly3; final meaningful >=2 bound passes).
+Known glow emission increases the rendered signal. Shader sunlight lifecycle
+surface→−1→−8→surface→10 and legacy-mask suppression pass with real GL resources.
+
+PASS18 released v0.3.15 baseline comparisons: levels0/1/10 x3brightness xday/night
+have identical full pixel hashes, fixed-function sprite tint and shader fog
+uniform values. The packaged baseline JAR and archive provenance/SHA remain in
+baseline-receipt.json. This is controlled renderer parity, not a claim about all
+locations/hardware. Ordinary native underground preview remains an owner gate.
+
+PASS full renderer guardrails and existing hardware geometry/terrain lighting
+suite (slopes/walls, low-sun contacts, roofs, High/Low/Off, history/context/quality
+resets, resource/state cleanup and glow behavior). Initial guardrails failed an
+exact source-snippet check when the new login metadata reset separated the old
+forceLegacy/endScene adjacency; reset now precedes forceLegacy, preserving the
+old raster contract and the unchanged existing test. Final full guardrails pass.
+
+Commands:
+ python3 tests/myworld/test-underground-lighting.py
+ DISPLAY=:0 tests/myworld/test-underground-lighting-gpu.sh
+ tests/myworld/test-renderer-guardrails.sh
+ DISPLAY=:0 tests/myworld/test-geometry-shadow-gpu.sh
+
+Workspace layout check remains nonzero for preserved historical ai2 output-root
+entries/assets/sprites; all new outputs use declared tests categories. No ignored
+history, assets, accounts, databases or runtime files were removed.
+
+Status: source ready for manager review/private preview; owner visual acceptance,
+manager integration and release decisions remain pending. No public deployment.
+
+Frozen preview artifact
+-----------------------
+Production checkpoint85ac86a324bfd7e97560bede65638beb99e0fff9, built before any
+later test/doc-only changes. JAR:
+output/tests/underground-light-normalization/candidate-underground-neutral-85ac86a32.jar
+SHA2565929babeb2d3de0a4f1d0d1ba7610d731827805d7aaf8a50a89868c8a23a77bc.
+Exact8production source hashes and compiler/runtime are in candidate-freeze.json.
+The new CPU contract is included in the standard renderer guardrail list.
+All worker GPU/CPU processes exited before the manager's private native preview.
+No main integration, owner visual acceptance or public activation is claimed.

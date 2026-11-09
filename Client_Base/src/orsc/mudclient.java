@@ -2609,6 +2609,7 @@ public final class mudclient implements Runnable {
 			}
 			this.closeClientStreamOnly();
 			this.packetHandler.resetLayeredSceneProtocolState();
+			if (this.scene != null) this.scene.setRendererSignedWorldLevel(0);
 			this.stopSoundPlayback();
 
 			this.setUsername("");
@@ -8858,6 +8859,8 @@ public final class mudclient implements Runnable {
 					this.queuedCombatEffectCount = 0;
 					this.ensureGameplayRendererWorldChunkFrame();
 					long sceneRenderStart = RenderTelemetry.now();
+					this.scene.setRendererSignedWorldLevel(this.packetHandler.getLogicalWorldLevel(
+						this.midRegionBaseZ + (this.localPlayer == null ? this.playerLocalZ : this.localPlayer.currentZ / this.tileSize)));
 					this.scene.endScene(-113);
 					RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
 					Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
@@ -24313,6 +24316,7 @@ public final class mudclient implements Runnable {
 			this.scene.fogZFalloff = 1;
 			this.scene.fogSmoothingStartDistance = 10000;
 			this.scene.setCamera(slide_x, -this.world.getElevation(slide_x, slide_y), slide_y, 912, rotation, 0, zoom_distance * 2);
+			this.scene.setRendererSignedWorldLevel(0);
 			this.scene.forceLegacyWorldRasterOnce();
 			this.scene.endScene(-124);
 			if (var1 >= -48) {
@@ -24349,6 +24353,7 @@ public final class mudclient implements Runnable {
 			this.scene.fogSmoothingStartDistance = 10000;
 			this.scene.fogEntityDistance = 10000;
 			this.scene.setCamera(slide_x, -this.world.getElevation(slide_x, slide_y), slide_y, 912, rotation, 0, zoom_distance * 2);
+			this.scene.setRendererSignedWorldLevel(0);
 			this.scene.forceLegacyWorldRasterOnce();
 			this.scene.endScene(-114);
 			this.getSurface().fade2black(16316665);
@@ -24389,6 +24394,7 @@ public final class mudclient implements Runnable {
 			this.scene.fogZFalloff = 1;
 			this.scene.fogSmoothingStartDistance = 10000;
 			this.scene.setCamera(slide_x, -this.world.getElevation(slide_x, slide_y), slide_y, 912, rotation, 0, zoom_distance * 2);
+			this.scene.setRendererSignedWorldLevel(0);
 			this.scene.forceLegacyWorldRasterOnce();
 			this.scene.endScene(-111);
 
@@ -24419,6 +24425,7 @@ public final class mudclient implements Runnable {
 	private void resetGame(int var1) {
 		try {
 			this.packetHandler.resetLayeredSceneProtocolState();
+			if (this.scene != null) this.scene.setRendererSignedWorldLevel(0);
 			this.systemUpdate = 0;
 			this.elixirTimer = 0;
 			this.clearActivePotionEffects();

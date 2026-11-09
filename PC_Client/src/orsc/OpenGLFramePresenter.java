@@ -710,7 +710,16 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		return frame;
 	}
 
-	private void renderFrame(Frame frame) throws Exception {
+    private void renderFrame(Frame frame) throws Exception {
+        Renderer3DFrame previous = RendererFrameLighting.bind(frame.renderer3DFrame);
+        try {
+            renderFrameInLightingScope(frame);
+        } finally {
+            RendererFrameLighting.restore(previous);
+        }
+    }
+
+    private void renderFrameInLightingScope(Frame frame) throws Exception {
 		if (frameGpuTimer != null) frameGpuTimer.begin();
 		RenderTelemetry.recordBoundaryOpenGLFrameDequeued(
 			frame.submittedNanos);
@@ -1111,6 +1120,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		if (frame == null || frame.renderer3DFrame == null) {
 			return false;
 		}
+        if (frame.renderer3DFrame.isUnderground()) return true;
 		Renderer3DWorldChunkFrame worldChunkFrame = frame.renderer3DFrame.getWorldChunkFrame();
 		if (worldChunkFrame == null) {
 			return false;

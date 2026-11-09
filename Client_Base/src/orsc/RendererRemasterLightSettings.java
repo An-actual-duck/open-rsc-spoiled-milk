@@ -45,6 +45,7 @@ final class RendererRemasterLightSettings {
 	}
 
 	static float getAzimuthDegrees() {
+        if (RendererFrameLighting.isUnderground()) return 135.0f;
 		if (azimuthOverride) {
 			return azimuthDegrees;
 		}
@@ -52,6 +53,7 @@ final class RendererRemasterLightSettings {
 	}
 
 	static float getElevationDegrees() {
+        if (RendererFrameLighting.isUnderground()) return 45.0f;
 		if (elevationOverride) {
 			return elevationDegrees;
 		}
