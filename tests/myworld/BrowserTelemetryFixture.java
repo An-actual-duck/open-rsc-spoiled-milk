@@ -6,8 +6,14 @@ import java.util.*;
 public final class BrowserTelemetryFixture {
     public static void main(String[] args) {
         System.setProperty("spoiledmilk.rendererTelemetry","true");
-        System.setProperty("spoiledmilk.rendererTelemetryInterval","1200");
+        System.setProperty("spoiledmilk.rendererTelemetryInterval","1");
+        System.setProperty("spoiledmilk.rendererTelemetryCountersOnly","true");
         System.setProperty("spoiledmilk.rendererSlowFrameMs","1000000");
+        if(RenderTelemetry.optionalRuntimeLoad(()->{throw new ArrayIndexOutOfBoundsException("injected unavailable OS service");})!=-1.0D)throw new AssertionError("Optional OS failure lost unavailable marker");
+        if(RenderTelemetry.optionalRuntimeLoad(()->.25D)!=.25D)throw new AssertionError("Normal OS load changed");
+        for(final Error fatal:new Error[]{new OutOfMemoryError("injected"),new ThreadDeath()}) {
+            try{RenderTelemetry.optionalRuntimeLoad(()->{throw fatal;});throw new AssertionError("Fatal VM error swallowed");}catch(Error actual){if(actual!=fatal)throw actual;}
+        }
         String[] names=BrowserTelemetryData.names().split("\\|");double[] before=BrowserTelemetryData.snapshot();
         RenderTelemetry.recordScene3DPhases(11,22,33,44,55);RenderTelemetry.recordSceneRender(77);
         RenderTelemetry.recordClientLoop(120,10,20,5,85,1,0,256,false);

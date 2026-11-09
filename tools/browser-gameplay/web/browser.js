@@ -51,7 +51,7 @@ const natives = {
   async Java_orsc_browser_BrowserBootstrap_reportTelemetry(lib,names,values) {
     const labels=names.split('|'),sample=Array.from(values);
     if(labels.length>32||sample.length!==labels.length*2||sample.some(v=>!Number.isFinite(v)||v<0))throw new Error('Invalid bounded browser telemetry export');
-    window.browserProof.profiled=true;window.browserProof.telemetryNames=labels;
+    window.browserProof.profiled=true;window.browserProof.profileKind="counters-only";window.browserProof.telemetryNames=labels;
     const samples=window.browserProof.telemetrySamples||=[];samples.push({milliseconds:performance.now(),values:sample});if(samples.length>300)samples.shift();
   },
   async Java_orsc_browser_BrowserBootstrap_reportLoop(lib,mode) { window.browserProof.clientLoop=mode; },
@@ -112,7 +112,7 @@ try {
   });
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
-    javaProperties: ['user.dir=/files', ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])], natives});
+    javaProperties: ['user.dir=/files', ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])], natives});
   report('Browser Java ready');
   const display = document.querySelector('#display');
   cheerpjCreateDisplay(1000, 620, display);
