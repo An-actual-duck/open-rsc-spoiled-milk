@@ -63,9 +63,12 @@ await n.Java_orsc_BrowserWebGLBridge_replaceChunk(null,1,replacement,indices,nex
 assert.equal(backend.stats.gpuBytes,resident);assert.equal(backend.stats.repackedChunks,1);assert.equal((await frame())[0].count,3,'repack retained borrowed batch metadata');
 await assert.rejects(()=>n.Java_orsc_BrowserWebGLBridge_replaceChunk(null,1,new Float32Array(112),indices,nextBatches),/shape changed/);assert.equal(backend.stats.gpuBytes,resident);
 await n.Java_orsc_BrowserWebGLBridge_deleteTextures(null,new Int32Array([7]));textureCount=0;assert.deepEqual(await frame(),[{count:3,offset:0,cutoff:.5,blend:false,texture:0}]);
-await n.Java_orsc_BrowserWebGLBridge_beginWorldSprites();const quad=new Float32Array(20);for(let i=0;i<4;i++){quad[i*5+3]=i===0||i===3?1:0;quad[i*5+4]=i<2?0:1;}
-await n.Java_orsc_BrowserWebGLBridge_uploadWorldSprite(null,3,5,quad,new Uint8Array(60));const sampled=new Float32Array(lastSubData.bytes.buffer);
+const quad=new Float32Array(20);for(let i=0;i<4;i++){quad[i*5+3]=i===0||i===3?1:0;quad[i*5+4]=i<2?0:1;}
+assert.deepEqual(Array.from(await n.Java_orsc_BrowserWebGLBridge_planWorldSprites(null,1,1,new Int32Array([1,3,5]))),[1]);
+await n.Java_orsc_BrowserWebGLBridge_commitWorldSprites(null,1,1,new Uint8Array(60),quad);const sampled=new Float32Array(lastSubData.bytes.buffer);
 for(let i=0;i<4;i++){assert.equal(sampled[i*5+3],atlasTexelCenter(0,3,quad[i*5+3],2048));assert.equal(sampled[i*5+4],atlasTexelCenter(0,5,quad[i*5+4],2048));}
+assert.deepEqual(Array.from(await n.Java_orsc_BrowserWebGLBridge_planWorldSprites(null,1,2,new Int32Array([1,3,5]))),[]);
+await n.Java_orsc_BrowserWebGLBridge_commitWorldSprites(null,1,2,new Uint8Array(0),quad);assert.equal(backend.stats.spriteUploadedImages,1,'hot sprite reuploaded pixels');
 await n.Java_orsc_BrowserWebGLBridge_deleteChunks(null,new Int32Array([1]));assert.equal(backend.stats.gpuBytes,0);
 await n.Java_orsc_BrowserWebGLBridge_uploadChunk(null,2,vertices,indices,new Int32Array([7,0,3,1,0]));
 failure={method:'bufferSubData',mode:'throw'};await assert.rejects(()=>n.Java_orsc_BrowserWebGLBridge_replaceChunk(null,2,vertices,indices,new Int32Array([7,0,3,1,0])),/Injected/);

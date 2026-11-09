@@ -24,6 +24,8 @@ final class BrowserWorldSpriteCache {
 	private long cacheBytes;
 	private long hits;
 	private long misses;
+	private int nextImageId=1;
+	private int epoch=1;
 
 	BrowserWorldSpriteCache() { this(MAX_CACHE_BYTES, 128); }
 
@@ -77,7 +79,7 @@ final class BrowserWorldSpriteCache {
 				entries.remove(i);
 				entries.add(entry);
 				hits++;
-				return new Result(minX, minY, (int) width, (int) height, entry.rgba);
+				return new Result(minX, minY, (int) width, (int) height, entry.rgba, entry.id);
 			}
 		}
 		misses++;
@@ -86,6 +88,7 @@ final class BrowserWorldSpriteCache {
 		if (composite == null) return null;
 		byte[] rgba = new byte[(int) (width * height * 4)];
 		composite.textureData.pixels().get(rgba);
+		int imageId=nextImageId();
 		long cost = probe.retainedBytes + rgba.length + 256;
 		if (cost <= byteBudget) {
 			boolean evicted = false;
@@ -95,25 +98,27 @@ final class BrowserWorldSpriteCache {
 			}
 			// Do not retain a previously large reference table after byte-budget eviction.
 			if (evicted) entries.trimToSize();
-			entries.add(new Entry(probe.ownedCopy(), rgba, cost));
+			entries.add(new Entry(probe.ownedCopy(), rgba, cost, imageId));
 			cacheBytes += cost;
 		}
-		return new Result(composite.x, composite.y, composite.width, composite.height, rgba);
+		return new Result(composite.x, composite.y, composite.width, composite.height, rgba, imageId);
 	}
 
 	/** Release retained cache data on context reset; statistics are lifetime totals. */
-	void clear() { entries.clear(); entries.trimToSize(); cacheBytes = 0; }
+	void clear() { if(epoch==Integer.MAX_VALUE)throw new IllegalStateException("Sprite epoch exhausted"); entries.clear(); entries.trimToSize(); cacheBytes = 0; epoch++; }
+	int getEpoch(){return epoch;}
+	int nextImageId(){if(nextImageId==Integer.MAX_VALUE)throw new IllegalStateException("Sprite identity exhausted");return nextImageId++;}
 	long getHits() { return hits; }
 	long getMisses() { return misses; }
 	long getCacheBytes() { return cacheBytes; }
 	int getEntryCount() { return entries.size(); }
 
 	static final class Result {
-		final int x, y, width, height;
+		final int x, y, width, height, id;
 		/** Borrowed read-only, independent of scratch; caller must not modify. */
 		final byte[] rgba;
-		Result(int x, int y, int width, int height, byte[] rgba) {
-			this.x = x; this.y = y; this.width = width; this.height = height; this.rgba = rgba;
+		Result(int x, int y, int width, int height, byte[] rgba, int id) {
+			this.x = x; this.y = y; this.width = width; this.height = height; this.rgba = rgba; this.id=id;
 		}
 	}
 
@@ -121,7 +126,8 @@ final class BrowserWorldSpriteCache {
 		final Key key;
 		final byte[] rgba;
 		final long cost;
-		Entry(Key key, byte[] rgba, long cost) { this.key = key; this.rgba = rgba; this.cost = cost; }
+		final int id;
+		Entry(Key key, byte[] rgba, long cost, int id) { this.key = key; this.rgba = rgba; this.cost = cost; this.id=id; }
 	}
 
 	private static final class Key {
