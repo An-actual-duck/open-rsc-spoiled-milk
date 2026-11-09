@@ -29,4 +29,7 @@ assert.throws(()=>m.prepare(2,2,1,0,2,0,false,new Float32Array(3)),/plane/);asse
 m.prepare(2,2,1,0,2,0,false,new Float32Array(4));assert.throws(()=>m.prepare(2,2,1,0,2,0,false,new Float32Array(4)),/consumed/);assert.throws(()=>m.begin(3,2),/declaration/);m.begin(2,2);m.draw(2,2,rgb);
 m.dispose();m.dispose();assert.equal(x.objects.size,0);assert.equal(stats.overlayCoverageBytes,0);assert.equal(stats.overlayRgbBytes,0);assert.throws(()=>m.begin(2,2),/unavailable/);
 const f=fakeGL(),failed=createBrowserOverlay(f.gl);failed.prepare(2,2,1,1,1,0,false,new Float32Array(4));failed.begin(2,2);f.gl.texImage2D=()=>{throw new Error('upload failure');};assert.throws(()=>failed.draw(2,2,rgb),/upload/);failed.dispose();assert.equal(f.objects.size,0);
+const large=fakeGL(),budget={},bounded=createBrowserOverlay(large.gl,{stats:budget});
+for(const [w,h,seq]of [[2048,1024,1],[1024,2048,2]]){bounded.prepare(w,h,1,seq,seq,0,false,new Float32Array(w*h));assert.equal(bounded.begin(w,h),false);bounded.draw(w,h,new Uint8Array(w*h*4));assert.equal(budget.overlayCompositeResourceBytes,32*1024*1024);assert(budget.overlayCompositePeakBytes<=32*1024*1024,'combined C/T/retained replacement exceeded32MiB');}
+assert.equal(budget.overlayCompositePeakBytes,32*1024*1024);bounded.dispose();assert.equal(large.objects.size,0);
 console.log('PASS coverage upload ownership, premultiplied C+T blend selection, exact retained FULL/BASE caller tokens, duplicate sequencing, owner reset, opaque fallback, bounds and owned cleanup. GL API double; no GPU proof.');

@@ -11523,6 +11523,9 @@ public final class mudclient implements Runnable {
 	}
 
 	public final void drawTeleportBubble(int id, int x, int y, int width, int height, int topPixelSkew, int var7) {
+        Renderer2DFrame.Phase previousPhase = Renderer3DSettings.isBrowserPresentationAvailable()
+            ? this.getSurface().getRenderer2DPhase() : null;
+        if (previousPhase != null) this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
 		try {
 
 			if (var7 != 2) {
@@ -11546,7 +11549,9 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var11) {
 			throw GenUtil.makeThrowable(var11, "client.LB(" + topPixelSkew + ',' + x + ',' + y + ',' + height + ',' + id
 				+ ',' + width + ',' + var7 + ')');
-		}
+		} finally {
+            if (previousPhase != null) this.getSurface().setRenderer2DPhase(previousPhase);
+        }
 	}
 
 	private void drawTextBox(String line2, byte var2, String line1) {

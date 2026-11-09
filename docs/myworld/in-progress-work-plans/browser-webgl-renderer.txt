@@ -329,3 +329,16 @@ ACTIVE source-only overlay/actor integration draft after8109 freeze
 - THIS DRAFT IS NOT BUILT/TESTED: it awaits manager-reviewed GraphicsController
   coverage/scoped-actor API and the end of exclusive8109 benchmark window.
   Frozen8109 artifact remainsaff4a9b42 and is unaffected by these source edits.
+
+Overlay draft validation update
+- GL API controls now pass C/T borrowed upload ownership, premultiplied alpha
+  selection, exact FULL/BASE caller sequencing, duplicate-frame handling, opaque
+  mode and owner-reset contracts. No actual compositor GPU claim yet.
+- Combined RGB/T/retained texture peak is self-enforced32MiB (not an assumed
+  retained-only scope): reset retained resources BEFORE any viewport resize,
+  reserve oldC/T plus newreplacementtexture, and reserve retainedpair afterward.
+  Two2Mpixel differently-shaped viewports exercise the full32MiB steady/peak.
+  Program/driver memory remains outside this explicit texture ledger.
+- Ordinary teleport circles are explicitly WORLD_OVERLAY only in browser mode,
+  with previous phase restored even on exceptions. Native raster body unchanged.
+  Production Java regression fixture awaits the reviewed shared actor API build.
