@@ -85,6 +85,7 @@ public final class BrowserWorldSpriteCacheFixture {
             if(first!=null) {
                 check(cache.getHits()==hits+2, "identical/translated cache hits");
                 check(first.rgba==same.rgba && first.rgba==shifted.rgba, "translation shares owned RGBA");
+                check(first.id>0 && first.id==same.id && first.id==shifted.id,"exact translated cache hits share positive identity");
                 check(shifted.x==first.x+43 && shifted.y==first.y-29, "translation updates position");
                 byte[] saved=first.rgba.clone();
                 OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(one(new Sprite(new int[]{0xabcdef},1,1)),scratch);
@@ -97,7 +98,7 @@ public final class BrowserWorldSpriteCacheFixture {
         cache.clear(); List<SpriteCommand> commands=one(mutable);
         BrowserWorldSpriteCache.Result a=parity(cache,commands,scratch); byte[] saved=a.rgba.clone();
         long misses=cache.getMisses();
-        mutable.getPixels()[0]=0xaabbcc; parity(cache,commands,scratch);
+        mutable.getPixels()[0]=0xaabbcc; check(parity(cache,commands,scratch).id!=a.id,"mutation receives new identity");
         mutable.setPixel(1,0x445566); parity(cache,commands,scratch);
         mutable.setPixels(new int[]{0x778899,0x445566}); parity(cache,commands,scratch);
         check(cache.getMisses()==misses+3,"all mutation APIs invalidate");
@@ -108,8 +109,9 @@ public final class BrowserWorldSpriteCacheFixture {
         // Deliberate Arrays.hashCode collision, not merely a random collision assumption.
         int[] p={0x112233,0x445566}, q={0x112234,0x445547};
         check(Arrays.hashCode(p)==Arrays.hashCode(q),"collision fixture");
-        cache.clear(); parity(cache,one(new Sprite(p,2,1)),scratch); misses=cache.getMisses();
+        cache.clear(); int collisionPredecessor=parity(cache,one(new Sprite(p,2,1)),scratch).id; misses=cache.getMisses();
         BrowserWorldSpriteCache.Result collision=parity(cache,one(new Sprite(q,2,1)),scratch);
+        check(collision.id!=collisionPredecessor,"hash collision must not reuse residency identity");
         check(cache.getMisses()==misses+1 && !Arrays.equals(reference(one(new Sprite(p,2,1))),collision.rgba),"hash collision exact comparison");
         // Every pixel-input metadata group changes independently; ordered overlap also matters.
         Sprite sprite=new Sprite(new int[]{0x333333,0xff3333,0x3344aa,0xffffff},2,2);
@@ -134,17 +136,19 @@ public final class BrowserWorldSpriteCacheFixture {
         // Bounded LRU, reuse A after B, and clear never retain old storage.
         BrowserWorldSpriteCache tiny=new BrowserWorldSpriteCache(4096,2);
         List<SpriteCommand> ca=one(new Sprite(new int[]{1},1,1)), cb=one(new Sprite(new int[]{2},1,1)), cc=one(new Sprite(new int[]{3},1,1));
-        byte[] ar=tiny.compose(ca,scratch).rgba;
+        BrowserWorldSpriteCache.Result held=tiny.compose(ca,scratch);byte[] ar=held.rgba;
         tiny.compose(cb,scratch); check(tiny.compose(ca,scratch).rgba==ar,"A-B-cached A");
         tiny.compose(cc,scratch); misses=tiny.getMisses(); tiny.compose(cb,scratch);
         check(tiny.getMisses()==misses+1 && tiny.getEntryCount()==2,"LRU entry eviction");
-        tiny.clear(); check(tiny.getCacheBytes()==0 && tiny.getEntryCount()==0,"clear storage");
+        check(held.id!=tiny.compose(cb,scratch).id && Arrays.equals(ar,held.rgba),"evicted frame result remains strongly owned");
+        int epoch=tiny.getEpoch();tiny.clear();check(tiny.getEpoch()>epoch,"clear advances session epoch"); check(tiny.getCacheBytes()==0 && tiny.getEntryCount()==0,"clear storage");
         check(tiny.compose(ca,scratch).rgba!=ar,"clear recomposes independent bytes");
         BrowserWorldSpriteCache bytesBound=new BrowserWorldSpriteCache(1400,20);
         for(List<SpriteCommand> item:Arrays.asList(ca,cb,cc)) {parity(bytesBound,item,scratch); check(bytesBound.getCacheBytes()<=1400,"byte eviction");}
         check(bytesBound.getEntryCount()==1,"byte budget counts keys and source copies");
         BrowserWorldSpriteCache oversized=new BrowserWorldSpriteCache(100,2);
         byte[] first=parity(oversized,ca,scratch).rgba, second=parity(oversized,ca,scratch).rgba;
+        check(oversized.compose(ca,scratch).id!=oversized.compose(ca,scratch).id,"transient images never alias identities");
         check(first!=second && oversized.getEntryCount()==0 && oversized.getCacheBytes()==0,"oversized uncached fallback");
         BrowserWorldSpriteCache largeSources=new BrowserWorldSpriteCache(4096,2);
         parity(largeSources,one(new Sprite(new int[2048],2048,1)),scratch);

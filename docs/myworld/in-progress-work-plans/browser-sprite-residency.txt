@@ -1,0 +1,100 @@
+Browser exact sprite residency and bulk descriptors — ACTIVE
+===========================================================
+Scope: private WebGL backend, after accepted main0addba6c2. Native renderer,
+Scene/picking, gameplay authority, sprites, visual quality and source compositor
+are unchanged. This is the first measured-performance candidate, not an FPS claim.
+
+Exact identity and gathered frame
+--------------------------------
+The production-reference CPU cache still hashes AND fully compares every mutable
+source pixel and normalized ordered layer parameter. A cache entry additionally
+owns a monotonic positive image ID. An exact/translated hit shares that ID; every
+miss gets a new ID, including uncached/oversized entries. No pixel hash alone is
+trusted. IDs never repeat within a cache epoch. clear advances epoch; overflow
+fails explicitly. No camera position, anchor, depth or pooled frame lives in a
+cache entry.
+
+BrowserWorldSpriteBatch gathers strong RGBA references for the entire current
+frame before GPU planning. Thus CPU LRU eviction while gathering later actors
+cannot invalidate earlier actors. The gather rejects a unique working set beyond
+16MiB before retaining another result, so a pathological frame cannot accumulate
+unbounded strong image references before the GPU capacity check. Fresh quads retain current source order and
+camera/depth/tone semantics. Actual null snapshots, absent anchors, empty layers
+and production-compositor-null results retain the old skip policy; no visible
+actor is omitted or reduced to fit resource limits.
+
+Two synchronous bulk native calls
+---------------------------------
+planWorldSprites(epoch,sequence,ordered[id,width,height]) returns missing unique
+IDs from the GPU's residency inventory. Java validates those IDs against the
+strongly held frame and concatenates only their RGBA bytes. commitWorldSprites
+consumes that contiguous upload plus all fresh ordered quads. It issues missing
+texture subimages and one contiguous VBO update, instead of one native/upload
+call per actor. A hot frame sends zero image bytes. Shared actors retain their
+separate ordered quads while sharing one exact image.
+
+The single existing2048x2048 RGBA8 texture remains16MiB; no second atlas or hidden
+spare allocation exists. All current IDs are pinned before inactive LRU eviction.
+The free-rectangle allocator is bounded by a4096-entry inventory and8192 free
+rectangles. If holes cannot fit current sprites, the planner discards residency
+metadata and deterministically repacks/reuploads all current unique images into
+the SAME texture. It does not clear or replace the texture object. Draw order
+stays independent of allocation order. An impossible current working set fails
+closed, preserving the existing explicit atlas-capacity policy.
+
+Accepted plans own copied metadata only. Primitive Java arrays are synchronously
+consumed; no Java frame array escapes into a later JS callback. Quads are copied
+before texel-center conversion, matching existing native UV endpoints exactly.
+An epoch/sequence mismatch, uncommitted presentation, invalid dimensions, GPU
+error or partial upload makes the sprite backend unusable until session restart.
+Context loss already fails closed and a new session creates a fresh inventory.
+Disposal is idempotent; GL texture/VBO ownership remains with the parent renderer.
+
+Metrics and limits
+------------------
+spriteUploadedImages/Bytes are cumulative accepted missing-image uploads;
+spriteDescriptorUploads counts accepted whole-frame VBO commits;
+spritePlanCalls/CommitCalls count accepted bulk calls, spriteSourceImageBytes
+records the old per-instance RGBA upload equivalent and spriteDescriptorBytes
+records actual contiguous quad bytes;
+spriteResidentImages is the live GPU inventory; spriteCompactions/Evictions
+track allocation behavior. spriteDrawReuses counts draw instances not requiring
+a unique image upload, including cold same-frame sharing; it is NOT a unique
+cache-hit count. CPU hit/miss counters remain separate. CPU-evicted and transient
+IDs can remain harmless GPU residents until bounded LRU eviction; they are not
+immediately retired or considered CPU-cache hits.
+
+GPU upload/buffer allocation overhead should fall, but full source validation,
+CPU composition on misses, descriptor construction, planning and Java update/UI
+work remain. The16MiB atlas is separate from existing world/lighting/UI budgets;
+CPU batch uploads are bounded16MiB and at most1024 fresh quads. No performance
+improvement is accepted without serialized real hardware old/new measurements.
+
+CPU evidence
+------------
+Fresh Java8-target client build; production compositor/cache fixture on Java8
+and21 includes9089 checks across600 seeded alpha/skew/mirror/clipping/recolor
+composites, source mutation, deliberate hash collisions, translations, IDs,
+epoch changes and eviction lifetime. Actual batch fixture checks held results
+after CPU LRU eviction, owned ordered vertices, shared-ID dedup, missing-ID
+validation and16MiB upload bound. JS atlas API double verifies pixel placement,
+hot zero-image uploads, ordered shared images, pinned eviction, fragmentation
+compaction, borrowed descriptors, stale epochs/sequence, incomplete plans,
+partial-upload failure and disposal. Existing GPU world/material/resource/UV
+contract fixture and native/default Scene ownership/picking guards pass.
+Layout audit reports inherited legacy ai2 loose output/asset entries; no cleanup
+was attempted. This task uses only declared output/tests/browser-sprite-residency.
+All are CPU/API checks. Hardware image comparison, private gameplay smoke and
+controlled FPS acceptance remain pending manager's serialized window.
+
+Review candidate checkpoint
+---------------------------
+Source4d9203ec4530a91b2d3d98bbbf24bf02f77cc666 normally merges published
+reviewed display main2abf25f1c. Immutable candidate HTTP127.0.0.1:8118:
+output/tests/browser-gameplay-spike/browser-sprite-residency/stage.json.
+Client SHA25608bbaa4230ebd5e2557a5e830654caf7c56e6174b309c4b15fdf095d8a1ac44e.
+This task has launched no GPU context. Manager owns serialized actual gameplay
+and baseline/candidate comparison; CPU/API readiness is not hardware acceptance.
+The separate CPU cache may retain16MiB in addition to up to16MiB held current
+frame images; a missing-pixel transfer may own another16MiB plus bounded scratch
+and descriptors. These software allocations do not expand the single GPU atlas.

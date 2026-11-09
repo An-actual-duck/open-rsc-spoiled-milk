@@ -51,8 +51,9 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void worldProgress(int[] metadata);
     private static native void overlayFrame(int width,int height,int mode,double generation,double frameSequence,int fades,boolean reset,float[] transmittance);
     private static native void deleteChunks(int[] ids);
-    private static native void beginWorldSprites();
-    private static native void uploadWorldSprite(int width,int height,float[] vertices,byte[] rgba);
+    private static native int[] planWorldSprites(int epoch,double sequence,int[] images);
+    private static native void commitWorldSprites(int epoch,double sequence,byte[] rgba,float[] quads);
+    private long spriteSequence;
     public static void install() {
         if(Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
             System.setProperty("spoiledmilk.remasterLightAzimuth","135");System.setProperty("spoiledmilk.remasterLightElevation","45");
@@ -199,21 +200,28 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         lightingFrame(light.values);
     }
     private int uploadSprites(Renderer3DFrame frame) {
-        int uploadedGroups=0;
-        beginWorldSprites();
         if(frame.getWorldSpriteSnapshotCount()>1024)throw new IllegalStateException("Browser world sprite count exceeds capacity");
+        BrowserWorldSpriteBatch batch=new BrowserWorldSpriteBatch();
+        // Strong references protect the entire gathered frame from CPU LRU evictions.
         for(Renderer3DFrame.WorldSpriteSnapshot snapshot:frame.getWorldSpriteSnapshots()) {
             if(snapshot==null||snapshot.getAnchor()==null||snapshot.getLayerCount()==0)continue;
             BrowserWorldSpriteCache.Result cached=null;
-            if(SPRITE_CACHE)try{cached=spriteCache.compose(snapshot,spriteWorkspace);}catch(IllegalArgumentException unsupported){/* Retain production builder for unsupported optional-cache layouts. */}
+            if(SPRITE_CACHE)try{cached=spriteCache.compose(snapshot,spriteWorkspace);}catch(IllegalArgumentException unsupported){/* Use the same production builder below. */}
             CompositeWorldSpriteTexture composite;
-            byte[] rgba;
-            if(cached!=null){composite=new CompositeWorldSpriteTexture(cached.x,cached.y,cached.width,cached.height,null);rgba=cached.rgba;}
-            else{composite=OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(snapshot,spriteWorkspace);if(composite==null)continue;ByteBuffer pixels=composite.textureData.pixels();rgba=new byte[pixels.remaining()];pixels.get(rgba);}
+            if(cached!=null)composite=new CompositeWorldSpriteTexture(cached.x,cached.y,cached.width,cached.height,null);
+            else{
+                composite=OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(snapshot,spriteWorkspace);if(composite==null)continue;
+                ByteBuffer pixels=composite.textureData.pixels();byte[] rgba=new byte[pixels.remaining()];pixels.get(rgba);
+                cached=new BrowserWorldSpriteCache.Result(composite.x,composite.y,composite.width,composite.height,rgba,spriteCache.nextImageId());
+            }
             if(composite.width<1||composite.height<1||(long)composite.width*composite.height>MAX_PIXELS)throw new IllegalStateException("Browser world sprite exceeds capacity");
-            uploadWorldSprite(composite.width,composite.height,spriteQuad(frame,snapshot.getAnchor(),composite),rgba);uploadedGroups++;
+            batch.add(cached,spriteQuad(frame,snapshot.getAnchor(),composite));
         }
-        return uploadedGroups;
+        if(spriteSequence>=9007199254740991L)throw new IllegalStateException("Sprite sequence exhausted");
+        long sequence=++spriteSequence;int epoch=spriteCache.getEpoch();
+        int[] missing=planWorldSprites(epoch,sequence,batch.descriptors());
+        commitWorldSprites(epoch,sequence,batch.pixels(missing),batch.vertices());
+        return batch.size();
     }
     static float[] spriteQuad(Renderer3DFrame frame,Renderer3DFrame.SpriteAnchor anchor,CompositeWorldSpriteTexture composite) {
         float scale=(float)(1<<Math.max(0,Math.min(24,frame.getPerspectiveShift())));
