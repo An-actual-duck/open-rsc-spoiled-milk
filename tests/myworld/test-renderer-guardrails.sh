@@ -20,6 +20,9 @@ renderer_tests=(
   test-browser-chunk-materials.py
   test-browser-lighting.py
   test-terrain-definition.py
+  test-remaster-glow-mask-bounds.py
+  test-remaster-glow-mask-scratch.py
+  test-remaster-glow-mask-content-cache.py
   test-sprite-workspace.py
   test-animated-texture-shadow-policy.py
   test-geometry-shadow-coordinates.py

@@ -20,11 +20,12 @@ final class RemasterGlowMaskBuilder {
 		readInt(CACHE_ENTRIES_PROPERTY, CACHE_ENTRIES_ENV, 16, 1, 64);
 	private static final float TEXTURE_PADDING = 384.0f;
 	private static final float GLOW_SCALE = 0.34f;
-	private static final long FNV_OFFSET_BASIS = 0xcbf29ce484222325L;
-	private static final long FNV_PRIME = 0x100000001b3L;
 
-	private final LinkedHashMap<Long, RemasterGlowMask> cacheBySignature =
-		new LinkedHashMap<Long, RemasterGlowMask>(16, 0.75f, true);
+	private final LinkedHashMap<MaskInputs, RemasterGlowMask> cacheByInputs =
+		new LinkedHashMap<MaskInputs, RemasterGlowMask>(16, 0.75f, true);
+	/* Upload revisions belong to this builder, not a lossy content hash. Keep
+	 * advancing across clear() so a rebuilt mask cannot alias an old GPU upload. */
+	private long nextUploadRevision = 1L;
 	/*
 	 * This builder is owned by the OpenGL presenter thread. These fixed-size
 	 * accumulation arrays are synchronous scratch and never escape buildMask.
@@ -45,23 +46,26 @@ final class RemasterGlowMaskBuilder {
 		if (bounds == null) {
 			return null;
 		}
-		long signature = signature(chunkFrame, emitters, bounds);
-		RemasterGlowMask cached = cacheBySignature.get(Long.valueOf(signature));
+		MaskInputs inputs = new MaskInputs(bounds, emitters);
+		RemasterGlowMask cached = cacheByInputs.get(inputs);
 		if (cached != null) {
 			return new RemasterGlowMaskBuild(cached, true, false, "cache");
 		}
 
-		RemasterGlowMask mask = buildMask(signature, bounds, emitters);
+		long revision = nextUploadRevision;
+		// Exhaustion must fail rather than reuse zero/sentinel/old upload identities.
+		nextUploadRevision = Math.addExact(nextUploadRevision, 1L);
+		RemasterGlowMask mask = buildMask(revision, bounds, emitters);
 		if (mask == null || mask.visiblePixels <= 0) {
 			return null;
 		}
-		cacheBySignature.put(Long.valueOf(signature), mask);
+		cacheByInputs.put(inputs, mask);
 		trimCache();
 		return new RemasterGlowMaskBuild(mask, false, true, "rebuild");
 	}
 
 	void clear() {
-		cacheBySignature.clear();
+		cacheByInputs.clear();
 	}
 
 	private List<Renderer3DWorldChunkFrame.GlowEmitter> collectEmitters(
@@ -178,50 +182,49 @@ final class RemasterGlowMaskBuilder {
 		return t * t * (3.0f - 2.0f * t);
 	}
 
-	private long signature(
-		Renderer3DWorldChunkFrame chunkFrame,
-		List<Renderer3DWorldChunkFrame.GlowEmitter> emitters,
-		RemasterGlowMaskBounds bounds) {
-		long hash = FNV_OFFSET_BASIS;
-		hash = mix(hash, chunkFrame.getChunkCount());
-		hash = mix(hash, chunkFrame.getTotalTriangleCount());
-		hash = mix(hash, TEXTURE_SIZE);
-		hash = mix(hash, Math.round(bounds.minX / 4.0f));
-		hash = mix(hash, Math.round(bounds.maxX / 4.0f));
-		hash = mix(hash, Math.round(bounds.minZ / 4.0f));
-		hash = mix(hash, Math.round(bounds.maxZ / 4.0f));
-		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
-			hash = mix(hash, chunk.getPlane());
-			hash = mix(hash, chunk.getCenterSectionX());
-			hash = mix(hash, chunk.getCenterSectionY());
-			hash = mix(hash, chunk.getOriginWorldX());
-			hash = mix(hash, chunk.getOriginWorldZ());
-			hash = mix(hash, (int) chunk.getSignature());
-			hash = mix(hash, (int) (chunk.getSignature() >>> 32));
+	/** Only the inputs consumed by bounds/pixel generation belong in this key.
+	 * Preserve emitter order and duplicates: float addition is not associative.
+	 * Exact equality, not just a hash, prevents nearby inputs sharing stale pixels.
+	 * Height/kind/chunk metadata are deliberately absent; the mask is an X/Z field.
+	 */
+	private static final class MaskInputs {
+		private final int[] values;
+		private final int hash;
+
+		private MaskInputs(RemasterGlowMaskBounds bounds,
+			List<Renderer3DWorldChunkFrame.GlowEmitter> emitters) {
+			values = new int[5 + 5 * emitters.size()];
+			values[0] = TEXTURE_SIZE;
+			values[1] = Float.floatToIntBits(bounds.minX);
+			values[2] = Float.floatToIntBits(bounds.maxX);
+			values[3] = Float.floatToIntBits(bounds.minZ);
+			values[4] = Float.floatToIntBits(bounds.maxZ);
+			int index = 5;
+			for (Renderer3DWorldChunkFrame.GlowEmitter emitter : emitters) {
+				values[index++] = emitter.getCenterX();
+				values[index++] = emitter.getCenterZ();
+				values[index++] = emitter.getRadius();
+				values[index++] = emitter.getColor();
+				values[index++] = emitter.getIntensity();
+			}
+			hash = Arrays.hashCode(values);
 		}
-		hash = mix(hash, emitters.size());
-		for (Renderer3DWorldChunkFrame.GlowEmitter emitter : emitters) {
-			hash = mix(hash, emitter.getModelKind().ordinal());
-			hash = mix(hash, Math.round(emitter.getCenterX() / 4.0f));
-			hash = mix(hash, Math.round(emitter.getCenterY() / 4.0f));
-			hash = mix(hash, Math.round(emitter.getCenterZ() / 4.0f));
-			hash = mix(hash, Math.round(emitter.getRadius() / 4.0f));
-			hash = mix(hash, emitter.getColor());
-			hash = mix(hash, emitter.getIntensity());
+
+		@Override
+		public int hashCode() { return hash; }
+
+		@Override
+		public boolean equals(Object other) {
+			return other == this || (other instanceof MaskInputs
+				&& Arrays.equals(values, ((MaskInputs) other).values));
 		}
-		return hash;
 	}
 
 	private void trimCache() {
-		while (cacheBySignature.size() > CACHE_ENTRIES) {
-			Map.Entry<Long, RemasterGlowMask> eldest = cacheBySignature.entrySet().iterator().next();
-			cacheBySignature.remove(eldest.getKey());
+		while (cacheByInputs.size() > CACHE_ENTRIES) {
+			Map.Entry<MaskInputs, RemasterGlowMask> eldest = cacheByInputs.entrySet().iterator().next();
+			cacheByInputs.remove(eldest.getKey());
 		}
-	}
-
-	private static long mix(long hash, int value) {
-		hash ^= value & 0xffffffffL;
-		return hash * FNV_PRIME;
 	}
 
 	private static int readInt(
