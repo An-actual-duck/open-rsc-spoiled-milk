@@ -40,6 +40,11 @@ public class GraphicsController {
 		MINIMAP, WORLDMAP, SHOP
 	}
 
+	/** Scoped SCENE ownership only; never permits unordered UI/world-overlay replay. */
+	public enum SceneSpriteRasterPolicy {
+		DEFAULT, GPU_OWNED, FORCE_SOFTWARE
+	}
+
 	private enum Renderer2DNativeUiBlocker {
 		SPRITE,
 		TEXT,
@@ -91,6 +96,11 @@ public class GraphicsController {
 	private int renderer2DSceneSpriteAnchorIndex = -1;
 	private int renderer2DSceneSpriteDrawOrder = -1;
 	private Renderer3DFrame renderer2DSceneFrame;
+	private SceneSpriteRasterPolicy sceneSpriteRasterPolicy = SceneSpriteRasterPolicy.DEFAULT;
+	private boolean guardGpuSceneSoftwareWrites;
+	private boolean sceneSpriteLastLayerOwned;
+	private boolean sceneSpriteLastLayerEmpty;
+	private String sceneSpriteRasterFailure = "";
 	private boolean renderer2DCommandOverflowLogged;
 	private int renderer2DCaptureAttempts;
 	private int renderer2DCaptureAccepted;
@@ -177,9 +187,15 @@ public class GraphicsController {
 		return worldOverlayCoverage == null ? null : worldOverlayCoverage.borrow(pixelData, width2, height2);
 	}
 
+	/** Owner/epoch/mode coherence, not a pixel-content revision check. Ordinary
+	 * same-frame draws mutate the borrowed arrays: borrow after UI and consume now.
+	 */
 	public final boolean isWorldOverlayCoverageCurrent(WorldOverlayCoverage.Frame frame) {
 		return worldOverlayCoverage != null && worldOverlayCoverage.isCurrent(frame, pixelData, width2, height2);
 	}
+
+	/** Sticky until beginRenderer2DFrame; explicit GPU owners must reject failed frames. */
+	public final String getSceneSpriteRasterFailure() { return sceneSpriteRasterFailure; }
 
 	/** External raw/Java2D writers must call this before touching an active overlay. */
 	public final void invalidateWorldOverlayCoverage(String reason) {
@@ -187,14 +203,40 @@ public class GraphicsController {
 	}
 
 	private void coverageOpaque(int[] destination, int index) {
+		noteSceneSoftwareWrite(destination);
 		if (worldOverlayCoverage != null) worldOverlayCoverage.opaque(destination, index);
 	}
 
+	private void coverageOpaqueSpan(int[] destination, int start, int end) {
+		if (end > start) noteSceneSoftwareWrite(destination);
+		if (worldOverlayCoverage != null) worldOverlayCoverage.opaqueSpan(destination, start, end);
+	}
+
 	private void coverageMultiply(int[] destination, int index, int numerator) {
+		noteSceneSoftwareWrite(destination);
 		if (worldOverlayCoverage != null) worldOverlayCoverage.multiply(destination, index, numerator);
 	}
 
+	private void noteSceneSoftwareWrite(int[] destination) {
+		if (guardGpuSceneSoftwareWrites && destination == pixelData) {
+			failSceneSpriteOwnership("GPU-owned Scene entity used an uncaptured software writer");
+		}
+	}
+
+	private void updateSceneSoftwareWriteGuard() {
+		guardGpuSceneSoftwareWrites = sceneSpriteRasterPolicy == SceneSpriteRasterPolicy.GPU_OWNED
+			&& renderer2DPhase == Renderer2DFrame.Phase.SCENE;
+	}
+
+	private void failSceneSpriteOwnership(String reason) {
+		if (sceneSpriteRasterFailure.isEmpty()) sceneSpriteRasterFailure = reason;
+		coverageUnsupported(sceneSpriteRasterFailure);
+	}
+
 	private void coverageUnsupported(String operation) {
+		if (guardGpuSceneSoftwareWrites && sceneSpriteRasterFailure.isEmpty()) {
+			sceneSpriteRasterFailure = operation;
+		}
 		if (worldOverlayCoverage != null) worldOverlayCoverage.invalidate(operation);
 	}
 
@@ -221,6 +263,9 @@ public class GraphicsController {
 
 	public final void beginRenderer2DFrame() {
 		if (worldOverlayCoverage != null) worldOverlayCoverage.beginFrame();
+		sceneSpriteRasterFailure = "";
+		sceneSpriteLastLayerOwned = false;
+		sceneSpriteLastLayerEmpty = false;
 		renderer2DSpriteCommands.clear();
 		renderer2DTextCommands.clear();
 		renderer2DPrimitiveCommands.clear();
@@ -229,6 +274,7 @@ public class GraphicsController {
 		renderer2DCommandSequence = 0;
 		renderer2DCommandOverflowLogged = false;
 		renderer2DPhase = Renderer2DFrame.Phase.UI_OVERLAY;
+		guardGpuSceneSoftwareWrites = false;
 		renderer2DSceneSpriteAnchorIndex = -1;
 		renderer2DSceneSpriteDrawOrder = -1;
 		renderer2DSceneFrame = null;
@@ -285,6 +331,7 @@ public class GraphicsController {
 
 	public final void setRenderer2DPhase(Renderer2DFrame.Phase phase) {
 		renderer2DPhase = phase == null ? Renderer2DFrame.Phase.UNKNOWN : phase;
+		updateSceneSoftwareWriteGuard();
 	}
 
 	public final Renderer2DFrame.Phase getRenderer2DPhase() {
@@ -407,6 +454,18 @@ public class GraphicsController {
 	}
 
 	private boolean shouldReplaceRenderer2DUiSprite(boolean captured, boolean requiresOrderedReplay) {
+		if (renderer2DPhase == Renderer2DFrame.Phase.SCENE) {
+			if (sceneSpriteRasterPolicy == SceneSpriteRasterPolicy.FORCE_SOFTWARE) return false;
+			if (sceneSpriteRasterPolicy == SceneSpriteRasterPolicy.GPU_OWNED) {
+				// Clipped/dimension-empty layers have no pixels and claim no GPU ownership.
+				if (!captured && sceneSpriteLastLayerEmpty) return true;
+				if (!captured || !sceneSpriteLastLayerOwned) {
+					failSceneSpriteOwnership("GPU-owned Scene sprite layer was not captured into its owned snapshot");
+				}
+				// A failed GPU frame is rejected explicitly, never mixed with a CPU overlay.
+				return true;
+			}
+		}
 		boolean replace = captured
 			&& !requiresOrderedReplay
 			&& (canReplaceRenderer2DNativeUi() || canReplaceRenderer2DSceneSprite());
@@ -423,7 +482,9 @@ public class GraphicsController {
 
 	private boolean canReplaceRenderer2DSceneSprite() {
 		return renderer2DPhase == Renderer2DFrame.Phase.SCENE
-			&& Renderer2DSettings.canReplayOpenGLWorldSprites();
+			&& sceneSpriteRasterPolicy != SceneSpriteRasterPolicy.FORCE_SOFTWARE
+			&& (sceneSpriteRasterPolicy == SceneSpriteRasterPolicy.GPU_OWNED
+				|| Renderer2DSettings.canReplayOpenGLWorldSprites());
 	}
 
 	private boolean canCaptureAlphaRenderer2DSprite(int alpha) {
@@ -431,7 +492,8 @@ public class GraphicsController {
 			&& alpha <= Renderer2DFrame.SpriteCommand.FULL_ALPHA
 			&& (alpha == Renderer2DFrame.SpriteCommand.FULL_ALPHA
 				|| (renderer2DPhase == Renderer2DFrame.Phase.SCENE
-					&& Renderer2DSettings.canReplayOpenGLWorldSprites())
+					&& (sceneSpriteRasterPolicy == SceneSpriteRasterPolicy.GPU_OWNED
+						|| Renderer2DSettings.canReplayOpenGLWorldSprites()))
 				|| (renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
 					&& (Renderer2DSettings.canReplaceUiSpritesWithOpenGL()
 						|| canCaptureRenderer2DOpenGLWorldOverlayReplay()))
@@ -828,6 +890,7 @@ public class GraphicsController {
 		int alpha,
 		RendererSpriteTransform transform) {
 		if (width <= 0 || height <= 0) {
+			sceneSpriteLastLayerEmpty = true;
 			return false;
 		}
 		return recordRenderer2DSprite(
@@ -864,6 +927,7 @@ public class GraphicsController {
 		int sourceScaleY,
 		int alpha,
 		RendererSpriteTransform transform) {
+		sceneSpriteLastLayerEmpty = width <= 0 || height <= 0;
 		if (renderer2DCommandCaptureSuppressed
 			|| !Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
 			return false;
@@ -944,8 +1008,9 @@ public class GraphicsController {
 
 	private void recordCapturedRenderer2DSprite(Renderer2DFrame.SpriteCommand command) {
 		renderer2DSpriteCommands.add(command);
+		sceneSpriteLastLayerOwned = false;
 		if (renderer2DSceneFrame != null) {
-			renderer2DSceneFrame.recordWorldSpriteLayer(
+			sceneSpriteLastLayerOwned = renderer2DSceneFrame.recordWorldSpriteLayer(
 				renderer2DSceneSpriteAnchorIndex,
 				renderer2DSceneSpriteDrawOrder,
 				command);
@@ -986,6 +1051,7 @@ public class GraphicsController {
 		int scaleY,
 		int alpha,
 		RendererSpriteTransform transform) {
+		sceneSpriteLastLayerEmpty = destWidth <= 0 || destHeight <= 0;
 		if (sprite == null || destWidth <= 0 || destHeight <= 0 || this.width2 <= 0) {
 			return false;
 		}
@@ -1043,6 +1109,7 @@ public class GraphicsController {
 		int destColumnSkewPerRow,
 		boolean mirrorX,
 		RendererSpriteTransform transform) {
+		sceneSpriteLastLayerEmpty = destWidth <= 0 || destHeight <= 0;
 		if (renderer2DCommandCaptureSuppressed
 			|| !Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
 			return false;
@@ -1073,6 +1140,7 @@ public class GraphicsController {
 			|| minLeft >= this.clipRight
 			|| destY + destHeight <= this.clipTop
 			|| destY >= this.clipBottom) {
+			sceneSpriteLastLayerEmpty = true;
 			renderer2DCaptureSkippedBounds++;
 			return false;
 		}
@@ -1807,12 +1875,36 @@ public class GraphicsController {
 		int sceneSpriteAnchorIndex,
 		int sceneSpriteDrawOrder,
 		Renderer3DFrame sceneFrame) {
+		drawSceneEntity(index, x, y, width, height, overlayMovement, topPixelSkew, scenePickIndex,
+			sceneSpriteAnchorIndex, sceneSpriteDrawOrder, sceneFrame, SceneSpriteRasterPolicy.DEFAULT);
+	}
+
+	public final void drawSceneEntity(
+		int index,
+		int x,
+		int y,
+		int width,
+		int height,
+		int overlayMovement,
+		int topPixelSkew,
+		int scenePickIndex,
+		int sceneSpriteAnchorIndex,
+		int sceneSpriteDrawOrder,
+		Renderer3DFrame sceneFrame,
+		SceneSpriteRasterPolicy policy) {
 		int previousAnchorIndex = renderer2DSceneSpriteAnchorIndex;
 		int previousDrawOrder = renderer2DSceneSpriteDrawOrder;
 		Renderer3DFrame previousSceneFrame = renderer2DSceneFrame;
+		SceneSpriteRasterPolicy previousPolicy = sceneSpriteRasterPolicy;
+		boolean previousOwnedLayer = sceneSpriteLastLayerOwned;
+		boolean previousEmptyLayer = sceneSpriteLastLayerEmpty;
 		renderer2DSceneSpriteAnchorIndex = sceneSpriteAnchorIndex;
 		renderer2DSceneSpriteDrawOrder = sceneSpriteDrawOrder;
 		renderer2DSceneFrame = sceneFrame;
+		sceneSpriteRasterPolicy = policy == null ? SceneSpriteRasterPolicy.DEFAULT : policy;
+		updateSceneSoftwareWriteGuard();
+		sceneSpriteLastLayerOwned = false;
+		sceneSpriteLastLayerEmpty = false;
 		try {
 			drawEntity(
 				index,
@@ -1827,6 +1919,10 @@ public class GraphicsController {
 			renderer2DSceneSpriteAnchorIndex = previousAnchorIndex;
 			renderer2DSceneSpriteDrawOrder = previousDrawOrder;
 			renderer2DSceneFrame = previousSceneFrame;
+			sceneSpriteRasterPolicy = previousPolicy;
+			updateSceneSoftwareWriteGuard();
+			sceneSpriteLastLayerOwned = previousOwnedLayer;
+			sceneSpriteLastLayerEmpty = previousEmptyLayer;
 		}
 	}
 
@@ -2597,16 +2693,16 @@ public class GraphicsController {
 
 			int var2 = this.height2 * this.width2;
 			if (var1 == !this.interlace) {
+				coverageOpaqueSpan(this.pixelData, 0, var2);
 				for (int i = 0; var2 > i; ++i) {
-					coverageOpaque(this.pixelData, i);
 					this.pixelData[i] = 0;
 				}
 			} else {
 				int head = 0;
 
 				for (int i = -this.height2; i < 0; i += 2) {
+					coverageOpaqueSpan(this.pixelData, head, head + this.width2);
 					for (int j = -this.width2; j < 0; ++j) {
-						coverageOpaque(this.pixelData, head);
 						this.pixelData[head++] = 0;
 					}
 
@@ -3165,9 +3261,9 @@ public class GraphicsController {
 					if (shouldReplaceRenderer2DPrimitive(recordRenderer2DPrimitive(x, y, width, 1, color, 256))) {
 						return;
 					}
+					coverageOpaqueSpan(this.pixelData, offset, offset + width);
 
 					for (int xi = 0; width > xi; ++xi) {
-						coverageOpaque(this.pixelData, offset + xi);
 						this.pixelData[offset + xi] = color;
 					}
 
@@ -3902,6 +3998,7 @@ public class GraphicsController {
 	}
 
 	public final void fade2black(int var1) {
+		noteSceneSoftwareWrite(pixelData);
 		if (worldOverlayCoverage != null && worldOverlayCoverage.retainFade(pixelData, width2, height2)) return;
 		try {
 
@@ -4105,6 +4202,10 @@ public class GraphicsController {
 
 				if (colorMask2 == 0) {
 					colorMask2 = 0xFFFFFF;
+				}
+				if (guardGpuSceneSoftwareWrites && mirrorX && colorMask2 != 0xFFFFFF && dummy != 1) {
+					failSceneSpriteOwnership("GPU Scene sprite has an unsupported legacy clipping sentinel");
+					return;
 				}
 
 				if (colorMask == 0) {

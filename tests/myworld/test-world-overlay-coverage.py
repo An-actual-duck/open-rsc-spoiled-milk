@@ -15,7 +15,8 @@ with tempfile.TemporaryDirectory(prefix='world-overlay-coverage-') as temp:
     current, baseline = temp / 'current', temp / 'baseline'
     current.mkdir(); baseline.mkdir()
     sources = [ROOT / GRAPHICS, ROOT / 'Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java',
-               ROOT / 'tests/myworld/WorldOverlayCoverageFixture.java']
+               ROOT / 'tests/myworld/WorldOverlayCoverageFixture.java',
+               ROOT / 'tests/myworld/SceneSpriteRasterPolicyFixture.java']
     subprocess.run([str(JAVA / 'javac'), '-source', '8', '-target', '8', '-cp', str(JAR),
                     '-d', str(current), *map(str, sources)], check=True)
     old = temp / 'GraphicsController.java'
@@ -30,3 +31,8 @@ with tempfile.TemporaryDirectory(prefix='world-overlay-coverage-') as temp:
     assert ordinary.startswith('NATIVE_RGB_SHA256='), ordinary
     print(ordinary.strip(), '(unchanged parent source parity)')
     subprocess.run(command + [str(current) + os.pathsep + str(JAR), main], check=True)
+    for properties, mode in ((['-Dspoiledmilk.openglWorldSpritesVisible=true'], 'world'),
+                             (['-Dspoiled_milk.opengl_sprite_overlay=true'], 'capture-only'),
+                             ([], 'capture-off')):
+        subprocess.run([str(JAVA / 'java'), *properties, '-cp', str(current) + os.pathsep + str(JAR),
+                        'orsc.graphics.two.SceneSpriteRasterPolicyFixture', mode], check=True)

@@ -15,6 +15,9 @@ This includes alpha 0..256, AA thresholds <=30 / <230 / opaque, and the
 two-mask sprite path's unusual (255-opacity)/256 coefficient. Raw source-zero
 transparency is tested before any RGB interpretation, preserving ARGB black.
 Coverage hooks follow the actual software clip/interlace/sample loops.
+blackScreen updates coverage in one full span or one span per actual legacy
+interlace row, rather than invoking a per-pixel callback. Horizontal opaque
+lines likewise fill a span. The original RGB loops/expressions are unchanged.
 
 Fresh-world composition uses RGB=legacy UI over black and output RGB+T*world.
 Upload RGB as premultiplied contribution and T as a separate nearest R32F
@@ -70,6 +73,47 @@ coverage. Views expire at subsequent drawing/lifecycle transitions and cannot
 serve as immutable image captures. isCurrent checks owner/helper identity,
 dimensions, valid state, generation, frameSequence, mode/count and T identity;
 it does not freeze arrays or track every individual pixel mutation.
+In particular, an ordinary same-frame draw may mutate BOTH borrowed arrays
+without changing the epoch; isCurrent can still return true. It validates
+owner/lifecycle/mode coherence, not immutable-content freshness. Never cache
+that descriptor before UI or use it asynchronously; borrow again after UI.
+
+Scoped Scene actor raster ownership
+----------------------------------
+GraphicsController.SceneSpriteRasterPolicy has DEFAULT, GPU_OWNED and
+FORCE_SOFTWARE. New drawSceneEntity overload adds that policy AFTER the existing
+Renderer3DFrame argument; the old signature delegates DEFAULT. Scope restores
+the previous policy/frame/anchor/order/owned-layer state in finally, including
+exception paths. No shared global/UI unordered-replay permission changes.
+
+Only when phase==SCENE:
+  DEFAULT: original replacement rules, including ordered replay restriction.
+  GPU_OWNED: captured layers accepted by frame.recordWorldSpriteLayer are GPU
+             owned, including mirror/skew/ordered layers. Never raster them
+             again into the CPU overlay; that would defeat GPU occlusion.
+  FORCE_SOFTWARE: no SCENE layer is replaced, ensuring complete legacy fallback
+                  includes even unmirrored actor layers.
+
+GPU_OWNED does not infer ownership from captured=true alone: exact scoped frame
+acceptance must also succeed. Direct-ground comparator layers do not prevent
+subsequent accepted capture. Eligible capture failure, bad anchor/order or an
+uncaptured software writer marks sticky getSceneSpriteRasterFailure() and
+invalidates active coverage. The wrapper then suppresses the mixed CPU fallback;
+Bridge must reject that frame/request a complete redraw EVEN when T is disabled.
+Failure resets only at beginRenderer2DFrame. Fully clipped no-op layers do not
+claim ownership and do not fail merely for drawing nothing.
+Real actor callers pass legacy dummy1. Mirrored two-mask calls with other dummy
+values have a CPU-only clipBottom mutation; explicit GPU ownership rejects that
+unsupported sentinel instead of silently dropping its side effect. DEFAULT and
+FORCE_SOFTWARE retain the old behavior.
+
+The writer guard applies only to GPU_OWNED + SCENE + exact on-screen destination.
+It does not suppress WORLD_OVERLAY/UI_OVERLAY names, progress bars, spell effects
+or scratch hit-splats. Scene should select GPU_OWNED only for the actual GPU
+world path, FORCE_SOFTWARE for complete legacy/forceLegacy, DEFAULT for native.
+Those Scene call sites and Bridge failure checks are separate owning integration.
+For an unexpected raw software writer, internal RGB may already be touched;
+the sticky error makes the whole frame unpresentable rather than undoing pixels.
 
 Exact retained fade protocol (GPU integration required)
 ------------------------------------------------------
@@ -133,6 +177,17 @@ fade requests, BASE/delta reuse, lifecycle/mismatch/disable/reset limits.
 Native RGB is compared byte-for-byte against parent9c07 source compiled with
 the SAME fixture/dependencies. Frozen default-RGB oracle SHA256:
   d0092296098efaa99047f01540a500497f07e8bad341b2f6a3c2fd8326a506c3
+
+The same runner also exercises the production actor capture/snapshot/compositor
+under world-replay, capture-only and disabled-capture JVM settings. Directed
+checks cover mirrored/skewed GPU layers leaving CPU RGB/T untouched, unchanged
+ordered command/bounds/RGBA fingerprints and depth-anchor identity, full software
+fallback, partial alpha, direct-ground predecessors, phase-switched progress/UI,
+capture/ownership failures and exception-safe scope restoration. Actual GPU depth
+QA and timing are still required after Scene/Bridge wiring.
+Both Java8 and21 pass9,838,473 coverage assertions plus24,847 actor-policy
+checks in each enabled capture mode and4 disabled-capture checks. Default RGB
+oracle, existing renderer2D overflow guardrail, layout and diff checks pass.
 
 Measured ordinary reconstruction: max1LSB/channel, RMS0.1218668525 in this suite.
 This is not a universal1LSB bound. For n sequential floor blends, a conservative

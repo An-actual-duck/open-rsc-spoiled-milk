@@ -82,6 +82,13 @@ public final class WorldOverlayCoverage {
 		if (transparent && valid && destination == ownerPixels) { written = true; transmittance[index] = 0f; }
 	}
 
+	void opaqueSpan(int[] destination, int start, int end) {
+		if (transparent && valid && destination == ownerPixels && end > start) {
+			written = true;
+			Arrays.fill(transmittance, start, end, 0f);
+		}
+	}
+
 	void multiply(int[] destination, int index, int numerator) {
 		if (transparent && valid && destination == ownerPixels) {
 			written = true;
@@ -133,6 +140,9 @@ public final class WorldOverlayCoverage {
 			: retainedFadeCount > 0 ? MODE_RETAINED_FADE : MODE_RETAINED_BASE;
 	}
 
+	/** Owner/epoch/mode check only; ordinary same-frame writes mutate the borrowed
+	 * arrays without a new epoch. Borrow freshly after UI and consume synchronously.
+	 */
 	boolean isCurrent(Frame frame, int[] pixels, int width, int height) {
 		return frame != null && frame.owner == this && frame.ownerPixels == pixels && frame.width == width && frame.height == height
 			&& frame.generation == generation && frame.frameSequence == frameSequence && frame.valid && valid
