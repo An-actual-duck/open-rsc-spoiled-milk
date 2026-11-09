@@ -74,10 +74,10 @@ try {
   await delay(80); assert.equal(await evaluate('document.querySelectorAll("iframe").length'), 1);
   await call('Input.dispatchKeyEvent', {type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
   await call('Input.dispatchKeyEvent', {type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+  await delay(100); assert.equal(await evaluate('document.querySelectorAll("#runtime").length'), 1);
+  await click('document.querySelector("#stop")');
   await wait('!document.querySelector("#runtime")');
   const ticks = await evaluate('testTicks'); await delay(120); assert.equal(await evaluate('testTicks'), ticks);
-  await start(); await click('document.querySelector("#stop")');
-  await wait('!document.querySelector("#runtime")');
   await start(); await evaluate('document.querySelector("#runtime").contentWindow.testExit(0)');
   await wait('!document.querySelector("#runtime")'); assert.match(await evaluate('browserProof.stopReason'), /program stopped/);
   await start(); await evaluate('document.querySelector("#runtime").contentWindow.testFail()');
@@ -101,15 +101,19 @@ try {
   await start();
   const alternate = await call('Target.createTarget', {url:'about:blank'});
   await call('Target.activateTarget', {targetId:alternate.targetId});
-  await wait('!document.querySelector("#runtime")');
-  assert.match(await evaluate('browserProof.stopReason'), /hidden/);
+  await wait('browserProof.visibility==="hidden"');
+  assert.equal(await evaluate('document.querySelectorAll("#runtime").length'), 1);
   await call('Target.closeTarget', {targetId:alternate.targetId});
   await call('Target.activateTarget', {targetId:targets.find(t=>t.type==='page').id});
+  await wait('browserProof.visibility==="visible"');
+  assert.equal(await evaluate('document.querySelectorAll("#runtime").length'), 1);
+  await click('document.querySelector("#stop")');
+  await wait('!document.querySelector("#runtime")');
   // Removed/stale contexts cannot send trusted stop commands into a new session.
   await start(); await evaluate('window.postMessage({type:"browser-session-stop",reason:"untrusted parent"},location.origin)');
   await delay(80); assert.equal(await evaluate('document.querySelectorAll("iframe").length'), 1);
   await click('document.querySelector("#stop")');
-  const result = {passed:true, runtime:'mocked; actual browser DOM/CDP input', loads, tests:['explicit start','frame sandbox/options','nested input','Escape','timer teardown','Stop','Java exit','bootstrap failure','advisory focus departure','outer input while session remains alive','actual tab visibility teardown','restart/stale message rejection'], desktopGlobalKeyboard:'NOT_TESTED; reported failure not reproduced'};
+  const result = {passed:true, runtime:'mocked; actual browser DOM/CDP input', loads, tests:['explicit start','frame sandbox/options','nested input','Escape preservation','timer teardown','Stop','Java exit','bootstrap failure','advisory focus departure','outer input while session remains alive','actual tab hide/restore survival','restart/stale message rejection'], desktopGlobalKeyboard:'NOT_TESTED; reported failure not reproduced'};
   fs.writeFileSync(path.join(run, 'result.json'), JSON.stringify(result, null, 2));
   console.log('PASS browser input lifecycle', run);
 } finally {

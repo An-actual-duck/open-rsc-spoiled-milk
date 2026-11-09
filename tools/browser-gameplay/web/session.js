@@ -56,9 +56,6 @@ window.addEventListener('focus', () => {
   if (frame) window.browserProof.focus = 'page';
 });
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) end('Stopped because the test tab was hidden.');
+  window.browserProof.visibility = document.visibilityState;
 });
 window.addEventListener('pagehide', () => end('Stopped because the page closed.'));
-window.addEventListener('keydown', event => {
-  if (event.key === 'Escape') end('Stopped with Escape.', true);
-}, true);

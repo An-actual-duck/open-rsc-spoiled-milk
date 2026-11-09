@@ -21,14 +21,12 @@ window.addEventListener('blur', () => setTimeout(() => {
   if (!document.hasFocus() && !stopped) parent.postMessage({type: 'browser-session-focus-left'}, location.origin);
 }, 0));
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) finish('Stopped because the test tab was hidden.');
+  window.browserProof.visibility = document.visibilityState;
+  publish();
 });
 window.addEventListener('pagehide', () => { stopped = true; transport.dispose(); gpu?.dispose(); });
-// Escape is an escape hatch, never captured by Java. Other browser shortcuts
-// retain the vendor's documented default behavior (no overrideShortcuts).
-window.addEventListener('keydown', event => {
-  if (event.key === 'Escape') { event.stopImmediatePropagation(); finish('Stopped with Escape.'); }
-}, true);
+// Keyboard events, including Escape, remain ordinary game/AWT input. The
+// wrapper does not turn closing a menu into closing a Java session.
 function report(message) {
   const event = {milliseconds: Math.round(performance.now() - started), message};
   window.browserProof.events.push(event); status.textContent = message; console.log('BROWSER_PROOF', JSON.stringify(event)); publish();
