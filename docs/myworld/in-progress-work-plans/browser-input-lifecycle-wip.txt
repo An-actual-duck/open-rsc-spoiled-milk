@@ -1,8 +1,8 @@
 Browser session lifecycle — resumed private browser work (2026-11-09)
 ===================================================================
 
-Current status: focused source candidate; actual final-policy runtime controls
-pending the manager's serialized browser/GPU window. No public deployment.
+Current status: READY for manager review after actual final-policy controls.
+No public deployment or desktop-client behavior change.
 This work does not reproduce or diagnose the old one-off desktop-wide keyboard
 report. The owner had deferred that report after it stopped reproducing.
 
@@ -43,8 +43,7 @@ the starting location. The reported Java software loop stayed about3FPS; this
 is compatibility evidence, never GPU speed or desktop parity evidence.
 
 The successful run used the intermediate policy that still ended on Escape/tab
-hide. The final policy preserves those too; its actual control check is recorded
-separately after the serialized test window. Historical failed/intermediate
+hide. The final policy preserves those too; its actual control check passed separately in the serialized test window. Historical failed/intermediate
 captures are retained, not overwritten or presented as final acceptance.
 
 Evidence:
@@ -99,3 +98,37 @@ Tests and limits
 No public hosting/security/distribution acceptance, browser performance promise,
 all-browser/device claim or global keyboard correctness guarantee is made.
 CheerpJ is fetched from its official CDN, not modified or redistributed.
+
+Final actual-policy validation
+------------------------------
+Clean frontend checkpoint55133afb8bd20e645146b3f8688df786ee3f67ee was staged as
+output/tests/browser-gameplay-spike/lifecycle-20261109-final-controls/, HTTP8100.
+Actual unmodified CDN CheerpJ5.0/Java8 in isolated Chrome152 passed responsive
+LOGIN twice, typing into the outer page while Java remains alive, explicit Stop,
+a fresh Start, Escape survival, and real new-tab hide/restore survival with a
+responsive login afterward. No login/account authentication was performed in
+this control; the earlier100-second run separately supplies visible-world and
+authoritative-walking proof. The dedicated Chrome exited and the shared private
+account was confirmed offline before releasing the GPU/login window to ai2.
+Receipt: output/tests/browser-input-lifecycle/actual-runtime-1794249060087/.
+The final real-DOM/mock-vendor matrix also passes, including tab survival.
+
+After that actual control, the frontend gained only sticky GPU-error reporting
+and last-submitted-frame age (performance.now from module stats.lastFrame), so a
+stale Java GAME/FPS observation cannot overwrite a rendering failure. Its real
+frontend API code is exercised by a mocked module/DOM Node VM contract: native
+merge, titlebar-aware placement, pointer transparency, sticky error/age and
+idempotent explicit Stop disposal pass. This is not actual GPU or vendor proof.
+Command: node --experimental-vm-modules tests/myworld/test-browser-webgl-frontend.mjs
+
+The capture tool now supports --hardware-gl for webgl mode only. It requests
+ANGLE/OpenGL/X11 with software rasterization disabled, records actual WebGL
+unmasked renderer data, and refuses a hardware claim without an informative
+recognized adapter or if SwiftShader/software is reported. Flags alone are not
+evidence. Actual GPU tests remain ai2's evidence. WebGL login readiness uses
+gpu.javaFrames rather than the legacy FPS field, which can remain stale at0.
+
+New fresh stages at ports8098 had refused binds because ai2 already owned them;
+the failed HTTP logs and files are retained. No existing process was stopped.
+The final8100 listener was explicitly readiness-checked. Output layout check
+passes. Public Oracle, player data, and historical fixtures remain unchanged.

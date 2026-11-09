@@ -7,6 +7,12 @@ if (![8, 11, 17].includes(javaVersion)) throw new Error('Private probe supports 
 window.browserProof = {events: [], started, renderer: 'AWT software / direct framebuffer', mode: options.get('mode') || 'software', javaVersion, wasmGC: options.has('wasmgc'), runtimeVersion: window.browserRuntimeVersion};
 let stopped = false;
 let gpu;
+function setStatus(message) {
+  if (gpu?.stats.lastError) {
+    const age = gpu.stats.lastFrame > 0 ? Math.max(0, Math.round(performance.now() - gpu.stats.lastFrame)) + ' ms ago' : 'none';
+    status.textContent = `Browser GPU error: ${gpu.stats.lastError} · last submitted frame: ${age}`;
+  } else status.textContent = message;
+}
 function publish() {
   if (gpu) window.browserProof.gpu = gpu.stats;
   if (!stopped) parent.postMessage({type: 'browser-session-proof', proof: window.browserProof, status: status.textContent}, location.origin);
@@ -19,7 +25,7 @@ function finish(reason) {
   if (stopped) return;
   publish(); dispose();
   document.activeElement?.blur?.();
-  parent.postMessage({type: 'browser-session-stop', reason}, location.origin);
+  parent.postMessage({type: 'browser-session-stop', reason: gpu?.stats.lastError ? status.textContent : reason}, location.origin);
 }
 // The outer Stop control disposes app-owned transport/GPU resources before
 // discarding this document. Page exit follows the same idempotent path.
@@ -36,7 +42,7 @@ window.addEventListener('pagehide', dispose);
 // wrapper does not turn closing a menu into closing a Java session.
 function report(message) {
   const event = {milliseconds: Math.round(performance.now() - started), message};
-  window.browserProof.events.push(event); status.textContent = message; console.log('BROWSER_PROOF', JSON.stringify(event)); publish();
+  window.browserProof.events.push(event); setStatus(message); console.log('BROWSER_PROOF', JSON.stringify(event)); publish();
 }
 const transport = createTransport(WebSocket, report);
 window.browserTransport = transport;
@@ -48,7 +54,7 @@ const natives = {
     window.browserProof.state = state;
     (window.browserProof.samples ||= []).push(state);
     if (window.browserProof.samples.length > 300) window.browserProof.samples.shift();
-    status.textContent = `${window.browserProof.mode === 'webgl' ? 'Experimental WebGL client' : 'Software client'} · ${mode} · ${fps} reported Java loop frames/s · private loopback world`;
+    setStatus(`${window.browserProof.mode === 'webgl' ? 'Experimental WebGL client' : 'Software client'} · ${mode} · ${fps} reported Java loop frames/s · private loopback world`);
     publish();
   },
   async Java_orsc_browser_BrowserBootstrap_wsOpen() { return transport.open(); },
