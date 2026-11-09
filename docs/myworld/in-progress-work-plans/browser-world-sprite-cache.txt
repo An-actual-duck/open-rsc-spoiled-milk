@@ -1,0 +1,97 @@
+Browser multipart sprite composite cache — isolated candidate
+===========================================================
+
+Scope
+-----
+BrowserWorldSpriteCache is a package-private, optional render-thread helper.
+It has no renderer/bridge/bootstrap callers yet. Native rendering, production
+sprite compositing, captures, frame/depth authority and public service are
+unchanged. Browser integration and an actual matched GPU A/B remain required
+before deciding whether to enable it. These CPU tests establish correctness,
+not a browser performance gain.
+
+API and ownership
+-----------------
+  compose(WorldSpriteSnapshot, OpenGLPixelWorkspace) -> Result or null
+  compose(List<SpriteCommand>, OpenGLPixelWorkspace) -> Result or null
+  Result: current x, y, width, height; borrowed read-only byte[] rgba
+  getHits(), getMisses(), getCacheBytes(), getEntryCount(), clear()
+
+Pass the existing owner-specific workspace; null also works through the
+production builder's independent-buffer path. Scratch is borrowed during the
+call and never retained. Result bytes are owned independently of scratch and
+source sprites. Callers must not modify them. Upload immediately; avoid keeping
+evicted results alive indefinitely outside the cache's own storage budget.
+Statistics are lifetime totals; clear releases entries/backing storage and
+resets retained bytes. No new GPU texture ID or upload revision is implied.
+
+Use the CURRENT snapshot's anchor/depth and the Result's current bounds for the
+quad. The cache deliberately retains no frame, snapshot, anchor, Sprite,
+command, or borrowed source-array references. Escape/context disposal should
+call clear, independently of any caller-owned workspace/GPU cleanup.
+
+Identity and limits
+-------------------
+Ordered layers include relative x/y, exact normalized fixed-point top/bottom
+edges, dimensions, source crop and fixed-point sampling, alpha, mirror/order
+flags, source dimensions, immutable RendererSpriteTransform value, and every
+active source pixel. Source pixels are hashed on each lookup and compared
+exactly against owned copies on a prospective hit. Hashes are only a filter;
+neither identity nor a hash collision can validate different source contents.
+Unused source-array tails, scene ordering metadata and absolute translations
+are not retained. Integer translations return new bounds with the same RGBA.
+Fractional changes conservatively miss. Current Sprite raw-array mutation APIs
+are supported BETWEEN compose calls; concurrent mutation during a call is not.
+
+LRU defaults: 128 entries, configurable up to 256; budget up to 16 MiB.
+Retained-byte charges include RGBA length, 4 bytes per copied active source
+pixel (separately per layer), 512 bytes per layer for metadata/array headers/
+immutable transform, key/reference allowance of 128 + 8 per layer, and 256 per
+entry for bookkeeping/output-array overhead. This is conservative accounting
+for cache-owned data, not a measurement of VM/driver heap use. Caller scratch,
+temporary lookup metadata and caller-retained evicted results are separate.
+Oversized keys render accurately without copying/retaining their source data.
+Invalid budgets, >256 layers, >2,097,152 active pixels in a source/composite,
+destination height >8192, coordinate overflow and incomplete pixel buffers
+throw IllegalArgumentException before invoking the compositor. The future
+optional caller must explicitly retain the uncached production path for any
+unsupported shape it wants to render. Transparent/empty outputs remain null.
+
+The helper computes exact row extrema using the monotonic first/last
+interpolated rows. Miss pixels come directly from the unchanged production
+OpenGLSpriteTextureBuilder, including legacy alpha and transparent-black
+semantics. GPU depth/occlusion is not cached or modified.
+
+Evidence
+--------
+  python3 tests/myworld/test-browser-world-sprite-cache.py
+  JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
+    python3 tests/myworld/test-browser-world-sprite-cache.py
+
+Both: PASS 8490 assertions, 600 seeded production-reference composites with
+fractional/negative skew, mirror sampling, clipping, partial alpha, recolor,
+layer order, exact bounds and integer translations. Directed checks cover
+opaque black, all mutable pixel APIs, equal content across Sprite identities,
+deliberate Arrays.hashCode collision, metadata changes, A/B/cached-A reuse,
+LRU/byte eviction, clear, scratch independence, oversized uncached keys,
+source-copy accounting, malformed input and the actual snapshot overload.
+Java 21 prints the expected obsolete Java-8-target compiler warnings.
+
+  python3 tests/myworld/test-sprite-workspace.py
+
+Both baseline/reuse modes PASS 1000 seeded list/snapshot composites. Existing
+pixel oracle remains:
+c460a449b004bf6ee0b8f6def7d9b3a9d1a1997364117349f47e1c1b98818098
+
+Cost and remaining gates
+------------------------
+Every lookup scans all active source pixels, allocates small metadata keys,
+then compares potential hits; misses copy source pixels in addition to RGBA.
+Default LRU lookup checks at most 128 entry hashes. There is no assumed win:
+fast-changing animation/scales/skew may have poor hit rates, and CheerpJ array
+access/allocation can outweigh avoided compositing. It saves neither texture
+uploads nor quad/matrix work by itself. Integration should expose hit/miss,
+cache bytes and actual composite/upload timings, with a private opt-in and
+matched scene visual/functional and hardware A/B checks. Keep it disabled if
+validation cost or memory pressure cancels the benefit. No browser, GPU,
+server or live-account tests were run for this helper-only task.
