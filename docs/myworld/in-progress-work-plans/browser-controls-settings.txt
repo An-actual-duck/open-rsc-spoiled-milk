@@ -82,6 +82,7 @@ CPU evidence
   python3 tests/myworld/test-renderer-settings-panel-extraction.py
   python3 tests/myworld/test-desktop-middle-mouse-camera-orbit.py
   python3 tests/myworld/test-desktop-graphics-options-tab.py
+  node --experimental-vm-modules tests/myworld/test-browser-webgl-frontend.mjs
   ./scripts/build-client.sh
 
 Focused fixture:67 Java assertions for capability rows/actions, unsupported
@@ -91,6 +92,11 @@ invalid packets and nonzero113/17 letterbox offsets. Node fixture covers actual
 DOM field values, viewport scaling, coalescing, left/right/vendor isolation,
 blur/hidden/readiness/capture loss, bounded wait and disposal. Desktop regression
 fixtures remain unchanged and pass. Full maintained client build passes.
+The existing frontend VM fixture links the new middle-input module explicitly,
+checks its native-method merge and proof ownership, verifies input errors remain
+visible across loop/FPS success updates, and asserts idempotent input/GPU/transport
+disposal. This is an API-contract fixture; actual DOM relay and hardware proof
+remain separate evidence, not inferred from the synthetic module.
 
 Actual runtime evidence (functional, not performance)
 -----------------------------------------------------
