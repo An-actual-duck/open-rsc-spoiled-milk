@@ -75,6 +75,7 @@ public final class Renderer3DSettings {
 				OPENGL_WORLD_CHUNKS_RESIDENT_OBJECTS_ENV,
 				false);
 	private static volatile boolean openGLPresentationAvailable;
+    private static volatile boolean browserPresentationAvailable;
 
 	private Renderer3DSettings() {
 	}
@@ -88,16 +89,21 @@ public final class Renderer3DSettings {
 	}
 
 	public static boolean canSkipLegacyWorldRaster() {
-		return openGLPresentationAvailable && SKIP_LEGACY_WORLD_RASTER_ENABLED;
+		return (openGLPresentationAvailable || browserPresentationAvailable) && SKIP_LEGACY_WORLD_RASTER_ENABLED;
 	}
 
 	public static boolean canSkipProjectedWorldCapture() {
-		return openGLPresentationAvailable && RESIDENT_CHUNK_TRUSTED_REPLACEMENT_ENABLED;
+		return (openGLPresentationAvailable || browserPresentationAvailable) && RESIDENT_CHUNK_TRUSTED_REPLACEMENT_ENABLED;
 	}
 
 	public static boolean canUseResidentObjectChunks() {
-		return openGLPresentationAvailable && RESIDENT_CHUNK_OBJECTS_ENABLED;
+		return (openGLPresentationAvailable || browserPresentationAvailable) && RESIDENT_CHUNK_OBJECTS_ENABLED;
 	}
+
+    /** Explicit optional backend capability; false for every ordinary desktop launch. */
+    public static void setBrowserPresentationAvailable(boolean available) {
+        browserPresentationAvailable = available;
+    }
 
 	public static void setOpenGLPresentationAvailable(boolean available) {
 		openGLPresentationAvailable = available;

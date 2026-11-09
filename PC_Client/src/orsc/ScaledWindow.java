@@ -290,6 +290,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 		BufferedImage renderer2DUiBaseImage,
 		Renderer3DFrame renderer3DFrame,
 		String[] rendererDebugOverlayLines) {
+        if (BrowserFrameSinkRegistry.present(gameImage, renderer2DFrame, renderer3DFrame)) return;
 		if (gameImage == null) {
 			if (renderer3DFrame != null) {
 				renderer3DFrame.release();

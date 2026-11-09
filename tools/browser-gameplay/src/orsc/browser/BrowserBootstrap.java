@@ -32,7 +32,8 @@ public final class BrowserBootstrap {
             }
             return;
         }
-        report("software-client:copying-private-files");
+        final boolean webgl=args.length>0 && "webgl".equals(args[0]);
+        report((webgl?"webgl-client":"software-client")+":copying-private-files");
         try (BufferedReader index = new BufferedReader(new FileReader("/app/bootstrap-files.txt"))) {
             String relative;
             while ((relative = index.readLine()) != null) {
@@ -52,12 +53,18 @@ public final class BrowserBootstrap {
             "openglWorldChunksResidentObjects", "openglWorldChunksSpatialCull",
             "openglWorldSpritesVisible", "skipLegacyWorldRaster", "modernClientLoop"};
         for (String name : off) System.setProperty("spoiledmilk." + name, "false");
+        if(webgl) {
+            String[] on={"renderer3DGeometryCapture","renderer3DVisibleWorld","openglWorldMesh","openglWorldMeshTexturedVisible","openglWorldMeshTexturedStaticVisible","openglWorldReplacementComposite","openglWorldChunksTexturedVisible","openglWorldChunksReplacementComposite","openglWorldChunksTrustedReplacement","openglWorldChunksResidentObjects","skipLegacyWorldRaster"};
+            for(String name:on)System.setProperty("spoiledmilk."+name,"true");
+            // No native presenter or GLFW initialization; only the browser sink owns GPU submission.
+            orsc.BrowserWebGLBridge.install();
+        }
         System.setProperty("spoiledmilk.directFramebuffer", "true");
         System.setProperty("user.dir", "/files");
         Socket.setSocketImplFactory(new SocketImplFactory() {
             public SocketImpl createSocketImpl() { return new BrowserSocket(); }
         });
-        report("software-client:start; networking=loopback-websocket");
+        report((webgl?"webgl-client":"software-client")+":start; networking=loopback-websocket");
         orsc.OpenRSC.main(new String[0]);
         Thread observer = new Thread(new Runnable() {
             public void run() {
