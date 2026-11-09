@@ -419,3 +419,44 @@ Final complete-build comparison and scope
   Finalplain-link smoke uses normal entrypoint defaults, ordinaryinventory/menu,
   explicitStop/restart/logins and intentionalWebGLcontextloss+restart. Results
   will be added after execution; syntheticloss is functional, notperformance.
+
+Conservative rendering / strict-parity limits
+- Browser currently submits eligible resident chunks/batches and relies on GPU
+  clip/fog; native also applies camera/fog batch bounds culling and AABB shadow
+  caster culling. These per-pass bounds optimizations are not yet ported. This
+  adds conservative work and remains a strict-parity/performance limitation.
+  GPUmedian~2.33ms in the measured fixture does not identify it as dominant.
+- The repeated264480byte animated upload strongly matches the rotating windmill
+  sail mesh, but no runtimeIDtrace was taken. Native also prepares animated
+  buffers before bounds culling; distance alone does NOT prove that upload is
+  avoidable. Bounded mutable logical-cell buffer reuse is a future measured
+  optimization, not part of this handoff. Animation has not been frozen.
+
+Final plain-link lifecycle / failure recovery acceptance
+- Frozen sourcebc1501946448821eed4807bd11426950d3ad85ef, coreJARdf5a5206...,
+  helperJAR5a4cb91c71e201f095bbdb42cc39e4fabe4d9f4e06c6af06ea4f52926d0a7547,
+  webgl.js7d18d4ab2630e8d1e2ecbaf6fa93f2edbe1d44f5f5a17f419abacf17bd02fbf1.
+- Plain http://127.0.0.1:8113/?mode=webgl uses promoted private defaults without
+  benchmark/profile/diagnostic flags. ActualAMD3normal logins drew161/152/155
+  realworldframes. Inventory/contextmenu and normalStop/restart passed.
+- Intentional WEBGL_lose_context stopped submissions at1927 and surfaced sticky
+  GL_CONTEXT_LOST0x9242. ExplicitStop removediframe/closedaccount; a freshStart
+  loggedin and renderedworldagain. FinalStop confirmedaccountOFFLINE and owned
+  browser exited. No orphan game session. This is functional, not an FPSbenchmark.
+- Full receipts/images/manifest are under
+  output/tests/browser-gameplay-spike/webgl-private-preview/; finalmanifest.json
+  equivalent is final-artifact-manifest.json, smoke=plain-smoke-1794262097406.
+- Runtime code at handoff is exactly the testedbc1501946 checkpoint; subsequent
+  handoff changes update documentation only. Private preview remains available
+  through the loopbackHTTP server; no client is left logged in.
+
+Ready scope and remaining limits
+- Ready for manager review/integration as an EXPERIMENTAL PRIVATE browserGPU
+  backend. Same production rendering data and gameplay authority are retained.
+-60FPS/full-desktop performance is NOT achieved (~38worldFPS on this fixture/PC).
+  Broaderdevices/content, strict image parity, standalone publicWSS/endpoints,
+  caching/distribution and public browser rollout remain separate work.
+- Context loss requires explicitStop/restart. Unexpected unsupported framebuffer
+  operations fail closed; they do not silently pretend full visual compatibility.
+- Inherited workspace-layout findings remain preserved; no map, productionDB,
+  ownercredentials, Oracle, publicserver, release artifact or gameasset changed.

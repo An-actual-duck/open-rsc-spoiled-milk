@@ -1,3 +1,10 @@
+Historical software feasibility evidence
+----------------------------------------
+The later hardware-rendered WebGL phase, current private preview and measured
+status are documented in browser-webgl-renderer.txt in this directory. Preserve
+the software-phase results below as history; their FPS/status are not the current
+WebGL backend's results.
+
 Historical diagnostic status — November 7, 2026
 The observations below describe the initial, blocked feasibility phase.
 For the subsequent shared-source compatibility fix, actual visible world,
