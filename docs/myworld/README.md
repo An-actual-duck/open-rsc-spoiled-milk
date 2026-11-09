@@ -47,6 +47,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [Client performance and portability](in-progress-work-plans/client-performance-portability-plan.md):
   measured allocation and dispatch improvements, remaining optimization targets,
   and hardware evidence with the approved visuals preserved.
+- [Underground lighting](in-progress-work-plans/underground-light-normalization.txt):
+  v0.3.16 steady lighting below level0, signed-frame authority, surface parity
+  and private/native/release validation.
 - [High-quality picket shadows](in-progress-work-plans/picket-shadow-wave.txt):
   v0.3.15 ground-aligned High sampling, exact Low parity, visual approval and
   retained sparse-railing limitations.

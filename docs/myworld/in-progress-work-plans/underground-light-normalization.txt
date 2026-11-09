@@ -93,7 +93,7 @@ Workspace layout check remains nonzero for preserved historical ai2 output-root
 entries/assets/sprites; all new outputs use declared tests categories. No ignored
 history, assets, accounts, databases or runtime files were removed.
 
-Status: source ready for manager review/private preview; owner visual acceptance,
+Worker handoff status (before manager acceptance): source ready for manager review/private preview; owner visual acceptance,
 manager integration and release decisions remain pending. No public deployment.
 
 Frozen preview artifact
@@ -120,3 +120,16 @@ said: "server is off go ahead and update", authorizing release integration and
 activation. Oracle was independently confirmed inactive, exit0, with no public
 listener; no AI shutdown was initiated. v0.3.16 release evidence belongs under
 output/reviews/release-v0.3.16/. Final deployment state is recorded separately.
+
+Release completion
+------------------
+v0.3.16 was published and activated at exact source
+73752f45d089ebc71ba24d832f85a06590de661c. The packaged client contains1979classes,
+all byte-identical to the tested preview. The actual published v0.3.15 updater
+installed it with settings/identity preserved, and the downloaded client reached
+the public config/login screen with hardware OpenGL. All68accounts and the map
+are preserved. Staged and installed server classes exactly match v0.3.15; no
+server gameplay tests were repeated. Public service is active with zero automatic
+restarts. Fresh backups remain on both Oracle and the owner's PC. The old source
+is retained for rollback. See docs/workspaces/oracle-hosting.md and the release
+evidence directory for activation, backup, package and updater receipts.
