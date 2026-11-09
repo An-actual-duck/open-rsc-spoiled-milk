@@ -25,7 +25,7 @@ start.addEventListener('click', () => {
   frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
   frame.setAttribute('allow', "fullscreen 'none'; clipboard-read 'none'; clipboard-write 'none'; keyboard-map 'none'");
   frame.src = './runtime.html' + location.search;
-  window.browserProof = {events: [], lifecycle: 'starting'};
+  window.browserProof = {events: [], lifecycle: 'starting', focus: 'runtime'};
   start.disabled = true; stop.disabled = false;
   status.textContent = 'Starting disposable browser Java session…';
   session.append(frame);
@@ -41,17 +41,20 @@ window.addEventListener('message', event => {
     window.browserProof.lifecycle = 'running';
     status.textContent = event.data.status;
   } else if (event.data?.type === 'browser-session-stop') end(String(event.data.reason));
-  else if (event.data?.type === 'browser-session-focus-left') setTimeout(() => {
-    // CheerpJ creates internal frames. A focus change inside the runtime is
-    // not departure; only the outer document can make this distinction.
-    if (frame && (!document.hasFocus() || document.activeElement !== frame)) end('Stopped because the Java session lost focus.');
-  }, 0);
+  else if (event.data?.type === 'browser-session-focus-left') {
+    // The runtime creates/focuses nested contexts during startup. Blur is not
+    // a lifecycle boundary: destroying Java here also destroys valid startup.
+    window.browserProof.focus = 'outside-runtime';
+  }
 });
-// Moving focus into our iframe is not leaving the page. Check hasFocus after
-// the transition so normal canvas clicks cannot immediately tear down Java.
-window.addEventListener('blur', () => setTimeout(() => {
-  if (!document.hasFocus()) end('Stopped because the test lost focus.');
-}, 0));
+// Input belongs to the focused embedded document. Merely moving focus (including
+// to another app or our Stop button) must not discard a live game session.
+window.addEventListener('blur', () => {
+  if (frame) window.browserProof.focus = 'outside-runtime';
+});
+window.addEventListener('focus', () => {
+  if (frame) window.browserProof.focus = 'page';
+});
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) end('Stopped because the test tab was hidden.');
 });

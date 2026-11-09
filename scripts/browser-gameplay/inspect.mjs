@@ -5,7 +5,7 @@ import path from 'node:path';
 import {spawn} from 'node:child_process';
 
 const [runArg, mode = 'native-probe', secondsArg = '90'] = process.argv.slice(2);
-if (!runArg || !['native-probe', 'mesh-probe', 'software'].includes(mode)) throw new Error('Usage: inspect.mjs RUN [native-probe|mesh-probe|software] [seconds]');
+if (!runArg || !['native-probe', 'mesh-probe', 'software', 'webgl'].includes(mode)) throw new Error('Usage: inspect.mjs RUN [native-probe|mesh-probe|software|webgl] [seconds]');
 const run = path.resolve(runArg), seconds = Math.min(300, Math.max(5, Number(secondsArg)));
 const httpPort = Number(process.argv.find(arg => arg.startsWith('--port='))?.split('=')[1] || '8079');
 const login = process.argv.includes('--login');
@@ -108,7 +108,7 @@ try {
     if (readiness?.result.value) {
       didLogin = true;
       await screenshot('login-ready');
-      const result = await call('Runtime.evaluate', {expression: 'JSON.stringify((()=>{const f=document.querySelector("#runtime"),o=f.getBoundingClientRect();return Array.from(f.contentDocument.querySelectorAll("canvas")).map(c=>{const r=c.getBoundingClientRect();return {x:o.x+r.x,y:o.y+r.y,w:r.width,h:r.height}}).sort((a,b)=>b.w*b.h-a.w*a.h)[0]})())', returnByValue: true});
+      const result = await call('Runtime.evaluate', {expression: 'JSON.stringify((()=>{const f=document.querySelector("#runtime"),o=f.getBoundingClientRect();return Array.from(f.contentDocument.querySelectorAll("canvas")).filter(c=>c.id!=="browser-webgl").map(c=>{const r=c.getBoundingClientRect();return {x:o.x+r.x,y:o.y+r.y,w:r.width,h:r.height}}).sort((a,b)=>b.w*b.h-a.w*a.h)[0]})())', returnByValue: true});
       const r = JSON.parse(result.result.value); fs.writeFileSync(path.join(capture, 'canvas-rect.json'), JSON.stringify(r));
       await click(r.x + r.w / 2 + 100, r.y + r.h / 2 + 123);
       await click(r.x + r.w / 2 - 116, r.y + r.h / 2 + 98); await type('browserdemo');
@@ -118,7 +118,11 @@ try {
     }
     if (process.argv.includes('--accept-character') && didLogin && !didAccept) {
       const mode = await call('Runtime.evaluate', {expression: 'window.browserProof?.state?.mode', returnByValue: true});
-      if (mode.result.value === 'GAME') { await screenshot('character-design'); await click(275, 491); didAccept = true; }
+      if (mode.result.value === 'GAME') {
+        const bounds = await call('Runtime.evaluate', {expression: 'JSON.stringify((()=>{const f=document.querySelector("#runtime"),o=f.getBoundingClientRect();const c=[...f.contentDocument.querySelectorAll("canvas")].filter(c=>c.id!=="browser-webgl").sort((a,b)=>b.width*b.height-a.width*a.height)[0];const r=c.getBoundingClientRect();return {x:o.x+r.x,y:o.y+r.y,w:r.width,h:r.height}})())', returnByValue:true});
+        const r = JSON.parse(bounds.result.value);
+        await screenshot('character-design'); await click(r.x + 255, r.y + 336); didAccept = true;
+      }
     }
     if (login && i === 35) await screenshot('after-login');
     if (process.argv.includes('--walk-proof')) {
@@ -126,7 +130,11 @@ try {
       const actions = {40:[500,514,'close-welcome'],50:[650,558,'walk-1'],65:[820,580,'walk-2'],85:[850,600,'walk-3'],110:[860,570,'walk-4'],140:[830,590,'walk-5'],170:[790,580,'walk-6'],200:[790,580,'walk-7'],230:[790,580,'walk-8']};
       if (actions[i]) {
         const [x,y,name] = actions[i]; serverSample('before-'+name);
-        await screenshot('before-'+name); await click(x,y); serverSample('after-pointer-'+name);
+        const inputBounds = await call('Runtime.evaluate', {expression: 'JSON.stringify((()=>{const f=document.querySelector("#runtime"),o=f.getBoundingClientRect();const c=[...f.contentDocument.querySelectorAll("canvas")].filter(c=>c.id!=="browser-webgl").sort((a,b)=>b.width*b.height-a.width*a.height)[0];const r=c.getBoundingClientRect();return {x:o.x+r.x,y:o.y+r.y}})())', returnByValue:true});
+        const r = JSON.parse(inputBounds.result.value);
+        // Preserve the established route in canvas coordinates, independent of
+        // header height, the outer lifecycle frame or status text wrapping.
+        await screenshot('before-'+name); await click(r.x+x-20,r.y+y-155); serverSample('after-pointer-'+name);
       }
       if ([45,58,75,95,125,155,185,215,245,275].includes(i)) await screenshot('world-'+i);
     }

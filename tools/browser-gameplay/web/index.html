@@ -4,7 +4,7 @@
 <header><strong>Private browser feasibility test</strong> · <a href="?mode=software">software client</a> · <a href="?mode=native-probe">native graphics probe</a>
 <small>Software mode is a compatibility experiment; it does not reproduce the current GPU renderer. Loopback server only. Java runs in your browser through <a href="https://cheerpj.com/">CheerpJ by Leaning Technologies</a>.</small>
 <small><strong>Experimental private test:</strong> the current world runs through the software renderer, with low frame rates expected. This is a loopback compatibility test, not a public browser release. Log in with <code>browserdemo</code> / <code>BrowserProof13</code>, the disposable private account.</small>
-<small>The runtime starts only when requested. Stop, Escape, leaving the test or hiding this tab ends the session. Restarting creates a new runtime. This is a lifecycle precaution; the reported desktop-wide keyboard failure has not been reproduced or diagnosed.</small>
+<small>The runtime starts only when requested. Stop, Escape, closing the page or hiding this tab ends the session. Moving focus alone keeps the session running. Restarting creates a new runtime. This is a lifecycle precaution; the reported desktop-wide keyboard failure has not been reproduced or diagnosed.</small>
 <button id="start" type="button">Start private test</button><button id="stop" type="button" disabled>Stop private test</button>
 <div id="status" role="status">Stopped. Java has not been loaded.</div></header><main id="session"></main>
 <script type="module" src="./session.js"></script>
