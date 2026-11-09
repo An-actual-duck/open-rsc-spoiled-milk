@@ -10,7 +10,7 @@ export function createWorldReadiness(gl,{stats,clock=()=>performance.now()}={}) 
   set('login','Waiting for login');
   function declare(input){
     const data=new Int32Array(input);
-    if(data.length!==12||data[0]!==1||data[1]<0||data[1]>3||data.some(v=>v<0)||data[4]>data[3]||data[7]>data[6]||data[9]*data[10]>2097152)throw new Error('Invalid browser world readiness declaration');
+    if(data.length!==12||data[0]!==1||data[1]<0||data[1]>3||data.some(v=>v<0)||data[4]>data[3]||data[7]>data[6]||data[3]>256||data[5]>data[3]||data[6]>1024||data[8]>1||data[9]<1||data[10]<1||data[11]>2048||data[9]*data[10]>2097152)throw new Error('Invalid browser world readiness declaration');
     current=data;pending=true;
     if(failed)return;
     const next=data[2]+':'+data[9]+':'+data[10];

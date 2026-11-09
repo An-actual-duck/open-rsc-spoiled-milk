@@ -9,7 +9,7 @@ window.browserProof = {events: [], started, renderer: 'AWT software / direct fra
 let stopped = false;
 let gpu,worldCover,awaitingGameFrame=false;
 window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput;
-function updateWorldCover(){const state=gpu?.stats.worldReadiness;worldCover?.update(awaitingGameFrame&&state?.phase==='login'?{phase:'loading',reason:'Waiting for area data'}:state,gpu?.canvas.style,gpu?.stats.lastError|| (gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null));}
+function updateWorldCover(){const state=gpu?.stats.worldReadiness,error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null),waiting=awaitingGameFrame&&state?.phase==='login';if(!worldCover||(!waiting&&!error&&!['loading','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;worldCover.update(waiting?{phase:'loading',reason:'Waiting for area data'}:state,gpu?.canvas.style,error);}
 function setStatus(message) {
   if (gpu?.stats.lastError) {
     const age = gpu.stats.lastFrame > 0 ? Math.max(0, Math.round(performance.now() - gpu.stats.lastFrame)) + ' ms ago' : 'none';
@@ -98,7 +98,7 @@ try {
     }
     const progressName='Java_orsc_BrowserWebGLBridge_worldProgress',progress=natives[progressName];
     if(typeof progress!=='function')throw new Error('WebGL bridge has no loading protocol');
-    natives[progressName]=async(lib,metadata)=>{const blocked=worldCover.blocksWorldInput;await progress(lib,metadata);awaitingGameFrame=false;alignWorldSurface(Number(metadata[9]),Number(metadata[10]));if(blocked!==worldCover.blocksWorldInput)publish();};
+    natives[progressName]=async(lib,metadata)=>{const blocked=worldCover.blocksWorldInput;await progress(lib,metadata);awaitingGameFrame=false;if(gpu.stats.worldReadiness?.blocksWorldInput||gpu.stats.worldReadiness?.phase==='loading'||Number(metadata[9])!==gpu.stats.display?.internalWidth||Number(metadata[10])!==gpu.stats.display?.internalHeight)alignWorldSurface(Number(metadata[9]),Number(metadata[10]));else updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();};
     const presentName = 'Java_orsc_BrowserWebGLBridge_present';
     const present = natives[presentName];
     if (typeof present !== 'function') throw new Error('WebGL bridge has no frame presenter');

@@ -56,3 +56,12 @@ shortcuts/focus, press/release gating and cleanup. Existing bridge/Scene ownersh
 and GPU resource/frontend controls pass after adding the new declaration seam.
 These are CPU/API controls, not a GPU or performance claim. Serialized real
 private hardware proof is pending manager access coordination;8115 is reserved.
+
+Steady-state and focus controls
+-------------------------------
+Ready-world declarations do not trigger a second canvas layout query or copy the
+whole proof object to the outer page on every frame. Loading state changes and
+actual presentation still update the cover promptly; ordinary status cadence
+remains unchanged. The frontend test asserts these steady-state boundaries.
+Tab/Shift+Tab, Escape, function keys, Ctrl/Meta/Alt shortcuts and keys outside
+game focus are explicitly tested; all releases pass. No GPU proof yet.
