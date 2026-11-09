@@ -1,4 +1,4 @@
-Browser world readiness cover — ACTIVE private follow-up
+Browser world readiness cover — verified private follow-up
 =======================================================
 Baseline main73018fa59967c478e5b05f02bd5b4b9ee73baf8b.
 The existing8113 preview is immutable. This task changes only browser readiness
@@ -54,8 +54,7 @@ Instrumented GL/DOM tests cover source completeness, fences, warm-up bounds,
 slow devices, live-update stability, resize/login/modal/error states, keyboard
 shortcuts/focus, press/release gating and cleanup. Existing bridge/Scene ownership
 and GPU resource/frontend controls pass after adding the new declaration seam.
-These are CPU/API controls, not a GPU or performance claim. Serialized real
-private hardware proof is pending manager access coordination;8115 is reserved.
+These CPU/API controls are separate from the hardware proof below.
 
 Steady-state and focus controls
 -------------------------------
@@ -64,4 +63,43 @@ whole proof object to the outer page on every frame. Loading state changes and
 actual presentation still update the cover promptly; ordinary status cadence
 remains unchanged. The frontend test asserts these steady-state boundaries.
 Tab/Shift+Tab, Escape, function keys, Ctrl/Meta/Alt shortcuts and keys outside
-game focus are explicitly tested; all releases pass. No GPU proof yet.
+game focus are explicitly tested; all releases pass.
+
+
+Combined private hardware proof
+-------------------------------
+Frozen source df414acd0402d383de3a46a69d4d37954d65bfe1 includes reviewed
+controls main60202480f. JAR SHA256:
+019d6af7d43513feb058e00f44e2a42e80cf28ccf546479f20c6d1f15d01f944.
+Immutable stage output/tests/browser-gameplay-spike/browser-world-ready-proof,
+HTTP127.0.0.1:8115/?mode=webgl. Actual isolated Chrome/ANGLE adapter:
+AMD Radeon RX6700XT, OpenGL4.6; no software fallback. Normal disposable
+browserdemo account only; public host/map/accounts untouched.
+
+Evidence run plain-smoke-1794265328115 includes loading-progression.json,
+00-loading-cover.png, subsequent world/menu/settings captures and result.json.
+165 sampled states record actual authority loading, required chunks expanding
+41 to101, uploads increasing from1 to101, then reveal at101/101, zero pending
+repacks and seven complete source frames. A real CDP world click under the cover
+was suppressed (two pointer events); game updates/uploads kept progressing.
+Cover aligned below the titlebar; outer Stop remained available. Initial cover
+through reveal took approximately14.2seconds in this instrumented functional run;
+this is not a startup-time or FPS benchmark.
+
+After reveal, ordinary left-click inventory and right-click context menu worked.
+Actual middle-button orbit changed yaw512 to320, pitch112 to172; normal release
+worked. A separately labeled gate fault injection while middle was stationary
+incremented cancel immediately. This validates the readiness-event/relay contract;
+it is not evidence of a real map transition while dragging. Geometry visibly
+changed Smooth toFaceted and lighting eventually changed Directional toClassic.
+Those live setting repacks remained uncovered, as intended. The attempted terrain
+slider did not visibly change, so no slider-success claim is made. Settings
+repack actions were asynchronous and the proof stopped before all final live
+repacks completed; no loading-cover or GPU error occurred.
+
+Explicit Stop removed the runtime iframe, closed the dedicated browser and left
+the private account offline. Existing8113/8114 artifacts were preserved. This is
+a focused functional proof, not new performance acceptance or a claim of60FPS.
+Existing wider browser limitations remain in browser-webgl-renderer.txt. Real
+area transition/resize/relogin/error state handling also has controlled state
+fixtures; this short combined run primarily exercised initial login readiness.
