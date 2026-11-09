@@ -24,8 +24,9 @@ the producer level to0; old constructors still default to0 for compatibility.
 
 OpenGLFramePresenter binds the dequeued immutable frame in RendererFrameLighting,
 a render-thread-local scope, and always restores the previous binding in finally.
-There is no mutable global player level, no inherited thread scope and no added
-per-frame scope allocation. The common presentation and modeling-light getters
+There is no mutable global player level, no inherited thread scope and no allocated
+scope wrapper. ThreadLocal removal may allocate a small map entry on the next
+bind; this is not a zero-allocation claim. The common presentation and modeling-light getters
 therefore cover resident/projected shader uniforms, fixed-function mesh/fallback
 materials, cache brightness keys, world/entity sprite tint and fog consistently.
 UI draw colors/settings are unchanged; null/login frames cannot inherit a prior
@@ -105,3 +106,17 @@ Exact8production source hashes and compiler/runtime are in candidate-freeze.json
 The new CPU contract is included in the standard renderer guardrail list.
 All worker GPU/CPU processes exited before the manager's private native preview.
 No main integration, owner visual acceptance or public activation is claimed.
+
+Manager review / release authorization
+--------------------------------------
+The manager reviewed the exact READY handoff and repeated native signed-world
+login, day/night packet and surface-return comparisons using the frozen JAR.
+The Ichor shore stays consistently lit at day/night; returning to level0 restores
+the normal outside cycle. Captures include animated liquid/entities and do not
+claim whole-frame equality. The first run's welcome-obscured images are retained;
+unobscured evidence is output/reviews/underground-lighting/native2/.
+The replacement private preview was opened for the owner. On November8 the owner
+said: "server is off go ahead and update", authorizing release integration and
+activation. Oracle was independently confirmed inactive, exit0, with no public
+listener; no AI shutdown was initiated. v0.3.16 release evidence belongs under
+output/reviews/release-v0.3.16/. Final deployment state is recorded separately.
