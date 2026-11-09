@@ -1,0 +1,77 @@
+Deferred network-frame diagnostics — focused client slice, 2026-11-09
+==================================================================
+
+Baseline958a278453e460d59dcfce6c102adcc42dcfc1d7.
+Scope: Network_Base diagnostic guards only. No socket prefetch, protocol,
+framing, timeout redesign, browser backend or server changes.
+
+Problem
+-------
+The logger checked BOUNDARY_DIAGNOSTICS and its256-line cap internally, after
+Java had already constructed HEADER/PROGRESS/COMPLETE/TIMEOUT/PENDING messages.
+Each construction called available(). In a browser that may cross Java/JS even
+when logs are disabled or their cap has already been reached. Default diagnostic
+off therefore did extra socket queries, strings, and potentially diagnostic-only
+I/O failures on otherwise normal packet reads.
+
+Change
+------
+Each of the five call sites now checks canLogFrameDiagnostic() before evaluating
+any message arguments. The logger retains its own defensive guard and the exact
+existing text/line cap. The pending-attempt bookkeeping remains outside the guard
+so cadence/state are unchanged. Required header/payload availability checks,
+reads, partial draining, buffer growth, payload completion, timeout state and
+malformed-header handling are unchanged. No other eager diagnostic sites exist
+in this class; exception-context construction remains exceptional only.
+
+Validation
+----------
+Actual packaged Network_Base is exercised by a same-package Scripted transport
+subclass, not a replacement frame decoder. Separate JVMs test diagnostics false
+and true because the setting is static-final at class initialization. The fixture
+also verifies its production class origin is the packaged client JAR.
+
+The corpus covers whole frames, partial drains before completion, resuming a
+pending frame, following-frame alignment,4097-byte payload growth/draining,
+120-idle-poll pending cadence, timeout state/exception, declared lengths0/1/2,
+actual payload I/O failure, and100completeframes exceeding the256-line cap.
+Enabled HEADER/PROGRESS/COMPLETE/PENDING/TIMEOUT strings and exact cap are checked.
+The decoded corpus SHA256 must match enabled/disabled runs. A scripted
+post-drain available() failure demonstrates that disabled diagnostics cannot
+introduce that diagnostic-only fault; enabled behavior stays observable.
+
+For a complete small packet, available() calls are2off vs5on before the cap.
+For100packets they are200off vs456on (200protocol +256logged diagnostic queries).
+After the cap, even enabled diagnostic sites avoid additional availability calls.
+These are deterministic call counts, not timing, browser FPS or CPU percentages.
+
+Existing incremental-frame and packet-shape checks pass. The older
+packet-diagnostic-extraction test has an inherited source assertion: unchanged
+HEAD PacketHandler.updateSceneBaseline contains3 packetEnd assignments whereas
+the test expects exactly2. Neither PacketHandler nor that expectation was
+changed. Its mismatch receipt is preserved in the evidence directory.
+
+Evidence: output/tests/disabled-network-diagnostics/.
+No browser/GPU/server was launched, no private fixture was changed, and public
+Oracle/player data were untouched. CPU tests/builds pause during the manager's
+exclusive measurement window. Final test status is recorded at handoff.
+
+Final results
+-------------
+Maintained client build passes with javac1.8.0_482, source/target8. The production
+reader fixture passes507checks in each mode on both Java8 and Java21; decoded
+corpus SHA256 is04666cf9db7b832afcf54c4a4291b79700f76c9bc464fa832fa773a6a436823c
+in both modes/runtimes. A separately compiled fresh baseline958a production
+reader (distinct class name, samebuffer implementation) proves its default-off
+100packet workload still makes500available() calls; the candidate makes200.
+This removes300diagnostic-only queries in that deterministic workload, without
+changing any decoded packet or claiming a measured client FPS gain.
+
+Existing incremental-frame2cases, packet-shape guards and authenticated-network
+benchmark5contracts pass. The inherited diagnostic-extraction assertion failure
+is retained with both its tested source files verified byte-identical toHEAD.
+Workspace-layout and whitespace pass. No GPU/browser/server was launched, and
+all CPU tests paused during the manager's explicit benchmark window.
+
+Status: READY for manager review. Native/browser behavior and performance beyond
+these deterministic frame-reader contracts remain for manager/renderer testing.
