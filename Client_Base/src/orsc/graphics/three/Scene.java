@@ -3120,6 +3120,10 @@ public final class Scene {
 				}
 			}
 
+            // A GPU backend may explicitly own depth without a CPU raster consumer.
+            // Model transformation, polygon picking, anchors and resident authority remain intact.
+            if (!Renderer3DSettings.needsCpuDepthFrame()) depthWorldKinds=null;
+
 			if (var1 > -99) {
 				this.m_H = (int[]) null;
 			}

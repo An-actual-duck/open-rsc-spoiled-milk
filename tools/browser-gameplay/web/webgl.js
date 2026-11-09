@@ -4,7 +4,7 @@ export function adaptResidentShader(source, fragment) {
   let text = source.replace('#version 120', '#version 300 es\nprecision highp float;\nprecision highp int;\nprecision highp sampler2DShadow;');
   text = text.replace(/\battribute\b/g, 'in').replace(/\bvarying\b/g, fragment ? 'in' : 'out').replace(/\btexture2D\(/g, 'texture(');
   text = text.replace(/shadow2D\((.*)\)\.r/g, 'texture($1)');
-  if (fragment) text = text.replace('precision highp sampler2DShadow;', 'precision highp sampler2DShadow;\nout vec4 browserFragment;').replace(/gl_FragColor = color;/g, 'if (color.a < 0.01) discard; browserFragment = color;').replace(/\bgl_FragColor\b/g, 'browserFragment');
+  if (fragment) text = text.replace('precision highp sampler2DShadow;', 'precision highp sampler2DShadow;\nout vec4 browserFragment;\nuniform float uBrowserAlphaCutoff;').replace(/gl_FragColor = color;/g, 'if (color.a <= uBrowserAlphaCutoff) discard; browserFragment = color;').replace(/\bgl_FragColor\b/g, 'browserFragment');
   return text;
 }
 const FLOAT_UNIFORMS=['uBrightness','uContrast','uGamma','uSaturation','uToneRed','uToneGreen','uToneBlue','uToneBlend','uLightDirectionX','uLightDirectionY','uLightDirectionZ','uLightAmbient','uLightIntensity','uFogStart','uFogEnd','uFogRed','uFogGreen','uFogBlue','uTerrainReliefStrength','uObjectReliefStrength','uTerrainVariationStrength','uTerrainVariationTolerance','uTerrainVariationTargetRed','uTerrainVariationTargetGreen','uTerrainVariationTargetBlue'];
@@ -86,12 +86,21 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
       if(world){
         gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.useProgram(program);gl.uniformMatrix4fv(loc('uProjectionMatrix'),false,matrices.subarray(0,16));gl.uniformMatrix4fv(loc('uWorldViewMatrix'),false,matrices.subarray(16,32));
         FLOAT_UNIFORMS.forEach((name,n)=>f(name,u[n]));i('uTerrainDefinitionMode',u[25]);i('uTerrainVariationEnabled',u[26]);i('uRemasterLightingEnabled',u[27]);i('uFogEnabled',u[28]);
-        for(const kind of [1,2,3,5,4,0])for(let at=0;at<draws.length;at+=8){
+        for(const transparent of [false,true]) {
+          if(transparent){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);}else gl.disable(gl.BLEND);
+          f('uBrowserAlphaCutoff',transparent?0:0.5);
+          for(const kind of [1,2,3,5,4,0]) {
+          if(kind===4||kind===5){gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);}else gl.disable(gl.CULL_FACE);
+          if(kind===2){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-1);}else gl.disable(gl.POLYGON_OFFSET_FILL);
+          for(let at=0;at<draws.length;at+=8){
           if(!(draws[at+5]&(1<<kind)))continue;const chunk=chunks.get(draws[at]);if(!chunk)throw new Error('Draw references absent browser chunk');gl.bindVertexArray(chunk.vao);
           f('uChunkOffsetX',draws[at+1]);f('uChunkOffsetZ',draws[at+2]);f('uTerrainWorldOffsetX',draws[at+3]);f('uTerrainWorldOffsetZ',draws[at+4]);
-          const b=chunk.batches;for(let n=0;n<b.length;n+=5){if(b[n+3]!==kind)continue;const tex=textures.get(b[n]);i('uTextureEnabled',tex?1:0);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex?tex.texture:baseTextures[0]);gl.drawElements(gl.TRIANGLES,b[n+2],gl.UNSIGNED_INT,b[n+1]*4);calls++;triangles+=b[n+2]/3;}
+          const b=chunk.batches;for(let n=0;n<b.length;n+=5){if(b[n+3]!==kind||(b[n+4]===1)!==transparent)continue;const tex=textures.get(b[n]);i('uTextureEnabled',tex?1:0);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex?tex.texture:baseTextures[0]);gl.drawElements(gl.TRIANGLES,b[n+2],gl.UNSIGNED_INT,b[n+1]*4);calls++;triangles+=b[n+2]/3;}
           stats.reusedChunkDraws++;
         }
+        }
+        }
+        gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);gl.disable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(0,0);
         if(spriteDraws.length){
           gl.useProgram(spriteProgram);gl.bindVertexArray(spriteVAO);gl.uniformMatrix4fv(gl.getUniformLocation(spriteProgram,'projection'),false,matrices.subarray(32,48));gl.uniform3f(gl.getUniformLocation(spriteProgram,'tone'),u[4],u[5],u[6]);gl.uniform1i(gl.getUniformLocation(spriteProgram,'image'),0);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,spriteTexture);
           gl.depthMask(false);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);

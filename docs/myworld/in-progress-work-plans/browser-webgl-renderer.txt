@@ -1,0 +1,104 @@
+Browser GPU renderer continuation — private development
+=======================================================
+
+Scope
+-----
+The maintained Java game now has an optional synchronous browser presentation
+sink at ScaledWindow.setGameImage. Desktop presentation remains the default.
+The sink borrows immutable Renderer3DFrame/Renderer2DFrame snapshots; the registry
+releases pooled 3D ownership in finally on normal, null-image and failure paths.
+WebGL2 receives primitive arrays and uploads/copies them before native calls
+return. This is local Java game execution and browser GPU rendering, with the
+normal private WebSocket server protocol and native world authority intact.
+No desktop video stream, owner account, public server or production DB is used.
+
+Renderer data
+-------------
+Resident geometry uses the production vertex/material/normal packer, camera
+matrix arithmetic and GLSL resident shader strings. A small syntax adapter
+converts GLSL120 to GLSL300es. Chunk storage signatures and presentation rebase
+offsets identify resident GPU buffers. The implementation preserves original
+texture pixels and game sprite artwork. RendererFrameLighting scopes the actual
+immutable frame so signed negative levels retain the current neutral-light rule.
+
+World sprites use the existing owned multipart snapshots, production composite
+texture builder, and production top/bottom depth estimator. Camera-space quads
+receive ordinary GPU depth testing against the resident world. Scene software
+sprites are suppressed only through the existing explicit replay capability.
+UI remains a software layer. An unused direct-RGB framebuffer high-byte marks
+cleared world background; real black pixels remain opaque. getRGB cannot retain
+this metadata, so the bridge validates and borrows the packed direct int buffer.
+Partially transparent UI composed against the old software background still
+needs a fuller command/coverage renderer; full visual parity is not claimed.
+
+Resource ownership
+------------------
+Scene/chunk/viewport/texture and sprite-atlas dimensions are bounded. The geometry
+and world-texture budget is256MiB; the sprite atlas is separately16MiB and the
+software overlay at most8MiB. These figures exclude driver/program overhead.
+A new frame's active chunks are protected. The optional LRU reserves32MiB for
+world textures and evicts inactive buffers before an upload exceeds its chunk
+byte budget. The earlier active-only policy remains a controlled comparison.
+No referenced chunk may be evicted while the current frame needs it. Context
+loss/errors are surfaced; the prototype requires a fresh session to recover.
+
+Evidence sequence (all earlier failed evidence is retained)
+-----------------------------------------------------------
+1. Sources604ae20fb/7e8b6625d compiled the production resident shader in real
+   browser WebGL. Initial automatically chosen adapter was SwiftShader. Run
+   names containing "hw" do not establish physical hardware; correction JSON
+   explicitly limits those captures. First implementation reached a usable
+   login form. The next ordinary login reached GAME, then resident object
+   construction failed in ChunkMesh.normalizeIntArray.
+2. Semantics-equivalent primitive fill/bounded-copy normalization, matching the
+   earlier enum compatibility work, resolves this activated path. JVM probes
+   pass5000int/float cases on main and5000on worker, enum4200+4200, and direct
+   constructor8+8. Real subsequent browser gameplay constructs resident objects.
+3. Frozen2a119ba4b / JAR0f1ce798bfacb31b54bb1e7cdd39ee91089a0c9a602af084c58093fbbea54378
+   rendered the real world on ANGLE/AMD RX6700XT with authoritative walking.
+   Its old inactive-buffer cache exhausted256MiB at110893ms. Later GAME/FPS
+   observer values were stale, so the180srun is rejected as stability evidence.
+   rejected-stability-summary.json records the failure and30coordinate pairs.
+4. Frozen cfef63c8f / JAR05c32867520d00f6cc493911e5f0e1ed17ddec6749877629253debb1b8229b6a
+   adds actual GPU multipart sprites and active-set eviction. The180sphysical
+   AMD capture completed5391Java frames,3943world frames, fresh last-frame at
+   185357ms, no GPU error, and197595752resident bytes. Four authoritative
+   positions were observed; blocked route clicks are not scene-transition proof.
+   The player is partly occluded by a tree in after-login.png at149643.
+   These mixed-route captures also ran during CPU checks and are functional
+   evidence, not an accepted performance comparison.
+
+All stages are under output/tests/browser-gameplay-spike/; detailed tests and
+frozen JARs are under output/tests/browser-webgl/. The relevant captures are
+webgl-primitive-fix/webgl-r5.0-j8-1794249131438 and
+webgl-depth-prune/webgl-r5.0-j8-1794249908365.
+
+Current measurement candidate
+-----------------------------
+Frozen ff4a705d3a84428011c02122a9544e4f0a833a4c uses
+JAR97afdc70320fe4d48349614d23ccbc2b56ad76a5ed927a8d3c900b3ae1cb2678,
+stage webgl-performance-cohorts. Query benchmark=1 pins day,135/45sun,
+high brightness, camera zoom75/rotation128. cache=active|lru and
+underlay=always|initial select controlled cohorts of the same artifact.
+The normal window/input surface still initializes and resizes. The initial-only
+policy avoids repainting an AWT layer fully covered by the browser GPU surface.
+The manager owns the exclusive exploratory comparison; results are pending here.
+
+Statistics count actual Java-produced frames, with no independent rAF redraw
+inflating client frame counts. Separate arrays record Java world-frame intervals,
+asynchronous GPU work, JS submission wall time and Java bridge spans. The spans
+overlap and must not be summed as serialized work. Pending GPU queries can cross
+phase edges; trim the first8GPU samples and first CPU interval. Measurement rings
+are bounded4096; normal diagnostic rings are bounded600. Captures/profilers and
+parallel builds are excluded from manager timed phases.
+
+Work remaining
+--------------
+Shared production lighting/shadow data and browser modules are a separate focused
+worker slice. Their integration and actual GPU visual checks remain pending.
+A browser-only optional declaration to omit an unused CPU depth raster is being
+prepared for a separate old/new test, with desktop/editor/source defaults kept.
+It is not enabled by default before interaction and GPU-occlusion evidence.
+Hardware/browser/device coverage, broader combat/content, context recovery and
+public TLS/networking/distribution acceptance remain future work. This document
+does not claim the owner's full visual/performance goal has been achieved.

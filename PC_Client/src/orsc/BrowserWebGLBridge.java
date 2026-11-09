@@ -40,6 +40,9 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static String shader(String name) throws Exception {
         Field f=OpenGLShaderProgram.class.getDeclaredField(name);f.setAccessible(true);return (String)f.get(null);
     }
+    @Override public boolean needsCpuDepthFrame() {
+        return !"gpu".equals(System.getProperty("spoiledmilk.browserDepthSource","cpu"));
+    }
     @Override public void present(BufferedImage image,Renderer2DFrame commands,Renderer3DFrame frame) {
         long frameStart=System.nanoTime();
         int w=image.getWidth(),h=image.getHeight();

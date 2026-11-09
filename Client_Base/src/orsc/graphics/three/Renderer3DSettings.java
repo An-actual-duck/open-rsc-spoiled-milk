@@ -76,6 +76,7 @@ public final class Renderer3DSettings {
 				false);
 	private static volatile boolean openGLPresentationAvailable;
     private static volatile boolean browserPresentationAvailable;
+    private static volatile boolean browserCpuDepthRequired=true;
 
 	private Renderer3DSettings() {
 	}
@@ -99,6 +100,13 @@ public final class Renderer3DSettings {
 	public static boolean canUseResidentObjectChunks() {
 		return (openGLPresentationAvailable || browserPresentationAvailable) && RESIDENT_CHUNK_OBJECTS_ENABLED;
 	}
+
+    public static boolean needsCpuDepthFrame() {
+        return !browserPresentationAvailable || browserCpuDepthRequired
+            || !RESIDENT_CHUNK_TRUSTED_REPLACEMENT_ENABLED || !RESIDENT_CHUNK_OBJECTS_ENABLED
+            || WorldEditorBuildSettings.isEnabled() || VISIBLE_WORLD_ENABLED;
+    }
+    public static void setBrowserCpuDepthRequired(boolean required) { browserCpuDepthRequired=required; }
 
     public static boolean isBrowserPresentationAvailable() { return browserPresentationAvailable; }
 

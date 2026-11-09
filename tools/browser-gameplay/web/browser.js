@@ -65,8 +65,8 @@ const natives = {
 };
 try {
   if (window.browserProof.mode==='webgl' && options.has('benchmark')) {
-    if(!['active','lru'].includes(options.get('cache')) || !['always','initial'].includes(options.get('underlay')))throw new Error('Private benchmark requires explicit cache and underlay policies');
-    window.browserProof.benchmark={cache:options.get('cache'),underlay:options.get('underlay'),tone:'day',sun:'135/45',brightness:'high',zoom:75,rotation:128};
+    if(!['active','lru'].includes(options.get('cache')) || !['always','initial'].includes(options.get('underlay')) || !['cpu','gpu'].includes(options.get('depth')||'cpu'))throw new Error('Private benchmark requires explicit cache and underlay policies');
+    window.browserProof.benchmark={cache:options.get('cache'),underlay:options.get('underlay'),depth:options.get('depth')||'cpu',tone:'day',sun:'135/45',brightness:'high',zoom:75,rotation:128};
   }
   if (window.browserProof.mode === 'webgl') {
     const {createBrowserWebGL} = await import('./webgl.js');
@@ -105,7 +105,7 @@ try {
   });
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
-    javaProperties: ['user.dir=/files', ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay')] : [])], natives});
+    javaProperties: ['user.dir=/files', ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu')] : [])], natives});
   report('Browser Java ready');
   const display = document.querySelector('#display');
   cheerpjCreateDisplay(1000, 620, display);

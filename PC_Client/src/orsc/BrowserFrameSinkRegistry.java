@@ -9,6 +9,7 @@ import orsc.graphics.three.Renderer3DSettings;
 public final class BrowserFrameSinkRegistry {
     public interface Sink {
         void present(BufferedImage image, Renderer2DFrame commands, Renderer3DFrame frame);
+        default boolean needsCpuDepthFrame() { return true; }
     }
     private static volatile Sink sink;
     private static int underlayWidth=-1,underlayHeight=-1;
@@ -17,6 +18,7 @@ public final class BrowserFrameSinkRegistry {
     public static synchronized void install(Sink next) {
         if (next != null && sink != null) throw new IllegalStateException("A browser frame sink is already installed");
         sink = next;underlayWidth=underlayHeight=-1;
+        Renderer3DSettings.setBrowserCpuDepthRequired(next == null || next.needsCpuDepthFrame());
         Renderer3DSettings.setBrowserPresentationAvailable(next != null);
     }
     /** Preserve the ordinary AWT input surface, but do not repaint pixels hidden by WebGL. */
