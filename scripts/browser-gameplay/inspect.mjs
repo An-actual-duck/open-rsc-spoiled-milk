@@ -9,6 +9,8 @@ if (!runArg || !['native-probe', 'mesh-probe', 'software', 'webgl'].includes(mod
 const run = path.resolve(runArg), seconds = Math.min(300, Math.max(5, Number(secondsArg)));
 const httpPort = Number(process.argv.find(arg => arg.startsWith('--port='))?.split('=')[1] || '8079');
 const login = process.argv.includes('--login');
+const hardwareGl = process.argv.includes('--hardware-gl');
+if (hardwareGl && mode !== 'webgl') throw new Error('--hardware-gl requires mode webgl');
 const javaVersion = process.argv.find(arg => arg.startsWith('--java='))?.split('=')[1] || '8';
 const wasmGC = process.argv.includes('--wasmgc');
 const runtime = process.argv.find(arg => arg.startsWith('--runtime='))?.split('=')[1] || '5.0';
@@ -18,7 +20,8 @@ if (!Number.isInteger(httpPort) || httpPort < 1 || httpPort > 65535) throw new E
 if (!fs.existsSync(path.join(run, 'stage.json'))) throw new Error('Use a staged private run');
 const capture = path.join(run, `${mode}-r${runtime}-j${javaVersion}${wasmGC ? '-gc' : ''}-${Date.now()}`); fs.mkdirSync(capture);
 const profile = path.join(capture, 'chrome-profile');
-const browser = spawn('/usr/bin/google-chrome', ['--headless=new', '--no-first-run', '--no-default-browser-check', '--disable-dev-shm-usage',
+const hardwareArgs = hardwareGl ? ['--enable-gpu', '--use-gl=angle', '--use-angle=gl', '--ozone-platform=x11', '--disable-software-rasterizer'] : [];
+const browser = spawn('/usr/bin/google-chrome', ['--headless=new', '--no-first-run', '--no-default-browser-check', '--disable-dev-shm-usage', ...hardwareArgs,
   '--remote-debugging-address=127.0.0.1', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--window-size=1200,950', 'about:blank'], {stdio: 'ignore'});
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 let ws, seq = 0; const pending = new Map();
@@ -104,7 +107,7 @@ try {
   let didLogin = false, didAccept = false;
   for (let i = 0; i < seconds; i++) {
     await delay(1000);
-    const readiness = login && !didLogin && i >= 18 ? await call('Runtime.evaluate', {expression: '(window.browserProof?.state?.fps || 0) >= 10', returnByValue: true}) : null;
+    const readiness = login && !didLogin && i >= 18 ? await call('Runtime.evaluate', {expression: mode === 'webgl' ? '(window.browserProof?.gpu?.javaFrames || 0) >= 20' : '(window.browserProof?.state?.fps || 0) >= 10', returnByValue: true}) : null;
     if (readiness?.result.value) {
       didLogin = true;
       await screenshot('login-ready');
@@ -147,17 +150,30 @@ try {
   const snapshot = await call('Runtime.evaluate', {expression: 'JSON.stringify({proof:window.browserProof,text:document.body.innerText,resources:performance.getEntriesByType("resource").map(r=>({name:r.name,duration:r.duration,transfer:r.transferSize})),canvases:Array.from(document.querySelectorAll("canvas")).map(c=>({width:c.width,height:c.height}))})', returnByValue: true});
   fs.writeFileSync(path.join(capture, 'page.json'), snapshot.result.value);
   const page = JSON.parse(snapshot.result.value);
+  const gpuResult = await call('Runtime.evaluate', {expression: `(()=>{
+    const frame=document.querySelector('#runtime'),canvas=frame?.contentDocument.querySelector('#browser-webgl');
+    if(!canvas)return null;
+    const gl=canvas.getContext('webgl2');if(!gl)return null;
+    const extension=gl.getExtension('WEBGL_debug_renderer_info');
+    return {vendor:extension?gl.getParameter(extension.UNMASKED_VENDOR_WEBGL):gl.getParameter(gl.VENDOR),
+      renderer:extension?gl.getParameter(extension.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),
+      version:gl.getParameter(gl.VERSION),width:canvas.width,height:canvas.height};
+  })()`, returnByValue:true});
+  const actualGpu = gpuResult.result.value;
+  const hardwareVerified = !!actualGpu?.renderer && !/swiftshader|llvmpipe|softpipe|software/i.test(actualGpu.renderer);
+  fs.writeFileSync(path.join(capture, 'webgl-device.json'), JSON.stringify({hardwareRequested:hardwareGl,hardwareVerified,actualGpu,chromeGraphicsArgs:hardwareArgs},null,2));
   fs.writeFileSync(path.join(capture, 'outcome.json'), JSON.stringify({captureCompleted: true, mode, runtime, javaVersion: Number(javaVersion), wasmGC,
     probeReportedBlocked: page.proof?.events.some(event => event.message.includes(':blocked:')) || false,
     javaProgramEnded: page.proof?.ended || false,
     observedClientModes: [...new Set((page.proof?.samples || []).map(sample => sample.mode))],
-    gameplayAcceptance: 'REQUIRES_VISUAL_REVIEW', movementAcceptance: movement.some(v=>v.online && movement.some(w=>w.online && (w.x!==v.x || w.y!==v.y))) ? 'AUTHORITATIVE_COORDINATE_CHANGE_OBSERVED' : 'NOT_ACCEPTED', gpuRendererAcceptance: 'NOT_ACCEPTED',
+    gameplayAcceptance: 'REQUIRES_VISUAL_REVIEW', movementAcceptance: movement.some(v=>v.online && movement.some(w=>w.online && (w.x!==v.x || w.y!==v.y))) ? 'AUTHORITATIVE_COORDINATE_CHANGE_OBSERVED' : 'NOT_ACCEPTED', gpuRendererAcceptance: 'NOT_ACCEPTED', hardwareRequested:hardwareGl, hardwareVerified, actualGpu,
     note: 'Exit 0 means capture completed; inspect compatibility results. A GAME state is not proof of visible world rendering.'}, null, 2));
   const image = await call('Page.captureScreenshot', {format: 'png'});
   fs.writeFileSync(path.join(capture, 'screenshot.png'), Buffer.from(image.data, 'base64'));
   fs.writeFileSync(path.join(capture, 'browser-version.json'), JSON.stringify(await call('Browser.getVersion'), null, 2));
   if (gameCapture) await gameCapture;
   console.log('Capture:', capture);
+  if (hardwareGl && !hardwareVerified) throw new Error('Requested hardware WebGL was not established: '+JSON.stringify(actualGpu));
 } finally {
   try { if (ws?.readyState === WebSocket.OPEN) await call('Browser.close'); } catch {}
   ws?.close(); log.end();
