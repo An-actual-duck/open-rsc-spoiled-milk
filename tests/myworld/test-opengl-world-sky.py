@@ -10,6 +10,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 SETTINGS = ROOT / "PC_Client/src/orsc/OpenGLSkySettings.java"
 PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
 CHUNKS = ROOT / "PC_Client/src/orsc/OpenGLWorldChunkRenderer.java"
+GEOMETRY = ROOT / "PC_Client/src/orsc/WorldSkyGeometry.java"
 
 
 def require(condition: bool, message: str) -> None:
@@ -64,6 +65,8 @@ def main() -> None:
     settings = SETTINGS.read_text(encoding="utf-8")
     presenter = PRESENTER.read_text(encoding="utf-8")
     chunks = CHUNKS.read_text(encoding="utf-8")
+    geometry = GEOMETRY.read_text(encoding="utf-8")
+    require("worldSkyGeometry.emit(radius,presentation,skyGeometrySink);" in chunks, "native sky must use shared geometry source")
     require('"spoiledmilk.openglSky"' in settings, "system-property sky switch missing")
     require('"SPOILED_MILK_OPENGL_SKY"' in settings, "environment sky switch missing")
     require('WORLD_DOME("world-dome")' in settings, "world-dome mode missing")
@@ -77,26 +80,26 @@ def main() -> None:
     require("getCameraRotationX()" in sky_view, "sky view must follow camera pitch")
     require("getCameraRotationY()" in sky_view, "sky view must follow camera yaw")
     require("getCameraOffset" not in sky_view, "sky view must ignore camera translation")
-    require("SKY_DOME_ELEVATION_DEGREES" in chunks, "world sky needs explicit altitude rings")
+    require("SKY_DOME_ELEVATION_DEGREES" in geometry, "world sky needs explicit altitude rings")
     require("drawWorldSkyDiagnosticMarker" not in chunks, "pink diagnostic landmarks must be removed")
     require(
-        chunks.index("drawWorldSkyStars(radius, starVisibility);")
-        < chunks.index("drawWorldSkyClouds(radius, presentation, cloudVisibility);"),
+        geometry.index("drawWorldSkyStars(radius,stars);")
+        < geometry.index("drawWorldSkyClouds(radius,p,clouds);"),
         "clouds must layer over stars during dawn/dusk transitions",
     )
     require(
-        chunks.count("drawWorldSkyCloudCluster(radius,") == 12,
+        geometry.count("drawWorldSkyCloudCluster(radius,") == 12,
         "day sky must distribute twelve cloud groups around the dome",
     )
-    require("drawWorldSkyWispyCloud" in chunks, "cloud field must include wispy silhouettes")
-    require("drawWorldSkyTowerCloud" in chunks, "cloud field must include taller silhouettes")
-    require("for (int star = 0; star < 180; star++)" in chunks, "night sky must use denser fixed fields")
-    require("drawWorldSkyMilkyWay(radius, starVisibility);" in chunks, "night sky must include a Milky Way band")
-    require("float centerElevation = -43.0f" in chunks, "Milky Way stars must follow the tilted band")
-    require("visibility * 0.030f" in chunks, "Milky Way haze must remain subtle")
-    require("float starVisibility = smoothSkyAmount" in chunks, "stars must fade with presentation brightness")
-    require("float cloudVisibility = smoothSkyAmount" in chunks, "clouds must fade with presentation brightness")
-    require("presentation.fogRed" in chunks, "horizon must stitch to presentation fog")
+    require("drawWorldSkyWispyCloud" in geometry, "cloud field must include wispy silhouettes")
+    require("drawWorldSkyTowerCloud" in geometry, "cloud field must include taller silhouettes")
+    require("for (int star = 0; star < 180; star++)" in geometry, "night sky must use denser fixed fields")
+    require("drawWorldSkyMilkyWay(radius,stars);" in geometry, "night sky must include a Milky Way band")
+    require("float centerElevation = colorsOnly ? 0.0f : -43.0f" in geometry, "Milky Way stars must follow the tilted band")
+    require("visibility * 0.030f" in geometry, "Milky Way haze must remain subtle")
+    require("return smoothSkyAmount((0.58f-brightness)/0.40f);" in geometry, "stars must fade with presentation brightness")
+    require("return smoothSkyAmount((brightness-0.20f)/0.42f);" in geometry, "clouds must fade with presentation brightness")
+    require("presentation.fogRed" in geometry, "horizon must stitch to presentation fog")
     require("frame.getFogDistance() * 0.92f" in chunks, "dome must remain inside the far clip")
     load_matrix_start = chunks.index("private void loadMatrix(int matrixMode, float[] matrix)")
     load_matrix_end = chunks.index("private FloatBuffer putWorldToClipMatrix", load_matrix_start)
