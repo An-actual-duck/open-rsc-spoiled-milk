@@ -67,6 +67,17 @@ public final class WorldOverlayCoverage {
 		if (release) transmittance = null;
 	}
 
+	void discard() {
+		boolean partialImage = transparent || !valid;
+		reset(true);
+		if (partialImage) {
+			valid = false;
+			reason = "Discarded overlay requires a new complete image/world base";
+		}
+	}
+
+	boolean isValid() { return valid; }
+
 	void opaque(int[] destination, int index) {
 		if (transparent && valid && destination == ownerPixels) { written = true; transmittance[index] = 0f; }
 	}

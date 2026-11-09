@@ -194,6 +194,12 @@ public final class WorldOverlayCoverageFixture {
         frame=owner.borrowWorldOverlayCoverage();owner.setWorldOverlayCoverageEnabled(false);check(owner.borrowWorldOverlayCoverage()==null,"disable releases");
         owner.setWorldOverlayCoverageEnabled(true);check(!owner.isWorldOverlayCoverageCurrent(frame),"new opt-in owner expires old opaque view");
         owner.beginTransparentWorldOverlay();frame=owner.borrowWorldOverlayCoverage();owner.clearWorldOverlayCoverage();check(!owner.isWorldOverlayCoverageCurrent(frame),"clear expires view");
+        check(!owner.borrowWorldOverlayCoverage().valid&&owner.borrowWorldOverlayCoverage().transmittance==null,"discarded partial image is not falsely opaque");
+        owner.clearWorldOverlayCoverage();check(!owner.borrowWorldOverlayCoverage().valid,"repeated discard remains invalid until new base");
+        owner.beginTransparentWorldOverlay();check(owner.borrowWorldOverlayCoverage().valid,"new world recovers discard");
+        owner.setWorldOverlayCoverageEnabled(false);check(!owner.borrowWorldOverlayCoverage().valid&&!owner.beginTransparentWorldOverlay(),"disable partial image retains invalid tombstone, no new tracking");
+        owner.setWorldOverlayCoverageEnabled(false);check(!owner.borrowWorldOverlayCoverage().valid,"repeat disable cannot relabel partial image");
+        owner.beginOpaqueWorldOverlay();check(owner.borrowWorldOverlayCoverage()==null,"complete image handshake releases disabled tombstone");
         WorldOverlayCoverage bounded=new WorldOverlayCoverage();check(!bounded.begin(new int[1],1,WorldOverlayCoverage.MAX_PIXELS+1),"oversized viewport rejected");
         check(!bounded.borrow(new int[1],1,1).valid,"oversized view invalid");
         // Demonstrate why retained legacy fade cannot use a simple affine multiplier.

@@ -139,33 +139,40 @@ public class GraphicsController {
 	private ZipFile spriteArchive;
 	private final RemasteredSpriteResolver remasteredSpriteResolver = new RemasteredSpriteResolver();
 	private WorldOverlayCoverage worldOverlayCoverage;
+	private boolean worldOverlayCoverageEnabled;
 
 	/** Opt in on the real on-screen surface only; scratch/minimap surfaces stay ordinary RGB. */
 	public final void setWorldOverlayCoverageEnabled(boolean enabled) {
+		worldOverlayCoverageEnabled = enabled;
 		if (enabled) {
 			if (worldOverlayCoverage == null) worldOverlayCoverage = new WorldOverlayCoverage();
 		} else {
-			if (worldOverlayCoverage != null) worldOverlayCoverage.reset(true);
-			worldOverlayCoverage = null;
+			if (worldOverlayCoverage != null) {
+				worldOverlayCoverage.discard();
+				// Keep only an invalid metadata tombstone if RGB is still a partial image.
+				if (worldOverlayCoverage.isValid()) worldOverlayCoverage = null;
+			}
 		}
 	}
 
 	/** Begin only where the Scene deliberately skips the software world raster. */
 	public final boolean beginTransparentWorldOverlay() {
-		return worldOverlayCoverage != null && worldOverlayCoverage.begin(pixelData, width2, height2);
+		return worldOverlayCoverageEnabled && worldOverlayCoverage != null
+			&& worldOverlayCoverage.begin(pixelData, width2, height2);
 	}
 
 	/** Before a complete legacy/login/loading image; does not alter ordinary RGB pixels. */
 	public final void beginOpaqueWorldOverlay() {
 		if (worldOverlayCoverage != null) worldOverlayCoverage.reset(false);
+		if (!worldOverlayCoverageEnabled) worldOverlayCoverage = null;
 	}
 
-	/** Release retained plane storage on resize/context teardown, preserving opt-in. */
+	/** Release plane storage; a partial RGB image stays invalid until a new complete base. */
 	public final void clearWorldOverlayCoverage() {
-		if (worldOverlayCoverage != null) worldOverlayCoverage.reset(true);
+		if (worldOverlayCoverage != null) worldOverlayCoverage.discard();
 	}
 
-	/** Null means disabled; an opaque view means RGB is already the complete image. */
+	/** Null means disabled with complete RGB; disabled partial images retain an invalid tombstone. */
 	public final WorldOverlayCoverage.Frame borrowWorldOverlayCoverage() {
 		return worldOverlayCoverage == null ? null : worldOverlayCoverage.borrow(pixelData, width2, height2);
 	}
@@ -472,7 +479,7 @@ public class GraphicsController {
 	}
 
 	private boolean canReplaceRenderer2DNativeUi() {
-		return worldOverlayCoverage == null
+		return !worldOverlayCoverageEnabled
 			&& renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
 			&& renderer2DUiBaseCaptured
 			&& !renderer2DNativeUiSoftwareDirty
@@ -1347,6 +1354,9 @@ public class GraphicsController {
 		this.pixelData = new int[width * height];
 		this.height2 = height;
 		this.width2 = width;
+		// The replacement array is a complete opaque black image, not the old partial overlay.
+		if (worldOverlayCoverage != null) worldOverlayCoverage.reset(true);
+		if (!worldOverlayCoverageEnabled) worldOverlayCoverage = null;
 	}
 
 	private void plotCharacter(boolean antiAliased, byte[] fontData, int x, int color, int indexAddr, int y) {

@@ -1,0 +1,149 @@
+Optional browser software-overlay coverage
+=========================================
+
+Scope and default behavior
+--------------------------
+GraphicsController now supports a separate per-instance float transmittance
+plane. Nothing enables it by default. Scratch hit-splat/minimap surfaces stay
+ordinary RGB, as do all desktop/native surfaces. No source sprite pixels,
+camera, scene geometry, gameplay or browser bootstrap code changed here.
+Scene/Bridge/JS integration is owned separately and remains a private opt-in.
+
+The existing software RGB expressions are unchanged. Opaque writes set T=0;
+source-over writes multiply T by the ACTUAL legacy destination coefficient.
+This includes alpha 0..256, AA thresholds <=30 / <230 / opaque, and the
+two-mask sprite path's unusual (255-opacity)/256 coefficient. Raw source-zero
+transparency is tested before any RGB interpretation, preserving ARGB black.
+Coverage hooks follow the actual software clip/interlace/sample loops.
+
+Fresh-world composition uses RGB=legacy UI over black and output RGB+T*world.
+Upload RGB as premultiplied contribution and T as a separate nearest R32F
+texture; do not unpremultiply, chroma-key black, or interpret source high bytes
+as coverage. ONE, ONE_MINUS_SRC_ALPHA with shader alpha=1-T is one compatible
+output path. Ordinary legacy integer floors mean this reconstruction is an
+approximation, not byte-exact UI over every possible background.
+
+Public GraphicsController API
+-----------------------------
+  setWorldOverlayCoverageEnabled(boolean)
+  beginTransparentWorldOverlay() -> boolean
+  beginOpaqueWorldOverlay()
+  clearWorldOverlayCoverage()
+  borrowWorldOverlayCoverage() -> WorldOverlayCoverage.Frame or null
+  isWorldOverlayCoverageCurrent(Frame) -> boolean
+  invalidateWorldOverlayCoverage(String)
+
+Opt in ONLY on the actual on-screen owner. At Scene's intentional GPU-world
+skip, beginTransparent clears the actual owner RGB to zero, fills T=1, and
+starts WORLD mode. It returns false for unsupported surfaces, which must not
+silently fall back to presenting partial RGB as opaque. Plane allocation is
+exact/reused for this surface, capped at 2,097,152 floats (8 MiB). No global
+scratch or property controls this bookkeeping.
+
+An explicit beginOpaque is the caller's promise of a COMPLETE software image
+before presentation: forceLegacy world raster, login, loading or ordinary
+image. beginSoftwareOwnedRenderer2DFrame invokes that handshake. It resets
+coverage metadata without changing RGB; enabled storage can be reused later.
+
+beginRenderer2DFrame preserves RGB/T, as death/sleep/activation retention use
+the preceding pixel image. It advances frameSequence and resets current-frame
+writer/fade bookkeeping only. Resize releases the plane and creates a complete
+new black RGB image, valid OPAQUE. Clear/context discard releases storage but
+leaves INVALID metadata if RGB was partial. Disable while partial also retains
+an INVALID metadata tombstone, with no plane/source-array ownership, until a
+new complete-image handshake/resize. Repeated clear/disable cannot falsely
+relabel the old delta OPAQUE. A genuinely opaque disabled owner returns null.
+
+Frame contains read-only borrowed ownerPixels, width, height, transmittance,
+transparent, valid, reason, generation, frameSequence, mode, retainedFadeCount.
+Integer mode constants on WorldOverlayCoverage:
+  0 MODE_OPAQUE         complete RGB image, T=null
+  1 MODE_WORLD          UI contribution over current GPU world
+  2 MODE_RETAINED_BASE  same retained faded BASE; current RGB/T is its UI delta
+  3 MODE_RETAINED_FADE  exact-fade previous FULL final output before current delta
+  4 MODE_INVALID        MUST NOT present; obtain a new complete base/image
+
+Borrow AFTER all software UI writers and immediately before synchronous sink
+upload. Verify ownerPixels identity AND dimensions against the actual image
+borrowed by Bridge; copied UI-base/presentation images have no implicit matching
+coverage. Views expire at subsequent drawing/lifecycle transitions and cannot
+serve as immutable image captures. isCurrent checks owner/helper identity,
+dimensions, valid state, generation, frameSequence, mode/count and T identity;
+it does not freeze arrays or track every individual pixel mutation.
+
+Exact retained fade protocol (GPU integration required)
+------------------------------------------------------
+Repeated fade2black is NOT approximated by multiplying T by15/16. At white,
+30 legacy fades yield16, while that approximation yields37. The difference is
+visibly cumulative. Instead, on an opted-in transparent owner, first fade in
+a retained frame (before any new writers and without fresh Scene) requests
+MODE_RETAINED_FADE, clears RGB0/T1 and skips ONLY that optional legacy CPU fade.
+Following UI writes form a new delta. Multiple consecutive fades before any
+drawing accumulate a bounded count1..16. Fade after fresh world/new writes or
+beyond16 invalidates; unsupported sequences never pretend to be pointwise.
+Opaque/default surfaces execute the original CPU fade unchanged.
+
+Integration maintains two GPU images, FULL and BASE:
+  WORLD/OPAQUE: draw complete new base/image, overlay if needed; capture FULL.
+  RETAINED_FADE: exact uint packed legacy fade(FULL,count)->BASE; draw BASE,
+                 overlay current delta RGB/T; capture FULL AFTER that delta.
+  RETAINED_BASE: draw cached BASE, overlay current delta; capture FULL.
+
+Do not use FULL as BASE for no-fade retention: the previous delta would be
+applied twice. Do not repeatedly fade FULL on duplicate presentation of the
+same request: token is owner identity + generation + frameSequence + count.
+Replaying the same token must reuse BASE; changed count/stale token is an error.
+Fresh Scene changes generation, reset/resize invalidates resources, retained
+frames preserve generation and advance frameSequence. The GPU module/Bridge
+must reject missing FULL/BASE, owner/dimension mismatch, or INVALID metadata
+and request a complete software-owned frame rather than display partial data.
+
+Legacy exact fade, c=pixel&0xffffff:
+  ((c>>>4)&0x0f0f0f) + ((c&0xf8f8f9)>>>3)
+  + ((c&0xfefeff)>>>1) + ((c>>>2)&0x803f3f3f)
+
+Unsupported/raw writers and integration gates
+--------------------------------------------
+Framebuffer blur, storeSpriteVert and copyPixelDataToSurface invalidate an
+active overlay. Their known login/minimap callers remain safe in complete
+legacy/non-owner mode. Captured UI-base RGB is a separate image and does not
+magically inherit T. External raw or Java2D writers must call invalidate before
+touching this owner, or be disabled/separately captured under private opt-in.
+
+Known external writers requiring owning integration guards:
+  mudclient.drawWorldEditorGridLine (direct pixelData Bresenham writes)
+  ORSCApplet Java2D debug overlay (draws through the pixel-array image alias)
+Static GraphicsController.a scanline is Scene raster code: Scene must skip it
+for the GPU path or use an explicit complete legacy frame. No edits to those
+other owners are included here. Any new raw/nonlocal writer needs review.
+
+Evidence and limits
+-------------------
+  python3 tests/myworld/test-world-overlay-coverage.py
+  JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
+    python3 tests/myworld/test-world-overlay-coverage.py
+  python3 tests/myworld/test-renderer-2d-overflow-telemetry.py
+
+The focused fixture executes119 real software raster variants (public wrappers
+and actual glyph/indexed low-level writers), clip/interlace combinations,
+black/white/gray/checkerboard backgrounds, alpha0/1/128/255/256, AA threshold
+edges, masks/transforms/mirror/skew, opaque zero/ARGB black, overlap, ordinary
+login blur/capture, non-owner destinations, retained pixels and repeated exact
+fade requests, BASE/delta reuse, lifecycle/mismatch/disable/reset limits.
+Native RGB is compared byte-for-byte against parent9c07 source compiled with
+the SAME fixture/dependencies. Frozen default-RGB oracle SHA256:
+  d0092296098efaa99047f01540a500497f07e8bad341b2f6a3c2fd8326a506c3
+
+Measured ordinary reconstruction: max1LSB/channel, RMS0.1218668525 in this suite.
+This is not a universal1LSB bound. For n sequential floor blends, a conservative
+bound accumulates <1LSB per layer weighted by later destination coefficients,
+plus final display quantization and float error. Very low-alpha long chains
+can exceed1LSB. Test both real menus and adversarial overlaps during GPU QA.
+Exact retained fade avoids the much larger systematic error from a simple T
+multiplier, but the GPU implementation/capture timing still needs actual tests.
+
+Inherited negative-Y drawVerticalGradient can throw in the original rasterizer;
+the suite uses its valid positive-Y input and does not alter that legacy bug.
+No GPU, browser, server or public-account actions occurred in this task.
+No FPS claim: a viewport float clear plus per-pixel bookkeeping/upload has cost.
+Correct UI composition is the goal; matched hardware timing remains a gate.
