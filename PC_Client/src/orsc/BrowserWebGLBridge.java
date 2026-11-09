@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.SinglePixelPackedSampleModel;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
 import java.util.*;
 import orsc.graphics.Renderer2DFrame;
 import orsc.graphics.three.*;
@@ -14,6 +15,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private final Map<Long,CachedChunk> chunks=new LinkedHashMap<Long,CachedChunk>();
     private final Map<Integer,Long> textures=new HashMap<Integer,Long>();
     private final OpenGLWorldChunkRenderer packing=new OpenGLWorldChunkRenderer(null,null,null,true,true,false,false,true,true,false);
+    private final OpenGLPixelWorkspace spriteWorkspace=new OpenGLPixelWorkspace();
     private int nextId=1;
     private boolean initialized;
     private static native void initialize(String vertex, String fragment);
@@ -21,6 +23,9 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void uploadTexture(int id,int width,int height,int[] rgba);
     private static native void present(int width,int height,boolean world,float[] matrices,float[] uniforms,int[] draws,int[] overlay);
     private static native void reset();
+    private static native void deleteChunks(int[] ids);
+    private static native void beginWorldSprites();
+    private static native void uploadWorldSprite(int width,int height,float[] vertices,byte[] rgba);
     public static void install() { BrowserFrameSinkRegistry.install(new BrowserWebGLBridge()); }
     private static String shader(String name) throws Exception {
         Field f=OpenGLShaderProgram.class.getDeclaredField(name);f.setAccessible(true);return (String)f.get(null);
@@ -36,13 +41,20 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         Renderer3DWorldChunkFrame world=frame==null?null:frame.getWorldChunkFrame();
         boolean hasWorld=world!=null&&world.getChunkCount()>0;
         if(!hasWorld) {
-            present(w,h,false,new float[32],new float[30],new int[0],borrowOverlay(image));
+            present(w,h,false,new float[48],new float[30],new int[0],borrowOverlay(image));
             return;
         }
         if(world.getChunkCount()>MAX_CHUNKS)throw new IllegalStateException("Browser scene exceeds chunk capacity");
         Renderer3DFrame previous=RendererFrameLighting.bind(frame);
         try {
-            if(chunks.size()+world.getChunkCount()>MAX_CHUNKS*2){reset();chunks.clear();textures.clear();}
+            // Evict the old view before uploading a new immutable active set.
+            // A count-only cache bound can exceed the byte budget long before 512 chunks.
+            Set<Long> active=new HashSet<Long>();
+            for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks())active.add(chunk.getStorageSignature());
+            int[] deleted=new int[chunks.size()];int deletedCount=0;
+            Iterator<Map.Entry<Long,CachedChunk>> iterator=chunks.entrySet().iterator();
+            while(iterator.hasNext()){Map.Entry<Long,CachedChunk> entry=iterator.next();if(!active.contains(entry.getKey())){deleted[deletedCount++]=entry.getValue().id;iterator.remove();}}
+            if(deletedCount>0)deleteChunks(Arrays.copyOf(deleted,deletedCount));
             for(Renderer3DTextureData texture:frame.getTextures()) {
                 if(texture==null)continue;
                 int id=texture.getTextureId();Long old=textures.get(id);
@@ -61,14 +73,41 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 }
                 if(cached==null)continue;
                 draws[count++]=cached.id;draws[count++]=chunk.getVertexOffsetX()-cached.x;draws[count++]=chunk.getVertexOffsetZ()-cached.z;
-                draws[count++]=chunk.getLogicalWorldOffsetX();draws[count++]=chunk.getLogicalWorldOffsetZ();draws[count++]=chunk.getPlane();
+                draws[count++]=chunk.getLogicalWorldOffsetX();draws[count++]=chunk.getLogicalWorldOffsetZ();
+                int visibility=0;for(Renderer3DModelKind kind:Renderer3DModelKind.values())if(frame.isWorldChunkModelKindVisible(kind,chunk.getPlane()))visibility|=1<<kind.ordinal();
+                draws[count++]=visibility;
             }
             float[] view=OpenGLWorldChunkRenderer.worldViewMatrix(frame);
             float[] clip=OpenGLWorldChunkRenderer.multiply(OpenGLWorldChunkRenderer.projectionMatrix(frame),view);
-            float[] matrices=new float[32];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);
+            float[] matrices=new float[48];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);columnMajor(OpenGLFramePresenter.cameraToClipProjectionMatrix(frame),matrices,32);
+            uploadSprites(frame);
             present(w,h,true,matrices,uniforms(frame),Arrays.copyOf(draws,count),borrowOverlay(image));
         } finally { RendererFrameLighting.restore(previous); }
     }
+    private void uploadSprites(Renderer3DFrame frame) {
+        beginWorldSprites();
+        if(frame.getWorldSpriteSnapshotCount()>1024)throw new IllegalStateException("Browser world sprite count exceeds capacity");
+        for(Renderer3DFrame.WorldSpriteSnapshot snapshot:frame.getWorldSpriteSnapshots()) {
+            if(snapshot==null||snapshot.getAnchor()==null||snapshot.getLayerCount()==0)continue;
+            CompositeWorldSpriteTexture composite=OpenGLSpriteTextureBuilder.buildCompositeCharacterSpriteTexture(snapshot,spriteWorkspace);
+            if(composite==null)continue;
+            if(composite.width<1||composite.height<1||(long)composite.width*composite.height>MAX_PIXELS)throw new IllegalStateException("Browser world sprite exceeds capacity");
+            ByteBuffer pixels=composite.textureData.pixels();byte[] rgba=new byte[pixels.remaining()];pixels.get(rgba);
+            uploadWorldSprite(composite.width,composite.height,spriteQuad(frame,snapshot.getAnchor(),composite),rgba);
+        }
+    }
+    static float[] spriteQuad(Renderer3DFrame frame,Renderer3DFrame.SpriteAnchor anchor,CompositeWorldSpriteTexture composite) {
+        float scale=(float)(1<<Math.max(0,Math.min(24,frame.getPerspectiveShift())));
+        float topDepth=OpenGLWorldSpriteRenderer.estimateEntitySpriteDepth(anchor,composite.y),bottomDepth=OpenGLWorldSpriteRenderer.estimateEntitySpriteDepth(anchor,composite.y+composite.height);
+        float[] result=new float[20];int at=0;
+        for(int n=0;n<4;n++) {
+            float x=composite.x+(n==1||n==2?composite.width:0),y=composite.y+(n>=2?composite.height:0),z=n>=2?bottomDepth:topDepth;
+            result[at++]=(x-frame.getCenterX())*z/scale;result[at++]=(y-frame.getCenterY())*z/scale;result[at++]=z;
+            result[at++]=n==1||n==2?1:0;result[at++]=n>=2?1:0;
+        }
+        return result;
+    }
+
     private CachedChunk upload(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk) {
         Map<String,List<Integer>> indices=new LinkedHashMap<String,List<Integer>>();
         Map<String,int[]> materials=new LinkedHashMap<String,int[]>();

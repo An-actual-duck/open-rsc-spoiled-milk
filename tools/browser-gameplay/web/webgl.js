@@ -12,10 +12,11 @@ const ATTRIBUTES=[['aPosition',3,0],['aMaterialColor',4,3],['aTexCoord',2,7],['a
 const MAX_GPU_BYTES=256*1024*1024, MAX_CHUNKS=512, MAX_PIXELS=2097152;
 function typed(value, Type) { return value instanceof Type ? value : new Type(value); }
 export function createBrowserWebGL(canvas, report=()=>{}) {
-  const gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+  const gl=canvas.getContext('webgl2',{alpha:false,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});
   if(!gl) throw new Error('WebGL2 unavailable: browser GPU proof requires WebGL2');
-  const stats={backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"resident chunks and texture pixels only; excludes overlays, programs and driver overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Geometry shadows not yet activated','Software overlay depth/partial-alpha blending is not yet equivalent','Sky backdrop not yet ported','Terrain valley field and glow masks pending'],frameSamples:[]};
-  const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,disposed=false,last=0;
+  const stats={backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas and <=8MiB overlay; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Geometry shadows not yet activated','UI partial-alpha over geometry is not yet equivalent','Sky backdrop not yet ported','Terrain valley field and glow masks pending'],frameSamples:[]};
+  const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0;
+  let spriteX=0,spriteY=0,spriteRow=0,spriteDraws=[];const SPRITE_ATLAS=2048;
   const uniforms=new Map();
   function alive(){if(disposed||stats.contextLost)throw new Error('Browser GPU backend unavailable; restart the private session');}
   function lost(event){event.preventDefault();stats.contextLost=true;report('WebGL context lost; stop and restart the private session');}
@@ -32,6 +33,12 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
       alive();if(program)throw new Error('WebGL backend initialized twice');
       program=link(adaptResidentShader(vertex,false),adaptResidentShader(fragment,true));
       overlayProgram=link('#version 300 es\nprecision highp float;out vec2 uv;void main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));uv=vec2(p.x,1.0-p.y);gl_Position=vec4(p*2.0-1.0,0,1);}', '#version 300 es\nprecision highp float;uniform sampler2D image;uniform bool world;in vec2 uv;out vec4 color;void main(){vec4 s=texture(image,uv);if(world&&s.a>0.003&&s.a<0.005)discard;color=vec4(s.bgr,1.0);}');
+      spriteProgram=link('#version 300 es\nprecision highp float;in vec3 position;in vec2 texCoord;uniform mat4 projection;out vec2 uv;void main(){uv=texCoord;gl_Position=projection*vec4(position,1);}', '#version 300 es\nprecision highp float;in vec2 uv;uniform sampler2D image;uniform vec3 tone;out vec4 color;void main(){color=texture(image,uv);if(color.a<=0.0)discard;color.rgb*=tone;}');
+      spriteTexture=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,spriteTexture);textureParameters();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,SPRITE_ATLAS,SPRITE_ATLAS,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+      spriteVAO=gl.createVertexArray();spriteVBO=gl.createBuffer();spriteIBO=gl.createBuffer();gl.bindVertexArray(spriteVAO);gl.bindBuffer(gl.ARRAY_BUFFER,spriteVBO);gl.bufferData(gl.ARRAY_BUFFER,1024*20*4,gl.STREAM_DRAW);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,spriteIBO);
+      const spriteIndices=new Uint32Array(1024*6);for(let n=0;n<1024;n++)spriteIndices.set([0,1,2,0,2,3].map(x=>x+n*4),n*6);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,spriteIndices,gl.STATIC_DRAW);
+      for(const [name,size,offset]of [['position',3,0],['texCoord',2,3]]){const at=gl.getAttribLocation(spriteProgram,name);gl.enableVertexAttribArray(at);gl.vertexAttribPointer(at,size,gl.FLOAT,false,20,offset*4);}
+      stats.spriteResourceBytes=SPRITE_ATLAS*SPRITE_ATLAS*4+1024*20*4+1024*6*4;
       emptyVAO=gl.createVertexArray();overlayTexture=gl.createTexture();
       gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,overlayTexture);textureParameters();
       gl.useProgram(program);
@@ -67,20 +74,26 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
     },
     async Java_orsc_BrowserWebGLBridge_present(lib,width,height,world,matrixInput,uniformInput,drawInput,pixelInput){
       alive();const matrices=typed(matrixInput,Float32Array),u=typed(uniformInput,Float32Array),draws=typed(drawInput,Int32Array),pixels=typed(pixelInput,Int32Array);
-      if(width<1||height<1||width*height>MAX_PIXELS||pixels.length!==width*height||matrices.length!==32||u.length!==30||draws.length%6||draws.length>256*6)throw new Error('Browser frame bounds violated');
+      if(width<1||height<1||width*height>MAX_PIXELS||pixels.length!==width*height||matrices.length!==48||u.length!==30||draws.length%6||draws.length>256*6)throw new Error('Browser frame bounds violated');
       if(canvas.width!==width)canvas.width=width;if(canvas.height!==height)canvas.height=height;
       gl.viewport(0,0,width,height);gl.disable(gl.SCISSOR_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);gl.depthMask(true);gl.clearDepth(1);
       gl.clearColor(world&&u[29]>=0?u[15]:0,world&&u[29]>=0?u[16]:0,world&&u[29]>=0?u[17]:0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
       let calls=0,triangles=0;
       if(world){
-        gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.useProgram(program);gl.uniformMatrix4fv(loc('uProjectionMatrix'),false,matrices.subarray(0,16));gl.uniformMatrix4fv(loc('uWorldViewMatrix'),false,matrices.subarray(16));
+        gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.useProgram(program);gl.uniformMatrix4fv(loc('uProjectionMatrix'),false,matrices.subarray(0,16));gl.uniformMatrix4fv(loc('uWorldViewMatrix'),false,matrices.subarray(16,32));
         FLOAT_UNIFORMS.forEach((name,n)=>f(name,u[n]));i('uTerrainDefinitionMode',u[25]);i('uTerrainVariationEnabled',u[26]);i('uRemasterLightingEnabled',u[27]);i('uFogEnabled',u[28]);
         for(const kind of [1,2,3,5,4,0])for(let at=0;at<draws.length;at+=6){
-          const chunk=chunks.get(draws[at]);if(!chunk)throw new Error('Draw references absent browser chunk');gl.bindVertexArray(chunk.vao);
+          if(!(draws[at+5]&(1<<kind)))continue;const chunk=chunks.get(draws[at]);if(!chunk)throw new Error('Draw references absent browser chunk');gl.bindVertexArray(chunk.vao);
           f('uChunkOffsetX',draws[at+1]);f('uChunkOffsetZ',draws[at+2]);f('uTerrainWorldOffsetX',draws[at+3]);f('uTerrainWorldOffsetZ',draws[at+4]);
           const b=chunk.batches;for(let n=0;n<b.length;n+=5){if(b[n+3]!==kind)continue;const tex=textures.get(b[n]);i('uTextureEnabled',tex?1:0);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex?tex.texture:baseTextures[0]);gl.drawElements(gl.TRIANGLES,b[n+2],gl.UNSIGNED_INT,b[n+1]*4);calls++;triangles+=b[n+2]/3;}
           stats.reusedChunkDraws++;
         }
+        if(spriteDraws.length){
+          gl.useProgram(spriteProgram);gl.bindVertexArray(spriteVAO);gl.uniformMatrix4fv(gl.getUniformLocation(spriteProgram,'projection'),false,matrices.subarray(32,48));gl.uniform3f(gl.getUniformLocation(spriteProgram,'tone'),u[4],u[5],u[6]);gl.uniform1i(gl.getUniformLocation(spriteProgram,'image'),0);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,spriteTexture);
+          gl.depthMask(false);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+          gl.drawElements(gl.TRIANGLES,spriteDraws.length*6,gl.UNSIGNED_INT,0);gl.disable(gl.BLEND);gl.depthMask(true);
+        }
+        stats.worldSpriteGroups=spriteDraws.length;
         stats.javaWorldFrames++;
       }
       gl.disable(gl.DEPTH_TEST);gl.depthMask(false);gl.useProgram(overlayProgram);gl.bindVertexArray(emptyVAO);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,overlayTexture);
@@ -89,11 +102,22 @@ export function createBrowserWebGL(canvas, report=()=>{}) {
       const now=performance.now();stats.javaFrames++;stats.drawCalls=calls;stats.triangles=triangles;stats.activeChunks=draws.length/6;stats.lastFrame=now;
       if(last){stats.frameSamples.push(now-last);if(stats.frameSamples.length>600)stats.frameSamples.shift();}last=now;
     },
+    async Java_orsc_BrowserWebGLBridge_deleteChunks(lib,input){
+      alive();const ids=typed(input,Int32Array);for(const id of ids){const x=chunks.get(id);if(!x)throw new Error('Eviction references absent GPU chunk');gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);stats.gpuBytes-=x.bytes;chunks.delete(id);}stats.evictedChunks=(stats.evictedChunks||0)+ids.length;
+    },
+    async Java_orsc_BrowserWebGLBridge_beginWorldSprites(){alive();spriteX=spriteY=spriteRow=0;spriteDraws=[];},
+    async Java_orsc_BrowserWebGLBridge_uploadWorldSprite(lib,width,height,vertexInput,pixelInput){
+      alive();const pixels=typed(pixelInput,Uint8Array),quad=new Float32Array(vertexInput);if(width<1||height<1||width>SPRITE_ATLAS||height>SPRITE_ATLAS||pixels.length!==width*height*4||quad.length!==20||spriteDraws.length>=1024)throw new Error('World sprite bounds violated');
+      if(spriteX+width>SPRITE_ATLAS){spriteY+=spriteRow;spriteX=0;spriteRow=0;}if(spriteY+height>SPRITE_ATLAS)throw new Error('World sprite atlas capacity exceeded');
+      for(let n=0;n<4;n++){quad[n*5+3]=(spriteX+quad[n*5+3]*width)/SPRITE_ATLAS;quad[n*5+4]=(spriteY+quad[n*5+4]*height)/SPRITE_ATLAS;}
+      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,spriteTexture);gl.texSubImage2D(gl.TEXTURE_2D,0,spriteX,spriteY,width,height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);gl.bindBuffer(gl.ARRAY_BUFFER,spriteVBO);gl.bufferSubData(gl.ARRAY_BUFFER,spriteDraws.length*20*4,quad);
+      spriteDraws.push(true);spriteX+=width;spriteRow=Math.max(spriteRow,height);check();
+    },
     async Java_orsc_BrowserWebGLBridge_reset(){
       alive();for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);chunks.clear();textures.clear();stats.gpuBytes=0;
     }
   };
-  function dispose(){if(disposed)return;for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);if(overlayTexture)gl.deleteTexture(overlayTexture);if(emptyVAO)gl.deleteVertexArray(emptyVAO);canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
+  function dispose(){if(disposed)return;for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);if(overlayTexture)gl.deleteTexture(overlayTexture);if(spriteTexture)gl.deleteTexture(spriteTexture);if(spriteVBO)gl.deleteBuffer(spriteVBO);if(spriteIBO)gl.deleteBuffer(spriteIBO);if(spriteVAO)gl.deleteVertexArray(spriteVAO);if(emptyVAO)gl.deleteVertexArray(emptyVAO);canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
   for(const name of Object.keys(natives)) {
     const call=natives[name];natives[name]=async(...args)=>{
       try{return await call(...args);}catch(error){stats.lastError=String(error);stats.lastErrorAt=performance.now();report('Browser GPU error: '+error);throw error;}
