@@ -98,12 +98,14 @@ class Network_Base {
 			try {
 				++this.packetReadAttempts;
 				if (this.m_d > 0 && this.packetReadAttempts > this.m_d) {
-					logFrameDiagnostic(
-						"NETWORK_FRAME_TIMEOUT attempts="
-							+ this.packetReadAttempts
-							+ " received=" + this.incomingPacketBytesRead
-							+ "/" + this.incomingPacketLength
-							+ " available=" + this.available());
+					if (canLogFrameDiagnostic()) {
+						logFrameDiagnostic(
+							"NETWORK_FRAME_TIMEOUT attempts="
+								+ this.packetReadAttempts
+								+ " received=" + this.incomingPacketBytesRead
+								+ "/" + this.incomingPacketLength
+								+ " available=" + this.available());
+					}
 					this.errorHappened = true;
 					this.errorCode = "time-out";
 					this.m_d += this.m_d;
@@ -121,11 +123,13 @@ class Network_Base {
 					this.incomingPacketLength = declaredFrameLength - 2;
 					this.incomingPacketBytesRead = 0;
 					this.packetReadAttempts = 0;
-					logFrameDiagnostic(
-						"NETWORK_FRAME_HEADER declaredBytes="
-							+ declaredFrameLength
-							+ " pendingBytes=" + this.incomingPacketLength
-							+ " available=" + this.available());
+					if (canLogFrameDiagnostic()) {
+						logFrameDiagnostic(
+							"NETWORK_FRAME_HEADER declaredBytes="
+								+ declaredFrameLength
+								+ " pendingBytes=" + this.incomingPacketLength
+								+ " available=" + this.available());
+					}
 				}
 				/*
 				 * Consume any bytes already offered by the socket even when a
@@ -148,23 +152,27 @@ class Network_Base {
 							readableNow);
 						this.incomingPacketBytesRead += readableNow;
 						this.packetReadAttempts = 0;
-						logFrameDiagnostic(
-							"NETWORK_FRAME_PROGRESS read=" + readableNow
-								+ " received="
-								+ this.incomingPacketBytesRead + "/"
-								+ this.incomingPacketLength
-								+ " available=" + this.available());
+						if (canLogFrameDiagnostic()) {
+							logFrameDiagnostic(
+								"NETWORK_FRAME_PROGRESS read=" + readableNow
+									+ " received="
+									+ this.incomingPacketBytesRead + "/"
+									+ this.incomingPacketLength
+									+ " available=" + this.available());
+						}
 					}
 				}
 				if (this.incomingPacketLength > 0
 					&& this.incomingPacketBytesRead
 						== this.incomingPacketLength) {
 					int packetLength = this.incomingPacketLength;
-					logFrameDiagnostic(
-						"NETWORK_FRAME_COMPLETE opcode="
-							+ (data.dataBuffer[0] & 0xFF)
-							+ " bytes=" + packetLength
-							+ " available=" + this.available());
+					if (canLogFrameDiagnostic()) {
+						logFrameDiagnostic(
+							"NETWORK_FRAME_COMPLETE opcode="
+								+ (data.dataBuffer[0] & 0xFF)
+								+ " bytes=" + packetLength
+								+ " available=" + this.available());
+					}
 					this.packetReadAttempts = 0;
 					this.lastPendingFrameDiagnosticAttempt = 0;
 					this.incomingPacketLength = 0;
@@ -177,12 +185,14 @@ class Network_Base {
 						>= PENDING_FRAME_DIAGNOSTIC_INTERVAL) {
 					this.lastPendingFrameDiagnosticAttempt =
 						this.packetReadAttempts;
-					logFrameDiagnostic(
-						"NETWORK_FRAME_PENDING attempts="
-							+ this.packetReadAttempts
-							+ " received=" + this.incomingPacketBytesRead
-							+ "/" + this.incomingPacketLength
-							+ " available=" + this.available());
+					if (canLogFrameDiagnostic()) {
+						logFrameDiagnostic(
+							"NETWORK_FRAME_PENDING attempts="
+								+ this.packetReadAttempts
+								+ " received=" + this.incomingPacketBytesRead
+								+ "/" + this.incomingPacketLength
+								+ " available=" + this.available());
+					}
 				}
 			} catch (IOException var4) {
 				this.errorHappened = true;
@@ -193,6 +203,13 @@ class Network_Base {
 		} catch (RuntimeException var5) {
 			throw GenUtil.makeThrowable(var5, "b.O(" + (data != null ? "{...}" : "null") + ',' + "dummy" + ')');
 		}
+	}
+
+	/* Call before constructing diagnostics: available() can cross a browser
+	 * native boundary even when the eventual logger would discard the string. */
+	private boolean canLogFrameDiagnostic() {
+		return BOUNDARY_DIAGNOSTICS
+			&& this.diagnosticFrameCount < MAX_DIAGNOSTIC_FRAMES;
 	}
 
 	private void logFrameDiagnostic(final String message) {
