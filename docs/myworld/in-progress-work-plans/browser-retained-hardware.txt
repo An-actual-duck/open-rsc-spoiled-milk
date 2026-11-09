@@ -1,0 +1,102 @@
+Retained-frame actual-GPU proof harness
+
+Scope
+This is a reusable functional test for browser-retained-frame.js alone. It uses
+actual WebGL2 shader execution, GPU copies and RGBA8 readPixels comparisons
+against the current actual GraphicsController.fade2black output. It does not
+log in, open a game server, touch accounts, use OS input, or assess FPS/full-game
+visual parity. Readback is deliberate functional instrumentation, not a timing.
+
+Preparation is the default and does not launch Chrome, GPU or HTTP server:
+python3 tests/myworld/prepare-browser-retained-hardware.py --run-id REVIEW-NAME
+or add --prepare-only for explicit documentation of that same behavior.
+
+The run is under declared output/tests/browser-retained-frame/hardware/REVIEW-NAME.
+An existing directory is refused; preserve evidence and use a new name. The
+preparer copies the maintained module and HTML/JS harness into web/, snapshots
+current GraphicsController.java and the Java oracle fixture into source/,
+compiles only the oracle/current source using an already-built client dependency
+jar, then produces117 RGBA8 native oracle frames and metadata. The stage receipt
+records source commit, copied module/source/oracle/jar SHA-256 and every served
+file hash/length. Raw array row0 is explicitly GPU bottom row in this fixture;
+it does not ambiguously reinterpret a Java BufferedImage.
+
+CPU-only prepared-stage checks:
+python3 tests/myworld/test-browser-retained-hardware-prepare.py PRINTED-RUN-PATH
+This verifies hashes, frame count/dimensions, source syntax and an explicit-run
+rejection control. It verifies actual native untouched-white121 at10 frames,
+16 at30 and0 at50. It does not run the hardware test.
+
+Hardware launch requires a separate explicit option and a manager-approved GPU
+window, with all other benchmark/game contexts closed:
+node tests/myworld/run-browser-retained-hardware.mjs --run-hardware PRINTED-RUN-PATH
+Alternatively prepare-browser-retained-hardware.py --run-hardware prepares a new
+stage then invokes that exact explicit runner. Never run during another worker's
+exclusive measurement window.
+
+Isolation and hardware identity
+The runner serves only the frozen staged-web allowlist on127.0.0.1 with a random
+port. It never serves Core root, source/, classes/, jar, credentials or databases.
+Method/Host/Origin checks and same-origin CSP restrict the test fixture. Files
+must remain byte-identical to their receipt and cannot be symlinks. The runner
+accepts only a run below its own declared hardware output directory.
+Chrome receives a fresh dedicated profile inside that run, explicit ANGLE OpenGL,
+hardware GPU flags, remote debugging on127.0.0.1 and a random CDP port. It starts
+about:blank then navigates to the isolated fixture. No owner profile, extension,
+OS keyboard/mouse action, game account or private game server is used.
+The page requires WEBGL_debug_renderer_info and reports actual unmasked renderer,
+vendor, WebGL version and texture capability. Both the page and runner reject
+SwiftShader/llvmpipe/softpipe/software/WARP and require AMD/Radeon +ANGLE +OpenGL.
+A different renderer is recorded as failed/unsupported, not evidence for this
+AMD host. Browser version and browser-level CDP SystemInfo.getInfo are recorded.
+
+Actual functional cases (expected233 byte-exact comparisons)
+A256x128 pattern covers grayscale, independent RGB channels, opaque black/white,
+channel gradients and spatially asymmetric color grids. A simple independent
+texelFetch shader first renders it into an RGBA8 FBO. Source-pattern readback is
+compared before each test. The retained module captures that actual framebuffer
+and applies counts1..16; readback must equal fresh actual Java native output.
+Then50 consecutive frames each apply one fade, compare the faded BASE, add an
+opaque changing UI rectangle matching native drawBox, compare FULL, capture FULL,
+repeat the same source fade presentation, and replay no-new-fade BASE. Both
+replays must equal BASE without applying the UI delta twice or refading FULL.
+This validates the required FULL/BASE distinction and exact-once generation/
+frameSequence semantics. Native oracle images include every intermediate frame.
+A shrink/expand exercises actual texture/FBO replacement. The smaller crop is
+compared against native count3. Missing/reset/base, bad dimensions, stale generation
+and changed duplicate fade count are required rejection controls. Every GL error
+fails, as do mismatches, program/state restoration differences and leaked owned
+resources. Instrumented creation/deletion counts distinguish harness resources
+from module resources. Module accounting is checked against two RGBA8 textures.
+The independent fakeGL suite remains responsible for injected allocation/copy/
+FBO failure and maximum32MiB replacement-budget controls.
+
+Evidence and limitations
+PREPARED_ONLY stage.json has gpuExecuted=false. It must never be described as GPU
+proof. Only hardware-result.json from an actual explicit run can establish that
+result; it includes case mismatches/max channel error, renderer and source hashes.
+Each run is single-use; an existing profile or result is refused. The runner
+closes its private Chrome/CDP/server when finished and preserves profile/logs/
+metadata/oracles. The scope is native fade algorithm +shader compiler +GPU copy
+orientation +RGBA8 conversion +retained resource lifecycle. It does not prove
+CheerpJ data transfer, actual game death/sleep integration, retained frame owner
+DTO correctness, performance or renderer-wide appearance. Those remain manager
+integration checks.
+
+Completed actual hardware run (manager-authorized isolated window)
+Run: output/tests/browser-retained-frame/hardware/gpu-final-1
+Result: completed=true, passed=true,233 cases,30,441,472 compared bytes,
+zero byte mismatches and max channel error0. Actual unmasked renderer:
+ANGLE (AMD, AMD Radeon RX6700XT (radeonsi navi22 LLVM20.1.2), OpenGL4.6).
+Browser: Chrome/152.0.7977.64.
+Frozen maintained retained module SHA-256:
+dfebf90ad9d195336f5b3f1e1ce67bd4f3b3d8e947a513482c395b7cb2e28f55
+Current actual GraphicsController source SHA-256:
+dabfdb9992eb9570b12f3d7aa33cc4066fcde61b5869e580e1c78159d6109a5e
+The ignored run retains stage.json, native-oracle.log,117 actual native oracle
+frames, immutable HTML/JS/module copies, hardware-result.json, CDP/Chrome logs
+and dedicated profile. Fresh source/hash/explicit-run CPU contracts passed first.
+The driver exited0, closed its own browser/CDP/server, and a subsequent process
+inventory found no process referencing that private profile. No public process,
+account or game server was accessed. No performance or whole-game claim follows.
+The earlier prepared-contract-1 remains preserved as unrun preparation evidence.
