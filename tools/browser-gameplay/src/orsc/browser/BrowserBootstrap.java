@@ -8,6 +8,8 @@ public final class BrowserBootstrap {
     private BrowserBootstrap() { }
     public static native void report(String message);
     public static native void reportState(String mode, int fps, int loadingPercent);
+    public static native void reportLoop(String mode);
+    public static native void reportTelemetry(String names,double[] values);
     private static native int wsOpen();
     private static native byte[] wsRead(int socket, int maximum);
     private static native int wsAvailable(int socket);
@@ -73,12 +75,17 @@ public final class BrowserBootstrap {
                     java.lang.reflect.Field clientField = orsc.ORSCApplet.class.getDeclaredField("mudclient"); clientField.setAccessible(true);
                     java.lang.reflect.Field modeField = orsc.mudclient.class.getDeclaredField("currentViewMode"); modeField.setAccessible(true);
                     java.lang.reflect.Field fpsField = orsc.mudclient.class.getDeclaredField("FPS"); fpsField.setAccessible(true);
+                    java.lang.reflect.Field loopField = orsc.mudclient.class.getDeclaredField("selectedClientLoopMode"); loopField.setAccessible(true);
                     while (true) {
                         Object client = clientField.get(null);
                         if (client != null && webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
                             orsc.mudclient actual=(orsc.mudclient)client;actual.setCameraZoomSetting(75);actual.cameraRotation=128;
                         }
-                        if (client != null) reportState(String.valueOf(modeField.get(client)), fpsField.getInt(null), orsc.ORSCApplet.globalLoadingPercent);
+                        if (client != null) {
+                            if(Boolean.getBoolean("spoiledmilk.browserProfile"))reportTelemetry(orsc.BrowserTelemetryData.names(),orsc.BrowserTelemetryData.snapshot());
+                            reportLoop(String.valueOf(loopField.get(client)));
+                            reportState(String.valueOf(modeField.get(client)), fpsField.getInt(null), orsc.ORSCApplet.globalLoadingPercent);
+                        }
                         Thread.sleep(1000);
                     }
                 } catch (Throwable error) { report("observer:stopped:" + error); }

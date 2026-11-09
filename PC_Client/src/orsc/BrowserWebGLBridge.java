@@ -155,23 +155,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         if(residentChunkBytes+required>CHUNK_BUDGET||chunks.size()>=MAX_CHUNKS*2)throw new IllegalStateException("Active browser scene exceeds resident byte budget");
     }
     private CachedChunk upload(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk,long bytes) {
-        Map<String,List<Integer>> indices=new LinkedHashMap<String,List<Integer>>();
-        Map<String,int[]> materials=new LinkedHashMap<String,int[]>();
-        int triangles=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3);
-        for(int triangle=0;triangle<triangles;triangle++) {
-            int tex=packing.backendTextureId(frame,chunk.getTriangleTexture(triangle),chunk.getTriangleFallbackColor(triangle));
-            Renderer3DTextureData texture=frame.getTexture(tex);if(texture==null)tex=-1;
-            int kind=chunk.getTriangleModelKind(triangle).ordinal(),transparent=texture!=null&&texture.hasTransparency()?1:0;
-            String key=tex+":"+kind+":"+transparent;
-            List<Integer> list=indices.get(key);if(list==null){list=new ArrayList<Integer>();indices.put(key,list);materials.put(key,new int[]{tex,kind,transparent});}
-            for(int j=0;j<3;j++)list.add(chunk.getIndex(triangle*3+j));
-        }
-        int[] index=new int[triangles*3],batch=new int[indices.size()*5];int at=0,b=0;
-        for(Map.Entry<String,List<Integer>> group:indices.entrySet()) {
-            int[] material=materials.get(group.getKey());batch[b++]=material[0];batch[b++]=at;batch[b++]=group.getValue().size();batch[b++]=material[1];batch[b++]=material[2];
-            for(Integer value:group.getValue())index[at++]=value;
-        }
-        int id=nextId++;uploadChunk(id,packing.copyBackendChunkVertices(chunk,frame),index,batch);
+        BrowserChunkMaterials.Buffers materials=BrowserChunkMaterials.pack(packing,frame,chunk);
+        int id=nextId++;uploadChunk(id,packing.copyBackendChunkVertices(chunk,frame),materials.indices,materials.batches);
         return new CachedChunk(id,chunk.getVertexOffsetX(),chunk.getVertexOffsetZ(),bytes);
     }
     static int[] borrowOverlay(BufferedImage image) {

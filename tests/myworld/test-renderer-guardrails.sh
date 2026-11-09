@@ -17,6 +17,8 @@ renderer_tests=(
   test-shadow-context-epoch.py
   test-underground-lighting.py
   test-browser-frame-sink.py
+  test-browser-chunk-materials.py
+  test-browser-lighting.py
   test-terrain-definition.py
   test-sprite-workspace.py
   test-animated-texture-shadow-policy.py

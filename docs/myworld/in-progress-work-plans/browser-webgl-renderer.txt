@@ -139,3 +139,57 @@ client build and frontend contract tests passed before lighting integration.
 Hardware/browser/device coverage, broader combat/content, context recovery and
 public TLS/networking/distribution acceptance remain future work. This document
 does not claim the owner's full visual/performance goal has been achieved.
+
+Integrated lighting functional checkpoint
+-----------------------------------------
+Frozen2a73a9d5359125fe2f4c44d4a33a5997b6093578 / JAR
+0658072f0d997acbbb21fa5b896d448616fe5c10a5e63c6e27121c9e9a43fc7f
+is preserved as webgl-shared-lighting (8105). Actual AMD hardware rendering
+completed6833worldframes in its300-second functional capture. Last submitted
+frame315710.7ms was fresh against the315728ms Java observer; no GPU error.
+Geometry shadows were active with80MiB depth maps,237794624resident chunk/texture
+bytes, source AO/glow masks and correct negative-level-aware lighting scope.
+Actual cpuDepthFramePresent=false independently confirms the private GPU-depth
+opt-in. The warmed functional scene was roughly24–26FPS, not the60FPS goal.
+
+Held150ms menu clicks successfully dropped and recovered the ordinary Tin Short
+Sword at the player's tile. Inventory changed2/30→1/30→2/30, and the unmodified
+current-game connection carried opcodes246/drop and247/take for item1997 at
+(133,660). This avoids the earlier table-pot reach ambiguity. Ordinary door
+picking sent opcode136 and caused authoritative walking to(130,655); the run
+ended before arrival, so completed door opening is not claimed. Cook moved before
+manual click targets; a static NPC fixture is being prepared by the manager.
+The bounded output-only transport tap starts after GAME, stays on that existing
+connection, stops recording outside observedGAME and always forwards unchanged.
+No authentication/new-connection writes are intentionally captured.
+
+An observed repeated mask upload per world frame costs about8.5ms in Java lighting
+export. The shared glow builder's full-scene signature is under a separate
+focused worker review; no cache invalidation shortcut has been applied here.
+Native-source output equality and actual changed-emitter invalidation are needed.
+
+Next controlled candidate
+--------------------------
+Primitive material grouping removes per-index Integer allocation and per-triangle
+String keys. A two-pass encoder retains byte-identical first-seen batch order and
+index streams:5438checks over300deterministic production ChunkMesh cases pass.
+No performance gain is claimed from allocation changes before browser measurement.
+
+The browser previously remained on the legacy loop despite setting modernClientLoop,
+because the real selector also required the native OpenGL-primary window. A new
+explicit browser capability gate exposes private benchmark loop=legacy|modern;
+legacy remains the default. The same existing modern loop implementation is reused.
+The actual run2 choice is recorded in selectedClientLoopMode and exported by the
+observer, rather than inferred from requested properties. CPU fixtures preserve
+ordinary native-primary and software-desktop/default-browser/teardown policies.
+Actual CheerpJ park/cadence/input proof remains required before changing default.
+
+profile=1 enables production RenderTelemetry before class initialization, with
+interval1200 and rendererSlowFrameMs1000000. One coherent synchronized export per
+second reads19 cumulative StageStats count/total pairs using cached reflection;
+it does not format hundreds of full snapshot fields. Array ownership, schema and
+actual production counters are tested. Telemetry is an instrumented diagnostic,
+not a clean FPS acceptance run. clientLoopDraw covers drawGame, Scene and final
+ORSCApplet draw; sceneRender excludes pre/post scene assembly/UI; frameStats is
+only the final ORSCApplet presentation segment. These nested spans must not be
+summed as independent work. Cohort deltas and counts are required for ranking.
