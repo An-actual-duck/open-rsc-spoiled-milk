@@ -77,7 +77,7 @@ export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShad
           // scene invalidations, never a blend with a stale/incomplete far map.
           const blend=values[7]===1&&!changed&&far;
           target=allocate(previous,values[4]);previous=null;
-          stats.shadowFarDraws=drawMap(target,values.subarray(48,64),draws,true,excluded);
+          try{stats.shadowFarDraws=drawMap(target,values.subarray(48,64),draws,true,excluded);}catch(error){destroy(target);throw error;}
           if(blend){previous=far;previousActive=true;}else{destroy(far);previousActive=false;}
           far=target;stats.shadowFarRebuilds=(stats.shadowFarRebuilds||0)+1;
         }
