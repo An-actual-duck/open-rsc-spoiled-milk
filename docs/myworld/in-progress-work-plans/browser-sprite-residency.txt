@@ -86,3 +86,15 @@ Layout audit reports inherited legacy ai2 loose output/asset entries; no cleanup
 was attempted. This task uses only declared output/tests/browser-sprite-residency.
 All are CPU/API checks. Hardware image comparison, private gameplay smoke and
 controlled FPS acceptance remain pending manager's serialized window.
+
+Review candidate checkpoint
+---------------------------
+Source4d9203ec4530a91b2d3d98bbbf24bf02f77cc666 normally merges published
+reviewed display main2abf25f1c. Immutable candidate HTTP127.0.0.1:8118:
+output/tests/browser-gameplay-spike/browser-sprite-residency/stage.json.
+Client SHA25608bbaa4230ebd5e2557a5e830654caf7c56e6174b309c4b15fdf095d8a1ac44e.
+This task has launched no GPU context. Manager owns serialized actual gameplay
+and baseline/candidate comparison; CPU/API readiness is not hardware acceptance.
+The separate CPU cache may retain16MiB in addition to up to16MiB held current
+frame images; a missing-pixel transfer may own another16MiB plus bounded scratch
+and descriptors. These software allocations do not expand the single GPU atlas.
