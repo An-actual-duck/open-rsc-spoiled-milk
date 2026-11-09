@@ -1,0 +1,100 @@
+Browser retained final-frame fade: focused module handoff
+
+Scope and reason
+Death and sleep fade a previous completed framebuffer in place. Their packed
+integer fade does not equal a real-valued 15/16 multiplication: native white
+becomes RGB121 after10 calls, RGB16 after30, black after50. A transmittance plane
+alone cannot reproduce those floors. This module keeps the FULL completed GPU
+frame and a separate faded BASE; no CPU readback or approximate fade is used.
+Only new module/tests/docs are changed; native rendering remains unchanged.
+
+API
+import {createBrowserRetainedFrame} from './browser-retained-frame.js';
+const retained=createBrowserRetainedFrame(gl,{stats});
+initialize() is optional: capture initializes lazily. Initialization failure
+permanently disposes that instance. Create a new module for retry.
+
+All frame calls require token={generation,frameSequence}, safe nonnegative
+integers copied from the actual owner surface's source-frame DTO.
+capture(width,height,token): AFTER all world/UI/overlays have drawn, copies the
+CURRENT READ framebuffer into the retained FULL texture. The caller must bind
+the intended read source (normally default framebuffer) beforehand. This is
+copyTexSubImage2D, not a CPU transfer. A new generation invalidates faded BASE.
+drawFaded(width,height,count,token): count1..16, BEFORE current delta UI, renders
+FULL through the exact packed uint fade into owned BASE FBO, then BASE unchanged
+into the caller's CURRENT DRAW framebuffer. No color/depth clear occurs here.
+drawBase(width,height,token): renders the last faded BASE without applying any
+fade. This avoids accumulating an already-presented UI delta twice when the
+source surface retains its current delta without issuing another fade.
+reset(): invalidates both images and frees textures/FBO. Does not destroy program.
+dispose(): reset plus owned program/shaders/VAO cleanup; idempotent.
+
+Ordering and identity
+First capture may be the complete opaque login frame. Normal world frames can
+also be captured. Source ownerPixels identity, session changes and context reset
+must cause explicit reset by the parent: matching dimensions are not ownership.
+New scene generations invalidate BASE when their FULL output is captured.
+For retained FADE, generation must match the captured FULL. Frame sequence must
+advance. A duplicate presentation with the same last faded generation/sequence
+and same count draws cached BASE; changed count or stale sequence is rejected.
+After delta UI, capture records the same source sequence. Repeating FADE for that
+sequence still uses BASE, never the just-captured FULL containing UI.
+RETAINED_BASE may be presented repeatedly, but cannot precede a successful fade.
+An absent/size-mismatched FULL/BASE is an error; do not fall back to stale images.
+
+Resource and GL contract
+At most 2,097,152 pixels and each axis <=MAX_TEXTURE_SIZE. FULL+BASE RGBA8 use
+8*width*height bytes: max16MiB steady; resize allows old+new pair max32MiB peak.
+At960x540 steady bytes=4,147,200. Driver/FBO/program/VAO bookkeeping is additional.
+Texture storage is immutable RGBA8, nearest/clamped. Shader fetches integer texel
+coordinates gl_FragCoord.xy; GPU copies and texture fetches share bottom origin,
+so no Java-image flip, scaling, filtering or gamma conversion is applied.
+The exported RETAINED_VERTEX_SOURCE/RETAINED_FRAGMENT_SOURCE can be compiled by
+manager hardware tests. The fragment reconstructs24-bit RGB from normalized
+RGBA8 then executes the native uint bitmask/shift expression up to16 times.
+RGBA output is opaque. Dithering/sample-coverage/raster-discard are disabled
+for this pass and restored, along with depth/blend/cull/scissor/stencil enables,
+depth/color writes, viewport, program, VAO, texture unit0 binding and active unit.
+Read and draw FBO bindings remain separate. Internal passes change DRAW only and
+restore it; capture reads the existing READ binding. BASE is never sampled while
+attached as current draw destination; such a caller destination is rejected.
+
+Resize allocates a complete new pair/FBO, checks completeness, copies FULL, then
+commits/deletes old resources. Failed resize preserves prior images/accounting.
+If caller bound old owned FULL/BASE at texture unit0 or the BASE FBO as READ/DRAW,
+successful replacement follows that binding to its new counterpart; failure
+keeps original objects/bindings alive. Other unit bindings are not used by this
+module, and private resource handles are not part of its public API.
+An interrupted same-size FULL copy may have partially changed it: the module
+explicitly invalidates FULL and BASE. Never present that partial capture.
+Failed BASE fade leaves BASE invalid and prior FULL intact. Successful BASE
+followed by failed caller replay does not commit its exact-once sequence;
+retry remains based on unchanged FULL. Initialization failures clean all owned
+objects. Context loss requires stop/recreate plus a fresh owner reset/capture.
+
+Validation performed
+python3 tests/myworld/test-browser-retained-fade.py
+Compiles the CURRENT actual GraphicsController.java (using built client jar for
+dependencies), executes native fade2black for262,144 corpus entries (grayscale,
+isolated channels, fixed-seed colors and1..16 calls), compares against a CPU
+interpretation of the exported GLSL uint expression. Also checks actual native
+10/30/50-call white oracle. PASS.
+node tests/myworld/test-browser-retained-frame.mjs
+Instrumented GL checks FULL/BASE semantics, repeated source presentation,
+generation/count/stale-sequence rejection, separate read/draw/state restoration,
+no texture feedback, failed allocation/FBO/copy/resize preservation, owned binding
+replacement, same-size copy invalidation, maximum budgets, reset/retry/dispose.
+PASS. No actual GPU/browser/server launch took place.
+
+Remaining integration acceptance
+Ai1 owns coverage DTO modes/new-delta production. Ai2 owns Bridge/webgl wiring.
+Manager must compile/run actual WebGL2 shaders, verify RGBA8 exact pixel outputs
+against the native corpus, test retained death/sleep with translucent UI across
+multiple frames and duplicate presentations, resize/session/context loss and
+resource telemetry. CPU uint-expression equality does not prove shader compiler,
+render-target conversion, capture timing, framebuffer origin or FPS behavior.
+
+Workspace-layout check exits1 on inherited unclassified output-root entries
+(output/remastered-sprites, output/static-analysis*, output/combat-test etc.).
+This task created evidence only in declared output/tests/browser-retained-frame;
+none of the old entries was removed. git diff --check passes.
