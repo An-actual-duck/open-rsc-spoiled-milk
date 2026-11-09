@@ -350,6 +350,7 @@ public class GraphicsController {
 			return Renderer2DFrame.empty(this.width2, this.height2);
 		}
 
+        long snapshotStart = RenderTelemetry.now();
 		Renderer2DFrame frame =
 			Renderer2DFrame.snapshot(
 				this.width2,
@@ -360,6 +361,7 @@ public class GraphicsController {
 				renderer2DRotatedSpriteCommands,
 				renderer2DCircleCommands,
 				renderer2DCaptureStats());
+        RenderTelemetry.recordRenderer2DFrameSnapshot(RenderTelemetry.elapsedSince(snapshotStart));
 		resetRenderer2DCommandState();
 		return frame;
 	}

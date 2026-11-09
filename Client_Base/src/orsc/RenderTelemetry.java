@@ -44,6 +44,11 @@ public final class RenderTelemetry {
 	private static final StageStats clientLoopRepositionStats = new StageStats();
 	private static final StageStats clientLoopDrawStats = new StageStats();
 	private static final StageStats sceneRenderStats = new StageStats();
+	private static final StageStats clientDrawBeforeSceneStats = new StageStats();
+	private static final StageStats clientDrawResidentObjectsStats = new StageStats();
+	private static final StageStats clientDrawWorldOverlayStats = new StageStats();
+	private static final StageStats clientDrawUiOverlayStats = new StageStats();
+	private static final StageStats renderer2DFrameSnapshotStats = new StageStats();
 	private static final StageStats sceneModelRotateStats = new StageStats();
 	private static final StageStats sceneWorldCullStats = new StageStats();
 	private static final StageStats sceneDepthExportStats = new StageStats();
@@ -453,6 +458,22 @@ public final class RenderTelemetry {
 			totalNanos,
 			commitNanos,
 			presentNanos);
+	}
+
+	/** Exclusive live-world draw preparation spans; no timers in pixel writers. */
+	static void recordClientDrawPreparation(long beforeScene, long residentObjects, long worldOverlay, long uiOverlay) {
+		if (!isCollectionEnabled()) return;
+		synchronized (RenderTelemetry.class) {
+			clientDrawBeforeSceneStats.record(beforeScene);
+			clientDrawResidentObjectsStats.record(residentObjects);
+			clientDrawWorldOverlayStats.record(worldOverlay);
+			clientDrawUiOverlayStats.record(uiOverlay);
+		}
+	}
+
+	public static void recordRenderer2DFrameSnapshot(long nanos) {
+		if (!isCollectionEnabled()) return;
+		synchronized (RenderTelemetry.class) { renderer2DFrameSnapshotStats.record(nanos); }
 	}
 
 	static void recordSceneRender(long nanos) {

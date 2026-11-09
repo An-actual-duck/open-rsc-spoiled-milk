@@ -7,7 +7,8 @@ public final class BrowserTelemetryData {
     private static final String[] FIELDS={
         "clientLoopStats","clientLoopSleepStats","clientLoopUpdateStats","clientLoopRepositionStats","clientLoopDrawStats",
         "sceneRenderStats","sceneModelRotateStats","sceneWorldCullStats","sceneDepthExportStats","sceneLegacyDrawStats","sceneMeshExportStats",
-        "frameStats","commitStats","scalarResizeStats","backingCopyStats","presentStats","setGameImageStats","sourceCopyStats","paintImmediateStats","clientLoopUpdateCountStats"
+        "frameStats","commitStats","scalarResizeStats","backingCopyStats","presentStats","setGameImageStats","sourceCopyStats","paintImmediateStats","clientLoopUpdateCountStats",
+        "clientDrawBeforeSceneStats","clientDrawResidentObjectsStats","clientDrawWorldOverlayStats","clientDrawUiOverlayStats","renderer2DFrameSnapshotStats"
     };
     private static final Object[] STAGES=new Object[FIELDS.length];
     private static final Field[] COUNTS=new Field[FIELDS.length],TOTALS=new Field[FIELDS.length];
