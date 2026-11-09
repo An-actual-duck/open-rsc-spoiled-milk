@@ -1,6 +1,22 @@
 Browser GPU renderer continuation — private development
 =======================================================
 
+Latest validated private artifact
+---------------------------------
+Frozen6a249f50e115d38fec03ef70b547c9671e296dc4 / JAR
+ df5a5206874ea0d70ff8e63322f69c8518866c65bfad9f136be7d7041e7a3f89
+at loopback8112 passed actual AMD gameplay:3,949 real world frames, ordinary
+bank/inventory alpha UI and2,343 retained Sleep replay frames; no GPU error,
+last189225.1ms versus189224ms observer. A separate normal login returned to the
+real world for1,219 further frames, no error. Sleep was enabled ONLY in the
+preserved disposable fixture; public configuration remains sleep-disabled.
+The sleeping UI reached60FPS; the actual world did NOT. Full60FPS performance,
+matched desktop parity, broader devices and full-content gameplay remain open.
+The manager's complete-build pair measured35.94uncached versus37.73cached real
+worldFPS, at960x540, similarNPCmeans31.60/31.52 and2.33ms medianGPU. This
+single-device result supports the bounded exact cache as the private default;
+it does not establish60FPS, cross-device parity or a universal speed gain.
+
 Scope
 -----
 The maintained Java game now has an optional synchronous browser presentation
@@ -22,25 +38,36 @@ texture pixels and game sprite artwork. RendererFrameLighting scopes the actual
 immutable frame so signed negative levels retain the current neutral-light rule.
 
 World sprites use the existing owned multipart snapshots, production composite
-texture builder, and production top/bottom depth estimator. Camera-space quads
-receive ordinary GPU depth testing against the resident world. Scene software
-sprites are suppressed only through the existing explicit replay capability.
-UI remains a software layer. An unused direct-RGB framebuffer high-byte marks
-cleared world background; real black pixels remain opaque. getRGB cannot retain
-this metadata, so the bridge validates and borrows the packed direct int buffer.
-Partially transparent UI composed against the old software background still
-needs a fuller command/coverage renderer; full visual parity is not claimed.
+texture builder, exact native atlas texel centers and top/bottom depth estimator.
+Camera-space quads receive ordinary GPU depth testing. Explicit per-entity
+GPU_OWNED/FORCE_SOFTWARE policy keeps captured mirrored/skewed actors off the
+software overlay, preserves native DEFAULT and rejects uncaptured GPU frames.
+Completed actor-failure/coverage metadata survives command consumption until the
+next actual begin-frame; native command/counter resets remain unchanged.
+
+Ordinary UI pixels still come from the real software writers. Optional per-owner
+transmittance reconstructs RGB + T * GPUworld using premultiplied blending.
+Legitimate black UI remains opaque. Native integer-rounding differences up to
+one channel step were observed in119 focused raster variants; this is not a
+claim of universal bitwise image identity. Exact retained FULL/BASE GPU images
+handle native packed-integer death/sleep fades without CPU world readback.
+RGBA drawingbuffer alpha is explicitly normalized after world/before UI; every
+final pixel stays opaque. The marker-only earlier path remains a comparison.
 
 Resource ownership
 ------------------
-Scene/chunk/viewport/texture and sprite-atlas dimensions are bounded. The geometry
-and world-texture budget is256MiB; the sprite atlas is separately16MiB and the
-software overlay at most8MiB. These figures exclude driver/program overhead.
-A new frame's active chunks are protected. The optional LRU reserves32MiB for
-world textures and evicts inactive buffers before an upload exceeds its chunk
-byte budget. The earlier active-only policy remains a controlled comparison.
-No referenced chunk may be evicted while the current frame needs it. Context
-loss/errors are surfaced; the prototype requires a fresh session to recover.
+Scene/chunk/viewport/texture and sprite-atlas dimensions are bounded. Geometry
+and world textures have a256MiB budget; separately bounded resources include
+16MiB sprite atlas, up to160MiB shadows,8MiB masks and2MiB Sky peak. Optional
+C/T UI plus retained FULL/BASE textures enforce a combined32MiB peak by freeing
+retained storage before viewport changes; actual960x540 usage is8,294,400bytes.
+These texture/buffer ledgers exclude driver/program overhead. The optional exact
+Java sprite cache is separately bounded16MiB and is a measured control.
+Active chunks are protected; LRU reserves32MiB for textures and evicts inactive
+buffers before uploads exceed the224MiB chunk budget. New buffer allocations
+commit after GL checks; partial in-place failures explicitly require restart.
+No borrowed frame arrays survive the synchronous native upload. Context loss
+and backend errors are surfaced with actual frame age; Stop/restart is required.
 
 Evidence sequence (all earlier failed evidence is retained)
 -----------------------------------------------------------
@@ -369,3 +396,26 @@ Actual game integration defects discovered and repaired
  pass; phased/overflowandallfocusedScene/depth/teleportcontracts pass.
 -These failedcaptures remainpreserved; no stability/60FPSclaim from their stale
  observers. Nextactualgameproof must exercise correctedSleep path.
+
+Private default promotion draft (after validated8112 proof)
+- Only BrowserBootstrap WebGL sets missing properties to GPU depth, early/full
+  resident ownership, coverage UI and the existing modern client loop. Explicit
+  benchmark controls win; ordinary desktop/software entrypoints do not change.
+- Modern uses the same native-equivalent update semantics; it did not by itself
+  improve measured throughput and does not change server tick rate.
+- Sprite cache private default is cached after manager's complete-build pair.
+  This source/default draft is not part of immutable8112 measurement artifact.
+
+Final complete-build comparison and scope
+- Frozen8112 sameartifact, explicitcoverage/modern/GPUdepth/early/fullownership,
+  no diagnosticreadbacks: uncached35.94 versuscached37.73actualworldFPS. Similar
+  NPCmeans31.60/31.52; GPUmedian2.33ms both. Bridge10.8->9.5ms, sprite4.2->3.0ms,
+  118967hits/5836misses,4.59MB bounded cache. Exploratory singlefixture/device.
+  Do not reuse earlier less-complete41.43FPS headline for the final code.
+- OrdinaryRub on fixtureitem597(renamedChargedDragonstoneBangle) produced no
+  teleport; no successfulin-gameRub/teleportbubbleclaim.56productionraster/phase
+  teleportchecks pass. Gameplayhandler issue is outside this renderer change.
+- Private normalserver restored sleep:false, normalgroup10/base2items at133660.
+  Finalplain-link smoke uses normal entrypoint defaults, ordinaryinventory/menu,
+  explicitStop/restart/logins and intentionalWebGLcontextloss+restart. Results
+  will be added after execution; syntheticloss is functional, notperformance.

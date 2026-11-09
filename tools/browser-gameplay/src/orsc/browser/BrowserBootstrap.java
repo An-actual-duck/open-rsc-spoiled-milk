@@ -56,6 +56,13 @@ public final class BrowserBootstrap {
             "openglWorldSpritesVisible", "skipLegacyWorldRaster", "modernClientLoop"};
         for (String name : off) System.setProperty("spoiledmilk." + name, "false");
         if(webgl) {
+            // Private WebGL entrypoint opts into the verified backend. Explicit
+            // comparative javaProperties still win; desktop/software defaults do not change.
+            String[][] defaults={{"browserDepthSource","gpu"},{"browserEarlyFaceCull","true"},
+                {"browserOwnsWallsAndRoofs","true"},{"browserOverlayCoverage","true"},
+                {"browserSpriteCache","cached"},{"browserLoop","modern"}};
+            for(String[] setting:defaults)if(System.getProperty("spoiledmilk."+setting[0])==null)
+                System.setProperty("spoiledmilk."+setting[0],setting[1]);
             String[] on={"renderer3DGeometryCapture","openglWorldMesh","openglWorldMeshTexturedVisible","openglWorldMeshTexturedStaticVisible","openglWorldReplacementComposite","openglWorldChunksTexturedVisible","openglWorldChunksReplacementComposite","openglWorldChunksTrustedReplacement","openglWorldChunksResidentObjects","openglWorldSpritesVisible","skipLegacyWorldRaster","modernClientLoop"};
             for(String name:on)System.setProperty("spoiledmilk."+name,"true");
             System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");
