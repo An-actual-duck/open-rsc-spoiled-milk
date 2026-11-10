@@ -126,17 +126,33 @@ but the original ASYNC failure stopped its Java thread and emitted an unhandled
 rejection before any SYNC failure ran. That was an invalid probe expectation,
 not a demonstrated synchronous-dispatch regression. Original v1/v2 artifacts are
 preserved; v3 tests the inherited fatal boundary without a renderer/vendor fix.
-Actual v3 execution remains manager-owned; compilation and JS syntax checks alone
-are not a JNI compatibility or performance result. Range-capable HTTP serving is
-required for the authentic JAR loader.
+Range-capable HTTP serving is required for the authentic JAR loader.
+
+The manager then ran all four v3-void modes in Firefox 154, CheerpJ 5.0 / Java 8.
+All passed. Values completed with Java exit 0, all 1,903 assertions, 100 vector
+calls per policy, 101 scalar calls per policy including post-void continuation,
+and both exact void markers; no poison, window error or unhandled rejection.
+Both failure policies stopped at the inherited native-error boundary with the
+same failure message, exactly one poison operation and no Java after-native
+marker. The async case emitted its expected runtime rejection; sync and thenable
+cases had no orphan rejection. Thenable mode's original rejected Promise was
+consumed while its explicit protocol violation stopped the native caller.
+Evidence and all per-mode JSON files:
+`/home/justin/Core-Framework/output/diagnostics/browser-performance-pass/native-contract-modes-firefox-1/summary.json`.
+
+The manager also reported actual SYNC game startup on review stage 8166: ready
+101 chunks, 32 NPCs, 37 sprite groups, normal gameplay camera, welcome interface
+closed and no errors. Its actual dispatch receipt was 19 synchronous methods and
+one asynchronous initialization method. This is a basic startup/rendering smoke
+result, not a full gameplay, movement, input-latency or performance certification.
 
 ## Remaining gates
 
-Root must run the integrated frontend in real CheerpJ before any adoption. Check
-direct int-array return conversion, sequential Java native ordering, error
-propagation, input/Stop responsiveness and asynchronous init/context-loss paths.
-Removing Promise boundaries may change cooperative scheduling; the official
-return-value contract does not prove identical game-thread scheduling or latency.
+Source, isolated pixel and authentic JNI conversion/fatal-boundary gates have
+passed for the tested Firefox/CheerpJ versions. Broader input/Stop responsiveness,
+movement and gameplay checks remain manager acceptance work. Removing Promise
+boundaries may change cooperative scheduling; these results do not establish
+identical latency or behavior on every browser/runtime/device.
 
 Then compare the same immutable JAR and fixed workload using the literal original
 async mode versus sync, warm both modes, confirm actual module/source hashes and
