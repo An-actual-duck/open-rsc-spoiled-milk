@@ -18,7 +18,7 @@ arithmetic=method(old,creator).split('\t\tint localX =',1)[1].split('\t\treturn 
 assert arithmetic==method(new,'\tprivate int writeResidentStaticDescriptor(').split('\t\tint localX =',1)[1].split('\t\tint[] values =',1)[0], 'Direct sampling diverged from original arithmetic'
 assert method(old,'\tprivate List<ResidentObjectChunkInput> buildResidentObjectChunkInputsUncached(')==method(new,'\tprivate List<ResidentObjectChunkInput> buildResidentObjectChunkInputsUncached('), 'Uncached/native builder changed'
 outputs=[]
-for variant,source in [('frozen',old),('off',new),('on',new)]:
+for variant,source in [('frozen',old),('default',new),('off',new),('on',new)]:
  run=suite/variant;run.mkdir(exist_ok=True);classes=run/'classes';classes.mkdir(exist_ok=True)
  # Independent source-only instrumentation counts constructor entry; neither
  # production sources nor field/descriptor values are modified by that counter.
@@ -28,7 +28,7 @@ for variant,source in [('frozen',old),('off',new),('on',new)]:
  selected=run/'mudclient.java';selected.write_text(instrumented)
  subprocess.run(['javac','-source','8','-target','8','-cp',str(jar),'-d',str(classes),str(selected),str(root/'tests/myworld/BrowserResidentInputsFixture.java'),str(root/'tests/myworld/BrowserResidentDescriptorFixture.java')],check=True)
  output=run/'descriptors.bin'
- args=['java','-Xmx512m','-Djava.awt.headless=true','-Dspoiledmilk.browserResidentInputCache=true','-Dspoiledmilk.browserResidentDescriptorWriting='+str(variant=='on').lower(),'-cp',str(classes)+':'+str(jar),'orsc.BrowserResidentDescriptorFixture',str(output)]
+ args=['java','-Xmx512m','-Djava.awt.headless=true','-Dspoiledmilk.browserResidentInputCache=true']+([] if variant=='default' else ['-Dspoiledmilk.browserResidentDescriptorWriting='+str(variant=='on').lower()])+['-cp',str(classes)+':'+str(jar),'orsc.BrowserResidentDescriptorFixture',str(output)]
  result=subprocess.run(args,check=True,text=True,capture_output=True);(run/'result.txt').write_text(result.stdout+result.stderr);print(variant,result.stdout.strip());outputs.append(output.read_bytes())
-assert outputs[0]==outputs[1]==outputs[2], 'Frozen/defaultOFF/directON descriptor data or animated indices differ'
-print(f'PASS frozen {frozen[:9]} vs OFF/ON exact {len(outputs[0])}-byte descriptor corpus; original creator/uncached builder unchanged')
+assert all(output==outputs[0] for output in outputs), 'Frozen/defaultOFF/directON descriptor data or animated indices differ'
+print(f'PASS frozen {frozen[:9]} vs default/OFF/ON exact {len(outputs[0])}-byte descriptor corpus; original creator/uncached builder unchanged')
