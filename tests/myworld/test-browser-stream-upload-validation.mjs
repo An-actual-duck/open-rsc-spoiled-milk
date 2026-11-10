@@ -43,6 +43,7 @@ const streams={chunk:async x=>x.n.Java_orsc_BrowserWebGLBridge_replaceChunk(null
  coverage:x=>overlay(x,2),atlas:async x=>{await x.n.Java_orsc_BrowserWebGLBridge_planWorldSprites(null,1,1,new Int32Array([1,1,1]));await x.n.Java_orsc_BrowserWebGLBridge_commitWorldSprites(null,1,1,new Uint8Array([1,2,3,255]),new Float32Array(20));}};
 for(const [name,stream]of Object.entries(streams)){
  const x=await setup();const before=x.backend.stats.javaFrames,lastFrame=x.backend.stats.lastFrame,worldFrames=x.backend.stats.javaWorldFrames,passed=x.backend.stats.streamUploadValidationPassed;
+ x.backend.queueStreamUploadValidation(false);assert.equal(x.backend.stats.streamUploadValidationActive,true);
  x.fault(name==='chunk'?'bufferSubData':'texSubImage2D');await stream(x);
  assert.equal(x.draws,0);assert.equal(x.backend.stats.streamUploadValidationPassed,passed);
  await assert.rejects(()=>present(x),/Streaming upload GL error/);
