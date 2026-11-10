@@ -5,8 +5,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const physicalOption=process.argv.includes('--physical-off')?'off':process.argv.includes('--physical')?'on':null;
+const repeatable=process.argv.includes('--repeatable');
 const benchmarkKeys=process.argv.includes('--benchmark-key-limbs');
-const benchmarkStream=process.argv.includes('--benchmark-stream')||benchmarkKeys;let streamRequested;
+const benchmarkStream=process.argv.includes('--benchmark-stream')||benchmarkKeys||repeatable;let streamRequested;
 let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, displayDisposed = 0, configured,gpuOptions;
 const status = {textContent:''}, messages = [];
 let layoutReads=0;
@@ -16,14 +17,15 @@ const canvas = {style:{},setAttribute(){}};
 const stats = {lastError:null,lastFrame:0};
 const gateEvents=[];
 const window = {dispatchEvent:e=>gateEvents.push(e.type),browserRuntimeVersion:'5.0',addEventListener(){}};
-const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':''):'?mode=webgl')+(physicalOption?'&physical='+physicalOption:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
+const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':''):'?mode=webgl')+(repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
   URLSearchParams,performance:{now:()=>clock},console,
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
   cheerpjInit:async o=>{configured=o;},cheerpjCreateDisplay(){},cheerpjRunMain:()=>new Promise(()=>{})});
+let transportUrl;
 let gateChanged;const cover={blocksWorldInput:false,attach(){},dispose(){coverDisposed++;this.blocksWorldInput=false;},update(state){const next=state?.phase==='loading';if(next!==this.blocksWorldInput){this.blocksWorldInput=next;gateChanged();}}};
 const coverModule=new vm.SyntheticModule(['createWorldCover'],function(){this.setExport('createWorldCover',o=>{gateChanged=o.onGateChange;return cover;});},{context});
-const transportModule = new vm.SyntheticModule(['createTransport'],function(){this.setExport('createTransport',()=>({dispose:()=>transportDisposed++}));},{context});
+const transportModule = new vm.SyntheticModule(['createTransport'],function(){this.setExport('createTransport',(...args)=>{transportUrl=args[2];return {dispose:()=>transportDisposed++};});},{context});
 const middleStats = {presses:0,moves:0,releases:0,cancels:0,coalesced:0};
 const middleNative = async()=>Int32Array.from([1,30,40,0]);
 const middleModule = new vm.SyntheticModule(['createBrowserMiddleMouseInput'],function(){this.setExport('createBrowserMiddleMouseInput',()=>{
@@ -56,6 +58,8 @@ await module.link(specifier=>{
 });
 module.evaluate();
 for(let i=0;i<30&&!configured;i++)await new Promise(resolve=>setImmediate(resolve));
+assert.equal(transportUrl,repeatable?'ws://127.0.0.1:43549/':'ws://127.0.0.1:43529/');
+if(repeatable){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportRepeatableState(null,'browserdemo',[1,32,1]);assert.equal(window.browserProof.repeatableFixture.username,'browserdemo');assert.equal(window.browserProof.repeatableFixture.cameraPinned,true);assert.equal(window.browserProof.repeatableFixture.npcCount,32);}
 assert.ok(configured,'actual frontend did not initialize Java options');
 const expectedPhysical=physicalOption?physicalOption==='on':!benchmarkStream;assert.equal(gpuOptions.physicalOutput,expectedPhysical,'Ordinary physical output defaults ON with explicit OFF; benchmark retains explicit opt-in');assert.equal(window.browserProof.physicalOutputRequested,expectedPhysical);
 assert.equal(gpuOptions.ownedState,!benchmarkStream,'Ordinary frontend must pass the verified owned policy to the actual backend seam');
