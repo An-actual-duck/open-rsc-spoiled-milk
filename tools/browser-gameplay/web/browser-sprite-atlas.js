@@ -1,7 +1,7 @@
 /** Exact-ID sprite residency. One existing RGBA8 atlas; no extra texture on compaction.
  * Java IDs identify owned exact-content cache entries, never a probabilistic hash.
  * All current IDs are pinned before eviction. Borrowed arrays are consumed inline. */
-export function createBrowserSpriteAtlas(gl,{texture,vbo,stats={},extent=2048,maxSprites=1024}={}) {
+export function createBrowserSpriteAtlas(gl,{texture,vbo,stats={},extent=2048,maxSprites=1024,ownedFrame=null}={}) {
   if(!Number.isInteger(extent)||extent<1||extent>2048||!Number.isInteger(maxSprites)||maxSprites<1||maxSprites>1024)throw new Error('Invalid sprite atlas bounds');
   const MAX_RESIDENT=4096;
   let entries=new Map(),free=[{x:0,y:0,w:extent,h:extent}],epoch=0,sequence=0,pending=null,failed=false,disposed=false;
@@ -50,9 +50,9 @@ export function createBrowserSpriteAtlas(gl,{texture,vbo,stats={},extent=2048,ma
     const pixels=pixelInput instanceof Uint8Array?pixelInput:new Uint8Array(pixelInput),quads=new Float32Array(quadInput);
     if(pixels.length!==pending.bytes||quads.length!==pending.order.length*20||quads.some(v=>!Number.isFinite(v)))throw new Error('Sprite commit dimensions invalid');
     for(let at=0;at<pending.order.length;at++){const r=pending.next.get(pending.order[at]);for(let n=0;n<4;n++){const base=at*20+n*5;quads[base+3]=center(r.x,r.w,quads[base+3]);quads[base+4]=center(r.y,r.h,quads[base+4]);}}
-    const active=gl.getParameter(gl.ACTIVE_TEXTURE),array=gl.getParameter(gl.ARRAY_BUFFER_BINDING);gl.activeTexture(gl.TEXTURE0);const binding=gl.getParameter(gl.TEXTURE_BINDING_2D),alignment=gl.getParameter(gl.UNPACK_ALIGNMENT);
+    const active=ownedFrame?.active?null:gl.getParameter(gl.ACTIVE_TEXTURE),array=ownedFrame?.active?null:gl.getParameter(gl.ARRAY_BUFFER_BINDING);gl.activeTexture(gl.TEXTURE0);const binding=ownedFrame?.active?null:gl.getParameter(gl.TEXTURE_BINDING_2D),alignment=ownedFrame?.active?4:gl.getParameter(gl.UNPACK_ALIGNMENT);
     try{gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_ALIGNMENT,4);let offset=0;for(const id of pending.missing){const r=pending.next.get(id),length=r.w*r.h*4;gl.texSubImage2D(gl.TEXTURE_2D,0,r.x,r.y,r.w,r.h,gl.RGBA,gl.UNSIGNED_BYTE,pixels.subarray(offset,offset+length));offset+=length;}gl.bindBuffer(gl.ARRAY_BUFFER,vbo);if(quads.length)gl.bufferSubData(gl.ARRAY_BUFFER,0,quads);check();}
-    finally{gl.bindBuffer(gl.ARRAY_BUFFER,array);gl.bindTexture(gl.TEXTURE_2D,binding);gl.pixelStorei(gl.UNPACK_ALIGNMENT,alignment);gl.activeTexture(active);}
+    finally{if(!ownedFrame?.active){gl.bindBuffer(gl.ARRAY_BUFFER,array);gl.bindTexture(gl.TEXTURE_2D,binding);gl.pixelStorei(gl.UNPACK_ALIGNMENT,alignment);gl.activeTexture(active);}else gl.activeTexture(gl.TEXTURE0);}
     entries=pending.next;free=pending.rectangles;epoch=e;sequence=s;
     stats.spriteDrawReuses+=pending.hits;stats.spriteUploadedImages+=pending.missing.length;stats.spriteUploadedBytes+=pending.bytes;stats.spriteCompactions+=pending.compacted?1:0;stats.spriteEvictions+=pending.evictions;stats.spriteDescriptorUploads++;stats.spriteCommitCalls++;stats.spriteDescriptorBytes+=quads.byteLength;stats.spriteSourceImageBytes+=pending.sourceBytes;stats.spriteFrameGroups=pending.order.length;stats.spriteResidentImages=entries.size;
     const count=pending.order.length;pending=null;return count;

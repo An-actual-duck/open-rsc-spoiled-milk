@@ -3,7 +3,7 @@ import {createTransport} from './transport.js';
 import {createWorldCover} from './browser-world-cover.js';
 import {createBrowserMiddleMouseInput} from './browser-middle-mouse.js';
 import {createBrowserDisplay} from './browser-display.js';
-import {browserPreparationBenchmarkControls} from './browser-benchmark-controls.js';
+import {browserPreparationBenchmarkControls,browserOwnedStateBenchmarkPolicy} from './browser-benchmark-controls.js';
 const status = document.querySelector('#status');
 const options = new URLSearchParams(location.search);
 const javaVersion = Number(options.get('java') || '8');
@@ -29,7 +29,7 @@ function publish() {
 }
 function dispose() {
   if (stopped) return;
-  stopped = true; pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
+  stopped = true; delete window.browserBenchmarkOwnedState; pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
 }
 function finish(reason) {
   if (stopped) return;
@@ -102,7 +102,10 @@ try {
     const canvas = document.createElement('canvas'); canvas.id = 'browser-webgl';
     canvas.setAttribute('aria-hidden', 'true');
     Object.assign(canvas.style, {position: 'absolute', pointerEvents: 'none', display: 'none', zIndex: '1'});
-    gpu = createBrowserWebGL(canvas, report, {opaqueProof:options.get('alpha-proof')==='1'});
+    const ownedState=browserOwnedStateBenchmarkPolicy(window.browserProof.mode,options);
+    window.browserProof.ownedStateRequested=ownedState;
+    gpu = createBrowserWebGL(canvas, report, {opaqueProof:options.get('alpha-proof')==='1',ownedState,benchmarkControl:options.has('benchmark')});
+    if(options.has('benchmark'))window.browserBenchmarkOwnedState=enabled=>gpu.queueOwnedState(enabled);
     worldCover=createWorldCover({document,window,display:document.querySelector('#display'),onGateChange:()=>window.dispatchEvent(new Event('browser-world-readinesschange'))});
     window.browserProof.worldLoading=worldCover.stats;
     window.browserProof.renderer = 'WebGL2 resident world and sprites / software UI (experimental)';

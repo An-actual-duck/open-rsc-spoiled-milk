@@ -3,22 +3,22 @@ import {createBrowserShadows} from './browser-shadows.js';
 /** Terrain/roof/glow textures use the byte-identical production Java builders.
  * All input arrays are copied or uploaded before a native bridge call returns. */
 export function createBrowserLighting(gl,options) {
-  const {program,stats}=options,shadows=createBrowserShadows(gl,options),masks=new Map(),locations=new Map();
+  const {program,stats,ownedFrame}=options,shadows=createBrowserShadows(gl,options),masks=new Map(),locations=new Map();
   const MAX_MASK_BYTES=8*1024*1024;let values=null,disposed=false;
   stats.lightingMaskBytes=0;stats.lightingMaskBudgetBytes=MAX_MASK_BYTES;
   function loc(name){if(!locations.has(name))locations.set(name,gl.getUniformLocation(program,name));return locations.get(name);}
   function initialize(vertex,fragment){shadows.initialize(vertex,fragment);}
   function uploadMask(unit,width,height,input,bounds){
     if(disposed||![2,5,7].includes(unit)||width<1||height<1||width>1024||height>1024||input.length!==width*height*4||bounds.length!==4)throw new Error('Browser lighting mask schema invalid');
-    const bytes=width*height*4,old=masks.get(unit);if(stats.lightingMaskBytes-(old?old.bytes:0)+bytes>MAX_MASK_BYTES||width>gl.getParameter(gl.MAX_TEXTURE_SIZE)||height>gl.getParameter(gl.MAX_TEXTURE_SIZE))throw new Error('Browser lighting mask budget exceeded');
-    const active=gl.getParameter(gl.ACTIVE_TEXTURE);gl.activeTexture(gl.TEXTURE0+unit);const binding=gl.getParameter(gl.TEXTURE_BINDING_2D),texture=old?old.texture:gl.createTexture();
+    const bytes=width*height*4,old=masks.get(unit);if(stats.lightingMaskBytes-(old?old.bytes:0)+bytes>MAX_MASK_BYTES||width>(ownedFrame?.active?ownedFrame.maxTextureSize:gl.getParameter(gl.MAX_TEXTURE_SIZE))||height>(ownedFrame?.active?ownedFrame.maxTextureSize:gl.getParameter(gl.MAX_TEXTURE_SIZE)))throw new Error('Browser lighting mask budget exceeded');
+    const active=ownedFrame?.active?null:gl.getParameter(gl.ACTIVE_TEXTURE);gl.activeTexture(gl.TEXTURE0+unit);const binding=ownedFrame?.active?null:gl.getParameter(gl.TEXTURE_BINDING_2D),texture=old?old.texture:gl.createTexture();
     try {
       gl.bindTexture(gl.TEXTURE_2D,texture);const filter=unit===5?gl.NEAREST:gl.LINEAR;
       gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,filter);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,filter);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
       const bytesView=ArrayBuffer.isView(input)?new Uint8Array(input.buffer,input.byteOffset,input.byteLength):new Uint8Array(input);
       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,bytesView);
       stats.lightingMaskBytes+=bytes-(old?old.bytes:0);stats.lightingMaskUploads=(stats.lightingMaskUploads||0)+1;masks.set(unit,{texture,bytes,width,height,bounds:new Float32Array(bounds)});
-    } finally {gl.bindTexture(gl.TEXTURE_2D,binding);gl.activeTexture(active);}
+    } finally {if(!ownedFrame?.active){gl.bindTexture(gl.TEXTURE_2D,binding);gl.activeTexture(active);}else gl.activeTexture(gl.TEXTURE0);}
   }
   function prepare(input,draws){if(disposed)throw new Error('Browser lighting disposed');values=new Float32Array(input);shadows.prepare(values,draws);}
   function bindMask(unit,enabled,prefix,at){
