@@ -31,7 +31,7 @@ try{
  const end=Date.now()+120000;let proof;while(Date.now()<end){const value=await ws.call('Runtime.evaluate',{expression:'JSON.stringify(window.retainedProof||null)',returnByValue:true});if(value.exceptionDetails)throw Error(JSON.stringify(value.exceptionDetails));proof=JSON.parse(value.result.value||'null');if(proof?.completed)break;await delay(100);}
  result.proof=proof;if(!proof?.completed)throw Error('Retained GPU proof timed out');if(!proof.passed)throw Error('Retained GPU proof failed: '+JSON.stringify(proof.errors));
  if(!/AMD|Radeon/i.test(proof.renderer)||!/ANGLE/i.test(proof.renderer)||!/OpenGL/i.test(proof.renderer)||/SwiftShader|llvmpipe|softpipe|software|WARP/i.test(proof.renderer))throw Error('Physical AMD ANGLE OpenGL renderer verification failed');
- if(proof.cases.length!==233||proof.cases.some(test=>test.mismatches!==0))throw Error('Expected233 byte-exact hardware cases');
+ if(proof.cases.length!==249||proof.cases.some(test=>test.mismatches!==0))throw Error('Expected249 byte-exact hardware cases');
  result.passed=true;result.completed=true;
 }catch(error){result.error=String(error.stack||error);}
 finally{

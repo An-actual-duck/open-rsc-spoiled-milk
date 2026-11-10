@@ -74,6 +74,12 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void present(int width,int height,boolean world,float[] matrices,float[] uniforms,int[] draws,int[] overlay);
     private static native void frameWork(float[] milliseconds,int[] pose);
     private static native void worldProgress(int[] metadata);
+    private static native void regionTransition(boolean ordinaryWalking);
+    private static native void holdWorld();
+    @Override public void worldTransition(boolean ordinaryWalking) {
+        loadState.beginTransition();
+        if(initialized)regionTransition(ordinaryWalking);
+    }
     private static native void overlayFrame(int width,int height,int mode,double generation,double frameSequence,int fades,boolean reset,float[] transmittance);
     private static native void deleteChunks(int[] ids);
     private static native int[] planWorldSprites(int epoch,double sequence,int[] images);
@@ -111,10 +117,15 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         Renderer3DWorldChunkFrame world=frame==null?null:frame.getWorldChunkFrame();
         boolean hasWorld=world!=null&&world.getChunkCount()>0;
         if(!hasWorld) {
+            boolean game=client!=null&&client.isGameView(),modal=client!=null&&client.isFullScreenModalUiActive();
+            int[] progress=loadState.frame(game,modal,false,frame,0,0,0,0,0,w,h,textures.size());
+            if(game&&!modal&&loadState.shouldHold(false,0,0,0)) {
+                worldProgress(progress);holdWorld();return;
+            }
             exportLighting(null);
             exportSky(null);
             prepareOverlay(image,currentSurface);
-            worldProgress(loadState.frame(client!=null&&client.isGameView(),client!=null&&client.isFullScreenModalUiActive(),false,frame,0,0,0,0,0,w,h,textures.size()));
+            worldProgress(progress);
             present(w,h,false,new float[48],new float[30],new int[0],borrowOverlay(image));
             return;
         }
@@ -143,6 +154,14 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             ChunkDraws geometry=prepareChunks(frame,world,active);
             int[] draws=geometry.draws;int count=draws.length,remainingRepacks=geometry.remainingRepacks;
             long geometryEnd=System.nanoTime();
+            boolean authority=client!=null&&client.isRenderer3DWorldReady();
+            int[] progress=loadState.frame(client!=null&&client.isGameView(),client!=null&&client.isFullScreenModalUiActive(),authority,frame,world.getChunkCount(),count/8,remainingRepacks,0,0,w,h,textures.size());
+            // Core already retained its last coherent CPU frame during area activation.
+            // Preserve that same final GPU image until EVERY new source chunk is ready.
+            // Uploads are synchronous, so no borrowed frame storage escapes this call.
+            if(progress[1]!=BrowserWorldLoadState.UI&&loadState.shouldHold(authority,world.getChunkCount(),count/8,remainingRepacks)) {
+                worldProgress(progress);holdWorld();return;
+            }
             float[] view=OpenGLWorldChunkRenderer.backendWorldViewMatrix(frame);
             float[] clip=OpenGLWorldChunkRenderer.multiply(OpenGLWorldChunkRenderer.projectionMatrix(frame),view);
             float[] matrices=new float[48];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);columnMajor(OpenGLFramePresenter.backendCameraToClipProjectionMatrix(frame),matrices,32);
@@ -153,8 +172,9 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             exportSky(frame);
             long skyEnd=System.nanoTime();
             prepareOverlay(image,currentSurface);
-            worldProgress(loadState.frame(client!=null&&client.isGameView(),client!=null&&client.isFullScreenModalUiActive(),client!=null&&client.isRenderer3DWorldReady(),frame,world.getChunkCount(),count/8,remainingRepacks,spriteGroups,spriteGroups,w,h,textures.size()));
+            progress[6]=progress[7]=spriteGroups;worldProgress(progress);
             present(w,h,true,matrices,uniforms(frame),draws,borrowOverlay(image));
+            loadState.presented(OVERLAY_COVERAGE&&authority,world.getChunkCount(),count/8,remainingRepacks);
             long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()},pose(frame));
         } finally { RendererFrameLighting.restore(previous); }
     }

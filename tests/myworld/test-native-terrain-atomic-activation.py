@@ -189,7 +189,7 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
         )
         self.assertIn(
             "mc.beginLayeredSceneActivation(\n"
-            "\t\t\t\thadLayeredSceneContext && !result.isScopeChanged());",
+            "\t\t\t\thadLayeredSceneContext && !result.isScopeChanged(),",
             handler,
         )
         self.assertIn(

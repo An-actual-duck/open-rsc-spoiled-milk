@@ -750,6 +750,10 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		this.addConsumer(arg0);
 	}
 
+	@Override public void beginWorldTransition(boolean ordinaryWalking) {
+		BrowserFrameSinkRegistry.worldTransition(ordinaryWalking);
+	}
+
 	public final void draw() {
 		if (mudclient != null
 			&& mudclient.shouldRetainLastPresentedFrame()) {

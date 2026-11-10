@@ -53,6 +53,15 @@ for(const owned of [false,true])for(const [name,stream]of Object.entries(streams
  await assert.rejects(()=>complete(x),/unavailable/);assert.throws(()=>x.backend.queueStreamUploadValidation(false),/unavailable/);
  x.backend.dispose();x.backend.dispose();assert.equal(x.objects.size,0,name+' leaked resources after tentative content failure');
 }
+// Streaming keeps a captured FULL image, but still validates uploads before that replay.
+for(const owned of [false,true]){
+ const x=await setup(true,owned),queries=x.queryCount,before=x.backend.stats.javaWorldFrames;
+ await x.n.Java_orsc_BrowserWebGLBridge_regionTransition(null,true);
+ await x.n.Java_orsc_BrowserWebGLBridge_worldProgress(null,new Int32Array([1,2,2,2,1,0,0,0,1,2,2,1]));
+ await x.n.Java_orsc_BrowserWebGLBridge_holdWorld();assert.equal(x.draws,1,'hold must replay only FULL, no world/sky/shadows/UI');assert.equal(x.backend.stats.javaWorldFrames,before);assert.equal(x.queryCount,queries,'held frame started throughput query');assert.equal(x.backend.stats.heldWorldFrames,1);await x.n.Java_orsc_BrowserWebGLBridge_worldProgress(null,new Int32Array([1,2,2,2,1,0,0,0,1,4,4,1]));await x.n.Java_orsc_BrowserWebGLBridge_holdWorld();assert.equal(x.backend.stats.heldWorldFrames,2,'pending logical resize could not replay old backing dimensions');assert.equal(x.backend.stats.worldReadiness.phase,'loading','initial warmup should still cover first scene');x.resetDraws();
+ x.fault('bufferSubData');await streams.chunk(x);await x.n.Java_orsc_BrowserWebGLBridge_worldProgress(null,new Int32Array([1,2,2,2,1,0,0,0,1,2,2,1]));
+ await assert.rejects(()=>x.n.Java_orsc_BrowserWebGLBridge_holdWorld(),/Streaming upload/);assert.equal(x.draws,0,'failed streaming upload replayed stale frame');assert.equal(x.queryCount,queries);x.backend.dispose();assert.equal(x.objects.size,0);
+}
 // Zero-image atlas hot commits still validate the streamed descriptor buffer.
 {const x=await setup();await streams.atlas(x);await present(x);await complete(x);x.resetDraws();
  await x.n.Java_orsc_BrowserWebGLBridge_planWorldSprites(null,1,2,new Int32Array([1,1,1]));x.fault('bufferSubData');await x.n.Java_orsc_BrowserWebGLBridge_commitWorldSprites(null,1,2,new Uint8Array(),new Float32Array(20));await assert.rejects(()=>present(x),/Streaming upload/);assert.equal(x.draws,0);x.backend.dispose();assert.equal(x.objects.size,0);}

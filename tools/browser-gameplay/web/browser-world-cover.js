@@ -4,11 +4,12 @@ export function createWorldCover({document,window,display,onGateChange=()=>{}}) 
   Object.assign(cover.style,{position:'absolute',display:'none',zIndex:'2',background:'#101820',color:'#eef4f7',alignItems:'center',justifyContent:'center',flexDirection:'column',font:'16px system-ui',textAlign:'center',pointerEvents:'auto'});
   const title=document.createElement('strong'),detail=document.createElement('div');detail.style.marginTop='12px';cover.append(title,detail);display.append(cover);
   const stats={blocked:false,transitions:0,blockedPointerEvents:0,blockedKeydowns:0};
-  let blocked=false,disposed=false;
+  let blocked=false,keyboardBlocked=false,disposed=false;
   function within(event){const point=event.changedTouches?.[0]||event.touches?.[0]||event;const r=cover.getBoundingClientRect();return point.clientX>=r.left&&point.clientX<r.right&&point.clientY>=r.top&&point.clientY<r.bottom;}
   function gate(event){
     if(!blocked||disposed)return;
     if(event.type==='keydown') {
+      if(!keyboardBlocked)return;
       // This boundary is game input, never browser/window shortcut ownership.
       if(event.ctrlKey||event.metaKey||event.altKey)return;
       if(!(event.key?.length===1||/^Arrow(Up|Down|Left|Right)$/.test(event.key||'')))return;
@@ -22,9 +23,12 @@ export function createWorldCover({document,window,display,onGateChange=()=>{}}) 
   function update(state,style,error){
     if(disposed)return;
     if(style)for(const name of ['left','top','width','height'])cover.style[name]=style[name];
-    const phase=error?'error':state?.phase||'login',next=phase==='loading'||phase==='error';
-    const heading=phase==='error'?'Unable to load the world':'Loading world…';if(title.textContent!==heading)title.textContent=heading;
+    const phase=error?'error':state?.phase||'login',streaming=phase==='streaming',next=phase==='loading'||phase==='error'||streaming;
+    keyboardBlocked=next&&(!streaming||state?.blocksKeyboard!==false);
+    const heading=phase==='error'?'Unable to load the world':streaming?'Updating area…':'Loading world…';if(title.textContent!==heading)title.textContent=heading;
     const message=phase==='error'?(error||state?.reason||'Graphics could not finish loading.')+' Stop and restart the private test to retry.':state?.required>state?.uploaded?`Preparing terrain and objects (${state.uploaded} / ${state.required})`:state?.reason||'Preparing graphics';if(detail.textContent!==message)detail.textContent=message;
+    Object.assign(cover.style,{background:streaming?'transparent':'#101820',pointerEvents:streaming?'none':'auto',justifyContent:streaming?'flex-end':'center',font:streaming?'12px system-ui':'16px system-ui'});
+    title.style.display=streaming?'none':'';detail.style.background=streaming?'#101820cc':'';detail.style.padding=streaming?'4px 8px':'';
     cover.style.display=next?'flex':'none';cover.setAttribute('aria-busy',next?'true':'false');
     if(next!==blocked){blocked=next;stats.blocked=next;stats.transitions++;onGateChange();}
   }

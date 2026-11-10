@@ -17,8 +17,8 @@ function fakeGL(){
 const x=fakeGL(),stats={},m=createBrowserOverlay(x.gl,{stats});
 const t=new Float32Array([1,.5,0,.25]),rgb=new Uint8Array(16);rgb[0]=128;
 m.prepare(2,2,1,1,1,0,true,t);t.fill(0);const mask=[...x.objects].find(o=>o.format===x.gl.R32F);assert.deepEqual([...mask.pixels],[1,.5,0,.25],'borrowed T escaped synchronous upload');
-assert.equal(m.begin(2,2),false);m.draw(2,2,rgb);assert.equal(stats.retainedCaptures,1);assert.equal(stats.overlayCoverageBytes,16);assert.equal(stats.overlayRgbBytes,16);
-assert.deepEqual(x.draws.at(-1).blendRgb,[x.gl.ONE,x.gl.ONE_MINUS_SRC_ALPHA]);assert.equal(x.draws.at(-1).transparent,1);
+assert.equal(m.begin(2,2),false);m.draw(2,2,rgb);assert.equal(stats.retainedCaptures,1);const heldFull=x.gl.lastCopy.tex,heldCopies=stats.retainedCaptures;m.hold(2,2);assert.equal(x.draws.at(-1).tex,heldFull);assert.equal(stats.retainedCaptures,heldCopies,'stream hold copied pixels again');assert.equal(stats.overlayCoverageBytes,16);assert.equal(stats.overlayRgbBytes,16);
+assert.deepEqual(x.draws.at(-2).blendRgb,[x.gl.ONE,x.gl.ONE_MINUS_SRC_ALPHA]);assert.equal(x.draws.at(-2).transparent,1);
 function frame(mode,seq,fades=0,generation=1,reset=false){m.prepare(2,2,mode,generation,seq,fades,reset,new Float32Array(4).fill(1));const retained=m.begin(2,2);m.draw(2,2,rgb);return retained;}
 let before=x.draws.length;assert.equal(frame(3,2,1),true);assert.deepEqual(x.draws.slice(before).map(d=>d.count),[1,0,0]);
 before=x.draws.length;assert.equal(frame(3,2,1),true);assert.deepEqual(x.draws.slice(before).map(d=>d.count),[0,0],'duplicate frame refaded FULL');
@@ -26,10 +26,18 @@ before=x.draws.length;assert.equal(frame(2,3),true);assert.equal(x.draws.length-
 assert.equal(frame(0,4),false);assert.equal(x.draws.at(-1).transparent,0);assert.equal(x.draws.at(-1).blend,false);assert.equal(stats.retainedResourceBytes,0);
 assert.equal(frame(1,1,0,0,true),false,'new pixel-owner epoch did not reset retained token');
 assert.throws(()=>m.prepare(2,2,1,0,2,0,false,new Float32Array(3)),/plane/);assert.throws(()=>m.prepare(2,2,4,0,2,0,false,new Float32Array(4)),/mode/);
-m.prepare(2,2,1,0,2,0,false,new Float32Array(4));assert.throws(()=>m.prepare(2,2,1,0,2,0,false,new Float32Array(4)),/consumed/);assert.throws(()=>m.begin(3,2),/declaration/);m.begin(2,2);m.draw(2,2,rgb);
+m.prepare(2,2,1,0,2,0,false,new Float32Array(4));assert.throws(()=>m.hold(2,2),/partially/);assert.throws(()=>m.prepare(2,2,1,0,2,0,false,new Float32Array(4)),/consumed/);assert.throws(()=>m.begin(3,2),/declaration/);m.begin(2,2);m.draw(2,2,rgb);
 m.dispose();m.dispose();assert.equal(x.objects.size,0);assert.equal(stats.overlayCoverageBytes,0);assert.equal(stats.overlayRgbBytes,0);assert.throws(()=>m.begin(2,2),/unavailable/);
 const f=fakeGL(),failed=createBrowserOverlay(f.gl);failed.prepare(2,2,1,1,1,0,false,new Float32Array(4));failed.begin(2,2);f.gl.texImage2D=()=>{throw new Error('upload failure');};assert.throws(()=>failed.draw(2,2,rgb),/upload/);failed.dispose();assert.equal(f.objects.size,0);
 const large=fakeGL(),budget={},bounded=createBrowserOverlay(large.gl,{stats:budget});
 for(const [w,h,seq]of [[2048,1024,1],[1024,2048,2]]){bounded.prepare(w,h,1,seq,seq,0,false,new Float32Array(w*h));assert.equal(bounded.begin(w,h),false);bounded.draw(w,h,new Uint8Array(w*h*4));assert.equal(budget.overlayCompositeResourceBytes,32*1024*1024);assert(budget.overlayCompositePeakBytes<=32*1024*1024,'combined C/T/retained replacement exceeded32MiB');}
 assert.equal(budget.overlayCompositePeakBytes,32*1024*1024);bounded.dispose();assert.equal(large.objects.size,0);
+// Browser opt-in retains actual opaque game UI too; standalone opaque behavior above is unchanged.
+const opaque=fakeGL(),opaqueStats={},opaqueOverlay=createBrowserOverlay(opaque.gl,{stats:opaqueStats,retainOpaqueFull:true});
+for(let seq=1;seq<=3;seq++){
+ opaqueOverlay.prepare(2,2,seq===1?1:0,seq===1?3:0,seq,0,false,new Float32Array(4));opaqueOverlay.begin(2,2);opaqueOverlay.draw(2,2,new Uint8Array(16));
+ const source=opaque.gl.lastCopy.tex,objects=opaque.objects.size,copies=opaqueStats.retainedCaptures;opaqueOverlay.hold(2,2);assert.equal(opaque.draws.at(-1).tex,source);assert.equal(opaqueStats.retainedCaptures,copies);assert.equal(opaque.objects.size,objects);
+ assert.equal(opaqueStats.retainedResourceBytes,32);assert(opaqueStats.overlayCompositeResourceBytes<=128);
+}
+opaqueOverlay.prepare(2,2,1,4,4,0,false,new Float32Array(4));opaqueOverlay.begin(2,2);opaqueOverlay.draw(2,2,new Uint8Array(16));opaqueOverlay.hold(2,2);opaqueOverlay.dispose();assert.equal(opaque.objects.size,0);
 console.log('PASS coverage upload ownership, premultiplied C+T blend selection, exact retained FULL/BASE caller tokens, duplicate sequencing, owner reset, opaque fallback, bounds and owned cleanup. GL API double; no GPU proof.');

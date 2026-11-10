@@ -26311,6 +26311,12 @@ public final class mudclient implements Runnable {
 		this.layeredScenePresentationLatch.begin(retainPresentedFrame);
 	}
 
+	public void beginLayeredSceneActivation(
+		final boolean retainPresentedFrame, final boolean ordinaryWalking) {
+		if (clientPort != null) clientPort.beginWorldTransition(ordinaryWalking);
+		beginLayeredSceneActivation(retainPresentedFrame);
+	}
+
 	public void resetLayeredSceneActivationPresentation() {
 		this.layeredSceneActivationPending = false;
 		this.layeredSceneTerrainStageWaitLogged = false;

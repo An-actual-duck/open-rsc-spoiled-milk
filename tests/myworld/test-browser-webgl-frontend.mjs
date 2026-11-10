@@ -30,6 +30,8 @@ const middleModule = new vm.SyntheticModule(['createBrowserMiddleMouseInput'],fu
 });},{context});
 const displayModule=new vm.SyntheticModule(['createBrowserDisplay'],function(){this.setExport('createBrowserDisplay',()=>({stats:{},scale:1,setSize(){},attachDesktop(){},dispose(){displayDisposed++;}}));},{context});
 const gpuModule = new vm.SyntheticModule(['createBrowserWebGL'],function(){this.setExport('createBrowserWebGL',(_canvas,_report,options)=>{gpuOptions=options;stats.ownedStateActive=options.ownedState;stats.streamUploadValidationActive=options.streamUploadValidation;return({canvas,stats,queueStreamUploadValidation:value=>{streamRequested=value;},queueOwnedState(){},dispose:()=>gpuDisposed++,natives:{
+  Java_orsc_BrowserWebGLBridge_regionTransition:async(lib,soft)=>{stats.worldReadiness={phase:'streaming',blocksWorldInput:true,blocksKeyboard:!soft};},
+  Java_orsc_BrowserWebGLBridge_holdWorld:async()=>{},
   Java_orsc_BrowserWebGLBridge_worldProgress:async()=>{stats.worldReadiness={phase:stats.declaredPhase||'loading'};},
   Java_orsc_BrowserWebGLBridge_present:async(lib,width,height)=>{canvas.width=width;canvas.height=height;stats.lastFrame=clock;stats.worldReadiness={phase:'ready'};},
 }});});},{context});

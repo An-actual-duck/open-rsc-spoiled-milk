@@ -35,6 +35,9 @@ public interface ClientPort {
 
 	void draw();
 
+	/** Optional presentation-only notice; gameplay authority remains in the client. */
+	default void beginWorldTransition(boolean ordinaryWalking) { }
+
 	void close();
 
 	String getCacheLocation();

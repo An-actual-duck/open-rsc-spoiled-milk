@@ -260,6 +260,7 @@ public class mudclient {
  public void resetLayeredSceneActivationPresentation() {}
  public void applyLayeredSceneScope(int p,boolean c,boolean d,NativeLayeredTerrainSnapshot s) {}
  public void beginLayeredSceneActivation(boolean retained) {}
+ public void beginLayeredSceneActivation(boolean retained,boolean ordinaryWalking) {beginLayeredSceneActivation(retained);}
  public void setLayeredSceneActivationPending(boolean pending) {}
  public void applyCustomMovementUpdate(int x,int y,int d) {}
  public int getPlayerCount(){return 0;}
