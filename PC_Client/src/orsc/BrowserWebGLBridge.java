@@ -37,6 +37,13 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static final boolean ANIMATED_BUFFER_REUSE=Boolean.parseBoolean(System.getProperty("spoiledmilk.browserAnimatedBufferReuse","true"));
     /** Actual Java-selected private control; never changes desktop renderer policy. */
     public static boolean isAnimatedBufferReuseEnabled(){return ANIMATED_BUFFER_REUSE;}
+    private static final boolean GEOMETRY_TRANSFER_REUSE=Boolean.getBoolean("spoiledmilk.browserGeometryTransferReuse");
+    /** Private same-artifact browser preparation experiment; ordinary default is off. */
+    public static boolean isGeometryTransferReuseEnabled(){return GEOMETRY_TRANSFER_REUSE;}
+    private float[] packVertices(Renderer3DWorldChunkFrame.ChunkMesh chunk,Renderer3DFrame frame) {
+        return GEOMETRY_TRANSFER_REUSE?packing.copyBackendChunkVerticesResolved(chunk,frame)
+            :packing.copyBackendChunkVertices(chunk,frame);
+    }
     static WorldChunkBufferKey chunkKey(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
         if(!ANIMATED_BUFFER_REUSE&&chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS) {
             // Native from(chunk,false) still gives animated positional identity.
@@ -249,7 +256,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             return replacement;
         }
         BrowserChunkMaterials.Buffers buffers=BrowserChunkMaterials.pack(packing,frame,chunk);
-        chunkBackend.replace(cached.id,packing.copyBackendChunkVertices(chunk,frame),buffers.indices,buffers.batches);
+        chunkBackend.replace(cached.id,packVertices(chunk,frame),buffers.indices,buffers.batches);
         cached.x=chunk.getVertexOffsetX();cached.z=chunk.getVertexOffsetZ();cached.settings=settings;cached.materials=materials;
         cached.signature=chunk.getStorageSignature();cached.materialRevision=materialRevision;cached.packedAt=++packingSequence;
         return cached;
@@ -340,7 +347,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     }
     private CachedChunk upload(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk,long bytes,int[] settings) {
         BrowserChunkMaterials.Buffers materials=BrowserChunkMaterials.pack(packing,frame,chunk);
-        int id=nextId++;chunkBackend.upload(id,packing.copyBackendChunkVertices(chunk,frame),materials.indices,materials.batches);
+        int id=nextId++;chunkBackend.upload(id,packVertices(chunk,frame),materials.indices,materials.batches);
         return new CachedChunk(id,chunk,bytes,settings,BrowserChunkVariant.materials(frame,chunk),materialRevision,++packingSequence);
     }
     static int[] borrowOverlay(BufferedImage image) {

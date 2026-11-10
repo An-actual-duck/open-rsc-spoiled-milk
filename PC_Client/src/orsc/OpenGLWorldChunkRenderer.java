@@ -2917,7 +2917,37 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
         boolean unbakedRemasterBase=shouldUseUnbakedRemasterMaterialBase();
         for(int vertex=0;vertex<vertexCount;vertex++) {
             writeChunkVertex(values,vertex*FLOATS_PER_VERTEX,chunk,frame,vertex,false,true,
-                smoothDiffuseLights,null,unbakedRemasterBase);
+                smoothDiffuseLights,null,unbakedRemasterBase,false,0,0,0,null);
+        }
+        return values;
+    }
+
+    /** Browser-only preparation reuse within one immutable mesh/frame invocation.
+     * Material resolution is triangle-constant; light, UV, normal and blend data
+     * remain per vertex, and live brightness is still evaluated by the shared writer.
+     * No source arrays or material results survive this call. */
+    float[] copyBackendChunkVerticesResolved(Renderer3DWorldChunkFrame.ChunkMesh chunk, Renderer3DFrame frame) {
+        int vertexCount=chunk.getVertexCount();
+        // Production presentation meshes expand each triangle into three vertices.
+        // Preserve the baseline traversal/failure behavior for other mesh shapes.
+        if(vertexCount%3!=0||vertexCount/3!=chunk.getTriangleCount())
+            return copyBackendChunkVertices(chunk,frame);
+        float[] values=new float[vertexCount*FLOATS_PER_VERTEX];
+        int[] smoothDiffuseLights=buildChunkSmoothDiffuseLights(chunk,vertexCount);
+        boolean unbakedRemasterBase=shouldUseUnbakedRemasterMaterialBase();
+        for(int first=0;first<vertexCount;first+=3) {
+            int triangle=first/3;
+            int effectiveTextureId=effectiveChunkTextureId(
+                frame,chunk.getTriangleTexture(triangle),chunk.getTriangleFallbackColor(triangle));
+            int rawMaterialColor=rawMaterialColorForTriangle(frame,chunk,triangle);
+            int materialColor=materialColorForTriangle(frame,chunk,triangle);
+            Renderer3DTextureData texture=frame==null?null:frame.getTexture(effectiveTextureId);
+            int end=Math.min(first+3,vertexCount);
+            for(int vertex=first;vertex<end;vertex++) {
+                writeChunkVertex(values,vertex*FLOATS_PER_VERTEX,chunk,frame,vertex,
+                    false,true,smoothDiffuseLights,null,unbakedRemasterBase,true,
+                    effectiveTextureId,rawMaterialColor,materialColor,texture);
+            }
         }
         return values;
     }
@@ -2957,26 +2987,30 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		boolean unbakedRemasterBase = shouldUseUnbakedRemasterMaterialBase();
         for (int vertex=0;vertex<vertexCount;vertex++) {
             writeChunkVertex(nativePackedVertex,0,chunk,frame,vertex,atlasTextureCoordinates,false,
-                smoothDiffuseLights,bakedTerrainShadowMask,unbakedRemasterBase);
+                smoothDiffuseLights,bakedTerrainShadowMask,unbakedRemasterBase,false,0,0,0,null);
             vertexUploadBuffer.put(nativePackedVertex);
         }
 		vertexUploadBuffer.flip();
 	}
 
     /** All production field formulas live here; writers differ only in destination.
-     * Browser stores into its final array, native bulk-puts one reusable vertex. */
+     * Browser stores into its final array, native bulk-puts one reusable vertex.
+     * Only the browser experiment supplies triangle-prepared material inputs.
+     * Both paths make one writer call per vertex; no baseline-only wrapper cost. */
     private void writeChunkVertex(
         float[] values, int at, Renderer3DWorldChunkFrame.ChunkMesh chunk,
         Renderer3DFrame frame, int vertex, boolean atlasTextureCoordinates,
         boolean standaloneTextureCoordinates, int[] smoothDiffuseLights,
-        float[] bakedTerrainShadowMask, boolean unbakedRemasterBase) {
+        float[] bakedTerrainShadowMask, boolean unbakedRemasterBase,
+        boolean preparedMaterial,int preparedTextureId,int preparedRawColor,int materialColor,
+        Renderer3DTextureData texture) {
         int coord = vertex * POSITION_COMPONENT_COUNT;
         int triangle = vertex / 3;
         OpenGLTextureRegion textureRegion =
             atlasTextureCoordinates ? textureRegionForVertex(frame, chunk, vertex) : null;
-        int effectiveTextureId = effectiveChunkTextureId(
+        int effectiveTextureId = preparedMaterial?preparedTextureId:effectiveChunkTextureId(
             frame, chunk.getTriangleTexture(triangle), chunk.getTriangleFallbackColor(triangle));
-        int rawMaterialColor = rawMaterialColorForTriangle(frame, chunk, triangle);
+        int rawMaterialColor = preparedMaterial?preparedRawColor:rawMaterialColorForTriangle(frame, chunk, triangle);
         values[at++] = (float) chunk.getVertexCoord(coord);
         values[at++] = (float) chunk.getVertexCoord(coord + 1);
         values[at++] = (float) chunk.getVertexCoord(coord + 2);
@@ -2984,10 +3018,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
         int baseLegacyLight = legacyLight;
         legacyLight = applyBakedTerrainShadow(legacyLight, bakedTerrainShadowMask, triangle);
         at = writeChunkMaterialColor(values, at,
-            materialColorForTriangle(frame, chunk, triangle), rawMaterialColor,
+            preparedMaterial?materialColor:materialColorForTriangle(frame,chunk,triangle), rawMaterialColor,
             effectiveTextureId, legacyLight, unbakedRemasterBase);
         if (standaloneTextureCoordinates) {
-            Renderer3DTextureData texture = frame == null ? null : frame.getTexture(effectiveTextureId);
+            if(!preparedMaterial)texture=frame==null?null:frame.getTexture(effectiveTextureId);
             values[at++] = texture == null ? clampUnit(chunk.getVertexTextureU(vertex))
                 : backendTexelCenter(chunk.getVertexTextureU(vertex), texture.getWidth());
             values[at++] = texture == null ? clampUnit(chunk.getVertexTextureV(vertex))
