@@ -39,7 +39,9 @@ body source: `javaBridgeReportedWorldFrames` is initialized to zero and copied f
 
 - `scripts/browser-gameplay/native_dispatch.py` exports
   `synchronous_module(canonical_source: str) -> str`. Unknown/missing/duplicate
-  natives, capability-marker drift or a new await in a pure body reject generation.
+  natives, capability-marker drift, any pure-body SHA256 drift or a new await in
+  a pure body reject generation. A Promise-returning change without await also
+  requires explicit re-audit rather than silently becoming synchronous.
   The generated header records the canonical source SHA256.
 - `browser-native-call-dispatch.js` exports
   `browserNativeCallPolicy(mode, options)`. Only benchmark WebGL maps
@@ -70,10 +72,26 @@ unexpected Promise rejection consumption, queued-upload rejection before draws,
 allocation/RGB/copy failure rollback, Stop during initialization, duplicate init,
 context loss and idempotent cleanup. The GL double does not compile shaders or
 rasterize pixels; these tests are not actual browser, CheerpJ or GPU evidence.
+The CPU command corpus pins a fake frame clock so readiness cadence is identical
+between cohorts; otherwise diagnostic byte-recording/JIT time can legitimately
+change fence retirement timing. Actual hardware uses real fences/browser tasks.
+The final corpus exercises all 20 native methods and compares 12,202 GL commands
+per cohort. Command trace SHA256:
+`34e2302068aab6d63699497f67731d7793d7a89896d64fe6c3227448cf3452ec`.
 
 Frozen source modules, hashes and receipts live under the declared
 `output/tests/browser-native-call-dispatch/` subject. No Java source/JAR, gameplay,
 server, account or public deployment is changed by this experiment.
+
+`prepare-browser-native-call-hardware.py --dependency-jar APPROVED_JAR --run-id RUN`
+freezes the current/original/generated modules, actual production shader/native
+sky data and a manifest-validated isolated hardware runner. Preparation launches
+no browser or HTTP service. Its explicit emitted `run-hardware.mjs` command is
+reserved for the manager's exclusive GPU window. The standalone page exposes
+`window.nativeCallProof`, compares 42 nonblank actual pixel frames, readiness,
+Stop/init and real context loss. It does not execute CheerpJ; that remains a
+separate whole-game smoke gate. Initial prepared review stage uses approved clean
+325bf JAR SHA256 `f72047bfb006b79a1e51889b46be08a36c9c80d353b4fa5ccece795c06ad1279`.
 
 ## Remaining gates
 

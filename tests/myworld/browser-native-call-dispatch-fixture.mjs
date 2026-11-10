@@ -1,10 +1,18 @@
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
 import {browserNativeCallPolicy,createSynchronousNativeCall} from '../../tools/browser-gameplay/web/browser-native-call-dispatch.js';
 import {fakeGL} from './browser-owned-fake-gl.mjs';
 import {initializeSession,prepareFrame,finishFrame,cases,geometry} from './browser-owned-scenario.mjs';
-const modules=await Promise.all(process.argv.slice(2).map(path=>import(pathToFileURL(path))));
+const modules=await Promise.all(process.argv.slice(2,5).map(path=>import(pathToFileURL(path))));
 assert.equal(modules.length,3);
+for(const index of [1,2])assert.throws(()=>modules[index].createBrowserWebGL({getContext(){assert.fail('Mismatched dispatch created a GL context');}},()=>{},{nativeCallDispatch:index===2?'async':'sync'}),/module\/policy mismatch/);
+// Command equivalence must not depend on how long deep byte recording/JIT takes
+// in each cohort: readiness intentionally observes cadence. This is a CPU-only
+// fake clock, not a production change or a performance measurement.
+const originalPerformance=Object.getOwnPropertyDescriptor(globalThis,'performance');let clock=1000;
+Object.defineProperty(globalThis,'performance',{configurable:true,value:{now:()=>clock}});
 for(const mode of ['software','webgl'])for(const value of ['', 'nativecalls=sync','nativecalls=bad'])assert.equal(browserNativeCallPolicy(mode,new URLSearchParams(value)),'async');
 assert.equal(browserNativeCallPolicy('software',new URLSearchParams('benchmark&nativecalls=sync')),'async');
 assert.equal(browserNativeCallPolicy('webgl',new URLSearchParams('benchmark')),'async');
@@ -29,6 +37,7 @@ function recordingState(){
 }
 const snapshots=[];
 for(const [index,module]of modules.entries()){
+ clock=1000;
  const state=recordingState(),canvas=state.canvas();canvas.getBoundingClientRect=()=>({width:384,height:256});
  const mode=index===2?'sync':'async',reports=[],backend=module.createBrowserWebGL(canvas,message=>reports.push(message),{ownedState:true,benchmarkControl:true,streamUploadValidation:true,physicalOutput:true,nativeCallDispatch:mode});
  if(index)assert.deepEqual(backend.stats.nativeCallDispatch,{requested:mode,active:mode,synchronousMethods:index===2?19:0,asynchronousMethods:index===2?1:20});
@@ -37,9 +46,12 @@ for(const [index,module]of modules.entries()){
  const session=await initializeSession(backend,shaders);
  // Upload borrowed arrays now; later Java mutation cannot affect GPU copies.
  const input=geometry(1),before=new Float32Array(input);await backend.natives.Java_orsc_BrowserWebGLBridge_replaceChunk(null,1,input,new Int32Array([0,1,2]),new Int32Array([7,0,3,1,0]));input.fill(123);assert.notDeepEqual(input,before);
- for(const test of cases()){await(await prepareFrame(session,test))();await finishFrame(session);}
+ for(const test of cases()){clock+=16;await(await prepareFrame(session,test))();await finishFrame(session);}
+ await backend.natives.Java_orsc_BrowserWebGLBridge_deleteTextures(null,new Int32Array([8]));
+ await backend.natives.Java_orsc_BrowserWebGLBridge_deleteChunks(null,new Int32Array([3]));
  const declaration=new Int32Array([1,2,2,4,3,0,0,0,1,192,128,2]);
  await backend.natives.Java_orsc_BrowserWebGLBridge_regionTransition(null,true);await backend.natives.Java_orsc_BrowserWebGLBridge_worldProgress(null,declaration);await backend.natives.Java_orsc_BrowserWebGLBridge_holdWorld();
+ assert.equal(calls.size,20,'Native inventory was not fully exercised');
  const invariant={javaFrames:backend.stats.javaFrames,worldFrames:backend.stats.javaWorldFrames,held:backend.stats.heldWorldFrames,drawCalls:backend.stats.drawCalls,triangles:backend.stats.triangles,gpuBytes:backend.stats.gpuBytes,retainedBytes:backend.stats.retainedResourceBytes,shadowBytes:backend.stats.shadowResourceBytes};
  snapshots.push({commands:structuredClone(state.commands),draws:structuredClone(state.draws),state:structuredClone(state.state),queries:[...state.queries],invariant,reports,calls:[...calls]});
  canvas.lose();const lose=()=>backend.natives.Java_orsc_BrowserWebGLBridge_holdWorld();if(index===2)assert.throws(lose,/unavailable/);else await assert.rejects(lose,/unavailable/);
@@ -96,4 +108,6 @@ for(const method of ['createBuffer','texSubImage2D','copyTexSubImage2D']){
  assert.deepEqual(outcomes[1],outcomes[0],'ASYNC control error/rollback changed '+method);assert.deepEqual(outcomes[2],outcomes[0],'SYNC error/rollback changed '+method);
 }
 delete globalThis.window;
+Object.defineProperty(globalThis,'performance',originalPerformance);
+if(process.argv[5])fs.writeFileSync(process.argv[5],JSON.stringify({passed:true,frames:cases().length,modes:['original-async','control-async','generated-sync'],commandsCompared:snapshots[0].commands.length,nativeCallsCompared:Object.fromEntries(snapshots[0].calls),commandTraceSha256:crypto.createHash('sha256').update(JSON.stringify(snapshots[0].commands)).digest('hex'),literalAsyncSchedulingPreserved:true,allocationRgbCopyFailureParity:true,queuedErrorNoDraw:true,stopInitRace:true,contextLossAndDispose:true,GPU:false,CheerpJSmoke:false,FPSClaim:false},null,2)+'\n');
 console.log('PASS frozen original/control/SYNC42 frames: same GL commands/state/arrays, native counts/returns, retained/resize/holds, immediate fatal throw vs literalasync rejection ordering, queued-error zero-draw, contextloss/disposal; no shader pixels or CheerpJ/FPS proof');

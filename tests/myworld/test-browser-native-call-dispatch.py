@@ -27,6 +27,8 @@ assert restored==source,'Generator changed something besides audited async decla
 bad_sources=[source.replace(generator.MARKER,''),source+'\n'+generator.MARKER,
  source.replace('async Java_orsc_BrowserWebGLBridge_worldProgress','async Java_orsc_BrowserWebGLBridge_unknown',1),
  source.replace('worldProgress(lib,metadata){','worldProgress(lib,metadata){await Promise.resolve();',1),
+ source.replace('worldProgress(lib,metadata){','worldProgress(lib,metadata){return Promise.resolve();',1),
+ source.replace('  const natives={','  const natives={\n    Java_orsc_BrowserWebGLBridge_unknown(){},',1),
  source.replace('    async Java_orsc_BrowserWebGLBridge_worldProgress','    Java_orsc_BrowserWebGLBridge_worldProgress',1)]
 for bad in bad_sources:
  try:generator.synchronous_module(bad)
@@ -39,5 +41,6 @@ for name,text in [('original',old),('async-control',source),('sync-candidate',ge
  path=suite/(name+'.mjs');path.write_text(linked);paths.append(path)
 receipt={'baseline':BASE,'canonicalSha256':hashlib.sha256(source.encode()).hexdigest(),'originalSha256':hashlib.sha256(old.encode()).hexdigest(),'generatedSha256':hashlib.sha256(generated.encode()).hexdigest(),'pureNatives':list(generator.SYNC_NATIVES),'alwaysAsync':generator.ASYNC_NATIVE,'literalAsyncBodiesAndFatalWrapperPreserved':True,'GPU':False,'CheerpJSmoke':False,'FPSClaim':False}
 (suite/'source-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
-subprocess.run(['node',str(ROOT/'tests/myworld/browser-native-call-dispatch-fixture.mjs'),*map(str,paths)],check=True)
+result=subprocess.run(['node',str(ROOT/'tests/myworld/browser-native-call-dispatch-fixture.mjs'),*map(str,paths),str(suite/'cpu-result.json')],text=True,capture_output=True)
+(suite/'cpu-result.log').write_text(result.stdout+result.stderr);print(result.stdout,end='');print(result.stderr[:4000] if result.returncode else result.stderr,end='');result.check_returncode()
 print('PASS strict19-method generated transform and literal frozen ASYNC body/wrapper authority; no GPU/CheerpJ/FPS claim')
