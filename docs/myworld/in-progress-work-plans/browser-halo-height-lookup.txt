@@ -1,0 +1,86 @@
+Browser halo height lookup — default OFF experiment
+
+Worker ai-2, fix/browser-halo-height-lookup. Frozen reference325bf42b6.
+No GPU/browser/server/database/public operation; no fog/draw-distance changes.
+
+Concrete source cost
+Height probes already use primitive elevation access: loaded Sector.getTile returns
+an existing Tile reference, while immutable chunks decode only1 legacy or2 wide
+bytes. Creating a new Tile was not the remaining cost. World first called
+Snapshot.covers (linear available-chunk search), then getGroundElevation (the same
+search again), for each native halo vertex. A final-slot query in a25-slot regular
+halo executes51 chunk coverage checks, including the existing tileOffset guard.
+
+Change
+NativeLayeredTerrainSnapshot adds getGroundElevationOrUnavailable. Its primitive
+result is unsigned elevation or Integer.MIN_VALUE for unavailable source. World
+uses it only after the unchanged loaded-sector-first path and unchanged checked
+local/world/logical mapping. Visual halo relation and active fallback remain the
+same; no current scene, terrain product, collision or selection authority changes.
+Existing covers/getGroundElevation/createTile/findAvailableChunk methods remain
+byte-for-byte unchanged and still serve all other callers.
+
+The snapshot already owns a constructor-copied x-major/y-minor array, not a list.
+The original constructor validates count, order and every chunk coordinate. New
+eligibility additionally requires every immutable Chunk.size to equal declared
+presentationChunkSize and constructor-only representable min/max chunk bounds.
+A regular lookup uses int floorDiv, bounds checks, differences0..4 and direct array
+indexing. No hot long delta arithmetic, new array/map, height cache or borrowed
+workspace is used. The chunk's original availability/coordinate/encoding guard
+still executes when reading its elevation bytes.
+
+Public constructors historically accept mixed actual chunk sizes. They remain
+accepted. Such irregular snapshots use the literal original first-covering-chunk
+scan, preserving overlaps, voids, order, errors and unusual accepted shapes.
+Constructor overflow rejection remains in the original checked coordinate loop;
+there is no new rejection rule. Uniform pages retain their exact rectangle checks.
+
+Control
+spoiledmilk.browserHaloHeightLookup=true explicitly opts in; default false.
+World.isBrowserHaloHeightLookupEnabled() reports that flag AND installed browser
+presentation. Native/default paths retain the original World chain. Private
+halolookup query/actual receipt wiring is separately owned by ai-1. No production
+per-query counters or timers were added.
+
+Independent verification
+python3 tests/myworld/test-browser-halo-height-lookup.py separately compiles frozen
+World/Snapshot/Chunk sources and candidate default/OFF/ON. Binary outputs match
+EXACTLY:1,024,275 bytes. Corpus covers all7 chunked protocols plus uniform pages,
+legacy/wide/mixed encodings, voids, negative/extreme coordinates and accepted mixed
+chunk sizes, invalid array/null/order constructor errors, source-array mutation,
+height/sentinel/exception behavior and real World bilinear/face-tile results.
+World coverage includes loaded-sector/editor-height mutation and precedence,
+missing sectors, visual scope mismatch, offsets/checked overflow, signed layers
+and native fallback. Source assertions protect the original public methods and
+loaded-sector/mapping prefix; hot lookup cannot introduce long delta arithmetic.
+
+Test-only instrumentation in independently compiled Chunk source proves:
+- Original regular covers+height chain:51 coverage calls.
+- New regular primitive:1 call (the retained original tileOffset validation).
+- Irregular missing point:25 calls, preserving the original scan.
+- Actual World OFF/default:51 calls; actual browser ON:1 call.
+- Actual native World:51; a loaded live sector:0 snapshot coverage calls.
+Candidate11 structural/control assertions pass. Instrumentation exists only in
+ignored test source, not production. These are operation counts, not CPU or FPS
+measurements. Evidence: output/tests/browser-halo-height-lookup/parity-final-int.log
+and separate frozen/default/off/on source classes and heights.bin corpora.
+
+Other gates
+Full client build passed. Existing native wire/cache3 tests pass using the explicit
+read-only installed server package selected by installed-map-selection.py. The
+initial old-default package path lacked mining-guild data; its failure is preserved
+as wire.log, with successful override in wire-installed.log and map-selection.json.
+No map file or manager configuration was changed. Prediction5, symmetric4,
+atomic activation4 tests, real resident-input/canonical mesh360/330 checks and the
+existing frozen World height/halo oracle(1,613,824 bytes) also passed. Diffcheck
+passes. Global layoutcheck still reports inherited ignored ai-2 assets/sprites and
+old unclassified output-root directories; none were introduced here and all were
+preserved. New outputs use declared tests/browser-halo-height-lookup.
+
+Remaining gate
+Manager must compare one immutable artifact OFF/ON with actual Java receipts,
+identical camera/actors/settings and source-phase/transition evidence. Inner loaded
+sectors already bypass halo lookup; average benefit depends on actual probe mix.
+A51-to1 worst-slot operation reduction is not a claimed frame-time/FPS improvement
+or loading-pause cure. No cross-frame elevation cache or old experimental bundle
+is implicitly enabled by this candidate.

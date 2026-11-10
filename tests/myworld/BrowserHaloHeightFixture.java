@@ -73,11 +73,23 @@ public final class BrowserHaloHeightFixture {
                 if(pass==2){Sector[] sectors=(Sector[])BrowserResidentInputsFixture.get(w,"sectors");for(Sector s:sectors)for(int x=0;x<48;x++)for(int y=0;y<48;y++)s.getTile(x,y).groundElevation+=103;}
                 if(pass==3)BrowserResidentInputsFixture.set(w,"symmetricNativeLayeredTerrainVisualSnapshot",snapshot(protocol,-4,-2,3,wide,mixed,true,"other"));
                 if(pass==4){BrowserResidentInputsFixture.set(w,"syntheticDeepFixtureOffsetX",Integer.MAX_VALUE);BrowserResidentInputsFixture.set(w,"syntheticDeepFixtureOffsetZ",Integer.MIN_VALUE);}
-                for(int n=0;n<500;n++){final int x=random.nextInt(46080)-12288,y=random.nextInt(46080)-12288;record(out,()->w.getPresentationTerrainElevation(x,y));}
+                for(int n=0;n<500;n++){final int x=random.nextInt(46080)-12288,y=random.nextInt(46080)-12288;record(out,()->w.getPresentationTerrainElevation(x,y));record(out,()->w.isPresentationTerrainFaceTile(x>>7,y>>7)?1:0);}
                 for(int x:new int[]{Integer.MIN_VALUE,-128,-1,0,18303,18304,Integer.MAX_VALUE})for(int y:new int[]{-128,0,Integer.MAX_VALUE})record(out,()->w.getPresentationTerrainElevation(x,y));
             }
             BrowserResidentInputsFixture.set(w,"nativeLayeredTerrainAppliedSectionX",Integer.MAX_VALUE);record(out,()->w.getPresentationTerrainElevation(-256,256));
             BrowserResidentInputsFixture.set(w,"nativeLayeredTerrainSnapshot",null);record(out,()->w.getPresentationTerrainElevation(500,600));
+        }
+    }
+    static void uniformWorldCorpus(DataOutputStream out)throws Exception{
+        NativeLayeredTerrainSnapshot uniform=new NativeLayeredTerrainSnapshot("fixture","1.0.0",SHA,24,"global",-4,-2,3,NativeLayeredTerrainSnapshot.UNIFORM_ENCODING,SHA,255,1,2,3,4,5,6);
+        Random random=new Random(88221);
+        for(NativeLayeredTerrainSnapshot visual:new NativeLayeredTerrainSnapshot[]{null,uniform}){
+            World w=world(uniform,visual);Sector[] sectors=(Sector[])BrowserResidentInputsFixture.get(w,"sectors");
+            for(int phase=0;phase<3;phase++){
+                if(phase==1)for(int n=0;n<sectors.length;n++){sectors[n]=Sector.blankLoaded();for(int x=0;x<48;x++)for(int y=0;y<48;y++)sectors[n].getTile(x,y).groundElevation=1234+n;}
+                if(phase==2)sectors[0]=null;
+                for(int n=0;n<300;n++){final int x=random.nextInt(45000)-12000,y=random.nextInt(45000)-12000;record(out,()->w.getPresentationTerrainElevation(x,y));record(out,()->w.isPresentationTerrainFaceTile(x>>7,y>>7)?1:0);}
+            }
         }
     }
     static void controls()throws Exception{
@@ -94,7 +106,9 @@ public final class BrowserHaloHeightFixture {
             NativeLayeredTerrainSnapshot mixed=snapshot(NativeLayeredTerrainSnapshot.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION,-1,0,0,true,true,false,"global");
             check(!(Boolean)BrowserResidentInputsFixture.get(mixed,"regularHeightLookup"),"Mixed-size shape incorrectly eligible");counter.setInt(null,0);direct.invoke(mixed,10000,10000);fallbackChecks=counter.getInt(null);check(fallbackChecks==25,"Irregular accepted shape skipped original scan");
             boolean enabled=(Boolean)World.class.getMethod("isBrowserHaloHeightLookupEnabled").invoke(null);check(worldChecks==(enabled?1:51),"World did not follow actual private lookup policy");
-            Renderer3DSettings.setBrowserPresentationAvailable(false);check(!(Boolean)World.class.getMethod("isBrowserHaloHeightLookupEnabled").invoke(null),"Native path enabled browser lookup");
+            Renderer3DSettings.setBrowserPresentationAvailable(false);counter.setInt(null,0);
+            BrowserResidentInputsFixture.call(w,"presentationVertexElevation",new Class<?>[]{int.class,int.class,NativeLayeredTerrainSnapshot.class,NativeLayeredTerrainSnapshot.class},144,144,BrowserResidentInputsFixture.get(w,"nativeLayeredTerrainSnapshot"),regular);check(counter.getInt(null)==51,"Native World used optional primitive path");
+            check(!(Boolean)World.class.getMethod("isBrowserHaloHeightLookupEnabled").invoke(null),"Native path enabled browser lookup");
             Renderer3DSettings.setBrowserPresentationAvailable(true);check(((Boolean)World.class.getMethod("isBrowserHaloHeightLookupEnabled").invoke(null))==Boolean.getBoolean("spoiledmilk.browserHaloHeightLookup"),"Actual browser policy differs");
         }catch(NoSuchMethodException frozen){check(worldChecks==51,"Frozen World did not use original scans");}
         Sector[] sectors=(Sector[])BrowserResidentInputsFixture.get(w,"sectors");sectors[0]=Sector.blankLoaded();sectors[0].getTile(5,5).groundElevation=123;counter.setInt(null,0);
@@ -102,6 +116,6 @@ public final class BrowserHaloHeightFixture {
         System.out.println("test-only chunk coverage calls: old="+originalChecks+" direct="+directChecks+" irregular="+fallbackChecks+" actualWorld="+worldChecks);
     }
     public static void main(String[] args)throws Exception{
-        Renderer3DSettings.setBrowserPresentationAvailable(true);try(DataOutputStream out=new DataOutputStream(new BufferedOutputStream(new FileOutputStream(args[0])))){snapshotCorpus(out);worldCorpus(out);}controls();System.out.println("PASS raw snapshot/real World height corpus and "+checks+" structural/control checks; no GPU/FPS claim");
+        Renderer3DSettings.setBrowserPresentationAvailable(true);try(DataOutputStream out=new DataOutputStream(new BufferedOutputStream(new FileOutputStream(args[0])))){snapshotCorpus(out);worldCorpus(out);uniformWorldCorpus(out);}controls();System.out.println("PASS raw snapshot/real World height corpus and "+checks+" structural/control checks; no GPU/FPS claim");
     }
 }

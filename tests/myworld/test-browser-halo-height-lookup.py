@@ -17,6 +17,7 @@ for marker in ['\tprivate NativeLayeredTerrainChunk findAvailableChunk(','\tpubl
  assert method(old[paths[1]],marker)==method(new[paths[1]],marker), 'Original snapshot method changed: '+marker
 marker='\tprivate int presentationVertexElevation('
 assert method(old[paths[0]],marker).split('\t\tNativeLayeredTerrainSnapshot source = null;')[0]==method(new[paths[0]],marker).split('\t\tif (isBrowserHaloHeightLookupEnabled())')[0], 'Loaded-sector-first or checked coordinate mapping changed'
+assert "long " not in method(new[paths[1]],"\tpublic int getGroundElevationOrUnavailable("), "Hot lookup introduced 64-bit delta arithmetic"
 outputs=[]
 for variant in ['frozen','default','off','on']:
  run=suite/variant;classes=run/'classes';classes.mkdir(parents=True,exist_ok=True);selected=[]

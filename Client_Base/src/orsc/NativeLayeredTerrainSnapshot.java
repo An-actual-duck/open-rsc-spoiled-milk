@@ -57,6 +57,7 @@ public final class NativeLayeredTerrainSnapshot {
 	private final int chunkRadius;
 	private final NativeLayeredTerrainChunk[] chunks;
 	private final boolean regularHeightLookup;
+	private final int heightMinChunkX,heightMaxChunkX,heightMinChunkY,heightMaxChunkY,heightGridWidth;
 
 	public NativeLayeredTerrainSnapshot(
 		String packageId,
@@ -120,6 +121,7 @@ public final class NativeLayeredTerrainSnapshot {
 		this.chunkRadius = 0;
 		this.chunks = new NativeLayeredTerrainChunk[0];
 		this.regularHeightLookup = false;
+		this.heightMinChunkX=0;this.heightMaxChunkX=0;this.heightMinChunkY=0;this.heightMaxChunkY=0;this.heightGridWidth=0;
 	}
 
 	public NativeLayeredTerrainSnapshot(
@@ -234,7 +236,16 @@ public final class NativeLayeredTerrainSnapshot {
 				this.chunks[index++] = chunk;
 			}
 		}
-		this.regularHeightLookup = regularSizes;
+		// This check is constructor-only; the original coordinate loop already
+		// rejects overflow. Keep hot lookups entirely in checked int ranges.
+		long minX=(long)currentChunkX-chunkRadius,maxX=(long)currentChunkX+chunkRadius;
+		long minY=(long)currentChunkY-chunkRadius,maxY=(long)currentChunkY+chunkRadius;
+		boolean representable=minX>=Integer.MIN_VALUE&&maxX<=Integer.MAX_VALUE
+			&&minY>=Integer.MIN_VALUE&&maxY<=Integer.MAX_VALUE;
+		this.heightMinChunkX=representable?(int)minX:0;this.heightMaxChunkX=representable?(int)maxX:0;
+		this.heightMinChunkY=representable?(int)minY:0;this.heightMaxChunkY=representable?(int)maxY:0;
+		this.heightGridWidth=width;
+		this.regularHeightLookup = regularSizes&&representable;
 		this.sectorX = 0;
 		this.sectorY = 0;
 		this.encoding = "";
@@ -318,12 +329,10 @@ public final class NativeLayeredTerrainSnapshot {
 		if (regularHeightLookup) {
 			// Constructor validated array length/order/coordinates. Matching chunk
 			// sizes make this a non-overlapping grid, including negative tiles.
-			long dx = (long)Math.floorDiv(worldX, presentationChunkSize) - currentChunkX;
-			long dy = (long)Math.floorDiv(worldY, presentationChunkSize) - currentChunkY;
-			if (dx < -chunkRadius || dx > chunkRadius || dy < -chunkRadius || dy > chunkRadius)
+			int x = Math.floorDiv(worldX, presentationChunkSize), y = Math.floorDiv(worldY, presentationChunkSize);
+			if (x < heightMinChunkX || x > heightMaxChunkX || y < heightMinChunkY || y > heightMaxChunkY)
 				return Integer.MIN_VALUE;
-			int width = chunkRadius * 2 + 1;
-			chunk = chunks[(int)(dx + chunkRadius) * width + (int)(dy + chunkRadius)];
+			chunk = chunks[(x - heightMinChunkX) * heightGridWidth + y - heightMinChunkY];
 			if (!chunk.isAvailable()) return Integer.MIN_VALUE;
 		} else {
 			// Public constructors historically accept mixed chunk sizes. Retain
