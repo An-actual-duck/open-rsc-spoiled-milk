@@ -1,3 +1,7 @@
+import {browserGeometryTransferPolicy} from './browser-geometry-transfer-policy.js';
+import {privatePreparationCandidates} from './browser-preparation-candidates.js';
+import {createStutterDiagnostics,stutterDiagnosticsPolicy} from './browser-stutter-diagnostics.js';
+import {repeatableFixturePolicy} from './browser-repeatable-policy.js';
 import {physicalOutputRequested} from './browser-physical-output.js';
 import {browserSpriteKeyBenchmarkControls} from './browser-sprite-key-policy.js';
 import {browserUploadValidationBenchmarkPolicy} from './browser-upload-validation.js';
@@ -16,7 +20,7 @@ let stopped = false;
 let preparationControls = {properties: [], requested: null};
 let spriteKeyControls = {properties: [], requested: null};
 let modelPreparationControls = {properties: [], requested: null};
-let gpu,worldCover,awaitingGameFrame=false,displayLayout;
+let gpu,worldCover,awaitingGameFrame=false,displayLayout,stutterDiagnostics;
 window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput;
 function updateWorldCover(){const state=gpu?.stats.worldReadiness,error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null),waiting=awaitingGameFrame&&state?.phase==='login';if(!worldCover||(!waiting&&!error&&!['loading','streaming','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;worldCover.update(waiting?{phase:'loading',reason:'Waiting for area data'}:state,gpu?.canvas.style,error);}
 function setStatus(message) {
@@ -34,7 +38,7 @@ function publish() {
 }
 function dispose() {
   if (stopped) return;
-  stopped = true; delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput; pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
+  stopped = true; delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
 }
 function finish(reason) {
   if (stopped) return;
@@ -59,11 +63,28 @@ function report(message) {
   const event = {milliseconds: Math.round(performance.now() - started), message};
   window.browserProof.events.push(event); setStatus(message); console.log('BROWSER_PROOF', JSON.stringify(event)); publish();
 }
-const transport = createTransport(WebSocket, report);
+const geometryTransfer=browserGeometryTransferPolicy(window.browserProof.mode,options);
+const candidatePreparation=privatePreparationCandidates(window.browserProof.mode,options);
+const fixturePolicy=repeatableFixturePolicy(window.browserProof.mode,options);
+window.browserProof.repeatableFixtureRequested=fixturePolicy.requested;
+const transport = createTransport(WebSocket, report,fixturePolicy.websocket);
 const pointer = window.browserProof.mode === 'webgl' ? createBrowserMiddleMouseInput(window,document,{logicalExtent:()=>({width:gpu?.stats.physicalOutput?.logicalWidth||gpu?.stats.display?.internalWidth||960,height:gpu?.stats.physicalOutput?.logicalHeight||gpu?.stats.display?.internalHeight||540})}) : undefined;
 if (pointer) window.browserProof.middleInput = pointer.stats;
 window.browserTransport = transport;
 const natives = {
+  async Java_orsc_browser_BrowserBootstrap_reportRegionPreparationDiagnostics(lib,available,counters){
+    if((available&&counters.length!==3)||(!available&&counters.length!==0))throw new Error('Region diagnostics layout changed');
+    const values=Array.from(counters);if(values.some(value=>!Number.isSafeInteger(value)||value<0))throw new Error('Region diagnostics numeric range changed');
+    window.browserProof.regionPreparationDiagnostics={available:available===true,hits:values[0]??null,builds:values[1]??null,retainedTileBytes:values[2]??null};
+  },
+  async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
+    if(!['geometryTransfer','regionPreparation','descriptorWriting'].includes(name))throw new Error('Unknown private policy receipt');
+    (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
+  },
+  async Java_orsc_browser_BrowserBootstrap_reportRepeatableState(lib,username,counters){
+    if(fixturePolicy.requested!=='repeatable-v1'||counters.length!==3)throw new Error('Unexpected repeatable fixture receipt');
+    window.browserProof.repeatableFixture={username:String(username).slice(0,40),cameraPinned:counters[0]===1,npcCount:counters[1],playerCount:counters[2]};
+  },
   async Java_orsc_browser_BrowserBootstrap_reportInputError(lib, message) {
     window.browserProof.inputError=String(message).slice(0,512);setStatus(message);publish();
   },
@@ -101,6 +122,9 @@ const natives = {
 };
 if (pointer) Object.assign(natives, pointer.natives);
 try {
+  stutterDiagnostics=createStutterDiagnostics(window,{enabled:stutterDiagnosticsPolicy(window.browserProof.mode,options)});
+  window.browserProof.stutterDiagnostics=stutterDiagnostics.stats;
+  if(options.has('benchmark'))window.browserBenchmarkDiagnosticsReset=()=>stutterDiagnostics.reset();
   preparationControls = browserPreparationBenchmarkControls(window.browserProof.mode, options);
   spriteKeyControls = browserSpriteKeyBenchmarkControls(window.browserProof.mode,options);
   modelPreparationControls = browserModelBenchmarkControls(window.browserProof.mode, options);
@@ -157,7 +181,7 @@ try {
   });
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
-    javaProperties: ['user.dir=/files', ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])], natives});
+    javaProperties: ['user.dir=/files', ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])], natives});
   report('Browser Java ready');
   const display = document.querySelector('#display');
   displayLayout=createBrowserDisplay({window,document,display,viewport:document.querySelector('#viewport')});
