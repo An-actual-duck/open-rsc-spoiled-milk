@@ -201,6 +201,9 @@ public class GraphicsController {
 		return worldOverlayCoverage != null && worldOverlayCoverage.isCurrent(frame, pixelData, width2, height2);
 	}
 
+	/** Read-only ownership receipt for render-thread-local preparation reuse. */
+	public final boolean isGpuOwnedSceneSpriteCaptureActive() { return guardGpuSceneSoftwareWrites; }
+
 	/** Sticky until beginRenderer2DFrame; explicit GPU owners must reject failed frames. */
 	public final String getSceneSpriteRasterFailure() { return sceneSpriteRasterFailure; }
 

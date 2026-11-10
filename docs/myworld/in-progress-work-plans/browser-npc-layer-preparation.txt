@@ -1,0 +1,74 @@
+Browser NPC layer preparation
+=============================
+
+Measured target
+---------------
+The manager's 31-field browser profile measured drawSceneEntity capture at
+3.821739 ms per sampled frame with 33.85 actors; polygon sorting was 0.0087 ms,
+remaining legacy-loop work 0.1696 ms and coverage initialization 0.6304 ms.
+Those are measurements of the preceding artifact, not this candidate's gain.
+This change targets repeated work inside actual drawNPC; no FPS result is claimed.
+
+Exact change
+------------
+Ordinary non-wield NPC body layers have historically been drawn twice, with the
+same animation/frame, geometry, colours and opacity. Both draws remain in the
+same order. Removing one would change translucent/non-corporeal appearance.
+
+A private helper now prepares one animation layer. Only an installed browser,
+explicitly GPU-owned SCENE capture and the existing opted-in coverage fastpath
+may reuse preparation for those two body draws. Native/software and browser
+forced-software paths still prepare independently at both original call points.
+The source Sprite is borrowed and read by both draws; pixels are never cached,
+copied or treated immutable. Definitions, source arrays and dimensions are read
+fresh on every invocation/layer. There is no cross-frame actor/sprite cache.
+
+Equipment ordering and body ordering remain unchanged. The wield-slot scratch
+array is allocated lazily once per drawNPC rather than once per mapped layer.
+Both mutable wield IDs are refreshed at every original per-layer boundary.
+GraphicsController exposes the actual scoped GPU-capture guard as a read-only
+receipt; this does not grant ownership or weaken the software-write guard.
+
+spoiledmilk.browserNpcLayerPreparation=false disables only the body-preparation
+reuse for a same-jar private comparison. Default is true, with all ownership
+guards above. The earlier browserFramePreparation=false switch also prevents
+this reuse. No frontend controls, shaders, asset bytes or gameplay rules change.
+
+Oracle and validation
+---------------------
+  ./scripts/build-client.sh
+  python3 tests/myworld/test-browser-npc-layer-preparation.py
+  python3 tests/myworld/test-npc-visual-fixes.py
+  python3 tests/myworld/test-npc-projectile-clipping.py
+  bash tests/myworld/test-renderer-guardrails.sh
+
+The focused test compiles actual original mudclient from checkpoint
+ee876dbe895d914a9df78088cec2ca35362ffc04 and current source separately. It invokes
+real MudClientGraphics/drawNPC with nonempty synthetic canonical/custom animation
+sheets, never a mock layer renderer. The corpus covers 864 draws across native,
+browser GPU-owned and browser forced-software paths; both sprite systems; all
+16 directions; opaque, non-corporeal and summon opacity; and three wield states.
+Frames, mirroring, skin/mask colours and source dimensions vary. Source pixel
+contents, whole source arrays and animation definitions are mutated between
+invocations. The custom animation-ID >=230 colour branch is included.
+
+It compares complete Renderer2DFrame command DTOs (including masks, clipping,
+source pixels, order and opacity), actual software framebuffer pixels and the
+actual production OpenGLSpriteTextureBuilder composite RGBA bytes and bounds.
+Native translucent FORCE_SOFTWARE deliberately does not produce replay commands;
+its nonempty actual software image is still compared, and corresponding GPU
+cases compare captured commands and the production composite. The fixture does
+not turn that renderer policy into a false empty-body success.
+
+Malformed walk timing, mapped wield-layer index and animation definitions must
+still throw the same exception class/message/cause chain. Scoped ownership must
+restore after those failures. Disabled candidate output AND selector counts must
+match original. The enabled candidate must reduce actual spriteSelect activity,
+measured through the resolver's disabled-selection counter, while non-GPU counts
+remain identical. This proves the optimization branch executes, rather than
+merely comparing two empty or inactive captures.
+
+Generated evidence uses the declared output/tests/browser-npc-layer-preparation/
+subject. No browser/GPU process, server, account data or release operation is
+needed for these CPU comparisons. An integrated private browser functional check
+and controlled same-artifact timing remain the manager's next acceptance gate.
