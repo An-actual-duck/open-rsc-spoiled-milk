@@ -64,8 +64,8 @@ artifact directory/source receipt:
     --client-source-commit EXACT40HASH --server-artifacts /frozen/server \
     --server-source frozen-artifacts-source-unverified
 
-The preparation receipt contains exact serverStartCommand/httpCommand/url/status/request paths. Those
-commands are instructions for a later explicitly coordinated manager test;
+The preparation receipt contains exact serverStartCommand/httpCommand/url/
+status/request paths. Those commands are instructions for a later explicitly coordinated manager test;
 prepare-combat.py never executes them. Existing run names are refused.
 
 A later manager proof must confirm realCombat.authoritative, all six channels'
@@ -91,3 +91,25 @@ output roots (legacy static-analysis, sprite and renderer diagnostic folders);
 this task writes only declared tests/browser-combat-workload,
 tests/browser-gameplay-spike and tests/renderer-shadow-benchmarks subjects.
 Those historical outputs were preserved, not moved or deleted.
+
+Frozen review stage (prepared, never started by this worker)
+----------------------------------------------------------
+Browser run: output/tests/browser-gameplay-spike/browser-combat-baseline-1
+Server run: output/tests/renderer-shadow-benchmarks/browser-combat-baseline-1
+HTTP8169; fixture renderer-combat-v1; TCP43639 / WebSocket43539.
+Exact frontend/Bootstrap source:81dace127121ffc24a9e98eb44c05e9be33a54d2.
+Client source325bf42b60fe411705f9f14c0a3ef6debabe24a7 / JAR SHA256
+f72047bfb006b79a1e51889b46be08a36c9c80d353b4fa5ccece795c06ad1279.
+Frozen repeatable-baseline-2 core SHA256
+fe6d8de5a6b46026028c81e665645eafbdc78673e285a7dc8a6a4c8776acbdf0;
+gameplay overlay SHA256
+cd9b781f58841fb6dcf0e1e9c26910343a33fcd723d6bff1dfe4fb1db35ca848.
+All plugins/libs copied from that same frozen server directory. Its binary source
+is unverified and recorded as frozen-repeatable-baseline-2-artifacts-source-unverified.
+Server marker SHA256cf954089f1df18f64b6656a3e4f8cb6ad74aa2d5500579c2ec0b8b271df0555c.
+
+Preparation verified zero database accounts, integrity_check=ok, unchanged
+immutable artifact hashes, and2265 runtime animation PNGs with0missing/0different.
+No processes.json, server.pid or status.json existed after preparation. The full
+commands/URL/provenance are in combat-preparation.json and stage.json. Later
+documentation-only handoff commits do not mutate that frozen stage.
