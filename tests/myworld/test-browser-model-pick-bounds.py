@@ -14,9 +14,9 @@ with(run/'compile.log').open('w')as log:
  frozen=run/'Scene.java';frozen.write_bytes(subprocess.check_output(['git','show',BASE+':'+scene],cwd=ROOT))
  subprocess.run(['javac','-source','8','-target','8','-cp',str(jar),'-d',str(old),str(frozen)],check=True,stdout=log,stderr=subprocess.STDOUT)
 results={}
-for version,enabled in [('baseline',False),('baseline',True),('current',False),('current',True)]:
- name=version+('-on'if enabled else'-off');cp=(str(old)+':'if version=='baseline'else'')+str(current)+':'+str(jar)
- with(run/(name+'.log')).open('w')as log:subprocess.run(['java','-Xmx768m','-Djava.awt.headless=true','-cp',cp,'orsc.graphics.three.BrowserModelPickBoundsFixture',version,str(enabled).lower()],check=True,stdout=log,stderr=subprocess.STDOUT)
+for version,enabled in [('baseline',False),('baseline',True),('current',False),('current',True),('current',None)]:
+ name=version+('-default'if enabled is None else'-on'if enabled else'-off');cp=(str(old)+':'if version=='baseline'else'')+str(current)+':'+str(jar)
+ with(run/(name+'.log')).open('w')as log:subprocess.run(['java','-Xmx768m','-Djava.awt.headless=true','-cp',cp,'orsc.graphics.three.BrowserModelPickBoundsFixture',version,'default'if enabled is None else str(enabled).lower()],check=True,stdout=log,stderr=subprocess.STDOUT)
  results[name]=(run/(name+'.log')).read_text().strip().splitlines()[-1]
 assert len(set(results.values()))==1,results
 with(run/'math.log').open('w')as log:subprocess.run(['java','-Xmx768m','-Djava.awt.headless=true','-cp',str(current)+':'+str(jar),'orsc.graphics.three.BrowserModelPickBoundsFixture','math'],check=True,stdout=log,stderr=subprocess.STDOUT)

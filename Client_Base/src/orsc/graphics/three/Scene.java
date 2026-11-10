@@ -20,7 +20,7 @@ public final class Scene {
 	private final boolean browserOverlayCoverage = Boolean.getBoolean("spoiledmilk.browserOverlayCoverage");
 	private final boolean browserEarlyFaceCull = Boolean.getBoolean("spoiledmilk.browserEarlyFaceCull");
 	private final boolean browserOwnsWallsAndRoofs = Boolean.getBoolean("spoiledmilk.browserOwnsWallsAndRoofs");
-	private final boolean browserModelPickBounds = Boolean.getBoolean("spoiledmilk.browserModelPickBounds");
+	private final boolean browserModelPickBounds = Boolean.parseBoolean(System.getProperty("spoiledmilk.browserModelPickBounds", "true"));
 	public boolean isBrowserModelPickBoundsEnabled() { return browserModelPickBounds && isBrowserFullResidentOwnershipEnabled(); }
 	public boolean isBrowserFullResidentOwnershipEnabled() { return browserOwnsWallsAndRoofs && Renderer3DSettings.isBrowserPresentationAvailable() && !Renderer3DSettings.needsCpuDepthFrame(); }
 	public boolean isEarlyResidentFaceCullEnabled() { return browserEarlyFaceCull && Renderer3DSettings.isBrowserPresentationAvailable(); }
