@@ -93,3 +93,28 @@ Approved immutable dependency:
 SHA256 `02babd3b0be6e1d8067572a97a2bf1ac26f015952098799f18f1bbdafeec1583`.
 The worker's ignored JAR was not read or overwritten. Source remains default OFF;
 no hardware pixels, Firefox visual improvement or FPS result is claimed yet.
+
+## First manager hardware result
+
+Manager executed immutable `physical-v2` on actual Firefox154/WebGL2: all46 cases
+passed; 22,731,720 RGBA bytes compared, zero changed bytes. Actual context loss and
+Stop/init race passed. Evidence is preserved at:
+`/home/justin/Core-Framework/output/diagnostics/browser-motion-transitions/physical-hardware-firefox-1/result.json`.
+This verifies the shader/copy/reference contract, not whole-game quality, input or
+performance. A subsequent source-only guard tightens queued commits: transparent
+no-world frames cannot masquerade as opaque resets. Its CPU regression passes;
+the final fresh fixture includes the guard for manager rerun.
+
+A gameplay stage is separately prepared at
+`output/tests/browser-gameplay-spike/browser-physical-output-check-1` with explicit
+02bab… dependency, sourcef2cca receipt, all frontend hashes and freshly compiled
+Bootstrap. The manager serves it on actual loopback8152 (the staged suggested8143
+port was occupied by another preserved fixture). No artifact is modified in place.
+Maintained preparation now accepts `--dependency-jar` and `--client-source-commit`
+so a stale ignored worker build cannot silently enter this test. Its read-only
+validator checks exact artifact/frontend hashes and private blank-account config.
+
+Canonical output layout checking finds inherited unclassified historical output
+root entries in this recycled ai3 slot. This task writes only declared
+`tests/browser-physical-output` and `tests/browser-gameplay-spike` categories;
+historical directories were preserved.

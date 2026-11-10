@@ -181,7 +181,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(width<1||height<1||width*height>MAX_PIXELS||pixels.length!==width*height||matrices.length!==48||u.length!==30||draws.length%8||draws.length>256*8)throw new Error('Browser frame bounds violated');
       // Resize/policy commits are presentation-only and happen before ANY pass.
       // Retained fades/BASE and held regions keep the exact previous backing.
-      if(pendingPhysicalOutput!==null&&overlay?.canChangeOutput&&(!world||worldReady.sourceComplete)){
+      if(pendingPhysicalOutput!==null&&overlay?.canChangeOutput&&(overlay.opaqueOutput||world&&worldReady.sourceComplete)){
         physicalOutput=pendingPhysicalOutput;pendingPhysicalOutput=null;stats.pendingPhysicalOutput=null;stats.physicalOutputActive=physicalOutput;
         stats.physicalOutputTransitions.push({enabled:physicalOutput,beforeJavaFrame:stats.javaFrames,milliseconds:performance.now()});if(stats.physicalOutputTransitions.length>64)stats.physicalOutputTransitions.shift();
       }

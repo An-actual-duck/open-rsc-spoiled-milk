@@ -62,5 +62,5 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
   /** Region streaming replays the last FULL output; no pending Java delta is consumed. */
   function hold(w,h){alive();if(pending||active)throw new Error('Cannot hold a partially declared overlay');retained.drawFull(w,h);}
   function dispose(){if(disposed)return;retained.dispose();if(rgb)gl.deleteTexture(rgb);if(coverage)gl.deleteTexture(coverage);if(vao)gl.deleteVertexArray(vao);if(program)gl.deleteProgram(program);if(vertex)gl.deleteShader(vertex);if(fragment)gl.deleteShader(fragment);rgb=coverage=vao=program=vertex=fragment=null;pending=active=null;stats.overlayCoverageBytes=stats.overlayRgbBytes=stats.overlayCompositeResourceBytes=0;disposed=true;}
-  return {prepare,outputSize,begin,draw,hold,dispose,get canChangeOutput(){return !!pending&&(pending.mode===0||pending.mode===1);}};
+  return {prepare,outputSize,begin,draw,hold,dispose,get canChangeOutput(){return !!pending&&(pending.mode===0||pending.mode===1);},get opaqueOutput(){return pending?.mode===0;}};
 }

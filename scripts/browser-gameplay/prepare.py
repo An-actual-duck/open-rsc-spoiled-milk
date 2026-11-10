@@ -4,6 +4,7 @@ import argparse
 import datetime
 import hashlib
 import json
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -15,11 +16,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--name', default=datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ'))
     parser.add_argument('--http-port', type=int, default=8079)
+    parser.add_argument('--dependency-jar', type=Path, help='Explicit immutable client artifact; leaves worker JAR untouched')
+    parser.add_argument('--client-source-commit', help='Known source commit for the explicitly selected client artifact')
     args = parser.parse_args()
     if not 1 <= args.http_port <= 65535:
         parser.error('Port must be between 1 and 65535')
     if not args.name or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in args.name):
         parser.error('Use a simple run name')
+    if args.client_source_commit and not re.fullmatch(r'[0-9a-f]{40}',args.client_source_commit):
+        parser.error('Client source commit must be an exact40-character hash')
     category = subprocess.check_output(['python3', str(ROOT / 'scripts/workspace-layout.py'), 'path', 'tests', 'browser-gameplay-spike', '--mkdir'], text=True).strip()
     run = Path(category) / args.name
     if run.exists():
@@ -28,7 +33,7 @@ def main():
     web = run / 'web'; web.mkdir()
     for file in (ROOT / 'tools/browser-gameplay/web').iterdir():
         shutil.copy2(file, web / file.name)
-    client = ROOT / 'Client_Base/Open_RSC_Client.jar'
+    client = args.dependency_jar.resolve() if args.dependency_jar else ROOT / 'Client_Base/Open_RSC_Client.jar'
     if not client.is_file():
         parser.error('Build the maintained client first with scripts/build-client.sh')
     classes = run / 'classes'; classes.mkdir()
@@ -61,7 +66,7 @@ def main():
     files = sorted(p.relative_to(web).as_posix() for p in web.rglob('*') if p.is_file() and p.relative_to(web).parts[0] in ('Cache', 'world-builder', 'world-builder-configs'))
     (web / 'bootstrap-files.txt').write_text('\n'.join(files) + '\n')
     report = dict(root=str(ROOT), run=str(run), web=str(web), sourceCommit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-                  clientSha256=hashlib.sha256(client.read_bytes()).hexdigest(), runtime='CheerpJ 5.0, Java 8, CDN',
+                  clientSha256=hashlib.sha256(client.read_bytes()).hexdigest(), dependencyJar=str(client), clientSourceCommit=args.client_source_commit, frontendSha256={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in web.iterdir() if p.is_file() and p.suffix in ('.js','.html','.css')}, runtime='CheerpJ 5.0, Java 8, CDN',
                   http='127.0.0.1:' + str(args.http_port), tcp='127.0.0.1:43629', websocket='127.0.0.1:43529', credentialsCopied=False)
     (run / 'stage.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
