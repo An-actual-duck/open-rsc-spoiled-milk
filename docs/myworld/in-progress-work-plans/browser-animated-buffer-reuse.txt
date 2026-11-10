@@ -65,3 +65,26 @@ Final CPU gates passed
 - Mocked frontend and source/world-readiness contracts.
 - workspace-layout check and git diff --check.
 No browser, GPU benchmark or server operation was run by this worker.
+
+Loading-budget regression repair
+The first combined actual browser run exposed a scheduling regression: mandatory
+animated pose updates bypassed the repack cap but still incremented the shared
+uploaded counter. A missing33000-vertex chunk could only exceed the32768 budget
+when that counter was zero, so continuous animation denied it that escape forever.
+The failed combined run never became world-ready and is not FPS evidence.
+
+The focused correction captures poseChanged BEFORE updateChunk mutates the
+cached signature. Mandatory pose work does not consume the discretionary counter;
+settings-only repacks and new chunks retain their original bounded admission
+rules. Exact current animation uploads, topology/byte/entry limits and error
+semantics are unchanged. No broader scheduling rewrite was made.
+
+The production fixture reproduced the old failure before the fix; evidence is
+output/tests/browser-animated-chunks/loading-budget-before.log. Updated fixture
+passes1028 LRU/1542 active checks:100 static draw instances sharing one oversized
+buffer plus one changing animation produce101 draws and just two resource uploads;
+mandatory topology replacement also allows the missing oversized chunk to load;
+two settings-only20001-vertex repacks still defer one, then finish next frame.
+Updated full client build, existing82 native UV/material checks,5438 material
+stream checks, JS resource-boundary controls and frontend/layout/diff gates pass.
+Manager will verify the repaired combined browser stage; no FPS claim yet.
