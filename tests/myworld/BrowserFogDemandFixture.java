@@ -21,8 +21,49 @@ public final class BrowserFogDemandFixture {
   Renderer3DWorldChunkFrame.ChunkMesh empty=new Renderer3DWorldChunkFrame.ChunkMesh(0,0,0,0,0,new int[0],new float[0],new float[0],new int[0],new int[0],new int[0],new int[0],new Renderer3DModelKind[0],null,null,0,0,0,false,0,3);
   require(!empty.hasVertexBounds()&&empty.getMinVertexY()==0&&empty.getMaxVertexY()==0,"Empty bounds changed");
  }
+ static float coordinate(float[] m,int row,float x,float y,float z,boolean column) {
+  return column?((m[row]*x+m[4+row]*y)+m[8+row]*z)+m[12+row]:((m[row*4]*x+m[row*4+1]*y)+m[row*4+2]*z)+m[row*4+3];
+ }
+ static void numeric() {
+  Random random=new Random(492345);int excluded=0;
+  for(int iteration=0;iteration<10000;iteration++) {
+   double[] bounds=new double[6];for(int n=0;n<3;n++){bounds[n]=random.nextInt(100000)-50000;bounds[n+3]=bounds[n]+random.nextInt(2000);}
+   float[] matrix=new float[16];for(int n=0;n<16;n++)matrix[n]=(random.nextFloat()-.5f)*.05f;matrix[15]=1;
+   boolean far=BrowserFogDemand.outsideFar(bounds,matrix),shadow=BrowserFogDemand.outsideShadow(bounds,matrix,0,0);if(far||shadow)excluded++;
+   boolean allOutsideOne=false;
+   for(int row=0;row<3;row++)for(int sign:new int[]{-1,1}) {
+    boolean all=true;
+    for(int corner=0;corner<8;corner++) {
+     float x=(float)bounds[(corner&1)==0?0:3],y=(float)bounds[(corner&2)==0?1:4],z=(float)bounds[(corner&4)==0?2:5];
+     float w=coordinate(matrix,3,x,y,z,true),v=coordinate(matrix,row,x,y,z,true);if(!(sign*v>w))all=false;
+     if(far)require(coordinate(matrix,2,x,y,z,false)>coordinate(matrix,3,x,y,z,false),"Far predicate dropped Float32-visible corner");
+    }
+    allOutsideOne|=all;
+   }
+   if(shadow)require(allOutsideOne,"Shadow predicate dropped Float32-visible AABB");
+  }
+  require(excluded>100,"Numeric oracle had vacuous exclusions");
+ }
+ static void compare(BrowserLightingData a,BrowserLightingData b,Renderer3DFrame f,String why) {
+  BrowserLightingData.ShadowPlan p=preview(b,f);
+  // Discarded previews must not advance far-map age or blend progression.
+  for(int n=0;n<3;n++)require(Arrays.equals(p.values,preview(b,f).values),"Read-only preview advanced "+why);
+  BrowserLightingData.Frame x=commit(a,f,null),y=commit(b,f,p);
+  require(Arrays.equals(x.values,y.values),"Projection policy differs "+why);
+  require(x.changes.length==y.changes.length,"Mask staging differs "+why);
+  for(int n=0;n<x.changes.length;n++)require(Arrays.equals(x.changes[n].rgba,y.changes[n].rgba),"Mask pixels differ "+why);
+ }
+ static void history(Renderer3DWorldChunkFrame world) {
+  BrowserLightingData a=new BrowserLightingData(),b=new BrowserLightingData();
+  for(int tick=0;tick<175;tick++) {
+   RendererShadowSettings.setQuality(tick<155?RendererShadowSettings.Quality.HIGH:tick<160?RendererShadowSettings.Quality.LOW:tick<164?RendererShadowSettings.Quality.OFF:RendererShadowSettings.Quality.HIGH);
+   Renderer3DFrame f=frame(world,tick>=168&&tick<172?-1:0,tick<152?128:640,1500);
+   if(tick==166)f.setRoofVisibility(Renderer3DRoofVisibility.VISIBLE,1);
+   compare(a,b,f,"history/quality/level tick "+tick);f.release();
+  }
+ }
  public static void main(String[] args)throws Exception{
-  bounds();
+  bounds();numeric();
   RendererFogSettings.setMode(RendererFogSettings.Mode.ON);RendererLightingSettings.setMode(RendererLightingSettings.Mode.DIRECTIONAL);RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);RendererRemasterLightSettings.adjustAzimuth(0);RendererRemasterLightSettings.adjustElevation(0);
   List<Renderer3DWorldChunkFrame.ChunkMesh> chunks=new ArrayList<>();for(int z=-2;z<=2;z++)for(int x=-2;x<=2;x++)chunks.add(chunk((x*48-24)*128,0,(z*48-24)*128,48*128,0,chunks.size()+1));Renderer3DWorldChunkFrame world=Renderer3DWorldChunkFrame.fromChunks(chunks);
   BrowserLightingData ordinary=new BrowserLightingData(),planned=new BrowserLightingData();require(BrowserFogDemand.POSITION_CONTRACT,"Shader allowlist mismatched production");
@@ -31,6 +72,8 @@ public final class BrowserFogDemandFixture {
    BrowserLightingData.Frame a=commit(ordinary,f,null),b=commit(planned,f,plan);require(Arrays.equals(a.values,b.values),"Preview/commit differs from actual preparation "+tick);require(a.changes.length==b.changes.length,"Preview staged masks");for(int i=0;i<a.changes.length;i++)require(Arrays.equals(a.changes[i].rgba,b.changes[i].rgba),"Mask bytes changed");
    System.out.println("ELIGIBILITY tick="+tick+" source="+demand.sourceChunks+" required="+demand.requiredChunks+" vertices="+demand.requiredVertices+" planes="+plan.demandMatrices.length);f.release();
   }
+  history(world);
+  RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);
   Renderer3DFrame f=frame(world,0,128,1500);BrowserLightingData d=new BrowserLightingData();BrowserLightingData.ShadowPlan plan=preview(d,f);float[] expected=plan.values.clone();RendererShadowSettings.setQuality(RendererShadowSettings.Quality.OFF);RendererRemasterLightSettings.adjustAzimuth(100);BrowserLightingData.Frame captured=commit(d,f,plan);require(Arrays.equals(Arrays.copyOfRange(captured.values,32,80),Arrays.copyOfRange(expected,32,80)),"Live sun/quality escaped captured plan");require(captured.values[1]==expected[1]&&captured.values[3]==expected[3],"Captured quality changed");try{commit(d,f,plan);throw new AssertionError("Stale plan reused");}catch(IllegalStateException good){checks++;}f.release();
   System.out.println("PASS checks="+checks+" actual production constructors/projection preview; no GPU or speed claim");
  }

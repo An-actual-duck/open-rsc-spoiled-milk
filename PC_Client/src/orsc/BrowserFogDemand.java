@@ -80,7 +80,14 @@ final class BrowserFogDemand {
         }
         return Double.isFinite(low)&&Double.isFinite(magnitude)&&magnitude<1e30&&low>128*FLOAT_EPS*magnitude+1e-5;
     }
-    private static boolean bounded(double[] b,int... values){for(double v:b)if(!Double.isFinite(v)||Math.abs(v)>MAX_COORD)return false;for(int v:values)if(Math.abs((double)v)>MAX_COORD)return false;return b[0]<=b[3]&&b[1]<=b[4]&&b[2]<=b[5];}
+    private static boolean bounded(double[] bounds,int offX,int offZ,int vertexX,int vertexZ) {
+        for(double value:bounds) {
+            if(!Double.isFinite(value)||Math.abs(value)>MAX_COORD)return false;
+        }
+        return Math.abs((double)offX)<=MAX_COORD&&Math.abs((double)offZ)<=MAX_COORD
+            &&Math.abs((double)vertexX)<=MAX_COORD&&Math.abs((double)vertexZ)<=MAX_COORD
+            &&bounds[0]<=bounds[3]&&bounds[1]<=bounds[4]&&bounds[2]<=bounds[5];
+    }
     private static boolean finite(float[] matrix){if(matrix==null||matrix.length!=16)return false;for(float f:matrix)if(!Float.isFinite(f))return false;return true;}
     private static boolean contract(){try {Field f=OpenGLShaderProgram.class.getDeclaredField("RESIDENT_CHUNK_PARITY_VERTEX_SHADER");f.setAccessible(true);return digest((String)f.get(null)).equals("7af2917e332f05cc614aa50c40fba1509546e820dceb54900f8f0e56bbdfb3df")&&digest(BrowserLightingData.depthVertex()).equals("354aec4d0338ccdf0f988bdf5524ee00443f48e5bbe8d944ee0179571ff315a9");}catch(Exception error){return false;}}
     private static String digest(String s)throws Exception{StringBuilder b=new StringBuilder();for(byte v:MessageDigest.getInstance("SHA-256").digest(s.getBytes("UTF-8")))b.append(String.format("%02x",v&255));return b.toString();}

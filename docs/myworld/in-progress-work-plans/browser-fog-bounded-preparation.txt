@@ -1,0 +1,94 @@
+Browser fog-bounded preparation investigation (experimental, default OFF)
+======================================================================
+
+Scope
+-----
+The browser keeps the existing 5x5 CPU map buffer and 3x3 gameplay/collision
+core. No distance/quality options are added. Only geometry wholly beyond the
+actual color far clip AND outside every required near/current-far/previous-far
+shadow volume is eligible for deferred preparation. Fully saturated fog still
+writes depth and can mask sky, so it is insufficient to prove zero contribution.
+
+This is an investigation, not an adopted optimization or complete parity claim.
+The conservative full shadow volumes can retain nearly the whole buffered map.
+A synthetic production-constructor 25-cell grid retained24/25 initially and25/25
+after turning. Those numbers are not measurements of the actual game map.
+
+Controls and diagnostic stage
+-----------------------------
+Private WebGL benchmark URL: benchmark=1&fogbounded=on|off&loadprofile=1.
+Ordinary URLs do not override either startup property; the candidate is OFF.
+Actual requested/enabled values are in browserProof.fogPreparationPolicy.
+Private benchmark observer reports only the actual username (no credentials)
+as browserProof.privateAccount so automation can verify its disposable account.
+
+REVIEW-only source55abea41d4f568289e01e53874c93838fd684ff4 was freshly built and
+frozen under ai1/output/tests/browser-gameplay-spike/fog-bounded-review-2,
+loopback8157. Client SHA256:
+32850451c9e08d3cdd8a05a07916c46904799a1ae3a4773de99c32eb668534c8.
+This stage is immutable and is for parent diagnostic eligibility counts, not
+pixel correctness/adoption/performance acceptance. Earlier review-1 is preserved;
+its suggested8156 port was occupied and no existing process was changed.
+
+Load-only bounded telemetry
+--------------------------
+GPU stats.fogPreparation is the latest load declaration; steady-state values may
+therefore be stale by design. stats.loadWorkSamples holds at most128 rows, with
+monotonic sequence and browser milliseconds. Held exits are included.
+fields16:
+ [schema1, requested, enabled, sourceChunks, requiredChunks, deferredChunks,
+  sourceVertices, demandVertices, readyChunks, pendingRepacks, sourceEpoch,
+  geometryEpoch, exit, newUploads, newVertices, replacedVertices]
+exit1=retained FULL/held,2=presented,3=other.
+timings6 milliseconds:
+ [total, texture, geometry, CPU-pack, synchronous-native-upload-wall, demand-plan]
+Upload wall time includes bridge copying/driver waits and is not pure GPU time.
+No JMX, telemetry string reports, screenshots, or per-frame unbounded storage.
+
+Current correctness work
+------------------------
+- Maintained full XYZ chunk bounds share the existing constructor scan; rebase
+  copies Y unchanged. The first draft omitted final Y assignment; corrected
+  before the review stage, with elevated/depressed/asymmetric Y assertions.
+- Actual Float32 combined matrices and error padding determine exclusion.
+  Extreme/unknown old GPU rebase bases retain source geometry. Shader source
+  allowlists seal the position contract. Invalid/oversized source chunks retain
+  their original validation/error path rather than disappearing under culling.
+- Full CPU source supplies AO, glow, roof, anchor offsets and lighting history.
+  Exact captured projection plans prevent sun/quality changes during packing
+  from making the demand decision disagree with shadow preparation.
+- Default OFF retains the original preparation path, with no demand plan/cull
+  allocations. The experimental plan path currently duplicates the baseline
+  shadow policy statements; its comparison tests must be retained if refactored.
+- Required geometry alone controls GPU active protection/readiness. Camera-only
+  demand expansion can hold the previous FULL while new resources are prepared.
+  An actual anchor is conservatively retained for otherwise-empty demand.
+- Full source animated-key conflicts are rejected even when a conflicting pose
+  would be omitted. Ongoing demanded chunks use normal cache validation, rather
+  than allocating extra material arrays in a redundant freshness check.
+
+CPU evidence (not GPU acceptance)
+--------------------------------
+Fresh client build passed. Existing six animated policy/control runs passed,
+including demanded/omitted duplicate-identity regressions. Frontend VM contract,
+lighting resource/state/failure tests, full-source provenance API/history tests,
+and shadow uniform command oracle passed.
+The extended demand fixture has240,849 checks: nonzero Y/rebases/immutable source,
+10,000 nonvacuous asymmetric Float32 matrix/AABB corner comparisons, and175frames
+of captured-plan vs ordinary preparation covering repeated discarded previews,
+far age150, blend lifetime, HIGH/LOW/OFF, underground and active-plane changes.
+This does not replace frozen old-source or actual full renderer pixel oracles.
+
+Outstanding review gates
+------------------------
+Full-source caster provenance currently overinvalidates on unrelated opaque
+texture catalog changes; that can destroy a previous-far blend and must be
+corrected before adoption. Completeness headers also need one-shot frame
+ownership (including held/UI exits), rather than sticky proof across frames.
+A full production-shader Firefox full-source vs Java-selected draw-list pixel
+corpus remains required, including long offscreen casters, previous-map blending,
+camera demand expansions, nonzero anchors/rebases and underground/fog-OFF.
+Actual ordinary crossing/teleport load times and steady-state overhead must be
+measured on the same artifact with source-identical OFF/ON controls. Conservative
+eligibility may be too small to justify the added machinery. No FPS or load-time
+gain, quality parity, adoption, release or public deployment is claimed.
