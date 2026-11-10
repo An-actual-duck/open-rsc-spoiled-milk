@@ -32,3 +32,17 @@ terrain and visual halo replacement, loaded ACK priority, exceptional probe
 cleanup, empty scene, area/relog and native fallback. Full input/canonical mesh
 differential also passed360enabled/330disabled checks. No copied height math.
 No browser/GPU/FPS result or public server operation yet.
+
+Hardware throughput decision
+Frozen28b0e159d/JAR972eee4b27e533e18274181d30a836c7f4803e16595630a624125291ca8801d2
+onprivate8129 passed actual world readiness101/101 and remained visually
+coherent. Clean40s cohort elevation-sample-batch-1 measured49.6692FPS,
+mean20.1335ms, p95 22.9ms, GPU2.4958ms. Average30.1406actor composites
+versus main e696's49.8458FPS/33.6248actors. NPCs roam, so cohorts are not
+identical; the candidate does not establish an FPS benefit despite lighter
+actor population. Full renderer guards passed.
+
+Manager decision: preserve this reviewed experiment for later profiling and
+withhold main/default promotion. Correctness evidence does not justify extra
+cache complexity when throughput does not improve. The exact pushed branch
+and immutable8129stage remain; no public files/deployment affected.
