@@ -45,3 +45,15 @@ uniform location queries does not by itself establish any FPS gain. Program
 relinking is not supported by this module today; if later added, the depth cache
 must be cleared at successful relink before reuse. Current API links once and
 requires fresh module initialization after Stop/context replacement.
+
+Manager Firefox verification (2026-11-10)
+---------------------------------------
+The integrated backend passed the actual production-shader/native-sky owned
+pipeline comparison in Firefox 154: 42 cases, 12,976,128 compared RGBA bytes,
+zero changed bytes. Real context-loss and stop-during-initialization checks
+also passed. Browser reports AMD / "Radeon R9 200 Series, or similar"; this is
+the reported Firefox string, not a claim of an exact physical GPU model.
+Evidence: manager output/diagnostics/browser-motion-transitions/
+shadow-uniform-firefox-1/result.json plus frozen stage receipt.
+Integrated command, lighting/resource-failure, owned-state and queued-upload
+failure tests passed. No end-to-end FPS gain is claimed from query counts.
