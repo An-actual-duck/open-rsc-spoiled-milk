@@ -163,7 +163,12 @@ until the new source was ready. Accepted evidence is under
 `paired-fps-result.json`, `input-result.json`, `hold-resize-result.json`.
 The first `layer-result.json` in that directory was invalid automation (outer
 keyboard focus, actual pose remained level0); it is not cited as layer acceptance.
-An authority-confirmed negative-level/return test remains the manager's gate.
+The manager then corrected focus and confirmed the real layer transition: private
+server authority and Java GPU pose both reported level−1 at104,667; both returned
+to level0 at133,660, ready with physical output ON. This was source193b with the
+separate projection candidate JAR1ef, not the invalid earlier level0 automation.
+Its acceptance is recorded in the manager's `projection-game-firefox-on` layerChecks
+receipt at benchmark completion; the invalid `layer-result.json` remains excluded.
 
 Per manager instruction, ordinary WebGL now defaults ON, explicit `physical=off`
 remains available, benchmark startup remains explicit/default OFF, and live policy
@@ -173,3 +178,14 @@ source processing dimensions, budgets, input mapping and GPU algorithms did not.
 Published main7450594c (including its separately verified shadow-uniform cache)
 was normally merged before adoption; no cherry-pick or experimental texture branch
 was incorporated. Fresh frozen artifacts follow the exact adoption checkpoint.
+
+
+Adoption source checkpoint: `a385bff824098e2fe194d0129ebdef557ccb7594`.
+Updated immutable artifacts (prepare-only; no worker browser/server process):
+`output/tests/browser-physical-output/hardware/physical-adoption` and
+`output/tests/browser-gameplay-spike/browser-physical-output-adoption` (suggested8154).
+These include published shadow-cache JS and ordinary default ON, with the approved
+02bab… Java artifact/sourcef2cca explicitly recorded. They deliberately exclude the
+manager's separate Scene projection Java candidate; the final combined manager
+build can use the same explicit-artifact preparation option. The prepared gameplay
+validator passed. All previously served stages remain unchanged.
