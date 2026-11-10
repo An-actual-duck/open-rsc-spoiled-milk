@@ -6,8 +6,8 @@ const transpose=a=>Float32Array.from({length:16},(_,n)=>a[(n%4)*4+Math.floor(n/4
 const json=async p=>(await fetch(p)).json(),bytes=async p=>new Uint8Array(await(await fetch(p)).arrayBuffer());
 const roi={x:240,y:100,w:480,h:360};
 let manifest,shader,vertices,indices,batches,textures,backend,replaying=false,distance='mid';
-const floorCorners=[[-512,0,-128],[512,0,-128],[512,0,896],[-512,0,896]];
-const wallCorners=[[-512,0,896],[512,0,896],[512,-256,896],[-512,-256,896]];
+const floorCorners=[[-512,0,-512],[512,0,-512],[512,0,512],[-512,0,512]];
+const wallCorners=[[-512,0,-512],[512,0,-512],[512,-256,-512],[-512,-256,-512]];
 async function load(){
  if(manifest)return;
  manifest=await json('./assets/manifest.json');
@@ -32,8 +32,8 @@ function materialQuads(){
   }
   const start=idx.length;idx.push(first,first+1,first+2,first,first+2,first+3);bs.push(id,start,6,1,0);
  }
- for(let x=-512;x<512;x+=128)for(let z=-128;z<896;z+=128)quad([[x,0,z],[x+128,0,z],[x+128,0,z+128],[x,0,z+128]],6);
- for(let x=-512;x<512;x+=128)for(let y=-256;y<0;y+=128)quad([[x,y,896],[x+128,y,896],[x+128,y+128,896],[x,y+128,896]],2);
+ for(let x=-512;x<512;x+=128)for(let z=-512;z<512;z+=128)quad([[x,0,z],[x+128,0,z],[x+128,0,z+128],[x,0,z+128]],6);
+ for(let x=-512;x<512;x+=128)for(let y=-256;y<0;y+=128)quad([[x,y,-512],[x+128,y,-512],[x+128,y+128,-512],[x,y+128,-512]],2);
  return [new Float32Array(data),new Int32Array(idx),new Int32Array(bs)];
 }
 async function create(mode){
@@ -53,7 +53,7 @@ async function draw(index,treeOnly=false){
  const n=backend.natives,w=canvas.width,h=canvas.height,m=new Float32Array(48),u=new Float32Array(30);
  m.set(transpose(views()[index].clipRowMajor));m.set(transpose(views()[index].viewRowMajor),16);m.set(identity(),32);
  u.set([1,1,1,1,1,1,1]);u[11]=1;u[15]=.08;u[16]=.12;u[17]=.18;
- const ds=treeOnly?[1,0,0,0,0,63,0,0]:[2,0,0,0,0,63,0,0,1,0,0,0,0,63,0,0,1,-350,500,0,0,63,0,0,1,350,850,0,0,63,0,0];
+ const ds=treeOnly?[1,0,0,0,0,63,0,0]:[2,0,0,0,0,63,0,0,1,0,0,0,0,63,0,0,1,-350,-128,0,0,63,0,0,1,350,-256,0,0,63,0,0];
  await n.Java_orsc_BrowserWebGLBridge_worldProgress(null,new Int32Array([1,2,1,2,2,0,0,0,1,w,h,textures.size]));
  await n.Java_orsc_BrowserWebGLBridge_present(null,w,h,true,m,u,new Int32Array(ds),new Int32Array(w*h).fill(0x01000000));
  const gl=canvas.getContext('webgl2'),e=gl.getError();if(e)throw Error('Diagnostic GL error '+e);
@@ -78,7 +78,7 @@ function projectedBounds(points,index,inset=0){
 }
 function regions(index){
  const points=[];for(let n=0;n<vertices.length;n+=28)points.push(Array.from(vertices.subarray(n,n+3)));
- return {full:roi,tree:projectedBounds(points,index,2),floor:projectedBounds([[-256,0,-128],[256,0,-128],[256,0,128],[-256,0,128]],index,4),wall:projectedBounds([[128,-256,896],[512,-256,896],[512,-128,896],[128,-128,896]],index,4)};
+ return {full:roi,tree:projectedBounds(points,index,2),floor:projectedBounds([[-256,0,-128],[256,0,-128],[256,0,128],[-256,0,128]],index,4),wall:projectedBounds([[128,-256,-512],[512,-256,-512],[512,-128,-512],[128,-128,-512]],index,4)};
 }
 function intersection(a,b){const x=Math.max(a.x,b.x),y=Math.max(a.y,b.y);return {x,y,w:Math.max(0,Math.min(a.x+a.w,b.x+b.w)-x),h:Math.max(0,Math.min(a.y+a.h,b.y+b.h)-y)};}
 function accumulate(state,image,ref,previous,prevRef,box,prevBox){
