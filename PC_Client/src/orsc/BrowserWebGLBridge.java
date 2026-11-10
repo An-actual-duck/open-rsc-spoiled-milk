@@ -180,9 +180,13 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         for(PendingRepack update:pending) {
             // Settings-only repacks retain the existing bounded budget. A changed
             // animation pose must be uploaded now, never drawn from an older pose.
-            if(update.cached.signature==update.chunk.getStorageSignature()&&uploaded>0&&uploaded+update.chunk.getVertexCount()>UPLOAD_VERTICES_PER_FRAME){remainingRepacks++;continue;}
+            boolean poseChanged=update.cached.signature!=update.chunk.getStorageSignature();
+            if(!poseChanged&&uploaded>0&&uploaded+update.chunk.getVertexCount()>UPLOAD_VERTICES_PER_FRAME){remainingRepacks++;continue;}
             updateChunk(frame,update.chunk,update.cached,packingSettings,update.materials,active);
-            uploaded+=update.chunk.getVertexCount();
+            // Mandatory animation uploads are separate from discretionary load/
+            // settings work. Otherwise every frame loses the uploaded==0 escape
+            // that lets one new oversized chunk make forward progress.
+            if(!poseChanged)uploaded+=update.chunk.getVertexCount();
         }
         for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
             WorldChunkBufferKey key=WorldChunkBufferKey.from(chunk,true);CachedChunk cached=chunks.get(key);

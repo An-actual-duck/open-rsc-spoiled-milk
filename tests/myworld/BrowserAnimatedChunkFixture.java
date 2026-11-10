@@ -61,7 +61,29 @@ public final class BrowserAnimatedChunkFixture {
         fails(()->prepare(bridge,frame,a,b),"Conflicting simultaneous animated identity accepted");
         // Full repack budget cannot defer a changed animation pose behind immutable settings work.
         Backend busy=new Backend();BrowserWebGLBridge busyBridge=new BrowserWebGLBridge(busy);Renderer3DWorldChunkFrame.ChunkMesh largeStatic=mesh(statik,0,0,0,0,11000,9000,0);prepare(busyBridge,frame,largeStatic,a);prepare(busyBridge,frame,largeStatic,a);RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.FACETED);BrowserWebGLBridge.ChunkDraws busyDraw=prepare(busyBridge,frame,largeStatic,b);reference(busy,busyDraw.draws[8],frame,b);require(busyDraw.remainingRepacks==0,"Animated current pose was deferred by immutable repack budget");
+        // Animation work must not consume the discretionary loading budget: the
+        // first new chunk may itself exceed the cap, as in the production loader.
+        Backend loading=new Backend();BrowserWebGLBridge loadingBridge=new BrowserWebGLBridge(loading);prepare(loadingBridge,frame,a);
+        for(int n=0;n<4;n++){
+            Renderer3DWorldChunkFrame.ChunkMesh currentPose=mesh(animated,-1,7,100,30+n,2,5000+n,0);
+            Renderer3DWorldChunkFrame.ChunkMesh[] sceneChunks=new Renderer3DWorldChunkFrame.ChunkMesh[101];Arrays.fill(sceneChunks,largeStatic);sceneChunks[100]=currentPose;
+            BrowserWebGLBridge.ChunkDraws progress=prepare(loadingBridge,frame,sceneChunks);
+            require(progress.draws.length==101*8,"Changed animation permanently starved first oversized loading chunk");
+            require(progress.draws[0]==progress.draws[99*8],"Duplicate static draw instances did not share storage");
+            reference(loading,progress.draws[100*8],frame,currentPose);
+        }
+        require(loading.uploads==2&&loading.replaces==4,"Loading/animation schedule allocated redundant resources");
+        Backend topologyLoad=new Backend();BrowserWebGLBridge topologyBridge=new BrowserWebGLBridge(topologyLoad);prepare(topologyBridge,frame,a);
+        BrowserWebGLBridge.ChunkDraws topologyProgress=prepare(topologyBridge,frame,largeStatic,larger);
+        require(topologyProgress.draws.length==16&&topologyLoad.uploads==3&&topologyLoad.deletes==1,"Mandatory topology change starved first oversized loading chunk");reference(topologyLoad,topologyProgress.draws[8],frame,larger);
+        // Settings-only work still has its original cap, without making every
+        // pending repack mandatory just because current animation is exempt.
+        Backend settings=new Backend();BrowserWebGLBridge settingsBridge=new BrowserWebGLBridge(settings);
+        Renderer3DWorldChunkFrame.ChunkMesh staticA=mesh(statik,0,1,1,0,6667,9100,0),staticB=mesh(statik,0,2,2,0,6667,9101,0);
+        prepare(settingsBridge,frame,staticA,staticB);prepare(settingsBridge,frame,staticA,staticB);
         RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
+        require(prepare(settingsBridge,frame,staticA,staticB).remainingRepacks==1&&settings.replaces==1,"Settings-only repacks bypassed discretionary cap");
+        require(prepare(settingsBridge,frame,staticA,staticB).remainingRepacks==0&&settings.replaces==2,"Deferred settings repack never completed");
         // Same geometry/material IDs, changed texture metadata must repack without a pose change.
         scene.loadTexture(0,new int[]{0xff00ff,0x99cc11},0,texture);scene.endScene(0);Renderer3DFrame recolored=scene.getRenderer3DFrame();
         int materialId=prepare(bridge,frame,b).draws[0],materialReplaces=backend.replaces;
