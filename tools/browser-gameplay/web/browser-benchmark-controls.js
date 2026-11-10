@@ -21,3 +21,11 @@ export function browserOwnedStateBenchmarkPolicy(mode, options) {
   if (!['on','off'].includes(policy)) throw new Error('Invalid private ownedstate policy');
   return policy==='on';
 }
+
+/** Independent startup-only CPU experiments; no ordinary/software overrides. */
+export function browserModelBenchmarkControls(mode, options) {
+  if (mode !== 'webgl' || !options.has('benchmark')) return {properties: [], requested: null};
+  const read=(name,fallback)=>{const value=options.get(name)||fallback;if(value!=='on'&&value!=='off')throw new Error(`Invalid private ${name} policy`);return value==='on';};
+  const modelPickBounds=read('modelpickbounds','off'),haloMatchReuse=read('halomatch','on');
+  return {properties:['spoiledmilk.browserModelPickBounds='+modelPickBounds,'spoiledmilk.presentationHaloMatchReuse='+haloMatchReuse],requested:{modelPickBounds,haloMatchReuse}};
+}
