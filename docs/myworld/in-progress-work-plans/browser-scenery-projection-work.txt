@@ -1,7 +1,8 @@
 Browser fresh scenery projection experiment
 ===========================================
 
-Status: source/test authoring; default OFF; awaiting permitted CPU validation.
+Status: CPU-validated default-OFF experiment; ready for manager review.
+Actual browser timing and dynamic spell/projectile/summon parity remain later gates.
 Base authority: 325bf42b60fe411705f9f14c0a3ef6debabe24a7.
 
 Private property spoiledmilk.browserSceneryProjectionWork defaults false.
@@ -16,11 +17,12 @@ collects exact int-shifted numerator extrema and positive depth extrema during
 that same current-frame traversal. Four numerator/depth corners per axis bound
 all signed Java integer-division results. Existing outward scale padding remains
 the authority; viewport Y addition wrap, near-plane mixtures, incomplete arrays,
-small models and unproven bounds fall back. No long arithmetic on the hot path.
+small models and unproven bounds fall back. Per-vertex extrema use int
+comparisons rather than Math helper calls. No long arithmetic on the hot path.
 
 Only full GPU-owned scenery is eligible. Actor/sprite m_T, interaction-only
 proxies, native/software/mixed/CPU-depth/editor and forced legacy are excluded.
-Only picking frames use the experiment. Fresh XYZ and visibility are always
+Only early-cull picking frames use the experiment; late cull remains literal. Fresh XYZ and visibility are always
 available; projected XY are delayed only for a model wholly outside the mouse
 envelope. Scene checks each omitted face uses current rotated vertices. A null,
 short, invalid or spare-capacity face materializes exact same-frame projection
@@ -36,7 +38,8 @@ changing camera/zoom/near plane, interaction proxy, GPU/mixed/software/depth and
 forced fallback. Separate direct current-coordinate cases include negative and
 extreme XYZ, camera offsets/rotations, Java shift wrapping, viewport addition
 wrap, huge pick scales, near clipping and malformed array exception fallback.
-Test-only isolated source instrumentation counts projected and omitted vertices;
+Test-only isolated source instrumentation counts projected/omitted vertices and
+actual perspective plus added interval divisions;
 no production counters/timers are added. The original method literal is checked.
 
 Expected work reduction is perspective divisions/stores for rejected scenery,
@@ -44,3 +47,68 @@ not transform refresh/normals, fresh XYZ rotations, actor projection/compositing
 resident input construction or packing. Candidate bounds plus a second projection
 pass can cost more for mouse-near models. Actual matched browser measurement is
 required; no FPS gain or60FPS claim follows from CPU parity/work counters.
+
+Ownership and alias/error review
+-------------------------------
+Before any split work, malformed/incomplete arrays retain the literal original
+method and exception/mutation sequence. After the unchanged transform refresh,
+all reordered output arrays must be independent of source/transformed arrays,
+each other and observable material/topology/light payloads. Nested faceIndices
+and faceParam1 rows are reference-checked without reading unsafe vertex indices.
+This single post-refresh alias walk avoids a duplicate O(face-capacity) scan.
+The original fallback call is OUTSIDE the refresh try/catch, avoiding duplicate
+GenUtil error wrapping. Its second refresh does nothing to the state that the
+unchanged first refresh already completed; independent tests cover m_Yb states
+0/1/2/3/-1/Integer.MIN_VALUE/Integer.MAX_VALUE and compare final alias mutations
+and error text, not merely pixels.
+
+Maintained ownership scope: RSModel.setFaceVertexCount and
+clearRotDataAndParams26 allocate fresh projection and XYZ arrays; capacity growth
+uses owned Arrays.copyOf, and clone/combine constructors route through allocation.
+Production-source assignment audit found no cross-model assignment of those
+package-private output arrays. No global O(models²) scan is introduced to support
+arbitrary reflection-created cross-model shared output graphs. Per-model alias
+hardening covers the current writer/read ordering; it is not a claim that all
+possible hostile external object graphs are supported.
+
+Final CPU evidence
+------------------
+output/tests/browser-scenery-projection-work/20261110T210448656049Z/result.json
+records source, fixture and built-JAR SHA256 receipts. Independently compiled
+frozen325 Scene+RSModel+helper, candidateOFF, candidateON and absent/default each
+match the576-frame real Scene digest:
+04a53a9d5a6d6623859a3609185c22e703e5030a08f4630e57134d03bab56ed4.
+Nine additional real Scene frames assert NONEMPTY picks, actor anchors, surviving
+face captures and resident payload; their serialized pixel/pick/capture/dense
+negative-plane shifted-origin mesh digest also matches all versions:
+f2e8adcfbe722ab783a1e388381c223e3ee3bbceef872147890ee0c30c6f55c9.
+Scene itself has XYZ and no level field; the negative-plane case is explicitly
+source mesh export, not an assertion that this headless fixture loads a map.
+
+20000 independent fresh-coordinate cases plus512 retained-moving frames and
+alias/error controls match the frozen authority digest:
+59a31f99ac4c57720caf7636d8066ac219bb398b8d1588e211d77fdbdf43bd95.
+Some retained tests intentionally leave projected arrays stale across frames,
+then require a later actual consumer to receive fresh coordinates. Alias tests
+compare all vertex input/transformed/projected arrays after both refresh modes
+and exceptional state values. Failed initial fixture authoring attempts (private
+field access and sink install without explicit removal) remain in the earlier
+ignored run directories; final complete run passes without relaxing parity.
+
+Test-only work counters for585 real Scene frames: projected vertices107657→
+102587,5070 deferred; perspective divisions200630→190490 plus472 added interval
+divisions (190962 total). Mixed/CPU/native/late/forceLegacy cohorts intentionally
+remain in this corpus. These are deterministic work counts, NOT CPU/FPS gains.
+Additional reference/alias guards and second passes on mouse-near models can
+outweigh saved division work. Dynamic spell/projectile/summon VFX, browser input
+and actual scene transitions are not exercised by this CPU suite.
+
+./scripts/build-client.sh passes for the final production source.
+python3 tests/myworld/test-browser-scenery-projection-work.py passes.
+python3 tests/myworld/test-browser-model-pick-bounds.py passes its frozen/default
+Scene cohorts,400018 bound checks,1084 ownership and2975 wall/roof checks and
+private Bootstrap compile. git diff --check passes.
+workspace-layout.py check was run: inherited ignored asset-root sprites and old
+unclassified output-root files fail exactly as in preceding ai2 tasks; preserved,
+not cleaned. This task creates only declared output/tests subject/run directories.
+No GPU/browser/server/public/deployment/account/map operation was performed.

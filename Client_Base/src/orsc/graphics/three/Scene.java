@@ -2968,7 +2968,7 @@ public final class Scene {
 
 			long modelRotateStart = RenderTelemetry.now();
 			boolean splitSceneryProjection = isBrowserSceneryProjectionWorkEnabled()
-				&& skipProjectedWorldCapture && !forceLegacyWorldRaster && this.m_K;
+				&& earlyResidentFaceCull && skipProjectedWorldCapture && !forceLegacyWorldRaster && this.m_K;
 			if (splitSceneryProjection && this.browserProjectionDeferred.length < this.models.length)
 				this.browserProjectionDeferred = new boolean[this.models.length];
 			int var3;

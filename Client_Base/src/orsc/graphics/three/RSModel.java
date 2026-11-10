@@ -2371,8 +2371,20 @@ public final class RSModel {
 			return false;
 		}
 		try {
-
 			this.resetTransformCache((int) 7972);
+		} catch (RuntimeException failure) {
+			throw GenUtil.makeThrowable(failure, "ca.U(" + yOffset + ',' + vParamSrc + ',' + xOffset + ',' + (byte) -122 + ','
+				+ zOffset + ',' + rotY + ',' + rotZ + ',' + rotX + ',' + zTop + ')');
+		}
+		// Validate aliasing only after refresh, once per eligible model. Refresh is
+		// the unchanged first part of legacy rotation; the fallback's second refresh
+		// is a no-op for that already-refreshed state, preserving legacy mutations.
+		// No earlier eligibility can authorize writes into replaced/aliased storage.
+		if (!browserProjectionArraysComplete() || !browserProjectionArraysIndependent()) {
+			this.rotate1024(yOffset, vParamSrc, xOffset, (byte) -122, zOffset, rotY, rotZ, rotX, zTop);
+			return false;
+		}
+		try {
 			if (this.minZ <= MiscFunctions.frustumMinX && this.maxZ >= MiscFunctions.frustumMaxX
 				&& this.minX <= MiscFunctions.frustumMinY && this.maxX >= MiscFunctions.frustumMaxY
 				&& this.minY <= MiscFunctions.frustumNearZ && this.maxY >= MiscFunctions.frustumFarZ) {
@@ -2428,9 +2440,12 @@ public final class RSModel {
 
 					// Shift exactly as legacy Java int projection does, including wrapping.
 					int nx = x0 << vParamSrc, ny = yO << vParamSrc;
-					minNX = Math.min(minNX, nx); maxNX = Math.max(maxNX, nx);
-					minNY = Math.min(minNY, ny); maxNY = Math.max(maxNY, ny);
-					minDepth = Math.min(minDepth, zO); maxDepth = Math.max(maxDepth, zO);
+					if (nx < minNX) minNX = nx;
+					if (nx > maxNX) maxNX = nx;
+					if (ny < minNY) minNY = ny;
+					if (ny > maxNY) maxNY = ny;
+					if (zO < minDepth) minDepth = zO;
+					if (zO > maxDepth) maxDepth = zO;
 
 					this.vertXRot[var17] = x0;
 					this.vertYRot[var17] = yO;
@@ -2460,6 +2475,40 @@ public final class RSModel {
 			&& this.vertHead <= this.vertXTransform.length && this.vertHead <= this.vertYTransform.length && this.vertHead <= this.vertZTransform.length
 			&& this.vertHead <= this.vertXRot.length && this.vertHead <= this.vertYRot.length && this.vertHead <= this.vertZRot.length
 			&& this.vertHead <= this.vertexParam6.length && this.vertHead <= this.vertexParam2.length;
+	}
+
+	private boolean browserProjectionArraysIndependent() {
+		return this.vertexParam6 != this.vertexParam2
+			&& this.vertexParam6 != this.vertXRot && this.vertexParam6 != this.vertYRot && this.vertexParam6 != this.vertZRot
+			&& this.vertexParam2 != this.vertXRot && this.vertexParam2 != this.vertYRot && this.vertexParam2 != this.vertZRot
+			&& this.vertXRot != this.vertYRot && this.vertXRot != this.vertZRot && this.vertYRot != this.vertZRot
+			&& !browserOutputAliasesInput(this.vertexParam6) && !browserOutputAliasesInput(this.vertexParam2)
+			&& !browserOutputAliasesInput(this.vertXRot) && !browserOutputAliasesInput(this.vertYRot)
+			&& !browserOutputAliasesInput(this.vertZRot)
+			&& !browserProjectionAliasesPayload(this.vertexParam6) && !browserProjectionAliasesPayload(this.vertexParam2)
+			&& !browserProjectionAliasesRows(this.faceIndices) && !browserProjectionAliasesRows(this.faceParam1);
+	}
+
+	private boolean browserOutputAliasesInput(int[] output) {
+		return output == this.vertX || output == this.vertY || output == this.vertZ
+			|| output == this.vertXTransform || output == this.vertYTransform || output == this.vertZTransform;
+	}
+
+	private boolean browserProjectionAliasesPayload(int[] output) {
+		return output == this.faceDiffuseLight || output == this.faceIndexCount || output == this.facePickIndex
+			|| output == this.scenePolyNormalShift || output == this.scenePolyNormalMagnitude
+			|| output == this.faceTextureBack || output == this.faceTextureFront || output == this.vertDiffuseLight
+			|| output == this.faceMaxX || output == this.faceMaxY || output == this.faceMaxZ
+			|| output == this.faceMinX || output == this.faceMinY || output == this.faceMinZ
+			|| output == this.faceNormX || output == this.faceNormY || output == this.faceNormZ
+			|| output == this.fishingSpotClarityBaseX || output == this.fishingSpotClarityBaseY
+			|| output == this.fishingSpotClarityBaseZ || output == this.fishingSpotClarityRippleGroup;
+	}
+
+	private boolean browserProjectionAliasesRows(int[][] rows) {
+		if (rows == null) return false;
+		for (int[] row : rows) if (row == this.vertexParam6 || row == this.vertexParam2) return true;
+		return false;
 	}
 
 	/** Complete the SAME frame's projection before any projected-coordinate consumer. */
