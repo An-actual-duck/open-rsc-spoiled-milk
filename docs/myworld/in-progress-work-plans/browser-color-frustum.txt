@@ -78,3 +78,18 @@ It records actual AMD ANGLE OpenGL identity and readback results; no FPS claim.
 The manager owns GPU scheduling. Until that explicit run finishes, GPU evidence
 is UNRUN. Outputs belong under output/tests/browser-color-frustum/hardware/RUN.
 No Java production source, public server, player data or release changes occur.
+
+Initialization and fixture scheduling
+-------------------------------------
+The one-time async shader digest rechecks backend ownership before allocating
+more GL resources. Stop while a digest is pending must not resume into disposed
+resources. Program assignment precedes that await, so a second initialize call
+already fails before allocation; the API fixture checks both races explicitly.
+
+The hardware harness yields browser tasks while waiting for its ordinary GPU
+readiness fence, with a10-second deadline and backend/frame/readiness diagnostics.
+Resolved-Promise-only warmup is insufficient for WebGL fence visibility. The
+initial checkpoint03ffed742 stage exposed that harness issue in the original
+backend before any pixel comparison; its failed evidence remains preserved.
+Production readiness code is unchanged. The corrected stage requires a fresh
+explicit manager-run GPU proof before this slice is accepted.

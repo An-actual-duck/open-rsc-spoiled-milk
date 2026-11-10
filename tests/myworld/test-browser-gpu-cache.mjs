@@ -87,7 +87,17 @@ console.log('PASS native atlas UV samples, copied repack metadata, fixed residen
 // Optional actual-production shader authority + color-only API regression cohort.
 if(process.argv[3]){
  functions.checkFramebufferStatus=()=>gl.FRAMEBUFFER_COMPLETE;
- const c=createBrowserWebGL(canvas()),cn=c.natives,worldVertex=fs.readFileSync(process.argv[3],'utf8');
+ const worldVertex=fs.readFileSync(process.argv[3],'utf8');
+ const cryptoDescriptor=Object.getOwnPropertyDescriptor(globalThis,'crypto');let releaseDigest;
+ const digest=new Promise(resolve=>releaseDigest=resolve);
+ try{
+  Object.defineProperty(globalThis,'crypto',{configurable:true,value:{subtle:{digest:()=>digest}}});
+  const stopped=createBrowserWebGL(canvas()),initializing=stopped.natives.Java_orsc_BrowserWebGLBridge_initialize(null,worldVertex,f);
+  const pendingResources=resources();await assert.rejects(()=>stopped.natives.Java_orsc_BrowserWebGLBridge_initialize(null,worldVertex,f),/initialized twice/);assert.equal(resources(),pendingResources,'Duplicate initialize during digest allocated resources');
+  stopped.dispose();releaseDigest(new Uint8Array(32).buffer);await assert.rejects(()=>initializing,/backend unavailable/);stopped.dispose();
+  for(const [kind,items]of owned)assert.equal(items.size,0,'Stop during shader authority digest recreated '+kind);
+ }finally{if(cryptoDescriptor)Object.defineProperty(globalThis,'crypto',cryptoDescriptor);else delete globalThis.crypto;}
+ const c=createBrowserWebGL(canvas()),cn=c.natives;
  await cn.Java_orsc_BrowserWebGLBridge_initialize(null,worldVertex,f);assert.equal(c.stats.colorFrustumCulling,true);
  await cn.Java_orsc_BrowserWebGLBridge_initializeLighting(null,v,f);await cn.Java_orsc_BrowserWebGLBridge_initializeSky();
  const lighting=new Float32Array(81);lighting[0]=lighting[1]=1;lighting[3]=lighting[4]=64;lighting[6]=1;for(let i=0;i<4;i++)lighting[32+i*5]=lighting[48+i*5]=1;

@@ -52,9 +52,14 @@ try{
     await n.Java_orsc_BrowserWebGLBridge_present(null,width,height,true,matrices,values,new Int32Array(draws),new Int32Array(width*height).fill(0x01000000));
    };
    for(let warm=0;warm<(frame===0||frame===32?30:1);warm++)await render();
-   if(backend.stats.worldReadiness.phase!=='ready'){gl.finish();await render();}
+   const deadline=performance.now()+10000;
+   while(backend.stats.worldReadiness.phase!=='ready'&&performance.now()<deadline){
+    // WebGL fence visibility needs a new browser task, not only resolved-Promise microtasks.
+    gl.finish();await new Promise(resolve=>setTimeout(resolve,0));await render();
+   }
+   proof.lastSource={backend:session.canvas.id,frame,uploadedChunks:backend.stats.uploadedChunks,readiness:{...backend.stats.worldReadiness}};
    const pixels=new Uint8Array(width*height*4);gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);require(gl.getError()===gl.NO_ERROR,'Actual GPU error at frame '+frame);
-   require(backend.stats.uploadedChunks===101&&backend.stats.worldReadiness.phase==='ready','Color cull altered complete residency/readiness');
+   require(backend.stats.uploadedChunks===101&&backend.stats.worldReadiness.phase==='ready','Incomplete residency/readiness: '+JSON.stringify(proof.lastSource));
    require(backend.stats.shadowNearDraws===101&&backend.stats.shadowFarDraws===100,'Offscreen shadow casters or animated far exclusions changed');
    views.push(pixels);
   }
