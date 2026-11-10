@@ -134,3 +134,27 @@ Warm Node microcheck actual texture8 about1.141ms/build and animated17 about0.28
 versus earlier stable0.451/0.113; Firefox initial and animated upload costs still
 need measurement. Fixture records both stable/cutout17 CPU-only plan costs, and
 supports nearest/stable/cutout/reference identical-view PNG snapshots.
+
+Root v4 same-frame true-tree review rejected ordinary 'stable': linear mip
+filtering visibly smooths the classic leaf grain into a faceted shell. Full-scene
+ROI labels were also confounded by fixture subject occlusion; those scores cannot
+be used as independent floor/tree quality evidence. v7 fixes this by separate
+actual tree/floor/wall passes (three independentlyselected chunks), nonempty-pixel
+checks and96 per-view green/silhouette receipts. cutout-nearest is a separate
+NEAREST_MIPMAP_LINEAR control with nearest within-level coverage fit. Root still
+observed pronounced clumpy/faceted canopy in v7 mid tree. Neither mode accepted.
+
+Final bounded experiment cutout-aniso4 (4c0c8819a; moving-v8-aniso4): exactly the
+linear cutout mip/alpha policy with only world sampler anisotropy min(4,reported
+hardware cap). No extra textures, allocations or mip bytes. Capability receipt
+reports extension presence, requested4, cap/applied amount and explicit trilinear
+fallback reason for missing/invalid/below4 limits. Missing extension is usable
+fallback, never advertised as anisotropic success. Sampler setup GL errors still
+fail transactionally and delete owned sampler; Stop disposal is idempotent.
+One-time extension/cap queries, no per-frame queries. Tests cover absent,1,2,16,
+invalidNaN cap, setupGLerror, sampler isolation and disposal. Default OFF remains.
+Khronos revision6 explicitly permits this enum in WebGL2 samplerParameterf:
+https://registry.khronos.org/webgl/extensions/EXT_texture_filter_anisotropic/
+Root owns aligned Firefox snapshot/visual acceptance. No further sampling modes
+planned: if this also loses leaf character, keep original nearest appearance and
+consider the separate physical-world-raster direction rather than claim a fix.
