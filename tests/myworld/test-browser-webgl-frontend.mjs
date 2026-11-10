@@ -48,6 +48,7 @@ assert.equal(gpuOptions.ownedState,true,'Ordinary frontend must pass the verifie
 assert.equal(gpuOptions.benchmarkControl,false,'Ordinary frontend must not expose live benchmark control');
 assert.equal(window.browserProof.ownedStateRequested,true);assert.equal(stats.ownedStateActive,true,'Actual selected backend policy receipt');
 assert.equal(window.browserBenchmarkOwnedState,undefined);
+assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserModelPickBounds=')||p.startsWith('spoiledmilk.presentationHaloMatchReuse=')),false,'Ordinary frontend must not override CPU benchmark experiment policies');
 assert.equal(middleCreated,1,'WebGL frontend creates one middle-input owner');
 assert.equal(window.browserProof.middleInput,middleStats,'proof counters come from the real module seam');
 assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent,middleNative,'Java input consumer is merged into CheerpJ natives');
@@ -67,6 +68,7 @@ await configured.natives.Java_orsc_browser_BrowserBootstrap_reportPreparation(nu
 assert.equal(window.browserProof.preparationControls.framePreparationEnabled,true);
 assert.equal(window.browserProof.preparationControls.framePreparationActive,false);
 assert.equal(window.browserProof.preparationControls.animatedBufferReuseEnabled,true);
+await configured.natives.Java_orsc_browser_BrowserBootstrap_reportModelPickBounds(null,true,false);assert.equal(window.browserProof.modelPickBounds.requested,true);assert.equal(window.browserProof.modelPickBounds.enabled,false);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportTelemetry(null,'sceneRenderStats',[1,77]);
 assert.equal(window.browserProof.profiled,true);assert.deepEqual(Array.from(window.browserProof.telemetrySamples[0].values),[1,77]);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportInputError(null,'controlled input relay error');
