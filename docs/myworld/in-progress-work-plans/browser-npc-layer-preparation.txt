@@ -72,3 +72,15 @@ Generated evidence uses the declared output/tests/browser-npc-layer-preparation/
 subject. No browser/GPU process, server, account data or release operation is
 needed for these CPU comparisons. An integrated private browser functional check
 and controlled same-artifact timing remain the manager's next acceptance gate.
+
+CPU results
+-----------
+Client build PASS. Exact original/enabled/disabled oracle PASS: 864 real draws,
+8,192 unchanged captured commands, 576 nonempty software images and identical
+production composite bytes. Non-GPU sprite selections remain 23,300; GPU
+selections fall from 11,636 to 9,372. Disabled candidate output and all selection
+counts exactly match original. All three malformed-input exception/ownership
+cases pass. NPC visual/projectile checks and the entire renderer guardrail suite
+PASS. diff --check PASS. Layout check retains inherited unclassified output-root
+warnings; this task's generated evidence uses its declared tests subject.
+No runtime speedup or native/browser FPS claim follows from selector counts.
