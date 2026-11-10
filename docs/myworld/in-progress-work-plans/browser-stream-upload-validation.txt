@@ -96,3 +96,13 @@ Normal-merged ordinary-ownedON adoption main2b0681f841. Only frontend policy
 defaults/control assertions differ from v2; imported error-policy runtime modules
 remain byte-identical. Ordinary WebGL uses owned state but uploadvalidation stays
 OFF pending a measured performance decision. No player-facing override was added.
+
+Frozen normal-world measurement candidate (not yet a performance result):
+ ai2/output/tests/browser-gameplay-spike/browser-stream-validation-candidate
+ HTTP127.0.0.1:8133; JS source2b766556be2a1d4e8e777ab80138f5f3f46d7a2f.
+ Maintained prepare/serve; client and bootstrap compile both explicitly use the
+ unchanged reviewed b503 dependencyJAR (baseline Java sourcee696adeee737). No held
+ overlay-clear experiment included. stage.json records all frontend hashes and
+ verifies9imported error-policy runtime modules identical to passed v2 hardware.
+ benchmark ownedstate=on, uploadvalidation=off initially; private live control
+ queues ON/OFF at frameWork end. No worker GPU/browser run or performance claim.
