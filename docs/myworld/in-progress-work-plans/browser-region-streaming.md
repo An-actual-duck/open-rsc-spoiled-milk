@@ -165,3 +165,29 @@ streaming-firefox-3 (including the held screenshots and focus-result.json).
 Manager build, full renderer guardrails, native terrain activation/recovery,
 region packing/readiness/retained/overlay/upload failure tests and canonical
 workspace layout check passed after integration.
+
+## Subsequent Firefox load-phase evidence
+
+The manager captured existing Java transition stdout in the isolated Firefox
+session without opening developer tools or enabling native/JMX boundary tracing.
+Evidence: `output/diagnostics/browser-motion-transitions/region-phase-firefox-1/result.json`.
+These are diagnostic measurements, not an uninstrumented latency benchmark.
+
+A far teleport to (350,550,L0) reported 103 ms for the core client region
+transition, including 89 ms of world section work. The browser's notice-to-complete
+interval measured 10,045 ms, with 42 held frames, 112 new chunk uploads and
+175,888,248 uploaded bytes. The nested Java phase spans must not be added together,
+and the notice interval can overlap them. These spans do not account for every
+packet/geometry phase. The next measurements must cover held-frame geometry
+preparation, Java/JS transfer and GPU uploads; these receipts alone do not isolate
+their costs or exclude other core work outside the recorded region method.
+
+Current `frameWork` timings are reported only after completed world presentation.
+The held/no-world early returns omit much of the loading interval. Before
+changing upload budgets, add or capture bounded load-only phase measurements
+covering those exits: packing time, native upload time, vertices/bytes/chunks and
+remaining work. Preserve authoritative scene/input activation and retained FULL
+presentation. Do not enable full `BoundaryLoadingDiagnostics` blindly in CheerpJ:
+its runtime initialization uses management beans independently of the existing
+browser counters-only profiling mode. No speculative loading-budget change was
+made from the byte totals alone.

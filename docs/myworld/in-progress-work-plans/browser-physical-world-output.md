@@ -179,6 +179,30 @@ Published main7450594c (including its separately verified shadow-uniform cache)
 was normally merged before adoption; no cherry-pick or experimental texture branch
 was incorporated. Fresh frozen artifacts follow the exact adoption checkpoint.
 
+## Manager integration and ordinary preview
+
+Exact READY96aab3338bd4eb51dada76e20aae2803e9e617ee was integrated as
+main6408aecb22d8a95c03a806a34b84721034ad3224. Manager policy/frontend variants,
+42-frame physical pipeline, retained/overlay, owned-state, upload-error, shadow
+cache, middle-mouse and canonical layout checks passed. The frontend fixture
+requires Node's `--experimental-vm-modules` flag; its initial invocation without
+that flag failed before fixture execution and the correct invocations passed.
+
+The immutable adoption stage was hash-checked against integrated main and served
+on loopback8156. Actual ordinary Firefox startup (`?mode=webgl`, no benchmark or
+physical override) reached GAME/ready, physical output requested/enabled at
+1200x675 with Java960x540, no GPU error and no benchmark/projection-reuse mode.
+Evidence: manager `output/diagnostics/browser-motion-transitions/final-preview-1/`.
+The separate source-projection experiment was not integrated: its small raw FPS
+difference was confounded by actors, visible draw counts and camera offsets.
+
+The disposable browserdemo account's temporary administrator group was restored
+offline to its original group10, after a server-confirmed return to133660,L0.
+The ordinary preview uses that restored account. Owner test data and the public
+Oracle server were untouched. This is a private visual-review milestone; moving
+texture shimmer still needs the owner's assessment, region preparation latency
+remains measurable, and Firefox60 FPS has not been achieved or claimed.
+
 
 Adoption source checkpoint: `a385bff824098e2fe194d0129ebdef557ccb7594`.
 Updated immutable artifacts (prepare-only; no worker browser/server process):
