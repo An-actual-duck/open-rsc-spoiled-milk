@@ -12,3 +12,11 @@ export function browserPreparationBenchmarkControls(mode, options) {
     requested: {framePreparation: policies[0], animatedBufferReuse: policies[1]},
   };
 }
+
+/** JS-only same-artifact toggle; not a client preference or Java property. */
+export function browserOwnedStateBenchmarkPolicy(mode, options) {
+  if (mode !== 'webgl' || !options.has('benchmark')) return false;
+  const policy=options.get('ownedstate')||'off';
+  if (!['on','off'].includes(policy)) throw new Error('Invalid private ownedstate policy');
+  return policy==='on';
+}

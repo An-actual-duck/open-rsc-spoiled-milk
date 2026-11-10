@@ -1,6 +1,6 @@
 /** Geometry-depth backend for the unchanged production shadow projection/receiver shader.
  * Projection policy and shader text arrive from BrowserLightingData; no scene or sun math is duplicated. */
-export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShader}) {
+export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShader,ownedFrame}) {
   const MAX_SHADOW_BYTES=160*1024*1024,ownedVAOs=new Map(),locations=new Map();
   let depthProgram=null,depthVertex=null,depthFragment=null,whiteTexture=null,emptyDepth=null,near=null,far=null,previous=null,values=null,disposed=false,drawSignature='',previousActive=false;
   stats.shadowResourceBytes=0;stats.shadowResourceBudgetBytes=MAX_SHADOW_BYTES;stats.shadowNearDraws=stats.shadowFarDraws=0;
@@ -27,7 +27,7 @@ export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShad
     // Validate peak allocation, retaining the old valid map until replacement
     // storage and its framebuffer are complete. Failure must leave ownership
     // and accounting unchanged so retry/disposal cannot double-delete it.
-    if(!Number.isInteger(size)||size<1||size>gl.getParameter(gl.MAX_TEXTURE_SIZE)||stats.shadowResourceBytes+bytes>MAX_SHADOW_BYTES)throw new Error('Browser production shadow resource limit');
+    if(!Number.isInteger(size)||size<1||size>(ownedFrame?.active?ownedFrame.maxTextureSize:gl.getParameter(gl.MAX_TEXTURE_SIZE))||stats.shadowResourceBytes+bytes>MAX_SHADOW_BYTES)throw new Error('Browser production shadow resource limit');
     let texture=null,framebuffer=null;
     try {
       texture=gl.createTexture();framebuffer=gl.createFramebuffer();if(!texture||!framebuffer)throw new Error('Browser shadow allocation failed');
@@ -71,7 +71,7 @@ export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShad
     for(const [id,entry]of ownedVAOs)if(!chunks.has(id)){gl.deleteVertexArray(entry.vao);ownedVAOs.delete(id);}
     if(values[1]!==1||values[15]<0){suspend();return;}
     if(!depthProgram)throw new Error('Browser production shadow shader is not initialized');
-    const old={draw:gl.getParameter(gl.DRAW_FRAMEBUFFER_BINDING),read:gl.getParameter(gl.READ_FRAMEBUFFER_BINDING),viewport:gl.getParameter(gl.VIEWPORT),program:gl.getParameter(gl.CURRENT_PROGRAM),vao:gl.getParameter(gl.VERTEX_ARRAY_BINDING),array:gl.getParameter(gl.ARRAY_BUFFER_BINDING),active:gl.getParameter(gl.ACTIVE_TEXTURE),mask:gl.getParameter(gl.COLOR_WRITEMASK),depthMask:gl.getParameter(gl.DEPTH_WRITEMASK),depthFunc:gl.getParameter(gl.DEPTH_FUNC),clear:gl.getParameter(gl.DEPTH_CLEAR_VALUE),depth:gl.isEnabled(gl.DEPTH_TEST),blend:gl.isEnabled(gl.BLEND),cull:gl.isEnabled(gl.CULL_FACE),scissor:gl.isEnabled(gl.SCISSOR_TEST),polygon:gl.isEnabled(gl.POLYGON_OFFSET_FILL),factor:gl.getParameter(gl.POLYGON_OFFSET_FACTOR),units:gl.getParameter(gl.POLYGON_OFFSET_UNITS)};
+    const old=ownedFrame?.active?null:{draw:gl.getParameter(gl.DRAW_FRAMEBUFFER_BINDING),read:gl.getParameter(gl.READ_FRAMEBUFFER_BINDING),viewport:gl.getParameter(gl.VIEWPORT),program:gl.getParameter(gl.CURRENT_PROGRAM),vao:gl.getParameter(gl.VERTEX_ARRAY_BINDING),array:gl.getParameter(gl.ARRAY_BUFFER_BINDING),active:gl.getParameter(gl.ACTIVE_TEXTURE),mask:gl.getParameter(gl.COLOR_WRITEMASK),depthMask:gl.getParameter(gl.DEPTH_WRITEMASK),depthFunc:gl.getParameter(gl.DEPTH_FUNC),clear:gl.getParameter(gl.DEPTH_CLEAR_VALUE),depth:gl.isEnabled(gl.DEPTH_TEST),blend:gl.isEnabled(gl.BLEND),cull:gl.isEnabled(gl.CULL_FACE),scissor:gl.isEnabled(gl.SCISSOR_TEST),polygon:gl.isEnabled(gl.POLYGON_OFFSET_FILL),factor:gl.getParameter(gl.POLYGON_OFFSET_FACTOR),units:gl.getParameter(gl.POLYGON_OFFSET_UNITS)};
     try {
       gl.useProgram(depthProgram);gl.uniform1i(gl.getUniformLocation(depthProgram,'uTexture'),0);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.depthFunc(gl.LESS);gl.clearDepth(1);gl.colorMask(false,false,false,false);
       gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);gl.disable(gl.SCISSOR_TEST);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1.5,2.0);
@@ -94,8 +94,9 @@ export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShad
       }else{destroy(far);destroy(previous);far=previous=null;previousActive=false;}
       drawSignature=signature;stats.geometryShadowsActive=true;
     } finally {
+      if(ownedFrame?.active){ownedFrame.target();gl.colorMask(true,true,true,true);gl.depthMask(true);gl.disable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(0,0);gl.activeTexture(gl.TEXTURE0);}else{
       gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,old.draw);gl.bindFramebuffer(gl.READ_FRAMEBUFFER,old.read);gl.viewport(...old.viewport);gl.useProgram(old.program);gl.bindVertexArray(old.vao);gl.bindBuffer(gl.ARRAY_BUFFER,old.array);gl.colorMask(...old.mask);gl.depthMask(old.depthMask);gl.depthFunc(old.depthFunc);gl.clearDepth(old.clear);gl.polygonOffset(old.factor,old.units);
-      for(const [cap,on]of [[gl.DEPTH_TEST,old.depth],[gl.BLEND,old.blend],[gl.CULL_FACE,old.cull],[gl.SCISSOR_TEST,old.scissor],[gl.POLYGON_OFFSET_FILL,old.polygon]])on?gl.enable(cap):gl.disable(cap);gl.activeTexture(old.active);
+      for(const [cap,on]of [[gl.DEPTH_TEST,old.depth],[gl.BLEND,old.blend],[gl.CULL_FACE,old.cull],[gl.SCISSOR_TEST,old.scissor],[gl.POLYGON_OFFSET_FILL,old.polygon]])on?gl.enable(cap):gl.disable(cap);gl.activeTexture(old.active);}
     }
   }
   function bindReceiver(){
