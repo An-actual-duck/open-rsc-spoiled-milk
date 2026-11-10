@@ -25,3 +25,47 @@ draws, sticky failure, blocked later calls/mode changes, cleanup, allocation err
 remaining immediate, and next-frame-only policy changes. Existing legacy atlas,
 world allocation rollback, sky, overlay and retained fixtures remain required.
 These API doubles are not hardware evidence or performance acceptance.
+
+Private controls and observability
+----------------------------------
+Use WebGL + benchmark + uploadvalidation=on; omitted/off keeps literal immediate
+checks. No player-facing option. window.browserBenchmarkStreamUploadValidation(bool)
+queues a next-frame policy and is removed on Stop. Requested/active/presented
+policies are separate stats; per-world-frame policy samples are bounded600/4096.
+Counters distinguish deferred eligible checks, pre-draw checks, passes, failures
+and frame-end transitions. These counters describe validation attempts; content
+upload counters can be tentative before the gate, as stated above.
+
+The gate runs BEFORE timer query allocation/begin as well as shadow preparation.
+A separately tracked active timer query is ended/deleted on disposal if a later
+immediate RGB/postdraw error interrupts presentation. Successful frames transfer
+ownership to the existing bounded pending-query ledger. Timer-enabled error tests
+cover this cleanup; a failed batch itself never allocates a new query.
+
+Normal-merged reviewed owned-state main a4fd736e3. Constructors and frameWork
+combine independent ownership and upload-validation policies. CPU fault probes
+run with both owned-state ON and OFF; the existing42-frame568-draw effective-state
+oracle still reports2766 scoped queries versus0 owned, preserving its immediate
+error-poll policy when this candidate is off. Standalone immediate checks retain
+original error prefixes/retry contracts. No Java production source changed.
+
+Hardware preparation (does NOT launch a browser, server or GPU):
+ python3 tests/myworld/prepare-browser-stream-upload-hardware.py --run-id NAME \
+   --dependency-jar /absolute/path/to/reviewed/client.jar
+This freezes module/shader bytes and provenance under declared tests output.
+The standalone page enables the reviewed owned-state path alongside validation.
+The separate explicit runner is manager-only:
+ node tests/myworld/run-browser-stream-upload-hardware.mjs --run-hardware RUN
+It uses a dedicated loopback origin/profile/owned Chrome process and verifies
+physical AMD ANGLE OpenGL. It warms actual resource allocations first, then
+injects real queued errors for chunk, atlas pixels/descriptors, sky palette and
+same-size T. No gameplay, image-parity or performance claim is made by these
+standalone production-shader error probes. The RGB post-world exclusion is
+explicitly exercised by the CPU fixture with immediate Coverage error checking,
+without a zero-world-draw claim.
+
+Validation commands: test-browser-stream-upload-validation.mjs; existing
+gpu-cache, sprite-atlas, sky, overlay, lighting, retained-frame, resident-draw-state
+and owned-gl-state Node fixtures; frontend VM fixture ordinary plus
+--benchmark-stream mode. All passed before the final freeze. No GPU run by worker.
+Layout audit reports only inherited loose ai2 assets/outputs; no cleanup attempted.

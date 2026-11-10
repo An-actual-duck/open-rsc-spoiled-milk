@@ -13,10 +13,10 @@ try{
   const gl=new Proxy(raw,{get(target,key){const value=target[key];if(typeof value!=='function')return value;return(...args)=>{
    if(fault===key){fault=null;if(key==='bufferSubData')target.bufferSubData(target.ARRAY_BUFFER,0x7fffffff,new Uint8Array(4));else target.texSubImage2D(target.TEXTURE_2D,0,0,0,-1,1,target.RGBA,target.UNSIGNED_BYTE,new Uint8Array(4));}
    if(key==='drawArrays'||key==='drawElements')draws++;
-   if(/^delete(?:Texture|Buffer|VertexArray|Shader|Program|Framebuffer|Sync)$/.test(key)&&args[0])assert(live.delete(args[0]),'Unknown/double GL deletion '+key);
-   const out=value.apply(target,args);if(/^create(?:Texture|Buffer|VertexArray|Shader|Program|Framebuffer)$/.test(key)||key==='fenceSync')if(out)live.add(out);return out;
+   if(/^delete(?:Texture|Buffer|VertexArray|Shader|Program|Framebuffer|Sync|Query)$/.test(key)&&args[0])assert(live.delete(args[0]),'Unknown/double GL deletion '+key);
+   const out=value.apply(target,args);if(/^create(?:Texture|Buffer|VertexArray|Shader|Program|Framebuffer|Query)$/.test(key)||key==='fenceSync')if(out)live.add(out);return out;
   };}});
-  const backend=createBrowserWebGL({width:2,height:2,getContext:()=>gl,addEventListener(){},removeEventListener(){}},()=>{},{benchmarkControl:true,streamUploadValidation:true}),n=backend.natives;
+  const backend=createBrowserWebGL({width:2,height:2,getContext:()=>gl,addEventListener(){},removeEventListener(){}},()=>{},{benchmarkControl:true,streamUploadValidation:true,ownedState:true}),n=backend.natives;
   await n.Java_orsc_BrowserWebGLBridge_initialize(null,vertex,fragment);await n.Java_orsc_BrowserWebGLBridge_initializeLighting(null,depthVertex,depthFragment);await n.Java_orsc_BrowserWebGLBridge_initializeSky();
   const vertices=new Float32Array(84);for(let i=0;i<3;i++){vertices[i*28+3]=vertices[i*28+4]=vertices[i*28+5]=vertices[i*28+6]=1;vertices[i*28+19]=1;vertices[i*28+21]=1;}
   const indices=new Int32Array([0,1,2]),batches=new Int32Array([7,0,3,1,0]);await n.Java_orsc_BrowserWebGLBridge_uploadChunk(null,1,vertices,indices,batches);await n.Java_orsc_BrowserWebGLBridge_uploadTexture(null,7,1,1,new Int32Array([-1]),false);
@@ -35,7 +35,7 @@ try{
   if(kind==='coverage')fault='texSubImage2D';await coverage(2);
   let error='';try{await present();}catch(e){error=String(e);}assert(/Streaming upload GL error/.test(error),'Queued actual GL error not rejected: '+error);assert(draws===0,'Drew before rejected batch');assert(backend.stats.javaFrames===fresh&&backend.stats.lastFrame===last,'Published failed frame freshness');assert(backend.stats.backendFailed&&backend.stats.worldReadiness.phase==='error','Failure not sticky');
   let blocked=false;try{backend.queueStreamUploadValidation(false);}catch{blocked=true;}assert(blocked,'Mode flip revived backend');blocked=false;try{await n.Java_orsc_BrowserWebGLBridge_skyFrame(null,sky,palette);}catch{blocked=true;}assert(blocked,'Native call revived backend');
-  backend.dispose();backend.dispose();assert(live.size===0,'Leaked GL handles: '+live.size);result.cases.push({kind,zeroDraws:true,freshnessUnchanged:true,sticky:true,resourcesAfterDispose:live.size,error});raw.getExtension('WEBGL_lose_context')?.loseContext();canvas.remove();
+  backend.dispose();backend.dispose();assert(live.size===0,'Leaked GL handles: '+live.size);result.cases.push({kind,ownedState:true,zeroDraws:true,freshnessUnchanged:true,sticky:true,resourcesAfterDispose:live.size,error});raw.getExtension('WEBGL_lose_context')?.loseContext();canvas.remove();
  }
  result.passed=true;result.completed=true;
 }catch(e){result.error=String(e?.stack||e);result.completed=true;}
