@@ -13,7 +13,7 @@ for(const test of cases()){
  const snapshots=[];
  for(const session of sessions){const {state,backend}=session,was=backend.stats.ownedStateActive;state.draws.length=0;state.queries.length=0;const errors=state.errors,render=await prepareFrame(session,test);
   if(session.name==='mixed'){backend.queueOwnedState(!was);assert.equal(backend.stats.ownedStateActive,was,'Queued policy changed during uploads');}
-  await render();assert.equal(backend.stats.presentedOwnedState,was,'A frame mixed ownership policies');snapshots.push(structuredClone(state.draws));
+  await render();if(test.world&&test.mode===1)assert.ok(backend.stats.worldReadiness.completeFrames>0,'Fixture advertised incomplete sources '+JSON.stringify({declaration:session.readinessDeclaration,sprites:backend.stats.worldSpriteGroups,readiness:backend.stats.worldReadiness}));assert.equal(backend.stats.presentedOwnedState,was,'A frame mixed ownership policies');snapshots.push(structuredClone(state.draws));
   if(session.name==='owned'){ownedQueries+=state.queries.length;assert.equal(state.queries.length,0,'Hot owned frame queried GL state: '+state.queries);}
   if(session.name==='scoped')scopedQueries+=state.queries.length;
   session.lastErrors=state.errors-errors;await finishFrame(session);

@@ -12,7 +12,7 @@ export async function initializeSession(backend,shaders,skies=simpleSky()){
  await n.Java_orsc_BrowserWebGLBridge_uploadTexture(null,8,2,2,new Int32Array([-1,0,0x4488ff88,0xff8822ff]),true);
  for(let id=1;id<=3;id++)await n.Java_orsc_BrowserWebGLBridge_uploadChunk(null,id,geometry(id),new Int32Array([0,1,2]),new Int32Array([id===2?8:7,0,3,id===3?5:1,id===2?1:0]));
  for(const unit of [2,5,7])await n.Java_orsc_BrowserWebGLBridge_uploadLightingMask(null,unit,2,2,new Uint8Array([255,255,255,255,128,128,128,255,255,255,255,255,200,200,200,255]),new Float32Array([-1,-1,.5,.5]));
- return {backend,n,skies,index:0};
+ return {backend,n,skies,index:0,fixtureResources:{chunkIds:[1,2,3],textureIds:[7,8],spriteIds:[1]}};
 }
 export async function prepareFrame(session,test){
  const {n,skies}=session,index=session.index++,w=test.w,h=test.h,level=test.level||0;
@@ -27,6 +27,7 @@ export async function prepareFrame(session,test){
  const draws=new Int32Array([1,0,0,0,0,63,0,0,2,0,0,0,0,63,0,2,3,0,0,0,0,63,1,0]),pixels=new Int32Array(w*h),t=new Float32Array(w*h).fill(1);
  for(let y=4;y<Math.min(28,h);y++)for(let x=5;x<Math.min(80,w);x++){const at=y*w+x;pixels[at]=test.mode===0?0x00c06020:0x00202020;t[at]=test.mode===0?0:.5;}
  await n.Java_orsc_BrowserWebGLBridge_overlayFrame(null,w,h,test.mode,test.g,test.seq,test.count||0,test.mode===0,t);
- return async()=>{await n.Java_orsc_BrowserWebGLBridge_worldProgress(null,new Int32Array([1,2,1,3,3,0,0,0,1,w,h,2]));await n.Java_orsc_BrowserWebGLBridge_present(null,w,h,test.world,matrices,values,draws,pixels);};
+ session.readinessDeclaration=[1,2,1,3,3,0,1,1,1,w,h,2];
+ return async()=>{await n.Java_orsc_BrowserWebGLBridge_worldProgress(null,new Int32Array(session.readinessDeclaration));await n.Java_orsc_BrowserWebGLBridge_present(null,w,h,test.world,matrices,values,draws,pixels);};
 }
 export async function finishFrame(session){await session.n.Java_orsc_BrowserWebGLBridge_frameWork(null,new Float64Array(14),new Int32Array(14));}

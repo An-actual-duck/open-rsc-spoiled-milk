@@ -17,6 +17,7 @@ try{
  const ext=sessions[2].gl.getExtension('WEBGL_debug_renderer_info');proof.renderer=ext?sessions[2].gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):sessions[2].backend.stats.renderer;
  // Give real GL fence visibility browser tasks; repeated resolved Promises do not suffice.
  for(let warm=0;warm<32;warm++){for(const session of sessions){const render=await prepareFrame(session,{name:'warm',mode:1,world:true,seq:0,g:0,w:192,h:128});await render();await finishFrame(session);session.gl.finish();}await new Promise(r=>setTimeout(r,0));}
+ proof.warmSourceDiagnostics=sessions.map(s=>({mode:s.name,declaration:s.readinessDeclaration,createdSources:s.fixtureResources,uploadedChunks:s.backend.stats.uploadedChunks,worldSpriteGroups:s.backend.stats.worldSpriteGroups,spriteFrameGroups:s.backend.stats.spriteFrameGroups,spriteResidentImages:s.backend.stats.spriteResidentImages,lightingMasks:s.backend.stats.lightingMaskBytes,readiness:s.backend.stats.worldReadiness}));
  for(const session of sessions)require(session.backend.stats.worldReadiness.phase==='ready','Incomplete warm readiness '+session.name+JSON.stringify(session.backend.stats.worldReadiness));
  proof.readyChunks=sessions.map(s=>({mode:s.name,uploaded:s.backend.stats.uploadedChunks,ready:s.backend.stats.worldReadiness.phase}));
  for(const test of cases()){
