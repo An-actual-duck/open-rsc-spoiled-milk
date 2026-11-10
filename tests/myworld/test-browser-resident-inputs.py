@@ -8,4 +8,5 @@ classes=suite/'classes';classes.mkdir(exist_ok=True)
 jar=root/'Client_Base/Open_RSC_Client.jar'
 subprocess.run(['javac','-source','8','-target','8','-cp',str(jar),'-d',str(classes),str(root/'Client_Base/src/orsc/mudclient.java'),str(root/'tests/myworld/BrowserResidentInputsFixture.java')],check=True)
 for selected in ['true','false']:
- subprocess.run(['java','-Xmx512m','-Djava.awt.headless=true','-Dspoiledmilk.browserResidentInputCache='+selected,'-cp',str(classes)+':'+str(jar),'orsc.BrowserResidentInputsFixture'],check=True)
+ for writing in ['false','true']:
+  subprocess.run(['java','-Xmx512m','-Djava.awt.headless=true','-Dspoiledmilk.browserResidentInputCache='+selected,'-Dspoiledmilk.browserResidentDescriptorWriting='+writing,'-cp',str(classes)+':'+str(jar),'orsc.BrowserResidentInputsFixture'],check=True)

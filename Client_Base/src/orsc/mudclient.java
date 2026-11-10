@@ -966,6 +966,12 @@ public final class mudclient implements Runnable {
 	// canonical groups every frame. Animation inputs remain frame-local.
 	private static final boolean BROWSER_RESIDENT_INPUT_CACHE = !"false".equalsIgnoreCase(
 		System.getProperty("spoiledmilk.browserResidentInputCache", "true"));
+	private static final boolean BROWSER_RESIDENT_DESCRIPTOR_WRITING = Boolean.getBoolean("spoiledmilk.browserResidentDescriptorWriting");
+	public static boolean isBrowserResidentDescriptorWritingEnabled() {
+		return BROWSER_RESIDENT_DESCRIPTOR_WRITING && BROWSER_RESIDENT_INPUT_CACHE
+			&& Renderer3DSettings.isBrowserPresentationAvailable()
+			&& !SceneObjectDebugSettings.isEnabled() && !RESIDENT_OBJECT_GEOMETRY_DIAGNOSTICS_ENABLED;
+	}
 	private static final int MAX_RESIDENT_INPUT_DESCRIPTOR_INTS = 1024 * 1024;
 	private ResidentStaticInputCache residentStaticInputCache;
 	private int[] residentStaticInputProbe;
@@ -4458,6 +4464,7 @@ public final class mudclient implements Runnable {
 	/** Exact canonical values include freshly sampled terrain elevations. Incomplete
 	 * instance revision counters and mutable model identities are not cache proof. */
 	private int captureResidentStaticInputs() {
+		if (isBrowserResidentDescriptorWritingEnabled()) return captureResidentStaticInputsDirect();
 		int used = 0;
 		residentAnimatedInputCount = 0;
 		for (int i = 0; i < getGameObjectInstanceCount(); i++) {
@@ -4483,6 +4490,37 @@ public final class mudclient implements Runnable {
 		for (SceneBaselineState.Record record : staticPresentationWallRecords)
 			used = createResidentObjectCanonicalIdentity(Renderer3DModelKind.WALL_OBJECT, record.x, record.y,
 				record.id, record.direction).writeDescriptor(residentStaticInputProbe, used, true);
+		return used;
+	}
+
+	/** Direct probe writing mirrors the unchanged canonical creator below. Every
+	 * elevation is sampled now; this is allocation removal, not a height cache. */
+	private int captureResidentStaticInputsDirect() {
+		int used = 0;
+		residentAnimatedInputCount = 0;
+		for (int i = 0; i < getGameObjectInstanceCount(); i++) {
+			if (!isGameObjectInstanceMaterialized(i) || getGameObjectInstanceModel(i) == null) continue;
+			int id = getGameObjectInstanceID(i);
+			if (isAnimatedResidentObjectChunkModel(Renderer3DModelKind.GAME_OBJECT, id)) {
+				residentAnimatedInputIndices[residentAnimatedInputCount++] = i;
+				continue;
+			}
+			used = writeResidentStaticDescriptor(Renderer3DModelKind.GAME_OBJECT,
+				midRegionBaseX + getGameObjectInstanceX(i), midRegionBaseZ + getGameObjectInstanceZ(i),
+				id, getGameObjectInstanceDir(i), used, false);
+		}
+		for (int i = 0; i < getWallObjectInstanceCount(); i++) {
+			if (!isWallObjectInstanceMaterialized(i) || getWallObjectInstanceModel(i) == null) continue;
+			used = writeResidentStaticDescriptor(Renderer3DModelKind.WALL_OBJECT,
+				midRegionBaseX + getWallObjectInstanceX(i), midRegionBaseZ + getWallObjectInstanceZ(i),
+				getWallObjectInstanceID(i), getWallObjectInstanceDir(i), used, false);
+		}
+		for (SceneBaselineState.Record record : staticPresentationSceneryRecords)
+			used = writeResidentStaticDescriptor(Renderer3DModelKind.GAME_OBJECT, record.x, record.y,
+				record.id, record.direction, used, true);
+		for (SceneBaselineState.Record record : staticPresentationWallRecords)
+			used = writeResidentStaticDescriptor(Renderer3DModelKind.WALL_OBJECT, record.x, record.y,
+				record.id, record.direction, used, true);
 		return used;
 	}
 
@@ -4732,6 +4770,69 @@ public final class mudclient implements Runnable {
 			|| modelName.startsWith("skulltorcha")
 			|| modelName.startsWith("myworld_cosmic_sparkles")
 			|| modelName.startsWith("clawspell");
+	}
+
+	/** Sampling authority: createResidentObjectCanonicalIdentity. Keep arithmetic
+	 * byte-for-byte aligned and verify against frozen source before changing it. */
+	private int writeResidentStaticDescriptor(Renderer3DModelKind kind,
+		int worldTileX, int worldTileZ, int objectId, int direction, int offset, boolean presentationOnly) {
+		int localX = worldTileX - this.midRegionBaseX;
+		int localZ = worldTileZ - this.midRegionBaseZ;
+		int elevation1 = World.PRESENTATION_ELEVATION_UNAVAILABLE;
+		int elevation2 = World.PRESENTATION_ELEVATION_UNAVAILABLE;
+		if (kind == Renderer3DModelKind.GAME_OBJECT) {
+			GameObjectDef definition =
+				EntityHandler.getObjectDef(objectId);
+			if (definition != null && definition.modelID >= 0) {
+				int xSize;
+				int zSize;
+				if (direction == 0 || direction == 4) {
+					xSize = definition.getWidth();
+					zSize = definition.getHeight();
+				} else {
+					xSize = definition.getHeight();
+					zSize = definition.getWidth();
+				}
+				int centerX =
+					(2 * localX + xSize) * this.tileSize / 2;
+				int centerZ =
+					(2 * localZ + zSize) * this.tileSize / 2;
+				elevation1 =
+					this.world.getPresentationTerrainElevation(
+						centerX, centerZ);
+				elevation2 = elevation1;
+			}
+		} else if (kind == Renderer3DModelKind.WALL_OBJECT) {
+			int startX = localX;
+			int startZ = localZ;
+			int endpointX = localX;
+			int endpointZ = localZ;
+			if (direction == 1) {
+				endpointZ++;
+			} else if (direction == 0) {
+				endpointX++;
+			} else if (direction == 2) {
+				startX++;
+				endpointZ++;
+			} else if (direction == 3) {
+				endpointX++;
+				endpointZ++;
+			}
+			elevation1 =
+				this.world.getPresentationTerrainElevation(
+					startX * this.tileSize,
+					startZ * this.tileSize);
+			elevation2 =
+				this.world.getPresentationTerrainElevation(
+					endpointX * this.tileSize,
+					endpointZ * this.tileSize);
+		}
+		int[] values = this.residentStaticInputProbe;
+		values[offset++] = kind.ordinal(); values[offset++] = worldTileX; values[offset++] = worldTileZ;
+		values[offset++] = objectId; values[offset++] = direction;
+		values[offset++] = elevation1; values[offset++] = elevation2;
+		values[offset++] = presentationOnly ? 1 : 0;
+		return offset;
 	}
 
 	private ResidentObjectCanonicalIdentity
