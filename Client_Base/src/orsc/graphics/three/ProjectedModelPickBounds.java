@@ -24,6 +24,25 @@ final class ProjectedModelPickBounds {
             && mouseY >= (double) minY - paddingY && mouseY <= (double) maxY + paddingY;
     }
 
+    /** Conservative interval of this frame's exact shifted numerators / positive depths.
+     * Near-plane and viewport-addition wrap cases must retain ordinary projection. */
+    static boolean couldContainCameraBounds(int minNX, int maxNX, int minNY, int maxNY,
+            int minZ, int maxZ, int pickScale, int viewportY, int mouseX, int mouseY) {
+        if (minZ <= 0 || maxZ < minZ || maxNX < minNX || maxNY < minNY) return true;
+        int x00 = minNX / minZ, x01 = minNX / maxZ, x10 = maxNX / minZ, x11 = maxNX / maxZ;
+        int y00 = minNY / minZ, y01 = minNY / maxZ, y10 = maxNY / minZ, y11 = maxNY / maxZ;
+        int minX = Math.min(Math.min(x00, x01), Math.min(x10, x11));
+        int maxX = Math.max(Math.max(x00, x01), Math.max(x10, x11));
+        int minY = Math.min(Math.min(y00, y01), Math.min(y10, y11));
+        int maxY = Math.max(Math.max(y00, y01), Math.max(y10, y11));
+        double lowY = (double) minY + viewportY, highY = (double) maxY + viewportY;
+        if (lowY < Integer.MIN_VALUE || highY > Integer.MAX_VALUE) return true;
+        int scale = Math.max(1, pickScale);
+        double px = padding(minX, maxX, scale), py = padding(minY, maxY, scale);
+        return mouseX >= (double) minX - px && mouseX <= (double) maxX + px
+            && mouseY >= lowY - py && mouseY <= highY + py;
+    }
+
     private static double padding(int min, int max, int scale) {
         if (scale <= 1) return 2;
         // A face's mathematical span cannot exceed the model's. The old signed

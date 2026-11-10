@@ -1,0 +1,46 @@
+Browser fresh scenery projection experiment
+===========================================
+
+Status: source/test authoring; default OFF; awaiting permitted CPU validation.
+Base authority: 325bf42b60fe411705f9f14c0a3ef6debabe24a7.
+
+Private property spoiledmilk.browserSceneryProjectionWork defaults false.
+Scene.isBrowserSceneryProjectionWorkEnabled() reports requested eligibility AND
+existing full browser GPU/model-bound ownership. It does not claim every model
+or frame can defer projection. Separate private harness sceneryprojection=on|off
+routing belongs to the manager's benchmark-tools topic.
+
+Original RSModel.rotate1024 remains literal. The new sibling first performs the
+same transform-cache refresh, frustum test and integer XYZ camera rotation. It
+collects exact int-shifted numerator extrema and positive depth extrema during
+that same current-frame traversal. Four numerator/depth corners per axis bound
+all signed Java integer-division results. Existing outward scale padding remains
+the authority; viewport Y addition wrap, near-plane mixtures, incomplete arrays,
+small models and unproven bounds fall back. No long arithmetic on the hot path.
+
+Only full GPU-owned scenery is eligible. Actor/sprite m_T, interaction-only
+proxies, native/software/mixed/CPU-depth/editor and forced legacy are excluded.
+Only picking frames use the experiment. Fresh XYZ and visibility are always
+available; projected XY are delayed only for a model wholly outside the mouse
+envelope. Scene checks each omitted face uses current rotated vertices. A null,
+short, invalid or spare-capacity face materializes exact same-frame projection
+before executing the original face/error path. This includes late-cull mode:
+proven faces skip before any old projected-XY consumer. Frame-local boolean
+storage is bounded by existing Scene model capacity and is overwritten each
+eligible frame; there is no camera/geometry/picking cache.
+
+The proposed CPU oracle independently compiles frozen325 Scene, RSModel and
+ProjectedModelPickBounds. It compares actual Scene picks, occlusion/order,
+anchors, resident payloads and pixels across moving geometry/topology/material,
+changing camera/zoom/near plane, interaction proxy, GPU/mixed/software/depth and
+forced fallback. Separate direct current-coordinate cases include negative and
+extreme XYZ, camera offsets/rotations, Java shift wrapping, viewport addition
+wrap, huge pick scales, near clipping and malformed array exception fallback.
+Test-only isolated source instrumentation counts projected and omitted vertices;
+no production counters/timers are added. The original method literal is checked.
+
+Expected work reduction is perspective divisions/stores for rejected scenery,
+not transform refresh/normals, fresh XYZ rotations, actor projection/compositing,
+resident input construction or packing. Candidate bounds plus a second projection
+pass can cost more for mouse-near models. Actual matched browser measurement is
+required; no FPS gain or60FPS claim follows from CPU parity/work counters.

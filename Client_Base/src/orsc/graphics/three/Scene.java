@@ -21,6 +21,10 @@ public final class Scene {
 	private final boolean browserEarlyFaceCull = Boolean.getBoolean("spoiledmilk.browserEarlyFaceCull");
 	private final boolean browserOwnsWallsAndRoofs = Boolean.getBoolean("spoiledmilk.browserOwnsWallsAndRoofs");
 	private final boolean browserModelPickBounds = Boolean.parseBoolean(System.getProperty("spoiledmilk.browserModelPickBounds", "true"));
+	private final boolean browserSceneryProjectionWork = Boolean.getBoolean("spoiledmilk.browserSceneryProjectionWork");
+	private boolean[] browserProjectionDeferred = new boolean[0];
+	/** Requested policy plus actual full GPU ownership; individual uncertain models still project normally. */
+	public boolean isBrowserSceneryProjectionWorkEnabled() { return browserSceneryProjectionWork && isBrowserModelPickBoundsEnabled(); }
 	public boolean isBrowserModelPickBoundsEnabled() { return browserModelPickBounds && isBrowserFullResidentOwnershipEnabled(); }
 	public boolean isBrowserFullResidentOwnershipEnabled() { return browserOwnsWallsAndRoofs && Renderer3DSettings.isBrowserPresentationAvailable() && !Renderer3DSettings.needsCpuDepthFrame(); }
 	public boolean isEarlyResidentFaceCullEnabled() { return browserEarlyFaceCull && Renderer3DSettings.isBrowserPresentationAvailable(); }
@@ -2963,9 +2967,27 @@ public final class Scene {
 			this.m_T.m_Yb = 2;
 
 			long modelRotateStart = RenderTelemetry.now();
+			boolean splitSceneryProjection = isBrowserSceneryProjectionWorkEnabled()
+				&& skipProjectedWorldCapture && !forceLegacyWorldRaster && this.m_K;
+			if (splitSceneryProjection && this.browserProjectionDeferred.length < this.models.length)
+				this.browserProjectionDeferred = new boolean[this.models.length];
 			int var3;
 			for (var3 = 0; this.modelCount > var3; ++var3) {
-				this.models[var3].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
+				RSModel current = this.models[var3];
+				if (splitSceneryProjection) {
+					this.browserProjectionDeferred[var3] = false;
+					Renderer3DModelKind kind = current.getRenderer3DModelKind();
+					boolean ownedScenery = kind == Renderer3DModelKind.TERRAIN || kind == Renderer3DModelKind.WALL
+						|| kind == Renderer3DModelKind.ROOF || residentObjectChunks
+							&& (kind == Renderer3DModelKind.GAME_OBJECT || kind == Renderer3DModelKind.WALL_OBJECT);
+					if (ownedScenery && current != this.m_T && !current.isInteractionOnly()) {
+						this.browserProjectionDeferred[var3] = current.rotate1024ForBrowserPick(
+							this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, this.rot1024_off_z,
+							this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop,
+							this.m_Nb, this.m_j, this.m_Wb);
+					} else current.rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
+						this.rot1024_off_z, this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop);
+				} else current.rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
 					this.rot1024_off_z, this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop);
                 RSModel rotated = this.models[var3];
                 if (this.m_K && !this.interactionOnlyPickActive && rotated.m_dc && rotated.isInteractionOnly()) {
@@ -3004,13 +3026,22 @@ public final class Scene {
                         || pickModelKind == Renderer3DModelKind.WALL || pickModelKind == Renderer3DModelKind.ROOF
                         || residentObjectChunks && (pickModelKind == Renderer3DModelKind.GAME_OBJECT
                             || pickModelKind == Renderer3DModelKind.WALL_OBJECT));
-                    boolean modelMouseOutside = residentPickModel && skipProjectedWorldCapture
+                    boolean projectionDeferred = splitSceneryProjection && this.browserProjectionDeferred[var9];
+                    boolean modelMouseOutside = projectionDeferred || residentPickModel && skipProjectedWorldCapture
                         && !forceLegacyWorldRaster && this.m_K
                         && (this.interactionOnlyPickActive || !var2.m_db && var2.m_zb != null && var2.facePickIndex != null)
                         && !ProjectedModelPickBounds.couldContainMouse(var2, this.m_Nb, this.m_j, this.m_Wb);
 					for (var3 = 0; var3 < var2.faceHead; ++var3) {
 						var10 = var2.faceIndexCount[var3];
 						var11 = var2.faceIndices[var3];
+                        if (projectionDeferred) {
+                            // The whole model is outside this frame's mouse envelope. Only
+                            // current used vertices may inherit that proof. Spare/malformed
+                            // indices retain the original full projection and face/error path.
+                            if (ProjectedModelPickBounds.hasOnlyRotatedVertexIndices(var2, var11, var10)) continue;
+                            var2.completeBrowserProjection(this.rot1024_vp_src, this.rot1024_zTop);
+                            projectionDeferred = false;
+                        }
                         if (earlyResidentFaceCull && (useModelPickBounds
                                 ? shouldSkipBoundedResidentProjectedFace(var2,var3,var11,var10,
                                     skipProjectedWorldCapture,forceLegacyWorldRaster,residentPickModel,modelMouseOutside)

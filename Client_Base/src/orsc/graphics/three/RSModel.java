@@ -2361,6 +2361,116 @@ public final class RSModel {
 		}
 	}
 
+	/** Frame-local browser projection split; never retains camera or geometry state across frames. */
+	final boolean rotate1024ForBrowserPick(int yOffset, int vParamSrc, int xOffset, int zOffset, int rotY, int rotZ, int rotX,
+			int zTop, int viewportY, int mouseX, int mouseY) {
+		// Default/native rotate1024 remains the authority. Bad/spare arrays use it
+		// unchanged, retaining its mutation and exception order instead of guessing.
+		if (this.vertHead < 8 || zTop <= 0 || !browserProjectionArraysComplete()) {
+			this.rotate1024(yOffset, vParamSrc, xOffset, (byte) -122, zOffset, rotY, rotZ, rotX, zTop);
+			return false;
+		}
+		try {
+
+			this.resetTransformCache((int) 7972);
+			if (this.minZ <= MiscFunctions.frustumMinX && this.maxZ >= MiscFunctions.frustumMaxX
+				&& this.minX <= MiscFunctions.frustumMinY && this.maxX >= MiscFunctions.frustumMaxY
+				&& this.minY <= MiscFunctions.frustumNearZ && this.maxY >= MiscFunctions.frustumFarZ) {
+				this.m_dc = true;
+				int xy_xy = 0;
+
+				int xy_yy = 0;
+				int yz_zy = 0;
+				int yz_zz = 0;
+				int xz_xz = 0;
+				if (rotZ != 0) {
+					xy_yy = FastMath.trigTable1024[1024 + rotZ];
+					xy_xy = FastMath.trigTable1024[rotZ];
+				}
+
+				int xz_xx = 0;
+				if (rotX != 0) {
+					yz_zy = FastMath.trigTable1024[rotX];
+					yz_zz = FastMath.trigTable1024[rotX + 1024];
+				}
+
+				if (rotY != 0) {
+					xz_xz = FastMath.trigTable1024[rotY];
+					xz_xx = FastMath.trigTable1024[rotY + 1024];
+				}
+
+				int minNX = Integer.MAX_VALUE, maxNX = Integer.MIN_VALUE;
+				int minNY = Integer.MAX_VALUE, maxNY = Integer.MIN_VALUE;
+				int minDepth = Integer.MAX_VALUE, maxDepth = Integer.MIN_VALUE;
+				for (int var17 = 0; this.vertHead > var17; ++var17) {
+					int x0 = this.vertXTransform[var17] - xOffset;
+					int yO = this.vertYTransform[var17] - yOffset;
+					int zO = this.vertZTransform[var17] - zOffset;
+
+					int tmp;
+					if (rotZ != 0) {
+						tmp = yO * xy_xy + xy_yy * x0 >> 15;
+						yO = yO * xy_yy - x0 * xy_xy >> 15;
+						x0 = tmp;
+					}
+
+					if (rotY != 0) {
+						tmp = xz_xx * x0 + zO * xz_xz >> 15;
+						zO = xz_xx * zO - x0 * xz_xz >> 15;
+						x0 = tmp;
+					}
+
+					if (rotX != 0) {
+						tmp = yO * yz_zz - yz_zy * zO >> 15;
+						zO = yz_zy * yO + yz_zz * zO >> 15;
+						yO = tmp;
+					}
+
+					// Shift exactly as legacy Java int projection does, including wrapping.
+					int nx = x0 << vParamSrc, ny = yO << vParamSrc;
+					minNX = Math.min(minNX, nx); maxNX = Math.max(maxNX, nx);
+					minNY = Math.min(minNY, ny); maxNY = Math.max(maxNY, ny);
+					minDepth = Math.min(minDepth, zO); maxDepth = Math.max(maxDepth, zO);
+
+					this.vertXRot[var17] = x0;
+					this.vertYRot[var17] = yO;
+					this.vertZRot[var17] = zO;
+				}
+
+				if (minDepth >= zTop && !ProjectedModelPickBounds.couldContainCameraBounds(
+					minNX, maxNX, minNY, maxNY, minDepth, maxDepth,
+					this.getPickBoundsScale(), viewportY, mouseX, mouseY)) return true;
+				this.completeBrowserProjection(vParamSrc, zTop);
+			} else {
+				this.m_dc = false;
+			}
+			return false;
+		} catch (RuntimeException var21) {
+			throw GenUtil.makeThrowable(var21, "ca.U(" + yOffset + ',' + vParamSrc + ',' + xOffset + ',' + (byte) -122 + ','
+				+ zOffset + ',' + rotY + ',' + rotZ + ',' + rotX + ',' + zTop + ')');
+		}
+	}
+
+	private boolean browserProjectionArraysComplete() {
+		return this.vertX != null && this.vertY != null && this.vertZ != null
+			&& this.vertXTransform != null && this.vertYTransform != null && this.vertZTransform != null
+			&& this.vertXRot != null && this.vertYRot != null && this.vertZRot != null
+			&& this.vertexParam6 != null && this.vertexParam2 != null
+			&& this.vertHead <= this.vertX.length && this.vertHead <= this.vertY.length && this.vertHead <= this.vertZ.length
+			&& this.vertHead <= this.vertXTransform.length && this.vertHead <= this.vertYTransform.length && this.vertHead <= this.vertZTransform.length
+			&& this.vertHead <= this.vertXRot.length && this.vertHead <= this.vertYRot.length && this.vertHead <= this.vertZRot.length
+			&& this.vertHead <= this.vertexParam6.length && this.vertHead <= this.vertexParam2.length;
+	}
+
+	/** Complete the SAME frame's projection before any projected-coordinate consumer. */
+	final void completeBrowserProjection(int vParamSrc, int zTop) {
+		for (int vertex = 0; vertex < this.vertHead; vertex++) {
+			int z = this.vertZRot[vertex];
+			this.vertexParam6[vertex] = z < zTop ? this.vertXRot[vertex] << vParamSrc : (this.vertXRot[vertex] << vParamSrc) / z;
+			this.vertexParam2[vertex] = z < zTop ? this.vertYRot[vertex] << vParamSrc : (this.vertYRot[vertex] << vParamSrc) / z;
+		}
+	}
+
 	private void rotate256(int var1, int rotX, int rotZ, int rotY) {
 		try {
 
