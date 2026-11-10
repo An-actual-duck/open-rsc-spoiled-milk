@@ -1,4 +1,4 @@
-# Browser owned frame GL state — in progress
+# Browser explicitly owned GL frame state — review candidate
 
 This focused browser-only change removes state capture/restore queries inside an exclusively owned renderer frame. Standalone sky, shadow, coverage, retained-frame and sprite-atlas APIs retain their existing scoped behavior by default. No GL context Proxy, Java change, shader approximation, error-poll removal, visual-quality change or public-server operation is included.
 
@@ -6,6 +6,21 @@ The owner establishes default READ/DRAW framebuffer, exact viewport, full color/
 
 Private WebGL `?benchmark&ownedstate=on|off` defaults off. Ordinary URLs ignore this control. Benchmark sessions additionally expose `window.browserBenchmarkOwnedState(boolean)`: requests queue until the END of the existing native `frameWork` callback, after a complete frame's uploads, shadows, world and final UI. Every presented frame snapshots the selected policy; bounded `worldFramePolicies` and `worldFrameSpriteGroups` align with `worldFrameSamples`; transition receipts record the frame boundary. No extra native calls or timer per draw are added. Normal sessions expose no live switch. Stop clears it.
 
-CPU milestone: `node tests/myworld/test-browser-owned-gl-state.mjs` passed 42 deterministic full pipeline frames / 568 effective draw, clear and retained-copy operations, including continuous live policy alternation. Scoped and owned state/resource/draw streams match; 2,766 scoped hot state queries versus zero owned queries; GL error-poll counts match. This is an instrumented state oracle, not rasterized pixel or FPS evidence. It includes coverage RGB/T, all fade counts 1–16, duplicate and BASE replay, sky layers, near/far shadows, ground sprites, resized/underground/opaque-reset frames, context loss, partial upload errors and idempotent resource disposal.
+CPU milestone: `node tests/myworld/test-browser-owned-gl-state.mjs` passed 42 deterministic full pipeline frames / 568 effective draw, clear and retained-copy operations, including continuous live policy alternation. Scoped and owned state/resource/draw streams match; 2,766 scoped hot state queries versus zero owned queries in the instrumented context (the real GPU timer disjoint query and cold capability queries are deliberately retained); GL error-poll counts match. This is an instrumented state oracle, not rasterized pixel or FPS evidence. It includes coverage RGB/T, all fade counts 1–16, duplicate and BASE replay, sky layers, near/far shadows, ground sprites, resized/underground/opaque-reset frames, context loss, partial upload errors and idempotent resource disposal.
 
 Existing default scoped sky, shadow/lighting, coverage, retained, atlas, resident-cache, benchmark-query and frontend VM contracts pass. Actual production shader/native sky GPU differential remains unrun. Throughput and 60 FPS are not established by these CPU tests. The manager will run frozen hardware proof before deciding whether to promote the optional mode.
+
+Prepared manager-only hardware proof:
+
+```sh
+python3 tests/myworld/prepare-browser-owned-gl-hardware.py --prepare-only --run-id UNIQUE_RUN
+node tests/myworld/run-browser-owned-gl-hardware.mjs --run-hardware ABSOLUTE_PREPARED_RUN
+```
+
+The preparer freezes original `9e570ad332a3e641238acb0aa646b9884b3aa23a` modules and the candidate modules, extracts actual current production world/depth shaders, and exports shared native sky geometry plus day/sunrise/night palettes. All staged files have SHA-256 receipts; the dependency JAR is recorded (`b5035079673342899046b7c498f6e34f8c4a26d7047ff40307006095a7b1fb16` in the current run). The explicit runner serves only the frozen allowlisted files on loopback with a dedicated Chrome profile and requires physical AMD ANGLE/OpenGL. It compares original/default-off/owned-on/live-alternating frames, then checks Stop during async shader initialization and actual WebGL context loss. GPU readback is functional evidence only.
+
+The first frozen v2 hardware attempt failed BEFORE pixel comparisons because the fixture declared zero sprite groups despite committing one. That declaration is corrected to actual 1/1 required/uploaded groups in checkpoint `ec8f133eadef625342f44d70b76d3fe1d175350a`; the CPU fixture now asserts initial source completeness, and hardware diagnostics record declarations, created source IDs, uploaded geometry, actual sprite counts/mask bytes and readiness. Old failed evidence remains unchanged. Fresh stage `output/tests/browser-owned-gl-state/hardware/checkpoint-pipeline-v3` is prepared; its GPU result is pending manager execution/review.
+
+For same-warm-world measurement, clear `worldFramePolicies` and `worldFrameSpriteGroups` whenever externally clearing `worldFrameSamples`; those three arrays push/shift together internally. Do not attribute population-changing cohort FPS to this change without a matched or alternating policy comparison. Current 60 FPS goal remains unmet until measured otherwise.
+
+`workspace-layout.py check` still reports inherited unclassified output-root directories; this change creates no new root-level category. All new fixtures, logs and preserved stages reside under declared `tests/browser-owned-gl-state`.
