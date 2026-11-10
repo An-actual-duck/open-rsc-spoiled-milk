@@ -53,6 +53,12 @@ public final class RenderTelemetry {
 	private static final StageStats sceneWorldCullStats = new StageStats();
 	private static final StageStats sceneDepthExportStats = new StageStats();
 	private static final StageStats sceneLegacyDrawStats = new StageStats();
+	private static final StageStats sceneLegacyDrawSampleStats = new StageStats();
+	private static final StageStats scenePolygonSortSampleStats = new StageStats();
+	private static final StageStats sceneSpriteCaptureSampleStats = new StageStats();
+	private static final StageStats sceneCoverageInitSampleStats = new StageStats();
+	private static final CounterStats sceneSpriteCaptureSampleCountStats = new CounterStats();
+	private static final CounterStats sceneProjectedIterationSampleCountStats = new CounterStats();
 	private static final StageStats sceneMeshExportStats = new StageStats();
 	private static final StageStats worldSectionLoadStats = new StageStats();
 	private static final StageStats worldSectionLoadResetStats = new StageStats();
@@ -543,6 +549,21 @@ public final class RenderTelemetry {
 			sceneDepthExportStats.record(depthExportNanos);
 			sceneLegacyDrawStats.record(legacyDrawNanos);
 			sceneMeshExportStats.record(meshExportNanos);
+		}
+	}
+
+	/** One detailed sample per 32 completed Scene attempts while telemetry is enabled.
+	 * Durations are per sampled frame; counts are entities/faces per sampled frame. */
+	public static void recordScenePreparationSample(long sortNanos, long captureNanos, long coverageNanos, long legacyNanos,
+		int spriteCount, int projectedCount) {
+		if (!isCollectionEnabled()) return;
+		synchronized (RenderTelemetry.class) {
+			sceneLegacyDrawSampleStats.record(legacyNanos);
+			scenePolygonSortSampleStats.record(sortNanos);
+			sceneSpriteCaptureSampleStats.record(captureNanos);
+			sceneCoverageInitSampleStats.record(coverageNanos);
+			sceneSpriteCaptureSampleCountStats.record(spriteCount);
+			sceneProjectedIterationSampleCountStats.record(projectedCount);
 		}
 	}
 
@@ -3207,6 +3228,10 @@ public final class RenderTelemetry {
 			sceneWorldCullStats,
 			sceneDepthExportStats,
 			sceneLegacyDrawStats,
+			sceneLegacyDrawSampleStats,
+			scenePolygonSortSampleStats,
+			sceneSpriteCaptureSampleStats,
+			sceneCoverageInitSampleStats,
 			sceneMeshExportStats,
 			worldSectionLoadStats,
 			worldSectionLoadResetStats,
@@ -3319,6 +3344,8 @@ public final class RenderTelemetry {
 			renderer2DCircleCommandAcceptedStats,
 			renderer2DCircleCommandDroppedStats,
 			clientLoopUpdateCountStats,
+			sceneSpriteCaptureSampleCountStats,
+			sceneProjectedIterationSampleCountStats,
 			clientLoopSkippedDrawStats,
 			clientLoopSleepRequestStats,
 			clientLoopStepSizeStats,
