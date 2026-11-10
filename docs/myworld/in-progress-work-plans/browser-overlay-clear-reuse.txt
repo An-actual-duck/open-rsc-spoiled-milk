@@ -1,0 +1,29 @@
+Browser overlay full-clear reuse
+
+The actual host CPU profile found WorldOverlayCoverage.begin about460ms self
+/618ms inclusive over roughly1000frames. Normal browser frames clear RGB in
+blackScreen, write T0 there, then immediately clear RGB again and fill T1 when
+Scene opens a fresh transparent world overlay.
+
+Only the existing browser-frame-preparation main surface opts in. A full
+opaque T clear can remain a logical uniform zero until borrow; a fresh world
+begin overwrites T with1 directly. Any already borrowed same-frame T view
+forces immediate materialization, preserving live borrowed-array semantics.
+Point/span writes, multiply validation and malformed index/span exceptions
+retain the original results. Turning the optimization off materializes pending
+data; frame/epoch/surface reset and retained fades preserve ownership/tokens.
+
+An explicit producer receipt after actual blackScreen RGB clearing can let
+begin skip the second RGB fill. Every RGB coverage writer invalidates that
+receipt; unknown external writers invalidate coverage, reset and resize cannot
+reuse it, and fresh frame invalidates old proof. No draw is omitted.
+
+The flag follows spoiledmilk.browserFramePreparation; native/software/scratch
+paths and callers without browser ownership retain ordinary behavior.
+
+Validation: actual frozen9e570ad33/current graphics+coverage classes in separate
+JVMs match5,625,354 output bytes for RGB/T/metadata/tokens/live views/exceptions,
+including1500random maintained raster operations.13 private fast-path checks
+prove active/disabled controls and borrowed/unborrowed behavior. Existing
+9,838,525 coverage checks, scoped Scene ownership, retained fades and actual
+frame-preparation snapshot tests pass. No GPU/FPS result or main promotion yet.

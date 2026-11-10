@@ -163,6 +163,7 @@ public class GraphicsController {
 		updateBrowserFramePreparation();
 		if (enabled) {
 			if (worldOverlayCoverage == null) worldOverlayCoverage = new WorldOverlayCoverage();
+			worldOverlayCoverage.setFastClears(browserFramePreparationActive);
 		} else {
 			if (worldOverlayCoverage != null) {
 				worldOverlayCoverage.discard();
@@ -582,6 +583,7 @@ public class GraphicsController {
 	private void updateBrowserFramePreparation() {
 		browserFramePreparationActive = BROWSER_FRAME_PREPARATION && worldOverlayCoverageEnabled
 			&& Renderer3DSettings.isBrowserPresentationAvailable();
+		if (worldOverlayCoverage != null) worldOverlayCoverage.setFastClears(browserFramePreparationActive);
 	}
 
 	/** Private browser benchmark receipt: configured policy and current surface ownership. */
@@ -2729,6 +2731,7 @@ public class GraphicsController {
 				coverageOpaqueSpan(this.pixelData, 0, var2);
 				if (browserFramePreparationActive) {
 					Arrays.fill(this.pixelData, 0, var2, 0);
+					if (worldOverlayCoverage != null) worldOverlayCoverage.noteFullRgbClear(this.pixelData, width2, height2);
 					return;
 				}
 				for (int i = 0; var2 > i; ++i) {
