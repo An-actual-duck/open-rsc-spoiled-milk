@@ -15,6 +15,7 @@ public final class BrowserBootstrap {
     public static native void reportRegionPreparationDiagnostics(boolean available,double[] counters);
     public static native void reportCandidatePolicy(String name,boolean requested,boolean available,boolean enabled);
     public static native void reportRepeatableState(String username,int[] counters);
+    public static native void reportCombatState(String username,String names,int[] counters);
     public static native void reportModelPickBounds(boolean requested,boolean enabled);
     private static native int wsOpen();
     private static native byte[] wsRead(int socket, int maximum);
@@ -68,9 +69,12 @@ public final class BrowserBootstrap {
             return;
         }
         final boolean webgl=args.length>0 && "webgl".equals(args[0]);
-        final boolean repeatable="repeatable-v1".equals(System.getProperty("spoiledmilk.browserRepeatableFixture"));
+        final String fixture=System.getProperty("spoiledmilk.browserRepeatableFixture");
+        final boolean combat="renderer-combat-v1".equals(fixture);
+        final boolean repeatable="repeatable-v1".equals(fixture)||combat;
         if(repeatable&&(!webgl||!Boolean.getBoolean("spoiledmilk.browserBenchmark")))throw new IllegalArgumentException("Repeatable camera is private benchmark only");
         final RepeatableCamera fixedCamera=repeatable?new RepeatableCamera():null;
+        final BrowserCombatWorkload combatWorkload=combat?new BrowserCombatWorkload():null;
         report((webgl?"webgl-client":"software-client")+":copying-private-files");
         try (BufferedReader index = new BufferedReader(new FileReader("/app/bootstrap-files.txt"))) {
             String relative;
@@ -149,7 +153,11 @@ public final class BrowserBootstrap {
                         if (client != null && webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
                             orsc.mudclient actual=(orsc.mudclient)client;
                             if(fixedCamera==null){actual.setCameraZoomSetting(75);actual.cameraRotation=128;}
-                            else reportRepeatableState(actual.getUsername(),fixedCamera.observe(actual));
+                            else {
+                                int[] camera=fixedCamera.observe(actual);
+                                if(combatWorkload==null)reportRepeatableState(actual.getUsername(),camera);
+                                else reportCombatState(actual.getUsername(),BrowserCombatWorkload.NAMES,combatWorkload.observe(actual,camera));
+                            }
                         }
                         if (client != null) {
                             if(inputDiagnostics && inputDiagnosticSamples<64) {
@@ -199,6 +207,10 @@ public final class BrowserBootstrap {
         observer.setDaemon(true); observer.start();
     }
 
+    static int privateFixturePort(String fixture) {
+        return "renderer-combat-v1".equals(fixture)?43639:"repeatable-v1".equals(fixture)?43649:43629;
+    }
+
     private static final class BrowserSocket extends SocketImpl {
         private int connection = -1;
         protected void create(boolean stream) throws IOException {
@@ -206,7 +218,7 @@ public final class BrowserBootstrap {
         }
         protected void connect(String host, int port) throws IOException { connect(InetAddress.getByName(host), port); }
         protected void connect(InetAddress host, int port) throws IOException {
-            if (!host.isLoopbackAddress() || port != ("repeatable-v1".equals(System.getProperty("spoiledmilk.browserRepeatableFixture"))?43649:43629)) throw new IOException("Private prototype permits only 127.0.0.1:43629");
+            if (!host.isLoopbackAddress() || port != privateFixturePort(System.getProperty("spoiledmilk.browserRepeatableFixture"))) throw new IOException("Private prototype permits only the selected loopback fixture port");
             address = host; this.port = port; connection = wsOpen();
             if (connection < 0) throw new IOException("Private WebSocket connection failed");
         }

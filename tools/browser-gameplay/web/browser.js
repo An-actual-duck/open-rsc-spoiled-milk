@@ -88,6 +88,13 @@ const natives = {
     if(!['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection'].includes(name))throw new Error('Unknown private policy receipt');
     (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
   },
+  async Java_orsc_browser_BrowserBootstrap_reportCombatState(lib,username,names,counters){
+    const labels=String(names).split('|'),values=Array.from(counters);
+    if(fixturePolicy.requested!=='renderer-combat-v1'||labels.length!==25||values.length!==labels.length
+      ||new Set(labels).size!==labels.length||labels.some(name=>!/^\w+$/.test(name))
+      ||values.some(value=>!Number.isSafeInteger(value)||value<0))throw new Error('Unexpected private combat fixture receipt');
+    window.browserProof.combatFixture={username:String(username).slice(0,40),scope:'Received client state and loaded frames; not proof of visible pixels or spell damage',...Object.fromEntries(labels.map((name,index)=>[name,values[index]]))};
+  },
   async Java_orsc_browser_BrowserBootstrap_reportRepeatableState(lib,username,counters){
     if(fixturePolicy.requested!=='repeatable-v1'||counters.length!==4)throw new Error('Unexpected repeatable fixture receipt');
     window.browserProof.repeatableFixture={username:String(username).slice(0,40),cameraPinned:counters[0]===1,npcCount:counters[1],playerCount:counters[2],welcomeVisible:counters[3]===1};

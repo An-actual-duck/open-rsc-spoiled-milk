@@ -1,0 +1,76 @@
+Private browser combat visual workload
+======================================
+
+Scope
+-----
+renderer-combat-v1 is a separate explicit WebGL benchmark fixture. It reuses
+RendererBenchmarkServer, prepared with scripts/renderer-benchmark.py prepare.
+That preparer copies only the intact zero-account seed into a new disposable
+run, binds TCP43639/WebSocket43539 on loopback, disables external services and
+uses its synthetic renderdemo / RendererProof13 account. No owner or public
+server data is used. Preparation never starts a server, browser or GPU client.
+
+The idle repeatable-v1 fixture keeps its separate43649/43549 route and original
+32 fixed NPCs. Ordinary/software sessions keep43629/43529. The Java socket
+adapter restricts connections to the selected loopback port; both frontend
+and Bootstrap require benchmark WebGL before enabling either fixture camera.
+Production client/server code, assets and native/software defaults are unchanged.
+
+Combat is the existing combat-real phase at502,453,L0:16 controlled players,
+32 NPC targets, eight summoned bears; six production attack channels are tier3
+ICE_CRYSTAL, THUNDER_STRIKE, BATTERING_RAM, ranged, throwing and melee. Existing
+30000HP targets sustain the workload. No fake client-side VFX are injected and
+no animation clock is frozen. Existing authoritative status.json reports
+primary/credited damage, resources spent, active channels, summons and positions.
+request.json selects the phase deliberately; there is no timing auto-switch.
+The once-per-login camera pin reuses RepeatableCamera: source pitch912,
+rotation128 and zoom75, with only automatic camera drift disabled. Actual
+published pose must still be checked by the manager.
+
+Receipts and interpretation
+---------------------------
+window.browserProof.combatFixture is sampled once per second by a read-only
+Bootstrap observer only for renderer-combat-v1. It reports received NPC/player
+counts, live projectile/impact/combat/pending/cleric/hit/health actor counts,
+loaded combat/projectile/impact kinds and frames, and named tier3/summon frame
+counts. It does not advance actors, manufacture effects or replay animations.
+Counts are not proof that an actor/effect is projected, unobstructed or visible.
+Brief effects may occur between observer samples. Actual animated image capture
+and representative nonzero observations are required before FPS acceptance.
+
+combat-real does not currently cast cleric buffs/curses, so zero live cleric
+counts do not imply a rendering failure or provide cleric performance coverage.
+Summon count/engagement authority is the existing server status, not guessed
+from client NPC appearances. The ordinary RGB/transmittance overlay is retained
+for custom spell/cleric/queued projectile effects; GPU actor snapshots continue
+through the existing Scene path.
+
+Prepared asset-parity.json compares every maintained runtime animations and
+legacy-animations PNG with its embedded myworld-assets JAR entry, including
+exact SHA256 bytes. This is packaging evidence only: it does not prove ImageIO
+decoding or actual Firefox visibility. stage.json records hashes of the browser
+frontend, Bootstrap Java sources, client JAR, fixture, asset audit and separately
+prepared server marker. An explicitly provided server-artifacts directory keeps
+core/overlay/plugins/libs from one frozen snapshot; an unverified source label
+must remain labelled unverified rather than being called current main.
+
+Manager-only usage
+------------------
+Prepare with an explicit reviewed client JAR/source and congruent frozen server
+artifact directory/source receipt:
+
+  python3 scripts/browser-gameplay/prepare-combat.py --name UNIQUE \
+    --http-port 8169 --dependency-jar /reviewed/client.jar \
+    --client-source-commit EXACT40HASH --server-artifacts /frozen/server \
+    --server-source frozen-artifacts-source-unverified
+
+The preparation receipt contains exact serverStartCommand/httpCommand/url/status/request paths. Those
+commands are instructions for a later explicitly coordinated manager test;
+prepare-combat.py never executes them. Existing run names are refused.
+
+A later manager proof must confirm realCombat.authoritative, all six channels'
+resource/damage progress and eight summons; loaded frame counts plus visible
+changing custom spell/projectile/summon frames; readiness, no backend errors,
+and fresh world-frame FPS after sufficient warmup. Existing idle NPC performance
+numbers do not cover this dynamic workload. No FPS/visible-VFX result is claimed
+by this preparation task.

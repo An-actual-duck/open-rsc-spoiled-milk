@@ -109,9 +109,13 @@ def prepare(args):
             raise ValueError("Seed must be intact and have zero accounts")
     dbdir = server / "inc/sqlite"; dbdir.mkdir(parents=True)
     shutil.copy2(seed, dbdir / "renderer_benchmark_dev.db"); (dbdir / "renderer_benchmark_dev.db").chmod(0o600)
+    artifact_root = args.server_artifacts.resolve() if args.server_artifacts else ROOT / "server"
+    if args.server_artifacts and not args.server_source:
+        raise ValueError("External server artifacts require an explicit source receipt")
     artifacts = []
-    for source in [*(ROOT / "server" / n for n in ("core.jar", "plugins.jar", "core-gameplay-overlay.jar")), *sorted((ROOT / "server/lib").glob("*.jar"))]:
-        relative = source.relative_to(ROOT / "server"); target = server / relative; target.parent.mkdir(exist_ok=True)
+    for source in [*(artifact_root / n for n in ("core.jar", "plugins.jar", "core-gameplay-overlay.jar")), *sorted((artifact_root / "lib").glob("*.jar"))]:
+        if args.server_artifacts and (not source.is_file() or source.is_symlink()): raise ValueError("Regular immutable server artifact required")
+        relative = source.relative_to(artifact_root); target = server / relative; target.parent.mkdir(exist_ok=True)
         actual = args.server_core if relative.as_posix() == "core.jar" and args.server_core else args.server_overlay if relative.as_posix() == "core-gameplay-overlay.jar" and args.server_overlay else source
         shutil.copy2(actual, target); artifacts.append(dict(path=str(relative), sha256=sha(target)))
     shutil.copy2(jar, client / "client.jar")
@@ -134,6 +138,7 @@ def prepare(args):
     subprocess.run(["javac", "-source", "8", "-target", "8", "-cp", str(client / "client.jar"), "-d", str(classes), str(sources / "RendererBenchmarkClient.java")], check=True)
     marker = dict(schema=1, sourceCommit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(), clientSourceCommit=resolve_source(args.client_source), clientSourceBranch=args.client_branch, clientSha256=sha(client / "client.jar"), seedSha256=sha(seed), seedAccounts=0, mapManifest=selection["manifestSha256"], artifacts=artifacts, private=True, hideRoofsPreference=not args.show_roofs, tcp=PORTS[0], websocket=PORTS[1], source=str(ROOT))
     marker["serverSourceCommit"] = resolve_source(args.server_source) if args.server_source else marker["sourceCommit"]
+    marker["serverArtifactRoot"] = str(artifact_root)
     marker["toolSources"] = {p.name:sha(p) for p in sources.iterdir()}
     marker["compiledClasses"] = {p.relative_to(classes).as_posix():sha(p) for p in classes.rglob("*.class")}
     (run / MARKER).write_text(json.dumps(marker, indent=2) + "\n")
@@ -402,7 +407,7 @@ def report(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__); sub = parser.add_subparsers(dest="action", required=True)
-    p = sub.add_parser("prepare"); p.add_argument("--name", required=True); p.add_argument("--client-jar", type=Path, required=True); p.add_argument("--client-source", required=True); p.add_argument("--client-branch", default="unspecified-artifact-branch"); p.add_argument("--server-core", type=Path); p.add_argument("--server-overlay", type=Path); p.add_argument("--server-source"); p.add_argument("--show-roofs",action="store_true")
+    p = sub.add_parser("prepare"); p.add_argument("--name", required=True); p.add_argument("--client-jar", type=Path, required=True); p.add_argument("--client-source", required=True); p.add_argument("--client-branch", default="unspecified-artifact-branch"); p.add_argument("--server-core", type=Path); p.add_argument("--server-overlay", type=Path); p.add_argument("--server-source"); p.add_argument("--server-artifacts",type=Path,help="Explicit congruent core/plugins/overlay/lib snapshot; requires source receipt"); p.add_argument("--show-roofs",action="store_true")
     for name in ("start", "stop", "capture", "preview"):
         p = sub.add_parser(name); p.add_argument("run", type=Path)
         if name in ("capture", "preview"):
