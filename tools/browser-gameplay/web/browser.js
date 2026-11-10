@@ -1,3 +1,4 @@
+import {browserUiPreuploadBenchmarkPolicy} from './browser-ui-preupload.js';
 import {browserUploadValidationBenchmarkPolicy} from './browser-upload-validation.js';
 const started = performance.now();
 import {createTransport} from './transport.js';
@@ -31,7 +32,7 @@ function publish() {
 }
 function dispose() {
   if (stopped) return;
-  stopped = true; delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
+  stopped = true; delete window.browserBenchmarkOwnedState;delete window.browserBenchmarkUiPreupload; delete window.browserBenchmarkStreamUploadValidation; pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
 }
 function finish(reason) {
   if (stopped) return;
@@ -111,9 +112,10 @@ try {
     const ownedState=browserOwnedStateBenchmarkPolicy(window.browserProof.mode,options);
     const streamUploadValidation=browserUploadValidationBenchmarkPolicy(window.browserProof.mode,options);
     window.browserProof.ownedStateRequested=ownedState;
+    const uiPreupload=browserUiPreuploadBenchmarkPolicy(window.browserProof.mode,options);window.browserProof.uiPreuploadRequested=uiPreupload;
     if(window.browserProof.benchmark)window.browserProof.benchmark.streamUploadValidationRequested=streamUploadValidation;
-    gpu = createBrowserWebGL(canvas, report, {opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,benchmarkControl:options.has('benchmark')});
-    if(options.has('benchmark')){window.browserBenchmarkOwnedState=enabled=>gpu.queueOwnedState(enabled);window.browserBenchmarkStreamUploadValidation=enabled=>gpu.queueStreamUploadValidation(enabled);}
+    gpu = createBrowserWebGL(canvas, report, {opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,uiPreupload,benchmarkControl:options.has('benchmark')});
+    if(options.has('benchmark')){window.browserBenchmarkUiPreupload=enabled=>gpu.queueUiPreupload(enabled);window.browserBenchmarkOwnedState=enabled=>gpu.queueOwnedState(enabled);window.browserBenchmarkStreamUploadValidation=enabled=>gpu.queueStreamUploadValidation(enabled);}
     worldCover=createWorldCover({document,window,display:document.querySelector('#display'),onGateChange:()=>window.dispatchEvent(new Event('browser-world-readinesschange'))});
     window.browserProof.worldLoading=worldCover.stats;
     window.browserProof.renderer = 'WebGL2 resident world and sprites / software UI (experimental)';

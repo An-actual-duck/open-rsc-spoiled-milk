@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-const benchmarkStream=process.argv.includes('--benchmark-stream');let streamRequested;
+const benchmarkUi=process.argv.includes('--benchmark-ui-preupload'),benchmarkStream=process.argv.includes('--benchmark-stream')||benchmarkUi;let streamRequested,uiRequested;
 let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, displayDisposed = 0, configured,gpuOptions;
 const status = {textContent:''}, messages = [];
 let layoutReads=0;
@@ -14,7 +14,7 @@ const canvas = {style:{},setAttribute(){}};
 const stats = {lastError:null,lastFrame:0};
 const gateEvents=[];
 const window = {dispatchEvent:e=>gateEvents.push(e.type),browserRuntimeVersion:'5.0',addEventListener(){}};
-const context = vm.createContext({window,location:{search:benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on':'?mode=webgl',origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
+const context = vm.createContext({window,location:{search:benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkUi?'&ui-preupload=on':''):'?mode=webgl',origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
   URLSearchParams,performance:{now:()=>clock},console,
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
@@ -28,10 +28,11 @@ const middleModule = new vm.SyntheticModule(['createBrowserMiddleMouseInput'],fu
   middleCreated++;return {stats:middleStats,dispose:()=>middleDisposed++,natives:{Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent:middleNative}};
 });},{context});
 const displayModule=new vm.SyntheticModule(['createBrowserDisplay'],function(){this.setExport('createBrowserDisplay',()=>({stats:{},scale:1,setSize(){},attachDesktop(){},dispose(){displayDisposed++;}}));},{context});
-const gpuModule = new vm.SyntheticModule(['createBrowserWebGL'],function(){this.setExport('createBrowserWebGL',(_canvas,_report,options)=>{gpuOptions=options;stats.ownedStateActive=options.ownedState;stats.streamUploadValidationActive=options.streamUploadValidation;return({canvas,stats,queueStreamUploadValidation:value=>{streamRequested=value;},queueOwnedState(){},dispose:()=>gpuDisposed++,natives:{
+const gpuModule = new vm.SyntheticModule(['createBrowserWebGL'],function(){this.setExport('createBrowserWebGL',(_canvas,_report,options)=>{gpuOptions=options;stats.ownedStateActive=options.ownedState;stats.streamUploadValidationActive=options.streamUploadValidation;stats.uiPreuploadActive=options.uiPreupload;return({canvas,stats,queueUiPreupload:value=>{uiRequested=value;},queueStreamUploadValidation:value=>{streamRequested=value;},queueOwnedState(){},dispose:()=>gpuDisposed++,natives:{
   Java_orsc_BrowserWebGLBridge_worldProgress:async()=>{stats.worldReadiness={phase:stats.declaredPhase||'loading'};},
   Java_orsc_BrowserWebGLBridge_present:async(lib,width,height)=>{canvas.width=width;canvas.height=height;stats.lastFrame=clock;stats.worldReadiness={phase:'ready'};},
 }});});},{context});
+const uiPreuploadModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-ui-preupload.js',import.meta.url),'utf8'),{context});
 const controlsModule = new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-benchmark-controls.js',import.meta.url),'utf8'),{context});
 const streamValidationModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-upload-validation.js',import.meta.url),'utf8'),{context});
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
@@ -40,6 +41,7 @@ await module.link(specifier=>{
   if(specifier==='./browser-world-cover.js')return coverModule;
   if(specifier==='./browser-display.js')return displayModule;
   if(specifier==='./browser-benchmark-controls.js')return controlsModule;
+  if(specifier==='./browser-ui-preupload.js')return uiPreuploadModule;
   if(specifier==='./browser-upload-validation.js')return streamValidationModule;
   if(specifier==='./browser-middle-mouse.js')return middleModule;
   assert.equal(specifier,'./transport.js');return transportModule;
@@ -60,6 +62,7 @@ assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMo
 assert.deepEqual(Array.from(await configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent(null)),[1,30,40,0]);
 assert.equal(canvas.style.pointerEvents,'none');
 assert.equal(configured.enableInputMethods,false);
+assert.equal(gpuOptions.uiPreupload,benchmarkUi,'Unmeasured UI preupload must stay off except explicit private benchmark');assert.equal(window.browserProof.uiPreuploadRequested,benchmarkUi);assert.equal(stats.uiPreuploadActive,benchmarkUi);if(benchmarkStream){window.browserBenchmarkUiPreupload(!benchmarkUi);assert.equal(uiRequested,!benchmarkUi);}else assert.equal(window.browserBenchmarkUiPreupload,undefined);
 assert.equal(gpuOptions.streamUploadValidation,true,'Ordinary WebGL adopts validated streaming policy');assert.equal(stats.streamUploadValidationActive,true,'Actual selected backend streaming receipt');
 if(benchmarkStream){assert.equal(typeof window.browserBenchmarkStreamUploadValidation,'function');window.browserBenchmarkStreamUploadValidation(false);assert.equal(streamRequested,false);assert.equal(window.browserProof.benchmark.streamUploadValidationRequested,true);}else assert.equal(window.browserBenchmarkStreamUploadValidation,undefined,'ordinary sessions cannot change stream policy');
 assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserFramePreparation=')||p.startsWith('spoiledmilk.browserAnimatedBufferReuse=')),benchmarkStream,'only private benchmark URL receives preparation overrides');
