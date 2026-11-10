@@ -71,11 +71,13 @@ export function preserveBinaryCutoutCoverage(chain,source,nearest=false){
   return chain;
 }
 export function createWorldTextureSampling(gl,{enabled=false,mode="stable",stats={}}={}){
-  let sampler=null,disposed=false,boundSampler=null;const cutout=mode==='cutout'||mode==='cutout-nearest';
+  let sampler=null,disposed=false,boundSampler=null;const cutout=mode==='cutout'||mode==='cutout-nearest'||mode==='cutout-aniso4';
+  stats.worldTextureSamplingMode=enabled?mode:'nearest';stats.worldTextureAnisotropy={requested:mode==='cutout-aniso4'?4:1,extension:false,reportedCap:null,applied:1,fallback:mode==='cutout-aniso4',reason:mode==='cutout-aniso4'?'not-initialized':null};
   stats.worldTextureSampling=enabled?(cutout?'native-binary-cutout / coverage-mips':'mip-minification / nearest-magnification'):'nearest';stats.worldMipUploadedBytes=0;stats.worldMipBuildMilliseconds=0;
   function initialize(){if(!enabled||sampler)return;if(disposed)throw new Error('World texture sampling disposed');let next=null;
     try{next=gl.createSampler();if(!next)throw new Error('World sampler allocation failed');
       for(const [name,value]of [[gl.TEXTURE_MIN_FILTER,mode==='cutout-nearest'?gl.NEAREST_MIPMAP_LINEAR:gl.LINEAR_MIPMAP_LINEAR],[gl.TEXTURE_MAG_FILTER,gl.NEAREST],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]])gl.samplerParameteri(next,name,value);
+      if(mode==='cutout-aniso4'){const ext=gl.getExtension('EXT_texture_filter_anisotropic'),cap=ext?gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT):null,valid=Number.isFinite(cap)&&cap>=1,applied=ext&&valid?Math.min(4,cap):1;stats.worldTextureAnisotropy={requested:4,extension:!!ext,reportedCap:valid?cap:null,applied,fallback:!ext||!valid||applied<4,reason:!ext?'extension-unavailable':!valid?'invalid-reported-cap':applied<4?'cap-below-requested4':null};if(ext&&valid)gl.samplerParameterf(next,ext.TEXTURE_MAX_ANISOTROPY_EXT,applied);}
       const error=gl.getError();if(error!==gl.NO_ERROR)throw new Error('World sampler initialization GL error 0x'+error.toString(16));sampler=next;next=null;
     }finally{if(next)gl.deleteSampler(next);}
   }

@@ -38,7 +38,7 @@ function materialQuads(subject){
 }
 async function create(mode){
  if(backend)backend.dispose();const scale=mode==='reference'?2:1;canvas.width=960*scale;canvas.height=540*scale;
- backend=createBrowserWebGL(canvas,()=>{},{worldTextureFiltering:['stable','cutout','cutout-nearest'].includes(mode)?mode:'nearest',colorFrustumCulling:false});
+ backend=createBrowserWebGL(canvas,()=>{},{worldTextureFiltering:['stable','cutout','cutout-nearest','cutout-aniso4'].includes(mode)?mode:'nearest',colorFrustumCulling:false});
  const n=backend.natives;
  await n.Java_orsc_BrowserWebGLBridge_initialize(null,shader[0],shader[1]);
  await n.Java_orsc_BrowserWebGLBridge_initializeLighting(null,shader[2],shader[3]);await n.Java_orsc_BrowserWebGLBridge_initializeSky();
@@ -97,22 +97,22 @@ async function compare(mode,reference,subject){
  }
  const middleSignal=subjectSignals[48];
  const metrics=Object.fromEntries(Object.entries(states).map(([k,s])=>[k,{samples:s.samples,temporalSamples:s.temporalSamples,referenceRmse:s.samples?Math.sqrt(s.squared/s.samples):null,temporalResidualRmse:s.temporalSamples?Math.sqrt(s.temporal/s.temporalSamples):null}]));
- return {mode,distance,subject,frames:views().length,regionsAtMiddle:regions(48),metrics,subjectSignals,middleSignal,note:'Isolated actual subject; green signal is not alpha coverage proof',stats:{worldFrames:backend.stats.javaWorldFrames,mipBuildMs:backend.stats.worldMipBuildMilliseconds,mipUploadedBytes:backend.stats.worldMipUploadedBytes,renderer:backend.stats.renderer,vendor:backend.stats.vendor}};
+ return {mode,distance,subject,frames:views().length,regionsAtMiddle:regions(48),metrics,subjectSignals,middleSignal,note:'Isolated actual subject; green signal is not alpha coverage proof',stats:{worldFrames:backend.stats.javaWorldFrames,mipBuildMs:backend.stats.worldMipBuildMilliseconds,mipUploadedBytes:backend.stats.worldMipUploadedBytes,renderer:backend.stats.renderer,vendor:backend.stats.vendor,anisotropy:backend.stats.worldTextureAnisotropy}};
 }
 // Captures the SAME freshly submitted drawingbuffer synchronously, before browser
 // compositing may discard it. No screenshot of a later blank canvas is accepted.
 window.renderSnapshot=async(mode,index=48,treeOnly=false,requestedDistance='mid')=>{
- if(!['nearest','stable','cutout','cutout-nearest','reference'].includes(mode)||!['near','mid','far'].includes(requestedDistance)||!Number.isInteger(index)||index<0||index>=96)throw Error('Invalid snapshot request');
+ if(!['nearest','stable','cutout','cutout-nearest','cutout-aniso4','reference'].includes(mode)||!['near','mid','far'].includes(requestedDistance)||!Number.isInteger(index)||index<0||index>=96)throw Error('Invalid snapshot request');
  replaying=false;await load();distance=requestedDistance;await create(mode);await draw(index,treeOnly);
  const png=canvas.toDataURL('image/png');
- return {mode,index,distance,subject:treeOnly===true?'tree':treeOnly===false?'scene':treeOnly,width:canvas.width,height:canvas.height,png,regions:regions(index),renderer:backend.stats.renderer,sourceCommit:(await json('./stage.json')).sourceCommit};
+ return {mode,index,distance,subject:treeOnly===true?'tree':treeOnly===false?'scene':treeOnly,width:canvas.width,height:canvas.height,png,regions:regions(index),renderer:backend.stats.renderer,anisotropy:backend.stats.worldTextureAnisotropy,sourceCommit:(await json('./stage.json')).sourceCommit};
 };
 async function run(options={}){
  document.querySelector('#start').disabled=true;
  try{
   await load();const gl=canvas.getContext('webgl2'),ext=gl.getExtension('WEBGL_debug_renderer_info'),renderer=gl.getParameter(ext?ext.UNMASKED_RENDERER_WEBGL:gl.RENDERER);
   if(/swiftshader|llvmpipe|software rasterizer/i.test(renderer))throw Error('Software renderer rejected: '+renderer);
-  const results=[];for(const d of options.distances||['near','mid','far']){if(!['near','mid','far'].includes(d))throw Error('Invalid distance');distance=d;for(const subject of options.subjects||['tree','floor','wall']){if(!['tree','floor','wall'].includes(subject))throw Error('Invalid subject');const reference=[];for(const mode of ['reference','nearest','stable','cutout','cutout-nearest'])results.push(await compare(mode,reference,subject));}}
+  const results=[];for(const d of options.distances||['near','mid','far']){if(!['near','mid','far'].includes(d))throw Error('Invalid distance');distance=d;for(const subject of options.subjects||['tree','floor','wall']){if(!['tree','floor','wall'].includes(subject))throw Error('Invalid subject');const reference=[];for(const mode of ['reference','nearest','stable','cutout','cutout-nearest','cutout-aniso4'])results.push(await compare(mode,reference,subject));}}
   const t=textures.get(17),start=performance.now();for(let n=0;n<120;n++)buildWorldCutoutMips(t.width,t.height,t.rgba);const stableCpu=(performance.now()-start)/120,cutoutCpuPlan=createWorldTextureSampling({}, {enabled:true,mode:'cutout'}),cutoutStart=performance.now();for(let n=0;n<120;n++)cutoutCpuPlan.plan(t.width,t.height,t.rgba,true);const cutoutCpu=(performance.now()-cutoutStart)/120;
   const result={pass:true,qualityAccepted:false,scope:'Production shaders/tree/palette;independent tree/floor6/wall2 passes without mutual occlusion;128-unit tiling;no shadows/fog;not FPS acceptance',userAgent:navigator.userAgent,renderer,roi,reference:'2x physical-raster NEAREST,box-downsampled;not native LWJGL pixel parity',results,animatedTexture17CpuMsPerBuild:{stable:stableCpu,cutout:cutoutCpu},source:await json('./stage.json')};
   window.textureStabilityResult=result;status.textContent=JSON.stringify(result,null,2);document.querySelector('#play').disabled=false;return result;

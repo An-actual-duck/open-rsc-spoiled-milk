@@ -28,3 +28,13 @@ console.log('PASS native cutout coverage estimate never worsens vs raw mips, ind
 
 {const x=fixture(),p=createWorldTextureSampling(x.gl,{enabled:true,mode:'cutout-nearest'});p.initialize();assert(x.calls.some(c=>c[0]==='sampler'&&c[2]===x.gl.TEXTURE_MIN_FILTER&&c[3]===x.gl.NEAREST_MIPMAP_LINEAR));const src=new Uint8Array(64*64*4);for(let n=0;n<4096;n++)src.set([37,211,19,n%3?0:255],n*4);const raw=buildWorldCutoutMips(64,64,src),plan=p.plan(64,64,src,true),target=1366/4096;for(let i=1;i<plan.levels.length;i++){const l=plan.levels[i],r=raw.levels[i],c=a=>a.reduce((n,v,i)=>n+(i%4===3&&v>127.5?1:0),0)/(a.length/4);assert(Math.abs(c(l.pixels)-target)<=Math.abs(c(r.pixels)-target)+1e-12);}p.dispose();}
 console.log('PASS independent nearest-mip cutout sampler/coverage policy; no visual acceptance');
+for(const cap of [null,1,2,16,NaN]){
+ const x=fixture(),stats={},ext={TEXTURE_MAX_ANISOTROPY_EXT:123,MAX_TEXTURE_MAX_ANISOTROPY_EXT:124};let extensionQueries=0,capQueries=0;
+ x.gl.getExtension=name=>{assert.equal(name,'EXT_texture_filter_anisotropic');extensionQueries++;return cap===null?null:ext;};
+ x.gl.getParameter=name=>{assert.equal(name,124);capQueries++;return cap;};x.gl.samplerParameterf=(...args)=>x.calls.push(['anisotropy',...args]);
+ const p=createWorldTextureSampling(x.gl,{enabled:true,mode:'cutout-aniso4',stats});p.initialize();p.initialize();assert.equal(extensionQueries,1);assert.equal(capQueries,cap===null?0:1);
+ const valid=Number.isFinite(cap)&&cap>=1,applied=valid?Math.min(4,cap):1;assert.equal(stats.worldTextureAnisotropy.applied,applied);assert.equal(stats.worldTextureAnisotropy.fallback,!valid||applied<4);assert.equal(stats.worldTextureAnisotropy.extension,cap!==null);assert.equal(x.calls.filter(c=>c[0]==='anisotropy').length,valid?1:0);if(valid)assert.equal(x.calls.find(c=>c[0]==='anisotropy')[3],applied);
+ p.colorSampling();p.baseSampling();assert.equal(x.calls.at(-1)[2],null);p.dispose();p.dispose();assert.equal(x.live.size,0);
+}
+{const x=fixture(),stats={};let fail=0;x.gl.getExtension=()=>({TEXTURE_MAX_ANISOTROPY_EXT:123,MAX_TEXTURE_MAX_ANISOTROPY_EXT:124});x.gl.getParameter=()=>16;x.gl.samplerParameterf=()=>{fail=0x502;};x.gl.getError=()=>{const v=fail;fail=0;return v;};const p=createWorldTextureSampling(x.gl,{enabled:true,mode:'cutout-aniso4',stats});assert.throws(()=>p.initialize(),/GL error/);assert.equal(x.live.size,0);p.dispose();}
+console.log('PASS bounded anisotropy extension/cap/absent-invalid fallback, one-time queries, same sampler lifetime and failure cleanup');
