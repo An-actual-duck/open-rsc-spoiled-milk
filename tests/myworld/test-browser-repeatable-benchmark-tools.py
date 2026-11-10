@@ -31,8 +31,8 @@ def main():
         run([javac,'-source','8','-target','8','-cp',str(jar),'-d',str(classes)]+[str(p)for p in bootstrap+fixtures],log)
         cp=str(classes)+':'+str(jar)
         run([java,'-Djava.awt.headless=true','-cp',cp,'orsc.browser.RepeatableCameraFixture'],log)
-        flags=['-D'+name+'=false'for name in ['spoiledmilk.browserGeometryTransferReuse','spoiledmilk.browserRegionPreparation','spoiledmilk.browserResidentDescriptorWriting','spoiledmilk.browserHaloHeightLookup','spoiledmilk.browserSceneryProjectionWork']]
-        positive=['-D'+name+'=true'for name in ['spoiledmilk.browserGeometryTransferReuse','spoiledmilk.browserRegionPreparation','spoiledmilk.browserResidentDescriptorWriting','spoiledmilk.browserHaloHeightLookup','spoiledmilk.browserSceneryProjectionWork']]
+        flags=['-D'+name+'=false'for name in ['spoiledmilk.browserGeometryTransferReuse','spoiledmilk.browserRegionPreparation','spoiledmilk.browserResidentDescriptorWriting','spoiledmilk.browserHaloHeightLookup','spoiledmilk.browserSceneryProjectionWork','spoiledmilk.browserPrimitiveChunkCoverage']]
+        positive=['-D'+name+'=true'for name in ['spoiledmilk.browserGeometryTransferReuse','spoiledmilk.browserRegionPreparation','spoiledmilk.browserResidentDescriptorWriting','spoiledmilk.browserHaloHeightLookup','spoiledmilk.browserSceneryProjectionWork','spoiledmilk.browserPrimitiveChunkCoverage']]
         tail=(['--require-candidates']if args.require_candidates else [])+(['--require-projection']if args.require_projection else [])
         for selected in [flags,positive]:run([java,'-Djava.awt.headless=true']+selected+['-cp',cp,'orsc.browser.BenchmarkCandidatePoliciesFixture']+tail,log)
         servercp=':'.join(str(ROOT/'server'/p)for p in ['core-gameplay-overlay.jar','core.jar','plugins.jar','lib/*'])
