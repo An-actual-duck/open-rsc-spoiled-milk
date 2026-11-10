@@ -118,3 +118,21 @@ Canonical output layout checking finds inherited unclassified historical output
 root entries in this recycled ai3 slot. This task writes only declared
 `tests/browser-physical-output` and `tests/browser-gameplay-spike` categories;
 historical directories were preserved.
+
+## Final-source hardware checkpoint
+
+Manager reran the fresh immutable `physical-v3-final` stage containing source
+193b45f4a34fd3d6903d94886b8c53e0aed19e13, including the strict complete-source/opaque
+policy guard: actual Firefox/WebGL2 again passed all46 cases, 22,731,720 RGBA bytes
+compared with zero changed bytes, actual context loss and Stop/init race passed.
+Evidence:
+`/home/justin/Core-Framework/output/diagnostics/browser-motion-transitions/physical-hardware-firefox-final/result.json`.
+The reported renderer is Firefox's privacy-limited `Radeon R9 200 Series, or similar`;
+no exact physical GPU model or FPS claim follows from that string.
+
+Final gameplay artifact `output/tests/browser-gameplay-spike/browser-physical-output-final`
+was prepared and its read-only explicit-JAR/frontend/private-config validator passed.
+The manager is evaluating that frozen artifact on8153. Whole-game quality, input,
+layer/teleport/hold behavior and warmed same-session ON/OFF performance remain
+manager acceptance work. The source stays default OFF regardless of those pending
+measurements; this handoff supplies the reviewed prototype and bounded proof tools.
