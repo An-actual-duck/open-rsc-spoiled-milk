@@ -64,4 +64,21 @@ simulated: those CPU cases remain incomplete while awaiting runMain, and cannot
 claim that1903 Java checks passed. Query rejection and injected init failure are
 also checked. Authentic Firefox/CheerpJ results must be recorded separately by the
 manager. No tests, compilation or preparation were run during the initial
-projection-performance timing hold; this source is pending that release.
+projection-performance timing hold. After explicit release, the CPU guards and
+canonical workspace layout check passed; no JVM compilation was needed.
+
+Prepared review artifacts (no worker launch)
+-------------------------------------------
+From clean tooling checkpoint6ab3d9540184c7ef5fb89b474d42224b9b2d5c47:
+ output/tests/browser-runtime-engine-matrix/java17-js-review-1 (HTTP8183)
+ output/tests/browser-runtime-engine-matrix/java8-wasmgc-review-1 (HTTP8184)
+The explicit source was the approved frozen v3-void stage supplied by the manager.
+Its manifest SHA256 is81a8ba75a783a69011e62b662c3add53a9ecf914cb69f83c6f443d527acd7f63.
+Both variants retain probe.jar SHA32ba181e42d95ab7c33fb5ce95d417dcd95849ca59d6f2ace5d61453edf7cab2.
+Variant script hashes:
+ java17-js:4af26f6b31c5020431fffd52847111b665095dacf9b84de8ceb821927c59d074
+ java8-wasmgc:b978658a6ba645a6dc2ad95e88a95fcfaad4d192ca38a4ed6400b78fb4d027e4
+Both stages remain immutable. CPU validation additionally rejects unmanifested
+nested web files in the range service. Prepared manifests are not runtime results;
+manager observations and engine-specific failures must be preserved separately.
+The worker launched no browser, HTTP service, game server, JVM or GPU workload.

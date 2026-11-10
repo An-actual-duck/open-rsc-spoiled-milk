@@ -36,6 +36,11 @@ def main():
         else:raise AssertionError('Existing immutable stage overwritten')
         result=subprocess.run(['node','--experimental-vm-modules',str(ROOT/'tests/myworld/test-browser-runtime-engine-options.mjs'),str(run),variant],cwd=ROOT,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
         (run/'cpu.log').write_text(result.stdout);print(result.stdout,end='');result.check_returncode()
+    # A nested unmanifested file must never become reachable through the range service.
+    foreign=suite/'java17-js'/'web'/'unmanifested';foreign.mkdir();(foreign/'payload.txt').write_text('not served')
+    try:server.verify(suite/'java17-js')
+    except ValueError:pass
+    else:raise AssertionError('Unmanifested nested files were accepted')
     altered=suite/'altered-input';(altered/'web').mkdir(parents=True);(altered/'source').mkdir()
     (altered/'stage.json').write_bytes(raw);(altered/'source/NativeDispatchProbe.java').write_bytes(java)
     for name,value in inputs.items():(altered/'web'/name.lstrip('/')).write_bytes(value)

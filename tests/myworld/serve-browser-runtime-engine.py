@@ -17,7 +17,7 @@ def verify(stage):
         raise ValueError('Select a prepared runtime-engine probe')
     web = stage/'web'
     expected={'/probe.jar','/index.html','/browser-native-runtime-probe.js','/browser-native-call-dispatch.js'}
-    if set(metadata['webFiles']) != expected or expected != {'/'+p.name for p in web.iterdir() if p.is_file()}:
+    if any(p.is_dir() for p in web.iterdir()) or set(metadata['webFiles']) != expected or expected != {'/'+p.name for p in web.iterdir() if p.is_file()}:
         raise ValueError('Unmanifested web files')
     for name, record in metadata['webFiles'].items():
         if name not in ['/probe.jar','/index.html','/browser-native-runtime-probe.js','/browser-native-call-dispatch.js']:
