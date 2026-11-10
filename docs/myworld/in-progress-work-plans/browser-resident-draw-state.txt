@@ -1,0 +1,38 @@
+Browser resident color-pass state reuse
+
+Only the resident world color pass owns this cache; it starts empty after
+lighting prepare/bindReceiver on every present. Repeated VAO, four offset
+uniforms, receiver plane, texture-enabled flag and unit0 texture bindings
+are elided. No previous-frame state, shader values, draw order, batches,
+geometry, shadows or visual quality are changed. Sprite/UI passes still
+establish their own bindings. Fixed Int32 draw inputs cannot contain NaN.
+
+Frozen-source differential uses ee876dbe8 actual original webgl.js and current
+backend with independent in-memory GL contexts. All2592 ordered effective
+draw-state snapshots match across opaque/transparent kinds, repeated/changed
+offsets and planes, texture updates/deletion/recreation, empty frame, and
+intervening external state. This is API evidence, not hardware pixels/FPS.
+
+uniform1f: 3915 -> 1157 calls in synthetic differential workload
+uniform1i: 3641 -> 2743 calls in synthetic differential workload
+activeTexture: 2700 -> 1413 calls in synthetic differential workload
+bindTexture: 2673 -> 2202 calls in synthetic differential workload
+bindVertexArray: 987 -> 895 calls in synthetic differential workload
+
+Existing GPU-resource/lighting/frontend checks, layout and diff checks pass.
+Actual hardware image verification and combined FPS measurement are pending.
+
+Actual GPU differential
+An explicit opt-in synthetic fixture can be prepared with
+node tests/myworld/test-browser-resident-draw-state.mjs --prepare-hardware
+Serve the printed isolated folder on loopback and read window.result. It uses
+actual original/current backends, alpha/kind/offset/plane/texture changes and
+independent real WebGL2 contexts. Eight nonblank96x96RGBA frames matched all
+294912bytes on AMD RX6700XT/ANGLE OpenGL4.6, with61935colored components.
+Manager evidence: output/reviews/browser-display-performance/resident-state-pixels-2.
+The first fixture used opaque black UI pixels and was correctly rejected by
+its nonblank check; corrected hardware-2 uses the existing transparent marker.
+Both attempts preserved. This uses synthetic shaders, not complete gameplay
+pixel parity or FPS acceptance. Peer review8577dd4a3 found no state blocker.
+
+No public server operation. Combined gameplay hardware benchmark remains next.

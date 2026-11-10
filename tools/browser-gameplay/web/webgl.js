@@ -164,6 +164,11 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(world&&!retainedWorld){
         gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.useProgram(program);gl.uniformMatrix4fv(loc('uProjectionMatrix'),false,matrices.subarray(0,16));gl.uniformMatrix4fv(loc('uWorldViewMatrix'),false,matrices.subarray(16,32));
         FLOAT_UNIFORMS.forEach((name,n)=>f(name,u[n]));i('uTerrainDefinitionMode',u[25]);i('uTerrainVariationEnabled',u[26]);i('uRemasterLightingEnabled',u[27]);i('uFogEnabled',u[28]);lighting.bindReceiver();
+        // The color pass owns these bindings until the sprite pass. Cache only
+        // within this invocation: lighting/upload/context work may change GL state
+        // between frames, so no prior-frame state is trusted.
+        let residentVAO,residentTexture,textureEnabled,chunkX,chunkZ,terrainX,terrainZ,receiverPlane;
+        gl.activeTexture(gl.TEXTURE0);
         for(const transparent of [false,true]) {
           if(transparent){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);}else gl.disable(gl.BLEND);
           f('uBrowserAlphaCutoff',transparent?0:0.5);
@@ -171,9 +176,17 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
           if(kind===4||kind===5){gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);}else gl.disable(gl.CULL_FACE);
           if(kind===2){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-1);}else gl.disable(gl.POLYGON_OFFSET_FILL);
           for(let at=0;at<draws.length;at+=8){
-          if(!(draws[at+5]&(1<<kind)))continue;const chunk=chunks.get(draws[at]);if(!chunk)throw new Error('Draw references absent browser chunk');gl.bindVertexArray(chunk.vao);
-          f('uChunkOffsetX',draws[at+1]);f('uChunkOffsetZ',draws[at+2]);f('uTerrainWorldOffsetX',draws[at+3]);f('uTerrainWorldOffsetZ',draws[at+4]);lighting.bindReceiverPlane(draws[at+6]);
-          const b=chunk.batches;for(let n=0;n<b.length;n+=5){if(b[n+3]!==kind||(b[n+4]===1)!==transparent)continue;const tex=textures.get(b[n]);i('uTextureEnabled',tex?1:0);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex?tex.texture:baseTextures[0]);gl.drawElements(gl.TRIANGLES,b[n+2],gl.UNSIGNED_INT,b[n+1]*4);calls++;triangles+=b[n+2]/3;}
+          if(!(draws[at+5]&(1<<kind)))continue;const chunk=chunks.get(draws[at]);if(!chunk)throw new Error('Draw references absent browser chunk');
+          if(residentVAO!==chunk.vao){gl.bindVertexArray(chunk.vao);residentVAO=chunk.vao;}
+          if(chunkX!==draws[at+1]){chunkX=draws[at+1];f('uChunkOffsetX',chunkX);}
+          if(chunkZ!==draws[at+2]){chunkZ=draws[at+2];f('uChunkOffsetZ',chunkZ);}
+          if(terrainX!==draws[at+3]){terrainX=draws[at+3];f('uTerrainWorldOffsetX',terrainX);}
+          if(terrainZ!==draws[at+4]){terrainZ=draws[at+4];f('uTerrainWorldOffsetZ',terrainZ);}
+          if(receiverPlane!==draws[at+6]){receiverPlane=draws[at+6];lighting.bindReceiverPlane(receiverPlane);}
+          const b=chunk.batches;for(let n=0;n<b.length;n+=5){if(b[n+3]!==kind||(b[n+4]===1)!==transparent)continue;const tex=textures.get(b[n]),enabled=tex?1:0,texture=tex?tex.texture:baseTextures[0];
+            if(textureEnabled!==enabled){i('uTextureEnabled',enabled);textureEnabled=enabled;}
+            if(residentTexture!==texture){gl.bindTexture(gl.TEXTURE_2D,texture);residentTexture=texture;}
+            gl.drawElements(gl.TRIANGLES,b[n+2],gl.UNSIGNED_INT,b[n+1]*4);calls++;triangles+=b[n+2]/3;}
           stats.reusedChunkDraws++;
         }
         }
