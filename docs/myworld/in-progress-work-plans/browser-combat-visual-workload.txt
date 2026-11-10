@@ -74,3 +74,20 @@ changing custom spell/projectile/summon frames; readiness, no backend errors,
 and fresh world-frame FPS after sufficient warmup. Existing idle NPC performance
 numbers do not cover this dynamic workload. No FPS/visible-VFX result is claimed
 by this preparation task.
+
+CPU verification
+----------------
+The focused observer/route/packaging/frontend suite passed on installed JDK8
+and system JDK21 against the explicit baseline325 client JAR. Each run checked
+12 actual client-state/read-only/gating conditions,15 actual once-pinned camera
+conditions, compiled the unchanged production-combat server against the frozen
+baseline2 artifacts, and exercised ordinary, idle-repeatable and combat frontend
+contracts. The16 existing renderer-benchmark guard tests also passed. None of
+these tests starts a server, browser or GPU; mock frontend FPS fields are not
+performance evidence.
+
+workspace-layout.py check was run. It reports pre-existing unclassified worker
+output roots (legacy static-analysis, sprite and renderer diagnostic folders);
+this task writes only declared tests/browser-combat-workload,
+tests/browser-gameplay-spike and tests/renderer-shadow-benchmarks subjects.
+Those historical outputs were preserved, not moved or deleted.
