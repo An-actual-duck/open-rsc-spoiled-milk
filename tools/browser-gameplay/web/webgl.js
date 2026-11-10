@@ -3,6 +3,7 @@ import {createWorldReadiness} from './browser-world-ready.js';
 import {createBrowserOverlay} from './browser-overlay.js';
 import {createBrowserSky} from './browser-sky.js';
 import {createBrowserLighting} from './browser-lighting.js';
+import {buildChunkColorBounds,hasResidentPositionContract,isChunkOutsideColorFrustum} from './browser-color-frustum.js';
 /** Experimental resident-world WebGL2 backend. Receives ordinary Java-produced scene frames. */
 export function adaptResidentShader(source, fragment) {
   if (typeof source !== 'string' || source.length > 131072 || !source.startsWith('#version 120')) throw new Error('Expected bounded production GLSL120 shader');
@@ -32,6 +33,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   if(!gl) throw new Error('WebGL2 unavailable: browser GPU proof requires WebGL2');
   const stats={worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas, <=8MiB marker overlay plus optional <=32MiB combined C/T/retained texture peak, <=160MiB shadow maps and <=8MiB masks and separately bounded <=2MiB sky peak; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Marker UI lacks partial-alpha reconstruction unless coverage mode is enabled','Browser/device coverage and broader gameplay parity pending'],frameSamples:[]};
   const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0,lastWorld=0,lighting,lightingValues,sky,overlay;
+  const colorVisible=new Uint8Array(256),colorCullScratch=new Float64Array(18);let colorCullingSupported=false;
   const worldReady=createWorldReadiness(gl,{stats});
   const gpuTimer=gl.getExtension("EXT_disjoint_timer_query_webgl2"),pendingQueries=[];
   let spriteAtlas,spriteDraws=[];const SPRITE_ATLAS=2048;
@@ -51,13 +53,17 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     if(vertices.length%28||vertices.length/28>524288||indices.length>1572864||batches.length%5)throw new Error('Invalid browser chunk dimensions');
     const count=vertices.length/28;for(const index of indices)if(index<0||index>=count)throw new Error('Invalid browser chunk index');
     for(let b=0;b<batches.length;b+=5)if(batches[b+1]<0||batches[b+2]<0||batches[b+1]+batches[b+2]>indices.length)throw new Error('Invalid browser material range');
-    return {vertices,indices,batches};
+    return {vertices,indices,batches,bounds:colorCullingSupported?buildChunkColorBounds(vertices):null};
   }
   const natives={
     async Java_orsc_BrowserWebGLBridge_worldProgress(lib,metadata){alive();worldReady.declare(metadata);},
     async Java_orsc_BrowserWebGLBridge_initialize(lib,vertex,fragment){
       alive();if(program)throw new Error('WebGL backend initialized twice');
       program=link(adaptResidentShader(vertex,false),adaptResidentShader(fragment,true));
+      const supported=options.colorFrustumCulling!==false&&(await hasResidentPositionContract(vertex));
+      alive(); // Stop/context loss may happen while the exact shader digest is pending.
+      colorCullingSupported=supported;
+      stats.colorFrustumCulling=colorCullingSupported;
       overlayProgram=link('#version 300 es\nprecision highp float;out vec2 uv;void main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));uv=vec2(p.x,1.0-p.y);gl_Position=vec4(p*2.0-1.0,0,1);}', '#version 300 es\nprecision highp float;uniform sampler2D image;uniform bool world;in vec2 uv;out vec4 color;void main(){vec4 s=texture(image,uv);if(world&&s.a>0.003&&s.a<0.005)discard;color=vec4(s.bgr,1.0);}');
       spriteProgram=link('#version 300 es\nprecision highp float;in vec3 position;in vec2 texCoord;uniform mat4 projection;out vec2 uv;void main(){uv=texCoord;gl_Position=projection*vec4(position,1);}', '#version 300 es\nprecision highp float;in vec2 uv;uniform sampler2D image;uniform vec3 tone;out vec4 color;void main(){color=texture(image,uv);if(color.a<=0.0)discard;color.rgb*=tone;}');
       spriteTexture=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,spriteTexture);textureParameters();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,SPRITE_ATLAS,SPRITE_ATLAS,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
@@ -95,7 +101,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     },
     async Java_orsc_BrowserWebGLBridge_uploadChunk(lib,id,vertexInput,indexInput,batchInput){
       alive();if(chunks.size>=MAX_CHUNKS||chunks.has(id))throw new Error('Browser chunk cache limit/identity violation');
-      const {vertices,indices,batches}=chunkData(vertexInput,indexInput,batchInput);
+      const {vertices,indices,batches,bounds}=chunkData(vertexInput,indexInput,batchInput);
       const bytes=vertices.byteLength+indices.byteLength;reserve(bytes);
       const previousVAO=gl.getParameter(gl.VERTEX_ARRAY_BINDING),previousArray=gl.getParameter(gl.ARRAY_BUFFER_BINDING);
       let vao,vbo,ibo,committed=false;
@@ -104,7 +110,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
         if(!vao||!vbo||!ibo)throw new Error('WebGL chunk allocation failed');
         gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.STATIC_DRAW);
         for(const [name,size,offset] of ATTRIBUTES){const at=gl.getAttribLocation(program,name);if(at>=0){gl.enableVertexAttribArray(at);gl.vertexAttribPointer(at,size,gl.FLOAT,false,28*4,offset*4);}}
-        check();chunks.set(id,{vao,vbo,ibo,batches,bytes,vertexBytes:vertices.byteLength,indexBytes:indices.byteLength});
+        check();chunks.set(id,{vao,vbo,ibo,batches,bounds,bytes,vertexBytes:vertices.byteLength,indexBytes:indices.byteLength});
         stats.gpuBytes+=bytes;stats.uploadedBytes+=bytes;stats.uploadedChunks++;committed=true;
       } finally {
         gl.bindVertexArray(previousVAO);gl.bindBuffer(gl.ARRAY_BUFFER,previousArray);
@@ -114,12 +120,12 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     },
     async Java_orsc_BrowserWebGLBridge_replaceChunk(lib,id,vertexInput,indexInput,batchInput){
       alive();const chunk=chunks.get(id);if(!chunk)throw new Error('Repack references absent GPU chunk');
-      const {vertices,indices,batches}=chunkData(vertexInput,indexInput,batchInput);
+      const {vertices,indices,batches,bounds}=chunkData(vertexInput,indexInput,batchInput);
       if(vertices.byteLength!==chunk.vertexBytes||indices.byteLength!==chunk.indexBytes)throw new Error('Immutable chunk shape changed during repack');
       const previousVAO=gl.getParameter(gl.VERTEX_ARRAY_BINDING),previousArray=gl.getParameter(gl.ARRAY_BUFFER_BINDING);
       try {
         gl.bindVertexArray(chunk.vao);gl.bindBuffer(gl.ARRAY_BUFFER,chunk.vbo);gl.bufferSubData(gl.ARRAY_BUFFER,0,vertices);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,chunk.ibo);gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER,0,indices);check();
-        chunk.batches=batches;stats.uploadedBytes+=vertices.byteLength+indices.byteLength;stats.repackedChunks=(stats.repackedChunks||0)+1;
+        chunk.batches=batches;chunk.bounds=bounds;stats.uploadedBytes+=vertices.byteLength+indices.byteLength;stats.repackedChunks=(stats.repackedChunks||0)+1;
       } catch(error){stats.backendFailed=true;throw error;}
       finally{gl.bindVertexArray(previousVAO);gl.bindBuffer(gl.ARRAY_BUFFER,previousArray);}
     },
@@ -160,8 +166,15 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       gl.clearColor(world&&u[29]>=0?u[15]:0,world&&u[29]>=0?u[16]:0,world&&u[29]>=0?u[17]:0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
       const retainedWorld=overlay?overlay.begin(width,height):false;
       if(!retainedWorld)sky.draw();
-      let calls=0,triangles=0;
+      let calls=0,triangles=0;stats.colorCulledChunkDraws=stats.colorVisibleChunkDraws=0;
       if(world&&!retainedWorld){
+        let culled=0;
+        for(let at=0;at<draws.length;at+=8){
+          const chunk=chunks.get(draws[at]);
+          const outside=colorCullingSupported&&chunk&&isChunkOutsideColorFrustum(chunk.bounds,matrices,width,height,draws[at+1],draws[at+2],colorCullScratch);
+          colorVisible[at/8]=outside?0:1;if(outside)culled++;
+        }
+        stats.colorCulledChunkDraws=culled;stats.colorVisibleChunkDraws=draws.length/8-culled;
         gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.useProgram(program);gl.uniformMatrix4fv(loc('uProjectionMatrix'),false,matrices.subarray(0,16));gl.uniformMatrix4fv(loc('uWorldViewMatrix'),false,matrices.subarray(16,32));
         FLOAT_UNIFORMS.forEach((name,n)=>f(name,u[n]));i('uTerrainDefinitionMode',u[25]);i('uTerrainVariationEnabled',u[26]);i('uRemasterLightingEnabled',u[27]);i('uFogEnabled',u[28]);lighting.bindReceiver();
         // The color pass owns these bindings until the sprite pass. Cache only
@@ -176,7 +189,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
           if(kind===4||kind===5){gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);}else gl.disable(gl.CULL_FACE);
           if(kind===2){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-1);}else gl.disable(gl.POLYGON_OFFSET_FILL);
           for(let at=0;at<draws.length;at+=8){
-          if(!(draws[at+5]&(1<<kind)))continue;const chunk=chunks.get(draws[at]);if(!chunk)throw new Error('Draw references absent browser chunk');
+          if(!colorVisible[at/8]||!(draws[at+5]&(1<<kind)))continue;const chunk=chunks.get(draws[at]);if(!chunk)throw new Error('Draw references absent browser chunk');
           if(residentVAO!==chunk.vao){gl.bindVertexArray(chunk.vao);residentVAO=chunk.vao;}
           if(chunkX!==draws[at+1]){chunkX=draws[at+1];f('uChunkOffsetX',chunkX);}
           if(chunkZ!==draws[at+2]){chunkZ=draws[at+2];f('uChunkOffsetZ',chunkZ);}

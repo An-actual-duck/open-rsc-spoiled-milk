@@ -83,3 +83,33 @@ assert.equal(textureFailure.stats.backendFailed,true);textureFailure.dispose();t
 const failedProgram=createBrowserWebGL(canvas());failure={method:'createProgram',mode:'null'};await assert.rejects(()=>failedProgram.natives.Java_orsc_BrowserWebGLBridge_initialize(null,v,f),/program allocation failed/);failedProgram.dispose();failedProgram.dispose();
 for(const [kind,values]of owned)assert.equal(values.size,0,'failed initialization/update left owned '+kind);
 console.log('PASS native atlas UV samples, copied repack metadata, fixed resident accounting, alpha-class refresh/removal, mirrored NPOT sprite UV, allocation/GL-error cleanup and fail-closed partial-update API contracts. No real GPU/image/FPS claim.');
+
+// Optional actual-production shader authority + color-only API regression cohort.
+if(process.argv[3]){
+ functions.checkFramebufferStatus=()=>gl.FRAMEBUFFER_COMPLETE;
+ const worldVertex=fs.readFileSync(process.argv[3],'utf8');
+ const cryptoDescriptor=Object.getOwnPropertyDescriptor(globalThis,'crypto');let releaseDigest;
+ const digest=new Promise(resolve=>releaseDigest=resolve);
+ try{
+  Object.defineProperty(globalThis,'crypto',{configurable:true,value:{subtle:{digest:()=>digest}}});
+  const stopped=createBrowserWebGL(canvas()),initializing=stopped.natives.Java_orsc_BrowserWebGLBridge_initialize(null,worldVertex,f);
+  const pendingResources=resources();await assert.rejects(()=>stopped.natives.Java_orsc_BrowserWebGLBridge_initialize(null,worldVertex,f),/initialized twice/);assert.equal(resources(),pendingResources,'Duplicate initialize during digest allocated resources');
+  stopped.dispose();releaseDigest(new Uint8Array(32).buffer);await assert.rejects(()=>initializing,/backend unavailable/);stopped.dispose();
+  for(const [kind,items]of owned)assert.equal(items.size,0,'Stop during shader authority digest recreated '+kind);
+ }finally{if(cryptoDescriptor)Object.defineProperty(globalThis,'crypto',cryptoDescriptor);else delete globalThis.crypto;}
+ const c=createBrowserWebGL(canvas()),cn=c.natives;
+ await cn.Java_orsc_BrowserWebGLBridge_initialize(null,worldVertex,f);assert.equal(c.stats.colorFrustumCulling,true);
+ await cn.Java_orsc_BrowserWebGLBridge_initializeLighting(null,v,f);await cn.Java_orsc_BrowserWebGLBridge_initializeSky();
+ const lighting=new Float32Array(81);lighting[0]=lighting[1]=1;lighting[3]=lighting[4]=64;lighting[6]=1;for(let i=0;i<4;i++)lighting[32+i*5]=lighting[48+i*5]=1;
+ await cn.Java_orsc_BrowserWebGLBridge_lightingFrame(null,lighting);await cn.Java_orsc_BrowserWebGLBridge_skyFrame(null,new Float32Array(20),new Float32Array(4096));
+ const geometry=x=>{const a=new Float32Array(84);a.set([x-.2,-.2,0],0);a.set([x+.2,-.2,0],28);a.set([x,.2,0],56);return a;};
+ const all=[];for(let id=1;id<=101;id++){await cn.Java_orsc_BrowserWebGLBridge_uploadChunk(null,id,geometry(id===1?0:10+id*2),indices,new Int32Array([-1,0,3,1,0]));all.push(id,0,0,0,0,2,0,id===101?2:0);}
+ const clip=new Float32Array(48);for(let i=0;i<4;i++)clip[i*5]=clip[16+i*5]=clip[32+i*5]=1;
+ async function colorFrame(){await cn.Java_orsc_BrowserWebGLBridge_worldProgress(null,new Int32Array([1,2,1,101,101,0,0,0,1,960,540,0]));await cn.Java_orsc_BrowserWebGLBridge_present(null,960,540,true,clip,values,new Int32Array(all),new Int32Array(960*540).fill(0x01000000));}
+ for(let warm=0;warm<30;warm++)await colorFrame();assert.equal(c.stats.uploadedChunks,101);assert.equal(c.stats.worldReadiness.phase,'ready');assert.equal(c.stats.colorCulledChunkDraws,100);assert.equal(c.stats.drawCalls,1);assert.equal(c.stats.shadowNearDraws,101,'offscreen chunks lost from near shadow pass');assert.equal(c.stats.shadowFarDraws,100,'offscreen static chunks lost from far shadow pass');
+ const moved=geometry(0);await cn.Java_orsc_BrowserWebGLBridge_replaceChunk(null,2,moved,new Int32Array([2,1,0]),new Int32Array([-1,0,3,1,0]));moved.fill(1e8);await colorFrame();assert.equal(c.stats.drawCalls,2,'repacked bounds stale or retained borrowed vertices');assert.equal(c.stats.shadowNearDraws,101);
+ const unknown=geometry(1e30);unknown[0]=NaN;await cn.Java_orsc_BrowserWebGLBridge_replaceChunk(null,3,unknown,indices,new Int32Array([-1,0,3,1,0]));await colorFrame();assert.equal(c.stats.drawCalls,3,'unproven bounds must stay visible');
+ clip[0]=NaN;await colorFrame();assert.equal(c.stats.drawCalls,101,'unproven projection must retain all color draws');
+ c.dispose();c.dispose();for(const [kind,items]of owned)assert.equal(items.size,0,'color culling leaked '+kind);
+ console.log('PASS101/101 upload/readiness retained; color-only bounds culling, repack/borrowed/NaN fallback and complete near/far shadow draws; GL double only');
+}
