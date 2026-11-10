@@ -1,6 +1,8 @@
 Private repeatable browser frame-work investigation
 ==================================================
-Status: review candidate only; no new ordinary defaults or performance claim.
+Status: useful private harness under review; cached alignment rejected for adoption.
+No new ordinary defaults. Preserve the cache experiment separately from a future
+selective harness integration that keeps the literal original alignment path.
 Manager alone starts private servers/browsers and measures hardware. Public and
 owner accounts/databases are outside this fixture.
 
@@ -105,3 +107,38 @@ scenario totals260legacy vs56cached rectangle reads; query counts are not FPS.
 availability/false/type and actual composite OFF/ON checks pass. Policy/frontend
 VM tests, bounded diagnostic virtual-clock tests and canonical output layout pass.
 No GPU pixel oracle or measured alignment gain is claimed by these CPU results.
+
+Actual fixed-fixture alignment result
+------------------------------------
+Parent measurement: manager/output/diagnostics/browser-performance-pass/
+alignment-balanced-1/comparison.json and its complete result. Eight30second
+segments, balanced OFF/ON order, actual fresh Java world-frame counts, isolated
+Firefox profile,32fixed mixed NPCs and exactly37actor groups/frame in EVERY
+segment. Actual camera pose and physical output were identical. No screenshots
+or IPC inside timed spans; no concurrent worker builds/GPU tests. Unrelated
+owner desktop applications were left intact.
+
+Live alignment OFF mean43.3192546FPS; cached ON43.3250587FPS (+0.0134%).
+OFF samples43.1290/43.4001/43.0552/43.6927; ON43.3290/43.4913/43.3986/43.0813.
+p95 was25-26ms OFF and25ms ON; p99 was27-28ms OFF and28-29ms ON.
+No meaningful FPS or pacing benefit was demonstrated. The60FPS goal was not met.
+
+The cache itself functioned: root functional-on.json at alignment-abba-1 showed
+89align calls/87cache hits/+4rectangle reads/+2invalidations over roughly2seconds.
+That query reduction is not a performance improvement by itself. The first ABBA
+attempt was rejected before comparative acceptance because a snapshot could
+observe present's newer world-frame counter before frameWork's later metadata.
+Current source publishes javaBridgeReportedWorldFrames only at successful
+frameWork completion; root sampling requires it to equal javaWorldFrames.
+A GPU API double checks that present alone does not advance the commit receipt.
+The CSSOM-normalizing style test also seals fractional own-write comparisons.
+These are instrumentation/functionality checks, not visual-quality certification.
+
+Decision: leave cached alignment OFF and do not adopt its observer complexity.
+Preserve its source/tests/stages for research. A later focused selective branch
+may integrate the useful isolated repeatable harness, private controls, coherent
+metadata receipt and optional diagnostics while restoring literal original
+alignment. Do not blanket-merge the experiment as a performance upgrade. No
+additional GPU validation is required for this rejected cache. Core packing,
+region and descriptor candidates are separate manager-owned measurement gates;
+this result does not accept or reject them. Public state remains untouched.
