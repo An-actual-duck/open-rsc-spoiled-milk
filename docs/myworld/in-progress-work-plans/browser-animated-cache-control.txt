@@ -1,0 +1,45 @@
+Private animated cache identity control
+
+Worker ai-1, test/browser-animated-cache-control. No public/server/GPU operation.
+Purpose: same-artifact isolation measurement, not another optimization.
+
+spoiledmilk.browserAnimatedBufferReuse defaults to true (current logical mutable
+animated buffer ownership). Set false before class initialization to restore
+immutable per-pose animated identity. Actual Java selection is exposed through
+BrowserWebGLBridge.isAnimatedBufferReuseEnabled(); manager's private Bootstrap
+reporter can call this getter, rather than merely echo a requested query string.
+The browser.js query relay/reporting belongs to ai-3's separate focused branch.
+
+Static identity, packing, geometry, material state, uploads, scheduling budgets,
+resource limits, near-shadow inputs and error behavior are unchanged. Both
+paths create one WorldChunkBufferKey per lookup. OFF selects storageSignature
+identity with plane/object/role qualifiers; current pose arrays still use the
+same production packing and native uploader. The original cache policy applies:
+LRU can reuse a previously seen immutable pose, ACTIVE evicts absent poses.
+No native desktop renderer code or default setting was changed.
+
+Important native API detail
+WorldChunkBufferKey.from(chunk,false) does NOT select old per-pose identity for
+animated chunks: both boolean variants use positional animated keys. OFF must
+explicitly construct the immutable-storage key with drawOffsetStorage=true and
+the current storage signature. Tests protect this distinction.
+
+Verification
+Actual production bridge through the recording native chunk boundary:
+- Default ON:1029 LRU/1543 ACTIVE checks, including the default-true assertion.
+- Explicit ON:1028 LRU/1542 ACTIVE checks (existing full regression fixture).
+- Explicit OFF:1040 LRU/1553 ACTIVE checks.100 animated poses allocate100 IDs
+  with zero mutable replacements; prior-pose reuse/eviction follows cache policy;
+  each current float/index/material array equals production packing; static
+  rebase and resident byte/entry bounds remain correct.
+Commands: python3 tests/myworld/test-browser-animated-chunks.py
+./scripts/build-client.sh passed. Existing82 native UV/material dependency checks,
+5438 exact material stream/range checks, JS cache/error controls, mocked frontend,
+workspace layout and diff checks passed.
+
+Limits and next measurement
+No real browser/GPU/performance measurement was performed by this worker.
+Earlier combined and sprite-only timings had different actor populations and
+cannot establish the animated reuse FPS effect. Manager will use one frozen JAR
+for a2x2 matrix of this flag and frame preparation, with per-second population
+and phase data. Current-pose CPU packing is intentionally not skipped by reuse.

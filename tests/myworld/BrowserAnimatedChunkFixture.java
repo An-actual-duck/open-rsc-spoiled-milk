@@ -34,11 +34,36 @@ public final class BrowserAnimatedChunkFixture {
     private static void setLong(BrowserWebGLBridge bridge,String name,long value)throws Exception{Field f=BrowserWebGLBridge.class.getDeclaredField(name);f.setAccessible(true);f.setLong(bridge,value);}
     private static void reference(Backend backend,int id,Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh mesh){OpenGLWorldChunkRenderer renderer=new OpenGLWorldChunkRenderer(null,null,null,true,true,false,false,true,true,false);Renderer3DFrame old=RendererFrameLighting.bind(frame);try{Data actual=backend.resources.get(id);BrowserChunkMaterials.Buffers material=BrowserChunkMaterials.pack(renderer,frame,mesh);require(Arrays.equals(actual.vertices,renderer.copyBackendChunkVertices(mesh,frame)),"Current pose vertices differ from production packing");require(Arrays.equals(actual.indices,material.indices)&&Arrays.equals(actual.batches,material.batches),"Current material/index bytes differ from production packing");}finally{RendererFrameLighting.restore(old);}}
     private static void fails(Runnable action,String why){boolean failed=false;try{action.run();}catch(IllegalStateException expected){failed=true;}require(failed,why);}
+    private static void immutableControl(Renderer3DFrame frame)throws Exception {
+        int animated=Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS,statik=Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
+        Backend backend=new Backend();BrowserWebGLBridge bridge=new BrowserWebGLBridge(backend);
+        Renderer3DWorldChunkFrame.ChunkMesh first=mesh(animated,-1,7,100,1,2,20000,0),second=mesh(animated,-1,7,100,2,2,20001,0);
+        require(WorldChunkBufferKey.from(first,false).equals(WorldChunkBufferKey.from(second,false)),"Native false parameter unexpectedly toggled animated identity");
+        require(!BrowserWebGLBridge.chunkKey(first).equals(BrowserWebGLBridge.chunkKey(second)),"OFF did not select per-pose immutable storage");
+        int firstId=prepare(bridge,frame,first).draws[0];reference(backend,firstId,frame,first);
+        for(int n=1;n<100;n++){
+            Renderer3DWorldChunkFrame.ChunkMesh pose=mesh(animated,-1,7,100,n+1,2,20000+n,0);int id=prepare(bridge,frame,pose).draws[0];require(id!=firstId,"OFF reused mutable pose ID");reference(backend,id,frame,pose);
+        }
+        require(backend.uploads==100&&backend.replaces==0,"OFF did not restore per-pose uploads");
+        boolean active="active".equals(System.getProperty("spoiledmilk.browserCachePolicy"));
+        require(backend.resources.size()==(active?1:100),"OFF resident identities do not follow existing cache policy");
+        int returnedId=prepare(bridge,frame,first).draws[0];require(active?returnedId!=firstId:returnedId==firstId,"OFF prior pose cache reuse differs from policy");reference(backend,returnedId,frame,first);
+        Renderer3DWorldChunkFrame.ChunkMesh fixed=mesh(statik,-1,7,100,0,2,4000,0),rebased=fixed.rebaseStaticObjectPresentation(8,8,128,-128);
+        require(BrowserWebGLBridge.chunkKey(fixed).equals(WorldChunkBufferKey.from(fixed,true)),"Private control changed static identity");
+        int fixedId=prepare(bridge,frame,fixed).draws[0],uploads=backend.uploads;BrowserWebGLBridge.ChunkDraws draw=prepare(bridge,frame,rebased);
+        require(draw.draws[0]==fixedId&&backend.uploads==uploads&&draw.draws[1]==128&&draw.draws[2]==-128,"OFF changed static rebase handling");
+        for(int n=0;n<520;n++)prepare(bridge,frame,mesh(animated,-1,7,100,n,2,30000+n,0));
+        require(backend.resources.size()<=(active?1:512),"OFF bypassed resident bound");long live=0;for(Data data:backend.resources.values())live+=data.vertices.length*4L+data.indices.length*4L;require(live==bytes(bridge),"OFF resident accounting differs from live boundary");
+    }
     public static void main(String[] args)throws Exception{
         System.setProperty("spoiledmilk.renderer3DGeometryCapture","true");
         RendererLightingSettings.setMode(RendererLightingSettings.Mode.DIRECTIONAL);RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
         Scene scene=new Scene(new MudClientGraphics(64,64,1),4,16,4);scene.setMidpoints(32,true,64,32,32,9,64);scene.setCamera(0,-4,0,768,0,0,600);scene.setFrustum(0,11,7,1);
         byte[] texture=new byte[4096];Arrays.fill(texture,(byte)1);scene.loadTexture(0,new int[]{0xff00ff,0x112233},0,texture);scene.endScene(0);Renderer3DFrame frame=scene.getRenderer3DFrame();
+        if(System.getProperty("spoiledmilk.browserAnimatedBufferReuse")==null)require(BrowserWebGLBridge.isAnimatedBufferReuseEnabled(),"Default animated reuse changed");
+        if(!BrowserWebGLBridge.isAnimatedBufferReuseEnabled()){
+            immutableControl(frame);frame.release();System.out.println("PASS "+checks+" production immutable-pose OFF control checks ("+System.getProperty("spoiledmilk.browserCachePolicy","lru")+"); no GPU/FPS claim");return;
+        }
         int animated=Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS,statik=Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
         Backend backend=new Backend();BrowserWebGLBridge bridge=new BrowserWebGLBridge(backend);
         Renderer3DWorldChunkFrame.ChunkMesh a=mesh(animated,-1,7,100,0,2,101,0),b=mesh(animated,-1,7,100,11,2,102,0);
