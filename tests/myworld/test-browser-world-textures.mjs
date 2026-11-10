@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {buildWorldCutoutMips,worldMipBytes,createWorldTextureSampling} from '../../tools/browser-gameplay/web/browser-world-textures.js';
+let cases=0;
+for(const [w,h]of [[1,1],[1,17],[19,1],[3,5],[64,64],[128,128],[257,13]])for(const mode of ['transparent','opaque','leaf','fractional']){
+ const input=new Uint8Array(w*h*4);for(let n=0;n<w*h;n++){input[n*4]=mode==='leaf'?37:13;input[n*4+1]=mode==='leaf'?211:89;input[n*4+2]=mode==='leaf'?19:173;input[n*4+3]=mode==='transparent'?0:mode==='opaque'?255:mode==='leaf'?(n%3?0:255):(n*71)%256;}
+ const original=input.slice(),m=buildWorldCutoutMips(w,h,input);assert.deepEqual(input,original,'borrowed production texture mutated');assert.equal(m.bytes,worldMipBytes(w,h));assert.equal(m.levels.reduce((a,l)=>a+l.pixels.length,0),m.bytes);
+ let sum=0;for(let n=3;n<input.length;n+=4)sum+=input[n];
+ for(const level of m.levels){let coverage=0;for(let n=3;n<level.pixels.length;n+=4)coverage+=level.pixels[n];assert.equal(coverage,Math.round(sum*level.width*level.height/(w*h)),'integrated alpha drift acrossdistance');for(let n=0;n<level.pixels.length;n+=4)if(level.pixels[n+3]&&mode==='leaf')assert.deepEqual([...level.pixels.subarray(n,n+3)],[37,211,19],'transparent black darkened foliage');}
+ for(let n=0;n<input.length;n+=4){assert.equal(m.levels[0].pixels[n+3],input[n+3]);if(input[n+3])assert.deepEqual(m.levels[0].pixels.subarray(n,n+4),input.subarray(n,n+4),'visible magnified pixel changed');}
+ assert.equal(m.levels.at(-1).width,1);assert.equal(m.levels.at(-1).height,1);cases++;
+}
+assert.throws(()=>worldMipBytes(262145,1),/bound/);assert.throws(()=>buildWorldCutoutMips(2,2,new Uint8Array(3)),/mismatch/);
+function fixture(fail=false){let id=0,pending=0;const live=new Set(),calls=[],gl={NO_ERROR:0,TEXTURE_MIN_FILTER:1,TEXTURE_MAG_FILTER:2,TEXTURE_WRAP_S:3,TEXTURE_WRAP_T:4,LINEAR_MIPMAP_LINEAR:5,NEAREST:6,CLAMP_TO_EDGE:7,TEXTURE_2D:8,RGBA8:9,RGBA:10,UNSIGNED_BYTE:11,
+ createSampler(){const s={id:++id};live.add(s);return s;},deleteSampler(s){assert(live.delete(s),'sampler leaked/doubledelete');},samplerParameteri(...a){calls.push(['sampler',...a]);if(fail)pending=0x505;},getError(){const p=pending;pending=0;return p;},bindSampler(...a){calls.push(['bind',...a]);},texImage2D(...a){calls.push(['image',...a]);},texSubImage2D(...a){calls.push(['sub',...a]);},generateMipmap(...a){calls.push(['mips',...a]);}};return{gl,live,calls};}
+{const x=fixture(),p=createWorldTextureSampling(x.gl,{enabled:true});p.initialize();assert.equal(x.live.size,1);assert(x.calls.some(c=>c[0]==='sampler'&&c[2]===x.gl.TEXTURE_MIN_FILTER&&c[3]===x.gl.LINEAR_MIPMAP_LINEAR));assert(x.calls.some(c=>c[0]==='sampler'&&c[2]===x.gl.TEXTURE_MAG_FILTER&&c[3]===x.gl.NEAREST));p.baseSampling();p.colorSampling();p.baseSampling();assert.equal(x.calls.at(-1)[2],null,'sprite/UI/shadow sampler must be reset');const data=new Uint8Array(64).fill(255),plan=p.plan(4,4,data,false);p.uploadBound(plan,4,4,false);assert(x.calls.some(c=>c[0]==='mips'));x.calls.length=0;p.uploadBound(p.plan(4,4,data,true),4,4,true);assert.equal(x.calls.filter(c=>c[0]==='sub').length,3);assert(!x.calls.some(c=>c[0]==='image'));p.dispose();p.dispose();assert.equal(x.live.size,0);}
+{const x=fixture(true),p=createWorldTextureSampling(x.gl,{enabled:true});assert.throws(()=>p.initialize(),/GL error/);assert.equal(x.live.size,0);p.dispose();}
+{const x=fixture(),p=createWorldTextureSampling(x.gl);p.initialize();p.baseSampling();p.colorSampling();p.dispose();assert.equal(x.calls.length,0,'default mode changed native sampling');}
+console.log('PASS '+cases+' bounded POT/NPOT alpha/RGB coverage chains, level0 visible bytes, sampler isolation, upload sizes and failure cleanup; no GPU/FPS claim');

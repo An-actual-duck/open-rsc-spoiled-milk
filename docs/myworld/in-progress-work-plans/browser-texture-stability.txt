@@ -1,0 +1,39 @@
+Browser world-texture stability — experimental candidate, default OFF
+
+Inspected owner screenshot2026-11-10_00-23-52 at115,656,L0. High-frequency leaves,
+floorboards and walltexels are undersampled during movement. Source audit found
+native world atlas also usesNEAREST/no mipmaps; browser did not lose a native
+mipmap feature. Native3D however renders into physical framebufferViewport while
+browser currently rasterizes960x540 then CSSfits. This is a real quality/workload
+difference and must not be mislabeled same-raster pixel parity.
+
+Current focused candidate uses mip minification ONLY for world material textures,
+nearest magnification, independent sampler0 only during color drawing. Source
+level0 visible bytes remain identical; invisible RGB may extend to remove black
+fringes. Cutout levels use alpha-weighted RGB and exact integral mean alpha within
+per-level integer quantization, including odd/NPOT edges. Opaque levels use GPU
+generation. Underlying textures remainNEAREST: sampler0 is unbound before shadows,
+sky, world sprites, UI and retained-frame replay. Shadow cutout alpha samples the
+original level0 unchanged, preserving the accepted shadow-alpha policy.
+
+World transparency currently blends with cutoff0, unlike shadow cutoff0.5. This
+candidate does NOT silently introduce a new world binary cutoff. CPU alpha-mean
+coverage checks do not prove whole-tree silhouette preservation with overlapping
+alpha/depth; moving real-tree proof must reject thinning/halo regressions before
+adoption. No blanket canvas blur, source-art edits, sprite/UI smoothing or physical
+resolution increase. Mip storage is accounted exactly within existing256MiB
+chunk/texture budget, allocation transactions unchanged. CPU mip build/upload
+counters are diagnostic and must be measured for animated cutouts/startup costs.
+
+Native evidence: OpenGLTextureAtlas.create NEAREST min/mag; OpenGLFramePresenter
+renderFrameInLightingScope physical framebufferViewport before drawWorldMesh;
+OpenGLViewportPresenter.computeViewport aspect fit. Primary API reference:
+https://registry.khronos.org/webgl/specs/latest/2.0/
+
+New standalone offline oracle uses the approvedcb699 dependencyJAR SHA1046b115...
+and its copied Cache, real production palette converter loadTextureFromPixels,
+all73runtime textures, and tree.ob3 real492vertices/164triangles. Tree foliage
+texture8 is128x128 with4,382transparent pixels. It exports production packing and
+96shared native projection/view matrices. No server/account/GL context required.
+Outputs under tests/browser-texture-stability. Moving Firefox proof is pending;
+no performance or visual-fix acceptance claim yet. Worker launches no GPU/browser.
