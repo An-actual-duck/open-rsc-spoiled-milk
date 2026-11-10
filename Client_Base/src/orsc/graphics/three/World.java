@@ -6,6 +6,7 @@ import com.openrsc.client.model.Tile;
 import com.openrsc.data.DataConversions;
 import orsc.Config;
 import orsc.NativeLayeredTerrainSnapshot;
+import orsc.NativePresentationMergeCache;
 import orsc.RenderTelemetry;
 import orsc.WorldBuilderClientProfile;
 import orsc.WorldBuilderTerrainBootstrap;
@@ -40,6 +41,28 @@ import java.util.zip.ZipFile;
 public final class World {
 	private static final boolean PRESENTATION_HALO_MATCH_REUSE = !"false".equalsIgnoreCase(
 		System.getProperty("spoiledmilk.presentationHaloMatchReuse", "true"));
+	private static final boolean BROWSER_REGION_PREPARATION = Boolean.getBoolean("spoiledmilk.browserRegionPreparation");
+	private volatile NativePresentationMergeCache nativePresentationMergeCache;
+	public static boolean isBrowserRegionPreparationEnabled() {
+		return BROWSER_REGION_PREPARATION && Renderer3DSettings.isBrowserPresentationAvailable();
+	}
+	public long[] getBrowserRegionPreparationDiagnostics() {
+		NativePresentationMergeCache cache=nativePresentationMergeCache;
+		return cache==null ? new long[3] : cache.diagnostics();
+	}
+	private synchronized NativePresentationMergeCache presentationMergeCache() {
+		if(nativePresentationMergeCache==null)nativePresentationMergeCache=new NativePresentationMergeCache();
+		return nativePresentationMergeCache;
+	}
+	private NativeLayeredTerrainSnapshot mergeNativePresentation(
+		NativeLayeredTerrainSnapshot visual, NativeLayeredTerrainSnapshot structural) {
+		if (!isBrowserRegionPreparationEnabled()) {
+			NativePresentationMergeCache cache=nativePresentationMergeCache;
+			if(cache!=null)cache.clear();
+			return NativeLayeredTerrainSnapshot.mergePresentation(visual,structural);
+		}
+		return presentationMergeCache().merge(visual,structural);
+	}
 	private static final int RENDERER_3D_WALL_SHADOW_MAX_FOOTPRINT = 512;
 
 	public static final int SECTION_SIZE = 48;
@@ -318,6 +341,14 @@ public final class World {
 		final NativeLayeredTerrainSnapshot nativeTerrainSnapshot,
 		final int worldOffsetX,
 		final int worldOffsetZ) {
+		NativeLayeredTerrainSnapshot previousMergeScope = this.nativeLayeredTerrainSnapshot;
+		if (nativeTerrainSnapshot == null || previousMergeScope != null
+			&& (!previousMergeScope.packageIdentity().equals(nativeTerrainSnapshot.packageIdentity())
+				|| !previousMergeScope.getWorldSpace().equals(nativeTerrainSnapshot.getWorldSpace())
+				|| previousMergeScope.getLevel() != nativeTerrainSnapshot.getLevel())) {
+			NativePresentationMergeCache cache=nativePresentationMergeCache;
+			if(cache!=null)cache.clear();
+		}
 		final boolean layeredTerrain =
 			syntheticDeepFixture || nativeTerrainSnapshot != null;
 		if (syntheticDeepFixtureTerrain != layeredTerrain
@@ -416,7 +447,7 @@ public final class World {
 		if (haloTerrain.getProtocolVersion()
 				== NativeLayeredTerrainSnapshot
 					.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
-			renderTerrain = NativeLayeredTerrainSnapshot.mergePresentation(
+			renderTerrain = mergeNativePresentation(
 				symmetricNativeLayeredTerrainVisualSnapshot,
 				haloTerrain);
 		} else {
@@ -531,7 +562,7 @@ public final class World {
 				"Predicted structure does not match its visual field");
 		}
 		final NativeLayeredTerrainSnapshot presentationTerrain =
-			NativeLayeredTerrainSnapshot.mergePresentation(
+			mergeNativePresentation(
 				visualTerrain, structuralTerrain);
 		final long sourceRevision = worldEditorTerrainRevision.get();
 		final String activeScopeIdentity = activeTerrain.scopeIdentity();
@@ -692,7 +723,7 @@ public final class World {
 			return false;
 		}
 		NativeLayeredTerrainSnapshot presentationTerrain =
-			NativeLayeredTerrainSnapshot.mergePresentation(
+			mergeNativePresentation(
 				visualTerrain, structuralTerrain);
 		if (!result.haloScopeIdentity.equals(
 				presentationTerrain.scopeIdentity())
@@ -735,7 +766,7 @@ public final class World {
 			return false;
 		}
 		NativeLayeredTerrainSnapshot presentationTerrain =
-			NativeLayeredTerrainSnapshot.mergePresentation(
+			mergeNativePresentation(
 				visualTerrain, structuralTerrain);
 		return result.activeScopeIdentity.equals(
 				activeTerrain.scopeIdentity())
