@@ -1,4 +1,10 @@
-Browser world-texture stability — experimental candidate, default OFF
+Browser world-texture stability — PARKED / PRESERVATION ONLY
+
+FINAL DECISION: do not adopt these tree-filtering modes. All remain OFF.
+This branch is READY only as a preserved experiment/fixture handoff, not for
+merging its renderer changes into ordinary gameplay. Firefox visual acceptance
+failed even with actual4x anisotropy. No FPS acceptance was performed.
+
 
 Inspected owner screenshot2026-11-10_00-23-52 at115,656,L0. High-frequency leaves,
 floorboards and walltexels are undersampled during movement. Source audit found
@@ -158,3 +164,37 @@ https://registry.khronos.org/webgl/extensions/EXT_texture_filter_anisotropic/
 Root owns aligned Firefox snapshot/visual acceptance. No further sampling modes
 planned: if this also loses leaf character, keep original nearest appearance and
 consider the separate physical-world-raster direction rather than claim a fix.
+
+Final manager Firefox decision (2026-11-10)
+
+Root reviewed aligned near/mid tree PNGs from moving-v8-aniso4 and rejected the
+result: the canopy still looks smoothlyfaceted/clumpy versus the original classic
+leaf grain. stable, cutout, cutout-nearest and cutout-aniso4 are therefore rejected
+for ordinary trees. Do not enable them, add more modes, or describe this branch as
+a successful shimmer fix. Ordinary filtering remains original nearest. The source
+and fixtures are preserved for possible separatelyapproved opaque-only research;
+that work was not implemented here. Physical output is a separate manager task.
+
+Actual v8 receipts for both near/mid cutout-aniso4:
+  Firefox renderer: Radeon R9 200 Series, or similar; vendorAMD.
+  requested4; extensiontrue; reportedCap16; applied4; fallbackfalse; reasonnull.
+Thus rejection cannot be explained by an unsupported-extension fallback.
+Root evidence under manager output/diagnostics/browser-motion-transitions/:
+  textures-firefox-8/{near,mid}-tree-cutout-aniso4.{json,png}
+  textures-firefox-8/{near,mid}-tree-{nearest,reference}.{json,png}
+  textures-firefox-7/ contains earlier independent-subject snapshots.
+  textures-firefox-4/ contains the rejected linear-mip true-tree snapshots.
+
+Earlier v4 full-scene tree/floor metric labels were INVALID subject attribution:
+geometry overlapped, and the brick plane covered areas labelled tree/floor. Their
+apparent20–45percent surface temporal improvement cannot establish correctlylabelled
+subject benefit. v7/v8 independent subject passes fix the measurement arrangement,
+but visual rejection still takes precedence over favourable isolated metrics.
+v2 stretched textures/offscreen wall and mostlyblank fullROI were also unsuitable
+for adoption. All immutable stages/evidence remain preserved, not overwritten.
+
+No worker GPU was launched. Root executed Firefox image proofs; diagnostic
+readbacks, repeated contexts and CPU mip microchecks are not steadygame FPS tests.
+No FPS gain, equal native visual parity, or performance acceptance is claimed.
+CPU sampler/mip/coverage/resource/defaultOFF regression fixtures passed before
+this documentation-only final handoff. No public server/client files were changed.
