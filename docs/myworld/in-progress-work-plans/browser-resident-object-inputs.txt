@@ -1,0 +1,62 @@
+Browser resident static input reuse — focused implementation
+
+Measured motivation: the sampled browser profile on frozen 4a396089 reported
+~3.99ms/frame in the post-Scene resident-object append span. The input builder
+recreated canonical static groups, TreeMaps, sorted identity arrays and FNV
+content keys each frame although scenery usually did not change.
+
+The optional browser-only path caches completed STATIC groups. Each frame it
+still samples exact canonical primitive values (kind, world tile, object ID,
+direction, both terrain elevations and live/presentation membership), comparing
+them directly against an owned descriptor snapshot. This deliberately does not
+trust incomplete game-object revision counters or mutable model identity.
+Anchor object, region base, tile size and presentation revision must also match.
+
+ANIMATED models are collected afresh and use the unchanged production builder
+with current instance/model/transform versions. The sorted static and animated
+cell streams are merged in original signed-key order; a colliding role key falls
+back to the original full builder. Static canonical production already ignores
+live model pose/color, and this cache preserves that policy exactly.
+
+Native/software paths, explicit scenery diagnostics and oversized descriptor
+sets use the unchanged uncached builder. Both descriptor arrays are bounded to
+at most4MiB each; the animated index list and one set of immutable static groups
+are also retained. Input caches release with the existing area/relog cache clear.
+The retained anchor is invalidated by reference when the terrain frame changes.
+No appearance bytes, picking rules, gameplay or public server state are changed.
+
+Private control: -Dspoiledmilk.browserResidentInputCache=false before mudclient
+class initialization. Default on only takes effect with an installed browser
+presentation owner. This is not a claim of a measured FPS gain.
+
+Validation so far
+./scripts/build-client.sh passed.
+python3 tests/myworld/test-browser-resident-inputs.py passed360 enabled and330
+disabled checks against the literal unchanged production builder. Inputs include
+exact keys, ownership counts, sorted canonical identities and animation sources;
+real generated mesh coordinates, UV bits, normals, lighting, blend data, indices,
+materials and variation masks are compared as well. Cases cover changing poses,
+incomplete-revision setters, materialization/model availability, terrain edits,
+presentation records, definitions, doors, negative planes, region/anchor changes,
+reset, native fallback and descriptor budget. The independent uncached builder
+remains available as the differential oracle. No browser/GPU result yet.
+
+Combined validation and hardware evidence
+The candidate74e517130938f1666db4722122d45abedcc6c4af includes published
+16265754f (direct array packing and sampled Scene metrics). Full renderer
+guardrails and canonical layout checks passed. Independent read-only review
+of73e31de found no correctness blocker; forced cross-role key collision and
+explicit debug toggles remain source-reviewed fallback coverage limits.
+
+Frozen private stage: output/tests/browser-gameplay-spike/browser-resident-input-reuse
+loopback8126, JAR SHA256562f39ded7119086ad21d8bdf5cdeba06661ab34cbc29e68304b7cceae4acc27.
+Manager benchmark resident-input-reuse-1 recorded2018 fresh Java world frames
+over40.2278s:50.1643FPS, mean19.9303ms, p95 22.6ms, GPU mean2.5627ms.
+960x540 internal workload, AMD RX6700XT, fixed private133/660/L0 and benchmark
+lighting/camera. All101 required world chunks uploaded, readiness ready.
+No graphics quality reductions. Screenshot inspected coherent after measurement.
+Average actor composites32.7299/frame; prior array candidate44.949FPS had
+36.8633/frame, so roaming NPC population differs and raw throughput comparisons
+are not a perfectly matched causal estimate. This does not achieve60FPS or
+prove all-device/busy-scene performance. Public server remains untouched.
+Detailed31-field instrumented follow-up is separate from clean throughput.
