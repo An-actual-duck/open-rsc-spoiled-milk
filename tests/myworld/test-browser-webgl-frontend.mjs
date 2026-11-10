@@ -31,11 +31,13 @@ const gpuModule = new vm.SyntheticModule(['createBrowserWebGL'],function(){this.
   Java_orsc_BrowserWebGLBridge_worldProgress:async()=>{stats.worldReadiness={phase:stats.declaredPhase||'loading'};},
   Java_orsc_BrowserWebGLBridge_present:async(lib,width,height)=>{canvas.width=width;canvas.height=height;stats.lastFrame=clock;stats.worldReadiness={phase:'ready'};},
 }}));},{context});
+const controlsModule = new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-benchmark-controls.js',import.meta.url),'utf8'),{context});
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{assert.equal(specifier,'./webgl.js');await gpuModule.link(()=>{});await gpuModule.evaluate();return gpuModule;}});
 await module.link(specifier=>{
   if(specifier==='./browser-world-cover.js')return coverModule;
   if(specifier==='./browser-display.js')return displayModule;
+  if(specifier==='./browser-benchmark-controls.js')return controlsModule;
   if(specifier==='./browser-middle-mouse.js')return middleModule;
   assert.equal(specifier,'./transport.js');return transportModule;
 });
@@ -48,6 +50,7 @@ assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMo
 assert.deepEqual(Array.from(await configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent(null)),[1,30,40,0]);
 assert.equal(canvas.style.pointerEvents,'none');
 assert.equal(configured.enableInputMethods,false);
+assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserFramePreparation=')||p.startsWith('spoiledmilk.browserAnimatedBufferReuse=')),false,'ordinary WebGL URL must not receive private benchmark overrides');
 await configured.natives.Java_orsc_BrowserWebGLBridge_worldProgress(null,[1,2,1,4,2,0,0,0,1,960,540,0]);assert.equal(window.browserWorldInputAllowed(),false);
 await configured.natives.Java_orsc_BrowserWebGLBridge_present(null,960,540);assert.equal(window.browserWorldInputAllowed(),true);assert.deepEqual(gateEvents,['browser-world-readinesschange','browser-world-readinesschange']);
 assert.equal(canvas.style.left,'20px');assert.equal(canvas.style.top,'60px');
@@ -56,6 +59,10 @@ assert.equal(canvas.style.display,'block');
 const steadyMessages=messages.length,steadyLayouts=layoutReads;stats.declaredPhase='ready';for(let i=0;i<10;i++)await configured.natives.Java_orsc_BrowserWebGLBridge_worldProgress(null,[1,2,1,4,4,0,0,0,1,960,540,0]);assert.equal(messages.length,steadyMessages,'steady source frames copied whole proof to parent');assert.equal(layoutReads,steadyLayouts,'steady loading protocol forced extra canvas layout queries');
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportLoop(null,'modern');
 assert.equal(window.browserProof.clientLoop,'modern');
+await configured.natives.Java_orsc_browser_BrowserBootstrap_reportPreparation(null,true,false,true);
+assert.equal(window.browserProof.preparationControls.framePreparationEnabled,true);
+assert.equal(window.browserProof.preparationControls.framePreparationActive,false);
+assert.equal(window.browserProof.preparationControls.animatedBufferReuseEnabled,true);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportTelemetry(null,'sceneRenderStats',[1,77]);
 assert.equal(window.browserProof.profiled,true);assert.deepEqual(Array.from(window.browserProof.telemetrySamples[0].values),[1,77]);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportInputError(null,'controlled input relay error');

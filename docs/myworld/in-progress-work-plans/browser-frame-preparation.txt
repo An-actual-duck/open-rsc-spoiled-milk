@@ -140,3 +140,13 @@ PASS: pure query/default/isolation validation; actual native receiver values;
 Bootstrap compilation; actual GraphicsController configured and active gate
 fixtures for default/on/off. This is a control-path proof, not a browser FPS run.
 The separate animated-buffer worker owns its implementation and parity tests.
+
+Frontend integration contract also passes:
+
+  node --experimental-vm-modules tests/myworld/test-browser-webgl-frontend.mjs
+
+Its VM linker loads the actual new benchmark-controls module, preserving every
+existing display/loading/middle-input/transport import. It checks ordinary URLs
+receive no overrides and exercises the new native receipt. Repository audit of
+SourceTextModule/browser.js VM fixtures found this as the only frontend linker;
+the separate controls fixture imports the helper directly and is also passing.
