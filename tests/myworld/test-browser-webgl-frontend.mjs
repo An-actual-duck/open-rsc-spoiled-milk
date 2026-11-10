@@ -28,7 +28,7 @@ const middleModule = new vm.SyntheticModule(['createBrowserMiddleMouseInput'],fu
   middleCreated++;return {stats:middleStats,dispose:()=>middleDisposed++,natives:{Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent:middleNative}};
 });},{context});
 const displayModule=new vm.SyntheticModule(['createBrowserDisplay'],function(){this.setExport('createBrowserDisplay',()=>({stats:{},scale:1,setSize(){},attachDesktop(){},dispose(){displayDisposed++;}}));},{context});
-const gpuModule = new vm.SyntheticModule(['createBrowserWebGL'],function(){this.setExport('createBrowserWebGL',(_canvas,_report,options)=>{gpuOptions=options;stats.ownedStateActive=options.ownedState;return({canvas,stats,queueStreamUploadValidation:value=>{streamRequested=value;},queueOwnedState(){},dispose:()=>gpuDisposed++,natives:{
+const gpuModule = new vm.SyntheticModule(['createBrowserWebGL'],function(){this.setExport('createBrowserWebGL',(_canvas,_report,options)=>{gpuOptions=options;stats.ownedStateActive=options.ownedState;stats.streamUploadValidationActive=options.streamUploadValidation;return({canvas,stats,queueStreamUploadValidation:value=>{streamRequested=value;},queueOwnedState(){},dispose:()=>gpuDisposed++,natives:{
   Java_orsc_BrowserWebGLBridge_worldProgress:async()=>{stats.worldReadiness={phase:stats.declaredPhase||'loading'};},
   Java_orsc_BrowserWebGLBridge_present:async(lib,width,height)=>{canvas.width=width;canvas.height=height;stats.lastFrame=clock;stats.worldReadiness={phase:'ready'};},
 }});});},{context});
@@ -58,7 +58,7 @@ assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMo
 assert.deepEqual(Array.from(await configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent(null)),[1,30,40,0]);
 assert.equal(canvas.style.pointerEvents,'none');
 assert.equal(configured.enableInputMethods,false);
-assert.equal(gpuOptions.streamUploadValidation,benchmarkStream);
+assert.equal(gpuOptions.streamUploadValidation,true,'Ordinary WebGL adopts validated streaming policy');assert.equal(stats.streamUploadValidationActive,true,'Actual selected backend streaming receipt');
 if(benchmarkStream){assert.equal(typeof window.browserBenchmarkStreamUploadValidation,'function');window.browserBenchmarkStreamUploadValidation(false);assert.equal(streamRequested,false);assert.equal(window.browserProof.benchmark.streamUploadValidationRequested,true);}else assert.equal(window.browserBenchmarkStreamUploadValidation,undefined,'ordinary sessions cannot change stream policy');
 assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserFramePreparation=')||p.startsWith('spoiledmilk.browserAnimatedBufferReuse=')),benchmarkStream,'only private benchmark URL receives preparation overrides');
 await configured.natives.Java_orsc_BrowserWebGLBridge_worldProgress(null,[1,2,1,4,2,0,0,0,1,960,540,0]);assert.equal(window.browserWorldInputAllowed(),false);

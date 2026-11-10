@@ -42,7 +42,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   function queueOwnedState(enabled){alive();if(options.benchmarkControl!==true||typeof enabled!=='boolean')throw new Error('Private benchmark owned-state control unavailable');pendingOwnedState=enabled;stats.pendingOwnedState=enabled;return {queued:enabled,active:!!ownedFrame?.active};}
   function commitOwnedState(){if(pendingOwnedState===null)return;const before=!!ownedFrame.active;ownedFrame.active=pendingOwnedState;pendingOwnedState=null;stats.pendingOwnedState=null;stats.ownedStateActive=ownedFrame.active;stats.ownedStateTransitions.push({afterJavaFrame:stats.javaFrames,afterWorldFrame:stats.javaWorldFrames,before,enabled:ownedFrame.active,milliseconds:performance.now()});if(stats.ownedStateTransitions.length>64)stats.ownedStateTransitions.shift();}
   const worldReady=createWorldReadiness(gl,{stats});
-  const uploadValidation=createStreamUploadValidation(gl,{stats,enabled:options.benchmarkControl===true&&options.streamUploadValidation===true,poison:error=>worldReady.fail(String(error))});
+  const uploadValidation=createStreamUploadValidation(gl,{stats,enabled:options.streamUploadValidation===true,poison:error=>worldReady.fail(String(error))});
   const gpuTimer=gl.getExtension("EXT_disjoint_timer_query_webgl2"),pendingQueries=[];let activeTimerQuery=null;
   let spriteAtlas,spriteDraws=[];const SPRITE_ATLAS=2048;
   const uniforms=new Map();

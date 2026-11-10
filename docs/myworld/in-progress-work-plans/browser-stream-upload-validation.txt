@@ -1,7 +1,9 @@
-Private streaming-upload validation candidate
+Browser streaming-upload validation
 
-Default is OFF. Only the private WebGL benchmark may opt in. No native/Java,
-server, content, visual quality or public changes. No hardware/FPS result yet.
+Ordinary WebGL now defaults ON after the manager hardware and paired-performance
+checks below. Direct/standalone backend and helper constructors still default OFF;
+the frontend passes the adopted policy explicitly. Overrides and live switches
+remain private benchmark-only. No native/Java, server, content or public changes.
 
 Eligible mutations use deferOrCheck(originalCheck): fixed-size chunk bufferSubData,
 atlas existing texture + descriptor bufferSubData, sky palette texSubImage2D, and
@@ -28,8 +30,9 @@ These API doubles are not hardware evidence or performance acceptance.
 
 Private controls and observability
 ----------------------------------
-Use WebGL + benchmark + uploadvalidation=on; omitted/off keeps literal immediate
-checks. No player-facing option. window.browserBenchmarkStreamUploadValidation(bool)
+Use WebGL + benchmark + uploadvalidation=on; in that private benchmark, omitted/
+off keeps literal immediate checks. Ordinary WebGL ignores URL policy overrides
+and uses the adopted ON default; software stays unaffected. No player-facing option. window.browserBenchmarkStreamUploadValidation(bool)
 queues a next-frame policy and is removed on Stop. Requested/active/presented
 policies are separate stats; per-world-frame policy samples are bounded600/4096.
 Counters distinguish deferred eligible checks, pre-draw checks, passes, failures
@@ -94,8 +97,8 @@ b5035079673342899046b7c498f6e34f8c4a26d7047ff40307006095a7b1fb16 dependencyJAR.
 
 Normal-merged ordinary-ownedON adoption main2b0681f841. Only frontend policy
 defaults/control assertions differ from v2; imported error-policy runtime modules
-remain byte-identical. Ordinary WebGL uses owned state but uploadvalidation stays
-OFF pending a measured performance decision. No player-facing override was added.
+remain byte-identical. That pre-adoption candidate used ordinary owned state with uploadvalidation
+OFF pending the now-completed paired measurement below. No player-facing override was added.
 
 Frozen normal-world measurement candidate (not yet a performance result):
  ai2/output/tests/browser-gameplay-spike/browser-stream-validation-candidate
@@ -106,3 +109,31 @@ Frozen normal-world measurement candidate (not yet a performance result):
  verifies9imported error-policy runtime modules identical to passed v2 hardware.
  benchmark ownedstate=on, uploadvalidation=off initially; private live control
  queues ON/OFF at frameWork end. No worker GPU/browser run or performance claim.
+
+Manager paired performance decision and adoption
+------------------------------------------------
+Evidence: manager/output/reviews/browser-display-performance/benchmarks/
+stream-validation-live-1/result.json. One warm normal-world CheerpJ5/Java8 session,
+60s warmup followed by4alternating20s segments, fixed960x540 internal workload,
+owned state ON in both policies, source2b766556b/baseline b503JAR. No screenshots,
+profiler or input during timed segments. The inherited driver field `owned` in
+this result labels the STREAM-VALIDATION switch, not the actual owned-state mode.
+
+Grouped actual fresh Java world FPS: OFF51.970324, ON54.057948 (about4.0% higher).
+Mean sprite groups/frame: OFF32.99665, ON33.25781. Segment FPS were OFF51.89202,
+ON54.28790, OFF52.04864, ON53.82784; both ON segments exceeded both OFF segments.
+All101chunks stayed ready,401draws/477928triangles, no validation errors. ON
+deferred about4.27eligible checks/frame into1pre-draw validation.
+
+NPCs still roam; actor groups are measured rather than frozen. These matched
+within-session results support this small adoption, not a universal device/scene
+speedup. Do not compare raw FPS against earlier owned-only54.8run to infer a
+regression: the run conditions differ. The60FPS goal remains unmet.
+
+Manager decision: ordinary browser frontend enables this policy by default.
+Benchmark omission remains OFF for same-artifact comparison; explicit internal
+backend options can enable without exposing a live control. Standalone constructors
+still default OFF and ordinary/software URLs cannot override policy. Focused
+policy/frontend tests verify ordinary actual ON, private live-control isolation,
+software exclusion, literal standalone checks and unchanged queued-error behavior.
+Worker performed CPU tests only; frozen8133 and prior hardware evidence preserved.

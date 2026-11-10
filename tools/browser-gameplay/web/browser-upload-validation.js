@@ -24,9 +24,10 @@ export function createStreamUploadValidation(gl,{stats={},enabled=false,poison=(
   function dispose(){disposed=true;pending=null;dirty=false;}
   return {assertAlive,fail,deferOrCheck,beforeDraw,queue,frameComplete,dispose,get active(){return active;}};
 }
-/** No ordinary/software session receives the experimental override. */
+/** Adopted ordinary WebGL default; overrides/live controls remain benchmark-only. */
 export function browserUploadValidationBenchmarkPolicy(mode,options){
-  if(mode!=='webgl'||!options.has('benchmark'))return false;
+  if(mode!=='webgl')return false;
+  if(!options.has('benchmark'))return true;
   const value=options.get('uploadvalidation')||'off';
   if(value!=='on'&&value!=='off')throw new Error('Invalid private uploadvalidation policy');
   return value==='on';
