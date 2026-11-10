@@ -1,0 +1,80 @@
+Browser color-only conservative frustum culling
+==============================================
+
+Scope and authority
+-------------------
+Only the world color-pass draw loop changes. Uploads/repacking, all required
+chunk readiness, original full shadow draw metadata, near/far shadow preparation,
+actor sprites, sky and software UI remain intact. No distance, fog, resolution,
+lighting or appearance-quality setting is reduced. This is not a frame-rate claim.
+
+A six-double AABB is derived from the exact uploaded Float32 position attributes
+(stride28) once per successful upload/repack. It includes all vertices, including
+unused/hidden ones, so it can be more conservative than indexed/material bounds.
+No borrowed Java vertex/index/matrix array is retained. Bounds commit with the
+accepted GPU upload; failed repacks already fail the backend closed. Chunk delete
+and disposal release their metadata. Payload is bounded by512*48 bytes plus a
+144-byte scratch and256-byte visible mask; JS object overhead is additional.
+The scratch and mask are reused, with no per-frame/per-chunk temporary arrays.
+
+Culling is authorized only for the exact maintained production vertex shader:
+SHA256 7af2917e332f05cc614aa50c40fba1509546e820dceb54900f8f0e56bbdfb3df.
+The source oracle recompiles the actual maintained OpenGLShaderProgram and
+OpenGLGeometryShadows and extracts their private constants without a GL context.
+Unknown/displaced/changed shader source, absent crypto capability or crypto
+failure disables culling and bounds scans. A snippet match is never sufficient.
+Changes to that production source require deliberate allowlist review/update.
+
+Conservative test
+-----------------
+The first16 floats are the actual column-major world-to-clip GPU matrix.
+Chunk X/Z uniform offsets undergo Float32 conversion/addition. Homogeneous side
+bounds enclose the complete AABB; no center-point test or perspective division
+is used. Each screen edge has128px extra margin, matching the native policy's
+padding. Float32 addition/cancellation and matrix arithmetic have generous
+magnitude-dependent error margins. Any nonfinite, malformed, overflow-risk,
+camera-plane or near-plane-intersecting bound remains visible. Near and far
+planes are not used to discard chunks. This trades possible extra drawing for
+avoiding missing geometry. Unproven inputs never become an optimization win.
+
+The full input draw list reaches lighting.prepare BEFORE color visibility is
+calculated. Color filtering is local to this frame; it never modifies the list,
+geometry, batch metadata or shadow-caster signature/cache. The existing per-frame
+GL state cache still writes every relevant state for its first visible chunk.
+options.colorFrustumCulling=false permits a private backend comparison; default
+is enabled only when shader authority is proven. New stats report policy and
+color-visible/culled input entries; non-world/retained passes report zero.
+
+CPU proof and prepared hardware fixture
+--------------------------------------
+  python3 tests/myworld/test-browser-color-frustum.py
+
+This prepares a fresh frozen run, compiles actual shader source, then checks:
+50,000 randomized AABBs/cameras, 4,518 proven rejections and180,720 independent
+Float32/fused corner/interior transforms; negative/large offsets, boundaries,
+near crossings, source replacement and nonfinite/overflow fallbacks. Unknown and
+same-length displaced shader sources fail the exact authority guard.
+
+The real backend API fixture (GL double, not an image proof) uploads101 chunks
+and reaches101/101 ready after ordinary warmup. It culls100 color chunks while
+retaining101 near and100 static far caster draws. Repacking/topology mutation,
+borrowed array mutation, unknown bounds and unknown projection are covered;
+resource cleanup, existing alpha-class/state and allocation-failure tests remain.
+
+Default preparation never launches a browser/GPU. Frozen hardware stages contain
+actual production color/depth shaders, old/current backend code and checksums.
+The optional runner requires --run-hardware explicitly, serves only those staged
+files on loopback, creates an isolated Chrome profile and rejects software GPU
+renderers. It compares64 actual GPU frames byte-for-byte with nonblank geometry
+and exercised culling: perspective/orthographic/rotated cameras, near crossings,
+large positive/negative rebases, texture/cutout/translucent classes, all model
+kinds/layers, viewport resize, topology/animated/replacement mutation. Each frame
+requires full101-chunk readiness and101 near/100 far shadow-caster draw counts.
+It records actual AMD ANGLE OpenGL identity and readback results; no FPS claim.
+
+  python3 tests/myworld/prepare-browser-color-frustum-hardware.py --prepare-only
+  node tests/myworld/run-browser-color-frustum-hardware.mjs --run-hardware RUN
+
+The manager owns GPU scheduling. Until that explicit run finishes, GPU evidence
+is UNRUN. Outputs belong under output/tests/browser-color-frustum/hardware/RUN.
+No Java production source, public server, player data or release changes occur.
