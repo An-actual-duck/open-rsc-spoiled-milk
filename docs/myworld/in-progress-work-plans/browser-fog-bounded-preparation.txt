@@ -1,5 +1,10 @@
-Browser fog-bounded preparation investigation (experimental, default OFF)
-======================================================================
+Browser fog-bounded preparation investigation (PARKED, default OFF)
+==================================================================
+
+Final disposition: preserved for research only. Do not integrate or enable this
+branch. The formal READY handoff is for manager review/parking, not production
+merge or visual certification. Runtime source remains5fb125c6d; the closing
+follow-up changes documentation only. Frozen8159 is unchanged.
 
 Scope
 -----
@@ -120,3 +125,56 @@ and later role-aware diagnostic run. These runs overlapped CPU builds, used
 instrumented capture, and did not establish FPS, load-time gains, or pixel parity.
 The first diagnostic telemetry could retain an old declaration after a fully
 cached crossing; current source emits declaration changes even without uploads.
+
+Final paired measurement and parking decision
+--------------------------------------------
+The parent compared the same5fb125c6d artifact (client SHA d248d50267eb04c81d1b0b32df6181ee14ffbf8ea93b4c877c64a44f660fcdd1)
+in foreground Firefox154, current28/40fog, High shadows (80MiB), logical960x540
+and physical1843x1037. Each startup policy had180seconds warm-up followed by
+two30second FPS samples. Instrumented numeric load reporting was enabled.
+
+                         OFF                 ON
+World FPS mean           40.6772             39.5620
+FPS samples              40.6252 /40.7293     39.8614 /39.2627
+Actor groups/frame       31.4563             33.7608
+
+ON had about7.3% more natural actors, and camera pose jitter remains. These data
+show no demonstrated FPS gain; they do not establish an isolated regression of
+the same size either. The60FPS goal was not reached. Sampled bridge means were
+6.22ms OFF /6.58ms ON; before-geometry including demand0.0783 /0.3133ms and
+geometry1.0833 /1.0700ms. These phase means share the actor/pose limitations and
+are not a separate causal benchmark.
+
+Single recorded transition comparisons:
+- Far teleport:10.977s OFF ->9.810s ON, upload bytes182,886,528 ->173,304,000.
+- City return:11.026s OFF ->10.220s ON, upload bytes151,129,440 ->101,276,352.
+- Explicit ordinary Walk Here:1.831s OFF ->1.552s ON, upload bytes82,678,536
+  ->56,879,208. Final endpoints differed by one tile (OFF105,621; ON105,620).
+
+These are indicative single-pass client stream intervals, not repeated controlled
+load-time certification or proof of a general percentage improvement. Cache
+history, actor population, exact camera poses and the walking endpoint differ.
+The timed FPS comparison and later interaction diagnostics are separate phases.
+
+The ON camera-turn diagnostic increased held frames118->123 and geometry epochs
+6->14 while source epoch remained5: five extra held frames/eight resource-demand
+events. The benchmark observer reset the camera every second. This therefore
+is NOT a measured180degree-turn result. It demonstrates resource-demand churn,
+not certified smooth turning or visual equivalence.
+
+Evidence is preserved in manager output/diagnostics/browser-fog-demand:
+- paired-comparison.json and phase-comparison.json
+- paired-off-1/result.json and paired-on-1/result.json
+- paired-on-1/walking-explicit.json and camera-turn.json
+The paired source receipts identify the actual disposable browserdemo account.
+Earlier misidentified-login and uncontrolled-build diagnostic attempts are not
+used as timed acceptance evidence.
+
+Decision: keep the experiment OFF and unmerged. Potential transition savings do
+not justify adoption with no demonstrated FPS improvement, extra same-region
+demand holds, and outstanding visual proof. The actual production-shader GPU
+full-source/subset pixel oracle was NOT completed. There is no GPU pixel parity,
+previous-far blend visual certification, general visual certification, default
+adoption, public release or deployment claim. Preserve implementation, CPU
+oracles, diagnostic artifacts and frozen8159 for a separately authorized future
+investigation. No additional implementation or GPU work belongs to this handoff.
