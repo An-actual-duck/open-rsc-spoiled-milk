@@ -48,7 +48,7 @@ public final class BrowserModelPickBoundsFixture {
     }
     public static void main(String[] args)throws Exception{
         if(args[0].equals("math")){math();return;}
-        boolean enabled=Boolean.parseBoolean(args[1]),current=args[0].equals("current");System.setProperty("spoiledmilk.browserModelPickBounds",String.valueOf(enabled));
+        boolean defaults=args[1].equals("default"),enabled=defaults||Boolean.parseBoolean(args[1]),current=args[0].equals("current");if(defaults)System.clearProperty("spoiledmilk.browserModelPickBounds");else System.setProperty("spoiledmilk.browserModelPickBounds",String.valueOf(enabled));
         for(String name:new String[]{"renderer3DGeometryCapture","openglWorldMesh","openglWorldMeshTexturedVisible","openglWorldMeshTexturedStaticVisible","openglWorldChunksTexturedVisible","openglWorldChunksReplacementComposite","openglWorldChunksTrustedReplacement","openglWorldChunksResidentObjects","skipLegacyWorldRaster","browserOverlayCoverage"})System.setProperty("spoiledmilk."+name,"true");System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");
         MessageDigest hash=MessageDigest.getInstance("SHA-256");
         for(int mode=0;mode<4;mode++)for(boolean early:new boolean[]{false,true}){

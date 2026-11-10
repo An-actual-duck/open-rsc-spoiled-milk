@@ -1,8 +1,8 @@
 # Browser frame-local projected model picking experiment
 
-Status: opt-in CPU candidate; no browser/GPU timing or performance claim yet.
+Status: adopted for full GPU-only browser ownership after the private browser comparisons below. Native/software/mixed ownership remains excluded.
 
-The existing Scene tests projected bounds per eligible resident face. The private `spoiledmilk.browserModelPickBounds` property defaults false. When enabled AND full GPU-only browser resident ownership is actually active, Scene computes the model's resident ownership once and a fresh projected model mouse envelope before its face loop. A rejected envelope can omit an individual face's original projected-coordinate scan only after confirming all face indices refer to this rotation's used vertices. Inside/unproven envelopes retain the original face helper.
+The existing Scene tests projected bounds per eligible resident face. The internal `spoiledmilk.browserModelPickBounds` property now defaults true. Private benchmark controls deliberately default OFF for reference comparisons; ordinary/software URLs cannot supply an override. When enabled AND full GPU-only browser resident ownership is actually active, Scene computes the model's resident ownership once and a fresh projected model mouse envelope before its face loop. A rejected envelope can omit an individual face's original projected-coordinate scan only after confirming all face indices refer to this rotation's used vertices. Inside/unproven envelopes retain the original face helper.
 
 No rotation, polygon raster/pick, near-plane clipping, interaction-only pre-detection, picking order, anchor or GPU geometry is removed. The default/native/software/mixed-ownership code retains the previous helper. Bounds have no cross-frame/model cache. Every invocation rereads the current projected coordinates, viewport offset and pick scale.
 
@@ -27,3 +27,26 @@ Private benchmark-only startup controls are independent: `modelpickbounds=on|off
 An earlier fixture iteration accidentally compiled the unrelated private server source with the client-only classpath; that failed during Bootstrap build after the Scene proofs passed. The runner now compiles exactly `tools/browser-gameplay/src/orsc/browser`, matching the maintained preparer; the final complete rerun passes and the failed iteration remains preserved.
 
 `build-client.sh` passes. The old b503 worker JAR was preserved under `output/tests/browser-model-pick-bounds/preserved-client` before building this source. Query-control and actual frontend VM tests pass, including `modelpickbounds`/`halomatch` independent defaults and no ordinary override. No GPU, browser or public-server process was launched. Default remains OFF pending manager review and measurement; no performance claim is made.
+
+
+## Measured default adoption
+
+One frozen client artifact (source dc86bccc9adea0610e8bc0d5bcdf28abb365fa2e,
+SHA25643c316df878f315c8335f594ea7877083f011f4afdd5db6697d415264ef8ccbc)
+ran separate fresh Java8 sessions:60seconds warm,40seconds timed each, internal960x540,
+fixed location/camera/daylight, owned GL+stream validation+halo comparison reuse ON.
+ModelOFF56.13799FPS/32.3438 mean actor composites; modelON59.70564/30.5012;
+reverse modelOFF58.19356/31.2096. Population and warm/system variation prevent
+claiming the entire raw difference as isolated speed. The ON frame intervals were
+also lower within shared31/32/33actor bins than both OFF runs. All runs retained
+401color draws,477928triangles and101/101ready chunks; requested/actual Scene
+receipts matched. No timed screenshots/profilers/input or worker CPU tests.
+
+This supports adopting the proven conservative work reduction, with a measured
+near60FPS result for this private scene. It is not an all-device, fullHD, maximum-
+distance or busy-scene guarantee. Private benchmark still defaults OFF and supports
+explicit on/off; no player-facing setting is added. A fifth real Scene cohort now
+clears the property entirely and checks the actual default browser gate, while
+retaining native/CPU-depth/mixed exclusions and the same frozen digest.
+Evidence: manager output/reviews/browser-display-performance/benchmarks/
+halo-model-off-on-1, halo-model-on-on-1, halo-model-off-on-reverse-1. Public unchanged.
