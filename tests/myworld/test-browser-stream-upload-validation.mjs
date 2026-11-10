@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import {createBrowserWebGL} from '../../tools/browser-gameplay/web/webgl.js';
 import {createStreamUploadValidation,browserUploadValidationBenchmarkPolicy} from '../../tools/browser-gameplay/web/browser-upload-validation.js';
-function fixture(enabled=true){
+function fixture(enabled=true,benchmarkControl=true){
  let next=0,active=1000,vao=null,array=null,program=null,pending=0,inject=null,lost=false,polls=0,draws=0;
  const bindings=new Map(),state=new Map(),objects=new Set(),constants={NO_ERROR:0,TEXTURE0:1000};
  const allocations=['createBuffer','createTexture','createVertexArray','createShader','createProgram','createFramebuffer','fenceSync'];
@@ -19,7 +19,7 @@ function fixture(enabled=true){
    if(k.startsWith('delete')){if(args[0])assert(objects.delete(args[0]),'unknown/double delete '+k);return;}
    return o[k]?.(...args);
   };}});
- const backend=createBrowserWebGL({width:2,height:2,getContext:()=>gl,addEventListener(){},removeEventListener(){}},()=>{},{benchmarkControl:true,streamUploadValidation:enabled});
+ const backend=createBrowserWebGL({width:2,height:2,getContext:()=>gl,addEventListener(){},removeEventListener(){}},()=>{},{benchmarkControl,streamUploadValidation:enabled});
  return{backend,n:backend.natives,gl,objects,get draws(){return draws;},resetDraws(){draws=0;},get polls(){return polls;},fault(method){inject=method;},lose(){lost=true;}};
 }
 const v='#version 120\nattribute vec3 aPosition;void main(){gl_Position=vec4(aPosition,1.0);}';
@@ -42,11 +42,11 @@ async function setup(enabled=true){const x=fixture(enabled),n=x.n;
 const streams={chunk:async x=>x.n.Java_orsc_BrowserWebGLBridge_replaceChunk(null,1,vertices,indices,batches),sky,
  coverage:x=>overlay(x,2),atlas:async x=>{await x.n.Java_orsc_BrowserWebGLBridge_planWorldSprites(null,1,1,new Int32Array([1,1,1]));await x.n.Java_orsc_BrowserWebGLBridge_commitWorldSprites(null,1,1,new Uint8Array([1,2,3,255]),new Float32Array(20));}};
 for(const [name,stream]of Object.entries(streams)){
- const x=await setup();const before=x.backend.stats.javaFrames,passed=x.backend.stats.streamUploadValidationPassed;
+ const x=await setup();const before=x.backend.stats.javaFrames,lastFrame=x.backend.stats.lastFrame,worldFrames=x.backend.stats.javaWorldFrames,passed=x.backend.stats.streamUploadValidationPassed;
  x.fault(name==='chunk'?'bufferSubData':'texSubImage2D');await stream(x);
  assert.equal(x.draws,0);assert.equal(x.backend.stats.streamUploadValidationPassed,passed);
  await assert.rejects(()=>present(x),/Streaming upload GL error/);
- assert.equal(x.draws,0,name+' drew shadows/world/sky/UI before rejecting queued error');assert.equal(x.backend.stats.javaFrames,before);
+ assert.equal(x.draws,0,name+' drew shadows/world/sky/UI before rejecting queued error');assert.equal(x.backend.stats.javaFrames,before);assert.equal(x.backend.stats.javaWorldFrames,worldFrames);assert.equal(x.backend.stats.lastFrame,lastFrame);assert.equal(x.backend.stats.worldReadiness.phase,'error');
  assert.equal(x.backend.stats.streamUploadValidationFailures,1);assert.equal(x.backend.stats.backendFailed,true);
  await assert.rejects(()=>x.n.Java_orsc_BrowserWebGLBridge_lightingFrame(null,new Float32Array(81)),/unavailable/);
  await assert.rejects(()=>complete(x),/unavailable/);assert.throws(()=>x.backend.queueStreamUploadValidation(false),/unavailable/);
@@ -61,11 +61,14 @@ for(const [name,stream]of Object.entries(streams)){
 for(const enabled of [false,true]){const x=await setup(enabled),before=x.backend.stats.gpuBytes;
  x.fault('texImage2D');await assert.rejects(()=>x.n.Java_orsc_BrowserWebGLBridge_uploadTexture(null,9,2,1,new Int32Array(2),false),/WebGL error 0x/);assert.equal(x.backend.stats.gpuBytes,before);assert.equal(x.draws,0);x.backend.dispose();assert.equal(x.objects.size,0);}
 {const x=await setup(false);x.fault('bufferSubData');await assert.rejects(()=>streams.chunk(x),/WebGL error 0x/);assert.equal(x.draws,0);x.backend.dispose();}
+// RGB uploads remain immediate after world draw; never defer them into next frame.
+{const x=await setup();await overlay(x,2);x.fault('texSubImage2D');await assert.rejects(()=>present(x),/Coverage GL error 0x/);assert(x.draws>0,'RGB still occurs after the world pass');assert.equal(x.backend.stats.backendFailed,true);x.backend.dispose();assert.equal(x.objects.size,0);}
 // One pre-draw poll replaces all eligible checks. RGB/postdraw/retained polls remain immediate.
 {const x=await setup(),s=x.backend.stats,polls=x.polls;await streams.chunk(x);await sky(x);await overlay(x,2);await streams.atlas(x);assert.equal(x.polls,polls);
  const before=s.streamUploadValidationChecks;await present(x);assert.equal(s.streamUploadValidationChecks,before+1);assert(x.polls>polls+1,'RGB/retained immediate checks disappeared');await complete(x);
  x.backend.queueStreamUploadValidation(false);assert.equal(s.streamUploadValidationActive,true);await sky(x);await overlay(x,3);await present(x);assert.equal(s.presentedStreamUploadValidation,true);await complete(x);assert.equal(s.streamUploadValidationActive,false);const p=x.polls;await sky(x);assert.equal(x.polls,p+1);x.backend.dispose();assert.equal(x.objects.size,0);}
 {let polls=0;const stats={},g=createStreamUploadValidation({NO_ERROR:0,getError(){polls++;return 0;}},{stats,enabled:true});g.deferOrCheck(()=>assert.fail());assert.throws(()=>g.frameComplete(),/Unvalidated/);assert.throws(()=>g.queue(false),/unavailable/);assert.equal(polls,0);}
+{const x=fixture(true,false);assert.equal(x.backend.stats.streamUploadValidationActive,false);assert.throws(()=>x.backend.queueStreamUploadValidation(true),/Private benchmark/);x.backend.dispose();assert.equal(x.objects.size,0);}
 for(const [mode,q,expected]of [['software','benchmark&uploadvalidation=on',false],['webgl','uploadvalidation=on',false],['webgl','benchmark',false],['webgl','benchmark&uploadvalidation=on',true]])assert.equal(browserUploadValidationBenchmarkPolicy(mode,new URLSearchParams(q)),expected);
 assert.throws(()=>browserUploadValidationBenchmarkPolicy('webgl',new URLSearchParams('benchmark&uploadvalidation=no')),/Invalid/);
 console.log('PASS production queued errors for chunk/atlas pixels+hot descriptors/sky/coverage, zero shadow/world/UI draws, sticky failure/cleanup, allocations immediate, policy atomicity/default isolation. CPU API double only.');
