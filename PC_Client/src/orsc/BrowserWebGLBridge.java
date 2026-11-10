@@ -36,13 +36,18 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static final boolean LOAD_PROFILE=Boolean.getBoolean("spoiledmilk.browserLoadProfile");
     private final BrowserCasterProvenance casterProvenance=FOG_ELIGIBLE?new BrowserCasterProvenance():null;
     private Set<WorldChunkBufferKey> presentedDemand=Collections.emptySet();
-    private LoadMeasure loadMeasure;
+    private LoadMeasure loadMeasure,lastLoadMeasure;
     public static boolean isFogBoundedPreparationEnabled(){return FOG_ELIGIBLE&&RendererFogSettings.getMode()==RendererFogSettings.Mode.ON;}
     private static native void shadowSourceProvenance(int version,int revision,boolean complete);
     private static native void loadWork(int[] fields,float[] timings);
     private static final class LoadMeasure {
-        final long start=System.nanoTime();int source,required,sourceVertices,vertices,ready,repacks,exit,newChunks,newVertices,replacedVertices;
+        final long start=System.nanoTime();int source,required,sourceVertices,vertices,ready,repacks,exit,newChunks,newVertices,replacedVertices,sourceEpoch,geometryEpoch;
         boolean enabled,loading,game;long textureNanos,geometryNanos,packNanos,nativeNanos,demandNanos;
+        boolean declarationChanged(LoadMeasure previous) {
+            return previous==null||sourceEpoch!=previous.sourceEpoch||geometryEpoch!=previous.geometryEpoch
+                ||source!=previous.source||required!=previous.required||sourceVertices!=previous.sourceVertices
+                ||vertices!=previous.vertices||enabled!=previous.enabled;
+        }
     }
 
     private int maxTextureSize;
@@ -229,9 +234,15 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()},pose(frame));success=true;
         } finally { RendererFrameLighting.restore(previous); }        } finally {
             loadMeasure=null;
-            if(measure!=null&&success&&measure.game&&(measure.loading||measure.exit==1||measure.newChunks>0||measure.repacks>0))loadWork(new int[]{1,FOG_BOUNDED?1:0,measure.enabled?1:0,measure.source,measure.required,measure.source-measure.required,
-                measure.sourceVertices,measure.vertices,measure.ready,measure.repacks,loadState.sourceEpoch(),loadState.geometryEpoch(),measure.exit,measure.newChunks,measure.newVertices,measure.replacedVertices},
-                new float[]{(System.nanoTime()-measure.start)/1000000f,measure.textureNanos/1000000f,measure.geometryNanos/1000000f,measure.packNanos/1000000f,measure.nativeNanos/1000000f,measure.demandNanos/1000000f});
+            if(measure!=null&&success&&measure.game) {
+                measure.sourceEpoch=loadState.sourceEpoch();measure.geometryEpoch=loadState.geometryEpoch();
+                if(measure.loading||measure.exit==1||measure.newChunks>0||measure.repacks>0||measure.declarationChanged(lastLoadMeasure)) {
+                    loadWork(new int[]{1,FOG_BOUNDED?1:0,measure.enabled?1:0,measure.source,measure.required,measure.source-measure.required,
+                        measure.sourceVertices,measure.vertices,measure.ready,measure.repacks,measure.sourceEpoch,measure.geometryEpoch,measure.exit,measure.newChunks,measure.newVertices,measure.replacedVertices},
+                        new float[]{(System.nanoTime()-measure.start)/1000000f,measure.textureNanos/1000000f,measure.geometryNanos/1000000f,measure.packNanos/1000000f,measure.nativeNanos/1000000f,measure.demandNanos/1000000f});
+                    lastLoadMeasure=measure;
+                }
+            }
         }
     }
 

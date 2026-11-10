@@ -32,9 +32,13 @@ its suggested8156 port was occupied and no existing process was changed.
 
 Load-only bounded telemetry
 --------------------------
-GPU stats.fogPreparation is the latest load declaration; steady-state values may
-therefore be stale by design. stats.loadWorkSamples holds at most128 rows, with
-monotonic sequence and browser milliseconds. Held exits are included.
+GPU stats.fogPreparation is the latest load declaration. The original diagnostic
+stage emitted only loading/upload rows, so zero-upload source changes could
+leave it stale. Current source also emits when source/geometry epoch, chunk or
+vertex counts, or enabled-state changes. Unchanged steady frames stay quiet.
+stats.loadWorkSamples holds at most128 rows, with monotonic sequence and browser
+milliseconds. Held exits are included. The scalar declaration predicate has21
+checks including zero-upload changes and unchanged-frame suppression.
 fields16:
  [schema1, requested, enabled, sourceChunks, requiredChunks, deferredChunks,
   sourceVertices, demandVertices, readyChunks, pendingRepacks, sourceEpoch,
