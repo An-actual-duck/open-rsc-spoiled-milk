@@ -1,0 +1,34 @@
+Capture-local browser terrain elevation sampling
+
+The measured8126 source profile still spent2.876ms/frame in resident object
+append after exact static-input reuse. Descriptor capture reads shared wall
+endpoints repeatedly through the full terrain presentation sampler.
+
+This private memo reuses exact same-pixel World samples only during one
+captureResidentStaticInputs invocation. Four primitive8192-entry arrays total
+128KiB;4096unique entries maximum keeps open addressing at most half full.
+Full32-bit x/z equality, not a hash alone, proves a hit. Sentinels are ordinary
+cached values. A fresh epoch starts every probe, finally disables it, overflow
+clears tags, empty scenery allocates no memo, existing area/relog clearing
+releases all storage. Outside this private probe the original World method is
+always called, including native, the uncached builder and canonical mesh build.
+Control: spoiledmilk.browserElevationSampleBatch=false before class init.
+
+Independent read-only ownership audit found no supported concurrent mutation
+during this render-owned synchronous probe. Modern/legacy loops serialize
+update/checkConnection then draw; packet/editor ACK and async terrain-result
+publication happen in update. Async jobs build detached Sector/snapshot inputs;
+later installation deep-copies Sector/Tile data. World height methods and
+definition getters here are pure reads, no native calls or packet polling.
+This is not a general threadsafe World cache and must stay confined to this
+method; arbitrary external Tile mutation during the probe is outside that
+ownership contract. Any future asynchronous active-terrain writer must revisit
+this invariant or disable the memo.
+
+Build and actual value tests passed18031checks plus disabled control. The real
+World sampler is the independent value oracle: random/full-int coordinates,
+deliberate hash collisions, cache budget, wrap, fresh edits, signed native
+terrain and visual halo replacement, loaded ACK priority, exceptional probe
+cleanup, empty scene, area/relog and native fallback. Full input/canonical mesh
+differential also passed360enabled/330disabled checks. No copied height math.
+No browser/GPU/FPS result or public server operation yet.

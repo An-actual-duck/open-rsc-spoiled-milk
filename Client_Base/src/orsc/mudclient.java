@@ -967,6 +967,9 @@ public final class mudclient implements Runnable {
 	private static final boolean BROWSER_RESIDENT_INPUT_CACHE = !"false".equalsIgnoreCase(
 		System.getProperty("spoiledmilk.browserResidentInputCache", "true"));
 	private static final int MAX_RESIDENT_INPUT_DESCRIPTOR_INTS = 1024 * 1024;
+	private static final boolean BROWSER_ELEVATION_SAMPLE_BATCH = !"false".equalsIgnoreCase(
+		System.getProperty("spoiledmilk.browserElevationSampleBatch", "true"));
+	private ResidentElevationSampleBatch residentElevationSampleBatch;
 	private ResidentStaticInputCache residentStaticInputCache;
 	private int[] residentStaticInputProbe;
 	private int[] residentAnimatedInputIndices;
@@ -4458,6 +4461,12 @@ public final class mudclient implements Runnable {
 	/** Exact canonical values include freshly sampled terrain elevations. Incomplete
 	 * instance revision counters and mutable model identities are not cache proof. */
 	private int captureResidentStaticInputs() {
+		if (BROWSER_ELEVATION_SAMPLE_BATCH && residentStaticInputProbe.length > 0
+			&& residentElevationSampleBatch == null)
+			residentElevationSampleBatch = new ResidentElevationSampleBatch();
+		ResidentElevationSampleBatch batch = residentElevationSampleBatch;
+		if (batch != null) batch.begin();
+		try {
 		int used = 0;
 		residentAnimatedInputCount = 0;
 		for (int i = 0; i < getGameObjectInstanceCount(); i++) {
@@ -4484,9 +4493,20 @@ public final class mudclient implements Runnable {
 			used = createResidentObjectCanonicalIdentity(Renderer3DModelKind.WALL_OBJECT, record.x, record.y,
 				record.id, record.direction).writeDescriptor(residentStaticInputProbe, used, true);
 		return used;
+		} finally {
+			if (batch != null) batch.active = false;
+		}
+	}
+
+	private int sampleResidentTerrainElevation(int pixelX, int pixelZ) {
+		ResidentElevationSampleBatch batch = residentElevationSampleBatch;
+		return batch != null && batch.active
+			? batch.sample(this.world, pixelX, pixelZ)
+			: this.world.getPresentationTerrainElevation(pixelX, pixelZ);
 	}
 
 	private void clearResidentStaticInputCache() {
+		residentElevationSampleBatch = null;
 		residentStaticInputCache = null;
 		residentStaticInputProbe = null;
 		residentAnimatedInputIndices = null;
@@ -4763,7 +4783,7 @@ public final class mudclient implements Runnable {
 				int centerZ =
 					(2 * localZ + zSize) * this.tileSize / 2;
 				elevation1 =
-					this.world.getPresentationTerrainElevation(
+					sampleResidentTerrainElevation(
 						centerX, centerZ);
 				elevation2 = elevation1;
 			}
@@ -4784,11 +4804,11 @@ public final class mudclient implements Runnable {
 				endpointZ++;
 			}
 			elevation1 =
-				this.world.getPresentationTerrainElevation(
+				sampleResidentTerrainElevation(
 					startX * this.tileSize,
 					startZ * this.tileSize);
 			elevation2 =
-				this.world.getPresentationTerrainElevation(
+				sampleResidentTerrainElevation(
 					endpointX * this.tileSize,
 					endpointZ * this.tileSize);
 		}
@@ -5208,6 +5228,36 @@ public final class mudclient implements Runnable {
 	private static long mixResidentObjectChunkCacheKey(long hash, int value) {
 		hash ^= value & 0xffffffffL;
 		return hash * RESIDENT_OBJECT_CHUNK_FNV_PRIME;
+	}
+
+	/** Frame-local memo of pure terrain reads. Never survives as valid data beyond
+	 * one descriptor probe. Render-thread terrain/packet commits occur outside it. */
+	private static final class ResidentElevationSampleBatch {
+		private static final int SLOTS = 8192, LIMIT = SLOTS / 2;
+		private final int[] xs = new int[SLOTS], zs = new int[SLOTS];
+		private final int[] heights = new int[SLOTS], epochs = new int[SLOTS];
+		private int epoch, entries, hits, sourceReads;
+		private boolean active;
+		private void begin() {
+			if (++epoch == 0) { Arrays.fill(epochs, 0); epoch = 1; }
+			entries = hits = sourceReads = 0;
+			active = true;
+		}
+		private int sample(World world, int x, int z) {
+			int hash = x * 0x9e3779b9 ^ z;
+			hash ^= hash >>> 16; hash *= 0x85ebca6b; hash ^= hash >>> 13;
+			int at = hash & (SLOTS - 1);
+			while (epochs[at] == epoch) {
+				if (xs[at] == x && zs[at] == z) { hits++; return heights[at]; }
+				at = (at + 1) & (SLOTS - 1);
+			}
+			sourceReads++;
+			int height = world.getPresentationTerrainElevation(x, z);
+			if (entries < LIMIT) {
+				xs[at] = x; zs[at] = z; heights[at] = height; epochs[at] = epoch; entries++;
+			}
+			return height;
+		}
 	}
 
 	private static final class ResidentStaticInputCache {
