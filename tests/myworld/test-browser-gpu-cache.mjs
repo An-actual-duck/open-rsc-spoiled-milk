@@ -107,6 +107,11 @@ if(process.argv[3]){
  const clip=new Float32Array(48);for(let i=0;i<4;i++)clip[i*5]=clip[16+i*5]=clip[32+i*5]=1;
  async function colorFrame(){await cn.Java_orsc_BrowserWebGLBridge_worldProgress(null,new Int32Array([1,2,1,101,101,0,0,0,1,960,540,0]));await cn.Java_orsc_BrowserWebGLBridge_present(null,960,540,true,clip,values,new Int32Array(all),new Int32Array(960*540).fill(0x01000000));}
  for(let warm=0;warm<30;warm++)await colorFrame();assert.equal(c.stats.uploadedChunks,101);assert.equal(c.stats.worldReadiness.phase,'ready');assert.equal(c.stats.colorCulledChunkDraws,100);assert.equal(c.stats.drawCalls,1);assert.equal(c.stats.shadowNearDraws,101,'offscreen chunks lost from near shadow pass');assert.equal(c.stats.shadowFarDraws,100,'offscreen static chunks lost from far shadow pass');
+ assert.equal(c.stats.javaBridgeReportedWorldFrames,0,'Presentation falsely committed Java bridge metadata');
+ await cn.Java_orsc_BrowserWebGLBridge_frameWork(null,new Float32Array(14),new Int32Array(14));
+ assert.equal(c.stats.javaBridgeReportedWorldFrames,c.stats.javaWorldFrames,'Completed bridge metadata not published atomically');
+ const reported=c.stats.javaBridgeReportedWorldFrames;await colorFrame();assert.equal(c.stats.javaBridgeReportedWorldFrames,reported,'Present advanced bridge receipt before its later callback');
+ await cn.Java_orsc_BrowserWebGLBridge_frameWork(null,new Float32Array(14),new Int32Array(14));assert.equal(c.stats.javaBridgeReportedWorldFrames,c.stats.javaWorldFrames,'Later metadata did not close snapshot skew');
  const moved=geometry(0);await cn.Java_orsc_BrowserWebGLBridge_replaceChunk(null,2,moved,new Int32Array([2,1,0]),new Int32Array([-1,0,3,1,0]));moved.fill(1e8);await colorFrame();assert.equal(c.stats.drawCalls,2,'repacked bounds stale or retained borrowed vertices');assert.equal(c.stats.shadowNearDraws,101);
  const unknown=geometry(1e30);unknown[0]=NaN;await cn.Java_orsc_BrowserWebGLBridge_replaceChunk(null,3,unknown,indices,new Int32Array([-1,0,3,1,0]));await colorFrame();assert.equal(c.stats.drawCalls,3,'unproven bounds must stay visible');
  clip[0]=NaN;await colorFrame();assert.equal(c.stats.drawCalls,101,'unproven projection must retain all color draws');

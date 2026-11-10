@@ -76,7 +76,11 @@ export function createSurfaceAlignment({window:win,document:doc,display,canvas,l
       stats.layoutReads+=2;
       const sx=box.width/selected.width/scale,sy=box.height/selected.height/scale;
       lastStyle={display:'block',left:((box.left-parentBox.left)/scale+(selected.width-w)*sx/2)+'px',top:((box.top-parentBox.top)/scale+(selected.height-h)*sy)+'px',width:w*sx+'px',height:h*sy+'px'};
-      Object.assign(canvas.style,lastStyle);stats.styleCommits++;
+      Object.assign(canvas.style,lastStyle);
+      // CSSOM may shorten fractional pixel strings. Compare future own-write
+      // mutation records with actual serialized inline values, not raw math.
+      if(stats.active)for(const key of ['display','left','top','width','height'])lastStyle[key]=canvas.style[key];
+      stats.styleCommits++;
     }
     // Missing AWT target must be retried even before mutation delivery.
     dirty=!selected||!canvas.parentElement;return true;
