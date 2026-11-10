@@ -93,6 +93,6 @@ history. READY means reviewable and durable, not approved for merging/release.
 Manager evidence (preserved ignored review outputs, relative to manager root):
  output/reviews/browser-display-performance/benchmarks/sprite-fixed-point-1/
  output/reviews/browser-display-performance/benchmarks/actor-preparation-1/
-Each contains result.json, phase-before.json, phase-after.json and phase-samples.json.
+Each contains result.json, phase-before.json, phase-after.json and phase-population.json.
 Immutable candidate stage remains under worker output/tests/browser-gameplay-spike/
 browser-sprite-fixed-point; the later docs-only handoff does not change stage bytes.
