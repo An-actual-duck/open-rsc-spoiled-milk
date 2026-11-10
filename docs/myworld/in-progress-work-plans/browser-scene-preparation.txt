@@ -1,0 +1,92 @@
+Browser Scene preparation: measurement before optimization
+========================================================
+
+Scope
+-----
+The existing sceneLegacyDrawStats duration is not a terrain raster-only timer.
+It encloses both polygon sort passes, sprite anchor/direct ground-layer setup,
+actual GraphicsController.drawSceneEntity (NPC/player/equipment layer capture),
+sprite picking and remaining projected-world clipping/picking/raster work.
+Browser GPU geometry ownership still requires exact interaction and actor data.
+No work is skipped or cached in this change.
+
+Coverage initialization currently precedes that timer. It may clear full RGB
+and transmittance planes even when terrain/world pixels are GPU-owned, so its
+cost cannot be inferred from the reported 3.76 ms legacyDraw mean. Sorting may
+also resolve polygon overlap, not merely average depth. Replacing it with a
+simpler sort without evidence would risk ordered anchors and mouse occlusion.
+
+Sampling contract
+-----------------
+When existing RenderTelemetry collection is enabled, each Scene instance selects
+every 32nd endScene call for detailed clocks. Disabled collection neither advances
+that sequence nor issues any new nanoTime calls. Unsampled frames issue no new
+clock calls. The detailed row is recorded only after legacy drawing finishes.
+There are no per-pixel/per-face timers, formatted per-frame strings, JMX reads or
+new browser-native boundary calls.
+
+The bulk BrowserTelemetryData schema adds six fields (31 total, capacity 32):
+
+* sceneLegacyDrawSampleStats: paired legacyDraw total on sampled frames only.
+* scenePolygonSortSampleStats: both existing polygon sorting passes combined.
+* sceneSpriteCaptureSampleStats: sum of actual drawSceneEntity intervals, including
+  NPC/player/item layer preparation and capture inside that call. Anchor creation,
+  direct ground-layer creation and sprite mouse-pick checks are outside this span.
+* sceneCoverageInitSampleStats: the existing coverage/marker initialization before
+  legacyDraw. It is outside the sampled legacy total and must not be subtracted
+  from that total or added to an already inclusive Scene duration again.
+* sceneSpriteCaptureSampleCountStats: entity-call count per sampled frame.
+* sceneProjectedIterationSampleCountStats: non-sprite polygon loop iterations per
+  sampled frame, including iterations that early-continue without clipping/raster.
+
+All six have the same sample-frame denominator. The last two are CounterStats:
+count = sampled frames; total = summed calls/iterations, not nanoseconds.
+Existing all-frame legacy/Scene counters remain unchanged. All new counters use
+existing bounded storage and the normal report-window reset.
+
+Read means using each field's own total/count. The paired residual
+(sampled legacy total - polygon sort - sprite capture) estimates the remaining
+loop/anchor/pick work on those same sampled frames. It must not use all-frame
+legacy means against the sampled substage means. Small negative residuals due
+to measurement noise would indicate a reporting/aggregation problem, not savings.
+
+Timing limitations
+------------------
+A detailed sample adds two clock calls per drawn entity, but only once in 32
+Scene calls, plus coverage and sort endpoints. This limits amortized overhead;
+it does not prove System.nanoTime is free in CheerpJ. Report profiled samples
+separately from unprofiled FPS cohorts. At roughly 40 FPS, a 40-second measured
+window contains around 50 detailed samples; count actual samples and drawn
+entities instead of assuming equal populations across independent runs.
+
+CPU verification
+----------------
+  ./scripts/build-client.sh
+  python3 tests/myworld/test-browser-scene-preparation.py
+  python3 tests/myworld/test-browser-frame-sink.py
+
+The new fixture compiles the actual pre-instrumentation Scene from main
+4a396089eb3badcb6af338c57b1b0a4c8837c228 separately. Baseline/current and profiling
+off/on run the same 256 actual Scene draws across GPU-only, forced legacy,
+CPU-depth browser and native paths, with changed camera/material/transparent
+cutout inputs. It compares exact software pixels, picks, ordered actor calls,
+anchors, projected/clipped faces and resident output. Each new statistic must
+record exactly eight samples with profiling enabled and zero when disabled;
+actor-call export must be exercised, and schema stays within its wire bound.
+The existing interaction/occlusion, early/late cull, wall/roof ownership and
+telemetry fixtures provide additional differential coverage.
+
+Results and generated evidence belong to the declared
+output/tests/browser-scene-preparation/ subject. No browser/GPU test, live-server
+operation, FPS gain or complete 60 FPS result is claimed by this worker.
+
+Next gate
+---------
+Freeze the integrated artifact and collect profile=1 for at least 40 seconds
+with the existing private benchmark controls/camera/backing resolution. Inspect
+these six counters before choosing an optimization. If capture dominates, inspect
+actual repeated actor/layer preparation while preserving all mutable inputs.
+If sort dominates, retain exact overlap/order semantics in any candidate. If
+coverage dominates, a clear-ownership change requires explicit normal/fallback,
+exception, loading, retained fade, interlace and native/software differential
+proof; simply dropping the early blackScreen clear is not safe.

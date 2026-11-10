@@ -22,6 +22,7 @@ public final class Scene {
 	private final boolean browserOwnsWallsAndRoofs = Boolean.getBoolean("spoiledmilk.browserOwnsWallsAndRoofs");
 	public boolean isBrowserFullResidentOwnershipEnabled() { return browserOwnsWallsAndRoofs && Renderer3DSettings.isBrowserPresentationAvailable() && !Renderer3DSettings.needsCpuDepthFrame(); }
 	public boolean isEarlyResidentFaceCullEnabled() { return browserEarlyFaceCull && Renderer3DSettings.isBrowserPresentationAvailable(); }
+	private int scenePreparationProfileSequence;
 	private RSModel[] m_Ab;
 	private final int[] m_B = new int[40];
 	private int m_db;
@@ -2899,6 +2900,11 @@ public final class Scene {
 			long depthExportNanos = 0L;
 			long legacyDrawNanos = 0L;
 			long meshExportNanos = 0L;
+            // Detailed clocks are diagnostic-only and sampled to limit CheerpJ timing overhead.
+            boolean profilePreparation = RenderTelemetry.isEnabled()
+                && (++scenePreparationProfileSequence & 31) == 0;
+            long polygonSortNanos = 0L, spriteCaptureNanos = 0L;
+            int spriteCaptureCount = 0, projectedIterationCount = 0;
 			this.m_f = this.graphics.interlace;
 			Renderer3DFrame geometryFrame = Renderer3DSettings.isGeometryCaptureEnabled()
 				? new Renderer3DFrame(
@@ -3170,6 +3176,7 @@ public final class Scene {
 			boolean skipLegacyWorldRaster =
 				Renderer3DSettings.canSkipLegacyWorldRaster() && !forceLegacyWorldRaster;
             this.interactionLegacyRaster = !skipLegacyWorldRaster;
+            long coverageInitStart = profilePreparation ? RenderTelemetry.now() : 0L;
             if (browserOverlayCoverage) {
                 this.graphics.setWorldOverlayCoverageEnabled(Renderer3DSettings.isBrowserPresentationAvailable());
                 if (skipLegacyWorldRaster && Renderer3DSettings.isBrowserPresentationAvailable()) {
@@ -3180,10 +3187,13 @@ public final class Scene {
                 // Marker-only compatibility prototype; genuine black UI remains opaque.
                 java.util.Arrays.fill(this.pixelData, 0x01000000);
             }
+            long coverageInitNanos = profilePreparation ? RenderTelemetry.elapsedSince(coverageInitStart) : 0L;
 			long legacyDrawStart = RenderTelemetry.now();
 			if (this.m_zb != 0) {
+                long polygonSortStart = profilePreparation ? RenderTelemetry.now() : 0L;
 				this.setFrustum(0, -1, this.polygons, this.m_zb - 1);
 				this.setFrustum(this.m_zb, 100, -53, this.polygons);
+                if (profilePreparation) polygonSortNanos = RenderTelemetry.elapsedSince(polygonSortStart);
 
 				for (var9 = 0; this.m_zb > var9; ++var9) {
 					Polygon var25 = this.polygons[var9];
@@ -3253,6 +3263,7 @@ public final class Scene {
 									directGroundItemLayer);
 							}
 						}
+                        long spriteCaptureStart = profilePreparation ? RenderTelemetry.now() : 0L;
 						this.graphics.drawSceneEntity(
 							this.m_gb[var3],
 							var20 + this.m_Zb,
@@ -3269,6 +3280,10 @@ public final class Scene {
                                 ? (skipLegacyWorldRaster ? GraphicsController.SceneSpriteRasterPolicy.GPU_OWNED
                                     : GraphicsController.SceneSpriteRasterPolicy.FORCE_SOFTWARE)
                                 : GraphicsController.SceneSpriteRasterPolicy.DEFAULT);
+                        if (profilePreparation) {
+                            spriteCaptureNanos += RenderTelemetry.elapsedSince(spriteCaptureStart);
+                            spriteCaptureCount++;
+                        }
 						if (this.m_K) {
 							var20 += (this.m_Q[var3] << this.rot1024_vp_src) / var15;
 							if (var21 <= this.m_Wb && var21 + var17 >= this.m_Wb && var20 <= this.m_j
@@ -3277,6 +3292,7 @@ public final class Scene {
 							}
 						}
 					} else {
+                        if (profilePreparation) projectedIterationCount++;
 						if (geometryFrame != null
 							&& depthWorldKinds != null
 							&& depthWorldKinds.contains(var2.getRenderer3DModelKind())) {
@@ -3432,6 +3448,9 @@ public final class Scene {
 				this.m_K = false;
 			}
 			legacyDrawNanos = RenderTelemetry.elapsedSince(legacyDrawStart);
+            if (profilePreparation) RenderTelemetry.recordScenePreparationSample(
+                polygonSortNanos, spriteCaptureNanos, coverageInitNanos, legacyDrawNanos,
+                spriteCaptureCount, projectedIterationCount);
 			if (geometryFrame != null && depthWorldKinds != null) {
 				long depthExportStart = RenderTelemetry.now();
 				geometryFrame.setDepthFrame(Renderer3DDepthFrame.render(

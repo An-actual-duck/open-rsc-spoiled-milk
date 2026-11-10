@@ -1,0 +1,66 @@
+Browser array vertex packing — CPU verified candidate
+=====================================================
+Baseline4a396089eb3badcb6af338c57b1b0a4c8837c228.
+Scope: OpenGLWorldChunkRenderer packing only. Gameplay, Scene authority/picking,
+source meshes/materials, shaders, lighting and current rendering quality unchanged.
+
+Change
+------
+Browser copyBackendChunkVertices writes its final28-float-per-vertex float[]
+directly, including standalone native-centered texture UVs in the same vertex
+pass. It no longer allocates/uses a direct vertex workspace, two unused direct
+index workspaces, bulk-reads a direct buffer or runs a second UV overwrite loop.
+Production formulas live once in writeChunkVertex and its shared material/light/
+shader-input writers. There is no per-float writer interface or per-vertex object.
+Native rendering retains the existing direct buffer allocation/upload/flip API,
+using one reusable28-float(112-byte) scratch and one bulk put per vertex. It never
+allocates another full-chunk native array. Native raw fields are preserved exactly.
+
+Independent OLD oracle
+----------------------
+The reference is frozen production source from git4a396089e, compiled and executed
+in a separate JVM from the candidate. It is not a rewritten implementation of
+expected formulas. Initial proof also used a full baseline-built JAR preserved
+before editing (SHA2568cc353c871bf3d20e942553b064d70e59ea28ac0c2c3f5dfbdbb93c466ca0f30).
+Portable runner tests/myworld/test-browser-array-vertex-packing.py extracts that
+exact old source, with old package classes first on its isolated classpath.
+
+Java8 and21 each compare3,514,140 raw-float fields (14,063,764 output bytes) across
+600 deterministic production ChunkMesh/RSModel cases and three streams per case:
+browser, native plain and native atlas/projected-shadow-proof. Cases exercise all
+model kinds, signed levels0/-1/-8/1/10, Classic/Directional, Smooth/Faceted/Wire,
+fog, brightness, fixed day/dawn/night tones, cutout/missing/fallback materials,
+source normals/colors/terrain blends/variation masks, negative/rebased coordinates,
+nonfinite/out-of-range UVs, empty meshes and absent texture frames. Atlas region
+lookups use actual production region objects without invoking a graphics driver.
+These are production DTO/model-construction fixtures, not captured live-map data
+or a raster/clipping/image proof. Existing Scene ownership/picking guards separately
+remain unchanged and pass.
+
+Oracle SHA256 after null-frame cases:
+10e881bea9f2d64b4ca4e60dfa2bb42f0fbb386cdd82183a5e88b0138be1ece5.
+Reflection additionally verifies every browser instance has null direct vertex,
+index and material-index buffers after packing; native output remains direct,
+position0 and flipped to the expected packed length.
+
+Other checks
+------------
+Fresh target8 client build;82 native UV/cache-variant checks;5438 exact material
+stream/range checks; animated/static chunk identity/budget/failure suite; native
+Scene depth/ownership/pick/teleport guards; geometry modes, material-family and
+below-terrain guards. Two obsolete source-snippet names in world-geometry guard
+now check the shared writer and native bulk sink; the independent bit oracle is
+the behavioral proof. Output is under output/tests/browser-array-vertex-packing.
+Layout audit still lists inherited ai2 legacy output/assets entries; no cleanup.
+
+Bounded JVM throughput control
+------------------------------
+Optional --timing runs separate OLD/new desktop Java8 JVMs,200 warm-ups then five
+100-call rounds packing one6000-vertex unbaked object chunk, bounded heap512MiB.
+A representative rerun median was native122.8us OLD ->150.1us candidate and browser
+172.2us ->148.1us. Native scratch/bulk writing therefore has a measured ~27us
+per6000-vertex chunk overhead here; native packing performance is NOT claimed
+unchanged. This is small absolute work, but manager must judge native integration.
+These desktop microbench figures are not browser/JIT/GPU/game FPS evidence and do
+not predict CheerpJ improvement. Real serialized browser comparison and actual
+native functional acceptance remain manager gates. This task launched no GPU.
