@@ -21,7 +21,12 @@ final class BrowserChunkMaterials {
         Map<Long,Integer> groups=new LinkedHashMap<Long,Integer>();
         List<int[]> materials=new ArrayList<int[]>();
         for(int triangle=0;triangle<triangles;triangle++) {
-            int textureId=renderer.backendTextureId(frame,chunk.getTriangleTexture(triangle),chunk.getTriangleFallbackColor(triangle));
+            int sourceTexture=chunk.getTriangleTexture(triangle),fallback=chunk.getTriangleFallbackColor(triangle);
+            if(!renderer.backendMaterialDrawable(frame,sourceTexture,fallback)) {
+                triangleGroups[triangle]=-1;
+                continue;
+            }
+            int textureId=renderer.backendTextureId(frame,sourceTexture,fallback);
             Renderer3DTextureData texture=frame.getTexture(textureId);
             if(texture==null)textureId=-1;
             int kind=chunk.getTriangleModelKind(triangle).ordinal();
@@ -34,6 +39,8 @@ final class BrowserChunkMaterials {
             }
             triangleGroups[triangle]=group;materials.get(group)[3]+=3;
         }
+        // Keep the original allocation capacity for resident in-place updates.
+        // Only batch ranges are submitted; unused trailing indices never draw.
         int[] indices=new int[triangles*3],batches=new int[materials.size()*5],cursor=new int[materials.size()];
         int start=0;
         for(int group=0;group<materials.size();group++) {
@@ -42,7 +49,9 @@ final class BrowserChunkMaterials {
             batches[at+3]=material[1];batches[at+4]=material[2];cursor[group]=start;start+=material[3];
         }
         for(int triangle=0;triangle<triangles;triangle++) {
-            int group=triangleGroups[triangle],at=cursor[group];
+            int group=triangleGroups[triangle];
+            if(group<0)continue;
+            int at=cursor[group];
             for(int corner=0;corner<3;corner++)indices[at+corner]=chunk.getIndex(triangle*3+corner);
             cursor[group]+=3;
         }
