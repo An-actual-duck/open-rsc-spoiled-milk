@@ -110,8 +110,9 @@ game-thread scheduling, gameplay or FPS. No GPU/browser was launched by this wor
 target-8 test JAR and page under this subject's `runtime/` directory. It launches
 no browser. The page uses the real CheerpJ 5.0/JRE8 runtime and exposes
 `window.nativeRuntimeProof`. Its current separate query modes each start a fresh
-page/JVM: `values` checks 100 scalar/int-array pairs and 1,901 assertions including
-MIN/MAX/sign/overflow and unchanged input; `async-fatal`, `sync-fatal` and
+page/JVM: `values` checks 100 scalar/int-array pairs, async/sync void calls with
+caller continuation, and 1,903 assertions including MIN/MAX/sign/overflow and
+unchanged input; `async-fatal`, `sync-fatal` and
 `thenable-fatal` report a before-native marker, then require the existing runtime
 fatal/thread-stopped boundary, one poison operation, the expected error message
 and no after-native marker. Thenable mode additionally forbids an orphan rejection

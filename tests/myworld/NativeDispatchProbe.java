@@ -6,6 +6,8 @@ public final class NativeDispatchProbe {
     private static native int scalarSync(int a,int b);
     private static native int[] vectorAsync(int seed,int[] values);
     private static native int[] vectorSync(int seed,int[] values);
+    private static native void voidAsync(int marker);
+    private static native void voidSync(int marker);
     private static native void failureAsync();
     private static native void failureSync();
     private static native void unexpectedThenable();
@@ -38,6 +40,8 @@ public final class NativeDispatchProbe {
             }
         }
         check(values[0]==Integer.MIN_VALUE&&values[1]==Integer.MAX_VALUE&&values[7]==0xabcdef01,"Native changed caller input");
+        voidAsync(-12345);check(scalarSync(7,5)==scalar(7,5),"Caller did not continue after async void");
+        voidSync(Integer.MIN_VALUE);check(scalarAsync(7,5)==scalar(7,5),"Caller did not continue after sync void");
         report("checks",Integer.toString(checks));report("completed","true");
     }
 }

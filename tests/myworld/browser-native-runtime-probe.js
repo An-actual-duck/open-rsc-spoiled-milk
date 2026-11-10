@@ -1,6 +1,6 @@
 import {createSynchronousNativeCall} from './browser-native-call-dispatch.js';
 const mode=new URLSearchParams(location.search).get('mode')||'values';
-const proof=window.nativeRuntimeProof={completed:false,passed:false,mode,events:[],errors:[],calls:{},console:[],windowErrors:[],runtime:'5.0',poisoned:false,poisonCount:0,poisonMessages:[],unhandled:[],scope:'Authentic CheerpJ value/fatal-boundary contract only; fresh page/JVM per mode; no game/GPU/FPS claim'};
+const proof=window.nativeRuntimeProof={completed:false,passed:false,mode,events:[],errors:[],calls:{},voidMarkers:[],console:[],windowErrors:[],runtime:'5.0',poisoned:false,poisonCount:0,poisonMessages:[],unhandled:[],scope:'Authentic CheerpJ value/fatal-boundary contract only; fresh page/JVM per mode; no game/GPU/FPS claim'};
 const describe=error=>({message:String(error),stack:error?.stack?String(error.stack):null});
 const bounded=value=>{try{return (value instanceof Error?String(value)+'\n'+(value.stack||''):typeof value==='string'?value:JSON.stringify(value)??String(value)).slice(0,3000);}catch{return '[unprintable diagnostic]';}};
 const failureText='native-dispatch-probe-failure',consumedText='consumed future rejection';
@@ -23,6 +23,8 @@ const natives={
  Java_orsc_browser_NativeDispatchProbe_scalarSync:sync('scalarSync',scalar),
  Java_orsc_browser_NativeDispatchProbe_vectorAsync:asyncWrap(async(...args)=>vector(...args)),
  Java_orsc_browser_NativeDispatchProbe_vectorSync:sync('vectorSync',vector),
+ Java_orsc_browser_NativeDispatchProbe_voidAsync:asyncWrap(async(_lib,marker)=>{proof.voidMarkers.push({mode:'async',marker});}),
+ Java_orsc_browser_NativeDispatchProbe_voidSync:sync('voidSync',(_lib,marker)=>{proof.voidMarkers.push({mode:'sync',marker});}),
  Java_orsc_browser_NativeDispatchProbe_failureAsync:asyncWrap(async()=>failure()),
  Java_orsc_browser_NativeDispatchProbe_failureSync:sync('failureSync',failure),
  Java_orsc_browser_NativeDispatchProbe_unexpectedThenable:sync('unexpectedThenable',()=>Promise.reject(new Error(consumedText))),
@@ -39,7 +41,7 @@ try{
  await new Promise(resolve=>setTimeout(resolve,250));
  const values=Object.fromEntries(proof.events.map(({name,value})=>[name,value]));
  if(mode==='values'){
-  if(proof.javaExit!==0||values.completed!=='true'||Number(values.checks)!==1901||proof.poisoned||proof.unhandled.length)throw Error('Value conversion probe failed: '+JSON.stringify({outcome,values}));
+  if(proof.javaExit!==0||values.completed!=='true'||Number(values.checks)!==1903||proof.poisoned||proof.unhandled.length||JSON.stringify(proof.voidMarkers)!==JSON.stringify([{mode:'async',marker:-12345},{mode:'sync',marker:-2147483648}]))throw Error('Value conversion probe failed: '+JSON.stringify({outcome,values,voidMarkers:proof.voidMarkers}));
  }else{
   const expected=mode==='thenable-fatal'?'Unexpected asynchronous result':failureText;
   if(values.beforeNative!==mode||values.afterNative!==undefined||values.completed!==undefined||!proof.runtimeFatal||proof.poisonCount!==1||!proof.poisonMessages[0]?.includes(expected))throw Error('Fatal native boundary failed: '+JSON.stringify({outcome,values,poison:proof.poisonMessages}));
