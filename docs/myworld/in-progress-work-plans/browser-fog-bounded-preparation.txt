@@ -149,7 +149,7 @@ Single recorded transition comparisons:
 - Far teleport:10.977s OFF ->9.810s ON, upload bytes182,886,528 ->173,304,000.
 - City return:11.026s OFF ->10.220s ON, upload bytes151,129,440 ->101,276,352.
 - Explicit ordinary Walk Here:1.831s OFF ->1.552s ON, upload bytes82,678,536
-  ->56,879,208. Final endpoints differed by one tile (OFF105,621; ON105,620).
+  ->56,879,208. Final endpoints differed by one tile (OFF105,619; ON105,620).
 
 These are indicative single-pass client stream intervals, not repeated controlled
 load-time certification or proof of a general percentage improvement. Cache
