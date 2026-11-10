@@ -1,0 +1,67 @@
+Private runtime engine entry probes
+==================================
+This is bounded compatibility test tooling. It changes no game, renderer,
+production native callback, runtime default, account, server or asset.
+
+Inputs and scope
+----------------
+The preparer accepts an explicit --source-stage containing the manager-accepted
+native-contract-modes-v3-void artifact. Four fixed web files and the Java source
+must match pinned SHA256/length records and its manifest. The original probe JAR
+and sync/async helper are copied byte-for-byte; no compilation or parked native
+branch merge is needed. Source metadata (including its original dirty-review
+provenance) and exact input snapshots are preserved. A fresh output directory is
+required. No source stage or existing prepared stage is modified.
+
+Only two stage-fixed variants are permitted:
+ java17-js: version17, wasmGC option ABSENT (vendor default engine requested)
+ java8-wasmgc: version8, wasmGC:true (experimental engine requested)
+Each stage has one variant, never an ambiguous mixture. The only page query is a
+single mode=values|async-fatal|sync-fatal|thenable-fatal. Runtime/engine queries are
+rejected before loading CheerpJ, including wasmgc=off. The existing ordinary game
+probe uses options.has('wasmgc'), so even that apparently negative query enables
+its option; do not use it as an engine-OFF control.
+
+The existing1903 scalar/int-array/void assertions, exact void markers and three
+inherited fatal-boundary checks remain unchanged. Each mode starts a fresh page/
+JVM. Original loader, initialization and run/fatal waits are bounded45seconds each.
+Run values FIRST. If an experimental engine cannot initialize or pass values,
+preserve its result and stop that variant; no giant automatic matrix/retry loop.
+Later fatal probes are only useful after this entry gate passes. There is no
+performance claim from compatibility success or timeouts.
+
+Receipts explicitly distinguish requested options from observations. They record
+configured Java/engine and actual browser user-agent, initialization resolution,
+and eventual probe result. actualEngineObserved and actualJavaVersionObserved
+remain null: this reused Java probe has no engine/version getter. Initialization
+or successful JNI execution must not be relabeled as independently measured
+engine activation. Browser/GPU performance and gameplay remain separate tests.
+
+Vendor reference checked2026-11-10:
+ https://cheerpj.com/docs/reference/cheerpjInit#wasmgc
+The vendor documents wasmGC as experimental in5.0, with Firefox153+ required;
+Firefox154 meets that stated browser requirement. Java17 is a supported version.
+This does not promise compatibility or stability for our workload.
+
+Preparation and manager launch
+------------------------------
+After the manager releases the timing window:
+ python3 tests/myworld/prepare-browser-runtime-engine.py \
+   --source-stage APPROVED_FROZEN_V3_STAGE --variant java17-js \
+   --run-id fresh-java17-js --http-port FRESH_PORT
+Repeat with java8-wasmgc and a different run/port only when desired. stage.json
+contains exact serveCommand, values/fatal URLs and all served-file hashes. The
+explicit manager-run range service validates the whole four-file inventory and
+binds127.0.0.1 only. Preparation never starts a service or browser. No game/server,
+owner profile, saved login or public data is part of these probes.
+
+CPU validation
+--------------
+ test-browser-runtime-engine-matrix.py --source-stage APPROVED_FROZEN_V3_STAGE
+checks source/hash rejection, no overwrite, unchanged native/protocol bytes and
+fake-runtime exact init arguments for both variants. Java is deliberately NOT
+simulated: those CPU cases remain incomplete while awaiting runMain, and cannot
+claim that1903 Java checks passed. Query rejection and injected init failure are
+also checked. Authentic Firefox/CheerpJ results must be recorded separately by the
+manager. No tests, compilation or preparation were run during the initial
+projection-performance timing hold; this source is pending that release.
