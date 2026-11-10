@@ -37,3 +37,33 @@ texture8 is128x128 with4,382transparent pixels. It exports production packing an
 96shared native projection/view matrices. No server/account/GL context required.
 Outputs under tests/browser-texture-stability. Moving Firefox proof is pending;
 no performance or visual-fix acceptance claim yet. Worker launches no GPU/browser.
+
+Prepared moving-v2 diagnostic (ea5345789; earlier moving-v1 rejected in source
+review for missing readiness declaration, never used as success evidence):
+  python3 tests/myworld/prepare-browser-texture-stability.py \
+    --dependency-jar /ABS/approved/client.jar --run-id UNIQUE
+Preparation verifies the exact approved SHA, compiles offline oracles against that
+JAR, freezes shaders/material pixels/tree geometry/96views and current web modules,
+and writes all hashes/provenance. It never launches a GPU/browser. Serve its web/
+folder and invoke window.runTextureStability(); window.textureStabilityResult
+contains completion and renderer evidence. Firefox AMD strings are accepted without
+requiring ANGLE. Software rasterizer names are rejected. Replay lets reviewers
+switch nearest/stable/reference. The reference is 1920x1080 nearest downsampled to
+960x540, explicitly a raster-size diagnostic, NOT native-client pixel equivalence.
+Readbacks and large marker transfers make this an image test, not an FPS test.
+
+Metrics include spatial error and temporal residual error vs the 2x reference,
+actual tree-only silhouette/green signal, and CPU mip generation for animated
+texture17. These metrics do not automatically accept quality: qualityAccepted is
+false until whole-tree and close-up visual review. No runtime frontend toggle is
+added yet. Experimental backend option worldTextureFiltering='stable' is explicit.
+
+CPU checks: 28 bounded POT/NPOT/leaf/fractional chains, original visible level0
+bytes and input ownership, alpha integral targets, no black foliage fringes,
+exact mip byte ledger, nearest magnification and sampler isolation, new/reuse
+uploads, sampler error cleanup/default OFF behavior. Existing GPUcache,
+stream-validation and owned-state CPU fixtures pass. Warm Node-only actual-pixel
+120-build check: texture8 128² about0.451ms/build; texture17 64² about0.113ms/build.
+Neither is a Firefox timing nor an end-to-end FPS claim. workspace-layout check
+still reports preexisting legacy output/root entries; new outputs use declared
+category tests/browser-texture-stability.
