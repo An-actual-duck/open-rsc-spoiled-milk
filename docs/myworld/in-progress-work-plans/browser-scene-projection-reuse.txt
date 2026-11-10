@@ -1,4 +1,9 @@
-Browser stationary Scene projection reuse — experimental, default OFF
+Browser stationary Scene projection reuse — PARKED, default OFF
+
+FINAL MANAGER DECISION: DO NOT ADOPT. READY is for preservation/parking only,
+not ordinary renderer integration. Firefox testing did not isolate sufficient
+comparable-workload gain to justify this added cache/validation complexity.
+
 
 Measured target supplied by manager: Firefox ModelRotate around3.1ms within
 Scene around6.7ms. Existing model-pick bounds reject faces only AFTER rotating
@@ -90,3 +95,38 @@ No workerGPU/browser launch, login or public changes. Actual Firefox sameartifac
 OFF/ON comparison with fixedcamera/location/quality and warmup, actualcachecounts,
 plus motion/pick/interaction proof remain manager gates. No60FPS or actualFPS gain
 claim. Default must remain OFF unless measured benefit supports adoption.
+
+Final root Firefox measurement (2026-11-10)
+
+Manager ran a private composite8155: projection source8f4650a92/current fresh
+clientJAR1ef... with physical-output193b... and acceptedshadow7450594cf. This was
+NOT a single production commit or public release. Logical960x540; actual physical
+1843x1037; fresh startup per policy,180seconds warmup then two30second timed
+segments. No input, screenshots or profiler during timed segments.
+
+ProjectionON actual fresh-worldFPS:42.11648673863788 /42.656713433532175.
+Actors/frame:30.185126582278482 /30.003125.
+ProjectionOFF actual fresh-worldFPS:41.183526589364256 /41.17666655561848.
+Actors/frame:32.73705501618123 /32.249190938511326.
+The roughly3percent raw difference is confounded by lower actor population onON.
+Raw result files also show geometry differed:ON478,684triangles/396draws versus
+OFF480,380triangles/401draws during both timedsegments. Requested camera matched,
+but actualcamera offsets drifted slightly and were not identical. Thus no clean
+causal FPS win or60FPS claim follows. Last600-frame actor-group bins suggest some
+lowerON intervals but do not remove the whole-scene/camera/startup confounds.
+
+The feature actually ran:ONfinalreceipt hits2,583,190,misses1,477,029,entries256,
+bytes680,416,admissionRejects1,466,446; requested/enabledtrue. OFFreceipts show
+requested/enabledfalse andzero counts/storage. No symbolic flag or static-redraw
+FPS was substituted for fresh Java-produced world frames. Entrycount cap reached;
+bytes remained below8MiB. These counts establish exercise, not enough benefit.
+
+Root layer/movement functional checks are separate correctness evidence; they do
+not override the performance decision. DefaultOFF is unchanged. Preserve source,
+CPU oracles, controls and history without adding optimizations or adoptingthis
+candidate. No further builds/tests were run for this documentation-only closure.
+Evidence under manager output/diagnostics/browser-motion-transitions/:
+  projection-comparison.json
+  projection-game-firefox-on/result.json
+  projection-game-firefox-off/result.json
+Public files/server were not changed. Final handoff is for parking only.
