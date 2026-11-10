@@ -14,6 +14,10 @@ public final class BenchmarkCandidatePoliciesFixture {
     public static final class FakeWorld {long hits;public long[] getBrowserRegionPreparationDiagnostics(){return new long[]{hits,2,1672704};}}
     private static void check(boolean value,String message){if(!value)throw new AssertionError(message);}
     public static void main(String[] args) {
+        // Configure the exact browser ownership prerequisites BEFORE any class
+        // can initialize Renderer3DSettings' immutable startup flags.
+        for(String name:new String[]{"spoiledmilk.openglWorldMesh","spoiledmilk.openglWorldChunksTexturedVisible","spoiledmilk.openglWorldChunksReplacementComposite","spoiledmilk.openglWorldChunksTrustedReplacement","spoiledmilk.openglWorldChunksResidentObjects","spoiledmilk.browserOwnsWallsAndRoofs","spoiledmilk.browserModelPickBounds"})System.setProperty(name,"true");
+        System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");
         boolean[] missing=BenchmarkCandidatePolicies.inspect("orsc.BrowserWebGLBridge","missingGetter");check(!missing[0]&&!missing[1],"Missing getter was inferred active");
         boolean[] off=BenchmarkCandidatePolicies.inspect(BenchmarkCandidatePoliciesFixture.class.getName(),"disabled");check(off[0]&&!off[1],"Actual false getter lost availability");
         try{BenchmarkCandidatePolicies.inspect(BenchmarkCandidatePoliciesFixture.class.getName(),"wrong");throw new AssertionError("Wrong type accepted");}catch(IllegalStateException expected){}
@@ -37,9 +41,18 @@ public final class BenchmarkCandidatePoliciesFixture {
         Renderer3DSettings.setBrowserCpuDepthRequired(false);
         orsc.graphics.three.Scene scene=new orsc.graphics.three.Scene(new orsc.graphics.two.MudClientGraphics(64,64,1),4,16,4);
         boolean[] projection=BenchmarkCandidatePolicies.inspectInstance(scene,"isBrowserSceneryProjectionWorkEnabled");
-        if(requireCandidates)check(projection[0],"Composite scenery projection getter absent");
+        boolean requireProjection=java.util.Arrays.asList(args).contains("--require-projection");
+        if(requireCandidates||requireProjection)check(projection[0],"Composite scenery projection getter absent");
         if(projection[0])check(projection[1]==(Boolean.getBoolean("spoiledmilk.browserSceneryProjectionWork")&&scene.isBrowserModelPickBoundsEnabled()),"Actual instance projection gate differs");
         else check(!projection[1],"Absent instance policy inferred enabled");
+        if(projection[0]){
+            Renderer3DSettings.setBrowserPresentationAvailable(false);
+            check(!BenchmarkCandidatePolicies.inspectInstance(scene,"isBrowserSceneryProjectionWorkEnabled")[1],"Projection receipt ignored browser gate");
+            Renderer3DSettings.setBrowserPresentationAvailable(true);Renderer3DSettings.setBrowserCpuDepthRequired(true);
+            check(!BenchmarkCandidatePolicies.inspectInstance(scene,"isBrowserSceneryProjectionWorkEnabled")[1],"Projection receipt ignored CPU depth consumer");
+            Renderer3DSettings.setBrowserCpuDepthRequired(false);
+            check(BenchmarkCandidatePolicies.inspectInstance(scene,"isBrowserSceneryProjectionWorkEnabled")[1]==Boolean.getBoolean("spoiledmilk.browserSceneryProjectionWork"),"Projection receipt failed to restore exact eligible mode");
+        }
         System.out.println("PASS actual optional static/instance getter availability, wrong type/failure and five candidate policies; CPU only");
     }
 }

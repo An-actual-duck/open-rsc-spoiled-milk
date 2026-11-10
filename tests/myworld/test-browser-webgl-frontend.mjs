@@ -9,6 +9,7 @@ const argument=name=>{const index=process.argv.indexOf(name);return index<0?null
 const nativeMode=process.argv.includes('--native-sync')?'sync':'async';
 const nativeExplicit=process.argv.includes('--native-sync')||process.argv.includes('--native-async');
 const nativeFault=process.argv.includes('--native-thenable');
+const withoutNativeModule=process.argv.includes('--without-native-module');
 const nativeSource=argument('--native-source'),nativeCommit=argument('--native-source-commit');
 if(nativeExplicit)assert(nativeSource&&/^[a-f0-9]{40}$/.test(nativeCommit),'Explicit reviewed native helper source required');
 const physicalOption=process.argv.includes('--physical-off')?'off':process.argv.includes('--physical')?'on':null;
@@ -45,10 +46,10 @@ function backend(name,body){
   return nativeMode==='sync'?invoke:async(...args)=>invoke(...args);
 }
 const gpuModule = new vm.SyntheticModule(['createBrowserWebGL','BROWSER_NATIVE_CALL_DISPATCH'],function(){
-  this.setExport('BROWSER_NATIVE_CALL_DISPATCH',nativeMode);
+  this.setExport('BROWSER_NATIVE_CALL_DISPATCH',withoutNativeModule?undefined:nativeMode);
   this.setExport('createBrowserWebGL',(_canvas,_report,options)=>{
     gpuOptions=options;stats.ownedStateActive=options.ownedState;stats.streamUploadValidationActive=options.streamUploadValidation;
-    stats.nativeCallDispatch={requested:options.nativeCallDispatch,active:nativeMode,synchronousMethods:nativeMode==='sync'?19:0,asynchronousMethods:nativeMode==='sync'?1:20};
+    if(!withoutNativeModule)stats.nativeCallDispatch={requested:options.nativeCallDispatch,active:nativeMode,synchronousMethods:nativeMode==='sync'?19:0,asynchronousMethods:nativeMode==='sync'?1:20};
     return {canvas,stats,queueStreamUploadValidation:value=>{streamRequested=value;},queueOwnedState(){},dispose:()=>gpuDisposed++,natives:{
       Java_orsc_BrowserWebGLBridge_regionTransition:backend('transition',(lib,soft)=>{stats.worldReadiness={phase:'streaming',blocksWorldInput:true,blocksKeyboard:!soft};return 3;}),
       Java_orsc_BrowserWebGLBridge_holdWorld:backend('hold',()=>4),
@@ -84,11 +85,12 @@ await module.link(specifier=>{
 });
 module.evaluate();
 for(let i=0;i<30&&!configured;i++)await new Promise(resolve=>setImmediate(resolve));
+if(withoutNativeModule&&nativeMode==='sync'){assert.equal(configured,undefined);assert.equal(gpuOptions,undefined);assert.equal(gpuDisposed,0);assert.equal(transportDisposed,1);assert.equal(middleDisposed,1);assert.ok(messages.some(m=>m.type==='browser-session-stop'&&m.reason.includes('Private synchronous backend is unavailable')));console.log('PASS unavailableSYNC fails before backend/Java startup; no fallback or fake receipt');process.exit(0);}
 assert.equal(transportUrl,repeatable?'ws://127.0.0.1:43549/':'ws://127.0.0.1:43529/');
 if(repeatable){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportRepeatableState(null,'browserdemo',[1,32,1,0]);assert.equal(window.browserProof.repeatableFixture.username,'browserdemo');assert.equal(window.browserProof.repeatableFixture.cameraPinned,true);assert.equal(window.browserProof.repeatableFixture.npcCount,32);assert.equal(window.browserProof.repeatableFixture.welcomeVisible,false);}
 assert.ok(configured,'actual frontend did not initialize Java options');
 const expectedPhysical=physicalOption?physicalOption==='on':!benchmarkStream;assert.equal(gpuOptions.physicalOutput,expectedPhysical,'Ordinary physical output defaults ON with explicit OFF; benchmark retains explicit opt-in');assert.equal(window.browserProof.physicalOutputRequested,expectedPhysical);
-assert.equal(gpuOptions.nativeCallDispatch,nativeMode);assert.equal(window.browserProof.nativeCallDispatch.reported,stats.nativeCallDispatch);
+assert.equal(gpuOptions.nativeCallDispatch,nativeMode);assert.equal(window.browserProof.nativeCallDispatch.reported,stats.nativeCallDispatch??null);if(withoutNativeModule){assert.equal(window.browserProof.nativeCallDispatch.module,null);assert.equal(window.browserProof.nativeCallDispatch.reported,null);}
 assert.equal(gpuOptions.ownedState,!benchmarkStream,'Ordinary frontend must pass the verified owned policy to the actual backend seam');
 assert.equal(gpuOptions.benchmarkControl,benchmarkStream,'Ordinary frontend must not expose live benchmark control');
 assert.equal(window.browserProof.ownedStateRequested,!benchmarkStream);assert.equal(stats.ownedStateActive,!benchmarkStream,'Actual selected backend policy receipt');

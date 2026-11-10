@@ -195,5 +195,35 @@ implement projection or infer that gate from the URL. A missing getter is
 explicitly unavailable and false for an OFF/old-JAR run; requested ON with an
 absent getter is refused. Ordinary/software URLs do not override the property.
 Static and instance receipts share the bounded five-name frontend schema.
-The immutable8166 stage remains unchanged. This follow-up awaits focused CPU
-retests after the manager's height-lookup timing window; no performance claim.
+The immutable8166 stage remains unchanged. The focused Java8/21 retests passed after the manager released its timing window;
+no projection performance claim is made.
+
+Projection-control follow-up validation
+--------------------------------------
+The full focused tooling suite passed on Java8/21 against the immutable height-only
+review JAR, proving the fifth instance getter remains explicitly unavailable on
+that older artifact. Separate isolated classes were compiled from exact committed
+projection source8652a01787453708564cda4eabf9a0d50fe01974 (Scene, RSModel and
+ProjectedModelPickBounds). The real Scene getter passed no-property defaultOFF,
+explicit OFF/ON, browser-disabled and CPU-depth-consumer checks on both JDKs.
+Receipt/source hashes/logs: worker output/tests/browser-repeatable-benchmark-tools/
+projection-getter-8652-2/. This validates the getter/control contract only, not the
+projection algorithm. The first isolated getter attempt correctly exposed missing
+startup ownership prerequisites in the test setup; it was preserved and rejected,
+then the fixture set those flags before Renderer3DSettings class initialization.
+
+Frontend doubles additionally prove a backend without native capability metadata
+continues in ordinary ASYNC with null/unknown module/actual receipts. A requested
+private SYNC unsupported module stops before backend creation or Java startup.
+The ordinary preparer emits available=false and no generated module when its
+canonical backend has no capability marker; no generator/19-body SHA requirement
+is imposed on an unmarked future main. This keeps the tooling useful if the native
+runtime experiment remains parked. Root measured SYNC46.9955FPS versus literal
+ASYNC46.6263 (0.79%, judged insignificant): ASYNC remains the ordinary/default path.
+No native-call runtime implementation is adopted by this tooling handoff.
+
+Final focused logs: jdk8-projection-control-final.log and
+jdk21-projection-control-final.log in the worker tooling test category. Both also
+ran unavailable-native cases, exact async wrapper/CSS trace checks and existing
+shader/API doubles. Canonical workspace layout passed. No frozen stage, server,
+owner data or public deployment changed during this follow-up.
