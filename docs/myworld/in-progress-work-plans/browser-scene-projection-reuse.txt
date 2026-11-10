@@ -1,0 +1,92 @@
+Browser stationary Scene projection reuse — experimental, default OFF
+
+Measured target supplied by manager: Firefox ModelRotate around3.1ms within
+Scene around6.7ms. Existing model-pick bounds reject faces only AFTER rotating
+all model vertices. A preprojection world-AABB rejection was not chosen: public/
+package-mutated geometry, stale bounds, int wrap and near clipping would require
+additional conservative proof. This candidate skips no geometry/picks. It reuses
+only exactlyverified prior integer projection results for a stationary camera.
+
+Implementation:
+- Scene-owned BrowserProjectionReuse enabled only by startup property
+  spoiledmilk.browserProjectionReuse=true AND browser full GPU ownership,
+  skip-projected-capture and no forced complete software frame. Default is OFF,
+  allocating no cache. Native/CPUdepth/mixed/forced frames use literal old path.
+- All camera offsets, three rotations, perspective shift, near threshold and six
+  actual mutable trig table entries form the camera key. Moving/new camera clears
+  entries, no model copy/admission; two consecutive identical camera frames admit.
+- RSModel.rotate1024 original body is literally unchanged (source guard). A new
+  optional wrapper can hit only for m_Yb0, for which resetTransformCache(7972) is
+  an exact no-op, and after reproducing the original visible-frustum test. Dirty
+  transforms, malformed parameters and misses call the old method. The sprite
+  anchor model m_T always stays on the old path.
+- Owned copies of ALL active transformed XYZ values are compared, no hash or
+  transform-revision trust. On a hit, all five projection arrays are bulkrestored,
+  repairing even externallymutated output arrays. Original writes all five active
+  arrays even behind the near plane (shift path), so this does not overwrite any
+  active unwritten state. Off-frustum original leaves outputs untouched; no hit
+  or capture occurs there. Sparecapacity outputs are not overwritten.
+- Guard null/short arrays, out-of-range counts, input/output aliases and output/
+  output aliases: original interleaved writes/exceptions remain authoritative.
+- Entry copy budget8MiB, <=256 entries,16..8192vertices/model. All eight int arrays
+  plus512bytes/entry conservative header/map overhead are accounted; fixed helper
+  pose scratch/map baseline is separate small bounded storage. Full active hotset
+  refuses new admission, neverevicts activeentries to cycle Scene order. End-frame
+  prune removes unseen/offscreen/dirty/retired keys; individual/batched removals
+  and removeAllGameObjects release entries immediately. Disabled backend/native/
+  CPUdepth nextdraw clears entries; Stop/sessionVM teardown releases Scene.
+- Saturating int counters avoid CheerpJ long arithmetic. Private1Hz receipt has
+  actualScene getter enabled plus hits,eligiblemisses,entries,bytes,admissionrejects.
+  These diagnostics are render-owned counters, not authority or frame timestamps.
+
+Source lifecycle audit: maintained projection array element writes occur only in
+RSModel.rotate1024; other maintained consumers read them. Array allocations/growth
+also occur in RSModel, and capacity/alias guards do not depend on identity. Cached
+source values are still checked exactly, not assumed immutable. Resident mesh
+workers use canonical copies for static objects. Animated live-model builds finish
+through Future.get before appendResidentObjectChunkFrame returns/nextScene draw.
+No new locking/async mutation model is introduced; normalrenderloop ownership is
+preserved. Inter-frame geometry/material/cursor changes remain allowed.
+
+Private controls:
+  mode=webgl&benchmark=1&projectionreuse=on|off
+Only privatebenchmark URLs produce the startup Java property; ordinary/software
+URLs cannot override it. No unsafe live setter or desktop/UI setting. Actual
+window.browserProof.projectionReuse reports requested and Scene enabled, plus
+bounded integer counters. Bootstrap uses fresh actualScene methods, not symbolic
+JavaScript flags. Fresh clientJAR + matching Bootstrap/frontend required.
+
+Proof:
+  python3 tests/myworld/test-browser-projection-reuse.py
+  python3 tests/myworld/test-browser-projection-reuse.py --java-home /usr/lib/jvm/java-21-openjdk-amd64
+Frozen7450594cf RSModel+Scene sources separatelycompiled/JVM-run against current
+OFF/ON.1800 direct model frames+15 malformed/extreme fallbacks+960 actual Scene
+frames percohort: mutable input/output/arrayreplacement, trig mutation between
+begin andprojection, camera/movement, dirty transforms, near/behind/frustum,
+integerextremes, alias/null/short-array exceptions, cursor/model scales,
+interactionproxy/occlusion, material/cutout, forcedsoftware/native/CPUdepth/full
+ownership, residentmeshes, spriteanchor/order and softwareRGB outputs.
+Identical SHA256 on Java8 and21 for all frozen/OFF/ON cohorts:
+0415f5a795cab8faaedc57ea0cee44aefe1d196f853fd925b7759d5d9ea64abb
+Nonvacuous direct1463hits; actualScenehitsasserted.300models×4096vertices stress
+checksbudget/admissionrefusal/nohotsetthrash and activeprune/removal tozero bytes.
+No-property test confirms defaultOFF and no cache allocation.
+
+Fresh clientbuild, fresh Bootstrapcompile, existing200,000 modelpickbounds math
+and frozen Scene differential, Scene preparation telemetry differential, scene
+instance and model-removal regressions pass. Frontend ordinary/privateprojection/
+keylimb/stream controls and policy isolation pass. Layoutcheck passes. Logs and
+source/JAR hashes under output/tests/browser-projection-reuse/. Source scripts
+record dirty-state/source SHA to make precheckpoint tests explicit.
+
+Exploratory JVM microcheck64×127vertices,2000 measured iterations after400warm:
+Java8 stationary~25.7->11.7microseconds/frame, moving~25.06->25.05;
+Java21 stationary~27.3->13.6, moving~26.02->26.50. These tests overlapped other CPU
+checks and are only gross-cost probes; no desktop/browser FPS inference. Real
+CheerpJ arraycopy/map/validation cost can differ. Moving gameplay is expected to
+receive no reuse benefit; warm/admission copies and perframe bookkeeping may cost.
+
+No workerGPU/browser launch, login or public changes. Actual Firefox sameartifact
+OFF/ON comparison with fixedcamera/location/quality and warmup, actualcachecounts,
+plus motion/pick/interaction proof remain manager gates. No60FPS or actualFPS gain
+claim. Default must remain OFF unless measured benefit supports adoption.
