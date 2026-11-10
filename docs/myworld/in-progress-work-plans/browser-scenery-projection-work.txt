@@ -1,8 +1,9 @@
 Browser fresh scenery projection experiment
 ===========================================
 
-Status: CPU-validated default-OFF experiment; ready for manager review.
-Actual browser timing and dynamic spell/projectile/summon parity remain later gates.
+Status: CPU-correct default-OFF experiment; matched browser timing showed no
+benefit. Manager will park this implementation unmerged. Dynamic spell/projectile/
+summon parity remains a separate broader browser gate.
 Base authority: 325bf42b60fe411705f9f14c0a3ef6debabe24a7.
 
 Private property spoiledmilk.browserSceneryProjectionWork defaults false.
@@ -112,3 +113,34 @@ workspace-layout.py check was run: inherited ignored asset-root sprites and old
 unclassified output-root files fail exactly as in preceding ai2 tasks; preserved,
 not cleaned. This task creates only declared output/tests subject/run directories.
 No GPU/browser/server/public/deployment/account/map operation was performed.
+
+Manager matched hardware result: do not adopt
+--------------------------------------------
+The manager measured this exact implementation (06f2e601b) using one immutable
+projection-only candidate JAR identified as 29855329 and the 206 literal ASYNC
+frontend. No height/cache/native call experiment was enabled. Both fresh runs
+used 180 seconds warm-up then two 30-second measurement phases, exactly 32 NPCs and
+37 actor groups, camera 112/512/0 and welcome modal off. ON ran before OFF; desktop
+applications were unchanged and task CPU/GPU activity was exclusive.
+
+Projection ON: 46.269452497584055 FPS; phase p95 = 23/23 ms, p99 = 26/26 ms.
+Projection OFF: 46.98590422873138 FPS; phase p95 = 23/23 ms, p99 = 25/25 ms.
+Both runs had zero frame intervals over 33 ms. ON versus OFF is -1.524822695035466%.
+
+This matched idle-world comparison shows no performance benefit and a small
+regression in this run. It does not establish a general causal regression from
+one ON-then-OFF ordering, but it provides no reason to adopt the candidate. CPU
+correctness and deterministic division-work reduction passed; those do not imply
+lower actual browser frame time. Preserve the branch and its evidence, leave the
+property default OFF, and park the implementation unmerged. No tuning was made in
+response to these measurements.
+
+Manager evidence (paths relative to /home/justin/Core-Framework):
+output/diagnostics/browser-performance-pass/projection-comparison.json
+output/diagnostics/browser-performance-pass/projection-on-idle-1/result.json
+output/diagnostics/browser-performance-pass/projection-off-idle-1/result.json
+The summary records accepted coherent source-frame endpoints. This fixed actor
+workload performs no spell casts and is not a dynamic spell/projectile/summon VFX
+parity or performance claim. The manager is pursuing those independent gates.
+This follow-up changes documentation only; no implementation, build, test, GPU,
+browser, server, public deployment, map or account operation was performed.
