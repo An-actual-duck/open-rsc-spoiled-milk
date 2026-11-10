@@ -44,7 +44,7 @@ export function buildWorldCutoutMips(width,height,rgba){
 /** Binary cutouts use the native effective >0.5 test. Preserve its source-area
  * fraction using four bilinear samples per output texel, selecting a bounded
  * alpha scale; tiny mips have irreducible quantization error, reported to tests. */
-export function preserveBinaryCutoutCoverage(chain,source){
+export function preserveBinaryCutoutCoverage(chain,source,nearest=false){
   let visible=0;for(let n=3;n<source.length;n+=4){if(source[n]!==0&&source[n]!==255)throw new Error('Expected verified binary cutout');if(source[n]===255)visible++;}
   const target=visible/(source.length/4);
   for(let level=1;level<chain.levels.length;level++){
@@ -52,6 +52,7 @@ export function preserveBinaryCutoutCoverage(chain,source){
     function coverage(scale){
       for(let a=0;a<256;a++)table[a]=Math.min(255,Math.round(a*scale));
       let count=0;
+      if(nearest){for(let n=3;n<pixels.length;n+=4)if(table[pixels[n]]>127.5)count++;return count/(w*h);}
       for(let y=0;y<h;y++)for(let x=0;x<w;x++){
         const l=Math.max(0,x-1),r=Math.min(w-1,x+1),t=Math.max(0,y-1),b=Math.min(h-1,y+1);
         const a=table[pixels[(t*w+l)*4+3]],bb=table[pixels[(t*w+x)*4+3]],c=table[pixels[(t*w+r)*4+3]],d=table[pixels[(y*w+l)*4+3]],e=table[pixels[(y*w+x)*4+3]],f=table[pixels[(y*w+r)*4+3]],g=table[pixels[(b*w+l)*4+3]],hh=table[pixels[(b*w+x)*4+3]],ii=table[pixels[(b*w+r)*4+3]];
@@ -70,21 +71,21 @@ export function preserveBinaryCutoutCoverage(chain,source){
   return chain;
 }
 export function createWorldTextureSampling(gl,{enabled=false,mode="stable",stats={}}={}){
-  let sampler=null,disposed=false,boundSampler=null;
-  stats.worldTextureSampling=enabled?(mode==='cutout'?'native-binary-cutout / coverage-mips':'mip-minification / nearest-magnification'):'nearest';stats.worldMipUploadedBytes=0;stats.worldMipBuildMilliseconds=0;
+  let sampler=null,disposed=false,boundSampler=null;const cutout=mode==='cutout'||mode==='cutout-nearest';
+  stats.worldTextureSampling=enabled?(cutout?'native-binary-cutout / coverage-mips':'mip-minification / nearest-magnification'):'nearest';stats.worldMipUploadedBytes=0;stats.worldMipBuildMilliseconds=0;
   function initialize(){if(!enabled||sampler)return;if(disposed)throw new Error('World texture sampling disposed');let next=null;
     try{next=gl.createSampler();if(!next)throw new Error('World sampler allocation failed');
-      for(const [name,value]of [[gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR],[gl.TEXTURE_MAG_FILTER,gl.NEAREST],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]])gl.samplerParameteri(next,name,value);
+      for(const [name,value]of [[gl.TEXTURE_MIN_FILTER,mode==='cutout-nearest'?gl.NEAREST_MIPMAP_LINEAR:gl.LINEAR_MIPMAP_LINEAR],[gl.TEXTURE_MAG_FILTER,gl.NEAREST],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]])gl.samplerParameteri(next,name,value);
       const error=gl.getError();if(error!==gl.NO_ERROR)throw new Error('World sampler initialization GL error 0x'+error.toString(16));sampler=next;next=null;
     }finally{if(next)gl.deleteSampler(next);}
   }
   function plan(width,height,rgba,transparent){if(!enabled)return{bytes:width*height*4,base:rgba,levels:null,generate:false};const start=performance.now();
     let binary=true;for(let n=3;n<rgba.length;n+=4)if(rgba[n]!==0&&rgba[n]!==255){binary=false;break;}
-    if(mode==='cutout'&&!binary)return{bytes:width*height*4,base:rgba,levels:null,generate:false,pointSampling:true,binaryCutout:false};
+    if(cutout&&!binary)return{bytes:width*height*4,base:rgba,levels:null,generate:false,pointSampling:true,binaryCutout:false};
     let result=transparent?buildWorldCutoutMips(width,height,rgba):{bytes:worldMipBytes(width,height),levels:null};
-    if(mode==='cutout'&&transparent)result=preserveBinaryCutoutCoverage(result,rgba);
+    if(cutout&&transparent)result=preserveBinaryCutoutCoverage(result,rgba,mode==='cutout-nearest');
     stats.worldMipBuildMilliseconds+=performance.now()-start;
-    return{...result,base:rgba,generate:!transparent,pointSampling:false,binaryCutout:mode==='cutout'&&transparent&&binary};
+    return{...result,base:rgba,generate:!transparent,pointSampling:false,binaryCutout:cutout&&transparent&&binary};
   }
   function uploadBound(plan,width,height,reuse){
     if(plan.levels){for(let n=0;n<plan.levels.length;n++){const level=plan.levels[n];if(reuse)gl.texSubImage2D(gl.TEXTURE_2D,n,0,0,level.width,level.height,gl.RGBA,gl.UNSIGNED_BYTE,level.pixels);else gl.texImage2D(gl.TEXTURE_2D,n,gl.RGBA8,level.width,level.height,0,gl.RGBA,gl.UNSIGNED_BYTE,level.pixels);}}
@@ -94,5 +95,5 @@ export function createWorldTextureSampling(gl,{enabled=false,mode="stable",stats
   function baseSampling(){if(enabled){gl.bindSampler(0,null);boundSampler=null;}}
   function colorSampling(texture=null){if(enabled){initialize();const wanted=texture?.pointSampling?null:sampler;if(boundSampler!==wanted){gl.bindSampler(0,wanted);boundSampler=wanted;}}}
   function dispose(){if(disposed)return;if(sampler){gl.bindSampler(0,null);gl.deleteSampler(sampler);}sampler=null;disposed=true;}
-  return {enabled,cutoutMode:enabled&&mode==='cutout',initialize,plan,uploadBound,baseSampling,colorSampling,dispose};
+  return {enabled,cutoutMode:enabled&&cutout,initialize,plan,uploadBound,baseSampling,colorSampling,dispose};
 }
