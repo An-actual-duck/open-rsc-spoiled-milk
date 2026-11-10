@@ -1,3 +1,4 @@
+import {createSynchronousNativeCall} from './browser-native-call-dispatch.js';
 import {createPhysicalOutputSizer} from './browser-physical-output.js';
 import {createStreamUploadValidation} from './browser-upload-validation.js';
 import {createOwnedBrowserFrameState} from './browser-owned-state.js';
@@ -24,6 +25,9 @@ export function atlasTexelCenter(position,size,unit,extent) {
 const FLOAT_UNIFORMS=['uBrightness','uContrast','uGamma','uSaturation','uToneRed','uToneGreen','uToneBlue','uToneBlend','uLightDirectionX','uLightDirectionY','uLightDirectionZ','uLightAmbient','uLightIntensity','uFogStart','uFogEnd','uFogRed','uFogGreen','uFogBlue','uTerrainReliefStrength','uObjectReliefStrength','uTerrainVariationStrength','uTerrainVariationTolerance','uTerrainVariationTargetRed','uTerrainVariationTargetGreen','uTerrainVariationTargetBlue'];
 const ATTRIBUTES=[['aPosition',3,0],['aMaterialColor',4,3],['aTexCoord',2,7],['aRawMaterialColor',3,15],['aBaseLegacyLight',1,14],['aNormal',3,18],['aModelKind',1,21],['aMaterialFamily',1,22],['aTerrainVariationMask',1,23],['aTerrainBlendColor',3,24],['aTerrainBlendStrength',1,27]];
 const MAX_GPU_BYTES=256*1024*1024, MAX_CHUNKS=512, MAX_PIXELS=2097152;
+// The preparation tool derives a separate private sync module from this source.
+// Canonical ASYNC method bodies and fatal wrapper remain the literal control.
+export const BROWSER_NATIVE_CALL_DISPATCH = 'async';
 function typed(value, Type) { return value instanceof Type ? value : new Type(value); }
 /** Normalize alpha without touching RGB, including after legacy SRC_ALPHA blending. */
 export function normalizeOpaqueCanvas(gl,known=null) {
@@ -32,10 +36,14 @@ export function normalizeOpaqueCanvas(gl,known=null) {
   finally{gl.colorMask(...mask);gl.clearColor(...color);if(scissor)gl.enable(gl.SCISSOR_TEST);}
 }
 export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
+  const requestedDispatch=options.nativeCallDispatch??'async';
+  if(!['async','sync'].includes(requestedDispatch)||requestedDispatch!==BROWSER_NATIVE_CALL_DISPATCH)
+    throw new Error('Browser native dispatch module/policy mismatch');
   const gl=canvas.getContext('webgl2',{alpha:true,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});
   if(!gl) throw new Error('WebGL2 unavailable: browser GPU proof requires WebGL2');
-  const stats={worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,heldWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas, <=8MiB marker overlay plus optional <=32MiB combined C/T/retained texture peak, <=160MiB shadow maps and <=8MiB masks and separately bounded <=2MiB sky peak; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Marker UI lacks partial-alpha reconstruction unless coverage mode is enabled','Browser/device coverage and broader gameplay parity pending'],frameSamples:[]};
+  const stats={worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,javaBridgeReportedWorldFrames:0,heldWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas, <=8MiB marker overlay plus optional <=32MiB combined C/T/retained texture peak, <=160MiB shadow maps and <=8MiB masks and separately bounded <=2MiB sky peak; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Marker UI lacks partial-alpha reconstruction unless coverage mode is enabled','Browser/device coverage and broader gameplay parity pending'],frameSamples:[]};
   const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0,lastWorld=0,lighting,lightingValues,sky,overlay;
+  stats.nativeCallDispatch={requested:requestedDispatch,active:BROWSER_NATIVE_CALL_DISPATCH,synchronousMethods:BROWSER_NATIVE_CALL_DISPATCH==='sync'?19:0,asynchronousMethods:BROWSER_NATIVE_CALL_DISPATCH==='sync'?1:20};
   const colorVisible=new Uint8Array(256),colorCullScratch=new Float64Array(18);let colorCullingSupported=false;
   const ownedFrame=options.ownedState===true||options.benchmarkControl===true?createOwnedBrowserFrameState(gl,{enabled:options.ownedState===true}):null;
   let physicalOutput=options.physicalOutput===true,pendingPhysicalOutput=null;
@@ -270,7 +278,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       stats.javaFrames++;stats.drawCalls=calls;stats.triangles=triangles;stats.activeChunks=draws.length/8;stats.lastFrame=now;
       if(last){stats.frameSamples.push(now-last);if(stats.frameSamples.length>(stats.measurement?4096:600))stats.frameSamples.shift();}last=now;
     },
-    async Java_orsc_BrowserWebGLBridge_frameWork(lib,values,poseInput){alive();const p=typed(poseInput,Int32Array);if(p.length!==14)throw new Error("Invalid frame pose schema");stats.pose={cameraOffset:Array.from(p.subarray(0,3)),rotation:Array.from(p.subarray(3,6)),center:Array.from(p.subarray(6,8)),viewport:Array.from(p.subarray(8,10)),perspectiveShift:p[10],fogStart:p[11],fogEnd:p[12],signedLevel:p[13]};stats.spriteCompositeCache={enabled:values[10]===1,hits:values[11],misses:values[12],bytes:values[13]};stats.javaSkyExportMs=values[9];stats.cpuDepthFramePresent=values[7]===1;stats.javaLightingExportMs=values[8];stats.javaCacheEntries=values[5];stats.javaCacheResidentBytes=values[6];stats.javaBridgeWorkSamples.push(Array.from(values));if(stats.javaBridgeWorkSamples.length>(stats.measurement?4096:600))stats.javaBridgeWorkSamples.shift();uploadValidation.frameComplete();commitOwnedState();},
+    async Java_orsc_BrowserWebGLBridge_frameWork(lib,values,poseInput){alive();const p=typed(poseInput,Int32Array);if(p.length!==14)throw new Error("Invalid frame pose schema");stats.pose={cameraOffset:Array.from(p.subarray(0,3)),rotation:Array.from(p.subarray(3,6)),center:Array.from(p.subarray(6,8)),viewport:Array.from(p.subarray(8,10)),perspectiveShift:p[10],fogStart:p[11],fogEnd:p[12],signedLevel:p[13]};stats.spriteCompositeCache={enabled:values[10]===1,hits:values[11],misses:values[12],bytes:values[13]};stats.javaSkyExportMs=values[9];stats.cpuDepthFramePresent=values[7]===1;stats.javaLightingExportMs=values[8];stats.javaCacheEntries=values[5];stats.javaCacheResidentBytes=values[6];stats.javaBridgeWorkSamples.push(Array.from(values));if(stats.javaBridgeWorkSamples.length>(stats.measurement?4096:600))stats.javaBridgeWorkSamples.shift();uploadValidation.frameComplete();commitOwnedState();stats.javaBridgeReportedWorldFrames=stats.javaWorldFrames;},
     async Java_orsc_BrowserWebGLBridge_deleteChunks(lib,input){
       alive();const ids=typed(input,Int32Array);for(const id of ids){const x=chunks.get(id);if(!x)throw new Error('Eviction references absent GPU chunk');gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);stats.gpuBytes-=x.bytes;chunks.delete(id);}stats.evictedChunks=(stats.evictedChunks||0)+ids.length;
     },
@@ -280,6 +288,13 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   };
   function dispose(){if(disposed)return;outputSizer.dispose();uploadValidation.dispose();if(activeTimerQuery){try{gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);}finally{gl.deleteQuery(activeTimerQuery);activeTimerQuery=null;}}pendingOwnedState=null;pendingPhysicalOutput=null;stats.pendingPhysicalOutput=null;stats.pendingOwnedState=null;worldReady.dispose();if(spriteAtlas)spriteAtlas.dispose();if(lighting)lighting.dispose();if(sky)sky.dispose();if(overlay)overlay.dispose();for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);for(const q of pendingQueries)gl.deleteQuery(q);if(overlayTexture)gl.deleteTexture(overlayTexture);if(spriteTexture)gl.deleteTexture(spriteTexture);if(spriteVBO)gl.deleteBuffer(spriteVBO);if(spriteIBO)gl.deleteBuffer(spriteIBO);if(spriteVAO)gl.deleteVertexArray(spriteVAO);if(emptyVAO)gl.deleteVertexArray(emptyVAO);chunks.clear();textures.clear();programs.length=shaders.length=baseTextures.length=pendingQueries.length=0;stats.gpuBytes=0;stats.spriteResourceBytes=0;canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
   for(const name of Object.keys(natives)) {
+    if(BROWSER_NATIVE_CALL_DISPATCH==='sync'&&name!=='Java_orsc_BrowserWebGLBridge_initialize') {
+      natives[name]=createSynchronousNativeCall(natives[name],{name,
+        before:()=>uploadValidation.assertAlive(),
+        failure:error=>{if(uploadValidation.active)uploadValidation.fail(error);worldReady.fail(String(error));stats.lastError=String(error);stats.lastErrorAt=performance.now();report('Browser GPU error: '+error);}
+      });
+      continue;
+    }
     const call=natives[name];natives[name]=async(...args)=>{
       try{uploadValidation.assertAlive();return await call(...args);}catch(error){if(uploadValidation.active)uploadValidation.fail(error);worldReady.fail(String(error));stats.lastError=String(error);stats.lastErrorAt=performance.now();report('Browser GPU error: '+error);throw error;}
     };
