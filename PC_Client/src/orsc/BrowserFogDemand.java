@@ -32,7 +32,12 @@ final class BrowserFogDemand {
                 double oldMagnitude=rebase==null?0:rebase.uploadedOffsetMagnitude(chunk);
                 if(Double.isFinite(oldMagnitude)&&oldMagnitude<=MAX_COORD&&bounded(b,offX,offZ,chunk.getVertexOffsetX(),chunk.getVertexOffsetZ())) {
                     keep=!outsideFar(b,clip,scratch);
-                    if(!keep)for(float[] light:plan.demandMatrices)if(!outsideShadow(b,light,offX,offZ,oldMagnitude,scratch)){keep=true;break;}
+                    if(!keep)for(int projection=0;projection<plan.demandMatrices.length;projection++) {
+                        // Production cached far maps exclude animated-object
+                        // chunks. Their only shadow dependency is the near map.
+                        if(plan.demandStaticOnly[projection]&&chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS)continue;
+                        if(!outsideShadow(b,plan.demandMatrices[projection],offX,offZ,oldMagnitude,scratch)){keep=true;break;}
+                    }
                 }
             }
             if(!keep&&!validForOmission(chunk))keep=true;

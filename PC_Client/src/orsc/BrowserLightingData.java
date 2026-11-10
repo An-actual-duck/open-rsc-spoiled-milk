@@ -221,7 +221,7 @@ public final class BrowserLightingData {
     }
     public static final class ShadowPlan {
         private final BrowserLightingData owner;private final Renderer3DFrame frame;private final Renderer3DWorldChunkFrame world;private final int epoch;private final int activePlane;
-        final boolean directional;final float lightX,lightY,lightZ;final float[] values;final GeometryShadowRoofMask roof;final float[][] demandMatrices;
+        final boolean directional;final float lightX,lightY,lightZ;final float[] values;final GeometryShadowRoofMask roof;final float[][] demandMatrices;final boolean[] demandStaticOnly;
         final DirectionalShadowProjection near;
         final DirectionalShadowProjection far;
         final DirectionalShadowProjection previousFar;
@@ -249,8 +249,17 @@ public final class BrowserLightingData {
             this.farAge=farAge;
             this.blendAge=blendAge;
             ArrayList<float[]> matrices=new ArrayList<float[]>();
-            if(values[1]==1)for(DirectionalShadowProjection p:new DirectionalShadowProjection[]{near,far,previousFar,owner.near,owner.far,owner.previousFar})if(p!=null)matrices.add(p.matrix);
+            ArrayList<Boolean> staticOnly=new ArrayList<Boolean>();
+            if(values[1]==1) {
+                DirectionalShadowProjection[] projections={near,far,previousFar,owner.near,owner.far,owner.previousFar};
+                for(int n=0;n<projections.length;n++)if(projections[n]!=null) {
+                    matrices.add(projections[n].matrix);
+                    staticOnly.add(Boolean.valueOf(n!=0&&n!=3));
+                }
+            }
             demandMatrices=matrices.toArray(new float[matrices.size()][]);
+            demandStaticOnly=new boolean[staticOnly.size()];
+            for(int n=0;n<demandStaticOnly.length;n++)demandStaticOnly[n]=staticOnly.get(n).booleanValue();
         }
         private void validate(BrowserLightingData expected,Renderer3DFrame source,int epoch,int maxTextureSize) {
             if(owner!=expected||frame!=source||this.epoch!=epoch||world!=(source==null?null:source.getWorldChunkFrame())||activePlane!=(source==null?0:source.getActivePlane())||values[3]>maxTextureSize||values[4]>maxTextureSize)throw new IllegalStateException("Browser shadow plan source/history changed");
