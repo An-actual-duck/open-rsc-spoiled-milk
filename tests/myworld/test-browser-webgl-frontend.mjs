@@ -55,6 +55,8 @@ assert.equal(gpuOptions.benchmarkControl,benchmarkStream,'Ordinary frontend must
 assert.equal(window.browserProof.ownedStateRequested,!benchmarkStream);assert.equal(stats.ownedStateActive,!benchmarkStream,'Actual selected backend policy receipt');
 if(!benchmarkStream)assert.equal(window.browserBenchmarkOwnedState,undefined);
 else assert.equal(typeof window.browserBenchmarkOwnedState,'function');
+if(!benchmarkStream)assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserModelPickBounds=')||p.startsWith('spoiledmilk.presentationHaloMatchReuse=')),false,'Ordinary frontend must not override CPU benchmark experiment policies');
+else {assert(configured.javaProperties.includes('spoiledmilk.browserModelPickBounds=false'));assert(configured.javaProperties.includes('spoiledmilk.presentationHaloMatchReuse=true'));}
 assert.equal(middleCreated,1,'WebGL frontend creates one middle-input owner');
 assert.equal(window.browserProof.middleInput,middleStats,'proof counters come from the real module seam');
 assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent,middleNative,'Java input consumer is merged into CheerpJ natives');
@@ -79,6 +81,7 @@ await configured.natives.Java_orsc_browser_BrowserBootstrap_reportPreparation(nu
 assert.equal(window.browserProof.preparationControls.framePreparationEnabled,true);
 assert.equal(window.browserProof.preparationControls.framePreparationActive,false);
 assert.equal(window.browserProof.preparationControls.animatedBufferReuseEnabled,true);
+await configured.natives.Java_orsc_browser_BrowserBootstrap_reportModelPickBounds(null,true,false);assert.equal(window.browserProof.modelPickBounds.requested,true);assert.equal(window.browserProof.modelPickBounds.enabled,false);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportTelemetry(null,'sceneRenderStats',[1,77]);
 assert.equal(window.browserProof.profiled,true);assert.deepEqual(Array.from(window.browserProof.telemetrySamples[0].values),[1,77]);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportInputError(null,'controlled input relay error');

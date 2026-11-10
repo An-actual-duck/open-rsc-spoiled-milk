@@ -12,6 +12,7 @@ public final class BrowserBootstrap {
     public static native void reportTelemetry(String names,double[] values);
     public static native void reportSpriteKeyPolicy(boolean requested,boolean enabled);
     public static native void reportPreparation(boolean enabled,boolean active,boolean animated);
+    public static native void reportModelPickBounds(boolean requested,boolean enabled);
     private static native int wsOpen();
     private static native byte[] wsRead(int socket, int maximum);
     private static native int wsAvailable(int socket);
@@ -135,6 +136,7 @@ public final class BrowserBootstrap {
                     java.lang.reflect.Field fpsField = orsc.mudclient.class.getDeclaredField("FPS"); fpsField.setAccessible(true);
                     java.lang.reflect.Field loopField = orsc.mudclient.class.getDeclaredField("selectedClientLoopMode"); loopField.setAccessible(true);
                     int inputDiagnosticSamples=0;
+                    boolean modelPickReported=false;
                     while (true) {
                         Object client = clientField.get(null);
                         if (client != null && webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
@@ -150,6 +152,11 @@ public final class BrowserBootstrap {
                             if(Boolean.getBoolean("spoiledmilk.browserProfile"))reportTelemetry(orsc.BrowserTelemetryData.names(),orsc.BrowserTelemetryData.snapshot());
                             reportLoop(String.valueOf(loopField.get(client)),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isEarlyResidentFaceCullEnabled(),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isBrowserFullResidentOwnershipEnabled());
                             if(webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
+                                if(!modelPickReported && ((orsc.mudclient)client).getScene()!=null) {
+                                    reportModelPickBounds(Boolean.getBoolean("spoiledmilk.browserModelPickBounds"),
+                                        ((orsc.mudclient)client).getScene().isBrowserModelPickBoundsEnabled());
+                                    modelPickReported=true;
+                                }
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 reportPreparation(orsc.graphics.two.GraphicsController.isBrowserFramePreparationEnabled(),
                                     surface!=null && surface.isBrowserFramePreparationActive(),

@@ -20,6 +20,8 @@ public final class Scene {
 	private final boolean browserOverlayCoverage = Boolean.getBoolean("spoiledmilk.browserOverlayCoverage");
 	private final boolean browserEarlyFaceCull = Boolean.getBoolean("spoiledmilk.browserEarlyFaceCull");
 	private final boolean browserOwnsWallsAndRoofs = Boolean.getBoolean("spoiledmilk.browserOwnsWallsAndRoofs");
+	private final boolean browserModelPickBounds = Boolean.getBoolean("spoiledmilk.browserModelPickBounds");
+	public boolean isBrowserModelPickBoundsEnabled() { return browserModelPickBounds && isBrowserFullResidentOwnershipEnabled(); }
 	public boolean isBrowserFullResidentOwnershipEnabled() { return browserOwnsWallsAndRoofs && Renderer3DSettings.isBrowserPresentationAvailable() && !Renderer3DSettings.needsCpuDepthFrame(); }
 	public boolean isEarlyResidentFaceCullEnabled() { return browserEarlyFaceCull && Renderer3DSettings.isBrowserPresentationAvailable(); }
 	private int scenePreparationProfileSequence;
@@ -2932,6 +2934,8 @@ public final class Scene {
 			boolean skipProjectedWorldCapture = Renderer3DSettings.canSkipProjectedWorldCapture();
 			boolean earlyResidentFaceCull = isEarlyResidentFaceCullEnabled();
 			boolean browserFullResidentOwnership = isBrowserFullResidentOwnershipEnabled();
+            boolean useModelPickBounds = browserModelPickBounds && browserFullResidentOwnership;
+            boolean residentObjectChunks = useModelPickBounds && Renderer3DSettings.canUseResidentObjectChunks();
 			int var7 = this.m_A * this.fogLandscapeDistance >> this.rot1024_vp_src;
 			MiscFunctions.frustumFarZ = 0;
 			MiscFunctions.frustumNearZ = 0;
@@ -2995,12 +2999,24 @@ public final class Scene {
 			for (var9 = 0; var9 < this.modelCount; ++var9) {
 				var2 = this.models[var9];
 				if (var2.m_dc) {
+                    Renderer3DModelKind pickModelKind = useModelPickBounds ? var2.getRenderer3DModelKind() : null;
+                    boolean residentPickModel = useModelPickBounds && (pickModelKind == Renderer3DModelKind.TERRAIN
+                        || pickModelKind == Renderer3DModelKind.WALL || pickModelKind == Renderer3DModelKind.ROOF
+                        || residentObjectChunks && (pickModelKind == Renderer3DModelKind.GAME_OBJECT
+                            || pickModelKind == Renderer3DModelKind.WALL_OBJECT));
+                    boolean modelMouseOutside = residentPickModel && skipProjectedWorldCapture
+                        && !forceLegacyWorldRaster && this.m_K
+                        && (this.interactionOnlyPickActive || !var2.m_db && var2.m_zb != null && var2.facePickIndex != null)
+                        && !ProjectedModelPickBounds.couldContainMouse(var2, this.m_Nb, this.m_j, this.m_Wb);
 					for (var3 = 0; var3 < var2.faceHead; ++var3) {
 						var10 = var2.faceIndexCount[var3];
 						var11 = var2.faceIndices[var3];
-                        if (earlyResidentFaceCull && shouldSkipResidentOwnedProjectedFace(
-                                var2.getRenderer3DModelKind(),var2,var3,var11,var10,
-                                skipProjectedWorldCapture,forceLegacyWorldRaster,browserFullResidentOwnership)) continue;
+                        if (earlyResidentFaceCull && (useModelPickBounds
+                                ? shouldSkipBoundedResidentProjectedFace(var2,var3,var11,var10,
+                                    skipProjectedWorldCapture,forceLegacyWorldRaster,residentPickModel,modelMouseOutside)
+                                : shouldSkipResidentOwnedProjectedFace(
+                                    var2.getRenderer3DModelKind(),var2,var3,var11,var10,
+                                    skipProjectedWorldCapture,forceLegacyWorldRaster,browserFullResidentOwnership))) continue;
 						boolean var5 = false;
 
 						int var4;
@@ -3050,14 +3066,11 @@ public final class Scene {
 
 								if (var23 == 3) {
 									Renderer3DModelKind rendererModelKind = var2.getRenderer3DModelKind();
-									if (!earlyResidentFaceCull && shouldSkipResidentOwnedProjectedFace(
-										rendererModelKind,
-										var2,
-										var3,
-										var11,
-										var10,
-										skipProjectedWorldCapture,
-										forceLegacyWorldRaster,browserFullResidentOwnership)) {
+                                    if (!earlyResidentFaceCull && (useModelPickBounds
+                                            ? shouldSkipBoundedResidentProjectedFace(var2,var3,var11,var10,
+                                                skipProjectedWorldCapture,forceLegacyWorldRaster,residentPickModel,modelMouseOutside)
+                                            : shouldSkipResidentOwnedProjectedFace(rendererModelKind,var2,var3,var11,var10,
+                                                skipProjectedWorldCapture,forceLegacyWorldRaster,browserFullResidentOwnership))) {
 										continue;
 									}
 									this.ensurePolygonCapacity(this.m_zb + 1);
@@ -3476,6 +3489,17 @@ public final class Scene {
 			throw GenUtil.makeThrowable(var22, "lb.P(" + var1 + ')');
 		}
 	}
+
+    private boolean shouldSkipBoundedResidentProjectedFace(
+        RSModel model, int faceId, int[] faceIndices, int vertexCount,
+        boolean skipProjectedWorldCapture, boolean forceLegacyWorldRaster,
+        boolean residentOwnedModel, boolean modelMouseOutside) {
+        if (!skipProjectedWorldCapture || forceLegacyWorldRaster || !residentOwnedModel) return false;
+        if (this.m_K && (isProjectedFacePickable(model, faceId) || this.interactionOnlyPickActive)
+                && (!modelMouseOutside || !ProjectedModelPickBounds.hasOnlyRotatedVertexIndices(model, faceIndices, vertexCount))
+                && projectedFaceCouldContainMouse(model, faceIndices, vertexCount)) return false;
+        return true;
+    }
 
 	private boolean shouldSkipResidentOwnedProjectedFace(
 		Renderer3DModelKind modelKind,
