@@ -138,3 +138,30 @@ actual present. Holds replay that original backing size. A native-boundary test
 covers new declared dimensions with old backing; retained module dimensions are
 still strictly validated. The complete next source frame resizes backing storage
 and resets overlay ownership before its draw.
+
+## Manager integration verification — 2026-11-10
+
+Integrated with the invisible-wall fix at main `5b46939360a9cd05a4992252a850e517d8d2eac8`.
+Frozen private client SHA-256: `02babd3b0be6e1d8067572a97a2bf1ac26f015952098799f18f1bbdafeec1583`.
+
+Actual Firefox 154, ordinary browser URL, disposable browserdemo account:
+initial login, a walking crossing (111,625 -> 111,623,L0), developer teleport,
+underground transition (104,667,L-1), surface return and two background-tab /
+return cycles completed without a GPU error or a stuck input/loading gate.
+The crossing advanced epoch 1 -> 2 and retained the complete prior image while
+38 new chunks / 82,750,920 bytes were uploaded. Its instrumented receipt was
+1,935 ms / 18 held frames; screenshot sampling affects that timing, so this
+is not an uninstrumented latency benchmark or a seamless-streaming claim.
+Screenshots show the retained scene and small transparent status, with no
+full-screen region-loading cover. Initial login keeps its full cover.
+
+The two focus-return checks produced 100 and 98 fresh world frames over the
+following three seconds, with ready state and input restored; these are
+functional recovery checks, not 60 FPS acceptance. Firefox still needs
+further CPU/frame-time optimization. No public server or owner account was
+modified. Evidence: manager output/diagnostics/browser-motion-transitions/
+streaming-firefox-3 (including the held screenshots and focus-result.json).
+
+Manager build, full renderer guardrails, native terrain activation/recovery,
+region packing/readiness/retained/overlay/upload failure tests and canonical
+workspace layout check passed after integration.
