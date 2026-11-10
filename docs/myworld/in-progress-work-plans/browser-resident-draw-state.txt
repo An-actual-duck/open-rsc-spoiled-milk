@@ -1,0 +1,23 @@
+Browser resident color-pass state reuse
+
+Only the resident world color pass owns this cache; it starts empty after
+lighting prepare/bindReceiver on every present. Repeated VAO, four offset
+uniforms, receiver plane, texture-enabled flag and unit0 texture bindings
+are elided. No previous-frame state, shader values, draw order, batches,
+geometry, shadows or visual quality are changed. Sprite/UI passes still
+establish their own bindings. Fixed Int32 draw inputs cannot contain NaN.
+
+Frozen-source differential uses ee876dbe8 actual original webgl.js and current
+backend with independent in-memory GL contexts. All2592 ordered effective
+draw-state snapshots match across opaque/transparent kinds, repeated/changed
+offsets and planes, texture updates/deletion/recreation, empty frame, and
+intervening external state. This is API evidence, not hardware pixels/FPS.
+
+uniform1f: 3915 -> 1157 calls in synthetic differential workload
+uniform1i: 3641 -> 2743 calls in synthetic differential workload
+activeTexture: 2700 -> 1413 calls in synthetic differential workload
+bindTexture: 2673 -> 2202 calls in synthetic differential workload
+bindVertexArray: 987 -> 895 calls in synthetic differential workload
+
+Existing GPU-resource/lighting/frontend checks, layout and diff checks pass.
+Actual hardware image verification and combined FPS measurement are pending.
