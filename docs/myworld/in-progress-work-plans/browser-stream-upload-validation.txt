@@ -1,0 +1,27 @@
+Private streaming-upload validation candidate
+
+Default is OFF. Only the private WebGL benchmark may opt in. No native/Java,
+server, content, visual quality or public changes. No hardware/FPS result yet.
+
+Eligible mutations use deferOrCheck(originalCheck): fixed-size chunk bufferSubData,
+atlas existing texture + descriptor bufferSubData, sky palette texSubImage2D, and
+coverage same-size R32F T texSubImage2D. Default child constructors still execute
+the literal existing check/error prefix. All allocations/shape changes, RGB upload
+(even same-size), retained copy/fade, and post-draw checks stay immediate.
+
+One validation occurs at the start of present BEFORE lighting.prepare, which can
+already render shadow maps. The batch must not move after that call. Queued errors
+or context loss poison the entire backend: future native calls and mode changes
+reject until Stop/dispose and a new backend. No world/shadow/sky/UI draw occurs for
+an upload batch rejected there. No freshness/presented counters/readiness pass is
+published for the rejected frame. Content signatures, atlas token/residency and
+upload counters may be tentative before validation; they are NEVER reused after
+failure. Fixed resource ownership/accounting remains disposal authority. The
+optional policy switches only at the END of frameWork after validated presentation.
+
+The meaningful CPU fixture injects queued GL errors into each production streaming
+entry point, including atlas hot zero-image descriptor commits. It proves zero
+draws, sticky failure, blocked later calls/mode changes, cleanup, allocation errors
+remaining immediate, and next-frame-only policy changes. Existing legacy atlas,
+world allocation rollback, sky, overlay and retained fixtures remain required.
+These API doubles are not hardware evidence or performance acceptance.
