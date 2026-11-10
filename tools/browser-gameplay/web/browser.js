@@ -1,3 +1,7 @@
+import {browserGeometryTransferPolicy} from './browser-geometry-transfer-policy.js';
+import {privatePreparationCandidates} from './browser-preparation-candidates.js';
+import {createStutterDiagnostics,stutterDiagnosticsPolicy} from './browser-stutter-diagnostics.js';
+import {repeatableFixturePolicy} from './browser-repeatable-policy.js';
 import {physicalOutputRequested} from './browser-physical-output.js';
 import {browserSpriteKeyBenchmarkControls} from './browser-sprite-key-policy.js';
 import {browserUploadValidationBenchmarkPolicy} from './browser-upload-validation.js';
@@ -9,6 +13,13 @@ import {createBrowserDisplay} from './browser-display.js';
 import {browserPreparationBenchmarkControls,browserOwnedStateBenchmarkPolicy,browserModelBenchmarkControls} from './browser-benchmark-controls.js';
 const status = document.querySelector('#status');
 const options = new URLSearchParams(location.search);
+function nativeCallPolicy(mode,parameters){
+  if(mode!=='webgl'||!parameters.has('benchmark'))return 'async';
+  const value=parameters.get('nativecalls')||'async';
+  if(value!=='async'&&value!=='sync')throw new Error('Invalid private nativecalls policy');
+  return value;
+}
+const nativeCallDispatch=nativeCallPolicy(options.get('mode')||'software',options);
 const javaVersion = Number(options.get('java') || '8');
 if (![8, 11, 17].includes(javaVersion)) throw new Error('Private probe supports Java 8, 11 or 17');
 window.browserProof = {events: [], started, renderer: 'AWT software / direct framebuffer', mode: options.get('mode') || 'software', javaVersion, wasmGC: options.has('wasmgc'), runtimeVersion: window.browserRuntimeVersion};
@@ -16,7 +27,7 @@ let stopped = false;
 let preparationControls = {properties: [], requested: null};
 let spriteKeyControls = {properties: [], requested: null};
 let modelPreparationControls = {properties: [], requested: null};
-let gpu,worldCover,awaitingGameFrame=false,displayLayout;
+let gpu,worldCover,awaitingGameFrame=false,displayLayout,stutterDiagnostics;
 window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput;
 function updateWorldCover(){const state=gpu?.stats.worldReadiness,error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null),waiting=awaitingGameFrame&&state?.phase==='login';if(!worldCover||(!waiting&&!error&&!['loading','streaming','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;worldCover.update(waiting?{phase:'loading',reason:'Waiting for area data'}:state,gpu?.canvas.style,error);}
 function setStatus(message) {
@@ -34,7 +45,7 @@ function publish() {
 }
 function dispose() {
   if (stopped) return;
-  stopped = true; delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput; pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
+  stopped = true; delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
 }
 function finish(reason) {
   if (stopped) return;
@@ -59,11 +70,28 @@ function report(message) {
   const event = {milliseconds: Math.round(performance.now() - started), message};
   window.browserProof.events.push(event); setStatus(message); console.log('BROWSER_PROOF', JSON.stringify(event)); publish();
 }
-const transport = createTransport(WebSocket, report);
+const geometryTransfer=browserGeometryTransferPolicy(window.browserProof.mode,options);
+const candidatePreparation=privatePreparationCandidates(window.browserProof.mode,options);
+const fixturePolicy=repeatableFixturePolicy(window.browserProof.mode,options);
+window.browserProof.repeatableFixtureRequested=fixturePolicy.requested;
+const transport = createTransport(WebSocket, report,fixturePolicy.websocket);
 const pointer = window.browserProof.mode === 'webgl' ? createBrowserMiddleMouseInput(window,document,{logicalExtent:()=>({width:gpu?.stats.physicalOutput?.logicalWidth||gpu?.stats.display?.internalWidth||960,height:gpu?.stats.physicalOutput?.logicalHeight||gpu?.stats.display?.internalHeight||540})}) : undefined;
 if (pointer) window.browserProof.middleInput = pointer.stats;
 window.browserTransport = transport;
 const natives = {
+  async Java_orsc_browser_BrowserBootstrap_reportRegionPreparationDiagnostics(lib,available,counters){
+    if((available&&counters.length!==3)||(!available&&counters.length!==0))throw new Error('Region diagnostics layout changed');
+    const values=Array.from(counters);if(values.some(value=>!Number.isSafeInteger(value)||value<0))throw new Error('Region diagnostics numeric range changed');
+    window.browserProof.regionPreparationDiagnostics={available:available===true,hits:values[0]??null,builds:values[1]??null,retainedTileBytes:values[2]??null};
+  },
+  async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
+    if(!['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection'].includes(name))throw new Error('Unknown private policy receipt');
+    (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
+  },
+  async Java_orsc_browser_BrowserBootstrap_reportRepeatableState(lib,username,counters){
+    if(fixturePolicy.requested!=='repeatable-v1'||counters.length!==4)throw new Error('Unexpected repeatable fixture receipt');
+    window.browserProof.repeatableFixture={username:String(username).slice(0,40),cameraPinned:counters[0]===1,npcCount:counters[1],playerCount:counters[2],welcomeVisible:counters[3]===1};
+  },
   async Java_orsc_browser_BrowserBootstrap_reportInputError(lib, message) {
     window.browserProof.inputError=String(message).slice(0,512);setStatus(message);publish();
   },
@@ -101,6 +129,9 @@ const natives = {
 };
 if (pointer) Object.assign(natives, pointer.natives);
 try {
+  stutterDiagnostics=createStutterDiagnostics(window,{enabled:stutterDiagnosticsPolicy(window.browserProof.mode,options)});
+  window.browserProof.stutterDiagnostics=stutterDiagnostics.stats;
+  if(options.has('benchmark'))window.browserBenchmarkDiagnosticsReset=()=>stutterDiagnostics.reset();
   preparationControls = browserPreparationBenchmarkControls(window.browserProof.mode, options);
   spriteKeyControls = browserSpriteKeyBenchmarkControls(window.browserProof.mode,options);
   modelPreparationControls = browserModelBenchmarkControls(window.browserProof.mode, options);
@@ -109,7 +140,12 @@ try {
     window.browserProof.benchmark={cache:options.get('cache'),underlay:options.get('underlay'),depth:options.get('depth')||'cpu',loop:options.get('loop')||'legacy',cull:options.get('cull')||'late',ownership:options.get('ownership')||'objects',sprites:options.get('sprites')||'uncached',overlay:options.get('overlay')||'marker',preparationRequested:preparationControls.requested,modelPreparationRequested:modelPreparationControls.requested,tone:'day',sun:'135/45',brightness:'high',zoom:75,rotation:128};
   }
   if (window.browserProof.mode === 'webgl') {
-    const {createBrowserWebGL} = await import('./webgl.js');
+    const backendModule=await import(nativeCallDispatch==='sync'?'./webgl-sync.js':'./webgl.js');
+    const {createBrowserWebGL}=backendModule;
+    if(nativeCallDispatch==='sync'&&backendModule.BROWSER_NATIVE_CALL_DISPATCH!=='sync')throw new Error('Private synchronous backend is unavailable');
+    const synchronousNative=nativeCallDispatch==='sync'?(await import('./browser-native-call-dispatch.js')).createSynchronousNativeCall:null;
+    const synchronousFailure=error=>finish('Synchronous frontend native stopped: '+error);
+
     const canvas = document.createElement('canvas'); canvas.id = 'browser-webgl';
     canvas.setAttribute('aria-hidden', 'true');
     Object.assign(canvas.style, {position: 'absolute', pointerEvents: 'none', display: 'none', zIndex: '1'});
@@ -119,7 +155,8 @@ try {
     window.browserProof.physicalOutputRequested=physicalOutput;
     window.browserProof.ownedStateRequested=ownedState;
     if(window.browserProof.benchmark)window.browserProof.benchmark.streamUploadValidationRequested=streamUploadValidation;
-    gpu = createBrowserWebGL(canvas, report, {opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')});
+    gpu = createBrowserWebGL(canvas, report, {nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')});
+    window.browserProof.nativeCallDispatch={requested:nativeCallDispatch,module:backendModule.BROWSER_NATIVE_CALL_DISPATCH||null,reported:gpu.stats.nativeCallDispatch||null};
     if(options.has('benchmark')){window.browserBenchmarkOwnedState=enabled=>gpu.queueOwnedState(enabled);window.browserBenchmarkStreamUploadValidation=enabled=>gpu.queueStreamUploadValidation(enabled);window.browserBenchmarkPhysicalOutput=enabled=>gpu.queuePhysicalOutput(enabled);}
     worldCover=createWorldCover({document,window,display:document.querySelector('#display'),onGateChange:()=>window.dispatchEvent(new Event('browser-world-readinesschange'))});
     window.browserProof.worldLoading=worldCover.stats;
@@ -133,14 +170,31 @@ try {
     }
     const progressName='Java_orsc_BrowserWebGLBridge_worldProgress',progress=natives[progressName];
     if(typeof progress!=='function')throw new Error('WebGL bridge has no loading protocol');
+    if(nativeCallDispatch==='sync') {
+      natives[progressName]=synchronousNative((lib,metadata)=>{const blocked=worldCover.blocksWorldInput;const result=progress(lib,metadata);awaitingGameFrame=false;if(gpu.stats.worldReadiness?.blocksWorldInput||gpu.stats.worldReadiness?.phase==='loading'||Number(metadata[9])!==gpu.stats.display?.internalWidth||Number(metadata[10])!==gpu.stats.display?.internalHeight)alignWorldSurface(Number(metadata[9]),Number(metadata[10]));else updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();return result;},{name:'frontend worldProgress',failure:synchronousFailure});
+    } else {
     natives[progressName]=async(lib,metadata)=>{const blocked=worldCover.blocksWorldInput;await progress(lib,metadata);awaitingGameFrame=false;if(gpu.stats.worldReadiness?.blocksWorldInput||gpu.stats.worldReadiness?.phase==='loading'||Number(metadata[9])!==gpu.stats.display?.internalWidth||Number(metadata[10])!==gpu.stats.display?.internalHeight)alignWorldSurface(Number(metadata[9]),Number(metadata[10]));else updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();};
+    }
     for(const name of ['Java_orsc_BrowserWebGLBridge_regionTransition','Java_orsc_BrowserWebGLBridge_holdWorld']) {
       const callback=natives[name];if(typeof callback!=='function')throw new Error('WebGL bridge has no streaming protocol');
+      if(nativeCallDispatch==='sync')natives[name]=synchronousNative((...args)=>{const blocked=worldCover.blocksWorldInput;const result=callback(...args);updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();return result;},{name:'frontend '+name,failure:synchronousFailure});
+      else {
       natives[name]=async(...args)=>{const blocked=worldCover.blocksWorldInput;const result=await callback(...args);updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();return result;};
+      }
     }
     const presentName = 'Java_orsc_BrowserWebGLBridge_present';
     const present = natives[presentName];
     if (typeof present !== 'function') throw new Error('WebGL bridge has no frame presenter');
+    if(nativeCallDispatch==='sync') {
+      natives[presentName]=synchronousNative((...args)=>{
+        const blocked=worldCover.blocksWorldInput;
+        const result=present(...args);
+        alignWorldSurface(Number(args[1]),Number(args[2]));
+        if(blocked!==worldCover.blocksWorldInput)publish();
+        gpu.stats.display={internalWidth:Number(args[1]),internalHeight:Number(args[2]),cssWidth:canvas.style.width,cssHeight:canvas.style.height,devicePixelRatio:window.devicePixelRatio||1};
+        return result;
+      },{name:'frontend present',failure:synchronousFailure});
+    } else {
     natives[presentName] = async (...args) => {
       const blocked=worldCover.blocksWorldInput;
       const result = await present(...args);
@@ -150,6 +204,7 @@ try {
       gpu.stats.display={internalWidth:Number(args[1]),internalHeight:Number(args[2]),cssWidth:canvas.style.width,cssHeight:canvas.style.height,devicePixelRatio:window.devicePixelRatio||1};
       return result;
     };
+    }
   }
   await new Promise((resolve, reject) => {
     const script = document.createElement('script'); script.src = `https://cjrtnc.leaningtech.com/${window.browserRuntimeVersion}/loader.js`;
@@ -157,7 +212,7 @@ try {
   });
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
-    javaProperties: ['user.dir=/files', ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])], natives});
+    javaProperties: ['user.dir=/files', ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])], natives});
   report('Browser Java ready');
   const display = document.querySelector('#display');
   displayLayout=createBrowserDisplay({window,document,display,viewport:document.querySelector('#viewport')});

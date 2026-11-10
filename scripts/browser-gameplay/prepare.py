@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 import shutil
 import subprocess
+from native_dispatch_stage import stage_native_dispatch
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -18,7 +19,10 @@ def main():
     parser.add_argument('--http-port', type=int, default=8079)
     parser.add_argument('--dependency-jar', type=Path, help='Explicit immutable client artifact; leaves worker JAR untouched')
     parser.add_argument('--client-source-commit', help='Known source commit for the explicitly selected client artifact')
+    parser.add_argument('--native-source',type=Path,help='Read-only review repository for native dispatcher inputs')
+    parser.add_argument('--native-source-commit',help='Exact reviewed commit for native dispatcher input files')
     args = parser.parse_args()
+    if (args.native_source is None)!=(args.native_source_commit is None):parser.error('Use native source and exact commit together')
     if not 1 <= args.http_port <= 65535:
         parser.error('Port must be between 1 and 65535')
     if not args.name or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in args.name):
@@ -33,6 +37,7 @@ def main():
     web = run / 'web'; web.mkdir()
     for file in (ROOT / 'tools/browser-gameplay/web').iterdir():
         shutil.copy2(file, web / file.name)
+    native_dispatch=stage_native_dispatch(ROOT,run,web,args.native_source,args.native_source_commit)
     client = args.dependency_jar.resolve() if args.dependency_jar else ROOT / 'Client_Base/Open_RSC_Client.jar'
     if not client.is_file():
         parser.error('Build the maintained client first with scripts/build-client.sh')
@@ -67,7 +72,7 @@ def main():
     (web / 'bootstrap-files.txt').write_text('\n'.join(files) + '\n')
     report = dict(root=str(ROOT), run=str(run), web=str(web), sourceCommit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                   clientSha256=hashlib.sha256(client.read_bytes()).hexdigest(), dependencyJar=str(client), clientSourceCommit=args.client_source_commit, frontendSha256={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in web.iterdir() if p.is_file() and p.suffix in ('.js','.html','.css')}, runtime='CheerpJ 5.0, Java 8, CDN',
-                  http='127.0.0.1:' + str(args.http_port), tcp='127.0.0.1:43629', websocket='127.0.0.1:43529', credentialsCopied=False)
+                  http='127.0.0.1:' + str(args.http_port), tcp='127.0.0.1:43629', websocket='127.0.0.1:43529', credentialsCopied=False,nativeDispatch=native_dispatch)
     (run / 'stage.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
 

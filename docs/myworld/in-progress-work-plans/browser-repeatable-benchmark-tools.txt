@@ -1,0 +1,229 @@
+Private repeatable browser benchmark tools
+=========================================
+Scope: maintained test tooling, not a default renderer/FPS optimization. No
+Client_Base or PC_Client Java runtime source changes are part of this topic.
+
+Selective provenance
+--------------------
+Salvaged from parked291409c889ccc3516f5270d91cb04de39d2ade55, based on main325bf42b6.
+The cached-alignment implementation, imports, controls and dedicated tests were
+NOT carried over. browser.js uses the literal original325 alignWorldSurface
+function, including its existing per-frame measurement. The geometry control
+helper is byte-identical to fecc9b19c7ec0f2d456e2c3918542e0091efe4fd. Core geometry,
+region and descriptor runtime candidates remain separate reviewed branches.
+
+The parked cache had no demonstrated benefit in the manager's balanced37-group
+Firefox test (43.3193FPS OFF/43.3251ON); it is not adopted here. Full historical
+source, tests and evidence remain preserved on fix/browser-repeatable-frame-work.
+Frozen8162/8163 and the running private fixture are not modified by this salvage.
+
+Isolation and preparation
+-------------------------
+prepare-repeatable.py prepares but NEVER starts a fresh empty-seed server with
+copied artifacts/config/map. TCP43649/WS43549, SQLite browser_repeatable_dev and
+an explicit repeatable marker are required. The runner refuses other account
+rows/external services; it creates/resets only disposable browserdemo at133,660,L0,
+admin1 to avoid inactivity. It never uses an owner or public database. Existing
+private43629/43529 is independent. Root alone launches the server/HTTP commands.
+
+The fixed roster is32 NPCs using8 maintained definitions: Unicorn0, Bob1, Goblin4,
+Hans5, Cook7, Priest9, Man11, Traiborn17. Expected names/positions/directions are
+persisted in repeatable-fixture.json; actual names/indices/positions are emitted
+in status.json. Only this dedicated World suppresses other authored/lazy NPCs.
+Only autonomous behavior/movement is disabled for its fixed actors. Production
+client animation clocks, rendering, updates, map and network paths stay intact.
+This is a controlled client workload, not a claim to reproduce public server CPU.
+
+RepeatableCamera pins once at world-ready with cached reflection: sourcepitch912
+maps to actual Scene rotation112; yaw128 maps512; zoom75; offsets and future
+random-walk increments zero; automatic rotation disabled. Login/relogin renews the
+pin. At that first pin only, the private helper also calls the existing public
+setShowDialogMessage(false) API. The fourth counter reports actual welcomeVisible
+via cached reflection. It does NOT suppress later opened UI. Do not blindly click
+after this automatic close: that would become an unintended ground walk.
+Ongoing samples do not repeatedly override drift. Verify actual pose,
+client username and counts. The initial source112 setup produced actual912 and
+was rejected without accepted timings; corrected baseline3 proved stable pose.
+The parent observed37 GPU actor groups (distinct from32 server/client NPCs).
+The earlier matched alignment/core cohorts retained the welcome popup: those are
+matched popup-open workloads, not certified normal gameplay. Future clean timing
+must assert welcomeVisible=false as well as fixed pose/count/identity.
+
+prepare-repeatable-client.py creates a NEW immutable client stage while reusing
+only a marked repeatable server. It never changes or starts that server. Full
+initial preparation keeps its explicit single-source client commit contract.
+The client-only helper also accepts --client-provenance for a reviewed composite:
+its jarSha256 must match, singleProductionCommit must be false, the full receipt
+is copied, and clientSourceCommit stays null. Never mislabel a multi-source JAR
+as the base commit or frontend commit. Both preparation scripts refuse reuse of
+an existing output run through the maintained staging contract.
+
+Example preparation (root substitutes existing artifact paths):
+ python3 scripts/browser-gameplay/prepare-repeatable.py --name fresh-run \
+   --http-port 8160 --dependency-jar CLIENT.jar --client-source-commit EXACT40HASH
+ python3 scripts/browser-gameplay/prepare-repeatable-client.py --name control-run \
+   --http-port 8161 --server-run PREVIOUS_RUN --dependency-jar REVIEW.jar \
+   --client-provenance REVIEW_RECEIPT.json
+Use the generated repeatable-preparation.json URL/commands. Correct option spelling
+is --http-port followed by a separate numeric argument. Wait for ready/status
+valid and stableTicks; the HTTP stage's status path may refer to another server
+run explicitly. No browser or server is started during preparation or CPU tests.
+
+Private controls and receipts
+----------------------------
+fixture=repeatable-v1 requires WebGL benchmark mode and routes only43649/43549.
+Ordinary/software sessions retain their existing43629/43529 route. Query controls
+geometrytransfer, regionprep, descriptorwrite, halolookup and sceneryprojection
+accept on/off, default OFF;
+ordinary/software URLs do not set candidate Java properties. Actual one-time
+receipts separate requested, method availability and enabled state. A requested
+ON absent from its JAR is refused; OFF on an older baseline remains explicitly
+unavailable rather than inventing a getter result.
+
+Region hits/builds/retainedTileBytes are exported once/second via cached method
+lookup, not full snapshots/JMX. Nonnegative safe-integer bounds preserve exact
+numeric transport. Availability is explicit. These diagnostics do not prove
+performance/correctness of the separate runtime implementations.
+
+stats.javaBridgeReportedWorldFrames is assigned only at successful frameWork END,
+after pose/counters. Benchmark endpoint readers must require equality with
+stats.javaWorldFrames, plus fresh readiness/identity/pose. Present and frameWork
+are separate native calls; reading between them previously produced one extra
+37-actor frame in a sample. Initial skewed attempts were rejected, not accepted.
+Root uses numeric4096-frame measurement buffers, p95/p99/slowcounts, no screenshots
+or IPC inside timed spans, fixed pose/count validation and balanced/reverse order.
+Keep clean acceptance separate from profile=1 diagnostic cohorts.
+
+diagnostics=1 additionally enables private100ms event-loop lateness and supported
+longtask observations (512 rows each). Unsupported longtask APIs are reported as
+unsupported, not as absence of pauses. No timers/observers when disabled. Reset
+and idempotent disposal are provided. These observations DO NOT attribute delay
+to GC, GPU work or Java; actual GPU timers may be unavailable in Firefox.
+
+Validation and limits
+---------------------
+Preserved evidence includes successful separate-server startup,32mixedNPC receipts,
+actual fixed37-group/pose browser runs,15 CPU real-client camera/Scene convention/one-time welcome
+checks, candidate getter OFF/ON/availability/type checks, policy/frontend VM tests,
+coherent-counter GPU API doubles and bounded virtual-clock diagnostic tests.
+The selective topic reran its CPU-only runner successfully on Java8/21 against
+the maintained325 baseline, including literal alignment hash and no cache-file
+checks. Future optional control additions are retested before formal READY. It introduces no default
+optimization, public deployment, general visual certification or60FPS claim.
+
+Native-call review staging (experimental, not an adopted runtime change)
+-----------------------------------------------------------------------
+The private startup query nativecalls=sync|async defaults ASYNC; ordinary and
+software sessions ignore it. ASYNC keeps the literal325 frontend progress,
+transition/hold and present wrapper bodies. SYNC selects generated webgl-sync.js
+and four small plain-function frontend wrappers using the separately reviewed
+thenable-rejecting helper. initialize remains genuinely asynchronous. Reported
+module/backend dispatch metadata is retained; no support is inferred from a URL.
+An unexpected Promise from a selected synchronous wrapper stops/disposes its
+own session. This is not evidence that CheerpJ supports the experiment: the
+manager must run the authentic JNI probe and real-game smoke before READY.
+
+prepare.py and prepare-repeatable-client.py accept a read-only review dependency:
+ --native-source /PATH/TO/REVIEWED/REPOSITORY \
+ --native-source-commit EXACT40HASH
+The staging helper reads ONLY three fixed regular-file Git blobs at that exact
+commit: canonical webgl.js, browser-native-call-dispatch.js, and native_dispatch.py.
+It never reads dirty review working-tree content or changes that repository. The
+reviewed generator, not this tooling branch, owns the19-method SHA allowlist and
+transformation. There is no runtime eval or duplicated maintained renderer body.
+Canonical/helper/generated files and generator snapshot hashes are recorded in
+stage.json.nativeDispatch, with reviewDependency=true and exact source commit.
+If the ordinary current repository lacks the capability marker, no sync module
+is fabricated; the existing async backend remains available. After separately
+reviewed integration, default preparation can use those committed local files.
+The explicitly supplied review source is independent of the dependency JAR's
+multi-source receipt. Both provenances must be kept; neither is a production
+single-commit build. Frozen8162/8163 are unchanged.
+
+CPU validation additionally compares the whole frontend CSS/native/event/disposal
+trace between selected ASYNC and SYNC doubles; checks plain vs Promise returns,
+unexpected-thenable fail-closed behavior, exact original ASYNC wrapper bodies,
+committed-file hashes, source read-only status, and rejection of invalid commit,
+out-of-stage output and audited-body drift. The real production GL/error/pixel
+oracle belongs to the separate native-dispatch branch. No CPU test claims actual
+CheerpJ JNI compatibility, GPU pixels, FPS improvement or60FPS.
+
+Manager runtime review gate (completed; performance still pending)
+----------------------------------------------------------------
+The manager ran the authentic Firefox154/CheerpJ5/JRE8 JNI probe in all four
+modes: values, async-fatal, sync-fatal and thenable-fatal. The1903 scalar/vector/
+void checks and inherited fatal behavior passed. Evidence:
+ output/diagnostics/browser-performance-pass/native-contract-modes-firefox-1/summary.json
+in the manager checkout. This closes the compatibility prerequisite above; it
+is not an FPS test. The native worker's final separate READY is
+b76ab773a36dc7c1c6a53008671642b3bbd4d7f0. Its runtime/helper bytes are unchanged
+from the3b3f2241e6914b792089e766f210119975aa71d9 review source used by our stage.
+
+Immutable repeatable-native-height-review-1 was prepared from tooling checkpoint
+229f49dd5d8ea7895e8d51b21a921d3cdda11d06 for HTTP8166, using the existing marked
+baseline2 server on43649/43549. Dependency JAR SHA:
+ 57e7435b7679ee85a7cfe315a75f175d6942854e38f61cf1f7c37c9686de5cac
+Its copied height-review-1 receipt identifies the exact3 changed Java classes
+from9fd3957429d43ca07e929a999461f1b540f752cf plus the325 baseline; it is NOT a
+single production commit. The prior geometry/region/descriptor candidates are
+absent and remain explicitly OFF/unavailable. Canonical and generated backend
+SHA hashes, the exact3b3f source, and generator/input snapshots are recorded in
+stage.json.nativeDispatch; no frozen stage was changed after preparation.
+
+The manager's ordinary game smoke of that stage with nativecalls=sync and
+halolookup=off reached101ready chunks,32NPCs/37GPU actor groups and actual
+welcomeVisible=false without errors. This is functional compatibility evidence,
+not a measured speedup or60FPS acceptance. Startup dispatch remains ASYNC by
+default; the SYNC selection is private benchmark only. Controlled throughput
+comparisons are still pending and must be assessed separately.
+
+Java8 and21 focused CPU suites passed against the exact height-only review JAR
+and committed3b3f native dependency. Worker logs are under
+ output/tests/browser-repeatable-benchmark-tools/jdk8-native-union.log
+ output/tests/browser-repeatable-benchmark-tools/jdk21-native-union.log
+The extra private URL/literal-ASYNC wrapper source oracle also passed. No further
+build/test/GPU work was run during the manager's subsequent timing window.
+
+Scenery projection prototype control (source-only follow-up)
+----------------------------------------------------------
+The fifth optional candidate uses private sceneryprojection=on|off, default OFF,
+and property spoiledmilk.browserSceneryProjectionWork. Its actual getter is the
+INSTANCE Scene.isBrowserSceneryProjectionWorkEnabled(), inspected once on the
+real Scene after creation. The runtime branch additionally requires the actual
+browser model-pick/full GPU ownership/no-CPU-depth gate; this tooling does not
+implement projection or infer that gate from the URL. A missing getter is
+explicitly unavailable and false for an OFF/old-JAR run; requested ON with an
+absent getter is refused. Ordinary/software URLs do not override the property.
+Static and instance receipts share the bounded five-name frontend schema.
+The immutable8166 stage remains unchanged. The focused Java8/21 retests passed after the manager released its timing window;
+no projection performance claim is made.
+
+Projection-control follow-up validation
+--------------------------------------
+The full focused tooling suite passed on Java8/21 against the immutable height-only
+review JAR, proving the fifth instance getter remains explicitly unavailable on
+that older artifact. Separate isolated classes were compiled from exact committed
+projection source8652a01787453708564cda4eabf9a0d50fe01974 (Scene, RSModel and
+ProjectedModelPickBounds). The real Scene getter passed no-property defaultOFF,
+explicit OFF/ON, browser-disabled and CPU-depth-consumer checks on both JDKs.
+Receipt/source hashes/logs: worker output/tests/browser-repeatable-benchmark-tools/
+projection-getter-8652-2/. This validates the getter/control contract only, not the
+projection algorithm. The first isolated getter attempt correctly exposed missing
+startup ownership prerequisites in the test setup; it was preserved and rejected,
+then the fixture set those flags before Renderer3DSettings class initialization.
+
+Frontend doubles additionally prove a backend without native capability metadata
+continues in ordinary ASYNC with null/unknown module/actual receipts. A requested
+private SYNC unsupported module stops before backend creation or Java startup.
+The ordinary preparer emits available=false and no generated module when its
+canonical backend has no capability marker; no generator/19-body SHA requirement
+is imposed on an unmarked future main. This keeps the tooling useful if the native
+runtime experiment remains parked. Root measured SYNC46.9955FPS versus literal
+ASYNC46.6263 (0.79%, judged insignificant): ASYNC remains the ordinary/default path.
+No native-call runtime implementation is adopted by this tooling handoff.
+
+Final focused logs: jdk8-projection-control-final.log and
+jdk21-projection-control-final.log in the worker tooling test category. Both also
+ran unavailable-native cases, exact async wrapper/CSS trace checks and existing
+shader/API doubles. Canonical workspace layout passed. No frozen stage, server,
+owner data or public deployment changed during this follow-up.

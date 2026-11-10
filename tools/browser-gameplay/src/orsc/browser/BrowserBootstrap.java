@@ -12,6 +12,9 @@ public final class BrowserBootstrap {
     public static native void reportTelemetry(String names,double[] values);
     public static native void reportSpriteKeyPolicy(boolean requested,boolean enabled);
     public static native void reportPreparation(boolean enabled,boolean active,boolean animated);
+    public static native void reportRegionPreparationDiagnostics(boolean available,double[] counters);
+    public static native void reportCandidatePolicy(String name,boolean requested,boolean available,boolean enabled);
+    public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportModelPickBounds(boolean requested,boolean enabled);
     private static native int wsOpen();
     private static native byte[] wsRead(int socket, int maximum);
@@ -65,6 +68,9 @@ public final class BrowserBootstrap {
             return;
         }
         final boolean webgl=args.length>0 && "webgl".equals(args[0]);
+        final boolean repeatable="repeatable-v1".equals(System.getProperty("spoiledmilk.browserRepeatableFixture"));
+        if(repeatable&&(!webgl||!Boolean.getBoolean("spoiledmilk.browserBenchmark")))throw new IllegalArgumentException("Repeatable camera is private benchmark only");
+        final RepeatableCamera fixedCamera=repeatable?new RepeatableCamera():null;
         report((webgl?"webgl-client":"software-client")+":copying-private-files");
         try (BufferedReader index = new BufferedReader(new FileReader("/app/bootstrap-files.txt"))) {
             String relative;
@@ -136,11 +142,14 @@ public final class BrowserBootstrap {
                     java.lang.reflect.Field fpsField = orsc.mudclient.class.getDeclaredField("FPS"); fpsField.setAccessible(true);
                     java.lang.reflect.Field loopField = orsc.mudclient.class.getDeclaredField("selectedClientLoopMode"); loopField.setAccessible(true);
                     int inputDiagnosticSamples=0;
-                    boolean modelPickReported=false;
+                    boolean modelPickReported=false,candidatePoliciesReported=false;
+                    BenchmarkCandidatePolicies.RegionDiagnostics regionDiagnostics=new BenchmarkCandidatePolicies.RegionDiagnostics();
                     while (true) {
                         Object client = clientField.get(null);
                         if (client != null && webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
-                            orsc.mudclient actual=(orsc.mudclient)client;actual.setCameraZoomSetting(75);actual.cameraRotation=128;
+                            orsc.mudclient actual=(orsc.mudclient)client;
+                            if(fixedCamera==null){actual.setCameraZoomSetting(75);actual.cameraRotation=128;}
+                            else reportRepeatableState(actual.getUsername(),fixedCamera.observe(actual));
                         }
                         if (client != null) {
                             if(inputDiagnostics && inputDiagnosticSamples<64) {
@@ -157,7 +166,25 @@ public final class BrowserBootstrap {
                                         ((orsc.mudclient)client).getScene().isBrowserModelPickBoundsEnabled());
                                     modelPickReported=true;
                                 }
+                                if(!candidatePoliciesReported&&((orsc.mudclient)client).getScene()!=null) {
+                                    String[][] policies={{"geometryTransfer","spoiledmilk.browserGeometryTransferReuse","orsc.BrowserWebGLBridge","isGeometryTransferReuseEnabled"},
+                                        {"regionPreparation","spoiledmilk.browserRegionPreparation","orsc.graphics.three.World","isBrowserRegionPreparationEnabled"},
+                                        {"descriptorWriting","spoiledmilk.browserResidentDescriptorWriting","orsc.mudclient","isBrowserResidentDescriptorWritingEnabled"},
+                                        {"haloHeightLookup","spoiledmilk.browserHaloHeightLookup","orsc.graphics.three.World","isBrowserHaloHeightLookupEnabled"}};
+                                    for(String[] policy:policies) {
+                                        boolean requested=Boolean.getBoolean(policy[1]);boolean[] actual=BenchmarkCandidatePolicies.inspect(policy[2],policy[3]);
+                                        reportCandidatePolicy(policy[0],requested,actual[0],actual[1]);
+                                        if(requested&&!actual[0])throw new IllegalStateException("Requested candidate is absent from this fixture JAR: "+policy[0]);
+                                    }
+                                    boolean projectionRequested=Boolean.getBoolean("spoiledmilk.browserSceneryProjectionWork");
+                                    boolean[] projectionActual=BenchmarkCandidatePolicies.inspectInstance(((orsc.mudclient)client).getScene(),"isBrowserSceneryProjectionWorkEnabled");
+                                    reportCandidatePolicy("sceneryProjection",projectionRequested,projectionActual[0],projectionActual[1]);
+                                    if(projectionRequested&&!projectionActual[0])throw new IllegalStateException("Requested candidate is absent from this fixture JAR: sceneryProjection");
+                                    candidatePoliciesReported=true;
+                                }
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
+                                double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
+                                reportRegionPreparationDiagnostics(regionCounts!=null,regionCounts==null?new double[0]:regionCounts);
                                 reportPreparation(orsc.graphics.two.GraphicsController.isBrowserFramePreparationEnabled(),
                                     surface!=null && surface.isBrowserFramePreparationActive(),
                                     Boolean.parseBoolean(System.getProperty("spoiledmilk.browserAnimatedBufferReuse","true")));
@@ -179,7 +206,7 @@ public final class BrowserBootstrap {
         }
         protected void connect(String host, int port) throws IOException { connect(InetAddress.getByName(host), port); }
         protected void connect(InetAddress host, int port) throws IOException {
-            if (!host.isLoopbackAddress() || port != 43629) throw new IOException("Private prototype permits only 127.0.0.1:43629");
+            if (!host.isLoopbackAddress() || port != ("repeatable-v1".equals(System.getProperty("spoiledmilk.browserRepeatableFixture"))?43649:43629)) throw new IOException("Private prototype permits only 127.0.0.1:43629");
             address = host; this.port = port; connection = wsOpen();
             if (connection < 0) throw new IOException("Private WebSocket connection failed");
         }
