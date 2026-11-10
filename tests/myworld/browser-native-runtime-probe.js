@@ -1,0 +1,30 @@
+import {createSynchronousNativeCall} from './browser-native-call-dispatch.js';
+const proof=window.nativeRuntimeProof={completed:false,passed:false,events:[],errors:[],calls:{},runtime:'5.0',helperFailures:0,unhandled:[],scope:'Authentic CheerpJ scalar/int[]/JavaThrowable contract only; no game/GPU/FPS claim'};
+window.addEventListener('unhandledrejection',event=>{proof.unhandled.push(String(event.reason));});
+const failureText='native-dispatch-probe-failure';
+const scalar=(_lib,a,b)=>(Math.imul(a,1664525)+b)|0;
+const vector=(_lib,seed,values)=>{const result=new Int32Array(values.length);for(let i=0;i<values.length;i++)result[i]=values[i]^seed;return result;};
+const failure=()=>{throw new Error(failureText);};
+const sync=(name,body)=>createSynchronousNativeCall(body,{name,failure:()=>{proof.helperFailures++;}});
+const asyncWrap=body=>async(...args)=>{try{return await body(...args);}catch(error){throw error;}};
+const natives={
+ Java_orsc_browser_NativeDispatchProbe_scalarAsync:asyncWrap(async(...args)=>scalar(...args)),
+ Java_orsc_browser_NativeDispatchProbe_scalarSync:sync('scalarSync',scalar),
+ Java_orsc_browser_NativeDispatchProbe_vectorAsync:asyncWrap(async(...args)=>vector(...args)),
+ Java_orsc_browser_NativeDispatchProbe_vectorSync:sync('vectorSync',vector),
+ Java_orsc_browser_NativeDispatchProbe_failureAsync:asyncWrap(async()=>failure()),
+ Java_orsc_browser_NativeDispatchProbe_failureSync:sync('failureSync',failure),
+ Java_orsc_browser_NativeDispatchProbe_unexpectedThenable:sync('unexpectedThenable',()=>Promise.reject(new Error('consumed future rejection'))),
+ async Java_orsc_browser_NativeDispatchProbe_report(_lib,name,value){proof.events.push({name:String(name),value:String(value)});},
+};
+for(const name of Object.keys(natives)){const call=natives[name];natives[name]=(...args)=>{proof.calls[name]=(proof.calls[name]||0)+1;return call(...args);};}
+try{
+ await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cjrtnc.leaningtech.com/5.0/loader.js';script.onload=resolve;script.onerror=()=>reject(new Error('CheerpJ loader failed'));document.head.append(script);});
+ await cheerpjInit({version:8,natives});
+ const exit=await cheerpjRunMain('orsc.browser.NativeDispatchProbe','/app/probe.jar');proof.javaExit=exit;
+ await new Promise(resolve=>setTimeout(resolve,0));
+ const values=Object.fromEntries(proof.events.map(({name,value})=>[name,value]));
+ if(exit!==0||values.completed!=='true'||Number(values.checks)<1900||proof.helperFailures!==2||proof.unhandled.length)throw Error('JNI contract probe incomplete/failed: '+JSON.stringify({exit,values,helperFailures:proof.helperFailures,unhandled:proof.unhandled}));
+ proof.passed=true;
+}catch(error){proof.errors.push(String(error.stack||error));}
+finally{proof.completed=true;}

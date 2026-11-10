@@ -80,7 +80,7 @@ per cohort. Command trace SHA256:
 `34e2302068aab6d63699497f67731d7793d7a89896d64fe6c3227448cf3452ec`.
 
 Frozen source modules, hashes and receipts live under the declared
-`output/tests/browser-native-call-dispatch/` subject. No Java source/JAR, gameplay,
+`output/tests/browser-native-call-dispatch/` subject. No production Java/client JAR, gameplay,
 server, account or public deployment is changed by this experiment.
 
 `prepare-browser-native-call-hardware.py --dependency-jar APPROVED_JAR --run-id RUN`
@@ -92,6 +92,30 @@ reserved for the manager's exclusive GPU window. The standalone page exposes
 Stop/init and real context loss. It does not execute CheerpJ; that remains a
 separate whole-game smoke gate. Initial prepared review stage uses approved clean
 325bf JAR SHA256 `f72047bfb006b79a1e51889b46be08a36c9c80d353b4fa5ccece795c06ad1279`.
+
+## Manager-run pixel evidence
+
+The manager ran the manifest-validated `review-native-sync-v1` stage in Firefox
+154 on reported Radeon hardware (privacy-sanitized Radeon R9 200 Series string).
+All 42 actual production-shader/native-sky cases passed: 8,650,752 RGBA bytes
+compared, zero changed bytes, complete readiness/state, Stop/init race and real
+context-loss checks. Result:
+`/home/justin/Core-Framework/output/diagnostics/browser-performance-pass/native-sync-pixels-2/result.json`.
+This establishes this isolated GPU pipeline's parity, not Java interop, input,
+game-thread scheduling, gameplay or FPS. No GPU/browser was launched by this worker.
+
+## Authentic Java contract probe
+
+`prepare-browser-native-runtime-probe.py --run-id RUN` compiles/freeze a tiny
+target-8 test JAR and page under this subject's `runtime/` directory. It launches
+no browser. The page uses the real CheerpJ 5.0/JRE8 runtime and exposes
+`window.nativeRuntimeProof`. In one JVM, Java checks 100 scalar/int-array pairs
+including MIN/MAX/sign/overflow and unchanged inputs, compares a rejected async
+native against a direct synchronous helper throw as caught JavaThrowable class/
+message, continues after each failure, and checks an unexpected-thenable protocol
+error without an orphan rejection. No game/client classes, display, account or
+server are involved. Actual runtime execution remains manager-owned; compilation
+and JS syntax checking alone are not a JNI compatibility result.
 
 ## Remaining gates
 
