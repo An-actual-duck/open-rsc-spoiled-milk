@@ -1,0 +1,27 @@
+Presentation halo identity comparison reuse candidate
+
+The host profile attributed about418ms self time over20seconds to
+World.matchesActiveHalo. Terrain interpolation repeatedly compares the same
+immutable package/world/level/center relation while evaluating nearby vertices.
+
+Cache one final-field receipt keyed by BOTH snapshot object references, holding
+only that boolean relation. A fresh pair uses the unchanged comparison. Loaded
+sector values, editor acknowledgements, coordinates, sentinel behavior, snapshot
+coverage and interpolation remain read on every sample. Scope/visual publication
+or retirement clears the receipt so old payload references can be released.
+Concurrent readers use one locally read immutable receipt; a stale entry cannot
+match another pair. No locks or per-sample allocation on the reuse path.
+
+Startup spoiledmilk.presentationHaloMatchReuse=false retains literal comparison;
+the candidate default istrue. No main promotion or GPU/performance claim yet.
+The separate browser-only value-memo experiment remains parked and excluded.
+
+Initial CPU proof: frozen2b0681f841 World versus candidate ON/OFF serialize the
+same1,613,824 bytes of actual elevations, presentation-face availability and
+exception classes across null/replaced/mismatched scopes, live loaded tile edits
+and extreme coordinates. Additional exact relation checks, current-entry reuse
+and20,000 concurrent independent reader calls pass. Actual resident input/mesh
+fixture passes360 enabled/330 disabled. Independent read-only review found no
+semantic/race blocker; its bounded old-snapshot retention note led to clearing
+on all five scope/visual assignment sites. Final retirement assertion and full
+renderer guard rerun remain pending after the exclusive profiling window.
