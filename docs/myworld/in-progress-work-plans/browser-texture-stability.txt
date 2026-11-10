@@ -16,8 +16,11 @@ generation. Underlying textures remainNEAREST: sampler0 is unbound before shadow
 sky, world sprites, UI and retained-frame replay. Shadow cutout alpha samples the
 original level0 unchanged, preserving the accepted shadow-alpha policy.
 
-World transparency currently blends with cutoff0, unlike shadow cutoff0.5. This
-candidate does NOT silently introduce a new world binary cutoff. CPU alpha-mean
+Browser transparency currently blends with cutoff0, unlike shadow cutoff0.5.
+Native outer-pass cutoff0 is overridden immediately by bindChunkBatchDrawState
+(textured): GL_GREATER0.5 and BLENDdisabled before each new drawrange. Thus the
+prior claim that browser cutoff0 represented proven native policy was incorrect.
+This first candidate does NOT introduce a new world binary cutoff. CPU alpha-mean
 coverage checks do not prove whole-tree silhouette preservation with overlapping
 alpha/depth; moving real-tree proof must reject thinning/halo regressions before
 adoption. No blanket canvas blur, source-art edits, sprite/UI smoothing or physical
@@ -90,9 +93,22 @@ Reference remains 2x raster diagnostic, not native pixel oracle. Snapshots and
 per-surface error regions separate geometry-edge aliasing from surface sampling.
 No worker GPU run; revised Firefox execution still belongs to manager.
 
-Cutout caution: native/world transparent pass writes depth with alpha cutoff0.
+Cutout caution: browser transparent pass writes depth with alpha cutoff0; native
+textured drawrange binding instead resets cutoff0.5 and disables blending.
 Fractional filtered alpha can write formerlyemptytexels and hide deeperleafcards
 although average alpha is conserved. This is a plausible explanation for the
 first green-signal drop, not proven attribution. Do not change cutoff/depth policy
 to manufacture a passing metric; inspect aligned whole-tree stills before adopting
 foliage filtering, and retain default OFF if thinning/desaturation is observed.
+
+Effective native-policy correction (source audit after first Firefox execution):
+OpenGLWorldChunkRenderer drawChunkDiagnosticLayers calls bindChunkBatchDrawState
+before constructing/flushing every textured drawrange. That helper enables alpha
+test GREATER0.5 and disables blending, overriding the outer transparent-pass state.
+No live native GL draw trace was captured in this task; source call order supports
+this interpretation. Auditing all73 approved palette-converted textures found
+zero fractional-alpha texels:29 textures contain binary cutouts,44 fullyopaque.
+Evidence: tests/browser-texture-stability/actual-alpha-audit.json. Introducing
+fractional mip alpha is therefore a new state where browser/native policy matters;
+any second candidate must be restricted to verified binary cutouts, preserve the
+original path for future fractional sources, and receive actual whole-tree proof.
