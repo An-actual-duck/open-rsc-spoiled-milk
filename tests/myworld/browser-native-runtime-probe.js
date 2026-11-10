@@ -1,6 +1,12 @@
 import {createSynchronousNativeCall} from './browser-native-call-dispatch.js';
-const proof=window.nativeRuntimeProof={completed:false,passed:false,events:[],errors:[],calls:{},runtime:'5.0',helperFailures:0,unhandled:[],scope:'Authentic CheerpJ scalar/int[]/JavaThrowable contract only; no game/GPU/FPS claim'};
-window.addEventListener('unhandledrejection',event=>{proof.unhandled.push(String(event.reason));});
+const proof=window.nativeRuntimeProof={completed:false,passed:false,events:[],errors:[],calls:{},console:[],windowErrors:[],runtime:'5.0',helperFailures:0,unhandled:[],scope:'Authentic CheerpJ scalar/int[]/JavaThrowable contract only; no game/GPU/FPS claim'};
+const describe=error=>({message:String(error),stack:error?.stack?String(error.stack):null});
+const bounded=value=>{try{return (value instanceof Error?String(value)+'\n'+(value.stack||''):typeof value==='string'?value:JSON.stringify(value)??String(value)).slice(0,3000);}catch{return '[unprintable diagnostic]';}};
+// Diagnostic probe only: preserve ordinary console behavior and retain at most
+// 64 bounded entries before loading CheerpJ, including class/JAR load failures.
+for(const level of ['debug','log','info','warn','error']){const original=console[level];console[level]=function(...args){if(proof.console.length<64)proof.console.push({level,args:args.slice(0,8).map(bounded)});return original.apply(this,args);};}
+window.addEventListener('error',event=>{if(proof.windowErrors.length<16)proof.windowErrors.push({message:String(event.message),error:event.error?describe(event.error):null,filename:event.filename,line:event.lineno,column:event.colno});});
+window.addEventListener('unhandledrejection',event=>{if(proof.unhandled.length<16)proof.unhandled.push(describe(event.reason));});
 const failureText='native-dispatch-probe-failure';
 const scalar=(_lib,a,b)=>(Math.imul(a,1664525)+b)|0;
 const vector=(_lib,seed,values)=>{const result=new Int32Array(values.length);for(let i=0;i<values.length;i++)result[i]=values[i]^seed;return result;};
@@ -26,5 +32,5 @@ try{
  const values=Object.fromEntries(proof.events.map(({name,value})=>[name,value]));
  if(exit!==0||values.completed!=='true'||Number(values.checks)<1900||proof.helperFailures!==2||proof.unhandled.length)throw Error('JNI contract probe incomplete/failed: '+JSON.stringify({exit,values,helperFailures:proof.helperFailures,unhandled:proof.unhandled}));
  proof.passed=true;
-}catch(error){proof.errors.push(String(error.stack||error));}
+}catch(error){proof.errors.push(describe(error));}
 finally{proof.completed=true;}
