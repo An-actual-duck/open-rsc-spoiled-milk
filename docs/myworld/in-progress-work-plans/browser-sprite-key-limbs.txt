@@ -1,0 +1,126 @@
+Browser sprite-cache key limbs — adopted exact representation
+
+The owner’s host profile attributed about314ms self time over20s to Layer key
+construction, with comparison also measurable. Those spans include pixel hashing
+and other unchanged work, so measured claims below are limited to the defined sprite bridge span.
+
+Ordinary cache startup now defaults ON after the bounded headroom comparison
+below. Only the private browser benchmark can request spritekeylimbs=on|off via
+spoiledmilk.browserSpriteKeyLimbs; its omitted policy remains OFF for reference.
+Ordinary/software URLs receive no override. Bootstrap reports requested and actual selected cache
+mode once after installing the production bridge; no per-frame diagnostics.
+Native renderer, game rules, networking, artwork, pixels and depth are unchanged.
+
+Representation and algebra
+--------------------------
+The original long[19] is retained literally when OFF. ON uses int[23]: fifteen
+original int/boolean values and four signed64 values represented as high/low limbs.
+The four wide values are x-originX, y-originY, top16-(originX<<16), and
+bottom16-(originX<<16). There is no double rounding or wide arithmetic in their
+construction. Java low-int subtraction intentionally wraps modulo2^32. Comparing
+(aLow^MIN_VALUE)<(bLow^MIN_VALUE) computes unsigned borrow. The high word is
+ aHigh-bHigh-borrow.
+For unshifted values each high input is sign extension (n>>31); shifted originX
+has exact words (x>>16,x<<16). The high subtraction fits int for every possible
+input: conservative bounds[-32770,32769]. Reconstruction is the exact original
+signed64 result, so the mapping is bijective even for MIN/MAX and negative values.
+
+The original Arrays.hashCode(long[]) formula is preserved exactly: each wide
+value contributes high^low; a sign-extended narrow value contributes n^(n>>31),
+including negative source scales/starts. Hash accumulation/pixel hashing remains
+Java32-bit wrap. Exact full source-pixel hashing AND comparison are mandatory;
+mutable pixels and equal polynomial hashes never alias cache entries. Owned keys
+still copy pixels, no origin/anchor/frame object is retained, and source changes
+cannot be hidden by key reuse. The existing512bytes/layer budget estimate remains
+unchanged: hits, misses, IDs, eviction order/cost and resource policy match the
+frozen implementation. ON reduces metadata payload, not the declared cache budget.
+
+Validation
+----------
+Frozen real BrowserWorldSpriteCache source5e77ca2f8a05d068c72ad208bdf17678bbf25f1a
+runs in an independent JVM against candidateOFF,ON and a genuine no-property default cohort. Java8 and21 each serialize
+4,986,475 identical bytes, SHA256:
+44bb41dfc042b64aa65bd0b9c95b4813f44a4f6d3aaa968524d128b0911fd6ed.
+24,000 actual private Layer cases cover random int and signed/fixed boundaries;
+96,000 independent BigInteger wide-value checks validate all four fields. Every
+Layer hash is checked against the original long-array formula. ON exercises24,000boundary plus6accepted dimension
+limb representations, OFF retains long arrays. There are3,628 real cache calls per
+run with complete RGBA/bounds/ID/hit/miss/budget/epoch/LRU-entry-hash/cost output,
+translations, null/exception cases, source mutation, held evicted results and
+purposeful equal-hash/unequal-pixel inputs. Existing9,089 production-compositor
+checks pass in both representations and Java8/21. Fresh target8 client build passes.
+
+Tests: test-browser-sprite-key-limbs.py (--java-home forJava8/21),
+test-browser-world-sprite-cache.py (explicit runtime property ON/OFF),
+test-browser-sprite-key-policy.mjs, actual frontend VM with ordinary/default and
+--benchmark-key-limbs, plus existing stream/owned-state controls. Outputs under
+output/tests/browser-sprite-key-limbs; layout warnings are inherited old ai2 files.
+No GPU/browser tests or public/Oracle work performed by this worker. The extra
+four helper calls and startup branch may offset arithmetic savings; manager’s
+bounded same-artifact OFF/ON measurement below informed the adoption decision. No60FPS claim.
+
+Frozen measurement candidate
+----------------------------
+Maintained prepare/serve8135: ai2/output/tests/browser-gameplay-spike/
+browser-sprite-key-limbs, sourcefea08849658b32b37067935328a040191fa5b615, fresh
+candidate client5a05f6b92428e1e07d1e11c6504c1e3fce76913e7296aee1288683ab8554105a.
+Its bootstrap compiles against this same fresh candidateJAR, not an old baseline
+without the new cache path. stage.json records complete frontend byte hashes and
+startup property/mode receipts. NativeMap/owner credentials and public unchanged.
+Key flag is startup-only; ON/OFF comparison needs fresh JVM sessions. Benchmark
+ownedstate=on&uploadvalidation=on should be explicit in both modes to retain
+already accepted optimizations. This frozen artifact predates the separate model
+pick/Halo candidate controls; do not assume they are present. No GPU launched by
+worker. Frozen8135 must remain unchanged even if later source integrates main.
+
+ON-only source-count follow-up (after frozen8135)
+------------------------------------------------
+Source width*height also avoids wide math on ON. Both dimensions must be positive,
+the double product must be<=2^21, then and only then it narrows to int. Every
+accepted integer product is exactly representable. Any potentially inexact product
+is>=2^53 and cannot round near the2^21 threshold; all int-input products are finite.
+OFF retains the literal original long multiplication/validation/order. Pixels
+still undergo null/length checks and complete hashing/comparison. Independent
+BigInteger dimension cases include MIN/MAX, negatives/zero, threshold±1, missing
+source storage and5actual2M-pixel accepted arrays; all1,261dimension cases
+match frozen exception/count/hash bytes onJava8/21. Frozen8135 is unchanged; new measurement artifact will be8137 after proof.
+
+Final count+limb candidate normal-merged published model controls3680a1a20 and
+reviewed Halo main37a60529bd2569e2832338e3770feeb699aec025, then rebuilt fresh
+target8 client2510ca983a1e08ab98a6c3c002c15970c46a816a02b1f76eb2169d4d8f8ae0aa.
+New model controls remain ordinary-defaultOFF; they are explicitly ON only for
+the planned key benchmark, with halomatch=on in both key cohorts. That pre-adoption key flag
+remained OFF pending the now-completed measurement below. Existing8135 is historical and
+unchanged; final count+limb measurement uses a new frozen8137 artifact.
+
+Manager long-warm comparison and adoption
+-----------------------------------------
+Evidence: manager/output/reviews/browser-display-performance/benchmarks/
+sprite-key-steady-off-1/result.json and sprite-key-steady-on-1/result.json. Both
+fresh CheerpJ5/Java8 JVMs used180s warmup then40s measurement on frozen8137,
+internal960x540, fixed authoritative location/camera/daylight; model bounds,
+Halo, owned state and streaming validation ON in both. No screenshots, profiler
+or input during timed phase. NPCs continue to roam.
+
+OFF59.75259197FPS /31.672765 mean actors; ON59.80965360FPS /31.987942 actors.
+Both were near the60FPS cap; no isolated raw FPS gain is claimed. Measured sprite
+bridge column3 mean decreased0.86715178ms ->0.80898128ms (about0.058ms/frame).
+Normalized by actor count it decreased0.02737847 ->0.02529019ms/actor (about7.6%).
+The ON cohort had about3.5%more cache misses/frame (1.30145 ->1.34719).
+Total bridge mean varied4.188 ->4.289ms, and final/present span2.289 ->2.454ms;
+these results do not establish lower total frame CPU or universal throughput.
+
+The defined sprite CPU reduction, smaller int metadata payload and eliminated
+metadata-long widening support adopting the exact representation for headroom.
+Do not claim60FPS across devices/locations or attribute other stage variation to
+this change. Current default is ON; explicit benchmark OFF retains the frozen
+long implementation. Bootstrap requested/default parsing uses the same true
+default as the actual getter, preventing ordinary requested=false/actual=true.
+
+Normal-merged published model-default maincd219e9263ce63fe75962177922735948a59f405;
+Scene ordinary ON is preserved. Java8/21 actual no-property cache/default getter
+and public Bridge getter checks pass; no-property/default, explicitOFF andON all
+produce the same4,986,475 frozen oracle bytes/hash. Fresh final client/Bootstrap
+must be built together. Adopted target8 client build passed, SHA256
+2c4602c3d0872202809fef75df415e997936ac85716a940d858cc1b2e89bc169. Frozen8137 and all older stages remain untouched. Worker
+performed CPU verification only; no GPU/browser/public/Oracle operations.
