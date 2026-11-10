@@ -29,3 +29,24 @@ are limited to this memo and explicit retirement at five publication sites.
 Normal-merged published main5e77ca2f8, including adopted owned state and stream
 upload validation. Client rebuilt after final production changes. No actual
 GPU/performance measurement or main promotion for this candidate yet.
+
+Private same-artifact browser evidence (8134)
+-------------------------------------------
+Frozen source dc86bccc9adea0610e8bc0d5bcdf28abb365fa2e, client SHA256
+43c316df878f315c8335f594ea7877083f011f4afdd5db6697d415264ef8ccbc.
+Fresh Java8 sessions each warm60seconds then measure40seconds at internal960x540,
+fixed location/camera/daylight, owned GL and stream validation ON in every cohort.
+ModelOFF/haloOFF55.81885FPS with31.0588 mean actor composites;
+modelOFF/haloON56.13799FPS with32.3438 actors. Halo comparison alone therefore
+shows a small raw difference with a population mismatch, not a proven isolated
+FPS gain. It replaces repeated known-immutable scope comparisons on the exact
+source path that the host profile identified; all source heights remain live.
+
+The same artifact with modelON/haloON reached59.70564FPS with30.5012 actors,
+401color draw calls/477928triangles and101/101ready chunks in all cohorts.
+Do not attribute this combined result to halo reuse, claim all-device60FPS or
+conflate actor-density differences with isolated speed. The model path has its
+own576-frame pick/pixel oracle and its own adoption decision. No screenshots,
+profiler, input or concurrent worker CPU tests occurred during timed phases.
+Evidence lives in manager output/reviews/browser-display-performance/benchmarks/
+halo-model-off-off-1, halo-model-off-on-1 and halo-model-on-on-1. Public unchanged.
