@@ -74,3 +74,11 @@ const a=await run(original),b=await run(current);assert.ok(a.draws>1000);assert.
 for(const name of ['uniform1f','uniform1i','activeTexture','bindTexture','bindVertexArray'])assert.ok(b.counts[name]<a.counts[name],name+' was not reduced');
 const result={draws:b.draws,identical:true,originalCalls:a.counts,candidateCalls:b.counts,scope:'Mock GL per-draw state only; no hardware/FPS claim'};
 fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(result,null,2)+'\n');console.log('PASS '+b.draws+' exact ordered draws, uniforms/VAOs/textures/capabilities across alpha/kind/offset/plane/texture mutations, empty frame and intervening external state; no GPU/FPS claim');
+
+if(process.argv.includes('--prepare-hardware')){
+ const run=process.argv.find(x=>x.startsWith('--hardware-run='))?.split('=')[1]||'hardware-1';if(!/^[a-z0-9-]+$/.test(run))throw Error('Invalid hardware run');const target=path.join(out,run);if(fs.existsSync(target))throw Error('Hardware fixture exists; preserve evidence');fs.mkdirSync(target);
+ for(const file of fs.readdirSync(path.join(root,'tools/browser-gameplay/web')))if(file.endsWith('.js'))fs.copyFileSync(path.join(root,'tools/browser-gameplay/web',file),path.join(target,file));
+ fs.copyFileSync(path.join(root,'tests/myworld/browser-resident-draw-state-hardware.html'),path.join(target,'index.html'));
+ fs.writeFileSync(path.join(target,'original-webgl.mjs'),oldSource.replaceAll(pathToFileURL(path.join(root,'tools/browser-gameplay/web')).href+'/', './'));
+ console.log('Prepared hardware-only fixture: '+target);
+}

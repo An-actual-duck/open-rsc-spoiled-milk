@@ -1,0 +1,52 @@
+<!doctype html><meta charset="utf-8"><title>Resident color state pixel differential</title>
+<canvas id="old" width="96" height="96"></canvas><canvas id="new" width="96" height="96"></canvas>
+<script type="module">
+import {createBrowserWebGL as original} from './original-webgl.mjs';
+import {createBrowserWebGL as current} from './webgl.js';
+const vertex=`#version 120
+attribute vec3 aPosition;attribute vec4 aMaterialColor;attribute vec2 aTexCoord;
+uniform float uChunkOffsetX;uniform float uChunkOffsetZ;uniform float uTerrainWorldOffsetX;uniform float uTerrainWorldOffsetZ;
+varying vec4 colorValue;varying vec2 uv;
+void main(){gl_Position=vec4(aPosition.x+uChunkOffsetX*.0002+uTerrainWorldOffsetX*.0001,aPosition.y+uChunkOffsetZ*.0002+uTerrainWorldOffsetZ*.0001,aPosition.z,1.0);colorValue=aMaterialColor;uv=aTexCoord;}`;
+const fragment=`#version 120
+uniform sampler2D uTexture;uniform int uTextureEnabled;uniform int uGeometryRoofReceivers;
+varying vec4 colorValue;varying vec2 uv;
+void main(){vec4 color=colorValue;if(uTextureEnabled==1)color*=texture2D(uTexture,uv);if(uGeometryRoofReceivers==1)color.b*=.5;gl_FragColor = color;}`;
+async function run(create,id){
+ const canvas=document.querySelector(id),gl=canvas.getContext('webgl2'),backend=create(canvas),n=backend.natives;
+ await n.Java_orsc_BrowserWebGLBridge_initialize(null,vertex,fragment);
+ await n.Java_orsc_BrowserWebGLBridge_initializeLighting(null,vertex,fragment);await n.Java_orsc_BrowserWebGLBridge_initializeSky();
+ const light=new Float32Array(81);light[0]=1;light[1]=1;light[3]=64;light[11]=1;light[12]=0;
+ for(let i=0;i<4;i++)light[32+i*5]=1;
+ await n.Java_orsc_BrowserWebGLBridge_lightingFrame(null,light);
+ await n.Java_orsc_BrowserWebGLBridge_uploadLightingMask(null,5,1,1,new Uint8Array([255,0,0,255]),new Float32Array(4));
+ await n.Java_orsc_BrowserWebGLBridge_skyFrame(null,new Float32Array(20),new Float32Array(4096));
+ for(const [id,pixel,alpha] of [[7,0xff4444ff,false],[8,0x9988ff66,true],[9,0xffccaa44,false]])await n.Java_orsc_BrowserWebGLBridge_uploadTexture(null,id,1,1,new Int32Array([pixel]),alpha);
+ const v=new Float32Array(28*6);const positions=[[-.7,-.7,.1],[.7,-.7,.1],[0,.7,.1],[-.4,-.4,0],[.4,-.4,0],[0,.4,0]];
+ for(let i=0;i<6;i++){v.set(positions[i],i*28);v.set([1,.8,.7,1,.5,.5],i*28+3);v[i*28+19]=1;}
+ for(let id=1;id<=4;id++){
+  const batches=[];for(let kind=0;kind<=5;kind++)batches.push(7,0,3,kind,0,8,3,3,kind,1,id%2?999:9,0,3,kind,0);
+  await n.Java_orsc_BrowserWebGLBridge_uploadChunk(null,id,v,new Int32Array([0,1,2,3,4,5]),new Int32Array(batches));
+ }
+ const frames=[];const matrix=new Float32Array(48),u=new Float32Array(30);u[29]=0;
+ for(let frame=0;frame<8;frame++){
+  const draws=[];for(let id=1;id<=4;id++)draws.push(id,frame%2?id*128:0,frame%3?-id*128:0,frame%2?256:0,frame%3?256:0,63,frame%3-1,0);
+  draws.push(...draws.slice(0,8),...draws.slice(0,8));
+  await n.Java_orsc_BrowserWebGLBridge_worldProgress(null,new Int32Array([1,2,1,draws.length/8,draws.length/8,0,0,0,1,96,96,3]));
+  await n.Java_orsc_BrowserWebGLBridge_present(null,96,96,true,matrix,u,new Int32Array(draws),new Int32Array(96*96).fill(0x01000000));
+  const pixels=new Uint8Array(96*96*4);gl.readPixels(0,0,96,96,gl.RGBA,gl.UNSIGNED_BYTE,pixels);if(gl.getError()!==gl.NO_ERROR)throw Error('GPU readback error');frames.push(pixels);
+  gl.bindVertexArray(null);gl.useProgram(null);gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,null);
+  if(frame===2)await n.Java_orsc_BrowserWebGLBridge_uploadTexture(null,7,1,1,new Int32Array([0xff9922bb]),true);
+  if(frame===3)await n.Java_orsc_BrowserWebGLBridge_deleteTextures(null,new Int32Array([9]));
+  if(frame===4)await n.Java_orsc_BrowserWebGLBridge_uploadTexture(null,9,1,1,new Int32Array([0xff446688]),false);
+  if(frame===5){light[12]=-1;await n.Java_orsc_BrowserWebGLBridge_lightingFrame(null,light);}
+ }
+ const result={frames,renderer:backend.stats.renderer,draws:backend.stats.drawCalls};backend.dispose();return result;
+}
+try{
+ const a=await run(original,'#old'),b=await run(current,'#new');let comparedBytes=0,changedBytes=0,coloredPixels=0;
+ for(let i=0;i<a.frames.length;i++)for(let n=0;n<a.frames[i].length;n++){comparedBytes++;if(a.frames[i][n]!==b.frames[i][n])changedBytes++;if(n%4!==3&&a.frames[i][n]!==0)coloredPixels++;}
+ if(changedBytes||coloredPixels<1000||!b.draws)throw Error(JSON.stringify({changedBytes,coloredPixels,draws:b.draws}));
+ window.result={passed:true,frames:a.frames.length,comparedBytes,changedBytes,coloredComponents:coloredPixels,renderer:b.renderer,scope:'Actual WebGL2 synthetic shader pixel differential; not gameplay or FPS acceptance'};
+}catch(e){window.result={passed:false,error:String(e)};}
+</script>
