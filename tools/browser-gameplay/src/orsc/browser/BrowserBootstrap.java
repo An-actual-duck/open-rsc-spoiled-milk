@@ -10,6 +10,7 @@ public final class BrowserBootstrap {
     public static native void reportState(String mode, int fps, int loadingPercent);
     public static native void reportLoop(String mode,boolean earlyFaceCull,boolean fullResidentOwnership);
     public static native void reportTelemetry(String names,double[] values);
+    public static native void reportSpriteKeyPolicy(boolean requested,boolean enabled);
     public static native void reportPreparation(boolean enabled,boolean active,boolean animated);
     private static native int wsOpen();
     private static native byte[] wsRead(int socket, int maximum);
@@ -96,6 +97,7 @@ public final class BrowserBootstrap {
             System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");
             // No native presenter or GLFW initialization; only the browser sink owns GPU submission.
             orsc.BrowserWebGLBridge.install();
+            reportSpriteKeyPolicy(Boolean.getBoolean("spoiledmilk.browserSpriteKeyLimbs"),orsc.BrowserWebGLBridge.isSpriteKeyLimbsEnabled());
         }
         System.setProperty("spoiledmilk.directFramebuffer", "true");
         System.setProperty("spoiledmilk.browserBorderlessDisplay", "true");

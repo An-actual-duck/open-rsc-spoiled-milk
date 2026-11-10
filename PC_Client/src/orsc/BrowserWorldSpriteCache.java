@@ -14,6 +14,8 @@ import orsc.graphics.three.Renderer3DFrame;
  * No anchor/depth/frame state is retained. Caller scratch is borrowed only on misses.
  */
 final class BrowserWorldSpriteCache {
+	private static final boolean KEY_LIMBS = Boolean.getBoolean("spoiledmilk.browserSpriteKeyLimbs");
+	static boolean isKeyLimbsEnabled() { return KEY_LIMBS; }
 	static final long MAX_CACHE_BYTES = 16L * 1024 * 1024;
 	static final int MAX_ENTRIES = 256;
 	static final int MAX_PIXELS = 2 * 1024 * 1024;
@@ -169,6 +171,7 @@ final class BrowserWorldSpriteCache {
 
 	private static final class Layer {
 		final long[] metadata;
+		final int[] metadataLimbs;
 		final RendererSpriteTransform transform; // final immutable value, no sprite/frame references
 		final int[] pixels;
 		final int pixelCount;
@@ -181,24 +184,57 @@ final class BrowserWorldSpriteCache {
 			pixels = sprite.getPixels();
 			check(pixels != null && pixels.length >= count, "Incomplete source pixels");
 			pixelCount = (int) count;
-			metadata = new long[] {(long) c.getX() - x, (long) c.getY() - y, c.getWidth(), c.getHeight(),
+			if (KEY_LIMBS) {
+				metadata = null;
+				metadataLimbs = new int[] {0,0,0,0,c.getWidth(),c.getHeight(),
+					c.getSourceX(),c.getSourceY(),c.getSourceWidth(),c.getSourceHeight(),
+					c.getSourceStartX16(),c.getSourceStartY16(),c.getSourceScaleX16(),c.getSourceScaleY16(),
+					c.getAlpha(),0,0,0,0,c.isMirrorX()?1:0,c.requiresOrderedReplay()?1:0,
+					sprite.getWidth(),sprite.getHeight()};
+				putDifference(metadataLimbs,0,c.getX(),c.getX()>>31,x,x>>31);
+				putDifference(metadataLimbs,2,c.getY(),c.getY()>>31,y,y>>31);
+				putDifference(metadataLimbs,15,c.getTopX16(),c.getTopX16()>>31,x<<16,x>>16);
+				putDifference(metadataLimbs,17,c.getBottomX16(),c.getBottomX16()>>31,x<<16,x>>16);
+			} else {
+				metadataLimbs = null;
+				metadata = new long[] {(long) c.getX() - x, (long) c.getY() - y, c.getWidth(), c.getHeight(),
 				c.getSourceX(), c.getSourceY(), c.getSourceWidth(), c.getSourceHeight(),
 				c.getSourceStartX16(), c.getSourceStartY16(), c.getSourceScaleX16(), c.getSourceScaleY16(),
 				c.getAlpha(), (long) c.getTopX16() - ((long) x << 16),
 				(long) c.getBottomX16() - ((long) x << 16), c.isMirrorX() ? 1 : 0,
 				c.requiresOrderedReplay() ? 1 : 0, sprite.getWidth(), sprite.getHeight()};
+			}
 			transform = c.getTransform();
 			int pixelHash = 1;
 			for (int i = 0; i < pixelCount; i++) pixelHash = 31 * pixelHash + pixels[i];
-			hash = 31 * (31 * Arrays.hashCode(metadata) + transform.hashCode()) + pixelHash;
+			hash = 31 * (31 * (KEY_LIMBS ? metadataHash(metadataLimbs) : Arrays.hashCode(metadata)) + transform.hashCode()) + pixelHash;
 		}
+
+		/** Exact signed-64 subtraction represented by two int limbs. The low int
+		 * intentionally wraps mod2^32; unsigned borrow corrects the high limb.
+		 * All caller high differences fit int (sign limbs or signed x>>16). */
+		private static void putDifference(int[] out,int at,int aLow,int aHigh,int bLow,int bHigh) {
+			out[at+1] = aLow-bLow;
+			out[at] = aHigh-bHigh-((aLow^Integer.MIN_VALUE)<(bLow^Integer.MIN_VALUE)?1:0);
+		}
+		/** Identical to Arrays.hashCode(long[19]), including negative narrow ints. */
+		private static int metadataHash(int[] m) {
+			int h=31+(m[0]^m[1]);
+			h=31*h+(m[2]^m[3]);
+			for(int i=4;i<=14;i++)h=31*h+(m[i]^(m[i]>>31));
+			h=31*h+(m[15]^m[16]);h=31*h+(m[17]^m[18]);
+			for(int i=19;i<23;i++)h=31*h+(m[i]^(m[i]>>31));
+			return h;
+		}
+
 		Layer(Layer probe) {
-			metadata = probe.metadata.clone(); transform = probe.transform;
+			metadata = probe.metadata == null ? null : probe.metadata.clone();
+			metadataLimbs = probe.metadataLimbs == null ? null : probe.metadataLimbs.clone(); transform = probe.transform;
 			pixelCount = probe.pixelCount; pixels = Arrays.copyOf(probe.pixels, pixelCount); hash = probe.hash;
 		}
 		boolean same(Layer other) {
 			if (hash != other.hash || pixelCount != other.pixelCount
-				|| !Arrays.equals(metadata, other.metadata) || !transform.equals(other.transform)) return false;
+				|| !(KEY_LIMBS ? Arrays.equals(metadataLimbs, other.metadataLimbs) : Arrays.equals(metadata, other.metadata)) || !transform.equals(other.transform)) return false;
 			for (int i = 0; i < pixelCount; i++) if (pixels[i] != other.pixels[i]) return false;
 			return true;
 		}

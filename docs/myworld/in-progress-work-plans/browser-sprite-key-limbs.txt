@@ -1,0 +1,59 @@
+Browser sprite-cache key limbs — experimental startup-only candidate
+
+The owner’s host profile attributed about314ms self time over20s to Layer key
+construction, with comparison also measurable. Those spans include pixel hashing
+and other unchanged work, so this change makes no performance claim.
+
+Default OFF. Only the installed browser’s private benchmark can request
+spritekeylimbs=on|off via spoiledmilk.browserSpriteKeyLimbs. Ordinary/software
+URLs receive no override. Bootstrap reports requested and actual selected cache
+mode once after installing the production bridge; no per-frame diagnostics.
+Native renderer, game rules, networking, artwork, pixels and depth are unchanged.
+
+Representation and algebra
+--------------------------
+The original long[19] is retained literally when OFF. ON uses int[23]: fifteen
+original int/boolean values and four signed64 values represented as high/low limbs.
+The four wide values are x-originX, y-originY, top16-(originX<<16), and
+bottom16-(originX<<16). There is no double rounding or wide arithmetic in their
+construction. Java low-int subtraction intentionally wraps modulo2^32. Comparing
+(aLow^MIN_VALUE)<(bLow^MIN_VALUE) computes unsigned borrow. The high word is
+ aHigh-bHigh-borrow.
+For unshifted values each high input is sign extension (n>>31); shifted originX
+has exact words (x>>16,x<<16). The high subtraction fits int for every possible
+input: conservative bounds[-32770,32769]. Reconstruction is the exact original
+signed64 result, so the mapping is bijective even for MIN/MAX and negative values.
+
+The original Arrays.hashCode(long[]) formula is preserved exactly: each wide
+value contributes high^low; a sign-extended narrow value contributes n^(n>>31),
+including negative source scales/starts. Hash accumulation/pixel hashing remains
+Java32-bit wrap. Exact full source-pixel hashing AND comparison are mandatory;
+mutable pixels and equal polynomial hashes never alias cache entries. Owned keys
+still copy pixels, no origin/anchor/frame object is retained, and source changes
+cannot be hidden by key reuse. The existing512bytes/layer budget estimate remains
+unchanged: hits, misses, IDs, eviction order/cost and resource policy match the
+frozen implementation. ON reduces metadata payload, not the declared cache budget.
+
+Validation
+----------
+Frozen real BrowserWorldSpriteCache source5e77ca2f8a05d068c72ad208bdf17678bbf25f1a
+runs in an independent JVM against candidateOFF andON. Java8 and21 each serialize
+4,891,604 identical bytes, SHA256:
+26b77eb239bdd4896bca061016044ec03d4652e5fd30f389debffdda70987330.
+24,000 actual private Layer cases cover random int and signed/fixed boundaries;
+96,000 independent BigInteger wide-value checks validate all four fields. Every
+Layer hash is checked against the original long-array formula. ON exercises24,000
+limb representations, OFF retains long arrays. There are3,628 real cache calls per
+run with complete RGBA/bounds/ID/hit/miss/budget/epoch/LRU-entry-hash/cost output,
+translations, null/exception cases, source mutation, held evicted results and
+purposeful equal-hash/unequal-pixel inputs. Existing9,089 production-compositor
+checks pass in both representations and Java8/21. Fresh target8 client build passes.
+
+Tests: test-browser-sprite-key-limbs.py (--java-home forJava8/21),
+test-browser-world-sprite-cache.py (explicit runtime property ON/OFF),
+test-browser-sprite-key-policy.mjs, actual frontend VM with ordinary/default and
+--benchmark-key-limbs, plus existing stream/owned-state controls. Outputs under
+output/tests/browser-sprite-key-limbs; layout warnings are inherited old ai2 files.
+No GPU/browser tests or public/Oracle work performed by this worker. The extra
+four helper calls and startup branch may offset arithmetic savings; manager’s
+same-artifact OFF/ON browser measurement decides promotion. No60FPS claim.
