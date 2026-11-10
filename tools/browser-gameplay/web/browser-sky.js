@@ -1,6 +1,6 @@
 /** Bounded replay of the shared native world sky. Geometry/palette values are
  * exported by BrowserSkyData; this module adds no alternate visual formulas. */
-export function createBrowserSky(gl,{stats={},ownedFrame=null}={}) {
+export function createBrowserSky(gl,{stats={},ownedFrame=null,deferOrCheck=null}={}) {
   const MAX_VERTICES=65536,PALETTE_SIZE=1024,PALETTE_BYTES=PALETTE_SIZE*16,PEAK_BUDGET=MAX_VERTICES*16*2+PALETTE_BYTES;
   let program=null,vertexShader=null,fragmentShader=null,paletteTexture=null,vbo=null,vao=null,ranges=null,geometryBytes=0,values=null,initialized=false,disposed=false;
   let matrixLocation,paletteLocation;stats.skyResourceBytes=0;stats.skyPeakBudgetBytes=PEAK_BUDGET;stats.skyGeometryUploads=0;stats.skyPaletteUploads=0;stats.skyDrawCalls=0;
@@ -46,7 +46,7 @@ export function createBrowserSky(gl,{stats={},ownedFrame=null}={}) {
     if(next[0]===1){if(!vao||!ranges||next[3]<1)throw new Error('Browser sky geometry not uploaded');for(let n=4;n<20;n++)if(!Number.isFinite(next[n]))throw new Error('Browser sky matrix invalid');
       const palette=paletteInput instanceof Float32Array?paletteInput:new Float32Array(paletteInput);for(let n=0;n<next[3]*4;n++)if(!Number.isFinite(palette[n])||palette[n]<0||palette[n]>1)throw new Error('Browser sky palette bounds invalid');
       const active=ownedFrame?.active?null:gl.getParameter(gl.ACTIVE_TEXTURE);gl.activeTexture(gl.TEXTURE0);const binding=ownedFrame?.active?null:gl.getParameter(gl.TEXTURE_BINDING_2D);
-      try {gl.bindTexture(gl.TEXTURE_2D,paletteTexture);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,PALETTE_SIZE,1,gl.RGBA,gl.FLOAT,palette);check('palette upload');stats.skyPaletteUploads++;}
+      try {gl.bindTexture(gl.TEXTURE_2D,paletteTexture);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,PALETTE_SIZE,1,gl.RGBA,gl.FLOAT,palette);if(deferOrCheck)deferOrCheck(()=>check('palette upload'));else check('palette upload');stats.skyPaletteUploads++;}
       finally{if(!ownedFrame?.active){gl.bindTexture(gl.TEXTURE_2D,binding);gl.activeTexture(active);}}
     }
     values=next;
