@@ -1,7 +1,7 @@
 import {createBrowserRetainedFrame} from './browser-retained-frame.js';
 /** Optional exact-coverage compositor. RGB is the ordinary software result over
  * black; transmittance is the surviving world coefficient. No world readback. */
-export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=null}={}) {
+export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=null,retainOpaqueFull=false}={}) {
   const MAX_PIXELS=2097152, UNIT=8;
   const retained=createBrowserRetainedFrame(gl,{stats,ownedFrame});
   let program,vertex,fragment,vao,rgb,coverage,width=0,height=0,tWidth=0,tHeight=0,pending,active,failed=false,disposed=false;
@@ -48,7 +48,7 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
     try{gl.useProgram(program);gl.bindVertexArray(vao);gl.disable(gl.DEPTH_TEST);gl.depthMask(false);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,rgb);gl.activeTexture(gl.TEXTURE0+UNIT);gl.bindTexture(gl.TEXTURE_2D,coverage||rgb);gl.uniform1i(gl.getUniformLocation(program,'image'),0);gl.uniform1i(gl.getUniformLocation(program,'transmittance'),UNIT);gl.uniform1i(gl.getUniformLocation(program,'transparent'),active.mode!==0?1:0);
       if(active.mode!==0){gl.enable(gl.BLEND);gl.blendEquationSeparate(gl.FUNC_ADD,gl.FUNC_ADD);gl.blendFuncSeparate(gl.ONE,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);}else gl.disable(gl.BLEND);gl.drawArrays(gl.TRIANGLES,0,3);check();
     }catch(e){failed=true;throw e;}finally{if(ownedFrame?.active){gl.disable(gl.BLEND);gl.depthMask(true);gl.activeTexture(gl.TEXTURE0);}else{gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,oldRgb);gl.activeTexture(gl.TEXTURE0+UNIT);gl.bindTexture(gl.TEXTURE_2D,oldCoverage);gl.activeTexture(old.active);gl.useProgram(old.program);gl.bindVertexArray(old.vao);old.depth?gl.enable(gl.DEPTH_TEST):gl.disable(gl.DEPTH_TEST);old.blend?gl.enable(gl.BLEND):gl.disable(gl.BLEND);gl.depthMask(old.depthMask);gl.blendFuncSeparate(old.srcRgb,old.dstRgb,old.srcAlpha,old.dstAlpha);gl.blendEquationSeparate(old.eqRgb,old.eqAlpha);}}
-    try{if(active.mode!==0){if(stats.retainedResourceBytes===0)reserveCombined(w*h*8);retained.capture(w,h,active.token);}else retained.reset();account();}catch(e){failed=true;throw e;}stats.overlayCoverageFrames++;stats.overlayCoverageMode=active.mode;active=null;
+    try{if(active.mode!==0||retainOpaqueFull){if(active.mode===0&&stats.overlayCoverageMode!==0)retained.reset();if(stats.retainedResourceBytes===0)reserveCombined(w*h*8);retained.capture(w,h,active.token);}else retained.reset();account();}catch(e){failed=true;throw e;}stats.overlayCoverageFrames++;stats.overlayCoverageMode=active.mode;active=null;
   }
   /** Region streaming replays the last FULL output; no pending Java delta is consumed. */
   function hold(w,h){alive();if(pending||active)throw new Error('Cannot hold a partially declared overlay');retained.drawFull(w,h);}

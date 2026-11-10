@@ -32,4 +32,12 @@ const f=fakeGL(),failed=createBrowserOverlay(f.gl);failed.prepare(2,2,1,1,1,0,fa
 const large=fakeGL(),budget={},bounded=createBrowserOverlay(large.gl,{stats:budget});
 for(const [w,h,seq]of [[2048,1024,1],[1024,2048,2]]){bounded.prepare(w,h,1,seq,seq,0,false,new Float32Array(w*h));assert.equal(bounded.begin(w,h),false);bounded.draw(w,h,new Uint8Array(w*h*4));assert.equal(budget.overlayCompositeResourceBytes,32*1024*1024);assert(budget.overlayCompositePeakBytes<=32*1024*1024,'combined C/T/retained replacement exceeded32MiB');}
 assert.equal(budget.overlayCompositePeakBytes,32*1024*1024);bounded.dispose();assert.equal(large.objects.size,0);
+// Browser opt-in retains actual opaque game UI too; standalone opaque behavior above is unchanged.
+const opaque=fakeGL(),opaqueStats={},opaqueOverlay=createBrowserOverlay(opaque.gl,{stats:opaqueStats,retainOpaqueFull:true});
+for(let seq=1;seq<=3;seq++){
+ opaqueOverlay.prepare(2,2,seq===1?1:0,seq===1?3:0,seq,0,false,new Float32Array(4));opaqueOverlay.begin(2,2);opaqueOverlay.draw(2,2,new Uint8Array(16));
+ const source=opaque.gl.lastCopy.tex,objects=opaque.objects.size,copies=opaqueStats.retainedCaptures;opaqueOverlay.hold(2,2);assert.equal(opaque.draws.at(-1).tex,source);assert.equal(opaqueStats.retainedCaptures,copies);assert.equal(opaque.objects.size,objects);
+ assert.equal(opaqueStats.retainedResourceBytes,32);assert(opaqueStats.overlayCompositeResourceBytes<=128);
+}
+opaqueOverlay.prepare(2,2,1,4,4,0,false,new Float32Array(4));opaqueOverlay.begin(2,2);opaqueOverlay.draw(2,2,new Uint8Array(16));opaqueOverlay.hold(2,2);opaqueOverlay.dispose();assert.equal(opaque.objects.size,0);
 console.log('PASS coverage upload ownership, premultiplied C+T blend selection, exact retained FULL/BASE caller tokens, duplicate sequencing, owner reset, opaque fallback, bounds and owned cleanup. GL API double; no GPU proof.');

@@ -33,6 +33,11 @@ reusable under the ordinary LRU policy.
   final FULL texture until the complete current scene can be presented. The
   retained texture is necessary with `preserveDrawingBuffer=false`; a no-draw
   pause alone is insufficient as an explicit framebuffer-content guarantee.
+- The browser compositor explicitly retains opaque fullscreen UI output as FULL
+  too, resetting its fade BASE at the opaque boundary. This prevents an immediate
+  post-modal transition from replaying an invalid/deleted cache. Standalone overlay
+  default semantics are unchanged; the browser opt-in stays within the existing
+  combined 32MiB texture bound. Consecutive opaque frames reuse the allocation.
 - FULL replay uses existing bounded textures/shader. It makes no new allocation,
   copy, readback, fade, token advance or BASE change. Upload validation precedes
   replay, and the world filtering sampler is removed. No throughput timer or
@@ -84,15 +89,15 @@ cost from browser preparation. This adds no per-face clocks or per-frame Java ca
   invalidation, reset/resize/owner generations and disposal.
 - Stream upload validation tests include held replay: queued faults reject before
   any FULL/world/sky/UI draw or new timer; context/error failures remain sticky.
-- Existing owned/scoped state oracle passes 42 frames, 568 draw/copy/clear records,
-  2,766 scoped state queries versus zero owned hot-frame queries.
+- Existing owned/scoped state oracle passes 42 frames, 570 draw/copy/clear records,
+  2,777 scoped state queries versus zero owned hot-frame queries.
 - Native atomic activation (4), transition/minimap latch acceptance (12), protocol
   client authority (3), and real packet recovery/quarantine/LRU (2) tests pass.
   Source-shape assertion and minimal recovery mock were updated for the additive
   two-argument presentation hook; the original hook behavior is unchanged.
 - Frontend contract and canonical layout checks pass.
 
-## Prepared hardware acceptance (not yet executed by worker)
+## Manager hardware result and remaining acceptance
 
 The maintained retained hardware oracle was extended from 233 to 249 cases. For
 all 16 native fade-count corpora, it additionally captures a nonblank original,
@@ -105,10 +110,31 @@ node tests/myworld/run-browser-retained-hardware.mjs --run-hardware \
   output/tests/browser-retained-frame/hardware/region-streaming-full-v1
 ```
 
-Only the manager may execute hardware tests or private gameplay probes. Required
+The manager executed the fresh `region-streaming-full-firefox-v2` stage in
+Firefox154/WebGL2: all249 cases passed, zero pixel mismatches. The browser reported
+`Radeon R9 200 Series, or similar` (Firefox's sanitized AMD/Radeon identity); this
+is not evidence of the exact physical model or any FPS result. Evidence:
+`/home/justin/Core-Framework/output/diagnostics/browser-motion-transitions/retained-firefox-3/result.json`.
+The initial stage's Chrome-specific ANGLE/OpenGL identity guard failed before any
+case in Firefox; its evidence was preserved and the fresh stage accepts the
+reported AMD/Radeon identity while rejecting software renderers. The Chrome
+runner retains its own strict ANGLE/OpenGL/SystemInfo checks. Pixel assertions
+were not relaxed.
+
+The isolated result proves FULL replay pixels, fade/resize/state/resource behavior;
+it does not exercise the later browser opaque-UI caller opt-in or a whole-game
+region transition. Only the manager may execute hardware tests or private gameplay
+probes. Required
 whole-game follow-up: initial login; ordinary region crossings and return; near and
 far teleport; signed-layer changes; active modal interfaces; input releases, error,
 context loss and Stop/restart. Verify no Java loading-image/partial-world flash,
 actual source completion, correct current-scene picks after unblocking, and bounded
 resource counts. Firefox-specific wall-clock load latency remains to be measured.
 No public host, player data or owner browser was touched by this worker.
+
+During a pending logical resolution change, the frontend changes CSS/layout only;
+the GPU canvas backing width/height stays at the captured size until the next
+actual present. Holds replay that original backing size. A native-boundary test
+covers new declared dimensions with old backing; retained module dimensions are
+still strictly validated. The complete next source frame resizes backing storage
+and resets overlay ownership before its draw.
