@@ -85,6 +85,8 @@ import static orsc.Config.*;
 import static orsc.multiclient.ClientPort.saveHideIp;
 
 public final class mudclient implements Runnable {
+    private static final boolean BROWSER_NPC_LAYER_PREPARATION = !"false".equalsIgnoreCase(
+        System.getProperty("spoiledmilk.browserNpcLayerPreparation", "true"));
 
 	private static final int[][] NPC_OVERLAP_PATTERN_2 = {{-1, 0}, {1, 0}};
 	private static final int[][] NPC_OVERLAP_PATTERN_3 = {{-1, 1}, {1, 1}, {0, -1}};
@@ -10918,139 +10920,36 @@ public final class mudclient implements Runnable {
 			}
 			boolean hideSummonDuringArrival = shouldHideSummonDuringArrival(npc);
 			if (!hideSummonDuringArrival) {
-			for (var15 = 0; var15 < 12; ++var15) {
-				var16 = this.getAnimDirLayer_To_CharLayer()[var11][var15];
-				if (npc.wield > 0 || npc.wield2 > 0) {
-					int[] animID;
-					animID = new int[]{-1, -1, -1, -1, npc.wield, -1, -1, -1, -1, -1, npc.wield2, -1};
-					AnimationDef animationDef = EntityHandler.getAnimationDef(animID[var16]);
-					if (animID[var16] >= 0) {
-						byte spriteOffsetX = 0;
-						byte spriteOffsetY = 0;
-						int variant = var14;
-						if (var12 && var13 >= 1 && var13 <= 3 && animationDef.hasF()) {
-							variant = var14 + 15;
-						}
-						if (var13 != 5 || animationDef.hasA()) {
-							//int sprite = variant + animationDef.getNumber();
-							Sprite sprite = spriteSelect(animationDef, variant);
-							int something1 = sprite.getSomething1();
-							int something2 = sprite.getSomething2();
-							int something3 = this.spriteSelect(EntityHandler.getAnimationDef(animID[var16]), 0).getSomething1();
-							if (something1 != 0 && something2 != 0 && something3 != 0) {
-								int xOffset = (spriteOffsetX * width1) / something1;
-								int yOffset = (spriteOffsetY * height) / something2;
-								int spriteWidth = (something1 * width1) / something3;
-								xOffset -= (spriteWidth - width1) / 2;
-								int colorVariant = animationDef.getCharColour();// CacheValues.animationCharacterColour[animID];
-								int baseColor = 0;
-								if (colorVariant == 1) {
-									baseColor = def.getSkinColour();// CacheValues.npcColourSkin[npc.npcId];
-									colorVariant = def.getHairColour();// CacheValues.npcColourHair[npc.npcId];
-								} else if (animID[var16] >= 230 && Config.S_WANT_CUSTOM_SPRITES) {
-									baseColor = def.getSkinColour();// CacheValues.npcColourSkin[npc.npcId];
-								} else if (colorVariant != 2) {
-									if (colorVariant == 3) {
-										baseColor = def.getSkinColour();// CacheValues.npcColourSkin[npc.npcId];
-										colorVariant = def.getBottomColour();// CacheValues.npcColourBottom[npc.npcId];
-									}
-								} else {
-									colorVariant = def.getTopColour();// CacheValues.npcColourTop[npc.npcId];
-									baseColor = def.getSkinColour();// CacheValues.npcColourSkin[npc.npcId];
-								}
-
-								this.getSurface().drawSpriteClipping(sprite, xOffset + x, yOffset + y, spriteWidth, height,
-									colorVariant, baseColor, 0, var12, topPixelSkew, 1, npcColourTransform);
-							}
-						}
-					}
-				} else {
-					int animID = def.getSprite(var16);
-					AnimationDef animationDef = EntityHandler.getAnimationDef(animID);
-					if (animID >= 0) {
-						byte spriteOffsetX = 0;
-						byte spriteOffsetY = 0;
-						int variant = var14;
-						if (var12 && var13 >= 1 && var13 <= 3 && animationDef.hasF()) {
-							variant = var14 + 15;
-						}
-						if (var13 != 5 || animationDef.hasA()) {
-							//int sprite = variant + animationDef.getNumber();
-							Sprite sprite = spriteSelect(animationDef, variant);
-							int something1 = sprite.getSomething1();
-							int something2 = sprite.getSomething2();
-							int something3 = this.spriteSelect(EntityHandler.getAnimationDef(animID), 0).getSomething1();
-							if (something1 != 0 && something2 != 0 && something3 != 0) {
-								int xOffset = (spriteOffsetX * width1) / something1;
-								int yOffset = (spriteOffsetY * height) / something2;
-								int spriteWidth = (something1 * width1) / something3;
-								xOffset -= (spriteWidth - width1) / 2;
-								int colorVariant = animationDef.getCharColour();// CacheValues.animationCharacterColour[animID];
-								int baseColor = 0;
-								if (colorVariant == 1) {
-									baseColor = def.getSkinColour();// CacheValues.npcColourSkin[npc.npcId];
-									colorVariant = def.getHairColour();// CacheValues.npcColourHair[npc.npcId];
-								} else if (animID >= 230 && Config.S_WANT_CUSTOM_SPRITES) {
-									baseColor = def.getSkinColour();// CacheValues.npcColourSkin[npc.npcId];
-								} else if (colorVariant != 2) {
-									if (colorVariant == 3) {
-										baseColor = def.getSkinColour();// CacheValues.npcColourSkin[npc.npcId];
-										colorVariant = def.getBottomColour();// CacheValues.npcColourBottom[npc.npcId];
-									}
-								} else {
-									colorVariant = def.getTopColour();// CacheValues.npcColourTop[npc.npcId];
-									baseColor = def.getSkinColour();// CacheValues.npcColourSkin[npc.npcId];
-								}
-								this.getSurface().drawSpriteClipping(sprite, xOffset + x, yOffset + y, spriteWidth, height,
-									colorVariant, baseColor, 0, var12, topPixelSkew, 1, npcColourTransform);
-							}
-						}
-					}
-				}
-				int animID = def.getSprite(var16);
-				AnimationDef animationDef = EntityHandler.getAnimationDef(animID);
-				if (animID >= 0) {
-					byte spriteOffsetX = 0;
-					byte spriteOffsetY = 0;
-					int variant = var14;
-					if (var12 && var13 >= 1 && var13 <= 3 && animationDef.hasF()) {
-						variant = var14 + 15;
-					}
-					if (var13 != 5 || animationDef.hasA()) {
-						//int sprite = variant + animationDef.getNumber();
-						Sprite sprite = spriteSelect(animationDef, variant);
-						int something1 = sprite.getSomething1();
-						int something2 = sprite.getSomething2();
-						int something3 = this.spriteSelect(EntityHandler.getAnimationDef(animID), 0).getSomething1();
-						if (something1 != 0 && something2 != 0 && something3 != 0) {
-							int xOffset = (spriteOffsetX * width1) / something1;
-							int yOffset = (spriteOffsetY * height) / something2;
-							int spriteWidth = (something1 * width1) / something3;
-							xOffset -= (spriteWidth - width1) / 2;
-							int colorVariant = animationDef.getCharColour();// CacheValues.animationCharacterColour[animID];
-							int baseColor = 0;
-							if (colorVariant == 1) {
-								baseColor = def.getSkinColour();// CacheValues.npcColourSkin[npc.npcId];
-								colorVariant = def.getHairColour();// CacheValues.npcColourHair[npc.npcId];
-							} else if (animID >= 230 && Config.S_WANT_CUSTOM_SPRITES) {
-								baseColor = def.getSkinColour();// CacheValues.npcColourSkin[npc.npcId];
-							} else if (colorVariant != 2) {
-								if (colorVariant == 3) {
-									baseColor = def.getSkinColour();// CacheValues.npcColourSkin[npc.npcId];
-									colorVariant = def.getBottomColour();// CacheValues.npcColourBottom[npc.npcId];
-								}
-							} else {
-								colorVariant = def.getTopColour();// CacheValues.npcColourTop[npc.npcId];
-								baseColor = def.getSkinColour();// CacheValues.npcColourSkin[npc.npcId];
-							}
-
-							this.getSurface().drawSpriteClipping(sprite, xOffset + x, yOffset + y, spriteWidth, height,
-								colorVariant, baseColor, 0, var12, topPixelSkew, 1, npcColourTransform);
-						}
-					}
-				}
-			}
-			}
+            int[] wieldAnimations = null;
+            boolean reuseBodyPreparation = BROWSER_NPC_LAYER_PREPARATION
+                && Renderer3DSettings.isBrowserPresentationAvailable()
+                && this.getSurface().isGpuOwnedSceneSpriteCaptureActive()
+                && this.getSurface().isBrowserFramePreparationActive();
+            for (var15 = 0; var15 < 12; ++var15) {
+                var16 = this.getAnimDirLayer_To_CharLayer()[var11][var15];
+                if (npc.wield > 0 || npc.wield2 > 0) {
+                    if (wieldAnimations == null) {
+                        wieldAnimations = new int[12];
+                        java.util.Arrays.fill(wieldAnimations, -1);
+                    }
+                    // Refresh both mutable equipment IDs at the original per-layer boundary.
+                    wieldAnimations[4] = npc.wield;
+                    wieldAnimations[10] = npc.wield2;
+                    drawNpcAnimationLayer(def, wieldAnimations[var16], var14, var13, var12,
+                        x, y, width1, height, topPixelSkew, npcColourTransform, 1);
+                } else if (reuseBodyPreparation) {
+                    // These are deliberately two draws: translucent layers must blend twice.
+                    drawNpcAnimationLayer(def, def.getSprite(var16), var14, var13, var12,
+                        x, y, width1, height, topPixelSkew, npcColourTransform, 2);
+                    continue;
+                } else {
+                    drawNpcAnimationLayer(def, def.getSprite(var16), var14, var13, var12,
+                        x, y, width1, height, topPixelSkew, npcColourTransform, 1);
+                }
+                drawNpcAnimationLayer(def, def.getSprite(var16), var14, var13, var12,
+                    x, y, width1, height, topPixelSkew, npcColourTransform, 1);
+            }
+            }
 
 			drawCombatEffectOverlay(npc, x, y, width1, height);
 			drawClericCurseOverlay(npc, x, y, width1, height);
@@ -11110,6 +11009,38 @@ public final class mudclient implements Runnable {
 				+ overlayMovement + ',' + npcIndex + ',' + width1 + ',' + x + ')');
 		}
 	}
+
+    /** One invocation/layer only; no retained actor, sprite, definition or pixel cache. */
+    private void drawNpcAnimationLayer(NPCDef def, int animID, int frame, int sourceDirection,
+        boolean mirror, int x, int y, int width, int height, int topPixelSkew,
+        int colourTransform, int repetitions) {
+        AnimationDef animation = EntityHandler.getAnimationDef(animID);
+        if (animID < 0) return;
+        int variant = frame;
+        if (mirror && sourceDirection >= 1 && sourceDirection <= 3 && animation.hasF()) variant += 15;
+        if (sourceDirection == 5 && !animation.hasA()) return;
+        Sprite sprite = spriteSelect(animation, variant);
+        int boundWidth = sprite.getSomething1(), boundHeight = sprite.getSomething2();
+        int normalWidth = spriteSelect(EntityHandler.getAnimationDef(animID), 0).getSomething1();
+        if (boundWidth == 0 || boundHeight == 0 || normalWidth == 0) return;
+        int spriteWidth = boundWidth * width / normalWidth;
+        int offsetX = 0;
+        offsetX -= (spriteWidth - width) / 2;
+        int colour = animation.getCharColour(), skin = 0;
+        if (colour == 1) {
+            skin = def.getSkinColour(); colour = def.getHairColour();
+        } else if (animID >= 230 && Config.S_WANT_CUSTOM_SPRITES) {
+            skin = def.getSkinColour();
+        } else if (colour == 3) {
+            skin = def.getSkinColour(); colour = def.getBottomColour();
+        } else if (colour == 2) {
+            colour = def.getTopColour(); skin = def.getSkinColour();
+        }
+        for (int repeat = 0; repeat < repetitions; repeat++) {
+            this.getSurface().drawSpriteClipping(sprite, x + offsetX, y, spriteWidth, height,
+                colour, skin, 0, mirror, topPixelSkew, 1, colourTransform);
+        }
+    }
 
 	private void drawClericBuffOverlay(ORSCharacter character, int x, int y, int width, int height) {
 		if (character != this.localPlayer || character == null || character.clericBuffPlayback == null) return;
