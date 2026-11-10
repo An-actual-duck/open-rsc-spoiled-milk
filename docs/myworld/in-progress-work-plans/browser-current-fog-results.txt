@@ -1,0 +1,62 @@
+Browser current-fog preparation experiment — manager decision, 2026-11-10
+======================================================================
+Disposition: preserved and parked; no runtime merge or default change.
+Exact parked handoff:d1ac6189a19f4d9eb96a55a9e1bd50222b186660.
+
+Scope
+-----
+Use the existing nominal fog28-to40 tile range, unchanged5x5 source-sector
+window and3x3 gameplay/collision core. No Medium/Low distance presets. Test
+whether omitting GPU preparation outside color/shadow demand is worthwhile.
+Prototype runtime source5fb125c6d515d34524b3eab1401c57c967e6229c remains OFF.
+
+Measurement
+-----------
+Same immutable artifact, isolated foreground Firefox154, logical960x540,
+physical1843x1037, High shadows80MiB. Each OFF/ON startup policy warmed180s
+then ran two30s no-input timed intervals. Extra numeric load reporting enabled.
+
+                                OFF          ON
+Mean world FPS                  40.68        39.56
+Mean actor groups/frame         31.46        33.76
+Far teleport stream interval    10.977s       9.810s
+City-return stream interval     11.026s      10.220s
+Ordinary crossing interval       1.831s       1.552s
+
+No demonstrated FPS gain. ON had7.3% more natural actors, with camera jitter;
+the raw FPS difference is not an isolated causal regression measurement.
+Transition results are single passes, not general performance certification.
+The explicit walking selections crossed the same source boundary but ended
+one tile apart (OFF105,619; ON105,620). The original automatic OFF walking
+assertion failed because its click stopped short; only its later explicit
+Walk Here retry is accepted for the walking result.
+
+Fewer source vertices were prepared (roughly6-16% in sampled locations), but
+shadow maps still require distant casters. A camera diagnostic added five
+held frames and eight preparation-demand events within the same source epoch.
+The benchmark resets yaw each second, so this is not a measured180degree turn.
+
+Decision and limits
+-------------------
+The modest indicative loading improvement does not justify enabling this
+prototype with no demonstrated FPS benefit and new camera-demand holds.
+CPU and independent frozen-lighting tests passed; the actual production-shader
+GPU full-source/subset pixel oracle was not completed. No visual certification,
+60FPS acceptance, public release or deployment is claimed.
+
+Retain the implementation, immutable candidate and evidence for future research.
+Next useful direction: reduce geometry packing/upload cost, including compact
+shadow-only data, rather than introducing closer fog presets. This is a future
+recommendation, not an implemented feature.
+
+Evidence (local ignored diagnostics, retained)
+---------------------------------------------
+output/diagnostics/browser-fog-demand/paired-comparison.json
+output/diagnostics/browser-fog-demand/phase-comparison.json
+output/diagnostics/browser-fog-demand/paired-off-1/
+output/diagnostics/browser-fog-demand/paired-on-1/
+output/diagnostics/browser-fog-demand/final-review-stage-receipt.json
+Private disposable browserdemo identity was verified for accepted measurements.
+Earlier misidentified-login and uncontrolled diagnostic attempts are excluded.
+Only disposable account fields were directly edited; initial rejected UI input
+may have moved the separate private test avatar. Public server was untouched.
