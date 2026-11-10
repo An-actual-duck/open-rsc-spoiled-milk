@@ -23,5 +23,9 @@ and extreme coordinates. Additional exact relation checks, current-entry reuse
 and20,000 concurrent independent reader calls pass. Actual resident input/mesh
 fixture passes360 enabled/330 disabled. Independent read-only review found no
 semantic/race blocker; its bounded old-snapshot retention note led to clearing
-on all five scope/visual assignment sites. Final retirement assertion and full
-renderer guard rerun remain pending after the exclusive profiling window.
+on all five scope/visual assignment sites. Final retirement assertion, both policy parity reruns and full renderer guard
+passed after the exclusive profiling window. Production World field changes
+are limited to this memo and explicit retirement at five publication sites.
+Normal-merged published main5e77ca2f8, including adopted owned state and stream
+upload validation. Client rebuilt after final production changes. No actual
+GPU/performance measurement or main promotion for this candidate yet.
