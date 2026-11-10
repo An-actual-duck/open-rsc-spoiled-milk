@@ -2403,20 +2403,24 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	}
 
 	private int fallbackColorForBatch(Renderer3DFrame frame, WorldChunkMaterialBatch batch) {
-		int textureId = effectiveChunkTextureId(frame, batch.textureId, batch.fallbackColor);
+        return fallbackColorForMaterial(frame, batch.textureId, batch.fallbackColor);
+    }
+
+    private int fallbackColorForMaterial(Renderer3DFrame frame, int sourceTextureId, int fallbackColor) {
+		int textureId = effectiveChunkTextureId(frame, sourceTextureId, fallbackColor);
 		int textureAverageColor = averageTextureColor(frame, textureId);
 		if (textureAverageColor != NO_FALLBACK_COLOR) {
 			return textureAverageColor;
 		}
-		int fallbackTextureAverageColor = averageTextureColor(frame, batch.fallbackColor);
+		int fallbackTextureAverageColor = averageTextureColor(frame, fallbackColor);
 		if (fallbackTextureAverageColor != NO_FALLBACK_COLOR) {
 			return fallbackTextureAverageColor;
 		}
-		if (batch.textureId == LEGACY_TRANSPARENT_TEXTURE && batch.fallbackColor != LEGACY_TRANSPARENT_TEXTURE) {
-			if (isFrameTextureReference(frame, batch.fallbackColor)) {
+		if (sourceTextureId == LEGACY_TRANSPARENT_TEXTURE && fallbackColor != LEGACY_TRANSPARENT_TEXTURE) {
+			if (isFrameTextureReference(frame, fallbackColor)) {
 				return NO_FALLBACK_COLOR;
 			}
-			return batch.fallbackColor & 0xFFFFFF;
+			return fallbackColor & 0xFFFFFF;
 		}
 		return NO_FALLBACK_COLOR;
 	}
@@ -2931,6 +2935,14 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 
     int backendTextureId(Renderer3DFrame frame, int textureId, int fallbackColor) {
         return effectiveChunkTextureId(frame, textureId, fallbackColor);
+    }
+
+    /** Same missing-material policy as the native textured resident draw path.
+     * Invisible walls still belong to the world snapshot for picking/collision,
+     * but must not become the diagnostic model-kind color in a browser batch. */
+    boolean backendMaterialDrawable(Renderer3DFrame frame, int textureId, int fallbackColor) {
+        return frame.getTexture(effectiveChunkTextureId(frame, textureId, fallbackColor)) != null
+            || fallbackColorForMaterial(frame, textureId, fallbackColor) != NO_FALLBACK_COLOR;
     }
 
 	private void copyChunkVertices(
