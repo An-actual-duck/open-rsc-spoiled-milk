@@ -1,5 +1,5 @@
 import {createBrowserWebGL} from './webgl.js';
-import {buildWorldCutoutMips} from './browser-world-textures.js';
+import {buildWorldCutoutMips,createWorldTextureSampling} from './browser-world-textures.js';
 const canvas=document.querySelector('canvas'),status=document.querySelector('#status');
 const identity=()=>Float32Array.from([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
 const transpose=a=>Float32Array.from({length:16},(_,n)=>a[(n%4)*4+Math.floor(n/4)]);
@@ -113,8 +113,8 @@ async function run(options={}){
   await load();const gl=canvas.getContext('webgl2'),ext=gl.getExtension('WEBGL_debug_renderer_info'),renderer=gl.getParameter(ext?ext.UNMASKED_RENDERER_WEBGL:gl.RENDERER);
   if(/swiftshader|llvmpipe|software rasterizer/i.test(renderer))throw Error('Software renderer rejected: '+renderer);
   const results=[];for(const d of options.distances||['near','mid','far']){if(!['near','mid','far'].includes(d))throw Error('Invalid distance');distance=d;const reference=[];for(const mode of ['reference','nearest','stable','cutout'])results.push(await compare(mode,reference));}
-  const t=textures.get(17),start=performance.now();for(let n=0;n<120;n++)buildWorldCutoutMips(t.width,t.height,t.rgba);
-  const result={pass:true,qualityAccepted:false,scope:'Production shaders/tree/palette;128-unit tiled floor6/wall2;isolated material sampling,no shadows/fog;not FPS acceptance',userAgent:navigator.userAgent,renderer,roi,reference:'2x physical-raster NEAREST,box-downsampled;not native LWJGL pixel parity',results,animatedTexture17CpuMsPerBuild:(performance.now()-start)/120,source:await json('./stage.json')};
+  const t=textures.get(17),start=performance.now();for(let n=0;n<120;n++)buildWorldCutoutMips(t.width,t.height,t.rgba);const stableCpu=(performance.now()-start)/120,cutoutCpuPlan=createWorldTextureSampling({}, {enabled:true,mode:'cutout'}),cutoutStart=performance.now();for(let n=0;n<120;n++)cutoutCpuPlan.plan(t.width,t.height,t.rgba,true);const cutoutCpu=(performance.now()-cutoutStart)/120;
+  const result={pass:true,qualityAccepted:false,scope:'Production shaders/tree/palette;128-unit tiled floor6/wall2;isolated material sampling,no shadows/fog;not FPS acceptance',userAgent:navigator.userAgent,renderer,roi,reference:'2x physical-raster NEAREST,box-downsampled;not native LWJGL pixel parity',results,animatedTexture17CpuMsPerBuild:{stable:stableCpu,cutout:cutoutCpu},source:await json('./stage.json')};
   window.textureStabilityResult=result;status.textContent=JSON.stringify(result,null,2);document.querySelector('#play').disabled=false;return result;
  }catch(error){window.textureStabilityResult={pass:false,error:String(error),stack:error.stack};status.textContent=JSON.stringify(window.textureStabilityResult);throw error;}
 }

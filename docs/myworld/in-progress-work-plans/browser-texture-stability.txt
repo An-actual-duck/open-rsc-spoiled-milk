@@ -112,3 +112,25 @@ Evidence: tests/browser-texture-stability/actual-alpha-audit.json. Introducing
 fractional mip alpha is therefore a new state where browser/native policy matters;
 any second candidate must be restricted to verified binary cutouts, preserve the
 original path for future fractional sources, and receive actual whole-tree proof.
+
+SECOND candidate mode 'cutout' (experimental OFF until actual review): only
+verified binary source alpha gets native-effective GREATER0.5, blend disabled,
+accepted output alpha1. Fractional source textures remain point sampled with the
+previous draw policy; sprites/UI/shadows are untouched. Mips use alpha-weighted
+RGB, then per-level bounded scale search matches original source occupied area
+using four bilinear alpha probes per texel. Independent CPU bilinear estimator
+proves selected coverage never worsens against unscaled mips for tested patterns;
+this is NOT whole-tree/screen-space/trilinear coverage proof. Tiny mip levels have
+irreducible quantization and may still thin or swell cards; actual near/mid/far
+stills and motion must decide. No silhouette acceptance claim from this algebra.
+
+Sampler policy is selected per material, source alpha classification stored with
+accepted texture metadata, and same-shape allocation reuse additionally requires
+matching mip byte size. Fractional/binary updates can safely replace levels with
+accurate reserve/transaction accounting. Native/defaultOFF path remains previous
+sampling; the new shader boolean defaults0. Only modecutout applies per-batch
+cutout/blend changes. Tests retain mutable input ownership and point fallback.
+Warm Node microcheck actual texture8 about1.141ms/build and animated17 about0.285ms
+versus earlier stable0.451/0.113; Firefox initial and animated upload costs still
+need measurement. Fixture records both stable/cutout17 CPU-only plan costs, and
+supports nearest/stable/cutout/reference identical-view PNG snapshots.
