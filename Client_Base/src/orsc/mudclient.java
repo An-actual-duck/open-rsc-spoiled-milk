@@ -960,6 +960,15 @@ public final class mudclient implements Runnable {
 		staticPresentationWallRecords =
 			Collections.emptyList();
 	private long staticPresentationRevision = 0L;
+	// The browser validates exact primitive inputs rather than rebuilding static
+	// canonical groups every frame. Animation inputs remain frame-local.
+	private static final boolean BROWSER_RESIDENT_INPUT_CACHE = !"false".equalsIgnoreCase(
+		System.getProperty("spoiledmilk.browserResidentInputCache", "true"));
+	private static final int MAX_RESIDENT_INPUT_DESCRIPTOR_INTS = 1024 * 1024;
+	private ResidentStaticInputCache residentStaticInputCache;
+	private int[] residentStaticInputProbe;
+	private int[] residentAnimatedInputIndices;
+	private int residentAnimatedInputCount;
 	private long builtStaticPresentationRevision = -1L;
 	private int builtStaticPresentationBaseX = Integer.MIN_VALUE;
 	private int builtStaticPresentationBaseZ = Integer.MIN_VALUE;
@@ -4395,6 +4404,94 @@ public final class mudclient implements Runnable {
 	}
 
 	private List<ResidentObjectChunkInput> buildResidentObjectChunkInputs(Renderer3DWorldChunkFrame baseFrame) {
+		long maximumInputs = (long) getGameObjectInstanceCount() + getWallObjectInstanceCount()
+			+ staticPresentationSceneryRecords.size() + staticPresentationWallRecords.size();
+		if (!BROWSER_RESIDENT_INPUT_CACHE || !Renderer3DSettings.isBrowserPresentationAvailable()
+			|| SceneObjectDebugSettings.isEnabled() || RESIDENT_OBJECT_GEOMETRY_DIAGNOSTICS_ENABLED
+			|| maximumInputs > MAX_RESIDENT_INPUT_DESCRIPTOR_INTS / 8) {
+			clearResidentStaticInputCache();
+			return buildResidentObjectChunkInputsUncached(baseFrame);
+		}
+		int required = (int) maximumInputs * 8;
+		if (residentStaticInputProbe == null || residentStaticInputProbe.length < required)
+			residentStaticInputProbe = new int[required];
+		if (residentAnimatedInputIndices == null || residentAnimatedInputIndices.length < getGameObjectInstanceCount())
+			residentAnimatedInputIndices = new int[getGameObjectInstanceCount()];
+		int used = captureResidentStaticInputs();
+		Renderer3DWorldChunkFrame.ChunkMesh anchor = baseFrame.getChunks().get(0);
+		ResidentStaticInputCache cached = residentStaticInputCache;
+		if (cached == null || !cached.matches(anchor, midRegionBaseX, midRegionBaseZ, tileSize,
+			staticPresentationRevision, residentStaticInputProbe, used)) {
+			List<ResidentObjectChunkInput> all = buildResidentObjectChunkInputsUncached(baseFrame);
+			List<ResidentObjectChunkInput> statics = new ArrayList<ResidentObjectChunkInput>();
+			for (ResidentObjectChunkInput input : all)
+				if (input.chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS) statics.add(input);
+			residentStaticInputCache = new ResidentStaticInputCache(anchor, midRegionBaseX, midRegionBaseZ,
+				tileSize, staticPresentationRevision, Arrays.copyOf(residentStaticInputProbe, used), statics);
+			return all;
+		}
+		if (residentAnimatedInputCount == 0) return cached.inputs;
+		Map<Long, ResidentObjectChunkInputBuilder> builders = new TreeMap<Long, ResidentObjectChunkInputBuilder>();
+		for (int n = 0; n < residentAnimatedInputCount; n++) {
+			int i = residentAnimatedInputIndices[n];
+			addResidentObjectChunkModel(builders, anchor, getGameObjectInstanceX(i), getGameObjectInstanceZ(i),
+				Renderer3DModelKind.GAME_OBJECT, i, getGameObjectInstanceID(i), getGameObjectInstanceDir(i),
+				getGameObjectInstanceModel(i), false);
+		}
+		List<ResidentObjectChunkInput> animated = new ArrayList<ResidentObjectChunkInput>(builders.size());
+		for (ResidentObjectChunkInputBuilder builder : builders.values()) animated.add(builder.build());
+		List<ResidentObjectChunkInput> merged = new ArrayList<ResidentObjectChunkInput>(cached.inputs.size() + animated.size());
+		int s = 0, a = 0;
+		while (s < cached.inputs.size() && a < animated.size()) {
+			int comparison = Long.compare(cached.inputs.get(s).cellKey, animated.get(a).cellKey);
+			// Preserve the original single-map behavior even for a colliding cell key.
+			if (comparison == 0) return buildResidentObjectChunkInputsUncached(baseFrame);
+			merged.add(comparison < 0 ? cached.inputs.get(s++) : animated.get(a++));
+		}
+		while (s < cached.inputs.size()) merged.add(cached.inputs.get(s++));
+		while (a < animated.size()) merged.add(animated.get(a++));
+		return merged;
+	}
+
+	/** Exact canonical values include freshly sampled terrain elevations. Incomplete
+	 * instance revision counters and mutable model identities are not cache proof. */
+	private int captureResidentStaticInputs() {
+		int used = 0;
+		residentAnimatedInputCount = 0;
+		for (int i = 0; i < getGameObjectInstanceCount(); i++) {
+			if (!isGameObjectInstanceMaterialized(i) || getGameObjectInstanceModel(i) == null) continue;
+			int id = getGameObjectInstanceID(i);
+			if (isAnimatedResidentObjectChunkModel(Renderer3DModelKind.GAME_OBJECT, id)) {
+				residentAnimatedInputIndices[residentAnimatedInputCount++] = i;
+				continue;
+			}
+			used = createResidentObjectCanonicalIdentity(Renderer3DModelKind.GAME_OBJECT,
+				midRegionBaseX + getGameObjectInstanceX(i), midRegionBaseZ + getGameObjectInstanceZ(i),
+				id, getGameObjectInstanceDir(i)).writeDescriptor(residentStaticInputProbe, used, false);
+		}
+		for (int i = 0; i < getWallObjectInstanceCount(); i++) {
+			if (!isWallObjectInstanceMaterialized(i) || getWallObjectInstanceModel(i) == null) continue;
+			used = createResidentObjectCanonicalIdentity(Renderer3DModelKind.WALL_OBJECT,
+				midRegionBaseX + getWallObjectInstanceX(i), midRegionBaseZ + getWallObjectInstanceZ(i),
+				getWallObjectInstanceID(i), getWallObjectInstanceDir(i)).writeDescriptor(residentStaticInputProbe, used, false);
+		}
+		for (SceneBaselineState.Record record : staticPresentationSceneryRecords)
+			used = createResidentObjectCanonicalIdentity(Renderer3DModelKind.GAME_OBJECT, record.x, record.y,
+				record.id, record.direction).writeDescriptor(residentStaticInputProbe, used, true);
+		for (SceneBaselineState.Record record : staticPresentationWallRecords)
+			used = createResidentObjectCanonicalIdentity(Renderer3DModelKind.WALL_OBJECT, record.x, record.y,
+				record.id, record.direction).writeDescriptor(residentStaticInputProbe, used, true);
+		return used;
+	}
+
+	private void clearResidentStaticInputCache() {
+		residentStaticInputCache = null;
+		residentStaticInputProbe = null;
+		residentAnimatedInputIndices = null;
+		residentAnimatedInputCount = 0;
+	}
+
+	private List<ResidentObjectChunkInput> buildResidentObjectChunkInputsUncached(Renderer3DWorldChunkFrame baseFrame) {
 		Renderer3DWorldChunkFrame.ChunkMesh anchor = baseFrame.getChunks().get(0);
 		Map<Long, ResidentObjectChunkInputBuilder> builders =
 			new TreeMap<Long, ResidentObjectChunkInputBuilder>();
@@ -4855,6 +4952,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void clearResidentObjectChunkCache() {
+		clearResidentStaticInputCache();
 		this.cachedResidentObjectChunks.clear();
 		this.cachedResidentObjectChunkCurrentViewCells.clear();
 		this.cachedResidentObjectChunkPreviousViewCells.clear();
@@ -5110,6 +5208,27 @@ public final class mudclient implements Runnable {
 		return hash * RESIDENT_OBJECT_CHUNK_FNV_PRIME;
 	}
 
+	private static final class ResidentStaticInputCache {
+		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
+		private final int baseX, baseZ, tileSize;
+		private final long revision;
+		private final int[] descriptors;
+		private final List<ResidentObjectChunkInput> inputs;
+		private ResidentStaticInputCache(Renderer3DWorldChunkFrame.ChunkMesh anchor, int baseX, int baseZ,
+			int tileSize, long revision, int[] descriptors, List<ResidentObjectChunkInput> inputs) {
+			this.anchor = anchor; this.baseX = baseX; this.baseZ = baseZ; this.tileSize = tileSize;
+			this.revision = revision; this.descriptors = descriptors;
+			this.inputs = Collections.unmodifiableList(inputs);
+		}
+		private boolean matches(Renderer3DWorldChunkFrame.ChunkMesh anchor, int baseX, int baseZ,
+			int tileSize, long revision, int[] probe, int used) {
+			if (this.anchor != anchor || this.baseX != baseX || this.baseZ != baseZ || this.tileSize != tileSize
+				|| this.revision != revision || descriptors.length != used) return false;
+			for (int i = 0; i < used; i++) if (descriptors[i] != probe[i]) return false;
+			return true;
+		}
+	}
+
 	private static final class ResidentObjectChunkInput {
 		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
 		private final long cellKey;
@@ -5353,6 +5472,14 @@ public final class mudclient implements Runnable {
 				hash, this.elevation1);
 			return mixResidentObjectChunkCacheKey(
 				hash, this.elevation2);
+		}
+
+		private int writeDescriptor(int[] values, int offset, boolean presentationOnly) {
+			values[offset++] = kind; values[offset++] = worldTileX; values[offset++] = worldTileZ;
+			values[offset++] = objectId; values[offset++] = direction;
+			values[offset++] = elevation1; values[offset++] = elevation2;
+			values[offset++] = presentationOnly ? 1 : 0;
+			return offset;
 		}
 
 		@Override
