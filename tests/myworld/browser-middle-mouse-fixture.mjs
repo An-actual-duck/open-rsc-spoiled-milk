@@ -40,4 +40,12 @@ allowed=true;pending=next();await assert.rejects(next(),/Only one/);relay.dispos
 relay.dispose();assert.deepEqual(Array.from(await next()),[-1,0,0,0]);
 assert.equal([...win.listeners.values()].reduce((n,list)=>n+list.length,0),0);
 assert.equal([...doc.listeners.values()].reduce((n,list)=>n+list.length,0),0);
+// A physical GPU canvas never defines Java's logical middle-drag extent.
+for(const cssWidth of [960,1920]){
+ const w=new Target(),d=new Target();d.visibilityState='visible';d.querySelector=()=>({width:1920,height:1080,getBoundingClientRect:()=>({left:0,top:0,right:cssWidth,bottom:cssWidth*540/960,width:cssWidth,height:cssWidth*540/960})});
+ const m=createBrowserMiddleMouseInput(w,d,{logicalExtent:()=>({width:960,height:540})});const take=()=>m.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent();
+ w.fire('pointerdown',{clientX:cssWidth/2,clientY:cssWidth*270/960});assert.deepEqual(Array.from(await take()),[1,480,270,0]);
+ w.fire('pointermove',{clientX:cssWidth*3/4,clientY:cssWidth*400/960});assert.deepEqual(Array.from(await take()),[2,720,400,0]);
+ w.fire('pointerup',{buttons:0,clientX:cssWidth*3/4,clientY:cssWidth*400/960});assert.deepEqual(Array.from(await take()),[3,720,400,0]);m.dispose();
+}
 console.log('PASS middle-only DOM relay: real button1/buttons4, scaled coordinates, bounded coalescing, no vendor duplicate, cancel/gate/disposal');

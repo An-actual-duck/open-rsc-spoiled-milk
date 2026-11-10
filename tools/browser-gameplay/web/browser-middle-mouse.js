@@ -1,6 +1,6 @@
 // CheerpJ5 input drops buttons>2; DOM middle uses buttons=4. Relay ONLY this
 // gesture into ordinary AWT BUTTON2; never patch vendor code or page-wide input.
-export function createBrowserMiddleMouseInput(win = window, doc = document) {
+export function createBrowserMiddleMouseInput(win = window, doc = document, {logicalExtent=null}={}) {
   const queue = [], listeners = [], stats = {presses:0, moves:0, releases:0, cancels:0, coalesced:0};
   let waiting, active, stopped = false;
   const allowed = () => typeof win.browserWorldInputAllowed !== 'function' || win.browserWorldInputAllowed();
@@ -15,11 +15,13 @@ export function createBrowserMiddleMouseInput(win = window, doc = document) {
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     if (!(rect.width > 0 && rect.height > 0 && canvas.width > 0 && canvas.height > 0)) return;
-    return {canvas, rect};
+    const logical=logicalExtent?logicalExtent():canvas;
+    if(!logical||!Number.isInteger(logical.width)||!Number.isInteger(logical.height)||logical.width<1||logical.height<1||logical.width*logical.height>2097152)return;
+    return {canvas, rect, width:logical.width, height:logical.height};
   }
   function point(event, area) {
-    const x = Math.round((event.clientX-area.rect.left)*area.canvas.width/area.rect.width);
-    const y = Math.round((event.clientY-area.rect.top)*area.canvas.height/area.rect.height);
+    const x = Math.round((event.clientX-area.rect.left)*area.width/area.rect.width);
+    const y = Math.round((event.clientY-area.rect.top)*area.height/area.rect.height);
     if (!Number.isFinite(x) || !Number.isFinite(y) || Math.abs(x)>65536 || Math.abs(y)>65536) return;
     return [x,y,(event.shiftKey?1:0)|(event.ctrlKey?2:0)|(event.altKey?4:0)|(event.metaKey?8:0)];
   }

@@ -1,3 +1,4 @@
+import {createPhysicalOutputSizer} from './browser-physical-output.js';
 import {createStreamUploadValidation} from './browser-upload-validation.js';
 import {createOwnedBrowserFrameState} from './browser-owned-state.js';
 import {createBrowserSpriteAtlas} from './browser-sprite-atlas.js';
@@ -37,6 +38,13 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0,lastWorld=0,lighting,lightingValues,sky,overlay;
   const colorVisible=new Uint8Array(256),colorCullScratch=new Float64Array(18);let colorCullingSupported=false;
   const ownedFrame=options.ownedState===true||options.benchmarkControl===true?createOwnedBrowserFrameState(gl,{enabled:options.ownedState===true}):null;
+  let physicalOutput=options.physicalOutput===true,pendingPhysicalOutput=null;
+  const physicalControl=options.benchmarkControl===true&&options.physicalOutputControl===true;
+  const physicalCapability=physicalOutput||physicalControl;
+  const outputSizer=createPhysicalOutputSizer(canvas,{enabled:physicalCapability,maxTextureSize:physicalCapability?(ownedFrame?.maxTextureSize||gl.getParameter(gl.MAX_TEXTURE_SIZE)):4096});
+  stats.physicalOutputRequested=physicalOutput;
+  stats.physicalOutputActive=physicalOutput;stats.physicalOutputWorldFramePolicies=[];stats.physicalOutputTransitions=[];
+  if(physicalCapability)stats.resourceBudgetScope=stats.resourceBudgetScope.replace('<=32MiB combined','<=48MiB combined')+'; physical drawingbuffer <=1920x1080 with color+depth driver storage additional';
   let pendingOwnedState=null;
   stats.ownedStateActive=!!ownedFrame?.active;stats.ownedStateBenchmarkControl=options.benchmarkControl===true;stats.worldFramePolicies=[];stats.worldFrameSpriteGroups=[];stats.ownedStateTransitions=[];
   function queueOwnedState(enabled){alive();if(options.benchmarkControl!==true||typeof enabled!=='boolean')throw new Error('Private benchmark owned-state control unavailable');pendingOwnedState=enabled;stats.pendingOwnedState=enabled;return {queued:enabled,active:!!ownedFrame?.active};}
@@ -106,7 +114,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     async Java_orsc_BrowserWebGLBridge_uploadSkyGeometry(lib,geometry,ranges,paletteCount){alive();sky.uploadGeometry(geometry,ranges,paletteCount);},
     async Java_orsc_BrowserWebGLBridge_skyFrame(lib,values,palette){alive();sky.prepare(values,palette);stats.skyEnabled=values[0]===1;},
     async Java_orsc_BrowserWebGLBridge_overlayFrame(lib,width,height,mode,generation,frameSequence,fades,reset,transmittance){
-      alive();if(!overlay){overlay=createBrowserOverlay(gl,{stats,ownedFrame,deferOrCheck:uploadValidation.deferOrCheck,retainOpaqueFull:true});stats.overlayCoverageEnabled=true;stats.limitations[0]='Coverage UI follows legacy RGB/T; small integer-rounding differences remain possible';}
+      alive();if(!overlay){overlay=createBrowserOverlay(gl,{stats,ownedFrame,deferOrCheck:uploadValidation.deferOrCheck,retainOpaqueFull:true,physicalOutput:physicalCapability});stats.overlayCoverageEnabled=true;stats.limitations[0]='Coverage UI follows legacy RGB/T; small integer-rounding differences remain possible';}
       try{overlay.prepare(width,height,mode,generation,frameSequence,fades,reset,mode===0?null:typed(transmittance,Float32Array));}catch(e){stats.backendFailed=true;throw e;}
     },
     async Java_orsc_BrowserWebGLBridge_uploadChunk(lib,id,vertexInput,indexInput,batchInput){
@@ -171,13 +179,26 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       const timerQuery=gpuTimer&&pendingQueries.length<8?gl.createQuery():null;if(timerQuery){activeTimerQuery=timerQuery;gl.beginQuery(gpuTimer.TIME_ELAPSED_EXT,timerQuery);}
       const matrices=typed(matrixInput,Float32Array),u=typed(uniformInput,Float32Array),draws=typed(drawInput,Int32Array),pixels=typed(pixelInput,Int32Array);
       if(width<1||height<1||width*height>MAX_PIXELS||pixels.length!==width*height||matrices.length!==48||u.length!==30||draws.length%8||draws.length>256*8)throw new Error('Browser frame bounds violated');
-      if(canvas.width!==width)canvas.width=width;if(canvas.height!==height)canvas.height=height;
+      // Resize/policy commits are presentation-only and happen before ANY pass.
+      // Retained fades/BASE and held regions keep the exact previous backing.
+      if(pendingPhysicalOutput!==null&&overlay?.canChangeOutput&&(overlay.opaqueOutput||world&&worldReady.sourceComplete)){
+        physicalOutput=pendingPhysicalOutput;pendingPhysicalOutput=null;stats.pendingPhysicalOutput=null;stats.physicalOutputActive=physicalOutput;
+        stats.physicalOutputTransitions.push({enabled:physicalOutput,beforeJavaFrame:stats.javaFrames,milliseconds:performance.now()});if(stats.physicalOutputTransitions.length>64)stats.physicalOutputTransitions.shift();
+      }
+      stats.presentedPhysicalOutput=physicalOutput;
+      const measuredOutput=physicalCapability?outputSizer.size(width,height):null;
+      const desiredOutput=physicalOutput?measuredOutput:{width,height};
+      let output=desiredOutput;
+      if(physicalCapability&&overlay)output=overlay.outputSize(width,height,output.width,output.height);
+      const outputWidth=output.width,outputHeight=output.height;
+      stats.physicalOutput={enabled:physicalOutput,logicalWidth:width,logicalHeight:height,width:outputWidth,height:outputHeight,deferred:output.deferred===true,devicePixelRatio:globalThis.window?.devicePixelRatio||1,cssWidth:measuredOutput?.cssWidth??null,cssHeight:measuredOutput?.cssHeight??null,requestedWidth:measuredOutput?.width??width,requestedHeight:measuredOutput?.height??height,requestedScale:measuredOutput?.requestedScale??1,capped:physicalOutput&&measuredOutput?.capped===true,drawingbufferColorDepthEstimateBytes:outputWidth*outputHeight*8};
+      if(canvas.width!==outputWidth)canvas.width=outputWidth;if(canvas.height!==outputHeight)canvas.height=outputHeight;
       if(!lightingValues)throw new Error('Browser frame missing lighting declaration');
-      if(ownedFrame?.active)ownedFrame.begin(width,height,world&&u[29]>=0?u[15]:0,world&&u[29]>=0?u[16]:0,world&&u[29]>=0?u[17]:0);
+      if(ownedFrame?.active)ownedFrame.begin(outputWidth,outputHeight,world&&u[29]>=0?u[15]:0,world&&u[29]>=0?u[16]:0,world&&u[29]>=0?u[17]:0);
       lighting.prepare(lightingValues,draws);
-      gl.viewport(0,0,width,height);gl.disable(gl.SCISSOR_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);gl.depthMask(true);gl.clearDepth(1);
+      gl.viewport(0,0,outputWidth,outputHeight);gl.disable(gl.SCISSOR_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);gl.depthMask(true);gl.clearDepth(1);
       gl.clearColor(world&&u[29]>=0?u[15]:0,world&&u[29]>=0?u[16]:0,world&&u[29]>=0?u[17]:0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-      const retainedWorld=overlay?overlay.begin(width,height):false;
+      const retainedWorld=overlay?overlay.begin(width,height,outputWidth,outputHeight):false;
       if(!retainedWorld)sky.draw();
       let calls=0,triangles=0;stats.colorCulledChunkDraws=stats.colorVisibleChunkDraws=0;
       if(world&&!retainedWorld){
@@ -232,19 +253,19 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       // Make it visually opaque before UI; legacy world blends can lower alpha.
       const alphaProof=options.opaqueProof&&world&&stats.javaWorldFrames>=100&&!stats.opaqueAlphaProof;
       let beforeAlpha;
-      if(alphaProof){beforeAlpha=new Uint8Array(width*height*4);gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,beforeAlpha);}
+      if(alphaProof){beforeAlpha=new Uint8Array(outputWidth*outputHeight*4);gl.readPixels(0,0,outputWidth,outputHeight,gl.RGBA,gl.UNSIGNED_BYTE,beforeAlpha);}
       normalizeOpaqueCanvas(gl,ownedFrame?.active?ownedFrame:null);
-      if(alphaProof){const after=new Uint8Array(beforeAlpha.length);gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,after);let changedRgb=0,beforeNonOpaque=0,afterNonOpaque=0;for(let n=0;n<after.length;n+=4){for(let c=0;c<3;c++)if(beforeAlpha[n+c]!==after[n+c])changedRgb++;if(beforeAlpha[n+3]!==255)beforeNonOpaque++;if(after[n+3]!==255)afterNonOpaque++;}stats.opaqueAlphaProof={pixels:width*height,changedRgb,beforeNonOpaque,afterNonOpaque,diagnosticReadback:true};}
+      if(alphaProof){const after=new Uint8Array(beforeAlpha.length);gl.readPixels(0,0,outputWidth,outputHeight,gl.RGBA,gl.UNSIGNED_BYTE,after);let changedRgb=0,beforeNonOpaque=0,afterNonOpaque=0;for(let n=0;n<after.length;n+=4){for(let c=0;c<3;c++)if(beforeAlpha[n+c]!==after[n+c])changedRgb++;if(beforeAlpha[n+3]!==255)beforeNonOpaque++;if(after[n+3]!==255)afterNonOpaque++;}stats.opaqueAlphaProof={pixels:outputWidth*outputHeight,changedRgb,beforeNonOpaque,afterNonOpaque,diagnosticReadback:true};}
       if(overlay)overlay.draw(width,height,new Uint8Array(pixels.buffer,pixels.byteOffset,pixels.byteLength));
       else {
         gl.disable(gl.DEPTH_TEST);if(ownedFrame?.active){gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);}gl.depthMask(false);gl.useProgram(overlayProgram);gl.bindVertexArray(emptyVAO);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,overlayTexture);
         gl.pixelStorei(gl.UNPACK_ALIGNMENT,4);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(pixels.buffer,pixels.byteOffset,pixels.byteLength));
         gl.uniform1i(gl.getUniformLocation(overlayProgram,'image'),0);gl.uniform1i(gl.getUniformLocation(overlayProgram,'world'),world?1:0);gl.drawArrays(gl.TRIANGLES,0,3);gl.depthMask(true);check();
       }
-      if(alphaProof){const final=new Uint8Array(width*height*4);gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,final);let count=0;for(let n=3;n<final.length;n+=4)if(final[n]!==255)count++;stats.opaqueAlphaProof.finalNonOpaque=count;check();}
+      if(alphaProof){const final=new Uint8Array(outputWidth*outputHeight*4);gl.readPixels(0,0,outputWidth,outputHeight,gl.RGBA,gl.UNSIGNED_BYTE,final);let count=0;for(let n=3;n<final.length;n+=4)if(final[n]!==255)count++;stats.opaqueAlphaProof.finalNonOpaque=count;check();}
       if(timerQuery){gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);pendingQueries.push(timerQuery);activeTimerQuery=null;}
       const now=performance.now();stats.jsSubmissionSamples.push(now-submitStart);if(stats.jsSubmissionSamples.length>(stats.measurement?4096:600))stats.jsSubmissionSamples.shift();
-      if(world&&!retainedWorld){if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);stats.worldFramePolicies.push(stats.presentedOwnedState);stats.worldFrameSpriteGroups.push(spriteDraws.length);if(stats.worldFrameSamples.length>(stats.measurement?4096:600)){stats.worldFrameSamples.shift();stats.worldFramePolicies.shift();stats.worldFrameSpriteGroups.shift();}}lastWorld=now;}else lastWorld=0;
+      if(world&&!retainedWorld){if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);stats.worldFramePolicies.push(stats.presentedOwnedState);stats.worldFrameSpriteGroups.push(spriteDraws.length);stats.physicalOutputWorldFramePolicies.push(physicalOutput?1:0);if(stats.worldFrameSamples.length>(stats.measurement?4096:600)){stats.worldFrameSamples.shift();stats.worldFramePolicies.shift();stats.worldFrameSpriteGroups.shift();stats.physicalOutputWorldFramePolicies.shift();}}lastWorld=now;}else lastWorld=0;
       worldReady.presented({world:world&&!retainedWorld,width,height,textures:textures.size,sprites:spriteDraws.length,lighting:!!lightingValues});
       stats.javaFrames++;stats.drawCalls=calls;stats.triangles=triangles;stats.activeChunks=draws.length/8;stats.lastFrame=now;
       if(last){stats.frameSamples.push(now-last);if(stats.frameSamples.length>(stats.measurement?4096:600))stats.frameSamples.shift();}last=now;
@@ -257,12 +278,13 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     async Java_orsc_BrowserWebGLBridge_commitWorldSprites(lib,epoch,sequence,pixels,quads){alive();try{spriteDraws.length=spriteAtlas.commit(epoch,sequence,typed(pixels,Uint8Array),typed(quads,Float32Array));}catch(error){stats.backendFailed=true;throw error;}}
 
   };
-  function dispose(){if(disposed)return;uploadValidation.dispose();if(activeTimerQuery){try{gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);}finally{gl.deleteQuery(activeTimerQuery);activeTimerQuery=null;}}pendingOwnedState=null;stats.pendingOwnedState=null;worldReady.dispose();if(spriteAtlas)spriteAtlas.dispose();if(lighting)lighting.dispose();if(sky)sky.dispose();if(overlay)overlay.dispose();for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);for(const q of pendingQueries)gl.deleteQuery(q);if(overlayTexture)gl.deleteTexture(overlayTexture);if(spriteTexture)gl.deleteTexture(spriteTexture);if(spriteVBO)gl.deleteBuffer(spriteVBO);if(spriteIBO)gl.deleteBuffer(spriteIBO);if(spriteVAO)gl.deleteVertexArray(spriteVAO);if(emptyVAO)gl.deleteVertexArray(emptyVAO);chunks.clear();textures.clear();programs.length=shaders.length=baseTextures.length=pendingQueries.length=0;stats.gpuBytes=0;stats.spriteResourceBytes=0;canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
+  function dispose(){if(disposed)return;outputSizer.dispose();uploadValidation.dispose();if(activeTimerQuery){try{gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);}finally{gl.deleteQuery(activeTimerQuery);activeTimerQuery=null;}}pendingOwnedState=null;pendingPhysicalOutput=null;stats.pendingPhysicalOutput=null;stats.pendingOwnedState=null;worldReady.dispose();if(spriteAtlas)spriteAtlas.dispose();if(lighting)lighting.dispose();if(sky)sky.dispose();if(overlay)overlay.dispose();for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);for(const q of pendingQueries)gl.deleteQuery(q);if(overlayTexture)gl.deleteTexture(overlayTexture);if(spriteTexture)gl.deleteTexture(spriteTexture);if(spriteVBO)gl.deleteBuffer(spriteVBO);if(spriteIBO)gl.deleteBuffer(spriteIBO);if(spriteVAO)gl.deleteVertexArray(spriteVAO);if(emptyVAO)gl.deleteVertexArray(emptyVAO);chunks.clear();textures.clear();programs.length=shaders.length=baseTextures.length=pendingQueries.length=0;stats.gpuBytes=0;stats.spriteResourceBytes=0;canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
   for(const name of Object.keys(natives)) {
     const call=natives[name];natives[name]=async(...args)=>{
       try{uploadValidation.assertAlive();return await call(...args);}catch(error){if(uploadValidation.active)uploadValidation.fail(error);worldReady.fail(String(error));stats.lastError=String(error);stats.lastErrorAt=performance.now();report('Browser GPU error: '+error);throw error;}
     };
   }
+  function queuePhysicalOutput(enabled){alive();if(!physicalControl||typeof enabled!=='boolean')throw new Error('Private physical output control unavailable');pendingPhysicalOutput=enabled;stats.pendingPhysicalOutput=enabled;return {queued:enabled,active:physicalOutput};}
   function queueStreamUploadValidation(enabled){alive();if(options.benchmarkControl!==true)throw new Error('Private benchmark control unavailable');uploadValidation.queue(enabled);}
-  return {natives,stats,dispose,canvas,...(options.benchmarkControl===true?{queueOwnedState,queueStreamUploadValidation}:{})};
+  return {natives,stats,dispose,canvas,...(options.benchmarkControl===true?{queueOwnedState,queueStreamUploadValidation,queuePhysicalOutput}:{})};
 }
