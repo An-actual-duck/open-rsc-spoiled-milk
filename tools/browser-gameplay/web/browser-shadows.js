@@ -1,10 +1,12 @@
 /** Geometry-depth backend for the unchanged production shadow projection/receiver shader.
  * Projection policy and shader text arrive from BrowserLightingData; no scene or sun math is duplicated. */
 export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShader,ownedFrame}) {
-  const MAX_SHADOW_BYTES=160*1024*1024,ownedVAOs=new Map(),locations=new Map();
+  const MAX_SHADOW_BYTES=160*1024*1024,ownedVAOs=new Map(),locations=new Map(),depthLocations=new Map();
   let depthProgram=null,depthVertex=null,depthFragment=null,whiteTexture=null,emptyDepth=null,near=null,far=null,previous=null,values=null,disposed=false,drawSignature='',previousActive=false;
   stats.shadowResourceBytes=0;stats.shadowResourceBudgetBytes=MAX_SHADOW_BYTES;stats.shadowNearDraws=stats.shadowFarDraws=0;
   function loc(name){if(!locations.has(name))locations.set(name,gl.getUniformLocation(program,name));return locations.get(name);}
+  // The depth program links once per module. Cache null optimized-out locations too.
+  function depthLoc(name){if(!depthLocations.has(name))depthLocations.set(name,gl.getUniformLocation(depthProgram,name));return depthLocations.get(name);}
   function compile(type,source){const s=gl.createShader(type);gl.shaderSource(s,adaptShader(source,type===gl.FRAGMENT_SHADER));gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){const message=gl.getShaderInfoLog(s);gl.deleteShader(s);throw new Error('Browser shadow shader: '+message);}return s;}
   function initialize(vertex,fragment){
     if(disposed||depthProgram)throw new Error('Browser shadow initialization state invalid');
@@ -51,15 +53,15 @@ export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShad
   }
   function drawMap(map,matrix,draws,staticOnly,excluded){
     gl.bindFramebuffer(gl.FRAMEBUFFER,map.framebuffer);gl.viewport(0,0,map.size,map.size);gl.clear(gl.DEPTH_BUFFER_BIT);
-    gl.uniformMatrix4fv(gl.getUniformLocation(depthProgram,'uLightMatrix'),false,matrix);let count=0;
+    gl.uniformMatrix4fv(depthLoc('uLightMatrix'),false,matrix);let count=0;
     for(let at=0;at<draws.length;at+=8){
       if(staticOnly&&draws[at+7]===2)continue;const id=draws[at],chunk=chunks.get(id);if(!chunk)throw new Error('Shadow draw references absent geometry');
-      gl.bindVertexArray(vao(id,chunk));gl.uniform1f(gl.getUniformLocation(depthProgram,'uGlobalOffsetX'),draws[at+1]+values[9]);gl.uniform1f(gl.getUniformLocation(depthProgram,'uGlobalOffsetZ'),draws[at+2]+values[10]);
+      gl.bindVertexArray(vao(id,chunk));gl.uniform1f(depthLoc('uGlobalOffsetX'),draws[at+1]+values[9]);gl.uniform1f(depthLoc('uGlobalOffsetZ'),draws[at+2]+values[10]);
       const batches=chunk.batches;
       for(let n=0;n<batches.length;n+=5){
         if(staticOnly&&excluded.has(batches[n]))continue;if(batches[n+2]<=0)continue;
         const texture=textures.get(batches[n]);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture?texture.texture:whiteTexture);
-        gl.uniform1i(gl.getUniformLocation(depthProgram,'uAlphaTest'),texture&&batches[n+4]?1:0);
+        gl.uniform1i(depthLoc('uAlphaTest'),texture&&batches[n+4]?1:0);
         gl.drawElements(gl.TRIANGLES,batches[n+2],gl.UNSIGNED_INT,batches[n+1]*4);count++;
       }
     }
@@ -73,7 +75,7 @@ export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShad
     if(!depthProgram)throw new Error('Browser production shadow shader is not initialized');
     const old=ownedFrame?.active?null:{draw:gl.getParameter(gl.DRAW_FRAMEBUFFER_BINDING),read:gl.getParameter(gl.READ_FRAMEBUFFER_BINDING),viewport:gl.getParameter(gl.VIEWPORT),program:gl.getParameter(gl.CURRENT_PROGRAM),vao:gl.getParameter(gl.VERTEX_ARRAY_BINDING),array:gl.getParameter(gl.ARRAY_BUFFER_BINDING),active:gl.getParameter(gl.ACTIVE_TEXTURE),mask:gl.getParameter(gl.COLOR_WRITEMASK),depthMask:gl.getParameter(gl.DEPTH_WRITEMASK),depthFunc:gl.getParameter(gl.DEPTH_FUNC),clear:gl.getParameter(gl.DEPTH_CLEAR_VALUE),depth:gl.isEnabled(gl.DEPTH_TEST),blend:gl.isEnabled(gl.BLEND),cull:gl.isEnabled(gl.CULL_FACE),scissor:gl.isEnabled(gl.SCISSOR_TEST),polygon:gl.isEnabled(gl.POLYGON_OFFSET_FILL),factor:gl.getParameter(gl.POLYGON_OFFSET_FACTOR),units:gl.getParameter(gl.POLYGON_OFFSET_UNITS)};
     try {
-      gl.useProgram(depthProgram);gl.uniform1i(gl.getUniformLocation(depthProgram,'uTexture'),0);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.depthFunc(gl.LESS);gl.clearDepth(1);gl.colorMask(false,false,false,false);
+      gl.useProgram(depthProgram);gl.uniform1i(depthLoc('uTexture'),0);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.depthFunc(gl.LESS);gl.clearDepth(1);gl.colorMask(false,false,false,false);
       gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);gl.disable(gl.SCISSOR_TEST);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1.5,2.0);
       near=allocate(near,values[3]);const excluded=new Set(Array.from(values.subarray(81)));stats.shadowNearDraws=drawMap(near,values.subarray(32,48),draws,false,excluded);stats.shadowFarDraws=0;
       let signature='';for(let at=0;at<draws.length;at+=8){if(draws[at+7]===2)continue;for(const n of [0,1,2,3,4,6,7])signature+=draws[at+n]+',';}
@@ -114,6 +116,6 @@ export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShad
     for(const [name,unit,map]of [['uNearGeometryShadow',3,near],['uFarGeometryShadowMap',4,far||near],['uPreviousFarGeometryShadowMap',6,previousActive&&previous?previous:near]]){gl.uniform1i(loc(name),unit);gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,map.texture);}
     gl.activeTexture(gl.TEXTURE0);
   }
-  function dispose(){if(disposed)return;suspend();for(const entry of ownedVAOs.values())gl.deleteVertexArray(entry.vao);ownedVAOs.clear();if(depthProgram)gl.deleteProgram(depthProgram);if(depthVertex)gl.deleteShader(depthVertex);if(depthFragment)gl.deleteShader(depthFragment);if(whiteTexture)gl.deleteTexture(whiteTexture);if(emptyDepth)gl.deleteTexture(emptyDepth);stats.shadowFallbackBytes=0;disposed=true;}
+  function dispose(){if(disposed)return;suspend();for(const entry of ownedVAOs.values())gl.deleteVertexArray(entry.vao);ownedVAOs.clear();if(depthProgram)gl.deleteProgram(depthProgram);if(depthVertex)gl.deleteShader(depthVertex);if(depthFragment)gl.deleteShader(depthFragment);if(whiteTexture)gl.deleteTexture(whiteTexture);if(emptyDepth)gl.deleteTexture(emptyDepth);depthLocations.clear();stats.shadowFallbackBytes=0;disposed=true;}
   return {initialize,prepare,bindReceiver,dispose};
 }
