@@ -57,3 +57,17 @@ output/tests/browser-sprite-key-limbs; layout warnings are inherited old ai2 fil
 No GPU/browser tests or public/Oracle work performed by this worker. The extra
 four helper calls and startup branch may offset arithmetic savings; manager’s
 same-artifact OFF/ON browser measurement decides promotion. No60FPS claim.
+
+Frozen measurement candidate
+----------------------------
+Maintained prepare/serve8135: ai2/output/tests/browser-gameplay-spike/
+browser-sprite-key-limbs, sourcefea08849658b32b37067935328a040191fa5b615, fresh
+candidate client5a05f6b92428e1e07d1e11c6504c1e3fce76913e7296aee1288683ab8554105a.
+Its bootstrap compiles against this same fresh candidateJAR, not an old baseline
+without the new cache path. stage.json records complete frontend byte hashes and
+startup property/mode receipts. NativeMap/owner credentials and public unchanged.
+Key flag is startup-only; ON/OFF comparison needs fresh JVM sessions. Benchmark
+ownedstate=on&uploadvalidation=on should be explicit in both modes to retain
+already accepted optimizations. This frozen artifact predates the separate model
+pick/Halo candidate controls; do not assume they are present. No GPU launched by
+worker. Frozen8135 must remain unchanged even if later source integrates main.
