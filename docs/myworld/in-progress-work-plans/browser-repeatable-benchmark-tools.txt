@@ -146,3 +146,39 @@ committed-file hashes, source read-only status, and rejection of invalid commit,
 out-of-stage output and audited-body drift. The real production GL/error/pixel
 oracle belongs to the separate native-dispatch branch. No CPU test claims actual
 CheerpJ JNI compatibility, GPU pixels, FPS improvement or60FPS.
+
+Manager runtime review gate (completed; performance still pending)
+----------------------------------------------------------------
+The manager ran the authentic Firefox154/CheerpJ5/JRE8 JNI probe in all four
+modes: values, async-fatal, sync-fatal and thenable-fatal. The1903 scalar/vector/
+void checks and inherited fatal behavior passed. Evidence:
+ output/diagnostics/browser-performance-pass/native-contract-modes-firefox-1/summary.json
+in the manager checkout. This closes the compatibility prerequisite above; it
+is not an FPS test. The native worker's final separate READY is
+b76ab773a36dc7c1c6a53008671642b3bbd4d7f0. Its runtime/helper bytes are unchanged
+from the3b3f2241e6914b792089e766f210119975aa71d9 review source used by our stage.
+
+Immutable repeatable-native-height-review-1 was prepared from tooling checkpoint
+229f49dd5d8ea7895e8d51b21a921d3cdda11d06 for HTTP8166, using the existing marked
+baseline2 server on43649/43549. Dependency JAR SHA:
+ 57e7435b7679ee85a7cfe315a75f175d6942854e38f61cf1f7c37c9686de5cac
+Its copied height-review-1 receipt identifies the exact3 changed Java classes
+from9fd3957429d43ca07e929a999461f1b540f752cf plus the325 baseline; it is NOT a
+single production commit. The prior geometry/region/descriptor candidates are
+absent and remain explicitly OFF/unavailable. Canonical and generated backend
+SHA hashes, the exact3b3f source, and generator/input snapshots are recorded in
+stage.json.nativeDispatch; no frozen stage was changed after preparation.
+
+The manager's ordinary game smoke of that stage with nativecalls=sync and
+halolookup=off reached101ready chunks,32NPCs/37GPU actor groups and actual
+welcomeVisible=false without errors. This is functional compatibility evidence,
+not a measured speedup or60FPS acceptance. Startup dispatch remains ASYNC by
+default; the SYNC selection is private benchmark only. Controlled throughput
+comparisons are still pending and must be assessed separately.
+
+Java8 and21 focused CPU suites passed against the exact height-only review JAR
+and committed3b3f native dependency. Worker logs are under
+ output/tests/browser-repeatable-benchmark-tools/jdk8-native-union.log
+ output/tests/browser-repeatable-benchmark-tools/jdk21-native-union.log
+The extra private URL/literal-ASYNC wrapper source oracle also passed. No further
+build/test/GPU work was run during the manager's subsequent timing window.
