@@ -1,0 +1,87 @@
+Browser source region preparation: one immutable presentation merge
+
+Worker ai-2, fix/browser-region-preparation, frozen reference325bf42b6.
+This is a default-OFF private experiment. No browser/server/public operation was
+performed. No fog distance, map data, collision, selection or current-scene
+publication rule was changed.
+
+Evidence and scope
+Historical Firefox receipts show103ms core region work versus10045ms browser
+notice-to-completion with112 uploads/175.9MB. The core loader is not established
+as the dominant pause. It already supports prediction and immutable overlap
+reuse, so speculative loader/prefetch rewrites were rejected.
+One structural duplicate is certain: the same immutable visual/structural source
+pair is merged in predicted preparation, acknowledgment validation and later
+publication. Each merge iterates16 outer48x48 sectors, copies visual/structure
+bytes per tile, and makes a defensive byte-array copy. The acknowledgment and
+publication sites then need its exact scope identity. Reusing that exact merged
+source can eliminate two redundant merges per successful predicted pair. It does
+not eliminate packing, GPU transfers, core materialization or far-teleport costs.
+
+Implementation and controls
+- New NativePresentationMergeCache retains ONE exact visual reference, ONE exact
+  structural reference and their immutable merged snapshot per World instance.
+- These types are final; snapshot arrays are private/copy-owned, chunk byte arrays
+  are private and defensively cloned, and tile getters return new mutable Tile
+  values. Identity caching is therefore safe for these particular inputs; a new
+  source object always misses, including different bytes with the same scope/SHA
+  labels. No generic mutable-model identity cache was added.
+- Synchronized rare miss construction prevents duplicate work from concurrent
+  preparation. Invalid input validates before commit and preserves the last valid
+  pair. Existing authority/scope/protocol/offset/revision/roof checks still execute.
+- Four World callsites share the helper. Matching predicted-center activation can
+  retain the pair; null/logout, unrelated package/world/layer changes and disabled
+  use release retained source/output references. A new pair replaces the old one.
+- spoiledmilk.browserRegionPreparation=true explicitly opts in; default false.
+  Renderer3DSettings.isBrowserPresentationAvailable() must also be true. Ordinary
+  native/software behavior does not populate the cache. There is no new async
+  publication or source authority, and no new per-frame/native diagnostic call.
+- World.isBrowserRegionPreparationEnabled() reports actual flag plus browser gate.
+  World.getBrowserRegionPreparationDiagnostics() returns a rare-read long array:
+  hits, builds, retainedTileByteUpperBound. Private query/receipt wiring belongs
+  to the separately coordinated ai-1 harness task.
+
+Memory bound
+At most25 visual +16 structural +25 merged available chunks are counted. With
+48x48 tiles and at most11 bytes/tile, the conservative retained tile-byte bound
+is66*48*48*11=1,672,704 bytes (about1.60MiB), including BOTH source inputs and the
+merged output. Shared inner chunks are deliberately counted again. Object,
+reference-array and string overhead is additional and bounded by this one pair;
+this is not a claim of exact JVM heap usage. The merged output's16 newly owned
+outer byte arrays alone are at most405,504 bytes. During a miss the previous
+pair and newly constructed pair can coexist until the successful commit. The
+cache never grows a region history or retains mutable borrowed workspaces.
+
+Independent verification
+python3 tests/myworld/test-browser-region-preparation.py compiles frozen325bf
+World.java, NativeLayeredTerrainSnapshot.java and NativeLayeredTerrainChunk.java
+into a separate class directory; expected output is not recomputed through the
+candidate helper. Frozen, candidateOFF and candidateON outputs match EXACTLY:
+23,373,698 binary bytes covering legacy/wide tile data, scope/order, voids, signed
+levels0/-1/-8, negative centers, caller Tile/input-array mutation, null/invalid
+pairs, mismatched world/layer/center/encoding/availability and fresh source objects
+with equal scope strings. Actual World predicted acknowledgment/publication is
+exercised with scope/protocol/revision/offset/roof mismatches and unchanged active
+authority. Candidate13 controls additionally prove same-pair hits, concurrent
+one-build behavior, invalid-input atomicity, memory/reset, browser gate and logout.
+Evidence: output/tests/browser-region-preparation/parity-final.log and the separate
+frozen/off/on.bin files. The fixture's Unsafe use only constructs isolated owner
+objects; it never uses accounts, a server, native GPU or real map state.
+
+Passed: full client build; native prediction5 tests; atomic activation4;
+symmetric residency4; native retirement5; existing halo-relation frozen oracle
+(1,613,824 bytes per policy); model-product/source-boundary checks; client region
+load contract; browser region streaming CPU packing/publication fixture; diffcheck.
+
+Global workspace-layout check was RUN and FAILED on inherited ignored ai-2
+content: dev/myworld/assets/sprites and old unclassified output-root task folders.
+None was created or changed by this task; they were preserved. All new generated
+files use the declared tests/browser-region-preparation category. Full check output
+is preserved as layout-inherited.log. No unrelated cleanup was attempted.
+
+Remaining gate
+Manager must measure ordinary browser region preparation with the private flag
+OFF/ON in the same artifact and confirm actual hit/build receipts, transition
+latency/held frames, current-scene interactions, return/teleport/negative-level
+behavior and bounded retained bytes. No FPS, whole-region latency improvement,
+seamless streaming or10-second-pause cure is claimed by this branch.
