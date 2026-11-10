@@ -69,3 +69,9 @@ gpu-cache, sprite-atlas, sky, overlay, lighting, retained-frame, resident-draw-s
 and owned-gl-state Node fixtures; frontend VM fixture ordinary plus
 --benchmark-stream mode. All passed before the final freeze. No GPU run by worker.
 Layout audit reports only inherited loose ai2 assets/outputs; no cleanup attempted.
+
+Hardware warmup is explicitly non-vacuous: one accepted source submission, positive
+world/sky/shadow draw counters and retained/C-T allocations are asserted before
+each fault. Each case serializes warm counters, performance clock and Query
+creation/deletion counts; rejected batches cannot create a timer query. This is
+a standalone production-API source submission, not a logged-in Java gameplay frame.

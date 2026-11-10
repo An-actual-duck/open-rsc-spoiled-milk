@@ -38,7 +38,7 @@ async function setup(enabled=true,owned=false){const x=fixture(enabled,true,true
  await n.Java_orsc_BrowserWebGLBridge_uploadTexture(null,7,1,1,new Int32Array([-1]),false);
  await n.Java_orsc_BrowserWebGLBridge_uploadSkyGeometry(null,skyGeometry,ranges,1);
  const light=new Float32Array(81);light[0]=1;light[1]=1;light[3]=16;light[5]=16;light[16]=1/16;
- await n.Java_orsc_BrowserWebGLBridge_lightingFrame(null,light);await sky(x);await overlay(x,1);await present(x);await complete(x);x.resetDraws();return x;}
+ await n.Java_orsc_BrowserWebGLBridge_lightingFrame(null,light);await sky(x);await overlay(x,1);await present(x);await complete(x);assert(x.draws>0&&x.backend.stats.geometryShadowsActive&&x.backend.stats.skyEnabled&&x.backend.stats.retainedResourceBytes>0,'Warm production passes were not active');x.resetDraws();return x;}
 const streams={chunk:async x=>x.n.Java_orsc_BrowserWebGLBridge_replaceChunk(null,1,vertices,indices,batches),sky,
  coverage:x=>overlay(x,2),atlas:async x=>{await x.n.Java_orsc_BrowserWebGLBridge_planWorldSprites(null,1,1,new Int32Array([1,1,1]));await x.n.Java_orsc_BrowserWebGLBridge_commitWorldSprites(null,1,1,new Uint8Array([1,2,3,255]),new Float32Array(20));}};
 for(const owned of [false,true])for(const [name,stream]of Object.entries(streams)){
