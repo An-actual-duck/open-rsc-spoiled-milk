@@ -40,9 +40,11 @@ const physicalOutputModule=new vm.SourceTextModule(fs.readFileSync(new URL('../.
 const controlsModule = new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-benchmark-controls.js',import.meta.url),'utf8'),{context});
 const streamValidationModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-upload-validation.js',import.meta.url),'utf8'),{context});
 const spriteKeyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-sprite-key-policy.js',import.meta.url),'utf8'),{context});
+const fogModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-fog-benchmark-controls.js',import.meta.url),'utf8'),{context});
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{assert.equal(specifier,'./webgl.js');await gpuModule.link(()=>{});await gpuModule.evaluate();return gpuModule;}});
 await module.link(specifier=>{
+  if(specifier==='./browser-fog-benchmark-controls.js')return fogModule;
   if(specifier==='./browser-world-cover.js')return coverModule;
   if(specifier==='./browser-display.js')return displayModule;
   if(specifier==='./browser-benchmark-controls.js')return controlsModule;
@@ -87,6 +89,8 @@ await configured.natives.Java_orsc_browser_BrowserBootstrap_reportPreparation(nu
 assert.equal(window.browserProof.preparationControls.framePreparationEnabled,true);
 assert.equal(window.browserProof.preparationControls.framePreparationActive,false);
 assert.equal(window.browserProof.preparationControls.animatedBufferReuseEnabled,true);
+await configured.natives.Java_orsc_browser_BrowserBootstrap_reportFogPreparation(null,false,false);assert.equal(window.browserProof.fogPreparationPolicy.enabled,false);
+await configured.natives.Java_orsc_browser_BrowserBootstrap_reportPrivateAccount(null,'disposable');assert.equal(window.browserProof.privateAccount,'disposable');
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportModelPickBounds(null,true,false);assert.equal(window.browserProof.modelPickBounds.requested,true);assert.equal(window.browserProof.modelPickBounds.enabled,false);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportTelemetry(null,'sceneRenderStats',[1,77]);
 assert.equal(window.browserProof.profiled,true);assert.deepEqual(Array.from(window.browserProof.telemetrySamples[0].values),[1,77]);

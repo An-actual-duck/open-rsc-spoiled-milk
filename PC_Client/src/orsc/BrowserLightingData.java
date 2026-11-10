@@ -116,7 +116,7 @@ public final class BrowserLightingData {
     }
     public Frame prepare(Renderer3DFrame frame,int maxTextureSize,ShadowPlan plan) {
         if(plan==null)return prepare(frame,maxTextureSize);
-        plan.validate(this,frame,projectionEpoch);projectionEpoch++;
+        plan.validate(this,frame,projectionEpoch,maxTextureSize);projectionEpoch++;
         List<Mask> changes=new ArrayList<Mask>(3);
         Renderer3DWorldChunkFrame world=frame==null?null:frame.getWorldChunkFrame();
         boolean populated=world!=null&&world.getChunkCount()>0;
@@ -220,7 +220,7 @@ public final class BrowserLightingData {
         return new ShadowPlan(this,frame,projectionEpoch,directional,lx,ly,lz,near,far,previousFar,quality,nearContext,farContext,farSignature,farRoofSignature,nearPlane,farPlane,farAge,blendAge,values,roof);
     }
     public static final class ShadowPlan {
-        private final BrowserLightingData owner;private final Renderer3DFrame frame;private final Renderer3DWorldChunkFrame world;private final int epoch;
+        private final BrowserLightingData owner;private final Renderer3DFrame frame;private final Renderer3DWorldChunkFrame world;private final int epoch;private final int activePlane;
         final boolean directional;final float lightX,lightY,lightZ;final float[] values;final GeometryShadowRoofMask roof;final float[][] demandMatrices;
         final DirectionalShadowProjection near;
         final DirectionalShadowProjection far;
@@ -235,7 +235,7 @@ public final class BrowserLightingData {
         final int farAge;
         final int blendAge;
         private ShadowPlan(BrowserLightingData owner,Renderer3DFrame frame,int epoch,boolean directional,float lx,float ly,float lz,DirectionalShadowProjection near,DirectionalShadowProjection far,DirectionalShadowProjection previousFar,RendererShadowSettings.Quality quality,long nearContext,long farContext,long farSignature,long farRoofSignature,int nearPlane,int farPlane,int farAge,int blendAge,float[] values,GeometryShadowRoofMask roof) {
-            this.owner=owner;this.frame=frame;world=frame==null?null:frame.getWorldChunkFrame();this.epoch=epoch;this.directional=directional;lightX=lx;lightY=ly;lightZ=lz;this.values=values;this.roof=roof;
+            this.owner=owner;this.frame=frame;world=frame==null?null:frame.getWorldChunkFrame();this.epoch=epoch;activePlane=frame==null?0:frame.getActivePlane();this.directional=directional;lightX=lx;lightY=ly;lightZ=lz;this.values=values;this.roof=roof;
             this.near=near;
             this.far=far;
             this.previousFar=previousFar;
@@ -252,8 +252,8 @@ public final class BrowserLightingData {
             if(values[1]==1)for(DirectionalShadowProjection p:new DirectionalShadowProjection[]{near,far,previousFar,owner.near,owner.far,owner.previousFar})if(p!=null)matrices.add(p.matrix);
             demandMatrices=matrices.toArray(new float[matrices.size()][]);
         }
-        private void validate(BrowserLightingData expected,Renderer3DFrame source,int epoch) {
-            if(owner!=expected||frame!=source||this.epoch!=epoch||world!=(source==null?null:source.getWorldChunkFrame()))throw new IllegalStateException("Browser shadow plan source/history changed");
+        private void validate(BrowserLightingData expected,Renderer3DFrame source,int epoch,int maxTextureSize) {
+            if(owner!=expected||frame!=source||this.epoch!=epoch||world!=(source==null?null:source.getWorldChunkFrame())||activePlane!=(source==null?0:source.getActivePlane())||values[3]>maxTextureSize||values[4]>maxTextureSize)throw new IllegalStateException("Browser shadow plan source/history changed");
         }
     }
 

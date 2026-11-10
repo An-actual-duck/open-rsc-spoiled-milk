@@ -168,9 +168,12 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 int[] settings=packing.backendPackingSettings();int at=0;
                 for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
                     if(!required[at++])continue;WorldChunkBufferKey key=chunkKey(chunk);CachedChunk cached=chunks.get(key);
-                    boolean fresh=cached!=null&&cached.signature==chunk.getStorageSignature()&&Arrays.equals(cached.settings,settings)
-                        &&Arrays.equals(cached.materials,BrowserChunkVariant.materials(frame,chunk));
-                    if(cached==null||!presentedDemand.contains(key)&&!fresh){loadState.beginDemandTransition();regionTransition(true);break;}
+                    if(cached==null){loadState.beginDemandTransition();regionTransition(true);break;}
+                    if(!presentedDemand.contains(key)) {
+                        boolean fresh=cached.signature==chunk.getStorageSignature()&&Arrays.equals(cached.settings,settings)
+                            &&Arrays.equals(cached.materials,BrowserChunkVariant.materials(frame,chunk));
+                        if(!fresh){loadState.beginDemandTransition();regionTransition(true);break;}
+                    }
                 }
             }
             evictInactive(active);
@@ -252,8 +255,18 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     }
     static Set<WorldChunkBufferKey> activeKeys(Renderer3DWorldChunkFrame world,boolean[] required) {
         if(required.length!=world.getChunkCount())throw new IllegalArgumentException("Browser demand size changed");
-        Set<WorldChunkBufferKey> active=new HashSet<WorldChunkBufferKey>();int n=0;
-        for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks())if(required[n++])active.add(chunkKey(chunk));return active;
+        Set<WorldChunkBufferKey> active=new HashSet<WorldChunkBufferKey>();
+        Set<WorldChunkBufferKey> animated=new HashSet<WorldChunkBufferKey>();
+        int n=0;
+        for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
+            WorldChunkBufferKey key=chunkKey(chunk);
+            // Demand must not hide a conflicting source identity. Both poses
+            // would otherwise share one GPU resource, even if one is omitted.
+            if(chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS&&!animated.add(key))
+                throw new IllegalStateException("Conflicting animated browser chunk identity");
+            if(required[n++])active.add(key);
+        }
+        return active;
     }
     ChunkDraws prepareChunks(Renderer3DFrame frame,Renderer3DWorldChunkFrame world,Set<WorldChunkBufferKey> active) {return prepareChunks(frame,world,active,null);}
     ChunkDraws prepareChunks(Renderer3DFrame frame,Renderer3DWorldChunkFrame world,Set<WorldChunkBufferKey> active,boolean[] demanded) {

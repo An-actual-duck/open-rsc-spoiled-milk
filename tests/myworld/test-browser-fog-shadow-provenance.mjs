@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';import fs from 'node:fs';
+import {createBrowserShadows} from '../../tools/browser-gameplay/web/browser-shadows.js';
+const source=fs.readFileSync(new URL('./test-browser-lighting.mjs',import.meta.url),'utf8');const helper=source.slice(source.indexOf('function mockGL(){'),source.indexOf('\nconst m=mockGL()'));const mockGL=Function('assert',helper+';return mockGL;')(assert);
+const m=mockGL(),stats={},chunks=new Map([[1,{vbo:{id:1},ibo:{id:2},batches:new Int32Array([0,0,3,4,1])}],[2,{vbo:{id:3},ibo:{id:4},batches:new Int32Array([0,0,3,4,1])}]]),textures=new Map([[0,{texture:{id:10},revision:1}]]);
+const s=createBrowserShadows(m.gl,{program:{id:99},stats,chunks,textures,adaptShader:x=>x});s.initialize('vertex','fragment');
+const values=new Float32Array(81);values[0]=values[1]=1;values[3]=64;values[4]=128;values[6]=1;for(const at of [32,48,64])for(let n=0;n<4;n++)values[at+n*5]=1;
+const first=new Int32Array([1,0,0,0,0,63,0,0]),both=new Int32Array([...first,2,0,0,0,0,63,0,0]);
+s.setSourceProvenance(1,1,false);s.prepare(values,first);assert.equal(stats.shadowFarDraws,1);
+values[6]=0;s.setSourceProvenance(1,1,false);s.prepare(values,both);assert.equal(stats.shadowFarDraws,2,'partial GPU availability failed to refresh');
+s.setSourceProvenance(1,1,true);s.prepare(values,both);assert.equal(stats.shadowFarDraws,2,'first complete source not refreshed');
+s.setSourceProvenance(1,1,true);s.prepare(values,first);assert.equal(stats.shadowFarDraws,0,'demand list alone invalidated full-source cache');
+values[6]=values[7]=1;s.prepare(values,first);s.bindReceiver();assert.equal(m.uniforms.get('uPreviousFarGeometryShadow'),1);
+values[6]=0;s.prepare(values,both);s.bindReceiver();assert.equal(stats.shadowFarDraws,0);assert.equal(m.uniforms.get('uPreviousFarGeometryShadow'),1,'same-source camera demand destroyed blend history');
+s.setSourceProvenance(1,2,true);s.prepare(values,both);s.bindReceiver();assert.equal(stats.shadowFarDraws,2);assert.equal(m.uniforms.get('uPreviousFarGeometryShadow'),0,'source change kept incompatible history');
+for(const args of [[0,1,true],[2,1,true],[1,0,true],[1,2147483648,true],[1,1,1]])assert.throws(()=>s.setSourceProvenance(...args),/provenance/);
+s.dispose();s.dispose();assert.equal(m.objects.size,0);console.log('PASS full-source caster provenance, partial-to-complete refresh, demand-only changes/history retention, source invalidation, malformed refusal and cleanup; CPU API double only');
