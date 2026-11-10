@@ -13,9 +13,10 @@ export function browserPreparationBenchmarkControls(mode, options) {
   };
 }
 
-/** JS-only same-artifact toggle; not a client preference or Java property. */
+/** Verified ordinary WebGL default; only benchmark URLs expose an override. */
 export function browserOwnedStateBenchmarkPolicy(mode, options) {
-  if (mode !== 'webgl' || !options.has('benchmark')) return false;
+  if (mode !== 'webgl') return false;
+  if (!options.has('benchmark')) return true;
   const policy=options.get('ownedstate')||'off';
   if (!['on','off'].includes(policy)) throw new Error('Invalid private ownedstate policy');
   return policy==='on';

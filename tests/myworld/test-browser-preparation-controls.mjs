@@ -18,7 +18,7 @@ for(const f of [undefined,'on','off'])for(const a of [undefined,'on','off']){
 for(const name of ['frameprep','animated'])for(const invalid of ['false','OFF','0','maybe']){
  assert.throws(()=>controls('webgl',new URLSearchParams('benchmark&'+name+'='+invalid)),/Invalid private/);
 }
-for(const mode of ['webgl','software'])for(const query of ['', 'ownedstate=on', 'ownedstate=bad'])assert.equal(ownedState(mode,new URLSearchParams(query)),false);
+for(const mode of ['webgl','software','input-probe'])for(const query of ['', 'ownedstate=on', 'ownedstate=off', 'ownedstate=bad'])assert.equal(ownedState(mode,new URLSearchParams(query)),mode==='webgl','Ordinary URLs must select verified WebGL ownership and ignore private overrides');
 assert.equal(ownedState('software',new URLSearchParams('benchmark&ownedstate=on')),false);
 for(const [policy,expected]of [['',false],['on',true],['off',false]])assert.equal(ownedState('webgl',new URLSearchParams('benchmark&ownedstate='+policy)),expected);
 assert.throws(()=>ownedState('webgl',new URLSearchParams('benchmark&ownedstate=bad')),/Invalid private ownedstate/);
