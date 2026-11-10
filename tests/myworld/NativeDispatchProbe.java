@@ -13,12 +13,17 @@ public final class NativeDispatchProbe {
     private static int checks;
     private static void check(boolean value,String why){checks++;if(!value)throw new AssertionError(why);}
     private static int scalar(int a,int b){return a*1664525+b;}
-    private static Throwable failure(boolean sync){
-        try{if(sync)failureSync();else failureAsync();}
-        catch(Throwable error){return error;}
-        throw new AssertionError("Failing native returned normally");
-    }
     public static void main(String[] args){
+        String mode=args.length==0?"values":args[0];
+        if(!"values".equals(mode)){
+            report("beforeNative",mode);
+            if("async-fatal".equals(mode))failureAsync();
+            else if("sync-fatal".equals(mode))failureSync();
+            else if("thenable-fatal".equals(mode))unexpectedThenable();
+            else throw new AssertionError("Unknown native probe mode");
+            report("afterNative",mode);
+            throw new AssertionError("Fatal native unexpectedly returned");
+        }
         int[] values={Integer.MIN_VALUE,Integer.MAX_VALUE,-1,0,1,32768,-65536,0xabcdef01};
         int state=0x325bf42b;
         for(int n=0;n<100;n++){
@@ -33,17 +38,6 @@ public final class NativeDispatchProbe {
             }
         }
         check(values[0]==Integer.MIN_VALUE&&values[1]==Integer.MAX_VALUE&&values[7]==0xabcdef01,"Native changed caller input");
-        Throwable async=failure(false);report("asyncFailureClass",async.getClass().getName());report("asyncFailureMessage",String.valueOf(async.getMessage()));
-        check(scalarSync(7,5)==scalar(7,5),"Caller did not continue after rejected Promise");
-        Throwable sync=failure(true);report("syncFailureClass",sync.getClass().getName());report("syncFailureMessage",String.valueOf(sync.getMessage()));
-        check(async.getClass().getName().equals(sync.getClass().getName()),"Async/sync JavaThrowable class differs");
-        check(String.valueOf(async.getMessage()).equals(String.valueOf(sync.getMessage())),"Async/sync JavaThrowable message differs");
-        check(scalarAsync(7,5)==scalar(7,5),"Caller did not continue after direct throw");
-        Throwable protocol=null;try{unexpectedThenable();}catch(Throwable error){protocol=error;}
-        check(protocol!=null,"Unexpected thenable was accepted");
-        report("thenableFailureClass",protocol.getClass().getName());report("thenableFailureMessage",String.valueOf(protocol.getMessage()));
-        check(String.valueOf(protocol.getMessage()).contains("Unexpected asynchronous result"),"Protocol error lost its message");
-        check(scalarSync(Integer.MIN_VALUE,Integer.MAX_VALUE)==scalar(Integer.MIN_VALUE,Integer.MAX_VALUE),"Caller did not continue after protocol failure");
         report("checks",Integer.toString(checks));report("completed","true");
     }
 }

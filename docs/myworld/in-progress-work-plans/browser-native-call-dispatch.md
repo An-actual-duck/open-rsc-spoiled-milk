@@ -109,13 +109,25 @@ game-thread scheduling, gameplay or FPS. No GPU/browser was launched by this wor
 `prepare-browser-native-runtime-probe.py --run-id RUN` compiles/freeze a tiny
 target-8 test JAR and page under this subject's `runtime/` directory. It launches
 no browser. The page uses the real CheerpJ 5.0/JRE8 runtime and exposes
-`window.nativeRuntimeProof`. In one JVM, Java checks 100 scalar/int-array pairs
-including MIN/MAX/sign/overflow and unchanged inputs, compares a rejected async
-native against a direct synchronous helper throw as caught JavaThrowable class/
-message, continues after each failure, and checks an unexpected-thenable protocol
-error without an orphan rejection. No game/client classes, display, account or
-server are involved. Actual runtime execution remains manager-owned; compilation
-and JS syntax checking alone are not a JNI compatibility result.
+`window.nativeRuntimeProof`. Its current separate query modes each start a fresh
+page/JVM: `values` checks 100 scalar/int-array pairs and 1,901 assertions including
+MIN/MAX/sign/overflow and unchanged input; `async-fatal`, `sync-fatal` and
+`thenable-fatal` report a before-native marker, then require the existing runtime
+fatal/thread-stopped boundary, one poison operation, the expected error message
+and no after-native marker. Thenable mode additionally forbids an orphan rejection
+for the original consumed Promise. Loader/init/run waits are bounded; a stopped
+Java thread cannot leave the page awaiting runMain indefinitely. No game/client
+classes, display, account or server are involved.
+
+The initial probe assumed a JS error would reach Java's catch(Throwable). In the
+manager's real-runtime v2 run, all 100 calls to each scalar/vector policy completed,
+but the original ASYNC failure stopped its Java thread and emitted an unhandled
+rejection before any SYNC failure ran. That was an invalid probe expectation,
+not a demonstrated synchronous-dispatch regression. Original v1/v2 artifacts are
+preserved; v3 tests the inherited fatal boundary without a renderer/vendor fix.
+Actual v3 execution remains manager-owned; compilation and JS syntax checks alone
+are not a JNI compatibility or performance result. Range-capable HTTP serving is
+required for the authentic JAR loader.
 
 ## Remaining gates
 
