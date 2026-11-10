@@ -77,17 +77,27 @@ Fresh client build passed. Existing six animated policy/control runs passed,
 including demanded/omitted duplicate-identity regressions. Frontend VM contract,
 lighting resource/state/failure tests, full-source provenance API/history tests,
 and shadow uniform command oracle passed.
-The extended demand fixture has240,849 checks: nonzero Y/rebases/immutable source,
+The extended demand fixture has241,538 checks: nonzero Y/rebases/immutable source,
 10,000 nonvacuous asymmetric Float32 matrix/AABB corner comparisons, and175frames
 of captured-plan vs ordinary preparation covering repeated discarded previews,
 far age150, blend lifetime, HIGH/LOW/OFF, underground and active-plane changes.
-This does not replace frozen old-source or actual full renderer pixel oracles.
+An independent compile of frozen pre-task9ee lighting source additionally passes
+384 exact state/mask checks over190frames. Java8/21 both pass. Provenance has16
+actual immutable texture/source cases, including unreferenced opaque add/remove/
+resize, animated alpha exclusions, packed-index shape and >2^53 source signatures.
+The existing readiness/streaming fixtures pass19/73checks. These CPU tests do not
+replace actual full renderer pixel oracles.
 
 Outstanding review gates
 ------------------------
-Full-source caster provenance currently overinvalidates on unrelated opaque
-texture catalog changes; that can destroy a previous-far blend and must be
-corrected before adoption. Post-review source now seals completeness headers as
+Post-review source matches the existing Java far invalidation components and
+ignores opaque texture catalog changes. Exact provenance is committed only after
+the held-frame return, so an undrawn transient cannot invalidate a later blend.
+Packed-index count is included in its defensive shape metadata. The candidate
+also limits demand to exactly planned near/current/active-previous maps; obsolete
+owner matrices are not sampled after prepare, so they no longer force demand.
+Animated objects are tested only against near maps, matching production policy.
+Post-review source seals completeness headers as
 one-shot per-frame proof: consume at preparation, discard on held/inactive UI,
 and reject an active shadow frame missing its fresh header. CPU stale/held/UI
 header tests pass; immutable diagnostic stage55abe predates this sealing fix.
@@ -98,3 +108,15 @@ Actual ordinary crossing/teleport load times and steady-state overhead must be
 measured on the same artifact with source-identical OFF/ON controls. Conservative
 eligibility may be too small to justify the added machinery. No FPS or load-time
 gain, quality parity, adoption, release or public deployment is claimed.
+
+Parent map diagnostics (eligibility only)
+----------------------------------------
+The parent ran real Firefox ON diagnostics on immutable8157/8158. They observed
+3-13 deferred chunks from101-108source chunks (roughly6-16%source vertices).
+Role-aware8158 examples: citycold101->98,94,422of1,581,168vertices omitted;
+citysteady/return101->93,250,614of1,580,556; far108->102,136,158of1,412,730.
+Evidence: manager/output/diagnostics/browser-fog-demand/diagnostic-on-3/result.json
+and later role-aware diagnostic run. These runs overlapped CPU builds, used
+instrumented capture, and did not establish FPS, load-time gains, or pixel parity.
+The first diagnostic telemetry could retain an old declaration after a fully
+cached crossing; current source emits declaration changes even without uploads.

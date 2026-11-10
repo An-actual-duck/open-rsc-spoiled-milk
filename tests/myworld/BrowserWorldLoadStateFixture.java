@@ -17,6 +17,11 @@ public final class BrowserWorldLoadStateFixture {
   check(state.shouldHold(false,0,0,0),"hard transition replaced coherent image with loading UI");
   check(!state.shouldHold(true,4,4,0),"complete new frame was held");state.presented(true,4,4,0);
   check(!state.shouldHold(true,4,4,1),"steady settings-only refresh froze gameplay");
+  int sourceEpoch=state.sourceEpoch();state.beginDemandTransition();
+  check(state.sourceEpoch()==sourceEpoch&&state.geometryEpoch()==epoch+1,"Camera demand changed source authority epoch");
+  check(state.isTransitionPending()&&state.shouldHold(true,4,4,1),"Demand repack exposed stale cached geometry");
+  check(state.frame(true,false,true,a,4,4,1,0,0,32,32,3)[2]==epoch+1,"Source declaration reset demand epoch");
+  state.presented(true,4,4,0);check(!state.isTransitionPending()&&state.isCoherent(),"Complete demand did not release hold");epoch=state.geometryEpoch();
   check(state.frame(true,false,true,anim,4,4,0,0,0,32,32,3)[2]==epoch,"content/animation change started area epoch");check(state.frame(true,false,false,anim,4,4,0,0,0,32,32,3)[1]==1,"core authority not required");
   check(state.frame(true,true,false,null,0,0,0,0,0,32,32,0)[1]==3,"legitimate creation/death/sleep UI blocked");check(state.frame(false,false,false,null,0,0,0,0,0,32,32,0)[1]==0,"login classification");check(state.frame(true,false,true,a,4,4,0,0,0,32,32,3)[2]>epoch,"relogin did not renew epoch");epoch=state.frame(true,false,true,a,4,4,0,0,0,32,32,3)[2];
   check(state.frame(true,false,true,area,4,4,0,0,0,32,32,3)[2]>epoch,"area center unchanged");epoch=state.frame(true,false,true,area,4,4,0,0,0,32,32,3)[2];check(state.frame(true,false,true,below,4,4,0,0,0,32,32,3)[2]>epoch,"signed layer not included");for(Renderer3DFrame f:new Renderer3DFrame[]{a,anim,area,below})f.release();System.out.println("PASS "+checks+" real frame region/layer/content/readiness/UI classification checks");

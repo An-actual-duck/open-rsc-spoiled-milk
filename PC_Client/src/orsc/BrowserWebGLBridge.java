@@ -205,7 +205,6 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             int[] draws=geometry.draws;int count=draws.length,remainingRepacks=geometry.remainingRepacks;
             long geometryEnd=System.nanoTime();
             if(measure!=null){measure.textureNanos=textureEnd-textureStart;measure.geometryNanos=geometryEnd-textureEnd;measure.ready=count/8;measure.repacks=remainingRepacks;}
-            if(FOG_ELIGIBLE)shadowSourceProvenance(1,casterProvenance.update(frame),count/8==requiredCount&&remainingRepacks==0);
             boolean authority=client!=null&&client.isRenderer3DWorldReady();
             int[] progress=loadState.frame(client!=null&&client.isGameView(),client!=null&&client.isFullScreenModalUiActive(),authority,frame,requiredCount,count/8,remainingRepacks,0,0,w,h,textures.size());
             // Core already retained its last coherent CPU frame during area activation.
@@ -219,6 +218,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             float[] matrices=new float[48];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);columnMajor(OpenGLFramePresenter.backendCameraToClipProjectionMatrix(frame),matrices,32);
             int spriteGroups=uploadSprites(frame);
             long spriteEnd=System.nanoTime();
+            if(FOG_ELIGIBLE)shadowSourceProvenance(1,casterProvenance.update(frame),count/8==requiredCount&&remainingRepacks==0);
             if(shadowPlan==null)exportLighting(frame);else exportLighting(frame,shadowPlan);
             long lightingEnd=System.nanoTime();
             exportSky(frame);

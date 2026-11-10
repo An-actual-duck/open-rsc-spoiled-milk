@@ -251,10 +251,10 @@ public final class BrowserLightingData {
             ArrayList<float[]> matrices=new ArrayList<float[]>();
             ArrayList<Boolean> staticOnly=new ArrayList<Boolean>();
             if(values[1]==1) {
-                DirectionalShadowProjection[] projections={near,far,previousFar,owner.near,owner.far,owner.previousFar};
+                DirectionalShadowProjection[] projections={near,far,values[7]==1?previousFar:null};
                 for(int n=0;n<projections.length;n++)if(projections[n]!=null) {
                     matrices.add(projections[n].matrix);
-                    staticOnly.add(Boolean.valueOf(n!=0&&n!=3));
+                    staticOnly.add(Boolean.valueOf(n!=0));
                 }
             }
             demandMatrices=matrices.toArray(new float[matrices.size()][]);

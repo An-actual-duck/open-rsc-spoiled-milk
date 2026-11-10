@@ -21,17 +21,21 @@ final class BrowserCasterProvenance {
             signatures[s++] = chunk.getStorageSignature();
             fields[f++] = chunk.getOriginWorldX(); fields[f++] = chunk.getOriginWorldZ();
             fields[f++] = chunk.getPlane(); fields[f++] = chunk.getChunkRole();
-            fields[f++] = chunk.getVertexCount(); fields[f++] = chunk.getIndexCount();
+            fields[f++] = chunk.getVertexCount();
+            fields[f++] = Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3;
         }
         for (Renderer3DTextureData texture : frame.getTextures()) {
-            if (texture == null) continue;
+            // Match the existing Java far-cache invalidation dependency: opaque
+            // RGB/catalog/shape changes cannot change sampled cutout depth and
+            // must not discard an in-progress previous-far blend.
+            if (texture == null || !texture.hasTransparency() || !RendererShadowCasterPolicy.isFarCaster(texture)) continue;
             if (f + 5 > fields.length || s == signatures.length) throw new IllegalStateException("Browser caster textures exceed bound");
             boolean far = RendererShadowCasterPolicy.isFarCaster(texture);
             fields[f++] = texture.getTextureId(); fields[f++] = texture.getWidth(); fields[f++] = texture.getHeight();
             fields[f++] = texture.hasTransparency() ? 1 : 0; fields[f++] = far ? 1 : 0;
-            // Opaque RGB changes cannot alter depth. Cutout bytes, shape, presence
-            // and source material IDs can, and remain exact dependencies.
-            signatures[s++] = texture.hasTransparency() && far ? texture.getSignature() : 0L;
+            // This list intentionally includes unreferenced cutouts too: the
+            // existing Java staticSignature does, so preserve its semantics.
+            signatures[s++] = texture.getSignature();
         }
         boolean same = f == committedFields.length && s == committedSignatures.length;
         for (int n = 0; same && n < f; n++) same = fields[n] == committedFields[n];

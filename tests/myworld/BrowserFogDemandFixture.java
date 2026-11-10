@@ -65,6 +65,10 @@ public final class BrowserFogDemandFixture {
  }
  static void compare(BrowserLightingData a,BrowserLightingData b,Renderer3DFrame f,String why) {
   BrowserLightingData.ShadowPlan p=preview(b,f);
+  int expectedVolumes=p.values[1]!=1?0:1+(p.values[4]>0?1:0)+(p.values[7]==1?1:0);
+  require(p.demandMatrices.length==expectedVolumes,"Obsolete projection leaked into demand "+why);
+  require(p.demandStaticOnly.length==expectedVolumes,"Caster policy metadata differs "+why);
+  for(int n=0;n<expectedVolumes;n++)require(p.demandStaticOnly[n]==(n>0),"Near/far caster policy differs "+why);
   // Discarded previews must not advance far-map age or blend progression.
   for(int n=0;n<3;n++)require(Arrays.equals(p.values,preview(b,f).values),"Read-only preview advanced "+why);
   BrowserLightingData.Frame x=commit(a,f,null),y=commit(b,f,p);
