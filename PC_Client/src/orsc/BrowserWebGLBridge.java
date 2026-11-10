@@ -32,6 +32,17 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private int maxTextureSize;
     private static final long CHUNK_BUDGET=224L*1024*1024; // reserve32MiB for the bounded world texture catalog
     private static final boolean ACTIVE_ONLY="active".equals(System.getProperty("spoiledmilk.browserCachePolicy","lru"));
+    private static final boolean ANIMATED_BUFFER_REUSE=Boolean.parseBoolean(System.getProperty("spoiledmilk.browserAnimatedBufferReuse","true"));
+    /** Actual Java-selected private control; never changes desktop renderer policy. */
+    public static boolean isAnimatedBufferReuseEnabled(){return ANIMATED_BUFFER_REUSE;}
+    static WorldChunkBufferKey chunkKey(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+        if(!ANIMATED_BUFFER_REUSE&&chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS) {
+            // Native from(chunk,false) still gives animated positional identity.
+            // The private control explicitly restores immutable per-pose storage.
+            return new WorldChunkBufferKey(chunk.getPlane(),0,0,0,0,chunk.isObjectChunk(),chunk.getChunkRole(),true,chunk.getStorageSignature(),0L);
+        }
+        return WorldChunkBufferKey.from(chunk,true);
+    }
     private long residentChunkBytes;
     private int nextId=1;
     private boolean initialized;
@@ -154,7 +165,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     static Set<WorldChunkBufferKey> activeKeys(Renderer3DWorldChunkFrame world) {
         Set<WorldChunkBufferKey> active=new HashSet<WorldChunkBufferKey>();
         for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
-            if(!active.add(WorldChunkBufferKey.from(chunk,true))&&chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS)
+            if(!active.add(chunkKey(chunk))&&chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS)
                 throw new IllegalStateException("Conflicting animated browser chunk identity");
         }
         return active;
@@ -171,7 +182,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         int[] draws=new int[world.getChunkCount()*8];int count=0,uploaded=0,remainingRepacks=0;
         List<PendingRepack> pending=new ArrayList<PendingRepack>();
         for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
-            CachedChunk cached=chunks.get(WorldChunkBufferKey.from(chunk,true));if(cached==null)continue;
+            CachedChunk cached=chunks.get(chunkKey(chunk));if(cached==null)continue;
             int[] materialState=cached.materials;
             if(cached.signature!=chunk.getStorageSignature()||cached.materialRevision!=materialRevision){materialState=BrowserChunkVariant.materials(frame,chunk);if(Arrays.equals(materialState,cached.materials))cached.materialRevision=materialRevision;}
             if(cached.signature!=chunk.getStorageSignature()||cached.vertices!=chunk.getVertexCount()||cached.indices!=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3||!Arrays.equals(cached.settings,packingSettings)||!Arrays.equals(cached.materials,materialState))pending.add(new PendingRepack(cached,chunk,materialState));
@@ -189,7 +200,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             if(!poseChanged)uploaded+=update.chunk.getVertexCount();
         }
         for(Renderer3DWorldChunkFrame.ChunkMesh chunk:world.getChunks()) {
-            WorldChunkBufferKey key=WorldChunkBufferKey.from(chunk,true);CachedChunk cached=chunks.get(key);
+            WorldChunkBufferKey key=chunkKey(chunk);CachedChunk cached=chunks.get(key);
             if(cached==null && (uploaded==0||uploaded+chunk.getVertexCount()<=UPLOAD_VERTICES_PER_FRAME)) {
                 long required=chunkBytes(chunk);
                 makeRoom(active,required);
@@ -210,7 +221,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             CachedChunk replacement=upload(frame,chunk,required,settings);
             // Allocate+validate first. A failed native upload leaves the old cache
             // entry and accounting intact; it can never masquerade as this pose.
-            chunks.put(WorldChunkBufferKey.from(chunk,true),replacement);
+            chunks.put(chunkKey(chunk),replacement);
             residentChunkBytes+=required-cached.bytes;
             chunkBackend.delete(new int[]{cached.id});
             return replacement;
