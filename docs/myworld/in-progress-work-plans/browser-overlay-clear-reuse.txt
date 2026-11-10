@@ -26,4 +26,17 @@ JVMs match5,625,354 output bytes for RGB/T/metadata/tokens/live views/exceptions
 including1500random maintained raster operations.13 private fast-path checks
 prove active/disabled controls and borrowed/unborrowed behavior. Existing
 9,838,525 coverage checks, scoped Scene ownership, retained fades and actual
-frame-preparation snapshot tests pass. No GPU/FPS result or main promotion yet.
+frame-preparation snapshot tests pass. Private actual-world candidate8131 used this branch6b60 production changes,
+JAR e18aa5eb8829db3129e52fe86f0c1568c31f1ddc3b884d9c165073975aad4de6.
+Clean measurement overlay-clear-reuse-1 reached50.68256 actual fresh world FPS
+with33.5233 mean actor composites, versus the then-current color-frustum-1
+51.08027FPS with29.8443 actors. This is not an isolated throughput benefit:
+actor population differs and the raw FPS result does not establish a gain.
+The frozen render/input byte differential and coverage checks prove semantics,
+not performance. A separate read-only peer review found no blocker.
+
+Preserve the candidate without main promotion. The later owned-GL-state path
+has a much stronger alternating same-session measurement,50.50OFF/54.81ON,
+with matched populations. This clear candidate has not been combined with that
+path or upload validation, and must not be described as part of either gain.
+A later isolated clear control or matched measurement may justify promotion.
