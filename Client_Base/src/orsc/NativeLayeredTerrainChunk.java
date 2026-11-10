@@ -25,6 +25,9 @@ public final class NativeLayeredTerrainChunk {
 	public static final String STRUCTURAL_ENCODING_V2 = "structural-layered-sector-v2-u16";
 	public static final String PRESENTATION_ENCODING_V2 = "presentation-layered-sector-v2-u16";
 
+	private static final boolean BROWSER_PRIMITIVE_CHUNK_COVERAGE =
+		Boolean.getBoolean("spoiledmilk.browserPrimitiveChunkCoverage");
+
 	private static final Pattern SHA256 = Pattern.compile("[0-9a-f]{64}");
 
 	private final int size;
@@ -37,6 +40,14 @@ public final class NativeLayeredTerrainChunk {
 	private final String sourcePayloadSha256;
 	private final byte[] tileBytes;
 	private final int tileWireBytes;
+	private final boolean integerCoverageBounds;
+	private final int coverageMinimumX, coverageMaximumX, coverageMinimumY, coverageMaximumY;
+
+	/** Actual optional browser policy; never infers native rendering capability. */
+	public static boolean isBrowserPrimitiveChunkCoverageEnabled() {
+		return BROWSER_PRIMITIVE_CHUNK_COVERAGE
+			&& orsc.graphics.three.Renderer3DSettings.isBrowserPresentationAvailable();
+	}
 
 	private NativeLayeredTerrainChunk(
 		int size,
@@ -114,6 +125,18 @@ public final class NativeLayeredTerrainChunk {
 			this.sourcePayloadSha256 = null;
 			this.tileBytes = null;
 		}
+		// Append only after ALL original validation/copy work, preserving constructor
+		// failure order. An exclusive MAX_VALUE+1 edge uses the literal long path.
+		long integerMinimumX = (long) chunkX * size;
+		long integerMinimumY = (long) chunkY * size;
+		long integerMaximumX = integerMinimumX + size;
+		long integerMaximumY = integerMinimumY + size;
+		this.integerCoverageBounds = integerMinimumX >= Integer.MIN_VALUE && integerMaximumX <= Integer.MAX_VALUE
+			&& integerMinimumY >= Integer.MIN_VALUE && integerMaximumY <= Integer.MAX_VALUE;
+		this.coverageMinimumX = this.integerCoverageBounds ? (int) integerMinimumX : 0;
+		this.coverageMaximumX = this.integerCoverageBounds ? (int) integerMaximumX : 0;
+		this.coverageMinimumY = this.integerCoverageBounds ? (int) integerMinimumY : 0;
+		this.coverageMaximumY = this.integerCoverageBounds ? (int) integerMaximumY : 0;
 	}
 
 	public static NativeLayeredTerrainChunk available(
@@ -187,6 +210,11 @@ public final class NativeLayeredTerrainChunk {
 	}
 
 	public boolean covers(int worldX, int worldY) {
+		if (BROWSER_PRIMITIVE_CHUNK_COVERAGE && this.integerCoverageBounds
+			&& orsc.graphics.three.Renderer3DSettings.isBrowserPresentationAvailable()) {
+			return worldX >= coverageMinimumX && worldX < coverageMaximumX
+				&& worldY >= coverageMinimumY && worldY < coverageMaximumY;
+		}
 		long minimumX = (long) chunkX * size;
 		long minimumY = (long) chunkY * size;
 		return worldX >= minimumX && worldX < minimumX + size
