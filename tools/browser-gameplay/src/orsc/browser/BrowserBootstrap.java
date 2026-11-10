@@ -176,6 +176,10 @@ public final class BrowserBootstrap {
                                         reportCandidatePolicy(policy[0],requested,actual[0],actual[1]);
                                         if(requested&&!actual[0])throw new IllegalStateException("Requested candidate is absent from this fixture JAR: "+policy[0]);
                                     }
+                                    boolean projectionRequested=Boolean.getBoolean("spoiledmilk.browserSceneryProjectionWork");
+                                    boolean[] projectionActual=BenchmarkCandidatePolicies.inspectInstance(((orsc.mudclient)client).getScene(),"isBrowserSceneryProjectionWorkEnabled");
+                                    reportCandidatePolicy("sceneryProjection",projectionRequested,projectionActual[0],projectionActual[1]);
+                                    if(projectionRequested&&!projectionActual[0])throw new IllegalStateException("Requested candidate is absent from this fixture JAR: sceneryProjection");
                                     candidatePoliciesReported=true;
                                 }
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();

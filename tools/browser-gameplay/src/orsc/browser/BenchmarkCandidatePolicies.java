@@ -16,6 +16,17 @@ final class BenchmarkCandidatePolicies {
         catch(IllegalAccessException error){throw new IllegalStateException("Candidate getter inaccessible: "+method,error);}
         catch(InvocationTargetException error){throw new IllegalStateException("Candidate getter failed: "+method,error.getCause());}
     }
+    static boolean[] inspectInstance(Object owner,String method) {
+        if(owner==null)return new boolean[]{false,false};
+        try {
+            Method getter=owner.getClass().getMethod(method);
+            Object value=getter.invoke(owner);
+            if(!(value instanceof Boolean))throw new IllegalStateException("Candidate getter does not return boolean: "+method);
+            return new boolean[]{true,((Boolean)value).booleanValue()};
+        } catch(NoSuchMethodException error){return new boolean[]{false,false};}
+        catch(IllegalAccessException error){throw new IllegalStateException("Candidate getter inaccessible: "+method,error);}
+        catch(InvocationTargetException error){throw new IllegalStateException("Candidate getter failed: "+method,error.getCause());}
+    }
     static final class RegionDiagnostics {
         private Class<?> owner;
         private Method getter;

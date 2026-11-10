@@ -73,7 +73,8 @@ Private controls and receipts
 ----------------------------
 fixture=repeatable-v1 requires WebGL benchmark mode and routes only43649/43549.
 Ordinary/software sessions retain their existing43629/43529 route. Query controls
-geometrytransfer, regionprep, descriptorwrite and halolookup accept on/off, default OFF;
+geometrytransfer, regionprep, descriptorwrite, halolookup and sceneryprojection
+accept on/off, default OFF;
 ordinary/software URLs do not set candidate Java properties. Actual one-time
 receipts separate requested, method availability and enabled state. A requested
 ON absent from its JAR is refused; OFF on an older baseline remains explicitly
@@ -182,3 +183,17 @@ and committed3b3f native dependency. Worker logs are under
  output/tests/browser-repeatable-benchmark-tools/jdk21-native-union.log
 The extra private URL/literal-ASYNC wrapper source oracle also passed. No further
 build/test/GPU work was run during the manager's subsequent timing window.
+
+Scenery projection prototype control (source-only follow-up)
+----------------------------------------------------------
+The fifth optional candidate uses private sceneryprojection=on|off, default OFF,
+and property spoiledmilk.browserSceneryProjectionWork. Its actual getter is the
+INSTANCE Scene.isBrowserSceneryProjectionWorkEnabled(), inspected once on the
+real Scene after creation. The runtime branch additionally requires the actual
+browser model-pick/full GPU ownership/no-CPU-depth gate; this tooling does not
+implement projection or infer that gate from the URL. A missing getter is
+explicitly unavailable and false for an OFF/old-JAR run; requested ON with an
+absent getter is refused. Ordinary/software URLs do not override the property.
+Static and instance receipts share the bounded five-name frontend schema.
+The immutable8166 stage remains unchanged. This follow-up awaits focused CPU
+retests after the manager's height-lookup timing window; no performance claim.
