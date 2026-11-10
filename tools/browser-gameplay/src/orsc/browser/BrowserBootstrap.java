@@ -10,6 +10,7 @@ public final class BrowserBootstrap {
     public static native void reportState(String mode, int fps, int loadingPercent);
     public static native void reportLoop(String mode,boolean earlyFaceCull,boolean fullResidentOwnership);
     public static native void reportTelemetry(String names,double[] values);
+    public static native void reportPreparation(boolean enabled,boolean active,boolean animated);
     private static native int wsOpen();
     private static native byte[] wsRead(int socket, int maximum);
     private static native int wsAvailable(int socket);
@@ -146,6 +147,12 @@ public final class BrowserBootstrap {
                             }
                             if(Boolean.getBoolean("spoiledmilk.browserProfile"))reportTelemetry(orsc.BrowserTelemetryData.names(),orsc.BrowserTelemetryData.snapshot());
                             reportLoop(String.valueOf(loopField.get(client)),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isEarlyResidentFaceCullEnabled(),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isBrowserFullResidentOwnershipEnabled());
+                            if(webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
+                                orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
+                                reportPreparation(orsc.graphics.two.GraphicsController.isBrowserFramePreparationEnabled(),
+                                    surface!=null && surface.isBrowserFramePreparationActive(),
+                                    Boolean.parseBoolean(System.getProperty("spoiledmilk.browserAnimatedBufferReuse","true")));
+                            }
                             reportState(String.valueOf(modeField.get(client)), fpsField.getInt(null), orsc.ORSCApplet.globalLoadingPercent);
                         }
                         Thread.sleep(1000);
