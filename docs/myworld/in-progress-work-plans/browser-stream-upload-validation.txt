@@ -75,3 +75,24 @@ world/sky/shadow draw counters and retained/C-T allocations are asserted before
 each fault. Each case serializes warm counters, performance clock and Query
 creation/deletion counts; rejected batches cannot create a timer query. This is
 a standalone production-API source submission, not a logged-in Java gameplay frame.
+
+Manager actual GPU error-policy evidence
+----------------------------------------
+Manager ran the explicit v2 frozen hardware fixture on physical AMD RX6700XT
+ANGLE/OpenGL4.6: PASS5 queued INVALID_VALUE cases (chunk, atlas pixels, atlas
+descriptors, sky palette, coverageT). Every case first accepted a warm source
+submission with4actual draw calls:1world,1sky,1shadow plusUI, retained32bytes.
+Each later queued error rejected before ANYdraw, without advancing frame freshness,
+with sticky failure and0resources after idempotent dispose. Each case created
+exactly1timer query during warmup and deleted it on disposal; rejection created
+none. The worker did not launch GPU/browser. This is correctness evidence, not
+gameplay, image equivalence, performance or60FPS acceptance.
+Evidence (ai2-relative): output/tests/browser-stream-upload-validation/hardware/
+checkpoint-0cecef8d8-v2/hardware-result.json (passed:true, publicChanged:false).
+The fixture froze source0cecef8d8 and actual production shaders from reviewed
+b5035079673342899046b7c498f6e34f8c4a26d7047ff40307006095a7b1fb16 dependencyJAR.
+
+Normal-merged ordinary-ownedON adoption main2b0681f841. Only frontend policy
+defaults/control assertions differ from v2; imported error-policy runtime modules
+remain byte-identical. Ordinary WebGL uses owned state but uploadvalidation stays
+OFF pending a measured performance decision. No player-facing override was added.
