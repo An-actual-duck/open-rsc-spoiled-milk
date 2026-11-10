@@ -1,0 +1,166 @@
+Private browser combat visual workload
+======================================
+
+Scope
+-----
+renderer-combat-v1 is a separate explicit WebGL benchmark fixture. It reuses
+RendererBenchmarkServer, prepared with scripts/renderer-benchmark.py prepare.
+That preparer copies only the intact zero-account seed into a new disposable
+run, binds TCP43639/WebSocket43539 on loopback, disables external services and
+uses its synthetic renderdemo / RendererProof13 account. No owner or public
+server data is used. Preparation never starts a server, browser or GPU client.
+
+The idle repeatable-v1 fixture keeps its separate43649/43549 route and original
+32 fixed NPCs. Ordinary/software sessions keep43629/43529. The Java socket
+adapter restricts connections to the selected loopback port; both frontend
+and Bootstrap require benchmark WebGL before enabling either fixture camera.
+Production client/server code, assets and native/software defaults are unchanged.
+
+Combat is the existing combat-real phase at502,453,L0:16 controlled players,
+32 NPC targets, eight summoned bears; six production attack channels are tier3
+ICE_CRYSTAL, THUNDER_STRIKE, BATTERING_RAM, ranged, throwing and melee. Existing
+30000HP targets sustain the workload. No fake client-side VFX are injected and
+no animation clock is frozen. Existing authoritative status.json reports
+primary/credited damage, resources spent, active channels, summons and positions.
+request.json selects the phase deliberately; there is no timing auto-switch.
+The once-per-login camera pin reuses RepeatableCamera: source pitch912,
+rotation128 and zoom75, with only automatic camera drift disabled. Actual
+published pose must still be checked by the manager.
+
+Receipts and interpretation
+---------------------------
+window.browserProof.combatFixture is sampled once per second by a read-only
+Bootstrap observer only for renderer-combat-v1. It reports received NPC/player
+counts, live projectile/impact/combat/pending/cleric/hit/health actor counts,
+loaded combat/projectile/impact kinds and frames, and named tier3/summon frame
+counts. It does not advance actors, manufacture effects or replay animations.
+Counts are not proof that an actor/effect is projected, unobstructed or visible.
+Brief effects may occur between observer samples. Actual animated image capture
+and representative nonzero observations are required before FPS acceptance.
+
+combat-real does not currently cast cleric buffs/curses, so zero live cleric
+counts do not imply a rendering failure or provide cleric performance coverage.
+Summon count/engagement authority is the existing server status, not guessed
+from client NPC appearances. The ordinary RGB/transmittance overlay is retained
+for custom spell/cleric/queued projectile effects; GPU actor snapshots continue
+through the existing Scene path.
+
+Prepared asset-parity.json compares every maintained runtime animations and
+legacy-animations PNG with its embedded myworld-assets JAR entry, including
+exact SHA256 bytes. This is packaging evidence only: it does not prove ImageIO
+decoding or actual Firefox visibility. stage.json records hashes of the browser
+frontend, Bootstrap Java sources, client JAR, fixture, asset audit and separately
+prepared server marker. An explicitly provided server-artifacts directory keeps
+core/overlay/plugins/libs from one frozen snapshot; an unverified source label
+must remain labelled unverified rather than being called current main.
+
+Manager-only usage
+------------------
+Prepare with an explicit reviewed client JAR/source and congruent frozen server
+artifact directory/source receipt:
+
+  python3 scripts/browser-gameplay/prepare-combat.py --name UNIQUE \
+    --http-port 8169 --dependency-jar /reviewed/client.jar \
+    --client-source-commit EXACT40HASH --server-artifacts /frozen/server \
+    --server-source frozen-artifacts-source-unverified
+
+The preparation receipt contains exact serverStartCommand/httpCommand/url/
+status/request paths. Those commands are instructions for a later explicitly coordinated manager test;
+prepare-combat.py never executes them. Existing run names are refused.
+
+A later manager proof must confirm realCombat.authoritative, all six channels'
+resource/damage progress and eight summons; loaded frame counts plus visible
+changing custom spell/projectile/summon frames; readiness, no backend errors,
+and fresh world-frame FPS after sufficient warmup. Existing idle NPC performance
+numbers do not cover this dynamic workload. No FPS/visible-VFX result is claimed
+by this preparation task.
+
+CPU verification
+----------------
+The focused observer/route/packaging/frontend suite passed on installed JDK8
+and system JDK21 against the explicit baseline325 client JAR. Each run checked
+12 actual client-state/read-only/gating conditions,15 actual once-pinned camera
+conditions, compiled the unchanged production-combat server against the frozen
+baseline2 artifacts, and exercised ordinary, idle-repeatable and combat frontend
+contracts. The16 existing renderer-benchmark guard tests also passed. None of
+these tests starts a server, browser or GPU; mock frontend FPS fields are not
+performance evidence.
+
+workspace-layout.py check was run. It reports pre-existing unclassified worker
+output roots (legacy static-analysis, sprite and renderer diagnostic folders);
+this task writes only declared tests/browser-combat-workload,
+tests/browser-gameplay-spike and tests/renderer-shadow-benchmarks subjects.
+Those historical outputs were preserved, not moved or deleted.
+
+Frozen review stage (prepared, never started by this worker)
+----------------------------------------------------------
+Browser run: output/tests/browser-gameplay-spike/browser-combat-baseline-1
+Server run: output/tests/renderer-shadow-benchmarks/browser-combat-baseline-1
+HTTP8169; fixture renderer-combat-v1; TCP43639 / WebSocket43539.
+Exact frontend/Bootstrap source:81dace127121ffc24a9e98eb44c05e9be33a54d2.
+Client source325bf42b60fe411705f9f14c0a3ef6debabe24a7 / JAR SHA256
+f72047bfb006b79a1e51889b46be08a36c9c80d353b4fa5ccece795c06ad1279.
+Frozen repeatable-baseline-2 core SHA256
+fe6d8de5a6b46026028c81e665645eafbdc78673e285a7dc8a6a4c8776acbdf0;
+gameplay overlay SHA256
+cd9b781f58841fb6dcf0e1e9c26910343a33fcd723d6bff1dfe4fb1db35ca848.
+All plugins/libs copied from that same frozen server directory. Its binary source
+is unverified and recorded as frozen-repeatable-baseline-2-artifacts-source-unverified.
+Server marker SHA256cf954089f1df18f64b6656a3e4f8cb6ad74aa2d5500579c2ec0b8b271df0555c.
+
+Preparation verified zero database accounts, integrity_check=ok, unchanged
+immutable artifact hashes, and2265 runtime animation PNGs with0missing/0different.
+No processes.json, server.pid or status.json existed after preparation. The full
+commands/URL/provenance are in combat-preparation.json and stage.json. Later
+documentation-only handoff commits do not mutate that frozen stage.
+
+Stable-summon workload follow-up
+-------------------------------
+Manager Firefox visual smoke of baseline1 confirmed custom ice, projectiles,
+hitsplats and eight bear models. Client receipts reported106 loaded combat
+effect kinds/1980frames,36projectile kinds/375frames,23impact kinds/188frames;
+all six server channels showed positive resource use and damage. This is
+manager-reported visual/functionality evidence, not worker GPU or FPS evidence.
+However only3of8bears remained at phaseTick204, invalidating a stable long
+combat performance cohort. Baseline1 remains preserved unchanged.
+
+The optional renderer marker sustainSummonsForBenchmark defaults false and
+only affects explicitly opted-in combat-real fixture runs. Browser combat prep
+now opts in. Immediately after each of the eight ordinary summonTestBear calls,
+the private helper verifies the controlled owner/list index, summon owner and
+bear kind using cached actual private key metadata from the frozen Summoning
+class. It sets current/max summon attributes and skill HP to the existing
+SURVIVAL_HITS30000 exactly once per newly spawned bear, matching the existing
+player/target survival policy. Duplicate identity assignments fail rather than
+refilling. Phase recreation clears only that fixture identity set for new bears.
+
+No invulnerability is added: ordinary attacks, damage absorption, depletion,
+real combat and summon runtime remain active. No production Summoning source,
+per-tick health refill, resurrection or fake VFX is added. The production
+invulnerability flag alone would not prevent absorption setting exhausted,
+so it is deliberately not used. Status reports the opt-in, sustainedSummons
+and minCurrentSummonHits. A valid five-minute cohort still requires all eight
+summons present throughout warmup and measurement; depletion/loss fails the
+cohort rather than being hidden.
+
+The focused actual frozen Entity/Skills/key fixture passed70checks on JDK8
+and JDK21
+(default false/noncombat gates, unrelated owner/kind/index refusal, all eight
+HP pairs, unchanged absorption/invulnerability, duplicate-refill rejection).
+
+Superseding frozen stage2
+------------------------
+Browser run: output/tests/browser-gameplay-spike/browser-combat-baseline-2
+Server run: output/tests/renderer-shadow-benchmarks/browser-combat-baseline-2
+HTTP8170; same dedicated TCP43639/WebSocket43539 (manager must stop the old
+private fixture before starting this one). Client and frozen core/overlay/libs
+are identical to baseline1; only private fixture/preparation source changes.
+Exact stage source:2781b47dc099fdfe5a16995ccf40d7d13b83d455.
+Server marker SHA256ba6bb36af61c5b51b989fb0e2076f1787b6eeeb36e5452bc37127c03ee2e2035.
+
+The fresh marker explicitly opts in to one-time summon survival HP. Preparation
+again verified zero seed accounts, immutable hashes and all2265animation PNGs,
+with no process/server/status files created by this worker. JDK8/JDK21 focused
+suites and16existing renderer guards passed. Actual eight-bear stability and
+combat FPS still await manager testing; no result from baseline1's declining
+bear population can establish steady workload performance.

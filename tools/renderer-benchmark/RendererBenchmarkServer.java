@@ -41,6 +41,10 @@ public final class RendererBenchmarkServer {
     private static int samePositionTeleports, areaTeleports, levelTeleports;
     private static long serial;
     private static String phase = "dense-idle";
+    private static boolean sustainSummonsForBenchmark;
+    private static int sustainedSummons;
+    private static final Set<Npc> sustainedBearInstances=Collections.newSetFromMap(new IdentityHashMap<Npc,Boolean>());
+    private static String[] summonSurvivalKeys;
     private static final String[] COMBAT_FAMILIES={"ice","thunder","wood","ranged","throwing","melee"};
     private static final int SURVIVAL_HITS=30000;
 
@@ -84,7 +88,7 @@ public final class RendererBenchmarkServer {
     private static JSONObject combatState() throws Exception {
         JSONObject result=new JSONObject().put("authoritative",realCombat());
         if(!realCombat()||actors.size()<6)return result;
-        JSONObject damage=new JSONObject(),resources=new JSONObject(),credited=new JSONObject();int summonDamage=0;int damaged=0,active=0,summons=0,summonsEngaged=0;
+        JSONObject damage=new JSONObject(),resources=new JSONObject(),credited=new JSONObject();int summonDamage=0;int damaged=0,active=0,summons=0,summonsEngaged=0,minSummonHits=Integer.MAX_VALUE;
         for(int i=0;i<6;i++) {
             Player p=actors.get(i);Npc target=npcs.get(i*3);
             damage.put(COMBAT_FAMILIES[i],SURVIVAL_HITS-target.getSkills().getLevel(Skill.HITS.id()));
@@ -109,9 +113,9 @@ public final class RendererBenchmarkServer {
             if(p.getPvmMeleeEvent()!=null||p.getRangeEvent()!=null||p.getThrowingEvent()!=null||p.getMagicCombatEvent()!=null)active++;
         }
         for(Npc n:npcs)if(n.getSkills().getLevel(Skill.HITS.id())<SURVIVAL_HITS)damaged++;
-        for(Npc n:worldServer.getWorld().getNpcs())if(Summoning.isSummon(n)) {summons++;if(n.getPvmMeleeEvent()!=null||n.inCombat())summonsEngaged++;}
+        for(Npc n:worldServer.getWorld().getNpcs())if(Summoning.isSummon(n)) {summons++;minSummonHits=Math.min(minSummonHits,Summoning.getSummonCurrentHits(n));if(n.getPvmMeleeEvent()!=null||n.inCombat())summonsEngaged++;}
         return result.put("primaryDamageByFamily",damage).put("creditedDamageByFamily",credited).put("summonCreditedDamage",summonDamage).put("resourceUnitsSpent",resources).put("damagedTargets",damaged).put("activeChannels",active)
-            .put("summonsPresent",summons).put("summonsEngaged",summonsEngaged);
+            .put("summonsPresent",summons).put("summonsEngaged",summonsEngaged).put("minCurrentSummonHits",summons==0?-1:minSummonHits).put("sustainedSummons",sustainedSummons);
     }
     private static int viewerX = 502, viewerY = 453;
 
@@ -128,7 +132,7 @@ public final class RendererBenchmarkServer {
             worldServer.getWorld().getPlayers().remove(actor); worldServer.getWorld().removePlayer(actor.getUsernameHash());
         }
         for (Npc npc : npcs) worldServer.getWorld().unregisterNpc(npc);
-        actors.clear(); npcs.clear(); positions.clear();
+        actors.clear(); npcs.clear(); positions.clear(); sustainedSummons=0; sustainedBearInstances.clear();
     }
 
     private static void equip(Player player, int id) throws Exception {
@@ -164,7 +168,36 @@ public final class RendererBenchmarkServer {
             Point point = tiles.get(16 + index); Npc npc = new Npc(worldServer.getWorld(), 3, point.getX(), point.getY(), 0);
             npc.setAttribute("renderer_benchmark_actor", true); worldServer.getWorld().registerNpc(npc); npcs.add(npc);
         }
-        for (int index = 0; index < 8; index++) Summoning.summonTestBear(actors.get(index));
+        for (int index = 0; index < 8; index++) {
+            Summoning.summonTestBear(actors.get(index));
+            sustainOwnedBenchmarkBear(actors.get(index),index);
+        }
+    }
+
+    /** One-time survival budget only. Production damage, absorption and attacks remain active. */
+    private static void sustainOwnedBenchmarkBear(Player owner,int index)throws Exception {
+        if(!sustainSummonsForBenchmark || !realCombat())return;
+        if(index<0||index>=8||index>=actors.size()||actors.get(index)!=owner
+            || !owner.getAttribute("renderer_benchmark_actor",false))throw new IllegalStateException("Only controlled benchmark bear owners may be sustained");
+        if(summonSurvivalKeys==null) {
+            String[] fields={"MANUAL_SUMMON_KEY","SUMMON_OWNER_KEY","SUMMON_CURRENT_HITS_KEY","SUMMON_MAX_HITS_KEY","SUMMON_KIND_KEY","KIND_BEAR"};
+            String[] keys=new String[fields.length];
+            for(int i=0;i<fields.length;i++) {
+                java.lang.reflect.Field field=Summoning.class.getDeclaredField(fields[i]);field.setAccessible(true);
+                keys[i]=(String)field.get(null);
+                if(keys[i]==null||keys[i].isEmpty())throw new IllegalStateException("Frozen summon metadata key unavailable");
+            }
+            summonSurvivalKeys=keys;
+        }
+        String[] keys=summonSurvivalKeys;
+        Npc bear=owner.getAttribute(keys[0],null);
+        if(bear==null||bear.isRemoved()||!Summoning.isSummon(bear)
+            || bear.getAttribute(keys[1],-1L)!=owner.getUsernameHash()
+            || !keys[5].equals(bear.getAttribute(keys[4],"")))throw new IllegalStateException("Expected immediately spawned owned benchmark bear");
+        if(!sustainedBearInstances.add(bear))throw new IllegalStateException("Benchmark bear survival budget may only be assigned once");
+        bear.setAttribute(keys[2],SURVIVAL_HITS);bear.setAttribute(keys[3],SURVIVAL_HITS);
+        bear.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),SURVIVAL_HITS,SURVIVAL_HITS,false);
+        sustainedSummons++;
     }
 
     private static void driveViewer() {
@@ -202,6 +235,7 @@ public final class RendererBenchmarkServer {
         if (!Files.isRegularFile(run.resolve("RENDERER-BENCHMARK.json"))) {
             throw new IllegalStateException("Marked renderer fixture required");
         }
+        sustainSummonsForBenchmark=new JSONObject(new String(Files.readAllBytes(run.resolve("RENDERER-BENCHMARK.json")),"UTF-8")).optBoolean("sustainSummonsForBenchmark",false);
         com.openrsc.server.config.ServerConfigurationLoadResult loaded = ServerConfigurationLoader.load("myworld.conf");
         com.openrsc.server.ServerConfiguration config = loaded.getLegacyConfiguration();
         if (!"127.0.0.1".equals(config.SERVER_BIND_ADDRESS)
@@ -302,7 +336,7 @@ public final class RendererBenchmarkServer {
                     if (player != null) state.put("x", player.getX()).put("y", player.getY()).put("level", player.getWorldLocation().getCoordinate().getLevel());
                     state.put("phase", phase).put("phaseTick", tick).put("samePositionTeleports", samePositionTeleports).put("areaTeleports",areaTeleports).put("levelTeleports",levelTeleports).put("controlledPlayers", actors.size()).put("controlledNpcs", npcs.size())
                         .put("summonsRequested", actors.isEmpty() ? 0 : 8).put("visualProjectileEmitters", actors.isEmpty() || realCombat() ? 0 : 8)
-                        .put("visualProjectilesDamage", false).put("realCombat",combatState()).put("removedMapNpcs", removedMapNpcs)
+                        .put("visualProjectilesDamage", false).put("sustainSummonsForBenchmark",sustainSummonsForBenchmark).put("realCombat",combatState()).put("removedMapNpcs", removedMapNpcs)
                         .put("cycleMillis", server.getWorldDayNightClock().getCurrentCycleMillis())
                         .put("cycleLengthMillis", server.getWorldDayNightClock().getCycleMillis()).put("cycleRate", server.getWorldDayNightClock().getRateMultiplier());
                     Path next = run.resolve("status.next"); Files.write(next, state.toString().getBytes("UTF-8"));
