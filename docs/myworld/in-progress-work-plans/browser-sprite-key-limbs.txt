@@ -38,11 +38,11 @@ Validation
 ----------
 Frozen real BrowserWorldSpriteCache source5e77ca2f8a05d068c72ad208bdf17678bbf25f1a
 runs in an independent JVM against candidateOFF andON. Java8 and21 each serialize
-4,891,604 identical bytes, SHA256:
-26b77eb239bdd4896bca061016044ec03d4652e5fd30f389debffdda70987330.
+4,986,475 identical bytes, SHA256:
+44bb41dfc042b64aa65bd0b9c95b4813f44a4f6d3aaa968524d128b0911fd6ed.
 24,000 actual private Layer cases cover random int and signed/fixed boundaries;
 96,000 independent BigInteger wide-value checks validate all four fields. Every
-Layer hash is checked against the original long-array formula. ON exercises24,000
+Layer hash is checked against the original long-array formula. ON exercises24,000boundary plus6accepted dimension
 limb representations, OFF retains long arrays. There are3,628 real cache calls per
 run with complete RGBA/bounds/ID/hit/miss/budget/epoch/LRU-entry-hash/cost output,
 translations, null/exception cases, source mutation, held evicted results and
@@ -71,3 +71,15 @@ ownedstate=on&uploadvalidation=on should be explicit in both modes to retain
 already accepted optimizations. This frozen artifact predates the separate model
 pick/Halo candidate controls; do not assume they are present. No GPU launched by
 worker. Frozen8135 must remain unchanged even if later source integrates main.
+
+ON-only source-count follow-up (after frozen8135)
+------------------------------------------------
+Source width*height also avoids wide math on ON. Both dimensions must be positive,
+the double product must be<=2^21, then and only then it narrows to int. Every
+accepted integer product is exactly representable. Any potentially inexact product
+is>=2^53 and cannot round near the2^21 threshold; all int-input products are finite.
+OFF retains the literal original long multiplication/validation/order. Pixels
+still undergo null/length checks and complete hashing/comparison. Independent
+BigInteger dimension cases include MIN/MAX, negatives/zero, threshold±1, missing
+source storage and5actual2M-pixel accepted arrays; all1,261dimension cases
+match frozen exception/count/hash bytes onJava8/21. Frozen8135 is unchanged; new measurement artifact will be8137 after proof.

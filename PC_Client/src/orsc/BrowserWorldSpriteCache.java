@@ -178,12 +178,23 @@ final class BrowserWorldSpriteCache {
 		final int hash;
 		Layer(Renderer2DFrame.SpriteCommand c, int x, int y) {
 			Sprite sprite = c.getSprite();
-			long count = (long) sprite.getWidth() * sprite.getHeight();
-			check(sprite.getWidth() > 0 && sprite.getHeight() > 0 && count <= MAX_PIXELS,
-				"Unsupported source dimensions");
-			pixels = sprite.getPixels();
-			check(pixels != null && pixels.length >= count, "Incomplete source pixels");
-			pixelCount = (int) count;
+			if (KEY_LIMBS) {
+				int width=sprite.getWidth(),height=sprite.getHeight();
+				double count=(double)width*height;
+				// Positive accepted integer products are <=2^21, hence exact.
+				// Any inexact double product is many orders above this bound.
+				check(width>0 && height>0 && count<=MAX_PIXELS,"Unsupported source dimensions");
+				pixelCount=(int)count;
+				pixels=sprite.getPixels();
+				check(pixels!=null && pixels.length>=pixelCount,"Incomplete source pixels");
+			} else {
+				long count = (long) sprite.getWidth() * sprite.getHeight();
+				check(sprite.getWidth() > 0 && sprite.getHeight() > 0 && count <= MAX_PIXELS,
+					"Unsupported source dimensions");
+				pixels = sprite.getPixels();
+				check(pixels != null && pixels.length >= count, "Incomplete source pixels");
+				pixelCount = (int) count;
+			}
 			if (KEY_LIMBS) {
 				metadata = null;
 				metadataLimbs = new int[] {0,0,0,0,c.getWidth(),c.getHeight(),

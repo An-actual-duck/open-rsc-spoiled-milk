@@ -10,7 +10,7 @@ import java.util.*;
 
 /** Executes the literal real cache in isolated frozen/current JVMs. */
 public final class BrowserSpriteKeyLimbsFixture {
- static int checks,limbCases,wideCases,cacheCalls;
+ static int checks,limbCases,wideCases,cacheCalls,dimensionCases;
  static void check(boolean b,String why){checks++;if(!b)throw new AssertionError(why);}
  static Object get(Object o,String name)throws Exception{Field f=o.getClass().getDeclaredField(name);f.setAccessible(true);return f.get(o);}
  static SpriteCommand command(Sprite s,int x,int y,int top,int bottom,Random r){
@@ -41,6 +41,25 @@ public final class BrowserSpriteKeyLimbsFixture {
    out.writeInt((Integer)get(layer,"hash"));for(long v:actual)out.writeLong(v);
    // Full source comparison must defeat a deterministic polynomial pixel collision.
    if(n%997==0){int keep=s.getPixels()[0];s.getPixels()[0]^=1;check(!(Boolean)same.invoke(layer,owned),"Mutable source change hidden");s.getPixels()[0]=keep;}
+  }
+ }
+ static void dimensions(DataOutputStream out)throws Exception{
+  Class<?> type=Class.forName("orsc.BrowserWorldSpriteCache$Layer");Constructor<?> ctor=type.getDeclaredConstructor(SpriteCommand.class,int.class,int.class);ctor.setAccessible(true);
+  Field width=Sprite.class.getDeclaredField("width"),height=Sprite.class.getDeclaredField("height");width.setAccessible(true);height.setAccessible(true);
+  int max=BrowserWorldSpriteCache.MAX_PIXELS;int[] edges={Integer.MIN_VALUE,-2,-1,0,1,2,511,512,1024,2047,2048,2049,max-1,max,max+1,Integer.MAX_VALUE};
+  List<int[]> pairs=new ArrayList<int[]>();for(int w:edges)for(int h:edges)pairs.add(new int[]{w,h});
+  pairs.add(new int[]{1,max});pairs.add(new int[]{max,1});pairs.add(new int[]{2,max/2});pairs.add(new int[]{max/2,2});pairs.add(new int[]{1024,2048});
+  Random r=new Random(781925);for(int i=0;i<1000;i++)pairs.add(new int[]{r.nextInt(),r.nextInt()});
+  for(int n=0;n<pairs.size();n++){
+   int w=pairs.get(n)[0],h=pairs.get(n)[1];BigInteger product=BigInteger.valueOf(w).multiply(BigInteger.valueOf(h));boolean valid=w>0&&h>0&&product.compareTo(BigInteger.valueOf(max))<=0;
+   Sprite sprite=new Sprite(new int[]{1},1,1);SpriteCommand c=new SpriteCommand(sprite,0,0,1,1,255);width.setInt(sprite,w);height.setInt(sprite,h);
+   if(n>=256&&n<261&&valid)sprite.setPixels(new int[product.intValueExact()]);else if(n%5==0)sprite.setPixels(null);
+   boolean complete=valid&&sprite.getPixels()!=null&&sprite.getPixels().length>=product.intValueExact();String error="";Object layer=null;
+   try{layer=ctor.newInstance(c,0,0);}catch(InvocationTargetException e){Throwable t=e.getCause();error=t.getClass().getName()+":"+t.getMessage();}
+   check((layer!=null)==complete,"Count guard acceptance differs from BigInteger");
+   if(!complete)check(error.equals("java.lang.IllegalArgumentException:"+(valid?"Incomplete source pixels":"Unsupported source dimensions")),"Count exception/order changed: "+error);
+   out.writeInt(w);out.writeInt(h);out.writeUTF(error);out.writeBoolean(layer!=null);if(layer!=null){check((Integer)get(layer,"pixelCount")==product.intValueExact(),"Count narrowed before exact validation");out.writeInt((Integer)get(layer,"pixelCount"));out.writeInt((Integer)get(layer,"hash"));for(long v:metadata(layer))out.writeLong(v);}
+   dimensionCases++;
   }
  }
  static SpriteCommand scene(Sprite s,int x,int y,int w,int h,int skew,boolean mirror,boolean ordered,int alpha){
@@ -74,8 +93,8 @@ public final class BrowserSpriteKeyLimbsFixture {
   }
  }
  public static void main(String[]args)throws Exception{
-  try(DataOutputStream out=new DataOutputStream(new BufferedOutputStream(new FileOutputStream(args[0])))){layers(out);caches(out);}
+  try(DataOutputStream out=new DataOutputStream(new BufferedOutputStream(new FileOutputStream(args[0])))){layers(out);dimensions(out);caches(out);}
   boolean expect=Boolean.getBoolean("test.expectLimbs");check((limbCases>0)==expect,"Selected representation not exercised");
-  System.out.println("PASS checks="+checks+" layerCases=24000 wideBigInteger="+wideCases+" limbCases="+limbCases+" cacheCalls="+cacheCalls);
+  System.out.println("PASS checks="+checks+" layerCases=24000 wideBigInteger="+wideCases+" limbCases="+limbCases+" cacheCalls="+cacheCalls+" dimensionCases="+dimensionCases);
  }
 }
