@@ -38,6 +38,8 @@ import java.util.zip.ZipFile;
 
 
 public final class World {
+	private static final boolean PRESENTATION_HALO_MATCH_REUSE = !"false".equalsIgnoreCase(
+		System.getProperty("spoiledmilk.presentationHaloMatchReuse", "true"));
 	private static final int RENDERER_3D_WALL_SHADOW_MAX_FOOTPRINT = 512;
 
 	public static final int SECTION_SIZE = 48;
@@ -236,6 +238,21 @@ public final class World {
 	private volatile String nativeLayeredTerrainHaloDebugSummary =
 		"halo inactive";
 	public String mapHash;
+	// One immutable identity relation only; loaded sector heights remain live.
+	// A stale reader can only miss or match this exact pair; final fields keep
+	// each locally read receipt coherent without locking the sampling path.
+	private PresentationHaloMatch presentationHaloMatch;
+	private static final class PresentationHaloMatch {
+		final NativeLayeredTerrainSnapshot active, visual;
+		final boolean matches;
+		PresentationHaloMatch(NativeLayeredTerrainSnapshot active,
+			NativeLayeredTerrainSnapshot visual, boolean matches) {
+			this.active = active;
+			this.visual = visual;
+			this.matches = matches;
+		}
+	}
+
 
 	public World(Scene var1, GraphicsController var2) {
 		try {
@@ -327,6 +344,7 @@ public final class World {
 				}
 			syntheticDeepFixtureTerrain = layeredTerrain;
 			nativeLayeredTerrainSnapshot = nativeTerrainSnapshot;
+			presentationHaloMatch = null;
 			syntheticDeepFixtureOffsetX = worldOffsetX;
 			syntheticDeepFixtureOffsetZ = worldOffsetZ;
 			nativeLayeredTerrainActivationSummary = "";
@@ -611,6 +629,7 @@ public final class World {
 		int worldOffsetX,
 		int worldOffsetZ) {
 		symmetricNativeLayeredTerrainVisualSnapshot = visualTerrain;
+		presentationHaloMatch = null;
 		symmetricOuterRenderer3DWorldChunkFrame =
 			Renderer3DWorldChunkFrame.fromChunks(result.outerChunks);
 		symmetricRetainableRenderer3DWorldChunkFrame =
@@ -764,6 +783,7 @@ public final class World {
 		int worldOffsetX,
 		int worldOffsetZ) {
 		symmetricNativeLayeredTerrainVisualSnapshot = haloTerrain;
+		presentationHaloMatch = null;
 		/*
 		 * The terrain-only halo is the first radius-two product available
 		 * during an atomic region shift. Publish its complete outer ring before
@@ -1541,6 +1561,7 @@ public final class World {
 				expectedActiveTerrain,
 				symmetricNativeLayeredTerrainVisualSnapshot)) {
 			symmetricNativeLayeredTerrainVisualSnapshot = null;
+			presentationHaloMatch = null;
 		}
 		nativeLayeredTerrainHaloDebugSummary =
 			"halo retainedOuter=" + retainedOuter.size()
@@ -1613,6 +1634,7 @@ public final class World {
 				expectedActiveTerrain,
 				symmetricNativeLayeredTerrainVisualSnapshot)) {
 			symmetricNativeLayeredTerrainVisualSnapshot = null;
+			presentationHaloMatch = null;
 			nativeLayeredTerrainHaloDebugSummary = "halo pending";
 		}
 	}
@@ -1847,6 +1869,18 @@ public final class World {
 			+ (southeast - northeast) * reverseZ / 128;
 	}
 
+	private boolean presentationHaloMatches(NativeLayeredTerrainSnapshot active,
+		NativeLayeredTerrainSnapshot visual) {
+		if (!PRESENTATION_HALO_MATCH_REUSE) return matchesActiveHalo(active, visual);
+		PresentationHaloMatch cached = presentationHaloMatch;
+		if (cached != null && cached.active == active && cached.visual == visual) {
+			return cached.matches;
+		}
+		boolean matches = matchesActiveHalo(active, visual);
+		presentationHaloMatch = new PresentationHaloMatch(active, visual, matches);
+		return matches;
+	}
+
 	private int presentationVertexElevation(
 		int localTileX,
 		int localTileZ,
@@ -1883,7 +1917,7 @@ public final class World {
 		int logicalTileZ = Math.subtractExact(
 			worldTileZ, syntheticDeepFixtureOffsetZ);
 		NativeLayeredTerrainSnapshot source = null;
-		if (matchesActiveHalo(active, visual)
+		if (presentationHaloMatches(active, visual)
 			&& visual.covers(
 				visual.getWorldSpace(),
 				visual.getLevel(),
