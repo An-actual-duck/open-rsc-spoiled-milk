@@ -42,5 +42,5 @@ export function createBrowserLighting(gl,options) {
   }
   function bindReceiverPlane(plane){gl.uniform1i(loc('uGeometryRoofReceivers'),values&&values[1]===1&&values[11]===1&&values[12]===plane&&masks.has(5)?1:0);}
   function dispose(){if(disposed)return;shadows.dispose();for(const mask of masks.values())gl.deleteTexture(mask.texture);masks.clear();stats.lightingMaskBytes=0;disposed=true;}
-  return {initialize,uploadMask,prepare,bindReceiver,bindReceiverPlane,dispose,setSourceProvenance:shadows.setSourceProvenance};
+  return {initialize,uploadMask,prepare,bindReceiver,bindReceiverPlane,dispose,setSourceProvenance:shadows.setSourceProvenance,discardSourceProvenance:shadows.discardSourceProvenance};
 }

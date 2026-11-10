@@ -170,7 +170,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                     if(!required[at++])continue;WorldChunkBufferKey key=chunkKey(chunk);CachedChunk cached=chunks.get(key);
                     if(cached==null){loadState.beginDemandTransition();regionTransition(true);break;}
                     if(!presentedDemand.contains(key)) {
-                        boolean fresh=cached.signature==chunk.getStorageSignature()&&Arrays.equals(cached.settings,settings)
+                        boolean fresh=cached.signature==chunk.getStorageSignature()
+                            &&cached.vertices==chunk.getVertexCount()
+                            &&cached.indices==Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3
+                            &&Arrays.equals(cached.settings,settings)
                             &&Arrays.equals(cached.materials,BrowserChunkVariant.materials(frame,chunk));
                         if(!fresh){loadState.beginDemandTransition();regionTransition(true);break;}
                     }

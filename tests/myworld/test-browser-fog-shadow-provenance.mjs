@@ -9,8 +9,12 @@ s.setSourceProvenance(1,1,false);s.prepare(values,first);assert.equal(stats.shad
 values[6]=0;s.setSourceProvenance(1,1,false);s.prepare(values,both);assert.equal(stats.shadowFarDraws,2,'partial GPU availability failed to refresh');
 s.setSourceProvenance(1,1,true);s.prepare(values,both);assert.equal(stats.shadowFarDraws,2,'first complete source not refreshed');
 s.setSourceProvenance(1,1,true);s.prepare(values,first);assert.equal(stats.shadowFarDraws,0,'demand list alone invalidated full-source cache');
-values[6]=values[7]=1;s.prepare(values,first);s.bindReceiver();assert.equal(m.uniforms.get('uPreviousFarGeometryShadow'),1);
-values[6]=0;s.prepare(values,both);s.bindReceiver();assert.equal(stats.shadowFarDraws,0);assert.equal(m.uniforms.get('uPreviousFarGeometryShadow'),1,'same-source camera demand destroyed blend history');
+values[6]=values[7]=1;s.setSourceProvenance(1,1,true);s.prepare(values,first);s.bindReceiver();assert.equal(m.uniforms.get('uPreviousFarGeometryShadow'),1);
+values[6]=0;s.setSourceProvenance(1,1,true);s.prepare(values,both);s.bindReceiver();assert.equal(stats.shadowFarDraws,0);assert.equal(m.uniforms.get('uPreviousFarGeometryShadow'),1,'same-source camera demand destroyed blend history');
 s.setSourceProvenance(1,2,true);s.prepare(values,both);s.bindReceiver();assert.equal(stats.shadowFarDraws,2);assert.equal(m.uniforms.get('uPreviousFarGeometryShadow'),0,'source change kept incompatible history');
 for(const args of [[0,1,true],[2,1,true],[1,0,true],[1,2147483648,true],[1,1,1]])assert.throws(()=>s.setSourceProvenance(...args),/provenance/);
+assert.throws(()=>s.prepare(values,both),/missing for current frame/,'stale complete proof reused');
+s.setSourceProvenance(1,2,true);s.discardSourceProvenance();assert.throws(()=>s.prepare(values,both),/missing for current frame/,'held proof survived discard');
+s.setSourceProvenance(1,2,true);const inactive=values.slice();inactive[1]=0;s.prepare(inactive,both);assert.throws(()=>s.prepare(values,both),/missing for current frame/,'UI proof survived inactive preparation');
+s.setSourceProvenance(1,2,true);s.prepare(values,both);
 s.dispose();s.dispose();assert.equal(m.objects.size,0);console.log('PASS full-source caster provenance, partial-to-complete refresh, demand-only changes/history retention, source invalidation, malformed refusal and cleanup; CPU API double only');

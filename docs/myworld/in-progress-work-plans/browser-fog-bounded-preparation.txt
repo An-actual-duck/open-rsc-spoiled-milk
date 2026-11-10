@@ -83,8 +83,10 @@ Outstanding review gates
 ------------------------
 Full-source caster provenance currently overinvalidates on unrelated opaque
 texture catalog changes; that can destroy a previous-far blend and must be
-corrected before adoption. Completeness headers also need one-shot frame
-ownership (including held/UI exits), rather than sticky proof across frames.
+corrected before adoption. Post-review source now seals completeness headers as
+one-shot per-frame proof: consume at preparation, discard on held/inactive UI,
+and reject an active shadow frame missing its fresh header. CPU stale/held/UI
+header tests pass; immutable diagnostic stage55abe predates this sealing fix.
 A full production-shader Firefox full-source vs Java-selected draw-list pixel
 corpus remains required, including long offscreen casters, previous-map blending,
 camera demand expansions, nonzero anchors/rebases and underground/fog-OFF.
