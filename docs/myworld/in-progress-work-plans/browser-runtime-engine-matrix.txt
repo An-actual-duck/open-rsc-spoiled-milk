@@ -82,3 +82,32 @@ Both stages remain immutable. CPU validation additionally rejects unmanifested
 nested web files in the range service. Prepared manifests are not runtime results;
 manager observations and engine-specific failures must be preserved separately.
 The worker launched no browser, HTTP service, game server, JVM or GPU workload.
+
+Manager authentic Firefox154 results
+------------------------------------
+Evidence in the manager checkout:
+ output/diagnostics/browser-performance-pass/engine-runtime-firefox-1/summary.json
+with one JSON file for each attempted mode. Runtime/options/protocol source and
+both prepared stages were unchanged; this is a documentation-only result update.
+
+java17-js passed all four modes. The values run reported checks=1903 and
+completed=true with exit0; async-fatal, sync-fatal and thenable-fatal each passed
+the inherited fatal-boundary expectations. This establishes this configured
+variant's standalone JNI compatibility gate, not game, input, GPU or FPS parity.
+
+java8-wasmgc failed its values entry gate and the page recorded passed=false,
+completed=true. Initialization resolved, and cheerpjRunMain returned exit0, but
+calls={}, events=[] and voidMarkers=[]: no native callback or1903-check completion
+was observed. The page correctly rejected that nominally successful exit with
+Value conversion probe failed. Its only console messages were runtime ready and
+class loaded/main starting; windowErrors and unhandled were empty. No internal
+engine cause is established by those observations. The manager stopped this
+variant: no fatal-mode, gameplay or FPS attempt followed.
+
+Requested settings remain distinct from observations: actualEngineObserved and
+actualJavaVersionObserved are null in both variants. A resolved initialization or
+exit0 is not an independent engine getter and cannot override the failed protocol.
+The ordinary Java8/default-JS configuration remains unchanged. No WasmGC adoption
+or Java17 performance benefit is claimed. All evidence, including the failed
+WasmGC result, is preserved; no additional tests/builds/browser work was run by
+this worker during the subsequent combat-visual/performance work.
