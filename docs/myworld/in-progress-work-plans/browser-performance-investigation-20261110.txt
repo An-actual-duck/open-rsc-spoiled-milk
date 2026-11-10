@@ -1,0 +1,102 @@
+Browser performance investigation: 2026-11-10
+=============================================
+
+Outcome
+-------
+No consistent general speedup was established. The tested runtime changes are
+not enabled in the accepted client. Production client Java sources and runtime
+assets at bf45b9f3fda55743b0415c3cf182a4bdd7ac2af5 match baseline
+325bf42b60fe411705f9f14c0a3ef6debabe24a7. Browser test tools, explicit private
+fixtures, provenance checks and runtime-engine probes were retained.
+No release, public server action, account migration or public database change
+was performed. Oracle and the owner's original private fixture were untouched.
+
+Spell visuals and workload scope
+-------------------------------
+The fixed 32-NPC browser crowd test intentionally does not cast spells. It must
+not be compared as the same workload as an earlier desktop spell-casting test.
+
+A separate actual Firefox combat fixture verified custom magic and summon
+rendering. Real production combat used Ice Crystal, Thunder Strike, Battering
+Ram, melee, ranged and throwing, with authoritative damage and resource changes.
+It contained 32 target NPCs, eight summons and 16 synthetic players plus viewer.
+All eight summons survived the timed stable workload. A private opt-in helper
+sets their HP to 30000 once; it does not change production AI, damage or casting.
+Actual changing custom effects and bear models were observed. A separate
+existing cosmetic projectile stress phase verified short-lived projectile
+visibility; that phase alone is not proof of real casting or combat performance.
+The combat-real fixture does not cast cleric buffs: those remain outside this
+visual/performance coverage. Packaging parity covered all 2265 runtime animation
+PNGs, identical bytes, with no missing files. Packaging alone is not visual proof.
+
+Measurements and decisions
+--------------------------
+Candidate                         Observation                 Decision
+Native synchronous dispatch       +0.79% fixed-scene FPS       Keep async default
+Height lookup                     +5.39% FPS; loads +13.89%   Park candidate
+Scenery projection split          -1.52% fixed-scene FPS       Park candidate
+Primitive chunk bounds            +0.61% fixed-scene FPS;      Revert implementation
+                                  loads +8.29% mean time
+
+Primitive bounds also measured +4.50% in mixed combat, 46.40 versus 48.48 FPS,
+but naturally varying combat poses/projectiles and GPU group counts prevent
+calling that a controlled general gain. The strict crowd and loading results
+do not support adoption. The accepted baseline still measured around 46 FPS
+in these demanding browser scenes; the 60 FPS goal has not been reached.
+
+Representative height transition means were 8869ms OFF and 10101ms ON.
+Primitive transition means were 9405ms OFF and 10184.5ms ON. Each used four
+far-teleport/return traces per mode and matched upload counts. These are private
+stress transitions, not a claim that every ordinary boundary takes that long.
+Area loading remains a significant open issue.
+
+Controls and limits
+-------------------
+Firefox 154.0.1 used isolated profiles, the same frozen artifacts within each
+comparison, fixed camera, welcome popup closed, physical output 1843x1037 and
+logical viewport 960x540. Cohorts normally used 180s warmup plus 60s measurement.
+One interrupted static ON attempt was rejected. Its accepted repeat reused
+the same already-warmed session; this is recorded separately from fresh cohorts.
+No screenshots or polling occurred inside timed measurement spans. Other task
+builds and GPU tests were paused. Owner desktop applications were left intact,
+so this is a within-session comparison, not a fully idle-system certification.
+Small cohorts, order effects and natural combat changes limit causal inference.
+JavaScript submission time and GPU utilization samples are not GPU frame time;
+no isolated hardware GPU timer evidence was available. Fog, shadows, visual
+assets and view distance were not reduced for these comparisons.
+
+The Java 17/default-JS native contract probe passed all four modes. The requested
+Java 8/WasmGC probe returned without executing expected native assertions; it
+was rejected, and no game or FPS result was claimed for it. Java 8/default-JS
+remains the baseline. A bounded local Firefox CPU-profile attempt completed its
+combat window but did not produce a complete export on normal shutdown. It is
+rejected; no CPU hotspot or Java method attribution is inferred from it.
+
+Next work
+---------
+First obtain a valid local content-process CPU profile with explicit steady
+window markers, nonempty JS samples and proven retained time range. Attribute
+region preparation separately from steady-frame work before another change.
+Use the repeatable crowd plus real combat and transition fixtures to evaluate
+any profile-supported candidate; preserve exact visuals and require balanced
+results rather than adopting arithmetic reductions without measured benefit.
+
+Evidence
+--------
+Local bundle: output/diagnostics/browser-performance-pass/
+  native-dispatch-comparison.json
+  height-fps-comparison.json / height-load-comparison.json
+  projection-comparison.json
+  primitive-combat-comparison.json
+  primitive-static-comparison.json / primitive-load-comparison.json
+  primitive-static-on-recovery.json
+  combat-visual-smoke-1/ and projectile-visual-samples-1/
+  engine-runtime-firefox-1/summary.json
+  firefox-combat-cpu-profile-1/capture-receipt.json (rejected)
+  manager-post-revert-harness.log / manager-post-revert-combat.log
+
+Frozen baseline client JAR SHA256:
+f72047bfb006b79a1e51889b46be08a36c9c80d353b4fa5ccece795c06ad1279
+The private server binaries are a congruent frozen artifact snapshot with source
+unverified, as labelled in receipts; they are not claimed to be built from main.
+Parked branches and all failed/rejected evidence remain preserved.
