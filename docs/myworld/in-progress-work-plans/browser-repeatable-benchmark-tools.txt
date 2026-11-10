@@ -37,10 +37,17 @@ This is a controlled client workload, not a claim to reproduce public server CPU
 RepeatableCamera pins once at world-ready with cached reflection: sourcepitch912
 maps to actual Scene rotation112; yaw128 maps512; zoom75; offsets and future
 random-walk increments zero; automatic rotation disabled. Login/relogin renews the
-pin, but ongoing samples do not repeatedly override drift. Verify actual pose,
+pin. At that first pin only, the private helper also calls the existing public
+setShowDialogMessage(false) API. The fourth counter reports actual welcomeVisible
+via cached reflection. It does NOT suppress later opened UI. Do not blindly click
+after this automatic close: that would become an unintended ground walk.
+Ongoing samples do not repeatedly override drift. Verify actual pose,
 client username and counts. The initial source112 setup produced actual912 and
 was rejected without accepted timings; corrected baseline3 proved stable pose.
 The parent observed37 GPU actor groups (distinct from32 server/client NPCs).
+The earlier matched alignment/core cohorts retained the welcome popup: those are
+matched popup-open workloads, not certified normal gameplay. Future clean timing
+must assert welcomeVisible=false as well as fixed pose/count/identity.
 
 prepare-repeatable-client.py creates a NEW immutable client stage while reusing
 only a marked repeatable server. It never changes or starts that server. Full
@@ -66,7 +73,7 @@ Private controls and receipts
 ----------------------------
 fixture=repeatable-v1 requires WebGL benchmark mode and routes only43649/43549.
 Ordinary/software sessions retain their existing43629/43529 route. Query controls
-geometrytransfer, regionprep and descriptorwrite accept on/off, default OFF;
+geometrytransfer, regionprep, descriptorwrite and halolookup accept on/off, default OFF;
 ordinary/software URLs do not set candidate Java properties. Actual one-time
 receipts separate requested, method availability and enabled state. A requested
 ON absent from its JAR is refused; OFF on an older baseline remains explicitly
@@ -95,9 +102,10 @@ to GC, GPU work or Java; actual GPU timers may be unavailable in Firefox.
 Validation and limits
 ---------------------
 Preserved evidence includes successful separate-server startup,32mixedNPC receipts,
-actual fixed37-group/pose browser runs,14 CPU real-client camera/Scene convention
+actual fixed37-group/pose browser runs,15 CPU real-client camera/Scene convention/one-time welcome
 checks, candidate getter OFF/ON/availability/type checks, policy/frontend VM tests,
 coherent-counter GPU API doubles and bounded virtual-clock diagnostic tests.
-This selective topic must rerun its focused CPU checks after the manager's current
-exclusive measurement window before formal READY. It introduces no default
+The selective topic reran its CPU-only runner successfully on Java8/21 against
+the maintained325 baseline, including literal alignment hash and no cache-file
+checks. Future optional control additions are retested before formal READY. It introduces no default
 optimization, public deployment, general visual certification or60FPS claim.

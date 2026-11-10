@@ -169,7 +169,8 @@ public final class BrowserBootstrap {
                                 if(!candidatePoliciesReported&&((orsc.mudclient)client).getScene()!=null) {
                                     String[][] policies={{"geometryTransfer","spoiledmilk.browserGeometryTransferReuse","orsc.BrowserWebGLBridge","isGeometryTransferReuseEnabled"},
                                         {"regionPreparation","spoiledmilk.browserRegionPreparation","orsc.graphics.three.World","isBrowserRegionPreparationEnabled"},
-                                        {"descriptorWriting","spoiledmilk.browserResidentDescriptorWriting","orsc.mudclient","isBrowserResidentDescriptorWritingEnabled"}};
+                                        {"descriptorWriting","spoiledmilk.browserResidentDescriptorWriting","orsc.mudclient","isBrowserResidentDescriptorWritingEnabled"},
+                                        {"haloHeightLookup","spoiledmilk.browserHaloHeightLookup","orsc.graphics.three.World","isBrowserHaloHeightLookupEnabled"}};
                                     for(String[] policy:policies) {
                                         boolean requested=Boolean.getBoolean(policy[1]);boolean[] actual=BenchmarkCandidatePolicies.inspect(policy[2],policy[3]);
                                         reportCandidatePolicy(policy[0],requested,actual[0],actual[1]);

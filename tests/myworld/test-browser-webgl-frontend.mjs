@@ -65,7 +65,7 @@ await module.link(specifier=>{
 module.evaluate();
 for(let i=0;i<30&&!configured;i++)await new Promise(resolve=>setImmediate(resolve));
 assert.equal(transportUrl,repeatable?'ws://127.0.0.1:43549/':'ws://127.0.0.1:43529/');
-if(repeatable){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportRepeatableState(null,'browserdemo',[1,32,1]);assert.equal(window.browserProof.repeatableFixture.username,'browserdemo');assert.equal(window.browserProof.repeatableFixture.cameraPinned,true);assert.equal(window.browserProof.repeatableFixture.npcCount,32);}
+if(repeatable){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportRepeatableState(null,'browserdemo',[1,32,1,0]);assert.equal(window.browserProof.repeatableFixture.username,'browserdemo');assert.equal(window.browserProof.repeatableFixture.cameraPinned,true);assert.equal(window.browserProof.repeatableFixture.npcCount,32);assert.equal(window.browserProof.repeatableFixture.welcomeVisible,false);}
 assert.ok(configured,'actual frontend did not initialize Java options');
 const expectedPhysical=physicalOption?physicalOption==='on':!benchmarkStream;assert.equal(gpuOptions.physicalOutput,expectedPhysical,'Ordinary physical output defaults ON with explicit OFF; benchmark retains explicit opt-in');assert.equal(window.browserProof.physicalOutputRequested,expectedPhysical);
 assert.equal(gpuOptions.ownedState,!benchmarkStream,'Ordinary frontend must pass the verified owned policy to the actual backend seam');
@@ -82,7 +82,7 @@ assert.deepEqual(Array.from(await configured.natives.Java_orsc_browser_BrowserBo
 assert.equal(canvas.style.pointerEvents,'none');
 assert.equal(configured.enableInputMethods,false);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportRegionPreparationDiagnostics(null,true,[10,2,1672704]);assert.equal(window.browserProof.regionPreparationDiagnostics.hits,10);assert.equal(window.browserProof.regionPreparationDiagnostics.retainedTileBytes,1672704);
-for(const name of ['geometryTransfer','regionPreparation','descriptorWriting']){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(null,name,true,true,true);assert.deepEqual(JSON.parse(JSON.stringify(window.browserProof.privatePolicies[name])),{requested:true,available:true,enabled:true});}
+for(const name of ['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup']){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(null,name,true,true,true);assert.deepEqual(JSON.parse(JSON.stringify(window.browserProof.privatePolicies[name])),{requested:true,available:true,enabled:true});}
 assert.equal(gpuOptions.streamUploadValidation,true,'Ordinary WebGL adopts validated streaming policy');assert.equal(stats.streamUploadValidationActive,true,'Actual selected backend streaming receipt');
 if(benchmarkStream){assert.equal(typeof window.browserBenchmarkStreamUploadValidation,'function');window.browserBenchmarkStreamUploadValidation(false);assert.equal(streamRequested,false);assert.equal(window.browserProof.benchmark.streamUploadValidationRequested,true);}else assert.equal(window.browserBenchmarkStreamUploadValidation,undefined,'ordinary sessions cannot change stream policy');
 assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserFramePreparation=')||p.startsWith('spoiledmilk.browserAnimatedBufferReuse=')),benchmarkStream,'only private benchmark URL receives preparation overrides');

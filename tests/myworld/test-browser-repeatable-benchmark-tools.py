@@ -4,8 +4,8 @@ from pathlib import Path
 import argparse,hashlib,importlib.util,json,sqlite3,subprocess
 ROOT=Path(__file__).resolve().parents[2]
 def run(command,log):
-    result=subprocess.run(command,cwd=ROOT,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,check=True)
-    log.write(result.stdout);print(result.stdout,end='')
+    result=subprocess.run(command,cwd=ROOT,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+    log.write(result.stdout);print(result.stdout,end='');result.check_returncode()
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--java-home',type=Path);parser.add_argument('--client-jar',type=Path,default=ROOT/'Client_Base/Open_RSC_Client.jar');parser.add_argument('--require-candidates',action='store_true');args=parser.parse_args()
     java=str(args.java_home/'bin/java')if args.java_home else 'java';javac=str(args.java_home/'bin/javac')if args.java_home else 'javac';jar=args.client_jar.resolve()
@@ -30,8 +30,8 @@ def main():
         run([javac,'-source','8','-target','8','-cp',str(jar),'-d',str(classes)]+[str(p)for p in bootstrap+fixtures],log)
         cp=str(classes)+':'+str(jar)
         run([java,'-Djava.awt.headless=true','-cp',cp,'orsc.browser.RepeatableCameraFixture'],log)
-        flags=['-D'+name+'=false'for name in ['spoiledmilk.browserGeometryTransferReuse','spoiledmilk.browserRegionPreparation','spoiledmilk.browserResidentDescriptorWriting']]
-        positive=['-D'+name+'=true'for name in ['spoiledmilk.browserGeometryTransferReuse','spoiledmilk.browserRegionPreparation','spoiledmilk.browserResidentDescriptorWriting']]
+        flags=['-D'+name+'=false'for name in ['spoiledmilk.browserGeometryTransferReuse','spoiledmilk.browserRegionPreparation','spoiledmilk.browserResidentDescriptorWriting','spoiledmilk.browserHaloHeightLookup']]
+        positive=['-D'+name+'=true'for name in ['spoiledmilk.browserGeometryTransferReuse','spoiledmilk.browserRegionPreparation','spoiledmilk.browserResidentDescriptorWriting','spoiledmilk.browserHaloHeightLookup']]
         tail=['--require-candidates']if args.require_candidates else []
         for selected in [flags,positive]:run([java,'-Djava.awt.headless=true']+selected+['-cp',cp,'orsc.browser.BenchmarkCandidatePoliciesFixture']+tail,log)
         servercp=':'.join(str(ROOT/'server'/p)for p in ['core-gameplay-overlay.jar','core.jar','plugins.jar','lib/*'])

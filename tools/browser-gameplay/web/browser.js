@@ -78,12 +78,12 @@ const natives = {
     window.browserProof.regionPreparationDiagnostics={available:available===true,hits:values[0]??null,builds:values[1]??null,retainedTileBytes:values[2]??null};
   },
   async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
-    if(!['geometryTransfer','regionPreparation','descriptorWriting'].includes(name))throw new Error('Unknown private policy receipt');
+    if(!['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup'].includes(name))throw new Error('Unknown private policy receipt');
     (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
   },
   async Java_orsc_browser_BrowserBootstrap_reportRepeatableState(lib,username,counters){
-    if(fixturePolicy.requested!=='repeatable-v1'||counters.length!==3)throw new Error('Unexpected repeatable fixture receipt');
-    window.browserProof.repeatableFixture={username:String(username).slice(0,40),cameraPinned:counters[0]===1,npcCount:counters[1],playerCount:counters[2]};
+    if(fixturePolicy.requested!=='repeatable-v1'||counters.length!==4)throw new Error('Unexpected repeatable fixture receipt');
+    window.browserProof.repeatableFixture={username:String(username).slice(0,40),cameraPinned:counters[0]===1,npcCount:counters[1],playerCount:counters[2],welcomeVisible:counters[3]===1};
   },
   async Java_orsc_browser_BrowserBootstrap_reportInputError(lib, message) {
     window.browserProof.inputError=String(message).slice(0,512);setStatus(message);publish();

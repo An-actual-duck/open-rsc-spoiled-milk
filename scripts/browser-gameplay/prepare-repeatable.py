@@ -29,7 +29,7 @@ def main():
     (server/'inc/sqlite/browser_spike_dev.db').rename(database)
     marker=json.loads((server/'BROWSER-PRIVATE.json').read_text());marker['repeatableFrameWork']=1
     (server/'BROWSER-PRIVATE.json').write_text(json.dumps(marker,indent=2)+'\n')
-    fixture=dict(schema=1,account='browserdemo',spawn=[133,660,0],groupId=1,actors=roster(),camera=dict(zoom=75,rotation=128,sourcePitch=912,expectedSceneRotation=[112,512,0],drift=[0,0],driftIncrement=[0,0]),scope='Only the separate disposable fixture World; authored NPCs suppressed there, production client animations unchanged')
+    fixture=dict(schema=1,account='browserdemo',spawn=[133,660,0],groupId=1,actors=roster(),camera=dict(zoom=75,rotation=128,sourcePitch=912,expectedSceneRotation=[112,512,0],closeInitialWelcome=True,drift=[0,0],driftIncrement=[0,0]),scope='Only the separate disposable fixture World; authored NPCs suppressed there, production client animations unchanged')
     (run/'repeatable-fixture.json').write_text(json.dumps(fixture,indent=2)+'\n')
     (run/'web/Cache/port.txt').write_text('43649\n')
     command=json.loads((run/'server-command.json').read_text());cp=command['command'][command['command'].index('-cp')+1]

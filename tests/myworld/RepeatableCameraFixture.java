@@ -19,12 +19,13 @@ public final class RepeatableCameraFixture {
         field("currentViewMode").set(client,GameMode.GAME);
         check(camera.observe(client)[0]==0,"Incomplete region was pinned");
         field("hasCompletedInitialRegionLoad").setBoolean(client,true);
+        field("showDialogMessage").setBoolean(client,true);
         field("cameraAutoMoveX").setInt(client,42);field("cameraAutoMoveZ").setInt(client,-16);
         field("cameraAutoMoveAmountX").setInt(client,2);field("cameraAutoMoveAmountZ").setInt(client,-2);
         field("cameraAutoMoveFrameCount").setInt(client,499);field("optionCameraModeAuto").setBoolean(client,true);
         field("npcCount").setInt(client,32);field("playerCount").setInt(client,1);
         int[] receipt=camera.observe(client);
-        check(receipt[0]==1&&receipt[1]==32&&receipt[2]==1,"Actual helper receipt differs");
+        check(receipt[0]==1&&receipt[1]==32&&receipt[2]==1&&receipt[3]==0,"Actual helper receipt differs");
         for(String name:new String[]{"cameraAutoMoveX","cameraAutoMoveZ","cameraAutoMoveAmountX","cameraAutoMoveAmountZ"})check(field(name).getInt(client)==0,"Drift source remains: "+name);
         check(!field("optionCameraModeAuto").getBoolean(client),"Automatic camera mode remains enabled");
         check(client.cameraRotation==128&&field("cameraPitch").getInt(client)==912,"Private orientation not pinned");
@@ -34,7 +35,8 @@ public final class RepeatableCameraFixture {
         check(actual.getCameraRotationX()==112&&actual.getCameraRotationY()==512,"Private source pose did not produce accepted actual projection rotation");actual.release();
         check(orsc.osConfig.C_LAST_ZOOM==75,"Private zoom not pinned");
         check(field("cameraAutoMoveFrameCount").getInt(client)==499,"Client timing/animation clock was changed");
-        field("cameraAutoMoveX").setInt(client,7);camera.observe(client);
+        field("cameraAutoMoveX").setInt(client,7);field("showDialogMessage").setBoolean(client,true);int[] later=camera.observe(client);
+        check(later[3]==1&&field("showDialogMessage").getBoolean(client),"Later UI was suppressed by a recurring observer");
         check(field("cameraAutoMoveX").getInt(client)==7,"Observer secretly repinned every sample instead of exposing drift");
         field("currentViewMode").set(client,GameMode.LOGIN);camera.observe(client);
         field("currentViewMode").set(client,GameMode.GAME);check(camera.observe(client)[0]==1&&field("cameraAutoMoveX").getInt(client)==0,"Relog did not renew camera pin");
