@@ -105,3 +105,29 @@ exact in every frame, including animated-far exclusions. Resource disposal passe
 The manager owns the preserved stage/hardware-result.json evidence. No worker
 GPU process was launched, and this functional readback is not a gameplay/FPS,
 all-device or 60FPS acceptance claim. An ordinary private game benchmark follows.
+
+Ordinary game cohort: manager color-frustum-1 on8130
+---------------------------------------------------
+The frozen candidate uses unchanged e696adeee Java, baseline client SHA256
+b5035079673342899046b7c498f6e34f8c4a26d7047ff40307006095a7b1fb16,
+with frontend b4df26656. Relative to the8127 baseline, the manager recorded:
+
+                              8127 baseline        8130 candidate
+Source world frames/s         49.8458              51.0803
+Mean visible actors           33.6248              29.8443
+Mean GPU work ms               2.58168              2.33563
+Mean JS submission ms          2.76124              2.69134
+Final color draw calls         441                  401
+Final color triangles          526944               477928
+Final uploaded/ready chunks    101/101              101/101
+Final visible/culled entries   101/0                90/11
+
+No errors were reported. Draw/triangle/visible counts are final-frame snapshots,
+not cohort averages. The actual game retained every required chunk while removing
+proven offscreen color submissions; this supports the intended work reduction.
+The lower measured GPU/JS times are observations, not an isolated equal-population
+causal speedup: actor density differed between these independent runs. In
+particular, the raw FPS increase does not establish an attributable FPS gain.
+The60FPS goal remains unmet; this cohort is still about50FPS. Screenshot review
+and broader private gameplay acceptance remain manager-owned; this record does
+not imply visual/user approval beyond the separate exact hardware oracle above.
