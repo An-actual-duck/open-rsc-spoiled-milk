@@ -50,6 +50,8 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
     }catch(e){failed=true;throw e;}finally{if(ownedFrame?.active){gl.disable(gl.BLEND);gl.depthMask(true);gl.activeTexture(gl.TEXTURE0);}else{gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,oldRgb);gl.activeTexture(gl.TEXTURE0+UNIT);gl.bindTexture(gl.TEXTURE_2D,oldCoverage);gl.activeTexture(old.active);gl.useProgram(old.program);gl.bindVertexArray(old.vao);old.depth?gl.enable(gl.DEPTH_TEST):gl.disable(gl.DEPTH_TEST);old.blend?gl.enable(gl.BLEND):gl.disable(gl.BLEND);gl.depthMask(old.depthMask);gl.blendFuncSeparate(old.srcRgb,old.dstRgb,old.srcAlpha,old.dstAlpha);gl.blendEquationSeparate(old.eqRgb,old.eqAlpha);}}
     try{if(active.mode!==0){if(stats.retainedResourceBytes===0)reserveCombined(w*h*8);retained.capture(w,h,active.token);}else retained.reset();account();}catch(e){failed=true;throw e;}stats.overlayCoverageFrames++;stats.overlayCoverageMode=active.mode;active=null;
   }
+  /** Region streaming replays the last FULL output; no pending Java delta is consumed. */
+  function hold(w,h){alive();if(pending||active)throw new Error('Cannot hold a partially declared overlay');retained.drawFull(w,h);}
   function dispose(){if(disposed)return;retained.dispose();if(rgb)gl.deleteTexture(rgb);if(coverage)gl.deleteTexture(coverage);if(vao)gl.deleteVertexArray(vao);if(program)gl.deleteProgram(program);if(vertex)gl.deleteShader(vertex);if(fragment)gl.deleteShader(fragment);rgb=coverage=vao=program=vertex=fragment=null;pending=active=null;stats.overlayCoverageBytes=stats.overlayRgbBytes=stats.overlayCompositeResourceBytes=0;disposed=true;}
-  return {prepare,begin,draw,dispose};
+  return {prepare,begin,draw,hold,dispose};
 }

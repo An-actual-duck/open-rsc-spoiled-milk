@@ -803,6 +803,9 @@ public class PacketHandler {
 		phaseStartedNanos = BoundaryLoadingDiagnostics.now();
 		final boolean hadLayeredSceneContext =
 			layeredSceneContextState.hasContext();
+		final int previousLogicalX = hadLayeredSceneContext ? layeredSceneContextState.getLogicalX() : 0;
+		final int previousLogicalY = hadLayeredSceneContext ? layeredSceneContextState.getLogicalY() : 0;
+		final int previousLogicalLevel = hadLayeredSceneContext ? layeredSceneContextState.getLogicalLevel() : 0;
 		if (nativeTerrainRecovery.isPending() && nativeTerrain == null) {
 			throw new IllegalStateException("Recovery requires a verified native context");
 		}
@@ -887,7 +890,11 @@ public class PacketHandler {
 				publishReadyPredictedLayeredTerrainHalo(nativeTerrain);
 			layeredSceneActivationState.begin(sequence);
 			mc.beginLayeredSceneActivation(
-				hadLayeredSceneContext && !result.isScopeChanged());
+				hadLayeredSceneContext && !result.isScopeChanged(),
+				hadLayeredSceneContext && !result.isScopeChanged()
+					&& previousLogicalLevel == logicalLevel
+					&& Math.abs((long) previousLogicalX - logicalX) <= 8L
+					&& Math.abs((long) previousLogicalY - logicalY) <= 8L);
 			refreshLayeredSceneActivationCover();
 		} else {
 			clearReadyPredictedLayeredTerrainHalo();

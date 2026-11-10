@@ -17,7 +17,7 @@ let spriteKeyControls = {properties: [], requested: null};
 let modelPreparationControls = {properties: [], requested: null};
 let gpu,worldCover,awaitingGameFrame=false,displayLayout;
 window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput;
-function updateWorldCover(){const state=gpu?.stats.worldReadiness,error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null),waiting=awaitingGameFrame&&state?.phase==='login';if(!worldCover||(!waiting&&!error&&!['loading','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;worldCover.update(waiting?{phase:'loading',reason:'Waiting for area data'}:state,gpu?.canvas.style,error);}
+function updateWorldCover(){const state=gpu?.stats.worldReadiness,error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null),waiting=awaitingGameFrame&&state?.phase==='login';if(!worldCover||(!waiting&&!error&&!['loading','streaming','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;worldCover.update(waiting?{phase:'loading',reason:'Waiting for area data'}:state,gpu?.canvas.style,error);}
 function setStatus(message) {
   if (gpu?.stats.lastError) {
     const age = gpu.stats.lastFrame > 0 ? Math.max(0, Math.round(performance.now() - gpu.stats.lastFrame)) + ' ms ago' : 'none';
@@ -131,6 +131,10 @@ try {
     const progressName='Java_orsc_BrowserWebGLBridge_worldProgress',progress=natives[progressName];
     if(typeof progress!=='function')throw new Error('WebGL bridge has no loading protocol');
     natives[progressName]=async(lib,metadata)=>{const blocked=worldCover.blocksWorldInput;await progress(lib,metadata);awaitingGameFrame=false;if(gpu.stats.worldReadiness?.blocksWorldInput||gpu.stats.worldReadiness?.phase==='loading'||Number(metadata[9])!==gpu.stats.display?.internalWidth||Number(metadata[10])!==gpu.stats.display?.internalHeight)alignWorldSurface(Number(metadata[9]),Number(metadata[10]));else updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();};
+    for(const name of ['Java_orsc_BrowserWebGLBridge_regionTransition','Java_orsc_BrowserWebGLBridge_holdWorld']) {
+      const callback=natives[name];if(typeof callback!=='function')throw new Error('WebGL bridge has no streaming protocol');
+      natives[name]=async(...args)=>{const blocked=worldCover.blocksWorldInput;const result=await callback(...args);updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();return result;};
+    }
     const presentName = 'Java_orsc_BrowserWebGLBridge_present';
     const present = natives[presentName];
     if (typeof present !== 'function') throw new Error('WebGL bridge has no frame presenter');
