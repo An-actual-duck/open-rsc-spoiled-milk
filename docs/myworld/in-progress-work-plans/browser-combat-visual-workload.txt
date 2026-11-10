@@ -144,5 +144,23 @@ summons present throughout warmup and measurement; depletion/loss fails the
 cohort rather than being hidden.
 
 The focused actual frozen Entity/Skills/key fixture passed70checks on JDK8
+and JDK21
 (default false/noncombat gates, unrelated owner/kind/index refusal, all eight
 HP pairs, unchanged absorption/invulnerability, duplicate-refill rejection).
+
+Superseding frozen stage2
+------------------------
+Browser run: output/tests/browser-gameplay-spike/browser-combat-baseline-2
+Server run: output/tests/renderer-shadow-benchmarks/browser-combat-baseline-2
+HTTP8170; same dedicated TCP43639/WebSocket43539 (manager must stop the old
+private fixture before starting this one). Client and frozen core/overlay/libs
+are identical to baseline1; only private fixture/preparation source changes.
+Exact stage source:2781b47dc099fdfe5a16995ccf40d7d13b83d455.
+Server marker SHA256ba6bb36af61c5b51b989fb0e2076f1787b6eeeb36e5452bc37127c03ee2e2035.
+
+The fresh marker explicitly opts in to one-time summon survival HP. Preparation
+again verified zero seed accounts, immutable hashes and all2265animation PNGs,
+with no process/server/status files created by this worker. JDK8/JDK21 focused
+suites and16existing renderer guards passed. Actual eight-bear stability and
+combat FPS still await manager testing; no result from baseline1's declining
+bear population can establish steady workload performance.
