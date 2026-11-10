@@ -581,6 +581,10 @@ public class GraphicsController {
 			&& Renderer3DSettings.isBrowserPresentationAvailable();
 	}
 
+	/** Private browser benchmark receipt: configured policy and current surface ownership. */
+	public static boolean isBrowserFramePreparationEnabled() { return BROWSER_FRAME_PREPARATION; }
+	public final boolean isBrowserFramePreparationActive() { return browserFramePreparationActive; }
+
 	private boolean skipUnusedBrowserCommands() {
 		return browserFramePreparationActive && renderer2DPhase != Renderer2DFrame.Phase.SCENE;
 	}

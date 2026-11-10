@@ -113,3 +113,30 @@ Those retained historical directories were not changed or removed.
 The focused test compares software RGB/T bit-for-bit, rather than claiming the
 existing GPU alpha reconstruction is mathematically bit-perfect. No browser
 hardware, frame-cadence, fullscreen or public-server test was run by this worker.
+
+Private same-artifact controls
+-----------------------------
+The private WebGL entrypoint now accepts frameprep=on|off and animated=on|off
+only when the benchmark query parameter is present. Both default on. It relays
+spoiledmilk.browserFramePreparation=true|false and
+spoiledmilk.browserAnimatedBufferReuse=true|false to Java before initialization.
+Normal URLs and software sessions receive neither override. Invalid explicit
+policies fail closed before starting Java. Existing cache/underlay validation,
+camera settings, resolution and profile=1 telemetry remain unchanged.
+
+browserProof.benchmark.preparationRequested records requested controls.
+The separate browserProof.preparationControls receipt is reported by Java once
+per second in benchmark mode: framePreparationEnabled is the actual static
+GraphicsController switch; framePreparationActive is its current main-surface
+ownership gate; animatedBufferReuseEnabled is the System-property policy using
+the exact Boolean.parseBoolean/default-true selection of the Bridge switch.
+Java does not change that property after initialization. A loading/opaque frame
+can correctly report active=false even when enabled=true. The receipt adds no
+per-frame/per-writer timing or browser-native call.
+
+  python3 tests/myworld/test-browser-preparation-controls.py
+
+PASS: pure query/default/isolation validation; actual native receiver values;
+Bootstrap compilation; actual GraphicsController configured and active gate
+fixtures for default/on/off. This is a control-path proof, not a browser FPS run.
+The separate animated-buffer worker owns its implementation and parity tests.
