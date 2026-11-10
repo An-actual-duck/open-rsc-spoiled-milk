@@ -13,6 +13,13 @@ import {createBrowserDisplay} from './browser-display.js';
 import {browserPreparationBenchmarkControls,browserOwnedStateBenchmarkPolicy,browserModelBenchmarkControls} from './browser-benchmark-controls.js';
 const status = document.querySelector('#status');
 const options = new URLSearchParams(location.search);
+function nativeCallPolicy(mode,parameters){
+  if(mode!=='webgl'||!parameters.has('benchmark'))return 'async';
+  const value=parameters.get('nativecalls')||'async';
+  if(value!=='async'&&value!=='sync')throw new Error('Invalid private nativecalls policy');
+  return value;
+}
+const nativeCallDispatch=nativeCallPolicy(options.get('mode')||'software',options);
 const javaVersion = Number(options.get('java') || '8');
 if (![8, 11, 17].includes(javaVersion)) throw new Error('Private probe supports Java 8, 11 or 17');
 window.browserProof = {events: [], started, renderer: 'AWT software / direct framebuffer', mode: options.get('mode') || 'software', javaVersion, wasmGC: options.has('wasmgc'), runtimeVersion: window.browserRuntimeVersion};
@@ -133,7 +140,12 @@ try {
     window.browserProof.benchmark={cache:options.get('cache'),underlay:options.get('underlay'),depth:options.get('depth')||'cpu',loop:options.get('loop')||'legacy',cull:options.get('cull')||'late',ownership:options.get('ownership')||'objects',sprites:options.get('sprites')||'uncached',overlay:options.get('overlay')||'marker',preparationRequested:preparationControls.requested,modelPreparationRequested:modelPreparationControls.requested,tone:'day',sun:'135/45',brightness:'high',zoom:75,rotation:128};
   }
   if (window.browserProof.mode === 'webgl') {
-    const {createBrowserWebGL} = await import('./webgl.js');
+    const backendModule=await import(nativeCallDispatch==='sync'?'./webgl-sync.js':'./webgl.js');
+    const {createBrowserWebGL}=backendModule;
+    if(nativeCallDispatch==='sync'&&backendModule.BROWSER_NATIVE_CALL_DISPATCH!=='sync')throw new Error('Private synchronous backend is unavailable');
+    const synchronousNative=nativeCallDispatch==='sync'?(await import('./browser-native-call-dispatch.js')).createSynchronousNativeCall:null;
+    const synchronousFailure=error=>finish('Synchronous frontend native stopped: '+error);
+
     const canvas = document.createElement('canvas'); canvas.id = 'browser-webgl';
     canvas.setAttribute('aria-hidden', 'true');
     Object.assign(canvas.style, {position: 'absolute', pointerEvents: 'none', display: 'none', zIndex: '1'});
@@ -143,7 +155,8 @@ try {
     window.browserProof.physicalOutputRequested=physicalOutput;
     window.browserProof.ownedStateRequested=ownedState;
     if(window.browserProof.benchmark)window.browserProof.benchmark.streamUploadValidationRequested=streamUploadValidation;
-    gpu = createBrowserWebGL(canvas, report, {opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')});
+    gpu = createBrowserWebGL(canvas, report, {nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')});
+    window.browserProof.nativeCallDispatch={requested:nativeCallDispatch,module:backendModule.BROWSER_NATIVE_CALL_DISPATCH||null,reported:gpu.stats.nativeCallDispatch||null};
     if(options.has('benchmark')){window.browserBenchmarkOwnedState=enabled=>gpu.queueOwnedState(enabled);window.browserBenchmarkStreamUploadValidation=enabled=>gpu.queueStreamUploadValidation(enabled);window.browserBenchmarkPhysicalOutput=enabled=>gpu.queuePhysicalOutput(enabled);}
     worldCover=createWorldCover({document,window,display:document.querySelector('#display'),onGateChange:()=>window.dispatchEvent(new Event('browser-world-readinesschange'))});
     window.browserProof.worldLoading=worldCover.stats;
@@ -157,14 +170,31 @@ try {
     }
     const progressName='Java_orsc_BrowserWebGLBridge_worldProgress',progress=natives[progressName];
     if(typeof progress!=='function')throw new Error('WebGL bridge has no loading protocol');
+    if(nativeCallDispatch==='sync') {
+      natives[progressName]=synchronousNative((lib,metadata)=>{const blocked=worldCover.blocksWorldInput;const result=progress(lib,metadata);awaitingGameFrame=false;if(gpu.stats.worldReadiness?.blocksWorldInput||gpu.stats.worldReadiness?.phase==='loading'||Number(metadata[9])!==gpu.stats.display?.internalWidth||Number(metadata[10])!==gpu.stats.display?.internalHeight)alignWorldSurface(Number(metadata[9]),Number(metadata[10]));else updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();return result;},{name:'frontend worldProgress',failure:synchronousFailure});
+    } else {
     natives[progressName]=async(lib,metadata)=>{const blocked=worldCover.blocksWorldInput;await progress(lib,metadata);awaitingGameFrame=false;if(gpu.stats.worldReadiness?.blocksWorldInput||gpu.stats.worldReadiness?.phase==='loading'||Number(metadata[9])!==gpu.stats.display?.internalWidth||Number(metadata[10])!==gpu.stats.display?.internalHeight)alignWorldSurface(Number(metadata[9]),Number(metadata[10]));else updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();};
+    }
     for(const name of ['Java_orsc_BrowserWebGLBridge_regionTransition','Java_orsc_BrowserWebGLBridge_holdWorld']) {
       const callback=natives[name];if(typeof callback!=='function')throw new Error('WebGL bridge has no streaming protocol');
+      if(nativeCallDispatch==='sync')natives[name]=synchronousNative((...args)=>{const blocked=worldCover.blocksWorldInput;const result=callback(...args);updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();return result;},{name:'frontend '+name,failure:synchronousFailure});
+      else {
       natives[name]=async(...args)=>{const blocked=worldCover.blocksWorldInput;const result=await callback(...args);updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();return result;};
+      }
     }
     const presentName = 'Java_orsc_BrowserWebGLBridge_present';
     const present = natives[presentName];
     if (typeof present !== 'function') throw new Error('WebGL bridge has no frame presenter');
+    if(nativeCallDispatch==='sync') {
+      natives[presentName]=synchronousNative((...args)=>{
+        const blocked=worldCover.blocksWorldInput;
+        const result=present(...args);
+        alignWorldSurface(Number(args[1]),Number(args[2]));
+        if(blocked!==worldCover.blocksWorldInput)publish();
+        gpu.stats.display={internalWidth:Number(args[1]),internalHeight:Number(args[2]),cssWidth:canvas.style.width,cssHeight:canvas.style.height,devicePixelRatio:window.devicePixelRatio||1};
+        return result;
+      },{name:'frontend present',failure:synchronousFailure});
+    } else {
     natives[presentName] = async (...args) => {
       const blocked=worldCover.blocksWorldInput;
       const result = await present(...args);
@@ -174,6 +204,7 @@ try {
       gpu.stats.display={internalWidth:Number(args[1]),internalHeight:Number(args[2]),cssWidth:canvas.style.width,cssHeight:canvas.style.height,devicePixelRatio:window.devicePixelRatio||1};
       return result;
     };
+    }
   }
   await new Promise((resolve, reject) => {
     const script = document.createElement('script'); script.src = `https://cjrtnc.leaningtech.com/${window.browserRuntimeVersion}/loader.js`;

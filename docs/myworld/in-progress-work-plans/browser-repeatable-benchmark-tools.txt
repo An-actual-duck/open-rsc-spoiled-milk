@@ -109,3 +109,40 @@ The selective topic reran its CPU-only runner successfully on Java8/21 against
 the maintained325 baseline, including literal alignment hash and no cache-file
 checks. Future optional control additions are retested before formal READY. It introduces no default
 optimization, public deployment, general visual certification or60FPS claim.
+
+Native-call review staging (experimental, not an adopted runtime change)
+-----------------------------------------------------------------------
+The private startup query nativecalls=sync|async defaults ASYNC; ordinary and
+software sessions ignore it. ASYNC keeps the literal325 frontend progress,
+transition/hold and present wrapper bodies. SYNC selects generated webgl-sync.js
+and four small plain-function frontend wrappers using the separately reviewed
+thenable-rejecting helper. initialize remains genuinely asynchronous. Reported
+module/backend dispatch metadata is retained; no support is inferred from a URL.
+An unexpected Promise from a selected synchronous wrapper stops/disposes its
+own session. This is not evidence that CheerpJ supports the experiment: the
+manager must run the authentic JNI probe and real-game smoke before READY.
+
+prepare.py and prepare-repeatable-client.py accept a read-only review dependency:
+ --native-source /PATH/TO/REVIEWED/REPOSITORY \
+ --native-source-commit EXACT40HASH
+The staging helper reads ONLY three fixed regular-file Git blobs at that exact
+commit: canonical webgl.js, browser-native-call-dispatch.js, and native_dispatch.py.
+It never reads dirty review working-tree content or changes that repository. The
+reviewed generator, not this tooling branch, owns the19-method SHA allowlist and
+transformation. There is no runtime eval or duplicated maintained renderer body.
+Canonical/helper/generated files and generator snapshot hashes are recorded in
+stage.json.nativeDispatch, with reviewDependency=true and exact source commit.
+If the ordinary current repository lacks the capability marker, no sync module
+is fabricated; the existing async backend remains available. After separately
+reviewed integration, default preparation can use those committed local files.
+The explicitly supplied review source is independent of the dependency JAR's
+multi-source receipt. Both provenances must be kept; neither is a production
+single-commit build. Frozen8162/8163 are unchanged.
+
+CPU validation additionally compares the whole frontend CSS/native/event/disposal
+trace between selected ASYNC and SYNC doubles; checks plain vs Promise returns,
+unexpected-thenable fail-closed behavior, exact original ASYNC wrapper bodies,
+committed-file hashes, source read-only status, and rejection of invalid commit,
+out-of-stage output and audited-body drift. The real production GL/error/pixel
+oracle belongs to the separate native-dispatch branch. No CPU test claims actual
+CheerpJ JNI compatibility, GPU pixels, FPS improvement or60FPS.
