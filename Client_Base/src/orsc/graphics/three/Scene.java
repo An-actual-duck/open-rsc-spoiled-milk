@@ -24,6 +24,9 @@ public final class Scene {
 	public boolean isBrowserModelPickBoundsEnabled() { return browserModelPickBounds && isBrowserFullResidentOwnershipEnabled(); }
 	public boolean isBrowserFullResidentOwnershipEnabled() { return browserOwnsWallsAndRoofs && Renderer3DSettings.isBrowserPresentationAvailable() && !Renderer3DSettings.needsCpuDepthFrame(); }
 	public boolean isEarlyResidentFaceCullEnabled() { return browserEarlyFaceCull && Renderer3DSettings.isBrowserPresentationAvailable(); }
+    private final BrowserProjectionReuse browserProjectionReuse=Boolean.getBoolean("spoiledmilk.browserProjectionReuse")?new BrowserProjectionReuse():null;
+    public boolean isBrowserProjectionReuseEnabled() { return browserProjectionReuse!=null && isBrowserFullResidentOwnershipEnabled(); }
+    public int[] getBrowserProjectionReuseStats() { return browserProjectionReuse==null?new int[5]:browserProjectionReuse.stats(); }
 	private int scenePreparationProfileSequence;
 	private RSModel[] m_Ab;
 	private final int[] m_B = new int[40];
@@ -2963,10 +2966,17 @@ public final class Scene {
 			this.m_T.m_Yb = 2;
 
 			long modelRotateStart = RenderTelemetry.now();
+            if(browserProjectionReuse!=null) browserProjectionReuse.begin(isBrowserProjectionReuseEnabled() && skipProjectedWorldCapture && !forceLegacyWorldRaster,
+                this.rot1024_off_y,this.rot1024_vp_src,this.rot1024_off_x,this.rot1024_off_z,
+                this.cameraProjY,this.cameraProjZ,this.cameraProjX,this.rot1024_zTop);
 			int var3;
+            BrowserProjectionReuse projectionReuse=browserProjectionReuse!=null && browserProjectionReuse.isActive()?browserProjectionReuse:null;
+            try {
 			for (var3 = 0; this.modelCount > var3; ++var3) {
-				this.models[var3].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
-					this.rot1024_off_z, this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop);
+				if(projectionReuse!=null) this.models[var3].rotate1024WithReuse(projectionReuse,this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
+                    this.rot1024_off_z, this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop);
+                else this.models[var3].rotate1024(this.rot1024_off_y,this.rot1024_vp_src,this.rot1024_off_x,(byte)-122,
+                    this.rot1024_off_z,this.cameraProjY,this.cameraProjZ,this.cameraProjX,this.rot1024_zTop);
                 RSModel rotated = this.models[var3];
                 if (this.m_K && !this.interactionOnlyPickActive && rotated.m_dc && rotated.isInteractionOnly()) {
                     for (int face = 0; face < rotated.faceHead; face++) {
@@ -2981,6 +2991,8 @@ public final class Scene {
 
 			this.models[this.modelCount].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x,
 				(byte) -114, this.rot1024_off_z, this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop);
+            } finally { if(browserProjectionReuse!=null) browserProjectionReuse.end(); }
+
 			modelRotateNanos = RenderTelemetry.elapsedSince(modelRotateStart);
 			if (geometryFrame != null) {
 				recordSpriteSubmissions(geometryFrame);
@@ -3784,6 +3796,7 @@ public final class Scene {
 				this.models[var2] = null;
 			}
 
+            if(browserProjectionReuse!=null)browserProjectionReuse.clear();
 			this.modelCount = 0;
 		} catch (RuntimeException var3) {
 			throw GenUtil.makeThrowable(var3, "lb.GA(" + var1 + ')');
@@ -3792,6 +3805,7 @@ public final class Scene {
 
 	public final void removeModel(RSModel var1) {
 		try {
+            if(browserProjectionReuse!=null)browserProjectionReuse.remove(var1);
 			for (int i = 0; i < this.modelCount; ++i) {
 				if (this.models[i] == var1) {
 					--this.modelCount;
@@ -3845,6 +3859,7 @@ public final class Scene {
 		for (int index = 0; index < this.modelCount; index++) {
 			RSModel model = this.models[index];
 			if (removalSet.containsKey(model)) {
+                if(browserProjectionReuse!=null)browserProjectionReuse.remove(model);
 				continue;
 			}
 			if (retained != index) {

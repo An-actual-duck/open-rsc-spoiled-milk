@@ -2277,6 +2277,23 @@ public final class RSModel {
 		}
 	}
 
+    final void rotate1024WithReuse(BrowserProjectionReuse cache, int y, int vp, int x, byte sentinel,
+            int z, int ry, int rz, int rx, int near) {
+        // m_Yb0 makes resetTransformCache(7972) an exact no-op. The original
+        // method remains literal for dirty transforms, cache misses and defaults.
+        boolean eligible=cache!=null && this.m_Yb==0 && sentinel<=-105 && cache.accepts(y,vp,x,z,ry,rz,rx,near);
+        if(eligible && this.minZ<=MiscFunctions.frustumMinX && this.maxZ>=MiscFunctions.frustumMaxX
+                && this.minX<=MiscFunctions.frustumMinY && this.maxX>=MiscFunctions.frustumMaxY
+                && this.minY<=MiscFunctions.frustumNearZ && this.maxY>=MiscFunctions.frustumFarZ
+                && cache.restore(this,this.vertHead,this.vertXTransform,this.vertYTransform,this.vertZTransform,
+                    this.vertexParam6,this.vertexParam2,this.vertXRot,this.vertYRot,this.vertZRot)) {
+            this.m_dc=true; return;
+        }
+        rotate1024(y,vp,x,sentinel,z,ry,rz,rx,near);
+        if(eligible && this.m_dc) cache.capture(this,this.vertHead,this.vertXTransform,this.vertYTransform,this.vertZTransform,
+            this.vertexParam6,this.vertexParam2,this.vertXRot,this.vertYRot,this.vertZRot);
+    }
+
 	final void rotate1024(int yOffset, int vParamSrc, int xOffset, byte var4, int zOffset, int rotY, int rotZ, int rotX,
 						  int zTop) {
 		try {
