@@ -65,5 +65,5 @@ export function createWorldReadiness(gl,{stats,clock=()=>performance.now()}={}) 
   }
   function fail(reason){failed=true;removeFence();set('error',reason);}
   function dispose(){removeFence();}
-  return {declare,presented,beginTransition,held,fail,dispose};
+  return {declare,presented,beginTransition,held,fail,dispose,get sourceComplete(){return !!current&&pending&&current[1]===2&&current[8]===1&&current[3]>0&&current[3]===current[4]&&current[5]===0;}};
 }

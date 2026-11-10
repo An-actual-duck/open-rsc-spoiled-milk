@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+const physicalRequested=process.argv.includes('--physical');
 const benchmarkKeys=process.argv.includes('--benchmark-key-limbs');
 const benchmarkStream=process.argv.includes('--benchmark-stream')||benchmarkKeys;let streamRequested;
 let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, displayDisposed = 0, configured,gpuOptions;
@@ -15,7 +16,7 @@ const canvas = {style:{},setAttribute(){}};
 const stats = {lastError:null,lastFrame:0};
 const gateEvents=[];
 const window = {dispatchEvent:e=>gateEvents.push(e.type),browserRuntimeVersion:'5.0',addEventListener(){}};
-const context = vm.createContext({window,location:{search:benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':''):'?mode=webgl',origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
+const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':''):'?mode=webgl')+(physicalRequested?'&physical=on':''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
   URLSearchParams,performance:{now:()=>clock},console,
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
@@ -35,6 +36,7 @@ const gpuModule = new vm.SyntheticModule(['createBrowserWebGL'],function(){this.
   Java_orsc_BrowserWebGLBridge_worldProgress:async()=>{stats.worldReadiness={phase:stats.declaredPhase||'loading'};},
   Java_orsc_BrowserWebGLBridge_present:async(lib,width,height)=>{canvas.width=width;canvas.height=height;stats.lastFrame=clock;stats.worldReadiness={phase:'ready'};},
 }});});},{context});
+const physicalOutputModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-physical-output.js',import.meta.url),'utf8'),{context});
 const controlsModule = new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-benchmark-controls.js',import.meta.url),'utf8'),{context});
 const streamValidationModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-upload-validation.js',import.meta.url),'utf8'),{context});
 const spriteKeyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-sprite-key-policy.js',import.meta.url),'utf8'),{context});
@@ -44,6 +46,7 @@ await module.link(specifier=>{
   if(specifier==='./browser-world-cover.js')return coverModule;
   if(specifier==='./browser-display.js')return displayModule;
   if(specifier==='./browser-benchmark-controls.js')return controlsModule;
+  if(specifier==='./browser-physical-output.js')return physicalOutputModule;
   if(specifier==='./browser-upload-validation.js')return streamValidationModule;
   if(specifier==='./browser-sprite-key-policy.js')return spriteKeyModule;
   if(specifier==='./browser-middle-mouse.js')return middleModule;
@@ -52,6 +55,7 @@ await module.link(specifier=>{
 module.evaluate();
 for(let i=0;i<30&&!configured;i++)await new Promise(resolve=>setImmediate(resolve));
 assert.ok(configured,'actual frontend did not initialize Java options');
+assert.equal(gpuOptions.physicalOutput,physicalRequested,'Physical output prototype must require explicit opt-in');assert.equal(window.browserProof.physicalOutputRequested,physicalRequested);
 assert.equal(gpuOptions.ownedState,!benchmarkStream,'Ordinary frontend must pass the verified owned policy to the actual backend seam');
 assert.equal(gpuOptions.benchmarkControl,benchmarkStream,'Ordinary frontend must not expose live benchmark control');
 assert.equal(window.browserProof.ownedStateRequested,!benchmarkStream);assert.equal(stats.ownedStateActive,!benchmarkStream,'Actual selected backend policy receipt');
