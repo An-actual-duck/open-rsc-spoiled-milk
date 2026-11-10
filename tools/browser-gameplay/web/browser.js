@@ -1,3 +1,4 @@
+import {browserUploadValidationBenchmarkPolicy} from './browser-upload-validation.js';
 const started = performance.now();
 import {createTransport} from './transport.js';
 import {createWorldCover} from './browser-world-cover.js';
@@ -29,7 +30,7 @@ function publish() {
 }
 function dispose() {
   if (stopped) return;
-  stopped = true; delete window.browserBenchmarkOwnedState; pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
+  stopped = true; delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
 }
 function finish(reason) {
   if (stopped) return;
@@ -103,9 +104,11 @@ try {
     canvas.setAttribute('aria-hidden', 'true');
     Object.assign(canvas.style, {position: 'absolute', pointerEvents: 'none', display: 'none', zIndex: '1'});
     const ownedState=browserOwnedStateBenchmarkPolicy(window.browserProof.mode,options);
+    const streamUploadValidation=browserUploadValidationBenchmarkPolicy(window.browserProof.mode,options);
     window.browserProof.ownedStateRequested=ownedState;
-    gpu = createBrowserWebGL(canvas, report, {opaqueProof:options.get('alpha-proof')==='1',ownedState,benchmarkControl:options.has('benchmark')});
-    if(options.has('benchmark'))window.browserBenchmarkOwnedState=enabled=>gpu.queueOwnedState(enabled);
+    if(window.browserProof.benchmark)window.browserProof.benchmark.streamUploadValidationRequested=streamUploadValidation;
+    gpu = createBrowserWebGL(canvas, report, {opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,benchmarkControl:options.has('benchmark')});
+    if(options.has('benchmark')){window.browserBenchmarkOwnedState=enabled=>gpu.queueOwnedState(enabled);window.browserBenchmarkStreamUploadValidation=enabled=>gpu.queueStreamUploadValidation(enabled);}
     worldCover=createWorldCover({document,window,display:document.querySelector('#display'),onGateChange:()=>window.dispatchEvent(new Event('browser-world-readinesschange'))});
     window.browserProof.worldLoading=worldCover.stats;
     window.browserProof.renderer = 'WebGL2 resident world and sprites / software UI (experimental)';

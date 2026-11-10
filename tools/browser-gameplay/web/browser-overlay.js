@@ -1,7 +1,7 @@
 import {createBrowserRetainedFrame} from './browser-retained-frame.js';
 /** Optional exact-coverage compositor. RGB is the ordinary software result over
  * black; transmittance is the surviving world coefficient. No world readback. */
-export function createBrowserOverlay(gl,{stats={},ownedFrame=null}={}) {
+export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=null}={}) {
   const MAX_PIXELS=2097152, UNIT=8;
   const retained=createBrowserRetainedFrame(gl,{stats,ownedFrame});
   let program,vertex,fragment,vao,rgb,coverage,width=0,height=0,tWidth=0,tHeight=0,pending,active,failed=false,disposed=false;
@@ -22,7 +22,7 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null}={}) {
   function textureUpload(old,oldW,oldH,w,h,format,type,data,unit){
     const previousActive=ownedFrame?.active?null:gl.getParameter(gl.ACTIVE_TEXTURE);gl.activeTexture(gl.TEXTURE0+unit);let restore=ownedFrame?.active?null:gl.getParameter(gl.TEXTURE_BINDING_2D),next=old,committed=false;
     try{if(!next||oldW!==w||oldH!==h){reserveCombined(w*h*4);next=gl.createTexture();if(!next)throw new Error('Coverage texture allocation failed');}gl.bindTexture(gl.TEXTURE_2D,next);textureParameters();gl.pixelStorei(gl.UNPACK_ALIGNMENT,4);
-      if(next===old)gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,w,h,format===gl.R32F?gl.RED:gl.RGBA,type,data);else gl.texImage2D(gl.TEXTURE_2D,0,format,w,h,0,format===gl.R32F?gl.RED:gl.RGBA,type,data);check();committed=true;if(next!==old&&old){if(restore===old)restore=next;gl.deleteTexture(old);}return next;
+      if(next===old)gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,w,h,format===gl.R32F?gl.RED:gl.RGBA,type,data);else gl.texImage2D(gl.TEXTURE_2D,0,format,w,h,0,format===gl.R32F?gl.RED:gl.RGBA,type,data);if(next===old&&format===gl.R32F&&deferOrCheck)deferOrCheck(check);else check();committed=true;if(next!==old&&old){if(restore===old)restore=next;gl.deleteTexture(old);}return next;
     }catch(e){if(next===old)failed=true;throw e;}finally{if(!ownedFrame?.active){gl.bindTexture(gl.TEXTURE_2D,restore);gl.activeTexture(previousActive);}else gl.activeTexture(gl.TEXTURE0);if(!committed&&next&&next!==old)gl.deleteTexture(next);}
   }
   function prepare(w,h,mode,generation,frameSequence,fades,reset,transmittance){

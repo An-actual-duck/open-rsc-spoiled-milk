@@ -1,0 +1,139 @@
+Browser streaming-upload validation
+
+Ordinary WebGL now defaults ON after the manager hardware and paired-performance
+checks below. Direct/standalone backend and helper constructors still default OFF;
+the frontend passes the adopted policy explicitly. Overrides and live switches
+remain private benchmark-only. No native/Java, server, content or public changes.
+
+Eligible mutations use deferOrCheck(originalCheck): fixed-size chunk bufferSubData,
+atlas existing texture + descriptor bufferSubData, sky palette texSubImage2D, and
+coverage same-size R32F T texSubImage2D. Default child constructors still execute
+the literal existing check/error prefix. All allocations/shape changes, RGB upload
+(even same-size), retained copy/fade, and post-draw checks stay immediate.
+
+One validation occurs at the start of present BEFORE lighting.prepare, which can
+already render shadow maps. The batch must not move after that call. Queued errors
+or context loss poison the entire backend: future native calls and mode changes
+reject until Stop/dispose and a new backend. No world/shadow/sky/UI draw occurs for
+an upload batch rejected there. No freshness/presented counters/readiness pass is
+published for the rejected frame. Content signatures, atlas token/residency and
+upload counters may be tentative before validation; they are NEVER reused after
+failure. Fixed resource ownership/accounting remains disposal authority. The
+optional policy switches only at the END of frameWork after validated presentation.
+
+The meaningful CPU fixture injects queued GL errors into each production streaming
+entry point, including atlas hot zero-image descriptor commits. It proves zero
+draws, sticky failure, blocked later calls/mode changes, cleanup, allocation errors
+remaining immediate, and next-frame-only policy changes. Existing legacy atlas,
+world allocation rollback, sky, overlay and retained fixtures remain required.
+These API doubles are not hardware evidence or performance acceptance.
+
+Private controls and observability
+----------------------------------
+Use WebGL + benchmark + uploadvalidation=on; in that private benchmark, omitted/
+off keeps literal immediate checks. Ordinary WebGL ignores URL policy overrides
+and uses the adopted ON default; software stays unaffected. No player-facing option. window.browserBenchmarkStreamUploadValidation(bool)
+queues a next-frame policy and is removed on Stop. Requested/active/presented
+policies are separate stats; per-world-frame policy samples are bounded600/4096.
+Counters distinguish deferred eligible checks, pre-draw checks, passes, failures
+and frame-end transitions. These counters describe validation attempts; content
+upload counters can be tentative before the gate, as stated above.
+
+The gate runs BEFORE timer query allocation/begin as well as shadow preparation.
+A separately tracked active timer query is ended/deleted on disposal if a later
+immediate RGB/postdraw error interrupts presentation. Successful frames transfer
+ownership to the existing bounded pending-query ledger. Timer-enabled error tests
+cover this cleanup; a failed batch itself never allocates a new query.
+
+Normal-merged reviewed owned-state main a4fd736e3. Constructors and frameWork
+combine independent ownership and upload-validation policies. CPU fault probes
+run with both owned-state ON and OFF; the existing42-frame568-draw effective-state
+oracle still reports2766 scoped queries versus0 owned, preserving its immediate
+error-poll policy when this candidate is off. Standalone immediate checks retain
+original error prefixes/retry contracts. No Java production source changed.
+
+Hardware preparation (does NOT launch a browser, server or GPU):
+ python3 tests/myworld/prepare-browser-stream-upload-hardware.py --run-id NAME \
+   --dependency-jar /absolute/path/to/reviewed/client.jar
+This freezes module/shader bytes and provenance under declared tests output.
+The standalone page enables the reviewed owned-state path alongside validation.
+The separate explicit runner is manager-only:
+ node tests/myworld/run-browser-stream-upload-hardware.mjs --run-hardware RUN
+It uses a dedicated loopback origin/profile/owned Chrome process and verifies
+physical AMD ANGLE OpenGL. It warms actual resource allocations first, then
+injects real queued errors for chunk, atlas pixels/descriptors, sky palette and
+same-size T. No gameplay, image-parity or performance claim is made by these
+standalone production-shader error probes. The RGB post-world exclusion is
+explicitly exercised by the CPU fixture with immediate Coverage error checking,
+without a zero-world-draw claim.
+
+Validation commands: test-browser-stream-upload-validation.mjs; existing
+gpu-cache, sprite-atlas, sky, overlay, lighting, retained-frame, resident-draw-state
+and owned-gl-state Node fixtures; frontend VM fixture ordinary plus
+--benchmark-stream mode. All passed before the final freeze. No GPU run by worker.
+Layout audit reports only inherited loose ai2 assets/outputs; no cleanup attempted.
+
+Hardware warmup is explicitly non-vacuous: one accepted source submission, positive
+world/sky/shadow draw counters and retained/C-T allocations are asserted before
+each fault. Each case serializes warm counters, performance clock and Query
+creation/deletion counts; rejected batches cannot create a timer query. This is
+a standalone production-API source submission, not a logged-in Java gameplay frame.
+
+Manager actual GPU error-policy evidence
+----------------------------------------
+Manager ran the explicit v2 frozen hardware fixture on physical AMD RX6700XT
+ANGLE/OpenGL4.6: PASS5 queued INVALID_VALUE cases (chunk, atlas pixels, atlas
+descriptors, sky palette, coverageT). Every case first accepted a warm source
+submission with4actual draw calls:1world,1sky,1shadow plusUI, retained32bytes.
+Each later queued error rejected before ANYdraw, without advancing frame freshness,
+with sticky failure and0resources after idempotent dispose. Each case created
+exactly1timer query during warmup and deleted it on disposal; rejection created
+none. The worker did not launch GPU/browser. This is correctness evidence, not
+gameplay, image equivalence, performance or60FPS acceptance.
+Evidence (ai2-relative): output/tests/browser-stream-upload-validation/hardware/
+checkpoint-0cecef8d8-v2/hardware-result.json (passed:true, publicChanged:false).
+The fixture froze source0cecef8d8 and actual production shaders from reviewed
+b5035079673342899046b7c498f6e34f8c4a26d7047ff40307006095a7b1fb16 dependencyJAR.
+
+Normal-merged ordinary-ownedON adoption main2b0681f841. Only frontend policy
+defaults/control assertions differ from v2; imported error-policy runtime modules
+remain byte-identical. That pre-adoption candidate used ordinary owned state with uploadvalidation
+OFF pending the now-completed paired measurement below. No player-facing override was added.
+
+Frozen normal-world measurement candidate (not yet a performance result):
+ ai2/output/tests/browser-gameplay-spike/browser-stream-validation-candidate
+ HTTP127.0.0.1:8133; JS source2b766556be2a1d4e8e777ab80138f5f3f46d7a2f.
+ Maintained prepare/serve; client and bootstrap compile both explicitly use the
+ unchanged reviewed b503 dependencyJAR (baseline Java sourcee696adeee737). No held
+ overlay-clear experiment included. stage.json records all frontend hashes and
+ verifies9imported error-policy runtime modules identical to passed v2 hardware.
+ benchmark ownedstate=on, uploadvalidation=off initially; private live control
+ queues ON/OFF at frameWork end. No worker GPU/browser run or performance claim.
+
+Manager paired performance decision and adoption
+------------------------------------------------
+Evidence: manager/output/reviews/browser-display-performance/benchmarks/
+stream-validation-live-1/result.json. One warm normal-world CheerpJ5/Java8 session,
+60s warmup followed by4alternating20s segments, fixed960x540 internal workload,
+owned state ON in both policies, source2b766556b/baseline b503JAR. No screenshots,
+profiler or input during timed segments. The inherited driver field `owned` in
+this result labels the STREAM-VALIDATION switch, not the actual owned-state mode.
+
+Grouped actual fresh Java world FPS: OFF51.970324, ON54.057948 (about4.0% higher).
+Mean sprite groups/frame: OFF32.99665, ON33.25781. Segment FPS were OFF51.89202,
+ON54.28790, OFF52.04864, ON53.82784; both ON segments exceeded both OFF segments.
+All101chunks stayed ready,401draws/477928triangles, no validation errors. ON
+deferred about4.27eligible checks/frame into1pre-draw validation.
+
+NPCs still roam; actor groups are measured rather than frozen. These matched
+within-session results support this small adoption, not a universal device/scene
+speedup. Do not compare raw FPS against earlier owned-only54.8run to infer a
+regression: the run conditions differ. The60FPS goal remains unmet.
+
+Manager decision: ordinary browser frontend enables this policy by default.
+Benchmark omission remains OFF for same-artifact comparison; explicit internal
+backend options can enable without exposing a live control. Standalone constructors
+still default OFF and ordinary/software URLs cannot override policy. Focused
+policy/frontend tests verify ordinary actual ON, private live-control isolation,
+software exclusion, literal standalone checks and unchanged queued-error behavior.
+Worker performed CPU tests only; frozen8133 and prior hardware evidence preserved.
