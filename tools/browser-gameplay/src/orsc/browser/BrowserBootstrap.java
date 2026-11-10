@@ -12,6 +12,8 @@ public final class BrowserBootstrap {
     public static native void reportTelemetry(String names,double[] values);
     public static native void reportSpriteKeyPolicy(boolean requested,boolean enabled);
     public static native void reportPreparation(boolean enabled,boolean active,boolean animated);
+    public static native void reportRegionPreparationDiagnostics(boolean available,double[] counters);
+    public static native void reportCandidatePolicy(String name,boolean requested,boolean available,boolean enabled);
     public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportModelPickBounds(boolean requested,boolean enabled);
     private static native int wsOpen();
@@ -140,7 +142,8 @@ public final class BrowserBootstrap {
                     java.lang.reflect.Field fpsField = orsc.mudclient.class.getDeclaredField("FPS"); fpsField.setAccessible(true);
                     java.lang.reflect.Field loopField = orsc.mudclient.class.getDeclaredField("selectedClientLoopMode"); loopField.setAccessible(true);
                     int inputDiagnosticSamples=0;
-                    boolean modelPickReported=false;
+                    boolean modelPickReported=false,candidatePoliciesReported=false;
+                    BenchmarkCandidatePolicies.RegionDiagnostics regionDiagnostics=new BenchmarkCandidatePolicies.RegionDiagnostics();
                     while (true) {
                         Object client = clientField.get(null);
                         if (client != null && webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
@@ -163,7 +166,20 @@ public final class BrowserBootstrap {
                                         ((orsc.mudclient)client).getScene().isBrowserModelPickBoundsEnabled());
                                     modelPickReported=true;
                                 }
+                                if(!candidatePoliciesReported&&((orsc.mudclient)client).getScene()!=null) {
+                                    String[][] policies={{"geometryTransfer","spoiledmilk.browserGeometryTransferReuse","orsc.BrowserWebGLBridge","isGeometryTransferReuseEnabled"},
+                                        {"regionPreparation","spoiledmilk.browserRegionPreparation","orsc.graphics.three.World","isBrowserRegionPreparationEnabled"},
+                                        {"descriptorWriting","spoiledmilk.browserResidentDescriptorWriting","orsc.mudclient","isBrowserResidentDescriptorWritingEnabled"}};
+                                    for(String[] policy:policies) {
+                                        boolean requested=Boolean.getBoolean(policy[1]);boolean[] actual=BenchmarkCandidatePolicies.inspect(policy[2],policy[3]);
+                                        reportCandidatePolicy(policy[0],requested,actual[0],actual[1]);
+                                        if(requested&&!actual[0])throw new IllegalStateException("Requested candidate is absent from this fixture JAR: "+policy[0]);
+                                    }
+                                    candidatePoliciesReported=true;
+                                }
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
+                                double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
+                                reportRegionPreparationDiagnostics(regionCounts!=null,regionCounts==null?new double[0]:regionCounts);
                                 reportPreparation(orsc.graphics.two.GraphicsController.isBrowserFramePreparationEnabled(),
                                     surface!=null && surface.isBrowserFramePreparationActive(),
                                     Boolean.parseBoolean(System.getProperty("spoiledmilk.browserAnimatedBufferReuse","true")));

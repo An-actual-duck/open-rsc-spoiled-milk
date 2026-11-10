@@ -38,6 +38,10 @@ const gpuModule = new vm.SyntheticModule(['createBrowserWebGL'],function(){this.
   Java_orsc_BrowserWebGLBridge_worldProgress:async()=>{stats.worldReadiness={phase:stats.declaredPhase||'loading'};},
   Java_orsc_BrowserWebGLBridge_present:async(lib,width,height)=>{canvas.width=width;canvas.height=height;stats.lastFrame=clock;stats.worldReadiness={phase:'ready'};},
 }});});},{context});
+const alignmentModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-surface-alignment.js',import.meta.url),'utf8'),{context});
+const stutterModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-stutter-diagnostics.js',import.meta.url),'utf8'),{context});
+const geometryModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-geometry-transfer-policy.js',import.meta.url),'utf8'),{context});
+const preparationCandidatesModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-preparation-candidates.js',import.meta.url),'utf8'),{context});
 const repeatableModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-repeatable-policy.js',import.meta.url),'utf8'),{context});
 const physicalOutputModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-physical-output.js',import.meta.url),'utf8'),{context});
 const controlsModule = new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-benchmark-controls.js',import.meta.url),'utf8'),{context});
@@ -46,6 +50,10 @@ const spriteKeyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../too
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{assert.equal(specifier,'./webgl.js');await gpuModule.link(()=>{});await gpuModule.evaluate();return gpuModule;}});
 await module.link(specifier=>{
+  if(specifier==='./browser-surface-alignment.js')return alignmentModule;
+  if(specifier==='./browser-stutter-diagnostics.js')return stutterModule;
+  if(specifier==='./browser-geometry-transfer-policy.js')return geometryModule;
+  if(specifier==='./browser-preparation-candidates.js')return preparationCandidatesModule;
   if(specifier==='./browser-repeatable-policy.js')return repeatableModule;
   if(specifier==='./browser-world-cover.js')return coverModule;
   if(specifier==='./browser-display.js')return displayModule;
@@ -75,6 +83,8 @@ assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMo
 assert.deepEqual(Array.from(await configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent(null)),[1,30,40,0]);
 assert.equal(canvas.style.pointerEvents,'none');
 assert.equal(configured.enableInputMethods,false);
+await configured.natives.Java_orsc_browser_BrowserBootstrap_reportRegionPreparationDiagnostics(null,true,[10,2,1672704]);assert.equal(window.browserProof.regionPreparationDiagnostics.hits,10);assert.equal(window.browserProof.regionPreparationDiagnostics.retainedTileBytes,1672704);
+for(const name of ['geometryTransfer','regionPreparation','descriptorWriting']){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(null,name,true,true,true);assert.deepEqual(JSON.parse(JSON.stringify(window.browserProof.privatePolicies[name])),{requested:true,available:true,enabled:true});}
 assert.equal(gpuOptions.streamUploadValidation,true,'Ordinary WebGL adopts validated streaming policy');assert.equal(stats.streamUploadValidationActive,true,'Actual selected backend streaming receipt');
 if(benchmarkStream){assert.equal(typeof window.browserBenchmarkStreamUploadValidation,'function');window.browserBenchmarkStreamUploadValidation(false);assert.equal(streamRequested,false);assert.equal(window.browserProof.benchmark.streamUploadValidationRequested,true);}else assert.equal(window.browserBenchmarkStreamUploadValidation,undefined,'ordinary sessions cannot change stream policy');
 assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserFramePreparation=')||p.startsWith('spoiledmilk.browserAnimatedBufferReuse=')),benchmarkStream,'only private benchmark URL receives preparation overrides');
@@ -109,6 +119,7 @@ assert.match(status.textContent,/controlled shader error/);assert.match(status.t
 await configured.natives.Java_orsc_browser_BrowserBootstrap_report(null,'ordinary successful update');
 assert.match(status.textContent,/controlled shader error/);
 cover.blocksWorldInput=true;window.browserSessionDispose();window.browserSessionDispose();assert.equal(window.browserBenchmarkStreamUploadValidation,undefined,'Stop removes private streaming control');
+assert.equal(window.browserBenchmarkAlignment,undefined,'Stop removes private layout control');assert.equal(window.browserBenchmarkDiagnosticsReset,undefined);
 assert.equal(coverDisposed,1,'Stop disposes the loading-cover owner exactly once before iframe removal');assert.equal(window.browserWorldInputAllowed(),true,'Stop releases the world input gate');
 assert.equal(displayDisposed,1);assert.equal(gpuDisposed,1);assert.equal(transportDisposed,1);assert.equal(middleDisposed,1,'Stop disposes the middle-input owner exactly once');
 assert.ok(messages.some(m=>m.proof?.gpu?.lastError==='controlled shader error'));

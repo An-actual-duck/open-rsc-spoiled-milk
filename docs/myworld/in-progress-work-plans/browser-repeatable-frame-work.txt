@@ -1,0 +1,107 @@
+Private repeatable browser frame-work investigation
+==================================================
+Status: review candidate only; no new ordinary defaults or performance claim.
+Manager alone starts private servers/browsers and measures hardware. Public and
+owner accounts/databases are outside this fixture.
+
+Baseline and isolation
+----------------------
+Clean main325bf42b60fe411705f9f14c0a3ef6debabe24a7 was freshly built BEFORE
+harness edits. Preserved ai1 tests/browser-repeatable-frame-work/
+baseline-325bf42b6/client.jar SHA256:
+f72047bfb006b79a1e51889b46be08a36c9c80d353b4fa5ccece795c06ad1279.
+The build receipt records clean source; an older parked fog JAR was not reused.
+
+prepare-repeatable.py creates an entirely new seed-based World/database, copied
+artifacts/config/map, TCP43649/WS43549 and synthetic browserdemo account. It never
+starts processes. BrowserRepeatableServer requires its dedicated marker, ports,
+SQLite DB name and disabled external services. It refuses other account rows.
+The disposable account is reset to133,660,L0/admin1 on fixture restart to avoid
+inactivity; only that synthetic DB/cache is changed. Existing43629/43529 private
+server, owner DB and public server remain untouched.
+
+There are32 stationary NPCs across8 maintained types: Unicorn0, Bob1, Goblin4,
+Hans5, Cook7, Priest9, Man11 and Traiborn17. Definitions/positions/directions are
+persisted in repeatable-fixture.json; actual names/indices/positions are emitted
+in status.json. Other NPCs are suppressed ONLY in the new fixture World, including
+lazy authored activation. Normal client animation/render/update/network pipelines
+are preserved; no frame, animation clock, geometry, texture or framebuffer freeze.
+This is a controlled client workload, not a claim to reproduce public server load.
+
+Root launches copied server-command.json and HTTP command from the receipt. Wait
+for REPEATABLE-FIXTURE-READY.json and valid/stableTicks, then verify the actual
+client username/count/cameraPinned receipt. The parent observed37 stable sprite
+groups in the corrected initial functional/profile run; NPCcount and GPU sprite
+group count are distinct quantities. No worker browser/server launch was used.
+
+Private camera
+--------------
+RepeatableCamera uses cached reflection and pins once at initial world-ready:
+source pitch912 -> actual Scene projection rotation112, yaw128 ->512, zoom75;
+random camera offsets AND future increments zero; automatic rotation disabled.
+It does not repeatedly override an already pinned camera or hide later drift.
+Login/relogin renews the pin. Verify actual GPU pose remains constant in the
+sample; no post-projection matrix override or new runtime render hook is used.
+The initial baseline2 mistakenly used source112 (actual912); the root rejected
+those upside-down functional images and accepted no timings. Immutable baseline3
+corrected this and reuses baseline2's separate server, explicitly recorded.
+
+Controls and provenance
+-----------------------
+fixture=repeatable-v1 requires private WebGL benchmark mode; ordinary/software
+routes remain43629/43529. The fixture alone routes43649/43549. Named controls:
+ geometrytransfer=on|off -> browserGeometryTransferReuse (ai3 exactfecc helper)
+ regionprep=on|off -> browserRegionPreparation
+ descriptorwrite=on|off -> browserResidentDescriptorWriting
+ alignment=on|off -> JS surface-alignment candidate
+All experimental controls default OFF; ordinary/software URLs do not set Java
+candidate properties. One-time actual getter receipts report requested/available/
+enabled separately. Missing methods are explicitly unavailable; requested ON
+without its runtime method is refused. Region merge hits/builds/retainedTileBytes
+are exported once/second via cached reflection, with exact safe-number bounds.
+These receipts are not substitutes for measured use/correctness evidence.
+
+prepare-repeatable-client.py reuses only a marked repeatable server, creates a
+new immutable client stage and never mutates/starts that server. A single-source
+JAR needs its exact source commit. A review composite needs a matching SHA/source
+receipt; clientSourceCommit remains null and the full multi-source provenance is
+copied. Do not label the manager's composite as one production commit.
+
+Alignment candidate
+-------------------
+The literal frozen325 alignment function is the OFF control. Cached ON reuses
+AWT target/bounds until logical size, DOM all-attribute/text/child mutations,
+ResizeObserver, resize/scroll/fullscreen/display events, fonts/resource loads or
+DPR invalidation. Active overlapping CSS motion uses actual bounded animation
+identities and remains live-measured. Missing observation/animation APIs fall back
+to live alignment. OFF disconnects observers/listeners; exact owned GPU CSS writes
+and backing pixel dimensions do not invalidate logical layout. Stop is idempotent.
+Private live window.browserBenchmarkAlignment(boolean) applies on the next align.
+Stats expose requested/active/support, alignments/hits/reads/scans/invalidations.
+Cover updates and ordinary AWT input remain on their existing paths.
+
+This observes the current app/vendor DOM. Direct CSSOM insertRule or a new WAAPI
+animation started without any DOM/motion event is not automatically detectable;
+future app code using those paths must call invalidate or retain the live path.
+It is not a general arbitrary-website layout cache. Actual current-app resize,
+fullscreen, focus/input and pixel/bounds gates are required before adoption.
+
+Diagnostics and tests
+---------------------
+diagnostics=1 only on private benchmark enables a100ms event-loop lateness sampler
+and longtask observer IF the browser explicitly lists longtask support. Both
+rings cap512. No timers/observers when disabled. A private reset and disposal are
+provided. Delays/longtasks do NOT attribute a pause to GC, the GPU or Java; Firefox
+may not expose longtasks. Use a separate diagnostic cohort, not clean acceptance.
+Existing source-frame interval/phase counters and root p95/p99 remain primary.
+
+CPU checks:260 exact CSS/bounds comparisons against the independently extracted
+frozen325 function, including steady layout, scale/scroll/fullscreen/DPR, all
+attribute/text changes, AWT replacement, own GPU writes, old/new overlapping
+animations, live toggle, missing APIs and teardown. Initial+100 steady aligns:
+legacy200additional rectangle reads, cached0additional reads. The changing test
+scenario totals260legacy vs56cached rectangle reads; query counts are not FPS.
+14 real-client camera/Scene projection/count/login checks pass. Optional getter
+availability/false/type and actual composite OFF/ON checks pass. Policy/frontend
+VM tests, bounded diagnostic virtual-clock tests and canonical output layout pass.
+No GPU pixel oracle or measured alignment gain is claimed by these CPU results.

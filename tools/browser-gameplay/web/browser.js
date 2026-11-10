@@ -1,3 +1,7 @@
+import {browserGeometryTransferPolicy} from './browser-geometry-transfer-policy.js';
+import {privatePreparationCandidates} from './browser-preparation-candidates.js';
+import {createStutterDiagnostics,stutterDiagnosticsPolicy} from './browser-stutter-diagnostics.js';
+import {createSurfaceAlignment,surfaceAlignmentPolicy} from './browser-surface-alignment.js';
 import {repeatableFixturePolicy} from './browser-repeatable-policy.js';
 import {physicalOutputRequested} from './browser-physical-output.js';
 import {browserSpriteKeyBenchmarkControls} from './browser-sprite-key-policy.js';
@@ -17,7 +21,7 @@ let stopped = false;
 let preparationControls = {properties: [], requested: null};
 let spriteKeyControls = {properties: [], requested: null};
 let modelPreparationControls = {properties: [], requested: null};
-let gpu,worldCover,awaitingGameFrame=false,displayLayout;
+let gpu,worldCover,awaitingGameFrame=false,displayLayout,surfaceAlignment,stutterDiagnostics;
 window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput;
 function updateWorldCover(){const state=gpu?.stats.worldReadiness,error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null),waiting=awaitingGameFrame&&state?.phase==='login';if(!worldCover||(!waiting&&!error&&!['loading','streaming','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;worldCover.update(waiting?{phase:'loading',reason:'Waiting for area data'}:state,gpu?.canvas.style,error);}
 function setStatus(message) {
@@ -35,7 +39,7 @@ function publish() {
 }
 function dispose() {
   if (stopped) return;
-  stopped = true; delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput; pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
+  stopped = true; delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkAlignment;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose();surfaceAlignment?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
 }
 function finish(reason) {
   if (stopped) return;
@@ -60,6 +64,8 @@ function report(message) {
   const event = {milliseconds: Math.round(performance.now() - started), message};
   window.browserProof.events.push(event); setStatus(message); console.log('BROWSER_PROOF', JSON.stringify(event)); publish();
 }
+const geometryTransfer=browserGeometryTransferPolicy(window.browserProof.mode,options);
+const candidatePreparation=privatePreparationCandidates(window.browserProof.mode,options);
 const fixturePolicy=repeatableFixturePolicy(window.browserProof.mode,options);
 window.browserProof.repeatableFixtureRequested=fixturePolicy.requested;
 const transport = createTransport(WebSocket, report,fixturePolicy.websocket);
@@ -67,6 +73,15 @@ const pointer = window.browserProof.mode === 'webgl' ? createBrowserMiddleMouseI
 if (pointer) window.browserProof.middleInput = pointer.stats;
 window.browserTransport = transport;
 const natives = {
+  async Java_orsc_browser_BrowserBootstrap_reportRegionPreparationDiagnostics(lib,available,counters){
+    if((available&&counters.length!==3)||(!available&&counters.length!==0))throw new Error('Region diagnostics layout changed');
+    const values=Array.from(counters);if(values.some(value=>!Number.isSafeInteger(value)||value<0))throw new Error('Region diagnostics numeric range changed');
+    window.browserProof.regionPreparationDiagnostics={available:available===true,hits:values[0]??null,builds:values[1]??null,retainedTileBytes:values[2]??null};
+  },
+  async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
+    if(!['geometryTransfer','regionPreparation','descriptorWriting'].includes(name))throw new Error('Unknown private policy receipt');
+    (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
+  },
   async Java_orsc_browser_BrowserBootstrap_reportRepeatableState(lib,username,counters){
     if(fixturePolicy.requested!=='repeatable-v1'||counters.length!==3)throw new Error('Unexpected repeatable fixture receipt');
     window.browserProof.repeatableFixture={username:String(username).slice(0,40),cameraPinned:counters[0]===1,npcCount:counters[1],playerCount:counters[2]};
@@ -108,6 +123,9 @@ const natives = {
 };
 if (pointer) Object.assign(natives, pointer.natives);
 try {
+  stutterDiagnostics=createStutterDiagnostics(window,{enabled:stutterDiagnosticsPolicy(window.browserProof.mode,options)});
+  window.browserProof.stutterDiagnostics=stutterDiagnostics.stats;
+  if(options.has('benchmark'))window.browserBenchmarkDiagnosticsReset=()=>stutterDiagnostics.reset();
   preparationControls = browserPreparationBenchmarkControls(window.browserProof.mode, options);
   spriteKeyControls = browserSpriteKeyBenchmarkControls(window.browserProof.mode,options);
   modelPreparationControls = browserModelBenchmarkControls(window.browserProof.mode, options);
@@ -132,12 +150,10 @@ try {
     window.browserProof.worldLoading=worldCover.stats;
     window.browserProof.renderer = 'WebGL2 resident world and sprites / software UI (experimental)';
     Object.assign(natives, gpu.natives);
-    function alignWorldSurface(width,height){
-      const display=document.querySelector('#display'),target=[...display.querySelectorAll('canvas')].filter(c=>c!==canvas).sort((a,b)=>b.width*b.height-a.width*a.height)[0];
-      displayLayout?.setSize(width,height);
-      if(target&&canvas.parentElement){const box=target.getBoundingClientRect(),parentBox=display.getBoundingClientRect(),scale=displayLayout?.scale||1,sx=box.width/target.width/scale,sy=box.height/target.height/scale;Object.assign(canvas.style,{display:'block',left:((box.left-parentBox.left)/scale+(target.width-width)*sx/2)+'px',top:((box.top-parentBox.top)/scale+(target.height-height)*sy)+'px',width:width*sx+'px',height:height*sy+'px'});}
-      updateWorldCover();
-    }
+    surfaceAlignment=createSurfaceAlignment({window,document,display:document.querySelector('#display'),canvas,layout:()=>displayLayout,cached:surfaceAlignmentPolicy(window.browserProof.mode,options),control:options.has('benchmark')});
+    window.browserProof.surfaceAlignment=surfaceAlignment.stats;
+    if(options.has('benchmark'))window.browserBenchmarkAlignment=enabled=>surfaceAlignment.queueCached(enabled);
+    function alignWorldSurface(width,height){surfaceAlignment.align(width,height);updateWorldCover();}
     const progressName='Java_orsc_BrowserWebGLBridge_worldProgress',progress=natives[progressName];
     if(typeof progress!=='function')throw new Error('WebGL bridge has no loading protocol');
     natives[progressName]=async(lib,metadata)=>{const blocked=worldCover.blocksWorldInput;await progress(lib,metadata);awaitingGameFrame=false;if(gpu.stats.worldReadiness?.blocksWorldInput||gpu.stats.worldReadiness?.phase==='loading'||Number(metadata[9])!==gpu.stats.display?.internalWidth||Number(metadata[10])!==gpu.stats.display?.internalHeight)alignWorldSurface(Number(metadata[9]),Number(metadata[10]));else updateWorldCover();if(blocked!==worldCover.blocksWorldInput)publish();};
@@ -164,7 +180,7 @@ try {
   });
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
-    javaProperties: ['user.dir=/files', ...fixturePolicy.properties, ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])], natives});
+    javaProperties: ['user.dir=/files', ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])], natives});
   report('Browser Java ready');
   const display = document.querySelector('#display');
   displayLayout=createBrowserDisplay({window,document,display,viewport:document.querySelector('#viewport')});
