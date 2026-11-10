@@ -62,4 +62,37 @@ The eligibility test adds branches and two double product/sums on qualifying
 browser inputs. Desktop HotSpot already has cheap64-bit arithmetic; a speedup is
 not inferred from these CPU tests. CheerpJ may benefit from avoiding wide math,
 but actual serialized browser measurements must determine that. No FPS claim,
-GPU run, profiler or production deployment was performed by this task.
+GPU run, profiler or production deployment was performed by this worker.
+The manager subsequently measured the frozen candidate as recorded below.
+
+Manager hardware outcome — experiment parked
+--------------------------------------------
+The manager measured the frozen candidate on private port8128, source82e52eb816,
+client SHA256 c7a37085d05fed0bee7937c6318d107c75588f5a012674673664ceadc3003740.
+Baseline port8127 was main e696adeee737, client SHA256
+b5035079673342899046b7c498f6e34f8c4a26d7047ff40307006095a7b1fb16.
+Both used CheerpJ5.0/Java8 and actual AMD RX6700XT ANGLE/OpenGL4.6, a60s
+warm-up then40s measurement, internal960x540, CSS1200x675 at scale1.25/DPR1,
+normal private account held at133,660,L0, current full visual settings. No
+screenshots, profiler or input occurred during the timed phase. Public unchanged.
+
+Candidate produced2066 new world frames in40.2302s (51.3545FPS), versus2007
+in40.2642s (49.8458FPS) for baseline. The candidate had fewer average actor
+composites:30.4235 versus33.6248. Mean bridge time was5.594ms versus5.694ms.
+Consequently the raw FPS difference is confounded and does not establish a
+fixed-point speedup. Same-actor per-frame bins were noisy; candidate/baseline
+mean frame times in ms were:
+ 31actors:19.157/19.436;32:19.448/20.130;33:20.415/19.977;35:20.641/20.072.
+This is not reproducible isolated benefit, and does not meet a60FPS target.
+
+Manager decision: preserve this exactness-tested experiment on its local and
+remote topic branch, without main promotion until a reproducible performance
+benefit justifies the eligibility guards. Do not delete/revert implementation or
+history. READY means reviewable and durable, not approved for merging/release.
+
+Manager evidence (preserved ignored review outputs, relative to manager root):
+ output/reviews/browser-display-performance/benchmarks/sprite-fixed-point-1/
+ output/reviews/browser-display-performance/benchmarks/actor-preparation-1/
+Each contains result.json, phase-before.json, phase-after.json and phase-samples.json.
+Immutable candidate stage remains under worker output/tests/browser-gameplay-spike/
+browser-sprite-fixed-point; the later docs-only handoff does not change stage bytes.
