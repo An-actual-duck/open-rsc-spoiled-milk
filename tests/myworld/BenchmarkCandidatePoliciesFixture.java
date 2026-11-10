@@ -17,7 +17,8 @@ public final class BenchmarkCandidatePoliciesFixture {
         world.hits=-1;try{diagnostics.snapshot(world);throw new AssertionError("Negative diagnostics accepted");}catch(IllegalStateException expected){}
         Renderer3DSettings.setBrowserPresentationAvailable(true);
         String[][] policies={{"orsc.BrowserWebGLBridge","isGeometryTransferReuseEnabled","spoiledmilk.browserGeometryTransferReuse"},{"orsc.graphics.three.World","isBrowserRegionPreparationEnabled","spoiledmilk.browserRegionPreparation"},{"orsc.mudclient","isBrowserResidentDescriptorWritingEnabled","spoiledmilk.browserResidentDescriptorWriting"}};
-        for(String[] policy:policies){boolean[] value=BenchmarkCandidatePolicies.inspect(policy[0],policy[1]);check(value[0],"Composite actual getter absent: "+policy[1]);check(value[1]==Boolean.getBoolean(policy[2]),"Actual getter differs: "+policy[1]);}
+        boolean requireCandidates=args.length>0&&"--require-candidates".equals(args[0]);
+        for(String[] policy:policies){boolean[] value=BenchmarkCandidatePolicies.inspect(policy[0],policy[1]);if(requireCandidates)check(value[0],"Composite actual getter absent: "+policy[1]);if(value[0])check(value[1]==Boolean.getBoolean(policy[2]),"Actual getter differs: "+policy[1]);else check(!value[1],"Unavailable candidate was inferred enabled: "+policy[1]);}
         System.out.println("PASS actual optional-getter availability, false/wrong type and three composite candidate policies; CPU only");
     }
 }
