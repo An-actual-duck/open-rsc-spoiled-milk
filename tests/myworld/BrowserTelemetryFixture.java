@@ -29,6 +29,6 @@ public final class BrowserTelemetryFixture {
         }
         double[] copy=BrowserTelemetryData.snapshot();after[0]=-1;
         if(!Arrays.equals(copy,BrowserTelemetryData.snapshot()))throw new AssertionError("Export borrowed mutable production counters");
-        System.out.println("PASS20 actual cumulative stage/update-count counters, bulk schema, coherent snapshot and owned array checks");
+        System.out.println("PASS "+names.length+" actual cumulative stage/update-count counters, bulk schema, coherent snapshot and owned array checks");
     }
 }

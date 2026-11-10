@@ -8,7 +8,9 @@ public final class BrowserTelemetryData {
         "clientLoopStats","clientLoopSleepStats","clientLoopUpdateStats","clientLoopRepositionStats","clientLoopDrawStats",
         "sceneRenderStats","sceneModelRotateStats","sceneWorldCullStats","sceneDepthExportStats","sceneLegacyDrawStats","sceneMeshExportStats",
         "frameStats","commitStats","scalarResizeStats","backingCopyStats","presentStats","setGameImageStats","sourceCopyStats","paintImmediateStats","clientLoopUpdateCountStats",
-        "clientDrawBeforeSceneStats","clientDrawResidentObjectsStats","clientDrawWorldOverlayStats","clientDrawUiOverlayStats","renderer2DFrameSnapshotStats"
+        "clientDrawBeforeSceneStats","clientDrawResidentObjectsStats","clientDrawWorldOverlayStats","clientDrawUiOverlayStats","renderer2DFrameSnapshotStats",
+        "sceneLegacyDrawSampleStats","scenePolygonSortSampleStats","sceneSpriteCaptureSampleStats","sceneCoverageInitSampleStats",
+        "sceneSpriteCaptureSampleCountStats","sceneProjectedIterationSampleCountStats"
     };
     private static final Object[] STAGES=new Object[FIELDS.length];
     private static final Field[] COUNTS=new Field[FIELDS.length],TOTALS=new Field[FIELDS.length];
