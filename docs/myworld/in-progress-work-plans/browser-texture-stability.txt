@@ -67,3 +67,32 @@ stream-validation and owned-state CPU fixtures pass. Warm Node-only actual-pixel
 Neither is a Firefox timing nor an end-to-end FPS claim. workspace-layout check
 still reports preexisting legacy output/root entries; new outputs use declared
 category tests/browser-texture-stability.
+
+First root Firefox execution (moving-v2) completed with AMD renderer string
+"Radeon R9 200 Series, or similar". Mechanics only passed: full-ROI nearest RMSE
+2.835807/stable2.835748, temporal2.451046->2.450417 is negligible. Stable tree green
+signal79,533 versus95,675 reference (-17%) needs visual review; silhouettes4,303
+versus4,269 reference do not establish colour/leaf-card preservation. Candidate
+remains OFF. Evidence: manager output/diagnostics/browser-motion-transitions/
+textures-firefox-1/result.json. Source audit then found fixture flaws: one material
+image stretched over900worldunits remained mostly magnified, and wallZ896 was
+outside most camera views. Those figures must not support adoption.
+
+moving-v4 (4b5d3bfa9) corrects the fixture only: actual floor texture6/wall2 tiled
+at128worldunits, wallZ-512 inside all tested frusta, actual native camera distances
+900/1400/2200, and per-frame projected interior floor/wall/tree ROIs. No production
+sampler/filter change since first candidate. Public diagnostic APIs:
+  await runTextureStability({distances:['mid']})   // default all near/mid/far
+  await renderSnapshot('nearest',48,false,'mid')  // stable/reference, near/far
+renderSnapshot returns PNG dataURL synchronously after the SAME present, before
+compositing can discard the drawingbuffer. Canvas is above bounded status text.
+Reference remains 2x raster diagnostic, not native pixel oracle. Snapshots and
+per-surface error regions separate geometry-edge aliasing from surface sampling.
+No worker GPU run; revised Firefox execution still belongs to manager.
+
+Cutout caution: native/world transparent pass writes depth with alpha cutoff0.
+Fractional filtered alpha can write formerlyemptytexels and hide deeperleafcards
+although average alpha is conserved. This is a plausible explanation for the
+first green-signal drop, not proven attribution. Do not change cutoff/depth policy
+to manufacture a passing metric; inspect aligned whole-tree stills before adopting
+foliage filtering, and retain default OFF if thinning/desaturation is observed.
