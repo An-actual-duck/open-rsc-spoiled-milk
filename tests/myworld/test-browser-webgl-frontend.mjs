@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, displayDisposed = 0, configured;
+let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, displayDisposed = 0, configured, gpuOptions;
 const status = {textContent:''}, messages = [];
 let layoutReads=0;
 const target = {width:960,height:560,getBoundingClientRect:()=>{layoutReads++;return{left:20,top:40,width:960,height:560}}};
@@ -27,10 +27,10 @@ const middleModule = new vm.SyntheticModule(['createBrowserMiddleMouseInput'],fu
   middleCreated++;return {stats:middleStats,dispose:()=>middleDisposed++,natives:{Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent:middleNative}};
 });},{context});
 const displayModule=new vm.SyntheticModule(['createBrowserDisplay'],function(){this.setExport('createBrowserDisplay',()=>({stats:{},scale:1,setSize(){},attachDesktop(){},dispose(){displayDisposed++;}}));},{context});
-const gpuModule = new vm.SyntheticModule(['createBrowserWebGL'],function(){this.setExport('createBrowserWebGL',()=>({canvas,stats,dispose:()=>gpuDisposed++,natives:{
+const gpuModule = new vm.SyntheticModule(['createBrowserWebGL'],function(){this.setExport('createBrowserWebGL',(_canvas,_report,options)=>{gpuOptions=options;stats.ownedStateActive=options.ownedState;return {canvas,stats,dispose:()=>gpuDisposed++,natives:{
   Java_orsc_BrowserWebGLBridge_worldProgress:async()=>{stats.worldReadiness={phase:stats.declaredPhase||'loading'};},
   Java_orsc_BrowserWebGLBridge_present:async(lib,width,height)=>{canvas.width=width;canvas.height=height;stats.lastFrame=clock;stats.worldReadiness={phase:'ready'};},
-}}));},{context});
+}};});},{context});
 const controlsModule = new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-benchmark-controls.js',import.meta.url),'utf8'),{context});
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{assert.equal(specifier,'./webgl.js');await gpuModule.link(()=>{});await gpuModule.evaluate();return gpuModule;}});
@@ -44,6 +44,10 @@ await module.link(specifier=>{
 module.evaluate();
 for(let i=0;i<30&&!configured;i++)await new Promise(resolve=>setImmediate(resolve));
 assert.ok(configured,'actual frontend did not initialize Java options');
+assert.equal(gpuOptions.ownedState,true,'Ordinary frontend must pass the verified owned policy to the actual backend seam');
+assert.equal(gpuOptions.benchmarkControl,false,'Ordinary frontend must not expose live benchmark control');
+assert.equal(window.browserProof.ownedStateRequested,true);assert.equal(stats.ownedStateActive,true,'Actual selected backend policy receipt');
+assert.equal(window.browserBenchmarkOwnedState,undefined);
 assert.equal(middleCreated,1,'WebGL frontend creates one middle-input owner');
 assert.equal(window.browserProof.middleInput,middleStats,'proof counters come from the real module seam');
 assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent,middleNative,'Java input consumer is merged into CheerpJ natives');
