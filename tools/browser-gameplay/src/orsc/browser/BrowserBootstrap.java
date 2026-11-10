@@ -98,7 +98,7 @@ public final class BrowserBootstrap {
             System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");
             // No native presenter or GLFW initialization; only the browser sink owns GPU submission.
             orsc.BrowserWebGLBridge.install();
-            reportSpriteKeyPolicy(Boolean.getBoolean("spoiledmilk.browserSpriteKeyLimbs"),orsc.BrowserWebGLBridge.isSpriteKeyLimbsEnabled());
+            reportSpriteKeyPolicy(Boolean.parseBoolean(System.getProperty("spoiledmilk.browserSpriteKeyLimbs", "true")),orsc.BrowserWebGLBridge.isSpriteKeyLimbsEnabled());
         }
         System.setProperty("spoiledmilk.directFramebuffer", "true");
         System.setProperty("spoiledmilk.browserBorderlessDisplay", "true");

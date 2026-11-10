@@ -68,7 +68,7 @@ if(benchmarkStream){assert.equal(typeof window.browserBenchmarkStreamUploadValid
 assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserFramePreparation=')||p.startsWith('spoiledmilk.browserAnimatedBufferReuse=')),benchmarkStream,'only private benchmark URL receives preparation overrides');
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserSpriteKeyLimbs=true'),benchmarkKeys);
 assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserSpriteKeyLimbs=')),benchmarkStream);
-await configured.natives.Java_orsc_browser_BrowserBootstrap_reportSpriteKeyPolicy(null,benchmarkKeys,benchmarkKeys);assert.equal(window.browserProof.spriteKeyLimbs.enabled,benchmarkKeys);assert.equal(window.browserProof.spriteKeyLimbs.requested,benchmarkKeys);
+const selectedKeys=!benchmarkStream||benchmarkKeys;await configured.natives.Java_orsc_browser_BrowserBootstrap_reportSpriteKeyPolicy(null,selectedKeys,selectedKeys);assert.equal(window.browserProof.spriteKeyLimbs.enabled,selectedKeys);assert.equal(window.browserProof.spriteKeyLimbs.requested,selectedKeys);
 await configured.natives.Java_orsc_BrowserWebGLBridge_worldProgress(null,[1,2,1,4,2,0,0,0,1,960,540,0]);assert.equal(window.browserWorldInputAllowed(),false);
 await configured.natives.Java_orsc_BrowserWebGLBridge_present(null,960,540);assert.equal(window.browserWorldInputAllowed(),true);assert.deepEqual(gateEvents,['browser-world-readinesschange','browser-world-readinesschange']);
 assert.equal(canvas.style.left,'20px');assert.equal(canvas.style.top,'60px');

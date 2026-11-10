@@ -6,4 +6,5 @@ for(const [mode,query,wanted] of [['software','',null],['software','benchmark&sp
 }
 assert.throws(()=>policy('webgl',new URLSearchParams('benchmark&spritekeylimbs=maybe')),/Invalid private/);
 const bootstrap=fs.readFileSync(new URL('../../tools/browser-gameplay/src/orsc/browser/BrowserBootstrap.java',import.meta.url),'utf8');assert.equal((bootstrap.match(/reportSpriteKeyPolicy\(/g)||[]).length,2,'Exactly declaration + one startup report');assert(bootstrap.indexOf('reportSpriteKeyPolicy(Boolean')>bootstrap.indexOf('BrowserWebGLBridge.install()'),'Receipt must read installed production policy');
-console.log('PASS startup-only sprite key policy, ordinary/software isolation, default OFF and one-time installed-cache receipt');
+assert(bootstrap.includes('Boolean.parseBoolean(System.getProperty("spoiledmilk.browserSpriteKeyLimbs", "true"))'),'Ordinary requested receipt must use actual default true');
+console.log('PASS startup-only sprite key policy, ordinary/software isolation, private default OFF, ordinary no override and one-time installed-cache receipt');

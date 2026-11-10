@@ -94,7 +94,12 @@ public final class BrowserSpriteKeyLimbsFixture {
  }
  public static void main(String[]args)throws Exception{
   try(DataOutputStream out=new DataOutputStream(new BufferedOutputStream(new FileOutputStream(args[0])))){layers(out);dimensions(out);caches(out);}
-  boolean expect=Boolean.getBoolean("test.expectLimbs");check((limbCases>0)==expect,"Selected representation not exercised");
+  boolean expect=Boolean.getBoolean("test.expectLimbs");
+  if(Boolean.getBoolean("test.expectNoProperty"))check(System.getProperty("spoiledmilk.browserSpriteKeyLimbs")==null,"Default cohort accidentally has override");
+  try{Method getter=BrowserWorldSpriteCache.class.getDeclaredMethod("isKeyLimbsEnabled");getter.setAccessible(true);check((Boolean)getter.invoke(null)==expect,"Actual cache mode getter disagrees");
+   Method bridge=Class.forName("orsc.BrowserWebGLBridge").getMethod("isSpriteKeyLimbsEnabled");check((Boolean)bridge.invoke(null)==expect,"Installed bridge mode getter disagrees");
+  }catch(NoSuchMethodException frozen){check(!expect,"Candidate mode getter missing");}
+  check((limbCases>0)==expect,"Selected representation not exercised");
   System.out.println("PASS checks="+checks+" layerCases=24000 wideBigInteger="+wideCases+" limbCases="+limbCases+" cacheCalls="+cacheCalls+" dimensionCases="+dimensionCases);
  }
 }

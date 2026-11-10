@@ -14,7 +14,8 @@ import orsc.graphics.three.Renderer3DFrame;
  * No anchor/depth/frame state is retained. Caller scratch is borrowed only on misses.
  */
 final class BrowserWorldSpriteCache {
-	private static final boolean KEY_LIMBS = Boolean.getBoolean("spoiledmilk.browserSpriteKeyLimbs");
+	private static final boolean KEY_LIMBS = Boolean.parseBoolean(
+		System.getProperty("spoiledmilk.browserSpriteKeyLimbs", "true"));
 	static boolean isKeyLimbsEnabled() { return KEY_LIMBS; }
 	static final long MAX_CACHE_BYTES = 16L * 1024 * 1024;
 	static final int MAX_ENTRIES = 256;
