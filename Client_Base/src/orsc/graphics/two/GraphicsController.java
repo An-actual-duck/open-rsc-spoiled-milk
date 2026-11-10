@@ -1162,10 +1162,23 @@ public class GraphicsController {
 		}
 
 		int destY = destRowHead / this.width2;
-		long topX16 = destFirstColumn;
-		long bottomX16 = topX16 + (long) destColumnSkewPerRow * destHeight;
-		int minLeft = floorFixedToInt(Math.min(topX16, bottomX16));
-		int maxLeft = ceilFixedToInt(Math.max(topX16, bottomX16));
+        boolean intMath = sceneSpriteRasterPolicy == SceneSpriteRasterPolicy.GPU_OWNED
+            && destRowHead >= 0 && canUseBrowserSpriteIntMath(destY, destFirstColumn, destWidth,
+            destHeight, srcStartX, srcStartY, scaleX, scaleY, destColumnSkewPerRow, mirrorX);
+        int topPixelX, bottomColumn16, minLeft, maxLeft;
+        if (intMath) {
+            topPixelX = destFirstColumn >> 16;
+            bottomColumn16 = destFirstColumn; // Zero skew is part of the proof.
+            minLeft = topPixelX;
+            maxLeft = (destFirstColumn + 0xFFFF) >> 16;
+        } else {
+            long topX16 = destFirstColumn;
+            long bottomX16 = topX16 + (long) destColumnSkewPerRow * destHeight;
+            topPixelX = floorFixedToInt(topX16);
+            bottomColumn16 = (int) bottomX16;
+            minLeft = floorFixedToInt(Math.min(topX16, bottomX16));
+            maxLeft = ceilFixedToInt(Math.max(topX16, bottomX16));
+        }
 		if (maxLeft + destWidth <= this.clipLeft
 			|| minLeft >= this.clipRight
 			|| destY + destHeight <= this.clipTop
@@ -1182,12 +1195,20 @@ public class GraphicsController {
 			plotScaleX = -scaleX;
 		}
 
-		long firstSourceX16 = plotSrcStartX;
-		long lastSourceX16 = firstSourceX16 + (long) (destWidth - 1) * plotScaleX;
-		int sourceX = floorFixedToInt(Math.min(firstSourceX16, lastSourceX16));
-		int sourceRight = floorFixedToInt(Math.max(firstSourceX16, lastSourceX16)) + 1;
-		int sourceY = srcStartY >> 16;
-		int sourceBottom = (int) ((srcStartY + (long) (destHeight - 1) * scaleY) >> 16) + 1;
+        int sourceX, sourceRight, sourceBottom;
+        int sourceY = srcStartY >> 16;
+        if (intMath) {
+            // The nonnegative products and sums were proved <=2^30-1 using doubles.
+            sourceX = srcStartX >> 16;
+            sourceRight = ((srcStartX + (destWidth - 1) * scaleX) >> 16) + 1;
+            sourceBottom = ((srcStartY + (destHeight - 1) * scaleY) >> 16) + 1;
+        } else {
+            long firstSourceX16 = plotSrcStartX;
+            long lastSourceX16 = firstSourceX16 + (long) (destWidth - 1) * plotScaleX;
+            sourceX = floorFixedToInt(Math.min(firstSourceX16, lastSourceX16));
+            sourceRight = floorFixedToInt(Math.max(firstSourceX16, lastSourceX16)) + 1;
+            sourceBottom = (int) ((srcStartY + (long) (destHeight - 1) * scaleY) >> 16) + 1;
+        }
 		if (sourceX < 0
 			|| sourceY < 0
 			|| sourceRight > sprite.getWidth()
@@ -1207,7 +1228,7 @@ public class GraphicsController {
 		recordCapturedRenderer2DSprite(
 			new Renderer2DFrame.SpriteCommand(
 				sprite,
-				floorFixedToInt(topX16),
+				topPixelX,
 				destY,
 				destWidth,
 				destHeight,
@@ -1221,8 +1242,8 @@ public class GraphicsController {
 				scaleY,
 				transform.getOpacity(),
 				transform,
-				(int) topX16,
-				(int) bottomX16,
+				destFirstColumn,
+				bottomColumn16,
 				mirrorX,
 				mirrorX || destColumnSkewPerRow != 0,
 				renderer2DLegacySpriteId,
@@ -1233,6 +1254,25 @@ public class GraphicsController {
 		renderer2DCaptureAccepted++;
 		return true;
 	}
+
+    /** Conservative browser-only proof. No long arithmetic is needed to reject.
+     * Width/height<=32767 and nonnegative int operands bound all double integer
+     * products/sums below2^47, hence they are exact. Accepted endpoints<=2^30-1
+     * prove each nonnegative int multiplication/addition safe before evaluation. */
+    private boolean canUseBrowserSpriteIntMath(int destY, int column16, int width,
+        int height, int sourceX16, int sourceY16, int scaleX, int scaleY,
+        int skew, boolean mirror) {
+        if (sceneSpriteRasterPolicy != SceneSpriteRasterPolicy.GPU_OWNED
+            || renderer2DPhase != Renderer2DFrame.Phase.SCENE
+            || mirror || skew != 0 || destY < 0 || destY > 32767
+            || column16 < 0 || column16 > 0x3FFFFFFF
+            || width < 1 || width > 32767 || height < 1 || height > 32767
+            || sourceX16 < 0 || sourceY16 < 0 || scaleX < 0 || scaleY < 0
+            || !Renderer3DSettings.isBrowserPresentationAvailable()) return false;
+        double lastX16 = sourceX16 + (double) (width - 1) * scaleX;
+        double lastY16 = sourceY16 + (double) (height - 1) * scaleY;
+        return lastX16 <= 0x3FFFFFFF && lastY16 <= 0x3FFFFFFF;
+    }
 
 	/*
 	 * RENDERER-V2 DIRECT INPUT: build the same command shape that the legacy

@@ -1,0 +1,65 @@
+Browser Scene sprite fixed-point arithmetic — CPU-verified candidate
+==================================================================
+Frozen oracle baseline fe0528b2092159d4dbd8b3c539b6f0a860712f75.
+The measured Scene sprite-capture span (~3.82ms/frame with ~34actors) includes
+other work. This change targets repeated wide arithmetic only; it has no accepted
+performance result and must be measured before promotion.
+
+Conservative eligibility
+------------------------
+Only an installed browser owner, SCENE phase and explicit GPU_OWNED sprite policy
+can enter the fast path. Nonnegative row/column origins, source starts and scales,
+zero skew, unmirrored input, dimensions1..32767 and destY0..32767 are required.
+The fixed destination column must be <=2^30-1. Two double computations establish
+that both final source fixed-point endpoints are <=2^30-1.
+
+Why this is exact
+------------------
+With the checked dimensions and nonnegative int operands, every candidate double
+integer product/sum is below2^47, well within the exact integer range of a double.
+There is no rounded-large-product acceptance assumption. Accepted nonnegative
+endpoints bound each constituent int product and sum below2^30. Thus the actual
+int multiplication/addition is safe BEFORE evaluation; no long-to-int cast is
+used as an overflow check. Positive scales put the first source coordinate at
+the minimum and the endpoint at the maximum, so int shifts reproduce the old
+long min/max/floor results. Zero skew makes both destination endpoints identical.
+Adding65535 for destination ceil remains below2^31; resulting pixel bounds plus
+the checked dimensions also fit int. Command fields and order are unchanged.
+
+Every unproven input uses the original wide calculations, including negative,
+mirrored, skewed, oversized, extreme and overflow-prone inputs. Native/default/
+force-software policies do not enter the browser arithmetic path. No cross-frame
+cache, quality changes, appearance changes, picking changes or public-server work.
+The separate NPC worker's read-only capture guard is untouched.
+
+Independent tests
+-----------------
+test-browser-sprite-fixed-point.py compiles the literal frozen GraphicsController
+from git and executes it in an isolated JVM; current code runs in another JVM.
+All captured SpriteCommand fields and order are serialized, including source/
+destination metadata, transforms and sprite contents. Direct capture asserts RGB
+and coverage remain unchanged. Actual public clipping/raster cases serialize
+full RGB/transmittance plus production GPU-composite source bytes and placement.
+No browser/GPU context is used by this CPU compositor proof.
+
+Java8 and21 each pass12000 direct inputs plus600 public clipping draws, including
+random/extreme parameters, source mutation, clipping, shifted sprites, mirrored/
+skewed cases and force-software controls. Candidate eligibility exercises2572
+fast and9428fallback inputs. Another530 explicit source/destination threshold and
+scope cases compare against independent BigInteger arithmetic. Both versions
+produce39,560,383 identical output bytes, SHA256:
+4b1bc5dc6d4a21fa0e241e3e037fd88606a8a0b2602da912c281e6ebf6eb8bae.
+
+Fresh target8 build, native Scene ownership/picking/teleport guards, coverage/
+retained/native-RGB oracle, scoped sprite raster tests and overflow tests pass.
+The native RGB oracle remains d0092296098efaa99047f01540a500497f07e8bad341b2f6a3c2fd8326a506c3.
+Output: declared output/tests/browser-sprite-fixed-point. Layout audit lists only
+inherited ai2 loose legacy asset/output entries; no cleanup attempted.
+
+Performance limits
+------------------
+The eligibility test adds branches and two double product/sums on qualifying
+browser inputs. Desktop HotSpot already has cheap64-bit arithmetic; a speedup is
+not inferred from these CPU tests. CheerpJ may benefit from avoiding wide math,
+but actual serialized browser measurements must determine that. No FPS claim,
+GPU run, profiler or production deployment was performed by this task.
