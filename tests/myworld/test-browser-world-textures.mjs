@@ -16,3 +16,12 @@ function fixture(fail=false){let id=0,pending=0;const live=new Set(),calls=[],gl
 {const x=fixture(true),p=createWorldTextureSampling(x.gl,{enabled:true});assert.throws(()=>p.initialize(),/GL error/);assert.equal(x.live.size,0);p.dispose();}
 {const x=fixture(),p=createWorldTextureSampling(x.gl);p.initialize();p.baseSampling();p.colorSampling();p.dispose();assert.equal(x.calls.length,0,'default mode changed native sampling');}
 console.log('PASS '+cases+' bounded POT/NPOT alpha/RGB coverage chains, level0 visible bytes, sampler isolation, upload sizes and failure cleanup; no GPU/FPS claim');
+// Independent bilinear >0.5 estimator for the experimental native cutout mode.
+function coverage(p,w,h){let n=0;for(let y=0;y<h;y++)for(let x=0;x<w;x++)for(const dy of [.25,.75])for(const dx of [.25,.75]){const sx=x+dx-.5,sy=y+dy-.5,x0=Math.floor(sx),y0=Math.floor(sy),fx=sx-x0,fy=sy-y0;let alpha=0;for(let yy=0;yy<2;yy++)for(let xx=0;xx<2;xx++)alpha+=p[(Math.min(h-1,Math.max(0,y0+yy))*w+Math.min(w-1,Math.max(0,x0+xx)))*4+3]*(xx?fx:1-fx)*(yy?fy:1-fy);if(alpha>127.5)n++;}return n/(w*h*4);}
+for(const [w,h]of [[3,5],[64,64],[128,128]]){
+ const source=new Uint8Array(w*h*4);for(let n=0;n<w*h;n++)source.set([37,211,19,n%3?0:255],n*4);const original=source.slice(),x=fixture(),p=createWorldTextureSampling(x.gl,{enabled:true,mode:'cutout'}),plan=p.plan(w,h,source,true),base=buildWorldCutoutMips(w,h,source),target=Array.from(source).filter((_,i)=>i%4===3).reduce((a,b)=>a+(b===255),0)/(w*h);
+ assert.equal(plan.binaryCutout,true);assert.equal(plan.pointSampling,false);assert.deepEqual(source,original);assert.deepEqual(plan.levels[0].pixels,base.levels[0].pixels);
+ for(let n=1;n<plan.levels.length;n++){const l=plan.levels[n],before=base.levels[n];const measured=coverage(l.pixels,l.width,l.height);assert(Math.abs(measured-target)<=Math.abs(coverage(before.pixels,before.width,before.height)-target)+1e-12);assert.equal(measured,l.coverage.estimated);}
+ const fractional=original.slice();fractional[3]=128;const fallback=p.plan(w,h,fractional,true);assert.equal(fallback.binaryCutout,false);assert.equal(fallback.pointSampling,true);assert.equal(fallback.levels,null);assert.equal(fallback.bytes,w*h*4);assert.deepEqual(fallback.base,fractional);p.dispose();
+}
+console.log('PASS native cutout coverage estimate never worsens vs raw mips, independently reconstructed bilinear samples; fractional sources retain point path');

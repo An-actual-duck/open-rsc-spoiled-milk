@@ -38,7 +38,7 @@ function materialQuads(){
 }
 async function create(mode){
  if(backend)backend.dispose();const scale=mode==='reference'?2:1;canvas.width=960*scale;canvas.height=540*scale;
- backend=createBrowserWebGL(canvas,()=>{},{worldTextureFiltering:mode==='stable'?'stable':'nearest',colorFrustumCulling:false});
+ backend=createBrowserWebGL(canvas,()=>{},{worldTextureFiltering:mode==='stable'||mode==='cutout'?mode:'nearest',colorFrustumCulling:false});
  const n=backend.natives;
  await n.Java_orsc_BrowserWebGLBridge_initialize(null,shader[0],shader[1]);
  await n.Java_orsc_BrowserWebGLBridge_initializeLighting(null,shader[2],shader[3]);await n.Java_orsc_BrowserWebGLBridge_initializeSky();
@@ -102,7 +102,7 @@ async function compare(mode,reference){
 // Captures the SAME freshly submitted drawingbuffer synchronously, before browser
 // compositing may discard it. No screenshot of a later blank canvas is accepted.
 window.renderSnapshot=async(mode,index=48,treeOnly=false,requestedDistance='mid')=>{
- if(!['nearest','stable','reference'].includes(mode)||!['near','mid','far'].includes(requestedDistance)||!Number.isInteger(index)||index<0||index>=96)throw Error('Invalid snapshot request');
+ if(!['nearest','stable','cutout','reference'].includes(mode)||!['near','mid','far'].includes(requestedDistance)||!Number.isInteger(index)||index<0||index>=96)throw Error('Invalid snapshot request');
  replaying=false;await load();distance=requestedDistance;await create(mode);await draw(index,treeOnly);
  const png=canvas.toDataURL('image/png');
  return {mode,index,distance,treeOnly,width:canvas.width,height:canvas.height,png,regions:regions(index),renderer:backend.stats.renderer,sourceCommit:(await json('./stage.json')).sourceCommit};
@@ -112,7 +112,7 @@ async function run(options={}){
  try{
   await load();const gl=canvas.getContext('webgl2'),ext=gl.getExtension('WEBGL_debug_renderer_info'),renderer=gl.getParameter(ext?ext.UNMASKED_RENDERER_WEBGL:gl.RENDERER);
   if(/swiftshader|llvmpipe|software rasterizer/i.test(renderer))throw Error('Software renderer rejected: '+renderer);
-  const results=[];for(const d of options.distances||['near','mid','far']){if(!['near','mid','far'].includes(d))throw Error('Invalid distance');distance=d;const reference=[];for(const mode of ['reference','nearest','stable'])results.push(await compare(mode,reference));}
+  const results=[];for(const d of options.distances||['near','mid','far']){if(!['near','mid','far'].includes(d))throw Error('Invalid distance');distance=d;const reference=[];for(const mode of ['reference','nearest','stable','cutout'])results.push(await compare(mode,reference));}
   const t=textures.get(17),start=performance.now();for(let n=0;n<120;n++)buildWorldCutoutMips(t.width,t.height,t.rgba);
   const result={pass:true,qualityAccepted:false,scope:'Production shaders/tree/palette;128-unit tiled floor6/wall2;isolated material sampling,no shadows/fog;not FPS acceptance',userAgent:navigator.userAgent,renderer,roi,reference:'2x physical-raster NEAREST,box-downsampled;not native LWJGL pixel parity',results,animatedTexture17CpuMsPerBuild:(performance.now()-start)/120,source:await json('./stage.json')};
   window.textureStabilityResult=result;status.textContent=JSON.stringify(result,null,2);document.querySelector('#play').disabled=false;return result;

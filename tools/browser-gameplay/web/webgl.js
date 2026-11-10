@@ -13,7 +13,7 @@ export function adaptResidentShader(source, fragment) {
   let text = source.replace('#version 120', '#version 300 es\nprecision highp float;\nprecision highp int;\nprecision highp sampler2DShadow;');
   text = text.replace(/\battribute\b/g, 'in').replace(/\bvarying\b/g, fragment ? 'in' : 'out').replace(/\btexture2D\(/g, 'texture(');
   text = text.replace(/shadow2D\((.*)\)\.r/g, 'texture($1)');
-  if (fragment) text = text.replace('precision highp sampler2DShadow;', 'precision highp sampler2DShadow;\nout vec4 browserFragment;\nuniform float uBrowserAlphaCutoff;').replace(/gl_FragColor = color;/g, 'if (color.a <= uBrowserAlphaCutoff) discard; browserFragment = color;').replace(/\bgl_FragColor\b/g, 'browserFragment');
+  if (fragment) text = text.replace('precision highp sampler2DShadow;', 'precision highp sampler2DShadow;\nout vec4 browserFragment;\nuniform float uBrowserAlphaCutoff;\nuniform bool uBrowserBinaryCutout;').replace(/gl_FragColor = color;/g, 'if (color.a <= uBrowserAlphaCutoff) discard; if(uBrowserBinaryCutout)color.a=1.0; browserFragment = color;').replace(/\bgl_FragColor\b/g, 'browserFragment');
   return text;
 }
 /** Native atlas endpoints address texel centers, including mirrored and one-pixel regions. */
@@ -35,7 +35,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   const gl=canvas.getContext('webgl2',{alpha:true,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});
   if(!gl) throw new Error('WebGL2 unavailable: browser GPU proof requires WebGL2');
   const stats={worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas, <=8MiB marker overlay plus optional <=32MiB combined C/T/retained texture peak, <=160MiB shadow maps and <=8MiB masks and separately bounded <=2MiB sky peak; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Marker UI lacks partial-alpha reconstruction unless coverage mode is enabled','Browser/device coverage and broader gameplay parity pending'],frameSamples:[]};
-  const worldTextureSampling=createWorldTextureSampling(gl,{enabled:options.worldTextureFiltering==='stable',stats});
+  const worldTextureSampling=createWorldTextureSampling(gl,{enabled:options.worldTextureFiltering==='stable'||options.worldTextureFiltering==='cutout',mode:options.worldTextureFiltering,stats});
   const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0,lastWorld=0,lighting,lightingValues,sky,overlay;
   const colorVisible=new Uint8Array(256),colorCullScratch=new Float64Array(18);let colorCullingSupported=false;
   const ownedFrame=options.ownedState===true||options.benchmarkControl===true?createOwnedBrowserFrameState(gl,{enabled:options.ownedState===true}):null;
@@ -148,7 +148,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       const pixels=typed(pixelInput,Int32Array);if(pixels.length!==width*height)throw new Error('Browser texture dimensions mismatch');
       const rgba=new Uint8Array(pixels.length*4);for(let n=0;n<pixels.length;n++){const c=pixels[n];rgba[n*4]=c>>>24;rgba[n*4+1]=c>>>16;rgba[n*4+2]=c>>>8;rgba[n*4+3]=c;}
       const mipPlan=worldTextureSampling.plan(width,height,rgba,hasTransparency===true);
-      const bytes=mipPlan.bytes,reuse=old&&old.width===width&&old.height===height;
+      const bytes=mipPlan.bytes,reuse=old&&old.width===width&&old.height===height&&old.bytes===bytes;
       if(!reuse)reserve(bytes); // Keep the old resource valid until replacement allocation succeeds; bound peak storage.
       const previousActive=ownedFrame?.active?null:gl.getParameter(gl.ACTIVE_TEXTURE);gl.activeTexture(gl.TEXTURE0);
       let previousTexture=ownedFrame?.active?null:gl.getParameter(gl.TEXTURE_BINDING_2D),texture=reuse?old.texture:null,committed=false;
@@ -156,7 +156,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
         if(!texture)texture=gl.createTexture();if(!texture)throw new Error('WebGL texture allocation failed');
         gl.bindTexture(gl.TEXTURE_2D,texture);textureParameters();
         worldTextureSampling.uploadBound(mipPlan,width,height,reuse);
-        check();textures.set(id,{texture,bytes,width,height,revision:(old?.revision||0)+1,hasTransparency:hasTransparency===true});
+        check();textures.set(id,{texture,bytes,width,height,revision:(old?.revision||0)+1,pointSampling:mipPlan.pointSampling===true,binaryCutout:mipPlan.binaryCutout===true,hasTransparency:hasTransparency===true});
         if(!reuse){stats.gpuBytes+=bytes-(old?.bytes||0);if(old){if(previousTexture===old.texture)previousTexture=texture;gl.deleteTexture(old.texture);}}
         stats.uploadedBytes+=bytes;committed=true;
         // Alpha classification follows accepted texture data while bounded Java repacking catches up.
@@ -201,7 +201,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
         worldTextureSampling.colorSampling();
         try { for(const transparent of [false,true]) {
           if(transparent){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);}else gl.disable(gl.BLEND);
-          f('uBrowserAlphaCutoff',transparent?0:0.5);
+          f('uBrowserAlphaCutoff',transparent?0:0.5);let passCutoff=transparent?0:0.5,passBinary=false,passBlend=transparent;i('uBrowserBinaryCutout',0);
           for(const kind of [1,2,3,5,4,0]) {
           if(kind===4||kind===5){gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);}else gl.disable(gl.CULL_FACE);
           if(kind===2){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-1);}else gl.disable(gl.POLYGON_OFFSET_FILL);
@@ -215,7 +215,9 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
           if(receiverPlane!==draws[at+6]){receiverPlane=draws[at+6];lighting.bindReceiverPlane(receiverPlane);}
           const b=chunk.batches;for(let n=0;n<b.length;n+=5){if(b[n+3]!==kind||(b[n+4]===1)!==transparent)continue;const tex=textures.get(b[n]),enabled=tex?1:0,texture=tex?tex.texture:baseTextures[0];
             if(textureEnabled!==enabled){i('uTextureEnabled',enabled);textureEnabled=enabled;}
-            if(residentTexture!==texture){gl.bindTexture(gl.TEXTURE_2D,texture);residentTexture=texture;}
+            if(residentTexture!==texture){gl.bindTexture(gl.TEXTURE_2D,texture);residentTexture=texture;worldTextureSampling.colorSampling(tex);}
+            if(worldTextureSampling.cutoutMode){const binary=tex?.binaryCutout===true,cutoff=binary?.5:(transparent?0:.5),blend=transparent&&!binary;
+            if(passCutoff!==cutoff){f('uBrowserAlphaCutoff',cutoff);passCutoff=cutoff;}if(passBinary!==binary){i('uBrowserBinaryCutout',binary?1:0);passBinary=binary;}if(passBlend!==blend){if(blend)gl.enable(gl.BLEND);else gl.disable(gl.BLEND);passBlend=blend;}}
             gl.drawElements(gl.TRIANGLES,b[n+2],gl.UNSIGNED_INT,b[n+1]*4);calls++;triangles+=b[n+2]/3;}
           stats.reusedChunkDraws++;
         }
