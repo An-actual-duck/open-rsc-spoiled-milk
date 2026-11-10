@@ -1,8 +1,9 @@
-# Experimental physical browser output
+# Physical browser output
 
 Worker `feat/browser-physical-world-output`, base `f2cca708956167e15eadebc4b437fab896eaa40e`.
-Default OFF. No Java/client game logic, source scene, server, art, or native/software
-renderer changes. This is a GPU presentation prototype requiring manager review.
+Ordinary WebGL defaults ON after manager quality/safety checks; explicit
+`physical=off` selects logical backing. Software ignores this policy. No Java/client
+game logic, source scene, server, art or native/software renderer changes.
 
 The existing browser renders the world into the logical Java framebuffer size and
 then CSS scales that image. The prototype instead selects GPU backing dimensions
@@ -15,8 +16,10 @@ their current sizes and algorithms. No mip or texture-filtering changes are incl
 
 ## Scope and controls
 
-- Explicit private prototype query: `?mode=webgl&physical=on`. Ordinary URL/default
-  stays OFF; software ignores the option. Invalid WebGL values fail closed.
+- Ordinary WebGL uses physical backing by default. Explicit `physical=on` or
+  `physical=off` remains available in the private browser frontend. Benchmark
+  startup retains its default OFF unless `physical=on` is given; its queued setter
+  stays benchmark-only. Invalid WebGL values fail closed; software stays unchanged.
 - Private benchmark-only `window.browserBenchmarkPhysicalOutput(boolean)` queues
   a policy change. It commits before any pass of a fresh complete source WORLD or
   opaque reset. It cannot commit during held regions, retained BASE or fade frames.
@@ -134,5 +137,39 @@ Final gameplay artifact `output/tests/browser-gameplay-spike/browser-physical-ou
 was prepared and its read-only explicit-JAR/frontend/private-config validator passed.
 The manager is evaluating that frozen artifact on8153. Whole-game quality, input,
 layer/teleport/hold behavior and warmed same-session ON/OFF performance remain
-manager acceptance work. The source stays default OFF regardless of those pending
-measurements; this handoff supplies the reviewed prototype and bounded proof tools.
+manager acceptance work. At the initial prototype handoff the source remained default OFF; the adoption
+section below records the later manager-authorized ordinary default change.
+
+
+## Manager-authorized ordinary adoption
+
+After final46-case hardware proof, root's actual Firefox fullscreen gameplay test
+kept Java processing at960×540 and rendered the GPU at1843×1037. After200 seconds
+warming both policies, four30-second segments measured fresh-world FPS:
+
+- OFF:39.6534 /39.2523, actor means33.74 /33.94.
+- ON:40.5477 /39.8414, actor means32.02 /34.59.
+
+Workload variation prevents an FPS-gain claim. No material penalty was observed in
+this tested scene at the larger backing size. Firefox60 FPS is still unmet. The
+manager observed sharper fullscreen geometry with native texture grain retained;
+no filtering/mip changes were included.
+
+Actual bank right-click/select/close used correct logical input. A64×15 CSS middle
+movement changed logical camera pitch by8 as expected. Exiting fullscreen/CSS
+resize plus queued OFF during a hard teleport retained the previous1843-wide FULL
+until the new source was ready. Accepted evidence is under
+`/home/justin/Core-Framework/output/diagnostics/browser-motion-transitions/physical-game-firefox-2/`:
+`paired-fps-result.json`, `input-result.json`, `hold-resize-result.json`.
+The first `layer-result.json` in that directory was invalid automation (outer
+keyboard focus, actual pose remained level0); it is not cited as layer acceptance.
+An authority-confirmed negative-level/return test remains the manager's gate.
+
+Per manager instruction, ordinary WebGL now defaults ON, explicit `physical=off`
+remains available, benchmark startup remains explicit/default OFF, and live policy
+control is still restricted to benchmark sessions. Only the pure policy selector,
+focused policy/frontend tests and this report changed for adoption. Pixel shaders,
+source processing dimensions, budgets, input mapping and GPU algorithms did not.
+Published main7450594c (including its separately verified shadow-uniform cache)
+was normally merged before adoption; no cherry-pick or experimental texture branch
+was incorporated. Fresh frozen artifacts follow the exact adoption checkpoint.

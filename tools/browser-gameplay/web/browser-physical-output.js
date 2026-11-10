@@ -1,9 +1,9 @@
-/** Experimental GPU backing only. Java pixels, scene projection and input stay logical. */
+/** GPU backing only. Java pixels, scene projection and input stay logical. */
 export function physicalOutputRequested(mode,options){
   const value=options.get('physical');
   if(mode!=='webgl')return false;
   if(value!==null&&!['on','off'].includes(value))throw new Error('Invalid physical output policy');
-  return value==='on';
+  return options.has('benchmark')?value==='on':value!=='off';
 }
 export function physicalOutputSize(width,height,rect,dpr,maxTextureSize=4096){
   if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width*height>2097152||!Number.isInteger(maxTextureSize)||maxTextureSize<1)throw new Error('Invalid logical/physical output dimensions');

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {physicalOutputRequested,physicalOutputSize,createPhysicalOutputSizer} from '../../tools/browser-gameplay/web/browser-physical-output.js';
-for(const [mode,q,on]of [['webgl','',false],['webgl','physical=on',true],['webgl','physical=off',false],['software','physical=on',false]])assert.equal(physicalOutputRequested(mode,new URLSearchParams(q)),on);
+for(const [mode,q,on]of [['webgl','',true],['webgl','physical=on',true],['webgl','physical=off',false],['webgl','benchmark',false],['webgl','benchmark&physical=on',true],['webgl','benchmark&physical=off',false],['software','',false],['software','physical=on',false]])assert.equal(physicalOutputRequested(mode,new URLSearchParams(q)),on);
 assert.throws(()=>physicalOutputRequested('webgl',new URLSearchParams('physical=oops')),/Invalid/);
 for(const [rect,dpr,w,h]of [[{width:960,height:540},1,960,540],[{width:1280,height:720},1.5,1920,1080],[{width:3840,height:2160},2,1920,1080],[{width:480,height:270},1,960,540],[{width:1200,height:675},1,1200,675]]){const s=physicalOutputSize(960,540,rect,dpr);assert.equal(s.width,w);assert.equal(s.height,h);assert(s.width*s.height<=2097152);}
 for(const rect of [null,{width:NaN,height:100},{width:Infinity,height:540},{width:0,height:0}])assert.deepEqual(physicalOutputSize(960,540,rect,1),{width:960,height:540,requestedScale:1,capped:false});
