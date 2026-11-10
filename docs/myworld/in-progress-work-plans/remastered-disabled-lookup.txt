@@ -1,0 +1,33 @@
+Disabled remastered animation lookup — CPU-verified optimization
+===============================================================
+Baseline ee876dbe895d914a9df78088cec2ca35362ffc04.
+Actual browser profile reported ~3.82ms/frame in Scene sprite capture. This span
+contains several tasks, so avoiding key lookup is a candidate, not an attributed
+saving or FPS claim.
+
+Only RemasteredSpriteResolver.resolve(AnimationDef,int,Sprite) changes. A null
+canonical returns null without counters. Disabled settings increment the existing
+disabledFallbackCount once and return the exact canonical object before inspecting
+the animation/key cache. Enabled resolution still uses the same key cache and
+resolveKey implementation, preserving decode/selection/fallback behavior. String
+key resolution and production availability/settings, artwork and credits remain
+unchanged. The owner pause remains enforced.
+
+Tests compile the literal frozen resolver under a different test class name and
+compare actual results against the candidate: canonical/override identity,
+pixels, placement, loaded keys and all public diagnostic counters. On Java8 and21,
+1798 checks pass with actual production availability=false. Another1800 checks
+pass with an isolated test-only copy of Settings where AVAILABLE=true; this lets
+the preserved enabled implementation decode the actual packaged/development PNG
+and exercise name/category mutation, toggles, incompatible canonical metadata,
+null/negative/large frames and missing entries. Production Settings is untouched.
+A counting AnimationDef additionally proves disabled1000-call selection performs
+zero name reads and retains zero definitions/frame slots while preserving1000
+fallback increments. Getter inspection/key retention avoidance is intentional.
+
+Fresh target8 client build, existing animation key-cache checks and full paused
+loader/packaging/runtime-override checks pass. Outputs are under declared category
+output/tests/remastered-disabled-lookup. Layout audit still reports inherited ai2
+legacy output/assets entries; nothing was cleaned. No GPU/browser/profiler or
+public-server work was performed. Actual combined performance remains the manager
+measurement gate.
