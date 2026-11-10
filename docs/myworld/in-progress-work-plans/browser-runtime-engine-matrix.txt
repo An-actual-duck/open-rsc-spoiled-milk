@@ -1,0 +1,113 @@
+Private runtime engine entry probes
+==================================
+This is bounded compatibility test tooling. It changes no game, renderer,
+production native callback, runtime default, account, server or asset.
+
+Inputs and scope
+----------------
+The preparer accepts an explicit --source-stage containing the manager-accepted
+native-contract-modes-v3-void artifact. Four fixed web files and the Java source
+must match pinned SHA256/length records and its manifest. The original probe JAR
+and sync/async helper are copied byte-for-byte; no compilation or parked native
+branch merge is needed. Source metadata (including its original dirty-review
+provenance) and exact input snapshots are preserved. A fresh output directory is
+required. No source stage or existing prepared stage is modified.
+
+Only two stage-fixed variants are permitted:
+ java17-js: version17, wasmGC option ABSENT (vendor default engine requested)
+ java8-wasmgc: version8, wasmGC:true (experimental engine requested)
+Each stage has one variant, never an ambiguous mixture. The only page query is a
+single mode=values|async-fatal|sync-fatal|thenable-fatal. Runtime/engine queries are
+rejected before loading CheerpJ, including wasmgc=off. The existing ordinary game
+probe uses options.has('wasmgc'), so even that apparently negative query enables
+its option; do not use it as an engine-OFF control.
+
+The existing1903 scalar/int-array/void assertions, exact void markers and three
+inherited fatal-boundary checks remain unchanged. Each mode starts a fresh page/
+JVM. Original loader, initialization and run/fatal waits are bounded45seconds each.
+Run values FIRST. If an experimental engine cannot initialize or pass values,
+preserve its result and stop that variant; no giant automatic matrix/retry loop.
+Later fatal probes are only useful after this entry gate passes. There is no
+performance claim from compatibility success or timeouts.
+
+Receipts explicitly distinguish requested options from observations. They record
+configured Java/engine and actual browser user-agent, initialization resolution,
+and eventual probe result. actualEngineObserved and actualJavaVersionObserved
+remain null: this reused Java probe has no engine/version getter. Initialization
+or successful JNI execution must not be relabeled as independently measured
+engine activation. Browser/GPU performance and gameplay remain separate tests.
+
+Vendor reference checked2026-11-10:
+ https://cheerpj.com/docs/reference/cheerpjInit#wasmgc
+The vendor documents wasmGC as experimental in5.0, with Firefox153+ required;
+Firefox154 meets that stated browser requirement. Java17 is a supported version.
+This does not promise compatibility or stability for our workload.
+
+Preparation and manager launch
+------------------------------
+After the manager releases the timing window:
+ python3 tests/myworld/prepare-browser-runtime-engine.py \
+   --source-stage APPROVED_FROZEN_V3_STAGE --variant java17-js \
+   --run-id fresh-java17-js --http-port FRESH_PORT
+Repeat with java8-wasmgc and a different run/port only when desired. stage.json
+contains exact serveCommand, values/fatal URLs and all served-file hashes. The
+explicit manager-run range service validates the whole four-file inventory and
+binds127.0.0.1 only. Preparation never starts a service or browser. No game/server,
+owner profile, saved login or public data is part of these probes.
+
+CPU validation
+--------------
+ test-browser-runtime-engine-matrix.py --source-stage APPROVED_FROZEN_V3_STAGE
+checks source/hash rejection, no overwrite, unchanged native/protocol bytes and
+fake-runtime exact init arguments for both variants. Java is deliberately NOT
+simulated: those CPU cases remain incomplete while awaiting runMain, and cannot
+claim that1903 Java checks passed. Query rejection and injected init failure are
+also checked. Authentic Firefox/CheerpJ results must be recorded separately by the
+manager. No tests, compilation or preparation were run during the initial
+projection-performance timing hold. After explicit release, the CPU guards and
+canonical workspace layout check passed; no JVM compilation was needed.
+
+Prepared review artifacts (no worker launch)
+-------------------------------------------
+From clean tooling checkpoint6ab3d9540184c7ef5fb89b474d42224b9b2d5c47:
+ output/tests/browser-runtime-engine-matrix/java17-js-review-1 (HTTP8183)
+ output/tests/browser-runtime-engine-matrix/java8-wasmgc-review-1 (HTTP8184)
+The explicit source was the approved frozen v3-void stage supplied by the manager.
+Its manifest SHA256 is81a8ba75a783a69011e62b662c3add53a9ecf914cb69f83c6f443d527acd7f63.
+Both variants retain probe.jar SHA32ba181e42d95ab7c33fb5ce95d417dcd95849ca59d6f2ace5d61453edf7cab2.
+Variant script hashes:
+ java17-js:4af26f6b31c5020431fffd52847111b665095dacf9b84de8ceb821927c59d074
+ java8-wasmgc:b978658a6ba645a6dc2ad95e88a95fcfaad4d192ca38a4ed6400b78fb4d027e4
+Both stages remain immutable. CPU validation additionally rejects unmanifested
+nested web files in the range service. Prepared manifests are not runtime results;
+manager observations and engine-specific failures must be preserved separately.
+The worker launched no browser, HTTP service, game server, JVM or GPU workload.
+
+Manager authentic Firefox154 results
+------------------------------------
+Evidence in the manager checkout:
+ output/diagnostics/browser-performance-pass/engine-runtime-firefox-1/summary.json
+with one JSON file for each attempted mode. Runtime/options/protocol source and
+both prepared stages were unchanged; this is a documentation-only result update.
+
+java17-js passed all four modes. The values run reported checks=1903 and
+completed=true with exit0; async-fatal, sync-fatal and thenable-fatal each passed
+the inherited fatal-boundary expectations. This establishes this configured
+variant's standalone JNI compatibility gate, not game, input, GPU or FPS parity.
+
+java8-wasmgc failed its values entry gate and the page recorded passed=false,
+completed=true. Initialization resolved, and cheerpjRunMain returned exit0, but
+calls={}, events=[] and voidMarkers=[]: no native callback or1903-check completion
+was observed. The page correctly rejected that nominally successful exit with
+Value conversion probe failed. Its only console messages were runtime ready and
+class loaded/main starting; windowErrors and unhandled were empty. No internal
+engine cause is established by those observations. The manager stopped this
+variant: no fatal-mode, gameplay or FPS attempt followed.
+
+Requested settings remain distinct from observations: actualEngineObserved and
+actualJavaVersionObserved are null in both variants. A resolved initialization or
+exit0 is not an independent engine getter and cannot override the failed protocol.
+The ordinary Java8/default-JS configuration remains unchanged. No WasmGC adoption
+or Java17 performance benefit is claimed. All evidence, including the failed
+WasmGC result, is preserved; no additional tests/builds/browser work was run by
+this worker during the subsequent combat-visual/performance work.
