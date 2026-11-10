@@ -1,0 +1,59 @@
+Browser depth-shadow uniform location cache
+
+Scope: browser-shadows.js only. Receiver locations were already cached. The depth
+program formerly queried uTexture eachprepare, uLightMatrix eachmap,
+uGlobalOffsetX/Z eachchunk, and uAlphaTest eachbatch. Cache these five stable
+locations lazily for the depth program lifetime, including null optimized-out
+locations (Map.has), clear on module disposal. No new mode/options/flags. Shader
+text, links, draw order, uniform values, alpha/culling, projection policy,
+error checks, ownership and resources are unchanged. Desktop/native/software
+implementations are untouched.
+
+CPU differential oracle:
+  node tests/myworld/test-browser-shadow-uniform-cache.mjs
+Loads literal frozen f2cca708956167e15eadebc4b437fab896eaa40e module, SHA256
+86e84a2958b6de3dd859801d08c7793459718178b8bdc12e20e2dc2ddab0a068, independently
+runs old/current against the established lighting GL API double, compares every
+non-lookup command's arguments/results/order, draw/cache summaries and final
+resource ledger. Tests24 combinations of scoped/owned state, null alpha location,
+compile(vertex/fragment)/link/storage/uniform-query failures and ordinary path.
+Within eachsuccessful scenario: near/far rebuild, actual far-cache hit, unchanged
+visibility, animated role/offset, cutout revision invalidation, previous-far
+history/retirement, quality resize/Off, underground suppression/surface return,
+negative origin, replacement VBO and ownership transitions. Retry and disposal
+retain original failure/resource behavior. Separate same-GL-context module
+restart proves five locations are queried again for the new program. No lookup
+exception is cached; successful null location is cached.
+
+Result:16,520 identical non-lookup commands; totalqueries1,864->280 (includes
+unchanged receiver lookups); depthqueries1,648->64 across all failure/retry cases.
+A warmed steady frame makes zero depth or receiver location queries. These are
+instrumented protocol counts, NOT timings or FPS evidence.
+
+Additional PASS:
+  node tests/myworld/test-browser-lighting.mjs
+  node tests/myworld/test-browser-owned-gl-state.mjs
+  node tests/myworld/test-browser-stream-upload-validation.mjs
+The existing lighting suite covers allocation refusal, storage/FBO failure,
+accounting/retry/idempotent cleanup. Existing owned-state full pipeline and upload
+error/zero-draw gates remain intact. workspace-layout check passes. Logs and JSON
+under output/tests/browser-shadow-uniform-cache/, all categorized outputs.
+
+No worker GPU/browser launch, gameplay login or public access. Actual production
+pixel fixture and Firefox performance acceptance remain manager gates; removing
+uniform location queries does not by itself establish any FPS gain. Program
+relinking is not supported by this module today; if later added, the depth cache
+must be cleared at successful relink before reuse. Current API links once and
+requires fresh module initialization after Stop/context replacement.
+
+Manager Firefox verification (2026-11-10)
+---------------------------------------
+The integrated backend passed the actual production-shader/native-sky owned
+pipeline comparison in Firefox 154: 42 cases, 12,976,128 compared RGBA bytes,
+zero changed bytes. Real context-loss and stop-during-initialization checks
+also passed. Browser reports AMD / "Radeon R9 200 Series, or similar"; this is
+the reported Firefox string, not a claim of an exact physical GPU model.
+Evidence: manager output/diagnostics/browser-motion-transitions/
+shadow-uniform-firefox-1/result.json plus frozen stage receipt.
+Integrated command, lighting/resource-failure, owned-state and queued-upload
+failure tests passed. No end-to-end FPS gain is claimed from query counts.
