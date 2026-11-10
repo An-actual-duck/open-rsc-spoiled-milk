@@ -93,3 +93,15 @@ initial checkpoint03ffed742 stage exposed that harness issue in the original
 backend before any pixel comparison; its failed evidence remains preserved.
 Production readiness code is unchanged. The corrected stage requires a fresh
 explicit manager-run GPU proof before this slice is accepted.
+
+Manager-run hardware result
+---------------------------
+The corrected frozen checkpoint518f0b0bd stage PASSED on AMD Radeon RX6700XT,
+ANGLE/OpenGL4.6. Across64 actual production-shader frames it compared11,010,048
+RGBA bytes with zero differences and96,868 nonzero color components. Culling
+was exercised in47 frames, totaling3,020 culled input entries (range0..100).
+All101 chunks stayed uploaded/ready; near101/far100 caster draw counts remained
+exact in every frame, including animated-far exclusions. Resource disposal passed.
+The manager owns the preserved stage/hardware-result.json evidence. No worker
+GPU process was launched, and this functional readback is not a gameplay/FPS,
+all-device or 60FPS acceptance claim. An ordinary private game benchmark follows.
