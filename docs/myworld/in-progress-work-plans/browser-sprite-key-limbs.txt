@@ -83,3 +83,11 @@ still undergo null/length checks and complete hashing/comparison. Independent
 BigInteger dimension cases include MIN/MAX, negatives/zero, threshold±1, missing
 source storage and5actual2M-pixel accepted arrays; all1,261dimension cases
 match frozen exception/count/hash bytes onJava8/21. Frozen8135 is unchanged; new measurement artifact will be8137 after proof.
+
+Final count+limb candidate normal-merged published model controls3680a1a20 and
+reviewed Halo main37a60529bd2569e2832338e3770feeb699aec025, then rebuilt fresh
+target8 client2510ca983a1e08ab98a6c3c002c15970c46a816a02b1f76eb2169d4d8f8ae0aa.
+New model controls remain ordinary-defaultOFF; they are explicitly ON only for
+the planned key benchmark, with halomatch=on in both key cohorts. The key flag
+itself remains OFF pending its own measurement. Existing8135 is historical and
+unchanged; final count+limb measurement uses a new frozen8137 artifact.
