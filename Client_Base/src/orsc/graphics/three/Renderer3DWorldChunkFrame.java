@@ -258,6 +258,7 @@ public final class Renderer3DWorldChunkFrame {
 		private boolean hasVertexBounds;
 		private int minVertexX;
 		private int maxVertexX;
+        private int minVertexY, maxVertexY;
 		private int minVertexZ;
 		private int maxVertexZ;
 		private final float[] vertexTextureU;
@@ -935,6 +936,7 @@ public final class Renderer3DWorldChunkFrame {
 			this.vertexOffsetZ = Math.addExact(
 				source.vertexOffsetZ, additionalOffsetZ);
 			this.hasVertexBounds = source.hasVertexBounds;
+            this.minVertexY=source.minVertexY;this.maxVertexY=source.maxVertexY;
 			this.minVertexX = source.hasVertexBounds
 				? Math.addExact(source.minVertexX, additionalOffsetX)
 				: 0;
@@ -1165,16 +1167,19 @@ public final class Renderer3DWorldChunkFrame {
 				hasVertexBounds = false;
 				minVertexX = 0;
 				maxVertexX = 0;
+                minVertexY=maxVertexY=0;
 				minVertexZ = 0;
 				maxVertexZ = 0;
 				return;
 			}
 			int minimumVertexX = Integer.MAX_VALUE;
 			int maximumVertexX = Integer.MIN_VALUE;
+            int minimumVertexY=Integer.MAX_VALUE,maximumVertexY=Integer.MIN_VALUE;
 			int minimumVertexZ = Integer.MAX_VALUE;
 			int maximumVertexZ = Integer.MIN_VALUE;
 			for (int coord = 0; coord + 2 < vertexCoords.length; coord += 3) {
 				int x = Math.addExact(vertexCoords[coord], vertexOffsetX);
+                int y=vertexCoords[coord+1];minimumVertexY=Math.min(minimumVertexY,y);maximumVertexY=Math.max(maximumVertexY,y);
 				int z = Math.addExact(vertexCoords[coord + 2], vertexOffsetZ);
 				minimumVertexX = Math.min(minimumVertexX, x);
 				maximumVertexX = Math.max(maximumVertexX, x);
@@ -1483,6 +1488,8 @@ public final class Renderer3DWorldChunkFrame {
 			return maxVertexX;
 		}
 
+        public int getMinVertexY(){return minVertexY;}
+        public int getMaxVertexY(){return maxVertexY;}
 		public int getMinVertexZ() {
 			return minVertexZ;
 		}
