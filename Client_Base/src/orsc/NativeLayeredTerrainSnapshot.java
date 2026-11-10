@@ -56,6 +56,7 @@ public final class NativeLayeredTerrainSnapshot {
 	private final int currentChunkY;
 	private final int chunkRadius;
 	private final NativeLayeredTerrainChunk[] chunks;
+	private final boolean regularHeightLookup;
 
 	public NativeLayeredTerrainSnapshot(
 		String packageId,
@@ -118,6 +119,7 @@ public final class NativeLayeredTerrainSnapshot {
 			presentationChunkSize);
 		this.chunkRadius = 0;
 		this.chunks = new NativeLayeredTerrainChunk[0];
+		this.regularHeightLookup = false;
 	}
 
 	public NativeLayeredTerrainSnapshot(
@@ -215,6 +217,7 @@ public final class NativeLayeredTerrainSnapshot {
 		}
 		this.chunks = new NativeLayeredTerrainChunk[chunks.length];
 		int index = 0;
+		boolean regularSizes = true;
 		for (int deltaX = -chunkRadius; deltaX <= chunkRadius; deltaX++) {
 			for (int deltaY = -chunkRadius; deltaY <= chunkRadius; deltaY++) {
 				NativeLayeredTerrainChunk chunk =
@@ -227,9 +230,11 @@ public final class NativeLayeredTerrainSnapshot {
 						"Native terrain chunks are not in x-major/y-minor "
 							+ "radius order at index " + index);
 				}
+				regularSizes &= chunk.size() == presentationChunkSize;
 				this.chunks[index++] = chunk;
 			}
 		}
+		this.regularHeightLookup = regularSizes;
 		this.sectorX = 0;
 		this.sectorY = 0;
 		this.encoding = "";
@@ -301,6 +306,32 @@ public final class NativeLayeredTerrainSnapshot {
 		}
 		return requireAvailableChunk(worldX, worldY)
 			.groundElevation(worldX, worldY);
+	}
+
+	/** Height-only optional browser path: no allocation or decoded Tile object.
+	 * Returns Integer.MIN_VALUE outside available source; valid heights are unsigned. */
+	public int getGroundElevationOrUnavailable(int worldX, int worldY) {
+		if (protocolVersion == UNIFORM_PAGE_PROTOCOL_VERSION) {
+			return covers(worldSpace, level, worldX, worldY) ? elevation : Integer.MIN_VALUE;
+		}
+		NativeLayeredTerrainChunk chunk;
+		if (regularHeightLookup) {
+			// Constructor validated array length/order/coordinates. Matching chunk
+			// sizes make this a non-overlapping grid, including negative tiles.
+			long dx = (long)Math.floorDiv(worldX, presentationChunkSize) - currentChunkX;
+			long dy = (long)Math.floorDiv(worldY, presentationChunkSize) - currentChunkY;
+			if (dx < -chunkRadius || dx > chunkRadius || dy < -chunkRadius || dy > chunkRadius)
+				return Integer.MIN_VALUE;
+			int width = chunkRadius * 2 + 1;
+			chunk = chunks[(int)(dx + chunkRadius) * width + (int)(dy + chunkRadius)];
+			if (!chunk.isAvailable()) return Integer.MIN_VALUE;
+		} else {
+			// Public constructors historically accept mixed chunk sizes. Retain
+			// their literal first-covering-chunk scan and its exception semantics.
+			chunk = findAvailableChunk(worldX, worldY);
+			if (chunk == null) return Integer.MIN_VALUE;
+		}
+		return chunk.groundElevation(worldX, worldY);
 	}
 
 	public int getGroundOverlay(int worldX, int worldY) {

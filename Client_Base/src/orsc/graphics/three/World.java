@@ -40,6 +40,10 @@ import java.util.zip.ZipFile;
 public final class World {
 	private static final boolean PRESENTATION_HALO_MATCH_REUSE = !"false".equalsIgnoreCase(
 		System.getProperty("spoiledmilk.presentationHaloMatchReuse", "true"));
+	private static final boolean BROWSER_HALO_HEIGHT_LOOKUP = Boolean.getBoolean("spoiledmilk.browserHaloHeightLookup");
+	public static boolean isBrowserHaloHeightLookupEnabled() {
+		return BROWSER_HALO_HEIGHT_LOOKUP && Renderer3DSettings.isBrowserPresentationAvailable();
+	}
 	private static final int RENDERER_3D_WALL_SHADOW_MAX_FOOTPRINT = 512;
 
 	public static final int SECTION_SIZE = 48;
@@ -1916,6 +1920,15 @@ public final class World {
 			worldTileX, syntheticDeepFixtureOffsetX);
 		int logicalTileZ = Math.subtractExact(
 			worldTileZ, syntheticDeepFixtureOffsetZ);
+		if (isBrowserHaloHeightLookupEnabled()) {
+			if (presentationHaloMatches(active, visual)) {
+				int height = visual.getGroundElevationOrUnavailable(logicalTileX, logicalTileZ);
+				if (height != PRESENTATION_ELEVATION_UNAVAILABLE) return height * 3;
+			}
+			int height = active == null ? PRESENTATION_ELEVATION_UNAVAILABLE
+				: active.getGroundElevationOrUnavailable(logicalTileX, logicalTileZ);
+			return height == PRESENTATION_ELEVATION_UNAVAILABLE ? height : height * 3;
+		}
 		NativeLayeredTerrainSnapshot source = null;
 		if (presentationHaloMatches(active, visual)
 			&& visual.covers(

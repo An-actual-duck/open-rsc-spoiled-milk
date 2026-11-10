@@ -216,6 +216,9 @@ public final class NativeLayeredTerrainChunk {
 		return tile;
 	}
 
+	/** Immutable layout metadata; does not expose the owned tile bytes. */
+	int size() { return size; }
+
 	int groundElevation(int worldX, int worldY) {
 		int offset = tileOffset(worldX, worldY);
 		return tileWireBytes == WIDE_TILE_WIRE_BYTES
