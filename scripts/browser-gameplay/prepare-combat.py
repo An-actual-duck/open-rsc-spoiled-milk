@@ -35,7 +35,7 @@ def main():
     audit=asset_audit(jar,ROOT/'dev/myworld/assets/runtime')
     if audit['missing']or audit['different']:p.error('Client animation PNG packaging differs; use a reviewed matching artifact')
     subprocess.run([sys.executable,str(ROOT/'scripts/renderer-benchmark.py'),'prepare','--name',args.name,'--client-jar',str(jar),'--client-source',args.client_source_commit,
-        '--server-artifacts',str(artifacts),'--server-core',str(artifacts/'core.jar'),'--server-overlay',str(artifacts/'core-gameplay-overlay.jar'),'--server-source',args.server_source],check=True,stdout=subprocess.DEVNULL)
+        '--server-artifacts',str(artifacts),'--server-core',str(artifacts/'core.jar'),'--server-overlay',str(artifacts/'core-gameplay-overlay.jar'),'--server-source',args.server_source,'--sustain-summons-for-benchmark'],check=True,stdout=subprocess.DEVNULL)
     subprocess.run([sys.executable,str(ROOT/'scripts/browser-gameplay/prepare.py'),'--name',args.name,'--http-port',str(args.http_port),'--dependency-jar',str(jar),'--client-source-commit',args.client_source_commit],check=True,stdout=subprocess.DEVNULL)
     # The server consumes this ONLY when the manager explicitly starts it. It
     # remains combat-real until a deliberate request.json replaces the phase.
@@ -45,7 +45,7 @@ def main():
     (browser_run/'web/Cache/port.txt').write_text('43639\n')
     fixture=dict(schema=1,id=FIXTURE,account='renderdemo',spawn=[502,453,0],tcp=43639,websocket=43539,
         serverRun=str(server_run),request=request,phasePolicy='Explicit request.json only; no timed auto-switch',
-        spells=['ICE_CRYSTAL','THUNDER_STRIKE','BATTERING_RAM'],otherChannels=['ranged','throwing','melee'],summonsRequested=8,
+        spells=['ICE_CRYSTAL','THUNDER_STRIKE','BATTERING_RAM'],otherChannels=['ranged','throwing','melee'],summonsRequested=8,sustainSummonsForBenchmark=True,summonSurvivalHits=30000,
         camera=dict(zoom=75,rotation=128,sourcePitch=912,expectedSceneRotation=[112,512,0],pin='once after ready per login',drift=[0,0],driftIncrement=[0,0]),
         scope='Existing RendererBenchmarkServer production combat; no client-side fake effects or gameplay edits')
     (browser_run/'combat-fixture.json').write_text(json.dumps(fixture,indent=2)+'\n')

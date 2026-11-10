@@ -139,6 +139,7 @@ def prepare(args):
     marker = dict(schema=1, sourceCommit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(), clientSourceCommit=resolve_source(args.client_source), clientSourceBranch=args.client_branch, clientSha256=sha(client / "client.jar"), seedSha256=sha(seed), seedAccounts=0, mapManifest=selection["manifestSha256"], artifacts=artifacts, private=True, hideRoofsPreference=not args.show_roofs, tcp=PORTS[0], websocket=PORTS[1], source=str(ROOT))
     marker["serverSourceCommit"] = resolve_source(args.server_source) if args.server_source else marker["sourceCommit"]
     marker["serverArtifactRoot"] = str(artifact_root)
+    marker["sustainSummonsForBenchmark"] = args.sustain_summons_for_benchmark
     marker["toolSources"] = {p.name:sha(p) for p in sources.iterdir()}
     marker["compiledClasses"] = {p.relative_to(classes).as_posix():sha(p) for p in classes.rglob("*.class")}
     (run / MARKER).write_text(json.dumps(marker, indent=2) + "\n")
@@ -407,7 +408,7 @@ def report(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__); sub = parser.add_subparsers(dest="action", required=True)
-    p = sub.add_parser("prepare"); p.add_argument("--name", required=True); p.add_argument("--client-jar", type=Path, required=True); p.add_argument("--client-source", required=True); p.add_argument("--client-branch", default="unspecified-artifact-branch"); p.add_argument("--server-core", type=Path); p.add_argument("--server-overlay", type=Path); p.add_argument("--server-source"); p.add_argument("--server-artifacts",type=Path,help="Explicit congruent core/plugins/overlay/lib snapshot; requires source receipt"); p.add_argument("--show-roofs",action="store_true")
+    p = sub.add_parser("prepare"); p.add_argument("--name", required=True); p.add_argument("--client-jar", type=Path, required=True); p.add_argument("--client-source", required=True); p.add_argument("--client-branch", default="unspecified-artifact-branch"); p.add_argument("--server-core", type=Path); p.add_argument("--server-overlay", type=Path); p.add_argument("--server-source"); p.add_argument("--server-artifacts",type=Path,help="Explicit congruent core/plugins/overlay/lib snapshot; requires source receipt"); p.add_argument("--show-roofs",action="store_true"); p.add_argument("--sustain-summons-for-benchmark",action="store_true",help="Private combat-real fixture only: one-time30000HP on its8controlled bears")
     for name in ("start", "stop", "capture", "preview"):
         p = sub.add_parser(name); p.add_argument("run", type=Path)
         if name in ("capture", "preview"):

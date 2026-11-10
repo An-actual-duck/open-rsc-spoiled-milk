@@ -113,3 +113,36 @@ immutable artifact hashes, and2265 runtime animation PNGs with0missing/0differen
 No processes.json, server.pid or status.json existed after preparation. The full
 commands/URL/provenance are in combat-preparation.json and stage.json. Later
 documentation-only handoff commits do not mutate that frozen stage.
+
+Stable-summon workload follow-up
+-------------------------------
+Manager Firefox visual smoke of baseline1 confirmed custom ice, projectiles,
+hitsplats and eight bear models. Client receipts reported106 loaded combat
+effect kinds/1980frames,36projectile kinds/375frames,23impact kinds/188frames;
+all six server channels showed positive resource use and damage. This is
+manager-reported visual/functionality evidence, not worker GPU or FPS evidence.
+However only3of8bears remained at phaseTick204, invalidating a stable long
+combat performance cohort. Baseline1 remains preserved unchanged.
+
+The optional renderer marker sustainSummonsForBenchmark defaults false and
+only affects explicitly opted-in combat-real fixture runs. Browser combat prep
+now opts in. Immediately after each of the eight ordinary summonTestBear calls,
+the private helper verifies the controlled owner/list index, summon owner and
+bear kind using cached actual private key metadata from the frozen Summoning
+class. It sets current/max summon attributes and skill HP to the existing
+SURVIVAL_HITS30000 exactly once per newly spawned bear, matching the existing
+player/target survival policy. Duplicate identity assignments fail rather than
+refilling. Phase recreation clears only that fixture identity set for new bears.
+
+No invulnerability is added: ordinary attacks, damage absorption, depletion,
+real combat and summon runtime remain active. No production Summoning source,
+per-tick health refill, resurrection or fake VFX is added. The production
+invulnerability flag alone would not prevent absorption setting exhausted,
+so it is deliberately not used. Status reports the opt-in, sustainedSummons
+and minCurrentSummonHits. A valid five-minute cohort still requires all eight
+summons present throughout warmup and measurement; depletion/loss fails the
+cohort rather than being hidden.
+
+The focused actual frozen Entity/Skills/key fixture passed70checks on JDK8
+(default false/noncombat gates, unrelated owner/kind/index refusal, all eight
+HP pairs, unchanged absorption/invulnerability, duplicate-refill rejection).
