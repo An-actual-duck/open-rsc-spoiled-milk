@@ -40,3 +40,23 @@ incomplete-revision setters, materialization/model availability, terrain edits,
 presentation records, definitions, doors, negative planes, region/anchor changes,
 reset, native fallback and descriptor budget. The independent uncached builder
 remains available as the differential oracle. No browser/GPU result yet.
+
+Combined validation and hardware evidence
+The candidate74e517130938f1666db4722122d45abedcc6c4af includes published
+16265754f (direct array packing and sampled Scene metrics). Full renderer
+guardrails and canonical layout checks passed. Independent read-only review
+of73e31de found no correctness blocker; forced cross-role key collision and
+explicit debug toggles remain source-reviewed fallback coverage limits.
+
+Frozen private stage: output/tests/browser-gameplay-spike/browser-resident-input-reuse
+loopback8126, JAR SHA256562f39ded7119086ad21d8bdf5cdeba06661ab34cbc29e68304b7cceae4acc27.
+Manager benchmark resident-input-reuse-1 recorded2018 fresh Java world frames
+over40.2278s:50.1643FPS, mean19.9303ms, p95 22.6ms, GPU mean2.5627ms.
+960x540 internal workload, AMD RX6700XT, fixed private133/660/L0 and benchmark
+lighting/camera. All101 required world chunks uploaded, readiness ready.
+No graphics quality reductions. Screenshot inspected coherent after measurement.
+Average actor composites32.7299/frame; prior array candidate44.949FPS had
+36.8633/frame, so roaming NPC population differs and raw throughput comparisons
+are not a perfectly matched causal estimate. This does not achieve60FPS or
+prove all-device/busy-scene performance. Public server remains untouched.
+Detailed31-field instrumented follow-up is separate from clean throughput.
