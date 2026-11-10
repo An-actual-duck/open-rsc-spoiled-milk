@@ -1189,6 +1189,7 @@ public final class Renderer3DWorldChunkFrame {
 			hasVertexBounds = true;
 			minVertexX = minimumVertexX;
 			maxVertexX = maximumVertexX;
+            minVertexY=minimumVertexY;maxVertexY=maximumVertexY;
 			minVertexZ = minimumVertexZ;
 			maxVertexZ = maximumVertexZ;
 		}

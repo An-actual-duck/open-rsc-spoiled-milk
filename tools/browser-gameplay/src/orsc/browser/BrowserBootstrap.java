@@ -12,6 +12,8 @@ public final class BrowserBootstrap {
     public static native void reportTelemetry(String names,double[] values);
     public static native void reportSpriteKeyPolicy(boolean requested,boolean enabled);
     public static native void reportPreparation(boolean enabled,boolean active,boolean animated);
+    public static native void reportPrivateAccount(String username);
+    public static native void reportFogPreparation(boolean requested,boolean enabled);
     public static native void reportModelPickBounds(boolean requested,boolean enabled);
     private static native int wsOpen();
     private static native byte[] wsRead(int socket, int maximum);
@@ -152,6 +154,8 @@ public final class BrowserBootstrap {
                             if(Boolean.getBoolean("spoiledmilk.browserProfile"))reportTelemetry(orsc.BrowserTelemetryData.names(),orsc.BrowserTelemetryData.snapshot());
                             reportLoop(String.valueOf(loopField.get(client)),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isEarlyResidentFaceCullEnabled(),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isBrowserFullResidentOwnershipEnabled());
                             if(webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
+                                reportPrivateAccount(((orsc.mudclient)client).getUsername());
+                                reportFogPreparation(Boolean.getBoolean("spoiledmilk.browserFogBoundedPreparation"),orsc.BrowserWebGLBridge.isFogBoundedPreparationEnabled());
                                 if(!modelPickReported && ((orsc.mudclient)client).getScene()!=null) {
                                     reportModelPickBounds(Boolean.getBoolean("spoiledmilk.browserModelPickBounds"),
                                         ((orsc.mudclient)client).getScene().isBrowserModelPickBoundsEnabled());

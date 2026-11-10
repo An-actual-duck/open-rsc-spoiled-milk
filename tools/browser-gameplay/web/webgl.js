@@ -109,6 +109,8 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     },
     async Java_orsc_BrowserWebGLBridge_initializeLighting(lib,vertex,fragment){alive();if(!lighting)throw new Error('Browser lighting initialized before world program');lighting.initialize(vertex,fragment);},
     async Java_orsc_BrowserWebGLBridge_uploadLightingMask(lib,unit,width,height,rgba,bounds){alive();lighting.uploadMask(unit,width,height,rgba,bounds);},
+    async Java_orsc_BrowserWebGLBridge_shadowSourceProvenance(lib,version,revision,complete){alive();lighting.setSourceProvenance(version,revision,complete);},
+    async Java_orsc_BrowserWebGLBridge_loadWork(lib,fields,timings){alive();if(fields.length!==16||fields[0]!==1||timings.length!==6)throw new Error('Browser load telemetry schema invalid');const f=Array.from(fields),t=Array.from(timings);stats.fogPreparation={requested:f[1]===1,enabled:f[2]===1,sourceChunks:f[3],requiredChunks:f[4],deferredChunks:f[5],sourceVertices:f[6],demandVertices:f[7],readyChunks:f[8],pendingRepacks:f[9],sourceEpoch:f[10],geometryEpoch:f[11],exit:f[12],newUploads:f[13],newVertices:f[14],replacedVertices:f[15]};const rows=stats.loadWorkSamples||(stats.loadWorkSamples=[]);const sequence=(stats.loadWorkSequence||0)+1;stats.loadWorkSequence=sequence;rows.push({sequence,milliseconds:performance.now(),fields:f,timings:t});if(rows.length>128)rows.shift();},
     async Java_orsc_BrowserWebGLBridge_lightingFrame(lib,values){alive();lightingValues=new Float32Array(values);},
     async Java_orsc_BrowserWebGLBridge_initializeSky(){alive();sky.initialize();},
     async Java_orsc_BrowserWebGLBridge_uploadSkyGeometry(lib,geometry,ranges,paletteCount){alive();sky.uploadGeometry(geometry,ranges,paletteCount);},

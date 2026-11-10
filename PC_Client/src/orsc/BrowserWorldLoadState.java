@@ -7,9 +7,12 @@ import orsc.graphics.three.Renderer3DWorldChunkFrame;
 /** Browser-only source readiness. No GPU/frame ownership or gameplay authority is fabricated. */
 final class BrowserWorldLoadState {
     static final int LOGIN=0, LOADING=1, WORLD=2, UI=3;
-    private int epoch;
+    private int epoch,sourceEpoch;
     private int[] region;
     private boolean coherentWorld, transitionPending;
+    int sourceEpoch(){return sourceEpoch;}int geometryEpoch(){return epoch;}
+    boolean isCoherent(){return coherentWorld;}boolean isTransitionPending(){return transitionPending;}
+    void beginDemandTransition(){if(epoch==Integer.MAX_VALUE)throw new IllegalStateException("Browser load epoch exhausted");epoch++;transitionPending=true;}
     void beginTransition() { transitionPending=true; }
     boolean shouldHold(boolean authority,int required,int ready,int repacks) {
         return coherentWorld && (!authority || required!=ready || transitionPending&&repacks!=0);
@@ -28,7 +31,7 @@ final class BrowserWorldLoadState {
             }
             if(anchor!=null){
                 int[] next={anchor.getCenterSectionX(),anchor.getCenterSectionY(),anchor.getLogicalWorldOffsetX(),anchor.getLogicalWorldOffsetZ(),frame.getSignedWorldLevel(),frame.getActivePlane()};
-                if(!Arrays.equals(region,next)){if(epoch==Integer.MAX_VALUE)throw new IllegalStateException("Browser load epoch exhausted");epoch++;region=next;transitionPending=true;}
+                if(!Arrays.equals(region,next)){if(epoch==Integer.MAX_VALUE)throw new IllegalStateException("Browser load epoch exhausted");epoch++;sourceEpoch++;region=next;transitionPending=true;}
             }
         }
         int mode=!game?LOGIN:modal?UI:authority&&required>0?WORLD:LOADING;

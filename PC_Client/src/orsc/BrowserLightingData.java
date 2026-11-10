@@ -249,7 +249,7 @@ public final class BrowserLightingData {
             this.farAge=farAge;
             this.blendAge=blendAge;
             ArrayList<float[]> matrices=new ArrayList<float[]>();
-            if(values[1]==1)for(DirectionalShadowProjection p:new DirectionalShadowProjection[]{near,far,previousFar,owner.near,owner.far,owner.previousFar})if(p!=null){float[] rows=new float[16];for(int r=0;r<4;r++)for(int c=0;c<4;c++)rows[r*4+c]=p.matrix[c*4+r];matrices.add(rows);}
+            if(values[1]==1)for(DirectionalShadowProjection p:new DirectionalShadowProjection[]{near,far,previousFar,owner.near,owner.far,owner.previousFar})if(p!=null)matrices.add(p.matrix);
             demandMatrices=matrices.toArray(new float[matrices.size()][]);
         }
         private void validate(BrowserLightingData expected,Renderer3DFrame source,int epoch) {

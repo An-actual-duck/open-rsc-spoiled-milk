@@ -2,7 +2,7 @@
  * Projection policy and shader text arrive from BrowserLightingData; no scene or sun math is duplicated. */
 export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShader,ownedFrame}) {
   const MAX_SHADOW_BYTES=160*1024*1024,ownedVAOs=new Map(),locations=new Map(),depthLocations=new Map();
-  let depthProgram=null,depthVertex=null,depthFragment=null,whiteTexture=null,emptyDepth=null,near=null,far=null,previous=null,values=null,disposed=false,drawSignature='',previousActive=false;
+  let depthProgram=null,depthVertex=null,depthFragment=null,whiteTexture=null,emptyDepth=null,near=null,far=null,previous=null,values=null,disposed=false,drawSignature='',previousActive=false,sourceProvenance=null;
   stats.shadowResourceBytes=0;stats.shadowResourceBudgetBytes=MAX_SHADOW_BYTES;stats.shadowNearDraws=stats.shadowFarDraws=0;
   function loc(name){if(!locations.has(name))locations.set(name,gl.getUniformLocation(program,name));return locations.get(name);}
   // The depth program links once per module. Cache null optimized-out locations too.
@@ -68,6 +68,10 @@ export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShad
     return count;
   }
   function suspend(){destroy(near);destroy(far);destroy(previous);near=far=previous=null;previousActive=false;drawSignature='';stats.shadowNearDraws=stats.shadowFarDraws=0;stats.geometryShadowsActive=false;}
+  function setSourceProvenance(version,revision,complete){
+    if(disposed||version!==1||!Number.isInteger(revision)||revision<1||revision>2147483647||typeof complete!=='boolean')throw new Error('Browser shadow source provenance invalid');
+    sourceProvenance={revision,complete};
+  }
   function prepare(input,draws){
     if(disposed)throw new Error('Browser shadow module disposed');values=new Float32Array(input);if(values.length<81||values[0]!==1||values.length!==81+values[80]||draws.length%8)throw new Error('Browser shadow frame schema invalid');
     for(const [id,entry]of ownedVAOs)if(!chunks.has(id)){gl.deleteVertexArray(entry.vao);ownedVAOs.delete(id);}
@@ -80,6 +84,10 @@ export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShad
       near=allocate(near,values[3]);const excluded=new Set(Array.from(values.subarray(81)));stats.shadowNearDraws=drawMap(near,values.subarray(32,48),draws,false,excluded);stats.shadowFarDraws=0;
       let signature='';for(let at=0;at<draws.length;at+=8){if(draws[at+7]===2)continue;for(const n of [0,1,2,3,4,6,7])signature+=draws[at+n]+',';}
       for(let at=0;at<draws.length;at+=8){if(draws[at+7]===2)continue;const batches=chunks.get(draws[at]).batches;for(let n=0;n<batches.length;n+=5)if(batches[n+4]&&!excluded.has(batches[n])){const texture=textures.get(batches[n]);signature+='|'+batches[n]+':'+(texture?texture.revision||0:0);}}
+      // Full-source provenance is Java-authoritative, independent of residency
+      // IDs or omitted zero-contribution chunks. Partial first-load maps must
+      // still rebuild until a complete demanded GPU set has actually drawn.
+      if(sourceProvenance)signature='source1:'+sourceProvenance.revision+(sourceProvenance.complete?':complete':':partial:'+signature);
       const changed=signature!==drawSignature;
       if(values[4]>0){
         const rebuild=values[6]===1||changed||!far;let target=null;
@@ -117,5 +125,5 @@ export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShad
     gl.activeTexture(gl.TEXTURE0);
   }
   function dispose(){if(disposed)return;suspend();for(const entry of ownedVAOs.values())gl.deleteVertexArray(entry.vao);ownedVAOs.clear();if(depthProgram)gl.deleteProgram(depthProgram);if(depthVertex)gl.deleteShader(depthVertex);if(depthFragment)gl.deleteShader(depthFragment);if(whiteTexture)gl.deleteTexture(whiteTexture);if(emptyDepth)gl.deleteTexture(emptyDepth);depthLocations.clear();stats.shadowFallbackBytes=0;disposed=true;}
-  return {initialize,prepare,bindReceiver,dispose};
+  return {initialize,prepare,bindReceiver,dispose,setSourceProvenance};
 }
