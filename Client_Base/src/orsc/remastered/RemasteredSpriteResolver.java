@@ -37,6 +37,14 @@ public final class RemasteredSpriteResolver {
 	}
 
 	public synchronized Sprite resolve(AnimationDef animation, int frame, Sprite canonical) {
+		if (canonical == null) {
+			return null;
+		}
+		// The owner-disabled path must not inspect definitions or allocate frame keys.
+		if (!RemasteredSpriteSettings.isEnabled()) {
+			disabledFallbackCount++;
+			return canonical;
+		}
 		return resolveKey(animationKeyCache.key(animation, frame), canonical);
 	}
 
