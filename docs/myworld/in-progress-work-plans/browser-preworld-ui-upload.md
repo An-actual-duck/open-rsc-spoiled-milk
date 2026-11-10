@@ -1,6 +1,6 @@
-# Pre-world RGB upload experiment
+# Pre-world RGB upload experiment — parked, not adopted
 
-Default OFF; Java, shaders and visual quality unchanged. Standalone `overlay.draw` keeps its immediate post-world RGB upload/check. The optional browser path validates native frame arrays and integer dimensions, uploads RGB synchronously before the existing streaming gate, and only then starts timer queries or draws shadows, sky, retained BASE, world, sprites and UI. The owned frame baseline is established after this upload. Marker-only presentation retains its old path.
+Decision: preserve this experiment on its topic branch and do not merge/adopt it. Main keeps the original post-world RGB upload. Java, shaders and visual quality are unchanged. Standalone `overlay.draw` keeps its immediate post-world RGB upload/check. The optional browser path validates native frame arrays and integer dimensions, uploads RGB synchronously before the existing streaming gate, and only then starts timer queries or draws shadows, sky, retained BASE, world, sprites and UI. The owned frame baseline is established after this upload. Marker-only presentation retains its old path.
 
 `overlay.prepareRgb` requires the exact still-pending coverage declaration, validates retained capture/replay tokens without GL calls, uploads/copies the caller bytes synchronously, and stores only the internal declaration identity. A staged image cannot be overwritten, used with another declaration/dimensions or drawn twice. `begin` consumes that declaration; `drawPrepared` consumes its stage. Pure retained checks share the existing token/sequence/readiness logic; literal standalone draw/replay checks are preserved. Invalid/stale/duplicate-count/resize-incompatible retained input is rejected before touching RGB storage.
 
@@ -33,3 +33,16 @@ Manager evidence `output/reviews/browser-display-performance/benchmarks/ui-preup
 **GPU timer scope differs and must not be used as evidence of reduced GPU work.** The query starts after prefix RGB preupload in ON mode, while OFF mode uploads RGB later inside the timed query. Consequently the approximate2.45→2.27ms GPU decrease excludes work from the ON interval rather than proving that work was removed. Shader, triangle and texture pixel work is unchanged. JS submission starts before the prefix in both modes, but those timings alone also do not establish end-to-end gain. Successful fresh world FPS under matched plateau conditions is the acceptance measure.
 
 A longer both-mode warmup is pending: OFF90s, ON90s, OFF20s, then four alternating30s segments. No adoption or60 FPS claim is authorized by the first paired result. This documentation update changes no source, artifact or active mode.
+
+## Steady comparison: no benefit; park without integration
+
+Final manager evidence: `output/reviews/browser-display-performance/benchmarks/ui-preupload-steady-1/result.json`, its four segment receipts/population samples and frozen8136 provenance. One warm world used OFF90s, ON90s, OFF20s before OFF/ON/OFF/ON30s measured segments. No source, workload, visual-quality or companion-policy change occurred between modes.
+
+| Policy | Fresh frames | Elapsed | Weighted world FPS | Actor groups/frame |
+| --- | ---: | ---: | ---: | ---: |
+| Original post-world RGB (OFF) | 3,576 | 60.3275s | 59.2764493805 | 33.0531319911 |
+| Prefix RGB (ON) | 3,567 | 60.2845s | 59.1694382470 | 33.0611157836 |
+
+Individual OFF/ON/OFF/ON segments:59.04220/59.01661/59.51098/59.32246 FPS. Actor populations are effectively matched. There is no demonstrated end-to-end benefit; ON is slightly slower in this run, within ordinary variation. The earlier short pair's final ON rise was warming/variation, not adequate evidence for this optimization. GPU timer scope remains non-comparable as documented above.
+
+**Decision: DO NOT ADOPT.** Preserve the exact topic branch, CPU fixtures, 12,976,128-byte/zero-difference actual GPU correctness proof, real-error blocking proof and both successful/failed login evidence. Do not merge the additional prefix/token/control complexity for an unproven improvement. Published main `cd219e9263ce63fe75962177922735948a59f405` keeps original post-world RGB upload. This docs-only disposition changes no source, frozen artifact, test result or public system. No60 FPS or broader-device performance claim follows from this experiment.
