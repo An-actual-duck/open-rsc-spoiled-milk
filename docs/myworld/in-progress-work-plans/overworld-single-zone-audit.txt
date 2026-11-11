@@ -8,6 +8,13 @@ host, not an assumed deployment target or RAM/VRAM guarantee. Device system RAM
 and GPU memory must be considered separately. The earlier modern-streaming plan remains saved and
 planned/deferred in browser-modern-streaming-plan.txt while this audit proceeds.
 
+Existing global L0 already shares a world-space/level coordinate namespace across
+sectors. NativeLayeredTerrainSnapshot.scopeIdentity additionally includes the
+current center/radius/chunk identities, so local activation still changes while
+that namespace stays global. The requested one-zone experience concerns source
+preparation/residency and transition behavior; simply renaming a zone does not
+remove the existing work or authority barriers.
+
 Three proposals that must not be conflated
 -----------------------------------------
 A. One continuous logical L0 zone, internally streamed. Gameplay and visual source
@@ -124,7 +131,8 @@ Audit outputs required before choosing an architecture
    required source changes and confidence. This audit makes no FPS, startup-time,
    RAM-fit or full-GPU-residency promise. Measured data decides the next task.
 
-Evidence links will be appended after the independent inventory/geometry audits.
+Independent inventory/geometry evidence and the final audit recommendation are
+recorded below; their completed source reports are cross-linked by filename.
 No earlier release history, accepted visual work, owner preview or current public
 map/server is changed by this document. Public activation requires its own gate.
 
@@ -187,5 +195,129 @@ and stitch alternatives. Do not turn the bounded census process's 512MiB heap
 limit into a target-client memory limit or RAM-fit claim. Full B/C estimates
 remain the priority before proposing a hybrid.
 
-Scenery geometry and final inventory evidence links are pending their workers'
-completed audit reports. No runtime recommendation is adopted at this draft stage.
+The complete scenery inventory and final capacity assessment follow. This
+completed audit authorizes no runtime implementation or adoption.
+
+Completed full-scope inventory and geometry reconciliation
+---------------------------------------------------------
+Read alongside the independently delivered subject reports:
+ overworld-zone-inventory.txt (READY f4882b85f75841e909b597eb8fdd7100a4570632)
+ overworld-zone-geometry-audit.txt (READY a6b3acddf7bc765eed7186e4a41bd2b87ba71c48)
+No worker histories were cross-merged to produce this architecture report.
+
+Inventory/provenance evidence, ai2/output/diagnostics/overworld-zone-inventory/:
+ inventory.json SHA256 fd7729a4733bd45d8d5abf0b93f32a14b24f0b065fc00729fc0404d0268459d0
+ provenance.json SHA256 5758e8427952b0ca4855c57db7482576c4a4cf5c89b185318b9ed91c86e2d488
+ geometry-review.json SHA256 b5e0147659c01de8f1daed62556938a94ed6edf96bce09260cf9f795cf184594
+All 1787 selected terrain payloads (including 5 toolkit-terrain patches), 9 placement
+payloads and 1797 paired files were verified. Package file-content total is
+46,101,718B (43.966MiB); actual local v0.3.16 ZIP is 1,714,098B, not 43.966MiB.
+The compressed archive and expanded file inventory are different representations.
+ZIP SHA256 9ff36b8193233c5313ae62678b8247728fc73ff67a46f5d592ad4e24bec2ea88;
+local release source 73752f45d089ebc71ba24d832f85a06590de661c. This verifies local
+source/release agreement, not Oracle/public-download state or absence of a later
+unimported editor save. Source L0 raw terrain alone is 10,280,448 bytes.
+
+L0 includes 22301 scenery+680 boundary placements, 2479 NPC start placements and
+561 ground items. Static model census resolves all 866 relevant scenery/boundary
+definitions using the actual model archive/EntityHandler and client normalization
+hooks, with zero unresolved definitions/placements. NPC/player/summon/ground-item
+sprite and live/plugin additions remain separate from the mesh census.
+
+Combined production geometry evidence:
+ ai1/output/tests/overworld-zone-geometry-audit/combined-report.json
+ SHA256 9e6d0e1f3e934e8f6cbcb72d23110a3e5eae56e75d3346c0f9508193299944d2
+The combined report binds each raw census/receipt hash and was independently
+reconciled by the inventory worker. All figures below are entire-scope totals,
+not a selected attractive region or a per-sector extrapolation.
+
+Current expanded vertex/index representation, bytes:
+                         terrain/wall/roof   scenery/boundary   subtotal
+ L0                       730,439,124        1,296,933,360       2,027,372,484
+ L1 visible dependency     10,078,080          125,551,440         135,629,520
+ L2 visible dependency      1,975,248           39,189,672          41,164,920
+ TOTAL                                                         2,204,166,924
+
+L0 is 1.88814GiB; adding current L1/L2 topology/placement dependencies is 2.05279GiB.
+The alternative current positive-stitch total is 2,233,479,312B (2.08009GiB);
+choose an alternative rather than adding both. Material-resolved batch metadata,
+textures/mips, shadows/masks, sprites/actors/VFX, framebuffers/depth, driver
+overhead, staging and any extra live world additions are NOT included. The
+absolute one-batch-per-triangle bound is also not an observed batch allocation.
+No full-world GPU allocation or draw test was performed.
+
+Primitive canonical CPU arrays are a separate lower bound: L0 908,822,148B;
+L0+upper 988,074,828B (942.30MiB). It excludes headers, enum/reference/source model
+objects, collision/picking caches, effects and retained copies. It is not actual
+whole-world process/Java/browser heap usage. Do not automatically add the full
+GPU stream again as resident Java RAM: present CachedChunk stores metadata and
+GPU accounting, while transient packing and Worker ownership have distinct costs.
+
+L0 object cost includes 1,270,746,360B static placements and 26,187,000B for 408
+animated placements' current baseline frame. The animation library/other frames
+are unmeasured. Across all three levels, 358 distinct primitive-array prototypes
+cost 52,895,304B; terrain+those prototypes gives a hypothetical 795,387,756B lower
+bound BEFORE instance data/resources. That would require a NEW instancing/shared
+geometry architecture. Different placement heights, rotations, normals/colors,
+materials, animation, effects and interaction IDs mean identical primitive hash
+is not proof of existing safe sharing. It is a later option, not substituted
+for the complete current-copy estimate above. L3/L4/L5/underground/Zanaris are
+separately inventoried and are not silently included in the L0+L1/L2 number.
+Upper stacked coordinates still need exact validation, not only topology counts.
+
+Current measurement host, not a general device guarantee
+--------------------------------------------------------
+Root captured a read-only native driver query on 2026-11-11T19:15:05Z:
+ output/reviews/overworld-zone-audit/hardware-scope.json
+ SHA256 7837960c06a929b513aa11f527884de066fded62606ac5331a7c95a92def0347
+Related files: host-opengl-info.txt and host-memory-info.txt. The current driver
+reports AMD Radeon RX 6700 XT with 12288MiB dedicated/nonunified video memory;
+system RAM total 32,741,584,896B (about 32GB). These are capacity queries, not a
+browser/WebGL allocation test or guaranteed available per-tab budgets. Other
+applications and runtime/browser overhead affect available headroom.
+
+This audit uses that current query without rewriting older Firefox receipts that
+reported a sanitized Radeon R9 label. It makes no assertion that all players have
+this hardware or that native allocation totals prove browser resource limits.
+No owner preview, browser context, map or public server was changed for this audit.
+
+Final audit recommendation — no implementation yet
+--------------------------------------------------
+Full overworld scope is a plausible next private prototype on the measured host's
+capacity: the measured current-copy mesh subtotal (~2.05GiB before extras) leaves
+apparent capacity headroom under the reported 12GiB dedicated VRAM, and primitive
+CPU lower bounds are materially below total system RAM. These are reasons to
+TEST full B/C, not memory-fit/FPS/startup guarantees. Current software policies
+would reject the workload long before that hardware limit.
+
+A: Continuous logical-zone behavior remains the experience goal. The global L0
+namespace already exists; preserve bounded dynamic interests/local authority and
+local-coordinate working sets where useful. This alone neither requires nor
+proves B/C and must not be used to silently shrink the requested whole-zone audit.
+B: Bulk immutable source residency is modest by file bytes; full prepared CPU
+geometry is much larger. Specify exactly what stays resident, model/header/cache
+peaks and the browser/CheerpJ ownership and heap limits. Deliberate package
+delivery/hash/version/dynamic-overlay invalidation must be designed; current
+browser staging does not already deliver all sector payloads.
+C: Full current-copy GPU residency is capacity-plausible on this host, with extra
+resource allowances. It needs a separate global residency catalog and bounded
+visible draw/pick/shadow working sets, not every model submitted every frame.
+The current 256 active/512 resident limits, budgets and readiness assumptions
+need deliberate redesign. A monolithic mesh or simply raising CHUNK limits does
+not solve source construction, picking, local collision or dynamic invalidation.
+
+If the owner chooses this direction after the audit, write a focused prototype
+contract before changing runtime code. It must define global cell/source keys,
+new browser source delivery, local-origin transforms, dynamic scenery/door/model
+revision overlays, immutable ownership, bounded initial uploads and memory peaks,
+visible lists, upper/roof state, stale results and context-loss rebuild. Measure
+actual browser allocation/headroom, upfront download/decode/prepare/upload wait,
+GC, walking/camera/interaction latency and completed frames. The owner may choose
+a long initial zone-entry wait to eliminate later loading; present that measured
+tradeoff plainly. Do not declare it unacceptable or promise it will be short.
+
+Earlier immutable-cell reuse/cache/prepare-ahead/background/offline/compact-format
+plans remain saved in browser-modern-streaming-plan.txt, not rejected. They may
+be used within a chosen zone design later, after the full-scope comparison and
+owner decision. This audit does not adopt any candidate, change defaults, edit
+the map, activate a server or authorize a public release.

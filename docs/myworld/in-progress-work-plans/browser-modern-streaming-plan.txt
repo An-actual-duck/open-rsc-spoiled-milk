@@ -12,11 +12,13 @@ Current evidence and completed private work
 The render Worker and region-build work are implemented private prototypes;
 they remain off by default. They are not ordinary browser adoption or public
 release gates. browser-render-worker-pipeline.txt and
-browser-render-worker-gpu-oracle.txt preserve exact GPU and private-game evidence. The Worker shares the
-existing backend/shaders and owns bounded copies; it does not move the Java VM,
+browser-render-worker-gpu-oracle.txt preserve exact GPU and private-game evidence.
+The Worker shares the existing backend/shaders and owns bounded copies; it does not move the Java VM,
 input or all scene construction off the main thread.
 
-browser-region-transition-pipeline.txt, browser-region-transition-independent-review.txt and browser-travel-loading-workload.txt preserve the completed private
+browser-region-transition-pipeline.txt,
+browser-region-transition-independent-review.txt and
+browser-travel-loading-workload.txt preserve the completed private
 scene-construction experiment. Its same-artifact walking comparison reduced mean
 warm gaps from 3660.375ms to 1475.5ms (59.6899%) on the tested host, with a remaining
 3300ms warm outlier. This is a useful measured step, not seamless-streaming

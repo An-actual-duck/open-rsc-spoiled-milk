@@ -6,9 +6,11 @@ roadmap defines priorities, milestone boundaries, and release progression.
 
 ## Browser architecture audit — November 11, 2026
 
-Audit the upper-bound scope of the entire overworld as one continuous L0 zone
-before implementing the earlier streaming roadmap. The owner's PC is a
-measurement host; system RAM and GPU memory need separate capacity estimates. Distinguish
+The read-only audit covers the entire overworld as one continuous L0 zone
+before implementing the earlier streaming roadmap. Source inventory and bounded
+production geometry censuses are complete; the estimated full residency is
+capacity-plausible on the queried host, with browser allocation/startup/performance
+still untested. System RAM and GPU memory are separate capacity estimates. Distinguish
 a logical zone with bounded internal streaming from loading all data into RAM or
 keeping all geometry GPU-resident. This is audit-only; no runtime/map/default or
 public deployment change follows. See the [single-zone audit](overworld-single-zone-audit.txt).
