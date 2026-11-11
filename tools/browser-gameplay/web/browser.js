@@ -33,7 +33,7 @@ let spriteKeyControls = {properties: [], requested: null};
 let modelPreparationControls = {properties: [], requested: null};
 let gpu,worldCover,awaitingGameFrame=false,displayLayout,stutterDiagnostics;
 window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput;
-function updateWorldCover(){const state=gpu?.stats.worldReadiness,error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null),waiting=awaitingGameFrame&&state?.phase==='login';if(!worldCover||(!waiting&&!error&&!['loading','streaming','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;worldCover.update(waiting?{phase:'loading',reason:'Waiting for area data'}:state,gpu?.canvas.style,error);}
+function updateWorldCover(){const state=gpu?.stats.worldReadiness,error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null),waiting=awaitingGameFrame&&(renderWorker.enabled?!(state?.phase==='ready'&&gpu?.stats.javaWorldFrames>0):state?.phase==='login');if(!worldCover||(!waiting&&!error&&!['loading','streaming','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;worldCover.update(waiting?{phase:'loading',reason:'Waiting for area data'}:state,gpu?.canvas.style,error);}
 function setStatus(message) {
   if (gpu?.stats.lastError) {
     const age = gpu.stats.lastFrame > 0 ? Math.max(0, Math.round(performance.now() - gpu.stats.lastFrame)) + ' ms ago' : 'none';
@@ -192,7 +192,7 @@ try {
     window.browserProof.ownedStateRequested=ownedState;
     if(window.browserProof.benchmark)window.browserProof.benchmark.streamUploadValidationRequested=streamUploadValidation;
     const gpuOptions={nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
-    if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;gpu=await factory(canvas,report,{...gpuOptions,onFatal:error=>finish('Private render worker failed: '+error),onComplete:ack=>{if(ack.frameId&&gpu.stats.worldReadiness?.phase!=='login')awaitingGameFrame=false;const blocked=worldCover?.blocksWorldInput;updateWorldCover();if(blocked!==worldCover?.blocksWorldInput)publish();}});}
+    if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;gpu=await factory(canvas,report,{...gpuOptions,onFatal:error=>finish('Private render worker failed: '+error),onComplete:ack=>{if(ack.frameId&&gpu.stats.javaWorldFrames>0&&gpu.stats.worldReadiness?.phase==='ready')awaitingGameFrame=false;const blocked=worldCover?.blocksWorldInput;updateWorldCover();if(blocked!==worldCover?.blocksWorldInput)publish();}});}
     else gpu=createBrowserWebGL(canvas,report,gpuOptions);
     window.browserProof.renderWorker={...renderWorker,actual:renderWorker.enabled===true};
     window.browserProof.nativeCallDispatch={requested:nativeCallDispatch,module:backendModule.BROWSER_NATIVE_CALL_DISPATCH||null,reported:gpu.stats.nativeCallDispatch||null};

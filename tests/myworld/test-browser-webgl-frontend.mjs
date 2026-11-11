@@ -156,6 +156,13 @@ assert.equal(canvas.style.display,'block');
 assert.deepEqual(nativeTrace,['progress','present']);
 for(const [name,value]of[['regionTransition',3],['holdWorld',4]]){const result=configured.natives['Java_orsc_BrowserWebGLBridge_'+name](null,true);assert.equal(typeof result?.then,nativeMode==='sync'?'undefined':'function');assert.equal(await result,value);}assert.deepEqual(nativeTrace,['progress','present','transition','hold']);stats.worldReadiness={phase:'ready'};
 const steadyMessages=messages.length,steadyLayouts=layoutReads;stats.declaredPhase='ready';for(let i=0;i<10;i++)await configured.natives.Java_orsc_BrowserWebGLBridge_worldProgress(null,[1,2,1,4,4,0,0,0,1,960,540,0]);assert.equal(messages.length,steadyMessages,'steady source frames copied whole proof to parent');assert.equal(layoutReads,steadyLayouts,'steady loading protocol forced extra canvas layout queries');
+if(benchmarkRenderWorker){
+ stats.worldReadiness={phase:'login'};await configured.natives.Java_orsc_browser_BrowserBootstrap_reportState(null,'GAME',60,100);assert.equal(window.browserWorldInputAllowed(),false);
+ stats.declaredPhase='login';await configured.natives.Java_orsc_BrowserWebGLBridge_worldProgress(null,[1,2,1,4,4,0,0,0,1,960,540,0]);assert.equal(window.browserWorldInputAllowed(),false,'queued declaration cannot release initial gate');
+ stats.worldReadiness={phase:'loading'};gpuOptions.onComplete({frameId:3});assert.equal(window.browserWorldInputAllowed(),false,'held/loading ACK cannot release initial gate');
+ stats.worldReadiness={phase:'ready'};stats.javaWorldFrames=0;gpuOptions.onComplete({frameId:4});assert.equal(window.browserWorldInputAllowed(),false,'LOGIN image ACK with no actual WORLD cannot release gate');
+ stats.javaWorldFrames=1;gpuOptions.onComplete({frameId:5});assert.equal(window.browserWorldInputAllowed(),true,'actual WORLD-ready completion releases initial gate');stats.declaredPhase='ready';
+}
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportLoop(null,'modern');
 assert.equal(window.browserProof.clientLoop,'modern');
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportPreparation(null,true,false,true);
