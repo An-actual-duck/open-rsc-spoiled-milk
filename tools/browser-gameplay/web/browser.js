@@ -90,7 +90,15 @@ if (pointer) window.browserProof.middleInput = pointer.stats;
 window.browserTransport = transport;
 const natives = {
   Java_orsc_BrowserWebGLBridge_rasterTextSegment:segmentedTextKernel.native,
-  Java_orsc_browser_BrowserBootstrap_reportSegmentedTextWork(lib,values){const v=Array.from(values);if(v.length!==12||v.some(n=>!Number.isSafeInteger(n)||n<0))throw new Error("Invalid bounded TEXT work receipt");window.browserProof.segmentedTextWork=Object.fromEntries(["attempts","commits","nativeCalls","texts","glyphs","rejections","literalFallbacks","poisonedFrames","shortSegments","shortTexts","capturedTexts","capturedGlyphs"].map((name,n)=>[name,v[n]]));},
+  Java_orsc_browser_BrowserBootstrap_reportSegmentedTextWork(lib,values,runs,samples,admissions){
+    if(values.length!==12)throw new Error("Invalid bounded TEXT work receipt");const v=Array.from(values);if(v.some(n=>!Number.isSafeInteger(n)||n<0))throw new Error("Invalid bounded TEXT work receipt");
+    window.browserProof.segmentedTextWork=Object.fromEntries(["attempts","commits","nativeCalls","texts","glyphs","rejections","literalFallbacks","poisonedFrames","shortSegments","shortTexts","capturedTexts","capturedGlyphs"].map((name,n)=>[name,v[n]]));
+    if(runs!==undefined){if(runs.length!==14||admissions.length!==8||typeof samples!=="string"||samples.length>35000)throw new Error("Invalid bounded TEXT run diagnostics");const r=Array.from(runs),a=Array.from(admissions);if([...r,...a].some(n=>!Number.isSafeInteger(n)||n<0))throw new Error("Invalid bounded TEXT run values");
+      window.browserProof.segmentedTextRuns={maxTexts:r[0],maxGlyphs:r[1],maxWork:r[2],textSizeCounts:r.slice(3,11),geometryRejects:r[11],ownerRejects:r[12],budgetFlushes:r[13]};
+      window.browserProof.segmentedTextFlushSamples=samples?samples.split("\n--\n").slice(0,32):[];
+      window.browserProof.segmentedTextAdmissions=Object.fromEntries(["attempts","empty","softwareOrMissingCoverage","nonFreshOwner","gpuSceneGuard","scenePolicy","unsupported","queued"].map((n,i)=>[n,a[i]]));
+    }
+  },
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,
   Java_orsc_browser_BrowserBootstrap_reportBatchedModelWork(lib,counters){
     const v=Array.from(counters);

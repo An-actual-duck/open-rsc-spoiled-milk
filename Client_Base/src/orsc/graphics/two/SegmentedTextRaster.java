@@ -22,6 +22,9 @@ public final class SegmentedTextRaster {
     public static boolean available(){return installed!=null;}
     private static int nextOwner;
     private int ownerId;private int segmentId;private Object coverageIdentity;
+    private final int[] runStats=new int[14]; // maxTEXT,maxGlyph,maxWork,TEXTsize1..7/8+,geometryRejects,ownerRejects,budgetFlushes
+    private final ArrayList<String> flushSamples=new ArrayList<String>();
+    private int sampleSequence;
     private final Owner owner;
     private final ArrayList<Text> pending=new ArrayList<Text>();
     private WorldOverlayCoverage.Frame frame;
@@ -36,6 +39,9 @@ public final class SegmentedTextRaster {
     private void identify(WorldOverlayCoverage.Frame frame){if(coverageIdentity!=frame.segmentedTextOwnerIdentity()){synchronized(SegmentedTextRaster.class){if(nextOwner==Integer.MAX_VALUE)throw new IllegalStateException("TEXT owner identity exhausted");ownerId=++nextOwner;}coverageIdentity=frame.segmentedTextOwnerIdentity();segmentId=0;}}
     private void add(int at,int n){stats[at]=n>Integer.MAX_VALUE-stats[at]?Integer.MAX_VALUE:stats[at]+n;}
     public int[] work(){return stats.clone();}
+    public int[] runDiagnostics(){return runStats.clone();}
+    public String flushSamples(){StringBuilder out=new StringBuilder();for(String s:flushSamples){if(out.length()>0)out.append("\n--\n");out.append(s);}return out.toString();}
+    private void rejectRun(int at){if(runStats[at]<Integer.MAX_VALUE)runStats[at]++;}
     public int pendingTexts(){return pending.size();}
     private static int validatedWork(byte[] f,int[] p,int n,int l,int t,int r,int b,int width,int height){
         if(l<0||t<0||r<l||b<t||r>width||b>height)return -1;int work=0;
@@ -53,16 +59,16 @@ public final class SegmentedTextRaster {
         }return work;
     }
     public boolean record(byte[] font,int[] plots,int count,int l,int t,int r,int b,Replay replay){
-        if(installed==null||!owner.eligible()){flush();return false;}
+        if(installed==null||!owner.eligible()){rejectRun(12);flush();return false;}
         WorldOverlayCoverage.Frame now=owner.frame();
         if(now==null||!now.valid||!now.transparent||now.mode!=WorldOverlayCoverage.MODE_WORLD||now.deltaTransportOwner()!=null){flush();return false;}
         if(frame!=null&&!same(now)){flush();now=owner.frame();}
         if(font==null||plots==null||replay==null||count<0||count>MAX_GLYPHS||plots.length<count*5||font.length>MAX_FONT_BYTES){flush();return false;}
-        if(pending.size()==MAX_TEXTS||count>MAX_GLYPHS-glyphCount||font.length>MAX_FONT_BYTES-fontBytes){flush();now=owner.frame();}
+        if(pending.size()==MAX_TEXTS||count>MAX_GLYPHS-glyphCount||font.length>MAX_FONT_BYTES-fontBytes){rejectRun(13);flush();now=owner.frame();}
         byte[] captured=font.clone();int[] scalar=Arrays.copyOf(plots,count*5);
         int selected=validatedWork(captured,scalar,count,l,t,r,b,now.width,now.height);
-        if(selected<0){flush();return false;}
-        if(pending.size()==MAX_TEXTS||count>MAX_GLYPHS-glyphCount||captured.length>MAX_FONT_BYTES-fontBytes||selected>MAX_WORK-work){flush();now=owner.frame();}
+        if(selected<0){rejectRun(11);flush();return false;}
+        if(pending.size()==MAX_TEXTS||count>MAX_GLYPHS-glyphCount||captured.length>MAX_FONT_BYTES-fontBytes||selected>MAX_WORK-work){rejectRun(13);flush();now=owner.frame();}
         if(!owner.eligible()||now==null||!owner.current(now))return false;
         identify(now);frame=now;pending.add(new Text(captured,scalar,l,t,r,b,replay));glyphCount+=count;fontBytes+=captured.length;work+=selected;add(10,1);add(11,count);return true;
     }
@@ -73,6 +79,8 @@ public final class SegmentedTextRaster {
     public void discardPoisoned(){clear();}
     public void flush(){
         if(pending.isEmpty())return;add(0,1);
+        runStats[0]=Math.max(runStats[0],pending.size());runStats[1]=Math.max(runStats[1],glyphCount);runStats[2]=Math.max(runStats[2],work);rejectRun(3+Math.min(7,pending.size()-1));
+        if((sampleSequence++&15)==0&&flushSamples.size()<32){StringBuilder trace=new StringBuilder("texts="+pending.size()+",glyphs="+glyphCount+",work="+work);StackTraceElement[] frames=new Throwable().getStackTrace();for(int n=1;n<Math.min(frames.length,7);n++)trace.append("\n").append(frames[n]);flushSamples.add(trace.length()>1024?trace.substring(0,1024):trace.toString());}
         if(frame==null||!owner.current(frame)){failed("Segmented TEXT lost live C/T owner before flush");return;}
         if(pending.size()<MIN_NATIVE_TEXTS){add(8,1);add(9,pending.size());literal();return;}
         final int result;

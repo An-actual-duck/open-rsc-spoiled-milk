@@ -17,7 +17,7 @@ public final class BrowserBootstrap {
     public static native void reportRegionPreparationDiagnostics(boolean available,double[] counters);
     public static native void reportCandidatePolicy(String name,boolean requested,boolean available,boolean enabled);
     public static native void reportBatchedModelWork(int[] counters);
-    public static native void reportSegmentedTextWork(int[] counters);
+    public static native void reportSegmentedTextWork(int[] counters,int[] runs,String samples,int[] admissions);
     public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportCombatState(String username,String names,int[] counters);
     public static native void reportModelPickBounds(boolean requested,boolean enabled);
@@ -233,7 +233,7 @@ public final class BrowserBootstrap {
                                 int[] batchWork=snapshotBatchedModelWork(observedScene,Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel"));
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
-                                if(Boolean.getBoolean("spoiledmilk.browserSegmentedTextRaster")&&surface!=null)reportSegmentedTextWork(surface.getSegmentedTextWork());
+                                if(Boolean.getBoolean("spoiledmilk.browserSegmentedTextRaster")&&surface!=null)reportSegmentedTextWork(surface.getSegmentedTextWork(),surface.getSegmentedTextRunDiagnostics(),surface.getSegmentedTextFlushSamples(),surface.getSegmentedTextAdmissionWork());
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
                                 reportRegionPreparationDiagnostics(regionCounts!=null,terrainDiagnostics.append(((orsc.mudclient)client).getWorld(),regionCounts));
                                 reportPreparation(orsc.graphics.two.GraphicsController.isBrowserFramePreparationEnabled(),
