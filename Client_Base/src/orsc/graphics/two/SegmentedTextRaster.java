@@ -5,6 +5,8 @@ import java.util.Arrays;
 
 /** Private contiguous-TEXT owner. Captures plots once, never reconstructs UI. */
 public final class SegmentedTextRaster {
+    public static final class FrameAbort extends Error { public FrameAbort(String reason){super(reason,null,false,false);} }
+    public static final int MIN_NATIVE_TEXTS=8;
     public static final int MAX_TEXTS=256,MAX_GLYPHS=4096,MAX_FONT_BYTES=8*1024*1024,MAX_WORK=2*1024*1024;
     public interface Backend { int raster(int[] header,int[] texts,int[] plots,byte[] fonts,int[] c,float[] t,double generation,double sequence); }
     public interface Owner {
@@ -18,17 +20,20 @@ public final class SegmentedTextRaster {
     private static volatile Backend installed;
     public static void install(Backend backend){installed=backend;}
     public static boolean available(){return installed!=null;}
+    private static int nextOwner;
+    private int ownerId;private int segmentId;private Object coverageIdentity;
     private final Owner owner;
     private final ArrayList<Text> pending=new ArrayList<Text>();
     private WorldOverlayCoverage.Frame frame;
     private int glyphCount,fontBytes,work;
     // Saturating cumulative scalar observations; exported only at low frequency.
-    private final int[] stats=new int[8]; // attempts,commits,nativeCalls,texts,glyphs,rejections,literalFallbacks,poisonedFrames
+    private final int[] stats=new int[12]; // attempts,commits,nativeCalls,nativeTexts,nativeGlyphs,rejections,literalFallbacks,poisonedFrames,shortSegments,shortTexts,capturedTexts,capturedGlyphs
     private static final class Text {
         final byte[] font;final int[] plots;final int l,t,r,b;final Replay replay;
         Text(byte[] font,int[] plots,int l,int t,int r,int b,Replay replay){this.font=font;this.plots=plots;this.l=l;this.t=t;this.r=r;this.b=b;this.replay=replay;}
     }
     public SegmentedTextRaster(Owner owner){this.owner=owner;}
+    private void identify(WorldOverlayCoverage.Frame frame){if(coverageIdentity!=frame.segmentedTextOwnerIdentity()){synchronized(SegmentedTextRaster.class){if(nextOwner==Integer.MAX_VALUE)throw new IllegalStateException("TEXT owner identity exhausted");ownerId=++nextOwner;}coverageIdentity=frame.segmentedTextOwnerIdentity();segmentId=0;}}
     private void add(int at,int n){stats[at]=n>Integer.MAX_VALUE-stats[at]?Integer.MAX_VALUE:stats[at]+n;}
     public int[] work(){return stats.clone();}
     public int pendingTexts(){return pending.size();}
@@ -53,28 +58,35 @@ public final class SegmentedTextRaster {
         if(now==null||!now.valid||!now.transparent||now.mode!=WorldOverlayCoverage.MODE_WORLD||now.deltaTransportOwner()!=null){flush();return false;}
         if(frame!=null&&!same(now)){flush();now=owner.frame();}
         if(font==null||plots==null||replay==null||count<0||count>MAX_GLYPHS||plots.length<count*5||font.length>MAX_FONT_BYTES){flush();return false;}
+        if(pending.size()==MAX_TEXTS||count>MAX_GLYPHS-glyphCount||font.length>MAX_FONT_BYTES-fontBytes){flush();now=owner.frame();}
         byte[] captured=font.clone();int[] scalar=Arrays.copyOf(plots,count*5);
         int selected=validatedWork(captured,scalar,count,l,t,r,b,now.width,now.height);
         if(selected<0){flush();return false;}
         if(pending.size()==MAX_TEXTS||count>MAX_GLYPHS-glyphCount||captured.length>MAX_FONT_BYTES-fontBytes||selected>MAX_WORK-work){flush();now=owner.frame();}
-        frame=now;pending.add(new Text(captured,scalar,l,t,r,b,replay));glyphCount+=count;fontBytes+=captured.length;work+=selected;return true;
+        if(!owner.eligible()||now==null||!owner.current(now))return false;
+        identify(now);frame=now;pending.add(new Text(captured,scalar,l,t,r,b,replay));glyphCount+=count;fontBytes+=captured.length;work+=selected;add(10,1);add(11,count);return true;
     }
     private boolean same(WorldOverlayCoverage.Frame now){return frame.ownerPixels==now.ownerPixels&&frame.transmittance==now.transmittance&&frame.width==now.width&&frame.height==now.height&&frame.generation==now.generation&&frame.frameSequence==now.frameSequence;}
     private void clear(){pending.clear();frame=null;glyphCount=fontBytes=work=0;}
     private void failed(String reason){add(7,1);clear();owner.poison(reason);}
+    private void literal(){ArrayList<Text> replay=new ArrayList<Text>(pending);clear();for(Text text:replay){try{text.replay.plots(text.font,text.plots,text.l,text.t,text.r,text.b);add(6,1);}catch(Throwable error){failed("Segmented TEXT literal replay failed: "+error);return;}}}
+    public void discardPoisoned(){clear();}
     public void flush(){
         if(pending.isEmpty())return;add(0,1);
         if(frame==null||!owner.current(frame)){failed("Segmented TEXT lost live C/T owner before flush");return;}
+        if(pending.size()<MIN_NATIVE_TEXTS){add(8,1);add(9,pending.size());literal();return;}
         final int result;
         try{
-            int[] header={1,frame.width,frame.height,pending.size(),glyphCount,fontBytes,work};
+            if(segmentId==Integer.MAX_VALUE)throw new IllegalStateException("TEXT segment identity exhausted");
+            int[] header={1,frame.width,frame.height,pending.size(),glyphCount,fontBytes,work,ownerId,++segmentId,frame.mode,frame.isFreshSegmentedTextOwner()?1:0};
             int[] texts=new int[pending.size()*8],plots=new int[glyphCount*5];byte[] fonts=new byte[fontBytes];int n=0,fo=0,go=0;
             for(Text text:pending){int at=n++*8;texts[at]=fo;texts[at+1]=text.font.length;texts[at+2]=go;texts[at+3]=text.plots.length/5;texts[at+4]=text.l;texts[at+5]=text.t;texts[at+6]=text.r;texts[at+7]=text.b;
                 System.arraycopy(text.font,0,fonts,fo,text.font.length);System.arraycopy(text.plots,0,plots,go*5,text.plots.length);fo+=text.font.length;go+=text.plots.length/5;}
             add(2,1);result=installed.raster(header,texts,plots,fonts,frame.ownerPixels,frame.transmittance,frame.generation,frame.frameSequence);
         }catch(Throwable error){failed("Segmented TEXT callback/preparation failed: "+error);return;}
-        if(result==0){add(5,1);for(Text text:pending){text.replay.plots(text.font,text.plots,text.l,text.t,text.r,text.b);add(6,1);}clear();return;}
+        if(result==0){add(5,1);literal();return;}
         if((result!=1&&result!=2)||!owner.current(frame)){failed("Segmented TEXT nontransactional failure/status/owner");return;}
-        add(1,1);add(3,pending.size());add(4,glyphCount);owner.committed(frame,result==2);clear();
+        try{owner.committed(frame,result==2);}catch(Throwable error){failed("Segmented TEXT commit lost owner: "+error);return;}
+        add(1,1);add(3,pending.size());add(4,glyphCount);clear();
     }
 }

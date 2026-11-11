@@ -6186,6 +6186,9 @@ public final class mudclient implements Runnable {
 							this.getSurface().loggedIn = true;
 							this.drawGame(13);
 						}
+					} catch (orsc.graphics.two.SegmentedTextRaster.FrameAbort discarded) {
+                        if(this.getScene()!=null&&this.getScene().getRenderer3DFrame()!=null)this.getScene().getRenderer3DFrame().release();
+                        return;
 					} catch (OutOfMemoryError var4) {
 						var4.printStackTrace();
 						this.errorLoadingMemory = true;
@@ -24712,6 +24715,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawWorldEditorGridLine(int x0,int y0,int x1,int y1,int color){
+        if(orsc.graphics.two.GraphicsController.isSegmentedTextEnabled())this.getSurface().flushPendingSegmentedText();
         if(orsc.graphics.two.GraphicsController.BROWSER_OVERLAY_JOURNAL_OBSERVE)this.getSurface().observeOverlayJournalBarrier(orsc.graphics.two.OverlayJournalObserver.EDITOR);
 
 		int width=this.getSurface().width2,height=this.getSurface().height2;

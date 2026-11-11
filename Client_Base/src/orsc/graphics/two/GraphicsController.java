@@ -31,6 +31,45 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class GraphicsController {
+    private static final boolean BROWSER_SEGMENTED_TEXT=Boolean.getBoolean("spoiledmilk.browserSegmentedTextRaster");
+    private SegmentedTextRaster segmentedText;
+    private boolean segmentedTextPoisoned;
+    public static boolean isSegmentedTextEnabled(){return BROWSER_SEGMENTED_TEXT&&SegmentedTextRaster.available();}
+    public final boolean isSegmentedTextPoisoned(){return segmentedTextPoisoned;}
+    public final boolean hasPendingSegmentedText(){return segmentedText!=null&&segmentedText.pendingTexts()!=0;}
+    public final int[] getSegmentedTextWork(){return segmentedText==null?new int[12]:segmentedText.work();}
+    /** Every maintained read/raster/escape boundary must materialize first. */
+    public final void flushPendingSegmentedText(){
+        if(!BROWSER_SEGMENTED_TEXT)return;
+        if(segmentedTextPoisoned)throw new SegmentedTextRaster.FrameAbort("Discard poisoned TEXT frame until fresh base");
+        if(segmentedText!=null)segmentedText.flush();
+    }
+    private void resetSegmentedTextFreshBase(){if(segmentedText!=null)segmentedText.discardPoisoned();segmentedTextPoisoned=false;}
+    private SegmentedTextRaster textSegments(){
+        if(segmentedText==null)segmentedText=new SegmentedTextRaster(new SegmentedTextRaster.Owner(){
+            public boolean eligible(){WorldOverlayCoverage.Frame frame=journalFrame();return !segmentedTextPoisoned&&worldOverlayCoverageEnabled&&frame!=null&&frame.isFreshSegmentedTextOwner();}
+            public WorldOverlayCoverage.Frame frame(){return journalFrame();}
+            public boolean current(WorldOverlayCoverage.Frame frame){return worldOverlayCoverage!=null&&worldOverlayCoverage.isCurrent(frame,pixelData,width2,height2)&&frame.isFreshSegmentedTextOwner();}
+            public void committed(WorldOverlayCoverage.Frame frame,boolean wrote){frame.commitSegmentedText(wrote);}
+            public void poison(String reason){segmentedTextPoisoned=true;if(worldOverlayCoverage!=null)worldOverlayCoverage.invalidate(reason);throw new SegmentedTextRaster.FrameAbort(reason);}
+        });return segmentedText;
+    }
+    private boolean recordSegmentedText(java.util.List<Renderer2DTextPlotCommand> plots){
+        if(!isSegmentedTextEnabled()||plots.isEmpty())return false;
+        if(segmentedTextPoisoned)flushPendingSegmentedText();
+        WorldOverlayCoverage.Frame admission=journalFrame();
+        if(!worldOverlayCoverageEnabled||admission==null||!admission.isFreshSegmentedTextOwner()||plots.size()>SegmentedTextRaster.MAX_GLYPHS){flushPendingSegmentedText();return false;}
+        byte[] font=plots.get(0).fontData;int[] scalar=new int[plots.size()*5];int at=0;
+        for(Renderer2DTextPlotCommand plot:plots){if(plot.fontData!=font){flushPendingSegmentedText();return false;}scalar[at++]=plot.x;scalar[at++]=plot.y;scalar[at++]=plot.color;scalar[at++]=plot.indexAddr;scalar[at++]=plot.antiAliased?1:0;}
+        return textSegments().record(font,scalar,plots.size(),clipLeft,clipTop,clipRight,clipBottom,new SegmentedTextRaster.Replay(){
+            public void plots(byte[] saved,int[] commands,int left,int top,int right,int bottom){
+                int oldL=clipLeft,oldT=clipTop,oldR=clipRight,oldB=clipBottom;clipLeft=left;clipTop=top;clipRight=right;clipBottom=bottom;
+                try{try{for(int n=0;n<commands.length;n+=5)plotCharacter(commands[n+4]!=0,saved,commands[n],commands[n+2],commands[n+3],commands[n+1]);}
+                    catch(Exception error){System.out.println("drawstring: "+error);error.printStackTrace();}}
+                finally{clipLeft=oldL;clipTop=oldT;clipRight=oldR;clipBottom=oldB;}
+            }
+        });
+    }
 	private static final int MAX_RENDERER_2D_SPRITE_COMMANDS = Renderer2DFrame.SPRITE_COMMAND_LIMIT;
 	private static final int MAX_RENDERER_2D_TEXT_COMMANDS = Renderer2DFrame.TEXT_COMMAND_LIMIT;
 	private static final int MAX_RENDERER_2D_PRIMITIVE_COMMANDS = Renderer2DFrame.PRIMITIVE_COMMAND_LIMIT;
@@ -81,6 +120,7 @@ public class GraphicsController {
     private OverlayJournalObserver journal() { if(overlayJournal==null)overlayJournal=new OverlayJournalObserver();return overlayJournal; }
     private WorldOverlayCoverage.Frame journalFrame() { return worldOverlayCoverage==null?null:worldOverlayCoverage.observeFrame(); }
     public final void observeOverlayJournalBarrier(int kind) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE&&!overlayJournalFailed)try{journal().barrier(pixelData,kind,renderer2DPhase.ordinal());}catch(Throwable error){journalFailure(error);}
     }
     private void journalUnknown(int[] destination,int[] source) {
@@ -194,6 +234,7 @@ public class GraphicsController {
 
 	/** Opt in on the real on-screen surface only; scratch/minimap surfaces stay ordinary RGB. */
 	public final void setWorldOverlayCoverageEnabled(boolean enabled) {
+        if(BROWSER_SEGMENTED_TEXT&&!segmentedTextPoisoned)flushPendingSegmentedText();
 		worldOverlayCoverageEnabled = enabled;
 		updateBrowserFramePreparation();
 		if (enabled) {
@@ -209,6 +250,11 @@ public class GraphicsController {
 
 	/** Begin only where the Scene deliberately skips the software world raster. */
 	public final boolean beginTransparentWorldOverlay() {
+        if(BROWSER_SEGMENTED_TEXT){
+            if(!segmentedTextPoisoned)flushPendingSegmentedText();
+            boolean begun=BROWSER_OVERLAY_JOURNAL_OBSERVE?beginObservedWorldOverlay():worldOverlayCoverageEnabled&&worldOverlayCoverage!=null&&worldOverlayCoverage.begin(pixelData,width2,height2);
+            if(begun)resetSegmentedTextFreshBase();return begun;
+        }
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)return beginObservedWorldOverlay();
 		return worldOverlayCoverageEnabled && worldOverlayCoverage != null
 			&& worldOverlayCoverage.begin(pixelData, width2, height2);
@@ -221,6 +267,10 @@ public class GraphicsController {
     }
 	/** Before a complete legacy/login/loading image; does not alter ordinary RGB pixels. */
 	public final void beginOpaqueWorldOverlay() {
+        if(BROWSER_SEGMENTED_TEXT){
+            if(!segmentedTextPoisoned)flushPendingSegmentedText();
+            else {long count=(long)width2*height2;if(pixelData==null||width2<1||height2<1||count>pixelData.length)throw new SegmentedTextRaster.FrameAbort("Poisoned opaque base cannot clear current surface");java.util.Arrays.fill(pixelData,0,(int)count,0);resetSegmentedTextFreshBase();}
+        }
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalClose(OverlayJournalObserver.MODE);
 
 		if (worldOverlayCoverage != null) worldOverlayCoverage.reset(false);
@@ -229,6 +279,7 @@ public class GraphicsController {
 
 	/** Release plane storage; a partial RGB image stays invalid until a new complete base. */
 	public final void clearWorldOverlayCoverage() {
+        if(BROWSER_SEGMENTED_TEXT&&!segmentedTextPoisoned)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalClose(OverlayJournalObserver.RESET);
 
 		if (worldOverlayCoverage != null) worldOverlayCoverage.discard();
@@ -236,6 +287,7 @@ public class GraphicsController {
 
 	/** Null means disabled with complete RGB; disabled partial images retain an invalid tombstone. */
 	public final WorldOverlayCoverage.Frame borrowWorldOverlayCoverage() {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		return worldOverlayCoverage == null ? null : worldOverlayCoverage.borrow(pixelData, width2, height2);
 	}
 
@@ -289,6 +341,7 @@ public class GraphicsController {
 	}
 
 	private void coverageUnsupported(String operation) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.UNKNOWN);
 
 		if (guardGpuSceneSoftwareWrites && sceneSpriteRasterFailure.isEmpty()) {
@@ -320,10 +373,12 @@ public class GraphicsController {
 	}
 
 	public final void beginRenderer2DFrame() {
+        if(BROWSER_SEGMENTED_TEXT&&!segmentedTextPoisoned)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalClose(OverlayJournalObserver.RESET);
 
 		updateBrowserFramePreparation();
 		if (worldOverlayCoverage != null) worldOverlayCoverage.beginFrame();
+        if(BROWSER_SEGMENTED_TEXT&&segmentedTextPoisoned&&worldOverlayCoverageEnabled&&worldOverlayCoverage!=null){if(worldOverlayCoverage.begin(pixelData,width2,height2))resetSegmentedTextFreshBase();}
 		sceneSpriteRasterFailure = "";
         resetRenderer2DCommandState();
     }
@@ -399,6 +454,7 @@ public class GraphicsController {
 	}
 
 	public final void setRenderer2DPhase(Renderer2DFrame.Phase phase) {
+        if(BROWSER_SEGMENTED_TEXT&&!segmentedTextPoisoned)flushPendingSegmentedText();
 		renderer2DPhase = phase == null ? Renderer2DFrame.Phase.UNKNOWN : phase;
 		updateSceneSoftwareWriteGuard();
 	}
@@ -408,6 +464,7 @@ public class GraphicsController {
 	}
 
 	public final Renderer2DFrame consumeRenderer2DFrame() {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		if (!Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
 			resetRenderer2DCommandState();
 			return Renderer2DFrame.empty(this.width2, this.height2);
@@ -438,6 +495,7 @@ public class GraphicsController {
 			return;
 		}
 
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.READ);
 		int requiredPixels = width2 * height2;
 		if (renderer2DUiBasePixels == null || renderer2DUiBasePixels.length != requiredPixels) {
@@ -1501,6 +1559,7 @@ public class GraphicsController {
 	}
 
 	public void resize(int width, int height) {
+        if(BROWSER_SEGMENTED_TEXT&&!segmentedTextPoisoned)flushPendingSegmentedText();
 		clearWorldOverlayCoverage();
 		this.clipBottom = height;
 		this.clipRight = width;
@@ -1570,6 +1629,7 @@ public class GraphicsController {
 	}
 
 	public final void clearClip() {
+        if(BROWSER_SEGMENTED_TEXT&&!segmentedTextPoisoned)flushPendingSegmentedText();
 		try {
 			this.clipRight = this.width2;
 			this.clipLeft = 0;
@@ -2030,6 +2090,7 @@ public class GraphicsController {
 	}
 
 	public final void a(int var1, int var2, int var3, int var4, int var5, int var6, int var7) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.READ);
 
 		coverageUnsupported("Nonlocal framebuffer blur during GPU world overlay");
@@ -2069,6 +2130,7 @@ public class GraphicsController {
 
 	private void a(int var1, int var2, int var3, int var4, int var5, int[] var6, int var7, int[] letterPlotTable,
 				   int var9, int var10, boolean var11, int var12, int var13, int var14, int var15) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(letterPlotTable,var6);
 
 		try {
@@ -2137,6 +2199,7 @@ public class GraphicsController {
 	 */
 	private void plot_horiz_line(int negCount, int srcWidth, int[] dest, int srcStepX, int srcHeadY, int srcHeadX,
 								 int[] src, int srcStepY, int destHead) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(dest,src);
 
 		try {
@@ -2157,6 +2220,7 @@ public class GraphicsController {
 
 	private void a(int var1, int var2, int var3, int[] var4, int var5, int var6, int var7, int[] var8, int var9,
 				   int var10, int var11, int var12) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(var8,var4);
 
 		try {
@@ -2205,6 +2269,7 @@ public class GraphicsController {
 	 */
 	private void plot_trans_horiz_line(int srcStepY, int negCount, int srcHeadX, int[] src, int[] var5,
 									   int srcHeadY, int destHead, int srcWidth, int srcStepX) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(var5,src);
 
 		try {
@@ -2249,6 +2314,7 @@ public class GraphicsController {
 
 	private void a(int var1, int[] var2, int var3, int var4, int var5, int var6, byte var7, int var8, int[] var9,
 				   int var10, int var11) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(var2,var9);
 
 		try {
@@ -2438,6 +2504,7 @@ public class GraphicsController {
 	private void plot_scale_black_mask(int[] src, int heightStep, int scaleX, int dummy1, int srcStartY,
 									   int[] dest, byte dummy2, int scaleY, int destHeight, int srcStartX, int destRowStride, int destWidth,
 									   int srcWidth, int destHead) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(dest,src);
 
 		try {
@@ -2531,6 +2598,7 @@ public class GraphicsController {
 											   int destColumnSkewPerRow, int destFirstColumn, int dummy1, int spritePixel, int mask2, int scaleY, int scaleX,
 											   int srcStartX, int skipEveryOther, int srcStartY, int srcWidth, int mask1, int destHeight,
 											   int destRowHead, int colourTransform, int blueMask) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(dest,src);
 
 		try {
@@ -2654,6 +2722,7 @@ public class GraphicsController {
 	}
 
 	public final void copyPixelDataToSurface(SPRITE_LAYER layer, int xOffset, int yOffset, int width, int height) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.READ);
 
 		coverageUnsupported("Framebuffer sprite capture during GPU world overlay");
@@ -2728,6 +2797,7 @@ public class GraphicsController {
 	}
 
 	public final void drawVerticalGradient(int x, int y, int width, int height, int topColor, int bottomColor) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.GRADIENT);
 
 		try {
@@ -2794,6 +2864,7 @@ public class GraphicsController {
 	}
 
 	public final void blackScreen(boolean var1) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.CLEAR);
 
 		try {
@@ -2873,6 +2944,7 @@ public class GraphicsController {
 	}
 
 	public final void drawBox(int xr, int yr, int widthh, int height, int color) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalRectangle(OverlayJournalObserver.BOX,xr,yr,widthh,height,color,256);
 
 		try {
@@ -2931,6 +3003,7 @@ public class GraphicsController {
 	}
 
 	public final void drawBoxAlpha(int x, int y, int width, int height, int color, int alpha) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalRectangle(OverlayJournalObserver.ALPHA_BOX,x,y,width,height,color,alpha);
 
 		try {
@@ -3010,6 +3083,7 @@ public class GraphicsController {
 	}
 
 	public final void drawCircle(int x, int y, int radius, int color, int alpha, int dummy) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.CIRCLE);
 
 		try {
@@ -3324,10 +3398,12 @@ public class GraphicsController {
 					markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.TEXT);
 				}
                 if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalText(renderer2DTextPlots);
+                if(BROWSER_SEGMENTED_TEXT&&recordSegmentedText(renderer2DTextPlots))return;
 				for (Renderer2DTextPlotCommand plot : renderer2DTextPlots) {
 					plot.plot(this);
 				}
 			} catch (Exception var14) {
+				if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 				System.out.println("drawstring: " + var14);
 				var14.printStackTrace();
 			}
@@ -3363,6 +3439,7 @@ public class GraphicsController {
 	}
 
 	public final void drawLineHoriz(int x, int y, int width, int color) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalRectangle(OverlayJournalObserver.HLINE,x,y,width,1,color,256);
 
 		try {
@@ -3396,6 +3473,7 @@ public class GraphicsController {
 	}
 
 	public final void drawLineVert(int x, int y, int color, int height) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalRectangle(OverlayJournalObserver.VLINE,x,y,1,height,color,256);
 
 
@@ -4121,6 +4199,7 @@ public class GraphicsController {
 	}
 
 	public final void fade2black(int var1) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.MODE);
 
 		noteSceneSoftwareWrite(pixelData);
@@ -4263,6 +4342,7 @@ public class GraphicsController {
 	}
 
 	public final void createCaptchaSprite(Sprite s) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.READ);
 
 		try {
@@ -4274,6 +4354,7 @@ public class GraphicsController {
 	}
 
 	public final void setClip(int clipLeft, int clipRight, int clipBottom, int clipTop) {
+        if(BROWSER_SEGMENTED_TEXT&&!segmentedTextPoisoned)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.CLIP);
 
 		try {
@@ -4305,6 +4386,7 @@ public class GraphicsController {
 	}
 
 	public final void setPixel(int x, int y, int val) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.UNKNOWN);
 
 		try {
@@ -4511,6 +4593,7 @@ public class GraphicsController {
 	private void plot_tran_scale(int heightStep, int srcStartY, int destWidth, byte dummy1, int scaleY,
 								 int spriteWidth, int scaleX, int height, int destHead, int[] src, int dummy2, int srcStartX,
 								 int destRowStride, int alpha, int[] dest) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(dest,src);
 
 		try {
@@ -4594,6 +4677,7 @@ public class GraphicsController {
 	private void plot_tran_scale_with_mask(int dummy2, int[] src, int scaleY, int dummy1, int srcStartY,
 										   int srcStartX, int destColumnCount, int[] dest, int destHeight, int destColumnSkewPerRow, int destRowHead,
 										   int scaleX, int destFirstColumn, int srcWidth, int skipEveryOther, int spritePixel, int colourTransform, int blueMask) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(dest,src);
 
 		try {
@@ -4729,6 +4813,7 @@ public class GraphicsController {
 	final void plot_trans_scale_lookup_with_mask(byte[] src, int background, int dummy1, int destColumnSkewPerRow,
 												 int[] lookupTable, int srcWidth, int srcStartY, int scaleY, int destFirstColumn, int scaleX, int[] dest,
 												 int skipEveryOther, int dummy2, int srcStartX, int destRowHead, int destColumnCount, int destHeight) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
         if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(dest,lookupTable);
 		try {
 

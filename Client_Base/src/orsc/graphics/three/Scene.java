@@ -171,6 +171,7 @@ public final class Scene {
 
 		try {
 			this.modelCount = 0;
+			if(orsc.graphics.two.GraphicsController.isSegmentedTextEnabled())var1.flushPendingSegmentedText();
 			this.pixelData = var1.pixelData;
 			this.graphics = var1;
 			this.m_A = var1.width2 / 2;
@@ -2900,6 +2901,7 @@ public final class Scene {
 	}
 
 	public final void endScene(int var1) {
+        if(orsc.graphics.two.GraphicsController.isSegmentedTextEnabled()&&!this.graphics.isSegmentedTextPoisoned())this.graphics.flushPendingSegmentedText();
 		try {
 
             this.interactionOnlyPickActive = false;
@@ -4366,6 +4368,7 @@ public final class Scene {
 			if (!var2) {
 				this.m_f = false;
 			}
+			if(orsc.graphics.two.GraphicsController.isSegmentedTextEnabled())graphics.flushPendingSegmentedText();
 			pixelData = graphics.pixelData;
 		} catch (RuntimeException var9) {
 			throw GenUtil.makeThrowable(var9,

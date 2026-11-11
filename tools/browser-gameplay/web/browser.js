@@ -1,3 +1,4 @@
+import {createSegmentedTextKernel} from './browser-segmented-text.js';
 import {optimizedRenderDefaults,canonicalRenderProperties} from './browser-optimized-render-defaults.js';
 import {createBatchedModelKernel} from './browser-batched-model-kernel.js';
 import {browserGeometryTransferPolicy} from './browser-geometry-transfer-policy.js';
@@ -47,7 +48,7 @@ function publish() {
 }
 function dispose() {
   if (stopped) return;
-  stopped = true; delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
+  stopped = true; delete window.browserBenchmarkSegmentedTextPoisonOnce; delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
 }
 function finish(reason) {
   if (stopped) return;
@@ -76,6 +77,9 @@ const geometryTransfer=browserGeometryTransferPolicy(window.browserProof.mode,op
 const candidatePreparation=privatePreparationCandidates(window.browserProof.mode,options);
 const optimizedDefaults=optimizedRenderDefaults(window.browserProof.mode,options);
 const modelBatchKernel=createBatchedModelKernel();
+const segmentedTextKernel=candidatePreparation.requested?.segmentedTextRaster===true?createSegmentedTextKernel({allowFault:options.has('benchmark')}):{native:()=>0,stats:{enabled:false}};
+if(options.has('benchmark')&&candidatePreparation.requested?.segmentedTextRaster===true)window.browserBenchmarkSegmentedTextPoisonOnce=()=>segmentedTextKernel.armPoisonOnce();
+window.browserProof.segmentedTextNativeWork=segmentedTextKernel.stats;
 window.browserProof.batchedModelKernelWork=modelBatchKernel.stats;
 const fixturePolicy=repeatableFixturePolicy(window.browserProof.mode,options,window.browserPrivateTestRoute,location.origin);
 if(window.browserPrivateTestRoute!==undefined)window.browserProof.privateLoopbackRoute={origin:location.origin,websocket:fixturePolicy.websocket,tcpPort:fixturePolicy.tcpPort};
@@ -85,6 +89,8 @@ const pointer = window.browserProof.mode === 'webgl' ? createBrowserMiddleMouseI
 if (pointer) window.browserProof.middleInput = pointer.stats;
 window.browserTransport = transport;
 const natives = {
+  Java_orsc_BrowserWebGLBridge_rasterTextSegment:segmentedTextKernel.native,
+  Java_orsc_browser_BrowserBootstrap_reportSegmentedTextWork(lib,values){const v=Array.from(values);if(v.length!==12||v.some(n=>!Number.isSafeInteger(n)||n<0))throw new Error("Invalid bounded TEXT work receipt");window.browserProof.segmentedTextWork=Object.fromEntries(["attempts","commits","nativeCalls","texts","glyphs","rejections","literalFallbacks","poisonedFrames","shortSegments","shortTexts","capturedTexts","capturedGlyphs"].map((name,n)=>[name,v[n]]));},
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,
   Java_orsc_browser_BrowserBootstrap_reportBatchedModelWork(lib,counters){
     const v=Array.from(counters);
@@ -101,7 +107,7 @@ const natives = {
     }
   },
   async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
-    if(!['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'].includes(name))throw new Error('Unknown private policy receipt');
+    if(!['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex','segmentedTextRaster'].includes(name))throw new Error('Unknown private policy receipt');
     (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
     if(!options.has('benchmark')&&['batchedModelKernel','terrainQueryIndex'].includes(name))(window.browserProof.optimizedRenderDefaults||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
   },

@@ -206,6 +206,9 @@ public final class WorldOverlayCoverage {
             }
             owner.deltaTransport.acknowledge(delta.plan,ownerPixels,width,height,generation,frameSequence);
         }
+        public Object segmentedTextOwnerIdentity(){return owner;}
+        public boolean isFreshSegmentedTextOwner(){return mode==MODE_WORLD&&owner.freshWorld&&owner.deltaTransport==null&&owner.isCurrent(this,ownerPixels,width,height);}
+        public void commitSegmentedText(boolean wrote){if(!isFreshSegmentedTextOwner())throw new IllegalStateException("Segmented TEXT lost fresh owner");if(wrote)owner.written=true;}
 		private final WorldOverlayCoverage owner;
 		public final int[] ownerPixels;
 		public final int width;

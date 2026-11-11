@@ -701,6 +701,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	}
 
 	private synchronized void commitToImage(boolean var1) {
+        if(orsc.graphics.two.GraphicsController.isSegmentedTextEnabled()&&mudclient!=null&&mudclient.getSurface()!=null)mudclient.getSurface().flushPendingSegmentedText();
 		try {
 			if (null != this.imageProducer) {
 				this.imageProducer.setPixels(0, 0, mudclient.getSurface().width2, mudclient.getSurface().height2,
@@ -755,6 +756,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	}
 
 	public final void draw() {
+        if(orsc.graphics.two.GraphicsController.isSegmentedTextEnabled()&&mudclient!=null&&mudclient.getSurface()!=null)mudclient.getSurface().flushPendingSegmentedText();
 		if (mudclient != null
 			&& mudclient.shouldRetainLastPresentedFrame()) {
 			RenderTelemetry.recordBoundaryPresentationRetention();
@@ -911,6 +913,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	}
 
 	private BufferedImage getDirectFramebufferImage() {
+        if(orsc.graphics.two.GraphicsController.isSegmentedTextEnabled()&&mudclient!=null&&mudclient.getSurface()!=null)mudclient.getSurface().flushPendingSegmentedText();
 		int width = mudclient.getSurface().width2;
 		int height = mudclient.getSurface().height2;
 		int[] pixels = mudclient.getSurface().pixelData;
@@ -958,6 +961,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	}
 
 	private void bindDirectFramebuffer(int width, int height) {
+        if(orsc.graphics.two.GraphicsController.isSegmentedTextEnabled()&&mudclient!=null&&mudclient.getSurface()!=null)mudclient.getSurface().flushPendingSegmentedText();
         if(orsc.graphics.two.GraphicsController.BROWSER_OVERLAY_JOURNAL_OBSERVE)mudclient.getSurface().observeOverlayJournalBarrier(orsc.graphics.two.OverlayJournalObserver.AWT);
 		int[] pixels = mudclient.getSurface().pixelData;
 		directFramebufferImage = createDirectFramebufferImage(width, height, pixels);

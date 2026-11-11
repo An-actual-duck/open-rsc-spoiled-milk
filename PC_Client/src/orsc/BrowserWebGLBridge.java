@@ -108,7 +108,12 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native int[] planWorldSprites(int epoch,double sequence,int[] images);
     private static native void commitWorldSprites(int epoch,double sequence,byte[] rgba,float[] quads);
     private long spriteSequence;
+    private static native int rasterTextSegment(int[] header,int[] texts,int[] plots,byte[] fonts,int[] c,float[] t,double generation,double sequence);
     public static void install() {
+        if(Boolean.getBoolean("spoiledmilk.browserSegmentedTextRaster")){
+            if(!Boolean.getBoolean("spoiledmilk.browserBenchmark")||!OVERLAY_COVERAGE||OVERLAY_DELTA)throw new IllegalStateException("Segmented TEXT requires private fresh world coverage and full overlay uploads");
+            orsc.graphics.two.SegmentedTextRaster.install(new orsc.graphics.two.SegmentedTextRaster.Backend(){public int raster(int[] h,int[] tx,int[] p,byte[] f,int[] c,float[] t,double g,double s){return rasterTextSegment(h,tx,p,f,c,t,g,s);}});
+        }
         if(Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
             System.setProperty("spoiledmilk.remasterLightAzimuth","135");System.setProperty("spoiledmilk.remasterLightElevation","45");
             RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);RendererBrightnessSettings.setMode(RendererBrightnessSettings.Mode.HIGH);
@@ -125,6 +130,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         long frameStart=System.nanoTime();
         mudclient client=currentClient();
         GraphicsController currentSurface=client==null?null:client.getSurface();
+        if(GraphicsController.isSegmentedTextEnabled()&&currentSurface!=null)currentSurface.flushPendingSegmentedText();
         if(currentSurface!=null&&!currentSurface.getSceneSpriteRasterFailure().isEmpty())throw new IllegalStateException("Browser actor capture rejected: "+currentSurface.getSceneSpriteRasterFailure());
         int w=image.getWidth(),h=image.getHeight();
         if(w<1||h<1||(long)w*h>MAX_PIXELS)throw new IllegalStateException("Browser viewport exceeds bounded backend capacity");
