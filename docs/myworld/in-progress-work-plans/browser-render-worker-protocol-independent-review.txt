@@ -253,3 +253,78 @@ receipt listed above. No changes to the worker, GPU backend or shaders were
 required; prior a10 GPU equivalence remains separately scoped. Actual corrected
 Java-native startup/gameplay/FPS is still a manager gate; no performance/default
 adoption claim is made by this amendment.
+
+Manager final live gates:25cd runtime unchanged
+----------------------------------------------
+This report-only amendment supersedes the earlier pending corrected-startup
+and measured-combat gates within the following bounded scope. No tests, builds,
+Worker/browser/GPU or server processes were started by ai-2 for this amendment.
+
+Actual startup/world, walking, menus and middle-click functional smoke PASS:
+output/diagnostics/browser-frame-architecture/render-worker-functional-2/functional-smoke.json
+  SHA256 634eae0919632a438b72d927ef529dcaabcfa4784fe2fe60281c67dc5d0b8f1c
+The receipt records authoritative movement from(502,453,0) to(499,456,0), one
+middle-button press/release, GAME/ready, unblocked input and no lastError. The
+manager separately checked context/spell menus. This closes the real early-AWT
+startup defect at the tested layout; it does not erase the preserved first
+failed integration receipt.
+
+A fresh exact25cd actual Worker GPU oracle also PASS:
+output/diagnostics/browser-frame-architecture/render-worker-gpu-5/receipt.json
+  SHA256 cafe8b9dbf6cc55ee1cfc7927352d898a1919c1b15ae03dbeab7a23b509c5b92
+output/diagnostics/browser-frame-architecture/render-worker-gpu-5/actual.json
+  SHA256 3ae5bdf22ff75229855b180d2bbdcba89b7ffd88d991fcd137511fff4e1e3d25
+Receipt actualSha256 matches the actual file. All50 cases compare27,915,808RGBA
+bytes with0 changes and no errors, including borrowed/returned storage lifetime;
+confirmed disposal reports GPU/sprite resource bytes0. This separately validates
+the unchanged worker/backend path with corrected main adapter/frontend source.
+
+Manager strict combat measurements, all accepted as valid runs:
+  OFF1:3405 completed world frames/60036ms =56.715970FPS
+  ON2 :3593 completed world frames/60031ms =59.852410FPS
+  ON3 :3589 completed world frames/60017ms =59.799723FPS (confirmation)
+Each configuration had180s additional warm-up and two30s numeric spans. The same
+JAR/source used full C/T coverage with modelbatch+terrain+spritekeysON and the
+same pinned camera, logical960x540 and actual physical1843x1037 output. Strict
+realcombat fixtures advance all six scheduled combat channels' resource, damage
+and execution counters. Worker counts are actual completed gpu.javaWorldFrames,
+not Java-reported FPS or transport.completedFrames (which also includes held
+presentations). No screenshots/IPC polling or concurrent task builds/GPU tests
+occurred within timed spans.
+
+ON2 frame intervals have2 >50ms, ON3 has1; neither has >100ms. Their p99 values
+are22/23ms and23/22ms. OFF p99 is22/21ms, with no >50ms interval. Thus near60 mean
+FPS does not imply perfect16.67ms pacing. Worker ACK age p99 is19ms in all four
+ON spans; maxima24/22ms and22/26ms include main delivery latency. Measured ON
+spans show zero additional owned-buffer allocation bytes/frame and zero new
+backpressure waits, although startup/warm-up lifetime counters contain both.
+Approximately two worker packets and4.24MiB copied payload per world frame remain
+real costs; there is no zero-copy or universal low-memory/device performance
+claim. Queue age/completion are not GPU-fence or compositor-scanout latency.
+
+Source input hashes were recomputed while reading each result:
+output/diagnostics/browser-frame-architecture/render-worker-off-1-measure/result.json
+  SHA256 9d28b233e507cff2047bfca995affe9b6adcfb134d73222636dea5ff56c086f2
+output/diagnostics/browser-frame-architecture/render-worker-on-2-measure/result.json
+  SHA256 01808a303e009647e6a7aa19c7dbe19ca001cd8b3b3ba475210a724e05038135
+output/diagnostics/browser-frame-architecture/render-worker-on-3-measure/result.json
+  SHA256 4cc44f0d125f0fb2130032f522f22059d9e3f256268be0ef8504a2cbaa73fae9
+
+These are one OFF run and two ON runs on one owner machine/browser/scene, with
+live-effect variation and no confidence interval. They show a promising private
+experiment and do not establish device-wide60FPS, broad area-loading performance,
+long-session stability, input-latency equivalence or release readiness. Keep
+renderworker defaultOFF/private; ordinary desktop/current-browser policy is
+unchanged. Manager collection may preserve this reviewed prototype and evidence
+without treating the correctness/performance gates as automatic default adoption.
+
+Manager final same-source/JAR comparison (read/hash verified):
+output/diagnostics/browser-frame-architecture/render-worker-comparison.json
+  SHA256 b0edb4213d9838b3e5ca202f46ee38fcf105bc3c9bf34c4c14d8f0de604fa3c5
+It binds runtime25cd and client JAR SHA256
+49bc1f7d78d4022eca6399afd15acc1a7ee226ae67cf1b10c183e39ec7f56e08,
+with input cohort hashes matching those above. Weighted gains versus OFF1 are
+ON2:+5.53008%, ON3:+5.43719%. The ordered ON/OFF/ON confirmation preserves all
+stated live-scene/timing/device/latency limits. Manager reports all owned Firefox
+sessions closed normally. This amendment is documentation only; no runtime or
+policy/default change was made by the independent reviewer.
