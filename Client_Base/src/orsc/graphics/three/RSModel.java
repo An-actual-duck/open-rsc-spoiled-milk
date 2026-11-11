@@ -2361,6 +2361,21 @@ public final class RSModel {
 		}
 	}
 
+    // These helpers only inspect cache-clean model state. The batch producer
+    // must flush earlier work before invoking any dirty/unsupported model.
+    final boolean isBrowserBatchCacheClean() { return this.m_Yb == 0 && !this.interactionOnly; }
+    final boolean isBrowserBatchFrustumVisible() {
+        return this.minZ <= MiscFunctions.frustumMinX && this.maxZ >= MiscFunctions.frustumMaxX
+            && this.minX <= MiscFunctions.frustumMinY && this.maxX >= MiscFunctions.frustumMaxY
+            && this.minY <= MiscFunctions.frustumNearZ && this.maxY >= MiscFunctions.frustumFarZ;
+    }
+    final void borrowBrowserBatchArrays(int[][] rows, int offset) {
+        rows[offset] = this.vertXTransform; rows[offset + 1] = this.vertYTransform;
+        rows[offset + 2] = this.vertZTransform; rows[offset + 3] = this.vertexParam6;
+        rows[offset + 4] = this.vertexParam2; rows[offset + 5] = this.vertXRot;
+        rows[offset + 6] = this.vertYRot; rows[offset + 7] = this.vertZRot;
+    }
+
 	private void rotate256(int var1, int rotX, int rotZ, int rotY) {
 		try {
 

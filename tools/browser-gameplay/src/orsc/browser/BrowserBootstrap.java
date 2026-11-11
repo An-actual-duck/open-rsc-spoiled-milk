@@ -14,6 +14,7 @@ public final class BrowserBootstrap {
     public static native void reportPreparation(boolean enabled,boolean active,boolean animated);
     public static native void reportRegionPreparationDiagnostics(boolean available,double[] counters);
     public static native void reportCandidatePolicy(String name,boolean requested,boolean available,boolean enabled);
+    public static native void reportBatchedModelWork(int[] counters);
     public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportCombatState(String username,String names,int[] counters);
     public static native void reportModelPickBounds(boolean requested,boolean enabled);
@@ -189,7 +190,16 @@ public final class BrowserBootstrap {
                                     boolean[] projectionActual=BenchmarkCandidatePolicies.inspectInstance(((orsc.mudclient)client).getScene(),"isBrowserSceneryProjectionWorkEnabled");
                                     reportCandidatePolicy("sceneryProjection",projectionRequested,projectionActual[0],projectionActual[1]);
                                     if(projectionRequested&&!projectionActual[0])throw new IllegalStateException("Requested candidate is absent from this fixture JAR: sceneryProjection");
+                                    boolean batchRequested=Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel");
+                                    boolean[] batchActual=BenchmarkCandidatePolicies.inspectInstance(((orsc.mudclient)client).getScene(),"isBrowserBatchedModelKernelEnabled");
+                                    reportCandidatePolicy("batchedModelKernel",batchRequested,batchActual[0],batchActual[1]);
+                                    if(batchRequested&&!batchActual[0])throw new IllegalStateException("Requested candidate is absent from this fixture JAR: batchedModelKernel");
                                     candidatePoliciesReported=true;
+                                }
+                                if(Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel")) {
+                                    Object batchWork=((orsc.mudclient)client).getScene().getClass().getMethod("getBrowserBatchedModelKernelWork").invoke(((orsc.mudclient)client).getScene());
+                                    if(!(batchWork instanceof int[])||((int[])batchWork).length!=14)throw new IllegalStateException("Invalid batched model work getter");
+                                    reportBatchedModelWork((int[])batchWork);
                                 }
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());

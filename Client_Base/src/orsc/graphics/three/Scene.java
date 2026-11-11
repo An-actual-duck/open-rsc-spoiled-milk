@@ -116,6 +116,14 @@ public final class Scene {
 	private Polygon[] polygons;
 	private int m_zb;
 	private int m_Zb = 256;
+    private final BrowserBatchedModelKernel browserBatchedModelKernel =
+        Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel") ? new BrowserBatchedModelKernel() : null;
+    public boolean isBrowserBatchedModelKernelEnabled() {
+        return browserBatchedModelKernel != null && Renderer3DSettings.isBrowserPresentationAvailable();
+    }
+    public int[] getBrowserBatchedModelKernelWork() {
+        return browserBatchedModelKernel == null ? new int[14] : browserBatchedModelKernel.work();
+    }
 	private int modelCount;
 	private RSModel[] models;
 	private Renderer3DFrame renderer3DFrame;
@@ -2964,7 +2972,14 @@ public final class Scene {
 
 			long modelRotateStart = RenderTelemetry.now();
 			int var3;
+            boolean batchModels = isBrowserBatchedModelKernelEnabled();
+            if (batchModels) browserBatchedModelKernel.begin(this.rot1024_off_y, this.rot1024_vp_src,
+                this.rot1024_off_x, this.rot1024_off_z, this.cameraProjY, this.cameraProjZ,
+                this.cameraProjX, this.rot1024_zTop);
+            try {
 			for (var3 = 0; this.modelCount > var3; ++var3) {
+                if (batchModels && browserBatchedModelKernel.enqueue(this.models[var3])) continue;
+                if (batchModels) { browserBatchedModelKernel.flush(); browserBatchedModelKernel.literalModel(); }
 				this.models[var3].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
 					this.rot1024_off_z, this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop);
                 RSModel rotated = this.models[var3];
@@ -2978,6 +2993,9 @@ public final class Scene {
                     }
                 }
 			}
+
+                if (batchModels) browserBatchedModelKernel.flush();
+            } finally { if (batchModels) browserBatchedModelKernel.discard(); }
 
 			this.models[this.modelCount].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x,
 				(byte) -114, this.rot1024_off_z, this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop);
