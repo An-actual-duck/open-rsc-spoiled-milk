@@ -4,12 +4,13 @@ import {pathToFileURL} from 'node:url';
 const root=process.argv[2];
 const P=await import(pathToFileURL(root+'/browser-render-worker-protocol.js'));
 const {createRenderWorkerTransport}=await import(pathToFileURL(root+'/browser-render-worker-transport.js'));
+const {createBrowserRenderWorker}=await import(pathToFileURL(root+'/browser-render-worker.js'));
 const {createRenderWorkerReplay,createWorkerOutputSizer}=await import(pathToFileURL(root+'/browser-render-worker-replay.js'));
 let checks=0;function ok(v,m){assert.ok(v,m);checks++;}function eq(a,b,m){assert.deepEqual(a,b,m);checks++;}
 const tick=()=>new Promise(r=>setImmediate(r));
 const layout=()=>({epoch:1,width:1843,height:1037,dpr:1});
 function fake(options={}){const sent=[];const t=createRenderWorkerTransport({layout,postMessage:(p,x)=>{sent.push(structuredClone(p,{transfer:x}));},...options});return {t,sent};}
-function ack(p,more={}){return {type:'ack',version:1,id:p.id,frameId:p.frameId,layoutEpoch:p.layout.epoch,result:4096,...more};}
+function ack(p,more={}){const buffers=p.commands.flatMap(c=>c.args.filter(v=>ArrayBuffer.isView(v)).map(v=>v.buffer));const result={type:'ack',version:1,id:p.id,frameId:p.frameId,layoutEpoch:p.layout.epoch,result:4096,buffers,...more};return structuredClone(result,{transfer:buffers});}
 function command(name,args){return P.ownRenderCommand(name,args).command;}
 function batch(commands,more={}){return {version:1,type:'batch',id:1,frameId:0,layout:layout(),commands,bytes:commands.reduce((n,c)=>n+P.inspectRenderCommand(c.name,c.args).bytes,0),...more};}
 function backend(){const calls=[];const natives={};for(const name of Object.keys(P.RENDER_WORKER_SCHEMA)){if(name[0]!=='$')natives[P.renderNativeName(name)]=async(_,...args)=>{calls.push([name,args]);return name==='initialize'?8192:undefined;};}return {calls,natives,dispose(){calls.push(['dispose']);}};}
@@ -58,5 +59,96 @@ function backend(){const calls=[];const natives={};for(const name of Object.keys
 // Disposal wakes every unresolved result and blocked slot producer.
 {
  const {t,sent}=fake();const a=t.enqueue('initialize',['v','f']);a.catch(()=>{});await tick();await t.enqueue('holdWorld',[]);const blocked=t.enqueue('holdWorld',[]);blocked.catch(()=>{});await tick();eq(sent.length,2);t.dispose();await assert.rejects(a);checks++;await assert.rejects(blocked);checks++;eq(t.stats.completedFrames,0);eq(t.stats.inFlightBytes,0);
+}
+// Shared source aliases become separately owned planes; opaque login T stays null.
+{
+ const storage=new ArrayBuffer(32),i=new Int32Array(storage),f=new Float32Array(storage);i.set([0x80000000,0x7fc01234,0x11223344,7]);
+ const own=P.ownRenderCommand('present',[960,540,false,f.subarray(0,4),f.subarray(1,3),i.subarray(0,2),i.subarray(2,4)]);
+ const before=own.command.args.slice(3).map(v=>Array.from(new Uint8Array(v.buffer)));i.fill(0);eq(own.command.args.slice(3).map(v=>Array.from(new Uint8Array(v.buffer))),before);eq(new Set(own.transfers).size,4,'no owned transfer aliases');eq(storage.byteLength,32);
+ const opaque=P.ownRenderCommand('overlayFrame',[960,540,0,1,1,0,false,null]);eq(opaque.command.args[7],null);eq(opaque.transfers,[]);
+}
+// Caps are validated on command count before a malformed suffix can be dispatched.
+{
+ const b=backend(),r=createRenderWorkerReplay({backend:b,outputSizer:createWorkerOutputSizer()});const commands=Array.from({length:1025},()=>({name:'initializeSky',args:[]}));
+ await assert.rejects(r.execute({version:1,type:'batch',id:1,frameId:0,layout:layout(),commands,bytes:0}));checks++;eq(b.calls,[]);r.dispose();
+ const {t,sent}=fake();for(let n=0;n<1024;n++)t.enqueue('initializeSky',[]);assert.throws(()=>t.enqueue('initializeSky',[]));checks++;eq(sent,[]);eq(t.stats.stagedBytes,0);assert.throws(()=>t.enqueue('initializeSky',[]));checks++;t.dispose();
+}
+// Diagnostic callback failure and invalid layout must settle every outstanding result.
+{
+ const {t,sent}=fake({onStats(){throw Error('diagnostics fault');}});const p=t.enqueue('initialize',['v','f']);p.catch(()=>{});await tick();t.receive(ack(sent[0]));await assert.rejects(p);checks++;eq(t.stats.completedPackets,0);eq(t.stats.inFlightBytes,0);assert.throws(()=>t.enqueue('initializeSky',[]));checks++;t.dispose();
+ const x=fake({layout:()=>({epoch:1,width:NaN,height:3,dpr:1})});await assert.rejects(x.t.enqueue('holdWorld',[]));checks++;eq(x.sent,[]);eq(x.t.stats.stagedBytes,0);assert.throws(()=>x.t.enqueue('initializeSky',[]));checks++;x.t.dispose();
+}
+// Worker fatal/post failure clears staged planes and rejects held result barriers.
+{
+ const {t,sent}=fake();const p=t.enqueue('initialize',['v','f']);p.catch(()=>{});await tick();t.enqueue('lightingFrame',[new Float32Array([1,2,3])]);t.receive({type:'fatal',error:'context lost'});await assert.rejects(p);checks++;eq(t.stats.stagedBytes,0);eq(t.stats.inFlightBytes,0);eq(t.stats.completedPackets,0);t.receive(ack(sent[0]));eq(t.stats.completedPackets,0);t.dispose();
+ const x=fake({postMessage(){throw Error('post fault');}});await assert.rejects(x.t.enqueue('holdWorld',[]));checks++;eq(x.t.stats.completedFrames,0);eq(x.t.stats.inFlightBytes,0);x.t.dispose();
+}
+// An actual byte-copy failure is terminal, with no later flush of staged prefix.
+{
+ const {t}=fake();const pending=t.enqueue('initialize',['v','f']);pending.catch(()=>{});await tick();t.enqueue('lightingFrame',[new Float32Array([8])]);
+ const set=Uint8Array.prototype.set;try{Uint8Array.prototype.set=function(){throw Error('injected copy fault');};assert.throws(()=>t.enqueue('lightingFrame',[new Float32Array([9])]),/copy fault/);checks++;}finally{Uint8Array.prototype.set=set;}
+ await assert.rejects(pending);checks++;eq(t.stats.stagedBytes,0);eq(t.stats.inFlightBytes,0);assert.throws(()=>t.enqueue('initializeSky',[]));checks++;t.dispose();
+}
+// Layout epochs are ordered and immutable. Same epoch geometry change rejects prefix.
+{
+ const b=backend(),r=createRenderWorkerReplay({backend:b,outputSizer:createWorkerOutputSizer()});await r.execute(batch([command('initializeSky',[])]));const count=b.calls.length;
+ await assert.rejects(r.execute(batch([command('initializeSky',[])],{id:2,layout:{...layout(),width:1842}})));checks++;eq(b.calls.length,count);r.dispose();
+ const b2=backend(),s=createWorkerOutputSizer(),r2=createRenderWorkerReplay({backend:b2,outputSizer:s});await r2.execute(batch([command('initialize',['v','f'])]));await r2.execute(batch([command('holdWorld',[])],{id:2,frameId:1,layout:{epoch:2,width:1201,height:677,dpr:1}}));eq([s.size(960,540).width,s.size(960,540).height],[1203,677]);r2.dispose();
+}
+// World presentation is one packet completed only by subsequent frameWork.
+{
+ const {t,sent}=fake();t.enqueue('present',[960,540,true,new Float32Array(16),new Float32Array(),new Int32Array(),new Int32Array()]);eq(sent.length,0);await assert.rejects(t.drain());checks++;await t.enqueue('frameWork',[new Float32Array(14),new Int32Array()]);eq(sent.length,1);eq(sent[0].commands.map(c=>c.name),['present','frameWork']);eq(t.stats.completedFrames,0);t.receive(ack(sent[0]));await t.drain();eq(t.stats.completedFrames,1);t.dispose();
+}
+// Exact ACK identities: stale/foreign/frame/layout mistakes never release/count slots.
+for(const mutate of [x=>({...x,version:99}),x=>({...x,id:2}),x=>({...x,frameId:4}),x=>({...x,layoutEpoch:2}),x=>({...x,type:'queued'})]){
+ const {t,sent}=fake();const p=t.enqueue('initialize',['v','f']);p.catch(()=>{});await tick();t.receive(mutate(ack(sent[0])));await assert.rejects(p);checks++;eq(t.stats.completedPackets,0);eq(t.stats.inFlightBytes,0);t.dispose();
+}
+{
+ const {t,sent}=fake();await t.enqueue('holdWorld',[]);t.receive(ack(sent[0]));eq(t.stats.completedFrames,1);t.receive(ack(sent[0]));eq(t.stats.completedFrames,1);assert.throws(()=>t.enqueue('initializeSky',[]));checks++;t.dispose();
+}
+// Aggregate payload over cap rejects before any copy; aliases do not evade total cost.
+{
+ const data=new ArrayBuffer(17*1024*1024),f=new Float32Array(data),i=new Int32Array(data);const set=Uint8Array.prototype.set;let copied=false;
+ try{Uint8Array.prototype.set=function(...a){copied=true;return set.apply(this,a);};assert.throws(()=>P.ownRenderCommand('present',[960,540,true,f,f,i,i]),/cap/);checks++;}finally{Uint8Array.prototype.set=set;}
+ eq(copied,false);eq(data.byteLength,17*1024*1024);
+}
+// Last missing endpoint preflight also protects a valid earlier resource prefix.
+{
+ const b=backend();delete b.natives[P.renderNativeName('initializeSky')];const r=createRenderWorkerReplay({backend:b,outputSizer:createWorkerOutputSizer()});await assert.rejects(r.execute(batch([command('deleteChunks',[new Int32Array([1])]),command('initializeSky',[])])));checks++;eq(b.calls,[]);r.dispose();
+}
+// Returned transport storage is reused only after ACK and fully overwritten.
+{
+ const {t,sent}=fake({onReturnedBuffers:buffers=>{for(const b of buffers)new Uint8Array(b).fill(0xa5);}});
+ const source=new Float32Array([1,-0,3,4]);t.enqueue('lightingFrame',[source]);await t.enqueue('holdWorld',[]);eq(t.stats.poolBytes,0);eq(t.stats.reusedBuffers,0);const first=sent[0];t.receive(ack(first));eq(t.stats.poolBytes,16);eq(first.commands[0].args[0].byteLength,0,'returned fake-worker input detached');eq(source.byteLength,16);
+ source.set([9,8,7,6]);t.enqueue('lightingFrame',[source]);await t.enqueue('holdWorld',[]);eq(t.stats.reusedBuffers,1);eq(t.stats.poolBytes,0);eq(Array.from(sent[1].commands[0].args[0]),[9,8,7,6],'reused poison bytes fully overwritten');eq(source.byteLength,16);t.receive(ack(sent[1]));eq(t.stats.returnedBuffers,2);eq(t.mutateReturnedBuffers(),16);t.dispose();eq(t.stats.poolBytes,0);
+}
+// Missing, wrong-size, duplicate, shared or forged returned buffers fail before ACK/pooling.
+for(const mutate of [x=>({...x,buffers:[]}),x=>({...x,buffers:[new ArrayBuffer(8),new ArrayBuffer(4)]}),x=>{const a=new ArrayBuffer(4);return {...x,buffers:[a,a]};},x=>({...x,buffers:[new SharedArrayBuffer(4),new ArrayBuffer(4)]}),x=>({...x,buffers:[{},new ArrayBuffer(4)]})]){
+ const {t,sent}=fake();t.enqueue('skyFrame',[new Float32Array(1),new Float32Array(1)]);const p=t.flush({result:true});p.catch(()=>{});await tick();t.receive(mutate(ack(sent[0])));await assert.rejects(p);checks++;eq(t.stats.poolBytes,0);eq(t.stats.completedPackets,0);eq(t.stats.inFlightBytes,0);t.dispose();
+}
+// Pool entry cap remains bounded independently of packet/producer byte caps.
+{
+ const {t,sent}=fake();for(let n=0;n<512;n++)t.enqueue('uploadSkyGeometry',[new Float32Array(1),new Int32Array(1),1]);await t.enqueue('holdWorld',[]);t.receive(ack(sent[0]));eq(t.stats.poolBytes,4096);eq(t.stats.returnedBuffers,1024);
+ t.enqueue('skyFrame',[new Float32Array(2),new Float32Array(2)]);await t.enqueue('holdWorld',[]);t.receive(ack(sent[1]));eq(t.stats.poolBytes,4096,'new buffers do not exceed1024entry cap');t.dispose();
+}
+// Main adapter mock exercises lifecycle only, never OffscreenCanvas/realWorker/GPU.
+class FakeWorker{
+ constructor(startup='ready'){this.events=new Map();this.sent=[];this.terminated=0;this.startup=startup;}
+ addEventListener(k,f){if(!this.events.has(k))this.events.set(k,[]);this.events.get(k).push(f);}
+ emit(k,data){for(const f of this.events.get(k)||[])f(k==='message'?{data}:data);}
+ postMessage(m){this.sent.push(m);if(m.type==='init')queueMicrotask(()=>this.startup==='ready'?this.emit('message',{type:'ready',version:1}):this.emit('error',{message:'startup fault'}));}
+ terminate(){this.terminated++;}
+}
+{
+ const oldWindow=globalThis.window,oldResize=globalThis.ResizeObserver,windowEvents=new Map();let disconnected=0;
+ globalThis.window={devicePixelRatio:1,addEventListener(k,f){windowEvents.set(k,f);},removeEventListener(k,f){if(windowEvents.get(k)===f)windowEvents.delete(k);}};
+ globalThis.ResizeObserver=class{observe(){}disconnect(){disconnected++;}};
+ const canvas={transferControlToOffscreen(){return {};},getBoundingClientRect(){return {width:1843,height:1037};}};
+ try{
+  const worker=new FakeWorker();const view=await createBrowserRenderWorker(canvas,()=>{},{workerFactory:()=>worker,oracle:true});
+  const initialized=view.natives[P.renderNativeName('initialize')](null,'v','f');await tick();const packet=worker.sent.find(x=>x.type==='batch');eq(packet.layout,{epoch:1,width:1843,height:1037,dpr:1});worker.emit('message',ack(packet,{result:8192,stats:{value:{},samples:{},timeOrigin:performance.timeOrigin}}));eq(await initialized,8192);
+  const read=view.readPixels();read.catch(()=>{});await tick();worker.emit('error',{message:'worker died during readback'});await assert.rejects(read);checks++;view.dispose();eq(windowEvents.size,0);eq(disconnected,1);eq(worker.terminated,1);
+  const failed=new FakeWorker('error');await assert.rejects(createBrowserRenderWorker(canvas,()=>{},{workerFactory:()=>failed}));checks++;eq(failed.terminated,1);eq(windowEvents.size,0,'startup failure removes window listeners');eq(disconnected,2,'startup failure disconnects observer');
+ }finally{globalThis.window=oldWindow;globalThis.ResizeObserver=oldResize;}
 }
 console.log(JSON.stringify({passed:true,checks,cpuOnly:true,actualGPU:false,actualWorker:false,scope:'owned bytes/transfer, ordered resources, bounded ACK slots, result barriers, physical metadata, rejection and cleanup'}));
