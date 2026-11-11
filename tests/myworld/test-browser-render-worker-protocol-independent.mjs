@@ -6,6 +6,7 @@ const P=await import(pathToFileURL(root+'/browser-render-worker-protocol.js'));
 const {createRenderWorkerTransport}=await import(pathToFileURL(root+'/browser-render-worker-transport.js'));
 const {createBrowserRenderWorker}=await import(pathToFileURL(root+'/browser-render-worker.js'));
 const {createRenderWorkerReplay,createWorkerOutputSizer}=await import(pathToFileURL(root+'/browser-render-worker-replay.js'));
+const {createWorkerStatsSnapshot,WORKER_SAMPLE_FIELDS}=await import(pathToFileURL(root+'/browser-render-worker-stats.js'));
 let checks=0;function ok(v,m){assert.ok(v,m);checks++;}function eq(a,b,m){assert.deepEqual(a,b,m);checks++;}
 const tick=()=>new Promise(r=>setImmediate(r));
 const layout=()=>({epoch:1,width:1843,height:1037,dpr:1});
@@ -131,12 +132,18 @@ for(const mutate of [x=>({...x,buffers:[]}),x=>({...x,buffers:[new ArrayBuffer(8
  const {t,sent}=fake();for(let n=0;n<512;n++)t.enqueue('uploadSkyGeometry',[new Float32Array(1),new Int32Array(1),1]);await t.enqueue('holdWorld',[]);t.receive(ack(sent[0]));eq(t.stats.poolBytes,4096);eq(t.stats.returnedBuffers,1024);
  t.enqueue('skyFrame',[new Float32Array(2),new Float32Array(2)]);await t.enqueue('holdWorld',[]);t.receive(ack(sent[1]));eq(t.stats.poolBytes,4096,'new buffers do not exceed1024entry cap');t.dispose();
 }
+// Executor completion is after frameWork finishes, not after present was queued.
+{
+ const b=backend();let release,completed=false;const gate=new Promise(r=>release=r);b.natives[P.renderNativeName('frameWork')]=async(_,...args)=>{b.calls.push(['frameWork',args]);await gate;};const r=createRenderWorkerReplay({backend:b,outputSizer:createWorkerOutputSizer()});
+ const counters=new Int32Array([0x7fffffff,-1]),work=new Float32Array(14);new Uint32Array(work.buffer).set([0x80000000,0x7fc01234,0x3f800001]);
+ const packet=batch([command('present',[960,540,true,new Float32Array(16),new Float32Array(),new Int32Array(),new Int32Array()]),command('frameWork',[work,counters])],{frameId:1});const result=r.execute(packet).then(x=>{completed=true;return x;});await tick();eq(completed,false);eq(b.calls.map(x=>x[0]),['present','frameWork']);eq(Array.from(new Uint32Array(b.calls[1][1][0].buffer)),Array.from(new Uint32Array(work.buffer)));eq(Array.from(b.calls[1][1][1]),[0x7fffffff,-1]);release();eq((await result).frameId,1);r.dispose();
+}
 // Main adapter mock exercises lifecycle only, never OffscreenCanvas/realWorker/GPU.
 class FakeWorker{
  constructor(startup='ready'){this.events=new Map();this.sent=[];this.terminated=0;this.startup=startup;}
  addEventListener(k,f){if(!this.events.has(k))this.events.set(k,[]);this.events.get(k).push(f);}
  emit(k,data){for(const f of this.events.get(k)||[])f(k==='message'?{data}:data);}
- postMessage(m){this.sent.push(m);if(m.type==='init')queueMicrotask(()=>this.startup==='ready'?this.emit('message',{type:'ready',version:1}):this.emit('error',{message:'startup fault'}));}
+ postMessage(m){if(m.type===this.throwOnType)throw Error('injected proxy post fault');this.sent.push(m);if(m.type==='init')queueMicrotask(()=>this.startup==='ready'?this.emit('message',{type:'ready',version:1}):this.emit('error',{message:'startup fault'}));}
  terminate(){this.terminated++;}
 }
 {
@@ -149,6 +156,27 @@ class FakeWorker{
   const initialized=view.natives[P.renderNativeName('initialize')](null,'v','f');await tick();const packet=worker.sent.find(x=>x.type==='batch');eq(packet.layout,{epoch:1,width:1843,height:1037,dpr:1});worker.emit('message',ack(packet,{result:8192,stats:{value:{},samples:{},timeOrigin:performance.timeOrigin}}));eq(await initialized,8192);
   const read=view.readPixels();read.catch(()=>{});await tick();worker.emit('error',{message:'worker died during readback'});await assert.rejects(read);checks++;view.dispose();eq(windowEvents.size,0);eq(disconnected,1);eq(worker.terminated,1);
   const failed=new FakeWorker('error');await assert.rejects(createBrowserRenderWorker(canvas,()=>{},{workerFactory:()=>failed}));checks++;eq(failed.terminated,1);eq(windowEvents.size,0,'startup failure removes window listeners');eq(disconnected,2,'startup failure disconnects observer');
+  const closingWorker=new FakeWorker(),closingView=await createBrowserRenderWorker(canvas,()=>{},{workerFactory:()=>closingWorker,oracle:true});
+  let closingState='pending';const closing=closingView.disposeAndConfirm().then(()=>closingState='resolved',()=>closingState='rejected');await tick();closingWorker.emit('error',{message:'worker died while disposing'});await tick();eq(closingState,'rejected','fatal rejects pending dispose confirmation');await closing;closingView.dispose();eq(windowEvents.size,0);
+  const postingWorker=new FakeWorker(),postingView=await createBrowserRenderWorker(canvas,()=>{},{workerFactory:()=>postingWorker,oracle:true});postingWorker.throwOnType='readPixels';await assert.rejects(postingView.readPixels());checks++;eq(postingView.stats.backendFailed,true,'readback post error poisons adapter');postingView.dispose();eq(windowEvents.size,0);
+
  }finally{globalThis.window=oldWindow;globalThis.ResizeObserver=oldResize;}
+}
+// Closed statistics surface: scalar/object budgets, omission and actual sample pushes.
+{
+ function stats(extra={}){return Object.assign(Object.fromEntries(WORKER_SAMPLE_FIELDS.map(k=>[k,[]])),extra);}
+ const source=stats({javaFrames:3,worldReadiness:{phase:'ready',blocksWorldInput:false},cacheThatMustStayPrivate:{pixels:new Int32Array(1024)},privatePlane:new Float32Array(100)}),snap=createWorkerStatsSnapshot(source);
+ const first=snap();eq(first.value.javaFrames,3);eq(first.value.worldReadiness,{phase:'ready',blocksWorldInput:false});ok(!('cacheThatMustStayPrivate'in first.value));ok(!('privatePlane'in first.value));eq(first.samples,{});
+ source.frameSamples.push(16,16);eq(snap().samples.frameSamples,[16,16],'equal actual samples preserved');eq(snap().samples,{},'no stale repeated sample');
+ for(let n=0;n<5;n++){source.frameSamples.push(n);if(source.frameSamples.length>3)source.frameSamples.shift();}eq(snap().samples.frameSamples,[2,3,4],'full ring only actual retained tail');eq(snap().samples,{});
+ for(const extra of [{worldReadiness:{pixels:new Int32Array(2)}},{worldReadiness:{bad:NaN}},{worldReadiness:{s:'x'.repeat(4097)}},{worldReadiness:{arr:Array(17).fill(0)}},{worldReadiness:Object.fromEntries(Array.from({length:65},(_,n)=>['k'+n,n]))}]){const snapshot=createWorkerStatsSnapshot(stats(extra));assert.throws(()=>snapshot());checks++;}
+}
+// Sample payloads themselves are copied/validated, not a plane/cache escape.
+{
+ const make=extra=>Object.assign(Object.fromEntries(WORKER_SAMPLE_FIELDS.map(k=>[k,[]])),extra);
+ const source=make({measurement:true}),snap=createWorkerStatsSnapshot(source),row=Array.from({length:14},(_,n)=>n);source.javaBridgeWorkSamples.push(row);source.worldFramePolicies.push(true);const output=snap();row.fill(999);eq(output.samples.javaBridgeWorkSamples[0],Array.from({length:14},(_,n)=>n));eq(output.samples.worldFramePolicies,[true]);eq(output.measurementActive,true);
+ for(const [key,bad]of [['frameSamples',new Float32Array(10)],['frameSamples',NaN],['frameSamples',-1],['worldFramePolicies',1],['javaBridgeWorkSamples',Array(13).fill(0)],['javaBridgeWorkSamples',new Float32Array(14)],['javaBridgeWorkSamples',Array(14).fill(Infinity)]]){const s=make({}),f=createWorkerStatsSnapshot(s);s[key].push(bad);assert.throws(()=>f());checks++;}
+ const big=make(Object.fromEntries(Array.from({length:193},(_,n)=>['f'+n,n])));assert.throws(()=>createWorkerStatsSnapshot(big)());checks++;
+ const strings=make(Object.fromEntries(Array.from({length:5},(_,n)=>['s'+n,'x'.repeat(4096)])));assert.throws(()=>createWorkerStatsSnapshot(strings)());checks++;
 }
 console.log(JSON.stringify({passed:true,checks,cpuOnly:true,actualGPU:false,actualWorker:false,scope:'owned bytes/transfer, ordered resources, bounded ACK slots, result barriers, physical metadata, rejection and cleanup'}));

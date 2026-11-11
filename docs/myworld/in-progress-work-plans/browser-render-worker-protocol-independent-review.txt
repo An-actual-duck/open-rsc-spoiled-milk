@@ -1,6 +1,6 @@
 Browser render-worker protocol independent review
 ================================================
-Status: design/preflight only; runtime candidate and source-bound execution pending.
+Status: independent CPU protocol review PASS; actual Firefox/GPU gates pending.
 Owner: Core ai-2, test/browser-render-worker-protocol.
 Base:58c61d98562e287c6e35a6056009cbe81c6d3464.
 
@@ -61,3 +61,129 @@ layout. The proxy/worker protocol therefore needs explicit initialization
 round-trips, durable ordered resource commands, asynchronous fatal messages and
 main-thread display metrics. These are obligations to verify, not reported bugs
 in a candidate that has not yet been checkpointed.
+
+Source-bound CPU result
+-----------------------
+Candidate:88af6b08ebc1d50fab86bec34ef4461fcf42631b in ai-1.
+Independent test execution:PASS180 checks, Node22.21.1, no browser, actual Worker,
+OffscreenCanvas, GPU, Java VM or server launched. Exact receipt:
+output/tests/browser-render-worker-protocol-independent/20261111T123626005011Z/result.json
+It freezes six candidate modules plus fixture before import, and records source,
+fixture, runner, stdout/stderr hashes and exact command. Invocation:
+python3 tests/myworld/test-browser-render-worker-protocol-independent.py \
+  --candidate-root /home/justin/Core-Framework-ai-1 \
+  --candidate-commit 88af6b08ebc1d50fab86bec34ef4461fcf42631b
+
+Proof details
+-------------
+The raw-byte oracle uses real nonzero-offset Float32/Int32 views containing
+negative zero and noncanonical NaN payloads. Own forged/throwing shape getters
+do not change intrinsic source bounds. Shared source aliases become separate
+owned copies; mutation after capture cannot affect packets. Real Node
+structuredClone transfer detaches ONLY owned command storage, never original
+source storage. A second real transfer returns the owned copies; immediate
+0xa5 overwrite and later reuse still yield exact new packet data. This proves
+JS ownership/structuredClone behavior on Node, not Firefox transfer performance.
+
+Two packets can remain unACKed; a third producer waits until one exact completion
+ACK arrives. No posted packet counts as completed. Initialization's scalar result
+stays pending until its own ACK. Bad ACK version/id/frame/layout, duplicates,
+missing/wrong-size/duplicate/shared/fake buffers terminate before successful
+credit or pool admission. Returned buffer count/order/length/unique identity are
+validated against that packet's recorded capacity. Identity is not physical
+cross-transfer provenance: a same-sized new genuine buffer can provide usable
+capacity, because every byte is overwritten before reuse and its old contents
+are never interpreted as acknowledged pixels. The executor is trusted same-origin
+code. This is not an adversarial cross-origin security protocol.
+
+Pool1024-entry cap is exercised. Source separately caps retained pool bytes at
+16MiB; total owned payload capacity is TWO64MiB in-flight packets plus ONE64MiB
+producer plus16MiB pool=208MiB. It is not a process-memory ceiling: backend owned
+copies, resources, strings/objects, browser/driver storage and GC peaks are
+additional. Tests also prove the1024-command producer/envelope limit, aggregate
+payload rejection BEFORE any byte-copy, and staging/pool/pending cleanup on error.
+
+Ordered upload/delete/reuse is preserved. Entire structural/schema/cap/method-
+availability preflight rejects a malformed LAST command without executing a
+valid resource prefix. Backend semantic validation remains authoritative: a
+schema-valid but semantically bad later resource can follow an executed valid
+prefix before throwing. The executor then poisons and produces no successful
+ACK; GPU-frame/resource atomicity is NOT promised. No continuing frame-cancel
+operation silently drops staged resources. Failure/dispose abandons the entire
+session; any recovery requires fresh ownership/backend initialization.
+
+World present is captured until its subsequent frameWork; the resulting packet
+contains both in literal order. A deliberately unresolved fake frameWork delays
+the completion promise/ACK even after present ran, and exact Float32 raw bits and
+Int32 counters reach the backend. Result queries (initialize, planWorldSprites)
+are explicit synchronous-result barriers and can produce an extra command packet
+before the final presentation packet. Therefore one Java world frame is NOT
+claimed to always equal one IPC packet. Two-slot backpressure and ACK counters
+apply to packets; completedFrames counts presentation-complete packets. These
+are worker backend-call completions, not GPU-fence or compositor-scanout proof.
+
+Main-side fakeWorker tests execute the actual adapter factory. They cover
+startup failure, normal result completion, readback worker death, readback post
+failure, confirmed-disposal worker death and cleanup of ResizeObserver/window
+listeners. Callback/layout/actual injected byte-copy/post failures reject held
+result barriers and blocked producers, clear staging/in-flight/pool capacity,
+and prohibit successful continuation. Context-loss is simulated by the fatal
+message route; actual browser context-loss behavior remains a manager gate.
+
+Resize layout epochs reject changed geometry under an old epoch, with zero
+backend prefix; later epochs update explicit physical sizing. A1843x1037 CSS
+snapshot yields1843x1037 physical output for960x540 logical content, rather than
+silently using a worker-global960x540 fallback. Actual maximum texture capability
+is returned by initialization; pure sizing uses that capability. Real display,
+DPR, input mapping and odd dimensions require the separate GPU/DOM review.
+
+Closed diagnostics tests exercise omitted unknown cache/plane objects, bounded
+known metadata/string/array/field budgets, equal consecutive sample intervals,
+no duplicate stale samples and full-ring tail accounting. Sample payloads also reject typed planes/nonfinite or negative intervals,
+wrong policy kinds and malformed Java14-value work rows. Each accepted work row
+is copied, so mutating its source cannot change the snapshot. Top-level field
+and combined string budgets reject oversized metadata. This remains an internal
+maintained backend diagnostics interface, not an external security boundary.
+
+Returned-buffer backend retention review
+-----------------------------------------
+Read-only source inspection found no retained alias to a command-owned buffer in
+the reviewed backend path. webgl.js copies lightingFrame values and chunk batch
+metadata; chunk color bounds are derived own arrays. browser-lighting copies
+mask bounds/values; browser-shadows copies values. browser-sky copies ranges and
+frame values and synchronously uploads vertex/palette data. Sprite atlas plan
+stores scalar-derived metadata, returns its own missing-ID list, copies quad
+coordinates and synchronously uploads pixels. Full overlay prepare uploads T
+immediately and retains scalar declaration/token metadata; present consumes C
+synchronously. Frame pose/work history copies arrays/scalars. Raw geometry/
+pixel planes go to synchronous GL uploads and are not cached as JS input views.
+This source review supports safe transfer-return after backend completion; the
+manager GPU oracle must still mutate/reuse returned storage and render unchanged
+resources to prove actual browser/GPU equivalence.
+
+Findings and retained evidence
+------------------------------
+Early WIP review identified an onStats throw leaving a removed result barrier
+unresolved, layout errors leaving flushing set, ACK-version omission and capture
+failure cleanup gaps; implementation corrected those before final proof.
+Source-bound765fc89cb1a038bc4ed80e8fdb9e2116b766d8fc passed134 protocol/pool
+checks, then the expanded actual-adapter fixture reproduced a real startup
+cleanup failure:two window listeners and ResizeObserver survived rejected startup.
+Failing receipt is preserved:
+output/tests/browser-render-worker-protocol-independent/20261111T123222066140Z/result.json
+c4b closes that leak and confirmed-disposal/readback error paths; final180 checks
+include those regressions plus88af sample-shape/budget/copy tightening. Earlier passing receipts122810/122919/123010/123135
+remain preserved in the same declared test subject, with no deletion of evidence.
+
+Current disposition
+-------------------
+No source-backed CPU protocol blocker remains within this private maintained-
+caller contract. READY for manager collection of tests/report only. This result
+cannot establish actual Worker ABI behavior, exact GPU/shader/output parity,
+absence of real context-loss issues, visual quality, latency or FPS improvement.
+The manager owns actual Firefox/GPU/combat gates; producer Java60FPS is not a
+presentation acceptance result. All experimental policy remains defaultOFF.
+
+Workspace-layout check reports inherited asset-root sprites and legacy loose
+output entries. All new evidence uses the declared tests subject; none of those
+inherited assets/outputs were removed. git diff --check passes.
