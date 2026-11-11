@@ -42,6 +42,17 @@ public final class OverlayJournalRenderingIndependentFixture {
         draws.add(g->{g.drawBox(1,1,5,3,0x112233);g.resize(17,19);g.beginRenderer2DFrame();g.beginTransparentWorldOverlay();g.drawBox(1,1,4,5,0xabcdef);});
         draws.add(g->{for(int i=0;i<4100;i++)g.drawBox(1,1,1,1,i);g.drawBox(8,1,1,1,0xff00ff);});
         draws.add(g->{g.invalidateWorldOverlayCoverage("external fixture raw writer");g.pixelData[0]=0x123456;});
+        draws.add(g->{
+            g.drawBox(1,1,3,3,0x223355);
+            // Test-owned corruption simulates a partially failed journal buffer.
+            // The actual GraphicsController catch/retirement path must still run
+            // the original following writers, once, without altered exceptions.
+            try{
+                java.lang.reflect.Field field=GraphicsController.class.getDeclaredField("overlayJournal");field.setAccessible(true);Object observer=field.get(g);
+                if(observer!=null){java.lang.reflect.Field ops=observer.getClass().getDeclaredField("ops");ops.setAccessible(true);if(ops.get(observer)!=null)ops.set(observer,null);}
+            }catch(NoSuchFieldException baseline){}
+            g.drawBoxAlpha(2,2,4,5,0x776655,128);fonts(false);g.drawColoredString(1,10,"ABC",0,0xffffff,0);
+        });
         MessageDigest hash=MessageDigest.getInstance("SHA-256");int cases=0;
         for(boolean transparent:new boolean[]{false,true})for(boolean interlace:new boolean[]{false,true})for(boolean clip:new boolean[]{false,true})for(Draw draw:draws){
             GraphicsController g=new GraphicsController(40,32,1);g.setWorldOverlayCoverageEnabled(true);g.beginRenderer2DFrame();
