@@ -98,3 +98,33 @@ This is correctness/work-elimination evidence only, not browser FPS evidence.
 Use the private fixed crowd, real spell/summon combat and area transitions with
 one immutable reviewed JAR for OFF/ON comparison. Reject a candidate with visual,
 picking, context or loading regressions even if one standing scene runs faster.
+
+Verified checkpoint and private stage
+------------------------------------
+Runtime source checkpoint: c1852523dfb5658c80c6878559a42ca7545288ed.
+Full maintained client build passed on Temurin Java8; candidate class version52.
+The immutable client-review.jar has SHA256
+98ae7640cc892d02b13435793592eae45d059a60c305eb48ce2aa17ea0a98bfa.
+It is an explicitly labelled COMPOSITE: exact approved f720 baseline JAR with
+only Scene.class and RSModel.class replaced and BrowserStaticModelBounds.class
+added. Those three classes match the checkpoint's full-build bytes; every other
+entry, including assets and shaders, remains byte-identical to baseline. The
+same-source full build changes Scene$Axis only through debug source positions;
+the review artifact retains the compatible baseline enum. Receipt and per-class
+provenance are under output/builds/browser-static-model-preparation/.
+
+Dedicated oracle rerun against this artifact passed. The broader repeatable
+benchmark tools suite passed, including explicit policy receipt and counter
+schema tests. Existing frame-sink suite passed 1084 Scene face/pick/pixel checks,
+2975 wall/roof ownership checks, and 56 teleport-overlay/restoration checks.
+The frontend VM suite requires Node --experimental-vm-modules; the initial
+invocation without that VM flag was a tooling invocation failure, then passed
+with the documented flag. workspace-layout.py check and git diff --check pass.
+
+Private client stage static-model-review-1 is prepared at HTTP8174 against the
+existing dedicated repeatable-baseline-2 server, not a newly started server.
+Frontend/Bootstrap source is checkpoint c185; copied provenance explicitly says
+singleProductionCommit:false. Preparation started no browser, HTTP or server.
+The manager controls all hardware runs and any integration/adoption decision.
+No browser performance, GPU pixel parity or loading improvement is claimed by
+this worker; these remain manager acceptance work.
