@@ -104,3 +104,45 @@ same-artifact gameplay comparison remains the manager's separate gate.
 Workspace-layout check reports inherited legacy output-root entries and the
 legacy assets/sprites entry. New evidence uses the declared tests category;
 layout-check.log is preserved with the run and no inherited data was removed.
+
+Manager-owned live measurement and current generated bodies
+------------------------------------------------------------
+The completed strict same75c349 full-client JAR pair measured terrain query
+OFF51.76952812583311FPS versus ON55.320425234112044FPS: +6.8590486% in this
+single pair. Each used180 seconds warm-up and60 seconds measurement, OFF then
+ON, preferred sprite keys, batched-model kernel ON, full C/T uploads and no
+overlay tracking, with all six real combat families validated. Segment p99
+frame intervals changed24/24ms to23/23ms. This is a positive conditional
+measurement, not a60FPS result or a confidence interval across hardware/runs.
+Evidence is manager output/diagnostics/browser-frame-architecture/
+terrain-query-comparison.json. Its loaded snapshot metadata is present/eligible,
+protocol8, dimension3 in both runs, with enabled false versus true. Protocols9
+and10 have the CPU proofs above, not live coverage from this measured scene.
+
+The subsequent instrumented20-second diagnostic is separately preserved at
+manager output/diagnostics/browser-frame-architecture/
+post-terrain-query-profile-1/{sources-profile.json,
+additional-information.json,sources-receipt.json}. The receipt reports GAME,
+ready and no error before/after, with terrainQueryIndex requested/available/
+enabled:true. This generic profile receipt does not export loaded snapshot
+metadata; protocol/dimension/eligibility above come from the comparison receipt,
+not an invented profile field. Signed-level and transition gameplay checks
+remain the manager's next functional gate at this writing.
+
+Actual generated source-body review identifies:
+*J_01a3a798, sourcefb3942a9: enabled/eligible branch, floor-division helper calls,
+ checked dx/dy, x-major index and availability.46 deepest-generated samples,
+ 82 inclusive, confirm this body's presence in the actual capture.
+*J_01a6dc48, source894822e4: enabled cached inclusive int bound comparisons,
+ with4 deepest/inclusive samples. The enabled comparison body has no BigInt
+ arithmetic. These actual generated branches match the reviewed Java path.
+The game GeckoMain1715064 has10,027 sampled stacks,7,364 containing generated
+J_* Java frames. Sample proportions neither quantify FPS saved nor establish
+that a particular helper caused the measured improvement; generated branches
+and continuations are not a full Java source map. No runtime change follows
+from this attribution and no additional worker test/browser/GPU run occurred.
+
+Capture SHA256, respectively profile /additional information /receipt:
+76454c2a8eae524bb6a607c788d398cfa9167c7d60515488dbaf2bcfa8bd87f7
+69a511de350551d47e835a0206dc1fcfd20b520f54d74d415c3a1fd5a0bcf050
+4d3784d02d3880f34af8c1a400f641a070ef86664df24249129993aaf3f4d196
