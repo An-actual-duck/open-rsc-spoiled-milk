@@ -48,3 +48,15 @@ following-error writes, unknown/nested/reset/owner/epoch/pending/ACK cases.
 Independent source-bound CPU proof; game build/stages and real browser policy,
 work counters and FPS acceptance managed by root. No GPU or server processes
 started by this worker. No performance/default-adoption claim.
+
+CPU milestone e87 runtime / ae167 tests
+-------------------------------------
+Independent exact e87 source proof passed 201 full C/raw-T plus exception/catch
+snapshots across 8 baseline/candidate/property JVM variants, and 3,539 explicit
+scope/owner/ACK/footprint lifecycle checks. Evidence (ai2):
+output/tests/browser-overlay-writer-span-independent/20261111T093233897455Z/result.json.
+Own Java Graphics/Coverage/transport/Bridge compilation, existing 1,147
+history/plane/ACK checks (142 rectangle frames), coverage/native RGB, private
+startup controls/defaults and mocked frontend passed. Persisted ai1 receipt:
+output/tests/browser-overlay-writer-spans/e87/result.json.
+No actual browser, GPU or performance acceptance yet.
