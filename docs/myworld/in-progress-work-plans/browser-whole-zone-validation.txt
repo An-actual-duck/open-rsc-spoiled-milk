@@ -229,3 +229,46 @@ Receipt: output/tests/browser-whole-zone-validation/packed-pilot-2/result.json
 The48 undrawn index slots are preserved, matching the producer's capacity-tail
 contract. CompleteDeclared=false remains prominent. No GL, driver allocation,
 actual pixel equality, source-builder parity or performance is inferred here.
+
+Actual Java capture/filter/resolver and signed-scope gate
+--------------------------------------------------------
+27 initial Java cases pass on single full-source bb6175dbd26de8971cc2a110c0d9b4354185ca60
+JAR a6c3f87b5af8c4443c7f41fd58d0e81bbbd7a7a4a36ed0087a0f6ec74f80ae3a.
+Receipt: output/tests/browser-whole-zone-validation/java-dynamic-2/result.json
+43 expanded cases pass with explicitly declared reader-only unit source overlay
+from clean56bab876458874ec20c0c6366edc80c5a61cb510, reader SHA256
+4b4b1567f8b73a050444236be9fea139c9f01e1077d02e5c4366ffd6fa227899.
+Receipt: output/tests/browser-whole-zone-validation/java-dynamic-5-signed/result.json
+The runner validates full dependency build/source/class/asset manifests, records
+actual executed overlay-class hashes, and makes no composite integration-JAR claim.
+
+The actual final mudclient cannot be subclassed. A bare actual instance and actual
+PacketHandler/SceneBaselineState receive detached owned state; no GUI or gameplay
+packet is invoked. The fixture injects only the reader's partial index to isolate
+semantics, so constructor/full-catalog admission stays a SEPARATE gate. It executes
+actual private captureWholeOverworldObjectCells, frame/filter/resolveStatic and
+actual authority helpers. Both static/animated input orders preserve static key
+and sticky reason2; matching cells skip the local static/world upload list and
+retain effect-only descriptors; mutated/mixed cells stay live. Explicit empty,
+partial-cell known-position authority and unknown halo are distinguished. Settings,
+source hash, manifest and unsupported terrain patches refuse. Invalidation clears
+the resolver. Signed−1/−2/10 and non-global L0 remain inactive, preserve the exact
+local frame object and cannot suppress static geometry. Metadata signed level and
+explicit non-global flag17 are checked independently of Classic display plane.
+
+Actual object geometry parity
+------------------------------
+Receipt: output/tests/browser-whole-zone-validation/object-parity-pilot-3-final/result.json
+Pilot-3 catalogue SHA f56cce7908d03f0157869049d613d82426ae191f992f89502da49e94a4be5e25
+is independently source-joined and packed-file verified (same3world/12object/202
+placements scope as pilot-2).29 frontend selection checks include signed/non-global
+local draw preservation; that source result is hash-bound, pending final clean
+frontend checkpoint.7 nonempty object resources acrossL0/1/2,202 placements,
+97038 vertices,11,257,100 packed bytes match the UNCHANGED production canonical
+builder/model transforms and112B/material/index packing exactly.5 empty cells are
+explicit. Production canonical keys also match. Only actual offline asset/model
+setup comes from the preserved clean56 Baker.Context source overlay; ordinary
+geometry construction is invoked from the full-source dependency JAR.
+This comparison is conditional on the supplied seven-word identities. It does
+not independently validate their elevation words, terrain/seam geometry, full GPU
+allocation or image equality. World/upper production-path parity is in progress.

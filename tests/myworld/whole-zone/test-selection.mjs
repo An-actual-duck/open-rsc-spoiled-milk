@@ -33,6 +33,10 @@ assert.throws(()=>first.selection.merge(new Int32Array(),0),/fresh/);checks++;
 assert.throws(()=>select(()=>{},Int32Array.from([1000000,0,0,0,0,0,0,0])),/Pinned/);checks++;
 // Zero color masks still retain world chunks as possible geometry shadow casters.
 {const s=module.createWholeZoneSelection(catalogue,{}),v=metadata();v[8]=v[9]=v[10]=0;s.frame(v,Int32Array.from(rows));assert.deepEqual(ids(s.merge(new Int32Array(),0)),expected);checks++;}
+// Signed level is independent of classic compatibility plane; field17 declares non-global scope.
+for(const level of [-1,-2,10,0]){const stats={},s=module.createWholeZoneSelection(catalogue,stats),v=metadata();v[1]=0;v[2]=level;v[17]=level===0?1:0;s.frame(v,new Int32Array());ok(s.merge(local,level)===local);ok(stats.currentPinnedDraws===0);}
+assert.throws(()=>{const s=module.createWholeZoneSelection(catalogue,{}),v=metadata();v[1]=0;s.frame(v,new Int32Array());s.merge(local,0);},/inactive|scope/);checks++;
+assert.throws(()=>{const s=module.createWholeZoneSelection(catalogue,{}),v=metadata();v[17]=1;s.frame(v,Int32Array.from(rows));},/scope|contract|overworld/);checks++;
 // Loader must reject an incomplete pilot, even though selection can be isolated.
 assert.throws(()=>module.validateWholeZoneManifest(catalogue),/complete|Incomplete|scope|roster|identity mismatch/);checks++;
 const result={passed:true,checks,moduleSha256:sha(source),policySha256:sha(policy),catalogueSha256:sha(raw),catalogue:cataloguePath,sourceRoot:root,scope:'CPU actual selection API on partial source-joined pilot; tests real pinned ID use/mutation/animated/empty/authority/epochs/shadow-zero masks. No Java upload skipping, full catalog readiness, geometry or GPU/performance proof.'};
