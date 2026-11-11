@@ -33,7 +33,7 @@ for(const mode of ['offset-views','raw-buffers','shared-disjoint-planes','wide-t
  check(observer.counters.mismatched===1&&observer.counters.last.mismatches>=2,'Comparison checks raw T bits including negative zero and NaN payload');
  check(bytes(value.t).equals(before),'Mismatch never patches authoritative T');
 }
-for(const kind of ['invalid-header','invalid-op-count','late-glyph','late-rect','generation','short-T','plane-alias','font-short','run-hole']){
+for(const kind of ['invalid-header','invalid-op-count','late-glyph','late-rect','generation','short-T','plane-alias','metadata-alias','font-short','run-hole']){
  const value=input(corpus.frames[0]),beforeC=Buffer.from(bytes(value.c)),beforeT=Buffer.from(bytes(value.t));
  if(kind==='invalid-header')value.header[0]=99;
  if(kind==='invalid-op-count')value.header[4]=0x7fffffff;
@@ -42,6 +42,7 @@ for(const kind of ['invalid-header','invalid-op-count','late-glyph','late-rect',
  if(kind==='generation')value.generation++;
  if(kind==='short-T')value.t=value.t.subarray(0,value.t.length-1);
  if(kind==='plane-alias')value.t=new Float32Array(value.c.buffer);
+ if(kind==='metadata-alias')value.stats=new Int32Array(value.c.buffer,0,32);
  if(kind==='font-short')value.fonts=value.fonts.subarray(1);
  if(kind==='run-hole')value.runs[0]=1;
  assert.throws(()=>validateJournal(value),undefined,kind);checks++;

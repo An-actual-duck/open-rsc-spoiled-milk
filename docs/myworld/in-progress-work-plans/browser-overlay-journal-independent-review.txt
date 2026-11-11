@@ -66,11 +66,11 @@ the Java observer-failure case and source-binds directly to0de2.
 Independent native-module proof
 --------------------------------
 Source-bound result:
-output/tests/browser-overlay-journal-native-independent/20261111T111330889592Z/
+output/tests/browser-overlay-journal-native-independent/20261111T111632625095Z/
   result.json, stdout.log, stderr.log and frozen browser-overlay-journal.mjs
 The detached JS module SHA256 is
 1fbb58be5eea730e8018b5d928dd144960ecd03cd3391b007f3eb0e7a426b9e1.
-All145 checks pass, including EVERY Java-exported C int/raw T bit, separately
+All149 checks pass, including EVERY Java-exported C int/raw T bit, separately
 allocated replay, authoritative input immutability and correct match counters.
 
 Additional obligations exercised:
