@@ -4,6 +4,21 @@ This document tracks the high-level path from the current alpha toward beta.
 Detailed implementation plans remain in their subject-specific documents; this
 roadmap defines priorities, milestone boundaries, and release progression.
 
+## Private whole-overworld experiment — November 11, 2026
+
+The complete prepared catalogue was admitted in Firefox: 1,400 geometry resources
+and 74 textures, about 2.06 GiB of tracked immutable GPU data. The primary walking
+pair reduced mean warm gaps from 1,577.5 to 501.25 ms, while stationary fresh world
+FPS fell from 50.81 to 42.83. This remains a private, default-off experiment;
+full classic CPU residency, seamless travel and 60 FPS are not established.
+See the [measured results and remaining gates](browser-whole-zone-experiment-results.txt)
+and [implementation contract](browser-whole-overworld-zone.txt).
+
+Profile the stationary regression and residual local construction pauses before
+choosing another implementation. The earlier [modern streaming plan](browser-modern-streaming-plan.txt)
+remains saved and deferred pending review. The audit entry below records the
+prior evidence state; it does not overwrite this later hardware experiment.
+
 ## Browser architecture audit — November 11, 2026
 
 The read-only audit covers the entire overworld as one continuous L0 zone

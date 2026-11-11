@@ -1,0 +1,111 @@
+Whole-overworld browser experiment — November 11, 2026
+======================================================
+PRIVATE / DEFAULT OFF. The complete GPU catalogue worked on the tested host.
+Walking pauses improved, but stationary rendering regressed. This is experimental
+evidence, not adoption, seamless travel, full classic CPU residency or 60 FPS.
+
+Measured results
+-----------------
+Primary original-walking pair: walking-on-3 versus walking-off-2. Both used the
+same frozen artifact/options and original minimap pointer input, with only
+wholezone toggled. Server authority confirmed the route from (111,625,0), across
+y=623/624, completing six boundary epochs (1 to 7) without load-report poll gaps.
+Preparatory distant admin teleports are excluded. The final four crossings,
+after approach and first out/return priming, measured:
+                                  ON                       OFF
+  New-frame gaps (ms)              585,436,552,432           707,3399,1495,709
+  Mean warm gap                   501.25 ms                1,577.5 ms
+  Whole route elapsed             12.478 s                 17.554 s
+  Held images over route          4                        118
+  Largest new-frame gap           1,384 ms                 3,399 ms
+
+Mean warm gap fell 68.23%, but roughly 0.4–0.6 second warm pauses remain. Route
+elapsed includes input/polling/settling, not pure CPU time or steady FPS. Per-leg
+new interval tails distinguish fresh gaps from overlapping historical maxima;
+held images do not count as fresh world frames. This is one primary pair, not a
+randomized or multi-device estimate. walking-on-2 is preserved but not pooled.
+
+Accepted stationary-on-2/off-1 samples used the same camera pose/source/settings,
+were visible, focused and ready, and had no held frames during each 12 s sample:
+                                  ON                       OFF
+  Fresh frames / elapsed          517 / 12.071 s           614 / 12.085 s
+  Fresh world FPS                 42.83                    50.81
+  Observed draw calls             412                      379
+  Observed triangles              463,882                  464,554
+
+Fresh world FPS regressed 15.70%. The nominal 60 FPS Java/UI counter is not proof
+of fresh world FPS. Backend/Worker frame completion is not physical scanout or a
+GPU fence each frame. Draw/triangle counts do not establish GPU-time causation.
+
+Artifact, capacity and scope
+-----------------------------
+Runtime: e8ee5a0424df575539870d598306d8025cfd6872
+JAR: 9ff4938b78d0c3a040ba2c9d1c482abc26661b1d3edb80e427a8c8a42fa6cec2
+Catalogue: 1aa06bcc8f9acc309f8e391545885d7b547751e124eb867f52755979735f1008
+
+The full bake accounts for 445 L0, 444 L1 and 441 L2 sectors, 1,330 world-cell
+records, 5,320 object-cell records and 24,580 authored placements. All 1,400
+geometry resources plus 74 textures were admitted in actual Firefox. Full-file
+checks and all six level/type geometry totals match the independent audit.
+Positive Java constructor admission and actual GPU startup readiness are distinct
+passed gates. Unchanged local static draws use the prepared catalogue.
+
+Tracked immutable GPU bytes: geometry 2,204,166,924 + textures 3,031,040 =
+2,207,197,964 (2.055613 GiB, about 2.06 GiB). Local live geometry, shadows, sprites,
+overlays, framebuffers and driver overhead are separate. rawSourceCPUReady=false:
+raw map/classic model data is not all resident in Java RAM; local collision,
+picking, scene construction and server interest remain bounded existing systems.
+
+Startup automation took 55.677 s ON versus 48.045 s OFF: about 7.63 s extra local
+time. BOTH totals include 22 s artificial login settle and slow typing. Warm OS/
+loopback files and one pair do not establish engine-only load cost, WAN behavior
+or a production cold-start promise. The bake itself was prepared offline.
+Whole-host AMD VRAM counters rose about 2.45 GiB, including desktop/driver/shadows
+and possible unrelated changes; this is not exact context allocation. Summed
+Firefox RSS can double-count shared pages. The queried host has RX 6700 XT/12 GiB
+VRAM and about 32 GiB RAM; Firefox exposed an AMD/R9-family label. Other devices
+remain untested.
+
+Actual scope smoke reached (700,441,0), underground (6,563,-1), signed level 10 (99,705,10)
+and returned to (133,660,0), ready without reported backend errors. All 1,400
+geometry resources remained pinned; signed -1/10 used local draws with whole-L0
+selection inactive. These admin-teleport smoke checks are not walking/FPS tests.
+
+Evidence and exclusions
+------------------------
+Manager base: output/diagnostics/browser-whole-overworld-zone/
+ experiment-result.json SHA256
+ 79bd016d9abdbc543cddc6cc6e71c77a0af34c2dbc152924196f1aae363df33c
+ full-catalogue-check.json, full-packed-check.json, full-audit-reconciliation.json
+ startup-on-3/ and startup-off-1/
+ walking-on-3/route/result.json; walking-off-2/route/result.json
+ stationary-on-2/{result,samples}.json; stationary-off-1/{result,samples}.json
+ scope-smoke-1/results.json
+Final evidence check: output/reviews/browser-whole-overworld-zone/final-evidence-check.json
+Java admission: output/tests/browser-whole-zone-constructor/integrated-1/result.json
+
+walking-on-1 failed camera preflight after exploratory preview movement, cause
+unestablished; no route input/result was accepted. walking-off-1 reached the tile
+but not the required camera Z; no measured route started. A later excluded distant
+reset corrected setup. stationary-on-1 lacked visibility proof from an optional
+field; accepted=false is preserved. Later samples read document.visibilityState.
+
+Remaining gates and next step
+------------------------------
+Actual door/tree changes, full GPU image/roof/indoor parity, forced context loss,
+long soak and broader traversal/device acceptance remain open. The 43 dynamic/
+signed Java unit cases and representative geometry oracles are separate evidence.
+Selected upper native pages can differ from normal legacy fallback, so exact
+full-scene ON/OFF pixels must not be assumed. Normal stop/disposal and OS release
+were exercised. No public deployment or default change follows from this test.
+
+Profile stationary ON/OFF before choosing a fix. Java per-cell clones, scans,
+string/map/JSON lookup and material sorting, plus changed draw/shadow submission
+counts, are source-backed hypotheses, not proven causes of the regression. Then
+profile remaining local collision/pick/region construction, including held returns
+and pre-bridge time. Preserve visuals/fog while measuring. The earlier
+browser-modern-streaming-plan.txt remains saved and deferred pending review;
+its reuse, budgets, background preparation, compact formats and later kernel/
+instancing options are not rejected or automatically authorized by this report.
+See browser-whole-overworld-zone.txt, browser-whole-zone-backend.txt and
+browser-whole-zone-validation.txt for the contract and historical unit evidence.
