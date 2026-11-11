@@ -23,6 +23,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private BrowserWholeOverworldRam wholeRam;
     private static volatile int[] wholeRamWork=new int[0];
     public static int[] getWholeRamWork(){return wholeRamWork.clone();}
+    static void publishWholeRamWork(int[] work){if(work.length!=18||work[0]!=1)throw new IllegalStateException("Whole-RAM work schema");wholeRamWork=work.clone();}
     public static boolean isWholeRamEnabled(){return BrowserWholeOverworldRam.isEnabled();}
     private static volatile int[] wholeZoneWork=new int[0];
     public static int[] getWholeZoneWork(){return wholeZoneWork.clone();}
