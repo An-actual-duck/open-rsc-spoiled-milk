@@ -51,7 +51,7 @@ export function transformModelVertices(count, sx, sy, sz, px, py, rx, ry, rz,
 
 export function createNativeModelKernel() {
   const stats = {attempts: 0, calls: 0, vertices: 0, rejections: 0};
-  return {stats, async native(lib, ...args) {
+  return {stats, native(lib, ...args) {
     stats.attempts++;
     const used = transformModelVertices(...args);
     if (used) { stats.calls++; stats.vertices += args[0]; } else stats.rejections++;

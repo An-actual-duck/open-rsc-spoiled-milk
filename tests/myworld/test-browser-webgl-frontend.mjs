@@ -68,9 +68,11 @@ const physicalOutputModule=new vm.SourceTextModule(fs.readFileSync(new URL('../.
 const controlsModule = new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-benchmark-controls.js',import.meta.url),'utf8'),{context});
 const streamValidationModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-upload-validation.js',import.meta.url),'utf8'),{context});
 const spriteKeyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-sprite-key-policy.js',import.meta.url),'utf8'),{context});
+const modelKernelModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-native-model-kernel.js',import.meta.url),'utf8'),{context});
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{const selected=specifier==='./browser-native-call-dispatch.js'?nativeModule:gpuModule;if(selected===gpuModule)assert.equal(specifier,nativeMode==='sync'?'./webgl-sync.js':'./webgl.js');assert(selected,'Unexpected native helper import');if(selected.status==='unlinked')await selected.link(()=>{});if(selected.status==='linked')await selected.evaluate();return selected;}});
 await module.link(specifier=>{
+  if(specifier==='./browser-native-model-kernel.js')return modelKernelModule;
   if(specifier==='./browser-stutter-diagnostics.js')return stutterModule;
   if(specifier==='./browser-geometry-transfer-policy.js')return geometryModule;
   if(specifier==='./browser-preparation-candidates.js')return preparationCandidatesModule;
@@ -100,6 +102,10 @@ if(!benchmarkStream)assert.equal(window.browserBenchmarkOwnedState,undefined);
 else assert.equal(typeof window.browserBenchmarkOwnedState,'function');
 if(!benchmarkStream)assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserModelPickBounds=')||p.startsWith('spoiledmilk.presentationHaloMatchReuse=')),false,'Ordinary frontend must not override CPU benchmark experiment policies');
 else {assert(configured.javaProperties.includes('spoiledmilk.browserModelPickBounds=false'));assert(configured.javaProperties.includes('spoiledmilk.presentationHaloMatchReuse=true'));}
+assert.equal(typeof configured.natives.Java_orsc_graphics_three_BrowserNativeModelKernel_transform,'function');
+assert.equal(window.browserProof.nativeModelKernelWork.calls,0);
+assert.equal(configured.javaProperties.includes('spoiledmilk.browserNativeModelKernel=false'),benchmarkStream);
+assert.equal(configured.javaProperties.includes('spoiledmilk.browserNativeModelKernel=true'),false);
 assert.equal(middleCreated,1,'WebGL frontend creates one middle-input owner');
 assert.equal(window.browserProof.middleInput,middleStats,'proof counters come from the real module seam');
 assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent,middleNative,'Java input consumer is merged into CheerpJ natives');
@@ -107,7 +113,7 @@ assert.deepEqual(Array.from(await configured.natives.Java_orsc_browser_BrowserBo
 assert.equal(canvas.style.pointerEvents,'none');
 assert.equal(configured.enableInputMethods,false);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportRegionPreparationDiagnostics(null,true,[10,2,1672704]);assert.equal(window.browserProof.regionPreparationDiagnostics.hits,10);assert.equal(window.browserProof.regionPreparationDiagnostics.retainedTileBytes,1672704);
-for(const name of ['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage'])for(const [requested,available,enabled]of [[false,false,false],[true,true,false],[true,true,true]]){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(null,name,requested,available,enabled);assert.deepEqual(JSON.parse(JSON.stringify(window.browserProof.privatePolicies[name])),{requested,available,enabled});}
+for(const name of ['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','nativeModelKernel'])for(const [requested,available,enabled]of [[false,false,false],[true,true,false],[true,true,true]]){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(null,name,requested,available,enabled);assert.deepEqual(JSON.parse(JSON.stringify(window.browserProof.privatePolicies[name])),{requested,available,enabled});}
 assert.equal(gpuOptions.streamUploadValidation,true,'Ordinary WebGL adopts validated streaming policy');assert.equal(stats.streamUploadValidationActive,true,'Actual selected backend streaming receipt');
 if(benchmarkStream){assert.equal(typeof window.browserBenchmarkStreamUploadValidation,'function');window.browserBenchmarkStreamUploadValidation(false);assert.equal(streamRequested,false);assert.equal(window.browserProof.benchmark.streamUploadValidationRequested,true);}else assert.equal(window.browserBenchmarkStreamUploadValidation,undefined,'ordinary sessions cannot change stream policy');
 assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserFramePreparation=')||p.startsWith('spoiledmilk.browserAnimatedBufferReuse=')),benchmarkStream,'only private benchmark URL receives preparation overrides');
