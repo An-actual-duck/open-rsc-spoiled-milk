@@ -1,0 +1,131 @@
+Private browser-native model transform kernel
+=============================================
+
+Scope and ownership
+-------------------
+This is a default-OFF private experiment, not an adopted performance improvement.
+It moves only RSModel.rotate1024's numeric vertex loop from CheerpJ-generated
+Java code into an explicit JavaScript Int32Array kernel. The Java caller still
+owns model-transform refresh, world bounds/frustum decisions, trigonometry table
+lookups, visibility, face processing, picking and exception wrapping. The
+existing Java loop remains literally unchanged as the default and fallback.
+No gameplay, camera rules, geometry, shaders, shadows, artwork or native desktop
+renderer defaults change. No server or public deployment is part of this task.
+
+Rationale
+---------
+The manager's live Firefox combat CPU sample found a generated function whose
+current-session body structurally matches RSModel.rotate1024, accounting for
+about13% of deepest-JS samples in two20-second diagnostic windows. That is
+motivation for a targeted native kernel, not proof of an achievable FPS gain.
+The JavaScript loop uses Math.imul for wrapping32-bit products, signed shifts
+and truncation to match Java integer arithmetic. Source and output arrays are
+borrowed in the native call, consumed inline, and never retained.
+
+CheerpJ's current interop documentation states int[] and Int32Array are passed
+by reference: https://cheerpj.com/interoperability/
+Native callbacks may return a value or Promise:
+https://cheerpj.com/docs/guides/implementing-native-methods.html
+Our new callback returns a synchronous boolean because its entire operation is
+local numeric work. It does not adopt the separate global sync-dispatch
+experiment or alter existing native callbacks. Actual browser JNI writeback
+must be verified, not inferred solely from these documents or CPU tests.
+
+Private controls and receipts
+-----------------------------
+Only WebGL benchmark URLs parse modelkernel=on/off; default off. Ordinary and
+software URLs do not add the property. The opt-in property is
+spoiledmilk.browserNativeModelKernel. BrowserBootstrap explicitly installs
+BrowserNativeModelKernel only when both the benchmark and kernel properties
+are true. Property-only desktop startup still uses the original Java loop.
+
+browserProof.privatePolicies.nativeModelKernel reports requested/available/
+enabled from the actual Java getter. An old client JAR without the helper is
+reported unavailable; requesting ON fails rather than pretending it is enabled.
+browserProof.nativeModelKernelWork reports actual native attempts, successful
+calls, vertices and rejections. Enabled without successful calls is not proof
+that the kernel ran. No new hot-loop timers or browser polling are introduced.
+
+Fallback and failure boundaries
+-------------------------------
+Java checks positive vertex count and near plane, every input/output length,
+nulls and all output/source or output/output identity aliases before JNI.
+JavaScript validates Int32Array representation, scalar int ranges and shared
+ArrayBuffer overlap before any write. Source/source aliases are supported.
+Unsupported inputs return false and execute the literal Java loop. Nonpositive
+near planes deliberately retain Java behavior, including possible division by
+zero and partial writes. Positive near planes guarantee a nonzero divisor in
+the division branch. Malformed trig indices still fail in the unchanged Java
+setup before the native branch. Backend errors are not assumed to become Java
+Throwable instances; no fake Java catch/recovery contract is claimed.
+
+CPU verification
+----------------
+  python3 tests/myworld/test-browser-native-model-kernel.py --baseline-jar JAR
+
+The suite compiles the actual frozen8b888cd2f RSModel separately. It verifies
+that the candidate's rotation method, with only its tiny opt-in insertion
+removed, is identical to that frozen method. Actual frozen Java outputs and
+candidate OFF/property-only outputs are byte-identical. The native JS kernel
+matches all eight complete arrays, including unchanged inputs and spare padding,
+across6000 cases,194223vertices and1697784integer values. Cases cover all axis
+combinations, positive/negative/extreme coordinates and offsets, wrapped integer
+products/sums/shifts, signed projection and multiple near planes.160JS guards
+verify rejection leaves arrays unchanged;52Java guard checks pass.40 malformed,
+aliased, near-zero/negative and bad-trig cases preserve the wrapped exception
+type/message and partially written arrays against the frozen implementation.
+The fallback digest is
+c124c629f6c2e54325d4fa406e7a16788ddba1c4f24c3769d677a47b5270c4af.
+
+The private bootstrap compiles against current production classes. Mocked
+frontend tests pass for ordinary, repeatable, combat and kernel-ON routes,
+including actual native registration and absence of ordinary opt-in changes.
+CPU or mocked frontend checks do not establish browser visibility or FPS.
+
+Artifacts and provenance
+------------------------
+Full clean JDK8 build at494ff659bf46afb53c2a7db9204ba50b9fe70a60:
+  output/builds/browser-native-model-kernel/source-494ff659b/client.jar
+  SHA2567a9dc501b1d12de91ce2105e0f7866160cc5e22898ac9bd28688c0034648cf0f
+Only RSModel.class differs from approved baselinef72047bf; the sole added class
+is BrowserNativeModelKernel.class. All2265 maintained animation PNGs are byte
+identical. Later frontend/test/documentation changes do not mutate that JAR.
+The full receipt and build log are adjacent to it. No other parked experiment
+is mixed into that artifact.
+
+The first asynchronous callback probe was actually run by the manager in an
+isolated Firefox:64successful calls,2254vertices,19568Java array values, zero
+rejections, exit0. Manager evidence:
+output/diagnostics/browser-frame-architecture/kernel-contract-host-1/
+actual-contract-result.json. This proves JNI writeback for that artifact, not
+FPS. The first probe's advertised HTTP command needed correction because the
+standard server requires browser-spike.jar; its frozen files were preserved and
+the manager used a validated range handler. Future probes use the proper
+browser-spike.jar filename/classpath. A bounded loopback CPU HTTP smoke verified
+HEAD200, exact harness length, ranged206 client bytes and HTML classpath, then
+stopped that HTTP process. No browser or GPU was started by the worker.
+
+Synchronous callback frontend checkpoint:
+a22689b5d1976aaf57bdec9ac44e0736e5ed1cba
+Native module SHA256:
+6e34e31a31ec6cea4a8bd2aff9ef8cbbc94849aed51a6a6d397b3e1f0a2aab7e
+Frozen prepared-only stages (all use the same7a9dc501 client JAR):
+  tests/browser-native-model-probe/kernel-sync-a22689b5d (HTTP8189)
+  tests/browser-gameplay-spike/native-kernel-static-sync-a22689b5d (HTTP8187)
+  tests/browser-gameplay-spike/native-kernel-combat-sync-a22689b5d (HTTP8188)
+Each directory is under output/. Preparation receipts hold exact commands and
+hashes; they do not authorize or claim a server/browser start. The combat stage
+uses a congruent frozen server artifact snapshot whose source is explicitly
+unverified; it is not called current main. Older async stages stay untouched.
+
+Remaining manager acceptance
+----------------------------
+Verify the final synchronous callback's actual64-case JNI contract, then measure
+same-artifact ON/OFF fixed crowd, real spell/summon combat and area transitions,
+checking successful native counters and unchanged picking/visuals. Per-model
+native-call overhead could offset saved arithmetic, so no gain or60FPS claim is
+made by this worker. Keep defaultOFF unless balanced measurements support adoption.
+
+workspace-layout.py check was run. This worker inherits an existing ignored
+assets/sprites tree and many historical unclassified output roots; those were
+preserved. All new work uses declared tests/ and builds/ categories.

@@ -16,7 +16,8 @@ const physicalOption=process.argv.includes('--physical-off')?'off':process.argv.
 const repeatable=process.argv.includes('--repeatable');
 const combat=process.argv.includes('--combat');
 const benchmarkKeys=process.argv.includes('--benchmark-key-limbs');
-const benchmarkStream=process.argv.includes('--benchmark-stream')||benchmarkKeys||repeatable||combat||nativeExplicit;let streamRequested;
+const benchmarkKernel=process.argv.includes('--model-kernel');
+const benchmarkStream=process.argv.includes('--benchmark-stream')||benchmarkKeys||repeatable||combat||nativeExplicit||benchmarkKernel;let streamRequested;
 let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, displayDisposed = 0, configured,gpuOptions;
 const status = {textContent:''}, messages = [];
 let layoutReads=0;
@@ -26,7 +27,7 @@ const canvas = {style:{},setAttribute(){}};
 const stats = {lastError:null,lastFrame:0};
 const gateEvents=[];
 const window = {dispatchEvent:e=>gateEvents.push(e.type),browserRuntimeVersion:'5.0',addEventListener(){}};
-const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
+const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkKernel?'&modelkernel=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
   URLSearchParams,performance:{now:()=>clock},console,
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
@@ -104,8 +105,8 @@ if(!benchmarkStream)assert.equal(configured.javaProperties.some(p=>p.startsWith(
 else {assert(configured.javaProperties.includes('spoiledmilk.browserModelPickBounds=false'));assert(configured.javaProperties.includes('spoiledmilk.presentationHaloMatchReuse=true'));}
 assert.equal(typeof configured.natives.Java_orsc_graphics_three_BrowserNativeModelKernel_transform,'function');
 assert.equal(window.browserProof.nativeModelKernelWork.calls,0);
-assert.equal(configured.javaProperties.includes('spoiledmilk.browserNativeModelKernel=false'),benchmarkStream);
-assert.equal(configured.javaProperties.includes('spoiledmilk.browserNativeModelKernel=true'),false);
+assert.equal(configured.javaProperties.includes('spoiledmilk.browserNativeModelKernel=false'),benchmarkStream&&!benchmarkKernel);
+assert.equal(configured.javaProperties.includes('spoiledmilk.browserNativeModelKernel=true'),benchmarkKernel);
 assert.equal(middleCreated,1,'WebGL frontend creates one middle-input owner');
 assert.equal(window.browserProof.middleInput,middleStats,'proof counters come from the real module seam');
 assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent,middleNative,'Java input consumer is merged into CheerpJ natives');

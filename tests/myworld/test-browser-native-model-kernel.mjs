@@ -33,6 +33,7 @@ for(let n=9;n<23;n++)if(n!==13)for(const invalid of [undefined,NaN,Infinity,0.1,
 assert.deepEqual(nativeModelKernelPolicy('software',new URLSearchParams('benchmark=1&modelkernel=on')),{properties:[],requested:false});
 assert.deepEqual(nativeModelKernelPolicy('webgl',new URLSearchParams('modelkernel=on')),{properties:[],requested:false});
 assert.deepEqual(nativeModelKernelPolicy('webgl',new URLSearchParams('benchmark=1')),{properties:['spoiledmilk.browserNativeModelKernel=false'],requested:false});
+assert.deepEqual(nativeModelKernelPolicy('webgl',new URLSearchParams('benchmark=1&modelkernel=on')),{properties:['spoiledmilk.browserNativeModelKernel=true'],requested:true});
 assert.throws(()=>nativeModelKernelPolicy('webgl',new URLSearchParams('benchmark=1&modelkernel=bad')));
 const native=createNativeModelKernel();const returned=native.native(null,...valid());assert.equal(typeof returned?.then,'undefined');assert.equal(returned,true);assert.equal(native.stats.calls,1);assert.equal(native.stats.vertices,3);assert.equal(native.stats.rejections,0);assert.equal(await native.native(null,...[0,...valid().slice(1)]),false);assert.equal(native.stats.rejections,1);
 console.log(JSON.stringify({passed:true,cases,vertices,values,guards,scope:'Exact frozen Java array outputs and mutation-free unsupported-input rejection; CPU only, no FPS claim'}));
