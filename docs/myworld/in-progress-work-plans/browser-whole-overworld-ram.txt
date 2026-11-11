@@ -1,0 +1,181 @@
+Whole-overworld RAM experiment — private CPU prototype READY
+===============================================================
+
+Private, explicit wholeram=on, requiring wholezone=on and browser benchmark
+mode. Ordinary browser/native/software paths remain literal. No server protocol,
+map, visual scope, fog, collision rule or gameplay authority changes.
+
+The experiment retains three different things, reported separately:
+1. All 1,797 exact selected-package files (46,101,718 payload bytes), in one
+   owned, indexed WRA1 source bundle. These bytes alone are NOT prepared-ready.
+2. 445 global L0 activation recipes captured by the production native-authority
+   landscape pipeline. Recipes retain cooked tile fields, static collision,
+   final elevations, minimap pixels, and ordered wall/roof picking models.
+   Primitive pages are content-interned across recipes. Active arrays/models
+   are independently owned; identical immutable pages never merge independent
+   mutable aliases. Live scenery, doors and trees are applied after activation
+   by the existing authoritative materialization path.
+3. 1,330 canonical global L0/L1/L2 CPU query-cell products. These support the
+   existing terrain definition/roof/lighting queries without rebuilding the
+   full visual GPU mesh on each crossing. The separate GPU catalog supplies
+   visual geometry. GPU mesh avoidance is counted separately from recipe hits.
+
+Only global L0 consumes activation recipes. Signed underground, positive
+non-overworld levels and other world spaces keep the original bounded path.
+Unknown/stale source, editor patches, mismatched client/catalog/settings,
+unsupported CPU roof options or incomplete preparation refuse the private mode.
+Content-identical snapshot epochs reuse preparation; network readiness and local
+object authority remain mandatory. No stale server packet can activate a window.
+
+Delivery: Cache/whole-ram/manifest.json (<=4 MiB), source.bin and prepared.bin.
+Raw manifest/bundle is owned by the frontend tooling. Java owns WRP1 prepared
+format and validates all lengths/counts before allocation/publication. The
+prepared extension contains schemaVersion,path,bytes,sha256,recipes,queryCells,
+levels,pageCount,modelTemplateCount,retainedPrimitiveBytes,hiddenRoofs. complete=true requires
+the exact full roster; bounded pilot outputs remain incomplete and cannot claim
+whole-RAM readiness. Preparation is atomic; no partially decoded provider is
+installed. Prepared bytes are streamed into typed storage, not retained twice.
+
+World integration bypasses terrain/wall/roof emission, grid splitting and
+redundant GPU construction on a prepared activation. It still resets/publishes
+the local scene, copy mutable collision/tile/elevation state, instantiate mutable
+model workspaces, apply live authority and perform ordinary picking/projection.
+Scenery model cloning is deliberately retained in this first experiment.
+
+Bounded test entry uses the same capture/activation/codec path on a few specified
+centres. It reports partial preparation and cannot satisfy startup readiness.
+Tests compare production output including model/face/pick order, transformed
+coordinates, light/material/UV data, directions, minimap, collision, elevation,
+fresh content-identical epochs, mutation isolation and live overlay behavior.
+
+Low-frequency reportWholeRamWork(int[18]): schema=1, sourceReady,preparedReady,
+rawFiles,rawBytes,recipes,queryCells,primitiveBytesLo,primitiveBytesHi,activations,
+recipeHits,modelsInstantiated,mutableBytesCopiedLo,mutableBytesCopiedHi,
+gpuBuildsAvoided,sourceValidateCount,prepareMilliseconds,activationMilliseconds.
+Counts saturate at INT_MAX except split-byte totals. These are CPU accounting,
+not browser RSS, GPU memory or a performance claim. Native fixture heap and
+browser/process RSS/peak are separate observations; CheerpJ memory is browser
+managed and receives no desktop -Xmx setting.
+
+Pilot gates precede full cooking. Root owns actual Firefox/GPU/route acceptance
+and the final unified full-source client build plus newly bound GPU bake.
+No public deployment or ordinary-default adoption is part of this experiment.
+
+Implemented boundaries and measured CPU evidence (2026-11-11)
+------------------------------------------------------------
+World.loadSections consumes a source-validated recipe instead of running
+terrain/wall/roof emission and grid splitting. World scope/halo preparation uses
+immutable query cells instead of rebuilding visual GPU meshes. Network snapshot
+readiness gates still run. All available AND void slots must match the authored
+roster; legacy protocol4/24-tile and mixed-size authority windows are refused.
+The supported basis is native-only, global L0, zero translation, protocol5+
+with48-tile slots. Other signed levels/world spaces use the original path.
+
+Prepared activation owns fresh model camera/transform/light/index arrays. The
+pool content-deduplicates immutable primitive arrays, but per-model alias-group
+records preserve distinct equal-content mutable arrays when instantiated. Model
+field codec covers all93 instance fields (immutable m_Vb constant preserved by
+constructor); no reflection runs in hot model activation. Query records retain
+actual cropped vertex/normal/UV/light/blend/index/kind/material words. Their
+content-hashed identities differ from uncropped144-window storage; primary roof
+coverage uses the actual143-face axis and includes its bits in wrapper identity.
+
+One precise observable-equivalence qualification: the old accumulator retains
+unused vertDiffuseLight words for flat-shaded wall vertices from prior roof
+builds. A cook's prior build order can differ from a fresh literal World. These
+unconsumed scratch words may differ. Every Gouraud/sentinel-reachable vertex,
+including shared vertices, must still compare exactly, as do actual front/back
+render lights. Maintained consumption reads are Scene's legacy sentinel branch,
+Scene.renderer3DBaseLightForVertex and
+RSModel.ObjectChunkMeshBuilder.objectLegacyLightForVertex. copyFaceTo only
+propagates the value with the unchanged flat-face flag. A new consumer requires
+review; this exception does not weaken the separate bit-exact93-field codec.
+
+Independent tests so far:
+* 64,394 model/publication/query checks on frozen0fda16196 full-source JAR:
+  actual production loadSections vs streamed prepared data at2:12,2:13,3:13;
+  collision/elevation/tile fields/directions/minimap, ordered pick models,
+  actual front/back lights, mutable isolation, live tree/door overlap and empty
+  restoration; all143²roof bits; raw canonical query words and warm/fresh terrain
+  definition/roof cache identity. Proof: ai-3/output/tests/browser-whole-ram/
+  activation-roof-fix-6/result.json. The first320-vs324roof metadata rejection
+  remains preserved, rather than being counted as a passing activation.
+* Own bounded decoder corpus:20,484 checks, including truncation/header/version,
+  count/type/allocation bounds, malformed late model/kind/loaded references,
+  successful pool roundtrip, bulk-SHA equality and143²bit addressing. Latest
+  run: output/tests/browser-whole-ram-codec/20261111T221121Z/result.json.
+* Full source/reader21e742773: independent actual full constructor and22
+  activation/admission/refusal checks passed; additional failure gates follow
+  in the independent final review. This is CPU readiness, not actual GPU proof.
+* Ordinary-OFF regression:73 packed chunk/cache/publication checks, all6animated
+  identity/LRU/control variants,4whole-zone policy gates and default frontend
+  mock passed against the full source-capacity-3 client. No hardware claim.
+
+Full native CPU cook source21e742773 / JAR SHA256
+ ec5475e3cc927dbd682f53695e7c0f3716ebd6c901d681f27d409aa96b951fe2:
+ exact445recipes +1330query cells;50,796primitive pool entries;
+ 12,174unique ordered model templates;
+ prepared.bin240,959,569bytes (SHA256
+ 5112468575590c75191ef49ee5e3ed316492e7cc124e82123c28a705cec95496);
+ retained prepared primitive payload240,524,781bytes;
+ source bundle46,101,734bytes including16-byte header;
+ combined primitive lower bound286,626,515bytes (~273.35MiB).
+ Native cook wall19.65seconds, -Xmx1536m/SerialGC,
+ max process RSS1,679,384KiB, end observed Java heap903,531,528bytes.
+ Receipt: output/tests/browser-whole-ram-products/full-capacity-3/receipt.json;
+ build provenance: output/builds/browser-whole-overworld-ram/source-capacity-3/
+ receipt.json (976maintained classes,3194packaged game assets, no class splice).
+ This worker cook intentionally references the old GPU catalog ONLY as a source/
+ settings reference with explicit neverRuntimeReady pilot provenance. Root must
+ produce a fresh main/client/GPU/RAM-bound cook for the actual browser session.
+
+The primitive lower bound excludes Java objects/array headers/enum references,
+active mutable model workspaces, ordinary scenery instances and baseline caches,
+CheerpJ/browser/VFS delivery buffers, JS/driver staging and GPU memory. Files may
+also remain in the browser virtual filesystem. The cook peak includes temporary
+production construction/cache work and must not be presented as browser runtime
+RAM. All source files are retained, but this is not a claim that every classic
+scenery RSModel exists globally. Actual browser RSS, initial wait, travel gaps,
+steady FPS, signed-layer transitions, dynamic updates and visual/picking checks
+remain manager hardware gates. No seamless-loading or performance gain is claimed.
+
+Startup publishes zero -> verified-source-only -> complete-prepared states via
+existing bounded diagnostics; constructor/error/failed activation clears ready
+flags. Data is streamed with bulk SHA buffering. C_HIDE_ROOFS is bound explicitly
+by prepared.hiddenRoofs; changing it or packing/material/source inputs refuses
+this private cook. prepared.bin and its primitive pool each have1536MiB limits.
+No desktop heap setting is passed to CheerpJ.
+
+Final worker handoff evidence
+-----------------------------
+Final full-source build commit7986d1b63390453d0beb3aadba3fbb0be3800937:
+ output/builds/browser-whole-overworld-ram/source-final-4/receipt.json
+ JAR5fa57ee2174f49881282d05b69e020ac50e126a950e1690adbb99aa1e0e7e86e
+ source manifest3b597fd47d3a0c28b4d21c91fb298f22ee75d8a704c86a1535690f149b632eac
+ 976maintained classes /3194game assets, no transplanted classes.
+Only BrowserWholeOverworldRam.class differs from source-capacity-3: the avoided
+build diagnostic increment is synchronized to avoid losing concurrent halo/main
+increments. All other class entries and all game assets are byte-identical.
+No data, geometry, model or prepared-format changes follow the complete CPU cook.
+
+Latest independent unified21e742773 proofs:
+ ai-3/output/tests/browser-whole-ram/activation-roof-fix-7/result.json:
+ 64,417 model/publication/query checks against the full445/1330 dataset.
+ ai-3/output/tests/browser-whole-ram/full-reader-21e-4/result.json:
+ 32 actual full-reader/activation/refusal checks, including source/editor/options,
+ map/JAR/GPU binding, legacy24/mixed-size/authored-void/sourcehash failures,
+ signed/non-global fallback and failure after raw-source readiness clearing both
+ flags. Deliberate native OOM recovery was source-reviewed, not executed.
+ Source delivery/baseline:5,413 independent checks (review branch owns receipt).
+Final worker JAR decoder suite re-run:
+ output/tests/browser-whole-ram-codec/20261111T221831Z/result.json,20,484PASS.
+
+Manager integration steps: merge exact READY implementations/review; build one
+fresh full main JAR; bake whole-zone GPU data from it; build verified WRA1 source
+and complete WRP1 CPU data from the same JAR/GPU catalog; stage ON-only RAM files
+and hash properties with ai-2's whole-ram tools. Use fresh output names and keep
+all older cooks/stages intact. Manager owns actual Firefox startup/full residency,
+normal overlays/options/input, doors/trees and signed transitions, ordinary
+walking cadence plus steady completed-frame FPS/RSS/VRAM comparisons. All those
+hardware gates remain pending. The feature remains private explicit ON/default
+OFF regardless of these CPU results; no public/release action is authorized here.

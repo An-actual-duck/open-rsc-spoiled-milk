@@ -1,0 +1,14 @@
+package orsc.graphics.three;
+import java.io.*;
+/** Fixed little-endian prepared protocol, streamed without a second whole-file allocation. */
+public final class WholeRamIO {
+ private WholeRamIO(){}
+ public static final class Output implements DataOutput {
+  private final DataOutputStream out;public Output(OutputStream stream){out=new DataOutputStream(stream);}
+  public void write(int b)throws IOException{out.write(b);}public void write(byte[] b)throws IOException{out.write(b);}public void write(byte[]b,int o,int n)throws IOException{out.write(b,o,n);}public void writeBoolean(boolean v)throws IOException{out.writeBoolean(v);}public void writeByte(int v)throws IOException{out.writeByte(v);}public void writeShort(int v)throws IOException{out.writeShort(Short.reverseBytes((short)v));}public void writeChar(int v)throws IOException{writeShort(v);}public void writeInt(int v)throws IOException{out.writeInt(Integer.reverseBytes(v));}public void writeLong(long v)throws IOException{out.writeLong(Long.reverseBytes(v));}public void writeFloat(float v)throws IOException{writeInt(Float.floatToRawIntBits(v));}public void writeDouble(double v)throws IOException{writeLong(Double.doubleToRawLongBits(v));}public void writeBytes(String s)throws IOException{throw new IOException("No strings in WRP1");}public void writeChars(String s)throws IOException{throw new IOException("No strings in WRP1");}public void writeUTF(String s)throws IOException{throw new IOException("No strings in WRP1");}
+ }
+ public static final class Input implements DataInput {
+  private final DataInputStream in;public Input(InputStream stream){in=new DataInputStream(stream);}
+  public void readFully(byte[] b)throws IOException{in.readFully(b);}public void readFully(byte[] b,int o,int n)throws IOException{in.readFully(b,o,n);}public int skipBytes(int n)throws IOException{return in.skipBytes(n);}public boolean readBoolean()throws IOException{return in.readBoolean();}public byte readByte()throws IOException{return in.readByte();}public int readUnsignedByte()throws IOException{return in.readUnsignedByte();}public short readShort()throws IOException{return Short.reverseBytes(in.readShort());}public int readUnsignedShort()throws IOException{return readShort()&65535;}public char readChar()throws IOException{return (char)readUnsignedShort();}public int readInt()throws IOException{return Integer.reverseBytes(in.readInt());}public long readLong()throws IOException{return Long.reverseBytes(in.readLong());}public float readFloat()throws IOException{return Float.intBitsToFloat(readInt());}public double readDouble()throws IOException{return Double.longBitsToDouble(readLong());}public String readLine()throws IOException{throw new IOException("No strings in WRP1");}public String readUTF()throws IOException{throw new IOException("No strings in WRP1");}
+ }
+}

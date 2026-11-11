@@ -20,9 +20,16 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         ? System.getProperty("spoiledmilk.browserOverlayRectMode","off") : "off";}
     private static final boolean WHOLE_ZONE=WholeOverworldZoneRegistry.isEnabled();
     private BrowserWholeOverworldZone wholeZone;
+    private BrowserWholeOverworldRam wholeRam;
+    private static final int[] WHOLE_RAM_FAILED_WORK=new int[]{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    private static volatile int[] wholeRamWork=new int[0];
+    static void clearWholeRamReady(){wholeRamWork=WHOLE_RAM_FAILED_WORK;WholeOverworldRamRegistry.clear();}
+    public static int[] getWholeRamWork(){return wholeRamWork.clone();}
+    static void publishWholeRamWork(int[] work){if(work.length!=18||work[0]!=1)throw new IllegalStateException("Whole-RAM work schema");wholeRamWork=work.clone();}
+    public static boolean isWholeRamEnabled(){return BrowserWholeOverworldRam.isEnabled();}
     private static volatile int[] wholeZoneWork=new int[0];
     public static int[] getWholeZoneWork(){return wholeZoneWork.clone();}
-    private void invalidateWholeZone(){if(wholeZone!=null){wholeZone.invalidate();wholeZoneWork=wholeZone.diagnostics();}WholeOverworldZoneRegistry.clear();}
+    private void invalidateWholeZone(){if(wholeRam==null&&BrowserWholeOverworldRam.isEnabled())clearWholeRamReady();if(wholeRam!=null){wholeRam.invalidate();wholeRamWork=wholeRam.diagnostics();}WholeOverworldRamRegistry.clear();if(wholeZone!=null){wholeZone.invalidate();wholeZoneWork=wholeZone.diagnostics();}WholeOverworldZoneRegistry.clear();}
     public static boolean isWholeZoneEnabled(){return WHOLE_ZONE;}
     private static native int initializeWholeZone(String manifestIdentity,int[] settings,int[] materials);
     private static native void wholeZoneFrame(int[] metadata,int[] objectCells);
@@ -197,6 +204,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             if(wholeZone==null)wholeZone=new BrowserWholeOverworldZone();
             wholeZone.frame(client,frame,packing.backendPackingSettings());
             if(!wholeZone.ready())wholeZone.uploaded(initializeWholeZone(wholeZone.manifestHash(),wholeZone.settings(),wholeZone.materials()));
+            if(BrowserWholeOverworldRam.isEnabled()){if(wholeRam==null)wholeRam=new BrowserWholeOverworldRam(wholeZone.manifestHash(),packing.backendPackingSettings());wholeRam.validateOptions(packing.backendPackingSettings());wholeRamWork=wholeRam.diagnostics();}
             wholeZoneFrame(wholeZone.metadata(),wholeZone.objectRows());
             presentationWorld=wholeZone.filter(world);wholeZoneWork=wholeZone.diagnostics();
         }
