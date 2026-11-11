@@ -1,0 +1,93 @@
+Browser modern streaming plan — saved November 11, 2026
+=======================================================
+
+Status: PLANNED / DEFERRED during the whole-overworld single-zone audit.
+This is the earlier prioritized direction, saved so that it is not forgotten.
+It has not been rejected. Do not implement it before reviewing the separate
+single-zone feasibility evidence and the owner's chosen direction.
+See overworld-single-zone-audit.txt and roadmap.md's dated browser entry.
+
+Current evidence and completed private work
+------------------------------------------
+The render Worker and region-build work are implemented private prototypes;
+they remain off by default. They are not ordinary browser adoption or public
+release gates. browser-render-worker-pipeline.txt and
+browser-render-worker-gpu-oracle.txt preserve exact GPU and private-game evidence.
+The Worker shares the existing backend/shaders and owns bounded copies; it does not move the Java VM,
+input or all scene construction off the main thread.
+
+browser-region-transition-pipeline.txt,
+browser-region-transition-independent-review.txt and
+browser-travel-loading-workload.txt preserve the completed private
+scene-construction experiment. Its same-artifact walking comparison reduced mean
+warm gaps from 3660.375ms to 1475.5ms (59.6899%) on the tested host, with a remaining
+3300ms warm outlier. This is a useful measured step, not seamless-streaming
+completion. The captured pre-bridge stall primarily consumed main-thread CPU;
+Worker upload time was not its dominant explanation. Preserve these results
+while exploring a larger logical zone rather than reopening rejected UI paths.
+
+Prioritized work retained for later consideration
+------------------------------------------------
+The current audit estimates FULL whole-overworld RAM/GPU proposals before
+substituting this earlier incremental plan or a hybrid. An upfront zone-entry
+wait may be an acceptable owner-selected tradeoff for smooth travel; measure
+and present it explicitly rather than forbidding it. The 512MiB cache experiment
+below is not a cap on the audit's estimated whole-zone requirements.
+
+1. Reuse immutable per-cell products across local scope changes. Avoid rebuilding
+   unchanged terrain, walls, roofs and static scenery merely because the active
+   3x3/5x5 window moved. Keys must include real package/content, world-space,
+   signed-level, geometry/material/options and dependency identity. Keep dynamic
+   mutation revisions and ready authority separate from reuse identity. Preserve
+   exact collision, picks, ordering, source versions and upper-floor dependencies.
+2. Experiment with bounded larger CPU/GPU caches on the high-end desktop. A
+   512MiB budget is a candidate to measure, not a new default or proof it fits
+   other devices. Separate retained CPU products, GPU geometry/textures, driver
+   overhead, transient copies, render-Worker packets, overlay, shadows and Java
+   heap. Revisit count caps and eviction coherence together. Measure return-hit
+   rates, worst resident peaks, load gaps and exhaustion/fallback explicitly.
+3. Prepare ahead with a strict measured frame budget. Build entering cells before
+   they are required; do not retain a synchronous all-window rebuild behind a
+   nominal upload budget. Bound source preparation, packing and upload separately,
+   maintain last-good presentation/input gates, and cancel stale generations.
+   A 60 FPS target gives 16.67ms for the WHOLE frame, not 16.67ms of extra prep work.
+4. Move suitable preparation to a background worker after defining immutable
+   source snapshots, ownership, bounded queues, cancellation and exact result
+   validation. The current rendering Worker does not make Java construction
+   parallel; moving borrowed CheerpJ heap references is not a valid design.
+5. Consider offline prebuilt static geometry keyed to the selected map and exact
+   model/material/renderer versions. Keep authoritative terrain/collision and
+   mutable scenery separate. Installation, invalidation and fallback must remain
+   explicit; an obsolete bake must never override newer map or gameplay state.
+6. Investigate compact vertex formats. The current browser interleaved stream is
+   28 floats, 112 bytes per vertex before indices. Quantized positions, packed
+   colors/normals/material fields and appropriate attribute types may reduce
+   memory/transfer, but require exact or approved visual error bounds and new
+   shader/packing/state/picking/lighting proof. Do not equate disk compression
+   with GPU residency savings or silently reduce visual quality.
+7. Reduce duplicated data and GC pressure where profiles show real work. Reuse
+   owned buffers and immutable numeric products; measure transient peaks and
+   producer/consumer retention. Preserve source mutation checks and exact first-
+   use behavior. A broad cache or allocation rewrite is not justified by counts
+   alone.
+8. Later, evaluate larger JS/Wasm kernels or instancing for measured remaining
+   boundaries. Pay attention to JNI/ownership and batching cost, not only native
+   loop arithmetic. Keep the accepted actor/VFX/UI pipeline intact until proven.
+   A kernel experiment is distinct from switching the Java runtime engine; the
+   earlier experimental engine failure remains recorded in
+   browser-runtime-engine-matrix.txt and is not a reason to retry it implicitly.
+9. Evaluate WebGPU only if measurement establishes an unmet backend need and the
+   supported browser/device coverage makes it worthwhile. It is not a prerequisite
+   for current quality, an automatic cure for main Java scene construction, or
+   permission to discard the tested WebGL renderer.
+
+Acceptance before any ordinary adoption
+---------------------------------------
+Use the same source/map pair, same-artifact toggles and original walking input.
+Cover outward/cached-return/cold/long traversal, camera turns/zoom, upper floors,
+underground boundaries, dynamic doors/scenery, teleport, disconnect and context
+loss. Track fresh completed frames and actual source readiness; held images do
+not count as gameplay FPS. Keep worst pauses/outliers and excluded setup failures.
+Require bounded resident/transient memory, safe stale-result rejection, exact
+scene/pick/collision authority and established visual parity. Public release and
+server activation are separate decisions; this saved plan authorizes neither.
