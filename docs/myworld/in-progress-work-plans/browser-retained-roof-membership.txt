@@ -1,0 +1,83 @@
+Private browser retained roof membership prototype
+==================================================
+
+Scope and motivation
+--------------------
+The ordinary mudclient roof loop removes/re-adds up to five model references
+per grid slot on every rendered frame. World has 144 grid slots, so ground
+level can request720 separate linear Scene removals each frame. Even absent
+or null roof entries are repeatedly searched. A current Firefox generated
+function structurally matches removeModel's absent-target search, but that
+identification is not an official Java symbol map and no speedup is claimed.
+Array.prototype.splice is a separate hotspot; it has not been attributed here.
+
+This prototype retains the settled CPU Scene membership between unchanged
+frames. Geometry, textures, camera, shadows, roof visibility and gameplay rules
+are not replaced. Only private WebGL benchmark roofmembership=on opts in;
+ordinary/default/software/native sessions keep the literal membership loop.
+The capability also requires browser resident ownership, no CPU-depth consumer,
+projected and raster world ownership, and no pre-existing forced legacy frame.
+
+Authority and invalidation
+--------------------------
+Scene owns a dedicated roster revision plus epoch. addModel(non-null), actual
+removeModel matches, batch removals and full nonempty roster reset update that
+authority. Null/absent additions/removals do not pretend the roster changed.
+Revision wrap replaces the epoch so an old snapshot cannot match a new roster.
+The five source mutation sites were audited: constructor initialization;
+addModel; removeAllGameObjects; removeModel; removeModels. Capacity copying
+keeps identical ordered membership. models[modelCount]=m_T is an out-of-roster
+sprite sentinel and deliberately does not change membership authority. Scene
+exposes pick results through its public array accessor, not the model roster.
+
+The helper checks Scene identity, epoch/revision, active plane and the resolved
+Renderer3DRoofVisibility. It also compares the complete relevant reference
+sequence each frame in bounded, reused720-reference arrays. Row identity alone
+is insufficient: same-array slot replacements and null changes are detected.
+World/region replacement, reset and rebase products invalidate through these
+references and roster authority. No borrowed grid arrays or camera/pick arrays
+are cached, and stale tails are cleared on shrink/invalidation.
+
+Dirty frames execute the original remove/add calls in the original interleaved
+order. Their post-reconciliation revision is remembered only after successful
+completion. External scene additions/removals (including scenery replacements)
+therefore trigger the next reconciliation and preserve the legacy roof suffix
+ordering relative to other models. No batched compaction is substituted.
+The original camera zoom/doCameraZoom statements still execute in the original
+loop on every frame; changing settings or controls does not require a roster
+mutation to take effect. Roof coverage and option resolution remain outside
+the helper and are evaluated normally.
+
+Duplicate target references or multiple memberships of a selected model never
+get normalized. Because literal removeModel has adjacent-duplicate behavior,
+those states keep the full literal path until a unique settled state exists.
+Malformed/oversized grid shapes likewise keep literal exception/partial-state
+behavior. Snapshot validation is a render-thread operation; it grants no new
+cross-thread mutation contract or scene/readiness authority.
+
+Diagnostics and acceptance
+--------------------------
+Private receipts distinguish requested/available/enabled policy. Optional work
+counters report frames, completed reconciliations, reused frames, reference
+checks, avoided removal/addition calls and uncacheable inputs. Counters saturate
+rather than wrap. They are observed once/second, not through per-model IPC.
+Requested ON with an older JAR lacking the getter fails explicitly.
+
+CPU differential runner:
+  python3 tests/myworld/test-browser-roof-membership.py --client-jar /frozen/client.jar
+
+It independently extracts the actual roof loop from frozen baseline
+8b888cd2f13d3a45d4ece42263ecf8ecc9b415ae and current mudclient, then compiles
+those blocks against the corresponding real Scene sources. Each cohort checks
+480 frames' ordered roster/metadata, camera bookkeeping, real Scene picks,
+sprite anchors, resident exports and RGB pixels. Native/CPU-depth/partial
+ownership and explicit OFF are compared with enabled browser ownership.
+Additional edge outcomes cover empty/oversize/short/null grids, invalid plane,
+duplicated targets/memberships and null references. Focused tests cover actual
+revision mutation/no-op behavior, epoch wrap, exact720-reference bound and
+retention/invalidation counts. This is CPU evidence only: Firefox compatibility,
+actual avoided-work receipts, FPS and area-transition performance remain manager
+acceptance work. No public release or server operation is part of this task.
+
+Verification status: implementation checkpoint; focused suites and full build
+are pending the manager's exclusive hardware-measurement window ending.

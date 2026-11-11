@@ -118,6 +118,43 @@ public final class Scene {
 	private int m_Zb = 256;
 	private int modelCount;
 	private RSModel[] models;
+	// Scene roster authority only. The sprite sentinel at models[modelCount] is
+	// outside this roster. An epoch replacement prevents revision wrap aliasing.
+	private Object modelMembershipEpoch = new Object();
+	private int modelMembershipRevision;
+	final Object modelMembershipEpoch() { return modelMembershipEpoch; }
+	final int modelMembershipRevision() { return modelMembershipRevision; }
+	private void modelMembershipChanged() {
+		if (modelMembershipRevision == Integer.MAX_VALUE) {
+			modelMembershipEpoch = new Object();
+			modelMembershipRevision = 0;
+		} else modelMembershipRevision++;
+	}
+	/** Private browser capability; never enabled by a desktop/native launch. */
+	public final boolean canRetainBrowserRoofMembership() {
+		return isBrowserFullResidentOwnershipEnabled()
+			&& Renderer3DSettings.canSkipProjectedWorldCapture()
+			&& Renderer3DSettings.canSkipLegacyWorldRaster()
+			&& !forceLegacyWorldRasterOnce;
+	}
+	/** Duplicate/malformed rosters keep literal repeated-removal semantics. */
+	final boolean hasUniqueRoofMembership(RSModel[] selected, int count) {
+		IdentityHashMap<RSModel, Boolean> seen = new IdentityHashMap<RSModel, Boolean>();
+		for (int index = 0; index < count; index++) {
+			RSModel model = selected[index];
+			if (model != null && seen.put(model, Boolean.FALSE) != null) return false;
+		}
+		for (int index = 0; index < modelCount; index++) {
+			RSModel model = models[index];
+			if (model == null) return false;
+			Boolean previous = seen.get(model);
+			if (previous != null) {
+				if (previous.booleanValue()) return false;
+				seen.put(model, Boolean.TRUE);
+			}
+		}
+		return true;
+	}
 	private Renderer3DFrame renderer3DFrame;
 	private Renderer3DTextureData[] renderer3DTextures = new Renderer3DTextureData[0];
     private final java.util.Set<Integer> rendererAnimatedTextureIntent = new java.util.HashSet<Integer>();
@@ -2456,6 +2493,7 @@ public final class Scene {
 			this.ensureModelCapacity(this.modelCount + 1);
 			this.m_jb[this.modelCount] = 0;
 			this.models[this.modelCount++] = mod;
+			this.modelMembershipChanged();
 
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "lb.NA(" + "null" + ',' + 118 + ')');
@@ -3780,6 +3818,7 @@ public final class Scene {
 				this.m_Xb = -11;
 			}
 
+			if (this.modelCount != 0) this.modelMembershipChanged();
 			for (int var2 = 0; this.modelCount > var2; ++var2) {
 				this.models[var2] = null;
 			}
@@ -3795,6 +3834,7 @@ public final class Scene {
 			for (int i = 0; i < this.modelCount; ++i) {
 				if (this.models[i] == var1) {
 					--this.modelCount;
+					this.modelMembershipChanged();
 
 					for (int j = i; j < this.modelCount; ++j) {
 						this.models[j] = this.models[j + 1];
@@ -3842,9 +3882,14 @@ public final class Scene {
 		}
 
 		int retained = 0;
+		boolean membershipChanged = false;
 		for (int index = 0; index < this.modelCount; index++) {
 			RSModel model = this.models[index];
 			if (removalSet.containsKey(model)) {
+				if (!membershipChanged) {
+					this.modelMembershipChanged();
+					membershipChanged = true;
+				}
 				continue;
 			}
 			if (retained != index) {

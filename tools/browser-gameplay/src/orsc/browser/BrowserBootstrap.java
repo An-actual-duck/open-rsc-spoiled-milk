@@ -14,6 +14,7 @@ public final class BrowserBootstrap {
     public static native void reportPreparation(boolean enabled,boolean active,boolean animated);
     public static native void reportRegionPreparationDiagnostics(boolean available,double[] counters);
     public static native void reportCandidatePolicy(String name,boolean requested,boolean available,boolean enabled);
+    public static native void reportRoofMembershipWork(int[] counters);
     public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportCombatState(String username,String names,int[] counters);
     public static native void reportModelPickBounds(boolean requested,boolean enabled);
@@ -189,7 +190,16 @@ public final class BrowserBootstrap {
                                     boolean[] projectionActual=BenchmarkCandidatePolicies.inspectInstance(((orsc.mudclient)client).getScene(),"isBrowserSceneryProjectionWorkEnabled");
                                     reportCandidatePolicy("sceneryProjection",projectionRequested,projectionActual[0],projectionActual[1]);
                                     if(projectionRequested&&!projectionActual[0])throw new IllegalStateException("Requested candidate is absent from this fixture JAR: sceneryProjection");
+                                    boolean roofRequested=Boolean.getBoolean("spoiledmilk.browserRoofMembership");
+                                    boolean[] roofActual=BenchmarkCandidatePolicies.inspectInstance(client,"isBrowserRoofMembershipEnabled");
+                                    reportCandidatePolicy("roofMembership",roofRequested,roofActual[0],roofActual[1]);
+                                    if(roofRequested&&!roofActual[0])throw new IllegalStateException("Requested candidate is absent from this fixture JAR: roofMembership");
                                     candidatePoliciesReported=true;
+                                }
+                                if(Boolean.getBoolean("spoiledmilk.browserRoofMembership")) {
+                                    Object counters=client.getClass().getMethod("getBrowserRoofMembershipWork").invoke(client);
+                                    if(!(counters instanceof int[])||((int[])counters).length!=7)throw new IllegalStateException("Invalid roof-membership work getter");
+                                    reportRoofMembershipWork((int[])counters);
                                 }
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());

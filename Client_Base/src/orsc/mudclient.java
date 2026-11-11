@@ -37,6 +37,7 @@ import orsc.graphics.three.Renderer3DMeshFrame;
 import orsc.graphics.three.Renderer3DMaterialClassifier;
 import orsc.graphics.three.Renderer3DModelKind;
 import orsc.graphics.three.Renderer3DRoofVisibility;
+import orsc.graphics.three.BrowserRoofMembership;
 import orsc.graphics.three.Renderer3DSettings;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
 import orsc.graphics.three.RSModel;
@@ -916,6 +917,16 @@ public final class mudclient implements Runnable {
 	private boolean isSleeping = false;
 	private int knownPlayerCount = 0;
 	private int lastHeightOffset = -1;
+	private final BrowserRoofMembership browserRoofMembership =
+		Boolean.getBoolean("spoiledmilk.browserRoofMembership") ? new BrowserRoofMembership() : null;
+	/** Private benchmark receipt; ordinary/native presentation remains literal. */
+	public final boolean isBrowserRoofMembershipEnabled() {
+		return browserRoofMembership != null && scene != null && scene.canRetainBrowserRoofMembership();
+	}
+	public final int[] getBrowserRoofMembershipWork() {
+		return browserRoofMembership == null ? new int[7] : browserRoofMembership.work();
+	}
+
 	private int lastObjectAnimationNumberFireLightningSpell = -1;
 	private int lastObjectAnimationNumberTorch = -1;
 	private int lastObjectAnimationNumberCosmicSparkles = -1;
@@ -8539,15 +8550,20 @@ public final class mudclient implements Runnable {
 						Renderer3DRoofVisibility roofVisibility = this.currentRenderer3DRoofVisibility();
 						boolean roofsVisible = roofVisibility.areRoofsVisible();
 						boolean automaticRoofCameraZoom = roofVisibility.usesAutomaticRoofCameraZoom();
+						boolean retainedRoofMembership = browserRoofMembership != null
+							&& browserRoofMembership.canReuse(this.scene, this.world.modelRoofGrid,
+								this.world.modelWallGrid, this.lastHeightOffset, roofVisibility);
 
 						int centerX;
 					for (centerX = 0; centerX < this.world.modelRoofGrid[this.lastHeightOffset].length; ++centerX) {
-						this.scene.removeModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
-						if (this.lastHeightOffset == 0) {
-							this.scene.removeModel(this.world.modelWallGrid[1][centerX]);
-							this.scene.removeModel(this.world.modelRoofGrid[1][centerX]);
-							this.scene.removeModel(this.world.modelWallGrid[2][centerX]);
-							this.scene.removeModel(this.world.modelRoofGrid[2][centerX]);
+						if (!retainedRoofMembership) {
+							this.scene.removeModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
+							if (this.lastHeightOffset == 0) {
+								this.scene.removeModel(this.world.modelWallGrid[1][centerX]);
+								this.scene.removeModel(this.world.modelRoofGrid[1][centerX]);
+								this.scene.removeModel(this.world.modelWallGrid[2][centerX]);
+								this.scene.removeModel(this.world.modelRoofGrid[2][centerX]);
+							}
 						}
 
 						// If the player is hiding roofs, we want to skip the camera zoom
@@ -8560,12 +8576,14 @@ public final class mudclient implements Runnable {
 						cameraZoom = minCameraZoom + (osConfig.C_LAST_ZOOM * 2);
 
 						if (roofsVisible) {
-							this.scene.addModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
-							if (this.lastHeightOffset == 0) {
-								this.scene.addModel(this.world.modelWallGrid[1][centerX]);
-								this.scene.addModel(this.world.modelRoofGrid[1][centerX]);
-								this.scene.addModel(this.world.modelWallGrid[2][centerX]);
-								this.scene.addModel(this.world.modelRoofGrid[2][centerX]);
+							if (!retainedRoofMembership) {
+								this.scene.addModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
+								if (this.lastHeightOffset == 0) {
+									this.scene.addModel(this.world.modelWallGrid[1][centerX]);
+									this.scene.addModel(this.world.modelRoofGrid[1][centerX]);
+									this.scene.addModel(this.world.modelWallGrid[2][centerX]);
+									this.scene.addModel(this.world.modelRoofGrid[2][centerX]);
+								}
 							}
 
 							if (this.doCameraZoom) {
@@ -8574,6 +8592,9 @@ public final class mudclient implements Runnable {
 							}
 						}
 					}
+
+					if (!retainedRoofMembership && browserRoofMembership != null)
+						browserRoofMembership.completedReconciliation();
 
 					if (this.objectAnimationNumberFireLightningSpell != this.lastObjectAnimationNumberFireLightningSpell) {
 						this.lastObjectAnimationNumberFireLightningSpell = this.objectAnimationNumberFireLightningSpell;
