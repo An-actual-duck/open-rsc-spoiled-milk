@@ -13,6 +13,13 @@ const displayModes=createDisplayModes({window,document,player:document.querySele
 function end(reason, focusStart = false) {
   if (!frame) return;
   const current = frame; frame = null;
+  // Stop owns the parent receipt too. Child postMessage cleanup is queued and
+  // must remain rejected once this frame is discarded; it cannot clear our
+  // last structured clone synchronously. Preserve historical counts only.
+  window.browserProof.stopped = true;
+  if (window.browserProof.wholeRamJava) window.browserProof.wholeRamJava = {...window.browserProof.wholeRamJava, sourceReady:false, preparedReady:false, disposed:true};
+  if (window.browserProof.wholeRamResidency) window.browserProof.wholeRamResidency = {...window.browserProof.wholeRamResidency, sourceReady:false, preparedReady:false, gpuReady:false, ready:false, disposed:true};
+  if (window.browserProof.gpu?.wholeZone) window.browserProof.gpu.wholeZone = {...window.browserProof.gpu.wholeZone, rawSourceCPUReady:false, preparedCPUReady:false};
   // Best effort app transport cleanup before discarding all runtime listeners,
   // timers, workers and focus state belonging to the embedded document.
   try {
