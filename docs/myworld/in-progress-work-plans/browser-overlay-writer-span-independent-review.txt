@@ -126,3 +126,88 @@ view is retained. Existing bands/work/C/T argument ordering is unchanged.
 Policy requires delta plus on/packed rectangles and reports requested versus
 actual enablement. This is source-level interface review, not an actual JNI
 execution proof; the manager's new full-client stage must exercise that bridge.
+
+Actual enabled integration and instrumented diagnostic
+------------------------------------------------------
+The manager reports the guard2 full-client JNI integration active with correct
+native arguments. The completed strict matched76794c guard2 JAR pair measured
+span-OFF40.38384646141543FPS versus span-ON33.88475186166225FPS: a16.0933%
+regression. Each used180 seconds warm-up plus60 seconds measurement with the
+six real combat families; actual order was ON then OFF. The manager's
+output/diagnostics/browser-frame-architecture/writer-spans-comparison.json
+marks the measurement accepted and candidateAccepted:false. The feature is
+rejected for adoption and retained unmerged/parked with its evidence. Correct
+pixels and valid native arguments do not establish acceptable performance.
+
+Both new-artifact measurements are lower than the historical bf2 packed53.323
+result, which has a different artifact/time and is not a matched control here.
+This review does not attribute that cross-artifact difference to a particular
+compiler/control-flow change or to Java-long arithmetic. No default changes
+are justified by either the correctness tests or these rejected measurements.
+
+Read-only attribution uses the manager's actual20-second instrumented capture:
+output/diagnostics/browser-frame-architecture/post-writer-spans-profile-1/
+  sources-profile.json, additional-information.json, sources-receipt.json
+Its receipt reports Firefox154.0.1, GAME/ready and enabled writer spans,
+rectangle-packed transport and batched model kernel. This diagnostic follows
+the warmed FPS measurement; instrumented sample counts are not FPS acceptance.
+Actual generated source bodies, rather than assumed Java method names, identify:
+
+*J_01c6de78 / source e2f4e2fe: beginTransportWriter destination checks, admission,
+ BigInt conversions and BigInt.asIntN for Java-long bounds.14 inclusive samples,
+ 11 as the deepest generated Java frame.
+*J_01c6deb8 / e6068822: per-row scope owner/bounds updates and delta.markSpan.
+ 179 inclusive samples:51 deepest in this helper,43 in delta.markSpan
+ (J_01c740a8),39 in tile.span (J_01c75840),19 in tile marking
+ (J_01c7fa80),18 in the counter, and9 in tracking guards.
+*J_01c6df38 /88d28e18: transportMark membership/suppression or ordinary mark.
+ 205 inclusive samples,55 deepest here. Its descendants include the existing
+ ordinary marking path, so the inclusive total is not wholly new work.
+*J_01c76978 /7a5b1c68: actual saturated int counter array read/increment/write.
+ 40 deepest samples:18 beneath row marking,3 beneath scope admission and19
+ beneath transportMark, consistent with suppressed-mark accounting.
+
+The captured game GeckoMain thread1692803 has10,026 sampled stacks, of which
+6,944 contain a generated J_* Java frame. The three scope trees above contain
+398 disjoint samples, but include preexisting tracker work. The four helpers'
+deepest-generated buckets total157/6,944(2.26%); that is attribution, not an
+estimate of removable CPU time. In particular the actual BigInt admission body
+has only14 inclusive samples: this capture does not support blaming the whole
+observed regression on Java-long arithmetic.
+
+The source-exposed mono glyph loop J_00a27b70 /2bd0d3e4 has276 deepest-generated
+samples; its body contains unrolled source-byte tests and RGB writes. Font
+header/clip/glyph dispatch J_00a26d18 /e139c274 has237, with510 inclusive.
+Their disjoint deepest buckets total513/6,944(7.39%). CheerpJ bodies contain
+selectively compiled branches and continuation/stub paths, not a complete Java
+source map; these buckets do not reconstruct every logical font method or
+justify adding overlapping inclusive totals. No performance forecast or
+runtime repair was made from this profile review.
+
+The separately captured OFF profile at
+output/diagnostics/browser-frame-architecture/post-writer-spans-off-profile-1/
+also reports GAME/ready, with writer spans requested/enabled:false. Its game
+GeckoMain1695182 has10,047 sampled stacks and7,626 containing generated J_*
+Java frames. Mono-loop J_00a27950 /17b48200 has375 deepest samples; font header/
+clip dispatcher J_00a26af8 /a868753e has262. Their637/7,626(8.35%) disjoint
+bucket share is not directly a time delta from ON's7.39%: frame counts and
+denominators differ. Comparing the actual exported bodies, both selected OFF
+functions exactly match their ON counterparts after normalizing only generated
+function/callee IDs and the exception method ID. Thus these selected bodies
+do not demonstrate a changed font-loop implementation. Other generated
+branches/continuations and runtime effects remain unisolated; addresses differ
+between processes and cannot be treated as a stable Java method map.
+
+Read-only provenance SHA256 (profile /additional information /receipt):
+ON:
+7ca165f516ed49cb2b1b60c0cfccb112e9964bd435b454fe3125161452f3f71b
+bbc8a64199298f7e91c6566b96725e32508e25c7a25a39ef165f2a33f87bc027
+2407d033cfab8e1f312bb329043e69d9dfdadf3738b19a601723724b771b2014
+OFF:
+5ea7df2cd6b74c0a275294a15393120322cd21632cfb070714365ddea562c9e7
+e3f457eb06082a16a26dbb2afdd2e4b7482d988dbbb4e5cc1ebb6dbe98ced98e
+7a75de2201c1f69b594dca8d43817907d51968e7c346e1d7b7079ee1f30d40d0
+This worker only read/hashed the manager's completed captures, ran no new
+profile or benchmark and made no runtime fix in response. Correctness proofs
+above remain valid for their exact source inputs; the performance result fails
+the separate adoption gate and the whole feature remains parked.
