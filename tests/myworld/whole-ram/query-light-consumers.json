@@ -1,0 +1,15 @@
+{
+  "sourceCommit": "9f0184ada82505370fb6d1860e83116ab56e1fdf",
+  "wholeSource": {
+    "PC_Client/src/orsc/OpenGLWorldChunkRenderer.java": "a7a3c7eeec924810bb97644cb64d333f51a9cdf4097fd064272337d947a4fac4",
+    "Client_Base/src/orsc/mudclient.java": "4d270e98687117fb9db26ca9b0c53442e15aea906b3f122d4f4cd6becaf6a182",
+    "PC_Client/src/orsc/BrowserWebGLBridge.java": "26f3a1c321222f89eef45dae2a5224bb6dec2fad068ffe72362c66ff2b4e9c19",
+    "PC_Client/src/orsc/BrowserWholeOverworldZone.java": "4b4b1567f8b73a050444236be9fea139c9f01e1077d02e5c4366ffd6fa227899",
+    "PC_Client/src/orsc/TerrainDefinitionField.java": "d35d8ab62f6f7090458a69cdd292ac046d840d727c02a7637a9dd138bb97f4dd",
+    "PC_Client/src/orsc/RemasterShadowRoofCoverage.java": "73eda53e25487582ffe187b82d8141d5906ac3c74e8c0586d5264868c3562ea7",
+    "PC_Client/src/orsc/RemasterShadowIndoorFlood.java": "e87e3f19ce6cb4ec10a5e34c4e38d8247a3f1bc71fd3f2bffbb43ab9fddb3ab0",
+    "Client_Base/src/orsc/graphics/three/Renderer3DWorldChunkFrame.java": "2f62451e581c42add3a1394614f5b093194bba179ff8c6364f7f4ae3d9063f5c",
+    "Client_Base/src/orsc/graphics/three/TerrainVertexLightVariation.java": "741303c64a84e0a13c388beda37849a165b5da97067858fb9ba98af100c80fbe"
+  },
+  "carrierSeedMethodSha256": "abcd20795978cc8416f3ead0fb69bdddbab6a4e1247f474380b2f06960d9b8d0"
+}
