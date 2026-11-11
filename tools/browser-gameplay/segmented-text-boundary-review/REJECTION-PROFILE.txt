@@ -1,0 +1,97 @@
+FINAL RESULT: CORRECT PRIVATE PROTOTYPE, ADOPTION REJECTED
+
+Same immutable f79 source/client artifact:
+  f79a751e4cd50eb2206d4ab7d22bcae046e50c57
+  JAR bd4360b514e32f73fc802242c5adc8fea3e63a31bc1114712d00bcce9b67da8b
+Manager real Firefox JNI, fault recovery and UI gates passed. The path was
+nonvacuous: approximately2.20 native calls/frame,51 TEXT calls and1296 glyph
+plots/frame. All six actual combat channels advanced. Stage1's earlier zero-
+callback gate remains a separate failed, non-performance result (NO-OP-ANALYSIS).
+
+Matched same-artifact benchmark,180s additional warmup then2x30s each:
+  OFF54.975261FPS (54.770789 /55.179767), p9924/22ms
+  ON49.355973FPS (49.595040 /49.116961), p9928/27ms
+  RelativeFPS -10.221485%. REJECTED for adoption; preserve/park prototype.
+This is one ordered pair with changing live effects and no confidence interval.
+It is enough to reject this candidate here, not to prove one universal slowdown
+or identify a single cause. Main's accepted renderer is unchanged.
+
+Fresh ON CPU profile classification
+-----------------------------------
+Actual Firefox154.0.1 content GeckoMain pid/tid1781412. One unique UserTiming
+rsc-steady-start/end pair spans20032.189ms,10016 samples, no stackless samples,
+18.9709s sampled threadCPU delta (94.70% of one core).880 instrumented frames.
+Focused window, unchanged pose/keylimbs/modelbatch/terrain settings, deltaOFF,
+segmentedTEXTON, all six damage/events and five resources advance. Profile time
+is diagnostic overhead, NOT benchmarkFPS or GPU timing.
+
+Generated names below were verified from THIS profile's source table plus
+additional-information source bodies, then structurally matched to exact f79
+Java. No old J-label mapping was reused. These are matched hot bodies, not a
+complete Java source map; VM/stub/async continuations can lose caller ancestry.
+
+Observed stages (nested inclusive counts overlap; never add these percentages):
+- GC.recordSegmentedText J_00a40188/source4547:120 samples (1.198%). It builds
+  5-int glyph records, admission/owner receipts and per-TEXT replay context.
+  Segment.record J_00a9bb10/source2334 is nested inside:93 samples (0.929%).
+  It clones each font, copies plot scalars, validates footprint and queues an
+  owned Text. Runtime anf's current body is new c.constructor(c);42 deepest-JS
+  clone samples occur under this record scope. These are actual snapshot costs.
+- Java validatedWork J_00a9bad0/source2359:8 inclusive samples (0.080%),6 as
+  deepestJS. Its signed-header/clipping/long range checks match f79. This small
+  observed scope does NOT support blaming BigInt validation for the regression.
+- Segment.flush J_00a9bcf0/source2611:303 samples (3.025%) inclusive. It builds
+  the11-int header,8-int TEXT descriptors, flattened plots/fonts, verifies the
+  live owner and hands off/commits.85 deepest-JS samples under it are runtime
+  agV, whose current source performs array range copying. Native and GC costs
+  nested below this scope are included, not additional percentages.
+- The actual browser-segmented-text.js native source2262 prevalidates all inputs,
+  resolves geometry AGAIN, then runs integer C/T glyph loops. It has54 deepest-
+  JS samples (0.539%),116 inclusive (1.158%).51 of those inclusive samples are
+  MajorGC markers: collection occurred during the call, which does not prove
+  which allocation caused it. The pure glyph loop is not separately timed.
+- The current native adapter/source57 borrows six arrays, invokes the callback
+  and normalizes its return.139 inclusive samples (1.388%) include native/GC.
+  This does not prove a hidden full C/T copy or isolate pure JNI overhead.
+- The union of verified capture/record/flush/native/adapter scopes is428 samples
+  (4.273%;4.434% of sampled threadCPU). This is a visible scoped classification,
+  not a complete cost delta. It includes72 GC interruption endpoints and88
+  array-copy endpoints. No paired OFF CPU profile exists, and generic VM/async
+  samples without these ancestors cannot honestly be assigned to TEXT.
+
+The code moves the final glyph loop but adds Java plot packing, per-TEXT font
+and plot snapshots, frame-owner receipts, duplicate Java/JS geometry validation,
+flattening/copies and fallback replay for short groups. Remaining short groups
+still rasterize in Java after paying capture costs; a literal glyph loop is
+visible beneath flush in this profile. These are source-backed work stages,
+not a causal explanation accounting for the full10.22% FPS result.
+
+The largest current deepest-JS endpoints remain texSubImage2D9.135% and
+getError4.513%; unchanged software sprite/alpha-box pixel loops are also near
+the top. These are sampled CPU endpoint shares, not GPU/bus timing or predicted
+savings. The text-only native raster is not a dominant endpoint here. Parking
+this UI prototype is justified; do not chase it by lowering the minimum batch,
+weakening barriers, discarding source snapshots or retrying an unproven engine.
+Any next architecture is a separate scoped experiment with its own correctness
+and matched gameplay acceptance gates.
+
+Evidence and reproducibility
+----------------------------
+Manager root: output/diagnostics/browser-frame-architecture/
+  segmented-text-comparison.json
+  segmented-text-{off,on}-measure-1/result.json
+  segmented-text-functional-2/{ui-smoke,fault-recovery}.json and screenshots
+  post-segmented-text-on-profile-1/{sources-profile.json,
+    additional-information.json,sources-receipt.json}
+Worker: output/diagnostics/browser-segmented-text-boundaries/
+  post-segmented-text-on-profile-1/{analysis.json,scoped-attribution.json,
+    source-matches.json,analyze.py,current-sources/}
+The worker analyzer validates markers/process/units/receipts and all six actual
+combat advances before ranking. source-matches.json records exact current body
+hashes and structural evidence. No browser/GPU/server operation by this worker.
+
+Root input SHA256:
+segmented-text-comparison.json: 8f2b4a86374cd6e9da3dad22a58baca4c7aa4bf1e8ad0a5397b4c5d2d9d8f400
+post-segmented-text-on-profile-1/sources-profile.json: defb1612ed6472c2415bf31bea70f3275c0c717e266e7312c80a3f4b6f5efb6d
+post-segmented-text-on-profile-1/additional-information.json: 40d973658bf4af3252378e25699b8c225c61aacf1d891c654bf170dcefb483e8
+post-segmented-text-on-profile-1/sources-receipt.json: 3e2c3799b4a407aa7c41c910c3ff95ad39b0257c7ebc73563fbfabbb6a07befc

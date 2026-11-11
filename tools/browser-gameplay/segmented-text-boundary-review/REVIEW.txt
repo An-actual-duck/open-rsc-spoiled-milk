@@ -243,3 +243,10 @@ sources are preserved in ignored evidence and Git history. This remains source
 proof; ai2 owns actual51-nameTEXT batch accept/reject/prefix pixel tests. Manager
 actual native callback/typing/pixel/fault-retention gates and same-artifact FPS
 cohorts are still required. No game speed or browser fault-retention claim here.
+
+Final adoption status
+---------------------
+Manager real f79 native/UI/fault gates passed, but matched same-artifact FPS
+regressed54.975261 ->49.355973 (-10.221485%). REJECTED/PARK; main unchanged.
+See REJECTION-PROFILE.txt for current-source CPU classification and exact limits.
+Source/pixel correctness alone was not adoption approval.
