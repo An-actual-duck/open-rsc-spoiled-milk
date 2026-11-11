@@ -172,3 +172,10 @@ low-latency input, GPU scanout/fence behavior or absence of occasional stalls.
 This remains private and default OFF. No ordinary browser adoption, native game
 behavior change, public publication/deployment or server action is authorized
 by this independent report. The passing oracle code remains frozen.
+
+Manager final comparison:
+ output/diagnostics/browser-frame-architecture/render-worker-comparison.json
+ SHA256 b0edb4213d9838b3e5ca202f46ee38fcf105bc3c9bf34c4c14d8f0de604fa3c5
+Weighted observed differences were +5.53008% and +5.43719% for the two Worker
+runs versus that matched control. All manager-owned Firefox sessions closed
+normally. These are bounded private-cohort results with the limits above.
