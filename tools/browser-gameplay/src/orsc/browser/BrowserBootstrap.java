@@ -115,6 +115,10 @@ public final class BrowserBootstrap {
             for(String name:on)System.setProperty("spoiledmilk."+name,"true");
             System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");
             // No native presenter or GLFW initialization; only the browser sink owns GPU submission.
+            if(Boolean.getBoolean("spoiledmilk.browserWholeZone")){
+                boolean[] actual=BenchmarkCandidatePolicies.inspect("orsc.BrowserWebGLBridge","isWholeZoneEnabled");
+                if(!actual[0]||!actual[1])throw new IllegalStateException("Requested whole-zone mode is unsupported by this client JAR");
+            }
             orsc.BrowserWebGLBridge.install();
             reportOverlayRectPolicy(System.getProperty("spoiledmilk.browserOverlayRectMode","off"),orsc.BrowserWebGLBridge.getOverlayRectMode());
             reportSpriteKeyPolicy(Boolean.parseBoolean(System.getProperty("spoiledmilk.browserSpriteKeyLimbs", "true")),orsc.BrowserWebGLBridge.isSpriteKeyLimbsEnabled());
