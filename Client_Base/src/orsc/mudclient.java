@@ -4014,6 +4014,7 @@ public final class mudclient implements Runnable {
 					!= this.midRegionBaseZ;
 		long inputStartNanos = System.nanoTime();
 		List<ResidentObjectChunkInput> objectInputs = buildResidentObjectChunkInputs(baseFrame);
+        if(orsc.graphics.three.WholeOverworldZoneRegistry.isEnabled())captureWholeOverworldObjectCells(objectInputs);
 		long inputNanos = System.nanoTime() - inputStartNanos;
 		if (objectInputs.isEmpty()) {
 			clearResidentObjectChunkCache();
@@ -4083,6 +4084,12 @@ public final class mudclient implements Runnable {
 			final ResidentObjectChunkInput input =
 				objectInputs.get(inputIndex);
 			activeCells.add(input.cellKey);
+            if(orsc.graphics.three.WholeOverworldZoneRegistry.isEnabled()&&input.chunkRole==Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS){
+                int zoneCellX=Math.floorDiv(Math.addExact(input.localOriginTileX,this.midRegionBaseX),24);
+                int zoneCellY=Math.floorDiv(Math.addExact(input.localOriginTileZ,this.midRegionBaseZ),24);
+                Renderer3DWorldChunkFrame.ChunkMesh pinned=orsc.graphics.three.WholeOverworldZoneRegistry.resolveStatic(input.anchor.getPlane(),zoneCellX,zoneCellY,input.canonicalContentKey,this.midRegionBaseX,this.midRegionBaseZ);
+                if(pinned!=null){objectChunks.set(inputIndex,pinned);continue;}
+            }
 			ResidentObjectChunkCacheEntry cached = this.cachedResidentObjectChunks.get(input.cellKey);
 			ResidentObjectChunkCacheEntry canonicalComparisonCandidate =
 				null;
@@ -4404,6 +4411,31 @@ public final class mudclient implements Runnable {
 			this.midRegionBaseZ;
 		return Renderer3DWorldChunkFrame.fromChunks(chunks);
 	}
+
+
+    // Only explicit private whole-zone mode materializes this bounded identity view.
+    private int[] wholeOverworldObjectCells;
+    public int[] getWholeOverworldObjectCells(){return wholeOverworldObjectCells==null?new int[0]:wholeOverworldObjectCells.clone();}
+    public static long wholeOverworldEmptyObjectKey(int plane,int cellX,int cellY){
+        long hash=RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+        for(int word:new int[]{plane,cellX,cellY,Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS,RESIDENT_OBJECT_CHUNK_TILE_SIZE,0})hash=mixResidentObjectChunkCacheKey(hash,word);
+        return hash;
+    }
+    private void captureWholeOverworldObjectCells(List<ResidentObjectChunkInput> inputs){
+        Map<String,int[]> rows=new LinkedHashMap<String,int[]>();
+        for(ResidentObjectChunkInput input:inputs){
+            int plane=input.anchor.getPlane();
+            int cellX=Math.floorDiv(Math.addExact(input.localOriginTileX,this.midRegionBaseX),24);
+            int cellY=Math.floorDiv(Math.addExact(input.localOriginTileZ,this.midRegionBaseZ),24);
+            String id=plane+":"+cellX+":"+cellY;int[] previous=rows.get(id);
+            long key=input.chunkRole==Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS?input.canonicalContentKey:wholeOverworldEmptyObjectKey(plane,cellX,cellY);
+            if(input.chunkRole!=Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS&&previous!=null)key=((long)previous[4]<<32)|(previous[3]&0xffffffffL);
+            int reason=input.chunkRole==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS||previous!=null&&previous[5]==2?2:0;
+            rows.put(id,new int[]{plane,cellX,cellY,(int)key,(int)(key>>>32),reason});
+        }
+        if(rows.size()>1024)throw new IllegalStateException("Private whole-zone local identity capacity exceeded");
+        int[] packed=new int[rows.size()*6];int at=0;for(int[] row:rows.values()){System.arraycopy(row,0,packed,at,6);at+=6;}wholeOverworldObjectCells=packed;
+    }
 
 	private List<ResidentObjectChunkInput> buildResidentObjectChunkInputs(Renderer3DWorldChunkFrame baseFrame) {
 		long maximumInputs = (long) getGameObjectInstanceCount() + getWallObjectInstanceCount()

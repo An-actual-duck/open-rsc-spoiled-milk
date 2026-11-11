@@ -306,6 +306,10 @@ public final class World {
 		}
 	}
 
+    /** Immutable source metadata for the explicit private full-source GPU prototype. */
+    public NativeLayeredTerrainSnapshot getWholeOverworldSourceSnapshot(){return nativeLayeredTerrainSnapshot;}
+    public long getWholeOverworldSourceRevision(){return worldEditorTerrainRevision.get();}
+
 	public void setSyntheticDeepFixtureTerrain(
 		final boolean enabled,
 		final int worldOffsetX,

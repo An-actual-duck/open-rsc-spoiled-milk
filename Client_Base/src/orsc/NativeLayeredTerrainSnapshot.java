@@ -426,6 +426,12 @@ public final class NativeLayeredTerrainSnapshot {
 		return result;
 	}
 
+    /** Chunk objects are immutable and expose no mutable payload array. */
+    public NativeLayeredTerrainChunk getChunkMetadata(int index){
+        if(!isChunkedProtocol())throw new IllegalStateException("Chunked metadata required");
+        return chunks[index];
+    }
+
 	public int getChunkSlotCount() {
 		return isChunkedProtocol() ? chunks.length : 1;
 	}
