@@ -294,6 +294,28 @@ public final class Renderer3DWorldChunkFrame {
 		private int[] worldEditorTerrainGridHeights = new int[0];
 		private int worldEditorTerrainGridSignature;
 
+        /** Canonical non-overlapping CPU query cell. Visual triangles stay in the GPU catalog. */
+        public int captureWholeRamCell(WholeRamData.Pool pool) {
+            int selected=0;boolean[] take=new boolean[getTriangleCount()];
+            for(int t=0;t<take.length;t++){long x=0,z=0;for(int c=0;c<3;c++){int v=indices[t*3+c]*3;x+=vertexCoords[v];z+=vertexCoords[v+2];}if(x>=48L*128*3&&x<96L*128*3&&z>=48L*128*3&&z<96L*128*3){take[t]=true;selected++;}}
+            int n=selected*3;int[] coords=new int[n*3],lights=new int[n],nx=new int[n],ny=new int[n],nz=new int[n],colors=new int[n],strengths=new int[n],idx=new int[n],textures=new int[selected],fallback=new int[selected],kinds=new int[selected],families=new int[selected],variation=new int[selected];float[] u=new float[n],v=new float[n];int at=0,terrain=0,wall=0,roof=0;
+            for(int t=0;t<take.length;t++)if(take[t]){for(int c=0;c<3;c++){int from=indices[t*3+c],to=at*3+c;System.arraycopy(vertexCoords,from*3,coords,to*3,3);u[to]=vertexTextureU[from];v[to]=vertexTextureV[from];lights[to]=vertexLights[from];nx[to]=vertexNormalX[from];ny[to]=vertexNormalY[from];nz[to]=vertexNormalZ[from];colors[to]=vertexTerrainBlendColors[from];strengths[to]=vertexTerrainBlendStrengths[from];idx[to]=to;}textures[at]=triangleTextures[t];fallback[at]=triangleFallbackColors[t];kinds[at]=triangleModelKinds[t].ordinal();families[at]=triangleMaterialFamilies[t].ordinal();variation[at]=triangleTerrainVariationMasks[t];if(triangleModelKinds[t]==Renderer3DModelKind.TERRAIN)terrain++;else if(triangleModelKinds[t]==Renderer3DModelKind.WALL)wall++;else if(triangleModelKinds[t]==Renderer3DModelKind.ROOF)roof++;at++;}
+            return pool.intern(new int[]{1,plane,centerSectionX,centerSectionY,originWorldX,originWorldZ,terrain,wall,roof,(int)signature,(int)(signature>>>32),pool.intern(coords),pool.intern(u),pool.intern(v),pool.intern(lights),pool.intern(nx),pool.intern(ny),pool.intern(nz),pool.intern(colors),pool.intern(strengths),pool.intern(idx),pool.intern(textures),pool.intern(fallback),pool.intern(kinds),pool.intern(families),pool.intern(variation)});
+        }
+        public static ChunkMesh restoreWholeRamCell(WholeRamData.Pool pool,int descriptor){return new ChunkMesh(pool,pool.ints(descriptor));}
+        private ChunkMesh(WholeRamData.Pool pool,int[] d){
+            if(d.length!=26||d[0]!=1||d[1]<0||d[1]>2)throw new IllegalStateException("Prepared query-cell schema");
+            plane=d[1];centerSectionX=d[2];centerSectionY=d[3];originWorldX=d[4];originWorldZ=d[5];terrainTriangles=d[6];wallTriangles=d[7];roofTriangles=d[8];storageSignature=signature=((long)d[10]<<32)|(d[9]&0xffffffffL);
+            vertexCoords=pool.ints(d[11]);vertexTextureU=(float[])pool.get(d[12]);vertexTextureV=(float[])pool.get(d[13]);vertexLights=pool.ints(d[14]);vertexNormalX=pool.ints(d[15]);vertexNormalY=pool.ints(d[16]);vertexNormalZ=pool.ints(d[17]);vertexTerrainBlendColors=pool.ints(d[18]);vertexTerrainBlendStrengths=pool.ints(d[19]);indices=pool.ints(d[20]);triangleTextures=pool.ints(d[21]);triangleFallbackColors=pool.ints(d[22]);int[] kinds=pool.ints(d[23]),families=pool.ints(d[24]);triangleTerrainVariationMasks=pool.ints(d[25]);
+            int vc=vertexCoords.length/3,tc=triangleTextures.length;if(vertexCoords.length%3!=0||vc>524288||indices.length!=tc*3||triangleFallbackColors.length!=tc||kinds.length!=tc||families.length!=tc||triangleTerrainVariationMasks.length!=tc||terrainTriangles<0||wallTriangles<0||roofTriangles<0||terrainTriangles+wallTriangles+roofTriangles!=tc)throw new IllegalStateException("Prepared query-cell geometry");
+            if(vertexTextureU.length!=vc||vertexTextureV.length!=vc||vertexLights.length!=vc||vertexNormalX.length!=vc||vertexNormalY.length!=vc||vertexNormalZ.length!=vc||vertexTerrainBlendColors.length!=vc||vertexTerrainBlendStrengths.length!=vc)throw new IllegalStateException("Prepared query vertex arrays");
+            for(int i:indices)if(i<0||i>=vc)throw new IllegalStateException("Prepared query index");
+            triangleModelKinds=new Renderer3DModelKind[tc];triangleMaterialFamilies=new Renderer3DMaterialFamily[tc];Renderer3DModelKind[] kv=Renderer3DModelKind.values();Renderer3DMaterialFamily[] fv=Renderer3DMaterialFamily.values();for(int i=0;i<tc;i++){if(kinds[i]<0||kinds[i]>=kv.length||families[i]<0||families[i]>=fv.length)throw new IllegalStateException("Prepared query enum");triangleModelKinds[i]=kv[kinds[i]];triangleMaterialFamilies[i]=fv[families[i]];}
+            vertexOffsetX=vertexOffsetZ=0;initializeVertexBounds();referencedTextureIds=collectReferencedTextureIds(triangleTextures,triangleFallbackColors);materialFamilyTriangleCounts=countFamilies(triangleMaterialFamilies);shadowCasters=new ShadowCaster[0];glowEmitters=new GlowEmitter[0];roofCoverageBits=new long[0];roofCoverageAxis=roofCoveredTileCount=0;objectChunk=false;chunkRole=CHUNK_ROLE_WORLD;
+        }
+        /** Only immutable prepared CPU query meshes use this; ordinary render rebase rules stay intact. */
+        public ChunkMesh rebaseWholeRamQuery(int x,int z,long[] roofBits,int roofAxis,int roofCount){return new ChunkMesh(this,centerSectionX,centerSectionY,x,z,false,roofBits,roofAxis,roofCount);}
+
 		public ChunkMesh(
 			int plane,
 			int centerSectionX,
@@ -924,6 +946,9 @@ public final class Renderer3DWorldChunkFrame {
 			int additionalOffsetX,
 			int additionalOffsetZ,
 			boolean translateObjectEffects) {
+            this(source,nextCenterSectionX,nextCenterSectionY,additionalOffsetX,additionalOffsetZ,translateObjectEffects,null,0,0);
+        }
+        private ChunkMesh(ChunkMesh source,int nextCenterSectionX,int nextCenterSectionY,int additionalOffsetX,int additionalOffsetZ,boolean translateObjectEffects,long[] preparedRoof,int preparedAxis,int preparedCount) {
 			this.plane = source.plane;
 			this.centerSectionX = nextCenterSectionX;
 			this.centerSectionY = nextCenterSectionY;
@@ -986,9 +1011,9 @@ public final class Renderer3DWorldChunkFrame {
 					additionalOffsetX,
 					additionalOffsetZ)
 				: source.glowEmitters;
-			this.roofCoverageBits = source.roofCoverageBits;
-			this.roofCoverageAxis = source.roofCoverageAxis;
-			this.roofCoveredTileCount = source.roofCoveredTileCount;
+			this.roofCoverageBits = preparedRoof == null ? source.roofCoverageBits : preparedRoof;
+			this.roofCoverageAxis = preparedRoof == null ? source.roofCoverageAxis : preparedAxis;
+			this.roofCoveredTileCount = preparedRoof == null ? source.roofCoveredTileCount : preparedCount;
 			this.terrainTriangles = source.terrainTriangles;
 			this.wallTriangles = source.wallTriangles;
 			this.roofTriangles = source.roofTriangles;
