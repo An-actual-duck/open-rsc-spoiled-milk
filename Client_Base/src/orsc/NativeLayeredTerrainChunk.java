@@ -27,6 +27,8 @@ public final class NativeLayeredTerrainChunk {
 
 	private static final Pattern SHA256 = Pattern.compile("[0-9a-f]{64}");
 
+	private static final boolean BROWSER_TERRAIN_QUERY_INDEX = Boolean.getBoolean("spoiledmilk.browserTerrainQueryIndex");
+	private final int minimumX, minimumY, maximumX, maximumY;
 	private final int size;
 	private final int chunkX;
 	private final int chunkY;
@@ -56,6 +58,12 @@ public final class NativeLayeredTerrainChunk {
 		this.size = size;
 		requireSafeChunkCoordinate(chunkX, size, "chunk X");
 		requireSafeChunkCoordinate(chunkY, size, "chunk Y");
+		// Existing safe-coordinate checks prove these inclusive bounds fit int,
+		// including chunks whose exclusive upper bound would be MAX_VALUE + 1.
+		this.minimumX = chunkX * size;
+		this.minimumY = chunkY * size;
+		this.maximumX = minimumX + (size - 1);
+		this.maximumY = minimumY + (size - 1);
 		this.chunkX = chunkX;
 		this.chunkY = chunkY;
 		this.available = available;
@@ -187,6 +195,10 @@ public final class NativeLayeredTerrainChunk {
 	}
 
 	public boolean covers(int worldX, int worldY) {
+		if (BROWSER_TERRAIN_QUERY_INDEX) {
+			return worldX >= minimumX && worldX <= maximumX
+				&& worldY >= minimumY && worldY <= maximumY;
+		}
 		long minimumX = (long) chunkX * size;
 		long minimumY = (long) chunkY * size;
 		return worldX >= minimumX && worldX < minimumX + size
@@ -261,6 +273,8 @@ public final class NativeLayeredTerrainChunk {
 	public boolean isAvailable() {
 		return available;
 	}
+
+	public int getSize() { return size; }
 
 	public int getChunkX() {
 		return chunkX;

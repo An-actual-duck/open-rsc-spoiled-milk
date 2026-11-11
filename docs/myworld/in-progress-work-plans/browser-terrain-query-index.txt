@@ -1,0 +1,41 @@
+Browser immutable terrain query index (ACTIVE experimental pilot)
+================================================================
+
+Private WebGL benchmark terrainquery=on maps to
+spoiledmilk.browserTerrainQueryIndex. Default OFF. Startup policy getter:
+NativeLayeredTerrainSnapshot.isBrowserTerrainQueryIndexEnabled().
+No per-query counters, allocation, boxed map or additional hot helper calls.
+
+Snapshot construction already validates protocol/size, signed coordinates,
+exact radius roster length and x-major/y-minor coordinate ordering, then clones
+the roster. Added immutable metadata: eligibility, grid minimum X/Y, dimension.
+Eligibility requires EVERY slot's actual chunk size to equal presentation size
+24/48, including void slots. Eligible ON lookup floorDivs signed world X/Y,
+bounds relative chunk coordinates, reads dx*dimension+dy and availability.
+Uniform-page protocol3 remains literal. Mixed sizes remain accepted and use
+the original ordered first-available scan, preserving overlaps/void precedence.
+No accepted input is rejected by the new metadata.
+
+NativeLayeredTerrainChunk exposes read-only getSize(). Its existing constructor
+validates full inclusive signed bounds with long arithmetic. Four cached int
+bounds are then exact, including MAX_VALUE upper edges; opt-in covers() uses
+inclusive int comparisons. OFF covers() retains literal long arithmetic.
+Uniform/sparse terrain encoding, C/T, Tile layout/getters, payload ownership,
+merge/extraction, scope identity and all signed levels are unchanged.
+
+Diagnostics reuse the existing bounded periodic region diagnostic native call.
+No extra per-frame/per-query invocation. The first three region metrics stay in
+place; candidate-aware frontend accepts an eight-number extended receipt:
+region3 + snapshot-present, eligible, actual-static-enabled, dimension, protocol.
+Reflection is cached by World class and reads its current snapshot only during
+periodic benchmark observation. Metadata getters are immutable; no query is
+instrumented. Missing old-candidate support retains original diagnostics.
+window.browserProof.terrainQueryIndex exposes that current path evidence.
+
+Required proof pending: frozen baseline/on/off outputs and exceptions for all
+protocols3–10, scalar/batch/Tile getters, signed coordinates and int edges, every
+chunk divisor, mixed-size overlap/void first-match, source/roster immutability,
+constructor acceptance and merge/extraction identity. Independent review owns a
+separate reference oracle. Full-source game build/class/asset/frontend parity
+and actual browser policy/eligibility/FPS acceptance follow correctness proof.
+No GPU/server processes started by this worker. No speedup/adoption claim.
