@@ -1,0 +1,61 @@
+Fresh packed-combat profile and reference direction, 2026-11-11
+===============================================================
+Raw manager profile (unchanged):
+/home/justin/Core-Framework/output/diagnostics/browser-frame-architecture/post-packed-combat-profile-1/
+Analysis and process-local source exports:
+/home/justin/Core-Framework-ai-3/output/diagnostics/browser-overlay-command-reference/post-packed-combat-profile-1/
+analysis.json records raw hashes, paired markers and generated source body hashes.
+No stale J-name attribution from the prior source artifact is used.
+
+Independent parser/receipt checks: Firefox154.0.1,profilev34; exactly one paired
+UserTiming content GeckoMain PID/TID1666888. Marker window326202.321784 through
+346216.585337ms (20,014.263553ms),10,007 samples,zero stackless.940 instrumented
+world frames; sampled thread CPU18,809,102,505ns (93.98% of one core). Actual
+keyPolicy ON,rectPolicy packed,delta/batch ON,focused/ready/fixed camera and all
+six real combat ledger/event plus five resource counters advance. This is a
+20s instrumented CPU profile, NOT an FPS test or GPU timing. Other threads were
+filtered; sampled endpoint CPU and first boundary interval are approximate.
+
+Deepest-JS sample endpoints:
+texSubImage2D512 (5.116%); getError417 (4.167%); opaque runtime aAA497 (4.967%).
+Do not turn these into saved GPU time/FPS or attribute opaque runtime/splice.
+Native terrain findAvailable219 [333]+signed64 covers160 [206]:379 endpoints,
+3.787%/3.967% sampled CPU; this remains separate indexed terrain-address work.
+transformRow146 endpoints(1.459%), preferred actor ctor100 [194]+same60 [896]
+(1.599%) do not justify rewriting the existing GPU-owned world actor pipeline.
+
+Source-backed new transport marking finding:
+WorldOverlayDeltaTransport.mark J_01c7e950[1400]:180 endpoints;
+WorldOverlayTileTracker.mark J_01c80cf0[334]:132;
+tracker.supported J_01c80e60[818]:60;
+transport.beforeWrite J_01c7e910[1222]:31.
+These are DISJOINT deepest-JS endpoints,403 total (4.027% samples,4.131% sampled
+CPU). Bodies match actual41b8336be source: active/pending checks, tileTracker.mark
+before row fallback, pixel bounds, one-row cached interval, next-row fast path,
+boolean touch and supported predicate. Counters/branch arithmetic remain CPU
+work even when uploaded pixels are reduced. This is not a measurement of the
+cost of removing them: no counterfactual or independently timed function exists.
+
+Broader remaining literal raster/coverage/marker LOWER-BOUND group:
+mark chain403; Coverage.multiply159 [612],opaque101 [1062]; GraphicsController
+wrappers63 [242]/45 [542]; plotLetter134 [1514]; alpha-scale73 [783]; tinted-scale
+60 [665]; alpha-box55 [1640]. Total1,093 endpoints(10.922% samples,11.225% CPU).
+Bodies match source ownership/T updates, unrolled glyph bytes, packed-channel
+alpha arithmetic and original alpha-box green mask. This excludes opaque runtime,
+anonymous continuation loops and C/T clears. It cannot label every sprite as UI
+or custom VFX without verified higher callers. It is not total frame raster cost.
+
+Prior profile shares are conditional context, not a delta-timer result. Different
+sample windows, effect activity,940 vs918 instrumented frames, generated shapes
+and denominators forbid interpreting changed shares as optimization effects.
+The root's separate first strict matched pair row51.1654/packed53.3233FPS (+4.2175%)
+is encouraging but not a60FPS result; additional configuration/control checks
+are manager-owned and still underway. This analysis worker ran no GPU/FPS test.
+
+Recommendation: prove the isolated ordered glyph/alpha arithmetic contract first.
+For a production pilot consider transport-only conservative writer scopes before
+a native callback, then synchronous whole-TEXT-call only if actual callback cost
+supports it. Both preserve exact C/T and Java interleaving; see CONTRACT.txt.
+A full single-frame packet still requires complete writer/source/read journaling
+and whole-frame eligibility before suppressed mutation. Existing Renderer2DFrame
+capture is insufficient. No production bridge/default change is part of v1.
