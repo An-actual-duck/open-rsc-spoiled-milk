@@ -105,8 +105,10 @@ frontend and Bootstrap from its own checkout, whereas --native-source only binds
 native-dispatch inputs. It must not accidentally serve main's old JS/Bootstrap
 beside new Java natives. Freeze exact ai1 Java/bake/source settings and exact ai2
 frontend/catalog blobs with hashes; never label the composite one nonexistent
-commit. A full build/stage from ai1 or manager-reviewed source copy is preferable
-to a partial JAR overlay. Root owns actual HTTP/Firefox launch.
+commit. Root chose a single integration commit after unit-ready handoffs, followed by
+a fresh FULL JAR, matching Bootstrap/frontend and source assets from that same
+commit. This avoids the composite ambiguity rather than claiming transplanted
+classes are one source build. Root owns actual HTTP/Firefox launch.
 
 The earlier standalone three-way Worker oracle is reusable for renderer pixel/
 physical-output/ownership cases, but its toy fixed scene cannot prove full-zone
@@ -117,3 +119,29 @@ to broad caching or normal rendering while labelling the result whole-zone.
 
 Current state: source proof complete; runtime contract/candidate geometry/GPU/
 travel acceptance pending. No ordinary default, public server or map changed.
+
+Independent texture-delivery gate
+---------------------------------
+The new baker uses a textures-only derivative of Custom_Sprites.osar. Fresh
+actual production Unpacker/Workspace/Subspace/Entry/Frame source was compiled
+and used to decode BOTH the unchanged original and derivative, independently.
+All 73 entries/73 frames/753664 palette-expanded pixels and type/layer/dimensions/
+shift/offset/bounds match exactly; no rendering or Scene is created. The current
+0409c558... dependency JAR is bound in the receipt. This proves texture delivery,
+not later loadTextures quantization/average/material metadata, UVs or GPU pixels.
+
+Receipt: output/tests/browser-whole-zone-validation/texture-equivalence-2/result.json
+Original archive 0883c7d1957b5bb4b70f0001770e4aac8d3145d77b2ff1a470d574e4718c426e
+Derivative f9f39a2d9d6ee4cafeddcb3d41eb28eac2930038c8bc75619a36b0b94f4b9704
+Decoded pixel SHA256 e9f52be5e000cdb6abbe280640de0227fee54c2dace3507fb3ec66d694d88750
+Tests: WholeZoneTextureEquivalence.java and verify-textures.py under whole-zone/.
+The first same-pixel receipt used an older accepted dependency; it is preserved,
+and the second receipt is the current-audit dependency result. No asset bytes
+were changed by this branch. The extractor's zero-frame aggregate-budget review
+was forwarded to its owner; malformed extraction tests await the stable code.
+
+Prototype-state labels remain important: the frontend's draft loader deliberately
+retains catalog metadata and streams baked payloads into GPU buffers, then drops
+CPU payload views. rawSourceCPUReady=false is truthful. Full GPU static residency
+and verified source-catalog coverage must not be relabelled full raw terrain or
+Java classic/prepared CPU geometry residency. Residual local CPU work is expected.
