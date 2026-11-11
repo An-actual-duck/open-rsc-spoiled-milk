@@ -1,4 +1,4 @@
-Adopted browser startup render defaults (ACTIVE)
+Adopted browser startup render defaults (READY implementation; normal Firefox acceptance pending)
 ===============================================
 
 Only ordinary WebGL startup adopts the verified model batching and immutable
@@ -31,7 +31,7 @@ throws rather than falling back. Absent metadata keeps ordinary routing intact.
 No product menu/query setting, proxy, server or account change is introduced.
 
 CPU proof passed (source-bound inputs in receipt):
-output/tests/browser-optimized-render-defaults/20261111T105439152744Z/result.json
+output/tests/browser-optimized-render-defaults/20261111T105843255648Z/result.json
 Old/new/wrong-signature stub classloaders prove non-initializing capability
 checks and policy-before-static-init, ordinary fallback, software UNSET keys,
 benchmark omitted OFF and explicit ON refusal, and invalid property rejection.
@@ -45,3 +45,41 @@ ON + terrain index ON with full C/T and no overlay tracking: 55.32 FPS in one
 matched terrain pair, not a universal result. Adoption uses its proven code
 paths without changing the game renderer. Source/class/asset reuse receipts
 and the normal HTTP8214 preview will bind the same immutable client artifact.
+
+Frozen normal preview and artifact reuse
+----------------------------------------
+Startup/frontend source 84f719c0c12d31dd63135b3bb50e5f4dd0a04a36.
+No core game source, renderer algorithm or class changed in this branch.
+Reused existing full-source Java8 client artifact:
+output/builds/browser-terrain-query-index/game-proof-1/client.jar
+SHA256 75c349ae9836fb07cf9189d29abe2509a970470f5015beea4378256788d7bff6
+Game source commit 46c00c29a18936816b9a372b3de42af90f24edd2.
+All 368 game-source/contract files match that source manifest; all 3,185 packaged
+runtime assets match their current maintained files. No rebuild or transplanted
+classes. The bundle intentionally combines the preserved game-source commit
+and newer reviewed startup/frontend commit; it has no single bundle commit.
+
+Client-only stage, no process/server/account/DB/proxy changes:
+output/tests/browser-gameplay-spike/optimized-render-defaults-normal-review-1/normal-preparation.json
+Normal URL http://127.0.0.1:8214/?mode=webgl has NO benchmark or fixture option.
+Cache port 43639 and the derived runtime.html metadata route exactly to
+ws://127.0.0.1:43539/, the existing disposable final combat server. The private
+account is renderdemo. The validated effective endpoint appears in proof data.
+The receipt also gives explicit matched benchmark ON/OFF URLs using the same
+JAR/modules; the fixture switch is only present in those comparison URLs.
+
+source-reuse-provenance.json (same directory) SHA256
+7979071fe488f2ab240d776f7b0a1e2415c2937d2902137d9773dc73199cc121
+It binds all core source/asset hashes, original full-source build receipt,
+Bootstrap source hashes, and separate original/derived runtime.html hashes.
+The only derived HTML edit is one pre-module private loopback route declaration;
+maintained product UI and view settings are unchanged. Invalid route metadata
+is rejected even when a benchmark fixture is supplied, and inconsistent route/
+fixture port pairs refuse startup rather than silently routing elsewhere.
+
+CPU proof is exact-source-bound to clean 84f719, including normal/benchmark
+frontend mocks, non-initializing old/new/incompatible capability stubs, software
+UNSET keys, strict private controls and actual normal receipt handling. Existing
+repeatable-policy and candidate-control regressions also pass. Native Firefox
+login, actual default-enabled receipts, movement/UI and current terrain metadata
+remain manager-owned acceptance before final adoption/publication.
