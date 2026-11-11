@@ -44,6 +44,7 @@ def main():
  ram_run=a.ram_run.resolve();r=lib.document(ram_run/'ram-bake-receipt.json');data=ram_run/'whole-ram';gpu_path=a.bake_run.resolve()/'whole-zone/manifest.json';gpu=lib.document(gpu_path,32*1024*1024)
  if not(r.get('passed')and r.get('complete')and r.get('fullRequested')and r.get('requestedRecipes')==445 and r.get('clientJarSha256')==jar_sha and r.get('gpuCatalogSha256')==lib.sha(gpu_path)and gpu.get('clientJarSha256')==jar_sha):p.error('Complete useful445-recipe/1330-query preparation matching GPU/client is required; source-only/pilots cannot be staged')
  m=lib.validate_ram(data,{'clientJarSha256':jar_sha,'gpuCatalogSha256':lib.sha(gpu_path),'settings':gpu['settings'],'externalAssets':gpu['externalAssets']})
+ if type(r.get('hiddenRoofs'))is not bool or r['hiddenRoofs']is not m['prepared']['hiddenRoofs']:p.error('RAM receipt/cooked roof variant mismatch')
  if lib.sha(data/'manifest.json')!=r['manifestSha256']or m['prepared']!=r['prepared']:p.error('Prepared RAM manifest/receipt mismatch')
  for asset in m['externalAssets']:
   source=ROOT/'Client_Base'/asset['path']

@@ -11,6 +11,12 @@ def module(path,name):
 
 def main():
  base=Path(subprocess.check_output(['python3',str(ROOT/'scripts/workspace-layout.py'),'path','tests','browser-whole-ram-staging','--mkdir'],text=True).strip());run=base/('refusal-'+datetime.now().strftime('%Y%m%dT%H%M%S%f'));run.mkdir();stager=module(ROOT/'scripts/browser-gameplay/prepare-whole-ram-client.py','ram_stager');checks=0
+ sys.path.insert(0,str(ROOT/'tools/browser-gameplay/whole-ram'));baker=module(ROOT/'tools/browser-gameplay/whole-ram/bake.py','ram_baker')
+ for hidden in [False,True]:
+  props=baker.baker_properties(hidden);assert props==['-Dspoiledmilk.browserWholeRamCookHiddenRoofs='+str(hidden).lower()];assert all('C_HIDE_ROOFS'not in prop for prop in props);checks+=2
+ try:baker.baker_properties(1)
+ except ValueError:checks+=1
+ else:raise AssertionError('Cook option must be Boolean')
  data=run/'delivery-plan-only';data.mkdir()
  for name,payload in [('manifest.json',b'{}'),('source.bin',b'NOT REAL SOURCE'),('prepared.bin',b'NOT REAL PREPARED DATA')]: (data/name).write_bytes(payload)
  m={'sourceBundle':{'bytes':14,'sha256':sha(data/'source.bin')},'prepared':{'bytes':22,'sha256':sha(data/'prepared.bin'),'retainedPrimitiveBytes':999,'hiddenRoofs':False}}
@@ -40,7 +46,7 @@ def main():
  reject('incomplete-source-only',stage,'Complete useful445-recipe')
  bake=['python3',str(ROOT/'tools/browser-gameplay/whole-ram/bake.py'),'--name',name,'--client-jar',str(jar),'--client-receipt',str(receipt),'--gpu-bake-run',str(gpu.parent),'--full','--recipe-limit','445']
  reject('nonintegrated-full-cook',bake,'manager-only')
- pilot=bake[:-3]+['--recipe-limit','3'];reject('no-real-baker',pilot,'Actual prepared CPU baker missing')
+ pilot=bake[:-3]+['--recipe-limit','3'];reject('no-real-baker',pilot,'Actual prepared CPU baker missing');reject('hidden-option-no-real-baker',pilot+['--hidden-roofs'],'Actual prepared CPU baker missing')
  wrong=dict(build,jarSha256='f'*64);receipt.write_text(json.dumps(wrong));reject('artifact-mismatch',stage,'Exact clean single-source')
  report={'passed':True,'checks':checks,'sourceCommit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'testSha256':sha(Path(__file__)),'stagerSha256':sha(ROOT/'scripts/browser-gameplay/prepare-whole-ram-client.py'),'bakerDriverSha256':sha(ROOT/'tools/browser-gameplay/whole-ram/bake.py'),'results':results,'scope':'Conditional file-plan installation and early CLI refusals using explicitly non-runtime synthetic bytes/JAR. No valid source/data acceptance, Java, game, server, browser, GPU, network process or performance test.'};(run/'result.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({'passed':True,'checks':checks,'run':str(run)}))
 if __name__=='__main__':main()
