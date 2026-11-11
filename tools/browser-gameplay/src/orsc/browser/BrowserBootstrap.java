@@ -108,6 +108,11 @@ public final class BrowserBootstrap {
             System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");
             // No native presenter or GLFW initialization; only the browser sink owns GPU submission.
             orsc.BrowserWebGLBridge.install();
+            if (Boolean.getBoolean("spoiledmilk.browserBenchmark")
+                    && Boolean.getBoolean("spoiledmilk.browserNativeModelKernel")) {
+                Class.forName("orsc.graphics.three.BrowserNativeModelKernel")
+                    .getMethod("installForPrivateBrowser").invoke(null);
+            }
             reportSpriteKeyPolicy(Boolean.parseBoolean(System.getProperty("spoiledmilk.browserSpriteKeyLimbs", "true")),orsc.BrowserWebGLBridge.isSpriteKeyLimbsEnabled());
         }
         System.setProperty("spoiledmilk.directFramebuffer", "true");
@@ -179,7 +184,8 @@ public final class BrowserBootstrap {
                                         {"regionPreparation","spoiledmilk.browserRegionPreparation","orsc.graphics.three.World","isBrowserRegionPreparationEnabled"},
                                         {"descriptorWriting","spoiledmilk.browserResidentDescriptorWriting","orsc.mudclient","isBrowserResidentDescriptorWritingEnabled"},
                                         {"haloHeightLookup","spoiledmilk.browserHaloHeightLookup","orsc.graphics.three.World","isBrowserHaloHeightLookupEnabled"},
-                                        {"chunkCoverage","spoiledmilk.browserPrimitiveChunkCoverage","orsc.NativeLayeredTerrainChunk","isBrowserPrimitiveChunkCoverageEnabled"}};
+                                        {"chunkCoverage","spoiledmilk.browserPrimitiveChunkCoverage","orsc.NativeLayeredTerrainChunk","isBrowserPrimitiveChunkCoverageEnabled"},
+                                        {"nativeModelKernel","spoiledmilk.browserNativeModelKernel","orsc.graphics.three.BrowserNativeModelKernel","isBrowserNativeModelKernelEnabled"}};
                                     for(String[] policy:policies) {
                                         boolean requested=Boolean.getBoolean(policy[1]);boolean[] actual=BenchmarkCandidatePolicies.inspect(policy[2],policy[3]);
                                         reportCandidatePolicy(policy[0],requested,actual[0],actual[1]);

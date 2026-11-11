@@ -2311,6 +2311,12 @@ public final class RSModel {
 					xz_xx = FastMath.trigTable1024[rotY + 1024];
 				}
 
+                if (BrowserNativeModelKernel.enabled && BrowserNativeModelKernel.tryTransform(
+                        this.vertHead, this.vertXTransform, this.vertYTransform, this.vertZTransform,
+                        this.vertexParam6, this.vertexParam2, this.vertXRot, this.vertYRot, this.vertZRot,
+                        xOffset, yOffset, zOffset, vParamSrc, zTop, rotZ, rotY, rotX,
+                        xy_xy, xy_yy, xz_xz, xz_xx, yz_zy, yz_zz)) return;
+
 				for (int var17 = 0; this.vertHead > var17; ++var17) {
 					int x0 = this.vertXTransform[var17] - xOffset;
 					int yO = this.vertYTransform[var17] - yOffset;

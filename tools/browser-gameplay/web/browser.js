@@ -1,3 +1,4 @@
+import {nativeModelKernelPolicy,createNativeModelKernel} from './browser-native-model-kernel.js';
 import {browserGeometryTransferPolicy} from './browser-geometry-transfer-policy.js';
 import {privatePreparationCandidates} from './browser-preparation-candidates.js';
 import {createStutterDiagnostics,stutterDiagnosticsPolicy} from './browser-stutter-diagnostics.js';
@@ -72,6 +73,9 @@ function report(message) {
 }
 const geometryTransfer=browserGeometryTransferPolicy(window.browserProof.mode,options);
 const candidatePreparation=privatePreparationCandidates(window.browserProof.mode,options);
+const modelKernelPolicy=nativeModelKernelPolicy(window.browserProof.mode,options);
+const modelKernel=createNativeModelKernel();
+window.browserProof.nativeModelKernelWork=modelKernel.stats;
 const fixturePolicy=repeatableFixturePolicy(window.browserProof.mode,options);
 window.browserProof.repeatableFixtureRequested=fixturePolicy.requested;
 const transport = createTransport(WebSocket, report,fixturePolicy.websocket);
@@ -79,13 +83,14 @@ const pointer = window.browserProof.mode === 'webgl' ? createBrowserMiddleMouseI
 if (pointer) window.browserProof.middleInput = pointer.stats;
 window.browserTransport = transport;
 const natives = {
+  Java_orsc_graphics_three_BrowserNativeModelKernel_transform: modelKernel.native,
   async Java_orsc_browser_BrowserBootstrap_reportRegionPreparationDiagnostics(lib,available,counters){
     if((available&&counters.length!==3)||(!available&&counters.length!==0))throw new Error('Region diagnostics layout changed');
     const values=Array.from(counters);if(values.some(value=>!Number.isSafeInteger(value)||value<0))throw new Error('Region diagnostics numeric range changed');
     window.browserProof.regionPreparationDiagnostics={available:available===true,hits:values[0]??null,builds:values[1]??null,retainedTileBytes:values[2]??null};
   },
   async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
-    if(!['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage'].includes(name))throw new Error('Unknown private policy receipt');
+    if(!['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','nativeModelKernel'].includes(name))throw new Error('Unknown private policy receipt');
     (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
   },
   async Java_orsc_browser_BrowserBootstrap_reportCombatState(lib,username,names,counters){
@@ -219,7 +224,7 @@ try {
   });
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
-    javaProperties: ['user.dir=/files', ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])], natives});
+    javaProperties: ['user.dir=/files', ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...modelKernelPolicy.properties, ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])], natives});
   report('Browser Java ready');
   const display = document.querySelector('#display');
   displayLayout=createBrowserDisplay({window,document,display,viewport:document.querySelector('#viewport')});
