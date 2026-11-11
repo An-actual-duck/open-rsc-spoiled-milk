@@ -6699,18 +6699,28 @@ public final class World {
 		private final int originWorldZ;
 		private final boolean includePresentationEffects;
 		private final List<Integer> vertexCoords = new ArrayList<Integer>();
+        private final BrowserRegionBuild.IntValues vertexCoordsPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Float> vertexTextureU = new ArrayList<Float>();
+        private final BrowserRegionBuild.FloatValues vertexTextureUPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.FloatValues() : null;
 		private final List<Float> vertexTextureV = new ArrayList<Float>();
+        private final BrowserRegionBuild.FloatValues vertexTextureVPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.FloatValues() : null;
 		private final List<Integer> vertexLights = new ArrayList<Integer>();
+        private final BrowserRegionBuild.IntValues vertexLightsPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Integer> vertexTerrainBlendColors = new ArrayList<Integer>();
+        private final BrowserRegionBuild.IntValues vertexTerrainBlendColorsPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Integer> vertexTerrainBlendStrengths = new ArrayList<Integer>();
+        private final BrowserRegionBuild.IntValues vertexTerrainBlendStrengthsPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Integer> indices = new ArrayList<Integer>();
+        private final BrowserRegionBuild.IntValues indicesPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Integer> triangleTextures = new ArrayList<Integer>();
+        private final BrowserRegionBuild.IntValues triangleTexturesPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Integer> triangleFallbackColors = new ArrayList<Integer>();
+        private final BrowserRegionBuild.IntValues triangleFallbackColorsPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Renderer3DModelKind> triangleModelKinds = new ArrayList<Renderer3DModelKind>();
 		private final List<Renderer3DMaterialFamily> triangleMaterialFamilies =
 			new ArrayList<Renderer3DMaterialFamily>();
 		private final List<Integer> triangleTerrainVariationMasks = new ArrayList<Integer>();
+        private final BrowserRegionBuild.IntValues triangleTerrainVariationMasksPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Renderer3DWorldChunkFrame.ShadowCaster> shadowCasters =
 			new ArrayList<Renderer3DWorldChunkFrame.ShadowCaster>();
 		private final List<Renderer3DWorldChunkFrame.GlowEmitter> glowEmitters =
@@ -6842,20 +6852,20 @@ public final class World {
 			int a,
 			int b,
 			int c) {
-			int baseVertex = vertexCoords.size() / 3;
+			int baseVertex = (vertexCoordsPrimitive == null ? vertexCoords.size() : vertexCoordsPrimitive.size()) / 3;
 			addVertex(faceVertexCoords, faceVertexLights, faceVertexTerrainBlendColors, faceVertexTerrainBlendStrengths, textureU, textureV, a);
 			addVertex(faceVertexCoords, faceVertexLights, faceVertexTerrainBlendColors, faceVertexTerrainBlendStrengths, textureU, textureV, b);
 			addVertex(faceVertexCoords, faceVertexLights, faceVertexTerrainBlendColors, faceVertexTerrainBlendStrengths, textureU, textureV, c);
-			indices.add(Integer.valueOf(baseVertex));
-			indices.add(Integer.valueOf(baseVertex + 1));
-			indices.add(Integer.valueOf(baseVertex + 2));
-			triangleTextures.add(Integer.valueOf(texture));
-			triangleFallbackColors.add(Integer.valueOf(resolveFallbackColor(texture, fallbackColor)));
+			if (indicesPrimitive != null) indicesPrimitive.add(baseVertex); else indices.add(Integer.valueOf(baseVertex));
+			if (indicesPrimitive != null) indicesPrimitive.add(baseVertex + 1); else indices.add(Integer.valueOf(baseVertex + 1));
+			if (indicesPrimitive != null) indicesPrimitive.add(baseVertex + 2); else indices.add(Integer.valueOf(baseVertex + 2));
+			if (triangleTexturesPrimitive != null) triangleTexturesPrimitive.add(texture); else triangleTextures.add(Integer.valueOf(texture));
+			if (triangleFallbackColorsPrimitive != null) triangleFallbackColorsPrimitive.add(resolveFallbackColor(texture, fallbackColor)); else triangleFallbackColors.add(Integer.valueOf(resolveFallbackColor(texture, fallbackColor)));
 			triangleModelKinds.add(kind);
 			triangleMaterialFamilies.add(family == null
 				? Renderer3DMaterialClassifier.fallbackFor(kind)
 				: family);
-			triangleTerrainVariationMasks.add(Integer.valueOf(terrainVariationMask));
+			if (triangleTerrainVariationMasksPrimitive != null) triangleTerrainVariationMasksPrimitive.add(terrainVariationMask); else triangleTerrainVariationMasks.add(Integer.valueOf(terrainVariationMask));
 			if (kind == Renderer3DModelKind.TERRAIN) {
 				terrainTriangles++;
 			} else if (kind == Renderer3DModelKind.WALL) {
@@ -6972,14 +6982,14 @@ public final class World {
 			int x = faceVertexCoords[coord];
 			int y = faceVertexCoords[coord + 1];
 			int z = faceVertexCoords[coord + 2];
-			vertexCoords.add(Integer.valueOf(x));
-			vertexCoords.add(Integer.valueOf(y));
-			vertexCoords.add(Integer.valueOf(z));
-			vertexTextureU.add(Float.valueOf(textureU[vertex]));
-			vertexTextureV.add(Float.valueOf(textureV[vertex]));
-			vertexLights.add(Integer.valueOf(vertexLight(faceVertexLights, vertex)));
-			vertexTerrainBlendColors.add(Integer.valueOf(vertexTerrainBlendColor(faceVertexTerrainBlendColors, vertex)));
-			vertexTerrainBlendStrengths.add(Integer.valueOf(vertexTerrainBlendStrength(faceVertexTerrainBlendStrengths, vertex)));
+			if (vertexCoordsPrimitive != null) vertexCoordsPrimitive.add(x); else vertexCoords.add(Integer.valueOf(x));
+			if (vertexCoordsPrimitive != null) vertexCoordsPrimitive.add(y); else vertexCoords.add(Integer.valueOf(y));
+			if (vertexCoordsPrimitive != null) vertexCoordsPrimitive.add(z); else vertexCoords.add(Integer.valueOf(z));
+			if (vertexTextureUPrimitive != null) vertexTextureUPrimitive.add(textureU[vertex]); else vertexTextureU.add(Float.valueOf(textureU[vertex]));
+			if (vertexTextureVPrimitive != null) vertexTextureVPrimitive.add(textureV[vertex]); else vertexTextureV.add(Float.valueOf(textureV[vertex]));
+			if (vertexLightsPrimitive != null) vertexLightsPrimitive.add(vertexLight(faceVertexLights, vertex)); else vertexLights.add(Integer.valueOf(vertexLight(faceVertexLights, vertex)));
+			if (vertexTerrainBlendColorsPrimitive != null) vertexTerrainBlendColorsPrimitive.add(vertexTerrainBlendColor(faceVertexTerrainBlendColors, vertex)); else vertexTerrainBlendColors.add(Integer.valueOf(vertexTerrainBlendColor(faceVertexTerrainBlendColors, vertex)));
+			if (vertexTerrainBlendStrengthsPrimitive != null) vertexTerrainBlendStrengthsPrimitive.add(vertexTerrainBlendStrength(faceVertexTerrainBlendStrengths, vertex)); else vertexTerrainBlendStrengths.add(Integer.valueOf(vertexTerrainBlendStrength(faceVertexTerrainBlendStrengths, vertex)));
 		}
 
 		private int vertexLight(int[] faceVertexLights, int vertex) {
@@ -7047,16 +7057,16 @@ public final class World {
 		}
 
 		private WorldGpuChunkMesh build() {
-			int[] vertexArray = toIntArray(vertexCoords);
-			float[] textureUArray = toFloatArray(vertexTextureU);
-			float[] textureVArray = toFloatArray(vertexTextureV);
-			int[] lightArray = toIntArray(vertexLights);
-			int[] terrainBlendColorArray = toIntArray(vertexTerrainBlendColors);
-			int[] terrainBlendStrengthArray = toIntArray(vertexTerrainBlendStrengths);
-			int[] indexArray = toIntArray(indices);
-			int[] textureArray = toIntArray(triangleTextures);
-			int[] fallbackArray = toIntArray(triangleFallbackColors);
-			int[] terrainVariationMaskArray = toIntArray(triangleTerrainVariationMasks);
+			int[] vertexArray = vertexCoordsPrimitive == null ? toIntArray(vertexCoords) : vertexCoordsPrimitive.array();
+			float[] textureUArray = vertexTextureUPrimitive == null ? toFloatArray(vertexTextureU) : vertexTextureUPrimitive.array();
+			float[] textureVArray = vertexTextureVPrimitive == null ? toFloatArray(vertexTextureV) : vertexTextureVPrimitive.array();
+			int[] lightArray = vertexLightsPrimitive == null ? toIntArray(vertexLights) : vertexLightsPrimitive.array();
+			int[] terrainBlendColorArray = vertexTerrainBlendColorsPrimitive == null ? toIntArray(vertexTerrainBlendColors) : vertexTerrainBlendColorsPrimitive.array();
+			int[] terrainBlendStrengthArray = vertexTerrainBlendStrengthsPrimitive == null ? toIntArray(vertexTerrainBlendStrengths) : vertexTerrainBlendStrengthsPrimitive.array();
+			int[] indexArray = indicesPrimitive == null ? toIntArray(indices) : indicesPrimitive.array();
+			int[] textureArray = triangleTexturesPrimitive == null ? toIntArray(triangleTextures) : triangleTexturesPrimitive.array();
+			int[] fallbackArray = triangleFallbackColorsPrimitive == null ? toIntArray(triangleFallbackColors) : triangleFallbackColorsPrimitive.array();
+			int[] terrainVariationMaskArray = triangleTerrainVariationMasksPrimitive == null ? toIntArray(triangleTerrainVariationMasks) : triangleTerrainVariationMasksPrimitive.array();
 			Renderer3DModelKind[] kindArray =
 				triangleModelKinds.toArray(new Renderer3DModelKind[triangleModelKinds.size()]);
 			Renderer3DMaterialFamily[] familyArray = triangleMaterialFamilies.toArray(
@@ -7146,6 +7156,7 @@ public final class World {
 			long[] roofCoverageBits,
 			int roofCoverageAxis,
 			int roofCoveredTileCount) {
+			if (BrowserRegionBuild.isEnabled()) return signaturePrimitive(vertexArray, textureUArray, textureVArray, lightArray, terrainBlendColorArray, terrainBlendStrengthArray, indexArray, textureArray, fallbackArray, terrainVariationMaskArray, kindArray, familyArray, shadowCasterArray, glowEmitterArray, roofCoverageBits, roofCoverageAxis, roofCoveredTileCount);
 			long hash = FNV_OFFSET_BASIS;
 			hash = mix(hash, plane);
 			hash = mix(hash, centerSectionX);
@@ -7216,6 +7227,96 @@ public final class World {
 				hash = mix(hash, (int) (value >>> 32));
 			}
 			return hash;
+		}
+
+		private long signaturePrimitive(
+			int[] vertexArray,
+			float[] textureUArray,
+			float[] textureVArray,
+			int[] lightArray,
+			int[] terrainBlendColorArray,
+			int[] terrainBlendStrengthArray,
+			int[] indexArray,
+			int[] textureArray,
+			int[] fallbackArray,
+			int[] terrainVariationMaskArray,
+			Renderer3DModelKind[] kindArray,
+			Renderer3DMaterialFamily[] familyArray,
+			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray,
+			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitterArray,
+			long[] roofCoverageBits,
+			int roofCoverageAxis,
+			int roofCoveredTileCount) {
+			BrowserRegionBuild.Fnv64 hash = new BrowserRegionBuild.Fnv64(FNV_OFFSET_BASIS);
+			hash.add(plane);
+			hash.add(centerSectionX);
+			hash.add(centerSectionY);
+			hash.add(originWorldX);
+			hash.add(originWorldZ);
+			for (int value : vertexArray) {
+				hash.add(value);
+			}
+			for (float value : textureUArray) {
+				hash.add(Float.floatToIntBits(value));
+			}
+			for (float value : textureVArray) {
+				hash.add(Float.floatToIntBits(value));
+			}
+			for (int value : lightArray) {
+				hash.add(value);
+			}
+			for (int value : terrainBlendColorArray) {
+				hash.add(value);
+			}
+			for (int value : terrainBlendStrengthArray) {
+				hash.add(value);
+			}
+			for (int value : indexArray) {
+				hash.add(value);
+			}
+			for (int value : textureArray) {
+				hash.add(value);
+			}
+			for (int value : fallbackArray) {
+				hash.add(value);
+			}
+			for (int value : terrainVariationMaskArray) {
+				hash.add(value);
+			}
+			for (Renderer3DModelKind kind : kindArray) {
+				hash.add(kind.ordinal());
+			}
+			for (Renderer3DMaterialFamily family : familyArray) {
+				hash.add(family.getShaderId());
+			}
+			for (Renderer3DWorldChunkFrame.ShadowCaster caster : shadowCasterArray) {
+				hash.add(caster.getModelKind().ordinal());
+				hash.add(caster.getBaseX0());
+				hash.add(caster.getBaseY());
+				hash.add(caster.getBaseZ0());
+				hash.add(caster.getBaseX1());
+				hash.add(caster.getBaseZ1());
+				hash.add(caster.getHeight());
+				hash.add(caster.getWidth());
+				hash.add(caster.getOpacity());
+				hash.add(caster.isOutdoorOnly() ? 1 : 0);
+			}
+			for (Renderer3DWorldChunkFrame.GlowEmitter emitter : glowEmitterArray) {
+				hash.add(emitter.getModelKind().ordinal());
+				hash.add(emitter.getCenterX());
+				hash.add(emitter.getCenterY());
+				hash.add(emitter.getCenterZ());
+				hash.add(emitter.getRadius());
+				hash.add(emitter.getColor());
+				hash.add(emitter.getIntensity());
+			}
+			hash.add(roofCoverageAxis);
+			hash.add(roofCoveredTileCount);
+			for (long value : roofCoverageBits) {
+				hash.add((int) value);
+				hash.add((int) (value >>> 32));
+			}
+			return hash.value();
 		}
 
 		private static long mix(long hash, int value) {

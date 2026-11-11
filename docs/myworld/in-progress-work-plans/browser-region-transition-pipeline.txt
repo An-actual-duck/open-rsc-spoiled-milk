@@ -1,0 +1,193 @@
+Browser travel / chunk transition pipeline — READY, private opt-in only
+
+Current result (2026-11-11): the exact private construction candidate passed
+CPU parity and repeated actual Firefox adjacent-walk acceptance. Mean warm
+new-world frame gap fell from 3660.375ms OFF to 1475.5ms ON in eight crossings
+per mode, a 59.6899% reduction. Residual ON pauses reach 3300ms. No seamless
+streaming, steady-FPS gain, broad-device acceptance or normal-default adoption
+is claimed. All public/server/default settings remain unchanged.
+
+The sections below preserve the chronological investigation; early pending
+statements describe their original milestone and are superseded by the final
+acceptance record at the end.
+
+User reports good stable-chunk FPS but frequent long loads and stutter while
+traveling. This task targets ordinary repeated boundaries, not only farteleports.
+No visual/distance/fog, map, authority, collision/picking or public changes.
+
+Source-backed first boundary
+- Existing immutable/rebase-safe GPU chunk keys and LRU overlap reuse already
+  exist.32,768 discretionary vertices/frame; one oversized forward-progress
+  escape; animation changes mandatory. Retained FULL image and atomic source
+  readiness already protect incomplete presentation. Do not loosen these.
+- Cold chunks still run production Java28-float vertex packing plus triangle/
+  material grouping; held earlyreturns omit existing frameWork diagnostics.
+- Historical Firefox ordinary crossing38uploads/82.8MB ~1.935s; far112uploads /
+ 175.9MB ~10s vs recordedcore103ms. These are instrumented old samples, not
+  current baseline nor proofGPU uploaddominates. Old mergecache onlyavoids
+  duplicate immutable merges; parkedfog addedcamera-demandholds withnogain.
+- World prepared renderer cache has4 entries vs48 worldmodelproducts; conversion
+  clones/normalizes meshes. Possible churn needsmeasurement, notblind expansion.
+
+First milestone: private loadprofile=on diagnostic only
+- Exact36 scalars, owner/attempt/path/sourceepoch/required/ready/missing, nested
+  phase milliseconds: initialization, activekeys/evict, textures, geometry,
+  vertexpack, materialpack, nativechunksubmit, sprites, lighting, sky, overlay,
+  terminal andtotal. Chunk/resource/cached/packcall counters copiedowned.
+- Paths0error,1noWorldHold,2incompleteHold,3world,4opaque. Allheld/error/resource
+  changes andfirstcomplete epochs emitted, steadyworld/opaque suppressed.
+- Native submit clocks callback return, including Worker copy/backpressure;
+  NOT actual Worker/GPUexecution. Correlate main receivedTime and Worker
+  submitted/completed packet/frame IDs separately. Durations overlap; DO NOTSUM.
+- GPU/packing/presentation order, budgets andliteraloutput unchanged. FlagOFF
+  adds no counters/clocks/diagnosticcalls. Onprofilediagnosticfailure preserves
+  original thrown presentation error (suppresses reporterror ontoit); otherwise
+  diagnosticfailure uses existingprivateerrorboundary. No JMX/managementbeans.
+- Main gpu.stats.loadProfile owns last/totalReports/samples(max128), plusalias
+  gpu.stats.loadProfileSamples. No borrowedJava arrays retained. Actual policy
+  reported through BrowserBootstrap candidategetter andstrict absentON refusal.
+
+Implementation choice after actual travel attribution: remove repeated work /
+cache churn ifdemonstrated, orstage big blockingpreparationbursts. No automatic
+budgetraise, oldbranch import, qualitycut or performanceclaim atthis milestone.
+Worker performsCPU/source/build/stageonly; managerownsactualFirefox/profiles.
+
+Repeatable diagnostic staging follow-up
+- NEW immutable output/tests/browser-gameplay-spike/
+  region-load-profile-repeatable-review-1/repeatable-preparation.json.
+- Same ba0 full-source diagnosticJAR d1cbcabc282010f50c1d14b7a58d09929f0d8a5dfd975a06587b4bdd93ebd56c;
+  exact65857a5bb211dac12d7e34722301b4d7cd3bfc5d frontend. Runtime unchanged.
+- Maintained repeatable client preparer, existing repeatable-baseline-2 server;
+  accountbrowserdemo, fixture repeatable-v1, TCP/Cache43649, WS43549, HTTP8220.
+  Standard repeatable sourceproof/camera contract, Worker/loadprofile ON;
+  modelbatch/terrainquery/keylimbs/physical ON; fullC/T, overlaydelta/rect OFF.
+  ON/OFF metadata changes only diagnostic flag, not presentationquality.
+- Server/DB/account/fixture/processes untouched; no browser/server started.
+  Prior combat8220 metadata and failed LOGIN/disappearing-client attempt kept.
+  Precise earlier application-exit cause remains unproven; new stage supplies
+  coherent repeatable route instead of mixingcombatcache/repeatableURL.
+- Stage hashes/commands verified and canonical workspace check PASS. Actual
+  route profile still manager gate; no tuning or performanceclaim yet.
+
+Private exact construction candidate (2026-11-11, acceptance pending)
+------------------------------------------------------------------
+Actual adjacent-crossing profile attributes 147 of 183 insertVertex-inclusive
+samples to addModels, signature/FNV any-stack union 294/1522 gap samples, and
+114 reference-array growth samples to World GPU numeric lists. This motivates
+one private regionbuild=on candidate, not an expected percentage speedup.
+
+The benchmark-only property spoiledmilk.browserRegionBuild enables:
+* A construction-local RSModel.addModels XYZ index, earliest-index semantics,
+  at most 262144 int slots (1MiB). Coordinates stay in authoritative model arrays.
+  Inputs above 131072 predicted vertices, or unexpectedly growing beyond half
+  occupancy, use the original scan. No persistent mutable-model cache exists.
+  The index is discarded in finally; insertVertex outside this scope is literal.
+* Two-int FNV-1a state in both object/world GPU signature loops. Array/field
+  order and canonical Float.floatToIntBits remain identical; long is joined only
+  at finish. Literal long hash loops remain the OFF branch.
+* Numeric primitive World GPU accumulators. Each scratch array grows no further
+  than 1048576 elements (4MiB), then converts to the original boxed representation
+  for oversized accepted inputs. Final arrays are exact-sized owned copies;
+  enum/effect order and all geometry/material/lighting data remain unchanged.
+  This bounds additional primitive scratch, not total process/output memory.
+
+The ordinary browser/native/default paths keep the property OFF. No view distance,
+geometry selection, cache identity, signature ordering, collision, gameplay or
+world-load authority changes. Source compilation passes against the preserved
+ba0 full-source client. Frozen reference/parity and actual travel acceptance are
+still pending; no improvement claim yet. Existing load-profile artifacts remain
+immutable and distinct from this new construction experiment.
+
+Construction CPU proof and frozen artifact (2026-11-11)
+------------------------------------------------------
+Runtime source: 502fa18d88688f3030e8349c6487e541aea87a78.
+Test-only source/build checkpoint: 437c4e6e67f23bd1c0527d48c2cd11bf626af354.
+Own helper suite: 2,916,362 checks in each of four property gates; exact literal
+long FNV through random/carry/extreme seeds, scratch overflow beyond 1M values,
+raw NaN/-zero bits and isolated output arrays. Frontend normal and private
+Worker/no-AWT/load-profile/regionbuild mocked contracts pass; layout check passes.
+
+Independent ai2 receipt:
+/home/justin/Core-Framework-ai-2/output/tests/browser-construction-independent/
+20261111T180554694154Z/result.json
+Frozen 7934, candidate OFF and ON match 4,364,314 raw construction bytes and
+20,480 whole-signature bytes (98 construction cases and 320 object/world hash
+cases). Includes malformed failure prefix, source aliases/transforms, full signed
+coordinates, canonical float NaNs, effects and roof data. Literal FNV reference
+131072 words and 2,097,291 helper edge assertions pass. Actual private index
+collisions/wrapped probing/earliest matches/caps and primitive overflow branches
+are exercised, so kernel proofs are nonvacuous. CPU equality is not a travel-time
+or browser-performance claim.
+
+Immutable full-source build:
+output/builds/browser-region-transition-pipeline/construct-437-review-1/
+client.jar SHA256 0409c558246b5652a70794f7b99fff9801729845a3f1d6d72dd4b0fe6574041b
+receipt.json records clean source, Java8u482/vendored Ant, all source/class/asset
+hashes; no transplanted classes. 956 compiled classes = 666 orsc + 290 com.
+ZIP comparison versus the preserved diagnostic d1cbc build finds five added
+helper classes, no removed entries, changed class families only RSModel/World
+(including nested debug-line changes), and no changed asset. Runtime artwork is
+3185 files, unchanged; other class-directory resources account for nine files.
+Initial direct Ant launcher lacked execute permission; the preserved failed log
+contains that failure. The normal documented sh launcher then built successfully
+(build-log-2.txt). No source or artifact was replaced to conceal that setup error.
+
+Immutable client-only private repeatable stage:
+output/tests/browser-gameplay-spike/region-build-repeatable-review-1/
+repeatable-preparation.json (includes exact web-file/JAR/build receipt hashes)
+HTTP8221, existing repeatable-baseline-2 TCP43649/WS43549, browserdemo account.
+urlOn and urlOff differ solely by regionbuild. Worker, loadprofile, modelbatch,
+terrainquery and sprite-key limbs are ON; full C/T, visual scope and fixed camera
+are unchanged. Runtime policy regionBuild reports actual requested/available/
+enabled via existing bounded startup receipt. No worker process/server/database,
+browser or GPU was started or changed. Prior baseline HTTP8220 metadata/artifacts
+are preserved. Actual adjacent-walk acceptance is manager-owned and pending.
+
+
+Final manager-owned actual travel acceptance (2026-11-11)
+--------------------------------------------------------
+Comparison receipt:
+/home/justin/Core-Framework/output/diagnostics/browser-travel-loading/
+region-build-comparison.json
+SHA256 ce36e782e1551439c4466544467250f8ad7852e1c6397179df6f40f1038e6af8
+Same source/artifact/route settings, OFF/ON/OFF/ON fresh Firefox runs, no worker
+CPU/Git/build/GPU contention. Worker rendering and Java load diagnostics ON;
+CPU sampling OFF during timing. Existing fixed older repeatable fixture is not
+current-production-server proof. No server restart or public change occurred.
+
+cohort          cold gap ms  first return ms  final-four mean ms  route seconds
+OFF1                  4293             3509             3827.75        28.518
+ON1                   2947              672             1874.25        16.673
+OFF3                  4342             3540             3493.00        26.957
+ON2                   2951              670             1076.75        15.677
+
+Across eight final warm crossings per mode: OFF3660.375ms / ON1475.5ms, mean
+reduction59.68992248%. ON warm minimum530ms, maximum3300ms. Route duration
+includes pointer actions, walking, polling and settling; it is not pure loading
+CPU time. New-world gaps use count-indexed interval tails only when the full
+frame-count delta fits, never concatenated repeated rings or held-frame FPS.
+Both ON actual regionBuild policies were available/enabled; all seven legs in
+each accepted cohort passed pointer/authoritative route/ordinary epoch1-to7
+and ready/no-error gates, with zero diagnostic polling gaps. Upload totals can
+vary with scheduling/animations; no isolated GPU/upload reduction is inferred.
+
+Preserved exclusions and tooling corrections:
+* First collector preflight rejected the new stage metadata before route input:
+  fixture/tcp/websocket fields were missing from repeatable-preparation.json,
+  though stage.json, Cache43649 and actual WS43549 were correct. Manager saved
+  the original and created candidate-stage-route-contract.json binding its hash,
+  real socket and private marker. Immutable stage/runtime bytes were unchanged.
+  The maintained preparer now emits these three additive fields from stage.json;
+  pure CPU receipt-field regression checks pass. This is a test-only correction.
+* OFF2 was rejected before any measured boundary: setup teleport had not fully
+  rendered before the map click, so the strict authority gate rejected movement.
+  Its failure is preserved. Driver setup now requires fresh post-command frames,
+  exact pinned target pose and last-frame age; no runtime change was needed.
+
+Final independent review READY835e26f4b83cfd94db61534f7f5f43322048dd27.
+Its full CPU receipt SHA256:
+fa3f3f5936fb405b119ad4e30c14f035e1bd9b9f506d4af499b66bb21ab27eba
+Runtime502/artifact437/0409 JAR, frontend shaders and approved artwork remain
+frozen. Later changes are tests/preparer receipt fields/documentation only.
+This handoff is ready for private opt-in integration. regionbuild remains OFF
+normally; more work is needed for remaining occasional multi-second stalls.
