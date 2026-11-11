@@ -10,7 +10,7 @@ The manager runs Firefox; the preparer starts no HTTP, browser or server.
 The current immutable stage freezes producer a10f96234dbe7556565dc31301cd6a3a5bc6d5a5,
 reference main 58c61d98562e287c6e35a6056009cbe81c6d3464, and this oracle c6d7a5303.
 Producer a10 changes the main return-buffer pool; Worker/backend remain 88af6b08e.
-Current stage: output/tests/browser-render-worker-oracle/worker-pixels-a10f-c6d7-4/
+Current stage: output/tests/browser-render-worker-oracle/worker-pixels-25cd-426b-5/
 Receipt: stage.json; source gate: 112 checks PASS, CPU only.
 The receipt binds every served module, native Java input, shader and sky file.
 Exact main 58 Shader/Scene/GraphicsController/Sky sources are freshly compiled
@@ -130,3 +130,45 @@ check on this hardware. It does not execute CheerpJ/Java JNI, physical input,
 context loss or gameplay. It does not measure scanout, responsiveness, FPS or
 any performance improvement. The manager's private full-game gate must test
 those separately and use completed Worker frames rather than producer FPS.
+
+Final source-bound gate after loading-layout correction
+------------------------------------------------------
+Stage5 freezes producer 25cd32c629d63a9a16abc5ceb5fe955d3c1e0285 and oracle
+426b3583c94712b47caa1b9e7140d36c12e667ab. All served stage4 bytes were
+verified before reuse of native Java/classes/shaders/sky. Only browser.js and
+browser-render-worker.js changed: early pre-AWT loading canvas alignment and
+retrying a cached zero-size DOM rectangle. Worker entry/replay/protocol/transport/
+stats, actual backend and shaders remain byte-identical to GPU-proven a10.
+Source 112 checks pass. Stage5's nativeReuse receipt preserves source lineage;
+no old stage or raw evidence was replaced.
+
+Manager evidence:
+ output/diagnostics/browser-frame-architecture/render-worker-gpu-5/actual.json
+ output/diagnostics/browser-frame-architecture/render-worker-gpu-5/receipt.json
+Actual stage5 again passed 50 cases, 27,915,808 compared RGBA bytes, zero changed,
+no errors, borrowed/returned lifetime true and confirmed disposal ledgers zero.
+SHA256 actual.json:
+ 3ae5bdf22ff75229855b180d2bbdcba89b7ffd88d991fcd137511fff4e1e3d25
+SHA256 receipt.json:
+ cafe8b9dbf6cc55ee1cfc7927352d898a1919c1b15ae03dbeab7a23b509c5b92
+
+The standalone calls the main proxy directly with controlled CSSrect/DPR, not
+browser.js/AWT initialization. The manager separately passed actual game
+functional2 startup, first world, walking, menu and middle-click checks. Actual
+headful Firefox same-build fixed-camera combat measurements, 180s warmup then
+two 30s windows each, are preserved in:
+ render-worker-on-2-measure/result.json: 59.852410 completed Worker frames/s
+ render-worker-on-3-measure/result.json: 59.799723 completed Worker frames/s
+ render-worker-off-1-measure/result.json: 56.715970 same-thread frames/s
+All paths above share the manager diagnostics/browser-frame-architecture root.
+The accepted result receipts require all six real combat channels to advance
+and the same visual/physical configuration. Worker queue-age p99 was 19ms in
+each window; this is not measured physical input latency. Worker frame interval
+p99 was 22/23ms and 23/22ms versus control 22/21ms. There were respectively 2 and 1
+intervals over 50ms per 60s Worker run versus 0 in the control. These small matched
+cohorts support further private testing; they do not establish universal 60 FPS,
+low-latency input, GPU scanout/fence behavior or absence of occasional stalls.
+
+This remains private and default OFF. No ordinary browser adoption, native game
+behavior change, public publication/deployment or server action is authorized
+by this independent report. The passing oracle code remains frozen.
