@@ -1,4 +1,4 @@
-Whole-overworld RAM experiment — implementation contract (ACTIVE)
+Whole-overworld RAM experiment — private CPU prototype READY
 ===============================================================
 
 Private, explicit wholeram=on, requiring wholezone=on and browser benchmark
@@ -31,13 +31,13 @@ Delivery: Cache/whole-ram/manifest.json (<=4 MiB), source.bin and prepared.bin.
 Raw manifest/bundle is owned by the frontend tooling. Java owns WRP1 prepared
 format and validates all lengths/counts before allocation/publication. The
 prepared extension contains schemaVersion,path,bytes,sha256,recipes,queryCells,
-levels,pageCount,modelTemplateCount,retainedPrimitiveBytes. complete=true requires
+levels,pageCount,modelTemplateCount,retainedPrimitiveBytes,hiddenRoofs. complete=true requires
 the exact full roster; bounded pilot outputs remain incomplete and cannot claim
 whole-RAM readiness. Preparation is atomic; no partially decoded provider is
 installed. Prepared bytes are streamed into typed storage, not retained twice.
 
-World integration will bypass terrain/wall/roof emission, grid splitting and
-redundant GPU construction on a prepared activation. It will still reset/publish
+World integration bypasses terrain/wall/roof emission, grid splitting and
+redundant GPU construction on a prepared activation. It still resets/publishes
 the local scene, copy mutable collision/tile/elevation state, instantiate mutable
 model workspaces, apply live authority and perform ordinary picking/projection.
 Scenery model cloning is deliberately retained in this first experiment.
@@ -145,3 +145,37 @@ flags. Data is streamed with bulk SHA buffering. C_HIDE_ROOFS is bound explicitl
 by prepared.hiddenRoofs; changing it or packing/material/source inputs refuses
 this private cook. prepared.bin and its primitive pool each have1536MiB limits.
 No desktop heap setting is passed to CheerpJ.
+
+Final worker handoff evidence
+-----------------------------
+Final full-source build commit7986d1b63390453d0beb3aadba3fbb0be3800937:
+ output/builds/browser-whole-overworld-ram/source-final-4/receipt.json
+ JAR5fa57ee2174f49881282d05b69e020ac50e126a950e1690adbb99aa1e0e7e86e
+ source manifest3b597fd47d3a0c28b4d21c91fb298f22ee75d8a704c86a1535690f149b632eac
+ 976maintained classes /3194game assets, no transplanted classes.
+Only BrowserWholeOverworldRam.class differs from source-capacity-3: the avoided
+build diagnostic increment is synchronized to avoid losing concurrent halo/main
+increments. All other class entries and all game assets are byte-identical.
+No data, geometry, model or prepared-format changes follow the complete CPU cook.
+
+Latest independent unified21e742773 proofs:
+ ai-3/output/tests/browser-whole-ram/activation-roof-fix-7/result.json:
+ 64,417 model/publication/query checks against the full445/1330 dataset.
+ ai-3/output/tests/browser-whole-ram/full-reader-21e-4/result.json:
+ 32 actual full-reader/activation/refusal checks, including source/editor/options,
+ map/JAR/GPU binding, legacy24/mixed-size/authored-void/sourcehash failures,
+ signed/non-global fallback and failure after raw-source readiness clearing both
+ flags. Deliberate native OOM recovery was source-reviewed, not executed.
+ Source delivery/baseline:5,413 independent checks (review branch owns receipt).
+Final worker JAR decoder suite re-run:
+ output/tests/browser-whole-ram-codec/20261111T221831Z/result.json,20,484PASS.
+
+Manager integration steps: merge exact READY implementations/review; build one
+fresh full main JAR; bake whole-zone GPU data from it; build verified WRA1 source
+and complete WRP1 CPU data from the same JAR/GPU catalog; stage ON-only RAM files
+and hash properties with ai-2's whole-ram tools. Use fresh output names and keep
+all older cooks/stages intact. Manager owns actual Firefox startup/full residency,
+normal overlays/options/input, doors/trees and signed transitions, ordinary
+walking cadence plus steady completed-frame FPS/RSS/VRAM comparisons. All those
+hardware gates remain pending. The feature remains private explicit ON/default
+OFF regardless of these CPU results; no public/release action is authorized here.
