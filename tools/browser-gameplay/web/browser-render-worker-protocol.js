@@ -5,7 +5,7 @@ export const RENDER_WORKER_MAX_COMMANDS=1024;
 const P='Java_orsc_BrowserWebGLBridge_';
 // n finite scalar, i safe integer, b boolean, s bounded shader, I/F/B primitive plane.
 export const RENDER_WORKER_SCHEMA=Object.freeze({
-  initialize:['s','s'],initializeLighting:['s','s'],initializeSky:[],
+  initialize:['s','s'],initializeWholeZone:['s','I','I'],wholeZoneFrame:['I','I'],initializeLighting:['s','s'],initializeSky:[],
   uploadLightingMask:['i','i','i','B','F'],lightingFrame:['F'],uploadSkyGeometry:['F','I','i'],skyFrame:['F','F'],
   overlayFrame:['i','i','i','n','n','i','b','N'],uploadChunk:['i','F','I','I'],replaceChunk:['i','F','I','I'],
   deleteTextures:['I'],uploadTexture:['i','i','i','I','b'],deleteChunks:['I'],

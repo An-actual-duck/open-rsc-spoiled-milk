@@ -1,3 +1,4 @@
+import {wholeZonePolicy} from './browser-whole-zone-policy.js';
 import {browserLoadProfilePolicy,createBrowserLoadProfileCollector} from './browser-region-load-profile.js';
 import {renderWorkerPolicy} from './browser-render-worker-protocol.js';
 import {optimizedRenderDefaults,canonicalRenderProperties} from './browser-optimized-render-defaults.js';
@@ -25,6 +26,7 @@ function nativeCallPolicy(mode,parameters){
 }
 const nativeCallDispatch=nativeCallPolicy(options.get('mode')||'software',options);
 const renderWorker=renderWorkerPolicy(options.get('mode')||'software',options);
+const wholeZone=wholeZonePolicy(options.get('mode')||'software',options);
 const loadProfilePolicy=browserLoadProfilePolicy(options.get('mode')||'software',options);
 const javaVersion = Number(options.get('java') || '8');
 if (![8, 11, 17].includes(javaVersion)) throw new Error('Private probe supports Java 8, 11 or 17');
@@ -33,7 +35,7 @@ let stopped = false;
 let preparationControls = {properties: [], requested: null};
 let spriteKeyControls = {properties: [], requested: null};
 let modelPreparationControls = {properties: [], requested: null};
-let gpu,worldCover,awaitingGameFrame=false,displayLayout,stutterDiagnostics;
+let gpu,worldCover,awaitingGameFrame=false,displayLayout,stutterDiagnostics,wholeZoneCatalogConfig=null;
 window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput;
 function updateWorldCover(){const state=gpu?.stats.worldReadiness,error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null),waiting=awaitingGameFrame&&(renderWorker.enabled?!(state?.phase==='ready'&&gpu?.stats.javaWorldFrames>0):state?.phase==='login');if(!worldCover||(!waiting&&!error&&!['loading','streaming','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;worldCover.update(waiting?{phase:'loading',reason:'Waiting for area data'}:state,gpu?.canvas.style,error);}
 function setStatus(message) {
@@ -93,6 +95,13 @@ window.browserProof.loadProfile=loadProfileCollector.stats;
 const natives = {
   Java_orsc_BrowserWebGLBridge_loadingWork:loadProfileCollector.report,
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,
+  Java_orsc_browser_BrowserBootstrap_reportWholeZoneWork(lib,input){
+    if(input?.length===0){window.browserProof.wholeZoneJava={requested:wholeZone.requested,pending:true,scope:'Java catalog index has not initialized; no residency claim'};return;}
+    if(!input||input.length!==9)throw new Error('Whole-zone Java diagnostics shape');const v=[];
+    for(let n=0;n<9;n++){const x=input[n];if(!Number.isSafeInteger(x)||x<0||x>2147483647)throw new Error('Whole-zone Java diagnostics bounds');v.push(x);}
+    if(v[0]!==1||v[1]>1||v[2]>1||v[3]>8192||v[4]>1330||v[5]>5320||v.slice(6).some(x=>x>256))throw new Error('Whole-zone Java diagnostics contract');
+    window.browserProof.wholeZoneJava={requested:wholeZone.requested,initializationConfirmed:v[1]===1,active:v[2]===1,expectedResources:v[3],sourceSectorMetadataCount:v[4],objectCellMetadataCount:v[5],resolvedStaticSourceChunks:v[6],liveStaticSourceChunks:v[7],catalogCoveredWorldSourceChunks:v[8],scope:'Java immutable catalog index/local source coverage; not full classic CPU model residency or independent GPU completion proof'};
+  },
   Java_orsc_browser_BrowserBootstrap_reportBatchedModelWork(lib,counters){
     const v=Array.from(counters);
     if(v.length!==14||v.some(x=>!Number.isSafeInteger(x)||x<0))throw new Error('Invalid batched model work receipt');
@@ -108,7 +117,7 @@ const natives = {
     }
   },
   async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
-    if(!['regionBuild','regionLoadProfile','geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'].includes(name))throw new Error('Unknown private policy receipt');
+    if(!['wholeZone','regionBuild','regionLoadProfile','geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'].includes(name))throw new Error('Unknown private policy receipt');
     (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
     if(!options.has('benchmark')&&['batchedModelKernel','terrainQueryIndex'].includes(name))(window.browserProof.optimizedRenderDefaults||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
   },
@@ -196,10 +205,13 @@ try {
     window.browserProof.physicalOutputRequested=physicalOutput;
     window.browserProof.ownedStateRequested=ownedState;
     if(window.browserProof.benchmark)window.browserProof.benchmark.streamUploadValidationRequested=streamUploadValidation;
-    const gpuOptions={nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
+    const wholeZoneCatalog=wholeZone.enabled?(await import('./browser-whole-zone-config.js')).default:null;wholeZoneCatalogConfig=wholeZoneCatalog;
+    if(wholeZone.enabled&&!wholeZoneCatalog)throw new Error('Private whole-zone catalog has not been staged');
+    const gpuOptions={wholeZone:wholeZone.enabled,wholeZoneCatalog,nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
     if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;gpu=await factory(canvas,report,{...gpuOptions,onFatal:error=>finish('Private render worker failed: '+error),onComplete:ack=>{if(ack.frameId&&gpu.stats.javaWorldFrames>0&&gpu.stats.worldReadiness?.phase==='ready')awaitingGameFrame=false;const blocked=worldCover?.blocksWorldInput;updateWorldCover();if(blocked!==worldCover?.blocksWorldInput)publish();}});}
     else gpu=createBrowserWebGL(canvas,report,gpuOptions);
     window.browserProof.renderWorker={...renderWorker,actual:renderWorker.enabled===true};
+    window.browserProof.wholeZoneRequested=wholeZone.requested;
     window.browserProof.nativeCallDispatch={requested:nativeCallDispatch,module:backendModule.BROWSER_NATIVE_CALL_DISPATCH||null,reported:gpu.stats.nativeCallDispatch||null};
     if(options.has('benchmark')){window.browserBenchmarkOwnedState=enabled=>gpu.queueOwnedState(enabled);window.browserBenchmarkStreamUploadValidation=enabled=>gpu.queueStreamUploadValidation(enabled);window.browserBenchmarkPhysicalOutput=enabled=>gpu.queuePhysicalOutput(enabled);}
     worldCover=createWorldCover({document,window,display:document.querySelector('#display'),onGateChange:()=>window.dispatchEvent(new Event('browser-world-readinesschange'))});
@@ -264,7 +276,7 @@ try {
   });
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
-    javaProperties: canonicalRenderProperties(['user.dir=/files', ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...loadProfilePolicy.properties, ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])],optimizedDefaults), natives});
+    javaProperties: canonicalRenderProperties(['user.dir=/files', ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...loadProfilePolicy.properties, ...wholeZone.properties, ...(wholeZone.enabled?['spoiledmilk.browserWholeZoneClientSha256='+wholeZoneCatalogConfig.clientJarSha256,'spoiledmilk.browserWholeZoneCatalogSha256='+wholeZoneCatalogConfig.manifestSha256]:[]), ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])],optimizedDefaults), natives});
   report('Browser Java ready');
   const display = document.querySelector('#display');
   displayLayout=createBrowserDisplay({window,document,display,viewport:document.querySelector('#viewport')});
