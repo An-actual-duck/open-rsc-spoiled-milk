@@ -193,3 +193,159 @@ Workspace-layout verification still reports pre-existing ignored legacy output
 root categories. This task creates evidence only in the declared diagnostics
 category. Maintained repository change is this report only; no runtime defaults
 or gameplay/server code changes are proposed for integration in this handoff.
+
+
+Addendum: preferred sprite-key configuration, 2026-11-11
+=======================================================
+
+This addendum supersedes the initial recommendation to obtain a preferred-key
+control: that control and its combined profile now exist. The earlier capture,
+source labels and matched results remain conditional legacy-key evidence. They
+are preserved above, not relabeled as current-default measurements.
+
+Conclusion
+----------
+The largest bounded source-backed ownership opportunity remains overlay texture
+transport. First measure actual writer masks without changing uploads. A2D
+rectangle backend is justified only if those masks demonstrate sufficient area
+reduction after history union, rectangle limits and call overhead. Do not replace
+the current backend based on content occupancy or CPU sample percentages alone.
+The preferred combined cohort does not establish a reliable performance gain.
+
+Fresh evidence and validation
+-----------------------------
+Untouched manager raw capture:
+/home/justin/Core-Framework/output/diagnostics/browser-frame-architecture/post-preferred-combined-profile-1/
+Local analysis, hashes, source exports and structural-match evidence:
+/home/justin/Core-Framework-ai-3/output/diagnostics/browser-preferred-profile-review/post-preferred-combined-profile-1/
+See analyze.py, analysis.json, attribution-provenance.json and current-sources/.
+The source/JAR identity remains a129c10a1 / SHA2569c84cb1fe3a0abc26bd132cb6fbd6750cc51834cf3610bdbff69d6b77a42448f.
+Reviewed main1f1be1b7c has no client/frontend differences from that artifact.
+The private fixture is final1b8; frozen server provenance remains unverified.
+
+Firefox154.0.1/v34; exactly one paired UserTiming content GeckoMain, PID/TID1632162.
+Process-local marks403643.363251..423662.642461ms span20,019.279210ms;
+10,010 samples, zero stackless,918 instrumented rendered frames. Units are ms
+and threadCPUDelta ns. Thread CPU totals18,621,034,866ns,93.02% of one core.
+This instrumented20s interval is neither FPS acceptance nor GPU timing. Endpoint
+CPU weights can straddle marker boundaries; unselected GPU/compositor threads
+are not evidence of zero work. Unknown runtime/native labels stay unresolved.
+
+Receipt verifies focus, fixed960x540 pose, ready state, actual delta/batch ON,
+all six scheduled channels advancing. Damage deltas for ice/thunder/wood/ranged/
+throwing/melee are130/112/136/119/237/96; event deltas31/31/31/15/10/10.
+Resource deltas are70 each for the three spell families,15 ranged,30 throwing.
+The profile receipt and preferred11 preview session IDs exactly agree. Both
+30s FPS windows record keyPolicy requested/enabled TRUE at their boundaries;
+policy-after-profile.json independently confirms it after the profile. The
+startup property is immutable. Fresh generated Layer construction also proves
+the preferred branch: double bounded area and Int32Array(23), with limb metadata
+equality in Layer.same. No old J-label was reused to infer this result.
+
+Preferred matched manager results, separately from profiling:
+ 00 (delta OFF,batch OFF):50.5540FPS; p99 segment24/23ms.
+ 11 (delta ON,batch ON): 50.1608FPS; p99 segment26/25ms.
+ Difference:-0.778%. One60s cohort per setting is too small to establish reliable
+gain or regression. Both use180s warmup, explicit key limbs ON, all six channels
+advance in EACH30s interval, and full4,147,200 overlay bytes/frame. Natural GPU
+group/effect counts differ. This is not an additive or isolated component result.
+
+Fresh source-backed ranking
+---------------------------
+Deepest-JS endpoints; sample% uses all10,010 samples and CPU% uses sampled thread
+CPU delta. Do not add these to inclusive/leaf metrics or interpret as GPU times.
+
+Endpoint / structural attribution                   Samples%  CPU%
+WebGL texSubImage2D                                    9.281   9.854
+WebGL getError                                        6.214   4.812
+Opaque CheerpJ runtime aAA                            4.665   4.708
+Int-range + float-range + float-whole fill shapes      4.186   4.403
+Terrain findAvailable + signed64 covers               3.736   3.960
+Array.splice, separate opaque runtime caller          2.308   2.053
+Scene.removeModel common identity-search prefix        1.778   1.488
+WorldOverlayCoverage.multiply                         1.499   1.586
+BrowserBatchedModelKernel.enqueue                     1.379   1.465
+Native JS transformRow                                1.219   1.295
+WorldOverlayCoverage.opaque                           1.119   1.183
+GraphicsController.plotLetter                         0.939   0.992
+Preferred actor Layer constructor + same              1.538   1.629
+
+927 of929 texSubImage2D endpoints are overlayDeltaFrame -> prepareDelta ->
+textureUpload; two are sky uploads. getError endpoints split308 final overlay
+draw,269 textureUpload,23 beforeDraw validation,22 retained capture. Thus the
+specific upload-plus-upload-check path has1,196 disjoint endpoints (11.948%).
+More rectangles can increase calls/checks; final draw checks are not eliminated
+by smaller uploads. No predicted FPS or80% bandwidth saving follows from this.
+
+Fresh process-local source anchors (not interchangeable with previous labels):
+- J_01247b68[3039]/J_01a37cd8[2822]: ordered available-chunk search and signed64
+  bounds;374 disjoint endpoints. This remains a later indexed lookup candidate.
+- J_01c7ed28[2075]: fresh bounded overlay begin, fillT1 and fillRGB0. Its fill
+  callees account for97 int-fill and85 whole-float-fill endpoints. Another107
+  int-fill endpoints have an opaque runtime caller;129 float-range fills come
+  from opaqueSpan. Do not assign the whole fill group to fresh overlay clears.
+- J_01c7ef18[647]/J_01c7ee98[3150]: ownership-guarded multiply/opaque and mark.
+- J_01c81350[873]: existing full-width block-range cached mark path.
+- J_009ffa28[1021]: removeModel common search prefix; found branch is a runtime
+  stub. Array.splice still has a different opaque caller, not this method.
+- J_017f7820[3594]: batch enqueue128 capacity,8 arrays, role/alias guards.
+- J_01d238c0[4034]/J_01d24a38[3669]: preferred actor constructor/equality.
+  Constructor87 and equality67 endpoints remain smaller than transport. A
+  source-pixel publication/version boundary may help later, but this profile
+  does not establish the parked owned-actor candidate's benefit or correctness.
+- Fresh browser-overlay.js matches current reviewed bytes exactly, SHA07047d03...
+
+Compared conditionally with the legacy-key profile, upload/check shares and
+sampled total CPU are similar; actor representation is now proven different.
+Small share changes are not optimization effects: these are separate20s samples
+with naturally varying effects, denominators and generated/runtime execution.
+
+Content occupancy is not dirty-writer coverage
+----------------------------------------------
+Manager's valid GAME captures preferred-occupancy-00-1 and preferred-occupancy-11-1
+have no errors and advancing world frames. On the32x16 grid, their two-frame
+non-default C/T content unions are208 cells/102,656 pixels (19.80%) and200 cells/
+98,560 pixels (19.01%) of518,400. The earlier idle/logout collector
+plane-occupancy-first-collector.json is explicitly excluded; raw evidence stays.
+
+The collector synchronously examines borrowed source planes after the original
+upload, retaining only tile metadata. It scans T!=1 and nonzero RGB, honoring
+source stride/skips. This is a LOWER BOUND on supported writer coverage, because
+no-op/identity writes may touch pixels without changing those values. It cannot
+prove actual dirty area, safe rectangle count,80% transferable-byte reduction,
+history correctness or FPS. The diagnostic full-plane scan must stay outside
+timed performance windows. Two adjacent masks cannot establish arbitrary ACK,
+held/unsubmitted/reset history. Last live row plan still selects380/540 rows,
+above324 cutoff, and uploads the whole surface.
+
+Next-stage acceptance
+---------------------
+Agent1's observe-only writer-grid checkpoint2545 is the appropriate next proof:
+compare literal pixels, current touched tiles, last ACK current-touch union,
+proposed upload area/rectangle count/fallback reason, marking cost and allocations.
+Observe-only must preserve existing bytes/calls, token/ACK behavior and shaders.
+Diagnostics should aggregate bounded metadata rather than add per-pixel work.
+
+Only after real writer coverage supports it, implement bounded synchronous
+subrectangle transfer with dense/fragmented fallback. Retain ALL seven transport
+proof obligations above, particularly no false2D cached interval, pure validation
+of both planes before ANY GL, one authoritative token owner, success-only ACK,
+metadata-only borrowed lifetimes and fail-closed partial-upload failure. Require
+literal-plane and actual GPU pixel oracles plus GL state/stride/offset restoration.
+CPU clear reuse has a different dirty history including unsubmitted frames; keep
+it a separate future ownership change, not an implied benefit of2D uploads.
+
+Repeat preferred-key static, strict combat and loading cohorts after correctness,
+with bytes/calls, frame percentiles and counters. Six attack families do not cover
+all custom visuals: current receipts have zero active Cleric buffs/curses. Loaded
+effect-frame counts and sustained bears alone do not prove every VFX visible or
+every summon damage path. Include those visual cases explicitly in GPU acceptance.
+No runtime/default/public changes or new browser/process actions were made by
+this analysis worker. Manager retains adoption and default decisions.
+
+Addendum verification: parser/receipt/source-body assertions passed; four30s
+workload windows and both live occupancy captures independently checked;
+git diff --check passed. workspace-layout check still reports the same40
+pre-existing ignored legacy output-root entries. New evidence is entirely in
+the declared diagnostics category. No runtime build/test was necessary for this
+documentation-only handoff; no new GPU/FPS test was run by this worker.
