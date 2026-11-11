@@ -189,3 +189,22 @@ missing/wrong-type/short/null counters and failing-getter paths. The tools suite
 also checks that all observer Scene reads use a single captured reference.
 The kernel, packet arithmetic and client classes are unchanged by this fix;
 previous immutable stages and failed manager evidence remain preserved.
+
+Startup-fix clean source: 90b16cccd367df8935072340d183d5593481d5db.
+The startup fixture passes 23 checks and the full CPU benchmark-tools suite
+passes against the freshly rebuilt client. No actual-game startup/FPS pass
+is claimed here; the manager must rerun the corrected stage.
+
+Fresh immutable full build:
+  output/builds/browser-batched-model-kernel/source-90b16cccd/client.jar
+  SHA256 f4647992fea02f6e0d5a4d8541b858dd92afcdc37879dd1d4cb464e5c9ea5d46
+Every decompressed JAR entry is byte-identical to the ab3/740597 artifact; the
+ZIP metadata differs. Kernel/Scene sources and native module bytes are also
+unchanged, so the actual batch JNI proof remains applicable. Adjacent receipt
+and logs record the clean source and full comparison. The browser-spike.jar
+bootstrap is freshly compiled from the corrected source in both new stages:
+  output/tests/browser-gameplay-spike/batched-model-static-90b16cccd
+    repeatable-preparation.json (HTTP 8196, existing static fixture)
+  output/tests/browser-gameplay-spike/batched-model-combat-90b16cccd
+    combat-preparation.json (HTTP 8197, frozen/source-unverified server)
+Both were prepared only; no worker browser/server/GPU was started.
