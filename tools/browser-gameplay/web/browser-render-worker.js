@@ -17,7 +17,7 @@ export async function createBrowserRenderWorker(canvas,report=()=>{},options={})
     if(Number.isFinite(snapshot.value.lastFrame)&&Number.isFinite(snapshot.timeOrigin))snapshot.value.lastFrame+=snapshot.timeOrigin-performance.timeOrigin;
     const display=stats.display;Object.assign(stats,snapshot.value);if(display)stats.display=display;
     for(const [key,values]of Object.entries(snapshot.samples)){if(!Array.isArray(stats[key])||!Array.isArray(values)||values.length>4096)throw new Error('Unknown worker sample field');for(const value of values){stats[key].push(value);if(stats[key].length>4096)stats[key].shift();}}
-  stats.renderWorker=transport.stats;stats.renderWorker.lastCompletedPacket=ack.id;if(ack.frameId)stats.renderWorker.lastCompletedFrame=ack.frameId;stats.renderWorker.layoutEpoch=ack.layoutEpoch;stats.renderWorker.executionMilliseconds=ack.executionMilliseconds;
+  stats.renderWorker=transport.stats;stats.renderWorker.lastCompletedPacket=ack.id;if(ack.frameId)stats.renderWorker.lastCompletedFrame=ack.frameId;stats.renderWorker.layoutEpoch=ack.layoutEpoch;stats.renderWorker.executionMilliseconds=ack.executionMilliseconds;stats.renderWorker.measurementActive=snapshot.measurementActive===true;
     options.onComplete?.(ack);
   }});
     Object.defineProperty(stats,'measurement',{enumerable:true,get:()=>measurement,set:v=>{if(typeof v!=='boolean')throw new Error('Invalid worker measurement policy');measurement=v;controls.set('$measurement',v);}});
