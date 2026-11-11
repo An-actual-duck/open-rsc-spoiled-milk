@@ -23,6 +23,9 @@ public final class BrowserWholeZoneBaker {
     private static String sha(byte[] data)throws Exception{StringBuilder b=new StringBuilder();for(byte x:MessageDigest.getInstance("SHA-256").digest(data))b.append(String.format("%02x",x&255));return b.toString();}
     private static String hex(long value){return String.format("%016x",value);}
     private static JSONObject json(Path path)throws Exception{return new JSONObject(new String(Files.readAllBytes(path),StandardCharsets.UTF_8));}
+    private static JSONArray externalAssets(Path root)throws Exception{
+        JSONArray result=new JSONArray();for(String name:new String[]{"Authentic_Landscape.orsc","Authentic_Sprites.orsc","Custom_Sprites.osar","library.orsc","models.orsc"}){Path path=root.resolve("Client_Base/Cache/video/"+name);if(Files.size(path)>16L*1024*1024)throw new IllegalStateException("Source video archive exceeds bound");byte[] bytes=Files.readAllBytes(path);result.put(new JSONObject().put("path","Cache/video/"+name).put("bytes",bytes.length).put("sha256",sha(bytes)));}return result;
+    }
     private static JSONArray ints(int[] values){JSONArray a=new JSONArray();for(int v:values)a.put(v);return a;}
     private static byte[] little(int[] values){ByteBuffer b=ByteBuffer.allocate(values.length*4).order(ByteOrder.LITTLE_ENDIAN);for(int v:values)b.putInt(v);return b.array();}
     private static JSONObject descriptor(Renderer3DWorldChunkFrame.ChunkMesh mesh,int originX,int originZ)throws Exception{
@@ -38,7 +41,7 @@ public final class BrowserWholeZoneBaker {
         return new JSONObject().put("shadowCasters",casters).put("glowEmitters",glows);
     }
     private static final class Context {
-        final Path root,source,output;final JSONObject sourceManifest;
+        final Path root,source,output;final JSONObject sourceManifest;final byte[] sourceManifestBytes;final String sourceManifestHash,derivativeTextureHash;final JSONArray initialExternalAssets;
         final Map<String,JSONObject> pages=new HashMap<String,JSONObject>();
         final Map<String,List<SceneBaselineState.Record>> records=new HashMap<String,List<SceneBaselineState.Record>>();
         final World world;final mudclient client;final Renderer3DFrame frame;
@@ -51,9 +54,9 @@ public final class BrowserWholeZoneBaker {
         final Method endpointShadow=method(World.class,"applyWallEndpointShadows",terrainType,wallType),build=method(World.class,"buildWorldGpuChunkMesh",int.class,int.class,int.class,terrainType,wallType,roofType,boolean.class);
         final Method objectModel=method(mudclient.class,"createStaticPresentationGameObjectModel",SceneBaselineState.Record.class,int.class,int.class),wallModel=method(mudclient.class,"createStaticPresentationWallObjectModel",SceneBaselineState.Record.class,int.class,int.class,int.class);
         Context(Path root,Path source,Path miniCache,Path output)throws Exception{
-            this.root=root;this.source=source;this.output=output;sourceManifest=json(source.resolve("manifest.json"));
+            this.root=root;this.source=source;this.output=output;sourceManifestBytes=Files.readAllBytes(source.resolve("manifest.json"));sourceManifestHash=sha(sourceManifestBytes);sourceManifest=new JSONObject(new String(sourceManifestBytes,StandardCharsets.UTF_8));initialExternalAssets=externalAssets(root);derivativeTextureHash=sha(Files.readAllBytes(miniCache.resolve("video/Custom_Sprites.osar")));
             for(Object o:sourceManifest.getJSONArray("terrainSectors")){JSONObject e=(JSONObject)o;if("global".equals(e.getString("worldSpace"))&&e.getInt("level")>=0&&e.getInt("level")<=2)pages.put(e.getInt("level")+":"+e.getInt("sectorX")+":"+e.getInt("sectorY"),e);}
-            for(Object o:sourceManifest.getJSONArray("placementSets")){JSONObject e=(JSONObject)o;int level=e.getInt("level");if(level<0||level>2||!"global".equals(e.getString("worldSpace")))continue;JSONObject data=json(source.resolve(e.getString("path")));for(String family:new String[]{"scenery","boundaries"})for(Object item:data.getJSONArray(family)){
+            for(Object o:sourceManifest.getJSONArray("placementSets")){JSONObject e=(JSONObject)o;int level=e.getInt("level");if(level<0||level>2||!"global".equals(e.getString("worldSpace")))continue;byte[] placementBytes=Files.readAllBytes(source.resolve(e.getString("path")));if(!sha(placementBytes).equals(e.getString("sha256")))throw new IllegalStateException("Source placement hash mismatch");JSONObject data=new JSONObject(new String(placementBytes,StandardCharsets.UTF_8));for(String family:new String[]{"scenery","boundaries"})for(Object item:data.getJSONArray(family)){
                 JSONObject r=(JSONObject)item,p=r.getJSONObject("position");int x=p.getInt("x"),y=p.getInt("y");String key=level+":"+Math.floorDiv(x,24)+":"+Math.floorDiv(y,24);List<SceneBaselineState.Record> list=records.get(key);if(list==null){list=new ArrayList<SceneBaselineState.Record>();records.put(key,list);}list.add(new SceneBaselineState.Record(r.getInt(family.equals("scenery")?"sceneryId":"boundaryId"),x,y,r.getInt("direction"),family.equals("scenery")?0:1));}}
             System.setProperty("openrsc.worldBuilderInstalledClientProfile",root.resolve("Client_Base/world-builder-configs/installed-client.json").toString());System.setProperty("spoiledmilk.renderer3DGeometryCapture","true");
             Config.S_WANT_CUSTOM_SPRITES=true;Config.F_CACHE_DIR=miniCache.toString();EntityHandler.load(true);
@@ -67,7 +70,7 @@ public final class BrowserWholeZoneBaker {
             Set<Integer> requiredModels=new HashSet<Integer>();for(List<SceneBaselineState.Record> list:records.values())for(SceneBaselineState.Record r:list)if(r.type==0)requiredModels.add(EntityHandler.getObjectDef(r.id).modelID);
             RSModel[] cache=new RSModel[EntityHandler.getModelCount()];Method generated=method(mudclient.class,"createGeneratedModel",String.class),normalize=method(mudclient.class,"normalizeLoadedModel",String.class,RSModel.class);
             for(int i=0;i<cache.length;i++){String name=EntityHandler.getModelName(i);int offset=DataOperations.getDataFileOffset(name+".ob3",archive);if(offset==0&&!name.equals("myworld_air_glyph")&&!name.startsWith("myworld_cosmic_sparkles")){if(requiredModels.contains(i))throw new IllegalStateException("Unresolved required model "+name);cache[i]=new RSModel(1,1);continue;}RSModel m=offset==0?(RSModel)generated.invoke(client,name):new RSModel(archive,offset,true);cache[i]=(RSModel)normalize.invoke(client,name,m);cache[i].m_cb=name.equals("giantcrystal");}
-            set(client,"modelCache",cache);world=new World(null,null);set(client,"world",world);
+            set(client,"modelCache",cache);world=new World(null,null);if(!WorldBuilderTerrainBootstrap.mapIdentity().equals(sourceManifest.getString("packageId")+"@"+sourceManifest.getString("packageVersion")+":"+sourceManifestHash))throw new IllegalStateException("Installed client/source package identity mismatch");set(client,"world",world);
         }
         NativeLayeredTerrainSnapshot snapshot(int plane,int sx,int sy)throws Exception{
             NativeLayeredTerrainChunk[] chunks=new NativeLayeredTerrainChunk[9];int at=0;
@@ -76,7 +79,7 @@ public final class BrowserWholeZoneBaker {
                 if(page==null)chunks[at++]=NativeLayeredTerrainChunk.voidChunk(48,x,y);
                 else {byte[] raw=Files.readAllBytes(source.resolve(page.getString("path")));if(raw.length>48*48*11||!sha(raw).equals(page.getString("sha256")))throw new IllegalStateException("Source terrain hash mismatch");chunks[at++]=NativeLayeredTerrainChunk.available(48,x,y,x,y,page.getString("encoding"),page.getString("sha256"),raw);}
             }
-            return new NativeLayeredTerrainSnapshot(8,sourceManifest.getString("packageId"),sourceManifest.getString("packageVersion"),sha(Files.readAllBytes(source.resolve("manifest.json"))),48,"global",plane,sx,sy,1,chunks);
+            return new NativeLayeredTerrainSnapshot(8,sourceManifest.getString("packageId"),sourceManifest.getString("packageVersion"),sourceManifestHash,48,"global",plane,sx,sy,1,chunks);
         }
         JSONObject emit(float[] vertices,int[] indices,int[] batches,int plane,int role,int cellSize,int cellX,int cellY,int originX,int originZ,String kind,JSONObject effects)throws Exception{
             if(vertices.length%28!=0||indices.length%3!=0||batches.length%5!=0||vertices.length/28>524288)throw new IllegalStateException("Baked resource dimensions");
@@ -165,8 +168,8 @@ public final class BrowserWholeZoneBaker {
         long started=System.nanoTime();Context c=new Context(root,source,miniCache,output);c.bake(limit,args.length==7?args[6]:null);
         int[] metadata=new int[c.materials.size()];for(int i=0;i<metadata.length;i++)metadata[i]=c.materials.get(i);
         JSONObject scope=new JSONObject().put("sectors",new JSONObject().put("0",445).put("1",444).put("2",441)).put("placements",new JSONObject().put("0",22981).put("1",1260).put("2",339));
-        byte[] original=Files.readAllBytes(source.resolve("manifest.json"));Files.write(output.resolve("source-manifest.json"),original);
-        JSONArray externalAssets=new JSONArray();for(String name:new String[]{"Authentic_Landscape.orsc","Authentic_Sprites.orsc","Custom_Sprites.osar","library.orsc","models.orsc"}){Path asset=root.resolve("Client_Base/Cache/video/"+name);byte[] bytes=Files.readAllBytes(asset);externalAssets.put(new JSONObject().put("path","Cache/video/"+name).put("bytes",bytes.length).put("sha256",sha(bytes)));}
+        byte[] original=c.sourceManifestBytes;if(!Arrays.equals(original,Files.readAllBytes(source.resolve("manifest.json"))))throw new IllegalStateException("Source manifest changed during bake");Files.write(output.resolve("source-manifest.json"),original);
+        JSONArray externalAssets=externalAssets(root);if(!externalAssets.toString().equals(c.initialExternalAssets.toString())||!c.derivativeTextureHash.equals(sha(Files.readAllBytes(miniCache.resolve("video/Custom_Sprites.osar")))))throw new IllegalStateException("Source video archives changed during bake");
         JSONObject manifest=new JSONObject().put("externalAssets",externalAssets).put("derivativeTextureSha256",sha(Files.readAllBytes(miniCache.resolve("video/Custom_Sprites.osar")))).put("schemaVersion",1).put("type","spoiled-milk-whole-overworld-zone").put("packageFingerprintSha256",source.getParent().getFileName().toString()).put("manifestSha256",sha(original)).put("sourceManifestBytes",original.length).put("clientJarSha256",args[4]).put("settings",ints(c.packing.backendPackingSettings())).put("materialMetadata",ints(metadata)).put("textureCatalogSha256",sha(little(metadata))).put("scope",scope).put("chunks",c.chunks).put("worldCells",c.worldCells).put("objectCells",c.objectCells).put("textures",c.textures).put("complete",c.preparedSectors==1330&&c.preparedPlacements==24580).put("preparedSectors",c.preparedSectors).put("preparedPlacements",c.preparedPlacements).put("bakeMilliseconds",(System.nanoTime()-started)/1000000.0).put("upperGeometryPolicy","ground-view stacked roof elevations; upper object resources retained but not drawn from ground");
         Files.write(output.resolve("manifest.json"),manifest.toString(2).getBytes(StandardCharsets.UTF_8));System.out.println("WHOLE_ZONE_BAKE manifest="+output.resolve("manifest.json")+" complete="+manifest.getBoolean("complete"));
     }
