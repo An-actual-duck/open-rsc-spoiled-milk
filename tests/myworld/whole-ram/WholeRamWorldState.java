@@ -43,7 +43,9 @@ public final class WholeRamWorldState {
   for(int f=0;f<faces;f++)for(int v=0;v<count[f];v++){d.word((Integer)select.invoke(scene,model,f,-1,indices[f][v]));d.word((Integer)select.invoke(scene,model,f,1,indices[f][v]));}
   // Shade/normal inputs and bounds participate in actual picking/culling, unlike cache/version counters.
   for(String name:new String[]{"diffuseParam1","diffuseParam2","diffuseDirX","diffuseDirY","diffuseDirZ","diffuseMag","minX","maxX","minY","maxY","minZ","maxZ","maxFaceDimension","pickBoundsScale"})d.word(number(model,name));
-  for(String name:new String[]{"faceTextureUStart","faceTextureUScale"}){float[] values=(float[])get(model,name);d.word(values==null?-1:faces);if(values!=null)for(int n=0;n<faces;n++)d.word(Float.floatToRawIntBits(values[n]));}
+  // Null optional UV arrays and explicitly allocated all-default arrays have identical
+  // production render/pick getter values; compare those values, not representation.
+  for(int n=0;n<faces;n++){d.word(Float.floatToRawIntBits(model.getFaceTextureUStart(n)));d.word(Float.floatToRawIntBits(model.getFaceTextureUScale(n)));}
   // Only consumed terrain pick IDs matter; unused backing-array tails are not published state.
   int[] picks=model.facePickIndex;for(int f=0;f<faces;f++){int pick=picks==null?0:picks[f];if(pick>=200000&&pick-200000<world.faceTileX.length){int id=pick-200000;d.word(f);d.word(world.faceTileX[id]);d.word(world.faceTileZ[id]);}}
   d.word(model.getRenderer3DGlowColor());d.word(model.getRenderer3DGlowRadius());d.word(model.getRenderer3DGlowIntensity());return d.finish();

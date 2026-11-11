@@ -1,0 +1,94 @@
+Whole-overworld RAM: independent CPU validation
+2026-11-11. Integration-ready tests; actual browser acceptance remains pending.
+
+Artifact and reproduction
+-------------------------
+Final executable production code: clean unified21e7427732c64a912f1c98b986a4900e2a31ee06,
+JAR SHA256 ec5475e3cc927dbd682f53695e7c0f3716ebd6c901d681f27d409aa96b951fe2.
+Receipt: ai1/output/builds/browser-whole-overworld-ram/source-capacity-3/receipt.json.
+Actual complete cook: ai1/output/tests/browser-whole-ram-products/full-capacity-3/.
+Only independent fixture classes were compiled alongside the JAR; no production
+source overlay/transplanted class was used. The cook references an explicitly old
+GPU catalogue for CPU tests, not a compatible staged browser/GPU admission proof.
+
+Evidence under Core-Framework-ai-3/output/tests/browser-whole-ram:
+* activation-full-21e-3/result.json:64,417 checks. Three real original-versus-cooked
+  locations using complete445/1330 products; eight fresh-JVM private flag policies.
+* full-reader-21e-4/result.json:32 checks, actual complete constructor/provider,
+  real activation and fifteen refusal cases.
+* source-delivery-5/result.json:5,413 checks, all original1797 files and seventeen
+  malformed cases; final producer source SHA256
+  2f8c068aed0632ddf8f4b09154537c051407ab3c17d906fcc2aea15ab25321ea.
+Receipts preserve exact commands/input/fixture hashes. Reproduce with --help on
+tests/myworld/whole-ram/{verify-activation.py,verify-reader.py,verify-source-delivery.py}.
+Select immutable artifacts and NEW output directories. Current source-mapped CPU
+motivation is saved separately in browser-whole-ram-profile-proof.txt.
+
+What passed
+------------
+Actual reader decoding admitted445 global-L0 recipes and1330 canonical query cells;
+source/prepared flags both became ready without injection. Retained data ledger:
+286,626,515 bytes =46,101,734 raw bundle +240,524,781 primitive pool bytes. A real
+activation advanced use/hit counters and copied1,565,879 mutable-workspace bytes.
+This ledger excludes JVM/JavaScript object/array/header/map overhead and is not
+browser heap, process RSS or native-memory capacity evidence.
+
+At centers(2,12),(2,13),(3,13), actual World.loadSections matches decoded recipe
+publication for every decoded tile, collision/elevation/nonzero live-direction
+grid,429x429 minimap pixel, transformed geometry, face/pick IDs/model order,
+effective UV values and actual front/back Scene light-selector outputs. Canonical
+L0 query triangles match every coordinate/UV/light/normal/blend/material word.
+All143x143 roof bits and outside classifications agree. Normal then prepared
+same-center TerrainDefinitionField memo results equal fresh computation; cropped
+and changed-roof-mask representations use distinct storage identities.
+
+Active sector/model/collision/minimap mutation cannot corrupt reactivation or a
+second active world. Reflection covers all93 nonstatic RSModel fields, full
+capacity/tails, nulls, raw float bits, both boolean polarities, internal alias
+graphs, independent active ownership, wire roundtrip and real model use. A live
+blocking tree and door overlap existing terrain/wall blockage; prepared baseline
+plus identical final live objects matches a complete original rebuild. Removing
+the last old object and reactivating restores unrelated baseline flags.
+
+Actual reader refusals: authored page becoming void; mixed-size slot; legacy24
+protocol4; changed payload SHA under the same manifest; editor patch; unsupported
+offset basis; roof/packing settings; missing recipe; staged-index/map/JAR/GPU-
+catalogue bindings; truncated prepared data after complete raw-source validation.
+Late constructor/activation failure clears readiness. Signed-1/-2/10 and non-
+globalL0 decline prepared ownership while retaining data. Offset admission is
+isolated using a temporary scalar fixture; unsupported live scope reconfiguration
+is intentionally fatal, not a tested in-session recovery operation. Every missing-
+flag policy refuses before file decoding; all three explicit private gates are needed.
+
+Defects and representation limits
+---------------------------------
+First816900 actual pilot read failed on the wrong144 roof axis; preserved at
+activation-816900-2. Corrected143-axis products pass every bit. Sharper Python
+metadata testing found level:true accepted as numeric1; source-delivery-3 preserves
+that failure. Final type-exact tools pass it plus schema/scope boolean cases.
+
+Ordinary accumulator reuse leaves history-dependent vertex diffuse words used
+exclusively by flat faces. Observable comparison excludes ONLY those unused
+words; all Gouraud-referenced values, face lights and actual front/back selector
+outputs remain exact. Scene's two consumers and the object builder are sentinel-
+gated. verify-flat-light-readers.py freezes the field roster AND complete enclosing
+Scene/RSModel source hashes so changed control flow requires review. Separate
+all93-field codec preservation stays bit-exact. Optional UV arrays can be null or
+allocated all-default; actual render/pick getters return the same0/1 values. World
+parity compares getters; codec parity retains exact array/null representation.
+Earlier raw-state failures are preserved, not reported as successful pixel tests.
+
+Remaining gates
+----------------
+No browser/GPU/server/HTTP process was launched. This is full decoded membership
+and bounded CPU correctness/consumption evidence, not all445 activations, all upper
+geometry pixels, camera-click execution, browser retention, OOM recovery, startup
+latency, FPS or seamless travel. Native JVM durations are not browser predictions.
+Manager must build one fresh integrated JAR and regenerate compatible GPU/RAM
+data, then verify actual Firefox coverage/use/memory/input/signed fallback and
+walking. Compare GPUON/RAMOFF versus GPUON/RAMON using the same artifact/settings;
+ordinary GPUOFF is a separate reference. Count held periods and actual fresh-world
+gaps, not UI60/queued work. Private/defaultOFF remains; no adoption/public deploy.
+
+Layout check reports pre-existing legacy output-root entries. All new outputs use
+declared tests/diagnostics categories; no historical output was deleted or moved.

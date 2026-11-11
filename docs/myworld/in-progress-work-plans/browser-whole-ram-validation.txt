@@ -1,5 +1,8 @@
 Whole-overworld RAM prototype — independent validation plan
 ===========================================================
+CPU results and remaining browser gates: browser-whole-ram-validation-results.txt.
+Fresh baseline source attribution: browser-whole-ram-profile-proof.txt.
+
 Baseline: main15b7b7c9cb83f0bd15023b4e6ef259b26b2c8bdb, November11,2026.
 Private prototype authorized. ai1 owns runtime Java/contract, ai2 staging/frontend;
 ai3 owns independent fixtures/evidence only. No ordinary default or public change.

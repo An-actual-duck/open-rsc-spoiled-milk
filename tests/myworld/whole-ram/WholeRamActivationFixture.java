@@ -25,6 +25,7 @@ public final class WholeRamActivationFixture {
    for(int i=0;i<palettes.length;i++)if(palettes[i]!=null&&pixels[i]!=null)scene.loadTexture(i,palettes[i].clone(),types[i],pixels[i].clone());
   }
   void scope(NativeLayeredTerrainSnapshot snapshot){world.setLayeredTerrainScope(true,snapshot,0,0);}
+  void seedLiveDirections()throws Exception{int[][] directions=(int[][])get(world,"tileDirection");directions[60][60]=6;directions[100][100]=2;}
   JSONObject state()throws Exception{return WholeRamWorldState.capture(world,scene,surface);}
  }
  static void equal(JSONObject a,JSONObject b,String label)throws Exception{
@@ -76,16 +77,16 @@ public final class WholeRamActivationFixture {
   Class<?> type=Class.forName("orsc.BrowserWholeZoneBaker$Context");Constructor<?> constructor=type.getDeclaredConstructor(Path.class,Path.class,Path.class,Path.class);constructor.setAccessible(true);Object context=constructor.newInstance(root,source,mini,out.resolve("context"));
   Method snapshot=type.getDeclaredMethod("snapshot",int.class,int.class,int.class);snapshot.setAccessible(true);Renderer3DSettings.setBrowserPresentationAvailable(true);Scene actualAssets=((mudclient)get(context,"client")).getScene();
   WholeRamPrepared prepared;try(InputStream in=new BufferedInputStream(Files.newInputStream(preparedFile))){prepared=WholeRamPrepared.read(in);}
-  check(prepared.recipes()==3&&prepared.queryCells()==9,"Explicit bounded real pilot counts");JSONArray cases=new JSONArray();
+  check(prepared.recipes()>=3&&prepared.queryCells()>=9&&prepared.recipes()<=445&&prepared.queryCells()<=1330,"Bounded cases use real partial/full decoded products");JSONArray cases=new JSONArray();
   for(int[] center:new int[][]{{2,12},{2,13},{3,13}}){
-   int x=center[0],y=center[1];NativeLayeredTerrainSnapshot s=(NativeLayeredTerrainSnapshot)snapshot.invoke(context,0,x,y);Active literal=new Active(actualAssets),cached=new Active(actualAssets);literal.scope(s);cached.scope(s);
+   int x=center[0],y=center[1];NativeLayeredTerrainSnapshot s=(NativeLayeredTerrainSnapshot)snapshot.invoke(context,0,x,y);Active literal=new Active(actualAssets),cached=new Active(actualAssets);literal.scope(s);cached.scope(s);literal.seedLiveDirections();cached.seedLiveDirections();
    // Original publication is the reference; no Provider installed and no RAM property enabled.
    literal.world.loadSections(x*48,y*48,0);JSONObject expected=literal.state();
    query(literal,prepared,x,y);
    long bytes=cached.world.publishWholeRamActivation(prepared.recipe(x,y),prepared.queryFrame(x,y));JSONObject actual=cached.state();
    Files.write(out.resolve(x+"-"+y+"-literal.json"),expected.toString(2).getBytes("UTF-8"));Files.write(out.resolve(x+"-"+y+"-prepared.json"),actual.toString(2).getBytes("UTF-8"));debugModels(literal,cached);equal(expected,actual,"Original/cooked "+x+":"+y);check(bytes>0,"Actual mutable-workspace copy accounting");
    mutate(cached);cached.world.publishWholeRamActivation(prepared.recipe(x,y),prepared.queryFrame(x,y));equal(expected,cached.state(),"Mutate/reactivate "+x+":"+y);
-   Active second=new Active(actualAssets);second.scope(s);second.world.publishWholeRamActivation(prepared.recipe(x,y),prepared.queryFrame(x,y));mutate(cached);equal(expected,second.state(),"Cross-active-instance isolation "+x+":"+y);
+   Active second=new Active(actualAssets);second.scope(s);second.seedLiveDirections();second.world.publishWholeRamActivation(prepared.recipe(x,y),prepared.queryFrame(x,y));mutate(cached);equal(expected,second.state(),"Cross-active-instance isolation "+x+":"+y);
    collision(literal,cached,second,prepared,x,y);
    cases.put(new JSONObject().put("centerX",x).put("centerY",y).put("copiedWorkspaceBytes",bytes));
   }
