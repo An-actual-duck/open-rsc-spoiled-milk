@@ -151,6 +151,7 @@ public final class BrowserBootstrap {
                     int inputDiagnosticSamples=0;
                     boolean modelPickReported=false,candidatePoliciesReported=false;
                     BenchmarkCandidatePolicies.RegionDiagnostics regionDiagnostics=new BenchmarkCandidatePolicies.RegionDiagnostics();
+                    BenchmarkCandidatePolicies.TerrainQueryDiagnostics terrainDiagnostics=new BenchmarkCandidatePolicies.TerrainQueryDiagnostics();
                     while (true) {
                         Object client = clientField.get(null);
                         if (client != null && webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
@@ -186,7 +187,8 @@ public final class BrowserBootstrap {
                                         {"descriptorWriting","spoiledmilk.browserResidentDescriptorWriting","orsc.mudclient","isBrowserResidentDescriptorWritingEnabled"},
                                         {"haloHeightLookup","spoiledmilk.browserHaloHeightLookup","orsc.graphics.three.World","isBrowserHaloHeightLookupEnabled"},
                                         {"chunkCoverage","spoiledmilk.browserPrimitiveChunkCoverage","orsc.NativeLayeredTerrainChunk","isBrowserPrimitiveChunkCoverageEnabled"},
-                                        {"overlayDeltaTransport","spoiledmilk.browserOverlayDeltaTransport","orsc.BrowserWebGLBridge","isOverlayDeltaTransportEnabled"}};
+                                        {"overlayDeltaTransport","spoiledmilk.browserOverlayDeltaTransport","orsc.BrowserWebGLBridge","isOverlayDeltaTransportEnabled"},
+                                        {"terrainQueryIndex","spoiledmilk.browserTerrainQueryIndex","orsc.NativeLayeredTerrainSnapshot","isBrowserTerrainQueryIndexEnabled"}};
                                     for(String[] policy:policies) {
                                         boolean requested=Boolean.getBoolean(policy[1]);boolean[] actual=BenchmarkCandidatePolicies.inspect(policy[2],policy[3]);
                                         reportCandidatePolicy(policy[0],requested,actual[0],actual[1]);
@@ -206,7 +208,7 @@ public final class BrowserBootstrap {
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
-                                reportRegionPreparationDiagnostics(regionCounts!=null,regionCounts==null?new double[0]:regionCounts);
+                                reportRegionPreparationDiagnostics(regionCounts!=null,terrainDiagnostics.append(((orsc.mudclient)client).getWorld(),regionCounts));
                                 reportPreparation(orsc.graphics.two.GraphicsController.isBrowserFramePreparationEnabled(),
                                     surface!=null && surface.isBrowserFramePreparationActive(),
                                     Boolean.parseBoolean(System.getProperty("spoiledmilk.browserAnimatedBufferReuse","true")));

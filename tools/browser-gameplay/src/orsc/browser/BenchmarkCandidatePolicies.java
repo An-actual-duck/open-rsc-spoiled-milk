@@ -49,4 +49,35 @@ final class BenchmarkCandidatePolicies {
         }
     }
 
+    /** Bounded periodic metadata only. Never instruments hot terrain queries. */
+    static final class TerrainQueryDiagnostics {
+        private Class<?> owner;
+        private java.lang.reflect.Field snapshotField;
+        private Method eligible,dimension,protocol,enabled;
+        double[] append(Object world,double[] region) {
+            if(world==null)return region==null?new double[0]:region;
+            if(owner!=world.getClass()) {
+                owner=world.getClass();
+                try {
+                    snapshotField=owner.getDeclaredField("nativeLayeredTerrainSnapshot");snapshotField.setAccessible(true);
+                    Class<?> type=Class.forName("orsc.NativeLayeredTerrainSnapshot");
+                    eligible=type.getMethod("isTerrainQueryIndexEligible");
+                    enabled=type.getMethod("isBrowserTerrainQueryIndexEnabled");
+                    dimension=type.getMethod("getTerrainQueryIndexDimension");protocol=type.getMethod("getProtocolVersion");
+                } catch(ReflectiveOperationException absent){snapshotField=null;}
+            }
+            if(snapshotField==null)return region==null?new double[0]:region;
+            try {
+                Object snapshot=snapshotField.get(world);double[] values=new double[8];
+                if(region!=null)System.arraycopy(region,0,values,0,3);
+                values[3]=snapshot==null?0:1;
+                values[4]=snapshot!=null&&((Boolean)eligible.invoke(snapshot)).booleanValue()?1:0;
+                values[5]=((Boolean)enabled.invoke(null)).booleanValue()?1:0;
+                values[6]=snapshot==null?0:((Integer)dimension.invoke(snapshot)).intValue();
+                values[7]=snapshot==null?0:((Integer)protocol.invoke(snapshot)).intValue();
+                return values;
+            } catch(ReflectiveOperationException error){throw new IllegalStateException("Terrain query diagnostics failed",error);}
+        }
+    }
+
 }
