@@ -1,5 +1,13 @@
-Browser overlay writer spans (READY private experimental pilot)
+Browser overlay writer spans (READY for preservation; rejected experiment)
 =======================================================
+
+Outcome
+-------
+Actual matched browser testing rejected this prototype: writer scopes ON
+33.8847518617 FPS versus OFF 40.3838464614 FPS (-16.0933026%).
+Keep the entire experiment parked. No integration or default change; main
+and public gameplay were not changed by this failed candidate. Correctness
+proof passed, but the intended performance improvement did not materialize.
 
 Scope and controls
 ------------------
@@ -59,7 +67,7 @@ Own Java Graphics/Coverage/transport/Bridge compilation, existing 1,147
 history/plane/ACK checks (142 rectangle frames), coverage/native RGB, private
 startup controls/defaults and mocked frontend passed. Persisted ai1 receipt:
 output/tests/browser-overlay-writer-spans/e87/result.json.
-No actual browser, GPU or performance acceptance yet.
+This CPU milestone preceded the actual browser result recorded below.
 
 Default-path guard and frozen artifact
 -------------------------------------
@@ -100,5 +108,52 @@ output/tests/browser-overlay-writer-span-independent/20261111T093748157013Z/resu
 Independent review READY e5c2a3dba4b3f7f3529b46947cddee3f0ce4adb5 also audited
 OFF guards and the fixed five-int native argument, with no runtime blocker.
 Actual browser integration, work counters, visual acceptance and matched FPS
-remain root-owned. READY is for review of this default-OFF experimental pilot.
+were performed by root as recorded below. READY now permits clean preservation
+of a rejected experimental branch, not integration or adoption.
 No standalone speedup, adoption or 60 FPS result is claimed.
+
+Final actual browser result: rejected, preserve without integration
+-----------------------------------------------------------------
+Root measured the same immutable full-source 76794cffe... JAR and maintained
+frontend from source 2d4aebdc00eb0a49d42dc9321d60ae240955517b, HTTP8209,
+preferred key limbs ON, model batching ON and packed overlay transport.
+The order was writer scopes ON then OFF. Each cohort used 180 seconds warmup
+and 60 seconds timing (two 30-second segments); all six real combat families
+passed strict activity/resource gates. No overlapping worker GPU session ran.
+
+                    scopes OFF            scopes ON
+FPS                 40.3838464614         33.8847518617
+30s segment FPS     40.08397 / 40.68373    33.82431 / 33.94517
+p99 frame ms        30 / 30               36 / 35
+Relative FPS change                      -16.0933026%
+
+The integration was demonstrably active: startup receipt reported 1,600 scopes,
+12,528 premarked rows, 33,260 suppressed pixel marks and zero mismatches or
+rejections. Timed ON windows averaged about 1,597 scopes, 12,511-12,517 rows
+and 34,643-35,039 suppressed marks per frame, with zero rejections. OFF counters
+were zero. This is a valid negative result, not an accidentally disabled pilot.
+
+Authoritative manager evidence:
+output/diagnostics/browser-frame-architecture/writer-spans-comparison.json
+output/diagnostics/browser-frame-architecture/writer-spans-on-1/result.json
+output/diagnostics/browser-frame-architecture/post-writer-spans-profile-1/
+output/diagnostics/browser-frame-architecture/post-writer-spans-off-profile-1/
+
+The older bf2aeb packed result (~53.3233 FPS) is from a different artifact/time
+and is not the matched OFF control. Both new-artifact variants were slower than
+that historical result, but this comparison cannot attribute that entire gap to
+writer scopes, BigInt/Java long arithmetic, the compiler or a particular helper.
+Source-body/profile attribution is limited and the underlying mechanism remains
+unproven. There is no micro-fix or further implementation in this task.
+
+Class/provenance audit remains exact: old bf2aeb and 76794cffe have identical
+2,030 total class-entry sets; only 12 expected bridge/graphics/coverage/transport
+family entries changed. Full compilation produced 948 classes (658 orsc plus
+290 com). The earlier 710-class label was inconsistent with entry-based counts;
+it was not evidence of missing classes. The source manifest, class hashes,
+module reuse hashes and full artifact receipts remain preserved unchanged.
+
+Final independent review READY 590fba57b683a795fc4c870e72a21cecb180855d preserves the source-body
+attribution limits. Correctness evidence and all source hashes, old/current
+artifacts, stages, logs and profiles are retained. Default OFF remains intact.
+The manager may park this exact report-only handoff without merging it.
