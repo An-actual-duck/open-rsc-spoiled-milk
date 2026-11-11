@@ -1,0 +1,84 @@
+Whole-overworld RAM prototype — independent validation plan
+===========================================================
+Baseline: main15b7b7c9cb83f0bd15023b4e6ef259b26b2c8bdb, November11,2026.
+Private prototype authorized. ai1 owns runtime Java/contract, ai2 staging/frontend;
+ai3 owns independent fixtures/evidence only. No ordinary default or public change.
+Existing preview/server/map are not modified by this review.
+
+Evidence boundary and initial source review
+-------------------------------------------
+The measured whole-GPU prototype reduced warm crossing gaps to501.25ms mean,
+but did not retain all raw/CPU products: rawSourceCPUReady=false. See
+browser-whole-zone-experiment-results.txt. The available source-mapped route CPU
+profile predates both region-build optimization and whole-GPU residency. It
+attributes the former3.047s bridge-silent interval to main CPU (~98% one core),
+with insertVertex/addModels, boxed World mesh construction and signatures among
+identified costs. It does NOT rank the CURRENT roughly0.5s residual. Do not reuse
+old percentages/generated function labels as a fresh profile. A new current-source
+crossing profile is needed to rank remaining causes.
+
+Current source still exposes work which useful RAM retention must actually skip:
+- World.setLayeredTerrainScope321+ prebuilds scope-bound native products.
+  sectionWindowKey5350 includes global editor revision and snapshot.scopeIdentity;
+  merely enlarging the48-entry product LRU or retaining raw bytes does not prove
+  prepared immutable products survive and are used across fresh content-equal
+  epochs. Halo/lower-floor dependencies and dynamic mutation remain separate.
+- World.generateLandscapeModel2419+ loads products, clears local collision and
+  minimap, publishes terrain authority, then emits and splits wall/roof RSModels.
+  publishTerrainAuthorityProduct3530 updates collision/minimap/elevation;
+  emitWallProduct3826 inserts vertices/faces and applies terrain-light endpoints;
+  publishWallProduct3966 divides models and adds them to Scene. Roof paths4360/
+  4374 likewise emit/split/publish, carrying finalElevations. A product-cache hit
+  does not by itself remove this publication/model-construction work.
+- mudclient.loadNextRegion21572+ dematerializes every local game/wall instance,
+  calls world.loadSections, rebases, then materializeLoadedTerrainScenery3772
+  rebuilds local models/collision. Whole-GPU filtering occurs later in the bridge;
+  pinned GPU geometry does not suppress this earlier pick/collision machinery.
+These are source-backed candidate boundaries, not measured current bottleneck
+rankings. Share immutable per-cell products/dependency indices where possible;
+avoid multiplying every source cell into independently retained3x3 windows.
+
+Priority semantic gates
+------------------------
+1. Useful consumption: distinguish raw source loaded, decoded source retained,
+   prepared static products retained and products CONSUMED. All scoped source
+   cells/dependencies must be accounted for, including explicit void/empty cells.
+   Retained bytes are different from cumulative downloads and model counts.
+   A content-identical fresh snapshot/epoch must use the prepared product and
+   avoid construction/grid-split/template-clone work intended to be removed.
+   Build and use counters plus exact object/array identity prove this nonvacuously.
+2. CPU world parity: compare actual ordinary versus candidate outputs for the
+   same frozen source/options: active collision grid/path results, elevation,
+   tile directions, minimap pixels, wall endpoint lights, wall/roof topology,
+   facePickIndex/faceTileX/Z and model/face traversal order. Cached pick IDs and
+   local coordinates cannot silently retain the old region origin. Include the
+   original111625↔623 boundary, both directions and repeated fresh snapshots.
+3. Mutation and ownership: no cached immutable prototype may alias mutable active
+   RSModel transform/camera/light arrays or collision grids. Mutate active copies,
+   re-enter and verify the retained source stays unchanged. Door/tree addition,
+   removal/replacement and last-object empty must reproduce actual baseline
+   collision/pick behavior without stale or doubled geometry. Mixed animated
+   cells stay live. Baseline/overlay composition must preserve neighboring flags.
+4. Dependency/refusal: bind world-space, signed level, source/version/options,
+   exact definitions/material/model data, halo and lower-roof dependencies.
+   Changing one neighbor/lower page must invalidate or refuse the affected
+   prepared product; matching epoch alone is insufficient. Source/editor patches,
+   unsupported settings, stale async generation, missing resources and partial
+   startup must not announce full RAM readiness. Scope transitions−1/−2/10 and
+   non-globalL0 must preserve correct local behavior and return safely.
+5. OFF and hardware: ordinary OFF remains literal. Use ONE final full-source JAR
+   for independent executable fixtures, without source overlays/transplanted
+   classes. Root owns actual complete browser retention/use/memory/readiness,
+   walking, input and ON/OFF tests. No cache-count-only or CPU mock is full-RAM
+   browser evidence. Frame gaps/held returns and pre-bridge time must be measured;
+   GPU-ready/UI60 alone proves neither RAM consumption nor seamless movement.
+
+Implementation coordination
+----------------------------
+Initial source risks/priority gates were sent to ai1/root. Exact fixtures will
+follow the settled API and final unified artifact. Prepared per-cell immutable
+payloads should be separately identified from owned active mutable projection,
+collision and pick state. Expose bounded coverage/retained-byte/use/build counters
+rather than enumerating the full zone every frame. A caller-visible readiness
+flag requires complete useful coverage, not merely finishing a fetch or raising
+an LRU limit. No runtime implementation or new process was launched for this plan.
