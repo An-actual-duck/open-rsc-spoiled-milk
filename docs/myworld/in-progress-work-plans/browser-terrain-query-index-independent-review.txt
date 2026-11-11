@@ -146,3 +146,25 @@ Capture SHA256, respectively profile /additional information /receipt:
 76454c2a8eae524bb6a607c788d398cfa9167c7d60515488dbaf2bcfa8bd87f7
 69a511de350551d47e835a0206dc1fcfd20b520f54d74d415c3a1fd5a0bcf050
 4d3784d02d3880f34af8c1a400f641a070ef86664df24249129993aaf3f4d196
+
+Final manager-owned functional transition gate
+-----------------------------------------------
+The separate manager receipt at output/diagnostics/browser-frame-architecture/
+terrain-query-transitions-1/result.json is accepted:true, SHA256
+f0a343acf7e45ecb8598b274d9f08634afbcdc4a9c64dbac0369afbd99cc118c.
+Read-only verification checks all four fresh server-authoritative targets:
+(350,550,0), (711,587,-1), (684,506,2), and return (133,660,0). Each private
+online authority record matches its requested position/level. Every resulting
+client receipt is GAME, ready, keyboard/world input unblocked, has required
+chunks uploaded, advances rendered frames, reports the correct signed level
+and no error, and retains present/eligible/enabled protocol8 dimension3 terrain
+with the private policy enabled. The manager also reports the returned-city
+visual check passed; this worker did not independently view the browser.
+
+This closes the previously pending signed-level/transition functional gate for
+these four actual destinations. Loading timings in that receipt are functional
+observations, not new performance claims; the only measured FPS comparison
+remains the single +6.859% pair above. Protocol9/10 live transitions remain
+outside this scene's coverage despite passing the independent CPU corpus.
+No source changed after the exact e730 proof and no new test, browser or GPU
+process was started by this worker for this receipt/report amendment.
