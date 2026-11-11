@@ -21,7 +21,8 @@ floatBitsToUint(T); readPixels checks all bytes. FULL is checked by that same
 oracle, so agreement is transitive against FULL, not merely two unverified paths.
 A failure stops before timing. No EXT_color_buffer_float is required: R32F is
 sampled, not attached to the read framebuffer. GPU proof is NOT yet run in worker
-preparation. Manager must run it on actual Firefox/hardware.
+preparation. Manager must run it on actual Firefox/hardware. The completed source-bound
+manager Radeon/Firefox154 reference is documented in RESULTS.txt.
 
 CPU proof independently checks valid/rejected geometry, every packed row against
 its minimal strided source view, output reconstruction, odd width,1x17 and all16
