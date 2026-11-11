@@ -1,0 +1,79 @@
+Private whole-overworld prepared residency — ACTIVE prototype
+
+Owner authorized trying the full authored overworld after the read-only audit.
+This is an explicit private benchmark mode, OFF normally. No public/server/map
+or default renderer changes. No smaller-zone fallback may call itself ready.
+
+First playable contract
+-----------------------
+1. Offline native Java baker uses the selected package and fresh full-source
+   client JAR to construct all445L0/444L1/441L2 sectors, all manifest placements,
+   real stacked upper roof heights and actual texture/material/settings data.
+   It uses production builders and browser vertex/material packing. Exact source,
+   definitions/models/textures/JAR/settings hashes bind the catalog. Upfront work
+   is acceptable. All output goes below declared build/test categories.
+2. Terrain resources own non-overlapping central48tile centroid domains. Pack
+   the authentic full3x3 mesh FIRST, then select packed triangle rows so normals,
+   diffuse smoothing and blend inputs retain the surrounding source context.
+   Do not recompute cropped normals or double-paint positive stitching strips.
+   Objects use current24tile static-cell ownership; animation cells remain live.
+3. Every catalog resource is uploaded into a separate pinned WebGL arena before
+   ready. GPU completion/capacity checkpoint is distinct from catalog parsing and
+   command submission. Original shaders, shadow/roof masks, texture scope, fog and
+   graphics quality stay intact. Main/Worker normal rendering remain unchanged.
+4. The existing server-driven collision/picking/local dynamic working set remains
+   authoritative. Unchanged local static objects resolve the same existing
+   canonicalContentKey to pinned resources and skip regeneration/uploads. Mutated
+   or animated cells mask the authored baked cell and use current live geometry.
+   Explicit empty-cell keys remove destroyed last objects; no stale double draw.
+   Authored distant state is a baseline until the server supplies local interest;
+   the prototype cannot invent authoritative state outside that interest.
+5. Global resources stay local-origin based. Per-frame global base translation
+   makes them match the current camera without feeding global coordinates through
+   legacy int transforms. Only normal visible/fog/frustum scope is drawn, while
+   all source resources remain resident. Full source residency is not all-world
+   draw submission, nor all classic CPU RSModel objects simultaneously active.
+6. Source/settings/material mismatch fails closed with an actionable private
+   error. A source epoch change with matching immutable content can reuse data;
+   changed source bytes never quietly reuse stale geometry. Context loss/disposal
+   invalidates readiness, with no false ACK or partial-catalog fallback. Upstairs/
+   underground preserve local gameplay rendering with whole-L0 resources pinned;
+   mode-active scope and source readiness must be reported separately.
+
+Agreed Java/JS boundaries (worker2 owns JS/tooling)
+-------------------------------------------------
+Manifest type spoiled-milk-whole-overworld-zone/schemaVersion1 binds original
+source manifest bytes/SHA/fingerprint, client JAR/source hashes, settings[4],
+materialMetadata sorted rows[id,w,h,averageOpaqueRgb,transparent], and texture
+metadata/resources. Texture pixel phase is excluded from material dependencies;
+animated pixel uploads continue normally. Material metadata hash is Int32LE SHA.
+Resources have pinned IDs>=1000000, plane/role/cellSize/sourceKind/cellX/Y,
+originX/Z/global bounds/counts/hash/path. Object resources add canonicalContentKey
+(hex16) and placementCount. Full worldCells and objectCells rosters include empty
+cells; missing geometry must not be confused with failed work.
+Binary: little-endian magic0x575A4331, vertexCount,indexCount,batchIntCount;
+then28floats/vertex, uint32 indices and5int material batches.
+World packed coords remain relative to (section-1)*48*128; object packed coords
+are relative to their24tile anchor. Manifest origin identifies that global point.
+
+initializeWholeZone(String manifestIdentity,int[]settings,int[]materialMetadata)
+returns resource count only after complete worker-side upload/capacity proof.
+wholeZoneFrame(int[]metadata,int[]objectCells) precedes normal present.
+Metadata18: schema,active,level,globalBaseX/Z,centerSX/SY,radius2,visibility masks
+for planes0/1/2, four packing settings, sourceEpochLo/Hi,reserved0.
+Object-cell rows6: plane,cellX,cellY,canonicalKeyLo/Hi,reason. Equal keys resolve
+pinned resources; differing/empty/animated ownership masks old cell geometry.
+Private merged draw bound may exceed normal256 to preserve radius2, never silently
+lower draw distance. Worker command payload/backpressure remains bounded.
+
+Ownership and gates
+-------------------
+worker1 owns all Java runtime/bridge/bootstrap and baker Java plus this contract;
+worker2 owns frontend/GPU loader/bake driver/stager; worker3 independently tests
+catalog/authority/geometry/readiness and source contracts. No cross-edit/merges.
+Manager owns actual Firefox/GPU/server processes. Required before adoption:
+complete source/placement/resource census, exact representative seam/material/
+stacked-roof proof, actual full GPU allocation/ready counts, playable movement,
+dynamic object/door/empty-cell changes, source epoch/settings/context-loss failure,
+and measured crossings using completed frames. Local CPU rebuild may still pause;
+capacity or nominal producer FPS alone cannot establish a travel improvement.
