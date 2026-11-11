@@ -193,6 +193,8 @@ public final class BrowserBootstrap {
                                         boolean[] actual=BrowserOptimizedDefaults.actual(observedScene,optimizedDefaults,n);
                                         reportCandidatePolicy(names[n],optimizedDefaults.requested[n],actual[0],actual[1]);
                                     }
+                                    boolean[] textPolicy=BenchmarkCandidatePolicies.inspect("orsc.graphics.two.GraphicsController","isSegmentedTextEnabled");
+                                    reportCandidatePolicy("segmentedTextRaster",Boolean.getBoolean("spoiledmilk.browserSegmentedTextRaster"),textPolicy[0],textPolicy[1]);
                                     optimizedDefaultsReported=true;
                                 }
                                 double[] normalTerrain=terrainDiagnostics.append(((orsc.mudclient)client).getWorld(),null);

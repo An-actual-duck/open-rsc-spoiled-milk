@@ -47,7 +47,7 @@ public class GraphicsController {
     private void resetSegmentedTextFreshBase(){if(segmentedText!=null)segmentedText.discardPoisoned();segmentedTextPoisoned=false;}
     private SegmentedTextRaster textSegments(){
         if(segmentedText==null)segmentedText=new SegmentedTextRaster(new SegmentedTextRaster.Owner(){
-            public boolean eligible(){WorldOverlayCoverage.Frame frame=journalFrame();return !segmentedTextPoisoned&&worldOverlayCoverageEnabled&&frame!=null&&frame.isFreshSegmentedTextOwner();}
+            public boolean eligible(){WorldOverlayCoverage.Frame frame=journalFrame();return !segmentedTextPoisoned&&sceneSpriteRasterPolicy==SceneSpriteRasterPolicy.DEFAULT&&!guardGpuSceneSoftwareWrites&&worldOverlayCoverageEnabled&&frame!=null&&frame.isFreshSegmentedTextOwner();}
             public WorldOverlayCoverage.Frame frame(){return journalFrame();}
             public boolean current(WorldOverlayCoverage.Frame frame){return worldOverlayCoverage!=null&&worldOverlayCoverage.isCurrent(frame,pixelData,width2,height2)&&frame.isFreshSegmentedTextOwner();}
             public void committed(WorldOverlayCoverage.Frame frame,boolean wrote){frame.commitSegmentedText(wrote);}
@@ -58,7 +58,7 @@ public class GraphicsController {
         if(!isSegmentedTextEnabled()||plots.isEmpty())return false;
         if(segmentedTextPoisoned)flushPendingSegmentedText();
         WorldOverlayCoverage.Frame admission=journalFrame();
-        if(!worldOverlayCoverageEnabled||admission==null||!admission.isFreshSegmentedTextOwner()||plots.size()>SegmentedTextRaster.MAX_GLYPHS){flushPendingSegmentedText();return false;}
+        if(sceneSpriteRasterPolicy!=SceneSpriteRasterPolicy.DEFAULT||guardGpuSceneSoftwareWrites||!worldOverlayCoverageEnabled||admission==null||!admission.isFreshSegmentedTextOwner()||plots.size()>SegmentedTextRaster.MAX_GLYPHS){flushPendingSegmentedText();return false;}
         byte[] font=plots.get(0).fontData;int[] scalar=new int[plots.size()*5];int at=0;
         for(Renderer2DTextPlotCommand plot:plots){if(plot.fontData!=font){flushPendingSegmentedText();return false;}scalar[at++]=plot.x;scalar[at++]=plot.y;scalar[at++]=plot.color;scalar[at++]=plot.indexAddr;scalar[at++]=plot.antiAliased?1:0;}
         return textSegments().record(font,scalar,plots.size(),clipLeft,clipTop,clipRight,clipBottom,new SegmentedTextRaster.Replay(){
@@ -487,6 +487,7 @@ public class GraphicsController {
 	}
 
 	public final void captureRenderer2DUiBaseFrame() {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		if (browserFramePreparationActive || !Renderer2DSettings.canPresentUiBaseFrame()
 			|| pixelData == null
 			|| width2 <= 0
@@ -515,6 +516,7 @@ public class GraphicsController {
 	}
 
 	public final int[] getRenderer2DUiBasePixels() {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		return renderer2DUiBasePixels;
 	}
 
@@ -1570,6 +1572,7 @@ public class GraphicsController {
 		// The replacement array is a complete opaque black image, not the old partial overlay.
 		if (worldOverlayCoverage != null) worldOverlayCoverage.reset(true);
 		if (!worldOverlayCoverageEnabled) worldOverlayCoverage = null;
+        if(BROWSER_SEGMENTED_TEXT&&segmentedTextPoisoned)resetSegmentedTextFreshBase();
 	}
 
 	private void plotCharacter(boolean antiAliased, byte[] fontData, int x, int color, int indexAddr, int y) {
@@ -1642,6 +1645,7 @@ public class GraphicsController {
 	}
 
 	public final void spriteClipping(Sprite sprite, byte var2, int height, int var4, int width, int var6, int var7) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		try {
 
 
@@ -1823,6 +1827,7 @@ public class GraphicsController {
 	}
 
 	public final void a(Sprite sprite, int var2, int var3, int var4, int var5) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		try {
 			if (sprite == null) {
 				System.out.println("Sprite missing: " + sprite.getID());
@@ -1916,6 +1921,7 @@ public class GraphicsController {
 	}
 
 	public final void spriteClip3(int var1, int var2, Sprite sprite, int var4, int var5, byte var6, int var7) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		try {
 
 
@@ -2038,6 +2044,7 @@ public class GraphicsController {
 		int sceneSpriteDrawOrder,
 		Renderer3DFrame sceneFrame,
 		SceneSpriteRasterPolicy policy) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		int previousAnchorIndex = renderer2DSceneSpriteAnchorIndex;
 		int previousDrawOrder = renderer2DSceneSpriteDrawOrder;
 		Renderer3DFrame previousSceneFrame = renderer2DSceneFrame;
@@ -2073,6 +2080,7 @@ public class GraphicsController {
 	}
 
 	public void drawEntity(int index, int x, int y, int width, int height, int var1, int var8, int scenePickIndex) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		try {
 			Sprite sprite = sprites[index];
 			int previousLegacySpriteId = renderer2DLegacySpriteId;
@@ -2776,6 +2784,7 @@ public class GraphicsController {
 	}
 
 	public final void publishMinimapRaster(int[] rowMajorPixels, int width, int height) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		if (rowMajorPixels == null
 			|| width <= 0
 			|| height <= 0
@@ -3503,6 +3512,7 @@ public class GraphicsController {
 	}
 
 	public final void drawMinimapSprite(Sprite sprite, int var2, int var3, int var4, int var5, int var6) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		try {
 			int var7 = this.width2;
 			int var8 = this.height2;
@@ -3839,6 +3849,7 @@ public class GraphicsController {
 	}
 
 	public final void drawSprite(Sprite sprite, int x, int y) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		try {
 			if (sprite == null) {
 				System.out.println("sprite missing:" + sprite);
@@ -3992,6 +4003,7 @@ public class GraphicsController {
 	}
 
 	public final void drawSprite(Sprite sprite, int x, int y, int destWidth, int destHeight, int var5) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		try {
 			try {
 				int spriteWidth = sprite.getWidth();
@@ -4096,6 +4108,7 @@ public class GraphicsController {
 	}
 
 	public final void drawSprite(Sprite sprite, int x, int y, int destWidth, int destHeight, int var5, int alpha) {
+        if(BROWSER_SEGMENTED_TEXT)flushPendingSegmentedText();
 		try {
 			try {
 				int spriteWidth = sprite.getWidth();

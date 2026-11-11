@@ -3493,6 +3493,7 @@ public final class Scene {
 					depthWorldKinds));
 				if (Renderer3DSettings.isVisibleWorldEnabled()) {
                     if(orsc.graphics.two.GraphicsController.BROWSER_OVERLAY_JOURNAL_OBSERVE)this.graphics.observeOverlayJournalBarrier(orsc.graphics.two.OverlayJournalObserver.LEGACY);
+					if(orsc.graphics.two.GraphicsController.isSegmentedTextEnabled())this.graphics.flushPendingSegmentedText();
 					geometryFrame.getDepthFrame().copyColorTo(this.pixelData);
 				}
 				depthExportNanos = RenderTelemetry.elapsedSince(depthExportStart);
