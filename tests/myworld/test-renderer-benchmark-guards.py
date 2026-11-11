@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Negative process/data guards for the optional native benchmark tooling."""
 import contextlib
+import copy
 import io
 import importlib.util
 import json
@@ -35,12 +36,38 @@ class GuardTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             run=Path(folder)
             keys=("ice","thunder","wood","ranged","throwing","melee")
-            sample={"serverState":{"realCombat":{"authoritative":True,"creditedDamageByFamily":dict.fromkeys(keys,1),"resourceUnitsSpent":dict.fromkeys(keys,1),"summonsEngaged":1}},"combatVisuals":{"activeHitSplatActors":1},"activeProjectileActors":2}
-            benchmark.validate_runtime(run,[sample],"combat-real")
-            for owner,key,value in ((sample["serverState"]["realCombat"],"authoritative",False),(sample["serverState"]["realCombat"]["creditedDamageByFamily"],"ice",0),(sample["serverState"]["realCombat"]["resourceUnitsSpent"],"wood",0),(sample["serverState"]["realCombat"],"summonsEngaged",0),(sample["combatVisuals"],"activeHitSplatActors",0),(sample,"activeProjectileActors",1)):
-                original=owner[key];owner[key]=value
-                with self.assertRaises(ValueError):benchmark.validate_runtime(run,[sample],"combat-real")
-                owner[key]=original
+            sample={"serverState":{"realCombat":{"authoritative":True,"workloadComplete":True,"activeChannels":6,"channels":{k:dict(running=True,registered=True,playerRegistered=True,eventTicks=1,actorIdentity=k,actorIndex=i) for i,k in enumerate(keys)},"creditedDamageByFamily":dict.fromkeys(keys,1),"resourceUnitsSpent":dict.fromkeys(keys,1),"summonsEngaged":1}},"combatVisuals":{"activeHitSplatActors":1},"activeProjectileActors":2}
+            after=copy.deepcopy(sample)
+            for k in keys:
+                after["serverState"]["realCombat"]["creditedDamageByFamily"][k]=2
+                after["serverState"]["realCombat"]["resourceUnitsSpent"][k]=2
+                after["serverState"]["realCombat"]["channels"][k]["eventTicks"]=2
+            benchmark.validate_runtime(run,[sample,after],"combat-real")
+            for path,value in ((["serverState","realCombat","authoritative"],False),(["serverState","realCombat","creditedDamageByFamily","ice"],0),(["serverState","realCombat","resourceUnitsSpent","wood"],0),(["serverState","realCombat","summonsEngaged"],0),(["combatVisuals","activeHitSplatActors"],0),(["activeProjectileActors"],1)):
+                bad=copy.deepcopy([sample,after])
+                for state in bad:
+                    owner=state
+                    for key in path[:-1]:owner=owner[key]
+                    owner[path[-1]]=value
+                with self.assertRaises(ValueError):benchmark.validate_runtime(run,bad,"combat-real")
+            for field in ("creditedDamageByFamily","resourceUnitsSpent"):
+                for family in keys if field=="creditedDamageByFamily" else keys[:-1]:
+                    old=after["serverState"]["realCombat"][field][family]
+                    after["serverState"]["realCombat"][field][family]=1
+                    with self.assertRaises(ValueError):benchmark.validate_runtime(run,[sample,after],"combat-real")
+                    after["serverState"]["realCombat"][field][family]=old
+            for flag in ("running","registered","playerRegistered"):
+                for family in keys:
+                    after["serverState"]["realCombat"]["channels"][family][flag]=False
+                    with self.assertRaises(ValueError):benchmark.validate_runtime(run,[sample,after],"combat-real")
+                    after["serverState"]["realCombat"]["channels"][family][flag]=True
+            for field in ("actorIdentity","actorIndex"):
+                old=after["serverState"]["realCombat"]["channels"]["wood"][field]
+                after["serverState"]["realCombat"]["channels"]["wood"][field]=after["serverState"]["realCombat"]["channels"]["ice"][field]
+                with self.assertRaises(ValueError):benchmark.validate_runtime(run,[sample,after],"combat-real")
+                after["serverState"]["realCombat"]["channels"]["wood"][field]=old
+            with self.assertRaises(ValueError):benchmark.validate_runtime(run,[sample],"combat-real")
+            with self.assertRaises(ValueError):benchmark.validate_runtime(run,[sample,copy.deepcopy(sample)],"combat-real")
 
     def test_unmarked_run_refused_before_start_or_signal(self):
         with tempfile.TemporaryDirectory() as name:

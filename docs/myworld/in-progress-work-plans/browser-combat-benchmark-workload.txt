@@ -1,0 +1,111 @@
+Browser combat benchmark workload investigation
+===============================================
+
+Scope: private renderer benchmark harness and evidence validation only. No
+production gameplay, public server, or original frozen fixture changes.
+
+Observed manager-owned baseline-2: six non-null combat handles but no credited
+ice/thunder/wood/ranged damage and no corresponding resource consumption.
+Those measurements are partial-workload evidence, not full combat acceptance.
+
+Diagnostic checkpoint
+---------------------
+At the initial diagnostic checkpoint the root cause was unproven. Offline probes over the exact frozen
+core/plugins/overlay and installed map exercise registered production event
+queues, full terrain loading, full plugin discovery, ordinary player processing,
+and source bootstrap loadouts. They prove the content IDs/resources can work;
+they do not prove full Server.startServer initialization or real-clock behavior.
+Early probe variants omitted normal logout processing or used a synthetic viewer
+without an appearance, so they are exploratory evidence only. The corrected
+appearance probe gives positive resources and contributions for all six channels.
+
+The bootstrap now validates distinct registered actor UUIDs/indices, verifies
+both the projectile path and adjacent action edge when choosing a placement,
+checks rune insertion, and reports channel identity, exact scheduled-instance
+membership, key presence, running status, execution count, actor registration,
+coordinates, readiness/queued action, and explicit missing/orphan/stopped errors.
+GameEventHandler.has alone is insufficient: it checks key presence, not identity.
+The original damage ledger and real production attack events remain authoritative.
+The fixture writes its detailed status, then fails closed after48ticks if any
+expected family lacks real resources, contribution, or a running registered event.
+
+Benchmark validation now requires before/after samples with advancing resources,
+ledger contributions, and scheduler counts for every expected family, plus six
+distinct live registered channels. Positive stale cumulative counters cannot pass.
+No manual projectile emission or damage is added to combat-real.
+
+Checks
+------
+- test-renderer-benchmark-guards.py:16 tests pass, including stopped/orphaned
+  channels, duplicate actors, stalled positive counters, missing resources/damage.
+- Source bootstrap compiles against the exact frozen server artifact snapshot.
+- Exploratory read-only/offline evidence is preserved under
+  output/tests/browser-combat-workload/probe-1/.
+
+Next action: manager activates a fresh immutable disposable diagnostic stage with
+unchanged frozen server binaries and an explicitly unverified server-source
+receipt. Original baseline-2 data and processes stay manager-owned and unchanged.
+Do not mark this checkpoint as a proven workload fix or full combat acceptance.
+
+Offline regression and prepared diagnostic stage
+-----------------------------------------------
+- test-renderer-combat-workload.py with --server-artifacts pointing to preserved
+  baseline-2 server:114 checks pass in offline-regression-2. Full terrain loading,
+  authored population, full plugin roster, regular actor processing and queued
+  production events produce increasing contributions/resources for every family
+  across two windows separated by the real spell cooldown. Exact same-key orphan
+  and stopped-handle cases are rejected. No alternate combat events/damage exist.
+- The first regression attempt tried the population loader's item-ID inventory
+  query against the explicit unused localhost test credentials; it failed safely.
+  The corrected test supplies only an empty seed item-ID inventory and throws on
+  any JDBC open, keeping the production world population path while guaranteeing
+  no player database is contacted. Failure evidence remains in offline-regression-1.
+- Immutable diagnostic stage browser-combat-workload-diagnostic-1 was compiled
+  from source checkpoint f16ec4283a0085fb9c57ba6f0c9db1e78d2de41f. Its source,
+  artifacts, map, and fresh database are receipted; frozen server binary source is
+  explicitly unverified. No process was launched by this worker. Subsequent test
+  additions do not rewrite that stage's frozen source/classes/receipts.
+- Later source also excludes actors absent from the live player list from active
+  channel totals. That change is not silently installed into diagnostic-stage-1.
+
+Proven reset defect and narrow fix
+---------------------------------
+A healthy run followed immediately by removeActors/createActors/beginRealCombat
+reproduces orphaned fresh event handles. Usernames intentionally repeat, so Player
+UUIDs and scheduler keys repeat. Old removeActors removed actors from the world
+but left owned scheduler registrations until a later cleanup/tick. New add or
+addOrUpdate calls therefore collided with old registrations; the new handles could
+remain forever unsubmitted even once old events were subsequently cleaned up.
+Exactly which channels survive depends on the old event states. This defect is
+consistent with the original partial workload; its exact old event roster cannot
+be proven retrospectively because those diagnostics did not exist.
+
+Private removeActors now collects exact identities of controlled players, target
+NPCs and their summons before removing them. It stops/removes only their owned
+scheduled events before teardown and again afterward, then verifies none remain.
+It preserves null-owner/world events and unrelated viewer/NPC events. It neither
+changes production scheduler/combat code nor restarts failed channels to disguise
+a broken workload. A retirement counter makes exercised cleanup observable.
+
+The regression repeats reset/relogin-style actor replacement three times without
+an intervening scheduler cleanup tick. Every replacement event must be exactly
+registered immediately, then all six real styles must again consume resources
+and contribute damage; only eight summons may remain. Unrelated viewer, NPC and
+world events/participants must survive. Same-key orphan and stopped-handle
+negative tests remain in place.
+
+Differential evidence:
+- Frozen diagnostic source9e977b65c (old teardown, same new regression) fails with
+  "no old actor/NPC/summon scheduled event survives reset0". Evidence:
+  output/tests/browser-combat-workload/offline-reset-baseline-9e977b65c/.
+- Fixed source passes12829 checks. Evidence:
+  output/tests/browser-combat-workload/offline-reset-fixed-1/.
+- Exploratory RESET_IMMEDIATE/RESET_AFTER dumps are preserved in
+  offline-regression-9e977b65c/reset-probe.log; old fresh handles can report a
+  present scheduler key despite absent exact scheduled identity and zero work.
+- Manager's actual diagnostic-1 first session at63/85ticks confirms all six
+  channels genuinely advance. That fresh first-session trace remains valid and
+  unchanged. It is not proof that old reused baseline-2 was fully loaded combat.
+
+Workspace-layout check reports only pre-existing ignored legacy output-root
+entries; this task creates outputs solely below declared tests categories.

@@ -276,9 +276,23 @@ def validate_runtime(run, samples, phase):
     if phase == "combat-real":
         combat=[s.get("serverState",{}).get("realCombat",{}) for s in samples]
         if not combat or not all(c.get("authoritative") is True for c in combat):raise ValueError("Missing authoritative combat evidence")
+        families=("ice","thunder","wood","ranged","throwing","melee")
+        if len(combat)<2:raise ValueError("Combat coverage requires before/after workload samples")
+        for state in combat:
+            channels=state.get("channels",{})
+            if state.get("workloadComplete") is not True or state.get("activeChannels")!=len(families):
+                raise ValueError("Incomplete live combat workload")
+            if any(not all(channels.get(k,{}).get(flag) is True for flag in ("running","registered","playerRegistered")) for k in families):
+                raise ValueError("Missing, stopped, or orphaned combat channel")
+            identities=[channels[k].get("actorIdentity") for k in families]
+            indices=[channels[k].get("actorIndex") for k in families]
+            if any(not isinstance(value,str) or not value for value in identities) or len(set(identities))!=len(families) or any(type(value) is not int or value<0 for value in indices) or len(set(indices))!=len(families):
+                raise ValueError("Combat actor identities/indices are not distinct")
         last=combat[-1]
-        if any(last.get("creditedDamageByFamily",{}).get(k,0)<=0 for k in ("ice","thunder","wood","ranged","throwing","melee")):raise ValueError("An expected combat family has no authoritative damage contribution")
-        if any(last.get("resourceUnitsSpent",{}).get(k,0)<=0 for k in ("ice","thunder","wood","ranged","throwing")):raise ValueError("An expected combat family consumed no resources")
+        first=combat[0]
+        if any(first.get("creditedDamageByFamily",{}).get(k,0)<=0 or last.get("creditedDamageByFamily",{}).get(k,0)<=first.get("creditedDamageByFamily",{}).get(k,0) for k in families):raise ValueError("An expected combat family has no advancing authoritative damage contribution")
+        if any(first.get("resourceUnitsSpent",{}).get(k,0)<=0 or last.get("resourceUnitsSpent",{}).get(k,0)<=first.get("resourceUnitsSpent",{}).get(k,0) for k in families[:-1]):raise ValueError("An expected combat family consumed no additional resources")
+        if any(first["channels"][k].get("eventTicks",0)<=0 or last["channels"][k].get("eventTicks",0)<=first["channels"][k].get("eventTicks",0) for k in families):raise ValueError("An expected combat scheduler channel did not advance")
         if max(c.get("summonsEngaged",0) for c in combat)<=0:raise ValueError("Summons never engaged production combat")
         if max(s.get("combatVisuals",{}).get("activeHitSplatActors",0) for s in samples)<=0:raise ValueError("No received active hit splats")
         if max(s.get("activeProjectileActors",0) for s in samples)<2:raise ValueError("No overlapping received projectiles")
