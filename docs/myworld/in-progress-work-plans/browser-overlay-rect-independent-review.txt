@@ -1,0 +1,236 @@
+Independent browser overlay rectangle review
+===========================================
+
+Scope
+-----
+Read-only candidate review plus independent CPU fixtures in ai2. This worker
+started no browser, HTTP/game server or GPU workload and makes no FPS claim.
+Runtime implementation belongs to the separate ai1 topic. Later sections add
+source-bound manager-owned hardware evidence after the initial observe-only
+review; the historical evidence and its limits remain recorded below.
+
+Primary specification checks
+----------------------------
+Published Khronos WebGL2 2.0.0, section3.7.6:
+https://registry.khronos.org/webgl/specs/2.0.0/#3.7.6
+The current editor draft was cross-checked, without treating it as a release:
+https://registry.khronos.org/webgl/specs/latest/2.0/#3.7.6
+Client-array source offsets count typed elements relative to the supplied
+view. Float offsets therefore count floats, not bytes. Client-array uploads
+require PIXEL_UNPACK_BUFFER to be unbound; dimensions and unpack parameters
+also constrain the accessible source footprint.
+
+Khronos OpenGL ES3.0.6, section3.7.2, equations3.12–3.13 (PDF pages127–128):
+https://registry.khronos.org/OpenGL/specs/es/3.0/es_spec_3.0.pdf
+Row length is in pixels. Unpack alignment rounds the row byte stride, and row
+and pixel skips advance the source start. Final-row trailing padding is not
+read. The independent transfer oracle implements these rules for the two
+actual overlay formats (RGBA/UNSIGNED_BYTE and RED/FLOAT). Its arithmetic is
+separate from candidate mocks and never claims real-driver conformance.
+
+Observe-only checkpoint
+-----------------------
+Candidate3085efa5dbc7b7892385b553d88231a055c90a47 had an unbounded metadata
+admission ordering problem: observation work could be materialized before the
+exact dimensions-derived length was checked. Reported to ai1 before testing.
+Candidate2545bd1132dec60073efa18871c0db485d2872c9 fixes this with bounded
+length validation followed by indexed copies that do not consult iterators.
+
+Exact2545 independent tests pass:
+* 7,343 per-pixel reference assertions cover tile cache holes, cross-row spans,
+  clipped viewport edges, previous/current footprint union and capacity fallback.
+* Direct transport checks cover stale ACK, writes after prepare, disappearing
+  UI and empty frames. The next ACK tracks actual writer tiles, rather than
+  the broader row/full region that happened to be uploaded.
+* The separate specification arithmetic self-check covers view byte offsets,
+  element-unit offsets, stride/alignment/skips, exact final-row bounds, array
+  type, PBO rejection and views smaller than their underlying backing buffer.
+* Actual candidate observe overlay code passes independent RGB/T transfer
+  simulation using nonzero-offset borrowed views and disappearing edge pixels.
+* Oversized metadata fails without enumeration/index reads or ANY GL operation.
+  Correctly sized ArrayLike metadata ignores malicious iterators as intended.
+
+Evidence:
+output/tests/browser-overlay-rect-independent-review/20261111T081204503843Z/
+  result.json, compile.log, footprint.log, spec.log, observe.log
+The receipt binds exact candidate source bytes, independent fixture hashes
+and the selected dependency JAR. Candidate sources are detached with git show
+at the exact hash before compilation/import, so later edits cannot alter the
+run. The dependency JAR supplies unchanged unrelated classes, not tracker or
+transport implementations.
+
+Remaining review boundary
+-------------------------
+Observe-only tests do not prove rectangle planning, source strided uploads,
+exact GL state restoration, both-plane upload failures, follow-on atlas/full
+uploads or real browser readback parity. Those require the later stable
+rectangle checkpoint and manager-owned hardware validation. Existing mocks
+that ignore pixelStorei are insufficient for those semantics.
+
+Firefox queued-transfer audit (before rectangle performance acceptance)
+---------------------------------------------------------------------
+Mozilla's FIREFOX_154_0_RELEASE tag resolves to commit
+032a9fc1ac0cc3209f7c142744ba2e40847c8086. This matches the reported browser
+version, not independently verified installed-binary provenance/preferences.
+Read-only source copies and hashes are preserved locally (not imported into
+production/Git) at output/diagnostics/browser-firefox-transfer-audit/
+firefox154-source/{tag-ref.json,sources.json,...}.
+
+Pinned primary sources:
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/ClientWebGLContext.cpp#L4368
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/ClientWebGLContext.cpp#L4418
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/QueueParamTraits.h#L341
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/WebGLQueueParamTraits.h#L86
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/WebGLCommandQueue.h#L111
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/WebGLContext.cpp#L2984
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/TexUnpackBlob.cpp#L538
+
+The client applies the view/element offset, then Shrink limits cpuData to the
+smaller of available bytes and aligned row-stride times total rows. Queue
+serialization copies that contiguous span into command storage; it does not
+tightly gather the requested pixels from each row. Skipped prefix rows can
+therefore be copied too. With flip/premultiply false and no PBO, the host raw
+path passes the pointer and unpack state to GL without a tight CPU conversion.
+
+A minimal borrowed subarray from the first required element through the final
+required element, with srcOffset0 and skip0, bounds the submitted span. For
+4-byte pixels and ROW_LENGTH=W, its byte length is
+4*((rectangleHeight-1)*W+rectangleWidth). It still includes row gaps; narrow,
+full-height rectangles may span almost a full plane. This is a source-based
+queued-copy concern, not evidence of actual hardware bus traffic or FPS.
+
+Agent1/root were advised to report logical texel payload, supplied view-span
+bytes and measured FPS separately. No true-zero-copy claim is justified. Tight
+packing or separate row calls would be a distinct reviewed experiment; no
+packing implementation is authorized or silently introduced by these tests.
+
+Packing scope revision
+----------------------
+After the Firefox source-span audit, the manager explicitly authorized a bounded,
+synchronous JS-owned tight-packing comparison variant. This revises the earlier
+no-packing prototype constraint; no earlier source/evidence was rewritten.
+Required review covers both planes/geometry before allocations or GL, reusable
+scratch and peak/capacity bounds, exact Float32 bits/BGRA bytes, borrowed-view
+bounds and no retained Java input references. Packing has not yet been tested
+against a stable candidate checkpoint, and no performance benefit is assumed.
+
+Stable rectangle and packing review
+-----------------------------------
+Exact candidate923d745c0c032437f1a1f034f23b905c96c8b490 passes the expanded
+independent CPU suite. Runtime is still private/default-off. The reviewed
+contract permits at most8 disjoint rectangles, logical area<=60% of viewport,
+and selects rectangles only with useful savings against the row/full plan.
+Direct mode uses minimal borrowed strided views; packed mode uses bounded,
+synchronous JS-owned scratch. Both continue using the fine writer-footprint
+snapshot and original owner/ACK generation rules.
+
+Independent results:
+* 7,343 tile/ACK checks pass again against the exact rectangle checkpoint.
+* 1,593,292 planner assertions across405 frames exercise104rectangle plans,
+  49row plans and252full plans. The reference derives tiles per written pixel,
+  then checks complete old/current union coverage, disjointness, clipped tile
+  boundaries, plan caps and ACK progression without copying the grouping logic.
+* 128actual-overlay/specification-model checks cover direct/packed variants
+  with both scoped state and the actual owned-frame factory. Hostile row length,
+  skips, alignment, PBO, flip and premultiply state is restored exactly on the
+  scoped path. The explicit owner establishes canonical state initially and
+  on inactive-to-active transition. Its active=false path still scopes normally.
+* Minimal direct API views and tightly packed views have the expected distinct
+  byte lengths. Source views have nonzero offsets; RGB starts at byte3.
+* Invalid later rectangles, omitted dirty tiles and a short second plane are
+  rejected before any GL call or staging growth. Failure in EITHER upload plane
+  poisons the transaction; subsequent work cannot advance history. Disposal
+  releases candidate resources and packing capacity in the model.
+* A following full overlay upload and the ACTUAL candidate sprite-atlas module
+  produce the expected texture contents, detecting leaked rectangle strides.
+* Independent packing expectations preserve BGRA bytes, signedzero, signaling
+  and quiet NaN Float32 payload bits via raw bytes. Tests check source isolation,
+  exact element offsets, short-view bounds, no writes/allocations for bad later
+  geometry, empty plans, scratch reuse, allocation failure and disposal.
+
+Packing's12MiB retained/24MiB growth cap concerns owned scratch payload only;
+it is not a ceiling on total JavaScript heap, browser command queues, driver
+memory, original Java planes or externally retained test result views. The
+reviewed helper retains only its scratch and numeric counters; borrowed Java
+input views are consumed synchronously and not stored in owner state.
+
+Evidence:
+output/tests/browser-overlay-rect-independent-review/20261111T084156132135Z/
+  result.json, compile.log, footprint.log, rect-footprint.log, spec.log,
+  observe.log, rect-transfer.log, packing.log
+Run with test-browser-overlay-independent-review.py --rectangles and exact
+--candidate-commit / --candidate-root / --client-jar inputs. The receipt binds
+candidate source/dependency bytes and independent fixture hashes. Imported
+candidate modules are detached from Git at the requested hash, including
+transitive local modules; no live worker source is imported during execution.
+
+No source-backed correctness blocker remains from this independent review.
+These CPU models do not establish real WebGL readback, IPC traffic, driver/bus
+bytes or FPS. Manager-owned actual browser/GPU validation and matched timing
+are still required; lower logical area alone is not adoption evidence.
+
+Workspace-layout check still reports inherited legacy output-root entries and
+the legacy assets/sprites tree. New review writers use declared tests/diagnostics
+categories; inherited ignored data was preserved. layout-check.log beside this
+run records the check. No generated Firefox source file is committed to Git.
+
+Production-module hardware evidence and fixture follow-up
+---------------------------------------------------------
+Manager-owned Firefox hardware WebGL2 runs now pass with runtime source
+923d745c0c032437f1a1f034f23b905c96c8b490 and clean test-only checkpoint
+b0bec6bff85d9355e1ef5d1b58b3c35d731e3750. The latter changes fixtures, not
+production runtime modules. Read-only receipt verification found:
+
+* Normal owned output: 24,897,876 RGBA bytes compared exactly.
+* Owned output at2x with odd physical dimensions:100,508,520 exact bytes.
+* Hostile scoped unpack/PBO state:24,897,876 exact bytes and326 restoration
+  checks. Total across the three runs:150,304,272 exact output bytes.
+* Each run contains166 literal frames, each compared against all three actual
+  ROW/direct/packed production compositors:498 zero-difference comparisons.
+  Both rectangle variants record142 rectangle declarations, so passing did not
+  depend on full-upload fallback alone.
+* Each run also records4 post-prepare source mutations,3 held comparisons,
+  2 retained-output deferrals,8 actual sprite-atlas follow-ons and8 full-texture
+  follow-ons. All report no errors. Context receipts report alpha:true and a
+  physical Radeon R9 200 Series-or-similar renderer, not a software renderer.
+
+Evidence under the manager checkout:
+output/diagnostics/browser-frame-architecture/rect-gpu-owned-1/
+output/diagnostics/browser-frame-architecture/rect-gpu-owned-2-odd/
+output/diagnostics/browser-frame-architecture/rect-gpu-scoped-hostile-1/
+Each contains actual.json and receipt.json. All reference the same clean b0
+source receipt at ai1 output/tests/browser-overlay-delta-transport/
+20261111T085819304446Z/result.json. This review recomputed every staged web
+and all332 data-file SHA256 entries: no mismatch. Every staged runtime module
+also matches its923d Git blob byte-for-byte. Receipt aggregate fields agree
+with actual.json, and all166x3 individual frame comparisons have changedBytes0.
+The preparer now explicitly hashes the compiled WorldOverlayTileTracker.java;
+its recorded SHA256 is
+7f363acce146e03e053bbfc38ad3b75dbf7bc808facbac364d597e01f940dcfc.
+
+The b0 addition test-browser-overlay-packed-failure.mjs injects allocation and
+raw-byte-copy failures THROUGH actual createBrowserOverlay.prepareDelta. It
+checks failure before any GL call, poisoned subsequent work, released scratch
+and disposed graphics resources, restoring test-patched globals in finally.
+This closes the earlier source-level coverage gap beyond direct staging-helper
+allocation failure. Its execution is separate from the corpus preparer; do not
+infer that it ran merely because the hardware corpus passed. Following the
+successful pre-b0 transcript run, agent1 persisted a separate exit0 rerun at
+ai1 output/tests/browser-overlay-rect-transport/packed-failures-41b8336/
+{result.json,stdout.log,stderr.log}. It binds clean source
+41b8336bedc85e28bcb5da50a146f54033c2fdf5, runtime923d, Node v22.21.1, the exact
+command and all imported runtime/mock/test hashes. This worker verified every
+recorded source hash against that commit, runtime equality to923d, the stdout
+hash and empty stderr. The receipt reports both actual prepare fault cases
+passed. This closes the persisted-evidence follow-up, without representing an
+independent rerun or any real GPU fault-injection proof.
+
+Limits remain explicit. Final composited RGBA equality does not establish raw
+R32F texture-bit identity: the independent CPU packing bit oracle and manager's
+separate hardware transfer bit proof cover different claims. These production
+GPU runs do establish output parity for their literal corpus and state cases,
+not every scene, browser, GPU, context-loss path or driver. They do not measure
+full-game FPS, hardware bus bytes, total browser memory or establish a60FPS
+result. Matched full-game acceptance remains the manager's responsibility.
+No new source-backed correctness blocker was found in this follow-up. Only
+this report changed; no repeat CPU suite, GPU or server process was started.
