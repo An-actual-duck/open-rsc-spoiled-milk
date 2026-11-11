@@ -1,0 +1,29 @@
+PRIVATE OFFSCREEN RENDER-WORKER PIPELINE — ACTIVE
+
+Purpose: move the existing createBrowserWebGL backend and its unchanged shaders
+to an OffscreenCanvas worker. Java VM, input, AWT and literal C/T stay main.
+Default remains OFF; no release/public changes. Performance is unproven.
+
+Protocol contract
+- Explicit native argument roster; synchronous owned byte copies inside each
+  borrowed callback. Preserve exact typed view offsets and float bit patterns.
+  Transfer only new buffers, never Java arrays. Validate dimensions/caps first.
+- Two unacknowledged packets plus one bounded producer batch; no unbounded
+  mailbox. Resource creation/update/delete and frame submissions are ordered.
+- initialize and planWorldSprites are result barriers, using the actual backend
+  MAX_TEXTURE_SIZE and missing-image decisions. This unavoidable initial pilot
+  synchronization limits overlap; no replicated atlas ownership.
+- present enqueues a frame; worker completion ACK follows successful original
+  backend execution. Producer FPS is not presented FPS. Fatal/context loss or
+  dispose rejects waiters; no fallback after canvas transfer.
+- Main DOM rect/DPR snapshot and monotone size epoch travel with each batch.
+  Backend output sizing uses this explicit adapter, preserving physical quality.
+- Full C/T only. Existing overlay ACK and Java generation authority unchanged.
+- Sequential main-vs-worker replay must compare actual RGBA output including
+  odd physical dimensions; CPU mocks do not establish GPU equality.
+
+Proof plan: independent ownership/order/backpressure/failure CPU corpus, actual
+GPU exact replay, then private same-artifact gameplay functional/FPS acceptance
+by manager. No worker browser/server/GPU processes. Port8217 reserved for client
+preparation against existing combat43639/43539; artifacts under declared output
+categories.
