@@ -1,0 +1,195 @@
+Remaining browser frame cost after combined delta and model batching
+===================================================================
+
+Recommendation
+--------------
+The next bounded architecture experiment should retain the existing RGB/T GPU
+textures and update two-dimensional dirty tiles/rectangles, rather than whole
+screen-width row bands. Keep literal Java drawing, shaders, gameplay and current
+presentation/token ownership unchanged. First rerun the control with explicit
+spritekeylimbs=on; do not implement or adopt a new default from this report alone.
+
+IMPORTANT CONFIGURATION LIMIT: the captured benchmark URL omitted spritekeylimbs.
+Browser sprite-key policy explicitly forces OFF in that case, whereas ordinary
+Java/default is TRUE. The actual current generated Layer constructor confirms
+BigInt64Array(19) and the long-key branch. All prior matched OFF/ON comparisons
+remain fair conditional legacy-key comparisons; this profile is not the preferred
+ordinary key configuration. Actor-key hotspots below have that qualification.
+Other audited controls were active: frame preparation/animated preparation,
+model pick bounds, halo matching, GPU state ownership and physical output.
+
+Capture and provenance
+----------------------
+Raw manager capture, untouched:
+/home/justin/Core-Framework/output/diagnostics/browser-frame-architecture/post-combined-profile-1/
+Analysis evidence and reproducible local analyzer:
+/home/justin/Core-Framework-ai-3/output/diagnostics/browser-remaining-frame-cost/post-combined-profile-1/
+See analysis.json, attribution-provenance.json, analyze.py and current-sources/.
+The raw capture/source/receipt hashes are recorded in analysis.json. No browser,
+server, process, build, gameplay code or public resource was changed by this task.
+
+Full source client/frontend: a129c10a1a57f9bf6b78a9c1219c174e645179ba.
+JAR SHA256: 9c84cb1fe3a0abc26bd132cb6fbd6750cc51834cf3610bdbff69d6b77a42448f.
+Reviewed main d5a2e41c9 has no client/frontend source differences from that build.
+Private server bootstrap is exact1b8fbf889; frozen core/plugins/overlay source
+provenance remains explicitly unverified. It is not relabeled as current source.
+
+Firefox154.0.1 profile v34; interval2ms; js, stackwalk, processcpu, jssources and
+nomarkerstacks enabled. Exactly one content GeckoMain (PID/TID1619029) contains
+both UserTiming marks. Its process-local window is400533.584350..420549.044338ms
+(20,015.459988ms), with10,008 samples and no stackless samples. Source tables are
+resolved within that same process; generated function declarations are checked
+against actual exported bodies. This is structural attribution, not an official
+Java source map; unknown runtime names/native addresses stay unresolved.
+
+Receipt confirms fixed pose960x540, focus, ready state, both actual candidate
+getters enabled, and all six real channels advancing. During the marked window,
+resource spend increases ice/thunder/wood77 each, ranged15, throwing30; credited
+damage increases86/100/96/137/300/135 for ice/thunder/wood/ranged/throwing/melee.
+The instrumented interval contains920 rendered frames. It is NOT FPS acceptance.
+
+GeckoMain threadCPUDelta totals18,609,740,759ns, approximately92.98% of one core
+over the selected window. CPU shares below weight sampled endpoint stacks by
+that delta. They are CPU attribution, not GPU duration, bandwidth measurements
+or exact function timers. The first selected delta can straddle the start mark.
+The selected thread filters omit many browser/GPU/compositor threads; their low
+recorded peers do not prove total browser CPU is single-threaded.
+
+Largest source-backed costs
+---------------------------
+Percentages use all10,008 selected content samples; CPU% uses that thread's
+sampled CPU delta. Leaf, deepest-JS and inclusive costs overlap: never sum them.
+These rows use deepest-JS endpoints; grouped fill/terrain rows are disjoint
+endpoints within their own group, not additional costs beside their components.
+
+Endpoint / structural attribution                 Samples%   CPU%
+WebGL texSubImage2D                                  9.373    9.935
+WebGL getError                                      6.245    4.792
+Opaque CheerpJ runtime aAA                          4.696    4.793
+Int-range + float-range + float-whole fill shapes    4.596    4.816
+Native terrain chunk search + signed64 covers       3.547    3.761
+Array.splice, runtime collection caller             2.288    2.059
+WorldOverlayCoverage.multiply                       1.779    1.884
+Scene.removeModel common search prefix              1.689    1.452
+BrowserBatchedModelKernel.enqueue                   1.579    1.677
+Native JS transformRow                              1.269    1.346
+GraphicsController.plotLetter                       1.099    1.161
+WorldOverlayCoverage.opaque                         1.089    1.147
+Actor cache Layer.same, legacy key configuration     0.859    0.910
+Actor cache Layer constructor, legacy key config    0.809    0.858
+WorldOverlayDeltaTransport.mark                     0.809    0.861
+
+933 of938 texSubImage2D endpoint samples have the exact path:
+webgl native overlayDeltaFrame -> overlay.prepareDelta -> textureUpload.
+The other5 are sky uploads. Of625 getError endpoints,307 occur in overlay.draw,
+269 in overlay.textureUpload,30 in upload-validation.beforeDraw and19 in retained
+capture. Therefore the specific overlay upload plus upload-side check path has
+1,202 disjoint endpoint samples (12.010%); all getError cost is NOT upload savings.
+More rectangles might increase driver overhead. Do not remove validation to make
+a benchmark look faster or translate these shares into a predicted FPS gain.
+The two largest native leaf addresses map to libc using the capture's library
+ranges; no exact symbol/GPU duration is inferred from that mapping.
+
+Current body/source anchors (fresh labels only):
+- J_01c792b0[1363] matches WorldOverlayCoverage.begin: bounded long width*height,
+  owner/dimensions, float fill1, int fill0, fresh-world flags and delta begin.
+  107 int-fill and88 whole-float-fill endpoints have this exact caller. Another
+  127 int-fill endpoints have an opaque runtime caller and cannot all be assigned
+  to the overlay.134 float-range-fill endpoints have opaqueSpan as caller.
+- J_01c5f040[2180]/J_01c6d498[4002] match multiply/opaque ownership guards, T writes
+  and delta mark. J_01c5f9a0[3956] matches the cached block-range mark path.
+- J_01a4f490[2638] and J_01a6c4b8[284] match first-available chunk scanning and
+  signed64 chunk bounds. These suggest a later indexed terrain lookup boundary.
+- J_009ffa60[1328] matches Scene.removeModel's common identity-search prefix;
+  the rare found branch is a runtime stub, not a complete decompiled method.
+  Do NOT attribute Array.splice to it: splice has a distinct opaque runtime caller.
+- J_019ce7f0[1790] matches batch enqueue's128-model capacity,8 row references,
+  three readers/five writers, role/trig alias guards and queue metadata.
+- J_01d20c40[2766]/J_01d21090[1919] match actor Layer construction/equality;
+  the existing owned-actor-pixels candidate addresses this separate smaller path.
+  It still needs current-default/combined measurements; this profile cannot
+  establish its benefit in the preferred limb representation.
+- Profile browser-overlay.js bytes exactly equal reviewed source (SHA07047d03...).
+  Generated bodies, exact hashes and match reasoning are in attribution-provenance.
+
+Why two-dimensional texture residency is first
+----------------------------------------------
+Manager's unprofiled combined60s combat snapshots show4,147,200 overlay bytes/frame
+with delta ON and OFF. The later same-session overlay-plan-live snapshot reports
+21,424 declarations,21,423 full/1 partial, last plan24 touched16-row blocks,
+380/540 touched rows. The current60% cutoff is324 rows; line64 of WorldOverlayDeltaTransport forces
+full fallback once the selected row union exceeds it. The row plan contains no
+horizontal distribution, so it cannot quantify how much a2D plan would save.
+These counters support the geometry failure mode, not a promised reduction.
+
+References in reviewed source:
+WorldOverlayDeltaTransport.java:8,31,39,47 (16 rows, marking, union, full fallback).
+WorldOverlayCoverage.java:43,89,96,104 (literal clears and writes remain CPU-owned).
+BrowserWebGLBridge.java:285 (fresh borrowed planes, declaration, token/ACK boundary).
+browser-overlay.js:28,43,88 (upload, pure prepare validation, draw/capture).
+NativeLayeredTerrainSnapshot.java:547 and NativeLayeredTerrainChunk.java:189.
+BrowserWorldSpriteCache.java:180,221,247; GraphicsController.java:4074.
+
+Bounded next experiment and proof obligations
+--------------------------------------------
+1. Establish the explicit spritekeylimbs=on control first. Shadow-plan2D cells
+   from existing writer hooks without changing pixels/GL. Record selected union
+   area, rectangle count, fallback reason, actual bytes/calls and marking cost.
+   A32x16 tile grid is a reasonable starting hypothesis (1,020 cells at960x540),
+   not a chosen optimum. Bound masks, rectangles, area, call count and allocations.
+2. Preserve last ACKNOWLEDGED CURRENT-touch mask, unioned with the new current
+   mask, so disappearing UI/effects upload cleared RGB/T. Never ACK the larger
+   upload union. Unsubmitted frames must not advance GPU history. Same-size owner
+   changes, resize, reset, opaque/retained modes, holds and malformed/unsupported
+   writers must retain authoritative invalidation/full fallback semantics.
+3. The old cached contiguous linear interval is valid for whole-width row blocks.
+   It is INVALID for an entire2D tile bounding interval: gaps between its row
+   spans contain other tiles. Use a contiguous tile-row-span cache or otherwise
+   prove membership. Cover multi-row linear spans, first/last partial tiles,
+   negative/out-of-range writes,1x17, odd widths, and all legal surface bounds.
+4. Validate BOTH full borrowed planes and every rectangle/token/history before
+   ANY GL query/upload/mutation. Keep metadata-only retention and synchronous
+   borrowed lifetimes, original coverage->RGB->world/present ordering, final draw
+   and capture, and ACK only after successful presentation. A later plane/upload
+   failure must poison the partially changed backend; no silent retry or ACK.
+5. Upload subrectangles without full-plane packing/copying. WebGL2 typed-array
+   texSubImage2D supports source offsets and UNPACK_ROW_LENGTH/SKIP parameters;
+   their units/constraints and restoration need actual GPU proof for RGBA8 and
+   R32F. Preserve pixel-store/bindings/active unit and existing error checks.
+   Avoid conflating TexImageSource rules with ArrayBufferView rules.
+6. Differentially compare against literal full upload across held/unsubmitted
+   frames, fades/death/sleep, region changes, overlapping/transparent writers,
+   source mutation, duplicate/stale ACKs, resize and owner swaps. Require exact
+   current RGB/T planes and final pixels. Existing affine composition approximates
+   some legacy integer rounding; this work must not silently change that behavior.
+7. Then test actual current-source Firefox static AND strict six-family combat,
+   spell/summon visuals, loading, interaction/picking, and matched warmed OFF/ON
+   cohorts with identical key/layout controls. Verify actual bytes/calls and CPU
+   marking overhead alongside frame percentiles/FPS. Defaults remain manager-owned.
+
+A later CPU-overlay step could reuse precise write coverage to avoid full RGB/T
+clears or move raster operations across the browser boundary. CPU dirty history
+must include unsubmitted frames and is NOT the GPU ACK history. That is a separate
+ownership change. A complete UI-command rewrite is a larger correctness project
+than the presently demonstrated transport bottleneck; it is not first here.
+
+Limits and external API check
+-----------------------------
+This is one20s instrumented profile on one camera/workload, conditional on the
+legacy sprite-key control. No new GPU oracle, throughput benchmark, FPS test or
+code change was performed by this analysis worker. Manager's separate matched
+00/11 result is49.6593/51.3906FPS (+3.486%), conditional on that same control,
+with natural effect/group-count variation; it is neither additive with earlier
+component gains nor evidence of60FPS. Reprofile accepted current-default winners.
+
+Primary API reference checked2026-11-11:
+https://registry.khronos.org/webgl/specs/2.0.0/
+and Pixel Store Parameters/constraints in that specification. The typed-array
+source-offset overload reads offsets in typed elements; pixel-store row length
+and skips describe pixels/rows. Actual implementation must verify GL state and
+bounds on both planes. Latest2.0 editor draft is explicitly work in progress.
+
+Workspace-layout verification still reports pre-existing ignored legacy output
+root categories. This task creates evidence only in the declared diagnostics
+category. Maintained repository change is this report only; no runtime defaults
+or gameplay/server code changes are proposed for integration in this handoff.
