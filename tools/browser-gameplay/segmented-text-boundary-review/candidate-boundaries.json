@@ -1,0 +1,349 @@
+{
+  "reviewedCheckpoint": "c7c2c99528ce4a257c60b5b0d03079a25763c70e",
+  "scope": "Exact audited AST prefixes before old consumers; gates manually reviewed with private flagtrue/observerfalse. No automatic CFG or full alias-analysis claim.",
+  "methods": [
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "<init>(GraphicsController,int,int,int,)",
+      "requiredPrefix": "{\n    this.m_Ib = new int[this.m_ib][256];\n    this.m_Nb = 256;\n    this.fogLandscapeDistance = 1000;\n    this.m_vb = 512;\n    this.m_r = new int[40];\n    this.m_K = false;\n    this.m_A = 256;\n    this.m_cb = 0;\n    this.polyNormalScale = 4;\n    this.m_Ub = false;\n    this.m_v = new int[this.m_ib];\n    this.m_n = 0;\n    this.m_yb = new int[40];\n    this.fogEntityDistance = 1000;\n    this.m_db = 100;\n    this.rot1024_vp_src = 8;\n    this.m_Ab = new RSModel[this.m_db];\n    this.m_qb = new int[this.m_db];\n    try {\n        this.modelCount = 0;\n        if (orsc.graphics.two.GraphicsController.isSegmentedTextEnabled()) var1.flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "endScene(int,)",
+      "requiredPrefix": "{\n    if (orsc.graphics.two.GraphicsController.isSegmentedTextEnabled() && !this.graphics.isSegmentedTextPoisoned()) this.graphics.flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setMidpoints(int,boolean,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    try {\n        this.rot1024_vp_src = var6;\n        this.m_Zb = var7;\n        this.m_vb = var3;\n        this.m_Nb = var5;\n        this.m_x = new Scanline[var1 + var5];\n        this.m_wb = var1;\n        this.m_A = var4;\n        for (int var8 = 0; var8 < var5 + var1; ++var8) {\n            this.m_x[var8] = new Scanline();\n        }\n        if (!var2) {\n            this.m_f = false;\n        }\n        if (orsc.graphics.two.GraphicsController.isSegmentedTextEnabled()) graphics.flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "a(Sprite,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "a(int,int,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "a(int,int,int,int,int,int[],int,int[],int,int,boolean,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "a(int,int,int,int[],int,int,int,int[],int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "a(int,int[],int,int,int,int,byte,int,int[],int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "beginOpaqueWorldOverlay()",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) {\n        if (!segmentedTextPoisoned) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "beginRenderer2DFrame()",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT && !segmentedTextPoisoned) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "beginTransparentWorldOverlay()",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) {\n        if (!segmentedTextPoisoned) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "blackScreen(boolean,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "borrowWorldOverlayCoverage()",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "captureRenderer2DUiBaseFrame()",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "clearClip()",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT && !segmentedTextPoisoned) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "clearWorldOverlayCoverage()",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT && !segmentedTextPoisoned) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "consumeRenderer2DFrame()",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "copyPixelDataToSurface(SPRITE_LAYER,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "coverageUnsupported(String,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "createCaptchaSprite(Sprite,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawBox(int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawBoxAlpha(int,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawCircle(int,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawColoredString(int,int,String,int,int,int,)",
+      "requiredPrefix": "{\n    try {\n        try {\n            font = RendererFontSettings.displayFont(font);\n            int renderer2DGlyphs = 0;\n            boolean renderer2DNativeTextReplayable = canCaptureRenderer2DNativeUiCommand();\n            List<Renderer2DTextPlotCommand> renderer2DTextPlots = new ArrayList<>();\n            List<Renderer2DFrame.TextCommand.GlyphCommand> renderer2DNativeGlyphs = renderer2DNativeTextReplayable ? new ArrayList<Renderer2DFrame.TextCommand.GlyphCommand>() : null;\n            if (spriteHeader > 0) {\n                int iconSprite = (spriteHeader >> 24 & 255) + this.iconSpriteIndex - 1;\n                int spriteHeaderMask = (spriteHeader & 16777215);\n                Sprite crown = spriteSelect(EntityHandler.crowns.get(iconSprite - 3284));\n                if (crown != null) {\n                    this.drawSpriteClipping(crown, x, y - crown.getHeight(), crown.getWidth(), crown.getHeight(), spriteHeaderMask, 0, 0, false, 0, 0);\n                    x += crown.getWidth() + 5;\n                }\n            }\n            byte[] fontData = Fonts.fontData[font];\n            for (int i = 0; str.length() > i; ++i) {\n                if (str.charAt(i) == '@' && i + 4 < str.length() && str.charAt(i + 4) == '@') {\n                    final String key = str.substring(i + 1, i + 4);\n                    if (key.equalsIgnoreCase(\"red\")) {\n                        color = 16711680;\n                    } else if (key.equalsIgnoreCase(\"lre\")) {\n                        color = 16748608;\n                    } else if (key.equalsIgnoreCase(\"yel\")) {\n                        color = 16776960;\n                    } else if (key.equalsIgnoreCase(\"gre\")) {\n                        color = 65280;\n                    } else if (key.equalsIgnoreCase(\"blu\")) {\n                        color = 255;\n                    } else if (key.equalsIgnoreCase(\"cya\")) {\n                        color = 65535;\n                    } else if (key.equalsIgnoreCase(\"mag\")) {\n                        color = 16711935;\n                    } else if (key.equalsIgnoreCase(\"whi\")) {\n                        color = 16777215;\n                    } else if (key.equalsIgnoreCase(\"bla\")) {\n                        color = 0;\n                    } else if (key.equalsIgnoreCase(\"dre\")) {\n                        color = 12582912;\n                    } else if (key.equalsIgnoreCase(\"ora\")) {\n                        color = 16748608;\n                    } else if (key.equalsIgnoreCase(\"ran\")) {\n                        color = (int)(16777215 * Math.random());\n                    } else if (key.equalsIgnoreCase(\"or1\")) {\n                        color = 16756736;\n                    } else if (key.equalsIgnoreCase(\"or2\")) {\n                        color = 16740352;\n                    } else if (key.equalsIgnoreCase(\"or3\")) {\n                        color = 16723968;\n                    } else if (key.equalsIgnoreCase(\"gr1\")) {\n                        color = 12648192;\n                    } else if (key.equalsIgnoreCase(\"gr2\")) {\n                        color = 8453888;\n                    } else if (key.equalsIgnoreCase(\"gr3\")) {\n                        color = 4259584;\n                    } else if (key.equalsIgnoreCase(\"bl1\")) {\n                        color = 4210943;\n                    } else if (key.equalsIgnoreCase(\"bl2\")) {\n                        color = 16639;\n                    } else if (key.equalsIgnoreCase(\"bl3\")) {\n                        color = 4194559;\n                    } else if (key.equalsIgnoreCase(\"dgr\")) {\n                        color = 49152;\n                    } else if (key.equalsIgnoreCase(\"dbl\")) {\n                        color = 192;\n                    } else if (key.equalsIgnoreCase(\"dcy\")) {\n                        color = 49344;\n                    } else if (key.equalsIgnoreCase(\"dor\")) {\n                        color = 12607520;\n                    } else if (key.equalsIgnoreCase(\"sub\")) {\n                        color = 15654365;\n                    } else if (key.equalsIgnoreCase(\"eve\")) {\n                        color = 5059517;\n                    } else if (key.equalsIgnoreCase(\"sil\")) {\n                        color = 12632256;\n                    } else if (key.equalsIgnoreCase(\"pre\")) {\n                        color = 4516575;\n                    } else if (key.equalsIgnoreCase(\"cla\")) {\n                        color = 8170970;\n                    } else if (key.equalsIgnoreCase(\"pin\")) {\n                        color = 16748249;\n                    }\n                    i += 4;\n                } else {\n                    if (str.charAt(i) == '~' && 4 + i < str.length() && str.charAt(4 + i) == '~') {\n                        char a = str.charAt(i + 1);\n                        char b = str.charAt(i + 2);\n                        char c = str.charAt(i + 3);\n                        if (a >= '0' && a <= '9' && b >= '0' && b <= '9' && c >= '0' && c <= '9') {\n                            x = Integer.parseInt(str.substring(i + 1, i + 4));\n                        }\n                        i += 4;\n                    } else if (str.charAt(i) == '~' && i + 5 < str.length() && str.charAt(i + 5) == '~') {\n                        char c = str.charAt(i + 1);\n                        char c1 = str.charAt(i + 2);\n                        char c2 = str.charAt(i + 3);\n                        char c3 = str.charAt(i + 4);\n                        if (c >= '0' && c <= '9' && c1 >= '0' && c1 <= '9' && c2 >= '0' && c2 <= '9' && c3 >= '0' && c3 <= '9') x = Integer.parseInt(str.substring(i + 1, i + 5));\n                        i += 5;\n                    } else if (false && Config.S_WANT_CUSTOM_RANK_DISPLAY && str.charAt(i) == '#' && i + 4 < str.length() && str.charAt(i + 4) == '#' && str.substring(i + 1, i + 4).equalsIgnoreCase(\"adm\")) {\n                        this.drawSpriteClipping(spriteSelect(EntityHandler.GUIparts.get(0)), x - 1, y - sprites[this.iconSpriteIndex].getHeight(), sprites[this.iconSpriteIndex].getWidth(), sprites[this.iconSpriteIndex].getHeight(), 65280, 0, 0, false, 0, 0);\n                        x += sprites[this.iconSpriteIndex].getWidth() + 5;\n                        i += 4;\n                    } else if (false && Config.S_WANT_CUSTOM_RANK_DISPLAY && str.charAt(i) == '#' && i + 4 < str.length() && str.charAt(i + 4) == '#' && str.substring(i + 1, i + 4).equalsIgnoreCase(\"mod\")) {\n                        this.drawSpriteClipping(spriteSelect(EntityHandler.crowns.get(0)), x - 1, y - sprites[this.iconSpriteIndex].getHeight(), sprites[this.iconSpriteIndex].getWidth(), sprites[this.iconSpriteIndex].getHeight(), 255, 0, 0, false, 0, 0);\n                        x += sprites[this.iconSpriteIndex].getWidth() + 5;\n                        i += 4;\n                    } else if (false && Config.S_WANT_CUSTOM_RANK_DISPLAY && str.charAt(i) == '#' && i + 4 < str.length() && str.charAt(i + 4) == '#' && str.substring(i + 1, i + 4).equalsIgnoreCase(\"dev\")) {\n                        this.drawSpriteClipping(spriteSelect(EntityHandler.crowns.get(0)), x - 1, y - sprites[this.iconSpriteIndex].getHeight(), sprites[this.iconSpriteIndex].getWidth(), sprites[this.iconSpriteIndex].getHeight(), 16711680, 0, 0, false, 0, 0);\n                        x += sprites[this.iconSpriteIndex].getWidth() + 5;\n                        i += 4;\n                    } else if (false && Config.S_WANT_CUSTOM_RANK_DISPLAY && str.charAt(i) == '#' && i + 4 < str.length() && str.charAt(i + 4) == '#' && str.substring(i + 1, i + 4).equalsIgnoreCase(\"eve\")) {\n                        this.drawSpriteClipping(spriteSelect(EntityHandler.GUIparts.get(0)), x - 1, y - sprites[this.iconSpriteIndex].getHeight(), sprites[this.iconSpriteIndex].getWidth(), sprites[this.iconSpriteIndex].getHeight(), 5059517, 0, 0, false, 0, 0);\n                        x += sprites[this.iconSpriteIndex].getWidth() + 5;\n                        i += 4;\n                    } else {\n                        char here = str.charAt(i);\n                        if (here == 160) {\n                            here = ' ';\n                        }\n                        if (here < 0 || here >= Fonts.inputFilterCharFontAddr.length) {\n                            here = ' ';\n                        }\n                        int addr = Fonts.inputFilterCharFontAddr[here];\n                        boolean antiAliased = Fonts.fontAntiAliased[font];\n                        if (this.loggedIn && !antiAliased && color != 0) {\n                            Renderer2DTextPlotCommand plot = new Renderer2DTextPlotCommand(antiAliased, fontData, 1 + x, 0, addr, y);\n                            renderer2DTextPlots.add(plot);\n                            if (renderer2DNativeTextReplayable) {\n                                addRenderer2DTextGlyphCommand(renderer2DNativeGlyphs, antiAliased, fontData, 1 + x, 0, addr, y);\n                            }\n                        }\n                        if (this.loggedIn && !antiAliased && color != 0) {\n                            Renderer2DTextPlotCommand plot = new Renderer2DTextPlotCommand(antiAliased, fontData, x, 0, addr, y + 1);\n                            renderer2DTextPlots.add(plot);\n                            if (renderer2DNativeTextReplayable) {\n                                addRenderer2DTextGlyphCommand(renderer2DNativeGlyphs, antiAliased, fontData, x, 0, addr, y + 1);\n                            }\n                        }\n                        Renderer2DTextPlotCommand plot = new Renderer2DTextPlotCommand(antiAliased, fontData, x, color, addr, y);\n                        renderer2DTextPlots.add(plot);\n                        if (renderer2DNativeTextReplayable) {\n                            addRenderer2DTextGlyphCommand(renderer2DNativeGlyphs, antiAliased, fontData, x, color, addr, y);\n                        }\n                        x += fontData[addr + 7];\n                        renderer2DGlyphs++;\n                    }\n                }\n            }\n            recordRenderer2DTextDraw(renderer2DGlyphs);\n            if (renderer2DNativeTextReplayable && renderer2DNativeGlyphs != null && shouldReplaceRenderer2DText(recordRenderer2DTextCommand(renderer2DNativeGlyphs))) {\n                return;\n            }\n            if (!renderer2DTextPlots.isEmpty()) {\n                markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.TEXT);\n            }\n            if (BROWSER_OVERLAY_JOURNAL_OBSERVE) journalText(renderer2DTextPlots);\n            if (BROWSER_SEGMENTED_TEXT && recordSegmentedText(renderer2DTextPlots)) return;\n            for (Renderer2DTextPlotCommand plot : renderer2DTextPlots) {\n                plot.plot(this);\n            }\n        } catch (Exception var14) {\n            if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawEntity(int,int,int,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawLineHoriz(int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawLineVert(int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawMinimapSprite(Sprite,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSceneEntity(int,int,int,int,int,int,int,int,int,int,Renderer3DFrame,SceneSpriteRasterPolicy,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSprite(Sprite,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSprite(Sprite,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSprite(Sprite,int,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawVerticalGradient(int,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "fade2black(int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "getRenderer2DUiBasePixels()",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "observeOverlayJournalBarrier(int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "plot_horiz_line(int,int,int[],int,int,int,int[],int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "plot_scale_black_mask(int[],int,int,int,int,int[],byte,int,int,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "plot_tran_scale(int,int,int,byte,int,int,int,int,int,int[],int,int,int,int,int[],)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "plot_tran_scale_with_mask(int,int[],int,int,int,int,int,int[],int,int,int,int,int,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "plot_trans_horiz_line(int,int,int,int[],int[],int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "plot_trans_scale_lookup_with_mask(byte[],int,int,int,int[],int,int,int,int,int,int[],int,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "plot_trans_scale_with_2_masks(int[],int[],int,int,int,int,int,int,int,int,int,int,int,int,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "publishMinimapRaster(int[],int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "resize(int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT && !segmentedTextPoisoned) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "setClip(int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT && !segmentedTextPoisoned) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "setPixel(int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "setRenderer2DPhase(Renderer2DFrame.Phase,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT && !segmentedTextPoisoned) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "setWorldOverlayCoverageEnabled(boolean,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT && !segmentedTextPoisoned) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "spriteClip3(int,int,Sprite,int,int,byte,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "spriteClipping(Sprite,byte,int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/mudclient.java",
+      "method": "drawWorldEditorGridLine(int,int,int,int,int,)",
+      "requiredPrefix": "{\n    if (orsc.graphics.two.GraphicsController.isSegmentedTextEnabled()) this.getSurface().flushPendingSegmentedText();"
+    },
+    {
+      "file": "PC_Client/src/orsc/BrowserWebGLBridge.java",
+      "method": "present(BufferedImage,Renderer2DFrame,Renderer3DFrame,)",
+      "requiredPrefix": "{\n    long frameStart = System.nanoTime();\n    mudclient client = currentClient();\n    GraphicsController currentSurface = client == null ? null : client.getSurface();\n    if (GraphicsController.isSegmentedTextEnabled() && currentSurface != null) currentSurface.flushPendingSegmentedText();"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "bindDirectFramebuffer(int,int,)",
+      "requiredPrefix": "{\n    if (orsc.graphics.two.GraphicsController.isSegmentedTextEnabled() && mudclient != null && mudclient.getSurface() != null) mudclient.getSurface().flushPendingSegmentedText();"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "commitToImage(boolean,)",
+      "requiredPrefix": "{\n    if (orsc.graphics.two.GraphicsController.isSegmentedTextEnabled() && mudclient != null && mudclient.getSurface() != null) mudclient.getSurface().flushPendingSegmentedText();"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "draw()",
+      "requiredPrefix": "{\n    if (orsc.graphics.two.GraphicsController.isSegmentedTextEnabled() && mudclient != null && mudclient.getSurface() != null) mudclient.getSurface().flushPendingSegmentedText();"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "getDirectFramebufferImage()",
+      "requiredPrefix": "{\n    if (orsc.graphics.two.GraphicsController.isSegmentedTextEnabled() && mudclient != null && mudclient.getSurface() != null) mudclient.getSurface().flushPendingSegmentedText();"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "storeSpriteVert(int,int,int,int,int,)",
+      "requiredPrefix": "{\n    coverageUnsupported(\"Login viewport capture during GPU world overlay\");"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "invalidateWorldOverlayCoverage(String,)",
+      "requiredPrefix": "{\n    coverageUnsupported(reason == null ? \"Unsupported external framebuffer writer\" : reason);"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "beginSoftwareOwnedRenderer2DFrame()",
+      "requiredPrefix": "{\n    beginOpaqueWorldOverlay();\n    beginRenderer2DFrame();"
+    }
+  ],
+  "orderedSnippets": [
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "endScene(int,)",
+      "text": "if (orsc.graphics.two.GraphicsController.isSegmentedTextEnabled()) this.graphics.flushPendingSegmentedText();\n                geometryFrame.getDepthFrame().copyColorTo(this.pixelData);",
+      "reason": "Intra-Scene depth copy after potential actor text; entry-only flush is insufficient"
+    }
+  ],
+  "suffixes": [
+    {
+      "file": "Client_Base/src/orsc/mudclient.java",
+      "method": "draw()",
+      "text": "} catch (orsc.graphics.two.SegmentedTextRaster.FrameAbort discarded) {\n        if (this.getScene() != null && this.getScene().getRenderer3DFrame() != null) this.getScene().getRenderer3DFrame().release();\n        return;\n    } catch (RuntimeException var5) {\n        throw GenUtil.makeThrowable(var5, \"client.JD()\");\n    }\n}",
+      "reason": "Outermost dedicated abort catches all draw branches and releases pooled frame before returning"
+    }
+  ],
+  "coldBodies": [
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "recordSegmentedText(java.util.List<Renderer2DTextPlotCommand>,)",
+      "text": "{\n    if (!isSegmentedTextEnabled() || plots.isEmpty()) return false;\n    if (segmentedTextPoisoned) flushPendingSegmentedText();\n    WorldOverlayCoverage.Frame admission = journalFrame();\n    if (sceneSpriteRasterPolicy != SceneSpriteRasterPolicy.DEFAULT || guardGpuSceneSoftwareWrites || !worldOverlayCoverageEnabled || admission == null || !admission.isFreshSegmentedTextOwner() || plots.size() > SegmentedTextRaster.MAX_GLYPHS) {\n        flushPendingSegmentedText();\n        return false;\n    }\n    byte[] font = plots.get(0).fontData;\n    int[] scalar = new int[plots.size() * 5];\n    int at = 0;\n    for (Renderer2DTextPlotCommand plot : plots) {\n        if (plot.fontData != font) {\n            flushPendingSegmentedText();\n            return false;\n        }\n        scalar[at++] = plot.x;\n        scalar[at++] = plot.y;\n        scalar[at++] = plot.color;\n        scalar[at++] = plot.indexAddr;\n        scalar[at++] = plot.antiAliased ? 1 : 0;\n    }\n    return textSegments().record(font, scalar, plots.size(), clipLeft, clipTop, clipRight, clipBottom, new SegmentedTextRaster.Replay(){\n        \n        public void plots(byte[] saved, int[] commands, int left, int top, int right, int bottom) {\n            int oldL = clipLeft;\n            int oldT = clipTop;\n            int oldR = clipRight;\n            int oldB = clipBottom;\n            clipLeft = left;\n            clipTop = top;\n            clipRight = right;\n            clipBottom = bottom;\n            try {\n                try {\n                    for (int n = 0; n < commands.length; n += 5) plotCharacter(commands[n + 4] != 0, saved, commands[n], commands[n + 2], commands[n + 3], commands[n + 1]);\n                } catch (Exception error) {\n                    System.out.println(\"drawstring: \" + error);\n                    error.printStackTrace();\n                }\n            } finally {\n                clipLeft = oldL;\n                clipTop = oldT;\n                clipRight = oldR;\n                clipBottom = oldB;\n            }\n        }\n    });\n}"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "beginTransparentWorldOverlay()",
+      "text": "{\n    if (BROWSER_SEGMENTED_TEXT) {\n        if (!segmentedTextPoisoned) flushPendingSegmentedText();\n        boolean begun = BROWSER_OVERLAY_JOURNAL_OBSERVE ? beginObservedWorldOverlay() : worldOverlayCoverageEnabled && worldOverlayCoverage != null && worldOverlayCoverage.begin(pixelData, width2, height2);\n        if (begun) resetSegmentedTextFreshBase();\n        return begun;\n    }\n    if (BROWSER_OVERLAY_JOURNAL_OBSERVE) return beginObservedWorldOverlay();\n    return worldOverlayCoverageEnabled && worldOverlayCoverage != null && worldOverlayCoverage.begin(pixelData, width2, height2);\n}"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "beginOpaqueWorldOverlay()",
+      "text": "{\n    if (BROWSER_SEGMENTED_TEXT) {\n        if (!segmentedTextPoisoned) flushPendingSegmentedText(); else {\n            long count = (long)width2 * height2;\n            if (pixelData == null || width2 < 1 || height2 < 1 || count > pixelData.length) throw new SegmentedTextRaster.FrameAbort(\"Poisoned opaque base cannot clear current surface\");\n            java.util.Arrays.fill(pixelData, 0, (int)count, 0);\n            resetSegmentedTextFreshBase();\n        }\n    }\n    if (BROWSER_OVERLAY_JOURNAL_OBSERVE) journalClose(OverlayJournalObserver.MODE);\n    if (worldOverlayCoverage != null) worldOverlayCoverage.reset(false);\n    if (!worldOverlayCoverageEnabled) worldOverlayCoverage = null;\n}"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "beginRenderer2DFrame()",
+      "text": "{\n    if (BROWSER_SEGMENTED_TEXT && !segmentedTextPoisoned) flushPendingSegmentedText();\n    if (BROWSER_OVERLAY_JOURNAL_OBSERVE) journalClose(OverlayJournalObserver.RESET);\n    updateBrowserFramePreparation();\n    if (worldOverlayCoverage != null) worldOverlayCoverage.beginFrame();\n    if (BROWSER_SEGMENTED_TEXT && segmentedTextPoisoned && worldOverlayCoverageEnabled && worldOverlayCoverage != null) {\n        if (worldOverlayCoverage.begin(pixelData, width2, height2)) resetSegmentedTextFreshBase();\n    }\n    sceneSpriteRasterFailure = \"\";\n    resetRenderer2DCommandState();\n}"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "flushPendingSegmentedText()",
+      "text": "{\n    if (!BROWSER_SEGMENTED_TEXT) return;\n    if (segmentedTextPoisoned) throw new SegmentedTextRaster.FrameAbort(\"Discard poisoned TEXT frame until fresh base\");\n    if (segmentedText != null) segmentedText.flush();\n}"
+    }
+  ]
+}

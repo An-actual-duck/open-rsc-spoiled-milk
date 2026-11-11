@@ -1090,79 +1090,546 @@
     "PC_Client/src/orsc/Frame.java": "3baaa08d0a04f630dc27bb6d3a9a0d1da103235a017016463fd6da8e070b71c4"
   },
   "reviewedCandidateAccessChanges": {
+    "checkpoint": "c7c2c99528ce4a257c60b5b0d03079a25763c70e",
+    "rationale": "Independent exact-source review:62 explicit flush calls;13 owner-coherence/fresh-clear/borrow references in GC, coverage and isolated segment core. Existing180 accesses retained. No generic file exemptions.",
     "remove": [],
-    "add": []
+    "add": [
+      {
+        "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+        "method": "<init>(GraphicsController,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "var1.flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+        "method": "endScene(int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "this.graphics.flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+        "method": "endScene(int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "this.graphics.flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+        "method": "setMidpoints(int,boolean,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "graphics.flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "current(WorldOverlayCoverage.Frame,)",
+        "kind": "pixelData",
+        "expression": "worldOverlayCoverage != null && worldOverlayCoverage.isCurrent(frame, pixelData, width2, height2) && frame.isFreshSegmentedTextOwner()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "recordSegmentedText(java.util.List<Renderer2DTextPlotCommand>,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "recordSegmentedText(java.util.List<Renderer2DTextPlotCommand>,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "recordSegmentedText(java.util.List<Renderer2DTextPlotCommand>,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "observeOverlayJournalBarrier(int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "setWorldOverlayCoverageEnabled(boolean,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "beginTransparentWorldOverlay()",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "beginTransparentWorldOverlay()",
+        "kind": "pixelData",
+        "expression": "BROWSER_OVERLAY_JOURNAL_OBSERVE ? beginObservedWorldOverlay() : worldOverlayCoverageEnabled && worldOverlayCoverage != null && worldOverlayCoverage.begin(pixelData, width2, height2)"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "beginOpaqueWorldOverlay()",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "beginOpaqueWorldOverlay()",
+        "kind": "pixelData",
+        "expression": "(pixelData == null || width2 < 1 || height2 < 1 || count > pixelData.length)"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "beginOpaqueWorldOverlay()",
+        "kind": "pixelData",
+        "expression": "(pixelData == null || width2 < 1 || height2 < 1 || count > pixelData.length)"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "beginOpaqueWorldOverlay()",
+        "kind": "pixelData",
+        "expression": "java.util.Arrays.fill(pixelData, 0, (int)count, 0)"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "clearWorldOverlayCoverage()",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "borrowWorldOverlayCoverage()",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "coverageUnsupported(String,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "beginRenderer2DFrame()",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "beginRenderer2DFrame()",
+        "kind": "pixelData",
+        "expression": "(worldOverlayCoverage.begin(pixelData, width2, height2))"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "setRenderer2DPhase(Renderer2DFrame.Phase,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "consumeRenderer2DFrame()",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "captureRenderer2DUiBaseFrame()",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "captureRenderer2DUiBaseFrame()",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "getRenderer2DUiBasePixels()",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "resize(int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "clearClip()",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "spriteClipping(Sprite,byte,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "a(Sprite,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "spriteClip3(int,int,Sprite,int,int,byte,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "drawSceneEntity(int,int,int,int,int,int,int,int,int,int,Renderer3DFrame,SceneSpriteRasterPolicy,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "drawEntity(int,int,int,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "a(int,int,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "a(int,int,int,int,int,int[],int,int[],int,int,boolean,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "plot_horiz_line(int,int,int[],int,int,int,int[],int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "a(int,int,int,int[],int,int,int,int[],int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "plot_trans_horiz_line(int,int,int,int[],int[],int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "a(int,int[],int,int,int,int,byte,int,int[],int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "plot_scale_black_mask(int[],int,int,int,int,int[],byte,int,int,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "plot_trans_scale_with_2_masks(int[],int[],int,int,int,int,int,int,int,int,int,int,int,int,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "copyPixelDataToSurface(SPRITE_LAYER,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "publishMinimapRaster(int[],int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "drawVerticalGradient(int,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "blackScreen(boolean,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "drawBox(int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "drawBoxAlpha(int,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "drawCircle(int,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "drawColoredString(int,int,String,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "drawLineHoriz(int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "drawLineVert(int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "drawMinimapSprite(Sprite,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "drawSprite(Sprite,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "drawSprite(Sprite,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "drawSprite(Sprite,int,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "fade2black(int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "createCaptchaSprite(Sprite,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "setClip(int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "setPixel(int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "plot_tran_scale(int,int,int,byte,int,int,int,int,int,int[],int,int,int,int,int[],)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "plot_tran_scale_with_mask(int,int[],int,int,int,int,int,int[],int,int,int,int,int,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "plot_trans_scale_lookup_with_mask(byte[],int,int,int,int[],int,int,int,int,int,int[],int,int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/SegmentedTextRaster.java",
+        "method": "same(WorldOverlayCoverage.Frame,)",
+        "kind": "ownerPixels",
+        "expression": "frame.ownerPixels == now.ownerPixels && frame.transmittance == now.transmittance && frame.width == now.width && frame.height == now.height && frame.generation == now.generation && frame.frameSequence == now.frameSequence"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/SegmentedTextRaster.java",
+        "method": "same(WorldOverlayCoverage.Frame,)",
+        "kind": "ownerPixels",
+        "expression": "frame.ownerPixels == now.ownerPixels && frame.transmittance == now.transmittance && frame.width == now.width && frame.height == now.height && frame.generation == now.generation && frame.frameSequence == now.frameSequence"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/SegmentedTextRaster.java",
+        "method": "same(WorldOverlayCoverage.Frame,)",
+        "kind": "transmittance",
+        "expression": "frame.ownerPixels == now.ownerPixels && frame.transmittance == now.transmittance && frame.width == now.width && frame.height == now.height && frame.generation == now.generation && frame.frameSequence == now.frameSequence"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/SegmentedTextRaster.java",
+        "method": "same(WorldOverlayCoverage.Frame,)",
+        "kind": "transmittance",
+        "expression": "frame.ownerPixels == now.ownerPixels && frame.transmittance == now.transmittance && frame.width == now.width && frame.height == now.height && frame.generation == now.generation && frame.frameSequence == now.frameSequence"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/SegmentedTextRaster.java",
+        "method": "flush()",
+        "kind": "ownerPixels",
+        "expression": "result = installed.raster(header, texts, plots, fonts, frame.ownerPixels, frame.transmittance, frame.generation, frame.frameSequence)"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/SegmentedTextRaster.java",
+        "method": "flush()",
+        "kind": "transmittance",
+        "expression": "result = installed.raster(header, texts, plots, fonts, frame.ownerPixels, frame.transmittance, frame.generation, frame.frameSequence)"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+        "method": "isFreshSegmentedTextOwner()",
+        "kind": "ownerPixels",
+        "expression": "mode == MODE_WORLD && owner.freshWorld && owner.deltaTransport == null && owner.isCurrent(this, ownerPixels, width, height)"
+      },
+      {
+        "file": "Client_Base/src/orsc/mudclient.java",
+        "method": "drawWorldEditorGridLine(int,int,int,int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "this.getSurface().flushPendingSegmentedText()"
+      },
+      {
+        "file": "PC_Client/src/orsc/BrowserWebGLBridge.java",
+        "method": "present(BufferedImage,Renderer2DFrame,Renderer3DFrame,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "currentSurface.flushPendingSegmentedText()"
+      },
+      {
+        "file": "PC_Client/src/orsc/ORSCApplet.java",
+        "method": "commitToImage(boolean,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "mudclient.getSurface().flushPendingSegmentedText()"
+      },
+      {
+        "file": "PC_Client/src/orsc/ORSCApplet.java",
+        "method": "draw()",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "mudclient.getSurface().flushPendingSegmentedText()"
+      },
+      {
+        "file": "PC_Client/src/orsc/ORSCApplet.java",
+        "method": "getDirectFramebufferImage()",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "mudclient.getSurface().flushPendingSegmentedText()"
+      },
+      {
+        "file": "PC_Client/src/orsc/ORSCApplet.java",
+        "method": "bindDirectFramebuffer(int,int,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "mudclient.getSurface().flushPendingSegmentedText()"
+      }
+    ]
   },
   "unchangedLegacyBodies": [
     {
       "file": "Client_Base/src/orsc/MiscFunctions.java",
       "method": "copyBlock4(int,int,int[],int,int,int[],int,byte,)",
-      "sha256": "1f37bb9792ce5006e136ed7096347752c08ea1d491a90756b1e2e1ee94d54c32"
+      "sha256": "7c265adaef133a9684b274c3fa67376ac143849e0a9b9f6c0d5969332cf651d5",
+      "rawSha256": "6710d7000aeec68c2eff67a84184dd555ff08ca6dfc5b87f7e1257a441b5046c"
     },
     {
       "file": "Client_Base/src/orsc/MiscFunctions.java",
       "method": "copyBlock16(int,int,int,int[],int[],int,int,int,)",
-      "sha256": "9b53cf597273748b800d4eff486652847f32c6d58c333d8bedac969d19f01dc4"
+      "sha256": "290eb3947d196f0594dfdf4a4d8f698d0b728b0ccf6f5f1314e15ed5a3747f4f",
+      "rawSha256": "328cf05830a408da62a8edb145b67c78ce4a2ec47685b42dfa466fd864b0ce19"
     },
     {
       "file": "Client_Base/src/orsc/graphics/three/Shader.java",
       "method": "shadeScanline(int,int,int,int,int[],int,int,int,int,int,int,int,int,int,int[],int,)",
-      "sha256": "135585feda594fee338ab7291a6a87fe3fc6fb02265a5cd98c7bca5c14ac0ab6"
+      "sha256": "8ee23a8f4336cc55d24d40ce28afbe3252a3cc6da99eaccd2aabb592a83007f2",
+      "rawSha256": "e8c8aca977f07096b76664d2665d50b6d8af95636996b17dce3be092eb365d9d"
     },
     {
       "file": "Client_Base/src/orsc/graphics/three/Shader.java",
       "method": "shadeScanline(int,int,byte,int,int,int,int[],int,int,int,int,int,int[],int,int,)",
-      "sha256": "3abcfa1649695f0c531a3036efffc43e0f8db49d8e6556a50454c2592605f9ce"
+      "sha256": "01d4304ad030220bb09970aeac2abcec34073a6319d46d202421fd83720f34f7",
+      "rawSha256": "eb540cb7f2ed1e49bcc769387b7933aae5093844412affbc871ea96f01eb1c46"
     },
     {
       "file": "Client_Base/src/orsc/graphics/three/Shader.java",
       "method": "shadeScanline(int,int,int,int,int,int,int,int,int,int,int[],int,int,int[],byte,)",
-      "sha256": "f36bfa1fd7a98e9eeb67f9d92541c5dbcb396c333b666d46f8706bc1bf0ee4bc"
+      "sha256": "a8eeba8a31de390fe8bd7ef9bea16ed05268019963f1cd5fef8b474d76c4bae1",
+      "rawSha256": "8b897d4e73d3b4a1b2c6d22527ba86604d76d7c30704b2e17f050c578f9568fc"
     },
     {
       "file": "Client_Base/src/orsc/graphics/three/Shader.java",
       "method": "shadeScanline(int[],int,int,int,int,int,int,int,int,int,int[],boolean,int,int,int,)",
-      "sha256": "b7c7af7b1516072995fe7fffc22ad5e480842d337e271476da66d60b4e65a070"
+      "sha256": "c403e50aecf29666b48a66af6fbb6e35b262343750b28e17772633d6d6d7cf06",
+      "rawSha256": "7ad9512155e3bcfaede94da9b39a9fe2a45cd01b7e340f086ffe15b68c750987"
     },
     {
       "file": "Client_Base/src/orsc/graphics/three/Shader.java",
       "method": "shadeScanline(int,int,int,int,int,int[],int,int,int,int,int[],int,int,int,int,)",
-      "sha256": "2f3e2bc43468a592c8f700303a98148fda8641b61faaf116cccf8844170a271e"
+      "sha256": "c5718eecbbe02ae6512b3398222a7f45779bb1bebc546f729b4a60634777fd01",
+      "rawSha256": "a51edb4203e5cda9ab8d3a69680e059681426aa79da823a2169955cec242b0e3"
     },
     {
       "file": "Client_Base/src/orsc/graphics/three/Shader.java",
       "method": "shadeScanline(int,int,int,byte,int,int,int,int,int[],int[],int,int,int,int,int,int,)",
-      "sha256": "78fcd51a135ea26aa65f95839fccb4a8b1166d8ff70aa381e9103ce76aa4587e"
+      "sha256": "f5944d25b6f18ab24d41ef55b9f37e49d22ad7e1654b2275623e3cab78c11fc9",
+      "rawSha256": "a53d8bca94556fc346147f501f36d64cf6423d379681e0127515beb76f565b7e"
     },
     {
       "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
       "method": "coverageOpaque(int[],int,)",
-      "sha256": "56def7b0ccc519bbec826f8212c5ef836400512fae103bc9938f6a09744961e0"
+      "sha256": "5883bd7a85e69dd9e97cde5302790412f6e43e56b0cc0b24c630fd300e8d3c04",
+      "rawSha256": "1bb68dc5e905b557de97a05ae2d2c5ab2b8706267d7432814082758fe26dff4b"
     },
     {
       "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
       "method": "coverageOpaqueSpan(int[],int,int,)",
-      "sha256": "f3061d2452df2b41f12d52d2dc0503ecd4714642faefd0e4eac8c935fba95830"
+      "sha256": "cdd95950f5341b0b2d28ef0e6c89cee87a9e35feb39924c8308611304924d86a",
+      "rawSha256": "b0b1c72d943961c1008e4b430a9b9ba54909f2c2ea864ca11fbf4883cfca7bc7"
     },
     {
       "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
       "method": "coverageMultiply(int[],int,int,)",
-      "sha256": "30b5b2740b3841ad08e2aff2732904c35d3ffb3fcf528186b943d507cade76cd"
+      "sha256": "ebb7cd63115c0f421a726f9391e5c717d0d74579704bcc89d654bb3c930407b4",
+      "rawSha256": "0ce29800c92238847fc482d2345c4587a0d4283c73f39a23b4558df8d962c197"
     },
     {
       "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
       "method": "a(int,int[],int,int[],int,int,int,int,)",
-      "sha256": "3a4ddae0fe46ae1c4ee9affad18d77dab640076a4be2daf781323eef4fad402b"
+      "sha256": "91823e7bdd4bea4c2fe1bd971be9072a83b028c5fb81c8e46328f3552db3247e",
+      "rawSha256": "904b03e0631c4775a69f8cfe406d0c991d4c7e48452b934785a9f212ea086c81"
     },
     {
       "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
       "method": "plotLetter(int,int[],int,int,int,int,int,byte[],int,)",
-      "sha256": "84f89efb8e4f74a1e6dc07bc74ff31948eca23376f558caf71454ffb72d47594"
+      "sha256": "ad8d1fe4a1c395c071a647275fee2e646dc35771e139eba599320cb17cab2f43",
+      "rawSha256": "ff77243682271f2da69527b424e49910682336cab8649d40dd62712a057e387b"
     },
     {
       "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
       "method": "plotLetterAntialiased(byte[],int,int,int,int,int,int,int[],int,)",
-      "sha256": "aa1f2cf82e6a03703445ffa2abd2d4fd30de6a92a0521500c0b6766ad41ce892"
+      "sha256": "2fae7bc5743368e603a002398351c068c8080c836a2e6e794ba6890d80e48233",
+      "rawSha256": "2b999768c8daec8fdf11b074da0bda9abba25a6c66dd70bdf15e40012127f26f"
     }
   ]
 }

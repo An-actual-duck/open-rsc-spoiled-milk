@@ -133,12 +133,64 @@ false; it is never presented as proof of runtime hooks.
 Commands:
   python3 tests/myworld/test-browser-segmented-text-boundaries.py --name NAME
   python3 tests/myworld/test-browser-segmented-text-boundaries.py \
-    --source-root /path/to/exact/candidate --require-segmented-hooks --name NAME
+    --source-root /path/to/exact/candidate --source-commit EXACT_HASH \
+    --require-segmented-hooks --name NAME
 New evidence: output/tests/browser-segmented-text-boundaries/NAME.
 BOUNDARY_JDK_HOME may select an equivalent JDK with supported javac tree APIs.
 
-Status
-------
-Baseline180 references/calls,14 literal bodies and8 tripwire mutation cases PASS.
-Exact runtime producer checkpoint review and nonvacuous candidate hook guards
-are pending. No runtime correctness/performance acceptance is claimed yet.
+Exact candidate result
+----------------------
+Reviewed producer c7c2c99528ce4a257c60b5b0d03079a25763c70e from a frozen git
+archive (no dirty moving worktree source or application class execution).
+PASS255 AST references/calls: all180 baseline expressions retained, plus75
+explicit independently reviewed entries (62 flush calls and13 owner-coherence,
+fresh-clear/recovery or bounded segment C/T borrow references). The reviewed
+delta is finite; no whole-file raw-access exemption is admitted.
+
+PASS60 explicit entry/delegate prefix guards, one immediate post-enqueue Scene
+depth-copy guard, one outermost draw-abort/pool-release suffix guard, five full
+cold admission/recovery body guards, and14 literal raw-source/canonical old
+hot/Shader/Misc/static-GC bodies. Four roster mutations plus four actual parsed
+new Java consumers must fail. Removing reviewed materialization calls or abort
+pool cleanup also fails. Candidate source is an explicit guard mode; baseline
+inventory mode remains marked candidateBoundariesChecked=false.
+
+Concrete findings raised independently and corrected in this candidate:
+1 Metadata-only opaque recovery could clear the poison latch without clearing C.
+  GC.beginOpaqueWorldOverlay now clears the entire validated C plane before
+  unlatching; failed transparent begin does not unlatch. See GC252/269.
+2 An inner GAME/LOGIN abort catch missed resize/loading branches. The catch now
+  belongs to outermost mudclient.draw and releases the current pooled 3D frame
+  before return. See mudclient6199/6200. Full GUI/GPU execution is not claimed.
+3 Scene actor text could precede a later depth copy. A flush immediately precedes
+  copyColorTo, in addition to endScene entry materialization. See Scene3496.
+4 Native text could bypass the existing GPU-owned Scene software-write guard.
+  Queue admission now rejects nonDEFAULT SceneSpritePolicy and
+  guardGpuSceneSoftwareWrites; prior pending work flushes before policy change.
+  See GC.recordSegmentedText57 and drawSceneEntity2034.
+5 Cached AWT images and retained/hold early returns needed materialization before
+  consumption. ORSC draw758/getDirect915/commit703 and Bridge present129/133 flush
+  before the first consumer, including before both hold branches152/193.
+
+The private flag's false branches leave the fourteen guarded old literal bodies
+unchanged. The new queue/native kernel's full exact pixels, exception-prefix,
+fallback and poison-recovery execution are separately owned by ai2; this source
+review does not substitute for them. No outstanding maintained-source boundary
+blocker found in exact c7c2. Future edits to protected expressions or gates require
+re-review and updated independent tests.
+
+Evidence (worker-relative):
+output/tests/browser-segmented-text-boundaries/candidate-c7-boundaries-2/result.json
+  Frozen source commit, inventory hashes and all nonvacuous source guard counts.
+output/tests/browser-segmented-text-boundaries/baseline-literal-1/result.json
+  Independent frozen baseline180/14 with real synthetic Java mutation checks.
+
+Limits and next acceptance gates
+-------------------------------
+This proves the specified maintained source ordering/alias contract, not arbitrary
+plugin/reflection/concurrent access, whole-program alias analysis, actual GPU
+pixels, 60FPS or performance improvement. A source suffix does not execute the
+full after-write fault -> outer mudclient -> pooled-release/last-good-browser
+path. Manager-owned private browser injection must verify that path, normal
+cached-image rendering, poison/invalid recovery, and no present/clear/resize of
+an aborted frame before gameplay A/B measurement or adoption.
