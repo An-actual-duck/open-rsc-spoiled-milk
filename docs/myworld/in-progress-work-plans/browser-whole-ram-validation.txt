@@ -82,3 +82,19 @@ collision and pick state. Expose bounded coverage/retained-byte/use/build counte
 rather than enumerating the full zone every frame. A caller-visible readiness
 flag requires complete useful coverage, not merely finishing a fetch or raising
 an LRU limit. No runtime implementation or new process was launched for this plan.
+
+Comparison and alias refinements
+---------------------------------
+Primary RAM isolation is same-artifact GPUON/RAMOFF versus GPUON/RAMON, with the
+same new bound GPU catalogue/JAR/options. Ordinary GPUOFF/RAMOFF is a separate
+reference, not interchangeable with the RAM control. Startup/preparation/retained
+memory and steady rendering remain distinct from warm crossing gaps.
+Sector.getTile exposes mutable Tile, while Sector.copy deep-copies every tile.
+Prepared decoded sectors therefore cannot be assigned to active source arrays and
+then mutated by bridge/editor/lighting work without protecting the cache owner.
+Terrain faceTileX/Z and facePickIndex=200000+localFaceID belong to local publication;
+wall30000+wallID is definition-based, while local scenery model.key encodes active
+instance index. Rebase/activation must preserve these different ownership rules.
+Collision reference is a full ordinary rebuild with the SAME final authoritative
+live scenery/doors, not an invented OR/clear formula or an unchecked incremental
+remove. This specifically checks overlapping baseline tile/wall blockage.
