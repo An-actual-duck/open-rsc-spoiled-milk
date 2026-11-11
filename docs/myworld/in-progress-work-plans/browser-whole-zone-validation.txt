@@ -212,3 +212,20 @@ a positive placement count may validly map a16-byte zero-geometry resource when
 all faces are invisible. It may not use null to silently omit source content.
 Only L0 terrain must be nonempty. Independent catalogue corpus now25 checks,
 including this distinction. Elevation/rawgeometry/image parity remains pending.
+
+Actual packed-delivery integrity gate
+--------------------------------------
+verify-packed.py independently verifies each actual file's SHA/length and binary
+header, all finite112B vertex fields, index bounds, material IDs/ranges/triangle
+alignment/nonoverlap, global bounds and actual texture payload shape/hash. This
+is an internal consistency proof rather than a second implementation of the
+source mesh builders. It preserves legitimate undrawn zero index tails.
+16 adversarial packed tests pass, including late invalid indices/materials,
+nonfinite nonposition fields with refreshed hashes and explicit16B empty geometry.
+
+Actual pilot-2 PASS:84 resources (10 geometry+74 actual production textures),
+16,568,664 resource-file bytes,116694 vertices/indices,116646 drawn material indices.
+Receipt: output/tests/browser-whole-zone-validation/packed-pilot-2/result.json
+The48 undrawn index slots are preserved, matching the producer's capacity-tail
+contract. CompleteDeclared=false remains prominent. No GL, driver allocation,
+actual pixel equality, source-builder parity or performance is inferred here.
