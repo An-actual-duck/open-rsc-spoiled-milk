@@ -34,7 +34,7 @@ public final class WorldOverlayCoverage {
 
 
 
-    private final boolean writerSpans = Boolean.getBoolean("spoiledmilk.browserOverlayWriterSpans")
+    final boolean writerSpans = Boolean.getBoolean("spoiledmilk.browserOverlayWriterSpans")
         && deltaTransport != null && ("on".equals(System.getProperty("spoiledmilk.browserOverlayRectMode"))
             || "packed".equals(System.getProperty("spoiledmilk.browserOverlayRectMode")));
     private boolean writerActive;
@@ -74,7 +74,7 @@ public final class WorldOverlayCoverage {
     }
 
 	void beginFrame() {
-        writerActive=false;java.util.Arrays.fill(writerWork,0);
+        if(writerSpans){writerActive=false;java.util.Arrays.fill(writerWork,0);}
         if(deltaTransport!=null)deltaTransport.beginFrame();
 		frameSequence++;
 		written = freshWorld = false;
@@ -129,10 +129,10 @@ public final class WorldOverlayCoverage {
 	boolean isValid() { return valid; }
 
 	void opaque(int[] destination, int index) {
-        if(writerActive&&(destination!=ownerPixels||!transparent||!valid))failWriter();
+        if(writerSpans&&writerActive&&(destination!=ownerPixels||!transparent||!valid))failWriter();
 		if (transparent && valid && destination == ownerPixels) {
             written = true; transmittance[index] = 0f;
-            transportMark(index);
+            if(deltaTransport!=null){if(writerSpans)transportMark(index);else deltaTransport.mark(index);}
         }
 	}
 
@@ -146,7 +146,7 @@ public final class WorldOverlayCoverage {
 	}
 
 	void multiply(int[] destination, int index, int numerator) {
-        if(writerActive&&(destination!=ownerPixels||!transparent||!valid))failWriter();
+        if(writerSpans&&writerActive&&(destination!=ownerPixels||!transparent||!valid))failWriter();
 		if (transparent && valid && destination == ownerPixels) {
 			written = true;
 			if (numerator < 0 || numerator > 256) {
@@ -154,7 +154,7 @@ public final class WorldOverlayCoverage {
 				return;
 			}
 			transmittance[index] *= numerator * (1f / 256f);
-            transportMark(index);
+            if(deltaTransport!=null){if(writerSpans)transportMark(index);else deltaTransport.mark(index);}
 		}
 	}
 

@@ -2898,7 +2898,7 @@ public class GraphicsController {
 				return;
 			}
 
-            final boolean transportScope=worldOverlayCoverage!=null && worldOverlayCoverage.beginTransportWriter(this.pixelData,pxi,width,(height+var16-1)/var16,width+lineStride);
+            final boolean transportScope=worldOverlayCoverage!=null && worldOverlayCoverage.writerSpans && worldOverlayCoverage.beginTransportWriter(this.pixelData,pxi,width,(height+var16-1)/var16,width+lineStride);
             try {
 			for (int yi = 0; yi < height; yi += var16) {
                 if(transportScope)worldOverlayCoverage.transportWriterRow(this.pixelData,pxi,width);
@@ -4078,7 +4078,7 @@ public class GraphicsController {
 	private void plotLetter(int color, int[] dest, int destHead, int rowStride, int height, int width,
 							int srcHead, byte[] src, int srcStride) {
 		final int transportWidth=width;
-        final boolean transportScope=worldOverlayCoverage!=null && worldOverlayCoverage.beginTransportWriter(dest,destHead,width,height,width+rowStride);
+        final boolean transportScope=worldOverlayCoverage!=null && worldOverlayCoverage.writerSpans && worldOverlayCoverage.beginTransportWriter(dest,destHead,width,height,width+rowStride);
         try {
 		try {
 
@@ -4149,7 +4149,7 @@ public class GraphicsController {
 
 	private void plotLetterAntialiased(byte[] src, int color, int width, int destHead, int height, int srcStride,
 									   int rowStride, int[] dest, int srcHead) {
-		final boolean transportScope=worldOverlayCoverage!=null && worldOverlayCoverage.beginTransportWriter(dest,destHead,width,height,width+rowStride);
+		final boolean transportScope=worldOverlayCoverage!=null && worldOverlayCoverage.writerSpans && worldOverlayCoverage.beginTransportWriter(dest,destHead,width,height,width+rowStride);
         try {
 		try {
 
