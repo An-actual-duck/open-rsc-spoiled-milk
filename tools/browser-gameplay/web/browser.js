@@ -90,12 +90,16 @@ const natives = {
     window.browserProof.batchedModelPreparationWork=Object.fromEntries(['frames','groups','nativePackets','nativeModels','nativeVertices','metadataModels','literalModels','rejectedPackets','aliasBarriers','dirtyBarriers','queuedModels','maxGroup','arrayReferencesQueued','roleMapOperations'].map((name,n)=>[name,v[n]]));
   },
   async Java_orsc_browser_BrowserBootstrap_reportRegionPreparationDiagnostics(lib,available,counters){
-    if((available&&counters.length!==3)||(!available&&counters.length!==0))throw new Error('Region diagnostics layout changed');
+    if(counters.length!==8&&((available&&counters.length!==3)||(!available&&counters.length!==0)))throw new Error('Region diagnostics layout changed');
     const values=Array.from(counters);if(values.some(value=>!Number.isSafeInteger(value)||value<0))throw new Error('Region diagnostics numeric range changed');
-    window.browserProof.regionPreparationDiagnostics={available:available===true,hits:values[0]??null,builds:values[1]??null,retainedTileBytes:values[2]??null};
+    window.browserProof.regionPreparationDiagnostics={available:available===true,hits:available?values[0]:null,builds:available?values[1]:null,retainedTileBytes:available?values[2]:null};
+    if(values.length===8){
+      if(values.slice(3,6).some(v=>v>1)||![0,3,5].includes(values[6])||![0,3,4,5,6,7,8,9,10].includes(values[7]))throw new Error('Terrain query diagnostics layout changed');
+      window.browserProof.terrainQueryIndex={present:values[3]===1,eligible:values[4]===1,enabled:values[5]===1,dimension:values[6],protocol:values[7]};
+    }
   },
   async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
-    if(!['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport'].includes(name))throw new Error('Unknown private policy receipt');
+    if(!['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'].includes(name))throw new Error('Unknown private policy receipt');
     (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
   },
   async Java_orsc_browser_BrowserBootstrap_reportCombatState(lib,username,names,counters){

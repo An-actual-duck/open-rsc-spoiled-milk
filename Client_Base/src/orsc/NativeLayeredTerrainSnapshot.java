@@ -33,6 +33,12 @@ public final class NativeLayeredTerrainSnapshot {
 		Pattern.compile("[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9._-]+)?");
 	private static final Pattern SHA256 = Pattern.compile("[0-9a-f]{64}");
 
+	private static final boolean BROWSER_TERRAIN_QUERY_INDEX = Boolean.getBoolean("spoiledmilk.browserTerrainQueryIndex");
+	private final boolean queryIndexEligible;
+	private final int queryMinimumX, queryMinimumY, queryDimension;
+	public static boolean isBrowserTerrainQueryIndexEnabled() { return BROWSER_TERRAIN_QUERY_INDEX; }
+	public boolean isTerrainQueryIndexEligible() { return queryIndexEligible; }
+	public int getTerrainQueryIndexDimension() { return queryDimension; }
 	private final int protocolVersion;
 	private final String packageId;
 	private final String packageVersion;
@@ -118,6 +124,8 @@ public final class NativeLayeredTerrainSnapshot {
 			presentationChunkSize);
 		this.chunkRadius = 0;
 		this.chunks = new NativeLayeredTerrainChunk[0];
+		this.queryIndexEligible = false;
+		this.queryMinimumX = this.queryMinimumY = this.queryDimension = 0;
 	}
 
 	public NativeLayeredTerrainSnapshot(
@@ -215,6 +223,7 @@ public final class NativeLayeredTerrainSnapshot {
 		}
 		this.chunks = new NativeLayeredTerrainChunk[chunks.length];
 		int index = 0;
+		boolean matchingSizes = true;
 		for (int deltaX = -chunkRadius; deltaX <= chunkRadius; deltaX++) {
 			for (int deltaY = -chunkRadius; deltaY <= chunkRadius; deltaY++) {
 				NativeLayeredTerrainChunk chunk =
@@ -227,9 +236,17 @@ public final class NativeLayeredTerrainSnapshot {
 						"Native terrain chunks are not in x-major/y-minor "
 							+ "radius order at index " + index);
 				}
+				if (chunk.getSize() != presentationChunkSize) matchingSizes = false;
 				this.chunks[index++] = chunk;
 			}
 		}
+		// The existing ordered roster is a disjoint uniform tiling ONLY when
+		// every slot (including explicit void) has the presentation size. Mixed
+		// sizes remain accepted and preserve the literal first-available scan.
+		this.queryIndexEligible = matchingSizes;
+		this.queryDimension = width;
+		this.queryMinimumX = this.chunks[0].getChunkX();
+		this.queryMinimumY = this.chunks[0].getChunkY();
 		this.sectorX = 0;
 		this.sectorY = 0;
 		this.encoding = "";
@@ -546,6 +563,15 @@ public final class NativeLayeredTerrainSnapshot {
 
 	private NativeLayeredTerrainChunk findAvailableChunk(
 		int worldX, int worldY) {
+		if (BROWSER_TERRAIN_QUERY_INDEX && queryIndexEligible) {
+            // presentation size is 24 or 48. Floor division preserves negative
+            // world coordinates; quotients and their differences fit int.
+            int dx = Math.floorDiv(worldX, presentationChunkSize) - queryMinimumX;
+            int dy = Math.floorDiv(worldY, presentationChunkSize) - queryMinimumY;
+            if (dx < 0 || dy < 0 || dx >= queryDimension || dy >= queryDimension) return null;
+            NativeLayeredTerrainChunk chunk = chunks[dx * queryDimension + dy];
+            return chunk.isAvailable() ? chunk : null;
+        }
 		for (NativeLayeredTerrainChunk chunk : chunks) {
 			if (chunk.isAvailable() && chunk.covers(worldX, worldY)) {
 				return chunk;
