@@ -1,0 +1,27 @@
+Overworld single-zone geometry audit — ACTIVE, read-only
+
+Selected source is server/world-builder-configs/primary.json, paired package
+7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc,
+manifest42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b.
+GlobalL0 scope445 authored48tile sectors, including blank/sea/padding. Additional
+L1=444 andL2=441 wall/roof dependencies are separate. No negative,3/4/5 or10.
+
+Read-only actual production World input/builder harness retains one3x3 snapshot
+and geometry product at a time. Triangle centroid ownership partitions central
+48tile domain into four24tile canonical cells, no overlapping3x3 multiplier.
+Actual positive-stitch presentation crop is separately counted and allocates
+compact selected-triangle arrays; it does not retain unused3x3vertices. L1/L2
+use floor-local wall/roof topology counts only, no upper terrain; this is not a
+claim that stacked visual coordinates match floor-local coordinates.
+
+Pilot1 preserved: two valid sectors then explicit rejection of unauthored0,-1.
+Pilot2 corrected authorednegativeY19,-1; foursectors pass,43–113ms/sector,
+maxRSS228624KiB (223.3MiB), observedheap47–130MB under512MiB/SerialGC.
+Positive-stitch trianglecounts exceed canonical counts in busy cells (e.g.
+5912vs5696); both representations will be reported rather than silently dropping
+seam duplicates. Runtime source manifests match the0409full-source JAR exactly.
+
+Manager approved full1330sector audit with512MiBheap/SerialGC/300s timeout,
+JSONL output, noGPU/Scene/server/browser or fullzone allocation. Models/scenery
+costs will be a separate bounded phase after terrain census. CPU timings are
+measurement of the audit only, not browser loading/FPS or fullzone viability.
