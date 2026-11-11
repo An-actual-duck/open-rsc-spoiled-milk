@@ -8,6 +8,9 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.PathValidation;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.PlayerAppearance;
 import com.openrsc.server.model.container.Bank;
 import com.openrsc.server.model.container.Equipment;
@@ -49,6 +52,13 @@ public final class RendererBenchmarkServer {
     private static final int SURVIVAL_HITS=30000;
 
     private static boolean realCombat() { return phase.equals("combat-real"); }
+    /** A clear tile alone does not prove the edge to the target permits a cast. */
+    private static boolean combatPlacement(int x,int y,Npc target) {
+        if(!clear(x,y))return false;
+        WorldLocation from=WorldLocation.global(new WorldCoordinate(x,y,0));
+        return PathValidation.checkCombatProjectilePath(worldServer.getWorld(),from,target.getWorldLocation())
+            && PathValidation.checkAdjacentDistance(worldServer.getWorld(),from,target.getWorldLocation(),false,true);
+    }
     private static void equipAmount(Player p,int id,int amount)throws Exception {
         java.lang.reflect.Field f=Equipment.class.getDeclaredField("list");f.setAccessible(true);
         com.openrsc.server.external.ItemDefinition d=worldServer.getEntityHandler().getItemDef(id);
@@ -57,6 +67,9 @@ public final class RendererBenchmarkServer {
         p.updateWornItems(d.getWieldPosition(),d.getAppearanceId(),d.getWearableId(),true);
     }
     private static void beginRealCombat()throws Exception {
+        Set<UUID> identities=new HashSet<UUID>();Set<Integer> indices=new HashSet<Integer>();
+        for(Player p:actors)if(!identities.add(p.getUUID())||!indices.add(p.getIndex())
+            ||worldServer.getWorld().getPlayer(p.getIndex())!=p)throw new IllegalStateException("Combat actors must have unique registered identities and indices");
         for(Npc n:npcs) {
             n.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),SURVIVAL_HITS,SURVIVAL_HITS,false);
         }
@@ -64,8 +77,8 @@ public final class RendererBenchmarkServer {
         for(int i=0;i<COMBAT_FAMILIES.length;i++) {
             Player p=actors.get(i);Npc target=npcs.get(i*3);
             boolean placed=false;
-            for(int[] d:new int[][]{{1,0},{-1,0},{0,1},{0,-1}})if(!placed&&clear(target.getX()+d[0],target.getY()+d[1])){p.teleport(target.getX()+d[0],target.getY()+d[1],false);placed=true;}
-            if(!placed)throw new IllegalStateException("No walkable adjacent combat tile");
+            for(int[] d:new int[][]{{1,0},{-1,0},{0,1},{0,-1}})if(!placed&&combatPlacement(target.getX()+d[0],target.getY()+d[1],target)){p.teleport(target.getX()+d[0],target.getY()+d[1],false);placed=true;}
+            if(!placed)throw new IllegalStateException("No walkable adjacent combat tile with a clear production projectile/action edge");
             java.lang.reflect.Field equipment=Equipment.class.getDeclaredField("list");equipment.setAccessible(true);
             Arrays.fill((Item[])equipment.get(p.getCarriedItems().getEquipment()),null);
             p.setWornItems(p.getSettings().getAppearance().getSprites());
@@ -73,7 +86,7 @@ public final class RendererBenchmarkServer {
                 equipAmount(p,ItemId.STAFF.id(),1);
                 Spells spell=new Spells[]{Spells.ICE_CRYSTAL,Spells.THUNDER_STRIKE,Spells.BATTERING_RAM}[i];
                 for(Map.Entry<Integer,Integer> rune:worldServer.getEntityHandler().getSpellDef(spell).getRunesRequired())
-                    p.getCarriedItems().getInventory().add(new Item(rune.getKey(),10000),false);
+                    if(!p.getCarriedItems().getInventory().add(new Item(rune.getKey(),10000),false))throw new IllegalStateException("Could not seed combat rune "+rune.getKey());
                 p.setAutoCastSpell(spell);
                 if(!MagicCombatEvent.start(p,target))throw new IllegalStateException("Real magic combat did not start "+spell);
             }else if(i==3) {
@@ -88,7 +101,9 @@ public final class RendererBenchmarkServer {
     private static JSONObject combatState() throws Exception {
         JSONObject result=new JSONObject().put("authoritative",realCombat());
         if(!realCombat()||actors.size()<6)return result;
-        JSONObject damage=new JSONObject(),resources=new JSONObject(),credited=new JSONObject();int summonDamage=0;int damaged=0,active=0,summons=0,summonsEngaged=0,minSummonHits=Integer.MAX_VALUE;
+        Set<GameTickEvent> scheduled=Collections.newSetFromMap(new IdentityHashMap<GameTickEvent,Boolean>());
+        scheduled.addAll(worldServer.getGameEventHandler().getEvents());
+        JSONObject damage=new JSONObject(),resources=new JSONObject(),credited=new JSONObject(),channels=new JSONObject();int summonDamage=0;int damaged=0,active=0,summons=0,summonsEngaged=0,minSummonHits=Integer.MAX_VALUE;
         for(int i=0;i<6;i++) {
             Player p=actors.get(i);Npc target=npcs.get(i*3);
             damage.put(COMBAT_FAMILIES[i],SURVIVAL_HITS-target.getSkills().getLevel(Skill.HITS.id()));
@@ -110,11 +125,33 @@ public final class RendererBenchmarkServer {
                 int slot=p.getCarriedItems().getEquipment().searchEquipmentForItem(id);Item item=p.getCarriedItems().getEquipment().get(slot);if(item!=null)remaining=item.getAmount();
                 resources.put(COMBAT_FAMILIES[i],10000-remaining);
             }else resources.put("meleeXp",p.getSkills().getExperience(Skill.MELEE.id()));
-            if(p.getPvmMeleeEvent()!=null||p.getRangeEvent()!=null||p.getThrowingEvent()!=null||p.getMagicCombatEvent()!=null)active++;
+            GameTickEvent event=i<3?p.getMagicCombatEvent():i==3?p.getRangeEvent():i==4?p.getThrowingEvent():p.getPvmMeleeEvent();
+            boolean registered=event!=null&&scheduled.contains(event);
+            boolean running=event!=null&&event.isRunning()&&event.getOwner()==p
+                &&registered;
+            if(running)active++;
+            channels.put(COMBAT_FAMILIES[i],new JSONObject().put("running",running)
+                .put("hasHandle",event!=null).put("registered",registered)
+                .put("schedulerKeyPresent",event!=null&&worldServer.getGameEventHandler().has(event))
+                .put("eventIdentity",event==null?"":event.getUUID().toString())
+                .put("error",event==null?"Missing expected event":!registered?"Expected event is not the exact scheduled instance":!event.isRunning()?"Expected event stopped":event.getOwner()!=p?"Unexpected event owner":"")
+                .put("playerRegistered",worldServer.getWorld().getPlayer(p.getIndex())==p)
+                .put("actorIndex",p.getIndex()).put("actorIdentity",p.getUUID().toString()).put("sessionId",p.sessionId)
+                .put("eventTicks",event==null?0:event.getTimesRan()).put("x",p.getX()).put("y",p.getY())
+                .put("targetX",target.getX()).put("targetY",target.getY())
+                .put("walkAction",p.getWalkToAction()!=null).put("busy",p.isBusy())
+                .put("walkActionExecuted",p.getWalkToAction()!=null&&p.getWalkToAction().isExecuted())
+                .put("movementHeld",worldServer.getGameUpdater().isNativeTerrainActivationMovementHeld(p))
+                .put("loggedIn",p.loggedIn()).put("removed",p.isRemoved())
+                .put("magicReady",p.combatCastTimer(p.getConfig().RAPID_CAST_SPELLS))
+                .put("clearProjectilePath",PathValidation.checkCombatProjectilePath(worldServer.getWorld(),p.getWorldLocation(),target.getWorldLocation())));
         }
         for(Npc n:npcs)if(n.getSkills().getLevel(Skill.HITS.id())<SURVIVAL_HITS)damaged++;
         for(Npc n:worldServer.getWorld().getNpcs())if(Summoning.isSummon(n)) {summons++;minSummonHits=Math.min(minSummonHits,Summoning.getSummonCurrentHits(n));if(n.getPvmMeleeEvent()!=null||n.inCombat())summonsEngaged++;}
-        return result.put("primaryDamageByFamily",damage).put("creditedDamageByFamily",credited).put("summonCreditedDamage",summonDamage).put("resourceUnitsSpent",resources).put("damagedTargets",damaged).put("activeChannels",active)
+        boolean complete=active==6;
+        for(String family:COMBAT_FAMILIES)complete&=credited.getInt(family)>0;
+        for(int i=0;i<5;i++)complete&=resources.getInt(COMBAT_FAMILIES[i])>0;
+        return result.put("primaryDamageByFamily",damage).put("creditedDamageByFamily",credited).put("summonCreditedDamage",summonDamage).put("resourceUnitsSpent",resources).put("damagedTargets",damaged).put("activeChannels",active).put("channels",channels).put("workloadComplete",complete)
             .put("summonsPresent",summons).put("summonsEngaged",summonsEngaged).put("minCurrentSummonHits",summons==0?-1:minSummonHits).put("sustainedSummons",sustainedSummons);
     }
     private static int viewerX = 502, viewerY = 453;
@@ -332,15 +369,18 @@ public final class RendererBenchmarkServer {
                         }
                         if (!moved) throw new IllegalStateException("No valid authored transition landing");
                     }
+                    JSONObject combat=combatState();
                     JSONObject state = new JSONObject().put("online", player != null).put("private", true);
                     if (player != null) state.put("x", player.getX()).put("y", player.getY()).put("level", player.getWorldLocation().getCoordinate().getLevel());
                     state.put("phase", phase).put("phaseTick", tick).put("samePositionTeleports", samePositionTeleports).put("areaTeleports",areaTeleports).put("levelTeleports",levelTeleports).put("controlledPlayers", actors.size()).put("controlledNpcs", npcs.size())
                         .put("summonsRequested", actors.isEmpty() ? 0 : 8).put("visualProjectileEmitters", actors.isEmpty() || realCombat() ? 0 : 8)
-                        .put("visualProjectilesDamage", false).put("sustainSummonsForBenchmark",sustainSummonsForBenchmark).put("realCombat",combatState()).put("removedMapNpcs", removedMapNpcs)
+                        .put("visualProjectilesDamage", false).put("sustainSummonsForBenchmark",sustainSummonsForBenchmark).put("realCombat",combat).put("removedMapNpcs", removedMapNpcs)
                         .put("cycleMillis", server.getWorldDayNightClock().getCurrentCycleMillis())
                         .put("cycleLengthMillis", server.getWorldDayNightClock().getCycleMillis()).put("cycleRate", server.getWorldDayNightClock().getRateMultiplier());
                     Path next = run.resolve("status.next"); Files.write(next, state.toString().getBytes("UTF-8"));
                     Files.move(next, run.resolve("status.json"), StandardCopyOption.REPLACE_EXISTING);
+                    if(realCombat()&&viewer!=null&&tick>=48&&!combat.optBoolean("workloadComplete",false))
+                        throw new IllegalStateException("Incomplete real combat workload after48ticks: "+combat);
                 } catch (Exception error) {
                     System.err.println("RENDERER_FIXTURE_SETUP_FAILURE " + error);
                     error.printStackTrace();

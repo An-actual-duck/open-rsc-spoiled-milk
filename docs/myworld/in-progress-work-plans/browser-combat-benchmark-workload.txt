@@ -1,0 +1,48 @@
+Browser combat benchmark workload investigation
+===============================================
+
+Scope: private renderer benchmark harness and evidence validation only. No
+production gameplay, public server, or original frozen fixture changes.
+
+Observed manager-owned baseline-2: six non-null combat handles but no credited
+ice/thunder/wood/ranged damage and no corresponding resource consumption.
+Those measurements are partial-workload evidence, not full combat acceptance.
+
+Diagnostic checkpoint
+---------------------
+The root cause remains unproven. Successful offline probes over the exact frozen
+core/plugins/overlay and installed map exercise registered production event
+queues, full terrain loading, full plugin discovery, ordinary player processing,
+and source bootstrap loadouts. They prove the content IDs/resources can work;
+they do not prove full Server.startServer initialization or real-clock behavior.
+Early probe variants omitted normal logout processing or used a synthetic viewer
+without an appearance, so they are exploratory evidence only. The corrected
+appearance probe gives positive resources and contributions for all six channels.
+
+The bootstrap now validates distinct registered actor UUIDs/indices, verifies
+both the projectile path and adjacent action edge when choosing a placement,
+checks rune insertion, and reports channel identity, exact scheduled-instance
+membership, key presence, running status, execution count, actor registration,
+coordinates, readiness/queued action, and explicit missing/orphan/stopped errors.
+GameEventHandler.has alone is insufficient: it checks key presence, not identity.
+The original damage ledger and real production attack events remain authoritative.
+The fixture writes its detailed status, then fails closed after48ticks if any
+expected family lacks real resources, contribution, or a running registered event.
+
+Benchmark validation now requires before/after samples with advancing resources,
+ledger contributions, and scheduler counts for every expected family, plus six
+distinct live registered channels. Positive stale cumulative counters cannot pass.
+No manual projectile emission or damage is added to combat-real.
+
+Checks
+------
+- test-renderer-benchmark-guards.py:16 tests pass, including stopped/orphaned
+  channels, duplicate actors, stalled positive counters, missing resources/damage.
+- Source bootstrap compiles against the exact frozen server artifact snapshot.
+- Exploratory read-only/offline evidence is preserved under
+  output/tests/browser-combat-workload/probe-1/.
+
+Next action: manager activates a fresh immutable disposable diagnostic stage with
+unchanged frozen server binaries and an explicitly unverified server-source
+receipt. Original baseline-2 data and processes stay manager-owned and unchanged.
+Do not mark this checkpoint as a proven workload fix or full combat acceptance.
