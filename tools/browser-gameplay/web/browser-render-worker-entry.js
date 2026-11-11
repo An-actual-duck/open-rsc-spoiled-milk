@@ -43,6 +43,6 @@ self.onmessage=event=>{
       if(gl.getError()!==gl.NO_ERROR)throw new Error('Worker oracle readback failed');
       oraclePixels={width:canvas.width,height:canvas.height,pixels};
     }
-    ack.stats=snapshot(message.frameId);self.postMessage(ack);
+    ack.stats=snapshot(message.frameId);ack.buffers=[];for(const c of message.commands)for(const a of c.args)if(ArrayBuffer.isView(a))ack.buffers.push(a.buffer);self.postMessage(ack,ack.buffers);
   }).catch(fatal);
 };

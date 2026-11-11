@@ -40,9 +40,9 @@ export function inspectRenderCommand(name,args){
   if(count>RENDER_WORKER_MAX_BYTES)throw new Error('Render command payload cap');
   return {bytes:count,planes};
 }
-export function ownRenderCommand(name,args){
+export function ownRenderCommand(name,args,acquire=length=>new ArrayBuffer(length)){
   const shape=inspectRenderCommand(name,args),owned=args.slice(),transfers=[];
-  for(const p of shape.planes){const data=new Uint8Array(p.length);data.set(new Uint8Array(p.buffer,p.offset,p.length));owned[p.n]=p.kind==='I'?new Int32Array(data.buffer):p.kind==='F'?new Float32Array(data.buffer):data;transfers.push(data.buffer);}
+  for(const p of shape.planes){const buffer=acquire(p.length);if(abLength.call(buffer)!==p.length)throw new Error('Invalid owned render buffer allocation');const data=new Uint8Array(buffer);data.set(new Uint8Array(p.buffer,p.offset,p.length));owned[p.n]=p.kind==='I'?new Int32Array(data.buffer):p.kind==='F'?new Float32Array(data.buffer):data;transfers.push(data.buffer);}
   return {command:{name,args:owned},bytes:shape.bytes,transfers};
 }
 export function validateRenderLayout(layout){
