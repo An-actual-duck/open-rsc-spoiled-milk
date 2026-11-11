@@ -4,10 +4,12 @@ Private segmented TEXT raster (ACTIVE implementation)
 Only consecutive final drawColoredString plot lists may defer. Parsing, random
 colors, inline icons, font remapping and shadow/glyph order remain authoritative.
 Own font snapshots at each TEXT, scalar plot/clip snapshots and once-only literal
-replay; never reconstruct or rerun UI. Limits256 texts,4096 plots,8MiB snapshot
-fonts,2M clipped glyph work. Fresh MODE_WORLD C/T only and overlaydelta OFF.
-A whole segment is materialized synchronously before ANY other raster/read/
-escape/mode/clip/surface/frame barrier. Native status0 guarantees no writes and
+replay; never reconstruct or rerun UI. Limits: 256 texts, 4,096 plots, 8 MiB snapshot
+fonts, 2M clipped glyph work. Fresh MODE_WORLD C/T only and overlaydelta OFF.
+A whole segment is materialized synchronously before every actual non-TEXT
+C/T raster/read/escape/mode/clip/surface/frame barrier. Pure phase/policy changes
+and proven GPU-descriptor-only wrappers may retain pending TEXT; no C/T read or
+write occurs on those paths. Native status0 guarantees no writes and
 may replay saved plots/fonts/clip once; after-write errors poison/hold the frame,
 never replay over partial alpha. Recovery requires a fresh cleared world frame.
 
@@ -32,3 +34,115 @@ copy so rejection replay uses untouched private Java snapshots. Native validates
 all scalar/source/output extents, byte-range aliases, tokens and order before
 writing. Registry/queue implementation is a first standalone milestone; actual
 suppression, poison boundary, native ABI and frozen CPU/native tests follow.
+
+Closed context revision and rejection replay
+--------------------------------------------
+Current frozen runtime source f79a751e4cd50eb2206d4ab7d22bcae046e50c57.
+Each TEXT captures its original phase, SceneSpriteRasterPolicy, actual guard,
+clip and owned font snapshot. Rejection replay saves the current state, restores
+that TEXT's complete original context, invokes its captured glyph plots once,
+then restores current state in finally. It never reruns UI construction/random
+color parsing. Actual new SCENE+GPU-owned guarded writes still take literal
+original behavior and report the same ownership error/T-prefix. WORLD/UI text
+inside such a wrapper is legal when the actual software-write guard is false.
+
+Phase setters and drawSceneEntity policy wrapper only alter metadata/guard.
+Seven sprite descriptor wrappers may return through already-owned GPU capture
+without touching C/T. Actual software leaves still flush before writing/reading
+C/T, including intra-Scene depth-color copy. Clip/mode/owner/retained/presentation
+boundaries remain materialization points. This narrow distinction is necessary
+to batch adjacent world name labels across actors; it is not a general command
+replay or permission to omit real writer barriers.
+
+Native admission currently requires at least 8 TEXTs. Short segments replay
+captured Java plots once. Counts distinguish actual native commits/texts/glyphs
+from short Java segments, rejections, literal fallbacks, captured totals and
+poisoned frames. Bounded diagnostics add segment maxima/size histogram,
+geometry/owner/budget reasons, eight admission buckets and up to 32 sampled
+flush stacks (one per 16 segments until cap). No per-TEXT JNI diagnostic call.
+The existing low-frequency report transports these scalar/string snapshots.
+Private root fault control arms one after-preflight magenta C write then poison;
+it is unavailable in ordinary mode and is never automatically armed for FPS.
+
+Transactions and failure boundary
+---------------------------------
+The native ABI receives header 11 ints, 8 ints/TEXT, 5 ints/glyph, packed owned font
+bytes and borrowed current C/T plus exact generation/sequence. Java snapshots
+for rejection replay are separate from the native packet. Typed arrays are
+normalized via intrinsic shape/buffer getters; shadow properties/proxies cannot
+hide an output alias. Inputs may share a buffer only when byte ranges are
+disjoint. No input views or buffers survive callback return. Scratch retains
+only scalar resolved geometry and bounded counters; no GPU calls/await.
+
+Status 0 is guaranteed zero-write and replays snapshots once. Replay detaches
+pending records before callbacks, so an exception cannot retry a rendered
+prefix. Any unknown/after-write callback failure poisons coverage, discards the
+queue and throws a dedicated Error through ordinary legacy Exception/Runtime
+wrappers. Only the outermost mudclient.draw catches it; current pooled 3D frame
+storage is released, presentation is skipped and the prior good GPU image stays.
+Scene building itself stages data; actual GPU submission begins in Bridge.
+ORSC.draw and Bridge.present flush before retention/initialization/native calls.
+
+Recovery does not merely reset metadata. A successful world begin genuinely
+clears C/T; failed begin keeps poison. Poisoned opaque recovery explicitly
+clears the complete RGB surface before reopening opaque ownership. A poisoned
+next renderer frame clears its fresh C/T base before accepting new work. No
+later reader may export partially native-written C, and no UI/game update rerun
+or client-loop shutdown is used. Font payload is bounded to 8 MiB retained
+snapshots and up to 16 MiB transient Java snapshot+flat copies, plus bounded scalar
+arrays, owner C/T and engine/driver overhead outside that payload accounting.
+
+Evidence and first actual admission failure (preserved)
+-------------------------------------------------------
+Source c7c2c99528ce4a257c60b5b0d03079a25763c70e built full Java8 artifact:
+output/builds/browser-segmented-text-raster/game-c7-review-1/client.jar
+SHA256 d1a8ecf9162ce59caf7fe1864aa28f673fd8328b493286faeab03e8061a668ec
+Client-only 8216 stage 1:
+output/tests/browser-gameplay-spike/segmented-text-combat-review-1/combat-preparation.json
+Actual manager gate was VACUOUS for JNI: GAME 515 world frames/policy true, but
+native attempts/commits 0. Java captured 6,214 TEXTs yet all 2,008 segments were
+short and replayed literally. No fault was armed and no FPS result was accepted.
+This stage and receipt remain frozen. The initial blanket nonDEFAULT-policy
+exclusion rejected legal WORLD name text inside GPU-owned wrappers (~50/frame),
+and conservative metadata/public-descriptor flushes fragmented remaining runs.
+Genuine SCENE guard rejection was never removed in the corrected source.
+
+Controlled exact-c7 Java proof passed 1,128 frozen rendering/error cases,
+core 643 and actual GC poison/recovery3,860. The first uncontrolled digest failure
+also differed between identical baseline runs because HotSpot FastThrow omitted
+repeated exception messages; explicit -XX:-OmitStackTraceInFastThrow restored
+deterministic error fingerprints, with no runtime fix. Both rejected and
+controlled evidence remain in ai2 output. Actual Node kernel passed 107 checks/
+30,720 words from 12 producer packets vs independent Java literal C/raw-T.
+
+Revised exact-f79 independent proof passed 1,128 frozen cases/Scene/phase hashes,
+core 1,069 and actual GC poison/recovery3,860. A new 17 GPU-owned entity scopes ×3
+legal WORLD TEXTs test holds 51 pending TEXTs and submits exactly one native group;
+AA, alpha prefill, overlaps, font mutation, rejection/context restoration and a
+subsequent illegal SCENE write all match literal output/error behavior.
+Java evidence (ai2):
+output/tests/browser-segmented-text-independent/20261111T115629023799Z/result.json
+Actual JS kernel Node evidence (ai2),110 checks/30,720 words:
+output/tests/browser-segmented-text-native-independent/20261111T115700683206Z/result.json
+
+Independent boundary review READY c03727c0bcbe762bffd7013e3bf9a445a00945a8
+binds exact f79: 249 AST refs, 51 true entry/leaf guards, late depth copy, outermost
+abort/pool release, context/fresh-recovery guards and 24 preserved literal source
+bodies. Pure metadata/descriptor wrappers are separately proven unchanged from
+the original; no maintained raw access was dropped from the closed roster.
+No arbitrary external plugin/reflection/concurrent raw alias safety is claimed.
+
+Revised full-source immutable artifact and stage
+-----------------------------------------------
+output/builds/browser-segmented-text-raster/game-f79-review-2/client.jar
+SHA256 bd4360b514e32f73fc802242c5adc8fea3e63a31bc1114712d00bcce9b67da8b
+Clean source f79,959 compiled Java8 classes, 3,185 runtime assets exact; no class
+transplants. Source/class/asset manifests and build receipt are adjacent.
+Client-only 8216 stage 2 (matched ON/OFF URLs on same JAR/frontend):
+output/tests/browser-gameplay-spike/segmented-text-combat-review-2/combat-preparation.json
+Existing final combat server 43639/43539 only; no server/DB/request/process was
+changed by this worker. Model batch/terrain index/key limbs ON, full C/T, delta/
+rect OFF; segmentedtext alone is toggled. No worker browser/GPU was launched.
+Root actual JNI visibility/nonvacuous calls, after-write fault/last-good GPU/
+fresh recovery, functional visuals and matched FPS remain acceptance gates.
+The prototype remains private default OFF and makes no performance/adoption claim.
