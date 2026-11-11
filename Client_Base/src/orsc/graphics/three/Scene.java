@@ -18,6 +18,20 @@ public final class Scene {
 	static final int TRANSPARENT = 12345678;
 	private static final int MIN_EXPANDED_PICK_PADDING_PIXELS = 14;
 	private final boolean browserOverlayCoverage = Boolean.getBoolean("spoiledmilk.browserOverlayCoverage");
+    private final boolean browserStaticModelPreparation = Boolean.getBoolean("spoiledmilk.browserStaticModelPreparation");
+    private boolean[] browserStaticModelSkipped;
+    private final double[] browserStaticModelBounds = new double[6];
+    private final int[] browserStaticModelWork = new int[7];
+    /** Private opt-in stage boundary; ordinary/native presentation never selects it. */
+    public boolean isBrowserStaticModelPreparationEnabled() {
+        return browserStaticModelPreparation && isBrowserFullResidentOwnershipEnabled()
+            && isEarlyResidentFaceCullEnabled() && Renderer3DSettings.canSkipProjectedWorldCapture()
+            && Renderer3DSettings.canSkipLegacyWorldRaster();
+    }
+    /** Last completed/active frame: candidates, skipped, avoided vertices/faces,
+     * validation vertices/faces, full-path candidates. Observer reads once/second. */
+    public int[] getBrowserStaticModelPreparationWork() { return browserStaticModelWork.clone(); }
+
 	private final boolean browserEarlyFaceCull = Boolean.getBoolean("spoiledmilk.browserEarlyFaceCull");
 	private final boolean browserOwnsWallsAndRoofs = Boolean.getBoolean("spoiledmilk.browserOwnsWallsAndRoofs");
 	private final boolean browserModelPickBounds = Boolean.parseBoolean(System.getProperty("spoiledmilk.browserModelPickBounds", "true"));
@@ -2936,6 +2950,14 @@ public final class Scene {
 			boolean browserFullResidentOwnership = isBrowserFullResidentOwnershipEnabled();
             boolean useModelPickBounds = browserModelPickBounds && browserFullResidentOwnership;
             boolean residentObjectChunks = useModelPickBounds && Renderer3DSettings.canUseResidentObjectChunks();
+            boolean skipStaticModelPreparation = isBrowserStaticModelPreparationEnabled() && !forceLegacyWorldRaster;
+            if (browserStaticModelPreparation) java.util.Arrays.fill(browserStaticModelWork, 0);
+            if (skipStaticModelPreparation) {
+                if (browserStaticModelSkipped == null || browserStaticModelSkipped.length < this.modelCount)
+                    browserStaticModelSkipped = new boolean[this.modelCount];
+                java.util.Arrays.fill(browserStaticModelSkipped, 0, this.modelCount, false);
+            }
+
 			int var7 = this.m_A * this.fogLandscapeDistance >> this.rot1024_vp_src;
 			MiscFunctions.frustumFarZ = 0;
 			MiscFunctions.frustumNearZ = 0;
@@ -2965,6 +2987,26 @@ public final class Scene {
 			long modelRotateStart = RenderTelemetry.now();
 			int var3;
 			for (var3 = 0; this.modelCount > var3; ++var3) {
+                RSModel candidate = this.models[var3];
+                Renderer3DModelKind candidateKind = skipStaticModelPreparation ? candidate.getRenderer3DModelKind() : null;
+                // Scenery may animate. This first stage owns only fixed world
+                // surfaces; actors, interaction proxies and all scenery stay literal.
+                if (skipStaticModelPreparation && candidate != this.m_T && !candidate.isInteractionOnly()
+                    && (candidateKind == Renderer3DModelKind.TERRAIN || candidateKind == Renderer3DModelKind.WALL
+                        || candidateKind == Renderer3DModelKind.ROOF)) {
+                    browserStaticModelWork[0]++;
+                    if (candidate.canSkipBrowserCameraPreparation(this.rot1024_off_y, this.rot1024_vp_src,
+                            this.rot1024_off_x, this.rot1024_off_z, this.cameraProjY, this.cameraProjZ,
+                            this.cameraProjX, this.rot1024_zTop, this.m_Nb, this.m_j, this.m_Wb,
+                            browserStaticModelBounds, browserStaticModelWork)) {
+                        browserStaticModelSkipped[var3] = true;
+                        browserStaticModelWork[1]++;
+                        browserStaticModelWork[2] += candidate.vertHead;
+                        browserStaticModelWork[3] += candidate.faceHead;
+                        continue;
+                    }
+                    browserStaticModelWork[6]++;
+                }
 				this.models[var3].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
 					this.rot1024_off_z, this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop);
                 RSModel rotated = this.models[var3];
@@ -2997,6 +3039,7 @@ public final class Scene {
 			int var14;
 			long worldCullStart = RenderTelemetry.now();
 			for (var9 = 0; var9 < this.modelCount; ++var9) {
+                if (skipStaticModelPreparation && browserStaticModelSkipped[var9]) continue;
 				var2 = this.models[var9];
 				if (var2.m_dc) {
                     Renderer3DModelKind pickModelKind = useModelPickBounds ? var2.getRenderer3DModelKind() : null;

@@ -84,8 +84,13 @@ const natives = {
     const values=Array.from(counters);if(values.some(value=>!Number.isSafeInteger(value)||value<0))throw new Error('Region diagnostics numeric range changed');
     window.browserProof.regionPreparationDiagnostics={available:available===true,hits:values[0]??null,builds:values[1]??null,retainedTileBytes:values[2]??null};
   },
+  async Java_orsc_browser_BrowserBootstrap_reportStaticModelWork(lib,counters){
+    const v=Array.from(counters);
+    if(v.length!==7||v.some(x=>!Number.isSafeInteger(x)||x<0))throw new Error('Invalid static-model preparation work receipt');
+    window.browserProof.staticModelPreparationWork={candidates:v[0],skipped:v[1],avoidedVertices:v[2],avoidedFaces:v[3],validationVertices:v[4],validationFaces:v[5],fullPathCandidates:v[6]};
+  },
   async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
-    if(!['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage'].includes(name))throw new Error('Unknown private policy receipt');
+    if(!['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','staticModelPreparation'].includes(name))throw new Error('Unknown private policy receipt');
     (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
   },
   async Java_orsc_browser_BrowserBootstrap_reportCombatState(lib,username,names,counters){

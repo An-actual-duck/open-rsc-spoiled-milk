@@ -1,0 +1,100 @@
+Browser static-model CPU preparation boundary
+=============================================
+
+Status and intent
+-----------------
+Private browser-only opt-in prototype. Default/native/client rules, renderer
+assets, camera, fog, shadows, world mesh generation and actor composition stay
+unchanged. This is a stage-removal experiment, not another perspective-division
+optimization. It can skip the complete camera-vertex transform and subsequent
+Scene world-face traversal for an owned static world model which cannot affect
+the current mouse query. It does not assume that reducing CPU operations proves
+an FPS gain. Manager hardware comparison is still required before adoption.
+
+Private control
+---------------
+Benchmark WebGL URL staticprep=on selects Java system property
+spoiledmilk.browserStaticModelPreparation=true. Absent/off remains false; ordinary
+and software URLs never forward this override. Scene requires full browser
+resident ownership, early face culling, projected capture omission, no CPU depth
+consumer, and no forced legacy frame. Only TERRAIN/WALL/ROOF are candidates.
+Scenery GAME_OBJECT/WALL_OBJECT can animate and remains entirely unchanged.
+Interaction-only models, the aggregate sprite model m_T, unknown model kinds,
+small models, unproven input shapes and uncertainty keep original rotation.
+
+isBrowserStaticModelPreparationEnabled is an actual Scene getter. Private
+Bootstrap publishes privatePolicies.staticModelPreparation with requested,
+available and enabled, refuses requested absent implementations, and reports
+staticModelPreparationWork once per second. The latter contains candidates,
+skipped, avoidedVertices, avoidedFaces, validationVertices, validationFaces and
+fullPathCandidates. Counts describe the latest active/completed eligible frame,
+not cumulative timing; observer reads are outside acceptance intervals.
+The conservative guards still scan coordinates and topology before a skip.
+Avoided vertex transforms are not claimed to remove all vertex visits.
+
+Consumer and mutation proof
+---------------------------
+Scene.endScene originally rotates all models, then uses rotated/projected
+arrays for face bounds, picking, legacy raster and optional projected exports.
+Outside RSModel those five arrays are consumed by Scene,
+ProjectedModelPickBounds, InteractionPickGeometry and projected FaceCommand
+capture in Renderer3DFrame. Their paths require a model surviving the Scene
+face walk. The new frame-local skipped-index array bypasses both whole-model
+stages; it does not modify m_dc or claim stale camera arrays are current.
+A mouse move recalculates the broad phase in the next frame and executes the
+original rotation before any pick if the mouse may overlap the model.
+
+The aggregate actor model m_T always uses original rotation. Its anchor and
+sprite-order work, all character capture, UI/effects and coverage remain
+literal. mudclient attaches independently generated resident world chunks only
+after Scene.endScene; the new gate does not alter those chunk inputs, GPU
+visibility, drawing, shadow fields or lighting/export rules. It also retains
+overlapping opaque models whenever their bounds may intersect the mouse ray,
+so interaction-only proxy occlusion uses the complete original face logic.
+
+RSModel refreshes local transforms/bounds using the same original first call.
+Private local coordinate arrays are modified by that model's own APIs. Before
+skip, all current vertices must still lie in the refreshed cached AABB; every
+current face index must be valid and below vertHead. Missing/short/null/spare,
+aliased camera storage and in-place stale narrowed bounds force original path.
+The five camera arrays are model-owned allocations: setFaceVertexCount and
+clearRotDataAndParams26 allocate each separately; ensureCapacity independently
+copies each. No production assignment shares those arrays across models.
+Artificial package/reflection cross-model aliasing is not a supported ownership
+contract; no costly per-frame global model-array alias scan was added.
+
+Conservative mathematical rejection
+----------------------------------
+The broad phase interval-transforms existing world AABB extrema using exact
+legacy trig coefficients and arithmetic-right-shift floor semantics. Every
+subtraction, multiplication, addition and projected shift must be provably
+nonwrapping within signed int range. If an intermediate may wrap, the original
+path runs. It rejects no near-plane-crossing interval. Positive-depth quotient
+bounds round outward and include viewport-Y overflow checks plus expanded
+picking padding. This broad phase never chooses a face or a tile; it can only
+prove disjointness. Bad camera/domain inputs preserve the literal path.
+
+CPU verification
+----------------
+tests/myworld/test-browser-static-model-preparation.py takes an explicit client
+JAR, compiles frozen Scene+RSModel from 8b888cd2f alongside the candidate, and
+compares baseline/OFF/ON/default. Five cohorts each run 960 actual Scene frames:
+moving mouse, camera/near-plane changes, native and CPU-depth consumers, partial
+ownership, force-legacy, signed levels, mutable topology, interaction proxies,
+opaque occluders, ordered actors, anchors, residual pixels and resident output.
+Nine malformed/stale mutation outcomes are also included in the same digest.
+A separate 200000-case oracle compares interval rejection against the actual
+legacy projected-face helper, including wrap-prone domains and large padding.
+Direct guards exercise missing arrays, aliasing, null/short/spare topology and
+in-place transformed-coordinate/bounds edits. Tests must show nonzero avoided
+models/vertices/faces; vacuous disabled-only success is refused.
+
+Initial CPU result: identical frozen/current digest, 86 eligible skips avoiding
+14534 camera vertex transforms and 12384 downstream face traversals, with 14534
+coordinate and 12384 topology validations reported separately. The math corpus
+had 60417 rejections and 28645 original bound hits with zero false exclusions.
+This is correctness/work-elimination evidence only, not browser FPS evidence.
+
+Use the private fixed crowd, real spell/summon combat and area transitions with
+one immutable reviewed JAR for OFF/ON comparison. Reject a candidate with visual,
+picking, context or loading regressions even if one standing scene runs faster.

@@ -2361,6 +2361,68 @@ public final class RSModel {
 		}
 	}
 
+    /** Frame-local CPU preparation rejection. Does not change camera arrays,
+     * m_dc, geometry ownership or the original rotate1024 implementation. */
+    final boolean canSkipBrowserCameraPreparation(int yOffset, int shift, int xOffset, int zOffset,
+        int rotY, int rotZ, int rotX, int near, int viewportY, int mouseX, int mouseY,
+        double[] bounds, int[] work) {
+        if (vertHead < 16 || faceHead < 1 || shift < 0 || shift > 20 || near < 1
+            || rotX < 0 || rotX > 1023 || rotY < 0 || rotY > 1023 || rotZ < 0 || rotZ > 1023)
+            return false;
+        try {
+            // Exactly the original rotation's first mutation. A full fallback's
+            // repeated refresh is then a no-op; failures retain its error context.
+            resetTransformCache(7972);
+        } catch (RuntimeException failure) {
+            throw GenUtil.makeThrowable(failure, "ca.U(" + yOffset + ',' + shift + ',' + xOffset + ',' + (byte)-122 + ','
+                + zOffset + ',' + rotY + ',' + rotZ + ',' + rotX + ',' + near + ')');
+        }
+        if (!browserCameraArraysIndependent() || minX > maxX || minY > maxY || minZ > maxZ
+            || !(this.minZ <= MiscFunctions.frustumMinX && this.maxZ >= MiscFunctions.frustumMaxX
+                && this.minX <= MiscFunctions.frustumMinY && this.maxX >= MiscFunctions.frustumMaxY
+                && this.minY <= MiscFunctions.frustumNearZ && this.maxY >= MiscFunctions.frustumFarZ)) return false;
+        bounds[0]=(double)minX-xOffset; bounds[1]=(double)maxX-xOffset;
+        bounds[2]=(double)minY-yOffset; bounds[3]=(double)maxY-yOffset;
+        bounds[4]=(double)minZ-zOffset; bounds[5]=(double)maxZ-zOffset;
+        if (!BrowserStaticModelBounds.excludesMouse(bounds,shift,rotX,rotY,rotZ,near,
+                viewportY,mouseX,mouseY,pickBoundsScale)) return false;
+        // Package-private topology can mutate without invalidation. Never trust
+        // cached bounds or array identity alone: prove current referenced inputs
+        // still belong to those bounds and preserve the old spare/error path.
+        if (faceIndices == null || faceIndexCount == null || faceHead > faceIndices.length
+            || faceHead > faceIndexCount.length || facePickIndex != null && faceHead > facePickIndex.length
+            || m_zb != null && faceHead > m_zb.length) return false;
+        for (int vertex=0; vertex<vertHead; vertex++) {
+            work[4]++;
+            int x=vertXTransform[vertex],y=vertYTransform[vertex],z=vertZTransform[vertex];
+            if (x<minX || x>maxX || y<minY || y>maxY || z<minZ || z>maxZ) return false;
+        }
+        for (int face=0; face<faceHead; face++) {
+            work[5]++;
+            int[] indices=faceIndices[face];int count=faceIndexCount[face];
+            if (indices == null || count<3 || count>indices.length) return false;
+            for (int n=0;n<count;n++) if(indices[n]<0 || indices[n]>=vertHead) return false;
+        }
+        return true;
+    }
+    private boolean browserCameraArraysIndependent() {
+        if (vertHead < 1 || vertXTransform==null || vertYTransform==null || vertZTransform==null
+            || vertHead>vertXTransform.length || vertHead>vertYTransform.length || vertHead>vertZTransform.length
+            || vertXRot==null || vertYRot==null || vertZRot==null || vertexParam6==null || vertexParam2==null
+            || vertHead>vertXRot.length || vertHead>vertYRot.length || vertHead>vertZRot.length
+            || vertHead>vertexParam6.length || vertHead>vertexParam2.length) return false;
+        return browserCameraArrayIndependent(vertXRot,vertYRot,vertZRot,vertexParam6,vertexParam2)
+            && browserCameraArrayIndependent(vertYRot,vertZRot,vertexParam6,vertexParam2,null)
+            && browserCameraArrayIndependent(vertZRot,vertexParam6,vertexParam2,null,null)
+            && browserCameraArrayIndependent(vertexParam6,vertexParam2,null,null,null)
+            && browserCameraArrayIndependent(vertexParam2,null,null,null,null);
+    }
+    private boolean browserCameraArrayIndependent(int[] array,int[] a,int[] b,int[] c,int[] d) {
+        return array!=a && array!=b && array!=c && array!=d
+            && array!=vertXTransform && array!=vertYTransform && array!=vertZTransform
+            && array!=vertX && array!=vertY && array!=vertZ;
+    }
+
 	private void rotate256(int var1, int rotX, int rotZ, int rotY) {
 		try {
 
