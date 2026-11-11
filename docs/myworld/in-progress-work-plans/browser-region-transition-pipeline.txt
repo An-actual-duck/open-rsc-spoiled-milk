@@ -57,3 +57,32 @@ Repeatable diagnostic staging follow-up
   coherent repeatable route instead of mixingcombatcache/repeatableURL.
 - Stage hashes/commands verified and canonical workspace check PASS. Actual
   route profile still manager gate; no tuning or performanceclaim yet.
+
+Private exact construction candidate (2026-11-11, acceptance pending)
+------------------------------------------------------------------
+Actual adjacent-crossing profile attributes 147 of 183 insertVertex-inclusive
+samples to addModels, signature/FNV any-stack union 294/1522 gap samples, and
+114 reference-array growth samples to World GPU numeric lists. This motivates
+one private regionbuild=on candidate, not an expected percentage speedup.
+
+The benchmark-only property spoiledmilk.browserRegionBuild enables:
+* A construction-local RSModel.addModels XYZ index, earliest-index semantics,
+  at most 262144 int slots (1MiB). Coordinates stay in authoritative model arrays.
+  Inputs above 131072 predicted vertices, or unexpectedly growing beyond half
+  occupancy, use the original scan. No persistent mutable-model cache exists.
+  The index is discarded in finally; insertVertex outside this scope is literal.
+* Two-int FNV-1a state in both object/world GPU signature loops. Array/field
+  order and canonical Float.floatToIntBits remain identical; long is joined only
+  at finish. Literal long hash loops remain the OFF branch.
+* Numeric primitive World GPU accumulators. Each scratch array grows no further
+  than 1048576 elements (4MiB), then converts to the original boxed representation
+  for oversized accepted inputs. Final arrays are exact-sized owned copies;
+  enum/effect order and all geometry/material/lighting data remain unchanged.
+  This bounds additional primitive scratch, not total process/output memory.
+
+The ordinary browser/native/default paths keep the property OFF. No view distance,
+geometry selection, cache identity, signature ordering, collision, gameplay or
+world-load authority changes. Source compilation passes against the preserved
+ba0 full-source client. Frozen reference/parity and actual travel acceptance are
+still pending; no improvement claim yet. Existing load-profile artifacts remain
+immutable and distinct from this new construction experiment.

@@ -884,6 +884,9 @@ public final class RSModel {
 				this.faceParam1 = new int[faceCount][];
 			}
 
+			ConstructionVertexIndex constructionIndex = BrowserRegionBuild.isEnabled()
+				? new ConstructionVertexIndex(vertCount) : null;
+			try {
 			for (i = offset; i < modelCount; ++i) {
 				RSModel model = models[i];
 				model.commitTransform((byte) -28);
@@ -900,8 +903,9 @@ public final class RSModel {
 
 					int v;
 					for (v = 0; model.faceIndexCount[f] > v; ++v) {
-						newIndices[v] = this.insertVertex(model.vertX[srcIndices[v]], model.vertY[srcIndices[v]],
-							model.vertZ[srcIndices[v]]);
+						newIndices[v] = constructionIndex == null
+							? this.insertVertex(model.vertX[srcIndices[v]], model.vertY[srcIndices[v]], model.vertZ[srcIndices[v]])
+							: this.insertConstructionVertex(constructionIndex, model.vertX[srcIndices[v]], model.vertY[srcIndices[v]], model.vertZ[srcIndices[v]]);
 						this.copyFishingSpotClarityVertexMetadataFrom(model, srcIndices[v], newIndices[v]);
 					}
 
@@ -931,6 +935,9 @@ public final class RSModel {
 				}
 			}
 
+			} finally {
+				if (constructionIndex != null) constructionIndex.clear();
+			}
 			this.m_Yb = 1;
 		} catch (RuntimeException var14) {
 			throw GenUtil.makeThrowable(var14, "ca.KA(" + offset + ',' + (models != null ? "{...}" : "null") + ','
@@ -1486,6 +1493,50 @@ public final class RSModel {
 				+ texFront + ',' + texBack + ',' + var5 + ')');
 		}
 	}
+
+
+    /** Construction-local table stores indices only; coordinates remain authoritative. */
+    private static final class ConstructionVertexIndex {
+        private int[] slots;
+        ConstructionVertexIndex(int maximumVertices) {
+            if (maximumVertices < 0 || maximumVertices > 131072) return;
+            int size=16;
+            while (size < maximumVertices*2) size <<= 1;
+            slots=new int[size];
+        }
+        void clear() { slots=null; }
+        int slot(RSModel model,int x,int y,int z) {
+            int hash=x*0x9e3779b9 ^ Integer.rotateLeft(y*0x85ebca6b,11) ^ Integer.rotateLeft(z*0xc2b2ae35,22);
+            hash ^= hash >>> 16;
+            int slot=hash & (slots.length-1);
+            while (slots[slot] != 0) {
+                int i=slots[slot]-1;
+                if (model.vertX[i]==x && model.vertY[i]==y && model.vertZ[i]==z) return slot;
+                slot=(slot+1)&(slots.length-1);
+            }
+            return slot;
+        }
+    }
+    private int insertConstructionVertex(ConstructionVertexIndex index,int x,int y,int z) {
+        if (index.slots==null || this.vertHead >= index.slots.length/2) {
+            index.clear();
+            return this.insertVertex(x,y,z);
+        }
+        try {
+            int slot=index.slot(this,x,y,z);
+            int prior=index.slots[slot];
+            if (prior!=0) return prior-1;
+            this.ensureCapacity(this.vertHead+1,this.faceCount);
+            this.vertX[this.vertHead]=x;
+            this.vertY[this.vertHead]=y;
+            this.vertZ[this.vertHead]=z;
+            int result=this.vertHead++;
+            index.slots[slot]=result+1;
+            return result;
+        } catch (RuntimeException error) {
+            throw GenUtil.makeThrowable(error,"ca.I("+x+','+z+','+y+','+"dummy"+')');
+        }
+    }
 
 	public final int insertVertex(int x, int y, int z) {
 		try {
@@ -2213,6 +2264,7 @@ public final class RSModel {
 			Renderer3DMaterialFamily[] familyArray,
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray,
 			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitterArray) {
+			if (BrowserRegionBuild.isEnabled()) return signaturePrimitive(vertexArray, textureUArray, textureVArray, lightArray, indexArray, textureArray, fallbackArray, kindArray, familyArray, shadowCasterArray, glowEmitterArray);
 			long hash = FNV_OFFSET_BASIS;
 			hash = mix(hash, plane);
 			hash = mix(hash, centerSectionX);
@@ -2269,6 +2321,76 @@ public final class RSModel {
 				hash = mix(hash, emitter.getIntensity());
 			}
 			return hash;
+		}
+
+		private long signaturePrimitive(
+			int[] vertexArray,
+			float[] textureUArray,
+			float[] textureVArray,
+			int[] lightArray,
+			int[] indexArray,
+			int[] textureArray,
+			int[] fallbackArray,
+			Renderer3DModelKind[] kindArray,
+			Renderer3DMaterialFamily[] familyArray,
+			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray,
+			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitterArray) {
+			BrowserRegionBuild.Fnv64 hash = new BrowserRegionBuild.Fnv64(FNV_OFFSET_BASIS);
+			hash.add(plane);
+			hash.add(centerSectionX);
+			hash.add(centerSectionY);
+			hash.add(originWorldX);
+			hash.add(originWorldZ);
+			hash.add(chunkRole);
+			for (int value : vertexArray) {
+				hash.add(value);
+			}
+			for (float value : textureUArray) {
+				hash.add(Float.floatToIntBits(value));
+			}
+			for (float value : textureVArray) {
+				hash.add(Float.floatToIntBits(value));
+			}
+			for (int value : lightArray) {
+				hash.add(value);
+			}
+			for (int value : indexArray) {
+				hash.add(value);
+			}
+			for (int value : textureArray) {
+				hash.add(value);
+			}
+			for (int value : fallbackArray) {
+				hash.add(value);
+			}
+			for (Renderer3DModelKind kind : kindArray) {
+				hash.add(kind.ordinal());
+			}
+			for (Renderer3DMaterialFamily family : familyArray) {
+				hash.add(family.getShaderId());
+			}
+			for (Renderer3DWorldChunkFrame.ShadowCaster caster : shadowCasterArray) {
+				hash.add(caster.getModelKind().ordinal());
+				hash.add(caster.getBaseX0());
+				hash.add(caster.getBaseY());
+				hash.add(caster.getBaseZ0());
+				hash.add(caster.getBaseX1());
+				hash.add(caster.getBaseZ1());
+				hash.add(caster.getHeight());
+				hash.add(caster.getWidth());
+				hash.add(caster.getOpacity());
+				hash.add(caster.isOutdoorOnly() ? 1 : 0);
+			}
+			for (Renderer3DWorldChunkFrame.GlowEmitter emitter : glowEmitterArray) {
+				hash.add(emitter.getModelKind().ordinal());
+				hash.add(emitter.getCenterX());
+				hash.add(emitter.getCenterY());
+				hash.add(emitter.getCenterZ());
+				hash.add(emitter.getRadius());
+				hash.add(emitter.getColor());
+				hash.add(emitter.getIntensity());
+			}
+			return hash.value();
 		}
 
 		private static long mix(long hash, int value) {

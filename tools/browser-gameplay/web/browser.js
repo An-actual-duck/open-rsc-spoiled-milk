@@ -108,7 +108,7 @@ const natives = {
     }
   },
   async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
-    if(!['regionLoadProfile','geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'].includes(name))throw new Error('Unknown private policy receipt');
+    if(!['regionBuild','regionLoadProfile','geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'].includes(name))throw new Error('Unknown private policy receipt');
     (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
     if(!options.has('benchmark')&&['batchedModelKernel','terrainQueryIndex'].includes(name))(window.browserProof.optimizedRenderDefaults||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
   },
