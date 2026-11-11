@@ -21,6 +21,11 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private final Map<Integer,int[]> textureMetadata=new HashMap<Integer,int[]>();
     private long materialRevision,packingSequence;
     private static final boolean OVERLAY_COVERAGE=Boolean.getBoolean("spoiledmilk.browserOverlayCoverage");
+    private static final boolean OVERLAY_DELTA=Boolean.getBoolean("spoiledmilk.browserOverlayDeltaTransport");
+    public static boolean isOverlayDeltaTransportEnabled(){return OVERLAY_DELTA&&OVERLAY_COVERAGE;}
+    private boolean overlayDeltaReset=true;
+    private Object overlayDeltaOwner;
+
     private Field mainClientField;
     private int[] overlayOwner;private int overlayWidth,overlayHeight;
     private long opaqueSequence;
@@ -77,10 +82,21 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void regionTransition(boolean ordinaryWalking);
     private static native void holdWorld();
     @Override public void worldTransition(boolean ordinaryWalking) {
+        overlayDeltaReset=true;
         loadState.beginTransition();
         if(initialized)regionTransition(ordinaryWalking);
     }
     private static native void overlayFrame(int width,int height,int mode,double generation,double frameSequence,int fades,boolean reset,float[] transmittance);
+    private static native void overlayDeltaFrame(int width,int height,double generation,double frameSequence,boolean reset,
+        boolean partial,double baseGeneration,double baseFrameSequence,int[] bands,int[] work,int[] rgb,float[] transmittance);
+    private static final class PreparedOverlay {
+        final WorldOverlayCoverage.Frame frame;final WorldOverlayCoverage.Delta delta;
+        PreparedOverlay(WorldOverlayCoverage.Frame frame,WorldOverlayCoverage.Delta delta){this.frame=frame;this.delta=delta;}
+    }
+    private void acknowledgeOverlay(PreparedOverlay prepared){
+        if(prepared!=null){prepared.frame.acknowledgeDeltaTransport(prepared.delta);overlayDeltaReset=false;}
+    }
+
     private static native void deleteChunks(int[] ids);
     private static native int[] planWorldSprites(int epoch,double sequence,int[] images);
     private static native void commitWorldSprites(int epoch,double sequence,byte[] rgba,float[] quads);
@@ -120,13 +136,14 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             boolean game=client!=null&&client.isGameView(),modal=client!=null&&client.isFullScreenModalUiActive();
             int[] progress=loadState.frame(game,modal,false,frame,0,0,0,0,0,w,h,textures.size());
             if(game&&!modal&&loadState.shouldHold(false,0,0,0)) {
-                worldProgress(progress);holdWorld();return;
+                overlayDeltaReset=true;worldProgress(progress);holdWorld();return;
             }
             exportLighting(null);
             exportSky(null);
-            prepareOverlay(image,currentSurface);
+            PreparedOverlay preparedOverlay=prepareOverlay(image,currentSurface);
             worldProgress(progress);
             present(w,h,false,new float[48],new float[30],new int[0],borrowOverlay(image));
+            acknowledgeOverlay(preparedOverlay);
             return;
         }
         if(world.getChunkCount()>MAX_CHUNKS)throw new IllegalStateException("Browser scene exceeds chunk capacity");
@@ -160,7 +177,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             // Preserve that same final GPU image until EVERY new source chunk is ready.
             // Uploads are synchronous, so no borrowed frame storage escapes this call.
             if(progress[1]!=BrowserWorldLoadState.UI&&loadState.shouldHold(authority,world.getChunkCount(),count/8,remainingRepacks)) {
-                worldProgress(progress);holdWorld();return;
+                overlayDeltaReset=true;worldProgress(progress);holdWorld();return;
             }
             float[] view=OpenGLWorldChunkRenderer.backendWorldViewMatrix(frame);
             float[] clip=OpenGLWorldChunkRenderer.multiply(OpenGLWorldChunkRenderer.projectionMatrix(frame),view);
@@ -171,9 +188,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             long lightingEnd=System.nanoTime();
             exportSky(frame);
             long skyEnd=System.nanoTime();
-            prepareOverlay(image,currentSurface);
+            PreparedOverlay preparedOverlay=prepareOverlay(image,currentSurface);
             progress[6]=progress[7]=spriteGroups;worldProgress(progress);
             present(w,h,true,matrices,uniforms(frame),draws,borrowOverlay(image));
+            acknowledgeOverlay(preparedOverlay);
             loadState.presented(OVERLAY_COVERAGE&&authority,world.getChunkCount(),count/8,remainingRepacks);
             long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()},pose(frame));
         } finally { RendererFrameLighting.restore(previous); }
@@ -264,19 +282,37 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             return (mudclient)mainClientField.get(null);
         } catch(ReflectiveOperationException e){throw new IllegalStateException("Browser cannot inspect its current surface",e);}
     }
-    private void prepareOverlay(BufferedImage image,GraphicsController surface) {
-        if(!OVERLAY_COVERAGE)return;
+    private PreparedOverlay prepareOverlay(BufferedImage image,GraphicsController surface) {
+        if(!OVERLAY_COVERAGE)return null;
+        PreparedOverlay prepared=null;
         int[] pixels=borrowOverlay(image);int width=image.getWidth(),height=image.getHeight();
         boolean reset=pixels!=overlayOwner||width!=overlayWidth||height!=overlayHeight;
         WorldOverlayCoverage.Frame coverage=surface==null?null:surface.borrowWorldOverlayCoverage();
+        if(OVERLAY_DELTA){
+            Object owner=coverage==null?null:coverage.deltaTransportOwner();
+            if(owner!=overlayDeltaOwner)reset=true;
+            overlayDeltaOwner=owner;
+        }
         if(coverage!=null) {
             if(coverage.transparent&&(RendererDebugSettings.isOverlayEnabled()||WorldEditorBuildSettings.isEnabled()))surface.invalidateWorldOverlayCoverage("Raw debug/editor framebuffer writer is unsupported by browser coverage");
             if(!coverage.valid||!surface.isWorldOverlayCoverageCurrent(coverage))throw new IllegalStateException("Browser overlay rejected: "+coverage.reason);
             if(coverage.transparent&&(coverage.ownerPixels!=pixels||coverage.width!=width||coverage.height!=height))throw new IllegalStateException("Browser overlay pixel owner/dimensions changed");
             if(coverage.generation<0||coverage.generation>9007199254740991L||coverage.frameSequence<0||coverage.frameSequence>9007199254740991L)throw new IllegalStateException("Browser overlay token exceeds exact JavaScript integer range");
-            overlayFrame(width,height,coverage.mode,coverage.generation,coverage.frameSequence,coverage.retainedFadeCount,reset,coverage.transmittance);
-        } else overlayFrame(width,height,WorldOverlayCoverage.MODE_OPAQUE,0,++opaqueSequence,0,reset,null);
+            WorldOverlayCoverage.Delta delta=OVERLAY_DELTA?coverage.prepareDeltaTransport(reset||overlayDeltaReset):null;
+            if(delta!=null){
+                overlayDeltaFrame(width,height,coverage.generation,coverage.frameSequence,reset,delta.partial,
+                    delta.baseGeneration,delta.baseFrameSequence,delta.bands(),delta.work(),pixels,coverage.transmittance);
+                prepared=new PreparedOverlay(coverage,delta);
+            }else{
+                if(OVERLAY_DELTA)overlayDeltaReset=true;
+                overlayFrame(width,height,coverage.mode,coverage.generation,coverage.frameSequence,coverage.retainedFadeCount,reset,coverage.transmittance);
+            }
+        } else {
+            if(OVERLAY_DELTA)overlayDeltaReset=true;
+            overlayFrame(width,height,WorldOverlayCoverage.MODE_OPAQUE,0,++opaqueSequence,0,reset,null);
+        }
         overlayOwner=pixels;overlayWidth=width;overlayHeight=height;
+        return prepared;
     }
     static int[] pose(Renderer3DFrame frame) {
         return new int[]{frame.getCameraOffsetX(),frame.getCameraOffsetY(),frame.getCameraOffsetZ(),frame.getCameraRotationX(),frame.getCameraRotationY(),frame.getCameraRotationZ(),frame.getCenterX(),frame.getCenterY(),frame.getViewportWidth(),frame.getViewportHeight(),frame.getPerspectiveShift(),frame.getFogStartDistance(),frame.getFogDistance(),frame.getSignedWorldLevel()};

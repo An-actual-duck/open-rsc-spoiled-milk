@@ -1,0 +1,184 @@
+Browser overlay delta transport prototype
+=========================================
+
+Status
+------
+Private experimental option, default OFF. READY for manager review after
+CPU/protocol checks, actual GPU parity and private client-stage preparation.
+This does not authorize adoption, default enablement or release. URL overlaydelta=on/off only in
+benchmark WebGL selects spoiledmilk.browserOverlayDeltaTransport. Ordinary
+and software URLs receive no override. BrowserWebGLBridge actual getter
+isOverlayDeltaTransportEnabled requires both the option and overlay coverage;
+privatePolicies.overlayDeltaTransport reports requested/available/enabled.
+
+Scope and ownership
+-------------------
+Preserve all ordinary CPU RGB rendering, transmittance arithmetic and full-plane
+clears. Preserve the existing fragment shader verbatim, including raw BGRA-to-RGB
+.bgr interpretation and the existing affine composition approximation.
+WorldOverlayCoverage tracks only touched 16-row blocks through its already
+centralized opaque/opaqueSpan/multiply hooks. A last-block stamp avoids repeated
+division for contiguous writes. Diagnostic counters count newly touched blocks,
+spans and per-frame upload totals, not per-pixel long/BigInt increments. At most
+2048 boolean blocks are retained per bounded accepted surface; no full pixel
+comparison or copied/repacked Java plane is used for change detection.
+
+Each fresh WORLD declaration uses the union of its touched blocks and the last
+successfully acknowledged GPU frame's touched blocks. This clears disappearing
+UI/effects. Touch history is separate from coverage generation, which advances
+on every fresh begin. A held/unsubmitted CPU frame does not advance submitted
+history. Full first upload acknowledges the actual CURRENT touches, not all
+uploaded rows; its following empty frame still clears the previous UI correctly.
+The source helper stores bounded owned masks/tokens and pixel-owner identity.
+It never keeps borrowed Frame or transmittance views for deferred GPU work.
+
+At most four sorted disjoint full-width row bands, covering at most 60% of the
+height, are permitted for partial transport. Fragmented/broad surfaces use full
+planes. Opaque, retained BASE/FADE, invalid/unknown writers, discard, resize,
+owner changes, region transition/loading and uncertain source state invalidate
+submitted history and use the existing complete path. A new coverage owner on
+the same pixel array/dimensions still resets GPU retained/history state.
+
+Submission protocol
+-------------------
+The enabled overlayDeltaFrame declaration replaces the old overlayFrame call;
+it does not add a per-frame native call. It receives both full borrowed RGB/T
+planes and small owned bands/work/base tokens. JS validates both plane shapes,
+all tokens, dimensions, band ordering/range/alignment, capacity/fraction and
+acknowledged resident texture history before ANY graphics call. It uploads both
+planes synchronously through full-row subarray views and keeps metadata only.
+No per-band getError is added: one existing validation per plane covers its
+entire set of bands. Existing streaming validation still runs before world draw.
+
+The following ordinary present native call uses already-uploaded RGB and the
+literal original shader. Only after it returns successfully does Java acknowledge
+its exact current plan. Superseded, duplicate, stale, changed-owner or post-write
+acknowledgements fail closed and discard history. A failed second plane poisons
+the GPU module instead of retrying with partially modified resident textures.
+Native history commits only after draw/capture succeeds. Retained/opaque fallback
+continues through the literal original declaration/draw path.
+
+Counters
+--------
+gpu.overlayDeltaDeclarations / PartialDeclarations / FullDeclarations count
+eligible successfully submitted declaration API calls, not final GPU completion.
+overlayDeltaPresentedFrames counts completed enabled overlay draw/capture calls.
+overlayDeltaUploadedBytes and FullEquivalentBytes cover eligible declarations;
+overlayUploadBytes / Calls cover all RGB/T texture uploads including complete
+fallbacks. overlayDeltaLast exposes partial, bands, newBlocks, spanMarks,
+touchedRows, uploadedRows, bandCount and bytes. Bytes are API payload sizes,
+not measured PCIe traffic or GPU time. Borrowed arrays are not retained there.
+
+Verification so far
+-------------------
+Early Java compilation and existing overlay mock contracts passed. New state
+oracle passed 969 checks with 141 partial and 15 full submissions: 6784 submitted
+rows against 20416 complete-equivalent rows. Cases include all existing valid
+writer operations, first-full dirty preservation, disappearing/moving UI/VFX,
+zero-touch frames, borrowed-but-unsubmitted source, broad/fragmented fallback,
+retained and opaque transitions, resize/new owner and invalid writers. Duplicate,
+out-of-order, superseded, discarded and post-mutation acknowledgements reject.
+
+The new GL-double oracle passed exact resident RGB/T reconstruction, source
+subarray buffer identity, synchronous borrow consumption, invalid metadata before
+ANY GL, stale history, zero-upload frames and injected second-plane failure
+poison/cleanup. Validation counts do not increase with the number of bands.
+These results are CPU/protocol checks, not actual WebGL image or FPS evidence.
+
+Manager acceptance work
+-----------------------
+Frozen literal-plane differential, broader suites, full client build and artifact
+provenance checks are complete. Manager-run actual WebGL comparisons pass at
+logical and odd scaled output, as recorded below. Actual game OFF/ON FPS,
+loading and interaction checks remain manager acceptance work before adoption.
+Per-writer marking overhead and vertically broad UI may outweigh reduced API
+payload. Protocol correctness and synthetic transport savings are not FPS proof.
+
+Independent review follow-up
+----------------------------
+The first ACTIVE checkpoint d897fe546 remains preserved. Review identified a
+stale FULL token declaration which could pass partial-history checks after hold
+or a legacy fallback, then fail only during retained capture after uploads.
+The corrected implementation reuses the retained-frame owner's own PURE capture
+chronology validator before any delta GL operation. capture itself uses that
+same validator, including planned reset handling. No second chronology authority
+is kept. Hold, ordinary fallback and opaque mode capture/reset remain owned by
+the existing retained module. Direct stale-full-after-hold/fallback, same-frame
+replay and reset epoch restart tests verify the guard without graphics calls.
+
+Delta dimensions are validated against the maxTextureSize cached at backend
+initialization, avoiding even capability queries for malformed wide/short input.
+The final-row stamp cache is clamped to the actual pixel count; a direct index
+in padding past a partial final block invalidates the tracker.
+
+Updated verification: four frozen/current OFF/ON literal RGB/T plane digests
+match exactly (87b10499cb867a30bce5af0870b650fc7a2030caf13772371c57d2d92741c803).
+The state oracle passes 970 checks. All changed metadata guards and old overlay
+mock/frontend controls pass. Real WebGL oracle exports also include source-array
+mutation after synchronous upload to test that borrowed planes never escape.
+These are still CPU checks and preparation, not a claimed GPU/FPS result.
+
+Frozen review artifacts and expanded GPU coverage
+------------------------------------------------
+Runtime source: 7e909551c366b601dc82dd97a4a684c70065e363. Full client build
+passed; immutable composite client-review-7e909.jar SHA256
+0b4e5e1b4288fd4018598193ecabf293bc6d393c17a1f3b55f309b6355f81bdf
+contains only source-built overlay bridge/coverage/tracker class families over
+the approved f720 baseline. All other entries are byte-identical to baseline;
+selected family bytes match the full build. Exact per-class provenance is in
+output/builds/browser-overlay-delta-transport/client-source-provenance-7e909.json.
+
+The clean-source CPU result and prepared GPU oracle are under
+output/tests/browser-overlay-delta-transport/20261111T052405748339Z/.
+Repeatable and combat benchmark harnesses, original RGB/T coverage, frame
+preparation, retained FULL/BASE mock and 262144 native fade-expression cases
+passed. No worker browser/GPU/server processes were started.
+
+Manager's first actual Radeon oracle with alpha:false failed in the BASELINE
+retained RGBA8 capture before any comparison frame. It is excluded as setup
+failure, not a delta result. The game uses alpha:true. Test-only checkpoint
+11250beb66a13c7697d97799321a08253fdad45e adds alpha/scale/odd-output controls,
+actual outputSize/begin selection and retained output-deferral coverage.
+Its separate alpha-physical-11250beb6 stage preserves all runtime module,
+Java plane and JAR hashes from the clean 7e909 stage. Root performs actual GPU
+comparison at alpha=true and at scale=2 with odd physical output dimensions.
+The older stage and setup-failure evidence remain preserved unchanged.
+
+Future oracle diagnostics include String(error) plus stack because Firefox's
+stack can omit the message/GL code. The oracle's default alpha is now true;
+explicit alpha=false remains available for the deliberately separate context
+check. Actual GPU/FPS acceptance results remain manager-owned pending evidence.
+
+Actual manager GPU proof and exact handoff scope
+-----------------------------------------------
+On Firefox154 with physical Radeon R9 200 and game-style alpha:true:
+  scale1: 159 frames, 7,831,552 compared RGBA bytes, zero differences;
+  scale2 with odd physical output: 159 frames, 31,613,820 bytes, zero differences.
+Each run completed two post-upload borrowed-source mutations and two retained
+output-resize deferrals, with errors[]. Worker independently checked the raw
+actual.json results, all frame changedBytes values and accepted receipts at:
+  /home/justin/Core-Framework/output/diagnostics/browser-frame-architecture/overlay-gpu-alpha-2/
+  /home/justin/Core-Framework/output/diagnostics/browser-frame-architecture/overlay-gpu-alpha-physical-1/
+
+The CPU state counters contain 156 eligible transport submissions (141 partial,
+15 full); the exported hardware corpus has three additional literal fallback
+frames, for 159 total. The first scale1 collector incorrectly expected156 and
+rejected the complete capture. The unchanged raw capture was then revalidated
+against its159-frame manifest; the original collector receipt is preserved as
+receipt.collector-expected156.json. No failed pixels or data were discarded.
+The prior alpha:false zero-comparison setup failure stays explicitly excluded.
+These comparisons prove the existing affine shader output is preserved, not
+that the affine approximation itself equals arbitrary native compositing.
+
+Client-only game stages, prepared with unchanged0b4e composite JAR and current
+frontend/Bootstrap content byte-identical to runtime checkpoint7e909:
+  output/tests/browser-gameplay-spike/overlay-delta-static-review-1/
+    repeatable-preparation.json; HTTP8194, TCP43649/WebSocket43549;
+  output/tests/browser-gameplay-spike/overlay-delta-combat-review-1/
+    combat-preparation.json; HTTP8195, TCP43639/WebSocket43539.
+Each receipt provides OFF/ON URLs and the exact HTTP command, explicitly labels
+singleProductionCommit:false, and points to existing dedicated private servers.
+Copied credentials are empty; combat animation audit is2265files/0missing/
+0different. No new server, database, request file or running process was created
+or changed by this worker. All performance/adoption decisions remain with the
+manager; the implementation remains default OFF.

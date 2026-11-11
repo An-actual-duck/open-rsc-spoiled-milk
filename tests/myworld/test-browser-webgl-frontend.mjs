@@ -17,7 +17,8 @@ const repeatable=process.argv.includes('--repeatable');
 const combat=process.argv.includes('--combat');
 const benchmarkKeys=process.argv.includes('--benchmark-key-limbs');
 const benchmarkBatch=process.argv.includes('--model-batch');
-const benchmarkStream=process.argv.includes('--benchmark-stream')||benchmarkKeys||repeatable||combat||nativeExplicit||benchmarkBatch;let streamRequested;
+const benchmarkDelta=process.argv.includes('--overlay-delta');
+const benchmarkStream=process.argv.includes('--benchmark-stream')||benchmarkKeys||repeatable||combat||nativeExplicit||benchmarkBatch||benchmarkDelta;let streamRequested;
 let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, displayDisposed = 0, configured,gpuOptions;
 const status = {textContent:''}, messages = [];
 let layoutReads=0;
@@ -27,7 +28,7 @@ const canvas = {style:{},setAttribute(){}};
 const stats = {lastError:null,lastFrame:0};
 const gateEvents=[];
 const window = {dispatchEvent:e=>gateEvents.push(e.type),browserRuntimeVersion:'5.0',addEventListener(){}};
-const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
+const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':'')+(benchmarkDelta?'&overlaydelta=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
   URLSearchParams,performance:{now:()=>clock},console,
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
@@ -107,6 +108,9 @@ assert.equal(typeof configured.natives.Java_orsc_graphics_three_BrowserBatchedMo
 assert.equal(window.browserProof.batchedModelKernelWork.packets,0);
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserBatchedModelKernel=false'),benchmarkStream&&!benchmarkBatch);
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserBatchedModelKernel=true'),benchmarkBatch);
+assert.equal(configured.javaProperties.includes('spoiledmilk.browserOverlayDeltaTransport=false'),benchmarkStream&&!benchmarkDelta);
+assert.equal(configured.javaProperties.includes('spoiledmilk.browserOverlayDeltaTransport=true'),benchmarkDelta);
+assert.equal(gpuOptions.overlayDeltaTransport,benchmarkDelta);
 assert.equal(middleCreated,1,'WebGL frontend creates one middle-input owner');
 assert.equal(window.browserProof.middleInput,middleStats,'proof counters come from the real module seam');
 assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_awaitMiddleMouseEvent,middleNative,'Java input consumer is merged into CheerpJ natives');
@@ -114,7 +118,7 @@ assert.deepEqual(Array.from(await configured.natives.Java_orsc_browser_BrowserBo
 assert.equal(canvas.style.pointerEvents,'none');
 assert.equal(configured.enableInputMethods,false);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportRegionPreparationDiagnostics(null,true,[10,2,1672704]);assert.equal(window.browserProof.regionPreparationDiagnostics.hits,10);assert.equal(window.browserProof.regionPreparationDiagnostics.retainedTileBytes,1672704);
-for(const name of ['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel'])for(const [requested,available,enabled]of [[false,false,false],[true,true,false],[true,true,true]]){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(null,name,requested,available,enabled);assert.deepEqual(JSON.parse(JSON.stringify(window.browserProof.privatePolicies[name])),{requested,available,enabled});}
+for(const name of ['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport'])for(const [requested,available,enabled]of [[false,false,false],[true,true,false],[true,true,true]]){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(null,name,requested,available,enabled);assert.deepEqual(JSON.parse(JSON.stringify(window.browserProof.privatePolicies[name])),{requested,available,enabled});}
 assert.equal(gpuOptions.streamUploadValidation,true,'Ordinary WebGL adopts validated streaming policy');assert.equal(stats.streamUploadValidationActive,true,'Actual selected backend streaming receipt');
 if(benchmarkStream){assert.equal(typeof window.browserBenchmarkStreamUploadValidation,'function');window.browserBenchmarkStreamUploadValidation(false);assert.equal(streamRequested,false);assert.equal(window.browserProof.benchmark.streamUploadValidationRequested,true);}else assert.equal(window.browserBenchmarkStreamUploadValidation,undefined,'ordinary sessions cannot change stream policy');
 assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserFramePreparation=')||p.startsWith('spoiledmilk.browserAnimatedBufferReuse=')),benchmarkStream,'only private benchmark URL receives preparation overrides');

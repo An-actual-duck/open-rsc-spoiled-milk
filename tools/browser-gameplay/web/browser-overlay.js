@@ -1,10 +1,15 @@
+import {validateOverlayDelta} from './browser-overlay-delta.js';
 import {createBrowserRetainedFrame} from './browser-retained-frame.js';
 /** Optional exact-coverage compositor. RGB is the ordinary software result over
  * black; transmittance is the surviving world coefficient. No world readback. */
-export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=null,retainOpaqueFull=false,physicalOutput=false}={}) {
+export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=null,retainOpaqueFull=false,physicalOutput=false,deltaTransport=false,maxTextureSize=0}={}) {
   const MAX_PIXELS=2097152, UNIT=8;
   const retained=createBrowserRetainedFrame(gl,{stats,ownedFrame,reserveBytes:extra=>reserveCombined(extra)});
   let outputWidth=0,outputHeight=0;
+  let deltaHistory=null;
+  const deltaMaxTextureSize=maxTextureSize||ownedFrame?.maxTextureSize||0;
+  Object.assign(stats,{overlayDeltaTransportEnabled:deltaTransport===true,overlayDeltaDeclarations:0,overlayDeltaPartialDeclarations:0,overlayDeltaFullDeclarations:0,overlayDeltaPresentedFrames:0,overlayDeltaUploadedBytes:0,overlayDeltaFullEquivalentBytes:0,overlayDeltaUploadCalls:0,overlayUploadBytes:0,overlayUploadCalls:0});
+
   let program,vertex,fragment,vao,rgb,coverage,width=0,height=0,tWidth=0,tHeight=0,pending,active,failed=false,disposed=false;
   Object.assign(stats,{overlayCoverageBytes:0,overlayRgbBytes:0,overlayCoverageFrames:0,overlayCompositePeakBudgetBytes:(physicalOutput?48:32)*1024*1024,overlayCompositePeakBytes:0,overlayCompositeResourceBytes:0});
   function check(){const e=gl.getError();if(e!==gl.NO_ERROR)throw new Error('Coverage GL error 0x'+e.toString(16));}
@@ -20,13 +25,45 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
   function reserveCombined(extra){const peak=resourceBytes()+extra;if(peak>stats.overlayCompositePeakBudgetBytes)throw new Error('Coverage combined texture peak budget exceeded');stats.overlayCompositePeakBytes=Math.max(stats.overlayCompositePeakBytes,peak);}
   function account(){stats.overlayCompositeResourceBytes=resourceBytes();reserveCombined(0);}
   function textureParameters(){for(const p of [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER])gl.texParameteri(gl.TEXTURE_2D,p,gl.NEAREST);for(const p of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T])gl.texParameteri(gl.TEXTURE_2D,p,gl.CLAMP_TO_EDGE);}
-  function textureUpload(old,oldW,oldH,w,h,format,type,data,unit){
+  function textureUpload(old,oldW,oldH,w,h,format,type,data,unit,bands=null){
+    if(bands&&bands.length===0)return old;
     const previousActive=ownedFrame?.active?null:gl.getParameter(gl.ACTIVE_TEXTURE);gl.activeTexture(gl.TEXTURE0+unit);let restore=ownedFrame?.active?null:gl.getParameter(gl.TEXTURE_BINDING_2D),next=old,committed=false;
     try{if(!next||oldW!==w||oldH!==h){reserveCombined(w*h*4);next=gl.createTexture();if(!next)throw new Error('Coverage texture allocation failed');}gl.bindTexture(gl.TEXTURE_2D,next);textureParameters();gl.pixelStorei(gl.UNPACK_ALIGNMENT,4);
-      if(next===old)gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,w,h,format===gl.R32F?gl.RED:gl.RGBA,type,data);else gl.texImage2D(gl.TEXTURE_2D,0,format,w,h,0,format===gl.R32F?gl.RED:gl.RGBA,type,data);if(next===old&&format===gl.R32F&&deferOrCheck)deferOrCheck(check);else check();committed=true;if(next!==old&&old){if(restore===old)restore=next;gl.deleteTexture(old);}return next;
+      if(next===old){
+        if(bands){const channels=type===gl.UNSIGNED_BYTE?4:1;for(let n=0;n<bands.length;n+=2){const y=bands[n],end=bands[n+1];gl.texSubImage2D(gl.TEXTURE_2D,0,0,y,w,end-y,format===gl.R32F?gl.RED:gl.RGBA,type,data.subarray(y*w*channels,end*w*channels));}}
+        else gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,w,h,format===gl.R32F?gl.RED:gl.RGBA,type,data);
+      }else gl.texImage2D(gl.TEXTURE_2D,0,format,w,h,0,format===gl.R32F?gl.RED:gl.RGBA,type,data);
+      if(next===old&&format===gl.R32F&&deferOrCheck)deferOrCheck(check);else check();committed=true;
+      let submittedRows=h;if(bands){submittedRows=0;for(let n=0;n<bands.length;n+=2)submittedRows+=bands[n+1]-bands[n];}
+      stats.overlayUploadBytes+=submittedRows*w*4;stats.overlayUploadCalls+=bands?bands.length/2:1;
+      if(next!==old&&old){if(restore===old)restore=next;gl.deleteTexture(old);}return next;
     }catch(e){if(next===old)failed=true;throw e;}finally{if(!ownedFrame?.active){gl.bindTexture(gl.TEXTURE_2D,restore);gl.activeTexture(previousActive);}else gl.activeTexture(gl.TEXTURE0);if(!committed&&next&&next!==old)gl.deleteTexture(next);}
   }
+  function invalidateDeltaHistory(){deltaHistory=null;}
+  function prepareDelta(w,h,generation,frameSequence,reset,partial,baseGeneration,baseFrameSequence,bands,work,bytes,transmittance){
+    alive();if(!deltaTransport)throw new Error('Overlay delta transport is unavailable');
+    if(pending||active)throw new Error('Overlay delta declaration was not consumed');
+    // Validate both complete borrowed planes and ALL small metadata before any
+    // graphics query, allocation, upload or mutation. Only metadata is retained.
+    const plan=validateOverlayDelta({width:w,height:h,generation,frameSequence,reset,partial,baseGeneration,baseFrameSequence,bands,work,rgb:bytes,transmittance},deltaHistory,
+      !!rgb&&!!coverage&&width===w&&height===h&&tWidth===w&&tHeight===h,deltaMaxTextureSize);
+    retained.validateCaptureToken(plan.token,{willReset:reset||width!==w||height!==h});
+    dimensions(w,h);
+    try{
+      if(reset||width!==w||height!==h)retained.reset();
+      const selected=plan.partial?plan.bands:null;
+      coverage=textureUpload(coverage,tWidth,tHeight,w,h,gl.R32F,gl.FLOAT,transmittance,UNIT,selected);tWidth=w;tHeight=h;stats.overlayCoverageBytes=w*h*4;
+      rgb=textureUpload(rgb,width,height,w,h,gl.RGBA8,gl.UNSIGNED_BYTE,bytes,0,selected);width=w;height=h;stats.overlayRgbBytes=w*h*4;
+      account();
+      pending={w,h,mode:1,token:plan.token,fades:0,delta:plan};
+      stats.overlayDeclaration={width:w,height:h,mode:1,generation,frameSequence,fades:0,reset};
+      stats.overlayDeltaDeclarations++;stats[plan.partial?'overlayDeltaPartialDeclarations':'overlayDeltaFullDeclarations']++;
+      stats.overlayDeltaUploadedBytes+=plan.rows*w*8;stats.overlayDeltaFullEquivalentBytes+=w*h*8;stats.overlayDeltaUploadCalls+=plan.bands.length;
+      stats.overlayDeltaLast={partial:plan.partial,bands:plan.bands.slice(),newBlocks:plan.work[0],spanMarks:plan.work[1],touchedRows:plan.work[2],uploadedRows:plan.rows,bandCount:plan.bands.length/2,bytes:plan.rows*w*8};
+    }catch(error){failed=true;deltaHistory=null;throw error;}
+  }
   function prepare(w,h,mode,generation,frameSequence,fades,reset,transmittance){
+    if(deltaTransport)invalidateDeltaHistory();
     alive();dimensions(w,h);if(pending)throw new Error('Coverage declaration was not consumed');
     if(![0,1,2,3].includes(mode)||!Number.isSafeInteger(generation)||generation<0||!Number.isSafeInteger(frameSequence)||frameSequence<0||!Number.isInteger(fades)||fades<0||fades>16||(mode===3?fades<1:fades!==0))throw new Error('Invalid coverage mode/token');
     if(mode!==0&&(!(transmittance instanceof Float32Array)||transmittance.length!==w*h))throw new Error('Invalid coverage transmittance plane');
@@ -50,17 +87,19 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
   }
   function draw(w,h,bytes){
     alive();if(!active||active.w!==w||active.h!==h||!(bytes instanceof Uint8Array)||bytes.length!==w*h*4)throw new Error('Coverage RGB frame mismatch');initialize();
-    rgb=textureUpload(rgb,width,height,w,h,gl.RGBA8,gl.UNSIGNED_BYTE,bytes,0);width=w;height=h;stats.overlayRgbBytes=w*h*4;
+    if(!active.delta){rgb=textureUpload(rgb,width,height,w,h,gl.RGBA8,gl.UNSIGNED_BYTE,bytes,0);width=w;height=h;stats.overlayRgbBytes=w*h*4;}
     if(ownedFrame?.active)ownedFrame.target();
     const old=ownedFrame?.active?null:{program:gl.getParameter(gl.CURRENT_PROGRAM),vao:gl.getParameter(gl.VERTEX_ARRAY_BINDING),active:gl.getParameter(gl.ACTIVE_TEXTURE),depth:gl.isEnabled(gl.DEPTH_TEST),blend:gl.isEnabled(gl.BLEND),depthMask:gl.getParameter(gl.DEPTH_WRITEMASK),srcRgb:gl.getParameter(gl.BLEND_SRC_RGB),dstRgb:gl.getParameter(gl.BLEND_DST_RGB),srcAlpha:gl.getParameter(gl.BLEND_SRC_ALPHA),dstAlpha:gl.getParameter(gl.BLEND_DST_ALPHA),eqRgb:gl.getParameter(gl.BLEND_EQUATION_RGB),eqAlpha:gl.getParameter(gl.BLEND_EQUATION_ALPHA)};
     gl.activeTexture(gl.TEXTURE0);const oldRgb=ownedFrame?.active?null:gl.getParameter(gl.TEXTURE_BINDING_2D);gl.activeTexture(gl.TEXTURE0+UNIT);const oldCoverage=ownedFrame?.active?null:gl.getParameter(gl.TEXTURE_BINDING_2D);
     try{gl.useProgram(program);gl.bindVertexArray(vao);gl.disable(gl.DEPTH_TEST);gl.depthMask(false);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,rgb);gl.activeTexture(gl.TEXTURE0+UNIT);gl.bindTexture(gl.TEXTURE_2D,coverage||rgb);gl.uniform1i(gl.getUniformLocation(program,'image'),0);gl.uniform1i(gl.getUniformLocation(program,'transmittance'),UNIT);gl.uniform1i(gl.getUniformLocation(program,'transparent'),active.mode!==0?1:0);if(physicalOutput){gl.uniform2f(gl.getUniformLocation(program,'logicalSize'),w,h);gl.uniform2f(gl.getUniformLocation(program,'outputSize'),active.outputWidth,active.outputHeight);}
       if(active.mode!==0){gl.enable(gl.BLEND);gl.blendEquationSeparate(gl.FUNC_ADD,gl.FUNC_ADD);gl.blendFuncSeparate(gl.ONE,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);}else gl.disable(gl.BLEND);gl.drawArrays(gl.TRIANGLES,0,3);check();
     }catch(e){failed=true;throw e;}finally{if(ownedFrame?.active){gl.disable(gl.BLEND);gl.depthMask(true);gl.activeTexture(gl.TEXTURE0);}else{gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,oldRgb);gl.activeTexture(gl.TEXTURE0+UNIT);gl.bindTexture(gl.TEXTURE_2D,oldCoverage);gl.activeTexture(old.active);gl.useProgram(old.program);gl.bindVertexArray(old.vao);old.depth?gl.enable(gl.DEPTH_TEST):gl.disable(gl.DEPTH_TEST);old.blend?gl.enable(gl.BLEND):gl.disable(gl.BLEND);gl.depthMask(old.depthMask);gl.blendFuncSeparate(old.srcRgb,old.dstRgb,old.srcAlpha,old.dstAlpha);gl.blendEquationSeparate(old.eqRgb,old.eqAlpha);}}
-    try{if(active.mode!==0||retainOpaqueFull){if(active.mode===0&&stats.overlayCoverageMode!==0)retained.reset();retained.capture(active.outputWidth,active.outputHeight,active.token);}else retained.reset();account();}catch(e){failed=true;throw e;}stats.overlayCoverageFrames++;stats.overlayCoverageMode=active.mode;active=null;
+    try{if(active.mode!==0||retainOpaqueFull){if(active.mode===0&&stats.overlayCoverageMode!==0)retained.reset();retained.capture(active.outputWidth,active.outputHeight,active.token);}else retained.reset();account();}catch(e){failed=true;throw e;}stats.overlayCoverageFrames++;stats.overlayCoverageMode=active.mode;
+    if(active.delta){deltaHistory={width:w,height:h,...active.token};stats.overlayDeltaPresentedFrames++;}
+    active=null;
   }
   /** Region streaming replays the last FULL output; no pending Java delta is consumed. */
-  function hold(w,h){alive();if(pending||active)throw new Error('Cannot hold a partially declared overlay');retained.drawFull(w,h);}
-  function dispose(){if(disposed)return;retained.dispose();if(rgb)gl.deleteTexture(rgb);if(coverage)gl.deleteTexture(coverage);if(vao)gl.deleteVertexArray(vao);if(program)gl.deleteProgram(program);if(vertex)gl.deleteShader(vertex);if(fragment)gl.deleteShader(fragment);rgb=coverage=vao=program=vertex=fragment=null;pending=active=null;stats.overlayCoverageBytes=stats.overlayRgbBytes=stats.overlayCompositeResourceBytes=0;disposed=true;}
-  return {prepare,outputSize,begin,draw,hold,dispose,get canChangeOutput(){return !!pending&&(pending.mode===0||pending.mode===1);},get opaqueOutput(){return pending?.mode===0;}};
+  function hold(w,h){alive();if(deltaTransport)invalidateDeltaHistory();if(pending||active)throw new Error('Cannot hold a partially declared overlay');retained.drawFull(w,h);}
+  function dispose(){if(disposed)return;deltaHistory=null;retained.dispose();if(rgb)gl.deleteTexture(rgb);if(coverage)gl.deleteTexture(coverage);if(vao)gl.deleteVertexArray(vao);if(program)gl.deleteProgram(program);if(vertex)gl.deleteShader(vertex);if(fragment)gl.deleteShader(fragment);rgb=coverage=vao=program=vertex=fragment=null;pending=active=null;stats.overlayCoverageBytes=stats.overlayRgbBytes=stats.overlayCompositeResourceBytes=0;disposed=true;}
+  return {prepare,prepareDelta,invalidateDeltaHistory,outputSize,begin,draw,hold,dispose,get canChangeOutput(){return !!pending&&(pending.mode===0||pending.mode===1);},get opaqueOutput(){return pending?.mode===0;}};
 }
