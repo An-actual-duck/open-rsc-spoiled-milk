@@ -1,9 +1,10 @@
 Private whole-overworld residency: browser/backend and bake tools
 ===============================================================
-Implementation candidate; default OFF. No public deployment. Actual complete
-catalogue bake, browser/GPU residency, visuals and travel/performance acceptance
-remain manager gates. CPU protocol tests and small real pilot decoding are not
-proof that the whole world fits or renders correctly on hardware.
+Private implementation, default OFF. The integrated experiment now admitted the
+complete catalogue in actual Firefox. Walking improved and stationary rendering
+regressed; see browser-whole-zone-experiment-results.txt for measured results and
+remaining gates. Historical CPU handoff notes below remain preserved; small pilot
+checks alone did not establish this later hardware result. No public deployment.
 
 Scope and resource ownership
 ----------------------------
@@ -70,7 +71,7 @@ calls gl.finish ONCE followed by gl.getError before marking startupGpuCompleted.
 This point is distinct from an enqueued upload, ordinary per-frame Worker ACK,
 scanout or per-frame GPU completion. Main and Worker disposal/context loss
 invalidate readiness; a stopped session cannot retain a true ready receipt.
-Only the manager will establish actual hardware completion/capacity evidence.
+The manager hardware result is recorded separately in browser-whole-zone-experiment-results.txt.
 
 wholeZoneFrame(int[18],int[] rows6) is ordered before presentation. Metadata:
 [1,active,signedLevel,globalBaseXunits,globalBaseZunits,centerSX,centerSY,2,
@@ -175,7 +176,8 @@ CPU evidence and remaining gates
 - workspace-layout check reports inherited assets/sprites and legacy output-root
   entries. New outputs use declared builds/tests categories; no cleanup performed.
 
-Required manager gates after integration: fresh single-source JAR and matching
+Historical manager gate list at CPU handoff (see measured report for current status):
+fresh single-source JAR and matching
 FULL bake, independent complete source/resource/topology/material/seam/upper
 parity, actual Worker/GPU full catalogue completion and OS memory measurements,
 real dynamic override/pick/lighting/interaction tests, and comparable ordinary

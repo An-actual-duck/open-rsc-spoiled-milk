@@ -1,8 +1,19 @@
-Private whole-overworld prepared residency — READY for private integration; GPU gate pending
+Private whole-overworld prepared residency — measured private experiment, default OFF
 
 Owner authorized trying the full authored overworld after the read-only audit.
 This is an explicit private benchmark mode, OFF normally. No public/server/map
 or default renderer changes. No smaller-zone fallback may call itself ready.
+
+Current status — November 11, 2026
+----------------------------------
+The integrated full catalogue has now passed actual Firefox admission: 1,400
+geometry resources plus 74 textures, with 2,207,197,964 tracked immutable GPU bytes.
+Primary warm walking gaps improved from 1,577.5 to 501.25 ms, but stationary fresh
+world FPS fell from 50.81 to 42.83. Keep this private and off by default.
+See browser-whole-zone-experiment-results.txt for exact artifacts, exclusions,
+startup/memory limits and remaining acceptance. rawSourceCPUReady remains false.
+The worker handoff records below are historical; they do not describe the current
+GPU gate as pending. Full image/dynamic/soak/performance adoption remains open.
 
 First playable contract
 -----------------------
@@ -78,7 +89,7 @@ dynamic object/door/empty-cell changes, source epoch/settings/context-loss failu
 and measured crossings using completed frames. Local CPU rebuild may still pause;
 capacity or nominal producer FPS alone cannot establish a travel improvement.
 
-Implementation milestones (CPU only; actual GPU/playtest pending)
+Historical implementation milestones (CPU-only worker handoff)
 ----------------------------------------------------------------
 Java registry/source hooks:2f3093cb7; baker/authority hooks:0c5980bf5;
 stacked-context/schema correction:c1c4511c3; bridge/reader:eb19d79ec;
@@ -119,7 +130,7 @@ No unmeasured optimization claim is made. The manager will observe completed Wor
 frames and profile actual whole-zone play before accepting performance.
 
 
-CPU integration handoff (current source d7525c946)
+Historical CPU integration handoff (worker source d7525c946)
 ------------------------------------------------
 The final worker full-source verification artifact is:
 output/builds/browser-whole-overworld-zone/runtime-review-4/client.jar
@@ -171,7 +182,7 @@ Preserved corrections/limitations:
   source-geometry difference rather than falsely calling legacy fallback the full
   selected-source visual reference.
 
-Remaining manager-owned gates before a playable/accepted result:
+Historical remaining gate list at worker handoff (superseded by measured report):
 Full source main build and full1330sector bake; actual positive Java constructor
 and complete-catalog admission; actual WebGL upload+capacity/cleanup+ready proof;
 playable Firefox movement/UI/doors/object removal/source changes; completed Worker
@@ -179,3 +190,12 @@ frame FPS/travel/VRAM/RSS measurements. No full2GiB bake, browser/GPU/server lau
 public update or normal-default change was performed by worker1. Initial entry
 wait and residual local classic CPU reconstruction are explicit tradeoffs, not
 claims that every travel pause has disappeared.
+
+Current remaining gates after the measured experiment
+-----------------------------------------------------
+The full integrated build/bake, positive Java admission and complete actual GPU
+startup gate are done on the tested host. Resolve the stationary regression and
+residual walking stalls; establish actual dynamic-object and full image/roof/indoor
+parity, forced context-loss/long-soak and broader device/traversal acceptance before
+ordinary adoption. See browser-whole-zone-experiment-results.txt. The earlier
+browser-modern-streaming-plan.txt remains saved and deferred pending review.

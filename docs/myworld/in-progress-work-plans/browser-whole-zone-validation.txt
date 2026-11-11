@@ -1,3 +1,9 @@
+Current experiment update — November 11, 2026
+The unit-review history below is preserved. Full integrated bake and actual
+Firefox catalogue admission have since completed; measured walking improved,
+while stationary FPS regressed. See browser-whole-zone-experiment-results.txt
+for current evidence, exclusions and open adoption gates. Default remains OFF.
+
 Private whole-overworld prototype — independent validation
 =========================================================
 Worker ai3, test/browser-whole-zone-validation, baseline main 2b2a81920.
