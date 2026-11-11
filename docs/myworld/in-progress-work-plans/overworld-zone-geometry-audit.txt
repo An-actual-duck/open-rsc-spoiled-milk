@@ -25,3 +25,39 @@ Manager approved full1330sector audit with512MiBheap/SerialGC/300s timeout,
 JSONL output, noGPU/Scene/server/browser or fullzone allocation. Models/scenery
 costs will be a separate bounded phase after terrain census. CPU timings are
 measurement of the audit only, not browser loading/FPS or fullzone viability.
+
+Bounded completed census (preliminary source/independent review)
+- Full1330sector run:6.84s wall, maxRSS289728KiB, exit0; no source/runtime changes.
+  output/tests/overworld-zone-geometry-audit/full-1/{result,summary}.json.
+- L0:1780canonical24cells,6,296,889vertices/2,098,963triangles;
+  2,048,820terrain +38,678wall +11,465roof triangles. Packed vertex/index
+  730,439,124bytes; actualpositive-stitch48cell representation759,580,296bytes.
+  Primitive mesh arrays/normals lowerbound327,438,228bytes, a separate CPU figure.
+  Material batches/textures/sprites/shadowmaps/framebuffers are not in packed bytes.
+- L1wall/roof topology10,078,080packedbytes, L2 1,975,248bytes, separate dependencies.
+- All authoredsea/blank/padding included; terrain-only1373/1780L0cells,
+  structural407; L0triangle densitymin310/median1152/p951346/max1714.
+  Missing-neighbor padding explicitly reported84L0edge sectors.
+
+Scenery phase approved independently with512MiB/SerialGC/300s/2048unique-ID cap.
+Pilotfive commonTree/largeGrandTree/fishing/portal/boundary definitions pass.
+Full866unique IDs resolve actual models.orsc decode + mudclient normalization,
+per-definition material/interaction and generated-model hooks + actualobject
+chunk builder. Unsafe allocates only a bare client for these pure methods; no
+constructor, login, network, scene or graphics context. Unknown archive names
+would be reported unresolved, never counted as substitute zero/cube art.
+- output/tests/overworld-zone-geometry-audit/objects-full-1/result.json.
+  1.02s wall, maxRSS238804KiB, exit0; zero unresolved definitions/placements.
+- ManifestL0 22981scenery/boundary placements:11,180,460preparedvertices,
+  3,726,820triangles,1,296,933,360packedbytes. Includes408animated placements'
+  current baseline frame, not entire animation-library residency.
+- L1/L2objects125,551,440/39,189,672bytes separate.
+- Distinct primitive-array prototype hashes forL0:332,44,231,496packedbytes.
+  This is a hypothetical instancing lowerbound/opportunity, not existing sharing
+  eligibility. Per-instance elevation, normals, colors, animation/mutability and
+  material behavior need separate implementation/proof before sharing geometry.
+- Combined L0 terrain+current-copy object vertex/index subtotal2,027,372,484bytes
+  (~1.888GiB). No GPU-fits/performance claim; nonmesh resources are additional.
+  Do not automatically count the full GPUinterleaved stream as resident JavaRAM:
+  current CachedChunk byte accounting describes GPU resources, not owned Java
+  copies. Primitive Java-array lowerbounds are reported separately.
