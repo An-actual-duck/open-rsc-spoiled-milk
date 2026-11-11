@@ -1,0 +1,176 @@
+Adopted browser startup render defaults (READY for manager integration)
+===============================================
+
+Only ordinary WebGL startup adopts the verified model batching and immutable
+terrain query index. Rendering math, quality, view distance, UI and the desktop/
+native/software paths are unchanged. Overlay delta/rectangles and all other
+experiments remain ordinary OFF. This is not a 60 FPS claim.
+
+One canonical JS resolver owns both property values. Ordinary WebGL resolves
+both requested ON; benchmark omitted controls remain OFF with explicit ON/OFF
+retained. Private URL switches are ignored outside benchmark mode. The final
+property assembly replaces these two keys in legacy experiment property lists,
+then appends exactly one value each, preserving other experimental properties.
+Software contributes neither feature key.
+
+Bootstrap admission precedes BrowserBridge.install, Scene construction and
+Terrain initialization. Class.forName(name,false,loader) and method/native
+signature checks discover supported classes without running their static
+initializers. Ordinary missing/incompatible capability quietly resolves to
+literal OFF; explicit benchmark ON remains a strict pre-start refusal.
+Both features are validated before either property is written. No renderer or
+hot-loop code changes. The normal policy receipt reports actual Scene/static
+getters once Scene exists, under browserProof.optimizedRenderDefaults; bounded
+existing periodic terrain diagnostics report current eligible snapshot metadata.
+Unsupported old helpers remain quiet and do not manufacture enabled receipts.
+
+A stage-only derived HTML route input permits the normal private test to use
+its existing loopback server without a benchmark/fixture URL. It is restricted
+to a loopback origin and known exact loopback endpoint/port pairs; invalid input
+throws rather than falling back. Absent metadata keeps ordinary routing intact.
+No product menu/query setting, proxy, server or account change is introduced.
+
+CPU proof passed (source-bound inputs in receipt):
+output/tests/browser-optimized-render-defaults/20261111T105843255648Z/result.json
+Old/new/wrong-signature stub classloaders prove non-initializing capability
+checks and policy-before-static-init, ordinary fallback, software UNSET keys,
+benchmark omitted OFF and explicit ON refusal, and invalid property rejection.
+JS checks prove canonical uniqueness, preserved other properties, private
+controls/default rules and strict loopback routing. Mocked frontend covers
+normal, benchmark omitted, batch ON and combat variants with actual-vs-requested
+normal receipts. Actual Firefox normal login/movement/UI acceptance is recorded below.
+
+The conditional strongest measured private configuration used model batching
+ON + terrain index ON with full C/T and no overlay tracking: 55.32 FPS in one
+matched terrain pair, not a universal result. Adoption uses its proven code
+paths without changing the game renderer. Source/class/asset reuse receipts
+and the normal HTTP 8214 preview will bind the same immutable client artifact.
+
+Initial immutable preview and artifact reuse (preserved failed stage 1)
+--------------------------------------------------------------------
+Startup/frontend source 84f719c0c12d31dd63135b3bb50e5f4dd0a04a36.
+No core game source, renderer algorithm or class changed in this branch.
+Reused existing full-source Java8 client artifact:
+output/builds/browser-terrain-query-index/game-proof-1/client.jar
+SHA256 75c349ae9836fb07cf9189d29abe2509a970470f5015beea4378256788d7bff6
+Game source commit 46c00c29a18936816b9a372b3de42af90f24edd2.
+All 368 game-source/contract files match that source manifest; all 3,185 packaged
+runtime assets match their current maintained files. No rebuild or transplanted
+classes. The bundle intentionally combines the preserved game-source commit
+and newer reviewed startup/frontend commit; it has no single bundle commit.
+
+Client-only stage, no process/server/account/DB/proxy changes:
+output/tests/browser-gameplay-spike/optimized-render-defaults-normal-review-1/normal-preparation.json
+Normal URL http://127.0.0.1:8214/?mode=webgl has NO benchmark or fixture option.
+Cache port 43639 and the derived runtime.html metadata route exactly to
+ws://127.0.0.1:43539/, the existing disposable final combat server. The private
+account is renderdemo. The validated effective endpoint appears in proof data.
+The receipt also gives explicit matched benchmark ON/OFF URLs using the same
+JAR/modules; the fixture switch is only present in those comparison URLs.
+
+source-reuse-provenance.json (same directory) SHA256
+7979071fe488f2ab240d776f7b0a1e2415c2937d2902137d9773dc73199cc121
+It binds all core source/asset hashes, original full-source build receipt,
+Bootstrap source hashes, and separate original/derived runtime.html hashes.
+The only derived HTML edit is one pre-module private loopback route declaration;
+maintained product UI and view settings are unchanged. Invalid route metadata
+is rejected even when a benchmark fixture is supplied, and inconsistent route/
+fixture port pairs refuse startup rather than silently routing elsewhere.
+
+CPU proof is exact-source-bound to clean 84f719, including normal/benchmark
+frontend mocks, non-initializing old/new/incompatible capability stubs, software
+UNSET keys, strict private controls and actual normal receipt handling. Existing
+repeatable-policy and candidate-control regressions also pass. Native Firefox acceptance of the revised stage is recorded below.
+
+First actual normal attempt and focused route/diagnostic revision
+----------------------------------------------------------------
+The first immutable 8214 stage failed before normal gameplay acceptance.
+Manager capture optimized-defaults-normal-session-1/startup-rejection.json
+reported Java exit 0 after approximately 5.965 seconds, with no world/model
+packets or actual-default receipt. The exit cause is not established.
+The failed stage and capture are preserved, not replaced or counted as success.
+
+A definite source protocol gap was found independently: frontend/Cache routed
+to 43539/43639 while BrowserSocket's fixture-null TCP guard permitted 43629.
+The revised stage metadata now also supplies a narrowly validated private
+loopback port property. Java accepts 43639 or 43649 only, requires any explicit
+fixture to agree, rejects nonloopback hosts/wrong ports before wsOpen, and keeps
+the original 43629 behavior when metadata is absent. This fixes the contract
+inconsistency; the pre-login exit must still be localized through actual trace.
+
+Bounded normal-only startup diagnostics use a proof-only native channel and
+leave UI/status text alone. After OpenRSC.main returns, its existing uncaught
+logger is chained (not replaced), and up to 12 startup observations capture the
+real client-loop state/daemon/alive plus the last 4096 bytes of its virtual
+runtime log. Existing per-thread/core behavior remains unchanged. No daemon
+changes, keepalive, shutdown hook or guessed lifecycle fix were introduced.
+OpenRSC schedules GUI startup via Swing.invokeLater; the client loop is already
+explicitly non-daemon. Those facts do not establish why this session exited.
+
+CPU route/lifecycle observation proof:
+output/tests/browser-optimized-render-defaults/20261111T110737725078Z/result.json
+Tests cover Java selected-port/host/fixture validation, original default route,
+chaining the original exception cause, absent/NEW/TERMINATED loop observations,
+log-tail capture and sample cap. These are observations of unchanged thread
+lifetime, not proof that real browser startup is fixed. The new private stage
+must bind a new source commit and preserve the prior failed stage.
+
+Revised immutable stage and actual normal acceptance
+----------------------------------------------------
+Final startup/frontend runtime source:
+de6fcd8a34ec4acaf2d63788147a6c5b6c07588d
+Client-only HTTP 8214 stage 2:
+output/tests/browser-gameplay-spike/optimized-render-defaults-normal-review-2/normal-preparation.json
+The normal URL remains http://127.0.0.1:8214/?mode=webgl with NO benchmark or
+fixture parameter. The stage preserves the original immutable game JAR 75c349,
+all 368 game-source/contract bytes and all 3,185 maintained packaged assets.
+Only Bootstrap/frontend startup/route/diagnostic code changes; no render math,
+UI, quality, world view distance, game thread lifetime or server/account changes.
+No full game build or class transplant occurred.
+
+Revised source-reuse-provenance.json SHA256 (same stage directory):
+e075d51d522b4776d91bae78bff6d079d72b73db777d524ad11a13201046a021
+It binds the current Bootstrap sources, separately derived runtime.html route,
+original full-source game artifact receipt and unchanged game/asset hashes.
+Java guard and frontend both select 43639/43539, respectively. The proof exports
+javaPrivateLoopbackPort=43639 and the exact loopback endpoint/origin.
+
+Manager-owned actual Firefox normal stage 2 acceptance PASSED:
+- Ordinary startup and login reached GAME and world ready without benchmark or
+  fixture policy. repeatableFixtureRequested is null.
+- optimizedRenderDefaults reports both batchedModelKernel and terrainQueryIndex
+  requested:true, available:true, enabled:true from actual getters.
+- Loaded terrain metadata is present/eligible/enabled with protocol 8/dimension 3.
+- Startup observations show main returned before the loop existed, followed by
+  the actual RUNNABLE/alive, non-daemon client loop. No exit was reproduced.
+- Manager visual review accepted the context menu/Walk here and game UI.
+- A fresh authoritative viewer confirmed a normal click moved the character
+  from (502,453,0) to (499,456,0). The world remained ready, lastError was null
+  and held frames were zero. The manager then stopped this private client.
+
+Manager evidence directory:
+output/diagnostics/browser-frame-architecture/optimized-defaults-normal-session-2/
+  first-ready.json SHA256
+  26afdce9cadd2a6e852e629ec84c8d6d70a16341e3eb4b01c77d0f1aacf4ffdf
+  first-ready.png SHA256
+  0251353d9f8471d4c06f7ca383a379a786d4890f16c67073fa6650298c5a5edb
+  functional-smoke.json SHA256
+  9d4a04c758d94a62a6b0a326abf5055926fa745a6e23b4be298da8fb97ee083a
+  context-menu.png SHA256
+  7739d5c2b10192801a475ca60d9f348b962978fd93386a321dfb97cc6a3c05b9
+  after-walk.png SHA256
+  fcc8bf10a69e6a42e6a7ce3beb5b40363c4278d7436967f099b237e2137a50e5
+
+The earlier stage 1 exit 0 remains unexplained and was not reproduced in stage 2.
+The Java route-guard mismatch was a definite independently proven protocol bug;
+this successful attempt does not establish that it caused the earlier pre-login
+exit. The preserved failed capture is not reclassified as a success. No blind
+keepalive, daemon change, shutdown hook or core lifecycle alteration was used.
+Bounded chained diagnostics remain available to localize a recurrence.
+
+READY exact report-only handoff after normal acceptance; runtime source de6fcd8
+and every frozen stage/artifact/hash stay unchanged. This adopts only the proven
+browser features. Desktop/native/software behavior and private benchmark
+controls retain their prior semantics. Earlier FPS evidence remains conditional;
+this functional smoke is not a new FPS benchmark or a 60 FPS claim. Manager
+owns integration tests/publication; this task accessed no public server.
