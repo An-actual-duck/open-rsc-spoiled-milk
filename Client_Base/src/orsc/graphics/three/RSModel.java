@@ -127,7 +127,8 @@ public final class RSModel {
         int[] roots=new int[]{graph.capture(model.faceDiffuseLight),graph.capture(model.faceIndexCount),graph.capture(model.faceIndices),graph.capture(model.facePickIndex),graph.capture(model.scenePolyNormalShift),graph.capture(model.scenePolyNormalMagnitude),graph.capture(model.faceTextureBack),graph.capture(model.faceTextureFront),graph.capture(model.faceTextureUStart),graph.capture(model.faceTextureUScale),graph.capture(model.m_zb),graph.capture(model.vertDiffuseLight),graph.capture(model.vertexParam2),graph.capture(model.vertexParam6),graph.capture(model.vertLightOther),graph.capture(model.vertX),graph.capture(model.vertXRot),graph.capture(model.vertYRot),graph.capture(model.vertZ),graph.capture(model.vertZRot),graph.capture(model.faceMaxX),graph.capture(model.faceMaxY),graph.capture(model.faceMaxZ),graph.capture(model.faceMinX),graph.capture(model.faceMinY),graph.capture(model.faceMinZ),graph.capture(model.faceNormX),graph.capture(model.faceNormY),graph.capture(model.faceNormZ),graph.capture(model.faceParam1),graph.capture(model.fishingSpotClarityBaseX),graph.capture(model.fishingSpotClarityBaseY),graph.capture(model.fishingSpotClarityBaseZ),graph.capture(model.fishingSpotClarityRippleGroup),graph.capture(model.vertXTransform),graph.capture(model.vertY),graph.capture(model.vertYTransform),graph.capture(model.vertZTransform)};
         return pool.intern(graph.descriptor(scalars,roots));
     }
-    public static RSModel instantiatePreparedState(int descriptor,WholeRamData.Pool pool) {
+    public static RSModel instantiatePreparedState(int descriptor,WholeRamData.Pool pool) { return instantiatePreparedState(descriptor,pool,null); }
+    public static RSModel instantiatePreparedState(int descriptor,WholeRamData.Pool pool,long[] copiedBytes) {
         if(descriptor==-1)return null;
         WholeRamData.ModelArrays a=new WholeRamData.ModelArrays(pool,pool.ints(descriptor),54,38);
         RSModel m=new RSModel(0,0);int[] v=a.scalars;
@@ -223,6 +224,7 @@ public final class RSModel {
         m.vertY=(int[])a.root(35);
         m.vertYTransform=(int[])a.root(36);
         m.vertZTransform=(int[])a.root(37);
+        if(copiedBytes!=null)copiedBytes[0]+=a.copiedBytes;
         return m;
     }
 

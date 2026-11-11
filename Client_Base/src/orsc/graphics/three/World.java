@@ -276,11 +276,19 @@ public final class World {
             WorldModelProduct product=w.loadWorldModelProduct(0,sx,sy,true,!Config.C_HIDE_ROOFS,false);d[at++]=pool.intern(product.roofInput.roofCoverageBits);d[at++]=product.roofInput.roofCoveredTileCount;
             if(at!=d.length)throw new AssertionError(at);return new PreparedActivation(pool,pool.ints(pool.intern(d)));
         }
+        public void validate(java.util.Set<Integer> models){
+            if(d[3]<0||d[3]>1||d[4]<0||d[4]>20736||d[5]<0||d[5]>20736)throw new IllegalStateException("Prepared activation counters/options");
+            for(int i=0;i<9;i++){if(pool.ints(d[6+i]).length!=9216||d[15+i]<0||d[15+i]>1)throw new IllegalStateException("Prepared sector/loaded flag");}
+            int at=24;for(int i=0;i<288;i++)if(pool.ints(d[at++]).length!=144)throw new IllegalStateException("Prepared tile page dimensions");
+            for(int x=0;x<12;x++)for(int z=0;z<12;z++)if(pool.ints(d[at++]).length!=Math.min(36,429-x*36)*Math.min(36,429-z*36))throw new IllegalStateException("Prepared minimap page dimensions");
+            for(int i=0;i<288;i++){int id=d[at++];if(id>=0&&models.add(id))RSModel.instantiatePreparedState(id,pool);else if(id< -1)throw new IllegalStateException("Prepared model reference");}
+            if(((long[])pool.get(d[at++])).length!=(144*144+63)/64||d[at]<0||d[at]>144*144)throw new IllegalStateException("Prepared roof metadata");
+        }
         public long activate(World w){
             if((Config.C_HIDE_ROOFS?1:0)!=d[3])throw new IllegalStateException("Whole-RAM CPU roof option changed; recook prepared products");
             // Materialize all mutable model workspaces BEFORE changing active publication.
-            RSModel[] walls=new RSModel[144],roofs=new RSModel[144];int modelStart=6+18+432;
-            for(int i=0;i<144;i++){walls[i]=RSModel.instantiatePreparedState(d[modelStart+i],pool);roofs[i]=RSModel.instantiatePreparedState(d[modelStart+144+i],pool);}
+            RSModel[] walls=new RSModel[144],roofs=new RSModel[144];int modelStart=6+18+432;long[] modelBytes=new long[1];
+            for(int i=0;i<144;i++){walls[i]=RSModel.instantiatePreparedState(d[modelStart+i],pool,modelBytes);roofs[i]=RSModel.instantiatePreparedState(d[modelStart+144+i],pool,modelBytes);}
             w.resetModels();int at=6;int[] loaded=new int[9];System.arraycopy(d,15,loaded,0,9);
             for(int n=0;n<9;n++){int[] data=pool.ints(d[at++]);if(data.length!=2304*4)throw new IllegalStateException("Prepared sector dimensions");Sector sector=w.sectors[n];boolean isLoaded=loaded[n]!=0;if(sector==null||sector.isLoaded()!=isLoaded)sector=isLoaded?Sector.blankLoaded():new Sector();for(int i=0;i<2304;i++){Tile t=sector.getTile(i);t.groundElevation=data[i*4];t.diagonalWalls=data[i*4+1];int a=data[i*4+2],b=data[i*4+3];t.groundTexture=(byte)a;t.groundOverlay=(byte)(a>>>8);t.roofTexture=(byte)(a>>>16);t.horizontalWall=(byte)(a>>>24);t.verticalWall=(byte)b;t.editorPaintedOverlay=(b&256)!=0;}w.sectors[n]=sector;}at+=9;
             for(int x=0;x<12;x++)for(int z=0;z<12;z++)copyPage(pool.ints(d[at++]),w.collisionFlags,x,z);
@@ -288,7 +296,7 @@ public final class World {
             int[] pixels=new int[429*429];for(int x=0;x<12;x++)for(int z=0;z<12;z++){int width=Math.min(36,429-x*36),height=Math.min(36,429-z*36);int[] page=pool.ints(d[at++]);if(page.length!=width*height)throw new IllegalStateException("Prepared minimap page");for(int y=0;y<height;y++)System.arraycopy(page,y*width,pixels,(z*36+y)*429+x*36,width);}
             w.minimapGraphics.blackScreen(true);w.minimapGraphics.publishMinimapRaster(pixels,429,429);w.modelWallGrid[0]=walls;w.modelRoofGrid[0]=roofs;for(RSModel model:walls)if(model!=null)w.scene.addModel(model);for(RSModel model:roofs)if(model!=null)w.scene.addModel(model);
             w.nativeTerrainAuthorityOnlyActive=true;w.nativeLayeredTerrainAppliedSectionX=sectionX;w.nativeLayeredTerrainAppliedSectionY=sectionY;w.nativeLayeredTerrainAppliedTiles=d[4];w.nativeLayeredTerrainNonVoidTiles=d[5];
-            return 9L*2304*16+144L*144*8+429L*429*4;
+            return modelBytes[0]+9L*2304*16+144L*144*8+429L*429*4;
         }
         public long[] roofBits(){return (long[])pool.get(d[d.length-2]);}
         public int roofCount(){return d[d.length-1];}
@@ -4789,12 +4797,12 @@ public final class World {
 		}
 	}
 
-    public void publishWholeRamActivation(PreparedActivation recipe,Renderer3DWorldChunkFrame query){
-        recipe.activate(this);renderer3DWorldChunkFrame=query;clearPredictiveRenderer3DWorldChunkFrame();
+    public long publishWholeRamActivation(PreparedActivation recipe,Renderer3DWorldChunkFrame query){
+        long start=WorldStreamManager.now();long copied=recipe.activate(this);renderer3DWorldChunkFrame=query;clearPredictiveRenderer3DWorldChunkFrame();
         symmetricRenderer3DWorldChunkFrame=null;symmetricOuterRenderer3DWorldChunkFrame=null;symmetricRetainableRenderer3DWorldChunkFrame=null;
         worldStreamManager.markActiveWindow(0,recipe.sectionX,recipe.sectionY,ACTIVE_SECTION_GRID,ACTIVE_SECTION_ORIGIN_OFFSET);
-        worldStreamManager.recordActiveWindowLoad(0,recipe.sectionX,recipe.sectionY,0);
-        logNativeLayeredTerrainActivation(recipe.sectionX*48,recipe.sectionY*48,0,recipe.sectionX,recipe.sectionY);
+        worldStreamManager.recordActiveWindowLoad(0,recipe.sectionX,recipe.sectionY,WorldStreamManager.elapsedSince(start));
+        logNativeLayeredTerrainActivation(recipe.sectionX*48,recipe.sectionY*48,0,recipe.sectionX,recipe.sectionY);return copied;
     }
 
 	private boolean shouldUseNativeTerrainAuthorityOnly() {

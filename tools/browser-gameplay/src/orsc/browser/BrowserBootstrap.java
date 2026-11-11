@@ -18,6 +18,7 @@ public final class BrowserBootstrap {
     public static native void reportCandidatePolicy(String name,boolean requested,boolean available,boolean enabled);
     public static native void reportBatchedModelWork(int[] counters);
     public static native void reportWholeZoneWork(int[] counters);
+    public static native void reportWholeRamWork(int[] counters);
     public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportCombatState(String username,String names,int[] counters);
     public static native void reportModelPickBounds(boolean requested,boolean enabled);
@@ -96,6 +97,12 @@ public final class BrowserBootstrap {
                 }
             }
         }
+        if(Boolean.getBoolean("spoiledmilk.browserWholeRam")) {
+            if(!webgl||!Boolean.getBoolean("spoiledmilk.browserBenchmark")||!Boolean.getBoolean("spoiledmilk.browserWholeZone"))throw new IllegalStateException("Whole-RAM delivery requires private whole-zone WebGL mode");
+            java.util.HashSet<String> expected=new java.util.HashSet<String>(java.util.Arrays.asList("Cache/whole-ram/manifest.json","Cache/whole-ram/source.bin","Cache/whole-ram/prepared.bin"));
+            try(BufferedReader index=new BufferedReader(new FileReader("/app/bootstrap-whole-ram-files.txt"))){String relative;while((relative=index.readLine())!=null){if(!expected.remove(relative))throw new IOException("Unexpected/duplicate whole-RAM staged path");File destination=new File("/files",relative);destination.getParentFile().mkdirs();try(InputStream input=new FileInputStream("/app/"+relative);OutputStream output=new FileOutputStream(destination)){byte[] buffer=new byte[65536];int n;while((n=input.read(buffer))!=-1)output.write(buffer,0,n);}}}
+            if(!expected.isEmpty())throw new IOException("Incomplete whole-RAM delivery roster");
+        }
         // Explicit test-only software presentation. Desktop defaults are untouched.
         String[] off = {"openglPresenter", "openglInput", "openglPrimaryWindow",
             "openglWorldMesh", "openglWorldMeshTexturedVisible",
@@ -119,6 +126,7 @@ public final class BrowserBootstrap {
                 boolean[] actual=BenchmarkCandidatePolicies.inspect("orsc.BrowserWebGLBridge","isWholeZoneEnabled");
                 if(!actual[0]||!actual[1])throw new IllegalStateException("Requested whole-zone mode is unsupported by this client JAR");
             }
+            if(Boolean.getBoolean("spoiledmilk.browserWholeRam")&&!orsc.BrowserWebGLBridge.isWholeRamEnabled())throw new IllegalStateException("Whole-RAM requires explicit benchmark and whole-zone mode");
             orsc.BrowserWebGLBridge.install();
             reportOverlayRectPolicy(System.getProperty("spoiledmilk.browserOverlayRectMode","off"),orsc.BrowserWebGLBridge.getOverlayRectMode());
             reportSpriteKeyPolicy(Boolean.parseBoolean(System.getProperty("spoiledmilk.browserSpriteKeyLimbs", "true")),orsc.BrowserWebGLBridge.isSpriteKeyLimbsEnabled());
@@ -211,6 +219,7 @@ public final class BrowserBootstrap {
                                 if(!candidatePoliciesReported&&observedScene!=null) {
                                     String[][] policies={{"geometryTransfer","spoiledmilk.browserGeometryTransferReuse","orsc.BrowserWebGLBridge","isGeometryTransferReuseEnabled"},
                                         {"wholeZone","spoiledmilk.browserWholeZone","orsc.BrowserWebGLBridge","isWholeZoneEnabled"},
+                                        {"wholeRam","spoiledmilk.browserWholeRam","orsc.BrowserWebGLBridge","isWholeRamEnabled"},
                                         {"regionBuild","spoiledmilk.browserRegionBuild","orsc.graphics.three.BrowserRegionBuild","isEnabled"},
                                         {"regionLoadProfile","spoiledmilk.browserLoadProfile","orsc.BrowserWebGLBridge","isLoadProfileEnabled"},
                                         {"regionPreparation","spoiledmilk.browserRegionPreparation","orsc.graphics.three.World","isBrowserRegionPreparationEnabled"},
@@ -237,6 +246,7 @@ public final class BrowserBootstrap {
                                 int[] batchWork=snapshotBatchedModelWork(observedScene,Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel"));
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeZone"))reportWholeZoneWork(snapshotWholeZoneWork());
+                                if(Boolean.getBoolean("spoiledmilk.browserWholeRam"))reportWholeRamWork(snapshotWholeRamWork());
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
                                 reportRegionPreparationDiagnostics(regionCounts!=null,terrainDiagnostics.append(((orsc.mudclient)client).getWorld(),regionCounts));
@@ -255,6 +265,11 @@ public final class BrowserBootstrap {
     }
 
     /** No receipt until Scene exists; a missing/invalid getter after startup stays fatal. */
+    static int[] snapshotWholeRamWork() throws ReflectiveOperationException {
+        Object work=Class.forName("orsc.BrowserWebGLBridge").getMethod("getWholeRamWork").invoke(null);
+        if(!(work instanceof int[])||((int[])work).length!=0&&((int[])work).length!=18)throw new IllegalStateException("Invalid whole-RAM work getter");return ((int[])work).clone();
+    }
+
     static int[] snapshotWholeZoneWork() throws ReflectiveOperationException {
         Object work=Class.forName("orsc.BrowserWebGLBridge").getMethod("getWholeZoneWork").invoke(null);
         if(!(work instanceof int[])||((int[])work).length!=0&&((int[])work).length!=9)throw new IllegalStateException("Invalid whole-zone work getter");
