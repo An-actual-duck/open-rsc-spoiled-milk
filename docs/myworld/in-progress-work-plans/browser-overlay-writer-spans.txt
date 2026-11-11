@@ -1,4 +1,4 @@
-Browser overlay writer spans (ACTIVE experimental pilot)
+Browser overlay writer spans (READY private experimental pilot)
 =======================================================
 
 Scope and controls
@@ -40,7 +40,7 @@ Finally always ends an admitted lexical scope, including swallowed mono errors.
 Reset/epoch changes cannot inherit suppression. ACK/base history stays owned
 by the existing delta transport. Prepared plans remain immutable snapshots.
 
-Required evidence (pending)
+Proof obligations
 ---------------------------
 Frozen baseline/off/on full C and raw-T comparisons, clipped/interlaced alpha,
 mono and AA sparse glyphs, malformed source/geometry exception prefixes,
@@ -60,3 +60,45 @@ history/plane/ACK checks (142 rectangle frames), coverage/native RGB, private
 startup controls/defaults and mocked frontend passed. Persisted ai1 receipt:
 output/tests/browser-overlay-writer-spans/e87/result.json.
 No actual browser, GPU or performance acceptance yet.
+
+Default-path guard and frozen artifact
+-------------------------------------
+2d4aebdc00eb0a49d42dc9321d60ae240955517b adds explicit OFF fast guards:
+GraphicsController checks the package-final flag before invoking scope admission;
+Coverage calls delta.mark directly when scopes are OFF, and skips diagnostics
+clearing when OFF. The scoped helper and foreign-writer checks are opt-in.
+Per-pixel suppressed-mark diagnostics remain bounded saturating counters; their
+own overhead must be included in actual performance acceptance.
+
+Full Java8 source artifact, no class transplant:
+output/builds/browser-overlay-writer-spans/game-guard-2/client.jar
+SHA256 76794cffe05040bca4eac78c7e62d6b72fb3896ee1357365af883de2afb43fa1
+Receipt, source manifest, compiled-class manifest and baseline-comparison.json
+are adjacent. Build output has 948 classes (658 orsc, 290 com), all Java8;
+all match their packaged class bytes. Both this and bf2aeb contain the exact
+same 2,030 total class entry names. Only 12 expected bridge/graphics/coverage/
+transport class-family entries differ; no unexpected code family changed.
+All 2,265 maintained animation PNGs match runtime source bytes.
+
+Client-only stages (no processes/server/DB/request changes):
+output/tests/browser-gameplay-spike/overlay-writer-spans-combat-review-2/combat-preparation.json
+  HTTP8209; existing final combat server TCP43639/WS43539.
+output/tests/browser-gameplay-spike/overlay-writer-spans-static-review-2/repeatable-preparation.json
+  HTTP8210; existing repeatable server TCP43649/WS43549.
+Both receipts give matched url/urlOff (packed transport, batch ON, key limbs ON).
+The existing overlayDeltaFrame call appends one five-int diagnostic snapshot;
+there is no additional per-frame native invocation. The seven overlay/delta/
+unpack/staging/owned-state/retained/atlas rendering modules are byte-identical
+to the actual-GPU-proven bf2aeb stages. webgl.js changes only bounded native
+counter intake; browser.js and Bootstrap add policy reporting.
+Earlier game-proof-1 and review-1 preparations remain preserved, unused and
+superseded by guard-2/review-2. Frozen bf2aeb stages are untouched.
+
+Exact guard revision independent recheck PASS: 201 snapshots across 8 gated
+baseline/candidate JVM runs plus 3,539 lifecycle checks. Evidence (ai2):
+output/tests/browser-overlay-writer-span-independent/20261111T093748157013Z/result.json.
+Independent review READY e5c2a3dba4b3f7f3529b46947cddee3f0ce4adb5 also audited
+OFF guards and the fixed five-int native argument, with no runtime blocker.
+Actual browser integration, work counters, visual acceptance and matched FPS
+remain root-owned. READY is for review of this default-OFF experimental pilot.
+No standalone speedup, adoption or 60 FPS result is claimed.
