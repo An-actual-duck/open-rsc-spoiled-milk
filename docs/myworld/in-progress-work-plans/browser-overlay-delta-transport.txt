@@ -3,8 +3,9 @@ Browser overlay delta transport prototype
 
 Status
 ------
-Private experimental option, default OFF. ACTIVE checkpoint for independent
-review; not adoption or release readiness. URL overlaydelta=on/off only in
+Private experimental option, default OFF. READY for manager review after
+CPU/protocol checks, actual GPU parity and private client-stage preparation.
+This does not authorize adoption, default enablement or release. URL overlaydelta=on/off only in
 benchmark WebGL selects spoiledmilk.browserOverlayDeltaTransport. Ordinary
 and software URLs receive no override. BrowserWebGLBridge actual getter
 isOverlayDeltaTransportEnabled requires both the option and overlay coverage;
@@ -84,15 +85,14 @@ ANY GL, stale history, zero-upload frames and injected second-plane failure
 poison/cleanup. Validation counts do not increase with the number of bands.
 These results are CPU/protocol checks, not actual WebGL image or FPS evidence.
 
-Pending before handoff
----------------------
-Run the new frozen 8b888 literal RGB/T differential, broader relevant suites,
-full client build and artifact provenance audit. The new CPU preparer exports
-literal software planes plus transport metadata and stages a standalone real
-WebGL full-versus-delta pixel oracle for the manager. It starts no processes.
-The manager must run that oracle, representative game visuals and same-artifact
-OFF/ON FPS/loading checks before any adoption. Per-writer marking overhead and
-vertically broad UI may outweigh reduced upload payload; no gain is assumed.
+Manager acceptance work
+-----------------------
+Frozen literal-plane differential, broader suites, full client build and artifact
+provenance checks are complete. Manager-run actual WebGL comparisons pass at
+logical and odd scaled output, as recorded below. Actual game OFF/ON FPS,
+loading and interaction checks remain manager acceptance work before adoption.
+Per-writer marking overhead and vertically broad UI may outweigh reduced API
+payload. Protocol correctness and synthetic transport savings are not FPS proof.
 
 Independent review follow-up
 ----------------------------
@@ -148,3 +148,37 @@ Future oracle diagnostics include String(error) plus stack because Firefox's
 stack can omit the message/GL code. The oracle's default alpha is now true;
 explicit alpha=false remains available for the deliberately separate context
 check. Actual GPU/FPS acceptance results remain manager-owned pending evidence.
+
+Actual manager GPU proof and exact handoff scope
+-----------------------------------------------
+On Firefox154 with physical Radeon R9 200 and game-style alpha:true:
+  scale1: 159 frames, 7,831,552 compared RGBA bytes, zero differences;
+  scale2 with odd physical output: 159 frames, 31,613,820 bytes, zero differences.
+Each run completed two post-upload borrowed-source mutations and two retained
+output-resize deferrals, with errors[]. Worker independently checked the raw
+actual.json results, all frame changedBytes values and accepted receipts at:
+  /home/justin/Core-Framework/output/diagnostics/browser-frame-architecture/overlay-gpu-alpha-2/
+  /home/justin/Core-Framework/output/diagnostics/browser-frame-architecture/overlay-gpu-alpha-physical-1/
+
+The CPU state counters contain 156 eligible transport submissions (141 partial,
+15 full); the exported hardware corpus has three additional literal fallback
+frames, for 159 total. The first scale1 collector incorrectly expected156 and
+rejected the complete capture. The unchanged raw capture was then revalidated
+against its159-frame manifest; the original collector receipt is preserved as
+receipt.collector-expected156.json. No failed pixels or data were discarded.
+The prior alpha:false zero-comparison setup failure stays explicitly excluded.
+These comparisons prove the existing affine shader output is preserved, not
+that the affine approximation itself equals arbitrary native compositing.
+
+Client-only game stages, prepared with unchanged0b4e composite JAR and current
+frontend/Bootstrap content byte-identical to runtime checkpoint7e909:
+  output/tests/browser-gameplay-spike/overlay-delta-static-review-1/
+    repeatable-preparation.json; HTTP8194, TCP43649/WebSocket43549;
+  output/tests/browser-gameplay-spike/overlay-delta-combat-review-1/
+    combat-preparation.json; HTTP8195, TCP43639/WebSocket43539.
+Each receipt provides OFF/ON URLs and the exact HTTP command, explicitly labels
+singleProductionCommit:false, and points to existing dedicated private servers.
+Copied credentials are empty; combat animation audit is2265files/0missing/
+0different. No new server, database, request file or running process was created
+or changed by this worker. All performance/adoption decisions remain with the
+manager; the implementation remains default OFF.
