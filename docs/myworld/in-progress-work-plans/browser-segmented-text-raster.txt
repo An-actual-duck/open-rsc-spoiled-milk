@@ -1,0 +1,34 @@
+Private segmented TEXT raster (ACTIVE implementation)
+====================================================
+
+Only consecutive final drawColoredString plot lists may defer. Parsing, random
+colors, inline icons, font remapping and shadow/glyph order remain authoritative.
+Own font snapshots at each TEXT, scalar plot/clip snapshots and once-only literal
+replay; never reconstruct or rerun UI. Limits256 texts,4096 plots,8MiB snapshot
+fonts,2M clipped glyph work. Fresh MODE_WORLD C/T only and overlaydelta OFF.
+A whole segment is materialized synchronously before ANY other raster/read/
+escape/mode/clip/surface/frame barrier. Native status0 guarantees no writes and
+may replay saved plots/fonts/clip once; after-write errors poison/hold the frame,
+never replay over partial alpha. Recovery requires a fresh cleared world frame.
+
+Closed maintained source contract (private prototype, no production adoption):
+GraphicsController primitives, sprites/palettes/scales, minimap/rotations,
+blur, framebuffer captures/reads, clear/fade, clip, frame/mode/owner/surface and
+presentation methods all flush. Scene retains an alias and delegates to Shader,
+MiscFunctions/static scanlines and depth-copy; their consuming render/resize/
+bind paths flush first. ORSCApplet retains BufferedImage/DataBuffer aliases:
+every presentation/getter and bind/read use flushes, not only initial binding.
+mudclient editor line raw writes flush before access. FloatingHitSplat scratch/
+measure/export always remains software and never defers. Public raw pixelData
+is not privatized; unknown external plugins/reflection/concurrent aliases are
+outside this closed private contract. A source-roster guard must reject new
+unaudited maintained raw uses, including delegated alias consumers.
+
+Ordinary OFF glyph/AA/coverage hot bodies must remain byte-for-byte source equal.
+The capture guard is only at final TEXT plot dispatch. All other methods add
+only opt-in barriers outside their per-pixel loops. Fonts are not identity-cache
+safe: mutable source is snapshotted per TEXT; native input is a separate packed
+copy so rejection replay uses untouched private Java snapshots. Native validates
+all scalar/source/output extents, byte-range aliases, tokens and order before
+writing. Registry/queue implementation is a first standalone milestone; actual
+suppression, poison boundary, native ABI and frozen CPU/native tests follow.
