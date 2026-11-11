@@ -27,3 +27,61 @@ GPU exact replay, then private same-artifact gameplay functional/FPS acceptance
 by manager. No worker browser/server/GPU processes. Port8217 reserved for client
 preparation against existing combat43639/43539; artifacts under declared output
 categories.
+
+Implementation checkpoint and limits
+- Runtime88af6b08ebc1d50fab86bec34ef4461fcf42631b; ordinary renderworker
+  absent/OFF keeps the existing main backend. Explicit ON requires private
+  async WebGL coverage and overlaydelta OFF. No Java raster/renderer edits.
+- Frame batch closes at final frameWork after WORLD present. LOGIN/opaque
+  present and holdWorld close directly, with no expected frameWork. Result
+  barriers (initialize, sprite plan) flush a nonframe batch and await actual
+  return. Resource prefixes cannot be dropped to cancel a pending draw.
+- ACK means backend execution/submission completed, not GPU fence completion
+  or physical scanout. Worker Java/world frame counters and interval samples
+  are authoritative; main producer calls are separate. Queue age, allocation,
+  copy time, transfers, pool and backpressure have separate counters.
+- Input payloads use intrinsic shape/getters and byte copies. ArrayBuffer
+  copies preserve raw float bits and view offsets, reject SharedArrayBuffer.
+  Whole command/envelope/endpoint metadata is preflighted before backend
+  prefix execution; backend semantic errors poison rather than falsely ACK.
+- Two unACKed64MiB packets plus one producer64MiB +16MiB/1024-buffer exact-size
+  returned pool =208MiB maximum transport owned payload capacity. This is not
+  a process-wide heap/driver/GC bound. Java sources, shader strings, derived
+  backend metadata/resources, message envelopes and engine overhead additional.
+  No Java/input buffer is transferred. Returned owned packet buffers are
+  detached from Worker only after all commands execute, then overwritten on
+  next synchronous capture. Pool is cleared on disposal/fatal failure.
+- Backend input lifetime audit: chunk batches/bounds, world readiness metadata,
+  sky ranges/values, lighting values/mask bounds and atlas metadata/quads have
+  explicit owned copies. Raw C/T/palette/geometry/mask planes are synchronously
+  consumed by WebGL APIs. Hardware retained-resource test still required.
+- Physical dimensions use main DOM rect/DPR with monotone size epoch and the
+  SAME physicalOutputSize formula/capability. Worker size() rejects absent or
+  zero metrics. Main aligns the existing CSS display before worker present.
+  Fit/fullscreen/input remain main-owned. No resolution/camera/quality cut.
+- Stats use closed metadata object/history whitelist and bounded recursive
+  shape. Actual pushed interval samples include equal samples and full rings;
+  measurement policy is ordered to worker and acknowledged. No framebuffer,
+  typed-plane or arbitrary cache clone in diagnostics.
+- Oracle-only capture reads RGBA in worker completion task before ACK, retains
+  max one owned output, and transfers it on request. It can overwrite EVERY
+  returned input buffer before pool insertion. Confirmed disposal awaits
+  backend ledger cleanup; ordinary disposal terminates promptly and rejects
+  waiters, without claiming observed backend resource cleanup.
+
+CPU proof
+- Independent exact88af review8bfb0f3e3f67e3808d3ed37b39757470a47a4bb6:
+  180 checks PASS; ownership/raw bits/offsets, real structuredClone transfers,
+  2-slot backpressure, resource order, malformed final command zero-prefix,
+  version/epoch/result identity, poisoned/fatal/dispose cleanup, lifecycle,
+  pool return overwrite/reuse, bounded stats/sample shapes and physical math.
+  Receipt: ai2/output/tests/browser-render-worker-protocol-independent/
+  20261111T123626005011Z/result.json. CPU only, no hardware/Worker-FPS claim.
+- Local CPU facade20checks and default/worker-combat mocked frontend PASS.
+  An initial worker mock omitted required overlay=coverage; preserved failed
+  fixture log, corrected test query then passed. No runtime workaround.
+- Initial full build invocation lacked system ant; failed prebuild log retained.
+  Repository vendored Ant with Java8 full source build succeeded3seconds.
+
+Status: ACTIVE; actual GPU exact replay and gameplay acceptance still pending.
+No adoption/performance/60FPS claim. All prior rejected experiments preserved.
