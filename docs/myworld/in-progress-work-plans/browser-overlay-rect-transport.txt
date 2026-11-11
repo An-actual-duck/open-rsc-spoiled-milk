@@ -53,13 +53,37 @@ Existing retained token validation, draw/ACK, shader and upload bytes stay the
 same. stats.overlayDeltaLast.transport reports row/full, rectangleMode reports
 observe/off, and tileObservation reports real writer footprint plus its bitmap.
 
-CPU tests prepared (not yet run at this checkpoint)
---------------------------------------------------
+Observe CPU proof and immutable stage
+-------------------------------------
 WorldOverlayTileTrackerFixture compares marks/spans against an independent
 per-pixel writer trace over seeded odd dimensions, tests row crossing and tile
 edges, stale cache reset, actual coverage hooks and current/ACK disappearance /
-held-frame semantics. Existing literal-plane and GL-double suites remain the
-row/FULL reference. Manager's active timing window requires tests/builds wait.
+held-frame semantics: 28,018 checks PASS. Existing 970 history/planes/ACK checks
+PASS. Frozen baseline/current delta OFF/ON and new observe literal RGB/T digest
+all equal 87b10499cb867a30bce5af0870b650fc7a2030caf13772371c57d2d92741c803.
+Existing pure policy, GL-double and ordinary frontend mock suites PASS.
+Independent worker review/tests against exact2545 source pass 7,343 tile/ACK /
+unpack/reference checks, including nonzero typed-view offsets and malformed
+metadata rejected before any enumeration/GL. Evidence is in ai-2/output/tests/
+browser-overlay-rect-independent-review/20261111T081204503843Z/result.json.
+
+Observe runtime/source checkpoint2545bd1132dec60073efa18871c0db485d2872c9 is
+frozen for this diagnostic stage. Java8 full source build PASS, 710 client-owned
+major52 classes. output/builds/browser-overlay-rect-transport/observe-2545/
+client.jar SHA256 a6dcfccbda1935e08e1f2797d821a8cc9c2fdb9dd73533ae45c1eb6fb3384a89.
+receipt.json/source-manifest.json there identify exact clean single-source
+provenance and build log. No experimental class transplant/composite artifact.
+
+Client-only stages (not started by worker):
+output/tests/browser-gameplay-spike/overlay-tiles-observe-static-1/
+repeatable-preparation.json: HTTP8204, existing baseline2 TCP43649/WS43549.
+output/tests/browser-gameplay-spike/overlay-tiles-observe-combat-1/
+combat-preparation.json: HTTP8205, existing ai-3 browser-combat-workload-final-1
+TCP43639/WS43539. Both expose observe url and row-only urlControl, with explicit
+modelbatch=on,overlaydelta=on,spritekeylimbs=on. Empty copied credentials, correct
+Cache ports and all2,265 packaged animation PNGs were verified. No process,
+server, DB or request mutation. Parent now needs actual supported-writer
+occupancy and a source-content containment check before rectangle work.
 
 Future rectangle contract (pending observed coverage)
 -----------------------------------------------------
