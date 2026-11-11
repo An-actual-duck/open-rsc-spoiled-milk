@@ -1,0 +1,62 @@
+Whole-overworld RAM experiment — implementation contract (ACTIVE)
+===============================================================
+
+Private, explicit wholeram=on, requiring wholezone=on and browser benchmark
+mode. Ordinary browser/native/software paths remain literal. No server protocol,
+map, visual scope, fog, collision rule or gameplay authority changes.
+
+The experiment retains three different things, reported separately:
+1. All 1,797 exact selected-package files (46,101,718 payload bytes), in one
+   owned, indexed WRA1 source bundle. These bytes alone are NOT prepared-ready.
+2. 445 global L0 activation recipes captured by the production native-authority
+   landscape pipeline. Recipes retain cooked tile fields, static collision,
+   final elevations, minimap pixels, and ordered wall/roof picking models.
+   Primitive pages are content-interned across recipes. Active arrays/models
+   are independently owned; identical immutable pages never merge independent
+   mutable aliases. Live scenery, doors and trees are applied after activation
+   by the existing authoritative materialization path.
+3. 1,330 canonical global L0/L1/L2 CPU query-cell products. These support the
+   existing terrain definition/roof/lighting queries without rebuilding the
+   full visual GPU mesh on each crossing. The separate GPU catalog supplies
+   visual geometry. GPU mesh avoidance is counted separately from recipe hits.
+
+Only global L0 consumes activation recipes. Signed underground, positive
+non-overworld levels and other world spaces keep the original bounded path.
+Unknown/stale source, editor patches, mismatched client/catalog/settings,
+unsupported CPU roof options or incomplete preparation refuse the private mode.
+Content-identical snapshot epochs reuse preparation; network readiness and local
+object authority remain mandatory. No stale server packet can activate a window.
+
+Delivery: Cache/whole-ram/manifest.json (<=4 MiB), source.bin and prepared.bin.
+Raw manifest/bundle is owned by the frontend tooling. Java owns WRP1 prepared
+format and validates all lengths/counts before allocation/publication. The
+prepared extension contains schemaVersion,path,bytes,sha256,recipes,queryCells,
+levels,pageCount,modelTemplateCount,retainedPrimitiveBytes. complete=true requires
+the exact full roster; bounded pilot outputs remain incomplete and cannot claim
+whole-RAM readiness. Preparation is atomic; no partially decoded provider is
+installed. Prepared bytes are streamed into typed storage, not retained twice.
+
+World integration will bypass terrain/wall/roof emission, grid splitting and
+redundant GPU construction on a prepared activation. It will still reset/publish
+the local scene, copy mutable collision/tile/elevation state, instantiate mutable
+model workspaces, apply live authority and perform ordinary picking/projection.
+Scenery model cloning is deliberately retained in this first experiment.
+
+Bounded test entry uses the same capture/activation/codec path on a few specified
+centres. It reports partial preparation and cannot satisfy startup readiness.
+Tests compare production output including model/face/pick order, transformed
+coordinates, light/material/UV data, directions, minimap, collision, elevation,
+fresh content-identical epochs, mutation isolation and live overlay behavior.
+
+Low-frequency reportWholeRamWork(int[18]): schema=1, sourceReady,preparedReady,
+rawFiles,rawBytes,recipes,queryCells,primitiveBytesLo,primitiveBytesHi,activations,
+recipeHits,modelsInstantiated,mutableBytesCopiedLo,mutableBytesCopiedHi,
+gpuBuildsAvoided,sourceValidateCount,prepareMilliseconds,activationMilliseconds.
+Counts saturate at INT_MAX except split-byte totals. These are CPU accounting,
+not browser RSS, GPU memory or a performance claim. Native fixture heap and
+browser/process RSS/peak are separate observations; CheerpJ memory is browser
+managed and receives no desktop -Xmx setting.
+
+Pilot gates precede full cooking. Root owns actual Firefox/GPU/route acceptance
+and the final unified full-source client build plus newly bound GPU bake.
+No public deployment or ordinary-default adoption is part of this experiment.
