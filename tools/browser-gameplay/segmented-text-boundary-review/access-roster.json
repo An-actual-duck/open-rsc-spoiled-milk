@@ -1,0 +1,1096 @@
+{
+  "baselineCommit": "58c61d98562e287c6e35a6056009cbe81c6d3464",
+  "scope": "Closed maintained raw owner/known image/delegate access roster. AST source tripwire, not alias-analysis/runtime proof. New expressions/files/counts require independent classification.",
+  "accesses": [
+    {
+      "file": "Client_Base/src/orsc/FloatingHitSplatRenderer.java",
+      "method": "backgroundSprite(int,String,MudClientGraphics,)",
+      "kind": "pixelData",
+      "expression": "(measure.pixelData[y * measureWidth + x] != 0)"
+    },
+    {
+      "file": "Client_Base/src/orsc/FloatingHitSplatRenderer.java",
+      "method": "backgroundSprite(int,String,MudClientGraphics,)",
+      "kind": "pixelData",
+      "expression": "new Sprite(scratch.pixelData, width, height)"
+    },
+    {
+      "file": "Client_Base/src/orsc/FloatingHitSplatRenderer.java",
+      "method": "sprite(int,int,MudClientGraphics,)",
+      "kind": "pixelData",
+      "expression": "cached = new Sprite(scratch.pixelData, width, height)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "<init>(GraphicsController,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData = var1.pixelData"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "<init>(GraphicsController,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData = var1.pixelData"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "endScene(int,)",
+      "kind": "call:copyColorTo",
+      "expression": "geometryFrame.getDepthFrame().copyColorTo(this.pixelData)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "endScene(int,)",
+      "kind": "pixelData",
+      "expression": "(this.graphics.pixelData != this.pixelData || !this.graphics.beginTransparentWorldOverlay())"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "endScene(int,)",
+      "kind": "pixelData",
+      "expression": "(this.graphics.pixelData != this.pixelData || !this.graphics.beginTransparentWorldOverlay())"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "endScene(int,)",
+      "kind": "pixelData",
+      "expression": "geometryFrame.getDepthFrame().copyColorTo(this.pixelData)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "endScene(int,)",
+      "kind": "pixelData",
+      "expression": "java.util.Arrays.fill(this.pixelData, 16777216)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "call:copyBlock16",
+      "expression": "MiscFunctions.copyBlock16(0, var17, -var15, this.pixelData, this.m_H, var16, var11 + var8, 418609192)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "call:copyBlock4",
+      "expression": "MiscFunctions.copyBlock4(var17, 0, this.m_H, var16, var8 + var11, this.pixelData, -var15, (byte)82)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "call:shadeScanline",
+      "expression": "Shader.shadeScanline(this.pixelData, var23, var26, var8 * var30 + var25, var39, var38, var8 + var33, var37, var28 * var8 + var19, 0, this.resourceDatabase[var5], false, var20, var8 * var29 + var22, 0)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "call:shadeScanline",
+      "expression": "Shader.shadeScanline(var22 + var29 * var8, var20, (byte)50, var25 + var8 * var30, var38, var39 << 2, this.resourceDatabase[var5], var8 + var33, var8 * var28 + var19, var26, 0, 0, this.pixelData, var23, var37)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "call:shadeScanline",
+      "expression": "Shader.shadeScanline(var23, 10, 0, 0, this.pixelData, var25 + var8 * var30, var38, var8 * var28 + var19, var22 + var8 * var29, var8 + var33, var26, var39, 0, var20, this.resourceDatabase[var5], var37)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "call:shadeScanline",
+      "expression": "Shader.shadeScanline(var33 + var8, var22 + var8 * var29, var19 + var8 * var28, 0, var38, var23, 0, var25 + var8 * var30, var20, var39 << 2, this.resourceDatabase[var5], var37, var26, this.pixelData, (byte)119)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "call:shadeScanline",
+      "expression": "Shader.shadeScanline(var37, var30 * var8 + var25, 0, (byte)25, 0, var20, var26, var39, this.resourceDatabase[var5], this.pixelData, var8 + var33, var8 * var28 + var19, 0, var23, var38, var29 * var8 + var22)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "call:shadeScanline",
+      "expression": "Shader.shadeScanline(var39, 1121159302, var23, var8 * var29 + var22, var20, this.resourceDatabase[var5], var38, 0, var19 + var28 * var8, 0, this.pixelData, var33 + var8, var25 + var8 * var30, var26, var37)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "pixelData",
+      "expression": "GraphicsController.a(var16, this.m_H, -var15, this.pixelData, 0, var17, var8 + var11, var3 - 1)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "pixelData",
+      "expression": "MiscFunctions.copyBlock16(0, var17, -var15, this.pixelData, this.m_H, var16, var11 + var8, 418609192)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "pixelData",
+      "expression": "MiscFunctions.copyBlock4(var17, 0, this.m_H, var16, var8 + var11, this.pixelData, -var15, (byte)82)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "pixelData",
+      "expression": "Shader.shadeScanline(this.pixelData, var23, var26, var8 * var30 + var25, var39, var38, var8 + var33, var37, var28 * var8 + var19, 0, this.resourceDatabase[var5], false, var20, var8 * var29 + var22, 0)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "pixelData",
+      "expression": "Shader.shadeScanline(var22 + var29 * var8, var20, (byte)50, var25 + var8 * var30, var38, var39 << 2, this.resourceDatabase[var5], var8 + var33, var8 * var28 + var19, var26, 0, 0, this.pixelData, var23, var37)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "pixelData",
+      "expression": "Shader.shadeScanline(var23, 10, 0, 0, this.pixelData, var25 + var8 * var30, var38, var8 * var28 + var19, var22 + var8 * var29, var8 + var33, var26, var39, 0, var20, this.resourceDatabase[var5], var37)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "pixelData",
+      "expression": "Shader.shadeScanline(var33 + var8, var22 + var8 * var29, var19 + var8 * var28, 0, var38, var23, 0, var25 + var8 * var30, var20, var39 << 2, this.resourceDatabase[var5], var37, var26, this.pixelData, (byte)119)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "pixelData",
+      "expression": "Shader.shadeScanline(var37, var30 * var8 + var25, 0, (byte)25, 0, var20, var26, var39, this.resourceDatabase[var5], this.pixelData, var8 + var33, var8 * var28 + var19, 0, var23, var38, var29 * var8 + var22)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setFrustum(int[],RSModel,int,int,int,int,int[],int[],int,int,)",
+      "kind": "pixelData",
+      "expression": "Shader.shadeScanline(var39, 1121159302, var23, var8 * var29 + var22, var20, this.resourceDatabase[var5], var38, 0, var19 + var28 * var8, 0, this.pixelData, var33 + var8, var25 + var8 * var30, var26, var37)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setMidpoints(int,boolean,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "pixelData = graphics.pixelData"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Scene.java",
+      "method": "setMidpoints(int,boolean,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "pixelData = graphics.pixelData"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Shader.java",
+      "method": "shadeScanline(int,int,int,int,int,int,int,int,int,int,int[],int,int,int[],byte,)",
+      "kind": "call:shadeScanline",
+      "expression": "Shader.shadeScanline(-65, -47, -42, (byte)-16, 62, 50, -59, -91, (int[])null, (int[])null, 71, -91, -16, -29, 110, 81)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Shader.java",
+      "method": "shadeScanline(int,int,int,int,int,int[],int,int,int,int,int[],int,int,int,int,)",
+      "kind": "call:shadeScanline",
+      "expression": "shadeScanline(-69, 127, -20, -29, -78, (int[])null, 16, 2, -77, -5, (int[])null, 113, -57, 68, -87)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Shader.java",
+      "method": "shadeScanline(int,int,int,int,int[],int,int,int,int,int,int,int,int,int,int[],int,)",
+      "kind": "call:shadeScanline",
+      "expression": "shadeScanline(-30, -28, 22, 0, (int[])null, -78, 109, 44, -120, 67, 27, 2, 107, -113, (int[])null, 56)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "<init>(int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData = new int[var1 * var2]"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "a(Sprite,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.a(var7, var8, var6, sprite.getPixels(), 0, var4, var14, this.pixelData, -107, var11, var10, var9)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "a(int,int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData[this.width2 * var15 + var14]"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "a(int,int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData[var8 + var9 * this.width2] = var12 / var13 + (var10 / var13 << 16) + (var11 / var13 << 8)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "beginObservedWorldOverlay()",
+      "kind": "pixelData",
+      "expression": "worldOverlayCoverageEnabled && worldOverlayCoverage != null && worldOverlayCoverage.begin(pixelData, width2, height2)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "beginTransparentWorldOverlay()",
+      "kind": "pixelData",
+      "expression": "worldOverlayCoverageEnabled && worldOverlayCoverage != null && worldOverlayCoverage.begin(pixelData, width2, height2)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "blackScreen(boolean,)",
+      "kind": "pixelData",
+      "expression": "Arrays.fill(this.pixelData, 0, var2, 0)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "blackScreen(boolean,)",
+      "kind": "pixelData",
+      "expression": "coverageOpaqueSpan(this.pixelData, 0, var2)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "blackScreen(boolean,)",
+      "kind": "pixelData",
+      "expression": "coverageOpaqueSpan(this.pixelData, head, head + this.width2)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "blackScreen(boolean,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData[head++] = 0"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "blackScreen(boolean,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData[i] = 0"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "borrowWorldOverlayCoverage()",
+      "kind": "pixelData",
+      "expression": "worldOverlayCoverage == null ? null : worldOverlayCoverage.borrow(pixelData, width2, height2)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "captureRenderer2DUiBaseFrame()",
+      "kind": "pixelData",
+      "expression": "(browserFramePreparationActive || !Renderer2DSettings.canPresentUiBaseFrame() || pixelData == null || width2 <= 0 || height2 <= 0 || pixelData.length < width2 * height2)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "captureRenderer2DUiBaseFrame()",
+      "kind": "pixelData",
+      "expression": "(browserFramePreparationActive || !Renderer2DSettings.canPresentUiBaseFrame() || pixelData == null || width2 <= 0 || height2 <= 0 || pixelData.length < width2 * height2)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "captureRenderer2DUiBaseFrame()",
+      "kind": "pixelData",
+      "expression": "System.arraycopy(pixelData, 0, renderer2DUiBasePixels, 0, requiredPixels)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "copyPixelDataToSurface(SPRITE_LAYER,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "pixels[pixel++] = pixelData[x + y * width2]"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawBox(int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "coverageOpaque(this.pixelData, var10)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawBox(int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData[var10++] = color"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawBoxAlpha(int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "coverageMultiply(this.pixelData, pxi, mixOld)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawBoxAlpha(int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "mixOld * ((16711680 & this.pixelData[pxi]) >> 16)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawBoxAlpha(int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "mixOld * ((65280 & this.pixelData[pxi]) >> 8)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawBoxAlpha(int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "mixOld * (this.pixelData[pxi] & 255)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawBoxAlpha(int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData[pxi++] = var20"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawCircle(int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "(this.pixelData[rowStart] & 255) * destAlpha"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawCircle(int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "coverageMultiply(this.pixelData, rowStart, destAlpha)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawCircle(int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "destAlpha * ((65280 & this.pixelData[rowStart]) >> 8)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawCircle(int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "destAlpha * ((this.pixelData[rowStart] & 16711680) >> 16)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawCircle(int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData[rowStart++] = finalColor"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawLineHoriz(int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "coverageOpaqueSpan(this.pixelData, offset, offset + width)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawLineHoriz(int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData[offset + xi] = color"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawLineVert(int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "coverageOpaque(this.pixelData, pxOffset + this.width2 * i)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawLineVert(int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData[pxOffset + this.width2 * i] = color"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawMinimapSprite(Sprite,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.plot_horiz_line(var42 - var43, var37, this.pixelData, var45, var46, var44, var40, var47, var42 + var39)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawMinimapSprite(Sprite,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.plot_trans_horiz_line(var47, var42 - var43, var44, var40, this.pixelData, var46, var42 + var39, var37, var45)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSprite(Sprite,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.a(var8, this.pixelData, var13, var7, 0, var6, (byte)123, var5, sprite.getPixels(), var9, var10)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSprite(Sprite,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.plot_scale_black_mask(sprite.getPixels(), heightStep, scaleX, 0, srcStartY, this.pixelData, (byte)78, scaleY, destHeight, srcStartX, destRowStride, destWidth, spriteWidth, destHead)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSprite(Sprite,int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.plot_tran_scale(heightStep, srcStartY, destWidth, (byte)-61, scaleY, spriteWidth, scaleX, destHeight, destHead, sprite.getPixels(), 0, srcStartX, destRowStride, alpha, this.pixelData)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSpriteClipping(Sprite,int,int,int,int,int,int,int,boolean,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.plot_tran_scale_with_mask(dummy + 89, e.getPixels(), scaleY, 0, srcStartY, srcStartX, width, this.pixelData, height, destColumnSkewPerRow, destRowHead, scaleX, destFirstColumn, spriteWidth, skipEveryOther, colorMask, colourTransform, blueMask)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSpriteClipping(Sprite,int,int,int,int,int,int,int,boolean,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.plot_tran_scale_with_mask(dummy ^ 74, e.getPixels(), scaleY, 0, srcStartY, (e.getWidth() << 16) - (srcStartX + 1), width, this.pixelData, height, destColumnSkewPerRow, destRowHead, -scaleX, destFirstColumn, spriteWidth, skipEveryOther, colorMask, colourTransform, blueMask)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSpriteClipping(Sprite,int,int,int,int,int,int,int,boolean,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.plot_trans_scale_with_2_masks(this.pixelData, e.getPixels(), width, destColumnSkewPerRow, destFirstColumn, 1603920392, 0, colorMask2, scaleY, scaleX, srcStartX, skipEveryOther, srcStartY, spriteWidth, colorMask, height, destRowHead, colourTransform, blueMask)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSpriteClipping(Sprite,int,int,int,int,int,int,int,boolean,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.plot_trans_scale_with_2_masks(this.pixelData, e.getPixels(), width, destColumnSkewPerRow, destFirstColumn, dummy + 1603920391, 0, colorMask2, scaleY, -scaleX, (e.getWidth() << 16) - srcStartX - 1, skipEveryOther, srcStartY, spriteWidth, colorMask, height, destRowHead, colourTransform, blueMask)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawVerticalGradient(int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "coverageOpaque(this.pixelData, pxHead)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawVerticalGradient(int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData[pxHead++] = color"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "fade2black(int,)",
+      "kind": "pixelData",
+      "expression": "(worldOverlayCoverage != null && worldOverlayCoverage.retainFade(pixelData, width2, height2))"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "fade2black(int,)",
+      "kind": "pixelData",
+      "expression": "16777215 & this.pixelData[i]"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "fade2black(int,)",
+      "kind": "pixelData",
+      "expression": "noteSceneSoftwareWrite(pixelData)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "fade2black(int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData[i] = FastMath.bitwiseAnd(var2 >>> 4, 986895) + (FastMath.bitwiseAnd(var2, 16316665) >>> 3) + (FastMath.bitwiseAnd(16711423, var2) >>> 1) + FastMath.bitwiseAnd(-2143338689, var2 >>> 2)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "finishOverlayJournal(WorldOverlayCoverage.Frame,)",
+      "kind": "pixelData",
+      "expression": "overlayJournal.finish(pixelData, frame)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "isWorldOverlayCoverageCurrent(WorldOverlayCoverage.Frame,)",
+      "kind": "pixelData",
+      "expression": "worldOverlayCoverage != null && worldOverlayCoverage.isCurrent(frame, pixelData, width2, height2)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "journalRectangle(int,int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "(journal().noteNonWorld(pixelData, 0))"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "journalRectangle(int,int,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "journal().rectangle(pixelData, journalFrame(), kind, x, y, w, h, color, alpha, clipLeft, clipTop, clipRight, clipBottom, renderer2DPhase.ordinal(), interlace)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "journalTextOwned(java.util.List<Renderer2DTextPlotCommand>,)",
+      "kind": "pixelData",
+      "expression": "(journal().noteNonWorld(pixelData, plots.size()))"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "journalTextOwned(java.util.List<Renderer2DTextPlotCommand>,)",
+      "kind": "pixelData",
+      "expression": "journal().text(pixelData, journalFrame(), font, data, plots.size(), clipLeft, clipTop, clipRight, clipBottom, renderer2DPhase.ordinal())"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "noteSceneSoftwareWrite(int[],)",
+      "kind": "pixelData",
+      "expression": "(guardGpuSceneSoftwareWrites && destination == pixelData)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "observeOverlayJournalBarrier(int,)",
+      "kind": "pixelData",
+      "expression": "journal().barrier(pixelData, kind, renderer2DPhase.ordinal())"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "plotCharacter(boolean,byte[],int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.plotLetter(color, this.pixelData, startPixel, rowStride, height, width, dataAddr, fontData, srcStride)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "plotCharacter(boolean,byte[],int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.plotLetterAntialiased(fontData, color, width, startPixel, height, srcStride, rowStride, this.pixelData, dataAddr)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "resize(int,int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData = new int[width * height]"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "setPixel(int,int,int,)",
+      "kind": "pixelData",
+      "expression": "coverageOpaque(this.pixelData, x + this.width2 * y)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "setPixel(int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.pixelData[x + this.width2 * y] = val"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "spriteClip3(int,int,Sprite,int,int,byte,int,)",
+      "kind": "pixelData",
+      "expression": "this.a(var11, var12, var7, var10, var15, sprite.getPixels(), var14, this.pixelData, 0, spriteWidth, false, var13, var5, var2, var19)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "spriteClipping(Sprite,byte,int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.plot_tran_scale(var19, var11, width, (byte)-61, scaleY, spriteWidth, scaleX, height, var14, sprite.getPixels(), 0, var10, var15, var7, this.pixelData)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "storeSpriteVert(int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "pixels[pixel++] = pixelData[x + y * width2]"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/OverlayJournalObserver.java",
+      "method": "begin(WorldOverlayCoverage.Frame,)",
+      "kind": "ownerPixels",
+      "expression": "owner = frame.ownerPixels"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/OverlayJournalObserver.java",
+      "method": "begin(WorldOverlayCoverage.Frame,)",
+      "kind": "transmittance",
+      "expression": "transmittance = frame.transmittance"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/OverlayJournalObserver.java",
+      "method": "begin(WorldOverlayCoverage.Frame,)",
+      "kind": "transmittance",
+      "expression": "transmittance = frame.transmittance"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/OverlayJournalObserver.java",
+      "method": "close(int,)",
+      "kind": "transmittance",
+      "expression": "transmittance = null"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/OverlayJournalObserver.java",
+      "method": "finish(int[],WorldOverlayCoverage.Frame,)",
+      "kind": "transmittance",
+      "expression": "transmittance = null"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/OverlayJournalObserver.java",
+      "method": "matches(int[],WorldOverlayCoverage.Frame,)",
+      "kind": "ownerPixels",
+      "expression": "active && pixels == owner && frame != null && frame.ownerPixels == owner && frame.transmittance == transmittance && frame.width == width && frame.height == height && frame.generation == generation && frame.frameSequence == sequence && frame.valid && frame.transparent && frame.mode == WorldOverlayCoverage.MODE_WORLD"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/OverlayJournalObserver.java",
+      "method": "matches(int[],WorldOverlayCoverage.Frame,)",
+      "kind": "transmittance",
+      "expression": "active && pixels == owner && frame != null && frame.ownerPixels == owner && frame.transmittance == transmittance && frame.width == width && frame.height == height && frame.generation == generation && frame.frameSequence == sequence && frame.valid && frame.transparent && frame.mode == WorldOverlayCoverage.MODE_WORLD"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/OverlayJournalObserver.java",
+      "method": "matches(int[],WorldOverlayCoverage.Frame,)",
+      "kind": "transmittance",
+      "expression": "active && pixels == owner && frame != null && frame.ownerPixels == owner && frame.transmittance == transmittance && frame.width == width && frame.height == height && frame.generation == generation && frame.frameSequence == sequence && frame.valid && frame.transparent && frame.mode == WorldOverlayCoverage.MODE_WORLD"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "<init>(WorldOverlayCoverage,int[],int,int,float[],boolean,boolean,String,long,long,int,int,)",
+      "kind": "ownerPixels",
+      "expression": "ownerPixels = pixels"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "<init>(WorldOverlayCoverage,int[],int,int,float[],boolean,boolean,String,long,long,int,int,)",
+      "kind": "transmittance",
+      "expression": "this.transmittance = transmittance"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "<init>(WorldOverlayCoverage,int[],int,int,float[],boolean,boolean,String,long,long,int,int,)",
+      "kind": "transmittance",
+      "expression": "this.transmittance = transmittance"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "acknowledgeDeltaTransport(Delta,)",
+      "kind": "ownerPixels",
+      "expression": "(owner.deltaTransport == null || delta == null || !owner.isCurrent(this, ownerPixels, width, height))"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "acknowledgeDeltaTransport(Delta,)",
+      "kind": "ownerPixels",
+      "expression": "owner.deltaTransport.acknowledge(delta.plan, ownerPixels, width, height, generation, frameSequence)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "begin(int[],int,int,)",
+      "kind": "ownerPixels",
+      "expression": "this.ownerPixels = pixels"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "begin(int[],int,int,)",
+      "kind": "transmittance",
+      "expression": "(transmittance == null || transmittance.length != count)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "begin(int[],int,int,)",
+      "kind": "transmittance",
+      "expression": "(transmittance == null || transmittance.length != count)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "begin(int[],int,int,)",
+      "kind": "transmittance",
+      "expression": "Arrays.fill(transmittance, 1.0F)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "begin(int[],int,int,)",
+      "kind": "transmittance",
+      "expression": "transmittance = new float[(int)count]"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "borrow(int[],int,int,)",
+      "kind": "ownerPixels",
+      "expression": "(transparent && (pixels != ownerPixels || width != this.width || height != this.height))"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "borrow(int[],int,int,)",
+      "kind": "transmittance",
+      "expression": "new Frame(this, pixels, width, height, transparent ? transmittance : null, transparent, valid, reason, generation, frameSequence, mode(), retainedFadeCount)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "isCurrent(Frame,int[],int,int,)",
+      "kind": "ownerPixels",
+      "expression": "frame != null && frame.owner == this && frame.ownerPixels == pixels && frame.width == width && frame.height == height && frame.generation == generation && frame.frameSequence == frameSequence && frame.valid && valid && frame.mode == mode() && frame.retainedFadeCount == retainedFadeCount && frame.transparent == transparent && (!transparent || (pixels == ownerPixels && width == this.width && height == this.height && frame.transmittance == transmittance))"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "isCurrent(Frame,int[],int,int,)",
+      "kind": "ownerPixels",
+      "expression": "frame != null && frame.owner == this && frame.ownerPixels == pixels && frame.width == width && frame.height == height && frame.generation == generation && frame.frameSequence == frameSequence && frame.valid && valid && frame.mode == mode() && frame.retainedFadeCount == retainedFadeCount && frame.transparent == transparent && (!transparent || (pixels == ownerPixels && width == this.width && height == this.height && frame.transmittance == transmittance))"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "isCurrent(Frame,int[],int,int,)",
+      "kind": "transmittance",
+      "expression": "frame != null && frame.owner == this && frame.ownerPixels == pixels && frame.width == width && frame.height == height && frame.generation == generation && frame.frameSequence == frameSequence && frame.valid && valid && frame.mode == mode() && frame.retainedFadeCount == retainedFadeCount && frame.transparent == transparent && (!transparent || (pixels == ownerPixels && width == this.width && height == this.height && frame.transmittance == transmittance))"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "isCurrent(Frame,int[],int,int,)",
+      "kind": "transmittance",
+      "expression": "frame != null && frame.owner == this && frame.ownerPixels == pixels && frame.width == width && frame.height == height && frame.generation == generation && frame.frameSequence == frameSequence && frame.valid && valid && frame.mode == mode() && frame.retainedFadeCount == retainedFadeCount && frame.transparent == transparent && (!transparent || (pixels == ownerPixels && width == this.width && height == this.height && frame.transmittance == transmittance))"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "multiply(int[],int,int,)",
+      "kind": "ownerPixels",
+      "expression": "(transparent && valid && destination == ownerPixels)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "multiply(int[],int,int,)",
+      "kind": "transmittance",
+      "expression": "transmittance[index] *= numerator * (1.0F / 256.0F)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "observeFrame()",
+      "kind": "ownerPixels",
+      "expression": "new Frame(this, ownerPixels, width, height, transparent ? transmittance : null, transparent, valid, reason, generation, frameSequence, mode(), retainedFadeCount)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "observeFrame()",
+      "kind": "transmittance",
+      "expression": "new Frame(this, ownerPixels, width, height, transparent ? transmittance : null, transparent, valid, reason, generation, frameSequence, mode(), retainedFadeCount)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "opaque(int[],int,)",
+      "kind": "ownerPixels",
+      "expression": "(transparent && valid && destination == ownerPixels)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "opaque(int[],int,)",
+      "kind": "transmittance",
+      "expression": "transmittance[index] = 0.0F"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "opaqueSpan(int[],int,int,)",
+      "kind": "ownerPixels",
+      "expression": "(transparent && valid && destination == ownerPixels && end > start)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "opaqueSpan(int[],int,int,)",
+      "kind": "transmittance",
+      "expression": "Arrays.fill(transmittance, start, end, 0.0F)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "prepareDeltaTransport(boolean,)",
+      "kind": "ownerPixels",
+      "expression": "(!owner.isCurrent(this, ownerPixels, width, height) || mode != MODE_WORLD)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "prepareDeltaTransport(boolean,)",
+      "kind": "ownerPixels",
+      "expression": "owner.deltaTransport.prepare(ownerPixels, width, height, generation, frameSequence, owner.freshWorld)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "reset(boolean,boolean,)",
+      "kind": "ownerPixels",
+      "expression": "ownerPixels = null"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "reset(boolean,boolean,)",
+      "kind": "transmittance",
+      "expression": "transmittance = null"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "retainFade(int[],int,int,)",
+      "kind": "ownerPixels",
+      "expression": "(pixels != ownerPixels || width != this.width || height != this.height)"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java",
+      "method": "retainFade(int[],int,int,)",
+      "kind": "transmittance",
+      "expression": "Arrays.fill(transmittance, 1.0F)"
+    },
+    {
+      "file": "Client_Base/src/orsc/mudclient.java",
+      "method": "drawWorldEditorGridLine(int,int,int,int,int,)",
+      "kind": "pixelData",
+      "expression": "this.getSurface().pixelData[x0 + y0 * width] = color"
+    },
+    {
+      "file": "PC_Client/src/orsc/BrowserWebGLBridge.java",
+      "method": "borrowOverlay(BufferedImage,)",
+      "kind": "call:getData",
+      "expression": "((DataBufferInt)image.getRaster().getDataBuffer()).getData()"
+    },
+    {
+      "file": "PC_Client/src/orsc/BrowserWebGLBridge.java",
+      "method": "borrowOverlay(BufferedImage,)",
+      "kind": "call:getDataBuffer",
+      "expression": "(!(image.getRaster().getDataBuffer() instanceof DataBufferInt) || !(image.getSampleModel() instanceof SinglePixelPackedSampleModel) || ((SinglePixelPackedSampleModel)image.getSampleModel()).getScanlineStride() != image.getWidth() || image.getRaster().getDataBuffer().getOffset() != 0 || image.getRaster().getSampleModelTranslateX() != 0 || image.getRaster().getSampleModelTranslateY() != 0)"
+    },
+    {
+      "file": "PC_Client/src/orsc/BrowserWebGLBridge.java",
+      "method": "borrowOverlay(BufferedImage,)",
+      "kind": "call:getDataBuffer",
+      "expression": "(!(image.getRaster().getDataBuffer() instanceof DataBufferInt) || !(image.getSampleModel() instanceof SinglePixelPackedSampleModel) || ((SinglePixelPackedSampleModel)image.getSampleModel()).getScanlineStride() != image.getWidth() || image.getRaster().getDataBuffer().getOffset() != 0 || image.getRaster().getSampleModelTranslateX() != 0 || image.getRaster().getSampleModelTranslateY() != 0)"
+    },
+    {
+      "file": "PC_Client/src/orsc/BrowserWebGLBridge.java",
+      "method": "borrowOverlay(BufferedImage,)",
+      "kind": "call:getDataBuffer",
+      "expression": "((DataBufferInt)image.getRaster().getDataBuffer()).getData()"
+    },
+    {
+      "file": "PC_Client/src/orsc/BrowserWebGLBridge.java",
+      "method": "prepareOverlay(BufferedImage,GraphicsController,)",
+      "kind": "call:borrowOverlay",
+      "expression": "borrowOverlay(image)"
+    },
+    {
+      "file": "PC_Client/src/orsc/BrowserWebGLBridge.java",
+      "method": "prepareOverlay(BufferedImage,GraphicsController,)",
+      "kind": "ownerPixels",
+      "expression": "(coverage.transparent && (coverage.ownerPixels != pixels || coverage.width != width || coverage.height != height))"
+    },
+    {
+      "file": "PC_Client/src/orsc/BrowserWebGLBridge.java",
+      "method": "prepareOverlay(BufferedImage,GraphicsController,)",
+      "kind": "transmittance",
+      "expression": "overlayDeltaFrame(width, height, coverage.generation, coverage.frameSequence, reset, delta.partial, delta.baseGeneration, delta.baseFrameSequence, delta.bands(), delta.work(), pixels, coverage.transmittance)"
+    },
+    {
+      "file": "PC_Client/src/orsc/BrowserWebGLBridge.java",
+      "method": "prepareOverlay(BufferedImage,GraphicsController,)",
+      "kind": "transmittance",
+      "expression": "overlayDeltaFrameObserved(width, height, coverage.generation, coverage.frameSequence, reset, delta.partial, delta.baseGeneration, delta.baseFrameSequence, delta.bands(), delta.work(), pixels, coverage.transmittance, journal.header, journal.ops, journal.glyphs, journal.fonts, journal.runs, journal.stats)"
+    },
+    {
+      "file": "PC_Client/src/orsc/BrowserWebGLBridge.java",
+      "method": "prepareOverlay(BufferedImage,GraphicsController,)",
+      "kind": "transmittance",
+      "expression": "overlayFrame(width, height, coverage.mode, coverage.generation, coverage.frameSequence, coverage.retainedFadeCount, reset, coverage.transmittance)"
+    },
+    {
+      "file": "PC_Client/src/orsc/BrowserWebGLBridge.java",
+      "method": "present(BufferedImage,Renderer2DFrame,Renderer3DFrame,)",
+      "kind": "call:borrowOverlay",
+      "expression": "present(w, h, false, new float[48], new float[30], new int[0], borrowOverlay(image))"
+    },
+    {
+      "file": "PC_Client/src/orsc/BrowserWebGLBridge.java",
+      "method": "present(BufferedImage,Renderer2DFrame,Renderer3DFrame,)",
+      "kind": "call:borrowOverlay",
+      "expression": "present(w, h, true, matrices, uniforms(frame), draws, borrowOverlay(image))"
+    },
+    {
+      "file": "PC_Client/src/orsc/Frame.java",
+      "method": "copyPackedIntRgbToRgba(BufferedImage,int,int,ByteBuffer,)",
+      "kind": "call:getData",
+      "expression": "intBuffer.getData()"
+    },
+    {
+      "file": "PC_Client/src/orsc/Frame.java",
+      "method": "copyPackedIntRgbToRgba(BufferedImage,int,int,ByteBuffer,)",
+      "kind": "call:getDataBuffer",
+      "expression": "raster.getDataBuffer()"
+    },
+    {
+      "file": "PC_Client/src/orsc/Frame.java",
+      "method": "copyPixelsToRgba(BufferedImage,int,int,ByteBuffer,)",
+      "kind": "call:copyPackedIntRgbToRgba",
+      "expression": "(copyPackedIntRgbToRgba(image, width, height, target))"
+    },
+    {
+      "file": "PC_Client/src/orsc/Frame.java",
+      "method": "fromImage(BufferedImage,float,ScaledWindow.ScalingAlgorithm,FrameBufferPool,Renderer2DFrame,Renderer3DFrame,String[],)",
+      "kind": "call:copyPixelsToRgba",
+      "expression": "copyPixelsToRgba(image, sourceWidth, sourceHeight, frameBuffer.buffer)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "bindDirectFramebuffer(int,int,)",
+      "kind": "call:createDirectFramebufferImage",
+      "expression": "directFramebufferImage = createDirectFramebufferImage(width, height, pixels)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "bindDirectFramebuffer(int,int,)",
+      "kind": "directFramebufferImage",
+      "expression": "directFramebufferImage = createDirectFramebufferImage(width, height, pixels)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "bindDirectFramebuffer(int,int,)",
+      "kind": "directFramebufferImage",
+      "expression": "game_image = directFramebufferImage"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "bindDirectFramebuffer(int,int,)",
+      "kind": "directFramebufferPixels",
+      "expression": "directFramebufferPixels = pixels"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "bindDirectFramebuffer(int,int,)",
+      "kind": "pixelData",
+      "expression": "mudclient.getSurface().pixelData"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "commitToImage(boolean,)",
+      "kind": "call:setPixels",
+      "expression": "this.imageProducer.setPixels(0, 0, mudclient.getSurface().width2, mudclient.getSurface().height2, this.imageModel, mudclient.getSurface().pixelData, 0, mudclient.getSurface().width2)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "commitToImage(boolean,)",
+      "kind": "pixelData",
+      "expression": "this.imageProducer.setPixels(0, 0, mudclient.getSurface().width2, mudclient.getSurface().height2, this.imageModel, mudclient.getSurface().pixelData, 0, mudclient.getSurface().width2)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "draw()",
+      "kind": "call:setGameImage",
+      "expression": "scaledWindow.setGameImage(frameImage, renderer2DFrame, renderer2DUiBaseImage, renderer3DFrame, rendererDebugOverlayLines)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "getDirectFramebufferImage()",
+      "kind": "directFramebufferImage",
+      "expression": "(directFramebufferImage == null || directFramebufferPixels != pixels || directFramebufferWidth != width || directFramebufferHeight != height)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "getDirectFramebufferImage()",
+      "kind": "directFramebufferImage",
+      "expression": "directFramebufferImage"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "getDirectFramebufferImage()",
+      "kind": "directFramebufferPixels",
+      "expression": "(directFramebufferImage == null || directFramebufferPixels != pixels || directFramebufferWidth != width || directFramebufferHeight != height)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "getDirectFramebufferImage()",
+      "kind": "pixelData",
+      "expression": "mudclient.getSurface().pixelData"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "getRenderer2DUiBaseImage()",
+      "kind": "call:createDirectFramebufferImage",
+      "expression": "renderer2DUiBaseImage = createDirectFramebufferImage(width, height, pixels)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "presentLoadingFrame(String,int,int,)",
+      "kind": "call:setGameImage",
+      "expression": "scaledWindow.setGameImage(game_image)"
+    },
+    {
+      "file": "PC_Client/src/orsc/OpenGLFrameCapture.java",
+      "method": "writeDepthDiagnostics(Frame,)",
+      "kind": "call:copyColorTo",
+      "expression": "depthFrame.copyColorTo(pixels)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ScaledWindow.java",
+      "method": "setGameImage(BufferedImage,)",
+      "kind": "call:setGameImage",
+      "expression": "setGameImage(gameImage, Renderer2DFrame.EMPTY)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ScaledWindow.java",
+      "method": "setGameImage(BufferedImage,Renderer2DFrame,)",
+      "kind": "call:setGameImage",
+      "expression": "setGameImage(gameImage, renderer2DFrame, null)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ScaledWindow.java",
+      "method": "setGameImage(BufferedImage,Renderer2DFrame,BufferedImage,)",
+      "kind": "call:setGameImage",
+      "expression": "setGameImage(gameImage, renderer2DFrame, renderer2DUiBaseImage, null)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ScaledWindow.java",
+      "method": "setGameImage(BufferedImage,Renderer2DFrame,BufferedImage,Renderer3DFrame,)",
+      "kind": "call:setGameImage",
+      "expression": "setGameImage(gameImage, renderer2DFrame, renderer2DUiBaseImage, renderer3DFrame, null)"
+    }
+  ],
+  "unchangedAliasImplementations": {
+    "Client_Base/src/orsc/graphics/three/Shader.java": "be4e043788a8f0b2fec97a227818b379bd291fa848fd0b9ea6dbb7a5a2cb8822",
+    "Client_Base/src/orsc/MiscFunctions.java": "0bfd2101c8055b8eec90e694af7afaf595649d4ceca63f8efc9b04c30d8fbede",
+    "Client_Base/src/com/openrsc/client/model/Sprite.java": "2cfb1d21c798b81875913360b02b3b67ff9a7d4a71dc46f20704b36b21158da6",
+    "PC_Client/src/orsc/Frame.java": "3baaa08d0a04f630dc27bb6d3a9a0d1da103235a017016463fd6da8e070b71c4"
+  },
+  "reviewedCandidateAccessChanges": {
+    "remove": [],
+    "add": []
+  },
+  "unchangedLegacyBodies": [
+    {
+      "file": "Client_Base/src/orsc/MiscFunctions.java",
+      "method": "copyBlock4(int,int,int[],int,int,int[],int,byte,)",
+      "sha256": "1f37bb9792ce5006e136ed7096347752c08ea1d491a90756b1e2e1ee94d54c32"
+    },
+    {
+      "file": "Client_Base/src/orsc/MiscFunctions.java",
+      "method": "copyBlock16(int,int,int,int[],int[],int,int,int,)",
+      "sha256": "9b53cf597273748b800d4eff486652847f32c6d58c333d8bedac969d19f01dc4"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Shader.java",
+      "method": "shadeScanline(int,int,int,int,int[],int,int,int,int,int,int,int,int,int,int[],int,)",
+      "sha256": "135585feda594fee338ab7291a6a87fe3fc6fb02265a5cd98c7bca5c14ac0ab6"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Shader.java",
+      "method": "shadeScanline(int,int,byte,int,int,int,int[],int,int,int,int,int,int[],int,int,)",
+      "sha256": "3abcfa1649695f0c531a3036efffc43e0f8db49d8e6556a50454c2592605f9ce"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Shader.java",
+      "method": "shadeScanline(int,int,int,int,int,int,int,int,int,int,int[],int,int,int[],byte,)",
+      "sha256": "f36bfa1fd7a98e9eeb67f9d92541c5dbcb396c333b666d46f8706bc1bf0ee4bc"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Shader.java",
+      "method": "shadeScanline(int[],int,int,int,int,int,int,int,int,int,int[],boolean,int,int,int,)",
+      "sha256": "b7c7af7b1516072995fe7fffc22ad5e480842d337e271476da66d60b4e65a070"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Shader.java",
+      "method": "shadeScanline(int,int,int,int,int,int[],int,int,int,int,int[],int,int,int,int,)",
+      "sha256": "2f3e2bc43468a592c8f700303a98148fda8641b61faaf116cccf8844170a271e"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/three/Shader.java",
+      "method": "shadeScanline(int,int,int,byte,int,int,int,int,int[],int[],int,int,int,int,int,int,)",
+      "sha256": "78fcd51a135ea26aa65f95839fccb4a8b1166d8ff70aa381e9103ce76aa4587e"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "coverageOpaque(int[],int,)",
+      "sha256": "56def7b0ccc519bbec826f8212c5ef836400512fae103bc9938f6a09744961e0"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "coverageOpaqueSpan(int[],int,int,)",
+      "sha256": "f3061d2452df2b41f12d52d2dc0503ecd4714642faefd0e4eac8c935fba95830"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "coverageMultiply(int[],int,int,)",
+      "sha256": "30b5b2740b3841ad08e2aff2732904c35d3ffb3fcf528186b943d507cade76cd"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "a(int,int[],int,int[],int,int,int,int,)",
+      "sha256": "3a4ddae0fe46ae1c4ee9affad18d77dab640076a4be2daf781323eef4fad402b"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "plotLetter(int,int[],int,int,int,int,int,byte[],int,)",
+      "sha256": "84f89efb8e4f74a1e6dc07bc74ff31948eca23376f558caf71454ffb72d47594"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "plotLetterAntialiased(byte[],int,int,int,int,int,int,int[],int,)",
+      "sha256": "aa1f2cf82e6a03703445ffa2abd2d4fd30de6a92a0521500c0b6766ad41ce892"
+    }
+  ]
+}
