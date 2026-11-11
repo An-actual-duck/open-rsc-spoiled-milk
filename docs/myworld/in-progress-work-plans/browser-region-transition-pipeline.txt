@@ -210,3 +210,17 @@ Region-streaming73 checks pass; animated policies pass1029/1028/1040 lru and
 receipts live with output/tests/browser-region-streaming and browser-animated-
 chunks. This is CPU/cache correctness proof only; measured travel evidence and
 all frozen production artifacts remain unchanged.
+
+Overlay CPU-wrapper source-list correction (test-only)
+-----------------------------------------------------
+The earlier profile-source addition accidentally made the overlay wrapper's
+bridge path a Python tuple. Manager's failed compile-list preflight is preserved;
+no overlay tests ran in that failed attempt. Replaced it with explicit profile
+and bridge strings in one flat shared sourcePaths list used by compilation and
+source-hash receipts. No production source/JAR change.
+Rerun with verified0409 --client-jar passes970 history/plane/ACK checks, identical
+baseline/OFF/ON full-plane digests87b10499...c803, and all invoked Node protocol,
+baseline-overlay and packed-failure tests. CPU-only receipt:
+output/tests/browser-overlay-delta-transport/20261111T182852301051Z/result.json
+The receipt truthfully records the pending test-only edit as dirty and hashes
+its exact inputs. Prepared GPU files were not launched or tested here.
