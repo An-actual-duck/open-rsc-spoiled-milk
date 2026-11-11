@@ -1,0 +1,95 @@
+Browser overlay delta transport prototype
+=========================================
+
+Status
+------
+Private experimental option, default OFF. ACTIVE checkpoint for independent
+review; not adoption or release readiness. URL overlaydelta=on/off only in
+benchmark WebGL selects spoiledmilk.browserOverlayDeltaTransport. Ordinary
+and software URLs receive no override. BrowserWebGLBridge actual getter
+isOverlayDeltaTransportEnabled requires both the option and overlay coverage;
+privatePolicies.overlayDeltaTransport reports requested/available/enabled.
+
+Scope and ownership
+-------------------
+Preserve all ordinary CPU RGB rendering, transmittance arithmetic and full-plane
+clears. Preserve the existing fragment shader verbatim, including raw BGRA-to-RGB
+.bgr interpretation and the existing affine composition approximation.
+WorldOverlayCoverage tracks only touched 16-row blocks through its already
+centralized opaque/opaqueSpan/multiply hooks. A last-block stamp avoids repeated
+division for contiguous writes. Diagnostic counters count newly touched blocks,
+spans and per-frame upload totals, not per-pixel long/BigInt increments. At most
+2048 boolean blocks are retained per bounded accepted surface; no full pixel
+comparison or copied/repacked Java plane is used for change detection.
+
+Each fresh WORLD declaration uses the union of its touched blocks and the last
+successfully acknowledged GPU frame's touched blocks. This clears disappearing
+UI/effects. Touch history is separate from coverage generation, which advances
+on every fresh begin. A held/unsubmitted CPU frame does not advance submitted
+history. Full first upload acknowledges the actual CURRENT touches, not all
+uploaded rows; its following empty frame still clears the previous UI correctly.
+The source helper stores bounded owned masks/tokens and pixel-owner identity.
+It never keeps borrowed Frame or transmittance views for deferred GPU work.
+
+At most four sorted disjoint full-width row bands, covering at most 60% of the
+height, are permitted for partial transport. Fragmented/broad surfaces use full
+planes. Opaque, retained BASE/FADE, invalid/unknown writers, discard, resize,
+owner changes, region transition/loading and uncertain source state invalidate
+submitted history and use the existing complete path. A new coverage owner on
+the same pixel array/dimensions still resets GPU retained/history state.
+
+Submission protocol
+-------------------
+The enabled overlayDeltaFrame declaration replaces the old overlayFrame call;
+it does not add a per-frame native call. It receives both full borrowed RGB/T
+planes and small owned bands/work/base tokens. JS validates both plane shapes,
+all tokens, dimensions, band ordering/range/alignment, capacity/fraction and
+acknowledged resident texture history before ANY graphics call. It uploads both
+planes synchronously through full-row subarray views and keeps metadata only.
+No per-band getError is added: one existing validation per plane covers its
+entire set of bands. Existing streaming validation still runs before world draw.
+
+The following ordinary present native call uses already-uploaded RGB and the
+literal original shader. Only after it returns successfully does Java acknowledge
+its exact current plan. Superseded, duplicate, stale, changed-owner or post-write
+acknowledgements fail closed and discard history. A failed second plane poisons
+the GPU module instead of retrying with partially modified resident textures.
+Native history commits only after draw/capture succeeds. Retained/opaque fallback
+continues through the literal original declaration/draw path.
+
+Counters
+--------
+gpu.overlayDeltaDeclarations / PartialDeclarations / FullDeclarations count
+eligible successfully submitted declaration API calls, not final GPU completion.
+overlayDeltaPresentedFrames counts completed enabled overlay draw/capture calls.
+overlayDeltaUploadedBytes and FullEquivalentBytes cover eligible declarations;
+overlayUploadBytes / Calls cover all RGB/T texture uploads including complete
+fallbacks. overlayDeltaLast exposes partial, bands, newBlocks, spanMarks,
+touchedRows, uploadedRows, bandCount and bytes. Bytes are API payload sizes,
+not measured PCIe traffic or GPU time. Borrowed arrays are not retained there.
+
+Verification so far
+-------------------
+Early Java compilation and existing overlay mock contracts passed. New state
+oracle passed 969 checks with 141 partial and 15 full submissions: 6784 submitted
+rows against 20416 complete-equivalent rows. Cases include all existing valid
+writer operations, first-full dirty preservation, disappearing/moving UI/VFX,
+zero-touch frames, borrowed-but-unsubmitted source, broad/fragmented fallback,
+retained and opaque transitions, resize/new owner and invalid writers. Duplicate,
+out-of-order, superseded, discarded and post-mutation acknowledgements reject.
+
+The new GL-double oracle passed exact resident RGB/T reconstruction, source
+subarray buffer identity, synchronous borrow consumption, invalid metadata before
+ANY GL, stale history, zero-upload frames and injected second-plane failure
+poison/cleanup. Validation counts do not increase with the number of bands.
+These results are CPU/protocol checks, not actual WebGL image or FPS evidence.
+
+Pending before handoff
+---------------------
+Run the new frozen 8b888 literal RGB/T differential, broader relevant suites,
+full client build and artifact provenance audit. The new CPU preparer exports
+literal software planes plus transport metadata and stages a standalone real
+WebGL full-versus-delta pixel oracle for the manager. It starts no processes.
+The manager must run that oracle, representative game visuals and same-artifact
+OFF/ON FPS/loading checks before any adoption. Per-writer marking overhead and
+vertically broad UI may outweigh reduced upload payload; no gain is assumed.

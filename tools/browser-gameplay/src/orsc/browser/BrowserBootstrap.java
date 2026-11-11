@@ -179,7 +179,8 @@ public final class BrowserBootstrap {
                                         {"regionPreparation","spoiledmilk.browserRegionPreparation","orsc.graphics.three.World","isBrowserRegionPreparationEnabled"},
                                         {"descriptorWriting","spoiledmilk.browserResidentDescriptorWriting","orsc.mudclient","isBrowserResidentDescriptorWritingEnabled"},
                                         {"haloHeightLookup","spoiledmilk.browserHaloHeightLookup","orsc.graphics.three.World","isBrowserHaloHeightLookupEnabled"},
-                                        {"chunkCoverage","spoiledmilk.browserPrimitiveChunkCoverage","orsc.NativeLayeredTerrainChunk","isBrowserPrimitiveChunkCoverageEnabled"}};
+                                        {"chunkCoverage","spoiledmilk.browserPrimitiveChunkCoverage","orsc.NativeLayeredTerrainChunk","isBrowserPrimitiveChunkCoverageEnabled"},
+                                        {"overlayDeltaTransport","spoiledmilk.browserOverlayDeltaTransport","orsc.BrowserWebGLBridge","isOverlayDeltaTransportEnabled"}};
                                     for(String[] policy:policies) {
                                         boolean requested=Boolean.getBoolean(policy[1]);boolean[] actual=BenchmarkCandidatePolicies.inspect(policy[2],policy[3]);
                                         reportCandidatePolicy(policy[0],requested,actual[0],actual[1]);

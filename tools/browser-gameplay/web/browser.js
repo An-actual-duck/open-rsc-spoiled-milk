@@ -85,7 +85,7 @@ const natives = {
     window.browserProof.regionPreparationDiagnostics={available:available===true,hits:values[0]??null,builds:values[1]??null,retainedTileBytes:values[2]??null};
   },
   async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
-    if(!['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage'].includes(name))throw new Error('Unknown private policy receipt');
+    if(!['geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','overlayDeltaTransport'].includes(name))throw new Error('Unknown private policy receipt');
     (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
   },
   async Java_orsc_browser_BrowserBootstrap_reportCombatState(lib,username,names,counters){
@@ -162,7 +162,7 @@ try {
     window.browserProof.physicalOutputRequested=physicalOutput;
     window.browserProof.ownedStateRequested=ownedState;
     if(window.browserProof.benchmark)window.browserProof.benchmark.streamUploadValidationRequested=streamUploadValidation;
-    gpu = createBrowserWebGL(canvas, report, {nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')});
+    gpu = createBrowserWebGL(canvas, report, {nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')});
     window.browserProof.nativeCallDispatch={requested:nativeCallDispatch,module:backendModule.BROWSER_NATIVE_CALL_DISPATCH||null,reported:gpu.stats.nativeCallDispatch||null};
     if(options.has('benchmark')){window.browserBenchmarkOwnedState=enabled=>gpu.queueOwnedState(enabled);window.browserBenchmarkStreamUploadValidation=enabled=>gpu.queueStreamUploadValidation(enabled);window.browserBenchmarkPhysicalOutput=enabled=>gpu.queuePhysicalOutput(enabled);}
     worldCover=createWorldCover({document,window,display:document.querySelector('#display'),onGateChange:()=>window.dispatchEvent(new Event('browser-world-readinesschange'))});

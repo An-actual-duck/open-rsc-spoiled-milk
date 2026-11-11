@@ -29,19 +29,24 @@ public final class WorldOverlayCoverage {
 	private boolean freshWorld;
 	private boolean retained;
 	private int retainedFadeCount;
+    private final WorldOverlayDeltaTransport deltaTransport = Boolean.getBoolean("spoiledmilk.browserOverlayDeltaTransport")
+        ? new WorldOverlayDeltaTransport() : null;
+
 
 	void beginFrame() {
+        if(deltaTransport!=null)deltaTransport.beginFrame();
 		frameSequence++;
 		written = freshWorld = false;
 		retainedFadeCount = 0;
 	}
 
 	boolean begin(int[] pixels, int width, int height) {
-		reset(false);
+		reset(false,true);
 		long count = (long) width * height;
 		if (pixels == null || width <= 0 || height <= 0 || count > MAX_PIXELS || pixels.length < count) {
 			valid = false;
 			reason = "Unsupported world overlay surface";
+            if(deltaTransport!=null)deltaTransport.invalidate();
 			return false;
 		}
 		this.ownerPixels = pixels;
@@ -52,10 +57,13 @@ public final class WorldOverlayCoverage {
 		Arrays.fill(pixels, 0, (int) count, 0);
 		transparent = true;
 		freshWorld = true;
+        if(deltaTransport!=null)deltaTransport.beginFresh(pixels,width,height,generation,frameSequence);
 		return true;
 	}
 
-	void reset(boolean release) {
+	void reset(boolean release) { reset(release,false); }
+    private void reset(boolean release,boolean freshBegin) {
+        if(deltaTransport!=null&&!freshBegin)deltaTransport.invalidate();
 		ownerPixels = null;
 		width = height = 0;
 		transparent = false;
@@ -79,13 +87,17 @@ public final class WorldOverlayCoverage {
 	boolean isValid() { return valid; }
 
 	void opaque(int[] destination, int index) {
-		if (transparent && valid && destination == ownerPixels) { written = true; transmittance[index] = 0f; }
+		if (transparent && valid && destination == ownerPixels) {
+            written = true; transmittance[index] = 0f;
+            if(deltaTransport!=null)deltaTransport.mark(index);
+        }
 	}
 
 	void opaqueSpan(int[] destination, int start, int end) {
 		if (transparent && valid && destination == ownerPixels && end > start) {
 			written = true;
 			Arrays.fill(transmittance, start, end, 0f);
+            if(deltaTransport!=null)deltaTransport.markSpan(start,end);
 		}
 	}
 
@@ -97,6 +109,7 @@ public final class WorldOverlayCoverage {
 				return;
 			}
 			transmittance[index] *= numerator * (1f / 256f);
+            if(deltaTransport!=null)deltaTransport.mark(index);
 		}
 	}
 
@@ -118,12 +131,14 @@ public final class WorldOverlayCoverage {
 			Arrays.fill(pixels, 0, width * height, 0);
 			Arrays.fill(transmittance, 1f);
 		}
+        if(deltaTransport!=null)deltaTransport.invalidate();
 		retained = true;
 		retainedFadeCount++;
 		return true;
 	}
 
 	void invalidate(String reason) {
+        if(deltaTransport!=null)deltaTransport.invalidate();
 		if (transparent && valid) { valid = false; this.reason = reason; }
 	}
 
@@ -156,7 +171,37 @@ public final class WorldOverlayCoverage {
 	 * Invalid views MUST NOT be presented: request a complete software-owned frame.
 	 * A valid opaque view has null T and the RGB image must be displayed opaquely.
 	 */
+    /** Owned, bounded transport metadata; it does not copy or retain borrowed
+     * RGB/T planes. The plan's mask snapshot is independent of next-frame writes. */
+    public static final class Delta {
+        private final WorldOverlayDeltaTransport.Plan plan;
+        public final boolean partial;
+        public final long baseGeneration,baseFrameSequence;
+        private Delta(WorldOverlayDeltaTransport.Plan plan) {
+            this.plan=plan;partial=plan.partial;baseGeneration=plan.baseGeneration;baseFrameSequence=plan.baseSequence;
+        }
+        public int[] bands(){return plan.bands.clone();}
+        public int[] work(){return plan.work.clone();}
+    }
 	public static final class Frame {
+        /** Identity only; no borrowed plane reference is exported for retention. */
+        public Object deltaTransportOwner(){return owner.deltaTransport;}
+        public Delta prepareDeltaTransport(boolean reset) {
+            if(owner.deltaTransport==null)return null;
+            // A backend reset invalidates submitted history, not this fresh
+            // frame's already marked writes (which must survive a full upload).
+            if(reset)owner.deltaTransport.forgetAcknowledgedFrame();
+            if(!owner.isCurrent(this,ownerPixels,width,height)||mode!=MODE_WORLD){owner.deltaTransport.invalidate();return null;}
+            WorldOverlayDeltaTransport.Plan plan=owner.deltaTransport.prepare(ownerPixels,width,height,generation,frameSequence,owner.freshWorld);
+            return plan==null?null:new Delta(plan);
+        }
+        public void acknowledgeDeltaTransport(Delta delta) {
+            if(owner.deltaTransport==null||delta==null||!owner.isCurrent(this,ownerPixels,width,height)) {
+                if(owner.deltaTransport!=null)owner.deltaTransport.invalidate();
+                throw new IllegalStateException("Overlay transport acknowledgement lost current owner");
+            }
+            owner.deltaTransport.acknowledge(delta.plan,ownerPixels,width,height,generation,frameSequence);
+        }
 		private final WorldOverlayCoverage owner;
 		public final int[] ownerPixels;
 		public final int width;
