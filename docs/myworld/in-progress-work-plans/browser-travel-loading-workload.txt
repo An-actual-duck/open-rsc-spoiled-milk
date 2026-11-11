@@ -1,0 +1,114 @@
+Browser walking-transition measurement workload
+==============================================
+
+Purpose and authority
+---------------------
+This test-only branch isolates frequent walking stalls before choosing a new
+packing/upload architecture. It changes no renderer, server, route packet,
+world map or authoritative activation rule. The manager owns the isolated
+Firefox/session/fixture; the helper never launches, stops or reconfigures them.
+No current-browser baseline has been executed by this worker.
+
+Historical evidence is diagnostic, not a current performance baseline:
+browser-region-streaming.md records a 103ms core transition versus 10,045ms
+notice-to-ready, 112 uploads/175,888,248 bytes/42 held frames on an older client.
+Its frameWork spans omit held/no-world early returns. Root transition_probe.py
+uses admin teleports and screenshot/polling; it cannot establish walking cadence
+or the cost of those missing exits. Nested spans must never be summed as if
+exclusive, and samples at Java callback return are not actual Worker completion.
+
+Closed workload
+---------------
+Use a frozen current-source client with repeatable-v1, actual WorkerON,
+modelbatch/terrain/spritekeys aligned, GPU depth/full C/T coverage, same camera,
+physical resolution/fog/shadow settings. The old fixed 32-NPC server is only a
+preserved diagnostic server; bind its exact stage/source receipt and do not
+claim its binaries represent current server production. Current policy/Bootstrap
+supports TCP 43649/WS 43549/browserdemo. The prior combat stage's Cache/port.txt is
+43639, so assert live javaPrivateLoopbackPort 43649 and actual WS before running,
+or prepare a new repeatable-client-only stage. Never mutate the live fixture.
+
+The supplied candidate route starts at 111,625,L0 and walks 111,624→111,623→
+111,624→111,625, twice. A previous actual client successfully crossed 624 here.
+Current source World.SECTION_SIZE=48; native loadNextRegion tests strict bounds
+section*48−1..section*48+48. Source epoch advancement and ordinary completed
+stream receipts MUST prove the actual boundary. Revalidate map walkability and
+calibrate each logical pointer click against the actual camera first; these
+coordinates are a candidate, not a guarantee of present authored access.
+
+Initial position setup (including any admin teleport) and login warming are
+excluded. Then every leg uses original input walking or passive manual walking;
+no command teleports masquerade as travel. Legs are bounded 1..8 tiles, preserve
+signed level, and wait for authoritative target, current-ready state and at
+least two fresh world frames. Boundary legs additionally require a new epoch
+and ordinary-walk completed stream receipt. First outward traversal and cached
+return are recorded separately; cold/warm route comparisons need fresh sessions
+and exact cache/source state receipts. Do not force cache invalidation just to
+manufacture a cold load.
+
+Helper and evidence
+-------------------
+tests/myworld/browser-travel-loading-probe.py attaches to an existing loopback
+WebDriver session receipt. It defaults to passive observation; --drive emits
+only original pointer actions after explicit logical click calibration. It
+never sends chat/admin commands or renderer native calls. Source route validation
+and no-browser dry run:
+ python3 tests/myworld/browser-travel-loading-probe.py \
+  --route tests/myworld/browser-travel-loading-route.json --dry-run
+ python3 tests/myworld/test-browser-travel-loading-probe.py
+
+Manager invocation (new canonical diagnostics run, existing isolated session):
+ python3 tests/myworld/browser-travel-loading-probe.py \
+  --session SESSION_JSON --authority PRIVATE_STATUS_JSON --stage STAGE_JSON \
+  --route CALIBRATED_ROUTE_JSON --out OUTPUT_DIAGNOSTICS_RUN \
+  --poll-ms 250 --require-load-profile
+Add --drive only when every route leg contains a calibrated logical click pair.
+The output path must be under manager/ai3 output/diagnostics; use the declared
+workspace-layout diagnostics/browser-travel-loading category and a new run.
+
+Bounded 250ms polls preserve raw samples.jsonl and partial result.json on failure.
+They require a fresh<=4s private valid online browserdemo status, correct actual
+private port/Worker policy, visible game and monotonic fixture/frame counters.
+They record the original authority positions, host round-trip time, inner clock,
+ready epochs/held/fresh frames, upload byte/chunk deltas, Worker queue counters,
+physical/camera/policy state, completed-world-only bridge spans, and optional
+load-only diagnostics. They copy only bounded tails of existing diagnostic
+histories and never alter counters, ACK ownership, render resources or methods.
+
+Overlapping rings are NOT concatenated to invent sample counts/percentiles.
+The report records their observed maximum, counters and explicit missed-load-
+report gaps. Large RPC delays remain visible as pollRoundTripMs; measurements
+include diagnostic polling/input/settling. No screenshot or per-frame native
+callback is injected. No route elapsed-to-fresh-frame ratio is called FPS, and
+held images do not count as fresh frames. Presentation age is a sampled lower
+bound, not exact motion-to-photon latency. Actual user input response after new
+source authority still needs a functional check.
+
+Load-only diagnostic agreement with runtime worker
+-------------------------------------------------
+The runtime worker owns private loadprofile=on instrumentation. Planned schema 1
+is double[36] with owner/attempt/path/dimensions/sourceEpoch/required/ready/
+remaining/missing, nested phase times, chunk/texture/residency/work counts and
+initialization. Paths include error, no-world hold, incomplete hold, world and
+opaque. All held/error/resource-changing attempts and first complete epoch are
+reported, not just completed frameWork. The helper consumes g.loadProfile
+summary and g.loadProfileSamples bounded named records, including receivedTime
+and submitted/completed packet/frame IDs captured on callback return.
+
+Vertex/material packing must be distinct from nativeChunkSubmitMs (which can
+include main copy/backpressure); geometry is inclusive and must not be added
+to its children. Java source finish, main JNI callback return, queued packet,
+actual Worker ACK execution, complete authoritative scene and ready presentation
+are different boundaries. Main and Worker clocks need explicit conversion; only
+same-clock intervals may be subtracted. A delayed completed-frame ACK does not
+measure every omitted early hold or prove GPU scanout/fence time. The helper
+makes no causal cost claim until actual raw per-attempt evidence is collected.
+
+Validation status
+-----------------
+Offline helper proof covers valid adjacent route, rejects teleport-sized legs,
+layer changes, repeated destinations, wrong account, nonfinite clicks, noninteger
+world targets, unbounded route and ambiguous transition flags. It proves held
+work is distinct from fresh frame count, overlapping ring maxima are not counted
+twice, missing load report ranges are explicit, and snapshot JS is passive.
+No actual travel, GPU, process or server action has been performed by this worker.
