@@ -6,13 +6,17 @@ export function validateOverlayDelta({width:w,height:h,generation,frameSequence,
     ||w>32768||!Number.isInteger(maxTextureSize)||maxTextureSize<1||w>maxTextureSize||h>maxTextureSize
     ||typeof reset!=='boolean'||typeof partial!=='boolean'||!token(generation)||!token(frameSequence))throw new Error('Invalid overlay delta dimensions/token');
   if(!(rgb instanceof Uint8Array)||rgb.length!==w*h*4||!(transmittance instanceof Float32Array)||transmittance.length!==w*h)throw new Error('Invalid overlay delta borrowed planes');
-  if(!bands||!Number.isSafeInteger(bands.length)||bands.length%2||bands.length>8
-    ||!work||work.length!==6&&(!allowObservation||work.length<15))throw new Error('Invalid overlay delta metadata shape');
-  const ownedBands=Array.from(bands),ownedWork=Array.from(work);
+  const bandLength=bands?.length,workLength=work?.length,cells=Math.ceil(w/32)*Math.ceil(h/16);
+  if(!Number.isSafeInteger(bandLength)||bandLength<0||bandLength%2||bandLength>8
+    ||!Number.isSafeInteger(workLength)||workLength!==6&&(!allowObservation||cells>16384||workLength!==15+Math.ceil(cells/16)))throw new Error('Invalid overlay delta metadata shape');
+  // Bound allocations BEFORE reading values; do not trust arbitrary iterators.
+  const ownedBands=new Array(bandLength),ownedWork=new Array(workLength);
+  for(let n=0;n<bandLength;n++)ownedBands[n]=bands[n];
+  for(let n=0;n<workLength;n++)ownedWork[n]=work[n];
   if(ownedBands.some(v=>!Number.isSafeInteger(v))||ownedWork.some(v=>!Number.isSafeInteger(v)||v<0))throw new Error('Invalid overlay delta metadata numbers');
   let tileObservation;
   if(ownedWork.length!==6){
-    const cells=Math.ceil(w/32)*Math.ceil(h/16),wordCount=Math.ceil(cells/16);
+    const wordCount=Math.ceil(cells/16);
     if(ownedWork.length!==15+wordCount||ownedWork[6]!==1||cells>16384||ownedWork[13]!==Math.ceil(w/32)||ownedWork[14]!==Math.ceil(h/16)
       ||ownedWork[7]>ownedWork[9]||ownedWork[9]>cells||ownedWork[8]>ownedWork[10]||ownedWork[10]>w*h
       ||ownedWork[11]>2147483647||ownedWork[12]>2147483647)throw new Error('Invalid overlay tile observation');
