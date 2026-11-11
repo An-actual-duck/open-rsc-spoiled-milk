@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+const {createBrowserLoadProfileCollector,browserLoadProfilePolicy,BROWSER_LOAD_PROFILE_FIELDS}=await import(pathToFileURL(process.argv[2]));
+let checks=0;const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};const throws=f=>{assert.throws(f);checks++;};
+function valid(owner=1,attempt=1){const a=new Float64Array(36);a.set([1,owner,attempt,2,802,602,4,8,3,2,5]);a[13]=12.5;a[14]=8.75;a[16]=1.5;a[22]=20.25;a[23]=2;a[24]=1;a[25]=123;a[26]=1456;a[29]=10;a[30]=12345;a[31]=1;a[32]=6;a[33]=8;a[34]=5;return a;}
+eq(BROWSER_LOAD_PROFILE_FIELDS.length,36);eq(browserLoadProfilePolicy('webgl',new URLSearchParams('benchmark=1&loadprofile=on')).requested,true);throws(()=>browserLoadProfilePolicy('webgl',new URLSearchParams('loadprofile=on')));throws(()=>browserLoadProfilePolicy('software',new URLSearchParams('benchmark=1&loadprofile=on')));throws(()=>browserLoadProfilePolicy('webgl',new URLSearchParams('benchmark=1&loadprofile=garbage')));
+const gpu={stats:{renderWorker:{submittedPackets:14,lastCompletedPacket:12,lastCompletedFrame:8}}},c=createBrowserLoadProfileCollector({enabled:true,gpu:()=>gpu,clock:()=>77});
+const backing=new Float64Array(40);backing.set(valid(),2);const view=backing.subarray(2,38);view[Symbol.iterator]=()=>{throw Error('must not enumerate input');};c.report(null,view);backing.fill(999);eq(c.stats.last.owner,1);eq(c.stats.last.attempt,1);eq(c.stats.last.vertexPackMs,8.75);eq(c.stats.last.width,802);eq(c.stats.last.height,602);eq(c.stats.last.receivedTime,77);eq(c.stats.last.workerSubmittedPacket,14);eq(c.stats.last.workerCompletedPacket,12);eq(c.stats.last.workerCompletedFrame,8);eq(c.stats.totalReports,1);eq(gpu.stats.loadProfile,c.stats);
+throws(()=>c.report(null,valid()));eq(c.stats.totalReports,1);
+for(const [index,value]of [[0,2],[1,0],[1,Number.MAX_SAFE_INTEGER+1],[2,0],[3,5],[4,32769],[4,2048],[7,257],[8,9],[13,NaN],[13,-1],[23,1.5],[25,Infinity],[33,257]]){const a=valid(2,1);a[index]=value;if(index===4&&value===2048)a[5]=2048;throws(()=>c.report(null,a));eq(c.stats.totalReports,1);}
+let numericReads=0;const badLength=new Proxy({length:1000000000},{get(o,k){if(k!=='length'){numericReads++;throw Error('numeric access before admission');}return o.length;}});throws(()=>c.report(null,badLength));eq(numericReads,0);
+for(let n=2;n<160;n++)c.report(null,valid(1,n));eq(c.stats.samples.length,128);eq(c.stats.last.attempt,159);eq(c.stats.samples[0].attempt,32);eq(c.stats.totalReports,159);
+const disabled=createBrowserLoadProfileCollector();throws(()=>disabled.report(null,valid()));eq(disabled.stats.totalReports,0);
+const error=valid(3,1);error[3]=0;error[4]=error[5]=error[7]=error[8]=error[33]=0;c.report(null,error);eq(c.stats.last.path,0);eq(c.stats.last.width,0);
+console.log(JSON.stringify({passed:true,checks,cpuOnly:true,scope:'bounded36scalar owned diagnostic snapshots, policy, indexed intake, invalid/stale rejection,128sample history, actualWorker/GPU not executed'}));

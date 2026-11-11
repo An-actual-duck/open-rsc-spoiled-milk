@@ -1,6 +1,6 @@
 Browser continuous-region transition independent review
 ======================================================
-Status: source map / test design only, candidate contract and exact source pending.
+Status: initial load diagnostics CPU/source review PASS; actual crossing profile pending.
 Worker ai-2, test/browser-region-transition-review.
 Base7934b77c277cdc88b5a29c6815159b8f779c69fa.
 
@@ -99,3 +99,78 @@ optimization must compare against a frozen baseline output, not merely ask the
 candidate packer to agree with itself. Headless JVM CPU fixture elapsed time is
 not Firefox loading latency or displayed FPS. GPU/picking/lighting equivalence
 and actual continuous route timing remain manager gates.
+
+
+Initial exact instrumentation review:ba0bd22402e3e2951742cfab8ccab066fd7e934b
+-------------------------------------------------------------------------
+This checkpoint adds private source-load diagnostics, not an optimization or a
+new region publication policy. Java flag requires BOTH browserBenchmark and
+browserLoadProfile. The ordinary OFF wrapper calls the same presentFrame path;
+packing helpers take the literal old branch when no sample is active. Native
+loadingWork is a main-thread diagnostic callback, separate from Worker graphics
+commands and ACK history. No Worker resource/presentation protocol changed.
+
+Independent frozen trace PASS:
+output/tests/browser-region-trace-independent/20261111T162009858487Z/result.json
+Frozen baseline7934, candidateOFF and candidateON produce the same complete trace:
+135db524d973371f0c13040b27474de916d9fef339e90ead81ba8bbbf797fa08
+The trace hashes EVERY raw float bit/index/material payload, backend event/ID,
+draw order/offset, remaining repack count and resident accounting. It includes
+forward/back/return repeated region sequences, static rebase, settings changes,
+signed levels0/-1/+2, animated current-pose updates, shape replacement, injected
+upload/replace errors and retry, and empty source. All policies finish with24
+successful passes,15 uploads,15 replaces and1 deletion. Failed attempts are also
+represented in the event/error/accounting trace. Expected bytes are from the
+separately compiled FROZEN source, not recomputed through candidate helpers.
+
+ON explicitly installs26 per-attempt actual BrowserLoadProfile samples around
+prepareChunks, including failures. Counters for successful new/replaced chunks,
+vertices and bytes match independent recording-backend increments. Every one of
+the36 returned fields is finite/nonnegative and finish returns a detached scalar
+snapshot. This is nonvacuous helper/packing instrumentation proof, but it does
+NOT invoke the actual present/native loadingWork callback or establish timing
+precision in CheerpJ. The dependency JAR is frozen49bc1f7d78d4022eca6399afd15acc1a7ee226ae67cf1b10c183e39ec7f56e08;
+runner records all source/fixture/JAR/log hashes and exact JVM commands. No GPU,
+browser, server or account was involved.
+
+Independent native-intake JS PASS56 checks:
+output/tests/browser-load-profile-native-independent/20261111T162139580952Z/result.json
+Actual exact browser-region-load-profile.js accepts36 copied numeric fields,
+nonzero-offset Float64 views and throwing input iterators (bounded indexed copy,
+no enumeration). Mutating the input afterward cannot change recorded samples.
+Wrong length rejects before numeric reads; malformed schema/range/nonfinite/
+fractional counts, disabled policy and stale attempts do not advance statistics.
+History caps at128 samples, with up to8 recent owner-attempt guards. Worker
+submitted/completed packet/frame snapshots are scalar observations at receipt,
+not causal attribution or graphics completion ACKs. Generic replay security for
+an evicted older owner is not claimed. No borrowed input planes are retained.
+
+Source-level held-exit review
+-----------------------------
+The outer optional sample wraps the whole present attempt, clears active sample
+in finally and records success-path code only after the corresponding original
+terminal operation returns:1 no-world retained hold,2 incomplete-world retained
+hold,3 complete world,4 opaque/UI output;0 records an aborted/error attempt.
+Both held exits now pass through final reporting, closing the known diagnostic
+blind spot. last epoch/path plus work/repack activity controls reporting; this
+is not a new per-face clock or complete-frame-only counter. Component clocks
+include nested geometry/material/vertex/submit phases: DO NOT sum them. Native
+submit duration means callback return/enqueue/copy/backpressure, not Worker/GPU
+execution. Initialization is separate. LoadingWork follows terminal frame/hold
+submission and samples available Worker counters; delayed delivery must not be
+mistaken for that attempt's exact Worker completion time.
+
+The source retains original RuntimeException/Error presentation failures and
+suppresses any subsequent diagnostic exception onto them, rather than replacing
+the original failure. A diagnostic-only failure can still stop this explicitly
+private profiling session. The independent trace compares original error types/
+messages and side-effect prefixes, not full Java stack-frame identity. Exact
+whole-present failure suppression and real Java-native intake remain manager
+functional gates; this report does not invent actual browser execution evidence.
+
+No source-backed telemetry blocker remains within this focused private scope.
+The next useful step is the manager's measured continuous crossing/return route,
+with actual server movement, source epochs, held/fresh frame distinction and
+bounded source/Worker timings. No measured bottleneck, FPS/loading improvement,
+seamless travel or default adoption is asserted yet. Existing larger region
+preparation and fog prototypes remain parked and unimported.
