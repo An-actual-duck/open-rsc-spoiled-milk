@@ -39,7 +39,7 @@ def main():
     stage=json.loads((run/'stage.json').read_text());stage.update(tcp='127.0.0.1:43649',websocket='127.0.0.1:43549',fixture='repeatable-v1',fixtureSha256=sha(run/'repeatable-fixture.json'),serverHarnessSha256=sha(source/'BrowserRepeatableServer.java'),preparedOnly=True)
     stage['frontendSha256']={p.name:sha(p) for p in (run/'web').iterdir() if p.is_file() and p.suffix in ('.js','.html','.css')}
     (run/'stage.json').write_text(json.dumps(stage,indent=2)+'\n')
-    url='http://127.0.0.1:'+str(args.http_port)+'/?mode=webgl&benchmark=1&fixture=repeatable-v1&cache=lru&underlay=initial&depth=gpu&loop=modern&cull=early&ownership=all&sprites=cached&overlay=coverage&ownedstate=on&uploadvalidation=on&physical=on&modelpickbounds=on&halomatch=on'
+    url='http://127.0.0.1:'+str(args.http_port)+'/?mode=webgl&benchmark=1&fixture=repeatable-v1&cache=lru&underlay=initial&depth=gpu&loop=modern&cull=early&ownership=all&sprites=cached&overlay=coverage&ownedstate=on&uploadvalidation=on&physical=on&modelpickbounds=on&halomatch=on&spritekeylimbs=on'
     receipt=dict(preparedOnly=True,run=str(run),serverCommand=str(run/'server-command.json'),httpCommand=['python3',str(ROOT/'scripts/browser-gameplay/serve.py'),str(run/'web'),'--port',str(args.http_port)],url=url,status=str(run/'status.json'),ready=str(run/'REPEATABLE-FIXTURE-READY.json'),clientSha256=stage['clientSha256'],clientSourceCommit=args.client_source_commit,account='browserdemo',password='BrowserProof13',publicAccessed=False,processesStarted=False)
     (run/'repeatable-preparation.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(receipt,indent=2))
 if __name__=='__main__':main()
