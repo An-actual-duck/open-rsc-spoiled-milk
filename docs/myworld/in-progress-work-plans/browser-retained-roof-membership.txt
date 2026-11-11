@@ -79,5 +79,34 @@ retention/invalidation counts. This is CPU evidence only: Firefox compatibility,
 actual avoided-work receipts, FPS and area-transition performance remain manager
 acceptance work. No public release or server operation is part of this task.
 
-Verification status: implementation checkpoint; focused suites and full build
-are pending the manager's exclusive hardware-measurement window ending.
+Verification status: CPU verification complete; browser acceptance pending.
+The frozen actual-source differential passed against both the approved baseline
+JAR and the newly built JAR. All baseline/current OFF/ON cohorts produced
+825549f67692f215cf64d051ffc0aaa4c82bbf707c4bc7862ad57aeeef95279e.
+The enabled mixed-change cohort reused99 frames, completed20 reconciliations
+and avoided812 literal removals; native/CPU-depth/partial-ownership/OFF reused0.
+The24 malformed/duplicate/null/empty/oversize outcomes matched across every
+cohort, and10 focused revision/epoch/max720/null/duplicate assertions passed.
+The first oracle attempt found a test-only sink-replacement setup error; the
+fixture now explicitly uninstalls the preceding sink between modes. Failed
+evidence was preserved and is not counted as a passing run.
+
+Full client build passed, as did the existing frozen model-picking differential
+and200000 math cases, Scene batch-removal regression and CPU-only repeatable
+benchmark tools suite (including frontend, atlas, readiness and culling guards).
+No tests started a GPU/browser/server or changed public/owner data.
+
+Immutable review artifact:
+  output/tests/browser-roof-membership/review-289c6d1d5/client.jar
+  SHA2563579c20e7a8f08bfe7ca2fea56b241099ff0f0f89c6c9ea1f5052ab031db900a
+receipt.json records exact source hashes. Compared with baseline325, only
+Scene/mudclient class families changed (28 class byte differences, including
+inner-class source/debug offsets) and one BrowserRoofMembership class was
+added. No classes were removed; all2265 animation PNGs remain byte-identical.
+The runtime source checkpoint is289c6d1d57c383e897c8b5d29f8d68c73ac01766;
+subsequent handoff changes only correct the fixture setup and add these results.
+
+workspace-layout.py check reports pre-existing unclassified worker output-root
+entries (legacy renderer, sprite and static-analysis folders), preserved here.
+This task writes only the declared tests/browser-roof-membership category and
+existing maintained regression suites' declared test subjects.

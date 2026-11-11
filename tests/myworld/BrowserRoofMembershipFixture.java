@@ -58,6 +58,7 @@ public final class BrowserRoofMembershipFixture {
 		boolean current = version.equals("current");
 		int reused = 0, reconciled = 0, avoided = 0, frames = 0;
 		for (int mode = 0; mode < 4; mode++) {
+			BrowserFrameSinkRegistry.install(null);
 			BrowserFrameSinkRegistry.install(mode == 1 ? null : BrowserWallRoofOwnershipFixture.sink(mode == 2));
 			BrowserWallRoofOwnershipFixture.View view = new BrowserWallRoofOwnershipFixture.View(mode != 3);
 			Grid grid = new Grid(4); publish(view.s, grid);
