@@ -3,7 +3,7 @@ const proof=window.overlayDeltaProof={completed:false,passed:false,scope:'Actual
 let full,delta,gl,program,vs,fs,vao;
 function assert(ok,why){if(!ok)throw new Error(why);}
 try{
- const options=new URLSearchParams(location.search),alphaValue=options.get('alpha')||'false';
+ const options=new URLSearchParams(location.search),alphaValue=options.get('alpha')||'true';
  assert(['true','false'].includes(alphaValue),'alpha must be true or false');
  const alpha=alphaValue==='true',scale=Number(options.get('scale')||1),odd=options.get('odd')==='1',retainedResize=options.get('retainedresize')!=='off';
  assert(Number.isFinite(scale)&&scale>=1&&scale<=4,'scale must be between1and4');
@@ -47,7 +47,7 @@ try{
  assert((proof.borrowMutationChecks||0)===2,'Borrow mutation proof did not run');
  assert(deltaStats.overlayDeltaPartialDeclarations>10,'No actual partial transport');assert(deltaStats.overlayDeltaUploadedBytes<deltaStats.overlayDeltaFullEquivalentBytes,'No eligible bandwidth reduction');assert(deltaStats.overlayUploadBytes<fullStats.overlayUploadBytes,'Fallback/full transport erased total bandwidth reduction');
  proof.fullStats={...fullStats};proof.deltaStats={...deltaStats};proof.passed=true;
-}catch(error){proof.errors.push(String(error.stack||error));}finally{
+}catch(error){proof.errors.push(String(error)+(error.stack?'\n'+String(error.stack):''));}finally{
  try{full?.dispose();delta?.dispose();if(gl){if(vao)gl.deleteVertexArray(vao);if(program)gl.deleteProgram(program);if(vs)gl.deleteShader(vs);if(fs)gl.deleteShader(fs);}}catch(error){proof.passed=false;proof.errors.push('cleanup: '+String(error));}
  proof.completed=true;document.querySelector('#status').textContent=JSON.stringify(proof,null,2);
 }

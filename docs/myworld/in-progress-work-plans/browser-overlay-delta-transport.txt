@@ -117,3 +117,34 @@ The state oracle passes 970 checks. All changed metadata guards and old overlay
 mock/frontend controls pass. Real WebGL oracle exports also include source-array
 mutation after synchronous upload to test that borrowed planes never escape.
 These are still CPU checks and preparation, not a claimed GPU/FPS result.
+
+Frozen review artifacts and expanded GPU coverage
+------------------------------------------------
+Runtime source: 7e909551c366b601dc82dd97a4a684c70065e363. Full client build
+passed; immutable composite client-review-7e909.jar SHA256
+0b4e5e1b4288fd4018598193ecabf293bc6d393c17a1f3b55f309b6355f81bdf
+contains only source-built overlay bridge/coverage/tracker class families over
+the approved f720 baseline. All other entries are byte-identical to baseline;
+selected family bytes match the full build. Exact per-class provenance is in
+output/builds/browser-overlay-delta-transport/client-source-provenance-7e909.json.
+
+The clean-source CPU result and prepared GPU oracle are under
+output/tests/browser-overlay-delta-transport/20261111T052405748339Z/.
+Repeatable and combat benchmark harnesses, original RGB/T coverage, frame
+preparation, retained FULL/BASE mock and 262144 native fade-expression cases
+passed. No worker browser/GPU/server processes were started.
+
+Manager's first actual Radeon oracle with alpha:false failed in the BASELINE
+retained RGBA8 capture before any comparison frame. It is excluded as setup
+failure, not a delta result. The game uses alpha:true. Test-only checkpoint
+11250beb66a13c7697d97799321a08253fdad45e adds alpha/scale/odd-output controls,
+actual outputSize/begin selection and retained output-deferral coverage.
+Its separate alpha-physical-11250beb6 stage preserves all runtime module,
+Java plane and JAR hashes from the clean 7e909 stage. Root performs actual GPU
+comparison at alpha=true and at scale=2 with odd physical output dimensions.
+The older stage and setup-failure evidence remain preserved unchanged.
+
+Future oracle diagnostics include String(error) plus stack because Firefox's
+stack can omit the message/GL code. The oracle's default alpha is now true;
+explicit alpha=false remains available for the deliberately separate context
+check. Actual GPU/FPS acceptance results remain manager-owned pending evidence.
