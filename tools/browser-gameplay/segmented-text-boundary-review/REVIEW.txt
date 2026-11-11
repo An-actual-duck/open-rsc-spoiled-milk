@@ -138,8 +138,8 @@ Commands:
 New evidence: output/tests/browser-segmented-text-boundaries/NAME.
 BOUNDARY_JDK_HOME may select an equivalent JDK with supported javac tree APIs.
 
-Exact candidate result
-----------------------
+Historical initial candidate source result
+------------------------------------------
 Reviewed producer c7c2c99528ce4a257c60b5b0d03079a25763c70e from a frozen git
 archive (no dirty moving worktree source or application class execution).
 PASS255 AST references/calls: all180 baseline expressions retained, plus75
@@ -194,3 +194,52 @@ full after-write fault -> outer mudclient -> pooled-release/last-good-browser
 path. Manager-owned private browser injection must verify that path, normal
 cached-image rendering, poison/invalid recovery, and no present/clear/resize of
 an aborted frame before gameplay A/B measurement or adoption.
+
+Focused metadata-only revision: current source gate
+--------------------------------------------------
+Current reviewed producer f79a751e4cd50eb2206d4ab7d22bcae046e50c57 supersedes
+the initial c7 admission/entry grouping. See NO-OP-ANALYSIS.txt for preserved
+actual3602-frame, zero-native-callback failure and the source-backed cause.
+The initial structural PASS was not evidence of a useful native workload.
+
+The initial blanket nonDEFAULT actor-policy exclusion was too broad. Floating
+name text deliberately enters WORLD_OVERLAY while its enclosing policy stays
+GPU_OWNED. The actual old write guard is GPU_OWNED AND SCENE; it is false for
+that valid world text. Revised admission checks the real guard. It does not
+admit a new guarded SCENE software write. This is a correction to my earlier
+overly broad policy-exclusion advice, not permission to bypass that guard.
+
+Pure metadata proof: setRenderer2DPhase and updateSceneSoftwareWriteGuard are
+literal baseline source bodies. drawSceneEntity's wrapper is also literal
+baseline; before/after its inner drawEntity invocation it only changes scalar/
+reference capture metadata and the guard. The inner drawEntity is NOT pure.
+Seven public sprite/descriptor wrappers likewise match literal baseline source;
+GPU-owned capture/clip-noop returns can cross pending text because they do not
+read/write the current C/T target. All actual software pixel leaves still
+materialize first. Source asset arrays are separate owned assets or previously
+materialized/copied exports; arbitrary external Sprite aliases are unsupported.
+
+Each TEXT's rejection-replay closure now saves phase, policy, guard and clip
+alongside the owned font/plots; it restores the surrounding phase/policy/guard/
+clip in finally. This lets previously-valid WORLD text replay while the current
+context is guarded SCENE, then reinstates that guard before a new actual SCENE
+writer. Stable owner/dimensions, all true writer/read/export/mode/clear/owner
+barriers, depth copy and presentation guards remain mandatory. No threshold was
+lowered to manufacture native calls. The native raster algorithm is unchanged.
+
+PASS frozen exact f79 source:249 references/calls (180 original plus69 explicit
+reviewed additions:56 materialization calls and13 owner/fresh-clear/borrow refs).
+PASS51 entry/delegate guards, one intra-Scene depth-copy guard, outermost abort/
+pool-release tail, five full cold context/admission/recovery bodies, and24
+unchanged literal raw/canonical source bodies (original14 plus10 state/policy/
+descriptor bodies). Eight roster/new-Java-consumer mutation checks and removal
+checks remain active. No maintained source-boundary blocker found.
+
+Receipt: output/tests/browser-segmented-text-boundaries/
+  candidate-f79-boundaries-1/result.json
+Frozen baseline:58c61d98562e287c6e35a6056009cbe81c6d3464. The current JSON source
+guards intentionally target f79 semantics; prior c7 exact guard receipts/raw
+sources are preserved in ignored evidence and Git history. This remains source
+proof; ai2 owns actual51-nameTEXT batch accept/reject/prefix pixel tests. Manager
+actual native callback/typing/pixel/fault-retention gates and same-artifact FPS
+cohorts are still required. No game speed or browser fault-retention claim here.

@@ -1,5 +1,5 @@
 {
-  "reviewedCheckpoint": "c7c2c99528ce4a257c60b5b0d03079a25763c70e",
+  "reviewedCheckpoint": "f79a751e4cd50eb2206d4ab7d22bcae046e50c57",
   "scope": "Exact audited AST prefixes before old consumers; gates manually reviewed with private flagtrue/observerfalse. No automatic CFG or full alias-analysis claim.",
   "methods": [
     {
@@ -16,11 +16,6 @@
       "file": "Client_Base/src/orsc/graphics/three/Scene.java",
       "method": "setMidpoints(int,boolean,int,int,int,int,int,)",
       "requiredPrefix": "{\n    try {\n        this.rot1024_vp_src = var6;\n        this.m_Zb = var7;\n        this.m_vb = var3;\n        this.m_Nb = var5;\n        this.m_x = new Scanline[var1 + var5];\n        this.m_wb = var1;\n        this.m_A = var4;\n        for (int var8 = 0; var8 < var5 + var1; ++var8) {\n            this.m_x[var8] = new Scanline();\n        }\n        if (!var2) {\n            this.m_f = false;\n        }\n        if (orsc.graphics.two.GraphicsController.isSegmentedTextEnabled()) graphics.flushPendingSegmentedText();"
-    },
-    {
-      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-      "method": "a(Sprite,int,int,int,int,)",
-      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
     },
     {
       "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
@@ -124,11 +119,6 @@
     },
     {
       "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-      "method": "drawEntity(int,int,int,int,int,int,int,int,)",
-      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
-    },
-    {
-      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
       "method": "drawLineHoriz(int,int,int,int,)",
       "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
     },
@@ -140,26 +130,6 @@
     {
       "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
       "method": "drawMinimapSprite(Sprite,int,int,int,int,int,)",
-      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
-    },
-    {
-      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-      "method": "drawSceneEntity(int,int,int,int,int,int,int,int,int,int,Renderer3DFrame,SceneSpriteRasterPolicy,)",
-      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
-    },
-    {
-      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-      "method": "drawSprite(Sprite,int,int,)",
-      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
-    },
-    {
-      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-      "method": "drawSprite(Sprite,int,int,int,int,int,)",
-      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
-    },
-    {
-      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-      "method": "drawSprite(Sprite,int,int,int,int,int,int,)",
       "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
     },
     {
@@ -239,23 +209,8 @@
     },
     {
       "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-      "method": "setRenderer2DPhase(Renderer2DFrame.Phase,)",
-      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT && !segmentedTextPoisoned) flushPendingSegmentedText();"
-    },
-    {
-      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
       "method": "setWorldOverlayCoverageEnabled(boolean,)",
       "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT && !segmentedTextPoisoned) flushPendingSegmentedText();"
-    },
-    {
-      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-      "method": "spriteClip3(int,int,Sprite,int,int,byte,int,)",
-      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
-    },
-    {
-      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-      "method": "spriteClipping(Sprite,byte,int,int,int,int,int,)",
-      "requiredPrefix": "{\n    if (BROWSER_SEGMENTED_TEXT) flushPendingSegmentedText();"
     },
     {
       "file": "Client_Base/src/orsc/mudclient.java",
@@ -323,7 +278,7 @@
     {
       "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
       "method": "recordSegmentedText(java.util.List<Renderer2DTextPlotCommand>,)",
-      "text": "{\n    if (!isSegmentedTextEnabled() || plots.isEmpty()) return false;\n    if (segmentedTextPoisoned) flushPendingSegmentedText();\n    WorldOverlayCoverage.Frame admission = journalFrame();\n    if (sceneSpriteRasterPolicy != SceneSpriteRasterPolicy.DEFAULT || guardGpuSceneSoftwareWrites || !worldOverlayCoverageEnabled || admission == null || !admission.isFreshSegmentedTextOwner() || plots.size() > SegmentedTextRaster.MAX_GLYPHS) {\n        flushPendingSegmentedText();\n        return false;\n    }\n    byte[] font = plots.get(0).fontData;\n    int[] scalar = new int[plots.size() * 5];\n    int at = 0;\n    for (Renderer2DTextPlotCommand plot : plots) {\n        if (plot.fontData != font) {\n            flushPendingSegmentedText();\n            return false;\n        }\n        scalar[at++] = plot.x;\n        scalar[at++] = plot.y;\n        scalar[at++] = plot.color;\n        scalar[at++] = plot.indexAddr;\n        scalar[at++] = plot.antiAliased ? 1 : 0;\n    }\n    return textSegments().record(font, scalar, plots.size(), clipLeft, clipTop, clipRight, clipBottom, new SegmentedTextRaster.Replay(){\n        \n        public void plots(byte[] saved, int[] commands, int left, int top, int right, int bottom) {\n            int oldL = clipLeft;\n            int oldT = clipTop;\n            int oldR = clipRight;\n            int oldB = clipBottom;\n            clipLeft = left;\n            clipTop = top;\n            clipRight = right;\n            clipBottom = bottom;\n            try {\n                try {\n                    for (int n = 0; n < commands.length; n += 5) plotCharacter(commands[n + 4] != 0, saved, commands[n], commands[n + 2], commands[n + 3], commands[n + 1]);\n                } catch (Exception error) {\n                    System.out.println(\"drawstring: \" + error);\n                    error.printStackTrace();\n                }\n            } finally {\n                clipLeft = oldL;\n                clipTop = oldT;\n                clipRight = oldR;\n                clipBottom = oldB;\n            }\n        }\n    });\n}"
+      "text": "{\n    textAdmission(0);\n    if (!isSegmentedTextEnabled()) {\n        textAdmission(6);\n        return false;\n    }\n    if (plots.isEmpty()) {\n        textAdmission(1);\n        return false;\n    }\n    if (segmentedTextPoisoned) flushPendingSegmentedText();\n    WorldOverlayCoverage.Frame admission = journalFrame();\n    if (!worldOverlayCoverageEnabled || admission == null) {\n        textAdmission(2);\n        flushPendingSegmentedText();\n        return false;\n    }\n    if (!admission.isFreshSegmentedTextOwner()) {\n        textAdmission(3);\n        flushPendingSegmentedText();\n        return false;\n    }\n    if (guardGpuSceneSoftwareWrites) {\n        textAdmission(4);\n        flushPendingSegmentedText();\n        return false;\n    }\n    if (plots.size() > SegmentedTextRaster.MAX_GLYPHS) {\n        textAdmission(6);\n        flushPendingSegmentedText();\n        return false;\n    }\n    byte[] font = plots.get(0).fontData;\n    int[] scalar = new int[plots.size() * 5];\n    int at = 0;\n    for (Renderer2DTextPlotCommand plot : plots) {\n        if (plot.fontData != font) {\n            flushPendingSegmentedText();\n            return false;\n        }\n        scalar[at++] = plot.x;\n        scalar[at++] = plot.y;\n        scalar[at++] = plot.color;\n        scalar[at++] = plot.indexAddr;\n        scalar[at++] = plot.antiAliased ? 1 : 0;\n    }\n    final Renderer2DFrame.Phase savedPhase = renderer2DPhase;\n    final SceneSpriteRasterPolicy savedPolicy = sceneSpriteRasterPolicy;\n    final boolean savedGuard = guardGpuSceneSoftwareWrites;\n    boolean queued = textSegments().record(font, scalar, plots.size(), clipLeft, clipTop, clipRight, clipBottom, new SegmentedTextRaster.Replay(){\n        \n        public void plots(byte[] saved, int[] commands, int left, int top, int right, int bottom) {\n            int oldL = clipLeft;\n            int oldT = clipTop;\n            int oldR = clipRight;\n            int oldB = clipBottom;\n            Renderer2DFrame.Phase oldPhase = renderer2DPhase;\n            SceneSpriteRasterPolicy oldPolicy = sceneSpriteRasterPolicy;\n            boolean oldGuard = guardGpuSceneSoftwareWrites;\n            clipLeft = left;\n            clipTop = top;\n            clipRight = right;\n            clipBottom = bottom;\n            renderer2DPhase = savedPhase;\n            sceneSpriteRasterPolicy = savedPolicy;\n            guardGpuSceneSoftwareWrites = savedGuard;\n            try {\n                try {\n                    for (int n = 0; n < commands.length; n += 5) plotCharacter(commands[n + 4] != 0, saved, commands[n], commands[n + 2], commands[n + 3], commands[n + 1]);\n                } catch (Exception error) {\n                    System.out.println(\"drawstring: \" + error);\n                    error.printStackTrace();\n                }\n            } finally {\n                clipLeft = oldL;\n                clipTop = oldT;\n                clipRight = oldR;\n                clipBottom = oldB;\n                renderer2DPhase = oldPhase;\n                sceneSpriteRasterPolicy = oldPolicy;\n                guardGpuSceneSoftwareWrites = oldGuard;\n            }\n        }\n    });\n    textAdmission(queued ? 7 : 6);\n    return queued;\n}"
     },
     {
       "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",

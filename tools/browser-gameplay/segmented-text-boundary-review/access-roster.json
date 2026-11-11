@@ -1090,8 +1090,8 @@
     "PC_Client/src/orsc/Frame.java": "3baaa08d0a04f630dc27bb6d3a9a0d1da103235a017016463fd6da8e070b71c4"
   },
   "reviewedCandidateAccessChanges": {
-    "checkpoint": "c7c2c99528ce4a257c60b5b0d03079a25763c70e",
-    "rationale": "Independent exact-source review:62 explicit flush calls;13 owner-coherence/fresh-clear/borrow references in GC, coverage and isolated segment core. Existing180 accesses retained. No generic file exemptions.",
+    "checkpoint": "f79a751e4cd50eb2206d4ab7d22bcae046e50c57",
+    "rationale": "Independent focused revision:56 actual-consumer/owner flush calls and13 owner/fresh-clear/borrow references. Purephase/policy and descriptor wrappers match baseline literally; all180 baseline accesses retained. No generic file exemptions.",
     "remove": [],
     "add": [
       {
@@ -1123,6 +1123,24 @@
         "method": "current(WorldOverlayCoverage.Frame,)",
         "kind": "pixelData",
         "expression": "worldOverlayCoverage != null && worldOverlayCoverage.isCurrent(frame, pixelData, width2, height2) && frame.isFreshSegmentedTextOwner()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "recordSegmentedText(java.util.List<Renderer2DTextPlotCommand>,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "recordSegmentedText(java.util.List<Renderer2DTextPlotCommand>,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
+      },
+      {
+        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+        "method": "recordSegmentedText(java.util.List<Renderer2DTextPlotCommand>,)",
+        "kind": "call:flushPendingSegmentedText",
+        "expression": "flushPendingSegmentedText()"
       },
       {
         "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
@@ -1222,12 +1240,6 @@
       },
       {
         "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-        "method": "setRenderer2DPhase(Renderer2DFrame.Phase,)",
-        "kind": "call:flushPendingSegmentedText",
-        "expression": "flushPendingSegmentedText()"
-      },
-      {
-        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
         "method": "consumeRenderer2DFrame()",
         "kind": "call:flushPendingSegmentedText",
         "expression": "flushPendingSegmentedText()"
@@ -1259,36 +1271,6 @@
       {
         "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
         "method": "clearClip()",
-        "kind": "call:flushPendingSegmentedText",
-        "expression": "flushPendingSegmentedText()"
-      },
-      {
-        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-        "method": "spriteClipping(Sprite,byte,int,int,int,int,int,)",
-        "kind": "call:flushPendingSegmentedText",
-        "expression": "flushPendingSegmentedText()"
-      },
-      {
-        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-        "method": "a(Sprite,int,int,int,int,)",
-        "kind": "call:flushPendingSegmentedText",
-        "expression": "flushPendingSegmentedText()"
-      },
-      {
-        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-        "method": "spriteClip3(int,int,Sprite,int,int,byte,int,)",
-        "kind": "call:flushPendingSegmentedText",
-        "expression": "flushPendingSegmentedText()"
-      },
-      {
-        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-        "method": "drawSceneEntity(int,int,int,int,int,int,int,int,int,int,Renderer3DFrame,SceneSpriteRasterPolicy,)",
-        "kind": "call:flushPendingSegmentedText",
-        "expression": "flushPendingSegmentedText()"
-      },
-      {
-        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-        "method": "drawEntity(int,int,int,int,int,int,int,int,)",
         "kind": "call:flushPendingSegmentedText",
         "expression": "flushPendingSegmentedText()"
       },
@@ -1403,24 +1385,6 @@
       {
         "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
         "method": "drawMinimapSprite(Sprite,int,int,int,int,int,)",
-        "kind": "call:flushPendingSegmentedText",
-        "expression": "flushPendingSegmentedText()"
-      },
-      {
-        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-        "method": "drawSprite(Sprite,int,int,)",
-        "kind": "call:flushPendingSegmentedText",
-        "expression": "flushPendingSegmentedText()"
-      },
-      {
-        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-        "method": "drawSprite(Sprite,int,int,int,int,int,)",
-        "kind": "call:flushPendingSegmentedText",
-        "expression": "flushPendingSegmentedText()"
-      },
-      {
-        "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
-        "method": "drawSprite(Sprite,int,int,int,int,int,int,)",
         "kind": "call:flushPendingSegmentedText",
         "expression": "flushPendingSegmentedText()"
       },
@@ -1630,6 +1594,66 @@
       "method": "plotLetterAntialiased(byte[],int,int,int,int,int,int,int[],int,)",
       "sha256": "2fae7bc5743368e603a002398351c068c8080c836a2e6e794ba6890d80e48233",
       "rawSha256": "2b999768c8daec8fdf11b074da0bda9abba25a6c66dd70bdf15e40012127f26f"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "setRenderer2DPhase(Renderer2DFrame.Phase,)",
+      "sha256": "0873c17f8270fa9dbfe0e803a0dff31159f695bb8ef2017fbbccaac0734bd54f",
+      "rawSha256": "95dd559250e6a436cdd8d312f17b7c0ef863a7495c8b94088a71762800a8ad1e"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "updateSceneSoftwareWriteGuard()",
+      "sha256": "ea671a87020d5f5d2fd7809b20d230635af9f8daeab573065b789230dfd3ff74",
+      "rawSha256": "a9358b86dff1c3d3a645d4c385d9f615a3f17892f59fb5407bd3bdaecf034f43"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSceneEntity(int,int,int,int,int,int,int,int,int,int,Renderer3DFrame,SceneSpriteRasterPolicy,)",
+      "sha256": "ded24378bf9d3f207b87b22bc18bb2b798822dc12235f819af7b57105999b947",
+      "rawSha256": "dd824ac7a428023e8dbb3dc12f5952800c16b193e9d361b6730e91fc470c00e6"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "spriteClipping(Sprite,byte,int,int,int,int,int,)",
+      "sha256": "4fc1948a5131f3c5d670db4836bf480f9e1a5b72138f3d1912984df9079781e5",
+      "rawSha256": "07137a8f1fe409270a534ac463c3b5cb8c77ab3850ce31847cabbdf27937846c"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "a(Sprite,int,int,int,int,)",
+      "sha256": "a6312a01153c5daaf9a45eb1d859214d3193ef6297be8e494b737de4cd352164",
+      "rawSha256": "e975b227f6b43fb4c28780472e03d4244a8f057448d528ebb0ad8c2e35e0ad3f"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "spriteClip3(int,int,Sprite,int,int,byte,int,)",
+      "sha256": "5ef75fc73b5b2273e79f5a58195e47b63f0756c661f11cd7eda134ca857dd71f",
+      "rawSha256": "c9cb5c4335319e45e2222cd678a32d4dce1acfc93b856cbafbb66a5175006485"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawEntity(int,int,int,int,int,int,int,int,)",
+      "sha256": "f47f96d39ac9ee2fd81fbe87220515f16835356ef953c1c406641d3f56afe81a",
+      "rawSha256": "820df246251251273178182805efb965acf81a4756eb4cc545fa1f124bc44581"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSprite(Sprite,int,int,)",
+      "sha256": "791d438f1ebabe7d7a5d29bc274016ecc5701fd89cce7c5f683b9e73f42b4237",
+      "rawSha256": "c5c71ed886bbc5377d56530c88a4a76b56bda838388f2915d751011596ed1097"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSprite(Sprite,int,int,int,int,int,)",
+      "sha256": "5d136ada2570c6ce3e24eab0df31331d6bec6a511c965b2f128c356c768e67a5",
+      "rawSha256": "accdfafcb01f29fc729df96a20ea6782042041935a8aed16a9aa48903ffaf7c8"
+    },
+    {
+      "file": "Client_Base/src/orsc/graphics/two/GraphicsController.java",
+      "method": "drawSprite(Sprite,int,int,int,int,int,int,)",
+      "sha256": "b2e116955f15852170fa21fc6f729d112fe25afba55b2bea6d7bae7933d57ed2",
+      "rawSha256": "607aaf28d81eba72e4dd34bdb3304739eb8492f19e9dc65a7695f57789ad71ff"
     }
   ]
 }
