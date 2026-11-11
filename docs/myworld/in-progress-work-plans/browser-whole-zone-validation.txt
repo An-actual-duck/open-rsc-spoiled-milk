@@ -145,3 +145,29 @@ retains catalog metadata and streams baked payloads into GPU buffers, then drops
 CPU payload views. rawSourceCPUReady=false is truthful. Full GPU static residency
 and verified source-catalog coverage must not be relabelled full raw terrain or
 Java classic/prepared CPU geometry residency. Residual local CPU work is expected.
+
+Independent catalogue join and malformed-delivery corpus
+--------------------------------------------------------
+verify-catalogue.py reads the exact source manifest/payloads after the complete
+package verifier, independently derives all signed 48-cell world ownership and
+four 24-cell object owners per sector, and compares authored first-five identity
+word multisets against both scenery and boundaries. The model-kind enum order is
+source-guarded. Full resource reverse ownership/counts/roles/representation sizes
+are checked; extra or missing resources cannot be hidden behind matching totals.
+It deliberately does NOT claim to verify the two elevation words, canonical FNV
+key, packed vertices/normals/UVs or GPU use from this source-membership comparison.
+22 synthetic adversarial catalogue tests pass. Actual catalogue join awaits the
+baker output and stable runtime schema; synthetic success is not full-data proof.
+The selected actual package has all 24580 relevant authored placements inside
+its selected sector ownership (22301+680 L0,1165+95 L1,302+37 L2).
+
+Independent extractor malformed corpus:18 PASS against exact source SHA256
+ a3c7b59244b0b0821e2da9f4018ff3f2d32509c7ed37f72548615e74b14da612
+Receipt: output/tests/browser-whole-zone-validation/texture-malformed-1/result.json
+Includes original encoded-entry preservation, selected/nonselected groups,
+truncation, unknown type, duplicate groups/IDs, missing/empty groups, zero frames,
+nonconsecutive IDs, overlong names, trailing decoded bytes, gzip failure,
+aggregate metadata/pixel/decoded budgets and existing-output preservation.
+Budget branches use reduced constants to avoid allocating attack-sized buffers;
+this checks refusal logic, not peak-memory behavior at the production limits.
+Production Unpacker full-pixel equality remains the separate positive gate above.
