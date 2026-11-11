@@ -34,7 +34,8 @@ failure is poison, not silent fallback. Preflight rejection can safely fall back
 Genuine matching typed views or genuine ArrayBuffer only; the latter is wrapped
 in a bounded, aligned typed view sharing storage (no pixel/source copy). Reject
 arbitrary arrays/proxies and SharedArrayBuffer. Raw kinds and converted scalar
-view shapes plus zeroCopyBorrow are recorded. Adapter cost is included. Alias tests compare byte
+view shapes plus zeroCopyBorrow are recorded. That flag describes our adapter
+sharing incoming storage, not unmeasured CheerpJ internal copy behavior. Adapter cost is included. Alias tests compare byte
 RANGES, because disjoint Java views may share a backing heap. Metadata/source
 readers cannot overlap either writer; C/T cannot overlap each other.
 
@@ -79,7 +80,9 @@ Costs: literal; validate-only callback returning0 then literal; native raster.
 Two reversed count/mode orders,30 half-second measured cohorts after per-case
 warmups. Common clear/preparation costs remain inside every iteration. Native
 modes include actual Java packet building, fresh Frame borrow, dispatch, native
-preflight and raster. Literal is not charged artificial packet building. Timing
+preflight and raster. Literal is not charged artificial packet building. Probe plot fields are private
+final, and the literal loop calls the inner plot method, matching the existing
+TEXTPlotCommand accessor/call shape rather than granting cheaper public fields. Timing
 uses batched Java clocks and aggregates enough iterations for coarse resolution.
 This is not a pure JNI timer, browser gameplay FPS, GPU timing, or adoption result.
 Frame C/T clear here is only common probe setup, not an authorized runtime feature.
