@@ -12,7 +12,7 @@ class Catalogue(unittest.TestCase):
   cells=[{'plane':0,'cellX':x,'cellY':y,'resourceId':None,'vertexCount':0,'indexCount':0,'identities':[],'placementCount':0,'canonicalContentKey':'empty'}for x in (0,1)for y in (-2,-1)]
   owned=next(c for c in cells if(c['cellX'],c['cellY'])==(0,-1));owned.update(resourceId=1000001,vertexCount=6,indexCount=6,identities=[4,1,-1,34,1,10,10,5,2,-2,196,3,10,20],placementCount=2,canonicalContentKey='key')
   def resource(cell,role):return {**cell,'id':cell['resourceId'],'role':role,'sourceKind':'world'if role==0 else'objects','cellSize':48 if role==0 else 24,'batchIntCount':5,'bytes':16+cell['vertexCount']*112+cell['indexCount']*4+20}
-  self.c={'packageFingerprintSha256':'p','manifestSha256':'m','worldCells':[world],'objectCells':cells,'chunks':[resource(world,0),resource(owned,1)]}
+  self.c={'complete':True,'packageFingerprintSha256':'p','manifestSha256':'m','worldCells':[world],'objectCells':cells,'chunks':[resource(world,0),resource(owned,1)]}
  def tearDown(self):self.tmp.cleanup()
  def check(self):return m.join(self.c,self.proof,self.root,self.kinds)
  def rejected(self):
@@ -62,4 +62,11 @@ class Catalogue(unittest.TestCase):
   self.c['chunks'][1]['bytes']+=4;self.rejected()
  def test_changed_source_after_source_proof(self):
   (self.root/'placements.json').write_text('{}');self.rejected()
+ def test_partial_diagnostic_is_explicit(self):
+  self.c['complete']=False
+  with self.assertRaises(ValueError):self.check()
+  r=m.join(self.c,self.proof,self.root,self.kinds,{(0,0,-1)});self.assertTrue(r['partialDiagnostic'])
+ def test_partial_missing_explicit_source(self):
+  self.c['complete']=False
+  with self.assertRaises(ValueError):m.join(self.c,self.proof,self.root,self.kinds,{(0,0,-1),(1,0,-1)})
 if __name__=='__main__':unittest.main()

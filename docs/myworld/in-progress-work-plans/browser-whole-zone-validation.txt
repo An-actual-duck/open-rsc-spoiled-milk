@@ -171,3 +171,23 @@ aggregate metadata/pixel/decoded budgets and existing-output preservation.
 Budget branches use reduced constants to avoid allocating attack-sized buffers;
 this checks refusal logic, not peak-memory behavior at the production limits.
 Production Unpacker full-pixel equality remains the separate positive gate above.
+
+Actual bounded bake pilot source join
+--------------------------------------
+The producer's pilot-2 manifest SHA256
+ 87d73c20049811f1cf5a719cdf6d475e9007ef677ffb416ba638e98f67497214
+passes an independent exact-package join for explicitly requested owners
+(plane0,2,13),(plane1,2,13),(plane2,2,13):3 world cells,12 object cells,202 authored
+placements,10 reverse-owned resources,13,536,504 declared geometry GPU bytes.
+Receipt: output/tests/browser-whole-zone-validation/catalogue-pilot-2/result.json
+This is partialDiagnostic=true and complete=false. The verifier's ordinary mode
+requires complete=true and the entire exact package roster; a partial catalogue
+cannot pass by quietly shrinking expected coverage to its own records. Explicit
+partial owners absent from the source refuse. Catalogue adversarial suite now24.
+
+Read-only review found two producer/consumer schema name/count disagreements and
+forwarded them to both owners. The bbox name is corrected in the later pilot.
+The actual source has three L1 sectors without L0 pages:(-1,-1),(-1,0),(0,-1).
+The producer reports its correction now builds the lower void-context roof chain
+before emitting authored upper cells; actual ordinary-path geometry/elevation
+comparison is still a pending gate, not inferred from the source join.
