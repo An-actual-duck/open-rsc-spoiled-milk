@@ -2,7 +2,8 @@
  * Only createBrowserWebGL opts in. Children retain scoped APIs by default.
  * Every color frame targets the default framebuffer; retained BASE is temporary.
  */
-export function createOwnedBrowserFrameState(gl,{enabled=true}={}) {
+import {establishOverlayUnpack} from './browser-overlay-unpack.js';
+export function createOwnedBrowserFrameState(gl,{enabled=true,ownOverlayUnpack=false}={}) {
   const maxTextureSize=gl.getParameter(gl.MAX_TEXTURE_SIZE);
   if(!Number.isInteger(maxTextureSize)||maxTextureSize<1)throw new Error('Invalid owned browser texture capability');
   const viewport=new Int32Array(4),clearColor=new Float32Array([0,0,0,1]),colorMask=[true,true,true,true];
@@ -14,5 +15,14 @@ export function createOwnedBrowserFrameState(gl,{enabled=true}={}) {
     gl.enable(gl.DITHER);gl.colorMask(true,true,true,true);gl.depthMask(true);gl.clearDepth(1);gl.activeTexture(gl.TEXTURE0);
     gl.blendEquation(gl.FUNC_ADD);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
   }
-  return {gl,maxTextureSize,viewport,clearColor,colorMask,scissor:false,active:enabled===true,begin,target};
+  const result={gl,maxTextureSize,viewport,clearColor,colorMask,scissor:false,active:enabled===true,begin,target};
+  if(ownOverlayUnpack){
+    let active=enabled===true,needsUnpack=true;
+    result.ownsOverlayUnpack=true;
+    result.ensureOverlayUnpack=()=>{if(needsUnpack){establishOverlayUnpack(gl);needsUnpack=false;}};
+    Object.defineProperty(result,'active',{get:()=>active,set:value=>{const entering=value===true&&!active;active=value===true;if(entering){needsUnpack=true;result.ensureOverlayUnpack();}},enumerable:true});
+    // Establish the exclusive boundary before even initial/loading texture work.
+    if(active)result.ensureOverlayUnpack();
+  }
+  return result;
 }

@@ -121,7 +121,7 @@ const natives = {
   },
   async Java_orsc_browser_BrowserBootstrap_reportLoop(lib,mode,early,full) { window.browserProof.clientLoop=mode;window.browserProof.earlyFaceCull=early===true;window.browserProof.fullResidentOwnership=full===true; },
   async Java_orsc_browser_BrowserBootstrap_reportOverlayRectPolicy(lib,requested,enabled){
-    if(!['off','observe'].includes(requested)||!['off','observe'].includes(enabled))throw new Error('Invalid overlay rectangle policy receipt');
+    if(!['off','observe','on','packed'].includes(requested)||!['off','observe','on','packed'].includes(enabled))throw new Error('Invalid overlay rectangle policy receipt');
     window.browserProof.overlayRectMode={requested,enabled};
   },
   async Java_orsc_browser_BrowserBootstrap_reportSpriteKeyPolicy(lib,requested,enabled){window.browserProof.spriteKeyLimbs={requested:!!requested,enabled:!!enabled};publish();},

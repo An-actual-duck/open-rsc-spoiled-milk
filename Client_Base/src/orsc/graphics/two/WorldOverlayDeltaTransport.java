@@ -13,7 +13,9 @@ final class WorldOverlayDeltaTransport {
     private boolean active;
     private int blockPixels,lastBlock=-1,lastStart,lastEnd,writeMarks,spanMarks;
     private Plan pending;
-    private final WorldOverlayTileTracker tileTracker="observe".equals(System.getProperty("spoiledmilk.browserOverlayRectMode"))
+    private final boolean rectangles="on".equals(System.getProperty("spoiledmilk.browserOverlayRectMode"))
+        ||"packed".equals(System.getProperty("spoiledmilk.browserOverlayRectMode"));
+    private final WorldOverlayTileTracker tileTracker=rectangles||"observe".equals(System.getProperty("spoiledmilk.browserOverlayRectMode"))
         ? new WorldOverlayTileTracker() : null;
     private boolean[] acknowledgedTiles;
 
@@ -35,6 +37,7 @@ final class WorldOverlayDeltaTransport {
     void mark(int index) {
         if(!beforeWrite())return;
         if(tileTracker!=null&&!tileTracker.mark(index)){invalidate();return;}
+        if(rectangles&&tileTracker.supported())return;
         if(lastBlock>=0&&index>=lastStart&&index<lastEnd)return;
         if(index<0||index>=width*height){invalidate();return;}
         int block=index/blockPixels;
@@ -46,6 +49,7 @@ final class WorldOverlayDeltaTransport {
         if(spanMarks<Integer.MAX_VALUE)spanMarks++;
         if(start<0||end>width*height){invalidate();return;}
         if(tileTracker!=null&&!tileTracker.span(start,end)){invalidate();return;}
+        if(rectangles&&tileTracker.supported())return;
         int first=start/blockPixels,last=(end-1)/blockPixels;
         for(int block=first;block<=last;block++)if(!touched[block]){touched[block]=true;writeMarks++;}
         lastBlock=last;lastStart=last*blockPixels;lastEnd=Math.min(width*height,lastStart+blockPixels);
@@ -56,6 +60,7 @@ final class WorldOverlayDeltaTransport {
         if(generation<0||sequence<0||generation>9007199254740991L||sequence>9007199254740991L){invalidate();return null;}
         boolean history=pixels==acknowledgedPixels&&width==acknowledgedWidth&&height==acknowledgedHeight
             &&acknowledgedTouched!=null&&generation>acknowledgedGeneration&&sequence>acknowledgedSequence;
+        if(rectangles&&tileTracker.supported())writeMarks=tileTracker.deriveRows(touched);
         int[] bands=new int[MAX_BANDS*2];int count=0,rows=0,touchedRows=0;boolean open=false,tooMany=false;
         for(int block=0;block<touched.length;block++){
             int start=block*ROWS_PER_BLOCK,end=Math.min(height,start+ROWS_PER_BLOCK);
@@ -71,6 +76,10 @@ final class WorldOverlayDeltaTransport {
         if(!partial){bands=new int[]{0,height};rows=height;count=1;}else bands=Arrays.copyOf(bands,count*2);
         int[] work=new int[]{writeMarks,spanMarks,touchedRows,rows,count,partial?1:0};
         int[] observation=tileTracker==null?null:tileTracker.observe(history?acknowledgedTiles:null);
+        if(rectangles&&history&&observation!=null&&(long)observation[4]*5<=(long)width*height*3){
+            int[] regions=tileTracker.rectangles(acknowledgedTiles,rows*width);
+            if(regions!=null){bands=regions;partial=true;work[3]=0;work[4]=regions.length/4;work[5]=1;observation[0]=2;}
+        }
         if(observation!=null){work=Arrays.copyOf(work,work.length+observation.length);System.arraycopy(observation,0,work,6,observation.length);}
         pending=new Plan(this,width,height,generation,sequence,partial,
             partial?acknowledgedGeneration:-1,partial?acknowledgedSequence:-1,bands,touched.clone(),

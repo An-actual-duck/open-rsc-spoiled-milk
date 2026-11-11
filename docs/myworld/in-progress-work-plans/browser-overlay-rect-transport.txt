@@ -1,8 +1,9 @@
 Private bounded overlay rectangle transport investigation
 ========================================================
 
-Status: ACTIVE observe-only first checkpoint. Default OFF. No rectangle GPU
-uploads have been implemented. No browser/GPU/server processes started here.
+Status: ACTIVE rectangle/direct/packed implementation checkpoint, not READY.
+Default OFF. The backend needs independent CPU/GPU proof and timing acceptance.
+No browser/GPU/server processes started here.
 Source baseline: published main 1f1be1b7c2dee6dde98a0f123e5f1987585efdff.
 Parked owned-actor b655 and all its immutable artifacts remain preserved.
 
@@ -87,6 +88,52 @@ occupancy and a source-content containment check before rectangle work.
 
 Future rectangle contract (pending observed coverage)
 -----------------------------------------------------
+The actual supported-writer gate PASSED: manager's writer-observe-containment-1
+has three sequence-aligned live combat frames1868/1869/1870, writer union196/
+199/199 tiles (96,512/98,048/98,048 pixels), ZERO missing source-content tiles.
+The initial collector decoded16-bit words as32-bit and rejected; the SAME raw
+capture was recovered with the correct scheme1 decoder, original rejection
+preserved, no rerun or hidden missing-writer result. wordBits:16 is now explicit.
+Sixteen multi-phase samples have all6 real damage channels advancing; true
+writer area104,192-110,848pixels. Fine29-35 runs,64x32 coarsening11-14 runs.
+
+Current candidate chooses at most8 rectangles (<=16 GL subimages for2planes),
+fixed grids32x16/64x32/128x32/256x32, horizontal runs with identical vertical
+joins, <=60%logical area and >=20%area savings against existing row/FULL.
+No unbounded greedy search. Fixed256x32 planning on the16 captured masks gives
+6-8 rectangles,243,968-268,544 logical pixels but3.15-3.40MB strided source
+spans: neither is a hardware-bus measurement or FPS prediction.
+Active on/packed tracking skips duplicate per-pixel row tracking, deriving row
+fallback metadata once from fine tiles. Same/next-row mark-cache misses avoid
+variable-width division; markerMisses still reports actual tile-cache misses.
+
+work scheme2 denotes xywh rectangles in the existing regions argument;
+work[3]=0,work[4]=rectangleCount,partial=true. Scheme1 remains observed row/FULL
+fallback. Same owner, actual-current ACK footprint, two existing native calls.
+Pure validation also checks disjointness/order/grid alignment, total area,
+strided source bounds and full containment of every dirty union tile beforeGL.
+
+overlayrect=on uses minimal zero-copy strided subviews/srcOffset0 with
+UNPACK_ROW_LENGTH=logicalWidth. overlayrect=packed uses the identical planner
+and a bounded reusable JS-owned buffer, copies raw bytes for both planes, then
+uploads tight per-rectangle views with ROW_LENGTH0. Full/row fallback stays
+available. Packing occurs only after both planes/geometry/token validate; no
+input views survive the callback.12MiB retained/24MiB transient owner-live scratch
+growth bound excludes GC/driver overhead. Counters distinguish logical texels,
+gathered/staged bytes, scratch capacity/allocations/peak, API-view span bytes,
+packing wall time (bounded benchmark counters) and actual calls.
+
+Manager explicitly authorized packing after agent2's Firefox154 source audit:
+queued raw uploads serialize contiguous source spans INCLUDING row gaps.
+Thus logical texel reductions alone do not imply proportional browser copies.
+Raw BGRA and Float32 payload bits are preserved by byte copy, not Number math.
+
+withOverlayUnpack scopes row length/skip/alignment/PBO/flip/premultiply for BOTH
+planes. Scoped mode restores arbitrary incoming state; private explicitly
+owned mode establishes canonical state before initial uploads and on every
+inactive->active transition, then restores canonical state before other uploads.
+Default/observe owned-frame contract remains unchanged. No per-rectangle checks.
+
 Reuse the same plan and ACK owner, direct full RGB/T typed-array borrow, and
 bounded rectangle metadata; no packing or extra per-frame native call. Evaluate
 low rectangle-count limits and fixed coarsening before costly merging. Exact

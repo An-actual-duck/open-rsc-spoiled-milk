@@ -22,4 +22,6 @@ assert.deepEqual(privatePreparationCandidates('software',new URLSearchParams('be
 
 const observed=privatePreparationCandidates('webgl',new URLSearchParams('benchmark&overlaydelta=on&overlayrect=observe'));
 assert.equal(observed.rectMode,'observe');assert(observed.properties.includes('spoiledmilk.browserOverlayRectMode=observe'));
-for(const query of ['benchmark&overlayrect=observe','benchmark&overlaydelta=on&overlayrect=on','benchmark&overlayrect=bad'])assert.throws(()=>privatePreparationCandidates('webgl',new URLSearchParams(query)),/overlayrect/);
+for(const query of ['benchmark&overlayrect=observe','benchmark&overlayrect=bad'])assert.throws(()=>privatePreparationCandidates('webgl',new URLSearchParams(query)),/overlayrect/);
+
+assert.equal(privatePreparationCandidates('webgl',new URLSearchParams('benchmark&overlaydelta=on&overlayrect=on')).rectMode,'on');
