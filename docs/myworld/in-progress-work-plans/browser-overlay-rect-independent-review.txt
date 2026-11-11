@@ -103,3 +103,73 @@ Agent1/root were advised to report logical texel payload, supplied view-span
 bytes and measured FPS separately. No true-zero-copy claim is justified. Tight
 packing or separate row calls would be a distinct reviewed experiment; no
 packing implementation is authorized or silently introduced by these tests.
+
+Packing scope revision
+----------------------
+After the Firefox source-span audit, the manager explicitly authorized a bounded,
+synchronous JS-owned tight-packing comparison variant. This revises the earlier
+no-packing prototype constraint; no earlier source/evidence was rewritten.
+Required review covers both planes/geometry before allocations or GL, reusable
+scratch and peak/capacity bounds, exact Float32 bits/BGRA bytes, borrowed-view
+bounds and no retained Java input references. Packing has not yet been tested
+against a stable candidate checkpoint, and no performance benefit is assumed.
+
+Stable rectangle and packing review
+-----------------------------------
+Exact candidate923d745c0c032437f1a1f034f23b905c96c8b490 passes the expanded
+independent CPU suite. Runtime is still private/default-off. The reviewed
+contract permits at most8 disjoint rectangles, logical area<=60% of viewport,
+and selects rectangles only with useful savings against the row/full plan.
+Direct mode uses minimal borrowed strided views; packed mode uses bounded,
+synchronous JS-owned scratch. Both continue using the fine writer-footprint
+snapshot and original owner/ACK generation rules.
+
+Independent results:
+* 7,343 tile/ACK checks pass again against the exact rectangle checkpoint.
+* 1,593,292 planner assertions across405 frames exercise104rectangle plans,
+  49row plans and252full plans. The reference derives tiles per written pixel,
+  then checks complete old/current union coverage, disjointness, clipped tile
+  boundaries, plan caps and ACK progression without copying the grouping logic.
+* 128actual-overlay/specification-model checks cover direct/packed variants
+  with both scoped state and the actual owned-frame factory. Hostile row length,
+  skips, alignment, PBO, flip and premultiply state is restored exactly on the
+  scoped path. The explicit owner establishes canonical state initially and
+  on inactive-to-active transition. Its active=false path still scopes normally.
+* Minimal direct API views and tightly packed views have the expected distinct
+  byte lengths. Source views have nonzero offsets; RGB starts at byte3.
+* Invalid later rectangles, omitted dirty tiles and a short second plane are
+  rejected before any GL call or staging growth. Failure in EITHER upload plane
+  poisons the transaction; subsequent work cannot advance history. Disposal
+  releases candidate resources and packing capacity in the model.
+* A following full overlay upload and the ACTUAL candidate sprite-atlas module
+  produce the expected texture contents, detecting leaked rectangle strides.
+* Independent packing expectations preserve BGRA bytes, signedzero, signaling
+  and quiet NaN Float32 payload bits via raw bytes. Tests check source isolation,
+  exact element offsets, short-view bounds, no writes/allocations for bad later
+  geometry, empty plans, scratch reuse, allocation failure and disposal.
+
+Packing's12MiB retained/24MiB growth cap concerns owned scratch payload only;
+it is not a ceiling on total JavaScript heap, browser command queues, driver
+memory, original Java planes or externally retained test result views. The
+reviewed helper retains only its scratch and numeric counters; borrowed Java
+input views are consumed synchronously and not stored in owner state.
+
+Evidence:
+output/tests/browser-overlay-rect-independent-review/20261111T084156132135Z/
+  result.json, compile.log, footprint.log, rect-footprint.log, spec.log,
+  observe.log, rect-transfer.log, packing.log
+Run with test-browser-overlay-independent-review.py --rectangles and exact
+--candidate-commit / --candidate-root / --client-jar inputs. The receipt binds
+candidate source/dependency bytes and independent fixture hashes. Imported
+candidate modules are detached from Git at the requested hash, including
+transitive local modules; no live worker source is imported during execution.
+
+No source-backed correctness blocker remains from this independent review.
+These CPU models do not establish real WebGL readback, IPC traffic, driver/bus
+bytes or FPS. Manager-owned actual browser/GPU validation and matched timing
+are still required; lower logical area alone is not adoption evidence.
+
+Workspace-layout check still reports inherited legacy output-root entries and
+the legacy assets/sprites tree. New review writers use declared tests/diagnostics
+categories; inherited ignored data was preserved. layout-check.log beside this
+run records the check. No generated Firefox source file is committed to Git.

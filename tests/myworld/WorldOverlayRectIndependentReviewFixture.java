@@ -14,7 +14,7 @@ public final class WorldOverlayRectIndependentReviewFixture {
  private static void validate(WorldOverlayDeltaTransport.Plan plan,int width,int height,boolean[] union){
   int scheme=plan.work.length>6?plan.work[6]:0;boolean[] uploaded=new boolean[width*height];
   if(scheme==2){
-   rectangles++;check(plan.partial&&plan.work[3]==0&&plan.bands.length%4==0&&plan.bands.length<=24,"bounded partial rectangles");
+   rectangles++;check(plan.partial&&plan.work[3]==0&&plan.bands.length%4==0&&plan.bands.length<=32,"bounded partial rectangles");
    check(plan.work[4]==plan.bands.length/4,"rectangle work count");int area=0;
    for(int n=0;n<plan.bands.length;n+=4){int x=plan.bands[n],y=plan.bands[n+1],w=plan.bands[n+2],h=plan.bands[n+3];
     check(x>=0&&y>=0&&w>0&&h>0&&x+w<=width&&y+h<=height,"rectangle bounds");

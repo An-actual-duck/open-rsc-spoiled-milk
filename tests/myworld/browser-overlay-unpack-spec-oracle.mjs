@@ -24,7 +24,11 @@ export function readUnpackedPixels({view,width,height,format,type,srcOffset=0,
   const end=width&&height?first+(height-1)*stride+width*pixelBytes:first;
   if(!Number.isSafeInteger(end)||end>view.byteLength)fail('Client-array view too small');
   const output=type==='FLOAT'?new Float32Array(width*height*channels):new Uint8Array(width*height*channels);
-  for(let row=0;row<height;row++)for(let x=0;x<width*channels;x++)output[row*width*channels+x]=view[(first+(flipY?height-1-row:row)*stride)/elementBytes+x];
+  const sourceBytes=new Uint8Array(view.buffer,view.byteOffset,view.byteLength),targetBytes=new Uint8Array(output.buffer);
+  for(let row=0;row<height;row++){
+    const begin=first+(flipY?height-1-row:row)*stride;
+    targetBytes.set(sourceBytes.subarray(begin,begin+width*pixelBytes),row*width*pixelBytes);
+  }
   // The hostile-state fixtures use only alpha0/255, where this conversion is
   // exact and has no implementation-dependent normalized rounding boundary.
   if(premultiplyAlpha&&channels===4&&type==='UNSIGNED_BYTE')for(let at=0;at<output.length;at+=4)
