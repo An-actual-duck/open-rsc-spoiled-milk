@@ -61,6 +61,9 @@ console.log('Actual cross-realm SNAPSHOT PASS');
 """
   r=subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(m.SNAPSHOT),text=True,capture_output=True)
   self.assertEqual(r.returncode,0,r.stderr)
+ def test_new_interval_tail_excludes_previous_leg_max(self):
+  def row(frames,ints):return {'hostMs':frames,'pollRoundTripMs':1,'client':{'frames':frames,'held':0,'uploadedChunks':0,'uploadedBytes':0,'ready':{'epoch':1},'recentWorldIntervals':ints}}
+  a=m.summarize([row(10,[4000,16]),row(12,[4000,16,23,24])]);self.assertEqual(a['maxObservedRecentCompletedWorldIntervalMs'],4000);self.assertEqual(a['maxNewWorldIntervalMs'],24);self.assertEqual(a['newWorldIntervalTailCount'],2)
  def test_script_is_passive(self):
   self.assertNotIn('.push=',m.SNAPSHOT);self.assertNotIn('postMessage(',m.SNAPSHOT);self.assertNotIn('measurement=',m.SNAPSHOT)
 if __name__=='__main__':unittest.main()

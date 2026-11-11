@@ -145,3 +145,157 @@ socket record. All 22 offline checks pass. Preserved manager failure evidence:
  output/diagnostics/browser-travel-loading/minimap-calibration-1/result.json
 No input was sent by that failed helper calibration. No fake transport field,
 renderer mutation, permissive missing-socket fallback or route bypass was added.
+
+Actual ordinary-walking baseline and fresh-source profile
+--------------------------------------------------------
+Root captured return 623→624 at L0 with original minimap click (879,117), fresh
+private authority and ordinary stream epoch 2→3. The raw accepted route reports
+44 new chunks/93,009,960 bytes, 17 held frames and a 3,763ms completed-world gap.
+Root's separate four consecutive unprofiled crossings had newly appended world
+interval maxima 3569,3374,3562,3675ms. Their stream notices were 586,2773,736,680ms;
+the differing notice coverage means notice time must NOT universally be
+subtracted from the frame gap. Older ring maxima can overlap the previous leg.
+The helper now additionally exposes the newly appended tail maximum when the
+leg's world-frame delta fits its 64 retained samples, as normal walking/held
+frames append no opaque/fade boundary. Longer/mixed-mode runs need explicit
+interval sequence metadata rather than invented reconstruction.
+
+Raw evidence is rooted at manager output/diagnostics/browser-travel-loading/:
+ return-crossing-profile-1/{sources-profile.json,additional-information.json,
+ receipt.json,route/result.json,route/samples.jsonl}
+ baseline-new-frame-intervals.json
+The current frozen repeatable-preparation.json hashes to
+ 07d496092a5e9201b10f5ccd7d8c8fac2d5264e03043fdbeef91932b9fc9e2ec
+It binds Java ba0bd22402e3e2951742cfab8ccab066fd7e934b, frontend
+65857a5bb211dac12d7e34722301b4d7cd3bfc5d and full-source client JAR
+ d1cbcabc282010f50c1d14b7a58d09929f0d8a5dfd975a06587b4bdd93ebd56c
+RSModel.java and World.java were verified byte-identical between frozen ba0 and
+published main 7934. Their SHA256 values are respectively:
+ c54bf19b0f33edba07831035c005c8addca4dfcdafef94cb40d71789fa8f3333
+ cbfb22a5f54fd99bd70d6919d820aec3faa0a7d9b2a7363bbff94adb137d19a7
+
+Source-bound analyzer (test-only; no browser/process actions):
+ tests/myworld/analyze-browser-travel-profile.py INPUT --out NEW_DIAGNOSTICS_RUN \
+  --stage-receipt FROZEN_REPEATABLE_PREPARATION_JSON \
+  --signature-source-indices 1280,1504,2061 --vertex-source-index 1469 \
+  --reference-copy-source-index 1916
+Index options above apply ONLY to this capture after body review; opaqueJ labels
+must never be transferred to another run. The analyzer requires actual paired
+rsc-travel-start/end UserTiming markers in the content process, accepted private
+ordinary route, ready source epoch change and explicit ms/ns sample units. It
+has no steady 20-second/fixed-pose/combat assumption. It resolves each exported
+source through that process's source table and additional-information.jsSources,
+checks generated function declarations and hashes all raw evidence. Main and
+DOM Worker inclusive/deepest-JS CPU accounting are separate. Native worker-thread
+labels containing a URL are not accidentally classified as JS source.
+
+Reviewed output (ai3 canonical diagnostics):
+ output/diagnostics/browser-travel-loading/return-crossing-profile-1-reviewed/
+  analysis.json; sources/; java-source-equivalence.json
+analysis.json SHA256:
+ 1ceaeb8e2acc46f0f3790e57d7b37a8f07714ecff4a227ad0529c7d913ea01c4
+sources-profile.json SHA256:
+ 6b38c77ee796666fdc1f8ca6df623fd56b1e4b86424b2252f158d76a7b56feaa
+additional-information.json SHA256:
+ 8c551c9ed7c8e103b0b14a9500ca7c02f419b08bc3605f6ceeafeee7a862360a
+route/result.json SHA256:
+ 5b8f44b1d2b4fa020274a128eb56e7dcffb5cc4fa85e199d1fa09cdb14254333
+
+Main versus Worker and the missing bridge interval
+--------------------------------------------------
+Content pid 1871346 has 2620 current captured sources. Travel markers span
+348394.541942..352882.918840ms (4.488377s),2243 samples per selected thread.
+GeckoMain CPU=4,399,929,812ns (~98.03% of one core over wall interval).
+DOM Worker CPU=187,192,103ns (~4.17% of one core).
+The Worker sample stacks expose mostly native waiting/promise callbacks, not a
+complete attributable JS upload stack; do not invent its internal API costs.
+
+The last old-source report attempt 19924 returned at main performance 347603ms.
+The first new-source attempt 19925 returned at 350719ms with 69ms inclusive Java
+bridge time. ReceivedTime−totalMs therefore estimates its start at 350650ms.
+After main→profile clock conversion, this gives a 3.047s bridge-silent interval.
+Within that interval, 1522 samples show main CPU 2,989,123,311ns (~98.10% one core)
+and Worker CPU3,058,081ns (~0.10%). This is strong evidence for upstream main
+Java/runtime construction work, not Worker upload execution, as the dominant
+part of this stall. It is an interval between source reports, not an exact
+instrumented entry marker for one named core method.
+
+All 48 new owned bridge reports were recovered without report-counter gaps:
+31 world/17 incomplete holds. Their inclusive Java bridge sum 526ms includes
+geometry 300ms, vertex packing 214ms, material packing 41ms, native chunk submit 27ms,
+active keys 5ms, textures 2ms and terminal 33ms. These are overlapping nested timers;
+DO NOT add them. Source submit includes enqueue/copy/backpressure and does not
+measure GPU execution. The bridge totals include normal frames around the load,
+not just the silent interval or a nonoverlapping complete critical path.
+
+Current generated bodies and caller proof
+----------------------------------------
+Percentages below use the 1522-sample bridge-silent interval. They are sampled CPU
+endpoints/caller contexts, not predicted wall-time savings. Captured functions
+may contain CheerpJStub exits into the interpreter; matches describe the visible
+compiled body, not a complete Java symbol map.
+
+- Source 1469/J_0087e4d0: RSModel.insertVertex, RSModel.java1490. It scans head
+  vertices comparing all three int coordinates, then ensures capacity, appends
+  three arrays and increments head. 8.61% deepest JS,12.02% inclusive. Its body
+  SHA256 is c423994cf06a7ef02ab53ac54316962a36d1e485f4008eac1aef48e0f0a716de.
+- All 183 insertVertex inclusive samples have identified direct caller contexts:
+  147 via RSModel.addModels (source 1911=94/source 1386=51/compiled  1416=2),35 via
+  World.emitWallProduct (source 1050),1 via RSModel.copyFaceTo (source 819).
+  addModels bodies copy face-indexed XYZ and fishing vertex metadata, reproduce
+  face material/light/normal and faceParam1 branches (RSModel.java879..944).
+  Wall source has exactly four segment vertices, texture-bottom/top/height,
+  pick ID and 6316128 minimap/collision handling (World.java3822 onward).
+  copyFaceTo has the 5916 guard and copies vertex light metadata (RSModel:1283).
+  The anonymous interpreter blocks do not expose enough outer identity to say
+  which addModels invocation clones scenery versus merges CPU terrain. Do not
+  assert every dedup sample is a terrain-emission call.
+- Source 1280/J_01ca4fa8: RSModel.ObjectChunkMeshBuilder.signature, RSModel:2204.
+  Six identity integers then coordinates, float-bit U/V, lights, indices,
+  texture/fallback, kinds/family, caster/glow arrays match the source argument
+  order and unsigned32/FNV64 wrap. 4.53% deepest JS.
+- Source 1504/J_01be0c80: World.WorldGpuChunkMeshBuilder.signature, World:7132.
+  Five identity integers then terrain blend/variation arrays and roof bits in
+  addition to the matching mesh attributes.4.27% deepest JS.
+- Source 2061/J_01be0cc0: same World builder's mix(hash,int), exact unsigned32
+  xor and wrapping multiply 1099511628211. 3.88% deepest JS.
+  ANY-stack UNION of these three exact signature/mix sources is 294 samples
+  (19.3167%), counted once per sample. Do not add their inclusive percentages.
+- Source 2503/J_01be07f0: World builder toIntArray(List<Integer>), World:7115:
+  allocate int[size], loop list.get(i).intValue. 3.35% deepest JS.
+- Source 803/J_01bf0070: World builder addVertex boxed-list appends, with XYZ,
+  float U/V and light/blend attributes. 2.04% deepest JS.
+- Source 1916/J_00667088: reference-array Arrays.copyOf shape: allocate requested
+  runtime component type, clamp copied length and arraycopy. 6.57% deepest JS.
+  Its 114 inclusive samples all show list-growth caller contexts:91 under
+  WorldGPU addVertex→ArrayList.add/grow,23 under addTriangle's metadata lists.
+  This is positive source evidence for boxed terrain-builder growth, not a
+  reason to blame unrelated immutable mesh copies or change all array copying.
+
+Source exposes possible additional work (bulk scene removals and global-epoch
+prebuilds), but it was not confidently mapped to dominant current stack bodies
+here. Missing Java symbols/interpreter flattening limit exclusive attribution.
+No source-only asymptotic concern is promoted to a measured dominant cost.
+
+Recommended next bounded architecture and proof obligations
+----------------------------------------------------------
+Prioritize upstream CPU construction before changing Worker upload budgets:
+1. A per-CONSTRUCTION exact XYZ index for addModels and the wall accumulator,
+   preserving first inserted vertex index, all integer coordinates, source face
+   order, duplicate metadata overwrite order, bounds/exception prefixes and
+   malformed-array fallback. A persistent index on public mutable RSModel arrays
+   is unsafe without a mutation protocol. Scope/cleanup must not escape a
+   construction or survive arbitrary coordinate edits/commitTransform.
+2. Primitive terrain numeric builders replacing measured boxed Lists, preserving
+   exact vertex/material/face ordering, Float32 bits and all signatures.
+3. A bounded exact signature computation boundary if still useful: preserve
+   unsigned32 mixing, long64 wrap, Float.floatToIntBits semantics and output
+   identity. Do not substitute a different/approximate hash or drop attributes.
+Any candidate needs frozen Java differential pixels/metadata/exception tests,
+then identical actual minimap crossings both directions with authoritative ready
+and raw new-frame intervals. No FPS gain or seamless-loading forecast follows
+from this profile. All owner Firefox sessions were closed normally by the manager;
+this worker ran no browser, GPU, server or process action.
+
+Final baseline refinement SHA256:
+ 5bb272b6a6fbe967f2d8f05971ae8222f4585b8fa2d8e3904c3b9f31ff0a3507

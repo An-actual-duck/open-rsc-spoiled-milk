@@ -62,6 +62,8 @@ def summarize(rows):
  return {'elapsedHostMs':last['hostMs']-first['hostMs'],'worldFramesDelta':c['frames']-b['frames'],'heldDelta':c['held']-b['held'],
  'uploadedChunksDelta':c['uploadedChunks']-b['uploadedChunks'],'uploadedBytesDelta':c['uploadedBytes']-b['uploadedBytes'],
  'epochs':epochs,'maxObservedRecentCompletedWorldIntervalMs':max(intervals,default=None),
+ 'newWorldIntervalTailCount':c['frames']-b['frames'] if 0<=c['frames']-b['frames']<=len(c.get('recentWorldIntervals')or[])else None,
+ 'maxNewWorldIntervalMs':max((c.get('recentWorldIntervals')or[])[-(c['frames']-b['frames']):],default=None)if 0<c['frames']-b['frames']<=len(c.get('recentWorldIntervals')or[])else None,
  'maxObservedPresentationAgeMs':max((max(0,x['client'].get('clock',0)-x['client'].get('lastFrame',x['client'].get('clock',0)))for x in rows),default=0),
  'maxPollRoundTripMs':max(x['pollRoundTripMs']for x in rows),'sampleCount':len(rows),
  'loadReportDelta':(c.get('loadProfile')or{}).get('totalReports',0)-(b.get('loadProfile')or{}).get('totalReports',0),
