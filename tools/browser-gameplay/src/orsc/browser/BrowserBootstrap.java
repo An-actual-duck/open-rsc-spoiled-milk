@@ -17,6 +17,7 @@ public final class BrowserBootstrap {
     public static native void reportRegionPreparationDiagnostics(boolean available,double[] counters);
     public static native void reportCandidatePolicy(String name,boolean requested,boolean available,boolean enabled);
     public static native void reportBatchedModelWork(int[] counters);
+    public static native void reportWholeZoneWork(int[] counters);
     public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportCombatState(String username,String names,int[] counters);
     public static native void reportModelPickBounds(boolean requested,boolean enabled);
@@ -114,6 +115,10 @@ public final class BrowserBootstrap {
             for(String name:on)System.setProperty("spoiledmilk."+name,"true");
             System.setProperty("spoiledmilk.renderer3DVisibleWorld","false");
             // No native presenter or GLFW initialization; only the browser sink owns GPU submission.
+            if(Boolean.getBoolean("spoiledmilk.browserWholeZone")){
+                boolean[] actual=BenchmarkCandidatePolicies.inspect("orsc.BrowserWebGLBridge","isWholeZoneEnabled");
+                if(!actual[0]||!actual[1])throw new IllegalStateException("Requested whole-zone mode is unsupported by this client JAR");
+            }
             orsc.BrowserWebGLBridge.install();
             reportOverlayRectPolicy(System.getProperty("spoiledmilk.browserOverlayRectMode","off"),orsc.BrowserWebGLBridge.getOverlayRectMode());
             reportSpriteKeyPolicy(Boolean.parseBoolean(System.getProperty("spoiledmilk.browserSpriteKeyLimbs", "true")),orsc.BrowserWebGLBridge.isSpriteKeyLimbsEnabled());
@@ -205,6 +210,7 @@ public final class BrowserBootstrap {
                                 }
                                 if(!candidatePoliciesReported&&observedScene!=null) {
                                     String[][] policies={{"geometryTransfer","spoiledmilk.browserGeometryTransferReuse","orsc.BrowserWebGLBridge","isGeometryTransferReuseEnabled"},
+                                        {"wholeZone","spoiledmilk.browserWholeZone","orsc.BrowserWebGLBridge","isWholeZoneEnabled"},
                                         {"regionBuild","spoiledmilk.browserRegionBuild","orsc.graphics.three.BrowserRegionBuild","isEnabled"},
                                         {"regionLoadProfile","spoiledmilk.browserLoadProfile","orsc.BrowserWebGLBridge","isLoadProfileEnabled"},
                                         {"regionPreparation","spoiledmilk.browserRegionPreparation","orsc.graphics.three.World","isBrowserRegionPreparationEnabled"},
@@ -230,6 +236,7 @@ public final class BrowserBootstrap {
                                 }
                                 int[] batchWork=snapshotBatchedModelWork(observedScene,Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel"));
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
+                                if(Boolean.getBoolean("spoiledmilk.browserWholeZone"))reportWholeZoneWork(snapshotWholeZoneWork());
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
                                 reportRegionPreparationDiagnostics(regionCounts!=null,terrainDiagnostics.append(((orsc.mudclient)client).getWorld(),regionCounts));
@@ -248,6 +255,12 @@ public final class BrowserBootstrap {
     }
 
     /** No receipt until Scene exists; a missing/invalid getter after startup stays fatal. */
+    static int[] snapshotWholeZoneWork() throws ReflectiveOperationException {
+        Object work=Class.forName("orsc.BrowserWebGLBridge").getMethod("getWholeZoneWork").invoke(null);
+        if(!(work instanceof int[])||((int[])work).length!=0&&((int[])work).length!=9)throw new IllegalStateException("Invalid whole-zone work getter");
+        return ((int[])work).clone();
+    }
+
     static int[] snapshotBatchedModelWork(Object scene,boolean requested) throws ReflectiveOperationException {
         if(!requested || scene==null)return null;
         Object work=scene.getClass().getMethod("getBrowserBatchedModelKernelWork").invoke(scene);

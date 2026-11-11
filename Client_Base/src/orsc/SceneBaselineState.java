@@ -1045,6 +1045,15 @@ final class SceneBaselineState {
 			legacyExtraOutsideSyncRange);
 	}
 
+    boolean wholeZoneObjectPositionAuthoritative(int x,int y){return completedBaselines>0&&insideObjectSyncRange(x,y);}
+    /** Whole-cell authority, not inferred from visual terrain halo coverage. */
+    boolean wholeZoneObjectCellAuthoritative(int tileX,int tileY,int size){
+        if(completedBaselines<=0||size<1||size>48)return false;
+        int highX=Math.addExact(tileX,size-1),highY=Math.addExact(tileY,size-1);
+        return insideObjectSyncRange(tileX,tileY)&&insideObjectSyncRange(highX,tileY)
+            &&insideObjectSyncRange(tileX,highY)&&insideObjectSyncRange(highX,highY);
+    }
+
 	private boolean insideObjectSyncRange(int x, int y) {
 		return insideObjectSyncRange(
 			localX, localY, objectViewDistance, x, y);

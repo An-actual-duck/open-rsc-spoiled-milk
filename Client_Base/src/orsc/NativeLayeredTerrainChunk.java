@@ -274,6 +274,11 @@ public final class NativeLayeredTerrainChunk {
 		return available;
 	}
 
+    public int getSourceSectorX(){return sourceSectorX;}
+    public int getSourceSectorY(){return sourceSectorY;}
+    public String getSourceEncoding(){return sourceEncoding;}
+    public String getSourcePayloadSha256(){return sourcePayloadSha256;}
+
 	public int getSize() { return size; }
 
 	public int getChunkX() {
