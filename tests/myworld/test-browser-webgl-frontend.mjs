@@ -96,8 +96,9 @@ if(repeatable){await configured.natives.Java_orsc_browser_BrowserBootstrap_repor
 assert.ok(configured,'actual frontend did not initialize Java options');
 if(benchmarkStream)assert(configured.javaProperties.includes('spoiledmilk.browserOwnedActorPixels='+ownedActors));
 else assert(!configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserOwnedActorPixels=')));
-await configured.natives.Java_orsc_browser_BrowserBootstrap_reportOwnedActorPixels(null,ownedActors,ownedActors,Array.from({length:13},(_,i)=>i));
+await configured.natives.Java_orsc_browser_BrowserBootstrap_reportOwnedActorPixels(null,ownedActors,ownedActors,Array.from({length:13},(_,i)=>i),Array.from({length:14},(_,i)=>i));
 assert.equal(window.browserProof.ownedActorPixels.avoidedHashPixels,7);
+assert.equal(window.browserProof.ownedActorPixels.publication.copiedAuxiliaryBytes,4);
 await assert.rejects(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportOwnedActorPixels(null,true,true,[1]),/Invalid actor/);
 const expectedPhysical=physicalOption?physicalOption==='on':!benchmarkStream;assert.equal(gpuOptions.physicalOutput,expectedPhysical,'Ordinary physical output defaults ON with explicit OFF; benchmark retains explicit opt-in');assert.equal(window.browserProof.physicalOutputRequested,expectedPhysical);
 assert.equal(gpuOptions.nativeCallDispatch,nativeMode);assert.equal(window.browserProof.nativeCallDispatch.reported,stats.nativeCallDispatch??null);if(withoutNativeModule){assert.equal(window.browserProof.nativeCallDispatch.module,null);assert.equal(window.browserProof.nativeCallDispatch.reported,null);}

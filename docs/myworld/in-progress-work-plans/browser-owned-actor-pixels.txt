@@ -1,7 +1,7 @@
 Private browser actor pixel ownership prototype
 ==============================================
 
-Status: READY for manager review, default OFF. No adoption or performance claim. No server,
+Status: ACTIVE publication-budget follow-up, default OFF. No adoption or performance claim. No server,
 browser, HTTP listener or GPU launched by this worker. Based on main 8b888cd2f.
 
 Goal
@@ -31,6 +31,20 @@ Ownership contract
   behaviour; the owned private branch reads without escaping.
 * Primary and auxiliary copy lengths each cap at 2,097,152 elements. Existing
   malformed, incomplete, divergent or unsupported sources remain legacy.
+* Publication additionally caps NEW array payload at 64 MiB, unique copied
+  frames at 8,192, and retained identity memo entries at 8,192. Exhaustion leaves
+  the literal original frame/source in place. The memo also bounds unsupported
+  and exhausted source references. Already-published frames preserve identity
+  (including escaped ones) without consuming a new copy or memo entry.
+* Accurate payload accounting includes the complete primary int[], a distinct
+  transparent int[], and unknown byte[]. A transparent alias of primary is
+  counted once and remains aliased in the copy. Repeated Frames share one copy.
+  These limits bound incremental publication payload, not existing baseline
+  assets or JVM object headers. The local memo temporarily retains originals
+  and copies together: selected original+copied payload can reach 128 MiB at
+  the 64 MiB copy cap, plus bounded frame/token/memo overhead and other assets.
+  The memo and originals become collectible after publication returns unless
+  another existing loader/reference owner retains them.
 * Existing render-thread no-mutation-during-compose contract remains. Tokens
   are sampled from the ACTUAL command Sprite at compose time, never from an
   entry name, sprite ID or an earlier SpriteCommand construction.
@@ -70,15 +84,26 @@ trustedLayers, legacyLayers, escapedLayers, subclassLayers, hashedPixels,
 comparedPixels, copiedPixels, avoidedHashPixels, avoidedComparePixels, hits,
 misses, cacheBytes and entries. Counters add once per layer/scan, not once per
 pixel; export occurs only in the existing one-second observer.
+Its publication subrecord reports payloadBudget/frameLimit/memoLimit,
+copiedPrimaryBytes/copiedAuxiliaryBytes/copiedFrames, sharedReferences,
+alreadyPublishedReferences, unsupportedFallbacks, byteBudgetFallbacks,
+frameBudgetFallbacks, memoBudgetFallbacks, memoEntries and enabled. Fallback
+reasons count unique memoized attempts, except unretained memo-cap rejections;
+repeated memo hits are separately counted as sharedReferences.
 
 CPU verification so far
 -----------------------
-tests/myworld/test-browser-owned-actor-pixels.py: 5,766 source/version/alias,
+tests/myworld/test-browser-owned-actor-pixels.py: 5,781 source/version/alias,
 subclass, replacement, cache/LRU/budget and frozen RGBA checks; 700 seeded
 multi-layer alpha/recolour/skew/mirror/sampling cases. Uses the literal frozen
 8b888 compositor with independent unowned reference planes. Real decoded
-archive plus material recolouring: 8,640 exact frame/pixel/metadata checks,
+archive plus material recolouring: 8,642 exact frame/pixel/metadata checks,
 3,501 owned actor frames (6,502,532 pixels), 818 legacy generic frames.
+Budget follow-up asserts this exact same roster and pixels, with 26,010,128
+copied primary bytes, zero auxiliary bytes and no budget fallbacks. Artificial
+small limits independently test bytes, unique frames and memo exhaustion,
+auxiliary alias deduplication, shared references and escaped/already-published
+identity preservation at zero budget. No hot cache/compositor logic changed.
 
 CPU outputs: output/tests/browser-owned-actor-pixels/cpu-oracle/{result.json,
 cpu.log}. Raw archive SHA256 0883c7d1957b5bb4b70f0001770e4aac8d3145d77b2ff1a470d574e4718c426e.
@@ -92,8 +117,10 @@ Private policy and actual frontend mock pass ordinary/default-OFF/owned-ON.
 
 Build, review and prepared artifacts
 ------------------------------------
-Runtime/source checkpoint 1f55e572b822005a1138a018367b57a6bd63e987 is frozen.
-The later handoff changes this document only. Independent worker source review
+Prior runtime/source checkpoint 1f55e572b822005a1138a018367b57a6bd63e987 and its
+JAR/stages below remain frozen and preserved. The publication-budget follow-up
+changes cold publication APIs/reporting only; its new build/stages are pending.
+Independent worker source review
 of that exact checkpoint found no remaining correctness blocker. The reviewer
 did not run CPU/GPU tests; the above CPU results belong to this worker.
 

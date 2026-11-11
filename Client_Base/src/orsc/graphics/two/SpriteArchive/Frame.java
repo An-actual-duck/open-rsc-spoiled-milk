@@ -72,13 +72,23 @@ public class Frame {
     private int pixelLength() { return ownedPixels == null ? pixels.length : ownedPixels.length(); }
     private int readPixel(int index) { return ownedPixels == null ? pixels[index] : ownedPixels.get(index); }
 
-    /** Explicit new actor frame; never silently detaches an existing Frame's aliases. */
-    public final Frame copyForOwnedActor() {
-        if (getClass() != Frame.class || sprite.getClass() != Sprite.class) return this;
-        if (ownedPixels != null) return this; // An escaped publication remains untrusted forever.
+    /** Already-published frames (including escaped ones) preserve identity on replay. */
+    public final boolean isOwnedActorPublication() { return getClass() == Frame.class && ownedPixels != null; }
+
+    public final Sprite.ActorCopyCost ownedActorCopyCost() {
+        if (getClass() != Frame.class || sprite.getClass() != Sprite.class || ownedPixels != null) return null;
         // Preserve the old Frame-only changePixels/changeDimensions divergence.
-        if (pixels != sprite.getPixels() || width != sprite.getWidth() || height != sprite.getHeight()) return this;
-        Sprite copy = sprite.copyForOwnedActor();
+        if (pixels != sprite.getPixels() || width != sprite.getWidth() || height != sprite.getHeight()) return null;
+        return sprite.ownedActorCopyCost();
+    }
+
+    /** Explicit new actor frame; never silently detaches an existing Frame's aliases. */
+    public final Frame copyForOwnedActor() { return copyForOwnedActor(Long.MAX_VALUE); }
+    public final Frame copyForOwnedActor(long payloadBudget) {
+        if (isOwnedActorPublication()) return this; // Never re-seal escaped storage.
+        Sprite.ActorCopyCost cost = ownedActorCopyCost();
+        if (cost == null || cost.totalBytes() > payloadBudget) return this;
+        Sprite copy = sprite.copyForOwnedActor(payloadBudget);
         return copy == null ? this : new Frame(width, height, useShift, offsetX, offsetY,
             boundWidth, boundHeight, copy);
     }

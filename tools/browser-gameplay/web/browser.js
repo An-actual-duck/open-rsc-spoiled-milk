@@ -112,11 +112,14 @@ const natives = {
     const samples=window.browserProof.telemetrySamples||=[];samples.push({milliseconds:performance.now(),values:sample});if(samples.length>300)samples.shift();
   },
   async Java_orsc_browser_BrowserBootstrap_reportLoop(lib,mode,early,full) { window.browserProof.clientLoop=mode;window.browserProof.earlyFaceCull=early===true;window.browserProof.fullResidentOwnership=full===true; },
-  async Java_orsc_browser_BrowserBootstrap_reportOwnedActorPixels(lib,requested,enabled,counters){
+  async Java_orsc_browser_BrowserBootstrap_reportOwnedActorPixels(lib,requested,enabled,counters,publication){
     const labels=['trustedLayers','legacyLayers','escapedLayers','subclassLayers','hashedPixels','comparedPixels','copiedPixels','avoidedHashPixels','avoidedComparePixels','hits','misses','cacheBytes','entries'];
     const values=Array.from(counters);
     if(values.length!==labels.length||values.some(value=>!Number.isSafeInteger(value)||value<0))throw new Error('Invalid actor pixel diagnostics');
-    window.browserProof.ownedActorPixels={requested:requested===true,enabled:enabled===true,...Object.fromEntries(labels.map((name,index)=>[name,values[index]]))};
+    const publicationLabels=['payloadBudget','frameLimit','memoLimit','copiedPrimaryBytes','copiedAuxiliaryBytes','copiedFrames','sharedReferences','alreadyPublishedReferences','unsupportedFallbacks','byteBudgetFallbacks','frameBudgetFallbacks','memoBudgetFallbacks','memoEntries','enabled'];
+    const copied=Array.from(publication);
+    if(copied.length!==publicationLabels.length||copied.some(value=>!Number.isSafeInteger(value)||value<0))throw new Error('Invalid actor publication diagnostics');
+    window.browserProof.ownedActorPixels={requested:requested===true,enabled:enabled===true,...Object.fromEntries(labels.map((name,index)=>[name,values[index]])),publication:Object.fromEntries(publicationLabels.map((name,index)=>[name,copied[index]]))};
   },
   async Java_orsc_browser_BrowserBootstrap_reportSpriteKeyPolicy(lib,requested,enabled){window.browserProof.spriteKeyLimbs={requested:!!requested,enabled:!!enabled};publish();},
   async Java_orsc_browser_BrowserBootstrap_reportPreparation(lib, enabled, active, animated) {

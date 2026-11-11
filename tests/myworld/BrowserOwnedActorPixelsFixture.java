@@ -63,6 +63,50 @@ public final class BrowserOwnedActorPixelsFixture {
         VirtualFrame(){super(2,1,false,0,0,2,1);}
         @Override public int[] getPixels(){return new int[]{0x123456,0xabcdef};}
     }
+    private static Map<String,Map<String,Entry>> tree(Frame... frames) {
+        Entry entry=new Entry("actor",Entry.TYPE.NPC,null,frames.length);
+        System.arraycopy(frames,0,entry.getFrames(),0,frames.length);
+        Map<String,Entry> entries=new LinkedHashMap<String,Entry>();entries.put("actor",entry);
+        Map<String,Map<String,Entry>> tree=new LinkedHashMap<String,Map<String,Entry>>();tree.put("npc",entries);return tree;
+    }
+    private static Frame[] frames(Map<String,Map<String,Entry>> tree){return tree.get("npc").get("actor").getFrames();}
+    private static void budgets() {
+        Renderer3DSettings.setBrowserPresentationAvailable(true);
+        Frame a=new Frame(2,1,false,0,0,2,1),b=new Frame(2,1,false,0,0,2,1);
+        a.getSprite().setTransparentPixels(new int[]{1,2});a.getSprite().setUnknownByteArray(new byte[3]);
+        Sprite.ActorCopyCost cost=a.ownedActorCopyCost();
+        check(cost.primaryBytes==8&&cost.auxiliaryBytes==11&&cost.totalBytes()==19,"all distinct planes in copy budget");
+        check(a.copyForOwnedActor(18)==a,"insufficient per-copy budget preserves source");
+        Map<String,Map<String,Entry>> tree=tree(a,a,b);
+        BrowserOwnedActorPixels.PublicationReport report=BrowserOwnedActorPixels.publishWithLimits(tree,19,8,8);
+        check(report.copiedPrimaryBytes==8&&report.copiedAuxiliaryBytes==11&&report.copiedFrames==1,"accurate copied primary/auxiliary payload");
+        check(report.byteBudgetFallbacks==1&&report.sharedReferences==1&&report.memoEntries==2,"byte exhaustion reason and bounded memo");
+        check(frames(tree)[0]!=a&&frames(tree)[0]==frames(tree)[1]&&frames(tree)[2]==b,"shared owner identity and literal fallback");
+        Frame published=frames(tree)[0];published.getPixels(); // escaped publications must not be resealed
+        report=BrowserOwnedActorPixels.publishWithLimits(tree,0,0,0);
+        check(frames(tree)[0]==published&&published.getSprite().getOwnedPixels()==null,"already-published escaped identity preserved at zero budget");
+        check(report.copiedFrames==0&&report.alreadyPublishedReferences==2&&report.memoEntries==0,"replay copies no storage and retains no memo");
+
+        Frame alias=new Frame(2,1,false,0,0,2,1);alias.getSprite().setTransparentPixels(alias.getPixels());
+        alias.getSprite().setUnknownByteArray(new byte[3]);
+        check(alias.ownedActorCopyCost().auxiliaryBytes==3,"primary/transparent alias counted once");
+        tree=tree(alias,alias);report=BrowserOwnedActorPixels.publishWithLimits(tree,11,1,1);
+        check(report.copiedFrames==1&&report.copiedPrimaryBytes==8&&report.copiedAuxiliaryBytes==3&&report.sharedReferences==1,"exact alias-deduplicated boundary copy");
+        Sprite source=frames(tree)[0].getSprite();int[] raw=source.getTransparentPixels();raw[0]=0xaabbcc;
+        check(source.getPixel(0)==0xaabbcc&&source.getOwnedPixels()==null,"budget copy preserves auxiliary alias and escape revocation");
+        Frame x=new Frame(2,1,false,0,0,2,1),y=new Frame(2,1,false,0,0,2,1);
+        tree=tree(x,x,y);report=BrowserOwnedActorPixels.publishWithLimits(tree,64,1,8);
+        check(report.copiedFrames==1&&report.frameBudgetFallbacks==1&&frames(tree)[2]==y,"unique frame count cap with shared reuse");
+        x=new Frame(2,1,false,0,0,2,1);y=new Frame(2,1,false,0,0,2,1);
+        tree=tree(x,x,y);report=BrowserOwnedActorPixels.publishWithLimits(tree,64,8,1);
+        check(report.memoEntries==1&&report.copiedFrames==1&&report.memoBudgetFallbacks==1&&report.sharedReferences==1,"memo cap does not retain more source/copy references");
+        check(frames(tree)[2]==y,"memo exhaustion is literal legacy source");
+        VirtualFrame unsupported=new VirtualFrame();tree=tree(unsupported,unsupported);
+        report=BrowserOwnedActorPixels.publishWithLimits(tree,64,8,1);
+        check(report.copiedFrames==0&&report.unsupportedFallbacks==1&&report.sharedReferences==1&&report.memoEntries==1,"unsupported memo entries also bounded and reported");
+        boolean refused=false;try{BrowserOwnedActorPixels.publishWithLimits(tree,64L*1024*1024+1,1,1);}catch(IllegalArgumentException expected){refused=true;}
+        check(refused,"publication cannot request above production cap");
+    }
     private static void archive(String path) throws Exception {
         Workspace workspace=new Unpacker().unpackArchive(new java.io.File(path));
         check(workspace!=null,"actual archive decoded");
@@ -91,8 +135,11 @@ public final class BrowserOwnedActorPixelsFixture {
             Sprite.OwnedPixels source=frame.getSprite().getOwnedPixels();
             if(source!=null){owned++;pixels+=source.length();}else legacy++;
         }
-        check(owned>1000&&legacy>0,"real actor coverage and generic fallback");
-        System.out.println("PASS actual decoded/recoloured archive checks="+checks+" ownedFrames="+owned+" legacyFrames="+legacy+" ownedPixels="+pixels);
+        check(owned==3501&&legacy==818&&pixels==6502532,"unchanged real actor roster and primary pixels");
+        double[] publication=BrowserOwnedActorPixels.publicationCounters();
+        check(publication[3]==26010128&&publication[4]==0&&publication[5]==3501,"real archive exact primary/aux/unique copy bytes");
+        check(publication[9]==0&&publication[10]==0&&publication[11]==0,"actual roster fits all publication budgets");
+        System.out.println("PASS actual decoded/recoloured archive checks="+checks+" ownedFrames="+owned+" legacyFrames="+legacy+" ownedPixels="+pixels+" publication="+Arrays.toString(publication));
     }
     public static void main(String[] args) throws Exception {
         boolean enabled=Boolean.getBoolean("spoiledmilk.browserOwnedActorPixels");
@@ -108,6 +155,7 @@ public final class BrowserOwnedActorPixelsFixture {
             check((entry.getFrames()[0]!=original)==enabled,"explicit private policy");
             System.out.println("PASS publication policy enabled="+enabled+" checks="+checks);return;
         }
+        budgets();
         OpenGLPixelWorkspace scratch=new OpenGLPixelWorkspace();
         BrowserWorldSpriteCache cache=new BrowserWorldSpriteCache();
         int[] caller={0x123456,0xabcdef}; Sprite legacy=new Sprite(caller,2,1);

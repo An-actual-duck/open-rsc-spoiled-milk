@@ -166,25 +166,46 @@ public class Sprite {
 	 * once, after decoding/recolouring. The old Sprite and all its aliases retain
 	 * their old behaviour. Generic constructors/setPixels remain untrusted.
 	 */
-	public final Sprite copyForOwnedActor() {
-		if (getClass() != Sprite.class || pixels == null || width <= 0 || height <= 0
-			|| (long) width * height > 2097152 || pixels.length > 2097152
-			|| pixels.length < (long) width * height
+    /** Accurate payload copied by a NEW publication (array headers excluded). */
+    public static final class ActorCopyCost {
+        public final long primaryBytes, auxiliaryBytes;
+        private ActorCopyCost(long primaryBytes, long auxiliaryBytes) {
+            this.primaryBytes = primaryBytes; this.auxiliaryBytes = auxiliaryBytes;
+        }
+        public long totalBytes() { return primaryBytes + auxiliaryBytes; }
+    }
+
+    public final ActorCopyCost ownedActorCopyCost() {
+        if (getClass() != Sprite.class || ownedPixels != null || pixels == null || width <= 0 || height <= 0
+            || (long) width * height > 2097152 || pixels.length > 2097152
+            || pixels.length < (long) width * height
             || (transparentPixels != null && transparentPixels.length > 2097152)
             || (unknownByteArray != null && unknownByteArray.length > 2097152)) return null;
-		if (ownedPixels != null) return getOwnedPixels() == null ? null : this;
-		Sprite copy = new Sprite(pixels.clone(), width, height);
-		copy.ownedPixels = new OwnedPixels(copy.pixels);
-		copy.requiresShift = requiresShift;
-		copy.xShift = xShift; copy.yShift = yShift;
-		copy.something1 = something1; copy.something2 = something2;
-		copy.id = id; copy.packageName = packageName;
-		// Preserve an auxiliary alias, but its raw getter must revoke the same owner.
+        long auxiliaryBytes = transparentPixels == null || transparentPixels == pixels
+            ? 0 : 4L * transparentPixels.length;
+        if (unknownByteArray != null) auxiliaryBytes += unknownByteArray.length;
+        return new ActorCopyCost(4L * pixels.length, auxiliaryBytes);
+    }
+
+    public final Sprite copyForOwnedActor() { return copyForOwnedActor(Long.MAX_VALUE); }
+
+    public final Sprite copyForOwnedActor(long payloadBudget) {
+        if (getClass() != Sprite.class) return null;
+        if (ownedPixels != null) return getOwnedPixels() == null ? null : this;
+        ActorCopyCost cost = ownedActorCopyCost();
+        if (cost == null || cost.totalBytes() > payloadBudget) return null;
+        Sprite copy = new Sprite(pixels.clone(), width, height);
+        copy.ownedPixels = new OwnedPixels(copy.pixels);
+        copy.requiresShift = requiresShift;
+        copy.xShift = xShift; copy.yShift = yShift;
+        copy.something1 = something1; copy.something2 = something2;
+        copy.id = id; copy.packageName = packageName;
+        // Preserve an auxiliary alias, but its raw getter must revoke the same owner.
         copy.transparentPixels = transparentPixels == pixels ? copy.pixels
             : transparentPixels == null ? null : transparentPixels.clone();
-		copy.unknownByteArray = unknownByteArray == null ? null : unknownByteArray.clone();
-		return copy;
-	}
+        copy.unknownByteArray = unknownByteArray == null ? null : unknownByteArray.clone();
+        return copy;
+    }
 
 	/**
 	 * Exclusive storage with a nonescaping reader and an opaque version identity.
