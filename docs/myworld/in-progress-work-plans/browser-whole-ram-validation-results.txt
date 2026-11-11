@@ -1,5 +1,8 @@
 Whole-overworld RAM: independent CPU validation
-2026-11-11. Integration-ready tests; actual browser acceptance remains pending.
+2026-11-11. Independent CPU tests; later manager hardware comparison complete.
+See browser-whole-ram-experiment-results.txt for actual ON/OFF/ON evidence and
+limits. This document preserves historical artifact-bound CPU validation; final
+owner preview feedback and adoption remain separate.
 
 Artifact and reproduction
 -------------------------

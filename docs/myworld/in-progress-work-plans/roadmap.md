@@ -4,6 +4,22 @@ This document tracks the high-level path from the current alpha toward beta.
 Detailed implementation plans remain in their subject-specific documents; this
 roadmap defines priorities, milestone boundaries, and release progression.
 
+## Private prepared-RAM experiment — November 11, 2026
+
+With the full GPU catalogue ON in every run, prepared CPU RAM reduced warm
+crossing pauses from 508.25 ms OFF to 297.25/299.75 ms ON in an ON/OFF/ON
+comparison. Startup preparation added about 14.6–15.1 seconds. The retained
+primitive ledger is 263.20 MiB, a lower bound distinct from whole-browser memory.
+Stationary fresh world FPS was 42.82/40.77/40.45, so this establishes neither a
+consistent FPS gain nor 60 FPS. Residual pauses remain around 0.3 seconds.
+
+This stays private and default off; public server and ordinary choices are
+unchanged. Final owner preview feedback is pending. See the
+[RAM results and limits](browser-whole-ram-experiment-results.txt) and
+[CPU implementation contract](browser-whole-overworld-ram.txt). The saved
+[modern streaming plan](browser-modern-streaming-plan.txt) remains deferred;
+next implementation choices require profiling and review of these results.
+
 ## Private whole-overworld experiment — November 11, 2026
 
 The complete prepared catalogue was admitted in Firefox: 1,400 geometry resources

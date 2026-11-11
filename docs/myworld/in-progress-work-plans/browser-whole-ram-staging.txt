@@ -80,9 +80,12 @@ CPU gates
   even when explicitly bound to an old GPU reference for CPU-only testing;
   such data cannot be staged against a fresh artifact.
 
-Actual integrated fresh-source build/GPU bake/RAM cook, Firefox JNI readiness,
-continuous walking and measured performance/memory remain manager-owned gates.
-No browser, GPU, server, public deployment or release action is performed here.
+Manager subsequently completed the integrated fresh-source build/GPU bake/RAM
+cook, Firefox JNI readiness and ON/OFF/ON walking/performance/memory comparison.
+See browser-whole-ram-experiment-results.txt; residual pauses and40–43FPS keep
+this private/default OFF. Final owner preview feedback remains pending.
+No browser, GPU, server, public deployment or release action was performed by
+this delivery/staging worker; its CPU receipts below remain separate evidence.
 
 Executed source-bound receipts
 ------------------------------
