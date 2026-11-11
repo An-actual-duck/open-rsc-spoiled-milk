@@ -25,8 +25,11 @@ physical resolution/fog/shadow settings. The old fixed 32-NPC server is only a
 preserved diagnostic server; bind its exact stage/source receipt and do not
 claim its binaries represent current server production. Current policy/Bootstrap
 supports TCP 43649/WS 43549/browserdemo. The prior combat stage's Cache/port.txt is
-43639, so assert live javaPrivateLoopbackPort 43649 and actual WS before running,
-or prepare a new repeatable-client-only stage. Never mutate the live fixture.
+43639, so require the frozen repeatable stage TCP43649/WS43549 pair and actual open
+ws://127.0.0.1:43549/ socket before running, or prepare a new repeatable client
+stage. Bootstrap legitimately omits its Java route event in benchmark mode;
+when that event is present it must still agree with 43649. Never assign a fake
+route value to satisfy a gate. Never mutate the live fixture.
 
 The supplied candidate route starts at 111,625,L0 and walks 111,624→111,623→
 111,624→111,625, twice. A previous actual client successfully crossed 624 here.
@@ -112,3 +115,21 @@ world targets, unbounded route and ambiguous transition flags. It proves held
 work is distinct from fresh frame count, overlapping ring maxima are not counted
 twice, missing load report ranges are explicit, and snapshot JS is passive.
 No actual travel, GPU, process or server action has been performed by this worker.
+
+Actual benchmark-route guard correction
+--------------------------------------
+Root's initial 8220 diagnostic login was healthy, but the first helper gate
+incorrectly required p.javaPrivateLoopbackPort. BrowserBootstrap emits that
+startup event only for nonbenchmark WebGL. The original 936 handoff is preserved;
+the revised gate checks actual browserTransport.connections scalar socket URL,
+readyState 1 and closed=false, plus requested repeatable-v1, independently frozen
+stage TCP43649/WS43549 and fresh private server authority. Missing Java route is
+legitimate; a conflicting present route still rejects. No client field is
+modified to create proof. The snapshot reads at most 8 connection records.
+
+Runtime 65857a5's collector was read and agrees with the helper: main
+gpu.stats.loadProfile.{requested,totalReports,last,samples<=128,scope} and
+loadProfileSamples alias; named 36-field records plus callback-time packet/frame
+metadata. No generic management instrumentation is needed. 21 offline tests pass,
+including absent/present-conflicting Java route, missing/wrong/closed/connecting
+socket and combat-fixture rejection. No actual route run has yet been claimed.

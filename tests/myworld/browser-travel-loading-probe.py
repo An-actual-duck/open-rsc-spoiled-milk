@@ -11,7 +11,7 @@ if(!g)throw Error('No existing private renderer');
 const c=w.document.querySelector('#browser-webgl'),r=c?.getBoundingClientRect(),fr=f?.getBoundingClientRect();
 const take=(k,n=32)=>Array.isArray(g[k])?g[k].slice(-n):null;
 return {clock:w.performance.now(),url:w.location.href,visible:w.document.visibilityState,focused:document.hasFocus(),
- fixture:p.repeatableFixture,route:p.javaPrivateLoopbackPort,policies:p.privatePolicies,state:p.state,error:g.lastError,
+ fixture:p.repeatableFixture,requestedFixture:p.repeatableFixtureRequested,route:p.javaPrivateLoopbackPort??null,transportConnections:w.browserTransport?.connections instanceof Map&&w.browserTransport.connections.size<=8?Array.from(w.browserTransport.connections.values(),e=>({url:e.socket?.url,readyState:e.socket?.readyState,closed:e.closed})):null,policies:p.privatePolicies,state:p.state,error:g.lastError,
  contextLost:g.contextLost,ready:g.worldReadiness,pose:g.pose,physical:g.physicalOutput,worker:g.renderWorker,
  frames:g.javaWorldFrames,reportedFrames:g.javaBridgeReportedWorldFrames,held:g.heldWorldFrames,lastFrame:g.lastFrame,
  uploadedChunks:g.uploadedChunks,uploadedBytes:g.uploadedBytes,gpuBytes:g.gpuBytes,
@@ -37,6 +37,20 @@ def validate_route(a):
   if type(l.get('expectTransition',False))!=bool:raise ValueError('Transition expectation must be boolean')
   previous=t
  return a
+
+def validate_stage_route(stage):
+ if stage.get('fixture')!='repeatable-v1' or stage.get('tcp')!='127.0.0.1:43649' or stage.get('websocket') not in ['127.0.0.1:43549','ws://127.0.0.1:43549/']:raise ValueError('Frozen repeatable stage TCP43649/WS43549 required')
+ return 'ws://127.0.0.1:43549/'
+def validate_live_route(client):
+ # Bootstrap's route event is absent in benchmark mode; actual open sockets,
+ # fixture policy, frozen stage and fresh server authority are independent proof.
+ if client.get('route') not in [None,43649]:raise ValueError('Reported Java route conflicts with private fixture')
+ if client.get('requestedFixture')!='repeatable-v1':raise ValueError('Actual repeatable fixture policy missing')
+ sockets=client.get('transportConnections')
+ if not isinstance(sockets,list) or not 1<=len(sockets)<=8:raise ValueError('Bounded actual transport socket evidence required')
+ active=[x for x in sockets if x.get('readyState')==1 and x.get('closed')is False]
+ if len(active)!=1 or active[0].get('url')!='ws://127.0.0.1:43549/':raise ValueError('Actual open private WebSocket43549 required')
+ return True
 
 def position(a):return [a.get('x'),a.get('y'),a.get('level')]
 def summarize(rows):
@@ -81,11 +95,12 @@ def main():
  # of the invocation cwd. No file in a fixture/server or stage is modified.
  repo=Path(__file__).resolve().parents[2];allowed=[(repo/'output/diagnostics').resolve(),(repo.parent/'Core-Framework/output/diagnostics').resolve()]
  if not any(a.out.resolve().is_relative_to(d)for d in allowed):p.error('Use workspace-layout.py path diagnostics browser-travel-loading, then a new run directory')
- session=ExistingSession(a.session);a.out.mkdir(parents=True);start=time.monotonic();rows=[];result={'accepted':False,'scope':'Actual original pointer/manual walking with server-authoritative positions; diagnostic load timings, not steady-state FPS','drive':a.drive,'route':route,'publicChanged':False,'stageSHA256':hashlib.sha256(a.stage.read_bytes()).hexdigest(),'sessionSHA256':hashlib.sha256(a.session.read_bytes()).hexdigest(),'legs':[]}
+ validate_stage_route(json.loads(a.stage.read_text()));session=ExistingSession(a.session);a.out.mkdir(parents=True);start=time.monotonic();rows=[];result={'accepted':False,'scope':'Actual original pointer/manual walking with server-authoritative positions; diagnostic load timings, not steady-state FPS','drive':a.drive,'route':route,'publicChanged':False,'stageSHA256':hashlib.sha256(a.stage.read_bytes()).hexdigest(),'sessionSHA256':hashlib.sha256(a.session.read_bytes()).hexdigest(),'legs':[]}
  def sample():
   t=time.monotonic();c=session.snapshot();st=a.authority.stat();auth=json.loads(a.authority.read_text());age=max(0,time.time()-st.st_mtime)
   if age>4 or auth.get('private')is not True or auth.get('valid')is not True or auth.get('online')is not True or auth.get('account')!=route['account']:raise RuntimeError('Fresh active private browserdemo authority required')
-  if c.get('error')or c.get('contextLost')or c.get('visible')!='visible'or c.get('fixture',{}).get('username')!=route['account']or c.get('route')!=43649 or c.get('worker',{}).get('enabled')is not True:raise RuntimeError('Current WorkerON private repeatable-v1 route/visibility/error gate failed')
+  if c.get('error')or c.get('contextLost')or c.get('visible')!='visible'or c.get('fixture',{}).get('username')!=route['account']or c.get('worker',{}).get('enabled')is not True:raise RuntimeError('Current WorkerON private repeatable-v1 route/visibility/error gate failed')
+  validate_live_route(c)
   if a.require_load_profile and not isinstance(c.get('loadProfile',{}),dict):raise RuntimeError('Load-only diagnostics missing; cannot attribute held work')
   if a.require_load_profile and not c.get('loadProfile'):raise RuntimeError('Load-only diagnostics missing; cannot attribute held work')
   if rows and(auth.get('stableTicks',0)<rows[-1]['authority'].get('stableTicks',0)or c['frames']<rows[-1]['client']['frames']or c['held']<rows[-1]['client']['held']):raise RuntimeError('Fixture/session counters reset during route')

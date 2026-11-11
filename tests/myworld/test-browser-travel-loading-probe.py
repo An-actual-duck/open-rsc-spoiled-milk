@@ -26,6 +26,27 @@ class Travel(unittest.TestCase):
  def test_load_ring_loss_is_explicit(self):
   def row(n):return {'hostMs':n,'pollRoundTripMs':1,'client':{'frames':n,'held':0,'uploadedChunks':0,'uploadedBytes':0,'ready':{'epoch':1},'loadProfile':{'totalReports':n},'loadProfileSamples':[1]*32}}
   a=m.summarize([row(1),row(100)]);self.assertEqual(a['loadReportDelta'],99);self.assertEqual(a['loadReportPollGaps'],1)
+ def live(self):return {'route':None,'requestedFixture':'repeatable-v1','transportConnections':[{'url':'ws://127.0.0.1:43549/','readyState':1,'closed':False}]}
+ def test_benchmark_absent_route_uses_actual_socket(self):self.assertTrue(m.validate_live_route(self.live()))
+ def test_stage_loopback_pair(self):self.assertEqual(m.validate_stage_route({'fixture':'repeatable-v1','tcp':'127.0.0.1:43649','websocket':'127.0.0.1:43549'}),'ws://127.0.0.1:43549/')
+ def test_wrong_reported_route_still_rejected(self):
+  a=self.live();a['route']=43639
+  with self.assertRaises(ValueError):m.validate_live_route(a)
+ def test_missing_socket_is_not_fake_proof(self):
+  a=self.live();a['transportConnections']=[]
+  with self.assertRaises(ValueError):m.validate_live_route(a)
+ def test_wrong_open_socket(self):
+  a=self.live();a['transportConnections'][0]['url']='ws://127.0.0.1:43539/'
+  with self.assertRaises(ValueError):m.validate_live_route(a)
+ def test_closed_socket(self):
+  a=self.live();a['transportConnections'][0]['closed']=True
+  with self.assertRaises(ValueError):m.validate_live_route(a)
+ def test_socket_must_be_open(self):
+  a=self.live();a['transportConnections'][0]['readyState']=0
+  with self.assertRaises(ValueError):m.validate_live_route(a)
+ def test_combat_fixture_cannot_masquerade_as_route(self):
+  a=self.live();a['requestedFixture']='renderer-combat-v1'
+  with self.assertRaises(ValueError):m.validate_live_route(a)
  def test_script_is_passive(self):
   self.assertNotIn('.push=',m.SNAPSHOT);self.assertNotIn('postMessage(',m.SNAPSHOT);self.assertNotIn('measurement=',m.SNAPSHOT)
 if __name__=='__main__':unittest.main()
