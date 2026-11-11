@@ -60,7 +60,7 @@ initializeWholeZone(String manifestIdentity,int[]settings,int[]materialMetadata)
 returns resource count only after complete worker-side upload/capacity proof.
 wholeZoneFrame(int[]metadata,int[]objectCells) precedes normal present.
 Metadata18: schema,active,level,globalBaseX/Z,centerSX/SY,radius2,visibility masks
-for planes0/1/2, four packing settings, sourceEpochLo/Hi,reserved0.
+for planes0/1/2, four packing settings, sourceEpochLo/Hi,nonGlobalWorldSpace0/1.
 Object-cell rows6: plane,cellX,cellY,canonicalKeyLo/Hi,reason. Equal keys resolve
 pinned resources; differing/empty/animated ownership masks old cell geometry.
 Private merged draw bound may exceed normal256 to preserve radius2, never silently

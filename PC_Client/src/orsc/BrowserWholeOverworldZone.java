@@ -78,7 +78,7 @@ public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegist
         active="global".equals(authoritative.getWorldSpace())&&authoritative.getLevel()==0&&frame.getSignedWorldLevel()==0;observed.clear();int[] local=client.getWholeOverworldObjectCells();if(local.length%6!=0||local.length>6144)throw new IllegalStateException("Whole-zone local identity schema");
         for(int i=0;i<local.length;i+=6)observed.put(key(local[i],local[i+1],local[i+2]),Arrays.copyOfRange(local,i,i+6));
         NativeLayeredTerrainSnapshot snapshot=world.getWholeOverworldSourceSnapshot();int centerX=Math.floorDiv(snapshot.getCurrentChunkX()*snapshot.getPresentationChunkSize(),48),centerY=Math.floorDiv(snapshot.getCurrentChunkY()*snapshot.getPresentationChunkSize(),48);List<Integer> output=new ArrayList<Integer>();
-        for(int plane=0;plane<=2;plane++)for(int cx=(centerX-2)*2;cx<(centerX+3)*2;cx++)for(int cy=(centerY-2)*2;cy<(centerY+3)*2;cy++){
+        if(active)for(int plane=0;plane<=2;plane++)for(int cx=(centerX-2)*2;cx<(centerX+3)*2;cx++)for(int cy=(centerY-2)*2;cy<(centerY+3)*2;cy++){
             JSONObject cell=objects.get(key(plane,cx,cy));if(cell==null)continue;int[] known=observed.get(key(plane,cx,cy));long value;int reason;
             if(known!=null){value=((long)known[4]<<32)|(known[3]&0xffffffffL);reason=known[5];}
             else if(absentCellKnown(client,plane,cx,cy,cell)){value=parseKey(cell.getString("emptyCanonicalContentKey"));reason=0;}
@@ -90,7 +90,7 @@ public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegist
         rows=new int[output.size()];for(int i=0;i<rows.length;i++)rows[i]=output.get(i);
         metadata=new int[18];metadata[0]=1;metadata[1]=active?1:0;metadata[2]=frame.getSignedWorldLevel();metadata[3]=Math.multiplyExact(baseX,128);metadata[4]=Math.multiplyExact(baseZ,128);metadata[5]=centerX;metadata[6]=centerY;metadata[7]=2;
         for(int plane=0;plane<=2;plane++){int mask=0;for(Renderer3DModelKind kind:Renderer3DModelKind.values())if((kind!=Renderer3DModelKind.ROOF||!Config.C_HIDE_ROOFS)&&frame.isWorldChunkModelKindVisible(kind,plane)&&(plane==0||kind!=Renderer3DModelKind.GAME_OBJECT&&kind!=Renderer3DModelKind.WALL_OBJECT))mask|=1<<kind.ordinal();metadata[8+plane]=mask;}
-        System.arraycopy(settings,0,metadata,11,4);long epoch=world.getWholeOverworldSourceRevision();metadata[15]=(int)epoch;metadata[16]=(int)(epoch>>>32);resolvedStatic=liveStatic=skippedWorld=0;
+        System.arraycopy(settings,0,metadata,11,4);long epoch=world.getWholeOverworldSourceRevision();metadata[15]=(int)epoch;metadata[16]=(int)(epoch>>>32);metadata[17]="global".equals(authoritative.getWorldSpace())?0:1;resolvedStatic=liveStatic=skippedWorld=0;
     }
     public void invalidate(){ready=false;active=false;descriptors.clear();WholeOverworldZoneRegistry.clear();}
     public boolean ready(){return ready;}
