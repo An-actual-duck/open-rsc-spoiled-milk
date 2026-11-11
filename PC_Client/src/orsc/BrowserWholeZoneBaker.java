@@ -85,7 +85,7 @@ public final class BrowserWholeZoneBaker {
             int id=nextId++;String path="chunks/c"+id+".bin";Files.createDirectories(output.resolve("chunks"));byte[] raw=buffer.array();Files.write(output.resolve(path),raw);
             float minX=0,maxX=0,minY=0,maxY=0,minZ=0,maxZ=0;
             for(int i=0;i<vertices.length;i+=28){float x=vertices[i]+originX,y=vertices[i+1],z=vertices[i+2]+originZ;if(i==0){minX=maxX=x;minY=maxY=y;minZ=maxZ=z;}else{minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);minZ=Math.min(minZ,z);maxZ=Math.max(maxZ,z);}}
-            JSONObject row=new JSONObject().put("id",id).put("plane",plane).put("role",role).put("cellSize",cellSize).put("cellX",cellX).put("cellY",cellY).put("originX",originX).put("originZ",originZ).put("sourceKind",kind).put("visibilityMask",127).put("vertexCount",vertices.length/28).put("indexCount",indices.length).put("batchIntCount",batches.length).put("bytes",bytes).put("sha256",sha(raw)).put("path",path).put("bounds",new JSONArray(new float[]{minX,minY,minZ,maxX,maxY,maxZ}));
+            JSONObject row=new JSONObject().put("id",id).put("plane",plane).put("role",role).put("cellSize",cellSize).put("cellX",cellX).put("cellY",cellY).put("originX",originX).put("originZ",originZ).put("sourceKind",kind).put("visibilityMask",127).put("vertexCount",vertices.length/28).put("indexCount",indices.length).put("batchIntCount",batches.length).put("bytes",bytes).put("sha256",sha(raw)).put("path",path).put("bbox",new JSONArray(new float[]{minX,minY,minZ,maxX,maxY,maxZ}));
             row.put("shadowCasters",effects.getJSONArray("shadowCasters")).put("glowEmitters",effects.getJSONArray("glowEmitters"));chunks.put(row);return row;
         }
         JSONObject emitWorld(Renderer3DWorldChunkFrame.ChunkMesh full,int sx,int sy)throws Exception{
@@ -133,32 +133,35 @@ public final class BrowserWholeZoneBaker {
                 objectCells.put(cell);
             }
         }
-        void bake(int limit)throws Exception{
+        void bake(int limit,String pilotPosition)throws Exception{
             TreeSet<String> positions=new TreeSet<String>();for(String key:pages.keySet()){String[] p=key.split(":");positions.add(p[1]+":"+p[2]);}
-            for(String position:positions){String[] p=position.split(":");int sx=Integer.parseInt(p[0]),sy=Integer.parseInt(p[1]);int[][] base=null;
+            for(String position:positions){if(pilotPosition!=null&&!pilotPosition.equals(position))continue;String[] p=position.split(":");int sx=Integer.parseInt(p[0]),sy=Integer.parseInt(p[1]);int[][] base=null;
                 for(int plane=0;plane<=2;plane++){
-                    if(preparedSectors>=limit)return;JSONObject page=pages.get(plane+":"+sx+":"+sy);if(page==null)continue;
+                    if(preparedSectors>=limit)return;JSONObject page=pages.get(plane+":"+sx+":"+sy);
                     NativeLayeredTerrainSnapshot snapshot=snapshot(plane,sx,sy);Sector[] sectors=(Sector[])get(window.invoke(world,plane,sx,sy,snapshot,0,0),"sectors");set(world,"sectors",sectors);
                     set(world,"nativeLayeredTerrainSnapshot",snapshot);set(world,"nativeLayeredTerrainAppliedSectionX",sx);set(world,"nativeLayeredTerrainAppliedSectionY",sy);
                     Object wallInput=walls.invoke(world,sectors,base),roofInput=roofs.invoke(world,sectors,base),terrainInput=plane==0?terrain.invoke(world,plane,sx,sy,sectors):null;
                     if(terrainInput!=null)terrainInput=endpointShadow.invoke(null,terrainInput,wallInput);
                     Object product=build.invoke(null,plane,sx,sy,terrainInput,wallInput,roofInput,true);
                     Renderer3DWorldChunkFrame.ChunkMesh full=(Renderer3DWorldChunkFrame.ChunkMesh)method(product.getClass(),"toRenderer3DWorldChunkMesh").invoke(product);
+                    if(page!=null){
                     JSONObject resource=emitWorld(full,sx,sy);JSONObject cell=new JSONObject().put("plane",plane).put("cellX",sx).put("cellY",sy).put("sourceSha256",page.getString("sha256"));
                     if(resource==null)cell.put("resourceId",JSONObject.NULL).put("vertexCount",0).put("indexCount",0);
                     else cell.put("resourceId",resource.getInt("id")).put("vertexCount",resource.getInt("vertexCount")).put("indexCount",resource.getInt("indexCount"));
-                    worldCells.put(cell);emitObjects(plane,sx,sy,full,base);base=(int[][])get(roofInput,"finalElevations");preparedSectors++;
+                    worldCells.put(cell);emitObjects(plane,sx,sy,full,base);preparedSectors++;
                     System.out.println("WHOLE_ZONE_BAKE sector="+plane+":"+sx+":"+sy+" prepared="+preparedSectors+" resources="+chunks.length());System.out.flush();
+                    }
+                    base=(int[][])get(roofInput,"finalElevations");
                 }
             }
         }
     }
     public static void main(String[] args)throws Exception{
-        if(args.length!=6)throw new IllegalArgumentException("root selectedPackage miniCache output clientJarSha256 limitSectors");
+        if(args.length!=6&&args.length!=7)throw new IllegalArgumentException("root selectedPackage miniCache output clientJarSha256 limitSectors");
         Path root=Paths.get(args[0]).toRealPath(),source=Paths.get(args[1]).toRealPath(),miniCache=Paths.get(args[2]).toRealPath(),output=Paths.get(args[3]).toAbsolutePath().normalize();
         if(!args[4].matches("[a-f0-9]{64}"))throw new IllegalArgumentException("Exact full-source artifact hash required");int limit=Integer.parseInt(args[5]);if(limit<1||limit>1330)throw new IllegalArgumentException("Sector cap1..1330");
         if(Files.exists(output))throw new IllegalArgumentException("Preserve previous bakes; output must be new");Files.createDirectories(output);
-        long started=System.nanoTime();Context c=new Context(root,source,miniCache,output);c.bake(limit);
+        long started=System.nanoTime();Context c=new Context(root,source,miniCache,output);c.bake(limit,args.length==7?args[6]:null);
         int[] metadata=new int[c.materials.size()];for(int i=0;i<metadata.length;i++)metadata[i]=c.materials.get(i);
         JSONObject scope=new JSONObject().put("sectors",new JSONObject().put("0",445).put("1",444).put("2",441)).put("placements",new JSONObject().put("0",22981).put("1",1260).put("2",339));
         byte[] original=Files.readAllBytes(source.resolve("manifest.json"));Files.write(output.resolve("source-manifest.json"),original);
