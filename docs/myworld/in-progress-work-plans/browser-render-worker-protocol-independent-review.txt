@@ -1,0 +1,63 @@
+Browser render-worker protocol independent review
+================================================
+Status: design/preflight only; runtime candidate and source-bound execution pending.
+Owner: Core ai-2, test/browser-render-worker-protocol.
+Base:58c61d98562e287c6e35a6056009cbe81c6d3464.
+
+Scope
+-----
+Tests/report only. Java VM, AWT and input remain on the main thread; the private
+candidate will move the existing WebGL backend/shaders to an OffscreenCanvas
+worker. Actual Firefox/Worker/GPU correctness, displayed-frame pacing and FPS
+belong to the manager. A mock endpoint or Node structuredClone cannot establish
+those browser facts. No public, desktop or ordinary browser default change is
+part of this review.
+
+Independent test obligations
+----------------------------
+Capture: use real offset typed views with arbitrary int/float raw bits, including
+NaN payloads, negative zero and shared disjoint input storage. Verify owned
+packet data survives mutation of every source immediately after capture; never
+transfer/detach Java source buffers, never retain borrowed views until a later
+frame. Intrinsic view shape must govern actual bounds and copying rather than
+own getters/iterators. Bound all lengths/counts/totals before allocation/copy.
+
+Ordering: initialize must return actual worker MAX_TEXTURE_SIZE before Java
+uses it; shader initialization is asynchronous. Record resource upload/delete/
+replace/reuse in exact call order, including resources created before the first
+draw. Draw cancellation must not cancel its resource prefix or permit stale ID
+reuse. Multiple native callbacks in one Java frame produce one bounded owned
+packet. Initial scope is full C/T only, overlay delta OFF: no second partial-
+upload ACK/history system.
+
+Slots: two in-flight slots are a capacity limit, not a claim of two frames
+presented. Slot release and presented counters require an exact worker execution
+completion ACK with matching session/slot/frame identity. A queued/postMessage
+return is not an ACK. Duplicate/stale/foreign ACKs cannot release slots or count
+presentations. Backpressure must bound pending work before further staging can
+be overwritten. CPU tests will explicitly hold both ACKs and observe blocked
+third admission; inspect one completion at a time and disposal while blocked.
+
+Failure: malformed packets reject before GPU-side dispatch/allocation. Posting,
+worker initialization, decode, backend execution, context loss and disposal must
+reject outstanding promises and wake blocked producers without false presented
+ACKs. No later dispatch may succeed on the poisoned session. Borrowed inputs may
+not survive in error objects/closures. Recovery requires explicit new ownership.
+
+Display: preserve logical viewport, physical drawingbuffer, DPR/layout and
+resize epoch/order. An1843x1037 physical main canvas must not silently become a
+960x540 worker drawingbuffer. Old-size completion cannot publish as a new resize
+epoch. Worker-visible time/presented/frame-age/drop counters must be distinct
+from Java producer FPS. Existing WebGL resource/pixel/shadow quality stays in
+scope, even if protocol CPU tests alone cannot prove it.
+
+Initial source observations (base58c, not candidate findings)
+----------------------------------------------------------
+tools/browser-gameplay/web/webgl.js initializes shader/backend state and returns
+actual MAX_TEXTURE_SIZE from initialize. It receives resources before drawing,
+retains explicitly copied chunk metadata, and receives context loss outside the
+native endpoint flow. Its physical output sizer currently reads canvas DOM
+layout. The proxy/worker protocol therefore needs explicit initialization
+round-trips, durable ordered resource commands, asynchronous fatal messages and
+main-thread display metrics. These are obligations to verify, not reported bugs
+in a candidate that has not yet been checkpointed.
