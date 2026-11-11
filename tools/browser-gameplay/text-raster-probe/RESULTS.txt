@@ -1,0 +1,106 @@
+Actual Firefox/CheerpJ TEXT reference results (2026-11-11)
+=========================================================
+Decision
+---------
+Do NOT implement the per-TEXT game bridge. Both clean probes lose on short
+labels;128-glyph cases improve modestly. Keep original game C/T writers and
+hot glyph methods unchanged. A larger isolated one-frame batch now tests whether
+combining many TEXT records can amortize callback/packet costs. Its result is
+not yet recorded here; no complete game writer journal or suppression exists.
+
+Source-bound validation
+------------------------
+Raw manager directories under:
+/home/justin/Core-Framework/output/diagnostics/browser-frame-architecture/
+text-abi-probe-2, text-abi-probe-3-debug, text-abi-probe-3-clean,
+text-abi-probe-4-full-clean.
+Offline reproduced source/receipt/cohort analysis:
+/home/justin/Core-Framework-ai-3/output/diagnostics/browser-text-raster-probe/clean-3-4-analysis/
+Run analyze.py RAW_BASE OUTPUT_JSON. It checks stage file hashes against manifests,
+script bytes against exact probe Git checkpoints, class major52/font resource,
+real typed-view shapes, exact gates, all60 cohort order/call/elapsed arithmetic,
+and final kernel/Java counters. No browser/server actions occur in this analyzer.
+Raw input hashes are stored in analysis.json; frozen stages remain preserved.
+
+Probe3 runtime checkpointcdf4e2a839a3526483aa90ac14c6e4e6f6b6cd9a,67x43,
+one TEXT/common clear. Probe4 checkpoint1c6bc482f105ec6c1e16243c2433233aefe9a3f4,
+960x540,32 TEXT calls per ONE common clear. Same real h12b jf font SHA256
+056a122603ae4842d0b3048ff16f2e44f2a3e49af60fb72a208100f82e5cbb8d.
+Literal source comes from main38bbb1c34, with exact dirty input status/file hashes
+recorded; it is not mislabeled a clean game build. Probe source was clean.
+
+Startup/ABI evidence and limitations
+------------------------------------
+Stage2 exited1 before any kernel calls/phase events. Cause remains unlocalized;
+no ABI conclusion follows. Stage3 changed diagnostics AND serving to the existing
+range-capable server, then passed DEBUG exact tests. That does not isolate which
+change affected startup. Debug capture has zero timing rows and is excluded from
+cost comparisons. Early Java entry/font/catch diagnostics and bounded console
+capture remain; clean runs disable enableDebug.
+
+Clean probe3:57,620 exact C-int/T-raw-Float32 words, immediate Java reads after
+native return. Probe4:10,368,000 exact words after groups across all five glyph
+counts and both native controls. Both completed30 timing cohorts, no errors,
+poison or rejection. Total actual native calls747,226 and409,408 respectively,
+including warmup/gates/timing. Genuine Int8 font,Int32 C/metadata,Float32 T views
+were observed; distinct zero-offset output ArrayBuffers are compatible with the
+accepted range-alias guard. Full C and T each contain518,400 elements/2,073,600
+bytes. Real runs needed no ArrayBuffer adapters (adaptedBuffers0).
+
+zeroCopyBorrow states that our adapters share incoming storage, not a measurement
+of every runtime internal operation. Official conversion docs describe these
+primitive arrays by reference. Empirical same-call exact reads demonstrate actual
+visibility; cost sensitivity adds evidence, not proof of all runtime copy behavior.
+No pixel/source/proxy is retained by the native module; only scalar view metadata,
+counters and integer scratch are long-lived. No await/GL occurs inside the kernel.
+
+Clean cost evidence (microseconds/TEXT, forward / reverse)
+----------------------------------------------------------
+Includes common clear, Java packet building for native modes, fresh borrow,
+dispatch/adaptation, ALL-packet preflight and raster. Literal is not charged
+artificial packet building. Common clear is once per group, NOT once per TEXT in
+probe4. Each mode/count/order has about0.5seconds aggregated wall measurement.
+These are API/kernel costs, not gameplay FPS, GPU time or bus bandwidth.
+
+67x43,1TEXT/group       Literal       Native raster       Validate+literal
+0                   2.587/2.556     11.249/11.658         11.846/11.790
+1                   2.891/2.864     11.420/11.907         12.141/11.628
+8                   4.172/4.113     12.408/12.747         13.552/13.127
+32                  8.814/8.890     14.758/15.141         18.590/18.679
+128                27.400/27.552    25.080/24.752         41.446/39.962
+
+960x540,32TEXT/group    Literal       Native raster       Validate+literal
+0                 14.313/14.181     24.009/22.847         23.484/22.584
+1                 14.497/14.361     22.892/22.892         23.438/24.161
+8                 15.656/17.167     23.767/23.866         26.042/24.871
+32                20.641/20.508     26.446/26.094         30.518/31.312
+128               40.853/40.179     37.785/36.748         53.209/53.421
+
+Full group examples(ms/group32): at8 glyphs/TEXT,literal0.501/0.549 versus native
+0.761/0.764; at128,literal1.307/1.286 versus native1.209/1.176.0-glyph control adds
+roughly8–10us/callback in both tests. Large buffers do not show an obvious full-
+surface-copy-sized added tax per call in these shapes; small/full differ clear
+and group structure, so this is not an isolated copy benchmark or a causal proof.
+
+No confidence intervals or broad platform coverage; synthetic plots, fixed font,
+short reversed-order samples and common setup constrain extrapolation. Multiple
+calls can cost more than the literal arithmetic they replace. No production
+transport bounds/written receipt or actual game's callback frequency is measured.
+Thus neither successful ABI nor128-glyph win authorizes a per-TEXT game pilot.
+
+Next bounded experiment and game prerequisite
+---------------------------------------------
+Frozen source28f3b6332b38980ccdca7ff9b87b4301be047941 prepares stage5 with ONE
+callback for32 TEXT groups, flattened in original order, max4096 glyphs and
+4096x7 integer scratch. All packing/preflight and one common clear are included.
+Per-TEXT controls remain; validation-framebatch and native-framebatch are added.
+CPU literal comparison covers both routes plus late-invalid4096th glyph with
+zero prefix writes:10,368,000 exact words/31 checks. Real50-cohort result is still
+pending; it will prove amortization only. See OBSERVER-AUDIT.txt before proposing
+any game deferral, writer suppression or complete-frame ownership change.
+
+Primary API references checked2026-11-11:
+https://cheerpj.com/docs/guides/implementing-native-methods
+Native functions may return a value or Promise; plain return is not presumed bad.
+https://cheerpj.com/docs/reference/CJ3Library
+Primitive typed array conversion rules; real receipt remains the empirical gate.

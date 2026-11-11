@@ -101,3 +101,21 @@ node tools/browser-gameplay/text-raster-probe/proof.mjs NEW_TEST_STAGE
 Use a declared output/tests path; prepare refuses existing stage and checks free
 loopback port. It records clean/dirty probe source and dirty read-only input root,
 not a false combined clean commit. Stage manifest contains exact files/launch args.
+
+Approved isolated one-FRAME-batch comparison (not a game bridge)
+----------------------------------------------------------------
+After actual per-TEXT costs lost for short labels, stage5 keeps the same32 TEXT
+positions/order and ONE common clear but flattens all5-int records once per group.
+Native preflight admits at most4096 glyphs,4096x7 scalar scratch and2M raster work
+pixels. It validates ALL glyphs before writes; late-invalid4096th-glyph rejection
+is explicitly tested with unchanged patterned C/T. Typed source/alias/budget
+rules stay unchanged. Original per-TEXT controls remain; validation-framebatch
+return0 then literal, and native-framebatch add two modes. Both pack all records
+INSIDE the measured group. No hidden prepacking or per-frame clear native exists.
+
+Framebatch nativeCalls=iterations, perTEXT nativeCalls=iterations*32; literal=0.
+Five glyph counts/two orders/five modes yield50 half-second cohorts. Exact Java
+C/T after each group across every native/control mode must pass before timing.
+One callback can prove isolated amortization, not complete UI writer coverage,
+source immutability across real deferrals, actual render-frame performance or
+permission to suppress game writes. Observer prerequisites are listed separately.

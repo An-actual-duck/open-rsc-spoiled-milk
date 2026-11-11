@@ -1,0 +1,96 @@
+Owner-aware ordered-overlay OBSERVER contract proposal (not implemented)
+========================================================================
+No existing pixel writer may be skipped, replaced or deferred in this phase.
+Original Java C/T remain authoritative and GPU presentation stays unchanged.
+Observe-only instrumentation is a diagnostic build, not a performance claim or
+permission to change ordinary OFF hot methods. Root approval is required before
+implementing this proposed observer, even if standalone frame batching wins.
+
+Source inventory and limits
+------------------------------
+Direct pixelData references in maintained Client_Base/PC source occur in five
+files: GraphicsController,Scene,mudclient,ORSCApplet,FloatingHitSplatRenderer.
+This lexical inventory is NOT a complete alias/writer proof: destinations are
+passed to helpers/Shader/MiscFunctions and BufferedImage/DataBuffer escapes.
+Every delegate/read/escape below must get an explicit operator or barrier.
+Unknown writes are not made safe by exact final-image coincidence.
+
+- GraphicsController.java:73 public mutable pixelData;257/1455 surface replacement.
+  :1463 plotCharacter clips signed font headers;4074/4141 literal glyph/AA writers.
+  :2810+ opaque rectangles,2854 alpha boxes,3290/3320 lines,4210 pixels.
+  :2659 gradients,2930 circles,3370 rotated/minimap,3677+ sprite/scaled/tinted/
+  masked/paletted helper families all need operators or explicit barriers.
+- :1980 nonlocal blur reads framebuffer neighborhoods. :2588 framebuffer-to-
+  Sprite capture and:2782 login viewport capture read/export current pixels.
+  :4040 fade2black may select retained GPU behavior or literal full-plane update.
+  Clear/interlace/clip changes and opaque/software frame modes are state barriers.
+- Scene.java:174 aliases GraphicsController pixels;3214 begins current transparent
+  world C/T,3219 marker fallback,2100–2435 delegates legacy raster into Shader,
+  MiscFunctions and static scanline helpers;3491 copies depth color when enabled.
+  These world/legacy modes are distinct from post-world CPU overlay ownership.
+- mudclient.java:24727 editor-grid direct writes bypass ordinary leaf helpers.
+  Existing browser coverage rejects raw debug/editor overlays; do not journal
+  those as complete supported game frames without explicit writer coverage.
+- ORSCApplet.java:961+ binds BufferedImage directly to the pixel array; Java2D/
+  DataBuffer access is an escape/read barrier. Distinguish read-only presentation
+  from actual draw targets; audit callers rather than declaring all image reads
+  harmless. PC images are not a reason to change the game's GPU-owned actors.
+- FloatingHitSplatRenderer.java:85–129 renders glyphs/boxes on distinct software-
+  owned scratch/measure surfaces, reads the pixels and exports Sprite storage.
+  These are NOT necessarily eligible active-world C/T work. Target-owner identity
+  and phase must distinguish scratch cache construction from current overlay.
+- BrowserWorldSpriteCache already caches exact composite world sprites; its
+  misses may rasterize into scratch. Browser sprite atlas already owns residency.
+  Do not attribute all profiled glyph/sprite loops to repeated world-actor raster.
+
+Existing Renderer2DFrame is not the journal: browserFramePreparation suppresses
+non-SCENE capture; native UI paths reject AA/clipped/interlaced cases; per-type
+arrays only preserve order for accepted commands. It lacks all the above source
+read/escape/barrier semantics. Turning it on cannot establish complete coverage.
+
+Proposed bounded first observer
+--------------------------------
+Fresh active-world C/T owner only; record fixed owner/surface identity,phase,
+generation/sequence and a global operation ordinal. Other scratch owners have
+separate counts and never enter the active-world packet. Record no-op/clipped
+operations consistently or give them explicit empty footprints. Do not conflate
+geometry/draw order with unrelated GPU actor quads or UI input/layout actions.
+
+Initially whitelist resolved glyph/AA and opaque/alpha rectangle/line spans.
+Record every other family above as a named unsupported operator/read barrier;
+ANY unknown/overflow/missing target or unexplained raw write makes the frame
+INCOMPLETE. Clip/mode/source changes must appear in sequence, not be reconstructed
+from final state. A pixel hook outside a registered operation can count an unknown
+supported-writer family; it does not catch unhooked raw aliases, hence the audit.
+
+Bound command counts/work/source bytes. Font/glyph/sprite source storage can escape
+and mutate: either snapshot exact consumed bytes at capture, prove a versioned
+immutable publication, or mark a barrier. Identity alone is insufficient. Snapshot
+clipped glyph regions for a small diagnostic corpus rather than retaining mutable
+borrowed arrays until end-of-frame. Sources equal to/read-aliasing current C/T
+require explicit nonlocal-read handling or an unsupported barrier; ordinary alpha
+destination reads remain literal ordered operations. No gameplay rerender replay.
+
+For complete admitted traces, replay on separate owned C/T scratch and compare
+EVERY original C int/T bit. Keep original output visible. Unknown barriers must
+not become invisible merely because final pixels happen to match. Initial
+corpus includes bank/inventory/menus/chat, hit splats, prayer/Cleric/other custom
+VFX, fading/loading/held/resize/reset, opaque and software scratch cases; those
+outside scope remain explicitly incomplete. Exact parity for one view is not a
+closed-world proof of every game state or raw-array writer.
+
+Useful receipts: TEXT count and glyph-count distribution by ACTUAL target owner;
+operator counts/sequence, barrier kinds/locations, snapshot bytes, trace overflow,
+covered writer footprint and longest consecutive supported runs. Per-frame totals
+and bounded sample traces are enough; avoid a new per-pixel diagnostic call tax
+in any performance test. Capture/replay overhead belongs outside acceptance FPS.
+
+Future decisions after observation (not authorized here)
+---------------------------------------------------------
+If many labels/simple primitives form a complete ordered frame, test a bounded
+single packet. If only contiguous runs are complete, synchronous batch flush at
+EVERY read/unknown writer boundary may preserve Java interleaving; no implicit
+end-of-frame deferral. Raw array escapes require a proven flush boundary or make
+that route ineligible. A full-frame packet still requires complete source/read/
+writer semantics, pure preflight and no side-effect UI rerender fallback. Source
+snapshots, packet construction and boundary costs must be measured honestly.
