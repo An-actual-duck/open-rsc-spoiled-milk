@@ -57,6 +57,7 @@ public class PacketHandler {
 	private Network_Socket clientStream;
 	private mudclient mc;
 	private final SceneBaselineState sceneBaselineState = new SceneBaselineState();
+    public boolean isWholeZoneObjectCellAuthoritative(int tileX,int tileY,int size){return sceneBaselineState.wholeZoneObjectCellAuthoritative(tileX,tileY,size);}
 	private final MovementSnapshotDiagnostics movementSnapshotDiagnostics = new MovementSnapshotDiagnostics();
 	private final MovementSnapshotStage movementSnapshotStage = new MovementSnapshotStage();
 	private final LayeredSceneContextState layeredSceneContextState =
