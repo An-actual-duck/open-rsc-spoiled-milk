@@ -57,7 +57,7 @@ public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegist
         if(!manifestHash.equals(source.getManifestSha256()))throw new IllegalStateException("Whole-zone source manifest changed; rebuild the full catalog");
         if(source.getProtocolVersion()<4)throw new IllegalStateException("Whole-zone requires chunked native source protocol");
         if(source==validatedSource)return;
-        if(source.getLevel()<0||source.getLevel()>2){validatedSource=source;return;}
+        if(!"global".equals(source.getWorldSpace())||source.getLevel()<0||source.getLevel()>2){validatedSource=source;return;}
         for(int i=0;i<source.getChunkSlotCount();i++){NativeLayeredTerrainChunk c=source.getChunkMetadata(i);String expected=sources.get(key(source.getLevel(),c.getSourceSectorX(),c.getSourceSectorY()));if(c.isAvailable()&&(expected==null||!expected.equals(c.getSourcePayloadSha256())))throw new IllegalStateException("Whole-zone live terrain differs from baked source at "+source.getLevel()+":"+c.getSourceSectorX()+":"+c.getSourceSectorY());}
         validatedSource=source;
     }
@@ -74,7 +74,8 @@ public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegist
     public void frame(mudclient client,Renderer3DFrame frame,int[] currentSettings){
         if(!Arrays.equals(settings,currentSettings)||!Arrays.equals(materials,materialMetadata(frame)))throw new IllegalStateException("Whole-zone graphics/material settings changed; rebuild matching full catalog");
         this.currentClient=client;World world=client.getWorld();validateSource(world);int nextX=client.getMidRegionBaseX(),nextZ=client.getMidRegionBaseZ();if(baseX!=nextX||baseZ!=nextZ){descriptors.clear();baseX=nextX;baseZ=nextZ;}
-        active=frame.getActivePlane()==0;observed.clear();int[] local=client.getWholeOverworldObjectCells();if(local.length%6!=0||local.length>6144)throw new IllegalStateException("Whole-zone local identity schema");
+        NativeLayeredTerrainSnapshot authoritative=world.getWholeOverworldSourceSnapshot();
+        active="global".equals(authoritative.getWorldSpace())&&authoritative.getLevel()==0&&frame.getSignedWorldLevel()==0;observed.clear();int[] local=client.getWholeOverworldObjectCells();if(local.length%6!=0||local.length>6144)throw new IllegalStateException("Whole-zone local identity schema");
         for(int i=0;i<local.length;i+=6)observed.put(key(local[i],local[i+1],local[i+2]),Arrays.copyOfRange(local,i,i+6));
         NativeLayeredTerrainSnapshot snapshot=world.getWholeOverworldSourceSnapshot();int centerX=Math.floorDiv(snapshot.getCurrentChunkX()*snapshot.getPresentationChunkSize(),48),centerY=Math.floorDiv(snapshot.getCurrentChunkY()*snapshot.getPresentationChunkSize(),48);List<Integer> output=new ArrayList<Integer>();
         for(int plane=0;plane<=2;plane++)for(int cx=(centerX-2)*2;cx<(centerX+3)*2;cx++)for(int cy=(centerY-2)*2;cy<(centerY+3)*2;cy++){
@@ -87,7 +88,7 @@ public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegist
             for(int word:new int[]{plane,cx,cy,(int)value,(int)(value>>>32),reason})output.add(word);
         }
         rows=new int[output.size()];for(int i=0;i<rows.length;i++)rows[i]=output.get(i);
-        metadata=new int[18];metadata[0]=1;metadata[1]=active?1:0;metadata[2]=frame.getActivePlane();metadata[3]=Math.multiplyExact(baseX,128);metadata[4]=Math.multiplyExact(baseZ,128);metadata[5]=centerX;metadata[6]=centerY;metadata[7]=2;
+        metadata=new int[18];metadata[0]=1;metadata[1]=active?1:0;metadata[2]=frame.getSignedWorldLevel();metadata[3]=Math.multiplyExact(baseX,128);metadata[4]=Math.multiplyExact(baseZ,128);metadata[5]=centerX;metadata[6]=centerY;metadata[7]=2;
         for(int plane=0;plane<=2;plane++){int mask=0;for(Renderer3DModelKind kind:Renderer3DModelKind.values())if((kind!=Renderer3DModelKind.ROOF||!Config.C_HIDE_ROOFS)&&frame.isWorldChunkModelKindVisible(kind,plane)&&(plane==0||kind!=Renderer3DModelKind.GAME_OBJECT&&kind!=Renderer3DModelKind.WALL_OBJECT))mask|=1<<kind.ordinal();metadata[8+plane]=mask;}
         System.arraycopy(settings,0,metadata,11,4);long epoch=world.getWholeOverworldSourceRevision();metadata[15]=(int)epoch;metadata[16]=(int)(epoch>>>32);resolvedStatic=liveStatic=skippedWorld=0;
     }
@@ -107,7 +108,7 @@ public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegist
     }
     @Override public Renderer3DWorldChunkFrame.ChunkMesh resolveStatic(int plane,int x,int y,long value,int presentationX,int presentationZ){
         // Never suppress static geometry in a mixed animated cell: the native side masks all of it.
-        if(!ready||!active||currentClient==null||currentClient.getRequestedPlane()!=0)return null;int[] local=currentClient.getWholeOverworldObjectCells();for(int i=0;i<local.length;i+=6)if(local[i]==plane&&local[i+1]==x&&local[i+2]==y&&local[i+5]==2)return null;
+        if(!ready||!active||currentClient==null||currentClient.getRequestedPlane()!=0||currentClient.getWorld()==null||currentClient.getWorld().getWholeOverworldSourceSnapshot()==null||currentClient.getWorld().getWholeOverworldSourceSnapshot().getLevel()!=0||!"global".equals(currentClient.getWorld().getWholeOverworldSourceSnapshot().getWorldSpace()))return null;int[] local=currentClient.getWholeOverworldObjectCells();for(int i=0;i<local.length;i+=6)if(local[i]==plane&&local[i+1]==x&&local[i+2]==y&&local[i+5]==2)return null;
         JSONObject expected=objects.get(key(plane,x,y));if(expected==null||value!=parseKey(expected.getString("canonicalContentKey")))return null;
         String cache=key(plane,x,y)+":"+presentationX+":"+presentationZ;Renderer3DWorldChunkFrame.ChunkMesh old=descriptors.get(cache);if(old!=null)return old;
         JSONObject resource=resources.get(key(plane,x,y));List<Renderer3DWorldChunkFrame.ShadowCaster> casters=new ArrayList<Renderer3DWorldChunkFrame.ShadowCaster>();List<Renderer3DWorldChunkFrame.GlowEmitter> glows=new ArrayList<Renderer3DWorldChunkFrame.GlowEmitter>();
