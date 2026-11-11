@@ -15,6 +15,8 @@ import orsc.graphics.two.WorldOverlayCoverage;
 public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     /** One-time private startup receipt; never probes per-frame cache contents. */
     public static boolean isSpriteKeyLimbsEnabled(){return BrowserWorldSpriteCache.isKeyLimbsEnabled();}
+    public static String getOverlayRectMode(){return isOverlayDeltaTransportEnabled()
+        ? System.getProperty("spoiledmilk.browserOverlayRectMode","off") : "off";}
     private static final int MAX_CHUNKS=256, MAX_VERTICES=524288, MAX_PIXELS=2097152, UPLOAD_VERTICES_PER_FRAME=32768;
     private final Map<WorldChunkBufferKey,CachedChunk> chunks=new LinkedHashMap<WorldChunkBufferKey,CachedChunk>(32,.75f,true);
     private final Map<Integer,Long> textures=new HashMap<Integer,Long>();

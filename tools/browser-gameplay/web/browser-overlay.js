@@ -2,7 +2,8 @@ import {validateOverlayDelta} from './browser-overlay-delta.js';
 import {createBrowserRetainedFrame} from './browser-retained-frame.js';
 /** Optional exact-coverage compositor. RGB is the ordinary software result over
  * black; transmittance is the surviving world coefficient. No world readback. */
-export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=null,retainOpaqueFull=false,physicalOutput=false,deltaTransport=false,maxTextureSize=0}={}) {
+export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=null,retainOpaqueFull=false,physicalOutput=false,deltaTransport=false,overlayRectMode='off',maxTextureSize=0}={}) {
+  if(!['off','observe'].includes(overlayRectMode)||overlayRectMode!=='off'&&!deltaTransport)throw new Error('Invalid overlay rectangle transport mode');
   const MAX_PIXELS=2097152, UNIT=8;
   const retained=createBrowserRetainedFrame(gl,{stats,ownedFrame,reserveBytes:extra=>reserveCombined(extra)});
   let outputWidth=0,outputHeight=0;
@@ -46,7 +47,7 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
     // Validate both complete borrowed planes and ALL small metadata before any
     // graphics query, allocation, upload or mutation. Only metadata is retained.
     const plan=validateOverlayDelta({width:w,height:h,generation,frameSequence,reset,partial,baseGeneration,baseFrameSequence,bands,work,rgb:bytes,transmittance},deltaHistory,
-      !!rgb&&!!coverage&&width===w&&height===h&&tWidth===w&&tHeight===h,deltaMaxTextureSize);
+      !!rgb&&!!coverage&&width===w&&height===h&&tWidth===w&&tHeight===h,deltaMaxTextureSize,overlayRectMode==='observe');
     retained.validateCaptureToken(plan.token,{willReset:reset||width!==w||height!==h});
     dimensions(w,h);
     try{
@@ -59,7 +60,7 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
       stats.overlayDeclaration={width:w,height:h,mode:1,generation,frameSequence,fades:0,reset};
       stats.overlayDeltaDeclarations++;stats[plan.partial?'overlayDeltaPartialDeclarations':'overlayDeltaFullDeclarations']++;
       stats.overlayDeltaUploadedBytes+=plan.rows*w*8;stats.overlayDeltaFullEquivalentBytes+=w*h*8;stats.overlayDeltaUploadCalls+=plan.bands.length;
-      stats.overlayDeltaLast={partial:plan.partial,bands:plan.bands.slice(),newBlocks:plan.work[0],spanMarks:plan.work[1],touchedRows:plan.work[2],uploadedRows:plan.rows,bandCount:plan.bands.length/2,bytes:plan.rows*w*8};
+      stats.overlayDeltaLast={transport:plan.partial?'row':'full',rectangleMode:overlayRectMode,tileObservation:plan.tileObservation,partial:plan.partial,bands:plan.bands.slice(),newBlocks:plan.work[0],spanMarks:plan.work[1],touchedRows:plan.work[2],uploadedRows:plan.rows,bandCount:plan.bands.length/2,bytes:plan.rows*w*8};
     }catch(error){failed=true;deltaHistory=null;throw error;}
   }
   function prepare(w,h,mode,generation,frameSequence,fades,reset,transmittance){

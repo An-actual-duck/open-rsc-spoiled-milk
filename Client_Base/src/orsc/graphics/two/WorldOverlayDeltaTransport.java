@@ -13,6 +13,9 @@ final class WorldOverlayDeltaTransport {
     private boolean active;
     private int blockPixels,lastBlock=-1,lastStart,lastEnd,writeMarks,spanMarks;
     private Plan pending;
+    private final WorldOverlayTileTracker tileTracker="observe".equals(System.getProperty("spoiledmilk.browserOverlayRectMode"))
+        ? new WorldOverlayTileTracker() : null;
+    private boolean[] acknowledgedTiles;
 
     void beginFrame() { active=false;pending=null;lastBlock=-1; }
     void beginFresh(int[] pixels,int width,int height,long generation,long sequence) {
@@ -23,13 +26,15 @@ final class WorldOverlayDeltaTransport {
         int blocks=(height+ROWS_PER_BLOCK-1)/ROWS_PER_BLOCK;
         if(touched==null||touched.length!=blocks)touched=new boolean[blocks];else Arrays.fill(touched,false);
         blockPixels=width*ROWS_PER_BLOCK;active=true;
+        if(tileTracker!=null)tileTracker.begin(width,height);
     }
-    private void clearHistory(){acknowledgedPixels=null;acknowledgedTouched=null;acknowledgedWidth=acknowledgedHeight=0;acknowledgedGeneration=acknowledgedSequence=-1;}
+    private void clearHistory(){acknowledgedPixels=null;acknowledgedTouched=null;acknowledgedTiles=null;acknowledgedWidth=acknowledgedHeight=0;acknowledgedGeneration=acknowledgedSequence=-1;}
     void forgetAcknowledgedFrame(){clearHistory();pending=null;}
     void invalidate(){clearHistory();active=false;pending=null;lastBlock=-1;currentPixels=null;}
     private boolean beforeWrite(){if(!active)return false;if(pending!=null){invalidate();return false;}return true;}
     void mark(int index) {
         if(!beforeWrite())return;
+        if(tileTracker!=null&&!tileTracker.mark(index)){invalidate();return;}
         if(lastBlock>=0&&index>=lastStart&&index<lastEnd)return;
         if(index<0||index>=width*height){invalidate();return;}
         int block=index/blockPixels;
@@ -40,6 +45,7 @@ final class WorldOverlayDeltaTransport {
         if(!beforeWrite()||end<=start)return;
         if(spanMarks<Integer.MAX_VALUE)spanMarks++;
         if(start<0||end>width*height){invalidate();return;}
+        if(tileTracker!=null&&!tileTracker.span(start,end)){invalidate();return;}
         int first=start/blockPixels,last=(end-1)/blockPixels;
         for(int block=first;block<=last;block++)if(!touched[block]){touched[block]=true;writeMarks++;}
         lastBlock=last;lastStart=last*blockPixels;lastEnd=Math.min(width*height,lastStart+blockPixels);
@@ -63,9 +69,12 @@ final class WorldOverlayDeltaTransport {
         if(tooMany){touchedRows=0;for(int block=0;block<touched.length;block++)if(touched[block])touchedRows+=Math.min(ROWS_PER_BLOCK,height-block*ROWS_PER_BLOCK);}
         boolean partial=history&&!tooMany&&(long)rows*5<=(long)height*3;
         if(!partial){bands=new int[]{0,height};rows=height;count=1;}else bands=Arrays.copyOf(bands,count*2);
+        int[] work=new int[]{writeMarks,spanMarks,touchedRows,rows,count,partial?1:0};
+        int[] observation=tileTracker==null?null:tileTracker.observe(history?acknowledgedTiles:null);
+        if(observation!=null){work=Arrays.copyOf(work,work.length+observation.length);System.arraycopy(observation,0,work,6,observation.length);}
         pending=new Plan(this,width,height,generation,sequence,partial,
             partial?acknowledgedGeneration:-1,partial?acknowledgedSequence:-1,bands,touched.clone(),
-            new int[]{writeMarks,spanMarks,touchedRows,rows,count,partial?1:0});
+            work,tileTracker==null?null:tileTracker.snapshot());
         return pending;
     }
     void acknowledge(Plan plan,int[] pixels,int width,int height,long generation,long sequence) {
@@ -74,16 +83,18 @@ final class WorldOverlayDeltaTransport {
             ||generation!=plan.generation||sequence!=plan.sequence){invalidate();throw new IllegalStateException("Stale/out-of-order overlay transport acknowledgement");}
         acknowledgedPixels=pixels;acknowledgedWidth=width;acknowledgedHeight=height;
         acknowledgedGeneration=generation;acknowledgedSequence=sequence;acknowledgedTouched=plan.touched;
+        acknowledgedTiles=plan.tiles;
         pending=null;
     }
     static final class Plan {
         final WorldOverlayDeltaTransport owner;final int width,height;
         final long generation,sequence,baseGeneration,baseSequence;final boolean partial;
-        final int[] bands,work;final boolean[] touched;
+        final int[] bands,work;final boolean[] touched,tiles;
         Plan(WorldOverlayDeltaTransport owner,int width,int height,long generation,long sequence,
-            boolean partial,long baseGeneration,long baseSequence,int[] bands,boolean[] touched,int[] work){
+            boolean partial,long baseGeneration,long baseSequence,int[] bands,boolean[] touched,int[] work,boolean[] tiles){
             this.owner=owner;this.width=width;this.height=height;this.generation=generation;this.sequence=sequence;
             this.partial=partial;this.baseGeneration=baseGeneration;this.baseSequence=baseSequence;this.bands=bands;this.touched=touched;this.work=work;
+            this.tiles=tiles;
         }
     }
 }

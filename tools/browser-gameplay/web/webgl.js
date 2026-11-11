@@ -115,12 +115,12 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     async Java_orsc_BrowserWebGLBridge_uploadSkyGeometry(lib,geometry,ranges,paletteCount){alive();sky.uploadGeometry(geometry,ranges,paletteCount);},
     async Java_orsc_BrowserWebGLBridge_skyFrame(lib,values,palette){alive();sky.prepare(values,palette);stats.skyEnabled=values[0]===1;},
     async Java_orsc_BrowserWebGLBridge_overlayFrame(lib,width,height,mode,generation,frameSequence,fades,reset,transmittance){
-      alive();if(!overlay){overlay=createBrowserOverlay(gl,{stats,ownedFrame,deferOrCheck:uploadValidation.deferOrCheck,retainOpaqueFull:true,physicalOutput:physicalCapability,deltaTransport:options.overlayDeltaTransport===true,maxTextureSize:cachedMaxTextureSize});stats.overlayCoverageEnabled=true;stats.limitations[0]='Coverage UI follows legacy RGB/T; small integer-rounding differences remain possible';}
+      alive();if(!overlay){overlay=createBrowserOverlay(gl,{stats,ownedFrame,deferOrCheck:uploadValidation.deferOrCheck,retainOpaqueFull:true,physicalOutput:physicalCapability,deltaTransport:options.overlayDeltaTransport===true,overlayRectMode:options.overlayRectMode||'off',maxTextureSize:cachedMaxTextureSize});stats.overlayCoverageEnabled=true;stats.limitations[0]='Coverage UI follows legacy RGB/T; small integer-rounding differences remain possible';}
       try{overlay.prepare(width,height,mode,generation,frameSequence,fades,reset,mode===0?null:typed(transmittance,Float32Array));}catch(e){stats.backendFailed=true;throw e;}
     },
     async Java_orsc_BrowserWebGLBridge_overlayDeltaFrame(lib,width,height,generation,frameSequence,reset,partial,baseGeneration,baseFrameSequence,bands,work,rgbInput,transmittance){
       alive();if(options.overlayDeltaTransport!==true)throw new Error('Private overlay delta transport is unavailable');
-      if(!overlay){overlay=createBrowserOverlay(gl,{stats,ownedFrame,deferOrCheck:uploadValidation.deferOrCheck,retainOpaqueFull:true,physicalOutput:physicalCapability,deltaTransport:true,maxTextureSize:cachedMaxTextureSize});stats.overlayCoverageEnabled=true;stats.limitations[0]='Coverage UI follows legacy RGB/T; small integer-rounding differences remain possible';}
+      if(!overlay){overlay=createBrowserOverlay(gl,{stats,ownedFrame,deferOrCheck:uploadValidation.deferOrCheck,retainOpaqueFull:true,physicalOutput:physicalCapability,deltaTransport:true,overlayRectMode:options.overlayRectMode||'off',maxTextureSize:cachedMaxTextureSize});stats.overlayCoverageEnabled=true;stats.limitations[0]='Coverage UI follows legacy RGB/T; small integer-rounding differences remain possible';}
       const pixels=typed(rgbInput,Int32Array);
       try{overlay.prepareDelta(width,height,generation,frameSequence,reset,partial,baseGeneration,baseFrameSequence,
         typed(bands,Int32Array),typed(work,Int32Array),new Uint8Array(pixels.buffer,pixels.byteOffset,pixels.byteLength),typed(transmittance,Float32Array));}

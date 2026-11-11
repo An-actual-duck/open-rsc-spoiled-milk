@@ -11,7 +11,7 @@ fixtures=['WorldOverlayDeltaTransportFixture.java','WorldOverlayCoverageFixture.
 def execute(command,log):
  with(run/log).open('w')as out:subprocess.run(command,check=True,cwd=ROOT,stdout=out,stderr=subprocess.STDOUT)
  return(run/log).read_text().strip()
-execute(['javac','-source','8','-target','8','-cp',str(jar),'-d',str(current),*[str(ROOT/q)for q in [coverage,tracker,bridge]],*[str(ROOT/'tests/myworld'/q)for q in fixtures]],'compile.log')
+execute(['javac','-source','8','-target','8','-cp',str(jar),'-d',str(current),*[str(ROOT/q)for q in [coverage,tracker,bridge,'Client_Base/src/orsc/graphics/two/WorldOverlayTileTracker.java']],*[str(ROOT/'tests/myworld'/q)for q in fixtures]],'compile.log')
 frozen=old/'WorldOverlayCoverage.java';frozen.write_bytes(subprocess.check_output(['git','show',BASE+':'+coverage],cwd=ROOT));execute(['javac','-source','8','-target','8','-cp',str(current)+':'+str(jar),'-d',str(old),str(frozen)],'baseline-compile.log')
 rows={}
 for label,policy in [('baseline','false'),('baseline','true'),('current','false'),('current','true')]:

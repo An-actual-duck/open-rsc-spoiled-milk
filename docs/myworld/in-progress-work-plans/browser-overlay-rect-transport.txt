@@ -1,0 +1,74 @@
+Private bounded overlay rectangle transport investigation
+========================================================
+
+Status: ACTIVE observe-only first checkpoint. Default OFF. No rectangle GPU
+uploads have been implemented. No browser/GPU/server processes started here.
+Source baseline: published main 1f1be1b7c2dee6dde98a0f123e5f1987585efdff.
+Parked owned-actor b655 and all its immutable artifacts remain preserved.
+
+Evidence and sequence
+---------------------
+Manager's valid preferred-default strict combat control is about 50.55 FPS.
+Fresh profile attributes 12.01% of disjoint sampled endpoints to overlay
+uploads plus upload-side checks. Row coverage spans 380/540 rows, forcing FULL
+4,147,200-byte RGB/T uploads. This is measured evidence, not GPU timing.
+The valid preferred-occupancy-00-1 source-content capture has 208 union tiles /
+102,656 pixels at 32x16 tiles (19.8% of 518,400). Non-default RGB/T content is
+only a LOWER BOUND on supported writer coverage, not an FPS forecast. Earlier
+after-idle-login capture is excluded.
+
+First validate actual supported-writer occupancy. Only then choose a bounded
+rectangle upload planner and measure its cost. Parent owns actual GPU/FPS work.
+
+Observe-only contract
+---------------------
+Private benchmark WebGL URL: overlaydelta=on&overlayrect=observe. off is the
+default; ordinary/software URLs inject no override. on is rejected until the
+rectangle backend actually exists. Java browserOverlayRectMode=observe creates
+one WorldOverlayTileTracker under the EXISTING WorldOverlayDeltaTransport.
+
+All opaque/opaqueSpan/multiply writer hooks mark 32x16 tiles. Mark cache accepts
+only an exact single-row horizontal interval; multirow linear tile bounds
+contain other columns and cannot be used as an exact shortcut. Spans process
+partial first/last rows and full intervening tile-row groups. Bounds are checked
+before the fast cache. Metadata grid <=16,384 cells, no plane scans/packing.
+
+The existing transport remains the sole transaction/history owner. Plan owns a
+frozen actual-current tile snapshot. ACK advances acknowledgedTiles ONLY after
+successful presentation; skipped/held source frames do not advance. First FULL
+ACK retains actual current marks, never the uploaded full viewport. Invalidation,
+owner/dimension changes and fallback reset the same existing history.
+
+Uploads remain literal existing ROW/FULL operations. Current work[0..5] and
+bands are unchanged. Observe adds work[6..14]: scheme1, currentTileCount,
+currentArea, unionTileCount, unionArea, markerMisses, spanGroups, columns, rows.
+work[15..] is owned 16-bit-word union occupancy (row-major tile IDs). This is
+small bounded metadata, not borrowed planes; no additional per-frame JNI call.
+Current+last ACK union is reported even when row transport falls back to FULL.
+
+Pure native metadata validation checks observation opt-in, exact grid and
+word count, bounded unsigned words, zero padding bits, and recomputes the union
+tile count/edge-clipped area BEFORE any graphics call. No RGB/T pixels are read.
+Existing retained token validation, draw/ACK, shader and upload bytes stay the
+same. stats.overlayDeltaLast.transport reports row/full, rectangleMode reports
+observe/off, and tileObservation reports real writer footprint plus its bitmap.
+
+CPU tests prepared (not yet run at this checkpoint)
+--------------------------------------------------
+WorldOverlayTileTrackerFixture compares marks/spans against an independent
+per-pixel writer trace over seeded odd dimensions, tests row crossing and tile
+edges, stale cache reset, actual coverage hooks and current/ACK disappearance /
+held-frame semantics. Existing literal-plane and GL-double suites remain the
+row/FULL reference. Manager's active timing window requires tests/builds wait.
+
+Future rectangle contract (pending observed coverage)
+-----------------------------------------------------
+Reuse the same plan and ACK owner, direct full RGB/T typed-array borrow, and
+bounded rectangle metadata; no packing or extra per-frame native call. Evaluate
+low rectangle-count limits and fixed coarsening before costly merging. Exact
+WebGL2 UNPACK_ROW_LENGTH/srcOffset state restoration, invalid-metadata zero-GL,
+held/opaque/retained/loading/resize/owner failures and alpha:true actual hardware
+pixel oracles at1x and2x+odd with follow-on uploads are required before acceptance.
+Khronos: srcOffset is typed-array ELEMENTS; ROW_LENGTH is pixels; a PBO must be
+unbound for client arrays. Existing pixel-store ownership must be extended
+explicitly; state leaks into later atlas/full uploads are unacceptable.
