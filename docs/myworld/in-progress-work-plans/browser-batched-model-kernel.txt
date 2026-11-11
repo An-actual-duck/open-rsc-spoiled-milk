@@ -1,0 +1,210 @@
+Private browser segmented model kernel
+======================================
+
+Scope and reason
+----------------
+This is a private, default-OFF architecture experiment. It amortizes browser
+native-call overhead by borrowing up to 128 models' primitive-array references
+per call. It does not pack/copy vertex values, change culling/picking/camera
+rules, drop effects, reduce visual quality or alter normal desktop defaults.
+The manager observed hundreds of small calls/frame in the separate per-model
+prototype and no balanced improvement. That earlier topic/artifact remains
+parked, not imported wholesale here. No FPS gain is claimed for this candidate.
+
+The numeric loop is an explicit internal salvage of the authored algorithm at
+85c632c4a054fd7a103ad69559129e0cd9e2dac2 in browser-native-model-kernel.js.
+The frozen-reference exporter is also reused from that internal topic, with
+an added same-camera mode for packet testing. No third-party game assets or
+runtime implementation were copied into this repository.
+
+Mandatory actual nested-array gate
+---------------------------------
+Before any batch implementation the manager ran the SDK-only nested-array
+probe from 2b631582aee9a978b4cf3d64303b0794147f8c4d in Firefox 154 / Java 8:
+16 checks, 6 native calls, 4 accepted / 2 rejected, 28 outer index reads,
+6 primitive writes,
+exit 0. It proved synchronous int[][] leaf access, repeated int[] identity,
+shared writeback visible in Java, null/empty/variable-length rows, replacement
+between calls, no-write rejection and visibility of cleared outer rows.
+Application JS retains only primitive counters, not borrowed arrays/proxies.
+Manager evidence: output/diagnostics/browser-frame-architecture/
+nested-array-gate-1/result.json. This was an actual interoperability gate, not
+inference from current runtime source or a game/GPU/FPS test.
+
+Producer and ownership boundary
+-------------------------------
+Scene owns a BrowserBatchedModelKernel only when the private startup property
+spoiledmilk.browserBatchedModelKernel is true. Its capability additionally
+requires actual browser presentation. Native/default/software frames keep the
+literal Java path. RSModel.rotate1024 itself remains byte-for-byte unchanged;
+new package-local helpers only inspect cache-clean bounds or borrow 8 array
+references. m_Yb!=0 and interaction-only models are never deferred.
+
+Before the original model loop Scene begins a packet context. Cache-clean
+eligible models are queued; before dirty/unsupported/null/proxy models Scene
+flushes previous packets and executes the original rotate and interaction-only
+scan in their original order. The last packet is flushed before m_T's unchanged
+literal transform and before all consumers of projected model arrays. finally
+clears packet references on success, fallback and Java-visible failure. A
+fatal native JavaScript thread stop is not proven to unwind Java finally;
+such a failed private session must be torn down. Application JS still retains
+no borrowed references. There is no new
+cross-thread source-mutation contract; the packet is render-thread-owned.
+
+A packet contains at most 128 model references, 8 existing primitive-array
+references/model, counts/visibility and 8 camera / 6 coefficient integers. Only
+O(models) metadata/reference storage is prepared. No source or output vertex
+array is copied for transport. Clean frustum-excluded models are metadata-only
+entries (no array reads), and clean visible zero-vertex models need no numeric
+work. Entirely metadata-only packets commit in Java without JNI.
+
+Visibility m_dc changes are deferred until whole-packet success. A native
+representation rejection promises zero writes, then replays the packet through
+the literal Java method in order. Dirty reset/normal computation and unsupported
+exceptions therefore still occur after all earlier transforms. Proxies remain
+barriers, preserving the immediate interaction-only scan and later occlusion
+logic. Model membership, world chunks, sprite aggregate and rendering order
+remain independently owned by the original code.
+
+Aliases, coefficients and errors
+--------------------------------
+Java guards all active row lengths/nulls and local output aliases. A bounded
+IdentityHashMap tracks cross-model reader/writer roles; reader/reader sharing
+is allowed, writer/reader or writer/writer conflicts create a literal barrier.
+Writers of FastMath.trigTable1024 also stay literal. The coefficient table is
+captured afresh per segment after the preceding fallback; even an empty flush
+clears cached coefficients before a rejected model can modify the trig table.
+
+The native callback receives the original trig table as read-only storage as
+well as the compact copied coefficients. It validates the ENTIRE packet before
+any write, including Int32Array representation, lengths and ArrayBuffer range
+conflicts against all source/writer/config/table storage. Range unions are
+conservative and may reject safe gaps; they cannot authorize an overlapping
+writer. Unsupported packets return false with no changes. The synchronous
+callback retains no arrays after return and does not introduce per-model
+Promises or Java callbacks. Unexpected backend failures are fail-closed; no
+assumption is made that a JavaScript throw becomes a Java Throwable.
+
+Near<=0 or unsupported camera/trig setups retain original exception behavior.
+The numeric kernel uses Math.imul, signed 32-bit wrapping/shifts and truncation
+for exact Java integer results. It only writes existing projected/rotated arrays.
+
+Private controls and work receipts
+----------------------------------
+Only WebGL benchmark URLs parse modelbatch=on/off, default off. Ordinary and
+software URLs do not set this property. Scene reports actual capability through
+isBrowserBatchedModelKernelEnabled; requesting ON with an old JAR missing the
+getter is explicitly rejected by the private bootstrap.
+
+browserProof.batchedModelKernelWork is actual native JS work: attempts,
+successful packets/models/vertices, metadata rows, rejections and max packet
+size. browserProof.batchedModelPreparationWork comes from the actual Java
+producer once/second and reports 14 saturating counters: frames, groups, native
+packets/models/vertices, metadata/literal models, rejected packets, alias/dirty
+barriers, queued models/maxGroup, queued array references and role-map operations.
+These distinguish enabled-but-unused from useful granularity. Counters are
+not vertex values, gameplay authority or GPU elapsed-time measurements.
+
+CPU verification
+----------------
+  python3 tests/myworld/test-browser-batched-model-kernel.py --baseline-jar JAR
+
+The runner compiles actual frozen 8b888cd2f Scene/RSModel independently and
+verifies the literal rotate method is unchanged. Across 288 actual Scene frames,
+frozen/current OFF/current ON/native rejection replay match ordered picks,
+anchors, resident exports, projected faces and RGB pixels, including negative
+and upper signed levels, dirty transforms, proxies, CPU-depth and native gates.
+Digest: d536d81d9f9726e87e2dc5aa9e70b20428cc23842b1358f538aec7150e7647ec.
+The enabled small mixed/proxy scene exercised 380 packets / 866 numeric models;
+that is coverage evidence, not a representative performance workload.
+
+Thirteen edge scenarios include 300 clean models with exact 128/128/44 packets,
+culled/zero-vertex metadata, dirty resets affecting earlier arrays, malformed
+late arrays/null models, cross-model reader/writer aliases, first/late trig
+writers, bad camera/near values and proxy barriers. Full arrays, cache/visibility
+flags, wrapped error messages and partial-prefix state match frozen execution,
+including whole-packet native rejection replay. Digest:
+e6dc3e453306129f02321c2bf1a7f9c94a75d5a8a84dec33d09bf3d39083a17b.
+Injected backend failure also clears all model/array/role/table references.
+
+Pure JS whole-packet arithmetic matches two 6000-case frozen Java datasets:
+random cameras (194223 vertices / 1697784 values) and same-camera cohorts
+(194856 vertices / 1702848 values). The latter uses 47 packets for 6000 models.
+Each suite passes 130 no-write/alias/shape guards, including a bad later record
+leaving an earlier valid record untouched, metadata rows and config/trig buffer
+aliases. The Java oracle consumes the packet's supplied coefficient values, so
+it cannot mask a stale-coefficient bug by reading a fresh global table.
+
+Full JDK 8 build, the existing frozen model-picking differential with 200000 math
+cases, and CPU-only repeatable tools suite passed. Mocked frontend verifies
+ordinary defaults and explicit modelbatch opt-in. These do not prove browser
+compatibility, visual approval, area latency or FPS.
+
+Artifacts and pending manager acceptance
+----------------------------------------
+Clean runtime/frontend source: ab3e662a245b0094b922574ffc74277e4bb7de9d.
+Full artifact: output/builds/browser-batched-model-kernel/source-ab3e662a2/client.jar
+SHA256: 7405972883c60d88eb978c39d1880d041f8dbfe918025c3ef5e54fc24f94002b.
+Only RSModel/Scene/Scene$Axis differ from baseline325; three batch helper classes
+were added. No classes were removed and all 2265 animation PNGs are identical.
+The new JNI module SHA256 is
+b0a1493dae44a60cf156dadc7fc0236246c16eda43170a15d3d38ea21e6738a9.
+
+Prepared-only stages, never started by the worker:
+  tests/browser-batched-model-probe/batch-ab3e662a2 (HTTP 8191, 384-model proof)
+  tests/browser-gameplay-spike/batched-model-static-ab3e662a2 (HTTP 8192)
+  tests/browser-gameplay-spike/batched-model-combat-ab3e662a2 (HTTP 8193)
+Each is under output/. Receipts contain exact commands and hashes. A bounded
+loopback HTTP-only smoke verified advertised hosting, HEAD 200 / range 206 and
+classpath, then stopped that process. No worker browser/game/GPU was started.
+Combat server binary provenance stays explicitly frozen/source-unverified.
+
+The manager ran the actual batch JNI proof in Firefox 154 / Java 8 headless:
+384 models, 12782 vertices and 111472 Java array values matched the frozen
+reference. Exactly three packets of 128 models were accepted, zero rejected,
+exit 0. Java work was [2,3,3,384,12782,0,0,0,0,0,384,128,3072,6144]; packet
+references were confirmed cleared. Evidence:
+/home/justin/Core-Framework/output/diagnostics/browser-frame-architecture/
+batch-contract-1/result.json.
+
+Same-JAR ON/OFF real gameplay/visual/picking/area-load cohorts remain manager
+acceptance work. Producer validation/map
+cost can outweigh saved call overhead, so enabled counters alone are not an
+optimization result. No default adoption, release or public operation is claimed.
+
+The workspace-layout check still reports inherited unclassified output-root
+entries and the legacy assets/sprites directory. New writers use declared
+output categories; inherited ignored data was preserved. The check log is
+output/builds/browser-batched-model-kernel/source-ab3e662a2/layout-check.log.
+
+Startup observer correction
+---------------------------
+The first actual game ON attempt exposed an observer startup bug: mudclient
+exists before its Scene, but the new optional work observer dereferenced Scene
+unconditionally. The observer now captures Scene once, omits work receipts
+until it exists, and retains explicit errors for absent/invalid ready getters.
+It does not report the candidate enabled before an actual Scene is available.
+The startup fixture executes requested/disabled pre-Scene, ready, replacement,
+missing/wrong-type/short/null counters and failing-getter paths. The tools suite
+also checks that all observer Scene reads use a single captured reference.
+The kernel, packet arithmetic and client classes are unchanged by this fix;
+previous immutable stages and failed manager evidence remain preserved.
+
+Startup-fix clean source: 90b16cccd367df8935072340d183d5593481d5db.
+The startup fixture passes 23 checks and the full CPU benchmark-tools suite
+passes against the freshly rebuilt client. No actual-game startup/FPS pass
+is claimed here; the manager must rerun the corrected stage.
+
+Fresh immutable full build:
+  output/builds/browser-batched-model-kernel/source-90b16cccd/client.jar
+  SHA256 f4647992fea02f6e0d5a4d8541b858dd92afcdc37879dd1d4cb464e5c9ea5d46
+Every decompressed JAR entry is byte-identical to the ab3/740597 artifact; the
+ZIP metadata differs. Kernel/Scene sources and native module bytes are also
+unchanged, so the actual batch JNI proof remains applicable. Adjacent receipt
+and logs record the clean source and full comparison. The browser-spike.jar
+bootstrap is freshly compiled from the corrected source in both new stages:
+  output/tests/browser-gameplay-spike/batched-model-static-90b16cccd
+    repeatable-preparation.json (HTTP 8196, existing static fixture)
+  output/tests/browser-gameplay-spike/batched-model-combat-90b16cccd
+    combat-preparation.json (HTTP 8197, frozen/source-unverified server)
+Both were prepared only; no worker browser/server/GPU was started.

@@ -19,6 +19,9 @@ def main():
             if depth==0:end=n+1;break
     digest=hashlib.sha256(source[begin:end].encode()).hexdigest()
     assert digest=='01a412965f4ee56080b8cba692cec7a76e25bb4db2455e9c46a86a890613242e','Literal325 alignment function changed'
+    observer=(ROOT/'tools/browser-gameplay/src/orsc/browser/BrowserBootstrap.java').read_text().split('Thread observer =',1)[1].split('static int[] snapshotBatchedModelWork',1)[0]
+    assert observer.count('.getScene()')==1,'Observer must use one lifecycle snapshot rather than unchecked repeated Scene reads'
+    assert 'snapshotBatchedModelWork(observedScene,' in observer
     assert 'surfaceAlignment'not in source and 'browserBenchmarkAlignment'not in source
     assert not(ROOT/'tools/browser-gameplay/web/browser-surface-alignment.js').exists()
     spec=importlib.util.spec_from_file_location('repeatable_prepare',ROOT/'scripts/browser-gameplay/prepare-repeatable.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
@@ -26,11 +29,12 @@ def main():
     config='server_port: 43594\nother_server_port: 111\n';assert module.replace(config,'server_port',43649)=='server_port: 43649\nother_server_port: 111\n'
     with sqlite3.connect('file:'+str(ROOT/'server/inc/sqlite/myworld_seed.db')+'?mode=ro',uri=True)as database:assert database.execute('SELECT COUNT(*) FROM players').fetchone()[0]==0
     bootstrap=sorted((ROOT/'tools/browser-gameplay/src/orsc/browser').glob('*.java'))
-    fixtures=[ROOT/'tests/myworld/RepeatableCameraFixture.java',ROOT/'tests/myworld/BenchmarkCandidatePoliciesFixture.java',ROOT/'tests/myworld/BrowserColorShaderOracle.java']
+    fixtures=[ROOT/'tests/myworld/RepeatableCameraFixture.java',ROOT/'tests/myworld/BenchmarkCandidatePoliciesFixture.java',ROOT/'tests/myworld/BrowserBootstrapStartupFixture.java',ROOT/'tests/myworld/BrowserColorShaderOracle.java']
     with(suite/'cpu.log').open('w')as log:
         run([javac,'-source','8','-target','8','-cp',str(jar),'-d',str(classes)]+[str(p)for p in bootstrap+fixtures],log)
         cp=str(classes)+':'+str(jar)
         run([java,'-Djava.awt.headless=true','-cp',cp,'orsc.browser.RepeatableCameraFixture'],log)
+        run([java,'-Djava.awt.headless=true','-cp',cp,'orsc.browser.BrowserBootstrapStartupFixture'],log)
         flags=['-D'+name+'=false'for name in ['spoiledmilk.browserGeometryTransferReuse','spoiledmilk.browserRegionPreparation','spoiledmilk.browserResidentDescriptorWriting','spoiledmilk.browserHaloHeightLookup','spoiledmilk.browserSceneryProjectionWork','spoiledmilk.browserPrimitiveChunkCoverage']]
         positive=['-D'+name+'=true'for name in ['spoiledmilk.browserGeometryTransferReuse','spoiledmilk.browserRegionPreparation','spoiledmilk.browserResidentDescriptorWriting','spoiledmilk.browserHaloHeightLookup','spoiledmilk.browserSceneryProjectionWork','spoiledmilk.browserPrimitiveChunkCoverage']]
         tail=(['--require-candidates']if args.require_candidates else [])+(['--require-projection']if args.require_projection else [])
