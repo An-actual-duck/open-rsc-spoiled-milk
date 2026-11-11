@@ -65,7 +65,7 @@ try{
  // Real resource prefixes, replacement/deletion/recreation and atlas epoch barrier.
  for(const s of sessions){await s.n.Java_orsc_BrowserWebGLBridge_deleteTextures(null,new Int32Array([7]));await s.n.Java_orsc_BrowserWebGLBridge_uploadTexture(null,7,2,2,new Int32Array([0x44bbffff,-1,0xbb44ffff,-1]),false);for(const id of [1,3])await s.n.Java_orsc_BrowserWebGLBridge_replaceChunk(null,id,geometry(id),new Int32Array([0,1,2]),new Int32Array([7,0,3,id===3?5:1,0]));await s.n.Java_orsc_BrowserWebGLBridge_deleteChunks(null,new Int32Array([3]));await s.n.Java_orsc_BrowserWebGLBridge_uploadChunk(null,3,geometry(3),new Int32Array([0,1,2]),new Int32Array([7,0,3,5,0]));}
  await frame({name:'resource-recreate',mode:1,world:true,g:601,seq:601,w:192,h:128});
- for(const s of sessions){const plan=s.n.Java_orsc_BrowserWebGLBridge_planWorldSprites;s.n.Java_orsc_BrowserWebGLBridge_planWorldSprites=(lib,e,seq,images)=>plan(lib,2,seq,images);}
+ for(const s of sessions){for(const method of ['planWorldSprites','commitWorldSprites']){const name='Java_orsc_BrowserWebGLBridge_'+method,call=s.n[name];s.n[name]=(lib,e,seq,...args)=>call(lib,2,seq,...args);}}
  const stable=await frame({name:'atlas-epoch-two',mode:1,world:true,g:602,seq:602,w:192,h:128});
  const worker=sessions[2].backend;check(worker.stats.renderWorker.oracleMutatedReturnedBytes>0&&worker.stats.renderWorker.reusedBuffers>0,'Returned owned buffers not actually mutated/reused');const poolMutated=worker.mutateReturnedBuffers(0x5a);check(poolMutated>0,'No returned pool available for adversarial mutation');proof.returnedPoolMutatedBytes=poolMutated;
  // Mutate ALL borrowed producer arrays after ACK, while the worker also mutates
@@ -79,5 +79,5 @@ try{
  const disposal=await worker.disposeAndConfirm();check(disposal.disposed&&disposal.gpuBytes===0&&disposal.spriteResourceBytes===0,'Worker actual disposal ledger did not clear');proof.confirmedWorkerDisposal=disposal;
  for(const s of sessions.filter(s=>!s.worker)){s.backend.dispose();s.backend.dispose();for(const key of ['gpuBytes','spriteResourceBytes','shadowResourceBytes','skyResourceBytes','overlayCoverageBytes','overlayRgbBytes','retainedResourceBytes'])check(s.backend.stats[key]===0,'Main ledger leak '+s.name+'/'+key);}
  proof.passed=true;
-}catch(error){proof.errors.push(String(error.stack||error));const s=sessions.find(x=>x.worker);if(s)proof.failureWorkerState={queue:s.backend.stats.renderWorker,physical:s.backend.stats.physicalOutput,lastError:s.backend.stats.lastError};}
+}catch(error){proof.errors.push(String(error)+'\n'+String(error.stack||''));const s=sessions.find(x=>x.worker);if(s)proof.failureWorkerState={queue:s.backend.stats.renderWorker,physical:s.backend.stats.physicalOutput,lastError:s.backend.stats.lastError};}
 finally{for(const s of sessions)try{s.backend.dispose();}catch(_){}if(originalDpr)Object.defineProperty(window,'devicePixelRatio',originalDpr);proof.completed=true;document.getElementById('status').textContent=JSON.stringify(proof,null,2);}
