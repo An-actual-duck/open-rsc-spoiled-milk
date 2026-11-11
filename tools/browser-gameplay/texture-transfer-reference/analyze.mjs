@@ -1,0 +1,23 @@
+// Offline validation only. Never starts browser/server or mutates raw evidence.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {WIDTH,HEIGHT,MODES,metric,validateRectangles}from './transfer.mjs';
+const root=process.argv[2];if(!root)throw Error('Usage: node analyze.mjs RAW_DIRECTORY [OUTPUT_JSON]');
+const read=n=>JSON.parse(fs.readFileSync(path.join(root,n),'utf8')),actual=read('actual.json'),receipt=read('receipt.json'),session=read('session.json'),manifest=read('source-manifest.json');
+assert.equal(actual.completed,true);assert.equal(actual.publicChanged,false);assert.equal(receipt.accepted,true);assert.equal(actual.width,WIDTH);assert.equal(actual.height,HEIGHT);assert.deepEqual(actual.manifest,manifest.source);assert.equal(manifest.source.sourceDirty,false);
+assert.equal(session.capabilities.browserName,'firefox');assert.equal(session.capabilities.browserVersion,'154.0.1');assert.ok(actual.userAgent.includes('Firefox/154.0'));assert.ok(!/llvmpipe|swiftshader|software|softpipe|lavapipe|swrast/i.test(actual.renderer+' '+actual.vendor));assert.equal(actual.renderer,receipt.renderer);
+const here=path.dirname(new URL(import.meta.url).pathname);for(const n of ['harness.mjs','transfer.mjs','index.html'])assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(here,n))).digest('hex'),manifest.files[n],`Frozen runtime ${n}`);
+for(const l of actual.manifest.layouts)validateRectangles(l.rectangles);
+assert.equal(actual.exactGpuComparisons,actual.manifest.layouts.length*MODES.length*WIDTH*HEIGHT*8);assert.equal(actual.exactGpuComparisons,receipt.exactComparedBytes);
+assert.equal(actual.baselineResetOncePerCohortOutsideTiming,true);assert.equal(actual.consumerDrawsOutsideTimedApiButIncludedInRafWall,true);assert.equal(actual.prepackedExcludedPreparation,true);assert.equal(actual.cohorts.length,MODES.length*2);
+const timed=actual.manifest.layouts[actual.timedLayoutIndex];assert.ok(timed);const rows=[];
+for(let i=0;i<actual.cohorts.length;i++){const c=actual.cohorts[i],order=i<MODES.length?0:1,expectedMode=(order?[...MODES].reverse():MODES)[i%MODES.length],r=receipt.cohorts[i],m=metric(timed.rectangles,c.mode);assert.equal(c.order,order);assert.equal(c.mode,expectedMode);assert.equal(c.consumerDrawsPerFrame,2);assert.ok(c.frames>=30&&c.wallMs>=2000&&c.wallMs<5000);assert.equal(c.calls,c.frames*m.calls);assert.equal(c.logicalTexelBytes,c.frames*m.logicalTexelBytes);assert.equal(c.sourceViewSpanBytes,c.frames*m.sourceViewSpanBytes);assert.equal(c.stagedBytesCopied,c.mode==='packed'?c.logicalTexelBytes:0);
+ for(const key of ['apiAndPackingCpuMs','packingMs','viewCreationMs','rafIntervalMs']){const s=c[key];assert.equal(s.n,c.frames);for(const q of ['mean','p50','p95','p99','max'])assert.ok(Number.isFinite(s[q])&&s[q]>=0);assert.ok(s.p50<=s.p95&&s.p95<=s.p99&&s.p99<=s.max);}
+ assert.equal(r.apiCpuMeanMs,c.apiAndPackingCpuMs.mean);assert.equal(r.packMeanMs,c.packingMs.mean);assert.equal(r.frames,c.frames);assert.equal(r.mode,c.mode);assert.equal(r.order,c.order);assert.equal(r.viewSpanPerFrame,m.sourceViewSpanBytes);assert.equal(r.texelBytesPerFrame,m.logicalTexelBytes);
+ rows.push({order,mode:c.mode,frames:c.frames,callsPerFrame:m.calls,logicalTexelBytesPerFrame:m.logicalTexelBytes,sourceViewSpanBytesPerFrame:m.sourceViewSpanBytes,apiAndPackingMeanMs:c.apiAndPackingCpuMs.mean,packingMeanMs:c.packingMs.mean,viewCreationMeanMs:c.viewCreationMs.mean,rafMeanMs:c.rafIntervalMs.mean});
+}
+const hashes=Object.fromEntries(['actual.json','receipt.json','session.json','source-manifest.json'].map(n=>[n,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,n))).digest('hex')]));
+const result={validated:true,scope:actual.scope,sourceCommit:manifest.source.sourceCommit,sourceFilesMatch:true,renderer:actual.renderer,vendor:actual.vendor,browser:session.capabilities.browserVersion,exactComparedBytes:actual.exactGpuComparisons,timedLayoutIndex:actual.timedLayoutIndex,timedRectangleCount:timed.rectangles.length,timedArea:timed.coarseArea,inputs:hashes,rows,limitations:['Standalone synthetic API CPU/wall only; not gameplay FPS/GPU time/bus bytes','Two orders of2seconds pervariant; coarse observed timer granularity, no confidence interval','Source-view span arithmetic is not measurement of installed IPC path','All GPU correctness checks precede timing; they do not establish gameplay ACK/history correctness']};
+if(process.argv[3])fs.writeFileSync(process.argv[3],JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result,null,2));

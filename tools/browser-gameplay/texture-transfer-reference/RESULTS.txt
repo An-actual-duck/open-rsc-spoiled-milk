@@ -1,0 +1,79 @@
+Hardware reference result, 2026-11-11 (manager run, independently validated)
+===========================================================================
+Recommendation
+--------------
+Proceed with the already scoped JS-owned packed rectangle candidate and actual
+in-game correctness/performance comparison. Packing was consistently cheaper
+than direct strided views in this isolated run, even including row gathering.
+This result does not authorize adoption, forecast gameplay FPS or prove why the
+browser spent less time. Keep a full fallback and bounded staging/rectangle plan.
+
+Exact source and raw evidence
+-----------------------------
+Prepared runtime checkpoint: bd00c4ca921884bb0c0c02691ab712ac60b97faf.
+Manager raw directory (untouched by analysis):
+/home/justin/Core-Framework/output/diagnostics/browser-frame-architecture/texture-transfer-reference-1/
+actual.json, receipt.json, session.json, source-manifest.json.
+Local analysis and raw input hashes:
+/home/justin/Core-Framework-ai-3/output/diagnostics/browser-texture-transfer-reference/hardware-analysis-1/
+Reproduce read-only validation:
+node tools/browser-gameplay/texture-transfer-reference/analyze.mjs RAW_DIRECTORY OUTPUT_JSON
+Analyzer independently checks frozen harness/transfer/index file hashes against
+manifest, actual manifest identity, all16 layouts, exact comparison count, both
+mode orders, frame/sample counts, metrics/call arithmetic and manager receipt.
+It does not control or recreate the browser, and does not claim source proof of
+Firefox's installed IPC path.
+
+Firefox154.0.1, non-headless Linux, WebGL2. Reported unmasked renderer:
+Radeon R9 200 Series, or similar; vendor AMD. Recognized software renderer strings
+were rejected by harness. This is renderer identification, not hardware attestation.
+All16 captured64x32 layouts, all five variants:331,776,000 exact C byte/T bit
+comparisons passed before timing. FULL and variants agree with the same literal
+CPU C bytes/Float32 bits. This checks the standalone integer readback pipeline,
+not the production overlay shader, ACK history, UI or gameplay rendering.
+
+Observed API submission plus ordinary packing means (ms)
+---------------------------------------------------------
+Variant       Forward order   Reverse order   Calls/frame
+Full                 2.967           3.267             2
+Row bands            2.267           2.417             6
+Strided              2.542           2.475            28
+Packed               1.258           1.258            28
+Prepacked            1.175           1.183            28
+
+Packed row gathering, INCLUDED above:0.117/0.142ms mean. Prepacked explicitly
+excludes gathering/preparation; it is explanatory, not the proposed runtime cost.
+Each entry contains120 RAF-paced frames over at least2s. Coarse observed clock
+quantization and these short cohorts limit fine-grained conclusions. There are
+no confidence intervals, driver GPU timers or gameplay measurements here.
+Every cohort stayed around16.66ms RAF intervals, consistent with pacing; this is
+not evidence of a gameplay60FPS result or a speedup derived from RAF counts.
+
+Timed layout index0 (median-area stable sort),14 nonoverlapping rectangles,
+160,000 pixels of518,400. Identical layout/data changes in both orders. Logical
+texel bytes and submitted source-view span bytes per frame respectively:
+Full:4,147,200 /4,147,200.
+Row bands:3,164,160 /3,164,160 (exact union rows, no runtime60% fallback).
+Strided:1,280,000 /3,586,560 (row gaps remain in minimal views).
+Packed/prepacked:1,280,000 /1,280,000.
+These are arithmetic descriptions of views and logical texels, NOT measured GPU
+bus/IPC bytes. Packed ordinary mode also copies1,280,000 staging bytes/frame.
+
+Interpretation and remaining proof
+-----------------------------------
+Reduced contiguous source spans and the Firefox154 queued-source audit are
+consistent with this result. They do not establish actual browser IPC mode or
+isolate a causal bottleneck: formats, call counts, driver behavior, synchronization
+and the synthetic workload matter. No per-rectangle getError was removed: every
+variant uses the same once-per-plane policy. View creation and normal packing
+are inside API intervals; consumer draws and bookkeeping are outside them but
+inside RAF/wall intervals. Sources/staging are privately owned; no borrowed
+production arrays are retained. GPU work was run by manager, not this worker.
+
+The evolving runtime planner may use coarser grids and at most8 rectangles,
+whereas this reference uses captured64x32/14 rectangles. It cannot choose that
+planner, predict its exact cost, prove transactional failure handling or replace
+real-game pixel and strict six-family combat/loading/held/reset/resize acceptance.
+Require actual world upload-byte/call/staging counters and matched preferred-key
+FPS/frame percentiles before a default decision. Preserve all existing token,
+plane-validation, error, GL-state and ACK invariants. No production code changed.
