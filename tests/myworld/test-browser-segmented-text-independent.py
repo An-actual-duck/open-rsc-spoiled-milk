@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[2];BASE='58c61d98562e287c6e35a6056009cbe81
 HELPER=ROOT/'tests/myworld/test-browser-overlay-journal-independent.py'
 spec=importlib.util.spec_from_file_location('hotbody',HELPER);helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
 SOURCES=['Client_Base/src/orsc/graphics/two/'+n for n in ['GraphicsController.java','WorldOverlayCoverage.java','WorldOverlayDeltaTransport.java','WorldOverlayTileTracker.java','Fonts.java','OverlayJournalObserver.java']]
-COMMON=['WorldOverlayCoverageFixture.java','SceneSpriteRasterPolicyFixture.java','OverlayJournalRenderingIndependentFixture.java','SegmentedTextPacketReference.java','SegmentedTextInjectedBackendFixture.java','SegmentedTextSceneGuardFixture.java']
+COMMON=['WorldOverlayCoverageFixture.java','SceneSpriteRasterPolicyFixture.java','OverlayJournalRenderingIndependentFixture.java','SegmentedTextPacketReference.java','SegmentedTextInjectedBackendFixture.java','SegmentedTextSceneGuardFixture.java','SegmentedTextPhaseContextFixture.java']
 EXTRA=['SegmentedTextCoreIndependentFixture.java','SegmentedTextPoisonIndependentFixture.java']
 PROP='spoiledmilk.browserSegmentedTextRaster'
 def sha(data):return hashlib.sha256(data).hexdigest()

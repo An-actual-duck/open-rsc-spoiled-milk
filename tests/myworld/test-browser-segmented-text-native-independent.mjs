@@ -39,6 +39,12 @@ for(const kind of ['schema','fresh','mode','lateGlyph','lateClip','wrongWork','s
 // producer owns full lifecycle; this is not an unbounded per-owner replay log.
 {const k=createSegmentedTextKernel(),v=input(corpus.packets[0]);check(call(k,v)>0,'first monotone segment');unchanged(k,v);}
 {
+ const p=corpus.packets.find(p=>p.status===1),k=createSegmentedTextKernel(),a=input(p);a.c.fill(0);a.t.fill(1);a.g=5;a.s=5;
+ check(call(k,a)===1,'first active owner epoch');
+ const b=input(p);b.h[7]=a.h[7]+100;b.h[8]=1;b.g=1;b.s=1;b.c.fill(0);b.t.fill(1);check(call(k,b)===1,'replacement owner may start lower local epochs');
+ a.h[8]++;a.g++;a.s++;a.c.fill(0);a.t.fill(1);check(call(k,a)===1,'returning owner with its next monotone segment/new base accepted');
+}
+{
  const p=corpus.packets.find(p=>p.status===1);check(!!p,'Export includes legitimate zero-sample batch');const v=input(p),k=createSegmentedTextKernel({allowFault:true});
  const before=Buffer.from(bytes(v.c));k.armPoisonOnce();check(call(k,v)===-1&&!bytes(v.c).equals(before),'Actual module post-write fault is fatal');v.h[8]++;unchanged(k,v,-1);
  v.g++;v.s++;v.h[8]++;v.c.fill(0);v.t.fill(1);check(call(k,v)===1,'Successful new cleared epoch recovers native poison');check(v.c.every(x=>x===0)&&v.t.every(x=>x===1),'Recovered zero-sample batch preserves fresh base');

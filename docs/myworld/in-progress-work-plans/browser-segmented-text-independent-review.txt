@@ -1,0 +1,164 @@
+Independent private segmented TEXT producer review
+==================================================
+
+Exact scope and source
+----------------------
+Final reviewed checkpoint f79a751e4cd50eb2206d4ab7d22bcae046e50c57, frozen
+ordinary baseline58c61d98562e287c6e35a6056009cbe81c6d3464. Earlier c7c2c995
+proofs and its actual no-native integration failure are preserved below.
+This branch contains test fixtures/runners/report only; no runtime edits,
+game/browser/server processes, GPU or whole-client build by this reviewer.
+
+This is a default-OFF private producer, not the observe-only journal. It queues
+immutable per-TEXT font/plot/clip state on the real fresh world C/T owner with
+delta transport OFF. It materializes before actual non-TEXT C/T operations,
+reads, escapes, mode/owner/presentation boundaries. Replay starts from arbitrary
+EXISTING C/raw-T, never a fabricated C0/T1 base. Native status0 promises no C/T
+write and permits captured literal plots once; status-1/uncertain post-write
+failure poisons the frame and prohibits its publication. No UI/layout rerender,
+second transport plan or ACK journal is introduced.
+
+Frozen Java and injected-backend proof
+--------------------------------------
+Final evidence:
+output/tests/browser-segmented-text-independent/20261111T115629023799Z/
+  result.json, complete compile/matrix/core/poison stdout/stderr,
+  native-packets.json and detached Java/fixture source
+
+All1,128 full C/raw-Float32-T/error cases match across frozen baseline OFF/ON
+and candidate OFF/accepted-native/rejected-native/unavailable-backend JVMs:
+2d6711e120bc4920dba744fbccbed77f2ea3ff2191beb77456047927740d43c1
+The ordinary Scene ownership prefix/failure fingerprint also matches:
+ea781da98da958dbb6790c1a91e2196a12d3aa9ca42fc0c1fc969543c7e5eff8
+
+The accepted/rejected backend is a TEST JVM injection, not actual JNI. Its
+independent packet raster implements the frozen old glyph arithmetic directly
+over existing C/T. The aggregate must separately match the frozen original
+GraphicsController, avoiding JS-vs-JS self-reference. Accepted mode executes45
+native-test calls including8 legitimate zero-sample commits; rejected mode
+executes45 zero-write calls and matches the original via captured literal
+fallback. Unavailable/default-OFF modes execute zero native-test calls.
+Nonzero prior C and partial T are explicitly observed, not assumed.
+
+The corpus covers opaque/fresh surfaces, clipping/interlace, actual sprite/
+rectangle/alpha prefills, all original coverage writer families, AA/mono/shadows,
+transparent font holes, overlaps, mutable fonts changed before materialization,
+malformed/null/short sources and original catch/error behavior, overflow,
+retained/fade/resize/external writes and following operations. The snapshot
+first borrows through a supported framebuffer boundary, then reads raw C/T;
+uncoordinated arbitrary external array reads are not a supported deferred API.
+Five old per-pixel glyph/coverage method-body hashes remain byte-identical.
+
+The separate1,069-check core fixture proves immutable saved font/scalar/clip
+data, delayed writes, native rejection with deliberately corrupted PACKET copies
+while fallback snapshots remain exact, literal fallback once, fallback-prefix
+exception retirement, wrong-owner/epoch poison, post-write failure/no retry and
+fresh recovery. All256TEXT/4096glyph/8MiBfont/2Mwork boundaries are exercised:
+the old bounded prefix materializes before another record is admitted; a single
+oversized source declines to the literal current writer. These tests do not
+substitute for actual new native callback execution.
+
+Actual GraphicsController poison/publication proof
+--------------------------------------------------
+A3,860-check injected-backend fixture uses actual GC admission, pending state,
+flush, borrowing and recovery. A callback writes one C/T sample then returns-1;
+the frame aborts, pending work clears, repeated flush does not repeat the callback
+and borrowed presentation is blocked. Failed fresh begin(width0) retains poison.
+Opaque recovery is accepted ONLY because this implementation explicitly clears
+the complete actual C image black before unpoisoning; a metadata-only reset
+would fail the fixture. A second independent fault is followed by actual frame
+C0/T1 clearing and a successful fresh-world native batch. No partially written
+C/T becomes a valid implicit opaque borrowed image.
+
+This executes local GC behavior, not a full mudclient.draw/native-GPU fault.
+Worker3 independently source-guards the outermost abort catch and idempotent
+Renderer3DFrame.release route. This reviewer does not claim execution of pooled
+depth/WorldFaceStorage cleanup or last-good GPU presentation; those remain
+manager-owned actual integration/fault gates.
+
+Revised WORLD/SCENE state-only batching
+--------------------------------------
+The c7 prototype blanket-excluded nonDEFAULT policy, even when the actual
+guardGpuSceneSoftwareWrites was false in legal WORLD_OVERLAY labels. Its live
+8216 gate consequently produced zero native calls and was NOT accepted. Saved
+root evidence: output/diagnostics/browser-frame-architecture/
+segmented-text-functional-1/{no-native-batches.json,nonvacuous-gate-failed.json}.
+The latter reports14,272 short flushes/43,006 captured TEXTs,0 native calls;
+these are functional diagnostics, not a performance result. C7's synthetic
+41-call CPU proofs remain valid for that crafted corpus, not live nonvacuity.
+
+F79 admits legal WORLD/UI text under GPUowned policy only while the genuine
+software-write guard is false. It can cross pure phase/policy transitions by
+saving/restoring the FULL literal replay context: phase,policy,guard,clip,font.
+Actual C/T writer/read/mode/owner/escape boundaries remain materialization
+boundaries. No threshold reduction was used to manufacture live JNI traffic.
+
+A new actual-GC fixture enters17 GPUowned drawSceneEntity scopes, each switches
+WORLD, draws3 names, mutates its source font and returns SCENE. Mono and AA cases
+start over alpha C/T and overlap. All51 TEXTs must be pending with no native
+call before a real consumer, then materialize as exactly ONE native-test batch.
+Both accepted and native-false captured replay match the frozen output. A later
+genuine guarded SCENE glyph operation first materializes the legal WORLD prefix,
+then retains the original ownership failure and C/T prefix. Its fingerprint:
+21143bd023f4a97eb997bc7b85f4b0a9b4d3d1a6a23c5272829a1c6c1cc82d85
+This catches incomplete saved context that would wrongly replay prior WORLD
+text under the later guarded Scene policy. Worker3 owns the separate finite
+boundary/source/alias catalog proof; arbitrary plugin/reflection/concurrent
+array consumers remain outside this private maintained-callsite contract.
+
+Actual JS kernel and normalized-view proof
+------------------------------------------
+Final evidence:
+output/tests/browser-segmented-text-native-independent/20261111T115700683206Z/
+  result.json, stdout.log, stderr.log and frozen browser-segmented-text.mjs
+All110 checks pass over30,720 C/raw-T words from12 actual producer packets.
+Each packet has actual prior C/T plus independent JVM glyph-reference output,
+whose full surrounding frame already matches frozen baseline. Native accepts
+the ordered captured owner/segment sequence and matches EVERY result word.
+
+Tests exercise nonzero offsets/unaligned font views, raw ArrayBuffer adapters,
+disjoint C/T in shared backing storage, genuine subclasses and own throwing or
+forged buffer/byteOffset/byteLength/length properties. Intrinsic typed-array
+getters recover real bounds/type; hidden real overlap, fake lengths and
+prototype-spoofed element kinds reject with status0 and unchanged C/T. Bad
+schema/mode/freshness/epochs/work/late glyph/clip/source bounds likewise reject
+transactionally. Immediate duplicate segments do not apply AA again. A real
+kernel one-shot post-write fault returns-1, blocks another segment in the same
+poisoned epoch without more writes, then permits a new actually cleared epoch.
+Fault arming is unavailable by default. Stats retain no borrowed source arrays.
+
+Owner/epoch claim limits are explicit. The native guard remembers only its most
+recent owner/segment, not an unbounded per-owner replay history. Its poison
+comparison is componentwise, not lexicographic. Tests cover multiple captured
+segments, replacement owners, a returning owner with its NEXT monotone segment,
+and a replacement's lower local epochs. Java's current-owner/fresh-base checks
+and monotone captured identities remain authoritative. Forging an old owner
+packet after a different owner, or decreasing generation while increasing
+sequence, is not generated by the supported Java producer and is NOT generally
+claimed rejected by this kernel. No second ACK system or owner map is invented.
+
+Provenance, fixture corrections and remaining gates
+---------------------------------------------------
+Runners detach exact Git source, copy fixtures before compilation/import, bind
+the dependency JAR and hash every source/fixture/runner/log/corpus. Node proof
+checks all Java source hashes against its producer receipt. Earlier cap-expanded
+c7 evidence remains at Java20261111T114804945833Z and native20261111T115155452553Z.
+
+Initial drafts stopped for two fixture reasons: the Scene case omitted its SCENE
+phase, and repeated malformed-font exceptions triggered HotSpot's optional
+OmitStackTraceInFastThrow, changing logged messages even between baseline runs.
+The former setup was corrected; every final JVM run disables that optimization
+to compare full error semantics deterministically. Final candidate arithmetic
+required no fix for either draft failure. All stopped logs were preserved.
+
+No source-backed safety blocker remains for f79 within this reviewed contract.
+Actual Firefox new-ABI invocation, live meaningful native batch counts, one-shot
+frame-abort/recovery/pool/last-good presentation and matched FPS remain manager
+gates. Correctness or synthetic41/45-call nonvacuity cannot establish a live
+speedup. This report makes no60FPS, production/default-adoption or OFF-overhead
+claim.8MiB bounds retained queued font payload, not total Java/JS/browser memory;
+flat native copies and owned snapshots coexist transiently. No source/UI
+rerender fallback or pixel-quality reduction is authorized by this proof.
+
+Workspace-layout check retains inherited legacy output/assets entries. All new
+evidence uses declared tests subjects; no inherited outputs were removed.

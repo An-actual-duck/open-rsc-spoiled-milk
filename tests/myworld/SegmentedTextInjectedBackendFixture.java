@@ -38,8 +38,9 @@ public final class SegmentedTextInjectedBackendFixture {
         }catch(ClassNotFoundException baseline){}
         OverlayJournalRenderingIndependentFixture.main(new String[0]);
         SegmentedTextSceneGuardFixture.run();
-        // The runner supplies the expected activation property explicitly.
         boolean enabled=candidate&&installed&&Boolean.getBoolean(args.length>2?args[2]:"spoiledmilk.browserSegmentedTextRaster");
+        SegmentedTextPhaseContextFixture.run(enabled);
+        // The runner supplies the expected activation property explicitly.
         if(enabled){if(calls<1||!priorColor||!priorPartialT)throw new AssertionError("Vacuous native run or missing arbitrary C/T start");if(mode.equals("reject")&&rejections!=calls)throw new AssertionError("Rejection test wrote native pixels");if(mode.equals("accept")&&noWriteCommits<1)throw new AssertionError("No zero-sample accepted native batch");}
         else if(calls!=0)throw new AssertionError("Native ran despite disabled/unavailable producer");
         if(args.length>3){if(exported<8)throw new AssertionError("Too few actual packet exports");java.nio.file.Files.write(java.nio.file.Paths.get(args[3]),("{\"scope\":\"Actual producer packets, independent old-glyph JVM expected outputs verified by frozen full-frame parity\",\"packets\":["+packets+"]}\n").getBytes("UTF-8"));}
