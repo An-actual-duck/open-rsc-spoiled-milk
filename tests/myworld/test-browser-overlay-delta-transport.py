@@ -19,6 +19,7 @@ for label,policy in [('baseline','false'),('baseline','true'),('current','false'
 assert len(set(rows.values()))==1,rows
 state=execute(['java','-Xmx768m','-Djava.awt.headless=true','-cp',str(current)+':'+str(jar),'-Dspoiledmilk.browserOverlayRectMode='+args.rect_mode,'orsc.graphics.two.WorldOverlayDeltaTransportFixture','state',str(data)],'state.log')
 execute(['node',str(ROOT/'tests/myworld/test-browser-overlay-delta.mjs')],'node-delta.log');execute(['node',str(ROOT/'tests/myworld/test-browser-overlay.mjs')],'node-baseline-overlay.log')
+execute(['node',str(ROOT/'tests/myworld/test-browser-overlay-packed-failure.mjs')],'node-packed-failures.log')
 # Literal production compositor shader source stays unchanged.
 original=subprocess.check_output(['git','show',BASE+':tools/browser-gameplay/web/browser-overlay.js'],cwd=ROOT,text=True);present=(ROOT/'tools/browser-gameplay/web/browser-overlay.js').read_text();assert next(x for x in original.splitlines()if 'fragment=shader' in x)==next(x for x in present.splitlines()if 'fragment=shader' in x)
 for name in ['browser-overlay.js','browser-overlay-delta.js','browser-retained-frame.js','browser-overlay-unpack.js','browser-overlay-staging.js','browser-owned-state.js','browser-sprite-atlas.js']:shutil.copy2(ROOT/'tools/browser-gameplay/web'/name,web/name)

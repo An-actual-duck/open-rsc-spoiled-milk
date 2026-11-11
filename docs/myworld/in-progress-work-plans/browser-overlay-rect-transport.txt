@@ -1,8 +1,8 @@
 Private bounded overlay rectangle transport investigation
 ========================================================
 
-Status: ACTIVE rectangle/direct/packed implementation checkpoint, not READY.
-Default OFF. The backend needs independent CPU/GPU proof and timing acceptance.
+Status: ACTIVE, correctness proof passed, strict gameplay measurement in progress.
+Default OFF. No default adoption or gameplay performance claim yet.
 No browser/GPU/server processes started here.
 Source baseline: published main 1f1be1b7c2dee6dde98a0f123e5f1987585efdff.
 Parked owned-actor b655 and all its immutable artifacts remain preserved.
@@ -127,6 +127,56 @@ Manager explicitly authorized packing after agent2's Firefox154 source audit:
 queued raw uploads serialize contiguous source spans INCLUDING row gaps.
 Thus logical texel reductions alone do not imply proportional browser copies.
 Raw BGRA and Float32 payload bits are preserved by byte copy, not Number math.
+
+Frozen production source and executable proof
+---------------------------------------------
+Runtime checkpoint923d745c0c032437f1a1f034f23b905c96c8b490 remains frozen.
+Later36d/b0 checkpoints change tests only. Agent2 independent exact923d suite:
+1,593,292 planner assertions over405frames (104rectangle/49row/252full),128 actual
+overlay+Khronos-model checks over direct/packed x scoped/owned, both-plane
+failures, raw Float payload/unaligned views, bounded staging/reuse/dispose and
+following actual sprite-atlas/FULL uploads. Evidence ai-2/output/tests/
+browser-overlay-rect-independent-review/20261111T084156132135Z/result.json.
+The added actual prepareDelta allocation/copy failure fixture also passed before
+ANY GL with backend poison/dispose; its earlier execution is in the command
+transcript. A persisted rerun will follow the current manager CPU timing hold.
+Future corpus preparation now invokes it and writes node-packed-failures.log.
+
+Literal Java rectangle CPU export: output/tests/browser-overlay-delta-transport/
+20261111T085819304446Z/result.json.1155history/plane/ACK checks pass;166frames,
+142actualrectangle submissions. Existing full/row literal digest remains87b10499
+cb867a30bce5af0870b650fc7a2030caf13772371c57d2d92741c803. GPU corpus schema2
+compares each literal frame's FULL output against ROW/direct/packed outputs.
+
+Manager actual Radeon GPU proof PASSED all3 configurations:
+root output/diagnostics/browser-frame-architecture/rect-gpu-owned-1,
+rect-gpu-owned-2-odd,rect-gpu-scoped-hostile-1,each {actual,receipt}.json.
+166frames x3comparisons/run; exact RGBA bytes24,897,876 +100,508,520 +24,897,876
+=150,304,272, ZERO differences. Each run has4post-upload borrow mutations,
+3held comparisons,>=2retained output deferrals and following actual atlas/FULL
+uploads. Scoped hostile PBO/row/skip/alignment/flip/premultiply restoration passes.
+This proves final composite RGBA, not raw R32F-bit identity. CPU staging bit
+checks and the separate manager standalone331,776,000 C-byte/T-bit comparisons
+cover their own stated scopes; no bus-byte/FPS claim follows from them.
+
+Full source Java8 game artifact (NO transplanted classes):
+output/builds/browser-overlay-rect-transport/game-923d-b0bec6/client.jar
+SHA256 bf2aebf5d3870c8c28b1896d5d16530c06cf62b856bdb29477c732786173e6eb.
+receipt.json/source-manifest.json there bind all Java and maintained frontend
+bytes individually to923d; clean build checkoutb0 is test-only different.710
+client-owned major52 classes; all generator contracts and2,265 animation PNG
+package hashes pass. singleProductionCommit:true, no production source mixture.
+
+Client-only game stages (worker started no processes and touched no DB/request):
+output/tests/browser-gameplay-spike/overlay-rect-static-review-1/
+repeatable-preparation.json:8206,existing staticbaseline2 TCP43649/WS43549.
+output/tests/browser-gameplay-spike/overlay-rect-combat-review-1/
+combat-preparation.json:8207,existing finalcombat TCP43639/WS43539.
+Each has url(row),urlDirect,urlPacked,urlFull,urlObserve with identical batchon,
+explicit spritekeylimbs=on, correct cache port, empty credentials and exact file
+hashes.8204/8205observe and8178GPU proof evidence remain preserved separately.
+Root verified the8207JAR/frontend and is now measuring strict live row/packed
+gameplay after180s warmup; worker holds heavy CPU until the pair finishes.
 
 withOverlayUnpack scopes row length/skip/alignment/PBO/flip/premultiply for BOTH
 planes. Scoped mode restores arbitrary incoming state; private explicitly
