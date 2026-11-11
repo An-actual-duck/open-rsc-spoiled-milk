@@ -1,7 +1,7 @@
 Private browser actor pixel ownership prototype
 ==============================================
 
-Status: ACTIVE publication-budget follow-up, default OFF. No adoption or performance claim. No server,
+Status: READY publication-budget follow-up, default OFF. No adoption or general performance claim. No server,
 browser, HTTP listener or GPU launched by this worker. Based on main 8b888cd2f.
 
 Goal
@@ -117,9 +117,32 @@ Private policy and actual frontend mock pass ordinary/default-OFF/owned-ON.
 
 Build, review and prepared artifacts
 ------------------------------------
+Current runtime/source checkpoint c8e6df1e96e90bebb0eb03f3662720ecf3146627 is
+frozen. The subsequent handoff changes this document only. Independent worker
+read-only review of the exact budget checkpoint passes the incremental startup
+contract; no tests/builds/GPU were run by that reviewer.
+
+The new full-source Java8 build passes (710 client-owned major52 class entries):
+output/builds/browser-owned-actor-pixels/full-source-c8e6/client.jar
+SHA256 635413bd8a8a86e80991df3c989ed5c40cff2b09e1a33b6cb1b8229ca683d756.
+receipt.json and source-manifest.json beside it identify clean exact source,
+all Java input hashes and build log. singleProductionCommit:true. Frozen budget
+CPU evidence is output/tests/browser-owned-actor-pixels/cpu-budget-c8e6/.
+Legacy cache corpus and owned/ordinary frontend mocks were rerun and pass.
+
+New client-only stages (no processes/server/request/DB changes):
+* output/tests/browser-gameplay-spike/owned-actor-static-budget-review-1/
+  repeatable-preparation.json: HTTP8200, existing TCP43649/WS43549.
+* output/tests/browser-gameplay-spike/owned-actor-combat-budget-review-1/
+  combat-preparation.json: HTTP8201, existing TCP43639/WS43539.
+Both have exact c8e6 source/JAR/frontend receipts, OFF/urlOn, correct Cache port
+and empty credentials. All 2,265 animation PNGs package-identical. Existing
+full-source-1f55 and both older stage client.jar files were hash-verified
+unchanged after preparing these fresh stages.
+
 Prior runtime/source checkpoint 1f55e572b822005a1138a018367b57a6bd63e987 and its
 JAR/stages below remain frozen and preserved. The publication-budget follow-up
-changes cold publication APIs/reporting only; its new build/stages are pending.
+changes cold publication APIs/reporting only; cache and compositor are unchanged.
 Independent worker source review
 of that exact checkpoint found no remaining correctness blocker. The reviewer
 did not run CPU/GPU tests; the above CPU results belong to this worker.
@@ -153,6 +176,13 @@ this client-only preparation makes no claim about its pending workload fix.
 
 Remaining acceptance
 --------------------
+Manager reports the OLD a502 matched static pair at ON48.2815 vs OFF46.8953 FPS
+(+2.956%). This is modest, and the original unmodified baseline runs were about
+47.4-47.6 FPS, so the net gain over that original is smaller. These results do
+not time the new budget artifact or establish default adoption. The manager's
+next combined-candidate tests will determine whether it helps alongside the
+stronger accepted batch/overlay candidates.
+
 Manager-owned actual WebGL visual/picking/layer parity, stale-art probes and
 matched warmed FPS/coverage/hit-rate measurements. This private source-owner
 candidate remains OFF until actual acceptance. No hardware or FPS claim is
