@@ -1,0 +1,68 @@
+Independent browser overlay rectangle review
+===========================================
+
+Scope
+-----
+Read-only candidate review plus independent CPU fixtures in ai2. No browser,
+HTTP/game server, GPU workload or performance claim. Runtime implementation
+belongs to the separate ai1 topic. This report does not approve an untested
+rectangle backend; the first reviewed checkpoint only observes writer tiles
+while retaining the exact row/full upload path.
+
+Primary specification checks
+----------------------------
+Published Khronos WebGL2 2.0.0, section3.7.6:
+https://registry.khronos.org/webgl/specs/2.0.0/#3.7.6
+The current editor draft was cross-checked, without treating it as a release:
+https://registry.khronos.org/webgl/specs/latest/2.0/#3.7.6
+Client-array source offsets count typed elements relative to the supplied
+view. Float offsets therefore count floats, not bytes. Client-array uploads
+require PIXEL_UNPACK_BUFFER to be unbound; dimensions and unpack parameters
+also constrain the accessible source footprint.
+
+Khronos OpenGL ES3.0.6, section3.7.2, equations3.12–3.13 (PDF pages127–128):
+https://registry.khronos.org/OpenGL/specs/es/3.0/es_spec_3.0.pdf
+Row length is in pixels. Unpack alignment rounds the row byte stride, and row
+and pixel skips advance the source start. Final-row trailing padding is not
+read. The independent transfer oracle implements these rules for the two
+actual overlay formats (RGBA/UNSIGNED_BYTE and RED/FLOAT). Its arithmetic is
+separate from candidate mocks and never claims real-driver conformance.
+
+Observe-only checkpoint
+-----------------------
+Candidate3085efa5dbc7b7892385b553d88231a055c90a47 had an unbounded metadata
+admission ordering problem: observation work could be materialized before the
+exact dimensions-derived length was checked. Reported to ai1 before testing.
+Candidate2545bd1132dec60073efa18871c0db485d2872c9 fixes this with bounded
+length validation followed by indexed copies that do not consult iterators.
+
+Exact2545 independent tests pass:
+* 7,343 per-pixel reference assertions cover tile cache holes, cross-row spans,
+  clipped viewport edges, previous/current footprint union and capacity fallback.
+* Direct transport checks cover stale ACK, writes after prepare, disappearing
+  UI and empty frames. The next ACK tracks actual writer tiles, rather than
+  the broader row/full region that happened to be uploaded.
+* The separate specification arithmetic self-check covers view byte offsets,
+  element-unit offsets, stride/alignment/skips, exact final-row bounds, array
+  type, PBO rejection and views smaller than their underlying backing buffer.
+* Actual candidate observe overlay code passes independent RGB/T transfer
+  simulation using nonzero-offset borrowed views and disappearing edge pixels.
+* Oversized metadata fails without enumeration/index reads or ANY GL operation.
+  Correctly sized ArrayLike metadata ignores malicious iterators as intended.
+
+Evidence:
+output/tests/browser-overlay-rect-independent-review/20261111T081204503843Z/
+  result.json, compile.log, footprint.log, spec.log, observe.log
+The receipt binds exact candidate source bytes, independent fixture hashes
+and the selected dependency JAR. Candidate sources are detached with git show
+at the exact hash before compilation/import, so later edits cannot alter the
+run. The dependency JAR supplies unchanged unrelated classes, not tracker or
+transport implementations.
+
+Remaining review boundary
+-------------------------
+Observe-only tests do not prove rectangle planning, source strided uploads,
+exact GL state restoration, both-plane upload failures, follow-on atlas/full
+uploads or real browser readback parity. Those require the later stable
+rectangle checkpoint and manager-owned hardware validation. Existing mocks
+that ignore pixelStorei are insufficient for those semantics.
