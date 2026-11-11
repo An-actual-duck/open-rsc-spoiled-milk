@@ -83,3 +83,25 @@ CPU gates
 Actual integrated fresh-source build/GPU bake/RAM cook, Firefox JNI readiness,
 continuous walking and measured performance/memory remain manager-owned gates.
 No browser, GPU, server, public deployment or release action is performed here.
+
+Executed source-bound receipts
+------------------------------
+At clean ba9945d076303252fe303320895745dcf69de383 all four CPU suites
+passed (37 helper checks, 17 conditional-delivery/CLI refusal checks, ordinary
+frontend and RAM-enabled frontend). Receipt:
+output/tests/browser-whole-ram-staging/ba9945-full-format-1/result.json.
+
+The final cba72e3ba8dca2ae71789bda2d81df7f47618106 metadata type hardening
+rejects Boolean-for-integer JSON aliases in source roster/scope and prepared
+level/schema fields. Helper and refusal suites passed again. Full CPU pilot
+format/hash validation passed again at:
+output/tests/browser-whole-ram-staging/cba72-full-format-2/result.json.
+It verifies 240,959,569 prepared file bytes, 50,796 interned pages, 12,174 model
+templates, 445 recipes/1330 query cells and 240,524,781 prepared primitive bytes.
+Expected runtime source+prepared primitive ledger is 286,626,515 bytes. The
+pilot remains explicitly bound to an old GPU reference for CPU testing only;
+this is not an integrated runtime stage or a catalog rebind.
+
+workspace-layout.py check reports existing ignored legacy output-root entries
+and assets/sprites in this long-lived worker. New task outputs all use declared
+category directories; none of those preserved legacy entries was changed.
