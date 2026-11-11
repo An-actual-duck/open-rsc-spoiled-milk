@@ -265,3 +265,72 @@ same-artifact OFF/ON ordinary travel and warm return cohorts remain required.
 CPU helper counts and profile percentages are NOT a loading/FPS improvement
 claim. No loader authority, collision, picking rule, source window, fog distance,
 GPU backend/shader, public server or ordinary default was changed by this reviewer.
+
+Manager actual continuous walking result: same-artifact OFF/ON/OFF/ON
+--------------------------------------------------------------------
+This final amendment is documentation only;502 construction runtime is unchanged
+and no new CPU test/build/browser/GPU/server work was run by ai-2. Read/hash-
+verified comparison:
+output/diagnostics/browser-travel-loading/region-build-comparison.json
+  SHA256 ce36e782e1551439c4466544467250f8ad7852e1c6397179df6f40f1038e6af8
+It binds runtime502fa18d88688f3030e8349c6487e541aea87a78,
+artifact437c4e6e67f23bd1c0527d48c2cd11bf626af354 and client JAR SHA256
+0409c558246b5652a70794f7b99fff9801729845a3f1d6d72dd4b0fe6574041b.
+The private Firefox WorkerON ordinary walking cohorts used identical source/JAR,
+Java load diagnostics ON and CPU sampler OFF. No other task CPU/Git/build/GPU
+work ran during timing. The diagnostic server is fixed older test coverage,
+not proof against the current production server.
+
+Accepted warm-crossing gaps, final four crossings in each cohort (milliseconds):
+  OFF1:3852,3628,4108,3723; mean3827.75
+  ON1 :2382, 593,1222,3300; mean1874.25
+  OFF3:3630,3400,3597,3345; mean3493.00
+  ON2 :1976, 560,1241, 530; mean1076.75
+Eight pooled OFF warm gaps average3660.375ms; eight ON gaps average1475.5ms,
+a59.689922% reduction in this measured route. Cold crossings were4293/4342ms OFF
+versus2947/2951ms ON; first returns3509/3540ms OFF versus672/670ms ON. This is a
+combined construction-path result, not an isolated attribution to the vertex
+index, limb hashing or primitive builder alone. Cache/animation scheduling still
+varies; upload byte totals cannot independently measure pure CPU improvement.
+
+All four route input hashes in the comparison match the actual files; each route
+is accepted with seven legs: initial non-boundary calibration followed by six
+ordinary boundary crossings. Observed epochs1→7 advance one per crossing, and
+load-profile polling gaps are0 on EVERY leg. Current epochs finish ready without
+reported rendering error. The measured world gap comes from copied/count-indexed
+completed-world intervals when the full frame-count delta fits the history; it
+is not concatenated repeated rings or held-frame FPS. Actual server-authoritative
+positions, pointer actions and real window transitions establish movement rather
+than teleport-only or stationary-scene evidence.
+
+Verified route inputs under output/diagnostics/browser-travel-loading/:
+  candidate-off-1/route/result.json
+    a644dbdf6d01c653f206f4c2fbe5dc9ea614f64f680be6d4918d4e1911215dcd
+  candidate-on-1/route/result.json
+    e94dfba60e25b05a1d28062573bfde4caa1f4f734cc17ac69589fde8ec06ab4e
+  candidate-off-3/route/result.json
+    cb9637d98ccf0c2c5aa416180cbcdfdd199625f4e3bbb25de1002b1499ed0055
+  candidate-on-2/route/result.json
+    370fe4198a76511c2850e415c39023e7444587827d05c143fb2ce2a7a9431f95
+
+The candidate-off-2 attempt is EXCLUDED. Its setup teleport had not fully rendered
+before the first map click; strict authority validation rejected it before any
+measured boundary. The harness now requires post-command fresh frames, exact
+target camera/pose and bounded last-frame age. This was a test setup correction,
+not a runtime fix or relaxed pixel/authority gate. Earlier accepted OFF1/ON1 setup
+snapshots could show an older initial pose, but the manager verified the unmeasured
+calibration reached the new target/camera before each measured cold crossing.
+All original setup/failure receipts remain preserved; no excluded result is
+included in warm means. The normalized metadata descriptor binds immutable stage,
+actual socket/staged port and private marker without altering staged runtime.
+
+Mean whole-route elapsed fell from27737.775ms OFF to16174.763ms ON, but includes
+actual walking, pointer input, polling and settling; it is NOT FPS or pure loading
+time. ON residual warm gaps range530–3300ms, and cold crossings remain near2950ms.
+Therefore this work does NOT complete seamless streaming. One host/browser/route,
+short diagnostic runs, live effect/cache variation and no confidence interval
+remain material limits. Broad geography, long sessions, negative-level travel,
+production data/server, device memory and continuous input latency need separate
+coverage. The independent frozen CPU correctness gate and the manager measured
+travel gate now both pass within these limits; ordinary defaults/public server
+remain unchanged, and future adoption/integration belongs to the manager.
