@@ -68,7 +68,7 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
         catch(RuntimeException|Error failure){invalidate();BrowserWebGLBridge.publishWholeRamWork(diagnostics());throw failure;}
     }
     public Renderer3DWorldChunkFrame queryFrame(World world,int sx,int sy){return prepared.queryFrame(sx,sy);}
-    public void avoidedBuild(){avoided=sat((long)avoided+1);}
+    public synchronized void avoidedBuild(){avoided=sat((long)avoided+1);}
     public void validateOptions(int[] current){if(!ready||!Arrays.equals(settings,current)||hiddenRoofs!=Config.C_HIDE_ROOFS)throw new IllegalStateException("Whole-RAM render/CPU options changed");}
     public void invalidate(){ready=false;validated=null;WholeOverworldRamRegistry.clear();}
     public int[] diagnostics(){long bytes=source.length+prepared.pool.bytes();return new int[]{1,ready?1:0,ready?1:0,1797,46101718,prepared.recipes(),prepared.queryCells(),(int)bytes,(int)(bytes>>>32),activations,hits,models,(int)copiedBytes,(int)(copiedBytes>>>32),avoided,validations,prepareMillis,activationMillis};}
