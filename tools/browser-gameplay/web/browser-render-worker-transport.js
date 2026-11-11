@@ -4,13 +4,13 @@ export function createRenderWorkerTransport({postMessage,layout,now=()=>performa
   let commands=[],transfers=[],bytes=0,nextId=1,nextFrame=1,lastAck=0,lastLayout=0,flushing=false,failed=null,disposed=false,worldPending=false;
   const pending=new Map(),waiters=[],pool=new Map();let poolCount=0,poolBytes=0;const MAX_POOL_BYTES=16*1024*1024,MAX_POOL_BUFFERS=1024;
   const bufferLength=Object.getOwnPropertyDescriptor(ArrayBuffer.prototype,'byteLength').get;
-  function acquire(length){const bucket=pool.get(length);if(bucket?.length){const buffer=bucket.pop();if(!bucket.length)pool.delete(length);poolCount--;poolBytes-=length;stats.reusedBuffers++;stats.poolBytes=poolBytes;return buffer;}stats.allocatedBuffers++;stats.allocatedBytes+=length;return new ArrayBuffer(length);}
+  function acquire(length){const bucket=pool.get(length);if(bucket?.length){const buffer=bucket.pop();pool.delete(length);if(bucket.length)pool.set(length,bucket);poolCount--;poolBytes-=length;stats.reusedBuffers++;stats.poolBytes=poolBytes;return buffer;}stats.allocatedBuffers++;stats.allocatedBytes+=length;return new ArrayBuffer(length);}
   function release(buffers){
     for(const buffer of buffers){const size=bufferLength.call(buffer);if(!size||size>MAX_POOL_BYTES)continue;
       // Admit recent frame planes, evicting cold startup geometry. A saturated
       // first-come pool otherwise allocates C/T afresh forever after login.
       while(poolCount>=MAX_POOL_BUFFERS||poolBytes+size>MAX_POOL_BYTES){const key=pool.keys().next().value,bucket=pool.get(key);bucket.pop();if(!bucket.length)pool.delete(key);poolCount--;poolBytes-=key;stats.poolEvictions++;}
-      if(!pool.has(size))pool.set(size,[]);pool.get(size).push(buffer);poolCount++;poolBytes+=size;
+      const bucket=pool.get(size)||[];pool.delete(size);bucket.push(buffer);pool.set(size,bucket);poolCount++;poolBytes+=size;
     }
     stats.poolBytes=poolBytes;stats.peakPoolBytes=Math.max(stats.peakPoolBytes,poolBytes);
   }
