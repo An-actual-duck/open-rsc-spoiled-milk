@@ -10,6 +10,7 @@ import orsc.graphics.Renderer2DFrame;
 import orsc.graphics.three.*;
 import orsc.graphics.two.GraphicsController;
 import orsc.graphics.two.WorldOverlayCoverage;
+import orsc.graphics.two.OverlayJournalObserver;
 
 /** Experimental local WebGL2 backend. Native calls synchronously copy/upload borrowed primitive arrays. */
 public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
@@ -91,6 +92,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void overlayFrame(int width,int height,int mode,double generation,double frameSequence,int fades,boolean reset,float[] transmittance);
     private static native void overlayDeltaFrame(int width,int height,double generation,double frameSequence,boolean reset,
         boolean partial,double baseGeneration,double baseFrameSequence,int[] bands,int[] work,int[] rgb,float[] transmittance);
+    private static native void overlayDeltaFrameObserved(int width,int height,double generation,double frameSequence,boolean reset,
+        boolean partial,double baseGeneration,double baseFrameSequence,int[] bands,int[] work,int[] rgb,float[] transmittance,
+        int[] journalHeader,int[] journalOps,int[] journalGlyphs,byte[] journalFonts,int[] journalRuns,int[] journalStats);
+
     private static final class PreparedOverlay {
         final WorldOverlayCoverage.Frame frame;final WorldOverlayCoverage.Delta delta;
         PreparedOverlay(WorldOverlayCoverage.Frame frame,WorldOverlayCoverage.Delta delta){this.frame=frame;this.delta=delta;}
@@ -287,6 +292,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private PreparedOverlay prepareOverlay(BufferedImage image,GraphicsController surface) {
         if(!OVERLAY_COVERAGE)return null;
         PreparedOverlay prepared=null;
+        if(GraphicsController.BROWSER_OVERLAY_JOURNAL_OBSERVE&&surface!=null)surface.observeOverlayJournalBarrier(OverlayJournalObserver.AWT);
         int[] pixels=borrowOverlay(image);int width=image.getWidth(),height=image.getHeight();
         boolean reset=pixels!=overlayOwner||width!=overlayWidth||height!=overlayHeight;
         WorldOverlayCoverage.Frame coverage=surface==null?null:surface.borrowWorldOverlayCoverage();
@@ -300,10 +306,16 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             if(!coverage.valid||!surface.isWorldOverlayCoverageCurrent(coverage))throw new IllegalStateException("Browser overlay rejected: "+coverage.reason);
             if(coverage.transparent&&(coverage.ownerPixels!=pixels||coverage.width!=width||coverage.height!=height))throw new IllegalStateException("Browser overlay pixel owner/dimensions changed");
             if(coverage.generation<0||coverage.generation>9007199254740991L||coverage.frameSequence<0||coverage.frameSequence>9007199254740991L)throw new IllegalStateException("Browser overlay token exceeds exact JavaScript integer range");
+            OverlayJournalObserver.Snapshot journal=GraphicsController.BROWSER_OVERLAY_JOURNAL_OBSERVE&&surface!=null?surface.finishOverlayJournal(coverage):null;
             WorldOverlayCoverage.Delta delta=OVERLAY_DELTA?coverage.prepareDeltaTransport(reset||overlayDeltaReset):null;
             if(delta!=null){
+                if(journal!=null)overlayDeltaFrameObserved(width,height,coverage.generation,coverage.frameSequence,reset,delta.partial,
+                    delta.baseGeneration,delta.baseFrameSequence,delta.bands(),delta.work(),pixels,coverage.transmittance,
+                    journal.header,journal.ops,journal.glyphs,journal.fonts,journal.runs,journal.stats);
+                else {
                 overlayDeltaFrame(width,height,coverage.generation,coverage.frameSequence,reset,delta.partial,
                     delta.baseGeneration,delta.baseFrameSequence,delta.bands(),delta.work(),pixels,coverage.transmittance);
+                }
                 prepared=new PreparedOverlay(coverage,delta);
             }else{
                 if(OVERLAY_DELTA)overlayDeltaReset=true;

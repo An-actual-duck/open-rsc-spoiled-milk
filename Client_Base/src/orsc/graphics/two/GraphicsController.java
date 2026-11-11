@@ -71,6 +71,41 @@ public class GraphicsController {
 	public boolean loggedIn = false;
 	public int height2;
 	public int[] pixelData;
+    /** Private observer only. Ordinary OFF never enters capture helpers. */
+    public static final boolean BROWSER_OVERLAY_JOURNAL_OBSERVE=Boolean.getBoolean("spoiledmilk.browserOverlayJournalObserve");
+    private OverlayJournalObserver overlayJournal;
+    private boolean overlayJournalFailed;
+    private void journalFailure(Throwable error) { overlayJournalFailed=true;if(overlayJournal!=null){try{overlayJournal.close(OverlayJournalObserver.EXCEPTION);}catch(Throwable ignored){}overlayJournal=null;} }
+    private void journalClose(int kind) { if(overlayJournalFailed)return;try{if(overlayJournal!=null)overlayJournal.close(kind);}catch(Throwable error){journalFailure(error);} }
+    public final boolean isOverlayJournalObserverFailed(){return overlayJournalFailed;}
+    private OverlayJournalObserver journal() { if(overlayJournal==null)overlayJournal=new OverlayJournalObserver();return overlayJournal; }
+    private WorldOverlayCoverage.Frame journalFrame() { return worldOverlayCoverage==null?null:worldOverlayCoverage.observeFrame(); }
+    public final void observeOverlayJournalBarrier(int kind) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE&&!overlayJournalFailed)try{journal().barrier(pixelData,kind,renderer2DPhase.ordinal());}catch(Throwable error){journalFailure(error);}
+    }
+    private void journalUnknown(int[] destination,int[] source) {
+        if(overlayJournalFailed)return;try{journal().barrier(destination,source==destination?OverlayJournalObserver.SOURCE_ALIAS:OverlayJournalObserver.SPRITE,renderer2DPhase.ordinal());}catch(Throwable error){journalFailure(error);}
+    }
+    private void journalRectangle(int kind,int x,int y,int w,int h,int color,int alpha) {
+        if(overlayJournalFailed)return;try{if(journal().noteNonWorld(pixelData,0))return;journal().rectangle(pixelData,journalFrame(),kind,x,y,w,h,color,alpha,clipLeft,clipTop,clipRight,clipBottom,renderer2DPhase.ordinal(),interlace);}catch(Throwable error){journalFailure(error);}
+    }
+    private void journalText(java.util.List<Renderer2DTextPlotCommand> plots) {
+        if(overlayJournalFailed)return;try{journalTextOwned(plots);}catch(Throwable error){journalFailure(error);}
+    }
+    private void journalTextOwned(java.util.List<Renderer2DTextPlotCommand> plots) {
+        if(plots.isEmpty())return;
+        if(journal().noteNonWorld(pixelData,plots.size()))return;
+        if(plots.size()>4096){observeOverlayJournalBarrier(OverlayJournalObserver.OVERFLOW);return;}
+        byte[] font=plots.get(0).fontData;int[] data=new int[plots.size()*5];int at=0;
+        for(Renderer2DTextPlotCommand plot:plots){if(plot.fontData!=font){observeOverlayJournalBarrier(OverlayJournalObserver.SOURCE_ALIAS);return;}
+            data[at++]=plot.x;data[at++]=plot.y;data[at++]=plot.color;data[at++]=plot.indexAddr;data[at++]=plot.antiAliased?1:0;}
+        journal().text(pixelData,journalFrame(),font,data,plots.size(),clipLeft,clipTop,clipRight,clipBottom,renderer2DPhase.ordinal());
+    }
+    public final OverlayJournalObserver.Snapshot finishOverlayJournal(WorldOverlayCoverage.Frame frame) {
+        if(!BROWSER_OVERLAY_JOURNAL_OBSERVE||overlayJournalFailed||overlayJournal==null)return null;
+        try{return overlayJournal.finish(pixelData,frame);}catch(Throwable error){journalFailure(error);return null;}
+    }
+
 	public int width2;
 	public Sprite[] sprites;
 	public Sprite[] spriteVerts = new Sprite[4];
@@ -174,18 +209,28 @@ public class GraphicsController {
 
 	/** Begin only where the Scene deliberately skips the software world raster. */
 	public final boolean beginTransparentWorldOverlay() {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)return beginObservedWorldOverlay();
 		return worldOverlayCoverageEnabled && worldOverlayCoverage != null
 			&& worldOverlayCoverage.begin(pixelData, width2, height2);
 	}
 
+    private boolean beginObservedWorldOverlay() {
+        boolean begun=worldOverlayCoverageEnabled&&worldOverlayCoverage!=null&&worldOverlayCoverage.begin(pixelData,width2,height2);
+        if(!overlayJournalFailed)try{if(begun)journal().begin(journalFrame());else journalClose(OverlayJournalObserver.MODE);}catch(Throwable error){journalFailure(error);}
+        return begun;
+    }
 	/** Before a complete legacy/login/loading image; does not alter ordinary RGB pixels. */
 	public final void beginOpaqueWorldOverlay() {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalClose(OverlayJournalObserver.MODE);
+
 		if (worldOverlayCoverage != null) worldOverlayCoverage.reset(false);
 		if (!worldOverlayCoverageEnabled) worldOverlayCoverage = null;
 	}
 
 	/** Release plane storage; a partial RGB image stays invalid until a new complete base. */
 	public final void clearWorldOverlayCoverage() {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalClose(OverlayJournalObserver.RESET);
+
 		if (worldOverlayCoverage != null) worldOverlayCoverage.discard();
 	}
 
@@ -244,6 +289,8 @@ public class GraphicsController {
 	}
 
 	private void coverageUnsupported(String operation) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.UNKNOWN);
+
 		if (guardGpuSceneSoftwareWrites && sceneSpriteRasterFailure.isEmpty()) {
 			sceneSpriteRasterFailure = operation;
 		}
@@ -254,7 +301,8 @@ public class GraphicsController {
 		try {
 			this.clipBottom = var2;
 			this.clipRight = var1;
-			this.pixelData = new int[var1 * var2];
+			if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalClose(OverlayJournalObserver.SURFACE);
+            this.pixelData = new int[var1 * var2];
 			this.height2 = var2;
 			this.width2 = var1;
 			try {
@@ -272,6 +320,8 @@ public class GraphicsController {
 	}
 
 	public final void beginRenderer2DFrame() {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalClose(OverlayJournalObserver.RESET);
+
 		updateBrowserFramePreparation();
 		if (worldOverlayCoverage != null) worldOverlayCoverage.beginFrame();
 		sceneSpriteRasterFailure = "";
@@ -341,8 +391,9 @@ public class GraphicsController {
 	 * replay their draw commands through the OpenGL overlay bridge.
 	 */
 	public final void beginSoftwareOwnedRenderer2DFrame() {
-		beginOpaqueWorldOverlay();
-		beginRenderer2DFrame();
+        beginOpaqueWorldOverlay();
+        beginRenderer2DFrame();
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE&&!overlayJournalFailed)try{journal().softwareOwner();}catch(Throwable error){journalFailure(error);}
 		renderer2DCommandCaptureSuppressed = true;
 		browserFramePreparationActive = false;
 	}
@@ -387,6 +438,7 @@ public class GraphicsController {
 			return;
 		}
 
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.READ);
 		int requiredPixels = width2 * height2;
 		if (renderer2DUiBasePixels == null || renderer2DUiBasePixels.length != requiredPixels) {
 			renderer2DUiBasePixels = new int[requiredPixels];
@@ -1452,7 +1504,8 @@ public class GraphicsController {
 		clearWorldOverlayCoverage();
 		this.clipBottom = height;
 		this.clipRight = width;
-		this.pixelData = new int[width * height];
+		if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalClose(OverlayJournalObserver.SURFACE);
+            this.pixelData = new int[width * height];
 		this.height2 = height;
 		this.width2 = width;
 		// The replacement array is a complete opaque black image, not the old partial overlay.
@@ -1977,6 +2030,8 @@ public class GraphicsController {
 	}
 
 	public final void a(int var1, int var2, int var3, int var4, int var5, int var6, int var7) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.READ);
+
 		coverageUnsupported("Nonlocal framebuffer blur during GPU world overlay");
 		try {
 			for (int var8 = var4; var8 < var4 + var6; ++var8) {
@@ -2014,6 +2069,8 @@ public class GraphicsController {
 
 	private void a(int var1, int var2, int var3, int var4, int var5, int[] var6, int var7, int[] letterPlotTable,
 				   int var9, int var10, boolean var11, int var12, int var13, int var14, int var15) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(letterPlotTable,var6);
+
 		try {
 
 			int var16 = (var14 & 16736117) >> 16;
@@ -2080,6 +2137,8 @@ public class GraphicsController {
 	 */
 	private void plot_horiz_line(int negCount, int srcWidth, int[] dest, int srcStepX, int srcHeadY, int srcHeadX,
 								 int[] src, int srcStepY, int destHead) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(dest,src);
+
 		try {
 			for (int i = negCount; i < 0; ++i) {
 				coverageOpaque(dest, destHead);
@@ -2098,6 +2157,8 @@ public class GraphicsController {
 
 	private void a(int var1, int var2, int var3, int[] var4, int var5, int var6, int var7, int[] var8, int var9,
 				   int var10, int var11, int var12) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(var8,var4);
+
 		try {
 
 			int var13 = 256 - var6;
@@ -2144,6 +2205,8 @@ public class GraphicsController {
 	 */
 	private void plot_trans_horiz_line(int srcStepY, int negCount, int srcHeadX, int[] src, int[] var5,
 									   int srcHeadY, int destHead, int srcWidth, int srcStepX) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(var5,src);
+
 		try {
 
 			int i = negCount;
@@ -2186,6 +2249,8 @@ public class GraphicsController {
 
 	private void a(int var1, int[] var2, int var3, int var4, int var5, int var6, byte var7, int var8, int[] var9,
 				   int var10, int var11) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(var2,var9);
+
 		try {
 
 			if (var7 <= 122) {
@@ -2373,6 +2438,8 @@ public class GraphicsController {
 	private void plot_scale_black_mask(int[] src, int heightStep, int scaleX, int dummy1, int srcStartY,
 									   int[] dest, byte dummy2, int scaleY, int destHeight, int srcStartX, int destRowStride, int destWidth,
 									   int srcWidth, int destHead) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(dest,src);
+
 		try {
 
 
@@ -2464,6 +2531,8 @@ public class GraphicsController {
 											   int destColumnSkewPerRow, int destFirstColumn, int dummy1, int spritePixel, int mask2, int scaleY, int scaleX,
 											   int srcStartX, int skipEveryOther, int srcStartY, int srcWidth, int mask1, int destHeight,
 											   int destRowHead, int colourTransform, int blueMask) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(dest,src);
+
 		try {
 
 			int mask1R = mask1 >> 16 & 0xFF;
@@ -2585,6 +2654,8 @@ public class GraphicsController {
 	}
 
 	public final void copyPixelDataToSurface(SPRITE_LAYER layer, int xOffset, int yOffset, int width, int height) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.READ);
+
 		coverageUnsupported("Framebuffer sprite capture during GPU world overlay");
 		try {
 			int[] pixels = new int[width * height];
@@ -2657,6 +2728,8 @@ public class GraphicsController {
 	}
 
 	public final void drawVerticalGradient(int x, int y, int width, int height, int topColor, int bottomColor) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.GRADIENT);
+
 		try {
 			markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.GRADIENT);
 
@@ -2721,6 +2794,8 @@ public class GraphicsController {
 	}
 
 	public final void blackScreen(boolean var1) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.CLEAR);
+
 		try {
 			markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.CLEAR);
 
@@ -2798,6 +2873,8 @@ public class GraphicsController {
 	}
 
 	public final void drawBox(int xr, int yr, int widthh, int height, int color) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalRectangle(OverlayJournalObserver.BOX,xr,yr,widthh,height,color,256);
+
 		try {
 			if (xr < this.clipLeft) {
 				widthh -= this.clipLeft - xr;
@@ -2854,6 +2931,8 @@ public class GraphicsController {
 	}
 
 	public final void drawBoxAlpha(int x, int y, int width, int height, int color, int alpha) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalRectangle(OverlayJournalObserver.ALPHA_BOX,x,y,width,height,color,alpha);
+
 		try {
 
 			if (y < this.clipTop) {
@@ -2931,6 +3010,8 @@ public class GraphicsController {
 	}
 
 	public final void drawCircle(int x, int y, int radius, int color, int alpha, int dummy) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.CIRCLE);
+
 		try {
 			if (!recordRenderer2DCircle(x, y, radius, color, alpha)) {
 				markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.CIRCLE);
@@ -3242,6 +3323,7 @@ public class GraphicsController {
 				if (!renderer2DTextPlots.isEmpty()) {
 					markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.TEXT);
 				}
+                if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalText(renderer2DTextPlots);
 				for (Renderer2DTextPlotCommand plot : renderer2DTextPlots) {
 					plot.plot(this);
 				}
@@ -3281,6 +3363,8 @@ public class GraphicsController {
 	}
 
 	public final void drawLineHoriz(int x, int y, int width, int color) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalRectangle(OverlayJournalObserver.HLINE,x,y,width,1,color,256);
+
 		try {
 
 			if (this.clipTop <= y && y < this.clipBottom) {
@@ -3312,6 +3396,8 @@ public class GraphicsController {
 	}
 
 	public final void drawLineVert(int x, int y, int color, int height) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalRectangle(OverlayJournalObserver.VLINE,x,y,1,height,color,256);
+
 
 		if (this.clipLeft <= x && x < this.clipRight) {
 			if (y < this.clipTop) {
@@ -4035,6 +4121,8 @@ public class GraphicsController {
 	}
 
 	public final void fade2black(int var1) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.MODE);
+
 		noteSceneSoftwareWrite(pixelData);
 		if (worldOverlayCoverage != null && worldOverlayCoverage.retainFade(pixelData, width2, height2)) return;
 		try {
@@ -4175,6 +4263,8 @@ public class GraphicsController {
 	}
 
 	public final void createCaptchaSprite(Sprite s) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.READ);
+
 		try {
 
 			spriteVerts[3] = s;
@@ -4184,6 +4274,8 @@ public class GraphicsController {
 	}
 
 	public final void setClip(int clipLeft, int clipRight, int clipBottom, int clipTop) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.CLIP);
+
 		try {
 			if (this.height2 < clipBottom) {
 				clipBottom = this.height2;
@@ -4213,6 +4305,8 @@ public class GraphicsController {
 	}
 
 	public final void setPixel(int x, int y, int val) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)observeOverlayJournalBarrier(OverlayJournalObserver.UNKNOWN);
+
 		try {
 
 			if (this.clipLeft <= x && this.clipTop <= y && this.clipRight > x && this.clipBottom > y) {
@@ -4417,6 +4511,8 @@ public class GraphicsController {
 	private void plot_tran_scale(int heightStep, int srcStartY, int destWidth, byte dummy1, int scaleY,
 								 int spriteWidth, int scaleX, int height, int destHead, int[] src, int dummy2, int srcStartX,
 								 int destRowStride, int alpha, int[] dest) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(dest,src);
+
 		try {
 
 			int alphaInverse = 256 - alpha;
@@ -4498,6 +4594,8 @@ public class GraphicsController {
 	private void plot_tran_scale_with_mask(int dummy2, int[] src, int scaleY, int dummy1, int srcStartY,
 										   int srcStartX, int destColumnCount, int[] dest, int destHeight, int destColumnSkewPerRow, int destRowHead,
 										   int scaleX, int destFirstColumn, int srcWidth, int skipEveryOther, int spritePixel, int colourTransform, int blueMask) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(dest,src);
+
 		try {
 
 			int spritePixelR = spritePixel >> 16 & 0xFF;
@@ -4631,6 +4729,7 @@ public class GraphicsController {
 	final void plot_trans_scale_lookup_with_mask(byte[] src, int background, int dummy1, int destColumnSkewPerRow,
 												 int[] lookupTable, int srcWidth, int srcStartY, int scaleY, int destFirstColumn, int scaleX, int[] dest,
 												 int skipEveryOther, int dummy2, int srcStartX, int destRowHead, int destColumnCount, int destHeight) {
+        if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalUnknown(dest,lookupTable);
 		try {
 
 			int backR = (0xFF0000 & background) >> 16;

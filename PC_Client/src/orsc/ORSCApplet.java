@@ -958,6 +958,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	}
 
 	private void bindDirectFramebuffer(int width, int height) {
+        if(orsc.graphics.two.GraphicsController.BROWSER_OVERLAY_JOURNAL_OBSERVE)mudclient.getSurface().observeOverlayJournalBarrier(orsc.graphics.two.OverlayJournalObserver.AWT);
 		int[] pixels = mudclient.getSurface().pixelData;
 		directFramebufferImage = createDirectFramebufferImage(width, height, pixels);
 		directFramebufferPixels = pixels;

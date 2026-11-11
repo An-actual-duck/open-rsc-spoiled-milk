@@ -142,6 +142,10 @@ public final class WorldOverlayCoverage {
 		if (transparent && valid) { valid = false; this.reason = reason; }
 	}
 
+    /** Private observer read-only view: unlike borrow(), mismatches never invalidate visual ownership. */
+    Frame observeFrame() {
+        return new Frame(this,ownerPixels,width,height,transparent?transmittance:null,transparent,valid,reason,generation,frameSequence,mode(),retainedFadeCount);
+    }
 	Frame borrow(int[] pixels, int width, int height) {
 		if (transparent && (pixels != ownerPixels || width != this.width || height != this.height)) {
 			invalidate("World overlay surface identity/dimensions changed");
