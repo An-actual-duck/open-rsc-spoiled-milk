@@ -264,7 +264,8 @@ One exact query-data qualification: literal TerrainVertexLightVariation hashes
 legacy carrier tile coordinates, while canonical retained query light words use
 logical source coordinates. The query buffers' vertexLights are not consumed on
 this private full-GPU path: BrowserWholeOverworldZone.filter removes WORLD chunks
-before OpenGLWorldChunkRenderer packing (the only getVertexLight consumer).
+before OpenGLWorldChunkRenderer packing (the only visual-packing getVertexLight
+consumer; mudclient diagnostic fingerprinting can still observe these words).
 TerrainDefinitionField reads coordinates/heights, roof masks read bits/origins;
 wall/roof classic model lighting remains local. Thus independent tests must
 compare consumed lighting/query masks, not claim unused query light words match
