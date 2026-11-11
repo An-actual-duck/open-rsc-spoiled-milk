@@ -12,7 +12,7 @@ function levels(value,expected,label){if(!value||Object.keys(value).length!==3||
 const EXTERNAL_ASSETS=Object.freeze(['Authentic_Landscape.orsc','Authentic_Sprites.orsc','Custom_Sprites.osar','library.orsc','models.orsc'].map(n=>'Cache/video/'+n));
 function externalAssets(value){
   if(!Array.isArray(value)||value.length!==EXTERNAL_ASSETS.length)throw new Error('Whole zone external asset roster');let total=0;
-  const out=value.map((v,n)=>{if(!v||v.path!==EXTERNAL_ASSETS[n])throw new Error('Whole zone external asset identity');integer(v.bytes,1,32*1024*1024,'external asset bytes');hash(v.sha256,'external asset');total+=v.bytes;return Object.freeze({path:v.path,bytes:v.bytes,sha256:v.sha256});});
+  const out=value.map((v,n)=>{if(!v||v.path!==EXTERNAL_ASSETS[n])throw new Error('Whole zone external asset identity');integer(v.bytes,1,16*1024*1024,'external asset bytes');hash(v.sha256,'external asset');total+=v.bytes;return Object.freeze({path:v.path,bytes:v.bytes,sha256:v.sha256});});
   if(total>64*1024*1024)throw new Error('Whole zone external asset budget');return Object.freeze(out);
 }
 export function validateWholeZoneConfig(c){

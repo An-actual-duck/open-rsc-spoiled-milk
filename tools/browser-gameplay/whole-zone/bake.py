@@ -49,6 +49,7 @@ def main():
   for asset in m['externalAssets']:
    file=root/'Client_Base'/asset['path']
    if file.stat().st_size!=asset['bytes']or sha(file)!=asset['sha256']:raise ValueError('Baked/current external Cache asset mismatch')
+  if m.get('derivativeTextureSha256')!=texture['destinationSha256']:raise ValueError('Baker texture derivative differs from exact extraction receipt')
   if m.get('sourceManifestBytes')!=source_copy.stat().st_size:raise ValueError('Baker must declare actual source manifest byte size')
   if a.full:
    if m.get('complete')is not True:raise ValueError('Full baker did not declare complete')
