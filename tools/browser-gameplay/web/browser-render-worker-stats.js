@@ -1,6 +1,6 @@
 /** Closed bounded diagnostics: never clone renderer caches, typed planes or inputs. */
 export const WORKER_SAMPLE_FIELDS=Object.freeze(['frameSamples','worldFrameSamples','gpuWorkSamples','jsSubmissionSamples','javaBridgeWorkSamples','worldFramePolicies','worldFrameSpriteGroups','physicalOutputWorldFramePolicies']);
-const OBJECTS=new Set(['contextAttributes','worldReadiness','physicalOutput','overlayDeclaration','pose','spriteCompositeCache','opaqueAlphaProof']);
+const OBJECTS=new Set(['contextAttributes','worldReadiness','physicalOutput','overlayDeclaration','pose','spriteCompositeCache','opaqueAlphaProof','wholeZone']);
 const HISTORIES=new Set(['ownedStateTransitions','physicalOutputTransitions','worldStreamSamples','limitations']);
 function bounded(value,depth=0,budget={left:512,chars:16384}){
   if(--budget.left<0||depth>4)throw new Error('Worker stats metadata budget');

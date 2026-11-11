@@ -1,3 +1,4 @@
+import {wholeZoneCapacity} from './browser-whole-zone-policy.js';
 import {createOverlayJournalObserver,observedOverlayDelta} from './browser-overlay-journal.js';
 import {createPhysicalOutputSizer} from './browser-physical-output.js';
 import {createStreamUploadValidation} from './browser-upload-validation.js';
@@ -24,7 +25,7 @@ export function atlasTexelCenter(position,size,unit,extent) {
 }
 const FLOAT_UNIFORMS=['uBrightness','uContrast','uGamma','uSaturation','uToneRed','uToneGreen','uToneBlue','uToneBlend','uLightDirectionX','uLightDirectionY','uLightDirectionZ','uLightAmbient','uLightIntensity','uFogStart','uFogEnd','uFogRed','uFogGreen','uFogBlue','uTerrainReliefStrength','uObjectReliefStrength','uTerrainVariationStrength','uTerrainVariationTolerance','uTerrainVariationTargetRed','uTerrainVariationTargetGreen','uTerrainVariationTargetBlue'];
 const ATTRIBUTES=[['aPosition',3,0],['aMaterialColor',4,3],['aTexCoord',2,7],['aRawMaterialColor',3,15],['aBaseLegacyLight',1,14],['aNormal',3,18],['aModelKind',1,21],['aMaterialFamily',1,22],['aTerrainVariationMask',1,23],['aTerrainBlendColor',3,24],['aTerrainBlendStrength',1,27]];
-const MAX_GPU_BYTES=256*1024*1024, MAX_CHUNKS=512, MAX_PIXELS=2097152;
+const MAX_PIXELS=2097152;
 function typed(value, Type) { return value instanceof Type ? value : new Type(value); }
 /** Normalize alpha without touching RGB, including after legacy SRC_ALPHA blending. */
 export function normalizeOpaqueCanvas(gl,known=null) {
@@ -33,9 +34,11 @@ export function normalizeOpaqueCanvas(gl,known=null) {
   finally{gl.colorMask(...mask);gl.clearColor(...color);if(scissor)gl.enable(gl.SCISSOR_TEST);}
 }
 export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
+  const capacity=wholeZoneCapacity(options);
   const gl=canvas.getContext('webgl2',{alpha:true,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});
   if(!gl) throw new Error('WebGL2 unavailable: browser GPU proof requires WebGL2');
   const stats={worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,javaBridgeReportedWorldFrames:0,heldWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas, <=8MiB marker overlay plus optional <=32MiB combined C/T/retained texture peak, <=160MiB shadow maps and <=8MiB masks and separately bounded <=2MiB sky peak; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Marker UI lacks partial-alpha reconstruction unless coverage mode is enabled','Browser/device coverage and broader gameplay parity pending'],frameSamples:[]};
+  if(capacity.enabled){stats.resourceBudgetScope=stats.resourceBudgetScope.replace('256MiB chunk/texture pixels','private3072MiB chunk/texture pixels')+'; whole-zone capacity excludes loader/Worker/driver/Java heap';stats.wholeZone={enabled:true,phase:'unloaded',ready:false,capacityBytes:capacity.gpuBytes,maxResidentChunks:capacity.maxChunks,pinnedChunks:0,pinnedBytes:0,currentLocalDraws:0};}
   const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0,lastWorld=0,lighting,lightingValues,sky,overlay;
   const colorVisible=new Uint8Array(256),colorCullScratch=new Float64Array(18);let colorCullingSupported=false;
   const ownedFrame=options.ownedState===true||options.benchmarkControl===true?createOwnedBrowserFrameState(gl,{enabled:options.ownedState===true,ownOverlayUnpack:['on','packed'].includes(options.overlayRectMode)}):null;
@@ -64,7 +67,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   function loc(name){if(!uniforms.has(name))uniforms.set(name,gl.getUniformLocation(program,name));return uniforms.get(name);}
   function i(name,value){gl.uniform1i(loc(name),value);} function f(name,value){gl.uniform1f(loc(name),value);}
   function check(){const error=gl.getError();if(error!==gl.NO_ERROR)throw new Error('WebGL error 0x'+error.toString(16));}
-  function reserve(bytes){if(!Number.isSafeInteger(bytes)||bytes<0||stats.gpuBytes+bytes>MAX_GPU_BYTES)throw new Error('Browser GPU resource budget exceeded');}
+  function reserve(bytes){if(!Number.isSafeInteger(bytes)||bytes<0||stats.gpuBytes+bytes>capacity.gpuBytes)throw new Error('Browser GPU resource budget exceeded');}
   function textureParameters(filter=gl.NEAREST){gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,filter);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,filter);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
   function chunkData(vertexInput,indexInput,batchInput) {
     const vertices=typed(vertexInput,Float32Array),indices=typed(indexInput,Int32Array),batches=new Int32Array(batchInput);
@@ -128,7 +131,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       catch(error){stats.backendFailed=true;throw error;}
     },
     async Java_orsc_BrowserWebGLBridge_uploadChunk(lib,id,vertexInput,indexInput,batchInput){
-      alive();if(chunks.size>=MAX_CHUNKS||chunks.has(id))throw new Error('Browser chunk cache limit/identity violation');
+      alive();if(chunks.size>=capacity.maxChunks||chunks.has(id))throw new Error('Browser chunk cache limit/identity violation');
       const {vertices,indices,batches,bounds}=chunkData(vertexInput,indexInput,batchInput);
       const bytes=vertices.byteLength+indices.byteLength;reserve(bytes);
       const previousVAO=ownedFrame?.active?null:gl.getParameter(gl.VERTEX_ARRAY_BINDING),previousArray=ownedFrame?.active?null:gl.getParameter(gl.ARRAY_BUFFER_BINDING);
