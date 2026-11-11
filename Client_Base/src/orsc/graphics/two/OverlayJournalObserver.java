@@ -37,6 +37,7 @@ public final class OverlayJournalObserver {
         if(active&&pixels==owner)return true;
         add(software?2:4,1);add(software?3:5,plots);return false;
     }
+    public boolean noteNonWorld(int[] pixels,int plots){return !target(pixels,plots);}
     public void barrier(int[] pixels,int kind,int phase){
         if(!active||pixels!=owner){add(6,1);return;}barrier(kind,phase);
     }
