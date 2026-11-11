@@ -1,0 +1,71 @@
+ACTUAL NONVACUOUS GATE FAILURE: SOURCE ATTRIBUTION
+
+Exact initial runtime candidate c7c2c99528ce4a257c60b5b0d03079a25763c70e.
+The source-boundary guards passed; this did not prove useful native work.
+Manager actual isolated Firefox gate:3602 Java frames,14272 short flushes,
+43006 TEXT calls captured, native callbacks0. No fault/FPS cohort accepted.
+All eligible groups were below MIN_NATIVE_TEXTS8. Preserve this negative result;
+no performance conclusion can be drawn from a native path never exercised.
+
+Root evidence (read-only):
+output/diagnostics/browser-frame-architecture/segmented-text-functional-1/
+  no-native-batches.json
+  nonvacuous-gate-failed.json
+
+Source-backed explanation for missing text
+-----------------------------------------
+The prior observer's first51 recorded TEXT operations in the sampled trace are
+WORLD_OVERLAY (ordinal1), not SCENE. Most contain24/27 glyph plots; the actual
+floating-name wrapper GraphicsController.drawShadowText calls drawString three
+times. mudclient.drawPlayer explicitly sets WORLD_OVERLAY for the floating name
+and clan tag while inside drawSceneEntity, then restores SCENE in finally.
+The enclosing SceneSpriteRasterPolicy remains GPU_OWNED during that scope.
+
+The old software-write guard is exactly:
+  sceneSpriteRasterPolicy == GPU_OWNED && renderer2DPhase == SCENE.
+Therefore WORLD_OVERLAY text in that enclosing actor scope is legal old Java
+work: the phase setter recomputes guardGpuSceneSoftwareWrites=false. The initial
+pilot rejected every nonDEFAULT policy regardless of phase, removing these
+valid name calls before queue capture. My earlier advice to exclude nonDEFAULT
+policy wholesale was too broad. Genuine SCENE+GPU guard rejection must remain;
+relaxing only the unrelated policy blanket is not bypassing the real guard.
+
+This accounts for the source/trace discrepancy (old62 TEXT/frame versus initial
+pilot roughly12), rather than a transport-mode-induced native UI replacement.
+canReplaceRenderer2DNativeUi requires !worldOverlayCoverageEnabled. Coverage is
+active in both runs; overlaydelta OFF alone does not enable that replacement.
+The old sampled51-call run is not automatically a batchable production segment:
+its observer lacked phase/policy materialization boundaries.
+
+Correct next bounded boundary
+-----------------------------
+Fix valid WORLD/UI admission while preserving the actual SCENE guard. However,
+real WORLD->SCENE->WORLD changes around each name still split three-call groups
+if every metadata transition flushes. Avoiding only unchanged assignments does
+not reconstruct the old51-call group. Do not lower8 merely to force callbacks.
+
+setRenderer2DPhase only assigns phase and recomputes the guard. drawSceneEntity's
+entry/finally assignments update anchor/order/frame/policy/owned-layer metadata
+and the guard; its inner drawEntity is NOT pure and its actual consumers must
+retain barriers. Deferral can cross these pure state transitions only with a
+complete per-TEXT replay context (phase/policy/guard/clip/font), stable C/T owner
+and dimensions, and restoration of surrounding context even on rejection/error.
+Replayed previously-valid WORLD text must not inherit a later SCENE guard; after
+replay that guard must be restored so a new invalid SCENE write still fails.
+
+Public sprite calls that return after GPU-owned descriptor capture do not read
+or write C/T. Their conservative entry flushes may be replaced by existing
+actual software-leaf barriers once every closed caller/delegate is verified.
+Sprite.getPixels only returns a reference; maintained C-backed exports already
+flush/copy before publication, and arbitrary external aliasing remains outside
+this private contract. Every actual software writer/read/export/clear, coverage
+mode/owner reset, depth copy and presentation barrier stays. No per-pixel JNI.
+
+Manager authorized this focused revision; producer ai1 owns runtime changes,
+ai2 owns exact replay/native rejection/fault contexts, ai3 reviews pure setters
+and the maintained source boundary roster. New exact source and actual native
+callback/typing/pixel proof are required before a performance cohort.
+
+Evidence hashes:
+no-native-batches.json: fec4a8a0a0c672d68553b90327eaab424c7f035555173fd96580efc0e1e2fd0e
+nonvacuous-gate-failed.json: 46efcca786817889ad1863fba45beb49d6256c9f9474ae6324b38410b7c8a70c
