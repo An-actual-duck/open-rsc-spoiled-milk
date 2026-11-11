@@ -1,0 +1,100 @@
+Whole-overworld prepared RAM: private measured results, November 11, 2026
+=======================================================================
+
+The full RAM prototype reduced warm boundary pauses on the tested host, but
+still pauses for roughly 0.3 seconds and does not deliver 60 FPS. It remains private,
+explicit wholeram=on and default OFF. Public server, maps, ordinary client choices
+and defaults were unchanged. Owner travel/visual feedback is pending in the
+fresh final preview, now ready and released to the owner. It is not adoption.
+Evidence and identity
+---------------------
+Manager evidence: output/diagnostics/browser-whole-overworld-ram/
+experiment-result.json, SHA256
+627858eaf93fb80b38eda4443ab700d323832e7bcdce6500b24a736320ef6234.
+Its linked per-run receipts and reconstructed fresh-frame intervals preserve
+startup, ordinary walking, stationary samples, memory and signed-scope smoke.
+
+Timed runtime source c8fc5f8d6323a22d5f8e0968e80aa90d03c73e12:
+ JAR 0cea34c155273c3183dba35b39151e4d0d5198ac02eca7badf55e7dde51a67d3
+ GPUcatalog ce4dd9bea253d8d9a1c30c6d63f79157e6a9a4a43c21ee24be3a37c5063d4582
+ CPU manifest 485bfecfd52c4dd6c3a51434ba43ad2d58d3a8c9c8c24543be0f90ade60c7b2b
+All three runs use identical Java/frontend/GPU/CPU data, source, settings,
+camera/fog and render Worker ON. Only the RAM flag changes ON/OFF/ON. This is
+RAM's incremental effect with the full-GPU experiment already ON, not a
+comparison against ordinary browser defaults. Final preview stage4 adds only
+the subsequent parent Stop-receipt correction; Java/GPU/CPU bytes are identical.
+Measured travel and stationary frames
+-------------------------------------
+                         RAM ON         RAM OFF        RAM ON repeat
+Mean warm gap(ms)          297.25          508.25          299.75
+Four warm gaps(ms)         308/280/324/277 571/507/443/512 327/271/316/285
+Stationary fresh FPS       42.8228         40.7706         40.4476
+Stationary duration(s)     12.073          12.043          12.065
+
+Warm mean pauses decreased 41.515% and 41.023% versus the intervening OFF run.
+These were actual continuous crossings with accepted authoritative poses,
+advancing source epochs, readiness and fresh-frame tail reconstruction; setup
+teleports were excluded. Route elapsed times 11.468/13.064/11.044 seconds include
+walking, polling and settling, so are not pure loading cost or FPS measurements.
+
+There is no consistent stationary FPS gain: the repeated ON sample is slightly
+below OFF. These short same-pose samples had no held world frames and measure
+fresh backend-submitted world frames against the inner clock. Worker/API
+completion is not per-frame GPU-fence completion or display scanout. Neither a
+60 FPS result nor seamless travel is established.
+Startup and memory tradeoff
+----------------------------
+Actual Java source/prepared readiness reported 1797 files, 445 recipes and 1330
+query cells. Preparation took 14.587 seconds on ON and 15.089 seconds on repeat.
+Whole startup scripts took 73.84/56.99/73.07 seconds ON/OFF/ON, including artificial
+settle/typing time; those are not clean load-time measurements. The initialization
+wait is a real tradeoff, not removed work hidden from the report.
+
+Retained source+prepared primitive payload is 275,990,134 bytes (263.20 MiB):
+46,101,734 source-bundle bytes +229,888,400 prepared primitive bytes. This is a
+lower bound excluding objects/headers/maps, mutable active models, CheerpJ/VM,
+virtual-filesystem copies, transient buffers and browser/driver memory.
+
+Owned Firefox-tree PSS observations after route/stationary were 1896.18 MiB ON
+and 1840.91 MiB OFF; RSS 2689.67/2660.29 MiB. PSS covers the entire owned tree, not
+Java heap. RSS can count shared pages repeatedly. The observed 55.27 MiB PSS
+difference is NOT standalone cache cost or a memory-budget promise. Host GPU
+counters include unrelated applications. One host with 12 GiB primary VRAM does
+not establish capacity/performance for lower-memory machines or a long soak.
+
+Correctness, scope and preserved failures
+-----------------------------------------
+Complete source/reader, real-basis World parity, decoder and immutable wrapper
+checks passed; the summary records 204,583 independent actual-basis checks,
+33 full-reader checks,1,569,131 wrapper checks and 20,484 decoder checks.
+Source/recipe/use counters advanced in actual play, rather than staged-file
+counts being treated as readiness. Raw source alone never meant prepared CPU.
+
+Actual scope smoke reached global L0, signed -1 and signed 10, then returned to L0.
+Outside global L0 the original local path remained active, the full RAM/GPU data
+stayed retained, and recipe/hit counts stayed unchanged until L0 returned. This
+is fallback with retained resources, not extra-level prepared residency. Selected
+source/CPU cases have parity proof; all 445 recipes were cooked, but not every
+recipe received an independent complete pixel oracle. Tree contextmenu/Chop was
+observed; stump/respawn and a complete hardware door lifecycle were not proven.
+
+Earlier rejected startup attempts remain preserved: first roof-visible data
+correctly refused a hidden-roof client; a later attempt exposed the original
+zero-carrier-basis assumption. Matching hidden-roof cooks and checked logical to
+legacy-carrier adaptation resolved these causes. They were not evidence of an
+unsupported CheerpJ decoder or browser out-of-memory failure.
+
+The later explicit Stop discrepancy was a stale parent proof: its old-session
+message filter correctly ignored the disposed child's queued final message.
+The now-merged parent fix clears its own readiness synchronously while retaining
+historical counts; 77 queued structured-clone lifecycle cases pass and the old
+source fails. No iframe/process leak is inferred from that stale receipt.
+
+Next boundary
+--------------
+Keep this as an owner-reviewable private experiment. Remaining work includes
+residual activation/scenery pauses, fresh FPS profiling, broader locations/devices,
+long sessions and forced exhaustion/context-loss, plus conclusive hardware
+mutation cycles. The saved browser-modern-streaming-plan.txt remains deferred
+and preserved; these measurements do not authorize replacing it or adopting a
+new default. Public rollout is a separate decision.
