@@ -19,7 +19,7 @@ exclusive, and samples at Java callback return are not actual Worker completion.
 
 Closed workload
 ---------------
-Use a frozen current-source client with repeatable-v1, actual WorkerON,
+Use a frozen current-source client with repeatable-v1, actual Worker ON,
 modelbatch/terrain/spritekeys aligned, GPU depth/full C/T coverage, same camera,
 physical resolution/fog/shadow settings. The old fixed 32-NPC server is only a
 preserved diagnostic server; bind its exact stage/source receipt and do not
@@ -299,3 +299,65 @@ this worker ran no browser, GPU, server or process action.
 
 Final baseline refinement SHA256:
  5bb272b6a6fbe967f2d8f05971ae8222f4585b8fa2d8e3904c3b9f31ff0a3507
+
+Final same-artifact scene-build comparison: measured improvement, private only
+----------------------------------------------------------------------------
+Manager evidence:
+ output/diagnostics/browser-travel-loading/region-build-comparison.json
+ SHA256 ce36e782e1551439c4466544467250f8ad7852e1c6397179df6f40f1038e6af8
+Runtime source 502fa18d88688f3030e8349c6487e541aea87a78, artifact source
+437c4e6e67f23bd1c0527d48c2cd11bf626af354, same full-source client JAR SHA256
+ 0409c558246b5652a70794f7b99fff9801729845a3f1d6d72dd4b0fe6574041b
+
+The manager ran OFF/ON/OFF/ON with the same artifact, original minimap input,
+Worker ON and Java load diagnostics ON, CPU sampler OFF. The four cohorts each
+completed six ordinary signed level 0 boundary crossings, epochs 1→7, error-free
+with no diagnostic record gaps. Cold first crossing and first return were kept
+separate; the comparison uses the last four warm boundary crossings per cohort.
+
+Warm completed-world gaps, milliseconds:
+ OFF1: 3852,3628,4108,3723 (mean 3827.75)
+ ON1: 2382,593,1222,3300 (mean 1874.25)
+ OFF3: 3630,3400,3597,3345 (mean 3493)
+ ON2: 1976,560,1241,530 (mean 1076.75)
+All eight warm gaps per policy give OFF 3660.375ms versus ON 1475.5ms, a 59.6899%
+mean reduction in this bounded workload. The ON 3300ms outlier is retained.
+This is a substantial measured improvement, not seamless streaming; occasional
+multi-second stalls remain. Source scope is CPU construction; upload byte totals
+also depend on cache/animation state and are not an isolated CPU-cost experiment.
+
+Full route elapsed times were OFF 28.518/26.957s versus ON 16.673/15.677s. They
+include original walking input, polling and settling, and are NOT a pure render
+or CPU phase timer. These fixed older diagnostic-server runs do not establish
+current-production-server, broad-device or long-session acceptance.
+
+The candidate-off-2 setup attempt was excluded BEFORE any measured boundary:
+root's initial teleport wait was too weak and the helper's strict authority gate
+rejected its premature map click. No runtime patch was required. The root driver
+now requires post-command fresh frames, exact target camera (8128,*,7495) and
+last-presented age<100ms, twice, before route measurement. That earlier receipt
+remains preserved; it is not silently treated as an OFF sample.
+
+The first candidate preparation metadata omitted fixture/TCP/socket fields.
+The manager used a metadata-only normalized descriptor bound to the original
+immutable stage, actual live socket, staged port and private marker; no staged
+runtime bytes changed. This is distinct from assigning a fake proof field in the
+browser. The source emitter correction belongs to the runtime worker's test-only
+preparation follow-up, not to this test branch or the measured client artifact.
+
+Independent offline raw-receipt validation:
+ python3 tests/myworld/test-browser-region-build-comparison.py COMPARISON_JSON \
+  --expected-sha256 ce36e782e1551439c4466544467250f8ad7852e1c6397179df6f40f1038e6af8
+Actual result: output/tests/browser-travel-loading/region-build-comparison-proof.json
+PASS: 4 raw route hashes, 24 ordinary boundary legs, actual open private 43549 socket,
+actual regionBuild policy receipts, Worker ON/error/ready gates, consecutive epochs,
+complete new-world interval tails, zero record gaps, cold/return/warm separation,
+means/reduction arithmetic and the retained 3300ms outlier. One unmeasured initial
+calibration had 65 frames beyond its 64-sample tail; it is excluded from boundary
+and warm-gap calculations by the declared workload, not reconstructed by guess.
+
+The earlier current-source profile/caller proof is unchanged. This new evidence
+supports the bounded source CPU construction approach; it does not retrospectively
+convert sampled CPU endpoints into exclusive phase timers or FPS predictions.
+The candidate remains private and default OFF. Ordinary browser/native defaults,
+public release and public server were not changed by this report or worker.
