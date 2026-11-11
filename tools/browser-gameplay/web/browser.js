@@ -120,6 +120,10 @@ const natives = {
     const samples=window.browserProof.telemetrySamples||=[];samples.push({milliseconds:performance.now(),values:sample});if(samples.length>300)samples.shift();
   },
   async Java_orsc_browser_BrowserBootstrap_reportLoop(lib,mode,early,full) { window.browserProof.clientLoop=mode;window.browserProof.earlyFaceCull=early===true;window.browserProof.fullResidentOwnership=full===true; },
+  async Java_orsc_browser_BrowserBootstrap_reportOverlayRectPolicy(lib,requested,enabled){
+    if(!['off','observe','on','packed'].includes(requested)||!['off','observe','on','packed'].includes(enabled))throw new Error('Invalid overlay rectangle policy receipt');
+    window.browserProof.overlayRectMode={requested,enabled};
+  },
   async Java_orsc_browser_BrowserBootstrap_reportSpriteKeyPolicy(lib,requested,enabled){window.browserProof.spriteKeyLimbs={requested:!!requested,enabled:!!enabled};publish();},
   async Java_orsc_browser_BrowserBootstrap_reportPreparation(lib, enabled, active, animated) {
     window.browserProof.preparationControls = {framePreparationEnabled: enabled === true,
@@ -172,7 +176,7 @@ try {
     window.browserProof.physicalOutputRequested=physicalOutput;
     window.browserProof.ownedStateRequested=ownedState;
     if(window.browserProof.benchmark)window.browserProof.benchmark.streamUploadValidationRequested=streamUploadValidation;
-    gpu = createBrowserWebGL(canvas, report, {nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')});
+    gpu = createBrowserWebGL(canvas, report, {nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')});
     window.browserProof.nativeCallDispatch={requested:nativeCallDispatch,module:backendModule.BROWSER_NATIVE_CALL_DISPATCH||null,reported:gpu.stats.nativeCallDispatch||null};
     if(options.has('benchmark')){window.browserBenchmarkOwnedState=enabled=>gpu.queueOwnedState(enabled);window.browserBenchmarkStreamUploadValidation=enabled=>gpu.queueStreamUploadValidation(enabled);window.browserBenchmarkPhysicalOutput=enabled=>gpu.queuePhysicalOutput(enabled);}
     worldCover=createWorldCover({document,window,display:document.querySelector('#display'),onGateChange:()=>window.dispatchEvent(new Event('browser-world-readinesschange'))});

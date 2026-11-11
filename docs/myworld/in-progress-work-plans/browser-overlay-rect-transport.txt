@@ -1,0 +1,221 @@
+Private bounded overlay rectangle transport investigation
+========================================================
+
+Status: READY private experimental implementation, correctness proof passed.
+Default OFF. One strict pair improved; further ordinary/reverse tests pending.
+No default adoption, full performance acceptance or60FPS claim.
+No browser/GPU/server processes started here.
+Source baseline: published main 1f1be1b7c2dee6dde98a0f123e5f1987585efdff.
+Parked owned-actor b655 and all its immutable artifacts remain preserved.
+
+Evidence and sequence
+---------------------
+Manager's valid preferred-default strict combat control is about 50.55 FPS.
+Fresh profile attributes 12.01% of disjoint sampled endpoints to overlay
+uploads plus upload-side checks. Row coverage spans 380/540 rows, forcing FULL
+4,147,200-byte RGB/T uploads. This is measured evidence, not GPU timing.
+The valid preferred-occupancy-00-1 source-content capture has 208 union tiles /
+102,656 pixels at 32x16 tiles (19.8% of 518,400). Non-default RGB/T content is
+only a LOWER BOUND on supported writer coverage, not an FPS forecast. Earlier
+after-idle-login capture is excluded.
+
+First validate actual supported-writer occupancy. Only then choose a bounded
+rectangle upload planner and measure its cost. Parent owns actual GPU/FPS work.
+
+Observe-only contract
+---------------------
+Private benchmark WebGL URL: overlaydelta=on&overlayrect=observe. off is the
+default; ordinary/software URLs inject no override. on is rejected until the
+rectangle backend actually exists. Java browserOverlayRectMode=observe creates
+one WorldOverlayTileTracker under the EXISTING WorldOverlayDeltaTransport.
+
+All opaque/opaqueSpan/multiply writer hooks mark 32x16 tiles. Mark cache accepts
+only an exact single-row horizontal interval; multirow linear tile bounds
+contain other columns and cannot be used as an exact shortcut. Spans process
+partial first/last rows and full intervening tile-row groups. Bounds are checked
+before the fast cache. Metadata grid <=16,384 cells, no plane scans/packing.
+
+The existing transport remains the sole transaction/history owner. Plan owns a
+frozen actual-current tile snapshot. ACK advances acknowledgedTiles ONLY after
+successful presentation; skipped/held source frames do not advance. First FULL
+ACK retains actual current marks, never the uploaded full viewport. Invalidation,
+owner/dimension changes and fallback reset the same existing history.
+
+Uploads remain literal existing ROW/FULL operations. Current work[0..5] and
+bands are unchanged. Observe adds work[6..14]: scheme1, currentTileCount,
+currentArea, unionTileCount, unionArea, markerMisses, spanGroups, columns, rows.
+work[15..] is owned 16-bit-word union occupancy (row-major tile IDs). This is
+small bounded metadata, not borrowed planes; no additional per-frame JNI call.
+Current+last ACK union is reported even when row transport falls back to FULL.
+
+Pure native metadata validation checks observation opt-in, exact grid and
+word count, bounded unsigned words, zero padding bits, and recomputes the union
+tile count/edge-clipped area BEFORE any graphics call. No RGB/T pixels are read.
+Existing retained token validation, draw/ACK, shader and upload bytes stay the
+same. stats.overlayDeltaLast.transport reports row/full, rectangleMode reports
+observe/off, and tileObservation reports real writer footprint plus its bitmap.
+
+Observe CPU proof and immutable stage
+-------------------------------------
+WorldOverlayTileTrackerFixture compares marks/spans against an independent
+per-pixel writer trace over seeded odd dimensions, tests row crossing and tile
+edges, stale cache reset, actual coverage hooks and current/ACK disappearance /
+held-frame semantics: 28,018 checks PASS. Existing 970 history/planes/ACK checks
+PASS. Frozen baseline/current delta OFF/ON and new observe literal RGB/T digest
+all equal 87b10499cb867a30bce5af0870b650fc7a2030caf13772371c57d2d92741c803.
+Existing pure policy, GL-double and ordinary frontend mock suites PASS.
+Independent worker review/tests against exact2545 source pass 7,343 tile/ACK /
+unpack/reference checks, including nonzero typed-view offsets and malformed
+metadata rejected before any enumeration/GL. Evidence is in ai-2/output/tests/
+browser-overlay-rect-independent-review/20261111T081204503843Z/result.json.
+
+Observe runtime/source checkpoint2545bd1132dec60073efa18871c0db485d2872c9 is
+frozen for this diagnostic stage. Java8 full source build PASS, 710 client-owned
+major52 classes. output/builds/browser-overlay-rect-transport/observe-2545/
+client.jar SHA256 a6dcfccbda1935e08e1f2797d821a8cc9c2fdb9dd73533ae45c1eb6fb3384a89.
+receipt.json/source-manifest.json there identify exact clean single-source
+provenance and build log. No experimental class transplant/composite artifact.
+
+Client-only stages (not started by worker):
+output/tests/browser-gameplay-spike/overlay-tiles-observe-static-1/
+repeatable-preparation.json: HTTP8204, existing baseline2 TCP43649/WS43549.
+output/tests/browser-gameplay-spike/overlay-tiles-observe-combat-1/
+combat-preparation.json: HTTP8205, existing ai-3 browser-combat-workload-final-1
+TCP43639/WS43539. Both expose observe url and row-only urlControl, with explicit
+modelbatch=on,overlaydelta=on,spritekeylimbs=on. Empty copied credentials, correct
+Cache ports and all2,265 packaged animation PNGs were verified. No process,
+server, DB or request mutation. Parent now needs actual supported-writer
+occupancy and a source-content containment check before rectangle work.
+
+Future rectangle contract (pending observed coverage)
+-----------------------------------------------------
+The actual supported-writer gate PASSED: manager's writer-observe-containment-1
+has three sequence-aligned live combat frames1868/1869/1870, writer union196/
+199/199 tiles (96,512/98,048/98,048 pixels), ZERO missing source-content tiles.
+The initial collector decoded16-bit words as32-bit and rejected; the SAME raw
+capture was recovered with the correct scheme1 decoder, original rejection
+preserved, no rerun or hidden missing-writer result. wordBits:16 is now explicit.
+Sixteen multi-phase samples have all6 real damage channels advancing; true
+writer area104,192-110,848pixels. Fine29-35 runs,64x32 coarsening11-14 runs.
+
+Current candidate chooses at most8 rectangles (<=16 GL subimages for2planes),
+fixed grids32x16/64x32/128x32/256x32, horizontal runs with identical vertical
+joins, <=60%logical area and >=20%area savings against existing row/FULL.
+No unbounded greedy search. Fixed256x32 planning on the16 captured masks gives
+6-8 rectangles,243,968-268,544 logical pixels but3.15-3.40MB strided source
+spans: neither is a hardware-bus measurement or FPS prediction.
+Active on/packed tracking skips duplicate per-pixel row tracking, deriving row
+fallback metadata once from fine tiles. Same/next-row mark-cache misses avoid
+variable-width division; markerMisses still reports actual tile-cache misses.
+
+work scheme2 denotes xywh rectangles in the existing regions argument;
+work[3]=0,work[4]=rectangleCount,partial=true. Scheme1 remains observed row/FULL
+fallback. Same owner, actual-current ACK footprint, two existing native calls.
+Pure validation also checks disjointness/order/grid alignment, total area,
+strided source bounds and full containment of every dirty union tile beforeGL.
+
+overlayrect=on uses minimal zero-copy strided subviews/srcOffset0 with
+UNPACK_ROW_LENGTH=logicalWidth. overlayrect=packed uses the identical planner
+and a bounded reusable JS-owned buffer, copies raw bytes for both planes, then
+uploads tight per-rectangle views with ROW_LENGTH0. Full/row fallback stays
+available. Packing occurs only after both planes/geometry/token validate; no
+input views survive the callback.12MiB retained/24MiB transient owner-live scratch
+growth bound excludes GC/driver overhead. Counters distinguish logical texels,
+gathered/staged bytes, scratch capacity/allocations/peak, API-view span bytes,
+packing wall time (bounded benchmark counters) and actual calls.
+
+Manager explicitly authorized packing after agent2's Firefox154 source audit:
+queued raw uploads serialize contiguous source spans INCLUDING row gaps.
+Thus logical texel reductions alone do not imply proportional browser copies.
+Raw BGRA and Float32 payload bits are preserved by byte copy, not Number math.
+
+Frozen production source and executable proof
+---------------------------------------------
+Runtime checkpoint923d745c0c032437f1a1f034f23b905c96c8b490 remains frozen.
+Later36d/b0 checkpoints change tests only. Agent2 independent exact923d suite:
+1,593,292 planner assertions over405frames (104rectangle/49row/252full),128 actual
+overlay+Khronos-model checks over direct/packed x scoped/owned, both-plane
+failures, raw Float payload/unaligned views, bounded staging/reuse/dispose and
+following actual sprite-atlas/FULL uploads. Evidence ai-2/output/tests/
+browser-overlay-rect-independent-review/20261111T084156132135Z/result.json.
+The added actual prepareDelta allocation/copy failure fixture passed before ANY
+GL with backend poison/dispose. Persisted source-bound rerun (clean41b source,
+exact923d runtime, Nodeversion, all imported file hashes, exit0 and stdout) is
+output/tests/browser-overlay-rect-transport/packed-failures-41b8336/result.json.
+Corpus preparation now also invokes it and writes node-packed-failures.log.
+
+Literal Java rectangle CPU export: output/tests/browser-overlay-delta-transport/
+20261111T085819304446Z/result.json.1155history/plane/ACK checks pass;166frames,
+142actualrectangle submissions. Existing full/row literal digest remains:
+87b10499cb867a30bce5af0870b650fc7a2030caf13772371c57d2d92741c803. GPU corpus schema2
+compares each literal frame's FULL output against ROW/direct/packed outputs.
+
+Manager actual Radeon GPU proof PASSED all3 configurations:
+root output/diagnostics/browser-frame-architecture/rect-gpu-owned-1,
+rect-gpu-owned-2-odd,rect-gpu-scoped-hostile-1,each {actual,receipt}.json.
+166frames x3comparisons/run; exact RGBA bytes24,897,876 +100,508,520 +24,897,876
+=150,304,272, ZERO differences. Each run has4post-upload borrow mutations,
+3held comparisons,>=2retained output deferrals and following actual atlas/FULL
+uploads. Scoped hostile PBO/row/skip/alignment/flip/premultiply restoration passes.
+This proves final composite RGBA, not raw R32F-bit identity. CPU staging bit
+checks and the separate manager standalone331,776,000 C-byte/T-bit comparisons
+cover their own stated scopes; no bus-byte/FPS claim follows from them.
+
+Full source Java8 game artifact (NO transplanted classes):
+output/builds/browser-overlay-rect-transport/game-923d-b0bec6/client.jar
+SHA256 bf2aebf5d3870c8c28b1896d5d16530c06cf62b856bdb29477c732786173e6eb.
+receipt.json/source-manifest.json there bind all Java and maintained frontend
+bytes individually to923d; clean build checkoutb0 is test-only different.710
+client-owned major52 classes; all generator contracts and2,265 animation PNG
+package hashes pass. singleProductionCommit:true, no production source mixture.
+
+Client-only game stages (worker started no processes and touched no DB/request):
+output/tests/browser-gameplay-spike/overlay-rect-static-review-1/
+repeatable-preparation.json:8206,existing staticbaseline2 TCP43649/WS43549.
+output/tests/browser-gameplay-spike/overlay-rect-combat-review-1/
+combat-preparation.json:8207,existing finalcombat TCP43639/WS43539.
+Each has url(row),urlDirect,urlPacked,urlFull,urlObserve with identical batchon,
+explicit spritekeylimbs=on, correct cache port, empty credentials and exact file
+hashes.8204/8205observe and8178GPU proof evidence remain preserved separately.
+Root verified the8207JAR/frontend and completed the first strict pair after180s
+warmup, two30s windows each, samebf2aeb artifact, batchon and preferred keyon:
+ROW51.1654 FPS vs PACKED53.3233 FPS (+4.2175%). All6 real damage/resource families
+advance. Packed logical/API/gathered bytes are about1.68-1.69MB/frame versus
+ROW4.1472MB; calls about11.7-11.9 versus2; measured packing about0.100ms/frame,
+zero new scratch allocations in timed windows. Manager evidence:
+root output/diagnostics/browser-frame-architecture/rect-combat-first-pair.json.
+This is one pair/order, not60FPS or a default-adoption conclusion. The separate
+331,776,000-byte/bit-checked standalone transfer reference is API/packing timing,
+not gameplayFPS, GPUtime or hardware bus traffic.
+
+Parent is next testing PACKED with modelbatchOFF then FULL/batchOFF to reverse
+order and assess ordinary preferred configuration. Those results are pending
+and belong in the manager follow-up; they do not prevent review of this private
+default-OFF implementation. No further worker runtime changes are planned.
+
+Known limits
+-------------
+Actual hardware/browser proof is this Firefox/Radeon setup, not a universal
+device performance guarantee. Dense/fragmented/uncertain layouts use existing
+row/FULL fallback. Eight rectangles cap driver calls but may over-upload versus
+fine sparse coverage. Staging limits describe owned retained/transient payload,
+not GC/driver memory. Final-composite GPU equality is separate from raw Float32
+packing bit preservation. The established affine C/T approximation is unchanged.
+There are no art/shader/gameplay changes, no additional per-frame JNI call and
+no retained Java/input views. Default/native/software behavior remains unchanged.
+
+withOverlayUnpack scopes row length/skip/alignment/PBO/flip/premultiply for BOTH
+planes. Scoped mode restores arbitrary incoming state; private explicitly
+owned mode establishes canonical state before initial uploads and on every
+inactive->active transition, then restores canonical state before other uploads.
+Default/observe owned-frame contract remains unchanged. No per-rectangle checks.
+
+Reuse the same plan and ACK owner, direct full RGB/T typed-array borrow, and
+bounded rectangle metadata; no packing or extra per-frame native call. Evaluate
+low rectangle-count limits and fixed coarsening before costly merging. Exact
+WebGL2 UNPACK_ROW_LENGTH/srcOffset state restoration, invalid-metadata zero-GL,
+held/opaque/retained/loading/resize/owner failures and alpha:true actual hardware
+pixel oracles at1x and2x+odd with follow-on uploads are required before acceptance.
+Khronos: srcOffset is typed-array ELEMENTS; ROW_LENGTH is pixels; a PBO must be
+unbound for client arrays. Existing pixel-store ownership must be extended
+explicitly; state leaks into later atlas/full uploads are unacceptable.
