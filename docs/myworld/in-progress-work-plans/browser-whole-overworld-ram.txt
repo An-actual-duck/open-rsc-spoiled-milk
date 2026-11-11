@@ -179,3 +179,53 @@ normal overlays/options/input, doors/trees and signed transitions, ordinary
 walking cadence plus steady completed-frame FPS/RSS/VRAM comparisons. All those
 hardware gates remain pending. The feature remains private explicit ON/default
 OFF regardless of these CPU results; no public/release action is authorized here.
+
+Roofs-hidden cook compatibility follow-up (2026-11-11)
+------------------------------------------------------
+The first integrated browser startup was rejected after GPU/source preparation.
+The exact captured console cause was "Whole-RAM CPU roof option mismatch": the
+cook bound hiddenRoofs=false, but the actual player had Config.C_HIDE_ROOFS=true.
+The exit0 message was the existing caught client-loop failure/close path, not
+proof of a format, memory, Java VM or GPU allocation failure. Root preserved
+startup-on-1 and startup-on-console-1 evidence. No engine change or player setting
+change was made in response.
+
+BrowserWholeRamBaker now accepts the OFFLINE-ONLY Java property
+ spoiledmilk.browserWholeRamCookHiddenRoofs=true|false (defaultfalse).
+It sets Config.C_HIDE_ROOFS after asset Context initialization and before any CPU
+recipe or query capture. Both classic picking grids and canonical CPU query
+geometry follow that mode; query build includes roof geometry iff roofs are
+shown. Coverage/elevation metadata still follows the original mode's production
+path. GPU catalog retains the full roofs and is unchanged. The existing WRP1
+schema and prepared.hiddenRoofs binding are unchanged; this is one explicitly
+matched variant per cook, not a silent player-option override or dual-mode cache.
+The startup refusal now prints expected and actual roof booleans with the action
+needed to bake matching CPU data.
+
+Frozen follow-up source4348fc295c3dbee7bd6b4ea76c4ca3dfcc6a5a7b:
+ output/builds/browser-whole-overworld-ram/source-roof-mode-5/receipt.json
+ JAR59bacb1f3aaf4a1a29fe1fa11d9c4e965abcd9dfb391641ff4103c5caf207521.
+Only BrowserWholeOverworldRam.class and BrowserWholeRamBaker.class differ from
+the prior source-final-4 artifact; all other976-class entries/game assets match.
+Bounded actual three-centre TRUE and FALSE cooks are preserved under
+ output/tests/browser-whole-ram-products/pilot-roof-{true,false}-5/.
+FALSE prepared data and SHA exactly match the prior FALSE pilot. TRUE retains
+4,949,076primitive bytes/224model templates and omits roof picking models and CPU
+roof triangles, as the original roofs-hidden pipeline does.
+
+Independent same-JAR original-vs-prepared TRUE66,148checks and FALSE64,417checks
+passed at2:12,2:13,3:13, including dynamic overlap/restoration, picking/order,
+actual lights, raw query geometry/normal/UV/material, collision/minimap/elevation,
+143²coverage and ownership isolation. TRUE query roof triangle counts are zero;
+FALSE counts68/342/36match literal outputs. Receipts in ai-3:
+ output/tests/browser-whole-ram/activation-roof-true-4348-1/result.json
+ output/tests/browser-whole-ram/activation-roof-false-4348-1/result.json.
+Own decoder suites also pass20,484checks for each mode on that exact JAR:
+ output/tests/browser-whole-ram-codec/20261111T223723Z/result.json (TRUE)
+ output/tests/browser-whole-ram-codec/20261111T223748Z/result.json (FALSE).
+
+Root must build fresh main/JAR/GPU data and cook CPU data with --hidden-roofs for
+the current private player, retaining the player's existing setting. The full
+TRUE cook, actual browser acceptance, memory and travel comparisons remain root
+hardware gates. All earlier FALSE CPU capacity figures remain explicitly FALSE
+measurements; they are not silently reused as full TRUE memory/performance proof.
