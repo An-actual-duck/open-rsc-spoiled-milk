@@ -35,6 +35,12 @@ def check_hash(value,label):
 def integer(value,minimum,maximum,label):
  if type(value)is not int or not minimum<=value<=maximum:refuse('Invalid '+label+' bounds')
  return value
+def typed_equal(actual,expected):
+ if type(actual)is not type(expected):return False
+ if isinstance(expected,dict):return actual.keys()==expected.keys()and all(typed_equal(actual[k],v)for k,v in expected.items())
+ if isinstance(expected,list):return len(actual)==len(expected)and all(typed_equal(a,b)for a,b in zip(actual,expected))
+ return actual==expected
+
 def safe_path(value):
  if not isinstance(value,str)or len(value)>512 or not re.fullmatch(r'[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*',value)or any(p in ['.','..']for p in value.split('/')):refuse('Unsafe source path')
  return value
@@ -71,12 +77,12 @@ def validate_source(directory,expected=None,verify_payloads=True):
  if not isinstance(assets,list)or [v.get('path')for v in assets]!=ASSET_PATHS:refuse('RAM external asset roster')
  for asset in assets:integer(asset.get('bytes'),1,16*1024*1024,'external asset bytes');check_hash(asset.get('sha256'),'external asset')
  scope=m.get('scope',{});expected_scope={'rawPackageFiles':1797,'rawTerrainSectors':1787,'rawPlacementSets':9,'preparedWorldSpace':'global','preparedLevel':0,'preparedRecipes':445,'preparedQueryLevels':[0,1,2],'preparedQueryCells':1330}
- if not isinstance(scope,dict)or any(scope.get(k)!=v for k,v in expected_scope.items()):refuse('RAM source/prepared scope contract')
+ if not isinstance(scope,dict)or any(not typed_equal(scope.get(k),v)for k,v in expected_scope.items()):refuse('RAM source/prepared scope contract')
  if not isinstance(m.get('settings'),list)or len(m['settings'])!=4:refuse('RAM packing settings')
  for x in m['settings']:integer(x,-2147483648,2147483647,'packing word')
  if expected:
   for key,value in expected.items():
-   if m.get(key)!=value:refuse('RAM binding mismatch: '+key)
+   if not typed_equal(m.get(key),value):refuse('RAM binding mismatch: '+key)
  b=m.get('sourceBundle');files=m.get('files')
  if not isinstance(b,dict)or b.get('path')!='source.bin'or b.get('headerBytes')!=16 or b.get('fileCount')!=1797 or b.get('rawBytes')!=46101718 or b.get('bytes')!=46101734:refuse('Complete RAM source bundle declaration')
  check_hash(b.get('sha256'),'bundle');bundle=directory/'source.bin'
@@ -113,13 +119,14 @@ def validate_source(directory,expected=None,verify_payloads=True):
  for r in files:
   reference=roster[r['path']]
   for key,value in reference.items():
-   if r.get(key)!=value:refuse('RAM source typed metadata mismatch: '+r['path']+':'+key)
+   if not typed_equal(r.get(key),value):refuse('RAM source typed metadata mismatch: '+r['path']+':'+key)
   if r['kind']=='terrain'and r['bytes']!=2304*(11 if r['encoding']=='raw-layered-sector-v2-u16'else 10):refuse('RAM terrain raw wire length')
  return m
 
 def validate_ram(directory,expected=None,verify_payloads=True):
  m=validate_source(directory,expected,verify_payloads);p=m.get('prepared')
  if m.get('complete')is not True or not isinstance(p,dict)or p.get('schemaVersion')!=1 or p.get('path')!='prepared.bin'or p.get('recipes')!=445 or p.get('queryCells')!=1330 or p.get('levels')!=[0,1,2]:refuse('Complete useful CPU preparation is required; raw source alone is not RAM ready')
+ if type(p.get('hiddenRoofs'))is not bool:refuse('Prepared CPU roof option binding')
  integer(p.get('bytes'),1,1536*1024*1024,'prepared bytes');check_hash(p.get('sha256'),'prepared data');integer(p.get('pageCount'),1,2147483647,'prepared page count');integer(p.get('modelTemplateCount'),0,2147483647,'model template count');integer(p.get('retainedPrimitiveBytes'),1,9007199254740991,'retained primitive bytes')
  file=Path(directory)/'prepared.bin'
  if file.is_symlink()or not file.is_file()or file.stat().st_size!=p['bytes']:refuse('Prepared CPU file bounds')

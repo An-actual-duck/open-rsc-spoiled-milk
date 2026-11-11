@@ -1,0 +1,85 @@
+Private full-overworld system-RAM delivery and staging
+===================================================
+
+This experiment is default OFF. wholeram=on requires the existing private
+wholezone=on, renderworker=on, benchmark WebGL coverage path with overlay delta
+OFF. Same-thread browser and desktop choices remain unchanged. This frontend
+and tooling work does not itself establish useful RAM residency or performance.
+
+Source delivery
+---------------
+The WRA1 source bundle preserves every byte of the selected paired package:
+1797 files, 46,101,718 payload bytes, 46,101,734 bytes including the header.
+The package fingerprint is
+7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc;
+the original manifest SHA256 is
+42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b.
+Canonical paths, contiguous offsets, all payload hashes, signed levels, world
+spaces and exact typed metadata are cross-checked against that manifest. All
+source is retained, including non-overworld dependencies; prepared useful data
+has the separately stated global L0/upper-dependency scope.
+
+The at-most-4 MiB index binds the exact client JAR, GPU catalog, four packing
+settings and five external Cache archives. Source-only delivery is explicitly
+incomplete. Complete preparation additionally requires a hash-bound WRP1 file
+(maximum 1536 MiB), 445 L0 activation recipes and 1330 query cells for levels
+0/1/2, a hidden-roof option binding, and positive prepared primitive storage.
+Java owns WRP1 interpretation and validates/installs the immutable provider;
+the Python validator proves delivery membership, bounds and hashes, not the
+semantic correctness of prepared pages/model templates.
+
+Tools
+-----
+- tools/browser-gameplay/whole-ram/source_bundle.py builds/validates raw source.
+- tools/browser-gameplay/whole-ram/bake.py launches one bounded headless CPU
+  baker from the exact clean-source JAR. A full cook is manager-only on the
+  integrated artifact commit and requires its matching complete GPU catalog.
+  It never substitutes classes or rebinds an old catalog to a new JAR.
+- scripts/browser-gameplay/prepare-whole-ram-client.py first requires the full
+  successful RAM receipt, matching GPU/client/settings/assets and exact files.
+  It prepares a NEW client stage without starting any service. RAM files are
+  listed only in bootstrap-whole-ram-files.txt; the ordinary bootstrap is byte
+  unchanged and RAM OFF never copies/opens that list. The three files are
+  linked when possible, otherwise copied and hash checked.
+
+The stager emits urlOn/urlOff with wholezone=on in BOTH and the same accepted
+private quality/optimization settings. Only wholeram changes. Files and stage
+receipts are declaration evidence, not runtime readiness.
+
+Readiness and memory
+--------------------
+Proof names are privatePolicies.wholeRam, wholeRamRequested,
+wholeRamDelivery, wholeRamJava and wholeRamResidency. The bounded 18-word Java
+receipt allows progress (zero counters before initialization, then full source
+with preparedReady=false). It requires exact full counts before preparedReady.
+The final primitive ledger must equal prepared.retainedPrimitiveBytes plus the
+46,101,734-byte source array. Split counters preserve unsigned low words.
+These are primitive-storage counts, excluding Java object headers, CheerpJ/VM,
+filesystem copies, temporary startup data, driver memory and process RSS.
+
+The initial LOGIN stays usable while initialization waits for a world/GPU
+catalog. WORLD loading remains covered until useful prepared Java data is
+ready. GPU readiness is separately tied to the exact same catalog; staged raw
+source or a GPU ready flag alone cannot claim CPU prepared readiness. Failed
+receipt validation clears CPU flags and blocks world presentation; disposal
+clears them too. Java independently owns atomic provider readiness and recovery.
+
+CPU gates
+---------
+- tests/myworld/test-browser-whole-ram.mjs: private policy dependencies, bounded
+  pending/source/prepared receipts, byte counters and malformed metadata.
+- tests/myworld/test-browser-whole-ram-staging.py: conditional delivery and
+  early refusal of incomplete/pilot data, wrong artifacts and non-integrated
+  full cooks, using explicitly non-executable synthetic test data.
+- node --experimental-vm-modules tests/myworld/test-browser-webgl-frontend.mjs
+  and --whole-ram: actual frontend mocked native/DOM path, usable LOGIN,
+  source-only WORLD cover and complete-ready release, plus inherited ordinary
+  input/layout/error/disposal contracts. No hardware proof is claimed.
+- Independent ai3 source delivery and Java prepared-data correctness tests are
+  separate evidence. The complete CPU capacity cook can validate this format
+  even when explicitly bound to an old GPU reference for CPU-only testing;
+  such data cannot be staged against a fresh artifact.
+
+Actual integrated fresh-source build/GPU bake/RAM cook, Firefox JNI readiness,
+continuous walking and measured performance/memory remain manager-owned gates.
+No browser, GPU, server, public deployment or release action is performed here.

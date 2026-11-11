@@ -13,9 +13,10 @@ export function wholeRamPolicy(mode,options){
 export function validateWholeRamConfig(c,gpu){
   if(!c||c.schemaVersion!==1||!gpu)throw new Error('Private prepared RAM catalogue is not staged');
   hash(c.manifestSha256,'manifest');hash(c.clientJarSha256,'client');hash(c.gpuCatalogSha256,'GPU catalogue');hash(c.sourceBundleSha256,'source bundle');hash(c.preparedSha256,'prepared payload');
-  integer(c.manifestBytes,1,4*1024*1024,'manifest bytes');integer(c.preparedBytes,1,WHOLE_RAM_PREPARED_MAX,'prepared bytes');integer(c.retainedPrimitiveBytes,1,Number.MAX_SAFE_INTEGER,'prepared primitive bytes');
+  integer(c.manifestBytes,1,4*1024*1024,'manifest bytes');integer(c.preparedBytes,1,WHOLE_RAM_PREPARED_MAX,'prepared bytes');integer(c.retainedPrimitiveBytes,1,Number.MAX_SAFE_INTEGER,'prepared primitive bytes');integer(c.retainedPrimitiveBytes+c.sourceBundleBytes,1,Number.MAX_SAFE_INTEGER,'expected runtime primitive bytes');
+  if(typeof c.hiddenRoofs!=='boolean')throw new Error('Whole RAM roof option binding');
   if(c.clientJarSha256!==gpu.clientJarSha256||c.gpuCatalogSha256!==gpu.manifestSha256||c.sourceBundleBytes!==WHOLE_RAM_BUNDLE_BYTES||c.rawFiles!==1797||c.recipes!==445||c.queryCells!==1330)throw new Error('Whole RAM source/client/GPU/prepared scope mismatch');
-  return Object.freeze({schemaVersion:1,manifestSha256:c.manifestSha256,manifestBytes:c.manifestBytes,clientJarSha256:c.clientJarSha256,gpuCatalogSha256:c.gpuCatalogSha256,sourceBundleSha256:c.sourceBundleSha256,sourceBundleBytes:c.sourceBundleBytes,preparedSha256:c.preparedSha256,preparedBytes:c.preparedBytes,retainedPrimitiveBytes:c.retainedPrimitiveBytes,rawFiles:1797,recipes:445,queryCells:1330});
+  return Object.freeze({schemaVersion:1,manifestSha256:c.manifestSha256,manifestBytes:c.manifestBytes,clientJarSha256:c.clientJarSha256,gpuCatalogSha256:c.gpuCatalogSha256,sourceBundleSha256:c.sourceBundleSha256,sourceBundleBytes:c.sourceBundleBytes,preparedSha256:c.preparedSha256,preparedBytes:c.preparedBytes,retainedPrimitiveBytes:c.retainedPrimitiveBytes,expectedRuntimePrimitiveBytes:c.retainedPrimitiveBytes+c.sourceBundleBytes,rawFiles:1797,recipes:445,queryCells:1330,hiddenRoofs:c.hiddenRoofs});
 }
 function bytes(lo,hi){const value=(lo>>>0)+hi*4294967296;return Number.isSafeInteger(value)?value:null;}
 export function decodeWholeRamWork(input,requested){

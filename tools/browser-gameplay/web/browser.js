@@ -115,7 +115,7 @@ const natives = {
   Java_orsc_BrowserWebGLBridge_loadingWork:loadProfileCollector.report,
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,
   Java_orsc_browser_BrowserBootstrap_reportWholeRamWork(lib,input){
-    try{window.browserProof.wholeRamJava=decodeWholeRamWork(input,wholeRam.requested);}
+    try{const value=decodeWholeRamWork(input,wholeRam.requested);if(wholeRam.enabled&&value.preparedReady&&wholeRamCatalogConfig&&value.retainedPrimitiveBytes!==wholeRamCatalogConfig.expectedRuntimePrimitiveBytes)throw new Error('Whole RAM retained primitive ledger differs from staged complete preparation');window.browserProof.wholeRamJava=value;}
     catch(error){window.browserProof.wholeRamJava={requested:wholeRam.requested,sourceReady:false,preparedReady:false,error:String(error).slice(0,512)};window.browserProof.wholeRamError='Prepared RAM diagnostics rejected: '+String(error).slice(0,512);updateWorldCover();throw error;}
     updateWorldCover();
   },
