@@ -1,4 +1,4 @@
-Browser immutable terrain query index (ACTIVE experimental pilot)
+Browser immutable terrain query index (READY private experimental pilot)
 ================================================================
 
 Private WebGL benchmark terrainquery=on maps to
@@ -32,10 +32,67 @@ periodic benchmark observation. Metadata getters are immutable; no query is
 instrumented. Missing old-candidate support retains original diagnostics.
 window.browserProof.terrainQueryIndex exposes that current path evidence.
 
-Required proof pending: frozen baseline/on/off outputs and exceptions for all
+Required proof: frozen baseline/on/off outputs and exceptions for all
 protocols3–10, scalar/batch/Tile getters, signed coordinates and int edges, every
 chunk divisor, mixed-size overlap/void first-match, source/roster immutability,
 constructor acceptance and merge/extraction identity. Independent review owns a
 separate reference oracle. Full-source game build/class/asset/frontend parity
 and actual browser policy/eligibility/FPS acceptance follow correctness proof.
 No GPU/server processes started by this worker. No speedup/adoption claim.
+
+Correctness and startup proof (CPU only)
+---------------------------------------
+Exact runtime checkpoint e730f8582bdf3bfb872f81890b1e51a599a4b445 passed
+independent frozen baseline/candidate OFF/ON output and exception comparisons.
+Candidate runs checked 481,836 assertions across 123,660 queries; independent
+baseline checked 479,368 assertions. Frozen snapshot hash is identical:
+841c45f6fef28b7da6022cfe66b9dbcb3ade1171d196246f6f24807fe7621a5a
+Independent evidence (ai2):
+output/tests/browser-terrain-query-independent/20261111T101338281014Z/result.json
+The oracle uses its own ordered long-bounds reference, not candidate covers().
+It covers all-slot/mixed/overlapping/void eligibility, protocols3–10, negative
+and extreme24/48 window centers, every divisor and MAX_VALUE upper endpoint
+(size16), scalar/Tile/batch behavior, input/payload/Tile ownership, merge/inner
+extraction, acceptance and exception outcomes.
+
+Own Java compilation, private/default controls and mocked frontend passed.
+TerrainQueryDiagnosticsFixture passes ON/OFF, confirming actual static policy,
+unloaded/current uniform/mixed snapshots, original region prefix, absent old
+candidate and owner changes. Persisted ai1 evidence:
+output/tests/browser-terrain-query-index/e730/result.json
+Test-only checkpoint46c00c29a18936816b9a372b3de42af90f24edd2 has identical
+production content to runtimee730. No per-query diagnostics were introduced.
+
+Frozen full-source artifact and client-only stages
+-------------------------------------------------
+Clean full Java8 source46c00c29a18936816b9a372b3de42af90f24edd2, no class
+transplants:
+output/builds/browser-terrain-query-index/game-proof-1/client.jar
+SHA256 75c349ae9836fb07cf9189d29abe2509a970470f5015beea4378256788d7bff6
+Receipt, source/class manifests, build log and baseline-comparison.json are
+adjacent. Compile output948 classes(658orsc+290com), all Java8 and byte-matched
+to JAR entries. Exact same2030 total class-entry set as frozenbf2aeb; ONLY
+NativeLayeredTerrainChunk and NativeLayeredTerrainSnapshot class bytes differ.
+All2265 maintained animation PNGs and eight renderer/native-upload/shader/state
+modules match the previous actual-GPU-tested artifact/stage bytes exactly.
+No graphics/native upload signature changes are part of this candidate.
+
+CombatHTTP8212:
+output/tests/browser-gameplay-spike/terrain-query-index-combat-review-1/combat-preparation.json
+  Existing final combat server TCP43639/WS43539.
+StaticHTTP8213:
+output/tests/browser-gameplay-spike/terrain-query-index-static-review-1/repeatable-preparation.json
+  Existing repeatable server TCP43649/WS43549.
+Receipts include matched url/urlOff with terrainqueryON/OFF, key limbs ON,
+modelbatchON, full overlay/overlaydeltaOFF/overlayrectOFF. The worker created
+only client stages; no server/DB/request/process was changed or started.
+All prior frozen artifacts/stages remain untouched.
+
+Acceptance limits
+-----------------
+READY for review of the default-OFF private prototype. Independent source/test
+review branch is separate from implementation. Actual browser startup policy,
+loaded eligibility/dimension/protocol, gameplay/region correctness and matched
+FPS plus old-artifact OFF comparison remain root-owned acceptance steps.
+No performance forecast, gain, default adoption or60FPS claim is made. The
+measured source-profile boundary motivates this experiment, not its outcome.
