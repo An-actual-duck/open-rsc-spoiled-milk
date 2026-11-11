@@ -45,7 +45,10 @@ eligible models are queued; before dirty/unsupported/null/proxy models Scene
 flushes previous packets and executes the original rotate and interaction-only
 scan in their original order. The last packet is flushed before m_T's unchanged
 literal transform and before all consumers of projected model arrays. finally
-clears packet references on success, fallback and failure. There is no new
+clears packet references on success, fallback and Java-visible failure. A
+fatal native JavaScript thread stop is not proven to unwind Java finally;
+such a failed private session must be torn down. Application JS still retains
+no borrowed references. There is no new
 cross-thread source-mutation contract; the packet is render-thread-owned.
 
 A packet contains at most 128 model references, 8 existing primitive-array
@@ -173,3 +176,16 @@ The workspace-layout check still reports inherited unclassified output-root
 entries and the legacy assets/sprites directory. New writers use declared
 output categories; inherited ignored data was preserved. The check log is
 output/builds/browser-batched-model-kernel/source-ab3e662a2/layout-check.log.
+
+Startup observer correction
+---------------------------
+The first actual game ON attempt exposed an observer startup bug: mudclient
+exists before its Scene, but the new optional work observer dereferenced Scene
+unconditionally. The observer now captures Scene once, omits work receipts
+until it exists, and retains explicit errors for absent/invalid ready getters.
+It does not report the candidate enabled before an actual Scene is available.
+The startup fixture executes requested/disabled pre-Scene, ready, replacement,
+missing/wrong-type/short/null counters and failing-getter paths. The tools suite
+also checks that all observer Scene reads use a single captured reference.
+The kernel, packet arithmetic and client classes are unchanged by this fix;
+previous immutable stages and failed manager evidence remain preserved.

@@ -168,14 +168,17 @@ public final class BrowserBootstrap {
                                 report("input-state:"+login.getInt(client)+":"+actual.mouseX+":"+actual.mouseY+":"+actual.screenOffsetX+":"+actual.screenOffsetY+":"+actual.getGameWidth()+":"+actual.getGameHeight());
                             }
                             if(Boolean.getBoolean("spoiledmilk.browserProfile"))reportTelemetry(orsc.BrowserTelemetryData.names(),orsc.BrowserTelemetryData.snapshot());
-                            reportLoop(String.valueOf(loopField.get(client)),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isEarlyResidentFaceCullEnabled(),((orsc.mudclient)client).getScene()!=null&&((orsc.mudclient)client).getScene().isBrowserFullResidentOwnershipEnabled());
+                            // The client exists before its Scene during startup. Capture once so
+                            // every optional Scene observation sees the same lifecycle state.
+                            orsc.graphics.three.Scene observedScene=((orsc.mudclient)client).getScene();
+                            reportLoop(String.valueOf(loopField.get(client)),observedScene!=null&&observedScene.isEarlyResidentFaceCullEnabled(),observedScene!=null&&observedScene.isBrowserFullResidentOwnershipEnabled());
                             if(webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
-                                if(!modelPickReported && ((orsc.mudclient)client).getScene()!=null) {
+                                if(!modelPickReported && observedScene!=null) {
                                     reportModelPickBounds(Boolean.getBoolean("spoiledmilk.browserModelPickBounds"),
-                                        ((orsc.mudclient)client).getScene().isBrowserModelPickBoundsEnabled());
+                                        observedScene.isBrowserModelPickBoundsEnabled());
                                     modelPickReported=true;
                                 }
-                                if(!candidatePoliciesReported&&((orsc.mudclient)client).getScene()!=null) {
+                                if(!candidatePoliciesReported&&observedScene!=null) {
                                     String[][] policies={{"geometryTransfer","spoiledmilk.browserGeometryTransferReuse","orsc.BrowserWebGLBridge","isGeometryTransferReuseEnabled"},
                                         {"regionPreparation","spoiledmilk.browserRegionPreparation","orsc.graphics.three.World","isBrowserRegionPreparationEnabled"},
                                         {"descriptorWriting","spoiledmilk.browserResidentDescriptorWriting","orsc.mudclient","isBrowserResidentDescriptorWritingEnabled"},
@@ -187,20 +190,17 @@ public final class BrowserBootstrap {
                                         if(requested&&!actual[0])throw new IllegalStateException("Requested candidate is absent from this fixture JAR: "+policy[0]);
                                     }
                                     boolean projectionRequested=Boolean.getBoolean("spoiledmilk.browserSceneryProjectionWork");
-                                    boolean[] projectionActual=BenchmarkCandidatePolicies.inspectInstance(((orsc.mudclient)client).getScene(),"isBrowserSceneryProjectionWorkEnabled");
+                                    boolean[] projectionActual=BenchmarkCandidatePolicies.inspectInstance(observedScene,"isBrowserSceneryProjectionWorkEnabled");
                                     reportCandidatePolicy("sceneryProjection",projectionRequested,projectionActual[0],projectionActual[1]);
                                     if(projectionRequested&&!projectionActual[0])throw new IllegalStateException("Requested candidate is absent from this fixture JAR: sceneryProjection");
                                     boolean batchRequested=Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel");
-                                    boolean[] batchActual=BenchmarkCandidatePolicies.inspectInstance(((orsc.mudclient)client).getScene(),"isBrowserBatchedModelKernelEnabled");
+                                    boolean[] batchActual=BenchmarkCandidatePolicies.inspectInstance(observedScene,"isBrowserBatchedModelKernelEnabled");
                                     reportCandidatePolicy("batchedModelKernel",batchRequested,batchActual[0],batchActual[1]);
                                     if(batchRequested&&!batchActual[0])throw new IllegalStateException("Requested candidate is absent from this fixture JAR: batchedModelKernel");
                                     candidatePoliciesReported=true;
                                 }
-                                if(Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel")) {
-                                    Object batchWork=((orsc.mudclient)client).getScene().getClass().getMethod("getBrowserBatchedModelKernelWork").invoke(((orsc.mudclient)client).getScene());
-                                    if(!(batchWork instanceof int[])||((int[])batchWork).length!=14)throw new IllegalStateException("Invalid batched model work getter");
-                                    reportBatchedModelWork((int[])batchWork);
-                                }
+                                int[] batchWork=snapshotBatchedModelWork(observedScene,Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel"));
+                                if(batchWork!=null)reportBatchedModelWork(batchWork);
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
                                 reportRegionPreparationDiagnostics(regionCounts!=null,regionCounts==null?new double[0]:regionCounts);
@@ -216,6 +216,14 @@ public final class BrowserBootstrap {
             }
         }, "Private browser proof observer");
         observer.setDaemon(true); observer.start();
+    }
+
+    /** No receipt until Scene exists; a missing/invalid getter after startup stays fatal. */
+    static int[] snapshotBatchedModelWork(Object scene,boolean requested) throws ReflectiveOperationException {
+        if(!requested || scene==null)return null;
+        Object work=scene.getClass().getMethod("getBrowserBatchedModelKernelWork").invoke(scene);
+        if(!(work instanceof int[])||((int[])work).length!=14)throw new IllegalStateException("Invalid batched model work getter");
+        return (int[])work;
     }
 
     static int privateFixturePort(String fixture) {
