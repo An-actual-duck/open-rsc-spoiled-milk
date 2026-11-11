@@ -9,8 +9,8 @@ The manager runs Firefox; the preparer starts no HTTP, browser or server.
 
 The first immutable stage freezes producer 88af6b08ebc1d50fab86bec34ef4461fcf42631b,
 reference main 58c61d98562e287c6e35a6056009cbe81c6d3464, and this oracle fc2b52509.
-Stage: output/tests/browser-render-worker-oracle/worker-pixels-88af-fc2b-1/
-Receipt: stage.json; source gate: source-gate.log (110 checks PASS, CPU only).
+Current stage: output/tests/browser-render-worker-oracle/worker-pixels-88af-2463-2/
+Receipt: stage.json; source gate: 111 checks PASS, CPU only.
 The receipt binds every served module, native Java input, shader and sky file.
 Exact main58 Shader/Scene/GraphicsController/Sky sources are freshly compiled
 against the manager-approved dependency JAR SHA256
@@ -81,7 +81,9 @@ node tests/myworld/test-browser-render-worker-oracle-source.mjs STAGE_DIRECTORY
 
 The manager starts the stage.json httpCommand, opens its URL in isolated Firefox,
 and preserves window.renderWorkerProof with hardware/session/source receipts.
-Existing stages refuse overwrite. Hardware execution remains pending until the
-manager records its result. No game FPS, responsiveness, input or performance
+Existing stages refuse overwrite. The first stage selected the game JAR-gated serve.py and failed before any GPU
+execution. Its stage and manager failure logs remain preserved. The second stage
+uses python3 -m http.server, bound to loopback; all served bytes are unchanged.
+Hardware execution remains pending until the manager records its result. No game FPS, responsiveness, input or performance
 improvement follows from a pixel equality pass; those require the private game
 integration and completed-Worker metrics with the same visual workload.

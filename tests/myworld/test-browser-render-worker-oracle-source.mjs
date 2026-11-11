@@ -1,6 +1,7 @@
 import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import {pathToFileURL}from'node:url';import crypto from'node:crypto';
 const run=path.resolve(process.argv[2]||'');const receipt=JSON.parse(fs.readFileSync(path.join(run,'stage.json'),'utf8')),web=path.join(run,'web');let checks=0;
 function check(v,m){checks++;assert.ok(v,m);}const read=p=>fs.readFileSync(path.join(web,p),'utf8'),sha=p=>crypto.createHash('sha256').update(fs.readFileSync(path.join(web,p))).digest('hex');
+check(JSON.stringify(receipt.httpCommand)===JSON.stringify(['python3','-m','http.server',String(receipt.port),'--bind','127.0.0.1','--directory',web]),'Standalone static stage must not use game JAR-gated server');
 for(const [name,digest]of Object.entries(receipt.webFileSHA256))check(sha(name)===digest,'Frozen web source hash '+name);
 for(const name of ['browser-overlay.js','browser-lighting.js','browser-sky.js','browser-sprite-atlas.js','browser-owned-state.js','browser-color-frustum.js','browser-retained-frame.js','browser-physical-output.js','browser-world-ready.js','browser-upload-validation.js','browser-middle-mouse.js','browser-display.js','browser-display-modes.js','session.js','browser-world-cover.js'])check(read(name)===read('original/'+name),'Backend/shader/input quality drift '+name);
 const candidate=read('webgl.js'),baseline=read('original/webgl.js');check(candidate.replace('options.outputSizer||','').replace('measuredOutput?.devicePixelRatio||','')===baseline,'WebGL backend changed beyond explicit metrics injection');
