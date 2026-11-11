@@ -1,0 +1,53 @@
+Offline literal reference result, 2026-11-11
+===========================================
+PASS:307 ordered packets,334 state/rejection checks,1,768,934 exact C-int/T-raw-
+Float32 words. All five actual jf fonts, source-backed original clipping and
+shadow/glyph/alpha ordering, every alpha0..256, AA thresholds, signed colors,
+odd widths/clipped boundaries and a patterned C/T prelude are included.
+
+Raw generated corpus/oracle/provenance/proof:
+/home/justin/Core-Framework-ai-3/output/tests/browser-overlay-command-reference/literal-2/
+prepare.py records exact original GraphicsController/method/archive hashes and
+copies actual WorldOverlayCoverage/Delta source. The runtime kernel in this run
+is checkpointbfba6a0d9, unchanged by the following proof-selector correction:
+adding the patterned prelude moved op[1] from glyph to alpha; invalid source tests
+were corrected to explicitly select the final glyph. That was a test-fixture
+selection failure; exact Java/JS C/T comparisons had already passed. Literal-1
+pre-pattern evidence is preserved. No production source was modified.
+
+Validation rejects malformed source/destination/unsupported op/order/token/budget,
+shared-memory inputs and late unsupported operations without changing either
+plane or committed packet token. Post-call source mutation cannot alter output.
+This remains an isolated owned-source copy policy; it is not a verified game
+array-borrow callback, complete writer journal or ACK/held-frame implementation.
+
+Fresh packed-profile source attribution is in PROFILE.txt and its local analysis
+folder. It supports evaluating conservative transport marking scopes first,
+then a synchronous whole-TEXT callback only if actual per-call cost supports it.
+The full one-frame packet still needs complete coverage before suppressed writes.
+No benchmark, native callback, browser/GPU/server process, default or gameplay
+change was made by this worker. Node/JVM correctness is not browser performance.
+
+Reproduction: CONTRACT.txt lists preparation,javac,Java and Node commands. The
+prepare script refuses an existing output directory. A small isolated compile
+is sufficient; no full client build is needed. git diff --check and JS syntax
+checks passed. Workspace layout still reports40 pre-existing ignored legacy
+output-root entries; new evidence uses declared tests/diagnostics categories.
+
+Current published-source compatibility follow-up
+------------------------------------------------
+The initial reference base preceded rectangle transport. prepare.py now accepts
+explicit --source-root as read-only input and copies/hashes optional
+WorldOverlayTileTracker.java when present. Revised javac compiles all prepared
+.java files, with no automatic unknown dependency stubs. Main-source compatibility
+was rerun at c7ed5960abf0bc6a514852b998151b7a5856a6fc from /home/justin/Core-Framework:
+307 packets/334 checks/1,768,934 exact C/T words PASS. This includes compiling the
+current tracker dependency; transport properties remain default OFF in this
+literal arithmetic oracle, so it is not rectangle-protocol execution coverage.
+
+Canonical generated evidence:
+/home/justin/Core-Framework-ai-3/output/tests/browser-overlay-command-reference/published-main-literal-1/
+provenance.json records exact input root/commit/dirty status entries, original
+GraphicsController/archive/method and all three dependency hashes. Manager's
+unrelated dirty files were only inventoried, never edited. Do not relabel this
+as a clean full-game build. All compilation/execution uses copied test sources.

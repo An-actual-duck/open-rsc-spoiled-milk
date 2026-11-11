@@ -1,0 +1,155 @@
+Ordered overlay command reference v1: isolated proof, not game adoption
+=====================================================================
+Owner/scope
+-----------
+Core worker ai3, manager-approved isolated Java-versus-JS reference. No actual
+game bridge, callback, runtime property/default, native renderer, browser, GPU,
+server or gameplay changes. Production world actors/atlas already GPU-owned;
+this proposal concerns remaining ordered CPU overlay pixel arithmetic and C/T.
+Performance and default decisions remain manager-owned.
+
+Existing capture is NOT an adequate complete-frame packet
+---------------------------------------------------------
+GraphicsController.java:584 skipUnusedBrowserCommands suppresses non-SCENE
+capture when browserFramePreparationActive. Native UI replacement:565 explicitly
+excludes worldOverlayCoverageEnabled. createRenderer2DTextGlyphCommand:802 rejects
+AA and clipped-edge glyphs; actual plotCharacter:1463 clips/renders both. Primitive
+replacement:644 returns false; primitive/circle capture rejects interlace. Raw
+pixel writes, minimap, gradient, blur, clears/fades and direct pixelData escape
+need an explicit coverage audit, not an assumption from accepted commands.
+Renderer2DFrame.java:49/180 keeps separate command-type arrays with sequence
+numbers; those preserve order only for captured commands, not all literal writes.
+
+Deferring glyphs/alpha until end-of-frame while later Java writers blend/read the
+old framebuffer is incorrect. Late eligibility cannot recover missing prior
+pixels. Do not rerun UI construction for fallback: it can change game/UI state.
+A one-packet production frame requires complete ordered writer/read/source-state
+journal, pure whole-frame preflight, and either literal operation replay or an
+already correct whole-frame fallback chosen BEFORE suppressing mutations. An
+independent proven segment/suffix is another boundary, not implicit coverage.
+This v1 reference does not solve complete-journal discovery.
+
+Isolated v1 packet
+-------------------
+createRaster(width,height) owns hidden Int32 C / Float32 T planes. No renderer or
+Java array is retained. apply(packet) makes bounded owned copies of non-shared
+source byte views and scalar command metadata, validates the COMPLETE packet,
+then executes synchronously. Snapshot returns copies only. SharedArrayBuffer is
+rejected. Sources may alias each other in caller storage: independent ingress
+copies remove mutable aliases. Source/output alias is rejected; hidden output
+storage cannot escape via the public API. Copies are reference policy, not a
+claim that per-frame source copying is an efficient final ownership protocol.
+A future production source-ID publication design needs its own mutation proof.
+
+schema1, fixed width/height, safe nonnegative increasing generation+sequence;
+<=2^21 output pixels,<=128 source views,<=8MiB source bytes,<=8192 commands and
+<=2^24 raster work pixels. Exactly one first CLEAR sets C0/T1; later CLEAR and
+unsupported operations reject. Each operation order equals its packet index.
+GLYPH carries resolved source/destination heads, positive width/height, source/
+destination row gaps, signed32 color and AA flag. ALPHA carries destination head,
+width/height/row gap, signed32 color and integer alpha in ORIGINAL [0,256] range.
+Neither standard GL blending nor new text/font/layout parsing runs in JS.
+
+Validation checks every source/destination row range, bound, type, byte/work
+budget, order and token before either plane/token changes. Source copies and
+metadata snapshots prevent changes between preflight and execution. Rejected
+packets leave exact C/T/token unchanged; test this after valid writes and after
+an otherwise-valid prefix followed by an unsupported op. Unexpected fatal process
+or allocation failure during execution is not a proved rollback transaction.
+Unvalidated legacy malformed inputs can cause partial writes before legacy catches;
+v1 deliberately excludes them rather than claiming to reproduce those side effects.
+
+Literal arithmetic
+-------------------
+Use Java signed32 arithmetic via bitwise operations/Math.imul. Preserve exact
+shift/rounding order per operation; retain the original drawBoxAlpha 0xffc4 green
+mask even if it looks unusual. Non-AA glyph nonzero byte writes signed32 color
+and T0; zero bytes write nothing. AA <=30 writes nothing,>=230 writes opaque;
+intermediate bytes blend original packed channels and multiply Float32 T by
+(256-alpha)/256 with Math.fround at Java float boundaries. GL alpha blending is
+not an equivalent substitute. Signed font-byte headers and original clipRight/
+clipBottom off-by-one policy are retained by independent corpus preparation.
+Reference kernel takes resolved spans; extracted literal Java plotCharacter
+performs its own original clipping, checking the resolved-span preparation too.
+
+Proof corpus and provenance
+----------------------------
+prepare.py reads local Client_Base/Cache/video/library.orsc, decodes its existing
+container, extracts actual h11p/h12b/h12p/h13b/h14b jf bytes with hashes. Generated
+corpus/output remains under declared output/tests; no new assets are packaged.
+The optional --source-root selects a read-only Core source/cache input, defaulting
+to this checkout. Commit, dirty status entries, archive/method/source hashes and
+every copied dependency hash are recorded; a dirty input is never called a clean
+commit build. It extracts exact source methods plotCharacter, plotLetter, plotLetterAntialiased,
+drawBoxAlpha into a small Java class. Coverage and delta files are byte copies
+of actual source; WorldOverlayTileTracker is also copied when present, preserving
+current rectangle-transport compile dependencies. Coverage callbacks use actual
+WorldOverlayCoverage behavior. No unknown dependency/stub is auto-generated:
+future source changes requiring new helpers fail compilation for explicit review.
+Only UI capture/error helper adapters are stubbed; native/game runtime is not
+built. Method/source/archive hashes are recorded. This is a real font DATA corpus
+with constructed command sequences, NOT a recorded gameplay-frame corpus.
+
+Cases cover all five fonts, overlapping shadow/glyph/alpha order, clipped edges,
+odd widths, signed colors, full-range alpha0..256, byte thresholds0/30/31/229/230/
+255, patterned C/T prelude and real font rows. Compare every C int and every T
+raw float bit, not approximate color hashes. Invalid source/op/order/budget/token/
+shared-buffer cases must reject without writes. Mutation after apply must not
+change retained output. This does not prove unsupported interlace/fade/blur,
+exceptions, complete frame coverage, transport ACK/holds or actual browser ABI.
+No performance claim follows from Node/JVM arithmetic equivalence.
+
+Smaller synchronous whole-TEXT-call alternative (not implemented)
+----------------------------------------------------------------
+GraphicsController.drawColoredString:2998 builds Renderer2DTextPlotCommand list,
+draws crown/inline icons during parsing, then:3248 executes every shadow/glyph in
+one final loop. One synchronous callback replacing only that loop can borrow the
+ACTUAL current Java C/T arrays, apply all already-resolved glyphs and return before
+subsequent Java draws. That preserves current interleaving without a full frame
+journal. It must use a genuinely synchronous native ABI and retain nothing.
+
+Java can conservatively mark transport DIRTY bounds afterward, but must NOT call
+opaqueSpan/T0 on entire boxes: holes retain prior T. Need exact supported-writer
+receipt setting Coverage written/owner/generation/sequence coherently, validating
+both planes and metadata before mutation, per-glyph T updates inside callback,
+and unchanged fallback if unsupported BEFORE entry. It cannot silently defer a
+callback or split image ownership. Complete-frame design remains the main larger
+boundary; this is a narrower possible pilot, not a relaxed correctness condition.
+
+Measure actual callback cost before adoption: typical text labels can be numerous,
+so one call per text can lose to one frame packet despite faster pixel loops.
+Require actual CheerpJ synchronous ABI probe and game C/T differential corpus,
+then matched full-frame timing. No per-call cost evidence exists in this v1 work.
+
+Reproduce offline (CPU window required; no full client build)
+------------------------------------------------------------
+python3 tools/browser-gameplay/overlay-command-reference/prepare.py --source-root CORE_READ_ONLY_INPUT --output NEW_TEST_RUN
+javac -d NEW_TEST_RUN/classes NEW_TEST_RUN/*.java
+java -cp NEW_TEST_RUN/classes orsc.graphics.two.LiteralOverlayReference NEW_TEST_RUN/input.bin NEW_TEST_RUN/expected.bin
+node tools/browser-gameplay/overlay-command-reference/proof.mjs NEW_TEST_RUN
+Preparation refuses existing output. Choose NEW_TEST_RUN under declared tests
+category via scripts/workspace-layout.py. Scope remains isolated/offline reference.
+
+Even smaller transport-only writer scope (source review; not implemented)
+-------------------------------------------------------------------------
+Packed profile shows the mark/tracker/beforeWrite/supported chain separately from
+literal T arithmetic. A private glyph/alpha loop can premark its proven clipped
+rectangle ONCE for transport, while preserving every literal pixel C/T update.
+This differs from opaqueSpan: holes retain their actual T, with conservative
+transfer dirtiness only. Validate source/destination long ranges and owner/size/
+generation/sequence/pending-plan state BEFORE enabling scope and before writing.
+If bounds cannot be proved, use the ordinary path; don't extend the admitted
+legacy malformed-input domain. Premark before loops so legacy partial writes
+on exception are still covered. Reject nested scopes; clear in finally/reset.
+No callbacks, escaped scope or hidden writes outside the rectangle are allowed.
+Every other writer retains ordinary marking. A detected unsupported/outside write
+must invalidate partial transport/history and use full fallback. Coverage.written,
+validity and per-pixel T ownership semantics must remain unchanged. Do not clear
+T over the scope or accidentally advance GPU ACK history from premarking.
+
+Candidate proof must compare exact C/T, acknowledged CURRENT touch history,
+held/unsubmitted frames, pending declarations, owner/size resets, exception
+prefixes and nested/unsupported writes; bound lifetime across the actual literal
+method. Benchmark actual per-pixel branch cost and conservative uploaded area:
+removing marker calls can enlarge transfer rectangles or add a new hot branch.
+This can be tested before the native TEXT callback, without a native ABI change.
