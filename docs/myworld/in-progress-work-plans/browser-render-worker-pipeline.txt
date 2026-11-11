@@ -83,5 +83,50 @@ CPU proof
 - Initial full build invocation lacked system ant; failed prebuild log retained.
   Repository vendored Ant with Java8 full source build succeeded3seconds.
 
-Status: ACTIVE; actual GPU exact replay and gameplay acceptance still pending.
+Status: ACTIVE; actual GPU exact replay passed, gameplay/FPS acceptance pending.
 No adoption/performance/60FPS claim. All prior rejected experiments preserved.
+
+Final candidate and hardware pixel gate
+- Final runtime a10f96234dbe7556565dc31301cd6a3a5bc6d5a5. Main frontend
+  loading gate waits for a completed frame with actual Worker javaWorldFrames>0
+  and ready phase, not a queued declaration/held/LOGIN-image ACK. Dedicated
+  worker frontend mock exercises all those transitions and default OFF path.
+- Returned pool now evicts cold oldest size buckets and refreshes recency on
+  both acquisition/release; cold startup geometry cannot permanently exclude
+  hot C/T planes. CPU facade23checks include cold16MiB→hot2MiB→reuse plateau.
+- Full-source Java8 build: game-65-review-3, JAR
+  49bc1f7d78d4022eca6399afd15acc1a7ee226ae67cf1b10c183e39ec7f56e08.
+  Source65ba35fadbd131e670619575f799f6f08d2e6eb5, Java/Bootstrap/runtime-contract
+  byte-identical to finala10 (no Java renderer edits in this task). 950 compiled
+  classes =660orsc+290com; 3185 packaged runtime asset files exact, no transplants.
+  Receipt output/builds/browser-render-worker-pipeline/game-65-review-3/receipt.json.
+  Classmanifest933b9442ccfed6f47f676864ac3e74b1acdff2e4474e745e507f06aa6b34258d;
+  assets448c122a2af5c9e12dc02765753313de96502d4d50dde2eedbf45af73b5a9dba.
+- Final immutable client-only stage3:
+  output/tests/browser-gameplay-spike/render-worker-combat-review-3/
+  combat-preparation.json. Frontend exacta10, HTTP8217, existing final combat
+  TCP43639/WS43539; explicit modelbatch/terrainquery/keylimbs ON, fullC/T and
+  overlaydelta/rect OFF. Same-JAR renderworker ON/OFF URLs. Old88 stage1 and
+  frontendf1 stage2/builds/receipts preserved. No server/DB/request change.
+- Manager actual Firefox154.0.1 / AMD RadeonR9 200 hardware oracle PASS exacta10:
+  50 cases, 27,915,808 RGBA bytes compared across original58 backend, candidate
+  main and actual OffscreenCanvas Worker: ZERO changed bytes; errors[]. Cases
+  include physical1843x1037, odd/DPR2 sizes, null opaque T, resource/atlas epochs,
+  borrowed caller mutations and EVERY returned-buffer overwrite followed by
+  draw without unchanged resource resend. Confirmed Worker disposal ledger:
+  disposed true, gpuBytes0, spriteResourceBytes0. Recorded 83 completed frame
+  packets including32 warmframes,166 command packets,1180 buffers returned,
+  1062 reused; all22,377,760 returned bytes overwritten by oracle. These are
+  controlled hardware functional counters, NOT gameplay/JNI/FPS/scanout proof.
+- Manager evidence directory (not created/modified by this worker):
+  output/diagnostics/browser-frame-architecture/render-worker-gpu-4/
+  actual.json SHA256
+  9c07d4330eae2d5d5acf7966ec675bf62530f92cc0ab07edc926788840fc1f2f
+  receipt.json SHA256
+  f7caad14e54009abc93f6cc1f37859a6c5fb1d717650cbfe8c087a3f980af7a3
+- completedFrames transport counter includes held terminal packets. Gameplay
+  FPS must use actual Worker gpu.javaWorldFrames (or javaFrames for all actual
+  present calls), with held/drop/age/resource counters reported separately.
+  Completion means original backend execution/submission, not GPU scanout.
+
+No adoption/performance claim yet. Root owns actual private gameplay/paired FPS.
