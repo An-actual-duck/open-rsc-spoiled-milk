@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "account": "browserdemo",
+  "origin": [111, 625, 0],
+  "scope": "Provisional authored-route candidate from previous successful walk. Initial setup teleport is excluded. Revalidate walkability and calibrate original logical clicks on current map before --drive. Without clicks the helper passively observes manual walking.",
+  "legs": [
+    {"target": [111, 624, 0]},
+    {"target": [111, 623, 0], "expectTransition": true},
+    {"target": [111, 624, 0], "expectTransition": true},
+    {"target": [111, 625, 0]},
+    {"target": [111, 624, 0]},
+    {"target": [111, 623, 0], "expectTransition": true},
+    {"target": [111, 624, 0], "expectTransition": true},
+    {"target": [111, 625, 0]}
+  ]
+}

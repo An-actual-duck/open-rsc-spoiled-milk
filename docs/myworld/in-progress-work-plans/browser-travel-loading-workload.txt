@@ -1,0 +1,363 @@
+Browser walking-transition measurement workload
+==============================================
+
+Purpose and authority
+---------------------
+This test-only branch isolates frequent walking stalls before choosing a new
+packing/upload architecture. It changes no renderer, server, route packet,
+world map or authoritative activation rule. The manager owns the isolated
+Firefox/session/fixture; the helper never launches, stops or reconfigures them.
+No current-browser baseline has been executed by this worker.
+
+Historical evidence is diagnostic, not a current performance baseline:
+browser-region-streaming.md records a 103ms core transition versus 10,045ms
+notice-to-ready, 112 uploads/175,888,248 bytes/42 held frames on an older client.
+Its frameWork spans omit held/no-world early returns. Root transition_probe.py
+uses admin teleports and screenshot/polling; it cannot establish walking cadence
+or the cost of those missing exits. Nested spans must never be summed as if
+exclusive, and samples at Java callback return are not actual Worker completion.
+
+Closed workload
+---------------
+Use a frozen current-source client with repeatable-v1, actual Worker ON,
+modelbatch/terrain/spritekeys aligned, GPU depth/full C/T coverage, same camera,
+physical resolution/fog/shadow settings. The old fixed 32-NPC server is only a
+preserved diagnostic server; bind its exact stage/source receipt and do not
+claim its binaries represent current server production. Current policy/Bootstrap
+supports TCP 43649/WS 43549/browserdemo. The prior combat stage's Cache/port.txt is
+43639, so require the frozen repeatable stage TCP43649/WS43549 pair and actual open
+ws://127.0.0.1:43549/ socket before running, or prepare a new repeatable client
+stage. Bootstrap legitimately omits its Java route event in benchmark mode;
+when that event is present it must still agree with 43649. Never assign a fake
+route value to satisfy a gate. Never mutate the live fixture.
+
+The supplied candidate route starts at 111,625,L0 and walks 111,624→111,623→
+111,624→111,625, twice. A previous actual client successfully crossed 624 here.
+Current source World.SECTION_SIZE=48; native loadNextRegion tests strict bounds
+section*48−1..section*48+48. Source epoch advancement and ordinary completed
+stream receipts MUST prove the actual boundary. Revalidate map walkability and
+calibrate each logical pointer click against the actual camera first; these
+coordinates are a candidate, not a guarantee of present authored access.
+
+Initial position setup (including any admin teleport) and login warming are
+excluded. Then every leg uses original input walking or passive manual walking;
+no command teleports masquerade as travel. Legs are bounded 1..8 tiles, preserve
+signed level, and wait for authoritative target, current-ready state and at
+least two fresh world frames. Boundary legs additionally require a new epoch
+and ordinary-walk completed stream receipt. First outward traversal and cached
+return are recorded separately; cold/warm route comparisons need fresh sessions
+and exact cache/source state receipts. Do not force cache invalidation just to
+manufacture a cold load.
+
+Helper and evidence
+-------------------
+tests/myworld/browser-travel-loading-probe.py attaches to an existing loopback
+WebDriver session receipt. It defaults to passive observation; --drive emits
+only original pointer actions after explicit logical click calibration. It
+never sends chat/admin commands or renderer native calls. Source route validation
+and no-browser dry run:
+ python3 tests/myworld/browser-travel-loading-probe.py \
+  --route tests/myworld/browser-travel-loading-route.json --dry-run
+ python3 tests/myworld/test-browser-travel-loading-probe.py
+
+Manager invocation (new canonical diagnostics run, existing isolated session):
+ python3 tests/myworld/browser-travel-loading-probe.py \
+  --session SESSION_JSON --authority PRIVATE_STATUS_JSON --stage STAGE_JSON \
+  --route CALIBRATED_ROUTE_JSON --out OUTPUT_DIAGNOSTICS_RUN \
+  --poll-ms 250 --require-load-profile
+Add --drive only when every route leg contains a calibrated logical click pair.
+The output path must be under manager/ai3 output/diagnostics; use the declared
+workspace-layout diagnostics/browser-travel-loading category and a new run.
+
+Bounded 250ms polls preserve raw samples.jsonl and partial result.json on failure.
+They require a fresh<=4s private valid online browserdemo status, correct actual
+private port/Worker policy, visible game and monotonic fixture/frame counters.
+They record the original authority positions, host round-trip time, inner clock,
+ready epochs/held/fresh frames, upload byte/chunk deltas, Worker queue counters,
+physical/camera/policy state, completed-world-only bridge spans, and optional
+load-only diagnostics. They copy only bounded tails of existing diagnostic
+histories and never alter counters, ACK ownership, render resources or methods.
+
+Overlapping rings are NOT concatenated to invent sample counts/percentiles.
+The report records their observed maximum, counters and explicit missed-load-
+report gaps. Large RPC delays remain visible as pollRoundTripMs; measurements
+include diagnostic polling/input/settling. No screenshot or per-frame native
+callback is injected. No route elapsed-to-fresh-frame ratio is called FPS, and
+held images do not count as fresh frames. Presentation age is a sampled lower
+bound, not exact motion-to-photon latency. Actual user input response after new
+source authority still needs a functional check.
+
+Load-only diagnostic agreement with runtime worker
+-------------------------------------------------
+The runtime worker owns private loadprofile=on instrumentation. Planned schema 1
+is double[36] with owner/attempt/path/dimensions/sourceEpoch/required/ready/
+remaining/missing, nested phase times, chunk/texture/residency/work counts and
+initialization. Paths include error, no-world hold, incomplete hold, world and
+opaque. All held/error/resource-changing attempts and first complete epoch are
+reported, not just completed frameWork. The helper consumes g.loadProfile
+summary and g.loadProfileSamples bounded named records, including receivedTime
+and submitted/completed packet/frame IDs captured on callback return.
+
+Vertex/material packing must be distinct from nativeChunkSubmitMs (which can
+include main copy/backpressure); geometry is inclusive and must not be added
+to its children. Java source finish, main JNI callback return, queued packet,
+actual Worker ACK execution, complete authoritative scene and ready presentation
+are different boundaries. Main and Worker clocks need explicit conversion; only
+same-clock intervals may be subtracted. A delayed completed-frame ACK does not
+measure every omitted early hold or prove GPU scanout/fence time. The helper
+makes no causal cost claim until actual raw per-attempt evidence is collected.
+
+Validation status
+-----------------
+Offline helper proof covers valid adjacent route, rejects teleport-sized legs,
+layer changes, repeated destinations, wrong account, nonfinite clicks, noninteger
+world targets, unbounded route and ambiguous transition flags. It proves held
+work is distinct from fresh frame count, overlapping ring maxima are not counted
+twice, missing load report ranges are explicit, and snapshot JS is passive.
+No actual travel, GPU, process or server action has been performed by this worker.
+
+Actual benchmark-route guard correction
+--------------------------------------
+Root's initial 8220 diagnostic login was healthy, but the first helper gate
+incorrectly required p.javaPrivateLoopbackPort. BrowserBootstrap emits that
+startup event only for nonbenchmark WebGL. The original 936 handoff is preserved;
+the revised gate checks actual browserTransport.connections scalar socket URL,
+readyState 1 and closed=false, plus requested repeatable-v1, independently frozen
+stage TCP43649/WS43549 and fresh private server authority. Missing Java route is
+legitimate; a conflicting present route still rejects. No client field is
+modified to create proof. The snapshot reads at most 8 connection records.
+
+Runtime 65857a5's collector was read and agrees with the helper: main
+gpu.stats.loadProfile.{requested,totalReports,last,samples<=128,scope} and
+loadProfileSamples alias; named 36-field records plus callback-time packet/frame
+metadata. No generic management instrumentation is needed. 21 offline tests pass,
+including absent/present-conflicting Java route, missing/wrong/closed/connecting
+socket and combat-fixture rejection. No actual route run has yet been claimed.
+
+Cross-realm calibration guard correction
+---------------------------------------
+The first corrected calibration still rejected before sending input because the
+WebDriver outer realm's Map differs from the iframe's Map constructor. The
+snapshot now uses instanceof w.Map for the actual owning game iframe. A new Node
+VM test executes the ENTIRE actual snapshot against a genuine cross-realm Map,
+proves the former outer instanceof would fail, and validates the resulting live
+socket record. All 22 offline checks pass. Preserved manager failure evidence:
+ output/diagnostics/browser-travel-loading/minimap-calibration-1/result.json
+No input was sent by that failed helper calibration. No fake transport field,
+renderer mutation, permissive missing-socket fallback or route bypass was added.
+
+Actual ordinary-walking baseline and fresh-source profile
+--------------------------------------------------------
+Root captured return 623→624 at L0 with original minimap click (879,117), fresh
+private authority and ordinary stream epoch 2→3. The raw accepted route reports
+44 new chunks/93,009,960 bytes, 17 held frames and a 3,763ms completed-world gap.
+Root's separate four consecutive unprofiled crossings had newly appended world
+interval maxima 3569,3374,3562,3675ms. Their stream notices were 586,2773,736,680ms;
+the differing notice coverage means notice time must NOT universally be
+subtracted from the frame gap. Older ring maxima can overlap the previous leg.
+The helper now additionally exposes the newly appended tail maximum when the
+leg's world-frame delta fits its 64 retained samples, as normal walking/held
+frames append no opaque/fade boundary. Longer/mixed-mode runs need explicit
+interval sequence metadata rather than invented reconstruction.
+
+Raw evidence is rooted at manager output/diagnostics/browser-travel-loading/:
+ return-crossing-profile-1/{sources-profile.json,additional-information.json,
+ receipt.json,route/result.json,route/samples.jsonl}
+ baseline-new-frame-intervals.json
+The current frozen repeatable-preparation.json hashes to
+ 07d496092a5e9201b10f5ccd7d8c8fac2d5264e03043fdbeef91932b9fc9e2ec
+It binds Java ba0bd22402e3e2951742cfab8ccab066fd7e934b, frontend
+65857a5bb211dac12d7e34722301b4d7cd3bfc5d and full-source client JAR
+ d1cbcabc282010f50c1d14b7a58d09929f0d8a5dfd975a06587b4bdd93ebd56c
+RSModel.java and World.java were verified byte-identical between frozen ba0 and
+published main 7934. Their SHA256 values are respectively:
+ c54bf19b0f33edba07831035c005c8addca4dfcdafef94cb40d71789fa8f3333
+ cbfb22a5f54fd99bd70d6919d820aec3faa0a7d9b2a7363bbff94adb137d19a7
+
+Source-bound analyzer (test-only; no browser/process actions):
+ tests/myworld/analyze-browser-travel-profile.py INPUT --out NEW_DIAGNOSTICS_RUN \
+  --stage-receipt FROZEN_REPEATABLE_PREPARATION_JSON \
+  --signature-source-indices 1280,1504,2061 --vertex-source-index 1469 \
+  --reference-copy-source-index 1916
+Index options above apply ONLY to this capture after body review; opaqueJ labels
+must never be transferred to another run. The analyzer requires actual paired
+rsc-travel-start/end UserTiming markers in the content process, accepted private
+ordinary route, ready source epoch change and explicit ms/ns sample units. It
+has no steady 20-second/fixed-pose/combat assumption. It resolves each exported
+source through that process's source table and additional-information.jsSources,
+checks generated function declarations and hashes all raw evidence. Main and
+DOM Worker inclusive/deepest-JS CPU accounting are separate. Native worker-thread
+labels containing a URL are not accidentally classified as JS source.
+
+Reviewed output (ai3 canonical diagnostics):
+ output/diagnostics/browser-travel-loading/return-crossing-profile-1-reviewed/
+  analysis.json; sources/; java-source-equivalence.json
+analysis.json SHA256:
+ 1ceaeb8e2acc46f0f3790e57d7b37a8f07714ecff4a227ad0529c7d913ea01c4
+sources-profile.json SHA256:
+ 6b38c77ee796666fdc1f8ca6df623fd56b1e4b86424b2252f158d76a7b56feaa
+additional-information.json SHA256:
+ 8c551c9ed7c8e103b0b14a9500ca7c02f419b08bc3605f6ceeafeee7a862360a
+route/result.json SHA256:
+ 5b8f44b1d2b4fa020274a128eb56e7dcffb5cc4fa85e199d1fa09cdb14254333
+
+Main versus Worker and the missing bridge interval
+--------------------------------------------------
+Content pid 1871346 has 2620 current captured sources. Travel markers span
+348394.541942..352882.918840ms (4.488377s),2243 samples per selected thread.
+GeckoMain CPU=4,399,929,812ns (~98.03% of one core over wall interval).
+DOM Worker CPU=187,192,103ns (~4.17% of one core).
+The Worker sample stacks expose mostly native waiting/promise callbacks, not a
+complete attributable JS upload stack; do not invent its internal API costs.
+
+The last old-source report attempt 19924 returned at main performance 347603ms.
+The first new-source attempt 19925 returned at 350719ms with 69ms inclusive Java
+bridge time. ReceivedTime−totalMs therefore estimates its start at 350650ms.
+After main→profile clock conversion, this gives a 3.047s bridge-silent interval.
+Within that interval, 1522 samples show main CPU 2,989,123,311ns (~98.10% one core)
+and Worker CPU3,058,081ns (~0.10%). This is strong evidence for upstream main
+Java/runtime construction work, not Worker upload execution, as the dominant
+part of this stall. It is an interval between source reports, not an exact
+instrumented entry marker for one named core method.
+
+All 48 new owned bridge reports were recovered without report-counter gaps:
+31 world/17 incomplete holds. Their inclusive Java bridge sum 526ms includes
+geometry 300ms, vertex packing 214ms, material packing 41ms, native chunk submit 27ms,
+active keys 5ms, textures 2ms and terminal 33ms. These are overlapping nested timers;
+DO NOT add them. Source submit includes enqueue/copy/backpressure and does not
+measure GPU execution. The bridge totals include normal frames around the load,
+not just the silent interval or a nonoverlapping complete critical path.
+
+Current generated bodies and caller proof
+----------------------------------------
+Percentages below use the 1522-sample bridge-silent interval. They are sampled CPU
+endpoints/caller contexts, not predicted wall-time savings. Captured functions
+may contain CheerpJStub exits into the interpreter; matches describe the visible
+compiled body, not a complete Java symbol map.
+
+- Source 1469/J_0087e4d0: RSModel.insertVertex, RSModel.java1490. It scans head
+  vertices comparing all three int coordinates, then ensures capacity, appends
+  three arrays and increments head. 8.61% deepest JS,12.02% inclusive. Its body
+  SHA256 is c423994cf06a7ef02ab53ac54316962a36d1e485f4008eac1aef48e0f0a716de.
+- All 183 insertVertex inclusive samples have identified direct caller contexts:
+  147 via RSModel.addModels (source 1911=94/source 1386=51/compiled  1416=2),35 via
+  World.emitWallProduct (source 1050),1 via RSModel.copyFaceTo (source 819).
+  addModels bodies copy face-indexed XYZ and fishing vertex metadata, reproduce
+  face material/light/normal and faceParam1 branches (RSModel.java879..944).
+  Wall source has exactly four segment vertices, texture-bottom/top/height,
+  pick ID and 6316128 minimap/collision handling (World.java3822 onward).
+  copyFaceTo has the 5916 guard and copies vertex light metadata (RSModel:1283).
+  The anonymous interpreter blocks do not expose enough outer identity to say
+  which addModels invocation clones scenery versus merges CPU terrain. Do not
+  assert every dedup sample is a terrain-emission call.
+- Source 1280/J_01ca4fa8: RSModel.ObjectChunkMeshBuilder.signature, RSModel:2204.
+  Six identity integers then coordinates, float-bit U/V, lights, indices,
+  texture/fallback, kinds/family, caster/glow arrays match the source argument
+  order and unsigned32/FNV64 wrap. 4.53% deepest JS.
+- Source 1504/J_01be0c80: World.WorldGpuChunkMeshBuilder.signature, World:7132.
+  Five identity integers then terrain blend/variation arrays and roof bits in
+  addition to the matching mesh attributes.4.27% deepest JS.
+- Source 2061/J_01be0cc0: same World builder's mix(hash,int), exact unsigned32
+  xor and wrapping multiply 1099511628211. 3.88% deepest JS.
+  ANY-stack UNION of these three exact signature/mix sources is 294 samples
+  (19.3167%), counted once per sample. Do not add their inclusive percentages.
+- Source 2503/J_01be07f0: World builder toIntArray(List<Integer>), World:7115:
+  allocate int[size], loop list.get(i).intValue. 3.35% deepest JS.
+- Source 803/J_01bf0070: World builder addVertex boxed-list appends, with XYZ,
+  float U/V and light/blend attributes. 2.04% deepest JS.
+- Source 1916/J_00667088: reference-array Arrays.copyOf shape: allocate requested
+  runtime component type, clamp copied length and arraycopy. 6.57% deepest JS.
+  Its 114 inclusive samples all show list-growth caller contexts:91 under
+  WorldGPU addVertex→ArrayList.add/grow,23 under addTriangle's metadata lists.
+  This is positive source evidence for boxed terrain-builder growth, not a
+  reason to blame unrelated immutable mesh copies or change all array copying.
+
+Source exposes possible additional work (bulk scene removals and global-epoch
+prebuilds), but it was not confidently mapped to dominant current stack bodies
+here. Missing Java symbols/interpreter flattening limit exclusive attribution.
+No source-only asymptotic concern is promoted to a measured dominant cost.
+
+Recommended next bounded architecture and proof obligations
+----------------------------------------------------------
+Prioritize upstream CPU construction before changing Worker upload budgets:
+1. A per-CONSTRUCTION exact XYZ index for addModels and the wall accumulator,
+   preserving first inserted vertex index, all integer coordinates, source face
+   order, duplicate metadata overwrite order, bounds/exception prefixes and
+   malformed-array fallback. A persistent index on public mutable RSModel arrays
+   is unsafe without a mutation protocol. Scope/cleanup must not escape a
+   construction or survive arbitrary coordinate edits/commitTransform.
+2. Primitive terrain numeric builders replacing measured boxed Lists, preserving
+   exact vertex/material/face ordering, Float32 bits and all signatures.
+3. A bounded exact signature computation boundary if still useful: preserve
+   unsigned32 mixing, long64 wrap, Float.floatToIntBits semantics and output
+   identity. Do not substitute a different/approximate hash or drop attributes.
+Any candidate needs frozen Java differential pixels/metadata/exception tests,
+then identical actual minimap crossings both directions with authoritative ready
+and raw new-frame intervals. No FPS gain or seamless-loading forecast follows
+from this profile. All owner Firefox sessions were closed normally by the manager;
+this worker ran no browser, GPU, server or process action.
+
+Final baseline refinement SHA256:
+ 5bb272b6a6fbe967f2d8f05971ae8222f4585b8fa2d8e3904c3b9f31ff0a3507
+
+Final same-artifact scene-build comparison: measured improvement, private only
+----------------------------------------------------------------------------
+Manager evidence:
+ output/diagnostics/browser-travel-loading/region-build-comparison.json
+ SHA256 ce36e782e1551439c4466544467250f8ad7852e1c6397179df6f40f1038e6af8
+Runtime source 502fa18d88688f3030e8349c6487e541aea87a78, artifact source
+437c4e6e67f23bd1c0527d48c2cd11bf626af354, same full-source client JAR SHA256
+ 0409c558246b5652a70794f7b99fff9801729845a3f1d6d72dd4b0fe6574041b
+
+The manager ran OFF/ON/OFF/ON with the same artifact, original minimap input,
+Worker ON and Java load diagnostics ON, CPU sampler OFF. The four cohorts each
+completed six ordinary signed level 0 boundary crossings, epochs 1→7, error-free
+with no diagnostic record gaps. Cold first crossing and first return were kept
+separate; the comparison uses the last four warm boundary crossings per cohort.
+
+Warm completed-world gaps, milliseconds:
+ OFF1: 3852,3628,4108,3723 (mean 3827.75)
+ ON1: 2382,593,1222,3300 (mean 1874.25)
+ OFF3: 3630,3400,3597,3345 (mean 3493)
+ ON2: 1976,560,1241,530 (mean 1076.75)
+All eight warm gaps per policy give OFF 3660.375ms versus ON 1475.5ms, a 59.6899%
+mean reduction in this bounded workload. The ON 3300ms outlier is retained.
+This is a substantial measured improvement, not seamless streaming; occasional
+multi-second stalls remain. Source scope is CPU construction; upload byte totals
+also depend on cache/animation state and are not an isolated CPU-cost experiment.
+
+Full route elapsed times were OFF 28.518/26.957s versus ON 16.673/15.677s. They
+include original walking input, polling and settling, and are NOT a pure render
+or CPU phase timer. These fixed older diagnostic-server runs do not establish
+current-production-server, broad-device or long-session acceptance.
+
+The candidate-off-2 setup attempt was excluded BEFORE any measured boundary:
+root's initial teleport wait was too weak and the helper's strict authority gate
+rejected its premature map click. No runtime patch was required. The root driver
+now requires post-command fresh frames, exact target camera (8128,*,7495) and
+last-presented age<100ms, twice, before route measurement. That earlier receipt
+remains preserved; it is not silently treated as an OFF sample.
+
+The first candidate preparation metadata omitted fixture/TCP/socket fields.
+The manager used a metadata-only normalized descriptor bound to the original
+immutable stage, actual live socket, staged port and private marker; no staged
+runtime bytes changed. This is distinct from assigning a fake proof field in the
+browser. The source emitter correction belongs to the runtime worker's test-only
+preparation follow-up, not to this test branch or the measured client artifact.
+
+Independent offline raw-receipt validation:
+ python3 tests/myworld/test-browser-region-build-comparison.py COMPARISON_JSON \
+  --expected-sha256 ce36e782e1551439c4466544467250f8ad7852e1c6397179df6f40f1038e6af8
+Actual result: output/tests/browser-travel-loading/region-build-comparison-proof.json
+PASS: 4 raw route hashes, 24 ordinary boundary legs, actual open private 43549 socket,
+actual regionBuild policy receipts, Worker ON/error/ready gates, consecutive epochs,
+complete new-world interval tails, zero record gaps, cold/return/warm separation,
+means/reduction arithmetic and the retained 3300ms outlier. One unmeasured initial
+calibration had 65 frames beyond its 64-sample tail; it is excluded from boundary
+and warm-gap calculations by the declared workload, not reconstructed by guess.
+
+The earlier current-source profile/caller proof is unchanged. This new evidence
+supports the bounded source CPU construction approach; it does not retrospectively
+convert sampled CPU endpoints into exclusive phase timers or FPS predictions.
+The candidate remains private and default OFF. Ordinary browser/native defaults,
+public release and public server were not changed by this report or worker.
