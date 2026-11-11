@@ -1,3 +1,4 @@
+import {renderWorkerPolicy} from './browser-render-worker-protocol.js';
 import {optimizedRenderDefaults,canonicalRenderProperties} from './browser-optimized-render-defaults.js';
 import {createBatchedModelKernel} from './browser-batched-model-kernel.js';
 import {browserGeometryTransferPolicy} from './browser-geometry-transfer-policy.js';
@@ -22,6 +23,7 @@ function nativeCallPolicy(mode,parameters){
   return value;
 }
 const nativeCallDispatch=nativeCallPolicy(options.get('mode')||'software',options);
+const renderWorker=renderWorkerPolicy(options.get('mode')||'software',options);
 const javaVersion = Number(options.get('java') || '8');
 if (![8, 11, 17].includes(javaVersion)) throw new Error('Private probe supports Java 8, 11 or 17');
 window.browserProof = {events: [], started, renderer: 'AWT software / direct framebuffer', mode: options.get('mode') || 'software', javaVersion, wasmGC: options.has('wasmgc'), runtimeVersion: window.browserRuntimeVersion};
@@ -189,7 +191,10 @@ try {
     window.browserProof.physicalOutputRequested=physicalOutput;
     window.browserProof.ownedStateRequested=ownedState;
     if(window.browserProof.benchmark)window.browserProof.benchmark.streamUploadValidationRequested=streamUploadValidation;
-    gpu = createBrowserWebGL(canvas, report, {nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')});
+    const gpuOptions={nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
+    if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;gpu=await factory(canvas,report,{...gpuOptions,onFatal:error=>finish('Private render worker failed: '+error),onComplete:()=>updateWorldCover()});}
+    else gpu=createBrowserWebGL(canvas,report,gpuOptions);
+    window.browserProof.renderWorker={...renderWorker,actual:renderWorker.enabled===true};
     window.browserProof.nativeCallDispatch={requested:nativeCallDispatch,module:backendModule.BROWSER_NATIVE_CALL_DISPATCH||null,reported:gpu.stats.nativeCallDispatch||null};
     if(options.has('benchmark')){window.browserBenchmarkOwnedState=enabled=>gpu.queueOwnedState(enabled);window.browserBenchmarkStreamUploadValidation=enabled=>gpu.queueStreamUploadValidation(enabled);window.browserBenchmarkPhysicalOutput=enabled=>gpu.queuePhysicalOutput(enabled);}
     worldCover=createWorldCover({document,window,display:document.querySelector('#display'),onGateChange:()=>window.dispatchEvent(new Event('browser-world-readinesschange'))});
@@ -231,6 +236,7 @@ try {
     } else {
     natives[presentName] = async (...args) => {
       const blocked=worldCover.blocksWorldInput;
+      if(renderWorker.enabled){alignWorldSurface(Number(args[1]),Number(args[2]));gpu.invalidateLayout();}
       const result = await present(...args);
       // Preserve ordinary AWT input; the loading cover shares the game bounds.
       alignWorldSurface(Number(args[1]),Number(args[2]));
