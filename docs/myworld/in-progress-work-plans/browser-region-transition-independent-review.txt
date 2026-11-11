@@ -1,0 +1,336 @@
+Browser continuous-region transition independent review
+======================================================
+Status: initial load diagnostics CPU/source review PASS; actual crossing profile pending.
+Worker ai-2, test/browser-region-transition-review.
+Base7934b77c277cdc88b5a29c6815159b8f779c69fa.
+
+Scope and evidence boundary
+---------------------------
+Tests/report only. The main path under investigation is the private WorkerON
+browser with Java/AWT/input on main. No browser/GPU/server or owner-preview
+operation is authorized for this reviewer. Manager and ai-3 own actual continuous
+walking crossing workloads. Initial teleport placement is not crossing evidence.
+Stationary60FPS does not establish continuous travel performance.
+
+Existing invariants worth preserving
+-------------------------------------
+PC_Client/src/orsc/BrowserWebGLBridge.java:chunkKey/activeKeys/prepareChunks use
+native immutable static storage identity across center/rebase moves. Existing
+LinkedHashMap access-order retention permits overlap and return reuse. LRU byte
+limit224MiB reserves texture space; active resources cannot be evicted to make
+an impossible view appear successful. Animated objects own positional slots;
+changed poses are mandatory updates, not stale geometry allowed by a loading
+budget. Settings/material dependencies and shape determine exact replacement.
+
+Discretionary new/settings preparation is limited32768 vertices per call, with
+one oversized first chunk allowed for forward progress. Mandatory animation does
+not consume that escape. The existing implementation packs full28float vertices
+and stable grouped index/material buffers, then invokes the native backend.
+Source material and renderer packing are authoritative; key changes that flatten
+level, origin, role, world/package/revision, geometry or material dependencies
+can silently reuse wrong content even when FPS improves.
+
+BrowserWorldLoadState plus browser retained FULL/readiness already holds the
+last coherent image until every required current-scene resource and repack is
+complete. Its stale-image pointer/input gate is intentional. A held image must
+not count as a new world frame or publish new picks. Old loading images cannot
+overwrite retained world, and a stale pending activation cannot become current.
+No fake progress, lower geometry/shadow quality or shorter fog is part of this
+review's optimization authorization.
+
+Historical experiments, not current causal measurements
+-------------------------------------------------------
+The maintained browser-region-streaming.md records a prior browser crossing:
+38 new chunks/82.75MB and1935ms/18 held frames under screenshot sampling. A far
+teleport reported103ms nested core region time versus10045ms browser notice-to-
+completion,112 uploads/175.9MB. These old receipts motivate investigating packing,
+transfer and GPU execution; they do not locate the current WorkerON bottleneck.
+Nested timings overlap and cannot be added. Existing frameWork only reports
+completed worlds; no-world/incomplete early held exits omit important work.
+
+Parked fix/browser-region-preparation caches a single exact immutable visual/
+structural snapshot merge and eliminates two duplicate merges per predicted
+pair. Its frozen parity proof is useful, but it cannot establish the dominant
+loading delay or a whole-pause cure. Do not silently adopt that old branch.
+Parked current-fog demand kept source window5x5/gameplay3x3, found no demonstrated
+FPS gain, modest single-pass transition savings and new camera-demand holds.
+Its final recommendation was packing/upload reduction, not closer fog presets.
+No source quality certification or default adoption follows from those results.
+
+Required current diagnostics
+-----------------------------
+Bounded load-only records must include EACH present exit kind: no-world hold,
+incomplete geometry/repack hold and complete current world. Separate Java source/
+packing CPU time, native callback enqueue/copy time and actual Worker command
+completion from total authoritative transition duration. Record chunks/vertices/
+bytes attempted/completed/remaining, cache hit/miss/repack/eviction reason and
+held versus fresh-completed frames. Avoid per-vertex clocks and management-bean
+BoundaryLoading initialization in CheerpJ. No extra timing call is an automatic
+GPU-completion signal. Actual transitions must correlate fresh server position,
+scene/window identity and complete current authority, not only a target click.
+
+Independent oracle design for the forthcoming focused change
+------------------------------------------------------------
+Freeze exact baseline and candidate sources; compare recording-backend float raw
+bits/index/material bytes, draw order/IDs/offsets, mutation isolation and thrown
+error traces. Exercise a sequence with shared regions, repeated forward/backward
+crossings, return after LRU pressure, and signed-level/world/package changes.
+Keep same-location fresh immutable geometry distinguishable from equal labels.
+Settings-only, texture pixel-only, texture dimension/average/alpha changes,
+missing materials, dynamic pose and topology updates must preserve old invalidation
+semantics. Include zero/oversized first chunks and mandatory animation so new
+work cannot starve. All cached geometry/source arrays need explicit ownership and
+bounded lifetime. Upload/replace/delete failure must not commit cache accounting,
+masquerade as a current pose, or publish partial readiness. Domain-level backend
+errors may execute a valid prefix, but cannot produce a successful current-world
+ACK or continue an incoherent session.
+
+If scheduling is incremental, explicitly prove resume/cancel tokens bind immutable
+source+settings+material/world/level identity, stale prepared work cannot publish,
+reset/logout/dispose releases it, and old-current resources remain usable until
+replacement successfully completes. Test the64MiB worker producer command cap
+alongside the per-vertex budget: larger/reordered resource bursts can exhaust the
+transport even while Java/GPU cache budgets individually fit. Result queries can
+split packets; resource prefixes cannot disappear during a skipped draw.
+
+The existing BrowserRegionStreamingFixture is a useful production packing/hold
+example, but its expected packing calls the same current implementation. A new
+optimization must compare against a frozen baseline output, not merely ask the
+candidate packer to agree with itself. Headless JVM CPU fixture elapsed time is
+not Firefox loading latency or displayed FPS. GPU/picking/lighting equivalence
+and actual continuous route timing remain manager gates.
+
+
+Initial exact instrumentation review:ba0bd22402e3e2951742cfab8ccab066fd7e934b
+-------------------------------------------------------------------------
+This checkpoint adds private source-load diagnostics, not an optimization or a
+new region publication policy. Java flag requires BOTH browserBenchmark and
+browserLoadProfile. The ordinary OFF wrapper calls the same presentFrame path;
+packing helpers take the literal old branch when no sample is active. Native
+loadingWork is a main-thread diagnostic callback, separate from Worker graphics
+commands and ACK history. No Worker resource/presentation protocol changed.
+
+Independent frozen trace PASS:
+output/tests/browser-region-trace-independent/20261111T162009858487Z/result.json
+Frozen baseline7934, candidateOFF and candidateON produce the same complete trace:
+135db524d973371f0c13040b27474de916d9fef339e90ead81ba8bbbf797fa08
+The trace hashes EVERY raw float bit/index/material payload, backend event/ID,
+draw order/offset, remaining repack count and resident accounting. It includes
+forward/back/return repeated region sequences, static rebase, settings changes,
+signed levels0/-1/+2, animated current-pose updates, shape replacement, injected
+upload/replace errors and retry, and empty source. All policies finish with24
+successful passes,15 uploads,15 replaces and1 deletion. Failed attempts are also
+represented in the event/error/accounting trace. Expected bytes are from the
+separately compiled FROZEN source, not recomputed through candidate helpers.
+
+ON explicitly installs26 per-attempt actual BrowserLoadProfile samples around
+prepareChunks, including failures. Counters for successful new/replaced chunks,
+vertices and bytes match independent recording-backend increments. Every one of
+the36 returned fields is finite/nonnegative and finish returns a detached scalar
+snapshot. This is nonvacuous helper/packing instrumentation proof, but it does
+NOT invoke the actual present/native loadingWork callback or establish timing
+precision in CheerpJ. The dependency JAR is frozen49bc1f7d78d4022eca6399afd15acc1a7ee226ae67cf1b10c183e39ec7f56e08;
+runner records all source/fixture/JAR/log hashes and exact JVM commands. No GPU,
+browser, server or account was involved.
+
+Independent native-intake JS PASS56 checks:
+output/tests/browser-load-profile-native-independent/20261111T162139580952Z/result.json
+Actual exact browser-region-load-profile.js accepts36 copied numeric fields,
+nonzero-offset Float64 views and throwing input iterators (bounded indexed copy,
+no enumeration). Mutating the input afterward cannot change recorded samples.
+Wrong length rejects before numeric reads; malformed schema/range/nonfinite/
+fractional counts, disabled policy and stale attempts do not advance statistics.
+History caps at128 samples, with up to8 recent owner-attempt guards. Worker
+submitted/completed packet/frame snapshots are scalar observations at receipt,
+not causal attribution or graphics completion ACKs. Generic replay security for
+an evicted older owner is not claimed. No borrowed input planes are retained.
+
+Source-level held-exit review
+-----------------------------
+The outer optional sample wraps the whole present attempt, clears active sample
+in finally and records success-path code only after the corresponding original
+terminal operation returns:1 no-world retained hold,2 incomplete-world retained
+hold,3 complete world,4 opaque/UI output;0 records an aborted/error attempt.
+Both held exits now pass through final reporting, closing the known diagnostic
+blind spot. last epoch/path plus work/repack activity controls reporting; this
+is not a new per-face clock or complete-frame-only counter. Component clocks
+include nested geometry/material/vertex/submit phases: DO NOT sum them. Native
+submit duration means callback return/enqueue/copy/backpressure, not Worker/GPU
+execution. Initialization is separate. LoadingWork follows terminal frame/hold
+submission and samples available Worker counters; delayed delivery must not be
+mistaken for that attempt's exact Worker completion time.
+
+The source retains original RuntimeException/Error presentation failures and
+suppresses any subsequent diagnostic exception onto them, rather than replacing
+the original failure. A diagnostic-only failure can still stop this explicitly
+private profiling session. The independent trace compares original error types/
+messages and side-effect prefixes, not full Java stack-frame identity. Exact
+whole-present failure suppression and real Java-native intake remain manager
+functional gates; this report does not invent actual browser execution evidence.
+
+No source-backed telemetry blocker remains within this focused private scope.
+The next useful step is the manager's measured continuous crossing/return route,
+with actual server movement, source epochs, held/fresh frame distinction and
+bounded source/Worker timings. No measured bottleneck, FPS/loading improvement,
+seamless travel or default adoption is asserted yet. Existing larger region
+preparation and fog prototypes remain parked and unimported.
+
+Measured direction and exact construction candidate CPU gate
+-----------------------------------------------------------
+The actual658 ordinary crossing disproved packing-alone attribution. Manager
+first-crossing-1/result.json records111624→111623 server-authoritative walking,
+4417ms completed-world gap but1084ms notice→complete/35held frames. Deduplicated
+72 reports have no gaps; total bridge673ms, geometry436ms (vertex293/material67/
+submit64 nested), and first complete lighting130ms. Most frame gap precedes the
+bridge-held interval. Warm repeated crossings also retain multisecond pre-bridge
+cost. These are diagnostic timings, not arithmetic components to sum.
+Manager first-crossing evidence hashes read/recomputed:
+  output/diagnostics/browser-travel-loading/first-crossing-1/result.json
+    2f558dd0f9d95055bc8d681a6e669b7a51abe040e9edc0a0f7584c7e94691a31
+  output/diagnostics/browser-travel-loading/first-crossing-1/phase-summary.json
+    e9381f66a86b9df07dd924b24d6512b5f5fbb704b903b2bb8d4452f477401391
+
+Source analysis identifies repeated scene single-removal scans, epoch/scope-
+keyed World products and source construction as distinct possibilities. Actual
+fresh source-mapped profile supplied by the manager localizes signature/FNV,
+RSModel vertex deduplication and boxed World builder arrays. It does NOT establish
+Scene.removeModel as dominant; no scene-removal change is authorized from its
+O(N^2) source shape alone. Canonical static keys already exclude center/base;
+ordinary reuse explicitly rebases storage. Near224MiB resident cache pressure
+also makes new-upload counts ambiguous; no unsafe key weakening was proposed.
+
+Exact combined private candidate reviewed:
+502fa18d88688f3030e8349c6487e541aea87a78. It requires browserBenchmark AND
+browserRegionBuild; ordinary defaults remain OFF. The three focused changes are:
+- Construction-local index only inside private RSModel.addModels. A fresh own
+  destination starts at vertHead0. Full signed XYZ equality selects the earliest
+  inserted index. Original insertVertex is unchanged outside this lexical scope;
+  table references clear in finally. No persistent cache survives transforms,
+  deletion, resets, fishing animation, package-array mutation or public calls.
+- Two primitive int limbs implement the EXACT old unsigned-int FNV64 recurrence,
+  with int wrap/carry and one long join at result. Both original signature loops
+  remain literal OFF; ON duplicates the identical identity/array/effect word order
+  and Float.floatToIntBits NaN canonicalization, including roof low-word/high-word.
+- World numeric construction columns use bounded growing primitive scratch ON;
+  enum/effect lists remain ordered. At1048576 elements per column the helper
+  preserves arbitrary larger input via the old boxed-list representation instead
+  of imposing a new geometry admission limit. Output arrays remain owned copies.
+
+Independent exact-source CPU proof PASS:
+output/tests/browser-construction-independent/20261111T180554694154Z/result.json
+  SHA256 fa3f3f5936fb405b119ad4e30c14f035e1bd9b9f506d4af499b66bb21ab27eba
+Frozen7934, candidateOFF and candidateON produce identical binary corpora:
+  Actual construction98cases:4,364,314bytes
+    SHA25689a7f956b72939683649bdb375182b14f5ab86eb9bd50376262b65827519b069
+  Whole actual private signatures320cases:20,480bytes
+    SHA2567d8b1223fc4c27c208eb4bb6ecc6783fe629a969b72eabc0e5b94d82c62a6bbf
+The first corpus executes actual model merging/clone, duplicate and aliased source
+models, signed extreme coordinates, growth, transforms, malformed source face
+indices/counts/nulls, observable failed-merge prefixes and subsequent literal
+insertion. It also builds actual private World GPU mesh products from varied
+polygons/material kinds/light/blend/UV/effects/roof masks, recording raw vertex/
+normal/float/index/material/effect arrays and signatures. Reusing/mutating the
+builder after first product construction cannot mutate its saved mesh. This is
+product-construction proof, not full map-loader/authority activation execution.
+
+The second corpus directly calls both actual signature methods over all ordered
+identity and array arguments, signed extremes, infinities, negative zero and
+multiple NaN payloads, every enum/family plus casters/glows/roof64bits. Separately,
+actual Fnv64 receives131072 seeded-random/extreme/carry updates compared after
+EVERY word with an independent literal `(h^(x&0xffffffffL))*FNV_PRIME` oracle.
+Expected bytes are always compiled frozen-source output, never candidate helpers.
+
+Additional2,097,291 actual private helper checks are nonvacuous. The fixture
+interrogates an EMPTY actual index to find32 distinct full-XYZ keys in its LAST
+bucket, then proves collision wrap/first-match against literal insertVertex.
+It exercises array growth, unexpected half occupancy clearing to literal fallback,
+oversized/negative predicted counts disabling indexing and original ca.I failure
+shape. Both IntValues and FloatValues stream through FULL1048576 scratch capacity
+into boxed overflow, checking every integer/raw-float result (including NaN
+payload/negative zero), exact size and returned-array mutation isolation.
+
+Construction scratch bounds are not total process caps. The index stores only
+indices, up to262144 slots (~1MiB); above131072 predicted vertices it uses literal
+insertion. Primitive columns cap scratch at4MiB EACH; ten columns could total40MiB
+before boxed overflow/output/source arrays and growth coexistence. Very large
+legacy-valid input can still consume larger boxed/output storage, as before.
+No Java/JS borrowed array or model reference is kept in these helpers. Failure
+prefix, first-match and output ownership proofs do not promise unchanged OOM
+allocation timing, arbitrary reflective mutation during a private construction,
+or new concurrent access support.
+
+No source-backed correctness blocker remains for this private construction
+experiment. The manager's437 follow-up is test-only relative to502 runtime; actual
+same-artifact OFF/ON ordinary travel and warm return cohorts remain required.
+CPU helper counts and profile percentages are NOT a loading/FPS improvement
+claim. No loader authority, collision, picking rule, source window, fog distance,
+GPU backend/shader, public server or ordinary default was changed by this reviewer.
+
+Manager actual continuous walking result: same-artifact OFF/ON/OFF/ON
+--------------------------------------------------------------------
+This final amendment is documentation only;502 construction runtime is unchanged
+and no new CPU test/build/browser/GPU/server work was run by ai-2. Read/hash-
+verified comparison:
+output/diagnostics/browser-travel-loading/region-build-comparison.json
+  SHA256 ce36e782e1551439c4466544467250f8ad7852e1c6397179df6f40f1038e6af8
+It binds runtime502fa18d88688f3030e8349c6487e541aea87a78,
+artifact437c4e6e67f23bd1c0527d48c2cd11bf626af354 and client JAR SHA256
+0409c558246b5652a70794f7b99fff9801729845a3f1d6d72dd4b0fe6574041b.
+The private Firefox WorkerON ordinary walking cohorts used identical source/JAR,
+Java load diagnostics ON and CPU sampler OFF. No other task CPU/Git/build/GPU
+work ran during timing. The diagnostic server is fixed older test coverage,
+not proof against the current production server.
+
+Accepted warm-crossing gaps, final four crossings in each cohort (milliseconds):
+  OFF1:3852,3628,4108,3723; mean3827.75
+  ON1 :2382, 593,1222,3300; mean1874.25
+  OFF3:3630,3400,3597,3345; mean3493.00
+  ON2 :1976, 560,1241, 530; mean1076.75
+Eight pooled OFF warm gaps average3660.375ms; eight ON gaps average1475.5ms,
+a59.689922% reduction in this measured route. Cold crossings were4293/4342ms OFF
+versus2947/2951ms ON; first returns3509/3540ms OFF versus672/670ms ON. This is a
+combined construction-path result, not an isolated attribution to the vertex
+index, limb hashing or primitive builder alone. Cache/animation scheduling still
+varies; upload byte totals cannot independently measure pure CPU improvement.
+
+All four route input hashes in the comparison match the actual files; each route
+is accepted with seven legs: initial non-boundary calibration followed by six
+ordinary boundary crossings. Observed epochs1→7 advance one per crossing, and
+load-profile polling gaps are0 on EVERY leg. Current epochs finish ready without
+reported rendering error. The measured world gap comes from copied/count-indexed
+completed-world intervals when the full frame-count delta fits the history; it
+is not concatenated repeated rings or held-frame FPS. Actual server-authoritative
+positions, pointer actions and real window transitions establish movement rather
+than teleport-only or stationary-scene evidence.
+
+Verified route inputs under output/diagnostics/browser-travel-loading/:
+  candidate-off-1/route/result.json
+    a644dbdf6d01c653f206f4c2fbe5dc9ea614f64f680be6d4918d4e1911215dcd
+  candidate-on-1/route/result.json
+    e94dfba60e25b05a1d28062573bfde4caa1f4f734cc17ac69589fde8ec06ab4e
+  candidate-off-3/route/result.json
+    cb9637d98ccf0c2c5aa416180cbcdfdd199625f4e3bbb25de1002b1499ed0055
+  candidate-on-2/route/result.json
+    370fe4198a76511c2850e415c39023e7444587827d05c143fb2ce2a7a9431f95
+
+The candidate-off-2 attempt is EXCLUDED. Its setup teleport had not fully rendered
+before the first map click; strict authority validation rejected it before any
+measured boundary. The harness now requires post-command fresh frames, exact
+target camera/pose and bounded last-frame age. This was a test setup correction,
+not a runtime fix or relaxed pixel/authority gate. Earlier accepted OFF1/ON1 setup
+snapshots could show an older initial pose, but the manager verified the unmeasured
+calibration reached the new target/camera before each measured cold crossing.
+All original setup/failure receipts remain preserved; no excluded result is
+included in warm means. The normalized metadata descriptor binds immutable stage,
+actual socket/staged port and private marker without altering staged runtime.
+
+Mean whole-route elapsed fell from27737.775ms OFF to16174.763ms ON, but includes
+actual walking, pointer input, polling and settling; it is NOT FPS or pure loading
+time. ON residual warm gaps range530–3300ms, and cold crossings remain near2950ms.
+Therefore this work does NOT complete seamless streaming. One host/browser/route,
+short diagnostic runs, live effect/cache variation and no confidence interval
+remain material limits. Broad geography, long sessions, negative-level travel,
+production data/server, device memory and continuous input latency need separate
+coverage. The independent frozen CPU correctness gate and the manager measured
+travel gate now both pass within these limits; ordinary defaults/public server
+remain unchanged, and future adoption/integration belongs to the manager.
