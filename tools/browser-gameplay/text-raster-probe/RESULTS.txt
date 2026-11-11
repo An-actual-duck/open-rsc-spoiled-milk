@@ -5,20 +5,21 @@ Decision
 Do NOT implement the per-TEXT game bridge. Both clean probes lose on short
 labels;128-glyph cases improve modestly. Keep original game C/T writers and
 hot glyph methods unchanged. A larger isolated one-frame batch now tests whether
-combining many TEXT records can amortize callback/packet costs. Its result is
-not yet recorded here; no complete game writer journal or suppression exists.
+combining many TEXT records can amortize callback/packet costs. Its actual result below supports same-artifact batching, with a CRITICAL unstable
+literal baseline across artifacts. No complete game writer journal or suppression
+exists; no headline gain versus original literal, game FPS forecast or adoption.
 
 Source-bound validation
 ------------------------
 Raw manager directories under:
 /home/justin/Core-Framework/output/diagnostics/browser-frame-architecture/
 text-abi-probe-2, text-abi-probe-3-debug, text-abi-probe-3-clean,
-text-abi-probe-4-full-clean.
+text-abi-probe-4-full-clean, text-abi-probe-5-framebatch-clean.
 Offline reproduced source/receipt/cohort analysis:
-/home/justin/Core-Framework-ai-3/output/diagnostics/browser-text-raster-probe/clean-3-4-analysis/
+/home/justin/Core-Framework-ai-3/output/diagnostics/browser-text-raster-probe/clean-3-4-5-analysis/
 Run analyze.py RAW_BASE OUTPUT_JSON. It checks stage file hashes against manifests,
 script bytes against exact probe Git checkpoints, class major52/font resource,
-real typed-view shapes, exact gates, all60 cohort order/call/elapsed arithmetic,
+real typed-view shapes, exact gates, all110 cohort order/call/elapsed arithmetic,
 and final kernel/Java counters. No browser/server actions occur in this analyzer.
 Raw input hashes are stored in analysis.json; frozen stages remain preserved.
 
@@ -95,8 +96,7 @@ callback for32 TEXT groups, flattened in original order, max4096 glyphs and
 4096x7 integer scratch. All packing/preflight and one common clear are included.
 Per-TEXT controls remain; validation-framebatch and native-framebatch are added.
 CPU literal comparison covers both routes plus late-invalid4096th glyph with
-zero prefix writes:10,368,000 exact words/31 checks. Real50-cohort result is still
-pending; it will prove amortization only. See OBSERVER-AUDIT.txt before proposing
+zero prefix writes:10,368,000 exact words/31 checks. The real50-cohort result below proves isolated same-artifact amortization only. See OBSERVER-AUDIT.txt before proposing
 any game deferral, writer suppression or complete-frame ownership change.
 
 Primary API references checked2026-11-11:
@@ -104,3 +104,53 @@ https://cheerpj.com/docs/guides/implementing-native-methods
 Native functions may return a value or Promise; plain return is not presumed bad.
 https://cheerpj.com/docs/reference/CJ3Library
 Primitive typed array conversion rules; real receipt remains the empirical gate.
+
+
+Stage5: ONE-frame batch, exact real gate PASS; control drift blocks headline gains
+--------------------------------------------------------------------------------
+Frozen runtime28f3b6332b38980ccdca7ff9b87b4301be047941. Actual manager
+text-abi-probe-5-framebatch-clean passed20,736,000 C/T words immediately after
+native groups,330 gate callbacks,50 clean cohorts,371,234 total native calls,
+no rejection/error/poison. Genuine640-int per-TEXT and20,480-int framebatch
+command views were observed. All stage hashes/counters/ordering/byte shapes and
+calls/row(0 vsiterations*32 vsiterations) independently pass analyze.py. The
+original literal glyph method hashes are identical across3/4/5.
+
+Within SAME stage5 artifact, ms per32-TEXT group(forward/reverse):
+Glyphs/TEXT     Native perTEXT        ONE native framebatch
+0              0.773/0.740           0.462/0.463
+1              0.744/0.741           0.524/0.464
+8              0.788/0.794           0.496/0.496
+32             0.845/0.846           0.608/0.605
+128            1.204/1.155           1.041/1.039
+
+Every variant includes one identical common C/T clear; packet building and entire
+preflight stay inside its measured group. These are net whole-probe path costs,
+not a pure JNI timer or a measured game-frame improvement. Complete preflight
+of all4096 glyphs, bounded scratch and one callback can amortize per-TEXT overhead.
+It does NOT prove complete game writer coverage or profitable actual segments.
+
+CRITICAL: literal ms/group changed substantially from stage4 to stage5:
+Glyphs/TEXT       Stage4 literal        Stage5 literal
+0                 0.458/0.454           0.448/0.447
+1                 0.464/0.460           0.465/0.462
+8                 0.501/0.549           0.848/0.846
+32                0.661/0.656           1.965/1.969
+128               1.307/1.286           6.438/6.400
+
+Source comparison confirms once() gained a large mode>=3 framebatch branch while
+literal leaf bodies stayed identical; analyzer records both helper body hashes/
+lengths. This does not isolate the cause of changed timing: source/control-flow,
+generated code/JIT behavior, order and runtime state were not independently
+controlled across artifacts. Do not attribute the drift to one compiler mechanism
+or advertise a6x gain versus original literal. Actual same-JAR game A/B, including
+OFF control against previously accepted behavior, remains necessary.
+
+Decision: hand off the bounded probe/reference, then advance an OWNER-AWARE
+OBSERVE-ONLY journal under a focused approved task. All original Java writes
+must execute. Report actual eligible owner/op counts and known-run distributions
+between every unknown/read/source barrier, even if always-present minimap/sprites
+mean ZERO complete frames. Font copies and explicit barrier/alias/read coverage
+are prerequisites; no suppressed writes, UI rerender fallback or game native
+kernel adoption is part of this handoff. Existing software scratch hit-splat
+caching must stay distinct from active world C/T work.
