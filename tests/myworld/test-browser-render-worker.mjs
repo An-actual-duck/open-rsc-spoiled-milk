@@ -74,5 +74,16 @@ async function roundTrip(plane){poolTransport.enqueue('lightingFrame',[plane]);c
 await roundTrip(new Float32Array(4*1024*1024));check(poolTransport.stats.poolBytes===16*1024*1024);
 await roundTrip(new Float32Array(512*1024));check(poolTransport.stats.poolEvictions>0);
 const beforeHot=poolTransport.stats.allocatedBuffers;await roundTrip(new Float32Array(512*1024));check(poolTransport.stats.allocatedBuffers===beforeHot+1,'Hot plane reused (only zero-length descriptor allocates)');poolTransport.dispose();
+// A zero cached initialization rect must refresh without an observer callback;
+// positive steady metrics remain cached until explicit layout/DPR invalidation.
+let metrics={width:0,height:0},rectReads=0;const earlyWorker=new FakeWorker();
+const early=await createBrowserRenderWorker({getBoundingClientRect(){rectReads++;return metrics;},transferControlToOffscreen:()=>({})},()=>{},{workerFactory:()=>earlyWorker,oracle:true,physicalOutput:true});
+await early.natives[endpoint('initialize')](null,'v','f');check(rectReads===1);
+metrics={width:1843.55,height:1037};
+async function loadingFrame(){await early.natives[endpoint('present')](null,960,540,false,new Float32Array(48),new Float32Array(30),new Int32Array(0),new Int32Array(960*540));await early.drain();}
+await loadingFrame();check(rectReads===2&&earlyWorker.output.width===1843&&earlyWorker.output.height===1037);
+await loadingFrame();check(rectReads===2,'Positive steady canvas metrics remain cached');
+metrics={width:1440,height:810};early.invalidateLayout();await loadingFrame();check(rectReads===3&&earlyWorker.output.width===1440&&earlyWorker.output.height===810);
+await early.disposeAndConfirm();
 globalThis.window=oldWindow;
 console.log(JSON.stringify({passed:true,checks,scope:'CPU facade/transfer/replay only; no browser or GPU'}));

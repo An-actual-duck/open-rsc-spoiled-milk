@@ -204,7 +204,14 @@ try {
     function alignWorldSurface(width,height){
       const display=document.querySelector('#display'),target=[...display.querySelectorAll('canvas')].filter(c=>c!==canvas).sort((a,b)=>b.width*b.height-a.width*a.height)[0];
       displayLayout?.setSize(width,height);
-      if(target&&canvas.parentElement){const box=target.getBoundingClientRect(),parentBox=display.getBoundingClientRect(),scale=displayLayout?.scale||1,sx=box.width/target.width/scale,sy=box.height/target.height/scale;Object.assign(canvas.style,{display:'block',left:((box.left-parentBox.left)/scale+(target.width-width)*sx/2)+'px',top:((box.top-parentBox.top)/scale+(target.height-height)*sy)+'px',width:width*sx+'px',height:height*sy+'px'});}
+      let aligned=null;
+      if(target&&canvas.parentElement){const box=target.getBoundingClientRect(),parentBox=display.getBoundingClientRect(),scale=displayLayout?.scale||1,sx=box.width/target.width/scale,sy=box.height/target.height/scale;aligned={display:'block',left:((box.left-parentBox.left)/scale+(target.width-width)*sx/2)+'px',top:((box.top-parentBox.top)/scale+(target.height-height)*sy)+'px',width:width*sx+'px',height:height*sy+'px'};}
+      else if(renderWorker.enabled&&canvas.parentElement===display){
+        // Early Java loading images precede the first AWT canvas. Use the real
+        // already-fitted display surface, then measure the GPU canvas itself.
+        const box=display.getBoundingClientRect();if(box.width>0&&box.height>0)aligned={display:'block',left:'0px',top:'0px',width:width+'px',height:height+'px'};
+      }
+      if(aligned){if(!renderWorker.enabled)Object.assign(canvas.style,aligned);else{const changed=Object.keys(aligned).some(key=>canvas.style[key]!==aligned[key]);if(changed){Object.assign(canvas.style,aligned);gpu.invalidateLayout();}}}
       updateWorldCover();
     }
     const progressName='Java_orsc_BrowserWebGLBridge_worldProgress',progress=natives[progressName];
@@ -236,10 +243,10 @@ try {
     } else {
     natives[presentName] = async (...args) => {
       const blocked=worldCover.blocksWorldInput;
-      if(renderWorker.enabled){alignWorldSurface(Number(args[1]),Number(args[2]));gpu.invalidateLayout();}
+      if(renderWorker.enabled)alignWorldSurface(Number(args[1]),Number(args[2]));
       const result = await present(...args);
       // Preserve ordinary AWT input; the loading cover shares the game bounds.
-      alignWorldSurface(Number(args[1]),Number(args[2]));
+      if(!renderWorker.enabled)alignWorldSurface(Number(args[1]),Number(args[2]));
       if(blocked!==worldCover.blocksWorldInput)publish();
       gpu.stats.display={internalWidth:Number(args[1]),internalHeight:Number(args[2]),cssWidth:canvas.style.width,cssHeight:canvas.style.height,devicePixelRatio:window.devicePixelRatio||1};
       return result;

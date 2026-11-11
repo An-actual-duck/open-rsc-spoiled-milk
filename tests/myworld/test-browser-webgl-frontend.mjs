@@ -19,12 +19,13 @@ const benchmarkKeys=process.argv.includes('--benchmark-key-limbs');
 const benchmarkBatch=process.argv.includes('--model-batch');
 const benchmarkDelta=process.argv.includes('--overlay-delta');
 const benchmarkRenderWorker=process.argv.includes('--render-worker');
+const withoutAwtTarget=process.argv.includes('--no-awt-target');let awtVisible=!withoutAwtTarget;
 const benchmarkStream=benchmarkRenderWorker||process.argv.includes('--benchmark-stream')||benchmarkKeys||repeatable||combat||nativeExplicit||benchmarkBatch||benchmarkDelta;let streamRequested;
 let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, displayDisposed = 0, configured,gpuOptions;
 const status = {textContent:''}, messages = [];
 let layoutReads=0;
 const target = {width:960,height:560,getBoundingClientRect:()=>{layoutReads++;return{left:20,top:40,width:960,height:560}}};
-const display = {style:{},querySelectorAll:()=>[target,canvas],getBoundingClientRect:()=>({left:0,top:0}),append:()=>{canvas.parentElement=display;}};
+const display = {style:{},querySelectorAll:()=>awtVisible?[target,canvas]:[canvas],getBoundingClientRect:()=>({left:0,top:0,width:1843.55,height:1037}),append:()=>{canvas.parentElement=display;}};
 const canvas = {style:{},setAttribute(){}};
 const stats = {lastError:null,lastFrame:0};
 const gateEvents=[];
@@ -58,11 +59,11 @@ const gpuModule = new vm.SyntheticModule(['createBrowserWebGL','BROWSER_NATIVE_C
       Java_orsc_BrowserWebGLBridge_regionTransition:backend('transition',(lib,soft)=>{stats.worldReadiness={phase:'streaming',blocksWorldInput:true,blocksKeyboard:!soft};return 3;}),
       Java_orsc_BrowserWebGLBridge_holdWorld:backend('hold',()=>4),
       Java_orsc_BrowserWebGLBridge_worldProgress:backend('progress',()=>{stats.worldReadiness={phase:stats.declaredPhase||'loading'};return 5;}),
-      Java_orsc_BrowserWebGLBridge_present:backend('present',(lib,width,height)=>{if(nativeFault&&width===1)return Promise.resolve(6);canvas.width=width;canvas.height=height;stats.lastFrame=clock;stats.worldReadiness={phase:'ready'};return 6;}),
+      Java_orsc_BrowserWebGLBridge_present:backend('present',(lib,width,height)=>{if(nativeFault&&width===1)return Promise.resolve(6);awtVisible=true;canvas.width=width;canvas.height=height;stats.lastFrame=clock;stats.worldReadiness={phase:'ready'};return 6;}),
     }};
   });
 },{context});
-const renderWorkerModule=new vm.SyntheticModule(['createBrowserRenderWorker'],function(){this.setExport('createBrowserRenderWorker',async(...args)=>gpuModule.namespace.createBrowserWebGL(...args));},{context});
+const renderWorkerModule=new vm.SyntheticModule(['createBrowserRenderWorker'],function(){this.setExport('createBrowserRenderWorker',async(...args)=>{const instance=gpuModule.namespace.createBrowserWebGL(...args),present=instance.natives.Java_orsc_BrowserWebGLBridge_present;instance.natives.Java_orsc_BrowserWebGLBridge_present=async(...input)=>{const result=await present(...input);args[2].onComplete?.({frameId:1});return result;};return instance;});},{context});
 const nativeModule=nativeExplicit?new vm.SourceTextModule(execFileSync('git',['show',nativeCommit+':tools/browser-gameplay/web/browser-native-call-dispatch.js'],{cwd:nativeSource,encoding:'utf8'}),{context}):null;
 const stutterModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-stutter-diagnostics.js',import.meta.url),'utf8'),{context});
 const geometryModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-geometry-transfer-policy.js',import.meta.url),'utf8'),{context});
@@ -150,11 +151,12 @@ assert.equal(window.browserProof.startupDiagnostics.at(-1).detail,'loop=absent')
 const selectedKeys=!benchmarkStream||benchmarkKeys;await configured.natives.Java_orsc_browser_BrowserBootstrap_reportSpriteKeyPolicy(null,selectedKeys,selectedKeys);assert.equal(window.browserProof.spriteKeyLimbs.enabled,selectedKeys);assert.equal(window.browserProof.spriteKeyLimbs.requested,selectedKeys);
 const progressReturn=configured.natives.Java_orsc_BrowserWebGLBridge_worldProgress(null,[1,2,1,4,2,0,0,0,1,960,540,0]);assert.equal(typeof progressReturn?.then,nativeMode==='sync'?'undefined':'function');await progressReturn;assert.equal(window.browserWorldInputAllowed(),false);
 const presentReturn=configured.natives.Java_orsc_BrowserWebGLBridge_present(null,960,540);assert.equal(typeof presentReturn?.then,nativeMode==='sync'?'undefined':'function');assert.equal(await presentReturn,6);assert.equal(window.browserWorldInputAllowed(),true);assert.deepEqual(gateEvents,['browser-world-readinesschange','browser-world-readinesschange']);
-assert.equal(canvas.style.left,'20px');assert.equal(canvas.style.top,'60px');
+assert.equal(canvas.style.left,withoutAwtTarget?'0px':'20px');assert.equal(canvas.style.top,withoutAwtTarget?'0px':'60px');
 assert.equal(canvas.style.width,'960px');assert.equal(canvas.style.height,'540px');
 assert.equal(canvas.style.display,'block');
 assert.deepEqual(nativeTrace,['progress','present']);
 for(const [name,value]of[['regionTransition',3],['holdWorld',4]]){const result=configured.natives['Java_orsc_BrowserWebGLBridge_'+name](null,true);assert.equal(typeof result?.then,nativeMode==='sync'?'undefined':'function');assert.equal(await result,value);}assert.deepEqual(nativeTrace,['progress','present','transition','hold']);stats.worldReadiness={phase:'ready'};
+if(withoutAwtTarget){await configured.natives.Java_orsc_BrowserWebGLBridge_present(null,960,540);assert.equal(canvas.style.left,'20px');assert.equal(canvas.style.top,'60px');}
 const steadyMessages=messages.length,steadyLayouts=layoutReads;stats.declaredPhase='ready';for(let i=0;i<10;i++)await configured.natives.Java_orsc_BrowserWebGLBridge_worldProgress(null,[1,2,1,4,4,0,0,0,1,960,540,0]);assert.equal(messages.length,steadyMessages,'steady source frames copied whole proof to parent');assert.equal(layoutReads,steadyLayouts,'steady loading protocol forced extra canvas layout queries');
 if(benchmarkRenderWorker){
  stats.worldReadiness={phase:'login'};await configured.natives.Java_orsc_browser_BrowserBootstrap_reportState(null,'GAME',60,100);assert.equal(window.browserWorldInputAllowed(),false);
