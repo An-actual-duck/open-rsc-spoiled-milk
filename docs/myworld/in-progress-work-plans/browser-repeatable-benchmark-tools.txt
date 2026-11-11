@@ -227,3 +227,24 @@ jdk21-projection-control-final.log in the worker tooling test category. Both als
 ran unavailable-native cases, exact async wrapper/CSS trace checks and existing
 shader/API doubles. Canonical workspace layout passed. No frozen stage, server,
 owner data or public deployment changed during this follow-up.
+
+Preferred benchmark URL alignment (November 11, 2026)
+---------------------------------------------------
+New prepare-repeatable.py, prepare-repeatable-client.py and prepare-combat.py
+receipts explicitly select spritekeylimbs=on. This matches BrowserWorldSpriteCache's
+adopted ordinary WebGL default; the other adopted options in those preferred
+URLs were already explicit. This changes setup recommendations only, not Java
+runtime defaults, sprite artwork, comparison-policy omission behavior or any
+previously staged receipt/artifact.
+
+The comparison policy deliberately still interprets omitted spritekeylimbs
+as off, preserving historical reproduction. Earlier matched ON/OFF results
+remain fair comparisons conditional on that legacy-key setting. They must not
+be presented as ordinary-default FPS or substituted for a fresh current-default
+control. Future experiments should keep the explicit adopted setting on both
+sides unless sprite-key representation itself is the tested variable.
+
+Verification reuses the existing actual key-policy cases and mocked frontend
+with explicit limb keys, including repeatable and combat fixture routes; no
+new test merely checks the recommended URL string. No browser, game/server,
+GPU benchmark, source JAR or runtime optimization is part of this correction.

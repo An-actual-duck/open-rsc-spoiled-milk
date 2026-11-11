@@ -31,7 +31,7 @@ def main():
     if copied:
         (run/'client-source-provenance.json').write_text(json.dumps(copied,indent=2)+'\n');stage.update(clientSourceCommit=None,clientSourceComposite=copied,clientProvenanceSha256=sha(run/'client-source-provenance.json'))
     (run/'stage.json').write_text(json.dumps(stage,indent=2)+'\n')
-    query='?mode=webgl&benchmark=1&fixture=repeatable-v1&cache=lru&underlay=initial&depth=gpu&loop=modern&cull=early&ownership=all&sprites=cached&overlay=coverage&ownedstate=on&uploadvalidation=on&physical=on&modelpickbounds=on&halomatch=on&geometrytransfer=off&regionprep=off&descriptorwrite=off&halolookup=off&sceneryprojection=off&nativecalls=async'
+    query='?mode=webgl&benchmark=1&fixture=repeatable-v1&cache=lru&underlay=initial&depth=gpu&loop=modern&cull=early&ownership=all&sprites=cached&overlay=coverage&ownedstate=on&uploadvalidation=on&physical=on&modelpickbounds=on&halomatch=on&spritekeylimbs=on&geometrytransfer=off&regionprep=off&descriptorwrite=off&halolookup=off&sceneryprojection=off&nativecalls=async'
     receipt=dict(preparedOnly=True,processesStarted=False,run=str(run),serverRun=str(server_run),status=str(server_run/'status.json'),ready=str(server_run/'REPEATABLE-FIXTURE-READY.json'),httpCommand=['python3',str(ROOT/'scripts/browser-gameplay/serve.py'),str(run/'web'),'--port',str(args.http_port)],url='http://127.0.0.1:'+str(args.http_port)+'/'+query,clientSha256=stage['clientSha256'],clientSourceCommit=stage['clientSourceCommit'],frontendSourceCommit=stage['sourceCommit'],compositeSource=copied,nativeDispatch=stage.get('nativeDispatch'),camera=fixture['camera'])
     (run/'repeatable-preparation.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(receipt,indent=2))
 if __name__=='__main__':main()
