@@ -17,7 +17,7 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
     private final Set<String> l0=new HashSet<String>(),query=new HashSet<String>();
     private final int[] settings;
     private final boolean hiddenRoofs;
-    private boolean ready;
+    private volatile boolean ready;
     private NativeLayeredTerrainSnapshot validated;
     private int activations,hits,models,avoided,validations,prepareMillis,activationMillis;
     private long copiedBytes;
@@ -64,8 +64,19 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
         if(!world.isWholeRamSourceBasisSupported())throw new IllegalStateException("Whole-RAM native activation unsupported: nativeOnly="+WorldBuilderTerrainBootstrap.isNativeOnly()+", projectedSkip="+Renderer3DSettings.canSkipProjectedWorldCapture()+", editor="+WorldEditorBuildSettings.isEnabled()+", alignedOffset="+checkedBasis.offsetTilesX+","+checkedBasis.offsetTilesZ);
         if(!WorldBuilderTerrainBootstrap.isNativeOnly()||!Renderer3DSettings.canSkipProjectedWorldCapture())throw new IllegalStateException("Whole-RAM native/GPU ownership changed");
         if(Config.C_HIDE_ROOFS!=hiddenRoofs)throw new IllegalStateException("Whole-RAM CPU roof option changed: expected="+hiddenRoofs+" actual="+Config.C_HIDE_ROOFS);
+        validateSnapshotSource(snapshot);return true;
+    }
+    /** Background work owns its captured scope; current World/options only participate in publish guards. */
+    public boolean acceptsCaptured(NativeLayeredTerrainSnapshot snapshot,int offsetX,int offsetZ,boolean includeRoofGeometry){
+        if(!ready||snapshot==null||!"global".equals(snapshot.getWorldSpace())||snapshot.getLevel()!=0)return false;
+        validateSnapshotSource(snapshot);
+        if(includeRoofGeometry==hiddenRoofs||Math.floorMod(offsetX,48)!=0||Math.floorMod(offsetZ,48)!=0)return false;
+        new WholeRamBasis(offsetX,offsetZ);return true;
+    }
+    private synchronized void validateSnapshotSource(NativeLayeredTerrainSnapshot snapshot){
+        if(!manifestSha.equals(snapshot.getManifestSha256()))throw new IllegalStateException("Whole-RAM captured source manifest changed: expected="+manifestSha+" actual="+snapshot.getManifestSha256());
         if(snapshot.getProtocolVersion()<5||snapshot.getPresentationChunkSize()!=48)throw new IllegalStateException("Whole-RAM requires a full48-tile native authority window (protocol5+)");
-        if(snapshot!=validated){for(int i=0;i<snapshot.getChunkSlotCount();i++){NativeLayeredTerrainChunk c=snapshot.getChunkMetadata(i);if(c.getSize()!=48)throw new IllegalStateException("Whole-RAM rejects mixed-size source slots");String expected=sectors.get(WholeRamPrepared.key(0,c.getChunkX(),c.getChunkY()));if(c.isAvailable()){if(expected==null||c.getSourceSectorX()!=c.getChunkX()||c.getSourceSectorY()!=c.getChunkY()||!expected.equals(c.getSourcePayloadSha256()))throw new IllegalStateException("Whole-RAM live source differs from owned preparation");}else if(expected!=null)throw new IllegalStateException("Whole-RAM authored source page was presented as void");}validated=snapshot;validations=sat((long)validations+1);}return true;
+        if(snapshot!=validated){for(int i=0;i<snapshot.getChunkSlotCount();i++){NativeLayeredTerrainChunk c=snapshot.getChunkMetadata(i);if(c.getSize()!=48)throw new IllegalStateException("Whole-RAM rejects mixed-size source slots");String expected=sectors.get(WholeRamPrepared.key(0,c.getChunkX(),c.getChunkY()));if(c.isAvailable()){if(expected==null||c.getSourceSectorX()!=c.getChunkX()||c.getSourceSectorY()!=c.getChunkY()||!expected.equals(c.getSourcePayloadSha256()))throw new IllegalStateException("Whole-RAM live source differs from owned preparation");}else if(expected!=null)throw new IllegalStateException("Whole-RAM authored source page was presented as void");}validated=snapshot;validations=sat((long)validations+1);}
     }
     public boolean activate(World world,int plane,int sx,int sy){
         if(plane!=0)return false;long start=System.nanoTime();

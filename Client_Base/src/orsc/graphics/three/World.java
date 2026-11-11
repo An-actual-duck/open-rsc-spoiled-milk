@@ -907,7 +907,7 @@ public final class World {
 			boolean includeRoofGeometry,
 			Renderer3DWorldChunkFrame reusableChunks) {
 		long buildStart = System.nanoTime();
-        WholeOverworldRamRegistry.Provider ram=WholeOverworldRamRegistry.forWorld(this,haloTerrain);
+        WholeOverworldRamRegistry.Provider ram=WholeOverworldRamRegistry.forCaptured(haloTerrain,worldOffsetX,worldOffsetZ,includeRoofGeometry);
         if(ram!=null){
             int sx=haloTerrain.getCurrentChunkX(),sy=haloTerrain.getCurrentChunkY();
             WholeRamBasis basis=new WholeRamBasis(worldOffsetX,worldOffsetZ);
