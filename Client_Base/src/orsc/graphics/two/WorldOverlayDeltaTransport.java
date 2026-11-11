@@ -34,7 +34,7 @@ final class WorldOverlayDeltaTransport {
         if(index<0||index>=width*height){invalidate();return;}
         int block=index/blockPixels;
         if(!touched[block]){touched[block]=true;writeMarks++;}
-        lastBlock=block;lastStart=block*blockPixels;lastEnd=lastStart+blockPixels;
+        lastBlock=block;lastStart=block*blockPixels;lastEnd=Math.min(width*height,lastStart+blockPixels);
     }
     void markSpan(int start,int end) {
         if(!beforeWrite()||end<=start)return;
@@ -42,7 +42,7 @@ final class WorldOverlayDeltaTransport {
         if(start<0||end>width*height){invalidate();return;}
         int first=start/blockPixels,last=(end-1)/blockPixels;
         for(int block=first;block<=last;block++)if(!touched[block]){touched[block]=true;writeMarks++;}
-        lastBlock=last;lastStart=last*blockPixels;lastEnd=lastStart+blockPixels;
+        lastBlock=last;lastStart=last*blockPixels;lastEnd=Math.min(width*height,lastStart+blockPixels);
     }
     Plan prepare(int[] pixels,int width,int height,long generation,long sequence,boolean freshWorld) {
         if(!active||!freshWorld||pixels!=currentPixels||width!=this.width||height!=this.height

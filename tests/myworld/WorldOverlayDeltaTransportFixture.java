@@ -73,6 +73,9 @@ public final class WorldOverlayDeltaTransportFixture {
         fresh(g);WorldOverlayCoverage.Frame e=g.borrowWorldOverlayCoverage();WorldOverlayCoverage.Delta de=e.prepareDeltaTransport(false);g.clearWorldOverlayCoverage();fail(()->e.acknowledgeDeltaTransport(de),"Discarded owner ACK accepted");
         fresh(g);g.invalidateWorldOverlayCoverage("unknown raw writer");check(!g.borrowWorldOverlayCoverage().valid&&g.borrowWorldOverlayCoverage().prepareDeltaTransport(false)==null,"Unknown writer stayed eligible");
         fresh(g);check(!g.borrowWorldOverlayCoverage().prepareDeltaTransport(false).partial,"Invalidation did not force full");
+        WorldOverlayDeltaTransport direct=new WorldOverlayDeltaTransport();int[] shortLast=new int[17];
+        direct.beginFresh(shortLast,1,17,1,1);direct.mark(16);direct.mark(17);
+        check(direct.prepare(shortLast,1,17,1,1,true)==null,"Short final block hid an invalid direct index");
     }
     static void literal(String policy)throws Exception{
         System.setProperty("spoiledmilk.browserOverlayDeltaTransport",policy);MessageDigest hash=MessageDigest.getInstance("SHA-256");

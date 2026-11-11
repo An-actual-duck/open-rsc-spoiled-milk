@@ -93,3 +93,27 @@ WebGL full-versus-delta pixel oracle for the manager. It starts no processes.
 The manager must run that oracle, representative game visuals and same-artifact
 OFF/ON FPS/loading checks before any adoption. Per-writer marking overhead and
 vertically broad UI may outweigh reduced upload payload; no gain is assumed.
+
+Independent review follow-up
+----------------------------
+The first ACTIVE checkpoint d897fe546 remains preserved. Review identified a
+stale FULL token declaration which could pass partial-history checks after hold
+or a legacy fallback, then fail only during retained capture after uploads.
+The corrected implementation reuses the retained-frame owner's own PURE capture
+chronology validator before any delta GL operation. capture itself uses that
+same validator, including planned reset handling. No second chronology authority
+is kept. Hold, ordinary fallback and opaque mode capture/reset remain owned by
+the existing retained module. Direct stale-full-after-hold/fallback, same-frame
+replay and reset epoch restart tests verify the guard without graphics calls.
+
+Delta dimensions are validated against the maxTextureSize cached at backend
+initialization, avoiding even capability queries for malformed wide/short input.
+The final-row stamp cache is clamped to the actual pixel count; a direct index
+in padding past a partial final block invalidates the tracker.
+
+Updated verification: four frozen/current OFF/ON literal RGB/T plane digests
+match exactly (87b10499cb867a30bce5af0870b650fc7a2030caf13772371c57d2d92741c803).
+The state oracle passes 970 checks. All changed metadata guards and old overlay
+mock/frontend controls pass. Real WebGL oracle exports also include source-array
+mutation after synchronous upload to test that borrowed planes never escape.
+These are still CPU checks and preparation, not a claimed GPU/FPS result.

@@ -2,11 +2,12 @@ import {validateOverlayDelta} from './browser-overlay-delta.js';
 import {createBrowserRetainedFrame} from './browser-retained-frame.js';
 /** Optional exact-coverage compositor. RGB is the ordinary software result over
  * black; transmittance is the surviving world coefficient. No world readback. */
-export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=null,retainOpaqueFull=false,physicalOutput=false,deltaTransport=false}={}) {
+export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=null,retainOpaqueFull=false,physicalOutput=false,deltaTransport=false,maxTextureSize=0}={}) {
   const MAX_PIXELS=2097152, UNIT=8;
   const retained=createBrowserRetainedFrame(gl,{stats,ownedFrame,reserveBytes:extra=>reserveCombined(extra)});
   let outputWidth=0,outputHeight=0;
   let deltaHistory=null;
+  const deltaMaxTextureSize=maxTextureSize||ownedFrame?.maxTextureSize||0;
   Object.assign(stats,{overlayDeltaTransportEnabled:deltaTransport===true,overlayDeltaDeclarations:0,overlayDeltaPartialDeclarations:0,overlayDeltaFullDeclarations:0,overlayDeltaPresentedFrames:0,overlayDeltaUploadedBytes:0,overlayDeltaFullEquivalentBytes:0,overlayDeltaUploadCalls:0,overlayUploadBytes:0,overlayUploadCalls:0});
 
   let program,vertex,fragment,vao,rgb,coverage,width=0,height=0,tWidth=0,tHeight=0,pending,active,failed=false,disposed=false;
@@ -45,7 +46,8 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
     // Validate both complete borrowed planes and ALL small metadata before any
     // graphics query, allocation, upload or mutation. Only metadata is retained.
     const plan=validateOverlayDelta({width:w,height:h,generation,frameSequence,reset,partial,baseGeneration,baseFrameSequence,bands,work,rgb:bytes,transmittance},deltaHistory,
-      !!rgb&&!!coverage&&width===w&&height===h&&tWidth===w&&tHeight===h);
+      !!rgb&&!!coverage&&width===w&&height===h&&tWidth===w&&tHeight===h,deltaMaxTextureSize);
+    retained.validateCaptureToken(plan.token,{willReset:reset||width!==w||height!==h});
     dimensions(w,h);
     try{
       if(reset||width!==w||height!==h)retained.reset();
