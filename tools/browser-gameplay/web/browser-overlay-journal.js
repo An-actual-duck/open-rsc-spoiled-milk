@@ -2,6 +2,7 @@
 const MAX_PIXELS=2097152,MAX_OPS=4096,MAX_GLYPHS=4096,MAX_FONTS=8388608,STRIDE=16;
 function typed(value,type,max){if(value instanceof type&&ArrayBuffer.isView(value)&&value.buffer instanceof ArrayBuffer&&value.byteLength<=max)return value;if(value instanceof ArrayBuffer&&value.byteLength<=max&&value.byteLength%type.BYTES_PER_ELEMENT===0)return new type(value);throw Error('Journal genuine bounded view required');}
 const overlap=(a,b)=>a.buffer===b.buffer&&a.byteOffset<b.byteOffset+b.byteLength&&b.byteOffset<a.byteOffset+a.byteLength;
+function ownedScalars(view,cap){const n=Math.min(view.length,cap),out=new Array(n);for(let i=0;i<n;i++)out[i]=view[i];return out;}
 function require(value,message){if(!value)throw Error(message);}
 function token(hi,lo){require(hi>=0&&hi<=2097151,'Journal token high limb');return hi*4294967296+(lo>>>0);}
 export function validateJournal(input){
@@ -16,7 +17,7 @@ export function validateJournal(input){
  const count=header[4],glyphCount=header[5],textCount=header[6],fontBytes=header[7],barriers=header[8],work=header[9],runCount=header[10];
  require(count>=0&&count<=MAX_OPS&&glyphCount>=0&&glyphCount<=MAX_GLYPHS&&textCount>=0&&textCount<=256&&fontBytes>=0&&fontBytes<=MAX_FONTS&&barriers>=0&&work>=0&&work<=MAX_PIXELS&&runCount>=0&&runCount<=MAX_OPS+1,'Journal count caps');
  require(ops.length===count*STRIDE&&glyphs.length===glyphCount*5&&fonts.length===fontBytes&&runs.length===runCount*6,'Journal exact payload bounds');
- for(const n of stats)require(n>=0,'Journal negative counter');
+ for(let i=0;i<32;i++)require(stats[i]>=0,'Journal negative counter');
  // Bounded scalar geometry only. No scratch pixel plane or retained trace exists yet.
  const resolved=new Int32Array(glyphCount*7),rects=new Int32Array(count*4);let nextGlyph=0,nextFont=0,texts=0,seenBarriers=0,pixels=0;
  const domain=n=>n>=-32768&&n<=32768;
@@ -72,7 +73,7 @@ export function createOverlayJournalObserver(stats={}){
   if(h[3]){const replay=replayJournal(plan),actualBits=new Uint32Array(plan.t.buffer,plan.t.byteOffset,plan.t.length),expectedBits=new Uint32Array(replay.t.buffer);mismatches=0;for(let i=0;i<plan.c.length;i++)if(plan.c[i]!==replay.c[i]||actualBits[i]!==expectedBits[i]){mismatches++;if(first===null)first={index:i,actualC:plan.c[i],expectedC:replay.c[i],actualT:actualBits[i],expectedT:expectedBits[i]};}}
   counters.frames++;counters[h[3]?'complete':'incomplete']++;if(mismatches!==null)counters[mismatches?'mismatched':'matched']++;
   counters.last={valid:true,rasterReplayComplete:h[3]===1,generation:plan.g,sequence:plan.s,texts:h[6],glyphs:h[5],candidatePixelWork:h[9],barriers:h[8],fontSnapshotBytes:h[7],runCount:h[10],mismatches,first,
-   runs:Array.from(plan.runs.subarray(0,Math.min(plan.runs.length,64*6))),runsTruncated:h[10]>64,ops:Array.from(plan.ops.subarray(0,Math.min(plan.ops.length,64*STRIDE))),opsTruncated:h[4]>64,lifetime:Array.from(plan.stats)};
+   runs:ownedScalars(plan.runs,64*6),runsTruncated:h[10]>64,ops:ownedScalars(plan.ops,64*STRIDE),opsTruncated:h[4]>64,lifetime:ownedScalars(plan.stats,32)};
  }catch(error){failure(error);}}
  return {consume,failure,counters};
 }
@@ -80,5 +81,5 @@ export function createOverlayJournalObserver(stats={}){
 export function observedOverlayDelta(observer,original){return function(...args){
  try{observer.consume({width:args[1],height:args[2],generation:args[3],sequence:args[4],c:args[11],t:args[12],header:args[13],ops:args[14],glyphs:args[15],fonts:args[16],runs:args[17],stats:args[18]});}
  catch(error){try{observer.failure(error);}catch(ignored){}}
- return original(...args.slice(0,13));
+ return original(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11],args[12]);
 };}

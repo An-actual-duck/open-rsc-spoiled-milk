@@ -1,0 +1,137 @@
+PRIVATE ORDERED OVERLAY JOURNAL OBSERVER v1
+
+Scope
+-----
+URL overlayjournal=observe requires overlaydelta=on. It adds
+-Dspoiledmilk.browserOverlayJournalObserve=true before GraphicsController loads.
+Default off preserves the old native ABI/callback and bypasses capture helpers.
+It never suppresses Java raster writes, changes transport ACKs, rerenders the UI,
+or adopts a native text kernel. This is diagnostic overhead, not an optimization.
+
+Only successful beginTransparentWorldOverlay() opens a journal. The authority is
+WorldOverlayCoverage's actual fresh MODE_WORLD C=0/T=1 begin, exact owner C/T,
+dimensions, generation and frame sequence. A read-only observeFrame() does not
+invalidate coverage on a diagnostic mismatch. Retained/opaque/software/resize/
+reset paths close the journal and release owner/font references. A held frame
+is not exported; next begin/reset closes it. Static counters expose aborted
+journals. Scratch surfaces count attempts separately and allocate no large arrays.
+
+Each final drawColoredString glyph list records once immediately before the
+original ordered glyph loop. Inline icons retain their original earlier sprite
+execution/order. Per-TEXT font bytes are cloned at record time: Fonts and captured
+TextPlotCommand retain mutable byte-array aliases; identity-only caching is unsafe.
+This requires the existing single render-thread source mutation model. Concurrent
+uncoordinated font/pixel mutation is outside this diagnostic's supported scope.
+
+Known: final glyph/shadow plots; drawBox; drawBoxAlpha; horizontal/vertical lines.
+Interlace, unreasonable/raw malformed geometry/font access, cap overflow, and all
+other audited writes/reads are incomplete. No opaque span is invented over holes.
+Run metrics describe captured known operations between barriers, not all game work.
+Repeated barriers may have zero known work between them; no empty run is exported.
+Work is clipped candidate footprint, not nonzero samples or CPU/GPU duration.
+The existing sprite-atlas world actor pipeline is not moved or reimplemented.
+
+Ownership/ABI
+-------------
+finishOverlayJournal returns owned header/ops/glyphs/fonts/runs/stats. It consumes
+the current journal. C/T are borrowed only for the synchronous new
+BrowserWebGLBridge.overlayDeltaFrameObserved callback. The original delta frame
+callback runs exactly once with the identical original 13 JS arguments (including
+lib). Observer parse, allocation, replay or comparison failure cannot set a
+renderer failure or prevent/double original presentation. Original throw/rejection
+is preserved. No await occurs inside observer processing. No borrowed arrays,
+font arrays or plan objects are kept after the callback; last trace contains
+bounded owned scalar copies only (64 ops/runs and32 lifetime counters).
+
+JS validates genuine bounded typed views or zero-copy ArrayBuffer adapters; no
+array/proxy/SharedArrayBuffer copying. Byte-range overlap rejects C/T alias and
+metadata-output overlap. Entire schema, epoch, all commands, clipped source/dest,
+work cap, font/glyph ownership order and run partition validate before separate
+scratch C/T allocation. Complete journals replay into fresh owned C0/T1 arrays,
+then compare every C int and raw float32 T bit. Incomplete journals never replay.
+All original C/T stay read-only in this observer. No GL calls occur in its module.
+
+Caps/memory
+-----------
+4096 ops/plots,256 TEXTs,8MiB retained cloned font payload,2M clipped candidate
+pixels. Base lazy int buffers total442,392 bytes per world surface; scratch
+surfaces do not allocate them. 8MiB is NOT peak memory: finish flattening may
+coexist with8MiB font clones (16MiB total payload), snapshot arrays, bridge views,
+and optional separate replay C/T (8 bytes/pixel). This is a private bounded proof,
+not a claim of minimum memory or suitability for low-memory production.
+
+Closed audited source catalog
+-----------------------------
+The repository direct pixelData roster is exactly five files:
+1 GraphicsController.java: owns allocation/resize, primary clip/phase/raster APIs.
+  Leaf known writes: drawBox, drawBoxAlpha, drawLineHoriz, drawLineVert;
+  wrappers (border/shadow boxes, string centering/shadows) delegate and do not
+  double-record. TEXT plots are captured at the single final loop; private
+  plotCharacter/plotLetter/plotLetterAntialiased are unchanged. Reflection into
+  private glyph helpers is outside complete capture (used only parity tests).
+  All sprite leaf raster families have SPRITE/SOURCE_ALIAS barriers: unscaled
+  a(...letterPlotTable), alpha a(...var8), scaled a(...var2), plot_horiz_line,
+  plot_trans_horiz_line, plot_scale_black_mask, innermost two-mask scale,
+  plot_tran_scale, innermost one-mask scale, indexed
+  plot_trans_scale_lookup_with_mask (byte source plus int lookup alias).
+  Forwarding overloads add no duplicate journal operations. Minimap scanlines
+  delegate to these sprite leaves. These are raster UNKNOWN, not geometry proof.
+  Vertical gradient, circle, setPixel, blackScreen, fade2black explicitly barrier.
+  Framebuffer blur, copyPixelDataToSurface, storeSpriteVert/login viewport capture,
+  actual captureRenderer2DUiBaseFrame arraycopy are READ/UNKNOWN barriers.
+  Existing coverageUnsupported adds UNKNOWN as well (conservatively repeated
+  barriers for blur/capture are not separate pixel writes). Clip changes barrier;
+  next known op also stores its own exact clip. Public static a(...int[] var3)
+  is a legacy scanline helper; the only repository caller is Scene's guarded
+  legacy raster branch, so no static/global observer owner is invented.
+2 Scene.java: caches GraphicsController.pixelData at construction/resize. Shader,
+  MiscFunctions scanlines and static GraphicsController.a are covered by LEGACY
+  at legacy-raster entry; opaque fallback closes world capture. Depth-frame
+  copyColorTo explicitly barriers. Marker compatibility fill cannot have a fresh
+  coverage journal (coverage-enabled branch owns the actual fresh begin).
+3 mudclient.java: raw editor grid line writer explicitly EDITOR before writes;
+  debug/edit renderer coverageUnsupported remains fail-closed.
+4 FloatingHitSplatRenderer.java: measure/scratch GraphicsControllers call
+  beginSoftwareOwnedRenderer2DFrame before glyph writes/read scans or Sprite
+  pixel alias publication. Excluded from world packets; scratch scalar counts
+  remain. Existing LRU256 sprite cache means this is not necessarily per-frame
+  glyph construction. Final world sprite uses normal unknown sprite leaves or
+  existing GPU-owned world actor descriptors; no accidental world-font claim.
+5 ORSCApplet.java: legacy imageProducer.setPixels, direct image construction,
+  cached directFramebufferPixels and DataBufferInt publish/retain aliases.
+  bindDirectFramebuffer is AWT barrier; BrowserWebGLBridge.prepareOverlay also
+  marks terminal AWT before borrowing the shared image pixels. This intentionally
+  prevents complete world claims across the existing AWT shared-array escape,
+  including already cached image aliases. Ordinary image setPixels is outside
+  admitted fresh browser ownership; AWT runtime is not rewritten here.
+
+Public pixelData permits arbitrary external consumers. Completeness means only
+the closed audited repository catalog, NOT arbitrary plugin/reflection/concurrent
+raw writes. Source-catalog review must be repeated when adding direct accesses.
+No fullscreen/minimap/sprite frame is claimed complete merely because a hash
+happens to match. Actual gameplay may export zero complete frames honestly.
+
+Protocol
+--------
+Header16: version1,w,h,complete,ops,glyphs,texts,fontBytes,barriers,work,runs,
+MODE_WORLD1,generationHi/Lo,sequenceHi/Lo. Unsigned low and exact high limbs.
+Op stride16: kind,ordinal; TEXT fontOffset/len,firstGlyph/count,clipLTRB,phase;
+rect x/y/w/h,clipLTRB,phase,color,alpha. Barrier kind9/reason at2/phase at10.
+Glyph5: x,y,color,fontHeaderAddress,AA. Run6: start/endExclusive,texts,rects,
+glyphs,work. All non-barrier ops belong to exactly one run. Full barriers may
+exceed op cap, but missing operations always make the frame incomplete.
+Lifetime32:0fresh,1worldTEXTattempt,2scratchops,3scratchplots,4otherownerops,
+5otherplots,6otherbarriers,7worldbarriers,8unused,9..25reason1..17,
+26truncated,27aborted,28..31unused. Saturating diagnostic ints, no ACK authority.
+
+Checks
+------
+python3 tests/myworld/test-browser-overlay-journal.py
+node tests/myworld/test-browser-overlay-journal.mjs
+node tests/myworld/test-browser-preparation-candidates.mjs
+./scripts/build-client.sh
+python3 scripts/workspace-layout.py check
+Independent reviewer owns frozen actual GraphicsController full C/T/error parity,
+hot-helper hash proof, actual known-only Java corpus and additional hostile views.
+Actual CheerpJ ABI/functional rendering and overhead remain manager-owned gates.
+No game FPS gain or production adoption can be inferred from these CPU proofs.
