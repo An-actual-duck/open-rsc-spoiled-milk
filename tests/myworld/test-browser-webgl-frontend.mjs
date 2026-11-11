@@ -20,7 +20,8 @@ const benchmarkBatch=process.argv.includes('--model-batch');
 const benchmarkDelta=process.argv.includes('--overlay-delta');
 const benchmarkRegionBuild=process.argv.includes('--region-build');
 const benchmarkLoadProfile=process.argv.includes('--load-profile');
-const benchmarkWholeZone=process.argv.includes('--whole-zone');
+const benchmarkWholeRam=process.argv.includes('--whole-ram');
+const benchmarkWholeZone=process.argv.includes('--whole-zone')||benchmarkWholeRam;
 const benchmarkRenderWorker=process.argv.includes('--render-worker')||benchmarkWholeZone;
 const withoutAwtTarget=process.argv.includes('--no-awt-target');let awtVisible=!withoutAwtTarget;
 const benchmarkStream=benchmarkRegionBuild||benchmarkLoadProfile||benchmarkRenderWorker||process.argv.includes('--benchmark-stream')||benchmarkKeys||repeatable||combat||nativeExplicit||benchmarkBatch||benchmarkDelta;let streamRequested;
@@ -33,7 +34,7 @@ const canvas = {style:{},setAttribute(){}};
 const stats = {lastError:null,lastFrame:0};
 const gateEvents=[];
 const window = {dispatchEvent:e=>gateEvents.push(e.type),browserRuntimeVersion:'5.0',addEventListener(){}};
-const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':'')+(benchmarkDelta?'&overlaydelta=on':'')+(benchmarkRenderWorker?'&renderworker=on&overlay=coverage':'')+(benchmarkWholeZone?'&wholezone=on':'')+(benchmarkLoadProfile?'&loadprofile=on':'')+(benchmarkRegionBuild?'&regionbuild=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
+const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':'')+(benchmarkDelta?'&overlaydelta=on':'')+(benchmarkRenderWorker?'&renderworker=on&overlay=coverage':'')+(benchmarkWholeZone?'&wholezone=on':'')+(benchmarkWholeRam?'&wholeram=on':'')+(benchmarkLoadProfile?'&loadprofile=on':'')+(benchmarkRegionBuild?'&regionbuild=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
   URLSearchParams,performance:{now:()=>clock},console,
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
@@ -56,7 +57,7 @@ function backend(name,body){
 const gpuModule = new vm.SyntheticModule(['createBrowserWebGL','BROWSER_NATIVE_CALL_DISPATCH'],function(){
   this.setExport('BROWSER_NATIVE_CALL_DISPATCH',withoutNativeModule?undefined:nativeMode);
   this.setExport('createBrowserWebGL',(_canvas,_report,options)=>{
-    gpuOptions=options;stats.ownedStateActive=options.ownedState;stats.streamUploadValidationActive=options.streamUploadValidation;
+    gpuOptions=options;if(options.wholeZone)stats.wholeZone={ready:true,manifestSha256:zoneConfig.manifestSha256,rawSourceCPUReady:false};stats.ownedStateActive=options.ownedState;stats.streamUploadValidationActive=options.streamUploadValidation;
     if(!withoutNativeModule)stats.nativeCallDispatch={requested:options.nativeCallDispatch,active:nativeMode,synchronousMethods:nativeMode==='sync'?19:0,asynchronousMethods:nativeMode==='sync'?1:20};
     return {canvas,stats,invalidateLayout(){},queueStreamUploadValidation:value=>{streamRequested=value;},queueOwnedState(){},dispose:()=>gpuDisposed++,natives:{
       Java_orsc_BrowserWebGLBridge_regionTransition:backend('transition',(lib,soft)=>{stats.worldReadiness={phase:'streaming',blocksWorldInput:true,blocksKeyboard:!soft};return 3;}),
@@ -83,9 +84,13 @@ const optimizedDefaultsModule=new vm.SourceTextModule(fs.readFileSync(new URL('.
 const wholeZonePolicyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-whole-zone-policy.js',import.meta.url),'utf8'),{context});
 const zoneConfig={schemaVersion:1,manifestBytes:64,manifestSha256:'d'.repeat(64),clientJarSha256:'c'.repeat(64),externalAssets:['Authentic_Landscape.orsc','Authentic_Sprites.orsc','Custom_Sprites.osar','library.orsc','models.orsc'].map(n=>({path:'Cache/video/'+n,bytes:4,sha256:'f'.repeat(64)}))};
 const zoneConfigModule=new vm.SyntheticModule(['default'],function(){this.setExport('default',zoneConfig);},{context});
+const ramPolicyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-whole-ram.js',import.meta.url),'utf8'),{context});
+const ramConfig={schemaVersion:1,manifestSha256:'a'.repeat(64),manifestBytes:4096,clientJarSha256:zoneConfig.clientJarSha256,gpuCatalogSha256:zoneConfig.manifestSha256,sourceBundleSha256:'b'.repeat(64),sourceBundleBytes:46101734,preparedSha256:'e'.repeat(64),preparedBytes:4096,retainedPrimitiveBytes:60000000,rawFiles:1797,recipes:445,queryCells:1330};
+const ramConfigModule=new vm.SyntheticModule(['default'],function(){this.setExport('default',ramConfig);},{context});
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
-const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{if(specifier==='./browser-whole-zone-config.js'){if(zoneConfigModule.status==='unlinked')await zoneConfigModule.link(()=>{});if(zoneConfigModule.status==='linked')await zoneConfigModule.evaluate();return zoneConfigModule;}if(specifier==='./browser-render-worker.js'){if(renderWorkerModule.status==='unlinked')await renderWorkerModule.link(()=>{});if(renderWorkerModule.status==='linked')await renderWorkerModule.evaluate();return renderWorkerModule;}const selected=specifier==='./browser-native-call-dispatch.js'?nativeModule:gpuModule;if(selected===gpuModule)assert.equal(specifier,nativeMode==='sync'?'./webgl-sync.js':'./webgl.js');assert(selected,'Unexpected native helper import');if(selected.status==='unlinked')await selected.link(()=>{});if(selected.status==='linked')await selected.evaluate();return selected;}});
+const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{if(specifier==='./browser-whole-ram-config.js'){if(ramConfigModule.status==='unlinked')await ramConfigModule.link(()=>{});if(ramConfigModule.status==='linked')await ramConfigModule.evaluate();return ramConfigModule;}if(specifier==='./browser-whole-zone-config.js'){if(zoneConfigModule.status==='unlinked')await zoneConfigModule.link(()=>{});if(zoneConfigModule.status==='linked')await zoneConfigModule.evaluate();return zoneConfigModule;}if(specifier==='./browser-render-worker.js'){if(renderWorkerModule.status==='unlinked')await renderWorkerModule.link(()=>{});if(renderWorkerModule.status==='linked')await renderWorkerModule.evaluate();return renderWorkerModule;}const selected=specifier==='./browser-native-call-dispatch.js'?nativeModule:gpuModule;if(selected===gpuModule)assert.equal(specifier,nativeMode==='sync'?'./webgl-sync.js':'./webgl.js');assert(selected,'Unexpected native helper import');if(selected.status==='unlinked')await selected.link(()=>{});if(selected.status==='linked')await selected.evaluate();return selected;}});
 await module.link(specifier=>{
+  if(specifier==='./browser-whole-ram.js')return ramPolicyModule;
   if(specifier==='./browser-whole-zone-policy.js')return wholeZonePolicyModule;
   if(specifier==='./browser-region-load-profile.js')return loadProfileModule;
   if(specifier==='./browser-render-worker-protocol.js')return renderWorkerPolicyModule;
@@ -116,6 +121,17 @@ assert.equal(configured.javaProperties.includes('spoiledmilk.browserWholeZone=tr
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserWholeZoneClientSha256='+zoneConfig.clientJarSha256),benchmarkWholeZone);
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserWholeZoneCatalogSha256='+zoneConfig.manifestSha256),benchmarkWholeZone);
 assert.equal(gpuOptions.wholeZone,benchmarkWholeZone);if(benchmarkWholeZone)assert.equal(gpuOptions.wholeZoneCatalog,zoneConfig);
+assert.equal(configured.javaProperties.includes('spoiledmilk.browserWholeRam=true'),benchmarkWholeRam);
+assert.equal(configured.javaProperties.includes('spoiledmilk.browserWholeRamManifestSha256='+ramConfig.manifestSha256),benchmarkWholeRam);
+if(benchmarkWholeRam){
+ assert.equal(window.browserProof.wholeRamDelivery.declaredOnly,true);configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamWork(null,[]);
+ stats.worldReadiness={phase:'login'};await configured.natives.Java_orsc_browser_BrowserBootstrap_reportState(null,'LOGIN',60,100);assert.equal(window.browserWorldInputAllowed(),true,'RAM gate must not prevent login before first-world initialization');
+ await configured.natives.Java_orsc_browser_BrowserBootstrap_reportState(null,'GAME',60,100);assert.equal(window.browserWorldInputAllowed(),false);
+ configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamWork(null,[1,1,0,1797,46101718,0,0,46101734,0,0,0,0,0,0,0,0,10,0]);assert.equal(window.browserProof.wholeRamJava.sourceReady,true);assert.equal(window.browserProof.wholeRamJava.preparedReady,false);
+ stats.worldReadiness={phase:'ready'};stats.javaWorldFrames=1;gpuOptions.onComplete({frameId:4});assert.equal(window.browserWorldInputAllowed(),false,'raw data and a GPU frame cannot release prepared RAM gate');
+ configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamWork(null,[1,1,1,1797,46101718,445,1330,100000000,0,1,1,144,10000,0,1,1,30,2]);assert.equal(window.browserWorldInputAllowed(),true);assert.equal(window.browserProof.wholeRamResidency.ready,true);assert.equal(stats.wholeZone.rawSourceCPUReady,true);assert.equal(stats.wholeZone.preparedCPUReady,true);assert.equal(window.browserProof.wholeRamJava.mutableBytesCopied,10000);await configured.natives.Java_orsc_browser_BrowserBootstrap_reportState(null,'LOGIN',60,100);gateEvents.length=0;
+}
+
 configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeZoneWork(null,[]);assert.equal(window.browserProof.wholeZoneJava.pending,true);
 configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeZoneWork(null,[1,1,1,2000,1330,5320,12,2,9]);assert.equal(window.browserProof.wholeZoneJava.resolvedStaticSourceChunks,12);assert.throws(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeZoneWork(null,[1,1,1,2000,1331,5320,12,2,9]),/diagnostics/);
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserLoadProfile=true'),benchmarkLoadProfile);
