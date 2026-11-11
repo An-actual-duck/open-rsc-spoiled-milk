@@ -8,7 +8,8 @@ import java.util.*;
 /** Literal software writers and transport state oracle, without JNI/GPU. */
 public final class WorldOverlayDeltaTransportFixture {
     static final int W=96,H=128;
-    static int checks,partialFrames,fullFrames,serial;
+    static int checks,partialFrames,fullFrames,serial,rectangleFrames;
+    static boolean rectMode(){return "on".equals(System.getProperty("spoiledmilk.browserOverlayRectMode"))||"packed".equals(System.getProperty("spoiledmilk.browserOverlayRectMode"));}
     static long uploadedRows,equivalentRows;
     static int[] gpuRgb;static float[] gpuT;static int gw,gh;
     static List<String> exported=new ArrayList<String>();static Path export;
@@ -23,10 +24,13 @@ public final class WorldOverlayDeltaTransportFixture {
         WorldOverlayCoverage.Delta d=f.prepareDeltaTransport(reset);
         int[] bands=d==null||!d.partial?new int[]{0,f.height}:d.bands();
         if(gpuRgb==null||gw!=f.width||gh!=f.height){gpuRgb=new int[f.width*f.height];gpuT=new float[gpuRgb.length];gw=f.width;gh=f.height;}
-        for(int n=0;n<bands.length;n+=2){int from=bands[n]*gw,to=bands[n+1]*gw;System.arraycopy(f.ownerPixels,from,gpuRgb,from,to-from);if(f.transmittance!=null)System.arraycopy(f.transmittance,from,gpuT,from,to-from);}
+        boolean rectangles=d!=null&&d.work().length>6&&d.work()[6]==2;
+        if(rectangles){for(int n=0;n<bands.length;n+=4)for(int row=0;row<bands[n+3];row++){
+            int from=(bands[n+1]+row)*gw+bands[n];System.arraycopy(f.ownerPixels,from,gpuRgb,from,bands[n+2]);System.arraycopy(f.transmittance,from,gpuT,from,bands[n+2]);
+        }}else for(int n=0;n<bands.length;n+=2){int from=bands[n]*gw,to=bands[n+1]*gw;System.arraycopy(f.ownerPixels,from,gpuRgb,from,to-from);if(f.transmittance!=null)System.arraycopy(f.transmittance,from,gpuT,from,to-from);}
         check(Arrays.equals(gpuRgb,f.ownerPixels),"RGB stale outside submitted bands "+name);
         if(f.transmittance!=null)check(Arrays.equals(gpuT,f.transmittance),"T stale outside submitted bands "+name);
-        if(d!=null){int[] work=d.work();check(work.length==6&&work[2]<=f.height,"bounded work shape");int rows=0;for(int n=0;n<bands.length;n+=2)rows+=bands[n+1]-bands[n];check(work[3]==rows,"upload rows receipt");uploadedRows+=rows;equivalentRows+=f.height;if(d.partial)partialFrames++;else fullFrames++;}
+        if(d!=null){int[] work=d.work();check((work.length==6||work.length==15+((((f.width+31)/32)*((f.height+15)/16)+15)/16))&&work[2]<=f.height,"bounded work shape");int rows=0;if(rectangles){rectangleFrames++;check(bands.length<=32&&bands.length%4==0,"bounded rectangle shape");}else for(int n=0;n<bands.length;n+=2)rows+=bands[n+1]-bands[n];check(work[3]==rows,"upload rows receipt");uploadedRows+=rows;equivalentRows+=f.height;if(d.partial)partialFrames++;else fullFrames++;}
         if(export!=null){String id=String.format("%03d",serial++);binary(id+"-rgb.bin",f.ownerPixels);if(f.transmittance!=null)binary(id+"-t.bin",f.transmittance);
             exported.add("{\"name\":\""+name+"\",\"id\":\""+id+"\",\"width\":"+f.width+",\"height\":"+f.height+",\"mode\":"+f.mode+",\"generation\":"+f.generation+",\"frameSequence\":"+f.frameSequence+",\"fades\":"+f.retainedFadeCount+",\"reset\":"+reset+",\"delta\":"+(d!=null)+",\"partial\":"+(d!=null&&d.partial)+",\"baseGeneration\":"+(d==null?-1:d.baseGeneration)+",\"baseFrameSequence\":"+(d==null?-1:d.baseFrameSequence)+",\"bands\":"+Arrays.toString(d==null?new int[0]:d.bands())+",\"work\":"+Arrays.toString(d==null?new int[0]:d.work())+"}");
         }
@@ -36,7 +40,7 @@ public final class WorldOverlayDeltaTransportFixture {
         System.setProperty("spoiledmilk.browserOverlayDeltaTransport","true");GraphicsController g=graphics(W,H);
         fresh(g);g.drawBox(2,2,10,4,0x123456);WorldOverlayCoverage.Frame first=g.borrowWorldOverlayCoverage();WorldOverlayCoverage.Delta fd=first.prepareDeltaTransport(true);
         check(fd!=null&&!fd.partial&&fd.work()[2]==16,"First full lost current touched rows");submit(g,"first-world",true);
-        fresh(g);WorldOverlayCoverage.Delta clear=g.borrowWorldOverlayCoverage().prepareDeltaTransport(false);check(clear.partial&&Arrays.equals(clear.bands(),new int[]{0,16}),"Disappearing UI did not clear previous submitted touch");submit(g,"disappearing-ui",false);
+        fresh(g);WorldOverlayCoverage.Delta clear=g.borrowWorldOverlayCoverage().prepareDeltaTransport(false);check(clear.partial&&(rectMode()?clear.work()[6]==2:Arrays.equals(clear.bands(),new int[]{0,16})),"Disappearing UI did not clear previous submitted touch");submit(g,"disappearing-ui",false);
         fresh(g);WorldOverlayCoverage.Delta empty=g.borrowWorldOverlayCoverage().prepareDeltaTransport(false);check(empty.partial&&empty.bands().length==0,"Empty stable overlay not zero transport");submit(g,"zero-touch",false);
         for(int n=0;n<20;n++){fresh(g);int y=(n%4)*24;g.drawBoxAlpha(1,y,20,9,0xffee11,128);g.drawLineVert(25,y,0x123456,12);g.setPixel(50,120-n%16,0x000000);submit(g,"moving-vfx-"+n,false);}
         // Skipped source frame, including a borrowed but never submitted plan,
@@ -59,8 +63,14 @@ public final class WorldOverlayDeltaTransportFixture {
         fresh(g);submit(g,"resized-clear",false);
         g=graphics(64,256);fresh(g);submit(g,"fragment-owner",true);
         fresh(g);for(int y=0;y<160;y+=32)g.setPixel(1,y,0x997755);
-        check(!g.borrowWorldOverlayCoverage().prepareDeltaTransport(false).partial,"More than four bands did not choose full fallback");submit(g,"fragment-full",false);
+        check(rectMode()?g.borrowWorldOverlayCoverage().prepareDeltaTransport(false).partial:!g.borrowWorldOverlayCoverage().prepareDeltaTransport(false).partial,"Fragmentation did not follow selected transport");submit(g,"fragment-full",false);
         fresh(g);submit(g,"fragment-clear-full",false);fresh(g);submit(g,"fragment-cleared-empty",false);
+        if(rectMode()){
+            g=graphics(65,257);fresh(g);submit(g,"odd-sparse-owner",true);
+            for(int frame=0;frame<4;frame++){fresh(g);for(int y=0;y<257;y+=24)g.setPixel(64,y,0x77aaff);g.drawBoxAlpha(0,16+frame*16,9,5,0x553399,128);submit(g,"odd-sparse-tall-"+frame,false);}
+            fresh(g);submit(g,"odd-sparse-disappear",false);fresh(g);submit(g,"odd-sparse-empty",false);
+            check(rectangleFrames>10,"No actual rectangle transport in corpus");
+        }
         check(partialFrames>10&&fullFrames>3&&uploadedRows<equivalentRows,"Vacuous transport sequence");
         if(export!=null)Files.write(export.resolve("manifest.json"),("{\"schema\":1,\"scope\":\"Literal software RGB/T planes and owned transport metadata; GPU comparison pending\",\"frames\":["+String.join(",",exported)+"]}\n").getBytes("UTF-8"));
     }
@@ -88,6 +98,6 @@ public final class WorldOverlayDeltaTransportFixture {
     public static void main(String[] args)throws Exception{
         if(args[0].equals("literal")){literal(args[1]);return;}
         if(args.length>1){export=Paths.get(args[1]);Files.createDirectories(export);}
-        sequence();acknowledgements();System.out.println("PASS "+checks+" overlay history/planes/ACK checks; partialFrames="+partialFrames+" fullFrames="+fullFrames+" uploadedRows="+uploadedRows+" equivalentRows="+equivalentRows);
+        sequence();acknowledgements();System.out.println("PASS "+checks+" overlay history/planes/ACK checks; partialFrames="+partialFrames+" fullFrames="+fullFrames+" uploadedRows="+uploadedRows+" equivalentRows="+equivalentRows+" rectangleFrames="+rectangleFrames);
     }
 }
