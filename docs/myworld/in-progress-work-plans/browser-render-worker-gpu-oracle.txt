@@ -1,0 +1,87 @@
+Browser render Worker: independent hardware oracle
+=================================================
+
+Scope and source
+----------------
+This branch prepares an actual OffscreenCanvas Worker pixel comparison. It
+changes no game Java, production renderer, runtime defaults or input behavior.
+The manager runs Firefox; the preparer starts no HTTP, browser or server.
+
+The first immutable stage freezes producer 88af6b08ebc1d50fab86bec34ef4461fcf42631b,
+reference main 58c61d98562e287c6e35a6056009cbe81c6d3464, and this oracle fc2b52509.
+Stage: output/tests/browser-render-worker-oracle/worker-pixels-88af-fc2b-1/
+Receipt: stage.json; source gate: source-gate.log (110 checks PASS, CPU only).
+The receipt binds every served module, native Java input, shader and sky file.
+Exact main58 Shader/Scene/GraphicsController/Sky sources are freshly compiled
+against the manager-approved dependency JAR SHA256
+ da2c2f22fcefb29b8083ef98351d84e1ac583c47de93448ee12b21ae6192711f.
+That dependency is not the rejected segmented-TEXT client.
+
+The three independent contexts use accepted-main backend, candidate same-thread
+backend, and candidate actual Worker backend. Candidate webgl.js differs from
+main only by explicit outputSizer injection and measured DPR use. The source
+gate verifies that normalization and byte-identical shared overlay, lighting,
+sky, atlas, physical-size, retained-frame and input/display modules. Production
+Java shader text and native sky inputs are identical in all contexts.
+
+Hardware cases
+--------------
+The driver auto-runs and exposes window.renderWorkerProof. It rejects software
+GPU fallbacks and requires the owner's Radeon hardware. It compares every RGBA
+byte after each frame, requires nonblank colored output and explicit completed
+packet/frame counters, and never labels submission as presentation.
+
+Cases include 42 existing full-pipeline frames (world/opaque/retained, repeated
+fades, depth, native sky, lighting masks, atlas), actual opaque null T, C/T zero
+holes and finite Float32 alpha, texture/chunk deletion and recreation, atlas
+epoch/reuse, and physical sizing. Explicit layouts include logical960x540 to
+1843x1037, odd197x131 at2x, fractional CSS and DPR2. Missing/zero Worker layout
+must reject rather than silently render at logical resolution.
+
+The adversarial lifetime case overwrites every borrowed producer array after
+ACK. The actual Worker adapter also overwrites every returned packet buffer
+before pooling, then the oracle overwrites the available pool again. The next
+frame sends only frame/overlay/progress data, with unchanged sky, lighting,
+texture, masks and atlas NOT resent. It must match the preceding stable image
+and both main contexts. This checks persistent ownership after transferable
+inputs have detached; repeatedly sending fresh resources would hide that bug.
+
+Readback occurs in the Worker execution task immediately after the backend's
+frameWork/terminal presentation, before its ACK. Later readPixels requests
+transfer that owned saved image; they do not sample a default framebuffer after
+an intervening browser commit. Actual disposal confirmation must return zero
+GPU and sprite ledgers. This proves command completion plus diagnostic readback,
+not GPU scanout or a timing fence. Oracle readback overhead is not a benchmark.
+
+DOM and input boundary review
+-----------------------------
+Main createBrowserRenderWorker owns ResizeObserver, display-change listeners,
+getBoundingClientRect and window DPR. It snapshots explicit epoch/width/height/
+DPR into packets. Worker replay imports the same physicalOutputSize algorithm,
+sets the true MAX_TEXTURE_SIZE from initialize, and rejects absent metrics.
+Worker entry/replay contain no document, pointer-lock or keyboard/mouse hooks.
+The game frontend aligns the canvas before Worker present and invalidates its
+layout. Main AWT/Java VM and the existing input canvas remain on the main thread;
+source parity of input modules is checked, but this standalone oracle does not
+execute physical keyboard/mouse events or CheerpJ.
+
+Context-loss/fatal cleanup is source-reviewed and independently CPU-tested by
+the protocol worker. This oracle does not claim an actual lost-context GPU test.
+Normal disposeAndConfirm exercises the real Worker disposal ACK; immediate
+production dispose terminates promptly and cannot promise a backend ledger ACK.
+
+Reproduce without touching existing stages
+------------------------------------------
+python3 tests/myworld/prepare-browser-render-worker-hardware.py \
+ --worker-source /home/justin/Core-Framework-ai-1 \
+ --worker-commit 88af6b08ebc1d50fab86bec34ef4461fcf42631b \
+ --dependency-jar /home/justin/Core-Framework-ai-3/output/builds/browser-overlay-journal/0de2fbfbc/Open_RSC_Client.jar \
+ --name UNIQUE_NAME --port 8218
+node tests/myworld/test-browser-render-worker-oracle-source.mjs STAGE_DIRECTORY
+
+The manager starts the stage.json httpCommand, opens its URL in isolated Firefox,
+and preserves window.renderWorkerProof with hardware/session/source receipts.
+Existing stages refuse overwrite. Hardware execution remains pending until the
+manager records its result. No game FPS, responsiveness, input or performance
+improvement follows from a pixel equality pass; those require the private game
+integration and completed-Worker metrics with the same visual workload.
