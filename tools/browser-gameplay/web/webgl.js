@@ -42,7 +42,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   let physicalOutput=options.physicalOutput===true,pendingPhysicalOutput=null;
   const physicalControl=options.benchmarkControl===true&&options.physicalOutputControl===true;
   const physicalCapability=physicalOutput||physicalControl;
-  const outputSizer=createPhysicalOutputSizer(canvas,{enabled:physicalCapability,maxTextureSize:physicalCapability?(ownedFrame?.maxTextureSize||gl.getParameter(gl.MAX_TEXTURE_SIZE)):4096});
+  const outputSizer=options.outputSizer||createPhysicalOutputSizer(canvas,{enabled:physicalCapability,maxTextureSize:physicalCapability?(ownedFrame?.maxTextureSize||gl.getParameter(gl.MAX_TEXTURE_SIZE)):4096});
   stats.physicalOutputRequested=physicalOutput;
   stats.physicalOutputActive=physicalOutput;stats.physicalOutputWorldFramePolicies=[];stats.physicalOutputTransitions=[];
   if(physicalCapability)stats.resourceBudgetScope=stats.resourceBudgetScope.replace('<=32MiB combined','<=48MiB combined')+'; physical drawingbuffer <=1920x1080 with color+depth driver storage additional';
@@ -201,7 +201,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       let output=desiredOutput;
       if(physicalCapability&&overlay)output=overlay.outputSize(width,height,output.width,output.height);
       const outputWidth=output.width,outputHeight=output.height;
-      stats.physicalOutput={enabled:physicalOutput,logicalWidth:width,logicalHeight:height,width:outputWidth,height:outputHeight,deferred:output.deferred===true,devicePixelRatio:globalThis.window?.devicePixelRatio||1,cssWidth:measuredOutput?.cssWidth??null,cssHeight:measuredOutput?.cssHeight??null,requestedWidth:measuredOutput?.width??width,requestedHeight:measuredOutput?.height??height,requestedScale:measuredOutput?.requestedScale??1,capped:physicalOutput&&measuredOutput?.capped===true,drawingbufferColorDepthEstimateBytes:outputWidth*outputHeight*8};
+      stats.physicalOutput={enabled:physicalOutput,logicalWidth:width,logicalHeight:height,width:outputWidth,height:outputHeight,deferred:output.deferred===true,devicePixelRatio:measuredOutput?.devicePixelRatio||globalThis.window?.devicePixelRatio||1,cssWidth:measuredOutput?.cssWidth??null,cssHeight:measuredOutput?.cssHeight??null,requestedWidth:measuredOutput?.width??width,requestedHeight:measuredOutput?.height??height,requestedScale:measuredOutput?.requestedScale??1,capped:physicalOutput&&measuredOutput?.capped===true,drawingbufferColorDepthEstimateBytes:outputWidth*outputHeight*8};
       if(canvas.width!==outputWidth)canvas.width=outputWidth;if(canvas.height!==outputHeight)canvas.height=outputHeight;
       if(!lightingValues)throw new Error('Browser frame missing lighting declaration');
       if(ownedFrame?.active)ownedFrame.begin(outputWidth,outputHeight,world&&u[29]>=0?u[15]:0,world&&u[29]>=0?u[16]:0,world&&u[29]>=0?u[17]:0);
