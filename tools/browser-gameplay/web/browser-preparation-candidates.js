@@ -6,5 +6,7 @@ export function privatePreparationCandidates(mode,options) {
   const rectMode=options.get('overlayrect')||'off';
   if(!['off','observe','on','packed'].includes(rectMode))throw new Error('Invalid private overlayrect policy');
   if(rectMode!=='off'&&!overlayDeltaTransport)throw new Error('Private overlayrect requires overlaydelta=on');
-  return {rectMode,properties:['spoiledmilk.browserRegionPreparation='+region,'spoiledmilk.browserResidentDescriptorWriting='+descriptor,'spoiledmilk.browserHaloHeightLookup='+halo,'spoiledmilk.browserSceneryProjectionWork='+sceneryProjection,'spoiledmilk.browserPrimitiveChunkCoverage='+chunkCoverage,'spoiledmilk.browserOverlayDeltaTransport='+overlayDeltaTransport,'spoiledmilk.browserOverlayRectMode='+rectMode],requested:{region,descriptor,halo,sceneryProjection,chunkCoverage,overlayDeltaTransport}};
+  const overlayWriterSpans=selected('overlaywriterspans');
+  if(overlayWriterSpans&&(!overlayDeltaTransport||!['on','packed'].includes(rectMode)))throw new Error('Private overlaywriterspans requires active rectangle transport');
+  return {rectMode,properties:['spoiledmilk.browserRegionPreparation='+region,'spoiledmilk.browserResidentDescriptorWriting='+descriptor,'spoiledmilk.browserHaloHeightLookup='+halo,'spoiledmilk.browserSceneryProjectionWork='+sceneryProjection,'spoiledmilk.browserPrimitiveChunkCoverage='+chunkCoverage,'spoiledmilk.browserOverlayDeltaTransport='+overlayDeltaTransport,'spoiledmilk.browserOverlayRectMode='+rectMode,'spoiledmilk.browserOverlayWriterSpans='+overlayWriterSpans],requested:{region,descriptor,halo,sceneryProjection,chunkCoverage,overlayDeltaTransport,overlayWriterSpans}};
 }

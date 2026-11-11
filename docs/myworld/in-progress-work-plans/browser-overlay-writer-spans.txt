@@ -1,0 +1,50 @@
+Browser overlay writer spans (ACTIVE experimental pilot)
+=======================================================
+
+Scope and controls
+------------------
+Private browser benchmark overlaywriterspans=on; default off. Requires
+WebGL overlaydelta=on and overlayrect=on or packed. Ordinary/native/software
+startup does not enable this policy. No extra per-frame native invocation.
+The existing overlayDeltaFrame declaration carries one bounded five-int
+counter snapshot: admitted scopes, rows premarked, pixel marks suppressed,
+mismatches, rejections. browserProof.privatePolicies.overlayWriterSpans
+reports startup policy; webgl.stats.overlayWriterSpans reports frame work.
+
+Only GraphicsController.plotLetter, plotLetterAntialiased, drawBoxAlpha are
+scoped. Their literal RGB arithmetic, source predicates, T per-covered-pixel
+operations, scene ownership guard and legacy catch behavior stay authoritative.
+No opaqueSpan is used for sparse glyph holes. This changes transport marking,
+not rendering or the existing affine composition approximation.
+
+Contract
+--------
+Coverage owns one lexical writer scope. Admission requires transparent valid
+matching live owner, active delta transport, and no pending prepared plan.
+Even a zero-source glyph admission invalidates an already pending plan.
+Nested scopes invalidate transport. Long arithmetic validates the full clipped
+row geometry before marking: positive rows/width, in-surface start/end,
+rowStep >= rowWidth and a whole number of surface rows, no row edge crossing.
+Invalid geometry takes literal writing with delta invalidated; source data
+is deliberately not prevalidated, preserving legacy partial exception prefixes.
+
+Each original raster row calls transportWriterRow before entering its pixel
+loop. Expected start, width and remaining row count are checked; only then is
+its [start,end) marked using transport.markSpan. Per-pixel opaque/multiply still
+updates written/T and checks coefficients. Only redundant transport.mark is
+suppressed after an index-range check in the current row. Premarked transparent
+holes and an exception suffix conservatively over-upload; they never change T.
+Unknown/out-of-row write, opaqueSpan, foreign owner, nested writer, reset,
+borrow or prepare while open invalidate partial transport and clear suppression.
+Finally always ends an admitted lexical scope, including swallowed mono errors.
+Reset/epoch changes cannot inherit suppression. ACK/base history stays owned
+by the existing delta transport. Prepared plans remain immutable snapshots.
+
+Required evidence (pending)
+---------------------------
+Frozen baseline/off/on full C and raw-T comparisons, clipped/interlaced alpha,
+mono and AA sparse glyphs, malformed source/geometry exception prefixes,
+following-error writes, unknown/nested/reset/owner/epoch/pending/ACK cases.
+Independent source-bound CPU proof; game build/stages and real browser policy,
+work counters and FPS acceptance managed by root. No GPU or server processes
+started by this worker. No performance/default-adoption claim.

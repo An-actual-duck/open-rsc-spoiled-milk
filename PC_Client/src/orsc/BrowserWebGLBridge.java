@@ -15,6 +15,9 @@ import orsc.graphics.two.WorldOverlayCoverage;
 public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     /** One-time private startup receipt; never probes per-frame cache contents. */
     public static boolean isSpriteKeyLimbsEnabled(){return BrowserWorldSpriteCache.isKeyLimbsEnabled();}
+    public static boolean isOverlayWriterSpansEnabled(){return isOverlayDeltaTransportEnabled()
+        && Boolean.getBoolean("spoiledmilk.browserOverlayWriterSpans")
+        && ("on".equals(getOverlayRectMode())||"packed".equals(getOverlayRectMode()));}
     public static String getOverlayRectMode(){return isOverlayDeltaTransportEnabled()
         ? System.getProperty("spoiledmilk.browserOverlayRectMode","off") : "off";}
     private static final int MAX_CHUNKS=256, MAX_VERTICES=524288, MAX_PIXELS=2097152, UPLOAD_VERTICES_PER_FRAME=32768;
@@ -90,7 +93,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     }
     private static native void overlayFrame(int width,int height,int mode,double generation,double frameSequence,int fades,boolean reset,float[] transmittance);
     private static native void overlayDeltaFrame(int width,int height,double generation,double frameSequence,boolean reset,
-        boolean partial,double baseGeneration,double baseFrameSequence,int[] bands,int[] work,int[] rgb,float[] transmittance);
+        boolean partial,double baseGeneration,double baseFrameSequence,int[] bands,int[] work,int[] rgb,float[] transmittance,int[] writerWork);
     private static final class PreparedOverlay {
         final WorldOverlayCoverage.Frame frame;final WorldOverlayCoverage.Delta delta;
         PreparedOverlay(WorldOverlayCoverage.Frame frame,WorldOverlayCoverage.Delta delta){this.frame=frame;this.delta=delta;}
@@ -303,7 +306,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             WorldOverlayCoverage.Delta delta=OVERLAY_DELTA?coverage.prepareDeltaTransport(reset||overlayDeltaReset):null;
             if(delta!=null){
                 overlayDeltaFrame(width,height,coverage.generation,coverage.frameSequence,reset,delta.partial,
-                    delta.baseGeneration,delta.baseFrameSequence,delta.bands(),delta.work(),pixels,coverage.transmittance);
+                    delta.baseGeneration,delta.baseFrameSequence,delta.bands(),delta.work(),pixels,coverage.transmittance,delta.writerWork());
                 prepared=new PreparedOverlay(coverage,delta);
             }else{
                 if(OVERLAY_DELTA)overlayDeltaReset=true;

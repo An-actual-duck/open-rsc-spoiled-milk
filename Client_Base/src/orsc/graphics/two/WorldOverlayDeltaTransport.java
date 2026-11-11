@@ -33,6 +33,7 @@ final class WorldOverlayDeltaTransport {
     private void clearHistory(){acknowledgedPixels=null;acknowledgedTouched=null;acknowledgedTiles=null;acknowledgedWidth=acknowledgedHeight=0;acknowledgedGeneration=acknowledgedSequence=-1;}
     void forgetAcknowledgedFrame(){clearHistory();pending=null;}
     void invalidate(){clearHistory();active=false;pending=null;lastBlock=-1;currentPixels=null;}
+    boolean admitWriter(){if(!active||pending!=null){invalidate();return false;}return true;}
     private boolean beforeWrite(){if(!active)return false;if(pending!=null){invalidate();return false;}return true;}
     void mark(int index) {
         if(!beforeWrite())return;

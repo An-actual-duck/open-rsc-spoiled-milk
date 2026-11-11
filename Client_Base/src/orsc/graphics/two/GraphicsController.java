@@ -2898,7 +2898,10 @@ public class GraphicsController {
 				return;
 			}
 
+            final boolean transportScope=worldOverlayCoverage!=null && worldOverlayCoverage.beginTransportWriter(this.pixelData,pxi,width,(height+var16-1)/var16,width+lineStride);
+            try {
 			for (int yi = 0; yi < height; yi += var16) {
+                if(transportScope)worldOverlayCoverage.transportWriterRow(this.pixelData,pxi,width);
 				for (int xi = -width; xi < 0; ++xi) {
 					int o1 = mixOld * (this.pixelData[pxi] & 255);
 					int o3 = mixOld * ((0xFF0000 & this.pixelData[pxi]) >> 16);
@@ -2911,6 +2914,7 @@ public class GraphicsController {
 				pxi += lineStride;
 			}
 
+            } finally { if(transportScope)worldOverlayCoverage.endTransportWriter(); }
 		} catch (RuntimeException var21) {
 			throw GenUtil.makeThrowable(var21, "ua.KB(" + alpha + ',' + x + ',' + height + ',' + "dummy" + ',' + y + ','
 				+ width + ',' + color + ')');
@@ -4073,6 +4077,9 @@ public class GraphicsController {
 
 	private void plotLetter(int color, int[] dest, int destHead, int rowStride, int height, int width,
 							int srcHead, byte[] src, int srcStride) {
+		final int transportWidth=width;
+        final boolean transportScope=worldOverlayCoverage!=null && worldOverlayCoverage.beginTransportWriter(dest,destHead,width,height,width+rowStride);
+        try {
 		try {
 
 
@@ -4082,6 +4089,7 @@ public class GraphicsController {
 				width = -(width & 3);
 
 				for (int i = -height; i < 0; ++i) {
+                    if(transportScope)worldOverlayCoverage.transportWriterRow(dest,destHead,transportWidth);
 					for (int j = count2; j < 0; ++j) {
 						if (src[srcHead++] != 0) {
 							coverageOpaque(dest, destHead);
@@ -4136,13 +4144,17 @@ public class GraphicsController {
 					+ rowStride + ',' + height + ',' + width + ',' + srcHead + ','
 					+ (src != null ? "{...}" : "null") + ',' + srcStride + ')');
 		}
+        } finally { if(transportScope)worldOverlayCoverage.endTransportWriter(); }
 	}
 
 	private void plotLetterAntialiased(byte[] src, int color, int width, int destHead, int height, int srcStride,
 									   int rowStride, int[] dest, int srcHead) {
+		final boolean transportScope=worldOverlayCoverage!=null && worldOverlayCoverage.beginTransportWriter(dest,destHead,width,height,width+rowStride);
+        try {
 		try {
 
 			for (int i = -height; i < 0; ++i) {
+                if(transportScope)worldOverlayCoverage.transportWriterRow(dest,destHead,width);
 				for (int j = -width; j < 0; ++j) {
 					int alpha = 0xFF & src[srcHead++];
 					if (alpha <= 30) {
@@ -4172,8 +4184,8 @@ public class GraphicsController {
 					+ height + ',' + srcStride + ',' + "dummy" + ',' + rowStride + ','
 					+ (dest != null ? "{...}" : "null") + ',' + srcHead + ')');
 		}
+        } finally { if(transportScope)worldOverlayCoverage.endTransportWriter(); }
 	}
-
 	public final void createCaptchaSprite(Sprite s) {
 		try {
 

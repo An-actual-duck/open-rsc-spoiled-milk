@@ -118,7 +118,12 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       alive();if(!overlay){overlay=createBrowserOverlay(gl,{stats,ownedFrame,deferOrCheck:uploadValidation.deferOrCheck,retainOpaqueFull:true,physicalOutput:physicalCapability,deltaTransport:options.overlayDeltaTransport===true,overlayRectMode:options.overlayRectMode||'off',measurePacking:options.benchmarkControl===true,maxTextureSize:cachedMaxTextureSize});stats.overlayCoverageEnabled=true;stats.limitations[0]='Coverage UI follows legacy RGB/T; small integer-rounding differences remain possible';}
       try{overlay.prepare(width,height,mode,generation,frameSequence,fades,reset,mode===0?null:typed(transmittance,Float32Array));}catch(e){stats.backendFailed=true;throw e;}
     },
-    async Java_orsc_BrowserWebGLBridge_overlayDeltaFrame(lib,width,height,generation,frameSequence,reset,partial,baseGeneration,baseFrameSequence,bands,work,rgbInput,transmittance){
+    async Java_orsc_BrowserWebGLBridge_overlayDeltaFrame(lib,width,height,generation,frameSequence,reset,partial,baseGeneration,baseFrameSequence,bands,work,rgbInput,transmittance,writerInput){
+      const writerView=writerInput===undefined?null:typed(writerInput,Int32Array);
+      if(writerView&&writerView.length!==5)throw new Error('Invalid overlay writer scope counters');
+      const writerValues=writerView?Array.from(writerView):[0,0,0,0,0];
+      if(writerValues.some(v=>!Number.isSafeInteger(v)||v<0))throw new Error('Invalid overlay writer scope counters');
+      stats.overlayWriterSpans=Object.fromEntries(['scopes','rows','suppressedMarks','mismatches','rejections'].map((key,n)=>[key,writerValues[n]]));
       alive();if(options.overlayDeltaTransport!==true)throw new Error('Private overlay delta transport is unavailable');
       if(!overlay){overlay=createBrowserOverlay(gl,{stats,ownedFrame,deferOrCheck:uploadValidation.deferOrCheck,retainOpaqueFull:true,physicalOutput:physicalCapability,deltaTransport:true,overlayRectMode:options.overlayRectMode||'off',measurePacking:options.benchmarkControl===true,maxTextureSize:cachedMaxTextureSize});stats.overlayCoverageEnabled=true;stats.limitations[0]='Coverage UI follows legacy RGB/T; small integer-rounding differences remain possible';}
       const pixels=typed(rgbInput,Int32Array);
