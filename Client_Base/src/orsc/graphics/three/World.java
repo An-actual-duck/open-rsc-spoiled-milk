@@ -282,7 +282,7 @@ public final class World {
             int at=24;for(int i=0;i<288;i++)if(pool.ints(d[at++]).length!=144)throw new IllegalStateException("Prepared tile page dimensions");
             for(int x=0;x<12;x++)for(int z=0;z<12;z++)if(pool.ints(d[at++]).length!=Math.min(36,429-x*36)*Math.min(36,429-z*36))throw new IllegalStateException("Prepared minimap page dimensions");
             for(int i=0;i<288;i++){int id=d[at++];if(id>=0&&models.add(id))RSModel.instantiatePreparedState(id,pool);else if(id< -1)throw new IllegalStateException("Prepared model reference");}
-            if(((long[])pool.get(d[at++])).length!=(144*144+63)/64||d[at]<0||d[at]>144*144)throw new IllegalStateException("Prepared roof metadata");
+            if(((long[])pool.get(d[at++])).length!=(143*143+63)/64||d[at]<0||d[at]>143*143)throw new IllegalStateException("Prepared roof metadata");
         }
         public long activate(World w){
             if((Config.C_HIDE_ROOFS?1:0)!=d[3])throw new IllegalStateException("Whole-RAM CPU roof option changed; recook prepared products");

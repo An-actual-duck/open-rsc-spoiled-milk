@@ -21,7 +21,7 @@ public final class WholeRamPrepared {
     public Renderer3DWorldChunkFrame queryFrame(int sx,int sy){
         World.PreparedActivation recipe=recipe(sx,sy);if(recipe==null)throw new IllegalStateException("No prepared global L0 activation at "+sx+":"+sy);
         ArrayList<Renderer3DWorldChunkFrame.ChunkMesh> out=new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(75);
-        Renderer3DWorldChunkFrame.ChunkMesh first=cells.get(key(0,sx,sy));if(first==null)throw new IllegalStateException("Missing primary RAM query cell");out.add(first.rebaseWholeRamQuery(0,0,recipe.roofBits(),144,recipe.roofCount()));
+        Renderer3DWorldChunkFrame.ChunkMesh first=cells.get(key(0,sx,sy));if(first==null)throw new IllegalStateException("Missing primary RAM query cell");out.add(first.rebaseWholeRamQuery(0,0,recipe.roofBits(),143,recipe.roofCount()));
         for(int p=0;p<3;p++)for(int x=sx-2;x<=sx+2;x++)for(int y=sy-2;y<=sy+2;y++){if(p==0&&x==sx&&y==sy)continue;Renderer3DWorldChunkFrame.ChunkMesh c=cells.get(key(p,x,y));if(c!=null)out.add(c.rebaseWholeRamQuery(Math.multiplyExact(x-sx,6144),Math.multiplyExact(y-sy,6144),null,0,0));}
         return Renderer3DWorldChunkFrame.fromChunks(out);
     }
