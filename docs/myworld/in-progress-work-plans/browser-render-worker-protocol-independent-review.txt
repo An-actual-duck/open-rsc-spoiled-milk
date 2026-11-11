@@ -64,15 +64,15 @@ in a candidate that has not yet been checkpointed.
 
 Source-bound CPU result
 -----------------------
-Candidate:a10f96234dbe7556565dc31301cd6a3a5bc6d5a5 in ai-1.
-Independent test execution:PASS189 checks, Node22.21.1, no browser, actual Worker,
+Candidate:25cd32c629d63a9a16abc5ceb5fe955d3c1e0285 in ai-1.
+Independent test execution:PASS214 checks, Node22.21.1, no browser, actual Worker,
 OffscreenCanvas, GPU, Java VM or server launched. Exact receipt:
-output/tests/browser-render-worker-protocol-independent/20261111T124853095541Z/result.json
-It freezes six candidate modules plus fixture before import, and records source,
+output/tests/browser-render-worker-protocol-independent/20261111T125646225872Z/result.json
+It freezes seven candidate modules plus fixture before import, and records source,
 fixture, runner, stdout/stderr hashes and exact command. Invocation:
 python3 tests/myworld/test-browser-render-worker-protocol-independent.py \
   --candidate-root /home/justin/Core-Framework-ai-1 \
-  --candidate-commit a10f96234dbe7556565dc31301cd6a3a5bc6d5a5
+  --candidate-commit 25cd32c629d63a9a16abc5ceb5fe955d3c1e0285
 
 Proof details
 -------------
@@ -214,3 +214,42 @@ timing. This is manager-run actual Worker/GPU equivalence evidence, separate
 from this branch's Node CPU execution. Actual Java-native gameplay integration,
 combat pacing, real region loading/input and measured FPS acceptance remain
 manager gates. No ordinary default adoption follows from either correctness gate.
+
+Actual startup failure and focused25cd DOM correction
+----------------------------------------------------
+The a10 actual GPU oracle did NOT establish real Java/AWT startup readiness.
+The manager's first game initialization reached Worker/shader setup but stopped
+at its first loading image before any AWT target canvas existed:
+output/diagnostics/browser-frame-architecture/render-worker-functional-1/startup-failed.json
+  SHA256 da79271be1eed9520af66381faa2204bdd90a6eaeebdf157ef5e5eb3165522bd
+The retained receipt reports "Missing positive main-thread output layout" and
+last submitted frame:none. It remains a failed integration gate, not a pixel-
+parity or CPU ownership failure. The positive synthetic GPU layouts did not
+exercise this real startup sequence.
+
+25cd changes only the main adapter/frontend. For worker-only early loading, the
+actual present dimensions establish logical CSS size under the already measured
+positive #display/transform, then the proxy reads the GPU canvas's REAL rectangle
+and DPR. It does not supply fabricated960x540 physical metrics. A cached zero
+rectangle is retried until positive. Once AWT exists, the original target-based
+alignment is restored; positive steady layout does not poll/invalidate every
+frame. Ordinary same-thread no-AWT behavior is unchanged.
+
+Independent214-check final proof executes the exact extracted frontend alignment
+closure AND actual async present wrapper against fake DOM geometry. First802x602
+loading present without AWT obtains1604x1204 transformed canvas geometry BEFORE
+the backend callback. A later1000x800 AWT target restores the original target
+placement/scaling before the next present. The actual proxy factory separately
+exercises cached0x0 initialization, later positive1604x1204 DPR1.25 WITHOUT an
+observer event, steady positive caching and explicit invalidation/remeasurement.
+The ordinary same-thread alignment branch never invokes worker invalidation.
+These are source-bound DOM/adapter CPU checks, not actual browser layout proof.
+
+One initial fixture expected vertical centering in the old AWT formula, but the
+literal legacy formula deliberately aligns its vertical offset differently.
+The expected top was corrected to178.5px with no runtime source change; failed
+receipt20261111T125606054485Z remains preserved. Final214 checks pass at the
+receipt listed above. No changes to the worker, GPU backend or shaders were
+required; prior a10 GPU equivalence remains separately scoped. Actual corrected
+Java-native startup/gameplay/FPS is still a manager gate; no performance/default
+adoption claim is made by this amendment.

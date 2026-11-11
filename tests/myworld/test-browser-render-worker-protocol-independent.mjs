@@ -1,5 +1,7 @@
 // Independent behavioral oracle. Requires detached, exact-source ES modules.
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
 import {pathToFileURL} from 'node:url';
 const root=process.argv[2];
 const P=await import(pathToFileURL(root+'/browser-render-worker-protocol.js'));
@@ -188,5 +190,30 @@ class FakeWorker{
  for(const [key,bad]of [['frameSamples',new Float32Array(10)],['frameSamples',NaN],['frameSamples',-1],['worldFramePolicies',1],['javaBridgeWorkSamples',Array(13).fill(0)],['javaBridgeWorkSamples',new Float32Array(14)],['javaBridgeWorkSamples',Array(14).fill(Infinity)]]){const s=make({}),f=createWorkerStatsSnapshot(s);s[key].push(bad);assert.throws(()=>f());checks++;}
  const big=make(Object.fromEntries(Array.from({length:193},(_,n)=>['f'+n,n])));assert.throws(()=>createWorkerStatsSnapshot(big)());checks++;
  const strings=make(Object.fromEntries(Array.from({length:5},(_,n)=>['s'+n,'x'.repeat(4096)])));assert.throws(()=>createWorkerStatsSnapshot(strings)());checks++;
+}
+// Execute actual extracted frontend alignment body with independent DOM geometry.
+{
+ const source=fs.readFileSync(root+'/browser.js','utf8'),start=source.indexOf('function alignWorldSurface(');ok(start>=0);let end=source.indexOf('{',start),depth=1;for(end++;depth&&end<source.length;end++){if(source[end]==='{')depth++;else if(source[end]==='}')depth--;}const body=source.slice(start,end);
+ let awt=null,enabled=true,invalidations=0,layoutSets=[],coverUpdates=0;const style={};
+ const display={querySelectorAll(){return awt?[canvas,awt]:[canvas];},getBoundingClientRect(){return {left:10,top:20,width:1604,height:1204};}};
+ const canvas={style,parentElement:display,getBoundingClientRect(){return {left:10,top:20,width:parseFloat(style.width||0)*2,height:parseFloat(style.height||0)*2};}};
+ const renderWorker={get enabled(){return enabled;}},context=vm.createContext({document:{querySelector(){return display;}},canvas,renderWorker,displayLayout:{scale:2,setSize(w,h){layoutSets.push([w,h]);}},gpu:{invalidateLayout(){invalidations++;}},updateWorldCover(){coverUpdates++;},Object});
+ vm.runInContext(body+';this.align=alignWorldSurface;',context);context.align(802,602);eq(style,{display:'block',left:'0px',top:'0px',width:'802px',height:'602px'});eq(canvas.getBoundingClientRect().width,1604);eq(invalidations,1);context.align(802,602);eq(invalidations,1,'stable style causes no perframe invalidation');eq(layoutSets,[[802,602],[802,602]]);
+ awt={width:1000,height:800,getBoundingClientRect(){return {left:40,top:80,width:1500,height:1200};}};context.align(802,602);eq(style,{display:'block',left:'89.25px',top:'178.5px',width:'601.5px',height:'451.5px'});eq(invalidations,2);context.align(802,602);eq(invalidations,2);eq(canvas.getBoundingClientRect().width,1203);
+ enabled=false;context.align(802,602);eq(invalidations,2,'same-thread path never calls worker invalidation');awt=null;const original={...style};context.align(700,450);eq(style,original,'ordinary noAWT behavior unchanged');ok(coverUpdates>=6);
+ // Invoke the actual frontend native wrapper, proving alignment precedes backend submission.
+ enabled=true;for(const key of Object.keys(style))delete style[key];let atBackend=null;Object.assign(context,{natives:{},presentName:'p',worldCover:{blocksWorldInput:false},publish(){},window:{devicePixelRatio:1.25},present:async(_lib,w,h)=>{atBackend={w,h,rect:canvas.getBoundingClientRect()};return 6;}});context.gpu={stats:{},invalidateLayout(){invalidations++;}};
+ const wrapStart=source.lastIndexOf('natives[presentName] = async (...args) => {');ok(wrapStart>=0);let wrapEnd=source.indexOf('{',wrapStart),braces=1;for(wrapEnd++;braces&&wrapEnd<source.length;wrapEnd++){if(source[wrapEnd]==='{')braces++;else if(source[wrapEnd]==='}')braces--;}vm.runInContext(source.slice(wrapStart,wrapEnd)+';',context);
+ eq(await context.natives.p(null,802,602),6);eq([atBackend.w,atBackend.h,atBackend.rect.width,atBackend.rect.height],[802,602,1604,1204],'first present non960 has realpositive canvas before backend');awt={width:1000,height:800,getBoundingClientRect(){return {left:40,top:80,width:1500,height:1200};}};await context.natives.p(null,802,602);eq([atBackend.rect.width,atBackend.rect.height],[1203,903],'lateAWT target used before next present');eq(style.top,'178.5px');
+
+}
+// Actual adapter must retry a zero initial canvas rect, then cache positive layout.
+{
+ const oldWindow=globalThis.window;let reads=0,positive=false;globalThis.window={devicePixelRatio:1.25,addEventListener(){},removeEventListener(){}};
+ const canvas={transferControlToOffscreen(){return {};},getBoundingClientRect(){reads++;return positive?{width:1604,height:1204}:{width:0,height:0};}};const worker=new FakeWorker();let view;
+ try{view=await createBrowserRenderWorker(canvas,()=>{},{workerFactory:()=>worker,oracle:true});const init=view.natives[P.renderNativeName('initialize')](null,'v','f');await tick();let packets=worker.sent.filter(x=>x.type==='batch');eq(packets[0].layout,{epoch:1,width:0,height:0,dpr:1.25});worker.emit('message',ack(packets[0],{stats:{value:{},samples:{}}}));await init;eq(reads,1);
+ positive=true;await view.natives[P.renderNativeName('holdWorld')](null);packets=worker.sent.filter(x=>x.type==='batch');eq(packets[1].layout,{epoch:2,width:1604,height:1204,dpr:1.25});worker.emit('message',ack(packets[1],{stats:{value:{},samples:{}}}));eq(reads,2);
+ await view.natives[P.renderNativeName('holdWorld')](null);packets=worker.sent.filter(x=>x.type==='batch');worker.emit('message',ack(packets[2],{stats:{value:{},samples:{}}}));eq(reads,2,'positive steady state does not repoll');view.invalidateLayout();await view.natives[P.renderNativeName('holdWorld')](null);packets=worker.sent.filter(x=>x.type==='batch');worker.emit('message',ack(packets[3],{stats:{value:{},samples:{}}}));eq(reads,3);eq(packets[3].layout.epoch,2,'unchanged measured geometry preserves epoch');
+ }finally{view?.dispose();globalThis.window=oldWindow;}
 }
 console.log(JSON.stringify({passed:true,checks,cpuOnly:true,actualGPU:false,actualWorker:false,scope:'owned bytes/transfer, ordered resources, bounded ACK slots, result barriers, physical metadata, rejection and cleanup'}));

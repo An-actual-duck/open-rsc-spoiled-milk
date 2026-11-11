@@ -4,7 +4,7 @@ import argparse, hashlib, json, re, subprocess
 from pathlib import Path
 from datetime import datetime, timezone
 ROOT=Path(__file__).resolve().parents[2]
-MODULES=['browser-render-worker-protocol.js','browser-render-worker-transport.js','browser-render-worker-replay.js','browser-physical-output.js','browser-render-worker.js','browser-render-worker-stats.js']
+MODULES=['browser-render-worker-protocol.js','browser-render-worker-transport.js','browser-render-worker-replay.js','browser-physical-output.js','browser-render-worker.js','browser-render-worker-stats.js','browser.js']
 def sha(x):return hashlib.sha256(x).hexdigest()
 def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--candidate-root',required=True,type=Path);p.add_argument('--candidate-commit',required=True);a=p.parse_args()
