@@ -7,12 +7,13 @@ This branch prepares an actual OffscreenCanvas Worker pixel comparison. It
 changes no game Java, production renderer, runtime defaults or input behavior.
 The manager runs Firefox; the preparer starts no HTTP, browser or server.
 
-The first immutable stage freezes producer 88af6b08ebc1d50fab86bec34ef4461fcf42631b,
-reference main 58c61d98562e287c6e35a6056009cbe81c6d3464, and this oracle fc2b52509.
-Current stage: output/tests/browser-render-worker-oracle/worker-pixels-88af-2463-2/
-Receipt: stage.json; source gate: 111 checks PASS, CPU only.
+The current immutable stage freezes producer a10f96234dbe7556565dc31301cd6a3a5bc6d5a5,
+reference main 58c61d98562e287c6e35a6056009cbe81c6d3464, and this oracle c6d7a5303.
+Producer a10 changes the main return-buffer pool; Worker/backend remain 88af6b08e.
+Current stage: output/tests/browser-render-worker-oracle/worker-pixels-a10f-c6d7-4/
+Receipt: stage.json; source gate: 112 checks PASS, CPU only.
 The receipt binds every served module, native Java input, shader and sky file.
-Exact main58 Shader/Scene/GraphicsController/Sky sources are freshly compiled
+Exact main 58 Shader/Scene/GraphicsController/Sky sources are freshly compiled
 against the manager-approved dependency JAR SHA256
  da2c2f22fcefb29b8083ef98351d84e1ac583c47de93448ee12b21ae6192711f.
 That dependency is not the rejected segmented-TEXT client.
@@ -34,8 +35,8 @@ packet/frame counters, and never labels submission as presentation.
 Cases include 42 existing full-pipeline frames (world/opaque/retained, repeated
 fades, depth, native sky, lighting masks, atlas), actual opaque null T, C/T zero
 holes and finite Float32 alpha, texture/chunk deletion and recreation, atlas
-epoch/reuse, and physical sizing. Explicit layouts include logical960x540 to
-1843x1037, odd197x131 at2x, fractional CSS and DPR2. Missing/zero Worker layout
+epoch/reuse, and physical sizing. Explicit layouts include logical 960x540 to
+1843x1037, odd197x131 at 2x, fractional CSS and DPR 2. Missing/zero Worker layout
 must reject rather than silently render at logical resolution.
 
 The adversarial lifetime case overwrites every borrowed producer array after
@@ -74,7 +75,7 @@ Reproduce without touching existing stages
 ------------------------------------------
 python3 tests/myworld/prepare-browser-render-worker-hardware.py \
  --worker-source /home/justin/Core-Framework-ai-1 \
- --worker-commit 88af6b08ebc1d50fab86bec34ef4461fcf42631b \
+ --worker-commit a10f96234dbe7556565dc31301cd6a3a5bc6d5a5 \
  --dependency-jar /home/justin/Core-Framework-ai-3/output/builds/browser-overlay-journal/0de2fbfbc/Open_RSC_Client.jar \
  --name UNIQUE_NAME --port 8218
 node tests/myworld/test-browser-render-worker-oracle-source.mjs STAGE_DIRECTORY
@@ -84,6 +85,48 @@ and preserves window.renderWorkerProof with hardware/session/source receipts.
 Existing stages refuse overwrite. The first stage selected the game JAR-gated serve.py and failed before any GPU
 execution. Its stage and manager failure logs remain preserved. The second stage
 uses python3 -m http.server, bound to loopback; all served bytes are unchanged.
-Hardware execution remains pending until the manager records its result. No game FPS, responsiveness, input or performance
+Actual hardware result is recorded below. No game FPS, responsiveness, input or performance
 improvement follows from a pixel equality pass; those require the private game
 integration and completed-Worker metrics with the same visual workload.
+
+Preserved failed/partial attempts
+--------------------------------
+The manager's render-worker-gpu-1 attempt failed at HTTP startup before any GPU.
+render-worker-gpu-2/actual.json records 49 cases and 27,325,984 RGBA bytes exactly
+equal, Radeon R9 on main and Worker, then a fixture error BEFORE the Worker was
+called for atlas-epoch-two. The oracle changed the plan epoch to 2 but left the
+commit at 1; original58 correctly rejected the mismatched token. No renderer bug
+or completed lifetime/disposal proof follows from that partial pass. Current
+stage4 fixes BOTH epoch arguments and captures Error.message plus stack. Stage3
+was prepared but not run and retained the old fixture. Every stage is preserved.
+
+Actual hardware gate: PASS
+--------------------------
+Manager evidence (relative to /home/justin/Core-Framework):
+ output/diagnostics/browser-frame-architecture/render-worker-gpu-4/actual.json
+ output/diagnostics/browser-frame-architecture/render-worker-gpu-4/receipt.json
+ output/diagnostics/browser-frame-architecture/render-worker-gpu-4-browser/finished.png
+
+Firefox 154.0.1 on AMD Radeon R9 200 Series executed exact stage4, source
+c6d7a5303d2876f7a4244b55e88032f5ef003ff3 and producer
+a10f96234dbe7556565dc31301cd6a3a5bc6d5a5. All 50 frame cases passed with
+27,915,808 compared RGBA bytes, zero differences and no errors. Physical owner
+1843x1037, odd 2x 394x262, fractional 311x207 and DPR 2 outputs were nonvacuous.
+The final no-resource-resend frame also passed borrowed/returned lifetime checks:
+22,377,760 actual returned bytes were overwritten, the 5,237,544-byte pool was
+overwritten again, and 1,062 buffers were reused. 83 frames/166 packets completed
+including warmup/lifetime; none dropped or abandoned. Actual confirmed Worker
+disposal returned disposed=true, gpuBytes=0, spriteResourceBytes=0.
+
+SHA256 actual.json:
+ 9c07d4330eae2d5d5acf7966ec675bf62530f92cc0ab07edc926788840fc1f2f
+SHA256 receipt.json:
+ f7caad14e54009abc93f6cc1f37859a6c5fb1d717650cbfe8c087a3f980af7a3
+SHA256 frozen stage.json (also asserted by manager receipt):
+ f66dd512149dde2c90db977a2d0bc18471c259a00b06b625d0af78dc537d5e8e
+
+This is an actual production-backend/shader GPU pixel proof and resource lifetime
+check on this hardware. It does not execute CheerpJ/Java JNI, physical input,
+context loss or gameplay. It does not measure scanout, responsiveness, FPS or
+any performance improvement. The manager's private full-game gate must test
+those separately and use completed Worker frames rather than producer FPS.
