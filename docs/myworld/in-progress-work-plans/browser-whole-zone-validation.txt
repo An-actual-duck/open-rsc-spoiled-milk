@@ -1,0 +1,353 @@
+Private whole-overworld prototype — independent validation
+=========================================================
+Worker ai3, test/browser-whole-zone-validation, baseline main 2b2a81920.
+Implementation is newly authorized as a PRIVATE prototype; ordinary defaults,
+map edits, live host activation and release remain separate. The prior audit
+remains a historical audit-only record. See overworld-single-zone-audit.txt,
+overworld-zone-inventory.txt and overworld-zone-geometry-audit.txt.
+
+Ownership and acceptance order
+-------------------------------
+Runtime Java/client/bridge/baker contract belongs to ai1; frontend pinned GPU
+catalog/Worker and delivery tools to ai2. This branch changes only independent
+tests/documentation and, when exact candidates exist, nonrunning test stages.
+Root alone owns browser/GPU/server process actions and actual hardware tests.
+No feature cross-merges or shared/private fixture mutations occur here.
+
+The approved goal covers 445 global L0 sectors plus 444/441 upper 1/2 dependencies,
+full manifest scenery/boundary catalogue, source/settings-bound offline geometry
+and a separate persistent arena (draft 3GiB/8192 IDs). Active draw, local 144²
+collision/picking and dynamic server interests stay bounded. All declared
+geometry must be complete before GAME cover releases. Unchanged local static
+draws must actually resolve that catalogue; a large unused arena beside normal
+full-region repacking is not acceptance. Residual local CPU stalls are measured
+separately rather than hidden by the word whole-zone.
+
+Completed independent source gate
+----------------------------------
+tests/myworld/whole-zone/verify-package.py binds the current primary selection
+and installed-client profile, then independently checks the private package:
+all manifest/payload SHA256 values, canonical paths/no symlinks, encoding sizes,
+unique signed sector ownership, placement IDs/level/world consistency, complete
+actual file inventory/no extras and the package fingerprint.
+
+Actual existing diagnostic fixture source proof PASS:
+ /home/justin/Core-Framework-ai-1/output/tests/browser-gameplay-spike/repeatable-baseline-2/server/package
+ 1797 files /46,101,718 bytes; fingerprint 7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc
+ manifest 42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b
+ all 1787 terrain/9 placement payloads plus manifest;445/444/441 relevant sectors.
+Receipt: output/tests/browser-whole-zone-validation/private-fixture-source-proof.json
+SHA256 5e92dd0d9d8ed0e67d4455f9927b2a04c1531d1810716d66b76ec5285afcd950
+The old fixture's 325bf server binary remains older/unverified-current-source;
+matching map bytes do not prove current server code or production behavior.
+
+The receipt owns sectorRoster entries worldSpace/level/sectorX/sectorY/path/hash/
+bytes and manifestPlacements family/placementId/world/level/position. These are
+independent expected membership inputs for the future catalogue join, not a
+copy of the baker's count claims. All source levels are recorded; only explicitly
+chosen 0/1/2 enter this prototype. Negative/3+/Zanaris data is not silently part
+of catalogue geometry totals. No browser-residency claim follows from this CPU
+source proof. 13 adversarial source tests pass, including corrupt/missing/extra
+payloads, duplicate keys/paths/coordinates, traversal, symlink, bad encodings,
+placement-level mismatch and full-tree fingerprint mismatch.
+
+Planned independent candidate gates (pending stable runtime APIs)
+----------------------------------------------------------------
+1. SOURCE / DELIVERY: exact selected package, full source roster and settings/
+   actual texture catalogue bind the baked manifest. Reject stale source/model/
+   material/packing settings, malformed counts, path escapes, missing/duplicate
+   records, checksum failures and budgets. Membership is checked against the
+   independent roster, not declared cell totals alone. Record raw-source CPU
+   residency, canonical CPU geometry and pinned GPU bytes as DIFFERENT states.
+2. GEOMETRY: compare representative actual producer output against the frozen
+   ordinary production path, including every 112B vertex field/raw Float32 bits,
+   indices/material batches, lighting normals, roof/indoor/shadow descriptors and
+   actual texture resolution. Include route boundary 111,623↔624, adjacent sector
+   seams, negative Y, uniform 250 edges, invisible wall materials and sloped/
+   stacked upper-floor structures. Audit floor-local topology counts alone are
+   insufficient for actual stacked-world coordinates. Validate bake ownership:
+   positive-stitch 48 and canonical 24 are alternatives; adjacent cells may not
+   double-paint seam triangles or omit blend/normal dependencies.
+3. DYNAMIC / USE: construct real authoritative object-cell inputs through the
+   existing key builder. Equal canonical key must select pinned IDs and skip
+   local static upload. Mutating/removing a door, destroyed last object/explicit
+   empty cell, animated current pose, source epoch and negative-cell ownership
+   must mask every stale baked triangle exactly once and use the current live
+   geometry. A border-crossing object needs a consistent anchor-cell policy.
+   Wrong/incomplete authoritative rows must refuse, not leave old scenery drawn.
+4. GPU / LIFETIME: root executes an actual hardware full-catalog allocation,
+   complete membership/resource hash and final synchronization gate before
+   cover release. Exact representative pixels compare ordinary renderer versus
+   catalogue path with the SAME shader/material/lighting/sky settings. Check
+   returned/caller-buffer reuse, late fetch/hash/upload failure cleanup, resource
+   disposal and context-loss refusal. CPU mocks do not establish actual VRAM fit,
+   GPU completion, image equality or scanout latency.
+5. TRAVEL / PERFORMANCE: after source+geometry+full GPU acceptance, use the same
+   artifact whole-zoneON/OFF and original minimap walking helper on the existing
+   private fixture. Initial preload and zone-entry wait are recorded separately;
+   the owner explicitly may accept an upfront wait. Record full expected/loaded/
+   CPU/GPU-ready cells/bytes, actual pinned triangles/draws, local static uploads/
+   repacks, exact override reasons, held/fresh frames, source authority and queue
+   age. Unchanged crossings may not regenerate every active static cell as an
+   override. Include longer routes and separate teleports/mutations. Retained
+   screenshots are not fresh-world FPS; counters alone do not prove visible use.
+
+Proposed nonrunning stage approach
+----------------------------------
+Use maintained scripts/browser-gameplay/prepare-repeatable-client.py for the
+loopback 43649/43549 browserdemo fixture. It already validates the private marker,
+32-NPC fixture and exact immutable JAR source receipt, with Cache/port 43649. Root
+may use the preserved original walking driver; do not create a replacement DB
+or modify the running fixture just for this test.
+
+A split candidate needs explicit per-file composite provenance: prepare.py copies
+frontend and Bootstrap from its own checkout, whereas --native-source only binds
+native-dispatch inputs. It must not accidentally serve main's old JS/Bootstrap
+beside new Java natives. Freeze exact ai1 Java/bake/source settings and exact ai2
+frontend/catalog blobs with hashes; never label the composite one nonexistent
+commit. Root chose a single integration commit after unit-ready handoffs, followed by
+a fresh FULL JAR, matching Bootstrap/frontend and source assets from that same
+commit. This avoids the composite ambiguity rather than claiming transplanted
+classes are one source build. Root owns actual HTTP/Firefox launch.
+
+The earlier standalone three-way Worker oracle is reusable for renderer pixel/
+physical-output/ownership cases, but its toy fixed scene cannot prove full-zone
+catalog allocation, seam/roof geometry or use across the world. A new full-data
+hardware gate is required; package-source proof and computed byte totals alone
+are not a substitute. Keep partial/failing receipts and never silently fall back
+to broad caching or normal rendering while labelling the result whole-zone.
+
+Current state: source proof complete; runtime contract/candidate geometry/GPU/
+travel acceptance pending. No ordinary default, public server or map changed.
+
+Independent texture-delivery gate
+---------------------------------
+The new baker uses a textures-only derivative of Custom_Sprites.osar. Fresh
+actual production Unpacker/Workspace/Subspace/Entry/Frame source was compiled
+and used to decode BOTH the unchanged original and derivative, independently.
+All 73 entries/73 frames/753664 palette-expanded pixels and type/layer/dimensions/
+shift/offset/bounds match exactly; no rendering or Scene is created. The current
+0409c558... dependency JAR is bound in the receipt. This proves texture delivery,
+not later loadTextures quantization/average/material metadata, UVs or GPU pixels.
+
+Receipt: output/tests/browser-whole-zone-validation/texture-equivalence-2/result.json
+Original archive 0883c7d1957b5bb4b70f0001770e4aac8d3145d77b2ff1a470d574e4718c426e
+Derivative f9f39a2d9d6ee4cafeddcb3d41eb28eac2930038c8bc75619a36b0b94f4b9704
+Decoded pixel SHA256 e9f52be5e000cdb6abbe280640de0227fee54c2dace3507fb3ec66d694d88750
+Tests: WholeZoneTextureEquivalence.java and verify-textures.py under whole-zone/.
+The first same-pixel receipt used an older accepted dependency; it is preserved,
+and the second receipt is the current-audit dependency result. No asset bytes
+were changed by this branch. The extractor's zero-frame aggregate-budget review
+was forwarded to its owner; malformed extraction tests await the stable code.
+
+Prototype-state labels remain important: the frontend's draft loader deliberately
+retains catalog metadata and streams baked payloads into GPU buffers, then drops
+CPU payload views. rawSourceCPUReady=false is truthful. Full GPU static residency
+and verified source-catalog coverage must not be relabelled full raw terrain or
+Java classic/prepared CPU geometry residency. Residual local CPU work is expected.
+
+Independent catalogue join and malformed-delivery corpus
+--------------------------------------------------------
+verify-catalogue.py reads the exact source manifest/payloads after the complete
+package verifier, independently derives all signed 48-cell world ownership and
+four 24-cell object owners per sector, and compares authored first-five identity
+word multisets against both scenery and boundaries. The model-kind enum order is
+source-guarded. Full resource reverse ownership/counts/roles/representation sizes
+are checked; extra or missing resources cannot be hidden behind matching totals.
+It deliberately does NOT claim to verify the two elevation words, canonical FNV
+key, packed vertices/normals/UVs or GPU use from this source-membership comparison.
+22 synthetic adversarial catalogue tests pass. Actual catalogue join awaits the
+baker output and stable runtime schema; synthetic success is not full-data proof.
+The selected actual package has all 24580 relevant authored placements inside
+its selected sector ownership (22301+680 L0,1165+95 L1,302+37 L2).
+
+Independent extractor malformed corpus:18 PASS against exact source SHA256
+ a3c7b59244b0b0821e2da9f4018ff3f2d32509c7ed37f72548615e74b14da612
+Receipt: output/tests/browser-whole-zone-validation/texture-malformed-1/result.json
+Includes original encoded-entry preservation, selected/nonselected groups,
+truncation, unknown type, duplicate groups/IDs, missing/empty groups, zero frames,
+nonconsecutive IDs, overlong names, trailing decoded bytes, gzip failure,
+aggregate metadata/pixel/decoded budgets and existing-output preservation.
+Budget branches use reduced constants to avoid allocating attack-sized buffers;
+this checks refusal logic, not peak-memory behavior at the production limits.
+Production Unpacker full-pixel equality remains the separate positive gate above.
+
+Actual bounded bake pilot source join
+--------------------------------------
+The producer's pilot-2 manifest SHA256
+ 87d73c20049811f1cf5a719cdf6d475e9007ef677ffb416ba638e98f67497214
+passes an independent exact-package join for explicitly requested owners
+(plane0,2,13),(plane1,2,13),(plane2,2,13):3 world cells,12 object cells,202 authored
+placements,10 reverse-owned resources,13,536,504 declared geometry GPU bytes.
+Receipt: output/tests/browser-whole-zone-validation/catalogue-pilot-2/result.json
+This is partialDiagnostic=true and complete=false. The verifier's ordinary mode
+requires complete=true and the entire exact package roster; a partial catalogue
+cannot pass by quietly shrinking expected coverage to its own records. Explicit
+partial owners absent from the source refuse. Catalogue adversarial suite now24.
+
+Read-only review found two producer/consumer schema name/count disagreements and
+forwarded them to both owners. The bbox name is corrected in the later pilot.
+The actual source has three L1 sectors without L0 pages:(-1,-1),(-1,0),(0,-1).
+The producer reports its correction now builds the lower void-context roof chain
+before emitting authored upper cells; actual ordinary-path geometry/elevation
+comparison is still a pending gate, not inferred from the source join.
+
+Actual selection API gate (CPU only)
+------------------------------------
+19 independent checks pass against stable frontend83fa8c281 and the actual
+source-joined pilot-2 catalogue, with actual exported createWholeZoneSelection.
+Module SHA25608e8807bf7dda957958d5ff486d78392b3fc1154ef460545fd44ff813caa2847
+Policy SHA2566664fbd87ecad43c70a261cb004fdd38faa73811d03d3a24ec5d273e201e6763
+Receipt: output/tests/browser-whole-zone-validation/selection-pilot-2/result.json
+Equal keys produce the exact baked resource IDs; mutation/animated reasons mask
+the old object-cell geometry while preserving explicitly supplied live geometry.
+Destroyed-last-object empty rows suppress stale geometry. Authored-baseline rows,
+missing/duplicate authority, wrong keys, backward epochs, consumed declarations,
+pinned/local ID collision and zero-color-mask shadow retention are exercised.
+The incomplete pilot refuses full manifest admission. This does not execute the
+Java resolver/upload skipping, prove a complete catalogue or establish GPU use.
+
+Nonrenderable authored placements remain mandatory explicit resource ownership:
+a positive placement count may validly map a16-byte zero-geometry resource when
+all faces are invisible. It may not use null to silently omit source content.
+Only L0 terrain must be nonempty. Independent catalogue corpus now25 checks,
+including this distinction. Elevation/rawgeometry/image parity remains pending.
+
+Actual packed-delivery integrity gate
+--------------------------------------
+verify-packed.py independently verifies each actual file's SHA/length and binary
+header, all finite112B vertex fields, index bounds, material IDs/ranges/triangle
+alignment/nonoverlap, global bounds and actual texture payload shape/hash. This
+is an internal consistency proof rather than a second implementation of the
+source mesh builders. It preserves legitimate undrawn zero index tails.
+16 adversarial packed tests pass, including late invalid indices/materials,
+nonfinite nonposition fields with refreshed hashes and explicit16B empty geometry.
+
+Actual pilot-2 PASS:84 resources (10 geometry+74 actual production textures),
+16,568,664 resource-file bytes,116694 vertices/indices,116646 drawn material indices.
+Receipt: output/tests/browser-whole-zone-validation/packed-pilot-2/result.json
+The48 undrawn index slots are preserved, matching the producer's capacity-tail
+contract. CompleteDeclared=false remains prominent. No GL, driver allocation,
+actual pixel equality, source-builder parity or performance is inferred here.
+
+Actual Java capture/filter/resolver and signed-scope gate
+--------------------------------------------------------
+27 initial Java cases pass on single full-source bb6175dbd26de8971cc2a110c0d9b4354185ca60
+JAR a6c3f87b5af8c4443c7f41fd58d0e81bbbd7a7a4a36ed0087a0f6ec74f80ae3a.
+Receipt: output/tests/browser-whole-zone-validation/java-dynamic-2/result.json
+43 expanded cases pass with explicitly declared reader-only unit source overlay
+from clean56bab876458874ec20c0c6366edc80c5a61cb510, reader SHA256
+4b4b1567f8b73a050444236be9fea139c9f01e1077d02e5c4366ffd6fa227899.
+Receipt: output/tests/browser-whole-zone-validation/java-dynamic-5-signed/result.json
+The runner validates full dependency build/source/class/asset manifests, records
+actual executed overlay-class hashes, and makes no composite integration-JAR claim.
+
+The actual final mudclient cannot be subclassed. A bare actual instance and actual
+PacketHandler/SceneBaselineState receive detached owned state; no GUI or gameplay
+packet is invoked. The fixture injects only the reader's partial index to isolate
+semantics, so constructor/full-catalog admission stays a SEPARATE gate. It executes
+actual private captureWholeOverworldObjectCells, frame/filter/resolveStatic and
+actual authority helpers. Both static/animated input orders preserve static key
+and sticky reason2; matching cells skip the local static/world upload list and
+retain effect-only descriptors; mutated/mixed cells stay live. Explicit empty,
+partial-cell known-position authority and unknown halo are distinguished. Settings,
+source hash, manifest and unsupported terrain patches refuse. Invalidation clears
+the resolver. Signed−1/−2/10 and non-global L0 remain inactive, preserve the exact
+local frame object and cannot suppress static geometry. Metadata signed level and
+explicit non-global flag17 are checked independently of Classic display plane.
+
+Actual object geometry parity
+------------------------------
+Receipt: output/tests/browser-whole-zone-validation/object-parity-pilot-3-final/result.json
+Pilot-3 catalogue SHA f56cce7908d03f0157869049d613d82426ae191f992f89502da49e94a4be5e25
+is independently source-joined and packed-file verified (same3world/12object/202
+placements scope as pilot-2).29 frontend selection checks include signed/non-global
+local draw preservation; that source result is hash-bound, pending final clean
+frontend checkpoint.7 nonempty object resources acrossL0/1/2,202 placements,
+97038 vertices,11,257,100 packed bytes match the UNCHANGED production canonical
+builder/model transforms and112B/material/index packing exactly.5 empty cells are
+explicit. Production canonical keys also match. Only actual offline asset/model
+setup comes from the preserved clean56 Baker.Context source overlay; ordinary
+geometry construction is invoked from the full-source dependency JAR.
+This comparison is conditional on the supplied seven-word identities. It does
+not independently validate their elevation words, terrain/seam geometry, full GPU
+allocation or image equality. World/upper production-path parity is in progress.
+
+FINAL UNIT-REVIEW HANDOFF (actual full bake/GPU still pending)
+=============================================================
+Latest Java proofs all rerun against ONE fresh full-source dependency artifact:
+ source d7525c9466b01f623201ec45e31c828df0c279f1
+ JAR88ee38a24d4772d2ae47ae056e7bf386d2e52f6ba92fa28f625bb0c6e36f96ab
+ ai1/output/builds/browser-whole-overworld-zone/runtime-review-4/client.jar
+No reader or Baker source overlay is used in these latest ready-* results.
+Earlier composite unit receipts remain preserved, explicitly labelled above.
+
+Final frontend source8a5961b0ff0fd56f0c2afc8a4199464cae4898d5 is clean; module SHA
+4fae23180f5eba22cc7b3e23c725504481b65c4baafc22c8d0536d62aadf191f.
+29 independent selection checks and623 rerun producer actual-texture/binary checks
+pass. The latter is an independent execution of the producer's maintained test,
+not623 newly independent expected-value assertions. Receipt ready-materials records
+its exact test/module hashes and command. Explicit flag17 distinguishes legitimate
+non-global L0 from inactive global L0; signed−1/−2/10 preserve local draws.
+
+Canonical final receipts (under output/tests/browser-whole-zone-validation/):
+ ready-java-dynamic/result.json:43 actual Java dynamic/signed cases, no overlays.
+ ready-objects/result.json:7 object resources/202 placements/97038 vertices;
+   11,257,100 entire packed bytes exactly match production canonical geometry.
+ ready-world-busy/result.json:sector(2,13),3 world resources;2,201,472 vertex
+   bytes and2,196,096 material/index draw-stream bytes exactly match production.
+ ready-world-south/result.json:sector(2,12),1 world resource+2 explicit empty
+   upper cells;1,705,536 vertex/draw-stream bytes exact.
+ ready-world-east/result.json:sector(3,13),1 world resource+2 explicit empty
+   upper cells;1,608,096 vertex bytes/1,607,424 draw-stream bytes exact.
+ ready-world-missing-lower/result.json:actual L1(-1,-1) with no authored L0,
+   one EMPTY upper cell matches production;0 vertices, not a positive-geometry
+   claim. Lower void-context roof chain still executes.
+ ready-selection/result.json:29 selection cases on final clean frontend.
+ ready-materials/result.json:623 actual Java exported RGBA/material/layout cases.
+ packed-and-assets-pilot-3/result.json:all84 packed resources and five exact
+   source Cache archives(4,423,006 archive bytes) verified.
+ catalogue-{pilot-3,south,east,missing-lower}/result.json:independent source joins.
+
+World reference uses actual production loadWorldModelProduct, including its
+actual loadStackedUpperFloorBase chain. ONLY CPU input windows are independently
+assembled from exact source payloads and inserted into the ordinary window cache;
+no prebuilt model/product result is injected. Installed/native-only sector-read
+guard remains active, so an accidental legacy-archive fallback fails. Selection
+uses global coordinate sector ownership rather than copying producer local crop
+limits; every selected112B vertex field and ordered material/index draw stream
+matches. Both busy upper floors differ from floor-local negative controls, so
+this stacked comparison is nonvacuous. South/east neighboring partial bakes are
+explicit source-overlay diagnostics, never complete integration artifacts; their
+exact command/source/dependency receipts live in adjacent-bake-820/. The root's
+final complete bake must be recreated from the single integrated artifact.
+
+Final maintained synthetic suites:13 package tests,25 catalogue membership/
+resource tests,23 packed/external-archive tests,18 malformed extractor tests.
+All pass. Source delivery, effect-only Java reuse and actual pinned selection are
+covered independently; this branch contains no production runtime/default edits.
+
+Limits and next root gate
+--------------------------
+These results support CPU/unit READY, NOT browser/GPU or full-data acceptance.
+The actual complete catalogue constructor/admission, all1330/5320 cells/resources,
+full geometry totals/weighted model counts, actual2GiB-class GPU allocation and
+final synchronization, initial cover/readiness, representative real pixels and
+roof/indoor/shadow behavior, live dynamic changes, keyboard/mouse responsiveness,
+walking gaps/queue age and same-artifact ON/OFF performance remain root-owned.
+No FPS, fit, scanout, seamless-travel, raw-source CPU residency or public activation
+claim is made. The source-joined object geometry proof still conditions on supplied
+elevation words; actual world/stacked geometry parity above is a separate gate.
+No blocker was found in the final tested scope. The new bab3 mapIdentity composite
+comparison regression was reported and corrected by820 before the final tests.
+
+Geometry fixtures are intentionally bounded to64 object or12 world cells. For
+full delivered data run verify-catalogue.py in full mode and verify-packed.py
+(with --asset-root pointing at the actual stage root containing Cache/video).
+Those full-file/source checks do not replace the actual browser allocation/use
+and image/performance test. Root will build the integrated JAR/Bootstrap/frontend
+from one source commit before that test; this branch starts no service or browser.
+
+Workspace-layout check still reports the40 previously retained unclassified root
+entries; all new outputs here use the declared tests category. No old output was
+removed. No map, public deployment, default graphics policy or live data changed.
