@@ -15,6 +15,11 @@ import orsc.graphics.two.WorldOverlayCoverage;
 public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     /** One-time private startup receipt; never probes per-frame cache contents. */
     public static boolean isSpriteKeyLimbsEnabled(){return BrowserWorldSpriteCache.isKeyLimbsEnabled();}
+    public static boolean isOwnedActorPixelsEnabled(){return BrowserOwnedActorPixels.isEnabled();}
+    private static BrowserWorldSpriteCache diagnosticSpriteCache;
+    public static double[] ownedActorPixelCounters(){
+        return diagnosticSpriteCache == null ? new double[0] : diagnosticSpriteCache.diagnostics();
+    }
     private static final int MAX_CHUNKS=256, MAX_VERTICES=524288, MAX_PIXELS=2097152, UPLOAD_VERTICES_PER_FRAME=32768;
     private final Map<WorldChunkBufferKey,CachedChunk> chunks=new LinkedHashMap<WorldChunkBufferKey,CachedChunk>(32,.75f,true);
     private final Map<Integer,Long> textures=new HashMap<Integer,Long>();
@@ -90,7 +95,9 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             System.setProperty("spoiledmilk.remasterLightAzimuth","135");System.setProperty("spoiledmilk.remasterLightElevation","45");
             RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);RendererBrightnessSettings.setMode(RendererBrightnessSettings.Mode.HIGH);
         }
-        BrowserFrameSinkRegistry.install(new BrowserWebGLBridge());
+        BrowserWebGLBridge sink = new BrowserWebGLBridge();
+        diagnosticSpriteCache = sink.spriteCache;
+        BrowserFrameSinkRegistry.install(sink);
     }
     private static String shader(String name) throws Exception {
         Field f=OpenGLShaderProgram.class.getDeclaredField(name);f.setAccessible(true);return (String)f.get(null);

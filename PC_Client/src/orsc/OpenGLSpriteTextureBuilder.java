@@ -165,14 +165,15 @@ final class OpenGLSpriteTextureBuilder {
 		int compositeWidth,
 		int[] compositePixels) {
 		Sprite sprite = command.getSprite();
-		int[] sourcePixels = sprite.getPixels();
+		Sprite.OwnedPixels owned = sprite.getOwnedPixels();
+        int[] sourcePixels = owned == null ? sprite.getPixels() : null;
 		int spriteWidth = sprite.getWidth();
 		int spriteHeight = sprite.getHeight();
 		int width = command.getWidth();
 		int height = command.getHeight();
 		int alpha = command.getAlpha();
-		if (sourcePixels == null
-			|| sourcePixels.length < spriteWidth * spriteHeight
+		if ((owned == null ? sourcePixels == null || sourcePixels.length < spriteWidth * spriteHeight
+            : owned.length() < spriteWidth * spriteHeight)
 			|| width <= 0
 			|| height <= 0
 			|| alpha <= 0) {
@@ -197,7 +198,8 @@ final class OpenGLSpriteTextureBuilder {
 					|| sourceX >= spriteWidth) {
 					continue;
 				}
-				int sourcePixel = sourcePixels[sourceY * spriteWidth + sourceX];
+				int sourcePixel = owned == null ? sourcePixels[sourceY * spriteWidth + sourceX]
+                    : owned.get(sourceY * spriteWidth + sourceX);
 				if (!orsc.graphics.RendererTransparency.isVisibleSpritePixel(sourcePixel)) {
 					continue;
 				}

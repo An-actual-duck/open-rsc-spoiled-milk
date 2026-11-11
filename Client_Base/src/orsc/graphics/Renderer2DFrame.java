@@ -1299,7 +1299,7 @@ public final class Renderer2DFrame {
 			if (sprite == null) {
 				throw new IllegalArgumentException("sprite must not be null");
 			}
-			if (sprite.getWidth() <= 0 || sprite.getHeight() <= 0 || sprite.getPixels() == null) {
+			if (sprite.getWidth() <= 0 || sprite.getHeight() <= 0 || !sprite.hasPixelData()) {
 				throw new IllegalArgumentException("sprite texture must be available");
 			}
 			if (clipRight <= clipLeft || clipBottom <= clipTop) {

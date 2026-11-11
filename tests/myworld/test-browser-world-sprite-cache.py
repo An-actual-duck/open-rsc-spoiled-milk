@@ -13,6 +13,7 @@ SOURCES = [ROOT / 'PC_Client/src/orsc' / name for name in (
     'CompositeWorldSpriteTexture.java', 'DynamicTextureData.java', 'OpenGLSpriteAlpha.java')]
 SOURCES += [ROOT / 'Client_Base/src/orsc/graphics' / name for name in (
     'RendererSpriteTransform.java', 'RendererTransparency.java')]
+SOURCES.append(ROOT / 'Client_Base/src/com/openrsc/client/model/Sprite.java')
 SOURCES.append(ROOT / 'tests/myworld/BrowserWorldSpriteCacheFixture.java')
 with tempfile.TemporaryDirectory(prefix='browser-world-sprite-cache-') as temp:
     subprocess.run([str(JAVA / 'javac'), '-source', '8', '-target', '8', '-cp', str(JAR),

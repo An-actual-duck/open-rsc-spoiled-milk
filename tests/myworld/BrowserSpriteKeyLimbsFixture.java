@@ -23,28 +23,44 @@ public final class BrowserSpriteKeyLimbsFixture {
   for(int i=0;i<19;i++)if(i==0||i==1||i==13||i==14){out[i]=((long)a[j]<<32)|(a[j+1]&0xffffffffL);j+=2;}else out[i]=a[j++];
   return out;
  }
+ static final Class<?> LAYER;
+ static final Constructor<?> LAYER_NEW,LAYER_COPY;
+ static final Method LAYER_SAME;
+ static final Object COUNTERS;
+ static {
+  try {
+   LAYER=Class.forName("orsc.BrowserWorldSpriteCache$Layer");
+   Class<?> counts=null;Object counter=null;
+   try{counts=Class.forName("orsc.BrowserWorldSpriteCache$Counters");Constructor<?> c=counts.getDeclaredConstructor();c.setAccessible(true);counter=c.newInstance();}catch(ClassNotFoundException oldBaseline){}
+   COUNTERS=counter;
+   LAYER_NEW=counts==null?LAYER.getDeclaredConstructor(SpriteCommand.class,int.class,int.class):LAYER.getDeclaredConstructor(SpriteCommand.class,int.class,int.class,counts);
+   LAYER_COPY=counts==null?LAYER.getDeclaredConstructor(LAYER):LAYER.getDeclaredConstructor(LAYER,counts);
+   LAYER_SAME=counts==null?LAYER.getDeclaredMethod("same",LAYER):LAYER.getDeclaredMethod("same",LAYER,counts);
+   LAYER_NEW.setAccessible(true);LAYER_COPY.setAccessible(true);LAYER_SAME.setAccessible(true);
+  }catch(Exception error){throw new ExceptionInInitializerError(error);}
+ }
+ static Object layer(SpriteCommand c,int x,int y)throws Exception{return COUNTERS==null?LAYER_NEW.newInstance(c,x,y):LAYER_NEW.newInstance(c,x,y,COUNTERS);}
+ static Object copy(Object layer)throws Exception{return COUNTERS==null?LAYER_COPY.newInstance(layer):LAYER_COPY.newInstance(layer,COUNTERS);}
+ static boolean same(Object a,Object b)throws Exception{return (Boolean)(COUNTERS==null?LAYER_SAME.invoke(a,b):LAYER_SAME.invoke(a,b,COUNTERS));}
  static void layers(DataOutputStream out)throws Exception{
-  Class<?> type=Class.forName("orsc.BrowserWorldSpriteCache$Layer");Constructor<?> ctor=type.getDeclaredConstructor(SpriteCommand.class,int.class,int.class);ctor.setAccessible(true);
-  Constructor<?> copy=type.getDeclaredConstructor(type);copy.setAccessible(true);Method same=type.getDeclaredMethod("same",type);same.setAccessible(true);
   Random r=new Random(914779);Sprite s=new Sprite(new int[]{0x123456,0,0x778899,1},2,2);
   int[] edge={Integer.MIN_VALUE,Integer.MIN_VALUE+1,-65537,-65536,-65535,-32769,-1,0,1,32767,65535,65536,65537,Integer.MAX_VALUE-1,Integer.MAX_VALUE};
   for(int n=0;n<24000;n++){
    int x=n<edge.length*edge.length?edge[n/edge.length]:r.nextInt(),y=n<edge.length*edge.length?edge[n%edge.length]:r.nextInt();
    int cx=n<edge.length*edge.length?edge[n%edge.length]:r.nextInt(),cy=n<edge.length*edge.length?edge[n/edge.length]:r.nextInt();
    int top=n<edge.length*edge.length?edge[(n*7)%edge.length]:r.nextInt(),bottom=n<edge.length*edge.length?edge[(n*11)%edge.length]:r.nextInt();
-   SpriteCommand c=command(s,cx,cy,top,bottom,r);Object layer=ctor.newInstance(c,x,y);long[] actual=metadata(layer);
+   SpriteCommand c=command(s,cx,cy,top,bottom,r);Object layer=layer(c,x,y);long[] actual=metadata(layer);
    BigInteger bx=BigInteger.valueOf(x),by=BigInteger.valueOf(y),shift=bx.shiftLeft(16);
    BigInteger[] expected={BigInteger.valueOf(c.getX()).subtract(bx),BigInteger.valueOf(c.getY()).subtract(by),BigInteger.valueOf(c.getTopX16()).subtract(shift),BigInteger.valueOf(c.getBottomX16()).subtract(shift)};
    int[] at={0,1,13,14};for(int i=0;i<4;i++){check(BigInteger.valueOf(actual[at[i]]).equals(expected[i]),"Wide limb arithmetic changed");wideCases++;}
    int pixelHash=Arrays.hashCode(s.getPixels());check((Integer)get(layer,"hash")==31*(31*Arrays.hashCode(actual)+c.getTransform().hashCode())+pixelHash,"Original long hash formula changed");
-   Object owned=copy.newInstance(layer);check((Boolean)same.invoke(layer,owned),"Owned key clone differs");check(get(layer,"pixels")!=get(owned,"pixels"),"Owned clone aliases mutable source");
+   Object owned=copy(layer);check(same(layer,owned),"Owned key clone differs");check(get(layer,"pixels")!=get(owned,"pixels"),"Owned clone aliases mutable source");
    out.writeInt((Integer)get(layer,"hash"));for(long v:actual)out.writeLong(v);
    // Full source comparison must defeat a deterministic polynomial pixel collision.
-   if(n%997==0){int keep=s.getPixels()[0];s.getPixels()[0]^=1;check(!(Boolean)same.invoke(layer,owned),"Mutable source change hidden");s.getPixels()[0]=keep;}
+   if(n%997==0){int keep=s.getPixels()[0];s.getPixels()[0]^=1;check(!same(layer,owned),"Mutable source change hidden");s.getPixels()[0]=keep;}
   }
  }
  static void dimensions(DataOutputStream out)throws Exception{
-  Class<?> type=Class.forName("orsc.BrowserWorldSpriteCache$Layer");Constructor<?> ctor=type.getDeclaredConstructor(SpriteCommand.class,int.class,int.class);ctor.setAccessible(true);
   Field width=Sprite.class.getDeclaredField("width"),height=Sprite.class.getDeclaredField("height");width.setAccessible(true);height.setAccessible(true);
   int max=BrowserWorldSpriteCache.MAX_PIXELS;int[] edges={Integer.MIN_VALUE,-2,-1,0,1,2,511,512,1024,2047,2048,2049,max-1,max,max+1,Integer.MAX_VALUE};
   List<int[]> pairs=new ArrayList<int[]>();for(int w:edges)for(int h:edges)pairs.add(new int[]{w,h});
@@ -55,7 +71,7 @@ public final class BrowserSpriteKeyLimbsFixture {
    Sprite sprite=new Sprite(new int[]{1},1,1);SpriteCommand c=new SpriteCommand(sprite,0,0,1,1,255);width.setInt(sprite,w);height.setInt(sprite,h);
    if(n>=256&&n<261&&valid)sprite.setPixels(new int[product.intValueExact()]);else if(n%5==0)sprite.setPixels(null);
    boolean complete=valid&&sprite.getPixels()!=null&&sprite.getPixels().length>=product.intValueExact();String error="";Object layer=null;
-   try{layer=ctor.newInstance(c,0,0);}catch(InvocationTargetException e){Throwable t=e.getCause();error=t.getClass().getName()+":"+t.getMessage();}
+   try{layer=layer(c,0,0);}catch(InvocationTargetException e){Throwable t=e.getCause();error=t.getClass().getName()+":"+t.getMessage();}
    check((layer!=null)==complete,"Count guard acceptance differs from BigInteger");
    if(!complete)check(error.equals("java.lang.IllegalArgumentException:"+(valid?"Incomplete source pixels":"Unsupported source dimensions")),"Count exception/order changed: "+error);
    out.writeInt(w);out.writeInt(h);out.writeUTF(error);out.writeBoolean(layer!=null);if(layer!=null){check((Integer)get(layer,"pixelCount")==product.intValueExact(),"Count narrowed before exact validation");out.writeInt((Integer)get(layer,"pixelCount"));out.writeInt((Integer)get(layer,"hash"));for(long v:metadata(layer))out.writeLong(v);}

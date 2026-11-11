@@ -8,7 +8,7 @@ def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--java-home',type=Path,default=Path('/home/justin/jdk8u482-b08'));a=p.parse_args();java=a.java_home/'bin'
  out=Path(subprocess.check_output(['python3',str(ROOT/'scripts/workspace-layout.py'),'path','tests','browser-sprite-key-limbs','--mkdir'],text=True).strip())/a.java_home.name;out.mkdir(exist_ok=True)
  ref=out/'reference-src/orsc/BrowserWorldSpriteCache.java';ref.parent.mkdir(parents=True,exist_ok=True);ref.write_bytes(subprocess.check_output(['git','show',BASE+':PC_Client/src/orsc/BrowserWorldSpriteCache.java'],cwd=ROOT))
- jar=ROOT/'Client_Base/Open_RSC_Client.jar';pc=ROOT/'PC_Client/src/orsc';shared=[pc/n for n in ['OpenGLSpriteTextureBuilder.java','OpenGLPixelWorkspace.java','CompositeWorldSpriteTexture.java','DynamicTextureData.java','OpenGLSpriteAlpha.java']]+[ROOT/'tests/myworld/BrowserSpriteKeyLimbsFixture.java']
+ jar=ROOT/'Client_Base/Open_RSC_Client.jar';pc=ROOT/'PC_Client/src/orsc';shared=[pc/n for n in ['OpenGLSpriteTextureBuilder.java','OpenGLPixelWorkspace.java','CompositeWorldSpriteTexture.java','DynamicTextureData.java','OpenGLSpriteAlpha.java']]+[ROOT/'Client_Base/src/com/openrsc/client/model/Sprite.java',ROOT/'tests/myworld/BrowserSpriteKeyLimbsFixture.java']
  outputs=[]
  for name,cache in [('reference',ref),('candidate',pc/'BrowserWorldSpriteCache.java')]:
   classes=out/name;classes.mkdir(exist_ok=True);subprocess.run([str(java/'javac'),'-source','8','-target','8','-cp',str(jar),'-d',str(classes),str(cache),*map(str,shared)],check=True)

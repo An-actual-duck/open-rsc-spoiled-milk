@@ -15,8 +15,9 @@ if(nativeExplicit)assert(nativeSource&&/^[a-f0-9]{40}$/.test(nativeCommit),'Expl
 const physicalOption=process.argv.includes('--physical-off')?'off':process.argv.includes('--physical')?'on':null;
 const repeatable=process.argv.includes('--repeatable');
 const combat=process.argv.includes('--combat');
+const ownedActors=process.argv.includes('--owned-actors');
 const benchmarkKeys=process.argv.includes('--benchmark-key-limbs');
-const benchmarkStream=process.argv.includes('--benchmark-stream')||benchmarkKeys||repeatable||combat||nativeExplicit;let streamRequested;
+const benchmarkStream=process.argv.includes('--benchmark-stream')||benchmarkKeys||ownedActors||repeatable||combat||nativeExplicit;let streamRequested;
 let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, displayDisposed = 0, configured,gpuOptions;
 const status = {textContent:''}, messages = [];
 let layoutReads=0;
@@ -26,7 +27,7 @@ const canvas = {style:{},setAttribute(){}};
 const stats = {lastError:null,lastFrame:0};
 const gateEvents=[];
 const window = {dispatchEvent:e=>gateEvents.push(e.type),browserRuntimeVersion:'5.0',addEventListener(){}};
-const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
+const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(ownedActors?'&actorpixels=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
   URLSearchParams,performance:{now:()=>clock},console,
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
@@ -67,6 +68,7 @@ const repeatableModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../to
 const physicalOutputModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-physical-output.js',import.meta.url),'utf8'),{context});
 const controlsModule = new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-benchmark-controls.js',import.meta.url),'utf8'),{context});
 const streamValidationModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-upload-validation.js',import.meta.url),'utf8'),{context});
+const ownedActorModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-owned-actor-policy.js',import.meta.url),'utf8'),{context});
 const spriteKeyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-sprite-key-policy.js',import.meta.url),'utf8'),{context});
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{const selected=specifier==='./browser-native-call-dispatch.js'?nativeModule:gpuModule;if(selected===gpuModule)assert.equal(specifier,nativeMode==='sync'?'./webgl-sync.js':'./webgl.js');assert(selected,'Unexpected native helper import');if(selected.status==='unlinked')await selected.link(()=>{});if(selected.status==='linked')await selected.evaluate();return selected;}});
@@ -81,6 +83,7 @@ await module.link(specifier=>{
   if(specifier==='./browser-physical-output.js')return physicalOutputModule;
   if(specifier==='./browser-upload-validation.js')return streamValidationModule;
   if(specifier==='./browser-sprite-key-policy.js')return spriteKeyModule;
+  if(specifier==='./browser-owned-actor-policy.js')return ownedActorModule;
   if(specifier==='./browser-middle-mouse.js')return middleModule;
   assert.equal(specifier,'./transport.js');return transportModule;
 });
@@ -91,6 +94,11 @@ assert.equal(transportUrl,combat?'ws://127.0.0.1:43539/':repeatable?'ws://127.0.
 if(combat){const labels=['cameraPinned','npcCount','playerCount','welcomeVisible','activeProjectileActors','activeImpactActors','activeCombatEffectActors','pendingCombatEffectActors','activeClericBuffActors','activeClericCurseActors','activeHitSplatActors','damagedHealthActors','loadedCombatEffectKinds','loadedCombatEffectFrames','loadedProjectileKinds','loadedProjectileFrames','loadedProjectileImpactKinds','loadedProjectileImpactFrames','iceCrystalFrames','thunderStrikeFrames','batteringRamFrames','summonChargeFrames','summonCombatFrames','summonSupportFrames','summonUtilityFrames'];const values=labels.map((_,i)=>i);await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCombatState(null,'renderdemo',labels.join('|'),values);assert.equal(window.browserProof.combatFixture.username,'renderdemo');assert.equal(window.browserProof.combatFixture.activeProjectileActors,4);assert.equal(window.browserProof.combatFixture.iceCrystalFrames,18);await assert.rejects(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportCombatState(null,'renderdemo','wrong',[1]),/Unexpected/);}
 if(repeatable){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportRepeatableState(null,'browserdemo',[1,32,1,0]);assert.equal(window.browserProof.repeatableFixture.username,'browserdemo');assert.equal(window.browserProof.repeatableFixture.cameraPinned,true);assert.equal(window.browserProof.repeatableFixture.npcCount,32);assert.equal(window.browserProof.repeatableFixture.welcomeVisible,false);}
 assert.ok(configured,'actual frontend did not initialize Java options');
+if(benchmarkStream)assert(configured.javaProperties.includes('spoiledmilk.browserOwnedActorPixels='+ownedActors));
+else assert(!configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserOwnedActorPixels=')));
+await configured.natives.Java_orsc_browser_BrowserBootstrap_reportOwnedActorPixels(null,ownedActors,ownedActors,Array.from({length:13},(_,i)=>i));
+assert.equal(window.browserProof.ownedActorPixels.avoidedHashPixels,7);
+await assert.rejects(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportOwnedActorPixels(null,true,true,[1]),/Invalid actor/);
 const expectedPhysical=physicalOption?physicalOption==='on':!benchmarkStream;assert.equal(gpuOptions.physicalOutput,expectedPhysical,'Ordinary physical output defaults ON with explicit OFF; benchmark retains explicit opt-in');assert.equal(window.browserProof.physicalOutputRequested,expectedPhysical);
 assert.equal(gpuOptions.nativeCallDispatch,nativeMode);assert.equal(window.browserProof.nativeCallDispatch.reported,stats.nativeCallDispatch??null);if(withoutNativeModule){assert.equal(window.browserProof.nativeCallDispatch.module,null);assert.equal(window.browserProof.nativeCallDispatch.reported,null);}
 assert.equal(gpuOptions.ownedState,!benchmarkStream,'Ordinary frontend must pass the verified owned policy to the actual backend seam');

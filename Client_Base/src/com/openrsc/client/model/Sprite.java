@@ -7,6 +7,8 @@ public class Sprite {
 
 	private int[] pixels;
 
+	private OwnedPixels ownedPixels;
+
 	private int[] transparentPixels;
 
 	private byte[] unknownByteArray;
@@ -125,10 +127,12 @@ public class Sprite {
 	public void setYShift(int value) { this.yShift = value; }
 
 	public int[] getPixels() {
+		if (ownedPixels != null) ownedPixels.escape();
 		return pixels;
 	}
 
 	public void setPixels(int[] pixels) {
+		this.ownedPixels = null; // Caller retains the array: legacy alias semantics.
 		this.pixels = pixels;
 	}
 
@@ -138,6 +142,66 @@ public class Sprite {
 
 	public void setPixel(int i, int val) {
 		pixels[i] = val;
+		if (ownedPixels != null) ownedPixels.changed();
+	}
+
+	/** A nonescaping read guard. Subclasses retain their virtual getPixels contract. */
+	public final boolean hasPixelData() {
+		return getClass() == Sprite.class ? pixels != null : getPixels() != null;
+	}
+
+	/** Null after ANY raw array escape; no caller can re-certify an escaped buffer. */
+	public final OwnedPixels getOwnedPixels() {
+		return getClass() == Sprite.class && ownedPixels != null && !ownedPixels.escaped
+			? ownedPixels : null;
+	}
+
+	/** Diagnostic only: 0 legacy, 1 owned, 2 escaped, 3 subclass. */
+	public final int pixelOwnershipState() {
+		return getClass() != Sprite.class ? 3 : ownedPixels == null ? 0 : ownedPixels.escaped ? 2 : 1;
+	}
+
+	/**
+	 * Explicit actor publication boundary, NOT an in-place seal. Copies caller data
+	 * once, after decoding/recolouring. The old Sprite and all its aliases retain
+	 * their old behaviour. Generic constructors/setPixels remain untrusted.
+	 */
+	public final Sprite copyForOwnedActor() {
+		if (getClass() != Sprite.class || pixels == null || width <= 0 || height <= 0
+			|| (long) width * height > 2097152 || pixels.length > 2097152
+			|| pixels.length < (long) width * height
+            || (transparentPixels != null && transparentPixels.length > 2097152)
+            || (unknownByteArray != null && unknownByteArray.length > 2097152)) return null;
+		if (ownedPixels != null) return getOwnedPixels() == null ? null : this;
+		Sprite copy = new Sprite(pixels.clone(), width, height);
+		copy.ownedPixels = new OwnedPixels(copy.pixels);
+		copy.requiresShift = requiresShift;
+		copy.xShift = xShift; copy.yShift = yShift;
+		copy.something1 = something1; copy.something2 = something2;
+		copy.id = id; copy.packageName = packageName;
+		// Preserve an auxiliary alias, but its raw getter must revoke the same owner.
+        copy.transparentPixels = transparentPixels == pixels ? copy.pixels
+            : transparentPixels == null ? null : transparentPixels.clone();
+		copy.unknownByteArray = unknownByteArray == null ? null : unknownByteArray.clone();
+		return copy;
+	}
+
+	/**
+	 * Exclusive storage with a nonescaping reader and an opaque version identity.
+	 * A tracked edit changes identity; raw exposure permanently revokes trust.
+	 * Render-thread only, matching Sprite/cache's existing synchronous contract.
+	 */
+	public static final class OwnedPixels {
+		private final int[] values;
+		private Object version = new Object();
+		private boolean escaped;
+		private OwnedPixels(int[] values) { this.values = values; }
+		public int length() { return values.length; }
+		public int get(int index) { return values[index]; }
+		public Object version() { return escaped ? null : version; }
+		public int[] expose() { escape(); return values; }
+		private void escape() { escaped = true; }
+		private void changed() { if (!escaped) version = new Object(); }
 	}
 
 	public int getWidth() {
@@ -177,6 +241,7 @@ public class Sprite {
 	}
 
 	public int[] getTransparentPixels() {
+        if (ownedPixels != null && transparentPixels == pixels) ownedPixels.escape();
 		return transparentPixels;
 	}
 

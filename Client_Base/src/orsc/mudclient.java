@@ -10811,7 +10811,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private int[] getCombatSpriteVisibleBounds(Sprite sprite, boolean mirrorX) {
-		if (sprite == null || sprite.getPixels() == null || sprite.getWidth() <= 0 || sprite.getHeight() <= 0) {
+		if (sprite == null || !sprite.hasPixelData() || sprite.getWidth() <= 0 || sprite.getHeight() <= 0) {
 			return null;
 		}
 		int mirrorIndex = mirrorX ? 1 : 0;
@@ -10834,11 +10834,12 @@ public final class mudclient implements Runnable {
 
 		int minX = boundWidth;
 		int maxX = -1;
-		int[] pixels = sprite.getPixels();
+		Sprite.OwnedPixels owned = sprite.getOwnedPixels();
+        int[] pixels = owned == null ? sprite.getPixels() : null;
 		for (int y = 0; y < sprite.getHeight(); ++y) {
 			int row = y * sprite.getWidth();
 			for (int x = 0; x < sprite.getWidth(); ++x) {
-				if (pixels[row + x] == 0) {
+				if ((owned == null ? pixels[row + x] : owned.get(row + x)) == 0) {
 					continue;
 				}
 				int boundX = xShift + (mirrorX ? sprite.getWidth() - 1 - x : x);
@@ -21344,6 +21345,8 @@ public final class mudclient implements Runnable {
 			loadSlayerMovementPreviewSprites();
 			loadExternalEquipmentSprites();
 		}
+        // After archive packs, external frames, material recolours and anchor edits.
+        BrowserOwnedActorPixels.publish(getSurface().spriteTree);
 	}
 
 	private void loadEntitiesAuthentic() {

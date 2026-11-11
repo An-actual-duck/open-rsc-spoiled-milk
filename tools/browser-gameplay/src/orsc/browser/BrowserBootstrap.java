@@ -11,6 +11,7 @@ public final class BrowserBootstrap {
     public static native void reportLoop(String mode,boolean earlyFaceCull,boolean fullResidentOwnership);
     public static native void reportTelemetry(String names,double[] values);
     public static native void reportSpriteKeyPolicy(boolean requested,boolean enabled);
+    public static native void reportOwnedActorPixels(boolean requested,boolean enabled,double[] counters);
     public static native void reportPreparation(boolean enabled,boolean active,boolean animated);
     public static native void reportRegionPreparationDiagnostics(boolean available,double[] counters);
     public static native void reportCandidatePolicy(String name,boolean requested,boolean available,boolean enabled);
@@ -194,6 +195,8 @@ public final class BrowserBootstrap {
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
                                 reportRegionPreparationDiagnostics(regionCounts!=null,regionCounts==null?new double[0]:regionCounts);
+                                reportOwnedActorPixels(Boolean.getBoolean("spoiledmilk.browserOwnedActorPixels"),
+                                    orsc.BrowserWebGLBridge.isOwnedActorPixelsEnabled(),orsc.BrowserWebGLBridge.ownedActorPixelCounters());
                                 reportPreparation(orsc.graphics.two.GraphicsController.isBrowserFramePreparationEnabled(),
                                     surface!=null && surface.isBrowserFramePreparationActive(),
                                     Boolean.parseBoolean(System.getProperty("spoiledmilk.browserAnimatedBufferReuse","true")));

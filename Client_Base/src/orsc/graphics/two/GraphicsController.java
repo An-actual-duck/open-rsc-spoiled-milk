@@ -699,7 +699,7 @@ public class GraphicsController {
 		if (!canCaptureRenderer2DNativeUiCommand()
 			|| this.interlace
 			|| sprite == null
-			|| sprite.getPixels() == null
+			|| !sprite.hasPixelData()
 			|| sprite.getWidth() <= 0
 			|| sprite.getHeight() <= 0
 			|| clipRight <= clipLeft
@@ -967,7 +967,7 @@ public class GraphicsController {
 		}
 
 		renderer2DCaptureAttempts++;
-		if (sprite == null || sprite.getPixels() == null || width <= 0 || height <= 0) {
+		if (sprite == null || !sprite.hasPixelData() || width <= 0 || height <= 0) {
 			renderer2DCaptureSkippedInvalid++;
 			return false;
 		}
@@ -1149,7 +1149,7 @@ public class GraphicsController {
 		}
 
 		renderer2DCaptureAttempts++;
-		if (sprite == null || sprite.getPixels() == null || destWidth <= 0 || destHeight <= 0 || this.width2 <= 0) {
+		if (sprite == null || !sprite.hasPixelData() || destWidth <= 0 || destHeight <= 0 || this.width2 <= 0) {
 			renderer2DCaptureSkippedInvalid++;
 			return false;
 		}
@@ -1254,7 +1254,7 @@ public class GraphicsController {
 		int sceneSpriteAnchorIndex,
 		int sceneSpriteDrawOrder) {
 		if (sprite == null
-			|| sprite.getPixels() == null
+			|| !sprite.hasPixelData()
 			|| width <= 0
 			|| height <= 0
 			|| this.width2 <= 0

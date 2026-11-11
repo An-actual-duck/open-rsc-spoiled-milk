@@ -1,0 +1,97 @@
+Private browser actor pixel ownership prototype
+==============================================
+
+Status: ACTIVE, default OFF. No adoption or performance claim. No server,
+browser, HTTP listener or GPU launched by this worker. Based on main 8b888cd2f.
+
+Goal
+----
+Avoid BrowserWorldSpriteCache's repeated source pixel hash, comparison and key
+copy for actor sources whose exclusive ownership is mechanically enforced.
+Keep every command's sampling, alpha, skew, mirror, order, dimensions and colour
+transform in the cache key. Miss compositing, shaders and art are unchanged.
+
+Ownership contract
+------------------
+* Existing Sprite constructors and setPixels still retain caller arrays and
+  stay untrusted. They are never certified by array identity or a setter count.
+* copyForOwnedActor is explicit NEW publication: one detached copy of a bounded
+  source, not an in-place seal. The original object and its saved aliases still
+  behave as before. Exact Sprite/Frame classes only; subclasses fall back.
+* OwnedPixels holds private storage, a final nonescaping reader and an opaque
+  version token. Sprite.setPixel changes the token after a successful write.
+* Sprite.getPixels, OwnedPixels.expose, Frame.getPixels, and an auxiliary raw
+  getter that aliases the primary plane permanently revoke that plane's trust.
+  Saved raw references can then mutate at any later time: the ordinary full
+  hash/compare path sees them. An escaped publication cannot be resealed.
+* An owned Frame and its Sprite share one owner. Frame.changePixels and
+  changeDimensions deliberately remain Frame-only changes; Sprite.setPixels
+  deliberately leaves the Frame's old storage in place. Replacing one side
+  does not silently reconnect the other. Legacy clone retains virtual getter
+  behaviour; the owned private branch reads without escaping.
+* Primary and auxiliary copy lengths each cap at 2,097,152 elements. Existing
+  malformed, incomplete, divergent or unsupported sources remain legacy.
+* Existing render-thread no-mutation-during-compose contract remains. Tokens
+  are sampled from the ACTUAL command Sprite at compose time, never from an
+  entry name, sprite ID or an earlier SpriteCommand construction.
+
+Bounded production slice
+------------------------
+BrowserOwnedActorPixels.publish runs once at the end of mudclient.loadSprites,
+after archive packs, external NPC/equipment sheets, material staff recolours
+and equipment anchor changes. It handles Entry types PLAYER_PART, NPC and the
+two equippable types. IdentityHashMap preserves repeated Frame references.
+Generic SPRITE entries (including textures), authentic-mode sprites, dynamic
+framebuffer/minimap captures and later arbitrary replacements remain legacy.
+Textures' black-to-magenta post-load mutation is untouched.
+
+GraphicsController's command null guards now use hasPixelData without exposing
+the buffer. GPU-owned clipping still returns before software pixel reads;
+software fallbacks can expose and revoke normally. Actor visible bounds and
+the composite miss builder read owned planes without exposing them. Generic
+UI/direct texture paths remain unchanged. No UI command stream rewrite.
+
+Cache keys retain only the opaque token, not the source plane. Equal tokens
+are sufficient only WITH exact metadata/transform equality. Different owner
+tokens may reduce cross-Sprite equal-art deduplication; this is a hit-rate and
+memory/performance trade-off to measure, not a correctness shortcut. Legacy
+hash collision comparison, budgets, LRU, image IDs and epoch rules remain.
+
+Private controls and evidence
+-----------------------------
+URL actorpixels=on/off, WebGL benchmark pages only; default OFF. Ordinary and
+software URLs never inject the property. Java property:
+spoiledmilk.browserOwnedActorPixels. Actual browser availability is also
+required for production publication. Bridge getter:
+BrowserWebGLBridge.isOwnedActorPixelsEnabled.
+
+window.browserProof.ownedActorPixels reports requested/enabled plus lifetime
+trustedLayers, legacyLayers, escapedLayers, subclassLayers, hashedPixels,
+comparedPixels, copiedPixels, avoidedHashPixels, avoidedComparePixels, hits,
+misses, cacheBytes and entries. Counters add once per layer/scan, not once per
+pixel; export occurs only in the existing one-second observer.
+
+CPU verification so far
+-----------------------
+tests/myworld/test-browser-owned-actor-pixels.py: 5,766 source/version/alias,
+subclass, replacement, cache/LRU/budget and frozen RGBA checks; 700 seeded
+multi-layer alpha/recolour/skew/mirror/sampling cases. Uses the literal frozen
+8b888 compositor with independent unowned reference planes. Real decoded
+archive plus material recolouring: 8,640 exact frame/pixel/metadata checks,
+3,501 owned actor frames (6,502,532 pixels), 818 legacy generic frames.
+
+CPU outputs: output/tests/browser-owned-actor-pixels/cpu-oracle/{result.json,
+cpu.log}. Raw archive SHA256 0883c7d1957b5bb4b70f0001770e4aac8d3145d77b2ff1a470d574e4718c426e.
+test-browser-world-sprite-cache.py: 9,089 existing checks pass.
+test-browser-sprite-key-limbs.py: frozen 4,986,475-byte corpus exact across
+reference and current OFF/ON/default limb representations; SHA256
+44bb41dfc042b64aa65bd0b9c95b4813f44a4f6d3aaa968524d128b0911fd6ed.
+The reflection harness follows the new diagnostic constructor parameters;
+no production test-only constructor was added.
+Private policy and actual frontend mock pass ordinary/default-OFF/owned-ON.
+
+Remaining acceptance
+--------------------
+Full source build, independent review, immutable static/combat client stages,
+then manager-owned actual WebGL visual/picking/layer parity and matched warmed
+FPS/coverage measurements. No default enablement until actual acceptance.
