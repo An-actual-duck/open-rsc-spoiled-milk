@@ -115,3 +115,14 @@ the new candidate input hashes and unchanged independent fixture/dependency
 hashes. This supersedes e87 for final reviewed Java runtime confidence while
 preserving its earlier evidence. No GPU, browser, full build or FPS measurement
 was run by this worker for the guard follow-up.
+
+The native diagnostics append was also source-reviewed outside the Java pixel
+fixture. BrowserWebGLBridge appends Delta.writerWork() to the existing
+overlayDeltaFrame call, without another native call. The JS endpoint accepts
+the legacy omitted argument as five zeros; otherwise it requires an Int32 view
+of exactly five nonnegative values before materializing its bounded numeric
+copy. Only an owned object of numbers enters stats; no borrowed Java counter
+view is retained. Existing bands/work/C/T argument ordering is unchanged.
+Policy requires delta plus on/packed rectangles and reports requested versus
+actual enablement. This is source-level interface review, not an actual JNI
+execution proof; the manager's new full-client stage must exercise that bridge.
