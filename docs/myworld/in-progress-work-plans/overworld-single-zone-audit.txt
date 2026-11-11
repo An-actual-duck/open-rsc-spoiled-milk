@@ -1,15 +1,17 @@
 Whole overworld as one logical zone — architecture audit
 ========================================================
-Dated November 11, 2026. AUDIT ONLY. Baseline source main6d5a66a3f.
+Dated November 11, 2026. AUDIT ONLY. Baseline source main 6d5a66a3f.
 No browser/GPU/server/map/runtime changes or larger-memory defaults are approved.
-The owner's high-end PC is the first target; this does not establish a safe
-ordinary-device default. The earlier modern-streaming plan remains saved and
+The first estimate uses the upper-bound scope: the ENTIRE overworld, not a
+smaller area chosen to make it fit. The owner's PC is a possible measurement
+host, not an assumed deployment target or RAM/VRAM guarantee. Device system RAM
+and GPU memory must be considered separately. The earlier modern-streaming plan remains saved and
 planned/deferred in browser-modern-streaming-plan.txt while this audit proceeds.
 
 Three proposals that must not be conflated
 -----------------------------------------
 A. One continuous logical L0 zone, internally streamed. Gameplay and visual source
-   identities need not reset on each48-tile border; local collision/pick/interest
+   identities need not reset on each 48-tile border; local collision/pick/interest
    windows, origin rebasing and GPU page residency may remain bounded internals.
    This is a user-visible continuity goal, not a requirement to draw everything.
 B. The whole zone ready in system RAM. Specify whether this means compressed
@@ -20,48 +22,58 @@ C. All zone geometry resident on the GPU. This adds separate capacity, draw-list
    culling, texture, shadow and startup-upload requirements. GPU-resident does not
    mean all geometry should be submitted, shadowed or visible each frame.
 
-A may be feasible without B or C. Full map/source RAM residency may be feasible
-without CPU-constructing all classic models or uploading all geometry. Current
-limits cannot be treated as an estimate of the entire world's actual needs.
-Inventory and geometry audit evidence must decide what fits before implementation.
+Estimate the FULL B and C proposals before substituting A or a hybrid. A may
+ultimately be feasible without B or C, and full source RAM residency differs
+from CPU-constructing all classic models or uploading all geometry, but these
+are choices to present after the complete audit rather than automatic scope
+reductions. Current limits are not an estimate of the world's actual needs.
+Inventory and geometry evidence must decide what fits before implementation.
 
 Current source constraints (source references are review anchors)
 ----------------------------------------------------------------
-- NativeLayeredTerrainSnapshot.java:14–29,183–225 and decoder:238–270: protocol3
-  uniform pages, protocol4 legacy24-tile chunks, protocol5+48-tile sectors;
-  protocols5–8 require radius1/9 explicit slots, protocols9/10 radius2/25 slots.
+- NativeLayeredTerrainSnapshot.java:14–29,183–225 and decoder:238–270: protocol 3
+  uniform pages, protocol 4 legacy 24-tile chunks, protocol 5+ 48-tile sectors;
+  protocols 5–8 require radius 1/9 explicit slots, protocols 9/10 radius 2/25 slots.
   Client/server validators, query indexing, staging/readiness/atomic activation
   and acknowledgements require matching package/manifest, world-space, signed
   level, center and sequence. A giant zone is not a legal larger packet today.
-  A new whole-zone catalog/paging contract needs bounded download, checksums,
-  version compatibility, missing cells, recovery and stale-transaction proof.
-- World.java:45–78: active3x3 sections,144x144 local tiles,143x143 faces,12-tile
-  model grid,512 split-vertex limit; caches have distinct count limits (sector256,
-  CPU windows24, terrain/wall/roof inputs24, model products48, prepared chunks4).
+  Full static source may instead be preloaded from the paired client package;
+  that does not authorize activating out-of-window server state. Do not assume
+  a giant network packet is necessary merely because source is cached. Any new
+  whole-zone provider/catalog still needs checksums, version compatibility,
+  missing cells, recovery and stale-transaction proof.
+- World.java:45–78: active 3x3 sections, 144x144 local tiles, 143x143 faces, 12-tile
+  model grid, 512 split-vertex limit; caches have distinct count limits (sector 256,
+  CPU windows 24, terrain/wall/roof inputs 24, model products 48, prepared chunks 4).
   collisionFlags/pathFindSource/tileElevationCache and model/minimap products are
   sized/indexed to those local constants. Increasing ACTIVE_SECTION_GRID alone
   changes quadratic storage, geometry/grid counts and many algorithms; it is
   not an architectural whole-zone switch.
 - mudclient.loadNextRegion and World.sectionToLocalBaseTile retain local bases
   and local-player/entity coordinates. Scene picking and classic RSModel CPU
-  transforms consume these representations. RSModel.rotate1024 uses signed
-  int products before shifts (current:2402 onward). Feeding large global model
-  positions into every existing local transform can overflow or lose intended
-  projection precision even if logical server coordinates fit an int. Retain
-  per-cell/local origins or audit every transform, packet and index consumer.
-- BrowserWebGLBridge.java:21/51/181/319/419: max256 active draw chunks,512 resident
-  chunk identities,224MiB Java-side packed chunk budget,32768 discretionary upload
-  vertices per submission and524288 vertices per individual chunk. Each vertex
-  currently contributes28 floats/112 bytes plus triangle indices. Those budgets
-  do not include the entire Java heap or all GPU ancillary resources.
-- webgl.js:27/67/71/131/140/191:512 resident chunks,256 active draw descriptors,
-  256MiB tracked chunk/texture GPU budget, bounded indices and the same112-byte
+  transforms consume these representations. RSModel.rotate1024 subtracts camera
+  offsets before signed int products/shifts (current:2402 onward). That existing
+  relative-coordinate pipeline can remain useful. A giant model that bypasses
+  per-cell culling can still feed very distant vertices into those int products;
+  do not infer that int-safe logical tile coordinates imply safe model arithmetic.
+  Keep chunk origins/culling, or prove all transform/packet/index ranges after
+  a global-coordinate refactor. One logical zone does not require one huge mesh.
+- BrowserWebGLBridge.java:21/51/181/319/419: max 256 active draw chunks, 512 resident
+  chunk identities, 224MiB Java-side GPU chunk residency accounting, 32768 discretionary upload
+  vertices per submission and 524288 vertices per individual chunk. Each vertex
+  currently contributes 28 floats/112 bytes plus triangle indices. Those budgets
+  do not include the entire Java heap or all GPU ancillary resources. CachedChunk
+  holds metadata rather than retained interleaved vertex arrays: do not count
+  this 224MiB accounting as an additional actual CPU allocation. Canonical CPU
+  geometry, temporary packing and Worker-owned copies need separate estimates.
+- webgl.js:27/67/71/131/140/191: 512 resident chunks, 256 active draw descriptors,
+  256MiB tracked chunk/texture GPU budget, bounded indices and the same 112-byte
   stride. Shadow maps, sprite atlas, overlay/retained planes, lighting masks and
   sky have separate bounded ledgers; driver/program overhead is not accounted
   for by the chunk counter. Color/shadow culling must remain independent of a
   zone's logical extent; one giant mesh would undermine useful cell culling.
-- browser-render-worker-protocol.js and transport:64MiB packet cap, bounded
-  command count, two in-flight packets and one producer batch;16MiB owned return
+- browser-render-worker-protocol.js and transport: 64MiB packet cap, bounded
+  command count, two in-flight packets and one producer batch; 16MiB owned return
   pool. A full world cannot be handed to the Worker as one unbounded array or
   transferred while Java retains a borrowed view. Static resource lifetimes,
   disposal, source epochs and delayed ACK failures still apply.
@@ -69,7 +81,9 @@ Current source constraints (source references are review anchors)
   per-owner interest membership is bounded (4096 region cap). Player visibility
   still uses scoped logical windows and range filtering. Static map preloading
   must not subscribe every player to all NPCs/players/items/scenery updates or
-  expand combat targeting/collision authority to an entire zone. Audit packet
+  expand combat targeting/collision authority to an entire zone. The 4096 cap is
+  not itself proof the selected 445-cell map cannot fit; interest-window size and
+  range/entity/packet semantics are separate constraints. Audit packet
   coordinate/delta widths, local lists and entity capacities before changing
   interest semantics. Keeping bounded dynamic interests is compatible with A.
 - World.setLayeredTerrainScope:316 onward currently changes scope revisions,
@@ -101,12 +115,77 @@ Audit outputs required before choosing an architecture
    legacy/native renderer defaults separately.
 4. First-login/download/preparation cost, long-route mutation/staleness handling,
    retained ready authority and memory exhaustion/context-loss behavior. The
-   proposal must improve walking without moving a massive stall to login or
-   a later garbage collection, and without hiding incomplete geometry.
-5. Recommend A/B/C separately for the tested PC, with explicit unmeasured parts,
+   proposal must quantify upfront download/zone-entry preparation versus later
+   walking smoothness. The owner may accept a substantial initial wait in
+   exchange for uninterrupted travel; do not rule that tradeoff out implicitly.
+   Report later GC spikes and incomplete-geometry behavior separately.
+5. Recommend A/B/C separately for entire-overworld scope and stated device
+   RAM/VRAM classes, with explicit unmeasured parts,
    required source changes and confidence. This audit makes no FPS, startup-time,
    RAM-fit or full-GPU-residency promise. Measured data decides the next task.
 
 Evidence links will be appended after the independent inventory/geometry audits.
 No earlier release history, accepted visual work, owner preview or current public
 map/server is changed by this document. Public activation requires its own gate.
+
+Independent audit evidence available so far
+------------------------------------------
+The exact selected client/server package fingerprint is
+ 7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc
+Manifest SHA256:
+ 42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b
+Inventory worker independently verified 1797 matching client/server files.
+Global L0 has 445 stored 48x48 sectors (1,025,280 stored tiles), sector bounds
+X0..21/Y−1..20, or tile bounds X0..1055/Y−48..1007. The 22x22 bounding rectangle
+has 39 unrepresented sector positions; do not invent terrain or charge them as
+observed dense pages. L1/L2 have 444/441 stored sectors; authored higher 3/4/5 have
+one each and must be classified separately. Other world spaces and underground
+are outside this specific global L0 proposal, not deleted from the package.
+
+Full paired source is available in the maintained client/server package and the
+local layered-world distribution archive. However, scripts/browser-gameplay/
+prepare.py:61–70 intentionally copies only installed-client profile+manifest;
+its explicit comment says gameplay receives server-native terrain and does not
+read local sector files. Thus current browser stages do NOT preload the whole
+source. B could deliberately ship/load a bulk static source archive while leaving
+authoritative bounded server snapshots intact; it need not invent one giant
+terrain packet. Package availability, downloaded bytes and decoded RAM are three
+different states.
+
+Production source terrain census (geometry worker, CPU only):
+ ai1/output/tests/overworld-zone-geometry-audit/full-1/result.json
+ ai1/output/tests/overworld-zone-geometry-audit/full-1/cells.jsonl
+Audit source 7652678d317d5750f0393fd868159dd715ea4f69. Result SHA256:
+ 6f3b83d7ceab34a2b59e5ae6d1ee8ad588c33e14fe36d85a3afee68c6b944ca5
+The one bounded 512MiB native headless process visited 1330 L0/L1/L2 sectors in
+6.842s with 282.9MiB observed maximum RSS. It processed cells sequentially;
+neither RSS nor wall time measures retaining the full world, CheerpJ/browser
+startup, Java classic picking/model construction, transfer or actual GPU upload.
+
+Canonical nonoverlapping L0 terrain/wall/roof products, assigned to 24-tile cells:
+ 6,296,889 vertices / 2,098,963 triangles
+ 705,251,568 packed vertex bytes + 25,187,556 index bytes
+ = 730,439,124 bytes (696.60MiB), at the current 112B vertex+4B index format.
+This includes 2,048,820 terrain / 38,678 wall / 11,465 roof triangles.
+The separately measured current positive-stitch 48-cell representation is
+759,580,296 bytes (724.39MiB). It is an alternative representation, NOT another
+full layer to add to the canonical result. The reported primitive canonical CPU
+mesh lower bound for L0 is 327,438,228 bytes, excluding object headers, enums,
+roof bits and other retained metadata/effects. It is not a JVM heap measurement.
+L1/L2 wall/roof packed topology adds 10,078,080/1,975,248 bytes respectively;
+these are floor-local topology counts, not proven stacked-world coordinates or
+upper-floor terrain inclusion. Exact visible-structure dependencies need their
+own validation.
+
+Even the terrain-only current-format result exceeds current GPU residency
+accounting and the earlier 512MiB cache experiment. This does NOT establish that
+entire-overworld C cannot fit suitable hardware: scenery geometry, textures,
+ancillary GPU allocations and actual available VRAM remain to be measured, and
+the present limits are software policy. Do not sum the Java 224MiB accounting
+limit as if it were another observed CPU buffer. Do not double-count canonical
+and stitch alternatives. Do not turn the bounded census process's 512MiB heap
+limit into a target-client memory limit or RAM-fit claim. Full B/C estimates
+remain the priority before proposing a hybrid.
+
+Scenery geometry and final inventory evidence links are pending their workers'
+completed audit reports. No runtime recommendation is adopted at this draft stage.
