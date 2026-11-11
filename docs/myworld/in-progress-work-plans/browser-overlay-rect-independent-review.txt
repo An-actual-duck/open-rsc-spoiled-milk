@@ -3,11 +3,11 @@ Independent browser overlay rectangle review
 
 Scope
 -----
-Read-only candidate review plus independent CPU fixtures in ai2. No browser,
-HTTP/game server, GPU workload or performance claim. Runtime implementation
-belongs to the separate ai1 topic. This report does not approve an untested
-rectangle backend; the first reviewed checkpoint only observes writer tiles
-while retaining the exact row/full upload path.
+Read-only candidate review plus independent CPU fixtures in ai2. This worker
+started no browser, HTTP/game server or GPU workload and makes no FPS claim.
+Runtime implementation belongs to the separate ai1 topic. Later sections add
+source-bound manager-owned hardware evidence after the initial observe-only
+review; the historical evidence and its limits remain recorded below.
 
 Primary specification checks
 ----------------------------
@@ -173,3 +173,58 @@ Workspace-layout check still reports inherited legacy output-root entries and
 the legacy assets/sprites tree. New review writers use declared tests/diagnostics
 categories; inherited ignored data was preserved. layout-check.log beside this
 run records the check. No generated Firefox source file is committed to Git.
+
+Production-module hardware evidence and fixture follow-up
+---------------------------------------------------------
+Manager-owned Firefox hardware WebGL2 runs now pass with runtime source
+923d745c0c032437f1a1f034f23b905c96c8b490 and clean test-only checkpoint
+b0bec6bff85d9355e1ef5d1b58b3c35d731e3750. The latter changes fixtures, not
+production runtime modules. Read-only receipt verification found:
+
+* Normal owned output: 24,897,876 RGBA bytes compared exactly.
+* Owned output at2x with odd physical dimensions:100,508,520 exact bytes.
+* Hostile scoped unpack/PBO state:24,897,876 exact bytes and326 restoration
+  checks. Total across the three runs:150,304,272 exact output bytes.
+* Each run contains166 literal frames, each compared against all three actual
+  ROW/direct/packed production compositors:498 zero-difference comparisons.
+  Both rectangle variants record142 rectangle declarations, so passing did not
+  depend on full-upload fallback alone.
+* Each run also records4 post-prepare source mutations,3 held comparisons,
+  2 retained-output deferrals,8 actual sprite-atlas follow-ons and8 full-texture
+  follow-ons. All report no errors. Context receipts report alpha:true and a
+  physical Radeon R9 200 Series-or-similar renderer, not a software renderer.
+
+Evidence under the manager checkout:
+output/diagnostics/browser-frame-architecture/rect-gpu-owned-1/
+output/diagnostics/browser-frame-architecture/rect-gpu-owned-2-odd/
+output/diagnostics/browser-frame-architecture/rect-gpu-scoped-hostile-1/
+Each contains actual.json and receipt.json. All reference the same clean b0
+source receipt at ai1 output/tests/browser-overlay-delta-transport/
+20261111T085819304446Z/result.json. This review recomputed every staged web
+and all332 data-file SHA256 entries: no mismatch. Every staged runtime module
+also matches its923d Git blob byte-for-byte. Receipt aggregate fields agree
+with actual.json, and all166x3 individual frame comparisons have changedBytes0.
+The preparer now explicitly hashes the compiled WorldOverlayTileTracker.java;
+its recorded SHA256 is
+7f363acce146e03e053bbfc38ad3b75dbf7bc808facbac364d597e01f940dcfc.
+
+The b0 addition test-browser-overlay-packed-failure.mjs injects allocation and
+raw-byte-copy failures THROUGH actual createBrowserOverlay.prepareDelta. It
+checks failure before any GL call, poisoned subsequent work, released scratch
+and disposed graphics resources, restoring test-patched globals in finally.
+This closes the earlier source-level coverage gap beyond direct staging-helper
+allocation failure. Its execution is separate from the corpus preparer; do not
+infer that it ran merely because the hardware corpus passed. Agent1 reports a
+successful pre-b0 tool-transcript execution (chunk2aa1c1), with no persisted
+file receipt. This worker source-reviewed the test but did not independently
+execute it; a normal source-bound execution receipt is still a follow-up.
+
+Limits remain explicit. Final composited RGBA equality does not establish raw
+R32F texture-bit identity: the independent CPU packing bit oracle and manager's
+separate hardware transfer bit proof cover different claims. These production
+GPU runs do establish output parity for their literal corpus and state cases,
+not every scene, browser, GPU, context-loss path or driver. They do not measure
+full-game FPS, hardware bus bytes, total browser memory or establish a60FPS
+result. Matched full-game acceptance remains the manager's responsibility.
+No new source-backed correctness blocker was found in this follow-up. Only
+this report changed; no repeat CPU suite, GPU or server process was started.
