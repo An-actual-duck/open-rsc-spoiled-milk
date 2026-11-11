@@ -1,8 +1,9 @@
 Private bounded overlay rectangle transport investigation
 ========================================================
 
-Status: ACTIVE, correctness proof passed, strict gameplay measurement in progress.
-Default OFF. No default adoption or gameplay performance claim yet.
+Status: READY private experimental implementation, correctness proof passed.
+Default OFF. One strict pair improved; further ordinary/reverse tests pending.
+No default adoption, full performance acceptance or60FPS claim.
 No browser/GPU/server processes started here.
 Source baseline: published main 1f1be1b7c2dee6dde98a0f123e5f1987585efdff.
 Parked owned-actor b655 and all its immutable artifacts remain preserved.
@@ -137,15 +138,16 @@ overlay+Khronos-model checks over direct/packed x scoped/owned, both-plane
 failures, raw Float payload/unaligned views, bounded staging/reuse/dispose and
 following actual sprite-atlas/FULL uploads. Evidence ai-2/output/tests/
 browser-overlay-rect-independent-review/20261111T084156132135Z/result.json.
-The added actual prepareDelta allocation/copy failure fixture also passed before
-ANY GL with backend poison/dispose; its earlier execution is in the command
-transcript. A persisted rerun will follow the current manager CPU timing hold.
-Future corpus preparation now invokes it and writes node-packed-failures.log.
+The added actual prepareDelta allocation/copy failure fixture passed before ANY
+GL with backend poison/dispose. Persisted source-bound rerun (clean41b source,
+exact923d runtime, Nodeversion, all imported file hashes, exit0 and stdout) is
+output/tests/browser-overlay-rect-transport/packed-failures-41b8336/result.json.
+Corpus preparation now also invokes it and writes node-packed-failures.log.
 
 Literal Java rectangle CPU export: output/tests/browser-overlay-delta-transport/
 20261111T085819304446Z/result.json.1155history/plane/ACK checks pass;166frames,
-142actualrectangle submissions. Existing full/row literal digest remains87b10499
-cb867a30bce5af0870b650fc7a2030caf13772371c57d2d92741c803. GPU corpus schema2
+142actualrectangle submissions. Existing full/row literal digest remains:
+87b10499cb867a30bce5af0870b650fc7a2030caf13772371c57d2d92741c803. GPU corpus schema2
 compares each literal frame's FULL output against ROW/direct/packed outputs.
 
 Manager actual Radeon GPU proof PASSED all3 configurations:
@@ -175,8 +177,32 @@ combat-preparation.json:8207,existing finalcombat TCP43639/WS43539.
 Each has url(row),urlDirect,urlPacked,urlFull,urlObserve with identical batchon,
 explicit spritekeylimbs=on, correct cache port, empty credentials and exact file
 hashes.8204/8205observe and8178GPU proof evidence remain preserved separately.
-Root verified the8207JAR/frontend and is now measuring strict live row/packed
-gameplay after180s warmup; worker holds heavy CPU until the pair finishes.
+Root verified the8207JAR/frontend and completed the first strict pair after180s
+warmup, two30s windows each, samebf2aeb artifact, batchon and preferred keyon:
+ROW51.1654 FPS vs PACKED53.3233 FPS (+4.2175%). All6 real damage/resource families
+advance. Packed logical/API/gathered bytes are about1.68-1.69MB/frame versus
+ROW4.1472MB; calls about11.7-11.9 versus2; measured packing about0.100ms/frame,
+zero new scratch allocations in timed windows. Manager evidence:
+root output/diagnostics/browser-frame-architecture/rect-combat-first-pair.json.
+This is one pair/order, not60FPS or a default-adoption conclusion. The separate
+331,776,000-byte/bit-checked standalone transfer reference is API/packing timing,
+not gameplayFPS, GPUtime or hardware bus traffic.
+
+Parent is next testing PACKED with modelbatchOFF then FULL/batchOFF to reverse
+order and assess ordinary preferred configuration. Those results are pending
+and belong in the manager follow-up; they do not prevent review of this private
+default-OFF implementation. No further worker runtime changes are planned.
+
+Known limits
+-------------
+Actual hardware/browser proof is this Firefox/Radeon setup, not a universal
+device performance guarantee. Dense/fragmented/uncertain layouts use existing
+row/FULL fallback. Eight rectangles cap driver calls but may over-upload versus
+fine sparse coverage. Staging limits describe owned retained/transient payload,
+not GC/driver memory. Final-composite GPU equality is separate from raw Float32
+packing bit preservation. The established affine C/T approximation is unchanged.
+There are no art/shader/gameplay changes, no additional per-frame JNI call and
+no retained Java/input views. Default/native/software behavior remains unchanged.
 
 withOverlayUnpack scopes row length/skip/alignment/PBO/flip/premultiply for BOTH
 planes. Scoped mode restores arbitrary incoming state; private explicitly
