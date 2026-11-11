@@ -1,0 +1,68 @@
+Whole-overworld RAM: current GPU-only baseline CPU evidence
+2026-11-11. Independent analysis; implementation and browser acceptance pending.
+
+Evidence and scope
+------------------
+Manager diagnostic: output/diagnostics/browser-whole-overworld-ram/
+baseline-route-profile-2/{firefox-profile.json,additional-information.json,
+profile-start.json,profile-end.json,route/result.json,route/samples.jsonl}.
+Profile SHA256 ec1feee671beb62ee65a573bfb164c2b4d8620a17afa3e15880e4e350c5368a9;
+source-body export b004497a8803ef5389bdce98f656ab135bbea26584b22d084345e37d8e9cd00e.
+Reproduction: tests/myworld/whole-ram/analyze-route-profile.py INPUT --out NEWDIR.
+Worker output: output/diagnostics/browser-whole-ram-profile/baseline-2/analysis.json
+and sources/*.js. The analysis records every input and exported body hash.
+
+The paired rsc-ram-baseline-route-start/end UserTiming markers bound 12,222.134ms
+of actual accepted private walking, epochs1 through7. Six disjoint old-source
+report-return to first-new-source report-start intervals total2,548ms:
+626,378,424,351,410,359ms. They locate pre-Bridge publication silences; they are
+not exact named Java entry markers or the complete visible loading interval.
+Sample units explicitly report CPU nanoseconds and time milliseconds. In these
+silences main-thread CPU is2,493,302,668ns (97.85% of one core), DOM Worker CPU
+22,715,493ns (0.89%). The first sampled CPU delta can straddle an interval edge.
+This supports targeting main-thread prepared products, not a Worker upload-budget
+change. It is not a GPU timing, FPS result or a promised speedup.
+
+Fresh generated-source structural matches
+-----------------------------------------
+All indices below belong ONLY to this capture. Exported bodies were joined from
+the content process sources table to this capture's additional jsSources table;
+generated function declarations were verified. Production World/RSModel/Scene
+source at e8ee5a042 and validation baseline15b7b7c9c is byte-identical.
+
+* Source3391: RSModel.insertVertex linear XYZ scan, ensureCapacity, append XYZ.
+  240/1274 deepest-JS samples (18.84%) in publication silences. Of those,232
+  nearest callers are source1308, the actual World.emitWallProduct continuation:
+  four segment vertices, four-index face, UV range, facePickIndex, collision and
+  minimap wall color6316128. Eight are RSModel.copyFaceTo continuations. This is
+  concrete wall construction work that raw decoded source retention cannot skip.
+* Source1888: RSModel.computeNormals, cross products/clamp8192/sqrt, normalized
+  components65536/65535 and scenePolyNormalShift=-1. 44 deepest samples (3.45%);
+  inclusive101 (7.93%), overlapping other categories.
+* Source738: RSModel.addModels, committing source transforms then copying indexed
+  face geometry, lighting, UV and single/multiple-source face parameters.
+  29 deepest samples (2.28%), all called through a copy-constructor continuation.
+* Source1550: RSModel.IntArrayBuilder.add, primitive append and1.5x growth with
+  1,048,576 cap:17 deepest samples (1.33%). This is already a primitive builder;
+  it is not evidence for a boxed ArrayList replacement.
+* Source2770: two-int FNV64 mixer:16 deepest samples (1.26%). Source1563:
+  World GPU-builder numeric vertex append:14 (1.10%). Source3487: actual object
+  canonical signature including identities/geometry/UV/lights/materials:10 (0.78%).
+* Source2641: Scene.removeModel identity-scan prefix:53 deepest samples (4.16%)
+  in silences and432 (8.93%) outside them. Nine silence callers are explicit
+  dematerializeGameObjectInstance wrappers;42 are a larger draw continuation.
+  The unseen interpreter tail is not evidence quantifying array-shift cost.
+  This also occurs outside transitions; it is a separate roster issue, not a
+  justification to revive an earlier rejected membership prototype.
+
+Decision and limits
+--------------------
+Prepared wall/roof publication and canonical query products are justified targets.
+Acceptance must demonstrate that actual World.loadSections consumes them and
+skips the corresponding construction, while preserving local collision/picking,
+minimap, origins and mutable model ownership. Source-only preload is insufficient.
+Outside-silence samples include walking, Bridge work and transition tails, not a
+pure stationary control. Endpoint and inclusive shares overlap and cannot be
+summed. Profile1 without source-body export is preserved but not used for Java
+attribution. No stale generated label, causal FPS forecast, RAM readiness or
+whole-zone browser allocation claim is made by this report.
