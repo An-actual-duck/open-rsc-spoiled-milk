@@ -5,8 +5,17 @@ export function createRenderWorkerTransport({postMessage,layout,now=()=>performa
   const pending=new Map(),waiters=[],pool=new Map();let poolCount=0,poolBytes=0;const MAX_POOL_BYTES=16*1024*1024,MAX_POOL_BUFFERS=1024;
   const bufferLength=Object.getOwnPropertyDescriptor(ArrayBuffer.prototype,'byteLength').get;
   function acquire(length){const bucket=pool.get(length);if(bucket?.length){const buffer=bucket.pop();if(!bucket.length)pool.delete(length);poolCount--;poolBytes-=length;stats.reusedBuffers++;stats.poolBytes=poolBytes;return buffer;}stats.allocatedBuffers++;stats.allocatedBytes+=length;return new ArrayBuffer(length);}
-  function release(buffers){for(const buffer of buffers){const size=bufferLength.call(buffer);if(size&&poolCount<MAX_POOL_BUFFERS&&poolBytes+size<=MAX_POOL_BYTES){if(!pool.has(size))pool.set(size,[]);pool.get(size).push(buffer);poolCount++;poolBytes+=size;}}stats.poolBytes=poolBytes;stats.peakPoolBytes=Math.max(stats.peakPoolBytes,poolBytes);}
-  const stats={enabled:true,submittedPackets:0,completedPackets:0,submittedFrames:0,completedFrames:0,copiedBytes:0,transferredBytes:0,copyMilliseconds:0,backpressureWaits:0,maxInFlight:0,maxStagedBytes:0,inFlightBytes:0,stagedBytes:0,queueAgeMilliseconds:0,droppedFrames:0,abandonedFrames:0,allocatedBuffers:0,allocatedBytes:0,reusedBuffers:0,returnedBuffers:0,returnedBytes:0,poolBytes:0,peakPoolBytes:0};
+  function release(buffers){
+    for(const buffer of buffers){const size=bufferLength.call(buffer);if(!size||size>MAX_POOL_BYTES)continue;
+      // Admit recent frame planes, evicting cold startup geometry. A saturated
+      // first-come pool otherwise allocates C/T afresh forever after login.
+      while(poolCount>=MAX_POOL_BUFFERS||poolBytes+size>MAX_POOL_BYTES){const key=pool.keys().next().value,bucket=pool.get(key);bucket.pop();if(!bucket.length)pool.delete(key);poolCount--;poolBytes-=key;stats.poolEvictions++;}
+      if(!pool.has(size))pool.set(size,[]);pool.get(size).push(buffer);poolCount++;poolBytes+=size;
+    }
+    stats.poolBytes=poolBytes;stats.peakPoolBytes=Math.max(stats.peakPoolBytes,poolBytes);
+  }
+
+  const stats={enabled:true,submittedPackets:0,completedPackets:0,submittedFrames:0,completedFrames:0,copiedBytes:0,transferredBytes:0,copyMilliseconds:0,backpressureWaits:0,maxInFlight:0,maxStagedBytes:0,inFlightBytes:0,stagedBytes:0,queueAgeMilliseconds:0,droppedFrames:0,abandonedFrames:0,allocatedBuffers:0,allocatedBytes:0,reusedBuffers:0,returnedBuffers:0,returnedBytes:0,poolBytes:0,peakPoolBytes:0,poolEvictions:0};
   function alive(){if(failed||disposed)throw failed||new Error('Render worker disposed');}
   function fail(error,notify=true){if(failed||disposed)return;failed=error instanceof Error?error:new Error(String(error));commands=[];transfers=[];bytes=0;stats.stagedBytes=0;stats.abandonedFrames+=[...pending.values()].filter(p=>p.frameId).length+(worldPending?1:0);pool.clear();poolBytes=poolCount=0;stats.poolBytes=0;stats.lastError=String(failed);for(const p of pending.values())p.reject(failed);pending.clear();stats.inFlightBytes=0;while(waiters.length)waiters.shift().reject(failed);if(notify)onFatal(failed);}
   async function slot(){alive();if(pending.size<2)return;stats.backpressureWaits++;await new Promise((resolve,reject)=>waiters.push({resolve,reject}));alive();}

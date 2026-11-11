@@ -1,6 +1,7 @@
 #!/usr/bin/env -S node --experimental-default-type=module
 // CPU-only facade/replay test, not an actual browser Worker or GPU oracle.
 import assert from 'node:assert/strict';
+import {createRenderWorkerTransport} from '../../tools/browser-gameplay/web/browser-render-worker-transport.js';
 import {createBrowserRenderWorker} from '../../tools/browser-gameplay/web/browser-render-worker.js';
 import {createRenderWorkerReplay,createWorkerOutputSizer} from '../../tools/browser-gameplay/web/browser-render-worker-replay.js';
 import {renderWorkerPolicy,ownRenderCommand,renderNativeName} from '../../tools/browser-gameplay/web/browser-render-worker-protocol.js';
@@ -67,5 +68,11 @@ const disposal=await gpu.disposeAndConfirm();check(disposal.disposed&&disposal.g
 check(callbacks>=3);
 const source=Float32Array.of(1,2,3);assert.throws(()=>ownRenderCommand('lightingFrame',[source],()=>new ArrayBuffer(1)));checks++;
 check(source[0]===1);
+// Cold startup geometry must not permanently exclude reusable hot frame planes.
+let posted;const poolTransport=createRenderWorkerTransport({layout:()=>({epoch:1,width:1,height:1,dpr:1}),postMessage:(p,b)=>{posted=structuredClone(p,{transfer:b});}});
+async function roundTrip(plane){poolTransport.enqueue('lightingFrame',[plane]);const done=poolTransport.enqueue('planWorldSprites',[1,1,new Int32Array(0)]);await new Promise(resolve=>setImmediate(resolve));const buffers=posted.commands.flatMap(c=>c.args.filter(a=>ArrayBuffer.isView(a)).map(a=>a.buffer));const ack=structuredClone({type:'ack',version:1,id:posted.id,frameId:0,layoutEpoch:1,buffers},{transfer:buffers});poolTransport.receive(ack);await done;}
+await roundTrip(new Float32Array(4*1024*1024));check(poolTransport.stats.poolBytes===16*1024*1024);
+await roundTrip(new Float32Array(512*1024));check(poolTransport.stats.poolEvictions>0);
+const beforeHot=poolTransport.stats.allocatedBuffers;await roundTrip(new Float32Array(512*1024));check(poolTransport.stats.allocatedBuffers===beforeHot+1,'Hot plane reused (only zero-length descriptor allocates)');poolTransport.dispose();
 globalThis.window=oldWindow;
 console.log(JSON.stringify({passed:true,checks,scope:'CPU facade/transfer/replay only; no browser or GPU'}));
