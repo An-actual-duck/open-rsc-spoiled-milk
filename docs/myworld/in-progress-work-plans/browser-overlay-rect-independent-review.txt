@@ -214,10 +214,16 @@ checks failure before any GL call, poisoned subsequent work, released scratch
 and disposed graphics resources, restoring test-patched globals in finally.
 This closes the earlier source-level coverage gap beyond direct staging-helper
 allocation failure. Its execution is separate from the corpus preparer; do not
-infer that it ran merely because the hardware corpus passed. Agent1 reports a
-successful pre-b0 tool-transcript execution (chunk2aa1c1), with no persisted
-file receipt. This worker source-reviewed the test but did not independently
-execute it; a normal source-bound execution receipt is still a follow-up.
+infer that it ran merely because the hardware corpus passed. Following the
+successful pre-b0 transcript run, agent1 persisted a separate exit0 rerun at
+ai1 output/tests/browser-overlay-rect-transport/packed-failures-41b8336/
+{result.json,stdout.log,stderr.log}. It binds clean source
+41b8336bedc85e28bcb5da50a146f54033c2fdf5, runtime923d, Node v22.21.1, the exact
+command and all imported runtime/mock/test hashes. This worker verified every
+recorded source hash against that commit, runtime equality to923d, the stdout
+hash and empty stderr. The receipt reports both actual prepare fault cases
+passed. This closes the persisted-evidence follow-up, without representing an
+independent rerun or any real GPU fault-injection proof.
 
 Limits remain explicit. Final composited RGBA equality does not establish raw
 R32F texture-bit identity: the independent CPU packing bit oracle and manager's
