@@ -1,4 +1,4 @@
-Private whole-overworld prepared residency — ACTIVE prototype
+Private whole-overworld prepared residency — READY for private integration; GPU gate pending
 
 Owner authorized trying the full authored overworld after the read-only audit.
 This is an explicit private benchmark mode, OFF normally. No public/server/map
@@ -117,3 +117,65 @@ Steady-frame overhead is an explicit risk: current first prototype checks a smal
 sorted texture metadata table and bounded visible-cell ownership rows each frame.
 No unmeasured optimization claim is made. The manager will observe completed Worker
 frames and profile actual whole-zone play before accepting performance.
+
+
+CPU integration handoff (current source d7525c946)
+------------------------------------------------
+The final worker full-source verification artifact is:
+output/builds/browser-whole-overworld-zone/runtime-review-4/client.jar
+SHA256 88ee38a24d4772d2ae47ae056e7bf386d2e52f6ba92fa28f625bb0c6e36f96ab
+Clean source d7525c9466b01f623201ec45e31c828df0c279f1,962compiledclasses
+(672orsc/290com), source/class/asset/log hash receipts beside the JAR. No class
+transplantation. This verifies worker source only; manager will merge all worker
+commits and build ONE final main JAR before the full1330sector cook.
+
+Own true-OFF tests against that exact JAR pass:
+- Region streaming73 checks.
+- Animated cache six variants1029/1028/1040(lru),1543/1542/1553(active).
+- Four startup property gates45total checks: defaultOFF, isolated property flags
+  OFF, explicit benchmark+wholeZone ON. Resolver install/clear and guarded class
+  loading are tested without constructing a client/Scene or touching a catalog.
+
+Independent worker3 used the SAME unified full JAR, without source overlays:
+-43 actual Java capture/reader/filter/resolver dynamic/signed-scope checks.
+-7 object resources/202placements/97038vertices/11,257,100bytes exactly match
+  unchanged production canonical model construction and112B/material packing.
+-3 busy stacked world resources/2.201MB plus adjacent south/east1.706/1.608MB
+  match the detached production source-builder/packing reference. Upper floor-
+  local negative controls differ, so the actual stacked-height proof is nonvacuous.
+-Original incomplete pilot/catalogue/source-join proofs remain separate. Geometry
+  tests do not substitute for full-catalog runtime admission or GPU allocation.
+
+Preserved corrections/limitations:
+- An initial bake identity hardening compared the installed map identity to a
+  packageId@version:hash string; the actual API returns the manifest SHA alone.
+  Independent setup rejected that intermediate version. Fixed in820f6eb63 before
+  this final d752 build; subsequent unified-JAR geometry tests pass.
+- Source activation uses BOTH authoritative snapshot.global/L0 and signed frame
+  level0. Metadata[2] is signed level, field17 explicitly marks non-global space;
+  Zanaris10/compat0 and underground/upper scopes stay local-rendered while the
+  entire L0 catalog remains resident. Resolver checks the current snapshot before
+  skipping CPU geometry, even before the bridge updates its frame state.
+- Whole-mode source activation/loading holds occur before catalog frame handling
+  when gameplay authority is incomplete; modal UI follows the existing branch.
+  This avoids interpreting an old signed frame against a newly activated scope.
+- Editor terrain patches are unsupported and explicitly refused. Immutable source
+  snapshot/page mismatches, new settings/material dependencies and stale Cache/JAR/
+  catalog assets refuse private admission. This is not a live map-editing mode.
+- Current roster counts intentionally pin the selected7e043 package. New source
+  versions require a reviewed complete catalog/schema regeneration; no smaller
+  or partially successful bake can masquerade as the selected full overworld.
+- Existing normal upper-world fallback may not consume every selected nativeL1/L2
+  page. The new catalog explicitly prepares all selected upper pages with actual
+  stacked roof geometry. Actual ON/OFF pixel/performance tests must disclose that
+  source-geometry difference rather than falsely calling legacy fallback the full
+  selected-source visual reference.
+
+Remaining manager-owned gates before a playable/accepted result:
+Full source main build and full1330sector bake; actual positive Java constructor
+and complete-catalog admission; actual WebGL upload+capacity/cleanup+ready proof;
+playable Firefox movement/UI/doors/object removal/source changes; completed Worker
+frame FPS/travel/VRAM/RSS measurements. No full2GiB bake, browser/GPU/server launch,
+public update or normal-default change was performed by worker1. Initial entry
+wait and residual local classic CPU reconstruction are explicit tradeoffs, not
+claims that every travel pause has disappeared.
