@@ -122,3 +122,58 @@ delivered metadata. verify-reader.py accepts the same explicit option for the
 manager's later complete TRUE reader check. This bounded follow-up is not full
 TRUE browser residency, complete-zone traversal or a new performance claim.
 Fresh integrated JAR/data and actual Firefox gates remain manager-owned.
+
+Carrier-coordinate follow-up (same day)
+----------------------------------------
+Actual client startup exposed a legitimate legacy carrier basis: logical player
+111,624 became world2415,2400 with tile offsets2304,1776; logical recipe2,13
+therefore publishes at runtime center50,50. The old zero-offset refusal was too
+strict. The adapter now translates checked48-tile-aligned centers/origins and
+captures the basis for asynchronous query work; it does not translate local tile,
+model or vertex coordinates. Misaligned bases remain refused.
+
+Final evidence uses fresh MAIN c8fc5f8d6323a22d5f8e0968e80aa90d03c73e12,
+JAR SHA256 0cea34c155273c3183dba35b39151e4d0d5198ac02eca7badf55e7dde51a67d3,
+ROOT/output/builds/browser-whole-overworld-ram/integrated-carrier-3/receipt.json,
+with its fresh bound complete TRUE data at
+ROOT/output/builds/browser-whole-ram-bake/full-carrier-3/whole-ram/.
+ai3/output/tests/browser-whole-ram/basis-full-main-c8fc-1/result.json:
+204,583 checks PASS using the ACTUAL complete reader/provider, not a custom
+provider or injected readiness. reader-full-main-c8fc-1/result.json:33 PASS.
+
+The reference really calls original setLayeredTerrainScope and loadSections with
+carrier world coordinates. Registry ownership is disabled only around the
+original reference. Candidate uses the actual provider and same public calls.
+Reused worlds exercise zero basis,2304/1776 at logical2,13 then2,12, a different
+aligned-96/144 basis, and return to zero. All local source/collision/elevation/
+direction/minimap/pick/model state and effective wall/roof lighting match.
+Canonical metadata center/origin/logical-world offset and local geometry match
+the normal pipeline. Actual central TerrainDefinitionField RGBA relief values,
+roof/indoor classification and every roof bit match; warmed field caches equal
+fresh computation. Stale halo/preload references are cleared; late captured-basis
+queries retain their old basis and cannot publish over the current frame. Real
+signed-1 and10 source windows take the ordinary fallback and retain actual RAM.
+Hits/activations advance six times, avoided-build count five times; retained
+source-plus-primitive ledger is275,990,134 bytes. Misaligned actual source setter
+is refused. These are CPU correctness/counter checks, not browser timings.
+
+One precise additional qualification: original TerrainVertexLightVariation seeds
+TERRAIN query light words from carrier coordinates; canonical stored CPU queries
+retain logical seeds. Nonzero cases differ in9319/9954/9350 referenced words;
+zero-basis cases differ in none. ONLY those TERRAIN query light words are excluded
+from nonzero-basis comparison. All normals, UVs, materials, blends, coordinates,
+non-terrain query lights and effective local model lights stay exact.
+verify-query-light-consumers.py plus query-light-consumers.json freeze ten source
+units and the maintained getter-call roster. In admitted private globalL0 mode,
+the whole-zone filter removes ALL WORLD-role plane0..2 chunks before visual
+packing. Other light getter reads are resident-object parity/fingerprint
+diagnostics; relief/roof/indoor consumers use geometry and roof data, not these
+light words. This exception is not permitted for the normal renderer, arbitrary
+plugins/reflection or a future unreviewed consumer.
+
+Reproduce with verify-basis.py --hidden-roofs true and fresh immutable inputs.
+An explicit --prepared-only mode also exists for early adapter testing with
+previous data bytes: it creates NO reader and claims NO admission/readiness/hit
+proof. Earlier basis-prepared-* receipts are diagnostic only; final evidence
+above uses matching fresh JAR/data and preparedOnly=false. Actual hardware
+startup, route performance and later rollout decisions remain manager-owned.

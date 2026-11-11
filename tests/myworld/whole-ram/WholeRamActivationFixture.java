@@ -35,12 +35,15 @@ public final class WholeRamActivationFixture {
   for(String name:new String[]{"modelWallGrid","modelRoofGrid"}){RSModel[][] aa=(RSModel[][])get(a.world,name),bb=(RSModel[][])get(b.world,name);for(int row=0;row<aa.length;row++)for(int i=0;i<aa[row].length;i++){RSModel x=aa[row][i],y=bb[row][i];if(x==null||y==null)continue;if(WholeRamWorldState.model(x,a.world).equals(WholeRamWorldState.model(y,b.world)))continue;JSONObject diff=new JSONObject().put("grid",name).put("row",row).put("index",i);JSONArray fields=new JSONArray();for(Field f:RSModel.class.getDeclaredFields()){if(Modifier.isStatic(f.getModifiers()))continue;f.setAccessible(true);StringBuilder one=new StringBuilder(),two=new StringBuilder();WholeRamModelFieldFixture.graph(one,f.get(x),new IdentityHashMap<Object,Integer>());WholeRamModelFieldFixture.graph(two,f.get(y),new IdentityHashMap<Object,Integer>());if(!one.toString().equals(two.toString())){JSONObject d=new JSONObject().put("name",f.getName());Object av=f.get(x),bv=f.get(y);if(av instanceof int[]&&bv instanceof int[]){int[] ax=(int[])av,bx=(int[])bv;d.put("lengths",new JSONArray(new int[]{ax.length,bx.length}));for(int n=0;n<Math.min(ax.length,bx.length);n++)if(ax[n]!=bx[n]){d.put("first",new JSONArray(new int[]{n,ax[n],bx[n]}));break;}}else if(av instanceof Number)d.put("values",new JSONArray().put(av).put(bv));fields.put(d);}}diff.put("fields",fields);System.out.println("MODEL_DIFF "+diff);}}
  }
  static String geometry(Renderer3DWorldChunkFrame.ChunkMesh c,boolean centralOnly)throws Exception{
+  return geometry(c,centralOnly,true);
+ }
+ static String geometry(Renderer3DWorldChunkFrame.ChunkMesh c,boolean centralOnly,boolean terrainLight)throws Exception{
   WholeRamWorldState.Digest d=new WholeRamWorldState.Digest();
   for(int t=0;t<c.getTriangleCount();t++){
    long x=0,z=0;for(int n=0;n<3;n++){int v=c.getIndex(t*3+n)*3;x+=c.getVertexCoord(v);z+=c.getVertexCoord(v+2);}
    if(centralOnly&&(x<6144L*3||x>=12288L*3||z<6144L*3||z>=12288L*3))continue;
    for(int word:new int[]{c.getTriangleTexture(t),c.getTriangleFallbackColor(t),c.getTriangleModelKind(t).ordinal(),c.getTriangleMaterialFamily(t).ordinal(),c.getTriangleTerrainVariationMask(t)})d.word(word);
-   for(int n=0;n<3;n++){int v=c.getIndex(t*3+n);for(int axis=0;axis<3;axis++)d.word(c.getVertexCoord(v*3+axis));for(int word:new int[]{Float.floatToRawIntBits(c.getVertexTextureU(v)),Float.floatToRawIntBits(c.getVertexTextureV(v)),c.getVertexLight(v),c.getVertexNormalX(v),c.getVertexNormalY(v),c.getVertexNormalZ(v),c.getVertexTerrainBlendColor(v),c.getVertexTerrainBlendStrength(v)})d.word(word);}
+   for(int n=0;n<3;n++){int v=c.getIndex(t*3+n);for(int axis=0;axis<3;axis++)d.word(c.getVertexCoord(v*3+axis));for(int word:new int[]{Float.floatToRawIntBits(c.getVertexTextureU(v)),Float.floatToRawIntBits(c.getVertexTextureV(v)),terrainLight||c.getTriangleModelKind(t)!=Renderer3DModelKind.TERRAIN?c.getVertexLight(v):0,c.getVertexNormalX(v),c.getVertexNormalY(v),c.getVertexNormalZ(v),c.getVertexTerrainBlendColor(v),c.getVertexTerrainBlendStrength(v)})d.word(word);}
   }return d.finish();
  }
  static void query(Active original,WholeRamPrepared prepared,int x,int y)throws Exception{
