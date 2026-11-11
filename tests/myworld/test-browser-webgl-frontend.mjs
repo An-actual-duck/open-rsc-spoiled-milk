@@ -18,9 +18,10 @@ const combat=process.argv.includes('--combat');
 const benchmarkKeys=process.argv.includes('--benchmark-key-limbs');
 const benchmarkBatch=process.argv.includes('--model-batch');
 const benchmarkDelta=process.argv.includes('--overlay-delta');
+const benchmarkLoadProfile=process.argv.includes('--load-profile');
 const benchmarkRenderWorker=process.argv.includes('--render-worker');
 const withoutAwtTarget=process.argv.includes('--no-awt-target');let awtVisible=!withoutAwtTarget;
-const benchmarkStream=benchmarkRenderWorker||process.argv.includes('--benchmark-stream')||benchmarkKeys||repeatable||combat||nativeExplicit||benchmarkBatch||benchmarkDelta;let streamRequested;
+const benchmarkStream=benchmarkLoadProfile||benchmarkRenderWorker||process.argv.includes('--benchmark-stream')||benchmarkKeys||repeatable||combat||nativeExplicit||benchmarkBatch||benchmarkDelta;let streamRequested;
 let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, displayDisposed = 0, configured,gpuOptions;
 const status = {textContent:''}, messages = [];
 let layoutReads=0;
@@ -30,7 +31,7 @@ const canvas = {style:{},setAttribute(){}};
 const stats = {lastError:null,lastFrame:0};
 const gateEvents=[];
 const window = {dispatchEvent:e=>gateEvents.push(e.type),browserRuntimeVersion:'5.0',addEventListener(){}};
-const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':'')+(benchmarkDelta?'&overlaydelta=on':'')+(benchmarkRenderWorker?'&renderworker=on&overlay=coverage':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
+const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':'')+(benchmarkDelta?'&overlaydelta=on':'')+(benchmarkRenderWorker?'&renderworker=on&overlay=coverage':'')+(benchmarkLoadProfile?'&loadprofile=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
   URLSearchParams,performance:{now:()=>clock},console,
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
@@ -105,6 +106,8 @@ if(combat){const labels=['cameraPinned','npcCount','playerCount','welcomeVisible
 if(repeatable){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportRepeatableState(null,'browserdemo',[1,32,1,0]);assert.equal(window.browserProof.repeatableFixture.username,'browserdemo');assert.equal(window.browserProof.repeatableFixture.cameraPinned,true);assert.equal(window.browserProof.repeatableFixture.npcCount,32);assert.equal(window.browserProof.repeatableFixture.welcomeVisible,false);}
 assert.ok(configured,'actual frontend did not initialize Java options');
 assert.equal(window.browserProof.renderWorker.actual,benchmarkRenderWorker);
+assert.equal(configured.javaProperties.includes('spoiledmilk.browserLoadProfile=true'),benchmarkLoadProfile);
+if(benchmarkLoadProfile){const load=new Float64Array(36);load[0]=1;load[1]=1;load[2]=1;load[3]=2;load[4]=960;load[5]=540;load[7]=8;load[8]=3;load[33]=8;configured.natives.Java_orsc_BrowserWebGLBridge_loadingWork(null,load);assert.equal(stats.loadProfile.last.path,2);assert.equal(window.browserProof.loadProfile.totalReports,1);}
 const expectedPhysical=physicalOption?physicalOption==='on':!benchmarkStream;assert.equal(gpuOptions.physicalOutput,expectedPhysical,'Ordinary physical output defaults ON with explicit OFF; benchmark retains explicit opt-in');assert.equal(window.browserProof.physicalOutputRequested,expectedPhysical);
 assert.equal(gpuOptions.nativeCallDispatch,nativeMode);assert.equal(window.browserProof.nativeCallDispatch.reported,stats.nativeCallDispatch??null);if(withoutNativeModule){assert.equal(window.browserProof.nativeCallDispatch.module,null);assert.equal(window.browserProof.nativeCallDispatch.reported,null);}
 assert.equal(gpuOptions.ownedState,!benchmarkStream,'Ordinary frontend must pass the verified owned policy to the actual backend seam');
