@@ -92,3 +92,33 @@ gaps, not UI60/queued work. Private/defaultOFF remains; no adoption/public deplo
 
 Layout check reports pre-existing legacy output-root entries. All new outputs use
 declared tests/diagnostics categories; no historical output was deleted or moved.
+
+Roof-option follow-up (same day)
+--------------------------------
+The first actual browser startup subsequently refused an honest option mismatch:
+the original cook bound hiddenRoofs=false while the private player selected true.
+This was not established as an OOM, codec or CheerpJ failure. No player setting was
+silently changed or product rebound. The baker now accepts an explicit strict
+roof-mode option and applies it before producing either recipes or canonical
+query meshes; query construction uses the same include-roof decision as original
+production. The bound variant still refuses an incompatible runtime option.
+
+Independent follow-up uses clean unified4348fc295, JAR SHA256
+59bacb1f3aaf4a1a29fe1fa11d9c4e965abcd9dfb391641ff4103c5caf207521,
+ai1/output/builds/browser-whole-overworld-ram/source-roof-mode-5/receipt.json.
+Inputs are real partial three-center pilot-roof-{true,false}-5 products. Results:
+ai3/output/tests/browser-whole-ram/activation-roof-true-4348-1/result.json:
+66,148 checks PASS; original TRUE versus actual cooked TRUE, all three centers.
+ai3/output/tests/browser-whole-ram/activation-roof-false-4348-1/result.json:
+64,417 checks PASS; original FALSE versus actual cooked FALSE on the SAME JAR.
+
+The TRUE case independently asserts zero original/canonical roof triangles and
+null original roof pick models. FALSE primary canonical roof counts68,342,36
+match their production references. Both retain exact143-axis roof classification,
+elevation, collision, minimap, effective lighting/UV, query normals/material words,
+pick/order, live-overlay and ownership parity. Tests select --hidden-roofs=true
+or false explicitly; they do not derive the original expected setting from the
+delivered metadata. verify-reader.py accepts the same explicit option for the
+manager's later complete TRUE reader check. This bounded follow-up is not full
+TRUE browser residency, complete-zone traversal or a new performance claim.
+Fresh integrated JAR/data and actual Firefox gates remain manager-owned.

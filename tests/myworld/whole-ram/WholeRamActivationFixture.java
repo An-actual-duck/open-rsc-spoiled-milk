@@ -47,6 +47,7 @@ public final class WholeRamActivationFixture {
   Renderer3DWorldChunkFrame.ChunkMesh full=original.world.getRenderer3DWorldChunkFrame().getChunks().get(0),small=prepared.queryFrame(x,y).getChunks().get(0);
   check(full.getCenterSectionX()==x&&full.getCenterSectionY()==y&&full.getPlane()==0,"Actual original primary query identity");
   check(small.getVertexCount()>0&&small.getTriangleCount()<full.getTriangleCount(),"Nonvacuous compact canonical representation");
+  if(Config.C_HIDE_ROOFS){check(full.getRoofTriangles()==0&&small.getRoofTriangles()==0,"TRUE original and canonical queries both omit roof triangles");for(RSModel[] row:(RSModel[][])get(original.world,"modelRoofGrid"))for(RSModel model:row)check(model==null,"TRUE original has no published roof pick models");}
   check(geometry(full,true).equals(geometry(small,false)),"Central world triangles all coords/UV/light/normals/blend/material words");
   check(full.getStorageSignature()!=small.getStorageSignature(),"New representation cannot reuse full storage cache identity");
   check(small.getRoofCoverageAxis()==143&&small.getRoofCoveredTileCount()==full.getRoofCoveredTileCount(),"Actual143-axis roof metadata count");
@@ -74,7 +75,7 @@ public final class WholeRamActivationFixture {
  public static void main(String[] args)throws Exception{
   Path root=Paths.get(args[0]),source=Paths.get(args[1]),mini=Paths.get(args[2]),preparedFile=Paths.get(args[3]),out=Paths.get(args[4]);Files.createDirectories(out);
   for(String flag:new String[]{"renderer3DGeometryCapture","openglWorldMesh","openglWorldMeshTexturedVisible","openglWorldMeshTexturedStaticVisible","openglWorldReplacementComposite","openglWorldChunksTexturedVisible","openglWorldChunksReplacementComposite","openglWorldChunksTrustedReplacement","openglWorldChunksResidentObjects","skipLegacyWorldRaster"})System.setProperty("spoiledmilk."+flag,"true");
-  Class<?> type=Class.forName("orsc.BrowserWholeZoneBaker$Context");Constructor<?> constructor=type.getDeclaredConstructor(Path.class,Path.class,Path.class,Path.class);constructor.setAccessible(true);Object context=constructor.newInstance(root,source,mini,out.resolve("context"));
+  Class<?> type=Class.forName("orsc.BrowserWholeZoneBaker$Context");Constructor<?> constructor=type.getDeclaredConstructor(Path.class,Path.class,Path.class,Path.class);constructor.setAccessible(true);Object context=constructor.newInstance(root,source,mini,out.resolve("context"));Config.C_HIDE_ROOFS=Boolean.getBoolean("independent.wholeRam.hiddenRoofs");
   Method snapshot=type.getDeclaredMethod("snapshot",int.class,int.class,int.class);snapshot.setAccessible(true);Renderer3DSettings.setBrowserPresentationAvailable(true);Scene actualAssets=((mudclient)get(context,"client")).getScene();
   WholeRamPrepared prepared;try(InputStream in=new BufferedInputStream(Files.newInputStream(preparedFile))){prepared=WholeRamPrepared.read(in);}
   check(prepared.recipes()>=3&&prepared.queryCells()>=9&&prepared.recipes()<=445&&prepared.queryCells()<=1330,"Bounded cases use real partial/full decoded products");JSONArray cases=new JSONArray();
@@ -88,7 +89,7 @@ public final class WholeRamActivationFixture {
    mutate(cached);cached.world.publishWholeRamActivation(prepared.recipe(x,y),prepared.queryFrame(x,y));equal(expected,cached.state(),"Mutate/reactivate "+x+":"+y);
    Active second=new Active(actualAssets);second.scope(s);second.seedLiveDirections();second.world.publishWholeRamActivation(prepared.recipe(x,y),prepared.queryFrame(x,y));mutate(cached);equal(expected,second.state(),"Cross-active-instance isolation "+x+":"+y);
    collision(literal,cached,second,prepared,x,y);
-   cases.put(new JSONObject().put("centerX",x).put("centerY",y).put("copiedWorkspaceBytes",bytes));
+   cases.put(new JSONObject().put("centerX",x).put("centerY",y).put("hiddenRoofs",Config.C_HIDE_ROOFS).put("queryRoofTriangles",prepared.queryFrame(x,y).getChunks().get(0).getRoofTriangles()).put("copiedWorkspaceBytes",bytes));
   }
   System.out.println(new JSONObject().put("passed",true).put("checks",checks).put("cases",cases).put("scope","Three real selected source centers; original World.loadSections versus decoded WRP1 recipe publication, exact transformed model/pick/order/collision/elevation/minimap plus source and repeated mutation isolation. Partial pilot is not full residency or readiness; no browser/GPU/performance claim.").toString());
  }
