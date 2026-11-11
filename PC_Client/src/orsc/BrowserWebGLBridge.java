@@ -186,6 +186,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=4;
             return;
         }
+        if(WHOLE_ZONE&&client!=null&&client.isGameView()&&!client.isFullScreenModalUiActive()&&!client.isRenderer3DWorldReady()){
+            int[] progress=loadState.frame(client.isGameView(),client.isFullScreenModalUiActive(),false,frame,world.getChunkCount(),0,0,0,0,w,h,textures.size());
+            overlayDeltaReset=true;worldProgress(progress);holdWorld();if(loadProfile!=null){loadProfile.progress(progress);loadProfile.values[BrowserLoadProfile.PATH]=2;}return;
+        }
         if(world.getChunkCount()>MAX_CHUNKS)throw new IllegalStateException("Browser scene exceeds chunk capacity");
         Renderer3DWorldChunkFrame presentationWorld=world;
         if(WHOLE_ZONE){
