@@ -1,7 +1,7 @@
 Private browser actor pixel ownership prototype
 ==============================================
 
-Status: ACTIVE, default OFF. No adoption or performance claim. No server,
+Status: READY for manager review, default OFF. No adoption or performance claim. No server,
 browser, HTTP listener or GPU launched by this worker. Based on main 8b888cd2f.
 
 Goal
@@ -90,8 +90,43 @@ The reflection harness follows the new diagnostic constructor parameters;
 no production test-only constructor was added.
 Private policy and actual frontend mock pass ordinary/default-OFF/owned-ON.
 
+Build, review and prepared artifacts
+------------------------------------
+Runtime/source checkpoint 1f55e572b822005a1138a018367b57a6bd63e987 is frozen.
+The later handoff changes this document only. Independent worker source review
+of that exact checkpoint found no remaining correctness blocker. The reviewer
+did not run CPU/GPU tests; the above CPU results belong to this worker.
+
+Full-source Java 1.8.0_482 build PASS via bundled Ant; 707 client-owned class
+entries have major version 52. New build destination preserves all older JARs:
+output/builds/browser-owned-actor-pixels/full-source-1f55/client.jar
+SHA256 a502af7d5beaef75f567549a16929f276fa265b7bdf492bae9f9b83f56eb0178.
+receipt.json/source-manifest.json beside it identify the exact clean source,
+all Java input hashes, build log and JAR hash. singleProductionCommit:true;
+this is a full source build, not the prior overlay composite JAR.
+The first direct ant invocation failed because ant was not on PATH; no build
+occurred until rerun with the bundled Ant. Generator contract checks passed.
+
+Existing sprite residency (Java bulk frame ownership, JS atlas/resource mock),
+spirit/non-corporeal alpha and renderer phased-overlay checks also pass.
+
+Immutable client-only stages, no listeners started:
+* output/tests/browser-gameplay-spike/owned-actor-static-review-1/
+  repeatable-preparation.json: HTTP8198; existing static baseline2 at TCP43649,
+  WS43549. url is actorpixels=off; urlOn changes only actorpixels=on.
+* output/tests/browser-gameplay-spike/owned-actor-combat-review-1/
+  combat-preparation.json: HTTP8199; existing ai-3 combat baseline2 at TCP43639,
+  WS43539. Same full JAR/frontend/source; 2,265 animation PNGs package-identical.
+
+Both receipts include exact launch commands, endpoint/source/build provenance
+and artifact SHA. Cache ports and empty copied credentials were verified.
+No server created, database accessed or existing request/DB/server modified.
+The existing combat harness may independently change under manager ownership;
+this client-only preparation makes no claim about its pending workload fix.
+
 Remaining acceptance
 --------------------
-Full source build, independent review, immutable static/combat client stages,
-then manager-owned actual WebGL visual/picking/layer parity and matched warmed
-FPS/coverage measurements. No default enablement until actual acceptance.
+Manager-owned actual WebGL visual/picking/layer parity, stale-art probes and
+matched warmed FPS/coverage/hit-rate measurements. This private source-owner
+candidate remains OFF until actual acceptance. No hardware or FPS claim is
+implied by passing the frozen CPU pixel corpus.
