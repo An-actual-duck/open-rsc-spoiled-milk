@@ -1,0 +1,141 @@
+Overworld single-zone geometry audit — READY, audit only
+
+The entire authored overworld is materially larger than one current view. With
+existing expanded geometry, surface terrain plus scenery/boundaries requires
+1.888GiB of GPU vertex/index capacity. Including upper-floor dependencies raises
+that subtotal to2.053GiB, or2.080GiB with current positive-edge stitch duplication.
+These are mesh subtotals, not a whole-client memory budget or proof of performance.
+No zone, renderer, cache, map, server or product setting was changed.
+
+Authoritative scope
+-------------------
+server/world-builder-configs/primary.json selects paired server/client package:
+7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc
+Manifest SHA256:
+42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b
+GlobalL0 includes all445 authored48tile sectors (1,025,280 declared tiles),
+including sea, blank and padding. The manifest presentation-cell size is24tiles;
+production World windows use48tile sections. L1=444/L2=441 sectors are reported
+as additional wall/roof and placement dependencies. Negative levels,3/4/5 and
+Zanaris10 are outside this overworld scope, rather than silently counted as sea.
+Independent inventory/source proof lives in ai2's overworld-zone-inventory suite.
+
+Source-bound measured method
+----------------------------
+Full-source production JAR0409c558246b5652a70794f7b99fff9801729845a3f1d6d72dd4b0fe6574041b
+matches every current Client_Base/PC_Client Java source hash. The audit compiles
+only new test harnesses against it; no runtime classes are replaced or modified.
+
+For each storage sector, actual NativeLayeredTerrainChunk/Snapshot decoding and
+World private CPU-window/terrain/wall/roof/GPU-mesh builders run over its3x3 input.
+Triangles are assigned by centroid to exactly one central24tile canonical cell.
+Only the central48tile domain is counted, then split into four cells, so adjoining
+windows do not multiply the whole3x3 mesh. Signed coordinates use explicit sector
+identities; negativeY19,-1 is included. Missing-neighbor void padding is retained
+and reported:84L0 edge sectors have at least one missing neighbor.
+
+The actual production positive-edge presentation crop is also called separately.
+It allocates compact selected-triangle arrays, not unused full3x3 vertices. Its
+preceding one-tile stitch strips cause additional ownership overlap; both compact
+canonical and positive-stitch costs are recorded. Canonical counts are not passed
+off as the exact current overlapping residency representation.
+
+UpperL1/L2 use floor-local wall/roof topology without upper terrain. This measures
+source topology/counts; it does not prove that floor-local coordinates equal the
+stacked roof elevations used when viewing upper stories from the ground.
+
+Scenery uses actual models.orsc decode, mudclient normalization/material/interaction
+and explicit generated-model hooks, then RSModel.buildRenderer3DObjectChunkMesh.
+A bare Unsafe-allocated client is used solely for these source-reviewed pure
+methods; no client constructor, login, scene, browser, networking or GPU runs.
+Current boundary static-presentation quad/material behavior is separately used.
+All866 unique scenery/boundary definition IDs resolve. Missing archive entries
+would be reported unresolved; no placeholder cube/zero is treated as resolved art.
+Manifest placement counts are independently supplied by ai2 and hash-bound in the
+receipts. All counted scenery/boundaries lie in authored sector coverage.
+
+Measured counts and capacity arithmetic
+--------------------------------------
+                          SurfaceL0       UpperL1         UpperL2
+terrain/wall/roof triangles 2,098,963          28,960           5,676
+terrain mesh vertices      6,296,889          86,880          17,028
+terrain vertex/index bytes730,439,124      10,078,080       1,975,248
+object placements             22,981           1,260             339
+object prepared vertices  11,180,460       1,082,340         337,842
+object prepared triangles  3,726,820         360,780         112,614
+object vertex/index bytes1,296,933,360    125,551,440      39,189,672
+combined bytes           2,027,372,484    135,629,520      41,164,920
+
+The GPU arithmetic is the existing112bytes per prepared vertex plus uint32
+indices. It describes geometry capacity, not measured GPU allocation. L0 terrain
+contains2,048,820 terrain,38,678 wall and11,465 roof triangles. Every authored
+surface cell emits some geometry;1373/1780 are terrain-only,407 include structures.
+Cell triangle density min310/median1152/p95-nearest-rank1346/max1714. The source
+uniform/blank classifications remain in the inventory; terrain-only is not an
+assumption that a cell is sea or discardable.
+
+All three levels combined:
+- Existing-copy vertex/index subtotal:2,204,166,924bytes =2.052790GiB.
+- Positive-stitch equivalent:2,233,479,312bytes =2.080090GiB.
+- Primitive Java mesh-array/normals lowerbound:988,074,828bytes =942.302MiB.
+  Formula44V+24T excludes object/array headers, references, roof bits, effects,
+  source RSModels, collision/picking structures and other caches. This is a
+  separate CPU figure. Current CachedChunk byte accounting describes GPU storage;
+  do not automatically duplicate the entire interleaved GPU stream in JavaRAM.
+
+L0 objects split into22,573 static placements (1,270,746,360 packed bytes) and
+408 animated placements' baseline frame (26,187,000 bytes). Upper animated counts
+are67/58. Full animation libraries are not represented by a single baseline frame.
+Object shadow-caster descriptors:22,857/1,176/326; glow descriptors:198/67/58.
+These are descriptors, not one shadow texture per object. Shadow-map framebuffer
+memory and extra rendering passes are additional, separate costs.
+
+Unique geometry opportunity, not current instancing
+--------------------------------------------------
+L0 has332 distinct prepared primitive-array prototype hashes totaling44,231,496
+packed bytes; all three levels have358 totaling52,895,304bytes. Terrain plus that
+hypothetical prototype subtotal is795,387,756bytes before instance data and other
+resources. This is a lower bound/opportunity for a new instancing architecture,
+not supported current sharing or a drop-in memory reduction. Per-instance pose,
+height/deformation, colors, normals, materials, effects and mutable animation
+require their own correctness proof. No instancing or zone implementation is
+part of this audit.
+
+Non-mesh allocations and uncertainty
+-----------------------------------
+Material batches are separate. Terrain raw-key group metadata totals305,720/
+10,420/2,500bytes under the reported conditional grouping. Actual texture-atlas
+resolution/transparency can alter grouping/skip behavior. The report also supplies
+an absolute one-batch-per-triangle bound, not a claim that current content uses it.
+Textures/mips, sprite atlases, actors/NPCs/players/summons, spells/VFX, animation
+variants, shadow maps, depth/MSAA/color buffers, driver overhead and command
+staging are excluded from vertex/index figures. Manifest placements are a named
+subtotal; independent runtime-addition reconciliation must remain explicit.
+The native audit time is not a browser initial-load or FPS forecast. No fullzone
+allocation, actual GPU-fit test, render-distance change or performance test ran.
+
+Bounded run evidence and preservation
+------------------------------------
+Each audit child used512MiBheap/SerialGC/300s timeout, one sector or definition
+at a time, streamed JSONL, no retained whole-zone geometry. Full terrain1330
+sectors completed6.84s wall, maxRSS289728KiB, exit0. Object866definition run
+completed1.02s, maxRSS238804KiB, exit0. Pilot1 preserved two valid sectors then
+rejected an incorrectly requested unauthored0,-1; pilot2 corrected to19,-1 and
+passed four sectors. Five object pilots included commonTree, largeGrandTree,
+fishing, portal and boundary. No owner preview or server process was touched.
+
+Primary evidence under output/tests/overworld-zone-geometry-audit/:
+- full-1/result.json SHA256
+  6f3b83d7ceab34a2b59e5ae6d1ee8ad588c33e14fe36d85a3afee68c6b944ca5
+  cells.jsonl and summary.json include all raw counts/densities/resource data.
+- objects-full-1/result.json SHA256
+  1b2e2c04034bd0395c16a3ad31919d6c8f77a8cd88d5f9e24c48228f71283fcf
+  models.jsonl and summary.json include resolved IDs and weighted joins.
+- combined-report.json SHA256
+  9e6d0e1f3e934e8f6cbcb72d23110a3e5eae56e75d3346c0f9508193299944d2
+  It binds all component receipt/JSONL hashes and separates scope/costs/limits.
+
+Independent ai2 reconciliation passes all1330 sector identities, four-cell
+ownership, triangle-kind sums,3vertices/triangle, all byte formulas,866 model
+keys and weighted placement/prototype joins. No source/formula blocker found.
+Canonical workspace check passes. This is a reviewable audit handoff only.
