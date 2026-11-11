@@ -1,0 +1,101 @@
+Browser continuous-region transition independent review
+======================================================
+Status: source map / test design only, candidate contract and exact source pending.
+Worker ai-2, test/browser-region-transition-review.
+Base7934b77c277cdc88b5a29c6815159b8f779c69fa.
+
+Scope and evidence boundary
+---------------------------
+Tests/report only. The main path under investigation is the private WorkerON
+browser with Java/AWT/input on main. No browser/GPU/server or owner-preview
+operation is authorized for this reviewer. Manager and ai-3 own actual continuous
+walking crossing workloads. Initial teleport placement is not crossing evidence.
+Stationary60FPS does not establish continuous travel performance.
+
+Existing invariants worth preserving
+-------------------------------------
+PC_Client/src/orsc/BrowserWebGLBridge.java:chunkKey/activeKeys/prepareChunks use
+native immutable static storage identity across center/rebase moves. Existing
+LinkedHashMap access-order retention permits overlap and return reuse. LRU byte
+limit224MiB reserves texture space; active resources cannot be evicted to make
+an impossible view appear successful. Animated objects own positional slots;
+changed poses are mandatory updates, not stale geometry allowed by a loading
+budget. Settings/material dependencies and shape determine exact replacement.
+
+Discretionary new/settings preparation is limited32768 vertices per call, with
+one oversized first chunk allowed for forward progress. Mandatory animation does
+not consume that escape. The existing implementation packs full28float vertices
+and stable grouped index/material buffers, then invokes the native backend.
+Source material and renderer packing are authoritative; key changes that flatten
+level, origin, role, world/package/revision, geometry or material dependencies
+can silently reuse wrong content even when FPS improves.
+
+BrowserWorldLoadState plus browser retained FULL/readiness already holds the
+last coherent image until every required current-scene resource and repack is
+complete. Its stale-image pointer/input gate is intentional. A held image must
+not count as a new world frame or publish new picks. Old loading images cannot
+overwrite retained world, and a stale pending activation cannot become current.
+No fake progress, lower geometry/shadow quality or shorter fog is part of this
+review's optimization authorization.
+
+Historical experiments, not current causal measurements
+-------------------------------------------------------
+The maintained browser-region-streaming.md records a prior browser crossing:
+38 new chunks/82.75MB and1935ms/18 held frames under screenshot sampling. A far
+teleport reported103ms nested core region time versus10045ms browser notice-to-
+completion,112 uploads/175.9MB. These old receipts motivate investigating packing,
+transfer and GPU execution; they do not locate the current WorkerON bottleneck.
+Nested timings overlap and cannot be added. Existing frameWork only reports
+completed worlds; no-world/incomplete early held exits omit important work.
+
+Parked fix/browser-region-preparation caches a single exact immutable visual/
+structural snapshot merge and eliminates two duplicate merges per predicted
+pair. Its frozen parity proof is useful, but it cannot establish the dominant
+loading delay or a whole-pause cure. Do not silently adopt that old branch.
+Parked current-fog demand kept source window5x5/gameplay3x3, found no demonstrated
+FPS gain, modest single-pass transition savings and new camera-demand holds.
+Its final recommendation was packing/upload reduction, not closer fog presets.
+No source quality certification or default adoption follows from those results.
+
+Required current diagnostics
+-----------------------------
+Bounded load-only records must include EACH present exit kind: no-world hold,
+incomplete geometry/repack hold and complete current world. Separate Java source/
+packing CPU time, native callback enqueue/copy time and actual Worker command
+completion from total authoritative transition duration. Record chunks/vertices/
+bytes attempted/completed/remaining, cache hit/miss/repack/eviction reason and
+held versus fresh-completed frames. Avoid per-vertex clocks and management-bean
+BoundaryLoading initialization in CheerpJ. No extra timing call is an automatic
+GPU-completion signal. Actual transitions must correlate fresh server position,
+scene/window identity and complete current authority, not only a target click.
+
+Independent oracle design for the forthcoming focused change
+------------------------------------------------------------
+Freeze exact baseline and candidate sources; compare recording-backend float raw
+bits/index/material bytes, draw order/IDs/offsets, mutation isolation and thrown
+error traces. Exercise a sequence with shared regions, repeated forward/backward
+crossings, return after LRU pressure, and signed-level/world/package changes.
+Keep same-location fresh immutable geometry distinguishable from equal labels.
+Settings-only, texture pixel-only, texture dimension/average/alpha changes,
+missing materials, dynamic pose and topology updates must preserve old invalidation
+semantics. Include zero/oversized first chunks and mandatory animation so new
+work cannot starve. All cached geometry/source arrays need explicit ownership and
+bounded lifetime. Upload/replace/delete failure must not commit cache accounting,
+masquerade as a current pose, or publish partial readiness. Domain-level backend
+errors may execute a valid prefix, but cannot produce a successful current-world
+ACK or continue an incoherent session.
+
+If scheduling is incremental, explicitly prove resume/cancel tokens bind immutable
+source+settings+material/world/level identity, stale prepared work cannot publish,
+reset/logout/dispose releases it, and old-current resources remain usable until
+replacement successfully completes. Test the64MiB worker producer command cap
+alongside the per-vertex budget: larger/reordered resource bursts can exhaust the
+transport even while Java/GPU cache budgets individually fit. Result queries can
+split packets; resource prefixes cannot disappear during a skipped draw.
+
+The existing BrowserRegionStreamingFixture is a useful production packing/hold
+example, but its expected packing calls the same current implementation. A new
+optimization must compare against a frozen baseline output, not merely ask the
+candidate packer to agree with itself. Headless JVM CPU fixture elapsed time is
+not Firefox loading latency or displayed FPS. GPU/picking/lighting equivalence
+and actual continuous route timing remain manager gates.
