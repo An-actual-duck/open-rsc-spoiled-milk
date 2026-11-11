@@ -300,7 +300,12 @@ public final class Renderer3DWorldChunkFrame {
             for(int t=0;t<take.length;t++){long x=0,z=0;for(int c=0;c<3;c++){int v=indices[t*3+c]*3;x+=vertexCoords[v];z+=vertexCoords[v+2];}if(x>=48L*128*3&&x<96L*128*3&&z>=48L*128*3&&z<96L*128*3){take[t]=true;selected++;}}
             int n=selected*3;int[] coords=new int[n*3],lights=new int[n],nx=new int[n],ny=new int[n],nz=new int[n],colors=new int[n],strengths=new int[n],idx=new int[n],textures=new int[selected],fallback=new int[selected],kinds=new int[selected],families=new int[selected],variation=new int[selected];float[] u=new float[n],v=new float[n];int at=0,terrain=0,wall=0,roof=0;
             for(int t=0;t<take.length;t++)if(take[t]){for(int c=0;c<3;c++){int from=indices[t*3+c],to=at*3+c;System.arraycopy(vertexCoords,from*3,coords,to*3,3);u[to]=vertexTextureU[from];v[to]=vertexTextureV[from];lights[to]=vertexLights[from];nx[to]=vertexNormalX[from];ny[to]=vertexNormalY[from];nz[to]=vertexNormalZ[from];colors[to]=vertexTerrainBlendColors[from];strengths[to]=vertexTerrainBlendStrengths[from];idx[to]=to;}textures[at]=triangleTextures[t];fallback[at]=triangleFallbackColors[t];kinds[at]=triangleModelKinds[t].ordinal();families[at]=triangleMaterialFamilies[t].ordinal();variation[at]=triangleTerrainVariationMasks[t];if(triangleModelKinds[t]==Renderer3DModelKind.TERRAIN)terrain++;else if(triangleModelKinds[t]==Renderer3DModelKind.WALL)wall++;else if(triangleModelKinds[t]==Renderer3DModelKind.ROOF)roof++;at++;}
-            return pool.intern(new int[]{1,plane,centerSectionX,centerSectionY,originWorldX,originWorldZ,terrain,wall,roof,(int)signature,(int)(signature>>>32),pool.intern(coords),pool.intern(u),pool.intern(v),pool.intern(lights),pool.intern(nx),pool.intern(ny),pool.intern(nz),pool.intern(colors),pool.intern(strengths),pool.intern(idx),pool.intern(textures),pool.intern(fallback),pool.intern(kinds),pool.intern(families),pool.intern(variation)});
+            int[] descriptor=new int[]{1,plane,centerSectionX,centerSectionY,originWorldX,originWorldZ,terrain,wall,roof,0,0,pool.intern(coords),pool.intern(u),pool.intern(v),pool.intern(lights),pool.intern(nx),pool.intern(ny),pool.intern(nz),pool.intern(colors),pool.intern(strengths),pool.intern(idx),pool.intern(textures),pool.intern(fallback),pool.intern(kinds),pool.intern(families),pool.intern(variation)};
+            // Different representation from the full144-window: bind every actual cropped
+            // word, lengths and schema, never reuse the uncropped storage-cache identity.
+            long hash=0x5752503143454c4cL;for(int i=0;i<9;i++)hash=(hash^descriptor[i])*1099511628211L;
+            for(int i=11;i<descriptor.length;i++){Object data=pool.get(descriptor[i]);hash=(hash^java.lang.reflect.Array.getLength(data))*1099511628211L;if(data instanceof int[])for(int word:(int[])data)hash=(hash^(word&0xffffffffL))*1099511628211L;else for(float word:(float[])data)hash=(hash^(Float.floatToRawIntBits(word)&0xffffffffL))*1099511628211L;}
+            descriptor[9]=(int)hash;descriptor[10]=(int)(hash>>>32);return pool.intern(descriptor);
         }
         public static ChunkMesh restoreWholeRamCell(WholeRamData.Pool pool,int descriptor){return new ChunkMesh(pool,pool.ints(descriptor));}
         private ChunkMesh(WholeRamData.Pool pool,int[] d){
@@ -1019,8 +1024,10 @@ public final class Renderer3DWorldChunkFrame {
 			this.roofTriangles = source.roofTriangles;
 			this.objectChunk = source.objectChunk;
 			this.chunkRole = source.chunkRole;
-			this.storageSignature = source.storageSignature;
-			long translatedSignature = source.signature;
+            long preparedIdentity=source.storageSignature;
+            if(preparedRoof!=null){preparedIdentity=(preparedIdentity^0x57525031524f4f46L)*1099511628211L;preparedIdentity=(preparedIdentity^preparedAxis)*1099511628211L;preparedIdentity=(preparedIdentity^preparedCount)*1099511628211L;for(long word:preparedRoof){preparedIdentity=(preparedIdentity^(word&0xffffffffL))*1099511628211L;preparedIdentity=(preparedIdentity^(word>>>32))*1099511628211L;}}
+			this.storageSignature = preparedIdentity;
+			long translatedSignature = preparedRoof==null?source.signature:preparedIdentity;
 			translatedSignature =
 				(translatedSignature ^ this.vertexOffsetX)
 					* 1099511628211L;
