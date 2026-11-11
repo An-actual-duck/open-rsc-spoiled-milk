@@ -36,14 +36,15 @@ export function readUnpackedPixels({view,width,height,format,type,srcOffset=0,
  * The caller supplies ordinary shader/framebuffer lifecycle methods. */
 export function installUnpackSpecOracle(gl) {
   const constants={UNPACK_ROW_LENGTH:0x0cf2,UNPACK_SKIP_ROWS:0x0cf3,UNPACK_SKIP_PIXELS:0x0cf4,
-    UNPACK_IMAGE_HEIGHT:0x806e,UNPACK_SKIP_IMAGES:0x806d,UNPACK_FLIP_Y_WEBGL:0x9240,UNPACK_PREMULTIPLY_ALPHA_WEBGL:0x9241,PIXEL_UNPACK_BUFFER:0x88ec,PIXEL_UNPACK_BUFFER_BINDING:0x88ef};
+    UNPACK_IMAGE_HEIGHT:0x806e,UNPACK_SKIP_IMAGES:0x806d,UNPACK_FLIP_Y_WEBGL:0x9240,UNPACK_PREMULTIPLY_ALPHA_WEBGL:0x9241,PIXEL_UNPACK_BUFFER:0x88ec,PIXEL_UNPACK_BUFFER_BINDING:0x88ef,ARRAY_BUFFER:0x8892,ARRAY_BUFFER_BINDING:0x8894};
   Object.assign(gl,constants);
   const state=new Map([[gl.UNPACK_ALIGNMENT,4],[gl.UNPACK_ROW_LENGTH,0],[gl.UNPACK_SKIP_ROWS,0],
-    [gl.UNPACK_SKIP_PIXELS,0],[gl.UNPACK_FLIP_Y_WEBGL,false],[gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false],[gl.UNPACK_IMAGE_HEIGHT,0],[gl.UNPACK_SKIP_IMAGES,0],[gl.PIXEL_UNPACK_BUFFER_BINDING,null]]);
+    [gl.UNPACK_SKIP_PIXELS,0],[gl.UNPACK_FLIP_Y_WEBGL,false],[gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false],[gl.UNPACK_IMAGE_HEIGHT,0],[gl.UNPACK_SKIP_IMAGES,0],[gl.PIXEL_UNPACK_BUFFER_BINDING,null],[gl.ARRAY_BUFFER_BINDING,null]]);
   const trace=[],uploads=[],oldGet=gl.getParameter;
   gl.getParameter=p=>{trace.push(['getParameter',p]);return state.has(p)?state.get(p):oldGet(p);};
-  gl.pixelStorei=(p,v)=>{trace.push(['pixelStorei',p,v]);if(!state.has(p)||p===gl.PIXEL_UNPACK_BUFFER_BINDING)throw new Error('Unknown oracle pixel store');state.set(p,v);};
-  gl.bindBuffer=(p,v)=>{trace.push(['bindBuffer',p,v]);if(p!==gl.PIXEL_UNPACK_BUFFER)throw new Error('Unknown oracle buffer target');state.set(gl.PIXEL_UNPACK_BUFFER_BINDING,v);};
+  gl.pixelStorei=(p,v)=>{trace.push(['pixelStorei',p,v]);if(!state.has(p)||p===gl.PIXEL_UNPACK_BUFFER_BINDING||p===gl.ARRAY_BUFFER_BINDING)throw new Error('Unknown oracle pixel store');state.set(p,v);};
+  gl.bindBuffer=(p,v)=>{trace.push(['bindBuffer',p,v]);if(p===gl.PIXEL_UNPACK_BUFFER)state.set(gl.PIXEL_UNPACK_BUFFER_BINDING,v);else if(p===gl.ARRAY_BUFFER)state.set(gl.ARRAY_BUFFER_BINDING,v);else throw new Error('Unknown oracle buffer target');};
+  gl.bufferSubData=(...args)=>{trace.push(['bufferSubData',...args]);};
   let failPlane=null;
   const read=(format,type,data,offset,w,h)=>readUnpackedPixels({view:data,width:w,height:h,
     format:format===gl.RED?'RED':format===gl.RGBA?'RGBA':'?',type:type===gl.FLOAT?'FLOAT':type===gl.UNSIGNED_BYTE?'UNSIGNED_BYTE':'?',

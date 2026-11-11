@@ -66,3 +66,40 @@ exact GL state restoration, both-plane upload failures, follow-on atlas/full
 uploads or real browser readback parity. Those require the later stable
 rectangle checkpoint and manager-owned hardware validation. Existing mocks
 that ignore pixelStorei are insufficient for those semantics.
+
+Firefox queued-transfer audit (before rectangle performance acceptance)
+---------------------------------------------------------------------
+Mozilla's FIREFOX_154_0_RELEASE tag resolves to commit
+032a9fc1ac0cc3209f7c142744ba2e40847c8086. This matches the reported browser
+version, not independently verified installed-binary provenance/preferences.
+Read-only source copies and hashes are preserved locally (not imported into
+production/Git) at output/diagnostics/browser-firefox-transfer-audit/
+firefox154-source/{tag-ref.json,sources.json,...}.
+
+Pinned primary sources:
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/ClientWebGLContext.cpp#L4368
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/ClientWebGLContext.cpp#L4418
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/QueueParamTraits.h#L341
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/WebGLQueueParamTraits.h#L86
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/WebGLCommandQueue.h#L111
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/WebGLContext.cpp#L2984
+https://github.com/mozilla-firefox/firefox/blob/032a9fc1ac0cc3209f7c142744ba2e40847c8086/dom/canvas/TexUnpackBlob.cpp#L538
+
+The client applies the view/element offset, then Shrink limits cpuData to the
+smaller of available bytes and aligned row-stride times total rows. Queue
+serialization copies that contiguous span into command storage; it does not
+tightly gather the requested pixels from each row. Skipped prefix rows can
+therefore be copied too. With flip/premultiply false and no PBO, the host raw
+path passes the pointer and unpack state to GL without a tight CPU conversion.
+
+A minimal borrowed subarray from the first required element through the final
+required element, with srcOffset0 and skip0, bounds the submitted span. For
+4-byte pixels and ROW_LENGTH=W, its byte length is
+4*((rectangleHeight-1)*W+rectangleWidth). It still includes row gaps; narrow,
+full-height rectangles may span almost a full plane. This is a source-based
+queued-copy concern, not evidence of actual hardware bus traffic or FPS.
+
+Agent1/root were advised to report logical texel payload, supplied view-span
+bytes and measured FPS separately. No true-zero-copy claim is justified. Tight
+packing or separate row calls would be a distinct reviewed experiment; no
+packing implementation is authorized or silently introduced by these tests.
