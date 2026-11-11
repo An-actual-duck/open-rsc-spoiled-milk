@@ -69,6 +69,7 @@ const stutterModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools
 const geometryModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-geometry-transfer-policy.js',import.meta.url),'utf8'),{context});
 const preparationCandidatesModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-preparation-candidates.js',import.meta.url),'utf8'),{context});
 const repeatableModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-repeatable-policy.js',import.meta.url),'utf8'),{context});
+const loadProfileModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-region-load-profile.js',import.meta.url),'utf8'),{context});
 const renderWorkerPolicyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-render-worker-protocol.js',import.meta.url),'utf8'),{context});
 const physicalOutputModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-physical-output.js',import.meta.url),'utf8'),{context});
 const controlsModule = new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-benchmark-controls.js',import.meta.url),'utf8'),{context});
@@ -79,6 +80,7 @@ const optimizedDefaultsModule=new vm.SourceTextModule(fs.readFileSync(new URL('.
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{if(specifier==='./browser-render-worker.js'){if(renderWorkerModule.status==='unlinked')await renderWorkerModule.link(()=>{});if(renderWorkerModule.status==='linked')await renderWorkerModule.evaluate();return renderWorkerModule;}const selected=specifier==='./browser-native-call-dispatch.js'?nativeModule:gpuModule;if(selected===gpuModule)assert.equal(specifier,nativeMode==='sync'?'./webgl-sync.js':'./webgl.js');assert(selected,'Unexpected native helper import');if(selected.status==='unlinked')await selected.link(()=>{});if(selected.status==='linked')await selected.evaluate();return selected;}});
 await module.link(specifier=>{
+  if(specifier==='./browser-region-load-profile.js')return loadProfileModule;
   if(specifier==='./browser-render-worker-protocol.js')return renderWorkerPolicyModule;
   if(specifier==='./browser-optimized-render-defaults.js')return optimizedDefaultsModule;
   if(specifier==='./browser-batched-model-kernel.js')return modelBatchModule;

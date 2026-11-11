@@ -6,7 +6,7 @@ import argparse,hashlib,json,subprocess,shutil
 ROOT=Path(__file__).resolve().parents[2];BASE='8b888cd2f13d3a45d4ece42263ecf8ecc9b415ae'
 p=argparse.ArgumentParser();p.add_argument('--client-jar',type=Path,required=True);p.add_argument('--rect-mode',choices=['off','on','packed'],default='off');args=p.parse_args();jar=args.client_jar.resolve()
 base=Path(subprocess.check_output(['python3',str(ROOT/'scripts/workspace-layout.py'),'path','tests','browser-overlay-delta-transport','--mkdir'],text=True).strip());run=base/datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ');run.mkdir();current=run/'current';old=run/'baseline';current.mkdir();old.mkdir();web=run/'web';web.mkdir();data=web/'data';data.mkdir()
-coverage='Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java';tracker='Client_Base/src/orsc/graphics/two/WorldOverlayDeltaTransport.java';bridge='PC_Client/src/orsc/BrowserWebGLBridge.java'
+coverage='Client_Base/src/orsc/graphics/two/WorldOverlayCoverage.java';tracker='Client_Base/src/orsc/graphics/two/WorldOverlayDeltaTransport.java';bridge='PC_Client/src/orsc/BrowserLoadProfile.java','PC_Client/src/orsc/BrowserWebGLBridge.java'
 fixtures=['WorldOverlayDeltaTransportFixture.java','WorldOverlayCoverageFixture.java','SceneSpriteRasterPolicyFixture.java']
 def execute(command,log):
  with(run/log).open('w')as out:subprocess.run(command,check=True,cwd=ROOT,stdout=out,stderr=subprocess.STDOUT)

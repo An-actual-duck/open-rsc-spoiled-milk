@@ -1,0 +1,42 @@
+Browser travel / chunk transition pipeline — ACTIVE investigation
+
+User reports good stable-chunk FPS but frequent long loads and stutter while
+traveling. This task targets ordinary repeated boundaries, not only farteleports.
+No visual/distance/fog, map, authority, collision/picking or public changes.
+
+Source-backed first boundary
+- Existing immutable/rebase-safe GPU chunk keys and LRU overlap reuse already
+  exist.32,768 discretionary vertices/frame; one oversized forward-progress
+  escape; animation changes mandatory. Retained FULL image and atomic source
+  readiness already protect incomplete presentation. Do not loosen these.
+- Cold chunks still run production Java28-float vertex packing plus triangle/
+  material grouping; held earlyreturns omit existing frameWork diagnostics.
+- Historical Firefox ordinary crossing38uploads/82.8MB ~1.935s; far112uploads /
+ 175.9MB ~10s vs recordedcore103ms. These are instrumented old samples, not
+  current baseline nor proofGPU uploaddominates. Old mergecache onlyavoids
+  duplicate immutable merges; parkedfog addedcamera-demandholds withnogain.
+- World prepared renderer cache has4 entries vs48 worldmodelproducts; conversion
+  clones/normalizes meshes. Possible churn needsmeasurement, notblind expansion.
+
+First milestone: private loadprofile=on diagnostic only
+- Exact36 scalars, owner/attempt/path/sourceepoch/required/ready/missing, nested
+  phase milliseconds: initialization, activekeys/evict, textures, geometry,
+  vertexpack, materialpack, nativechunksubmit, sprites, lighting, sky, overlay,
+  terminal andtotal. Chunk/resource/cached/packcall counters copiedowned.
+- Paths0error,1noWorldHold,2incompleteHold,3world,4opaque. Allheld/error/resource
+  changes andfirstcomplete epochs emitted, steadyworld/opaque suppressed.
+- Native submit clocks callback return, including Worker copy/backpressure;
+  NOT actual Worker/GPUexecution. Correlate main receivedTime and Worker
+  submitted/completed packet/frame IDs separately. Durations overlap; DO NOTSUM.
+- GPU/packing/presentation order, budgets andliteraloutput unchanged. FlagOFF
+  adds no counters/clocks/diagnosticcalls. Onprofilediagnosticfailure preserves
+  original thrown presentation error (suppresses reporterror ontoit); otherwise
+  diagnosticfailure uses existingprivateerrorboundary. No JMX/managementbeans.
+- Main gpu.stats.loadProfile owns last/totalReports/samples(max128), plusalias
+  gpu.stats.loadProfileSamples. No borrowedJava arrays retained. Actual policy
+  reported through BrowserBootstrap candidategetter andstrict absentON refusal.
+
+Implementation choice after actual travel attribution: remove repeated work /
+cache churn ifdemonstrated, orstage big blockingpreparationbursts. No automatic
+budgetraise, oldbranch import, qualitycut or performanceclaim atthis milestone.
+Worker performsCPU/source/build/stageonly; managerownsactualFirefox/profiles.
