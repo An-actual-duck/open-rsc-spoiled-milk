@@ -1,0 +1,160 @@
+Overworld as one zone — selected source inventory and independent cost review
+===========================================================================
+Audit only, 2026-11-11. No map/runtime changes, game/server/GPU launches,
+public-host operations, full-world decoded allocation or implementation approval.
+
+Selection and provenance
+------------------------
+Read primary.json through maintained installed-map-selection.py, not historical
+fallback constants or a browser/minimal fixture. Entire server/client inventories
+match: 1,797 files, 46,101,718 bytes (43.966 MiB), package version0.5.0,
+fingerprint7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc,
+manifest42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b.
+Independently checked all1,787 terrain and9 placement payload hashes/sizes.
+The1,787 manifest entries include5 toolkit-terrain patches in addition to1,782
+terrain-directory files. Scanning only terrain/ would omit selected content.
+
+Local output/releases/v0.3.16/spoiled-milk-v0.3.16-layered-world.zip was streamed
+one payload at a time: its entire package inventory equals the selected pair.
+ZIP SHA2569ff36b8193233c5313ae62678b8247728fc73ff67a46f5d592ad4e24bec2ea88;
+release SOURCE-COMMIT73752f45d089ebc71ba24d832f85a06590de661c. This is local
+release evidence, not a claim about the current public download or Oracle disk.
+No Oracle connection or remote deployment inspection was made.
+
+Current selection last changed at19bc1745ac032ea38fcf01f47aceda0209b17418
+(Nov3 ordinary Ichor bones repair). Tracked ichor-bone-spawn-repair.json binds
+this fingerprint to corrected checkpoint generation4857 at
+/home/justin/.local/share/ichor-bones-20261103/checkpoint; terrain unchanged and
+only two underground item IDs corrected. Existing checkpoint project.json was
+hashed read-only. Earlier owner selection41e223ea35701b259b4948fba7e77642890a3c04
+is retained in Git. This establishes the selected provenance chain; it cannot
+prove absence of a later unimported/unsaved authoring project.
+
+Source availability and authority are separate. The installed Client_Base map
+folder and local layered-world release ZIP contain the full package. Browser
+prepare.py61–70 deliberately stages only installed-client.json and manifest;
+it receives terrain from the server. Full source is therefore not already
+browser resident. A future static provider could deliberately ship/preload it
+while retaining current server-authoritative window/snapshot identity and live
+changes; a giant authoritative all-world packet is not inherently required.
+
+Raw scope (all global L0, no geographical pruning)
+-------------------------------------------------
+Storage sector48x48; manifest presentationChunkSize24. Production World currently
+uses48-tile sections and3x3 native windows; do not substitute manifest24 into
+that protocol. Exported rosters include both sizes.
+
+Level sectors stored tiles raw bytes    scenery boundaries NPCs ground items
+L0    445     1,025,280    10,280,448    22,301  680        2,479 561
+L1    444     1,022,976    10,234,368     1,165   95          207  61
+L2    441     1,016,064    10,162,944       302   37           79  22
+
+L0 bounding sectors x0..21,y-1..20; inclusive tiles x0..1055,y-48..1007.
+445 present sectors,39 absent holes within the484-sector rectangle. Do not fill
+holes or infer authored/walkable area from the rectangle. No membership/island/
+wilderness tags exist in these raw sector rows: all L0 areas, including sea,
+islands, members/free locations and Wilderness, remain included.
+L0 encodings:433 v1 and12 v2-u16; L1:442/2, L2:440/1. Raw v1 is10 bytes/tile,
+v2 is11. Canonical audit decoding promotes v1 elevation to unsigned16 without
+changing fields, preserving signed sector ownership and x-major/y-minor order.
+
+L0:196 distinct raw payloads,4,538,880 raw bytes after exact content dedup;
+195 distinct u16-normalized payloads,4,942,080 normalized bytes. The latter is a
+different representation, not extra savings. Independently zlib9-compressed
+per-sector sum558,875 bytes is an audit simulation, not actual network traffic.
+230 sectors are uniform raw overlay250,4 all-zero,211 other-source terrain.
+World.applyBridgeDecorations resolves250 to2/9 using neighboring sector edges;
+uniform/raw-zero does not mean absent, discardable, geographic ocean or safe
+walkability. Raw type4 TileDef overlay IDs4/12/20/21 cover780 L0 tiles, but that
+narrow count is not a geographical water census. Roof/wall/diagonal structure
+appears on22,737 L0 tiles. Geometry census found no zero-geometry L0 cells.
+
+L0 unique manifest IDs:674 scenery,100 boundary,585 NPC,120 ground item.
+placement-definition-counts.json includes each level/family definition count;
+placements.json includes direction and position, NPC start position separately
+normalized. No authored elevation field exists in these placement rows; sample
+selected terrain through production rules for model placement elevation.
+Manifest counts do not exclude additional runtime/plugin/live placements.
+
+Additional authored positive dependencies: L3/L4/L5 each one25,344-byte sector
+at(0,9); scenery/boundaries/NPC counts87/1/39,88/1/31,116/0/30 respectively.
+These must be considered if entering the tower/upper areas, but the current
+L0 renderer's1/2 topology policy does not automatically include every positive
+level. Underground-1(441 sectors),-2(9) and Zanaris10(4) are inventoried separately
+and excluded from the overworld totals and geometry projection.
+
+Independent production census reconciliation
+---------------------------------------------
+Reviewed ai1 OverworldGeometryAudit.java, OverworldObjectGeometryAudit.java and
+census scripts. Actual bounded CPU census:1,330 unique sector keys exactly
+445/444/441, one3x3 build at a time, current selected artifact0409c558...,512MiB
+heap. Four canonical24 cells per storage sector, triangle centroid ownership in
+central48, each owned once. Current48 positive-edge stitch measured separately.
+Upper1/2 include floor-local walls/roofs, no upper terrain. This is not loading
+all geometry simultaneously and its peak process RSS is not a full-zone bound.
+
+Reconciled all cell rows, triangle kind sums,3 exported vertices/triangle,
+112-byte current bridge vertex stride and4-byte indices. Primitive arrays lower
+bound44V+24T includes generated normals, excludes headers/enums/effects/roofbits.
+No CachedChunk accounting was incorrectly added as a second retained Java copy.
+
+Level canonical terrain packed B  manifest object packed B  subtotal B
+L0       730,439,124                 1,296,933,360          2,027,372,484
+L1        10,078,080                   125,551,440            135,629,520
+L2         1,975,248                    39,189,672             41,164,920
+Total                                                       2,204,166,924
+
+L0 contains2,098,963 terrain/wall/roof triangles (6,296,889 vertices), plus
+3,726,820 placed-object triangles. Current positive-stitch L0 terrain instead
+costs759,580,296 bytes (+3.99%); never sum both representations together.
+L0 primitive mesh lower bounds327,438,228 terrain +581,383,920 objects.
+These are topology/representation subtotals, not VRAM or process-memory promises:
+exclude textures/atlas, material resolved batches, shadow maps, framebuffers,
+CPU wrappers/source copies, pool/staging slots, actors/VFX and driver overhead.
+No FPS or whole-world draw/load test occurred.
+
+All866 relevant scenery/boundary definitions resolved using actual EntityHandler,
+models.orsc decoding and mudclient normalization/generated/preparation hooks;
+not an XML-name approximation. models.orsc SHA256
+edabd984ef4bed99df0f7d4874c66b36acda1f7e3dff08f46c20f6afb64eb340.
+L0:22,981 manifest object placements reduce to332 distinct primitive-array mesh
+hashes (44,231,496 packed bytes for one each), L1:1,260 placements/91/12,294,144B,
+L2:339/56/7,603,800B. This is a hypothetical prototype lower bound/instancing
+opportunity, not proven existing sharing eligibility or visual equivalence.
+Direction, terrain placement, normals/materials/effects, picking/interaction IDs,
+lighting and animated variants require explicit per-instance treatment.
+408 L0,67 L1,58 L2 placements are animated resident current-frame models; animation
+library residency is excluded. NPCs/ground items are separate sprite concerns.
+
+Recommendation within this audit: one logical zone is plausible without one
+monolithic draw or all decoded geometry resident. Raw terrain can be compact;
+today's expanded mesh representation makes naive full residency expensive even
+on high-end hardware. Investigate shared object prototypes and compact terrain
+representation with bounded visible GPU cells before assuming the2.05GiB
+L0+upper subtotal is the implementation budget. This audit authorizes no change.
+
+Reproduction and evidence
+-------------------------
+python3 tools/audits/test-overworld-zone-inventory.py
+python3 tools/audits/overworld-zone-inventory.py
+python3 tools/audits/overworld-zone-provenance.py --release <local v0.3.16 map ZIP>
+python3 tools/audits/review-overworld-geometry.py --run <ai1/full-1> --objects <ai1/objects-full-1>
+Four independent raw-layout/signed-ownership tests PASS; selector+all payload
+hashes PASS; local release exact inventory PASS;1330-sector/866-definition
+independent census reconciliation PASS. No runtime tests or GPU evidence claimed.
+
+Evidence: ai2/output/diagnostics/overworld-zone-inventory/
+inventory.json SHA256fd7729a4733bd45d8d5abf0b93f32a14b24f0b065fc00729fc0404d0268459d0
+provenance.json SHA2565758e8427952b0ca4855c57db7482576c4a4cf5c89b185318b9ed91c86e2d488
+geometry-review.json SHA256b5e0147659c01de8f1daed62556938a94ed6edf96bce09260cf9f795cf184594
+placement-definition-counts.json SHA25627ad16248d36b737bec52a4de70b27e3b84d3ce054c456a38e3f198ee79f76bc
+Ai1 terrain receipt6f3b83d7ceab34a2b59e5ae6d1ee8ad588c33e14fe36d85a3afee68c6b944ca5,
+raw cells4125e7b40278a80820e5cb9b633fb53821f27e75957be68e7267ccc9a75e7c1d;
+object receipt1b2e2c04034bd0395c16a3ad31919d6c8f77a8cd88d5f9e24c48228f71283fcf,
+models6e27c73f8bbd74f7b307e2da93f35e7e427480acc97480e8d456ba7729affbbf.
+Output absolute paths are evidence locations, not runtime dependencies. The
+scripts reconstruct inventories from an explicitly selected paired source.
+
+Workspace-layout check was run and reports existing legacy output-root entries
+and assets/sprites. New audit outputs use declared diagnostics category; no
+legacy assets/output were deleted or reorganized in this audit.
