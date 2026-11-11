@@ -9,9 +9,21 @@ function integer(n,min,max,label){if(!Number.isSafeInteger(n)||n<min||n>max)thro
 function hash(value,label){if(typeof value!=='string'||!HASH.test(value))throw new Error('Whole zone '+label+' hash');return value;}
 function path(value){if(typeof value!=='string'||value.length>256||!/^([a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+$/.test(value)||value.split('/').some(x=>x==='.'||x==='..'))throw new Error('Whole zone resource path');return value;}
 function levels(value,expected,label){if(!value||Object.keys(value).length!==3||[0,1,2].some(n=>value[n]!==expected[n]))throw new Error('Incomplete whole zone '+label);}
+const EXTERNAL_ASSETS=Object.freeze(['Authentic_Landscape.orsc','Authentic_Sprites.orsc','Custom_Sprites.osar','library.orsc','models.orsc'].map(n=>'Cache/video/'+n));
+function externalAssets(value){
+  if(!Array.isArray(value)||value.length!==EXTERNAL_ASSETS.length)throw new Error('Whole zone external asset roster');let total=0;
+  const out=value.map((v,n)=>{if(!v||v.path!==EXTERNAL_ASSETS[n])throw new Error('Whole zone external asset identity');integer(v.bytes,1,32*1024*1024,'external asset bytes');hash(v.sha256,'external asset');total+=v.bytes;return Object.freeze({path:v.path,bytes:v.bytes,sha256:v.sha256});});
+  if(total>64*1024*1024)throw new Error('Whole zone external asset budget');return Object.freeze(out);
+}
 export function validateWholeZoneConfig(c){
   if(!c||c.schemaVersion!==1)throw new Error('Private whole zone catalog not staged');
-  integer(c.manifestBytes,1,MAX_MANIFEST,'catalog bytes');hash(c.manifestSha256,'catalog');hash(c.clientJarSha256,'client JAR');return Object.freeze({schemaVersion:1,manifestBytes:c.manifestBytes,manifestSha256:c.manifestSha256,clientJarSha256:c.clientJarSha256});
+  integer(c.manifestBytes,1,MAX_MANIFEST,'catalog bytes');hash(c.manifestSha256,'catalog');hash(c.clientJarSha256,'client JAR');return Object.freeze({schemaVersion:1,manifestBytes:c.manifestBytes,manifestSha256:c.manifestSha256,clientJarSha256:c.clientJarSha256,externalAssets:externalAssets(c.externalAssets)});
+}
+export function validateWholeZoneTexture(expected,width,height,input,transparent){
+  const pixels=ints(input);if(!expected||expected.length!==5||expected[1]!==width||expected[2]!==height||expected[4]!==Number(transparent)||pixels.length!==width*height)throw new Error('Pinned whole zone texture layout changed');
+  let count=0,zeros=0,r=0,g=0,b=0;for(let n=0;n<pixels.length;n++){const c=pixels[n];if(c===0){zeros++;continue;}count++;r+=c>>>24;g+=(c>>>16)&255;b+=(c>>>8)&255;}
+  const average=count?((Math.floor(r/count)<<16)|(Math.floor(g/count)<<8)|Math.floor(b/count)):0;
+  if(average!==expected[3]||Number(zeros>0)!==expected[4])throw new Error('Pinned whole zone texture material changed');return true;
 }
 export function validateWholeZoneLive(m,mapIdentity,settings,materials){
   settings=ints(settings);materials=ints(materials);
@@ -29,11 +41,11 @@ export function validateWholeZoneManifest(m){
     integer(c.plane,0,2,'object plane');integer(c.cellX,-100000,100000,'object cellX');integer(c.cellY,-100000,100000,'object cellY');integer(c.placementCount,0,100000,'cell placements');
     if(typeof c.emptyCanonicalContentKey!=='string'||!/^([0-9a-f]{16})$/.test(c.emptyCanonicalContentKey)||!Array.isArray(c.identities)||c.identities.length!==c.placementCount*7||c.identities.some(x=>!Number.isSafeInteger(x)||x<-2147483648||x>2147483647))throw new Error('Whole zone authored object identities');
     const key=c.plane+':'+c.cellX+':'+c.cellY;if(objectKeys.has(key)||typeof c.canonicalContentKey!=='string'||!/^([0-9a-f]{16})$/.test(c.canonicalContentKey))throw new Error('Whole zone object cell key');
-    const owned=Object.freeze({...c});objectKeys.set(key,owned);placementCounts[c.plane]+=c.placementCount;return owned;
+    const owned=Object.freeze({...c,identities:Object.freeze(c.identities.slice())});objectKeys.set(key,owned);placementCounts[c.plane]+=c.placementCount;return owned;
   });
   if(placementCounts.some((n,level)=>n!==WHOLE_ZONE_SOURCE.placements[level]))throw new Error('Whole zone placement coverage');
   const worldCells=m.worldCells.map(c=>{integer(c.plane,0,2,'world plane');integer(c.cellX,-100000,100000,'world cellX');integer(c.cellY,-100000,100000,'world cellY');hash(c.sourceSha256,'world cell');const key=c.plane+':'+c.cellX+':'+c.cellY;if(worldKeys.has(key))throw new Error('Duplicate whole zone world cell');worldKeys.add(key);return Object.freeze({...c});});
-  const ids=new Set(),keys=new Set();let gpuBytes=0,fileBytes=0;
+  const ids=new Set(),keys=new Set();let gpuBytes=0,fileBytes=0,effectScalars=0;
   const chunks=m.chunks.map(c=>{
     if(!c||typeof c!=='object')throw new Error('Whole zone chunk declaration');
     const id=integer(c.id,PIN_BASE,2147483647,'chunk ID'),plane=integer(c.plane,0,2,'plane'),role=integer(c.role,0,1,'role'),cellX=integer(c.cellX,-100000,100000,'cellX'),cellY=integer(c.cellY,-100000,100000,'cellY');
@@ -43,13 +55,15 @@ export function validateWholeZoneManifest(m){
     const sourceKey=plane+':'+cellX+':'+cellY;if(role===0?!worldKeys.has(sourceKey):!objectKeys.has(sourceKey))throw new Error('Whole zone chunk lacks source cell');
     if(role===1&&(objectKeys.get(sourceKey).canonicalContentKey!==c.canonicalContentKey||objectKeys.get(sourceKey).placementCount!==c.placementCount))throw new Error('Whole zone object resource/cell disagreement');
     if(!Array.isArray(c.bbox)||c.bbox.length!==6||c.bbox.some(x=>!Number.isFinite(x)))throw new Error('Whole zone bounds');
+    for(let n=0;n<3;n++)if(c.bbox[n]>c.bbox[n+3])throw new Error('Whole zone reversed bounds');
+    const effects={};for(const [name,size]of [['shadowCasters',10],['glowEmitters',7]]){const rows=c[name];if(!Array.isArray(rows)||rows.length>8192||(effectScalars+=rows.length*size)>2000000)throw new Error('Whole zone effect budget');effects[name]=Object.freeze(rows.map(row=>{if(!Array.isArray(row)||row.length!==size||row.some(x=>!Number.isSafeInteger(x)||x<-2147483648||x>2147483647))throw new Error('Whole zone effect descriptor');return Object.freeze(row.slice());}));}
     if(ids.has(id)||keys.has(plane+':'+role+':'+cellX+':'+cellY))throw new Error('Duplicate whole zone chunk');ids.add(id);keys.add(plane+':'+role+':'+cellX+':'+cellY);
     const vertices=integer(c.vertexCount,0,524288,'vertices'),indices=integer(c.indexCount,0,1572864,'indices'),batches=integer(c.batchIntCount,0,1572864,'batches');
     if(indices%3||batches%5)throw new Error('Whole zone triangle/batch shape');
     const bytes=integer(c.bytes,16,MAX_RESOURCE,'resource bytes');if(bytes!==16+vertices*112+indices*4+batches*4)throw new Error('Whole zone packed resource size');
     integer(c.originX,-2147483648,2147483647,'originX');integer(c.originZ,-2147483648,2147483647,'originZ');integer(c.visibilityMask,0,2147483647,'visibility');
     gpuBytes+=vertices*112+indices*4;fileBytes+=bytes;
-    return Object.freeze({...c,id,plane,role,cellX,cellY,path:path(c.path),sha256:hash(c.sha256,'resource')});
+    return Object.freeze({...c,...effects,bbox:Object.freeze(c.bbox.slice()),id,plane,role,cellX,cellY,path:path(c.path),sha256:hash(c.sha256,'resource')});
   });
   const resources=new Map(chunks.map(c=>[c.id,c])),covered=new Set();
   for(const [cells,kind]of [[worldCells,'world'],[objectCells,'objects']])for(const cell of cells){
@@ -71,7 +85,7 @@ export function validateWholeZoneManifest(m){
   integer(m.sourceManifestBytes,1,MAX_MANIFEST,'source manifest size');
   // Reserve the existing local arena, texture updates and metadata separately.
   if(gpuBytes>WHOLE_ZONE_GPU_BYTES-256*1024*1024)throw new Error('Whole zone immutable resource budget');
-  return Object.freeze({...m,settings:Object.freeze(m.settings.slice()),materialMetadata:Object.freeze(m.materialMetadata.slice()),worldCells:Object.freeze(worldCells),objectCells:Object.freeze(objectCells),chunks:Object.freeze(chunks),textures:Object.freeze(textures),gpuBytes,fileBytes});
+  return Object.freeze({...m,scope:Object.freeze({sectors:Object.freeze({...m.scope.sectors}),placements:Object.freeze({...m.scope.placements})}),externalAssets:externalAssets(m.externalAssets),settings:Object.freeze(m.settings.slice()),materialMetadata:Object.freeze(m.materialMetadata.slice()),worldCells:Object.freeze(worldCells),objectCells:Object.freeze(objectCells),chunks:Object.freeze(chunks),textures:Object.freeze(textures),gpuBytes,fileBytes});
 }
 export function validateWholeZoneSource(m,source){
   if(!source||!Array.isArray(source.terrainSectors)||source.terrainSectors.length>2048)throw new Error('Whole zone raw source manifest');
@@ -102,19 +116,23 @@ export async function fetchWholeZoneBytes(url,expected,{fetcher=fetch,signal,max
 }
 async function digest(buffer){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',buffer))].map(x=>x.toString(16).padStart(2,'0')).join('');}
 /** No payload view survives its upload callback. The returned catalog retains metadata only. */
-export async function loadWholeZone({baseURL,manifestBytes,manifestSha256,clientJarSha256,fetcher=fetch,uploadChunk,uploadTexture,finishGpu,stats,signal,mapIdentity,settings,materials,progress=()=>{}}){
-  integer(manifestBytes,1,MAX_MANIFEST,'manifest bytes');hash(manifestSha256,'catalog');const base=new URL(baseURL,import.meta.url);
+export async function loadWholeZone({baseURL,manifestBytes,manifestSha256,clientJarSha256,externalAssets:expectedAssets,fetcher=fetch,uploadChunk,uploadTexture,finishGpu,stats,signal,mapIdentity,settings,materials,progress=()=>{},assertAlive=()=>{}}){
+  assertAlive();integer(manifestBytes,1,MAX_MANIFEST,'manifest bytes');hash(manifestSha256,'catalog');const base=new URL(baseURL,import.meta.url);
   const manifestRaw=await fetchWholeZoneBytes(new URL('manifest.json',base),manifestBytes,{fetcher,signal,maximum:MAX_MANIFEST});if(await digest(manifestRaw)!==manifestSha256)throw new Error('Whole zone catalog digest mismatch');
   const m=validateWholeZoneManifest(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(manifestRaw)));
+  const stageAssets=externalAssets(expectedAssets);if(stageAssets.some((a,n)=>a.path!==m.externalAssets[n].path||a.bytes!==m.externalAssets[n].bytes||a.sha256!==m.externalAssets[n].sha256))throw new Error('Whole zone baked/staged external assets disagree');
   if(m.clientJarSha256!==clientJarSha256)throw new Error('Whole zone baked/client artifact mismatch');
   validateWholeZoneLive(m,mapIdentity,settings,materials);
   const materialWords=new Int32Array(m.materialMetadata);if(await digest(materialWords.buffer)!==m.textureCatalogSha256)throw new Error('Whole zone material catalog digest mismatch');
   const sourceRaw=await fetchWholeZoneBytes(new URL('source-manifest.json',base),m.sourceManifestBytes,{fetcher,signal,maximum:MAX_MANIFEST});if(await digest(sourceRaw)!==WHOLE_ZONE_SOURCE.manifestSha256)throw new Error('Whole zone original source manifest digest mismatch');validateWholeZoneSource(m,JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(sourceRaw)));
-  Object.assign(stats,{phase:'loading',ready:false,manifestSha256,expectedPinnedChunks:m.chunks.length,expectedPinnedBytes:m.gpuBytes,sourceFingerprint:m.packageFingerprintSha256,sourceManifestSha256:m.manifestSha256,sourceSectors:1330,sourceObjectPlacements:24580,sourceCatalogVerified:true,rawSourceCPUReady:false,catalogJSONBytes:manifestBytes,metadataRetainedScope:'Parsed immutable catalog descriptors; JSON size is not exact JS heap size',downloadedMetadataBytes:manifestBytes+m.sourceManifestBytes,downloadedBytes:manifestBytes+m.sourceManifestBytes,bakedGPUDataDownloadedBytes:0,preparedResources:0,pinnedChunks:0,pinnedBytes:0,textureBytes:0,startupGpuCompleted:false});
-  for(const t of m.textures){const raw=await fetchWholeZoneBytes(new URL(t.path,base),t.bytes,{fetcher,signal});if(await digest(raw)!==t.sha256)throw new Error('Whole zone texture digest mismatch');await uploadTexture(t,new Int32Array(raw));stats.downloadedBytes+=raw.byteLength;stats.bakedGPUDataDownloadedBytes+=raw.byteLength;stats.textureBytes+=raw.byteLength;stats.preparedResources++;}
+  assertAlive();Object.assign(stats,{phase:'loading',ready:false,manifestSha256,expectedPinnedChunks:m.chunks.length,expectedPinnedBytes:m.gpuBytes,sourceFingerprint:m.packageFingerprintSha256,sourceManifestSha256:m.manifestSha256,sourceSectors:1330,sourceObjectPlacements:24580,sourceCatalogVerified:true,rawSourceCPUReady:false,catalogJSONBytes:manifestBytes,metadataRetainedScope:'Parsed immutable catalog descriptors; JSON size is not exact JS heap size',downloadedMetadataBytes:manifestBytes+m.sourceManifestBytes,downloadedBytes:manifestBytes+m.sourceManifestBytes,bakedGPUDataDownloadedBytes:0,preparedResources:0,pinnedChunks:0,pinnedBytes:0,textureBytes:0,startupGpuCompleted:false});
+  stats.downloadedSourceAssetBytes=0;stats.externalAssetsVerified=false;
+  for(const asset of m.externalAssets){const raw=await fetchWholeZoneBytes(new URL('../'+asset.path,base),asset.bytes,{fetcher,signal});if(await digest(raw)!==asset.sha256)throw new Error('Whole zone staged external asset digest mismatch: '+asset.path);stats.downloadedSourceAssetBytes+=raw.byteLength;stats.downloadedBytes+=raw.byteLength;}
+  stats.externalAssetsVerified=true;
+  for(let n=0;n<m.textures.length;n++){const t=m.textures[n];const raw=await fetchWholeZoneBytes(new URL(t.path,base),t.bytes,{fetcher,signal});if(await digest(raw)!==t.sha256)throw new Error('Whole zone texture digest mismatch');const pixels=new Int32Array(raw),material=m.materialMetadata.slice(n*5,n*5+5);validateWholeZoneTexture(material,t.width,t.height,pixels,t.transparent);await uploadTexture(t,pixels,material);stats.downloadedBytes+=raw.byteLength;stats.bakedGPUDataDownloadedBytes+=raw.byteLength;stats.textureBytes+=raw.byteLength;stats.preparedResources++;}
   for(const c of m.chunks){const raw=await fetchWholeZoneBytes(new URL(c.path,base),c.bytes,{fetcher,signal});if(await digest(raw)!==c.sha256)throw new Error('Whole zone chunk digest mismatch');const planes=decodeWholeZoneChunk(raw,c);await uploadChunk(c,planes);stats.downloadedBytes+=raw.byteLength;stats.bakedGPUDataDownloadedBytes+=raw.byteLength;stats.pinnedChunks++;stats.pinnedBytes+=planes.vertices.byteLength+planes.indices.byteLength;stats.preparedResources++;if(stats.pinnedChunks%64===0)progress(stats.pinnedChunks,m.chunks.length);}
   if(stats.pinnedChunks!==m.chunks.length||stats.pinnedBytes+stats.textureBytes!==m.gpuBytes)throw new Error('Incomplete whole zone resource residency');
-  await finishGpu();Object.assign(stats,{phase:'ready',ready:true,startupGpuCompleted:true});return m;
+  await finishGpu();assertAlive();Object.assign(stats,{phase:'ready',ready:true,startupGpuCompleted:true});return m;
 }
 /** Per-frame selection keeps the bounded live renderer and the immutable arena distinct. */
 export function createWholeZoneSelection(catalog,stats){

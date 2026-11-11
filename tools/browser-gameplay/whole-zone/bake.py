@@ -5,6 +5,7 @@ from pathlib import Path
 sys.dont_write_bytecode=True
 ROOT=Path(__file__).resolve().parents[3]
 FINGERPRINT='7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc'
+ASSET_PATHS=['Cache/video/'+n for n in ['Authentic_Landscape.orsc','Authentic_Sprites.orsc','Custom_Sprites.osar','library.orsc','models.orsc']]
 def sha(path):
  h=hashlib.sha256()
  with Path(path).open('rb')as f:
@@ -44,6 +45,10 @@ def main():
    if sha(source_copy)!=selected['manifestSha256']:raise ValueError('Baked source manifest mismatch')
   else:shutil.copyfile(source,source_copy)
   if m.get('clientJarSha256')!=jar_sha or m.get('packageFingerprintSha256')!=FINGERPRINT:raise ValueError('Baked artifact/source identity mismatch')
+  if [v.get('path')for v in m.get('externalAssets',[])]!=ASSET_PATHS:raise ValueError('Missing/excess external Cache asset roster')
+  for asset in m['externalAssets']:
+   file=root/'Client_Base'/asset['path']
+   if file.stat().st_size!=asset['bytes']or sha(file)!=asset['sha256']:raise ValueError('Baked/current external Cache asset mismatch')
   if m.get('sourceManifestBytes')!=source_copy.stat().st_size:raise ValueError('Baker must declare actual source manifest byte size')
   if a.full:
    if m.get('complete')is not True:raise ValueError('Full baker did not declare complete')

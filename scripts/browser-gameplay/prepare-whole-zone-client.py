@@ -4,6 +4,7 @@ import argparse,hashlib,json,os,re,shutil,subprocess,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.dont_write_bytecode=True
+ASSET_PATHS=['Cache/video/'+n for n in ['Authentic_Landscape.orsc','Authentic_Sprites.orsc','Custom_Sprites.osar','library.orsc','models.orsc']]
 def sha(path):
  h=hashlib.sha256()
  with Path(path).open('rb')as f:
@@ -16,6 +17,10 @@ def main():
  if build.get('jarSha256')!=jar_sha or not build.get('buildSucceeded')or not build.get('cleanCheckoutAtBuild')or build.get('singleProductionCommit')is not True:p.error('Exact clean single-source client artifact required')
  bake_run=a.bake_run.resolve();receipt=json.loads((bake_run/'bake-receipt.json').read_text());bake=(bake_run/'whole-zone').resolve();manifest=bake/'manifest.json';m=json.loads(manifest.read_text())
  if not(receipt.get('passed')and receipt.get('complete')and receipt.get('fullRequested')and receipt.get('requestedSectorLimit')==1330 and receipt.get('clientJarSha256')==jar_sha and m.get('complete')is True and m.get('preparedSectors')==1330 and m.get('preparedPlacements')==24580 and m.get('clientJarSha256')==jar_sha and sha(manifest)==receipt['manifestSha256']):p.error('Complete source-bound1330-sector/24580-object bake required; pilots cannot be staged')
+ if [v.get('path')for v in m.get('externalAssets',[])]!=ASSET_PATHS:p.error('Missing/excess external Cache asset roster')
+ for asset in m['externalAssets']:
+  source=ROOT/'Client_Base'/asset['path']
+  if not source.is_file()or source.stat().st_size!=asset['bytes']or sha(source)!=asset['sha256']:p.error('Baked/current external cache asset mismatch')
  # Execute actual frontend validator before creating a stage or installing files.
  check="import fs from'node:fs';import{validateWholeZoneManifest,validateWholeZoneSource}from"+json.dumps((ROOT/'tools/browser-gameplay/web/browser-whole-zone.js').as_uri())+";const m=validateWholeZoneManifest(JSON.parse(fs.readFileSync(process.argv[1])));validateWholeZoneSource(m,JSON.parse(fs.readFileSync(process.argv[2])));"
  subprocess.run(['node','--input-type=module','-e',check,str(manifest),str(bake/'source-manifest.json')],check=True,cwd=ROOT)
@@ -36,7 +41,11 @@ def main():
   except OSError:shutil.copyfile(source,target);copied+=1
   if sha(target)!=r['sha256']:raise ValueError('Staged resource mismatch')
  cache=web/'Cache/whole-zone';cache.mkdir();shutil.copyfile(manifest,cache/'manifest.json')
- config={'schemaVersion':1,'manifestBytes':manifest.stat().st_size,'manifestSha256':sha(manifest),'clientJarSha256':jar_sha};(web/'browser-whole-zone-config.js').write_text('/* Immutable private stage; exact complete bake only. */\nexport default Object.freeze('+json.dumps(config,separators=(',',':'))+');\n')
+ if sha(cache/'manifest.json')!=sha(manifest):raise ValueError('Java/Worker catalog bytes differ')
+ for asset in m['externalAssets']:
+  target=web/asset['path']
+  if target.stat().st_size!=asset['bytes']or sha(target)!=asset['sha256']:raise ValueError('Staged runtime Cache asset differs from bake')
+ config={'schemaVersion':1,'manifestBytes':manifest.stat().st_size,'manifestSha256':sha(manifest),'clientJarSha256':jar_sha,'externalAssets':m['externalAssets']};(web/'browser-whole-zone-config.js').write_text('/* Immutable private stage; exact complete bake only. */\nexport default Object.freeze('+json.dumps(config,separators=(',',':'))+');\n')
  bootstrap=web/'bootstrap-files.txt';entries=bootstrap.read_text().splitlines();entries.append('Cache/whole-zone/manifest.json');bootstrap.write_text('\n'.join(sorted(set(entries)))+'\n')
  stage=json.loads((run/'stage.json').read_text());stage['frontendSha256']={f.name:sha(f)for f in web.iterdir()if f.is_file()and f.suffix in ['.js','.html','.css']};stage['wholeZone']={'enabled':True,'complete':True,'bakeReceiptSha256':sha(bake_run/'bake-receipt.json'),'catalog':config,'resources':len(unique),'resourceFileBytes':sum(r['bytes']for r in unique.values()),'hardLinkedFiles':linked,'copiedFiles':copied,'initialGpuCompletion':'Pending actual private browser startup fence; staging is not residency proof'};(run/'stage.json').write_text(json.dumps(stage,indent=2)+'\n')
  prepared=json.loads((run/'repeatable-preparation.json').read_text());prepared['url']+='&renderworker=on&wholezone=on';prepared['wholeZone']=stage['wholeZone'];prepared.update(preparedOnly=True,processesStarted=False,publicAccessed=False);(run/'whole-zone-preparation.json').write_text(json.dumps(prepared,indent=2)+'\n');(run/'whole-zone-resources.json').write_text(json.dumps(list(unique.values()),indent=2)+'\n');print(json.dumps(prepared,indent=2))
