@@ -77,9 +77,15 @@ Proof corpus and provenance
 prepare.py reads local Client_Base/Cache/video/library.orsc, decodes its existing
 container, extracts actual h11p/h12b/h12p/h13b/h14b jf bytes with hashes. Generated
 corpus/output remains under declared output/tests; no new assets are packaged.
-It extracts exact source methods plotCharacter, plotLetter, plotLetterAntialiased,
+The optional --source-root selects a read-only Core source/cache input, defaulting
+to this checkout. Commit, dirty status entries, archive/method/source hashes and
+every copied dependency hash are recorded; a dirty input is never called a clean
+commit build. It extracts exact source methods plotCharacter, plotLetter, plotLetterAntialiased,
 drawBoxAlpha into a small Java class. Coverage and delta files are byte copies
-of actual source; coverage callbacks use actual WorldOverlayCoverage behavior.
+of actual source; WorldOverlayTileTracker is also copied when present, preserving
+current rectangle-transport compile dependencies. Coverage callbacks use actual
+WorldOverlayCoverage behavior. No unknown dependency/stub is auto-generated:
+future source changes requiring new helpers fail compilation for explicit review.
 Only UI capture/error helper adapters are stubbed; native/game runtime is not
 built. Method/source/archive hashes are recorded. This is a real font DATA corpus
 with constructed command sequences, NOT a recorded gameplay-frame corpus.
@@ -117,8 +123,8 @@ then matched full-frame timing. No per-call cost evidence exists in this v1 work
 
 Reproduce offline (CPU window required; no full client build)
 ------------------------------------------------------------
-python3 tools/browser-gameplay/overlay-command-reference/prepare.py --output NEW_TEST_RUN
-javac -d NEW_TEST_RUN/classes NEW_TEST_RUN/LiteralOverlayReference.java NEW_TEST_RUN/WorldOverlayCoverage.java NEW_TEST_RUN/WorldOverlayDeltaTransport.java
+python3 tools/browser-gameplay/overlay-command-reference/prepare.py --source-root CORE_READ_ONLY_INPUT --output NEW_TEST_RUN
+javac -d NEW_TEST_RUN/classes NEW_TEST_RUN/*.java
 java -cp NEW_TEST_RUN/classes orsc.graphics.two.LiteralOverlayReference NEW_TEST_RUN/input.bin NEW_TEST_RUN/expected.bin
 node tools/browser-gameplay/overlay-command-reference/proof.mjs NEW_TEST_RUN
 Preparation refuses existing output. Choose NEW_TEST_RUN under declared tests

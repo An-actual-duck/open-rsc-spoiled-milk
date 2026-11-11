@@ -2,7 +2,7 @@
 """Source-bound offline literal Java oracle; never builds/launches game or browser."""
 import argparse,bz2,hashlib,json,struct,subprocess
 from pathlib import Path
-p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);a=p.parse_args();root=Path(__file__).resolve().parents[3];out=a.output.resolve()
+p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p.add_argument('--source-root',type=Path,help='Read-only Core source/cache input; never edited or built in place');a=p.parse_args();root=(a.source_root or Path(__file__).resolve().parents[3]).resolve();out=a.output.resolve()
 if out.exists():raise SystemExit('Refuse existing output')
 out.mkdir(parents=True);(out/'classes').mkdir()
 graphics=root/'Client_Base/src/orsc/graphics/two/GraphicsController.java';text=graphics.read_text()
@@ -90,7 +90,13 @@ static class FastMath{static int bitwiseAnd(int a,int b){return a&b;}}
 public static void main(String[]args)throws Exception{try(DataInputStream in=new DataInputStream(new FileInputStream(args[0]));DataOutputStream out=new DataOutputStream(new FileOutputStream(args[1]))){LiteralOverlayReference r=new LiteralOverlayReference();r.width2=in.readInt();r.height2=in.readInt();r.clipRight=r.width2;r.clipBottom=r.height2;r.pixelData=new int[r.width2*r.height2];byte[][]sources=new byte[in.readInt()][];for(int i=0;i<sources.length;i++){sources[i]=new byte[in.readInt()];in.readFully(sources[i]);}int frames=in.readInt();out.writeInt(frames);out.writeInt(r.pixelData.length);for(int frame=0;frame<frames;frame++){r.coverage.beginFrame();r.coverage.begin(r.pixelData,r.width2,r.height2);int ops=in.readInt();for(int j=0;j<ops;j++){int kind=in.readInt();if(kind==0){int s=in.readInt(),addr=in.readInt(),x=in.readInt(),y=in.readInt(),color=in.readInt();boolean aa=in.readInt()!=0;r.plotCharacter(aa,sources[s],x,color,addr,y);}else if(kind==1){int s=in.readInt(),sourceHead=in.readInt(),head=in.readInt(),w=in.readInt(),h=in.readInt(),stride=in.readInt(),sourceStride=in.readInt(),color=in.readInt();boolean aa=in.readInt()!=0;if(aa)r.plotLetterAntialiased(sources[s],color,w,head,h,sourceStride,stride,r.pixelData,sourceHead);else r.plotLetter(color,r.pixelData,head,stride,h,w,sourceHead,sources[s],sourceStride);}else if(kind==2){r.drawBoxAlpha(in.readInt(),in.readInt(),in.readInt(),in.readInt(),in.readInt(),in.readInt());}else throw new IOException("op");}for(int c:r.pixelData)out.writeInt(c);WorldOverlayCoverage.Frame f=r.coverage.borrow(r.pixelData,r.width2,r.height2);for(float t:f.transmittance)out.writeInt(Float.floatToRawIntBits(t));}if(in.available()!=0)throw new IOException("trailing corpus");}}
 }'''
 (out/'LiteralOverlayReference.java').write_text(shim)
-for name in ['WorldOverlayCoverage.java','WorldOverlayDeltaTransport.java']:(out/name).write_bytes((root/'Client_Base/src/orsc/graphics/two'/name).read_bytes())
-receipt=dict(sourceCommit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),graphicsSHA256=hashlib.sha256(graphics.read_bytes()).hexdigest(),archiveSHA256=hashlib.sha256(raw).hexdigest(),methodHashes=[hashlib.sha256(s.encode()).hexdigest()for s in methods],fontNames=[f[0]for f in fonts],packets=len(packets),sourceCopy=True,scope='Extracted literal Java methods with stub capture/error adapters; no game build/browser/GPU; corpus is not real frame capture')
+dependencies=['WorldOverlayCoverage.java','WorldOverlayDeltaTransport.java']
+if (root/'Client_Base/src/orsc/graphics/two/WorldOverlayTileTracker.java').exists():dependencies.append('WorldOverlayTileTracker.java')
+dependency_hashes={}
+for name in dependencies:
+ source=root/'Client_Base/src/orsc/graphics/two'/name;content=source.read_bytes();(out/name).write_bytes(content);dependency_hashes[name]=hashlib.sha256(content).hexdigest()
+# No dependency/stub auto-generation: unknown future source dependencies fail javac.
+status=subprocess.check_output(['git','status','--porcelain'],cwd=root,text=True)
+receipt=dict(sourceRoot=str(root),sourceCommit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),sourceDirty=bool(status.strip()),sourceStatus=status.splitlines(),graphicsSHA256=hashlib.sha256(graphics.read_bytes()).hexdigest(),archiveSHA256=hashlib.sha256(raw).hexdigest(),dependencySHA256=dependency_hashes,methodHashes=[hashlib.sha256(s.encode()).hexdigest()for s in methods],fontNames=[f[0]for f in fonts],packets=len(packets),sourceCopy=True,scope='Extracted literal Java methods with explicit stub capture/error adapters; read-only input; no game build/browser/GPU; corpus is not real frame capture')
 (out/'provenance.json').write_text(json.dumps(receipt,indent=2)+'\n')
 print(out)

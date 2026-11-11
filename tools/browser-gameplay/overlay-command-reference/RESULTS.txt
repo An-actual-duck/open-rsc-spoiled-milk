@@ -33,3 +33,21 @@ prepare script refuses an existing output directory. A small isolated compile
 is sufficient; no full client build is needed. git diff --check and JS syntax
 checks passed. Workspace layout still reports40 pre-existing ignored legacy
 output-root entries; new evidence uses declared tests/diagnostics categories.
+
+Current published-source compatibility follow-up
+------------------------------------------------
+The initial reference base preceded rectangle transport. prepare.py now accepts
+explicit --source-root as read-only input and copies/hashes optional
+WorldOverlayTileTracker.java when present. Revised javac compiles all prepared
+.java files, with no automatic unknown dependency stubs. Main-source compatibility
+was rerun at c7ed5960abf0bc6a514852b998151b7a5856a6fc from /home/justin/Core-Framework:
+307 packets/334 checks/1,768,934 exact C/T words PASS. This includes compiling the
+current tracker dependency; transport properties remain default OFF in this
+literal arithmetic oracle, so it is not rectangle-protocol execution coverage.
+
+Canonical generated evidence:
+/home/justin/Core-Framework-ai-3/output/tests/browser-overlay-command-reference/published-main-literal-1/
+provenance.json records exact input root/commit/dirty status entries, original
+GraphicsController/archive/method and all three dependency hashes. Manager's
+unrelated dirty files were only inventoried, never edited. Do not relabel this
+as a clean full-game build. All compilation/execution uses copied test sources.
