@@ -3,8 +3,9 @@ import {WHOLE_ZONE_SOURCE,WHOLE_ZONE_GPU_BYTES,WHOLE_ZONE_MAX_CHUNKS} from './br
 const HASH=/^[0-9a-f]{64}$/,MAX_RESOURCE=64*1024*1024,MAX_MANIFEST=32*1024*1024,PIN_BASE=1000000;
 const MAGIC=0x575a4331;
 const TAP=Object.getPrototypeOf(Int32Array.prototype),TGET=name=>Object.getOwnPropertyDescriptor(TAP,name).get;
+const ABYTES=Object.getOwnPropertyDescriptor(ArrayBuffer.prototype,'byteLength').get;
 const TBUFFER=TGET('buffer'),TOFFSET=TGET('byteOffset'),TBYTES=TGET('byteLength'),TTAG=Object.getOwnPropertyDescriptor(TAP,Symbol.toStringTag).get;
-function ints(value){try{if(TTAG.call(value)!=='Int32Array')throw new Error();return new Int32Array(TBUFFER.call(value),TOFFSET.call(value),TBYTES.call(value)/4);}catch(_){throw new Error('Whole zone requires a genuine int32 plane');}}
+function ints(value){try{if(TTAG.call(value)!=='Int32Array')throw new Error();const buffer=TBUFFER.call(value);ABYTES.call(buffer);return new Int32Array(buffer,TOFFSET.call(value),TBYTES.call(value)/4);}catch(_){throw new Error('Whole zone requires a genuine int32 plane');}}
 function integer(n,min,max,label){if(!Number.isSafeInteger(n)||n<min||n>max)throw new Error('Whole zone '+label+' bounds');return n;}
 function hash(value,label){if(typeof value!=='string'||!HASH.test(value))throw new Error('Whole zone '+label+' hash');return value;}
 function path(value){if(typeof value!=='string'||value.length>256||!/^([a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+$/.test(value)||value.split('/').some(x=>x==='.'||x==='..'))throw new Error('Whole zone resource path');return value;}
@@ -143,21 +144,22 @@ export function createWholeZoneSelection(catalog,stats){
   function frame(metadata,overrides){
     metadata=ints(metadata);overrides=ints(overrides);
     if(metadata.length!==18||overrides.length%6||overrides.length>3*25*4*6)throw new Error('Whole zone frame shape');
-    const v=Array.from(metadata);if(v[0]!==1||![0,1].includes(v[1])||v[2]<-32||v[2]>32||v[7]!==2||v[17]!==0||v.slice(11,15).some((x,n)=>x!==catalog.settings[n]))throw new Error('Whole zone frame contract/settings');
-    if(v[1]&&v[2]!==0)throw new Error('Whole zone applies to overworld only');
+    const v=Array.from(metadata);if(v[0]!==1||![0,1].includes(v[1])||v[2]<-32||v[2]>32||v[7]!==2||![0,1].includes(v[17])||v.slice(11,15).some((x,n)=>x!==catalog.settings[n]))throw new Error('Whole zone frame contract/settings');
+    if(v[1]&&(v[2]!==0||v[17]!==0))throw new Error('Whole zone applies to overworld only');
     for(const n of [8,9,10])if(v[n]<0)throw new Error('Whole zone visibility mask');
     const epoch=[v[16]>>>0,v[15]>>>0];if(lastEpoch&&(epoch[0]<lastEpoch[0]||epoch[0]===lastEpoch[0]&&epoch[1]<lastEpoch[1]))throw new Error('Whole zone source epoch moved backwards');
     const rows=new Map();for(let at=0;at<overrides.length;at+=6){const plane=overrides[at],x=overrides[at+1],y=overrides[at+2],reason=overrides[at+5],key=plane+':'+x+':'+y;
       if(plane<0||plane>2||reason<0||reason>3||rows.has(key))throw new Error('Whole zone object authority row');
       rows.set(key,{key:(overrides[at+4]>>>0).toString(16).padStart(8,'0')+(overrides[at+3]>>>0).toString(16).padStart(8,'0'),reason});
     }
-    current={v,rows};pending=true;lastEpoch=epoch;stats.active=v[1]===1;stats.sourceEpochLow=epoch[1];stats.sourceEpochHigh=epoch[0];stats.currentLevel=v[2];
+    current={v,rows};pending=true;lastEpoch=epoch;stats.active=v[1]===1;stats.sourceEpochLow=epoch[1];stats.sourceEpochHigh=epoch[0];stats.currentLevel=v[2];stats.nonGlobalWorldSpace=v[17]===1;
   }
   function merge(input,level){
     if(!pending||!current||current.v[2]!==level)throw new Error('Whole zone presentation missing fresh frame declaration');pending=false;
     if(input.length%8||input.length>256*8)throw new Error('Whole zone local draw bounds');
     const {v,rows}=current;stats.currentLocalDraws=input.length/8;
-    if(!v[1]){if(level===0)throw new Error('Whole zone overworld source inactive');stats.currentPinnedDraws=0;return input;}
+    for(let at=0;at<input.length;at+=8)if(input[at]>=PIN_BASE)throw new Error('Pinned chunk appeared in local Java draw list');
+    if(!v[1]){if(level===0&&v[17]===0)throw new Error('Whole zone overworld source inactive');Object.assign(stats,{currentPinnedDraws:0,currentMergedDraws:input.length/8,verifiedObjectCells:0,mutatedObjectCells:0,animatedObjectCells:0,authoredBaselineObjectCells:0,selectedObjectCells:0});return input;}
     const out=[];let unchanged=0,mutated=0,animated=0,baseline=0,knownCells=0;
     const add=c=>{if(!c||c.sourceKind==='objects'&&c.plane>0)return;const dx=c.originX-v[3],dz=c.originZ-v[4];integer(dx,-2147483648,2147483647,'rebased X');integer(dz,-2147483648,2147483647,'rebased Z');out.push(c.id,dx,dz,v[3],v[4],v[8+c.plane]&c.visibilityMask,c.plane,c.role);};
     for(let plane=0;plane<3;plane++)for(let x=v[5]-2;x<=v[5]+2;x++)for(let y=v[6]-2;y<=v[6]+2;y++)add(world.get(plane+':'+x+':'+y));
@@ -169,7 +171,6 @@ export function createWholeZoneSelection(catalog,stats){
       else if(row.reason===1)mutated++;else animated++;
     }
     const pinned=out.length/8;if(pinned+input.length/8>1024)throw new Error('Whole zone merged draw capacity');
-    for(let at=0;at<input.length;at+=8)if(input[at]>=PIN_BASE)throw new Error('Pinned chunk appeared in local Java draw list');
     const merged=new Int32Array(out.length+input.length);merged.set(out);merged.set(input,out.length);
     Object.assign(stats,{currentPinnedDraws:pinned,currentMergedDraws:merged.length/8,verifiedObjectCells:unchanged,mutatedObjectCells:mutated,animatedObjectCells:animated,authoredBaselineObjectCells:baseline,selectedObjectCells:knownCells});return merged;
   }

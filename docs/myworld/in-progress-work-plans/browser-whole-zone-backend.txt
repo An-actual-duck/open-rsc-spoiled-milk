@@ -1,0 +1,180 @@
+Private whole-overworld residency: browser/backend and bake tools
+===============================================================
+Implementation candidate; default OFF. No public deployment. Actual complete
+catalogue bake, browser/GPU residency, visuals and travel/performance acceptance
+remain manager gates. CPU protocol tests and small real pilot decoding are not
+proof that the whole world fits or renders correctly on hardware.
+
+Scope and resource ownership
+----------------------------
+wholezone=on requires private benchmark WebGL, renderworker=on, coverage overlay,
+and overlaydelta OFF. The ordinary cap remains256MiB/512 resident chunks and256
+Java draw descriptors. Private mode permits3GiB tracked chunk/texture resources,
+8192 resident IDs, at most7680 immutable catalogue chunks (512 local slots reserved),
+and1024 merged draw descriptors. The immutable subtotal must leave256MiB for
+local geometry/material updates. Shadow/sprite/mask/overlay/sky ledgers remain
+separate as documented in existing resourceBudgetScope. This is not a process,
+OS or driver-memory ceiling.
+
+The catalogue covers exact selected7e04367.../manifest42e20c36...:
+445 L0 +444 L1 +441 L2 source sectors;1330 world-cell records and5320 object24-cell
+records, including empty cells.24580 manifest scenery/boundary placements.
+The original source manifest SHA and exact sector roster/holes are verified;
+there is no rectangle filling or blank/ocean pruning. World48/object24 resources
+use the existing production112-byte vertex layout, uint32 indices and5-int
+material batches. Root/Java owns the baker's exact stacked upper elevations,
+pack-before-crop boundary normals, material/pick/effect semantics and authority.
+
+Every declared resource must join exactly one source cell, with matching IDs,
+vertex/index counts and cell identity. All445 L0 world cells require nonzero
+terrain resources. Positive-placement object cells require resources, including
+explicit16-byte zero-geometry resources for legitimate interaction-only content;
+these are not silently treated as absent placements. Upper world empty cells
+are explicit null-resource/zero-count entries. Reverse coverage rejects orphan
+or omitted resources. Actual source/geometry parity remains an independent
+producer test; trusted metadata alone cannot prove a correct bake.
+
+The Worker loads one bounded resource at a time through the same existing WebGL
+upload functions. New input is fetched into owned bounded buffers, hashed, then
+uploaded; no Java input buffer is transferred or retained. Chunk metadata owns
+its batches/bounds; raw vertex/index download views are not retained after the
+upload. Existing two in-flight packets plus one producer/16MiB return pool remain
+unchanged. Whole-world geometry is not one giant JNI/Worker packet.
+
+Each response is streamed into its declared bounded allocation (resource<=64MiB,
+catalogue JSON<=32MiB). Size/hash/header mismatches stop the private backend.
+Parsed metadata uses extra heap beyond JSON bytes; no exact heap-size claim.
+At most16MiB per external asset/64MiB aggregate; all five raw video archives are
+bound by path/length/SHA: Authentic_Landscape.orsc, Authentic_Sprites.orsc,
+Custom_Sprites.osar, library.orsc, models.orsc. Worker fetch/hash verifies the
+actual staged Cache before GPU resource uploads. Driver/stager compare original
+assets and actual staged Cache; the Java reader hashes its actual runtime Cache.
+The textures-only derivative is separately bound to byte-exact extraction.
+
+Exact client JAR SHA, raw catalogue SHA, source map SHA, four packing words and
+full ordered five-word material metadata table are bound across bake, staged
+config, Java Cache reader and native initializer. Material identity excludes
+animated pixel phase, but preserves dimensions/average opaque RGB/alpha class.
+Every pinned texture update validates those values from actual RGBA before GL;
+phase rotations preserving the table remain allowed. Pinned geometry cannot
+be replaced/deleted by the ordinary Java cache; pinned textures cannot be
+removed. Settings/material/source changes outside supported semantics fail
+closed, with no silently stale or smaller-world fallback.
+
+Startup readiness and live selection
+------------------------------------
+initializeWholeZone(String mapIdentity,int[4] settings,int[] materialMetadata)
+is a result/ACK barrier. It fetches and checks the complete catalogue, uploads
+all declared immutable resources, verifies actual membership/byte totals and
+calls gl.finish ONCE followed by gl.getError before marking startupGpuCompleted.
+This point is distinct from an enqueued upload, ordinary per-frame Worker ACK,
+scanout or per-frame GPU completion. Main and Worker disposal/context loss
+invalidate readiness; a stopped session cannot retain a true ready receipt.
+Only the manager will establish actual hardware completion/capacity evidence.
+
+wholeZoneFrame(int[18],int[] rows6) is ordered before presentation. Metadata:
+[1,active,signedLevel,globalBaseXunits,globalBaseZunits,centerSX,centerSY,2,
+ visibilityMask0,mask1,mask2,packingWords4,sourceEpochLo,sourceEpochHi,
+ nonGlobalWorldSpace]. The final flag is an authoritative world-space fact,
+not a generic failure escape. Active requires global+signed L0. Inactive global
+L0 fails; signed−1/−2/1/2/10 and known non-global L0 use ordinary local draws.
+Unknown source cannot claim non-global. Local geometry/authority remains local.
+
+Object authority rows are [plane,cellX,cellY,keyLo,keyHi,reason]:
+0 exact locally authoritative unchanged key;1 mutation/empty replacement;
+2 mixed animated cell;3 authored baseline outside live interest.
+Every selected known object cell needs a row; missing/duplicate/incorrect-key
+rows reject. Reasons1/2 mask its baked object resource and retain Java live
+geometry; reason3 is separately counted and never represented as live authority.
+Empty replacement keys can remove the last baked object. Epochs cannot reverse;
+presentation requires a fresh matching signed-level declaration. Metadata is
+copied into owned scalars, not retained borrowed views.
+
+Selection looks up5x5 world cells and corresponding24-tile object cells, rebases
+originX/Z to current globalBase and retains global terrain shader offsets.
+It does not submit the entire zone. Root approved private1024 capacity rather
+than cutting visibility to satisfy256. Color culling and production depth
+shadows consume the same merged list; world chunks with a zero COLOR visibility
+mask remain eligible shadow casters. Upper GAME_OBJECT resources are resident
+but do not acquire new ground-view draws/shadows: the current ground renderer
+publishes upper structural world geometry, not those object draws. Signed upper
+or underground gameplay uses the ordinary path. Local camera/picking and dynamic
+actors, summons, VFX, overlays and authority stay in existing Java systems.
+
+Receipts separate expected resource counts, actual pinned resource/byte counts,
+downloaded metadata/raw assets/baked GPU data, local/pinned/merged draw counts,
+reason counts, source epoch/world-space scope and the one startup GPU checkpoint.
+reportWholeZoneWork is main-thread low-frequency Java index/local coverage (0
+pending or9 scalar words), explicitly not full classic CPU model residency or
+independent GPU proof. In particular rawSourceCPUReady remains false on the
+browser loader: downloading mesh/catalogue resources does not decode all raw
+map tiles or retain every classic model in Java RAM.
+
+Offline tooling and immutable stages
+------------------------------------
+tools/browser-gameplay/whole-zone/extract-textures.py streams the original GZIP
+OSAR and copies the encoded textures subspace entry bytes exactly. It neither
+recolours nor regenerates palette/frame pixels. Caps, duplicates, malformed
+frames, zero-frame textures, truncation and trailing data reject. Originals
+are never edited. The73-entry source has independently proven exact production
+Unpacker equivalence (753664 decoded pixels and metadata).
+
+tools/browser-gameplay/whole-zone/bake.py calls the production Java baker from an
+exact clean single-source client artifact, validates its source manifest and
+selected paired package, and records hashes, logs, resource bounds and provenance.
+Default pilot<=4 sectors,512MiB heap; explicit bounds support<=1536MiB/600s.
+--source-root is read-only pilot source selection. FULL1330 requires --full,
+manager main at the exact integrated artifact commit, and no pilot-position
+narrowing. This intentionally blocks a full bake of an earlier worker artifact.
+It validates all exported binary headers/hashes and exact original texture
+source/derivative binding. Failed outputs are preserved. It starts one CPU
+baker, never a game/server/browser/GPU. No full bake was run by this worker.
+
+scripts/browser-gameplay/prepare-whole-zone-client.py refuses incomplete pilots,
+wrong source/artifact/bake receipts, changed assets and missing full geometry
+before creating a browser stage. It prepares an isolated client against an
+existing marked repeatable private server without starting it. All resources
+are hashed; immutable hard links avoid another2GiB copy where supported, otherwise
+copy with hash verification. Java receives only a duplicate catalogue manifest
+in Cache/whole-zone via bootstrap-files, not duplicate mesh files. Web and Cache
+catalogue bytes must match. A fresh staged config binds source catalogue/JAR and
+external assets. Existing frozen stages and owner saves are untouched.
+
+urlOn/urlOff and common comparisonFlags explicitly use Worker, load profile,
+region build, model batch and terrain query ON, delta/rect OFF, preserving the
+base explicit spritekey/physical/quality settings. Only wholezone differs.
+This avoids comparing the candidate against omitted older benchmark defaults.
+Staging a file is not actual residency or a measured improvement.
+
+CPU evidence and remaining gates
+--------------------------------
+- Existing ordinary/whole-zone frontend VM contracts PASS, including real
+  property/config handoff, diagnostics validation, Worker startup without AWT,
+  input/readiness/failure/disposal and accepted optimization flags.
+- Existing independent Worker protocol214 checks and facade27 checks PASS.
+- Actual busy pilot2: ten real binary resources decode with exact header/array
+  dimensions; incomplete pilot is rejected by the full loader. Pilot scope is
+  three planes at sector(2,13), not full-world capacity evidence.
+- Actual Java pilot texture-table oracle623 checks PASS:74 RGBA resources,
+  phase rotations, changed mean/dimensions/alpha refusal, hostile typed-view
+  properties/SharedArrayBuffer refusal and10 binary resource layouts. This is
+  producer-reference CPU parity, not GPU/full-data proof.
+- Four negative CLI cases PASS: incomplete pilot, non-integrated full bake,
+  source-manifest mismatch and artifact mismatch stop before stage/CPU bake.
+  Synthetic non-executable JAR proves refusal only, not valid artifact acceptance.
+- Independent agent3 reports exact73-entry/753664-pixel Unpacker parity,18 extractor
+  malformed/cap checks, and actual pilot selection/source joins. Its exact source-
+  bound review is collected separately; later runtime changes require recheck.
+- The old test-browser-native-frontend-policy literal progress-wrapper assertion
+  already fails inherited main because load-profile changed that wrapper. It was
+  confirmed on unchanged HEAD; this worker does not rewrite it to force a pass.
+- workspace-layout check reports inherited assets/sprites and legacy output-root
+  entries. New outputs use declared builds/tests categories; no cleanup performed.
+
+Required manager gates after integration: fresh single-source JAR and matching
+FULL bake, independent complete source/resource/topology/material/seam/upper
+parity, actual Worker/GPU full catalogue completion and OS memory measurements,
+real dynamic override/pick/lighting/interaction tests, and comparable ordinary
+walking across multiple boundaries. Residual Java local preparation stalls are
+possible and must be measured. No60 FPS, seamless travel, broad-device support,
+whole classic CPU residency or public-release recommendation is claimed here.
