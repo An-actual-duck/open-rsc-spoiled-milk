@@ -71,7 +71,7 @@ def fingerprint(rows):
 
 def validate_source(directory,expected=None,verify_payloads=True):
  directory=Path(directory);m=document(directory/'manifest.json')
- if m.get('schemaVersion')!=1 or m.get('type')!='spoiled-milk-whole-overworld-ram' or m.get('packageFingerprintSha256')!=FINGERPRINT or m.get('sourceManifestSha256')!=SOURCE_SHA:refuse('RAM source identity')
+ if not typed_equal(m.get('schemaVersion'),1)or m.get('type')!='spoiled-milk-whole-overworld-ram' or m.get('packageFingerprintSha256')!=FINGERPRINT or m.get('sourceManifestSha256')!=SOURCE_SHA:refuse('RAM source identity')
  for key in ['clientJarSha256','gpuCatalogSha256']:check_hash(m.get(key),key)
  assets=m.get('externalAssets');
  if not isinstance(assets,list)or [v.get('path')for v in assets]!=ASSET_PATHS:refuse('RAM external asset roster')
@@ -125,7 +125,7 @@ def validate_source(directory,expected=None,verify_payloads=True):
 
 def validate_ram(directory,expected=None,verify_payloads=True):
  m=validate_source(directory,expected,verify_payloads);p=m.get('prepared')
- if m.get('complete')is not True or not isinstance(p,dict)or p.get('schemaVersion')!=1 or p.get('path')!='prepared.bin'or p.get('recipes')!=445 or p.get('queryCells')!=1330 or p.get('levels')!=[0,1,2]:refuse('Complete useful CPU preparation is required; raw source alone is not RAM ready')
+ if m.get('complete')is not True or not isinstance(p,dict)or not typed_equal(p.get('schemaVersion'),1) or p.get('path')!='prepared.bin'or p.get('recipes')!=445 or p.get('queryCells')!=1330 or not typed_equal(p.get('levels'),[0,1,2]):refuse('Complete useful CPU preparation is required; raw source alone is not RAM ready')
  if type(p.get('hiddenRoofs'))is not bool:refuse('Prepared CPU roof option binding')
  integer(p.get('bytes'),1,1536*1024*1024,'prepared bytes');check_hash(p.get('sha256'),'prepared data');integer(p.get('pageCount'),1,2147483647,'prepared page count');integer(p.get('modelTemplateCount'),0,2147483647,'model template count');integer(p.get('retainedPrimitiveBytes'),1,9007199254740991,'retained primitive bytes')
  file=Path(directory)/'prepared.bin'
