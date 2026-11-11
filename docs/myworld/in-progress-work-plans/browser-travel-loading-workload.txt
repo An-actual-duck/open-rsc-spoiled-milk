@@ -133,3 +133,15 @@ loadProfileSamples alias; named 36-field records plus callback-time packet/frame
 metadata. No generic management instrumentation is needed. 21 offline tests pass,
 including absent/present-conflicting Java route, missing/wrong/closed/connecting
 socket and combat-fixture rejection. No actual route run has yet been claimed.
+
+Cross-realm calibration guard correction
+---------------------------------------
+The first corrected calibration still rejected before sending input because the
+WebDriver outer realm's Map differs from the iframe's Map constructor. The
+snapshot now uses instanceof w.Map for the actual owning game iframe. A new Node
+VM test executes the ENTIRE actual snapshot against a genuine cross-realm Map,
+proves the former outer instanceof would fail, and validates the resulting live
+socket record. All 22 offline checks pass. Preserved manager failure evidence:
+ output/diagnostics/browser-travel-loading/minimap-calibration-1/result.json
+No input was sent by that failed helper calibration. No fake transport field,
+renderer mutation, permissive missing-socket fallback or route bypass was added.

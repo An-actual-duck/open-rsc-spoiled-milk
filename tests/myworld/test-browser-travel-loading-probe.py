@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Bounded pure helper proof; no browser, fixture, network or process actions."""
-import importlib.util,json,copy,unittest
+import importlib.util,json,copy,unittest,subprocess
 from pathlib import Path
 P=Path(__file__).with_name('browser-travel-loading-probe.py');s=importlib.util.spec_from_file_location('travel',P);m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
 class Travel(unittest.TestCase):
@@ -47,6 +47,20 @@ class Travel(unittest.TestCase):
  def test_combat_fixture_cannot_masquerade_as_route(self):
   a=self.live();a['requestedFixture']='renderer-combat-v1'
   with self.assertRaises(ValueError):m.validate_live_route(a)
+ def test_actual_snapshot_accepts_iframe_map_realm(self):
+  script=r"""
+import vm from 'node:vm';import fs from 'node:fs';import assert from 'node:assert/strict';
+const source=JSON.parse(fs.readFileSync(0,'utf8'));
+const w=vm.runInNewContext(`({Map,browserTransport:{connections:new Map([[1,{socket:{url:'ws://127.0.0.1:43549/',readyState:1},closed:false}]])}})`);
+assert.equal(w.browserTransport.connections instanceof Map,false);
+Object.assign(w,{performance:{now:()=>1},document:{querySelector:()=>null,visibilityState:'visible'},location:{href:'http://127.0.0.1:8220/'},browserProof:{gpu:{javaWorldFrames:1,heldWorldFrames:0},repeatableFixtureRequested:'repeatable-v1'}});
+const document={querySelector:()=>({contentWindow:w,getBoundingClientRect:()=>({x:0,y:0})}),hasFocus:()=>true};
+const out=Function('document','window',source)(document,{});
+assert.deepEqual(out.transportConnections,[{url:'ws://127.0.0.1:43549/',readyState:1,closed:false}]);
+console.log('Actual cross-realm SNAPSHOT PASS');
+"""
+  r=subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(m.SNAPSHOT),text=True,capture_output=True)
+  self.assertEqual(r.returncode,0,r.stderr)
  def test_script_is_passive(self):
   self.assertNotIn('.push=',m.SNAPSHOT);self.assertNotIn('postMessage(',m.SNAPSHOT);self.assertNotIn('measurement=',m.SNAPSHOT)
 if __name__=='__main__':unittest.main()

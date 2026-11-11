@@ -11,7 +11,7 @@ if(!g)throw Error('No existing private renderer');
 const c=w.document.querySelector('#browser-webgl'),r=c?.getBoundingClientRect(),fr=f?.getBoundingClientRect();
 const take=(k,n=32)=>Array.isArray(g[k])?g[k].slice(-n):null;
 return {clock:w.performance.now(),url:w.location.href,visible:w.document.visibilityState,focused:document.hasFocus(),
- fixture:p.repeatableFixture,requestedFixture:p.repeatableFixtureRequested,route:p.javaPrivateLoopbackPort??null,transportConnections:w.browserTransport?.connections instanceof Map&&w.browserTransport.connections.size<=8?Array.from(w.browserTransport.connections.values(),e=>({url:e.socket?.url,readyState:e.socket?.readyState,closed:e.closed})):null,policies:p.privatePolicies,state:p.state,error:g.lastError,
+ fixture:p.repeatableFixture,requestedFixture:p.repeatableFixtureRequested,route:p.javaPrivateLoopbackPort??null,transportConnections:w.browserTransport?.connections instanceof w.Map&&w.browserTransport.connections.size<=8?Array.from(w.browserTransport.connections.values(),e=>({url:e.socket?.url,readyState:e.socket?.readyState,closed:e.closed})):null,policies:p.privatePolicies,state:p.state,error:g.lastError,
  contextLost:g.contextLost,ready:g.worldReadiness,pose:g.pose,physical:g.physicalOutput,worker:g.renderWorker,
  frames:g.javaWorldFrames,reportedFrames:g.javaBridgeReportedWorldFrames,held:g.heldWorldFrames,lastFrame:g.lastFrame,
  uploadedChunks:g.uploadedChunks,uploadedBytes:g.uploadedBytes,gpuBytes:g.gpuBytes,
