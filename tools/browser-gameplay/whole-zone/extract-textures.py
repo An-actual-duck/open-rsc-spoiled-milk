@@ -44,7 +44,9 @@ def extract(source,destination):
     label=reader.string();kind=reader.take(1);entry=bytearray(label+kind)if selected else None
     if kind[0]>4:raise ValueError('Unknown OSAR Entry.TYPE')
     layer=reader.take(1)if kind[0]in(1,2,3)else b'';frames=reader.take(1);palette_size=reader.take(1);palette=reader.take((palette_size[0]+1)*3)
-    if selected:entry.extend(layer+frames+palette_size+palette)
+    if selected:
+     if frames[0]==0:raise ValueError('Production texture entry needs frame zero')
+     entry.extend(layer+frames+palette_size+palette)
     for _ in range(frames[0]):
      header=reader.take(13);w,h=struct.unpack('>HH',header[:4]);pixels=w*h
      if pixels>MAX_FRAME_PIXELS:raise ValueError('OSAR frame pixel cap')
@@ -53,6 +55,7 @@ def extract(source,destination):
       entry.extend(header);entry.extend(reader.take(pixels))
      else:reader.skip(pixels)
     if selected:
+     if selected_bytes+len(entry)>MAX_TEXTURE_PAYLOAD:raise ValueError('Texture derivative byte cap')
      key=label[:-1].decode('latin1')
      if key in entry_hashes:raise ValueError('Duplicate texture entry')
      entry_hashes[key]=hashlib.sha256(entry).hexdigest();encoded.append(bytes(entry));selected_bytes+=len(entry)

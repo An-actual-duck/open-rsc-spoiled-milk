@@ -46,7 +46,7 @@ export function createRenderWorkerTransport({postMessage,layout,now=()=>performa
     }
     if(name==='frameWork'){if(!worldPending){const e=new Error('frameWork without world presentation');fail(e);throw e;}worldPending=false;return flush({frame:true});}
     if(name==='holdWorld')return flush({frame:true});
-    if(name==='initialize'||name==='planWorldSprites')return flush({result:true});
+    if(name==='initialize'||name==='initializeWholeZone'||name==='planWorldSprites')return flush({result:true});
   }
   function enqueue(name,args){try{return capture(name,args);}catch(error){fail(error);throw error;}}
   function receive(message){
