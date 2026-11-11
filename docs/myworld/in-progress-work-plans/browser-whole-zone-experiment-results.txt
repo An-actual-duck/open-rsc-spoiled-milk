@@ -66,7 +66,7 @@ Firefox RSS can double-count shared pages. The queried host has RX 6700 XT/12 Gi
 VRAM and about 32 GiB RAM; Firefox exposed an AMD/R9-family label. Other devices
 remain untested.
 
-Actual scope smoke reached (700,441,0), underground (6,563,-1), Zanaris (99,705,10)
+Actual scope smoke reached (700,441,0), underground (6,563,-1), signed level 10 (99,705,10)
 and returned to (133,660,0), ready without reported backend errors. All 1,400
 geometry resources remained pinned; signed -1/10 used local draws with whole-L0
 selection inactive. These admin-teleport smoke checks are not walking/FPS tests.
@@ -77,10 +77,11 @@ Manager base: output/diagnostics/browser-whole-overworld-zone/
  experiment-result.json SHA256
  79bd016d9abdbc543cddc6cc6e71c77a0af34c2dbc152924196f1aae363df33c
  full-catalogue-check.json, full-packed-check.json, full-audit-reconciliation.json
- final-evidence-check.json; startup-on-3/ and startup-off-1/
+ startup-on-3/ and startup-off-1/
  walking-on-3/route/result.json; walking-off-2/route/result.json
  stationary-on-2/{result,samples}.json; stationary-off-1/{result,samples}.json
  scope-smoke-1/results.json
+Final evidence check: output/reviews/browser-whole-overworld-zone/final-evidence-check.json
 Java admission: output/tests/browser-whole-zone-constructor/integrated-1/result.json
 
 walking-on-1 failed camera preflight after exploratory preview movement, cause
