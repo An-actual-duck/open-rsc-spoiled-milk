@@ -150,9 +150,9 @@ await configured.natives.Java_orsc_browser_BrowserBootstrap_reportStartupDiagnos
 assert.equal(window.browserProof.startupDiagnostics.at(-1).detail,'loop=absent');
 const selectedKeys=!benchmarkStream||benchmarkKeys;await configured.natives.Java_orsc_browser_BrowserBootstrap_reportSpriteKeyPolicy(null,selectedKeys,selectedKeys);assert.equal(window.browserProof.spriteKeyLimbs.enabled,selectedKeys);assert.equal(window.browserProof.spriteKeyLimbs.requested,selectedKeys);
 const progressReturn=configured.natives.Java_orsc_BrowserWebGLBridge_worldProgress(null,[1,2,1,4,2,0,0,0,1,960,540,0]);assert.equal(typeof progressReturn?.then,nativeMode==='sync'?'undefined':'function');await progressReturn;assert.equal(window.browserWorldInputAllowed(),false);
-const presentReturn=configured.natives.Java_orsc_BrowserWebGLBridge_present(null,960,540);assert.equal(typeof presentReturn?.then,nativeMode==='sync'?'undefined':'function');assert.equal(await presentReturn,6);assert.equal(window.browserWorldInputAllowed(),true);assert.deepEqual(gateEvents,['browser-world-readinesschange','browser-world-readinesschange']);
+const presentReturn=configured.natives.Java_orsc_BrowserWebGLBridge_present(null,withoutAwtTarget?896:960,withoutAwtTarget?504:540);assert.equal(typeof presentReturn?.then,nativeMode==='sync'?'undefined':'function');assert.equal(await presentReturn,6);assert.equal(window.browserWorldInputAllowed(),true);assert.deepEqual(gateEvents,['browser-world-readinesschange','browser-world-readinesschange']);
 assert.equal(canvas.style.left,withoutAwtTarget?'0px':'20px');assert.equal(canvas.style.top,withoutAwtTarget?'0px':'60px');
-assert.equal(canvas.style.width,'960px');assert.equal(canvas.style.height,'540px');
+assert.equal(canvas.style.width,withoutAwtTarget?'896px':'960px');assert.equal(canvas.style.height,withoutAwtTarget?'504px':'540px');
 assert.equal(canvas.style.display,'block');
 assert.deepEqual(nativeTrace,['progress','present']);
 for(const [name,value]of[['regionTransition',3],['holdWorld',4]]){const result=configured.natives['Java_orsc_BrowserWebGLBridge_'+name](null,true);assert.equal(typeof result?.then,nativeMode==='sync'?'undefined':'function');assert.equal(await result,value);}assert.deepEqual(nativeTrace,['progress','present','transition','hold']);stats.worldReadiness={phase:'ready'};
