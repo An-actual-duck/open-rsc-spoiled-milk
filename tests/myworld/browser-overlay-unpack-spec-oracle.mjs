@@ -4,7 +4,7 @@
  * This is a specification arithmetic oracle, never a real-driver proof.
  */
 export function readUnpackedPixels({view,width,height,format,type,srcOffset=0,
-  rowLength=0,skipRows=0,skipPixels=0,alignment=4,pixelUnpackBuffer=null}) {
+  rowLength=0,skipRows=0,skipPixels=0,alignment=4,pixelUnpackBuffer=null,flipY=false,premultiplyAlpha=false}) {
   const fail=message=>{throw new Error('INVALID_OPERATION: '+message);};
   const integer=n=>Number.isSafeInteger(n)&&n>=0;
   if(![width,height,srcOffset,rowLength,skipRows,skipPixels].every(integer))fail('Invalid transfer parameters');
@@ -24,7 +24,11 @@ export function readUnpackedPixels({view,width,height,format,type,srcOffset=0,
   const end=width&&height?first+(height-1)*stride+width*pixelBytes:first;
   if(!Number.isSafeInteger(end)||end>view.byteLength)fail('Client-array view too small');
   const output=type==='FLOAT'?new Float32Array(width*height*channels):new Uint8Array(width*height*channels);
-  for(let row=0;row<height;row++)for(let x=0;x<width*channels;x++)output[row*width*channels+x]=view[(first+row*stride)/elementBytes+x];
+  for(let row=0;row<height;row++)for(let x=0;x<width*channels;x++)output[row*width*channels+x]=view[(first+(flipY?height-1-row:row)*stride)/elementBytes+x];
+  // The hostile-state fixtures use only alpha0/255, where this conversion is
+  // exact and has no implementation-dependent normalized rounding boundary.
+  if(premultiplyAlpha&&channels===4&&type==='UNSIGNED_BYTE')for(let at=0;at<output.length;at+=4)
+    for(let channel=0;channel<3;channel++)output[at+channel]=Math.round(output[at+channel]*output[at+3]/255);
   return output;
 }
 
@@ -32,10 +36,10 @@ export function readUnpackedPixels({view,width,height,format,type,srcOffset=0,
  * The caller supplies ordinary shader/framebuffer lifecycle methods. */
 export function installUnpackSpecOracle(gl) {
   const constants={UNPACK_ROW_LENGTH:0x0cf2,UNPACK_SKIP_ROWS:0x0cf3,UNPACK_SKIP_PIXELS:0x0cf4,
-    UNPACK_IMAGE_HEIGHT:0x806e,UNPACK_SKIP_IMAGES:0x806d,PIXEL_UNPACK_BUFFER:0x88ec,PIXEL_UNPACK_BUFFER_BINDING:0x88ef};
+    UNPACK_IMAGE_HEIGHT:0x806e,UNPACK_SKIP_IMAGES:0x806d,UNPACK_FLIP_Y_WEBGL:0x9240,UNPACK_PREMULTIPLY_ALPHA_WEBGL:0x9241,PIXEL_UNPACK_BUFFER:0x88ec,PIXEL_UNPACK_BUFFER_BINDING:0x88ef};
   Object.assign(gl,constants);
   const state=new Map([[gl.UNPACK_ALIGNMENT,4],[gl.UNPACK_ROW_LENGTH,0],[gl.UNPACK_SKIP_ROWS,0],
-    [gl.UNPACK_SKIP_PIXELS,0],[gl.UNPACK_IMAGE_HEIGHT,0],[gl.UNPACK_SKIP_IMAGES,0],[gl.PIXEL_UNPACK_BUFFER_BINDING,null]]);
+    [gl.UNPACK_SKIP_PIXELS,0],[gl.UNPACK_FLIP_Y_WEBGL,false],[gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false],[gl.UNPACK_IMAGE_HEIGHT,0],[gl.UNPACK_SKIP_IMAGES,0],[gl.PIXEL_UNPACK_BUFFER_BINDING,null]]);
   const trace=[],uploads=[],oldGet=gl.getParameter;
   gl.getParameter=p=>{trace.push(['getParameter',p]);return state.has(p)?state.get(p):oldGet(p);};
   gl.pixelStorei=(p,v)=>{trace.push(['pixelStorei',p,v]);if(!state.has(p)||p===gl.PIXEL_UNPACK_BUFFER_BINDING)throw new Error('Unknown oracle pixel store');state.set(p,v);};
@@ -44,7 +48,7 @@ export function installUnpackSpecOracle(gl) {
   const read=(format,type,data,offset,w,h)=>readUnpackedPixels({view:data,width:w,height:h,
     format:format===gl.RED?'RED':format===gl.RGBA?'RGBA':'?',type:type===gl.FLOAT?'FLOAT':type===gl.UNSIGNED_BYTE?'UNSIGNED_BYTE':'?',
     srcOffset:offset,rowLength:state.get(gl.UNPACK_ROW_LENGTH),skipRows:state.get(gl.UNPACK_SKIP_ROWS),
-    skipPixels:state.get(gl.UNPACK_SKIP_PIXELS),alignment:state.get(gl.UNPACK_ALIGNMENT),pixelUnpackBuffer:state.get(gl.PIXEL_UNPACK_BUFFER_BINDING)});
+    skipPixels:state.get(gl.UNPACK_SKIP_PIXELS),alignment:state.get(gl.UNPACK_ALIGNMENT),pixelUnpackBuffer:state.get(gl.PIXEL_UNPACK_BUFFER_BINDING),flipY:state.get(gl.UNPACK_FLIP_Y_WEBGL),premultiplyAlpha:state.get(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL)});
   gl.texImage2D=(_target,_level,internal,w,h,border,format,type,data,offset=0)=>{
     trace.push(['texImage2D',format,type,w,h]);if(border!==0)throw new Error('Unexpected border');
     if(failPlane===format)throw new Error('Injected plane upload failure');

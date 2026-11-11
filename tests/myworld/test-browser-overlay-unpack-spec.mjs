@@ -14,4 +14,5 @@ for(const change of [{pixelUnpackBuffer:{}},{srcOffset:65},{srcOffset:-1},{rowLe
   assert.throws(()=>readUnpackedPixels({...base,...change}),/INVALID_OPERATION/);
 const small=bytes.subarray(0,4);
 assert.throws(()=>readUnpackedPixels({...base,view:small}),/view too small/,'Backing buffer capacity cannot override view bounds');
+assert.deepEqual([...readUnpackedPixels({view:new Uint8Array([10,20,30,0,40,50,60,255]),width:1,height:2,format:'RGBA',type:'UNSIGNED_BYTE',flipY:true,premultiplyAlpha:true})],[40,50,60,255,0,0,0,0]);
 console.log('PASS independent Khronos unpack arithmetic: view offsets, element units, row stride/skip/alignment, exact tail, PBO/type/range constraints; CPU specification model only');
