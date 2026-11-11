@@ -71,6 +71,9 @@ public final class BrowserBootstrap {
             return;
         }
         final boolean webgl=args.length>0 && "webgl".equals(args[0]);
+        final boolean benchmark=Boolean.getBoolean("spoiledmilk.browserBenchmark");
+        final BrowserOptimizedDefaults.Resolution optimizedDefaults=BrowserOptimizedDefaults.apply(webgl,benchmark,
+            BrowserOptimizedDefaults.capabilities(BrowserBootstrap.class.getClassLoader()));
         final String fixture=System.getProperty("spoiledmilk.browserRepeatableFixture");
         final boolean combat="renderer-combat-v1".equals(fixture);
         final boolean repeatable="repeatable-v1".equals(fixture)||combat;
@@ -149,7 +152,7 @@ public final class BrowserBootstrap {
                     java.lang.reflect.Field fpsField = orsc.mudclient.class.getDeclaredField("FPS"); fpsField.setAccessible(true);
                     java.lang.reflect.Field loopField = orsc.mudclient.class.getDeclaredField("selectedClientLoopMode"); loopField.setAccessible(true);
                     int inputDiagnosticSamples=0;
-                    boolean modelPickReported=false,candidatePoliciesReported=false;
+                    boolean modelPickReported=false,candidatePoliciesReported=false,optimizedDefaultsReported=false;
                     BenchmarkCandidatePolicies.RegionDiagnostics regionDiagnostics=new BenchmarkCandidatePolicies.RegionDiagnostics();
                     BenchmarkCandidatePolicies.TerrainQueryDiagnostics terrainDiagnostics=new BenchmarkCandidatePolicies.TerrainQueryDiagnostics();
                     while (true) {
@@ -175,6 +178,18 @@ public final class BrowserBootstrap {
                             // every optional Scene observation sees the same lifecycle state.
                             orsc.graphics.three.Scene observedScene=((orsc.mudclient)client).getScene();
                             reportLoop(String.valueOf(loopField.get(client)),observedScene!=null&&observedScene.isEarlyResidentFaceCullEnabled(),observedScene!=null&&observedScene.isBrowserFullResidentOwnershipEnabled());
+                            if(webgl&&!benchmark){
+                                if(!optimizedDefaultsReported&&observedScene!=null){
+                                    String[] names={"batchedModelKernel","terrainQueryIndex"};
+                                    for(int n=0;n<2;n++){
+                                        boolean[] actual=BrowserOptimizedDefaults.actual(observedScene,optimizedDefaults,n);
+                                        reportCandidatePolicy(names[n],optimizedDefaults.requested[n],actual[0],actual[1]);
+                                    }
+                                    optimizedDefaultsReported=true;
+                                }
+                                double[] normalTerrain=terrainDiagnostics.append(((orsc.mudclient)client).getWorld(),null);
+                                if(normalTerrain.length==8)reportRegionPreparationDiagnostics(false,normalTerrain);
+                            }
                             if(webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
                                 if(!modelPickReported && observedScene!=null) {
                                     reportModelPickBounds(Boolean.getBoolean("spoiledmilk.browserModelPickBounds"),

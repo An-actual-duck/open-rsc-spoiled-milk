@@ -71,9 +71,11 @@ const controlsModule = new vm.SourceTextModule(fs.readFileSync(new URL('../../to
 const streamValidationModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-upload-validation.js',import.meta.url),'utf8'),{context});
 const spriteKeyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-sprite-key-policy.js',import.meta.url),'utf8'),{context});
 const modelBatchModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-batched-model-kernel.js',import.meta.url),'utf8'),{context});
+const optimizedDefaultsModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-optimized-render-defaults.js',import.meta.url),'utf8'),{context});
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{const selected=specifier==='./browser-native-call-dispatch.js'?nativeModule:gpuModule;if(selected===gpuModule)assert.equal(specifier,nativeMode==='sync'?'./webgl-sync.js':'./webgl.js');assert(selected,'Unexpected native helper import');if(selected.status==='unlinked')await selected.link(()=>{});if(selected.status==='linked')await selected.evaluate();return selected;}});
 await module.link(specifier=>{
+  if(specifier==='./browser-optimized-render-defaults.js')return optimizedDefaultsModule;
   if(specifier==='./browser-batched-model-kernel.js')return modelBatchModule;
   if(specifier==='./browser-stutter-diagnostics.js')return stutterModule;
   if(specifier==='./browser-geometry-transfer-policy.js')return geometryModule;
@@ -105,9 +107,11 @@ else assert.equal(typeof window.browserBenchmarkOwnedState,'function');
 if(!benchmarkStream)assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserModelPickBounds=')||p.startsWith('spoiledmilk.presentationHaloMatchReuse=')),false,'Ordinary frontend must not override CPU benchmark experiment policies');
 else {assert(configured.javaProperties.includes('spoiledmilk.browserModelPickBounds=false'));assert(configured.javaProperties.includes('spoiledmilk.presentationHaloMatchReuse=true'));}
 assert.equal(typeof configured.natives.Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket,'function');
+for(const key of ['spoiledmilk.browserBatchedModelKernel','spoiledmilk.browserTerrainQueryIndex'])assert.equal(configured.javaProperties.filter(v=>v.startsWith(key+'=')).length,1);
+assert.equal(configured.javaProperties.includes('spoiledmilk.browserTerrainQueryIndex=true'),!benchmarkStream);
 assert.equal(window.browserProof.batchedModelKernelWork.packets,0);
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserBatchedModelKernel=false'),benchmarkStream&&!benchmarkBatch);
-assert.equal(configured.javaProperties.includes('spoiledmilk.browserBatchedModelKernel=true'),benchmarkBatch);
+assert.equal(configured.javaProperties.includes('spoiledmilk.browserBatchedModelKernel=true'),!benchmarkStream||benchmarkBatch);
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserOverlayDeltaTransport=false'),benchmarkStream&&!benchmarkDelta);
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserOverlayDeltaTransport=true'),benchmarkDelta);
 assert.equal(gpuOptions.overlayDeltaTransport,benchmarkDelta);
@@ -129,6 +133,11 @@ if(benchmarkStream){assert.equal(typeof window.browserBenchmarkStreamUploadValid
 assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserFramePreparation=')||p.startsWith('spoiledmilk.browserAnimatedBufferReuse=')),benchmarkStream,'only private benchmark URL receives preparation overrides');
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserSpriteKeyLimbs=true'),benchmarkKeys);
 assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserSpriteKeyLimbs=')),benchmarkStream);
+if(!benchmarkStream){
+ await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(null,'batchedModelKernel',true,true,true);
+ await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(null,'terrainQueryIndex',true,false,false);
+ assert.deepEqual(JSON.parse(JSON.stringify(window.browserProof.optimizedRenderDefaults)),{batchedModelKernel:{requested:true,available:true,enabled:true},terrainQueryIndex:{requested:true,available:false,enabled:false}});
+}
 const selectedKeys=!benchmarkStream||benchmarkKeys;await configured.natives.Java_orsc_browser_BrowserBootstrap_reportSpriteKeyPolicy(null,selectedKeys,selectedKeys);assert.equal(window.browserProof.spriteKeyLimbs.enabled,selectedKeys);assert.equal(window.browserProof.spriteKeyLimbs.requested,selectedKeys);
 const progressReturn=configured.natives.Java_orsc_BrowserWebGLBridge_worldProgress(null,[1,2,1,4,2,0,0,0,1,960,540,0]);assert.equal(typeof progressReturn?.then,nativeMode==='sync'?'undefined':'function');await progressReturn;assert.equal(window.browserWorldInputAllowed(),false);
 const presentReturn=configured.natives.Java_orsc_BrowserWebGLBridge_present(null,960,540);assert.equal(typeof presentReturn?.then,nativeMode==='sync'?'undefined':'function');assert.equal(await presentReturn,6);assert.equal(window.browserWorldInputAllowed(),true);assert.deepEqual(gateEvents,['browser-world-readinesschange','browser-world-readinesschange']);

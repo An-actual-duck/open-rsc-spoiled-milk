@@ -1,0 +1,47 @@
+Adopted browser startup render defaults (ACTIVE)
+===============================================
+
+Only ordinary WebGL startup adopts the verified model batching and immutable
+terrain query index. Rendering math, quality, view distance, UI and the desktop/
+native/software paths are unchanged. Overlay delta/rectangles and all other
+experiments remain ordinary OFF. This is not a 60 FPS claim.
+
+One canonical JS resolver owns both property values. Ordinary WebGL resolves
+both requested ON; benchmark omitted controls remain OFF with explicit ON/OFF
+retained. Private URL switches are ignored outside benchmark mode. The final
+property assembly replaces these two keys in legacy experiment property lists,
+then appends exactly one value each, preserving other experimental properties.
+Software contributes neither feature key.
+
+Bootstrap admission precedes BrowserBridge.install, Scene construction and
+Terrain initialization. Class.forName(name,false,loader) and method/native
+signature checks discover supported classes without running their static
+initializers. Ordinary missing/incompatible capability quietly resolves to
+literal OFF; explicit benchmark ON remains a strict pre-start refusal.
+Both features are validated before either property is written. No renderer or
+hot-loop code changes. The normal policy receipt reports actual Scene/static
+getters once Scene exists, under browserProof.optimizedRenderDefaults; bounded
+existing periodic terrain diagnostics report current eligible snapshot metadata.
+Unsupported old helpers remain quiet and do not manufacture enabled receipts.
+
+A stage-only derived HTML route input permits the normal private test to use
+its existing loopback server without a benchmark/fixture URL. It is restricted
+to a loopback origin and known exact loopback endpoint/port pairs; invalid input
+throws rather than falling back. Absent metadata keeps ordinary routing intact.
+No product menu/query setting, proxy, server or account change is introduced.
+
+CPU proof passed (source-bound inputs in receipt):
+output/tests/browser-optimized-render-defaults/20261111T105439152744Z/result.json
+Old/new/wrong-signature stub classloaders prove non-initializing capability
+checks and policy-before-static-init, ordinary fallback, software UNSET keys,
+benchmark omitted OFF and explicit ON refusal, and invalid property rejection.
+JS checks prove canonical uniqueness, preserved other properties, private
+controls/default rules and strict loopback routing. Mocked frontend covers
+normal, benchmark omitted, batch ON and combat variants with actual-vs-requested
+normal receipts. Actual Firefox normal login/movement/UI remains pending.
+
+The conditional strongest measured private configuration used model batching
+ON + terrain index ON with full C/T and no overlay tracking: 55.32 FPS in one
+matched terrain pair, not a universal result. Adoption uses its proven code
+paths without changing the game renderer. Source/class/asset reuse receipts
+and the normal HTTP8214 preview will bind the same immutable client artifact.
