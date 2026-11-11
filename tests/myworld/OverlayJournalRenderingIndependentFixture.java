@@ -21,8 +21,10 @@ public final class OverlayJournalRenderingIndependentFixture {
     private static String hex(byte[] data){StringBuilder s=new StringBuilder();for(byte b:data)s.append(String.format("%02x",b&255));return s.toString();}
     private static String exception(Throwable e){StringBuilder s=new StringBuilder();for(int i=0;e!=null&&i<8;i++,e=e.getCause())s.append(e.getClass().getName()).append(':').append(e.getMessage()).append('|');return s.toString();}
     private static void snapshot(MessageDigest hash,GraphicsController g)throws Exception{
-        ByteBuffer bytes=ByteBuffer.allocate(g.pixelData.length*4);for(int c:g.pixelData)bytes.putInt(c);hash.update(bytes.array());
+        // Supported framebuffer escape boundary: deferred implementations must
+        // materialize before this API publishes its borrowed C/T descriptors.
         WorldOverlayCoverage.Frame frame=g.borrowWorldOverlayCoverage();
+        ByteBuffer bytes=ByteBuffer.allocate(g.pixelData.length*4);for(int c:g.pixelData)bytes.putInt(c);hash.update(bytes.array());
         if(frame==null){hash.update((byte)99);return;}
         hash.update((byte)frame.mode);hash.update((byte)(frame.valid?1:0));
         if(frame.transmittance!=null){bytes=ByteBuffer.allocate(frame.transmittance.length*4);for(float t:frame.transmittance)bytes.putInt(Float.floatToRawIntBits(t));hash.update(bytes.array());}
@@ -36,6 +38,19 @@ public final class OverlayJournalRenderingIndependentFixture {
             draws.add(g->{fonts(aa);Fonts.fontData[0]=new byte[9];g.drawColoredString(2,10,"AB",0,1,0);});
             draws.add(g->{fonts(aa);StringBuilder text=new StringBuilder();for(int i=0;i<4200;i++)text.append('A');g.drawColoredString(1,10,text.toString(),0,0x554433,0);});
             draws.add(g->{fonts(aa);for(int i=0;i<270;i++)g.drawColoredString(1,10,"A",0,0x554433,0);});
+            draws.add(g->{
+                fonts(aa);g.drawBoxAlpha(0,0,40,32,0x354271,64);g.drawSprite(WorldOverlayCoverageFixture.sprite(false),4,5);
+                for(int i=0;i<9;i++)g.drawColoredString(1+i%3,10+i%2,"ABC",0,0x9164b8+i,0);
+                // A real clip barrier must commit the prior immutable font/clip,
+                // even though the same publicly reachable source is now changed.
+                Fonts.fontData[0][Fonts.fontData[0].length-1]=0;g.setClip(2,37,30,1);
+                for(int i=0;i<9;i++)g.drawColoredString(1+i%3,11+i%2,"ABC",0,0x65a793+i,0);
+                g.drawBoxAlpha(1,6,15,8,0x8346a1,128);g.clearClip();
+            });
+            draws.add(g->{
+                fonts(aa);byte[] f=Fonts.fontData[0];for(int i=f.length-6;i<f.length;i++)f[i]=0;
+                g.drawBoxAlpha(0,0,40,32,0x5b2e19,128);for(int i=0;i<9;i++)g.drawColoredString(1,10,"ABC",0,0x554433,0);
+            });
         }
         draws.add(g->{g.drawBox(1,1,5,3,0x112233);g.beginRenderer2DFrame();g.fade2black(0);g.drawBoxAlpha(2,3,4,3,0x223344,128);});
         draws.add(g->{g.drawBox(1,1,5,3,0x112233);g.beginOpaqueWorldOverlay();g.drawLineHoriz(1,2,8,0xffffff);});
@@ -63,6 +78,7 @@ public final class OverlayJournalRenderingIndependentFixture {
             finally{System.setOut(oldOut);System.setErr(oldErr);silence.close();}
             String logged=new String(captured.toByteArray(),"UTF-8");for(String line:logged.split("\\R"))if(line.startsWith("drawstring:")||line.startsWith("plotletter:"))hash.update(line.getBytes("UTF-8"));
             snapshot(hash,g);g.drawLineVert(35,2,0x735193,20);snapshot(hash,g);cases++;
+            if(Boolean.getBoolean("spoiledmilk.testRenderingCaseTrace"))System.err.println("CASE "+cases+" "+hex(((MessageDigest)hash.clone()).digest()));
         }
         System.out.println("SNAPSHOT "+hex(hash.digest()));System.err.println("PASS frozen journal writer C/raw-T and exception corpus cases="+cases+"; CPU only");
     }
