@@ -1142,7 +1142,7 @@ public final class World {
 		long terrainRevision,
 		boolean includeRoofGeometry) {
 		long buildStart = System.nanoTime();
-        WholeOverworldRamRegistry.Provider ram=WholeOverworldRamRegistry.forWorld(this,terrain);
+        WholeOverworldRamRegistry.Provider ram=WholeOverworldRamRegistry.forCaptured(terrain,worldOffsetX,worldOffsetZ,includeRoofGeometry);
         if(ram!=null){ram.avoidedBuild();return new NativeWorldModelPrebuild(true,System.nanoTime()-buildStart);}
 		int sectionX = worldTileToSection(Math.addExact(
 			Math.multiplyExact(
