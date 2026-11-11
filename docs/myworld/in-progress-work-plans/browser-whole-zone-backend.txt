@@ -104,6 +104,10 @@ actors, summons, VFX, overlays and authority stay in existing Java systems.
 Receipts separate expected resource counts, actual pinned resource/byte counts,
 downloaded metadata/raw assets/baked GPU data, local/pinned/merged draw counts,
 reason counts, source epoch/world-space scope and the one startup GPU checkpoint.
+Bounded first16 selected pinned IDs, a non-cryptographic FNV32 ID-list hash,
+up to8 masked-cell samples (mutations before animations), and4 authored-baseline
+samples support local reuse/override inspection without copying the catalogue.
+These are selection diagnostics, not independent pixels or GPU completion proof.
 reportWholeZoneWork is main-thread low-frequency Java index/local coverage (0
 pending or9 scalar words), explicitly not full classic CPU model residency or
 independent GPU proof. In particular rawSourceCPUReady remains false on the

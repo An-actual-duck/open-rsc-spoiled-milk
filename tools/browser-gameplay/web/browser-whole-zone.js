@@ -159,20 +159,20 @@ export function createWholeZoneSelection(catalog,stats){
     if(input.length%8||input.length>256*8)throw new Error('Whole zone local draw bounds');
     const {v,rows}=current;stats.currentLocalDraws=input.length/8;
     for(let at=0;at<input.length;at+=8)if(input[at]>=PIN_BASE)throw new Error('Pinned chunk appeared in local Java draw list');
-    if(!v[1]){if(level===0&&v[17]===0)throw new Error('Whole zone overworld source inactive');Object.assign(stats,{currentPinnedDraws:0,currentMergedDraws:input.length/8,verifiedObjectCells:0,mutatedObjectCells:0,animatedObjectCells:0,authoredBaselineObjectCells:0,selectedObjectCells:0});return input;}
-    const out=[];let unchanged=0,mutated=0,animated=0,baseline=0,knownCells=0;
+    if(!v[1]){if(level===0&&v[17]===0)throw new Error('Whole zone overworld source inactive');Object.assign(stats,{currentPinnedDraws:0,currentMergedDraws:input.length/8,verifiedObjectCells:0,mutatedObjectCells:0,animatedObjectCells:0,authoredBaselineObjectCells:0,selectedObjectCells:0,selectedPinnedFirstIds:[],selectedPinnedIdHash:0,maskedObjectCellSamples:[],authoredBaselineCellSamples:[]});return input;}
+    const out=[],changedSamples=[],animatedSamples=[],baselineSamples=[];let unchanged=0,mutated=0,animated=0,baseline=0,knownCells=0;
     const add=c=>{if(!c||c.sourceKind==='objects'&&c.plane>0)return;const dx=c.originX-v[3],dz=c.originZ-v[4];integer(dx,-2147483648,2147483647,'rebased X');integer(dz,-2147483648,2147483647,'rebased Z');out.push(c.id,dx,dz,v[3],v[4],v[8+c.plane]&c.visibilityMask,c.plane,c.role);};
     for(let plane=0;plane<3;plane++)for(let x=v[5]-2;x<=v[5]+2;x++)for(let y=v[6]-2;y<=v[6]+2;y++)add(world.get(plane+':'+x+':'+y));
     for(let plane=0;plane<3;plane++)for(let x=(v[5]-2)*2;x<(v[5]+3)*2;x++)for(let y=(v[6]-2)*2;y<(v[6]+3)*2;y++){
       const key=plane+':'+x+':'+y,cell=objectCells.get(key);if(!cell)continue;knownCells++;const row=rows.get(key);if(!row)throw new Error('Missing whole zone object authority: '+key);
       const matches=row.key===cell.canonicalContentKey;
       if(row.reason===0){if(!matches)throw new Error('Whole zone unchanged key mismatch');unchanged++;add(objects.get(key));}
-      else if(row.reason===3){if(!matches)throw new Error('Whole zone authored baseline key mismatch');baseline++;add(objects.get(key));}
-      else if(row.reason===1)mutated++;else animated++;
+      else if(row.reason===3){if(!matches)throw new Error('Whole zone authored baseline key mismatch');baseline++;if(baselineSamples.length<4)baselineSamples.push(key+':3:'+row.key);add(objects.get(key));}
+      else if(row.reason===1){mutated++;if(changedSamples.length<8)changedSamples.push(key+':1:'+row.key);}else{animated++;if(animatedSamples.length<8)animatedSamples.push(key+':2:'+row.key);}
     }
     const pinned=out.length/8;if(pinned+input.length/8>1024)throw new Error('Whole zone merged draw capacity');
-    const merged=new Int32Array(out.length+input.length);merged.set(out);merged.set(input,out.length);
-    Object.assign(stats,{currentPinnedDraws:pinned,currentMergedDraws:merged.length/8,verifiedObjectCells:unchanged,mutatedObjectCells:mutated,animatedObjectCells:animated,authoredBaselineObjectCells:baseline,selectedObjectCells:knownCells});return merged;
+    const merged=new Int32Array(out.length+input.length);merged.set(out);merged.set(input,out.length);let idHash=2166136261;const firstIds=[];for(let at=0;at<out.length;at+=8){idHash=Math.imul(idHash^out[at],16777619)>>>0;if(firstIds.length<16)firstIds.push(out[at]);}
+    Object.assign(stats,{currentPinnedDraws:pinned,currentMergedDraws:merged.length/8,verifiedObjectCells:unchanged,mutatedObjectCells:mutated,animatedObjectCells:animated,authoredBaselineObjectCells:baseline,selectedObjectCells:knownCells,selectedPinnedFirstIds:firstIds,selectedPinnedIdHash:idHash,maskedObjectCellSamples:changedSamples.concat(animatedSamples).slice(0,8),authoredBaselineCellSamples:baselineSamples});return merged;
   }
   return {frame,merge};
 }
