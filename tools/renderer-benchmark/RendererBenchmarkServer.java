@@ -128,7 +128,7 @@ public final class RendererBenchmarkServer {
             GameTickEvent event=i<3?p.getMagicCombatEvent():i==3?p.getRangeEvent():i==4?p.getThrowingEvent():p.getPvmMeleeEvent();
             boolean registered=event!=null&&scheduled.contains(event);
             boolean running=event!=null&&event.isRunning()&&event.getOwner()==p
-                &&registered;
+                &&registered&&worldServer.getWorld().getPlayer(p.getIndex())==p;
             if(running)active++;
             channels.put(COMBAT_FAMILIES[i],new JSONObject().put("running",running)
                 .put("hasHandle",event!=null).put("registered",registered)

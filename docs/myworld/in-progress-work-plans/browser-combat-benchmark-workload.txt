@@ -46,3 +46,24 @@ Next action: manager activates a fresh immutable disposable diagnostic stage wit
 unchanged frozen server binaries and an explicitly unverified server-source
 receipt. Original baseline-2 data and processes stay manager-owned and unchanged.
 Do not mark this checkpoint as a proven workload fix or full combat acceptance.
+
+Offline regression and prepared diagnostic stage
+-----------------------------------------------
+- test-renderer-combat-workload.py with --server-artifacts pointing to preserved
+  baseline-2 server:114 checks pass in offline-regression-2. Full terrain loading,
+  authored population, full plugin roster, regular actor processing and queued
+  production events produce increasing contributions/resources for every family
+  across two windows separated by the real spell cooldown. Exact same-key orphan
+  and stopped-handle cases are rejected. No alternate combat events/damage exist.
+- The first regression attempt tried the population loader's item-ID inventory
+  query against the explicit unused localhost test credentials; it failed safely.
+  The corrected test supplies only an empty seed item-ID inventory and throws on
+  any JDBC open, keeping the production world population path while guaranteeing
+  no player database is contacted. Failure evidence remains in offline-regression-1.
+- Immutable diagnostic stage browser-combat-workload-diagnostic-1 was compiled
+  from source checkpoint f16ec4283a0085fb9c57ba6f0c9db1e78d2de41f. Its source,
+  artifacts, map, and fresh database are receipted; frozen server binary source is
+  explicitly unverified. No process was launched by this worker. Subsequent test
+  additions do not rewrite that stage's frozen source/classes/receipts.
+- Later source also excludes actors absent from the live player list from active
+  channel totals. That change is not silently installed into diagnostic-stage-1.
