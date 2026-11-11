@@ -1,132 +1,176 @@
-PRIVATE OFFSCREEN RENDER-WORKER PIPELINE — ACTIVE
+PRIVATE OFFSCREEN RENDER-WORKER PIPELINE — READY, EXPERIMENTAL DEFAULT OFF
 
-Purpose: move the existing createBrowserWebGL backend and its unchanged shaders
-to an OffscreenCanvas worker. Java VM, input, AWT and literal C/T stay main.
-Default remains OFF; no release/public changes. Performance is unproven.
+The private browser render-worker prototype passed exact hardware pixel parity,
+real gameplay/input smoke, and matched busy-combat performance checks. Same-JAR
+Worker ON reached59.8524FPS and confirmation59.7997FPS versus main-thread
+OFF56.7160FPS (+5.53% / +5.44%). This approaches the60FPS target on this PC;
+it does not guarantee every frame60FPS, other devices, or compositor scanout.
+No public/release/server changes and no ordinary default enablement.
 
-Protocol contract
-- Explicit native argument roster; synchronous owned byte copies inside each
-  borrowed callback. Preserve exact typed view offsets and float bit patterns.
-  Transfer only new buffers, never Java arrays. Validate dimensions/caps first.
-- Two unacknowledged packets plus one bounded producer batch; no unbounded
-  mailbox. Resource creation/update/delete and frame submissions are ordered.
-- initialize and planWorldSprites are result barriers, using the actual backend
-  MAX_TEXTURE_SIZE and missing-image decisions. This unavoidable initial pilot
-  synchronization limits overlap; no replicated atlas ownership.
-- present enqueues a frame; worker completion ACK follows successful original
-  backend execution. Producer FPS is not presented FPS. Fatal/context loss or
-  dispose rejects waiters; no fallback after canvas transfer.
-- Main DOM rect/DPR snapshot and monotone size epoch travel with each batch.
-  Backend output sizing uses this explicit adapter, preserving physical quality.
-- Full C/T only. Existing overlay ACK and Java generation authority unchanged.
-- Sequential main-vs-worker replay must compare actual RGBA output including
-  odd physical dimensions; CPU mocks do not establish GPU equality.
-
-Proof plan: independent ownership/order/backpressure/failure CPU corpus, actual
-GPU exact replay, then private same-artifact gameplay functional/FPS acceptance
-by manager. No worker browser/server/GPU processes. Port8217 reserved for client
-preparation against existing combat43639/43539; artifacts under declared output
-categories.
-
-Implementation checkpoint and limits
-- Runtime88af6b08ebc1d50fab86bec34ef4461fcf42631b; ordinary renderworker
-  absent/OFF keeps the existing main backend. Explicit ON requires private
-  async WebGL coverage and overlaydelta OFF. No Java raster/renderer edits.
-- Frame batch closes at final frameWork after WORLD present. LOGIN/opaque
-  present and holdWorld close directly, with no expected frameWork. Result
-  barriers (initialize, sprite plan) flush a nonframe batch and await actual
-  return. Resource prefixes cannot be dropped to cancel a pending draw.
-- ACK means backend execution/submission completed, not GPU fence completion
-  or physical scanout. Worker Java/world frame counters and interval samples
-  are authoritative; main producer calls are separate. Queue age, allocation,
-  copy time, transfers, pool and backpressure have separate counters.
-- Input payloads use intrinsic shape/getters and byte copies. ArrayBuffer
-  copies preserve raw float bits and view offsets, reject SharedArrayBuffer.
-  Whole command/envelope/endpoint metadata is preflighted before backend
-  prefix execution; backend semantic errors poison rather than falsely ACK.
-- Two unACKed64MiB packets plus one producer64MiB +16MiB/1024-buffer exact-size
-  returned pool =208MiB maximum transport owned payload capacity. This is not
-  a process-wide heap/driver/GC bound. Java sources, shader strings, derived
-  backend metadata/resources, message envelopes and engine overhead additional.
-  No Java/input buffer is transferred. Returned owned packet buffers are
-  detached from Worker only after all commands execute, then overwritten on
-  next synchronous capture. Pool is cleared on disposal/fatal failure.
-- Backend input lifetime audit: chunk batches/bounds, world readiness metadata,
-  sky ranges/values, lighting values/mask bounds and atlas metadata/quads have
-  explicit owned copies. Raw C/T/palette/geometry/mask planes are synchronously
-  consumed by WebGL APIs. Hardware retained-resource test still required.
-- Physical dimensions use main DOM rect/DPR with monotone size epoch and the
-  SAME physicalOutputSize formula/capability. Worker size() rejects absent or
-  zero metrics. Main aligns the existing CSS display before worker present.
-  Fit/fullscreen/input remain main-owned. No resolution/camera/quality cut.
-- Stats use closed metadata object/history whitelist and bounded recursive
-  shape. Actual pushed interval samples include equal samples and full rings;
-  measurement policy is ordered to worker and acknowledged. No framebuffer,
-  typed-plane or arbitrary cache clone in diagnostics.
-- Oracle-only capture reads RGBA in worker completion task before ACK, retains
-  max one owned output, and transfers it on request. It can overwrite EVERY
-  returned input buffer before pool insertion. Confirmed disposal awaits
-  backend ledger cleanup; ordinary disposal terminates promptly and rejects
-  waiters, without claiming observed backend resource cleanup.
-
-CPU proof
-- Independent exact88af review8bfb0f3e3f67e3808d3ed37b39757470a47a4bb6:
-  180 checks PASS; ownership/raw bits/offsets, real structuredClone transfers,
-  2-slot backpressure, resource order, malformed final command zero-prefix,
-  version/epoch/result identity, poisoned/fatal/dispose cleanup, lifecycle,
-  pool return overwrite/reuse, bounded stats/sample shapes and physical math.
-  Receipt: ai2/output/tests/browser-render-worker-protocol-independent/
-  20261111T123626005011Z/result.json. CPU only, no hardware/Worker-FPS claim.
-- Local CPU facade20checks and default/worker-combat mocked frontend PASS.
-  An initial worker mock omitted required overlay=coverage; preserved failed
-  fixture log, corrected test query then passed. No runtime workaround.
-- Initial full build invocation lacked system ant; failed prebuild log retained.
-  Repository vendored Ant with Java8 full source build succeeded3seconds.
-
-Status: ACTIVE; actual GPU exact replay passed, gameplay/FPS acceptance pending.
-No adoption/performance/60FPS claim. All prior rejected experiments preserved.
-
-Final candidate and hardware pixel gate
-- Final runtime a10f96234dbe7556565dc31301cd6a3a5bc6d5a5. Main frontend
-  loading gate waits for a completed frame with actual Worker javaWorldFrames>0
-  and ready phase, not a queued declaration/held/LOGIN-image ACK. Dedicated
-  worker frontend mock exercises all those transitions and default OFF path.
-- Returned pool now evicts cold oldest size buckets and refreshes recency on
-  both acquisition/release; cold startup geometry cannot permanently exclude
-  hot C/T planes. CPU facade23checks include cold16MiB→hot2MiB→reuse plateau.
-- Full-source Java8 build: game-65-review-3, JAR
-  49bc1f7d78d4022eca6399afd15acc1a7ee226ae67cf1b10c183e39ec7f56e08.
-  Source65ba35fadbd131e670619575f799f6f08d2e6eb5, Java/Bootstrap/runtime-contract
-  byte-identical to finala10 (no Java renderer edits in this task). 950 compiled
-  classes =660orsc+290com; 3185 packaged runtime asset files exact, no transplants.
-  Receipt output/builds/browser-render-worker-pipeline/game-65-review-3/receipt.json.
+Exact frozen source and artifact
+- Runtime25cd32c629d63a9a16abc5ceb5fe955d3c1e0285. Final staged frontend
+  578292256fd416d7b1f2b3a9c9dc483e8707e584 is test-only/byte-identical runtime.
+- Full-source Java8 build game-65-review-3, source
+  65ba35fadbd131e670619575f799f6f08d2e6eb5. Java/Bootstrap/runtime-contract
+  sources are byte-identical to final25cd; this task changes no Java renderer,
+  gameplay, input, AWT or desktop/native/software code. No transplanted classes.
+- JAR49bc1f7d78d4022eca6399afd15acc1a7ee226ae67cf1b10c183e39ec7f56e08.
+  output/builds/browser-render-worker-pipeline/game-65-review-3/receipt.json:
+  950 compiledJava8 classes (660orsc+290com),3185 packaged runtime assets exact.
   Classmanifest933b9442ccfed6f47f676864ac3e74b1acdff2e4474e745e507f06aa6b34258d;
-  assets448c122a2af5c9e12dc02765753313de96502d4d50dde2eedbf45af73b5a9dba.
-- Final immutable client-only stage3:
-  output/tests/browser-gameplay-spike/render-worker-combat-review-3/
-  combat-preparation.json. Frontend exacta10, HTTP8217, existing final combat
-  TCP43639/WS43539; explicit modelbatch/terrainquery/keylimbs ON, fullC/T and
-  overlaydelta/rect OFF. Same-JAR renderworker ON/OFF URLs. Old88 stage1 and
-  frontendf1 stage2/builds/receipts preserved. No server/DB/request change.
-- Manager actual Firefox154.0.1 / AMD RadeonR9 200 hardware oracle PASS exacta10:
-  50 cases, 27,915,808 RGBA bytes compared across original58 backend, candidate
-  main and actual OffscreenCanvas Worker: ZERO changed bytes; errors[]. Cases
-  include physical1843x1037, odd/DPR2 sizes, null opaque T, resource/atlas epochs,
-  borrowed caller mutations and EVERY returned-buffer overwrite followed by
-  draw without unchanged resource resend. Confirmed Worker disposal ledger:
-  disposed true, gpuBytes0, spriteResourceBytes0. Recorded 83 completed frame
-  packets including32 warmframes,166 command packets,1180 buffers returned,
-  1062 reused; all22,377,760 returned bytes overwritten by oracle. These are
-  controlled hardware functional counters, NOT gameplay/JNI/FPS/scanout proof.
-- Manager evidence directory (not created/modified by this worker):
-  output/diagnostics/browser-frame-architecture/render-worker-gpu-4/
-  actual.json SHA256
-  9c07d4330eae2d5d5acf7966ec675bf62530f92cc0ab07edc926788840fc1f2f
-  receipt.json SHA256
-  f7caad14e54009abc93f6cc1f37859a6c5fb1d717650cbfe8c087a3f980af7a3
-- completedFrames transport counter includes held terminal packets. Gameplay
-  FPS must use actual Worker gpu.javaWorldFrames (or javaFrames for all actual
-  present calls), with held/drop/age/resource counters reported separately.
-  Completion means original backend execution/submission, not GPU scanout.
+  assetmanifest448c122a2af5c9e12dc02765753313de96502d4d50dde2eedbf45af73b5a9dba.
+- Final immutable client-only stage:
+  output/tests/browser-gameplay-spike/render-worker-combat-review-4/
+  combat-preparation.json. HTTP8217, existing final-combat TCP43639/WS43539.
+  Explicit modelbatch/terrainquery/keylimbs ON, full C/T, overlaydelta/rect OFF;
+  same-JAR renderworker ON/OFF URLs. Exact frontend/asset hashes in receipt.
+  Server, DB, request and processes were not changed/started by this worker.
 
-No adoption/performance claim yet. Root owns actual private gameplay/paired FPS.
+Architecture and ownership contract
+- Private renderworker=on selects OffscreenCanvas Worker with the SAME existing
+  createBrowserWebGL backend, modules and shaders. Java VM, game/scene prep,
+  input, AWT and literal C/T rendering stay main. Absent/OFF uses main backend.
+  ON requires private async WebGL coverage and overlaydelta OFF. No quality,
+  camera, fog or draw-distance reductions; no product UI or feature toggle.
+- Explicit native command schema validates primitive types/intrinsic typed-view
+  shapes, offsets/caps before byte-copy allocation. Preserve raw float bits.
+  Reject SharedArrayBuffer. Clone only genuinely owned buffers during callback;
+  transfer only copies, never Java arrays; no borrowed inputs retained.
+- Two unACKed64MiB packets plus one64MiB producer and a16MiB/1024-buffer returned
+  exact-size pool =208MiB maximum owned transport payload capacity. This is NOT
+  a process-wide memory ceiling: Java sources, envelopes/strings, backend-owned
+  metadata, driver/GPU storage, GC and engine overhead are additional.
+- Worker returns packet buffers only after backend execution. Pool recency is
+  refreshed on acquire/release; cold startup geometry is evicted for recent C/T
+  planes. Exact byte overwrite on reuse; all pool refs cleared on fatal/dispose.
+- Backend lifetime audit: chunk batches/bounds, readiness metadata, sky ranges/
+  values, lighting values/mask bounds, atlas metadata/quads retain OWN copies.
+  Raw C/T/palette/geometry/mask inputs are consumed synchronously by GL APIs.
+  Hardware tests detach/overwrite every returned input then draw without
+  resending unchanged resources, independently checking this contract.
+- Ordered IDs and main-layout epochs; entire envelope/shape/entrypoint preflight
+  before backend prefix execution. Backend semantic failure poisons transport;
+  no false ACK or silent fallback after irreversible canvas transfer. Fatal,
+  loss, disposal and startup rejection clear staging/reject pending promises.
+- WORLD present closes at final frameWork, so backend world-frame/stat receipts
+  are coherent. LOGIN/opaque present and holdWorld close directly. Resource
+  prefixes stay ordered and are never dropped to cancel an unfinished frame.
+- initialize and planWorldSprites are true result barriers: actual texture
+  capability and atlas missing-image decisions come from existing backend,
+  not duplicated state. They constrain overlap; no per-TEXT/JNI replacement.
+- ACK means original backend execution/submission completed, NOT GPU fence or
+  physical scanout. FPS uses Worker gpu.javaWorldFrames, never producer Java
+  reportState FPS or transport completedFrames (which includes held packets).
+- Main DOM rect/DPR and monotone size epoch explicitly feed the SAME physical
+  size formula/capability. Worker rejects zero/missing physical layout. Main
+  worker-only early loading uses positive measured #display and actual present
+  logical extent before AWT canvas exists, then measures actual GPU canvas.
+  Once AWT exists, original target alignment applies. Cached zero rect retries;
+  positive steady rect stays cached until resize/DPR/display invalidation.
+- Initial loading/input gate releases only after a completed actual WORLD frame
+  and ready phase, not a queued declaration, held/LOGIN image, or resource ACK.
+  Input/fit/fullscreen remain main-owned. No fake960/scale1 physical fallback.
+- Bounded closed stats object/history whitelist, sample shape/depth/string caps;
+  no framebuffer/typed-plane/cache diagnostic clone. Actual push counters retain
+  equal intervals/full-ring samples. Main measurement setting is ordered and
+  its actual Worker policy acknowledged. No per-frame full-proof publication.
+- Oracle-only completion-task RGBA capture precedes ACK/default drawingbuffer
+  clearing; max one owned readback. Confirmed disposal observes backend ledger;
+  ordinary disposal terminates promptly without claiming observed ledger0.
+
+CPU/source proof
+- Independent exact25cd review READY04e230283228a60eefd2e95eb113530511d5e4e7:
+  214 checks PASS, source-bound ownership/rawbits/offsets, real structuredClone
+  transfer/detach, two-slot backpressure, resource order, malformed finalcommand
+  zero-prefix, version/epoch/result identity, poison/fatal/dispose cleanup,
+  pool return/reuse/eviction, stats caps and actual extracted frontend paths.
+  No-AWT802x602 gives actual1604x1204 BEFOREbackend callback; lateAWT restores
+  original formula; zero-to-positive retry and steady cache verified.
+  ai2/output/tests/browser-render-worker-protocol-independent/
+  20261111T125646225872Z/result.json. CPU only, not actual browser/GPU proof.
+- Local facade27checks PASS, including cold16MiB→hot2MiB payload reuse and
+  measuredzero→positive→steady→invalidation. Actual frontend VM mocks pass
+  ordinary OFF and private worker; no-AWT first896x504 uses896px/504px from
+  actual arguments and later returns to normal AWT alignment.
+
+Actual hardware and gameplay gates (manager executed)
+- Exact25cd GPU oracle5: Firefox154.0.1, AMD RadeonR9 200, three-way original58 /
+  candidate-main / actual Worker.50cases,27,915,808 RGBAbytes, ZERO changed;
+  errors[]. Includes full C/T, null opaqueT,1843x1037, odd/DPR2, resource/atlas
+  epochs, caller and EVERY returned-buffer mutations followed by no-resource-
+  resend, and confirmed Worker disposal gpuBytes0/spriteResourceBytes0.
+  root output/diagnostics/browser-frame-architecture/render-worker-gpu-5/
+  actual.json3ae5bdf22ff75229855b180d2bbdcba89b7ffd88d991fcd137511fff4e1e3d25
+  receipt.jsoncafe8b9dbf6cc55ee1cfc7927352d898a1919c1b15ae03dbeab7a23b509c5b92
+- Corrected real gameplay functional2 PASS: LOGIN→GAME ready, actual Worker
+  world frames advance, logical960x540 and physical1843x1037 with same camera;
+  authoritative walk502,453→499,456 level0; menus and middle press/release PASS.
+  No GPU error/drop/abandon. These smoke checks do not claim exhaustive input,
+  region-transition, context-loss, device/browser or long-soak coverage.
+  root .../render-worker-functional-2/functional-smoke.json
+  634eae0919632a438b72d927ef529dcaabcfa4784fe2fe60281c67dc5d0b8f1c;
+  first-ready.json0fa8bd2c64ca73221ed0f026462eb5c26ed5856430687b98665232e106168979.
+
+Matched busy-combat measurements
+Same49bc JAR/final25cd, Firefox isolated foreground sessions on the same PC.
+Before EACH mode: manager reset disposable offline account spawn502,453 and
+existing private dayclock/combat phase. No server binary/public changes. Each
+run180s warmup then2x30s timed.32 targets,16 synthetic players+viewer,8 sustained
+summons; all6 real combat channels' resource/damage/event counters strictly
+advance per segment. GPU group counts vary with live effects. Batch+terrain+
+keys ON, full C/T unchanged, physical1843x1037/logical960x540/camera unchanged.
+No screenshots/IPC or concurrent task tests/builds/GPU work inside timed spans;
+owner's unrelated desktop apps left intact.
+
+Run             30s segments FPS             Weighted FPS   p99 ms
+Worker ON2      60.00133 /59.70348            59.85240959    22 /23
+Main OFF1       56.74964 /56.68232            56.71597042    22 /21
+Worker ON3      59.64082 /59.95867            59.79972341    23 /22
+
+ON2 gain5.53008%; confirmationON3 gain5.43719%. ON2/ON3 mean near60, not every
+frame at60: ON2 second segment had2>50ms frames/max57ms; ON3 first had1>50ms /
+max64ms. Neither ONrun had>100ms frame; OFFsegments max26/27ms. Higher average
+throughput does not establish better extreme tails or lower input latency.
+This is one PC/driver and two ON vs one OFF sessions, not a confidence interval,
+all-device promise, long soak, scanout measurement, or release/default approval.
+
+During accepted ON segments: ~2 Workerpackets/worldframe; ~4.24MB primitive
+owned copies/frame; measured main copy~0.167–0.173ms/frame (timer-resolution
+limited, not GPU/IPC/bus time); ZERO new payload buffer bytes/frame and ZERO
+backpressure waits. Zero-length buffer objects can still allocate, so this is
+not a claim of zero object allocations. GPU C/T uploads remain4,147,200bytes /
+frame,2 calls, no packing or sparse marking. Queue age means main ACK-delivery
+latency after submission: means13.6–14.1ms, p99~19ms, max22–26ms; no>33ms queue
+age in these segments. It is not GPU latency, scanout or end-to-end input delay.
+
+Raw receipts under manager output/diagnostics/browser-frame-architecture/:
+- render-worker-on-2-measure/result.json
+  01808a303e009647e6a7aa19c7dbe19ca001cd8b3b3ba475210a724e05038135
+- render-worker-off-1-measure/result.json
+  9d28b233e507cff2047bfca995affe9b6adcfb134d73222636dea5ff56c086f2
+- render-worker-on-3-measure/result.json
+  4cc44f0d125f0fb2130032f522f22059d9e3f256268be0ef8504a2cbaa73fae9
+- render-worker-comparison.json
+  b0edb4213d9838b3e5ca202f46ee38fcf105bc3c9bf34c4c14d8f0de604fa3c5
+
+Preserved exclusions and corrections
+- a10 stage3 actualstartup functional1 failed beforeLOGIN frame: real AWTcanvas
+  did not yet exist; CSSwidth/height empty and cachedrect0. Positive synthetic
+  GPU fixtures had not covered this DOM lifecycle. Fixed25cd with actual
+  measured display alignment/cache admission, not fake metrics or keepalive.
+  Original startup-failed.json retained SHA
+  da79271be1eed9520af66381faa2204bdd90a6eaeebdf157ef5e5eb3165522bd.
+- ON1 measurement rejected BEFORE timed data: old main-thread frameWork setter
+  hook incompatible with WorkerACK metadata updates. Collector only corrected,
+  fresh client restart; no runtime tuning or FPS salvaged from rejected data.
+  Original counter-hook-rejection.json retained SHA
+  e6a67b054438751a692364a515c504ad47c33ee111a1a062c068ec614d99afce.
+- Old stages/builds/oracles preserved, including a10GPU4 passing earlier pool
+  and subsequent25cdGPU5; only latest game-functional2 and accepted measured
+  ON2/OFF1/ON3 support final runtime performance statements. Initial command
+  without systemAnt failed beforebuild; vendoredAnt Java8 fullbuild succeeded.
+  Early mock omitted required coverage flag; corrected test query. No hidden
+  production workaround or unrelated failed experiment imported.
+
+Handoff: READY for manager review as PRIVATE, DEFAULT-OFF prototype. Runtime,
+stages and all evidence remain frozen; no unmeasured tuning after timings.
