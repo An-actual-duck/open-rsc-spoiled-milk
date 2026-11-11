@@ -118,11 +118,18 @@ hashes; they do not authorize or claim a server/browser start. The combat stage
 uses a congruent frozen server artifact snapshot whose source is explicitly
 unverified; it is not called current main. Older async stages stay untouched.
 
-Remaining manager acceptance
-----------------------------
-Verify the final synchronous callback's actual64-case JNI contract, then measure
-same-artifact ON/OFF fixed crowd, real spell/summon combat and area transitions,
-checking successful native counters and unchanged picking/visuals. Per-model
+Final synchronous JNI proof and remaining manager acceptance
+-----------------------------------------------------------
+The manager also verified the final synchronous callback in an isolated Firefox:
+64 successful calls,2254 vertices,19568 Java array values, zero rejections and
+exit0, with native-module SHA2566e34e31a... and client JAR7a9dc501... matching
+the frozen a226/494 preparation manifest. Evidence:
+output/diagnostics/browser-frame-architecture/kernel-sync-contract-host-1/
+actual-contract-result.json. The manager closed the probe Firefox and HTTP host
+normally. This is an actual JNI writeback proof, not game/FPS acceptance.
+
+Next measure same-artifact ON/OFF fixed crowd, real spell/summon combat and area
+transitions, checking successful native counters and unchanged picking/visuals. Per-model
 native-call overhead could offset saved arithmetic, so no gain or60FPS claim is
 made by this worker. Keep defaultOFF unless balanced measurements support adoption.
 
