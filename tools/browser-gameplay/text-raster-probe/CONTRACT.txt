@@ -1,0 +1,100 @@
+Private whole-TEXT raster pilot: ABI/cost gate (no game integration yet)
+=====================================================================
+Current source prepares a standalone real-CheerpJ probe, not a runtime property,
+registry, bridge or changed GraphicsController hot method. Parent approved the
+following future contract, conditional on real probe review. Existing ordinary
+plotCharacter/plotLetter/AA/alpha-box source remains completely unchanged: even
+flag-OFF try/finally wrappers can change generated code/performance. A future
+pilot adds only a direct private static-final guard at drawColoredString's final
+TEXTPlotCommand loop, with helper/finally allocated solely on the enabled path.
+
+Approved game boundary (not implemented here)
+-----------------------------------------------
+Common Client_Base synchronous sink/registry installed by PC WebGL startup only
+when explicitly enabled. Parsing, font remapping and inline/crown icons stay as
+now. One native callback processes all final glyph/shadow plots in their existing
+order, before subsequent Java draws. No per-glyph/per-pixel native calls and no
+whole-frame/UI rerender. Only valid current MODE_WORLD C/T owner initially; other
+phases/modes take literal path before mutation. Poison must latch invalid/hold
+before presentation, never fall through to a literal loop after partial writes.
+
+All plots in one drawColoredString call use the same local fontData reference.
+Five raw ints/plot: x,y,signed32 color,font-header address,AA flag; one borrowed
+byte[] font,int[] C,float[] T,typed surface/clip metadata and exact safe generation/
+sequence values. JS resolves signed-byte headers/clipping with original Java int
+wrap, then validates EVERY resolved source/destination row and bound before any
+write. Invalid input returns0 untouched, selecting the original Java loop and
+its original caught-prefix behavior. This does not normalize malformed legacy
+inputs into different partially rendered results.
+
+Success statuses1(no actual covered write),2(wrote C/T);0 unsupported/no writes;
+-1 poisoned execution. Native body is plain synchronous JavaScript: no async,
+await, GL, borrowed input retention or external callback. Unhandled Java/native
+failure is poison, not silent fallback. Preflight rejection can safely fall back.
+Genuine matching typed views or genuine ArrayBuffer only; the latter is wrapped
+in a bounded, aligned typed view sharing storage (no pixel/source copy). Reject
+arbitrary arrays/proxies and SharedArrayBuffer. Raw kinds and converted scalar
+view shapes plus zeroCopyBorrow are recorded. Adapter cost is included. Alias tests compare byte
+RANGES, because disjoint Java views may share a backing heap. Metadata/source
+readers cannot overlap either writer; C/T cannot overlap each other.
+
+Coverage receipt before callback must validate exact Java owner/C/T identities,
+mode/dimensions/generation/sequence and no pending transport plan. Java premarks
+ONE conservative clipped whole-TEXT bound with transport-only row ranges before
+entry, not one scope/row per glyph. Bounds use a strict reasonable coordinate/
+header domain and checked int arithmetic; questionable cases stay literal. JS
+validates every write remains within the premapped bound. Native per-pixel T
+updates preserve glyph holes; NEVER opaqueSpan/T0 an entire bounding box. Receipt
+commit rechecks owner/token and sets Coverage.written only on status2. Extra dirty
+marks on rejected0 are safe; they do not advance GPU ACK history. Scope is private,
+non-nested and cleared in finally/reset. Fatal execution holds/rejects that frame.
+No actual supported-writer receipt/transport mutation is implemented in this probe.
+
+Font ownership audit
+----------------------
+Fonts.java has package-visible byte[][]; addFont installs input arrays during
+loadLogo. Repository source search found no glyph-byte mutation after install;
+GraphicsController reads fontData and fontAntiAliased. Renderer2DFrame.GlyphCommand
+getFontData publicly returns the same array, and OpenGLGlyphTextureCache retains
+it, so identity never implies permanently immutable contents. Borrow current font
+bytes anew each call, with no cache or retained font reference. The pilot assumes
+existing render-thread confinement; it cannot make concurrent Java writers safe.
+A no-await JS native turn does not yield to another JavaScript task; shared-memory
+concurrent mutation is explicitly rejected. Future raw-source escape needs review.
+
+Probe design and what is proved
+---------------------------------
+prepare.py uses the reviewed overlay-command-reference source extractor against
+an explicit read-only Core root. Literal source methods/coverage/dependencies and
+actual jf font bytes get recorded hashes. Only copied test helpers are compiled.
+One real font (named/hashed in stage receipt) feeds0/1/8/32/128 overlapping glyph/
+shadow plots. Literal Java C/T vs returned native C/T is checked immediately after
+EVERY native return before any timing; this establishes actual same-call typed
+view visibility only if the real browser gate passes. Genuine constructors,
+element widths, buffer kind/size and offsets are recorded as scalar metadata.
+Native stores counters/scalar view shapes only; source/planes/metadata locals
+are nulled in finally. Scalar scratch contains resolved integer geometry only.
+
+Costs: literal; validate-only callback returning0 then literal; native raster.
+Two reversed count/mode orders,30 half-second measured cohorts after per-case
+warmups. Common clear/preparation costs remain inside every iteration. Native
+modes include actual Java packet building, fresh Frame borrow, dispatch, native
+preflight and raster. Literal is not charged artificial packet building. Timing
+uses batched Java clocks and aggregates enough iterations for coarse resolution.
+This is not a pure JNI timer, browser gameplay FPS, GPU timing, or adoption result.
+Frame C/T clear here is only common probe setup, not an authorized runtime feature.
+
+Stages are immutable after prepare. Root starts loopback HTTP/browser at8211;
+worker never launches them. Actual result is window.textRasterProbe. Any Java
+exit error, poison, missing exact gate or missing30 cohorts fails completion.
+Offline JVM/Node equality and malformed/alias rejection are separate checks and
+cannot prove CheerpJ ABI or callback cost. Real probe must pass before game edits.
+
+Reproduce CPU gate (explicit available CPU window)
+--------------------------------------------------
+python3 tools/browser-gameplay/text-raster-probe/prepare.py --source-root CORE_INPUT --output NEW_TEST_STAGE --port 8211
+java -cp NEW_TEST_STAGE/probe.jar orsc.graphics.two.LiteralOverlayReference --literal-oracle NEW_TEST_STAGE/expected.bin
+node tools/browser-gameplay/text-raster-probe/proof.mjs NEW_TEST_STAGE
+Use a declared output/tests path; prepare refuses existing stage and checks free
+loopback port. It records clean/dirty probe source and dirty read-only input root,
+not a false combined clean commit. Stage manifest contains exact files/launch args.

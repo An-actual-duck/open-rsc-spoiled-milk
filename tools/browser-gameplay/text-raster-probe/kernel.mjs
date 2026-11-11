@@ -1,18 +1,24 @@
 // Private ABI/cost probe only. No runtime registration or production adoption.
 export function createTextKernel(){
  const MAX_GLYPHS=128,MAX_PIXELS=2097152,MAX_WORK=2097152,STRIDE=5,RESOLVED=7,scratch=new Int32Array(MAX_GLYPHS*RESOLVED);
- const stats={calls:0,validated:0,rejections:0,rasterCalls:0,validateOnlyCalls:0,zeroWriteCalls:0,wroteCalls:0,glyphs:0,poisoned:false,views:null,error:null};let active=false;
+ const stats={calls:0,validated:0,rejections:0,rasterCalls:0,validateOnlyCalls:0,zeroWriteCalls:0,wroteCalls:0,glyphs:0,poisoned:false,views:null,rawKinds:null,adaptedBuffers:0,error:null};let active=false;
  function range(a,b){return a.buffer===b.buffer&&a.byteOffset<b.byteOffset+b.byteLength&&b.byteOffset<a.byteOffset+a.byteLength;}
  function genuine(a,type){return a instanceof type&&ArrayBuffer.isView(a)&&a.buffer instanceof ArrayBuffer;}
+ function adapt(value,type,maxBytes){
+  if(genuine(value,type))return value.byteLength<=maxBytes?value:null;
+  if(value instanceof ArrayBuffer&&value.byteLength<=maxBytes&&value.byteLength%type.BYTES_PER_ELEMENT===0){stats.adaptedBuffers++;return new type(value);}return null;
+ }
  const shape=a=>({constructor:a.constructor.name,elementBytes:a.BYTES_PER_ELEMENT,length:a.length,byteOffset:a.byteOffset,byteLength:a.byteLength,bufferKind:Object.prototype.toString.call(a.buffer),bufferBytes:a.buffer.byteLength});
  function native(lib,font,commands,surface,c,t,generation,sequence,validateOnly){
   stats.calls++;if(stats.poisoned)return -1;if(active){stats.poisoned=true;stats.error='Reentrant text native';return -1;}active=true;let execution=false;
   try{
+   if(stats.rawKinds===null)stats.rawKinds={font:Object.prototype.toString.call(font),commands:Object.prototype.toString.call(commands),surface:Object.prototype.toString.call(surface),c:Object.prototype.toString.call(c),t:Object.prototype.toString.call(t)};
+   font=font instanceof Uint8Array?adapt(font,Uint8Array,MAX_PIXELS):adapt(font,Int8Array,MAX_PIXELS);commands=adapt(commands,Int32Array,MAX_GLYPHS*STRIDE*4);surface=adapt(surface,Int32Array,40);c=adapt(c,Int32Array,MAX_PIXELS*4);t=adapt(t,Float32Array,MAX_PIXELS*4);
    if(!(genuine(font,Int8Array)||genuine(font,Uint8Array))||!genuine(commands,Int32Array)||!genuine(surface,Int32Array)||!genuine(c,Int32Array)||!genuine(t,Float32Array)||surface.length!==10||surface[0]!==1||surface[3]<0||surface[3]>MAX_GLYPHS||commands.length<surface[3]*STRIDE||font.length>MAX_PIXELS||!Number.isSafeInteger(generation)||generation<0||!Number.isSafeInteger(sequence)||sequence<0||![0,1].includes(validateOnly))return reject();
    const w=surface[1],h=surface[2],count=surface[3],left=surface[4],top=surface[5],right=surface[6],bottom=surface[7];
    if(w<1||h<1||w*h>MAX_PIXELS||c.length!==w*h||t.length!==w*h||left<0||top<0||right> w||bottom>h||right<left||bottom<top||surface[8]!==STRIDE||surface[9]!==0)return reject();
    const readers=[font,commands,surface];if(range(c,t)||readers.some(a=>range(a,c)||range(a,t)))return reject();
-   if(stats.views===null)stats.views={font:shape(font),commands:shape(commands),surface:shape(surface),c:shape(c),t:shape(t),sharedBackingBuffersAllowedWhenDisjoint:true};
+   if(stats.views===null)stats.views={font:shape(font),commands:shape(commands),surface:shape(surface),c:shape(c),t:shape(t),sharedBackingBuffersAllowedWhenDisjoint:true,zeroCopyBorrow:true};
    let work=0;
    for(let i=0;i<count;i++){
     const at=i*STRIDE,x=commands[at],y=commands[at+1],color=commands[at+2],address=commands[at+3],aa=commands[at+4];if(address<0||address>font.length-7||!([0,1].includes(aa)))return reject();
