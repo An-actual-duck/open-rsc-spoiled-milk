@@ -1,0 +1,96 @@
+Independent transport writer-span review
+========================================
+
+Scope and exact source
+----------------------
+Reviewed ai1 implementation e87fb8e501fd2154ac66286c10823c4227bb3921 against
+frozen baseline c7ed5960abf0bc6a514852b998151b7a5856a6fc. This ai2 branch
+contains independent CPU fixtures, their source-bound runner and this report;
+no production source edits. No browser, GPU or server process was started.
+
+The private switch spoiledmilk.browserOverlayWriterSpans=true requires both
+delta transport and rectangle mode on/packed. Only plotLetter,
+plotLetterAntialiased and drawBoxAlpha open scopes. Each scope validates the
+bounded destination rows, then premarks each entered row in transport metadata.
+The original covered-pixel opaque/multiply operations still update literal T
+and written/coefficient state. Only redundant transport.mark calls are skipped.
+
+The source/destination contract is deliberately asymmetric. Destination row
+geometry is validated with long arithmetic before admission. Glyph source
+bytes/strides are NOT prevalidated: a null, short or malformed source can fail
+after a bounded destination row was premarked. The conservative unexecuted row
+suffix is permitted transport overmark. Original exception/catch behavior and
+literal C/T prefixes must remain exact. Premarking glyph bounds via opaqueSpan
+would be incorrect because transparent source holes must not change T.
+
+Executed independent results
+-----------------------------
+Source-bound result and adjacent stdout/stderr logs:
+output/tests/browser-overlay-writer-span-independent/20261111T093233897455Z/
+  result.json
+
+*201 complete literal C/raw-Float32-T snapshots match exactly across eight JVM
+ runs: frozen baseline and candidate, each with writer spans OFF/ON in packed
+ mode, spans requested with delta OFF, and spans requested with rectangle OFF.
+ The common snapshot SHA256 is
+ b1acd8629b5e4bf0f85170a1c9fc9e1cc1e54c8d7326f95a700b5f4478ac2773.
+*Glyph cases cover mono/antialiased, empty/full/sparse source data, alpha
+ thresholds30/31/229/230, widths across unrolled/tile boundaries and repeated
+ rows. Malformed cases cover null/short sources, negative/extreme source
+ offsets/strides, negative dimensions, foreign destinations and invalid or
+ cross-row destination geometry. Catch chains and mono's historically logged
+ leading error line match, excluding source-line-dependent stack trace text.
+*Clipped/interlaced alpha boxes cover empty and off-screen shapes and alpha
+ -1/0/1/64/128/255/256/257. A following ordinary pixel write after a glyph
+ exception verifies scope cleanup does not hide subsequent transport work.
+*Changed-pixel containment is checked against actual tile or row declarations.
+ Controlled fixture setup seeds nontrivial prior C/T while leaving transport
+ masks empty; a full-background mark cannot make these checks vacuous. These
+ direct seed writes are a fixture setup, not authorization for gameplay raw
+ writers to bypass coverage invalidation.
+*A separate3,539-check lifecycle oracle asserts sparse/empty glyph T holes,
+ exact bounded conservative row footprints, previous-frame disappearance,
+ immutable diagnostic snapshots and actual suppressed-mark counters. It tests
+ pending-plan rejection even for an entirely transparent writer, nested scope,
+ row start/width mismatch, foreign destination, unexpected opaqueSpan,
+ out-of-row writes, borrow/prepare while open, unknown-writer invalidation,
+ invalid coefficients, reset/discard/frame changes and fresh recovery. Invalid
+ destination geometry selects literal/fallback without silently trusted marks.
+
+The runner extracts all four relevant candidate and baseline Java source files
+from exact Git commits before compilation. It copies the independent fixtures
+into each run, records their hashes, the runner hash and dependency JAR hash,
+and retains every snapshot/log. Later worker edits cannot change tested source.
+Unchanged unrelated classes come from the explicitly supplied client JAR.
+
+An initial draft run at20261111T093208271721Z stopped on this review runner's
+overestimated minimum corpus size (>300 versus the actual201); all eight
+snapshots already matched. The minimum was corrected to>=200 and the full
+successful rerun above was retained. No candidate fix was needed for that
+fixture bookkeeping error. The independent lifecycle test ran in the successful
+rerun, not the initial stopped run.
+
+Source review and boundaries
+-----------------------------
+Scope admission checks the actual coverage owner and active transport with no
+pending plan. Pending admission invalidates transport before a zero-source
+glyph could avoid all per-pixel calls. Row premarks precede the original row
+loops; unexpected owner/index/span/nesting and borrow/prepare/reset disable
+suppression and invalidate partial history. Both glyph methods retain their
+distinct historical catches; all three target methods close scope in finally.
+The scope stores numeric row bounds only and does not retain new source arrays.
+Counters saturate in five bounded int slots; diagnostics are carried on the
+existing transport call, not a separate per-frame JNI call.
+
+No source-backed correctness blocker remains for this reviewed checkpoint.
+Conservative overmark can enlarge the ACK footprint and subsequent upload,
+including for all-zero glyphs and failed source rows. Branches and counters
+also have cost. CPU parity therefore does not imply an FPS improvement, and
+this report does not recommend enabling the switch by default. Actual world
+writer occupancy, source-bound hardware output parity and matched full-game
+timing remain separate manager gates. The model assumes the existing render-
+thread ownership; it does not establish safety for concurrent drawing.
+
+Workspace-layout check reports the inherited legacy assets/sprites entry and
+unclassified legacy output-root items. New outputs use the declared tests
+category; no inherited data was removed.
