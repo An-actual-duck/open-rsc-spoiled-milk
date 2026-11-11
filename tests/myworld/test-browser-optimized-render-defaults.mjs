@@ -16,3 +16,5 @@ const p=repeatableFixturePolicy('webgl',query(''),route,'http://127.0.0.1:8214')
 for(const r of [null,{}, {...route,websocket:'ws://example.com:43539/'},{...route,websocket:'ws://127.0.0.1:43540/'},{...route,tcpPort:43629}])assert.throws(()=>repeatableFixturePolicy('webgl',query(''),r,'http://127.0.0.1:8214'),/Invalid staged/);
 for(const origin of ['https://example.com','http://evil127.0.0.1:8214','http://127.0.0.1.evil:8214'])assert.throws(()=>repeatableFixturePolicy('webgl',query(''),route,origin),/Invalid staged/);
 console.log('PASS canonical ordinary adopted defaults, unchanged software/private controls and strict stage-only loopback routing');
+assert.throws(()=>repeatableFixturePolicy('webgl',query('benchmark&fixture=renderer-combat-v1'),{tcpPort:43639,websocket:'ws://evil:43539/'},'http://127.0.0.1:8214'),/Invalid staged/);
+assert.throws(()=>repeatableFixturePolicy('webgl',query('benchmark&fixture=repeatable-v1'),route,'http://127.0.0.1:8214'),/differs from fixture/);
