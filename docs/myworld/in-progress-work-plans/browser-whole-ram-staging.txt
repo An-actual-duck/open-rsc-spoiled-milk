@@ -137,3 +137,22 @@ The expanded staging/refusal fixture passes 24 checks, including both explicit
 offline properties, wrong option types and --hidden-roofs reaching the genuine
 missing-baker refusal before execution. The 37 policy/receipt checks also pass.
 No Java cook, client, browser, GPU or server was run for this driver follow-up.
+
+Outer Stop clone ownership correction
+------------------------------------
+An actual explicit outer Stop revealed another distinction: session.js nulls
+the frame before child disposal, so its strict old-session filter correctly
+ignores the asynchronously posted final child receipt. The outer document now
+clears its own stored CPU/combined readiness synchronously when it discards a
+frame. It preserves historical source/resource/use counts, marks them disposed,
+and keeps the same source/origin filter so late messages cannot revive a stop
+or interfere with a new session. Cleanup exceptions still cannot leave a live
+parent readiness claim. This does not establish a resource leak; the actual
+record had no iframe and the owned process tree was already gone.
+
+The Node-only actual session-module regression covers queued structured-cloned
+messages, outer Stop, child exit, pagehide, cleanup failure, old-session/foreign
+origin messages, restart, historical counts and ordinary no-RAM behavior (77
+checks). Original parent source fails the regression; fixed source passes. The
+ordinary and RAM-enabled actual frontend mocked fixtures also pass. No staged
+web files, browser, GPU or server are changed or run by this correction.
