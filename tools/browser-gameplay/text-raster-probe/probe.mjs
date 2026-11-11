@@ -7,6 +7,6 @@ document.getElementById('start').onclick=async()=>{document.getElementById('star
  await cheerpjInit({version:8,disableScaling:true,...(diagnostic?{enableDebug:true}:{}),natives:{Java_orsc_graphics_two_LiteralOverlayReference_raster:kernel.native,
   async Java_orsc_graphics_two_LiteralOverlayReference_report(lib,text){const row=JSON.parse(String(text));if(row.phase==='result')result.rows.push(row);else result.events.push(row);status.textContent=row.phase+': '+(row.mode||'')+' '+(row.glyphs??'');}
  }});
- const code=await cheerpjRunMain('orsc.graphics.two.LiteralOverlayReference','/app/probe.jar',...(diagnostic?['diagnostic']:[]));if(code!==0||kernel.stats.poisoned)throw Error('Java exit '+code+' / '+kernel.stats.error);
+ const code=await cheerpjRunMain('orsc.graphics.two.LiteralOverlayReference','/app/probe.jar','surface',String(result.manifest.surface.width),String(result.manifest.surface.height),String(result.manifest.surface.textsPerClear),...(diagnostic?['diagnostic']:[]));if(code!==0||kernel.stats.poisoned)throw Error('Java exit '+code+' / '+kernel.stats.error);
  if(!result.events.some(x=>x.phase==='exact-pass')||result.rows.length!==(diagnostic?0:30))throw Error('Missing exact gate/timing cohorts');result.completed=true;status.textContent='Complete: exact gate passed; inspect timing limits';
  }catch(error){result.error=String(error);status.textContent='FAILED: '+error;}finally{for(const name of Object.keys(saved))console[name]=saved[name];}output.textContent=JSON.stringify(result,null,2);};
