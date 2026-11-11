@@ -1,0 +1,119 @@
+Private whole-overworld prototype — independent validation
+=========================================================
+Worker ai3, test/browser-whole-zone-validation, baseline main 2b2a81920.
+Implementation is newly authorized as a PRIVATE prototype; ordinary defaults,
+map edits, live host activation and release remain separate. The prior audit
+remains a historical audit-only record. See overworld-single-zone-audit.txt,
+overworld-zone-inventory.txt and overworld-zone-geometry-audit.txt.
+
+Ownership and acceptance order
+-------------------------------
+Runtime Java/client/bridge/baker contract belongs to ai1; frontend pinned GPU
+catalog/Worker and delivery tools to ai2. This branch changes only independent
+tests/documentation and, when exact candidates exist, nonrunning test stages.
+Root alone owns browser/GPU/server process actions and actual hardware tests.
+No feature cross-merges or shared/private fixture mutations occur here.
+
+The approved goal covers 445 global L0 sectors plus 444/441 upper 1/2 dependencies,
+full manifest scenery/boundary catalogue, source/settings-bound offline geometry
+and a separate persistent arena (draft 3GiB/8192 IDs). Active draw, local 144²
+collision/picking and dynamic server interests stay bounded. All declared
+geometry must be complete before GAME cover releases. Unchanged local static
+draws must actually resolve that catalogue; a large unused arena beside normal
+full-region repacking is not acceptance. Residual local CPU stalls are measured
+separately rather than hidden by the word whole-zone.
+
+Completed independent source gate
+----------------------------------
+tests/myworld/whole-zone/verify-package.py binds the current primary selection
+and installed-client profile, then independently checks the private package:
+all manifest/payload SHA256 values, canonical paths/no symlinks, encoding sizes,
+unique signed sector ownership, placement IDs/level/world consistency, complete
+actual file inventory/no extras and the package fingerprint.
+
+Actual existing diagnostic fixture source proof PASS:
+ /home/justin/Core-Framework-ai-1/output/tests/browser-gameplay-spike/repeatable-baseline-2/server/package
+ 1797 files /46,101,718 bytes; fingerprint 7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc
+ manifest 42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b
+ all 1787 terrain/9 placement payloads plus manifest;445/444/441 relevant sectors.
+Receipt: output/tests/browser-whole-zone-validation/private-fixture-source-proof.json
+SHA256 5e92dd0d9d8ed0e67d4455f9927b2a04c1531d1810716d66b76ec5285afcd950
+The old fixture's 325bf server binary remains older/unverified-current-source;
+matching map bytes do not prove current server code or production behavior.
+
+The receipt owns sectorRoster entries worldSpace/level/sectorX/sectorY/path/hash/
+bytes and manifestPlacements family/placementId/world/level/position. These are
+independent expected membership inputs for the future catalogue join, not a
+copy of the baker's count claims. All source levels are recorded; only explicitly
+chosen 0/1/2 enter this prototype. Negative/3+/Zanaris data is not silently part
+of catalogue geometry totals. No browser-residency claim follows from this CPU
+source proof. 13 adversarial source tests pass, including corrupt/missing/extra
+payloads, duplicate keys/paths/coordinates, traversal, symlink, bad encodings,
+placement-level mismatch and full-tree fingerprint mismatch.
+
+Planned independent candidate gates (pending stable runtime APIs)
+----------------------------------------------------------------
+1. SOURCE / DELIVERY: exact selected package, full source roster and settings/
+   actual texture catalogue bind the baked manifest. Reject stale source/model/
+   material/packing settings, malformed counts, path escapes, missing/duplicate
+   records, checksum failures and budgets. Membership is checked against the
+   independent roster, not declared cell totals alone. Record raw-source CPU
+   residency, canonical CPU geometry and pinned GPU bytes as DIFFERENT states.
+2. GEOMETRY: compare representative actual producer output against the frozen
+   ordinary production path, including every 112B vertex field/raw Float32 bits,
+   indices/material batches, lighting normals, roof/indoor/shadow descriptors and
+   actual texture resolution. Include route boundary 111,623↔624, adjacent sector
+   seams, negative Y, uniform 250 edges, invisible wall materials and sloped/
+   stacked upper-floor structures. Audit floor-local topology counts alone are
+   insufficient for actual stacked-world coordinates. Validate bake ownership:
+   positive-stitch 48 and canonical 24 are alternatives; adjacent cells may not
+   double-paint seam triangles or omit blend/normal dependencies.
+3. DYNAMIC / USE: construct real authoritative object-cell inputs through the
+   existing key builder. Equal canonical key must select pinned IDs and skip
+   local static upload. Mutating/removing a door, destroyed last object/explicit
+   empty cell, animated current pose, source epoch and negative-cell ownership
+   must mask every stale baked triangle exactly once and use the current live
+   geometry. A border-crossing object needs a consistent anchor-cell policy.
+   Wrong/incomplete authoritative rows must refuse, not leave old scenery drawn.
+4. GPU / LIFETIME: root executes an actual hardware full-catalog allocation,
+   complete membership/resource hash and final synchronization gate before
+   cover release. Exact representative pixels compare ordinary renderer versus
+   catalogue path with the SAME shader/material/lighting/sky settings. Check
+   returned/caller-buffer reuse, late fetch/hash/upload failure cleanup, resource
+   disposal and context-loss refusal. CPU mocks do not establish actual VRAM fit,
+   GPU completion, image equality or scanout latency.
+5. TRAVEL / PERFORMANCE: after source+geometry+full GPU acceptance, use the same
+   artifact whole-zoneON/OFF and original minimap walking helper on the existing
+   private fixture. Initial preload and zone-entry wait are recorded separately;
+   the owner explicitly may accept an upfront wait. Record full expected/loaded/
+   CPU/GPU-ready cells/bytes, actual pinned triangles/draws, local static uploads/
+   repacks, exact override reasons, held/fresh frames, source authority and queue
+   age. Unchanged crossings may not regenerate every active static cell as an
+   override. Include longer routes and separate teleports/mutations. Retained
+   screenshots are not fresh-world FPS; counters alone do not prove visible use.
+
+Proposed nonrunning stage approach
+----------------------------------
+Use maintained scripts/browser-gameplay/prepare-repeatable-client.py for the
+loopback 43649/43549 browserdemo fixture. It already validates the private marker,
+32-NPC fixture and exact immutable JAR source receipt, with Cache/port 43649. Root
+may use the preserved original walking driver; do not create a replacement DB
+or modify the running fixture just for this test.
+
+A split candidate needs explicit per-file composite provenance: prepare.py copies
+frontend and Bootstrap from its own checkout, whereas --native-source only binds
+native-dispatch inputs. It must not accidentally serve main's old JS/Bootstrap
+beside new Java natives. Freeze exact ai1 Java/bake/source settings and exact ai2
+frontend/catalog blobs with hashes; never label the composite one nonexistent
+commit. A full build/stage from ai1 or manager-reviewed source copy is preferable
+to a partial JAR overlay. Root owns actual HTTP/Firefox launch.
+
+The earlier standalone three-way Worker oracle is reusable for renderer pixel/
+physical-output/ownership cases, but its toy fixed scene cannot prove full-zone
+catalog allocation, seam/roof geometry or use across the world. A new full-data
+hardware gate is required; package-source proof and computed byte totals alone
+are not a substitute. Keep partial/failing receipts and never silently fall back
+to broad caching or normal rendering while labelling the result whole-zone.
+
+Current state: source proof complete; runtime contract/candidate geometry/GPU/
+travel acceptance pending. No ordinary default, public server or map changed.
