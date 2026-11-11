@@ -27,6 +27,16 @@ def main():
   try:compare_roster(mutated,expected)
   except AssertionError:pass
   else:raise AssertionError('Source-roster checker accepted new/changed/removed access')
+ # Parse actual synthetic NEW source consumers (unresolved types are intentional:
+ # Javac parse performs no class loading/resolution). All must be newly visible.
+ negative=out/'new-consumer-source';(negative/'Client_Base/src').mkdir(parents=True);(negative/'PC_Client/src').mkdir(parents=True)
+ (negative/'Client_Base/src/NewRawConsumer.java').write_text('class NewRawConsumer { int[] pixelData; int read(){return pixelData[0];} void export(){sink.accept(frame.ownerPixels);} void shader(){Shader.shadeScanline();} void buffer(){buffer.getData();} }')
+ synthetic=subprocess.check_output([str(jdk/'java'),'-cp',str(out),'SourceAccessInventory',str(negative)],text=True)
+ new_rows=[json.loads(x)for x in synthetic.splitlines()if json.loads(x)['kind']!='method-body'];assert len(new_rows)==4
+ for row in new_rows:
+  try:compare_roster(access+[row],expected)
+  except AssertionError:pass
+  else:raise AssertionError('Actual new Java consumer escaped inventory')
  methods=bodies(rows)
  for path,digest in manifest['unchangedAliasImplementations'].items():assert hashlib.sha256((source/path).read_bytes()).hexdigest()==digest,('Audited alias/delegate implementation changed',path)
  for item in manifest['unchangedLegacyBodies']:
@@ -39,6 +49,6 @@ def main():
    body=methods[(rule['file'],rule['method'])]
    required=rule['requiredPrefix'];assert body.startswith(required),('Missing/reordered materialization before old consumer',rule['file'],rule['method'])
   assert rules['methods'],'No nonvacuous boundary assertions'
- receipt={'passed':True,'sourceRoot':str(source),'sourceCommit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip(),'sourceDirty':bool(subprocess.check_output(['git','status','--porcelain'],cwd=source,text=True).strip()),'baselineCommit':manifest['baselineCommit'],'astAccesses':len(access),'rosterMutationChecks':len(mutations),'unchangedLegacyBodies':len(manifest['unchangedLegacyBodies']),'candidateBoundariesChecked':a.require_segmented_hooks,'scope':'Independent closed maintained source/alias/delegate roster and explicit reviewed entry-order guards; not full alias analysis, dynamic rendering, native faults, GPU or FPS proof.','manifestSha256':hashlib.sha256((CAT/'access-roster.json').read_bytes()).hexdigest()}
+ receipt={'passed':True,'sourceRoot':str(source),'sourceCommit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip(),'sourceDirty':bool(subprocess.check_output(['git','status','--porcelain'],cwd=source,text=True).strip()),'baselineCommit':manifest['baselineCommit'],'astAccesses':len(access),'rosterMutationChecks':len(mutations),'actualNewJavaConsumerChecks':len(new_rows),'unchangedLegacyBodies':len(manifest['unchangedLegacyBodies']),'candidateBoundariesChecked':a.require_segmented_hooks,'scope':'Independent closed maintained source/alias/delegate roster and explicit reviewed entry-order guards; not full alias analysis, dynamic rendering, native faults, GPU or FPS proof.','manifestSha256':hashlib.sha256((CAT/'access-roster.json').read_bytes()).hexdigest()}
  (out/'result.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(receipt,indent=2))
 if __name__=='__main__':main()

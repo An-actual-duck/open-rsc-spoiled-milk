@@ -8,7 +8,7 @@ import java.util.*;
 public final class SourceAccessInventory {
     static String quote(String text) {return "\""+text.replace("\\","\\\\").replace("\"","\\\"").replace("\r","\\r").replace("\n","\\n")+"\"";}
     static String compact(Tree tree){return tree.toString().replaceAll("\\s+", " ").trim();}
-    static final Set<String> aliases=new HashSet<String>(Arrays.asList("pixelData","ownerPixels","transmittance","directFramebufferPixels","directFramebufferImage"));
+    static final Set<String> aliases=new HashSet<String>(Arrays.asList("pixelData","ownerPixels","transmittance","directFramebufferPixels","directFramebufferImage","game_image"));
     static final Set<String> calls=new HashSet<String>(Arrays.asList("shadeScanline","copyBlock16","copyBlock4","copyColorTo","createDirectFramebufferImage","borrowOverlay","copyPixelsToRgba","copyPackedIntRgbToRgba","getDataBuffer","getData","setPixels","setGameImage"));
     public static void main(String[] args)throws Exception {
         Path root=Paths.get(args[0]).toRealPath();List<Path> paths=new ArrayList<Path>();

@@ -1,0 +1,144 @@
+SEGMENTED TEXT: INDEPENDENT MAINTAINED BOUNDARY REVIEW
+
+Role/scope
+----------
+Core worker ai3, test/browser-segmented-text-boundaries, baseline published
+58c61d98562e287c6e35a6056009cbe81c6d3464. Tests/report only. Producer ai1 owns
+runtime edits; ai2 independently owns exact pixel/native fallback/fault proof.
+No browser/GPU/server/public operations belong to this review.
+
+The observer's INCOMPLETE marker is not a materialization barrier. Deferring
+pixels requires every maintained reader/writer/escape to see all preceding text
+before any consumer side effect or return. Unknown operations must flush pending
+Java C/T first; a late 'mark incomplete' after a read cannot restore ordering.
+
+Closed maintained contract
+--------------------------
+The exact direct pixelData access roster contains five implementation files:
+GraphicsController, Scene, mudclient, FloatingHitSplatRenderer and ORSCApplet.
+This is not the complete alias graph. The review explicitly extends it to:
+- WorldOverlayCoverage.Frame ownerPixels/transmittance exports and consumers;
+- ORSC cached BufferedImage/directFramebufferPixels/game_image aliases;
+- DataBufferInt.getData in BrowserWebGLBridge and Frame source capture;
+- ScaledWindow image forwarding/BrowserFrameSinkRegistry synchronous present;
+- Scene's cached owner passed to Shader scanlines, MiscFunctions block copies,
+  static GraphicsController.a and Renderer3DDepthFrame.copyColorTo;
+- Sprite raw-array constructor/getPixels/setPixels aliases;
+- FloatingHitSplatRenderer's explicitly software-only measure/scratch surfaces.
+
+Private public-array contract only: arbitrary plugin/reflection/concurrent raw
+access is unsupported. No API privatization is attempted. Single render-thread
+queue/source/borrow assumptions are required. The parser tripwire is not a full
+interprocedural alias analysis. A new raw field name/array API/alias owner can
+require extending this explicitly audited catalog; existing names are guarded.
+
+Independent required boundaries (identified before candidate hook review)
+-------------------------------------------------------------------------
+GC non-TEXT leaves: drawBox/Alpha, lines, circle, gradient, pixel, blackScreen,
+framebuffer blur, all unscaled/scaled/masked/indexed sprite raster leaves and
+minimap scanline leaves. Wrappers may delegate but the actual pixel consumer
+must have materialization before its first source/dest pixel access. Do not
+flush per pixel. The old five glyph/coverage hot helper bodies remain exact.
+Private plotCharacter/plotLetter APIs are reached only by the final text loop;
+external reflection into them is outside the maintained contract.
+
+GC reads/exports: captureRenderer2DUiBaseFrame before actual arraycopy;
+copyPixelDataToSurface/storeSpriteVert before reading C into exported Sprite;
+borrowWorldOverlayCoverage before publishing C/T. isCurrent is metadata-only,
+but callers must not retain an old exposed Frame across a deferred mutation.
+Aliased Sprite.getPixels acquisition alone only returns a reference; the leaf
+read must happen after flush. All maintained C-backed Sprite publication routes
+must be included, not only direct destination writers.
+
+GC lifetime/state: beginTransparentWorldOverlay before old C/T is reset;
+beginOpaqueWorldOverlay/clearWorldOverlayCoverage/setWorldOverlayCoverageEnabled
+before metadata invalidation or replacement; beginRenderer2DFrame and
+consumeRenderer2DFrame before source lists/phase/token reset; software-owned
+frame entry; resize before replacing arrays; setClip AND clearClip; phase change.
+Retained fade must flush BEFORE retainFade's successful early return, not only
+before the later literal fade loop. Poison recovery requires an actual fresh
+cleared base, not merely relabeling an old partial image opaque.
+
+Rich text: inline icons execute during parsing before this call's final text
+plots, while earlier TEXT calls may already be pending. Their actual sprite leaf
+must flush earlier text before reading/writing. Font bytes must snapshot at each
+TEXT enqueue; a source identity memo or flush-time copy is incorrect when the
+same array mutates between calls. Queue overflow must materialize old pending
+work before literal fallback of the current call; no UI re-render fallback.
+
+Scene: cached pixelData ctor/setMidpoints alias; central endScene entry and/or
+proved leaf path before legacy Shader/Misc/static-GC scanlines, marker fill and
+depth copy. Private legacy setFrustum is only called by endScene; a guard at a
+public unrelated setter does not cover it. Owner-changing GC resize must flush
+before Scene caches the replacement owner.
+
+mudclient: raw drawWorldEditorGridLine BEFORE first assignment. Editor/debug
+coverage invalidation is not enough if it occurs after raw access. Abort catch
+must be outside legacy Exception/RuntimeException wrappers so Error cannot be
+swallowed into partial drawing or exported Sprite capture.
+
+ORSCApplet: commitToImage before imageProducer.setPixels; getDirectFramebufferImage
+BEFORE returning a cached image, not only bindDirectFramebuffer; bind/resize
+before alias publication; draw entry BEFORE shouldRetainLastPresentedFrame
+returns. Cached images have a live DataBuffer alias, so prior creation does not
+prove current deferred pixels are materialized. drawRendererDebugOverlay can
+write that alias before BrowserWebGLBridge.prepareOverlay; a late bridge-only
+flush would put old text on top of a newer debug overlay.
+
+Presentation and GPU abort ordering
+-----------------------------------
+Baseline Scene.endScene assembles a Renderer3DFrame in Java; it does not call the
+browser sink or native WebGL drawing. The maintained chain is:
+  mudclient.drawGame UI -> clientPort.draw -> ORSCApplet.draw ->
+  ScaledWindow.setGameImage -> BrowserFrameSinkRegistry.present ->
+  BrowserWebGLBridge.present -> native webgl.js present.
+Actual native present performs canvas resize, owned-frame begin, lighting/shadow
+preparation, clear and world/overlay draws. holdWorld also redraws the held image;
+worldProgress can cause frontend alignment/size side effects. Therefore flush
+must occur at ORSC draw entry and Bridge present entry BEFORE initialize,
+worldProgress or either holdWorld early-return branch. prepareOverlay alone is
+too late. Scene geometry construction itself does not need a GPU rollback.
+
+An outer draw Error catch before clientPort.draw keeps prior WebGL output if all
+pending materialization occurs before the first presentation native. This is a
+source ordering conclusion, not an actual injected-browser fault test. The next
+full browser gate must verify last-good-image retention under an after-write
+native failure. Suppression of an end overlay alone is insufficient proof.
+
+Pool ownership on abort: Scene.endScene stores a new Renderer3DFrame before UI.
+Normal Registry.present releases it in finally. Returning early from outer draw
+bypasses that path. Current frame release must be performed on the private abort
+path or equivalently proven; baseline Renderer3DFrame.release is idempotent and
+returns WorldFaceStorage/depth storage. Merely replacing Scene.renderer3DFrame
+next frame abandons the normal pool return route. No broad lifecycle refactor
+is requested.
+
+Source tripwire
+---------------
+SourceAccessInventory.java uses Javac parse-only AST (JDK21 diagnostic tooling;
+no game class loading/type resolution). It records exact method signatures and
+normalized owner/plane/image/delegate expressions across Client_Base/src and
+PC_Client/src. access-roster.json captures the independently audited baseline;
+new files, changed expressions and additional counts fail until explicitly
+reviewed. Four checker mutations plus four real parsed synthetic Java consumers
+prove new raw reads, owner exports, scanline calls and DataBuffer aliases fail.
+It does not silently regenerate the approved roster from a candidate.
+
+Four alias implementation files (Shader, MiscFunctions, Sprite, Frame) and14
+specific legacy raw/hot bodies are also locked. Candidate-specific allowed
+access deltas and entry-order guards are added only after exact producer source
+review. A baseline inventory PASS explicitly reports candidateBoundariesChecked
+false; it is never presented as proof of runtime hooks.
+
+Commands:
+  python3 tests/myworld/test-browser-segmented-text-boundaries.py --name NAME
+  python3 tests/myworld/test-browser-segmented-text-boundaries.py \
+    --source-root /path/to/exact/candidate --require-segmented-hooks --name NAME
+New evidence: output/tests/browser-segmented-text-boundaries/NAME.
+BOUNDARY_JDK_HOME may select an equivalent JDK with supported javac tree APIs.
+
+Status
+------
+Baseline180 references/calls,14 literal bodies and8 tripwire mutation cases PASS.
+Exact runtime producer checkpoint review and nonvacuous candidate hook guards
+are pending. No runtime correctness/performance acceptance is claimed yet.

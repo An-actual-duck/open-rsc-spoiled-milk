@@ -923,6 +923,12 @@
     {
       "file": "PC_Client/src/orsc/ORSCApplet.java",
       "method": "bindDirectFramebuffer(int,int,)",
+      "kind": "game_image",
+      "expression": "game_image = directFramebufferImage"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "bindDirectFramebuffer(int,int,)",
       "kind": "pixelData",
       "expression": "mudclient.getSurface().pixelData"
     },
@@ -943,6 +949,48 @@
       "method": "draw()",
       "kind": "call:setGameImage",
       "expression": "scaledWindow.setGameImage(frameImage, renderer2DFrame, renderer2DUiBaseImage, renderer3DFrame, rendererDebugOverlayLines)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "draw()",
+      "kind": "game_image",
+      "expression": "frameImage = game_image"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "drawLoading(int,)",
+      "kind": "game_image",
+      "expression": "game_image != null"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "ensureLoadingGameImage()",
+      "kind": "game_image",
+      "expression": "(game_image != null && game_image.getWidth() == this.width && game_image.getHeight() == this.height && g2dForGameImage != null)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "ensureLoadingGameImage()",
+      "kind": "game_image",
+      "expression": "(game_image != null && game_image.getWidth() == this.width && game_image.getHeight() == this.height && g2dForGameImage != null)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "ensureLoadingGameImage()",
+      "kind": "game_image",
+      "expression": "(game_image != null && game_image.getWidth() == this.width && game_image.getHeight() == this.height && g2dForGameImage != null)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "ensureLoadingGameImage()",
+      "kind": "game_image",
+      "expression": "g2dForGameImage = game_image.createGraphics()"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "ensureLoadingGameImage()",
+      "kind": "game_image",
+      "expression": "game_image = new BufferedImage(this.width, this.height, imageType)"
     },
     {
       "file": "PC_Client/src/orsc/ORSCApplet.java",
@@ -979,6 +1027,30 @@
       "method": "presentLoadingFrame(String,int,int,)",
       "kind": "call:setGameImage",
       "expression": "scaledWindow.setGameImage(game_image)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "presentLoadingFrame(String,int,int,)",
+      "kind": "game_image",
+      "expression": "scaledWindow.setGameImage(game_image)"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "resized()",
+      "kind": "game_image",
+      "expression": "g2dForGameImage = game_image.createGraphics()"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "resized()",
+      "kind": "game_image",
+      "expression": "game_image = new BufferedImage(newWidth, newHeight, ScaledWindow.getBufferedImageType())"
+    },
+    {
+      "file": "PC_Client/src/orsc/ORSCApplet.java",
+      "method": "updateRenderingScalarAndResize(float,int,int,)",
+      "kind": "game_image",
+      "expression": "game_image = new BufferedImage(newWidth, newHeight, imageType)"
     },
     {
       "file": "PC_Client/src/orsc/OpenGLFrameCapture.java",
