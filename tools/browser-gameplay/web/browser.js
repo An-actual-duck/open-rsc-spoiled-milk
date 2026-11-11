@@ -42,8 +42,8 @@ window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput;
 function updateWholeRamProof(){
   if(!wholeRam.enabled)return;
   const cpu=window.browserProof.wholeRamJava,gpuZone=gpu?.stats.wholeZone,same=!!(wholeRamCatalogConfig&&gpuZone?.manifestSha256===wholeRamCatalogConfig.gpuCatalogSha256);
-  const sourceReady=cpu?.sourceReady===true,preparedReady=cpu?.preparedReady===true,gpuReady=same&&gpuZone?.ready===true;
-  window.browserProof.wholeRamResidency={requested:true,sourceReady,preparedReady,gpuReady,ready:sourceReady&&preparedReady&&gpuReady,sameGpuCatalog:same,scope:'Correlated Java retained source/prepared CPU data and actual matching GPU catalogue; staging alone is not readiness'};
+  const sourceReady=!stopped&&cpu?.sourceReady===true,preparedReady=!stopped&&cpu?.preparedReady===true,gpuReady=!stopped&&same&&gpuZone?.ready===true;
+  window.browserProof.wholeRamResidency={requested:true,sourceReady,preparedReady,gpuReady,ready:sourceReady&&preparedReady&&gpuReady,sameGpuCatalog:same,disposed:stopped,scope:'Correlated Java retained source/prepared CPU data and actual matching GPU catalogue; staging alone is not readiness'};
   if(gpuZone){gpuZone.rawSourceCPUReady=same&&sourceReady;gpuZone.preparedCPUReady=same&&preparedReady;gpuZone.cpuReadinessScope='Correlated main-thread Java RAM receipt; separate from GPU Worker allocation';}
 }
 function updateWorldCover(){
@@ -65,18 +65,19 @@ function setStatus(message) {
   else if (window.browserProof.inputError) status.textContent = `Browser input error: ${window.browserProof.inputError}`;
   else status.textContent = message;
 }
-function publish() {
-  updateWorldCover();
+function publish(finalReceipt=false) {
+  if(!stopped)updateWorldCover();
   if (gpu) window.browserProof.gpu = gpu.stats;
-  if (!stopped) parent.postMessage({type: 'browser-session-proof', proof: window.browserProof, status: status.textContent}, location.origin);
+  if (!stopped||finalReceipt) parent.postMessage({type: 'browser-session-proof', proof: window.browserProof, status: status.textContent}, location.origin);
 }
 function dispose() {
   if (stopped) return;
-  stopped = true;if(wholeRam.enabled){window.browserProof.wholeRamJava={...window.browserProof.wholeRamJava,sourceReady:false,preparedReady:false,disposed:true};updateWholeRamProof();} delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
+  stopped = true;window.browserProof.stopped=true;if(wholeRam.enabled){window.browserProof.wholeRamJava={...window.browserProof.wholeRamJava,sourceReady:false,preparedReady:false,disposed:true};updateWholeRamProof();} delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
+  publish(true);
 }
 function finish(reason) {
   if (stopped) return;
-  publish(); dispose();
+  dispose();
   document.activeElement?.blur?.();
   parent.postMessage({type: 'browser-session-stop', reason: gpu?.stats.lastError ? status.textContent : reason}, location.origin);
 }
@@ -115,6 +116,7 @@ const natives = {
   Java_orsc_BrowserWebGLBridge_loadingWork:loadProfileCollector.report,
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,
   Java_orsc_browser_BrowserBootstrap_reportWholeRamWork(lib,input){
+    if(stopped)return;
     try{const value=decodeWholeRamWork(input,wholeRam.requested);if(wholeRam.enabled&&value.preparedReady&&wholeRamCatalogConfig&&value.retainedPrimitiveBytes!==wholeRamCatalogConfig.expectedRuntimePrimitiveBytes)throw new Error('Whole RAM retained primitive ledger differs from staged complete preparation');window.browserProof.wholeRamJava=value;}
     catch(error){window.browserProof.wholeRamJava={requested:wholeRam.requested,sourceReady:false,preparedReady:false,error:String(error).slice(0,512)};window.browserProof.wholeRamError='Prepared RAM diagnostics rejected: '+String(error).slice(0,512);updateWorldCover();throw error;}
     updateWorldCover();

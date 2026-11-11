@@ -105,3 +105,35 @@ this is not an integrated runtime stage or a catalog rebind.
 workspace-layout.py check reports existing ignored legacy output-root entries
 and assets/sprites in this long-lived worker. New task outputs all use declared
 category directories; none of those preserved legacy entries was changed.
+
+Stopped-session receipt correction
+----------------------------------
+The first actual RAM startup exposed a parent receipt ordering issue: finish
+published readiness before dispose cleared the child, while postMessage had
+already cloned the proof. Disposal now clears CPU source/prepared flags and
+combined GPU readiness, marks the proof stopped/disposed, and sends the final
+proof after cleanup before the stop event. Direct external disposal uses the
+same idempotent path. Readiness has no live-session meaning after disposal.
+
+The actual frontend fixture now structured-clones every parent postMessage.
+Its RAM test resolves Java exit after ready, checks the final cloned parent
+receipt has all readiness false, verifies the earlier clone remains ready,
+and checks final proof precedes stop. Ordinary mocked frontend also passes.
+This fixes observability only; it does not diagnose the separate Java prepared
+decode startup exit and makes no new runtime/memory/performance claim.
+
+Explicit roof-variant cook option
+---------------------------------
+Actual startup rejected visible-roof CPU products for a hidden-roof client.
+The driver now accepts --hidden-roofs (default false) and forwards ONLY the
+offline property spoiledmilk.browserWholeRamCookHiddenRoofs=true|false. It
+does not change a running client preference or rewrite any cooked header.
+The receipt records the Boolean, the returned prepared.hiddenRoofs must match
+the request, and the stager requires receipt/product option agreement. Existing
+frontend config already includes the cooked option. Each variant therefore
+requires its own real cook. The headless CPU timeout is bounded to 300 seconds.
+
+The expanded staging/refusal fixture passes 24 checks, including both explicit
+offline properties, wrong option types and --hidden-roofs reaching the genuine
+missing-baker refusal before execution. The 37 policy/receipt checks also pass.
+No Java cook, client, browser, GPU or server was run for this driver follow-up.
