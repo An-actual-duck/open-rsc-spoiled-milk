@@ -64,15 +64,15 @@ in a candidate that has not yet been checkpointed.
 
 Source-bound CPU result
 -----------------------
-Candidate:88af6b08ebc1d50fab86bec34ef4461fcf42631b in ai-1.
-Independent test execution:PASS180 checks, Node22.21.1, no browser, actual Worker,
+Candidate:a10f96234dbe7556565dc31301cd6a3a5bc6d5a5 in ai-1.
+Independent test execution:PASS189 checks, Node22.21.1, no browser, actual Worker,
 OffscreenCanvas, GPU, Java VM or server launched. Exact receipt:
-output/tests/browser-render-worker-protocol-independent/20261111T123626005011Z/result.json
+output/tests/browser-render-worker-protocol-independent/20261111T124853095541Z/result.json
 It freezes six candidate modules plus fixture before import, and records source,
 fixture, runner, stdout/stderr hashes and exact command. Invocation:
 python3 tests/myworld/test-browser-render-worker-protocol-independent.py \
   --candidate-root /home/justin/Core-Framework-ai-1 \
-  --candidate-commit 88af6b08ebc1d50fab86bec34ef4461fcf42631b
+  --candidate-commit a10f96234dbe7556565dc31301cd6a3a5bc6d5a5
 
 Proof details
 -------------
@@ -187,3 +187,30 @@ presentation acceptance result. All experimental policy remains defaultOFF.
 Workspace-layout check reports inherited asset-root sprites and legacy loose
 output entries. All new evidence uses the declared tests subject; none of those
 inherited assets/outputs were removed. git diff --check passes.
+
+Final LRU and manager GPU gate amendment
+---------------------------------------
+a10 adds bounded pool eviction rather than first-come permanent admission. The
+independent final189-check run includes an actual16MiB cold geometry copy/return,
+then2MiB hot plane return evicting cold capacity, and a following hot capture
+reusing that returned buffer. Another full1024-entry fixture acquires from a
+NONEMPTY hot size bucket while another packet is pending; its ACK pressures the
+pool and evicts the cold size instead. The remaining hot buffer is subsequently
+reused. Both acquire and release refresh size-bucket recency; byte/entry ceilings
+remain unchanged. No zero-copy or browser performance claim follows from reuse.
+
+Manager actual Firefox GPU result was read and hashes verified separately:
+output/diagnostics/browser-frame-architecture/render-worker-gpu-4/receipt.json
+  SHA256 f7caad14e54009abc93f6cc1f37859a6c5fb1d717650cbfe8c087a3f980af7a3
+output/diagnostics/browser-frame-architecture/render-worker-gpu-4/actual.json
+  SHA256 9c07d4330eae2d5d5acf7966ec675bf62530f92cc0ab07edc926788840fc1f2f
+The receipt binds worker sourcea10 and oracle sourcec6d7a5303d2876f7a4244b55e88032f5ef003ff3;
+its actualSha256 matches the actual file. All50 cases pass27,915,808 RGBA byte
+comparisons with0 changed bytes and no errors. Borrowed/returned lifetime test
+passes, returned pool storage is overwritten, and confirmed worker disposal
+reports GPU/sprite resource bytes0. Completion means backend presentation/
+frameWork plus oracle readPixels, explicitly not compositor scanout or fence
+timing. This is manager-run actual Worker/GPU equivalence evidence, separate
+from this branch's Node CPU execution. Actual Java-native gameplay integration,
+combat pacing, real region loading/input and measured FPS acceptance remain
+manager gates. No ordinary default adoption follows from either correctness gate.

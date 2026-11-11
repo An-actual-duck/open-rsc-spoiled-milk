@@ -130,13 +130,23 @@ for(const mutate of [x=>({...x,buffers:[]}),x=>({...x,buffers:[new ArrayBuffer(8
 // Pool entry cap remains bounded independently of packet/producer byte caps.
 {
  const {t,sent}=fake();for(let n=0;n<512;n++)t.enqueue('uploadSkyGeometry',[new Float32Array(1),new Int32Array(1),1]);await t.enqueue('holdWorld',[]);t.receive(ack(sent[0]));eq(t.stats.poolBytes,4096);eq(t.stats.returnedBuffers,1024);
- t.enqueue('skyFrame',[new Float32Array(2),new Float32Array(2)]);await t.enqueue('holdWorld',[]);t.receive(ack(sent[1]));eq(t.stats.poolBytes,4096,'new buffers do not exceed1024entry cap');t.dispose();
+ t.enqueue('skyFrame',[new Float32Array(2),new Float32Array(2)]);await t.enqueue('holdWorld',[]);t.receive(ack(sent[1]));eq(t.stats.poolBytes,4104,'recent buffers replace cold entries at1024entry cap');eq(t.stats.poolEvictions,2);t.dispose();
 }
 // Executor completion is after frameWork finishes, not after present was queued.
 {
  const b=backend();let release,completed=false;const gate=new Promise(r=>release=r);b.natives[P.renderNativeName('frameWork')]=async(_,...args)=>{b.calls.push(['frameWork',args]);await gate;};const r=createRenderWorkerReplay({backend:b,outputSizer:createWorkerOutputSizer()});
  const counters=new Int32Array([0x7fffffff,-1]),work=new Float32Array(14);new Uint32Array(work.buffer).set([0x80000000,0x7fc01234,0x3f800001]);
  const packet=batch([command('present',[960,540,true,new Float32Array(16),new Float32Array(),new Int32Array(),new Int32Array()]),command('frameWork',[work,counters])],{frameId:1});const result=r.execute(packet).then(x=>{completed=true;return x;});await tick();eq(completed,false);eq(b.calls.map(x=>x[0]),['present','frameWork']);eq(Array.from(new Uint32Array(b.calls[1][1][0].buffer)),Array.from(new Uint32Array(work.buffer)));eq(Array.from(b.calls[1][1][1]),[0x7fffffff,-1]);release();eq((await result).frameId,1);r.dispose();
+}
+// LRU admission evicts cold geometry, retaining hot frame planes for actual reuse.
+{
+ const {t,sent}=fake();t.enqueue('lightingFrame',[new Float32Array(4*1024*1024)]);await t.enqueue('holdWorld',[]);t.receive(ack(sent[0]));eq(t.stats.poolBytes,16*1024*1024);
+ t.enqueue('lightingFrame',[new Float32Array(512*1024)]);await t.enqueue('holdWorld',[]);t.receive(ack(sent[1]));eq(t.stats.poolBytes,2*1024*1024);eq(t.stats.poolEvictions,1);const reused=t.stats.reusedBuffers;t.enqueue('lightingFrame',[new Float32Array(512*1024)]);await t.enqueue('holdWorld',[]);eq(t.stats.reusedBuffers,reused+1);t.receive(ack(sent[2]));ok(t.stats.peakPoolBytes<=16*1024*1024);t.dispose();
+}
+// Acquiring from a NONEMPTY bucket refreshes recency before another ACK pressures it.
+{
+ const {t,sent}=fake();t.enqueue('lightingFrame',[new Float32Array(1)]);t.enqueue('lightingFrame',[new Float32Array(1)]);for(let n=0;n<511;n++)t.enqueue('skyFrame',[new Float32Array(2),new Float32Array(2)]);await t.enqueue('holdWorld',[]);t.receive(ack(sent[0]));eq(t.stats.returnedBuffers,1024);
+ t.enqueue('skyFrame',[new Float32Array(3),new Float32Array(3)]);await t.enqueue('holdWorld',[]);t.enqueue('lightingFrame',[new Float32Array(1)]);const reused=t.stats.reusedBuffers;t.receive(ack(sent[1]));eq(t.stats.poolEvictions,1);t.enqueue('lightingFrame',[new Float32Array(1)]);eq(t.stats.reusedBuffers,reused+1,'remaining hot-size bucket survived eviction');await t.enqueue('holdWorld',[]);t.receive(ack(sent[2]));t.dispose();
 }
 // Main adapter mock exercises lifecycle only, never OffscreenCanvas/realWorker/GPU.
 class FakeWorker{
