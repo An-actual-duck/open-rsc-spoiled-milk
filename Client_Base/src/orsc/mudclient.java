@@ -6186,9 +6186,6 @@ public final class mudclient implements Runnable {
 							this.getSurface().loggedIn = true;
 							this.drawGame(13);
 						}
-					} catch (orsc.graphics.two.SegmentedTextRaster.FrameAbort discarded) {
-                        if(this.getScene()!=null&&this.getScene().getRenderer3DFrame()!=null)this.getScene().getRenderer3DFrame().release();
-                        return;
 					} catch (OutOfMemoryError var4) {
 						var4.printStackTrace();
 						this.errorLoadingMemory = true;
@@ -6199,6 +6196,9 @@ public final class mudclient implements Runnable {
 				clientPort.drawLoadingError();
 				this.setFPS(1, (byte) 106);
 			}
+		} catch (orsc.graphics.two.SegmentedTextRaster.FrameAbort discarded) {
+            if(this.getScene()!=null&&this.getScene().getRenderer3DFrame()!=null)this.getScene().getRenderer3DFrame().release();
+            return;
 		} catch (RuntimeException var5) {
 			throw GenUtil.makeThrowable(var5, "client.JD()");
 		}
