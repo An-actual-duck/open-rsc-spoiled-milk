@@ -31,6 +31,7 @@ public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegist
         try {
             if(path.length()<1||path.length()>32L*1024*1024)throw new IllegalStateException("Private whole-zone catalog is absent or exceeds32MiB: "+path);
             byte[] bytes=new byte[(int)path.length()];try(DataInputStream in=new DataInputStream(new FileInputStream(path))){in.readFully(bytes);if(in.read()!=-1)throw new IllegalStateException("Catalog changed while reading");}
+            String expectedCatalog=System.getProperty("spoiledmilk.browserWholeZoneCatalogSha256","");MessageDigest catalogDigest=MessageDigest.getInstance("SHA-256");StringBuilder actualCatalog=new StringBuilder();for(byte value:catalogDigest.digest(bytes))actualCatalog.append(String.format("%02x",value&255));if(!expectedCatalog.matches("[a-f0-9]{64}")||!expectedCatalog.equals(actualCatalog.toString()))throw new IllegalStateException("Whole-zone Cache/native catalog identity mismatch");
             JSONObject m=new JSONObject(new String(bytes,StandardCharsets.UTF_8));
             if(m.getInt("schemaVersion")!=1||!"spoiled-milk-whole-overworld-zone".equals(m.getString("type"))||!m.getBoolean("complete"))throw new IllegalStateException("Complete full-source whole-zone catalog required");
             String artifact=System.getProperty("spoiledmilk.browserWholeZoneClientSha256","");if(!artifact.matches("[a-f0-9]{64}")||!artifact.equals(m.getString("clientJarSha256")))throw new IllegalStateException("Whole-zone bake/client artifact mismatch; rebuild the catalog from this exact client");
@@ -50,6 +51,7 @@ public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegist
     public int[] materials(){return materials.clone();}
     public void uploaded(int count){if(count!=expectedResources)throw new IllegalStateException("Whole-zone upload did not cover the full catalog");ready=true;WholeOverworldZoneRegistry.install(this);}
     private void validateSource(World world){
+        if(world.hasWholeOverworldTerrainPatches())throw new IllegalStateException("Whole-zone does not support unbaked live terrain editor patches; rebuild source/catalog");
         NativeLayeredTerrainSnapshot source=world.getWholeOverworldSourceSnapshot();if(source==null)throw new IllegalStateException("Whole-zone requires authoritative native layered terrain");
         if(!manifestHash.equals(source.getManifestSha256()))throw new IllegalStateException("Whole-zone source manifest changed; rebuild the full catalog");
         if(source==validatedSource)return;

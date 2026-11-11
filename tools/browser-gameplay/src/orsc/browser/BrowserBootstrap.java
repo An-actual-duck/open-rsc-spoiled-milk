@@ -232,7 +232,7 @@ public final class BrowserBootstrap {
                                 }
                                 int[] batchWork=snapshotBatchedModelWork(observedScene,Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel"));
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
-                                if(Boolean.getBoolean("spoiledmilk.browserWholeZone"))reportWholeZoneWork(orsc.BrowserWebGLBridge.getWholeZoneWork());
+                                if(Boolean.getBoolean("spoiledmilk.browserWholeZone"))reportWholeZoneWork(snapshotWholeZoneWork());
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
                                 reportRegionPreparationDiagnostics(regionCounts!=null,terrainDiagnostics.append(((orsc.mudclient)client).getWorld(),regionCounts));
@@ -251,6 +251,12 @@ public final class BrowserBootstrap {
     }
 
     /** No receipt until Scene exists; a missing/invalid getter after startup stays fatal. */
+    static int[] snapshotWholeZoneWork() throws ReflectiveOperationException {
+        Object work=Class.forName("orsc.BrowserWebGLBridge").getMethod("getWholeZoneWork").invoke(null);
+        if(!(work instanceof int[])||((int[])work).length!=0&&((int[])work).length!=9)throw new IllegalStateException("Invalid whole-zone work getter");
+        return ((int[])work).clone();
+    }
+
     static int[] snapshotBatchedModelWork(Object scene,boolean requested) throws ReflectiveOperationException {
         if(!requested || scene==null)return null;
         Object work=scene.getClass().getMethod("getBrowserBatchedModelKernelWork").invoke(scene);
