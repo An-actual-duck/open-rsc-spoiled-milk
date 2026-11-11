@@ -1,0 +1,170 @@
+Independent immutable terrain query-index review
+================================================
+
+Exact source and scope
+----------------------
+Candidate e730f8582bdf3bfb872f81890b1e51a599a4b445 was independently compared
+with frozen baseline38bbb1c34f7f6b41fa369f25d122d343b33bbdb3. This ai2
+branch changes only independent tests, their runner and this report. No browser,
+GPU, server or whole-client build was started. The implementation is private,
+default-OFF; correctness does not establish a performance gain or adoption.
+
+Source audit
+-------------
+Snapshot construction still accepts every previously accepted roster. Its
+existing cloned x-major/y-minor9/25-slot array supplies a direct slot only if
+EVERY chunk's own size equals the presentation size24/48, including void slots.
+Those uniform chunks are disjoint, so floorDiv(worldX/Y,presentationSize) and
+the stored minimum chunk coordinates identify exactly the old available chunk.
+For any int world coordinate,24/48 divisors keep quotients and differences
+well inside int bounds. Bounds checks precede dx*dimension+dy array indexing.
+Explicit void returns null. Mixed sizes retain the original first-available
+linear scan verbatim, preserving accepted overlap/precedence and void behavior.
+
+Chunk construction caches inclusive int bounds only AFTER the original long
+safe-coordinate checks. minimum=chunkCoordinate*size is then representable;
+maximum=minimum+(size-1) is representable even when the old exclusive upper
+bound equals Integer.MAX_VALUE+1. The OFF branch keeps the literal old long
+comparison. No new constructor validity rule was introduced.
+
+World/level identity checks in covers remain before lookup. Each snapshot owns
+its final index metadata and cloned roster; no global map/cache or stale
+cross-world index is introduced. Uniform protocol3 retains its original page
+path. Tile source bytes remain copied; returned Tiles remain independent.
+Merge and inner-window extraction construct fresh snapshots and derive their
+own eligibility. There is no per-query allocation, new long arithmetic, boxed
+Long hash lookup or hot-query diagnostic counter. Packet decoder, resident
+cache, loader and Tile source are unchanged by this candidate.
+
+Independent executable proof
+-----------------------------
+Source-bound evidence:
+output/tests/browser-terrain-query-independent/20261111T101338281014Z/
+  result.json, compile-{baseline,candidate}.{stdout,stderr},
+  {baseline,candidate}-{false,true}.{stdout,stderr}
+
+Four standalone JVM runs compile exact detached baseline/candidate Chunk,
+Snapshot and Tile source without a dependency JAR, then run the same independent
+reference fixture with the private property OFF and ON. All four produce:
+841c45f6fef28b7da6022cfe66b9dbcb3ade1171d196246f6f24807fe7621a5a
+
+Each executes123,660 snapshot queries. Baseline runs pass479,368 assertions;
+candidate runs pass481,836, adding explicit size/eligibility/dimension/static
+policy assertions. Results cover:
+
+*Protocols3–10, normal/negative/extreme window centers, signed levels,
+ wrong/null world identities and wrong levels; complete available and void
+ rosters, mixed24/presentation-size and every divisor-size roster.
+*An independent ordered reference uses known source specs and long inclusive
+ geometry, not candidate covers/find/index helpers. It chooses the FIRST
+ available covering spec and checks every Tile data field, unsigned elevation/
+ overlay scalars, missing-coordinate exception class/message and coverage.
+ Boundary/cross-slot and deterministic random queries exercise overlapping
+ mixed sizes and gaps. Full output/exception digests match the frozen baseline.
+*Every supported standalone chunk divisor1/2/3/4/6/8/12/16/24/48 at smallest/
+ largest accepted coordinates, edges/neighbor positions and int extrema.
+ Available and void covers semantics match the reference. The size16 upper
+ chunk explicitly includes Integer.MAX_VALUE; its exclusive end is not narrowed
+ into an overflowing int. All scalar/Tile accesses are checked where available.
+*Input byte arrays are overwritten after chunk construction and input rosters
+ nulled after snapshot construction. Returned Tiles are mutated before another
+ query. Results remain tied to the independently retained expected bytes.
+*Legacy/wide visual+structural merges, negative-center radius-two presentation,
+ radius-one atomic extraction and preserved input snapshots. Constructor and
+ query failures cover malformed roster size/order/null slots, protocol, chunk
+ size, payload length/hash/encoding/source-page identity, and invalid merges.
+*Candidate introspection verifies all-slot eligibility INCLUDING void sizes,
+ uniform-page noneligibility/dimension0,3/5 dimensions and the captured static
+ startup property independently of current query outputs.
+
+The runner records exact source/fixture/runner and stdout/stderr SHA256 values;
+it extracts Git blobs and copies fixtures into the run before compilation, so
+later worker changes cannot alter the tested input. Both Java compiles passed
+with empty stdout/stderr. No candidate fix or failed first-run exception was
+needed for this test run.
+
+Metadata and limits
+--------------------
+Read-only Bootstrap review confirms periodic metadata extends the existing
+three region counters to eight numbers, retaining prefix order. Cached
+reflection reads the current World's snapshot and reports present/eligible/
+static-enabled/dimension/protocol; it does not instrument queries or retain a
+queried tile. Null world or unavailable older API falls back to old metadata.
+Eligibility and global static enablement are separate facts: an enabled flag
+does not imply that a current uniform or mixed-size snapshot uses the index.
+Agent1 owns execution of the dedicated Bootstrap/frontend metadata fixture;
+this independent Java oracle proves the public snapshot diagnostics only.
+
+No source-backed correctness blocker was found for exact e730. JVM parity is
+not actual CheerpJ execution, real browser readiness/output parity, loader
+scenario acceptance, heap accounting or FPS evidence. The source-based hot
+loop simplification makes no numerical FPS forecast. Actual default/candidate
+same-artifact gameplay comparison remains the manager's separate gate.
+
+Workspace-layout check reports inherited legacy output-root entries and the
+legacy assets/sprites entry. New evidence uses the declared tests category;
+layout-check.log is preserved with the run and no inherited data was removed.
+
+Manager-owned live measurement and current generated bodies
+------------------------------------------------------------
+The completed strict same75c349 full-client JAR pair measured terrain query
+OFF51.76952812583311FPS versus ON55.320425234112044FPS: +6.8590486% in this
+single pair. Each used180 seconds warm-up and60 seconds measurement, OFF then
+ON, preferred sprite keys, batched-model kernel ON, full C/T uploads and no
+overlay tracking, with all six real combat families validated. Segment p99
+frame intervals changed24/24ms to23/23ms. This is a positive conditional
+measurement, not a60FPS result or a confidence interval across hardware/runs.
+Evidence is manager output/diagnostics/browser-frame-architecture/
+terrain-query-comparison.json. Its loaded snapshot metadata is present/eligible,
+protocol8, dimension3 in both runs, with enabled false versus true. Protocols9
+and10 have the CPU proofs above, not live coverage from this measured scene.
+
+The subsequent instrumented20-second diagnostic is separately preserved at
+manager output/diagnostics/browser-frame-architecture/
+post-terrain-query-profile-1/{sources-profile.json,
+additional-information.json,sources-receipt.json}. The receipt reports GAME,
+ready and no error before/after, with terrainQueryIndex requested/available/
+enabled:true. This generic profile receipt does not export loaded snapshot
+metadata; protocol/dimension/eligibility above come from the comparison receipt,
+not an invented profile field. Signed-level and transition gameplay checks
+remain the manager's next functional gate at this writing.
+
+Actual generated source-body review identifies:
+*J_01a3a798, sourcefb3942a9: enabled/eligible branch, floor-division helper calls,
+ checked dx/dy, x-major index and availability.46 deepest-generated samples,
+ 82 inclusive, confirm this body's presence in the actual capture.
+*J_01a6dc48, source894822e4: enabled cached inclusive int bound comparisons,
+ with4 deepest/inclusive samples. The enabled comparison body has no BigInt
+ arithmetic. These actual generated branches match the reviewed Java path.
+The game GeckoMain1715064 has10,027 sampled stacks,7,364 containing generated
+J_* Java frames. Sample proportions neither quantify FPS saved nor establish
+that a particular helper caused the measured improvement; generated branches
+and continuations are not a full Java source map. No runtime change follows
+from this attribution and no additional worker test/browser/GPU run occurred.
+
+Capture SHA256, respectively profile /additional information /receipt:
+76454c2a8eae524bb6a607c788d398cfa9167c7d60515488dbaf2bcfa8bd87f7
+69a511de350551d47e835a0206dc1fcfd20b520f54d74d415c3a1fd5a0bcf050
+4d3784d02d3880f34af8c1a400f641a070ef86664df24249129993aaf3f4d196
+
+Final manager-owned functional transition gate
+-----------------------------------------------
+The separate manager receipt at output/diagnostics/browser-frame-architecture/
+terrain-query-transitions-1/result.json is accepted:true, SHA256
+f0a343acf7e45ecb8598b274d9f08634afbcdc4a9c64dbac0369afbd99cc118c.
+Read-only verification checks all four fresh server-authoritative targets:
+(350,550,0), (711,587,-1), (684,506,2), and return (133,660,0). Each private
+online authority record matches its requested position/level. Every resulting
+client receipt is GAME, ready, keyboard/world input unblocked, has required
+chunks uploaded, advances rendered frames, reports the correct signed level
+and no error, and retains present/eligible/enabled protocol8 dimension3 terrain
+with the private policy enabled. The manager also reports the returned-city
+visual check passed; this worker did not independently view the browser.
+
+This closes the previously pending signed-level/transition functional gate for
+these four actual destinations. Loading timings in that receipt are functional
+observations, not new performance claims; the only measured FPS comparison
+remains the single +6.859% pair above. Protocol9/10 live transitions remain
+outside this scene's coverage despite passing the independent CPU corpus.
+No source changed after the exact e730 proof and no new test, browser or GPU
+process was started by this worker for this receipt/report amendment.
