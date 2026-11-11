@@ -40,3 +40,20 @@ Implementation choice after actual travel attribution: remove repeated work /
 cache churn ifdemonstrated, orstage big blockingpreparationbursts. No automatic
 budgetraise, oldbranch import, qualitycut or performanceclaim atthis milestone.
 Worker performsCPU/source/build/stageonly; managerownsactualFirefox/profiles.
+
+Repeatable diagnostic staging follow-up
+- NEW immutable output/tests/browser-gameplay-spike/
+  region-load-profile-repeatable-review-1/repeatable-preparation.json.
+- Same ba0 full-source diagnosticJAR d1cbcabc282010f50c1d14b7a58d09929f0d8a5dfd975a06587b4bdd93ebd56c;
+  exact65857a5bb211dac12d7e34722301b4d7cd3bfc5d frontend. Runtime unchanged.
+- Maintained repeatable client preparer, existing repeatable-baseline-2 server;
+  accountbrowserdemo, fixture repeatable-v1, TCP/Cache43649, WS43549, HTTP8220.
+  Standard repeatable sourceproof/camera contract, Worker/loadprofile ON;
+  modelbatch/terrainquery/keylimbs/physical ON; fullC/T, overlaydelta/rect OFF.
+  ON/OFF metadata changes only diagnostic flag, not presentationquality.
+- Server/DB/account/fixture/processes untouched; no browser/server started.
+  Prior combat8220 metadata and failed LOGIN/disappearing-client attempt kept.
+  Precise earlier application-exit cause remains unproven; new stage supplies
+  coherent repeatable route instead of mixingcombatcache/repeatableURL.
+- Stage hashes/commands verified and canonical workspace check PASS. Actual
+  route profile still manager gate; no tuning or performanceclaim yet.
