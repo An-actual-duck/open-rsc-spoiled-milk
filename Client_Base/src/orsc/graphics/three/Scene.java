@@ -3207,6 +3207,8 @@ public final class Scene {
 			boolean skipLegacyWorldRaster =
 				Renderer3DSettings.canSkipLegacyWorldRaster() && !forceLegacyWorldRaster;
             this.interactionLegacyRaster = !skipLegacyWorldRaster;
+            if(orsc.graphics.two.GraphicsController.BROWSER_OVERLAY_JOURNAL_OBSERVE&&!skipLegacyWorldRaster)
+                this.graphics.observeOverlayJournalBarrier(orsc.graphics.two.OverlayJournalObserver.LEGACY);
             long coverageInitStart = profilePreparation ? RenderTelemetry.now() : 0L;
             if (browserOverlayCoverage) {
                 this.graphics.setWorldOverlayCoverageEnabled(Renderer3DSettings.isBrowserPresentationAvailable());
@@ -3488,6 +3490,7 @@ public final class Scene {
 					geometryFrame,
 					depthWorldKinds));
 				if (Renderer3DSettings.isVisibleWorldEnabled()) {
+                    if(orsc.graphics.two.GraphicsController.BROWSER_OVERLAY_JOURNAL_OBSERVE)this.graphics.observeOverlayJournalBarrier(orsc.graphics.two.OverlayJournalObserver.LEGACY);
 					geometryFrame.getDepthFrame().copyColorTo(this.pixelData);
 				}
 				depthExportNanos = RenderTelemetry.elapsedSince(depthExportStart);

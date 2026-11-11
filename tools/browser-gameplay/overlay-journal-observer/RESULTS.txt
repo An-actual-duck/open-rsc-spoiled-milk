@@ -1,0 +1,107 @@
+PRIVATE JOURNAL OBSERVER: CPU REVIEW HANDOFF
+
+Runtime checkpoint0de2fbfbc4bebe36d01d9e4960305b8338345513, Java hooks/core
+byte-identical first stable checkpointffdbe9f3a350834e1a44d0bcc9c395053c8d3f9f.
+Based on published terrain5d2359d1e via authorized normal main sync; no feature
+cross-merge. Default OFF, original Java writes/presentation/ACK authoritative.
+
+PASS local26 ownership/source snapshot/caps/lifecycle checks;50 native schema,
+no-write/epoch/alias/delegation checks;8 independent actual Java hooked frames
+replayed to49,152 exact C/raw-T words. Corpus includes mono/AA, clipping, shadows,
+ordered boxes/alpha/lines/text, within-frame font mutation and clipped-away glyph.
+No JS expected pixels were used to generate that Java corpus.
+
+Independent review (ai2, frozen candidate0de2): baseline5d2359 versus candidate
+OFF/ON rendering/error digest identical across1096 cases;486 core assertions;
+all five literal old hot-helper bodies exact;149 native checks including late
+malformed commands, scratch allocation failures, hostile typed-array iterators,
+no borrowed diagnostics retention, original throw/reject and observer failures
+still delegating the original native callback exactly once. Independent review
+has its own test branch and receipts; manager collects that branch separately.
+The observer never uses input iterators/subarray/species for diagnostic copies.
+
+Existing candidate frontend policy, mocked WebGL frontend (Node experimental VM
+modules flag required), native original-ASYNC policy, delta GL-double, and
+owned-state CPU oracle also pass. These are CPU/mock/source proofs, not hardware
+rendering or FPS acceptance. Full maintained client build passed.
+
+Evidence (worker-relative ignored outputs)
+-----------------------------------------
+output/tests/browser-overlay-journal/final-0de2-1/result.json
+  Commands, hashes/logs and preserved independent literal corpus/result.
+output/builds/browser-overlay-journal/0de2fbfbc/receipt.json
+  Clean exact build/source hashes and build.log.
+  Open_RSC_Client.jar SHA256:
+  da2c2f22fcefb29b8083ef98351d84e1ac583c47de93448ee12b21ae6192711f
+output/tests/browser-gameplay-spike/overlay-journal-observer-0de2-1/
+  observer-preparation.json: immutable staged client, exact hashes/URLs,
+  HTTP8215 command, linked existing private combat server43639/43539.
+  Cacheport43639; no server/DB creation/mutation or process launch.
+  Frozen production server core's source remains explicitly unverified;
+  source-built guarded combat harness1b8 is independently proven.
+
+Actual native ABI/functional observation PASSED manager-owned Firefox test.
+See the actual-world addendum below; no complete game frame was replayed.
+The stage explicitly enables modelbatch, terrainquery, keylimbs, overlaydelta,
+packed rectangles and observer; paired same-stage observer off URL is recorded.
+Inspect browserProof.gpu.overlayJournalObserver and Enabled. All six workload
+channels must advance in the live test; an online channel count alone is not proof.
+
+Limits
+------
+This is intentionally an observer, with overhead expected. It is not evidence
+of gameplay speedup or permission to suppress Java work. Real frames may have
+zero complete journals due to terminal AWT alias and sprite/minimap UNKNOWN
+barriers. Known-run metrics remain useful but are captured candidate footprints,
+not all writer work, actual nonzero pixel counts or CPU/GPU timing. Last trace
+retains at most64 owned ops/runs; truncation is reported. Full bounds/source/
+read-barrier audit is required before any future segment or deferred replay.
+
+Source-catalog completeness is scoped to the five existing direct pixelData
+files. Arbitrary reflection/plugin/concurrent array mutation is outside scope.
+Font copies are at each TEXT, not memoized by mutable array identity.8MiB retained
+font payload is not peak memory: flattening may coexist with old copies, plus
+442,392B lazy base arrays/snapshot arrays/separate C/T replay scratch. See CONTRACT.
+
+workspace-layout.py check exits1 with the same40 historical unclassified output
+root entries. They were preserved; no task root entry was added. New evidence
+uses declared tests/builds categories. This known preexisting failure is recorded.
+No browser/GPU/server/public operation was performed by this worker.
+
+Actual-world functional gate (manager-owned, no worker launch)
+-----------------------------------------------------------
+Root evidence directory:
+/home/justin/Core-Framework/output/diagnostics/browser-frame-architecture/
+  overlay-journal-world-1/
+Manager used the immutable0de2 stage/JAR above in an isolated hardware Firefox
+session and closed its owned browser normally afterward. journal-observation.json
+asserts functionalObservationOnly=true and fpsClaim=false. All six actual combat
+channel event and credited-damage counters advanced between authority snapshots.
+The actual pose was (499,456,0), inherited from the normal walk, so this is a
+functional observation and not an exact-pose benchmark cohort.
+
+2636 valid observed frames,0 rejected,0 reported mismatches. Complete0 is
+EXPECTED: AWT/sprite barriers kept all original C/T authoritative. No actual-game
+whole-frame replay/comparison occurred; zero mismatches here does not independently
+prove native replay pixels. The separate8 actual Java literal frames provide the
+49,152-word complete replay proof. Screenshot observed-world.png was clean in
+manager review.
+
+Forty distinct live samples:62 TEXT calls,1427 glyph plots and260842 cloned font
+bytes per frame;10–15 known runs and39–62 barriers. Captured candidate footprint
+57301–59926 pixels/frame (median57976).486 sampled runs had at most51 TEXT calls
+in one contiguous known run; median0 TEXT reflects many primitive-only runs.
+No run trace was truncated. These are supported captured operation metrics, not
+all writer work, unique pixel counts, native profitability or timing.
+
+This supports investigating a bounded known-segment pilot that materializes
+BEFORE every unknown/read/escape barrier. It does not support blind whole-frame
+deferral or suppression. Such a pilot still needs the full early-barrier audit,
+source/alias lifetime proof, pure-Java journal replay fallback without UI rerender,
+pre-write native validation and exact pixel/exception/ordering proof, then real
+same-artifact gameplay A/B tests. No implementation/adoption is included here.
+
+Evidence SHA256:
+  journal-observation.json: 6d9ede5c6f8a8be40bbf89d6f13d095458d40909cd62f05aa9801503766cda83
+  summary.json: 5db893dda3c42980bec21b8446add6113523999ffa4de1bbfe4282ac96394ec6
+  observed-world.png: 914ffe522f452db79aedd392c4c1383ed6c1a5518b635098b091537210703532

@@ -24712,6 +24712,8 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawWorldEditorGridLine(int x0,int y0,int x1,int y1,int color){
+        if(orsc.graphics.two.GraphicsController.BROWSER_OVERLAY_JOURNAL_OBSERVE)this.getSurface().observeOverlayJournalBarrier(orsc.graphics.two.OverlayJournalObserver.EDITOR);
+
 		int width=this.getSurface().width2,height=this.getSurface().height2;
 		int code0=worldEditorGridClipCode(x0,y0,width,height),code1=worldEditorGridClipCode(x1,y1,width,height);
 		while(true){
