@@ -110,3 +110,29 @@ workspace-layout.py check reports pre-existing unclassified worker output-root
 entries (legacy renderer, sprite and static-analysis folders), preserved here.
 This task writes only the declared tests/browser-roof-membership category and
 existing maintained regression suites' declared test subjects.
+
+
+Diagnostic counter follow-up (before formal FPS acceptance)
+-----------------------------------------------------------
+The initial prototype incremented the reference-check diagnostic by calling
+add(3,1) for every compared reference. The follow-up counts the same completed
+bounded loop once with add(3,currentCount), preserving every reference comparison
+and the saturating end-of-frame counter value. This avoids720 extra diagnostic
+method calls on each unchanged ground-level frame. It changes no membership,
+visibility, camera or gameplay semantics.
+
+The oracle now also compiles the exact prior da65 helper and compares it with
+the follow-up over the same480-frame source/draw corpus. Both helpers report
+identical work counters, ordered roster/picking/pixel digest and24 edge outcomes.
+Additional assertions prove1440 checks after two720-reference frames and exact
+saturation near/already at Integer.MAX_VALUE;13 focused guard assertions pass.
+Frontend checks and full client rebuild passed. No FPS test was run here.
+
+New immutable artifact (initial3579 artifact and stages are preserved):
+  output/tests/browser-roof-membership/review-aggregate-counter-1/client.jar
+  SHA25630131011e8e356910aea1c6120ddc8f50867dd1b9d57f296400eefdbff4a83e0
+Only BrowserRoofMembership.class differs from the initial3579 JAR. The other
+class entries are identical, and all2265 animation PNGs are byte-identical.
+receipt.json records the exact source checkpoint and source hashes. Separate
+static/combat review-2 client-only stages use this revised artifact, with no
+HTTP/browser/server start or database creation by this worker.

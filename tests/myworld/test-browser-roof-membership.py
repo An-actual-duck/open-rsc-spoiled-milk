@@ -19,8 +19,10 @@ run = category / datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
 run.mkdir()
 current = run / 'current'
 baseline = run / 'baseline'
+previous_instrumentation = run / 'previous-instrumentation'
 current.mkdir()
 baseline.mkdir()
+previous_instrumentation.mkdir()
 
 
 def block(source):
@@ -56,6 +58,8 @@ assert 'Boolean.getBoolean("spoiledmilk.browserRoofMembership") ? new BrowserRoo
 for folder, source in [(baseline, old_client), (current, new_client)]:
     (folder / 'RoofMembershipDraw.java').write_text(harness(source))
 (baseline / 'Scene.java').write_bytes(old_scene)
+(previous_instrumentation / 'BrowserRoofMembership.java').write_bytes(subprocess.check_output([
+    'git', 'show', 'da65d0e26ccf81fc5ca74ad2f4593a8fd8f7f918:Client_Base/src/orsc/graphics/three/BrowserRoofMembership.java'], cwd=ROOT))
 fixtures = [ROOT / 'tests/myworld' / name for name in [
     'ClericWellSpotClientTest.java', 'BrowserOwnershipGraphics.java',
     'BrowserWallRoofOwnershipFixture.java', 'BrowserRoofMembershipFixture.java']]
@@ -67,25 +71,31 @@ with (run / 'compile.log').open('w') as log:
     subprocess.run(['javac', '-source', '8', '-target', '8', '-cp', str(current) + ':' + str(jar),
                     '-d', str(baseline), str(baseline / 'Scene.java'), str(baseline / 'RoofMembershipDraw.java')],
                    check=True, stdout=log, stderr=subprocess.STDOUT)
+    subprocess.run(['javac', '-source', '8', '-target', '8', '-cp', str(current) + ':' + str(jar),
+                    '-d', str(previous_instrumentation), str(previous_instrumentation / 'BrowserRoofMembership.java')],
+                   check=True, stdout=log, stderr=subprocess.STDOUT)
 
 rows = {}
 edges = {}
-for label, flag in [('baseline', 'false'), ('baseline', 'true'), ('current', 'false'), ('current', 'true')]:
+for label, flag in [('baseline', 'false'), ('baseline', 'true'), ('current', 'false'), ('current', 'true'), ('previous-instrumentation', 'true')]:
     name = label + '-' + flag
     cp = (str(baseline) + ':' if label == 'baseline' else '') + str(current) + ':' + str(jar)
+    if label == 'previous-instrumentation': cp = str(previous_instrumentation) + ':' + cp
+    version = 'current' if label == 'previous-instrumentation' else label
     with (run / (name + '.log')).open('w') as log:
         subprocess.run(['java', '-Xmx768m', '-Djava.awt.headless=true', '-cp', cp,
-                        'orsc.graphics.three.BrowserRoofMembershipFixture', label, flag],
+                        'orsc.graphics.three.BrowserRoofMembershipFixture', version, flag],
                        check=True, stdout=log, stderr=subprocess.STDOUT)
     lines = (run / (name + '.log')).read_text().strip().splitlines()
     rows[name] = {'digest': lines[-1], 'work': lines[-2]}
     with (run / (name + '-edges.log')).open('w') as log:
         subprocess.run(['java', '-Xmx768m', '-Djava.awt.headless=true', '-cp', cp,
-                        'orsc.graphics.three.BrowserRoofMembershipFixture', 'edges', label, flag],
+                        'orsc.graphics.three.BrowserRoofMembershipFixture', 'edges', version, flag],
                        check=True, stdout=log, stderr=subprocess.STDOUT)
     edges[name] = (run / (name + '-edges.log')).read_text().strip().splitlines()[-1]
 assert len({row['digest'] for row in rows.values()}) == 1, rows
 assert len(set(edges.values())) == 1, edges
+assert rows['current-true']['work'] == rows['previous-instrumentation-true']['work'], rows
 with (run / 'revisions.log').open('w') as log:
     subprocess.run(['java', '-Xmx768m', '-Djava.awt.headless=true', '-cp', str(current) + ':' + str(jar),
                     'orsc.graphics.three.BrowserRoofMembershipFixture', 'revisions'],

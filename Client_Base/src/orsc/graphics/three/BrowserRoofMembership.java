@@ -46,9 +46,9 @@ public final class BrowserRoofMembership {
 			&& this.revision == scene.modelMembershipRevision() && this.plane == plane
 			&& this.visibility == visibility && count == currentCount;
 		for (int n = 0; n < currentCount; n++) {
-			add(3, 1);
 			if (retained[n] != current[n]) same = false;
 		}
+		add(3, currentCount);
 		if (!same) return false;
 		pending = false;
 		add(2, 1); add(4, currentCount);

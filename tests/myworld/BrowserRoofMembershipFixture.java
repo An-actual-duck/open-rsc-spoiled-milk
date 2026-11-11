@@ -56,7 +56,7 @@ public final class BrowserRoofMembershipFixture {
 	static void differential(String version, boolean requested) throws Exception {
 		configure(); MessageDigest digest = MessageDigest.getInstance("SHA-256");
 		boolean current = version.equals("current");
-		int reused = 0, reconciled = 0, avoided = 0, frames = 0;
+		int reused = 0, reconciled = 0, avoided = 0, referenceChecks = 0, frames = 0;
 		for (int mode = 0; mode < 4; mode++) {
 			BrowserFrameSinkRegistry.install(null);
 			BrowserFrameSinkRegistry.install(mode == 1 ? null : BrowserWallRoofOwnershipFixture.sink(mode == 2));
@@ -115,10 +115,11 @@ public final class BrowserRoofMembershipFixture {
 			if (current && requested && mode == 0) check(work[2] > 50 && work[4] > 100, "No useful stable retention occurred");
 			if (mode != 0 || !requested || !current) check(work[2] == 0, "Retention escaped private browser GPU ownership");
 			reused += work[2]; reconciled += work[1]; avoided += work[4];
+			referenceChecks += work[3];
 		}
 		BrowserFrameSinkRegistry.install(null);
 		StringBuilder hex = new StringBuilder(); for (byte b : digest.digest()) hex.append(String.format("%02x", b & 255));
-		System.out.println("frames=" + frames + " reused=" + reused + " reconciled=" + reconciled + " avoidedRemovals=" + avoided);
+		System.out.println("frames=" + frames + " reused=" + reused + " reconciled=" + reconciled + " avoidedRemovals=" + avoided + " referenceChecks=" + referenceChecks);
 		System.out.println(hex);
 	}
 	static void revisions() throws Exception {
@@ -137,6 +138,7 @@ public final class BrowserRoofMembershipFixture {
 		check(s.modelMembershipRevision() != revision, "Reset did not change revision");
 		Grid grid = new Grid(144); RoofMembershipDraw draw = new RoofMembershipDraw(s, grid, true);
 		draw.draw(); draw.draw(); check(draw.browserRoofMembership.work()[2] == 1, "720-reference real bound not reusable");
+		check(draw.browserRoofMembership.work()[3] == 1440, "Reference checks differ from the literal per-reference counter");
 		field(Scene.class, "modelMembershipRevision").setInt(s, Integer.MAX_VALUE); epoch = s.modelMembershipEpoch();
 		s.addModel(m); check(s.modelMembershipRevision() == 0 && s.modelMembershipEpoch() != epoch, "Revision wrap aliases old ownership");
 		draw.draw(); check(draw.browserRoofMembership.work()[2] == 1, "Epoch replacement failed to invalidate retention");
@@ -145,6 +147,10 @@ public final class BrowserRoofMembershipFixture {
 		check(draw.browserRoofMembership.work()[2] == 1, "Duplicate targets were cached");
 		grid.modelRoofGrid[0][1] = null; s.removeModels(new RSModel[]{grid.modelRoofGrid[0][0]}, 1); draw.draw(); draw.draw();
 		check(draw.browserRoofMembership.work()[2] == 2, "Null target prevented valid retention");
+		int[] counters = (int[])field(BrowserRoofMembership.class, "work").get(draw.browserRoofMembership);
+		counters[3] = Integer.MAX_VALUE - 100;
+		draw.draw(); check(counters[3] == Integer.MAX_VALUE, "Aggregated reference counter did not saturate");
+		draw.draw(); check(counters[3] == Integer.MAX_VALUE, "Saturated reference counter wrapped");
 		BrowserFrameSinkRegistry.install(null);
 		System.out.println("PASS " + checks + " roster revision/epoch/no-op/max720/duplicate/null checks");
 	}
