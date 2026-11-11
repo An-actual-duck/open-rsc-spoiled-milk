@@ -42,6 +42,7 @@ public final class RendererBenchmarkServer {
     private static int tick;
     private static int removedMapNpcs;
     private static int samePositionTeleports, areaTeleports, levelTeleports;
+    private static int retiredFixtureEvents;
     private static long serial;
     private static String phase = "dense-idle";
     private static boolean sustainSummonsForBenchmark;
@@ -164,12 +165,31 @@ public final class RendererBenchmarkServer {
     }
 
     private static void removeActors() {
+        // Player UUIDs derive from usernames. Retire the exact old instances'
+        // scheduler entries before replacement actors reuse those event keys.
+        // Null-owner/world/viewer events belong to other fixture authorities.
+        Set<Mob> owned=Collections.newSetFromMap(new IdentityHashMap<Mob,Boolean>());
+        owned.addAll(actors);owned.addAll(npcs);
+        if(worldServer!=null)for(Npc npc:worldServer.getWorld().getNpcs())
+            if(Summoning.isSummon(npc)&&owned.contains(Summoning.getSummonOwner(npc)))owned.add(npc);
+        retireOwnedEvents(owned);
         for (Player actor : actors) {
             Summoning.dismissAll(actor); actor.setLoggedIn(false); actor.remove();
             worldServer.getWorld().getPlayers().remove(actor); worldServer.getWorld().removePlayer(actor.getUsernameHash());
         }
         for (Npc npc : npcs) worldServer.getWorld().unregisterNpc(npc);
+        retireOwnedEvents(owned);
+        if(worldServer!=null)for(GameTickEvent event:worldServer.getGameEventHandler().getEvents())
+            if(owned.contains(event.getOwner()))throw new IllegalStateException("Retired fixture still owns a scheduled event");
         actors.clear(); npcs.clear(); positions.clear(); sustainedSummons=0; sustainedBearInstances.clear();
+    }
+
+    private static void retireOwnedEvents(Set<Mob> owned) {
+        if(worldServer==null||owned.isEmpty())return;
+        for(GameTickEvent event:worldServer.getGameEventHandler().getEvents())if(owned.contains(event.getOwner())) {
+            event.stop();worldServer.getGameEventHandler().remove(event);
+            if(retiredFixtureEvents<Integer.MAX_VALUE)retiredFixtureEvents++;
+        }
     }
 
     private static void equip(Player player, int id) throws Exception {
@@ -372,7 +392,7 @@ public final class RendererBenchmarkServer {
                     JSONObject combat=combatState();
                     JSONObject state = new JSONObject().put("online", player != null).put("private", true);
                     if (player != null) state.put("x", player.getX()).put("y", player.getY()).put("level", player.getWorldLocation().getCoordinate().getLevel());
-                    state.put("phase", phase).put("phaseTick", tick).put("samePositionTeleports", samePositionTeleports).put("areaTeleports",areaTeleports).put("levelTeleports",levelTeleports).put("controlledPlayers", actors.size()).put("controlledNpcs", npcs.size())
+                    state.put("phase", phase).put("phaseTick", tick).put("samePositionTeleports", samePositionTeleports).put("areaTeleports",areaTeleports).put("levelTeleports",levelTeleports).put("controlledPlayers", actors.size()).put("controlledNpcs", npcs.size()).put("retiredFixtureEvents",retiredFixtureEvents)
                         .put("summonsRequested", actors.isEmpty() ? 0 : 8).put("visualProjectileEmitters", actors.isEmpty() || realCombat() ? 0 : 8)
                         .put("visualProjectilesDamage", false).put("sustainSummonsForBenchmark",sustainSummonsForBenchmark).put("realCombat",combat).put("removedMapNpcs", removedMapNpcs)
                         .put("cycleMillis", server.getWorldDayNightClock().getCurrentCycleMillis())

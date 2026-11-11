@@ -3,14 +3,21 @@ package com.openrsc.server.combat;
 import com.openrsc.server.Server;
 import com.openrsc.server.database.JDBCDatabaseConnection;
 import com.openrsc.server.database.impl.mysql.MySqlGameDatabase;
+import com.openrsc.server.content.Summoning;
+import com.openrsc.server.event.rsc.DuplicationStrategy;
+import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.impl.projectile.MagicCombatEvent;
 import com.openrsc.server.model.PlayerAppearance;
 import com.openrsc.server.model.entity.npc.Npc;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import org.json.JSONObject;
 
 /** Listener-free test of the source renderer harness over real production queues. */
@@ -40,6 +47,10 @@ public final class RendererCombatWorkloadFixture {
         Method method=fixture.getDeclaredMethod(name);method.setAccessible(true);return method.invoke(null);
     }
     private static JSONObject state()throws Exception {return (JSONObject)call("combatState");}
+    private static boolean scheduled(CurrentCombatHarness h,GameTickEvent requested) {
+        for(GameTickEvent event:h.server().getGameEventHandler().getEvents())if(event==requested)return true;
+        return false;
+    }
     private static void step(CurrentCombatHarness h,int count)throws Exception {
         for(int tick=0;tick<count;tick++) {
             h.server().getGameEventHandler().processNonPlayerEvents();
@@ -101,6 +112,28 @@ public final class RendererCombatWorkloadFixture {
                     if(!family.equals("melee"))check(after.getJSONObject("resourceUnitsSpent").getInt(family)
                         >before.getJSONObject("resourceUnitsSpent").getInt(family),"advancing real consumption "+family);
                 }
+                GameTickEvent viewerEvent=new GameTickEvent(h.world(),viewer,10000,"Unrelated viewer fixture sentinel",DuplicationStrategy.ALLOW_MULTIPLE){public void run(){}};
+                GameTickEvent worldEvent=new GameTickEvent(h.world(),null,10000,"Unrelated world fixture sentinel",DuplicationStrategy.ALLOW_MULTIPLE){public void run(){}};
+                Npc otherNpc=h.npc(3,510,460);
+                GameTickEvent npcEvent=new GameTickEvent(h.world(),otherNpc,10000,"Unrelated NPC fixture sentinel",DuplicationStrategy.ALLOW_MULTIPLE){public void run(){}};
+                h.server().getGameEventHandler().add(viewerEvent);h.server().getGameEventHandler().add(worldEvent);h.server().getGameEventHandler().add(npcEvent);
+                for(int reset=0;reset<3;reset++) {
+                    Set<Mob> retiring=Collections.newSetFromMap(new IdentityHashMap<Mob,Boolean>());
+                    retiring.addAll(actors);retiring.addAll((List<Npc>)get("npcs"));
+                    for(Npc npc:h.world().getNpcs())if(Summoning.isSummon(npc)&&retiring.contains(Summoning.getSummonOwner(npc)))retiring.add(npc);
+                    call("removeActors");
+                    for(GameTickEvent event:h.server().getGameEventHandler().getEvents())
+                        check(!retiring.contains(event.getOwner()),"no old actor/NPC/summon scheduled event survives reset"+reset);
+                    check(scheduled(h,viewerEvent)&&scheduled(h,worldEvent)&&scheduled(h,npcEvent),"reset preserves exact unrelated viewer/world/NPC events");
+                    check(h.world().getPlayer(viewer.getIndex())==viewer&&h.world().hasNpc(otherNpc),"reset preserves unrelated participants");
+                    call("createActors");call("beginRealCombat");
+                    JSONObject immediate=state();
+                    for(String family:FAMILIES)check(immediate.getJSONObject("channels").getJSONObject(family).getBoolean("registered"),"replacement exact event registered before cleanup tick "+family);
+                    step(h,16);healthy(state());
+                    int summons=0;for(Npc npc:h.world().getNpcs())if(Summoning.isSummon(npc))summons++;
+                    check(summons==8,"reset does not duplicate old summons");
+                }
+                check(((Integer)get("retiredFixtureEvents"))>0,"reset actually retired owned scheduled events");
                 Player caster=actors.get(0);
                 MagicCombatEvent original=caster.getMagicCombatEvent();
                 MagicCombatEvent orphan=new MagicCombatEvent(h.world(),caster,0,original.getTarget(),caster.getAutoCastSpell());
