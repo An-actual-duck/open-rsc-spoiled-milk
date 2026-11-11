@@ -284,7 +284,8 @@ public final class World {
             for(int i=0;i<288;i++){int id=d[at++];if(id>=0&&models.add(id))RSModel.instantiatePreparedState(id,pool);else if(id< -1)throw new IllegalStateException("Prepared model reference");}
             if(((long[])pool.get(d[at++])).length!=(143*143+63)/64||d[at]<0||d[at]>143*143)throw new IllegalStateException("Prepared roof metadata");
         }
-        public long activate(World w){
+        public long activate(World w){WholeRamBasis basis=w.getWholeRamBasis();return activate(w,basis.carrierX(sectionX),basis.carrierZ(sectionY));}
+        private long activate(World w,int carrierX,int carrierY){
             if((Config.C_HIDE_ROOFS?1:0)!=d[3])throw new IllegalStateException("Whole-RAM CPU roof option changed; recook prepared products");
             // Materialize all mutable model workspaces BEFORE changing active publication.
             RSModel[] walls=new RSModel[144],roofs=new RSModel[144];int modelStart=6+18+432;long[] modelBytes=new long[1];
@@ -295,7 +296,7 @@ public final class World {
             for(int x=0;x<12;x++)for(int z=0;z<12;z++)copyPage(pool.ints(d[at++]),w.tileElevationCache,x,z);
             int[] pixels=new int[429*429];for(int x=0;x<12;x++)for(int z=0;z<12;z++){int width=Math.min(36,429-x*36),height=Math.min(36,429-z*36);int[] page=pool.ints(d[at++]);if(page.length!=width*height)throw new IllegalStateException("Prepared minimap page");for(int y=0;y<height;y++)System.arraycopy(page,y*width,pixels,(z*36+y)*429+x*36,width);}
             w.minimapGraphics.blackScreen(true);w.minimapGraphics.publishMinimapRaster(pixels,429,429);w.modelWallGrid[0]=walls;w.modelRoofGrid[0]=roofs;for(RSModel model:walls)if(model!=null)w.scene.addModel(model);for(RSModel model:roofs)if(model!=null)w.scene.addModel(model);
-            w.nativeTerrainAuthorityOnlyActive=true;w.nativeLayeredTerrainAppliedSectionX=sectionX;w.nativeLayeredTerrainAppliedSectionY=sectionY;w.nativeLayeredTerrainAppliedTiles=d[4];w.nativeLayeredTerrainNonVoidTiles=d[5];
+            w.nativeTerrainAuthorityOnlyActive=true;w.nativeLayeredTerrainAppliedSectionX=carrierX;w.nativeLayeredTerrainAppliedSectionY=carrierY;w.nativeLayeredTerrainAppliedTiles=d[4];w.nativeLayeredTerrainNonVoidTiles=d[5];
             return modelBytes[0]+9L*2304*16+144L*144*8+429L*429*4;
         }
         public long[] roofBits(){return (long[])pool.get(d[d.length-2]);}
@@ -909,8 +910,9 @@ public final class World {
         WholeOverworldRamRegistry.Provider ram=WholeOverworldRamRegistry.forWorld(this,haloTerrain);
         if(ram!=null){
             int sx=haloTerrain.getCurrentChunkX(),sy=haloTerrain.getCurrentChunkY();
-            Renderer3DWorldChunkFrame query=ram.queryFrame(this,sx,sy);List<Renderer3DWorldChunkFrame.ChunkMesh> cells=query.getChunks();ram.avoidedBuild();
-            return new NativeLayeredTerrainHaloPrebuildResult(activeScopeIdentity,receivedHaloScopeIdentity,receivedProtocolVersion,sourceRevision,worldOffsetX,worldOffsetZ,0,sx,sy,includeRoofGeometry,cells,cells,query.getTotalTriangleCount(),true,cells.size(),0,"whole-ram query-ready","whole-ram immutable query cells",System.nanoTime()-buildStart);
+            WholeRamBasis basis=new WholeRamBasis(worldOffsetX,worldOffsetZ);
+            Renderer3DWorldChunkFrame query=ram.queryFrame(this,sx,sy,worldOffsetX,worldOffsetZ);List<Renderer3DWorldChunkFrame.ChunkMesh> cells=query.getChunks();ram.avoidedBuild();
+            return new NativeLayeredTerrainHaloPrebuildResult(activeScopeIdentity,receivedHaloScopeIdentity,receivedProtocolVersion,sourceRevision,worldOffsetX,worldOffsetZ,0,basis.carrierX(sx),basis.carrierZ(sy),includeRoofGeometry,cells,cells,query.getTotalTriangleCount(),true,cells.size(),0,"whole-ram query-ready","whole-ram immutable query cells",System.nanoTime()-buildStart);
         }
 		int logicalCenterX = Math.multiplyExact(
 			haloTerrain.getCurrentChunkX(), SECTION_SIZE);
@@ -4798,13 +4800,16 @@ public final class World {
 		}
 	}
 
-    public boolean isWholeRamSourceBasisSupported(){return WorldBuilderTerrainBootstrap.isNativeOnly()&&shouldUseNativeTerrainAuthorityOnly()&&syntheticDeepFixtureOffsetX==0&&syntheticDeepFixtureOffsetZ==0;}
+    public boolean isWholeRamSourceBasisSupported(){return WorldBuilderTerrainBootstrap.isNativeOnly()&&shouldUseNativeTerrainAuthorityOnly()&&Math.floorMod(syntheticDeepFixtureOffsetX,48)==0&&Math.floorMod(syntheticDeepFixtureOffsetZ,48)==0;}
+    public WholeRamBasis getWholeRamBasis(){return new WholeRamBasis(syntheticDeepFixtureOffsetX,syntheticDeepFixtureOffsetZ);}
     public long publishWholeRamActivation(PreparedActivation recipe,Renderer3DWorldChunkFrame query){
-        long start=WorldStreamManager.now();long copied=recipe.activate(this);renderer3DWorldChunkFrame=query;clearPredictiveRenderer3DWorldChunkFrame();
+        WholeRamBasis basis=getWholeRamBasis();int carrierX=basis.carrierX(recipe.sectionX),carrierY=basis.carrierZ(recipe.sectionY);
+        if(query.getChunkCount()==0||query.getChunks().get(0).getCenterSectionX()!=carrierX||query.getChunks().get(0).getCenterSectionY()!=carrierY||query.getChunks().get(0).getLogicalWorldOffsetX()!=Math.multiplyExact(Math.multiplyExact(carrierX-1,48),128)||query.getChunks().get(0).getLogicalWorldOffsetZ()!=Math.multiplyExact(Math.multiplyExact(carrierY-1,48),128))throw new IllegalStateException("Whole-RAM prepared query/carrier basis mismatch: carrier="+carrierX+","+carrierY+" logical="+recipe.sectionX+","+recipe.sectionY+" offsets="+basis.offsetTilesX+","+basis.offsetTilesZ);
+        long start=WorldStreamManager.now();long copied=recipe.activate(this,carrierX,carrierY);renderer3DWorldChunkFrame=query;clearPredictiveRenderer3DWorldChunkFrame();
         symmetricRenderer3DWorldChunkFrame=null;symmetricOuterRenderer3DWorldChunkFrame=null;symmetricRetainableRenderer3DWorldChunkFrame=null;
-        worldStreamManager.markActiveWindow(0,recipe.sectionX,recipe.sectionY,ACTIVE_SECTION_GRID,ACTIVE_SECTION_ORIGIN_OFFSET);
-        worldStreamManager.recordActiveWindowLoad(0,recipe.sectionX,recipe.sectionY,WorldStreamManager.elapsedSince(start));
-        logNativeLayeredTerrainActivation(recipe.sectionX*48,recipe.sectionY*48,0,recipe.sectionX,recipe.sectionY);return copied;
+        worldStreamManager.markActiveWindow(0,carrierX,carrierY,ACTIVE_SECTION_GRID,ACTIVE_SECTION_ORIGIN_OFFSET);
+        worldStreamManager.recordActiveWindowLoad(0,carrierX,carrierY,WorldStreamManager.elapsedSince(start));
+        logNativeLayeredTerrainActivation(Math.multiplyExact(carrierX,48),Math.multiplyExact(carrierY,48),0,carrierX,carrierY);return copied;
     }
 
 	private boolean shouldUseNativeTerrainAuthorityOnly() {

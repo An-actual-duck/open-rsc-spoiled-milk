@@ -8,7 +8,7 @@ public final class WholeOverworldRamRegistry {
     public interface Provider {
         boolean accepts(World world,NativeLayeredTerrainSnapshot snapshot);
         boolean activate(World world,int plane,int sectionX,int sectionY);
-        Renderer3DWorldChunkFrame queryFrame(World world,int sectionX,int sectionY);
+        Renderer3DWorldChunkFrame queryFrame(World world,int logicalSectionX,int logicalSectionY,int capturedOffsetTilesX,int capturedOffsetTilesZ);
         void avoidedBuild();
     }
     private static volatile Provider provider;
