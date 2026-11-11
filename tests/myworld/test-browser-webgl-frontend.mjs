@@ -26,7 +26,7 @@ const benchmarkRenderWorker=process.argv.includes('--render-worker')||benchmarkW
 const withoutAwtTarget=process.argv.includes('--no-awt-target');let awtVisible=!withoutAwtTarget;
 const benchmarkStream=benchmarkRegionBuild||benchmarkLoadProfile||benchmarkRenderWorker||process.argv.includes('--benchmark-stream')||benchmarkKeys||repeatable||combat||nativeExplicit||benchmarkBatch||benchmarkDelta;let streamRequested;
 let clock = 500, gpuDisposed = 0, transportDisposed = 0, middleDisposed = 0, middleCreated = 0, coverDisposed = 0, displayDisposed = 0, configured,gpuOptions;
-const status = {textContent:''}, messages = [];
+const status = {textContent:''}, messages = [];let stopJava;
 let layoutReads=0;
 const target = {width:960,height:560,getBoundingClientRect:()=>{layoutReads++;return{left:20,top:40,width:960,height:560}}};
 const display = {style:{},querySelectorAll:()=>awtVisible?[target,canvas]:[canvas],getBoundingClientRect:()=>({left:0,top:0,width:1843.55,height:1037}),append:()=>{canvas.parentElement=display;}};
@@ -34,11 +34,11 @@ const canvas = {style:{},setAttribute(){}};
 const stats = {lastError:null,lastFrame:0};
 const gateEvents=[];
 const window = {dispatchEvent:e=>gateEvents.push(e.type),browserRuntimeVersion:'5.0',addEventListener(){}};
-const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':'')+(benchmarkDelta?'&overlaydelta=on':'')+(benchmarkRenderWorker?'&renderworker=on&overlay=coverage':'')+(benchmarkWholeZone?'&wholezone=on':'')+(benchmarkWholeRam?'&wholeram=on':'')+(benchmarkLoadProfile?'&loadprofile=on':'')+(benchmarkRegionBuild?'&regionbuild=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(m)},
+const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':'')+(benchmarkDelta?'&overlaydelta=on':'')+(benchmarkRenderWorker?'&renderworker=on&overlay=coverage':'')+(benchmarkWholeZone?'&wholezone=on':'')+(benchmarkWholeRam?'&wholeram=on':'')+(benchmarkLoadProfile?'&loadprofile=on':'')+(benchmarkRegionBuild?'&regionbuild=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(structuredClone(m))},
   URLSearchParams,performance:{now:()=>clock},console,
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
-  cheerpjInit:async o=>{configured=o;},cheerpjCreateDisplay(){},cheerpjRunMain:()=>new Promise(()=>{})});
+  cheerpjInit:async o=>{configured=o;},cheerpjCreateDisplay(){},cheerpjRunMain:()=>new Promise(resolve=>{stopJava=resolve;})});
 let transportUrl;
 let gateChanged;const cover={blocksWorldInput:false,attach(){},dispose(){coverDisposed++;this.blocksWorldInput=false;},update(state){const next=state?.phase==='loading';if(next!==this.blocksWorldInput){this.blocksWorldInput=next;gateChanged();}}};
 const coverModule=new vm.SyntheticModule(['createWorldCover'],function(){this.setExport('createWorldCover',o=>{gateChanged=o.onGateChange;return cover;});},{context});
@@ -221,7 +221,13 @@ assert.match(status.textContent,/controlled shader error/);assert.match(status.t
 await configured.natives.Java_orsc_browser_BrowserBootstrap_report(null,'ordinary successful update');
 assert.match(status.textContent,/controlled shader error/);
 if(nativeFault){stats.lastError=null;assert.equal(nativeMode,'sync');assert.throws(()=>configured.natives.Java_orsc_BrowserWebGLBridge_present(null,1,1),/Unexpected asynchronous result/);assert.equal(gpuDisposed,1);assert.equal(transportDisposed,1);assert.ok(messages.some(m=>m.type==='browser-session-stop'&&m.reason.includes('Synchronous frontend native stopped')));}
-if(!nativeFault)cover.blocksWorldInput=true;window.browserSessionDispose();window.browserSessionDispose();assert.equal(window.browserBenchmarkStreamUploadValidation,undefined,'Stop removes private streaming control');
+if(benchmarkWholeRam){
+ const previous=messages.filter(m=>m.type==='browser-session-proof').at(-1);assert.equal(previous.proof.wholeRamJava.sourceReady,true);
+ stopJava(1);await new Promise(resolve=>setImmediate(resolve));
+ const final=messages.filter(m=>m.type==='browser-session-proof').at(-1);assert.equal(final.proof.stopped,true);assert.equal(final.proof.wholeRamJava.sourceReady,false);assert.equal(final.proof.wholeRamJava.preparedReady,false);assert.equal(final.proof.wholeRamResidency.gpuReady,false);assert.equal(final.proof.wholeRamResidency.ready,false);assert.equal(final.proof.wholeRamResidency.disposed,true);assert.equal(previous.proof.wholeRamJava.sourceReady,true,'Parent receipts are structured clones, not child aliases');
+ assert.equal(messages.at(-1).type,'browser-session-stop','Cleared final proof precedes stop receipt');
+}
+if(!nativeFault&&!benchmarkWholeRam)cover.blocksWorldInput=true;window.browserSessionDispose();window.browserSessionDispose();assert.equal(window.browserBenchmarkStreamUploadValidation,undefined,'Stop removes private streaming control');
 assert.equal(window.browserBenchmarkDiagnosticsReset,undefined);
 assert.equal(coverDisposed,1,'Stop disposes the loading-cover owner exactly once before iframe removal');assert.equal(window.browserWorldInputAllowed(),true,'Stop releases the world input gate');
 assert.equal(displayDisposed,1);assert.equal(gpuDisposed,1);assert.equal(transportDisposed,1);assert.equal(middleDisposed,1,'Stop disposes the middle-input owner exactly once');
