@@ -272,3 +272,82 @@ geometry construction is invoked from the full-source dependency JAR.
 This comparison is conditional on the supplied seven-word identities. It does
 not independently validate their elevation words, terrain/seam geometry, full GPU
 allocation or image equality. World/upper production-path parity is in progress.
+
+FINAL UNIT-REVIEW HANDOFF (actual full bake/GPU still pending)
+=============================================================
+Latest Java proofs all rerun against ONE fresh full-source dependency artifact:
+ source d7525c9466b01f623201ec45e31c828df0c279f1
+ JAR88ee38a24d4772d2ae47ae056e7bf386d2e52f6ba92fa28f625bb0c6e36f96ab
+ ai1/output/builds/browser-whole-overworld-zone/runtime-review-4/client.jar
+No reader or Baker source overlay is used in these latest ready-* results.
+Earlier composite unit receipts remain preserved, explicitly labelled above.
+
+Final frontend source8a5961b0ff0fd56f0c2afc8a4199464cae4898d5 is clean; module SHA
+4fae23180f5eba22cc7b3e23c725504481b65c4baafc22c8d0536d62aadf191f.
+29 independent selection checks and623 rerun producer actual-texture/binary checks
+pass. The latter is an independent execution of the producer's maintained test,
+not623 newly independent expected-value assertions. Receipt ready-materials records
+its exact test/module hashes and command. Explicit flag17 distinguishes legitimate
+non-global L0 from inactive global L0; signed−1/−2/10 preserve local draws.
+
+Canonical final receipts (under output/tests/browser-whole-zone-validation/):
+ ready-java-dynamic/result.json:43 actual Java dynamic/signed cases, no overlays.
+ ready-objects/result.json:7 object resources/202 placements/97038 vertices;
+   11,257,100 entire packed bytes exactly match production canonical geometry.
+ ready-world-busy/result.json:sector(2,13),3 world resources;2,201,472 vertex
+   bytes and2,196,096 material/index draw-stream bytes exactly match production.
+ ready-world-south/result.json:sector(2,12),1 world resource+2 explicit empty
+   upper cells;1,705,536 vertex/draw-stream bytes exact.
+ ready-world-east/result.json:sector(3,13),1 world resource+2 explicit empty
+   upper cells;1,608,096 vertex bytes/1,607,424 draw-stream bytes exact.
+ ready-world-missing-lower/result.json:actual L1(-1,-1) with no authored L0,
+   one EMPTY upper cell matches production;0 vertices, not a positive-geometry
+   claim. Lower void-context roof chain still executes.
+ ready-selection/result.json:29 selection cases on final clean frontend.
+ ready-materials/result.json:623 actual Java exported RGBA/material/layout cases.
+ packed-and-assets-pilot-3/result.json:all84 packed resources and five exact
+   source Cache archives(4,423,006 archive bytes) verified.
+ catalogue-{pilot-3,south,east,missing-lower}/result.json:independent source joins.
+
+World reference uses actual production loadWorldModelProduct, including its
+actual loadStackedUpperFloorBase chain. ONLY CPU input windows are independently
+assembled from exact source payloads and inserted into the ordinary window cache;
+no prebuilt model/product result is injected. Installed/native-only sector-read
+guard remains active, so an accidental legacy-archive fallback fails. Selection
+uses global coordinate sector ownership rather than copying producer local crop
+limits; every selected112B vertex field and ordered material/index draw stream
+matches. Both busy upper floors differ from floor-local negative controls, so
+this stacked comparison is nonvacuous. South/east neighboring partial bakes are
+explicit source-overlay diagnostics, never complete integration artifacts; their
+exact command/source/dependency receipts live in adjacent-bake-820/. The root's
+final complete bake must be recreated from the single integrated artifact.
+
+Final maintained synthetic suites:13 package tests,25 catalogue membership/
+resource tests,23 packed/external-archive tests,18 malformed extractor tests.
+All pass. Source delivery, effect-only Java reuse and actual pinned selection are
+covered independently; this branch contains no production runtime/default edits.
+
+Limits and next root gate
+--------------------------
+These results support CPU/unit READY, NOT browser/GPU or full-data acceptance.
+The actual complete catalogue constructor/admission, all1330/5320 cells/resources,
+full geometry totals/weighted model counts, actual2GiB-class GPU allocation and
+final synchronization, initial cover/readiness, representative real pixels and
+roof/indoor/shadow behavior, live dynamic changes, keyboard/mouse responsiveness,
+walking gaps/queue age and same-artifact ON/OFF performance remain root-owned.
+No FPS, fit, scanout, seamless-travel, raw-source CPU residency or public activation
+claim is made. The source-joined object geometry proof still conditions on supplied
+elevation words; actual world/stacked geometry parity above is a separate gate.
+No blocker was found in the final tested scope. The new bab3 mapIdentity composite
+comparison regression was reported and corrected by820 before the final tests.
+
+Geometry fixtures are intentionally bounded to64 object or12 world cells. For
+full delivered data run verify-catalogue.py in full mode and verify-packed.py
+(with --asset-root pointing at the actual stage root containing Cache/video).
+Those full-file/source checks do not replace the actual browser allocation/use
+and image/performance test. Root will build the integrated JAR/Bootstrap/frontend
+from one source commit before that test; this branch starts no service or browser.
+
+Workspace-layout check still reports the40 previously retained unclassified root
+entries; all new outputs here use the declared tests category. No old output was
+removed. No map, public deployment, default graphics policy or live data changed.

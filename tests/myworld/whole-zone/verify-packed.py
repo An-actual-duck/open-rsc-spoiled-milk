@@ -32,7 +32,18 @@ def check_chunk(raw,c,material_ids):
    for n in range(3):bounds[n]=min(bounds[n],p[n]);bounds[n+3]=max(bounds[n+3],p[n])
  if c['bbox']!=bounds:fail('Packed global bounds mismatch')
  return {'vertices':v,'indices':i,'drawnIndices':drawn,'bytes':len(raw)}
-def verify(catalogue,root):
+def check_assets(catalogue,root):
+ expected=['Cache/video/'+n for n in ['Authentic_Landscape.orsc','Authentic_Sprites.orsc','Custom_Sprites.osar','library.orsc','models.orsc']]
+ rows=catalogue.get('externalAssets');total=0
+ if not isinstance(rows,list)or len(rows)!=5:fail('External asset roster')
+ for name,row in zip(expected,rows):
+  if row.get('path')!=name or type(row.get('bytes'))is not int or not 1<=row['bytes']<=16*1024*1024:fail('External asset identity/budget')
+  raw=package.safe(root,name).read_bytes()
+  if len(raw)!=row['bytes']or package.sha(raw)!=row['sha256']:fail('External asset bytes/hash mismatch')
+  total+=len(raw)
+ if total>64*1024*1024:fail('Aggregate external asset budget')
+ return {'externalAssetsVerified':5,'externalAssetBytes':total}
+def verify(catalogue,root,asset_root=None):
  if struct.pack('=I',1)!=b'\x01\0\0\0':fail('Little endian proof host required')
  textures=catalogue['textures'];material_ids=set();total=0;resources=0
  for t in textures:
@@ -44,10 +55,12 @@ def verify(catalogue,root):
  for c in catalogue['chunks']:
   if c['path']in paths:fail('Packed resource path reused')
   paths.add(c['path']);r=check_chunk(package.safe(root,c['path']).read_bytes(),c,material_ids);vertices+=r['vertices'];indices+=r['indices'];drawn+=r['drawnIndices'];total+=r['bytes'];resources+=1
- return {'passed':True,'completeDeclared':catalogue.get('complete'),'resources':resources,'chunkResources':len(catalogue['chunks']),'textureResources':len(textures),'vertices':vertices,'indices':indices,'materialDrawnIndices':drawn,'verifiedResourceBytes':total,'scope':'Exact actual packed file hashes/header/finite fields/index/material/bounds consistency only. No ordinary-source geometry equality, GPU allocation, draw use, image parity or performance proof.'}
+ result={'passed':True,'completeDeclared':catalogue.get('complete'),'resources':resources,'chunkResources':len(catalogue['chunks']),'textureResources':len(textures),'vertices':vertices,'indices':indices,'materialDrawnIndices':drawn,'verifiedResourceBytes':total,'scope':'Exact actual packed file hashes/header/finite fields/index/material/bounds consistency only. No ordinary-source geometry equality, GPU allocation, draw use, image parity or performance proof.'}
+ if asset_root is not None:result.update(check_assets(catalogue,asset_root))
+ return result
 def main():
- a=argparse.ArgumentParser(description=__doc__);a.add_argument('--catalogue',type=Path,required=True);a.add_argument('--out',type=Path,required=True);o=a.parse_args()
+ a=argparse.ArgumentParser(description=__doc__);a.add_argument('--catalogue',type=Path,required=True);a.add_argument('--out',type=Path,required=True);a.add_argument('--asset-root',type=Path,help='Explicit source/stage root containing Cache/video; independently verify exact external archives');o=a.parse_args()
  if o.out.exists():fail('Preserve prior proof')
  if o.catalogue.stat().st_size>32*1024*1024:fail('Catalogue JSON budget')
- raw=o.catalogue.read_bytes();r=verify(package.load(raw),o.catalogue.parent);r['catalogueSha256']=package.sha(raw);r['verifierSha256']=package.sha(Path(__file__).read_bytes());o.out.parent.mkdir(parents=True,exist_ok=True);o.out.write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(r,indent=2))
+ raw=o.catalogue.read_bytes();r=verify(package.load(raw),o.catalogue.parent,o.asset_root);r['catalogueSha256']=package.sha(raw);r['verifierSha256']=package.sha(Path(__file__).read_bytes());o.out.parent.mkdir(parents=True,exist_ok=True);o.out.write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(r,indent=2))
 if __name__=='__main__':main()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import copy,importlib.util,struct,unittest
+import copy,importlib.util,struct,unittest,tempfile
 from pathlib import Path
 s=importlib.util.spec_from_file_location('packed',Path(__file__).with_name('verify-packed.py'));m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
 class Packed(unittest.TestCase):
@@ -30,4 +30,31 @@ class Packed(unittest.TestCase):
  def test_undrawn_zero_tail_preserved(self):self.i += [0,0,0];self.save();self.assertEqual(self.check()['drawnIndices'],3)
  def test_explicit_empty_resource(self):
   self.v=[];self.i=[];self.b=[];self.c['bbox']=[0.,0.,0.,0.,0.,0.];self.save();self.assertEqual(self.check()['bytes'],16)
+class External(unittest.TestCase):
+ def setUp(self):
+  self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name);self.rows=[]
+  for n in ['Authentic_Landscape.orsc','Authentic_Sprites.orsc','Custom_Sprites.osar','library.orsc','models.orsc']:
+   p=self.root/'Cache/video'/n;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(n.encode());self.rows.append({'path':p.relative_to(self.root).as_posix(),'bytes':p.stat().st_size,'sha256':m.package.sha(p.read_bytes())})
+  self.c={'externalAssets':self.rows}
+ def tearDown(self):self.tmp.cleanup()
+ def check(self):return m.check_assets(self.c,self.root)
+ def test_exact_five(self):self.assertEqual(self.check()['externalAssetsVerified'],5)
+ def test_duplicate_record(self):
+  self.rows[-1]=self.rows[0]
+  with self.assertRaises(ValueError):self.check()
+ def test_escape(self):
+  self.rows[0]['path']='../x'
+  with self.assertRaises(ValueError):self.check()
+ def test_changed_archive(self):
+  (self.root/self.rows[0]['path']).write_bytes(b'x')
+  with self.assertRaises(ValueError):self.check()
+ def test_missing_archive(self):
+  (self.root/self.rows[0]['path']).unlink()
+  with self.assertRaises(ValueError):self.check()
+ def test_oversized_declaration(self):
+  self.rows[0]['bytes']=16*1024*1024+1
+  with self.assertRaises(ValueError):self.check()
+ def test_symlink(self):
+  p=self.root/self.rows[0]['path'];p.unlink();p.symlink_to(self.root/self.rows[1]['path'])
+  with self.assertRaises(ValueError):self.check()
 if __name__=='__main__':unittest.main()

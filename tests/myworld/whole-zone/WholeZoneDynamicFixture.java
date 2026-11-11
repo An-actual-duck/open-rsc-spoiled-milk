@@ -34,7 +34,7 @@ public final class WholeZoneDynamicFixture {
   return new NativeLayeredTerrainSnapshot(8,source.getString("packageId"),source.getString("packageVersion"),manifest,48,space,signed,2,13,1,chunks);
  }
  @SuppressWarnings("unchecked") public static void main(String[] args)throws Exception{
-  Config.F_CACHE_DIR=Paths.get(args[2]).toString();Path catalogPath=Paths.get(args[0]),packageRoot=Paths.get(args[1]);JSONObject catalog=json(catalogPath),source=json(packageRoot.resolve("manifest.json"));
+  Config.F_CACHE_DIR=Paths.get(args[2]).toString();Path catalogPath=Paths.get(args[0]),packageRoot=Paths.get(args[1]);JSONObject catalog=json(catalogPath),source=json(packageRoot.resolve("manifest.json"));if(catalog.getJSONArray("objectCells").length()>64)throw new IllegalArgumentException("Explicit bounded pilot index required");
   // Intentionally inject only owned index metadata to isolate runtime semantics. Full admission is tested independently.
   BrowserWholeOverworldZone zone=(BrowserWholeOverworldZone)allocate(BrowserWholeOverworldZone.class);
   Map<String,JSONObject> objects=new HashMap<String,JSONObject>(),resources=new HashMap<String,JSONObject>();Map<String,String> sources=new HashMap<String,String>();
