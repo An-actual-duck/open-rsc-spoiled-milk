@@ -1,5 +1,11 @@
-Private segmented TEXT raster (ACTIVE implementation)
-====================================================
+Private segmented TEXT raster (READY for preservation; rejected experiment)
+=========================================================================
+
+Actual same-artifact performance rejected this prototype: OFF 54.975261 FPS
+versus ON 49.355973 FPS, a 10.2215% regression. Correctness, native execution,
+fault recovery and UI checks passed; the implementation is NOT adopted.
+Preserve/park this exact branch and all evidence without merging the feature.
+Ordinary defaults and the public server were not changed.
 
 Only consecutive final drawColoredString plot lists may defer. Parsing, random
 colors, inline icons, font remapping and shadow/glyph order remain authoritative.
@@ -32,8 +38,8 @@ only opt-in barriers outside their per-pixel loops. Fonts are not identity-cache
 safe: mutable source is snapshotted per TEXT; native input is a separate packed
 copy so rejection replay uses untouched private Java snapshots. Native validates
 all scalar/source/output extents, byte-range aliases, tokens and order before
-writing. Registry/queue implementation is a first standalone milestone; actual
-suppression, poison boundary, native ABI and frozen CPU/native tests follow.
+writing. The registry/queue, suppression, poison boundary and native ABI were
+implemented and tested as recorded below; actual performance rejected them.
 
 Closed context revision and rejection replay
 --------------------------------------------
@@ -136,13 +142,98 @@ Revised full-source immutable artifact and stage
 -----------------------------------------------
 output/builds/browser-segmented-text-raster/game-f79-review-2/client.jar
 SHA256 bd4360b514e32f73fc802242c5adc8fea3e63a31bc1114712d00bcce9b67da8b
-Clean source f79,959 compiled Java8 classes, 3,185 runtime assets exact; no class
+Clean source f79, 959 compiled Java8 classes, 3,185 runtime assets exact; no class
 transplants. Source/class/asset manifests and build receipt are adjacent.
 Client-only 8216 stage 2 (matched ON/OFF URLs on same JAR/frontend):
 output/tests/browser-gameplay-spike/segmented-text-combat-review-2/combat-preparation.json
 Existing final combat server 43639/43539 only; no server/DB/request/process was
 changed by this worker. Model batch/terrain index/key limbs ON, full C/T, delta/
 rect OFF; segmentedtext alone is toggled. No worker browser/GPU was launched.
-Root actual JNI visibility/nonvacuous calls, after-write fault/last-good GPU/
-fresh recovery, functional visuals and matched FPS remain acceptance gates.
-The prototype remains private default OFF and makes no performance/adoption claim.
+Root completed actual JNI/fault/UI and matched FPS gates below. The prototype
+remains private default OFF and is rejected for adoption.
+
+Final actual JNI, fault and UI result (manager-owned)
+----------------------------------------------------
+The revised immutable source f79/bd4360 stage was nonvacuous. At its functional
+checkpoint, actual native work reported 3,453 attempts/3,452 commits, 79,875 TEXTs
+and 2,029,950 glyph plots, with 0 preflight rejections. Actual primitive views were
+Int32Array C, Float32Array T and Int8Array font bytes. These are adapter view facts;
+they do not quantify hidden engine/driver copies or hardware bus bytes.
+
+Root deliberately armed exactly one private after-preflight partial-write
+fault. Native faults/poisonedFrames and the low-frequency Java poisonedFrames each
+advanced to 1; the following 139 fresh world frames and native commits advanced.
+Client remained GAME/ready with no persistent GPU error. The recovered image
+looked clean, and context/spell menu UI smoke passed. No fault was armed in
+performance cohorts. The original vacuous stage 1 never had its fault armed.
+
+Functional proof is not exact last-good framebuffer or pool-memory readback.
+Source ordering/release guards and CPU recovery tests are separate evidence;
+the browser test proves actual callback/fault/recovery behavior and subsequent
+clean frames, not pixel-perfect retention at the exact abort instant.
+
+Manager functional evidence:
+output/diagnostics/browser-frame-architecture/segmented-text-functional-2/
+  fault-recovery.json SHA256
+  f95f02517ef59662232853177f1b2605b102e5defa1585b3798bc03346dbc5e2
+  after-poison-recovered.png SHA256
+  55d2445b52374666b4870457f6b16302203096aff4d4c21b39b6b9e67e1de5c8
+  ui-smoke.json SHA256
+  fcb8a0c147096315b8e426d046d4e13d1d56225bc52483c639153c10e3d9234a
+
+Final matched performance: rejected
+-----------------------------------
+Same source f79a751e4cd50eb2206d4ab7d22bcae046e50c57 and full-source JAR
+bd4360b514e32f73fc802242c5adc8fea3e63a31bc1114712d00bcce9b67da8b,
+model batching/terrain index/preferred keys ON, full C/T and no delta/rectangle
+transport. Order: segmented TEXT OFF then ON. Each used 180 seconds additional
+warmup and 60 seconds timing split into two 30-second windows. All six real
+combat channels and corresponding damage/resource events advanced. Camera and
+display matched (logical 960×540; recorded physical 1843×1037 on 1920×1080 desktop).
+No worker CPU/Git/GPU work overlapped timed cohorts.
+
+                            OFF                    ON
+Frames/milliseconds         3,300/60,027            2,962/60,013
+FPS                         54.9752611325           49.3559728725
+30-second segment FPS       54.77079/55.17977       49.59504/49.11696
+p99 frame interval ms       24/22                  28/27
+Native calls/frame          0/0                    2.19758/2.20488
+Native TEXTs/frame          0/0                    51/51
+Native glyph plots/frame    0/0                    1,296/1,296
+Relative FPS change                                -10.2214853%
+
+There were no native rejections, poison or fault injections during timing.
+This is a real negative result with active batched rendering, not a disabled
+feature, low-volume admission failure or benchmark correctness rejection.
+One ordered pair/live effects give no cross-device confidence interval, but
+provide sufficient evidence to reject adoption. No tuning or further runtime
+change follows in this task. Exact cost attribution remains unproven; snapshot,
+preflight, packet construction, native transfer/raster and barriers are all part
+of the measured implementation, not selectively excluded overhead.
+
+Manager comparison receipt:
+output/diagnostics/browser-frame-architecture/segmented-text-comparison.json
+SHA256 8f2b4a86374cd6e9da3dad22a58baca4c7aa4bf1e8ad0a5397b4c5d2d9d8f400
+Manager raw measurement receipts:
+output/diagnostics/browser-frame-architecture/segmented-text-off-measure-1/result.json
+SHA256 1b75025007a3b1a11169ad7260ccc6ddbe7d6dcb22069af152adb9c2885e269f
+output/diagnostics/browser-frame-architecture/segmented-text-on-measure-1/result.json
+SHA256 2ea83e9763a076ed70329d1ee81a7847830c0322df306685c3be175774263328
+
+Separate instrumented post-timing CPU capture (not FPS acceptance):
+output/diagnostics/browser-frame-architecture/post-segmented-text-on-profile-1/
+  sources-receipt.json SHA256
+  3e2c3799b4a407aa7c41c910c3ff95ad39b0257c7ebc73563fbfabbb6a07befc
+  sources-profile.json.gz SHA256
+  441173e2d4a2ab8968b89017f47b0fbea41d88af290b8a85a515149cbeb9b77b
+  additional-information.json SHA256
+  40d973658bf4af3252378e25699b8c225c61aacf1d891c654bf170dcefb483e8
+A generated-source sample is not a complete Java source map or a causal FPS
+explanation. No single helper/JNI/compiler is blamed from these data.
+
+Final independent pixel/native review READY e8b1adc8b888cbfa15a76762057111e367b565f1;
+source-boundary review READY c03727c0bcbe762bffd7013e3bf9a445a00945a8.
+This final amendment is report-only. Frozen source f79, both full-source builds,
+immutable stages 1/2, all fixture/capture/manifests and failed/accepted gate
+receipts are preserved unchanged. READY permits clean parking, NOT feature
+integration or default enablement. No public/release/server change occurred.
