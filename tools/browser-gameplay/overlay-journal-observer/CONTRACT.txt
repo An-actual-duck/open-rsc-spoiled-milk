@@ -2,7 +2,8 @@ PRIVATE ORDERED OVERLAY JOURNAL OBSERVER v1
 
 Scope
 -----
-URL overlayjournal=observe requires overlaydelta=on. It adds
+Private benchmark URL overlayjournal=observe requires benchmark=1, mode=webgl
+and overlaydelta=on. It adds
 -Dspoiledmilk.browserOverlayJournalObserve=true before GraphicsController loads.
 Default off preserves the old native ABI/callback and bypasses capture helpers.
 It never suppresses Java raster writes, changes transport ACKs, rerenders the UI,
@@ -24,7 +25,7 @@ This requires the existing single render-thread source mutation model. Concurren
 uncoordinated font/pixel mutation is outside this diagnostic's supported scope.
 
 Known: final glyph/shadow plots; drawBox; drawBoxAlpha; horizontal/vertical lines.
-Interlace, unreasonable/raw malformed geometry/font access, cap overflow, and all
+Interlaced rectangles, unreasonable/raw malformed geometry/font access, cap overflow, and all
 other audited writes/reads are incomplete. No opaque span is invented over holes.
 Run metrics describe captured known operations between barriers, not all game work.
 Repeated barriers may have zero known work between them; no empty run is exported.
