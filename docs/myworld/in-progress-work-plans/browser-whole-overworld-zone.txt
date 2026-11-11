@@ -77,3 +77,43 @@ stacked-roof proof, actual full GPU allocation/ready counts, playable movement,
 dynamic object/door/empty-cell changes, source epoch/settings/context-loss failure,
 and measured crossings using completed frames. Local CPU rebuild may still pause;
 capacity or nominal producer FPS alone cannot establish a travel improvement.
+
+Implementation milestones (CPU only; actual GPU/playtest pending)
+----------------------------------------------------------------
+Java registry/source hooks:2f3093cb7; baker/authority hooks:0c5980bf5;
+stacked-context/schema correction:c1c4511c3; bridge/reader:eb19d79ec;
+catalog-byte/terrain-patch binding:bb6175dbd. Full clean source buildbb6175:
+output/builds/browser-whole-overworld-zone/runtime-review-3/client.jar
+SHA256 a6c3f87b5af8c4443c7f41fd58d0e81bbbd7a7a4a36ed0087a0f6ec74f80ae3a
+962classes=672orsc+290com, no class transplantation. Standard Java8/vendored
+Ant compile; receipt/source/class/asset manifests beside it.
+
+Nonvacuous busy(2,13) pilot3 uses that exact JAR. Three source levels,12object
+cells,202placements,10packed resources and74actual textures. Its partial
+manifest is intentionally complete=false and must never pass runtime admission.
+73textures are byte-preserved source-archive entries; the74th is the existing
+external air-glyph extension processed by actual client texture-loading code.
+Each object cell's models now follow the same sorted canonical identity order
+as production; root review caught the initial unsorted manifest-order version.
+Prior partial pilots and build artifacts remain preserved. Root waits to bake
+all1330sectors from the final single integrated JAR to avoid duplicating2GiB.
+
+Additional source bindings: catalog raw SHA is a stage property shared by Cache
+Java reader/native loader. Five original Cache video archives are SHA/size bound
+in the bake, staging and Java admission; texture-only derivative SHA is recorded
+separately. Actual material dimensions/average/transparency and packing settings
+are checked before per-frame texture upload. Pixel animation phases remain live.
+
+Server object authority comes from SceneBaselineState's completed baseline and
+actual object sync-range/removal-margin predicate, not inferred visual/terrain
+coverage. Absent cells use explicit empty keys only when the full cell or every
+authored member is within known server interest. Outside interest is separately
+reason3 authored baseline. Mixed animated cells remain ALLLIVE: resolver refuses
+static suppression, native masks the whole baked24cell, current static+animated
+meshes render together. Private source/settings/material/editor-patch errors clear
+Java resolver/upload confirmation and preserve the existing failure boundary.
+
+Steady-frame overhead is an explicit risk: current first prototype checks a small
+sorted texture metadata table and bounded visible-cell ownership rows each frame.
+No unmeasured optimization claim is made. The manager will observe completed Worker
+frames and profile actual whole-zone play before accepting performance.

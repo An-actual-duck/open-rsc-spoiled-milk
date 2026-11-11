@@ -27,6 +27,7 @@ public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegist
     private static int[] array(JSONArray a){int[] out=new int[a.length()];for(int i=0;i<out.length;i++)out[i]=a.getInt(i);return out;}
     public BrowserWholeOverworldZone() {
         if(!isEnabled())throw new IllegalStateException("Whole-zone reader requires explicit private browser mode");
+        if(Boolean.getBoolean("spoiledmilk.browserOverlayDeltaTransport"))throw new IllegalStateException("Whole-zone first prototype requires full overlay transport");
         File path=new File(Config.F_CACHE_DIR,"whole-zone/manifest.json");
         try {
             if(path.length()<1||path.length()>32L*1024*1024)throw new IllegalStateException("Private whole-zone catalog is absent or exceeds32MiB: "+path);
@@ -54,6 +55,7 @@ public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegist
         if(world.hasWholeOverworldTerrainPatches())throw new IllegalStateException("Whole-zone does not support unbaked live terrain editor patches; rebuild source/catalog");
         NativeLayeredTerrainSnapshot source=world.getWholeOverworldSourceSnapshot();if(source==null)throw new IllegalStateException("Whole-zone requires authoritative native layered terrain");
         if(!manifestHash.equals(source.getManifestSha256()))throw new IllegalStateException("Whole-zone source manifest changed; rebuild the full catalog");
+        if(source.getProtocolVersion()<4)throw new IllegalStateException("Whole-zone requires chunked native source protocol");
         if(source==validatedSource)return;
         if(source.getLevel()<0||source.getLevel()>2){validatedSource=source;return;}
         for(int i=0;i<source.getChunkSlotCount();i++){NativeLayeredTerrainChunk c=source.getChunkMetadata(i);String expected=sources.get(key(source.getLevel(),c.getSourceSectorX(),c.getSourceSectorY()));if(c.isAvailable()&&(expected==null||!expected.equals(c.getSourcePayloadSha256())))throw new IllegalStateException("Whole-zone live terrain differs from baked source at "+source.getLevel()+":"+c.getSourceSectorX()+":"+c.getSourceSectorY());}
@@ -81,6 +83,7 @@ public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegist
             else if(absentCellKnown(client,plane,cx,cy,cell)){value=parseKey(cell.getString("emptyCanonicalContentKey"));reason=0;}
             else {value=parseKey(cell.getString("canonicalContentKey"));reason=3;}
             long expected=parseKey(cell.getString("canonicalContentKey"));if(reason==0&&value!=expected)reason=1;
+            else if(reason==0&&!absentCellKnown(client,plane,cx,cy,cell))reason=3;
             for(int word:new int[]{plane,cx,cy,(int)value,(int)(value>>>32),reason})output.add(word);
         }
         rows=new int[output.size()];for(int i=0;i<rows.length;i++)rows[i]=output.get(i);
