@@ -86,3 +86,48 @@ world-load authority changes. Source compilation passes against the preserved
 ba0 full-source client. Frozen reference/parity and actual travel acceptance are
 still pending; no improvement claim yet. Existing load-profile artifacts remain
 immutable and distinct from this new construction experiment.
+
+Construction CPU proof and frozen artifact (2026-11-11)
+------------------------------------------------------
+Runtime source: 502fa18d88688f3030e8349c6487e541aea87a78.
+Test-only source/build checkpoint: 437c4e6e67f23bd1c0527d48c2cd11bf626af354.
+Own helper suite: 2,916,362 checks in each of four property gates; exact literal
+long FNV through random/carry/extreme seeds, scratch overflow beyond 1M values,
+raw NaN/-zero bits and isolated output arrays. Frontend normal and private
+Worker/no-AWT/load-profile/regionbuild mocked contracts pass; layout check passes.
+
+Independent ai2 receipt:
+/home/justin/Core-Framework-ai-2/output/tests/browser-construction-independent/
+20261111T180554694154Z/result.json
+Frozen 7934, candidate OFF and ON match 4,364,314 raw construction bytes and
+20,480 whole-signature bytes (98 construction cases and 320 object/world hash
+cases). Includes malformed failure prefix, source aliases/transforms, full signed
+coordinates, canonical float NaNs, effects and roof data. Literal FNV reference
+131072 words and 2,097,291 helper edge assertions pass. Actual private index
+collisions/wrapped probing/earliest matches/caps and primitive overflow branches
+are exercised, so kernel proofs are nonvacuous. CPU equality is not a travel-time
+or browser-performance claim.
+
+Immutable full-source build:
+output/builds/browser-region-transition-pipeline/construct-437-review-1/
+client.jar SHA256 0409c558246b5652a70794f7b99fff9801729845a3f1d6d72dd4b0fe6574041b
+receipt.json records clean source, Java8u482/vendored Ant, all source/class/asset
+hashes; no transplanted classes. 956 compiled classes = 666 orsc + 290 com.
+ZIP comparison versus the preserved diagnostic d1cbc build finds five added
+helper classes, no removed entries, changed class families only RSModel/World
+(including nested debug-line changes), and no changed asset. Runtime artwork is
+3185 files, unchanged; other class-directory resources account for nine files.
+Initial direct Ant launcher lacked execute permission; the preserved failed log
+contains that failure. The normal documented sh launcher then built successfully
+(build-log-2.txt). No source or artifact was replaced to conceal that setup error.
+
+Immutable client-only private repeatable stage:
+output/tests/browser-gameplay-spike/region-build-repeatable-review-1/
+repeatable-preparation.json (includes exact web-file/JAR/build receipt hashes)
+HTTP8221, existing repeatable-baseline-2 TCP43649/WS43549, browserdemo account.
+urlOn and urlOff differ solely by regionbuild. Worker, loadprofile, modelbatch,
+terrainquery and sprite-key limbs are ON; full C/T, visual scope and fixed camera
+are unchanged. Runtime policy regionBuild reports actual requested/available/
+enabled via existing bounded startup receipt. No worker process/server/database,
+browser or GPU was started or changed. Prior baseline HTTP8220 metadata/artifacts
+are preserved. Actual adjacent-walk acceptance is manager-owned and pending.
