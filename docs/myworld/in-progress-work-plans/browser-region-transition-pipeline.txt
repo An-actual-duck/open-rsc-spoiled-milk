@@ -1,4 +1,15 @@
-Browser travel / chunk transition pipeline — ACTIVE investigation
+Browser travel / chunk transition pipeline — READY, private opt-in only
+
+Current result (2026-11-11): the exact private construction candidate passed
+CPU parity and repeated actual Firefox adjacent-walk acceptance. Mean warm
+new-world frame gap fell from 3660.375ms OFF to 1475.5ms ON in eight crossings
+per mode, a 59.6899% reduction. Residual ON pauses reach 3300ms. No seamless
+streaming, steady-FPS gain, broad-device acceptance or normal-default adoption
+is claimed. All public/server/default settings remain unchanged.
+
+The sections below preserve the chronological investigation; early pending
+statements describe their original milestone and are superseded by the final
+acceptance record at the end.
 
 User reports good stable-chunk FPS but frequent long loads and stutter while
 traveling. This task targets ordinary repeated boundaries, not only farteleports.
@@ -131,3 +142,52 @@ are unchanged. Runtime policy regionBuild reports actual requested/available/
 enabled via existing bounded startup receipt. No worker process/server/database,
 browser or GPU was started or changed. Prior baseline HTTP8220 metadata/artifacts
 are preserved. Actual adjacent-walk acceptance is manager-owned and pending.
+
+
+Final manager-owned actual travel acceptance (2026-11-11)
+--------------------------------------------------------
+Comparison receipt:
+/home/justin/Core-Framework/output/diagnostics/browser-travel-loading/
+region-build-comparison.json
+SHA256 ce36e782e1551439c4466544467250f8ad7852e1c6397179df6f40f1038e6af8
+Same source/artifact/route settings, OFF/ON/OFF/ON fresh Firefox runs, no worker
+CPU/Git/build/GPU contention. Worker rendering and Java load diagnostics ON;
+CPU sampling OFF during timing. Existing fixed older repeatable fixture is not
+current-production-server proof. No server restart or public change occurred.
+
+cohort          cold gap ms  first return ms  final-four mean ms  route seconds
+OFF1                  4293             3509             3827.75        28.518
+ON1                   2947              672             1874.25        16.673
+OFF3                  4342             3540             3493.00        26.957
+ON2                   2951              670             1076.75        15.677
+
+Across eight final warm crossings per mode: OFF3660.375ms / ON1475.5ms, mean
+reduction59.68992248%. ON warm minimum530ms, maximum3300ms. Route duration
+includes pointer actions, walking, polling and settling; it is not pure loading
+CPU time. New-world gaps use count-indexed interval tails only when the full
+frame-count delta fits, never concatenated repeated rings or held-frame FPS.
+Both ON actual regionBuild policies were available/enabled; all seven legs in
+each accepted cohort passed pointer/authoritative route/ordinary epoch1-to7
+and ready/no-error gates, with zero diagnostic polling gaps. Upload totals can
+vary with scheduling/animations; no isolated GPU/upload reduction is inferred.
+
+Preserved exclusions and tooling corrections:
+* First collector preflight rejected the new stage metadata before route input:
+  fixture/tcp/websocket fields were missing from repeatable-preparation.json,
+  though stage.json, Cache43649 and actual WS43549 were correct. Manager saved
+  the original and created candidate-stage-route-contract.json binding its hash,
+  real socket and private marker. Immutable stage/runtime bytes were unchanged.
+  The maintained preparer now emits these three additive fields from stage.json;
+  pure CPU receipt-field regression checks pass. This is a test-only correction.
+* OFF2 was rejected before any measured boundary: setup teleport had not fully
+  rendered before the map click, so the strict authority gate rejected movement.
+  Its failure is preserved. Driver setup now requires fresh post-command frames,
+  exact pinned target pose and last-frame age; no runtime change was needed.
+
+Final independent review READY835e26f4b83cfd94db61534f7f5f43322048dd27.
+Its full CPU receipt SHA256:
+fa3f3f5936fb405b119ad4e30c14f035e1bd9b9f506d4af499b66bb21ab27eba
+Runtime502/artifact437/0409 JAR, frontend shaders and approved artwork remain
+frozen. Later changes are tests/preparer receipt fields/documentation only.
+This handoff is ready for private opt-in integration. regionbuild remains OFF
+normally; more work is needed for remaining occasional multi-second stalls.
