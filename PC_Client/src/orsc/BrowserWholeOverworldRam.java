@@ -17,7 +17,7 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
     private final Set<String> l0=new HashSet<String>(),query=new HashSet<String>();
     private final int[] settings;
     private final boolean hiddenRoofs;
-    private boolean ready;
+    private volatile boolean ready;
     private NativeLayeredTerrainSnapshot validated;
     private int activations,hits,models,avoided,validations,prepareMillis,activationMillis;
     private long copiedBytes;
@@ -58,16 +58,33 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
     public boolean accepts(World world,NativeLayeredTerrainSnapshot snapshot){
         if(!ready)return false;if(snapshot==null)return false;
         if(!"global".equals(snapshot.getWorldSpace())||snapshot.getLevel()!=0)return false;
-        if(!manifestSha.equals(snapshot.getManifestSha256())||world.hasWholeOverworldTerrainPatches()||!world.isWholeRamSourceBasisSupported()||!WorldBuilderTerrainBootstrap.isNativeOnly()||!Renderer3DSettings.canSkipProjectedWorldCapture()||Config.C_HIDE_ROOFS!=hiddenRoofs)throw new IllegalStateException("Whole-RAM source/options changed; recook or disable private mode");
+        if(!manifestSha.equals(snapshot.getManifestSha256()))throw new IllegalStateException("Whole-RAM source manifest changed: expected="+manifestSha+" actual="+snapshot.getManifestSha256());
+        if(world.hasWholeOverworldTerrainPatches())throw new IllegalStateException("Whole-RAM rejects unbaked terrain editor patches");
+        WholeRamBasis checkedBasis=world.getWholeRamBasis();
+        if(!world.isWholeRamSourceBasisSupported())throw new IllegalStateException("Whole-RAM native activation unsupported: nativeOnly="+WorldBuilderTerrainBootstrap.isNativeOnly()+", projectedSkip="+Renderer3DSettings.canSkipProjectedWorldCapture()+", editor="+WorldEditorBuildSettings.isEnabled()+", alignedOffset="+checkedBasis.offsetTilesX+","+checkedBasis.offsetTilesZ);
+        if(!WorldBuilderTerrainBootstrap.isNativeOnly()||!Renderer3DSettings.canSkipProjectedWorldCapture())throw new IllegalStateException("Whole-RAM native/GPU ownership changed");
+        if(Config.C_HIDE_ROOFS!=hiddenRoofs)throw new IllegalStateException("Whole-RAM CPU roof option changed: expected="+hiddenRoofs+" actual="+Config.C_HIDE_ROOFS);
+        validateSnapshotSource(snapshot);return true;
+    }
+    /** Background work owns its captured scope; current World/options only participate in publish guards. */
+    public boolean acceptsCaptured(NativeLayeredTerrainSnapshot snapshot,int offsetX,int offsetZ,boolean includeRoofGeometry){
+        if(!ready||snapshot==null||!"global".equals(snapshot.getWorldSpace())||snapshot.getLevel()!=0)return false;
+        validateSnapshotSource(snapshot);
+        if(includeRoofGeometry==hiddenRoofs||Math.floorMod(offsetX,48)!=0||Math.floorMod(offsetZ,48)!=0)return false;
+        new WholeRamBasis(offsetX,offsetZ);return true;
+    }
+    private synchronized void validateSnapshotSource(NativeLayeredTerrainSnapshot snapshot){
+        if(!manifestSha.equals(snapshot.getManifestSha256()))throw new IllegalStateException("Whole-RAM captured source manifest changed: expected="+manifestSha+" actual="+snapshot.getManifestSha256());
         if(snapshot.getProtocolVersion()<5||snapshot.getPresentationChunkSize()!=48)throw new IllegalStateException("Whole-RAM requires a full48-tile native authority window (protocol5+)");
-        if(snapshot!=validated){for(int i=0;i<snapshot.getChunkSlotCount();i++){NativeLayeredTerrainChunk c=snapshot.getChunkMetadata(i);if(c.getSize()!=48)throw new IllegalStateException("Whole-RAM rejects mixed-size source slots");String expected=sectors.get(WholeRamPrepared.key(0,c.getChunkX(),c.getChunkY()));if(c.isAvailable()){if(expected==null||c.getSourceSectorX()!=c.getChunkX()||c.getSourceSectorY()!=c.getChunkY()||!expected.equals(c.getSourcePayloadSha256()))throw new IllegalStateException("Whole-RAM live source differs from owned preparation");}else if(expected!=null)throw new IllegalStateException("Whole-RAM authored source page was presented as void");}validated=snapshot;validations=sat((long)validations+1);}return true;
+        if(snapshot!=validated){for(int i=0;i<snapshot.getChunkSlotCount();i++){NativeLayeredTerrainChunk c=snapshot.getChunkMetadata(i);if(c.getSize()!=48)throw new IllegalStateException("Whole-RAM rejects mixed-size source slots");String expected=sectors.get(WholeRamPrepared.key(0,c.getChunkX(),c.getChunkY()));if(c.isAvailable()){if(expected==null||c.getSourceSectorX()!=c.getChunkX()||c.getSourceSectorY()!=c.getChunkY()||!expected.equals(c.getSourcePayloadSha256()))throw new IllegalStateException("Whole-RAM live source differs from owned preparation");}else if(expected!=null)throw new IllegalStateException("Whole-RAM authored source page was presented as void");}validated=snapshot;validations=sat((long)validations+1);}
     }
     public boolean activate(World world,int plane,int sx,int sy){
         if(plane!=0)return false;long start=System.nanoTime();
-        try{World.PreparedActivation recipe=prepared.recipe(sx,sy);if(recipe==null)throw new IllegalStateException("Global L0 centre is outside complete authored RAM recipe roster: "+sx+":"+sy);Renderer3DWorldChunkFrame frame=prepared.queryFrame(sx,sy);long bytes=world.publishWholeRamActivation(recipe,frame);copiedBytes+=bytes;activations=sat((long)activations+1);hits=sat((long)hits+1);models=sat((long)models+(hiddenRoofs?144:288));activationMillis=sat((long)activationMillis+(System.nanoTime()-start)/1000000);return true;}
+        try{WholeRamBasis basis=world.getWholeRamBasis();int logicalX=basis.logicalX(sx),logicalY=basis.logicalZ(sy);NativeLayeredTerrainSnapshot current=world.getWholeOverworldSourceSnapshot();if(current==null||current.getCurrentChunkX()!=logicalX||current.getCurrentChunkY()!=logicalY)throw new IllegalStateException("Whole-RAM activation carrier/source centre mismatch: carrier="+sx+","+sy+" logical="+logicalX+","+logicalY);
+            World.PreparedActivation recipe=prepared.recipe(logicalX,logicalY);if(recipe==null)throw new IllegalStateException("Global L0 centre is outside complete authored RAM recipe roster: logical="+logicalX+":"+logicalY+" carrier="+sx+":"+sy);Renderer3DWorldChunkFrame frame=prepared.queryFrame(logicalX,logicalY,basis.offsetTilesX,basis.offsetTilesZ);long bytes=world.publishWholeRamActivation(recipe,frame);copiedBytes+=bytes;activations=sat((long)activations+1);hits=sat((long)hits+1);models=sat((long)models+(hiddenRoofs?144:288));activationMillis=sat((long)activationMillis+(System.nanoTime()-start)/1000000);return true;}
         catch(RuntimeException|Error failure){invalidate();BrowserWebGLBridge.publishWholeRamWork(diagnostics());throw failure;}
     }
-    public Renderer3DWorldChunkFrame queryFrame(World world,int sx,int sy){return prepared.queryFrame(sx,sy);}
+    public Renderer3DWorldChunkFrame queryFrame(World world,int sx,int sy,int capturedOffsetTilesX,int capturedOffsetTilesZ){return prepared.queryFrame(sx,sy,capturedOffsetTilesX,capturedOffsetTilesZ);}
     public synchronized void avoidedBuild(){avoided=sat((long)avoided+1);}
     public void validateOptions(int[] current){if(!ready||!Arrays.equals(settings,current)||hiddenRoofs!=Config.C_HIDE_ROOFS)throw new IllegalStateException("Whole-RAM render/CPU options changed");}
     public void invalidate(){ready=false;validated=null;WholeOverworldRamRegistry.clear();}

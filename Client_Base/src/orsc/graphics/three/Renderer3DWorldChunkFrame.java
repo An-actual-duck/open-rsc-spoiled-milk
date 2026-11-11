@@ -319,7 +319,8 @@ public final class Renderer3DWorldChunkFrame {
             vertexOffsetX=vertexOffsetZ=0;initializeVertexBounds();referencedTextureIds=collectReferencedTextureIds(triangleTextures,triangleFallbackColors);materialFamilyTriangleCounts=countFamilies(triangleMaterialFamilies);shadowCasters=new ShadowCaster[0];glowEmitters=new GlowEmitter[0];roofCoverageBits=new long[0];roofCoverageAxis=roofCoveredTileCount=0;objectChunk=false;chunkRole=CHUNK_ROLE_WORLD;
         }
         /** Only immutable prepared CPU query meshes use this; ordinary render rebase rules stay intact. */
-        public ChunkMesh rebaseWholeRamQuery(int x,int z,long[] roofBits,int roofAxis,int roofCount){return new ChunkMesh(this,centerSectionX,centerSectionY,x,z,false,roofBits,roofAxis,roofCount);}
+        public ChunkMesh rebaseWholeRamQuery(int x,int z,long[] roofBits,int roofAxis,int roofCount){return rebaseWholeRamQuery(x,z,roofBits,roofAxis,roofCount,0,0);}
+        public ChunkMesh rebaseWholeRamQuery(int x,int z,long[] roofBits,int roofAxis,int roofCount,int offsetTilesX,int offsetTilesZ){WholeRamBasis basis=new WholeRamBasis(offsetTilesX,offsetTilesZ);return new ChunkMesh(this,basis.carrierX(centerSectionX),basis.carrierZ(centerSectionY),x,z,false,roofBits,roofAxis,roofCount,basis.offsetUnitsX,basis.offsetUnitsZ);}
 
 		public ChunkMesh(
 			int plane,
@@ -954,11 +955,14 @@ public final class Renderer3DWorldChunkFrame {
             this(source,nextCenterSectionX,nextCenterSectionY,additionalOffsetX,additionalOffsetZ,translateObjectEffects,null,0,0);
         }
         private ChunkMesh(ChunkMesh source,int nextCenterSectionX,int nextCenterSectionY,int additionalOffsetX,int additionalOffsetZ,boolean translateObjectEffects,long[] preparedRoof,int preparedAxis,int preparedCount) {
+            this(source,nextCenterSectionX,nextCenterSectionY,additionalOffsetX,additionalOffsetZ,translateObjectEffects,preparedRoof,preparedAxis,preparedCount,0,0);
+        }
+        private ChunkMesh(ChunkMesh source,int nextCenterSectionX,int nextCenterSectionY,int additionalOffsetX,int additionalOffsetZ,boolean translateObjectEffects,long[] preparedRoof,int preparedAxis,int preparedCount,int carrierUnitsX,int carrierUnitsZ) {
 			this.plane = source.plane;
 			this.centerSectionX = nextCenterSectionX;
 			this.centerSectionY = nextCenterSectionY;
-			this.originWorldX = source.originWorldX;
-			this.originWorldZ = source.originWorldZ;
+			this.originWorldX = Math.addExact(source.originWorldX,carrierUnitsX);
+			this.originWorldZ = Math.addExact(source.originWorldZ,carrierUnitsZ);
 			this.vertexCoords = source.vertexCoords;
 			this.vertexOffsetX = Math.addExact(
 				source.vertexOffsetX, additionalOffsetX);
@@ -1034,6 +1038,7 @@ public final class Renderer3DWorldChunkFrame {
 			translatedSignature =
 				(translatedSignature ^ this.vertexOffsetZ)
 					* 1099511628211L;
+            if(carrierUnitsX!=0||carrierUnitsZ!=0){translatedSignature=(translatedSignature^0x5752503142415349L)*1099511628211L;translatedSignature=(translatedSignature^this.originWorldX)*1099511628211L;translatedSignature=(translatedSignature^this.originWorldZ)*1099511628211L;translatedSignature=(translatedSignature^nextCenterSectionX)*1099511628211L;translatedSignature=(translatedSignature^nextCenterSectionY)*1099511628211L;}
 			this.signature = translatedSignature;
 			this.worldEditorTerrainGridAxis =
 				source.worldEditorTerrainGridAxis;

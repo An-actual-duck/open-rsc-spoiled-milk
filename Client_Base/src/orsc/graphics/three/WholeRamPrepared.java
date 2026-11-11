@@ -18,11 +18,13 @@ public final class WholeRamPrepared {
     public Set<String> recipeKeys(){return Collections.unmodifiableSet(recipes.keySet());}
     public Set<String> queryKeys(){return Collections.unmodifiableSet(cells.keySet());}
     public int modelTemplates(){Set<Integer> ids=new HashSet<Integer>();for(Integer rid:recipeIds.values()){int[] d=pool.ints(rid);for(int i=456;i<744;i++)if(d[i]>=0)ids.add(d[i]);}return ids.size();}
-    public Renderer3DWorldChunkFrame queryFrame(int sx,int sy){
+    public Renderer3DWorldChunkFrame queryFrame(int sx,int sy){return queryFrame(sx,sy,0,0);}
+    public Renderer3DWorldChunkFrame queryFrame(int sx,int sy,int offsetTilesX,int offsetTilesZ){
+        WholeRamBasis basis=new WholeRamBasis(offsetTilesX,offsetTilesZ);
         World.PreparedActivation recipe=recipe(sx,sy);if(recipe==null)throw new IllegalStateException("No prepared global L0 activation at "+sx+":"+sy);
         ArrayList<Renderer3DWorldChunkFrame.ChunkMesh> out=new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(75);
-        Renderer3DWorldChunkFrame.ChunkMesh first=cells.get(key(0,sx,sy));if(first==null)throw new IllegalStateException("Missing primary RAM query cell");out.add(first.rebaseWholeRamQuery(0,0,recipe.roofBits(),143,recipe.roofCount()));
-        for(int p=0;p<3;p++)for(int x=sx-2;x<=sx+2;x++)for(int y=sy-2;y<=sy+2;y++){if(p==0&&x==sx&&y==sy)continue;Renderer3DWorldChunkFrame.ChunkMesh c=cells.get(key(p,x,y));if(c!=null)out.add(c.rebaseWholeRamQuery(Math.multiplyExact(x-sx,6144),Math.multiplyExact(y-sy,6144),null,0,0));}
+        Renderer3DWorldChunkFrame.ChunkMesh first=cells.get(key(0,sx,sy));if(first==null)throw new IllegalStateException("Missing primary RAM query cell");out.add(first.rebaseWholeRamQuery(0,0,recipe.roofBits(),143,recipe.roofCount(),basis.offsetTilesX,basis.offsetTilesZ));
+        for(int p=0;p<3;p++)for(int x=sx-2;x<=sx+2;x++)for(int y=sy-2;y<=sy+2;y++){if(p==0&&x==sx&&y==sy)continue;Renderer3DWorldChunkFrame.ChunkMesh c=cells.get(key(p,x,y));if(c!=null)out.add(c.rebaseWholeRamQuery(Math.multiplyExact(x-sx,6144),Math.multiplyExact(y-sy,6144),null,0,0,basis.offsetTilesX,basis.offsetTilesZ));}
         return Renderer3DWorldChunkFrame.fromChunks(out);
     }
     public void write(OutputStream stream)throws IOException{WholeRamIO.Output out=new WholeRamIO.Output(stream);out.writeInt(0x57525031);out.writeInt(1);pool.write(out);writeRows(out,recipeIds);writeRows(out,cellIds);}

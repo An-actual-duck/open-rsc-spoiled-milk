@@ -68,7 +68,7 @@ terrain/wall/roof emission and grid splitting. World scope/halo preparation uses
 immutable query cells instead of rebuilding visual GPU meshes. Network snapshot
 readiness gates still run. All available AND void slots must match the authored
 roster; legacy protocol4/24-tile and mixed-size authority windows are refused.
-The supported basis is native-only, global L0, zero translation, protocol5+
+The supported basis is native-only, global L0, aligned48-tile carrier translation, protocol5+
 with48-tile slots. Other signed levels/world spaces use the original path.
 
 Prepared activation owns fresh model camera/transform/light/index arrays. The
@@ -229,3 +229,60 @@ the current private player, retaining the player's existing setting. The full
 TRUE cook, actual browser acceptance, memory and travel comparisons remain root
 hardware gates. All earlier FALSE CPU capacity figures remain explicitly FALSE
 measurements; they are not silently reused as full TRUE memory/performance proof.
+
+Logical source / legacy carrier follow-up (2026-11-11)
+------------------------------------------------------
+The first TRUE-data browser attempt completed CPU preparation, then correctly
+refused the original zero-basis-only implementation. Exact captured cause:
+Native terrain halo build failed -> Whole-RAM source/options changed. Actual
+normal client source center2,13 lived in legacy carrier center50,50, with tile
+offsets2304,1776 (world2415,2400 / logical111,624). This was not a corrupt cook or
+memory/VM failure. Root preserves startup-on-2 and startup-on-console-2 evidence.
+
+WholeRamBasis now represents a checked immutable aligned translation. Logical
+recipe/query keys remain2,13; runtime center50,50 is mapped back before lookup.
+Active/applied-section, stream and diagnostic publication use carrier50,50.
+Local144²tile/collision/elevation/minimap and model coordinates remain unchanged:
+logicalTile+offset - ((carrierSection-1)*48) equals the original logical local
+coordinate. Query wrappers change center by offset/48 and origin by offset*128;
+cell-relative vertexOffset is unchanged. Raw storage identity stays canonical;
+presentation identity includes translated origin/center. Primary143²roof bits
+remain local and roof-cache origin follows the carrier. GPU catalog, logical
+whole-zone metadata, camera and player coordinates are not translated.
+
+Background halo AND native product preparation use separate captured admission:
+immutable source roster/hash, captured offsets and captured roof variant only.
+They do not read mutable current World basis/options to choose a translation.
+Existing sourceRevision/offset/scope/roof publication checks reject stale results.
+A captured unsupported old roof variant or misaligned old basis uses the original
+builder; genuine source corruption still refuses. Active synchronous activation
+keeps strict source/editor/options/basis checks. The avoided mutable coupling was
+source-confirmed; no claim is made that every standard layer transition would
+crash, since protocol8 normally cancels pending futures as well.
+
+One exact query-data qualification: literal TerrainVertexLightVariation hashes
+legacy carrier tile coordinates, while canonical retained query light words use
+logical source coordinates. The query buffers' vertexLights are not consumed on
+this private full-GPU path: BrowserWholeOverworldZone.filter removes WORLD chunks
+before OpenGLWorldChunkRenderer packing (the only getVertexLight consumer).
+TerrainDefinitionField reads coordinates/heights, roof masks read bits/origins;
+wall/roof classic model lighting remains local. Thus independent tests must
+compare consumed lighting/query masks, not claim unused query light words match
+a carrier-keyed rebuild. A new consumer requires review. Visible GPU geometry and
+its lighting remain the same full pinned catalog; no new format/remapping added.
+
+Frozen source27d20d169cedf835d074437ab5c525f29e52ccd9 full-source artifact:
+ output/builds/browser-whole-overworld-ram/source-captured-basis-8/receipt.json
+ JAR9855ff988e6dbc0ae801b3ccd81c222fb1c2b18a4d87c4a1ad7320af63c781f1
+ 977maintained classes/3194game assets, no transplanted classes.
+Targeted actual immutable wrapper corpus:1,569,131checks PASS, offsets0,0;
+2304,1776; negative/mixed-sign aligned bases; center/origin/logical-offset and
+signature behavior; all raw local geometry/roof bits unchanged; misalignment and
+pixel-range overflow refused. Receipt:
+ output/tests/browser-whole-ram-basis/20261111T230218Z/result.json.
+Decoder20,484checks PASS again on that JAR; receipt:
+ output/tests/browser-whole-ram-codec/20261111T230219Z/result.json.
+Manager will freshly integrate/build/bake and run actual-provider World parity,
+realistic nonzero-basis changes, stale async rejection, warm query caches and
+actual browser startup/travel before any hardware performance conclusion. No
+worker full cook or browser run is represented as those pending gates.
