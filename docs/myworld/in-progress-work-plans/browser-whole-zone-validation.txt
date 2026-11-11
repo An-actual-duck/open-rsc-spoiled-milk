@@ -191,3 +191,24 @@ The actual source has three L1 sectors without L0 pages:(-1,-1),(-1,0),(0,-1).
 The producer reports its correction now builds the lower void-context roof chain
 before emitting authored upper cells; actual ordinary-path geometry/elevation
 comparison is still a pending gate, not inferred from the source join.
+
+Actual selection API gate (CPU only)
+------------------------------------
+19 independent checks pass against stable frontend83fa8c281 and the actual
+source-joined pilot-2 catalogue, with actual exported createWholeZoneSelection.
+Module SHA25608e8807bf7dda957958d5ff486d78392b3fc1154ef460545fd44ff813caa2847
+Policy SHA2566664fbd87ecad43c70a261cb004fdd38faa73811d03d3a24ec5d273e201e6763
+Receipt: output/tests/browser-whole-zone-validation/selection-pilot-2/result.json
+Equal keys produce the exact baked resource IDs; mutation/animated reasons mask
+the old object-cell geometry while preserving explicitly supplied live geometry.
+Destroyed-last-object empty rows suppress stale geometry. Authored-baseline rows,
+missing/duplicate authority, wrong keys, backward epochs, consumed declarations,
+pinned/local ID collision and zero-color-mask shadow retention are exercised.
+The incomplete pilot refuses full manifest admission. This does not execute the
+Java resolver/upload skipping, prove a complete catalogue or establish GPU use.
+
+Nonrenderable authored placements remain mandatory explicit resource ownership:
+a positive placement count may validly map a16-byte zero-geometry resource when
+all faces are invisible. It may not use null to silently omit source content.
+Only L0 terrain must be nonempty. Independent catalogue corpus now25 checks,
+including this distinction. Elevation/rawgeometry/image parity remains pending.

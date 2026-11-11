@@ -73,7 +73,7 @@ def join(catalog,proof,root,kind_words,partial_sectors=None):
    reverse.add(rid)
    if roster_key(c)!=key or c['role']!=role or c['sourceKind']!=family or c['cellSize']!=(48 if role==0 else 24)or c['vertexCount']!=v or c['indexCount']!=i:fail('Geometry resource owner/count mismatch')
    if family=='objects'and(c['canonicalContentKey']!=cell['canonicalContentKey']or c['placementCount']!=cell['placementCount']):fail('Object geometry identity mismatch')
-   if mandatory and(not v or not i):fail('Mandatory source has empty geometry')
+   if family=='world'and key[0]==0 and(not v or not i):fail('L0 source has empty terrain geometry')
    if c['bytes']!=16+v*112+i*4+c['batchIntCount']*4 or c['batchIntCount']%5:fail('Resource byte/batch mismatch')
    gpu_bytes+=v*112+i*4
  if reverse!=set(resources):fail('Unowned extra geometry resource')

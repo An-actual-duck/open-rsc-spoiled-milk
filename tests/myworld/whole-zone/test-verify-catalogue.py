@@ -44,6 +44,10 @@ class Catalogue(unittest.TestCase):
   self.owned()['identities'][7:]=self.owned()['identities'][:7];self.rejected()
  def test_noninteger_identity(self):
   self.owned()['identities'][6]=True;self.rejected()
+ def test_invisible_authored_resource_still_explicit(self):
+  self.owned().update(vertexCount=0,indexCount=0)
+  self.c['chunks'][1].update(vertexCount=0,indexCount=0,batchIntCount=0,bytes=16)
+  self.check()
  def test_removed_mandatory_resource(self):
   self.owned().update(resourceId=None,vertexCount=0,indexCount=0);self.rejected()
  def test_missing_resource(self):
