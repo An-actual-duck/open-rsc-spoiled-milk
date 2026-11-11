@@ -5,7 +5,7 @@ from pathlib import Path
 from datetime import datetime,timezone
 ROOT=Path(__file__).resolve().parents[2];BASELINE='7934b77c277cdc88b5a29c6815159b8f779c69fa'
 SOURCES=['Client_Base/src/orsc/graphics/three/RSModel.java','Client_Base/src/orsc/graphics/three/World.java']
-FIXTURES=['BrowserConstructionIndependentFixture.java','BrowserSignatureIndependentFixture.java']
+FIXTURES=['BrowserConstructionIndependentFixture.java','BrowserSignatureIndependentFixture.java','BrowserRegionBuildEdgeIndependentFixture.java']
 def sha(x):return hashlib.sha256(x).hexdigest()
 def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--candidate-root',required=True,type=Path);p.add_argument('--candidate-commit',required=True);p.add_argument('--dependency-jar',required=True,type=Path);p.add_argument('--support',action='append',default=[]);p.add_argument('--skip-limb',action='store_true');a=p.parse_args();assert re.fullmatch('[a-f0-9]{40}',a.candidate_commit)

@@ -174,3 +174,94 @@ with actual server movement, source epochs, held/fresh frame distinction and
 bounded source/Worker timings. No measured bottleneck, FPS/loading improvement,
 seamless travel or default adoption is asserted yet. Existing larger region
 preparation and fog prototypes remain parked and unimported.
+
+Measured direction and exact construction candidate CPU gate
+-----------------------------------------------------------
+The actual658 ordinary crossing disproved packing-alone attribution. Manager
+first-crossing-1/result.json records111624→111623 server-authoritative walking,
+4417ms completed-world gap but1084ms notice→complete/35held frames. Deduplicated
+72 reports have no gaps; total bridge673ms, geometry436ms (vertex293/material67/
+submit64 nested), and first complete lighting130ms. Most frame gap precedes the
+bridge-held interval. Warm repeated crossings also retain multisecond pre-bridge
+cost. These are diagnostic timings, not arithmetic components to sum.
+Manager first-crossing evidence hashes read/recomputed:
+  output/diagnostics/browser-travel-loading/first-crossing-1/result.json
+    2f558dd0f9d95055bc8d681a6e669b7a51abe040e9edc0a0f7584c7e94691a31
+  output/diagnostics/browser-travel-loading/first-crossing-1/phase-summary.json
+    e9381f66a86b9df07dd924b24d6512b5f5fbb704b903b2bb8d4452f477401391
+
+Source analysis identifies repeated scene single-removal scans, epoch/scope-
+keyed World products and source construction as distinct possibilities. Actual
+fresh source-mapped profile supplied by the manager localizes signature/FNV,
+RSModel vertex deduplication and boxed World builder arrays. It does NOT establish
+Scene.removeModel as dominant; no scene-removal change is authorized from its
+O(N^2) source shape alone. Canonical static keys already exclude center/base;
+ordinary reuse explicitly rebases storage. Near224MiB resident cache pressure
+also makes new-upload counts ambiguous; no unsafe key weakening was proposed.
+
+Exact combined private candidate reviewed:
+502fa18d88688f3030e8349c6487e541aea87a78. It requires browserBenchmark AND
+browserRegionBuild; ordinary defaults remain OFF. The three focused changes are:
+- Construction-local index only inside private RSModel.addModels. A fresh own
+  destination starts at vertHead0. Full signed XYZ equality selects the earliest
+  inserted index. Original insertVertex is unchanged outside this lexical scope;
+  table references clear in finally. No persistent cache survives transforms,
+  deletion, resets, fishing animation, package-array mutation or public calls.
+- Two primitive int limbs implement the EXACT old unsigned-int FNV64 recurrence,
+  with int wrap/carry and one long join at result. Both original signature loops
+  remain literal OFF; ON duplicates the identical identity/array/effect word order
+  and Float.floatToIntBits NaN canonicalization, including roof low-word/high-word.
+- World numeric construction columns use bounded growing primitive scratch ON;
+  enum/effect lists remain ordered. At1048576 elements per column the helper
+  preserves arbitrary larger input via the old boxed-list representation instead
+  of imposing a new geometry admission limit. Output arrays remain owned copies.
+
+Independent exact-source CPU proof PASS:
+output/tests/browser-construction-independent/20261111T180554694154Z/result.json
+  SHA256 fa3f3f5936fb405b119ad4e30c14f035e1bd9b9f506d4af499b66bb21ab27eba
+Frozen7934, candidateOFF and candidateON produce identical binary corpora:
+  Actual construction98cases:4,364,314bytes
+    SHA25689a7f956b72939683649bdb375182b14f5ab86eb9bd50376262b65827519b069
+  Whole actual private signatures320cases:20,480bytes
+    SHA2567d8b1223fc4c27c208eb4bb6ecc6783fe629a969b72eabc0e5b94d82c62a6bbf
+The first corpus executes actual model merging/clone, duplicate and aliased source
+models, signed extreme coordinates, growth, transforms, malformed source face
+indices/counts/nulls, observable failed-merge prefixes and subsequent literal
+insertion. It also builds actual private World GPU mesh products from varied
+polygons/material kinds/light/blend/UV/effects/roof masks, recording raw vertex/
+normal/float/index/material/effect arrays and signatures. Reusing/mutating the
+builder after first product construction cannot mutate its saved mesh. This is
+product-construction proof, not full map-loader/authority activation execution.
+
+The second corpus directly calls both actual signature methods over all ordered
+identity and array arguments, signed extremes, infinities, negative zero and
+multiple NaN payloads, every enum/family plus casters/glows/roof64bits. Separately,
+actual Fnv64 receives131072 seeded-random/extreme/carry updates compared after
+EVERY word with an independent literal `(h^(x&0xffffffffL))*FNV_PRIME` oracle.
+Expected bytes are always compiled frozen-source output, never candidate helpers.
+
+Additional2,097,291 actual private helper checks are nonvacuous. The fixture
+interrogates an EMPTY actual index to find32 distinct full-XYZ keys in its LAST
+bucket, then proves collision wrap/first-match against literal insertVertex.
+It exercises array growth, unexpected half occupancy clearing to literal fallback,
+oversized/negative predicted counts disabling indexing and original ca.I failure
+shape. Both IntValues and FloatValues stream through FULL1048576 scratch capacity
+into boxed overflow, checking every integer/raw-float result (including NaN
+payload/negative zero), exact size and returned-array mutation isolation.
+
+Construction scratch bounds are not total process caps. The index stores only
+indices, up to262144 slots (~1MiB); above131072 predicted vertices it uses literal
+insertion. Primitive columns cap scratch at4MiB EACH; ten columns could total40MiB
+before boxed overflow/output/source arrays and growth coexistence. Very large
+legacy-valid input can still consume larger boxed/output storage, as before.
+No Java/JS borrowed array or model reference is kept in these helpers. Failure
+prefix, first-match and output ownership proofs do not promise unchanged OOM
+allocation timing, arbitrary reflective mutation during a private construction,
+or new concurrent access support.
+
+No source-backed correctness blocker remains for this private construction
+experiment. The manager's437 follow-up is test-only relative to502 runtime; actual
+same-artifact OFF/ON ordinary travel and warm return cohorts remain required.
+CPU helper counts and profile percentages are NOT a loading/FPS improvement
+claim. No loader authority, collision, picking rule, source window, fog distance,
+GPU backend/shader, public server or ordinary default was changed by this reviewer.
