@@ -94,3 +94,24 @@ thread ownership; it does not establish safety for concurrent drawing.
 Workspace-layout check reports the inherited legacy assets/sprites entry and
 unclassified legacy output-root items. New outputs use the declared tests
 category; no inherited data was removed.
+
+Default-OFF guard follow-up
+---------------------------
+Exact candidate2d4aebdc00eb0a49d42dc9321d60ae240955517b changes only the
+new feature's guards relative to reviewed e87 Java runtime sources. All three
+GraphicsController admission sites now short-circuit before invoking the scope
+helper when writerSpans is false. Coverage opaque/multiply retain the outer
+delta!=null test and directly call the existing delta.mark when spans are OFF;
+the scope helper is used only ON. Counter clearing likewise runs only ON.
+The final field is fixed for each coverage owner at construction. No ordinary
+pixel, coefficient, exception or ACK semantics change was found in this diff.
+
+The exact same independent fixtures were rerun against frozen c7ed and exact2d:
+output/tests/browser-overlay-writer-span-independent/20261111T093748157013Z/
+  result.json and adjacent compile/snapshot/scope stdout/stderr
+All201 snapshots in all eight gate runs retain the common SHA256 above, and
+the separate lifecycle oracle again passes3,539 checks. The receipt records
+the new candidate input hashes and unchanged independent fixture/dependency
+hashes. This supersedes e87 for final reviewed Java runtime confidence while
+preserving its earlier evidence. No GPU, browser, full build or FPS measurement
+was run by this worker for the guard follow-up.
