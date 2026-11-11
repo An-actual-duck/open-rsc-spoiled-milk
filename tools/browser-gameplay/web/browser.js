@@ -139,6 +139,12 @@ const natives = {
   async Java_orsc_browser_BrowserBootstrap_reportModelPickBounds(lib, requested, enabled) {
     window.browserProof.modelPickBounds = {requested:requested === true, enabled:enabled === true};
   },
+  Java_orsc_browser_BrowserBootstrap_reportStartupDiagnostics(lib,phase,detail){
+    if(typeof phase!=='string'||phase.length>32||typeof detail!=='string'||detail.length>8192)throw new Error('Invalid bounded startup diagnostic');
+    const rows=window.browserProof.startupDiagnostics||=[];if(rows.length<16)rows.push({milliseconds:Math.round(performance.now()-started),phase,detail});
+    if(phase==='route'&&['43629','43639','43649'].includes(detail))window.browserProof.javaPrivateLoopbackPort=Number(detail);
+    publish();
+  },
   async Java_orsc_browser_BrowserBootstrap_reportState(lib, mode, fps, loadingPercent) {
     if(mode==='GAME'&&window.browserProof.state?.mode!=='GAME')awaitingGameFrame=true;else if(mode!=='GAME')awaitingGameFrame=false;
     const state = {milliseconds: Math.round(performance.now() - started), mode, fps, loadingPercent};

@@ -138,6 +138,10 @@ if(!benchmarkStream){
  await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(null,'terrainQueryIndex',true,false,false);
  assert.deepEqual(JSON.parse(JSON.stringify(window.browserProof.optimizedRenderDefaults)),{batchedModelKernel:{requested:true,available:true,enabled:true},terrainQueryIndex:{requested:true,available:false,enabled:false}});
 }
+await configured.natives.Java_orsc_browser_BrowserBootstrap_reportStartupDiagnostics(null,'route','43639');
+assert.equal(window.browserProof.javaPrivateLoopbackPort,43639);
+await configured.natives.Java_orsc_browser_BrowserBootstrap_reportStartupDiagnostics(null,'main-returned','loop=absent');
+assert.equal(window.browserProof.startupDiagnostics.at(-1).detail,'loop=absent');
 const selectedKeys=!benchmarkStream||benchmarkKeys;await configured.natives.Java_orsc_browser_BrowserBootstrap_reportSpriteKeyPolicy(null,selectedKeys,selectedKeys);assert.equal(window.browserProof.spriteKeyLimbs.enabled,selectedKeys);assert.equal(window.browserProof.spriteKeyLimbs.requested,selectedKeys);
 const progressReturn=configured.natives.Java_orsc_BrowserWebGLBridge_worldProgress(null,[1,2,1,4,2,0,0,0,1,960,540,0]);assert.equal(typeof progressReturn?.then,nativeMode==='sync'?'undefined':'function');await progressReturn;assert.equal(window.browserWorldInputAllowed(),false);
 const presentReturn=configured.natives.Java_orsc_BrowserWebGLBridge_present(null,960,540);assert.equal(typeof presentReturn?.then,nativeMode==='sync'?'undefined':'function');assert.equal(await presentReturn,6);assert.equal(window.browserWorldInputAllowed(),true);assert.deepEqual(gateEvents,['browser-world-readinesschange','browser-world-readinesschange']);

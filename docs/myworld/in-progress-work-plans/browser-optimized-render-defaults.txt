@@ -83,3 +83,36 @@ UNSET keys, strict private controls and actual normal receipt handling. Existing
 repeatable-policy and candidate-control regressions also pass. Native Firefox
 login, actual default-enabled receipts, movement/UI and current terrain metadata
 remain manager-owned acceptance before final adoption/publication.
+
+First actual normal attempt and focused route/diagnostic revision
+----------------------------------------------------------------
+The first immutable 8214 stage failed before normal gameplay acceptance.
+Manager capture optimized-defaults-normal-session-1/startup-rejection.json
+reported Java exit 0 after approximately 5.965 seconds, with no world/model
+packets or actual-default receipt. The exit cause is not established.
+The failed stage and capture are preserved, not replaced or counted as success.
+
+A definite source protocol gap was found independently: frontend/Cache routed
+to 43539/43639 while BrowserSocket's fixture-null TCP guard permitted 43629.
+The revised stage metadata now also supplies a narrowly validated private
+loopback port property. Java accepts 43639 or 43649 only, requires any explicit
+fixture to agree, rejects nonloopback hosts/wrong ports before wsOpen, and keeps
+the original 43629 behavior when metadata is absent. This fixes the contract
+inconsistency; the pre-login exit must still be localized through actual trace.
+
+Bounded normal-only startup diagnostics use a proof-only native channel and
+leave UI/status text alone. After OpenRSC.main returns, its existing uncaught
+logger is chained (not replaced), and up to 12 startup observations capture the
+real client-loop state/daemon/alive plus the last 4096 bytes of its virtual
+runtime log. Existing per-thread/core behavior remains unchanged. No daemon
+changes, keepalive, shutdown hook or guessed lifecycle fix were introduced.
+OpenRSC schedules GUI startup via Swing.invokeLater; the client loop is already
+explicitly non-daemon. Those facts do not establish why this session exited.
+
+CPU route/lifecycle observation proof:
+output/tests/browser-optimized-render-defaults/20261111T110737725078Z/result.json
+Tests cover Java selected-port/host/fixture validation, original default route,
+chaining the original exception cause, absent/NEW/TERMINATED loop observations,
+log-tail capture and sample cap. These are observations of unchanged thread
+lifetime, not proof that real browser startup is fixed. The new private stage
+must bind a new source commit and preserve the prior failed stage.

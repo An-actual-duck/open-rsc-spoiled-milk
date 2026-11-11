@@ -17,9 +17,10 @@ for variant in ['new','old','wrong']:
   if variant=='wrong':method={'scene':'public static boolean isBrowserBatchedModelKernelEnabled(){return true;}','kernel':'private static boolean transformPacket(int n,int[][]r,int[]a,int[]b,int[]c,int[]d){return true;}','terrain':'public boolean isBrowserTerrainQueryIndexEnabled(){return true;}','chunk':'public static int getSize(){return 48;}'}[sentinel]
   f=folder/(cls+'.java');f.write_text('package '+package+'; public final class '+cls+' { public static boolean initializedValue=Boolean.getBoolean("spoiledmilk.browserTerrainQueryIndex"); static {System.setProperty("sentinel.'+sentinel+'","yes");} '+method+' }');files.append(f)
  call('compile-'+variant,['javac','-source','8','-target','8','-d',str(folder),*map(str,files)])
-classes=run/'classes';classes.mkdir();sources=sorted((ROOT/'tools/browser-gameplay/src/orsc/browser').glob('*.java'))+[ROOT/'tests/myworld/BrowserOptimizedDefaultsFixture.java']
+classes=run/'classes';classes.mkdir();sources=sorted((ROOT/'tools/browser-gameplay/src/orsc/browser').glob('*.java'))+[ROOT/'tests/myworld/BrowserOptimizedDefaultsFixture.java',ROOT/'tests/myworld/BrowserNormalStartupRouteFixture.java']
 call('compile',['javac','-source','8','-target','8','-cp',str(a.client_jar.resolve()),'-d',str(classes),*map(str,sources)])
 summary=call('java',['java','-cp',str(classes)+':'+str(a.client_jar.resolve()),'orsc.browser.BrowserOptimizedDefaultsFixture',*map(str,folders)])
+call('normal-route-lifecycle',['java','-Djava.awt.headless=true','-cp',str(classes)+':'+str(a.client_jar.resolve()),'orsc.browser.BrowserNormalStartupRouteFixture',str(run/'fixture-client.log')])
 call('policy',['node','tests/myworld/test-browser-optimized-render-defaults.mjs'])
 for n,flags in [('normal',[]),('benchmark',['--benchmark-stream']),('benchmark-batch',['--model-batch']),('benchmark-combat',['--combat'])]:call('frontend-'+n,['node','--experimental-vm-modules','tests/myworld/test-browser-webgl-frontend.mjs',*flags])
 inputs=[*sources,ROOT/'tools/browser-gameplay/web/browser-optimized-render-defaults.js',ROOT/'tools/browser-gameplay/web/browser.js',ROOT/'tools/browser-gameplay/web/browser-repeatable-policy.js',Path(__file__),ROOT/'tests/myworld/test-browser-optimized-render-defaults.mjs',ROOT/'tests/myworld/test-browser-webgl-frontend.mjs']

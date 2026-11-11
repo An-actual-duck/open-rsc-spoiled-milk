@@ -12,7 +12,7 @@ const unique=canonicalRenderProperties(['other=true','spoiledmilk.browserBatched
 for(const [key,value]of [['spoiledmilk.browserBatchedModelKernel','true'],['spoiledmilk.browserTerrainQueryIndex','true']])assert.deepEqual(unique.filter(p=>p.startsWith(key+'=')),[key+'='+value]);assert(unique.includes('spoiledmilk.browserOverlayJournalObserve=true'));
 assert.equal(repeatableFixturePolicy('webgl',query('')).websocket,'ws://127.0.0.1:43529/');
 const route={tcpPort:43639,websocket:'ws://127.0.0.1:43539/'};
-const p=repeatableFixturePolicy('webgl',query(''),route,'http://127.0.0.1:8214');assert.equal(p.requested,null);assert.deepEqual(p.properties,[]);assert.equal(p.websocket,route.websocket);
+const p=repeatableFixturePolicy('webgl',query(''),route,'http://127.0.0.1:8214');assert.equal(p.requested,null);assert.deepEqual(p.properties,['spoiledmilk.browserPrivateLoopbackPort=43639']);assert.equal(p.websocket,route.websocket);
 for(const r of [null,{}, {...route,websocket:'ws://example.com:43539/'},{...route,websocket:'ws://127.0.0.1:43540/'},{...route,tcpPort:43629}])assert.throws(()=>repeatableFixturePolicy('webgl',query(''),r,'http://127.0.0.1:8214'),/Invalid staged/);
 for(const origin of ['https://example.com','http://evil127.0.0.1:8214','http://127.0.0.1.evil:8214'])assert.throws(()=>repeatableFixturePolicy('webgl',query(''),route,origin),/Invalid staged/);
 console.log('PASS canonical ordinary adopted defaults, unchanged software/private controls and strict stage-only loopback routing');

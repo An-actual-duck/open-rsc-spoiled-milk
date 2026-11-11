@@ -8,6 +8,7 @@ public final class BrowserBootstrap {
     private BrowserBootstrap() { }
     public static native void report(String message);
     public static native void reportState(String mode, int fps, int loadingPercent);
+    public static native void reportStartupDiagnostics(String phase,String detail);
     public static native void reportLoop(String mode,boolean earlyFaceCull,boolean fullResidentOwnership);
     public static native void reportTelemetry(String names,double[] values);
     public static native void reportSpriteKeyPolicy(boolean requested,boolean enabled);
@@ -75,6 +76,7 @@ public final class BrowserBootstrap {
         final BrowserOptimizedDefaults.Resolution optimizedDefaults=BrowserOptimizedDefaults.apply(webgl,benchmark,
             BrowserOptimizedDefaults.capabilities(BrowserBootstrap.class.getClassLoader()));
         final String fixture=System.getProperty("spoiledmilk.browserRepeatableFixture");
+        final int privatePort=privateFixturePort(fixture,System.getProperty("spoiledmilk.browserPrivateLoopbackPort"));
         final boolean combat="renderer-combat-v1".equals(fixture);
         final boolean repeatable="repeatable-v1".equals(fixture)||combat;
         if(repeatable&&(!webgl||!Boolean.getBoolean("spoiledmilk.browserBenchmark")))throw new IllegalArgumentException("Repeatable camera is private benchmark only");
@@ -124,6 +126,10 @@ public final class BrowserBootstrap {
         });
         report((webgl?"webgl-client":"software-client")+":start; networking=loopback-websocket");
         orsc.OpenRSC.main(new String[0]);
+        final BrowserStartupDiagnostics startupDiagnostics=webgl&&!benchmark?new BrowserStartupDiagnostics(new BrowserStartupDiagnostics.Sink(){
+            public void report(String phase,String detail){reportStartupDiagnostics(phase,detail);}
+        }):null;
+        if(startupDiagnostics!=null){startupDiagnostics.installChainedHandler();reportStartupDiagnostics("route",String.valueOf(privatePort));startupDiagnostics.sample("main-returned");}
         if(webgl) {
             Thread pointer = new Thread(new Runnable() {
                 public void run() {
@@ -156,6 +162,7 @@ public final class BrowserBootstrap {
                     BenchmarkCandidatePolicies.RegionDiagnostics regionDiagnostics=new BenchmarkCandidatePolicies.RegionDiagnostics();
                     BenchmarkCandidatePolicies.TerrainQueryDiagnostics terrainDiagnostics=new BenchmarkCandidatePolicies.TerrainQueryDiagnostics();
                     while (true) {
+                        if(startupDiagnostics!=null)startupDiagnostics.sample("observer");
                         Object client = clientField.get(null);
                         if (client != null && webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
                             orsc.mudclient actual=(orsc.mudclient)client;
@@ -250,6 +257,18 @@ public final class BrowserBootstrap {
         return "renderer-combat-v1".equals(fixture)?43639:"repeatable-v1".equals(fixture)?43649:43629;
     }
 
+    static int privateFixturePort(String fixture,String stagedPort) {
+        int expected=privateFixturePort(fixture);
+        if(stagedPort==null)return expected;
+        if(!"43639".equals(stagedPort)&&!"43649".equals(stagedPort))throw new IllegalArgumentException("Invalid staged private loopback port");
+        int port=Integer.parseInt(stagedPort);
+        if(fixture!=null&&(!"renderer-combat-v1".equals(fixture)&&!"repeatable-v1".equals(fixture)||expected!=port))throw new IllegalArgumentException("Staged private loopback port differs from fixture");
+        return port;
+    }
+    static void validatePrivateConnection(InetAddress host,int port,String fixture,String stagedPort)throws IOException {
+        final int expected;try{expected=privateFixturePort(fixture,stagedPort);}catch(IllegalArgumentException invalid){throw new IOException(invalid);}
+        if(!host.isLoopbackAddress()||port!=expected)throw new IOException("Private prototype permits only the selected loopback fixture port");
+    }
     private static final class BrowserSocket extends SocketImpl {
         private int connection = -1;
         protected void create(boolean stream) throws IOException {
@@ -257,7 +276,7 @@ public final class BrowserBootstrap {
         }
         protected void connect(String host, int port) throws IOException { connect(InetAddress.getByName(host), port); }
         protected void connect(InetAddress host, int port) throws IOException {
-            if (!host.isLoopbackAddress() || port != privateFixturePort(System.getProperty("spoiledmilk.browserRepeatableFixture"))) throw new IOException("Private prototype permits only the selected loopback fixture port");
+            validatePrivateConnection(host,port,System.getProperty("spoiledmilk.browserRepeatableFixture"),System.getProperty("spoiledmilk.browserPrivateLoopbackPort"));
             address = host; this.port = port; connection = wsOpen();
             if (connection < 0) throw new IOException("Private WebSocket connection failed");
         }
