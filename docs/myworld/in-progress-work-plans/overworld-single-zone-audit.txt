@@ -1,0 +1,112 @@
+Whole overworld as one logical zone — architecture audit
+========================================================
+Dated November 11, 2026. AUDIT ONLY. Baseline source main6d5a66a3f.
+No browser/GPU/server/map/runtime changes or larger-memory defaults are approved.
+The owner's high-end PC is the first target; this does not establish a safe
+ordinary-device default. The earlier modern-streaming plan remains saved and
+planned/deferred in browser-modern-streaming-plan.txt while this audit proceeds.
+
+Three proposals that must not be conflated
+-----------------------------------------
+A. One continuous logical L0 zone, internally streamed. Gameplay and visual source
+   identities need not reset on each48-tile border; local collision/pick/interest
+   windows, origin rebasing and GPU page residency may remain bounded internals.
+   This is a user-visible continuity goal, not a requirement to draw everything.
+B. The whole zone ready in system RAM. Specify whether this means compressed
+   terrain/source records, decoded tiles/collision, canonical geometry, CPU
+   picking models, all static objects, or all layers. Each has different memory
+   and startup costs. A warm OS file cache does not equal decoded runtime residency.
+C. All zone geometry resident on the GPU. This adds separate capacity, draw-list,
+   culling, texture, shadow and startup-upload requirements. GPU-resident does not
+   mean all geometry should be submitted, shadowed or visible each frame.
+
+A may be feasible without B or C. Full map/source RAM residency may be feasible
+without CPU-constructing all classic models or uploading all geometry. Current
+limits cannot be treated as an estimate of the entire world's actual needs.
+Inventory and geometry audit evidence must decide what fits before implementation.
+
+Current source constraints (source references are review anchors)
+----------------------------------------------------------------
+- NativeLayeredTerrainSnapshot.java:14–29,183–225 and decoder:238–270: protocol3
+  uniform pages, protocol4 legacy24-tile chunks, protocol5+48-tile sectors;
+  protocols5–8 require radius1/9 explicit slots, protocols9/10 radius2/25 slots.
+  Client/server validators, query indexing, staging/readiness/atomic activation
+  and acknowledgements require matching package/manifest, world-space, signed
+  level, center and sequence. A giant zone is not a legal larger packet today.
+  A new whole-zone catalog/paging contract needs bounded download, checksums,
+  version compatibility, missing cells, recovery and stale-transaction proof.
+- World.java:45–78: active3x3 sections,144x144 local tiles,143x143 faces,12-tile
+  model grid,512 split-vertex limit; caches have distinct count limits (sector256,
+  CPU windows24, terrain/wall/roof inputs24, model products48, prepared chunks4).
+  collisionFlags/pathFindSource/tileElevationCache and model/minimap products are
+  sized/indexed to those local constants. Increasing ACTIVE_SECTION_GRID alone
+  changes quadratic storage, geometry/grid counts and many algorithms; it is
+  not an architectural whole-zone switch.
+- mudclient.loadNextRegion and World.sectionToLocalBaseTile retain local bases
+  and local-player/entity coordinates. Scene picking and classic RSModel CPU
+  transforms consume these representations. RSModel.rotate1024 uses signed
+  int products before shifts (current:2402 onward). Feeding large global model
+  positions into every existing local transform can overflow or lose intended
+  projection precision even if logical server coordinates fit an int. Retain
+  per-cell/local origins or audit every transform, packet and index consumer.
+- BrowserWebGLBridge.java:21/51/181/319/419: max256 active draw chunks,512 resident
+  chunk identities,224MiB Java-side packed chunk budget,32768 discretionary upload
+  vertices per submission and524288 vertices per individual chunk. Each vertex
+  currently contributes28 floats/112 bytes plus triangle indices. Those budgets
+  do not include the entire Java heap or all GPU ancillary resources.
+- webgl.js:27/67/71/131/140/191:512 resident chunks,256 active draw descriptors,
+  256MiB tracked chunk/texture GPU budget, bounded indices and the same112-byte
+  stride. Shadow maps, sprite atlas, overlay/retained planes, lighting masks and
+  sky have separate bounded ledgers; driver/program overhead is not accounted
+  for by the chunk counter. Color/shadow culling must remain independent of a
+  zone's logical extent; one giant mesh would undermine useful cell culling.
+- browser-render-worker-protocol.js and transport:64MiB packet cap, bounded
+  command count, two in-flight packets and one producer batch;16MiB owned return
+  pool. A full world cannot be handed to the Worker as one unbounded array or
+  transferred while Java retains a borrowed view. Static resource lifetimes,
+  disposal, source epochs and delayed ACK failures still apply.
+- Server RegionManager.java:127 and LayeredSpatialEntityIndex.requireBoundedWindow:
+  per-owner interest membership is bounded (4096 region cap). Player visibility
+  still uses scoped logical windows and range filtering. Static map preloading
+  must not subscribe every player to all NPCs/players/items/scenery updates or
+  expand combat targeting/collision authority to an entire zone. Audit packet
+  coordinate/delta widths, local lists and entity capacities before changing
+  interest semantics. Keeping bounded dynamic interests is compatible with A.
+- World.setLayeredTerrainScope:316 onward currently changes scope revisions,
+  prebuilds and cached active/predictive/symmetric products. Immutable storage
+  keys and mutable activation epochs cannot be casually merged. A zone-wide
+  identity must still invalidate the exact affected products after scenery,
+  doors, terrain/definition or material mutations, and reject stale asynchronous
+  output. All layers/world spaces must remain distinct during reuse.
+- World.java:2605–2640 explicitly builds stacked upper-floor walls/roofs from the
+  completed roof elevations below. Active-floor-local and ground-view stacked
+  products are deliberately different; sharing their key flattens upper stories.
+  A logical L0 zone needs its visible upper/roof dependencies inventoried even
+  if those upper floors are separate gameplay zones. Ground tiles alone do not
+  account for all pixels, shadows, indoor roof masks, picks or authored scenery.
+
+Audit outputs required before choosing an architecture
+-----------------------------------------------------
+1. Exact paired source-selected package identity and hashes, L0 storage-cell
+   roster/bounds/holes, placement count/type/model and all visible L1+ dependencies.
+   Exclude underground/world spaces only when explicitly outside this proposal;
+   preserve unknown/unresolved objects as findings, not zero cost.
+2. Separate disk/compressed, decoded canonical terrain, CPU classic-model/picking,
+   canonical GPU geometry, packed GPU vertex/index, texture/atlas/shadow and
+   transient-copy costs. Do not multiply one unrepresentative cell or confuse
+   server object definitions with active client vertex payloads.
+3. Enumerate every hard local-window/protocol/index/capacity dependency above and
+   classify: can stay bounded internal, needs an interface refactor, or genuinely
+   requires global resizing. Identify client/server/tooling compatibility and
+   legacy/native renderer defaults separately.
+4. First-login/download/preparation cost, long-route mutation/staleness handling,
+   retained ready authority and memory exhaustion/context-loss behavior. The
+   proposal must improve walking without moving a massive stall to login or
+   a later garbage collection, and without hiding incomplete geometry.
+5. Recommend A/B/C separately for the tested PC, with explicit unmeasured parts,
+   required source changes and confidence. This audit makes no FPS, startup-time,
+   RAM-fit or full-GPU-residency promise. Measured data decides the next task.
+
+Evidence links will be appended after the independent inventory/geometry audits.
+No earlier release history, accepted visual work, owner preview or current public
+map/server is changed by this document. Public activation requires its own gate.
