@@ -18,6 +18,14 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     public static boolean isSpriteKeyLimbsEnabled(){return BrowserWorldSpriteCache.isKeyLimbsEnabled();}
     public static String getOverlayRectMode(){return isOverlayDeltaTransportEnabled()
         ? System.getProperty("spoiledmilk.browserOverlayRectMode","off") : "off";}
+    private static final boolean WHOLE_ZONE=WholeOverworldZoneRegistry.isEnabled();
+    private BrowserWholeOverworldZone wholeZone;
+    private static volatile int[] wholeZoneWork=new int[0];
+    public static int[] getWholeZoneWork(){return wholeZoneWork.clone();}
+    private void invalidateWholeZone(){if(wholeZone!=null){wholeZone.invalidate();wholeZoneWork=wholeZone.diagnostics();}WholeOverworldZoneRegistry.clear();}
+    public static boolean isWholeZoneEnabled(){return WHOLE_ZONE;}
+    private static native int initializeWholeZone(String manifestIdentity,int[] settings,int[] materials);
+    private static native void wholeZoneFrame(int[] metadata,int[] objectCells);
     private static final int MAX_CHUNKS=256, MAX_VERTICES=524288, MAX_PIXELS=2097152, UPLOAD_VERTICES_PER_FRAME=32768;
     private final Map<WorldChunkBufferKey,CachedChunk> chunks=new LinkedHashMap<WorldChunkBufferKey,CachedChunk>(32,.75f,true);
     private final Map<Integer,Long> textures=new HashMap<Integer,Long>();
@@ -130,11 +138,11 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         return !"gpu".equals(System.getProperty("spoiledmilk.browserDepthSource","cpu"));
     }
     @Override public void present(BufferedImage image,Renderer2DFrame commands,Renderer3DFrame frame) {
-        if(!LOAD_PROFILE){presentFrame(image,commands,frame);return;}
+        if(!LOAD_PROFILE){if(!WHOLE_ZONE){presentFrame(image,commands,frame);return;}try{presentFrame(image,commands,frame);}catch(RuntimeException|Error failure){invalidateWholeZone();throw failure;}return;}
         BrowserLoadProfile sample=new BrowserLoadProfile(loadOwner,++loadAttempt);loadProfile=sample;
         Throwable failure=null;
         try {presentFrame(image,commands,frame);}
-        catch(RuntimeException|Error error){failure=error;throw error;}
+        catch(RuntimeException|Error error){failure=error;if(WHOLE_ZONE)invalidateWholeZone();throw error;}
         finally {loadProfile=null;double[] values=sample.finish(chunks.size(),residentChunkBytes);if(sample.report(lastLoadEpoch,lastLoadPath)){lastLoadEpoch=(long)values[6];lastLoadPath=(int)values[3];try{loadingWork(values);}catch(RuntimeException|Error diagnosticError){if(failure==null)throw diagnosticError;failure.addSuppressed(diagnosticError);}}}
     }
     private void presentFrame(BufferedImage image,Renderer2DFrame commands,Renderer3DFrame frame) {
@@ -179,12 +187,22 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             return;
         }
         if(world.getChunkCount()>MAX_CHUNKS)throw new IllegalStateException("Browser scene exceeds chunk capacity");
+        Renderer3DWorldChunkFrame presentationWorld=world;
+        if(WHOLE_ZONE){
+            if(client==null||client.getWorld()==null)throw new IllegalStateException("Whole-zone requires actual client source authority");
+            if(wholeZone==null)wholeZone=new BrowserWholeOverworldZone();
+            wholeZone.frame(client,frame,packing.backendPackingSettings());
+            if(!wholeZone.ready())wholeZone.uploaded(initializeWholeZone(wholeZone.manifestHash(),wholeZone.settings(),wholeZone.materials()));
+            wholeZoneFrame(wholeZone.metadata(),wholeZone.objectRows());
+            presentationWorld=wholeZone.filter(world);wholeZoneWork=wholeZone.diagnostics();
+        }
+        final int catalogCoveredSources=world.getChunkCount()-presentationWorld.getChunkCount();
         Renderer3DFrame previous=RendererFrameLighting.bind(frame);
         try {
             // Evict the old view before uploading the current logical/immutable active set.
             // A count-only cache bound can exceed the byte budget long before 512 chunks.
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.ACTIVE);
-            Set<WorldChunkBufferKey> active=activeKeys(world);
+            Set<WorldChunkBufferKey> active=activeKeys(presentationWorld);
             evictInactive(active);
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.TEXTURES);
             for(Renderer3DTextureData texture:frame.getTextures()) {
@@ -204,15 +222,15 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             if(removedCount>0)deleteTextures(Arrays.copyOf(removedTextures,removedCount));
             long textureEnd=System.nanoTime();
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.GEOMETRY);
-            ChunkDraws geometry=prepareChunks(frame,world,active);
+            ChunkDraws geometry=prepareChunks(frame,presentationWorld,active);
             int[] draws=geometry.draws;int count=draws.length,remainingRepacks=geometry.remainingRepacks;
             long geometryEnd=System.nanoTime();
             boolean authority=client!=null&&client.isRenderer3DWorldReady();
-            int[] progress=loadState.frame(client!=null&&client.isGameView(),client!=null&&client.isFullScreenModalUiActive(),authority,frame,world.getChunkCount(),count/8,remainingRepacks,0,0,w,h,textures.size());
+            int[] progress=loadState.frame(client!=null&&client.isGameView(),client!=null&&client.isFullScreenModalUiActive(),authority,frame,world.getChunkCount(),count/8+catalogCoveredSources,remainingRepacks,0,0,w,h,textures.size());
             // Core already retained its last coherent CPU frame during area activation.
             // Preserve that same final GPU image until EVERY new source chunk is ready.
             // Uploads are synchronous, so no borrowed frame storage escapes this call.
-            if(progress[1]!=BrowserWorldLoadState.UI&&loadState.shouldHold(authority,world.getChunkCount(),count/8,remainingRepacks)) {
+            if(progress[1]!=BrowserWorldLoadState.UI&&loadState.shouldHold(authority,world.getChunkCount(),count/8+catalogCoveredSources,remainingRepacks)) {
                 overlayDeltaReset=true;if(loadProfile!=null){loadProfile.progress(progress);loadProfile.enter(BrowserLoadProfile.TERMINAL);}worldProgress(progress);holdWorld();if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=2;return;
             }
             float[] view=OpenGLWorldChunkRenderer.backendWorldViewMatrix(frame);
@@ -233,7 +251,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             progress[6]=progress[7]=spriteGroups;worldProgress(progress);
             present(w,h,true,matrices,uniforms(frame),draws,borrowOverlay(image));
             acknowledgeOverlay(preparedOverlay);
-            loadState.presented(OVERLAY_COVERAGE&&authority,world.getChunkCount(),count/8,remainingRepacks);
+            loadState.presented(OVERLAY_COVERAGE&&authority,world.getChunkCount(),count/8+catalogCoveredSources,remainingRepacks);
             long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()},pose(frame));
             if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=3;
         } finally { RendererFrameLighting.restore(previous); }

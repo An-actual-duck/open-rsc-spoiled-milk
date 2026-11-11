@@ -17,6 +17,7 @@ public final class BrowserBootstrap {
     public static native void reportRegionPreparationDiagnostics(boolean available,double[] counters);
     public static native void reportCandidatePolicy(String name,boolean requested,boolean available,boolean enabled);
     public static native void reportBatchedModelWork(int[] counters);
+    public static native void reportWholeZoneWork(int[] counters);
     public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportCombatState(String username,String names,int[] counters);
     public static native void reportModelPickBounds(boolean requested,boolean enabled);
@@ -205,6 +206,7 @@ public final class BrowserBootstrap {
                                 }
                                 if(!candidatePoliciesReported&&observedScene!=null) {
                                     String[][] policies={{"geometryTransfer","spoiledmilk.browserGeometryTransferReuse","orsc.BrowserWebGLBridge","isGeometryTransferReuseEnabled"},
+                                        {"wholeZone","spoiledmilk.browserWholeZone","orsc.BrowserWebGLBridge","isWholeZoneEnabled"},
                                         {"regionBuild","spoiledmilk.browserRegionBuild","orsc.graphics.three.BrowserRegionBuild","isEnabled"},
                                         {"regionLoadProfile","spoiledmilk.browserLoadProfile","orsc.BrowserWebGLBridge","isLoadProfileEnabled"},
                                         {"regionPreparation","spoiledmilk.browserRegionPreparation","orsc.graphics.three.World","isBrowserRegionPreparationEnabled"},
@@ -230,6 +232,7 @@ public final class BrowserBootstrap {
                                 }
                                 int[] batchWork=snapshotBatchedModelWork(observedScene,Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel"));
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
+                                if(Boolean.getBoolean("spoiledmilk.browserWholeZone"))reportWholeZoneWork(orsc.BrowserWebGLBridge.getWholeZoneWork());
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
                                 reportRegionPreparationDiagnostics(regionCounts!=null,terrainDiagnostics.append(((orsc.mudclient)client).getWorld(),regionCounts));

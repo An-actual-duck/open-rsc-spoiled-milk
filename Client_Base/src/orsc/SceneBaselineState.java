@@ -1045,6 +1045,7 @@ final class SceneBaselineState {
 			legacyExtraOutsideSyncRange);
 	}
 
+    boolean wholeZoneObjectPositionAuthoritative(int x,int y){return completedBaselines>0&&insideObjectSyncRange(x,y);}
     /** Whole-cell authority, not inferred from visual terrain halo coverage. */
     boolean wholeZoneObjectCellAuthoritative(int tileX,int tileY,int size){
         if(completedBaselines<=0||size<1||size>48)return false;

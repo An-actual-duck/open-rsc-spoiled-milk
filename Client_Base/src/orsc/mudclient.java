@@ -4415,6 +4415,7 @@ public final class mudclient implements Runnable {
 
     // Only explicit private whole-zone mode materializes this bounded identity view.
     private int[] wholeOverworldObjectCells;
+    public boolean isWholeZoneObjectPositionAuthoritative(int plane,int x,int y){return plane==getRequestedPlane()&&packetHandler!=null&&packetHandler.isWholeZoneObjectPositionAuthoritative(x,y);}
     public boolean isWholeZoneObjectCellAuthoritative(int plane,int cellX,int cellY){
         return plane==this.getRequestedPlane()&&this.packetHandler!=null
             &&this.packetHandler.isWholeZoneObjectCellAuthoritative(Math.multiplyExact(cellX,24),Math.multiplyExact(cellY,24),24);
