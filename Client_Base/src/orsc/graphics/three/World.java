@@ -1554,6 +1554,7 @@ public final class World {
 		NativeLayeredTerrainSnapshot expectedActiveTerrain,
 		int expectedWorldOffsetX,
 		int expectedWorldOffsetZ) {
+        if(WholeOverworldRamRegistry.forWorld(this,expectedActiveTerrain)!=null){clearSymmetricRenderer3DWorldChunkFrame(expectedActiveTerrain);return;}
 		if (!canRetainSymmetricRenderer3DWorldChunkFrame(
 				previousActiveTerrain,
 				expectedActiveTerrain)) {
@@ -4797,6 +4798,7 @@ public final class World {
 		}
 	}
 
+    public boolean isWholeRamSourceBasisSupported(){return WorldBuilderTerrainBootstrap.isNativeOnly()&&shouldUseNativeTerrainAuthorityOnly()&&syntheticDeepFixtureOffsetX==0&&syntheticDeepFixtureOffsetZ==0;}
     public long publishWholeRamActivation(PreparedActivation recipe,Renderer3DWorldChunkFrame query){
         long start=WorldStreamManager.now();long copied=recipe.activate(this);renderer3DWorldChunkFrame=query;clearPredictiveRenderer3DWorldChunkFrame();
         symmetricRenderer3DWorldChunkFrame=null;symmetricOuterRenderer3DWorldChunkFrame=null;symmetricRetainableRenderer3DWorldChunkFrame=null;
