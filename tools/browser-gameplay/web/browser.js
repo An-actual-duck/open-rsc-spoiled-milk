@@ -42,7 +42,7 @@ window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput;
 function updateWholeRamProof(){
   if(!wholeRam.enabled)return;
   const cpu=window.browserProof.wholeRamJava,gpuZone=gpu?.stats.wholeZone,same=!!(wholeRamCatalogConfig&&gpuZone?.manifestSha256===wholeRamCatalogConfig.gpuCatalogSha256);
-  const sourceReady=cpu?.sourceReady===true,preparedReady=cpu?.preparedReady===true,gpuReady=!stopped&&same&&gpuZone?.ready===true;
+  const sourceReady=!stopped&&cpu?.sourceReady===true,preparedReady=!stopped&&cpu?.preparedReady===true,gpuReady=!stopped&&same&&gpuZone?.ready===true;
   window.browserProof.wholeRamResidency={requested:true,sourceReady,preparedReady,gpuReady,ready:sourceReady&&preparedReady&&gpuReady,sameGpuCatalog:same,disposed:stopped,scope:'Correlated Java retained source/prepared CPU data and actual matching GPU catalogue; staging alone is not readiness'};
   if(gpuZone){gpuZone.rawSourceCPUReady=same&&sourceReady;gpuZone.preparedCPUReady=same&&preparedReady;gpuZone.cpuReadinessScope='Correlated main-thread Java RAM receipt; separate from GPU Worker allocation';}
 }
@@ -116,6 +116,7 @@ const natives = {
   Java_orsc_BrowserWebGLBridge_loadingWork:loadProfileCollector.report,
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,
   Java_orsc_browser_BrowserBootstrap_reportWholeRamWork(lib,input){
+    if(stopped)return;
     try{const value=decodeWholeRamWork(input,wholeRam.requested);if(wholeRam.enabled&&value.preparedReady&&wholeRamCatalogConfig&&value.retainedPrimitiveBytes!==wholeRamCatalogConfig.expectedRuntimePrimitiveBytes)throw new Error('Whole RAM retained primitive ledger differs from staged complete preparation');window.browserProof.wholeRamJava=value;}
     catch(error){window.browserProof.wholeRamJava={requested:wholeRam.requested,sourceReady:false,preparedReady:false,error:String(error).slice(0,512)};window.browserProof.wholeRamError='Prepared RAM diagnostics rejected: '+String(error).slice(0,512);updateWorldCover();throw error;}
     updateWorldCover();

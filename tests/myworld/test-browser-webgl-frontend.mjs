@@ -226,6 +226,7 @@ if(benchmarkWholeRam){
  stopJava(1);await new Promise(resolve=>setImmediate(resolve));
  const final=messages.filter(m=>m.type==='browser-session-proof').at(-1);assert.equal(final.proof.stopped,true);assert.equal(final.proof.wholeRamJava.sourceReady,false);assert.equal(final.proof.wholeRamJava.preparedReady,false);assert.equal(final.proof.wholeRamResidency.gpuReady,false);assert.equal(final.proof.wholeRamResidency.ready,false);assert.equal(final.proof.wholeRamResidency.disposed,true);assert.equal(previous.proof.wholeRamJava.sourceReady,true,'Parent receipts are structured clones, not child aliases');
  assert.equal(messages.at(-1).type,'browser-session-stop','Cleared final proof precedes stop receipt');
+ const stoppedMessages=messages.length;configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamWork(null,[1,1,1,1797,46101718,445,1330,106101734,0,2,2,144,10000,0,1,1,30,2]);assert.equal(window.browserProof.wholeRamJava.sourceReady,false);assert.equal(window.browserProof.wholeRamJava.preparedReady,false);assert.equal(window.browserProof.wholeRamResidency.ready,false);assert.equal(messages.length,stoppedMessages,'Late observer callback cannot revive a stopped child or publish readiness');
 }
 if(!nativeFault&&!benchmarkWholeRam)cover.blocksWorldInput=true;window.browserSessionDispose();window.browserSessionDispose();assert.equal(window.browserBenchmarkStreamUploadValidation,undefined,'Stop removes private streaming control');
 assert.equal(window.browserBenchmarkDiagnosticsReset,undefined);
