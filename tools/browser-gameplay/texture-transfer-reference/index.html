@@ -1,0 +1,5 @@
+<!doctype html><meta charset="utf-8"><title>Texture transfer reference</title>
+<style>body{font:16px monospace;background:#182028;color:#eee;max-width:1100px;margin:2em auto}button{font:inherit;padding:.6em}pre{white-space:pre-wrap}canvas{width:480px;height:270px;border:1px solid #666}</style>
+<h1>Standalone texture transfer reference</h1><p>Owned synthetic BGRA-byte C / Float32 T planes, 960×540. GPU exact checks precede RAF-paced API submission measurements. This is not gameplay FPS, GPU duration, or bus bandwidth.</p>
+<button id="start">Run (~25 seconds)</button> <button id="save" disabled>Save JSON</button><p id="status">Ready; no work begins until Run.</p><canvas id="canvas" width="960" height="540"></canvas><pre id="result"></pre>
+<script type="module" src="harness.mjs"></script>
