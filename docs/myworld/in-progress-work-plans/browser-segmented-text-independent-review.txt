@@ -152,9 +152,10 @@ to compare full error semantics deterministically. Final candidate arithmetic
 required no fix for either draft failure. All stopped logs were preserved.
 
 No source-backed safety blocker remains for f79 within this reviewed contract.
-Actual Firefox new-ABI invocation, live meaningful native batch counts, one-shot
-frame-abort/recovery/pool/last-good presentation and matched FPS remain manager
-gates. Correctness or synthetic41/45-call nonvacuity cannot establish a live
+The original handoff left actual Firefox ABI, meaningful native counts,
+frame-abort/recovery and matched FPS as manager gates. The manager follow-up
+below closes the functional gates within its stated limits and rejects adoption
+on performance; exact FBO/pool readback remains unclaimed. Correctness or synthetic41/45-call nonvacuity cannot establish a live
 speedup. This report makes no60FPS, production/default-adoption or OFF-overhead
 claim.8MiB bounds retained queued font payload, not total Java/JS/browser memory;
 flat native copies and owned snapshots coexist transiently. No source/UI
@@ -162,3 +163,59 @@ rerender fallback or pixel-quality reduction is authorized by this proof.
 
 Workspace-layout check retains inherited legacy output/assets entries. All new
 evidence uses declared tests subjects; no inherited outputs were removed.
+
+Manager actual Firefox follow-up: functional PASS, performance REJECTED
+----------------------------------------------------------------------
+Read-only evidence review; no runtime change, new test execution or GPU action
+in this follow-up. All paths below are in the manager checkout under
+output/diagnostics/browser-frame-architecture/. The immutable source remains
+f79a751e4cd50eb2206d4ab7d22bcae046e50c57, client JAR SHA256
+bd4360b514e32f73fc802242c5adc8fea3e63a31bc1114712d00bcce9b67da8b.
+
+segmented-text-functional-2/fault-recovery.json reports actualNativeCallback,
+faultOneShot and passed=true. Firefox154.0.1 on Linux invoked the actual native
+callback with shared Int32Array C, Int8Array font and Float32Array T views.
+Before the armed post-write fault:3159 attempts/3159 commits/0 faults; afterward:
+3453 attempts/3452 commits/1 fault/1 poisoned frame. World frames advanced1431
+through1570, subsequent commits resumed, GAME stayed ready, heldWorldFrames=0,
+and lastError stayed null. ui-smoke.json separately reports passed=true,
+GAME/ready, unblocked input and no lastError after menu checks. This is actual
+JNI, one-shot partial-write fault and functional recovery/UI evidence. It is
+NOT exact FBO pixel readback, a measured pool-release counter, or a total-memory
+leak test. The source-level release/idempotence review and independent local
+C/raw-T/fault tests retain their separate scopes.
+
+SHA256 receipts read and recomputed:
+  segmented-text-functional-2/fault-recovery.json
+    f95f02517ef59662232853177f1b2605b102e5defa1585b3798bc03346dbc5e2
+  segmented-text-functional-2/ui-smoke.json
+    fcb8a0c147096315b8e426d046d4e13d1d56225bc52483c639153c10e3d9234a
+  segmented-text-functional-2/session.json
+    5f7bc4e26b568bc59c7864483118057bc62254422d29125af4c462b60a26bda4
+
+Matched same-JAR clean timing rejects this prototype: OFF3300 frames/60027ms=
+54.975261FPS; ON2962 frames/60013ms=49.355973FPS, a10.221485% regression. Each
+configuration had180s additional warm-up followed by two30s spans. ON was
+nonvacuous:2.1976/2.2049 native calls per frame,51 TEXT and1296 glyph plots per
+frame in both spans; OFF had zero native calls. All six scheduled combat
+channels advanced execution, resources and damage, with no clean-timing native
+rejection or poison. P99 frame milliseconds were OFF24/22 versus ON28/27.
+The viewport/camera stayed pinned:1920x1080 display,1843x1037 physical canvas,
+960x540 logical viewport. Model batch and terrain query were ON; overlay delta
+was OFF and full C/T upload remained in use.
+
+The comparison file's input hashes match the actual input files:
+  segmented-text-comparison.json
+    8f2b4a86374cd6e9da3dad22a58baca4c7aa4bf1e8ad0a5397b4c5d2d9d8f400
+  segmented-text-off-measure-1/result.json
+    1b75025007a3b1a11169ad7260ccc6ddbe7d6dcb22069af152adb9c2885e269f
+  segmented-text-on-measure-1/result.json
+    2ea83e9763a076ed70329d1ee81a7847830c0322df306685c3be175774263328
+
+This is one ordered live pair with differing live effects and no confidence
+interval. It supports rejection of this measured candidate, without attributing
+the regression to a particular helper, bridge cost or compiler decision.
+Correctness PASS does not override performance REJECTED. Preserve the prototype
+and both independent reviews as parked, unmerged evidence; keep ordinary
+runtime/defaults unchanged. No public server or release changed. The earlier
+stage1 zero-native failure remains preserved and is not reclassified as a pass.
