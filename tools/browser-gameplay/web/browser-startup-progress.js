@@ -2,9 +2,10 @@
 const STAGES=Object.freeze(['opening','archives','display','runtime-download','runtime-start','data-download','assets','data','client']);
 const LABELS=Object.freeze({opening:'Opening game…',archives:'Loading and checking game files…',display:'Preparing graphics…','runtime-download':'Loading game runtime…','runtime-start':'Starting game runtime…','data-download':'Loading game data…',assets:'Preparing game files…',data:'Loading and preparing game data…',client:'Opening sign-in screen…'});
 const LIMIT=128,MAX_BYTES=2**40,MAX_FILES=100000;
+const KEYS=['version','sequence','stage','bytes','totalBytes','writtenBytes','files','totalFiles','elapsedMillis','workMillis'].sort().join('|');
 const count=(n,max)=>Number.isSafeInteger(n)&&n>=0&&n<=max;
 export function validStartupProgress(value){
-  return !!value&&value.version===1&&count(value.sequence,1e9)&&value.sequence>0&&STAGES.includes(value.stage)&&
+  return !!value&&Object.keys(value).sort().join('|')===KEYS&&value.version===1&&count(value.sequence,1e9)&&value.sequence>0&&STAGES.includes(value.stage)&&
     count(value.bytes,MAX_BYTES)&&(value.totalBytes===null||count(value.totalBytes,MAX_BYTES)&&value.totalBytes>=value.bytes)&&
     (value.writtenBytes===null||count(value.writtenBytes,MAX_BYTES)&&(value.totalBytes===null||value.writtenBytes<=value.totalBytes))&&
     count(value.files,MAX_FILES)&&(value.totalFiles===null||count(value.totalFiles,MAX_FILES)&&value.totalFiles>=value.files)&&
@@ -54,7 +55,7 @@ export function createStartupReceiver({now=()=>performance.now(),render=()=>{}}=
 export function startupPresentation(value){
   const label=LABELS[value.stage];let detail='',valueNow=null,max=null;
   if(value.totalBytes!==null&&value.totalBytes>0){
-    const mb=n=>(n/1048576).toFixed(1);detail=`${mb(value.bytes)} of ${mb(value.totalBytes)} MB`;
+    const mb=n=>(n/1000000).toFixed(1);detail=`${mb(value.bytes)} of ${mb(value.totalBytes)} MB`;
     if(value.stage==='data'&&value.writtenBytes!==null){
       if(value.bytes===0){detail=`${mb(value.writtenBytes)} of ${mb(value.totalBytes)} MB prepared`;valueNow=value.writtenBytes;}
       else detail+=` loaded · ${mb(value.writtenBytes)} MB prepared`;
