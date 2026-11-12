@@ -1,0 +1,65 @@
+Compact geometry real WebGL2 proof — November 12, 2026
+=====================================================
+
+Prepared offline only. Manager owns the browser/GPU run. This worker starts no
+browser, HTTP listener, game client/server or public process. No production code
+or baked catalogue changes are part of this test branch.
+
+Preparation exports maintained world/depth shader constants by compiling the
+exact committed Java shader classes and reflection exporter against an explicit
+existing dependency JAR. Every copied frontend module/page and shader is hashed
+in provenance.json; the page verifies this complete frozen file inventory before
+creating its WebGL2 context. The JAR supplies compilation dependencies; shader
+strings come from those freshly compiled exact-source classes. The stage records
+the source commit and dependency JAR hash without claiming they are the same
+artifact or recompiling a game client.
+
+Prepare a fresh immutable named directory from a committed checkpoint:
+  python3 tests/myworld/prepare-browser-compact-hardware.py \
+    --name CHOOSE-FRESH-NAME --source-commit EXACT-40-CHAR-COMMIT \
+    --dependency-jar /home/justin/Core-Framework/output/builds/browser-bounded-streaming-cpu/integrated-2/client.jar \
+    --port 8235
+
+Receipt: output/tests/browser-compact-hardware/NAME/stage.json. It gives the exact
+loopback HTTP command and URL. Manager may run that command and open the URL in
+Firefox, click Run hardware checks, then wait for window.compactGeometryProof
+completed=true. Capture that object in the manager's diagnostics group. passed
+must be true; a missing extension, unsupported uniform or mismatch is a failure,
+not a skipped acceptance. Preparation itself cannot establish a hardware pass.
+
+The standalone fixture runs actual production compact pack/decode/attribute and
+shadow bindings, progressive uploader, and shader adapter. Its transform-feedback
+shader captures all 23 float inputs independently of color output: every uint8
+and normalized byte value is represented; arbitrary float32 positions/UV/normals
+include negative zero. Actual GPU getBufferSubData words must equal legacy source
+float32 words and equal each other between legacy112 and compact48. Any hardware
+normalization rounding discrepancy fails exact comparison and is reported.
+
+The maintained full production world and depth shaders render controlled indexed
+triangles with opaque, textured, alpha-cutout, terrain relief/blend and mixed
+local112+world48 resources. Real readPixels compares exact RGBA. A diagnostic
+fullscreen shader reads the actual depth texture and emits its float bits into
+RGBA8UI for exact depth readback; it does not replace the production depth shader.
+Coverage controls reject empty color/depth and absent cutout holes. Shadow draws
+mask color writes because production depth fragments define no color output.
+The mixed resource draws rebind main/depth attributes using maintained helpers.
+
+Cancellation allocates and partly uploads actual GPU buffers through the real
+bounded uploader, cancels before publication, proves ledger zero, and rejects a
+later step. This is a standalone uploader cancellation check; complete game
+scheduler/context-generation cleanup remains covered by manager game tests.
+The WEBGL_lose_context extension triggers actual context loss/restoration; the
+entire fixture suite runs again with freshly created handles/programs. No stale
+pre-loss handles are reused. Software renderers are rejected and unmasked GPU
+identity is required. All readbacks force real command completion, not timings.
+
+Limits: controlled geometry is synthetic and uses no gameplay function override.
+This is not the complete game compositor, Worker bridge, catalogued scene,
+transparent sorting, animated models, picking/input, loading route, FPS or total
+GPU-memory proof. The actual game legacy/compact A/B and user visual review remain
+separate. No hardware pass or performance result is claimed in this document.
+
+Offline verification: Python compile, node syntax checks, four early CLI refusal
+cases, exact-source Java shader export, and staged file/provenance SHA inventory.
+Output uses only declared tests/diagnostics groups. workspace-layout check in this
+worker retains the inherited 40 legacy output-root findings unchanged.
