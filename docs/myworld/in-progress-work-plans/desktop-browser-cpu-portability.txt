@@ -1,0 +1,188 @@
+Browser CPU improvements: desktop portability audit — November 12, 2026
+====================================================================
+
+Audit baseline: published main0269c0dae55138e59c7eee27f842338537a18842.
+Scope: source/gate audit and a bounded native JVM terrain lookup comparison.
+No production code, launcher defaults, game assets, server or deployment changed.
+The native player release remains v0.3.16. Presence in shared Client_Base source
+or in a newly built JAR does not imply that a browser policy runs on desktop.
+
+Recommendation
+--------------
+Start with the terrain query index as one native opt-in prototype, then assess
+static input-group reuse and construction work separately. These use existing
+pure Java algorithms with useful correctness coverage. Native JIT timing, native
+allocation and complete-client travel/frame evidence must decide adoption; the
+browser's CheerpJ/bridge costs and browser FPS percentages are not desktop wins.
+Do not turn on browserBenchmark/wholeZone to enable unrelated optimizations.
+
+What desktop already has
+------------------------
+The earlier native resource pass is already integrated; it is not a new browser
+port. PC_Client OpenGLCompositeSceneBuilder/OpenGLPixelWorkspace and sprite
+texture/atlas upload retain bounded synchronous scratch. LwjglBindings already
+uses typed MethodHandle dispatch for glUniform1f. The native performance ledger
+records the November8 allocation/resource and dispatch evidence, with its pacing
+limits. Existing desktop resident object meshes already have canonical keys,
+cache hits and static rebase in mudclient.appendResidentObjectChunkFrame.
+Repeatedly adding another canonical mesh cache would duplicate that machinery.
+
+The common packet/terrain activation and scene batch-removal code is already
+shared. BrowserRegionHandoffTrace is additional diagnostic observation, not a
+faster native loader. Its private enabled flag is benchmark&&browserLoadProfile;
+it does not make region work asynchronous or remove an authoritative wait.
+
+Ranked portable CPU work
+------------------------
+1. Terrain lookup index: smallest independent first prototype.
+   Client_Base/src/orsc/NativeLayeredTerrainSnapshot.java:36,246,570 and
+   NativeLayeredTerrainChunk.java:30,198. browserTerrainQueryIndex defaults false
+   in ordinary Java; browser bootstrap sets it true for its accepted WebGL
+   defaults before these classes initialize. The snapshot constructor already
+   validates x-major/y-minor slot ordering. When every slot has the presentation
+   size, findAvailableChunk selects the exact slot with floorDiv instead of
+   scanning the roster. Mixed-size snapshots keep the original first-available
+   scan. covers uses constructor-proven inclusive int bounds when the flag is
+   on; otherwise it recomputes signed long products. Uniform protocol3 retains
+   its existing path. No new per-tile cache or decoded terrain retention occurs.
+   This code has no dependency on browser presentation, GPU or full-world RAM.
+   The native microbenchmark below supports a lookup-stage hypothesis. It does
+   not establish how much complete native frames spend on these calls.
+
+2. Reuse static resident INPUT groups: strongest contained steady-state lead.
+   mudclient.java:967,4450,4501,5314. browserResidentInputCache defaults true but
+   buildResidentObjectChunkInputs also requires isBrowserPresentationAvailable,
+   so native takes the uncached TreeMap/group builder. The accepted browser
+   cache keeps immutable STATIC groups and compares exact newly sampled kind,
+   world coordinates, ID/direction, terrain heights and membership descriptors.
+   Anchor identity, region base, tile size and presentation revision also match.
+   ANIMATED groups rebuild; merging preserves signed key ordering and a role-key
+   collision refuses reuse. Debug/oversized input cases fall back; lifecycle
+   clearing is shared. This can avoid per-frame grouping/sorting/key allocations
+   on native without requiring a full-world catalogue. It still creates fresh
+   canonical identity samples and must not be sold as eliminating all scenery
+   allocations. Use the ordinary native presenter-availability contract and a
+   separate narrowly scoped native control; do not fake browser availability.
+   Existing BrowserResidentInputsFixture compares exact generated meshes and
+   mutable/incomplete-revision/terrain/definition/door cases. A native port needs
+   those tests adapted to prove actual native cache use and literal OFF output.
+
+3. Faster construction: split algorithmic wins from browser arithmetic tricks.
+   graphics/three/BrowserRegionBuild.java:5, RSModel.java:997,2508 and
+   World.java:6818,7275. Its gate is benchmark&&browserRegionBuild, false on
+   ordinary desktop. It bundles three distinct changes: construction-local XYZ
+   index replacing linear insertVertex searches, primitive numeric World mesh
+   accumulators replacing boxed lists, and two-int-limb FNV hashing. Index and
+   primitive builders are plausible native load/allocation wins. Preserve first
+   matching vertex, commitTransform side effects, malformed-prefix semantics,
+   float bits, bounded scratch, overflow fallback and independent final arrays.
+   The two-limb hash specifically avoids emulated signed64 arithmetic; native
+   long multiplication is not emulated. Retain native literal-long hashing unless
+   a separate matched native test justifies the alternative. Existing frozen
+   construction tests prove bytes/signatures, but browser travel improvement
+   from the combined bundle is not native performance evidence.
+
+4. Null Scene removal: tiny safe-looking generalization, measure relevance.
+   Scene.java:3814 contains a null-only early return, currently dependent on
+   WholeOverworldZoneRegistry.isStaticSceneReuseEnabled(). Native therefore
+   scans even for null. The documented private active-prefix invariant makes
+   removeModel(null) a no-op; m_T render sentinel is outside modelCount. Existing
+   legal-operation differential covers original order/duplicates/metadata.
+   A standalone native gate or invariant-backed common return avoids scanning
+   null requests without activating wholeZone. Browser's 720-null-roof workload
+   comes from its prepared hidden-roof activation; ordinary native upper grids
+   can contain real models. Count actual native null calls before ranking this
+   above more substantial work. Nonnull behavior must remain unchanged.
+
+5. Full static CPU/immutable halo caches: broader follow-up, not a flag flip.
+   WholeOverworldZoneRegistry.java:5, mudclient.java:4810 and World.java:1912
+   require benchmark+browserWholeZone+browserStaticSceneReuse. The halo identity
+   path is exact World/global/level0 scoped, requires matching authoritative
+   source snapshots and revisions, rejects edited terrain and every sample
+   touching a loaded mutable gameplay sector. BrowserWholeOverworldZone's parsed
+   catalogue/material/override-row retention also needs its own browser bridge
+   and bake ownership. Native lacks that installed ownership path; reuse its
+   principle only after a native per-frame profile identifies redundant work.
+   Do not skip descriptor scans based only on incomplete instance revisions.
+
+Browser-only and rejected work
+------------------------------
+BrowserBatchedModelKernel requires browser presentation and a JS-native packet
+backend; moving Java transforms into JS avoids emulation/bridge costs and is not
+an improvement to an ordinary native-JVM arithmetic loop. BrowserWorldSpriteCache
+key limbs and bulk Java-to-JS geometry/overlay transport likewise target browser
+boundaries. Desktop uses its own OpenGL sprite/glyph caches and submission path.
+Render Worker, CheerpJ runtime/filesystem startup, shader/WebGL scheduling and
+browser frame-hold policy are not direct native CPU ports.
+
+BrowserBaselineObjectReuse and BrowserPresentationCloneCache are present on main
+but are private and OFF in public alpha. Existing measured comparison did not
+establish a loading improvement, despite thousands of actual clone hits. Do not
+adopt them as successful browser upgrades. The parked branches listed by the
+workspace status include additional unadopted experiments; this audit does not
+import their code or treat their branch names as proof of successful work.
+
+Native lookup-stage measurement
+-------------------------------
+Runtime: openjdk version "21.0.12" 2026-07-21
+OpenJDK Runtime Environment (build 21.0.12+8-1-24.04-Ubuntu)
+OpenJDK 64-Bit Server VM (build 21.0.12+8-1-24.04-Ubuntu, mixed mode, sharing)
+Compiler: javac 1.8.0_482 (source/target8).
+CPU: AMD Ryzen 9 7900X 12-Core Processor
+regular3x3        13.394 ->   4.669 ns/query; 65.14% less measured time.
+regular5x5        21.548 ->   5.876 ns/query; 72.73% less measured time.
+irregular5x5      23.323 ->  19.580 ns/query; 16.05% less measured time.
+Receipt SHA256: a575d121fbb853fbfba226a73d90c04f00a7124a9a9be813c54c3a2b940b822a
+
+This is a CPU-only synthetic benchmark of the exact current three terrain/Tile
+sources. Three interleaved OFF/ON pairs use six fresh JVMs in order OFF,ON,ON,OFF,
+OFF,ON; each case gets one-second warmup and five 200ms measured batches. Queries
+use 32768 seeded signed coordinates, outside-window queries and an explicit void
+slot. Regular cases use 3x3 protocol8 and 5x5 protocol10 rosters of 48-tile slots.
+The mixed5x5 case substitutes 24-tile slots, forcing index ineligibility and
+original first-available search. Every input is checked against an independent
+ordered long-bounds reference before timing. All OFF/ON result checksums match.
+The common loop/checksum cost is included in ns/query; these are not isolated
+instruction latencies. Class initialization and snapshot construction are outside
+measurement. This is no FPS, first-frame, CPU-percent, travel-latency, device
+minimum or allocation estimate. The Ryzen9 7900X host is not a weak-PC test.
+Other workers did no heavy CPU/GPU work in this bounded measurement window.
+
+The earlier same-input Temurin Java8u482 cohort is preserved as extra supported-
+runtime evidence: 3x3 12.998->4.241 ns/query, 5x5 21.052->5.461, mixed5x5
+22.805->19.419. It is not substituted for the requested installed Java21 result.
+
+Evidence and first native acceptance order
+-----------------------------------------
+Worker-local output/diagnostics/desktop-browser-cpu-portability/ contains the
+immutable terrain-index-1 and terrain-index-java21-1 cohorts. Each keeps exact
+source copies/hashes, fixture, runner, compile output, every stdout/stderr and
+result.json (commands, runtime, CPU, samples, checksums). Reproduce by copying
+that cohort's run.py, TerrainLookupBench.java into a NEW empty subject/run
+folder and invoking its runner. Never overwrite a recorded cohort.
+
+Maintained existing guardrails to reuse after a port:
+ tests/myworld/test-browser-terrain-query-independent.py
+ tests/myworld/NativeTerrainQueryIndependentFixture.java
+ tests/myworld/test-browser-resident-inputs.py
+ tests/myworld/BrowserResidentInputsFixture.java
+ tests/myworld/test-browser-construction-independent.py
+ tests/myworld/bounded-streaming/verify-null-removal.py
+These are discovered test assets, not a claim they were rerun in this audit.
+
+First freeze an ordinary native v0.3.16/current comparison with the approved
+visuals and normal 1920x1080 camera, then maximum zoom separately. For terrain,
+run frozen ordered/reference proof across protocol3-10, void/mixed/border/signed
+and extreme-int cases; verify actual native policy and counters. Use interleaved
+native populated idle, camera motion, normal walking/boundary and signed-level
+routes, including visible spells/summons. Record main-thread work/allocation and
+frame/transition tails, not capped60FPS alone; preserve exact scene counts and
+output. Test lifecycle resets and diagnostics-off behavior. Admit one change
+only when its native gain exceeds noise without output, loading, memory or
+correctness regression. Existing client-performance-portability-plan.md supplies
+the native measurement contract; no universal60FPS claim follows from this audit.
+
+Validation bookkeeping: git diff --check passed. The worker layout scan reports
+inherited legacy asset/output entries in this preserved slot; no such files were
+removed. This task wrote generated evidence only under its declared diagnostics
+category. The manager should run its own canonical layout check after collection.
