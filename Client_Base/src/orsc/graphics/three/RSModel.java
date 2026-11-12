@@ -1217,6 +1217,91 @@ public final class RSModel {
 		}
 	}
 
+    /** Immutable exact raw clone inputs. Derived light/camera buffers are rebuilt
+     * through the original materialization/normal path, never reused as proof. */
+    public static final class BrowserBaselineProof {
+        private final BaselineGeometry source, model;
+        private final long bytes;
+        private BrowserBaselineProof(RSModel source, RSModel model, long bytes) {
+            this.source = new BaselineGeometry(source, true);
+            this.model = new BaselineGeometry(model, false); this.bytes = bytes;
+        }
+        public long retainedBytes() { return bytes; }
+        public boolean matchesSource(RSModel value) { return source.matches(value); }
+        public boolean matchesModelGeometry(RSModel value) { return model.matches(value); }
+    }
+    public static BrowserBaselineProof browserBaselineProof(RSModel source, RSModel model, long maximumBytes) {
+        if (source == null || model == null) return null;
+        long bytes = BaselineGeometry.bytes(source, true) + BaselineGeometry.bytes(model, false) + 256;
+        return bytes <= maximumBytes ? new BrowserBaselineProof(source, model, bytes) : null;
+    }
+    public boolean isBrowserBaselineRotation(int direction) {
+        return rot256X == 0 && rot256Z == 0 && rot256Y == ((direction * 32) & 255)
+            && scaleX == 256 && scaleY == 256 && scaleZ == 256
+            && rotM_xToY == 256 && rotM_xToZ == 256 && rotM_yToX == 256
+            && rotM_yToZ == 256 && rotM_zToX == 256 && rotM_zToY == 256;
+    }
+    private static final class BaselineGeometry {
+        final boolean source; final int[] scalars; final int[][] ints;
+        final int[][][] nested; final float[][] floats; final byte[][] bytes;
+        BaselineGeometry(RSModel m, boolean source) {
+            this.source = source; scalars = scalars(m, source);
+            int[][] raw = ints(m, source); ints = new int[raw.length][];
+            for (int i=0;i<raw.length;i++) ints[i] = raw[i] == null ? null : raw[i].clone();
+            int[][][] n = nested(m); nested = new int[n.length][][];
+            for(int i=0;i<n.length;i++) { if(n[i]==null) continue; nested[i]=new int[n[i].length][];
+                for(int j=0;j<n[i].length;j++) nested[i][j]=n[i][j]==null?null:n[i][j].clone(); }
+            float[][] f = floats(m); floats = new float[f.length][];
+            for(int i=0;i<f.length;i++) floats[i]=f[i]==null?null:f[i].clone();
+            byte[][] b = bytes(m); bytes = new byte[b.length][];
+            for(int i=0;i<b.length;i++) bytes[i]=b[i]==null?null:b[i].clone();
+        }
+        boolean matches(RSModel m) {
+            if(m==null || !Arrays.equals(scalars, scalars(m, source))) return false;
+            int[][] raw=ints(m, source); for(int i=0;i<raw.length;i++) if(!Arrays.equals(ints[i],raw[i]))return false;
+            int[][][] n=nested(m); for(int i=0;i<n.length;i++)if(!Arrays.deepEquals(nested[i],n[i]))return false;
+            float[][] f=floats(m); for(int i=0;i<f.length;i++) {
+                if(floats[i]==null || f[i]==null) { if(floats[i]!=f[i])return false; continue; }
+                if(floats[i].length!=f[i].length)return false;
+                for(int j=0;j<f[i].length;j++)if(Float.floatToRawIntBits(floats[i][j])!=Float.floatToRawIntBits(f[i][j]))return false;
+            }
+            byte[][] b=bytes(m);for(int i=0;i<b.length;i++)if(!Arrays.equals(bytes[i],b[i]))return false;
+            return true;
+        }
+        static int[] scalars(RSModel m, boolean source) {
+            int[] v = {m.faceHead,m.vertHead,m.faceCount,m.vertexCount2,m.m_cb?1:0,m.m_hc,
+                m.renderer3DModelKind.ordinal(),m.renderer3DMaterialFamily.ordinal(),m.renderer3DGlowColor,
+                m.renderer3DGlowRadius,m.renderer3DGlowIntensity,m.pickBoundsScale,m.interactionOnly?1:0,
+                m.m_db?1:0,m.m_dc?1:0,m.m_Kb?1:0,m.dontComputeDiffuse?1:0,m.m_b?1:0,m.m_c?1:0,
+                m.m_hb,m.m_v?1:0,m.fishingSpotClarityAnimationState};
+            if(!source)return v;
+            int[] result=Arrays.copyOf(v,v.length+23); int at=v.length;
+            int[] extra={m.diffuseParam1,m.diffuseParam2,m.diffuseDirX,m.diffuseDirY,m.diffuseDirZ,m.diffuseMag,
+                m.rot256X,m.rot256Y,m.rot256Z,m.scaleX,m.scaleY,m.scaleZ,m.rotM_xToY,m.rotM_xToZ,
+                m.rotM_yToX,m.rotM_yToZ,m.rotM_zToX,m.rotM_zToY,m.translateX,m.translateY,m.translateZ,m.m_Yb,m.appliedTransform};
+            System.arraycopy(extra,0,result,at,extra.length);return result;
+        }
+        static int[][] ints(RSModel m, boolean source) {
+            int[][] v={m.vertX,m.vertY,m.vertZ,m.faceIndexCount,m.faceTextureBack,m.faceTextureFront,
+                m.fishingSpotClarityBaseX,m.fishingSpotClarityBaseY,m.fishingSpotClarityBaseZ,m.fishingSpotClarityRippleGroup,m.facePickIndex};
+            if(!source)return v;
+            int[][] result=Arrays.copyOf(v,v.length+6);result[v.length]=m.faceDiffuseLight;
+            result[v.length+1]=m.scenePolyNormalShift;result[v.length+2]=m.scenePolyNormalMagnitude;
+            result[v.length+3]=m.vertXTransform;result[v.length+4]=m.vertYTransform;result[v.length+5]=m.vertZTransform;return result;
+        }
+        static int[][][] nested(RSModel m){return new int[][][]{m.faceIndices,m.faceParam1};}
+        static float[][] floats(RSModel m){return new float[][]{m.faceTextureUStart,m.faceTextureUScale};}
+        static byte[][] bytes(RSModel m){return new byte[][]{m.vertLightOther,m.m_zb};}
+        static long bytes(RSModel m,boolean source) {
+            long result=512+scalars(m,source).length*4L;
+            for(int[] a:ints(m,source))result+=64+(a==null?0:a.length*4L);
+            for(int[][] aa:nested(m)){result+=64+(aa==null?0:aa.length*8L);if(aa!=null)for(int[] a:aa)result+=64+(a==null?0:a.length*4L);}
+            for(float[] a:floats(m))result+=64+(a==null?0:a.length*4L);
+            for(byte[] a:bytes(m))result+=64+(a==null?0:a.length);
+            return result;
+        }
+    }
+
 	@Override
 	public final RSModel clone() {
 		try {
