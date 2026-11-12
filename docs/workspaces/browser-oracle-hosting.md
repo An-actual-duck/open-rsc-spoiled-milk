@@ -212,3 +212,34 @@ the required installed package path and fails before the new WSS options. The
 new focused parser fixture supplies that real path and passes both policies.
 This limitation is preserved in `configuration-parity.log`; it is not presented
 as a completely green broad suite or silently repaired by changing map authority.
+
+## Activation record — November 12, 2026
+
+Server-only v0.3.18 is active at source a8d176233ef82d47a7a7ea91e5bb91b3732a7f53.
+Browser alpha-20261112-1 is active at source 01c6f901aebc5f6969623d27e19981acd0a606ea
+and release manifest
+ed1a861f80eecc6cdb115f86ce07fb613daf71d9c7b9885e976453abe7b010c4.
+Its release directory is /srv/spoiled-milk-browser/releases/alpha-20261112-1.
+
+The owner initiated an in-game countdown and confirmed shutdown. The manager
+verified the graceful exit, backed up the 72-account DB with integrity checks
+and a verified PC copy, and activated the exact published tag. Installed Oracle
+JDK17 production-classpath fixtures passed 102 TLS/network checks and two hosted
+configuration checks. Plugin/overlay classes and the installed map are unchanged.
+The guarded launch, both listeners, external DB link, enabled backup timer and
+zero automatic restarts passed verification. The released desktop client still
+reaches its hardware login surface; its player release remains v0.3.16.
+
+Real public HTTPS Range/ETag/cache/MIME, direct WSS/native config-byte parity and
+wrong-origin/path/protocol/plaintext/text refusals passed. Certificate renewal
+with the installed hook passed its real dry-run. Firefox reached the public
+login surface with certificate validation and no reported GPU error. Owner
+account/world acceptance and website navigation publication remain to be confirmed;
+this does not claim an authenticated gameplay or FPS test. A separate Firefox
+profile is open for the owner.
+
+Receipts: Core output/reviews/browser-public-alpha/ and
+output/diagnostics/browser-public-alpha/firefox-public-1/. Oracle retains
+/home/ubuntu/spoiled-milk/verification/v0.3.18/ and
+browser-alpha/verification/network-a8d176233/. The older v0.3.17 source and
+validated TLS material remain preserved for rollback.

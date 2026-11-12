@@ -12,12 +12,12 @@ public worlds against diverging player databases.
 | Game port | TCP `43605` |
 | VM | `VM.Standard.A1.Flex`, 1 OCPU, 6 GB RAM, ARM64 |
 | OS / Java | Ubuntu 26.04.1 LTS / OpenJDK 17 |
-| Server release tag | `v0.3.17` (server-only Draynor basement ladder fix) |
+| Server release tag | `v0.3.18` (server-only secure browser connection) |
 | Published client release | `v0.3.16` (steady underground lighting) |
-| Game source | `4b0c2912a3c1d30db5e6cdc57d8b93ee24168c27` |
+| Game source | `a8d176233ef82d47a7a7ea91e5bb91b3732a7f53` |
 | Client protocol | `10059` |
 | Public service | `spoiled-milk.service`, enabled at boot |
-| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.17` |
+| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.18` |
 | Guarded live path | `/tmp/spoiled-milk-live-main` |
 | Git object repository | `/home/ubuntu/spoiled-milk/repository.git` |
 | External state | `/home/ubuntu/.local/share/spoiled-milk/live` |
@@ -28,16 +28,16 @@ The service requires that mount. The source is a clean detached checkout of the
 exact published tag; it is never a development workspace.
 
 The service calls `scripts/run-hosted-server.sh` with
-`MYWORLD_HOSTED_RELEASE_TAG=v0.3.17`. Existing exact-tag, clean-source, installed
+`MYWORLD_HOSTED_RELEASE_TAG=v0.3.18`. Existing exact-tag, clean-source, installed
 map, generator, external-database, and occupied-port guards remain active.
 `JAVA_TOOL_OPTIONS` caps the heap at 3 GiB. The unit uses `Restart=on-failure`;
 a successful in-game shutdown exits normally and stays stopped.
 
-The VM firewall and Oracle subnet security list permit TCP 43605. The client
+The VM firewall and Oracle subnet security list permit TCP 43605 and browser ports 80/443/43505. The client
 uses the public IPv4 address directly; an address change needs a client endpoint
 update. This deployment does not depend on the owner's PC staying online.
 
-`v0.3.7`, `v0.3.9`, `v0.3.10`, `v0.3.11`, and `v0.3.17` are server-only source tags with
+`v0.3.7`, `v0.3.9`, `v0.3.10`, `v0.3.11`, `v0.3.17`, and `v0.3.18` are server-only source tags with
 no player release entries.
 The website and updater now serve client `v0.3.16`, including the single-download
 ZIP and both platform updater assets. Protocol 10059 is unchanged. The actual
@@ -46,6 +46,47 @@ settings and synthetic identity. Its immediate post-publication attempt saw the
 old GitHub release list; a separate repeat passed once the list propagated.
 Native Windows launch/update execution was not available in this maintenance
 window. Never publish a newer player release without its updater assets.
+
+The v0.3.18 activation on November 12 enables direct secure WebSockets on
+43505 while retaining native TCP 43605 and the existing v0.3.16 desktop release.
+The owner completed an in-game countdown; the manager verified the clean exit
+and retained integrity-checked backups of all 72 accounts on Oracle and the PC.
+The map fingerprint is unchanged. Installed Oracle ARM64/JDK17 JARs passed 102
+TLS/network checks and two hosted-configuration checks. Class changes match the
+seven reviewed server Java files; plugin and gameplay-overlay classes remain
+identical to v0.3.17. The public listeners, guarded launch, external DB link,
+backup timer and zero automatic restarts were verified. The released desktop
+client still fetched configs and reached its hardware OpenGL login surface.
+v0.3.17 remains available for server rollback.
+
+Browser alpha `alpha-20261112-1` is served at
+`https://play.rscspoiledmilk.com/` from `/srv/spoiled-milk-browser/current`.
+Its fixed source is `01c6f901aebc5f6969623d27e19981acd0a606ea`; the direct game
+route is `wss://play.rscspoiledmilk.com:43505/`, subprotocol binary. The main
+website stays on GitHub Pages. All 1,594 files were checked against the immutable
+release inventory. Real HTTPS Range/ETag/cache/MIME and byte-exact native/WSS
+configuration exchange passed. Foreign origins, plaintext, wrong paths and
+missing subprotocols were refused; public text frames were closed. Real Firefox
+reached the public hardware-WebGL login surface without AI account creation or
+authentication. Owner account/world acceptance and website navigation publication
+are separate from that smoke test.
+
+Public alpha fixes effective Fog On, Directional lighting and Smooth geometry
+without changing saved preferences. Those rows are visibly fixed; brightness,
+shadows, roofs and presentation controls remain adjustable. Roof preferences
+choose compatible prepared data or the original authoritative parser with map
+and source checks retained. The first visit downloads game data; later visits
+can reuse immutable cached files. Restricted networks may block WSS 43505, so
+the desktop download remains available. Certbot renewal with the installed hook
+passed a real dry-run; private keys stay on Oracle. The current certificate
+expires February 10, 2027. See [browser hosting](browser-oracle-hosting.md).
+
+Broad native-player release readiness still reports preserved parked browser
+experiment branches. This activation used the isolated reviewed server snapshot
+and the separate source-bound browser packager, with no native player packaging
+or map replacement. Local receipts are in `output/reviews/browser-public-alpha/`;
+Oracle receipts are in `/home/ubuntu/spoiled-milk/verification/v0.3.18/` and
+`/home/ubuntu/spoiled-milk/browser-alpha/verification/`.
 
 The v0.3.17 activation on November 12 fixes Draynor Manor's basement ladder:
 the quest handler now explicitly targets (223,554,0), instead of preserving the
