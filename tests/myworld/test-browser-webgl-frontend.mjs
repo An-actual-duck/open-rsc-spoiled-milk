@@ -193,6 +193,7 @@ await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCloneTemplateW
 assert.equal(window.browserProof.cloneTemplatesJava.owners.legacyDelta.hits,20);assert.equal(window.browserProof.cloneTemplatesJava.peakChargedRetainedBytes,2000);assert.equal(window.browserProof.cloneTemplatesJava.worstReservedBoundBytes,16777216);
 assert.throws(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportCloneTemplateWork(null,[1,1,0]));
 assert.throws(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportCloneTemplateWork(null,[1,1,0,0,0,0,0,0,0,0,0,0,0,16777217,0,0,0,0]));
+const contradictoryCloneReceipt=new Array(18).fill(0);contradictoryCloneReceipt[0]=1;contradictoryCloneReceipt[1]=Number(!benchmarkCloneTemplates);assert.throws(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportCloneTemplateWork(null,contradictoryCloneReceipt),/Clone template diagnostics contract/,'Java selection must match requested startup policy');
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserBaselineReuse=true'),benchmarkBaseline);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportBaselineReuseWork(null,[1,benchmarkBaseline?1:0,8,3,2,1,16777216,2,100,3]);
 assert.equal(window.browserProof.baselineReuseJava.reused,8);assert.equal(window.browserProof.baselineReuseJava.admittedBaselines,2);
@@ -260,6 +261,9 @@ if(benchmarkWholeRam){
 }
 if(!nativeFault&&!benchmarkWholeRam)cover.blocksWorldInput=true;window.browserSessionDispose();window.browserSessionDispose();assert.equal(window.browserBenchmarkStreamUploadValidation,undefined,'Stop removes private streaming control');
 assert.equal(window.browserBenchmarkDiagnosticsReset,undefined);
+const cloneReceiptBeforeLate=JSON.stringify(window.browserProof.cloneTemplatesJava),cloneMessagesBeforeLate=messages.length;
+for(const late of [null,[],contradictoryCloneReceipt])assert.doesNotThrow(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportCloneTemplateWork(null,late),'Late malformed clone receipt ignored after stop');
+assert.equal(JSON.stringify(window.browserProof.cloneTemplatesJava),cloneReceiptBeforeLate,'Late receipt cannot mutate stopped clone policy/counters');assert.equal(messages.length,cloneMessagesBeforeLate,'Late receipt cannot publish after stop');
 assert.equal(coverDisposed,1,'Stop disposes the loading-cover owner exactly once before iframe removal');assert.equal(window.browserWorldInputAllowed(),true,'Stop releases the world input gate');
 assert.equal(displayDisposed,1);assert.equal(gpuDisposed,1);assert.equal(transportDisposed,1);assert.equal(middleDisposed,1,'Stop disposes the middle-input owner exactly once');
 if(!nativeFault)assert.ok(messages.some(m=>m.proof?.gpu?.lastError==='controlled shader error'));

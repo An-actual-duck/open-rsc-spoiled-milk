@@ -147,9 +147,10 @@ const natives = {
     window.browserProof.staticSceneJava={requested,pending:false,enabled:input[1]===1,rowBuilds:input[2],rowHits:input[3],observedBuilds:input[4],materialChecks:input[5],rowCount:input[6],parsedCellCount:input[7],rowCacheValid:input[8]===1,placementRevisionLow:input[9]>>>0,scope:'Actual Java static selection reuse counters; separate from GPU allocation and gameplay readiness'};
   },
   Java_orsc_browser_BrowserBootstrap_reportCloneTemplateWork(lib,input){
+    if(stopped)return;
     if(input?.length===0){window.browserProof.cloneTemplatesJava={requested:cloneTemplates.enabled,pending:true};return;}
     const v=Array.from(input);
-    if(v.length!==18||v.some(n=>!Number.isSafeInteger(n)||n<0)||v[0]!==1||v[1]>1||v[13]>16777216||v[14]>16777216||v[15]>256||v[17]>16777216)throw Error('Clone template diagnostics contract');
+    if(v.length!==18||v.some(n=>!Number.isSafeInteger(n)||n<0)||v[0]!==1||v[1]>1||v[13]>16777216||v[14]>16777216||v[15]>256||v[17]>16777216||v[1]!==Number(cloneTemplates.enabled))throw Error('Clone template diagnostics contract');
     window.browserProof.cloneTemplatesJava={requested:cloneTemplates.enabled,pending:false,selected:v[1]===1,owners:{legacyDelta:{requests:v[2],hits:v[3],misses:v[4]},baseline:{requests:v[5],hits:v[6],misses:v[7]},canonical:{requests:v[8],hits:v[9],misses:v[10]}},refusals:v[11],resets:v[12],retainedConservativeBytes:v[13],worstReservedBoundBytes:v[14],templates:v[15],copies:v[16],peakChargedRetainedBytes:v[17],scope:'Exact source-proven clone recipes; each result owns distinct mutable arrays. Conservative template workspace excludes live game instances and total VM memory.'};
   },
   Java_orsc_browser_BrowserBootstrap_reportBaselineReuseWork(lib,input){
