@@ -1,7 +1,7 @@
 /** Fullscreen belongs to the outer document, never Java or its sandbox iframe. */
 export function createDisplayModes({window:win,document:doc,player,dialog,confirm,cancel,message,onChange=()=>{},onReturn=()=>{}}){
   const stats={baseMode:new URLSearchParams(win.location.search).get('view')==='embedded'?'embedded':'fit',fullscreen:false};
-  let disposed=false,pending=false,generation=0;
+  let disposed=false,pending=false,generation=0,entryOwner=0;
   const supported=!!(doc.fullscreenEnabled&&player.requestFullscreen);
   function update(){
     if(disposed)return;
@@ -9,7 +9,7 @@ export function createDisplayModes({window:win,document:doc,player,dialog,confir
     doc.body.dataset.view=stats.baseMode;onChange(stats);
   }
   function closeDialog(){if(dialog.open)dialog.close();onReturn();}
-  function dismiss(){generation++;pending=false;closeDialog();}
+  function dismiss(){generation++;entryOwner=0;pending=false;closeDialog();}
   function offer(reason){
     if(disposed)return;
     message.textContent=reason;
@@ -21,18 +21,18 @@ export function createDisplayModes({window:win,document:doc,player,dialog,confir
   async function enter(){
     if(disposed||pending)return;
     if(!supported){offer('Fullscreen is unavailable. You can keep playing in this tab.');return;}
-    pending=true;const token=++generation;
-    try{await player.requestFullscreen();if(disposed||token!==generation){await exit();return;}stats.error=null;closeDialog();}
+    pending=true;const token=++generation;entryOwner=token;
+    try{await player.requestFullscreen();if(disposed||token!==generation){if(disposed||entryOwner===0)await exit();return;}stats.error=null;closeDialog();}
     catch(error){if(disposed||token!==generation)return;stats.error=String(error);offer('Choose Enter fullscreen to continue, or keep playing in this tab.');}
     finally{if(token===generation)pending=false;update();}
   }
-  async function exit(){if(doc.fullscreenElement===player)try{await doc.exitFullscreen();}catch(error){stats.error=String(error);}update();}
+  async function exit(){generation++;entryOwner=0;pending=false;if(doc.fullscreenElement===player)try{await doc.exitFullscreen();}catch(error){stats.error=String(error);}update();}
   function request(action){
     if(disposed)return;
     if(action===1){stats.baseMode=stats.baseMode==='fit'?'embedded':'fit';update();}
     else if(action===2){if(doc.fullscreenElement===player)void exit();else void enter();}
   }
-  function changed(){if(doc.fullscreenElement===player&&dialog.open)closeDialog();update();}
+  function changed(){if(doc.fullscreenElement!==player)entryOwner=0;if(doc.fullscreenElement===player&&dialog.open)closeDialog();update();}
   function confirmed(){void enter();}
   function cancelled(){dismiss();}
   function escaped(event){event.preventDefault();dismiss();}

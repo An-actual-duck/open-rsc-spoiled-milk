@@ -29,6 +29,9 @@ that attempt or requires a fresh gesture, a transient Enter fullscreen/Keep
 playing in tab dialog supplies that gesture. Escape/denial leave the game alive;
 fullscreenchange updates the real observed setting and CSS fit. Dismissing/stopping
 invalidates an outstanding request, including one whose promise resolves late.
+An obsolete completion cleans up only when no newer request owns fullscreen; it
+cannot exit a replacement session's successful entry. Independent review reproduced
+the original race, and both the independent and local regression now pass.
 No automatic fullscreen re-entry follows Escape. Native framebuffer dimensions
 and existing CSS input-coordinate normalization are unchanged.
 
@@ -70,18 +73,22 @@ implementation was not modified.
 Focused offline verification
 ----------------------------
 Evidence: output/diagnostics/browser-alpha-interface/focused-6eaf644/result.json.
-17 focused commands passed, including:
+17 focused commands passed for the frozen Java candidate, including:
 - 81 actual Java browser/settings checks plus middle-button relay behavior.
 - Desktop Graphics rows/actions/software scaling and all native window-mode labels.
 - Original middle-mouse mode/default/load/save/cycle persistence fixture.
 - 97 queued-message lifecycle/startup/recovery/old-frame/origin/teardown checks.
 - Direct fullscreen request, gesture fallback, repeated denial, Escape, late
-  fullscreen completion after Stop, fit/aspect/resize and pointer bounds.
+  completion after Stop, obsolete completion versus a newer successful/cancelled
+  owner, fit/aspect/resize and pointer bounds.
 - World readiness/loading/transparent streaming/keyboard-pointer-release gates.
 - Five mocked frontend modes (normal, repeatable, physical ON/OFF, no native module).
 - 15 actual repeatable-camera checks and23 pre-Scene/bootstrap observer checks.
 - Exact UI/light source scope and closed consumer ownership gate.
-No browser/server was launched by that focused run and no FPS claim follows.
+The subsequent JS-only generation correction also passed the updated display
+fixture, the independent display-generation fixture and all97 VM lifecycle checks.
+Java is byte-identical to the full build above. No browser/server was launched by
+those focused runs and no FPS claim follows.
 
 Known failed/excluded attempts
 -----------------------------

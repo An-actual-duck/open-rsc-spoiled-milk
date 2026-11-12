@@ -41,6 +41,13 @@ player.requestFullscreen=async()=>{requests++;doc.fullscreenElement=player;doc.f
 await modes.exit();player.requestFullscreen=async()=>{throw new Error('denied')};modes.request(2);await new Promise(r=>setImmediate(r));const escape={preventDefault(){this.prevented=true;}};dialog.fire('cancel',escape);assert.equal(dialog.open,false);assert.ok(refocus>0);assert.equal(modes.stats.mode,'embedded');
 // A fullscreen promise completing after Stop must not leave the discarded game fullscreen.
 let resolve;player.requestFullscreen=()=>new Promise(r=>resolve=()=>{doc.fullscreenElement=player;doc.fire('fullscreenchange');r();});modes.request(2);modes.dismiss();resolve();await new Promise(r=>setImmediate(r));assert.equal(doc.fullscreenElement,null);assert.equal(dialog.open,false);
+// A stale request from before Restart must not exit a newer successful owner.
+let oldResolve;player.requestFullscreen=()=>new Promise(r=>oldResolve=()=>{doc.fullscreenElement=player;doc.fire('fullscreenchange');r();});modes.request(2);modes.dismiss();
+player.requestFullscreen=async()=>{doc.fullscreenElement=player;doc.fire('fullscreenchange');};modes.request(2);await Promise.resolve();oldResolve();await new Promise(r=>setImmediate(r));assert.equal(doc.fullscreenElement,player,'obsolete completion cannot exit newer fullscreen request');
+await modes.exit();
+// If the newer request was cancelled too, no owner wants fullscreen anymore.
+let staleResolve;player.requestFullscreen=()=>new Promise(r=>staleResolve=()=>{doc.fullscreenElement=player;doc.fire('fullscreenchange');r();});modes.request(2);modes.dismiss();
+player.requestFullscreen=async()=>{throw Error('denied')};modes.request(2);await new Promise(r=>setImmediate(r));modes.dismiss();staleResolve();await new Promise(r=>setImmediate(r));assert.equal(doc.fullscreenElement,null,'all owners cancelled still cleans late entry');
 modes.dispose();assert.equal([...doc.listeners.values()].flat().length,0);
 const unavailable=createDisplayModes({window:win,document:doc,player:{},dialog,confirm,cancel,message});unavailable.request(2);assert.equal(dialog.open,true);assert.equal(confirm.disabled,true);assert.match(message.textContent,/unavailable/);unavailable.dispose();
 console.log('PASS fit/aspect/full-resolution input bounds, direct fullscreen attempt, transient gesture fallback, denial/Escape/Stop race and cleanup; no hardware proof');
