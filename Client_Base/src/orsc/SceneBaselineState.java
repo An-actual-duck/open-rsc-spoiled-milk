@@ -62,6 +62,9 @@ final class SceneBaselineState {
 	private int storedPresentationSceneKey = 0;
 	private int incompleteSceneResets = 0;
 	private int completedBaselines = 0;
+    // Changes only through packet/reset publication, never inferred from camera pose.
+    private long wholeZoneAuthorityRevision;
+    long wholeZoneAuthorityRevision(){return wholeZoneAuthorityRevision;}
 	private long baselineStartedMillis = 0L;
 	private long lastPacketMillis = 0L;
 	private long lastParityCheckMillis = 0L;
@@ -230,6 +233,7 @@ final class SceneBaselineState {
 			throw new IllegalArgumentException(
 				"Scene baseline presentation radii are invalid");
 		}
+        wholeZoneAuthorityRevision++;
 		long now = System.currentTimeMillis();
 		int nextStaticSceneKey = staticSceneKey(
 			protocolVersion,
@@ -363,6 +367,7 @@ final class SceneBaselineState {
 	}
 
 	void resetForScopeChange(String nextScopeIdentity) {
+        wholeZoneAuthorityRevision++;
 		staticSceneKey = 0;
 		storedStaticSceneKey = 0;
 		storedPresentationSceneKey = 0;

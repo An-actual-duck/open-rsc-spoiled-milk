@@ -1,0 +1,79 @@
+Private browser static scene CPU reuse — November 11, 2026
+========================================================
+
+This is an implementation experiment, default OFF. It does not adopt ordinary
+settings, publish a preview, establish a frame-time benefit or authorize public
+activation. The manager is capturing a fresh accepted full-GPU + prepared-RAM
+baseline; historical pre-RAM profiles are not its current ranking evidence.
+
+Control and retained work
+-------------------------
+The same client artifact accepts spoiledmilk.browserStaticSceneReuse=true only
+when both spoiledmilk.browserBenchmark and spoiledmilk.browserWholeZone are
+true. The coordinated frontend control is staticscene=on/off. The CPU control is
+independent of full versus bounded GPU residency. Full-GPU/RAM and ordinary
+paths remain available; default whole-zone override construction stays literal.
+
+BrowserWholeOverworldZone retains parsed, source-admitted immutable object-cell
+canonical and empty keys and authored identity positions. It retains the current
+six-word object override rows, the observed captured placement view and validated
+immutable material object roster. The existing bounded static shadow/glow mesh
+descriptors remain owned by that zone instance. This slice removes repeated Java
+JSON parsing, absence scans, boxing and cloning on unchanged frames; it does not
+claim to retain every browser render plan or eliminate per-frame native transfer.
+
+Ownership and invalidation contract
+-----------------------------------
+Reusing rows requires the exact mudclient, PacketHandler, World and native source
+snapshot owners; source revision; signed frame level; requested compatibility
+plane; active world-space/level state; presentation base and source center; and
+published placement and scene-authority revisions. Manifest/protocol/source
+payload validation and exact packing settings are still checked before reuse.
+The material fast path compares the complete immutable texture object roster by
+identity, after its exact baked metadata was validated. Replacing any object
+rechecks material metadata; no hash-only material admission is introduced.
+
+Placement capture publishes a new revision only when its exact six-word rows
+change. Its public getter still returns a defensive clone. Packet/reset authority
+publication advances a separate revision, including a moving authority footprint
+with unchanged scene-content hashes. Replacing the authority owner cannot reuse
+an equal counter from the old owner. Unknown placement/authority state refuses
+row retention. Signed-long overflow enters that same literal fallback: placement
+revision must remain positive and authority revision nonnegative. No counter
+changes gameplay authority, baseline completion or reset semantics.
+
+Camera-dependent visibility and roof masks are rebuilt every frame. Signed
+levels, including -1 and 10, continue to use the existing fallback; no modulo
+carrier shortcut is added. Mixed animated cells retain reason 2 and cannot
+suppress live static geometry. Mutation, last-object removal and restoration
+publish fresh captured rows. Actor order, picking, animation, effects and local
+active/collision readiness are unchanged. Cache reset clears row owners, parsed
+cells, material validation and observed ownership; context/session failure uses
+the bridge's existing invalidate path. GPU context ownership remains in the
+frontend, and cached CPU rows never assert GPU or gameplay readiness.
+
+The wire remains schema-1 18-word metadata plus six-word override rows. The exact
+catalogue-count receipt is admission of the complete validated index; bounded GPU
+mode separately waits for every currently required drawable resource. It is not
+a claim that all catalogue geometry is GPU-resident.
+
+Diagnostics and validation
+--------------------------
+BrowserWebGLBridge.isStaticSceneReuseEnabled() reports the selected Java control.
+getStaticSceneReuseWork() returns schema 1 with ten words:
+  schema, enabled, row builds, row hits, observed rebuilds, material checks,
+  row count, parsed-cell count, row-cache-valid, placement-revision low word.
+Counters describe work, not timing or presentation. Existing whole-zone work and
+native wire shapes are unchanged.
+
+scripts/build-client.sh compiles both complete maintained client source roots.
+tests/myworld/whole-zone/test-static-scene-revisions.py runs actual detached
+placement capture and packet/reset publication, including exact content stability,
+mutation/restoration, mixed animated input order, empty scenes, defensive copies,
+cell moves and overflow; it also checks private/default-off startup combinations.
+Existing whole-zone policy, static-scene reset and resident-input differential
+fixtures remain regression checks. Independent ai-3 literal-versus-reused override
+and metadata fixtures are reviewed separately. Detached fixtures do not replace
+source catalogue admission, real packets, browser/GPU pixels, long travel or
+hardware timing acceptance. The manager must build one unified clean source
+artifact and freshly bake its source-bound catalogue/RAM data before measuring.

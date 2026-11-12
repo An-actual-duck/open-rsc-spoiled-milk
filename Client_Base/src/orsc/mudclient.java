@@ -4415,6 +4415,9 @@ public final class mudclient implements Runnable {
 
     // Only explicit private whole-zone mode materializes this bounded identity view.
     private int[] wholeOverworldObjectCells;
+    private long wholeOverworldObjectCellsRevision;
+    public long getWholeOverworldObjectCellsRevision(){return wholeOverworldObjectCells==null?-1:wholeOverworldObjectCellsRevision;}
+    public long getWholeZoneObjectAuthorityRevision(){return packetHandler==null?-1:packetHandler.getWholeZoneObjectAuthorityRevision();}
     public boolean isWholeZoneObjectPositionAuthoritative(int plane,int x,int y){return plane==getRequestedPlane()&&packetHandler!=null&&packetHandler.isWholeZoneObjectPositionAuthoritative(x,y);}
     public boolean isWholeZoneObjectCellAuthoritative(int plane,int cellX,int cellY){
         return plane==this.getRequestedPlane()&&this.packetHandler!=null
@@ -4439,7 +4442,8 @@ public final class mudclient implements Runnable {
             rows.put(id,new int[]{plane,cellX,cellY,(int)key,(int)(key>>>32),reason});
         }
         if(rows.size()>1024)throw new IllegalStateException("Private whole-zone local identity capacity exceeded");
-        int[] packed=new int[rows.size()*6];int at=0;for(int[] row:rows.values()){System.arraycopy(row,0,packed,at,6);at+=6;}wholeOverworldObjectCells=packed;
+        int[] packed=new int[rows.size()*6];int at=0;for(int[] row:rows.values()){System.arraycopy(row,0,packed,at,6);at+=6;}
+        if(!Arrays.equals(wholeOverworldObjectCells,packed)){wholeOverworldObjectCells=packed;wholeOverworldObjectCellsRevision++;}
     }
 
 	private List<ResidentObjectChunkInput> buildResidentObjectChunkInputs(Renderer3DWorldChunkFrame baseFrame) {
