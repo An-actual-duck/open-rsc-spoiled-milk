@@ -1,0 +1,156 @@
+Browser public alpha: reviewed client and packaging candidate
+============================================================
+
+Scope and fixed contract
+------------------------
+Public page: https://play.rscspoiledmilk.com
+Game transport: wss://play.rscspoiledmilk.com:43505/ with binary subprotocol.
+The Java logical target is the existing public game132.145.137.142:43605; its
+SocketImpl uses the fixed browser WSS transport, never a direct TCP connection.
+Ordinary/private/repeatable loopback rules retain their original separate gates.
+No SSH, listener, browser, public publishing or server activation was performed
+by this worker. Oracle/TLS/ingress/maintenance remain manager operations.
+
+An immutable staged config selects alpha-v1. Only the exact HTTPS origin and WSS
+endpoint are accepted. Unknown fields, insecure/arbitrary endpoints, credentials,
+fixture names and URL experiment overrides are refused. Only optional view=fit or
+view=embedded presentation is accepted. The config pins executable archive hashes
+and lengths; both archives are fetched without credentials/redirects and SHA256
+verified before Java startup. Normal existing-account login is unchanged.
+
+The preset adopts Worker presentation, bounded512MiB geometry admission, compact
+geometry, complete retained source/preparation, static CPU reuse, modern loop,
+physical output and the accepted model/terrain kernels. The legacy internal
+browserBenchmark bit remains an admission capability for these existing audited
+paths; it is set by the fixed preset, not a public query or measurement claim.
+Failed baseline/clone caches, parked preparation/transfer/overlay experiments,
+profiling, forced camera and repeatable account/actor fixtures remain disabled.
+Java validates the exact public origin/preset and allowed properties before client
+static initialization. Public debug runtime switches are not exposed.
+
+Presentation and personal state
+-------------------------------
+Alpha/build ID and CheerpJ by Leaning Technologies credit appear on the transient
+Play surface and document title. Existing accounts, first-load expectations,
+unsupported-browser/network failures, retry and the downloadable client have plain
+messages. No permanent toolbar or inflated CPU/GPU loading claims are added.
+No web session cookie, reporting upload, analytics or tracking is introduced.
+Public bootstrap never seeds UID or credentials. The existing client creates and
+retains its browser UID; protected personal-state paths are refused by public
+bootstrap. Private disposable fixture behavior remains unchanged.
+
+Versioned deployment and executable filesystem
+----------------------------------------------
+Root index.html references /assets/<build-id>/session.js; that module locates its
+runtime iframe relative to import.meta.url. CheerpJ /app is the ORIGIN root, so
+classpath and bootstrap source paths explicitly use /app/assets/<build-id>/.
+The public Java helper permits only that bounded prefix shape. Initial assets are
+copied into the existing /files game layout; user settings remain client-owned.
+Official filesystem documentation: https://cheerpj.com/docs/guides/filesystem
+
+scripts/browser-gameplay/package-public-alpha.py requires a fresh clean exact-HEAD
+full client receipt plus source/class/asset manifests, a complete1330-sector GPU
+catalogue, complete1400-resource compact derivative and445-recipe/1330-query RAM
+cook bound to the same JAR/source/assets/settings. Source-only or rebound old cooks
+are refused. It compiles a fresh deterministic browser-spike.jar and emits a
+versioned static directory plus external package-receipt.json. No services start.
+
+Only maintained HEAD audio *.wav/sounds.mem and the closed six video/archive paths
+are copied, each checked against committed bytes (currently44files/4,875,269bytes).
+Untracked caches/backups, credentials, test account data and private fixture config
+are excluded. Source attribution/LICENSE are versioned with the build. Runtime
+packaging has no output-art fallback. Canonical manifest/source metadata/textures
+remain, but unused112-byte canonical geometry binaries are omitted: the validated
+complete compact sidecar replaces every geometry resource before any fetch, and
+public mode cannot select legacy format. All1400compact geometries remain.
+
+web/public-release.json schema1 declares origin, websocket, preset, build IDs,
+client/source hashes, assetPrefix, every served payload path/length/SHA256,
+SHA256SUMS hash and original cook identities. SHA256SUMS and public-release.json
+are excluded from the payload list to avoid circular hashes; the external package
+receipt pins public-release.json itself. Hosting independently verifies the exact
+manifest and full inventory. Root entry files require no-cache; versioned assets
+require immutable caching and HTTP Range support. Old build IDs must remain
+reachable for already-open sessions when current changes.
+
+Roof preferences: safe compatible preparation or original parser
+---------------------------------------------------------------
+The retained cook is roof-variant-specific. Public accounts must not be forced to
+that preference. Public mode therefore retains fully validated decoded data while
+an incompatible current roof preference takes the existing original native parser.
+Compatible preference resumes the same prepared owner/recipes. Source identity,
+owned source pages/protocol, current native/basis/editor patch and packing guards
+remain strict. PreparedActivation's own roof check is untouched. Private mismatch
+still fails as before. No account preference is changed or persisted by fallback.
+
+The18-word RAM receipt remains unchanged: complete decoded data is not an active
+recipe claim. A separate bounded six-word sampled roof eligibility receipt reports
+cooked/player preference and literal-roof fallback; it is not a per-frame activation
+or full signed-level eligibility claim. It captures the preference once, ignores
+callbacks after disposal and does not retain an old reader strongly. Existing
+World/UI reload and stale captured-result publication guards remain authoritative.
+
+The separate graphics-preset worker constrains incompatible Fog/Lighting/Geometry
+choices to the accepted effective tuple, with explicitly fixed menu rows and saved
+preferences preserved. That separate change must be merged before public rollout;
+this branch does not weaken GPU catalogue setting identity.
+
+Frozen build and offline evidence
+---------------------------------
+Core/helper source freeze:5b7b1425ebace9948cdd51d69d9a5fb59a64c332.
+Full clean991-class/3194-own-asset Ant JAR, no overlays:
+  2f12d1ae67d6441ceb1d5b629852270452323dd478524ba6f0b4f7ba4bc4f7d7
+Fresh27-class browser helper JAR:
+  b112736e16c342b496342d1ceb2f8c5a4d49b9030b1e14bfe4779361fba21e07
+Receipts, source/class/asset manifests and log:
+  output/builds/browser-public-alpha/review-roof-final/
+No old GPU/RAM cook was rebound to either review archive.
+
+Focused commands/results:
+  node tests/myworld/browser-public-alpha/policy.mjs
+    54 origin/query/endpoint/preset/archive integrity/private-policy checks.
+  python3 tests/myworld/browser-public-alpha/package.py
+    22 build manifest/source/class/path/refusal/reproducible archive checks.
+  node --experimental-vm-modules tests/myworld/test-browser-webgl-frontend.mjs --public-alpha --properties-output OUTPUT/frontend.properties
+    Actual fixed public frontend reaches Java with pinned WSS/compact/bounded512,
+    versioned executable paths, no fixture/parked runtime switches; separate roof
+    receipt validation and late-after-Stop behavior pass. Ordinary/repeatable VM
+    frontend and97 lifecycle/display/readiness checks also pass.
+  Compile tools/browser-gameplay/src/orsc/browser/*.java against the exact JAR;
+  compile/run browser-public-alpha/BootstrapFixture.java using frontend.properties:
+    39 public Java guard and actual UID creation/persistence checks.
+  Compile/run BrowserNormalStartupRouteFixture.java:
+    19 unchanged private route/startup checks.
+  python3 tests/myworld/browser-public-alpha/run-roof.py --jar JAR --receipt RECEIPT --name FRESH_NAME
+    Public213/private163 real-source CPU checks. Final worker result:
+    output/tests/browser-public-alpha/roof-final-5b/result.json
+
+The roof fixture constructs fresh one-centre in-memory products for BOTH cooked
+variants; no old cooked files are loaded. Actual account-setting setter and actual
+reloadCurrentRegionForRoofVisibility execute compatible→mismatched→compatible
+cycles. Transformed model/picking/scene order, collision, elevation, sectors and
+minimap match original parser references; counters prove actual recipe activation
+only when compatible. Actual old background halo results cannot replace the new
+roof query. Wrong manifest/owned-page, editor patch and packing cases remain refused.
+Run root contains only one installed map manifest, no individual terrain payloads;
+a SecurityManager denies original raw-source reads after authoritative snapshots
+are created. Reloads make no such read attempt. L1 load/return and -1/10 signed-scope
+roundtrips pass. Negative/10 legacy-plane transport is not claimed by this fixture.
+Constructor injection isolates a partial recipe test; it is not a complete445-cook
+constructor/readiness, browser, GPU, FPS or public activation proof.
+
+Manager completion recipe
+-------------------------
+After merging both exact READY topics, build the complete maintained client from
+clean integrated main. Then, using that one receipt/JAR throughout:
+1. whole-zone/bake.py --full --limit-sectors 1330.
+2. whole-zone/compact.mjs --name FRESH --bake-run COMPLETE_GPU_RUN.
+3. whole-ram/bake.py --full --recipe-limit 445 --heap-mib 1536 --gpu-bake-run COMPLETE_GPU_RUN.
+   Choose the accepted roof variant explicitly; fallback supports the other one.
+4. package-public-alpha.py --build-id LOWERCASE_ID --client-jar JAR
+   --client-receipt RECEIPT --bake-run GPU_RUN --compact-run COMPACT_RUN --ram-run RAM_RUN.
+5. Independently verify public-release.json/inventory, deploy static assets through
+   reviewed hosting operations, then Firefox-check real startup/archive paths,
+   existing-account roof preferences/toggles, fixed versus live graphics controls,
+   fullscreen/input, normal travel and signed-level returns. Staging is not that
+   acceptance. Public WSS activation must follow the current shutdown permission gate.
