@@ -16,6 +16,11 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
 	@Override
 	public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
+		if (PublicWebSocketPolicy.enabled() && !PublicWebSocketPolicy.accepts(ctx, request)) {
+			ctx.writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FORBIDDEN))
+				.addListener(ChannelFutureListener.CLOSE);
+			return;
+		}
 		if (this. websocketUri.equalsIgnoreCase(request.uri())) { // if the request uri matches the web socket path, we forward to next handler which will handle the upgrade handshake
 			ctx.fireChannelRead(request.retain()); // we need to increment the reference count to retain the ByteBuf for upcoming processing
 		} else {

@@ -409,6 +409,7 @@ public class Server implements Runnable {
 	}
 
 	private SslContext sslcontext = null;
+	private com.openrsc.server.net.ReloadingPublicWebSocketTls publicWebSocketTls;
 
 	private static String getDefaultConfigFileName() {
 		return "myworld.conf";
@@ -1023,6 +1024,12 @@ public class Server implements Runnable {
 				final ServerBootstrap bootstrap = new ServerBootstrap();
 				final Server serverOwner = this;
 
+				if (com.openrsc.server.net.PublicWebSocketPolicy.enabled()) {
+					if (!processNetworkConfiguration.isWebsocketsEnabled())
+						throw new IllegalStateException("Public WSS requires want_feature_websockets");
+					publicWebSocketTls = new com.openrsc.server.net.ReloadingPublicWebSocketTls(
+						processNetworkConfiguration.getSslServerCertPath(), processNetworkConfiguration.getSslServerKeyPath());
+				}
 				if (processNetworkConfiguration.isWebsocketsEnabled()) {
 					if (!processNetworkConfiguration.getSslServerCertPath().trim().isEmpty() && !processNetworkConfiguration.getSslServerKeyPath().trim().isEmpty()) {
 						LOGGER.info("Loading Websockets SSL cert...");
@@ -1107,6 +1114,8 @@ public class Server implements Runnable {
 							protected void initChannel(final SocketChannel channel) {
 								final ChannelPipeline pipeline = channel.pipeline();
 								pipeline.addLast("decoder_ws", new RSCMultiPortDecoder(RSCMultiPortDecoder.DecoderMode.WS, serverOwner));
+								if (com.openrsc.server.net.PublicWebSocketPolicy.enabled())
+									pipeline.addLast("public-ws-handshake", new com.openrsc.server.net.PublicWebSocketHandshakeGuard());
 								pipeline.addLast(rscConnectionHandlerId, new RSCConnectionHandler(serverOwner));
 							}
 						}
@@ -3137,6 +3146,11 @@ public class Server implements Runnable {
 	}
 
 	public void refreshWebsocketSSLContext(Player player) throws Exception {
+		if (publicWebSocketTls != null) {
+			publicWebSocketTls.refresh();
+			if (player != null) player.message("Successfully reloaded public websocket certificate files!");
+			return;
+		}
 		setSSLContext(loadWebsocketSSLFiles(getConfig().SSL_SERVER_CERT_PATH, getConfig().SSL_SERVER_KEY_PATH, player));
     }
 
@@ -3164,6 +3178,6 @@ public class Server implements Runnable {
 	}
 
 	public SslContext getSSLContext() {
-		return this.sslcontext;
+		return publicWebSocketTls == null ? this.sslcontext : publicWebSocketTls.context();
 	}
 }
