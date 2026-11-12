@@ -9,6 +9,10 @@ public final class BrowserBootstrap {
     public static native void report(String message);
     public static native void reportState(String mode, int fps, int loadingPercent);
     public static native void reportStartupDiagnostics(String phase,String detail);
+    private static native void reportStartupProgress(String phase,double writtenBytes,int files,int totalFiles,double elapsedMillis);
+    private static native String prepareRamBulkFile(String relative) throws IOException;
+    private static native void releaseRamBulkFile(String relative,boolean copied) throws IOException;
+    private static native boolean isRamBulkCancelled();
     public static native void reportLoop(String mode,boolean earlyFaceCull,boolean fullResidentOwnership);
     public static native void reportTelemetry(String names,double[] values);
     public static native void reportSpriteKeyPolicy(boolean requested,boolean enabled);
@@ -95,19 +99,17 @@ public final class BrowserBootstrap {
         final RepeatableCamera fixedCamera=repeatable?new RepeatableCamera():null;
         final BrowserCombatWorkload combatWorkload=combat?new BrowserCombatWorkload():null;
         report((webgl?"webgl-client":"software-client")+":copying-private-files");
+        java.util.List<String> ordinaryFiles=new java.util.ArrayList<String>();
         try (BufferedReader index = new BufferedReader(new FileReader(assetRoot+"bootstrap-files.txt"))) {
             String relative;
             while ((relative = index.readLine()) != null) {
                 if (relative.startsWith("/") || relative.contains("..") || relative.contains("\\")) throw new IOException("Unsafe staged path");
                 if(publicAlpha)BrowserPublicAlpha.validateBootstrapPath(relative);
-                File destination = new File("/files", relative);
-                destination.getParentFile().mkdirs();
-                try (InputStream input = new FileInputStream(assetRoot + relative); OutputStream output = new FileOutputStream(destination)) {
-                    byte[] buffer = new byte[32768]; int count;
-                    while ((count = input.read(buffer)) >= 0) output.write(buffer, 0, count);
-                }
+                ordinaryFiles.add(relative);
             }
         }
+        BrowserBootstrapFiles.copy(ordinaryFiles,assetRoot,new File("/files"),32768,
+            new BrowserBootstrapFiles.Progress(){public void update(long bytes,int files,int total,long elapsed){reportStartupProgress("assets",bytes,files,total,elapsed);}});
         if((Boolean.getBoolean("spoiledmilk.browserBaselineReuse")||Boolean.getBoolean("spoiledmilk.browserCloneTemplates")) && (!webgl
             || !Boolean.getBoolean("spoiledmilk.browserBenchmark") || !Boolean.getBoolean("spoiledmilk.browserWholeRam")
             || !Boolean.getBoolean("spoiledmilk.browserWholeZone") || !Boolean.getBoolean("spoiledmilk.browserStaticSceneReuse")))
@@ -115,8 +117,20 @@ public final class BrowserBootstrap {
         if(Boolean.getBoolean("spoiledmilk.browserWholeRam")) {
             if(!webgl||!Boolean.getBoolean("spoiledmilk.browserBenchmark")||!Boolean.getBoolean("spoiledmilk.browserWholeZone"))throw new IllegalStateException("Whole-RAM delivery requires private whole-zone WebGL mode");
             java.util.HashSet<String> expected=new java.util.HashSet<String>(java.util.Arrays.asList("Cache/whole-ram/manifest.json","Cache/whole-ram/source.bin","Cache/whole-ram/prepared.bin"));
-            try(BufferedReader index=new BufferedReader(new FileReader(assetRoot+"bootstrap-whole-ram-files.txt"))){String relative;while((relative=index.readLine())!=null){if(!expected.remove(relative))throw new IOException("Unexpected/duplicate whole-RAM staged path");File destination=new File("/files",relative);destination.getParentFile().mkdirs();try(InputStream input=new FileInputStream(assetRoot+relative);OutputStream output=new FileOutputStream(destination)){byte[] buffer=new byte[65536];int n;while((n=input.read(buffer))!=-1)output.write(buffer,0,n);}}}
+            java.util.List<String> ramFiles=new java.util.ArrayList<String>();
+            try(BufferedReader index=new BufferedReader(new FileReader(assetRoot+"bootstrap-whole-ram-files.txt"))){String relative;while((relative=index.readLine())!=null){if(!expected.remove(relative))throw new IOException("Unexpected/duplicate whole-RAM staged path");ramFiles.add(relative);}}
             if(!expected.isEmpty())throw new IOException("Incomplete whole-RAM delivery roster");
+            BrowserBootstrapFiles.Progress copyProgress=new BrowserBootstrapFiles.Progress(){public void update(long bytes,int files,int total,long elapsed){reportStartupProgress("data",bytes,files,total,elapsed);}};
+            if(publicAlpha)BrowserBulkStaging.copy(ramFiles,new File("/files"),65536,new BrowserBulkStaging.Source(){
+                public String prepare(String relative)throws IOException {
+                    String root=prepareRamBulkFile(relative);
+                    try{return BrowserBulkStaging.validateRoot(root);}
+                    catch(IOException failure){try{releaseRamBulkFile(relative,false);}catch(Throwable cleanup){failure.addSuppressed(cleanup);}throw failure;}
+                }
+                public void release(String relative,boolean copied)throws IOException {releaseRamBulkFile(relative,copied);}
+                public boolean cancelled(){return isRamBulkCancelled();}
+            },copyProgress);
+            else BrowserBootstrapFiles.copy(ramFiles,assetRoot,new File("/files"),65536,copyProgress);
         }
         // Explicit test-only software presentation. Desktop defaults are untouched.
         String[] off = {"openglPresenter", "openglInput", "openglPrimaryWindow",
@@ -160,6 +174,7 @@ public final class BrowserBootstrap {
         Socket.setSocketImplFactory(new SocketImplFactory() {
             public SocketImpl createSocketImpl() { return new BrowserSocket(); }
         });
+        reportStartupProgress("client",0,0,0,0);
         report((webgl?"webgl-client":"software-client")+":start; networking="+(publicAlpha?"public-secure-websocket":"loopback-websocket"));
         orsc.OpenRSC.main(new String[0]);
         final BrowserStartupDiagnostics startupDiagnostics=webgl&&!benchmark?new BrowserStartupDiagnostics(new BrowserStartupDiagnostics.Sink(){
