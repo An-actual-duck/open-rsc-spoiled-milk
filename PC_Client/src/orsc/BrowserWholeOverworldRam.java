@@ -17,8 +17,8 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
     }
     public static int[] getRoofSelectionWork() {
         BrowserWholeOverworldRam owner=roofSelection.get();boolean ready=owner!=null&&owner.ready;
-        boolean hidden=owner!=null&&owner.hiddenRoofs,compatible=ready&&hidden==Config.C_HIDE_ROOFS;
-        return new int[]{1,PUBLIC_ROOF_FALLBACK?1:0,ready?1:0,hidden?1:0,Config.C_HIDE_ROOFS?1:0,compatible?1:0};
+        boolean hidden=owner!=null&&owner.hiddenRoofs,preference=Config.C_HIDE_ROOFS,compatible=ready&&hidden==preference;
+        return new int[]{1,PUBLIC_ROOF_FALLBACK?1:0,ready?1:0,hidden?1:0,preference?1:0,compatible?1:0};
     }
     private final byte[] source;
     private final WholeRamPrepared prepared;

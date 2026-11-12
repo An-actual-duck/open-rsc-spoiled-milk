@@ -148,6 +148,9 @@ if(publicAlpha){
   assert.equal(props.some(s=>s.includes('browserRepeatableFixture')||s.includes('browserPrivateLoopbackPort')),false);
   for(const name of ['browserBenchmarkOwnedState','browserBenchmarkStreamUploadValidation','browserBenchmarkPhysicalOutput','browserBenchmarkDiagnosticsReset'])assert.equal(window[name],undefined);
   assert.equal(publicRunArgs[1],'/app/assets/alpha-test1/browser-spike.jar:/app/assets/alpha-test1/client.jar');
+  configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(null,new Int32Array([1,1,1,1,0,0]));assert.equal(window.browserProof.wholeRamRoofSelection.literalRoofFallback,true);
+  assert.throws(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(null,new Int32Array([1,1,1,1,0,1])));
+  const previous=window.browserProof.wholeRamRoofSelection;window.browserSessionDispose();configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(null,new Int32Array());assert.equal(window.browserProof.wholeRamRoofSelection,previous,'late reporter cannot revive disposed state');
   const file=argument('--properties-output');if(file)fs.writeFileSync(file,props.join('\n')+'\n');
   console.log('PASS actual public frontend fixed rendering/pinned WSS/versioned archives/Java properties/no fixture or runtime switches; VM only');process.exit(0);
 }

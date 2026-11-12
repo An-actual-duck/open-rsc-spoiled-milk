@@ -136,6 +136,7 @@ const natives = {
   Java_orsc_browser_BrowserBootstrap_reportRegionHandoffTrace:regionHandoffCollector.report,
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,
   Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(lib,input){
+    if(stopped)return;
     if(!deployment.publicAlpha||!input||input.length!==6||Array.from(input).some(v=>v!==0&&v!==1)||input[0]!==1||input[1]!==1||input[5]!==Number(input[2]===1&&input[3]===input[4]))throw new Error('Invalid public roof selection receipt');
     window.browserProof.wholeRamRoofSelection={publicFallback:true,preparedDataReady:input[2]===1,cookedHiddenRoofs:input[3]===1,playerHiddenRoofs:input[4]===1,roofCompatible:input[5]===1,literalRoofFallback:input[2]===1&&input[5]===0,scope:'Current roof eligibility only. Complete retained preparation is not an activation claim; unsupported roof preference uses the original parser and matching preference may resume recipes.'};
   },
