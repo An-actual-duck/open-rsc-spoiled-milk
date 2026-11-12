@@ -1,0 +1,127 @@
+Private bounded GPU streaming candidate — November 11, 2026
+==========================================================
+
+Implemented behind explicit private switches; ordinary defaults and the complete
+GPU reference remain unchanged. Hardware acceptance, release and public activation
+are separate. This is the GPU half of browser-bounded-streaming-and-cpu-plan.txt;
+staticscene=on selects the separately implemented Java static-scene CPU candidate.
+
+Controls and exact source binding
+--------------------------------
+Use the existing private benchmark WebGL Worker, wholezone=on, overlay=coverage
+and overlaydelta=off configuration. Add gpuresidency=bounded; its default combined
+geometry/material-texture budget is256MiB. Add gpubudget=512 for the explicit
+512MiB candidate. Invalid values and bounded without private wholezone admission
+are refused. No budget grows automatically. gpuresidency=full (default) preserves
+the3GiB full-catalogue reference; omit gpubudget for that reference.
+
+wholeram=on may coexist with either GPU policy. Java keeps its WHOLE_ZONE source
+index and retained immutable CPU recipes/query products. initializeWholeZone's
+return value confirms exact catalogue admission, not uploaded GPU membership.
+The existing catalogue/client JAR/map/source/material/settings SHA256 checks and
+complete source roster remain mandatory; bounded admission also verifies staged
+external assets and all74 material textures. It fetches no geometry until scoped
+selection requests it. Old stage/bake files are immutable and never rewritten.
+
+The fresh-stage scripts prepare-whole-zone-client.py and
+prepare-whole-ram-client.py accept --gpu-residency full|bounded,
+--gpu-budget-mib 256|512,
+and --static-scene on|off. They expose urlFullGpu, urlBoundedGpu, urlBounded256,
+urlBounded512 and urlStaticSceneOn/Off for the same staged artifacts. Controls
+apply at session startup. Stage declarations are not runtime readiness receipts.
+
+Ownership, selection and invalidation
+------------------------------------
+The renderer owns all catalogue GPU objects. Java remains authoritative for
+source readiness, active collision/elevation/picking, signed level/world space,
+and live/mutated/animated object overrides. The18-word selection declaration and
+6-word authority rows are unchanged. Required catalogue membership is the full
+existing5x5 world/scenery selection, including zero-color-mask cells retained as
+shadow inputs. No terrain/roof/shadow coverage is dropped to meet the cap.
+
+Required world cells precede required scenery; optional movement-ahead cells use
+spare space with32MiB reserved. Previously useful return cells remain as LRU
+residents until pressure requires eviction. Only catalogue-owned resources
+outside the required set may be evicted. Java's local/dynamic resources are
+never cache-eviction candidates. Signed-level/non-global fallback remains local.
+Doors/trees/live changes mask baseline catalogue scenery through the unchanged
+authority rows; restoring content requires an exact canonical baseline match.
+
+The source epoch and exact required-ID set form a preparation generation.
+Scope changes cancel/abort pending work and release partially allocated buffers.
+Region transition suspends readiness until a new declaration. Context loss and
+session disposal cancel the scheduler; the backend requires session restart.
+Stale fetch/hash completion cannot publish into a new generation or context.
+
+Scheduling and memory ledgers
+----------------------------
+One source resource may be fetched/hashed/prepared at a time. The pending raw
+file plus owned batch metadata is capped at64MiB. SHA256 may require a separate
+WebCrypto input copy up to64MiB; HTTP reader/browser copies and implementation
+overhead are separately scoped. Descriptor queues are capped at512 entries and
+320MiB of declared source bytes; these queued descriptors retain no payloads.
+
+Packed planes are views of the verified source buffer. Position/bounds validation,
+index validation, owned batch copying, GPU allocation and bufferSubData transfer
+advance in separate steps. Each Worker animation callback processes at most4MiB
+of validation/copy or transfer; the fallback timer interval is16ms. One allocation
+call reserves full final buffer storage, followed by bounded transfers. Driver
+allocation/check latency has no hard time guarantee: max/total slice milliseconds
+are measured. No async wrapper hides a whole-window unpack/pack/upload rebuild.
+
+stats.gpuBytes is the unified allocation ledger: catalogue geometry, Java local
+geometry, material textures and unfinished GPU buffer allocations all consume the
+selected256/512MiB cap. The512 resident-chunk count includes unfinished allocations.
+Replacement material storage is reserved before old storage is released. The
+scheduler rechecks free room after fetch completion because Java may allocate in
+the meantime. It refuses a required set that cannot fit alongside live resources.
+
+This is not total VRAM. Sprite/overlay/retained-frame textures, shadow maps,
+framebuffers, lighting/sky resources, driver/program objects, Worker transport,
+retained Java CPU products and browser memory keep their separate existing
+budgets/receipts. Resident batch metadata remains separately retained CPU data.
+
+Held images, input and honest receipts
+------------------------------------
+Missing required geometry rejects the proposed world frame before clear, shadows
+or fresh actor/UI drawing. Replay uses the preceding complete FULL image, with
+its matching world/actors/UI. A proposed reset is latched until a fresh frame can
+be captured. BASE/death/sleep fading keeps its existing retained-pixel protocol.
+Initial startup may retain the last login image until current coverage is ready.
+
+Held proposals do not increment javaWorldFrames, javaFrames, worldFrameSamples,
+lastFrame, or graphics readiness completion. They increment heldWorldFrames and
+boundedResidency.heldFrames. Transport completed-frame ACKs are distinct from
+fresh rendered frames. wholeZone.ready means current submitted coverage for the
+declared selection in bounded mode, never all1400 catalogue GPU resources.
+startupGpuCompleted stays false; the full-startup gl.finish receipt is not forged.
+wholeZone.pinnedChunks/Bytes describe actual current resident catalogue buffers.
+
+The main thread blocks world input immediately when exact source scope/mutation
+rows change, before the Worker can acknowledge a held proposal. Only a matching
+or newer coverage-ready and world-ready ACK clears that gate. An older ready ACK
+cannot authorize clicks on the newer source while the display is held. The
+existing transparent streaming cover is used, separate from initial loading.
+RAM raw/prepared readiness remains distinct from catalogue admission and current
+GPU coverage. browserProof.boundedResidencyInput exposes that producer/ACK gate.
+
+Tests and present limits
+------------------------
+Node API doubles cover progressive validation/transfer, late publication,
+cancellation, corrupt indices, allocation refusal, GL-binding restoration,
+retained reset/hold/fade sequencing, private controls and the producer/ACK input
+race. The real immutable c8fc complete-stage CPU test validates all source/assets/
+materials, admits1400 metadata records, selects120 required cells at sector(2,13)
+and proves zero geometry uploads/no full-GPU fence/no readiness shortcut.
+Independent review exercises queue caps, active/local protection, stale completion,
+suspend/reclaim and literal source selection. These are not hardware timings.
+
+Independent full-catalogue capacity audit found3 centers whose immutable required
+geometry+textures alone exceed256MiB. With a separately stated53MiB local-geometry
+assumption,62/448 centers exceed256MiB and the worst total is about329.5MiB.
+This assumption is not a new bounded-browser measurement. Thus256MiB is an honest
+pressure/refusal case for the current vertex format; explicit512MiB is available
+for whole-map exploration without visual cuts. Source format compaction/instancing
+remain deferred. The manager must measure paired actual Firefox/GPU profiles,
+cold/warm/return/long travel gaps, queue/slice peaks, local allocations, gameplay
+mutations, signed fallback, context loss and populated combat before acceptance.

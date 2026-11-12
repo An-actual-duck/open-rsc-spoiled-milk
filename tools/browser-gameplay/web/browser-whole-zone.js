@@ -115,9 +115,10 @@ export async function fetchWholeZoneBytes(url,expected,{fetcher=fetch,signal,max
   catch(error){try{await reader.cancel(error);}catch(_){}throw error;}finally{reader.releaseLock();}
   return data.buffer;
 }
-async function digest(buffer){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',buffer))].map(x=>x.toString(16).padStart(2,'0')).join('');}
+export async function digestWholeZoneBytes(buffer){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',buffer))].map(x=>x.toString(16).padStart(2,'0')).join('');}
+const digest=digestWholeZoneBytes;
 /** No payload view survives its upload callback. The returned catalog retains metadata only. */
-export async function loadWholeZone({baseURL,manifestBytes,manifestSha256,clientJarSha256,externalAssets:expectedAssets,fetcher=fetch,uploadChunk,uploadTexture,finishGpu,stats,signal,mapIdentity,settings,materials,progress=()=>{},assertAlive=()=>{}}){
+export async function loadWholeZone({baseURL,manifestBytes,manifestSha256,clientJarSha256,externalAssets:expectedAssets,fetcher=fetch,uploadChunk,uploadTexture,finishGpu,stats,signal,mapIdentity,settings,materials,bounded=false,progress=()=>{},assertAlive=()=>{}}){
   assertAlive();integer(manifestBytes,1,MAX_MANIFEST,'manifest bytes');hash(manifestSha256,'catalog');const base=new URL(baseURL,import.meta.url);
   const manifestRaw=await fetchWholeZoneBytes(new URL('manifest.json',base),manifestBytes,{fetcher,signal,maximum:MAX_MANIFEST});if(await digest(manifestRaw)!==manifestSha256)throw new Error('Whole zone catalog digest mismatch');
   const m=validateWholeZoneManifest(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(manifestRaw)));
@@ -131,6 +132,7 @@ export async function loadWholeZone({baseURL,manifestBytes,manifestSha256,client
   for(const asset of m.externalAssets){const raw=await fetchWholeZoneBytes(new URL('../'+asset.path,base),asset.bytes,{fetcher,signal});if(await digest(raw)!==asset.sha256)throw new Error('Whole zone staged external asset digest mismatch: '+asset.path);stats.downloadedSourceAssetBytes+=raw.byteLength;stats.downloadedBytes+=raw.byteLength;}
   stats.externalAssetsVerified=true;
   for(let n=0;n<m.textures.length;n++){const t=m.textures[n];const raw=await fetchWholeZoneBytes(new URL(t.path,base),t.bytes,{fetcher,signal});if(await digest(raw)!==t.sha256)throw new Error('Whole zone texture digest mismatch');const pixels=new Int32Array(raw),material=m.materialMetadata.slice(n*5,n*5+5);validateWholeZoneTexture(material,t.width,t.height,pixels,t.transparent);await uploadTexture(t,pixels,material);stats.downloadedBytes+=raw.byteLength;stats.bakedGPUDataDownloadedBytes+=raw.byteLength;stats.textureBytes+=raw.byteLength;stats.preparedResources++;}
+  if(bounded){assertAlive();Object.assign(stats,{phase:'catalog-admitted',ready:false,catalogAdmitted:true,residencyPolicy:'bounded',startupGpuCompleted:false});return m;}
   for(const c of m.chunks){const raw=await fetchWholeZoneBytes(new URL(c.path,base),c.bytes,{fetcher,signal});if(await digest(raw)!==c.sha256)throw new Error('Whole zone chunk digest mismatch');const planes=decodeWholeZoneChunk(raw,c);await uploadChunk(c,planes);stats.downloadedBytes+=raw.byteLength;stats.bakedGPUDataDownloadedBytes+=raw.byteLength;stats.pinnedChunks++;stats.pinnedBytes+=planes.vertices.byteLength+planes.indices.byteLength;stats.preparedResources++;if(stats.pinnedChunks%64===0)progress(stats.pinnedChunks,m.chunks.length);}
   if(stats.pinnedChunks!==m.chunks.length||stats.pinnedBytes+stats.textureBytes!==m.gpuBytes)throw new Error('Incomplete whole zone resource residency');
   await finishGpu();assertAlive();Object.assign(stats,{phase:'ready',ready:true,startupGpuCompleted:true});return m;
@@ -174,5 +176,5 @@ export function createWholeZoneSelection(catalog,stats){
     const merged=new Int32Array(out.length+input.length);merged.set(out);merged.set(input,out.length);let idHash=2166136261;const firstIds=[];for(let at=0;at<out.length;at+=8){idHash=Math.imul(idHash^out[at],16777619)>>>0;if(firstIds.length<16)firstIds.push(out[at]);}
     Object.assign(stats,{currentPinnedDraws:pinned,currentMergedDraws:merged.length/8,verifiedObjectCells:unchanged,mutatedObjectCells:mutated,animatedObjectCells:animated,authoredBaselineObjectCells:baseline,selectedObjectCells:knownCells,selectedPinnedFirstIds:firstIds,selectedPinnedIdHash:idHash,maskedObjectCellSamples:changedSamples.concat(animatedSamples).slice(0,8),authoredBaselineCellSamples:baselineSamples});return merged;
   }
-  return {frame,merge};
+  return {frame,merge,get scope(){return current?.v||null;},get generationKey(){return lastEpoch?.join(':')||'';}};
 }
