@@ -23,6 +23,7 @@ public final class BrowserBootstrap {
     public static native void reportBaselineReuseWork(double[] counters);
     public static native void reportCloneTemplateWork(double[] counters);
     public static native void reportWholeRamWork(int[] counters);
+    public static native void reportWholeRamRoofSelection(int[] counters);
     public static native void reportRegionHandoffTrace(String phases,double[] values);
     public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportCombatState(String username,String names,int[] counters);
@@ -271,7 +272,7 @@ public final class BrowserBootstrap {
                                 int[] batchWork=snapshotBatchedModelWork(observedScene,Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel"));
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeZone")){reportWholeZoneWork(snapshotWholeZoneWork());reportStaticSceneWork(snapshotStaticSceneWork());reportStaticIdentityWork(snapshotStaticIdentityWork(client));reportBaselineReuseWork(snapshotBaselineReuseWork(client));reportCloneTemplateWork(snapshotCloneTemplateWork(client));}
-                                if(Boolean.getBoolean("spoiledmilk.browserWholeRam"))reportWholeRamWork(snapshotWholeRamWork());
+                                if(Boolean.getBoolean("spoiledmilk.browserWholeRam")){reportWholeRamWork(snapshotWholeRamWork());if(publicAlpha)reportWholeRamRoofSelection(orsc.BrowserWholeOverworldRam.getRoofSelectionWork());}
                                 if(Boolean.getBoolean("spoiledmilk.browserLoadProfile")){
                                     double[] trace=snapshotRegionHandoffTrace();
                                     if(trace[2]!=lastHandoffRevision){

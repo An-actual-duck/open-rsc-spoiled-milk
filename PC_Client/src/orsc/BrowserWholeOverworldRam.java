@@ -10,6 +10,16 @@ import java.util.*;
 
 /** Private full-source + consumed CPU preparation owner. No local server authority is cached. */
 public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry.Provider {
+    private static final boolean PUBLIC_ROOF_FALLBACK=Boolean.getBoolean("spoiledmilk.browserPublicAlpha");
+    private static volatile java.lang.ref.WeakReference<BrowserWholeOverworldRam> roofSelection=new java.lang.ref.WeakReference<BrowserWholeOverworldRam>(null);
+    static void validateInitialRoofOption(boolean preparedHiddenRoofs) {
+        if(preparedHiddenRoofs!=Config.C_HIDE_ROOFS&&!PUBLIC_ROOF_FALLBACK)throw new IllegalStateException("Whole-RAM CPU roof option mismatch: prepared.hiddenRoofs="+preparedHiddenRoofs+", Config.C_HIDE_ROOFS="+Config.C_HIDE_ROOFS+"; bake matching CPU data without changing the player setting");
+    }
+    public static int[] getRoofSelectionWork() {
+        BrowserWholeOverworldRam owner=roofSelection.get();boolean ready=owner!=null&&owner.ready;
+        boolean hidden=owner!=null&&owner.hiddenRoofs,compatible=ready&&hidden==Config.C_HIDE_ROOFS;
+        return new int[]{1,PUBLIC_ROOF_FALLBACK?1:0,ready?1:0,hidden?1:0,Config.C_HIDE_ROOFS?1:0,compatible?1:0};
+    }
     private final byte[] source;
     private final WholeRamPrepared prepared;
     private final String manifestSha;
@@ -52,7 +62,7 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
             File data=new File(dir,"prepared.bin");if(data.length()!=product.getLong("bytes")||data.length()<1||data.length()>WholeRamData.MAX_BYTES)throw new IllegalStateException("Whole-RAM prepared payload budget");MessageDigest digest=MessageDigest.getInstance("SHA-256");
             try(InputStream in=new BufferedInputStream(new DigestInputStream(new FileInputStream(data),digest),65536)){prepared=WholeRamPrepared.read(in);if(in.read()!=-1)throw new IllegalStateException("Whole-RAM prepared trailing data");}
             if(!hex(digest.digest()).equals(product.getString("sha256"))||!prepared.recipeKeys().equals(l0)||!prepared.queryKeys().equals(query)||prepared.pool.size()!=product.getInt("pageCount")||prepared.pool.bytes()!=product.getLong("retainedPrimitiveBytes")||prepared.modelTemplates()!=product.getInt("modelTemplateCount"))throw new IllegalStateException("Whole-RAM prepared hash/roster/accounting mismatch");
-            hiddenRoofs=product.getBoolean("hiddenRoofs");if(hiddenRoofs!=Config.C_HIDE_ROOFS)throw new IllegalStateException("Whole-RAM CPU roof option mismatch: prepared.hiddenRoofs="+hiddenRoofs+", Config.C_HIDE_ROOFS="+Config.C_HIDE_ROOFS+"; bake matching CPU data without changing the player setting");ready=true;prepareMillis=sat((System.nanoTime()-start)/1000000);WholeOverworldRamRegistry.install(this);BrowserWebGLBridge.publishWholeRamWork(diagnostics());
+            hiddenRoofs=product.getBoolean("hiddenRoofs");validateInitialRoofOption(hiddenRoofs);ready=true;roofSelection=new java.lang.ref.WeakReference<BrowserWholeOverworldRam>(this);prepareMillis=sat((System.nanoTime()-start)/1000000);WholeOverworldRamRegistry.install(this);BrowserWebGLBridge.publishWholeRamWork(diagnostics());
         }catch(IOException|GeneralSecurityException|RuntimeException e){BrowserWebGLBridge.clearWholeRamReady();throw new IllegalStateException("Cannot prepare complete private overworld RAM data",e);}catch(Error error){BrowserWebGLBridge.clearWholeRamReady();throw error;}
     }
     public boolean accepts(World world,NativeLayeredTerrainSnapshot snapshot){
@@ -63,6 +73,9 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
         WholeRamBasis checkedBasis=world.getWholeRamBasis();
         if(!world.isWholeRamSourceBasisSupported())throw new IllegalStateException("Whole-RAM native activation unsupported: nativeOnly="+WorldBuilderTerrainBootstrap.isNativeOnly()+", projectedSkip="+Renderer3DSettings.canSkipProjectedWorldCapture()+", editor="+WorldEditorBuildSettings.isEnabled()+", alignedOffset="+checkedBasis.offsetTilesX+","+checkedBasis.offsetTilesZ);
         if(!WorldBuilderTerrainBootstrap.isNativeOnly()||!Renderer3DSettings.canSkipProjectedWorldCapture())throw new IllegalStateException("Whole-RAM native/GPU ownership changed");
+        // A public account may prefer the other roof variant. Data remains verified
+        // and retained, but only the original parser may publish that variant.
+        if(PUBLIC_ROOF_FALLBACK&&Config.C_HIDE_ROOFS!=hiddenRoofs){validateSnapshotSource(snapshot);return false;}
         if(Config.C_HIDE_ROOFS!=hiddenRoofs)throw new IllegalStateException("Whole-RAM CPU roof option changed: expected="+hiddenRoofs+" actual="+Config.C_HIDE_ROOFS);
         validateSnapshotSource(snapshot);return true;
     }
@@ -86,7 +99,7 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
     }
     public Renderer3DWorldChunkFrame queryFrame(World world,int sx,int sy,int capturedOffsetTilesX,int capturedOffsetTilesZ){return prepared.queryFrame(sx,sy,capturedOffsetTilesX,capturedOffsetTilesZ);}
     public synchronized void avoidedBuild(){avoided=sat((long)avoided+1);}
-    public void validateOptions(int[] current){if(!ready||!Arrays.equals(settings,current)||hiddenRoofs!=Config.C_HIDE_ROOFS)throw new IllegalStateException("Whole-RAM render/CPU options changed");}
+    public void validateOptions(int[] current){if(!ready||!Arrays.equals(settings,current)||!PUBLIC_ROOF_FALLBACK&&hiddenRoofs!=Config.C_HIDE_ROOFS)throw new IllegalStateException("Whole-RAM render/CPU options changed");}
     public void invalidate(){ready=false;validated=null;WholeOverworldRamRegistry.clear();}
     public int[] diagnostics(){long bytes=source.length+prepared.pool.bytes();return new int[]{1,ready?1:0,ready?1:0,1797,46101718,prepared.recipes(),prepared.queryCells(),(int)bytes,(int)(bytes>>>32),activations,hits,models,(int)copiedBytes,(int)(copiedBytes>>>32),avoided,validations,prepareMillis,activationMillis};}
 }
