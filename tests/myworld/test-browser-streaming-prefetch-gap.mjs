@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {createBoundedPrefetch} from '../../tools/browser-gameplay/web/browser-bounded-prefetch.js';
+import {createBoundedFrameGap} from '../../tools/browser-gameplay/web/browser-bounded-frame-gap.js';
+const chunks=[];let id=1000000;
+for(let role=0;role<=1;role++)for(let plane=0;plane<3;plane++)for(let x=-10;x<=10;x++)for(let y=-10;y<=10;y++)chunks.push({id:id++,role,plane,cellX:x,cellY:y});
+const byId=new Map(chunks.map(c=>[c.id,c])),planner=createBoundedPrefetch({chunks}),scope=(x,y,active=1)=>[1,active,0,0,0,x,y];
+const first=planner.plan(scope(0,0));assert.equal(first.length,140);assert.equal(new Set(first).size,140);
+for(const id of first){const c=byId.get(id),scale=c.role===0?1:2;
+  assert(c.role===0||c.plane===0);assert(!(c.cellX>=-2*scale&&c.cellX<3*scale&&c.cellY>=-2*scale&&c.cellY<3*scale));
+  const withinX=c.cellX>=-2*scale&&c.cellX<3*scale,withinY=c.cellY>=-2*scale&&c.cellY<3*scale;assert(withinX!==withinY,'prefetch included diagonal corner or extra window');
+}
+assert.equal(planner.plan(scope(0,0)),first,'unchanged center rebuilt lookahead plan');
+const right=planner.plan(scope(1,0));assert(right.length>0);assert.equal(byId.get(right[0]).cellX,4);assert.equal(byId.get(right[0]).role,0);assert.equal(planner.plan(scope(1,0)),right,'heading was lost on next unchanged frame');
+const left=planner.plan(scope(0,0));assert.equal(byId.get(left[0]).cellX,-3);assert.deepEqual(planner.plan(scope(0,0,0)),[]);assert.equal(planner.plan(scope(0,0)).length,140);
+const stats={worldFrameSamples:[],javaWorldFrames:9},gaps=createBoundedFrameGap(stats);gaps.held(100,90);gaps.held(4200,90);
+assert.equal(stats.completedHeldIntervals,0);assert.equal(stats.pendingHeldMilliseconds,4100);assert.equal(stats.javaWorldFrames,9);assert.deepEqual(stats.worldFrameSamples,[]);
+gaps.resumed(4300);assert.equal(stats.lastHeldIntervalMilliseconds,4200);assert.equal(stats.lastHeldFreshGapMilliseconds,4210);assert.equal(stats.maxHeldFreshGapMilliseconds,4210);assert.equal(stats.completedHeldIntervals,1);
+gaps.held(4400,4350);gaps.resumed(4500);assert.equal(stats.lastHeldFreshGapMilliseconds,150);assert.equal(stats.maxHeldFreshGapMilliseconds,4210);
+gaps.held(5000);gaps.resumed(5500);assert.equal(stats.lastHeldFreshGapMilliseconds,0,'startup image fabricated prior fresh frame');assert.equal(stats.lastHeldIntervalMilliseconds,500);assert.equal(stats.pendingHeldMilliseconds,0);
+console.log('PASS initial cardinal prefetch, cached movement priority, exact source-cell/signed fallback membership and honest four-second held intervals; no hardware timing claim.');
