@@ -15942,6 +15942,10 @@ public final class mudclient implements Runnable {
 				RendererSettingsPanel.REMASTERED_SPRITES);
 		}
 
+		index = addSettingsRow(index,
+			"@whi@Middle mouse - " + DesktopMiddleMouseSettings.getMode().label,
+			RendererSettingsPanel.MIDDLE_MOUSE);
+
 		// mouse button(s) - byte index 1
 		if (this.optionMouseButtonOne) {
 			index = addSettingsRow(index, "@whi@Mouse buttons - @red@One", 1);
@@ -16270,8 +16274,11 @@ public final class mudclient implements Runnable {
 			case REMASTERED_SPRITES:
 				this.toggleRemasteredSprites();
 				break;
-			case MIDDLE_MOUSE:
-				this.cycleDesktopMiddleMouseMode();
+			case BROWSER_FIT:
+				BrowserDisplaySettings.request(BrowserDisplaySettings.FIT_TO_TAB);
+				break;
+			case BROWSER_FULLSCREEN:
+				BrowserDisplaySettings.request(BrowserDisplaySettings.FULLSCREEN);
 				break;
 			case HIDE_ROOFS:
 				this.toggleRoofVisibilitySetting();
@@ -16496,6 +16503,10 @@ public final class mudclient implements Runnable {
 
 		if (settingIndex == RendererSettingsPanel.REMASTERED_SPRITES && this.mouseButtonClick == 1) {
 			toggleRemasteredSprites();
+		}
+
+		if (settingTab == 1 && settingIndex == RendererSettingsPanel.MIDDLE_MOUSE && this.mouseButtonClick == 1) {
+			this.cycleDesktopMiddleMouseMode();
 		}
 
 		// one or two mouse button(s) - byte index 1

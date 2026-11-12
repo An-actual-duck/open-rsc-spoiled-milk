@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[2]
 JAVA=Path(os.environ.get('JAVA_HOME','/home/justin/jdk8u482-b08'))/'bin'
 JAR=ROOT/'Client_Base/Open_RSC_Client.jar'
 with tempfile.TemporaryDirectory(prefix='browser-controls-settings-') as temp:
-    sources=[ROOT/'Client_Base/src/orsc/RendererSettingsPanel.java',ROOT/'Client_Base/src/orsc/RendererGeometrySettings.java',ROOT/'PC_Client/src/orsc/ORSCApplet.java',ROOT/'PC_Client/src/orsc/BrowserMiddleMouseInput.java',
+    sources=[ROOT/'Client_Base/src/orsc/BrowserDisplaySettings.java',ROOT/'Client_Base/src/orsc/RendererSettingsPanel.java',ROOT/'Client_Base/src/orsc/RendererGeometrySettings.java',ROOT/'PC_Client/src/orsc/ORSCApplet.java',ROOT/'PC_Client/src/orsc/BrowserMiddleMouseInput.java',
              ROOT/'PC_Client/src/orsc/DesktopMiddleMouseOrbit.java',ROOT/'tests/myworld/BrowserControlsSettingsFixture.java']
     subprocess.run([str(JAVA/'javac'),'-source','8','-target','8','-cp',str(JAR),'-d',temp,*map(str,sources)],check=True)
     subprocess.run([str(JAVA/'java'),'-Djava.awt.headless=true','-cp',temp+os.pathsep+str(JAR),'orsc.BrowserControlsSettingsFixture'],check=True)

@@ -33,7 +33,7 @@ final class RendererSettingsPanel {
 	private static final int SCALE_MINUS_X_OFFSET = 96;
 	private static final int SCALE_LABEL_X_OFFSET = 73;
 	private static final int SCALE_PLUS_X_OFFSET = 45;
-	private static final int LEGACY_SCALING_ROW_INDEX = RemasteredSpriteSettings.isAvailable() ? 3 : 2;
+	private static final int LEGACY_SCALING_ROW_INDEX = RemasteredSpriteSettings.isAvailable() ? 2 : 1;
 
 	private static final int ACTION_SCALING_ROW = 49;
 	private static final int ACTION_SCALING_TYPE = 46;
@@ -44,6 +44,8 @@ final class RendererSettingsPanel {
 	private static final int ACTION_SHADOW_QUALITY = 74;
 	private static final int ACTION_GEOMETRY = 62;
 	private static final int ACTION_WINDOW_MODE = 63;
+	private static final int ACTION_BROWSER_FIT = 75;
+	private static final int ACTION_BROWSER_FULLSCREEN = 76;
 	private static final int ACTION_TERRAIN_VARIATION = 64;
 	private static final int ACTION_HIDE_ROOFS = 26;
 	private static final int ACTION_HIDE_UNDERGROUND_FLICKER = 42;
@@ -61,7 +63,8 @@ final class RendererSettingsPanel {
 		WINDOW_MODE,
 		TERRAIN_VARIATION,
 		REMASTERED_SPRITES,
-		MIDDLE_MOUSE,
+		BROWSER_FIT,
+		BROWSER_FULLSCREEN,
 		HIDE_ROOFS,
 		HIDE_UNDERGROUND_FLICKER
 	}
@@ -337,7 +340,10 @@ final class RendererSettingsPanel {
 			addRow(rows, "@whi@Sprites: "
 				+ (state.remasteredSprites ? "@cya@Enhanced" : "@gre@Classic"), REMASTERED_SPRITES);
 		}
-		addRow(rows, "@whi@Middle mouse - " + state.middleMouseLabel, MIDDLE_MOUSE);
+		if (BrowserDisplaySettings.isAvailable()) {
+			addRow(rows, "@whi@Fit to tab - " + (BrowserDisplaySettings.isFitToTab() ? "@gre@On" : "@red@Off"), ACTION_BROWSER_FIT);
+			addRow(rows, "@whi@Fullscreen - " + (BrowserDisplaySettings.isFullscreen() ? "@gre@On" : "@red@Off"), ACTION_BROWSER_FULLSCREEN);
+		}
 
 		if (!state.openGLPrimary && !state.browserGpu) {
 			addRow(rows, "@whi@Scaling - ", ACTION_SCALING_ROW);
@@ -420,8 +426,9 @@ final class RendererSettingsPanel {
 		if (selectedAction == REMASTERED_SPRITES) {
 			return RemasteredSpriteSettings.isAvailable() ? Action.REMASTERED_SPRITES : null;
 		}
-		if (selectedAction == MIDDLE_MOUSE) {
-			return Action.MIDDLE_MOUSE;
+		if (BrowserDisplaySettings.isAvailable()) {
+			if (selectedAction == ACTION_BROWSER_FIT) return Action.BROWSER_FIT;
+			if (selectedAction == ACTION_BROWSER_FULLSCREEN) return Action.BROWSER_FULLSCREEN;
 		}
 		if (selectedAction == ACTION_HIDE_ROOFS && state.roofToggleAvailable) {
 			return Action.HIDE_ROOFS;

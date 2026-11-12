@@ -87,7 +87,6 @@ def main() -> None:
 
     expected_rows = (
         ("Preset", "state.rendererProfileLabel", "ACTION_RENDERER_PROFILE"),
-        ("Middle mouse", "state.middleMouseLabel", "MIDDLE_MOUSE"),
         ("Aspect Ratio", "state.aspectLabel", "ACTION_RENDER_SURFACE"),
         ("Lighting", "state.lightingLabel", "ACTION_LIGHTING"),
         ("Geometry", "state.geometryLabel", "ACTION_GEOMETRY"),
@@ -117,7 +116,6 @@ def main() -> None:
     for action, handler in (
         ("RENDER_SURFACE", "cycleRenderSurfaceMode();"),
         ("RENDERER_PROFILE", "cycleOpenGLRendererProfileMode();"),
-        ("MIDDLE_MOUSE", "cycleDesktopMiddleMouseMode();"),
         ("FOG", "cycleOpenGLFogMode();"),
         ("LIGHTING", "cycleOpenGLLightingMode();"),
         ("GEOMETRY", "cycleOpenGLGeometryMode();"),

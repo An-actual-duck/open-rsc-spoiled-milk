@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the persisted desktop middle-mouse Graphics option."""
+"""Validate the persisted desktop middle-mouse Interface option."""
 
 import subprocess
 import tempfile
@@ -127,12 +127,12 @@ def main() -> None:
     require(settings, "private static volatile Mode mode = Mode.WITH_TILT;", "new default")
     require(open_rsc, "DesktopMiddleMouseSettings.loadFromClientSettings(props);", "startup load")
     require(client, "DesktopMiddleMouseSettings.saveToClientSettings(properties);", "merged save")
-    require(client, "case MIDDLE_MOUSE:", "Graphics action adapter")
-    require(client, "this.cycleDesktopMiddleMouseMode();", "Graphics option cycling")
+    require(client, "settingTab == 1 && settingIndex == RendererSettingsPanel.MIDDLE_MOUSE", "Interface action adapter")
+    require(client, "this.cycleDesktopMiddleMouseMode();", "Interface option cycling")
 
-    require(panel, "static final int MIDDLE_MOUSE = 73;", "stable Graphics action ID")
-    require(panel, '"@whi@Middle mouse - " + state.middleMouseLabel', "Graphics row label")
-    require(panel, "return Action.MIDDLE_MOUSE;", "Graphics row dispatch")
+    require(panel, "static final int MIDDLE_MOUSE = 73;", "stable Interface action ID")
+    require(client, '"@whi@Middle mouse - " + DesktopMiddleMouseSettings.getMode().label', "Interface row label")
+    forbid(panel, 'addRow(rows, "@whi@Middle mouse', "Graphics duplicate row")
     require(panel, "DesktopMiddleMouseSettings.getMode().label", "live mode label capture")
 
     require(

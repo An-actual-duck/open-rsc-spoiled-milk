@@ -26,7 +26,7 @@ export function createWorldCover({document,window,display,onGateChange=()=>{}}) 
     const phase=error?'error':state?.phase||'login',streaming=phase==='streaming',next=phase==='loading'||phase==='error'||streaming;
     keyboardBlocked=next&&(!streaming||state?.blocksKeyboard!==false);
     const heading=phase==='error'?'Unable to load the world':streaming?'Updating area…':'Loading world…';if(title.textContent!==heading)title.textContent=heading;
-    const message=phase==='error'?(error||state?.reason||'Graphics could not finish loading.')+' Stop and restart the private test to retry.':state?.required>state?.uploaded?`Preparing terrain and objects (${state.uploaded} / ${state.required})`:state?.reason||'Preparing graphics';if(detail.textContent!==message)detail.textContent=message;
+    const message=phase==='error'?'The area could not be prepared. Restart the game to retry.':state?.required>state?.uploaded?`Preparing terrain and objects (${state.uploaded} / ${state.required})`:phase==='loading'?'Preparing game data':'Preparing nearby area';if(detail.textContent!==message)detail.textContent=message;
     Object.assign(cover.style,{background:streaming?'transparent':'#101820',pointerEvents:streaming?'none':'auto',justifyContent:streaming?'flex-end':'center',font:streaming?'12px system-ui':'16px system-ui'});
     title.style.display=streaming?'none':'';detail.style.background=streaming?'#101820cc':'';detail.style.padding=streaming?'4px 8px':'';
     cover.style.display=next?'flex':'none';cover.setAttribute('aria-busy',next?'true':'false');

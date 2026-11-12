@@ -33,6 +33,7 @@ public final class BrowserBootstrap {
     private static native void wsWrite(int socket, byte[] bytes);
     private static native void wsClose(int socket);
     private static native int[] awaitMiddleMouseEvent();
+    private static native int[] syncDisplaySettings(int action);
     private static native void reportInputError(String message);
 
     public static void main(String[] args) throws Exception {
@@ -194,15 +195,15 @@ public final class BrowserBootstrap {
                     BenchmarkCandidatePolicies.TerrainQueryDiagnostics terrainDiagnostics=new BenchmarkCandidatePolicies.TerrainQueryDiagnostics();
                     while (true) {
                         if(startupDiagnostics!=null)startupDiagnostics.sample("observer");
+                        orsc.BrowserDisplaySettings.update(syncDisplaySettings(orsc.BrowserDisplaySettings.takeRequest()));
                         Object client = clientField.get(null);
-                        if (client != null && webgl && Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
+                        // Only an explicit repeatable fixture owns the camera. Benchmark
+                        // optimizations also serve normal exploration and must not reset it.
+                        if (client != null && fixedCamera != null) {
                             orsc.mudclient actual=(orsc.mudclient)client;
-                            if(fixedCamera==null){actual.setCameraZoomSetting(75);actual.cameraRotation=128;}
-                            else {
-                                int[] camera=fixedCamera.observe(actual);
-                                if(combatWorkload==null)reportRepeatableState(actual.getUsername(),camera);
-                                else reportCombatState(actual.getUsername(),BrowserCombatWorkload.NAMES,combatWorkload.observe(actual,camera));
-                            }
+                            int[] camera=fixedCamera.observe(actual);
+                            if(combatWorkload==null)reportRepeatableState(actual.getUsername(),camera);
+                            else reportCombatState(actual.getUsername(),BrowserCombatWorkload.NAMES,combatWorkload.observe(actual,camera));
                         }
                         if (client != null) {
                             if(inputDiagnostics && inputDiagnosticSamples<64) {

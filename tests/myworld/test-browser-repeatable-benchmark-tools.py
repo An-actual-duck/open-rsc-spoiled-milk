@@ -20,6 +20,8 @@ def main():
     digest=hashlib.sha256(source[begin:end].encode()).hexdigest()
     assert digest=='01a412965f4ee56080b8cba692cec7a76e25bb4db2455e9c46a86a890613242e','Literal325 alignment function changed'
     observer=(ROOT/'tools/browser-gameplay/src/orsc/browser/BrowserBootstrap.java').read_text().split('Thread observer =',1)[1].split('static int[] snapshotBatchedModelWork',1)[0]
+    assert 'if (client != null && fixedCamera != null)' in observer
+    assert 'actual.setCameraZoomSetting' not in observer and 'actual.cameraRotation=' not in observer, 'Ordinary exploration observer must not force camera'
     assert observer.count('.getScene()')==1,'Observer must use one lifecycle snapshot rather than unchecked repeated Scene reads'
     assert 'snapshotBatchedModelWork(observedScene,' in observer
     assert 'surfaceAlignment'not in source and 'browserBenchmarkAlignment'not in source
