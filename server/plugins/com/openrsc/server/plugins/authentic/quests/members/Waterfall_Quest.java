@@ -349,7 +349,7 @@ public class Waterfall_Quest implements QuestInterface, TalkNpcTrigger,
 		} else if (obj.getID() == 469) {
 			mes("you jump into the wild rapids below");
 			delay(3);
-			player.teleport(654, 485, false);
+			player.teleport(654, 485, 0, false);
 			player.damage(DataConversions.random(4, 10));
 			say(player, null, "ouch!");
 			mes("you tumble over the water fall");
@@ -467,7 +467,7 @@ public class Waterfall_Quest implements QuestInterface, TalkNpcTrigger,
 				delay(3);
 				mes("flushing you back into the river");
 				delay(3);
-				player.teleport(654, 485, false);
+				player.teleport(654, 485, 0, false);
 				player.damage(DataConversions.random(4, 10));
 				say(player, null, "ouch!");
 				mes("you tumble over the water fall");

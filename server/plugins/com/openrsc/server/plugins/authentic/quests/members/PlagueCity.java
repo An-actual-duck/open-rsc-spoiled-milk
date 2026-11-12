@@ -912,19 +912,19 @@ public class PlagueCity implements QuestInterface, TalkNpcTrigger,
 		}
 		else if (obj.getID() == 448) {
 			player.message("you climb up the mud pile");
-			player.teleport(620, 578, false);
+			player.teleport(620, 578, 0, false);
 		}
 		else if (obj.getID() == 449) {
 			//gasmask no longer needed only if plague city and biohazard are done
 			if (player.getQuestStage(this) == -1 && player.getQuestStage(Quests.BIOHAZARD) == -1) {
 				player.message("you climb through the sewer pipe");
-				player.teleport(632, 589, false);
+				player.teleport(632, 589, 0, false);
 				return;
 			}
 			if (player.getQuestStage(getQuestId()) >= 5 || player.getQuestStage(getQuestId()) == -1) {
 				if (player.getCarriedItems().getEquipment().hasEquipped(ItemId.GASMASK.id())) {
 					player.message("you climb through the sewer pipe");
-					player.teleport(632, 589, false);
+					player.teleport(632, 589, 0, false);
 				} else {
 					player.message("You should wear your gasmask");
 					player.message("Before entering west Ardougne");

@@ -87,7 +87,7 @@ public class GnomeGlider implements TalkNpcTrigger, OpLocTrigger {
 					delay(3);
 					player.teleport(221, 3567);
 					say(player, n, "whhaaaaaaaaaagghhh");
-					player.teleport(389, 753);
+					player.teleport(389, 753, 0, false);
 					say(player, n, "ouch");
 				} else if (menu == 1) {
 					say(player, n, "take me to Varrock");
@@ -101,7 +101,7 @@ public class GnomeGlider implements TalkNpcTrigger, OpLocTrigger {
 					delay(3);
 					player.teleport(221, 3567);
 					say(player, n, "whhaaaaaaaaaagghhh");
-					player.teleport(58, 504);
+					player.teleport(58, 504, 0, false);
 					say(player, n, "ouch");
 				} else if (menu == 2) {
 					say(player, n, "take me to Al kharid");
@@ -115,7 +115,7 @@ public class GnomeGlider implements TalkNpcTrigger, OpLocTrigger {
 					delay(3);
 					player.teleport(221, 3567);
 					say(player, n, "whhaaaaaaaaaagghhh");
-					player.teleport(88, 664);
+					player.teleport(88, 664, 0, false);
 					say(player, n, "ouch");
 				} else if (menu == 3) {
 					say(player, n, "take me to White wolf mountain");
@@ -129,7 +129,7 @@ public class GnomeGlider implements TalkNpcTrigger, OpLocTrigger {
 					delay(3);
 					player.teleport(221, 3567);
 					say(player, n, "whhaaaaaaaaaagghhh");
-					player.teleport(400, 461);
+					player.teleport(400, 461, 0, false);
 					say(player, n, "ouch");
 				} else if (menu == 4) {
 					say(player, n, "i'll stay here thanks");
@@ -157,7 +157,7 @@ public class GnomeGlider implements TalkNpcTrigger, OpLocTrigger {
 					delay(3);
 					player.teleport(221, 3567);
 					say(player, n, "whhaaaaaaaaaagghhh");
-					player.teleport(425, 764);
+					player.teleport(425, 764, 0, false);
 					say(player, n, "ouch");
 					Npc GNOME_PILOT = ifnearvisnpc(player, NpcId.GNOME_PILOT_KARAMJA_BROKEN.id(), 5);
 					if (GNOME_PILOT != null) {

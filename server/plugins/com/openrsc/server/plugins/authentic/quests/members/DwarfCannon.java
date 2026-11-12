@@ -649,7 +649,7 @@ public class DwarfCannon extends AbstractShop
 			player.teleport(616, 1435, false);
 		} else if (obj.getID() == 985) {
 			player.message("you climb down the ladder");
-			player.teleport(616, 493, false);
+			player.teleport(616, 493, 0, false);
 		} else if (obj.getID() == 982 && obj.getY() == 523) {
 			mes("you cautiously enter the cave");
 			delay(3);
@@ -657,7 +657,7 @@ public class DwarfCannon extends AbstractShop
 		} else if (obj.getID() == 983) {
 			mes("you climb the mudpile");
 			delay(3);
-			player.teleport(578, 521, false);
+			player.teleport(578, 521, 0, false);
 		} else if (obj.getID() == 986) {
 			mes("you search the crate");
 			delay(3);

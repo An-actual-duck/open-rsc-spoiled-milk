@@ -375,9 +375,9 @@ public class DragonSlayer implements QuestInterface, UseLocTrigger,
 				break;
 			case BOATS_LADDER:
 				if (player.getCache().hasKey("lumb_lady") && player.getCache().getInt("lumb_lady") == CRANDOR) {
-					player.teleport(409, 638, false);
+					player.teleport(409, 638, 0, false);
 				} else {
-					player.teleport(259, 641, false);
+					player.teleport(259, 641, 0, false);
 				}
 				player.message("You leave the ship");
 				break;
