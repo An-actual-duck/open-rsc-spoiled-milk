@@ -354,12 +354,14 @@ final class RendererSettingsPanel {
 				addRow(rows, "@whi@Aspect Ratio - " + state.aspectLabel, ACTION_RENDER_SURFACE);
 				addRow(rows, "@whi@Window mode - " + state.windowModeLabel, ACTION_WINDOW_MODE);
 			}
-			addRow(rows, "@whi@Lighting - " + state.lightingLabel, ACTION_LIGHTING);
+			boolean fixedBrowserPreset = BrowserPublicGraphicsPreset.isEnabled();
+			if (fixedBrowserPreset) addSection(rows, "Browser preset (fixed)");
+			addRow(rows, "@whi@Lighting - " + state.lightingLabel, fixedBrowserPreset ? SECTION_ROW : ACTION_LIGHTING);
 			addRow(rows, "@whi@Shadows - " + state.shadowQualityLabel, ACTION_SHADOW_QUALITY);
-			addRow(rows, "@whi@Geometry - " + state.geometryLabel, ACTION_GEOMETRY);
+			addRow(rows, "@whi@Geometry - " + state.geometryLabel, fixedBrowserPreset ? SECTION_ROW : ACTION_GEOMETRY);
 			addRow(rows, "@whi@Terrain Variation - " + state.terrainVariationLabel,
 				ACTION_TERRAIN_VARIATION);
-			addRow(rows, "@whi@Fog - " + state.fogLabel, ACTION_FOG);
+			addRow(rows, "@whi@Fog - " + state.fogLabel, fixedBrowserPreset ? SECTION_ROW : ACTION_FOG);
 			addTuningRows(rows, "Terrain shading", state.terrainReliefLevel,
 				RendererReliefSettings.MAX_LEVEL, TERRAIN_RELIEF_SLIDER);
 			addTuningRows(rows, "Object shading", state.objectReliefLevel,
@@ -388,6 +390,8 @@ final class RendererSettingsPanel {
 	}
 
 	private static Action actionFor(int selectedAction, State state) {
+		if (BrowserPublicGraphicsPreset.isEnabled()
+			&& (selectedAction == ACTION_FOG || selectedAction == ACTION_LIGHTING || selectedAction == ACTION_GEOMETRY)) return null;
 		if (selectedAction == ACTION_SCALING_TYPE && !state.openGLPrimary && !state.browserGpu) {
 			return Action.SCALING_TYPE;
 		}

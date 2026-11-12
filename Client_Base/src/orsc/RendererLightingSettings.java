@@ -16,16 +16,18 @@ final class RendererLightingSettings {
 	}
 
 	static Mode getMode() {
-		return mode;
+		return BrowserPublicGraphicsPreset.isEnabled() ? Mode.DIRECTIONAL : mode;
 	}
 
 	static Mode cycleMode() {
+		if (BrowserPublicGraphicsPreset.isEnabled()) return getMode();
 		Mode next = mode.next();
 		mode = next;
 		return next;
 	}
 
 	static Mode setMode(Mode next) {
+		if (BrowserPublicGraphicsPreset.isEnabled()) return getMode();
 		mode = next == null ? Mode.CLASSIC : next;
 		return mode;
 	}
@@ -49,6 +51,7 @@ final class RendererLightingSettings {
 	}
 
 	static void saveToClientSettings(Properties props) {
+		if (BrowserPublicGraphicsPreset.isEnabled()) return;
 		if (props != null) {
 			props.setProperty(LIGHTING_PROPERTY_KEY, mode.id);
 		}
