@@ -123,7 +123,7 @@ final class BoundaryLoadingDiagnostics {
 	}
 
 	static long now() {
-		return ENABLED ? System.nanoTime() : 0L;
+		return ENABLED || BrowserRegionHandoffTrace.ENABLED ? System.nanoTime() : 0L;
 	}
 
 	static void beginContextTransition(
@@ -134,6 +134,7 @@ final class BoundaryLoadingDiagnostics {
 		int logicalY,
 		int logicalLevel,
 		long startedNanos) {
+		if (BrowserRegionHandoffTrace.ENABLED) BrowserRegionHandoffTrace.begin(contextSequence, protocolVersion, serverTick, logicalX, logicalY, logicalLevel, startedNanos);
 		if (!ENABLED) {
 			return;
 		}
@@ -176,6 +177,7 @@ final class BoundaryLoadingDiagnostics {
 		int centerY,
 		boolean scopeChanged,
 		boolean predictedPublished) {
+		if (BrowserRegionHandoffTrace.ENABLED) BrowserRegionHandoffTrace.destination(logicalLevel, centerX, centerY, scopeChanged, predictedPublished);
 		if (!ENABLED) {
 			return;
 		}
@@ -207,6 +209,7 @@ final class BoundaryLoadingDiagnostics {
 		String phase,
 		long startedNanos,
 		long durationNanos) {
+		if (BrowserRegionHandoffTrace.ENABLED) BrowserRegionHandoffTrace.phase(owner, phase, startedNanos, durationNanos);
 		if (!ENABLED) {
 			return;
 		}
@@ -226,6 +229,7 @@ final class BoundaryLoadingDiagnostics {
 		int bytes,
 		long startedNanos,
 		long durationNanos) {
+		if (BrowserRegionHandoffTrace.ENABLED) BrowserRegionHandoffTrace.packet(opcode, bytes, startedNanos, durationNanos);
 		if (!ENABLED) {
 			return;
 		}
@@ -252,6 +256,7 @@ final class BoundaryLoadingDiagnostics {
 		int pageIndex,
 		int pageTotal,
 		int records) {
+		if (BrowserRegionHandoffTrace.ENABLED) BrowserRegionHandoffTrace.baseline(contextSequence, pageCategory, pageIndex, pageTotal, records);
 		if (!ENABLED) {
 			return;
 		}
@@ -280,6 +285,7 @@ final class BoundaryLoadingDiagnostics {
 		int wallCount,
 		int playerCount,
 		int npcCount) {
+		if (BrowserRegionHandoffTrace.ENABLED) BrowserRegionHandoffTrace.region(hardAreaLoad, planeChanged, baseDeltaX, baseDeltaZ, sceneryCount, wallCount);
 		if (!ENABLED) {
 			return;
 		}
@@ -656,6 +662,7 @@ final class BoundaryLoadingDiagnostics {
 		boolean playerReceipt,
 		boolean staticBaseline,
 		long elapsedMillis) {
+		if (BrowserRegionHandoffTrace.ENABLED) BrowserRegionHandoffTrace.atomic(completed, playerReceipt, staticBaseline, elapsedMillis);
 		if (!ENABLED) {
 			return;
 		}
@@ -687,6 +694,7 @@ final class BoundaryLoadingDiagnostics {
 		boolean stable,
 		int chunks,
 		int triangles) {
+		if (BrowserRegionHandoffTrace.ENABLED) BrowserRegionHandoffTrace.release(samples, stable, chunks, triangles);
 		if (!ENABLED) {
 			return;
 		}

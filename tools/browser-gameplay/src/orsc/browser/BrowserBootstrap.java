@@ -21,6 +21,7 @@ public final class BrowserBootstrap {
     public static native void reportStaticSceneWork(int[] counters);
     public static native void reportStaticIdentityWork(int[] counters);
     public static native void reportWholeRamWork(int[] counters);
+    public static native void reportRegionHandoffTrace(String phases,double[] values);
     public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportCombatState(String username,String names,int[] counters);
     public static native void reportModelPickBounds(boolean requested,boolean enabled);
@@ -173,6 +174,7 @@ public final class BrowserBootstrap {
                     java.lang.reflect.Field fpsField = orsc.mudclient.class.getDeclaredField("FPS"); fpsField.setAccessible(true);
                     java.lang.reflect.Field loopField = orsc.mudclient.class.getDeclaredField("selectedClientLoopMode"); loopField.setAccessible(true);
                     int inputDiagnosticSamples=0;
+                    double lastHandoffRevision=-1;
                     boolean modelPickReported=false,candidatePoliciesReported=false,optimizedDefaultsReported=false;
                     BenchmarkCandidatePolicies.RegionDiagnostics regionDiagnostics=new BenchmarkCandidatePolicies.RegionDiagnostics();
                     BenchmarkCandidatePolicies.TerrainQueryDiagnostics terrainDiagnostics=new BenchmarkCandidatePolicies.TerrainQueryDiagnostics();
@@ -249,6 +251,13 @@ public final class BrowserBootstrap {
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeZone")){reportWholeZoneWork(snapshotWholeZoneWork());reportStaticSceneWork(snapshotStaticSceneWork());reportStaticIdentityWork(snapshotStaticIdentityWork(client));}
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeRam"))reportWholeRamWork(snapshotWholeRamWork());
+                                if(Boolean.getBoolean("spoiledmilk.browserLoadProfile")){
+                                    double[] trace=snapshotRegionHandoffTrace();
+                                    if(trace[2]!=lastHandoffRevision){
+                                        String phases=(String)Class.forName("orsc.BrowserWebGLBridge").getMethod("getRegionHandoffTracePhases").invoke(null);
+                                        reportRegionHandoffTrace(phases,trace);lastHandoffRevision=trace[2];
+                                    }
+                                }
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
                                 reportRegionPreparationDiagnostics(regionCounts!=null,terrainDiagnostics.append(((orsc.mudclient)client).getWorld(),regionCounts));
@@ -264,6 +273,15 @@ public final class BrowserBootstrap {
             }
         }, "Private browser proof observer");
         observer.setDaemon(true); observer.start();
+    }
+
+    static double[] snapshotRegionHandoffTrace() throws ReflectiveOperationException {
+        Object work=Class.forName("orsc.BrowserWebGLBridge").getMethod("getRegionHandoffTrace").invoke(null);
+        if(!(work instanceof double[]))throw new IllegalStateException("Invalid region-handoff trace getter");
+        double[] v=(double[])work;
+        if(v.length<8||v[0]!=1||v[1]!=1||v[4]<0||v[4]>512||v[5]!=12||v.length!=8+(int)v[4]*12)
+            throw new IllegalStateException("Invalid bounded region-handoff trace schema");
+        return v.clone();
     }
 
     /** No receipt until Scene exists; a missing/invalid getter after startup stays fatal. */

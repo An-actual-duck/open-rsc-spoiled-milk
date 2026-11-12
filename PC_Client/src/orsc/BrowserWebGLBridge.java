@@ -48,6 +48,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private BrowserLoadProfile loadProfile;
     private static native void loadingWork(double[] values);
     public static boolean isLoadProfileEnabled(){return LOAD_PROFILE;}
+    public static double[] getRegionHandoffTrace(){return BrowserRegionHandoffTrace.snapshot();}
+    public static String getRegionHandoffTracePhases(){return BrowserRegionHandoffTrace.phaseNames();}
 
     private static final boolean OVERLAY_COVERAGE=Boolean.getBoolean("spoiledmilk.browserOverlayCoverage");
     private static final boolean OVERLAY_DELTA=Boolean.getBoolean("spoiledmilk.browserOverlayDeltaTransport");
@@ -153,7 +155,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         Throwable failure=null;
         try {presentFrame(image,commands,frame);}
         catch(RuntimeException|Error error){failure=error;if(WHOLE_ZONE)invalidateWholeZone();throw error;}
-        finally {loadProfile=null;double[] values=sample.finish(chunks.size(),residentChunkBytes);if(sample.report(lastLoadEpoch,lastLoadPath)){lastLoadEpoch=(long)values[6];lastLoadPath=(int)values[3];try{loadingWork(values);}catch(RuntimeException|Error diagnosticError){if(failure==null)throw diagnosticError;failure.addSuppressed(diagnosticError);}}}
+        finally {loadProfile=null;double[] values=sample.finish(chunks.size(),residentChunkBytes);BrowserRegionHandoffTrace.bridge(loadAttempt,(int)values[3],(long)values[6],0L,(long)(values[22]*1000000d));if(sample.report(lastLoadEpoch,lastLoadPath)){lastLoadEpoch=(long)values[6];lastLoadPath=(int)values[3];try{loadingWork(values);}catch(RuntimeException|Error diagnosticError){if(failure==null)throw diagnosticError;failure.addSuppressed(diagnosticError);}}}
     }
     private void presentFrame(BufferedImage image,Renderer2DFrame commands,Renderer3DFrame frame) {
         long frameStart=System.nanoTime();
