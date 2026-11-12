@@ -2,6 +2,7 @@ import {wholeRamPolicy,validateWholeRamConfig,decodeWholeRamWork} from './browse
 import {wholeZonePolicy} from './browser-whole-zone-policy.js';
 import {createBoundedInputGate} from './browser-bounded-input.js';
 import {browserLoadProfilePolicy,createBrowserLoadProfileCollector} from './browser-region-load-profile.js';
+import {createRegionHandoffTraceCollector} from './browser-region-handoff-profile.js';
 import {renderWorkerPolicy} from './browser-render-worker-protocol.js';
 import {optimizedRenderDefaults,canonicalRenderProperties} from './browser-optimized-render-defaults.js';
 import {createBatchedModelKernel} from './browser-batched-model-kernel.js';
@@ -116,8 +117,11 @@ if (pointer) window.browserProof.middleInput = pointer.stats;
 window.browserTransport = transport;
 const loadProfileCollector=createBrowserLoadProfileCollector({enabled:loadProfilePolicy.requested,gpu:()=>gpu});
 window.browserProof.loadProfile=loadProfileCollector.stats;
+const regionHandoffCollector=createRegionHandoffTraceCollector({enabled:loadProfilePolicy.requested,gpu:()=>gpu,stopped:()=>stopped});
+window.browserProof.regionHandoff=regionHandoffCollector.stats;
 const natives = {
   Java_orsc_BrowserWebGLBridge_loadingWork:loadProfileCollector.report,
+  Java_orsc_browser_BrowserBootstrap_reportRegionHandoffTrace:regionHandoffCollector.report,
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,
   Java_orsc_browser_BrowserBootstrap_reportWholeRamWork(lib,input){
     if(stopped)return;

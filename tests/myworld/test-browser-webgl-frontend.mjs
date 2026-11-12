@@ -77,6 +77,7 @@ const geometryModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tool
 const preparationCandidatesModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-preparation-candidates.js',import.meta.url),'utf8'),{context});
 const repeatableModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-repeatable-policy.js',import.meta.url),'utf8'),{context});
 const loadProfileModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-region-load-profile.js',import.meta.url),'utf8'),{context});
+const handoffProfileModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-region-handoff-profile.js',import.meta.url),'utf8'),{context});
 const renderWorkerPolicyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-render-worker-protocol.js',import.meta.url),'utf8'),{context});
 const physicalOutputModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-physical-output.js',import.meta.url),'utf8'),{context});
 const controlsModule = new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-benchmark-controls.js',import.meta.url),'utf8'),{context});
@@ -97,6 +98,7 @@ await module.link(specifier=>{
   if(specifier==='./browser-bounded-input.js')return boundedInputModule;
   if(specifier==='./browser-whole-zone-policy.js')return wholeZonePolicyModule;
   if(specifier==='./browser-region-load-profile.js')return loadProfileModule;
+  if(specifier==='./browser-region-handoff-profile.js')return handoffProfileModule;
   if(specifier==='./browser-render-worker-protocol.js')return renderWorkerPolicyModule;
   if(specifier==='./browser-optimized-render-defaults.js')return optimizedDefaultsModule;
   if(specifier==='./browser-batched-model-kernel.js')return modelBatchModule;

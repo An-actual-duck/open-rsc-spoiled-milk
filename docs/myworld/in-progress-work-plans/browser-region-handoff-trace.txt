@@ -1,0 +1,120 @@
+Browser region handoff trace — diagnostic milestone, November 12, 2026
+====================================================================
+
+This private, default-OFF diagnostic reuses existing boundary hooks. It changes
+no gameplay, loading, rendering, readiness, collision, picking or source gates.
+No browser/GPU timings or speedup are established by its offline fixtures.
+The manager owns real Firefox/profile acceptance and the next optimization.
+
+The accepted c038/ac790 baseline still has roughly 300 ms warm source crossings.
+Its whole-RAM activation counter totalled 67 ms over eight activations, and the
+first newly captured original walking console rows report loadNextRegion totals
+of about 20–30 ms. The remaining pause therefore requires context/packet and
+presentation-stage attribution, not an assumption that prepared recipe copying
+or loadNextRegion dominates. The existing CLIENT_REGION_TRANSITION console rows
+already expose nine Java region phases without a new build; keep using them.
+
+Implementation and controls
+----------------------------
+The existing private benchmark + loadprofile=on controls enable an independent
+BrowserRegionHandoffTrace primitive ring. Both spoiledmilk.browserBenchmark and
+spoiledmilk.browserLoadProfile must be true. Other combinations do not take
+trace clocks, emit rows or allocate the 512-row storage. Ordinary browser and
+native desktop defaults stay unchanged. No separate feature flag or new source
+admission is introduced.
+
+BoundaryLoadingDiagnostics keeps its original desktop/JMX/session gate unchanged.
+Only its existing begin-context, destination, phase, packet, baseline, region,
+atomic-activation and presentation-release hooks mirror into the browser ring.
+now() supplies a clock under the browser diagnostic gate so existing duration
+expressions are useful; no ManagementFactory/JMX/file diagnostic is enabled.
+The source-only bridge additionally mirrors at most 32 completed Java attempts
+per context. Its path/epoch match existing BrowserLoadProfile fields; completion
+here may represent a held proposal, not a fresh Worker-rendered world frame.
+
+No PacketHandler, mudclient, World, shader, geometry or consumer-body edit is
+needed for this milestone. Their existing calls remain the authority. The bridge
+has only snapshot/name getters and the bounded diagnostic mirror. Bootstrap's
+existing one-second observer reads owned snapshots only when the diagnostic is
+requested and exports only changed event ordinals. Missing requested getters
+fail the private observer instead of silently claiming implementation support.
+
+Data contract
+--------------
+Java output has eight header words:
+ schema=1, enabled=1, totalOrdinal, overwritten, rows, stride=12,
+ snapshotJavaMilliseconds, latestContextSequence.
+Rows are chronological and contain:
+ ordinal, contextSequence, kind, phaseCode, observedJavaMilliseconds,
+ startJavaMillisecondsOrMinusOne, durationMilliseconds, payload a/b/c/d/e.
+
+Kinds and payloads:
+ 1 context: protocol, serverTick, logicalX, logicalY, signedLevel.
+ 2 destination: signedLevel, centerX, centerY, scopeChanged, predictedPublished.
+ 3 phase: fixed phase dictionary, timing fields; payload is zero.
+ 4 packet: opcode, packetBytes. At most 128 packet rows per context.
+ 5 baseline: packetContextSequence, category, pageIndex, pageTotal, recordCount.
+ 6 region: hard/changed bit flags, baseDX, baseDY, sceneryCount, wallCount.
+ 7 atomic: completed, playerReceipt, staticBaselineReceipt, elapsedMillis.
+ 8 Java presentation release: stableSamples, stable, chunks, triangles.
+ 9 Java bridge return: attempt, path, sourceEpoch. At most 32 per context.
+
+Durations can overlap. A -1 start means the existing hook supplied no start:
+do not manufacture a chronological start by subtracting duration from observation.
+The Java-relative clock origin and browser performance clock remain separate.
+Observer receivedBrowserMs is receipt time, not the original Java event time.
+The context begin event ordinal disambiguates reused context sequences after
+reconnect. World-space identity is not retained by the existing context hook;
+use this fixture's separately verified global source contract and signed level,
+not the trace alone as a cross-world authority proof.
+
+The frontend validates the complete numeric/dictionary shape before publication,
+copies borrowed Java values by index, deduplicates ordinals, reports overwritten
+gaps, and retains at most 2048 events and 128 receipt observations. Each receipt
+also snapshots the current GPU source epoch, readiness, fresh/held counters,
+last fresh browser time and Worker submitted/completed IDs. These are sampled
+receipt-time correlations, not exact event-time GPU execution or scanout clocks.
+Raw histories live under browserProof.regionHandoff, separate from existing GPU
+state so ordinary frequent route polls do not duplicate the complete ring.
+
+Capture and interpretation
+---------------------------
+Build a fresh full-source client, GPU catalogue and prepared-RAM data bound to
+that exact artifact, then stage with the existing private loadprofile=on option.
+Never rebind earlier cooks or transplant classes into a production JAR. Preserve
+the accepted c038/ac790 stage and all baseline evidence for same-visual comparison.
+
+Capture window.browserProof from the runtime iframe after the existing original
+seven-leg route. regionHandoff.events contains decoded rows; observations contain
+clock-domain and backend/Worker snapshots. Keep direct CLIENT_REGION_TRANSITION
+console rows and the original disjoint fresh-world gap reconstruction alongside
+this trace. Do not count held images as FPS or sum nested phase timers. First
+incoming context means Java dispatch start, not original socket-arrival time or
+server send time. A source context may be superseded; keep its incomplete rows.
+
+Offline checks
+---------------
+RegionHandoffTraceFixture invokes the actual existing BoundaryLoadingDiagnostics
+hooks and verifies all four private policy combinations, chronological ring wrap,
+defensive copies, signed levels and per-context packet/bridge bounds. Collector
+fixtures exercise shape rejection without partial mutation, deduplication,
+overwrite gaps, retention caps, indexed borrowed-array reads and disposal.
+The maintained frontend fixture runs with the actual new imported module.
+A complete maintained client source build and Bootstrap source compilation are
+required before handoff. These CPU checks do not establish browser timing,
+JMX emulation behavior or the size of the remaining optimization opportunity.
+
+Validation result for this diagnostic milestone
+-----------------------------------------------
+The complete maintained client source build passed. The actual resulting JAR
+passed 536 boundary-hook assertions across four gates (including 524 in enabled
+mode), plus 42 frontend collector assertions. Bootstrap source compilation and
+the maintained mocked frontend contract passed. Fixture runner:
+ python3 tests/myworld/browser-region-handoff/run.py --jar CLIENT_JAR --out NEW_RUN
+Evidence is in this worker's output/tests/browser-region-handoff/full-jar-1/
+and adjacent build/frontend/Bootstrap logs. No runtime classes were overlaid.
+
+Workspace layout checking reports the worker's inherited legacy asset/output
+roots (including assets/sprites and older loose test folders); this task neither
+created nor deleted them. All new outputs use the declared tests/diagnostics
+categories. The manager's canonical checkout layout is a separate final check.
