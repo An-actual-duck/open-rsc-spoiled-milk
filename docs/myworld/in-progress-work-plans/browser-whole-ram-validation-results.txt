@@ -219,3 +219,25 @@ JAR4052d05892b9498b6ecb453a88d9128f6ae509eb1cbfaeb4d95b47e759f8d991.
 This class equivalence supports the earlier literal-versus-retained semantic
 oracles; fresh prepared-data admission and basis proofs remain separately bound
 to the integrated JAR and its newly cooked data.
+
+Fresh integrated-data proof completed without --prepared-only:
+  JAR: manager output/builds/browser-bounded-streaming-cpu/integrated-1/client.jar
+  RAM: manager output/builds/browser-whole-ram-bake/bounded-cpu-1/whole-ram
+  Evidence: ai-3 output/tests/browser-reuse-source-guards/integrated-basis-1
+    and integrated-reader-1 (result.json plus preserved compilation/runtime logs).
+verify-basis.py --hidden-roofs true passes204583 checks with the actual complete
+production reader. The five carrier cases retain the same qualified TERRAIN
+query-light counts0/9319/9954/9350/0; coordinates, heights, roof bits, relief and
+indoor fields, other attributes and effective local model light remain exact.
+Actual reader hits/activations advance six times, avoided builds five times;
+signed-level fallbacks and stale carrier/preload guards remain exercised.
+verify-reader.py --hidden-roofs true separately passes33 checks, including all
+15 malformed/source/options/patch/basis/artifact/refusal cases. Its retained
+primitive/source ledger remains275990134 bytes. These tests use the fresh
+complete data bound to cc7022, without production-class overlays or a custom
+provider/readiness injection. They preserve the original exception rather than
+changing values to make comparisons pass; they do not measure GPU or FPS.
+
+Source-review receipt: ai-3 output/tests/browser-reuse-source-guards/source-review-1.
+Both unchanged guard programs pass against743d4c285; the refreshed closed query
+guard rejects superseded9f0184ada as expected. No flat-guard expectations changed.
