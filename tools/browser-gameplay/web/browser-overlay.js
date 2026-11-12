@@ -4,7 +4,7 @@ import {validateOverlayDelta} from './browser-overlay-delta.js';
 import {createBrowserRetainedFrame} from './browser-retained-frame.js';
 /** Optional exact-coverage compositor. RGB is the ordinary software result over
  * black; transmittance is the surviving world coefficient. No world readback. */
-export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=null,retainOpaqueFull=false,physicalOutput=false,deltaTransport=false,overlayRectMode='off',measurePacking=false,maxTextureSize=0}={}) {
+export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=null,retainOpaqueFull=false,deferRetainedReset=false,physicalOutput=false,deltaTransport=false,overlayRectMode='off',measurePacking=false,maxTextureSize=0}={}) {
   if(!['off','observe','on','packed'].includes(overlayRectMode)||overlayRectMode!=='off'&&!deltaTransport)throw new Error('Invalid overlay rectangle transport mode');
   const rectEnabled=['on','packed'].includes(overlayRectMode);
   const staging=overlayRectMode==='packed'?createOverlayStaging({stats,measure:measurePacking===true}):null;
@@ -12,6 +12,7 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
   const retained=createBrowserRetainedFrame(gl,{stats,ownedFrame,reserveBytes:extra=>reserveCombined(extra)});
   let outputWidth=0,outputHeight=0;
   let deltaHistory=null;
+  let deferredReset=false;
   const deltaMaxTextureSize=maxTextureSize||ownedFrame?.maxTextureSize||0;
   Object.assign(stats,{overlayDeltaTransportEnabled:deltaTransport===true,overlayDeltaRectDeclarations:0,overlayDeltaDeclarations:0,overlayDeltaPartialDeclarations:0,overlayDeltaFullDeclarations:0,overlayDeltaPresentedFrames:0,overlayDeltaUploadedBytes:0,overlayDeltaFullEquivalentBytes:0,overlayDeltaUploadCalls:0,overlayUploadBytes:0,overlayUploadCalls:0,overlaySourceViewSpanBytes:0,overlayDeltaSourceViewSpanBytes:0});
 
@@ -89,7 +90,7 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
     if(![0,1,2,3].includes(mode)||!Number.isSafeInteger(generation)||generation<0||!Number.isSafeInteger(frameSequence)||frameSequence<0||!Number.isInteger(fades)||fades<0||fades>16||(mode===3?fades<1:fades!==0))throw new Error('Invalid coverage mode/token');
     if(mode!==0&&(!(transmittance instanceof Float32Array)||transmittance.length!==w*h))throw new Error('Invalid coverage transmittance plane');
     // A resized retained FULL cannot define the new viewport; release it BEFORE C/T replacements.
-    if(reset||width!==w||height!==h)retained.reset();
+    if(reset||width!==w||height!==h){if(deferRetainedReset&&mode===1)deferredReset=true;else retained.reset();}
     if(mode!==0){coverage=textureUpload(coverage,tWidth,tHeight,w,h,gl.R32F,gl.FLOAT,transmittance,UNIT);tWidth=w;tHeight=h;stats.overlayCoverageBytes=w*h*4;}
     account();stats.overlayDeclaration={width:w,height:h,mode,generation,frameSequence,fades,reset};pending={w,h,mode,token:{generation,frameSequence},fades};
   }
@@ -101,7 +102,7 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
     if((pending.mode===2||pending.mode===3)&&outputWidth&&outputHeight)return {width:outputWidth,height:outputHeight,deferred:desiredWidth!==outputWidth||desiredHeight!==outputHeight};
     return {width:desiredWidth,height:desiredHeight,deferred:false};
   }
-  function begin(w,h,outWidth=w,outHeight=h){alive();if(!pending||pending.w!==w||pending.h!==h)throw new Error('Missing/current coverage declaration');if(physicalOutput)dimensions(outWidth,outHeight);if(!physicalOutput&&(outWidth!==w||outHeight!==h))throw new Error('Physical output is disabled');active=pending;active.outputWidth=outWidth;active.outputHeight=outHeight;pending=null;
+  function begin(w,h,outWidth=w,outHeight=h){alive();if(!pending||pending.w!==w||pending.h!==h)throw new Error('Missing/current coverage declaration');if(physicalOutput)dimensions(outWidth,outHeight);if(!physicalOutput&&(outWidth!==w||outHeight!==h))throw new Error('Physical output is disabled');if(deferredReset){retained.reset();deferredReset=false;}active=pending;active.outputWidth=outWidth;active.outputHeight=outHeight;pending=null;
     outputWidth=outWidth;outputHeight=outHeight;
     try{if(active.mode===3)retained.drawFaded(outWidth,outHeight,active.fades,active.token);else if(active.mode===2)retained.drawBase(outWidth,outHeight,active.token);}catch(e){failed=true;throw e;}
     return active.mode===2||active.mode===3;
@@ -121,6 +122,10 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
   }
   /** Region streaming replays the last FULL output; no pending Java delta is consumed. */
   function hold(w,h){alive();if(deltaTransport)invalidateDeltaHistory();if(pending||active)throw new Error('Cannot hold a partially declared overlay');retained.drawFull(w,h);}
+  /** Bounded residency rejects the proposed frame before any world clear. Its
+   * C declaration was consumed but never captured; replay FULL keeps UI/actors
+   * coherent with the held world. Reset remains latched until a fresh frame. */
+  function holdPrepared(w,h){alive();if(!deferRetainedReset||!pending||active||pending.mode!==1)throw new Error('Cannot retain bounded proposal');pending=null;if(stats.retainedValid)retained.drawFull(w,h);else stats.boundedStartupHolds=(stats.boundedStartupHolds||0)+1;}
   function dispose(){if(disposed)return;staging?.dispose();deltaHistory=null;retained.dispose();if(rgb)gl.deleteTexture(rgb);if(coverage)gl.deleteTexture(coverage);if(vao)gl.deleteVertexArray(vao);if(program)gl.deleteProgram(program);if(vertex)gl.deleteShader(vertex);if(fragment)gl.deleteShader(fragment);rgb=coverage=vao=program=vertex=fragment=null;pending=active=null;stats.overlayCoverageBytes=stats.overlayRgbBytes=stats.overlayCompositeResourceBytes=0;disposed=true;}
-  return {prepare,prepareDelta,invalidateDeltaHistory,outputSize,begin,draw,hold,dispose,get canChangeOutput(){return !!pending&&(pending.mode===0||pending.mode===1);},get opaqueOutput(){return pending?.mode===0;}};
+  return {prepare,prepareDelta,invalidateDeltaHistory,outputSize,begin,draw,hold,holdPrepared,dispose,get retainedOutput(){return pending?.mode===2||pending?.mode===3;},get canChangeOutput(){return !!pending&&(pending.mode===0||pending.mode===1);},get opaqueOutput(){return pending?.mode===0;}};
 }

@@ -1,5 +1,6 @@
 import {wholeRamPolicy,validateWholeRamConfig,decodeWholeRamWork} from './browser-whole-ram.js';
 import {wholeZonePolicy} from './browser-whole-zone-policy.js';
+import {createBoundedInputGate} from './browser-bounded-input.js';
 import {browserLoadProfilePolicy,createBrowserLoadProfileCollector} from './browser-region-load-profile.js';
 import {renderWorkerPolicy} from './browser-render-worker-protocol.js';
 import {optimizedRenderDefaults,canonicalRenderProperties} from './browser-optimized-render-defaults.js';
@@ -38,17 +39,20 @@ let preparationControls = {properties: [], requested: null};
 let spriteKeyControls = {properties: [], requested: null};
 let modelPreparationControls = {properties: [], requested: null};
 let gpu,worldCover,awaitingGameFrame=false,displayLayout,stutterDiagnostics,wholeZoneCatalogConfig=null,wholeRamCatalogConfig=null;
-window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput;
+const boundedInputGate=wholeZone.residency==='bounded'?createBoundedInputGate():null;
+window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput&&!boundedInputGate?.blocked;
 function updateWholeRamProof(){
   if(!wholeRam.enabled)return;
   const cpu=window.browserProof.wholeRamJava,gpuZone=gpu?.stats.wholeZone,same=!!(wholeRamCatalogConfig&&gpuZone?.manifestSha256===wholeRamCatalogConfig.gpuCatalogSha256);
-  const sourceReady=!stopped&&cpu?.sourceReady===true,preparedReady=!stopped&&cpu?.preparedReady===true,gpuReady=!stopped&&same&&gpuZone?.ready===true;
-  window.browserProof.wholeRamResidency={requested:true,sourceReady,preparedReady,gpuReady,ready:sourceReady&&preparedReady&&gpuReady,sameGpuCatalog:same,disposed:stopped,scope:'Correlated Java retained source/prepared CPU data and actual matching GPU catalogue; staging alone is not readiness'};
+  const sourceReady=!stopped&&cpu?.sourceReady===true,preparedReady=!stopped&&cpu?.preparedReady===true,gpuReady=!stopped&&same&&gpuZone?.ready===true&&!boundedInputGate?.blocked;
+  window.browserProof.wholeRamResidency={requested:true,sourceReady,preparedReady,gpuReady,ready:sourceReady&&preparedReady&&gpuReady,catalogAdmitted:!stopped&&same&&gpuZone?.sourceCatalogVerified===true,gpuResidency:wholeZone.residency,sameGpuCatalog:same,disposed:stopped,scope:'Correlated Java retained source/prepared CPU data and matching current GPU coverage; bounded coverage is not full catalogue residency'};
   if(gpuZone){gpuZone.rawSourceCPUReady=same&&sourceReady;gpuZone.preparedCPUReady=same&&preparedReady;gpuZone.cpuReadinessScope='Correlated main-thread Java RAM receipt; separate from GPU Worker allocation';}
 }
 function updateWorldCover(){
   updateWholeRamProof();
-  const state=gpu?.stats.worldReadiness,error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null)||window.browserProof.wholeRamError;
+  if(boundedInputGate)window.browserProof.boundedResidencyInput={blocked:boundedInputGate.blocked,requiredWorkerFrame:boundedInputGate.afterFrame,scope:'Producer scope/mutation identity must receive a matching-or-newer coverage-ready ACK before world input'};
+  let state=gpu?.stats.worldReadiness;const error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null)||window.browserProof.wholeRamError;
+  if(boundedInputGate?.blocked&&!['loading','error','login'].includes(state?.phase))state={...state,phase:'streaming',reason:'Preparing required GPU cells',blocksWorldInput:true,blocksKeyboard:true};
   const ramWorld=awaitingGameFrame||window.browserProof.state?.mode==='GAME'||state&&state.phase!=='login';
   const ramWait=wholeRam.enabled&&ramWorld&&window.browserProof.wholeRamJava?.preparedReady!==true;
   const waiting=ramWait||awaitingGameFrame&&(renderWorker.enabled?!(state?.phase==='ready'&&gpu?.stats.javaWorldFrames>0):state?.phase==='login');
@@ -127,6 +131,18 @@ const natives = {
     for(let n=0;n<9;n++){const x=input[n];if(!Number.isSafeInteger(x)||x<0||x>2147483647)throw new Error('Whole-zone Java diagnostics bounds');v.push(x);}
     if(v[0]!==1||v[1]>1||v[2]>1||v[3]>8192||v[4]>1330||v[5]>5320||v.slice(6).some(x=>x>256))throw new Error('Whole-zone Java diagnostics contract');
     window.browserProof.wholeZoneJava={requested:wholeZone.requested,initializationConfirmed:v[1]===1,active:v[2]===1,expectedResources:v[3],sourceSectorMetadataCount:v[4],objectCellMetadataCount:v[5],resolvedStaticSourceChunks:v[6],liveStaticSourceChunks:v[7],catalogCoveredWorldSourceChunks:v[8],scope:'Java immutable catalog index/local source coverage; not full classic CPU model residency or independent GPU completion proof'};
+  },
+  Java_orsc_browser_BrowserBootstrap_reportStaticSceneWork(lib,input){
+    const requested=options.get('staticscene')==='on';
+    if(input?.length===0){window.browserProof.staticSceneJava={requested,pending:true};return;}
+    if(!input||input.length!==10||Array.from(input).some((n,i)=>!Number.isSafeInteger(n)||n<(i===9?-2147483648:0)||n>2147483647)||input[0]!==1||input[1]>1||input[8]>1)throw new Error('Static scene Java diagnostics contract');
+    window.browserProof.staticSceneJava={requested,pending:false,enabled:input[1]===1,rowBuilds:input[2],rowHits:input[3],observedBuilds:input[4],materialChecks:input[5],rowCount:input[6],parsedCellCount:input[7],rowCacheValid:input[8]===1,placementRevisionLow:input[9]>>>0,scope:'Actual Java static selection reuse counters; separate from GPU allocation and gameplay readiness'};
+  },
+  Java_orsc_browser_BrowserBootstrap_reportStaticIdentityWork(lib,input){
+    const requested=options.get('staticscene')==='on';
+    if(input?.length===0){window.browserProof.staticIdentityJava={requested,pending:true};return;}
+    if(!input||input.length!==8||Array.from(input).some(n=>!Number.isSafeInteger(n)||n<0||n>2147483647)||input[0]!==1||input[1]>1)throw new Error('Static identity Java diagnostics contract');
+    window.browserProof.staticIdentityJava={requested,pending:false,selected:input[1]===1,hits:input[2],misses:input[3],mutableRefusals:input[4],contextResets:input[5],entries:input[6],capacityRefusals:input[7],scope:'Actual Java immutable identity reuse counters; mutable source refusals retain literal lookup'};
   },
   Java_orsc_browser_BrowserBootstrap_reportBatchedModelWork(lib,counters){
     const v=Array.from(counters);
@@ -234,8 +250,8 @@ try {
     const wholeZoneCatalog=wholeZone.enabled?(await import('./browser-whole-zone-config.js')).default:null;wholeZoneCatalogConfig=wholeZoneCatalog;
     if(wholeRam.enabled){wholeRamCatalogConfig=validateWholeRamConfig((await import('./browser-whole-ram-config.js')).default,wholeZoneCatalog);window.browserProof.wholeRamDelivery={...wholeRamCatalogConfig,declaredOnly:true,scope:'Immutable files staged for conditional Java preload; not runtime retained/decoded/prepared readiness'};}
     if(wholeZone.enabled&&!wholeZoneCatalog)throw new Error('Private whole-zone catalog has not been staged');
-    const gpuOptions={wholeZone:wholeZone.enabled,wholeZoneCatalog,nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
-    if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;gpu=await factory(canvas,report,{...gpuOptions,onFatal:error=>finish('Private render worker failed: '+error),onComplete:ack=>{if(ack.frameId&&gpu.stats.javaWorldFrames>0&&gpu.stats.worldReadiness?.phase==='ready')awaitingGameFrame=false;const blocked=worldCover?.blocksWorldInput;updateWorldCover();if(blocked!==worldCover?.blocksWorldInput)publish();}});}
+    const gpuOptions={wholeZone:wholeZone.enabled,gpuResidency:wholeZone.residency,wholeZoneCatalog,nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
+    if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;gpu=await factory(canvas,report,{...gpuOptions,onFatal:error=>finish('Private render worker failed: '+error),onComplete:ack=>{boundedInputGate?.acknowledge(ack,{coverageReady:gpu.stats.wholeZone?.ready===true,worldReady:gpu.stats.worldReadiness?.phase==='ready'});if(ack.frameId&&gpu.stats.javaWorldFrames>0&&gpu.stats.worldReadiness?.phase==='ready')awaitingGameFrame=false;const blocked=worldCover?.blocksWorldInput;updateWorldCover();if(blocked!==worldCover?.blocksWorldInput)publish();}});}
     else gpu=createBrowserWebGL(canvas,report,gpuOptions);
     window.browserProof.renderWorker={...renderWorker,actual:renderWorker.enabled===true};
     window.browserProof.wholeZoneRequested=wholeZone.requested;window.browserProof.wholeRamRequested=wholeRam.requested;
@@ -257,6 +273,11 @@ try {
       }
       if(aligned){if(!renderWorker.enabled)Object.assign(canvas.style,aligned);else{const changed=Object.keys(aligned).some(key=>canvas.style[key]!==aligned[key]);if(changed){Object.assign(canvas.style,aligned);gpu.invalidateLayout();}}}
       updateWorldCover();
+    }
+    if(boundedInputGate){
+      const name='Java_orsc_BrowserWebGLBridge_wholeZoneFrame',declare=natives[name];
+      if(typeof declare!=='function')throw new Error('Bounded residency requires source selection declarations');
+      natives[name]=async(lib,metadata,overrides)=>{boundedInputGate.declare(metadata,overrides,gpu.stats.renderWorker?.submittedFrames||0);updateWorldCover();return await declare(lib,metadata,overrides);};
     }
     const progressName='Java_orsc_BrowserWebGLBridge_worldProgress',progress=natives[progressName];
     if(typeof progress!=='function')throw new Error('WebGL bridge has no loading protocol');

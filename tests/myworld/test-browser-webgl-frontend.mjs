@@ -20,8 +20,9 @@ const benchmarkBatch=process.argv.includes('--model-batch');
 const benchmarkDelta=process.argv.includes('--overlay-delta');
 const benchmarkRegionBuild=process.argv.includes('--region-build');
 const benchmarkLoadProfile=process.argv.includes('--load-profile');
+const benchmarkBounded=process.argv.includes('--bounded-residency'),benchmarkStatic=process.argv.includes('--static-scene');
 const benchmarkWholeRam=process.argv.includes('--whole-ram');
-const benchmarkWholeZone=process.argv.includes('--whole-zone')||benchmarkWholeRam;
+const benchmarkWholeZone=process.argv.includes('--whole-zone')||benchmarkWholeRam||benchmarkBounded||benchmarkStatic;
 const benchmarkRenderWorker=process.argv.includes('--render-worker')||benchmarkWholeZone;
 const withoutAwtTarget=process.argv.includes('--no-awt-target');let awtVisible=!withoutAwtTarget;
 const benchmarkStream=benchmarkRegionBuild||benchmarkLoadProfile||benchmarkRenderWorker||process.argv.includes('--benchmark-stream')||benchmarkKeys||repeatable||combat||nativeExplicit||benchmarkBatch||benchmarkDelta;let streamRequested;
@@ -34,7 +35,7 @@ const canvas = {style:{},setAttribute(){}};
 const stats = {lastError:null,lastFrame:0};
 const gateEvents=[];
 const window = {dispatchEvent:e=>gateEvents.push(e.type),browserRuntimeVersion:'5.0',addEventListener(){}};
-const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':'')+(benchmarkDelta?'&overlaydelta=on':'')+(benchmarkRenderWorker?'&renderworker=on&overlay=coverage':'')+(benchmarkWholeZone?'&wholezone=on':'')+(benchmarkWholeRam?'&wholeram=on':'')+(benchmarkLoadProfile?'&loadprofile=on':'')+(benchmarkRegionBuild?'&regionbuild=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(structuredClone(m))},
+const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':'')+(benchmarkDelta?'&overlaydelta=on':'')+(benchmarkRenderWorker?'&renderworker=on&overlay=coverage':'')+(benchmarkWholeZone?'&wholezone=on':'')+(benchmarkWholeRam?'&wholeram=on':'')+(benchmarkBounded?'&gpuresidency=bounded':'')+(benchmarkStatic?'&staticscene=on':'')+(benchmarkLoadProfile?'&loadprofile=on':'')+(benchmarkRegionBuild?'&regionbuild=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(structuredClone(m))},
   URLSearchParams,performance:{now:()=>clock},console,
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
@@ -60,6 +61,7 @@ const gpuModule = new vm.SyntheticModule(['createBrowserWebGL','BROWSER_NATIVE_C
     gpuOptions=options;if(options.wholeZone)stats.wholeZone={ready:true,manifestSha256:zoneConfig.manifestSha256,rawSourceCPUReady:false};stats.ownedStateActive=options.ownedState;stats.streamUploadValidationActive=options.streamUploadValidation;
     if(!withoutNativeModule)stats.nativeCallDispatch={requested:options.nativeCallDispatch,active:nativeMode,synchronousMethods:nativeMode==='sync'?19:0,asynchronousMethods:nativeMode==='sync'?1:20};
     return {canvas,stats,invalidateLayout(){},queueStreamUploadValidation:value=>{streamRequested=value;},queueOwnedState(){},dispose:()=>gpuDisposed++,natives:{
+      Java_orsc_BrowserWebGLBridge_wholeZoneFrame:backend('zone-frame',()=>{}),
       Java_orsc_BrowserWebGLBridge_regionTransition:backend('transition',(lib,soft)=>{stats.worldReadiness={phase:'streaming',blocksWorldInput:true,blocksKeyboard:!soft};return 3;}),
       Java_orsc_BrowserWebGLBridge_holdWorld:backend('hold',()=>4),
       Java_orsc_BrowserWebGLBridge_worldProgress:backend('progress',()=>{stats.worldReadiness={phase:stats.declaredPhase||'loading'};return 5;}),
@@ -70,6 +72,7 @@ const gpuModule = new vm.SyntheticModule(['createBrowserWebGL','BROWSER_NATIVE_C
 const renderWorkerModule=new vm.SyntheticModule(['createBrowserRenderWorker'],function(){this.setExport('createBrowserRenderWorker',async(...args)=>{const instance=gpuModule.namespace.createBrowserWebGL(...args),present=instance.natives.Java_orsc_BrowserWebGLBridge_present;instance.natives.Java_orsc_BrowserWebGLBridge_present=async(...input)=>{const result=await present(...input);args[2].onComplete?.({frameId:1});return result;};return instance;});},{context});
 const nativeModule=nativeExplicit?new vm.SourceTextModule(execFileSync('git',['show',nativeCommit+':tools/browser-gameplay/web/browser-native-call-dispatch.js'],{cwd:nativeSource,encoding:'utf8'}),{context}):null;
 const stutterModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-stutter-diagnostics.js',import.meta.url),'utf8'),{context});
+const boundedInputModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-bounded-input.js',import.meta.url),'utf8'),{context});
 const geometryModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-geometry-transfer-policy.js',import.meta.url),'utf8'),{context});
 const preparationCandidatesModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-preparation-candidates.js',import.meta.url),'utf8'),{context});
 const repeatableModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-repeatable-policy.js',import.meta.url),'utf8'),{context});
@@ -91,6 +94,7 @@ const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{if(specifier==='./browser-whole-ram-config.js'){if(ramConfigModule.status==='unlinked')await ramConfigModule.link(()=>{});if(ramConfigModule.status==='linked')await ramConfigModule.evaluate();return ramConfigModule;}if(specifier==='./browser-whole-zone-config.js'){if(zoneConfigModule.status==='unlinked')await zoneConfigModule.link(()=>{});if(zoneConfigModule.status==='linked')await zoneConfigModule.evaluate();return zoneConfigModule;}if(specifier==='./browser-render-worker.js'){if(renderWorkerModule.status==='unlinked')await renderWorkerModule.link(()=>{});if(renderWorkerModule.status==='linked')await renderWorkerModule.evaluate();return renderWorkerModule;}const selected=specifier==='./browser-native-call-dispatch.js'?nativeModule:gpuModule;if(selected===gpuModule)assert.equal(specifier,nativeMode==='sync'?'./webgl-sync.js':'./webgl.js');assert(selected,'Unexpected native helper import');if(selected.status==='unlinked')await selected.link(()=>{});if(selected.status==='linked')await selected.evaluate();return selected;}});
 await module.link(specifier=>{
   if(specifier==='./browser-whole-ram.js')return ramPolicyModule;
+  if(specifier==='./browser-bounded-input.js')return boundedInputModule;
   if(specifier==='./browser-whole-zone-policy.js')return wholeZonePolicyModule;
   if(specifier==='./browser-region-load-profile.js')return loadProfileModule;
   if(specifier==='./browser-render-worker-protocol.js')return renderWorkerPolicyModule;
@@ -121,6 +125,14 @@ assert.equal(configured.javaProperties.includes('spoiledmilk.browserWholeZone=tr
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserWholeZoneClientSha256='+zoneConfig.clientJarSha256),benchmarkWholeZone);
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserWholeZoneCatalogSha256='+zoneConfig.manifestSha256),benchmarkWholeZone);
 assert.equal(gpuOptions.wholeZone,benchmarkWholeZone);if(benchmarkWholeZone)assert.equal(gpuOptions.wholeZoneCatalog,zoneConfig);
+assert.equal(gpuOptions.gpuResidency,benchmarkBounded?'bounded':'full');
+assert.equal(configured.javaProperties.includes('spoiledmilk.browserStaticSceneReuse=true'),benchmarkStatic);
+configured.natives.Java_orsc_browser_BrowserBootstrap_reportStaticSceneWork(null,[]);assert.equal(window.browserProof.staticSceneJava.pending,true);
+configured.natives.Java_orsc_browser_BrowserBootstrap_reportStaticSceneWork(null,[1,benchmarkStatic?1:0,2,3,4,5,6,7,1,-1]);assert.equal(window.browserProof.staticSceneJava.rowHits,3);assert.equal(window.browserProof.staticSceneJava.placementRevisionLow,4294967295);
+configured.natives.Java_orsc_browser_BrowserBootstrap_reportStaticIdentityWork(null,[]);assert.equal(window.browserProof.staticIdentityJava.pending,true);
+configured.natives.Java_orsc_browser_BrowserBootstrap_reportStaticIdentityWork(null,[1,benchmarkStatic?1:0,2,3,4,5,6,7]);assert.equal(window.browserProof.staticIdentityJava.hits,2);
+assert.throws(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportStaticSceneWork(null,[1]),/diagnostics/);
+assert.throws(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportStaticIdentityWork(null,[1]),/diagnostics/);
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserWholeRam=true'),benchmarkWholeRam);
 assert.equal(configured.javaProperties.includes('spoiledmilk.browserWholeRamManifestSha256='+ramConfig.manifestSha256),benchmarkWholeRam);
 if(benchmarkWholeRam){

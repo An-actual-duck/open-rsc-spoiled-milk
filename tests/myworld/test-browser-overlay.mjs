@@ -46,4 +46,15 @@ for(const [ow,oh,seq]of [[2048,1024,1],[1024,2048,2]]){
  physicalOverlay.prepare(2048,1024,1,seq,seq,0,false,new Float32Array(2097152));const chosen=physicalOverlay.outputSize(2048,1024,ow,oh);physical.gl.viewport(0,0,ow,oh);physicalOverlay.begin(2048,1024,chosen.width,chosen.height);physicalOverlay.draw(2048,1024,new Uint8Array(8388608));assert.equal(physicalStats.overlayRgbBytes,8388608);assert.equal(physicalStats.overlayCoverageBytes,8388608);assert.equal(physicalStats.retainedResourceBytes,16777216);
 }
 assert.equal(physicalStats.overlayCompositePeakBudgetBytes,48*1024*1024);assert.equal(physicalStats.overlayCompositePeakBytes,48*1024*1024,'physical replacement peak omitted old/new pair');physicalOverlay.dispose();assert.equal(physical.objects.size,0);
+// Bounded admission can reject a proposed frame AFTER C upload. A reset must
+// retain the previous complete world+actors+UI until actual geometry is ready.
+const streamed=fakeGL(),streamStats={},streamOverlay=createBrowserOverlay(streamed.gl,{stats:streamStats,retainOpaqueFull:true,deferRetainedReset:true});
+streamOverlay.prepare(2,2,1,7,1,0,true,new Float32Array(4));streamOverlay.begin(2,2);streamOverlay.draw(2,2,rgb);
+const oldFull=streamed.gl.lastCopy.tex,captures=streamStats.retainedCaptures;
+streamOverlay.prepare(2,2,1,1,1,0,true,new Float32Array(4));streamOverlay.holdPrepared(2,2);
+assert.equal(streamed.draws.at(-1).tex,oldFull);assert.equal(streamStats.retainedCaptures,captures);assert.equal(streamStats.retainedValid,true);
+streamOverlay.prepare(2,2,1,1,2,0,false,new Float32Array(4));streamOverlay.holdPrepared(2,2);assert.equal(streamed.draws.at(-1).tex,oldFull);
+streamOverlay.prepare(2,2,1,1,3,0,false,new Float32Array(4));streamOverlay.begin(2,2);streamOverlay.draw(2,2,rgb);assert.equal(streamStats.retainedCaptures,captures+1);
+streamOverlay.prepare(2,2,3,1,4,1,false,new Float32Array(4));assert.equal(streamOverlay.retainedOutput,true);assert.equal(streamOverlay.begin(2,2),true);streamOverlay.draw(2,2,rgb);
+streamOverlay.dispose();assert.equal(streamed.objects.size,0);
 console.log('PASS coverage upload ownership, premultiplied C+T blend selection, exact retained FULL/BASE caller tokens, duplicate sequencing, owner reset, opaque fallback, bounds and owned cleanup. GL API double; no GPU proof.');

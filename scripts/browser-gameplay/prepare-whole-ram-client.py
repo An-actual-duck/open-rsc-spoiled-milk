@@ -5,6 +5,8 @@ from pathlib import Path
 from urllib.parse import urlsplit,urlunsplit,parse_qsl,urlencode
 ROOT=Path(__file__).resolve().parents[2]
 sys.dont_write_bytecode=True
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from private_scene_urls import scene_urls
 
 def load_module():
  path=ROOT/'tools/browser-gameplay/whole-ram/source_bundle.py';spec=importlib.util.spec_from_file_location('ram_bundle',path);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
@@ -37,7 +39,7 @@ def install_ram_delivery(web,data,m,jar_sha,gpu_sha):
  return {'preparedOnly':True,'declaredComplete':True,'config':config,'files':inventory,'hardLinkedFiles':links,'copiedFiles':copies,'conditionalBootstrapSha256':digest(web/'bootstrap-whole-ram-files.txt'),'ordinaryBootstrapUnchanged':True,'runtimeReadiness':'Pending actual Java full verification/decode/atomic provider install and use counts; staged files alone are not RAM ready'}
 
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--name',required=True);p.add_argument('--http-port',type=int,required=True);p.add_argument('--server-run',type=Path,required=True);p.add_argument('--client-jar',type=Path,required=True);p.add_argument('--client-receipt',type=Path,required=True);p.add_argument('--bake-run',type=Path,required=True);p.add_argument('--ram-run',type=Path,required=True);a=p.parse_args();lib=load_module()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--name',required=True);p.add_argument('--http-port',type=int,required=True);p.add_argument('--server-run',type=Path,required=True);p.add_argument('--client-jar',type=Path,required=True);p.add_argument('--client-receipt',type=Path,required=True);p.add_argument('--bake-run',type=Path,required=True);p.add_argument('--ram-run',type=Path,required=True);p.add_argument('--gpu-residency',choices=['full','bounded'],default='full');p.add_argument('--static-scene',choices=['on','off'],default='off');a=p.parse_args();lib=load_module()
  if not re.fullmatch('[A-Za-z0-9_-]+',a.name):p.error('Fresh simple stage name required')
  jar=a.client_jar.resolve();build=lib.document(a.client_receipt);jar_sha=lib.sha(jar)
  if build.get('jarSha256')!=jar_sha or not(build.get('cleanCheckoutAtBuild')and build.get('singleProductionCommit')is True and build.get('buildSucceeded')):p.error('Exact clean single-source client artifact required')
@@ -49,9 +51,9 @@ def main():
  for asset in m['externalAssets']:
   source=ROOT/'Client_Base'/asset['path']
   if source.stat().st_size!=asset['bytes']or lib.sha(source)!=asset['sha256']:p.error('RAM/current original assets differ')
- subprocess.run(['python3',str(ROOT/'scripts/browser-gameplay/prepare-whole-zone-client.py'),'--name',a.name,'--http-port',str(a.http_port),'--server-run',str(a.server_run.resolve()),'--client-jar',str(jar),'--client-receipt',str(a.client_receipt.resolve()),'--bake-run',str(a.bake_run.resolve())],check=True,cwd=ROOT,stdout=subprocess.DEVNULL)
+ subprocess.run(['python3',str(ROOT/'scripts/browser-gameplay/prepare-whole-zone-client.py'),'--name',a.name,'--http-port',str(a.http_port),'--server-run',str(a.server_run.resolve()),'--client-jar',str(jar),'--client-receipt',str(a.client_receipt.resolve()),'--bake-run',str(a.bake_run.resolve()),'--gpu-residency',a.gpu_residency,'--static-scene',a.static_scene],check=True,cwd=ROOT,stdout=subprocess.DEVNULL)
  category=Path(subprocess.check_output(['python3',str(ROOT/'scripts/workspace-layout.py'),'path','tests','browser-gameplay-spike','--mkdir'],text=True).strip());run=category/a.name;web=run/'web'
  delivery=install_ram_delivery(web,data,m,jar_sha,lib.sha(gpu_path));delivery['ramBakeReceiptSha256']=lib.sha(ram_run/'ram-bake-receipt.json')
  stage=lib.document(run/'stage.json');stage['frontendSha256']={f.name:lib.sha(f)for f in web.iterdir()if f.is_file()and f.suffix in ['.js','.html','.css']};stage['wholeRam']=delivery;(run/'stage.json').write_text(json.dumps(stage,indent=2)+'\n')
- base=lib.document(run/'whole-zone-preparation.json');parts=urlsplit(base['urlOn']);query=dict(parse_qsl(parts.query));query['wholezone']='on';query['wholeram']='on';on=urlunsplit((parts.scheme,parts.netloc,parts.path,urlencode(query),parts.fragment));query['wholeram']='off';off=urlunsplit((parts.scheme,parts.netloc,parts.path,urlencode(query),parts.fragment));base.update(url=on,urlOn=on,urlOff=off,wholeRam=stage['wholeRam'],comparisonFlags={**base['comparisonFlags'],'wholezone':'on'},comparisonScope='Same exact Java/frontend/GPU whole-zone ON/assets/quality; only wholeram on/off changes. OFF does not open/copy RAM list/payloads.',preparedOnly=True,processesStarted=False,publicAccessed=False);(run/'whole-ram-preparation.json').write_text(json.dumps(base,indent=2)+'\n');print(json.dumps(base,indent=2))
+ base=lib.document(run/'whole-zone-preparation.json');parts=urlsplit(base['urlOn']);query=dict(parse_qsl(parts.query));query['wholezone']='on';query['wholeram']='on';on=urlunsplit((parts.scheme,parts.netloc,parts.path,urlencode(query),parts.fragment));query['wholeram']='off';off=urlunsplit((parts.scheme,parts.netloc,parts.path,urlencode(query),parts.fragment));base.update(scene_urls(on,a.gpu_residency,a.static_scene));base.update(url=on,urlOn=on,urlOff=off,wholeRam=stage['wholeRam'],comparisonFlags={**base['comparisonFlags'],'wholezone':'on'},comparisonScope='Same exact Java/frontend/GPU whole-zone ON/assets/quality; only wholeram on/off changes. OFF does not open/copy RAM list/payloads.',preparedOnly=True,processesStarted=False,publicAccessed=False);(run/'whole-ram-preparation.json').write_text(json.dumps(base,indent=2)+'\n');print(json.dumps(base,indent=2))
 if __name__=='__main__':main()
