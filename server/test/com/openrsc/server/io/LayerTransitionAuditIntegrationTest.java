@@ -21,6 +21,7 @@ import com.openrsc.server.plugins.authentic.misc.MagicGuildPortals;
 import com.openrsc.server.plugins.authentic.quests.free.DragonSlayer;
 import com.openrsc.server.plugins.authentic.quests.members.*;
 import com.openrsc.server.plugins.authentic.quests.members.grandtree.GnomeGlider;
+import com.openrsc.server.plugins.authentic.quests.members.grandtree.GrandTree;
 import com.openrsc.server.plugins.authentic.quests.members.watchtower.WatchTowerObstacles;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -174,6 +175,19 @@ public final class LayerTransitionAuditIntegrationTest {
             ()->player.setQuestStage(Quests.PLAGUE_CITY,5),
             ()->invoke(plague,scenery(636,590,-1,449),"climb-through"));
 
+        final Observatory observatory = new Observatory();
+        route("Observatory keep gate north to south",at(690,681,-1),at(690,682,-1),
+            ()->player.getCache().store("keep_key_gate",true),
+            ()->invoke(observatory,scenery(689,681,-1,926),"open"));
+        route("Observatory keep gate south to north",at(690,682,-1),at(690,681,-1),
+            ()->player.getCache().store("keep_key_gate",true),
+            ()->invoke(observatory,scenery(689,681,-1,926),"open"));
+        route("Observatory completed quest gate",at(690,682,-1),at(690,681,-1),
+            ()->player.setQuestStage(Quests.OBSERVATORY_QUEST,-1),
+            ()->invoke(observatory,scenery(689,681,-1,926),"open"));
+        route("Observatory locked gate denial",at(690,681,-1),at(690,681,-1),NONE,
+            ()->invoke(observatory,scenery(689,681,-1,926),"open"));
+
         final MagicGuildPortals magic = new MagicGuildPortals();
         for(final int[] portal:new int[][]{{147,602,754,212,695,0},{147,603,754,212,695,0},
                 {148,599,757,511,508,1},{148,599,758,511,508,1},
@@ -232,6 +246,17 @@ public final class LayerTransitionAuditIntegrationTest {
             ()->{player.setQuestStage(Quests.GRAND_TREE,8);menu.add(0);},()->glider.onTalkNpc(player,grandPilot));
         route("Gnome glider declined control",dock,dock,
             ()->{player.setQuestStage(Quests.GRAND_TREE,-1);menu.add(4);},()->glider.onTalkNpc(player,grandPilot));
+
+        final GrandTree tree = new GrandTree();
+        Npc king=null;
+        for(Npc n:server.getWorld().getNpcs())if(n.getID()==NpcId.KING_NARNODE_SHAREEN.id()){king=n;break;}
+        check(king!=null,"installed King Narnode");final Npc surfaceKing=king;
+        final WorldCoordinate kc=king.getWorldLocation().getCoordinate();
+        route("Grand Tree roots visit declined and returns upstairs",at(kc.getX()+1,kc.getY(),kc.getLevel()),at(415,163,0),
+            ()->{menu.add(0);menu.add(0);},()->{
+                check(tree.blockTalkNpc(player,surfaceKing),"king owns dialogue");tree.onTalkNpc(player,surfaceKing);
+                check(player.getQuestStage(Quests.GRAND_TREE)==0,"declining does not start quest");
+            });
     }
 
     @SuppressWarnings("unchecked")

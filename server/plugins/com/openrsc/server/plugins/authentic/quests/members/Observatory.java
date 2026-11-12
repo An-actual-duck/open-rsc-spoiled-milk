@@ -6,6 +6,7 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.QuestInterface;
 import com.openrsc.server.plugins.custom.quests.MyWorldQuestShortcuts;
@@ -454,7 +455,7 @@ public class Observatory implements QuestInterface, TalkNpcTrigger,
 	@Override
 	public boolean blockOpLoc(Player player, GameObject obj, String command) {
 		return DataConversions.inArray(new int[] {928, 937, 936, 929, 917, 930, 919, 935, 934, 927, 925}, obj.getID())
-				|| (obj.getID() == 926 && obj.getX() == 689 && obj.getY() == 3513);
+				|| (obj.getID() == 926 && obj.getX() == 689 && legacyPackedY(obj) == 3513);
 	}
 
 	@Override
@@ -545,17 +546,17 @@ public class Observatory implements QuestInterface, TalkNpcTrigger,
 				new GameObject(obj.getWorld(), obj.getLocation(), 935, obj.getDirection(),
 					obj.getType()));
 		}
-		else if (obj.getID() == 926 && obj.getX() == 689 && obj.getY() == 3513) { // 690
+		else if (obj.getID() == 926 && obj.getX() == 689 && legacyPackedY(obj) == 3513) { // 690
 			// 3514
 			if (player.getCache().hasKey("keep_key_gate")
 				|| player.getQuestStage(getQuestId()) == -1) {
-				if (player.getY() <= 3513) {
-					walkThroughDoorway(player, 690, 3514);
+				if (legacyPackedY(player) <= 3513) {
+					crossKeepGate(player, 3514);
 					say(player, null, "I'd better be quick",
 						"There may be more guards about");
 				} else {
 					player.message("you go through the gate");
-					walkThroughDoorway(player, 690, 3513);
+					crossKeepGate(player, 3513);
 				}
 			} else {
 				player.message("The gate is locked");
@@ -633,6 +634,12 @@ public class Observatory implements QuestInterface, TalkNpcTrigger,
 				constellation(player, player.getQuestStage(getQuestId()));
 			}
 		}
+	}
+
+	private static void crossKeepGate(Player player, int packedY) {
+		walkThroughDoorway(player, player.getWorld().getRegionManager()
+			.toRuntimeCompatibilityPoint(
+				LegacyPackedPointAdapter.fromPackedValues(690, packedY)));
 	}
 
 	private void giveOptionalReward(Player player, Npc n, Skill skill) {
