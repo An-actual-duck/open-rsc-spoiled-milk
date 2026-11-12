@@ -36,6 +36,7 @@ public final class BaselineReuseFixture {
   Sector[] sectors=(Sector[])get(w,"sectors");for(int i=0;i<sectors.length;i++)sectors[i]=Sector.blankLoaded();
   set(w,"nativeLayeredTerrainSnapshot",source(0,"global",'a'));
   set(mc,"world",w);set(mc,"scene",scene);set(mc,"sceneInstanceStore",new ClientSceneInstanceStore());set(mc,"tileSize",128);set(mc,"modelCache",new RSModel[]{model()});mc.setSurface(g);
+  RSModel foreign=model();foreign.key=9900;scene.addModel(foreign);
   PacketHandler packet=new PacketHandler(mc);mc.packetHandler=packet;scene.setMidpoints(96,true,256,128,96,9,256);scene.fogLandscapeDistance=20000;scene.fogEntityDistance=20000;scene.setCamera(3200,-200,3200,768,0,0,6000);
   return mc;
  }
@@ -52,8 +53,8 @@ public final class BaselineReuseFixture {
   snapshot(mc);
  }
  static void snapshot(mudclient mc)throws Exception{
-  Scene s=mc.getScene();RSModel[] models=(RSModel[])get(s,"models");int count=(Integer)get(s,"modelCount");check(count==mc.getGameObjectInstanceCount()+mc.getWallObjectInstanceCount(),"no retired Scene references");
-  RSModel[] active=Arrays.copyOf(models,count);hash(count);for(RSModel m:active)hash(m.key);
+  Scene s=mc.getScene();RSModel[] models=(RSModel[])get(s,"models");int count=(Integer)get(s,"modelCount");check(count==mc.getGameObjectInstanceCount()+mc.getWallObjectInstanceCount()+1,"no retired Scene references");
+  RSModel[] active=Arrays.copyOf(models,count);check(active[0].key==9900,"foreign terrain/actor model order retained");hash(Arrays.copyOf((int[])get(s,"m_jb"),count));hash(count);for(RSModel m:active)hash(m.key);
   Renderer3DWorldChunkFrame.ChunkMesh mesh=RSModel.buildRenderer3DObjectChunkMesh(0,0,0,0,0,active,count);hash(mesh);
   hash(get(mc.getWorld(),"collisionFlags"));hash(get(mc.getWorld(),"tileDirection"));
   s.setMouseLoc(0,128,96);Arrays.fill(mc.getSurface().pixelData,0x23262c);s.endScene(0);hash(mc.getSurface().pixelData);int picks=s.b(0);hash(picks);for(int i=0;i<picks;i++)hash(s.b((byte)100)[i].key);
@@ -79,6 +80,8 @@ public final class BaselineReuseFixture {
   RSModel[] changed={mc.getGameObjectInstanceModel(0),mc.getGameObjectInstanceModel(1),mc.getGameObjectInstanceModel(2)};
   changed[0].addRotation(0,1,0);((int[])get(changed[1],"vertX"))[0]+=7;changed[2].setInteractionOnly(true);baseline(mc,records(0,100));
   for(int i=0;i<3;i++)check(mc.getGameObjectInstanceModel(10+i)!=changed[i],"mutated instance is cloned afresh");
+  // Derived lighting is initialized again rather than retained as a cache proof.
+  mc.getGameObjectInstanceModel(0).setDiffuseLightAndColor(50,30,10,20,30,false,117);baseline(mc,records(10,100));
   // Source template/definition/settings changes must never reuse previous geometry.
   before=reuse(mc);mc.getModelCacheItem(0).setTranslate(5,0,0);baseline(mc,records(10,100));check(reuse(mc)==before,"changed source transform refuses old template");
   EntityHandler.getObjectDef(0).width=2;baseline(mc,records(0,100));RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.FACETED);baseline(mc,records(10,100));RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
@@ -98,6 +101,7 @@ public final class BaselineReuseFixture {
   Map patches=(Map)get(mc.getWorld(),"worldEditorTerrainPatches");patches.put(1L,null);before=reuse(mc);baseline(mc,records(10,100));check(reuse(mc)==before,"live terrain patch guard");patches.clear();
   BrowserBaselineObjectReuse work=(BrowserBaselineObjectReuse)get(mc.packetHandler,"browserBaselineReuse");work.clear();before=reuse(mc);baseline(mc,records(10,100));check(reuse(mc)==before,"reset drops all old proofs");check(work.peakBytes<=BrowserBaselineObjectReuse.MAX_BYTES,"workspace admission budget");
   mudclient over=client();over.setGameObjectInstanceCount(BrowserBaselineObjectReuse.MAX_OBJECTS+1);check(!new BrowserBaselineObjectReuse().begin(over,records(0,1)),"entry capacity refuses before model scan");
+  mudclient duplicated=client();duplicated.setGameObjectInstanceCount(2);RSModel shared=model();duplicated.setGameObjectInstanceModel(0,shared);duplicated.setGameObjectInstanceModel(1,shared);check(!new BrowserBaselineObjectReuse().begin(duplicated,records(0,2)),"shared model references require literal path");
   proofMutations();StringBuilder hex=new StringBuilder();for(byte b:digest.digest())hex.append(String.format("%02x",b&255));System.out.println("TRACE "+hex+" frames="+frames);System.out.println("PASS checks="+checks+" work="+Arrays.toString(mc.packetHandler.getBrowserBaselineReuseWork())+" CPU-only full maintained JAR; no browser/GPU/FPS claim");
  }
 }

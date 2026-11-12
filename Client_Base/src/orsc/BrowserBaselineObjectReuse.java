@@ -15,13 +15,14 @@ final class BrowserBaselineObjectReuse {
     private final Map<Integer, Template> templates = new HashMap<Integer, Template>();
     private Map<Key, RSModel> candidates;
     private Set<Integer> usedTemplates;
+    private Map<Integer, Template> verifiedTemplates;
     private String scope;
     private long bytes;
     long reused, cloned, refused, resets, peakBytes, admitted;
     long retainedBytes() { return bytes; }
     int retainedTemplates() { return templates.size(); }
     static boolean isEnabled() { return ENABLED; }
-    void clear() { templates.clear(); candidates = null; usedTemplates = null; scope = null; bytes = 0; resets++; }
+    void clear() { templates.clear(); candidates = null; usedTemplates = null; verifiedTemplates = null; scope = null; bytes = 0; resets++; }
 
     boolean begin(mudclient mc, List<SceneBaselineState.Record> incoming) {
         NativeLayeredTerrainSnapshot source = mc == null || mc.getWorld() == null ? null
@@ -38,6 +39,7 @@ final class BrowserBaselineObjectReuse {
             + ":" + RendererToneSettings.getMode() + ":" + RendererFogSettings.getMode();
         if (!current.equals(scope)) { clear(); scope = current; }
         candidates = new HashMap<Key, RSModel>(); usedTemplates = new HashSet<Integer>();
+        verifiedTemplates = new HashMap<Integer, Template>();
         Set<Key> ambiguous = new HashSet<Key>();
         Set<Key> seenExisting = new HashSet<Key>();
         Set<Key> seenIncoming = new HashSet<Key>();
@@ -46,6 +48,7 @@ final class BrowserBaselineObjectReuse {
             if (!seenIncoming.add(key)) ambiguous.add(key);
         }
         Map<Integer, Boolean> checkedTemplates = new HashMap<Integer, Boolean>();
+        boolean duplicateReference = false;
         IdentityHashMap<RSModel, Key> references = new IdentityHashMap<RSModel, Key>();
         for (int i = 0; i < mc.getGameObjectInstanceCount(); i++) {
             int id = mc.getGameObjectInstanceID(i), direction = mc.getGameObjectInstanceDir(i);
@@ -53,7 +56,7 @@ final class BrowserBaselineObjectReuse {
                 mc.getGameObjectInstanceZ(i) + mc.getMidRegionBaseZ(), id, direction);
             RSModel model = mc.getGameObjectInstanceModel(i);
             Key priorReference = model == null ? null : references.put(model, key);
-            if (priorReference != null) { ambiguous.add(priorReference); ambiguous.add(key); }
+            if (priorReference != null) { duplicateReference = true; ambiguous.add(priorReference); ambiguous.add(key); }
             if (!seenExisting.add(key)) ambiguous.add(key);
             Template template = templates.get(id);
             Boolean valid = checkedTemplates.get(id);
@@ -62,11 +65,13 @@ final class BrowserBaselineObjectReuse {
                 valid = template != null && def != null && def.modelID >= 0
                     && template.matchesTemplate(def, mc.getModelCacheItem(def.modelID));
                 checkedTemplates.put(id, valid);
+                if (valid) verifiedTemplates.put(id, template);
             }
             if (model == null || !mc.isBrowserBaselineStaticObject(id) || !valid
                 || !template.proof.matchesModelGeometry(model) || !model.isBrowserBaselineRotation(direction)) { refused++; continue; }
             candidates.put(key, model);
         }
+        if (duplicateReference) { refused++; clear(); return false; }
         for (Key key : ambiguous) candidates.remove(key);
         // Object keys, reference/ambiguity tables and hash-table slack are transient,
         // conservatively charged at 512 bytes per existing instance.
@@ -90,13 +95,15 @@ final class BrowserBaselineObjectReuse {
         GameObjectDef def = EntityHandler.getObjectDef(id);
         RSModel source = def == null || def.modelID < 0 ? null : mc.getModelCacheItem(def.modelID);
         if (source == null) return;
-        if (template == null || !template.matchesTemplate(def, source) || !template.proof.matchesModelGeometry(model)) {
+        if (template == null || verifiedTemplates.get(id) != template || !template.matchesDefinition(def, source)
+            || !template.proof.matchesModelGeometry(model)) {
             long allowance = MAX_BYTES - bytes - MAX_OBJECTS * 512L;
             if (templates.size() >= MAX_TEMPLATES || allowance <= 0) { refused++; return; }
             RSModel.BrowserBaselineProof proof = RSModel.browserBaselineProof(source, model, allowance);
             if (proof == null) { refused++; return; }
             if (template != null) bytes -= template.proof.retainedBytes();
             template = new Template(def, source, proof); templates.put(id, template); bytes += proof.retainedBytes();
+            verifiedTemplates.put(id, template);
         }
         usedTemplates.add(id); peakBytes = Math.max(peakBytes, bytes + MAX_OBJECTS * 512L);
     }
@@ -108,7 +115,7 @@ final class BrowserBaselineObjectReuse {
                 if (!usedTemplates.contains(entry.getKey())) { bytes -= entry.getValue().proof.retainedBytes(); it.remove(); }
             }
         }
-        candidates = null; usedTemplates = null;
+        candidates = null; usedTemplates = null; verifiedTemplates = null;
     }
 
     private static final class Template {
@@ -121,10 +128,13 @@ final class BrowserBaselineObjectReuse {
             name = d.getName(); modelName = d.getObjectModel(); command = d.getCommand1();
         }
         boolean matchesTemplate(GameObjectDef d, RSModel source) {
+            return matchesDefinition(d, source) && proof.matchesSource(source);
+        }
+        boolean matchesDefinition(GameObjectDef d, RSModel source) {
             return d != null && this.source == source && modelId == d.modelID && width == d.getWidth()
                 && height == d.getHeight() && type == d.getType() && interaction == d.isInteractionOnly()
                 && Objects.equals(name, d.getName()) && Objects.equals(modelName, d.getObjectModel())
-                && Objects.equals(command, d.getCommand1()) && proof.matchesSource(source);
+                && Objects.equals(command, d.getCommand1());
         }
 
     }

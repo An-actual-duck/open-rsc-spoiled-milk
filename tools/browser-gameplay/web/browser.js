@@ -145,9 +145,10 @@ const natives = {
     window.browserProof.staticSceneJava={requested,pending:false,enabled:input[1]===1,rowBuilds:input[2],rowHits:input[3],observedBuilds:input[4],materialChecks:input[5],rowCount:input[6],parsedCellCount:input[7],rowCacheValid:input[8]===1,placementRevisionLow:input[9]>>>0,scope:'Actual Java static selection reuse counters; separate from GPU allocation and gameplay readiness'};
   },
   Java_orsc_browser_BrowserBootstrap_reportBaselineReuseWork(lib,input){
+    if(stopped)return;
     if(input?.length===0){window.browserProof.baselineReuseJava={requested:baselineReuse.enabled,pending:true};return;}
     const v=[];for(let n=0;n<input.length;n++)v.push(input[n]);
-    if(v.length!==10||v.some(x=>!Number.isSafeInteger(x)||x<0)||v[0]!==1||v[1]>1||v[6]>16777216||v[8]>16777216||v[9]>512)throw new Error('Baseline reuse diagnostics contract');
+    if(v.length!==10||v.some(x=>!Number.isSafeInteger(x)||x<0)||v[0]!==1||v[1]>1||v[6]>16777216||v[8]>16777216||v[9]>512||v[1]!==Number(baselineReuse.enabled))throw new Error('Baseline reuse diagnostics contract');
     window.browserProof.baselineReuseJava={requested:baselineReuse.enabled,pending:false,selected:v[1]===1,reused:v[2],eligibleStaticClones:v[3],refusals:v[4],resets:v[5],peakConservativeBytes:v[6],admittedBaselines:v[7],retainedProofBytes:v[8],retainedTemplates:v[9],scope:'Exact proven static clone reuse only; collision, height, normal and readiness paths remain authoritative'};
   },
   Java_orsc_browser_BrowserBootstrap_reportStaticIdentityWork(lib,input){
@@ -171,7 +172,7 @@ const natives = {
     }
   },
   async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
-    if(!['wholeRam','wholeZone','regionBuild','regionLoadProfile','geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'].includes(name))throw new Error('Unknown private policy receipt');
+    if(!['baselineReuse','wholeRam','wholeZone','regionBuild','regionLoadProfile','geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'].includes(name))throw new Error('Unknown private policy receipt');
     (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
     if(!options.has('benchmark')&&['batchedModelKernel','terrainQueryIndex'].includes(name))(window.browserProof.optimizedRenderDefaults||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
   },

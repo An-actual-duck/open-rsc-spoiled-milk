@@ -135,6 +135,10 @@ public final class BrowserBootstrap {
                 if(!actual[0]||!actual[1])throw new IllegalStateException("Requested whole-zone mode is unsupported by this client JAR");
             }
             if(Boolean.getBoolean("spoiledmilk.browserWholeRam")&&!orsc.BrowserWebGLBridge.isWholeRamEnabled())throw new IllegalStateException("Whole-RAM requires explicit benchmark and whole-zone mode");
+            if(Boolean.getBoolean("spoiledmilk.browserBaselineReuse")) {
+                boolean[] actual=BenchmarkCandidatePolicies.inspect("orsc.PacketHandler","isBrowserBaselineReuseEnabled");
+                if(!actual[0]||!actual[1])throw new IllegalStateException("Requested baseline reuse is unsupported by this client JAR");
+            }
             orsc.BrowserWebGLBridge.install();
             reportOverlayRectPolicy(System.getProperty("spoiledmilk.browserOverlayRectMode","off"),orsc.BrowserWebGLBridge.getOverlayRectMode());
             reportSpriteKeyPolicy(Boolean.parseBoolean(System.getProperty("spoiledmilk.browserSpriteKeyLimbs", "true")),orsc.BrowserWebGLBridge.isSpriteKeyLimbsEnabled());
