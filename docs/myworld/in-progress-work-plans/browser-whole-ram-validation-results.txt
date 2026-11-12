@@ -241,3 +241,40 @@ changing values to make comparisons pass; they do not measure GPU or FPS.
 Source-review receipt: ai-3 output/tests/browser-reuse-source-guards/source-review-1.
 Both unchanged guard programs pass against743d4c285; the refreshed closed query
 guard rejects superseded9f0184ada as expected. No flat-guard expectations changed.
+
+November 12 final Scene null-removal guard review
+------------------------------------------------
+Runtime sourcec038033facae26c00026a72d42a7f2b053310966 changes Scene only by
+two explanatory comments and the private-reuse gated null return in removeModel.
+Independently deleting precisely those three added lines restores the previous
+Scene byte-for-byte, SHA b5e487fa633155fac7f4a99f29ca7c050b0137cdf77c4b8887b090ff831780dd.
+Updated ONLY Scene's expected enclosing whole-file hash in
+verify-flat-light-readers.py to
+f24ff1759505c43f7d900a2d451a28be9f1d2b1ec172a36890a850ea1c4358f5.
+The four Scene and eight RSModel vertDiffuseLight reference lines/digests and
+the RSModel enclosing hash are unchanged. Light consumer bodies, Gouraud sentinel
+conditions, unused flat words and all compared values remain unchanged. The
+query-light guard and its nine whole-file expectations remain unchanged and pass.
+
+Legal Scene active entries remain nonnull: addModel rejects null, rendering
+places m_T at models[modelCount] outside that prefix, and the literal nonnull
+removal/parallel metadata/duplicate behavior is untouched. On the exact final
+production JAR, NullModelRemovalFixture passes1812738 comparisons across6251
+constructed ON/OFF operations, including growth, full arrays/tails/metadata,
+duplicate handling, bulk/clear, null requests and signed levels0/-1/10. Its five
+startup policy gates also pass. No claim about malformed reflective Scene states
+or live captured arrays is introduced by this legal-prefix proof.
+
+Final native activation uses JAR
+ac790e96c24da5ce383fb430ae8b2e75596db749a689c3c2bbe9b1ba19f52e90
+from manager output/builds/browser-bounded-streaming-cpu/integrated-2 and complete
+RAM output/builds/browser-whole-ram-bake/bounded-cpu-2/whole-ram with hidden roofs.
+verify-activation.py passes66148 checks:65848 actual three-center World.loadSections
+versus decoded publication/picking/order/collision/elevation/minimap and repeated
+mutation isolation,277 model/flat-light checks and23 eight-policy checks. Its
+source guard passes all12 maintained field-reference lines. Exact JAR/cooked-data
+binding and reverse-diff receipt are preserved under ai-3
+output/tests/browser-null-scene-light-guard/source-review-1; activation and Scene
+proofs are in integrated-activation-1 and integrated-null-prefix-1 there. Only
+fixture classes are compiled; no runtime edit, source-value normalization,
+production overlay, browser/server/GPU action or performance claim is involved.
