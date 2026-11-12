@@ -90,6 +90,12 @@ export function createBrowserOverlay(gl,{stats={},ownedFrame=null,deferOrCheck=n
     if(![0,1,2,3].includes(mode)||!Number.isSafeInteger(generation)||generation<0||!Number.isSafeInteger(frameSequence)||frameSequence<0||!Number.isInteger(fades)||fades<0||fades>16||(mode===3?fades<1:fades!==0))throw new Error('Invalid coverage mode/token');
     if(mode!==0&&(!(transmittance instanceof Float32Array)||transmittance.length!==w*h))throw new Error('Invalid coverage transmittance plane');
     // A resized retained FULL cannot define the new viewport; release it BEFORE C/T replacements.
+    // Bounded proposals keep that old FULL at its original output size. Old C/T
+    // planes are dispensable (FULL already contains them), freeing room before
+    // a resized proposal's mask is allocated within the same composite cap.
+    if(deferRetainedReset&&mode===1&&(width&&width!==w||height&&height!==h||tWidth&&tWidth!==w||tHeight&&tHeight!==h)){
+      if(rgb)gl.deleteTexture(rgb);if(coverage)gl.deleteTexture(coverage);rgb=coverage=null;width=height=tWidth=tHeight=0;stats.overlayRgbBytes=stats.overlayCoverageBytes=0;account();
+    }
     if(reset||width!==w||height!==h){if(deferRetainedReset&&mode===1)deferredReset=true;else retained.reset();}
     if(mode!==0){coverage=textureUpload(coverage,tWidth,tHeight,w,h,gl.R32F,gl.FLOAT,transmittance,UNIT);tWidth=w;tHeight=h;stats.overlayCoverageBytes=w*h*4;}
     account();stats.overlayDeclaration={width:w,height:h,mode,generation,frameSequence,fades,reset};pending={w,h,mode,token:{generation,frameSequence},fades};

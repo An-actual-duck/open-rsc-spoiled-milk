@@ -54,7 +54,7 @@ export function createBoundedResidency({catalog,stats={},capacityBytes=256*1024*
     for(const id of required){requiredBytes+=bytes(byId.get(id));lru.set(id,++tick);}
     for(const id of resident.keys())if(byId.has(id)){residentCatalogBytes+=bytes(byId.get(id));residentCatalogCount++;}
     if(requiredBytes+totalBytes()-residentCatalogBytes>capacityBytes||required.size+totalCount()-residentCatalogCount>maxChunks){
-      const error=new Error('Required active GPU set exceeds bounded256MiB/count capacity; full residency reference remains available');stop(error);throw error;
+      const error=new Error('Required active GPU set exceeds explicit bounded'+capacityBytes/(1024*1024)+'MiB/count capacity; full residency reference remains available');stop(error);throw error;
     }
     stats.requiredChunks=required.size;stats.requiredBytes=requiredBytes;
     queue=[...required].filter(id=>!resident.has(id)).map(id=>byId.get(id)).sort((a,b)=>a.role-b.role);

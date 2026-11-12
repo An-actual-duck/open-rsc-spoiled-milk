@@ -27,7 +27,10 @@ for(const n of [0,4,111,113,NaN])assert.throws(()=>fixture().make().step(n),/sli
 const privateOptions=new URLSearchParams('wholezone=on&benchmark=1&renderworker=on&overlay=coverage&gpuresidency=bounded&staticscene=on');
 assert.equal(wholeZonePolicy('webgl',privateOptions).residency,'bounded');assert(wholeZonePolicy('webgl',privateOptions).properties.includes('spoiledmilk.browserStaticSceneReuse=true'));
 assert.equal(wholeZoneCapacity({wholeZone:true,benchmarkControl:true,gpuResidency:'bounded'}).gpuBytes,256*1024*1024);
+assert.equal(wholeZoneCapacity({wholeZone:true,benchmarkControl:true,gpuResidency:'bounded',gpuBudgetMiB:512}).gpuBytes,512*1024*1024);
+const explicit512=new URLSearchParams(privateOptions);explicit512.set('gpubudget','512');assert.equal(wholeZonePolicy('webgl',explicit512).gpuBudgetMiB,512);explicit512.set('gpubudget','1024');assert.throws(()=>wholeZonePolicy('webgl',explicit512),/budget/);
 assert.equal(wholeZoneCapacity({wholeZone:true,benchmarkControl:true}).gpuBytes,3*1024*1024*1024);
 assert.throws(()=>wholeZonePolicy('webgl',new URLSearchParams('gpuresidency=bounded')),/requires/);
+assert.throws(()=>wholeZoneCapacity({gpuResidency:'bounded'}),/requires/);
 assert.throws(()=>wholeZonePolicy('webgl',new URLSearchParams('staticscene=on')),/requires/);
 console.log('PASS bounded upload progressive validation/copy/transfer, publication, binding restore, cancellation, corrupt indices, refusal and private policy. GL double only.');

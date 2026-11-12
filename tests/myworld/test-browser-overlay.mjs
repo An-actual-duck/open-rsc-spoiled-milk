@@ -57,4 +57,8 @@ streamOverlay.prepare(2,2,1,1,2,0,false,new Float32Array(4));streamOverlay.holdP
 streamOverlay.prepare(2,2,1,1,3,0,false,new Float32Array(4));streamOverlay.begin(2,2);streamOverlay.draw(2,2,rgb);assert.equal(streamStats.retainedCaptures,captures+1);
 streamOverlay.prepare(2,2,3,1,4,1,false,new Float32Array(4));assert.equal(streamOverlay.retainedOutput,true);assert.equal(streamOverlay.begin(2,2),true);streamOverlay.draw(2,2,rgb);
 streamOverlay.dispose();assert.equal(streamed.objects.size,0);
+const resized=fakeGL(),resizedStats={},resizedOverlay=createBrowserOverlay(resized.gl,{stats:resizedStats,retainOpaqueFull:true,deferRetainedReset:true});
+resizedOverlay.prepare(2048,1024,1,1,1,0,true,new Float32Array(2097152));resizedOverlay.begin(2048,1024);resizedOverlay.draw(2048,1024,new Uint8Array(8388608));
+const resizeFull=resized.gl.lastCopy.tex;resizedOverlay.prepare(1024,2048,1,2,1,0,true,new Float32Array(2097152));resizedOverlay.holdPrepared(2048,1024);assert.equal(resized.draws.at(-1).tex,resizeFull);assert(resizedStats.overlayCompositePeakBytes<=32*1024*1024);
+resizedOverlay.prepare(1024,2048,1,2,2,0,false,new Float32Array(2097152));resizedOverlay.begin(1024,2048);resizedOverlay.draw(1024,2048,new Uint8Array(8388608));assert(resizedStats.overlayCompositePeakBytes<=32*1024*1024);resizedOverlay.dispose();assert.equal(resized.objects.size,0);
 console.log('PASS coverage upload ownership, premultiplied C+T blend selection, exact retained FULL/BASE caller tokens, duplicate sequencing, owner reset, opaque fallback, bounds and owned cleanup. GL API double; no GPU proof.');
