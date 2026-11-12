@@ -240,10 +240,11 @@ Java work: some physical JS ancestry places updateChunk beneath computeNormals,
 which is not a direct Java caller chain. Exact bodies establish that work is
 active; arbitrary outer JS frames do not alone identify the Java owner. Named
 Java owner-path counters/timings and current source semantics are needed before
-changing the next cache. Static-presentation/canonical model construction is a
-lead, and the existing canonical-match branch can still rebuild after ownership
-changes. No hash-only reuse or loading-screen workaround is authorized by that
-observation. That hypothesis led to the separately measured shared clone-template
+changing the next cache. Static-presentation/canonical model construction was a lead. A suspected
+static canonical ownership-mismatch branch was not established; later exact-source
+review rejected that branch assumption because the current static builder assigns
+cacheKey equal to canonicalContentKey. No hash-only reuse or loading-screen
+workaround is authorized by the profile alone. That hypothesis led to the separately measured shared clone-template
 follow-up below; it did not establish acceptance by itself.
 
 Correctness and remaining limits
@@ -395,9 +396,10 @@ Cumulative local-update/upload-byte deltas include repeated updates, not residen
   ON  cold 53 chunk uploads / 332451852 bytes; ON  warm 0 / 294196416.
 The earlier 55.1724% whole-catalogue compact geometry saving is a format comparison;
 it is not a 55% reduction in this live total backend ledger, total VRAM or RAM.
-This fresh catalogue's reported potential geometry allocation is 2,207,197,964
-reference bytes versus 991,105,868 compact bytes; actual admitted coverage remains
-bounded. Source-bound cooks and attribute parity are unchanged by temporal sets.
+This fresh catalogue's potential geometry-plus-texture backend allocation is
+2,207,197,964 reference bytes versus 991,105,868 compact bytes. Each includes
+3,031,040 texture bytes; geometry alone is 2,204,166,924 versus 988,074,828 bytes.
+Actual admitted coverage remains bounded. Source-bound cooks and attribute parity are unchanged by temporal sets.
 
 Signed-level smoke and attribution follow-up
 An actual original-command teleport to (104,671,-1) reached GAME/ready with error
