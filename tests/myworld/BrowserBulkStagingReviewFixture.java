@@ -10,7 +10,7 @@ public final class BrowserBulkStagingReviewFixture {
  static final class Source implements BrowserBulkStaging.Source {
   final String root;int prepares,releases,polls;int cancelAt=Integer.MAX_VALUE;boolean cleanupError;List<Boolean> copied=new ArrayList<Boolean>();
   Source(Path root){this.root=root.toString()+"/";}
-  public String prepare(String relative){check(prepares==releases,"onlyone sourcelease atatime");check(relative.equals(PATHS.get(prepares)),"fixedordered prepare");prepares++;return root;}
+  public String prepare(String relative){check(prepares==releases,"onlyone sourcelease atatime");check(relative.equals(PATHS.get(prepares)),"fixedordered prepare");prepares++;return root+relative;}
   public void release(String relative,boolean success)throws IOException{releases++;copied.add(success);if(cleanupError)throw new IOException("cleanup marker");}
   public boolean cancelled(){return ++polls>=cancelAt;}
  }
@@ -25,8 +25,8 @@ public final class BrowserBulkStagingReviewFixture {
   Source cancelled=new Source(input);cancelled.cancelAt=3;try{BrowserBulkStaging.copy(PATHS,run.resolve("cancelled").toFile(),65536,cancelled,null);throw new AssertionError("cancel ignored");}catch(InterruptedIOException expected){checks++;}check(cancelled.prepares==1&&cancelled.releases==1&&cancelled.copied.equals(Arrays.asList(false)),"cancelledcopy finallyreleasesclosedfailedlease");check(Files.size(run.resolve("cancelled").resolve(PATHS.get(0)))==1048576,"bounded1MiB cancellation");
   Source cleanup=new Source(input);cleanup.cleanupError=true;try{BrowserBulkStaging.copy(PATHS,run.resolve("cleanup").toFile(),65536,cleanup,null);throw new AssertionError("releaseerror ignored");}catch(IOException expected){check(expected.getMessage().equals("cleanup marker"),"successfulcopy cleanupfailure surfaces");}check(cleanup.prepares==1&&cleanup.releases==1&&cleanup.copied.equals(Arrays.asList(true)),"cleanupfailure preventsnextlease");
   Source reporter=new Source(input);BrowserBulkStaging.copy(PATHS,run.resolve("reporter").toFile(),32768,reporter,new BrowserBootstrapFiles.Progress(){public void update(long b,int f,int t,long ms){throw new IllegalStateException("UI marker");}});check(reporter.copied.equals(Arrays.asList(true,true,true)),"passivereportererror cannotabortcopies");
-  for(String invalid:new String[]{null,"/app/","/str/browser-startup-0/","/str/browser-startup-1/../","/str/browser-startup-1", "https://example/"})try{BrowserBulkStaging.validateRoot(invalid);throw new AssertionError("unsafeRoot");}catch(IOException expected){checks++;}
-  check(BrowserBulkStaging.validateRoot("/str/browser-startup-1/").equals("/str/browser-startup-1/"),"exactsource root admitted");
+  for(String invalid:new String[]{null,"/app/","/str/browser-startup-0/","/str/browser-startup-1/../","/str/browser-startup-1", "https://example/"})try{BrowserBulkStaging.validateSource(invalid,PATHS.get(0));throw new AssertionError("unsafeRoot");}catch(IOException expected){checks++;}
+  check(BrowserBulkStaging.validateSource("/str/browser-startup-1-manifest.json",PATHS.get(0)).equals("/str/browser-startup-1-manifest.json"),"exactsource root admitted");
   System.out.println("PASS "+checks+" independent actual-copy lease/originalIO/cleanup/cancel/byte-progress/source-root checks; no browser/network");
  }
 }

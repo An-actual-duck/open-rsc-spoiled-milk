@@ -30,7 +30,8 @@ no redirects, exact advertised/actual byte bounds and SHA256 before mounting.
 No arbitrary URL, persistent personal-state path or settings override is accepted.
 
 Only one logical raw payload is owned at a time: bounded receive, digest, mount
-at a session-owned /str/browser-startup-N/ path, Java copy to the same /files
+at a flat session-owned /str/browser-startup-N-manifest.json (and corresponding
+source.bin/prepared.bin names), Java copy to the same /files
 relative path, resource closure, then explicit removal. Subsequent fetches cannot
 begin while a prior payload is owned. Public transport has a separate 256 MiB
 per-file admission limit; the current largest file is 230,205,484 bytes. This is
@@ -90,7 +91,7 @@ fixtures. It writes categorized output/tests/browser-startup-bulk/suite-*/ recei
 It does not build a replacement core JAR or transplant core classes. An intact
 published alpha-20261112-1 client JAR was used for the worker compile.
 
-Focused coverage: 89 adapter checks; 54 actual Java byte/FD-close/finally/cancel/
+Focused coverage: 89 adapter checks; 56 actual Java byte/FD-close/finally/cancel/
 roster checks; 38 public-bootstrap/private admission checks; 250 startup observer/
 archive checks; 109 actual parent queued-message checks; 32 filesystem helper
 checks; 54 public policy checks; display/world readiness regressions; actual
@@ -118,3 +119,26 @@ been observed by the manager; CPU seams do not prove its actual byte/lifetime
 semantics. No startup-time, FPS, GPU-memory or total-memory improvement is claimed
 before those results. No public server, service, listener or browser was started
 by this worker and no hosting deployment was changed.
+
+Runtime compatibility correction
+--------------------------------
+The first actual CheerpJ 5.0 candidate stopped before writing the manifest. The
+manager captured the SDK error "Directories are not supported" for the initial
+nested /str path, followed by FileNotFoundException on that exact Java input.
+Evidence: output/diagnostics/browser-startup/functional-preview-debug-2/console.jsonl.
+The previous CPU Map mount seam did not enforce this filesystem restriction.
+
+Temporary inputs are now flat /str filenames. Native prepare returns the complete
+source filename, which Java validates against the session namespace and exact
+requested canonical basename. BrowserBootstrapFiles.copyOne takes an explicit
+source file and retains the independently validated destination relative path.
+The old root-based copy overloads delegate to the same unchanged copy loop and
+retain private behavior. Mount, read and removal use the same full flat name.
+
+The adapter test now models the actual SDK flat-only constraint. The actual-JVM
+fixture reads flat source files into the original nested destination paths and
+checks exact bytes and descriptors closed before release, including cancellation
+and failure. Namespace negatives reject a different product, foreign root and
+nested paths. All hashes, admission, readiness and source verification remain
+unchanged. Manager must re-run the corrected artifact on the real SDK; passing
+this model is not actual-runtime acceptance or a startup timing result.

@@ -28,6 +28,16 @@ public final class BrowserBootstrapFiles {
     }
     public static void copy(List<String> paths, String sourceRoot, File destinationRoot,
                             int bufferSize, Progress progress, Cancellation cancellation) throws IOException {
+        copy(paths,sourceRoot,destinationRoot,bufferSize,progress,cancellation,null);
+    }
+    /** Explicit flat input path; destination retains its original authorized relative path. */
+    public static void copyOne(String relative, String sourceFile, File destinationRoot,
+                               int bufferSize, Progress progress, Cancellation cancellation) throws IOException {
+        if(sourceFile==null)throw new IOException("Missing staged source");
+        copy(java.util.Collections.singletonList(relative),null,destinationRoot,bufferSize,progress,cancellation,sourceFile);
+    }
+    private static void copy(List<String> paths, String sourceRoot, File destinationRoot,
+                             int bufferSize, Progress progress, Cancellation cancellation, String sourceFile) throws IOException {
         if(bufferSize<=0||bufferSize>1048576)throw new IllegalArgumentException("Invalid copy buffer");
         // Validate the entire already-authorized roster before opening outputs.
         // Caller retains its public personal-file policy and exact RAM roster.
@@ -38,7 +48,7 @@ public final class BrowserBootstrapFiles {
             checkCancelled(cancellation);
             File destination=new File(destinationRoot,relative);
             File parent=destination.getParentFile();if(parent!=null)parent.mkdirs();
-            try(InputStream input=new FileInputStream(sourceRoot+relative);OutputStream output=new FileOutputStream(destination)){
+            try(InputStream input=new FileInputStream(sourceFile==null?sourceRoot+relative:sourceFile);OutputStream output=new FileOutputStream(destination)){
                 byte[] buffer=new byte[bufferSize];int count,untilPoll=1048576;
                 while((count=input.read(buffer,0,cancellation==null?buffer.length:Math.min(buffer.length,untilPoll)))!=-1){
                     output.write(buffer,0,count);bytes+=count;

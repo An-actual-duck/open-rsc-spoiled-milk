@@ -15,17 +15,17 @@ export function createBulkStaging({enabled=false,assetPrefix,config,fetcher=glob
     return Object.freeze({relative:'Cache/whole-ram/'+name,bytes,hash});
   });
   stats.totalFiles=files.length;stats.totalBytes=files.reduce((n,f)=>n+f.bytes,0);
-  const root='/str/browser-startup-'+(++nextOwner)+'/';let current=null,index=0,lastProgressBytes=0,lastProgressAt=now();
+  const root='/str/browser-startup-'+(++nextOwner)+'-';let current=null,index=0,lastProgressBytes=0,lastProgressAt=now();
   function notify(force=false){const at=now();if(!force&&stats.receivedBytes-lastProgressBytes<1048576&&at-lastProgressAt<250)return;lastProgressBytes=stats.receivedBytes;lastProgressAt=at;try{onProgress({bytes:stats.receivedBytes,totalBytes:stats.totalBytes});}catch{/* Observations never authorize or fail a copy. */}}
   function alive(owner){if(stats.stopped||stats.failed||current!==owner)throw Error('Public staging cancelled');}
   function drop(owner){owner.data=null;stats.ownedBytes=0;if(current===owner)current=null;}
-  function remove(owner){if(owner.mounted){try{removeFile(root+owner.file.relative);}catch(error){stats.failed=true;stats.cleanupFailed=true;stats.cleanupError=String(error).slice(0,512);throw error;}owner.mounted=false;stats.mountedBytes=0;stats.removals++;}stats.deferredCloseCleanup=false;drop(owner);}
+  function remove(owner){if(owner.mounted){try{removeFile(owner.path);}catch(error){stats.failed=true;stats.cleanupFailed=true;stats.cleanupError=String(error).slice(0,512);throw error;}owner.mounted=false;stats.mountedBytes=0;stats.removals++;}stats.deferredCloseCleanup=false;drop(owner);}
   async function prepare(relative){
     if(stats.stopped||stats.failed)throw Error('Public staging cancelled');
     if(current)throw Error('Public staging already owns a payload');
     const file=files[index];if(!file||relative!==file.relative)throw Error('Public staging roster/order mismatch');
     if(typeof addFile!=='function'||typeof removeFile!=='function')throw Error('Public staging APIs unavailable');
-    const owner={file,controller:new AbortController(),data:null,mounted:false,leased:false};current=owner;
+    const owner={file,path:root+file.relative.substring(file.relative.lastIndexOf('/')+1),controller:new AbortController(),data:null,mounted:false,leased:false};current=owner;
     try{
       const url=new URL(file.relative,ORIGIN+assetPrefix);
       const response=await fetcher(url.href,{cache:'default',credentials:'omit',redirect:'error',signal:owner.controller.signal});alive(owner);
@@ -44,8 +44,8 @@ export function createBulkStaging({enabled=false,assetPrefix,config,fetcher=glob
       if(Array.from(digest,x=>x.toString(16).padStart(2,'0')).join('')!==file.hash)throw Error('Public staging digest mismatch');
       stats.verifiedBytes+=file.bytes;
       // Mark the mount attempt so failed API implementations cannot leave a file.
-      owner.mounted=true;stats.mountedBytes=file.bytes;addFile(root+relative,owner.data);stats.mounts++;alive(owner);
-      owner.leased=true;return root;
+      owner.mounted=true;stats.mountedBytes=file.bytes;addFile(owner.path,owner.data);stats.mounts++;alive(owner);
+      owner.leased=true;return owner.path;
     }catch(error){stats.failed=!stats.stopped;owner.controller.abort();if(!owner.leased)try{remove(owner);}catch{/* Keep original preparation failure and unconfirmed ownership. */}throw error;}
   }
   function release(relative,copied){
