@@ -54,7 +54,11 @@ The prepared codec now supports an optional bounded pool and immutable preparsed
 ModelLayout metadata. Template hits reuse private node metadata instead of copying
 every descriptor node per clone. Small public scalar/root metadata arrays remain
 owned per ModelArrays instance; output graph arrays preserve alias groups within
-each model and remain disjoint between models. The default wire format and all93
+each model and remain disjoint between models. A private no-empty-array constructor is selected only for the schema-checked
+internal cached layout; it restores all92 mutable fields before return, while
+the93rd field m_Vb retains its normal final initializer12345678. Ordinary decoder
+and native construction remain literal. This removes arrays that would otherwise
+be allocated empty and immediately replaced. The default wire format and all93
 RSModel fields are unchanged. The ordinary decoder retains its original meaning.
 
 Budget and reset
@@ -74,8 +78,9 @@ peakChargedRetainedBytes are separate actual recipe charge sums. Live output
 instances, canonical borrowed model cache, VM/GC metadata and total RAM are not
 claimed by that ledger. Current fixture filled256 recipes at4,355,584 charged
 bytes. Session/scope reset clears cache; signed/native/patch/settings changes
-clear/refuse at the next factory request. The independent resident-input cache's
-ordinary per-frame invalidation does not clear these unrelated source recipes.
+clear/refuse at the next factory request. Per-object animated fallback evicts only that ID, preserving unrelated static
+recipes; a warm-static/animated/same-static counter assertion covers this reviewed
+performance correction. The independent resident-input cache's ordinary per-frame invalidation does not clear these unrelated source recipes.
 
 Controls and diagnostics
 ------------------------
@@ -91,11 +96,11 @@ charges and copied instance count. These receipts grant no gameplay readiness.
 
 Preserved review artifacts and checks
 ------------------------------------
-Implementation checkpoint645ea961055e2243b77e92dd4bec7f02c71f01b9:
-  output/builds/browser-clone-templates/review-645ea9/client.jar
-  SHA18777e2106cba60f9e4a51f374ea81a4193abc8dddeebc1da9a310b01ab6841c
+Final implementation checkpoint71753a7a60cf24ddd03093a406c746f7f56be7bb:
+  output/builds/browser-clone-templates/review-71753a/client.jar
+  SHAcadd6ff1afa324b1785eda1f56c505124ed9dae78e3992ec09bd960431cccf4a
   receipt/source/class/asset manifests beside it: clean full maintained Ant build,
-  990classes,3194own asset payloads, no class transplants. Earlier046 milestone
+  990classes,3194own asset payloads, no class transplants. Earlier046/645/03cb milestones
   and review artifact are preserved separately. No earlier bakes were changed.
 
 Focused full-JAR suite:
@@ -106,9 +111,9 @@ ON/OFF/ordinary/noRAM/noStatic. All produce identical complete state/alias/model
 mesh/collision/software/picking trace through11 actual showGameObjects DELTA
 packets, baseline/canonical factories, changed source transform/material/definition,
 signed-level/non-global/settings/patch fallback,80 concurrent copies, large-model
-fallback and256-template capacity.647checks per mode. Current complete trace:
+fallback and256-template capacity.648checks per mode. Current complete trace:
   fc8b0c3ff0a9ded96b14e265dfff6f1b691ee54eab68b4b720648974056acdb2
-ON measured owner hits:254DELTA,90BASELINE,86CANONICAL in this CPU fixture.
+ON measured owner hits:254DELTA,90BASELINE,89CANONICAL in this CPU fixture.
 
 The existing independent reflection inventory passes277checks covering all93
 nonstatic model fields, capacity tails, signed zero/NaN raw bits, nested aliases,
@@ -116,12 +121,13 @@ mutation isolation, actual transform/light/clone and wire pool roundtrip. The ne
 pool refuses a tiny budget before owning primitive bytes. Existing linear DELTA
 packet semantics pass. Frontend ordinary/private VM tests,12 actual startup policy
 checks and6 structured URL/dependency refusal checks pass. Evidence lives under
-output/tests/browser-clone-templates/full-jar-3 and sibling logs.
+output/tests/browser-clone-templates/full-jar-5 and sibling logs.
 
 Independent ai2 review of046 found no blocker across278 mutation scenarios,
 21,916ON assertions, all93 fields/aliases, literal source side effects,120 warmed
-concurrent copies and real DELTA/canonical owners. Final645 only broadens definition
-metadata refusal; await its exact independent review handoff before integration.
+concurrent copies and real DELTA/canonical owners. Subsequent645 broadens definition metadata refusal,03cb preserves static recipes
+across animated fallbacks, and71753 adds the focused no-empty-array constructor.
+Await final71753 independent review handoff before integration.
 
 Remaining acceptance
 --------------------
@@ -131,3 +137,13 @@ confirm owner counter deltas, frame-time/GC/gap distributions, source-level fall
 and visual/picking parity. Full source guards intentionally require focused review
 of enclosing mudclient/RSModel/codec changes; no blind hash refresh is authorized.
 Keep this flag default OFF until those results justify adoption.
+
+Final preparation notes
+-----------------------
+The final71753 artifact and five-mode proof are preserved under review-71753a and
+full-jar-5. Bootstrap Java compiled separately against that API; frontend ordinary
+and private clone-template property/counter contracts passed. workspace-layout
+check still reports the inherited40 legacy output-root entries in this worker;
+this task adds only declared tests/builds groups and preserves the old evidence.
+Independent review owns any focused source-guard expectation refresh and must be
+integrated with this exact reviewed Java. No guard exception is weakened here.
