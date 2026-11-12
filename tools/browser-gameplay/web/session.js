@@ -13,6 +13,7 @@ try{deployment=resolveBrowserDeployment(deploymentConfig,location);}
 catch(error){status.textContent=String(error.message);start.disabled=true;throw error;}
 if(deployment.publicAlpha){
   document.title='Spoiled Milk — Browser Alpha · '+deployment.config.buildId;
+  status.textContent='Sign in with your existing account. The first load may take a little longer.';
   const label=document.querySelector('#release-label');label.hidden=false;label.textContent='Browser Alpha · '+deployment.config.buildId;
   const credit=document.querySelector('#runtime-credit');credit.hidden=false;
   document.querySelector('#download-client').hidden=false;
