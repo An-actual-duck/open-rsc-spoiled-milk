@@ -180,3 +180,42 @@ previous data bytes: it creates NO reader and claims NO admission/readiness/hit
 proof. Earlier basis-prepared-* receipts are diagnostic only; final evidence
 above uses matching fresh JAR/data and preparedOnly=false. Actual hardware
 startup, route performance and later rollout decisions remain manager-owned.
+
+November 11 source-guard review after bounded GPU / CPU reuse integration
+------------------------------------------------------------------------
+Reviewed runtime source743d4c2850d7244df4e0e67f50d62ea80424a654 against the
+previous guarded source9f0184ada82505370fb6d1860e83116ab56e1fdf. Only three
+whole-file expectations changed in query-light-consumers.json: mudclient,
+BrowserWebGLBridge and BrowserWholeOverworldZone. The other six whole-file
+expectations, original collectTerrainVertexInputs carrier-seed method hash,
+getter-call roster and exception scope remain unchanged. No light word is
+normalized or newly excluded. The flat-light guard passes unchanged: the same
+12 field-reference lines and enclosing Scene/RSModel source hashes still match.
+
+mudclient's three getVertexLight calls remain the two sides of resident-object
+parity comparison and its resident-object geometry fingerprint. The new memo
+stores canonical identities containing kind, world coordinates, object ID,
+direction and two elevations; it neither reads nor stores query-light words.
+The unchanged original identity implementation remains the fallback. World adds
+only exact immutable halo ownership/context checks; every lookup rejects a
+loaded gameplay interpolation vertex, and heights still use the unchanged
+native/loaded elevation algorithm. Its carrier-seed method is byte-identical.
+The captured-prebuild RAM provider correction does not change light sampling.
+
+BrowserWholeOverworldZone retains primitive canonical cell/identity rows and
+validated material metadata under exact owner/source/revision/scope keys. Roof
+visibility metadata is rebuilt every frame. Its WORLD-role plane0..2 removal
+condition is unchanged. BrowserWebGLBridge still calls this filter before
+activeKeys and prepareChunks; its change adds diagnostics after filtering.
+The remaining getVertexLight consumer is the unchanged OpenGL chunk visual
+packer, which receives the filtered presentationWorld in this private path.
+Unchanged TerrainDefinitionField, roof/indoor consumers and chunk-frame code
+continue to use exact coordinates, heights, kinds and roof coverage, not the
+qualified carrier-seeded TERRAIN query-light words.
+
+The integrated immutable JAR cc7022c201ed94596e38b77d53d335c1e7278ccf6ef7434f0db02105e15a4cc6
+has the exact same 980-entry compiled-class manifest as the reviewed final CPU
+JAR4052d05892b9498b6ecb453a88d9128f6ae509eb1cbfaeb4d95b47e759f8d991.
+This class equivalence supports the earlier literal-versus-retained semantic
+oracles; fresh prepared-data admission and basis proofs remain separately bound
+to the integrated JAR and its newly cooked data.
