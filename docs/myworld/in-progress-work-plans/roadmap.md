@@ -4,6 +4,20 @@ This document tracks the high-level path from the current alpha toward beta.
 Detailed implementation plans remain in their subject-specific documents; this
 roadmap defines priorities, milestone boundaries, and release progression.
 
+## Current browser recommendation — November 11, 2026
+
+Record two complementary planned tracks: RAM-backed bounded GPU streaming and a
+persistent browser-owned static scene to reduce repeated CPU work. Start with a
+fresh complete profile and a shared ownership/version/invalidation contract;
+measure each change independently before combining it. Preserve visuals and
+gameplay authority while targeting lower GPU residency and 60 FPS. The owner
+found the RAM preview playable with better loading but remaining chunk stutter;
+populated roaming/combat acceptance is still separate from the fixed benchmark.
+See the [bounded streaming and CPU recommendation](browser-bounded-streaming-and-cpu-plan.txt).
+This records a recommendation, not implementation or adoption authorization.
+The [saved prior streaming plan](browser-modern-streaming-plan.txt) and dated
+experiment evidence below remain preserved.
+
 ## Private prepared-RAM experiment — November 11, 2026
 
 With the full GPU catalogue ON in every run, prepared CPU RAM reduced warm

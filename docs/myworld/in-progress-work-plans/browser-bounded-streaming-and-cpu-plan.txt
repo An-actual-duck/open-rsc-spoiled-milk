@@ -1,0 +1,148 @@
+Browser bounded GPU streaming and CPU reuse recommendation — November 11, 2026
+============================================================================
+
+Status: RECOMMENDED / PLANNED. The owner requested a written recommendation,
+not implementation, adoption, a new preview configuration or public deployment.
+Preserve current visuals while reducing GPU residency and recovering frame time
+toward 60 FPS. These are two complementary tracks with separate success measures;
+a smaller GPU budget does not automatically improve FPS.
+
+Evidence and present limits
+---------------------------
+browser-whole-ram-experiment-results.txt records same-artifact RAM ON/OFF/ON with
+the full GPU catalogue ON throughout: mean warm gaps 297.25/508.25/299.75 ms and
+stationary fresh world FPS 42.82/40.77/40.45. RAM preparation improved loading,
+but roughly 0.3-second pauses remain, with no consistent stationary FPS gain.
+browser-whole-zone-experiment-results.txt separately records full-GPU residency
+improving travel while stationary fresh FPS regressed from 50.81 to 42.83.
+Neither experiment establishes seamless travel or a complete present bottleneck.
+
+The owner subsequently found the RAM preview playable and liked its loading
+gain, while still noticing chunk stutter. Character/NPC rendering worked. This
+is limited owner feedback, not complete population or gameplay acceptance. The
+benchmark server suppresses authored NPCs except 32 fixed near (133,660); empty
+roaming elsewhere is intentional in that workload. Keep it for comparable
+measurements, and add populated roaming/combat acceptance separately when testing
+is authorized. No preview/server change is requested by this recommendation.
+
+At 40–43 fresh FPS, frames take roughly 23–25 ms; 60 FPS allows 16.67 ms for the
+whole frame, requiring about 7–8 ms saved. Recent Java bridge samples around
+4–6 ms and JS submission around 2–3 ms cover only parts of the pipeline and can
+overlap. Latest comparable GPU timings are absent. Older source profiles are
+historical evidence and cannot rank today's hotspots or promise an FPS gain.
+
+Existing architecture to preserve
+---------------------------------
+The map loader already reads selected source data. Custom 48-tile sectors,
+active 3x3 scope, 5x5 visual halo and prediction already exist; GPU residency is a
+separate cache. This proposal improves their coordination rather than inventing
+map loading or replacing the current scene authority.
+
+The private full-GPU mode pins the complete catalogue instead of using ordinary
+256 MiB geometry/texture capacity. Current prepared RAM requires that full-GPU
+mode and is bound to its exact catalogue/client/source/settings. Decouple that
+dependency before attempting a bounded GPU cache; this is not a supported toggle
+combination today. Preserve content validation when separating the lifecycles.
+browser-whole-overworld-ram.txt describes existing immutable CPU recipes/query
+products and independently owned active mutable state. Cached GPU geometry,
+the render Worker and native kernels also already exist. None removes all CPU
+scene, bridge, picking, actor or UI work.
+
+Track 1: RAM-backed bounded GPU streaming
+----------------------------------------
+Retain and reuse validated immutable CPU products across scope changes. Upload
+only useful visual cells to a bounded GPU cache, allowing a nearby/return working
+set without retaining the entire overworld in GPU memory. Keep CPU product
+retention, GPU residency, upload queues and active gameplay readiness distinct.
+
+Start with a candidate 256 MiB combined geometry/texture budget. Evaluate 512 MiB
+only if measured hit rates and travel gaps justify it on supported devices.
+Reconcile byte and count caps, reserve room for entering cells, and measure
+resident plus transient peaks. Shadows, framebuffers, sprite/overlay atlases,
+render-Worker copies, driver allocations, browser/VM memory and staging buffers
+need separate accounting. This budget is not a total VRAM or system-RAM promise.
+
+Use separate terrain and scenery scheduling and budget shares so a large scenery
+queue cannot block needed ground. Prioritize active/visible cells, then movement
+and camera lookahead, then useful return cells. Bound source preparation,
+packing, transfer and uploads independently; spread work over frames instead of
+placing a synchronous whole-window rebuild behind an upload limit. Cancel stale
+generations and release their owned buffers before accepting replacement work.
+
+Keep required active collision, elevation, picking and server readiness gates.
+Static visual reuse never grants gameplay authority. Doors, trees and other live
+mutations must invalidate or override the correct cells without resurrecting
+stale scenery. Retain safe signed-level/world-space fallback and bounded queues
+through rapid turns, teleports, disconnects and context loss.
+
+The current source-bound catalogue audit reports world geometry 742,492,452 B
+(about 708 MiB, including terrain/walls/roofs), object geometry 1,461,674,472 B
+(about 1,394 MiB) and textures 3,031,040 B (about 3 MiB). Keeping all ground on
+the GPU is not itself a small-memory solution: pure GROUND drawable triangles
+are estimated at 712,976,136 B (about 680 MiB) using the current independent
+triangle format, 112 B per vertex plus 4 B per index. This is a derivation, not
+a measured terrain-only implementation or allocation. It excludes unused
+capacity, metadata and the other memory categories above.
+
+Audit receipt in the manager evidence tree:
+output/diagnostics/browser-whole-overworld-ram/catalog-memory-breakdown.json
+Catalogue SHA256:
+ce4dd9bea253d8d9a1c30c6d63f79157e6a9a4a43c21ee24be3a37c5063d4582
+Consider compact vertex attributes and reusable meshes/instancing as separately
+measured follow-ups. Preserve picking/order/material/light behavior and exact or
+owner-approved visual error bounds. Disk compression alone saves no GPU buffers.
+
+Track 2: persistent browser-owned static scene
+---------------------------------------------
+Retain validated static descriptors and reusable render plans in the browser.
+Java would send scoped/versioned changes when static content changes, plus the
+camera, actors, effects and other truly changing frame data. Where a fresh profile
+shows cost, avoid repeating JSON parsing/writing, content hashing, array copying,
+static-cell scans or render-plan construction for unchanged content each frame.
+This extends existing caches; it does not assume these operations all dominate.
+
+Java/server remain authoritative for gameplay state. Accurate picks, actor order,
+animation, effects, UI and dynamic overlap must continue to update correctly.
+Camera-dependent visibility, roof/shadow selection and ordering may still need
+per-frame work even when descriptors persist. Keep immutable static identity
+separate from mutable overlays and active readiness; do not reuse stale results
+merely because geometry bytes match. Reuse browser-frame-preparation.txt's stage
+instrumentation and scoped fast paths and browser-scene-preparation.txt's ordered
+scene/picking contracts. browser-retained-frame.txt describes exact death/sleep
+fade pixels, a separate feature from this proposed persistent static scene.
+
+Sequence and decision gates
+----------------------------
+1. Capture a fresh complete profile bound to one current source/JAR/frontend/
+   map/catalogue/settings set. Cover Java draw preparation, bridge, Worker queue
+   and execution, JS submission, GPU work and fresh-frame intervals, including
+   work before the bridge. State timing coverage, overlap and missing samples;
+   do not sum nested spans or infer GPU causation from draw/triangle counts.
+2. Define one shared ownership/version/invalidation contract: source/package,
+   world space, signed level, cell, material/renderer/options and dependencies;
+   mutable revision, scene generation and GPU context generation. Specify who
+   owns buffers, who can publish/evict, and how stale work is rejected. Preserve
+   catalogue/source checks while decoupling RAM readiness from full GPU pinning.
+3. Implement bounded residency/scheduling and static CPU reuse in small, separately
+   measurable steps with same-artifact switches. Compare each against its own
+   baseline, then compare their combination. Keep current visual/fog settings.
+   Fresh profiling decides which measured CPU change should come first.
+4. Accept only with improved memory bounds/travel cadence and verified frame-time
+   results, not simply lower counters. Report median/tail/worst gaps, queue and
+   cache behavior, fresh ready frames versus held images, CPU/GPU timing coverage,
+   startup cost, retained/transient memory and sustained long-session behavior.
+
+Use identical camera/input/visuals and paired cold, warm, cached-return and long
+travel routes. Cover camera turns/zoom, upper floors/roofs, levels -1 and 10,
+teleports, doors/trees through complete mutation/restoration, VFX, populated
+roaming/combat, disconnect and context loss. Prove bounded memory and correct
+source/epoch rejection, collision, picking and visual behavior under pressure.
+Keep the fixed benchmark and populated acceptance results distinct. Include
+lower-memory devices before proposing ordinary defaults. A held picture is not
+a fresh gameplay frame, and backend completion is not physical display scanout.
+
+Saved prior plan: browser-modern-streaming-plan.txt remains unchanged. Its reuse,
+background preparation, compact formats and later instancing ideas remain useful;
+the results above inform this current recommendation without rewriting history.
+No WebGPU migration or runtime switch is a prerequisite. Implementation approval,
+ordinary adoption, release packaging and public activation remain separate work.
