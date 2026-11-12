@@ -15,10 +15,11 @@ final class RendererGeometrySettings {
 	}
 
 	static Mode getMode() {
-		return mode;
+		return BrowserPublicGraphicsPreset.isEnabled() ? Mode.SMOOTH : mode;
 	}
 
 	static Mode cycleMode() {
+		if (BrowserPublicGraphicsPreset.isEnabled()) return getMode();
 		Mode next = mode.next();
 		mode = next;
 		return next;
@@ -26,11 +27,13 @@ final class RendererGeometrySettings {
 
 	/** Browser WebGL has filled triangles only; native Wire remains desktop-only. */
 	static Mode cycleBrowserMode() {
+		if (BrowserPublicGraphicsPreset.isEnabled()) return getMode();
 		mode = mode == Mode.SMOOTH ? Mode.FACETED : Mode.SMOOTH;
 		return mode;
 	}
 
 	static Mode setMode(Mode next) {
+		if (BrowserPublicGraphicsPreset.isEnabled()) return getMode();
 		mode = next == null ? Mode.SMOOTH : next;
 		return mode;
 	}
@@ -46,6 +49,7 @@ final class RendererGeometrySettings {
 	}
 
 	static void saveToClientSettings(Properties props) {
+		if (BrowserPublicGraphicsPreset.isEnabled()) return;
 		if (props != null) {
 			props.setProperty(GEOMETRY_PROPERTY_KEY, mode.id);
 		}

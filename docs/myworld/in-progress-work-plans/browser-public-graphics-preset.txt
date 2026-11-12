@@ -1,0 +1,66 @@
+Public browser alpha graphics compatibility — November 12, 2026
+
+The whole-zone catalogue deliberately rejects incompatible vertex packing.
+Its accepted packing tuple is [0, 0, 1, 0]: unbaked brightness, Fog On,
+Directional lighting and Smooth geometry. Advertising selectable Fog/Lighting/
+Geometry while using that fixed catalogue could turn a menu choice into a fatal
+catalogue mismatch. Saved local renderer modes could cause the same problem.
+
+This change gives only the explicitly selected public browser alpha effective
+ON/DIRECTIONAL/SMOOTH modes. The ordinary settings loaders still parse and retain
+the stored preferences separately. Public cycles/setters do not modify that
+stored mode, and public save writers omit these three settings entirely,
+preserving their original keys/values and legacy fog alias. A future ordinary
+or private session can therefore read the original choices. No account settings,
+roof option, brightness, shaders, catalogue/hash guards, native renderer or
+private startup policy are overridden or weakened.
+
+Graphics groups the three unavailable choices under 'Browser preset (fixed)',
+then groups supported controls under 'Adjustments'. Fixed rows have no action;
+stale direct IDs 60/61/62 are also refused. Brightness/dimness remains live in
+actual shader uniforms while directional unbaked packing retains its zero word.
+The setting marker is the existing exact public bootstrap flag; no import from
+the other worker's unmerged public bootstrap is required.
+
+Changed production files: BrowserPublicGraphicsPreset.java, RendererFogSettings,
+RendererLightingSettings, RendererGeometrySettings and RendererSettingsPanel.
+Existing loader/persistence behavior with the public flag absent remains intact.
+The effective getter path is shared by the real menu, real backend packer and
+shader uniform exporter, so the menu cannot report a different mode from packing.
+
+Evidence
+--------
+Frozen clean implementation: ace6230e340cd62545161d584004625e41e04bfc.
+Full 992-class / 3,194-own-asset JAR:
+ /home/justin/Core-Framework-ai-3/output/builds/browser-public-graphics/review-ace623/client.jar
+ SHA256 6ee52c73c18f0177b3e7927abde5cb92e1e478dabdeca358ff7ef3a77a03572d
+Receipt/source/class/asset manifests and full isolated Ant build log are beside it.
+No class overlays or old-JAR rebinding were used.
+
+Actual full-JAR fixture results in output/tests/browser-public-graphics/final-1:
+ 151 public checks; 44 private checks; 81 ordinary controls/settings checks.
+The twelve saved Fog/Lighting/Geometry combinations keep their stored modes and
+Properties intact, including actual RendererProfileApplier aggregate persistence.
+Actual backendPackingSettings matches the accepted tuple for every public case;
+actual shader flags match the effective menu modes; unrelated brightness/dimness
+changes still affect actual shader uniforms. The real panel exposes disabled
+rows and refuses direct stale actions. Private setters/cycles/writers retain
+ordinary behavior. Query-light and flat-light gates pass unchanged; no guard
+expectations were updated. Output layout reports only 40 inherited legacy entries.
+
+Repeat with a new output destination from the worker checkout:
+
+ nice -n 10 python3 tests/myworld/browser-public-graphics/run.py \
+   --root . \
+   --jar output/builds/browser-public-graphics/review-ace623/client.jar \
+   --receipt output/builds/browser-public-graphics/review-ace623/receipt.json \
+   --catalogue /home/justin/Core-Framework/output/tests/browser-gameplay-spike/handoff-templates-1/web/whole-zone/manifest.json \
+   --out output/tests/browser-public-graphics/repeat-1
+
+The old catalogue is read only for its settings tuple, never executed/rebound
+with this JAR. All production Java still matches the frozen review artifact.
+The independent worker reviewed ace623's getter/load/save/dispatch separation
+and found no blocker. CPU tests do not prove real browser presentation or FPS.
+The manager must build/cook the exact combined public artifact and verify its
+menu appearance, normal exploration, roof fallback and gameplay in Firefox.
+This worker launched no browser, GPU, server, listener, SSH or service operation.
