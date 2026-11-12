@@ -4794,7 +4794,7 @@ public final class mudclient implements Runnable {
     private ResidentObjectCanonicalIdentity createResidentObjectCanonicalIdentity(Renderer3DModelKind kind,int worldTileX,int worldTileZ,int objectId,int direction){
         if(!orsc.graphics.three.WholeOverworldZoneRegistry.isStaticSceneReuseEnabled()||world==null||getRequestedPlane()!=0){residentCanonicalMemos=null;residentCanonicalMemoContext=null;residentCanonicalMemoEntries=0;return createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);}
         Object context=world.getWholeZoneImmutableElevationContext();
-        if(context!=residentCanonicalMemoContext){residentCanonicalMemos=null;residentCanonicalMemoEntries=0;residentCanonicalMemoContext=context;residentCanonicalMemoResets++;}
+        if(context!=residentCanonicalMemoContext){residentCanonicalMemos=null;residentCanonicalMemoEntries=0;residentCanonicalMemoContext=context;if(residentCanonicalMemoResets<Integer.MAX_VALUE)residentCanonicalMemoResets++;}
         if(context==null)return createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);
         int localX=worldTileX-midRegionBaseX,localZ=worldTileZ-midRegionBaseZ,modelId=-1,width=0,height=0;
         boolean immutable=true;
@@ -4809,13 +4809,13 @@ public final class mudclient implements Runnable {
             immutable=world.isWholeZoneImmutableElevationSample(startX*tileSize,startZ*tileSize)&&world.isWholeZoneImmutableElevationSample(endX*tileSize,endZ*tileSize);
         }else return createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);
         int slot=residentCanonicalMemoCursor++;
-        if(!immutable){residentCanonicalMemoLiveRefusals++;return createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);}
-        if(slot<0||slot>=MAX_RESIDENT_CANONICAL_MEMOS){residentCanonicalMemoCapacityRefusals++;return createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);}
+        if(!immutable){if(residentCanonicalMemoLiveRefusals<Integer.MAX_VALUE)residentCanonicalMemoLiveRefusals++;return createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);}
+        if(slot<0||slot>=MAX_RESIDENT_CANONICAL_MEMOS){if(residentCanonicalMemoCapacityRefusals<Integer.MAX_VALUE)residentCanonicalMemoCapacityRefusals++;return createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);}
         if(residentCanonicalMemos==null)residentCanonicalMemos=new ResidentCanonicalMemo[128];
         if(slot>=residentCanonicalMemos.length)residentCanonicalMemos=Arrays.copyOf(residentCanonicalMemos,Math.min(MAX_RESIDENT_CANONICAL_MEMOS,Math.max(slot+1,residentCanonicalMemos.length*2)));
         ResidentCanonicalMemo memo=residentCanonicalMemos[slot];
-        if(memo!=null&&memo.matches(kind.ordinal(),worldTileX,worldTileZ,objectId,direction,midRegionBaseX,midRegionBaseZ,tileSize,modelId,width,height)){residentCanonicalMemoHits++;return memo.identity;}
-        ResidentObjectCanonicalIdentity identity=createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);residentCanonicalMemoMisses++;
+        if(memo!=null&&memo.matches(kind.ordinal(),worldTileX,worldTileZ,objectId,direction,midRegionBaseX,midRegionBaseZ,tileSize,modelId,width,height)){if(residentCanonicalMemoHits<Integer.MAX_VALUE)residentCanonicalMemoHits++;return memo.identity;}
+        ResidentObjectCanonicalIdentity identity=createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);if(residentCanonicalMemoMisses<Integer.MAX_VALUE)residentCanonicalMemoMisses++;
         if(memo==null)residentCanonicalMemoEntries++;
         residentCanonicalMemos[slot]=new ResidentCanonicalMemo(kind.ordinal(),worldTileX,worldTileZ,objectId,direction,midRegionBaseX,midRegionBaseZ,tileSize,modelId,width,height,identity);return identity;
     }

@@ -122,7 +122,9 @@ whole-zone exact metadata admission gate.
 mudclient.getBrowserStaticIdentityWork() reports eight schema-1 words:
   schema, enabled, hits, misses, mutable-sample refusals, context resets,
   retained entries, capacity refusals.
-The separate Bootstrap reportStaticIdentityWork callback carries this receipt;
+These high-frequency work counters saturate at Integer.MAX_VALUE to preserve
+nonnegative telemetry through sustained sessions. The separate Bootstrap
+reportStaticIdentityWork callback carries this receipt;
 reportStaticSceneWork retains its ten-word schema. Both observers validate shape
 and clone arrays. Missing getters in a legacy dependency remain pending only
 when the new option is OFF; requesting a missing implementation remains fatal.
