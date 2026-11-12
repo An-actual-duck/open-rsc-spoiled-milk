@@ -1,0 +1,240 @@
+Bounded GPU streaming and static CPU reuse: private results, November 12, 2026
+============================================================================
+
+Both requested tracks are implemented and tested as explicit private options.
+The final combined preview measured about 59.5 fresh FPS in quiet and fixed-NPC
+stationary samples on this host, with a much smaller counted GPU allocation than
+full residency. Warm walking pauses around 0.3 seconds and multi-second cold
+teleport readiness delays remain. This is not seamless travel or ordinary adoption.
+
+The tested
+bounded mode retains prepared CPU products while keeping GPU geometry/textures
+within an explicit budget. Static CPU reuse avoids repeated immutable scene work
+and null-model scans. Ordinary client defaults, game content and the public
+server are unchanged. Publication of implementation commits is not adoption.
+
+Exact final artifact and comparison controls
+--------------------------------------------
+Runtime source: c038033facae26c00026a72d42a7f2b053310966
+Client JAR: ac790e96c24da5ce383fb430ae8b2e75596db749a689c3c2bbe9b1ba19f52e90
+GPU catalogue: ee358e553588e05f55b6f64e6b9085a57579f8ffaf9df7185cc2db2ebc831ebe
+CPU manifest: 662abc04ffe520728a713610dcc8cbfcd21b9cf3998b7ecfe91b44573734cb1e
+
+The complete clean source build contains 980 owned classes. Its receipt and
+source/class/asset manifests are under manager output/builds/browser-bounded-
+streaming-cpu/integrated-2/. GPU and RAM bake receipts are under
+output/builds/browser-whole-zone-bake/bounded-cpu-2/ and
+output/builds/browser-whole-ram-bake/bounded-cpu-2/. The staged frontend and exact
+file hashes are recorded by output/tests/browser-gameplay-spike/bounded-cpu-2/
+stage.json and whole-ram-preparation.json. Private HTTP is localhost port 8228.
+Subsequent lighting guards test the same runtime bytes; they do not change this
+artifact's identity. The native module and prior render Worker remain in use.
+
+cohort-urls-2.json in output/diagnostics/browser-bounded-streaming-cpu/ records
+four startup controls: full GPU/CPU OFF, full GPU/CPU ON, bounded 512 MiB/CPU OFF
+and bounded 512 MiB/CPU ON. All use this exact JAR/frontend/catalogue/CPU data,
+RAM ON, the same source, visual/fog settings, camera, native kernels and Worker.
+The private static control includes descriptor/identity reuse and the null-only
+Scene shortcut. It does not isolate each CPU optimization's individual effect.
+This compares private modes, not ordinary defaults or RAM's incremental effect.
+
+What was implemented
+---------------------
+Prepared RAM readiness is separated from full GPU pinning without weakening the
+exact source/package/catalogue/JAR/material/settings bindings. Java gameplay,
+collision, picking and active scope remain authoritative. Bounded GPU mode
+admits the complete validated catalogue index, then uploads the required visual
+set; metadata admission is not proof of completed GPU coverage. Missing required
+resources hold the prior coherent image and block the matching input gate.
+
+The GPU scheduler bounds catalogue count, bytes, fetch/hash preparation, pending
+buffers and queues. Required resources precede optional work; terrain is ordered
+ahead of scenery. Required resources cannot be evicted. Optional return/adjacent
+working sets use spare capacity and preserve a 32 MiB entering reserve. Changes
+of source/generation/context cancel stale owned work. Capacity pressure refuses
+explicitly rather than dropping coverage or silently raising the selected cap.
+
+The final scheduler shares a target 2 ms, 4 MiB budget across preparation and
+upload steps in one tick, with a step-count guard. This is a cooperative budget,
+not a promise that an indivisible browser/driver operation always finishes in
+2 ms; overruns are measured. Adjacent prefetch starts before a boundary rather
+than waiting for the first miss. Held-interval accounting retains honest fresh-
+frame gaps instead of resetting the clock and losing the pause from the ring.
+
+Static CPU reuse retains exact revision-scoped override rows, parsed canonical
+cell metadata and immutable material object rosters. Ownership includes client,
+packet authority, World and exact source snapshots, along with placement and
+authority revisions, signed scope, requested plane, presentation base and center.
+Roofs and camera-dependent masks stay current. Mixed animated cells and mutable
+object overrides retain their original behavior; unknown revisions rebuild.
+
+The bounded canonical identity cache reuses only immutable halo elevations.
+Every lookup still rejects any sample touching a loaded gameplay sector, and
+reads those mutable heights literally. Exact native source/visual snapshots,
+source revision, carrier/offset and current definition/placement values govern
+reuse. The final null-request shortcut uses the same private CPU control; every
+nonnull and legacy duplicate-removal path is unchanged. Existing native model
+kernels, actor order, picking, effects and UI work are not replaced by these caches.
+
+Why the explicit 512 MiB candidate
+----------------------------------
+The initial 256 MiB proposal is still selectable, but catalogue capacity analysis
+found three immutable required views above that cap. With an explicitly assumed
+53 MiB local allowance, 62 views would exceed it and the derived maximum is
+329.5 MiB. These are catalogue calculations, not measured GPU allocation or an
+allocation guarantee. The tested 512 MiB option is explicit; there is no automatic
+budget expansion or reduced geometry coverage.
+
+The budget covers counted geometry and world texture allocations, including
+local geometry in the shared accounting. It is not total VRAM. Shadows,
+framebuffers, sprite/overlay atlases, Worker copies, driver allocations, browser
+memory, HTTP/source staging and VM memory are outside that number. A 512-chunk
+count cap, 64 MiB pending-data cap and 320 MiB queue-byte cap are separate limits;
+a WebCrypto input copy may add up to 64 MiB of transient CPU memory.
+
+Measurements and their scope
+----------------------------
+Same-artifact quiet-pose controls (one pass per configuration):
+  GPU policy   Static CPU   Stationary fresh FPS   Cold boundary   Warm/return maxima(ms)
+  full         OFF          40.8848                573 ms          293/314/264/310/266
+  full         ON           59.9502                538 ms          299/306/306/311/261
+  bounded512   OFF          42.5043                538 ms          292/317/273/304/315
+  bounded512   ON           59.4897                513 ms          304/314/267/300/260
+
+The full/OFF stationary run used 658 frames over 16.094 seconds; full/ON used
+964 frames over 16.080 seconds; bounded/OFF used 685 frames over 16.116 seconds.
+All four passed fixed-pose/source, visibility and focus checks with zero holds.
+CPU ON reached about 59.5–60 fresh FPS here versus 40.9–42.5 with CPU OFF. The
+bounded option chiefly reduced counted GPU allocation; this single pass does
+not establish a separate stationary FPS benefit from GPU bounding. Each listed cold
+gap is one pass; the 60 ms range is not a paired repeated estimate of a GPU-policy
+speedup. Warm-boundary means were 289.4, 296.6, 300.2 and 289.0 ms in table order.
+Those roughly 0.3-second pauses remain. This is not seamless travel or repeated
+statistical confidence. The canonical comparison and per-run evidence pointers
+are in output/diagnostics/browser-bounded-streaming-cpu/four-way-results-2.json.
+
+The final bounded/CPU ON stationary sample at fixed global position (111,624)
+recorded 956 fresh backend-submitted world frames over 16.070 seconds:
+59.4897 fresh frames/second, no held frames, unchanged pose/source, visible and
+focused. This is the quiet forest position reached by the route. The benchmark's
+32 fixed NPCs are near (133,660); they are not present at this stationary pose.
+It does not by itself establish populated-area or whole-world 60 FPS.
+
+The final bounded/CPU ON route passed actual pointer-driven walking and source-
+epoch checks. Its first cold boundary gap was 513 ms, followed by warm/return
+boundary maxima of 304, 314, 267, 300 and 260 ms, reconstructed from disjoint
+fresh-frame tails with no holes. Setup teleport intervals are excluded. Route
+elapsed time includes walking, polling and settling, so is not a loading-only
+cost or stationary FPS measure. Held pictures are not fresh gameplay frames.
+
+The first integrated canary had a cold route hold of about 4.2 seconds. That
+failure remains preserved under walking-bounded-on-1/ and motivated the shared
+tick budget, adjacent prefetch and held-gap accounting correction. The later
+513 ms cold route result does not mean all lifecycle holds disappeared. Final
+lifetime counters include an initial GPU-coverage hold of 4.242 seconds before
+a prior fresh world frame, and an excluded setup-teleport fresh gap of 682 ms.
+Startup, teleport and timed walking windows must not be mixed.
+
+Fresh frame counts use the same inner clock and cumulative world counter. The
+stationary acceptance check requires no holds and a fixed pose/source, visible
+focused browser. Worker/API completion is not physical display scanout or a
+per-frame GPU fence. Overlapping interval rings are not concatenated into fake
+percentiles. Comparable GPU execution timings are absent unless final receipts
+explicitly supply them.
+
+Memory and startup tradeoffs
+----------------------------
+All four stationary samples reported 411 draw calls and 463,790 triangles.
+Equal counts do not prove pixel identity.
+The same-pose allocation and host observations are:
+  GPU policy   Static CPU   GPU ledger(MiB)   Firefox PSS(MiB)   Firefox RSS(MiB)
+  full         OFF          2,155.50          1,912.15            2,746.16
+  full         ON           2,155.50          2,097.32            2,923.98
+  bounded512   OFF            374.85          1,880.82            2,712.35
+  bounded512   ON             374.85          2,148.43            2,979.41
+
+The ledger is about 1.74 GiB smaller with bounded residency on this route. It
+measures counted geometry/texture allocations, not per-context physical VRAM
+residency or total GPU memory. Host observations are sums from each owned
+Firefox tree immediately before closing its cohort. CPU ON has higher PSS in
+both pairs; no system-RAM reduction is established. CPU backing retention,
+transient state and collection timing differ from GPU accounting. RSS can count
+shared pages repeatedly; PSS still covers the whole browser tree, not just Java.
+These single observations do not isolate cache cost. Host VRAM counters include
+other applications and are not used as per-context allocation proof.
+
+Startup scripts reported 71.91, 70.76, 66.95 and 67.26 seconds to ready in table
+order, including login/typing/settle time. These are not clean loader timings.
+Complete RAM preparation reported 14.06–14.84 seconds in these runs and remains
+a real startup cost; bounding GPU residency is not removal of CPU preparation
+or a total memory budget.
+
+The complete retained source/prepared primitive payload remains 275,990,134 bytes
+(263.20 MiB): 46,101,734 source-bundle bytes plus 229,888,400 prepared primitive
+bytes. It contains 1,797 raw files, 445 activation recipes and 1,330 query cells.
+This is a CPU payload lower bound, not Java heap, exact browser RAM or a total
+memory cap. It excludes headers/maps/objects, mutable active models, VM/virtual
+filesystem copies, queues, transient buffers and browser/driver allocations.
+Browser-tree PSS/RSS, when recorded, cover a different scope and must be stated
+separately. Startup still validates/decodes this complete CPU preparation; the
+bounded GPU option does not remove that initialization cost.
+
+Proof and limits
+-----------------
+Exact source-bound Java scene/halo differential fixtures cover mutation and
+restoration, authoritative absence, mixed animated cells, source/material/options
+refusals, ownership replacement, signed fallback, loaded-sector transitions,
+carrier/definition changes, bounded cache capacity and counter saturation.
+The null-only legal-state differential passed 1,812,738 checks over 6,251 actual
+constructed Scene operations plus five private/default-OFF gate combinations.
+The original source-bound complete RAM decoder and detached activation checked
+all 445 hidden-roof recipes and 64,080 null roof references, then confirmed 720
+null removal arguments with 144 nonnull active models. This is not a live-array
+snapshot. Additional independent source guards checked 12 unchanged light field-reference
+lines and their enclosing guards: four Scene references and eight RSModel
+references. These are source-preservation checks, not 12 behavior cases. Native
+independent checks report 66,148 checks: 65,848 activation checks, 277 model
+checks and 23 policy checks.
+
+Final GPU byte/count/queue/cancellation and ownership regressions have independent
+fixtures; mock/synthetic failures are not hardware acceptance. Readiness and
+resource-use receipts are required at runtime, not inferred from staged files.
+Final signed-scope and pressure smoke passed. Original administrator teleport
+inputs visited (639,543,0), (700,441,0), (6,563,-1), (99,705,10), then returned to
+(133,660,0). Every target reached actual authoritative scope, source readiness,
+fresh frames and a cleared input gate. The geometry/texture ledger stayed within
+512 MiB at every poll, peaking near 511.97 MiB; 346 evictions were recorded by
+return. Level 10's local fallback used roughly 510 MiB, illustrating pressure
+rather than universal spare capacity. All 445 RAM recipes remained retained;
+recipe-use counters stayed unchanged outside global level zero. These are signed
+fallbacks with retained CPU products, not prepared residency for extra levels.
+
+The five captures and full poll evidence are preserved under manager
+output/diagnostics/browser-bounded-streaming-cpu/scope-final-2/. Time from original
+teleport command to ready ranged from about 2.5 to 7.6 seconds in this sequence.
+It includes polling and capture overhead, not pure loading cost, but cold
+teleports still took several seconds. This is administrator teleport readiness
+smoke, not continuous walking latency, a long soak or a pixel-identity oracle.
+
+After return, the final bounded/CPU ON preview at authoritative (133,660,0), with
+32 fixed NPCs confirmed, recorded 1,196 fresh world frames over 20.102 seconds:
+59.4966 fresh FPS, no holds, fixed pose/source, visible and focused. Its selected
+scene reported 427 draw calls and 476,846 triangles. Evidence is under
+busy32-final-2/result.json and samples.json in the same manager diagnostic tree.
+This is a stationary fixed-NPC, noncombat sample; it does not validate roaming
+combat, VFX or a world-wide 60 FPS target. The interval tail still included the
+prior teleport pause, so that historical maximum is not a stutter measurement
+inside the stationary window.
+
+The final preview remains open for owner exploration with the banner removed
+and automated input finished. Its ready receipt and screenshot are under
+owner-preview-final-2/ready-to-explore.json and ready-to-explore.png. This is the
+explicit private combined preview on localhost 8228, not a public deployment.
+
+The private server intentionally suppresses authored population outside its 32
+fixed NPC benchmark. Empty travel elsewhere is expected in that setup. The quiet route, fixed-NPC sample and selected scope smoke do not prove
+populated roaming/combat, VFX, full
+door/tree mutation-restoration lifecycles, every roof/floor, long-session memory,
+context loss under play or lower-memory devices. The broader acceptance gates
+in the preserved November 11 recommendation remain open. The result is a tested
+private experiment for owner review, not ordinary adoption or public deployment.

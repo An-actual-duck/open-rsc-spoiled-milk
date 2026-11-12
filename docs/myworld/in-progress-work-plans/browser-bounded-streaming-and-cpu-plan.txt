@@ -1,3 +1,26 @@
+Browser bounded GPU streaming and CPU reuse — implementation status, November 12, 2026
+====================================================================================
+
+Status: IMPLEMENTED AS AN EXPLICIT PRIVATE EXPERIMENT. The owner subsequently
+authorized both tracks. Bounded GPU residency with retained prepared RAM and
+static CPU reuse are implemented, integrated, published to main and privately
+staged. Ordinary defaults and the public server are unchanged. This is not
+ordinary adoption, a player release or public activation.
+
+See browser-bounded-streaming-and-cpu-results.txt for final artifact identities,
+measured comparisons, scheduler corrections, correctness receipts and remaining
+acceptance limits. The private controls compare full versus bounded GPU residency
+and static CPU OFF/ON in the same staged artifact, with RAM ON throughout.
+
+The dated recommendation below is preserved as the original November 11 record.
+Its PLANNED status, unsupported-combination warning and proposed sequence describe
+that earlier state; the implementation/results report is the current authority.
+The broader acceptance gates still apply, including populated gameplay, signed
+scope, mutation/restoration, pressure, long sessions and lower-memory devices.
+
+Original recommendation, preserved verbatim
+------------------------------------------
+
 Browser bounded GPU streaming and CPU reuse recommendation — November 11, 2026
 ============================================================================
 
