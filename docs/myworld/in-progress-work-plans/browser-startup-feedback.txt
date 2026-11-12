@@ -80,3 +80,32 @@ cold/warm startup, visible progress, cancel/restart, network failures and real
 LOGIN/world readiness. No measured startup/FPS/memory win is claimed by this UI
 change. The companion bulk candidate has separate authority/lifecycle review and
 full Play-to-login/world timing requirements. Public server operation is untouched.
+
+Independent companion review
+----------------------------
+Exact bulk candidate182199e92bf0812824f7ff1354f13ed5848dc183 was reviewed read-only.
+No core client/source/recipe/readiness consumer changed. The Java helper accepts
+only the exact ordered three-file public roster before acquiring a source, copies
+one lease at a time, and releases after the real streams close. Its native root
+must have the exact bounded /str/browser-startup-N/ shape. Public bulk is explicit;
+private copies retain the original /app source path. Received and written counters
+remain separate and cumulative across files. Late archive/CDN/runtime callbacks
+check cancellation before creating a display or starting Java gameplay.
+
+The independent JS fixture reproduced two initial e4f63 cleanup defects, preserved
+in output/tests/browser-startup-feedback/bulk-review-e4f63.log. A failed removal
+had not marked the adapter failed; a cleanup throw could replace the original
+preparation error. Both are fixed in182199. Unconfirmed removal keeps its ownership
+ledger, sets terminal failure, blocks later prepares and retains the original error.
+
+node tests/myworld/test-browser-startup-bulk-review.mjs 182199e92bf0812824f7ff1354f13ed5848dc183
+ 10 exact-commit checks pass: failed cleanup, original primary error, retained
+ ownership, stale digest after Stop and closing a disposed active lease.
+python3 tests/myworld/test-browser-startup-bulk-java-review.py 182199e92bf0812824f7ff1354f13ed5848dc183
+ 44 independent real-filesystem checks pass against both exact committed helper
+ sources: three ordered leases, exact payload/cumulative byte/file counts,1MiB
+ cancellation/final release, first I/O error with cleanup suppressed, cleanup
+ failure stopping the next lease, passive observer failure and source-root checks.
+ Receipt: output/tests/browser-startup-feedback/bulk-java-review-1794524470250014558/receipt.json.
+These are CPU/ownership/correctness proofs, not real CheerpJ /str mounting, browser
+startup latency, process-memory or public-deployment acceptance.
