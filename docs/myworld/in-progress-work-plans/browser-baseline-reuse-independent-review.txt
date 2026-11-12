@@ -1,0 +1,91 @@
+Independent baseline clone reuse review — November 12, 2026
+==========================================================
+
+Verdict: no release-blocking correctness defect found in the reviewed private
+optimization. This is a focused source/CPU review, not hardware acceptance or
+permission to enable the feature by default. Existing private startup admission
+and default-off controls should remain until manager A/B evidence is complete.
+
+Reviewed implementation: 18d9425ae0e1d8f71ca109c81aceee07935b43fa, following the
+c30009e0e checkpoint and merge of published compact main. Reviewed production
+areas: BrowserBaselineObjectReuse, PacketHandler baseline replay, RSModel proofs,
+mudclient eligibility/materialization, BrowserBootstrap startup/counters,
+browser policy/property wiring and RAM staging controls. No ai2 files edited.
+
+Safety conclusions
+------------------
+Reuse never supplies scene authority or GPU readiness. It chooses an existing
+clone only for an exact global placement key and verified source/template/raw
+instance geometry; otherwise the original clone path runs. Animated models,
+changed transforms/scale, mutable geometry/material/pick bounds and ambiguous
+keys cannot be silently treated as identical. Duplicate physical references
+refuse the complete optimization, avoiding altered duplicate-removal semantics.
+
+Scene/collision handling still removes old collision flags before reconstructing
+the incoming ordered list, assigns the fresh picking index, samples current
+terrain height and rebuilds light/transformed normals through the maintained
+materialization path. Walls remain newly constructed. Source proof checks are
+performed once per template per baseline; they do not replace exact raw target
+comparison. Source-array snapshots are owned copies with exact float bits.
+
+Level 0, global native source, current requested level, whole-RAM, static-scene,
+private browser presentation and no live terrain patches are all required.
+Negative/high levels, non-global sources, source/settings changes, resets and
+capacity refusals clear the workspace or take the literal fallback. Ordinary
+mode does not select reuse even if the reuse JVM property is set.
+
+The conservative proof workspace allowance is capped at 16MiB with 4,096 objects
+and 512 templates; proofs are admitted before copying, account for replacement
+while an older proof remains live, reserve transient map slack, and unused
+proofs are dropped after replay. This is a conservative scoped workspace budget,
+not an exact Java heap or total application memory measurement.
+
+Additional independent adversarial test
+--------------------------------------
+The candidate's fixture already compares ordered Scene/m_jb membership, full
+object geometry, collision flags/tile directions, software pixels and picking
+across 21 transitions, including mutable/source/settings/signed-level/scope,
+height, rebase, duplicate and foreign-Scene cases. I added an independent test
+for a remaining proof boundary: derived caches are deliberately excluded from
+the exact target geometry snapshot, so their rebuilding needs direct evidence.
+
+DerivedReplayReview mutates 21 omitted normal/light/projection/transformed/bounds
+arrays and 12 bounds/translation/transform-state scalars before real PacketHandler
+baseline replay. In enabled mode it additionally requires retained object identity
+and increased reuse counters, proving those cases did not simply fall back to
+fresh clones. Four glow/material/picking scalar changes must instead clone fresh.
+The actual production class implementation is loaded only from the full JAR;
+only fixture classes are compiled on top, with no production class overlays.
+
+All three modes, ON/OFF/ordinary, passed 3,707 checks and produced the same output
+trace across 39 transitions:
+  4bbb8f11fd4183a295b1a65b4fb4a158840cf899d7f29ccbca5f17d656265841
+
+Reviewed full-source JAR:
+  /home/justin/Core-Framework-ai-2/output/builds/browser-baseline-reuse/review-18d942/client.jar
+  SHA256 3eb3e3c75a1fb0c9e445d38fb5121ba173af9b12962cde3d543f127fbe540430
+Build receipt SHA256:
+  6f0d18e9161420361610b4659958a9fee049be2f923378fd5c873b056e13aae1
+The runner verifies this exact single-source clean full-build receipt, source and
+compiled-class manifest hashes, four changed production source hashes against
+the reviewed Git commit, and every one of the 986 compiled class payloads in the
+JAR. Fixture helper bytes are frozen from the exact candidate commit. The helper
+provides maintained setup/output capture; the adversarial mutations and eligibility
+assertions are authored independently in this review branch.
+
+Evidence: output/tests/browser-baseline-reuse-review/derived-2/result.json,
+compile/stdout/stderr files alongside. Reproduce with a fresh output directory:
+  python3 tests/myworld/browser-baseline-review/run.py \
+    --candidate-commit 18d9425ae0e1d8f71ca109c81aceee07935b43fa \
+    --jar /home/justin/Core-Framework-ai-2/output/builds/browser-baseline-reuse/review-18d942/client.jar \
+    --build-receipt /home/justin/Core-Framework-ai-2/output/builds/browser-baseline-reuse/review-18d942/receipt.json \
+    --out output/tests/browser-baseline-reuse-review/FRESH-NAME
+
+Limits and remaining checks
+--------------------------
+No browser/GPU/client/server was started and no catalogue was recooked. The test
+uses synthetic but real production scenery/scene APIs, not all world assets or
+live gameplay packets. Manager still needs matched browser loading/frame-time,
+visible scenery/animation/picking and signed-level transitions on the final
+integrated artifact. If final ai2 READY changes reviewed Java, rerun or review the
+difference; a docs/test-only follow-up can retain the recorded source equivalence.
