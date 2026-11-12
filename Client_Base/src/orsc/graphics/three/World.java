@@ -1556,7 +1556,13 @@ public final class World {
 		NativeLayeredTerrainSnapshot expectedActiveTerrain,
 		int expectedWorldOffsetX,
 		int expectedWorldOffsetZ) {
-        if(WholeOverworldRamRegistry.forWorld(this,expectedActiveTerrain)!=null){clearSymmetricRenderer3DWorldChunkFrame(expectedActiveTerrain);return;}
+        // The incoming scope has not been committed yet. Its terrain must be
+        // paired with its captured offsets, never the previous layer's carrier.
+        if (WholeOverworldRamRegistry.forCaptured(expectedActiveTerrain,
+                expectedWorldOffsetX, expectedWorldOffsetZ, !Config.C_HIDE_ROOFS) != null) {
+            clearSymmetricRenderer3DWorldChunkFrame(expectedActiveTerrain);
+            return;
+        }
 		if (!canRetainSymmetricRenderer3DWorldChunkFrame(
 				previousActiveTerrain,
 				expectedActiveTerrain)) {
