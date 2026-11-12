@@ -51,6 +51,7 @@ const startupProgress=createStartupProgress({now:()=>performance.now(),emit:prog
 window.browserProof.startup=startupProgress.stats;
 startupProgress.update('opening');
 let bulkStaging=null;
+function ensureStarting(){if(stopped)throw new Error('Game startup cancelled');}
 let preparationControls = {properties: [], requested: null};
 let spriteKeyControls = {properties: [], requested: null};
 let modelPreparationControls = {properties: [], requested: null};
@@ -286,6 +287,7 @@ const natives = {
 if (pointer) Object.assign(natives, pointer.natives);
 try {
   await verifyPublicArchives(deployment,{onProgress:counts=>startupProgress.update('archives',counts)});
+  ensureStarting();
   startupProgress.update('display');
   stutterDiagnostics=createStutterDiagnostics(window,{enabled:stutterDiagnosticsPolicy(window.browserProof.mode,options)});
   window.browserProof.stutterDiagnostics=stutterDiagnostics.stats;
@@ -299,6 +301,7 @@ try {
   }
   if (window.browserProof.mode === 'webgl') {
     const backendModule=await import(nativeCallDispatch==='sync'?'./webgl-sync.js':'./webgl.js');
+    ensureStarting();
     const {createBrowserWebGL}=backendModule;
     if(nativeCallDispatch==='sync'&&backendModule.BROWSER_NATIVE_CALL_DISPATCH!=='sync')throw new Error('Private synchronous backend is unavailable');
     const synchronousNative=nativeCallDispatch==='sync'?(await import('./browser-native-call-dispatch.js')).createSynchronousNativeCall:null;
@@ -325,7 +328,8 @@ try {
     }
     if(wholeZone.enabled&&!wholeZoneCatalog)throw new Error('Private whole-zone catalog has not been staged');
     const gpuOptions={wholeZone:wholeZone.enabled,geometryFormat:wholeZone.geometryFormat,gpuResidency:wholeZone.residency,gpuBudgetMiB:wholeZone.gpuBudgetMiB,wholeZoneCatalog,nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
-    if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;gpu=await factory(canvas,report,{...gpuOptions,onFatal:error=>finish('Private render worker failed: '+error),onComplete:ack=>{boundedInputGate?.acknowledge(ack,{coverageReady:gpu.stats.wholeZone?.ready===true,worldReady:gpu.stats.worldReadiness?.phase==='ready'});if(ack.frameId&&gpu.stats.javaWorldFrames>0&&gpu.stats.worldReadiness?.phase==='ready')awaitingGameFrame=false;const blocked=worldCover?.blocksWorldInput;updateWorldCover();if(blocked!==worldCover?.blocksWorldInput)publish();}});}
+    ensureStarting();
+    if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;ensureStarting();gpu=await factory(canvas,report,{...gpuOptions,onFatal:error=>finish('Private render worker failed: '+error),onComplete:ack=>{if(stopped)return;boundedInputGate?.acknowledge(ack,{coverageReady:gpu.stats.wholeZone?.ready===true,worldReady:gpu.stats.worldReadiness?.phase==='ready'});if(ack.frameId&&gpu.stats.javaWorldFrames>0&&gpu.stats.worldReadiness?.phase==='ready')awaitingGameFrame=false;const blocked=worldCover?.blocksWorldInput;updateWorldCover();if(blocked!==worldCover?.blocksWorldInput)publish();}});if(stopped)gpu.dispose();ensureStarting();}
     else gpu=createBrowserWebGL(canvas,report,gpuOptions);
     window.browserProof.renderWorker={...renderWorker,actual:renderWorker.enabled===true};
     window.browserProof.wholeZoneRequested=wholeZone.requested;window.browserProof.wholeRamRequested=wholeRam.requested;
@@ -397,10 +401,12 @@ try {
     const script = document.createElement('script'); script.src = `https://cjrtnc.leaningtech.com/${window.browserRuntimeVersion}/loader.js`;
     script.onload = resolve; script.onerror = () => reject(new Error('Could not load browser Java runtime')); document.head.append(script);
   });
+  ensureStarting();
   startupProgress.update('runtime-start');
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
     javaProperties: canonicalRenderProperties(['user.dir=/files', ...deployment.properties, ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...loadProfilePolicy.properties, ...wholeZone.properties, ...wholeRam.properties, ...baselineReuse.properties, ...cloneTemplates.properties, ...(wholeRam.enabled?['spoiledmilk.browserWholeRamManifestSha256='+wholeRamCatalogConfig.manifestSha256]:[]), ...(wholeZone.enabled?['spoiledmilk.browserWholeZoneClientSha256='+wholeZoneCatalogConfig.clientJarSha256,'spoiledmilk.browserWholeZoneCatalogSha256='+wholeZoneCatalogConfig.manifestSha256]:[]), ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])],optimizedDefaults), natives});
+  ensureStarting();
   report('Browser Java ready');
   const display = document.querySelector('#display');
   displayLayout=createBrowserDisplay({window,document,display,viewport:document.querySelector('#viewport')});
@@ -410,4 +416,4 @@ try {
   const code = await cheerpjRunMain('orsc.browser.BrowserBootstrap', deployment.assetRoot+'browser-spike.jar:'+deployment.assetRoot+'client.jar', window.browserProof.mode);
   window.browserProof.ended = true; report('Java program stopped (exit ' + code + '); see console for compatibility results');
   finish('Java program stopped (exit ' + code + '). See console for compatibility results.');
-} catch (error) { report('Bootstrap error: ' + error); console.error(error); finish('Bootstrap error: ' + error); }
+} catch (error) { if(!stopped){report('Bootstrap error: ' + error); console.error(error); finish('Bootstrap error: ' + error);} }

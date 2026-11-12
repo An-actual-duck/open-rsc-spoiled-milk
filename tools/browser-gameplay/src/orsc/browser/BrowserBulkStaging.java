@@ -15,6 +15,7 @@ public final class BrowserBulkStaging {
     }
     public static void copy(List<String> paths, File destinationRoot, int bufferSize,
                             Source source, BrowserBootstrapFiles.Progress progress) throws IOException {
+        if(!java.util.Arrays.asList("Cache/whole-ram/manifest.json","Cache/whole-ram/source.bin","Cache/whole-ram/prepared.bin").equals(paths))throw new IOException("Invalid public startup roster");
         final long started=System.nanoTime();long completedBytes=0;int completedFiles=0;
         for(String relative:paths) {
             if(source.cancelled())throw new java.io.InterruptedIOException("Game startup cancelled");

@@ -109,7 +109,8 @@ public final class BrowserBootstrap {
             }
         }
         BrowserBootstrapFiles.copy(ordinaryFiles,assetRoot,new File("/files"),32768,
-            new BrowserBootstrapFiles.Progress(){public void update(long bytes,int files,int total,long elapsed){reportStartupProgress("assets",bytes,files,total,elapsed);}});
+            new BrowserBootstrapFiles.Progress(){public void update(long bytes,int files,int total,long elapsed){reportStartupProgress("assets",bytes,files,total,elapsed);}},
+            publicAlpha?new BrowserBootstrapFiles.Cancellation(){public boolean cancelled(){return isRamBulkCancelled();}}:null);
         if((Boolean.getBoolean("spoiledmilk.browserBaselineReuse")||Boolean.getBoolean("spoiledmilk.browserCloneTemplates")) && (!webgl
             || !Boolean.getBoolean("spoiledmilk.browserBenchmark") || !Boolean.getBoolean("spoiledmilk.browserWholeRam")
             || !Boolean.getBoolean("spoiledmilk.browserWholeZone") || !Boolean.getBoolean("spoiledmilk.browserStaticSceneReuse")))
