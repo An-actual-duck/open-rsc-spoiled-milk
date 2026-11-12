@@ -1,0 +1,133 @@
+Private shared static factory clone templates — November 12, 2026
+================================================================
+
+Status: implemented default OFF; full-source CPU checks passed. Manager owns
+actual Firefox loading/FPS acceptance. No browser, listener, game server, public
+change or catalogue cook was run by this worker.
+
+Why this path
+-------------
+The previous exact baseline-instance reuse trial was correct but actual warm
+travel had reused=0 and no legacy-reconcile phase for warm contexts8..13. The
+fresh source-bound profile is manager diagnostics/browser-handoff-compact/
+integrated-on-travel-profile-1, with generated bodies saved under sibling
+integrated-on-travel-analysis-1/sources. Fresh2383/J_00882d58 is RSModel.clone;
+fresh2248/J_009c7810 matches PacketHandler.addLegacyGameObject: capacity check,
+record's direct local coordinates, source.clone, picking/rotation/light, pending
+area flag and materialization. That DELTA factory was outside the baseline trial.
+
+Fresh72/J_00882d98 is commitTransform;1048/J_00882e58 is computeNormals. Other
+large bodies include1271 updateChunk,1657 showSceneBaseline and1470 mesh builder.
+CheerpJ cooperative continuation stacks can interleave logical Java work: do not
+attribute all inclusive samples to apparent outer JS callers or reuse old profile
+IDs. The shared known-factory candidate covers DELTA, baseline literal clones and
+canonical presentation rebuilds; live per-owner counters will establish actual
+activation. This is not a claim that clone construction dominates every gap.
+
+Implementation and invariants
+-----------------------------
+clonetemplates=on requires private benchmark WebGL, wholezone+wholeram and static
+scene admission. Java also checks actual browser presentation, signed requested
+level0, a global native source snapshot at level0 and no live terrain patches.
+Known animated scenery remains literal. The feature is not installed in generic
+RSModel.clone or animation replacement. Ordinary/flag-OFF calls return the
+literal source.clone outside locks, world snapshots and cache allocation.
+
+The cache is per-client, synchronized, with lazy creation only in the ON path.
+It verifies source identity, all current definition values and an exact owned
+snapshot of every input consumed by the literal constructor. It stores a recipe
+of the original clone result using capturePreparedState, with the complete scalar,
+array and alias graph. Each hit instantiates distinct mutable model arrays and
+runs the caller's original rotation/light/translation/picking/collision operations.
+No scene membership, placement authority, GPU readiness or cached mesh is supplied.
+
+Literal clone commits source transforms. A hit explicitly performs that same
+commit before its exact post-commit source proof. A miss performs literal clone
+and captures its actual result; if the proof/copy is refused it returns that
+literal result. Dirty source transforms, materials, definition/settings/source
+context changes and resets therefore rebuild rather than silently reuse stale
+art. Cache copies do not retain caller-owned mutable arrays. Source cache models
+remain borrowed inputs; arbitrary external concurrent reflection mutation is not
+a new supported synchronization contract.
+
+The prepared codec now supports an optional bounded pool and immutable preparsed
+ModelLayout metadata. Template hits reuse private node metadata instead of copying
+every descriptor node per clone. Small public scalar/root metadata arrays remain
+owned per ModelArrays instance; output graph arrays preserve alias groups within
+each model and remain disjoint between models. The default wire format and all93
+RSModel fields are unchanged. The ordinary decoder retains its original meaning.
+
+Budget and reset
+----------------
+At most256 recipes and16MiB conservatively charged template workspace, including
+a reserved2MiB for temporary alias/layout capture. Primitive pool admission occurs
+before copying; owned proof arrays are also bounded before copying. Prototype
+face count>1024 or vertex count>8192 uses literal clone. The alias graph has at
+most about2,100 nodes for admitted clone results; the reserved2MiB covers its
+bounded descriptor/hash/parser scaffolding. Recipe bytes include pool primitive
+payloads plus256B/entry, exact proof estimates, preparsed node metadata and1KiB
+entry overhead. Insufficient budget/full capacity falls back to literal clone.
+
+worstReservedBoundBytes intentionally records the admission reservation upper
+bound (normally16MiB), not observed heap usage. retainedConservativeBytes and
+peakChargedRetainedBytes are separate actual recipe charge sums. Live output
+instances, canonical borrowed model cache, VM/GC metadata and total RAM are not
+claimed by that ledger. Current fixture filled256 recipes at4,355,584 charged
+bytes. Session/scope reset clears cache; signed/native/patch/settings changes
+clear/refuse at the next factory request. The independent resident-input cache's
+ordinary per-frame invalidation does not clear these unrelated source recipes.
+
+Controls and diagnostics
+------------------------
+prepare-whole-ram-client.py --clone-templates on requires --static-scene on and
+--baseline-reuse off. Paired urlCloneTemplatesOn/Off use the same complete staged
+Java/frontend/data, keep the old baseline trial OFF and vary only clonetemplates.
+RAM-off/static-scene-off controls disable the dependent feature. No data is rebound
+to another JAR; manager must produce a fresh complete source-bound stage.
+
+browserProof.cloneTemplatesJava reports selected policy plus separate requests,
+hits and misses for legacyDelta/baseline/canonical, refusals, resets, recipe count,
+charges and copied instance count. These receipts grant no gameplay readiness.
+
+Preserved review artifacts and checks
+------------------------------------
+Implementation checkpoint645ea961055e2243b77e92dd4bec7f02c71f01b9:
+  output/builds/browser-clone-templates/review-645ea9/client.jar
+  SHA18777e2106cba60f9e4a51f374ea81a4193abc8dddeebc1da9a310b01ab6841c
+  receipt/source/class/asset manifests beside it: clean full maintained Ant build,
+  990classes,3194own asset payloads, no class transplants. Earlier046 milestone
+  and review artifact are preserved separately. No earlier bakes were changed.
+
+Focused full-JAR suite:
+  python3 tests/myworld/browser-clone-templates/run.py --jar JAR --receipt RECEIPT --out FRESH-TEST-DIR
+The runner verifies receipt/JAR/source identity and every compiled class payload;
+only fixture classes are compiled, never production overlays. It runs five modes
+ON/OFF/ordinary/noRAM/noStatic. All produce identical complete state/alias/model,
+mesh/collision/software/picking trace through11 actual showGameObjects DELTA
+packets, baseline/canonical factories, changed source transform/material/definition,
+signed-level/non-global/settings/patch fallback,80 concurrent copies, large-model
+fallback and256-template capacity.647checks per mode. Current complete trace:
+  fc8b0c3ff0a9ded96b14e265dfff6f1b691ee54eab68b4b720648974056acdb2
+ON measured owner hits:254DELTA,90BASELINE,86CANONICAL in this CPU fixture.
+
+The existing independent reflection inventory passes277checks covering all93
+nonstatic model fields, capacity tails, signed zero/NaN raw bits, nested aliases,
+mutation isolation, actual transform/light/clone and wire pool roundtrip. The new
+pool refuses a tiny budget before owning primitive bytes. Existing linear DELTA
+packet semantics pass. Frontend ordinary/private VM tests,12 actual startup policy
+checks and6 structured URL/dependency refusal checks pass. Evidence lives under
+output/tests/browser-clone-templates/full-jar-3 and sibling logs.
+
+Independent ai2 review of046 found no blocker across278 mutation scenarios,
+21,916ON assertions, all93 fields/aliases, literal source side effects,120 warmed
+concurrent copies and real DELTA/canonical owners. Final645 only broadens definition
+metadata refusal; await its exact independent review handoff before integration.
+
+Remaining acceptance
+--------------------
+No browser/FPS/loading gain, total memory reduction or production release claim.
+Manager must compare matched routes and same-artifact ON/OFF (baseline reuse OFF),
+confirm owner counter deltas, frame-time/GC/gap distributions, source-level fallback
+and visual/picking parity. Full source guards intentionally require focused review
+of enclosing mudclient/RSModel/codec changes; no blind hash refresh is authorized.
+Keep this flag default OFF until those results justify adoption.
