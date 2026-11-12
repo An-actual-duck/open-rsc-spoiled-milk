@@ -12,7 +12,7 @@ for(const changes of [{bytes:49},{writtenBytes:24},{totalBytes:101},{files:4},{b
 eq(child.update('assets'),false);eq(parent.accept(sent.at(-1)),false,'duplicate rejected');
 for(const value of [null,{}, {...sent.at(-1),sequence:4,elapsedMillis:-1},{...sent.at(-1),sequence:4,writtenBytes:101},{...sent.at(-1),sequence:4,stage:'untrusted label'}])eq(parent.accept(value),false);
 for(let i=0;i<200;i++){clock++;assert(child.update('data',{bytes:50,writtenBytes:25}));parent.accept(sent.at(-1));}checks+=200;
-eq(child.stats.records.length,128);eq(parent.stats.records.length,128);eq(parent.stats.latest.receivedMillis,450);
+eq(child.stats.records.length,128);eq(parent.stats.records.length,128);eq(parent.stats.latest.receivedMillis,450);eq(parent.stats.phases.opening.completedMillis,200);eq(parent.stats.phases.data.startedMillis,200);eq(parent.stats.phases.data.bytes,50);
 eq(parent.finish('streaming'),false);eq(child.finish('LOGIN'),true);eq(parent.finish('LOGIN'),true);eq(child.update('client'),false);eq(parent.accept({...sent.at(-1),sequence:999}),false);eq(parent.stats.elapsedMillis,450);
 const closed=createStartupProgress();closed.close();eq(closed.update('opening'),false);eq(closed.finish('LOGIN'),false);
 eq(startupPresentation({stage:'data',bytes:0,writtenBytes:50,totalBytes:100,totalFiles:3,files:1}).value,50);

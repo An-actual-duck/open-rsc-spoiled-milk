@@ -14,6 +14,9 @@ public final class BrowserBootstrapFiles {
     public interface Progress {
         void update(long bytes, int completedFiles, int totalFiles, long elapsedMillis);
     }
+    private static void observe(Progress progress,long bytes,int files,int total,long elapsed){
+        if(progress!=null)try{progress.update(bytes,files,total,elapsed);}catch(Throwable ignored){/* Display observations cannot replace I/O success or failure. */}
+    }
     public static void copy(List<String> paths, String sourceRoot, File destinationRoot,
                             int bufferSize, Progress progress) throws IOException {
         if(bufferSize<=0||bufferSize>1048576)throw new IllegalArgumentException("Invalid copy buffer");
@@ -21,7 +24,7 @@ public final class BrowserBootstrapFiles {
         // Caller retains its public personal-file policy and exact RAM roster.
         for(String path:paths)if(path==null||path.length()==0||path.startsWith("/")||path.contains("..")||path.contains("\\"))throw new IOException("Unsafe staged path");
         final long started=System.nanoTime();long bytes=0,lastBytes=0,lastMillis=0;int files=0;
-        if(progress!=null)progress.update(0,0,paths.size(),0);
+        observe(progress,0,0,paths.size(),0);
         for(String relative:paths){
             File destination=new File(destinationRoot,relative);
             File parent=destination.getParentFile();if(parent!=null)parent.mkdirs();
@@ -31,13 +34,13 @@ public final class BrowserBootstrapFiles {
                     output.write(buffer,0,count);bytes+=count;
                     long elapsed=(System.nanoTime()-started)/1000000;
                     if(bytes-lastBytes>=8388608||elapsed-lastMillis>=500){
-                        if(progress!=null)progress.update(bytes,files,paths.size(),elapsed);
+                        observe(progress,bytes,files,paths.size(),elapsed);
                         lastBytes=bytes;lastMillis=elapsed;
                     }
                 }
             }
             files++;lastBytes=bytes;lastMillis=(System.nanoTime()-started)/1000000;
-            if(progress!=null)progress.update(bytes,files,paths.size(),lastMillis);
+            observe(progress,bytes,files,paths.size(),lastMillis);
         }
     }
 }
