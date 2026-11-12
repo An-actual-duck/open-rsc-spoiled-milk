@@ -1,0 +1,186 @@
+Browser-to-desktop loading and GPU portability audit
+====================================================
+Audit baseline: 0269c0dae55138e59c7eee27f842338537a18842, November 12, 2026.
+Documentation only. No production change, build, GPU/browser test, server access
+or performance measurement was made by this audit. The desktop player release
+is v0.3.16; source presence on current main is not proof of desktop adoption.
+CPU/UI candidates are covered by the companion desktop-browser-cpu-portability.txt.
+
+Recommendation
+--------------
+The strongest distinct GPU-memory prototype is a native compact resident-vertex
+layout. The strongest larger loading-tail prototype is coherent, sliced native
+uploads with explicit byte accounting. Measure those independently. Prepared
+regional CPU products are a later option if a native route profile still assigns
+material time to model construction. Do not turn on the browser's entire preset,
+whole-world buffers, or browserBenchmark merely to enable shared helper classes.
+No desktop FPS/startup improvement is established by the browser measurements.
+
+What is actually selected today
+-------------------------------
+The public browser PRESET in tools/browser-gameplay/web/browser-public-alpha.js:6
+selects renderworker=on, wholezone=on, wholeram=on, bounded GPU residency=512 MiB,
+compact geometry, regionbuild/modelbatch/terrainquery and static-scene reuse.
+It explicitly disables baseline reuse and clone templates. Historical private
+experiment documents saying default OFF precede this fixed public alpha preset.
+They remain useful evidence, not the current public selection authority.
+
+Desktop packaging, scripts/package-player-release.sh:339-359, requires its own
+OpenGL presenter/input, trusted resident replacement, resident objects, spatial
+culling, remaster-lighting shader, skipLegacyWorldRaster=true and modern loop.
+It does not select browserBenchmark, browserWholeZone or browserWholeRam.
+The raw JVM property defaults alone are not the packaged launcher defaults.
+
+WholeOverworldZoneRegistry.java:5 and WholeOverworldRamRegistry.java:7 under
+Client_Base/src/orsc/graphics/three require the browser gates. Their source-bound
+providers are created in PC_Client/src/orsc/BrowserWebGLBridge.java:209-214.
+The ordinary desktop window instead creates OpenGLFramePresenter at
+PC_Client/src/orsc/ScaledWindow.java:58. Thus a browser provider compiled into
+the shared JAR is not automatically used by the desktop renderer.
+
+Priority 1: compact native resident geometry
+-------------------------------------------
+Native OpenGLWorldChunkRenderer.java:48-98 defines 28 float components/112 bytes
+per vertex, with reusable direct upload buffers at :2877 and three glBufferData
+uploads at :2780-2784 (vertices, original indices, material-sorted indices).
+The browser catalogue's independent compact48-v1 layout is defined in
+tools/browser-gameplay/web/browser-geometry-layout.js:1-24. Its converter :58
+preserves position/UV/normal float bits and admits byte fields only when they
+round-trip exactly; it refuses rather than quantizing unsupported values.
+
+Recorded browser proof: all 19,001,439 catalogue vertices/437,033,097 declared
+attribute comparisons passed. Whole-catalogue geometry including unchanged
+indices was 2,204,166,924 -> 988,074,828 bytes, 55.17% smaller. A selected live
+browser scene's pinned geometry was 337,019,556 -> 151,077,732 bytes. These are
+browser geometry ledgers, not native measurements or total VRAM/RSS savings;
+the native renderer also retains a second material index buffer. See
+browser-handoff-compact-results.txt and browser-compact-hardware-proof.txt.
+
+Port the representation contract, not the browser delivery files or JS driver.
+Start with the production remaster resident shader. Native shader attribute
+bindings at OpenGLShaderProgram.java:1064-1167 are currently all GL_FLOAT; shadow
+bindings at OpenGLGeometryShadows.java:286 separately need the correct stride/UV
+offset. Other shader/fixed-function variants use different fields, including
+legacy light/texture-light inputs. Desktop UVs may be atlas-relative, whereas
+copyBackendChunkVertices(:2913) requests standalone UVs for the browser. Never
+substitute the browser's standalone texture coordinates into native geometry.
+
+Retain literal vertex semantics and native texture ownership. Prove actual
+material/light values are exactly byte-representable in every admitted native
+mode, and preserve the legacy layout for other modes/nonrepresentable fields.
+Record the chosen layout in each buffer's identity; brightness/fog/lighting/
+geometry, shadow variant and material changes must still invalidate correctly.
+Keep animated/dynamic, software, compatibility and diagnostic paths unchanged
+until tested. A 48-byte target is a hypothesis for native supported paths, not
+permission to drop required fields. Compare main and near/far shadow output,
+cutouts, roofs, terrain relief, transparency, UV edges and settings transitions.
+
+Predicted benefit: fewer upload bytes and smaller resident buffers, particularly
+on integrated GPUs. Native packing CPU cost and actual frame-time benefit are
+unknown; do not trade extra expensive per-frame repacking for an assumed gain.
+
+Priority 2: coherent upload slices and byte-bounded retention
+-----------------------------------------------------------
+The desktop already caches resident VBOs: OpenGLWorldChunkRenderer.java:166 uses
+an access-order map, :3552 evicts beyond 256 entries, and :4022 keys immutable
+storage independently from its presentation rebase. These are existing desktop
+optimizations, not new features to claim from the browser work. There is currently
+no total-byte admission cap in this renderer; uploadedByteCount is tracked per
+buffer at :4108 and is not itself a memory budget.
+
+Important: the 3 ms upload setting (:103-126) is conditional. Presenter :1567
+permits deferral only when projected static fallback exists AND legacy raster
+has not been skipped. The packaged trusted replacement path normally skips that
+raster, so a launcher value of 3.0 does not mean production uploads are sliced.
+Even when allowed, :547-553 checks only between whole chunks after the first
+upload. Packing, material sorting and each glBufferData remain indivisible.
+
+Browser createBoundedResidency in browser-bounded-residency.js:6-8 coordinates
+2 ms/4 MiB ticks, count/queue/pending-byte caps and a 32 MiB entering reserve.
+It gives required coverage priority, never evicts that required set and rejects
+capacity overflow. browser-bounded-input.js and browser.js correlate matching
+coverage acknowledgements with the authority scope and hold the last coherent
+image/input while entering cells are incomplete. This is an architecture to
+adapt, not a budget number to copy. The current 512 MiB browser cap excludes
+shadows, framebuffers, sprite atlases, driver resources and CPU copies.
+
+A native prototype needs separate pending/live buffers, publish only after
+complete validated upload, generation cancellation and a coherent previous
+frame/readiness policy. Simply setting budgetedUploadsAllowed=true on trusted
+replacement risks incomplete world rendering; weakening readiness is invalid.
+Measure CPU packing/material-index construction separately from GL submission.
+If packing dominates, slicing only GPU calls cannot remove that boundary pause.
+Count native vertex plus BOTH index allocations, pending/staging bytes and
+required working-set size before choosing a byte cap. Keep required coverage;
+never silently lower draw distance or evict active chunks to satisfy a cap.
+
+Predicted benefit: smaller area-change stalls and bounded memory under varied
+scene density. This is a larger change than compact packing and needs level,
+teleport, resize, relog and context/error recovery tests. Native presenter context
+ownership remains exclusive; background threads cannot make arbitrary GL calls.
+
+Priority 3: bounded native prepared products, if profiling warrants
+----------------------------------------------------------------
+World.java:166-190 already has prepared renderer products and a single-threaded
+sector preload executor. Predictive/symmetric terrain preparation and immutable
+neighbor retention already exist; no need to invent a second world loader.
+The browser WholeRamPrepared recipes additionally retain complete selected CPU
+preparation. BrowserWholeOverworldRam.java:40-65 verifies source/JAR/catalogue/
+settings/roof bindings before installation. :67-94 restricts activation to global
+L0, exact map/source metadata and supported basis; negative and other levels
+fall back to the authoritative parser. :96-104 activates checked recipes.
+
+Historical browser ON/OFF/ON warm gaps were 297.25/508.25/299.75 ms with no
+consistent stationary FPS gain. Primitive source+prepared payload alone was
+275,990,134 bytes, excluding objects, live models, filesystem and driver copies.
+The final compact/bounded public arrangement differs from that older experiment;
+its numbers cannot be reused as a native comparison. Whole-world retention also
+adds startup work and build/package complexity. See
+browser-whole-ram-experiment-results.txt and browser-bounded-streaming-and-cpu-results.txt.
+
+Prefer extending the existing native regional working-set cache before importing
+all 445 recipes. Bind source/map, definitions/assets, settings, signed level,
+world space and placement revisions; mutable doors/objects/collision/picking stay
+authoritative. Preparation must respect alternate roofs/lighting/geometry
+options without forcing browser fixed settings on desktop players. Full-map
+cache admission is a later measured choice, not this audit's recommendation.
+
+Do not port as desktop performance upgrades
+-------------------------------------------
+* Browser render Worker: desktop already owns its GPU context on the dedicated
+  OpenGL Presenter thread (OpenGLFramePresenter.java:395-397). Worker transfer,
+  LiveConnect/native dispatch and OffscreenCanvas code solve browser constraints;
+  they are not a replacement desktop threading architecture.
+* Browser bulk startup: BrowserBootstrap.java:111-134 copies browser virtual
+  /app assets into /files; public RAM uses /str leases. The 70 -> 17 second result
+  eliminated 2111 HTTP-backed reads. Desktop directly loads local Java files and
+  has no CheerpJ /app, so this is not a corresponding desktop startup claim.
+* Full GPU pinning: the old catalogue potential was over 2 GiB before compacting.
+  Browser rollout instead uses bounded admission. Do not preload the whole native
+  world into VRAM or advertise full-catalogue totals as live memory requirements.
+* Baseline/shared clone-template caches: correctness passed, but browser matched
+  travel comparisons did not establish a loading win. Public preset leaves both
+  OFF. They are not accepted optimizations to promote onto native defaults.
+* Parked prototype branches: source availability is not acceptance. Nothing in
+  this audit revives or cross-merges the preserved experiments.
+
+Native acceptance proposal
+---------------------------
+Use the existing client-performance-portability-plan.md evidence rules and native
+renderer benchmark. Freeze exact current source/JAR, ordinary packaged launcher
+flags, map/assets and settings before each candidate; compare against the same
+build with only that candidate OFF. Use 1920x1080/normal camera as the main target,
+maximum zoom separately. Maintain approved shadows/relief, fog distance and full
+NPC/player/summon/spell population. Run three interleaved same-route pairs with
+warmup: dense idle/camera motion, repeated adjacent crossings, long teleport,
+negative and upper levels/return, settings changes, and active real combat.
+
+Report productive CPU/GPU time and allocation, present p50/p95/p99/max and slow
+frames, first useful world time, crossing tails, exact scene/triangle/actor counts,
+VBO/index/upload/pending bytes, cache hit/eviction reasons and process memory.
+Do not infer improvement from capped60 FPS or hidden missing geometry. Pair
+pixel/depth/shadow oracles with collision/picking/mutation/epoch/cleanup fixtures;
+repeat without heavy profiling. At least the physical iGPU is a useful second
+GPU, but shares the same CPU/OS. No weak-device, Windows/macOS or universal60 FPS
+claim follows from one Linux host. Preserve existing diagnostics-off behavior
+and native fallback. Private acceptance precedes player packaging/deployment.
