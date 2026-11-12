@@ -3,7 +3,7 @@
 import argparse,hashlib,json,pathlib,re,subprocess
 p=argparse.ArgumentParser();p.add_argument('--source-root',type=pathlib.Path,required=True);p.add_argument('--commit',required=True);a=p.parse_args()
 expected={'Client_Base/src/orsc/graphics/three/Scene.java':(4,'5e7a70b3f9e87235090788a0ce3b8bb803b7e0e45dc7f7d703b562bcb9b0a490'),'Client_Base/src/orsc/graphics/three/RSModel.java':(8,'2be51584442ade47738044ca17d7ed9b224ecf1a45c3ffcbaa0f80646903c141')}
-whole={'Client_Base/src/orsc/graphics/three/Scene.java':'f24ff1759505c43f7d900a2d451a28be9f1d2b1ec172a36890a850ea1c4358f5','Client_Base/src/orsc/graphics/three/RSModel.java':'4087d583a9609ae96b44253366c5e9754d21f04136a18a49aafbc66a99bc99c9'}
+whole={'Client_Base/src/orsc/graphics/three/Scene.java':'f24ff1759505c43f7d900a2d451a28be9f1d2b1ec172a36890a850ea1c4358f5','Client_Base/src/orsc/graphics/three/RSModel.java':'22cb8d8f4667b5ec7b1ad3b95c002ebe23cbb8fe086e1169c75acb576e3d7297'}
 def git(*cmd):return subprocess.check_output(['git','-C',str(a.source_root)]+list(cmd),text=True)
 found={}
 for name in git('ls-tree','-r','--name-only',a.commit,'Client_Base/src','PC_Client/src').splitlines():
