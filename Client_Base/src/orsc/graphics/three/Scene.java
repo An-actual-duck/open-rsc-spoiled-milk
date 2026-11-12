@@ -3813,6 +3813,9 @@ public final class Scene {
 
 	public final void removeModel(RSModel var1) {
 		try {
+            // Legal active entries are nonnull; render stores m_T outside modelCount.
+            // Keep the literal nonnull/duplicate removal and metadata order unchanged.
+            if (var1 == null && WholeOverworldZoneRegistry.isStaticSceneReuseEnabled()) return;
 			for (int i = 0; i < this.modelCount; ++i) {
 				if (this.models[i] == var1) {
 					--this.modelCount;

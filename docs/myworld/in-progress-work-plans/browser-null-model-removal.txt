@@ -1,0 +1,45 @@
+Private null model removal — November 12, 2026
+=============================================
+
+Scene.removeModel now returns immediately for a null argument only when the
+existing private static CPU reuse option is selected. Its gate still requires
+browserBenchmark + browserWholeZone + browserStaticSceneReuse. Default OFF and
+all nonnull/duplicate removal code remain literal. No new callback, counter,
+roof membership cache, batch removal, camera loop or global default is added.
+
+browser-static-reuse-profile-results.txt records the exact current profile and
+active-prefix proof. Scene's private active prefix contains nonnull entries at
+legal operation boundaries; the render sentinel lives at modelCount, outside
+that prefix. Returning for null cannot change model order, count, parallel
+metadata, stale tail or sentinel. Every nonnull argument executes the original
+loop, including its adjacent-duplicate behavior. The profile identified21.225%
+main-thread sample attribution to this scan, which is an optimization opportunity
+and not a promised frame-time/FPS saving.
+
+Tests and artifact boundaries
+-----------------------------
+tests/myworld/bounded-streaming/verify-null-removal.py requires a full clean
+receipt-bound source JAR and checks source/class/asset manifests and archive
+contents. It compiles fixture classes only; production overlays are not accepted.
+NullModelRemovalFixture constructs actual GraphicsController and Scene instances,
+then compares actual private-option ON/OFF operations on the same JAR. It covers
+empty/null adds, growth, nontrivial parallel metadata, full array tails, the legal
+outside-prefix sentinel boundary, repeated720 null requests at levels0/-1/10,
+missing/present/adjacent duplicate removals, bulk compaction, clears and a fixed
+random operation sequence. No cost ratio is converted into an FPS claim.
+
+Optional --reference-jar/--reference-receipt/--ram-delivery/--reference-cache
+arguments inspect the original743/cc702 source-bound full RAM data. The runner
+verifies complete manifest/JAR/prepared payload identities. PreparedRoofNullFixture
+uses the production WholeRamPrepared codec, checks actual decoded roof references
+in every recipe, then activates the profile-region recipe into a detached World
+with real Scene/GraphicsController objects. It checks the720 actual null removal
+arguments and the nonempty, nonnull active model prefix. This is stronger than
+source/config inference, but is a detached reproduction rather than a snapshot
+of the running browser's Java arrays. Its original JAR/data binding remains
+separate from the new null-shortcut artifact, which requires a fresh bake for
+integrated hardware testing.
+
+No server/browser/GPU action or deployment is part of this implementation.
+Same-artifact private ON/OFF hardware profiling and visual acceptance remain with
+the manager after integration and a fresh source-bound bake.
