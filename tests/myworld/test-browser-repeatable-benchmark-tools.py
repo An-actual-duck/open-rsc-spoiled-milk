@@ -18,7 +18,8 @@ def main():
             depth-=1
             if depth==0:end=n+1;break
     digest=hashlib.sha256(source[begin:end].encode()).hexdigest()
-    assert digest=='01a412965f4ee56080b8cba692cec7a76e25bb4db2455e9c46a86a890613242e','Literal325 alignment function changed'
+    # Exact same alignment bytes at accepted base1ce24dca0 and this UI candidate.
+    assert digest=='c526ff72b8a6d8ae88eeff851a3f578fd6db936d0414b09bd1bc86c64fc8f415','Accepted alignment function changed'
     observer=(ROOT/'tools/browser-gameplay/src/orsc/browser/BrowserBootstrap.java').read_text().split('Thread observer =',1)[1].split('static int[] snapshotBatchedModelWork',1)[0]
     assert 'if (client != null && fixedCamera != null)' in observer
     assert 'actual.setCameraZoomSetting' not in observer and 'actual.cameraRotation=' not in observer, 'Ordinary exploration observer must not force camera'

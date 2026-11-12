@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import tempfile
 import textwrap
@@ -10,7 +11,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CLIENT_JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
+CLIENT_JAR = Path(os.environ.get("SPOILED_MILK_TEST_CLIENT_JAR", ROOT / "Client_Base/Open_RSC_Client.jar"))
 
 
 FIXTURE = r"""
@@ -294,7 +295,7 @@ public final class RendererSettingsPanelFixture {
 		plus.selected = 49;
 		FakeActions plusActions = new FakeActions();
 		assertTrue(PANEL.handleSelectedAction(
-			plus, state(false, true, true), input(965, 114, 1, 0), 100, 66, plusActions),
+			plus, state(false, true, true), input(965, 99, 1, 0), 100, 66, plusActions),
 			"software plus handled");
 		assertEquals(RendererSettingsPanel.Action.SCALE_UP, plusActions.performed.get(0),
 			"software plus action");
@@ -304,7 +305,7 @@ public final class RendererSettingsPanelFixture {
 		hiddenPlus.scroll = 4;
 		FakeActions hiddenPlusActions = new FakeActions();
 		assertTrue(PANEL.handleSelectedAction(
-			hiddenPlus, state(false, true, true), input(965, 114, 1, 0), 100, 66,
+			hiddenPlus, state(false, true, true), input(965, 99, 1, 0), 100, 66,
 			hiddenPlusActions), "scrolled software row remains non-actionable");
 		assertEquals(0, hiddenPlusActions.performed.size(), "scrolled software click ignored");
 	}

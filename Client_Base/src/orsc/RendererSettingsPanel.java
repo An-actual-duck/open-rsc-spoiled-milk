@@ -275,7 +275,7 @@ final class RendererSettingsPanel {
 			view.setRow(index, row.label, row.action);
 		}
 
-		if (!state.openGLPrimary && !state.browserGpu && view.scrollAmount() <= LEGACY_SCALING_ROW_INDEX) {
+		if (!state.openGLPrimary && !state.browserGpu && view.scrollAmount() <= legacyScalingRowIndex()) {
 			drawSoftwareScalingControls(view, state, input, y);
 		}
 
@@ -302,9 +302,9 @@ final class RendererSettingsPanel {
 			return true;
 		}
 
-		if (!state.openGLPrimary && !state.browserGpu && view.scrollAmount() <= LEGACY_SCALING_ROW_INDEX) {
+		if (!state.openGLPrimary && !state.browserGpu && view.scrollAmount() <= legacyScalingRowIndex()) {
 			int yPos = yFromTopDistance
-				+ ((LEGACY_SCALING_ROW_INDEX - view.scrollAmount() + 1) * 15);
+				+ ((legacyScalingRowIndex() - view.scrollAmount() + 1) * 15);
 			boolean scaleMinusHover = input.gameWidth - input.mouseX >= SCALE_MINUS_X_OFFSET - 18
 				&& input.gameWidth - input.mouseX <= SCALE_MINUS_X_OFFSET
 				&& input.mouseY >= yPos + 3 && input.mouseY <= yPos + 14;
@@ -440,8 +440,12 @@ final class RendererSettingsPanel {
 		return null;
 	}
 
+	private static int legacyScalingRowIndex() {
+		return LEGACY_SCALING_ROW_INDEX + (BrowserPresentationSettings.isAvailable() ? 2 : 0);
+	}
+
 	private static void drawSoftwareScalingControls(View view, State state, Input input, int y) {
-		int yPos = y + ((LEGACY_SCALING_ROW_INDEX - view.scrollAmount() + 1) * 15);
+		int yPos = y + ((legacyScalingRowIndex() - view.scrollAmount() + 1) * 15);
 		boolean scaleMinusHover = input.gameWidth - input.mouseX >= SCALE_MINUS_X_OFFSET - 18
 			&& input.gameWidth - input.mouseX <= SCALE_MINUS_X_OFFSET
 			&& input.mouseY >= yPos - 7 && input.mouseY <= yPos + 4;
