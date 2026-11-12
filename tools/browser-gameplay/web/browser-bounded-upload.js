@@ -46,5 +46,5 @@ export function createBoundedChunkUpload(gl,{chunk:c,buffer,program,attributes,c
     }finally{measure(performance.now()-started,stage);}
   }
   function dispose(){if(disposed||done)return;disposed=true;if(vao)gl.deleteVertexArray(vao);if(vbo)gl.deleteBuffer(vbo);if(ibo)gl.deleteBuffer(ibo);if(owns)released(bytes);owns=false;}
-  return {step,dispose,get lastStepBytes(){return lastStepBytes;}};
+  return {step,dispose,get lastStepBytes(){return lastStepBytes;},get allocatedBytes(){return owns?bytes:0;}};
 }

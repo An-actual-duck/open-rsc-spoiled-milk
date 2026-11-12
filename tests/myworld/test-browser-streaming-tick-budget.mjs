@@ -10,11 +10,11 @@ function harness(config={},options={}){
     createUpload:c=>{created++;now+=options.createCost||0;let at=0,used=0,owns=false,done=false;const phases=options.phases||[112,12,20,0,112,12];return{
       step:limit=>{assert(limit>=112);used=options.invalidBytes?limit+1:phases[at++];assert(used<=limit||options.invalidBytes);now+=options.cost??.05;
         if(at===4){partial+=124;owns=true;}if(at===phases.length){if(owns)partial-=124;owns=false;resident.set(c.id,{bytes:124});done=true;}return done;},
-      dispose:()=>{if(owns){partial-=124;owns=false;}if(!done)disposed++;},get lastStepBytes(){return used;}};},...config});
+      dispose:()=>{if(owns){partial-=124;owns=false;}if(!done)disposed++;},get lastStepBytes(){return used;},get allocatedBytes(){return owns?124:0;}};},...config});
   const flush=async()=>{for(let i=0;i<60;i++)await Promise.resolve();};
   const frame=async()=>{const fn=timers.shift();if(fn)fn();await flush();};
   const drain=async()=>{for(let i=0;i<200;i++){await frame();if(!timers.length&&!stats.pendingBytes&&!stats.queuedChunks)return;}throw new Error('Did not drain');};
-  return {api,stats,resident,timers,prepared,signals,evicted,frame,flush,drain,elapse:n=>{now+=n;},get created(){return created;},get disposed(){return disposed;}};
+  return {api,stats,resident,timers,prepared,signals,evicted,frame,flush,drain,elapse:n=>{now+=n;},get partial(){return partial;},get created(){return created;},get disposed(){return disposed;}};
 }
 {
   const h=harness();h.api.select(chunks.slice(0,3).map(c=>c.id));await h.frame();
@@ -54,5 +54,10 @@ function harness(config={},options={}){
   let release;const wait=new Promise(r=>{release=r;}),h=harness({}, {wait:()=>wait});h.api.select([chunks[0].id]);await h.frame();h.elapse(3);release();await h.flush();
   assert.equal(h.created,0,'late source completion constructed upload outside a new tick');assert(h.stats.pendingBytes>0,'prepared payload ownership vanished from pending ledger');
   h.api.select([chunks[1].id],[],'teleport');assert.equal(h.stats.cancellations,1);await h.drain();assert(!h.resident.has(chunks[0].id));assert(h.resident.has(chunks[1].id));h.api.dispose();
+}
+{
+  const h=harness({capacityBytes:288,maxChunks:2,maxTickSteps:1});h.api.select([chunks[0].id],[chunks[1].id]);
+  for(let n=0;n<50&&!(h.stats.uploads===1&&h.partial>0);n++)await h.frame();assert(h.partial>0);assert(h.resident.has(chunks[0].id));
+  h.api.reclaim(124,1);assert.equal(h.partial,0,'optional partial allocation blocked local authority');assert.equal(h.stats.cancellations,1);assert(h.resident.has(chunks[0].id));assert(!h.resident.has(chunks[1].id));await h.drain();assert(h.api.ready);h.api.dispose();
 }
 console.log('PASS shared tick time/aggregate-byte/step bounds, immediate cheap-resource continuation, measured single-call overruns, optional no-churn admission and in-flight required protection. Synthetic clock/uploads only.');

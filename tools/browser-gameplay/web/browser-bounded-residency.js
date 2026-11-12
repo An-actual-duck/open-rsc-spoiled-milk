@@ -40,7 +40,13 @@ export function createBoundedResidency({catalog,stats={},capacityBytes=256*1024*
     if(disposed||failed)throw failed||new Error('Bounded residency disposed');
     while(totalBytes()+extraBytes>capacityBytes||totalCount()+extraCount>maxChunks){
       const victim=[...resident.keys()].filter(id=>byId.has(id)&&!required.has(id)).sort((a,b)=>(lru.get(a)||0)-(lru.get(b)||0))[0];
-      if(victim===undefined)throw new Error('Required active GPU resources leave no room within bounded capacity');
+      if(victim===undefined){
+        // A local authority allocation outranks optional partial GPU work too.
+        // Only cancel an actually allocated optional job: an unallocated job
+        // can itself be calling reserve here and must not dispose its own step.
+        if(job&&!required.has(job.id)&&job.value.allocatedBytes>0){job.value.dispose();job=null;stats.pendingBytes=0;stats.cancellations++;continue;}
+        throw new Error('Required active GPU resources leave no room within bounded capacity');
+      }
       evict(victim);lru.delete(victim);stats.evictions++;
     }
   }
