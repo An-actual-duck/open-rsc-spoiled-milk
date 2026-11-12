@@ -47,8 +47,8 @@ final class BrowserPresentationCloneCache {
     }
     private static final class Entry {
         final RSModel source;final RSModel.BrowserCloneTemplate template;
-        final int model,width,height,type;final boolean interaction;final String name,modelName,command;
-        Entry(GameObjectDef d,RSModel s,RSModel.BrowserCloneTemplate t){source=s;template=t;model=d.modelID;width=d.getWidth();height=d.getHeight();type=d.getType();interaction=d.isInteractionOnly();name=d.getName();modelName=d.getObjectModel();command=d.getCommand1();}
-        boolean matches(GameObjectDef d,RSModel s){return source==s&&model==d.modelID&&width==d.getWidth()&&height==d.getHeight()&&type==d.getType()&&interaction==d.isInteractionOnly()&&Objects.equals(name,d.getName())&&Objects.equals(modelName,d.getObjectModel())&&Objects.equals(command,d.getCommand1());}
+        final int model,width,height,type,ground,id;final boolean interaction;final String name,modelName,command,command2,description;
+        Entry(GameObjectDef d,RSModel s,RSModel.BrowserCloneTemplate t){source=s;template=t;model=d.modelID;width=d.getWidth();height=d.getHeight();type=d.getType();interaction=d.isInteractionOnly();name=d.getName();modelName=d.getObjectModel();command=d.getCommand1();command2=d.getCommand2();description=d.getDescription();ground=d.getGroundItemVar();id=d.id;}
+        boolean matches(GameObjectDef d,RSModel s){return source==s&&model==d.modelID&&width==d.getWidth()&&height==d.getHeight()&&type==d.getType()&&interaction==d.isInteractionOnly()&&Objects.equals(name,d.getName())&&Objects.equals(modelName,d.getObjectModel())&&Objects.equals(command,d.getCommand1())&&Objects.equals(command2,d.getCommand2())&&Objects.equals(description,d.getDescription())&&ground==d.getGroundItemVar()&&id==d.id;}
     }
 }

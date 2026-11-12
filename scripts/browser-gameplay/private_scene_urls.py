@@ -18,7 +18,7 @@ def baseline_reuse_urls(url):
  """A/B only clone reuse on the same exact RAM/geometry/source stage."""
  parts=urlsplit(url);base=dict(parse_qsl(parts.query))
  def make(value):
-  return urlunsplit((parts.scheme,parts.netloc,parts.path,urlencode({**base,'baselinereuse':value}),parts.fragment))
+  return urlunsplit((parts.scheme,parts.netloc,parts.path,urlencode({**base,'baselinereuse':value,'clonetemplates':'off'}),parts.fragment))
  allowed=base.get('wholeram')=='on'and base.get('staticscene')=='on'
  return {'urlBaselineReuseOn':make('on')if allowed else None,'urlBaselineReuseOff':make('off')}
 
