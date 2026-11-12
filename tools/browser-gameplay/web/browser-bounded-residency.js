@@ -11,7 +11,7 @@ export function createBoundedResidency({catalog,stats={},capacityBytes=256*1024*
   if(!Number.isFinite(tickMilliseconds)||tickMilliseconds<=0)throw new Error('Invalid bounded scheduler tick budget');
   if(sliceBytes<112||sliceBytes%4||!Number.isSafeInteger(optionalReserveBytes)||optionalReserveBytes<0)throw new Error('Invalid bounded scheduler slice/reserve');
   const byId=new Map(catalog.chunks.map(c=>[c.id,c])),lru=new Map();
-  let required=new Set(),queue=[],generation=0,key=null,loading=null,job=null,timer=null,disposed=false,suspended=true,failed=null,tick=0,activeTick=null,optionalKey=null,optionalDesired=new Set();
+  let required=new Set(),queue=[],generation=0,key=null,loading=null,prepared=null,job=null,timer=null,disposed=false,suspended=true,failed=null,tick=0,activeTick=null,optionalKey=null,optionalDesired=new Set();
   const bytes=c=>c.vertexCount*112+c.indexCount*4;
   Object.assign(stats,{policy:'bounded',capacityBytes,maxChunks,maxPendingBytes,maxQueue,maxQueueBytes,sliceBytes,tickMilliseconds,maxTickSteps,
     generation:0,requiredChunks:0,requiredBytes:0,missingChunks:0,ready:false,queuedChunks:0,queuedBytes:0,
@@ -25,8 +25,8 @@ export function createBoundedResidency({catalog,stats={},capacityBytes=256*1024*
     stats.peakGpuBytes=Math.max(stats.peakGpuBytes,totalBytes());
     if(totalBytes()>capacityBytes||totalCount()>maxChunks)throw new Error('Bounded GPU allocation/count cap violated');
   }
-  function wake(){if(!disposed&&!failed&&!loading&&timer===null&&(queue.length||job))timer=schedule(()=>{timer=null;pump();});}
-  function cancelJob(){if(job){job.value.dispose();job=null;stats.cancellations++;}if(loading){loading.controller.abort();stats.cancellations++;}stats.pendingBytes=loading?.bytes||0;}
+  function wake(){if(!disposed&&!failed&&!loading&&timer===null&&(queue.length||job||prepared))timer=schedule(()=>{timer=null;pump();});}
+  function cancelJob(){if(prepared){prepared=null;stats.cancellations++;}if(job){job.value.dispose();job=null;stats.cancellations++;}if(loading){loading.controller.abort();stats.cancellations++;}stats.pendingBytes=loading?.bytes||0;}
   function stop(error){if(failed||disposed)return;failed=error;cancelJob();queue=[];stats.ready=false;stats.error=String(error);account();onError(error);}
   function ensureRoom(c,optional){
     while(totalBytes()+bytes(c)>capacityBytes-(optional?optionalReserveBytes:0)||totalCount()+1>maxChunks){
@@ -46,7 +46,7 @@ export function createBoundedResidency({catalog,stats={},capacityBytes=256*1024*
   }
   function refreshOptional(optionalIds,force=false){
     const signature=optionalIds.join(',');if(!force&&signature===optionalKey)return;optionalKey=signature;
-    const inflight=id=>job?.id===id||loading?.id===id&&loading.generation===generation&&!loading.controller.signal.aborted;
+    const inflight=id=>job?.id===id||prepared?.chunk.id===id||loading?.id===id&&loading.generation===generation&&!loading.controller.signal.aborted;
     const missing=[...required].filter(id=>!resident.has(id)&&!inflight(id)).map(id=>byId.get(id)).sort((a,b)=>a.role-b.role);
     let queuedBytes=missing.reduce((n,c)=>n+c.bytes,0);
     if(queuedBytes>maxQueueBytes){const error=new Error('Required bounded queue byte cap exceeded');stop(error);throw error;}
@@ -91,6 +91,15 @@ export function createBoundedResidency({catalog,stats={},capacityBytes=256*1024*
     if(disposed||failed||t!==activeTick)return;
     try{
       while(tickAvailable(t)){
+        if(prepared){
+          const current=prepared;prepared=null;
+          if(current.generation!==generation){stats.pendingBytes=0;continue;}
+          if(!ensureRoom(current.chunk,!required.has(current.chunk.id))){stats.pendingBytes=0;continue;}
+          // View decoding and owned batch-array allocation are preparation too:
+          // create the upload job inside this tick, not in an unbudgeted Promise.
+          job={id:current.chunk.id,generation,value:createUpload(current.chunk,current.payload)};t.steps++;
+          continue;
+        }
         if(job){
           const current=job;if(current.generation!==generation){cancelJob();break;}
           const limit=sliceBytes-t.bytes,done=current.value.step(limit);
@@ -102,21 +111,20 @@ export function createBoundedResidency({catalog,stats={},capacityBytes=256*1024*
         }
         if(loading)break;
         while(queue.length&&resident.has(queue[0].id))queue.shift();
-        const c=queue.shift();account();if(!c)break;
+        const c=queue.shift();account();if(!c)break;t.steps++;
         const pendingBytes=c.bytes+c.batchIntCount*4;
         if(pendingBytes>maxPendingBytes)throw new Error('Bounded prepared resource exceeds pending byte cap');
         if(!ensureRoom(c,!required.has(c.id)))continue;
         const controller=new AbortController(),token={id:c.id,generation,controller,bytes:pendingBytes};loading=token;
         stats.pendingBytes=pendingBytes;stats.peakPendingBytes=Math.max(stats.peakPendingBytes,pendingBytes);
-        Promise.resolve().then(()=>prepare(c,controller.signal)).then(payload=>{
+        Promise.resolve(prepare(c,controller.signal)).then(payload=>{
           if(disposed||failed||generation!==token.generation||controller.signal.aborted)return;
-          if(!ensureRoom(c,!required.has(c.id)))return;
-          job={id:c.id,generation,value:createUpload(c,payload)};
+          prepared={chunk:c,payload,generation};
         }).catch(error=>{if(!disposed&&!controller.signal.aborted&&generation===token.generation)stop(error);}).finally(()=>{
-          if(loading===token)loading=null;stats.pendingBytes=job?pendingBytes:0;account();
+          if(loading===token)loading=null;stats.pendingBytes=job||prepared?pendingBytes:0;account();
           // Immediate fetch/hash completion may spend the same tick's remaining
           // budget. A later completion gets a new RAF, never a fresh hidden budget.
-          if(job&&tickAvailable(t))continueTick(t);else wake();
+          if((job||prepared)&&tickAvailable(t))continueTick(t);else wake();
         });
         break;
       }
