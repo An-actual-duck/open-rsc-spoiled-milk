@@ -233,9 +233,10 @@ reaches its hardware login surface; its player release remains v0.3.16.
 Real public HTTPS Range/ETag/cache/MIME, direct WSS/native config-byte parity and
 wrong-origin/path/protocol/plaintext/text refusals passed. Certificate renewal
 with the installed hook passed its real dry-run. Firefox reached the public
-login surface with certificate validation and no reported GPU error. Owner
-account/world acceptance and website navigation publication remain to be confirmed;
-this does not claim an authenticated gameplay or FPS test. A separate Firefox
+login surface with certificate validation and no reported GPU error. The owner
+confirmed normal account login and movement in the public browser. This is owner
+functional acceptance, not a controlled FPS test. The website worker may now
+publish the requested navigation links through its normal workflow. A separate Firefox
 profile is open for the owner.
 
 Receipts: Core output/reviews/browser-public-alpha/ and

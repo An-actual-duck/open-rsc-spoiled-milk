@@ -68,8 +68,8 @@ release inventory. Real HTTPS Range/ETag/cache/MIME and byte-exact native/WSS
 configuration exchange passed. Foreign origins, plaintext, wrong paths and
 missing subprotocols were refused; public text frames were closed. Real Firefox
 reached the public hardware-WebGL login surface without AI account creation or
-authentication. Owner account/world acceptance and website navigation publication
-are separate from that smoke test.
+authentication. The owner then confirmed normal account login and movement. Website navigation
+publication belongs to the existing website worker.
 
 Public alpha fixes effective Fog On, Directional lighting and Smooth geometry
 without changing saved preferences. Those rows are visibly fixed; brightness,
