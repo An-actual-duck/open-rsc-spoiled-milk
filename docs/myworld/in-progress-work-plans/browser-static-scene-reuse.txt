@@ -77,3 +77,54 @@ and metadata fixtures are reviewed separately. Detached fixtures do not replace
 source catalogue admission, real packets, browser/GPU pixels, long travel or
 hardware timing acceptance. The manager must build one unified clean source
 artifact and freshly bake its source-bound catalogue/RAM data before measuring.
+
+Second slice: immutable halo canonical identities
+-------------------------------------------------
+The fresh accepted c8fc full-GPU/prepared-RAM busy32 profile structurally maps
+wholeZone.frame to 10.31% of main-thread samples inclusive, with parseKey 7.86%
+nested; appendResidentObjectChunkFrame 19.37%, buildInputs 10.94%, static input
+capture 10.57%, canonical identity creation 8.89% are also nested. These spans
+cannot be added. The receipt and independent structural mapping live under the
+manager's output/diagnostics/browser-bounded-streaming-cpu baseline-busy-profile-1
+and ai-3 review outputs. Sampling ranks work; it does not measure the resulting
+speedup or establish a fresh FPS result.
+
+The same private toggle now retains immutable HALO canonical identity objects
+before bridge submission. The existing literal method remains named
+createResidentObjectCanonicalIdentityUncached. Every record is still inspected:
+kind, world tile coordinates, object ID, direction, presentation base, tile size,
+and current game definition model ID/width/height must match exactly. Ordinal
+entries reset their cursor for each capture/build and remain capped at 8192.
+Changing ordering or placement causes a miss, never an approximate key match.
+Animated live models retain their existing builder/exclusion and pose work.
+
+World supplies an identity token only for the exact World implementation with an
+admitted native global level-0 source, protocol >=4, nonnegative source revision
+and no editor terrain patches. The token captures exact active/visual snapshot
+owners, source revision, applied section coordinates and synthetic offsets. It
+changes when any dependency changes. Each lookup separately rechecks all four
+vertices of each elevation sample; touching even one loaded gameplay sector
+refuses retention and executes the original current-height interpolation. This
+also handles an unloaded sector becoming loaded without changing snapshots.
+Missing coverage retains the same unavailable sentinel only while the immutable
+source token is current. Unknown/subclassed/other-world/signed-level sources and
+nonzero requested planes use literal work. Disabling/refusing the source clears
+retained ownership. No invented mutable-terrain revision or incomplete instance
+counter is used to skip live elevation reads.
+
+Material, roof masks, render options, model geometry, picking, actor order and
+shadows are not inputs of the canonical identity/elevation function; their
+existing current validation/selection remains downstream. This cache does not
+reuse a rendered mesh based only on placement. Definition changes affecting the
+sample midpoint are compared directly, while material changes still meet the
+whole-zone exact metadata admission gate.
+
+mudclient.getBrowserStaticIdentityWork() reports eight schema-1 words:
+  schema, enabled, hits, misses, mutable-sample refusals, context resets,
+  retained entries, capacity refusals.
+The separate Bootstrap reportStaticIdentityWork callback carries this receipt;
+reportStaticSceneWork retains its ten-word schema. Both observers validate shape
+and clone arrays. Missing getters in a legacy dependency remain pending only
+when the new option is OFF; requesting a missing implementation remains fatal.
+The new StaticSceneObserverFixture executes pending, replacement-owner, defensive
+copy, fresh-counter, malformed-schema and requested-missing-getter behavior.

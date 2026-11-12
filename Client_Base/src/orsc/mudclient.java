@@ -4499,6 +4499,7 @@ public final class mudclient implements Runnable {
 	/** Exact canonical values include freshly sampled terrain elevations. Incomplete
 	 * instance revision counters and mutable model identities are not cache proof. */
 	private int captureResidentStaticInputs() {
+        residentCanonicalMemoCursor=0;
 		int used = 0;
 		residentAnimatedInputCount = 0;
 		for (int i = 0; i < getGameObjectInstanceCount(); i++) {
@@ -4528,6 +4529,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void clearResidentStaticInputCache() {
+        residentCanonicalMemos=null;residentCanonicalMemoContext=null;residentCanonicalMemoCursor=0;residentCanonicalMemoEntries=0;
 		residentStaticInputCache = null;
 		residentStaticInputProbe = null;
 		residentAnimatedInputIndices = null;
@@ -4535,6 +4537,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private List<ResidentObjectChunkInput> buildResidentObjectChunkInputsUncached(Renderer3DWorldChunkFrame baseFrame) {
+        residentCanonicalMemoCursor=0;
 		Renderer3DWorldChunkFrame.ChunkMesh anchor = baseFrame.getChunks().get(0);
 		Map<Long, ResidentObjectChunkInputBuilder> builders =
 			new TreeMap<Long, ResidentObjectChunkInputBuilder>();
@@ -4775,8 +4778,50 @@ public final class mudclient implements Runnable {
 			|| modelName.startsWith("clawspell");
 	}
 
+    private static final int MAX_RESIDENT_CANONICAL_MEMOS=8192;
+    private ResidentCanonicalMemo[] residentCanonicalMemos;
+    private Object residentCanonicalMemoContext;
+    private int residentCanonicalMemoCursor,residentCanonicalMemoEntries;
+    private int residentCanonicalMemoHits,residentCanonicalMemoMisses,residentCanonicalMemoLiveRefusals,residentCanonicalMemoResets,residentCanonicalMemoCapacityRefusals;
+    private static final class ResidentCanonicalMemo {
+        final int kind,x,z,id,direction,baseX,baseZ,tileSize,modelId,width,height;
+        final ResidentObjectCanonicalIdentity identity;
+        ResidentCanonicalMemo(int kind,int x,int z,int id,int direction,int baseX,int baseZ,int tileSize,int modelId,int width,int height,ResidentObjectCanonicalIdentity identity){this.kind=kind;this.x=x;this.z=z;this.id=id;this.direction=direction;this.baseX=baseX;this.baseZ=baseZ;this.tileSize=tileSize;this.modelId=modelId;this.width=width;this.height=height;this.identity=identity;}
+        boolean matches(int kind,int x,int z,int id,int direction,int baseX,int baseZ,int tileSize,int modelId,int width,int height){return this.kind==kind&&this.x==x&&this.z==z&&this.id==id&&this.direction==direction&&this.baseX==baseX&&this.baseZ==baseZ&&this.tileSize==tileSize&&this.modelId==modelId&&this.width==width&&this.height==height;}
+    }
+    /** schema,selected,hits,misses,mutable refusals,context resets,entries,capacity refusals. */
+    public int[] getBrowserStaticIdentityWork(){return new int[]{1,orsc.graphics.three.WholeOverworldZoneRegistry.isStaticSceneReuseEnabled()?1:0,residentCanonicalMemoHits,residentCanonicalMemoMisses,residentCanonicalMemoLiveRefusals,residentCanonicalMemoResets,residentCanonicalMemoEntries,residentCanonicalMemoCapacityRefusals};}
+    private ResidentObjectCanonicalIdentity createResidentObjectCanonicalIdentity(Renderer3DModelKind kind,int worldTileX,int worldTileZ,int objectId,int direction){
+        if(!orsc.graphics.three.WholeOverworldZoneRegistry.isStaticSceneReuseEnabled()||world==null||getRequestedPlane()!=0){residentCanonicalMemos=null;residentCanonicalMemoContext=null;residentCanonicalMemoEntries=0;return createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);}
+        Object context=world.getWholeZoneImmutableElevationContext();
+        if(context!=residentCanonicalMemoContext){residentCanonicalMemos=null;residentCanonicalMemoEntries=0;residentCanonicalMemoContext=context;residentCanonicalMemoResets++;}
+        if(context==null)return createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);
+        int localX=worldTileX-midRegionBaseX,localZ=worldTileZ-midRegionBaseZ,modelId=-1,width=0,height=0;
+        boolean immutable=true;
+        if(kind==Renderer3DModelKind.GAME_OBJECT){
+            GameObjectDef definition=EntityHandler.getObjectDef(objectId);
+            if(definition!=null){modelId=definition.modelID;width=definition.getWidth();height=definition.getHeight();}
+            if(modelId>=0){int xSize=direction==0||direction==4?width:height,zSize=direction==0||direction==4?height:width;
+                immutable=world.isWholeZoneImmutableElevationSample((2*localX+xSize)*tileSize/2,(2*localZ+zSize)*tileSize/2);}
+        }else if(kind==Renderer3DModelKind.WALL_OBJECT){
+            int startX=localX,startZ=localZ,endX=localX,endZ=localZ;
+            if(direction==1)endZ++;else if(direction==0)endX++;else if(direction==2){startX++;endZ++;}else if(direction==3){endX++;endZ++;}
+            immutable=world.isWholeZoneImmutableElevationSample(startX*tileSize,startZ*tileSize)&&world.isWholeZoneImmutableElevationSample(endX*tileSize,endZ*tileSize);
+        }else return createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);
+        int slot=residentCanonicalMemoCursor++;
+        if(!immutable){residentCanonicalMemoLiveRefusals++;return createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);}
+        if(slot<0||slot>=MAX_RESIDENT_CANONICAL_MEMOS){residentCanonicalMemoCapacityRefusals++;return createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);}
+        if(residentCanonicalMemos==null)residentCanonicalMemos=new ResidentCanonicalMemo[128];
+        if(slot>=residentCanonicalMemos.length)residentCanonicalMemos=Arrays.copyOf(residentCanonicalMemos,Math.min(MAX_RESIDENT_CANONICAL_MEMOS,Math.max(slot+1,residentCanonicalMemos.length*2)));
+        ResidentCanonicalMemo memo=residentCanonicalMemos[slot];
+        if(memo!=null&&memo.matches(kind.ordinal(),worldTileX,worldTileZ,objectId,direction,midRegionBaseX,midRegionBaseZ,tileSize,modelId,width,height)){residentCanonicalMemoHits++;return memo.identity;}
+        ResidentObjectCanonicalIdentity identity=createResidentObjectCanonicalIdentityUncached(kind,worldTileX,worldTileZ,objectId,direction);residentCanonicalMemoMisses++;
+        if(memo==null)residentCanonicalMemoEntries++;
+        residentCanonicalMemos[slot]=new ResidentCanonicalMemo(kind.ordinal(),worldTileX,worldTileZ,objectId,direction,midRegionBaseX,midRegionBaseZ,tileSize,modelId,width,height,identity);return identity;
+    }
+
 	private ResidentObjectCanonicalIdentity
-		createResidentObjectCanonicalIdentity(
+		createResidentObjectCanonicalIdentityUncached(
 			Renderer3DModelKind kind,
 			int worldTileX,
 			int worldTileZ,

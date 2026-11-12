@@ -16,11 +16,16 @@ suite = Path(subprocess.check_output(['python3', str(root / 'scripts/workspace-l
 classes = suite / 'classes'
 classes.mkdir(exist_ok=True)
 fixture = Path(__file__).with_name('StaticSceneRevisionFixture.java')
-compile_command = ['javac', '-source', '8', '-target', '8', '-cp', str(jar), '-d', str(classes), str(fixture)]
+observer_fixture = Path(__file__).with_name('StaticSceneObserverFixture.java')
+bootstrap = sorted((root / 'tools/browser-gameplay/src/orsc/browser').glob('*.java'))
+compile_command = ['javac', '-source', '8', '-target', '8', '-cp', str(jar), '-d', str(classes), str(fixture), str(observer_fixture)] + list(map(str, bootstrap))
 subprocess.run(compile_command, check=True)
 command = ['java', '-Xmx256m', '-Djava.awt.headless=true', '-cp', str(classes) + ':' + str(jar), 'orsc.StaticSceneRevisionFixture']
 result = subprocess.run(command, text=True, capture_output=True, check=True)
 print(result.stdout, end='')
+observer = subprocess.run(['java', '-Xmx128m', '-Djava.awt.headless=true', '-cp', str(classes) + ':' + str(jar),
+    'orsc.browser.StaticSceneObserverFixture'], text=True, capture_output=True, check=True)
+print(observer.stdout, end='')
 gates = []
 for properties, expected in [([], False), (['-Dspoiledmilk.browserStaticSceneReuse=true'], False),
     (['-Dspoiledmilk.browserBenchmark=true', '-Dspoiledmilk.browserStaticSceneReuse=true'], False),
@@ -33,4 +38,4 @@ for properties, expected in [([], False), (['-Dspoiledmilk.browserStaticSceneReu
     print(gate.stdout, end='')
 (suite / 'result.json').write_text(json.dumps({'jar': str(jar),
     'jarSha256': hashlib.sha256(jar.read_bytes()).hexdigest(), 'fixtureSha256': hashlib.sha256(fixture.read_bytes()).hexdigest(),
-    'commands': [compile_command, command], 'startupGates': gates, 'result': json.loads(result.stdout.strip()), 'stderr': result.stderr}, indent=2) + '\n')
+    'commands': [compile_command, command], 'observer': observer.stdout, 'startupGates': gates, 'result': json.loads(result.stdout.strip()), 'stderr': result.stderr}, indent=2) + '\n')

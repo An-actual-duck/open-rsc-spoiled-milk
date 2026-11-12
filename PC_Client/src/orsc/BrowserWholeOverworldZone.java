@@ -11,7 +11,7 @@ import org.json.*;
 public final class BrowserWholeOverworldZone implements WholeOverworldZoneRegistry.Resolver {
     public static boolean isEnabled(){return WholeOverworldZoneRegistry.isEnabled();}
     /** Private same-artifact control; ordinary and default whole-zone paths stay literal. */
-    public static boolean isStaticSceneReuseEnabled(){return isEnabled()&&Boolean.getBoolean("spoiledmilk.browserStaticSceneReuse");}
+    public static boolean isStaticSceneReuseEnabled(){return WholeOverworldZoneRegistry.isStaticSceneReuseEnabled();}
     private Map<String,Cell> retainedCells;
     private Renderer3DTextureData[] validatedMaterials;
     private mudclient observedClient;
