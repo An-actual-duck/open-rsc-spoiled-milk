@@ -30,6 +30,10 @@ def document(path,maximum=32*1024*1024):
 def safe_path(value):
  if not isinstance(value,str)or not re.fullmatch(r'[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*',value)or any(p in ('.','..')for p in value.split('/')):raise ValueError('Unsafe resource path')
  return value
+def archive_path(value):
+ if not isinstance(value,str)or len(value)>1024 or value.startswith('/')or '\\'in value or any(ord(c)<32 for c in value)or any(p in ('','.','..')for p in value.split('/')):raise ValueError('Unsafe archive path')
+ return value
+
 def regular(path):
  path=Path(path)
  if path.is_symlink()or not path.is_file():raise ValueError('Regular immutable input required: '+str(path))
@@ -55,7 +59,7 @@ def admit_build(jar,receipt,head):
  with zipfile.ZipFile(jar)as z:
   if len(z.namelist())!=len(set(z.namelist())):raise ValueError('Duplicate archive entry')
   for path,digest in {**classes,**assets}.items():
-   data=z.read(safe_path(path))
+   data=z.read(archive_path(path))
    if hashlib.sha256(data).hexdigest()!=digest:raise ValueError('Class/asset receipt mismatch')
   for name in z.namelist():
    if not name.endswith('/')and any(token in z.read(name)for token in SECRET_TOKENS):raise ValueError('Test account data in client archive')
@@ -83,6 +87,23 @@ def admit_gpu(bake,compact_run,jar_sha):
   if file.stat().st_size!=row['bytes']or sha(file)!=row['sha256']:raise ValueError('Delivery resource mismatch')
  if any(c['path']in seen for c in m['chunks']):raise ValueError('Canonical geometry accidentally included')
  return m,compact,records
+
+def runtime_cache_sources(root,commit):
+ """Only maintained sound/archive inputs, never recursively publish local cache contents."""
+ expected_video={'Cache/video/'+n for n in ('Authentic_Landscape.orsc','Authentic_Sprites.orsc','Custom_Sprites.osar','library.orsc','models.orsc','spritepacks/Menus.osar')}
+ names=subprocess.check_output(['git','ls-tree','-r','--name-only',commit,'--','Client_Base/Cache/audio','Client_Base/Cache/video'],cwd=root,text=True).splitlines()
+ rows=[];video=set()
+ for name in names:
+  relative=name.removeprefix('Client_Base/')
+  if relative.startswith('Cache/video/'):
+   if relative not in expected_video:raise ValueError('Unreviewed maintained video cache file')
+   video.add(relative)
+  elif not re.fullmatch(r'Cache/audio/(?:[A-Za-z0-9_-]+\.wav|sounds\.mem)',relative):raise ValueError('Unreviewed maintained audio cache file')
+  source=regular(Path(root)/name);tracked=subprocess.check_output(['git','show',commit+':'+name],cwd=root)
+  if source.stat().st_size>16*1024*1024 or hashlib.sha256(tracked).hexdigest()!=sha(source):raise ValueError('Maintained runtime cache input changed')
+  rows.append((relative,source))
+ if video!=expected_video or not any(p.endswith('/sounds.mem')for p,_ in rows):raise ValueError('Incomplete maintained runtime cache roster')
+ return rows
 
 def executable_jar(classes,destination):
  with zipfile.ZipFile(destination,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9)as z:
@@ -118,13 +139,11 @@ def main():
  subprocess.run(['javac','-source','8','-target','8','-cp',str(a.client_jar.resolve()),'-d',str(classes),*map(str,sources)],check=True,cwd=ROOT)
  executable_jar(classes,asset_root/'browser-spike.jar');copy_checked(a.client_jar,asset_root/'client.jar')
  cache=asset_root/'Cache';cache.mkdir()
- for directory in ('audio','video'):
-  base=ROOT/'Client_Base/Cache'/directory
-  for file in sorted(base.rglob('*')):
-   if file.is_file():copy_checked(file,cache/directory/file.relative_to(base))
+ for relative,source in runtime_cache_sources(ROOT,head):copy_checked(source,asset_root/relative)
  (cache/'config.txt').write_bytes(subprocess.check_output(['git','show','HEAD:Client_Base/Cache/config.txt'],cwd=ROOT))
  (cache/'ip.txt').write_text('132.145.137.142\n');(cache/'port.txt').write_text('43605\n')
- (cache/'discord_inuse.txt').write_text('1\n');(cache/'uid.dat').write_bytes(bytes(8))
+ (cache/'discord_inuse.txt').write_text('1\n')
+ # No UID or credential seed: the client owns persistent browser identity/login state.
  profile='world-builder-configs/installed-client.json';descriptor=document(ROOT/'Client_Base'/profile);relative=safe_path(descriptor['packageRelativePath'])
  copy_checked(ROOT/'Client_Base'/profile,asset_root/profile);copy_checked(ROOT/'Client_Base'/relative/'manifest.json',asset_root/relative/'manifest.json')
  if sha(asset_root/relative/'manifest.json')!=gpu['manifestSha256']:raise ValueError('Installed client package differs from cooked source')
@@ -141,8 +160,8 @@ def main():
  (asset_root/'browser-whole-ram-config.js').unlink();(asset_root/'browser-whole-ram-config.js').write_text('export default Object.freeze('+json.dumps(rc,separators=(',',':'))+');\n')
  deployment={'schemaVersion':1,'origin':ORIGIN,'websocket':WEBSOCKET,'preset':PRESET,'buildId':a.build_id,'assetPrefix':'/'+prefix+'/','clientJarSha256':jar_sha,'clientJarBytes':a.client_jar.stat().st_size,'bootstrapJarSha256':sha(asset_root/'browser-spike.jar'),'bootstrapJarBytes':(asset_root/'browser-spike.jar').stat().st_size}
  (asset_root/'browser-deployment-config.js').write_text('export default Object.freeze('+json.dumps(deployment,separators=(',',':'))+');\n')
- copy_checked(ROOT/'LICENSE',web/'LICENSE')
- (web/'SOURCE.txt').write_text('Source code for this build: https://github.com/An-actual-duck/open-rsc-spoiled-milk/tree/'+head+'\nJava runtime: CheerpJ by Leaning Technologies, https://cheerpj.com/ (loaded from its official CDN; not redistributed here).\n')
+ copy_checked(ROOT/'LICENSE',asset_root/'LICENSE')
+ (asset_root/'SOURCE.txt').write_text('Source code for this build: https://github.com/An-actual-duck/open-rsc-spoiled-milk/tree/'+head+'\nJava runtime: CheerpJ by Leaning Technologies, https://cheerpj.com/ (loaded from its official CDN; not redistributed here).\n')
  html=(ROOT/'tools/browser-gameplay/web/index.html').read_text().replace('src="./session.js"','src="/'+prefix+'/session.js"')
  if html.count('/'+prefix+'/session.js')!=1:raise ValueError('Versioned entry module missing')
  (web/'index.html').write_text(html)

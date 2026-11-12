@@ -36,6 +36,14 @@ final class BrowserPublicAlpha {
         if(root==null||!root.matches("/app/assets/[a-z0-9][a-z0-9-]{6,63}/"))throw new IllegalArgumentException("Public alpha asset root");
         return root;
     }
+    static void validateBootstrapPath(String relative) {
+        if(relative==null||!relative.matches("[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*"))throw new IllegalArgumentException("Invalid public bootstrap path");
+        for(String part:relative.split("/"))if(".".equals(part)||"..".equals(part))throw new IllegalArgumentException("Invalid public bootstrap path segment");
+        if ("Cache/uid.dat".equals(relative)||"Cache/credentials.txt".equals(relative)
+            ||relative.toLowerCase(java.util.Locale.ROOT).contains("client-settings")
+            ||relative.toLowerCase(java.util.Locale.ROOT).contains("client_settings"))
+            throw new IllegalArgumentException("Public bootstrap cannot replace personal browser state");
+    }
     static void validateConnection(InetAddress host,int port)throws IOException {
         if(host==null||!ADDRESS.equals(host.getHostAddress())||port!=PORT)throw new IOException("Public alpha permits only its game endpoint");
     }

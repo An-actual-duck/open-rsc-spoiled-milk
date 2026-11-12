@@ -98,6 +98,7 @@ public final class BrowserBootstrap {
             String relative;
             while ((relative = index.readLine()) != null) {
                 if (relative.startsWith("/") || relative.contains("..") || relative.contains("\\")) throw new IOException("Unsafe staged path");
+                if(publicAlpha)BrowserPublicAlpha.validateBootstrapPath(relative);
                 File destination = new File("/files", relative);
                 destination.getParentFile().mkdirs();
                 try (InputStream input = new FileInputStream(assetRoot + relative); OutputStream output = new FileOutputStream(destination)) {
