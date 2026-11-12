@@ -38,7 +38,7 @@ Receipt/source/class/asset manifests and full isolated Ant build log are beside 
 No class overlays or old-JAR rebinding were used.
 
 Actual full-JAR fixture results in output/tests/browser-public-graphics/final-1:
- public151 checks; private44 checks; ordinary controls/settings81 checks.
+ 151 public checks; 44 private checks; 81 ordinary controls/settings checks.
 The twelve saved Fog/Lighting/Geometry combinations keep their stored modes and
 Properties intact, including actual RendererProfileApplier aggregate persistence.
 Actual backendPackingSettings matches the accepted tuple for every public case;
@@ -46,7 +46,7 @@ actual shader flags match the effective menu modes; unrelated brightness/dimness
 changes still affect actual shader uniforms. The real panel exposes disabled
 rows and refuses direct stale actions. Private setters/cycles/writers retain
 ordinary behavior. Query-light and flat-light gates pass unchanged; no guard
-expectations were updated. Output layout reports only40 inherited legacy entries.
+expectations were updated. Output layout reports only 40 inherited legacy entries.
 
 Repeat with a new output destination from the worker checkout:
 
