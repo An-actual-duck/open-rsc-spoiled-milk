@@ -22,12 +22,18 @@ final class BrowserPresentationCloneCache {
         NativeLayeredTerrainSnapshot terrain=client.getWorld()==null?null:client.getWorld().getWholeOverworldSourceSnapshot();
         if(!ENABLED||!Boolean.getBoolean("spoiledmilk.browserWholeRam")||!WholeOverworldZoneRegistry.isStaticSceneReuseEnabled()
             ||!Renderer3DSettings.isBrowserPresentationAvailable()||terrain==null||terrain.getLevel()!=0||!"global".equals(terrain.getWorldSpace())
-            ||client.getRequestedPlane()!=0||client.getWorld().hasWholeOverworldTerrainPatches()||!client.isBrowserBaselineStaticObject(id)){
+            ||client.getRequestedPlane()!=0||client.getWorld().hasWholeOverworldTerrainPatches()){
             if(!entries.isEmpty()||scope!=null)clear();refusals++;return source.clone();
         }
         String context=terrain.packageIdentity()+":"+Config.S_WANT_CUSTOM_SPRITES+":"+Config.S_WANT_CUSTOM_LANDSCAPE
             +":"+RendererGeometrySettings.getMode()+":"+RendererLightingSettings.getMode()+":"+RendererToneSettings.getMode()+":"+RendererFogSettings.getMode();
         if(!context.equals(scope)){clear();scope=context;}
+        // An excluded animated object is not a global source/settings change.
+        // Retain unrelated source-proven static recipes across mixed packets.
+        if(!client.isBrowserBaselineStaticObject(id)){
+            Entry old=entries.remove(id);if(old!=null)bytes-=old.template.retainedBytes();
+            refusals++;return source.clone();
+        }
         Entry entry=entries.get(id);RSModel.BrowserCloneTemplate template=entry==null?null:entry.template;
         if(template!=null&&entry.matches(def,source)&&template.matches(source)){
             hits[owner]++;copied++;return template.instantiate();
