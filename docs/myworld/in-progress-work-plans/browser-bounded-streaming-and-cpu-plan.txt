@@ -127,8 +127,9 @@ Sequence and decision gates
    measurable steps with same-artifact switches. Compare each against its own
    baseline, then compare their combination. Keep current visual/fog settings.
    Fresh profiling decides which measured CPU change should come first.
-4. Accept only with improved memory bounds/travel cadence and verified frame-time
-   results, not simply lower counters. Report median/tail/worst gaps, queue and
+4. Assess declared GPU-memory, frame-time and travel targets against the full-RAM/
+   full-GPU reference; report quantified tradeoffs for owner review. Aim to avoid
+   renewed multi-second stalls. Report median/tail/worst gaps, queue and
    cache behavior, fresh ready frames versus held images, CPU/GPU timing coverage,
    startup cost, retained/transient memory and sustained long-session behavior.
 
