@@ -1,0 +1,115 @@
+Public browser startup audit — November 12, 2026
+
+Finding
+-------
+The first measured problem is serial application-data staging, not slow login or
+an unsupported renderer. The manager's actual published Firefox observation
+records Java-ready at 2,134 ms, Java copy start at 4,579 ms, and OpenRSC start at
+67,469 ms: 62,890 ms inside the pre-client staging interval. This does not prove
+a universal startup time. Its ResourceTiming buffer contains only 250 records;
+the manager observed 128 KiB RAM Range reads at roughly 26 ms median, including
+20 source.bin requests taking about 521 ms. This supports the serial-read target;
+it is not a complete per-resource attribution for the whole interval.
+
+The published alpha-20261112-1 package (source 01c6f901...) stages 51 ordinary files
+of 14,514,190 bytes, then 3 retained-RAM files of 276,938,781 bytes before invoking
+OpenRSC.main. RAM is manifest 631,563 bytes; source.bin 46,101,734 bytes;
+prepared.bin 230,205,484 bytes. The two executable archives total 14,927,229 bytes.
+The full 1,308,244,143-byte public directory is not all fetched before login:
+bounded GPU residency requests selected geometry rather than the entire catalog.
+
+Evidence paths:
+ /home/justin/Core-Framework/output/diagnostics/browser-startup/published-startup-baseline.json
+ /home/justin/Core-Framework/output/releases/browser-alpha/alpha-20261112-1/web/public-release.json
+ /home/justin/Core-Framework-ai-3/output/diagnostics/browser-startup-audit/evidence.json
+The audit receipt records exact source/release/evidence hashes and byte sums.
+The worker ran no browser, GPU, SSH, listener or server operation.
+
+Current order and cache implications
+------------------------------------
+The outer Play action creates the disposable iframe and shows Starting game.
+The child verifies both complete executable archives, prepares its WebGL worker
+and native bindings, loads the CDN loader, awaits cheerpjInit, then runs the Java
+bootstrap. Java serially copies its ordinary roster and all three RAM files
+from /app to /files. Only after that does OpenRSC create the client UI. Later,
+BrowserWholeOverworldRam independently reads/hashes/validates/decodes the copied
+source and recipes. The latter validation must remain authoritative.
+
+Official documentation defines /app as HTTP-backed read-only files, /files as
+persistent IndexedDB storage, and /str as in-memory Java-readable files. Warm
+HTTP caching therefore does not by itself remove the repeated /files writes.
+Current versioned archive verification requests cache:default, but the shared
+fetchWholeZoneBytes helper explicitly uses cache:no-store for catalog/source,
+textures and bounded geometry. That is a separate warm-loading opportunity;
+changing it must preserve all existing response bounds/hash checks and private
+fixture defaults. Do not confuse that no-store path with the Java RAM Range path.
+
+Recommended next experiment
+--------------------------
+Use a public-only, closed-roster bulk transfer for the three known RAM files.
+Fetch one complete immutable/versioned file at a time with cache:default, exact
+byte bounds and SHA-256. After cheerpjInit, expose its validated Uint8Array using
+cheerpOSAddStringFile at a session-owned /str path. Let the existing Java copy
+consume that in-memory path instead of thousands of HTTP Range reads. Only after
+Java closes the input should the bridge remove the /str file and drop its own
+reference. The official cheerpOSRemoveStringFile operation is idempotent.
+Keep the existing /files destinations, constructor/source/JAR/catalog hashes,
+recipe decoder, readiness, roof fallback and actual activation guards intact.
+This is a proposed transfer improvement, not permission to declare data ready.
+
+Bound live transfer ownership to one file, at most 230,205,484 bytes for this
+release. SubtleCrypto, the runtime's /str implementation, /files/IndexedDB and
+Java may hold internal copies; one owned buffer is not a claim that total memory
+increases by exactly one file. Measure peak browser PSS and live buffers. Stop,
+restart, failed digest, truncation and callback races must abort/release without
+reviving a discarded session. No arbitrary Java-supplied URL or destination may
+escape the closed manifest/three-file roster. Do not preload all RAM/GPU files
+concurrently to hide latency at the expense of unbounded transient memory.
+
+Acceptance: use the same exact artifact and route for ordinary serial versus
+bulk staging. Record Play-to-login AND Play-to-first-correct-world, plus stage
+bytes, wire bytes, request counts, CPU time and peak memory. A faster UI followed
+by an equal new world wait is not a startup improvement. Test cold HTTP/storage,
+warm HTTP with fresh VM, and retained /files state separately; record cache state
+and do not silently merge those cohorts. Preserve normal/private behavior.
+The manager's sole actual Firefox/host measurements decide adoption.
+
+Follow-ups, in priority order after measurement
+-----------------------------------------------
+1. Verified content-addressed warm reuse can avoid rewriting identical persisted
+   RAM data. A marker alone is insufficient: bind identity/length/hash, handle
+   partial files and version changes, preserve UID/settings, and retain Java's
+   full validation. Define derived-cache storage bounds before adding versions.
+2. Use the browser HTTP cache for immutable public GPU resources while preserving
+   all digest and source guards. Measure 200/206/304/cache hits and request bytes.
+3. Profile actual runtime resources with cjGetRuntimeResources, then use the
+   recorded preloadResources map in a subsequent session. This official feature
+   addresses runtime on-demand fetches, not our 276 MB application staging.
+4. Consider overlapping trusted CDN runtime startup with archive verification;
+   unverified game bytecode must still never execute. New cancellation/lifecycle
+   ownership is required. Current evidence says this is smaller than RAM staging.
+
+Global HTTP gzip is not a safe shortcut for arbitrary Java byte-range files:
+representation lengths/Range offsets and our declared-byte checks must remain
+correct. Any compressed transport needs explicit raw/encoded metadata and bounds,
+then a paired total-startup/CPU/memory test. No such change is adopted here.
+
+Feedback review boundary
+------------------------
+The parallel worker owns truthful visible phase/byte feedback. Received bytes,
+written bytes, validated data and playable-world readiness are different states.
+Known file lengths allow stage-local progress; CDN/runtime phases should remain
+indeterminate unless the runtime supplies real progress. The parent must accept
+only the current iframe's messages, cap retained diagnostics, reject malformed
+counts, ignore late callbacks after Stop, and never reopen startup UI over LOGIN
+or GAME for ordinary streaming. The feedback change claims visibility, not speed.
+
+Official primary references (checked November 12, 2026)
+----------------------------------------------------
+https://cheerpj.com/docs/guides/filesystem
+https://cheerpj.com/docs/reference/cheerpOSAddStringFile
+https://cheerpj.com/docs/reference/cheerpOSRemoveStringFile
+https://cheerpj.com/docs/reference/cheerpjInit
+https://cheerpj.com/docs/guides/Startup-time-optimization
+https://cheerpj.com/docs/reference/cjGetRuntimeResources.html
+https://cheerpj.com/docs/faq
