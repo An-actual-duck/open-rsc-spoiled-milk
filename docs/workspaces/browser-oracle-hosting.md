@@ -170,3 +170,45 @@ Protocol and operation references used for this design:
   https://nginx.org/en/docs/http/ngx_http_core_module.html
 - Certbot deployment hooks:
   https://eff-certbot.readthedocs.io/en/stable/using.html#renewing-certificates
+
+### Frozen worker evidence
+
+Production Java checkpoint: `daed56e3722576250808fc0d67bf0720bdb97e45`.
+The isolated full-source server build is preserved at
+`/home/justin/Core-Framework-ai-3/output/builds/browser-oracle-hosting/review-daed56/`.
+Its receipt binds all maintained server/plugin Java sources, both complete JARs,
+archive-entry manifests, build command/log and clean source commit; no class
+transplants were used. `core.jar` SHA-256 is
+`e0e50a0f57234048df0b817cbb82f7a72271d57c4dd4423e4a9a85eaa97715bc`.
+All maintained server Java hashes still match that frozen build.
+
+Run from the worker checkout with fresh output names:
+
+```
+nice -n 10 python3 tests/myworld/browser-oracle-hosting/run-network.py \
+  --root . --jar output/builds/browser-oracle-hosting/review-daed56/core.jar \
+  --out output/tests/browser-oracle-hosting/network-repeat
+nice -n 10 python3 tests/myworld/browser-oracle-hosting/run-config.py \
+  --root . --jar output/builds/browser-oracle-hosting/review-daed56/core.jar \
+  --out output/tests/browser-oracle-hosting/config-repeat
+python3 tests/myworld/browser-oracle-hosting/test-hosting.py \
+  --out output/tests/browser-oracle-hosting/hosting-repeat
+bash -n config/browser-hosting/certbot-deploy-hook.sh
+```
+
+Preserved `network-frozen-2` passed 51 checks per public ON/OFF process, using real
+RSA and EC TLS handshakes, production dynamic decoder/upgrade insertion, masked
+binary packet exchange and unchanged native TCP decoding. `config-frozen-1`
+passed actual hosted parser and immutable projection ON/OFF with the exact
+installed package explicitly supplied. `hosting-final-1` passed 16 negative and
+configuration checks. `ip-consumer-source-proof.json` proves every maintained
+socket remote-address consumer file remains byte-identical to the pre-change
+baseline. The output-layout check reports only the 40 inherited unclassified
+legacy entries, which were preserved.
+
+The older `test-server-r2-configuration-views.py` passes seven of eight cases.
+Its isolated hosted-profile case copies the selected native-map profile without
+the required installed package path and fails before the new WSS options. The
+new focused parser fixture supplies that real path and passes both policies.
+This limitation is preserved in `configuration-parity.log`; it is not presented
+as a completely green broad suite or silently repaired by changing map authority.

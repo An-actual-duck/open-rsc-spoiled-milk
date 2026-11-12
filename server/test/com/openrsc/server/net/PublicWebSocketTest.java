@@ -120,6 +120,8 @@ public final class PublicWebSocketTest {
     }
     public static void main(String[] args)throws Exception {
         boolean enabled=PublicWebSocketPolicy.enabled();Path root=Paths.get(args[0]);SslContext context=new ReloadingPublicWebSocketTls(root.resolve("one-cert.pem").toString(),root.resolve("one-key.pem").toString()).context();
+        SslContext ec=new ReloadingPublicWebSocketTls(root.resolve("ec-cert.pem").toString(),root.resolve("ec-key.pem").toString()).context();
+        EmbeddedChannel[] ecPair=tls(ec,new Observe());for(EmbeddedChannel channel:ecPair)channel.finishAndReleaseAll();
         admission(context,enabled);guard();reload(root);ipAdmission();productionUpgrade(context);nativeParity();System.out.println("PASS checks="+checks+" public="+enabled+" real-memory-TLS=true no-listeners=true");
     }
 }
