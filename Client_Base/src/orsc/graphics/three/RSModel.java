@@ -132,7 +132,7 @@ public final class RSModel {
     private static RSModel instantiatePreparedState(int descriptor,WholeRamData.Pool pool,long[] copiedBytes,WholeRamData.ModelLayout layout) {
         if(descriptor==-1)return null;
         WholeRamData.ModelArrays a=layout==null?new WholeRamData.ModelArrays(pool,pool.ints(descriptor),54,38):new WholeRamData.ModelArrays(pool,layout);
-        RSModel m=new RSModel(0,0);int[] v=a.scalars;
+        RSModel m=layout==null?new RSModel(0,0):new RSModel(layout);int[] v=a.scalars;
         m.faceHead=v[0];
         m.key=v[1];
         m.m_cb=v[2]!=0;
@@ -1217,6 +1217,13 @@ public final class RSModel {
 			throw GenUtil.makeThrowable(var3, "ca.H(" + var1 + ')');
 		}
 	}
+
+    /** Only a schema-checked private cached recipe uses this constructor. All92
+     * mutable state fields are restored before return; the93rd field m_Vb keeps
+     * its ordinary final field initializer. No empty arrays are allocated here. */
+    private RSModel(WholeRamData.ModelLayout verifiedLayout){
+        if(verifiedLayout==null)throw new IllegalArgumentException("Verified cached model layout required");
+    }
 
     /** Private canonical-clone recipe. Owned immutable pool; each instantiate
      * creates distinct live arrays and preserves the original clone alias graph. */
