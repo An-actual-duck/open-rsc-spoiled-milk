@@ -263,6 +263,7 @@ public class PacketHandler {
 		layeredTerrainStageAssembler.reset();
 		sceneBaselineState.resetForScopeChange("none");
         browserBaselineReuse.clear();
+        if(mc!=null)mc.clearBrowserPresentationCloneCache();
 		movementSnapshotStage.reset();
 		appliedSceneBaselineKey = 0;
 		appliedScenePresentationKey = 0;
@@ -860,7 +861,7 @@ public class PacketHandler {
 		final boolean atomicActivation = protocolVersion
 			== LayeredSceneContextState
 				.ATOMIC_NATIVE_LAYERED_PROTOCOL_VERSION;
-		if (result.isScopeChanged()) browserBaselineReuse.clear();
+		if (result.isScopeChanged()) {browserBaselineReuse.clear();mc.clearBrowserPresentationCloneCache();}
 		if (result.isScopeChanged() || atomicActivation) {
 			sceneBaselineState.resetForScopeChange(
 				layeredSceneContextState.scopeIdentity());
@@ -3606,7 +3607,7 @@ public class PacketHandler {
 		int instanceIndex = mc.getGameObjectInstanceCount();
         RSModel model = reuse ? browserBaselineReuse.take(record) : null;
         boolean wasClone = model == null;
-        if (wasClone) model = mc.getModelCacheItem(def.modelID).clone();
+        if (wasClone) model = mc.cloneBrowserPresentationGameObject(record.id, BrowserPresentationCloneCache.BASELINE);
 		applyExpandedGameObjectPickBounds(record.id, model);
 		model.key = instanceIndex;
 		if (wasClone) model.addRotation(0, record.direction * 32, 0);
@@ -3721,7 +3722,7 @@ public class PacketHandler {
 		int xTile = record.getX();
 		int zTile = record.getZ();
 		int modelIndex = EntityHandler.getObjectDef(id).modelID;
-		RSModel m = mc.getModelCacheItem(modelIndex).clone();
+		RSModel m = mc.cloneBrowserPresentationGameObject(id, BrowserPresentationCloneCache.LEGACY_DELTA);
 		applyExpandedGameObjectPickBounds(id, m);
 		m.key = instanceIndex;
 		m.addRotation(0, dir * 32, 0);

@@ -3913,7 +3913,7 @@ public final class mudclient implements Runnable {
 		}
 		int x = (2 * localX + xSize) * this.tileSize / 2;
 		int z = (2 * localZ + zSize) * this.tileSize / 2;
-		RSModel model = this.getModelCacheItem(def.modelID).clone();
+		RSModel model = cloneBrowserPresentationGameObject(record.id, BrowserPresentationCloneCache.CANONICAL);
 		model.key = -1 - index;
 		model.addRotation(0, record.direction * 32, 0);
 		model.setDiffuseLightAndColor(
@@ -4752,6 +4752,17 @@ public final class mudclient implements Runnable {
 	private static String lowerOrEmpty(String value) {
 		return value == null ? "" : value.toLowerCase(Locale.ROOT);
 	}
+
+    private volatile BrowserPresentationCloneCache browserPresentationCloneCache;
+    public static boolean isBrowserCloneTemplatesEnabled(){return BrowserPresentationCloneCache.isEnabled();}
+    public long[] getBrowserCloneTemplateWork(){BrowserPresentationCloneCache c=browserPresentationCloneCache;return c==null?new long[]{1,BrowserPresentationCloneCache.isEnabled()?1:0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}:c.work();}
+    RSModel cloneBrowserPresentationGameObject(int id,int owner){
+        if(!BrowserPresentationCloneCache.isEnabled())return getModelCacheItem(EntityHandler.getObjectDef(id).modelID).clone();
+        BrowserPresentationCloneCache cache=browserPresentationCloneCache;
+        if(cache==null){synchronized(this){cache=browserPresentationCloneCache;if(cache==null){cache=new BrowserPresentationCloneCache();browserPresentationCloneCache=cache;}}}
+        return cache.clone(this,id,owner);
+    }
+    void clearBrowserPresentationCloneCache(){if(browserPresentationCloneCache!=null)browserPresentationCloneCache.clear();}
 
     boolean isBrowserBaselineStaticObject(int objectId) {
         return !isAnimatedResidentObjectChunkModel(Renderer3DModelKind.GAME_OBJECT, objectId);

@@ -7,6 +7,7 @@ def scene_urls(url,gpu_residency='full',static_scene='off',gpu_budget_mib=256,ge
  parts=urlsplit(url);base=dict(parse_qsl(parts.query))
  def make(**flags):
   combined={**base,**flags}
+  if combined.get('clonetemplates')=='on'and(combined.get('staticscene')!='on'or combined.get('wholeram')!='on'):combined['clonetemplates']='off'
   if combined.get('baselinereuse')=='on'and(combined.get('staticscene')!='on'or combined.get('wholeram')!='on'):combined['baselinereuse']='off'
   return urlunsplit((parts.scheme,parts.netloc,parts.path,urlencode({k:v for k,v in combined.items()if v is not None}),parts.fragment))
  common={'wholezone':'on','gpuresidency':gpu_residency,'gpubudget':str(gpu_budget_mib)if gpu_residency=='bounded'else None,'staticscene':static_scene,**({'geometryformat':geometry_format}if compact_available else{})}
@@ -20,3 +21,11 @@ def baseline_reuse_urls(url):
   return urlunsplit((parts.scheme,parts.netloc,parts.path,urlencode({**base,'baselinereuse':value}),parts.fragment))
  allowed=base.get('wholeram')=='on'and base.get('staticscene')=='on'
  return {'urlBaselineReuseOn':make('on')if allowed else None,'urlBaselineReuseOff':make('off')}
+
+
+def clone_template_urls(url):
+ """Same-stage exact clone recipe controls; previous baseline trial stays off."""
+ parts=urlsplit(url);base=dict(parse_qsl(parts.query))
+ def make(value):return urlunsplit((parts.scheme,parts.netloc,parts.path,urlencode({**base,'baselinereuse':'off','clonetemplates':value}),parts.fragment))
+ allowed=base.get('wholeram')=='on'and base.get('staticscene')=='on'
+ return {'urlCloneTemplatesOn':make('on')if allowed else None,'urlCloneTemplatesOff':make('off')}
