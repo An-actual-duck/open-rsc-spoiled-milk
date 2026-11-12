@@ -39,8 +39,12 @@ and live/mutated/animated object overrides. The18-word selection declaration and
 existing5x5 world/scenery selection, including zero-color-mask cells retained as
 shadow inputs. No terrain/roof/shadow coverage is dropped to meet the cap.
 
-Required world cells precede required scenery; optional movement-ahead cells use
-spare space with32MiB reserved. Previously useful return cells remain as LRU
+Required world cells precede required scenery. A one-sector cardinal ring outside
+the existing5x5 window can prefetch before the first source-center change; it adds
+no diagonal corners and grants no drawable membership. The last known movement
+direction prioritizes its facing strip and persists while the center is unchanged.
+The ring contains at most140 existing world/scenery resource IDs; actual optional
+admission uses spare space with32MiB reserved. Previously useful return cells remain as LRU
 residents until pressure requires eviction. Only catalogue-owned resources
 outside the required set may be evicted. Java's local/dynamic resources are
 never cache-eviction candidates. Signed-level/non-global fallback remains local.
@@ -52,6 +56,8 @@ Scope changes cancel/abort pending work and release partially allocated buffers.
 Region transition suspends readiness until a new declaration. Context loss and
 session disposal cancel the scheduler; the backend requires session restart.
 Stale fetch/hash completion cannot publish into a new generation or context.
+Reordering optional lookahead under the same required scope does not cancel an
+in-flight required fetch/upload or increment its preparation generation.
 
 Scheduling and memory ledgers
 ----------------------------
@@ -63,11 +69,28 @@ overhead are separately scoped. Descriptor queues are capped at512 entries and
 
 Packed planes are views of the verified source buffer. Position/bounds validation,
 index validation, owned batch copying, GPU allocation and bufferSubData transfer
-advance in separate steps. Each Worker animation callback processes at most4MiB
-of validation/copy or transfer; the fallback timer interval is16ms. One allocation
+advance in separate steps. Each Worker animation tick shares a2ms wall-time
+budget,4MiB aggregate validation/copy/transfer bytes and32 steps across resources.
+Cheap stage transitions/allocation count as steps even when they move zero bytes.
+The actual byte count returned by each upload step consumes the shared allowance;
+the allowance is not reset between phases or immediate asynchronous completions.
+A fetch/hash completing later resumes on a new tick; the fallback timer is16ms.
+The next fetch starts immediately after a finished upload when budget remains.
+One allocation
 call reserves full final buffer storage, followed by bounded transfers. Driver
-allocation/check latency has no hard time guarantee: max/total slice milliseconds
-are measured. No async wrapper hides a whole-window unpack/pack/upload rebuild.
+allocation/check latency has no hard time guarantee: max/total slice milliseconds,
+tick wall-time/bytes/steps and single-call deadline overruns are measured. Tick
+wall-time may include time awaiting an immediate source completion; slice spans
+remain separately measured. The prior fixed one-phase-per-RAF cadence caused
+unnecessary cold-boundary holds despite cheap actual work; the shared budget
+removes that scheduling delay and needs paired hardware measurement. No async
+wrapper hides a whole-window unpack/pack/upload rebuild.
+
+Optional descriptor admission chooses one working set that fits byte/count and
+queue/pending constraints. Optional uploads cannot evict another member of that
+working set merely to drain a larger lookahead queue. Changed required scope or
+local allocation pressure may still evict optional residents. An unchanged plan
+does not immediately refill evicted optional cells and create allocation churn.
 
 stats.gpuBytes is the unified allocation ledger: catalogue geometry, Java local
 geometry, material textures and unfinished GPU buffer allocations all consume the
@@ -96,6 +119,13 @@ fresh rendered frames. wholeZone.ready means current submitted coverage for the
 declared selection in bounded mode, never all1400 catalogue GPU resources.
 startupGpuCompleted stays false; the full-startup gl.finish receipt is not forged.
 wholeZone.pinnedChunks/Bytes describe actual current resident catalogue buffers.
+The last fresh world-frame clock survives bounded held proposals, so the next
+fresh worldFrameSamples interval includes the complete cold pause. Separately,
+completedHeldIntervals, last/maxHeldIntervalMilliseconds and
+last/maxHeldFreshGapMilliseconds expose elapsed held time and the gap from the
+preceding fresh frame; pendingHeldMilliseconds remains visible before resumption.
+Startup without a prior fresh world frame reports held time without inventing a
+fresh interval. Held images themselves remain absent from fresh-frame counts.
 
 The main thread blocks world input immediately when exact source scope/mutation
 rows change, before the Worker can acknowledge a held proposal. Only a matching
@@ -107,7 +137,11 @@ GPU coverage. browserProof.boundedResidencyInput exposes that producer/ACK gate.
 
 Tests and present limits
 ------------------------
-Node API doubles cover progressive validation/transfer, late publication,
+Node API doubles cover shared tick time/aggregate bytes/step caps, multiple cheap
+resources within one tick, measured single-call overruns, optional no-churn
+admission and required in-flight protection during lookahead changes. They also
+cover initial cardinal-ring geometry, direction caching and a simulated4-second
+held interval without fresh frames. Node API doubles cover progressive validation/transfer, late publication,
 cancellation, corrupt indices, allocation refusal, GL-binding restoration,
 retained reset/hold/fade sequencing, private controls and the producer/ACK input
 race. The real immutable c8fc complete-stage CPU test validates all source/assets/

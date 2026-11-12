@@ -1,6 +1,8 @@
 import {loadWholeZone,validateWholeZoneConfig,validateWholeZoneLive,validateWholeZoneTexture,createWholeZoneSelection,fetchWholeZoneBytes,digestWholeZoneBytes} from './browser-whole-zone.js';
 import {createBoundedResidency} from './browser-bounded-residency.js';
 import {createBoundedChunkUpload} from './browser-bounded-upload.js';
+import {createBoundedPrefetch} from './browser-bounded-prefetch.js';
+import {createBoundedFrameGap} from './browser-bounded-frame-gap.js';
 import {wholeZoneCapacity} from './browser-whole-zone-policy.js';
 import {createOverlayJournalObserver,observedOverlayDelta} from './browser-overlay-journal.js';
 import {createPhysicalOutputSizer} from './browser-physical-output.js';
@@ -45,7 +47,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   if(capacity.enabled){if(!capacity.bounded)stats.resourceBudgetScope=stats.resourceBudgetScope.replace('256MiB chunk/texture pixels','private3072MiB chunk/texture pixels');stats.resourceBudgetScope+='; whole-zone catalogue metadata/loader/Worker/driver/Java heap separate';stats.wholeZone={enabled:true,residencyPolicy:capacity.bounded?'bounded':'full',phase:'unloaded',ready:false,capacityBytes:capacity.gpuBytes,maxResidentChunks:capacity.maxChunks,pinnedChunks:0,pinnedBytes:0,currentLocalDraws:0};}
   const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0,lastWorld=0,lighting,lightingValues,sky,overlay;
   let wholeZoneCatalog=null,wholeZoneSelection=null,zoneUploadId=null,zoneController=null;
-  let boundedResidency=null,previousZoneCenter=null,pendingZoneChunks=0,boundedCells=null;
+  let boundedResidency=null,pendingZoneChunks=0,boundedPrefetch=null,boundedFrameGap=null;
   const pinnedChunks=new Set(),pinnedTextures=new Set(),pinnedMaterials=new Map();
   const colorVisible=new Uint8Array(capacity.enabled?1024:256),colorCullScratch=new Float64Array(18);let colorCullingSupported=false;
   const ownedFrame=options.ownedState===true||options.benchmarkControl===true?createOwnedBrowserFrameState(gl,{enabled:options.ownedState===true,ownOverlayUnpack:['on','packed'].includes(options.overlayRectMode)}):null;
@@ -85,7 +87,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   }
   function startBoundedResidency(){
     const zoneStats=stats.wholeZone;stats.boundedResidency={};
-    boundedCells=new Map();for(const c of wholeZoneCatalog.chunks)boundedCells.set(c.role+':'+c.plane+':'+c.cellX+':'+c.cellY,c.id);
+    boundedPrefetch=createBoundedPrefetch(wholeZoneCatalog);boundedFrameGap=createBoundedFrameGap(stats.boundedResidency);
     boundedResidency=createBoundedResidency({catalog:wholeZoneCatalog,stats:stats.boundedResidency,capacityBytes:capacity.gpuBytes,maxChunks:capacity.maxChunks,
       resident:chunks,totalBytes:()=>stats.gpuBytes,totalCount:()=>chunks.size+pendingZoneChunks,
       evict:id=>{const c=chunks.get(id);if(!c||!pinnedChunks.has(id))throw new Error('Bounded eviction ownership');gl.deleteVertexArray(c.vao);gl.deleteBuffer(c.vbo);gl.deleteBuffer(c.ibo);stats.gpuBytes-=c.bytes;chunks.delete(id);pinnedChunks.delete(id);},
@@ -101,14 +103,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     const required=[];for(let at=0;at<draws.length;at+=8)if(draws[at]>=1000000)required.push(draws[at]);
     // Source-space lookahead uses exactly the same signed/global authority as
     // selection. Optional source descriptors do not grant drawable membership.
-    const v=wholeZoneSelection.scope,optional=[];
-    if(v?.[1]){
-      const dx=previousZoneCenter?Math.sign(v[5]-previousZoneCenter[0]):0,dy=previousZoneCenter?Math.sign(v[6]-previousZoneCenter[1]):0;
-      const cx=v[5]+dx,cy=v[6]+dy;
-      if(dx||dy)for(const role of [0,1])for(let plane=0;plane<(role===0?3:1);plane++){const scale=role===0?1:2;
-        for(let x=(cx-2)*scale;x<(cx+3)*scale;x++)for(let y=(cy-2)*scale;y<(cy+3)*scale;y++){const id=boundedCells.get(role+':'+plane+':'+x+':'+y);if(id!==undefined)optional.push(id);}}
-      previousZoneCenter=[v[5],v[6]];
-    }else previousZoneCenter=null;
+    const optional=boundedPrefetch.plan(wholeZoneSelection.scope);
     const ready=boundedResidency.select(required,optional,wholeZoneSelection.generationKey);
     Object.assign(stats.wholeZone,{ready,phase:ready?'coverage-ready':'streaming',residentChunks:chunks.size,pinnedChunks:pinnedChunks.size,pinnedBytes:[...pinnedChunks].reduce((n,id)=>n+chunks.get(id).bytes,0)});
     return ready;
@@ -133,7 +128,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     async Java_orsc_BrowserWebGLBridge_wholeZoneFrame(lib,metadata,overrides){alive();if(!capacity.enabled||!wholeZoneSelection||!capacity.bounded&&!stats.wholeZone.ready)throw new Error('Whole zone frame before catalogue admission/residency');wholeZoneSelection.frame(metadata,overrides);},
     async Java_orsc_BrowserWebGLBridge_worldProgress(lib,metadata){alive();worldReady.declare(metadata);},
     async Java_orsc_BrowserWebGLBridge_regionTransition(lib,soft){alive();if(options.overlayDeltaTransport===true&&overlay)overlay.invalidateDeltaHistory();if(capacity.bounded){boundedResidency?.suspend();stats.wholeZone.ready=false;stats.wholeZone.phase='awaiting-scope';}worldReady.beginTransition(soft===true);},
-    async Java_orsc_BrowserWebGLBridge_holdWorld(){alive();uploadValidation.beforeDraw();gl.bindSampler(0,null);if(!overlay)throw new Error('Region retention requires coverage compositor');if(ownedFrame?.active)ownedFrame.begin(canvas.width,canvas.height,0,0,0);overlay.hold(canvas.width,canvas.height);worldReady.held();gl.flush();stats.heldWorldFrames++;},
+    async Java_orsc_BrowserWebGLBridge_holdWorld(){alive();uploadValidation.beforeDraw();gl.bindSampler(0,null);if(!overlay)throw new Error('Region retention requires coverage compositor');if(ownedFrame?.active)ownedFrame.begin(canvas.width,canvas.height,0,0,0);overlay.hold(canvas.width,canvas.height);worldReady.held();gl.flush();stats.heldWorldFrames++;boundedFrameGap?.held(performance.now(),lastWorld);},
     async Java_orsc_BrowserWebGLBridge_initialize(lib,vertex,fragment){
       alive();if(program)throw new Error('WebGL backend initialized twice');
       program=link(adaptResidentShader(vertex,false),adaptResidentShader(fragment,true));
@@ -258,7 +253,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
           if(timerQuery){gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);gl.deleteQuery(timerQuery);activeTimerQuery=null;}
           if(!overlay)throw new Error('Bounded streaming requires retained coverage compositor');
           if(ownedFrame?.active)ownedFrame.begin(canvas.width,canvas.height,0,0,0);
-          overlay.holdPrepared(canvas.width,canvas.height);worldReady.held();gl.flush();stats.heldWorldFrames++;stats.boundedResidency.heldFrames=(stats.boundedResidency.heldFrames||0)+1;lastWorld=0;return;
+          overlay.holdPrepared(canvas.width,canvas.height);worldReady.held();gl.flush();stats.heldWorldFrames++;stats.boundedResidency.heldFrames=(stats.boundedResidency.heldFrames||0)+1;boundedFrameGap.held(performance.now(),lastWorld);return;
           }
         }
       }
@@ -348,7 +343,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(alphaProof){const final=new Uint8Array(outputWidth*outputHeight*4);gl.readPixels(0,0,outputWidth,outputHeight,gl.RGBA,gl.UNSIGNED_BYTE,final);let count=0;for(let n=3;n<final.length;n+=4)if(final[n]!==255)count++;stats.opaqueAlphaProof.finalNonOpaque=count;check();}
       if(timerQuery){gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);pendingQueries.push(timerQuery);activeTimerQuery=null;}
       const now=performance.now();stats.jsSubmissionSamples.push(now-submitStart);if(stats.jsSubmissionSamples.length>(stats.measurement?4096:600))stats.jsSubmissionSamples.shift();
-      if(world&&!retainedWorld){if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);stats.worldFramePolicies.push(stats.presentedOwnedState);stats.worldFrameSpriteGroups.push(spriteDraws.length);stats.physicalOutputWorldFramePolicies.push(physicalOutput?1:0);if(stats.worldFrameSamples.length>(stats.measurement?4096:600)){stats.worldFrameSamples.shift();stats.worldFramePolicies.shift();stats.worldFrameSpriteGroups.shift();stats.physicalOutputWorldFramePolicies.shift();}}lastWorld=now;}else lastWorld=0;
+      if(world&&!retainedWorld){boundedFrameGap?.resumed(now);if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);stats.worldFramePolicies.push(stats.presentedOwnedState);stats.worldFrameSpriteGroups.push(spriteDraws.length);stats.physicalOutputWorldFramePolicies.push(physicalOutput?1:0);if(stats.worldFrameSamples.length>(stats.measurement?4096:600)){stats.worldFrameSamples.shift();stats.worldFramePolicies.shift();stats.worldFrameSpriteGroups.shift();stats.physicalOutputWorldFramePolicies.shift();}}lastWorld=now;}else lastWorld=0;
       worldReady.presented({world:world&&!retainedWorld,width,height,textures:textures.size,sprites:spriteDraws.length,lighting:!!lightingValues});
       stats.javaFrames++;stats.drawCalls=calls;stats.triangles=triangles;stats.activeChunks=draws.length/8;stats.lastFrame=now;
       if(last){stats.frameSamples.push(now-last);if(stats.frameSamples.length>(stats.measurement?4096:600))stats.frameSamples.shift();}last=now;
