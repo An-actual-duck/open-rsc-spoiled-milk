@@ -59,7 +59,17 @@ backup timer and zero automatic restarts were verified. The released desktop
 client still fetched configs and reached its hardware OpenGL login surface.
 v0.3.17 remains available for server rollback.
 
-Browser alpha `alpha-20261112-1` is served at
+The current browser build is `alpha-20261112-3`, activated as a static-only
+update later on November 12. Its source is
+`f7bb88188bf48f3753983984010678690a5cd1f9`; the exact manifest SHA256 is
+`6616ce58b07f2e79a9cd882593d2c69fdc4cfcacf2155aeb260c3146e010ecf4`.
+Firefox Play-to-login checks improved from about 70 to 17 seconds, with visible
+startup progress and no measured PSS increase. Cancel, retry and actual copied
+file hashes passed. The public service was not restarted; native client, map and
+accounts are unchanged. The prior browser release and assets remain available
+for rollback. See [startup results](../myworld/in-progress-work-plans/browser-startup-results.txt).
+
+The original browser alpha `alpha-20261112-1` was activated at
 `https://play.rscspoiledmilk.com/` from `/srv/spoiled-milk-browser/current`.
 Its fixed source is `01c6f901aebc5f6969623d27e19981acd0a606ea`; the direct game
 route is `wss://play.rscspoiledmilk.com:43505/`, subprotocol binary. The main

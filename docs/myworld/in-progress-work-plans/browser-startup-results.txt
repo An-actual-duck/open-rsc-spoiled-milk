@@ -1,0 +1,92 @@
+Public browser startup: measured and activated, November 12, 2026
+================================================================
+
+Current static browser build: alpha-20261112-3
+Source: f7bb88188bf48f3753983984010678690a5cd1f9
+Public manifest SHA256: 6616ce58b07f2e79a9cd882593d2c69fdc4cfcacf2155aeb260c3146e010ecf4
+Client JAR SHA256: 188e9b81ca94bc34747dac615d014453b49cf073b11abba3b5140308718f4cc3
+Public URL: https://play.rscspoiledmilk.com/
+
+Outcome
+-------
+The former pre-client delay was dominated by 2111 serial HTTP-backed RAM reads.
+The public transport now downloads exactly three bounded, hash-verified files,
+then copies from flat session-owned /str inputs to the original /files paths.
+Temporary files are unlinked after Java closes streams. Canonical data, map,
+client core classes, source/recipe/readiness checks and private transport remain
+unchanged. The outer page now displays actual startup stages, file/byte progress
+and Cancel rather than leaving a static Starting game message.
+
+Actual Firefox comparison on the owner's PC, same measurement procedure:
+cold: 70.236 -> 16.846 seconds; peak PSS 525.4 -> 504.7 MiB; RAM requests 2111 -> 3.
+warm: 70.227 -> 16.692 seconds; peak PSS 715.8 -> 515.3 MiB; RAM requests 2111 -> 3.
+
+Cold means a fresh isolated profile; warm is a fresh browser/Java VM reusing that
+cohort's persisted profile. Start is a real Play click; the endpoint is actual
+LOGIN plus at least 20 Java frames. These are Play-to-login observations, not
+account-authentication or first-world timings. Each cohort is one run, so network
+and runtime cache variation remain. CPU/browser startup memory is the sampled
+PSS sum of that owned Firefox parent and descendants, missingPids=0 in all four
+runs. It is not exact JS heap or GPU memory. No measured PSS increase occurred;
+the one-payload ledger alone does not establish browser memory usage.
+
+The 276938782 candidate RAM bytes are received and copied before the client
+starts; work was not shifted beyond LOGIN. Actual data requests fell to three in
+both runs. The functional Firefox test read only the three public /files game
+data blobs afterward and verified their lengths and SHA256 against the fresh
+configuration. All three temporary mounts were removed; adapter owned/mounted
+bytes were zero at completion. Actual Cancel during download, zero ownership
+after cancellation, same-page retry, progress screenshot and login passed. No AI
+account creation/authentication occurred.
+
+Compatibility and tests
+-----------------------
+The first isolated candidate alpha-20261112-2 exposed an actual SDK limitation:
+CheerpOS explicitly rejects directories under /str. That candidate was never
+made the public root. The focused fix uses flat filenames with strict requested
+basename/session validation; the real Firefox test then passed. Failed preview
+artifacts/evidence are preserved. CPU tests now model this SDK limitation.
+
+Full 15-command manager replay passed: all ten Java bootstrap sources compiled
+against the intact supplied client JAR; 56 Java staging, 89 JS adapter, 250
+progress/archive, 109 parent-lifecycle, 32 file-copy and 54 policy checks, public
+and private frontend, deferred Stop, display and world-readiness regressions.
+Peer review additionally passed 10 JS and 52 Java flat-path/cancellation checks.
+Fresh 1330-sector GPU, compact, 445-recipe RAM and package cooks used the same
+new source-bound JAR. All 2074 core class entries and all non-manifest entries
+are byte-exact with the previous built core JAR; the helpers are separately
+packaged. The canonical asset/output layout check passed.
+
+Activation
+----------
+The verified 1596-file static package was installed separately and tested under
+a same-origin preview. An atomic current-symlink switch activated alpha-20261112-3.
+The prior alpha-20261112-1 release and immutable assets remain for rollback and
+existing tabs. Refreshing the Play page selects the new build. Post-activation
+root, exact release manifest, asset bytes/MIME/cache headers and Range206 passed.
+Direct trusted WSS/binary configuration exchange remained byte-exact with native
+TCP. Public game service PID88730/NRestarts0 was unchanged. Server v0.3.18,
+desktop v0.3.16, map and accounts are unchanged; no game restart was initiated.
+
+The broad native-player release-check still reports the preserved parked browser
+experiment branches. No branch was discarded to silence it. This static update
+used the reviewed source-bound browser packager and verified immutable inventory;
+no native player release was built or published.
+
+Evidence
+--------
+output/diagnostics/browser-startup/baseline-coldwarm-1/
+output/diagnostics/browser-startup/candidate-coldwarm-2/
+output/diagnostics/browser-startup/functional-preview-fixed-1/
+output/reviews/browser-startup/ (manager replay, fresh build, parity, transfer,
+  activation, HTTP and wire receipts; helper scripts kept with the subject)
+output/releases/browser-alpha/alpha-20261112-3/package-receipt.json
+Oracle: /home/ubuntu/spoiled-milk/browser-alpha/verification/alpha-20261112-3/activation.json
+
+Follow-ups, not prerequisites
+----------------------------
+The ordinary 51 small files still use the existing Java transport. Persisted
+verified product reuse or runtime preload may offer further savings, but this
+change deliberately does not trust partial old /files outputs as a cache. Any
+such reuse needs its own source-bound integrity and cross-session lifetime
+review. Lower-bandwidth devices will still take longer than these PC timings.
