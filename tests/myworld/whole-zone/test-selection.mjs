@@ -1,3 +1,4 @@
+import {frozenBrowserModules} from '../browser-source-import.mjs';
 /** Independent exact-source selection proof with a real bounded bake. No GL. */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,7 +12,7 @@ const policyPath=path.join(root,'tools/browser-gameplay/web/browser-whole-zone-p
 const policy=fs.readFileSync(policyPath,'utf8'),source=fs.readFileSync(modulePath,'utf8');
 const url=s=>'data:text/javascript;base64,'+Buffer.from(s).toString('base64');
 const importLine="from './browser-whole-zone-policy.js'";assert.equal(source.split(importLine).length,2);
-const module=await import(url(source.replace(importLine,`from '${url(policy)}'`)));
+const frozen=frozenBrowserModules(path.dirname(modulePath)),module=await import(frozen.url('browser-whole-zone.js'));
 const raw=fs.readFileSync(cataloguePath),catalogue=JSON.parse(raw);let checks=0;const ok=(...a)=>{assert(...a);checks++;};
 const metadata=(epoch=1)=>Int32Array.from([1,1,0,0,0,2,13,2,127,127,127,...catalogue.settings,epoch,0,0]);
 const split=k=>[parseInt(k.slice(8),16)|0,parseInt(k.slice(0,8),16)|0];
@@ -40,5 +41,5 @@ assert.throws(()=>{const s=module.createWholeZoneSelection(catalogue,{}),v=metad
 assert.throws(()=>{const s=module.createWholeZoneSelection(catalogue,{}),v=metadata();v[17]=1;s.frame(v,Int32Array.from(rows));},/scope|contract|overworld/);checks++;
 // Loader must reject an incomplete pilot, even though selection can be isolated.
 assert.throws(()=>module.validateWholeZoneManifest(catalogue),/complete|Incomplete|scope|roster|identity mismatch/);checks++;
-const result={passed:true,checks,moduleSha256:sha(source),policySha256:sha(policy),catalogueSha256:sha(raw),catalogue:cataloguePath,sourceRoot:root,sourceCommit:execFileSync('git',['-C',root,'rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceStatus:execFileSync('git',['-C',root,'status','--short','--',modulePath,policyPath],{encoding:'utf8'}).trim(),scope:'CPU actual selection API on partial source-joined pilot; tests real pinned ID use/mutation/animated/empty/authority/epochs/shadow-zero masks. No Java upload skipping, full catalog readiness, geometry or GPU/performance proof.'};
+const result={passed:true,checks,dependencySha256:frozen.hashes,moduleSha256:sha(source),policySha256:sha(policy),catalogueSha256:sha(raw),catalogue:cataloguePath,sourceRoot:root,sourceCommit:execFileSync('git',['-C',root,'rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceStatus:execFileSync('git',['-C',root,'status','--short','--',modulePath,policyPath],{encoding:'utf8'}).trim(),scope:'CPU actual selection API on partial source-joined pilot; tests real pinned ID use/mutation/animated/empty/authority/epochs/shadow-zero masks. No Java upload skipping, full catalog readiness, geometry or GPU/performance proof.'};
 fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify(result,null,2));

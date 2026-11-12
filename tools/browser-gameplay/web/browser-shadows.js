@@ -1,3 +1,4 @@
+import {bindShadowGeometryAttributes} from './browser-geometry-layout.js';
 /** Geometry-depth backend for the unchanged production shadow projection/receiver shader.
  * Projection policy and shader text arrive from BrowserLightingData; no scene or sun math is duplicated. */
 export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShader,ownedFrame}) {
@@ -45,11 +46,11 @@ export function createBrowserShadows(gl,{program,stats,chunks,textures,adaptShad
     const replacement={texture,framebuffer,size,bytes};stats.shadowResourceBytes+=bytes;destroy(map);return replacement;
   }
   function vao(id,chunk){
-    let entry=ownedVAOs.get(id);if(entry&&entry.vbo===chunk.vbo&&entry.ibo===chunk.ibo)return entry.vao;
+    let entry=ownedVAOs.get(id);if(entry&&entry.vbo===chunk.vbo&&entry.ibo===chunk.ibo&&entry.geometryLayout===chunk.geometryLayout)return entry.vao;
     if(entry)gl.deleteVertexArray(entry.vao);
     const made=gl.createVertexArray();gl.bindVertexArray(made);gl.bindBuffer(gl.ARRAY_BUFFER,chunk.vbo);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,chunk.ibo);
-    gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,112,0);gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,2,gl.FLOAT,false,112,28);
-    ownedVAOs.set(id,{vao:made,vbo:chunk.vbo,ibo:chunk.ibo});return made;
+    bindShadowGeometryAttributes(gl,chunk.geometryLayout);
+    ownedVAOs.set(id,{vao:made,vbo:chunk.vbo,ibo:chunk.ibo,geometryLayout:chunk.geometryLayout});return made;
   }
   function drawMap(map,matrix,draws,staticOnly,excluded){
     gl.bindFramebuffer(gl.FRAMEBUFFER,map.framebuffer);gl.viewport(0,0,map.size,map.size);gl.clear(gl.DEPTH_BUFFER_BIT);

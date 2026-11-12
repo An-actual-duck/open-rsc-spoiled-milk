@@ -1,3 +1,4 @@
+import {geometryBytes} from './browser-geometry-layout.js';
 /** Metadata-only bounded scheduler. GPU/payload ownership stays in its callbacks.
  * One fetch/hash and one incremental upload job at a time; no unbounded promises.
  * Required IDs cannot be evicted. Optional IDs use spare capacity only.
@@ -12,7 +13,7 @@ export function createBoundedResidency({catalog,stats={},capacityBytes=256*1024*
   if(sliceBytes<112||sliceBytes%4||!Number.isSafeInteger(optionalReserveBytes)||optionalReserveBytes<0)throw new Error('Invalid bounded scheduler slice/reserve');
   const byId=new Map(catalog.chunks.map(c=>[c.id,c])),lru=new Map();
   let required=new Set(),queue=[],generation=0,key=null,loading=null,prepared=null,job=null,timer=null,disposed=false,suspended=true,failed=null,tick=0,activeTick=null,optionalKey=null,optionalDesired=new Set();
-  const bytes=c=>c.vertexCount*112+c.indexCount*4;
+  const bytes=geometryBytes;
   Object.assign(stats,{policy:'bounded',capacityBytes,maxChunks,maxPendingBytes,maxQueue,maxQueueBytes,sliceBytes,tickMilliseconds,maxTickSteps,
     generation:0,requiredChunks:0,requiredBytes:0,missingChunks:0,ready:false,queuedChunks:0,queuedBytes:0,
     pendingBytes:0,peakPendingBytes:0,evictions:0,cancellations:0,uploads:0,uploadSlices:0,peakGpuBytes:totalBytes(),

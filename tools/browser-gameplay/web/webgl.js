@@ -1,3 +1,4 @@
+import {GEOMETRY_ATTRIBUTES,LEGACY_GEOMETRY,COMPACT_GEOMETRY,geometryBounds,bindGeometryAttributes,validateCompactShaderAttributes} from './browser-geometry-layout.js';
 import {loadWholeZone,validateWholeZoneConfig,validateWholeZoneLive,validateWholeZoneTexture,createWholeZoneSelection,fetchWholeZoneBytes,digestWholeZoneBytes} from './browser-whole-zone.js';
 import {createBoundedResidency} from './browser-bounded-residency.js';
 import {createBoundedChunkUpload} from './browser-bounded-upload.js';
@@ -29,7 +30,7 @@ export function atlasTexelCenter(position,size,unit,extent) {
   return Math.fround(first+Math.fround(Math.fround(last-first)*Math.fround(unit)));
 }
 const FLOAT_UNIFORMS=['uBrightness','uContrast','uGamma','uSaturation','uToneRed','uToneGreen','uToneBlue','uToneBlend','uLightDirectionX','uLightDirectionY','uLightDirectionZ','uLightAmbient','uLightIntensity','uFogStart','uFogEnd','uFogRed','uFogGreen','uFogBlue','uTerrainReliefStrength','uObjectReliefStrength','uTerrainVariationStrength','uTerrainVariationTolerance','uTerrainVariationTargetRed','uTerrainVariationTargetGreen','uTerrainVariationTargetBlue'];
-const ATTRIBUTES=[['aPosition',3,0],['aMaterialColor',4,3],['aTexCoord',2,7],['aRawMaterialColor',3,15],['aBaseLegacyLight',1,14],['aNormal',3,18],['aModelKind',1,21],['aMaterialFamily',1,22],['aTerrainVariationMask',1,23],['aTerrainBlendColor',3,24],['aTerrainBlendStrength',1,27]];
+const ATTRIBUTES=GEOMETRY_ATTRIBUTES;
 const MAX_PIXELS=2097152;
 function typed(value, Type) { return value instanceof Type ? value : new Type(value); }
 /** Normalize alpha without touching RGB, including after legacy SRC_ALPHA blending. */
@@ -40,13 +41,15 @@ export function normalizeOpaqueCanvas(gl,known=null) {
 }
 export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   const capacity=wholeZoneCapacity(options);
+  const geometryFormat=options.geometryFormat||'legacy';if(!['legacy','compact'].includes(geometryFormat)||geometryFormat==='compact'&&!capacity.enabled)throw new Error('Compact geometry requires private wholezone admission');
   const wholeZoneConfig=capacity.enabled?validateWholeZoneConfig(options.wholeZoneCatalog):null;
+  if(geometryFormat==='compact'&&!wholeZoneConfig?.compact)throw new Error('Compact geometry derivative has not been staged');
   const gl=canvas.getContext('webgl2',{alpha:true,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});
   if(!gl) throw new Error('WebGL2 unavailable: browser GPU proof requires WebGL2');
   const stats={worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,javaBridgeReportedWorldFrames:0,heldWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas, <=8MiB marker overlay plus optional <=32MiB combined C/T/retained texture peak, <=160MiB shadow maps and <=8MiB masks and separately bounded <=2MiB sky peak; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Marker UI lacks partial-alpha reconstruction unless coverage mode is enabled','Browser/device coverage and broader gameplay parity pending'],frameSamples:[]};
   if(capacity.enabled){if(!capacity.bounded)stats.resourceBudgetScope=stats.resourceBudgetScope.replace('256MiB chunk/texture pixels','private3072MiB chunk/texture pixels');stats.resourceBudgetScope+='; whole-zone catalogue metadata/loader/Worker/driver/Java heap separate';stats.wholeZone={enabled:true,residencyPolicy:capacity.bounded?'bounded':'full',phase:'unloaded',ready:false,capacityBytes:capacity.gpuBytes,maxResidentChunks:capacity.maxChunks,pinnedChunks:0,pinnedBytes:0,currentLocalDraws:0};}
   const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0,lastWorld=0,lighting,lightingValues,sky,overlay;
-  let wholeZoneCatalog=null,wholeZoneSelection=null,zoneUploadId=null,zoneController=null;
+  let wholeZoneCatalog=null,wholeZoneSelection=null,zoneController=null;
   let boundedResidency=null,pendingZoneChunks=0,boundedPrefetch=null,boundedFrameGap=null;
   const pinnedChunks=new Set(),pinnedTextures=new Set(),pinnedMaterials=new Map();
   const colorVisible=new Uint8Array(capacity.enabled?1024:256),colorCullScratch=new Float64Array(18);let colorCullingSupported=false;
@@ -85,6 +88,26 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     for(let b=0;b<batches.length;b+=5)if(batches[b+1]<0||batches[b+2]<0||batches[b+1]+batches[b+2]>indices.length)throw new Error('Invalid browser material range');
     return {vertices,indices,batches,bounds:colorCullingSupported?buildChunkColorBounds(vertices):null};
   }
+  async function uploadWholeZoneChunk(c,planes){
+    alive();if(chunks.has(c.id)||chunks.size>=capacity.maxChunks)throw new Error('Duplicate whole zone chunk publication');
+    const {vertices,indices,batches:inputBatches,geometryLayout:layoutId}=planes,batches=new Int32Array(inputBatches);
+    for(const index of indices)if(index<0||index>=c.vertexCount)throw new Error('Invalid whole zone geometry index');
+    for(let b=0;b<batches.length;b+=5)if(batches[b+1]<0||batches[b+2]<0||batches[b+1]+batches[b+2]>indices.length)throw new Error('Invalid whole zone material range');
+    if(layoutId===COMPACT_GEOMETRY)for(let n=47;n<vertices.byteLength;n+=48)if(vertices[n]!==0)throw new Error('Compact reserved vertex byte');
+    const bounds=colorCullingSupported?geometryBounds(vertices,layoutId):null,bytes=vertices.byteLength+indices.byteLength;reserve(bytes,1);
+    const previousVAO=ownedFrame?.active?null:gl.getParameter(gl.VERTEX_ARRAY_BINDING),previousArray=ownedFrame?.active?null:gl.getParameter(gl.ARRAY_BUFFER_BINDING);
+    let vao,vbo,ibo,committed=false;
+    try{
+      vao=gl.createVertexArray();vbo=gl.createBuffer();ibo=gl.createBuffer();if(!vao||!vbo||!ibo)throw new Error('Whole zone GPU allocation failed');
+      gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.STATIC_DRAW);
+      bindGeometryAttributes(gl,program,layoutId);check();
+      chunks.set(c.id,{vao,vbo,ibo,batches,bounds,bytes,geometryLayout:layoutId,vertexBytes:vertices.byteLength,indexBytes:indices.byteLength});pinnedChunks.add(c.id);
+      stats.gpuBytes+=bytes;stats.uploadedBytes+=bytes;stats.uploadedChunks++;committed=true;
+    }finally{
+      if(!ownedFrame?.active){gl.bindVertexArray(previousVAO);gl.bindBuffer(gl.ARRAY_BUFFER,previousArray);}
+      if(!committed){if(vao)gl.deleteVertexArray(vao);if(vbo)gl.deleteBuffer(vbo);if(ibo)gl.deleteBuffer(ibo);}
+    }
+  }
   function startBoundedResidency(){
     const zoneStats=stats.wholeZone;stats.boundedResidency={};
     boundedPrefetch=createBoundedPrefetch(wholeZoneCatalog);boundedFrameGap=createBoundedFrameGap(stats.boundedResidency);
@@ -114,9 +137,9 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(wholeZoneCatalog){validateWholeZoneLive(wholeZoneCatalog,mapIdentity,settings,materials);return wholeZoneCatalog.chunks.length;}
       zoneController=new AbortController();
       try{
-        wholeZoneCatalog=await loadWholeZone({baseURL:new URL('./whole-zone/',import.meta.url),...wholeZoneConfig,mapIdentity,settings,materials,stats:stats.wholeZone,signal:zoneController.signal,bounded:capacity.bounded,
+        wholeZoneCatalog=await loadWholeZone({baseURL:new URL('./whole-zone/',import.meta.url),...wholeZoneConfig,mapIdentity,settings,materials,stats:stats.wholeZone,signal:zoneController.signal,bounded:capacity.bounded,geometryFormat,
           uploadTexture:async(t,pixels,material)=>{alive();pinnedMaterials.set(t.id,material);await natives.Java_orsc_BrowserWebGLBridge_uploadTexture(null,t.id,t.width,t.height,pixels,t.transparent);pinnedTextures.add(t.id);},
-          uploadChunk:async(c,planes)=>{alive();zoneUploadId=c.id;try{await natives.Java_orsc_BrowserWebGLBridge_uploadChunk(null,c.id,planes.vertices,planes.indices,planes.batches);pinnedChunks.add(c.id);}finally{zoneUploadId=null;}},
+          uploadChunk:uploadWholeZoneChunk,
           assertAlive:alive,progress:(loaded,total)=>report('Preparing full overworld: '+loaded+'/'+total+' GPU cells'),
           finishGpu:()=>{alive();const start=performance.now();gl.finish();check();stats.wholeZone.startupGpuWaitMilliseconds=performance.now()-start;stats.wholeZone.verifiedGpuResidentBytes=stats.gpuBytes;}
         });
@@ -132,6 +155,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     async Java_orsc_BrowserWebGLBridge_initialize(lib,vertex,fragment){
       alive();if(program)throw new Error('WebGL backend initialized twice');
       program=link(adaptResidentShader(vertex,false),adaptResidentShader(fragment,true));
+      if(geometryFormat==='compact')validateCompactShaderAttributes(gl,program);
       const supported=options.colorFrustumCulling!==false&&(await hasResidentPositionContract(vertex));
       alive(); // Stop/context loss may happen while the exact shader digest is pending.
       colorCullingSupported=supported;
@@ -180,7 +204,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       catch(error){stats.backendFailed=true;throw error;}
     },
     async Java_orsc_BrowserWebGLBridge_uploadChunk(lib,id,vertexInput,indexInput,batchInput){
-      alive();if(capacity.enabled&&id>=1000000&&zoneUploadId!==id)throw new Error('Pinned zone IDs are immutable loader-owned resources');if(!capacity.bounded&&chunks.size>=capacity.maxChunks||chunks.has(id))throw new Error('Browser chunk cache limit/identity violation');
+      alive();if(capacity.enabled&&id>=1000000)throw new Error('Pinned zone IDs are immutable loader-owned resources');if(!capacity.bounded&&chunks.size>=capacity.maxChunks||chunks.has(id))throw new Error('Browser chunk cache limit/identity violation');
       const {vertices,indices,batches,bounds}=chunkData(vertexInput,indexInput,batchInput);
       const bytes=vertices.byteLength+indices.byteLength;reserve(bytes,1);
       const previousVAO=ownedFrame?.active?null:gl.getParameter(gl.VERTEX_ARRAY_BINDING),previousArray=ownedFrame?.active?null:gl.getParameter(gl.ARRAY_BUFFER_BINDING);
