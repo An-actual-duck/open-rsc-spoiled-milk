@@ -1,0 +1,70 @@
+Browser layer-return crash repair — November 12, 2026
+
+Problem and change
+------------------
+Returning down the ladder near global (257, 539, level 1) to level 0
+failed with: Whole-RAM carrier basis must align to48tiles: offset=2304,832.
+The upper-level carrier is valid for ordinary layered terrain; it is not a
+valid whole-overworld RAM carrier. No rounding or relaxed alignment is needed.
+
+World.setLayeredTerrainScope calls its retained-mesh transition before committing
+the incoming terrain and carrier offsets. That transition passed the incoming
+level-0 snapshot to forWorld, whose provider then read the still-current upper
+carrier from World. It combined two different scopes and threw.
+
+The single production change uses the existing forCaptured API at this precommit
+decision, pairing incoming terrain with incoming offsets and roof option. The
+same API already owns captured-input prebuild and halo admission. It validates
+source identity, page roster, protocol, tile size, roof option and alignment.
+This decision only clears retained meshes. It neither publishes a prepared frame
+nor performs activation. The later actual loadSections/compose forWorld checks
+are unchanged, including current native/browser ownership, patches and settings.
+The World setter's commit order, strict WholeRamBasis constructor, asynchronous
+publication guards, and all native fallback paths remain unchanged.
+
+Evidence and repeatable CPU test
+-------------------------------
+Implementation checkpoint: 0eabba1d81809250e41eebc20852427dde6ab6f8.
+Full clean source JAR:
+  /home/justin/Core-Framework-ai-3/output/builds/browser-layer-return/fix-0eabba/client.jar
+  SHA-256 938b461ca779e1d5b327b148e9814ace7fd2479e6427fd37f3b0e238ba6495f1
+receipt.json, source/class/asset manifests and full Ant log are alongside it.
+All 990 classes and 3,194 own assets were built from one clean commit; no class
+overlay, old-JAR rebinding, browser, GPU or server launch occurred.
+
+Run from the worker checkout (choose a new output run name):
+
+  nice -n 10 python3 tests/myworld/whole-ram/verify-layer-return.py \
+    --jar output/builds/browser-layer-return/fix-0eabba/client.jar \
+    --receipt output/builds/browser-layer-return/fix-0eabba/receipt.json \
+    --original-jar /home/justin/Core-Framework/output/builds/browser-handoff-compact/templates-1/client.jar \
+    --cache Client_Base/Cache \
+    --out output/tests/browser-layer-return/repeat-1
+
+The runner verifies JAR/receipt binding and reproduces the exact original 9e903
+failure through the actual public World setter and production provider methods.
+The fixed ON/OFF cases exercise level 0 -> 1 -> 0, -1 -> 0, 10 -> 0,
+unaligned signed-layer carriers, absent-provider fallback, genuine strict basis
+refusal, wrong-source refusal before incoming carrier/source commit, and actual
+background native halo preparation followed by stale completion rejection.
+The active loadSections path still rejects an editor patch before reset or
+publication. Active ownership refusal is also checked independently of captured
+admission. Original and failed development runs are preserved, not overwritten.
+
+Preserved final runner evidence:
+  output/tests/browser-layer-return/verified-3/result.json
+The existing query-light-consumer and flat-light-reader source gates pass with
+their original expectations; no guard hashes were refreshed.
+workspace-layout.py check reports only the 40 inherited unclassified legacy
+output-root entries. New outputs use the declared tests/builds/diagnostics groups.
+
+Limits and manager acceptance
+-----------------------------
+This focused fixture uses synthetic void pages and explicitly injected admission
+inputs in the production provider. It is not proof of full cooked-data constructor
+validation, readiness, copied geometry, prepared activation, visuals or FPS. Its
+purpose is to reproduce the exact scope-order bug and check the corrected boundary
+without a GPU or recooking canonical data. The manager must build/cook matching
+full-source data and repeat the actual upstairs/downstairs route in Firefox before
+calling the browser alpha blocker resolved. No public update is authorized here.
+F6 diagnostics is a separate, still-unproven runtime issue and was not changed.
