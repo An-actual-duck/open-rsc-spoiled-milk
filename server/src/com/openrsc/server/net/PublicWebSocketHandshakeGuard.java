@@ -10,9 +10,12 @@ public final class PublicWebSocketHandshakeGuard extends ChannelInboundHandlerAd
     private ChannelHandlerContext context;
     private ScheduledFuture<?> timeout;
     private boolean complete;
+    private final long timeoutMillis;
+    public PublicWebSocketHandshakeGuard() { this(10_000); }
+    PublicWebSocketHandshakeGuard(long timeoutMillis) { this.timeoutMillis=timeoutMillis; }
     @Override public void handlerAdded(ChannelHandlerContext ctx) { context = ctx; }
     @Override public void channelActive(ChannelHandlerContext ctx) {
-        timeout = ctx.executor().schedule(() -> ctx.close(), 10, TimeUnit.SECONDS);
+        timeout = ctx.executor().schedule(() -> ctx.close(), timeoutMillis, TimeUnit.MILLISECONDS);
         // RSCConnectionHandler registration/IP admission still happens normally.
         // Its session-ID timer must not run before TLS + WebSocket upgrade.
     }

@@ -2,6 +2,7 @@ package com.openrsc.server.net;
 
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -67,7 +68,9 @@ public final class ReloadingPublicWebSocketTls {
                 signature.initVerify(cert.getPublicKey());signature.update(challenge);
                 if(!signature.verify(signed))throw new IllegalArgumentException("Public WSS certificate/key mismatch");
             } finally { Arrays.fill(der,(byte)0); }
-            SslContext candidate=SslContextBuilder.forServer(new ByteArrayInputStream(certBytes),new ByteArrayInputStream(keyBytes)).build();
+            // Explicit JDK ownership: old contexts remain owned by existing channels,
+            // then are garbage collected; renewal has no native refcount to orphan.
+            SslContext candidate=SslContextBuilder.forServer(new ByteArrayInputStream(certBytes),new ByteArrayInputStream(keyBytes)).sslProvider(SslProvider.JDK).build();
             current=candidate;fingerprint=hash;nextCheck=System.nanoTime()+30_000_000_000L;
             return current;
         } finally { Arrays.fill(keyBytes,(byte)0); }

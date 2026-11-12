@@ -1030,7 +1030,7 @@ public class Server implements Runnable {
 					publicWebSocketTls = new com.openrsc.server.net.ReloadingPublicWebSocketTls(
 						processNetworkConfiguration.getSslServerCertPath(), processNetworkConfiguration.getSslServerKeyPath());
 				}
-				if (processNetworkConfiguration.isWebsocketsEnabled()) {
+				if (processNetworkConfiguration.isWebsocketsEnabled() && publicWebSocketTls == null) {
 					if (!processNetworkConfiguration.getSslServerCertPath().trim().isEmpty() && !processNetworkConfiguration.getSslServerKeyPath().trim().isEmpty()) {
 						LOGGER.info("Loading Websockets SSL cert...");
 						try {
