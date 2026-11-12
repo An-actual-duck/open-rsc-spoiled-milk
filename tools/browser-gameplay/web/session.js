@@ -12,7 +12,7 @@ let frame, startup;
 const meter=document.querySelector('#startup-progress'),detail=document.querySelector('#startup-detail');
 function hideProgress(){meter.hidden=true;detail.hidden=true;}
 function renderProgress(value){
-  status.textContent=value.label;detail.textContent=value.detail;detail.hidden=!value.detail;
+  if(status.textContent!==value.label)status.textContent=value.label;detail.textContent=value.detail;detail.hidden=!value.detail;
   meter.hidden=false;meter.setAttribute('aria-label',value.label);
   if(value.value===null)meter.removeAttribute('value');
   else {meter.max=value.max;meter.value=value.value;}

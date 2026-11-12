@@ -7,7 +7,7 @@ const child=createStartupProgress({now:()=>clock,emit:p=>sent.push(p)}),rendered
 const parent=createStartupReceiver({now:()=>clock,render:p=>rendered.push(p)});
 eq(child.update('opening'),true);eq(parent.accept(sent.at(-1)),true);eq(rendered.at(-1).value,null);
 clock=200;eq(child.update('data',{bytes:50,totalBytes:100,totalFiles:3}),true);eq(parent.accept(sent.at(-1)),true);
-clock=250;eq(child.update('data',{writtenBytes:25,workMillis:42}),true);eq(sent.at(-1).bytes,50);eq(parent.accept(sent.at(-1)),true);assert.match(rendered.at(-1).detail,/loaded.*prepared/);checks++;
+clock=250;eq(child.update('data',{writtenBytes:25,workMillis:42}),true);eq(sent.at(-1).bytes,50);eq(parent.accept(sent.at(-1)),true);assert.match(rendered.at(-1).detail,/loaded.*prepared/);checks++;eq(rendered.at(-1).value,25,'data meter tracks actual prepared bytes, not earlier finished download');
 for(const changes of [{bytes:49},{writtenBytes:24},{totalBytes:101},{files:4},{bytes:101},{bytes:NaN},{workMillis:Infinity}])eq(child.update('data',changes),false);
 eq(child.update('assets'),false);eq(parent.accept(sent.at(-1)),false,'duplicate rejected');
 for(const value of [null,{}, {...sent.at(-1),sequence:4,elapsedMillis:-1},{...sent.at(-1),sequence:4,writtenBytes:101},{...sent.at(-1),sequence:4,stage:'untrusted label'}])eq(parent.accept(value),false);

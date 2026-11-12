@@ -1,0 +1,82 @@
+Browser startup feedback: worker implementation and CPU proof
+=============================================================
+
+Scope
+-----
+The outer Play card observes startup from the actual click until Java reports
+LOGIN or GAME. It starts with Opening game, then uses fixed plain stage labels
+for archive checks, graphics/runtime setup, game file/data preparation and opening
+sign-in. Known byte/file totals get stage-local progress. Unknown work remains
+indeterminate. No overall percentage, ETA or world-readiness inference is made.
+The actual game still owns its initial world cover and normal region travel.
+
+The implementation is split: this topic owns the parent card, startup collector,
+archive observation and testable Java copy helper; the companion bulk-staging topic
+owns browser.js/BrowserBootstrap wiring. This topic alone does not emit all stages.
+The manager must collect both before browser acceptance/public deployment.
+
+Observations and ownership
+--------------------------
+Child reports use a small fixed numeric schema, ordered stage IDs, monotonic
+sequence/clock/counters and fixed known totals within each phase. The parent
+accepts only the currently owned same-origin iframe. Cancel, retry, fatal recovery
+and real LOGIN/GAME close the receiver; old/queued callbacks cannot reopen it or
+change the next session. Focus/display/Stop/input ownership remains unchanged.
+
+Child and parent each keep at most128 detailed observations plus fixed per-stage
+summaries. Child elapsed time starts after its module graph has loaded; parent
+elapsed time starts at Play and includes that gap. Parent finish records Play to
+real LOGIN/GAME. Neither is automatically Play-to-first-ready-world. Stage boundaries
+are observation timestamps, not CPU-only measurements. No diagnostics are uploaded.
+
+Archive bytes mean actually received executable bytes, followed by the original
+exact size/SHA256 checks. Files count only after each archive verifies. Public
+fetch credentials/cache/redirect/origin policy is unchanged. Stream reads reject
+an oversized response before copying beyond the expected bound; arrayBuffer-only
+responses remain supported for fixtures. Hash failure remains startup failure.
+
+BrowserBootstrapFiles preserves ordered stream copies and buffer sizes supplied
+by its caller. Its cumulative byte counter advances only after output.write
+succeeds; file completion follows resource closure. Callbacks occur initially,
+at8MiB/500ms bounds, and at file completion. These are bytes written, not network
+download or decoded/retained memory claims. Reporting failures cannot replace I/O
+success/failure. Caller retains its exact RAM roster and public personal-path
+admission. An optional separate Cancellation callback is polled before opening
+each file, after each1MiB of successful writes, at EOF and after closure. A true
+result throws InterruptedIOException through the stream-closing scope. The old
+signature delegates with no cancellation. Reporting remains passive; this explicit
+contract owns cancellation. A unified data stage supports received bytes and writtenBytes separately,
+so bounded one-file download/copy/release can interleave honestly. Its meter uses
+prepared bytes while the detail separately states loaded/prepared counts; receiving
+the last network byte does not make the preparation bar complete.
+
+CPU checks
+----------
+node tests/myworld/test-browser-startup-progress.mjs
+ 250 checks: monotonic/closed/bounded collector, phase summaries, distinct bytes,
+ exact archive stream/fallback integrity, overflow/cancellation and reporting errors.
+node --experimental-vm-modules tests/myworld/test-browser-session-stop-receipt.mjs
+ 109 actual-parent queued-message checks incl progress/cancel/retry/foreign owner,
+ login/travel/fatal and late-callback boundaries.
+python3 tests/myworld/test-browser-startup-files.py
+ 32 actual-filesystem copy/write/error/roster/buffer/observer checks; source SHA
+ and commands preserved in categorized output/tests/browser-startup-feedback.
+node tests/myworld/browser-public-alpha/policy.mjs
+ 54 existing public/private admission checks pass unchanged.
+node --experimental-vm-modules tests/myworld/test-browser-webgl-frontend.mjs --public-alpha
+ Existing actual public frontend VM admission passes before companion wiring.
+node tests/myworld/test-browser-display.mjs
+node tests/myworld/test-browser-world-ready.mjs
+ Existing display/input/readiness tests pass. No browser/GPU/listener was launched.
+
+workspace-layout.py check still reports the pre-existing asset-root sprites entry
+and legacy uncategorized output paths (exit1). This topic writes only categorized
+new test outputs; it does not move/delete prior work to clear those findings.
+
+Acceptance still required
+-------------------------
+The manager must verify the combined fresh bootstrap build/package, actual Firefox
+cold/warm startup, visible progress, cancel/restart, network failures and real
+LOGIN/world readiness. No measured startup/FPS/memory win is claimed by this UI
+change. The companion bulk candidate has separate authority/lifecycle review and
+full Play-to-login/world timing requirements. Public server operation is untouched.
