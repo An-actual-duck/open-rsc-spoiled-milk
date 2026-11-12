@@ -1,0 +1,271 @@
+Browser handoff and compact geometry: combined private results
+==============================================================
+
+Status
+------
+Phase 1 is complete: compact geometry is accepted for private testing, with measured
+memory savings and hardware parity. The legacy baseline clone cache passed
+correctness checks but produced ZERO warm runtime reuses and is NOT ADOPTED as a
+loading optimization. No CPU loading win was established. A new shared clone-template
+candidate is in progress and requires its own review, fresh artifact and runtime
+acceptance; it is not included in these results.
+No public server, public client default or player map was changed by this work.
+
+What changed
+------------
+1. Compact geometry gives the private catalogue a 48-byte vertex layout instead of
+   the 112-byte reference. Positions, UVs and normals remain float32; bounded
+   encodings preserve the represented attribute values. Main and shadow render
+   paths accept mixed local legacy and compact catalogue geometry. Independent
+   format controls use the same immutable stage and catalogue source bindings.
+2. Baseline clone reuse targets warm CPU handoff work. It keeps exact proven static
+   game-object clone inputs, retires scene entries in one stable batch, then
+   rebuilds the original ordered baseline and collision flags. Walls/animated
+   models remain fresh. Original light setup, current terrain-height sampling,
+   translation and normal reconstruction still run. Exact proofs have bounded
+   entries/bytes and fail back to literal construction. This is not a normals
+   optimization or a bypass of source authority, readiness or input gates.
+3. Bounded handoff diagnostics expose existing Java context/region/baseline phase
+   hooks and sampled bridge/Worker receipt correlation. Java and browser clocks
+   remain separate. Receipt-time correlation is not an exact Worker/GPU event
+   timestamp. See browser-region-handoff-trace.txt and browser-baseline-reuse.txt.
+
+Why these tracks
+----------------
+The frozen ac790e96 browser route had six warm bridge-silent intervals of
+282/169/208/174/213/166ms. Main CPU was91.6–99% of one core while Worker use was
+small, with no new GPU chunks in the warm route. Existing loadNextRegion console
+summaries measured 17–25 ms, so its prepared recipe activation did not explain the
+entire gap. Exact frozen generated bodies mapped normals, clone merge/vertex
+hashing and repeated Scene removal work; the proof is scoped to that frozen
+profile rather than reusing function IDs from an older JIT generation.
+
+Compact geometry addresses allocation/transfer headroom rather than assuming GPU
+allocation explains that CPU pause. The baseline candidate addresses a subset of
+pre-bridge CPU work. Both require separate acceptance evidence.
+
+Integrated artifact identity
+----------------------------
+Maintained source: c0a3cb89ea8dcbd768916fe9f743f1b8799f3191.
+Clean full Ant build: 986 classes, 3194 packaged own assets, no class transplant.
+  JAR SHA256
+    69493d2c77a40c4b91cd39f2c0fc7c17d9dd508887f6becc76eb6363feb45052
+  Source manifest SHA256
+    9baaac07e31f563addcd2f2f0fc1c82b58e69e2b664db18e3c5510c3e7518a33
+  Class manifest SHA256
+    959c9fdc926dc91c84fd2accdeb7b20467bd0a0dfb29af32df3b17d6497f8cf1
+  Canonical GPU catalogue SHA256
+    eb984478ad45debc0289d1b4654abc4ef88cd3ea8cee4b2715cc96e2090a6d3b
+  Compact derivative catalogue SHA256
+    bc103b84b33b1725df73c037cb17f1a384d26f0d301e1ef2ded47570763a6278
+  Prepared RAM manifest SHA256
+    afb7566eb435a8b8bd2a3627ee27db22aa9d1ee93291e887ddab64b5fcafd678
+  Prepared RAM payload SHA256
+    e0d878ce4ca0bedcef04d6df88447e2933ab62521d2850f398b8a53799f2c52a
+
+The GPU catalogue, compact derivative and RAM recipes were all cooked afresh for
+this JAR and original package/assets/settings. Old cooks were not rebound to a
+new JAR. Canonical settings are [0,0,1,0]. The catalogue contains 1400 geometry
+chunks; its complete 1474-resource delivery also includes texture/metadata files. Geometry-chunk and delivery-file counts are
+different scopes.
+
+Authoritative receipt locations under the manager checkout:
+  output/builds/browser-handoff-compact/integrated-1/receipt.json
+  output/builds/browser-whole-zone-bake/handoff-integrated-1/bake-receipt.json
+  output/builds/browser-compact-geometry/handoff-integrated-1/compact-receipt.json
+  output/builds/browser-whole-ram-bake/handoff-integrated-1-ram2/ram-bake-receipt.json
+  output/tests/browser-gameplay-spike/handoff-integrated-1/whole-ram-preparation.json
+Preparation summary:
+  output/diagnostics/browser-handoff-compact/integrated-preparation-result-2.json
+
+Preserved offline failure: the first RAM cooker exhausted its 512 MiB heap. The
+established 1536 MiB cooker limit then completed the 445-recipe cook in 17.42 s. This
+is build-tool heap, not a browser memory setting or a reason to increase runtime
+budgets. The failed run remains recorded in prepare-integrated-1/receipt.json.
+
+Geometry memory and byte preservation
+-------------------------------------
+Complete derivative conversion checked 19,001,439 vertices and 437,033,097 decoded
+float32 attribute values across all 1400 chunks. Full catalogue geometry ledger:
+  Reference112-byte vertices:2,204,166,924 bytes.
+  Compact48-byte vertices:     988,074,828 bytes.
+  Reduction: 55.1724% including unchanged index/other geometry payloads.
+These are the full geometry catalogue's potential backend bytes, not actual
+resident VRAM. The private renderer still admits only bounded current coverage.
+
+In the older frozen-JAR paired walking scene, both formats ended with 224 pinned
+chunks, 110 pinned draws and 15 local draws. Pinned geometry allocation decreased
+337,019,556 ->151,077,732 bytes, also 55.1724%. The broader reported backend ledger
+was393,061,436 ->207,119,612 bytes (374.85 -> 197.52 MiB); this includes remaining
+local resources, so its percentage differs from the pinned subset. Neither ledger
+is total driver VRAM or browser system RAM. Do not market it as a total memory
+reduction across every scene or device.
+
+Fresh RAM delivery contains 46,101,734 raw source bytes plus 230,205,484 prepared
+payload bytes; retained prepared primitive bytes are 229,888,400. It includes 445
+recipes, 1330 query cells and 9215 model templates, with hidden roof preparation.
+These payload/primitive counts exclude Java object overhead, application caches,
+textures, browser processes and GPU memory. They are not a browser PSS reading.
+
+Real compact rendering proof
+-----------------------------
+Firefox WebGL2 on the owner's Radeon R9 200 Series or similar ran production main
+and shadow shaders in a separate hardware oracle. It checked transform-feedback
+inputs and exact color/depth output for flat, textured, cutout, terrain-relief,
+mixed local/catalogue and opaque/alpha-cutout shadow cases. Two actual context
+generations passed 2,114,816 comparisons each, with no recorded errors. Each
+cancellation case rejected stale publication and returned its ledger to zero.
+Actual context recreation was exercised; this was not just a mocked context-lost
+callback. Device extension availability exposed no disjoint timer query, so there
+is no isolated hardware GPU-millisecond claim.
+
+The oracle is bound to shader/driver source9ea15a0829e9d308957cad9f0acbd136679919ab
+and the frozen ac790e96 dependency JAR, not the later integrated gameplay JAR. Its
+production shader/layout bindings are preserved in the proof. The integrated
+candidate was cooked separately as listed above. Do not silently present the old
+hardware oracle as a complete new-gameplay frame pixel comparison.
+Evidence:
+  output/diagnostics/browser-handoff-compact/compact-hardware-2/proof.json
+  output/diagnostics/browser-handoff-compact/compact-gpu-capabilities-1/capabilities.json
+
+Earlier real-game format comparison
+-----------------------------------
+Same frozen ac790e96 Java/assets and frontend; only geometryformat changed. Fixed
+busy pose at 960x540, 32 fixture NPCs, coverage ready, 20 seconds stationary:
+  Reference: 1193 fresh submissions / 20.092 s = 59.38 FPS; zero held.
+  Compact:   1190 fresh submissions / 20.070 s = 59.29 FPS; zero held.
+Both stayed focused/visible with matching pose and source epoch. Actual actor/draw
+counts vary slightly between runs; this supports stability, not a strict identical
+scene speedup assertion. Fresh submissions/Worker completion are not scanout or a
+per-frame GPU fence. The accepted scope is this private scene on the owner's PC.
+
+Single-pass route cold maximum completed-world interval: 635 ms reference, 569 ms
+compact. Mean of five warm per-crossing maxima: 295.4 ms reference, 304.6 ms compact.
+This does not establish a CPU loading improvement from compact geometry. Route
+elapsed time includes polling, clicks and settling and must not become an FPS
+measure. Overlapping interval rings must not be concatenated as independent
+percentile samples. Compact's clear win is the geometry byte reduction.
+Evidence: output/diagnostics/browser-handoff-compact/compact-comparison-1.json.
+
+Integrated baseline-reuse acceptance
+------------------------------------
+The first candidate is correctness-passed but NOT ADOPTED as a loading optimization.
+Stationary fresh submissions, accepted same-pose/epoch, focused and visible:
+  Busy 20 s: OFF 59.26885 FPS; ON 59.5232 FPS.
+  Quiet 16 s: OFF 58.55968 FPS; ON 59.7765 FPS.
+  All four runs: zero held frames.
+These are single passes, not proof of an FPS gain. The earlier OFF single cold
+route recorded per-leg maximum intervals [40,521,290,355,255,297,307]ms and 53 new
+catalogue uploads. That is descriptive startup evidence, not a strict pair with a
+later revised driver.
+
+The initial real ON cold route recorded [40,546,343,290,276,269,305]ms. Its runtime
+counters showed requested/selected=true, 3 admitted baseline replays, 3030 eligible
+static clones and ZERO reused instances. It retained 86 template proofs (about
+2.61 MB) with a conservative workspace peak of about 4.71 MB. Thus the exercised
+runtime did not demonstrate the offline reuse reduction, and these cold results
+do not establish a loading improvement. Admission or template retention alone is
+not evidence that a cache avoids actual work.
+
+The first candidate targeted legacy baseline reconstruction. The current-profile
+investigation moves to shared clone factories serving legacy deltas, baseline and
+canonical/static-presentation construction, with owner-split live counters. The
+next candidate is in progress; it has no accepted loading result in this report. Generated RSModel function identification
+alone did not prove which high-level caller should have been optimized. Do not
+present offline reuse counts as an exercised warm runtime optimization.
+
+Fair final warm per-crossing maximum completed-world intervals:
+  OFFwarm3: [348,337,267,272,273,268]ms; mean 294.1667 ms.
+  ONwarm:  [338,265,270,322,273,273]ms; mean 290.1667 ms.
+Actual warm reuses remained ZERO. Legacy-reconcile trace events occurred only in
+initial/hard setup contexts 1 and 7, not the warm contexts 8–13. The small difference
+between single-pass means cannot validate a CPU optimization that did not run on
+the measured warm path. Offline reuse counts only prove the intended path's
+correctness and work reduction when that path is actually exercised.
+
+The final fair warm driver waits for three 100 ms stable-camera/input-clear samples
+before the unchanged original 80 ms pointer click and requires three stable coverage
+observations at route end. No engine method override, click retry or forced region
+activation is used. Both final OFF and ON controls used that same driver.
+Route elapsed time includes those waits and cannot establish FPS or loading speed.
+
+Preserved exclusions: an earlier warm route reached its last authority context but
+its immediate final observer assertion raced Worker coverage ACK; passive follow-up
+coverage was ready with no runtime error. A separate route missed a calibrated
+minimap click while the camera was interpolating and remained at the old authority
+context. These incomplete driver attempts are excluded rather than treated as new
+production bugs or quietly retried into a successful sample.
+
+Record source/epoch/ready/input/Worker receipts and bounded capacity invariants,
+rather than treating low reported bridge time as a complete transition measurement.
+Do not declare a loading win from offline clone counts, the old format comparison,
+or a loading screen remaining hidden.
+
+Integrated runtime evidence (under output/diagnostics/browser-handoff-compact/):
+  reuse-off-1-warm3/fresh-intervals.json and finish.json
+  reuse-on-1-warm/fresh-intervals.json and finish.json
+  reuse-off-1-busy/result.json and reuse-on-1-busy/result.json
+  reuse-off-1-quiet3/result.json and reuse-on-1-quiet/result.json
+  reuse-off-1-cold/fresh-intervals.json and reuse-on-1-cold/finish.json
+Excluded attempts remain in reuse-off-1-warm and reuse-off-1-warm2. Disjoint fresh
+interval extraction reports no sample holes in the accepted warm controls.
+
+Current source-bound profile and next hypothesis
+------------------------------------------------
+Current integrated source profile:
+  output/diagnostics/browser-handoff-compact/integrated-on-travel-profile-1
+  output/diagnostics/browser-handoff-compact/integrated-on-travel-analysis-1
+Exact generated body mapping, newly verified for JAR 69493d2c:
+  1271/J_00a957f0: BrowserWebGLBridge.updateChunk, same-size replacement branch.
+    min(triangleCount,indexCount/3)*3; packMaterials/packVertices/submitChunk(true);
+    then cached offsets, settings/materials/signature/revision/packingSequence.
+  1657/J_009c7490: PacketHandler.showSceneBaseline parser, including version 6
+    sequence checks and version 8 22-byte presentation header/12-vs8-byte records.
+  1470/J_01cffcd8: RSModel.ObjectChunkMeshBuilder.build, primitive/object array
+    publication, output signature and ChunkMesh construction.
+  1048/J_00882e58: RSModel.computeNormals, verified by sentinel 14 and literal
+    cross-product normalization/arithmetic. No earlier function IDs were reused.
+
+The first operational bridge-silent window is 366 ms, main CPU 95.74% of one core.
+Inclusive sampled CPU shares are 22.74% updateChunk, 18.04% baseline parser, 18.07%
+mesh publication and 10.88% normals; major GC also appears 19.74% as deepest JS.
+These overlap and must not be summed. One window's GC share is not a whole-route
+allocation or pause percentile.
+
+This operational interval is not a pure named 'pre-bridge' method. It includes
+updateChunk work, and CheerpJ continuation/scheduler stacks can interleave logical
+Java work: some physical JS ancestry places updateChunk beneath computeNormals,
+which is not a direct Java caller chain. Exact bodies establish that work is
+active; arbitrary outer JS frames do not alone identify the Java owner. Named
+Java owner-path counters/timings and current source semantics are needed before
+changing the next cache. Static-presentation/canonical model construction is a
+lead, and the existing canonical-match branch can still rebuild after ownership
+changes. No hash-only reuse or loading-screen workaround is authorized by that
+observation. The shared clone-template follow-up is in progress and requires
+separate measured acceptance.
+
+Correctness and remaining limits
+--------------------------------
+The integrated full JAR passed independent actual PacketHandler adversarial replay:
+39 transitions per OFF/ON/ordinary mode, 3,707 assertions each; all 986 class bytes
+and changed production-source SHA values matched the build receipt. Geometry,
+collision, Scene order/metadata, picking and software output traces were identical:
+  4bbb8f11fd4183a295b1a65b4fb4a158840cf899d7f29ccbca5f17d656265841
+The independent fixture poisoned 21 derived arrays and 12 transform/bounds scalars,
+confirmed that the original pipeline rebuilt them, and asserted actual ON instance
+reuse. Material/picking mutations refused reuse. Broader feature fixtures retain
+21 transitions/six policy combinations and 6,362 checks per configuration.
+  output/diagnostics/browser-handoff-compact/integrated-independent-review-1/result.json
+
+Manager review 9a4f6eba9 proved that removing the two delimited helper additions
+recovers the original enclosing source bytes and that no guarded light reader was
+added. The closed query-light and flat-light source guards were then refreshed and
+pass on c0a3cb89e. This is an exact reviewed extension, not a disabled hash check.
+
+Those are CPU/offline stored-baseline tests, not incoming network or all gameplay
+scenarios. Signed negative/upper levels and other-world cases retain literal
+fallback. No general combat 60 FPS, weak-device 60 FPS, zero region stutter, total
+VRAM/PSS reduction, web deployment or public release readiness claim follows from
+this evidence. Phase 1 accepts compact geometry and rejects the legacy cache as a
+measured loading improvement. The broader browser optimization task continues with
+the shared clone-template candidate.
