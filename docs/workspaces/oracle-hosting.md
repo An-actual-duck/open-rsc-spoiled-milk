@@ -12,12 +12,12 @@ public worlds against diverging player databases.
 | Game port | TCP `43605` |
 | VM | `VM.Standard.A1.Flex`, 1 OCPU, 6 GB RAM, ARM64 |
 | OS / Java | Ubuntu 26.04.1 LTS / OpenJDK 17 |
-| Server release tag | `v0.3.16` (server gameplay unchanged from v0.3.15) |
+| Server release tag | `v0.3.17` (server-only Draynor basement ladder fix) |
 | Published client release | `v0.3.16` (steady underground lighting) |
-| Game source | `73752f45d089ebc71ba24d832f85a06590de661c` |
+| Game source | `4b0c2912a3c1d30db5e6cdc57d8b93ee24168c27` |
 | Client protocol | `10059` |
 | Public service | `spoiled-milk.service`, enabled at boot |
-| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.16` |
+| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.17` |
 | Guarded live path | `/tmp/spoiled-milk-live-main` |
 | Git object repository | `/home/ubuntu/spoiled-milk/repository.git` |
 | External state | `/home/ubuntu/.local/share/spoiled-milk/live` |
@@ -28,7 +28,7 @@ The service requires that mount. The source is a clean detached checkout of the
 exact published tag; it is never a development workspace.
 
 The service calls `scripts/run-hosted-server.sh` with
-`MYWORLD_HOSTED_RELEASE_TAG=v0.3.16`. Existing exact-tag, clean-source, installed
+`MYWORLD_HOSTED_RELEASE_TAG=v0.3.17`. Existing exact-tag, clean-source, installed
 map, generator, external-database, and occupied-port guards remain active.
 `JAVA_TOOL_OPTIONS` caps the heap at 3 GiB. The unit uses `Restart=on-failure`;
 a successful in-game shutdown exits normally and stays stopped.
@@ -37,7 +37,7 @@ The VM firewall and Oracle subnet security list permit TCP 43605. The client
 uses the public IPv4 address directly; an address change needs a client endpoint
 update. This deployment does not depend on the owner's PC staying online.
 
-`v0.3.7`, `v0.3.9`, `v0.3.10`, and `v0.3.11` are server-only source tags with
+`v0.3.7`, `v0.3.9`, `v0.3.10`, `v0.3.11`, and `v0.3.17` are server-only source tags with
 no player release entries.
 The website and updater now serve client `v0.3.16`, including the single-download
 ZIP and both platform updater assets. Protocol 10059 is unchanged. The actual
@@ -46,6 +46,28 @@ settings and synthetic identity. Its immediate post-publication attempt saw the
 old GitHub release list; a separate repeat passed once the list propagated.
 Native Windows launch/update execution was not available in this maintenance
 window. Never publish a newer player release without its updater assets.
+
+The v0.3.17 activation on November 12 fixes Draynor Manor's basement ladder:
+the quest handler now explicitly targets (223,554,0), instead of preserving the
+player's underground level. The exact Oracle ARM64/Java 17 build differs from
+v0.3.16 in only ErnestTheChicken.class. The old installed JAR reproduced the bug;
+the patched JAR passed 770 real plugin/Player/installed-map assertions across 64
+round trips and all puzzle-lever presence combinations, including lever reset
+and a walkable surface landing. Player release, protocol and installed map are
+unchanged. All 72 accounts were preserved; fresh integrity-checked backups remain
+on Oracle and the owner's PC. The previous v0.3.16 source remains for rollback.
+Installed class digests match the validated staged build, and the public listener,
+service, database link, backup timer and zero automatic restarts were verified.
+The existing v0.3.16 native client fetched public configs and reached its hardware
+OpenGL login screen without account authentication. Receipts are under
+`output/reviews/draynor-basement-ladder/` locally and
+`/home/ubuntu/spoiled-milk/verification/v0.3.17/` on Oracle.
+
+This was a server-only deployment. Normal full player-release readiness remains
+blocked by preserved parked browser experiment branches; those branches were
+kept intact. The isolated immutable server snapshot was audited against v0.3.16
+at source and compiled-class level. No player packaging, browser release, map
+replacement or experiment activation occurred.
 
 The v0.3.16 activation preserved all 68 accounts and the installed map. Fresh
 integrity-checked backups are retained on Oracle and the owner's PC; v0.3.15
