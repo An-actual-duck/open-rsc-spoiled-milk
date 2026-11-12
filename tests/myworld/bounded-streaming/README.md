@@ -10,7 +10,9 @@ Outputs refuse overwrites so prior failed and successful evidence survives.
   an independently filtered and ordered catalogue for every source-cell center.
   It covers mutation/animation/restoration, roofs, rebasing and signed fallback.
   Catalogue coverage and unique selected chunks are explicitly separate from GPU
-  allocations (zero in this fixture).
+  allocations (zero in this fixture). The capacity audit derives exact immutable
+  geometry and all texture bytes per center. Its separately declared 53 MiB local
+  reserve is an assumption, not measured total memory.
 * `fetch-oracle.mjs --source-root ROOT --out FILE` exercises the actual resource
   byte reader with independently produced streams, including pending-read abort.
 * `scheduler-oracle.mjs --source-root ROOT --out FILE` uses a caller-owned ledger
@@ -25,6 +27,9 @@ Outputs refuse overwrites so prior failed and successful evidence survives.
   The complete index is injected into detached owners to isolate the API:
   catalogue constructor admission and native/GPU work remain separate. Use a
   cache containing `video/Authentic_Landscape.orsc` for the actual World constructor.
+  Add `--halo` for original-versus-cached canonical identity fields using actual
+  native and loaded-sector elevation APIs, fourth-vertex ownership transitions,
+  source/carrier/definition changes, retention bounds and saturated diagnostics.
 * `analyze-stationary-profile.py INPUT --out DIRECTORY` verifies the capture
   receipt and paired stationary markers, analyzes main/Worker CPU samples and
   exports exact current captured source bodies with SHA256. Generated names are

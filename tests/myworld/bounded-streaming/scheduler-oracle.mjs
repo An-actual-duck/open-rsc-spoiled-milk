@@ -40,4 +40,18 @@ for(const failure of ['prepare','upload']){const h=harness(failure==='prepare'?{
 {
  const h=harness({config:{maxQueueBytes:159}});assert.throws(()=>h.select([id(0)]),/queue byte cap/);checks++;await h.drain();check(h.ledger.prepare.length===0,'oversized descriptor byte queue never starts');check(h.stats.queuedBytes<=159,'reported descriptor queue bytes remain bounded');h.api.dispose();
 }
+{
+ const h=harness();h.select([id(0),id(1)],[id(2)]);await h.drain();
+ h.api.reclaim(124,1);h.resident.set(42,{bytes:124});check(h.total()<=412&&h.resident.size<=3,'local allocation reclaims optional bytes and count first');check(h.resident.has(id(0))&&h.resident.has(id(1))&&!h.resident.has(id(2)),'local pressure retains required cells');
+ h.select([id(1),id(3)]);await h.drain();check(h.resident.has(42)&&h.resident.has(id(1))&&h.resident.has(id(3)),'scheduler never evicts live local authority');assert.throws(()=>h.api.reclaim(1,0),/no room|capacity/);checks++;h.api.dispose();
+}
+{
+ const h=harness();h.select([id(0)]);await h.drain();h.api.suspend();h.ledger.protected.clear();check(!h.api.ready&&h.stats.requiredChunks===0,'transition suspension clears drawable readiness');await h.drain();check(!h.api.ready,'idle suspended coverage is never fresh');h.select([id(0)],[],'new-source');await h.drain();check(h.api.ready,'new exact scope reestablishes coverage');h.api.dispose();
+}
+{
+ const h=harness({config:{maxPendingBytes:179}});h.select([id(0)]);await h.drain();check(!!h.api.error&&!h.api.ready,'raw plus copied batch pending cap fails closed');check(h.ledger.prepare.length===0,'oversize pending resource never fetched');h.api.dispose();
+}
+{
+ const h=harness({config:{capacityBytes:1000,maxChunks:1}});assert.throws(()=>h.select([id(0),id(1)]),/exceeds|count/);checks++;check(!!h.api.error&&!h.api.ready,'independent count cap fails closed even with spare bytes');h.api.dispose();
+}
 const result={passed:true,checks,sourceRoot:root,sourceSha256:crypto.createHash('sha256').update(source).digest('hex'),scope:'Actual scheduler plus independently owned texture/geometry/partial allocation ledger and adversarial asynchronous producers. Covers publication readiness, active eviction, byte/count/transient caps, stale fetch/upload cancellation, context disposal and failures. Synthetic uploads; no actual GPU allocation, pixels, total VRAM, timing or FPS proof.'};fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify(result));
