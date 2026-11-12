@@ -161,7 +161,7 @@ public class ErnestTheChicken implements QuestInterface,
 					player.getCache().remove("LeverF");
 				}
 				player.message("You climb up the ladder");
-				player.teleport(223, 554, false);
+				player.teleport(223, 554, 0, false);
 				break;
 			case QuestObjects.FOUNTAIN:
 				if (player.getCache().hasKey("poisoned_fountain")) {
