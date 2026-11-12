@@ -1,0 +1,97 @@
+Browser alpha interface — independent CPU/source review, November 12, 2026
+
+Reviewed implementation baseline
+-------------------------------
+Initial UI implementation: 6eaf6443590b5edfeba33f3c889a0378ffcadc4e.
+Initial READY: 8e3a9d066a5f499b1ab7fc3cba5dc48d4f2c1565.
+Canonical full JAR: ai2/output/builds/browser-alpha-interface/review-final/client.jar
+SHA-256: 841fb6b862182062090d56ac46e9c1b6e0210d68e0672d53de27473311a48618
+It contains 991 production classes and 3,194 own assets. Independent Java checks
+compile only the fixture against that complete JAR, never replacement production
+classes. The runner also verifies the full source and compiled-class manifests.
+
+One reproduced issue
+--------------------
+A pending fullscreen request from a discarded runtime could undo a successful
+replacement runtime's fullscreen. The outer player element is shared across
+sessions. Sequence: request A remains pending; Restart dismisses it; request B
+succeeds; A then resolves and its stale-completion branch unconditionally exits
+fullscreen. The independent production-module test reproduces that exact loss of
+new ownership. This is a display lifecycle race, not a gameplay/server failure.
+
+The independent test is tests/myworld/browser-alpha-ui-review/display-generation.mjs.
+Original failing evidence is ai3/output/tests/browser-alpha-ui-review/display-generation.log.
+The implementation worker was asked to preserve late-after-Stop cleanup while
+preventing obsolete completion from exiting a newer fullscreen request.
+
+Resolved in final exact UI READY 7fd6a63a142d05f6517e2fb968e74afbddc5cfcc.
+The display module separately tracks entry ownership and invalidation generation;
+obsolete completions only clean up fullscreen when no newer owner wants it.
+The independent race test passes. The implementation adds coverage for both
+replacement success and cancellation of all pending owners. Java bytes remain
+identical to the canonical JAR above. No remaining review blocker was found.
+
+Source findings without additional blockers
+------------------------------------------
+The actual Interface menu adds action 73 and dispatches it only in tab 1 using
+the original middle-mouse cycle/persistence method. Graphics omits that row and
+offers fit/fullscreen only when the browser bridge advertises availability.
+Ordinary desktop starts unavailable and retains native window/aspect/geometry
+controls. The software scaling-row adjustment accounts for the removed row and
+two optional browser rows. Browser state updates validate all flags before commit
+and clear pending requests on loss of availability.
+
+The display bridge accepts only the currently owned same-origin runtime window.
+Session messages additionally check origin. End clears frame ownership before
+cleanup, so delayed frame messages cannot revive a discarded session. Initial,
+login, gameplay and error recovery use transient outer UI; ordinary travel does
+not restore the startup panel. Loading text remains generic while detailed
+diagnostics stay in the proof object. The Java camera is controlled only by an
+explicit repeatable-camera fixture, preserving manual exploration.
+
+The exact three-hunk mudclient normalization proof leaves all other bytes and
+the three guarded light readers unchanged and rejects its negative mutations.
+The existing guard expectation update therefore has a focused source proof; this
+independent review changes no guard hashes or production implementation.
+
+F6 assessment (not a fix claim)
+-------------------------------
+PC_Client/src/orsc/ORSCApplet.java handles F6 and Ctrl-F6 in its actual keyPressed
+path. rendererDebugOverlayLines calls overlayLines when enabled; overlayLines
+samples process CPU and heap/nonheap/buffer/GC MXBeans. Those samplers are not
+browser-gated and do not catch unsupported/throwing management implementations.
+Null CPU bean and negative/null reported values have explicit n/a handling.
+
+The manager's real frozen-client F6 test received the key and showed the overlay;
+its missing __syscall_times import warning did not produce a fatal error over
+80 seconds. That warning alone does not establish a crash or a fix. A later
+compatibility improvement could show n/a for unsupported browser management
+metrics, preserving desktop telemetry. Keep it separate unless the combined
+artifact reproduces an actual failure. This review launches no browser or GPU.
+
+Validation and limits
+---------------------
+The initial implementation's production display, world-readiness and 97-case
+session suites pass independently. The canonical-JAR Java fixture passes all 81
+checks. The independent stale-completion test failed before the requested fix.
+The final runner passed all seven cases against clean exact 7fd6a63a:
+independent display generation, production display, session, world-readiness,
+exact menu-source proof, fixture compilation, canonical-JAR controls.
+Evidence: ai3/output/tests/browser-alpha-ui-review/final-7fd6/result.json.
+
+Repeat with a new output destination from the review worker:
+
+  nice -n 10 python3 tests/myworld/browser-alpha-ui-review/run.py \
+    --source-root /home/justin/Core-Framework-ai-2 \
+    --commit 7fd6a63a142d05f6517e2fb968e74afbddc5cfcc \
+    --jar /home/justin/Core-Framework-ai-2/output/builds/browser-alpha-interface/review-final/client.jar \
+    --receipt /home/justin/Core-Framework-ai-2/output/builds/browser-alpha-interface/review-final/receipt.json \
+    --out output/tests/browser-alpha-ui-review/repeat-1
+
+The output-layout check reports 40 pre-existing unclassified output-root entries,
+preserved unchanged; this task uses declared reviews/tests categories only.
+
+No browser, GPU, listener, game server, canonical recook, release or deployment is
+part of this review. Node event models do not prove real browser fullscreen user
+activation, CSS appearance, browser focus or graphics performance. The manager
+owns those checks, including the combined layer-return and F6/Ctrl-F6 preview.
