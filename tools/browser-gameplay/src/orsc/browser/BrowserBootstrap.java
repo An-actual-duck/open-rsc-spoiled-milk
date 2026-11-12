@@ -20,6 +20,7 @@ public final class BrowserBootstrap {
     public static native void reportWholeZoneWork(int[] counters);
     public static native void reportStaticSceneWork(int[] counters);
     public static native void reportStaticIdentityWork(int[] counters);
+    public static native void reportBaselineReuseWork(double[] counters);
     public static native void reportWholeRamWork(int[] counters);
     public static native void reportRegionHandoffTrace(String phases,double[] values);
     public static native void reportRepeatableState(String username,int[] counters);
@@ -100,6 +101,10 @@ public final class BrowserBootstrap {
                 }
             }
         }
+        if(Boolean.getBoolean("spoiledmilk.browserBaselineReuse") && (!webgl
+            || !Boolean.getBoolean("spoiledmilk.browserBenchmark") || !Boolean.getBoolean("spoiledmilk.browserWholeRam")
+            || !Boolean.getBoolean("spoiledmilk.browserWholeZone") || !Boolean.getBoolean("spoiledmilk.browserStaticSceneReuse")))
+            throw new IllegalStateException("Baseline reuse requires private whole-RAM/static-scene WebGL mode");
         if(Boolean.getBoolean("spoiledmilk.browserWholeRam")) {
             if(!webgl||!Boolean.getBoolean("spoiledmilk.browserBenchmark")||!Boolean.getBoolean("spoiledmilk.browserWholeZone"))throw new IllegalStateException("Whole-RAM delivery requires private whole-zone WebGL mode");
             java.util.HashSet<String> expected=new java.util.HashSet<String>(java.util.Arrays.asList("Cache/whole-ram/manifest.json","Cache/whole-ram/source.bin","Cache/whole-ram/prepared.bin"));
@@ -130,6 +135,10 @@ public final class BrowserBootstrap {
                 if(!actual[0]||!actual[1])throw new IllegalStateException("Requested whole-zone mode is unsupported by this client JAR");
             }
             if(Boolean.getBoolean("spoiledmilk.browserWholeRam")&&!orsc.BrowserWebGLBridge.isWholeRamEnabled())throw new IllegalStateException("Whole-RAM requires explicit benchmark and whole-zone mode");
+            if(Boolean.getBoolean("spoiledmilk.browserBaselineReuse")) {
+                boolean[] actual=BenchmarkCandidatePolicies.inspect("orsc.PacketHandler","isBrowserBaselineReuseEnabled");
+                if(!actual[0]||!actual[1])throw new IllegalStateException("Requested baseline reuse is unsupported by this client JAR");
+            }
             orsc.BrowserWebGLBridge.install();
             reportOverlayRectPolicy(System.getProperty("spoiledmilk.browserOverlayRectMode","off"),orsc.BrowserWebGLBridge.getOverlayRectMode());
             reportSpriteKeyPolicy(Boolean.parseBoolean(System.getProperty("spoiledmilk.browserSpriteKeyLimbs", "true")),orsc.BrowserWebGLBridge.isSpriteKeyLimbsEnabled());
@@ -224,6 +233,7 @@ public final class BrowserBootstrap {
                                     String[][] policies={{"geometryTransfer","spoiledmilk.browserGeometryTransferReuse","orsc.BrowserWebGLBridge","isGeometryTransferReuseEnabled"},
                                         {"wholeZone","spoiledmilk.browserWholeZone","orsc.BrowserWebGLBridge","isWholeZoneEnabled"},
                                         {"wholeRam","spoiledmilk.browserWholeRam","orsc.BrowserWebGLBridge","isWholeRamEnabled"},
+                                        {"baselineReuse","spoiledmilk.browserBaselineReuse","orsc.PacketHandler","isBrowserBaselineReuseEnabled"},
                                         {"regionBuild","spoiledmilk.browserRegionBuild","orsc.graphics.three.BrowserRegionBuild","isEnabled"},
                                         {"regionLoadProfile","spoiledmilk.browserLoadProfile","orsc.BrowserWebGLBridge","isLoadProfileEnabled"},
                                         {"regionPreparation","spoiledmilk.browserRegionPreparation","orsc.graphics.three.World","isBrowserRegionPreparationEnabled"},
@@ -249,7 +259,7 @@ public final class BrowserBootstrap {
                                 }
                                 int[] batchWork=snapshotBatchedModelWork(observedScene,Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel"));
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
-                                if(Boolean.getBoolean("spoiledmilk.browserWholeZone")){reportWholeZoneWork(snapshotWholeZoneWork());reportStaticSceneWork(snapshotStaticSceneWork());reportStaticIdentityWork(snapshotStaticIdentityWork(client));}
+                                if(Boolean.getBoolean("spoiledmilk.browserWholeZone")){reportWholeZoneWork(snapshotWholeZoneWork());reportStaticSceneWork(snapshotStaticSceneWork());reportStaticIdentityWork(snapshotStaticIdentityWork(client));reportBaselineReuseWork(snapshotBaselineReuseWork(client));}
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeRam"))reportWholeRamWork(snapshotWholeRamWork());
                                 if(Boolean.getBoolean("spoiledmilk.browserLoadProfile")){
                                     double[] trace=snapshotRegionHandoffTrace();
@@ -288,6 +298,18 @@ public final class BrowserBootstrap {
     static int[] snapshotWholeRamWork() throws ReflectiveOperationException {
         Object work=Class.forName("orsc.BrowserWebGLBridge").getMethod("getWholeRamWork").invoke(null);
         if(!(work instanceof int[])||((int[])work).length!=0&&((int[])work).length!=18)throw new IllegalStateException("Invalid whole-RAM work getter");return ((int[])work).clone();
+    }
+
+    static double[] snapshotBaselineReuseWork(Object client) throws ReflectiveOperationException {
+        Object packet=client.getClass().getField("packetHandler").get(client);
+        if(packet==null)return new double[0];
+        Object work;
+        try { work=packet.getClass().getMethod("getBrowserBaselineReuseWork").invoke(packet); }
+        catch(NoSuchMethodException missing) { if(!Boolean.getBoolean("spoiledmilk.browserBaselineReuse"))return new double[0];throw missing; }
+        if(!(work instanceof long[])||((long[])work).length!=10)throw new IllegalStateException("Invalid baseline reuse work getter");
+        long[] values=(long[])work;double[] result=new double[10];
+        for(int i=0;i<10;i++){if(values[i]<0||values[i]>9007199254740991L)throw new IllegalStateException("Invalid baseline reuse counter");result[i]=values[i];}
+        return result;
     }
 
     static int[] snapshotStaticIdentityWork(Object client) throws ReflectiveOperationException {

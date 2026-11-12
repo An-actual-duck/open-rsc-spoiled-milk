@@ -17,7 +17,7 @@ public final class BrowserRegionHandoffTrace {
         "client-region.baseline", "world-section.total", "world-section.reset",
         "world-section.active-plane", "world-section.upper-planes", "world-section.bridge",
         "world-section.active-chunk-build", "world-section.predictive-clear",
-        "world-section.symmetric-compose", "world-section.preload", "scenery.input", "scenery.mesh"
+        "world-section.symmetric-compose", "world-section.preload", "scenery.input", "scenery.mesh", "baseline.legacy-reconcile"
     };
     private static long ordinal;
     private static int count, next, context, packetBudget, frameBudget;

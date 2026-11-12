@@ -1,3 +1,4 @@
+import {baselineReusePolicy} from './browser-baseline-reuse-policy.js';
 import {wholeRamPolicy,validateWholeRamConfig,decodeWholeRamWork} from './browser-whole-ram.js';
 import {wholeZonePolicy} from './browser-whole-zone-policy.js';
 import {createBoundedInputGate} from './browser-bounded-input.js';
@@ -30,6 +31,7 @@ function nativeCallPolicy(mode,parameters){
 const nativeCallDispatch=nativeCallPolicy(options.get('mode')||'software',options);
 const renderWorker=renderWorkerPolicy(options.get('mode')||'software',options);
 const wholeZone=wholeZonePolicy(options.get('mode')||'software',options);
+const baselineReuse=baselineReusePolicy(options.get('mode')||'software',options);
 const wholeRam=wholeRamPolicy(options.get('mode')||'software',options);
 const loadProfilePolicy=browserLoadProfilePolicy(options.get('mode')||'software',options);
 const javaVersion = Number(options.get('java') || '8');
@@ -142,6 +144,13 @@ const natives = {
     if(!input||input.length!==10||Array.from(input).some((n,i)=>!Number.isSafeInteger(n)||n<(i===9?-2147483648:0)||n>2147483647)||input[0]!==1||input[1]>1||input[8]>1)throw new Error('Static scene Java diagnostics contract');
     window.browserProof.staticSceneJava={requested,pending:false,enabled:input[1]===1,rowBuilds:input[2],rowHits:input[3],observedBuilds:input[4],materialChecks:input[5],rowCount:input[6],parsedCellCount:input[7],rowCacheValid:input[8]===1,placementRevisionLow:input[9]>>>0,scope:'Actual Java static selection reuse counters; separate from GPU allocation and gameplay readiness'};
   },
+  Java_orsc_browser_BrowserBootstrap_reportBaselineReuseWork(lib,input){
+    if(stopped)return;
+    if(input?.length===0){window.browserProof.baselineReuseJava={requested:baselineReuse.enabled,pending:true};return;}
+    const v=[];for(let n=0;n<input.length;n++)v.push(input[n]);
+    if(v.length!==10||v.some(x=>!Number.isSafeInteger(x)||x<0)||v[0]!==1||v[1]>1||v[6]>16777216||v[8]>16777216||v[9]>512||v[1]!==Number(baselineReuse.enabled))throw new Error('Baseline reuse diagnostics contract');
+    window.browserProof.baselineReuseJava={requested:baselineReuse.enabled,pending:false,selected:v[1]===1,reused:v[2],eligibleStaticClones:v[3],refusals:v[4],resets:v[5],peakConservativeBytes:v[6],admittedBaselines:v[7],retainedProofBytes:v[8],retainedTemplates:v[9],scope:'Exact proven static clone reuse only; collision, height, normal and readiness paths remain authoritative'};
+  },
   Java_orsc_browser_BrowserBootstrap_reportStaticIdentityWork(lib,input){
     const requested=options.get('staticscene')==='on';
     if(input?.length===0){window.browserProof.staticIdentityJava={requested,pending:true};return;}
@@ -163,7 +172,7 @@ const natives = {
     }
   },
   async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
-    if(!['wholeRam','wholeZone','regionBuild','regionLoadProfile','geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'].includes(name))throw new Error('Unknown private policy receipt');
+    if(!['baselineReuse','wholeRam','wholeZone','regionBuild','regionLoadProfile','geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'].includes(name))throw new Error('Unknown private policy receipt');
     (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
     if(!options.has('benchmark')&&['batchedModelKernel','terrainQueryIndex'].includes(name))(window.browserProof.optimizedRenderDefaults||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
   },
@@ -328,7 +337,7 @@ try {
   });
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
-    javaProperties: canonicalRenderProperties(['user.dir=/files', ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...loadProfilePolicy.properties, ...wholeZone.properties, ...wholeRam.properties, ...(wholeRam.enabled?['spoiledmilk.browserWholeRamManifestSha256='+wholeRamCatalogConfig.manifestSha256]:[]), ...(wholeZone.enabled?['spoiledmilk.browserWholeZoneClientSha256='+wholeZoneCatalogConfig.clientJarSha256,'spoiledmilk.browserWholeZoneCatalogSha256='+wholeZoneCatalogConfig.manifestSha256]:[]), ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])],optimizedDefaults), natives});
+    javaProperties: canonicalRenderProperties(['user.dir=/files', ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...loadProfilePolicy.properties, ...wholeZone.properties, ...wholeRam.properties, ...baselineReuse.properties, ...(wholeRam.enabled?['spoiledmilk.browserWholeRamManifestSha256='+wholeRamCatalogConfig.manifestSha256]:[]), ...(wholeZone.enabled?['spoiledmilk.browserWholeZoneClientSha256='+wholeZoneCatalogConfig.clientJarSha256,'spoiledmilk.browserWholeZoneCatalogSha256='+wholeZoneCatalogConfig.manifestSha256]:[]), ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])],optimizedDefaults), natives});
   report('Browser Java ready');
   const display = document.querySelector('#display');
   displayLayout=createBrowserDisplay({window,document,display,viewport:document.querySelector('#viewport')});

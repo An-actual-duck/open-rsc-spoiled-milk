@@ -57,6 +57,9 @@ public class PacketHandler {
 	private Network_Socket clientStream;
 	private mudclient mc;
 	private final SceneBaselineState sceneBaselineState = new SceneBaselineState();
+	private final BrowserBaselineObjectReuse browserBaselineReuse = new BrowserBaselineObjectReuse();
+    public static boolean isBrowserBaselineReuseEnabled() { return BrowserBaselineObjectReuse.isEnabled(); }
+    public long[] getBrowserBaselineReuseWork() { return new long[]{1,BrowserBaselineObjectReuse.isEnabled()?1:0,browserBaselineReuse.reused,browserBaselineReuse.cloned,browserBaselineReuse.refused,browserBaselineReuse.resets,browserBaselineReuse.peakBytes,browserBaselineReuse.admitted,browserBaselineReuse.retainedBytes(),browserBaselineReuse.retainedTemplates()}; }
     public long getWholeZoneObjectAuthorityRevision(){return sceneBaselineState.wholeZoneAuthorityRevision();}
     public boolean isWholeZoneObjectPositionAuthoritative(int x,int y){return sceneBaselineState.wholeZoneObjectPositionAuthoritative(x,y);}
     public boolean isWholeZoneObjectCellAuthoritative(int tileX,int tileY,int size){return sceneBaselineState.wholeZoneObjectCellAuthoritative(tileX,tileY,size);}
@@ -259,6 +262,7 @@ public class PacketHandler {
 		nativeLayeredTerrainResidentCache.clear();
 		layeredTerrainStageAssembler.reset();
 		sceneBaselineState.resetForScopeChange("none");
+        browserBaselineReuse.clear();
 		movementSnapshotStage.reset();
 		appliedSceneBaselineKey = 0;
 		appliedScenePresentationKey = 0;
@@ -856,6 +860,7 @@ public class PacketHandler {
 		final boolean atomicActivation = protocolVersion
 			== LayeredSceneContextState
 				.ATOMIC_NATIVE_LAYERED_PROTOCOL_VERSION;
+		if (result.isScopeChanged()) browserBaselineReuse.clear();
 		if (result.isScopeChanged() || atomicActivation) {
 			sceneBaselineState.resetForScopeChange(
 				layeredSceneContextState.scopeIdentity());
@@ -3468,21 +3473,34 @@ public class PacketHandler {
 			return;
 		}
 
-		for (int i = 0; i < mc.getGameObjectInstanceCount(); i++) {
-			mc.dematerializeGameObjectInstance(i);
-		}
-		for (int i = 0; i < mc.getWallObjectInstanceCount(); i++) {
-			mc.dematerializeWallObjectInstance(i);
-		}
-		mc.setGameObjectInstanceCount(0);
-		mc.setWallObjectInstanceCount(0);
-
-		for (SceneBaselineState.Record record : sceneBaselineState.snapshotStoredSceneryRecords()) {
-			addBaselineGameObject(record);
-		}
-		for (SceneBaselineState.Record record : sceneBaselineState.snapshotStoredWallRecords()) {
-			addBaselineWallObject(record);
-		}
+        long baselineStart = BoundaryLoadingDiagnostics.now();
+        List<SceneBaselineState.Record> scenery = sceneBaselineState.snapshotStoredSceneryRecords();
+        boolean reuse = browserBaselineReuse.begin(mc, scenery);
+        try {
+            if (reuse) {
+                RSModel[] removed = new RSModel[mc.getGameObjectInstanceCount() + mc.getWallObjectInstanceCount()];
+                int count = 0;
+                // Remove all collision flags first, then rebuild the original ordered list.
+                // Retained overlapping footprints must not keep bits cleared by another removal.
+                for (int i=0;i<mc.getGameObjectInstanceCount();i++) {
+                    RSModel model=mc.deferGameObjectSceneRemoval(i);if(model!=null)removed[count++]=model;
+                }
+                for (int i=0;i<mc.getWallObjectInstanceCount();i++) {
+                    RSModel model=mc.deferWallObjectSceneRemoval(i);if(model!=null)removed[count++]=model;
+                }
+                mc.removeSceneModels(removed,count);
+            } else {
+                for (int i=0;i<mc.getGameObjectInstanceCount();i++)mc.dematerializeGameObjectInstance(i);
+                for (int i=0;i<mc.getWallObjectInstanceCount();i++)mc.dematerializeWallObjectInstance(i);
+            }
+            mc.setGameObjectInstanceCount(0);mc.setWallObjectInstanceCount(0);
+            for (SceneBaselineState.Record record : scenery) addBaselineGameObject(record, reuse);
+            for (SceneBaselineState.Record record : sceneBaselineState.snapshotStoredWallRecords()) addBaselineWallObject(record);
+        } finally {
+            browserBaselineReuse.finish();
+            BoundaryLoadingDiagnostics.recordPhase("baseline", "legacy-reconcile", baselineStart,
+                baselineStart==0?0:System.nanoTime()-baselineStart);
+        }
 
 		appliedSceneBaselineKey = sceneBaselineState.legacyApplyKey(mc);
 		sceneBaselineState.recordLegacyBaselineApplied();
@@ -3571,7 +3589,7 @@ public class PacketHandler {
 		ClientRuntimeLogger.log(summary);
 	}
 
-	private void addBaselineGameObject(SceneBaselineState.Record record) {
+	private void addBaselineGameObject(SceneBaselineState.Record record, boolean reuse) {
 		com.openrsc.client.entityhandling.defs.GameObjectDef def = EntityHandler.getObjectDef(record.id);
 		if (def == null || def.modelID < 0) {
 			return;
@@ -3586,10 +3604,12 @@ public class PacketHandler {
 		}
 
 		int instanceIndex = mc.getGameObjectInstanceCount();
-		RSModel model = mc.getModelCacheItem(def.modelID).clone();
+        RSModel model = reuse ? browserBaselineReuse.take(record) : null;
+        boolean wasClone = model == null;
+        if (wasClone) model = mc.getModelCacheItem(def.modelID).clone();
 		applyExpandedGameObjectPickBounds(record.id, model);
 		model.key = instanceIndex;
-		model.addRotation(0, record.direction * 32, 0);
+		if (wasClone) model.addRotation(0, record.direction * 32, 0);
 		model.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, 117);
 
 		mc.setGameObjectInstanceX(instanceIndex, localX);
@@ -3600,6 +3620,7 @@ public class PacketHandler {
 		mc.setGameObjectInstanceMaterialized(instanceIndex, false);
 		mc.materializeGameObjectInstance(instanceIndex);
 		mc.setGameObjectInstanceCount(instanceIndex + 1);
+        if (reuse) browserBaselineReuse.remember(mc, record.id, model, wasClone);
 	}
 
 	private void addBaselineWallObject(SceneBaselineState.Record record) {

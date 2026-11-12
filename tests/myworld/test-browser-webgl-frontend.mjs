@@ -19,6 +19,7 @@ const benchmarkKeys=process.argv.includes('--benchmark-key-limbs');
 const benchmarkBatch=process.argv.includes('--model-batch');
 const benchmarkDelta=process.argv.includes('--overlay-delta');
 const benchmarkRegionBuild=process.argv.includes('--region-build');
+const benchmarkBaseline=process.argv.includes('--baseline-reuse');
 const benchmarkLoadProfile=process.argv.includes('--load-profile');
 const benchmarkBounded=process.argv.includes('--bounded-residency'),benchmarkStatic=process.argv.includes('--static-scene');
 const benchmarkWholeRam=process.argv.includes('--whole-ram');
@@ -35,7 +36,7 @@ const canvas = {style:{},setAttribute(){}};
 const stats = {lastError:null,lastFrame:0};
 const gateEvents=[];
 const window = {dispatchEvent:e=>gateEvents.push(e.type),browserRuntimeVersion:'5.0',addEventListener(){}};
-const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':'')+(benchmarkDelta?'&overlaydelta=on':'')+(benchmarkRenderWorker?'&renderworker=on&overlay=coverage':'')+(benchmarkWholeZone?'&wholezone=on':'')+(benchmarkWholeRam?'&wholeram=on':'')+(benchmarkBounded?'&gpuresidency=bounded':'')+(benchmarkStatic?'&staticscene=on':'')+(benchmarkLoadProfile?'&loadprofile=on':'')+(benchmarkRegionBuild?'&regionbuild=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(structuredClone(m))},
+const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':'')+(benchmarkDelta?'&overlaydelta=on':'')+(benchmarkRenderWorker?'&renderworker=on&overlay=coverage':'')+(benchmarkWholeZone?'&wholezone=on':'')+(benchmarkWholeRam?'&wholeram=on':'')+(benchmarkBounded?'&gpuresidency=bounded':'')+(benchmarkStatic?'&staticscene=on':'')+(benchmarkLoadProfile?'&loadprofile=on':'')+(benchmarkBaseline?'&baselinereuse=on':'')+(benchmarkRegionBuild?'&regionbuild=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(structuredClone(m))},
   URLSearchParams,performance:{now:()=>clock},console,
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
@@ -77,6 +78,7 @@ const geometryModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tool
 const preparationCandidatesModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-preparation-candidates.js',import.meta.url),'utf8'),{context});
 const repeatableModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-repeatable-policy.js',import.meta.url),'utf8'),{context});
 const loadProfileModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-region-load-profile.js',import.meta.url),'utf8'),{context});
+const baselineReuseModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-baseline-reuse-policy.js',import.meta.url),'utf8'),{context});
 const handoffProfileModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-region-handoff-profile.js',import.meta.url),'utf8'),{context});
 const renderWorkerPolicyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-render-worker-protocol.js',import.meta.url),'utf8'),{context});
 const physicalOutputModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-physical-output.js',import.meta.url),'utf8'),{context});
@@ -99,6 +101,7 @@ await module.link(specifier=>{
   if(specifier==='./browser-whole-zone-policy.js')return wholeZonePolicyModule;
   if(specifier==='./browser-region-load-profile.js')return loadProfileModule;
   if(specifier==='./browser-region-handoff-profile.js')return handoffProfileModule;
+  if(specifier==='./browser-baseline-reuse-policy.js')return baselineReuseModule;
   if(specifier==='./browser-render-worker-protocol.js')return renderWorkerPolicyModule;
   if(specifier==='./browser-optimized-render-defaults.js')return optimizedDefaultsModule;
   if(specifier==='./browser-batched-model-kernel.js')return modelBatchModule;
@@ -181,7 +184,12 @@ assert.deepEqual(JSON.parse(JSON.stringify(window.browserProof.terrainQueryIndex
 assert.equal(window.browserProof.regionPreparationDiagnostics.available,false);assert.equal(window.browserProof.regionPreparationDiagnostics.hits,null);
 await configured.natives.Java_orsc_browser_BrowserBootstrap_reportRegionPreparationDiagnostics(null,true,[2,3,4,0,0,0,0,0]);assert.equal(window.browserProof.regionPreparationDiagnostics.hits,2);
 for(const v of [[0,0,0,2,1,1,5,10],[0,0,0,1,1,1,4,10],[0,0,0,1,1,1,5,11]])await assert.rejects(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportRegionPreparationDiagnostics(null,false,v),/Terrain query diagnostics/);
-for(const name of ['regionLoadProfile','geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'])for(const [requested,available,enabled]of [[false,false,false],[true,true,false],[true,true,true]]){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(null,name,requested,available,enabled);assert.deepEqual(JSON.parse(JSON.stringify(window.browserProof.privatePolicies[name])),{requested,available,enabled});}
+for(const name of ['baselineReuse','regionLoadProfile','geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'])for(const [requested,available,enabled]of [[false,false,false],[true,true,false],[true,true,true]]){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(null,name,requested,available,enabled);assert.deepEqual(JSON.parse(JSON.stringify(window.browserProof.privatePolicies[name])),{requested,available,enabled});}
+assert.equal(configured.javaProperties.includes('spoiledmilk.browserBaselineReuse=true'),benchmarkBaseline);
+await configured.natives.Java_orsc_browser_BrowserBootstrap_reportBaselineReuseWork(null,[1,benchmarkBaseline?1:0,8,3,2,1,16777216,2,100,3]);
+assert.equal(window.browserProof.baselineReuseJava.reused,8);assert.equal(window.browserProof.baselineReuseJava.admittedBaselines,2);
+assert.throws(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportBaselineReuseWork(null,[1,1,0]));
+assert.throws(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportBaselineReuseWork(null,[1,0,0,0,0,0,16777217,0,0,0]));
 assert.equal(gpuOptions.streamUploadValidation,true,'Ordinary WebGL adopts validated streaming policy');assert.equal(stats.streamUploadValidationActive,true,'Actual selected backend streaming receipt');
 if(benchmarkStream){assert.equal(typeof window.browserBenchmarkStreamUploadValidation,'function');window.browserBenchmarkStreamUploadValidation(false);assert.equal(streamRequested,false);assert.equal(window.browserProof.benchmark.streamUploadValidationRequested,true);}else assert.equal(window.browserBenchmarkStreamUploadValidation,undefined,'ordinary sessions cannot change stream policy');
 assert.equal(configured.javaProperties.some(p=>p.startsWith('spoiledmilk.browserFramePreparation=')||p.startsWith('spoiledmilk.browserAnimatedBufferReuse=')),benchmarkStream,'only private benchmark URL receives preparation overrides');

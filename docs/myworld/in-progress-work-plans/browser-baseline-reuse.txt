@@ -1,0 +1,148 @@
+Private browser baseline clone reuse — review candidate
+=======================================================
+
+Goal and evidence
+-----------------
+Reduce CPU work before the first fresh bridge submission at a region boundary.
+The manager's actual frozen c038033f/ac790e96 Firefox walking profile has six
+warm bridge-silent intervals of 282/169/208/174/213/166 ms, with main-thread CPU
+91.6–99% of one core and zero new GPU chunks. These intervals are broader than
+loadNextRegion: its existing warm console summaries measure only 17–25 ms.
+Do not attribute the whole gap to recipe activation or GPU allocation.
+
+Exact generated body inspection of baseline-travel-analysis-2 maps:
+  2006 / J_00882358: RSModel.computeNormals (cross products,8192 normalization,
+                         sqrt*256,65536/65535 output).
+  2120 / J_00882618: insertConstructionVertex (half-full hash table).
+  2489 / J_00882118: addModels, via1553/J_00881758 single-model constructor.
+  1786 interpreter continuation: Scene.removeModel's ordered suffix compaction.
+In the first silent window normals are12.2% inclusive and addModels8.4%; these
+are sampled inclusive shares, not additive explanations of the entire gap.
+Sources and analysis are preserved under manager output/diagnostics/
+browser-handoff-compact/baseline-travel-analysis-2/.
+
+The baseline replay path previously retired and cloned every object when the
+complete authoritative baseline differed. Nearby contexts contain overlapping
+objects. This candidate reuses only exact proven static game-object clone inputs
+and batches scene retirement. It intentionally still rebuilds normals.
+
+Controls and preserved behavior
+-------------------------------
+New startup-only baselinereuse=on|off, default off. ON requires private benchmark
+WebGL + wholezone=on + wholeram=on + staticscene=on. The Java path additionally
+requires browser presentation, actual GLOBAL signed level0 native source,
+requested plane0, no live terrain patches and bounded input. Unsupported startup
+JAR APIs fail closed. No ordinary/native defaults, map, server, gameplay packets,
+source admissions, readiness/input gates or Worker ACK rules change.
+
+Capture candidate static models by exact (world x,z,id,direction); hashes only
+index maps and never prove equality. Retire all old scenery/wall scene entries
+with the existing stable removeModels compaction, removing all collision flags.
+Rebuild the authoritative baseline in its original order. Matching static models
+replace only clone construction. Every entry still runs original pick-bound
+preparation, rekeying, lighting setup, current terrain-height sampling, translation
+and collision materialization. Translation dirties the model so original normal,
+light, projection and bounding-box reconstruction occurs. Walls are always fresh.
+Animated game objects use the existing classifier and always clone afresh.
+
+Proofs and bounds
+-----------------
+Exact owned primitive snapshots cover source clone inputs and configured target
+raw geometry/material/picking metadata. Source transforms and transformed vertex
+arrays are included because commitTransform can read them. Target raw geometry,
+face indices, texture ranges (raw float bits), face parameters, pick indices,
+vertex secondary light, fishing metadata and material/interaction flags are
+checked; rotation/scales/shears must match the original placement. Derived target
+normals/light/projection caches are deliberately not accepted as immutable proof:
+the original factory/materialization path rebuilds them before presentation.
+
+Snapshots are shared per object definition/template rather than per tree instance.
+Source snapshots are validated once per template per baseline, and each candidate
+instance has exact raw comparisons. Current definition/model reference, native
+package identity, signed scope, custom-asset settings and lighting/geometry/fog
+settings must agree. Scope/disconnect resets clear all proofs. A changed source,
+definition or target refuses reuse. Duplicate placement identities never reuse;
+duplicate physical model references refuse the entire optimized teardown, retaining
+literal removal semantics. Pending/unloaded objects still take original terrain
+availability checks. Source, actor and baseline authority remain upstream.
+
+Admission:4096 objects,512 templates,16MiB conservative owned workspace bound.
+Primitive snapshots are charged for full array extents, nested arrays, references
+and conservative object overhead. Transient map/key/reference slack reserves512
+bytes per object, with a4096-object reserve when creating proofs. Oversized inputs
+or proofs use literal clone fallback. Only templates used by the completed current
+baseline remain; candidate and verification maps are discarded after each replay.
+This is a bounded baseline traversal, not a per-frame geometry rebuild or a claim
+of bounded milliseconds on every device.
+
+Runtime evidence
+----------------
+window.browserProof.baselineReuseJava reports:
+  requested,selected,admittedBaselines,reused,eligibleStaticClones,refusals,resets,
+  retainedProofBytes,retainedTemplates,peakConservativeBytes.
+The Java raw getter getBrowserBaselineReuseWork() has10 long values:
+  schema1,selected,reused,clones,refusals,resets,peakBytes,admitted,proofBytes,templates.
+Selected means the startup flag, not that a signed-scope fallback was admitted.
+
+The region trace adds baseline.legacy-reconcile using the existing phase hook.
+The trace collector remains bounded and uses separate Java/receipt browser clocks.
+Use its existing documented source-to-fresh-frame limitations; a bridge attempt
+or receipt correlation does not establish Worker completion at the event instant.
+
+The RAM stager accepts --baseline-reuse on|off and preserves compact geometry
+options. urlBaselineReuseOn/Off differ only in clone reuse while RAM stays on;
+urlOff disables both RAM and dependent clone reuse and is not a one-flag A/B when
+the chosen candidate enabled both. StaticSceneOff controls also disable dependent
+baseline reuse. No staging operation launches a service or mutates an old cook.
+
+Verification and acceptance limits
+----------------------------------
+Immutable review full-source artifact:
+  output/builds/browser-baseline-reuse/review-18d942/client.jar
+  SHA2563eb3e3c75a1fb0c9e445d38fb5121ba173af9b12962cde3d543f127fbe540430
+  source18d9425ae0e1d8f71ca109c81aceee07935b43fa;986 classes,3194 packaged own assets.
+The sibling receipt binds clean exact source, class/assets manifests and full Ant
+compile; no classes were overlaid/transplanted. Later feature documentation/test
+changes preserve these production Java sources. Manager integration still needs a
+fresh complete JAR and matching GPU/RAM bakes, never old-cook JAR rebinding.
+
+Run:
+  python3 tests/myworld/browser-baseline-reuse/run.py --jar FULL_JAR --out FRESH_DIR
+  python3 tests/myworld/browser-baseline-reuse/stager.py
+  node --experimental-vm-modules tests/myworld/test-browser-webgl-frontend.mjs \
+    --repeatable --whole-ram --bounded-residency --static-scene --load-profile \
+    --baseline-reuse
+
+final-full-jar/result.json records six policy combinations,21 transitions each,
+6362 checks/run. Actual PacketHandler baseline reconstruction, World collision
+matrices/directions, ordered Scene/parallel metadata, foreign model retention,
+complete geometry meshes, software pixels and picking produce the same trace:
+  dfd18dc447206984c9f05acae4b1f5ba0e9a633d7f0440e0f2702e9b8cf4f71c
+ON867 reuses/825 eligible clones/17 admitted baselines; conservative peak2,114,963
+bytes, final retained proof17,811 bytes in3 templates. Ordinary/no-RAM/no-static/
+no-zone controls all have zero reuses. Coverage includes rebase/reversal through
+actual materialization operations, signed−1/10, other world, terrain patches and
+height changes, source transform, definition/settings, raw geometry/interaction/
+rotation mutations, lighting reset, duplicate placements, shared references, reset
+and entry/proof budget refusal. Stored baseline state is injected offline; these
+are not incoming network/actor simulations or complete loadNextRegion executions.
+
+Additional passes:12 startup policy cases,10 structured stager/dependency cases,
+default/private mocked frontend contracts, Bootstrap compile, original static-delta
+batch test,536 actual boundary-hook checks and42 collector checks. Compact delivery
+admission still validates all1400 resources. Parent owns real Firefox/GPU acceptance.
+
+Required guard review: query-light-consumers rejects the changed whole mudclient
+file (only a static-object classifier wrapper was added); flat-light-readers rejects
+the changed whole RSModel file (proof helpers added). Their expected hashes were
+NOT refreshed. Existing light-reader call sites and light consumer lines remain
+unchanged. Manager must review this exact diff before updating those closed guards.
+Worker layout check also retains inherited legacy output/asset roots; no new
+unclassified output root or runtime asset was introduced by this work.
+
+No measured browser speedup is claimed here. Clone merge/vertex hashing and repeated
+scene suffix shifts are reduced; per-instance exact proof scans and normal rebuilds
+remain. Compare the same fresh artifact with only baselinereuse varied, under the
+same profiler/pointer dwell, route, camera and compact geometry mode. Require real
+reuse counters, unchanged source/epoch/readiness/picking/collision behavior, no
+new held-frame/upload regressions and improved warm boundary gaps before acceptance.

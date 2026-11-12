@@ -4753,6 +4753,10 @@ public final class mudclient implements Runnable {
 		return value == null ? "" : value.toLowerCase(Locale.ROOT);
 	}
 
+    boolean isBrowserBaselineStaticObject(int objectId) {
+        return !isAnimatedResidentObjectChunkModel(Renderer3DModelKind.GAME_OBJECT, objectId);
+    }
+
 	private boolean isAnimatedResidentObjectChunkModel(Renderer3DModelKind kind, int objectId) {
 		if (kind != Renderer3DModelKind.GAME_OBJECT) {
 			return false;
