@@ -1,3 +1,5 @@
+import {LEGACY_GEOMETRY,COMPACT_GEOMETRY,COMPACT_MAGIC,geometryLayout} from './browser-geometry-layout.js';
+import {MAX_COMPACT_MANIFEST,validateCompactConfig,selectCompactCatalog} from './browser-compact-catalog.js';
 import {WHOLE_ZONE_SOURCE,WHOLE_ZONE_GPU_BYTES,WHOLE_ZONE_MAX_CHUNKS} from './browser-whole-zone-policy.js';
 /** Source-bound immutable packed resources. Only the private Worker calls this loader. */
 const HASH=/^[0-9a-f]{64}$/,MAX_RESOURCE=64*1024*1024,MAX_MANIFEST=32*1024*1024,PIN_BASE=1000000;
@@ -18,7 +20,7 @@ function externalAssets(value){
 }
 export function validateWholeZoneConfig(c){
   if(!c||c.schemaVersion!==1)throw new Error('Private whole zone catalog not staged');
-  integer(c.manifestBytes,1,MAX_MANIFEST,'catalog bytes');hash(c.manifestSha256,'catalog');hash(c.clientJarSha256,'client JAR');return Object.freeze({schemaVersion:1,manifestBytes:c.manifestBytes,manifestSha256:c.manifestSha256,clientJarSha256:c.clientJarSha256,externalAssets:externalAssets(c.externalAssets)});
+  integer(c.manifestBytes,1,MAX_MANIFEST,'catalog bytes');hash(c.manifestSha256,'catalog');hash(c.clientJarSha256,'client JAR');return Object.freeze({schemaVersion:1,manifestBytes:c.manifestBytes,manifestSha256:c.manifestSha256,clientJarSha256:c.clientJarSha256,externalAssets:externalAssets(c.externalAssets),...(c.compact?{compact:validateCompactConfig(c.compact,c.manifestSha256)}:{})});
 }
 export function validateWholeZoneTexture(expected,width,height,input,transparent){
   const pixels=ints(input);if(!expected||expected.length!==5||expected[1]!==width||expected[2]!==height||expected[4]!==Number(transparent)||pixels.length!==width*height)throw new Error('Pinned whole zone texture layout changed');
@@ -48,7 +50,7 @@ export function validateWholeZoneManifest(m){
   const worldCells=m.worldCells.map(c=>{integer(c.plane,0,2,'world plane');integer(c.cellX,-100000,100000,'world cellX');integer(c.cellY,-100000,100000,'world cellY');hash(c.sourceSha256,'world cell');const key=c.plane+':'+c.cellX+':'+c.cellY;if(worldKeys.has(key))throw new Error('Duplicate whole zone world cell');worldKeys.add(key);return Object.freeze({...c});});
   const ids=new Set(),keys=new Set();let gpuBytes=0,fileBytes=0,effectScalars=0;
   const chunks=m.chunks.map(c=>{
-    if(!c||typeof c!=='object')throw new Error('Whole zone chunk declaration');
+    if(!c||typeof c!=='object'||c.geometryLayout!==undefined&&c.geometryLayout!==LEGACY_GEOMETRY)throw new Error('Whole zone chunk declaration/layout');
     const id=integer(c.id,PIN_BASE,2147483647,'chunk ID'),plane=integer(c.plane,0,2,'plane'),role=integer(c.role,0,1,'role'),cellX=integer(c.cellX,-100000,100000,'cellX'),cellY=integer(c.cellY,-100000,100000,'cellY');
     if(c.sourceKind!==(role===0?'world':'objects')||c.cellSize!==(role===0?48:24))throw new Error('Whole zone cell representation');
     if(role===1&&(typeof c.canonicalContentKey!=='string'||!/^([0-9a-f]{16})$/.test(c.canonicalContentKey)))throw new Error('Whole zone object key');
@@ -102,9 +104,12 @@ export function validateWholeZoneSource(m,source){
 }
 export function decodeWholeZoneChunk(buffer,c){
   if(!(buffer instanceof ArrayBuffer)||buffer.byteLength!==c.bytes)throw new Error('Whole zone chunk byte length');
-  const d=new DataView(buffer);if(d.getUint32(0,true)!==MAGIC||d.getUint32(4,true)!==c.vertexCount||d.getUint32(8,true)!==c.indexCount||d.getUint32(12,true)!==c.batchIntCount)throw new Error('Whole zone chunk header');
+  const l=geometryLayout(c.geometryLayout),compact=l.id===COMPACT_GEOMETRY,header=compact?24:16;
+  if(buffer.byteLength<header)throw new Error('Whole zone chunk header length');
+  const d=new DataView(buffer),base=compact?12:4;
+  if(d.getUint32(0,true)!==(compact?COMPACT_MAGIC:MAGIC)||compact&&(d.getUint32(4,true)!==1||d.getUint32(8,true)!==48)||d.getUint32(base,true)!==c.vertexCount||d.getUint32(base+4,true)!==c.indexCount||d.getUint32(base+8,true)!==c.batchIntCount||buffer.byteLength!==header+c.vertexCount*l.strideBytes+c.indexCount*4+c.batchIntCount*4)throw new Error('Whole zone chunk header');
   const little=new Uint8Array(new Uint32Array([1]).buffer)[0]===1;if(!little)throw new Error('Whole zone little-endian host required');
-  return {vertices:new Float32Array(buffer,16,c.vertexCount*28),indices:new Int32Array(buffer,16+c.vertexCount*112,c.indexCount),batches:new Int32Array(buffer,16+c.vertexCount*112+c.indexCount*4,c.batchIntCount)};
+  return {vertices:compact?new Uint8Array(buffer,header,c.vertexCount*48):new Float32Array(buffer,header,c.vertexCount*28),indices:new Int32Array(buffer,header+c.vertexCount*l.strideBytes,c.indexCount),batches:new Int32Array(buffer,header+c.vertexCount*l.strideBytes+c.indexCount*4,c.batchIntCount),geometryLayout:l.id};
 }
 export async function fetchWholeZoneBytes(url,expected,{fetcher=fetch,signal,maximum=MAX_RESOURCE}={}){
   integer(expected,1,maximum,'fetch bytes');const response=await fetcher(url,{signal,cache:'no-store'});if(!response.ok)throw new Error('Whole zone resource HTTP '+response.status);
@@ -118,16 +123,26 @@ export async function fetchWholeZoneBytes(url,expected,{fetcher=fetch,signal,max
 export async function digestWholeZoneBytes(buffer){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',buffer))].map(x=>x.toString(16).padStart(2,'0')).join('');}
 const digest=digestWholeZoneBytes;
 /** No payload view survives its upload callback. The returned catalog retains metadata only. */
-export async function loadWholeZone({baseURL,manifestBytes,manifestSha256,clientJarSha256,externalAssets:expectedAssets,fetcher=fetch,uploadChunk,uploadTexture,finishGpu,stats,signal,mapIdentity,settings,materials,bounded=false,progress=()=>{},assertAlive=()=>{}}){
+export async function loadWholeZone({baseURL,manifestBytes,manifestSha256,clientJarSha256,externalAssets:expectedAssets,compact,geometryFormat='legacy',fetcher=fetch,uploadChunk,uploadTexture,finishGpu,stats,signal,mapIdentity,settings,materials,bounded=false,progress=()=>{},assertAlive=()=>{}}){
   assertAlive();integer(manifestBytes,1,MAX_MANIFEST,'manifest bytes');hash(manifestSha256,'catalog');const base=new URL(baseURL,import.meta.url);
   const manifestRaw=await fetchWholeZoneBytes(new URL('manifest.json',base),manifestBytes,{fetcher,signal,maximum:MAX_MANIFEST});if(await digest(manifestRaw)!==manifestSha256)throw new Error('Whole zone catalog digest mismatch');
-  const m=validateWholeZoneManifest(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(manifestRaw)));
+  let m=validateWholeZoneManifest(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(manifestRaw)));
   const stageAssets=externalAssets(expectedAssets);if(stageAssets.some((a,n)=>a.path!==m.externalAssets[n].path||a.bytes!==m.externalAssets[n].bytes||a.sha256!==m.externalAssets[n].sha256))throw new Error('Whole zone baked/staged external assets disagree');
   if(m.clientJarSha256!==clientJarSha256)throw new Error('Whole zone baked/client artifact mismatch');
   validateWholeZoneLive(m,mapIdentity,settings,materials);
   const materialWords=new Int32Array(m.materialMetadata);if(await digest(materialWords.buffer)!==m.textureCatalogSha256)throw new Error('Whole zone material catalog digest mismatch');
   const sourceRaw=await fetchWholeZoneBytes(new URL('source-manifest.json',base),m.sourceManifestBytes,{fetcher,signal,maximum:MAX_MANIFEST});if(await digest(sourceRaw)!==WHOLE_ZONE_SOURCE.manifestSha256)throw new Error('Whole zone original source manifest digest mismatch');validateWholeZoneSource(m,JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(sourceRaw)));
-  assertAlive();Object.assign(stats,{phase:'loading',ready:false,manifestSha256,expectedPinnedChunks:m.chunks.length,expectedPinnedBytes:m.gpuBytes,sourceFingerprint:m.packageFingerprintSha256,sourceManifestSha256:m.manifestSha256,sourceSectors:1330,sourceObjectPlacements:24580,sourceCatalogVerified:true,rawSourceCPUReady:false,catalogJSONBytes:manifestBytes,metadataRetainedScope:'Parsed immutable catalog descriptors; JSON size is not exact JS heap size',downloadedMetadataBytes:manifestBytes+m.sourceManifestBytes,downloadedBytes:manifestBytes+m.sourceManifestBytes,bakedGPUDataDownloadedBytes:0,preparedResources:0,pinnedChunks:0,pinnedBytes:0,textureBytes:0,startupGpuCompleted:false});
+  if(!['legacy','compact'].includes(geometryFormat))throw new Error('Unsupported private geometry format');
+  let compactMetadataBytes=0;
+  if(geometryFormat==='compact'){
+    const config=validateCompactConfig(compact,manifestSha256);
+    const bytes=await fetchWholeZoneBytes(new URL('compact-manifest.json',base),config.manifestBytes,{fetcher,signal,maximum:MAX_COMPACT_MANIFEST});
+    if(await digest(bytes)!==config.manifestSha256)throw new Error('Compact derivative manifest digest mismatch');
+    m=selectCompactCatalog(m,JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)),manifestSha256);compactMetadataBytes=bytes.byteLength;
+    stats.compactCatalogSha256=config.manifestSha256;
+  }
+  Object.assign(stats,{geometryFormat,geometryLayout:m.geometryLayout||LEGACY_GEOMETRY,canonicalExpectedPinnedBytes:m.canonicalGpuBytes??m.gpuBytes,compactMetadataBytes});
+  assertAlive();Object.assign(stats,{phase:'loading',ready:false,manifestSha256,expectedPinnedChunks:m.chunks.length,expectedPinnedBytes:m.gpuBytes,sourceFingerprint:m.packageFingerprintSha256,sourceManifestSha256:m.manifestSha256,sourceSectors:1330,sourceObjectPlacements:24580,sourceCatalogVerified:true,rawSourceCPUReady:false,catalogJSONBytes:manifestBytes,metadataRetainedScope:'Parsed immutable catalog descriptors; JSON size is not exact JS heap size',downloadedMetadataBytes:manifestBytes+m.sourceManifestBytes+compactMetadataBytes,downloadedBytes:manifestBytes+m.sourceManifestBytes+compactMetadataBytes,bakedGPUDataDownloadedBytes:0,preparedResources:0,pinnedChunks:0,pinnedBytes:0,textureBytes:0,startupGpuCompleted:false});
   stats.downloadedSourceAssetBytes=0;stats.externalAssetsVerified=false;
   for(const asset of m.externalAssets){const raw=await fetchWholeZoneBytes(new URL('../'+asset.path,base),asset.bytes,{fetcher,signal});if(await digest(raw)!==asset.sha256)throw new Error('Whole zone staged external asset digest mismatch: '+asset.path);stats.downloadedSourceAssetBytes+=raw.byteLength;stats.downloadedBytes+=raw.byteLength;}
   stats.externalAssetsVerified=true;
