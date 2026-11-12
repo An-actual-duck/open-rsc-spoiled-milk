@@ -165,7 +165,11 @@ if(publicAlpha){
   assert.equal(publicRunArgs[1],'/app/assets/alpha-test1/browser-spike.jar:/app/assets/alpha-test1/client.jar');
   configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(null,new Int32Array([1,1,1,1,0,0]));assert.equal(window.browserProof.wholeRamRoofSelection.literalRoofFallback,true);
   assert.throws(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(null,new Int32Array([1,1,1,1,0,1])));
+  assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_isRamBulkCancelled(),false);
   const previous=window.browserProof.wholeRamRoofSelection;window.browserSessionDispose();configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(null,new Int32Array());assert.equal(window.browserProof.wholeRamRoofSelection,previous,'late reporter cannot revive disposed state');
+  assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_isRamBulkCancelled(),true);
+  configured.natives.Java_orsc_browser_BrowserBootstrap_reportStartupProgress(null,'malformed',-1,-1,-1,-1);
+  await assert.rejects(configured.natives.Java_orsc_browser_BrowserBootstrap_prepareRamBulkFile(null,'Cache/whole-ram/manifest.json'),/unavailable/);
   const file=argument('--properties-output');if(file)fs.writeFileSync(file,props.join('\n')+'\n');
   console.log('PASS actual public frontend fixed rendering/pinned WSS/versioned archives/Java properties/no fixture or runtime switches; VM only');process.exit(0);
 }

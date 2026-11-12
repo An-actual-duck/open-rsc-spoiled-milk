@@ -177,6 +177,7 @@ public final class BrowserBootstrap {
         });
         reportStartupProgress("client",0,0,0,0);
         report((webgl?"webgl-client":"software-client")+":start; networking="+(publicAlpha?"public-secure-websocket":"loopback-websocket"));
+        if(publicAlpha&&isRamBulkCancelled())throw new InterruptedIOException("Game startup cancelled");
         orsc.OpenRSC.main(new String[0]);
         final BrowserStartupDiagnostics startupDiagnostics=webgl&&!benchmark?new BrowserStartupDiagnostics(new BrowserStartupDiagnostics.Sink(){
             public void report(String phase,String detail){reportStartupDiagnostics(phase,detail);}
