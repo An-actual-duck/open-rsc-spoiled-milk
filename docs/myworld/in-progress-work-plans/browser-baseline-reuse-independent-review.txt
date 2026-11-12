@@ -89,3 +89,46 @@ live gameplay packets. Manager still needs matched browser loading/frame-time,
 visible scenery/animation/picking and signed-level transitions on the final
 integrated artifact. If final ai2 READY changes reviewed Java, rerun or review the
 difference; a docs/test-only follow-up can retain the recorded source equivalence.
+
+Final source and closed light-guard review
+-----------------------------------------
+Final ai2 READY: 3c6cc58458f3a6b4581e44b84e268a6ee56447ea. All maintained
+production Java is byte-identical to the reviewed/built18d9425a implementation;
+subsequent changes are docs/tests/staging controls and previously published
+compact hardware fixtures. The JAR/adversarial results above remain applicable.
+
+Whole-file query/flat-light guards correctly refused changed enclosing files.
+I reviewed their complete diff against frozen743d4c28, rather than refreshing
+hashes without an ownership proof. The only baseline-reuse changes in guarded
+files are the4-line mudclient static-eligibility wrapper and85-line RSModel
+owned proof helpers. Removing exactly those blocks restores every original file
+byte, including ALL getVertexLight sites, vertDiffuseLight readers, surrounding
+Gouraud-sentinel branches, transform/normal/light code and packing/control flow.
+The inserted blocks contain no getVertexLight or vertDiffuseLight read.
+
+The query guard additionally caught a previously published diagnostics change
+in BrowserWebGLBridge (89ad84e45): two trace getter methods and a bounded trace
+call inside the existing finally clause. Removing those exact three additions
+restores every original bridge byte. The ring only records diagnostics and has
+no query-light, geometry, terrain ownership, packing or readiness authority.
+Other guarded files and original collectTerrainVertexInputs light seeding are
+unchanged. No exception was broadened to new modes, levels or consumers.
+
+verify-light-guard-extension.py codifies the exact-file subtraction and literal
+reader-site equivalence, with nine negative mutation controls for original-code
+changes and new light reads. Both complete existing guards then pass against
+exact3c6cc584: nine whole-source query owners plus carrier method, original four
+getVertexLight call sites, and all12 original vertDiffuseLight source occurrences.
+Only the three reviewed whole-file SHA expectations and query source-commit
+metadata changed; reader-site digests/call rosters/carrier hash remain unchanged.
+
+Evidence: output/tests/browser-baseline-reuse-review/light-extension.json,
+flat-light.json and query-light.json. Reproduce with:
+  python3 tests/myworld/browser-baseline-review/verify-light-guard-extension.py \
+    --source-root . --commit 3c6cc58458f3a6b4581e44b84e268a6ee56447ea
+  python3 tests/myworld/whole-ram/verify-query-light-consumers.py \
+    --source-root . --commit 3c6cc58458f3a6b4581e44b84e268a6ee56447ea
+  python3 tests/myworld/whole-ram/verify-flat-light-readers.py \
+    --source-root . --commit 3c6cc58458f3a6b4581e44b84e268a6ee56447ea
+These guard expectations target the feature's reviewed Java and should be merged
+after that feature. They intentionally refuse the earlier production source.
