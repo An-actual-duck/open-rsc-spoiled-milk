@@ -4,10 +4,19 @@ import {resolveBrowserDeployment,browserCapabilityProblem} from './browser-publi
 // separate disposable frame. Same-origin is needed for CheerpJ storage/files;
 // this sandbox is lifecycle containment, not an untrusted-code security boundary.
 import {createDisplayModes} from './browser-display-modes.js';
+import {createStartupReceiver} from './browser-startup-progress.js';
 const start = document.querySelector('#start'), stop = document.querySelector('#stop');
 const status = document.querySelector('#status'), session = document.querySelector('#session');
 const welcome = document.querySelector('#welcome');
-let frame;
+let frame, startup;
+const meter=document.querySelector('#startup-progress'),detail=document.querySelector('#startup-detail');
+function hideProgress(){meter.hidden=true;detail.hidden=true;}
+function renderProgress(value){
+  if(status.textContent!==value.label)status.textContent=value.label;detail.textContent=value.detail;detail.hidden=!value.detail;
+  meter.hidden=false;meter.setAttribute('aria-label',value.label);
+  if(value.value===null)meter.removeAttribute('value');
+  else {meter.max=value.max;meter.value=value.value;}
+}
 let deployment;
 try{deployment=resolveBrowserDeployment(deploymentConfig,location);}
 catch(error){status.textContent=String(error.message);start.disabled=true;throw error;}
@@ -34,6 +43,7 @@ window.browserSessionDisplayRequest=(source,action)=>{
   return displayModes.stats;
 };
 function showRecovery(message){
+  startup?.close();hideProgress();
   welcome.hidden=false;status.textContent=message;
   start.hidden=false;start.disabled=false;start.textContent='Restart game';
   stop.hidden=false;stop.disabled=false;stop.textContent='Close game';
@@ -41,6 +51,7 @@ function showRecovery(message){
 function end(reason, focusStart = false) {
   if (!frame) return;
   const current = frame; frame = null;
+  startup?.close();hideProgress();
   // Stop owns the parent receipt too. Child postMessage cleanup is queued and
   // must remain rejected once this frame is discarded; it cannot clear our
   // last structured clone synchronously. Preserve historical counts only.
@@ -76,7 +87,9 @@ start.addEventListener('click', () => {
   window.browserProof = {events: [], lifecycle: 'starting', focus: 'runtime',presentation:displayModes.stats};
   welcome.hidden=false;start.disabled=true;start.hidden=true;
   stop.disabled=false;stop.hidden=false;stop.textContent='Cancel';
-  status.textContent='Starting game…';
+  startup=createStartupReceiver({render:renderProgress});
+  window.browserProof.startupParent=startup.stats;
+  renderProgress({label:'Opening game…',detail:'',value:null,max:null});
   session.append(frame);
   // Start is an explicit user gesture. Transfer its focus into the new frame;
   // disabling the focused Start button otherwise creates a spurious blur.
@@ -85,7 +98,9 @@ start.addEventListener('click', () => {
 stop.addEventListener('click', () => end('Game closed.', true));
 window.addEventListener('message', event => {
   if (!frame || event.source !== frame.contentWindow || event.origin !== location.origin) return;
-  if (event.data?.type === 'browser-session-proof') {
+  if(event.data?.type==='browser-session-startup'){
+    startup?.accept(event.data.progress);
+  } else if (event.data?.type === 'browser-session-proof') {
     Object.assign(window.browserProof, event.data.proof);
     window.browserProof.lifecycle = 'running';
     // Startup/recovery is transient. The game owns its login and initial world
@@ -93,7 +108,7 @@ window.addEventListener('message', event => {
     const proof=event.data.proof;
     const fatal=proof.connectionError||(proof.gpu?.worldReadiness?.phase==='error'?'Area preparation failed.':null)||proof.gpu?.lastError||(proof.gpu?.contextLost?'Graphics connection lost.':null)||proof.wholeRamError;
     if(fatal)showRecovery(proof.connectionError?'Could not reach the game server. Check your connection, try again, or use the downloadable client.':'The game could not continue. You can restart or use the downloadable client.');
-    else if(proof.state?.mode==='LOGIN'||proof.state?.mode==='GAME')welcome.hidden=true;
+    else if(proof.state?.mode==='LOGIN'||proof.state?.mode==='GAME'){startup?.finish(proof.state.mode);hideProgress();welcome.hidden=true;}
   } else if (event.data?.type === 'browser-session-stop') end(String(event.data.reason));
   else if (event.data?.type === 'browser-session-focus-left') {
     // The runtime creates/focuses nested contexts during startup. Blur is not

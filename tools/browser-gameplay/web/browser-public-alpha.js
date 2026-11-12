@@ -27,14 +27,30 @@ export function browserCapabilityProblem(win){
 
 /** Verify both executable archives before asking the Java runtime to open them.
  * Immutable HTTP caching lets its later Range reads reuse the same resources. */
-export async function verifyPublicArchives(deployment,{fetcher=globalThis.fetch,crypto=globalThis.crypto}={}){
+export async function verifyPublicArchives(deployment,{fetcher=globalThis.fetch,crypto=globalThis.crypto,onProgress=()=>{},now=()=>performance.now()}={}){
   if(!deployment.publicAlpha)return;
-  const c=deployment.config;
+  const c=deployment.config,totalBytes=c.clientJarBytes+c.bootstrapJarBytes;
+  let received=0,files=0,lastBytes=0,lastTime=now();
+  const progress=force=>{const at=now();if(force||received-lastBytes>=1048576||at-lastTime>=250){
+    // Display observations must not change archive admission or startup success.
+    try{onProgress({bytes:received,totalBytes,files,totalFiles:2});}catch{}
+    lastBytes=received;lastTime=at;
+  }};
+  const invalid=()=>new Error('The game files could not be verified. Refresh the page to try again.');
+  progress(true);
   for(const [name,bytes,hash]of [['client.jar',c.clientJarBytes,c.clientJarSha256],['browser-spike.jar',c.bootstrapJarBytes,c.bootstrapJarSha256]]){
     const response=await fetcher(c.assetPrefix+name,{credentials:'omit',cache:'default',redirect:'error'});
-    if(!response.ok||response.headers.get('content-length')!==null&&Number(response.headers.get('content-length'))!==bytes)throw new Error('The game files could not be verified. Refresh the page to try again.');
-    const raw=await response.arrayBuffer();if(raw.byteLength!==bytes)throw new Error('The game files could not be verified. Refresh the page to try again.');
+    if(!response.ok||response.headers.get('content-length')!==null&&Number(response.headers.get('content-length'))!==bytes)throw invalid();
+    let raw;
+    if(response.body?.getReader){
+      const reader=response.body.getReader(),buffer=new Uint8Array(bytes);let offset=0;
+      try{while(true){const item=await reader.read();if(item.done)break;
+        if(!(item.value instanceof Uint8Array)||item.value.byteLength>bytes-offset)throw invalid();
+        buffer.set(item.value,offset);offset+=item.value.byteLength;received+=item.value.byteLength;progress(false);
+      }}catch(error){try{await reader.cancel();}catch{}throw error;}finally{reader.releaseLock();}
+      if(offset!==bytes)throw invalid();raw=buffer.buffer;
+    }else{raw=await response.arrayBuffer();if(raw.byteLength!==bytes)throw invalid();received+=raw.byteLength;progress(false);}
     const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',raw)),v=>v.toString(16).padStart(2,'0')).join('');
-    if(digest!==hash)throw new Error('The game files could not be verified. Refresh the page to try again.');
+    if(digest!==hash)throw invalid();files++;progress(true);
   }
 }
