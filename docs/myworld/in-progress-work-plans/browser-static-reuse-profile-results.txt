@@ -1,0 +1,98 @@
+Current static CPU reuse profile and next-step proof — November 12, 2026
+======================================================================
+
+Read-only attribution; no runtime implementation or adoption in this handoff.
+The current captured artifact is source743d4c2850d7244df4e0e67f50d62ea80424a654,
+JARcc7022c201ed94596e38b77d53d335c1e7278ccf6ef7434f0db02105e15a4cc6,
+compiled from980 owned classes. Its exact Java source manifest matches this
+checkout. The actual policy is bounded512 MiB + preparedRAM + staticCPU ON.
+One copied console label says fullGPU; the receipt and policy proof supersede it.
+
+Reproduction and evidence
+-------------------------
+Manager input: output/diagnostics/browser-bounded-streaming-cpu/optimized-busy-profile-1
+AI-2 output: output/diagnostics/browser-static-reuse-profile/optimized-1/analysis.json
+and sources/ contain the unchanged analyzer's exact captured-source exports.
+Run tests/myworld/bounded-streaming/analyze-stationary-profile.py INPUT --out NEW.
+The companion AI-2 output compare_exact.py reproduces comparison.json, verifies
+profile-file receipt hashes and current source-manifest hashes, binds14 current
+generated bodies by structural evidence and hashes, and checks the prior eight
+independently mapped baseline bodies. No generated source index is reused across
+captures without its own exact body match.
+
+The paired user markers span20,027.525ms and10,012 samples on each selected
+thread. GeckoMain used96.51% of one core; DOM Worker16.27%. Neither thread CPU
+nor submission calls measure GPU execution or physical display. No FPS result
+is derived from this profile. Inclusive spans below overlap and must not be added.
+
+What the current profile establishes
+------------------------------------
+Current inclusive main-thread sample shares:
+  Scene.removeModel                         21.225%
+  mudclient.drawGame                        23.212% (contains removeModel)
+  appendResidentObjectChunkFrame            15.012%
+  buildResidentObjectChunkInputs             8.789%
+  captureResidentStaticInputs                8.490%
+  canonical identity reuse wrapper           7.201%
+  literal canonical identity creation        1.808%
+  World immutable elevation context          3.066%
+  World patch-lock/has-patches method         0.190% (nested in context)
+  World context.matches                      0.070% (nested in context)
+  World immutable loaded-sector classifier   0.210%
+  World presentation terrain elevation       0.889%
+  World presentation vertex elevation        0.829% (nested in elevation)
+  BrowserWholeOverworldZone.frame            0.050%
+
+Endpoint observer deltas bracket the capture, rather than exactly its markers:
+912 row hits; zero row/observed/material rebuilds;1,557,578 halo identity hits;
+zero identity misses/context resets/capacity refusals;975,997 mutable refusals.
+This directly proves retained work was used while live-height work continued.
+
+The earlier accepted fullGPU+RAM/c8fc sample attributed10.308% to wholeZone.frame
+with7.863% nested key parsing;5.878% to terrain elevation;19.369% to appendResident.
+The current bodies/counters are consistent with removal of repeat static parsing
+and immutable halo elevation work. These are different artifacts/GPU policies and
+sample conditions, so percentage differences do not establish causal speedup.
+In particular, removeModel was2.335% in that older capture; its current21.225%
+requires addressing the current workload, not claiming a9x code regression.
+
+Recommended next focused slice: null removal only
+-------------------------------------------------
+Exact current source900/J_0087ee50 is Scene.removeModel's identity scan. Every
+one of its2,125 deepest-JS samples names drawGame/source657 as direct caller.
+Global level-zero drawGame requests five removals per144-element roof grid,
+720 requests/frame, while retaining its camera zoom and roof ordering loop.
+Prepared activation resets upper grids and loads only plane-zero walls/roofs;
+hidden-roof publication creates a144-null roof array. The frozen stage receipt
+records hiddenRoofs=true. Therefore720 null requests is a source/config inference;
+the profiler does not capture argument values or runtime array contents.
+
+Legal active-prefix proof: Scene.models and modelCount are private. Constructor
+starts count0. addModel rejectsnull and appends a nonnull value. Capacity copying
+preserves the prefix. render's m_T sentinel is written exactly at modelCount,
+outside it. removeModel shifts only values within the previous nonnull prefix.
+removeModels stably compacts existing values and clears only the retired suffix.
+removeAllGameObjects clears the prefix then publishes count0, without callbacks.
+There is no model-array getter or other production write in either source root.
+Thus, at legal completed operation boundaries, models[0..modelCount) contains
+no null: removeModel(null) is an exact no-op.
+
+Recommend a private/default-OFF early return for null removal requests only,
+with same-artifact on/off legal-state differential tests. Keep every nonnull and
+legacy duplicate-removal path byte-for-byte unchanged; do not batch/reorder the
+roof loop. Verify parallel metadata, model order, growth, clears, sentinel outside
+the prefix and repeated nulls. Actual prepared-array capture/counters should
+confirm the inferred workload. A profile share is an opportunity, not a promised
+millisecond or FPS saving. Implementation belongs on the next approved branch.
+
+Secondary work
+---------------
+The immutable context method's3.066% includes all eligibility and property checks;
+its observed patch-lock method alone is only0.190%. A cached exact context match
+could precede another patch-lock check because all production patch insertion and
+clearing publish worldEditorTerrainRevision. Retain private/World-class guards,
+full checks on misses and every loaded-sector classification. This is lower
+priority than null removal and needs exact patch/reset/refusal differential tests.
+Do not use incomplete instance revisions to skip broad live input scans. The
+remaining8.490% static capture includes legitimate per-record mutable work.
+No browser, GPU, server, deployment or build was started by this analysis task.
