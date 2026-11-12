@@ -1,0 +1,96 @@
+Browser region cost review — November12,2026
+===========================================
+
+Recommendation: keep clone templates OFF. The next bounded experiment should
+measure and then avoid repeated FINAL model preparation (rotation/transformed
+coordinates, bounds, normals and lighting), rather than add another raw-clone or
+canonical-content cache. The present evidence does not prove one dominant logical
+Java caller, so owner-split phase counters must gate that prototype.
+
+What the actual comparison establishes
+--------------------------------------
+The accepted compact format reduces stored/transferred immutable geometry. The
+clone trial activates, with real thousands of factory hits, but does not show a
+crossing improvement: manager warm max-gap means are ON301ms versus OFF300.33ms.
+Cold maxima likewise show no clear benefit. Do not describe hit count as a speed
+win, or rationalize the cold583ms result as a demonstrated cache cause.
+
+Fresh exact-source profile: manager diagnostics/browser-handoff-compact/
+templates-on-travel-profile-1; source7dba0f91, JAR9e903446. Offline analysis and a
+preserved reproducible helper are in this worker output/diagnostics/
+browser-region-cost-review/{analysis.json,analyze.py,sources/}. Inputs are hashed;
+generated-body names are verified against the actual source-table IDs. No old
+numeric function IDs are reused. No browser/GPU/build/cook was run for this review.
+
+The18.709s route window contains9,350 selected main-thread samples, approximately
+96.26% of one CPU core. The first421ms ACK-gap bracket contains210 samples and
+approximately96.34% of one core. That bracket is reconstructed backwards from one
+snapshot's lastFrame and interval ring; it is a diagnostic approximation, not a
+new logical Java span. Only4/210 samples contain a named GC frame there. This
+single window does not justify calling GC the dominant crossing bottleneck.
+
+Fresh generated body932/J_00882c40 is computeDiffuse: sentinel12345678, diffuse
+factor division, four temporary per-vertex arrays and smooth-face accumulation.
+It is the deepest generated body in13/210 bracket samples (6.19%). Many other
+bodies remain generic dispatch/library stubs. Their apparent outer JavaScript
+ancestry can interleave CheerpJ continuations, so inclusive percentages cannot
+be summed or assigned as exact Java caller ownership. The earlier profile's
+normal/mesh/updateChunk mappings remain useful source leads, not current IDs.
+
+Why the raw-clone trial may break even
+-------------------------------------
+BrowserPresentationCloneCache.clone still obtains native scope/settings, builds
+a context string, checks definitions, commits the source transform, walks exact
+source proof arrays and instantiates all mutable output arrays on every hit.
+Those checks are necessary for this mutable-source contract. The clone constructor
+is avoided, but copying/verification and the original factory's rotation/light/
+translation and later normal preparation remain. This is a plausible overhead
+explanation, not a measured allocation or time decomposition.
+
+RSModel.resetTransformCache recomputes transformed vertices, bounds and normals
+when m_Yb is1. setTranslate and rotation setters mark it1. computeNormals then
+calls computeDiffuse, whose four scratch arrays are freshly allocated per call.
+The current recipe stores a pre-placement clone; it deliberately leaves this
+finalization work unchanged. This is the strongest concrete next preparation
+reuse lead, conditional on direct phase evidence showing enough cost.
+
+Avoid duplicating mechanisms that already exist
+----------------------------------------------
+ResidentObjectChunkInputBuilder.build assigns STATIC_OBJECTS finalCacheKey equal
+to canonicalContentKey. Cache entries receive both from that input. Therefore the
+old canonicalOwnershipMatches-but-full-key-diff diagnostic is not a normal static
+miss route in current code. Static cache hits already call
+rebaseStaticObjectPresentation; whole-zone resolveStatic is tried first. Do not
+build a new hash-only canonical cache around that apparently promising branch.
+
+Animated cache hits, in contrast, require the same presentationBaseX/Z. Their
+input key also includes local coordinates, instance/model identity and transform
+version, so rebase can rebuild a group even when its world-relative appearance
+has not changed. BrowserWebGLBridge.updateChunk repacks and replaces vertices,
+indices and material batches for a changed storage signature, even when counts
+are unchanged. The profiled route submitted220,629,216 local bytes across751
+world frames; one steady sample submitted264,500bytes for2,280vertices. Much of
+that traffic can be routine animation, so this total is NOT region-only loading.
+Anchor-stable animated storage or separated topology/material updates is a useful
+secondary lead only after per-role/epoch byte counters establish redundant work.
+
+Next experiment and acceptance gate
+-----------------------------------
+1. Add bounded private owner-split elapsed/count counters around actual work:
+   source commit/proof/copy; placement light; transformed bounds/normal/diffuse;
+   static versus animated chunk build; updateChunk vertex/material/index packing
+   and submitted bytes. Separate steady animation from epoch/rebase work. Use
+   direct owners, not reconstructed cooperative JS ancestry. No readiness role.
+2. If finalization dominates, try ONE private owned post-orientation preparation
+   recipe per exact source/definition/direction/light configuration. Each caller
+   must still get distinct mutable arrays and fresh placement/picking/collision.
+   A translation-only shortcut may reuse normals mathematically, but must prove
+   exact integer rounding/overflow, bounds, light and complete visible/picking/
+   shadow outputs against literal code. Unknown or mutable state falls back.
+3. Independently test signed/global/source/settings/mutation/concurrency/reset
+   cases and actual DELTA/canonical owners, then run same-artifact OFF/ON routes.
+   If the cost phase or crossing metric does not improve, leave it OFF rather
+   than enlarging the cache. No current speedup is promised by this proposal.
+
+This review changes documentation only. It does not authorize a broader cache,
+ordinary renderer edits, a cookbook hash refresh or live deployment.
