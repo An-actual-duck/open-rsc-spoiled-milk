@@ -1,0 +1,120 @@
+Public browser startup: bounded bulk RAM transport
+================================================
+
+Scope and motivation
+--------------------
+The manager's anonymous Firefox baseline reached LOGIN in 70.236 seconds cold
+and 70.227 seconds in a new VM using the same persisted profile. Each cohort made
+2,111 RAM HTTP requests for 276,938,781 payload bytes; summed request durations
+were 55.49/56.14 seconds, and Java staging took 62.323/64.358 seconds. This points
+to the serial HTTP-backed /app reads as a concrete target. It does not establish
+how fast the replacement runs. Root evidence remains under
+output/diagnostics/browser-startup/baseline-coldwarm-1/ and
+single-prepared-transfer.json. The latter is a Python transfer sanity check,
+not browser startup or browser memory evidence.
+
+This topic depends on the companion startup-feedback topic. It wires that
+collector and actual Java copy helper, and adds public-only single-file bulk
+transport for the three existing RAM files. The canonical recipes, original
+client JAR, Java constructor/source/roof checks, account preferences, WebSocket
+policy and readiness conditions remain unchanged. No Client_Base/PC_Client file
+is modified. Private /app copying remains available without the /str APIs.
+
+Transfer and authority
+----------------------
+The declared RAM configuration is already checked against the executable and
+catalogue. The adapter accepts only the fixed immutable public asset prefix and
+closed manifest.json, source.bin, prepared.bin order. It admits the entire roster
+before RAM outputs. Each HTTPS fetch uses default HTTP caching, no credentials,
+no redirects, exact advertised/actual byte bounds and SHA256 before mounting.
+No arbitrary URL, persistent personal-state path or settings override is accepted.
+
+Only one logical raw payload is owned at a time: bounded receive, digest, mount
+at a session-owned /str/browser-startup-N/ path, Java copy to the same /files
+relative path, resource closure, then explicit removal. Subsequent fetches cannot
+begin while a prior payload is owned. Public transport has a separate 256 MiB
+per-file admission limit; the current largest file is 230,205,484 bytes. This is
+not a change to the prepared-state codec's independent maximum. Larger future
+products fail closed until that transport budget is deliberately reviewed.
+
+The native prepare/release path only changes transport. Java retains the original
+full source and prepared-state verification, provider installation and readiness
+checks. A completed download is neither decoded RAM readiness nor GPU readiness.
+No work is deferred beyond LOGIN to create an apparent startup improvement.
+
+Lifetime and failure
+--------------------
+Stop aborts fetches and rejects late fetch/digest completion. A mounted file that
+has been leased to an open Java input is retained until the helper's finally path
+releases it after both streams close. Copy cancellation is independent of passive
+progress and is polled before opening, at each 1 MiB of successful writes, EOF,
+after closure, and before starting the client. It is cooperative, not a guarantee
+that a blocked input read returns immediately. A failed copy cannot fetch the next
+file. Cleanup failures preserve the original failure, explicitly fail the adapter,
+and retain the unconfirmed ownership ledger instead of reporting zero bytes.
+
+Runtime/archive/CDN await boundaries also check whether the current session was
+stopped, preventing a discarded late init from creating a display or starting
+Java. Parent progress filtering separately rejects old-frame reports after retry.
+The disposable iframe/VM owns the final lifetime. /files writes remain the existing
+nontransactional staging process: Stop can leave partial files, and an already
+open old writer stops cooperatively. There is no claim of atomic cross-VM /files
+isolation. Every subsequent startup recopies and verifies the full products before
+world admission; no partial-write cache reuse is introduced.
+
+The byte ledger measures one adapter-owned logical raw payload only. Browser
+network/HTTP cache, crypto implementation, CheerpJ /str representation, Java
+buffers, IndexedDB and retained decoded-world memory can create other copies.
+Removal confirms API unlink and dropping the adapter reference, not immediate GC
+or a reduction in total RSS/PSS. Actual candidate peak PSS remains a manager gate.
+
+Progress
+--------
+The companion collector records bounded stages from opening to actual LOGIN/GAME.
+Archive counts mean received verified executable bytes. Ordinary assets count
+successful Java writes. Unified data keeps received bytes and writtenBytes
+separate; the meter advances by prepared bytes, while text labels loaded/prepared
+counts. Observers are passive and cannot replace I/O outcomes. Download reporting
+is throttled to 1 MiB/250 ms and file boundaries. Child history and parent history
+remain bounded; no diagnostics are uploaded. Unknown runtime work is indeterminate.
+
+Reproduction and checks
+-----------------------
+Run from a worker or manager checkout, supplying a complete intact production JAR:
+
+python3 tests/myworld/test-browser-startup-bulk.py --client-jar /absolute/client.jar
+
+The runner compiles all ten maintained bootstrap sources against that JAR, saves
+source/JAR hashes and exact commands, then runs actual Java and controlled frontend
+fixtures. It writes categorized output/tests/browser-startup-bulk/suite-*/ receipts.
+It does not build a replacement core JAR or transplant core classes. An intact
+published alpha-20261112-1 client JAR was used for the worker compile.
+
+Focused coverage: 89 adapter checks; 54 actual Java byte/FD-close/finally/cancel/
+roster checks; 38 public-bootstrap/private admission checks; 250 startup observer/
+archive checks; 109 actual parent queued-message checks; 32 filesystem helper
+checks; 54 public policy checks; display/world readiness regressions; actual
+frontend VM public/private and deferred Stop during archives, runtime script and
+cheerpjInit. The frontend VM uses controlled Java/WebGL seams, not hardware.
+Paired old/new parent ownership is checked by the parent fixture; the late-child
+fixture separately proves no late display/RunMain. Do not describe these as a
+real concurrent multi-browser test.
+
+Independent ai2 review of checkpoint 182199e92 found no blocker: ten exact-module
+cleanup/later-digest checks and 44 actual Java copy/cleanup checks pass. Those
+fixtures reproduced two earlier cleanup errors at e4f63 and pass after correction.
+The full unchanged private/native source tree and strict readiness/source guards
+remain outside the implementation diff. Workspace-layout check still reports the
+inherited legacy output entries; this work writes only categorized new outputs.
+
+Remaining acceptance
+--------------------
+The manager must build/package a fresh source-bound bootstrap and run actual
+Firefox using the real CheerpJ 5.0 APIs: full cold/warm Play-to-LOGIN and correct
+world readiness, RAM request counts, progress visibility, cancellation/retry,
+failures and peak PSS. Verify three full RAM fetches replace the small range-read
+pattern, with Java source/readiness checks still complete. API availability has
+been observed by the manager; CPU seams do not prove its actual byte/lifetime
+semantics. No startup-time, FPS, GPU-memory or total-memory improvement is claimed
+before those results. No public server, service, listener or browser was started
+by this worker and no hosting deployment was changed.

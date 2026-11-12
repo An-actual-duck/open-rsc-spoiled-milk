@@ -7,6 +7,8 @@ import vm from 'node:vm';
 import {webcrypto,createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 const publicAlpha=process.argv.includes('--public-alpha');
+const stopAt=process.argv.includes('--stop-before-init')?'init':process.argv.includes('--stop-during-archives')?'archives':process.argv.includes('--stop-during-runtime-download')?'script':null;
+let resumeInit,resumeArchive,resumeScript,runMainCalls=0,createDisplayCalls=0;
 const argument=name=>{const index=process.argv.indexOf(name);return index<0?null:process.argv[index+1];};
 const nativeMode=process.argv.includes('--native-sync')?'sync':'async';
 const nativeExplicit=process.argv.includes('--native-sync')||process.argv.includes('--native-async');
@@ -41,15 +43,17 @@ const gateEvents=[];
 const window = {dispatchEvent:e=>gateEvents.push(e.type),browserRuntimeVersion:'5.0',addEventListener(){}};
 const context = vm.createContext({window,location:{search:(benchmarkStream?'?mode=webgl&benchmark=1&cache=lru&underlay=initial&uploadvalidation=on'+(benchmarkKeys?'&spritekeylimbs=on':'')+(benchmarkBatch?'&modelbatch=on':'')+(benchmarkDelta?'&overlaydelta=on':'')+(benchmarkRenderWorker?'&renderworker=on&overlay=coverage':'')+(benchmarkWholeZone?'&wholezone=on':'')+(benchmarkWholeRam?'&wholeram=on':'')+(benchmarkBounded?'&gpuresidency=bounded':'')+(benchmarkStatic?'&staticscene=on':'')+(benchmarkLoadProfile?'&loadprofile=on':'')+(benchmarkBaseline?'&baselinereuse=on':'')+(benchmarkCloneTemplates?'&clonetemplates=on':'')+(benchmarkRegionBuild?'&regionbuild=on':''):'?mode=webgl')+(combat?'&fixture=renderer-combat-v1':repeatable?'&fixture=repeatable-v1':'')+(physicalOption?'&physical='+physicalOption:'')+(nativeExplicit?'&nativecalls='+nativeMode:''),origin:'http://127.0.0.1'},parent:{postMessage:m=>messages.push(structuredClone(m))},
   URLSearchParams,performance:{now:()=>clock},console,
-  document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
+  document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>{if(stopAt==='script')resumeScript=()=>s.onload();else queueMicrotask(()=>s.onload());}},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
-  cheerpjInit:async o=>{configured=o;},cheerpjCreateDisplay(){},cheerpjRunMain:()=>new Promise(resolve=>{stopJava=resolve;})});
+  cheerpjInit:async o=>{configured=o;if(stopAt==='init')await new Promise(r=>resumeInit=r);},cheerpjCreateDisplay(){createDisplayCalls++;},cheerpjRunMain:()=>{runMainCalls++;return new Promise(resolve=>{stopJava=resolve;});}});
 let transportUrl;let publicRunArgs;
 if(publicAlpha){
   context.location.origin='https://play.rscspoiledmilk.com';context.location.search='';context.crypto=webcrypto;
-  context.fetch=async(url,options)=>{assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');const raw=new Uint8Array(url.endsWith('/client.jar')?[1,2,3]:[5,6]);return{ok:true,headers:{get:()=>String(raw.length)},arrayBuffer:async()=>raw.buffer};};
-  context.cheerpjRunMain=(...args)=>{publicRunArgs=args;return new Promise(resolve=>{stopJava=resolve;});};
+  context.fetch=async(url,options)=>{assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');const raw=new Uint8Array(url.endsWith('/client.jar')?[1,2,3]:[5,6]);return{ok:true,headers:{get:()=>String(raw.length)},arrayBuffer:async()=>{if(stopAt==='archives'&&url.endsWith('/client.jar'))await new Promise(r=>resumeArchive=r);return raw.buffer;}};};
+  context.cheerpjRunMain=(...args)=>{runMainCalls++;publicRunArgs=args;return new Promise(resolve=>{stopJava=resolve;});};
 }
+const startupModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-startup-progress.js',import.meta.url),'utf8'),{context});
+const bulkModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-bulk-staging.js',import.meta.url),'utf8'),{context});
 const publicPolicyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-public-alpha.js',import.meta.url),'utf8'),{context});
 const deploymentModule=new vm.SyntheticModule(['default'],function(){this.setExport('default',publicAlpha?publicConfig:null);},{context});
 let gateChanged;const cover={blocksWorldInput:false,attach(){},dispose(){coverDisposed++;this.blocksWorldInput=false;},update(state){const next=state?.phase==='loading';if(next!==this.blocksWorldInput){this.blocksWorldInput=next;gateChanged();}}};
@@ -109,6 +113,8 @@ const ramConfigModule=new vm.SyntheticModule(['default'],function(){this.setExpo
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{if(specifier==='./browser-whole-ram-config.js'){if(ramConfigModule.status==='unlinked')await ramConfigModule.link(()=>{});if(ramConfigModule.status==='linked')await ramConfigModule.evaluate();return ramConfigModule;}if(specifier==='./browser-whole-zone-config.js'){if(zoneConfigModule.status==='unlinked')await zoneConfigModule.link(()=>{});if(zoneConfigModule.status==='linked')await zoneConfigModule.evaluate();return zoneConfigModule;}if(specifier==='./browser-render-worker.js'){if(renderWorkerModule.status==='unlinked')await renderWorkerModule.link(()=>{});if(renderWorkerModule.status==='linked')await renderWorkerModule.evaluate();return renderWorkerModule;}const selected=specifier==='./browser-native-call-dispatch.js'?nativeModule:gpuModule;if(selected===gpuModule)assert.equal(specifier,nativeMode==='sync'?'./webgl-sync.js':'./webgl.js');assert(selected,'Unexpected native helper import');if(selected.status==='unlinked')await selected.link(()=>{});if(selected.status==='linked')await selected.evaluate();return selected;}});
 await module.link(specifier=>{
+  if(specifier==='./browser-startup-progress.js')return startupModule;
+  if(specifier==='./browser-bulk-staging.js')return bulkModule;
   if(specifier==='./browser-deployment-config.js')return deploymentModule;
   if(specifier==='./browser-public-alpha.js')return publicPolicyModule;
   if(specifier==='./browser-whole-ram.js')return ramPolicyModule;
@@ -134,7 +140,16 @@ await module.link(specifier=>{
   if(specifier==='./browser-middle-mouse.js')return middleModule;
   assert.equal(specifier,'./transport.js');return transportModule;
 });
-module.evaluate();
+const evaluating=module.evaluate();
+if(stopAt){
+ assert.ok(publicAlpha,'Late startup cases use the actual public archive path');
+ for(let i=0;i<100&&!({init:resumeInit,archives:resumeArchive,script:resumeScript}[stopAt]);i++)await new Promise(r=>setImmediate(r));
+ const resume={init:resumeInit,archives:resumeArchive,script:resumeScript}[stopAt];assert.equal(typeof resume,'function','selected actual await is pending');
+ window.browserSessionDispose();const sent=messages.length;resume();await evaluating;
+ assert.equal(runMainCalls,0,'discarded runtime never starts Java ordinary writes');assert.equal(createDisplayCalls,0,'discarded runtime never creates AWT display');assert.equal(messages.length,sent,'old completion cannot send new parent/session state');
+ assert.equal(window.browserProof.startup.closed,true);assert.equal(transportDisposed,1);
+ console.log('PASS actual frontend Stop during '+stopAt+' ignores late completion before display/Java; parent restart ownership covered separately');process.exit(0);
+}
 for(let i=0;i<30&&!configured;i++)await new Promise(resolve=>setImmediate(resolve));
 if(withoutNativeModule&&nativeMode==='sync'){assert.equal(configured,undefined);assert.equal(gpuOptions,undefined);assert.equal(gpuDisposed,0);assert.equal(transportDisposed,1);assert.equal(middleDisposed,1);assert.ok(messages.some(m=>m.type==='browser-session-stop'&&m.reason.includes('Private synchronous backend is unavailable')));console.log('PASS unavailableSYNC fails before backend/Java startup; no fallback or fake receipt');process.exit(0);}
 if(publicAlpha){
@@ -150,7 +165,11 @@ if(publicAlpha){
   assert.equal(publicRunArgs[1],'/app/assets/alpha-test1/browser-spike.jar:/app/assets/alpha-test1/client.jar');
   configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(null,new Int32Array([1,1,1,1,0,0]));assert.equal(window.browserProof.wholeRamRoofSelection.literalRoofFallback,true);
   assert.throws(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(null,new Int32Array([1,1,1,1,0,1])));
+  assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_isRamBulkCancelled(),false);
   const previous=window.browserProof.wholeRamRoofSelection;window.browserSessionDispose();configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(null,new Int32Array());assert.equal(window.browserProof.wholeRamRoofSelection,previous,'late reporter cannot revive disposed state');
+  assert.equal(configured.natives.Java_orsc_browser_BrowserBootstrap_isRamBulkCancelled(),true);
+  configured.natives.Java_orsc_browser_BrowserBootstrap_reportStartupProgress(null,'malformed',-1,-1,-1,-1);
+  await assert.rejects(configured.natives.Java_orsc_browser_BrowserBootstrap_prepareRamBulkFile(null,'Cache/whole-ram/manifest.json'),/unavailable/);
   const file=argument('--properties-output');if(file)fs.writeFileSync(file,props.join('\n')+'\n');
   console.log('PASS actual public frontend fixed rendering/pinned WSS/versioned archives/Java properties/no fixture or runtime switches; VM only');process.exit(0);
 }
