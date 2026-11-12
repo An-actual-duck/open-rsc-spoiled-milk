@@ -3,9 +3,11 @@ Browser handoff and compact geometry: combined private results
 
 Status
 ------
-The integrated source-bound candidate and compact geometry hardware checks are
-complete. Same-artifact baseline-reuse OFF/ON travel acceptance is still pending.
-This document is a draft until those actual Firefox measurements are recorded.
+Compact geometry has measured memory savings and passed hardware checks. The
+first baseline clone reuse candidate has not established a CPU loading benefit:
+its initial real ON route selected the feature but reused zero models. The next
+profile/caller investigation and final warm route measurements are pending. This
+document remains a draft; the CPU optimization is not accepted as complete.
 No public server, public client default or player map was changed by this work.
 
 What changed
@@ -62,8 +64,8 @@ Clean full Ant build: 986 classes, 3194 packaged own assets, no class transplant
 
 The GPU catalogue, compact derivative and RAM recipes were all cooked afresh for
 this JAR and original package/assets/settings. Old cooks were not rebound to a
-new JAR. Canonical settings are [0,0,1,0]. The catalogue contains 1400 geometry chunks; its complete 1474-resource delivery
-also includes texture/metadata files. Geometry-chunk and delivery-file counts are
+new JAR. Canonical settings are [0,0,1,0]. The catalogue contains 1400 geometry
+chunks; its complete 1474-resource delivery also includes texture/metadata files. Geometry-chunk and delivery-file counts are
 different scopes.
 
 Authoritative receipt locations under the manager checkout:
@@ -142,20 +144,53 @@ This does not establish a CPU loading improvement from compact geometry. Route
 elapsed time includes polling, clicks and settling and must not become an FPS
 measure. Overlapping interval rings must not be concatenated as independent
 percentile samples. Compact's clear win is the geometry byte reduction.
-Evidence:output/diagnostics/browser-handoff-compact/compact-comparison-1.json.
+Evidence: output/diagnostics/browser-handoff-compact/compact-comparison-1.json.
 
 Integrated baseline-reuse acceptance
 ------------------------------------
-PENDING: manager same-new-artifact OFF/ON travel, phase/work counters and busy
-stationary measurements. Record source/epoch/ready/input/Worker receipts and
-bounded capacity invariants, rather than treating low reported bridge time as a
-complete transition measurement. Do not declare a loading win from offline clone
-counts, the old format comparison, or a loading screen remaining hidden.
+PENDING: final fair OFFwarm3/ONwarm route pair, named phase/work counters and
+candidate busy stationary result. The integrated OFF busy run accepted 59.26885
+fresh FPS. Its earlier single cold route recorded per-leg maximum intervals
+[40,521,290,355,255,297,307]ms and 53 new catalogue uploads; this is descriptive
+startup evidence, not a strict pair with a later revised driver.
+
+The initial real ON cold route recorded [40,546,343,290,276,269,305]ms. Its runtime
+counters showed requested/selected=true, 3 admitted baseline replays, 3030 eligible
+static clones and ZERO reused instances. It retained 86 template proofs (about
+2.61 MB) with a conservative workspace peak of about 4.71 MB. Thus the exercised
+runtime did not demonstrate the offline reuse reduction, and these cold results
+do not establish a loading improvement. Admission or template retention alone is
+not evidence that a cache avoids actual work.
+
+The first candidate targeted legacy baseline reconstruction. Current-profile
+investigation is needed to prove the higher-level owner of warm clone/normals
+work; static-presentation/canonical model builders and animated replacement are
+leads, not established attribution yet. Generated RSModel function identification
+alone did not prove which high-level caller should have been optimized. Do not
+present offline reuse counts as an exercised warm runtime optimization.
+
+The final fair warm driver waits for three 100 ms stable-camera/input-clear samples
+before the unchanged original 80 ms pointer click and requires three stable coverage
+observations at route end. No engine method override, click retry or forced region
+activation is used. Both final OFF and ON controls must use that same driver.
+Route elapsed time includes those waits and cannot establish FPS or loading speed.
+
+Preserved exclusions: an earlier warm route reached its last authority context but
+its immediate final observer assertion raced Worker coverage ACK; passive follow-up
+coverage was ready with no runtime error. A separate route missed a calibrated
+minimap click while the camera was interpolating and remained at the old authority
+context. These incomplete driver attempts are excluded rather than treated as new
+production bugs or quietly retried into a successful sample.
+
+Record source/epoch/ready/input/Worker receipts and bounded capacity invariants,
+rather than treating low reported bridge time as a complete transition measurement.
+Do not declare a loading win from offline clone counts, the old format comparison,
+or a loading screen remaining hidden.
 
 Correctness and remaining limits
 --------------------------------
 The integrated full JAR passed independent actual PacketHandler adversarial replay:
-39 transitions per OFF/ON/ordinary mode,3,707 assertions each; all 986 class bytes
+39 transitions per OFF/ON/ordinary mode, 3,707 assertions each; all 986 class bytes
 and changed production-source SHA values matched the build receipt. Geometry,
 collision, Scene order/metadata, picking and software output traces were identical:
   4bbb8f11fd4183a295b1a65b4fb4a158840cf899d7f29ccbca5f17d656265841
@@ -164,6 +199,11 @@ confirmed that the original pipeline rebuilt them, and asserted actual ON instan
 reuse. Material/picking mutations refused reuse. Broader feature fixtures retain
 21 transitions/six policy combinations and 6,362 checks per configuration.
   output/diagnostics/browser-handoff-compact/integrated-independent-review-1/result.json
+
+Manager review 9a4f6eba9 proved that removing the two delimited helper additions
+recovers the original enclosing source bytes and that no guarded light reader was
+added. The closed query-light and flat-light source guards were then refreshed and
+pass on c0a3cb89e. This is an exact reviewed extension, not a disabled hash check.
 
 Those are CPU/offline stored-baseline tests, not incoming network or all gameplay
 scenarios. Signed negative/upper levels and other-world cases retain literal
