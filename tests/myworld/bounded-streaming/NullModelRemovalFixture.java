@@ -28,6 +28,8 @@ public final class NullModelRemovalFixture {
     private static void clear(Scene off,Scene on)throws Exception{selected(false);off.removeAllGameObjects(false);selected(true);on.removeAllGameObjects(false);operations++;equal(off,on);}
     private static void bulk(Scene off,Scene on,RSModel[] models)throws Exception{selected(false);off.removeModels(models,models.length);selected(true);on.removeModels(models,models.length);operations++;equal(off,on);}
     public static void main(String[] args)throws Exception{
+        if(args.length>0){check(WholeOverworldZoneRegistry.isStaticSceneReuseEnabled()==Boolean.parseBoolean(args[0]),"actual shared private/default-OFF gate");System.out.println("PASS null removal shared private gate "+args[0]);return;}
+        selected(false);check(!WholeOverworldZoneRegistry.isStaticSceneReuseEnabled(),"literal control selected");selected(true);check(WholeOverworldZoneRegistry.isStaticSceneReuseEnabled(),"private optimized control selected");
         Scene off=scene(),on=scene();RSModel[] pool=new RSModel[40];for(int i=0;i<pool.length;i++)pool[i]=new RSModel(1,1);
         remove(off,on,null);add(off,on,null);check(COUNT.getInt(on)==0,"empty/addnull remains empty");
         for(int i=0;i<80;i++)add(off,on,pool[i%pool.length]);

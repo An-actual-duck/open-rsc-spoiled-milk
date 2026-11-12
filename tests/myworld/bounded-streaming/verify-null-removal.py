@@ -27,6 +27,9 @@ fixture=Path(__file__).with_name('NullModelRemovalFixture.java')
 run('compile',['javac','-source','8','-target','8','-cp',str(a.jar.resolve()),'-d',str(classes),str(fixture)])
 flags=['-Djava.awt.headless=true','-Dspoiledmilk.browserBenchmark=true','-Dspoiledmilk.browserWholeZone=true']
 result=json.loads(run('differential',['java','-Xmx256m',*flags,'-cp',str(classes)+':'+str(a.jar.resolve()),'orsc.graphics.three.NullModelRemovalFixture']).strip().splitlines()[-1]);assert result['passed']and result['operations']>=6000
+gates=[]
+for index,(properties,expected) in enumerate([([],False),(['browserStaticSceneReuse'],False),(['browserBenchmark','browserStaticSceneReuse'],False),(['browserBenchmark','browserWholeZone'],False),(['browserBenchmark','browserWholeZone','browserStaticSceneReuse'],True)]):
+ text=run('gate-'+str(index),['java','-Xmx128m','-Djava.awt.headless=true',*['-Dspoiledmilk.'+name+'=true'for name in properties],'-cp',str(classes)+':'+str(a.jar.resolve()),'orsc.graphics.three.NullModelRemovalFixture',str(expected).lower()]);gates.append(dict(properties=properties,expected=expected,stdout=text))
 references=[a.reference_jar,a.reference_receipt,a.ram_delivery,a.reference_cache];assert not any(references)or all(references),'Supply complete original reference binding'
 prepared=None
 if all(references):
@@ -36,5 +39,5 @@ if all(references):
  run('reference-compile',['javac','-source','8','-target','8','-cp',str(a.reference_jar.resolve()),'-d',str(refclasses),str(source)])
  prepared=json.loads(run('prepared-arrays',['java','-Xmx1024m','-Djava.awt.headless=true','-cp',str(refclasses)+':'+str(a.reference_jar.resolve()),'orsc.graphics.three.PreparedRoofNullFixture',str(data),str(a.reference_cache)]).strip().splitlines()[-1]);assert prepared['passed']and prepared['activatedNullRemovalRequests']==720
  prepared.update(referenceReceipt=reference,manifestSha256=sha(a.ram_delivery/'manifest.json'),preparedSha256=sha(data))
-report=dict(passed=True,productionReceipt=receipt,differential=result,preparedReference=prepared,commands=commands,fixtureSha256={v.name:sha(v)for v in Path(__file__).parent.glob('*Null*Fixture.java')},limitations=['Fixture-only classes compiled; no production overlays.','No browser/server/GPU/FPS claim.','Prepared activation is detached, not a live process array snapshot.'])
+report=dict(passed=True,productionReceipt=receipt,differential=result,startupGates=gates,preparedReference=prepared,commands=commands,fixtureSha256={v.name:sha(v)for v in Path(__file__).parent.glob('*Null*Fixture.java')},limitations=['Fixture-only classes compiled; no production overlays.','No browser/server/GPU/FPS claim.','Prepared activation is detached, not a live process array snapshot.'])
 (a.out/'result.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(dict(passed=True,differential=result,prepared=prepared,out=str(a.out)),indent=2))

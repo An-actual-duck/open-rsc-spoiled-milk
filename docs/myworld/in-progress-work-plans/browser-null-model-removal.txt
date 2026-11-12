@@ -43,3 +43,14 @@ integrated hardware testing.
 No server/browser/GPU action or deployment is part of this implementation.
 Same-artifact private ON/OFF hardware profiling and visual acceptance remain with
 the manager after integration and a fresh source-bound bake.
+
+Initial clean candidate30f616e79 full-source build passed. Its actual Scene
+ON/OFF differential passed1,812,736 checks over6,251 operations. The original
+source-bound743/cc702 full RAM decoder and detached2,13 activation passed65,394
+checks:445 decoded recipes contain64,080 null roof references; the actual
+activation exposes720 null removal arguments while144 nonnull models remain in
+the active Scene prefix. These results substantiate the prepared-context workload
+without claiming to capture live browser arguments. The final fixture additionally
+requires selected ON/OFF control assertions and five startup gate combinations.
+Evidence is under AI-2 output/tests/browser-null-model-removal/; frozen full source
+artifacts and their receipts/manifests are under output/builds/browser-null-model-removal/.
