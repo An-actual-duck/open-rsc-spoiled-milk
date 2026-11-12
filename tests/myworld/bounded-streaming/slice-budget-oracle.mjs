@@ -1,12 +1,12 @@
+import {frozenBrowserModules} from '../browser-source-import.mjs';
 /** Independent aggregate-tick and cache-horizon oracle; real uploader, simulated GL/RAF. */
 import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import assert from 'node:assert/strict';
 const args=process.argv.slice(2),option=n=>{const i=args.indexOf(n);if(i<0||!args[i+1])throw Error('Required '+n);return path.resolve(args[i+1]);};
 const root=option('--source-root'),out=option('--out'),web=path.join(root,'tools/browser-gameplay/web');
 const names=['browser-bounded-residency.js','browser-bounded-upload.js','browser-whole-zone.js','browser-whole-zone-policy.js'];
 const sources=Object.fromEntries(names.map(n=>[n,fs.readFileSync(path.join(web,n),'utf8')])),data=s=>'data:text/javascript;base64,'+Buffer.from(s).toString('base64');
-const zone=sources['browser-whole-zone.js'].replace("from './browser-whole-zone-policy.js'",`from '${data(sources['browser-whole-zone-policy.js'])}'`);
-const upload=sources['browser-bounded-upload.js'].replace("from './browser-whole-zone.js'",`from '${data(zone)}'`);
-const {createBoundedResidency}=await import(data(sources['browser-bounded-residency.js']));const {createBoundedChunkUpload}=await import(data(upload));
+const frozen=frozenBrowserModules(web);
+const {createBoundedResidency}=await import(frozen.url('browser-bounded-residency.js'));const {createBoundedChunkUpload}=await import(frozen.url('browser-bounded-upload.js'));
 let checks=0;const check=(v,label)=>{assert(v,label);checks++;};
 const id=n=>1000000+n,geometryBytes=124,workBytes=268;
 const chunks=Array.from({length:32},(_,n)=>({id:id(n),role:n%2,vertexCount:1,indexCount:3,batchIntCount:5,bytes:160}));
@@ -78,4 +78,4 @@ for(const options of [{constructorCost:7},{prepareCost:7}]){
 {
  const h=harness({config:{capacityBytes:40+3*geometryBytes,maxChunks:3,maxTickSteps:1}});h.select([id(0)]);for(let n=0;n<20&&!h.ledger.partial;n++)await h.frame();check(h.ledger.partial===124,'required partial allocation exercised');assert.throws(()=>h.api.reclaim(372,3),/no room|capacity/);checks++;check(h.ledger.partial===124&&h.ledger.disposed===0,'required partial upload never cancelled for local pressure');await h.drain();check(h.api.ready&&h.resident.has(id(0)),'protected required partial still completes');h.api.dispose();
 }
-const result={passed:true,checks,sourceRoot:root,sourceSha256:Object.fromEntries(Object.entries(sources).map(([n,s])=>[n,crypto.createHash('sha256').update(s).digest('hex')])),scope:'Actual scheduler + actual incremental packed-resource uploader with independent byte/allocation ledger, synthetic sources, deterministic RAF/clock and GL double. Aggregate timing includes injected nonpreemptible overruns. No GPU execution, browser/visuals, real timing or FPS acceptance.'};fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify(result));
+const result={passed:true,checks,dependencySha256:frozen.hashes,sourceRoot:root,sourceSha256:Object.fromEntries(Object.entries(sources).map(([n,s])=>[n,crypto.createHash('sha256').update(s).digest('hex')])),scope:'Actual scheduler + actual incremental packed-resource uploader with independent byte/allocation ledger, synthetic sources, deterministic RAF/clock and GL double. Aggregate timing includes injected nonpreemptible overruns. No GPU execution, browser/visuals, real timing or FPS acceptance.'};fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify(result));

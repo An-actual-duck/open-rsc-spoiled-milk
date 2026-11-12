@@ -1,3 +1,4 @@
+import {geometryLayout,geometryFloatView,bindGeometryAttributes,COMPACT_GEOMETRY} from './browser-geometry-layout.js';
 import {decodeWholeZoneChunk} from './browser-whole-zone.js';
 /** One owned packed payload. Each call performs at most sliceBytes of CPU
  * validation/copy or GPU transfer, and restores bindings even in owned-state mode.
@@ -5,7 +6,8 @@ import {decodeWholeZoneChunk} from './browser-whole-zone.js';
  */
 export function createBoundedChunkUpload(gl,{chunk:c,buffer,program,attributes,check,
   reserve,allocated,released,publish,measure=()=>{}}){
-  const {vertices,indices,batches:sourceBatches}=decodeWholeZoneChunk(buffer,c);
+  const {vertices,indices,batches:sourceBatches,geometryLayout:layoutId}=decodeWholeZoneChunk(buffer,c);
+  const layout=geometryLayout(layoutId),positions=geometryFloatView(vertices,layoutId),stride=layout.strideBytes;
   const batches=new Int32Array(sourceBatches.length),bytes=vertices.byteLength+indices.byteLength;
   const bounds=new Float64Array([Infinity,Infinity,Infinity,-Infinity,-Infinity,-Infinity]);
   let stage='vertices',at=0,vao=null,vbo=null,ibo=null,owns=false,done=false,disposed=false,lastStepBytes=0;
@@ -17,9 +19,9 @@ export function createBoundedChunkUpload(gl,{chunk:c,buffer,program,attributes,c
     lastStepBytes=0;const started=performance.now();
     try{
       if(stage==='vertices'){
-        const end=Math.min(vertices.length,at+Math.max(28,Math.floor(limit/112)*28));
-        lastStepBytes=(end-at)*4;for(;at<end;at+=28)for(let axis=0;axis<3;axis++){const n=vertices[at+axis];if(!Number.isFinite(n))throw new Error('Bounded nonfinite geometry');bounds[axis]=Math.min(bounds[axis],n);bounds[axis+3]=Math.max(bounds[axis+3],n);}
-        if(at===vertices.length){stage='indices';at=0;}return false;
+        const end=Math.min(c.vertexCount,at+Math.floor(limit/stride));
+        lastStepBytes=(end-at)*stride;for(;at<end;at++){if(layoutId===COMPACT_GEOMETRY&&vertices[at*stride+47]!==0)throw new Error('Compact reserved vertex byte');for(let axis=0;axis<3;axis++){const n=positions[at*(stride/4)+axis];if(!Number.isFinite(n))throw new Error('Bounded nonfinite geometry');bounds[axis]=Math.min(bounds[axis],n);bounds[axis+3]=Math.max(bounds[axis+3],n);}}
+        if(at===c.vertexCount){stage='indices';at=0;}return false;
       }
       if(stage==='indices'){
         const end=Math.min(indices.length,at+Math.floor(limit/4));lastStepBytes=(end-at)*4;for(;at<end;at++)if(indices[at]<0||indices[at]>=c.vertexCount)throw new Error('Bounded invalid geometry index');
@@ -34,14 +36,14 @@ export function createBoundedChunkUpload(gl,{chunk:c,buffer,program,attributes,c
         reserve(bytes);bindings(()=>{vao=gl.createVertexArray();vbo=gl.createBuffer();ibo=gl.createBuffer();if(!vao||!vbo||!ibo)throw new Error('Bounded GPU allocation failed');
           gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,vertices.byteLength,gl.STATIC_DRAW);
           gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices.byteLength,gl.STATIC_DRAW);
-          for(const[name,size,offset]of attributes){const location=gl.getAttribLocation(program,name);if(location>=0){gl.enableVertexAttribArray(location);gl.vertexAttribPointer(location,size,gl.FLOAT,false,112,offset*4);}}check();});
+          bindGeometryAttributes(gl,program,layoutId,attributes);check();});
         owns=true;allocated(bytes);stage='upload-vertices';return false;
       }
       bindings(()=>{gl.bindVertexArray(vao);const plane=stage==='upload-vertices'?vertices:indices,target=stage==='upload-vertices'?gl.ARRAY_BUFFER:gl.ELEMENT_ARRAY_BUFFER;
         gl.bindBuffer(target,stage==='upload-vertices'?vbo:ibo);const end=Math.min(plane.byteLength,at+limit);
         lastStepBytes=end-at;if(end>at)gl.bufferSubData(target,at,new Uint8Array(plane.buffer,plane.byteOffset+at,end-at));check();at=end;
         if(at===plane.byteLength){at=0;if(stage==='upload-vertices')stage='upload-indices';else{
-          publish({vao,vbo,ibo,batches,bounds:vertices.length?bounds:null,bytes,vertexBytes:vertices.byteLength,indexBytes:indices.byteLength});owns=false;done=true;
+          publish({vao,vbo,ibo,batches,bounds:vertices.length?bounds:null,bytes,geometryLayout:layoutId,vertexBytes:vertices.byteLength,indexBytes:indices.byteLength});owns=false;done=true;
         }}});return done;
     }finally{measure(performance.now()-started,stage);}
   }

@@ -1,3 +1,4 @@
+import {frozenBrowserModules} from '../browser-source-import.mjs';
 /** Exercise actual bounded resource reader with independent stream producers. */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -7,7 +8,7 @@ const args=process.argv.slice(2),option=n=>{const at=args.indexOf(n);if(at<0||!a
 const root=option('--source-root'),out=option('--out'),web=path.join(root,'tools/browser-gameplay/web');
 const source=fs.readFileSync(path.join(web,'browser-whole-zone.js'),'utf8'),policy=fs.readFileSync(path.join(web,'browser-whole-zone-policy.js'),'utf8');
 const data=v=>'data:text/javascript;base64,'+Buffer.from(v).toString('base64');
-const {fetchWholeZoneBytes}=await import(data(source.replace("from './browser-whole-zone-policy.js'",`from '${data(policy)}'`)));
+const frozen=frozenBrowserModules(web);const {fetchWholeZoneBytes}=await import(frozen.url('browser-whole-zone.js'));
 let checks=0;
 function stream(parts,{advertised=null,failAt=-1,ok=true,status=200}={}){
  let at=0;const observed={cancelled:0,released:0,reads:0,fetches:0};
@@ -36,5 +37,5 @@ for(const expected of [0,-1,1.5,1025,NaN]){const s=stream([bytes]);await assert.
  while(reads<2)await Promise.resolve();controller.abort(new Error('midfetch cancellation'));
  await assert.rejects(pending,/midfetch cancellation/);assert(signalSeen);assert.equal(cancel,1);assert.equal(release,1);checks+=4;
 }
-const result={passed:true,checks,sourceRoot:root,sourceSha256:crypto.createHash('sha256').update(source).digest('hex'),scope:'Actual resource byte-reader boundary, malformed response, prefetch cap and midfetch abort cleanup. Synthetic transport only; scheduler cancellation, network stack, GPU and timing remain separate.'};
+const result={passed:true,checks,dependencySha256:frozen.hashes,sourceRoot:root,sourceSha256:crypto.createHash('sha256').update(source).digest('hex'),scope:'Actual resource byte-reader boundary, malformed response, prefetch cap and midfetch abort cleanup. Synthetic transport only; scheduler cancellation, network stack, GPU and timing remain separate.'};
 fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify(result));

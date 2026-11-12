@@ -1,8 +1,9 @@
+import {frozenBrowserModules} from '../browser-source-import.mjs';
 /** Adversarial caller-owned allocation ledger for actual bounded scheduler. No GL. */
 import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import assert from 'node:assert/strict';
 const args=process.argv.slice(2),option=n=>{const i=args.indexOf(n);if(i<0||!args[i+1])throw Error('Required '+n);return path.resolve(args[i+1]);};
 const root=option('--source-root'),out=option('--out'),file=path.join(root,'tools/browser-gameplay/web/browser-bounded-residency.js'),source=fs.readFileSync(file,'utf8');
-const {createBoundedResidency}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+const frozen=frozenBrowserModules(path.dirname(file));const {createBoundedResidency}=await import(frozen.url('browser-bounded-residency.js'));
 let checks=0;const check=(b,label)=>{assert(b,label);checks++;};
 const chunks=Array.from({length:8},(_,n)=>({id:1000000+n,role:n%2,vertexCount:1,indexCount:3,batchIntCount:5,bytes:160}));
 const id=n=>chunks[n].id,geometryBytes=124;
@@ -54,4 +55,4 @@ for(const failure of ['prepare','upload']){const h=harness(failure==='prepare'?{
 {
  const h=harness({config:{capacityBytes:1000,maxChunks:1}});assert.throws(()=>h.select([id(0),id(1)]),/exceeds|count/);checks++;check(!!h.api.error&&!h.api.ready,'independent count cap fails closed even with spare bytes');h.api.dispose();
 }
-const result={passed:true,checks,sourceRoot:root,sourceSha256:crypto.createHash('sha256').update(source).digest('hex'),scope:'Actual scheduler plus independently owned texture/geometry/partial allocation ledger and adversarial asynchronous producers. Covers publication readiness, active eviction, byte/count/transient caps, stale fetch/upload cancellation, context disposal and failures. Synthetic uploads; no actual GPU allocation, pixels, total VRAM, timing or FPS proof.'};fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify(result));
+const result={passed:true,checks,dependencySha256:frozen.hashes,sourceRoot:root,sourceSha256:crypto.createHash('sha256').update(source).digest('hex'),scope:'Actual scheduler plus independently owned texture/geometry/partial allocation ledger and adversarial asynchronous producers. Covers publication readiness, active eviction, byte/count/transient caps, stale fetch/upload cancellation, context disposal and failures. Synthetic uploads; no actual GPU allocation, pixels, total VRAM, timing or FPS proof.'};fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify(result));
