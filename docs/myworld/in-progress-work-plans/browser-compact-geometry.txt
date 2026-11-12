@@ -1,35 +1,116 @@
 Private browser compact geometry — November 12, 2026
 ===================================================
 
-Status: implementation in progress in feat/browser-compact-geometry. Ordinary
-renderer defaults, public server, existing bakes and owner preview are unchanged.
-The region-handoff investigation is independent.
+Status: implemented, offline checks passed; manager hardware acceptance pending.
+Private startup geometryformat=legacy|compact defaults to legacy. Ordinary/native
+renderer defaults and Java vertex data are unchanged. No browser, game client,
+listener, server, deployment or GPU test was started by this worker.
 
-The complete accepted ee358e... catalogue audit covers 1,400 resources and
-19,001,439 vertices. Shader inputs use 23 of the 28 legacy float components;
-components 9..13 are neither browser receiver nor depth-shadow attributes.
-Every material/raw/blend color exactly round-trips through float32(byte/255).
-Base light and kind/family/mask/blend-strength exactly fit unsigned bytes.
-No float32 position, UV or normal precision change is proposed.
+Representation and scope
+------------------------
+The complete accepted ee358e... catalogue has 1,400 resources and 19,001,439
+vertices. Browser shader inputs use 23 of the 28 legacy float components;
+components 9..13 are neither receiver nor depth-shadow attributes. The converter
+refuses nonrepresentable values instead of quantizing them. Position, UV and
+normal float32 bits are copied exactly, including signed zero. Material/raw/blend
+colors must round-trip through float32(byte/255); light, model kind, material
+family, variation mask and blend strength must be exact uint8 values. Negative
+zero in those byte fields is rejected. Index and material-batch bytes are copied.
 
-Candidate compact48-v1 layout (byte offsets):
+compact48-v1 byte offsets:
   0 position float32[3]; 12 UV float32[2]; 20 normal float32[3]
   32 material RGBA unorm8[4]; 36 raw RGB unorm8[3]; 39 base light uint8
   40 terrain blend RGB unorm8[3]; 43 model kind uint8; 44 material family uint8
   45 variation mask uint8; 46 blend strength uint8; 47 zero padding
-This changes vertex storage from 112 to 48 bytes (57.14% smaller), before indices.
-Each conversion must refuse nonrepresentable values, including sign-changing
-negative zero, rather than quantize them. CPU roundtrip equivalence does not
-replace actual shader/pixel acceptance on hardware.
+The versioned 24-byte header declares magic, version, stride and three counts.
+Legacy 112-byte Java/local/dynamic geometry is retained. Catalogue main-pass and
+shadow VAOs bind their owned layout independently. No runtime scene repacking or
+compact-to-legacy vertex expansion occurs. Shared allocation/residency accounting
+uses actual allocated vertex plus index bytes; pending/cancelled uploads retain
+the existing ledger and cancellation rules. Texture bytes are unchanged.
 
-A versioned derivative sidecar will bind the exact canonical catalogue/JAR/source,
-settings and every original resource hash. Canonical catalogue and RAM recipes
-remain immutable. A fresh private stage may contain legacy and compact variants
-for same-artifact startup controls. Local/dynamic geometry retains legacy112;
-per-resource VAO/shadow layouts and actual allocation bytes remain explicit.
-No runtime whole-window CPU conversion is planned.
+The immutable derivative manifest binds the exact canonical catalogue SHA,
+client JAR SHA, source manifest/fingerprint, settings, layout and complete original
+resource roster/hashes/counts. Resource paths and shapes are fixed. Downloaded
+sidecar and payloads are length/SHA checked. Unknown active shader attributes fail
+closed in compact mode. The stager checks converter/decoder source hashes and
+full derivative inventory before staging. Canonical catalogue and RAM recipes
+are not rewritten or rebound to a different Java executable. Stages identify the
+current frontend and the distinct frozen Java source/artifact accurately.
 
-Acceptance requires full-catalogue conversion/roundtrip proof, sidecar/decoder
-negative cases, GL-double layout and mixed-path checks, bounded slice/cancellation
-and accounting tests, then manager-owned hardware pixel/frame-time/loading/memory
-comparison. No browser/GPU measurement or FPS gain is claimed here.
+Full offline result
+-------------------
+Converter implementation checkpoint: 6ff47c7a5d827c43eb6f5bc21340c6f0f47a39e3.
+Frozen Java source: c038033facae26c00026a72d42a7f2b053310966.
+JAR SHA: ac790e96c24da5ce383fb430ae8b2e75596db749a689c3c2bbe9b1ba19f52e90.
+Canonical catalogue SHA:
+  ee358e553588e05f55b6f64e6b9085a57579f8ffaf9df7185cc2db2ebc831ebe
+Sidecar SHA:
+  aa99c09df5e1ac06a767744b5bda893047c021f337223b470594c9cc0d9b0f3e
+
+All 1,400 resources passed 437,033,097 declared-attribute float32 comparisons.
+Geometry GPU storage, with unchanged indices:
+  legacy:  2,204,166,924 bytes
+  compact:   988,074,828 bytes (55.17% smaller)
+Vertex storage alone is 57.14% smaller (112 to 48 bytes).
+Complete texture payload remains 3,031,040 bytes. These are complete-catalogue
+resource derivations, not measured scene residency, total VRAM or total RAM.
+Sidecar JSON is 606,245 bytes. Full conversion/proof took 26.77s at nice10.
+
+Worker output receipts:
+  output/builds/browser-compact-geometry/full-1/compact-receipt.json
+  output/builds/browser-compact-geometry/full-1/compact-zone/compact-manifest.json
+  output/diagnostics/browser-compact-geometry/layout-audit.json
+  output/diagnostics/browser-compact-geometry/staging-smoke-1.log
+  output/tests/browser-gameplay-spike/compact-smoke-1/whole-ram-preparation.json
+Outputs are ignored task evidence, not shipped assets. Prior bakes stay intact.
+
+Reproduction (fresh destination names required)
+-----------------------------------------------
+Run from a clean worker checkpoint whose four converter-owned files match HEAD:
+
+nice -n 10 node tools/browser-gameplay/whole-zone/compact.mjs \
+  --name NEW-NAME \
+  --bake-run /home/justin/Core-Framework/output/builds/browser-whole-zone-bake/bounded-cpu-2
+
+The existing source-bound RAM stager supports --geometry-format legacy|compact
+and --compact-run PATH. The smoke stage was built with the existing frozen JAR,
+GPU bake, RAM bake, --gpu-residency bounded --gpu-budget-mib 512 --static-scene on.
+Its receipt provides urlGeometryLegacy and urlGeometryCompact. Both use the same
+stage/JAR, view, settings and budget, changing only geometryformat. Staging starts
+no HTTP listener. Parent owns launch and same-artifact hardware comparisons.
+
+Focused verification
+--------------------
+node tests/myworld/test-browser-compact-geometry.mjs CANONICAL-MANIFEST COMPACT-MANIFEST
+  7,215 checks: actual pack/decode/bind/upload/ledger/scheduler APIs, independent
+  literal byte interpretation, all byte values, signed zero, corrupt and negative
+  inputs, GL-double main/shadow layout calls, sliced upload and cancellation.
+python3 tests/myworld/test-browser-compact-delivery.py CANONICAL-DIR COMPACT-RUN
+  Actual complete inventory SHA/header admission, receipt refusals and paired URLs.
+node tests/myworld/test-browser-bounded-catalog.mjs STAGED-WEB legacy
+node tests/myworld/test-browser-bounded-catalog.mjs STAGED-WEB compact
+  Both admit all 1,400 descriptors and 74 textures, select 120 required chunks,
+  grant no premature GPU readiness and fit the Worker stats snapshot contract.
+
+Existing bounded upload, slice (152), prefetch (1,969), scheduler (89), fetch (53),
+selection (1,490), lighting/resource cleanup, shadow-uniform-cache (24 cases,
+16,520 unchanged non-lookup GL commands) and staging refusal checks pass.
+Oracle import changes capture recursive actual dependency bytes and SHA receipts;
+existing assertions were retained. No test substitutes a compact implementation.
+
+workspace-layout check reports 40 inherited legacy output-root entries in this
+worker. This task creates only declared diagnostics/tests/builds category groups;
+no inherited evidence was moved or deleted. Manager's layout remains separate.
+
+Remaining acceptance and limits
+-------------------------------
+CPU bit proofs model normalized byte inputs; actual hardware shader conversion,
+pixels, depth silhouettes/alpha cutouts, picking, animation, actor/VFX overlap,
+context reset and live loading still require manager verification. Use legacy
+and compact controls on the same artifact, with identical route/view/fog/budget.
+Record actual GPU ledger/queue/transient peaks and CPU/frame-time distributions;
+absence of GPU timer extension must be stated. No FPS gain is claimed. Compact
+format primarily reduces geometry upload/storage bandwidth, and does not promise
+lower VM/PSS/total VRAM. Do not change 512MiB default capacity based on full-file
+size math; any 256MiB proposal needs separate selected-scene capacity evidence.
