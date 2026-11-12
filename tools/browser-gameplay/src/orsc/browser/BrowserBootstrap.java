@@ -124,8 +124,8 @@ public final class BrowserBootstrap {
             BrowserBootstrapFiles.Progress copyProgress=new BrowserBootstrapFiles.Progress(){public void update(long bytes,int files,int total,long elapsed){reportStartupProgress("data",bytes,files,total,elapsed);}};
             if(publicAlpha)BrowserBulkStaging.copy(ramFiles,new File("/files"),65536,new BrowserBulkStaging.Source(){
                 public String prepare(String relative)throws IOException {
-                    String root=prepareRamBulkFile(relative);
-                    try{return BrowserBulkStaging.validateRoot(root);}
+                    String sourceFile=prepareRamBulkFile(relative);
+                    try{return BrowserBulkStaging.validateSource(sourceFile,relative);}
                     catch(IOException failure){try{releaseRamBulkFile(relative,false);}catch(Throwable cleanup){failure.addSuppressed(cleanup);}throw failure;}
                 }
                 public void release(String relative,boolean copied)throws IOException {releaseRamBulkFile(relative,copied);}
