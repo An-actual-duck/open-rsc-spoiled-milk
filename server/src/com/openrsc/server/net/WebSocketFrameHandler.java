@@ -16,6 +16,8 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
 	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 		// If the WebSocket handshake was successful, we remove the HttpRequestHandler from the pipeline as we are no more supporting raw HTTP requests
 		if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
+			PublicWebSocketHandshakeGuard guard = ctx.pipeline().get(PublicWebSocketHandshakeGuard.class);
+			if (guard != null) guard.complete();
 			ctx.pipeline().remove(HttpRequestHandler.class);
 		} else {
 			// otherwise forward to next handler
@@ -26,6 +28,11 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
 		if (frame instanceof TextWebSocketFrame) {
+			if (PublicWebSocketPolicy.enabled()) {
+				ctx.writeAndFlush(new io.netty.handler.codec.http.websocketx.CloseWebSocketFrame(1003, "Binary frames required"))
+					.addListener(io.netty.channel.ChannelFutureListener.CLOSE);
+				return;
+			}
 			// Send the uppercase string back.
 			String request = ((TextWebSocketFrame) frame).text();
 			ctx.channel().writeAndFlush(new TextWebSocketFrame(request.toUpperCase(Locale.US)));

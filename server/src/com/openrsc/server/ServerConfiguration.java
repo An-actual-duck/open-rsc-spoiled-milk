@@ -488,6 +488,12 @@ public class ServerConfiguration {
 		SERVER_PORT = tryReadInt("server_port").orElse(43594);
 		WS_SERVER_PORT = tryReadInt("ws_server_port").orElse(43494);
 		WANT_FEATURE_WEBSOCKETS = tryReadBool("want_feature_websockets").orElse(true);
+		// Explicit public alpha opt-in; ordinary hosted/native configuration is unchanged.
+		if (com.openrsc.server.net.PublicWebSocketPolicy.enabled()) {
+			WANT_FEATURE_WEBSOCKETS = true;
+			SSL_SERVER_CERT_PATH = System.getProperty("spoiledmilk.publicWebSocketCert", SSL_SERVER_CERT_PATH);
+			SSL_SERVER_KEY_PATH = System.getProperty("spoiledmilk.publicWebSocketKey", SSL_SERVER_KEY_PATH);
+		}
 		if (WS_SERVER_PORT == SERVER_PORT) {
 			// Disable port sharing of Websockets & TCP port
 			// technically maybe sharing the port can work, but let's just not do this ever.
