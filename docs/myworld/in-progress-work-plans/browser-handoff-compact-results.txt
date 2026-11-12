@@ -3,12 +3,13 @@ Browser handoff and compact geometry: combined private results
 
 Status
 ------
-Phase 1 is complete: compact geometry is accepted for private testing, with measured
-memory savings and hardware parity. The legacy baseline clone cache passed
-correctness checks but produced ZERO warm runtime reuses and is NOT ADOPTED as a
-loading optimization. No CPU loading win was established. A new shared clone-template
-candidate is in progress and requires its own review, fresh artifact and runtime
-acceptance; it is not included in these results.
+Compact geometry is accepted for private testing, with measured memory savings
+and hardware parity. Neither clone-cache experiment is adopted as a loading
+optimization: the first legacy baseline cache produced ZERO warm runtime reuses;
+the subsequent shared factory cache genuinely ran, but did not improve measured
+loading. Both remain private and OFF in the accepted preview. No CPU loading or
+FPS win was established. The separately identified follow-up artifact and actual
+OFF/ON measurements are recorded below; earlier Phase 1 results remain historical.
 No public server, public client default or player map was changed by this work.
 
 What changed
@@ -169,9 +170,10 @@ not evidence that a cache avoids actual work.
 
 The first candidate targeted legacy baseline reconstruction. The current-profile
 investigation moves to shared clone factories serving legacy deltas, baseline and
-canonical/static-presentation construction, with owner-split live counters. The
-next candidate is in progress; it has no accepted loading result in this report. Generated RSModel function identification
-alone did not prove which high-level caller should have been optimized. Do not
+canonical/static-presentation construction, with owner-split live counters. At the Phase 1 checkpoint, that
+next candidate had no measured loading result. Phase 2 below records the completed
+follow-up. Generated RSModel function identification alone did not prove which
+high-level caller should have been optimized. Do not
 present offline reuse counts as an exercised warm runtime optimization.
 
 Fair final warm per-crossing maximum completed-world intervals:
@@ -238,11 +240,12 @@ Java work: some physical JS ancestry places updateChunk beneath computeNormals,
 which is not a direct Java caller chain. Exact bodies establish that work is
 active; arbitrary outer JS frames do not alone identify the Java owner. Named
 Java owner-path counters/timings and current source semantics are needed before
-changing the next cache. Static-presentation/canonical model construction is a
-lead, and the existing canonical-match branch can still rebuild after ownership
-changes. No hash-only reuse or loading-screen workaround is authorized by that
-observation. The shared clone-template follow-up is in progress and requires
-separate measured acceptance.
+changing the next cache. Static-presentation/canonical model construction was a lead. A suspected
+static canonical ownership-mismatch branch was not established; later exact-source
+review rejected that branch assumption because the current static builder assigns
+cacheKey equal to canonicalContentKey. No hash-only reuse or loading-screen
+workaround is authorized by the profile alone. That hypothesis led to the separately measured shared clone-template
+follow-up below; it did not establish acceptance by itself.
 
 Correctness and remaining limits
 --------------------------------
@@ -267,5 +270,162 @@ scenarios. Signed negative/upper levels and other-world cases retain literal
 fallback. No general combat 60 FPS, weak-device 60 FPS, zero region stutter, total
 VRAM/PSS reduction, web deployment or public release readiness claim follows from
 this evidence. Phase 1 accepts compact geometry and rejects the legacy cache as a
-measured loading improvement. The broader browser optimization task continues with
-the shared clone-template candidate.
+measured loading improvement. The broader browser optimization task continues;
+the subsequent shared clone-template measurements below do not establish a
+loading improvement either.
+
+
+Phase 2: actual shared factory cache, measured but NOT ADOPTED
+-----------------------------------------------------------
+This is a new source-bound artifact, not a reinterpretation of the Phase 1 JAR.
+The private shared cache reaches all three known static game-object clone owners:
+legacy packet DELTA, baseline and canonical/static presentation. It stores exact
+source-proven prepared clone recipes, not placed live instances. Every result owns
+its mutable arrays and preserves the source alias graph. Source commitTransform
+side effects, current definition/settings/scope checks, normal/height/placement
+work, collision, picking and readiness remain authoritative. Animated/dynamic,
+unsupported level, large-model and capacity cases use literal construction.
+Ordinary/public defaults remain OFF. Entry/workspace accounting has a 16 MiB
+reserved bound, including a 2 MiB transient reserve, and a 256-template limit.
+This bound excludes live clone arrays, browser VM overhead and total RAM.
+
+Source and preparation identity
+  Maintained source: 7dba0f91c08cc8fff3eeecc583017994c1584f8e.
+  Full clean Ant build: 990 own classes, 3194 own assets; no class overlays.
+  JAR SHA256:
+    9e903446129bb31e5ba9ee678a6feab9305aaf23e42559d22a4309c5b2cee168
+  Canonical GPU manifest SHA256:
+    e0f68251b95dcac180e5235be2b94cf40f176347ecb41038417ce85bdb02db06
+  Compact derivative manifest SHA256:
+    eda9521da04b6f5a759f6f29476553e4efd2cfe967b73756f1def2b81bd8c6b5
+  Prepared RAM manifest SHA256:
+    ab244c5c3a038803c1fcd0a0ab68af811239d796348b553a3d930804c0b06392
+All bakes were fresh for this exact JAR and source/assets/settings. Preparation
+passed the 445-recipe/1330-sector coverage checks. Authoritative manager receipts:
+  output/builds/browser-handoff-compact/templates-1/receipt.json
+  output/builds/browser-whole-zone-bake/handoff-templates-1/bake-receipt.json
+  output/builds/browser-compact-geometry/handoff-templates-1/compact-receipt.json
+  output/builds/browser-whole-ram-bake/handoff-templates-1/ram-bake-receipt.json
+  output/tests/browser-gameplay-spike/handoff-templates-1/whole-ram-preparation.json
+  output/diagnostics/browser-handoff-compact/prepare-templates-1/receipt.json
+
+Correctness evidence precedes performance acceptance
+The independent review bound the final Java implementation to the immutable full
+JAR cadd6ff1afa324b1785eda1f56c505124ed9dae78e3992ec09bd960431cccf4a,
+source 71753a7a60cf24ddd03093a406c746f7f56be7bb (same maintained Java as the
+reviewed feature handoff). Full manifests verified all 990 own class bytes, own
+assets and maintained source. Each ON/OFF/ordinary mode ran 286 cases. Full scalar,
+array capacity/raw-float and alias-graph comparison covered all 93 RSModel fields;
+mutation, source-commit side effects, malformed input, reset/refusal, actual DELTA
+reconciliation and canonical paths, plus 120 concurrent warmed clones passed.
+ON ran 26,619 assertions, OFF and ordinary 26,614 each, with the identical trace:
+  aa7d0ad65fe9226fbcdda471ab11333c23cc044aab40b9e8aefe2612ce4e5606
+Default prepared-codec wire/field parity with the previous full JAR also passed:
+  10a3f271f0dac826695848167b6db5cf32cbf8ea0f98e772ac1227aab84a49f0
+The exact light/source guard extension preserved all original reader/control-flow
+bytes; eight negative mutation controls passed. These are offline correctness
+proofs, not loading benchmarks. See browser-clone-template-independent-review.txt.
+
+One unprofiled same-artifact OFF/ON cohort
+Both completed cohorts passed. Only the cloneTemplates startup selection differed:
+whole RAM, bounded 512 MiB GPU coverage, compact geometry, render Worker and static
+CPU reuse stayed ON; the earlier legacy baseline cache stayed OFF. Original 80 ms
+pointer clicks and three stable-camera/input-clear observations were identical.
+The seven-leg route contains six crossings; the first no-cross approach leg is
+excluded from the crossing means. Completed backend world-frame intervals measure
+actual observed fresh submissions, not GPU fences, display scanout or a named Java
+method's latency. Whole-window intervals additionally cover all pre-input waits
+and at least two seconds after the last leg, so work is not hidden between legs
+or after an early ready observation. All four windows are disjoint and hole-free.
+
+  Six crossing maximum intervals, ms             Mean
+  OFF cold 486 / 277 / 349 / 254 / 311 / 306      330.5000
+  ON  cold 583 / 287 / 335 / 291 / 287 / 276      343.1667
+  OFF warm 421 / 260 / 270 / 269 / 262 / 320      300.3333
+  ON  warm 387 / 278 / 281 / 294 / 294 / 272      301.0000
+
+  Entire window       Fresh intervals  Max ms  p95 ms  p99 ms  Held delta
+  OFF cold                 959           486      23      34       5
+  ON  cold                 955           583      21      34       8
+  OFF warm                 998           421      23      42       2
+  ON  warm                1005           387      21      30       0
+The ON cold window contains an additional 173 ms interval after the first crossing;
+it is retained in the whole-window evidence even though it is not a leg maximum.
+Lower warm p95/p99 and held count in this one cohort do not establish a repeatable
+benefit: warm crossing means are essentially unchanged, and the cold result is
+worse. No general regression percentage is inferred from one pass either.
+
+Stationary same-pose/source-epoch fresh submission rates were:
+  Busy: OFF 59.4242 FPS over 20.076 s; ON 59.9881 over 20.104 s.
+  Quiet: OFF 59.6662 FPS over 16.056 s; ON 59.2261 over 16.074 s.
+Each accepted sample was focused/visible with zero held frames. Opposite directions
+and single samples support no FPS improvement claim. Travel host elapsed time is
+not converted to steady FPS.
+
+Actual owner counters: the new candidate DID run
+Counters below are timed-start -> finish receipt deltas, excluding startup totals:
+  ON cold: 3382 copies = 2389 legacy DELTA + 993 canonical; baseline 0.
+           DELTA requests 2442/misses 26; canonical requests 996/misses 0.
+  ON warm: 3408 copies = 2415 legacy DELTA + 993 canonical; baseline 0.
+           DELTA requests 2442/misses 0; canonical requests 996/misses 0.
+Each route added 30 refusals and no reset. Requests can exceed hits+misses because
+excluded models take fallback. OFF skips cache instrumentation, so its zero
+requests/copies do not mean no ordinary cloning occurred. The cold start retained
+86 templates/5,967,043 conservative bytes; cold finish and both warm endpoints
+retained 112/8,036,421 bytes, also the observed peak charge, below the 16 MiB bound.
+Unlike the earlier no-op warm experiment, substantial actual reuse occurred here;
+correct reuse alone did not reduce the measured loading stall.
+
+Coverage and live backend ledgers
+All four route finishes were coverage-ready with no missing/queued chunks or
+pending upload bytes, null runtime error, an actual render Worker, and keyboard/
+world input gates clear. Required/uploaded coverage counts were OFF cold 159/159
+and all other finishes 161/161. No source/ready bypass was used.
+  Finish      Backend bytes  Resident chunks  Pinned chunks  Pinned/local draws
+  OFF cold      199680068          254             224             110 / 15
+  OFF warm      211838492          262             224             112 / 15
+  ON  cold      207119612          261             224             112 / 15
+  ON  warm      207119612          261             224             112 / 15
+Pinned allocation was 151,077,732 bytes in every finish. OFF cold had five mutated
+object cells; the other finishes had two. Thus the actual temporal presentation/
+resident sets and cold draw counts were not exactly identical, despite matching
+source, route, settings and startup controls. Do not claim a strict scene-identical
+cold causal comparison or derive a cache memory saving from these finish deltas.
+Cumulative local-update/upload-byte deltas include repeated updates, not residency:
+  OFF cold 46 chunk uploads / 321292884 bytes; OFF warm 8 / 306140472.
+  ON  cold 53 chunk uploads / 332451852 bytes; ON  warm 0 / 294196416.
+The earlier 55.1724% whole-catalogue compact geometry saving is a format comparison;
+it is not a 55% reduction in this live total backend ledger, total VRAM or RAM.
+This fresh catalogue's potential geometry-plus-texture backend allocation is
+2,207,197,964 reference bytes versus 991,105,868 compact bytes. Each includes
+3,031,040 texture bytes; geometry alone is 2,204,166,924 versus 988,074,828 bytes.
+Actual admitted coverage remains bounded. Source-bound cooks and attribute parity are unchanged by temporal sets.
+
+Signed-level smoke and attribution follow-up
+An actual original-command teleport to (104,671,-1) reached GAME/ready with error
+null. The cache remained policy-selected but retained zero templates/bytes, with
+reset count 3 and cumulative refusal count 2810: this exercised literal factory
+fallback, not a misleading policy-disabled test. It is a negative-level smoke,
+not a browser level-10 or all-interior acceptance claim. Proof:
+  output/diagnostics/browser-handoff-compact/templates-on-layer-minus1-1/fallback-proof.json
+A fresh exact-9e903 ON walking profile also completed with ready coverage/null
+error. It is attribution evidence, not the unprofiled FPS cohort; detailed current
+cost review is separate. Do not recycle opaque function IDs from the earlier JAR.
+  output/diagnostics/browser-handoff-compact/templates-on-travel-profile-1/receipt.json
+
+Decision and evidence
+Compact geometry remains accepted. The shared clone-template cache remains private,
+OFF in the preview, and NOT ADOPTED as a loading optimization. Both CPU candidates
+passed useful correctness work but neither established the requested loading win.
+Public server, player maps and ordinary/native desktop defaults were untouched.
+
+Manager evidence root: output/diagnostics/browser-handoff-compact/
+  templates-off-1-cohort/receipt.json and templates-on-1-cohort/receipt.json
+  templates-{off,on}-1-{cold,warm}/complete-window.json and fresh-intervals.json
+  templates-{off,on}-1-{cold,warm}/timed-start.json and finish.json
+  templates-{off,on}-1-{busy,quiet}/result.json
+Compact machine-readable extraction, including exact owner deltas and finish sets:
+  /home/justin/Core-Framework-ai-2/output/diagnostics/browser-clone-template-results/comparison.json
+No private browser deployment, weak-device 60 FPS, all-world combat, zero stutter,
+long-duration soak or total-memory claim follows. Further optimization should be
+chosen from the new exact-artifact cost profile rather than the clone label alone.
