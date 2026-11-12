@@ -1,3 +1,5 @@
+import deploymentConfig from './browser-deployment-config.js';
+import {resolveBrowserDeployment,verifyPublicArchives} from './browser-public-alpha.js';
 import {cloneTemplatePolicy} from './browser-clone-template-policy.js';
 import {baselineReusePolicy} from './browser-baseline-reuse-policy.js';
 import {wholeRamPolicy,validateWholeRamConfig,decodeWholeRamWork} from './browser-whole-ram.js';
@@ -22,7 +24,8 @@ import {createBrowserMiddleMouseInput} from './browser-middle-mouse.js';
 import {createBrowserDisplay} from './browser-display.js';
 import {browserPreparationBenchmarkControls,browserOwnedStateBenchmarkPolicy,browserModelBenchmarkControls} from './browser-benchmark-controls.js';
 const status = document.querySelector('#status');
-const options = new URLSearchParams(location.search);
+const deployment=resolveBrowserDeployment(deploymentConfig,location);
+const options = deployment.options;
 function nativeCallPolicy(mode,parameters){
   if(mode!=='webgl'||!parameters.has('benchmark'))return 'async';
   const value=parameters.get('nativecalls')||'async';
@@ -105,6 +108,7 @@ window.addEventListener('pagehide', dispose);
 // wrapper does not turn closing a menu into closing a Java session.
 function report(message) {
   const event = {milliseconds: Math.round(performance.now() - started), message};
+  if(deployment.publicAlpha&&String(message).startsWith('WebSocket failed:'))window.browserProof.connectionError=true;
   window.browserProof.events.push(event); setStatus(message); console.log('BROWSER_PROOF', JSON.stringify(event)); publish();
 }
 const geometryTransfer=browserGeometryTransferPolicy(window.browserProof.mode,options);
@@ -112,7 +116,7 @@ const candidatePreparation=privatePreparationCandidates(window.browserProof.mode
 const optimizedDefaults=optimizedRenderDefaults(window.browserProof.mode,options);
 const modelBatchKernel=createBatchedModelKernel();
 window.browserProof.batchedModelKernelWork=modelBatchKernel.stats;
-const fixturePolicy=repeatableFixturePolicy(window.browserProof.mode,options,window.browserPrivateTestRoute,location.origin);
+const fixturePolicy=deployment.publicAlpha?{properties:[],requested:null,tcpPort:43605,websocket:deployment.websocket}:repeatableFixturePolicy(window.browserProof.mode,options,window.browserPrivateTestRoute,location.origin);
 if(window.browserPrivateTestRoute!==undefined)window.browserProof.privateLoopbackRoute={origin:location.origin,websocket:fixturePolicy.websocket,tcpPort:fixturePolicy.tcpPort};
 window.browserProof.repeatableFixtureRequested=fixturePolicy.requested;
 const transport = createTransport(WebSocket, report,fixturePolicy.websocket);
@@ -131,6 +135,11 @@ const natives = {
   Java_orsc_BrowserWebGLBridge_loadingWork:loadProfileCollector.report,
   Java_orsc_browser_BrowserBootstrap_reportRegionHandoffTrace:regionHandoffCollector.report,
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,
+  Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(lib,input){
+    if(stopped)return;
+    if(!deployment.publicAlpha||!input||input.length!==6||Array.from(input).some(v=>v!==0&&v!==1)||input[0]!==1||input[1]!==1||input[5]!==Number(input[2]===1&&input[3]===input[4]))throw new Error('Invalid public roof selection receipt');
+    window.browserProof.wholeRamRoofSelection={publicFallback:true,preparedDataReady:input[2]===1,cookedHiddenRoofs:input[3]===1,playerHiddenRoofs:input[4]===1,roofCompatible:input[5]===1,literalRoofFallback:input[2]===1&&input[5]===0,scope:'Current roof eligibility only. Complete retained preparation is not an activation claim; unsupported roof preference uses the original parser and matching preference may resume recipes.'};
+  },
   Java_orsc_browser_BrowserBootstrap_reportWholeRamWork(lib,input){
     if(stopped)return;
     try{const value=decodeWholeRamWork(input,wholeRam.requested);if(wholeRam.enabled&&value.preparedReady&&wholeRamCatalogConfig&&value.retainedPrimitiveBytes!==wholeRamCatalogConfig.expectedRuntimePrimitiveBytes)throw new Error('Whole RAM retained primitive ledger differs from staged complete preparation');window.browserProof.wholeRamJava=value;}
@@ -247,15 +256,16 @@ const natives = {
 };
 if (pointer) Object.assign(natives, pointer.natives);
 try {
+  await verifyPublicArchives(deployment);
   stutterDiagnostics=createStutterDiagnostics(window,{enabled:stutterDiagnosticsPolicy(window.browserProof.mode,options)});
   window.browserProof.stutterDiagnostics=stutterDiagnostics.stats;
-  if(options.has('benchmark'))window.browserBenchmarkDiagnosticsReset=()=>stutterDiagnostics.reset();
+  if(!deployment.publicAlpha&&options.has('benchmark'))window.browserBenchmarkDiagnosticsReset=()=>stutterDiagnostics.reset();
   preparationControls = browserPreparationBenchmarkControls(window.browserProof.mode, options);
   spriteKeyControls = browserSpriteKeyBenchmarkControls(window.browserProof.mode,options);
   modelPreparationControls = browserModelBenchmarkControls(window.browserProof.mode, options);
   if (window.browserProof.mode==='webgl' && options.has('benchmark')) {
     if(!['active','lru'].includes(options.get('cache')) || !['always','initial'].includes(options.get('underlay')) || !['cpu','gpu'].includes(options.get('depth')||'cpu') || !['legacy','modern'].includes(options.get('loop')||'legacy') || !['late','early'].includes(options.get('cull')||'late') || !['objects','all'].includes(options.get('ownership')||'objects') || !['uncached','cached'].includes(options.get('sprites')||'uncached') || !['marker','coverage'].includes(options.get('overlay')||'marker'))throw new Error('Private benchmark requires explicit cache and underlay policies');
-    window.browserProof.benchmark={cache:options.get('cache'),underlay:options.get('underlay'),depth:options.get('depth')||'cpu',loop:options.get('loop')||'legacy',cull:options.get('cull')||'late',ownership:options.get('ownership')||'objects',sprites:options.get('sprites')||'uncached',overlay:options.get('overlay')||'marker',preparationRequested:preparationControls.requested,modelPreparationRequested:modelPreparationControls.requested,tone:'day',sun:'135/45',brightness:'high',zoom:75,rotation:128};
+    window.browserProof.benchmark={publicPreset:deployment.publicAlpha?deployment.config.preset:null,cache:options.get('cache'),underlay:options.get('underlay'),depth:options.get('depth')||'cpu',loop:options.get('loop')||'legacy',cull:options.get('cull')||'late',ownership:options.get('ownership')||'objects',sprites:options.get('sprites')||'uncached',overlay:options.get('overlay')||'marker',preparationRequested:preparationControls.requested,modelPreparationRequested:modelPreparationControls.requested,tone:'day',sun:'135/45',brightness:'high'};
   }
   if (window.browserProof.mode === 'webgl') {
     const backendModule=await import(nativeCallDispatch==='sync'?'./webgl-sync.js':'./webgl.js');
@@ -275,6 +285,7 @@ try {
     if(window.browserProof.benchmark)window.browserProof.benchmark.streamUploadValidationRequested=streamUploadValidation;
     const wholeZoneCatalog=wholeZone.enabled?(await import('./browser-whole-zone-config.js')).default:null;wholeZoneCatalogConfig=wholeZoneCatalog;
     if(wholeRam.enabled){wholeRamCatalogConfig=validateWholeRamConfig((await import('./browser-whole-ram-config.js')).default,wholeZoneCatalog);window.browserProof.wholeRamDelivery={...wholeRamCatalogConfig,declaredOnly:true,scope:'Immutable files staged for conditional Java preload; not runtime retained/decoded/prepared readiness'};}
+    if(deployment.publicAlpha&&wholeZoneCatalog?.clientJarSha256!==deployment.config.clientJarSha256)throw new Error('Browser alpha executable/catalogue mismatch');
     if(wholeZone.enabled&&!wholeZoneCatalog)throw new Error('Private whole-zone catalog has not been staged');
     const gpuOptions={wholeZone:wholeZone.enabled,geometryFormat:wholeZone.geometryFormat,gpuResidency:wholeZone.residency,gpuBudgetMiB:wholeZone.gpuBudgetMiB,wholeZoneCatalog,nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
     if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;gpu=await factory(canvas,report,{...gpuOptions,onFatal:error=>finish('Private render worker failed: '+error),onComplete:ack=>{boundedInputGate?.acknowledge(ack,{coverageReady:gpu.stats.wholeZone?.ready===true,worldReady:gpu.stats.worldReadiness?.phase==='ready'});if(ack.frameId&&gpu.stats.javaWorldFrames>0&&gpu.stats.worldReadiness?.phase==='ready')awaitingGameFrame=false;const blocked=worldCover?.blocksWorldInput;updateWorldCover();if(blocked!==worldCover?.blocksWorldInput)publish();}});}
@@ -282,7 +293,7 @@ try {
     window.browserProof.renderWorker={...renderWorker,actual:renderWorker.enabled===true};
     window.browserProof.wholeZoneRequested=wholeZone.requested;window.browserProof.wholeRamRequested=wholeRam.requested;
     window.browserProof.nativeCallDispatch={requested:nativeCallDispatch,module:backendModule.BROWSER_NATIVE_CALL_DISPATCH||null,reported:gpu.stats.nativeCallDispatch||null};
-    if(options.has('benchmark')){window.browserBenchmarkOwnedState=enabled=>gpu.queueOwnedState(enabled);window.browserBenchmarkStreamUploadValidation=enabled=>gpu.queueStreamUploadValidation(enabled);window.browserBenchmarkPhysicalOutput=enabled=>gpu.queuePhysicalOutput(enabled);}
+    if(!deployment.publicAlpha&&options.has('benchmark')){window.browserBenchmarkOwnedState=enabled=>gpu.queueOwnedState(enabled);window.browserBenchmarkStreamUploadValidation=enabled=>gpu.queueStreamUploadValidation(enabled);window.browserBenchmarkPhysicalOutput=enabled=>gpu.queuePhysicalOutput(enabled);}
     worldCover=createWorldCover({document,window,display:document.querySelector('#display'),onGateChange:()=>window.dispatchEvent(new Event('browser-world-readinesschange'))});
     window.browserProof.worldLoading=worldCover.stats;
     window.browserProof.renderer = 'WebGL2 resident world and sprites / software UI (experimental)';
@@ -350,14 +361,14 @@ try {
   });
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
-    javaProperties: canonicalRenderProperties(['user.dir=/files', ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...loadProfilePolicy.properties, ...wholeZone.properties, ...wholeRam.properties, ...baselineReuse.properties, ...cloneTemplates.properties, ...(wholeRam.enabled?['spoiledmilk.browserWholeRamManifestSha256='+wholeRamCatalogConfig.manifestSha256]:[]), ...(wholeZone.enabled?['spoiledmilk.browserWholeZoneClientSha256='+wholeZoneCatalogConfig.clientJarSha256,'spoiledmilk.browserWholeZoneCatalogSha256='+wholeZoneCatalogConfig.manifestSha256]:[]), ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])],optimizedDefaults), natives});
+    javaProperties: canonicalRenderProperties(['user.dir=/files', ...deployment.properties, ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...loadProfilePolicy.properties, ...wholeZone.properties, ...wholeRam.properties, ...baselineReuse.properties, ...cloneTemplates.properties, ...(wholeRam.enabled?['spoiledmilk.browserWholeRamManifestSha256='+wholeRamCatalogConfig.manifestSha256]:[]), ...(wholeZone.enabled?['spoiledmilk.browserWholeZoneClientSha256='+wholeZoneCatalogConfig.clientJarSha256,'spoiledmilk.browserWholeZoneCatalogSha256='+wholeZoneCatalogConfig.manifestSha256]:[]), ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])],optimizedDefaults), natives});
   report('Browser Java ready');
   const display = document.querySelector('#display');
   displayLayout=createBrowserDisplay({window,document,display,viewport:document.querySelector('#viewport')});
   window.browserProof.displayLayout=displayLayout.stats;
   displayLayout.attachDesktop(cheerpjCreateDisplay(960,540,display));
   if (gpu) { display.append(gpu.canvas);worldCover.attach(); }
-  const code = await cheerpjRunMain('orsc.browser.BrowserBootstrap', '/app/browser-spike.jar:/app/client.jar', window.browserProof.mode);
+  const code = await cheerpjRunMain('orsc.browser.BrowserBootstrap', deployment.assetRoot+'browser-spike.jar:'+deployment.assetRoot+'client.jar', window.browserProof.mode);
   window.browserProof.ended = true; report('Java program stopped (exit ' + code + '); see console for compatibility results');
   finish('Java program stopped (exit ' + code + '). See console for compatibility results.');
 } catch (error) { report('Bootstrap error: ' + error); console.error(error); finish('Bootstrap error: ' + error); }

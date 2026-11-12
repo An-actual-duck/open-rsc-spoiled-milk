@@ -1,3 +1,5 @@
+import deploymentConfig from './browser-deployment-config.js';
+import {resolveBrowserDeployment,browserCapabilityProblem} from './browser-public-alpha.js';
 // The outer document owns lifecycle controls; vendor input handlers live in a
 // separate disposable frame. Same-origin is needed for CheerpJ storage/files;
 // this sandbox is lifecycle containment, not an untrusted-code security boundary.
@@ -6,6 +8,16 @@ const start = document.querySelector('#start'), stop = document.querySelector('#
 const status = document.querySelector('#status'), session = document.querySelector('#session');
 const welcome = document.querySelector('#welcome');
 let frame;
+let deployment;
+try{deployment=resolveBrowserDeployment(deploymentConfig,location);}
+catch(error){status.textContent=String(error.message);start.disabled=true;throw error;}
+if(deployment.publicAlpha){
+  document.title='Spoiled Milk — Browser Alpha · '+deployment.config.buildId;
+  status.textContent='Sign in with your existing account. The first load may take a little longer.';
+  const label=document.querySelector('#release-label');label.hidden=false;label.textContent='Browser Alpha · '+deployment.config.buildId;
+  const credit=document.querySelector('#runtime-credit');credit.hidden=false;
+  document.querySelector('#download-client').hidden=false;
+}
 window.browserProof = {events: [], lifecycle: 'stopped'};
 const displayModes=createDisplayModes({window,document,player:document.querySelector('#player'),
   dialog:document.querySelector('#display-confirm'),confirm:document.querySelector('#display-enter'),
@@ -54,12 +66,13 @@ function end(reason, focusStart = false) {
   if (focusStart && document.hasFocus()) start.focus({preventScroll: true});
 }
 start.addEventListener('click', () => {
+  if(deployment.publicAlpha){const problem=browserCapabilityProblem(window);if(problem){status.textContent=problem;return;}}
   if(frame)end('Restarting game.');
   frame = document.createElement('iframe'); frame.id = 'runtime';
   frame.title = 'Spoiled Milk';
   frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
   frame.setAttribute('allow', "fullscreen 'none'; clipboard-read 'none'; clipboard-write 'none'; keyboard-map 'none'");
-  frame.src = './runtime.html' + location.search;
+  frame.src = new URL('./runtime.html',import.meta.url).href + location.search;
   window.browserProof = {events: [], lifecycle: 'starting', focus: 'runtime',presentation:displayModes.stats};
   welcome.hidden=false;start.disabled=true;start.hidden=true;
   stop.disabled=false;stop.hidden=false;stop.textContent='Cancel';
@@ -78,8 +91,8 @@ window.addEventListener('message', event => {
     // Startup/recovery is transient. The game owns its login and initial world
     // loading cover; normal travel never restores the outer startup screen.
     const proof=event.data.proof;
-    const fatal=(proof.gpu?.worldReadiness?.phase==='error'?'Area preparation failed.':null)||proof.gpu?.lastError||(proof.gpu?.contextLost?'Graphics connection lost.':null)||proof.wholeRamError;
-    if(fatal)showRecovery('The game could not continue. You can restart or close it.');
+    const fatal=proof.connectionError||(proof.gpu?.worldReadiness?.phase==='error'?'Area preparation failed.':null)||proof.gpu?.lastError||(proof.gpu?.contextLost?'Graphics connection lost.':null)||proof.wholeRamError;
+    if(fatal)showRecovery(proof.connectionError?'Could not reach the game server. Check your connection, try again, or use the downloadable client.':'The game could not continue. You can restart or use the downloadable client.');
     else if(proof.state?.mode==='LOGIN'||proof.state?.mode==='GAME')welcome.hidden=true;
   } else if (event.data?.type === 'browser-session-stop') end(String(event.data.reason));
   else if (event.data?.type === 'browser-session-focus-left') {

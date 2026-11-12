@@ -4,7 +4,9 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {webcrypto,createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
+const publicAlpha=process.argv.includes('--public-alpha');
 const argument=name=>{const index=process.argv.indexOf(name);return index<0?null:process.argv[index+1];};
 const nativeMode=process.argv.includes('--native-sync')?'sync':'async';
 const nativeExplicit=process.argv.includes('--native-sync')||process.argv.includes('--native-async');
@@ -42,7 +44,14 @@ const context = vm.createContext({window,location:{search:(benchmarkStream?'?mod
   document:{querySelector:s=>s==='#status'?status:display,createElement:s=>s==='canvas'?canvas:{},head:{append:s=>queueMicrotask(()=>s.onload())},addEventListener(){}},
   Event:class {constructor(type){this.type=type;}},queueMicrotask,setTimeout,WebSocket:class{},
   cheerpjInit:async o=>{configured=o;},cheerpjCreateDisplay(){},cheerpjRunMain:()=>new Promise(resolve=>{stopJava=resolve;})});
-let transportUrl;
+let transportUrl;let publicRunArgs;
+if(publicAlpha){
+  context.location.origin='https://play.rscspoiledmilk.com';context.location.search='';context.crypto=webcrypto;
+  context.fetch=async(url,options)=>{assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');const raw=new Uint8Array(url.endsWith('/client.jar')?[1,2,3]:[5,6]);return{ok:true,headers:{get:()=>String(raw.length)},arrayBuffer:async()=>raw.buffer};};
+  context.cheerpjRunMain=(...args)=>{publicRunArgs=args;return new Promise(resolve=>{stopJava=resolve;});};
+}
+const publicPolicyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-public-alpha.js',import.meta.url),'utf8'),{context});
+const deploymentModule=new vm.SyntheticModule(['default'],function(){this.setExport('default',publicAlpha?publicConfig:null);},{context});
 let gateChanged;const cover={blocksWorldInput:false,attach(){},dispose(){coverDisposed++;this.blocksWorldInput=false;},update(state){const next=state?.phase==='loading';if(next!==this.blocksWorldInput){this.blocksWorldInput=next;gateChanged();}}};
 const coverModule=new vm.SyntheticModule(['createWorldCover'],function(){this.setExport('createWorldCover',o=>{gateChanged=o.onGateChange;return cover;});},{context});
 const transportModule = new vm.SyntheticModule(['createTransport'],function(){this.setExport('createTransport',(...args)=>{transportUrl=args[2];return {dispose:()=>transportDisposed++};});},{context});
@@ -91,6 +100,8 @@ const modelBatchModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../to
 const optimizedDefaultsModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-optimized-render-defaults.js',import.meta.url),'utf8'),{context});
 const wholeZonePolicyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-whole-zone-policy.js',import.meta.url),'utf8'),{context});
 const zoneConfig={schemaVersion:1,manifestBytes:64,manifestSha256:'d'.repeat(64),clientJarSha256:'c'.repeat(64),externalAssets:['Authentic_Landscape.orsc','Authentic_Sprites.orsc','Custom_Sprites.osar','library.orsc','models.orsc'].map(n=>({path:'Cache/video/'+n,bytes:4,sha256:'f'.repeat(64)}))};
+if(publicAlpha)zoneConfig.clientJarSha256=createHash('sha256').update(new Uint8Array([1,2,3])).digest('hex');
+const publicConfig={schemaVersion:1,origin:'https://play.rscspoiledmilk.com',websocket:'wss://play.rscspoiledmilk.com:43505/',preset:'alpha-v1',buildId:'alpha-test1',assetPrefix:'/assets/alpha-test1/',clientJarSha256:zoneConfig.clientJarSha256,clientJarBytes:3,bootstrapJarSha256:createHash('sha256').update(new Uint8Array([5,6])).digest('hex'),bootstrapJarBytes:2};
 const zoneConfigModule=new vm.SyntheticModule(['default'],function(){this.setExport('default',zoneConfig);},{context});
 const ramPolicyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-whole-ram.js',import.meta.url),'utf8'),{context});
 const ramConfig={schemaVersion:1,manifestSha256:'a'.repeat(64),manifestBytes:4096,clientJarSha256:zoneConfig.clientJarSha256,gpuCatalogSha256:zoneConfig.manifestSha256,sourceBundleSha256:'b'.repeat(64),sourceBundleBytes:46101734,preparedSha256:'e'.repeat(64),preparedBytes:4096,retainedPrimitiveBytes:60000000,hiddenRoofs:false,rawFiles:1797,recipes:445,queryCells:1330};
@@ -98,6 +109,8 @@ const ramConfigModule=new vm.SyntheticModule(['default'],function(){this.setExpo
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{if(specifier==='./browser-whole-ram-config.js'){if(ramConfigModule.status==='unlinked')await ramConfigModule.link(()=>{});if(ramConfigModule.status==='linked')await ramConfigModule.evaluate();return ramConfigModule;}if(specifier==='./browser-whole-zone-config.js'){if(zoneConfigModule.status==='unlinked')await zoneConfigModule.link(()=>{});if(zoneConfigModule.status==='linked')await zoneConfigModule.evaluate();return zoneConfigModule;}if(specifier==='./browser-render-worker.js'){if(renderWorkerModule.status==='unlinked')await renderWorkerModule.link(()=>{});if(renderWorkerModule.status==='linked')await renderWorkerModule.evaluate();return renderWorkerModule;}const selected=specifier==='./browser-native-call-dispatch.js'?nativeModule:gpuModule;if(selected===gpuModule)assert.equal(specifier,nativeMode==='sync'?'./webgl-sync.js':'./webgl.js');assert(selected,'Unexpected native helper import');if(selected.status==='unlinked')await selected.link(()=>{});if(selected.status==='linked')await selected.evaluate();return selected;}});
 await module.link(specifier=>{
+  if(specifier==='./browser-deployment-config.js')return deploymentModule;
+  if(specifier==='./browser-public-alpha.js')return publicPolicyModule;
   if(specifier==='./browser-whole-ram.js')return ramPolicyModule;
   if(specifier==='./browser-bounded-input.js')return boundedInputModule;
   if(specifier==='./browser-whole-zone-policy.js')return wholeZonePolicyModule;
@@ -124,6 +137,23 @@ await module.link(specifier=>{
 module.evaluate();
 for(let i=0;i<30&&!configured;i++)await new Promise(resolve=>setImmediate(resolve));
 if(withoutNativeModule&&nativeMode==='sync'){assert.equal(configured,undefined);assert.equal(gpuOptions,undefined);assert.equal(gpuDisposed,0);assert.equal(transportDisposed,1);assert.equal(middleDisposed,1);assert.ok(messages.some(m=>m.type==='browser-session-stop'&&m.reason.includes('Private synchronous backend is unavailable')));console.log('PASS unavailableSYNC fails before backend/Java startup; no fallback or fake receipt');process.exit(0);}
+if(publicAlpha){
+  assert(configured,'public fixed preset reached Java startup');
+  assert.equal(transportUrl,'wss://play.rscspoiledmilk.com:43505/');
+  assert.equal(gpuOptions.geometryFormat,'compact');assert.equal(gpuOptions.gpuResidency,'bounded');assert.equal(gpuOptions.gpuBudgetMiB,512);assert.equal(gpuOptions.wholeZone,true);
+  const props=configured.javaProperties;
+  assert.equal(new Set(props.map(s=>s.split('=')[0])).size,props.length,'public properties have one authority');
+  assert.ok(props.includes('spoiledmilk.browserPublicAlpha=true'));assert.ok(props.includes('spoiledmilk.browserAssetRoot=/app/assets/alpha-test1/'));
+  for(const key of ['browserBaselineReuse','browserCloneTemplates','browserProfile','browserLoadProfile','browserGeometryTransferReuse','browserRegionPreparation','browserResidentDescriptorWriting','browserHaloHeightLookup','browserSceneryProjectionWork','browserPrimitiveChunkCoverage','browserOverlayDeltaTransport'])assert.ok(!props.includes('spoiledmilk.'+key+'=true'),'no parked experiment '+key);
+  assert.equal(props.some(s=>s.includes('browserRepeatableFixture')||s.includes('browserPrivateLoopbackPort')),false);
+  for(const name of ['browserBenchmarkOwnedState','browserBenchmarkStreamUploadValidation','browserBenchmarkPhysicalOutput','browserBenchmarkDiagnosticsReset'])assert.equal(window[name],undefined);
+  assert.equal(publicRunArgs[1],'/app/assets/alpha-test1/browser-spike.jar:/app/assets/alpha-test1/client.jar');
+  configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(null,new Int32Array([1,1,1,1,0,0]));assert.equal(window.browserProof.wholeRamRoofSelection.literalRoofFallback,true);
+  assert.throws(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(null,new Int32Array([1,1,1,1,0,1])));
+  const previous=window.browserProof.wholeRamRoofSelection;window.browserSessionDispose();configured.natives.Java_orsc_browser_BrowserBootstrap_reportWholeRamRoofSelection(null,new Int32Array());assert.equal(window.browserProof.wholeRamRoofSelection,previous,'late reporter cannot revive disposed state');
+  const file=argument('--properties-output');if(file)fs.writeFileSync(file,props.join('\n')+'\n');
+  console.log('PASS actual public frontend fixed rendering/pinned WSS/versioned archives/Java properties/no fixture or runtime switches; VM only');process.exit(0);
+}
 assert.equal(transportUrl,combat?'ws://127.0.0.1:43539/':repeatable?'ws://127.0.0.1:43549/':'ws://127.0.0.1:43529/');
 if(combat){const labels=['cameraPinned','npcCount','playerCount','welcomeVisible','activeProjectileActors','activeImpactActors','activeCombatEffectActors','pendingCombatEffectActors','activeClericBuffActors','activeClericCurseActors','activeHitSplatActors','damagedHealthActors','loadedCombatEffectKinds','loadedCombatEffectFrames','loadedProjectileKinds','loadedProjectileFrames','loadedProjectileImpactKinds','loadedProjectileImpactFrames','iceCrystalFrames','thunderStrikeFrames','batteringRamFrames','summonChargeFrames','summonCombatFrames','summonSupportFrames','summonUtilityFrames'];const values=labels.map((_,i)=>i);await configured.natives.Java_orsc_browser_BrowserBootstrap_reportCombatState(null,'renderdemo',labels.join('|'),values);assert.equal(window.browserProof.combatFixture.username,'renderdemo');assert.equal(window.browserProof.combatFixture.activeProjectileActors,4);assert.equal(window.browserProof.combatFixture.iceCrystalFrames,18);await assert.rejects(()=>configured.natives.Java_orsc_browser_BrowserBootstrap_reportCombatState(null,'renderdemo','wrong',[1]),/Unexpected/);}
 if(repeatable){await configured.natives.Java_orsc_browser_BrowserBootstrap_reportRepeatableState(null,'browserdemo',[1,32,1,0]);assert.equal(window.browserProof.repeatableFixture.username,'browserdemo');assert.equal(window.browserProof.repeatableFixture.cameraPinned,true);assert.equal(window.browserProof.repeatableFixture.npcCount,32);assert.equal(window.browserProof.repeatableFixture.welcomeVisible,false);}

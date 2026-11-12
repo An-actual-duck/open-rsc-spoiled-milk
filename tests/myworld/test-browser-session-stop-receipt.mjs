@@ -8,13 +8,15 @@ let checks=0;
 function equal(a,b,message){assert.deepEqual(a,b,message);checks++;}
 async function harness(){
  const listeners={},tasks=[],frames=[];let removed=0,disposed=0,exited=0,focused=0;const displayRequests=[];
- const controls=Object.fromEntries(['start','stop','status','session','player','welcome','display-confirm','display-enter','display-cancel','display-message'].map(k=>[k,{addEventListener(type,fn){this[type]=fn;},focus(){focused++;}}]));
+ const controls=Object.fromEntries(['start','stop','status','session','player','welcome','display-confirm','display-enter','display-cancel','display-message','release-label','runtime-credit','download-client'].map(k=>[k,{addEventListener(type,fn){this[type]=fn;},focus(){focused++;}}]));
  controls.session.append=f=>frames.push(f);
  const window={addEventListener:(name,fn)=>listeners[name]=fn};
  const document={querySelector:s=>controls[s.slice(1)],hasFocus:()=>true,addEventListener(){},createElement(){const f={setAttribute(){},focus(){},remove(){removed++;},contentWindow:{dispatchEvent(){}}};return f;}};
- const context=vm.createContext({window,document,location:{search:'?wholeram=on',origin:'http://private'},Event:class{constructor(type){this.type=type;}}});
+ const context=vm.createContext({window,document,URL,URLSearchParams,location:{search:'?wholeram=on',origin:'http://private'},Event:class{constructor(type){this.type=type;}}});
  const display=new vm.SyntheticModule(['createDisplayModes'],function(){this.setExport('createDisplayModes',()=>({stats:{mode:'fit'},dismiss(){},request(action){displayRequests.push(action);},exit(){exited++;}}));},{context});
- const module=new vm.SourceTextModule(source,{context});await module.link(spec=>{assert.equal(spec,'./browser-display-modes.js');return display;});await module.evaluate();
+ const policy=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-public-alpha.js',import.meta.url),'utf8'),{context});
+ const config=new vm.SyntheticModule(['default'],function(){this.setExport('default',null);},{context});
+ const module=new vm.SourceTextModule(source,{context,initializeImportMeta(meta){meta.url='http://private/assets/test/session.js';}});await module.link(spec=>{if(spec==='./browser-public-alpha.js')return policy;if(spec==='./browser-deployment-config.js')return config;assert.equal(spec,'./browser-display-modes.js');return display;});await module.evaluate();
  function send(f,data,origin='http://private'){const copied=structuredClone(data);tasks.push(()=>listeners.message({source:f.contentWindow,origin,data:copied}));}
  function drain(){while(tasks.length)tasks.shift()();}
  function start(){controls.start.click();const f=frames.at(-1);f.contentWindow.browserSessionDispose=()=>{disposed++;send(f,{type:'browser-session-proof',proof:{wholeRamJava:{sourceReady:false,preparedReady:false,disposed:true}}});};return f;}

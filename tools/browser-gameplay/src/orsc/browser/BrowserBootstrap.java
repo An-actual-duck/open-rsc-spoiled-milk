@@ -23,6 +23,7 @@ public final class BrowserBootstrap {
     public static native void reportBaselineReuseWork(double[] counters);
     public static native void reportCloneTemplateWork(double[] counters);
     public static native void reportWholeRamWork(int[] counters);
+    public static native void reportWholeRamRoofSelection(int[] counters);
     public static native void reportRegionHandoffTrace(String phases,double[] values);
     public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportCombatState(String username,String names,int[] counters);
@@ -81,6 +82,9 @@ public final class BrowserBootstrap {
         }
         final boolean webgl=args.length>0 && "webgl".equals(args[0]);
         final boolean benchmark=Boolean.getBoolean("spoiledmilk.browserBenchmark");
+        final boolean publicAlpha=BrowserPublicAlpha.enabled(System.getProperties());
+        BrowserPublicAlpha.validate(System.getProperties(),webgl);
+        final String assetRoot=BrowserPublicAlpha.assetRoot(System.getProperties());
         final BrowserOptimizedDefaults.Resolution optimizedDefaults=BrowserOptimizedDefaults.apply(webgl,benchmark,
             BrowserOptimizedDefaults.capabilities(BrowserBootstrap.class.getClassLoader()));
         final String fixture=System.getProperty("spoiledmilk.browserRepeatableFixture");
@@ -91,13 +95,14 @@ public final class BrowserBootstrap {
         final RepeatableCamera fixedCamera=repeatable?new RepeatableCamera():null;
         final BrowserCombatWorkload combatWorkload=combat?new BrowserCombatWorkload():null;
         report((webgl?"webgl-client":"software-client")+":copying-private-files");
-        try (BufferedReader index = new BufferedReader(new FileReader("/app/bootstrap-files.txt"))) {
+        try (BufferedReader index = new BufferedReader(new FileReader(assetRoot+"bootstrap-files.txt"))) {
             String relative;
             while ((relative = index.readLine()) != null) {
                 if (relative.startsWith("/") || relative.contains("..") || relative.contains("\\")) throw new IOException("Unsafe staged path");
+                if(publicAlpha)BrowserPublicAlpha.validateBootstrapPath(relative);
                 File destination = new File("/files", relative);
                 destination.getParentFile().mkdirs();
-                try (InputStream input = new FileInputStream("/app/" + relative); OutputStream output = new FileOutputStream(destination)) {
+                try (InputStream input = new FileInputStream(assetRoot + relative); OutputStream output = new FileOutputStream(destination)) {
                     byte[] buffer = new byte[32768]; int count;
                     while ((count = input.read(buffer)) >= 0) output.write(buffer, 0, count);
                 }
@@ -110,7 +115,7 @@ public final class BrowserBootstrap {
         if(Boolean.getBoolean("spoiledmilk.browserWholeRam")) {
             if(!webgl||!Boolean.getBoolean("spoiledmilk.browserBenchmark")||!Boolean.getBoolean("spoiledmilk.browserWholeZone"))throw new IllegalStateException("Whole-RAM delivery requires private whole-zone WebGL mode");
             java.util.HashSet<String> expected=new java.util.HashSet<String>(java.util.Arrays.asList("Cache/whole-ram/manifest.json","Cache/whole-ram/source.bin","Cache/whole-ram/prepared.bin"));
-            try(BufferedReader index=new BufferedReader(new FileReader("/app/bootstrap-whole-ram-files.txt"))){String relative;while((relative=index.readLine())!=null){if(!expected.remove(relative))throw new IOException("Unexpected/duplicate whole-RAM staged path");File destination=new File("/files",relative);destination.getParentFile().mkdirs();try(InputStream input=new FileInputStream("/app/"+relative);OutputStream output=new FileOutputStream(destination)){byte[] buffer=new byte[65536];int n;while((n=input.read(buffer))!=-1)output.write(buffer,0,n);}}}
+            try(BufferedReader index=new BufferedReader(new FileReader(assetRoot+"bootstrap-whole-ram-files.txt"))){String relative;while((relative=index.readLine())!=null){if(!expected.remove(relative))throw new IOException("Unexpected/duplicate whole-RAM staged path");File destination=new File("/files",relative);destination.getParentFile().mkdirs();try(InputStream input=new FileInputStream(assetRoot+relative);OutputStream output=new FileOutputStream(destination)){byte[] buffer=new byte[65536];int n;while((n=input.read(buffer))!=-1)output.write(buffer,0,n);}}}
             if(!expected.isEmpty())throw new IOException("Incomplete whole-RAM delivery roster");
         }
         // Explicit test-only software presentation. Desktop defaults are untouched.
@@ -155,7 +160,7 @@ public final class BrowserBootstrap {
         Socket.setSocketImplFactory(new SocketImplFactory() {
             public SocketImpl createSocketImpl() { return new BrowserSocket(); }
         });
-        report((webgl?"webgl-client":"software-client")+":start; networking=loopback-websocket");
+        report((webgl?"webgl-client":"software-client")+":start; networking="+(publicAlpha?"public-secure-websocket":"loopback-websocket"));
         orsc.OpenRSC.main(new String[0]);
         final BrowserStartupDiagnostics startupDiagnostics=webgl&&!benchmark?new BrowserStartupDiagnostics(new BrowserStartupDiagnostics.Sink(){
             public void report(String phase,String detail){reportStartupDiagnostics(phase,detail);}
@@ -267,7 +272,7 @@ public final class BrowserBootstrap {
                                 int[] batchWork=snapshotBatchedModelWork(observedScene,Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel"));
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeZone")){reportWholeZoneWork(snapshotWholeZoneWork());reportStaticSceneWork(snapshotStaticSceneWork());reportStaticIdentityWork(snapshotStaticIdentityWork(client));reportBaselineReuseWork(snapshotBaselineReuseWork(client));reportCloneTemplateWork(snapshotCloneTemplateWork(client));}
-                                if(Boolean.getBoolean("spoiledmilk.browserWholeRam"))reportWholeRamWork(snapshotWholeRamWork());
+                                if(Boolean.getBoolean("spoiledmilk.browserWholeRam")){reportWholeRamWork(snapshotWholeRamWork());if(publicAlpha)reportWholeRamRoofSelection(orsc.BrowserWholeOverworldRam.getRoofSelectionWork());}
                                 if(Boolean.getBoolean("spoiledmilk.browserLoadProfile")){
                                     double[] trace=snapshotRegionHandoffTrace();
                                     if(trace[2]!=lastHandoffRevision){
@@ -380,9 +385,10 @@ public final class BrowserBootstrap {
         }
         protected void connect(String host, int port) throws IOException { connect(InetAddress.getByName(host), port); }
         protected void connect(InetAddress host, int port) throws IOException {
-            validatePrivateConnection(host,port,System.getProperty("spoiledmilk.browserRepeatableFixture"),System.getProperty("spoiledmilk.browserPrivateLoopbackPort"));
+            if(BrowserPublicAlpha.enabled(System.getProperties()))BrowserPublicAlpha.validateConnection(host,port);
+            else validatePrivateConnection(host,port,System.getProperty("spoiledmilk.browserRepeatableFixture"),System.getProperty("spoiledmilk.browserPrivateLoopbackPort"));
             address = host; this.port = port; connection = wsOpen();
-            if (connection < 0) throw new IOException("Private WebSocket connection failed");
+            if (connection < 0) throw new IOException("Game connection could not be opened");
         }
         protected void connect(SocketAddress target, int timeout) throws IOException {
             InetSocketAddress address = (InetSocketAddress) target; connect(address.getAddress(), address.getPort());
