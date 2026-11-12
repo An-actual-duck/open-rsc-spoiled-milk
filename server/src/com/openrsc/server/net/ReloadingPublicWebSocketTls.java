@@ -77,6 +77,11 @@ public final class ReloadingPublicWebSocketTls {
     }
     private static byte[] read(Path path) throws Exception {
         long size=Files.size(path);if(size<1||size>131072)throw new IllegalArgumentException("Public WSS PEM file size");
-        byte[] bytes=Files.readAllBytes(path);if(bytes.length!=size)throw new IllegalArgumentException("Public WSS PEM file changed during read");return bytes;
+        byte[] bytes=new byte[(int)size];
+        try(java.io.DataInputStream input=new java.io.DataInputStream(Files.newInputStream(path))) {
+            input.readFully(bytes);
+            if(input.read()!=-1)throw new IllegalArgumentException("Public WSS PEM file changed during read");
+        }
+        return bytes;
     }
 }
