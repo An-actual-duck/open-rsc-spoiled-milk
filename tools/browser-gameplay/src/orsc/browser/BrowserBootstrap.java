@@ -18,6 +18,8 @@ public final class BrowserBootstrap {
     public static native void reportCandidatePolicy(String name,boolean requested,boolean available,boolean enabled);
     public static native void reportBatchedModelWork(int[] counters);
     public static native void reportWholeZoneWork(int[] counters);
+    public static native void reportStaticSceneWork(int[] counters);
+    public static native void reportStaticIdentityWork(int[] counters);
     public static native void reportWholeRamWork(int[] counters);
     public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportCombatState(String username,String names,int[] counters);
@@ -245,7 +247,7 @@ public final class BrowserBootstrap {
                                 }
                                 int[] batchWork=snapshotBatchedModelWork(observedScene,Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel"));
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
-                                if(Boolean.getBoolean("spoiledmilk.browserWholeZone"))reportWholeZoneWork(snapshotWholeZoneWork());
+                                if(Boolean.getBoolean("spoiledmilk.browserWholeZone")){reportWholeZoneWork(snapshotWholeZoneWork());reportStaticSceneWork(snapshotStaticSceneWork());reportStaticIdentityWork(snapshotStaticIdentityWork(client));}
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeRam"))reportWholeRamWork(snapshotWholeRamWork());
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
@@ -268,6 +270,22 @@ public final class BrowserBootstrap {
     static int[] snapshotWholeRamWork() throws ReflectiveOperationException {
         Object work=Class.forName("orsc.BrowserWebGLBridge").getMethod("getWholeRamWork").invoke(null);
         if(!(work instanceof int[])||((int[])work).length!=0&&((int[])work).length!=18)throw new IllegalStateException("Invalid whole-RAM work getter");return ((int[])work).clone();
+    }
+
+    static int[] snapshotStaticIdentityWork(Object client) throws ReflectiveOperationException {
+        Object work;
+        try{work=client.getClass().getMethod("getBrowserStaticIdentityWork").invoke(client);}
+        catch(NoSuchMethodException missing){if(!Boolean.getBoolean("spoiledmilk.browserStaticSceneReuse"))return new int[0];throw missing;}
+        if(!(work instanceof int[])||((int[])work).length!=8||((int[])work)[0]!=1)throw new IllegalStateException("Invalid static-identity work getter");
+        return ((int[])work).clone();
+    }
+
+    static int[] snapshotStaticSceneWork() throws ReflectiveOperationException {
+        Object work;
+        try{work=Class.forName("orsc.BrowserWebGLBridge").getMethod("getStaticSceneReuseWork").invoke(null);}
+        catch(NoSuchMethodException missing){if(!Boolean.getBoolean("spoiledmilk.browserStaticSceneReuse"))return new int[0];throw missing;}
+        if(!(work instanceof int[])||((int[])work).length!=0&&(((int[])work).length!=10||((int[])work)[0]!=1))throw new IllegalStateException("Invalid static-scene work getter");
+        return ((int[])work).clone();
     }
 
     static int[] snapshotWholeZoneWork() throws ReflectiveOperationException {

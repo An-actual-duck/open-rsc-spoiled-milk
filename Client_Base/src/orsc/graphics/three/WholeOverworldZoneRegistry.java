@@ -11,6 +11,7 @@ public final class WholeOverworldZoneRegistry {
     private static volatile Resolver resolver;
     private WholeOverworldZoneRegistry() {}
     public static boolean isEnabled(){return ENABLED;}
+    public static boolean isStaticSceneReuseEnabled(){return ENABLED&&Boolean.getBoolean("spoiledmilk.browserStaticSceneReuse");}
     public static void install(Resolver next){if(!ENABLED)throw new IllegalStateException("Whole-zone resolver requires private browser mode");resolver=next;}
     public static void clear(){resolver=null;}
     public static Renderer3DWorldChunkFrame.ChunkMesh resolveStatic(int plane,int cellX,int cellY,long key,int baseX,int baseZ){

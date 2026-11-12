@@ -1893,6 +1893,29 @@ public final class World {
 					!= PRESENTATION_ELEVATION_UNAVAILABLE;
 	}
 
+    private WholeZoneElevationContext wholeZoneElevationContext;
+    private static final class WholeZoneElevationContext {
+        final NativeLayeredTerrainSnapshot active,visual;final long revision;
+        final int sectionX,sectionY,offsetX,offsetZ;
+        WholeZoneElevationContext(World world){active=world.nativeLayeredTerrainSnapshot;visual=world.symmetricNativeLayeredTerrainVisualSnapshot;revision=world.worldEditorTerrainRevision.get();sectionX=world.nativeLayeredTerrainAppliedSectionX;sectionY=world.nativeLayeredTerrainAppliedSectionY;offsetX=world.syntheticDeepFixtureOffsetX;offsetZ=world.syntheticDeepFixtureOffsetZ;}
+        boolean matches(World world){return active==world.nativeLayeredTerrainSnapshot&&visual==world.symmetricNativeLayeredTerrainVisualSnapshot&&revision==world.worldEditorTerrainRevision.get()&&sectionX==world.nativeLayeredTerrainAppliedSectionX&&sectionY==world.nativeLayeredTerrainAppliedSectionY&&offsetX==world.syntheticDeepFixtureOffsetX&&offsetZ==world.syntheticDeepFixtureOffsetZ;}
+    }
+    /** Identity for immutable native halo heights only. Never certifies mutable loaded sectors. */
+    public Object getWholeZoneImmutableElevationContext(){
+        NativeLayeredTerrainSnapshot active=nativeLayeredTerrainSnapshot;
+        if(getClass()!=World.class||!WholeOverworldZoneRegistry.isStaticSceneReuseEnabled()||active==null||active.getLevel()!=0||!"global".equals(active.getWorldSpace())||active.getProtocolVersion()<4||worldEditorTerrainRevision.get()<0||hasWholeOverworldTerrainPatches()){wholeZoneElevationContext=null;return null;}
+        if(wholeZoneElevationContext==null||!wholeZoneElevationContext.matches(this))wholeZoneElevationContext=new WholeZoneElevationContext(this);
+        return wholeZoneElevationContext;
+    }
+    /** Rechecked per lookup: a sector can become loaded without replacing its native source. */
+    public boolean isWholeZoneImmutableElevationSample(int pixelX,int pixelZ){
+        int x=pixelX>>7,z=pixelZ>>7;
+        return !hasLoadedPresentationVertex(x,z)&&!hasLoadedPresentationVertex(x+1,z)&&!hasLoadedPresentationVertex(x,z+1)&&!hasLoadedPresentationVertex(x+1,z+1);
+    }
+    private boolean hasLoadedPresentationVertex(int x,int z){
+        if(!isLocalTile(x,z))return false;Sector sector=sectorForLocalTile(x,z);return sector!=null&&sector.isLoaded();
+    }
+
 	/**
 	 * Bilinearly samples the terrain mesh's native source height in current
 	 * local pixel coordinates. The sentinel is returned outside the resident
