@@ -34,7 +34,7 @@ output/tests/browser-clone-template-review/final-71753a/result.json:
 
 The test exercises actual production DELTA batch reconciliation and canonical
 presentation factory, model Scene insertion/picking/collision/software output,
-source/template replacement, all-field mutations, distinct returned model arrays,
+source/template mutation, all-field mutations, distinct returned model arrays,
 120 warmed concurrent copies across owner types, empty/degenerate/naturally aliased
 inputs, literal fallback for a valid 1025-face model, tiny/exact byte refusal,
 actual 256-entry capacity and reset release. The supplier separately covers the
