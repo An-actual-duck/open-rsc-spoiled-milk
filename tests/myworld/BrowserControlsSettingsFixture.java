@@ -42,7 +42,7 @@ public final class BrowserControlsSettingsFixture {
         RendererSettingsPanel panel=new RendererSettingsPanel();View view=new View();Actions actions=new Actions();
         check(!has(rows,"Middle mouse"),"middle mouse belongs to Interface, not Graphics");
         check(!has(rows,"Fit to tab"),"desktop startup does not invent browser display capability");
-        BrowserDisplaySettings.update(new int[]{1,1,0});
+        BrowserPresentationSettings.update(new int[]{1,1,0});
         rows=RendererSettingsPanel.rows(browser);
         check(has(rows,"Fit to tab - @gre@On")&&has(rows,"Fullscreen - @red@Off"),"actual parent presentation state appears in browser Graphics");
         for(int[] mapping:new int[][]{{75,RendererSettingsPanel.Action.BROWSER_FIT.ordinal()},{76,RendererSettingsPanel.Action.BROWSER_FULLSCREEN.ordinal()}}){
@@ -50,15 +50,15 @@ public final class BrowserControlsSettingsFixture {
             check(panel.handleSelectedAction(view,browser,new RendererSettingsPanel.Input(960,0,0,1,0,false),0,0,actions),"browser display action handled");
             check(actions.last.ordinal()==mapping[1],"browser display action mapping");
         }
-        BrowserDisplaySettings.request(BrowserDisplaySettings.FULLSCREEN);
-        check(BrowserDisplaySettings.takeRequest()==2&&BrowserDisplaySettings.takeRequest()==0,"display request consumed once");
-        BrowserDisplaySettings.request(1);BrowserDisplaySettings.request(2);
-        check(BrowserDisplaySettings.takeRequest()==1,"pending display request is not overwritten by repeated clicks");
+        BrowserPresentationSettings.request(BrowserPresentationSettings.FULLSCREEN);
+        check(BrowserPresentationSettings.takeRequest()==2&&BrowserPresentationSettings.takeRequest()==0,"display request consumed once");
+        BrowserPresentationSettings.request(1);BrowserPresentationSettings.request(2);
+        check(BrowserPresentationSettings.takeRequest()==1,"pending display request is not overwritten by repeated clicks");
         for(int[] invalid:new int[][]{new int[]{1},new int[]{1,0,2}}){
-            try{BrowserDisplaySettings.update(invalid);throw new AssertionError("malformed display state accepted");}catch(IllegalArgumentException expected){checks++;}
+            try{BrowserPresentationSettings.update(invalid);throw new AssertionError("malformed display state accepted");}catch(IllegalArgumentException expected){checks++;}
         }
-        BrowserDisplaySettings.update(new int[]{0,1,0});
-        BrowserDisplaySettings.request(1);check(BrowserDisplaySettings.takeRequest()==0,"desktop/disabled mode cannot request browser actions");
+        BrowserPresentationSettings.update(new int[]{0,1,0});
+        BrowserPresentationSettings.request(1);check(BrowserPresentationSettings.takeRequest()==0,"desktop/disabled mode cannot request browser actions");
         for(int unsupported:new int[]{73,75,76}){view.selected=unsupported;actions.last=null;
             check(!panel.handleSelectedAction(view,browser,new RendererSettingsPanel.Input(960,0,0,1,0,false),0,0,actions)&&actions.last==null,"foreign/disabled display or Interface action rejected");}
 

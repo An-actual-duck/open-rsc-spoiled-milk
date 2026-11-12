@@ -195,7 +195,7 @@ public final class BrowserBootstrap {
                     BenchmarkCandidatePolicies.TerrainQueryDiagnostics terrainDiagnostics=new BenchmarkCandidatePolicies.TerrainQueryDiagnostics();
                     while (true) {
                         if(startupDiagnostics!=null)startupDiagnostics.sample("observer");
-                        orsc.BrowserDisplaySettings.update(syncDisplaySettings(orsc.BrowserDisplaySettings.takeRequest()));
+                        orsc.BrowserPresentationSettings.update(syncDisplaySettings(orsc.BrowserPresentationSettings.takeRequest()));
                         Object client = clientField.get(null);
                         // Only an explicit repeatable fixture owns the camera. Benchmark
                         // optimizations also serve normal exploration and must not reset it.

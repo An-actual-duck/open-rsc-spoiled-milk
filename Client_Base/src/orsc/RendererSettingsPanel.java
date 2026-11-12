@@ -340,9 +340,9 @@ final class RendererSettingsPanel {
 			addRow(rows, "@whi@Sprites: "
 				+ (state.remasteredSprites ? "@cya@Enhanced" : "@gre@Classic"), REMASTERED_SPRITES);
 		}
-		if (BrowserDisplaySettings.isAvailable()) {
-			addRow(rows, "@whi@Fit to tab - " + (BrowserDisplaySettings.isFitToTab() ? "@gre@On" : "@red@Off"), ACTION_BROWSER_FIT);
-			addRow(rows, "@whi@Fullscreen - " + (BrowserDisplaySettings.isFullscreen() ? "@gre@On" : "@red@Off"), ACTION_BROWSER_FULLSCREEN);
+		if (BrowserPresentationSettings.isAvailable()) {
+			addRow(rows, "@whi@Fit to tab - " + (BrowserPresentationSettings.isFitToTab() ? "@gre@On" : "@red@Off"), ACTION_BROWSER_FIT);
+			addRow(rows, "@whi@Fullscreen - " + (BrowserPresentationSettings.isFullscreen() ? "@gre@On" : "@red@Off"), ACTION_BROWSER_FULLSCREEN);
 		}
 
 		if (!state.openGLPrimary && !state.browserGpu) {
@@ -426,7 +426,7 @@ final class RendererSettingsPanel {
 		if (selectedAction == REMASTERED_SPRITES) {
 			return RemasteredSpriteSettings.isAvailable() ? Action.REMASTERED_SPRITES : null;
 		}
-		if (BrowserDisplaySettings.isAvailable()) {
+		if (BrowserPresentationSettings.isAvailable()) {
 			if (selectedAction == ACTION_BROWSER_FIT) return Action.BROWSER_FIT;
 			if (selectedAction == ACTION_BROWSER_FULLSCREEN) return Action.BROWSER_FULLSCREEN;
 		}

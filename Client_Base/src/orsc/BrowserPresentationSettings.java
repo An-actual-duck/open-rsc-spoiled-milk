@@ -1,7 +1,7 @@
 package orsc;
 
 /** Browser-only display requests. The outer page owns fullscreen and its user gesture. */
-public final class BrowserDisplaySettings {
+public final class BrowserPresentationSettings {
     public static final int FIT_TO_TAB = 1;
     public static final int FULLSCREEN = 2;
     private static volatile boolean available;
@@ -9,7 +9,7 @@ public final class BrowserDisplaySettings {
     private static volatile boolean fullscreen;
     private static int pending;
 
-    private BrowserDisplaySettings() { }
+    private BrowserPresentationSettings() { }
 
     public static boolean isAvailable() { return available; }
     public static boolean isFitToTab() { return fitToTab; }

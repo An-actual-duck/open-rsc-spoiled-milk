@@ -16275,10 +16275,10 @@ public final class mudclient implements Runnable {
 				this.toggleRemasteredSprites();
 				break;
 			case BROWSER_FIT:
-				BrowserDisplaySettings.request(BrowserDisplaySettings.FIT_TO_TAB);
+				BrowserPresentationSettings.request(BrowserPresentationSettings.FIT_TO_TAB);
 				break;
 			case BROWSER_FULLSCREEN:
-				BrowserDisplaySettings.request(BrowserDisplaySettings.FULLSCREEN);
+				BrowserPresentationSettings.request(BrowserPresentationSettings.FULLSCREEN);
 				break;
 			case HIDE_ROOFS:
 				this.toggleRoofVisibilitySetting();
