@@ -21,6 +21,7 @@ public final class BrowserBootstrap {
     public static native void reportStaticSceneWork(int[] counters);
     public static native void reportStaticIdentityWork(int[] counters);
     public static native void reportBaselineReuseWork(double[] counters);
+    public static native void reportCloneTemplateWork(double[] counters);
     public static native void reportWholeRamWork(int[] counters);
     public static native void reportRegionHandoffTrace(String phases,double[] values);
     public static native void reportRepeatableState(String username,int[] counters);
@@ -101,7 +102,7 @@ public final class BrowserBootstrap {
                 }
             }
         }
-        if(Boolean.getBoolean("spoiledmilk.browserBaselineReuse") && (!webgl
+        if((Boolean.getBoolean("spoiledmilk.browserBaselineReuse")||Boolean.getBoolean("spoiledmilk.browserCloneTemplates")) && (!webgl
             || !Boolean.getBoolean("spoiledmilk.browserBenchmark") || !Boolean.getBoolean("spoiledmilk.browserWholeRam")
             || !Boolean.getBoolean("spoiledmilk.browserWholeZone") || !Boolean.getBoolean("spoiledmilk.browserStaticSceneReuse")))
             throw new IllegalStateException("Baseline reuse requires private whole-RAM/static-scene WebGL mode");
@@ -138,6 +139,10 @@ public final class BrowserBootstrap {
             if(Boolean.getBoolean("spoiledmilk.browserBaselineReuse")) {
                 boolean[] actual=BenchmarkCandidatePolicies.inspect("orsc.PacketHandler","isBrowserBaselineReuseEnabled");
                 if(!actual[0]||!actual[1])throw new IllegalStateException("Requested baseline reuse is unsupported by this client JAR");
+            }
+            if(Boolean.getBoolean("spoiledmilk.browserCloneTemplates")){
+                boolean[] actual=BenchmarkCandidatePolicies.inspect("orsc.mudclient","isBrowserCloneTemplatesEnabled");
+                if(!actual[0]||!actual[1])throw new IllegalStateException("Requested clone templates unsupported by client JAR");
             }
             orsc.BrowserWebGLBridge.install();
             reportOverlayRectPolicy(System.getProperty("spoiledmilk.browserOverlayRectMode","off"),orsc.BrowserWebGLBridge.getOverlayRectMode());
@@ -234,6 +239,7 @@ public final class BrowserBootstrap {
                                         {"wholeZone","spoiledmilk.browserWholeZone","orsc.BrowserWebGLBridge","isWholeZoneEnabled"},
                                         {"wholeRam","spoiledmilk.browserWholeRam","orsc.BrowserWebGLBridge","isWholeRamEnabled"},
                                         {"baselineReuse","spoiledmilk.browserBaselineReuse","orsc.PacketHandler","isBrowserBaselineReuseEnabled"},
+                                        {"cloneTemplates","spoiledmilk.browserCloneTemplates","orsc.mudclient","isBrowserCloneTemplatesEnabled"},
                                         {"regionBuild","spoiledmilk.browserRegionBuild","orsc.graphics.three.BrowserRegionBuild","isEnabled"},
                                         {"regionLoadProfile","spoiledmilk.browserLoadProfile","orsc.BrowserWebGLBridge","isLoadProfileEnabled"},
                                         {"regionPreparation","spoiledmilk.browserRegionPreparation","orsc.graphics.three.World","isBrowserRegionPreparationEnabled"},
@@ -259,7 +265,7 @@ public final class BrowserBootstrap {
                                 }
                                 int[] batchWork=snapshotBatchedModelWork(observedScene,Boolean.getBoolean("spoiledmilk.browserBatchedModelKernel"));
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
-                                if(Boolean.getBoolean("spoiledmilk.browserWholeZone")){reportWholeZoneWork(snapshotWholeZoneWork());reportStaticSceneWork(snapshotStaticSceneWork());reportStaticIdentityWork(snapshotStaticIdentityWork(client));reportBaselineReuseWork(snapshotBaselineReuseWork(client));}
+                                if(Boolean.getBoolean("spoiledmilk.browserWholeZone")){reportWholeZoneWork(snapshotWholeZoneWork());reportStaticSceneWork(snapshotStaticSceneWork());reportStaticIdentityWork(snapshotStaticIdentityWork(client));reportBaselineReuseWork(snapshotBaselineReuseWork(client));reportCloneTemplateWork(snapshotCloneTemplateWork(client));}
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeRam"))reportWholeRamWork(snapshotWholeRamWork());
                                 if(Boolean.getBoolean("spoiledmilk.browserLoadProfile")){
                                     double[] trace=snapshotRegionHandoffTrace();
@@ -298,6 +304,15 @@ public final class BrowserBootstrap {
     static int[] snapshotWholeRamWork() throws ReflectiveOperationException {
         Object work=Class.forName("orsc.BrowserWebGLBridge").getMethod("getWholeRamWork").invoke(null);
         if(!(work instanceof int[])||((int[])work).length!=0&&((int[])work).length!=18)throw new IllegalStateException("Invalid whole-RAM work getter");return ((int[])work).clone();
+    }
+
+    static double[] snapshotCloneTemplateWork(Object client)throws ReflectiveOperationException{
+        Object raw;
+        try{raw=client.getClass().getMethod("getBrowserCloneTemplateWork").invoke(client);}
+        catch(NoSuchMethodException missing){if(!Boolean.getBoolean("spoiledmilk.browserCloneTemplates"))return new double[0];throw missing;}
+        if(!(raw instanceof long[]))throw new IllegalStateException("Invalid clone-template work getter");
+        long[] v=(long[])raw;if(v.length!=0&&v.length!=18)throw new IllegalStateException("Invalid clone-template counters");
+        double[] result=new double[v.length];for(int i=0;i<v.length;i++){if(v[i]<0||v[i]>9007199254740991L)throw new IllegalStateException("Clone-template counter bounds");result[i]=v[i];}return result;
     }
 
     static double[] snapshotBaselineReuseWork(Object client) throws ReflectiveOperationException {

@@ -128,10 +128,11 @@ public final class RSModel {
         return pool.intern(graph.descriptor(scalars,roots));
     }
     public static RSModel instantiatePreparedState(int descriptor,WholeRamData.Pool pool) { return instantiatePreparedState(descriptor,pool,null); }
-    public static RSModel instantiatePreparedState(int descriptor,WholeRamData.Pool pool,long[] copiedBytes) {
+    public static RSModel instantiatePreparedState(int descriptor,WholeRamData.Pool pool,long[] copiedBytes) {return instantiatePreparedState(descriptor,pool,copiedBytes,null);}
+    private static RSModel instantiatePreparedState(int descriptor,WholeRamData.Pool pool,long[] copiedBytes,WholeRamData.ModelLayout layout) {
         if(descriptor==-1)return null;
-        WholeRamData.ModelArrays a=new WholeRamData.ModelArrays(pool,pool.ints(descriptor),54,38);
-        RSModel m=new RSModel(0,0);int[] v=a.scalars;
+        WholeRamData.ModelArrays a=layout==null?new WholeRamData.ModelArrays(pool,pool.ints(descriptor),54,38):new WholeRamData.ModelArrays(pool,layout);
+        RSModel m=layout==null?new RSModel(0,0):new RSModel(layout);int[] v=a.scalars;
         m.faceHead=v[0];
         m.key=v[1];
         m.m_cb=v[2]!=0;
@@ -1216,6 +1217,52 @@ public final class RSModel {
 			throw GenUtil.makeThrowable(var3, "ca.H(" + var1 + ')');
 		}
 	}
+
+    /** Only a schema-checked private cached recipe uses this constructor. All92
+     * mutable state fields are restored before return; the93rd field m_Vb keeps
+     * its ordinary final field initializer. No empty arrays are allocated here. */
+    private RSModel(WholeRamData.ModelLayout verifiedLayout){
+        if(verifiedLayout==null)throw new IllegalArgumentException("Verified cached model layout required");
+    }
+
+    /** Private canonical-clone recipe. Owned immutable pool; each instantiate
+     * creates distinct live arrays and preserves the original clone alias graph. */
+    public static final class BrowserCloneTemplate {
+        private final RSModel source;
+        private final BrowserBaselineProof proof;
+        private final WholeRamData.Pool pool;
+        private final int descriptor;
+        private final WholeRamData.ModelLayout layout;
+        private final long bytes;
+        private BrowserCloneTemplate(RSModel source,BrowserBaselineProof proof,WholeRamData.Pool pool,int descriptor){
+            this.source=source;this.proof=proof;this.pool=pool;this.descriptor=descriptor;
+            this.layout=new WholeRamData.ModelLayout(pool.ints(descriptor),54,38);
+            this.bytes=proof.retainedBytes()+pool.retainedBytes()+layout.retainedBytes()+1024;
+        }
+        public long retainedBytes(){return bytes;}
+        /** Exact post-commit source inputs; invokes the literal clone side effect
+         * before checking, including changed source rotation/translation/normals. */
+        public boolean matches(RSModel value){
+            if(source!=value)return false;
+            value.commitTransform((byte)-28);
+            return proof.matchesSource(value);
+        }
+        public RSModel instantiate(){return instantiatePreparedState(descriptor,pool,null,layout);}
+    }
+    public static BrowserCloneTemplate browserCloneTemplate(RSModel source,RSModel prototype,long maximumBytes){
+        // Bounds the temporary alias graph below the cache's reserved2MiB. Large
+        // valid models still use literal clone; the codec/schema is not relaxed.
+        if(source==null||prototype==null||prototype.faceHead>1024||prototype.vertHead>8192||maximumBytes<4096)return null;
+        BrowserBaselineProof proof=browserBaselineProof(source,prototype,maximumBytes-1024);
+        if(proof==null)return null;
+        long remaining=maximumBytes-proof.retainedBytes()-1024;if(remaining<=0)return null;
+        WholeRamData.Pool pool=new WholeRamData.Pool(remaining);
+        try{
+            int descriptor=capturePreparedState(prototype,pool);pool.discardIndex();
+            BrowserCloneTemplate result=new BrowserCloneTemplate(source,proof,pool,descriptor);
+            return result.retainedBytes()<=maximumBytes?result:null;
+        }catch(IllegalStateException budget){return null;}
+    }
 
     /** Immutable exact raw clone inputs. Derived light/camera buffers are rebuilt
      * through the original materialization/normal path, never reused as proof. */
