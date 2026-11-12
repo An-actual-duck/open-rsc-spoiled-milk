@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en"><meta charset="utf-8"><title>Private Java session</title>
+<html lang="en"><meta charset="utf-8"><title>Spoiled Milk</title>
 <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#eee;font:15px system-ui}#status{position:absolute;z-index:5;left:5px;top:5px;background:#182026;display:none}#viewport{position:absolute;inset:0;overflow:hidden}#display{position:absolute;transform-origin:0 0}</style>
 <div id="status">Loading browser Java runtime…</div><div id="viewport"><div id="display"></div></div>
 <script type="module">
 // This document is a disposable browsing context, never a standalone entry point.
 if (window.parent === window) {
-  document.querySelector('#status').textContent = 'Open the private test index and choose Start.';
+  document.querySelector('#status').textContent = 'Open the game page and choose Play.';
 } else {
   try {
     const requested = new URLSearchParams(location.search).get('runtime') || '5.0';
