@@ -57,6 +57,7 @@ export function startupPresentation(value){
   if(value.totalBytes!==null&&value.totalBytes>0){
     const mb=n=>(n/1000000).toFixed(1);detail=`${mb(value.bytes)} of ${mb(value.totalBytes)} MB`;
     if(value.stage==='data'&&value.writtenBytes!==null){
+      valueNow=value.writtenBytes;
       if(value.bytes===0){detail=`${mb(value.writtenBytes)} of ${mb(value.totalBytes)} MB prepared`;valueNow=value.writtenBytes;}
       else detail+=` loaded · ${mb(value.writtenBytes)} MB prepared`;
     }else if(value.stage==='assets'||value.stage==='data')detail+=' prepared';

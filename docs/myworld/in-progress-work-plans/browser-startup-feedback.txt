@@ -41,19 +41,25 @@ succeeds; file completion follows resource closure. Callbacks occur initially,
 at8MiB/500ms bounds, and at file completion. These are bytes written, not network
 download or decoded/retained memory claims. Reporting failures cannot replace I/O
 success/failure. Caller retains its exact RAM roster and public personal-path
-admission. A unified data stage supports received bytes and writtenBytes separately,
-so bounded one-file download/copy/release can interleave honestly.
+admission. An optional separate Cancellation callback is polled before opening
+each file, after each1MiB of successful writes, at EOF and after closure. A true
+result throws InterruptedIOException through the stream-closing scope. The old
+signature delegates with no cancellation. Reporting remains passive; this explicit
+contract owns cancellation. A unified data stage supports received bytes and writtenBytes separately,
+so bounded one-file download/copy/release can interleave honestly. Its meter uses
+prepared bytes while the detail separately states loaded/prepared counts; receiving
+the last network byte does not make the preparation bar complete.
 
 CPU checks
 ----------
 node tests/myworld/test-browser-startup-progress.mjs
- 249 checks: monotonic/closed/bounded collector, phase summaries, distinct bytes,
+ 250 checks: monotonic/closed/bounded collector, phase summaries, distinct bytes,
  exact archive stream/fallback integrity, overflow/cancellation and reporting errors.
 node --experimental-vm-modules tests/myworld/test-browser-session-stop-receipt.mjs
  109 actual-parent queued-message checks incl progress/cancel/retry/foreign owner,
  login/travel/fatal and late-callback boundaries.
 python3 tests/myworld/test-browser-startup-files.py
- 24 actual-filesystem copy/write/error/roster/buffer/observer checks; source SHA
+ 32 actual-filesystem copy/write/error/roster/buffer/observer checks; source SHA
  and commands preserved in categorized output/tests/browser-startup-feedback.
 node tests/myworld/browser-public-alpha/policy.mjs
  54 existing public/private admission checks pass unchanged.
