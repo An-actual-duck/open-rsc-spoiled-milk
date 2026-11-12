@@ -10,8 +10,8 @@ def run(args,label):
 fixture=ROOT/'tests/myworld/browser-baseline-reuse/BaselineReuseFixture.java'
 run(['javac','-source','8','-target','8','-cp',str(jar),'-d',str(classes),str(fixture)],'compile')
 traces={};runs={}
-for label,benchmark,reuse in [('off',True,False),('on',True,True),('ordinary',False,True)]:
- props={'java.awt.headless':'true','spoiledmilk.browserBenchmark':str(benchmark).lower(),'spoiledmilk.browserWholeZone':'true','spoiledmilk.browserWholeRam':'true','spoiledmilk.browserStaticSceneReuse':'true','spoiledmilk.browserBaselineReuse':str(reuse).lower()}
+for label,benchmark,reuse,ram,statics,zone in [('off',True,False,True,True,True),('on',True,True,True,True,True),('ordinary',False,True,True,True,True),('no-ram',True,True,False,True,True),('no-static',True,True,True,False,True),('no-zone',True,True,True,True,False)]:
+ props={'java.awt.headless':'true','spoiledmilk.browserBenchmark':str(benchmark).lower(),'spoiledmilk.browserWholeZone':str(zone).lower(),'spoiledmilk.browserWholeRam':str(ram).lower(),'spoiledmilk.browserStaticSceneReuse':str(statics).lower(),'spoiledmilk.browserBaselineReuse':str(reuse).lower()}
  args=['java',*[f'-D{k}={v}'for k,v in props.items()],'-cp',str(classes)+':'+str(jar),'orsc.BaselineReuseFixture',str(ROOT)]
  text=run(args,label);traces[label]=next(x for x in text.splitlines()if x.startswith('TRACE '));runs[label]=args
 assert len(set(traces.values()))==1,'ON/OFF/default output differs'

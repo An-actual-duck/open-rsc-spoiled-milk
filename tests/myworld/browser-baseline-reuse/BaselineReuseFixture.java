@@ -72,7 +72,7 @@ public final class BaselineReuseFixture {
  public static void main(String[] args)throws Exception{
   digest=MessageDigest.getInstance("SHA-256");Config.F_CACHE_DIR=Paths.get(args[0],"Client_Base/Cache").toString();definitions();Renderer3DSettings.setBrowserPresentationAvailable(true);
   RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);RendererLightingSettings.setMode(RendererLightingSettings.Mode.DIRECTIONAL);RendererFogSettings.setMode(RendererFogSettings.Mode.ON);
-  mudclient mc=client();boolean enabled=Boolean.getBoolean("spoiledmilk.browserBaselineReuse")&&Boolean.getBoolean("spoiledmilk.browserBenchmark");
+  mudclient mc=client();boolean enabled=Boolean.getBoolean("spoiledmilk.browserBaselineReuse")&&Boolean.getBoolean("spoiledmilk.browserBenchmark")&&Boolean.getBoolean("spoiledmilk.browserWholeRam")&&Boolean.getBoolean("spoiledmilk.browserStaticSceneReuse")&&Boolean.getBoolean("spoiledmilk.browserWholeZone");
   baseline(mc,records(0,100));long before=reuse(mc);baseline(mc,records(10,100));check(!enabled||reuse(mc)>before,"warm reuse occurs");baseline(mc,records(0,100));
   // Every reuse still samples new heights and repeats the original collision/normal path.
   for(Sector sector:(Sector[])get(mc.getWorld(),"sectors"))for(int x=0;x<48;x++)for(int z=0;z<48;z++)sector.getTile(x,z).groundElevation=12;
