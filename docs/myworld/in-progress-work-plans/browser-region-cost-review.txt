@@ -1,4 +1,4 @@
-Browser region cost review — November12,2026
+Browser region cost review — November 12, 2026
 ===========================================
 
 Recommendation: keep clone templates OFF. The next bounded experiment should
@@ -11,27 +11,27 @@ What the actual comparison establishes
 --------------------------------------
 The accepted compact format reduces stored/transferred immutable geometry. The
 clone trial activates, with real thousands of factory hits, but does not show a
-crossing improvement: manager warm max-gap means are ON301ms versus OFF300.33ms.
+crossing improvement: manager warm max-gap means are ON 301 ms versus OFF 300.33 ms.
 Cold maxima likewise show no clear benefit. Do not describe hit count as a speed
-win, or rationalize the cold583ms result as a demonstrated cache cause.
+win, or rationalize the cold 583 ms result as a demonstrated cache cause.
 
 Fresh exact-source profile: manager diagnostics/browser-handoff-compact/
-templates-on-travel-profile-1; source7dba0f91, JAR9e903446. Offline analysis and a
+templates-on-travel-profile-1; source 7dba0f91, JAR 9e903446. Offline analysis and a
 preserved reproducible helper are in this worker output/diagnostics/
-browser-region-cost-review/{analysis.json,analyze.py,sources/}. Inputs are hashed;
+browser-region-cost-review/{analysis.json, analyze.py, sources/}. Inputs are hashed;
 generated-body names are verified against the actual source-table IDs. No old
 numeric function IDs are reused. No browser/GPU/build/cook was run for this review.
 
-The18.709s route window contains9,350 selected main-thread samples, approximately
-96.26% of one CPU core. The first421ms ACK-gap bracket contains210 samples and
-approximately96.34% of one core. That bracket is reconstructed backwards from one
+The 18.709 s route window contains 9,350 selected main-thread samples, approximately
+96.26% of one CPU core. The first 421 ms ACK-gap bracket contains 210 samples and
+approximately 96.34% of one core. That bracket is reconstructed backwards from one
 snapshot's lastFrame and interval ring; it is a diagnostic approximation, not a
-new logical Java span. Only4/210 samples contain a named GC frame there. This
+new logical Java span. Only 4/210 samples contain a named GC frame there. This
 single window does not justify calling GC the dominant crossing bottleneck.
 
-Fresh generated body932/J_00882c40 is computeDiffuse: sentinel12345678, diffuse
+Fresh generated body 932 / J_00882c40 is computeDiffuse: sentinel 12345678, diffuse
 factor division, four temporary per-vertex arrays and smooth-face accumulation.
-It is the deepest generated body in13/210 bracket samples (6.19%). Many other
+It is the deepest generated body in 13/210 bracket samples (6.19%). Many other
 bodies remain generic dispatch/library stubs. Their apparent outer JavaScript
 ancestry can interleave CheerpJ continuations, so inclusive percentages cannot
 be summed or assigned as exact Java caller ownership. The earlier profile's
@@ -48,7 +48,7 @@ translation and later normal preparation remain. This is a plausible overhead
 explanation, not a measured allocation or time decomposition.
 
 RSModel.resetTransformCache recomputes transformed vertices, bounds and normals
-when m_Yb is1. setTranslate and rotation setters mark it1. computeNormals then
+when m_Yb is 1. setTranslate and rotation setters mark it 1. computeNormals then
 calls computeDiffuse, whose four scratch arrays are freshly allocated per call.
 The current recipe stores a pre-placement clone; it deliberately leaves this
 finalization work unchanged. This is the strongest concrete next preparation
@@ -68,8 +68,8 @@ input key also includes local coordinates, instance/model identity and transform
 version, so rebase can rebuild a group even when its world-relative appearance
 has not changed. BrowserWebGLBridge.updateChunk repacks and replaces vertices,
 indices and material batches for a changed storage signature, even when counts
-are unchanged. The profiled route submitted220,629,216 local bytes across751
-world frames; one steady sample submitted264,500bytes for2,280vertices. Much of
+are unchanged. The profiled route submitted 220,629,216 local bytes across 751
+world frames; one steady sample submitted 264,500 bytes for 2,280 vertices. Much of
 that traffic can be routine animation, so this total is NOT region-only loading.
 Anchor-stable animated storage or separated topology/material updates is a useful
 secondary lead only after per-role/epoch byte counters establish redundant work.
