@@ -7,9 +7,8 @@ stationary samples on this host, with a much smaller counted GPU allocation than
 full residency. Warm walking pauses around 0.3 seconds and multi-second cold
 teleport readiness delays remain. This is not seamless travel or ordinary adoption.
 
-The tested
-bounded mode retains prepared CPU products while keeping GPU geometry/textures
-within an explicit budget. Static CPU reuse avoids repeated immutable scene work
+The tested bounded mode retains prepared CPU products while keeping GPU
+geometry/textures within an explicit budget. Static CPU reuse avoids repeated immutable scene work
 and null-model scans. Ordinary client defaults, game content and the public
 server are unchanged. Publication of implementation commits is not adoption.
 
@@ -204,10 +203,12 @@ inputs visited (639,543,0), (700,441,0), (6,563,-1), (99,705,10), then returned 
 (133,660,0). Every target reached actual authoritative scope, source readiness,
 fresh frames and a cleared input gate. The geometry/texture ledger stayed within
 512 MiB at every poll, peaking near 511.97 MiB; 346 evictions were recorded by
-return. Level 10's local fallback used roughly 510 MiB, illustrating pressure
-rather than universal spare capacity. All 445 RAM recipes remained retained;
-recipe-use counters stayed unchanged outside global level zero. These are signed
-fallbacks with retained CPU products, not prepared residency for extra levels.
+return. During level 10's local fallback, the combined ledger (including retained
+catalogue allocations) reached roughly 510 MiB. This illustrates pressure rather
+than universal spare capacity. All 445 RAM recipes remained retained. At both
+tested nonzero levels, recipe hits and activations stayed at two before and after
+the teleport. These are signed fallbacks with retained CPU products, not prepared
+residency for extra levels.
 
 The five captures and full poll evidence are preserved under manager
 output/diagnostics/browser-bounded-streaming-cpu/scope-final-2/. Time from original
@@ -232,9 +233,10 @@ owner-preview-final-2/ready-to-explore.json and ready-to-explore.png. This is th
 explicit private combined preview on localhost 8228, not a public deployment.
 
 The private server intentionally suppresses authored population outside its 32
-fixed NPC benchmark. Empty travel elsewhere is expected in that setup. The quiet route, fixed-NPC sample and selected scope smoke do not prove
-populated roaming/combat, VFX, full
-door/tree mutation-restoration lifecycles, every roof/floor, long-session memory,
+fixed NPC benchmark. Empty travel elsewhere is expected in that setup. The quiet
+route, fixed-NPC sample and selected scope smoke do not prove populated roaming
+or combat, VFX, full door/tree mutation-restoration lifecycles, every roof/floor,
+long-session memory,
 context loss under play or lower-memory devices. The broader acceptance gates
 in the preserved November 11 recommendation remain open. The result is a tested
 private experiment for owner review, not ordinary adoption or public deployment.
