@@ -62,7 +62,7 @@ function updateWorldCover(){
   const ramWait=wholeRam.enabled&&ramWorld&&window.browserProof.wholeRamJava?.preparedReady!==true;
   const waiting=ramWait||awaitingGameFrame&&(renderWorker.enabled?!(state?.phase==='ready'&&gpu?.stats.javaWorldFrames>0):state?.phase==='login');
   if(!worldCover||(!waiting&&!error&&!['loading','streaming','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;
-  const reason=ramWait?(window.browserProof.wholeRamJava?.sourceReady?'Preparing full overworld CPU activation recipes':'Loading full overworld source into RAM'):'Waiting for area data';
+  const reason=ramWait?'Preparing game data':'Preparing nearby area';
   worldCover.update(waiting?{phase:'loading',reason}:state,gpu?.canvas.style,error);
 }
 
@@ -124,6 +124,10 @@ window.browserProof.loadProfile=loadProfileCollector.stats;
 const regionHandoffCollector=createRegionHandoffTraceCollector({enabled:loadProfilePolicy.requested,gpu:()=>gpu,stopped:()=>stopped});
 window.browserProof.regionHandoff=regionHandoffCollector.stats;
 const natives = {
+  Java_orsc_browser_BrowserBootstrap_syncDisplaySettings(lib,action){
+    const state=parent.browserSessionDisplayRequest?.(window,action);
+    return new Int32Array(state?[1,state.baseMode==='fit'?1:0,state.fullscreen?1:0]:[0,1,0]);
+  },
   Java_orsc_BrowserWebGLBridge_loadingWork:loadProfileCollector.report,
   Java_orsc_browser_BrowserBootstrap_reportRegionHandoffTrace:regionHandoffCollector.report,
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,

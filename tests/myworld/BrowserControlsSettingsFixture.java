@@ -37,9 +37,31 @@ public final class BrowserControlsSettingsFixture {
         Renderer3DSettings.setBrowserPresentationAvailable(true);
         RendererSettingsPanel.State browser=state(false);check(browser.browserGpu&&!browser.openGLPrimary,"browser capability separate from native window");
         List<RendererSettingsPanel.Row> rows=RendererSettingsPanel.rows(browser);
-        for(String name:new String[]{"Lighting","Shadows","Geometry","Fog","Terrain Variation","Terrain shading","Object shading","Brightness","Contrast","Gamma","Saturation","Middle mouse"})check(has(rows,name),"browser row "+name);
+        for(String name:new String[]{"Lighting","Shadows","Geometry","Fog","Terrain Variation","Terrain shading","Object shading","Brightness","Contrast","Gamma","Saturation"})check(has(rows,name),"browser row "+name);
         for(String name:new String[]{"Scaling -","Scaling type","Window mode","Aspect Ratio","Preset"})check(!has(rows,name),"unsupported browser row omitted "+name);
         RendererSettingsPanel panel=new RendererSettingsPanel();View view=new View();Actions actions=new Actions();
+        check(!has(rows,"Middle mouse"),"middle mouse belongs to Interface, not Graphics");
+        check(!has(rows,"Fit to tab"),"desktop startup does not invent browser display capability");
+        BrowserPresentationSettings.update(new int[]{1,1,0});
+        rows=RendererSettingsPanel.rows(browser);
+        check(has(rows,"Fit to tab - @gre@On")&&has(rows,"Fullscreen - @red@Off"),"actual parent presentation state appears in browser Graphics");
+        for(int[] mapping:new int[][]{{75,RendererSettingsPanel.Action.BROWSER_FIT.ordinal()},{76,RendererSettingsPanel.Action.BROWSER_FULLSCREEN.ordinal()}}){
+            view.selected=mapping[0];actions.last=null;
+            check(panel.handleSelectedAction(view,browser,new RendererSettingsPanel.Input(960,0,0,1,0,false),0,0,actions),"browser display action handled");
+            check(actions.last.ordinal()==mapping[1],"browser display action mapping");
+        }
+        BrowserPresentationSettings.request(BrowserPresentationSettings.FULLSCREEN);
+        check(BrowserPresentationSettings.takeRequest()==2&&BrowserPresentationSettings.takeRequest()==0,"display request consumed once");
+        BrowserPresentationSettings.request(1);BrowserPresentationSettings.request(2);
+        check(BrowserPresentationSettings.takeRequest()==1,"pending display request is not overwritten by repeated clicks");
+        for(int[] invalid:new int[][]{new int[]{1},new int[]{1,0,2}}){
+            try{BrowserPresentationSettings.update(invalid);throw new AssertionError("malformed display state accepted");}catch(IllegalArgumentException expected){checks++;}
+        }
+        BrowserPresentationSettings.update(new int[]{0,1,0});
+        BrowserPresentationSettings.request(1);check(BrowserPresentationSettings.takeRequest()==0,"desktop/disabled mode cannot request browser actions");
+        for(int unsupported:new int[]{73,75,76}){view.selected=unsupported;actions.last=null;
+            check(!panel.handleSelectedAction(view,browser,new RendererSettingsPanel.Input(960,0,0,1,0,false),0,0,actions)&&actions.last==null,"foreign/disabled display or Interface action rejected");}
+
         for(int[] mapping:new int[][]{{60,RendererSettingsPanel.Action.FOG.ordinal()},{61,RendererSettingsPanel.Action.LIGHTING.ordinal()},
             {74,RendererSettingsPanel.Action.SHADOW_QUALITY.ordinal()},{64,RendererSettingsPanel.Action.TERRAIN_VARIATION.ordinal()},
             {62,RendererSettingsPanel.Action.GEOMETRY.ordinal()}}){

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import tempfile
 import textwrap
@@ -10,7 +11,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CLIENT_JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
+CLIENT_JAR = Path(os.environ.get("SPOILED_MILK_TEST_CLIENT_JAR", ROOT / "Client_Base/Open_RSC_Client.jar"))
 
 
 FIXTURE = r"""
@@ -125,14 +126,13 @@ public final class RendererSettingsPanelFixture {
 	private static void assertOpenGLRows() {
 		List<RendererSettingsPanel.Row> rows = RendererSettingsPanel.rows(state(true, true, true));
 		int[] expectedActions = {
-			-1000, 59, 73, 56, 63, 61, 74, 62, 64, 60,
+			-1000, 59, 56, 63, 61, 74, 62, 64, 60,
 			-1000, 66, -1000, 67, -1000, 68, -1000, 69,
 			-1000, 70, -1000, 71, -1000, 26, 42
 		};
 		String[] expectedFixedLabels = {
 			"@yel@Graphics",
 			"@whi@Preset - @yel@Test",
-			"@whi@Middle mouse - @gre@With tilt",
 			"@whi@Aspect Ratio - @gre@4:3",
 			"@whi@Window mode - @yel@Borderless",
 			"@whi@Lighting - @yel@Directional",
@@ -169,16 +169,15 @@ public final class RendererSettingsPanelFixture {
 		}
 
 		List<RendererSettingsPanel.Row> disabled = RendererSettingsPanel.rows(state(true, false, false));
-		assertEquals(23, disabled.size(), "visibility-disabled OpenGL row count");
-		assertEquals("@yel@Visibility", disabled.get(22).label, "visibility section remains");
+		assertEquals(22, disabled.size(), "visibility-disabled OpenGL row count");
+		assertEquals("@yel@Visibility", disabled.get(21).label, "visibility section remains");
 	}
 
 	private static void assertSoftwareRowsAndScroll() {
 		List<RendererSettingsPanel.Row> rows = RendererSettingsPanel.rows(state(false, true, true));
-		int[] expectedActions = {-1000, 73, 49, 46, -1000, 26, 42};
+		int[] expectedActions = {-1000, 49, 46, -1000, 26, 42};
 		String[] expectedLabels = {
 			"@yel@Graphics",
-			"@whi@Middle mouse - @gre@With tilt",
 			"@whi@Scaling - ",
 			"@whi@Scaling type - @gre@@gre@Integer",
 			"@yel@Visibility",
@@ -230,7 +229,7 @@ public final class RendererSettingsPanelFixture {
 	}
 
 	private static void assertStableActionDispatch() {
-		int[] ids = {56, 59, 60, 61, 74, 62, 63, 64, 73, 26, 42};
+		int[] ids = {56, 59, 60, 61, 74, 62, 63, 64, 26, 42};
 		RendererSettingsPanel.Action[] expected = {
 			RendererSettingsPanel.Action.RENDER_SURFACE,
 			RendererSettingsPanel.Action.RENDERER_PROFILE,
@@ -240,7 +239,6 @@ public final class RendererSettingsPanelFixture {
 			RendererSettingsPanel.Action.GEOMETRY,
 			RendererSettingsPanel.Action.WINDOW_MODE,
 			RendererSettingsPanel.Action.TERRAIN_VARIATION,
-			RendererSettingsPanel.Action.MIDDLE_MOUSE,
 			RendererSettingsPanel.Action.HIDE_ROOFS,
 			RendererSettingsPanel.Action.HIDE_UNDERGROUND_FLICKER
 		};
@@ -297,7 +295,7 @@ public final class RendererSettingsPanelFixture {
 		plus.selected = 49;
 		FakeActions plusActions = new FakeActions();
 		assertTrue(PANEL.handleSelectedAction(
-			plus, state(false, true, true), input(965, 114, 1, 0), 100, 66, plusActions),
+			plus, state(false, true, true), input(965, 99, 1, 0), 100, 66, plusActions),
 			"software plus handled");
 		assertEquals(RendererSettingsPanel.Action.SCALE_UP, plusActions.performed.get(0),
 			"software plus action");
@@ -307,7 +305,7 @@ public final class RendererSettingsPanelFixture {
 		hiddenPlus.scroll = 4;
 		FakeActions hiddenPlusActions = new FakeActions();
 		assertTrue(PANEL.handleSelectedAction(
-			hiddenPlus, state(false, true, true), input(965, 114, 1, 0), 100, 66,
+			hiddenPlus, state(false, true, true), input(965, 99, 1, 0), 100, 66,
 			hiddenPlusActions), "scrolled software row remains non-actionable");
 		assertEquals(0, hiddenPlusActions.performed.size(), "scrolled software click ignored");
 	}

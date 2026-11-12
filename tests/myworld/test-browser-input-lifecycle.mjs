@@ -65,7 +65,15 @@ try {
     await wait('!!document.querySelector("#runtime")?.contentWindow.testExit');
     assert.deepEqual(await evaluate('(()=>{const f=document.querySelector("#runtime"),o=f.contentWindow.testOptions;return [f.sandbox.value,f.allow,o.enableInputMethods,o.clipboardMode,o.overrideShortcuts({ctrlKey:true,key:"f"})]})()'), ['allow-scripts allow-same-origin', "fullscreen 'none'; clipboard-read 'none'; clipboard-write 'none'; keyboard-map 'none'", false, 'java', false]);
   }
+  async function closeFromRecovery() {
+    // There is no running-game toolbar. A fatal condition exposes a transient
+    // recovery surface, whose visible Close button tears down the owned frame.
+    await evaluate(`document.querySelector("#runtime").contentWindow.eval('parent.postMessage({type:"browser-session-proof",proof:{gpu:{worldReadiness:{phase:"error"}}}},location.origin)')`);
+    await wait('!document.querySelector("#welcome").hidden');
+    await click('document.querySelector("#stop")');
+  }
   await start();
+  assert.equal(await evaluate('document.querySelector("#welcome").hidden'),true);
   // Genuine browser focus/key events inside the nested document remain usable.
   await evaluate('document.querySelector("#runtime").contentDocument.querySelector("input").focus()');
   await call('Input.dispatchKeyEvent', {type: 'keyDown', key:'a',code:'KeyA',text:'a',windowsVirtualKeyCode:65});
@@ -75,7 +83,7 @@ try {
   await call('Input.dispatchKeyEvent', {type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
   await call('Input.dispatchKeyEvent', {type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
   await delay(100); assert.equal(await evaluate('document.querySelectorAll("#runtime").length'), 1);
-  await click('document.querySelector("#stop")');
+  await closeFromRecovery();
   await wait('!document.querySelector("#runtime")');
   const ticks = await evaluate('testTicks'); await delay(120); assert.equal(await evaluate('testTicks'), ticks);
   await start(); await evaluate('document.querySelector("#runtime").contentWindow.testExit(0)');
@@ -84,7 +92,7 @@ try {
   await wait('!document.querySelector("#runtime")'); assert.match(await evaluate('browserProof.stopReason'), /controlled runtime failure/);
   await start();
   await evaluate('document.querySelector("#runtime").contentDocument.querySelector("input").focus()');
-  await evaluate('(()=>{const input=document.createElement("input");input.id="outside";document.querySelector("header").append(input);input.focus()})()');
+  await evaluate('(()=>{const input=document.createElement("input");input.id="outside";document.body.append(input);input.focus()})()');
   await delay(100);
   assert.equal(await evaluate('document.querySelectorAll("iframe").length'), 1);
   // Vendor startup may post a focus departure while its nested contexts settle.
@@ -96,7 +104,7 @@ try {
   await call('Input.dispatchKeyEvent', {type:'keyDown',key:'b',code:'KeyB',text:'b',windowsVirtualKeyCode:66});
   await call('Input.dispatchKeyEvent', {type:'keyUp',key:'b',code:'KeyB',windowsVirtualKeyCode:66});
   assert.equal(await evaluate('document.querySelector("#outside").value'), 'b');
-  await click('document.querySelector("#stop")');
+  await closeFromRecovery();
   await wait('!document.querySelector("#runtime")');
   await start();
   const alternate = await call('Target.createTarget', {url:'about:blank'});
@@ -107,12 +115,12 @@ try {
   await call('Target.activateTarget', {targetId:targets.find(t=>t.type==='page').id});
   await wait('browserProof.visibility==="visible"');
   assert.equal(await evaluate('document.querySelectorAll("#runtime").length'), 1);
-  await click('document.querySelector("#stop")');
+  await closeFromRecovery();
   await wait('!document.querySelector("#runtime")');
   // Removed/stale contexts cannot send trusted stop commands into a new session.
   await start(); await evaluate('window.postMessage({type:"browser-session-stop",reason:"untrusted parent"},location.origin)');
   await delay(80); assert.equal(await evaluate('document.querySelectorAll("iframe").length'), 1);
-  await click('document.querySelector("#stop")');
+  await closeFromRecovery();
   const result = {passed:true, runtime:'mocked; actual browser DOM/CDP input', loads, tests:['explicit start','frame sandbox/options','nested input','Escape preservation','timer teardown','Stop','Java exit','bootstrap failure','advisory focus departure','outer input while session remains alive','actual tab hide/restore survival','restart/stale message rejection'], desktopGlobalKeyboard:'NOT_TESTED; reported failure not reproduced'};
   fs.writeFileSync(path.join(run, 'result.json'), JSON.stringify(result, null, 2));
   console.log('PASS browser input lifecycle', run);

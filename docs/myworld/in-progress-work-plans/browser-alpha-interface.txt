@@ -1,0 +1,118 @@
+Browser alpha interface cleanup: private candidate
+================================================
+
+Status and scope
+----------------
+CPU/offline candidate ready for manager review and real Firefox acceptance.
+No public server, endpoint, loopback policy, player map, renderer shader or ordinary
+native window mode is changed. This is not a public browser deployment.
+
+Player-facing changes
+---------------------
+Middle mouse moves from Graphics to General's Interface section. Stable action73,
+the existing tilt/Classic behavior and client-settings persistence are retained.
+The browser's Fit to tab and Fullscreen rows live in the in-game Graphics menu.
+Native Windowed/Borderless/Fullscreen and software scaling retain their existing
+controls; browser software compatibility adjusts scaling-row coordinates for its
+two additional display rows. No session/lifecycle action is added to Graphics.
+
+The permanent outer toolbar and engineering/login details are removed. A transient
+Play/Cancel surface owns startup. It disappears for login/game; ordinary region
+travel does not restore it. Fatal graphics/area-preparation failures expose a
+transient Restart game/Close game surface. Closing the tab still disposes the
+owned runtime. The retained hidden Stop element supports startup/recovery, not a
+permanent gameplay bar. Normal in-game logout behavior is unchanged.
+
+Only the outer document owns fullscreen. A Graphics request first calls the
+outer requestFullscreen API before awaiting anything. If the browser rejects
+that attempt or requires a fresh gesture, a transient Enter fullscreen/Keep
+playing in tab dialog supplies that gesture. Escape/denial leave the game alive;
+fullscreenchange updates the real observed setting and CSS fit. Dismissing/stopping
+invalidates an outstanding request, including one whose promise resolves late.
+An obsolete completion cleans up only when no newer request owns fullscreen; it
+cannot exit a replacement session's successful entry. Independent review reproduced
+the original race, and both the independent and local regression now pass.
+No automatic fullscreen re-entry follows Escape. Native framebuffer dimensions
+and existing CSS input-coordinate normalization are unchanged.
+
+Initial loading uses plain Preparing game data / Preparing nearby area labels.
+GPU/CPU/full-world retention language stays in diagnostics rather than gameplay
+loading text. Readiness, source authority, coverage ACK and input gates remain
+unchanged. Ordinary streaming keeps its transparent status and original gates;
+this patch does not cover region stalls with an opaque loading screen.
+
+The browser observer no longer overwrites zoom75/rotation128 every second merely
+because benchmark optimizations are selected. Only an explicitly selected private
+repeatable-v1 or renderer-combat-v1 fixture creates RepeatableCamera. Normal
+exploration keeps the player's zoom and rotation. The existing explicit fixture's
+one-time pin and drift reporting remain unchanged.
+
+Exact build and closed source review
+------------------------------------
+Full clean Ant build source: 6eaf6443590b5edfeba33f3c889a0378ffcadc4e.
+991 own classes, 3194 own assets, no transplanted classes.
+JAR SHA256:
+  841fb6b862182062090d56ac46e9c1b6e0210d68e0672d53de27473311a48618
+Worker receipt, source/class/asset manifests and log:
+  output/builds/browser-alpha-interface/review-final/
+The separate browser bootstrap was compiled from maintained tool source by the
+focused controls/startup fixtures; it is not claimed as an entry in that client
+JAR. Manager staging must compile its matching browser-spike.jar and cook any
+source-bound private catalogues afresh; old catalogue/JAR bindings are not reused.
+
+The whole-source light guard's mudclient SHA was refreshed only after exact review:
+  tests/myworld/browser-alpha-interface/verify-scope.py
+Normalizing exactly three UI edits recovers every byte of the original1ce24dca0
+mudclient. All three guarded light reader lines remain exact; three negative
+mutations fail. No terrain, collision, picking or source-authority edit is hidden
+by a new expected hash. The closed query-light consumer roster also passes.
+The previously stale alignment fixture expected hash was updated to the exact
+accepted-base1ce24dca0 body, which is byte-identical in this candidate; alignment
+implementation was not modified.
+
+Focused offline verification
+----------------------------
+Evidence: output/diagnostics/browser-alpha-interface/focused-6eaf644/result.json.
+17 focused commands passed for the frozen Java candidate, including:
+- 81 actual Java browser/settings checks plus middle-button relay behavior.
+- Desktop Graphics rows/actions/software scaling and all native window-mode labels.
+- Original middle-mouse mode/default/load/save/cycle persistence fixture.
+- 97 queued-message lifecycle/startup/recovery/old-frame/origin/teardown checks.
+- Direct fullscreen request, gesture fallback, repeated denial, Escape, late
+  completion after Stop, obsolete completion versus a newer successful/cancelled
+  owner, fit/aspect/resize and pointer bounds.
+- World readiness/loading/transparent streaming/keyboard-pointer-release gates.
+- Five mocked frontend modes (normal, repeatable, physical ON/OFF, no native module).
+- 15 actual repeatable-camera checks and23 pre-Scene/bootstrap observer checks.
+- Exact UI/light source scope and closed consumer ownership gate.
+The subsequent JS-only generation correction also passed the updated display
+fixture, the independent display-generation fixture and all97 VM lifecycle checks.
+Java is byte-identical to the full build above. No browser/server was launched by
+those focused runs and no FPS claim follows.
+
+Known failed/excluded attempts
+-----------------------------
+The broader CPU repeatable-tools wrapper passed its Java fixtures, then stopped
+in the inherited preparation-candidates fixture: its expected object omits the
+already-existing regionBuild:false field. Neither policy nor that stale test was
+changed here. Its log remains in output/tests/browser-repeatable-benchmark-tools/
+jdk-jdk8u482-b08/cpu.log. This wrapper is not reported as passing.
+
+An earlier accidental invocation of the old lifecycle test launched its own
+mocked headless Chrome/ephemeral HTTP fixture despite the worker's CPU-only scope.
+It failed when trying to click the now-hidden old running-game Stop button. The
+fixture's finally closed its owned browser/listener; an ownership-specific process
+check found no survivor. It never attached to a real game or existing browser.
+The failure record is output/diagnostics/browser-alpha-interface/failed-lifecycle-test.txt.
+The optional browser fixture was updated to use the visible fatal-recovery surface
+but was NOT rerun by this worker. Actual browser acceptance belongs to the manager.
+
+Remaining acceptance
+--------------------
+Manager Firefox should verify actual Graphics row selection, direct fullscreen
+activation or its transient confirmation, Escape, denial, fit/resize/click
+alignment, normal zoom/orbit persistence, initial loading wording, absence of a
+permanent toolbar, and startup Cancel/fatal Retry. The separately repaired
+upper-level return crash is outside this implementation and needs its own merged
+artifact and real stair smoke. No public-alpha readiness/deployment claim is made
+from offline UI checks alone.
