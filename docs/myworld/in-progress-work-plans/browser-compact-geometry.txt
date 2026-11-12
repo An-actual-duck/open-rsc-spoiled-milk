@@ -1,0 +1,35 @@
+Private browser compact geometry — November 12, 2026
+===================================================
+
+Status: implementation in progress in feat/browser-compact-geometry. Ordinary
+renderer defaults, public server, existing bakes and owner preview are unchanged.
+The region-handoff investigation is independent.
+
+The complete accepted ee358e... catalogue audit covers 1,400 resources and
+19,001,439 vertices. Shader inputs use 23 of the 28 legacy float components;
+components 9..13 are neither browser receiver nor depth-shadow attributes.
+Every material/raw/blend color exactly round-trips through float32(byte/255).
+Base light and kind/family/mask/blend-strength exactly fit unsigned bytes.
+No float32 position, UV or normal precision change is proposed.
+
+Candidate compact48-v1 layout (byte offsets):
+  0 position float32[3]; 12 UV float32[2]; 20 normal float32[3]
+  32 material RGBA unorm8[4]; 36 raw RGB unorm8[3]; 39 base light uint8
+  40 terrain blend RGB unorm8[3]; 43 model kind uint8; 44 material family uint8
+  45 variation mask uint8; 46 blend strength uint8; 47 zero padding
+This changes vertex storage from 112 to 48 bytes (57.14% smaller), before indices.
+Each conversion must refuse nonrepresentable values, including sign-changing
+negative zero, rather than quantize them. CPU roundtrip equivalence does not
+replace actual shader/pixel acceptance on hardware.
+
+A versioned derivative sidecar will bind the exact canonical catalogue/JAR/source,
+settings and every original resource hash. Canonical catalogue and RAM recipes
+remain immutable. A fresh private stage may contain legacy and compact variants
+for same-artifact startup controls. Local/dynamic geometry retains legacy112;
+per-resource VAO/shadow layouts and actual allocation bytes remain explicit.
+No runtime whole-window CPU conversion is planned.
+
+Acceptance requires full-catalogue conversion/roundtrip proof, sidecar/decoder
+negative cases, GL-double layout and mixed-path checks, bounded slice/cancellation
+and accounting tests, then manager-owned hardware pixel/frame-time/loading/memory
+comparison. No browser/GPU measurement or FPS gain is claimed here.
