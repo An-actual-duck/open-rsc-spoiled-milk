@@ -140,3 +140,16 @@ with small star/horn/pinecone stock insets. Two editable layers, deterministic
 author.lua recipe and receipt.json are preserved. Current Firefox index shows
 these at 1x/8x alongside the original and god mace references. Runtime sprites
 and gameplay remain unchanged pending review.
+
+Second native restart — owner-specified limb themes (CURRENT)
+------------------------------------------------------------
+Owner requested a fresh pass: Zamorak red stock with mace-head horns expressed
+in the limbs; Saradomin silver stock and gold limbs with star-shaped tips;
+Guthix brown stock, light green limbs, dark green brambles along stock.
+Current candidates and editable recipe: authoring/items/god-crossbows/
+native-restart-v2/. All earlier passes are superseded and are not inputs.
+Native 48x32 design uses the unchanged standard crossbow as its framework,
+retaining stock, trigger, latch and string positions; limb tips now deliberately
+change their silhouettes. Solid opaque/transparent pixels, clean canvas border,
+original grey mechanical parts verified unchanged. Firefox index updated with
+1x/8x comparison and mace references. Still art review only; no runtime changes.
