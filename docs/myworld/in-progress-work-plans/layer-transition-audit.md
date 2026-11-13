@@ -3,7 +3,9 @@
 Manager update, November 12, 2026: integrated at
 `2a6a77a7880302522029c5ad71b6b08613b43047` and staged as server-only `v0.3.20`.
 The current-code and Oracle ARM64/JDK17 replays both pass 51 cases / 342 checks;
-the running baseline fails 39 cases. The public server remains `v0.3.19`.
+the running baseline fails 39 cases. The fixes subsequently shipped with the satchel dialogue update in `v0.3.21`,
+source `977a5c310b232b4184ca5b87f7ef440665b72b50`; installed callbacks pass 51/342
+with class-loading proof. The `v0.3.20` candidate was never activated.
 See [staging and maintenance handoff](layer-transition-release-staging.txt).
 The worker's original scope and evidence below are preserved as history.
 

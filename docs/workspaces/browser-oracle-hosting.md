@@ -10,8 +10,11 @@ directly to `wss://play.rscspoiledmilk.com:43505/`, subprotocol `binary`.
 
 ## Current staged-login deployment
 
-Browser `alpha-20261112-6` and server-only `v0.3.19` are active together at source
-`2d55983b11f36b4a488a417e05d1662eb7357801`. The immutable release manifest is
+Browser `alpha-20261112-6` remains at source
+`2d55983b11f36b4a488a417e05d1662eb7357801`; the compatible public server is now
+server-only `v0.3.21`, source `977a5c310b232b4184ca5b87f7ef440665b72b50`.
+The later server patch changes quest transitions and satchel dialogue without
+changing the browser build, protocol or map. The immutable browser manifest is
 `6de94bcb8f28d1b613cbb183ef9d18122745621168b5fc1f6c4a68679912d594`.
 The desktop player release remains v0.3.16.
 

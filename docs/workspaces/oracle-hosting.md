@@ -12,15 +12,34 @@ public worlds against diverging player databases.
 | Game port | TCP `43605` |
 | VM | `VM.Standard.A1.Flex`, 1 OCPU, 6 GB RAM, ARM64 |
 | OS / Java | Ubuntu 26.04.1 LTS / OpenJDK 17 |
-| Server release tag | `v0.3.19` (server-only staged browser login) |
+| Server release tag | `v0.3.21` (server-only level transitions and satchel dialogue) |
 | Published client release | `v0.3.16` (steady underground lighting) |
-| Game source | `2d55983b11f36b4a488a417e05d1662eb7357801` |
+| Game source | `977a5c310b232b4184ca5b87f7ef440665b72b50` |
 | Client protocol | `10059` |
 | Public service | `spoiled-milk.service`, enabled at boot |
-| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.19` |
+| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.21` |
 | Guarded live path | `/tmp/spoiled-milk-live-main` |
 | Git object repository | `/home/ubuntu/spoiled-milk/repository.git` |
 | External state | `/home/ubuntu/.local/share/spoiled-milk/live` |
+
+The subsequent November 13 UTC / November 12 local server-only v0.3.21
+activation includes the 28 explicit surface-return repairs, Observatory keep gate
+and distinct satchel-completion lines for all six associates. Source is
+977a5c310b232b4184ca5b87f7ef440665b72b50. Candidate v0.3.20 was preserved without
+activation; v0.3.19 remains the prior live rollback source. Browser
+alpha-20261112-6 and desktop v0.3.16 are unchanged.
+
+The owner ran the full 120-second warning, followed by saved clean shutdown.
+Integrity-checked Oracle and PC backups retain all 74 accounts. The ARM64/JDK17
+candidate and installed JARs pass 51 transition cases / 342 checks plus the
+contact-dialogue routes; class-loading proof binds the installed callback test
+to its actual plugin JAR. Core and gameplay-overlay classes match v0.3.19.
+Changes are confined to twelve plugin source families, including two contact
+nested classes whose instructions are identical (debug positions changed).
+Map, database link, enabled service, backup timer, zero automatic restarts,
+native/WSS configurations and staged-login support were verified. Receipts:
+output/reviews/release-v0.3.21/ locally and
+/home/ubuntu/spoiled-milk/verification/v0.3.21/activation/ on Oracle.
 
 The November 13 UTC / November 12 local activation installed server-only
 `v0.3.19` and browser `alpha-20261112-6` together. The browser manifest SHA256 is
@@ -49,7 +68,7 @@ The service requires that mount. The source is a clean detached checkout of the
 exact published tag; it is never a development workspace.
 
 The service calls `scripts/run-hosted-server.sh` with
-`MYWORLD_HOSTED_RELEASE_TAG=v0.3.19`. Existing exact-tag, clean-source, installed
+`MYWORLD_HOSTED_RELEASE_TAG=v0.3.21`. Existing exact-tag, clean-source, installed
 map, generator, external-database, and occupied-port guards remain active.
 `JAVA_TOOL_OPTIONS` caps the heap at 3 GiB. The unit uses `Restart=on-failure`;
 a successful in-game shutdown exits normally and stays stopped.

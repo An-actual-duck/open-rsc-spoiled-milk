@@ -1,6 +1,11 @@
 Level-transition fixes: staged server-only release
 =================================================
-Prepared November 12, 2026. Status: staged and verified; NOT activated.
+Prepared November 12, 2026. Historical staging handoff: v0.3.20 was NOT activated.
+The combined fixes and six associate completion lines are now live in v0.3.21,
+source 977a5c310b232b4184ca5b87f7ef440665b72b50. The Oracle candidate and installed
+JAR replays both pass 51/342 plus the contact routes. The text below preserves
+the earlier immutable v0.3.20 staging record; do not execute its old activation
+tools against the v0.3.21 server.
 
 Follow-up after this freeze: the six associate satchel-completion lines have
 been updated on main, with contact/Influence route checks passing. Frozen tag
