@@ -653,7 +653,7 @@ public final class Renderer3DFrame {
 
 	/** Producer-sampled terrain tangent; no live world reads on the GL thread. */
 	public static final class CharacterGroundShadow {
-		public static final boolean ENABLED = !"false".equalsIgnoreCase(System.getProperty("spoiledmilk.characterGroundShadows", "true"));
+		public static final boolean ENABLED = Boolean.parseBoolean(System.getProperty("spoiledmilk.characterGroundShadows", "false"));
 		public final int faceId, x, y, z;
 		public final float radius, slopeX, slopeZ;
 		private CharacterGroundShadow(int faceId, int x, int y, int z, float radius, float slopeX, float slopeZ) {
