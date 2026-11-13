@@ -47,6 +47,9 @@ public abstract class LoginRequest extends LoginExecutorProcess{
     public LoginAdmissionReservations.Lease getAdmission(){return admission;}
     public final void releaseAdmission(){LoginAdmissionReservations.Lease lease=admission;if(lease!=null)lease.release();}
     public final void clearLoginSecret(){password=null;}
+    private void discardLoadedCandidate(Player candidate){
+        if(candidate!=null&&!candidate.isLoggedIn()&&server.getWorld().getPlayerID(candidate.getDatabaseID())!=candidate)candidate.closePersistenceSession();
+    }
     public Player reloadStagedPlayer() {
         try {
             PlayerLoginData current=server.getDatabase().getPlayerLoginData(getUsername());
@@ -60,7 +63,7 @@ public abstract class LoginRequest extends LoginExecutorProcess{
         }catch(GameDatabaseException failure){LOGGER.error("Unable to revalidate prepared login",failure);return null;}
     }
     public final boolean finishAdmission(final Player candidate,final Runnable beforeCommit) {
-        if(admission==null||!getChannel().isActive())return false;
+        if(admission==null||!getChannel().isActive()){discardLoadedCandidate(candidate);return false;}
         try {
             return admission.commit(System.currentTimeMillis(),()->{
                 if(!getChannel().isActive()||!admission.isLive(System.currentTimeMillis())
@@ -177,9 +180,9 @@ public abstract class LoginRequest extends LoginExecutorProcess{
 	public abstract void loadingComplete(Player loadedPlayer);
 
     protected void processInternal() {
-        boolean queued=false;
+        boolean queued=false;Player candidate=null;
         try {
-            ValidatedLogin vl=validateLogin();int response=vl.responseCode;Player candidate=null;
+            ValidatedLogin vl=validateLogin();int response=vl.responseCode;
             if(!isSimLogin&&isValidatedLoginSuccessful(response)){
                 candidate=getServer().getPlayerService().loadPlayer(this);
                 if(candidate==null)response=LoginResponse.LOGINSERVER_OFFLINE;
@@ -188,8 +191,9 @@ public abstract class LoginRequest extends LoginExecutorProcess{
                 clearLoginSecret();final Player loaded=candidate;final int success=response;
                 getServer().getGameEventHandler().add(new ImmediateEvent(server.getWorld(),"Prepare Browser Login"){
                     public void action(){
-                        if(!getChannel().isActive()||admission==null||!admission.isLive(System.currentTimeMillis())){releaseAdmission();getChannel().close();return;}
-                        configureStagedPlayer(loaded);StagedLoginSession.begin(LoginRequest.this,loaded,success);
+                        if(!getChannel().isActive()||admission==null||!admission.isLive(System.currentTimeMillis())){discardLoadedCandidate(loaded);releaseAdmission();getChannel().close();return;}
+                        try{configureStagedPlayer(loaded);StagedLoginSession.begin(LoginRequest.this,loaded,success);}
+                        catch(RuntimeException|Error failure){discardLoadedCandidate(loaded);releaseAdmission();getChannel().close();LOGGER.error("Cannot start detached browser preparation",failure);}
                     }
                 });queued=true;return;
             }
@@ -201,10 +205,12 @@ public abstract class LoginRequest extends LoginExecutorProcess{
                     public void action(){if(!finishAdmission(loaded,()->{})){releaseAdmission();getChannel().close();}}
                 });queued=true;
             }
-        }finally{clearLoginSecret();if(!queued)releaseAdmission();}
+        }finally{clearLoginSecret();if(!queued){discardLoadedCandidate(candidate);releaseAdmission();}}
     }
 
 	public ValidatedLogin validateLogin() {
+        if(stagedLoginRequested()&&getClientVersion()!=server.getConfig().CLIENT_VERSION)
+            return new ValidatedLogin(LoginResponse.CLIENT_UPDATED);
         // Wire compatibility is mandatory, including administrators and disabled version enforcement.
         if (!com.openrsc.server.net.rsc.NpcCapacityContract.supportsWorld(
                 getClientVersion(), getServer().getConfig().CLIENT_VERSION, getServer().getConfig().NPC_CAPACITY)) {

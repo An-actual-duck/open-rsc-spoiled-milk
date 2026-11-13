@@ -12,7 +12,7 @@ FILES = ['GameStateUpdater.java', 'Server.java', 'login/LoginRequest.java',
          'net/ConnectionAttachment.java', 'net/RSCConnectionHandler.java',
          'net/rsc/ActionSender.java', 'net/rsc/LoginPacketHandler.java',
          'login/LoginAdmissionReservations.java', 'login/StagedLoginProtocol.java',
-         'login/StagedLoginSession.java']
+         'login/StagedLoginSession.java','model/world/region/RegionManager.java']
 
 def main():
     base = Path(subprocess.check_output(['python3', 'scripts/workspace-layout.py',

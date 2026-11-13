@@ -56,6 +56,10 @@ while pending. There are no actors, player coordinates, items, announcements or
 gameplay actions. COMPLETE requires the existing accepted terrain receipt,
 symmetric halo readiness when enabled, and a completely sent static baseline.
 The client additionally waits for actual prepared scene/GPU coverage before READY.
+Detached static queries reuse the normal signed-coordinate/window filtering but
+read only the spatial index's game-object view. They require a live authenticated
+pending owner and do not create observer membership. Ordinary live visibility
+queries retain their existing mandatory observer-membership checks.
 
 ## Account and scene ownership
 
@@ -98,6 +102,10 @@ class against an existing server dependency artifact and runs real reservation,
 concurrency, pending packet grammar and detached cancellation assertions without
 starting a server or touching an account database. Existing player-login policy,
 character-creation and layered login-recovery tests also pass.
+The fixture also queries a populated real spatial index with an unregistered
+observer: scenery/walls are returned, actors/items are absent, other levels and
+out-of-window objects are excluded, and observer membership stays absent. Exact
+static identity is invariant to collection order and changes with real content.
 
 The manager must still run a fresh combined client/server private fixture,
 including cold preparation longer than 30 seconds, cancellation/expiry, normal

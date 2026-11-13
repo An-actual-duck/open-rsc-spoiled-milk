@@ -37,10 +37,14 @@ public final class StagedLoginSession {
         attachment=channel.attr(RSCConnectionHandler.attachment).get();deadline=System.currentTimeMillis()+request.getAdmission().remainingMillis(System.currentTimeMillis());
     }
     public static StagedLoginSession forPlayer(Player player){return player.getAttribute(OWNER,null);}
+    public boolean ownsDetachedSnapshot(Player player){return player!=null&&!player.isLoggedIn()&&forPlayer(player)==this&&live()&&attachment.stagedLogin.get()==this;}
     public static boolean supports(Server server,ConnectionAttachment attachment){
         return attachment!=null&&Boolean.TRUE.equals(attachment.isWebSocket.get())&&!server.getConfig().WORLD_BUILDER_MODE
             &&server.getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY&&server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
-            &&server.getConfig().WANT_SYNC_SCENE_BASELINE&&Boolean.parseBoolean(System.getProperty("spoiledmilk.browserStagedLogin","true"));
+            &&server.getConfig().WANT_SYNC_SCENE_BASELINE&&server.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+            &&server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY&&server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PREDICTION
+            &&server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_READINESS&&server.getConfig().WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY
+            &&Boolean.parseBoolean(System.getProperty("spoiledmilk.browserStagedLogin","true"));
     }
     public static boolean handlePreWorld(Server server,Channel channel,Packet packet){
         ConnectionAttachment attachment=channel.attr(RSCConnectionHandler.attachment).get();
@@ -56,7 +60,7 @@ public final class StagedLoginSession {
     }
     public static void begin(LoginRequest request,Player candidate,int success){
         StagedLoginSession session=new StagedLoginSession(request,candidate,success);
-        if(!session.attachment.stagedLogin.compareAndSet(null,session)){request.releaseAdmission();request.getChannel().close();return;}
+        if(!session.attachment.stagedLogin.compareAndSet(null,session)){session.discardDetached(candidate);request.releaseAdmission();request.getChannel().close();return;}
         request.getChannel().closeFuture().addListener(ignored->session.close(false,0));
         candidate.setAttribute(OWNER,session);
         try{
@@ -139,6 +143,7 @@ public final class StagedLoginSession {
                     protected void processInternal(){
                         Player fresh=request.reloadStagedPlayer();
                         if(closed){discardDetached(fresh);return;}
+                        if(fresh!=null)fresh.setAttribute(OWNER,StagedLoginSession.this);
                         server.getGameEventHandler().add(new ImmediateEvent(server.getWorld(),"Complete Browser Login Preparation"){
                             public void action(){
                                 if(closed){discardDetached(fresh);return;}

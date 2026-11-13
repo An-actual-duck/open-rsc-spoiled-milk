@@ -519,6 +519,20 @@ public class RegionManager {
 		final int minRuntimeY,
 		final int maxRuntimeXExclusive,
 		final int maxRuntimeYExclusive) {
+        return buildClientSceneVisibilitySnapshot(observer,minRuntimeX,minRuntimeY,maxRuntimeXExclusive,maxRuntimeYExclusive,false);
+    }
+
+    /** Static-only query for an authenticated pending account; never creates membership. */
+    public VisibilitySnapshot buildStagedLoginStaticSnapshot(Player observer,int minX,int minY,int maxX,int maxY){
+        requireDetachedLoginObserver(observer);
+        return buildClientSceneVisibilitySnapshot(observer,minX,minY,maxX,maxY,true);
+    }
+    private void requireDetachedLoginObserver(Player observer){
+        com.openrsc.server.login.StagedLoginSession owner=com.openrsc.server.login.StagedLoginSession.forPlayer(observer);
+        if(owner==null||!owner.ownsDetachedSnapshot(observer)||getWorld().getPlayerID(observer.getDatabaseID())==observer)
+            throw new IllegalStateException("Static login query requires an owned detached account");
+    }
+    private VisibilitySnapshot buildClientSceneVisibilitySnapshot(Player observer,int minRuntimeX,int minRuntimeY,int maxRuntimeXExclusive,int maxRuntimeYExclusive,boolean detached) {
 		final Player checked = Objects.requireNonNull(observer, "observer");
 		if (!isLayeredSpatialRuntimeAuthorityEnabled()) {
 			throw new IllegalStateException(
@@ -530,8 +544,7 @@ public class RegionManager {
 				"Exact client scene bounds must be non-empty");
 		}
 		final WorldLocation observerLocation = checked.getWorldLocation();
-		layeredSpatialEntityIndex.requireMembership(
-			checked, observerLocation);
+        if(!detached)layeredSpatialEntityIndex.requireMembership(checked, observerLocation);
 		final Point runtimeObserver =
 			toRuntimeCompatibilityPoint(observerLocation);
 		if (runtimeObserver.getX() != checked.getX()
@@ -564,8 +577,14 @@ public class RegionManager {
 			Math.floorDiv(
 				Math.subtractExact(maxLogicalYExclusive, 1),
 				WorldRegionKey.REGION_SIZE));
-		final LayeredSpatialEntityIndex.Snapshot snapshot =
-			layeredSpatialEntityIndex.snapshot(window);
+        final java.util.Collection<? extends Entity> entities;final long objectVersion;
+        if(detached){
+            LayeredSpatialEntityIndex.GameObjectSnapshot snapshot=layeredSpatialEntityIndex.snapshotGameObjects(window);
+            entities=snapshot.getGameObjects();objectVersion=snapshot.getObjectVersion();
+        }else{
+            LayeredSpatialEntityIndex.Snapshot snapshot=layeredSpatialEntityIndex.snapshot(window);
+            entities=snapshot.getEntities();objectVersion=snapshot.getObjectVersion();
+        }
 		final LinkedHashSet<Player> players =
 			new LinkedHashSet<Player>();
 		final LinkedHashSet<Npc> npcs =
@@ -578,7 +597,7 @@ public class RegionManager {
 			new ArrayList<GameObject>();
 		final LinkedHashSet<GroundItem> items =
 			new LinkedHashSet<GroundItem>();
-		for (final Entity candidate : snapshot.getEntities()) {
+		for (final Entity candidate : entities) {
 			if (!candidate.sharesSpatialDomain(checked)) {
 				continue;
 			}
@@ -626,7 +645,7 @@ public class RegionManager {
 			regionCount,
 			regionCount,
 			key,
-			snapshot.getObjectVersion());
+			objectVersion);
 	}
 
 	/**
@@ -640,6 +659,13 @@ public class RegionManager {
 			final int centerSectorY,
 			final int outerRadius,
 			final int innerRadius) {
+        return buildStaticScenePresentationSnapshot(observer,centerSectorX,centerSectorY,outerRadius,innerRadius,false);
+    }
+    public StaticScenePresentationSnapshot buildStagedLoginPresentationSnapshot(Player observer,int centerX,int centerY,int outerRadius,int innerRadius){
+        requireDetachedLoginObserver(observer);
+        return buildStaticScenePresentationSnapshot(observer,centerX,centerY,outerRadius,innerRadius,true);
+    }
+    private StaticScenePresentationSnapshot buildStaticScenePresentationSnapshot(Player observer,int centerSectorX,int centerSectorY,int outerRadius,int innerRadius,boolean detached){
 		Player checked = Objects.requireNonNull(observer, "observer");
 		if (!isLayeredSpatialRuntimeAuthorityEnabled()) {
 			throw new IllegalStateException(
@@ -650,8 +676,7 @@ public class RegionManager {
 				"Static presentation radii must define a non-empty outer ring");
 		}
 		WorldLocation observerLocation = checked.getWorldLocation();
-		layeredSpatialEntityIndex.requireMembership(
-			checked, observerLocation);
+        if(!detached)layeredSpatialEntityIndex.requireMembership(checked, observerLocation);
 		WorldRegionWindow window = new WorldRegionWindow(
 			observerLocation.getWorldSpace(),
 			observerLocation.getCoordinate().getLevel(),

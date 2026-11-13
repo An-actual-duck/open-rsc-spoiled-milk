@@ -1263,6 +1263,10 @@ public final class GameStateUpdater {
 	}
 
 	private VisibilitySnapshot buildPacketVisibilitySnapshot(final Player player, final boolean allowTickSnapshotCache) {
+        if(!player.isLoggedIn()&&com.openrsc.server.login.StagedLoginSession.forPlayer(player)!=null){
+            int x=currentClientLocalBaseX(player),y=currentClientLocalBaseY(player);
+            return getServer().getWorld().getRegionManager().buildStagedLoginStaticSnapshot(player,x,y,Math.addExact(x,CLIENT_LOCAL_TILE_COUNT),Math.addExact(y,CLIENT_LOCAL_TILE_COUNT));
+        }
 		return buildVisibilitySnapshot(
 			player,
 			useVisibilitySnapshotInput(player) ? VisibilitySnapshotMode.SNAPSHOT : VisibilitySnapshotMode.LEGACY,
@@ -1394,6 +1398,8 @@ public final class GameStateUpdater {
 					CLIENT_LOCAL_PLANE_HEIGHT),
 				runtimeOffsetY),
 			CLIENT_LOCAL_SECTION_SIZE);
+        if(!player.isLoggedIn()&&com.openrsc.server.login.StagedLoginSession.forPlayer(player)!=null)
+            return regionManager.buildStagedLoginPresentationSnapshot(player,centerSectorX,centerSectorY,NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS,NATIVE_LAYERED_CHUNK_RADIUS);
 		return regionManager
 			.buildStaticScenePresentationSnapshot(
 				player,

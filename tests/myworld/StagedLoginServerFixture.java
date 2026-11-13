@@ -12,6 +12,15 @@ import java.lang.reflect.Field;
 import com.openrsc.server.Server;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.entity.Entity;
+import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.GameObjectType;
+import com.openrsc.server.model.entity.npc.Npc;
+import com.openrsc.server.model.Point;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.region.RegionManager;
+import com.openrsc.server.model.world.region.LayeredSpatialEntityIndex;
+import com.openrsc.server.model.world.region.VisibilitySnapshot;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.ConnectionAttachment;
 import com.openrsc.server.net.RSCConnectionHandler;
@@ -93,6 +102,42 @@ public final class StagedLoginServerFixture {
         public void loginValidated(int response){replied=true;}
         public void loadingComplete(Player player){throw new AssertionError("Failed authentication must not load world");}
     }
+    private static final class FixtureRegions extends RegionManager{
+        FixtureRegions(){super(null);}
+        public boolean isLayeredSpatialRuntimeAuthorityEnabled(){return true;}
+        public Point toRuntimeCompatibilityPoint(WorldLocation location){return Point.location(location.getCoordinate().getX(),location.getCoordinate().getY());}
+    }
+    private static void place(Entity entity,World world,int x,int y,int level)throws Exception{
+        field(Entity.class,"world").set(entity,world);
+        field(Entity.class,"location").set(entity,new java.util.concurrent.atomic.AtomicReference<Point>(Point.location(x,y)));
+        field(Entity.class,"worldLocation").set(entity,new java.util.concurrent.atomic.AtomicReference<WorldLocation>(WorldLocation.global(new WorldCoordinate(x,y,level))));
+    }
+    private static void detachedStaticQueries(sun.misc.Unsafe unsafe,Server server,World world,Player candidate)throws Exception{
+        com.openrsc.server.ServerConfiguration configuration=(com.openrsc.server.ServerConfiguration)unsafe.allocateInstance(com.openrsc.server.ServerConfiguration.class);
+        configuration.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY=true;field(Server.class,"config").set(server,configuration);field(World.class,"server").set(world,server);
+        FixtureRegions regions=(FixtureRegions)unsafe.allocateInstance(FixtureRegions.class);field(RegionManager.class,"world").set(regions,world);field(World.class,"regionManager").set(world,regions);
+        LayeredSpatialEntityIndex index=new LayeredSpatialEntityIndex();field(RegionManager.class,"layeredSpatialEntityIndex").set(regions,index);
+        place(candidate,world,100,100,0);
+        GameObject nearby=(GameObject)unsafe.allocateInstance(GameObject.class);place(nearby,world,101,101,0);field(Entity.class,"id").setInt(nearby,41);field(GameObject.class,"gameObjectType").set(nearby,GameObjectType.SCENERY);
+        GameObject wall=(GameObject)unsafe.allocateInstance(GameObject.class);place(wall,world,102,101,0);field(Entity.class,"id").setInt(wall,42);field(GameObject.class,"gameObjectType").set(wall,GameObjectType.BOUNDARY);
+        GameObject otherLevel=(GameObject)unsafe.allocateInstance(GameObject.class);place(otherLevel,world,103,101,1);field(Entity.class,"id").setInt(otherLevel,43);field(GameObject.class,"gameObjectType").set(otherLevel,GameObjectType.SCENERY);
+        GameObject outside=(GameObject)unsafe.allocateInstance(GameObject.class);place(outside,world,200,100,0);field(Entity.class,"id").setInt(outside,44);field(GameObject.class,"gameObjectType").set(outside,GameObjectType.SCENERY);
+        Npc npc=(Npc)unsafe.allocateInstance(Npc.class);place(npc,world,104,101,0);
+        Player actor=(Player)unsafe.allocateInstance(Player.class);place(actor,world,105,101,0);
+        for(Entity entity:new Entity[]{nearby,wall,otherLevel,outside,npc,actor})index.synchronize(entity,null,entity.getWorldLocation());
+        try{regions.buildClientSceneVisibilitySnapshot(candidate,96,96,144,144);throw new AssertionError("Ordinary unregistered observer accepted");}catch(IllegalStateException expected){checks++;}
+        VisibilitySnapshot snapshot=regions.buildStagedLoginStaticSnapshot(candidate,96,96,144,144);
+        check(snapshot.getSceneryObjects().size()==1&&snapshot.getSceneryObjects().contains(nearby)&&snapshot.getWallObjects().size()==1&&snapshot.getWallObjects().contains(wall),"Detached query preserves exact signed-domain and rectangle static filters");
+        check(snapshot.getPlayers().isEmpty()&&snapshot.getNpcs().isEmpty()&&snapshot.getGroundItems().isEmpty(),"Detached static snapshot has no actors or ground items despite populated index");
+        check(regions.buildStagedLoginPresentationSnapshot(candidate,2,2,2,1).getScenery().size()==1,"Detached halo reads actual static presentation without observer membership");
+        try{index.requireMembership(candidate,candidate.getWorldLocation());throw new AssertionError("Detached query registered observer");}catch(IllegalStateException expected){checks++;}
+        java.lang.reflect.Method write=com.openrsc.server.GameStateUpdater.class.getDeclaredMethod("writeStagedObjectIdentity",java.io.DataOutputStream.class,java.util.Collection.class);write.setAccessible(true);
+        java.io.ByteArrayOutputStream one=new java.io.ByteArrayOutputStream(),two=new java.io.ByteArrayOutputStream();
+        write.invoke(null,new java.io.DataOutputStream(one),java.util.Arrays.asList(nearby,wall));write.invoke(null,new java.io.DataOutputStream(two),java.util.Arrays.asList(wall,nearby));
+        check(java.util.Arrays.equals(one.toByteArray(),two.toByteArray()),"Prepared identity independent of source collection order");
+        field(Entity.class,"id").setInt(wall,45);java.io.ByteArrayOutputStream changed=new java.io.ByteArrayOutputStream();write.invoke(null,new java.io.DataOutputStream(changed),java.util.Arrays.asList(nearby,wall));
+        check(!java.util.Arrays.equals(one.toByteArray(),changed.toByteArray()),"Prepared identity changes on actual static content change");
+    }
     private static void cancellation()throws Exception{
         sun.misc.Unsafe unsafe=(sun.misc.Unsafe)field(sun.misc.Unsafe.class,"theUnsafe").get(null);
         Server server=(Server)unsafe.allocateInstance(Server.class);World world=(World)unsafe.allocateInstance(World.class);
@@ -102,14 +147,16 @@ public final class StagedLoginServerFixture {
         channel.attr(RSCConnectionHandler.attachment).set(attachment);
         field(LoginRequest.class,"channel").set(request,channel);field(LoginRequest.class,"password").set(request,"test-only-secret");
         LoginAdmissionReservations registry=new LoginAdmissionReservations();AtomicInteger tracked=new AtomicInteger();
-        LoginAdmissionReservations.Lease lease=acquire(registry,71,"a",channel,1000,true,2,tracked);field(LoginRequest.class,"admission").set(request,lease);
+        LoginAdmissionReservations.Lease lease=acquire(registry,71,"a",channel,System.currentTimeMillis(),true,2,tracked);field(LoginRequest.class,"admission").set(request,lease);
         StagedLoginSession session=(StagedLoginSession)unsafe.allocateInstance(StagedLoginSession.class);
         field(StagedLoginSession.class,"server").set(session,server);field(StagedLoginSession.class,"channel").set(session,channel);
         field(StagedLoginSession.class,"request").set(session,request);field(StagedLoginSession.class,"attachment").set(session,attachment);
+        field(StagedLoginSession.class,"deadline").setLong(session,System.currentTimeMillis()+300000);
         field(StagedLoginSession.class,"stateLock").set(session,new Object());field(StagedLoginSession.class,"candidate").set(session,candidate);
         Timer tick=new Timer(),deadline=new Timer(),leaseTimer=new Timer();lease.expirationTask(leaseTimer);
         field(StagedLoginSession.class,"tickTask").set(session,tick);field(StagedLoginSession.class,"deadlineTask").set(session,deadline);
         attachment.stagedLogin.set(session);candidate.setAttribute("staged_login_owner",session);
+        detachedStaticQueries(unsafe,server,world,candidate);
         session.close(false,0);session.close(false,0);
         check(candidate.isPersistenceSessionClosed()&&!candidate.isLoggedIn(),"Cancelled detached snapshot permanently cannot save");
         check(candidate.getAttribute("staged_login_owner",null)==null&&attachment.stagedLogin.get()==null,"Only own pending transport ownership removed");
