@@ -204,7 +204,7 @@ public final class RendererBenchmarkServer {
         List<Point> tiles = new ArrayList<Point>();
         for (int radius = 1; radius <= 8; radius++) {
             for (int dx = -radius; dx <= radius; dx++) for (int dy = -radius; dy <= radius; dy++) {
-                if (Math.max(Math.abs(dx), Math.abs(dy)) == radius && clear(502 + dx, 453 + dy)) tiles.add(Point.location(502 + dx, 453 + dy));
+                if (Math.max(Math.abs(dx), Math.abs(dy)) == radius && clear(viewerX + dx, viewerY + dy)) tiles.add(Point.location(viewerX + dx, viewerY + dy));
             }
         }
         if (tiles.size() < 48) throw new IllegalStateException("Insufficient authored walkable crowd tiles");
@@ -222,7 +222,7 @@ public final class RendererBenchmarkServer {
             actors.add(actor); positions.add(point);
         }
         for (int index = 0; index < 32; index++) {
-            Point point = tiles.get(16 + index); Npc npc = new Npc(worldServer.getWorld(), 3, point.getX(), point.getY(), 0);
+            Point point = tiles.get(16 + index); Npc npc = new Npc(worldServer.getWorld(), phase.equals("busy-character-shadows") && index%2==0 ? 1 : 3, point.getX(), point.getY(), 0);
             npc.setAttribute("renderer_benchmark_actor", true); worldServer.getWorld().registerNpc(npc); npcs.add(npc);
         }
         for (int index = 0; index < 8; index++) {

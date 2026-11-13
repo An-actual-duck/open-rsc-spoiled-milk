@@ -1,0 +1,119 @@
+Standalone character ground shadows — November 13, 2026
+======================================================
+
+Status: owner-approved appearance; correctness, hardware pixels and final native
+functional checks passed. Ready for manager integration. No public release or
+server activation was requested by this work.
+
+Result
+------
+Add one subtle, soft-edged ground circle per visible character: NPCs, summons
+and players. The original gallery's armoured figures were simulated players;
+the initial NPC-only filter excluded them. The corrected pass covers those
+figures and real multipart NPCs without adding a circle per body part. The owner
+approved the corrected gallery after reviewing it in Firefox.
+
+Circles stay at interpolated character ground positions, follow a cheaply
+sampled terrain tangent and scale within a small footprint bound. They remain
+stationary relative to the feet rather than stretching with the sun. They are
+an inexpensive grounding effect, not silhouette shadows or new shadow maps.
+Characters need captured body layers; their layer alpha also scales the circle.
+The ordinary first-person/hidden-body submission rules continue to apply.
+
+Roof and lighting rules
+-----------------------
+Use the exact GeometryShadowRoofMask.Cache already used by native geometry
+sunlight. An actor whose centre is covered receives no circle; remaining fans
+are clipped to outdoor tiles so edges cannot bleed into adjacent roof coverage.
+Positive roof declarations remain authoritative when roof geometry is hidden.
+Use the frame's signed underground policy: negative levels receive no circle.
+Shadow Off and classic lighting also disable it; Low and High retain the same
+low-cost circle. The native opt-out is:
+ -Dspoiledmilk.characterGroundShadows=false
+
+This inherits existing roof metadata availability. It does not infer roofs from
+walls or repair the previously deferred multi-storey roof-data gaps. The real
+crowd captures happened to report no actors on declared roof tiles; controlled
+production-mask GPU pixels prove the positive-coverage clipping/suppression rule.
+Do not represent those crowd captures as a full in-game indoor-area audit.
+
+Implementation and resources
+----------------------------
+mudclient samples four neighbouring elevations on its own thread. Scene attaches
+immutable footprint metadata to Renderer3DFrame; the GL thread never reads live
+gameplay terrain. CharacterGroundShadowMesh builds sixteen-segment fans, with
+linearly fading alpha and roof-tile clipping, into reusable direct storage.
+OpenGLCharacterGroundShadows submits the batch once, with ordinary depth testing,
+blending and no depth writes, before the character sprites are composited.
+VBO/EBO resources close with the resident world session. No sprite assets,
+textures, shader maps, gameplay definitions, packet changes or server code added.
+
+Storage is bounded: at most131,070 vertices at28bytes each, a sequential index
+buffer at4bytes each, and up to65,536 body-face alpha entries. Normal scenes use
+much less vertex storage. Staging grows only as needed and is reused. The pass
+uses no additional world cache. Shadow Off avoids producer elevation sampling.
+The software path retains its existing rendering. Browser presentation does not
+generate or render these footprints; WebGL support is a separate follow-up.
+
+Frozen sources/builds
+---------------------
+Base main: e32dcf7a5d4629dd665227190a5e28f161200d0b.
+Approved multipart shape: e5b4bc08986182ccdb8fcf3b0db4a671eb4d9240.
+Final production classes: 02e5039c9f260cbb378c77dde528bd252860fc81.
+The final change only extracted the tested eligibility/draw helper and reset
+diagnostic counts; the approved circle geometry and body ownership are unchanged.
+Later commits change fixtures/benchmark tools/documentation only.
+
+Worker-local full maintained build:
+ output/builds/npc-ground-shadows/candidate-02e5039c9/client.jar
+ SHA256 44d4ef92224afa1612a12b2cc01d75eda3dba6236669a47fab2b4abe48e40789
+Adjacent receipts retain all379 source hashes,1,005 compiled classes and3,194 own
+resources. Build was clean, with no transplanted classes. Asset manifest remains
+a74d9bf3a936f2a02a46d4ef66b5d47ee2a2f4a037ba7804be7e5f5b61c56e08.
+
+Evidence
+--------
+All paths below are preserved under Core-Framework-ai-1/output/.
+* tests/npc-ground-shadows/1794587980309724481/: CPU geometry/roof cache and
+  2,004 native GPU pixel/policy checks. Actual renderer: AMD Radeon RX6700XT,
+  OpenGL4.6 Compatibility, Mesa25.2.8. Includes outdoor, roof-edge, visible/hidden
+  roof equality and wholly indoor pixels; levels0/2 versus-1/-8; High/Low/Off,
+  directional/classic and idempotent GPU resource close. GPU window is hidden.
+* tests/npc-ground-shadows/1794587813799152261/: final-JAR CPU checks on Java21;
+  Java8 is also covered by the hardware/CPU run. CPU tests cover slope/alpha,
+  clipping, negative/rebased coordinates, invalid inputs, staging bounds/reset.
+* diagnostics/npc-ground-shadows/multipart-20261113T162655Z/: actual mixed
+  scene ON/OFF,57 characters and259 body commands;16 NPCs use eight body-layer
+  commands each,17 players use3–5 each. Exactly57 circles ON, zero OFF.
+* art/npc-ground-shadows/multipart-preview-20261113T163001Z/index.html:
+  approved gallery, exact copied capture pixels and coverage.json.
+* diagnostics/npc-ground-shadows/functional-20261113T164041Z/: complete=true.
+  Final-JAR mixed scene and actual production combat both produced57 circles;
+  melee/ranged/throwing/ice/thunder/wood damage and resource counters advanced,
+  with summons, projectiles and hit splats. Native static input reuse remained
+  active and stable. Lifecycle retained the world through windowed/resize/
+  fullscreen/borderless/iconify/restore, all three shadow qualities, area/upper
+  level/return movement and two same-JVM relogs. Setting persistence passed.
+  Last Off phase correctly reported zero circles. One post-phase capture per
+  scene completed, no failures; this is not a twelve-frame pixel oracle.
+* tests/native-resident-inputs/1794588236425270940/: native/browser static input
+  regression against the final client JAR passed.
+* diagnostics/npc-ground-shadows/baseline-driver-compatibility/: updated optional
+  benchmark driver compiles against the frozen pre-feature client as well.
+
+Exploratory cost, not a universal FPS promise
+-------------------------------------------
+diagnostics/npc-ground-shadows/comparison-20261113T161051Z/ preserves the initial
+NPC-only same-artifact OFF/ON/ON/OFF outdoor comparison:20-second phases after
+15-second warmup,1920x1080, normal zoom, fixed sun and unchanged quality/content.
+Two run means per mode gave median native render CPU3.7235ms OFF versus3.8199ms
+ON for40 circles, approximately0.10ms additional work. The corrected57-character
+mixed-scene single ON/OFF pair was4.2553/4.2055ms. These are small, exploratory
+workload comparisons of the named prototypes, not final-build universal FPS,
+visible-display acceptance or weaker-system evidence. Final runs above certify
+functionality. No public service was accessed or changed.
+
+The first discarded comparison preserved a missing optional published-frame
+observation rather than zero. Final diagnostics represent that source count as
+null/unknown and report actual renderer circles independently. Frozen logs are
+retained; unknown observations never establish missing actors or zero work.

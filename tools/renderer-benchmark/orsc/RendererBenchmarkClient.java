@@ -339,6 +339,21 @@ public final class RendererBenchmarkClient {
     private static void applyDiagnosticFog() {
         RendererFogSettings.setMode("off".equals(System.getProperty("renderer.benchmark.fog","on")) ? RendererFogSettings.Mode.OFF : RendererFogSettings.Mode.ON);
     }
+    private static void recordCharacterGroundShadowState(mudclient client,OpenGLFramePresenter presenter,Path capture)throws Exception {
+        String requested=System.getProperty("renderer.benchmark.characterGroundShadows");if(requested==null)return;
+        boolean selected=Boolean.parseBoolean(requested);
+        Class<?> policy=Class.forName("orsc.graphics.three.Renderer3DFrame$CharacterGroundShadow");
+        if(((Boolean)field(null,policy,"ENABLED"))!=selected)throw new IllegalStateException("Character shadow comparison policy differs");
+        Object renderer=field(presenter,OpenGLFramePresenter.class,"worldChunkRenderer");
+        Object shadows=field(renderer,renderer.getClass(),"characterGroundShadows");
+        Object mesh=shadows==null?null:field(shadows,shadows.getClass(),"mesh");
+        int circles=mesh==null?0:((Number)field(mesh,mesh.getClass(),"circles")).intValue();
+        int roofed=mesh==null?0:((Number)field(mesh,mesh.getClass(),"roofSuppressed")).intValue();
+        Renderer3DFrame frame=tryPublishedFrame(presenter);
+        String footprints=frame==null?"null":Integer.toString(((java.util.List<?>)frame.getClass().getMethod("getCharacterGroundShadows").invoke(frame)).size());
+        Files.write(capture.resolve("npc-ground-shadows.json"),("{\"enabled\":"+selected+",\"circles\":"+circles
+            +",\"roofSuppressed\":"+roofed+",\"sourceFootprints\":"+footprints+"}\n").getBytes(StandardCharsets.UTF_8));
+    }
     private static void recordNativeResidentInputPolicy(mudclient client, Path capture) throws Exception {
         String requested=System.getProperty("renderer.benchmark.nativeResidentInputCache");
         if(requested==null)return;
@@ -462,6 +477,7 @@ public final class RendererBenchmarkClient {
         }
         System.out.println(RendererPerformanceDiagnostics.handleCommand("::pf stop " + phase));
         recordNativeResidentInputEnd(client,capture,phase);
+        recordCharacterGroundShadowState(client,presenter,capture);
         if (Boolean.getBoolean("renderer.benchmark.dumpRoofMask")) dumpRoofMask(client,presenter,capture);
         if (Boolean.getBoolean("renderer.benchmark.dumpTerrain")) dumpTerrain(client,presenter,capture);
         if (Boolean.getBoolean("renderer.benchmark.dumpFences")) dumpFences(client,presenter,capture);

@@ -185,6 +185,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private final GeometryShadowRoofMask.Cache geometryRoofMaskCache=new GeometryShadowRoofMask.Cache();
 	private boolean geometryShadowCapabilityChecked;
 	private Renderer3DFrame geometryShadowFrame;
+	private OpenGLCharacterGroundShadows characterGroundShadows;
 	private final OpenGLGeometryShadows.Scene geometryShadowScene = new OpenGLGeometryShadows.Scene() {
 		public long staticSignature() { return geometryShadowStaticSignature(geometryShadowFrame); }
         public long historyContext() { return geometryShadowFrame.getShadowContextEpoch(); }
@@ -1182,6 +1183,15 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		}
 	}
 
+	void drawCharacterGroundShadows(Renderer3DFrame frame) throws Exception {
+        if(characterGroundShadows!=null)characterGroundShadows.mesh.clear();
+        if(!OpenGLCharacterGroundShadows.enabledFor(frame))return;
+        if(characterGroundShadows==null)characterGroundShadows=new OpenGLCharacterGroundShadows(gl);
+        Renderer3DWorldChunkFrame.ChunkMesh anchor=frame.getWorldChunkFrame().getChunks().get(0);
+        loadWorldProjectionAndView(frame);
+        characterGroundShadows.draw(frame,geometryRoofMaskCache.get(frame.getWorldChunkFrame(),frame.getActivePlane()),
+            anchor.getLogicalWorldOffsetX(),anchor.getLogicalWorldOffsetZ());
+    }
 	boolean prepareGeometryShadows(Renderer3DFrame frame) throws Exception {
 		if (geometryShadows != null) geometryShadows.clearPrepared();
 		if (frame == null || frame.isUnderground() || frame.getWorldChunkFrame() == null || frame.getWorldChunkFrame().getChunkCount() == 0
@@ -3578,6 +3588,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	}
 
 	private void clearResidentResources() throws Exception {
+		if (characterGroundShadows != null) { characterGroundShadows.close(); characterGroundShadows = null; }
 		if (geometryShadows != null) { geometryShadows.close(); geometryShadows = null; }
 		terrainDefinitionTexture.clear(gl);
 		geometryShadowCapabilityChecked = false;

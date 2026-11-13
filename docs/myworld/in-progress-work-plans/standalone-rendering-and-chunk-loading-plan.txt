@@ -4,6 +4,9 @@ Recorded November 12, 2026, after the browser staged-login rollout.
 Status: first native CPU slice implemented in a private candidate; larger
 geometry/loading stages remain planned. See native-static-input-reuse-results.txt
 for exact builds, measured results, validation limits and publication status.
+The approved low-cost character ground-shadow addition is recorded separately
+in character-ground-shadows-results.txt; it reuses existing roof coverage and
+does not replace the planned geometry/chunk-loading work below.
 Standalone player release: v0.3.16. Public server: v0.3.21; browser:
 alpha-20261112-6. Recheck those versions and source before implementation.
 

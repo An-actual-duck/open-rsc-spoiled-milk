@@ -42,6 +42,8 @@ public final class Renderer3DFrame {
 	private final List<FaceCommand> worldFacesView;
 	private final List<SpriteSubmission> spriteSubmissions = new ArrayList<SpriteSubmission>();
 	private final List<CharacterSprite> characterSprites = new ArrayList<CharacterSprite>();
+	private final List<CharacterGroundShadow> characterGroundShadows = new ArrayList<CharacterGroundShadow>();
+	private final List<CharacterGroundShadow> characterGroundShadowsView = Collections.unmodifiableList(characterGroundShadows);
 	private final List<SpriteAnchor> spriteAnchors = new ArrayList<SpriteAnchor>();
 	private final List<WorldSpriteSnapshot> worldSpriteSnapshots = new ArrayList<WorldSpriteSnapshot>();
 	private final List<WorldSpriteSnapshot> worldSpriteSnapshotsView =
@@ -641,6 +643,23 @@ public final class Renderer3DFrame {
 
 	public List<CharacterSprite> getCharacterSprites() {
 		return Collections.unmodifiableList(characterSprites);
+	}
+
+	void addCharacterGroundShadow(int faceId, int x, int y, int z, float radius, float slopeX, float slopeZ) {
+		characterGroundShadows.add(new CharacterGroundShadow(faceId, x, y, z, radius, slopeX, slopeZ));
+	}
+
+	public List<CharacterGroundShadow> getCharacterGroundShadows() { return characterGroundShadowsView; }
+
+	/** Producer-sampled terrain tangent; no live world reads on the GL thread. */
+	public static final class CharacterGroundShadow {
+		public static final boolean ENABLED = !"false".equalsIgnoreCase(System.getProperty("spoiledmilk.characterGroundShadows", "true"));
+		public final int faceId, x, y, z;
+		public final float radius, slopeX, slopeZ;
+		private CharacterGroundShadow(int faceId, int x, int y, int z, float radius, float slopeX, float slopeZ) {
+			this.faceId=faceId; this.x=x; this.y=y; this.z=z; this.radius=radius; this.slopeX=slopeX; this.slopeZ=slopeZ;
+		}
+		public static int radiusForWidth(int sourceWidth) { return Math.max(14, Math.min(64, sourceWidth / 4)); }
 	}
 
 	public int getWorldFaceCount(Renderer3DModelKind kind) {

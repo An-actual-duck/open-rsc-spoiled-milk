@@ -85,6 +85,7 @@ public final class Scene {
 	private int[] m_Q;
 	private boolean[] m_S;
 	private boolean[] renderer3DCharacterTagged;
+	private float[] characterShadowRadius, characterShadowSlopeX, characterShadowSlopeZ;
 	private boolean[] renderer3DGroundItemTagged;
 	private boolean[] renderer3DGroundItemNoted;
 	private int[] renderer3DGroundItemId;
@@ -206,6 +207,7 @@ public final class Scene {
 			this.m_gb = new int[var4];
 			this.m_a = new int[var4];
 			this.renderer3DCharacterTagged = new boolean[var4];
+			this.characterShadowRadius = new float[var4]; this.characterShadowSlopeX = new float[var4]; this.characterShadowSlopeZ = new float[var4];
 			this.renderer3DGroundItemTagged = new boolean[var4];
 			this.renderer3DGroundItemNoted = new boolean[var4];
 			this.renderer3DGroundItemId = new int[var4];
@@ -2775,6 +2777,7 @@ public final class Scene {
 			this.m_Eb[this.m_n] = var7;
 			this.m_Q[this.m_n] = 0;
 			this.renderer3DCharacterTagged[this.m_n] = false;
+			this.characterShadowRadius[this.m_n] = 0;
 			this.renderer3DGroundItemTagged[this.m_n] = false;
 			int var9 = this.m_T.insertVertex2(false, var2, var4, var5);
 			int var10 = this.m_T.insertVertex2(false, var2, var4, var5 - var7);
@@ -2814,6 +2817,9 @@ public final class Scene {
 		this.m_gb = Arrays.copyOf(this.m_gb, newCapacity);
 		this.m_a = Arrays.copyOf(this.m_a, newCapacity);
 		this.renderer3DCharacterTagged = Arrays.copyOf(this.renderer3DCharacterTagged, newCapacity);
+		this.characterShadowRadius = Arrays.copyOf(this.characterShadowRadius, newCapacity);
+		this.characterShadowSlopeX = Arrays.copyOf(this.characterShadowSlopeX, newCapacity);
+		this.characterShadowSlopeZ = Arrays.copyOf(this.characterShadowSlopeZ, newCapacity);
 		this.renderer3DGroundItemTagged = Arrays.copyOf(this.renderer3DGroundItemTagged, newCapacity);
 		this.renderer3DGroundItemNoted = Arrays.copyOf(this.renderer3DGroundItemNoted, newCapacity);
 		this.renderer3DGroundItemId = Arrays.copyOf(this.renderer3DGroundItemId, newCapacity);
@@ -2898,6 +2904,13 @@ public final class Scene {
 		this.renderer3DCharacterCombatEffectTime[faceId] = combatEffectTime;
 		this.renderer3DCharacterActiveHitSplats[faceId] = activeHitSplats;
 	}
+
+	public void tagCharacterGroundShadow(int face, int radius, int leftY, int rightY, int backY, int frontY) {
+        if (face < 0 || face >= characterShadowRadius.length || radius <= 0) return;
+        characterShadowRadius[face] = radius;
+        characterShadowSlopeX[face] = Math.max(-1.5f, Math.min(1.5f, (rightY - (float) leftY) / (2 * radius)));
+        characterShadowSlopeZ[face] = Math.max(-1.5f, Math.min(1.5f, (frontY - (float) backY) / (2 * radius)));
+    }
 
 	public final void endScene(int var1) {
 		try {
@@ -3720,6 +3733,10 @@ public final class Scene {
 				"projected".equals(cullReason),
 				cullReason,
 				groundItemSource);
+			if (characterShadowRadius[face] > 0 && "projected".equals(cullReason)) {
+                geometryFrame.addCharacterGroundShadow(face, this.m_Fb[face], this.m_a[face], this.m_Ob[face],
+                    characterShadowRadius[face], characterShadowSlopeX[face], characterShadowSlopeZ[face]);
+            }
 			if (this.renderer3DCharacterTagged[face]) {
 				geometryFrame.addCharacterSprite(
 					this.renderer3DCharacterKind[face],
