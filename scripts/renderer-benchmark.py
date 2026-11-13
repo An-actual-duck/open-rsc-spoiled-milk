@@ -220,6 +220,7 @@ def capture(args):
     if visible: props["spoiledmilk.openglWindowMode"] = args.window_mode
     props["spoiledmilk.shadowGpuTimings"] = str(not args.acceptance).lower()
     props["spoiledmilk.boundaryDiagnostics"] = str(args.boundary_profile).lower()
+    props["spoiledmilk.nativeMaterialBatchReuse"] = str(getattr(args,"native_material_batch_reuse","off") == "on").lower()
     props["spoiledmilk.nativeCompactGeometry"] = str(getattr(args,"native_compact_geometry","off") == "on").lower()
     props["spoiledmilk.nativeGeometryDiagnostics"] = str(getattr(args,"native_geometry_diagnostics",False)).lower()
     props["spoiledmilk.nativeConstructionVertexIndex"] = str(args.native_construction_index == "on").lower()
@@ -462,6 +463,7 @@ def main():
             p.add_argument("--gc-log",action="store_true",help="Retain JVM GC messages in the private console log"); p.add_argument("--fog",choices=["on","off"],default="on"); p.add_argument("--tone-preview",choices=["day","cycle","sunrise-amber","dawn-gold","rose-dusk","cool-night","deep-blue"],default="day"); p.add_argument("--warmup-seconds",type=int,default=15); p.add_argument("--window-mode",choices=["windowed","fullscreen","borderless-fullscreen"],default="borderless-fullscreen"); p.add_argument("--dump-terrain",action="store_true"); p.add_argument("--dump-fences",action="store_true"); p.add_argument("--dump-roof-mask",action="store_true"); p.add_argument("--exclude-caster", choices=["TERRAIN","WALL","ROOF","GAME_OBJECT","WALL_OBJECT"],action="append",default=[]); p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
             p.add_argument("--acceptance",action="store_true",help="Disable GPU timing queries; retain low-overhead cadence telemetry")
             p.add_argument("--boundary-profile",action="store_true",help="Separate diagnostic boundary phase/upload/lock attribution")
+            p.add_argument("--native-material-batch-reuse",choices=["on","off"],default="off")
             p.add_argument("--native-compact-geometry",choices=["on","off"],default="off")
             p.add_argument("--native-geometry-diagnostics",action="store_true")
             p.add_argument("--native-construction-index",choices=["on","off"],default="off")

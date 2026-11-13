@@ -54,6 +54,13 @@ public final class NativeCompactGeometryFixture {
         for(int n=0;n<3;n++){compact.position(n*52);verify(Arrays.copyOfRange(literal,n*28,(n+1)*28),compact.slice().order(ByteOrder.nativeOrder()));}
         for(String flag:new String[]{"spoiledmilk.browserBenchmark","spoiledmilk.browserPublicAlpha"}){System.setProperty(flag,"true");pack.invoke(renderer,chunk,frame,3,true,Collections.emptyList());require(!field(OpenGLWorldChunkRenderer.class,"packedCompact").getBoolean(renderer),"browser isolation");System.clearProperty(flag);}
         pack.invoke(renderer,chunk,frame,3,false,Collections.emptyList());require(!field(OpenGLWorldChunkRenderer.class,"packedCompact").getBoolean(renderer),"unsupported atlas mode");
+        Renderer3DWorldChunkFrame.ChunkMesh late=new Renderer3DWorldChunkFrame.ChunkMesh(0,0,0,0,0,new int[]{0,0,0,128,0,0,0,0,128,0,0,0,128,0,0,0,0,128},new float[6],new float[6],new int[6],new int[6],new int[6],new int[]{0,1,2,3,4,5},new int[]{0,0},new int[]{0x337755,0x337755},new Renderer3DModelKind[]{Renderer3DModelKind.TERRAIN,Renderer3DModelKind.TERRAIN},null,null,null,new int[]{0,256},null,0,0,2,0,0,false,Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD,2);
+        method(OpenGLWorldChunkRenderer.class,"ensureUploadBuffers",int.class,int.class).invoke(renderer,6,6);
+        System.setProperty("spoiledmilk.nativeCompactGeometry","false");pack.invoke(renderer,late,frame,6,true,Collections.emptyList());
+        FloatBuffer old=((FloatBuffer)field(OpenGLWorldChunkRenderer.class,"vertexUploadBuffer").get(renderer)).duplicate();float[] fallback=new float[old.remaining()];old.get(fallback);
+        System.setProperty("spoiledmilk.nativeCompactGeometry","true");pack.invoke(renderer,late,frame,6,true,Collections.emptyList());require(!field(OpenGLWorldChunkRenderer.class,"packedCompact").getBoolean(renderer),"late rejection");
+        FloatBuffer regenerated=((FloatBuffer)field(OpenGLWorldChunkRenderer.class,"vertexUploadBuffer").get(renderer)).duplicate();require(regenerated.remaining()==fallback.length,"fallback length");for(float expected:fallback)equal(expected,regenerated.get(),"whole fallback regenerated");
+        pack.invoke(renderer,chunk,frame,3,true,Collections.emptyList());require(field(OpenGLWorldChunkRenderer.class,"packedCompact").getBoolean(renderer),"compact recovery");
         frame.release();System.out.println("PASS native compact exact attributes/atlas writer/fallback/isolation checks="+checks);
     }
 }

@@ -23,11 +23,11 @@ public final class NativeCompactGpuFixture {
             float[] positions={-1,-1,0,1,-1,0,1,1,0,-1,-1,0,1,1,0,-1,1,0};float[] identity={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
             gl.glViewport(0,0,128,128);gl.glDisable(gl.GL_DEPTH_TEST);gl.glDisable(gl.GL_CULL_FACE);gl.glDisable(gl.GL_BLEND);
             int proofs=0;Set<Integer> hashes=new HashSet<Integer>();
-            for(boolean textured:new boolean[]{false,true})for(int kind:new int[]{1,2,3,4,5})for(int blend:new int[]{0,127,255})for(float slope:new float[]{-.5f,0,.5f}){
+            for(boolean textured:new boolean[]{false,true})for(int kind:new int[]{1,2,3,4,5})for(int blend=0;blend<256;blend++)for(float slope:new float[]{-.5f,0,.5f}){
                 float[] legacy=new float[6*28];ByteBuffer compact=ByteBuffer.allocateDirect(6*52).order(ByteOrder.nativeOrder());
                 for(int n=0;n<6;n++){
-                    float[] v=new float[28];System.arraycopy(positions,n*3,v,0,3);v[3]=120/255f;v[4]=180/255f;v[5]=60/255f;v[6]=1;
-                    v[7]=(v[0]+1)*.5f;v[8]=(v[1]+1)*.5f;v[9]=v[10]=v[11]=v[12]=1;v[14]=130;v[15]=v[3];v[16]=v[4];v[17]=v[5];v[18]=slope;v[19]=1;v[21]=kind;v[22]=0;v[23]=0;v[24]=90/255f;v[25]=30/255f;v[26]=200/255f;v[27]=blend/255f;
+                    float[] v=new float[28];System.arraycopy(positions,n*3,v,0,3);v[3]=blend/255f;v[4]=((blend+n*17)&255)/255f;v[5]=(255-blend)/255f;v[6]=((blend+n)&255)/255f;
+                    v[7]=(v[0]+1)*.5f;v[8]=(v[1]+1)*.5f;v[9]=blend/255f;v[10]=(255-blend)/255f;v[11]=((blend+n)&255)/255f;v[12]=1;v[14]=blend;v[15]=v[3];v[16]=v[4];v[17]=v[5];v[18]=slope;v[19]=1;v[21]=kind;v[22]=1+blend%3;v[23]=blend;v[24]=90/255f;v[25]=30/255f;v[26]=200/255f;v[27]=blend/255f;
                     System.arraycopy(v,0,legacy,n*28,28);require(NativeResidentGeometry.put(compact,v),"exact pack");
                 }compact.flip();byte[] reference=null;
                 for(boolean packed:new boolean[]{false,true}){

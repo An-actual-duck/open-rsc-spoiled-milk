@@ -2812,7 +2812,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		uploadStages[3]+=NativeGeometryDiagnostics.now()-stageStart;
         uploadStages[4]+=uploadedByteCount; uploadStages[5]+=packedCompact?vertexCount:0;
         uploadStages[6]+=packedCompact?0:vertexCount; uploadStages[7]++;
-        buffer.compact=packedCompact;
+        buffer.compact=packedCompact; buffer.compactRequested=NativeResidentGeometry.enabled();
         buffer.signature = bufferSignature;
 		buffer.uploadedVertexOffsetX = chunk.getVertexOffsetX();
 		buffer.uploadedVertexOffsetZ = chunk.getVertexOffsetZ();
@@ -2843,7 +2843,11 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		boolean replacementCompositeDrawOnly,
 		boolean spatialBatches) {
 		int triangleCount = Math.min(chunk.getTriangleCount(), indexCount / 3);
-		Map<WorldChunkMaterialKey, WorldChunkMaterialBatchBuilder> batchesByMaterial =
+		WorldChunkMaterialBatchBuilder[] triangleBatches =
+            Boolean.getBoolean("spoiledmilk.nativeMaterialBatchReuse") && !Boolean.getBoolean("spoiledmilk.browserBenchmark")
+                && !Boolean.getBoolean("spoiledmilk.browserPublicAlpha") && triangleCount<=262144
+                ? new WorldChunkMaterialBatchBuilder[triangleCount] : null;
+        Map<WorldChunkMaterialKey, WorldChunkMaterialBatchBuilder> batchesByMaterial =
 			new LinkedHashMap<WorldChunkMaterialKey, WorldChunkMaterialBatchBuilder>();
 		for (int triangle = 0; triangle < triangleCount; triangle++) {
 			if (!shouldIncludeChunkTriangleInResidentDrawBuffer(chunk, triangle, replacementCompositeDrawOnly)) {
@@ -2855,7 +2859,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				batch = new WorldChunkMaterialBatchBuilder(key);
 				batchesByMaterial.put(key, batch);
 			}
-			batch.indexCount += 3;
+			if (triangleBatches!=null) triangleBatches[triangle]=batch;
+            batch.indexCount += 3;
 			batch.includeTriangleBounds(chunk, triangle);
 		}
 
@@ -2875,7 +2880,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				continue;
 			}
 			WorldChunkMaterialBatchBuilder batch =
-				batchesByMaterial.get(WorldChunkMaterialKey.from(chunk, triangle, spatialBatches));
+				triangleBatches==null ? batchesByMaterial.get(WorldChunkMaterialKey.from(chunk, triangle, spatialBatches)) : triangleBatches[triangle];
 			int sourceIndex = triangle * 3;
 			materialIndexUploadBuffer.put(batch.writeIndex++, chunk.getIndex(sourceIndex));
 			materialIndexUploadBuffer.put(batch.writeIndex++, chunk.getIndex(sourceIndex + 1));
@@ -2985,7 +2990,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
         if (packedCompact) {
             int bytes=Math.multiplyExact(vertexCount,NativeResidentGeometry.STRIDE);
             if (compactUploadBuffer==null || compactUploadBuffer.capacity()<bytes)
-                compactUploadBuffer=ByteBuffer.allocateDirect(bytes).order(ByteOrder.nativeOrder());
+                compactUploadBuffer=ByteBuffer.allocateDirect(growCapacity(0,bytes)).order(ByteOrder.nativeOrder());
             compactUploadBuffer.clear(); compactUploadBuffer.limit(bytes);
         }
 		int[] smoothDiffuseLights = buildChunkSmoothDiffuseLights(chunk, vertexCount);
@@ -4132,6 +4137,7 @@ final class WorldChunkBufferKey {
 
 final class WorldChunkBuffer {
     boolean compact;
+    boolean compactRequested;
 	final int vertexBufferId;
 	final int indexBufferId;
 	final int materialIndexBufferId;
@@ -4169,7 +4175,8 @@ final class WorldChunkBuffer {
 		int geometryModeBits,
 		boolean replacementCompositeDrawOnly,
 		long shadowProofSignature) {
-		return this.signature == signature
+		return this.compactRequested == NativeResidentGeometry.enabled()
+            && this.signature == signature
 			&& this.vertexCount == vertexCount
 			&& this.indexCount == indexCount
 			&& this.triangleCount == triangleCount
