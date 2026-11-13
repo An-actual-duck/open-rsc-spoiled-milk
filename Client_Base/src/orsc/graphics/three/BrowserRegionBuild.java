@@ -4,7 +4,16 @@ package orsc.graphics.three;
 public final class BrowserRegionBuild {
     private static final boolean ENABLED = Boolean.getBoolean("spoiledmilk.browserBenchmark")
         && Boolean.getBoolean("spoiledmilk.browserRegionBuild");
+    // Native experiments are independent and cannot enable browser hash arithmetic.
+    private static final boolean NATIVE = !Boolean.getBoolean("spoiledmilk.browserBenchmark")
+        && !Boolean.getBoolean("spoiledmilk.browserPublicAlpha");
+    private static final boolean NATIVE_INDEX = NATIVE
+        && Boolean.getBoolean("spoiledmilk.nativeConstructionVertexIndex");
+    private static final boolean NATIVE_PRIMITIVES = NATIVE
+        && Boolean.getBoolean("spoiledmilk.nativePrimitiveWorldBuild");
     private BrowserRegionBuild() {}
+    static boolean useConstructionIndex() { return ENABLED || NATIVE_INDEX; }
+    static boolean usePrimitiveWorldBuild() { return ENABLED || NATIVE_PRIMITIVES; }
     public static boolean isEnabled() { return ENABLED; }
 
     /** FNV-1a modulo 2^64, represented by two primitive signed int limbs. */

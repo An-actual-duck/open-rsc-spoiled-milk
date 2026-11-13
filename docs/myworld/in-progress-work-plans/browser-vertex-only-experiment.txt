@@ -1,5 +1,8 @@
-Private browser vertex-only experiment (in progress)
+Private browser vertex-only experiment (diagnostic phase complete)
 ===================================================
+Historical initial implementation notes; completed diagnostic results follow.
+Full-public validation remains blocked by the exact-main catalogue build gate.
+
 Worker: Core-Framework-ai-1, standalone-client-optimization-exploration.
 No publication, deployment or default adoption. Browser FPS and adjacent travel
 are the goals; CPU fixtures alone do not establish either improvement.

@@ -21,5 +21,5 @@ public final class BrowserRegionBuildEdgeIndependentFixture {
    check(values.get(a)==null);check(((List<?>)overflow.get(a)).size()==count);Object result=array.invoke(a);check(Array.getLength(result)==count);for(int n=0;n<count;n++){if(floats)check(Float.floatToRawIntBits(Array.getFloat(result,n))==(n%13==0?0x7fc01234:n%13==1?0x80000000:n*0x9e3779b9));else check(Array.getInt(result,n)==n*0x9e3779b9);}if(floats)Array.setFloat(result,0,77f);else Array.setInt(result,0,77);Object again=array.invoke(a);if(floats)check(Float.floatToRawIntBits(Array.getFloat(again,0))==0x7fc01234);else check(Array.getInt(again,0)==0);
   }
  }
- public static void main(String[]args)throws Exception{new FileOutputStream(args[0]).close();if(Boolean.getBoolean("fixture.testLimb")){index();arrays();}System.out.println("PASS helper-edge-checks="+checks+" collision-wrap/firstmatch/growth/cap/fallback/rawfloatcopy; no GPU/FPS");}
+ public static void main(String[]args)throws Exception{new FileOutputStream(args[0]).close();if((Boolean.getBoolean("fixture.testLimb") || Boolean.getBoolean("fixture.testConstructionHelpers"))){index();arrays();}System.out.println("PASS helper-edge-checks="+checks+" collision-wrap/firstmatch/growth/cap/fallback/rawfloatcopy; no GPU/FPS");}
 }

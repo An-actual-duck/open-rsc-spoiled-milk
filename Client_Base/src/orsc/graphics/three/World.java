@@ -6815,28 +6815,28 @@ public final class World {
 		private final int originWorldZ;
 		private final boolean includePresentationEffects;
 		private final List<Integer> vertexCoords = new ArrayList<Integer>();
-        private final BrowserRegionBuild.IntValues vertexCoordsPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
+        private final BrowserRegionBuild.IntValues vertexCoordsPrimitive = BrowserRegionBuild.usePrimitiveWorldBuild() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Float> vertexTextureU = new ArrayList<Float>();
-        private final BrowserRegionBuild.FloatValues vertexTextureUPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.FloatValues() : null;
+        private final BrowserRegionBuild.FloatValues vertexTextureUPrimitive = BrowserRegionBuild.usePrimitiveWorldBuild() ? new BrowserRegionBuild.FloatValues() : null;
 		private final List<Float> vertexTextureV = new ArrayList<Float>();
-        private final BrowserRegionBuild.FloatValues vertexTextureVPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.FloatValues() : null;
+        private final BrowserRegionBuild.FloatValues vertexTextureVPrimitive = BrowserRegionBuild.usePrimitiveWorldBuild() ? new BrowserRegionBuild.FloatValues() : null;
 		private final List<Integer> vertexLights = new ArrayList<Integer>();
-        private final BrowserRegionBuild.IntValues vertexLightsPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
+        private final BrowserRegionBuild.IntValues vertexLightsPrimitive = BrowserRegionBuild.usePrimitiveWorldBuild() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Integer> vertexTerrainBlendColors = new ArrayList<Integer>();
-        private final BrowserRegionBuild.IntValues vertexTerrainBlendColorsPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
+        private final BrowserRegionBuild.IntValues vertexTerrainBlendColorsPrimitive = BrowserRegionBuild.usePrimitiveWorldBuild() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Integer> vertexTerrainBlendStrengths = new ArrayList<Integer>();
-        private final BrowserRegionBuild.IntValues vertexTerrainBlendStrengthsPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
+        private final BrowserRegionBuild.IntValues vertexTerrainBlendStrengthsPrimitive = BrowserRegionBuild.usePrimitiveWorldBuild() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Integer> indices = new ArrayList<Integer>();
-        private final BrowserRegionBuild.IntValues indicesPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
+        private final BrowserRegionBuild.IntValues indicesPrimitive = BrowserRegionBuild.usePrimitiveWorldBuild() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Integer> triangleTextures = new ArrayList<Integer>();
-        private final BrowserRegionBuild.IntValues triangleTexturesPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
+        private final BrowserRegionBuild.IntValues triangleTexturesPrimitive = BrowserRegionBuild.usePrimitiveWorldBuild() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Integer> triangleFallbackColors = new ArrayList<Integer>();
-        private final BrowserRegionBuild.IntValues triangleFallbackColorsPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
+        private final BrowserRegionBuild.IntValues triangleFallbackColorsPrimitive = BrowserRegionBuild.usePrimitiveWorldBuild() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Renderer3DModelKind> triangleModelKinds = new ArrayList<Renderer3DModelKind>();
 		private final List<Renderer3DMaterialFamily> triangleMaterialFamilies =
 			new ArrayList<Renderer3DMaterialFamily>();
 		private final List<Integer> triangleTerrainVariationMasks = new ArrayList<Integer>();
-        private final BrowserRegionBuild.IntValues triangleTerrainVariationMasksPrimitive = BrowserRegionBuild.isEnabled() ? new BrowserRegionBuild.IntValues() : null;
+        private final BrowserRegionBuild.IntValues triangleTerrainVariationMasksPrimitive = BrowserRegionBuild.usePrimitiveWorldBuild() ? new BrowserRegionBuild.IntValues() : null;
 		private final List<Renderer3DWorldChunkFrame.ShadowCaster> shadowCasters =
 			new ArrayList<Renderer3DWorldChunkFrame.ShadowCaster>();
 		private final List<Renderer3DWorldChunkFrame.GlowEmitter> glowEmitters =

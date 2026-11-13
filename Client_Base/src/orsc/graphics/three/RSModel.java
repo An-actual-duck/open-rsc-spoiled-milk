@@ -997,7 +997,7 @@ public final class RSModel {
 				this.faceParam1 = new int[faceCount][];
 			}
 
-			ConstructionVertexIndex constructionIndex = BrowserRegionBuild.isEnabled()
+			ConstructionVertexIndex constructionIndex = BrowserRegionBuild.useConstructionIndex()
 				? new ConstructionVertexIndex(vertCount) : null;
 			try {
 			for (i = offset; i < modelCount; ++i) {
