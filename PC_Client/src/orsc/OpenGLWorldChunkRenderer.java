@@ -3045,7 +3045,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
         int baseLegacyLight = legacyLight;
         legacyLight = applyBakedTerrainShadow(legacyLight, bakedTerrainShadowMask, triangle);
         at = writeChunkMaterialColor(values, at,
-            materialColorForTriangle(frame, chunk, triangle), rawMaterialColor,
+            unbakedRemasterBase ? 0 : materialColorForTriangle(frame, chunk, triangle), rawMaterialColor,
             effectiveTextureId, legacyLight, unbakedRemasterBase, typed);
         if (standaloneTextureCoordinates) {
             Renderer3DTextureData texture = frame == null ? null : frame.getTexture(effectiveTextureId);
