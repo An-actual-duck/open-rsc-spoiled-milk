@@ -1,8 +1,8 @@
 Native terrain lookup prototype — November 12, 2026
 ==================================================
 
-Status: implemented and correctness checked; native performance acceptance is
-pending. This is the first independent slice of the standalone rendering and
+Status: implemented and correctness checked; the native busy-camera comparison
+does not justify default adoption. This is the first independent slice of the standalone rendering and
 chunk-loading plan. No launcher default, player package or public service changed.
 
 Frozen inputs
@@ -47,8 +47,29 @@ output/tests/renderer-shadow-benchmarks/native-index-functional-off-1/
 busy-camera-20261113T032134Z/. Its receipt confirms both flags false with the
 same eligible protocol8 nine-slot roster. It likewise is not a timing comparison.
 
-Performance acceptance still required
-------------------------------------
+Measured native outcome — November 13
+-------------------------------------
+After Stardew fully exited, six fresh native JVM/fixture runs completed in order
+OFF/ON/ON/OFF/OFF/ON, each with 20-second warmup and 30-second busy-camera phase.
+The same frozen candidate JAR was used, with explicit policy receipts. Evidence:
+output/diagnostics/native-terrain-query-index/cohort-20261113T052741Z/results.json.
+All runs retained 435,422 resident triangles, 17 received players and 40 received
+NPCs (including controlled summons); no partial records or fixture failures.
+Median of the three run means, OFF -> ON: sceneRender 1.341038 -> 1.349153 ms;
+OpenGL CPU render 3.540794 -> 3.578020 ms; world submission 0.806532 -> 0.822298 ms.
+These small differences establish no useful improvement in this workload.
+Both modes stayed capped at approximately 16.667 ms offscreen intervals.
+This does not certify visible presentation or weaker hardware. Background desktop
+applications and idle older private servers remained, documented in machine.json;
+no competing game renderer, heavy build or profiler was deliberately run.
+
+Decision: retain the independent opt-in and exact correctness proof on this
+preserved research branch; do not enable it in launcher defaults or publish a
+performance claim. Loading/construction-heavy comparisons could revisit it later,
+but the next active candidate is static scenery input-group reuse.
+
+Future acceptance if revisited
+-----------------------------
 Use the same frozen candidate JAR with explicit native OFF/ON so the one startup
 policy is the only client-source difference. Fresh disposable fixtures per run;
 1920x1080, normal zoom75, identical map/assets, quality, sun, fog and warmup.
@@ -69,4 +90,5 @@ bundle it into this candidate before collecting the lookup comparison.
 
 Follow the larger standalone-rendering-and-chunk-loading-plan.txt for compact
 native geometry and coherent budgeted uploads. Those steps are not implemented
-by this prototype. This checkpoint is not a READY handoff or a release approval.
+by this prototype. A READY research handoff does not mean default adoption or a
+release approval; this branch is intended to be parked with evidence retained.
