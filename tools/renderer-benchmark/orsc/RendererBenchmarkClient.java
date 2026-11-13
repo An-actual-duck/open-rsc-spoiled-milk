@@ -7,6 +7,7 @@ import orsc.graphics.three.*;
 
 /** Test-only client driver; all login/scene packets retain their ordinary paths. */
 public final class RendererBenchmarkClient {
+    private static Object initialNativeInputCache;
     private static java.io.BufferedWriter gpuWriter;
     private static Method gpuSinkSetter;
     private static final Object GPU_LOCK = new Object();
@@ -346,6 +347,7 @@ public final class RendererBenchmarkClient {
         boolean browser=Renderer3DSettings.isBrowserPresentationAvailable();
         boolean resident=Renderer3DSettings.canUseResidentObjectChunks();
         Object cache=field(client,mudclient.class,"residentStaticInputCache");
+        initialNativeInputCache=cache;
         if(configured!=selected||browser||!resident||(cache!=null)!=selected)
             throw new IllegalStateException("Native input reuse policy/cache/backend differs from request");
         int groups=cache==null?0:((java.util.List<?>)field(cache,cache.getClass(),"inputs")).size();
@@ -354,6 +356,18 @@ public final class RendererBenchmarkClient {
         Files.write(capture.resolve("native-resident-input-policy.json"),
             ("{\"requested\":"+selected+",\"configured\":"+configured+",\"browser\":"+browser
             +",\"resident\":"+resident+",\"cachedGroups\":"+groups+",\"descriptorInts\":"+descriptors+"}\n").getBytes(StandardCharsets.UTF_8));
+    }
+    private static void recordNativeResidentInputEnd(mudclient client,Path capture,String phase)throws Exception {
+        String requested=System.getProperty("renderer.benchmark.nativeResidentInputCache");
+        if(requested==null)return;
+        Object cache=field(client,mudclient.class,"residentStaticInputCache");
+        boolean stable=cache!=null && cache==initialNativeInputCache;
+        boolean selected=Boolean.parseBoolean(requested);
+        if((cache!=null)!=selected || (selected && phase.equals("busy-camera") && !stable))
+            throw new IllegalStateException("Native input cache was absent or rebuilt during stationary comparison");
+        Files.write(capture.resolve("native-resident-input-end.json"),
+            ("{\"cachePresent\":"+(cache!=null)+",\"sameCacheAcrossPhase\":"+stable+"}\n").getBytes(StandardCharsets.UTF_8));
+        initialNativeInputCache=null;
     }
     private static void applyDiagnosticTone() {
         String tone=System.getProperty("spoiledmilk.openglTonePreview");
@@ -447,6 +461,7 @@ public final class RendererBenchmarkClient {
             Thread.sleep(1000);
         }
         System.out.println(RendererPerformanceDiagnostics.handleCommand("::pf stop " + phase));
+        recordNativeResidentInputEnd(client,capture,phase);
         if (Boolean.getBoolean("renderer.benchmark.dumpRoofMask")) dumpRoofMask(client,presenter,capture);
         if (Boolean.getBoolean("renderer.benchmark.dumpTerrain")) dumpTerrain(client,presenter,capture);
         if (Boolean.getBoolean("renderer.benchmark.dumpFences")) dumpFences(client,presenter,capture);
