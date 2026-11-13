@@ -1,0 +1,155 @@
+Standalone client: rendering and chunk-loading follow-up
+=======================================================
+Recorded November 12, 2026, after the browser staged-login rollout.
+Status: planned; no new standalone optimization is enabled by this document.
+Standalone player release: v0.3.16. Public server: v0.3.19; browser:
+alpha-20261112-6. Recheck those versions and source before implementation.
+
+Purpose
+-------
+Bring the useful algorithmic and resource-management advances from browser work
+to the normal desktop client. Reduce CPU work, allocation, resident GPU memory
+and travel stalls while preserving approved shadows, relief/valley shading,
+draw distance, content and responsive movement. Stable capped 60 FPS on the
+owner's PC is the starting point; the goal is more headroom on weaker systems.
+Browser gains are leads to investigate, not established desktop gains.
+
+Preserved source reports
+------------------------
+These companion files in this directory retain the detailed findings:
+* desktop-browser-cpu-portability.txt: native gates, algorithms, existing work,
+  lookup measurements, correctness contracts and rejected browser-only ports.
+* desktop-browser-loading-portability.txt: native buffers, shaders, uploads,
+  memory accounting, retained regional products and loading risks.
+* client-performance-portability-plan.md: the earlier native performance pass,
+  its accepted allocation/dispatch changes and measurement contract. Its old
+  release baselines are historical; freeze a new baseline for this follow-up.
+* browser-modern-streaming-plan.txt and
+  browser-bounded-streaming-and-cpu-plan.txt: streaming alternatives and context.
+
+Already present; do not duplicate
+--------------------------------
+Desktop already has its own OpenGL presenter thread, resident mesh cache,
+static rebase/culling, bounded sprite-composite/upload scratch, typed float
+uniform dispatch, predictive terrain preparation and a sector-preload executor.
+Shared protocol/terrain authority and activation are already common code.
+Being compiled into Client_Base does not mean a browser-gated path runs in the
+ordinary desktop launcher. Audit effective launcher flags and providers first.
+
+Execution order
+---------------
+0. Freeze the native baseline and attribute costs.
+   Capture exact source/JAR, normal packaged arguments, map/assets/settings,
+   CPU/GPU/driver/Java and route. Profile idle, camera motion and populated
+   travel separately. Attribute time to terrain lookup, grouping/identity,
+   construction, packing/sorting, GL submission and authoritative data waits.
+   Keep the previously accepted renderer quality and movement behavior.
+
+1. Port contained CPU improvements, one change per comparison.
+   Start with the validated terrain-slot lookup index and its mixed-size/void
+   fallback. Native Java21 synthetic lookup tests measured 3x3 queries at
+   13.394 -> 4.669 ns and 5x5 at 21.548 -> 5.876 ns, with matching reference
+   results. Those numbers do not predict whole-client FPS.
+   Next evaluate immutable static resident INPUT-group reuse, using complete
+   identity/revision/terrain samples and rebuilding animated or mutable groups.
+   Then evaluate construction-local vertex indexing and primitive builders.
+   Keep native long arithmetic unless a native comparison proves otherwise;
+   the browser's two-limb hashing addresses a different execution cost.
+   Null-model removal is a small independent candidate if native call counts
+   show relevance. Do not bundle these changes under a browser mode switch.
+
+2. Prototype compact native resident geometry.
+   Current native resident vertices use 112 bytes; the browser's independently
+   validated compact representation uses 48. Treat the latter as a starting
+   contract, not permission to discard native fields. Prove native values are
+   exactly representable and preserve native atlas UVs, material ownership,
+   lighting, cutouts and near/far shadow sampling. Update shader attribute and
+   shadow bindings together. Retain the original layout for unsupported modes
+   or values. Measure packing cost, uploaded bytes and actual live allocations.
+
+3. Make chunk transitions coherent and budgeted.
+   First distinguish CPU building/packing stalls from GPU upload stalls.
+   The desktop's nominal 3 ms upload setting is normally bypassed by trusted
+   replacement rendering; enabling it alone can expose incomplete geometry.
+   Adapt separate pending/live buffers, bounded work slices, generation-based
+   cancellation and atomic publication after required coverage is complete.
+   Preserve the last coherent image and correct input/readiness ownership while
+   entering data is incomplete. Initial loading may use a loading screen;
+   ordinary travel should avoid repeated full-screen interruptions where safe.
+   Keep GL operations on the owning presenter thread. Off-thread pure CPU work
+   must use immutable snapshots and reject stale source/settings/level results.
+   Account for vertices, BOTH native index buffers, staging/pending allocations,
+   required coverage and eviction. Choose measured native byte/time limits;
+   the browser's 512 MiB geometry cap is not a total-VRAM allowance to copy.
+
+4. Extend bounded regional RAM preparation if loading profiles justify it.
+   Reuse the existing loader/preloader rather than introduce a second world
+   authority. Cache immutable nearby terrain/model preparation, prefetch likely
+   neighbors and reuse return trips. Bind products to map/source/assets,
+   definitions, settings/roof variant, signed level, world space and revisions.
+   Mutable doors, scenery, collision and picking remain live and authoritative.
+   Prefer a byte-bounded working set before considering all-world recipes.
+   Measure startup cost, cache misses, retention and eviction as well as travel.
+
+5. Reassess after measured slices and run an owner private playtest.
+   Promote only demonstrated native improvements. Prepare player packaging
+   only after correctness, visual and resource checks pass. This plan does not
+   request or authorize a public shutdown, deployment or renderer rewrite.
+
+Separate startup-safety option
+------------------------------
+The released browser now prepares checked world data and its static GPU scene
+before server admission. Assess whether native cold login needs similar safety
+after measuring it. The current negotiated path is WebSocket/browser-specific;
+supporting native TCP would require a separately reviewed capability/protocol
+change. Do not silently enable it or imitate safety with temporary invulnerability.
+
+What not to carry over wholesale
+--------------------------------
+Do not enable browserBenchmark, wholeZone or wholeRam to reach a shared helper.
+CheerpJ filesystem staging, Java-to-JS kernels, OffscreenCanvas/Render Worker and
+bridge transport optimizations solve browser costs; native has different owners.
+Do not pin the entire world in VRAM, force browser graphics settings onto users,
+silently reduce distance/quality, or revive parked experiments. Baseline object
+reuse and clone templates did not establish a browser loading win and remain
+outside this adoption list. Keep unsupported/native fallback behavior intact.
+
+Acceptance and sequencing
+-------------------------
+Use 1920x1080 and normal gameplay camera as the main comparison; maximum zoom is
+a separate stress case. Include dense actors, real spells/summons, adjacent
+boundary crossings, long teleports, negative/upper levels and return, mutable
+doors, roof/settings changes, relog, resize and context/error recovery.
+Compare matched OFF/ON builds/routes with warmup and interleaved repetitions.
+Record productive CPU/GPU time, allocations, p50/p95/p99/max frame and crossing
+times, first useful world time, cache outcomes, upload/pending/live bytes and
+process memory. Check scene/actor counts and pixel/depth/shadow output so missing
+work cannot masquerade as a speed gain. Repeat without heavy profiling.
+Keep diagnostic and cache memory bounded; test cleanup and stale-generation
+rejection. Include the physical iGPU as a second GPU where available, while
+stating that it shares the owner's CPU/OS. Windows/macOS and genuinely weaker
+hardware need their own evidence; do not promise universal 60 FPS.
+
+Use focused worker branches and exclusive timing windows. CPU/source audits may
+run in parallel with distinct ownership; shared mudclient/World/presenter files
+have one writer, and CPU/GPU measurements run serially. Start with baseline plus
+terrain indexing; compact layout is the next independent GPU-memory prototype.
+Reprofile before committing to larger streaming/RAM work. Preserve rejected
+results and stop adding speculative caches when gains remain inconclusive.
+
+Separate pending level-transition audit
+---------------------------------------
+Worker branch fix/layer-transition-audit is READY at
+cdde6f9da4f6797394e0e5cb32461e5c61aacc09. It contains 28 explicit surface-return
+call-site fixes across ten plugins and the Observatory keep-gate correction in
+an eleventh. Its report/fixture covers 51 cases / 342 checks; preserved baseline
+plugins fail 39 cases. This is an offline callback/map audit, not a complete
+quest walkthrough or network/approach-path certification.
+At this plan's creation the changes remain unmerged and undeployed. Current
+main has no intervening gameplay-plugin edits from the worker's base, and a
+read-only merge check is conflict-free. A manager replay on the exact worker branch passed the same 51/342 checks and
+reproduced all 39 baseline failures (worker evidence: output/tests/
+layer-transition-audit/manager-check-20261112/validation.json). Current-core
+regression review remains an integration step. Additional unproven candidates (Plague City gate, Tourist
+Trap carts, Legends/Vampire Slayer/Fight Arena predicates and legacy minirooms)
+are recorded in the worker's layer-transition-audit.md, not silently fixed.
