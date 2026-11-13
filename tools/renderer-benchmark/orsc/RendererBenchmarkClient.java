@@ -456,7 +456,7 @@ public final class RendererBenchmarkClient {
         OpenGLViewportPresenter viewport = (OpenGLViewportPresenter) field(presenter, OpenGLFramePresenter.class, "viewportPresenter");
         System.out.println(RendererPerformanceDiagnostics.handleCommand("::pf start " + phase));
         NativeRouteProbe routeProbe=phase.equals("busy-route") ? new NativeRouteProbe(run,capture,client) : null;
-        if(routeProbe!=null)routeProbe.route();
+        if(routeProbe!=null)try {routeProbe.route();} catch(Exception failure) {routeProbe.close();throw failure;}
         for (int second = 0; second < seconds; second++) {
             if(Files.exists(run.resolve("FIXTURE-FAILED"))) throw new IllegalStateException("Private fixture setup failed; aborting measurement");
             client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));

@@ -52,7 +52,9 @@ final class NativeRouteProbe implements AutoCloseable {
     }
     private JSONObject pose() throws Exception {
         PacketHandler packets=(PacketHandler)field(client,mudclient.class,"packetHandler");
-        return new JSONObject().put("x",packets.getLogicalPlayerX(client.getEditorPlayerWorldX())).put("y",packets.getLogicalPlayerY(client.getEditorPlayerWorldX(),client.getMidRegionBaseZ()+client.getLocalPlayerZ()))
+        OpenGLFramePresenter presenter=(OpenGLFramePresenter)field(ScaledWindow.getInstance(),ScaledWindow.class,"openGLFramePresenter");
+        OpenGLViewportPresenter viewport=(OpenGLViewportPresenter)field(presenter,OpenGLFramePresenter.class,"viewportPresenter");
+        return new JSONObject().put("viewportWidth",viewport.framebufferViewport().width).put("viewportHeight",viewport.framebufferViewport().height).put("x",packets.getLogicalPlayerX(client.getEditorPlayerWorldX())).put("y",packets.getLogicalPlayerY(client.getEditorPlayerWorldX(),client.getMidRegionBaseZ()+client.getLocalPlayerZ()))
             .put("level",packets.getLogicalWorldLevel(client.getMidRegionBaseZ()+client.getLocalPlayerZ())).put("ready",client.isRenderer3DWorldReady()).put("players",client.getPlayerCount()).put("npcs",client.getNpcCount()).put("context",packets.getLayeredSceneContextDebugSummary()).put("baseX",client.getMidRegionBaseX()).put("baseZ",client.getMidRegionBaseZ());
     }
     void route() throws Exception {

@@ -32,6 +32,7 @@ def analyze(capture):
         for key in ['x','y','level']:
             if state[key]!=step[key] or after[key]!=step[key]:raise ValueError('Arrival mismatch')
         if state['routeId']!=i+1 or state['controlledPlayers']!=16 or state['controlledNpcs']!=32:raise ValueError('Authority/population mismatch')
+        if (after.get('viewportWidth'),after.get('viewportHeight'))!=(1920,1080):raise ValueError('Route viewport mismatch')
         if not after.get('ready') or after.get('players',0)<16 or after.get('npcs',0)<32:raise ValueError('Received crowd/readiness missing')
         if step['kind']=='walk' and (before['baseX'],before['baseZ'])==(after['baseX'],after['baseZ']):raise ValueError('No actual boundary crossing')
         start=leg['requestNanos'];end=leg['endNanos']
