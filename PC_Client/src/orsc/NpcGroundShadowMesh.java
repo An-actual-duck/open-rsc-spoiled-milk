@@ -29,6 +29,7 @@ final class NpcGroundShadowMesh {
                 GeometryShadowRoofMask roofs,int worldOffsetX,int worldOffsetZ) {
         if(!Float.isFinite(x)||!Float.isFinite(y)||!Float.isFinite(z)||!Float.isFinite(radius)
             ||!Float.isFinite(dx)||!Float.isFinite(dz)||!Float.isFinite(opacity)
+            ||Math.abs(x)>1_000_000_000f||Math.abs(z)>1_000_000_000f
             ||radius<1||radius>64||opacity<=0||vertexCount()>=MAX_VERTICES-256)return;
         if(roofs.covered((int)x+worldOffsetX,(int)z+worldOffsetZ)) {roofSuppressed++;return;}
         centerX=x;centerY=y;centerZ=z;slopeX=dx;slopeZ=dz;
