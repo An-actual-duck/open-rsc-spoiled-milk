@@ -338,6 +338,23 @@ public final class RendererBenchmarkClient {
     private static void applyDiagnosticFog() {
         RendererFogSettings.setMode("off".equals(System.getProperty("renderer.benchmark.fog","on")) ? RendererFogSettings.Mode.OFF : RendererFogSettings.Mode.ON);
     }
+    private static void recordNativeResidentInputPolicy(mudclient client, Path capture) throws Exception {
+        String requested=System.getProperty("renderer.benchmark.nativeResidentInputCache");
+        if(requested==null)return;
+        boolean selected=Boolean.parseBoolean(requested);
+        boolean configured=(Boolean)field(null,mudclient.class,"NATIVE_RESIDENT_INPUT_CACHE");
+        boolean browser=Renderer3DSettings.isBrowserPresentationAvailable();
+        boolean resident=Renderer3DSettings.canUseResidentObjectChunks();
+        Object cache=field(client,mudclient.class,"residentStaticInputCache");
+        if(configured!=selected||browser||!resident||(cache!=null)!=selected)
+            throw new IllegalStateException("Native input reuse policy/cache/backend differs from request");
+        int groups=cache==null?0:((java.util.List<?>)field(cache,cache.getClass(),"inputs")).size();
+        int descriptors=cache==null?0:((int[])field(cache,cache.getClass(),"descriptors")).length;
+        if(selected&&(groups==0||descriptors==0))throw new IllegalStateException("Native input comparison has no actual static groups");
+        Files.write(capture.resolve("native-resident-input-policy.json"),
+            ("{\"requested\":"+selected+",\"configured\":"+configured+",\"browser\":"+browser
+            +",\"resident\":"+resident+",\"cachedGroups\":"+groups+",\"descriptorInts\":"+descriptors+"}\n").getBytes(StandardCharsets.UTF_8));
+    }
     private static void applyDiagnosticTone() {
         String tone=System.getProperty("spoiledmilk.openglTonePreview");
         if(tone!=null) RendererToneSettings.setMode(RendererToneSettings.Mode.from(tone));
@@ -394,6 +411,7 @@ public final class RendererBenchmarkClient {
             applyPreviewWindowMode(); applyDiagnosticTone(); applyDiagnosticFog(); Thread.sleep(1000);
         }
         applyPreviewWindowMode(); applyDiagnosticTone(); applyDiagnosticFog();
+        recordNativeResidentInputPolicy(client,capture);
         client.setShowDialogMessage(false);
         Config.C_HIDE_LOGIN_BOX = true;
         client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));
