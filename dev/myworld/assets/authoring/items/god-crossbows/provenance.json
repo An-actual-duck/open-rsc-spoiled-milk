@@ -1,0 +1,13 @@
+{
+  "status": "concept review only; not native-size runtime artwork",
+  "generator": "built-in image_gen",
+  "date": "2026-11-13",
+  "sourceSha256": "389221a1030b40e9bb5f83c6194ad44c9f5197db0452a1e52587f10885e0edf3",
+  "references": [
+    "assets/references/items/weapons/crossbows/id-02199.png",
+    "assets/runtime/sprites/items/inventory-ground/weapons/saradomin-mace-icon.png",
+    "assets/runtime/sprites/items/inventory-ground/weapons/zamorak-mace-icon.png",
+    "assets/runtime/sprites/items/inventory-ground/weapons/guthix-mace-icon.png"
+  ],
+  "promptSummary": "Single transparent lineup, Saradomin gold star and warm wood; Zamorak dark purple stock and red horned limbs; Guthix natural wood and green living limbs. Compact diagonal RSC crossbow silhouette based on the 48x32 native reference. No ammunition, aura, particles or labels. Enlarged chunky pixels for concept review."
+}

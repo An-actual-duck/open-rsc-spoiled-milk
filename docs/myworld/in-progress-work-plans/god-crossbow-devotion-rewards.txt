@@ -1,0 +1,105 @@
+God crossbows — design and implementation outline, November 13, 2026
+====================================================================
+
+Status: DESIGN REVIEW. No gameplay changes, item IDs, runtime sprites or live
+server changes have been installed. Core worker ai-2 owns branch
+feat/god-crossbow-devotion-rewards; Dot independently owns ai-1 for optimization.
+
+Owner requirements
+------------------
+Add one god crossbow to each of Saradomin, Zamorak and Guthix's devotion artifact
+reward pools. Use their god maces as the visual theme references. Equipping the
+weapon reserves 80 prayer points; shots require no bolts or other ammunition.
+The effective weapon should match a tier-11 crossbow with approximately tier-6
+bolts, subject to balance review.
+
+Proposed initial balance
+------------------------
+All three start with identical combat statistics and no additional god-specific
+proc. The current Dragon crossbow (tier 11) has 38 rangedOffense and weaponSpeed
+4. Mithril bolts (tier 6: tin, copper, bronze, iron, steel, mithril) have 12
+rangedOffense. Use a self-contained 50 Ranged offense, speed 4, normal crossbow
+range, one-handed mainhand equipment like existing crossbows. Recommend 80
+Ranged and 80 Worship to equip, matching the existing top crossbow and artifact
+Worship gate. Match the wielder's worshipped god as existing god weapons do.
+Do not grant an extra prayer bonus that offsets the intended 80-point reserve.
+These are starting recommendations, not yet implemented values.
+
+The reserve is a persistent allocation, not an 80-point payment on equip and
+not a per-shot drain. Count it in both server and client prayer allocation so
+prayers cannot also spend it. Free it immediately on unequip, weapon swap,
+death or other equipment removal. Refuse equipping when fewer than 80 points
+are available after the equipment swap; keep the old equipment/prayers intact.
+Recheck affordability before every shot if Worship or equipment bonuses change.
+Never leave a weapon firing when the reserve cannot be funded. Handle login
+restoration and prayer-book changes through the same authoritative rules.
+
+Ammunition-slot bolts must contribute no extra offense, poison, resource cost
+or recovery while a god crossbow is equipped. The same applies to inventory
+ammunition in legacy inventory-equipment mode. Ordinary crossbows retain all
+existing ammo rules. Do not implement this as a real/free Mithril bolt: doing
+so risks spawning recoverable bolts or consuming unrelated equipped ammo.
+Continue to use normal ranged critical, stagger, slow, PvP eligibility, XP,
+projectile collision and hit-resolution systems.
+
+Reward acquisition
+------------------
+GodArtifacts currently requires 80 Worship, 800 devotion, matching prayer book,
+and an unclaimed reward. It spends 400 devotion when a reward is successfully
+received. Add each new crossbow as that god's fourth artifact, preserving the
+existing per-item claim keys. Players who claimed all three older artifacts
+must become eligible for the crossbow. Preserve full-inventory failure safety
+and existing reward dialogue. Recommend untradeable artifacts like god maces.
+No new crafting or blessing recipe is implied by the request.
+
+Art
+---
+The inspected native crossbow reference is 48x32, visible bounds (7,4,40,27).
+Use that occupancy, angle and pixel shading as the final inventory scale anchor.
+The concept lineup is deliberately enlarged for owner review, not a runtime
+asset. Saradomin uses warm wood/gold and the mace's star; Zamorak uses a dark
+purple stock/red horn motif; Guthix uses wood, tan and green living limbs.
+Preserved concept and provenance:
+ dev/myworld/assets/authoring/items/god-crossbows/concept-lineup-v1.png
+ dev/myworld/assets/authoring/items/god-crossbows/provenance.json
+Review export:
+ output/art/god-crossbow-devotion-rewards/concept-lineup-v1.png
+
+Final inventory/ground icons and equipped direction/attack frames need separate
+native-size review. A finished inventory icon does not prove the equipped
+appearance is implemented. Use the ordinary crossbow's animation timing and
+hand anchors, with god-specific artwork rather than an unrelated placeholder.
+Preserve editable masters and authoring recipes; package only runtime assets.
+
+Implementation touchpoints discovered
+------------------------------------
+server/content/GodArtifacts: per-god pools and existing persistent claim keys.
+server/constants/ItemId and AppearanceId: allocate against current catalogs.
+server/conf/server/defs/ItemDefsCustom.json and ItemDefsMyWorld.json: effective
+ definitions and stats; EntityHandler: appearance registration/discovery.
+server/model/container/Equipment: matching god, equip transaction, offense
+ accounting (currently sums mainhand, offhand and ammo), removal and swaps.
+server/model/entity/player/Prayers and Player.getPrayerAllocationPoints:
+ shared allocation bookkeeping, overflow changes and funded-shot checks.
+server/event/rsc/impl/projectile/RangeUtils and RangeEvent: crossbow
+ classification, ammo-free launch, resource ledger, recovery and poison.
+Client EntityHandler, external assets and mudclient: icons/equipment visuals,
+ Ranged equipment display and prayer allocation display/activation affordances.
+In-game guide: reward availability, 80 reserved points and ammo-free shots.
+Paths above omit their existing Java package prefixes for readability.
+
+Focused verification before READY
+---------------------------------
+Exercise actual equip/swap/unequip/relog/death/book-change paths, exact 80-point
+boundary and insufficient-free-point rejection without inventory loss. Verify
+client/server allocation parity, point-release and loss-of-capacity behavior.
+Compare actual offense with a normal tier-11 crossbow plus Mithril bolts; test
+empty ammo, arrows, stronger bolts and poisoned bolts equipped and in inventory.
+Verify no ammo cost/recovery/poison and no artificial bolt loot from repeated
+hits, including zero damage, stagger and ranged cape behavior. Ordinary bows,
+crossbows and thrown weapons must retain their normal consumption/recovery.
+Test every god's fresh/partially claimed/fully claimed legacy reward accounts,
+full inventory, devotion spend, god mismatch and untradeability. Review native
+inventory and equipped sprites standing/attacking in every supported direction,
+plus browser custom-asset parity. No public activation without normal release
+and shutdown authorization.
