@@ -3,7 +3,7 @@
   "method": "Aseprite native-grid authoring from original crossbow only. Earlier god-crossbow versions are not inputs.",
   "recipe": "author.lua",
   "requirements": {
-    "zamorak": "Red stock; black horn-shaped limbs with subtle charcoal highlights.",
+    "zamorak": "Red stock; whole black horn limbs grow continuously from front mount and taper into curled tips. No ordinary limbs with add-on horn caps.",
     "saradomin": "Silver stock; golden limbs with star-shaped tips from mace head.",
     "guthix": "Brown stock; light green limbs; dark green brambles along stock."
   },
@@ -37,20 +37,21 @@
         32
       ],
       "visibleBounds": [
-        6,
+        5,
         4,
         47,
         31
       ],
-      "opaqueColours": 8,
-      "originalFrameworkPreserved": true,
+      "opaqueColours": 7,
       "originalTriggerLatchStringPreserved": true,
       "fullyTransparentCanvasBorder": true,
       "alphaValues": [
         0,
         255
       ],
-      "sha256": "b8267c92b47a28ac358f70d9641e31795fbfc164169e7cd6c948fe6f34fc6825"
+      "sha256": "668d87d1312d5560da8dd4e8875a1c2a962f7abc0649327fa1f85e47b1614bc3",
+      "originalStockPreserved": true,
+      "wholeBowReplacedByHornLimbs": true
     },
     {
       "god": "guthix",

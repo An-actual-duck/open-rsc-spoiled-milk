@@ -37,23 +37,47 @@ for _,s in ipairs(styles)do
    if r==88 and g==50 and b==29 then pixel(rgb(s.woodDark))
    elseif r==129 and g==83 and b==34 then pixel(rgb(s.woodMid))
    elseif r==184 and g==112 and b==48 then pixel(rgb(s.woodLight))
-   elseif r==129 and g==134 and b==145 then pixel(rgb(s.limb))
-   elseif pixel.y>=26 and (r==111 or r==82)then pixel(rgb(s.limbShade))end
+   elseif r==129 and g==134 and b==145 then
+    if s.name=='zamorak'then pixel(0)else pixel(rgb(s.limb))end
+   elseif pixel.y>=26 and (r==111 or r==82)then
+    if s.name=='zamorak'then pixel(0)else pixel(rgb(s.limbShade))end
+   end
   end
  end
  sprite.cels[1].image=body;sprite.layers[1].name='Original framework — stock and limb materials'
  local detail=Image(48,32,ColorMode.RGB)
  local name
  if s.name=='zamorak'then
-  name='Mace horns form the limb tips'
-  -- Two curled, tapering black horns terminate the existing curved limbs.
-  local paths={{{7,13},{6,11},{6,9},{7,8},{9,7},{10,8},{10,9}},{{35,28},{38,28},{40,27},{40,25},{39,24},{37,24},{36,25}}}
-  for _,points in ipairs(paths)do
-   for i=1,#points-1 do local a,b=points[i],points[i+1];line(detail,a[1],a[2],b[1],b[2],0x000000)end
+  name='Continuous tapered horn limbs'
+  -- Replace the complete ordinary bow, rather than decorating its ends.
+  -- Both horns grow from the front mounting point and curl back to the string.
+  local function stockAt(x,y)
+   local c=original:getPixel(x,y)
+   return pc.rgbaA(c)>0 and pc.rgbaR(c)>pc.rgbaG(c) and pc.rgbaG(c)>pc.rgbaB(c)
   end
-  line(detail,7,12,7,9,0x323232);line(detail,7,9,9,8,0x323232)
-  line(detail,35,27,38,27,0x323232);line(detail,38,27,39,26,0x323232)
-  dot(detail,10,9,0x191919);dot(detail,36,25,0x191919)
+  local function horn(points)
+   for y=1,30 do for x=1,46 do
+    local inside=false;local j=#points
+    for i=1,#points do
+     local a,b=points[i],points[j]
+     if (a[2]>y+0.5)~=(b[2]>y+0.5) and x+0.5<(b[1]-a[1])*(y+0.5-a[2])/(b[2]-a[2])+a[1]then inside=not inside end
+     j=i
+    end
+    if inside and not stockAt(x,y)then dot(detail,x,y,0x000000)end
+   end end
+  end
+  horn({{14,27},{10,25},{7,22},{5,18},{5,14},{6,11},{8,9},{11,9},{12,10},{12,12},{10,14},{10,12},{10,11},{9,11},{8,13},{8,16},{10,20},{12,23},{16,25}})
+  horn({{12,25},{17,26},{22,28},{28,29},{33,28},{36,26},{36,24},{35,23},{34,24},{34,25},{32,26},{27,27},{22,26},{17,24},{14,23}})
+  -- Restrained grey highlights follow each horn's length, not a separate cap.
+  for _,points in ipairs({{{13,25},{10,22},{8,18},{7,15},{8,12},{10,10}},{{15,26},{20,28},{25,29},{30,29},{34,27},{35,25}}})do
+   for i=1,#points-1 do
+    local a,b=points[i],points[i+1]
+    local temp=Image(48,32,ColorMode.RGB);line(temp,a[1],a[2],b[1],b[2],0x323232)
+    for pixel in temp:pixels()do
+     if pc.rgbaA(pixel())>0 and pc.rgbaA(detail:getPixel(pixel.x,pixel.y))>0 then dot(detail,pixel.x,pixel.y,0x323232)end
+    end
+   end
+  end
  elseif s.name=='saradomin'then
   name='Golden limb tips shaped into mace stars'
   local star={'   H   ',' G H G ','  GHG  ','HHHLHHH','  GHG  ',' G H G ','   H   '}

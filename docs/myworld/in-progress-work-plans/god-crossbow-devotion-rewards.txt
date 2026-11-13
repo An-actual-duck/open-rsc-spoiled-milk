@@ -157,3 +157,8 @@ original grey mechanical parts verified unchanged. Firefox index updated with
 Owner refinement: Zamorak limbs and curled horns changed to black with subtle
 charcoal highlights; red stock retained. Saradomin and Guthix PNG hashes are
 unchanged from the reviewed native-restart-v2 candidates.
+
+Zamorak horn integration: replaced the entire ordinary bow with two continuous
+curved/tapered black horn silhouettes, rather than horn caps on existing limbs.
+Red stock and original trigger/latch/string pixels verified identical; Sara
+and Guthix PNG hashes unchanged. Native size remains 48x32 with clear border.

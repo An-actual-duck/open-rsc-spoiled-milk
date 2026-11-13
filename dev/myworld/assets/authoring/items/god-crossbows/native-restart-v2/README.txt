@@ -3,7 +3,7 @@ Fresh native god crossbows — owner-directed limb designs
 Start over from the unchanged standard 48x32 crossbow framework. No previous
 crossbow design, generated concept or downsampled image is an input.
 
-Zamorak: red stock and black mace-head horns translated into curled limb tips.
+Zamorak: red stock and continuous black horn limbs growing from the front mount.
 Saradomin: silver stock, golden limbs terminating in stars like the mace.
 Guthix: brown stock, light green limbs, dark green thorned brambles on stock.
 
@@ -17,3 +17,7 @@ Rebuild from a worker root with its absolute path substituted for ROOT:
 
 These are inventory/ground art candidates. Runtime installation, equipped
 animations and gameplay remain pending; all earlier versions are superseded.
+
+Zamorak refinement: the complete ordinary bow is replaced by two tapered,
+curved black horns. Original red-stock and protected mechanical pixels match
+the prior approved version; other two PNGs remain byte-identical.
