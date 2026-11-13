@@ -24225,8 +24225,7 @@ public final class mudclient implements Runnable {
 						if(loginResponse==BrowserStagedLogin.PENDING_RESPONSE) {
 							if(!stagedLoginRequested)throw new IOException("Unexpected browser preparation response");
 							this.browserStagedLogin=new BrowserStagedLogin.Session(this,this.packetHandler.getClientStream());
-							try{loginResponse=this.browserStagedLogin.run();stagedLoginCommitted=true;}
-							finally{if(!stagedLoginCommitted){this.autoLoginTimeout=0;this.cancelBrowserStagedWorld();this.closeClientStreamOnly();}this.browserStagedLogin=null;}
+							loginResponse=this.finishBrowserStagedLogin();stagedLoginCommitted=true;
 						}
 
 						System.out.println("login response:" + loginResponse);
@@ -24234,7 +24233,7 @@ public final class mudclient implements Runnable {
 							this.autoLoginTimeout = 0;
 							this.m_Ce = loginResponse & 0x3;
 							this.m_Oj = (loginResponse >> 2) & 0xf;
-							if(stagedLoginCommitted)this.commitBrowserStagedWorld();else this.resetGame((byte) -123);
+							if(!stagedLoginCommitted)this.resetGame((byte) -123);
 							String suffix = " ";
 							if (ip.toLowerCase().equals("localhost") || ip.startsWith("127.") || ip.equals("::1")) {
 								suffix += "[localhost]";
@@ -26344,11 +26343,27 @@ public final class mudclient implements Runnable {
 		frame.setWorldChunkFrame(appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame()));
 		clientPort.draw();
 	}
-	private void commitBrowserStagedWorld() {
+	int finishBrowserStagedLogin() throws IOException {
+		BrowserStagedLogin.Session prepared=this.browserStagedLogin;
+		if(prepared==null)throw new IOException("No pending browser preparation");
+		boolean entered=false;
+		try {
+			int response;
+			try {response=prepared.run();}
+			finally {this.browserStagedLogin=null;}
+			// Pending packet ownership ends before ordinary entry. Carry the
+			// validated result explicitly across that lifetime boundary.
+			this.commitBrowserStagedWorld(prepared);entered=true;return response;
+		} finally {
+			if(!entered){this.autoLoginTimeout=0;this.cancelBrowserStagedWorld();this.closeClientStreamOnly();}
+		}
+	}
+	private void commitBrowserStagedWorld(BrowserStagedLogin.Session prepared) {
+		if(!prepared.committedFor(this))throw new IllegalStateException("Browser preparation was not committed for this client");
 		// The server has now committed. Keep the checked terrain/material products;
 		// the first ordinary player packet will create/place the actual character.
-		this.browserPreparedLogin=this.browserStagedLogin.destination;
-		this.browserPreparedLoginSequence=this.browserStagedLogin.contextSequence();
+		this.browserPreparedLogin=prepared.destination;
+		this.browserPreparedLoginSequence=prepared.contextSequence();
 		this.currentViewMode=GameMode.GAME;this.localPlayer=new ORSCharacter();
 		this.localPlayerServerIndex=-1;this.localPlayer.currentX=this.cameraPositionX;this.localPlayer.currentZ=this.cameraPositionZ;
 		RendererDiagnosticSession.recordEvent("client.login",null);RenderTelemetry.recordDiagnosticBoundary("client-login");
