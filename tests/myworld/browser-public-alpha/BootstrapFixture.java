@@ -25,6 +25,11 @@ public final class BootstrapFixture {
         BrowserPublicAlpha.validateConnection(publicHost,43605);checks++;
         for(InetAddress host:new InetAddress[]{publicHost,loop,InetAddress.getByAddress(new byte[]{1,2,3,4})})for(int port:new int[]{43505,43605,43629}){if(host.equals(publicHost)&&port==43605)continue;try{BrowserPublicAlpha.validateConnection(host,port);throw new AssertionError("wrong public target accepted");}catch(java.io.IOException expected){checks++;}}
         BrowserBootstrap.validatePrivateConnection(loop,43629,null,null);checks++;
+        System.clearProperty("spoiledmilk.browserStagedLogin");
+        for(String fixture:new String[]{null,"staged-login-v1"})try{BrowserBootstrap.validatePrivateConnection(loop,43659,fixture,"43659");throw new AssertionError("ungated staged route accepted");}catch(java.io.IOException expected){checks++;}
+        System.setProperty("spoiledmilk.browserStagedLogin","true");BrowserBootstrap.validatePrivateConnection(loop,43659,"staged-login-v1","43659");checks++;
+        try{BrowserBootstrap.validatePrivateConnection(loop,43659,null,"43659");throw new AssertionError("staged route without fixture accepted");}catch(java.io.IOException expected){checks++;}
+        System.clearProperty("spoiledmilk.browserStagedLogin");
         try{BrowserBootstrap.validatePrivateConnection(publicHost,43605,null,null);throw new AssertionError("private gate widened");}catch(java.io.IOException expected){checks++;}
         java.lang.reflect.Field singleton=sun.misc.Unsafe.class.getDeclaredField("theUnsafe");singleton.setAccessible(true);
         orsc.mudclient client=(orsc.mudclient)((sun.misc.Unsafe)singleton.get(null)).allocateInstance(orsc.mudclient.class);

@@ -24,15 +24,33 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static final int[] WHOLE_RAM_FAILED_WORK=new int[]{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     private static volatile int[] wholeRamWork=new int[0];
     private static volatile BrowserWorldPreparationProgress worldPreparation;
+    private static volatile BrowserWebGLBridge installedBridge;
+    private static native void stagedLoginState(int owner,int action);
+    private static native boolean stagedLoginReady(int owner);
+    public static void installStagedLoginBackend() {
+        if(!Boolean.getBoolean("spoiledmilk.browserStagedLogin"))return;
+        BrowserStagedLogin.install(new BrowserStagedLogin.Backend(){
+            public void begin(int owner){stagedLoginState(owner,0);}
+            public void prepareData(){
+                BrowserWebGLBridge bridge=installedBridge;
+                if(bridge==null||!WHOLE_ZONE||!BrowserWholeOverworldRam.isEnabled())throw new IllegalStateException("Browser preparation backend is unavailable");
+                if(bridge.wholeZone==null)bridge.wholeZone=new BrowserWholeOverworldZone();
+                if(bridge.wholeRam==null)bridge.wholeRam=new BrowserWholeOverworldRam(bridge.wholeZone.manifestHash(),bridge.packing.backendPackingSettings());
+                bridge.wholeRam.validateOptions(bridge.packing.backendPackingSettings());
+            }
+            public boolean ready(int owner){return stagedLoginReady(owner);}
+            public void finish(int owner,boolean committed){stagedLoginState(owner,committed?1:2);}
+        });
+    }
     private static native void worldPreparationProgress(int[] value);
     static BrowserWorldPreparationProgress beginWorldPreparation() {
-        BrowserWorldPreparationProgress progress=new BrowserWorldPreparationProgress(Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+        BrowserWorldPreparationProgress progress=new BrowserWorldPreparationProgress((Boolean.getBoolean("spoiledmilk.browserPublicAlpha")||Boolean.getBoolean("spoiledmilk.browserStagedLogin"))
             ? new BrowserWorldPreparationProgress.Sink(){public void report(int[] value){worldPreparationProgress(value);}} : null);
         worldPreparation=progress;return progress;
     }
     private static void worldPreparationFailed(Throwable failure) {
         try {
-            if(!Boolean.getBoolean("spoiledmilk.browserPublicAlpha"))return;
+            if(!Boolean.getBoolean("spoiledmilk.browserPublicAlpha")&&!Boolean.getBoolean("spoiledmilk.browserStagedLogin"))return;
             BrowserWorldPreparationProgress progress=worldPreparation;
             if(progress==null){progress=beginWorldPreparation();progress.stage(BrowserWorldPreparationProgress.METADATA,0);}
             progress.fail(failure instanceof OutOfMemoryError?1:3);
@@ -157,7 +175,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             System.setProperty("spoiledmilk.remasterLightAzimuth","135");System.setProperty("spoiledmilk.remasterLightElevation","45");
             RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);RendererBrightnessSettings.setMode(RendererBrightnessSettings.Mode.HIGH);
         }
-        BrowserFrameSinkRegistry.install(new BrowserWebGLBridge());
+        BrowserWebGLBridge bridge=new BrowserWebGLBridge();BrowserFrameSinkRegistry.install(bridge);installedBridge=bridge;
     }
     private static String shader(String name) throws Exception {
         Field f=OpenGLShaderProgram.class.getDeclaredField(name);f.setAccessible(true);return (String)f.get(null);
@@ -196,7 +214,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         if(loadProfile!=null)loadProfile.values[33]=world==null?0:world.getChunkCount();
         boolean hasWorld=world!=null&&world.getChunkCount()>0;
         if(!hasWorld) {
-            boolean game=client!=null&&client.isGameView(),modal=client!=null&&client.isFullScreenModalUiActive();
+            boolean game=client!=null&&(client.isGameView()||client.isBrowserStagedLoginPreparing()),modal=client!=null&&client.isFullScreenModalUiActive();
             int[] progress=loadState.frame(game,modal,false,frame,0,0,0,0,0,w,h,textures.size());
             if(game&&!modal&&loadState.shouldHold(false,0,0,0)) {
                 overlayDeltaReset=true;if(loadProfile!=null){loadProfile.progress(progress);loadProfile.enter(BrowserLoadProfile.TERMINAL);}worldProgress(progress);holdWorld();if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=1;return;
@@ -214,8 +232,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=4;
             return;
         }
-        if(WHOLE_ZONE&&client!=null&&client.isGameView()&&!client.isFullScreenModalUiActive()&&!client.isRenderer3DWorldReady()){
-            int[] progress=loadState.frame(client.isGameView(),client.isFullScreenModalUiActive(),false,frame,world.getChunkCount(),0,0,0,0,w,h,textures.size());
+        if(WHOLE_ZONE&&client!=null&&(client.isGameView()||client.isBrowserStagedLoginPreparing())&&!client.isFullScreenModalUiActive()&&!client.isRenderer3DWorldReady()&&!client.isBrowserStagedSceneReady()){
+            int[] progress=loadState.frame(client.isGameView()||client.isBrowserStagedLoginPreparing(),client.isFullScreenModalUiActive(),false,frame,world.getChunkCount(),0,0,0,0,w,h,textures.size());
             overlayDeltaReset=true;worldProgress(progress);holdWorld();if(loadProfile!=null){loadProfile.progress(progress);loadProfile.values[BrowserLoadProfile.PATH]=2;}return;
         }
         if(world.getChunkCount()>MAX_CHUNKS)throw new IllegalStateException("Browser scene exceeds chunk capacity");
@@ -258,8 +276,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             ChunkDraws geometry=prepareChunks(frame,presentationWorld,active);
             int[] draws=geometry.draws;int count=draws.length,remainingRepacks=geometry.remainingRepacks;
             long geometryEnd=System.nanoTime();
-            boolean authority=client!=null&&client.isRenderer3DWorldReady();
-            int[] progress=loadState.frame(client!=null&&client.isGameView(),client!=null&&client.isFullScreenModalUiActive(),authority,frame,world.getChunkCount(),count/8+catalogCoveredSources,remainingRepacks,0,0,w,h,textures.size());
+            boolean authority=client!=null&&(client.isRenderer3DWorldReady()||client.isBrowserStagedSceneReady());
+            int[] progress=loadState.frame(client!=null&&(client.isGameView()||client.isBrowserStagedLoginPreparing()),client!=null&&client.isFullScreenModalUiActive(),authority,frame,world.getChunkCount(),count/8+catalogCoveredSources,remainingRepacks,0,0,w,h,textures.size());
             // Core already retained its last coherent CPU frame during area activation.
             // Preserve that same final GPU image until EVERY new source chunk is ready.
             // Uploads are synchronous, so no borrowed frame storage escapes this call.

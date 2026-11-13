@@ -950,7 +950,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	}
 
 	private Renderer3DFrame getRenderer3DFrame() {
-		if (mudclient == null || !mudclient.isRenderer3DWorldReady() || mudclient.getScene() == null) {
+		if (mudclient == null || (!mudclient.isRenderer3DWorldReady() && !mudclient.isBrowserStagedSceneReady()) || mudclient.getScene() == null) {
 			return null;
 		}
 

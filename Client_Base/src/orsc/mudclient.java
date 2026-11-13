@@ -638,6 +638,9 @@ public final class mudclient implements Runnable {
 	public int lastMouseAction = 0;
 	public int lastMouseButtonDown = 0;
 	public PacketHandler packetHandler;
+	private BrowserStagedLogin.Session browserStagedLogin;
+	private BrowserStagedLogin.Destination browserPreparedLogin;
+	private int browserPreparedLoginSequence;
 	public int selectedSkill = -1;
 	public boolean m_N = false;
 	public int mouseX = 0;
@@ -24099,6 +24102,12 @@ public final class mudclient implements Runnable {
 							this.packetHandler.getClientStream().m_d = MiscFunctions.maxReadTries;
 						}
 
+						boolean stagedLoginRequested=BrowserStagedLogin.enabled();
+						if(stagedLoginRequested&&!BrowserStagedLogin.support(this.packetHandler.getClientStream())) {
+							this.closeClientStreamOnly();
+							this.showLoginScreenStatus("This server needs an update.","Browser world preparation is not available yet.");
+							return;
+						}
 						Math.random();
 						Math.random();
 						Math.random();
@@ -24181,6 +24190,7 @@ public final class mudclient implements Runnable {
 						this.packetHandler.getClientStream().bufferBits.putLong(getUID());
 
 						tellLimitations(this.packetHandler.getClientStream().bufferBits);
+						if(stagedLoginRequested)BrowserStagedLogin.capability(this.packetHandler.getClientStream().bufferBits);
 						//this.packetHandler.getClientStream().bufferBits.putString(getMacAddress());
 						/*
 						 * RSBuffer rsaBuffer = new RSBuffer(500);
@@ -24211,13 +24221,20 @@ public final class mudclient implements Runnable {
 						this.packetHandler.getClientStream().finishPacketAndFlush();
 						// this.clientStream.seedIsaac(isaacSeed);
 						int loginResponse = this.packetHandler.getClientStream().read();
+						boolean stagedLoginCommitted=false;
+						if(loginResponse==BrowserStagedLogin.PENDING_RESPONSE) {
+							if(!stagedLoginRequested)throw new IOException("Unexpected browser preparation response");
+							this.browserStagedLogin=new BrowserStagedLogin.Session(this,this.packetHandler.getClientStream());
+							try{loginResponse=this.browserStagedLogin.run();stagedLoginCommitted=true;}
+							finally{if(!stagedLoginCommitted){this.autoLoginTimeout=0;this.cancelBrowserStagedWorld();this.closeClientStreamOnly();}this.browserStagedLogin=null;}
+						}
 
 						System.out.println("login response:" + loginResponse);
 						if ((loginResponse & 0x40) != 0) {
 							this.autoLoginTimeout = 0;
 							this.m_Ce = loginResponse & 0x3;
 							this.m_Oj = (loginResponse >> 2) & 0xf;
-							this.resetGame((byte) -123);
+							if(stagedLoginCommitted)this.commitBrowserStagedWorld();else this.resetGame((byte) -123);
 							String suffix = " ";
 							if (ip.toLowerCase().equals("localhost") || ip.startsWith("127.") || ip.equals("::1")) {
 								suffix += "[localhost]";
@@ -24612,8 +24629,11 @@ public final class mudclient implements Runnable {
 
 	}
 
-	private void resetGame(int var1) {
+	private void resetGame(int var1) { resetGame(var1,false); }
+
+	private void resetGame(int var1, boolean preparingBrowser) {
 		try {
+			this.browserPreparedLogin=null;this.browserPreparedLoginSequence=0;
 			this.packetHandler.resetLayeredSceneProtocolState();
 			if (this.scene != null) this.scene.setRendererSignedWorldLevel(0);
 			this.systemUpdate = 0;
@@ -24625,9 +24645,9 @@ public final class mudclient implements Runnable {
 			this.hasCompletedInitialRegionLoad = false;
 			this.resetPredictiveTerrainPreload();
 
-			this.currentViewMode = GameMode.GAME;
+			this.currentViewMode = preparingBrowser ? GameMode.LOGIN : GameMode.GAME;
 			this.clearInputString80((byte) -49);
-			this.localPlayer = new ORSCharacter();
+			this.localPlayer = preparingBrowser ? null : new ORSCharacter();
 			this.localPlayerServerIndex = -1;
 			this.knownPlayerCount = 0;
 			Arrays.fill(this.knownPlayers, null);
@@ -24703,8 +24723,8 @@ public final class mudclient implements Runnable {
 			}
 
 			bank.resetUncertMode();
-			RendererDiagnosticSession.recordEvent("client.login", null);
-			RenderTelemetry.recordDiagnosticBoundary("client-login");
+			if(!preparingBrowser){RendererDiagnosticSession.recordEvent("client.login", null);
+			RenderTelemetry.recordDiagnosticBoundary("client-login");}
 
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "client.UD(" + var1 + ')');
@@ -26278,6 +26298,74 @@ public final class mudclient implements Runnable {
 
 	public boolean isGameView() {
 		return this.currentViewMode == GameMode.GAME;
+	}
+
+	/** Authenticated pending preparation has no local character or gameplay view. */
+	public boolean isBrowserStagedLoginPreparing() {
+		return this.currentViewMode==GameMode.LOGIN&&this.localPlayer==null
+			&&this.browserStagedLogin!=null&&this.browserStagedLogin.active();
+	}
+	public boolean isBrowserStagedSceneReady() {
+		return isBrowserStagedLoginPreparing()&&this.hasCompletedInitialRegionLoad
+			&&this.browserStagedLogin.hasFence()
+			&&this.packetHandler.browserStagedStaticReady(this.browserStagedLogin.destination,this.browserStagedLogin.contextSequence())
+			&&this.world.getRenderer3DWorldChunkFrame().getChunkCount()>0;
+	}
+	BrowserStagedLogin.Session browserStagedLoginSession(){return this.browserStagedLogin;}
+	void beginBrowserStagedWorld(BrowserStagedLogin.Destination destination) {
+		this.browserPreparedLogin=null;
+		this.resetGame(-123,true);
+		this.worldOffsetX=destination.offsetX;
+		this.worldOffsetZ=destination.offsetY-destination.plane*destination.levelStride;
+		this.requestedPlane=destination.plane;this.m_rc=destination.levelStride;
+		this.scene.setRendererSignedWorldLevel(destination.level);
+	}
+	void loadBrowserStagedWorld(BrowserStagedLogin.Destination destination) {
+		if(!isBrowserStagedLoginPreparing())throw new IllegalStateException("No authenticated browser preparation");
+		this.loadNextRegion(destination.legacyY,destination.legacyX,false);
+		this.playerLocalX=destination.legacyX-this.midRegionBaseX;
+		this.playerLocalZ=destination.legacyY-this.midRegionBaseZ;
+		if(!World.isLocalTile(this.playerLocalX,this.playerLocalZ))throw new IllegalStateException("Browser destination is outside prepared area");
+		this.cameraPositionX=this.playerLocalX*this.tileSize+64;this.cameraPositionZ=this.playerLocalZ*this.tileSize+64;
+	}
+	void drawBrowserStagedWorld() {
+		if(!isBrowserStagedSceneReady())return;
+		this.getSurface().beginRenderer2DFrame();this.getSurface().blackScreen(true);
+		this.scene.reduceSprites((byte)67,this.spriteCount);this.spriteCount=0;
+		int zoom=getWorldScaledCameraZoom(this.cameraZoom);applyGameplayFog(zoom);
+		int ground=-this.world.getElevation(this.cameraPositionX,this.cameraPositionZ);
+		this.scene.setCamera(this.cameraPositionX,getCameraHeightCompensatedCenterY(ground-180,this.cameraZoom,zoom),
+			this.cameraPositionZ,this.getCameraPitch(),this.cameraRotation*4,0,zoom*2,ground);
+		this.scene.setRendererSignedWorldLevel(this.browserStagedLogin.destination.level);
+		this.scene.endScene(-113);
+		Renderer3DFrame frame=this.scene.getRenderer3DFrame();
+		if(frame==null)throw new IllegalStateException("Browser preparation produced no scene frame");
+		frame.setRoofVisibility(currentRenderer3DRoofVisibility(),this.lastHeightOffset);
+		frame.setWorldChunkFrame(appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame()));
+		clientPort.draw();
+	}
+	private void commitBrowserStagedWorld() {
+		// The server has now committed. Keep the checked terrain/material products;
+		// the first ordinary player packet will create/place the actual character.
+		this.browserPreparedLogin=this.browserStagedLogin.destination;
+		this.browserPreparedLoginSequence=this.browserStagedLogin.contextSequence();
+		this.currentViewMode=GameMode.GAME;this.localPlayer=new ORSCharacter();
+		this.localPlayerServerIndex=-1;this.localPlayer.currentX=this.cameraPositionX;this.localPlayer.currentZ=this.cameraPositionZ;
+		RendererDiagnosticSession.recordEvent("client.login",null);RenderTelemetry.recordDiagnosticBoundary("client-login");
+	}
+	private void cancelBrowserStagedWorld() {
+		this.browserPreparedLogin=null;
+		this.packetHandler.resetLayeredSceneProtocolState();this.currentViewMode=GameMode.LOGIN;
+		this.localPlayer=null;this.localPlayerServerIndex=-1;this.hasCompletedInitialRegionLoad=false;
+		this.world.playerAlive=false;
+	}
+	boolean consumeBrowserPreparedWorldInfo(int offsetX,int offsetY,int plane,int stride) {
+		BrowserStagedLogin.Destination prepared=this.browserPreparedLogin;
+		int preparedSequence=this.browserPreparedLoginSequence;
+		this.browserPreparedLogin=null;
+		return prepared!=null&&isGameView()&&this.hasCompletedInitialRegionLoad
+			&&offsetX==prepared.offsetX&&offsetY==prepared.offsetY&&plane==prepared.plane&&stride==prepared.levelStride
+			&&this.packetHandler.browserStagedContextMatches(prepared,preparedSequence);
 	}
 
 	public boolean isRenderer3DWorldReady() {
@@ -29741,9 +29829,9 @@ public final class mudclient implements Runnable {
 
 	private Renderer3DRoofVisibility currentRenderer3DRoofVisibility() {
 		boolean playerTileCovered = false;
-		if (this.world != null && this.localPlayer != null) {
-			int tileX = this.localPlayer.currentX / this.tileSize;
-			int tileZ = this.localPlayer.currentZ / this.tileSize;
+		if (this.world != null && (this.localPlayer != null || isBrowserStagedLoginPreparing())) {
+			int tileX = this.localPlayer==null ? this.playerLocalX : this.localPlayer.currentX / this.tileSize;
+			int tileZ = this.localPlayer==null ? this.playerLocalZ : this.localPlayer.currentZ / this.tileSize;
 			if (tileX >= 0
 				&& tileX < this.world.collisionFlags.length
 				&& tileZ >= 0

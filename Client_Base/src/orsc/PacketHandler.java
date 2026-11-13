@@ -56,6 +56,7 @@ public class PacketHandler {
 	private final RSBuffer_Bits packetsIncoming = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
 	private Network_Socket clientStream;
 	private mudclient mc;
+	private boolean browserStagedPacket;
 	private final SceneBaselineState sceneBaselineState = new SceneBaselineState();
 	private final BrowserBaselineObjectReuse browserBaselineReuse = new BrowserBaselineObjectReuse();
     public static boolean isBrowserBaselineReuseEnabled() { return BrowserBaselineObjectReuse.isEnabled(); }
@@ -493,6 +494,29 @@ public class PacketHandler {
 				packetStartedNanos == 0L
 					? 0L : System.nanoTime() - packetStartedNanos);
 		}
+	}
+
+	void handleBrowserStagedScenePacket(int opcode,int length) {
+		if(mc.browserStagedLoginSession()==null||!mc.browserStagedLoginSession().active()
+			||opcode!=157&&opcode!=143&&opcode!=154&&opcode!=240)throw new IllegalStateException("Unexpected pending preparation packet");
+		browserStagedPacket=true;
+		try{handlePacket(opcode,length);}finally{browserStagedPacket=false;}
+	}
+	boolean browserStagedContextMatches(BrowserStagedLogin.Destination d,int sequence) {
+		NativeLayeredTerrainSnapshot source=layeredSceneContextState.getNativeTerrainSnapshot();
+		return layeredSceneContextState.hasContext()&&layeredSceneContextState.getSequence()==sequence
+			&&d.worldSpace.equals(layeredSceneContextState.getWorldSpace())&&d.level==layeredSceneContextState.getLogicalLevel()
+			&&d.x==layeredSceneContextState.getLogicalX()&&d.y==layeredSceneContextState.getLogicalY()
+			&&source!=null&&d.map.equals(source.getManifestSha256());
+	}
+	boolean browserStagedStaticReady(BrowserStagedLogin.Destination d,int sequence) {
+		return browserStagedContextMatches(d,sequence)&&sceneBaselineState.isCompleteAndOriginLoaded(mc)
+			&&sceneBaselineState.getLocationContextSequence()==sequence&&layeredSceneActivationState.hasStaticBaseline()
+			&&!isLayeredTerrainPresentationStagePending();
+	}
+	private void beginBrowserAwareTerrainReceipt(int opcode) {
+		BrowserStagedLogin.Session pending=mc.browserStagedLoginSession();
+		if(pending!=null&&pending.active())pending.receipt(opcode);else clientStream.newPacket(opcode);
 	}
 
 	private void handlePacket1(int opcode, int length) {
@@ -951,8 +975,7 @@ public class PacketHandler {
 			throw new IllegalStateException(
 				"Protocol-v7 terrain receipt has no installed terrain");
 		}
-		clientStream.newPacket(
-			Opcodes.Out.LAYERED_TERRAIN_READY.getOpcode());
+		beginBrowserAwareTerrainReceipt(Opcodes.Out.LAYERED_TERRAIN_READY.getOpcode());
 		clientStream.bufferBits.putByte(1);
 		clientStream.bufferBits.putInt(contextSequence);
 		clientStream.bufferBits.putString(worldSpace);
@@ -970,6 +993,8 @@ public class PacketHandler {
 		final int logicalLevel,
 		final String source,
 		final RuntimeException missing) {
+		if(mc.browserStagedLoginSession()!=null&&mc.browserStagedLoginSession().active())
+			throw new IllegalStateException("Pending preparation requires complete checked terrain");
 		if (layeredSceneContextState.getNativeTerrainSnapshot() == null) {
 			throw new IllegalStateException("Initial native context cannot reference absent terrain", missing);
 		}
@@ -1607,8 +1632,7 @@ public class PacketHandler {
 			throw new IllegalStateException(
 				"Terrain stage receipt has no resident terrain");
 		}
-		clientStream.newPacket(
-			Opcodes.Out.LAYERED_TERRAIN_STAGE_READY.getOpcode());
+		beginBrowserAwareTerrainReceipt(Opcodes.Out.LAYERED_TERRAIN_STAGE_READY.getOpcode());
 		clientStream.bufferBits.putByte(protocolVersion);
 		clientStream.bufferBits.putInt(stageSequence);
 		clientStream.bufferBits.putInt(contextSequence);
@@ -1898,6 +1922,7 @@ public class PacketHandler {
 			else handleUnknownPacket(opcode);
 
 		} catch (RuntimeException var17) {
+			if(browserStagedPacket)throw var17;
 			String var5 = "T2 - " + opcode + " - " + length + " rx:" + mc.getLocalPlayerX() + " ry:" + mc.getLocalPlayerZ()
 				+ " num3l:" + mc.getGameObjectInstanceCount() + " - ";
 
@@ -4274,12 +4299,15 @@ public class PacketHandler {
 	}
 
 	private void loadArea() {
-		mc.beginAreaLoad();
-		mc.setLocalPlayerServerIndex(packetsIncoming.getShort());
-		mc.setWorldOffsetX(packetsIncoming.getShort());
-		mc.setWorldOffsetZ(packetsIncoming.getShort());
-		mc.setRequestedPlane(packetsIncoming.getShort());
-		mc.setM_rc(packetsIncoming.getShort());
+		int playerIndex=packetsIncoming.getShort(),offsetX=packetsIncoming.getShort(),offsetY=packetsIncoming.getShort(),plane=packetsIncoming.getShort(),stride=packetsIncoming.getShort();
+		// Only the first exact post-COMMIT world-info packet may retain the
+		// authenticated static preparation. Ordinary travel/reset still loads.
+		if(!mc.consumeBrowserPreparedWorldInfo(offsetX,offsetY,plane,stride))mc.beginAreaLoad();
+		mc.setLocalPlayerServerIndex(playerIndex);
+		mc.setWorldOffsetX(offsetX);
+		mc.setWorldOffsetZ(offsetY);
+		mc.setRequestedPlane(plane);
+		mc.setM_rc(stride);
 		mc.setWorldOffsetZ(mc.getWorldOffsetZ() - (mc.getRequestedPlane() * mc.getM_rc()));
 	}
 

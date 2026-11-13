@@ -23,6 +23,7 @@ const started = performance.now();
 import {createTransport} from './transport.js';
 import {createWorldCover} from './browser-world-cover.js';
 import {createWorldPreparationProgress} from './browser-world-preparation.js';
+import {createStagedLoginGate} from './browser-staged-login.js';
 import {createBrowserMiddleMouseInput} from './browser-middle-mouse.js';
 import {createBrowserDisplay} from './browser-display.js';
 import {browserPreparationBenchmarkControls,browserOwnedStateBenchmarkPolicy,browserModelBenchmarkControls} from './browser-benchmark-controls.js';
@@ -41,6 +42,9 @@ const wholeZone=wholeZonePolicy(options.get('mode')||'software',options);
 const cloneTemplates=cloneTemplatePolicy(options.get('mode')||'software',options);
 const baselineReuse=baselineReusePolicy(options.get('mode')||'software',options);
 const wholeRam=wholeRamPolicy(options.get('mode')||'software',options);
+const stagedLoginEnabled=options.get('stagedlogin')==='on';
+if(options.has('stagedlogin')&&!['on','off'].includes(options.get('stagedlogin'))||stagedLoginEnabled&&(!wholeRam.enabled||!wholeZone.enabled||!renderWorker.enabled))throw new Error('Staged browser login requires the complete WebGL preparation backend');
+const stagedLogin=createStagedLoginGate({enabled:stagedLoginEnabled});
 const loadProfilePolicy=browserLoadProfilePolicy(options.get('mode')||'software',options);
 const javaVersion = Number(options.get('java') || '8');
 if (![8, 11, 17].includes(javaVersion)) throw new Error('Private probe supports Java 8, 11 or 17');
@@ -53,6 +57,7 @@ window.browserProof.startup=startupProgress.stats;
 startupProgress.update('opening');
 let bulkStaging=null;
 const worldPreparation=createWorldPreparationProgress();window.browserProof.worldPreparation=worldPreparation.stats;
+window.browserProof.stagedLogin=stagedLogin.stats;
 let lastPreparationYield=-Infinity;
 function ensureStarting(){if(stopped)throw new Error('Game startup cancelled');}
 let preparationControls = {properties: [], requested: null};
@@ -60,7 +65,7 @@ let spriteKeyControls = {properties: [], requested: null};
 let modelPreparationControls = {properties: [], requested: null};
 let gpu,worldCover,awaitingGameFrame=false,displayLayout,stutterDiagnostics,wholeZoneCatalogConfig=null,wholeRamCatalogConfig=null;
 const boundedInputGate=wholeZone.residency==='bounded'?createBoundedInputGate():null;
-window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput&&!boundedInputGate?.blocked;
+window.browserWorldInputAllowed=()=>!worldCover?.blocksWorldInput&&!boundedInputGate?.blocked&&!stagedLogin.blocked;
 function updateWholeRamProof(){
   if(!wholeRam.enabled)return;
   const cpu=window.browserProof.wholeRamJava,gpuZone=gpu?.stats.wholeZone,same=!!(wholeRamCatalogConfig&&gpuZone?.manifestSha256===wholeRamCatalogConfig.gpuCatalogSha256);
@@ -70,12 +75,13 @@ function updateWholeRamProof(){
 }
 function updateWorldCover(){
   updateWholeRamProof();
+  stagedLogin.observe(window.browserProof.state?.mode,{worldReady:gpu?.stats.worldReadiness?.phase==='ready',completedFrame:gpu?.stats.renderWorker?.lastCompletedFrame||0,blocked:boundedInputGate?.blocked!==false});
   if(boundedInputGate)window.browserProof.boundedResidencyInput={blocked:boundedInputGate.blocked,requiredWorkerFrame:boundedInputGate.afterFrame,scope:'Producer scope/mutation identity must receive a matching-or-newer coverage-ready ACK before world input'};
   let state=gpu?.stats.worldReadiness;const error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null)||window.browserProof.wholeRamError||worldPreparation.stats.latest?.failureCode;
   if(boundedInputGate?.blocked&&!['loading','error','login'].includes(state?.phase))state={...state,phase:'streaming',reason:'Preparing required GPU cells',blocksWorldInput:true,blocksKeyboard:true};
   const ramWorld=awaitingGameFrame||window.browserProof.state?.mode==='GAME'||state&&state.phase!=='login';
   const ramWait=wholeRam.enabled&&ramWorld&&window.browserProof.wholeRamJava?.preparedReady!==true;
-  const waiting=ramWait||awaitingGameFrame&&(renderWorker.enabled?!(state?.phase==='ready'&&gpu?.stats.javaWorldFrames>0):state?.phase==='login');
+  const waiting=stagedLogin.blocked||ramWait||awaitingGameFrame&&(renderWorker.enabled?!(state?.phase==='ready'&&gpu?.stats.javaWorldFrames>0):state?.phase==='login');
   if(!worldCover||(!waiting&&!error&&!['loading','streaming','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;
   const reason=ramWait?'Preparing game data':'Preparing nearby area';
   worldCover.update(waiting?{...state,phase:'loading',reason}:state,gpu?.canvas.style,error,worldPreparation.stats.latest);
@@ -96,7 +102,7 @@ function publish(finalReceipt=false) {
 }
 function dispose() {
   if (stopped) return;
-  bulkStaging?.dispose();startupProgress.close();
+  bulkStaging?.dispose();startupProgress.close();stagedLogin.dispose();
   stopped = true;window.browserProof.stopped=true;if(wholeRam.enabled){window.browserProof.wholeRamJava={...window.browserProof.wholeRamJava,sourceReady:false,preparedReady:false,disposed:true};updateWholeRamProof();} delete window.browserBenchmarkOwnedState; delete window.browserBenchmarkStreamUploadValidation; delete window.browserBenchmarkPhysicalOutput;delete window.browserBenchmarkDiagnosticsReset;stutterDiagnostics?.dispose(); pointer?.dispose(); displayLayout?.dispose(); worldCover?.dispose(); transport.dispose(); gpu?.dispose();
   publish(true);
 }
@@ -141,6 +147,20 @@ window.browserProof.loadProfile=loadProfileCollector.stats;
 const regionHandoffCollector=createRegionHandoffTraceCollector({enabled:loadProfilePolicy.requested,gpu:()=>gpu,stopped:()=>stopped});
 window.browserProof.regionHandoff=regionHandoffCollector.stats;
 const natives = {
+  Java_orsc_BrowserWebGLBridge_stagedLoginState(lib,owner,action){
+    if(stopped)return;
+    if(action===0)stagedLogin.begin(owner,gpu?.stats.renderWorker?.submittedFrames||0);
+    else if(action===1||action===2)stagedLogin.finish(owner,action===1,gpu?.stats.renderWorker?.submittedFrames||0);
+    else throw new Error('Invalid staged browser login action');
+    updateWorldCover();publish();
+  },
+  Java_orsc_BrowserWebGLBridge_stagedLoginReady(lib,owner){
+    if(stopped)return false;
+    return stagedLogin.ready(owner,{completedFrame:gpu?.stats.renderWorker?.lastCompletedFrame||0,
+      worldReady:gpu?.stats.worldReadiness?.phase==='ready',coverageReady:gpu?.stats.wholeZone?.ready===true,
+      cpuReady:window.browserProof.wholeRamJava?.preparedReady===true,blocked:boundedInputGate?.blocked!==false,
+      error:!!(gpu?.stats.lastError||gpu?.stats.contextLost||window.browserProof.wholeRamError||worldPreparation.stats.latest?.failureCode)});
+  },
   async Java_orsc_browser_BrowserBootstrap_prepareRamBulkFile(lib,relative){
     if(stopped||!bulkStaging)throw new Error('Public game data staging unavailable');
     if(startupProgress.stats.phase!=='data')startupProgress.update('data',{bytes:0,writtenBytes:0,totalBytes:bulkStaging.stats.totalBytes,files:0,totalFiles:3});
@@ -170,10 +190,10 @@ const natives = {
       if(!worldPreparation.accept(input))return;
       const value=worldPreparation.stats.latest;
       updateWorldCover();publish();
-      // A bounded task yield lets real DOM updates paint during Java parsing.
-      // It is independent of readiness and works in a background tab too.
+      // Foreground-only paint yields: background timers may be clamped to a
+      // second, which must not multiply parsing time for every progress report.
       const now=performance.now();
-      if(value.stage!==previous?.stage||now-lastPreparationYield>=100){lastPreparationYield=now;await new Promise(resolve=>setTimeout(resolve,0));}
+      if(document.visibilityState==='visible'&&(value.stage!==previous?.stage||now-lastPreparationYield>=100)){lastPreparationYield=now;await new Promise(resolve=>setTimeout(resolve,0));}
     }catch{/* Passive progress must never replace Java data/validation failures. */}
   },
   Java_orsc_BrowserWebGLBridge_loadingWork:loadProfileCollector.report,
@@ -296,6 +316,7 @@ const natives = {
   },
   async Java_orsc_browser_BrowserBootstrap_wsOpen() { return transport.open(); },
   async Java_orsc_browser_BrowserBootstrap_wsAvailable(lib, id) { return transport.available(id); },
+  async Java_orsc_browser_BrowserBootstrap_wsConnected(lib, id) { return transport.connected(id); },
   async Java_orsc_browser_BrowserBootstrap_wsRead(lib, id, maximum) { return transport.read(id, maximum); },
   async Java_orsc_browser_BrowserBootstrap_wsWrite(lib, id, bytes) { transport.write(id, bytes); },
   async Java_orsc_browser_BrowserBootstrap_wsClose(lib, id) { transport.close(id); },
@@ -421,7 +442,7 @@ try {
   startupProgress.update('runtime-start');
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
-    javaProperties: canonicalRenderProperties(['user.dir=/files', ...deployment.properties, ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...loadProfilePolicy.properties, ...wholeZone.properties, ...wholeRam.properties, ...baselineReuse.properties, ...cloneTemplates.properties, ...(wholeRam.enabled?['spoiledmilk.browserWholeRamManifestSha256='+wholeRamCatalogConfig.manifestSha256]:[]), ...(wholeZone.enabled?['spoiledmilk.browserWholeZoneClientSha256='+wholeZoneCatalogConfig.clientJarSha256,'spoiledmilk.browserWholeZoneCatalogSha256='+wholeZoneCatalogConfig.manifestSha256]:[]), ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])],optimizedDefaults), natives});
+    javaProperties: canonicalRenderProperties(['user.dir=/files', ...deployment.properties, ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...loadProfilePolicy.properties, ...wholeZone.properties, ...wholeRam.properties, 'spoiledmilk.browserStagedLogin='+stagedLoginEnabled, ...baselineReuse.properties, ...cloneTemplates.properties, ...(wholeRam.enabled?['spoiledmilk.browserWholeRamManifestSha256='+wholeRamCatalogConfig.manifestSha256]:[]), ...(wholeZone.enabled?['spoiledmilk.browserWholeZoneClientSha256='+wholeZoneCatalogConfig.clientJarSha256,'spoiledmilk.browserWholeZoneCatalogSha256='+wholeZoneCatalogConfig.manifestSha256]:[]), ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])],optimizedDefaults), natives});
   ensureStarting();
   report('Browser Java ready');
   const display = document.querySelector('#display');
