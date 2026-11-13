@@ -350,7 +350,7 @@ public final class RendererBenchmarkClient {
         int roofed=mesh==null?0:((Number)field(mesh,mesh.getClass(),"roofSuppressed")).intValue();
         Renderer3DFrame frame=tryPublishedFrame(presenter);
         Files.write(capture.resolve("npc-ground-shadows.json"),("{\"enabled\":"+selected+",\"circles\":"+circles
-            +",\"roofSuppressed\":"+roofed+",\"sourceFootprints\":"+(frame==null?-1:frame.getNpcGroundShadows().size())+"}\n").getBytes(StandardCharsets.UTF_8));
+            +",\"roofSuppressed\":"+roofed+",\"sourceFootprints\":"+(frame==null?"null":Integer.toString(frame.getNpcGroundShadows().size()))+"}\n").getBytes(StandardCharsets.UTF_8));
     }
     private static void recordNativeResidentInputPolicy(mudclient client, Path capture) throws Exception {
         String requested=System.getProperty("renderer.benchmark.nativeResidentInputCache");
