@@ -222,7 +222,7 @@ public final class RendererBenchmarkServer {
             actors.add(actor); positions.add(point);
         }
         for (int index = 0; index < 32; index++) {
-            Point point = tiles.get(16 + index); Npc npc = new Npc(worldServer.getWorld(), 3, point.getX(), point.getY(), 0);
+            Point point = tiles.get(16 + index); Npc npc = new Npc(worldServer.getWorld(), phase.equals("busy-character-shadows") && index%2==0 ? 1 : 3, point.getX(), point.getY(), 0);
             npc.setAttribute("renderer_benchmark_actor", true); worldServer.getWorld().registerNpc(npc); npcs.add(npc);
         }
         for (int index = 0; index < 8; index++) {

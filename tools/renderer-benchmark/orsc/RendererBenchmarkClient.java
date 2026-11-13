@@ -339,18 +339,18 @@ public final class RendererBenchmarkClient {
     private static void applyDiagnosticFog() {
         RendererFogSettings.setMode("off".equals(System.getProperty("renderer.benchmark.fog","on")) ? RendererFogSettings.Mode.OFF : RendererFogSettings.Mode.ON);
     }
-    private static void recordNpcGroundShadowState(mudclient client,OpenGLFramePresenter presenter,Path capture)throws Exception {
-        String requested=System.getProperty("renderer.benchmark.npcGroundShadows");if(requested==null)return;
+    private static void recordCharacterGroundShadowState(mudclient client,OpenGLFramePresenter presenter,Path capture)throws Exception {
+        String requested=System.getProperty("renderer.benchmark.characterGroundShadows");if(requested==null)return;
         boolean selected=Boolean.parseBoolean(requested);
-        if(Renderer3DFrame.NpcGroundShadow.ENABLED!=selected)throw new IllegalStateException("NPC shadow comparison policy differs");
+        if(Renderer3DFrame.CharacterGroundShadow.ENABLED!=selected)throw new IllegalStateException("NPC shadow comparison policy differs");
         Object renderer=field(presenter,OpenGLFramePresenter.class,"worldChunkRenderer");
-        Object shadows=field(renderer,renderer.getClass(),"npcGroundShadows");
+        Object shadows=field(renderer,renderer.getClass(),"characterGroundShadows");
         Object mesh=shadows==null?null:field(shadows,shadows.getClass(),"mesh");
         int circles=mesh==null?0:((Number)field(mesh,mesh.getClass(),"circles")).intValue();
         int roofed=mesh==null?0:((Number)field(mesh,mesh.getClass(),"roofSuppressed")).intValue();
         Renderer3DFrame frame=tryPublishedFrame(presenter);
         Files.write(capture.resolve("npc-ground-shadows.json"),("{\"enabled\":"+selected+",\"circles\":"+circles
-            +",\"roofSuppressed\":"+roofed+",\"sourceFootprints\":"+(frame==null?"null":Integer.toString(frame.getNpcGroundShadows().size()))+"}\n").getBytes(StandardCharsets.UTF_8));
+            +",\"roofSuppressed\":"+roofed+",\"sourceFootprints\":"+(frame==null?"null":Integer.toString(frame.getCharacterGroundShadows().size()))+"}\n").getBytes(StandardCharsets.UTF_8));
     }
     private static void recordNativeResidentInputPolicy(mudclient client, Path capture) throws Exception {
         String requested=System.getProperty("renderer.benchmark.nativeResidentInputCache");
@@ -475,7 +475,7 @@ public final class RendererBenchmarkClient {
         }
         System.out.println(RendererPerformanceDiagnostics.handleCommand("::pf stop " + phase));
         recordNativeResidentInputEnd(client,capture,phase);
-        recordNpcGroundShadowState(client,presenter,capture);
+        recordCharacterGroundShadowState(client,presenter,capture);
         if (Boolean.getBoolean("renderer.benchmark.dumpRoofMask")) dumpRoofMask(client,presenter,capture);
         if (Boolean.getBoolean("renderer.benchmark.dumpTerrain")) dumpTerrain(client,presenter,capture);
         if (Boolean.getBoolean("renderer.benchmark.dumpFences")) dumpFences(client,presenter,capture);

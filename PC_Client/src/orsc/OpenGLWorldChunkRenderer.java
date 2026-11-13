@@ -185,7 +185,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private final GeometryShadowRoofMask.Cache geometryRoofMaskCache=new GeometryShadowRoofMask.Cache();
 	private boolean geometryShadowCapabilityChecked;
 	private Renderer3DFrame geometryShadowFrame;
-	private OpenGLNpcGroundShadows npcGroundShadows;
+	private OpenGLCharacterGroundShadows characterGroundShadows;
 	private final OpenGLGeometryShadows.Scene geometryShadowScene = new OpenGLGeometryShadows.Scene() {
 		public long staticSignature() { return geometryShadowStaticSignature(geometryShadowFrame); }
         public long historyContext() { return geometryShadowFrame.getShadowContextEpoch(); }
@@ -1183,15 +1183,15 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		}
 	}
 
-	void drawNpcGroundShadows(Renderer3DFrame frame) throws Exception {
-        if(frame==null || !Renderer3DFrame.NpcGroundShadow.ENABLED || frame.isUnderground()
-            || frame.getNpcGroundShadows().isEmpty() || frame.getWorldChunkFrame().getChunkCount()==0
+	void drawCharacterGroundShadows(Renderer3DFrame frame) throws Exception {
+        if(frame==null || !Renderer3DFrame.CharacterGroundShadow.ENABLED || frame.isUnderground()
+            || frame.getCharacterGroundShadows().isEmpty() || frame.getWorldChunkFrame().getChunkCount()==0
             || RendererShadowSettings.getQuality()==RendererShadowSettings.Quality.OFF
             || RendererLightingSettings.getMode()!=RendererLightingSettings.Mode.DIRECTIONAL)return;
-        if(npcGroundShadows==null)npcGroundShadows=new OpenGLNpcGroundShadows(gl);
+        if(characterGroundShadows==null)characterGroundShadows=new OpenGLCharacterGroundShadows(gl);
         Renderer3DWorldChunkFrame.ChunkMesh anchor=frame.getWorldChunkFrame().getChunks().get(0);
         loadWorldProjectionAndView(frame);
-        npcGroundShadows.draw(frame,geometryRoofMaskCache.get(frame.getWorldChunkFrame(),frame.getActivePlane()),
+        characterGroundShadows.draw(frame,geometryRoofMaskCache.get(frame.getWorldChunkFrame(),frame.getActivePlane()),
             anchor.getLogicalWorldOffsetX(),anchor.getLogicalWorldOffsetZ());
     }
 	boolean prepareGeometryShadows(Renderer3DFrame frame) throws Exception {
@@ -3590,7 +3590,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	}
 
 	private void clearResidentResources() throws Exception {
-		if (npcGroundShadows != null) { npcGroundShadows.close(); npcGroundShadows = null; }
+		if (characterGroundShadows != null) { characterGroundShadows.close(); characterGroundShadows = null; }
 		if (geometryShadows != null) { geometryShadows.close(); geometryShadows = null; }
 		terrainDefinitionTexture.clear(gl);
 		geometryShadowCapabilityChecked = false;

@@ -13,7 +13,7 @@ public final class NpcGroundShadowFixture {
         return total;
     }
     public static void main(String[] args) {
-        NpcGroundShadowMesh mesh=new NpcGroundShadowMesh();mesh.clear();
+        CharacterGroundShadowMesh mesh=new CharacterGroundShadowMesh();mesh.clear();
         mesh.append(64,-80,64,32,.25f,-.5f,.28f,GeometryShadowRoofMask.EMPTY,0,0);
         FloatBuffer data=mesh.data();double fullArea=area(data);
         require(mesh.circles==1&&mesh.vertexCount()==48,"One circle must have sixteen triangles");
@@ -45,10 +45,10 @@ public final class NpcGroundShadowFixture {
         mesh.append(Float.MAX_VALUE,0,0,32,0,0,.28f,hidden,0,0);
         require(mesh.vertexCount()==0,"Invalid coordinates admitted");
         for(int i=0;i<10000;i++)mesh.append(64,0,64,32,0,0,.28f,GeometryShadowRoofMask.EMPTY,0,0);
-        require(mesh.vertexCount()>0&&mesh.vertexCount()<=NpcGroundShadowMesh.MAX_VERTICES,"Mesh staging bound exceeded");
+        require(mesh.vertexCount()>0&&mesh.vertexCount()<=CharacterGroundShadowMesh.MAX_VERTICES,"Mesh staging bound exceeded");
         mesh.clear();require(mesh.vertexCount()==0&&mesh.circles==0,"Scene reuse retained old circles");
-        require(Renderer3DFrame.NpcGroundShadow.radiusForWidth(0)==14&&Renderer3DFrame.NpcGroundShadow.radiusForWidth(128)==32
-            &&Renderer3DFrame.NpcGroundShadow.radiusForWidth(Integer.MAX_VALUE)==64,"Size clamp changed");
+        require(Renderer3DFrame.CharacterGroundShadow.radiusForWidth(0)==14&&Renderer3DFrame.CharacterGroundShadow.radiusForWidth(128)==32
+            &&Renderer3DFrame.CharacterGroundShadow.radiusForWidth(Integer.MAX_VALUE)==64,"Size clamp changed");
         System.out.println("PASS "+checks+" circle, terrain tangent, soft alpha, roof edge/hidden roofs, rebase, invalid/bounded data and reset checks");
     }
 }

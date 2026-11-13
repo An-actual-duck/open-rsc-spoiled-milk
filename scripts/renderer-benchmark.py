@@ -195,7 +195,7 @@ def capture(args):
                       "renderer.benchmark.nativeResidentInputCache":selected})
     if args.npc_ground_shadows is not None:
         selected = str(args.npc_ground_shadows == "on").lower()
-        props.update({"spoiledmilk.npcGroundShadows":selected,"renderer.benchmark.npcGroundShadows":selected})
+        props.update({"spoiledmilk.characterGroundShadows":selected,"renderer.benchmark.characterGroundShadows":selected})
     props["renderer.benchmark.visiblePreview"] = str(visible).lower()
     props["spoiledmilk.openglHiddenDiagnostic"] = str(not visible).lower()
     if visible: props["spoiledmilk.openglWindowMode"] = args.window_mode
@@ -433,10 +433,10 @@ def main():
     for name in ("start", "stop", "capture", "preview"):
         p = sub.add_parser(name); p.add_argument("run", type=Path)
         if name in ("capture", "preview"):
-            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-walk", "sun-motion", "night", "transition", "same-position", "relog", "visual", "combat-real", "lifecycle"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--snapshot-frames",type=int,choices=[1,12],default=12); p.add_argument("--legacy-mask", action="store_true")
+            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-character-shadows", "busy-walk", "sun-motion", "night", "transition", "same-position", "relog", "visual", "combat-real", "lifecycle"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--snapshot-frames",type=int,choices=[1,12],default=12); p.add_argument("--legacy-mask", action="store_true")
             p.add_argument("--gc-log",action="store_true",help="Retain JVM GC messages in the private console log"); p.add_argument("--fog",choices=["on","off"],default="on"); p.add_argument("--tone-preview",choices=["day","cycle","sunrise-amber","dawn-gold","rose-dusk","cool-night","deep-blue"],default="day"); p.add_argument("--warmup-seconds",type=int,default=15); p.add_argument("--window-mode",choices=["windowed","fullscreen","borderless-fullscreen"],default="borderless-fullscreen"); p.add_argument("--dump-terrain",action="store_true"); p.add_argument("--dump-fences",action="store_true"); p.add_argument("--dump-roof-mask",action="store_true"); p.add_argument("--exclude-caster", choices=["TERRAIN","WALL","ROOF","GAME_OBJECT","WALL_OBJECT"],action="append",default=[]); p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
             p.add_argument("--native-resident-input-cache", choices=["on","off"], help="Explicit native static-input comparison; omitted preserves normal defaults")
-            p.add_argument("--npc-ground-shadows", choices=["on","off"], help="Compare NPC ground-shadow pass without changing other shadow quality")
+            p.add_argument("--character-ground-shadows", "--npc-ground-shadows", dest="npc_ground_shadows", choices=["on","off"], help="Compare character ground shadows without changing other shadow quality")
     p = sub.add_parser("report"); p.add_argument("capture", type=Path)
     args = parser.parse_args()
     if args.action in ("capture", "preview") and not 5 <= args.warmup_seconds <= 120: parser.error("Warmup must be5..120 seconds")

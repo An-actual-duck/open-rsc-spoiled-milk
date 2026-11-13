@@ -8776,6 +8776,7 @@ public final class mudclient implements Runnable {
 								int var6 = -this.world.getElevation(var4, var5);
 								int var7 = this.scene.drawSprite(centerX + 5000, var5, centerX + 10000, var4, var6, 145,
 									220, (byte) 109);
+                                tagCharacterGroundShadow(var7,var4,var5,145);
 								this.scene.tagCharacterSprite(
 									var7,
 									"PLAYER",
@@ -8918,13 +8919,7 @@ public final class mudclient implements Runnable {
 						int var7 = this.scene.drawSprite(20000 + centerX, var5, centerX + 30000, var4, var6,
 							npcDef.getCamera1(),
 							npcDef.getCamera2(), (byte) 109);
-                        if (Renderer3DFrame.NpcGroundShadow.ENABLED && !Renderer3DSettings.isBrowserPresentationAvailable()
-                                && Renderer3DSettings.canUseResidentObjectChunks()) {
-                            int r = Renderer3DFrame.NpcGroundShadow.radiusForWidth(npcDef.getCamera1());
-                            this.scene.tagNpcGroundShadow(var7, r,
-                                -world.getElevation(var4-r,var5), -world.getElevation(var4+r,var5),
-                                -world.getElevation(var4,var5-r), -world.getElevation(var4,var5+r));
-                        }
+                        tagCharacterGroundShadow(var7,var4,var5,npcDef.getCamera1());
 						this.scene.tagCharacterSprite(
 							var7,
 							"NPC",
@@ -10787,6 +10782,15 @@ public final class mudclient implements Runnable {
 	private boolean useWorldAnchoredCombatSprites() {
 		return Config.S_WANT_CUSTOM_LANDSCAPE;
 	}
+
+    private void tagCharacterGroundShadow(int face,int x,int z,int sourceWidth) {
+        if (!Renderer3DFrame.CharacterGroundShadow.ENABLED || Renderer3DSettings.isBrowserPresentationAvailable()
+                || !Renderer3DSettings.canUseResidentObjectChunks()
+                || RendererShadowSettings.getQuality()==RendererShadowSettings.Quality.OFF) return;
+        int r=Renderer3DFrame.CharacterGroundShadow.radiusForWidth(sourceWidth);
+        scene.tagCharacterGroundShadow(face,r,-world.getElevation(x-r,z),-world.getElevation(x+r,z),
+            -world.getElevation(x,z-r),-world.getElevation(x,z+r));
+    }
 
 	private int getCombatScreenOffset(ORSCharacterDirection direction, int overlayMovement, int percent) {
 		if (useWorldAnchoredCombatSprites()) {

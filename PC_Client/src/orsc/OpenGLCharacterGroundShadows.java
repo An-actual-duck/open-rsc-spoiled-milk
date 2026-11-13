@@ -6,29 +6,29 @@ import java.nio.IntBuffer;
 import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.Renderer2DFrame;
 
-/** One untextured, depth-tested blended draw; no actor shadow maps or sprite assets. */
-final class OpenGLNpcGroundShadows implements AutoCloseable {
+/** One untextured, depth-tested blended draw; no character shadow maps or sprite assets. */
+final class OpenGLCharacterGroundShadows implements AutoCloseable {
     private final LwjglBindings gl;
-    final NpcGroundShadowMesh mesh=new NpcGroundShadowMesh();
+    final CharacterGroundShadowMesh mesh=new CharacterGroundShadowMesh();
     private int vbo,ebo;
     private float[] visibleAlpha=new float[256];
-    OpenGLNpcGroundShadows(LwjglBindings gl) {this.gl=gl;}
+    OpenGLCharacterGroundShadows(LwjglBindings gl) {this.gl=gl;}
 
     void draw(Renderer3DFrame frame,GeometryShadowRoofMask roofs,int offsetX,int offsetZ)throws Exception {
         mesh.clear();
         int faces=0;
-        for(Renderer3DFrame.NpcGroundShadow shadow:frame.getNpcGroundShadows())
+        for(Renderer3DFrame.CharacterGroundShadow shadow:frame.getCharacterGroundShadows())
             if(shadow.faceId>=0&&shadow.faceId<65536)faces=Math.max(faces,shadow.faceId+1);
         if(visibleAlpha.length<faces)visibleAlpha=new float[faces];
         java.util.Arrays.fill(visibleAlpha,0);
         for(Renderer3DFrame.WorldSpriteSnapshot sprite:frame.getWorldSpriteSnapshots()) {
-            if(sprite.getCharacter()==null || !"NPC".equals(sprite.getCharacter().getKind()))continue;
+            if(sprite.getCharacter()==null || (!"NPC".equals(sprite.getCharacter().getKind()) && !"PLAYER".equals(sprite.getCharacter().getKind())))continue;
             int face=sprite.getAnchor().getFaceId();
             if(face<0||face>=faces)continue;
             for(int i=0;i<sprite.getLayerCount();i++)
                 visibleAlpha[face]=Math.max(visibleAlpha[face],sprite.getPresentationLayer(i).getAlpha()/(float)Renderer2DFrame.SpriteCommand.FULL_ALPHA);
         }
-        for(Renderer3DFrame.NpcGroundShadow shadow:frame.getNpcGroundShadows()) {
+        for(Renderer3DFrame.CharacterGroundShadow shadow:frame.getCharacterGroundShadows()) {
             if(shadow.faceId<0||shadow.faceId>=faces||visibleAlpha[shadow.faceId]<=0)continue;
             float distance=(float)Math.hypot(shadow.x-frame.getCameraOffsetX(),shadow.z-frame.getCameraOffsetZ());
             float fade=Math.max(0,Math.min(1,(frame.getFogDistance()-distance)/Math.max(1,frame.getFogDistance()*.2f)));
@@ -37,8 +37,8 @@ final class OpenGLNpcGroundShadows implements AutoCloseable {
         if(mesh.vertexCount()==0)return;
         if(vbo==0) {
             vbo=gl.glGenBuffers();ebo=gl.glGenBuffers();
-            IntBuffer indices=ByteBuffer.allocateDirect(NpcGroundShadowMesh.MAX_VERTICES*4).order(ByteOrder.nativeOrder()).asIntBuffer();
-            for(int i=0;i<NpcGroundShadowMesh.MAX_VERTICES;i++)indices.put(i);
+            IntBuffer indices=ByteBuffer.allocateDirect(CharacterGroundShadowMesh.MAX_VERTICES*4).order(ByteOrder.nativeOrder()).asIntBuffer();
+            for(int i=0;i<CharacterGroundShadowMesh.MAX_VERTICES;i++)indices.put(i);
             indices.flip();gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER,ebo);
             gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER,indices,gl.GL_STATIC_DRAW);
         }
@@ -51,8 +51,8 @@ final class OpenGLNpcGroundShadows implements AutoCloseable {
             gl.glEnable(gl.GL_POLYGON_OFFSET_FILL);gl.glPolygonOffset(-1,-1);
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER,vbo);gl.glBufferData(gl.GL_ARRAY_BUFFER,mesh.data(),gl.GL_STREAM_DRAW);
             gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER,ebo);
-            gl.glEnableClientState(gl.GL_VERTEX_ARRAY);gl.glVertexPointer(3,gl.GL_FLOAT,NpcGroundShadowMesh.STRIDE*4,0L);
-            gl.glEnableClientState(gl.GL_COLOR_ARRAY);gl.glColorPointer(4,gl.GL_FLOAT,NpcGroundShadowMesh.STRIDE*4,12L);
+            gl.glEnableClientState(gl.GL_VERTEX_ARRAY);gl.glVertexPointer(3,gl.GL_FLOAT,CharacterGroundShadowMesh.STRIDE*4,0L);
+            gl.glEnableClientState(gl.GL_COLOR_ARRAY);gl.glColorPointer(4,gl.GL_FLOAT,CharacterGroundShadowMesh.STRIDE*4,12L);
             gl.glDrawElements(gl.GL_TRIANGLES,mesh.vertexCount(),gl.GL_UNSIGNED_INT,0L);
         } finally {
             gl.glPopClientAttrib();gl.glPopAttrib();

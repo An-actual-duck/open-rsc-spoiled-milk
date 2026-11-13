@@ -5,7 +5,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 /** Small reusable circle fans, clipped to the same declared roof tiles as sunlight. */
-final class NpcGroundShadowMesh {
+final class CharacterGroundShadowMesh {
     static final int STRIDE = 7;
     static final int MAX_VERTICES = 131070;
     private static final int SEGMENTS = 16;

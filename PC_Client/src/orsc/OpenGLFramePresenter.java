@@ -776,7 +776,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		phaseCaptureNanos = 0L;
 		runOpenGLPass(() -> drawWorldMesh(frame, worldReplacementComposite));
 		if (worldChunkRenderer != null && frame.renderer3DFrame != null && hasVisibleOpenGLWorldPass()) {
-            runOpenGLPass(() -> worldChunkRenderer.drawNpcGroundShadows(frame.renderer3DFrame));
+            runOpenGLPass(() -> worldChunkRenderer.drawCharacterGroundShadows(frame.renderer3DFrame));
             useSourceProjection(frame.sourceWidth,frame.sourceHeight);
         }
 		long worldNanos = RenderTelemetry.elapsedSince(worldStart);
