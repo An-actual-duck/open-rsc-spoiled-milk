@@ -34,9 +34,12 @@ public final class NativeLayeredTerrainSnapshot {
 	private static final Pattern SHA256 = Pattern.compile("[0-9a-f]{64}");
 
 	private static final boolean BROWSER_TERRAIN_QUERY_INDEX = Boolean.getBoolean("spoiledmilk.browserTerrainQueryIndex");
+	private static final boolean TERRAIN_QUERY_INDEX = BROWSER_TERRAIN_QUERY_INDEX
+		|| Boolean.getBoolean("spoiledmilk.nativeTerrainQueryIndex");
 	private final boolean queryIndexEligible;
 	private final int queryMinimumX, queryMinimumY, queryDimension;
 	public static boolean isBrowserTerrainQueryIndexEnabled() { return BROWSER_TERRAIN_QUERY_INDEX; }
+	public static boolean isTerrainQueryIndexEnabled() { return TERRAIN_QUERY_INDEX; }
 	public boolean isTerrainQueryIndexEligible() { return queryIndexEligible; }
 	public int getTerrainQueryIndexDimension() { return queryDimension; }
 	private final int protocolVersion;
@@ -569,7 +572,7 @@ public final class NativeLayeredTerrainSnapshot {
 
 	private NativeLayeredTerrainChunk findAvailableChunk(
 		int worldX, int worldY) {
-		if (BROWSER_TERRAIN_QUERY_INDEX && queryIndexEligible) {
+		if (TERRAIN_QUERY_INDEX && queryIndexEligible) {
             // presentation size is 24 or 48. Floor division preserves negative
             // world coordinates; quotients and their differences fit int.
             int dx = Math.floorDiv(worldX, presentationChunkSize) - queryMinimumX;

@@ -338,6 +338,22 @@ public final class RendererBenchmarkClient {
     private static void applyDiagnosticFog() {
         RendererFogSettings.setMode("off".equals(System.getProperty("renderer.benchmark.fog","on")) ? RendererFogSettings.Mode.OFF : RendererFogSettings.Mode.ON);
     }
+    private static void recordNativeTerrainQueryPolicy(mudclient client, Path capture) throws Exception {
+        String requested=System.getProperty("renderer.benchmark.nativeTerrainQueryIndex");
+        if(requested==null)return;
+        boolean selected=Boolean.parseBoolean(requested);
+        Class<?> type=Class.forName("orsc.NativeLayeredTerrainSnapshot");
+        boolean enabled=(Boolean)type.getMethod("isTerrainQueryIndexEnabled").invoke(null);
+        boolean browser=(Boolean)type.getMethod("isBrowserTerrainQueryIndexEnabled").invoke(null);
+        Object snapshot=client.getWorld().getClass().getMethod("getWholeOverworldSourceSnapshot").invoke(client.getWorld());
+        if(enabled!=selected||browser||snapshot==null)throw new IllegalStateException("Native terrain comparison policy/source not active");
+        boolean eligible=(Boolean)type.getMethod("isTerrainQueryIndexEligible").invoke(snapshot);
+        if(!eligible)throw new IllegalStateException("Native terrain comparison needs eligible source slots");
+        Files.write(capture.resolve("native-terrain-query-policy.json"),
+            ("{\"requested\":"+selected+",\"enabled\":"+enabled+",\"browserEnabled\":"+browser
+            +",\"eligible\":"+eligible+",\"protocol\":"+type.getMethod("getProtocolVersion").invoke(snapshot)
+            +",\"slots\":"+type.getMethod("getChunkSlotCount").invoke(snapshot)+"}\n").getBytes(StandardCharsets.UTF_8));
+    }
     private static void applyDiagnosticTone() {
         String tone=System.getProperty("spoiledmilk.openglTonePreview");
         if(tone!=null) RendererToneSettings.setMode(RendererToneSettings.Mode.from(tone));
@@ -394,6 +410,7 @@ public final class RendererBenchmarkClient {
             applyPreviewWindowMode(); applyDiagnosticTone(); applyDiagnosticFog(); Thread.sleep(1000);
         }
         applyPreviewWindowMode(); applyDiagnosticTone(); applyDiagnosticFog();
+        recordNativeTerrainQueryPolicy(client,capture);
         client.setShowDialogMessage(false);
         Config.C_HIDE_LOGIN_BOX = true;
         client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));

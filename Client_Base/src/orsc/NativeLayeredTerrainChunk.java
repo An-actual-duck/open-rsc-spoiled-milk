@@ -27,7 +27,8 @@ public final class NativeLayeredTerrainChunk {
 
 	private static final Pattern SHA256 = Pattern.compile("[0-9a-f]{64}");
 
-	private static final boolean BROWSER_TERRAIN_QUERY_INDEX = Boolean.getBoolean("spoiledmilk.browserTerrainQueryIndex");
+	private static final boolean TERRAIN_QUERY_INDEX = Boolean.getBoolean("spoiledmilk.browserTerrainQueryIndex")
+		|| Boolean.getBoolean("spoiledmilk.nativeTerrainQueryIndex");
 	private final int minimumX, minimumY, maximumX, maximumY;
 	private final int size;
 	private final int chunkX;
@@ -195,7 +196,7 @@ public final class NativeLayeredTerrainChunk {
 	}
 
 	public boolean covers(int worldX, int worldY) {
-		if (BROWSER_TERRAIN_QUERY_INDEX) {
+		if (TERRAIN_QUERY_INDEX) {
 			return worldX >= minimumX && worldX <= maximumX
 				&& worldY >= minimumY && worldY <= maximumY;
 		}
