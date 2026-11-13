@@ -21,6 +21,10 @@ public final class BrowserWorldPreparationProgressFixture {
   check(reports.get(terminal-1)[7]==3,"controlled render failure only");
   BrowserWorldPreparationProgress passive=new BrowserWorldPreparationProgress(v->{throw new OutOfMemoryError("observer");});
   passive.stage(2,data.length);try(InputStream in=passive.reading(new ByteArrayInputStream(data),data.length)){check(Arrays.equals(data,read(in)),"throwing observer never changes bytes");}passive.fail(1);
+  try(InputStream in=passive.reading(new ByteArrayInputStream(data),data.length)){
+   try{in.read(new byte[3],1,100000);throw new AssertionError("invalid range was clamped valid");}catch(IndexOutOfBoundsException expected){check(true,"oversize request remains invalid");}
+   try{in.read(null,0,3);throw new AssertionError("null buffer accepted");}catch(NullPointerException expected){check(true,"null input keeps original semantics");}
+  }
   final boolean[] closed={false};IOException original=new IOException("original read");
   InputStream broken=new InputStream(){public int read()throws IOException{throw original;}public int read(byte[]b,int o,int n)throws IOException{throw original;}public void close(){closed[0]=true;}};
   try(InputStream in=p.reading(broken,12)){in.read(new byte[8]);throw new AssertionError("read failure swallowed");}catch(IOException e){check(e==original,"same original read exception");}check(closed[0],"source closure preserved");

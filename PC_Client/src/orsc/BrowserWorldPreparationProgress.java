@@ -55,6 +55,9 @@ final class BrowserWorldPreparationProgress {
             @Override public int read()throws IOException {int n=in.read();if(n>=0)observed(1);return n;}
             @Override public int read(byte[] b)throws IOException{return read(b,0,b.length);}
             @Override public int read(byte[] b,int off,int len)throws IOException {
+                // Preserve the underlying stream's invalid-range/null behavior;
+                // clamping must not turn an invalid caller request into valid I/O.
+                if(b==null||off<0||len<0||off>b.length||len>b.length-off)return in.read(b,off,len);
                 int n=in.read(b,off,Math.min(len,65536));observed(n);return n;
             }
             @Override public long skip(long amount)throws IOException {
