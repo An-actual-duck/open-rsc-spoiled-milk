@@ -114,3 +114,14 @@ original and displays their theme references. These remain enlarged design
 renders with rendering halos; native-size pixel cleanup is still required.
 Authoring files, exact prompts and provenance are preserved under
 assets/authoring/items/god-crossbows/*v2*; runtime artwork remains unchanged.
+
+Native inventory candidates, November 13
+---------------------------------------
+All three candidates are now actual 48x32 RGBA PNGs, with binary alpha, limited
+colours and no halos. Generated simplified masters were exported using the
+preserved Aseprite Lua recipe, then strings, triggers and Saradomin star were
+cleaned on the native pixel grid. Final native Aseprite masters, PNGs and
+validation receipt live in authoring/items/god-crossbows/native-v1/.
+The Firefox index shows all four native canvases at exactly 1x and 8x, including
+the unchanged ordinary crossbow reference. Runtime sprites remain unmodified
+pending review; equipped frames and gameplay implementation are still pending.
