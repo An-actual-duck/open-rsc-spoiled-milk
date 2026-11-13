@@ -40,6 +40,14 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private static final int RADIMUS_GUILD = 785;
 	private static final int[] CONTACT_NPC_IDS = {846, 847, 848, 849, 850, RADIMUS_GUILD};
 	private static final String[] CONTACTS = {"falador", "port_sarim", "brimhaven", "champions", "heroes", "legends"};
+	private static final String[] SATCHEL_COMPLETION_LINES = {
+		"That should do it! I was able to add another pocket.",
+		"Looks good to me. You should have a tad more room now.",
+		"That's the stitching sorted. You've room for one more thing now.",
+		"Much better. That should let you hold a couple extra things.",
+		"You'll be able to fit at least two more weapons in there now.",
+		"You'd better be grateful. I've got practically a whole extra side bag on there for you!"
+	};
 	private static final MonsterSlayerRank[] REQUIRED = {MonsterSlayerRank.FLEDGLING, MonsterSlayerRank.INITIATE, MonsterSlayerRank.VETERAN, MonsterSlayerRank.ELITE, MonsterSlayerRank.CHAMPION, MonsterSlayerRank.HERO};
 	private static final String[] HOBART_FOLLOW_UP_REMARKS = {
 		"Right then, back to it. Try not to make a spectacle of yourself.",
@@ -289,7 +297,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			ActionSender.sendInventory(player); // sends capacity before refreshed inventory contents
 			dialogue.npc(player, npc, "Okay, hold on while I stitch this.");
 			dialogue.pause();
-			dialogue.npc(player, npc, "Done! I'm sure you can fit at least one more thing now.");
+			dialogue.npc(player, npc, SATCHEL_COMPLETION_LINES[index]);
 		}
 		else if ("locked-or-points".equals(result.getReason())) {
 			MonsterSlayerState.Snapshot latest = MonsterSlayerState.read(player.getCache(), data);

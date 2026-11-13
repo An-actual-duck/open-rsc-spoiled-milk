@@ -1944,7 +1944,7 @@ public final class MonsterSlayerContactsRouteTest {
 			"P:Totally worth it.",
 			"N:Okay, hold on while I stitch this.",
 			"D:1",
-			"N:Done! I'm sure you can fit at least one more thing now."), purchaseDialogue.events,
+			"N:That should do it! I was able to add another pocket."), purchaseDialogue.events,
 			"successful Fledgling satchel purchase preserves exact speaker and pause order");
 
 		RecordingDialogue duplicateDialogue = new RecordingDialogue(1);
