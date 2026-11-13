@@ -23,6 +23,22 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private BrowserWholeOverworldRam wholeRam;
     private static final int[] WHOLE_RAM_FAILED_WORK=new int[]{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     private static volatile int[] wholeRamWork=new int[0];
+    private static volatile BrowserWorldPreparationProgress worldPreparation;
+    private static native void worldPreparationProgress(int[] value);
+    static BrowserWorldPreparationProgress beginWorldPreparation() {
+        BrowserWorldPreparationProgress progress=new BrowserWorldPreparationProgress(Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+            ? new BrowserWorldPreparationProgress.Sink(){public void report(int[] value){worldPreparationProgress(value);}} : null);
+        worldPreparation=progress;return progress;
+    }
+    private static void worldPreparationFailed(Throwable failure) {
+        try {
+            if(!Boolean.getBoolean("spoiledmilk.browserPublicAlpha"))return;
+            BrowserWorldPreparationProgress progress=worldPreparation;
+            if(progress==null){progress=beginWorldPreparation();progress.stage(BrowserWorldPreparationProgress.METADATA,0);}
+            progress.fail(failure instanceof OutOfMemoryError?1:3);
+        }catch(Throwable ignored){/* Preserve the original presentation failure, including OOME. */}
+    }
+
     static void clearWholeRamReady(){wholeRamWork=WHOLE_RAM_FAILED_WORK;WholeOverworldRamRegistry.clear();}
     public static int[] getWholeRamWork(){return wholeRamWork.clone();}
     static void publishWholeRamWork(int[] work){if(work.length!=18||work[0]!=1)throw new IllegalStateException("Whole-RAM work schema");wholeRamWork=work.clone();}
@@ -150,11 +166,11 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         return !"gpu".equals(System.getProperty("spoiledmilk.browserDepthSource","cpu"));
     }
     @Override public void present(BufferedImage image,Renderer2DFrame commands,Renderer3DFrame frame) {
-        if(!LOAD_PROFILE){if(!WHOLE_ZONE){presentFrame(image,commands,frame);return;}try{presentFrame(image,commands,frame);}catch(RuntimeException|Error failure){invalidateWholeZone();throw failure;}return;}
+        if(!LOAD_PROFILE){if(!WHOLE_ZONE){presentFrame(image,commands,frame);return;}try{presentFrame(image,commands,frame);}catch(RuntimeException|Error failure){worldPreparationFailed(failure);invalidateWholeZone();throw failure;}return;}
         BrowserLoadProfile sample=new BrowserLoadProfile(loadOwner,++loadAttempt);loadProfile=sample;
         Throwable failure=null;
         try {presentFrame(image,commands,frame);}
-        catch(RuntimeException|Error error){failure=error;if(WHOLE_ZONE)invalidateWholeZone();throw error;}
+        catch(RuntimeException|Error error){failure=error;worldPreparationFailed(error);if(WHOLE_ZONE)invalidateWholeZone();throw error;}
         finally {loadProfile=null;double[] values=sample.finish(chunks.size(),residentChunkBytes);BrowserRegionHandoffTrace.bridge(loadAttempt,(int)values[3],(long)values[6],0L,(long)(values[22]*1000000d));if(sample.report(lastLoadEpoch,lastLoadPath)){lastLoadEpoch=(long)values[6];lastLoadPath=(int)values[3];try{loadingWork(values);}catch(RuntimeException|Error diagnosticError){if(failure==null)throw diagnosticError;failure.addSuppressed(diagnosticError);}}}
     }
     private void presentFrame(BufferedImage image,Renderer2DFrame commands,Renderer3DFrame frame) {

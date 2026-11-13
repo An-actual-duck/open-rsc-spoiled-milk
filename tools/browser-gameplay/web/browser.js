@@ -22,6 +22,7 @@ import {browserUploadValidationBenchmarkPolicy} from './browser-upload-validatio
 const started = performance.now();
 import {createTransport} from './transport.js';
 import {createWorldCover} from './browser-world-cover.js';
+import {createWorldPreparationProgress} from './browser-world-preparation.js';
 import {createBrowserMiddleMouseInput} from './browser-middle-mouse.js';
 import {createBrowserDisplay} from './browser-display.js';
 import {browserPreparationBenchmarkControls,browserOwnedStateBenchmarkPolicy,browserModelBenchmarkControls} from './browser-benchmark-controls.js';
@@ -51,6 +52,8 @@ const startupProgress=createStartupProgress({now:()=>performance.now(),emit:prog
 window.browserProof.startup=startupProgress.stats;
 startupProgress.update('opening');
 let bulkStaging=null;
+const worldPreparation=createWorldPreparationProgress();window.browserProof.worldPreparation=worldPreparation.stats;
+let lastPreparationYield=-Infinity;
 function ensureStarting(){if(stopped)throw new Error('Game startup cancelled');}
 let preparationControls = {properties: [], requested: null};
 let spriteKeyControls = {properties: [], requested: null};
@@ -68,14 +71,14 @@ function updateWholeRamProof(){
 function updateWorldCover(){
   updateWholeRamProof();
   if(boundedInputGate)window.browserProof.boundedResidencyInput={blocked:boundedInputGate.blocked,requiredWorkerFrame:boundedInputGate.afterFrame,scope:'Producer scope/mutation identity must receive a matching-or-newer coverage-ready ACK before world input'};
-  let state=gpu?.stats.worldReadiness;const error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null)||window.browserProof.wholeRamError;
+  let state=gpu?.stats.worldReadiness;const error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null)||window.browserProof.wholeRamError||worldPreparation.stats.latest?.failureCode;
   if(boundedInputGate?.blocked&&!['loading','error','login'].includes(state?.phase))state={...state,phase:'streaming',reason:'Preparing required GPU cells',blocksWorldInput:true,blocksKeyboard:true};
   const ramWorld=awaitingGameFrame||window.browserProof.state?.mode==='GAME'||state&&state.phase!=='login';
   const ramWait=wholeRam.enabled&&ramWorld&&window.browserProof.wholeRamJava?.preparedReady!==true;
   const waiting=ramWait||awaitingGameFrame&&(renderWorker.enabled?!(state?.phase==='ready'&&gpu?.stats.javaWorldFrames>0):state?.phase==='login');
   if(!worldCover||(!waiting&&!error&&!['loading','streaming','error'].includes(state?.phase)&&!worldCover.blocksWorldInput))return;
   const reason=ramWait?'Preparing game data':'Preparing nearby area';
-  worldCover.update(waiting?{phase:'loading',reason}:state,gpu?.canvas.style,error);
+  worldCover.update(waiting?{...state,phase:'loading',reason}:state,gpu?.canvas.style,error,worldPreparation.stats.latest);
 }
 
 function setStatus(message) {
@@ -159,6 +162,20 @@ const natives = {
   Java_orsc_browser_BrowserBootstrap_syncDisplaySettings(lib,action){
     const state=parent.browserSessionDisplayRequest?.(window,action);
     return new Int32Array(state?[1,state.baseMode==='fit'?1:0,state.fullscreen?1:0]:[0,1,0]);
+  },
+  async Java_orsc_BrowserWebGLBridge_worldPreparationProgress(lib,input){
+    if(stopped)return;
+    try{
+      const previous=worldPreparation.stats.latest;
+      if(!worldPreparation.accept(input))return;
+      const value=worldPreparation.stats.latest;
+      if(value.stage===1&&value.owner!==previous?.owner)awaitingGameFrame=true;
+      updateWorldCover();publish();
+      // A bounded task yield lets real DOM updates paint during Java parsing.
+      // It is independent of readiness and works in a background tab too.
+      const now=performance.now();
+      if(value.stage!==previous?.stage||now-lastPreparationYield>=100){lastPreparationYield=now;await new Promise(resolve=>setTimeout(resolve,0));}
+    }catch{/* Passive progress must never replace Java data/validation failures. */}
   },
   Java_orsc_BrowserWebGLBridge_loadingWork:loadProfileCollector.report,
   Java_orsc_browser_BrowserBootstrap_reportRegionHandoffTrace:regionHandoffCollector.report,
