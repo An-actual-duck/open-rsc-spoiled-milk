@@ -2985,8 +2985,11 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		boolean atlasTextureCoordinates,
 		List<ShadowProofCaster> shadowProofCasters) {
 		vertexUploadBuffer.clear();
+        // Capture this material decision once: settings may change on another thread
+        // while smooth-light preparation runs. Eligibility and writing must agree.
+        boolean unbakedRemasterBase = shouldUseUnbakedRemasterMaterialBase();
         packedCompact = NativeResidentGeometry.enabled() && atlasTextureCoordinates
-            && useResidentChunkShader(true) && shouldUseUnbakedRemasterMaterialBase() && !shadowProofEnabled;
+            && useResidentChunkShader(true) && unbakedRemasterBase && !shadowProofEnabled;
         if (packedCompact) {
             int bytes=Math.multiplyExact(vertexCount,NativeResidentGeometry.STRIDE);
             if (compactUploadBuffer==null || compactUploadBuffer.capacity()<bytes)
@@ -2995,7 +2998,6 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
         }
 		int[] smoothDiffuseLights = buildChunkSmoothDiffuseLights(chunk, vertexCount);
 		float[] bakedTerrainShadowMask = buildBakedTerrainShadowMask(chunk, shadowProofCasters);
-		boolean unbakedRemasterBase = shouldUseUnbakedRemasterMaterialBase();
         boolean typed = packedCompact && NativeResidentGeometry.typedWriterEnabled();
         for (int vertex=0;vertex<vertexCount;vertex++) {
             boolean admitted = writeChunkVertex(nativePackedVertex,0,chunk,frame,vertex,atlasTextureCoordinates,false,
@@ -3017,6 +3019,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
         Renderer3DFrame frame, int vertex, boolean atlasTextureCoordinates,
         boolean standaloneTextureCoordinates, int[] smoothDiffuseLights,
         float[] bakedTerrainShadowMask, boolean unbakedRemasterBase, ByteBuffer typed) {
+        // Defensive contract for future callers: never commit stale material bytes.
+        if (typed != null && !unbakedRemasterBase) return false;
         int coord = vertex * POSITION_COMPONENT_COUNT;
         int triangle = vertex / 3;
         OpenGLTextureRegion textureRegion =

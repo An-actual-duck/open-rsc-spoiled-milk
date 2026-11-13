@@ -1,0 +1,35 @@
+package orsc;
+import java.nio.*;import java.util.*;import java.lang.reflect.*;import java.security.*;
+import orsc.graphics.three.*;import orsc.graphics.two.MudClientGraphics;
+/** Actual production writer, upload, same resident cache, draw and near/far depth maps. */
+public final class NativeTypedCacheRoundTripFixture {
+    static void require(boolean b,String s){if(!b)throw new AssertionError(s);}
+    static Object field(Object o,String n)throws Exception{Field f=o.getClass().getDeclaredField(n);f.setAccessible(true);return f.get(o);}
+    static byte[] pixels(LwjglBindings gl,OpenGLWorldChunkRenderer renderer,Renderer3DFrame frame)throws Exception{
+        gl.glViewport(0,0,128,128);gl.glClearColor(.11f,.13f,.17f,1);gl.glClear(gl.GL_COLOR_BUFFER_BIT|gl.GL_DEPTH_BUFFER_BIT);require(renderer.drawDiagnostic(frame,true,true).drawnTriangles==6,"triangle inventory");ByteBuffer b=ByteBuffer.allocateDirect(128*128*4);gl.glReadPixels(0,0,128,128,gl.GL_RGBA,gl.GL_UNSIGNED_BYTE,b);byte[] bytes=new byte[b.remaining()];b.get(bytes);return bytes;
+    }
+    static byte[] depth(LwjglBindings gl,OpenGLGeometryShadows pass,String name)throws Exception{
+        Object map=field(pass,name);int texture=(Integer)field(map,"texture"),size=(Integer)field(map,"size");require(texture!=0&&size>0,"depth allocated");FloatBuffer read=ByteBuffer.allocateDirect(size*size*4).order(ByteOrder.nativeOrder()).asFloatBuffer();gl.glActiveTexture(gl.GL_TEXTURE0);gl.glBindTexture(gl.GL_TEXTURE_2D,texture);Class.forName("org.lwjgl.opengl.GL11").getMethod("glGetTexImage",int.class,int.class,int.class,int.class,FloatBuffer.class).invoke(null,gl.GL_TEXTURE_2D,0,0x1902,gl.GL_FLOAT,read);MessageDigest hash=MessageDigest.getInstance("SHA-256");int filled=0;for(int i=0;i<read.capacity();i++){float v=read.get(i);if(v<1)filled++;int b=Float.floatToRawIntBits(v);hash.update((byte)(b>>>24));hash.update((byte)(b>>>16));hash.update((byte)(b>>>8));hash.update((byte)b);}require(filled>0,"empty "+name+" map");return hash.digest();
+    }
+    public static void main(String[] args)throws Exception{
+        System.setProperty("spoiledmilk.remasterLightAzimuth","45");System.setProperty("spoiledmilk.remasterLightElevation","45");System.setProperty("spoiledmilk.renderer3DGeometryCapture","true");RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);RendererLightingSettings.setMode(RendererLightingSettings.Mode.DIRECTIONAL);RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);RendererFogSettings.setMode(RendererFogSettings.Mode.OFF);RendererShadowSettings.setQuality(RendererShadowSettings.Quality.HIGH);
+        LwjglBindings gl=LwjglBindings.load();require(gl.glfwInit(),"glfw");long window=0;OpenGLShaderProgram shader=null;OpenGLWorldTextureCache cache=null;OpenGLWorldChunkRenderer renderer=null;
+        try{
+            gl.glfwDefaultWindowHints();gl.glfwWindowHint(gl.GLFW_VISIBLE,gl.GLFW_FALSE);gl.glfwWindowHint(gl.GLFW_FOCUSED,gl.GLFW_FALSE);window=gl.glfwCreateWindow(128,128,"Hidden production typed writer proof",0,0);require(window!=0,"window");gl.glfwMakeContextCurrent(window);gl.createCapabilities();System.out.println("GL_RENDERER="+gl.glGetString(0x1f01));shader=OpenGLShaderProgram.createResidentChunkParity(gl);cache=new OpenGLWorldTextureCache(gl);renderer=new OpenGLWorldChunkRenderer(gl,cache,shader,true,true,false,false,true,true,false);
+            Scene scene=new Scene(new MudClientGraphics(128,128,2),4,16,4);scene.setMidpoints(64,true,128,64,64,7,64);scene.setFrustum(0,11,7,2);byte[] p=new byte[4096];Arrays.fill(p,(byte)1);for(int y=24;y<40;y++)for(int x=24;x<40;x++)p[y*64+x]=0;scene.loadTexture(0,new int[]{0xff00ff,0x337755},0,p);scene.setCamera(0,-4,0,768,0,0,600);scene.endScene(0);Renderer3DFrame frame=scene.getRenderer3DFrame();int cases=0;Set<Integer> distinct=new HashSet<Integer>();
+            for(int seed=0;seed<256;seed++){
+                Renderer3DWorldChunkFrame.ChunkMesh a=NativeCompactCacheGpuFixture.chunk(0,seed,0,seed*3+1),b=NativeCompactCacheGpuFixture.chunk(1,256,0,seed*3+2),c=NativeCompactCacheGpuFixture.chunk(2,seed,12345678,seed*3+3);
+                for(Renderer3DWorldChunkFrame.ChunkMesh mesh:Arrays.asList(a,b,c)){int[] strengths=(int[])field(mesh,"vertexTerrainBlendStrengths"),colors=(int[])field(mesh,"vertexTerrainBlendColors");for(int i=0;i<strengths.length;i++){strengths[i]=(seed+i)&255;colors[i]=seed<<16|(255-seed)<<8|((seed+i*17)&255);}Renderer3DMaterialFamily[] families=(Renderer3DMaterialFamily[])field(mesh,"triangleMaterialFamilies");Arrays.fill(families,Renderer3DMaterialFamily.values()[seed%Renderer3DMaterialFamily.values().length]);}
+                frame.setWorldChunkFrame(Renderer3DWorldChunkFrame.fromChunks(Arrays.asList(a,b,c)));cache.uploadReferencedTextures(frame,frame.getWorldChunkFrame());byte[] reference=null,near=null,far=null;
+                // OFF -> float-roundtrip -> OFF -> direct typed -> OFF, same renderer/cache.
+                for(int mode:new int[]{0,1,0,2,0}){
+                    System.setProperty("spoiledmilk.nativeCompactGeometry",Boolean.toString(mode!=0));System.setProperty("spoiledmilk.nativeCompactTypedWriter",Boolean.toString(mode==2));OpenGLWorldChunkUploadStats stats=renderer.upload(frame,frame.getWorldChunkFrame(),true,false);require(stats.uploadedChunks==3,"all buffers replaced");require(renderer.upload(frame,frame.getWorldChunkFrame(),true,false).reusedChunks==3,"steady reuse");int compact=0;for(WorldChunkBuffer v:((Map<?,WorldChunkBuffer>)field(renderer,"residentChunks")).values())if(v.compact)compact++;require(compact==(mode==0?0:2),"mixed representation inventory");
+                    // Depth proof on eight spread input codes; main pixels on every code.
+                    if(seed%32==0){require(renderer.prepareGeometryShadows(frame),"actual shadow prepare");OpenGLGeometryShadows shadow=renderer.geometryShadowDiagnostics();byte[] n=depth(gl,shadow,"near"),f=depth(gl,shadow,"far");if(near==null){near=n;far=f;}else require(Arrays.equals(near,n)&&Arrays.equals(far,f),"same-cache near/far depth mismatch");}
+                    byte[] image=pixels(gl,renderer,frame);if(reference==null)reference=image;else require(Arrays.equals(reference,image),"same-cache main mismatch seed="+seed+" mode="+mode);distinct.add(Arrays.hashCode(image));cases++;
+                }
+            }
+            require(distinct.size()>8,"vacuous color oracle");frame.release();require((Integer)Class.forName("org.lwjgl.opengl.GL11").getMethod("glGetError").invoke(null)==0,"GL error");System.out.println("PASS same-cache actual OFF/roundtrip/OFF/typed/OFF pixels="+cases+", distinct="+distinct.size()+", near/far depth pairs=40, mixed compact/fallback/flat");
+        }finally{if(renderer!=null)renderer.close();if(cache!=null)cache.close();if(shader!=null)shader.close();if(window!=0)gl.glfwDestroyWindow(window);gl.glfwTerminate();}
+    }
+}
