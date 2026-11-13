@@ -62,7 +62,7 @@ public final class BrowserResidentInputsFixture {
  @SuppressWarnings("unchecked") public static void main(String[] args)throws Exception{
   nativeBackend=args.length>0 && args[0].equals("native");
   definitions();mudclient c=client();Renderer3DWorldChunkFrame b=base(0,0);backend(true);
-  boolean enabled=nativeBackend ? Boolean.getBoolean("spoiledmilk.nativeResidentInputCache") : !"false".equalsIgnoreCase(System.getProperty("spoiledmilk.browserResidentInputCache","true"));
+  boolean enabled=nativeBackend ? !"false".equalsIgnoreCase(System.getProperty("spoiledmilk.nativeResidentInputCache","true")) : !"false".equalsIgnoreCase(System.getProperty("spoiledmilk.browserResidentInputCache","true"));
   List<Object> first=compare(c,b,true),second=compare(c,b,true);check((firstStatic(first)==firstStatic(second))==enabled,"Static reuse does not follow backend policy");
   Object fixed=firstStatic(second);for(int n=0;n<30;n++){c.getGameObjectInstanceModel(2).addRotation(0,5,0);List<Object> next=compare(c,b,true);if(enabled)check(firstStatic(next)==fixed,"Animation invalidated stable static groups");}
   c.setGameObjectInstanceDir(0,2);compare(c,b,true);c.setWallObjectInstanceDir(0,1);compare(c,b,true);

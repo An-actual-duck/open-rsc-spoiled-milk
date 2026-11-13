@@ -965,12 +965,13 @@ public final class mudclient implements Runnable {
 		staticPresentationWallRecords =
 			Collections.emptyList();
 	private long staticPresentationRevision = 0L;
-	// The browser validates exact primitive inputs rather than rebuilding static
-	// canonical groups every frame. Animation inputs remain frame-local.
+	// Validate exact primitive inputs instead of rebuilding static canonical
+	// groups every frame. Animation inputs remain frame-local; each backend has
+	// its own opt-out, and native software rendering retains the literal builder.
 	private static final boolean BROWSER_RESIDENT_INPUT_CACHE = !"false".equalsIgnoreCase(
 		System.getProperty("spoiledmilk.browserResidentInputCache", "true"));
-	private static final boolean NATIVE_RESIDENT_INPUT_CACHE =
-		Boolean.getBoolean("spoiledmilk.nativeResidentInputCache");
+	private static final boolean NATIVE_RESIDENT_INPUT_CACHE = !"false".equalsIgnoreCase(
+		System.getProperty("spoiledmilk.nativeResidentInputCache", "true"));
 	private static final int MAX_RESIDENT_INPUT_DESCRIPTOR_INTS = 1024 * 1024;
 	private ResidentStaticInputCache residentStaticInputCache;
 	private int[] residentStaticInputProbe;

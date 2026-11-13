@@ -34,19 +34,20 @@ def main():
         "-d", str(classes), str(fixture)])
     results = []
     # Browser OFF must stay OFF even when the separate native opt-in is ON.
-    for backend, selected, other in [("native", True, False), ("native", False, True),
+    for backend, selected, other in [("native", None, False), ("native", True, False), ("native", False, True),
                                       ("browser", True, False), ("browser", False, True)]:
         native = selected if backend == "native" else other
         browser = selected if backend == "browser" else other
         label = backend + "-" + str(selected)
         command = ["java", "-Xmx512m", "-Djava.awt.headless=true",
-            "-Dspoiledmilk.nativeResidentInputCache=" + str(native).lower(),
             "-Dspoiledmilk.browserResidentInputCache=" + str(browser).lower(),
             "-Dspoiledmilk.openglWorldMesh=true",
             "-Dspoiledmilk.openglWorldChunksTexturedVisible=true",
             "-Dspoiledmilk.openglWorldChunksReplacementComposite=true",
             "-Dspoiledmilk.openglWorldChunksResidentObjects=true",
             "-cp", str(classes) + ":" + str(jar), "orsc.BrowserResidentInputsFixture"]
+        if native is not None:
+            command.insert(3, "-Dspoiledmilk.nativeResidentInputCache=" + str(native).lower())
         if backend == "native": command.append("native")
         output = run(label, command)
         assert output.startswith("PASS "), output
