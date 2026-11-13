@@ -103,3 +103,14 @@ full inventory, devotion spend, god mismatch and untradeability. Review native
 inventory and equipped sprites standing/attacking in every supported direction,
 plus browser custom-asset parity. No public activation without normal release
 and shutdown authorization.
+
+November 13 shape revision
+--------------------------
+Owner requested closer adherence to original stock, trigger and direction,
+with mace and holy-necklace motifs. Revision 2 supplies separate Saradomin,
+Zamorak and Guthix concept renders, using both actual mace and pendant images
+as references. The preview now compares all three against the unchanged
+original and displays their theme references. These remain enlarged design
+renders with rendering halos; native-size pixel cleanup is still required.
+Authoring files, exact prompts and provenance are preserved under
+assets/authoring/items/god-crossbows/*v2*; runtime artwork remains unchanged.

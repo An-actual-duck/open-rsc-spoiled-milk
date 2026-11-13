@@ -1,0 +1,36 @@
+{
+  "generator": "built-in image_gen",
+  "status": "revised concepts for owner review; enlarged renders, not final native runtime sprites",
+  "date": "2026-11-13",
+  "ownerDirection": "Follow original crossbow anatomy, stock, trigger and direction; incorporate existing mace and holy-symbol motifs.",
+  "promptFile": "prompts-v2.json",
+  "assets": {
+    "saradomin": {
+      "file": "saradomin-crossbow-concept-v2.png",
+      "sha256": "c41905b44087453102fba6b679b5793b0111f33e9bcf76805d3205a68a30d47b",
+      "references": [
+        "dev/myworld/assets/references/items/weapons/crossbows/id-02199.png",
+        "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/saradomin-mace-icon.png",
+        "dev/myworld/assets/references/items/jewelry/necklaces-and-amulets/id-02193.png"
+      ]
+    },
+    "zamorak": {
+      "file": "zamorak-crossbow-concept-v2.png",
+      "sha256": "1bba1065e9e838eeb6b8bc0ec122a6744a6c12a118a57738eb64ec144391b89e",
+      "references": [
+        "dev/myworld/assets/references/items/weapons/crossbows/id-02199.png",
+        "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/zamorak-mace-icon.png",
+        "dev/myworld/assets/references/items/jewelry/necklaces-and-amulets/id-02500.png"
+      ]
+    },
+    "guthix": {
+      "file": "guthix-crossbow-concept-v2.png",
+      "sha256": "fd6269dd90556057e80226ad52d06c566fb5deeffccc0b5aaddfcfbe35d837f8",
+      "references": [
+        "dev/myworld/assets/references/items/weapons/crossbows/id-02199.png",
+        "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/guthix-mace-icon.png",
+        "dev/myworld/assets/runtime/sprites/items/inventory-ground/symbol-of-guthix.png"
+      ]
+    }
+  }
+}
