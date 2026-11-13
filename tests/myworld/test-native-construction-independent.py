@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Exact full-JAR baseline/native 2x2/browser-isolation construction proof."""
-import argparse, hashlib, json, subprocess
+import argparse, hashlib, json, subprocess, zipfile, re
 from pathlib import Path
 from datetime import datetime, timezone
 ROOT = Path(__file__).resolve().parents[2]
@@ -12,6 +12,23 @@ def main():
     p.add_argument('--candidate-commit',required=True);a=p.parse_args()
     base=Path(subprocess.check_output(['python3',str(ROOT/'scripts/workspace-layout.py'),'path','tests','native-construction-independent','--mkdir'],text=True).strip())
     run=base/datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ');run.mkdir()
+    # Bind artifact identity to full build receipts and exact Git source, never a caller label alone.
+    candidate_commit=subprocess.check_output(['git','rev-parse',a.candidate_commit+'^{commit}'],cwd=ROOT,text=True).strip()
+    for jar,expected in [(a.baseline_jar,'451bc765db487daf9013936e3547282f99c6a6a2'),(a.candidate_jar,candidate_commit)]:
+        receipt=json.loads((jar.parent/'receipt.json').read_text())
+        assert receipt.get('sourceCommit',receipt.get('commit'))==expected,'Receipt commit mismatch'
+        assert receipt['jarSha256']==sha(jar),'JAR receipt mismatch'
+        with zipfile.ZipFile(jar) as z:
+            actual={n:hashlib.sha256(z.read(n)).hexdigest() for n in z.namelist() if not n.endswith('/')}
+        assert actual==receipt['jarEntries'],'Packaged entry receipt mismatch'
+        source_hashes=receipt.get('sources',receipt.get('sourceAndResources'))
+        for path,digest in source_hashes.items():
+            blob=subprocess.check_output(['git','show',expected+':'+path],cwd=ROOT)
+            assert hashlib.sha256(blob).hexdigest()==digest,'Git source receipt mismatch: '+path
+    bytecode=subprocess.check_output(['javap','-p','-c','-classpath',str(a.candidate_jar),'orsc.graphics.three.RSModel'],text=True)
+    merge=bytecode.split('private void addModels(')[1].split('public final void addRotation')[0]
+    assert 'BrowserRegionBuild.useConstructionIndex:()Z' in merge,'Actual compiled merge bypasses native selector'
+    assert 'RSModel$ConstructionVertexIndex."<init>"' in merge and 'insertConstructionVertex:' in merge,'Actual compiled indexed insertion missing'
     results={}; jars={'baseline':a.baseline_jar.resolve(),'candidate':a.candidate_jar.resolve()}
     for version,jar in jars.items():
         folder=run/version;folder.mkdir();classes=folder/'classes';classes.mkdir()
@@ -20,7 +37,7 @@ def main():
         for name in names:
             target=folder/(name+'.java');target.write_bytes((ROOT/'tests/myworld'/(name+'.java')).read_bytes());sources.append(str(target))
         subprocess.run(['javac','-source','8','-target','8','-cp',str(jar),'-d',str(classes),*sources],check=True)
-        modes=[('native00',False,False,False,False,False)]
+        modes=[('default',False,False,False,False,False),('native00',False,False,False,False,False)]
         if version=='candidate':
             modes += [(f'native{i}{j}',False,False,False,bool(i),bool(j)) for i,j in [(1,0),(0,1),(1,1)]]
             modes += [(f'browser{r}-native{i}{j}',True,False,bool(r),bool(i),bool(j)) for r in [0,1] for i,j in [(0,0),(1,1)]]
@@ -28,6 +45,8 @@ def main():
         for label,browser,public,region,index,primitive in modes:
             key=version+'/'+label;results[key]={}
             props={'spoiledmilk.browserBenchmark':browser,'spoiledmilk.browserPublicAlpha':public,'spoiledmilk.browserRegionBuild':region,'spoiledmilk.nativeConstructionVertexIndex':index,'spoiledmilk.nativePrimitiveWorldBuild':primitive,'fixture.testConstructionHelpers':version=='candidate','fixture.testLimb':region}
+            if label=='default':
+                props={k:v for k,v in props.items() if not k.startswith('spoiledmilk.')}
             for name in names:
                 output=folder/(label+'-'+name+'.bin')
                 cmd=['java','-Xmx768m','-Djava.awt.headless=true',*[f'-D{k}={str(v).lower()}' for k,v in props.items()],'-cp',str(classes)+':'+str(jar),'orsc.graphics.three.'+name,str(output)]
@@ -37,6 +56,6 @@ def main():
             print(key,'PASS',flush=True)
     for name in FIXTURES:
         assert len({v[name]['sha256'] for v in results.values()})==1, 'Raw byte mismatch: '+name
-    receipt={'passed':True,'candidateCommit':a.candidate_commit,'jarHashes':{k:sha(v) for k,v in jars.items()},'fixtureHashes':{n:sha(ROOT/'tests/myworld'/(n+'.java')) for n in FIXTURES+['NativeConstructionPolicyFixture']},'results':results,'gpuExecuted':False}
+    receipt={'passed':True,'candidateCommit':candidate_commit,'jarHashes':{k:sha(v) for k,v in jars.items()},'fixtureHashes':{n:sha(ROOT/'tests/myworld'/(n+'.java')) for n in FIXTURES+['NativeConstructionPolicyFixture']},'results':results,'gpuExecuted':False}
     (run/'result.json').write_text(json.dumps(receipt,indent=2)+'\n');print(run/'result.json')
 if __name__=='__main__': main()

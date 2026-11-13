@@ -155,12 +155,12 @@ public final class RendererBenchmarkServer {
         return result.put("primaryDamageByFamily",damage).put("creditedDamageByFamily",credited).put("summonCreditedDamage",summonDamage).put("resourceUnitsSpent",resources).put("damagedTargets",damaged).put("activeChannels",active).put("channels",channels).put("workloadComplete",complete)
             .put("summonsPresent",summons).put("summonsEngaged",summonsEngaged).put("minCurrentSummonHits",summons==0?-1:minSummonHits).put("sustainedSummons",sustainedSummons);
     }
-    private static int viewerX = 502, viewerY = 453;
+    private static int viewerX = 502, viewerY = 453, viewerLevel = 0, routeId = 0;
 
     private static boolean clear(int x, int y) {
         com.openrsc.server.model.world.region.TileValue tile = worldServer.getWorld().getTile(
             com.openrsc.server.model.world.coordinate.WorldLocation.global(
-                new com.openrsc.server.model.world.coordinate.WorldCoordinate(x, y, 0)));
+                new com.openrsc.server.model.world.coordinate.WorldCoordinate(x, y, viewerLevel)));
         return (tile.traversalMask & 255) == 0 && (tile.overlay & 255) != 10;
     }
 
@@ -214,7 +214,7 @@ public final class RendererBenchmarkServer {
             actor.setClientVersion(worldServer.getConfig().CLIENT_VERSION); actor.setClientLimitations(ClientLimitations.forVersion(worldServer.getConfig().CLIENT_VERSION));
             actor.getClientLimitations().maxItemId = 65535;
             actor.getSettings().setAppearance(new PlayerAppearance(index % 8, (index * 3) % 8, 0, 0, 1, 2));
-            actor.setInitialLocation(point); actor.setWornItems(actor.getSettings().getAppearance().getSprites());
+            if(phase.equals("busy-route")) actor.setInitialLayeredLocation(com.openrsc.server.model.world.coordinate.WorldLocation.global(new com.openrsc.server.model.world.coordinate.WorldCoordinate(point.getX(),point.getY(),viewerLevel))); else actor.setInitialLocation(point); actor.setWornItems(actor.getSettings().getAppearance().getSprites());
             worldServer.getWorld().getPlayers().add(actor); actor.updateRegion(); actor.setLoggedIn(true); actor.setBusy(false);
             for (int skill = 0; skill < worldServer.getConstants().getSkills().getSkillsCount(); skill++) actor.getSkills().setTemporaryLevelAndMaxStat(skill, 99, 99, false);
             actor.getCache().store("setting_auto_retaliate", false);
@@ -222,7 +222,7 @@ public final class RendererBenchmarkServer {
             actors.add(actor); positions.add(point);
         }
         for (int index = 0; index < 32; index++) {
-            Point point = tiles.get(16 + index); Npc npc = new Npc(worldServer.getWorld(), phase.equals("busy-character-shadows") && index%2==0 ? 1 : 3, point.getX(), point.getY(), 0);
+            Point point = tiles.get(16 + index); Npc npc = phase.equals("busy-route") ? new Npc(worldServer.getWorld(),3,com.openrsc.server.model.world.coordinate.WorldLocation.global(new com.openrsc.server.model.world.coordinate.WorldCoordinate(point.getX(),point.getY(),viewerLevel)),0) : new Npc(worldServer.getWorld(), phase.equals("busy-character-shadows") && index%2==0 ? 1 : 3, point.getX(), point.getY(), 0);
             npc.setAttribute("renderer_benchmark_actor", true); worldServer.getWorld().registerNpc(npc); npcs.add(npc);
         }
         for (int index = 0; index < 8; index++) {
@@ -275,7 +275,7 @@ public final class RendererBenchmarkServer {
         if (!busy || actors.isEmpty() || realCombat()) return;
         for (int index = 0; index < actors.size(); index++) {
             Player actor = actors.get(index); Point origin = positions.get(index);
-            if (tick % 4 == 0) {
+            if (tick % 4 == 0 && viewerLevel == 0) {
                 int x = origin.getX() + (tick % 8 == 0 ? 1 : 0);
                 if (clear(x, origin.getY())) actor.walk(x, origin.getY());
             }
@@ -286,18 +286,59 @@ public final class RendererBenchmarkServer {
             }
         }
     }
+    private static org.json.JSONObject routeStep(String kind,int x,int y,int level) {
+        return new JSONObject().put("kind",kind).put("x",x).put("y",y).put("level",level);
+    }
+    private static void prepareRoute(Path run) throws Exception {
+        // Deterministically resolve a straight, walkable crossing of a 48-tile native boundary.
+        int ax=0,ay=0,bx=0,by=0;boolean found=false;viewerLevel=0;
+        for(int radius=0;radius<=48&&!found;radius++)for(int sign:new int[]{1,-1}) {
+            int y=453+radius*sign;boolean ok=true;
+            for(int x=478;x<=482;x++)ok &= clear(x,y);
+            if(ok){ax=478;ay=y;bx=482;by=y;found=true;break;}
+        }
+        if(!found)throw new IllegalStateException("No authored adjacent boundary corridor");
+        org.json.JSONArray steps=new org.json.JSONArray();steps.put(routeStep("setup",ax,ay,0));
+        for(int i=0;i<6;i++)steps.put(routeStep("walk",i%2==0?bx:ax,i%2==0?by:ay,0));
+        int[][] targets={{685,508,0},{685,508,2},{ax,ay,0}};
+        for(int[] target:targets){viewerLevel=target[2];boolean valid=false;
+            for(int radius=0;radius<=5&&!valid;radius++)for(int dx=-radius;dx<=radius&&!valid;dx++)for(int dy=-radius;dy<=radius&&!valid;dy++)
+                if(clear(target[0]+dx,target[1]+dy)){target[0]+=dx;target[1]+=dy;valid=true;}
+            if(!valid)throw new IllegalStateException("No exact route landing");
+            steps.put(routeStep(target[2]==2?"level":"teleport",target[0],target[1],target[2]));
+        }
+        viewerLevel=0;
+        Files.write(run.resolve("route-plan.json"),new JSONObject().put("schema",1).put("legs",steps).toString(2).getBytes("UTF-8"));
+    }
+    private static void driveRoute(Path run) throws Exception {
+        if(viewer==null||!phase.equals("busy-route")||!Files.isRegularFile(run.resolve("route-request.json")))return;
+        JSONObject command=new JSONObject(new String(Files.readAllBytes(run.resolve("route-request.json")),"UTF-8"));
+        Files.delete(run.resolve("route-request.json"));
+        int x=command.getInt("x"),y=command.getInt("y"),level=command.getInt("level");
+        String kind=command.getString("kind");int nextId=command.getInt("id");
+        org.json.JSONArray plan=new JSONObject(new String(Files.readAllBytes(run.resolve("route-plan.json")),"UTF-8")).getJSONArray("legs");
+        if(nextId!=routeId+1||nextId>plan.length())throw new IllegalStateException("Out of order private route command");
+        JSONObject expected=plan.getJSONObject(nextId-1);
+        if(x!=expected.getInt("x")||y!=expected.getInt("y")||level!=expected.getInt("level")||!kind.equals(expected.getString("kind")))throw new IllegalStateException("Private route plan mismatch");
+        routeId=nextId;
+        if(kind.equals("walk")){if(level!=viewerLevel||!clear(x,y))throw new IllegalStateException("Invalid walking destination");viewer.walk(x,y);}
+        else {removeActors();viewerX=x;viewerY=y;viewerLevel=level;if(!clear(x,y))throw new IllegalStateException("Invalid landing");viewer.teleport(x,y,level,false);createActors();}
+    }
     public static void main(String[] args) throws Exception {
         final Path root = Paths.get(".").toRealPath();
         final Path run = root.getParent();
         if (!Files.isRegularFile(run.resolve("RENDERER-BENCHMARK.json"))) {
             throw new IllegalStateException("Marked renderer fixture required");
         }
-        sustainSummonsForBenchmark=new JSONObject(new String(Files.readAllBytes(run.resolve("RENDERER-BENCHMARK.json")),"UTF-8")).optBoolean("sustainSummonsForBenchmark",false);
+        JSONObject marker=new JSONObject(new String(Files.readAllBytes(run.resolve("RENDERER-BENCHMARK.json")),"UTF-8"));
+        int tcp=marker.getInt("tcp"),websocket=marker.getInt("websocket");
+        if(!marker.getBoolean("private")||!((tcp==43639&&websocket==43539)||(tcp==44639&&websocket==44539)))throw new IllegalStateException("Invalid private port marker");
+        sustainSummonsForBenchmark=marker.optBoolean("sustainSummonsForBenchmark",false);
         com.openrsc.server.config.ServerConfigurationLoadResult loaded = ServerConfigurationLoader.load("myworld.conf");
         com.openrsc.server.ServerConfiguration config = loaded.getLegacyConfiguration();
         if (!"127.0.0.1".equals(config.SERVER_BIND_ADDRESS)
-                || loaded.getProcessNetwork().getServerPort() != 43639
-                || loaded.getProcessNetwork().getWebsocketPort() != 43539
+                || loaded.getProcessNetwork().getServerPort() != tcp
+                || loaded.getProcessNetwork().getWebsocketPort() != websocket
                 || config.DB_TYPE != DatabaseType.SQLITE || !"renderer_benchmark_dev".equals(config.DB_NAME)) {
             throw new IllegalStateException("Renderer-only loopback bindings/database required");
         }
@@ -340,7 +381,7 @@ public final class RendererBenchmarkServer {
                         Files.delete(request); removeActors();
                         busy = command.optBoolean("busy", false); phase = command.optString("phase", "dense-idle");
                         viewerX = command.optInt("x", 502); viewerY = command.optInt("y", 453);
-                        viewer = null; tick = 0;
+                        viewer = null; tick = 0; viewerLevel=0; routeId=0; if(phase.equals("busy-route"))prepareRoute(run);
                         server.getWorldDayNightClock().setCurrentCycleMillis(phase.equals("night") ? 2700000 : 900000);
                         if (player != null) ActionSender.sendWorldTime(player);
                     }
@@ -374,7 +415,7 @@ public final class RendererBenchmarkServer {
                     if(viewer!=null && phase.equals("lifecycle") && Files.isRegularFile(run.resolve("logout-request"))) {
                         Files.delete(run.resolve("logout-request"));viewer.logout();
                     }
-                    driveActors(); driveViewer(); tick++;
+                    driveRoute(run); driveActors(); driveViewer(); tick++;
                     if (viewer != null && phase.equals("same-position") && tick == 50) {
                         viewer.teleport(viewer.getX(), viewer.getY(), false); samePositionTeleports++;
                         System.out.println("BENCHMARK same-position teleport x="+viewer.getX()+" y="+viewer.getY()+" tick="+tick);
@@ -392,7 +433,7 @@ public final class RendererBenchmarkServer {
                     JSONObject combat=combatState();
                     JSONObject state = new JSONObject().put("online", player != null).put("private", true);
                     if (player != null) state.put("x", player.getX()).put("y", player.getY()).put("level", player.getWorldLocation().getCoordinate().getLevel());
-                    state.put("phase", phase).put("phaseTick", tick).put("samePositionTeleports", samePositionTeleports).put("areaTeleports",areaTeleports).put("levelTeleports",levelTeleports).put("controlledPlayers", actors.size()).put("controlledNpcs", npcs.size()).put("retiredFixtureEvents",retiredFixtureEvents)
+                    state.put("phase", phase).put("phaseTick", tick).put("routeId",routeId).put("samePositionTeleports", samePositionTeleports).put("areaTeleports",areaTeleports).put("levelTeleports",levelTeleports).put("controlledPlayers", actors.size()).put("controlledNpcs", npcs.size()).put("retiredFixtureEvents",retiredFixtureEvents)
                         .put("summonsRequested", actors.isEmpty() ? 0 : 8).put("visualProjectileEmitters", actors.isEmpty() || realCombat() ? 0 : 8)
                         .put("visualProjectilesDamage", false).put("sustainSummonsForBenchmark",sustainSummonsForBenchmark).put("realCombat",combat).put("removedMapNpcs", removedMapNpcs)
                         .put("cycleMillis", server.getWorldDayNightClock().getCurrentCycleMillis())

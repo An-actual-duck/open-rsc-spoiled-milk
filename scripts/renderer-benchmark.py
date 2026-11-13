@@ -22,6 +22,13 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 MARKER = "RENDERER-BENCHMARK.json"
 PORTS = (43639, 43539)
+ALLOWED_PORT_PAIRS = (PORTS, (44639, 44539))
+
+def marker_ports(marker):
+    pair=(marker.get("tcp"),marker.get("websocket"))
+    if any(type(p) is not int for p in pair) or pair not in ALLOWED_PORT_PAIRS:
+        raise ValueError("Only explicit private benchmark port pairs are permitted")
+    return pair
 
 
 def sha(path):
@@ -37,7 +44,8 @@ def marked(run):
 
 def validate_artifacts(run, include_client=True):
     marker = json.loads((run / MARKER).read_text())
-    if marker.get("schema") != 1 or marker.get("private") is not True or marker.get("tcp") != PORTS[0] or marker.get("websocket") != PORTS[1]:
+    ports=marker_ports(marker)
+    if marker.get("schema") != 1 or marker.get("private") is not True:
         raise ValueError("Private renderer marker identity mismatch")
     server = run / "server"
     database = server / "inc/sqlite/renderer_benchmark_dev.db"
@@ -53,9 +61,17 @@ def validate_artifacts(run, include_client=True):
         if not source.resolve().is_relative_to((run / "classes").resolve()) or sha(source) != expected:
             raise ValueError("Immutable benchmark bootstrap mismatch")
 
+    # Bind markers, server configuration and client endpoint to the same loopback pair.
+    conf=(server / "myworld.conf").read_text()
+    for key,value in (("server_bind_address","127.0.0.1"),("server_port",str(ports[0])),("ws_server_port",str(ports[1]))):
+        found=re.findall(r"(?m)^\s*"+key+r":\s*(\S+)\s*$",conf)
+        if found != [value]: raise ValueError("Private endpoint configuration mismatch: "+key)
+    if (run/"client/Cache/ip.txt").read_text().strip()!="127.0.0.1" or (run/"client/Cache/port.txt").read_text().strip()!=str(ports[0]):
+        raise ValueError("Private client endpoint mismatch")
 
-def free_ports():
-    for port in PORTS:
+
+def free_ports(ports=None):
+    for port in (PORTS if ports is None else ports):
         with socket.socket() as sock:
             sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)  # Ignore closed-connection TIME_WAIT, never a live listener.
             sock.bind(("127.0.0.1", port))
@@ -74,6 +90,7 @@ def resolve_source(source):
 
 
 def prepare(args):
+    ports=marker_ports(dict(tcp=getattr(args,"tcp_port",43639),websocket=getattr(args,"websocket_port",43539)))
     if not re.fullmatch(r"[A-Za-z0-9_-]+", args.name):
         raise ValueError("Use a simple unique run name")
     overrides = (args.server_core, args.server_overlay, args.server_source)
@@ -95,7 +112,7 @@ def prepare(args):
         shutil.copy2(ROOT / "server" / name, server / name)
     package = server / "package"; shutil.copytree(selection["serverPackage"], package)
     config = (ROOT / "server/myworld.conf").read_text()
-    values = dict(db_name="renderer_benchmark_dev", server_name="Private Renderer Benchmark", server_name_welcome="Private Renderer Benchmark", server_bind_address="127.0.0.1", server_port="43639", ws_server_port="43539", want_feature_websockets="true", want_discord_bot="false", want_discord_general_logging="false", want_discord_auction_updates="false", want_discord_item_showcase="false", want_discord_monitoring_updates="false", want_auto_server_shutdown="false", layered_native_terrain_package_path=str(package), layered_native_terrain_manifest_sha256=selection["manifestSha256"], layered_native_world_runtime_profile="world-builder-installed")
+    values = dict(db_name="renderer_benchmark_dev", server_name="Private Renderer Benchmark", server_name_welcome="Private Renderer Benchmark", server_bind_address="127.0.0.1", server_port=str(ports[0]), ws_server_port=str(ports[1]), want_feature_websockets="true", want_discord_bot="false", want_discord_general_logging="false", want_discord_auction_updates="false", want_discord_item_showcase="false", want_discord_monitoring_updates="false", want_auto_server_shutdown="false", layered_native_terrain_package_path=str(package), layered_native_terrain_manifest_sha256=selection["manifestSha256"], layered_native_world_runtime_profile="world-builder-installed")
     for key, value in values.items():
         config, count = re.subn(r"(?m)^([ \t]*)" + key + r":.*$", lambda m: m[1] + key + ": " + value, config)
         if not count: config += "\n" + key + ": " + value + "\n"
@@ -122,7 +139,7 @@ def prepare(args):
     cache = client / "Cache"; cache.mkdir()
     for name in ("audio", "video"): shutil.copytree(ROOT / "Client_Base/Cache" / name, cache / name)
     (cache / "config.txt").write_bytes(subprocess.check_output(["git", "show", "HEAD:Client_Base/Cache/config.txt"], cwd=ROOT))
-    for name, value in {"ip.txt":"127.0.0.1\n", "port.txt":"43639\n", "credentials.txt":"\n", "discord_inuse.txt":"1\n"}.items(): (cache / name).write_text(value)
+    for name, value in {"ip.txt":"127.0.0.1\n", "port.txt":str(ports[0])+"\n", "credentials.txt":"\n", "discord_inuse.txt":"1\n"}.items(): (cache / name).write_text(value)
     (cache / "uid.dat").write_bytes(bytes(8))
     profile = ROOT / "Client_Base/world-builder-configs/installed-client.json"
     relative = Path(json.loads(profile.read_text())["packageRelativePath"])
@@ -133,10 +150,11 @@ def prepare(args):
     sources = run / "sources"; sources.mkdir()
     shutil.copy2(ROOT / "tools/renderer-benchmark/RendererBenchmarkServer.java", sources / "RendererBenchmarkServer.java")
     shutil.copy2(ROOT / "tools/renderer-benchmark/orsc/RendererBenchmarkClient.java", sources / "RendererBenchmarkClient.java")
+    shutil.copy2(ROOT / "tools/renderer-benchmark/orsc/NativeRouteProbe.java", sources / "NativeRouteProbe.java")
     cp = classpath(server, classes)
     subprocess.run(["javac", "-source", "8", "-target", "8", "-cp", cp, "-d", str(classes), str(sources / "RendererBenchmarkServer.java")], check=True)
-    subprocess.run(["javac", "-source", "8", "-target", "8", "-cp", str(client / "client.jar"), "-d", str(classes), str(sources / "RendererBenchmarkClient.java")], check=True)
-    marker = dict(schema=1, sourceCommit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(), clientSourceCommit=resolve_source(args.client_source), clientSourceBranch=args.client_branch, clientSha256=sha(client / "client.jar"), seedSha256=sha(seed), seedAccounts=0, mapManifest=selection["manifestSha256"], artifacts=artifacts, private=True, hideRoofsPreference=not args.show_roofs, tcp=PORTS[0], websocket=PORTS[1], source=str(ROOT))
+    subprocess.run(["javac", "-source", "8", "-target", "8", "-cp", str(client / "client.jar"), "-d", str(classes), str(sources / "RendererBenchmarkClient.java"), str(sources / "NativeRouteProbe.java")], check=True)
+    marker = dict(schema=1, sourceCommit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(), clientSourceCommit=resolve_source(args.client_source), clientSourceBranch=args.client_branch, clientSha256=sha(client / "client.jar"), seedSha256=sha(seed), seedAccounts=0, mapManifest=selection["manifestSha256"], artifacts=artifacts, private=True, hideRoofsPreference=not args.show_roofs, tcp=ports[0], websocket=ports[1], source=str(ROOT))
     marker["serverSourceCommit"] = resolve_source(args.server_source) if args.server_source else marker["sourceCommit"]
     marker["serverArtifactRoot"] = str(artifact_root)
     marker["sustainSummonsForBenchmark"] = args.sustain_summons_for_benchmark
@@ -148,7 +166,7 @@ def prepare(args):
 
 
 def start(args):
-    run = marked(args.run); validate_artifacts(run); free_ports()
+    run = marked(args.run); validate_artifacts(run); free_ports(marker_ports(json.loads((run / MARKER).read_text())))
     if (run / "STOP").exists() or (run / "processes.json").exists(): raise ValueError("Use a fresh prepared run")
     command = dict(cwd=str(run / "server"), argv=["java", "-Xmx2g", "-XX:+UseSerialGC", "-cp", classpath(run / "server", run / "classes"), "RendererBenchmarkServer"])
     with (run / "server.log").open("ab") as log:
@@ -175,10 +193,11 @@ def capture(args):
     processes = json.loads((run / "processes.json").read_text())
     if processes.get("client") and owned_process_live(processes["client"],run/"client","orsc.RendererBenchmarkClient"):
         raise ValueError("A fixture client is already running")
+    ports=marker_ports(json.loads((run / MARKER).read_text()))
     deadline = time.monotonic() + 60
     while True:
         try:
-            with socket.create_connection(("127.0.0.1", PORTS[0]), timeout=1): break
+            with socket.create_connection(("127.0.0.1", ports[0]), timeout=1): break
         except OSError:
             if time.monotonic() >= deadline: raise ValueError("Private server did not become ready")
             time.sleep(.25)
@@ -199,7 +218,10 @@ def capture(args):
     props["renderer.benchmark.visiblePreview"] = str(visible).lower()
     props["spoiledmilk.openglHiddenDiagnostic"] = str(not visible).lower()
     if visible: props["spoiledmilk.openglWindowMode"] = args.window_mode
-    props["spoiledmilk.shadowGpuTimings"] = "true"
+    props["spoiledmilk.shadowGpuTimings"] = str(not args.acceptance).lower()
+    props["spoiledmilk.boundaryDiagnostics"] = str(args.boundary_profile).lower()
+    props["spoiledmilk.nativeConstructionVertexIndex"] = str(args.native_construction_index == "on").lower()
+    props["spoiledmilk.nativePrimitiveWorldBuild"] = str(args.native_primitive_world == "on").lower()
     props["renderer.benchmark.fog"] = args.fog
     props["renderer.benchmark.dumpRoofMask"] = str(args.dump_roof_mask).lower()
     props["renderer.benchmark.captureFrames"] = str(args.snapshot_frames)
@@ -430,11 +452,16 @@ def report(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__); sub = parser.add_subparsers(dest="action", required=True)
     p = sub.add_parser("prepare"); p.add_argument("--name", required=True); p.add_argument("--client-jar", type=Path, required=True); p.add_argument("--client-source", required=True); p.add_argument("--client-branch", default="unspecified-artifact-branch"); p.add_argument("--server-core", type=Path); p.add_argument("--server-overlay", type=Path); p.add_argument("--server-source"); p.add_argument("--server-artifacts",type=Path,help="Explicit congruent core/plugins/overlay/lib snapshot; requires source receipt"); p.add_argument("--show-roofs",action="store_true"); p.add_argument("--sustain-summons-for-benchmark",action="store_true",help="Private combat-real fixture only: one-time30000HP on its8controlled bears")
+    p.add_argument("--tcp-port",type=int,default=43639);p.add_argument("--websocket-port",type=int,default=43539)
     for name in ("start", "stop", "capture", "preview"):
         p = sub.add_parser(name); p.add_argument("run", type=Path)
         if name in ("capture", "preview"):
-            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-character-shadows", "busy-walk", "sun-motion", "night", "transition", "same-position", "relog", "visual", "combat-real", "lifecycle"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--snapshot-frames",type=int,choices=[1,12],default=12); p.add_argument("--legacy-mask", action="store_true")
+            p.add_argument("--phase", choices=["dense-idle", "dense-camera", "busy-idle", "busy-camera", "busy-character-shadows", "busy-walk", "busy-route", "sun-motion", "night", "transition", "same-position", "relog", "visual", "combat-real", "lifecycle"], default="busy-camera" if name == "preview" else "dense-idle"); p.add_argument("--seconds", type=int, default=60); p.add_argument("--zoom", type=int, choices=[75,900], default=75); p.add_argument("--quality", choices=["off","low","high"], default="high"); p.add_argument("--snapshot", action="store_true", default=name == "preview"); p.add_argument("--snapshot-frames",type=int,choices=[1,12],default=12); p.add_argument("--legacy-mask", action="store_true")
             p.add_argument("--gc-log",action="store_true",help="Retain JVM GC messages in the private console log"); p.add_argument("--fog",choices=["on","off"],default="on"); p.add_argument("--tone-preview",choices=["day","cycle","sunrise-amber","dawn-gold","rose-dusk","cool-night","deep-blue"],default="day"); p.add_argument("--warmup-seconds",type=int,default=15); p.add_argument("--window-mode",choices=["windowed","fullscreen","borderless-fullscreen"],default="borderless-fullscreen"); p.add_argument("--dump-terrain",action="store_true"); p.add_argument("--dump-fences",action="store_true"); p.add_argument("--dump-roof-mask",action="store_true"); p.add_argument("--exclude-caster", choices=["TERRAIN","WALL","ROOF","GAME_OBJECT","WALL_OBJECT"],action="append",default=[]); p.add_argument("--sun-azimuth", type=float, default=135); p.add_argument("--sun-elevation", type=float, default=45); p.add_argument("--rotation", type=int, choices=range(256), default=128); p.add_argument("--x", type=int, default=502); p.add_argument("--y", type=int, default=453)
+            p.add_argument("--acceptance",action="store_true",help="Disable GPU timing queries; retain low-overhead cadence telemetry")
+            p.add_argument("--boundary-profile",action="store_true",help="Separate diagnostic boundary phase/upload/lock attribution")
+            p.add_argument("--native-construction-index",choices=["on","off"],default="off")
+            p.add_argument("--native-primitive-world",choices=["on","off"],default="off")
             p.add_argument("--native-resident-input-cache", choices=["on","off"], help="Explicit native static-input comparison; omitted preserves normal defaults")
             p.add_argument("--character-ground-shadows", "--npc-ground-shadows", dest="npc_ground_shadows", choices=["on","off"], help="Compare character ground shadows without changing other shadow quality")
     p = sub.add_parser("report"); p.add_argument("capture", type=Path)

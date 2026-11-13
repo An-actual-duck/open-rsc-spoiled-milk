@@ -20,6 +20,9 @@ def summarize(rows):
         if count:events.extend(tail[-count:])
         previous=end
     if not events:raise ValueError("No new events")
+    # Its start predates our first observation, even with unchanged hold counters.
+    events=events[1:]
+    if not events:raise ValueError("No fully observed intervals after initial boundary")
     ordered=sorted(events)
     percentile=lambda q:ordered[max(0,math.ceil(len(ordered)*q)-1)]
-    return {"firstSequence":start+1,"lastSequence":previous,"count":len(events),"p50Ms":percentile(.5),"p95Ms":percentile(.95),"p99Ms":percentile(.99),"maxMs":max(events),"over33ms":sum(x>33 for x in events),"over50ms":sum(x>50 for x in events),"scope":"Unique backend world-interval events, nearest-rank percentiles; explicit unchanged hold counters and source epoch required. Nonsteady windows are rejected, never trimmed; preserve their unfiltered crossing gaps separately."}
+    return {"firstSequence":start+2,"lastSequence":previous,"count":len(events),"p50Ms":percentile(.5),"p95Ms":percentile(.95),"p99Ms":percentile(.99),"maxMs":max(events),"over33ms":sum(x>33 for x in events),"over50ms":sum(x>50 for x in events),"excludedInitialInterval":True,"scope":"First newly completed interval excluded because its start predates baseline. Unique backend world-interval events, nearest-rank percentiles; explicit unchanged hold counters and source epoch required. Nonsteady windows are rejected, never trimmed; preserve their unfiltered crossing gaps separately."}

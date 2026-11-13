@@ -146,3 +146,12 @@ The worker is ready to release exclusive implementation/timing ownership to the
 next serial native phase. Full-public validation remains pending the supported
 manager/integrated-main cook prerequisite. This is a local checkpoint, not READY
 handoff or publication approval.
+
+Steady-window review correction
+------------------------------
+The first newly completed interval is now excluded from steady statistics because
+its start predates the first observation, even if hold counters remain unchanged.
+Subsequent holds/epoch changes still reject the window. Unfiltered route evidence
+is unchanged. Stored four-cohort samples were reanalyzed without rerunning hardware:
+comparison-steady-initial-boundary-corrected.json contains one fewer interval each.
+p95/max values remain unchanged; cohort 1 nearest-rank p99 changes from 23 to 24 ms. This does not change the no-speedup decision.

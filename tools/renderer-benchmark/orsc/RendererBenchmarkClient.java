@@ -409,8 +409,11 @@ public final class RendererBenchmarkClient {
                     && !Boolean.getBoolean("renderer.benchmark.visiblePreview"))) {
             throw new IllegalStateException("Marked hidden fixture or explicit visible preview required");
         }
+        org.json.JSONObject marker=new org.json.JSONObject(new String(Files.readAllBytes(run.resolve("RENDERER-BENCHMARK.json")),StandardCharsets.UTF_8));
+        int tcp=marker.getInt("tcp"),websocket=marker.getInt("websocket");
+        if(!marker.getBoolean("private")||!((tcp==43639&&websocket==43539)||(tcp==44639&&websocket==44539)))throw new IllegalStateException("Invalid private port marker");
         if (!"127.0.0.1".equals(new String(Files.readAllBytes(clientRoot.resolve("Cache/ip.txt")), StandardCharsets.UTF_8).trim())
-                || !"43639".equals(new String(Files.readAllBytes(clientRoot.resolve("Cache/port.txt")), StandardCharsets.UTF_8).trim())) {
+                || !Integer.toString(tcp).equals(new String(Files.readAllBytes(clientRoot.resolve("Cache/port.txt")), StandardCharsets.UTF_8).trim())) {
             throw new IllegalStateException("Private renderer endpoint required");
         }
         Path capture = Paths.get(System.getProperty("spoiledmilk.rendererDiagnosticSessionDir")).toRealPath();
@@ -452,6 +455,8 @@ public final class RendererBenchmarkClient {
         OpenGLFramePresenter presenter = (OpenGLFramePresenter) field(ScaledWindow.getInstance(), ScaledWindow.class, "openGLFramePresenter");
         OpenGLViewportPresenter viewport = (OpenGLViewportPresenter) field(presenter, OpenGLFramePresenter.class, "viewportPresenter");
         System.out.println(RendererPerformanceDiagnostics.handleCommand("::pf start " + phase));
+        NativeRouteProbe routeProbe=phase.equals("busy-route") ? new NativeRouteProbe(run,capture,client) : null;
+        if(routeProbe!=null)routeProbe.route();
         for (int second = 0; second < seconds; second++) {
             if(Files.exists(run.resolve("FIXTURE-FAILED"))) throw new IllegalStateException("Private fixture setup failed; aborting measurement");
             client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));
@@ -475,6 +480,7 @@ public final class RendererBenchmarkClient {
             Files.write(capture.resolve("client-samples.jsonl"), (sample + "\n").getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             Thread.sleep(1000);
         }
+        if(routeProbe!=null)routeProbe.close();
         System.out.println(RendererPerformanceDiagnostics.handleCommand("::pf stop " + phase));
         recordNativeResidentInputEnd(client,capture,phase);
         recordCharacterGroundShadowState(client,presenter,capture);

@@ -116,6 +116,26 @@ class GuardTests(unittest.TestCase):
                 send.assert_not_called()
         finally: child.wait(timeout=2)
 
+    def test_explicit_private_port_pairs(self):
+        self.assertEqual(benchmark.marker_ports(dict(tcp=43639,websocket=43539)),(43639,43539))
+        self.assertEqual(benchmark.marker_ports(dict(tcp=44639,websocket=44539)),(44639,44539))
+        for pair in [(43639,44539),(43594,43595),(80,443),(44639,44639),(True,44539),("44639",44539)]:
+            with self.assertRaises(ValueError):benchmark.marker_ports(dict(zip(("tcp","websocket"),pair)))
+
+    def test_alternate_endpoint_mismatch_refused(self):
+        with tempfile.TemporaryDirectory() as name:
+            run=Path(name);(run/"server/inc/sqlite").mkdir(parents=True);(run/"client/Cache").mkdir(parents=True)
+            (run/"server/inc/sqlite/renderer_benchmark_dev.db").write_bytes(b"private")
+            (run/benchmark.MARKER).write_text(json.dumps(dict(schema=1,private=True,tcp=44639,websocket=44539,artifacts=[])))
+            conf="server_bind_address: 127.0.0.1\nserver_port: 44639\nws_server_port: 44539\n"
+            (run/"server/myworld.conf").write_text(conf);(run/"client/Cache/ip.txt").write_text("127.0.0.1\n");(run/"client/Cache/port.txt").write_text("44639\n")
+            benchmark.validate_artifacts(run,include_client=False)
+            for bad in [conf.replace("127.0.0.1","0.0.0.0"),conf.replace("44639","43639"),conf.replace("44539","43539")]:
+                (run/"server/myworld.conf").write_text(bad)
+                with self.assertRaisesRegex(ValueError,"configuration mismatch"):benchmark.validate_artifacts(run,include_client=False)
+            (run/"server/myworld.conf").write_text(conf);(run/"client/Cache/port.txt").write_text("43639")
+            with self.assertRaisesRegex(ValueError,"client endpoint mismatch"):benchmark.validate_artifacts(run,include_client=False)
+
     def test_port_probe_refuses_live_listener(self):
         with socket.socket() as listener:
             listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
