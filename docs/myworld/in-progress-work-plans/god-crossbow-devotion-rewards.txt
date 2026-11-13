@@ -125,3 +125,18 @@ validation receipt live in authoring/items/god-crossbows/native-v1/.
 The Firefox index shows all four native canvases at exactly 1x and 8x, including
 the unchanged ordinary crossbow reference. Runtime sprites remain unmodified
 pending review; equipped frames and gameplay implementation are still pending.
+
+Native restart — current art direction
+------------------------------------
+Owner rejected the high-resolution conversions and requested a fresh native
+pass based on the standard crossbow framework and original god mace themes.
+All preceding concepts/conversions are superseded, preserved as history only.
+Current candidates: assets/authoring/items/god-crossbows/native-restart-v1/.
+These are authored directly in Aseprite at 48x32 from the unchanged crossbow
+reference, with no generated or resampled input. Their entire opacity masks
+match the reference exactly; original grey trigger, stock-latch and string
+pixels remain byte-identical. Bow-limb and stock colours follow the maces,
+with small star/horn/pinecone stock insets. Two editable layers, deterministic
+author.lua recipe and receipt.json are preserved. Current Firefox index shows
+these at 1x/8x alongside the original and god mace references. Runtime sprites
+and gameplay remain unchanged pending review.
