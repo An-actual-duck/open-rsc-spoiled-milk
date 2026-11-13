@@ -1,0 +1,135 @@
+Standalone static scenery input reuse — November 13, 2026
+========================================================
+
+Status: native implementation, repeated comparison and final runtime checks
+complete; ready for manager integration and owner private playtest. No public
+release or server activation is requested.
+
+Decision and scope
+------------------
+Enable exact static resident INPUT-group reuse on the native hardware renderer.
+This reuses the maintained browser algorithm with an independent native control,
+not browser presentation or whole-world flags. The only production change is in
+mudclient: native hardware may use the existing cache, while software rendering,
+debug/oversized inputs, unavailable backends and explicit opt-out use the literal
+builder. Browser policy retains precedence and its original independent opt-out.
+Use -Dspoiledmilk.nativeResidentInputCache=false for the native diagnostic fallback.
+
+Fresh descriptors still sample canonical kind, world position, object ID,
+direction, terrain elevations and membership. Anchor, base, tile size and
+presentation revision must match. Animated groups rebuild. Existing ordering,
+collision fallback, maximum descriptor bound and region/relog clearing remain.
+There is no new map authority, all-world cache, shader, texture or asset change.
+
+Frozen sources and builds
+-------------------------
+Baseline main: 42e8c2a32eb0ecb128e1fee704a566e78dbc5702.
+Measured prototype: 26ff492808da3cc8ed8e7dfc5656d0b2b80076d5.
+Default-enabled source: 5f94293d5cd93e48c0ee2d96300f01034e76293a.
+Full maintained builds, no transplanted classes, with all source/class/resource
+hashes retained under worker output/builds/native-static-input-reuse/:
+ candidate-26ff49280/client.jar
+  SHA256 dcb0d04577e77046fe8145820a804bd8d298a7d96ffe76b992809e5a47cdab48
+ candidate-5f94293d5/client.jar
+  SHA256 9436a6aead553ecd43df05ecc4704b66a25ed1aad403316526243ce763a1d88d
+Each contains 1,002 compiled classes and 3,194 packaged own resources; the asset
+manifest is unchanged. Later benchmark-only diagnostic edits are outside the
+packaged game classes and do not alter these measured artifacts.
+
+Native comparison
+-----------------
+Evidence in Core-Framework-ai-1/output/diagnostics/native-static-input-reuse/
+cohort-20261113T053908Z/: raw results.json, allocation-stage-summary.json,
+machine.json and exact command/prepare/capture/report/cleanup logs. The scripts
+cohort.py, resume-cohort.py, resume-final-cohort.py and analyze-cohort.py in the
+parent retain the run and analysis recipe. Do not overwrite this cohort.
+
+Six fresh native JVM/loopback fixtures, OFF/ON/ON/OFF/OFF/ON, same frozen full
+client JAR, 1920x1080, normal zoom75, unchanged high shadows, fog, day sun,
+20-second warmup and 30-second busy-camera phase. No heavy build/profiler or
+competing game renderer ran during measurement; background desktop applications
+and older idle private servers remained. Hardware: owner's Ryzen9 7900X/Radeon
+native desktop, not evidence for genuinely weaker hardware or other OSes.
+
+Median of three complete run measurements:
+                                      OFF                ON
+ Client-loop allocated bytes/sec      38,696,989          32,375,614
+ Resident-group preparation mean      0.402955 ms         0.342725 ms
+ Client-loop CPU core utilization     0.154108            0.150986
+ Scene-render mean                    1.318399 ms         1.328810 ms
+ OpenGL CPU-render mean               3.561095 ms         3.572751 ms
+ Offscreen frame interval mean        16.666474 ms        16.666706 ms
+
+Allocation fell 16.34%; the targeted group-preparation stage fell 14.95%.
+The small total CPU-utilization change is not a broad CPU percentage promise.
+Scene/GPU submission timing did not improve meaningfully; both modes remain
+capped near60FPS. This is reduced repeated work/allocation, not an FPS uplift.
+Allocation and CPU use sums of telemetry deltas over complete runtime windows
+fully inside the timed phase, excluding overlapping leading windows. Group time
+uses window totals/counts. Earlier point samples at phase stop showed larger
+rates; those are not the aggregate result used here.
+
+All runs retained exactly435,422 resident triangles,17 received players and40
+received NPCs including controlled summons. No partial telemetry or fixture
+failure was accepted. ON receipts prove native resident rendering, browser=false,
+62 cached static groups and15,320 descriptor integers. After the fourth and fifth
+captures, guarded cleanup reported an exit-time PID ownership
+mismatch; rechecks found the private processes gone and ports free. No ownership
+guard was bypassed or unrelated process signalled. The remaining runs resumed in
+the original predetermined order, with the warning logs retained.
+
+Correctness and functional evidence
+----------------------------------
+tests/myworld/test-native-resident-inputs.py runs the fixture against the complete
+client JAR, not a replacement compiled mudclient. It compares actual native and
+browser cache use and exact input/generated mesh signatures against the original
+production uncached builder. Defaults, independent ON/OFF, unavailable backend,
+animation, membership/materialization, object/door direction, terrain, definition
+changes, signed level/base/anchor changes, clearing and oversize bounds are covered.
+The default-enabled JAR passed on Java8 and Java21; receipts:
+ output/tests/native-resident-inputs/1794548935609162557/result.json
+ output/tests/native-resident-inputs/1794548936714362570/result.json
+The earlier explicit-policy prototype passed both runtimes as well. The native
+default case and explicit opt-out are separate invocations. Canonical grouping,
+mesh generation and invalidation algorithms themselves are unchanged from main.
+
+Final native runtime suite is preserved under:
+ output/diagnostics/native-static-input-reuse/functional-20261113T055001Z/
+Its result.json is complete=true; all three fixtures passed. Underlying captures record actual cache retention, real
+production combat, level/area changes, same-JVM relogs, graphical settings,
+window lifecycle and production settings persistence. Busy-camera and real
+combat retained the same cache object throughout the phase. Lifecycle correctly
+replaced it across transitions/relogs, then retained a valid cache afterward.
+The native visible lifecycle completed windowed/resize/fullscreen/borderless,
+iconify/restore, Off/Low/High shadows, area/upper-level/return movement, two
+same-JVM relogs and production setting persistence. Signed negative levels are
+covered by the exact CPU fixture; this runtime suite visited levels0 and2.
+Each phase produced one completed image with no failed captures. Busy-camera and
+combat images were inspected; this bounded check is not a twelve-frame oracle or
+owner approval. Real combat validation confirmed advancing melee/ranged/throwing/
+ice/thunder/wood damage and resources, summons, projectiles and hit splats.
+All three private fixtures exited through guarded cleanup; no public service
+was accessed or changed.
+
+Known validation limitation: test-renderer-v2-world-geometry.py stops at its old
+ORSCApplet source-string assertion for the pre-staged-login readiness condition.
+Both this test and ORSCApplet are byte-identical to the baseline; the actual
+condition also admits the staged browser scene. This inherited brittle source
+assertion is not a new runtime failure or a passing check. It is left unchanged,
+with focused full-JAR and native runtime tests providing this feature's evidence.
+
+Terrain index experiment and next steps
+--------------------------------------
+The earlier terrain-slot prototype is preserved, not merged, on
+feat/native-terrain-query-index at c1a50e0aa10e284f1923791e41b2efa37ed10b0e.
+Six same-artifact native comparisons found no useful whole-frame gain. Its
+default remains OFF; no synthetic lookup speedup is advertised as native FPS.
+Evidence remains in output/diagnostics/native-terrain-query-index/. Nothing was
+deleted when the focused worker was parked and reused for this independent task.
+
+The next larger steps remain those in standalone-rendering-and-chunk-loading-
+plan.txt: profile native travel, prototype compact native geometry with exact
+attribute/shadow/UV parity, then coherent budgeted upload publication. Native
+construction/indexed-vertex work is another independent CPU candidate. Do not
+silently enable browser whole-world modes or assume browser timing transfers.
+Owner-visible normal playtesting is still required before player publication.
