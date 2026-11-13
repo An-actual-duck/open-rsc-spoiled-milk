@@ -2998,17 +2998,27 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
         }
 		int[] smoothDiffuseLights = buildChunkSmoothDiffuseLights(chunk, vertexCount);
 		float[] bakedTerrainShadowMask = buildBakedTerrainShadowMask(chunk, shadowProofCasters);
-        boolean typed = packedCompact && NativeResidentGeometry.typedWriterEnabled();
-        for (int vertex=0;vertex<vertexCount;vertex++) {
-            boolean admitted = writeChunkVertex(nativePackedVertex,0,chunk,frame,vertex,atlasTextureCoordinates,false,
-                smoothDiffuseLights,bakedTerrainShadowMask,unbakedRemasterBase,typed ? compactUploadBuffer : null);
-            if (packedCompact) {
+        if (packedCompact) {
+            boolean typed = NativeResidentGeometry.typedWriterEnabled();
+            for (int vertex=0;vertex<vertexCount;vertex++) {
+                boolean admitted = writeChunkVertex(nativePackedVertex,0,chunk,frame,vertex,atlasTextureCoordinates,false,
+                    smoothDiffuseLights,bakedTerrainShadowMask,unbakedRemasterBase,typed ? compactUploadBuffer : null);
                 if (!admitted || (!typed && !NativeResidentGeometry.put(compactUploadBuffer,nativePackedVertex))) {
-                    packedCompact=false; typed=false; vertexUploadBuffer.clear(); vertex=-1; continue;
+                    packedCompact=false;
+                    break;
                 }
-            } else vertexUploadBuffer.put(nativePackedVertex);
+            }
+            if (packedCompact) compactUploadBuffer.flip();
         }
-        if (packedCompact) compactUploadBuffer.flip();
+        if (!packedCompact) {
+            // A separate literal loop avoids a representation dispatch per legacy
+            // vertex. A rejected compact prefix is never mixed into this stream.
+            for (int vertex=0;vertex<vertexCount;vertex++) {
+                writeChunkVertex(nativePackedVertex,0,chunk,frame,vertex,atlasTextureCoordinates,false,
+                    smoothDiffuseLights,bakedTerrainShadowMask,unbakedRemasterBase,null);
+                vertexUploadBuffer.put(nativePackedVertex);
+            }
+        }
 		vertexUploadBuffer.flip();
 	}
 
