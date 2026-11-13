@@ -3734,7 +3734,7 @@ public final class Scene {
 				cullReason,
 				groundItemSource);
 			if (npcShadowRadius[face] > 0 && "projected".equals(cullReason)) {
-                geometryFrame.addNpcGroundShadow(this.m_Fb[face], this.m_a[face], this.m_Ob[face],
+                geometryFrame.addNpcGroundShadow(face, this.m_Fb[face], this.m_a[face], this.m_Ob[face],
                     npcShadowRadius[face], npcShadowSlopeX[face], npcShadowSlopeZ[face]);
             }
 			if (this.renderer3DCharacterTagged[face]) {

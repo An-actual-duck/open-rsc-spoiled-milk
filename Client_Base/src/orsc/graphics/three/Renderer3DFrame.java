@@ -645,8 +645,8 @@ public final class Renderer3DFrame {
 		return Collections.unmodifiableList(characterSprites);
 	}
 
-	void addNpcGroundShadow(int x, int y, int z, float radius, float slopeX, float slopeZ) {
-		npcGroundShadows.add(new NpcGroundShadow(x, y, z, radius, slopeX, slopeZ));
+	void addNpcGroundShadow(int faceId, int x, int y, int z, float radius, float slopeX, float slopeZ) {
+		npcGroundShadows.add(new NpcGroundShadow(faceId, x, y, z, radius, slopeX, slopeZ));
 	}
 
 	public List<NpcGroundShadow> getNpcGroundShadows() { return npcGroundShadowsView; }
@@ -654,10 +654,10 @@ public final class Renderer3DFrame {
 	/** Producer-sampled terrain tangent; no live world reads on the GL thread. */
 	public static final class NpcGroundShadow {
 		public static final boolean ENABLED = !"false".equalsIgnoreCase(System.getProperty("spoiledmilk.npcGroundShadows", "true"));
-		public final int x, y, z;
+		public final int faceId, x, y, z;
 		public final float radius, slopeX, slopeZ;
-		private NpcGroundShadow(int x, int y, int z, float radius, float slopeX, float slopeZ) {
-			this.x=x; this.y=y; this.z=z; this.radius=radius; this.slopeX=slopeX; this.slopeZ=slopeZ;
+		private NpcGroundShadow(int faceId, int x, int y, int z, float radius, float slopeX, float slopeZ) {
+			this.faceId=faceId; this.x=x; this.y=y; this.z=z; this.radius=radius; this.slopeX=slopeX; this.slopeZ=slopeZ;
 		}
 		public static int radiusForWidth(int sourceWidth) { return Math.max(14, Math.min(64, sourceWidth / 4)); }
 	}
