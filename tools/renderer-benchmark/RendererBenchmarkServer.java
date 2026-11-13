@@ -204,7 +204,7 @@ public final class RendererBenchmarkServer {
         List<Point> tiles = new ArrayList<Point>();
         for (int radius = 1; radius <= 8; radius++) {
             for (int dx = -radius; dx <= radius; dx++) for (int dy = -radius; dy <= radius; dy++) {
-                if (Math.max(Math.abs(dx), Math.abs(dy)) == radius && clear(502 + dx, 453 + dy)) tiles.add(Point.location(502 + dx, 453 + dy));
+                if (Math.max(Math.abs(dx), Math.abs(dy)) == radius && clear(viewerX + dx, viewerY + dy)) tiles.add(Point.location(viewerX + dx, viewerY + dy));
             }
         }
         if (tiles.size() < 48) throw new IllegalStateException("Insufficient authored walkable crowd tiles");
