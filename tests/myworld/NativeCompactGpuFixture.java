@@ -10,6 +10,7 @@ public final class NativeCompactGpuFixture {
     static void require(boolean b,String m){if(!b)throw new AssertionError(m);}
     static FloatBuffer floats(float[] f){FloatBuffer b=ByteBuffer.allocateDirect(f.length*4).order(ByteOrder.nativeOrder()).asFloatBuffer();b.put(f).flip();return b;}
     public static void main(String[] args)throws Exception {
+        System.setProperty("spoiledmilk.remasterLightAzimuth","45");System.setProperty("spoiledmilk.remasterLightElevation","45");RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);
         gl=LwjglBindings.load();require(gl.glfwInit(),"GLFW");long window=0;OpenGLShaderProgram shader=null;int vbo=0,ebo=0,texture=0;
         try {
             gl.glfwDefaultWindowHints();gl.glfwWindowHint(gl.GLFW_VISIBLE,gl.GLFW_FALSE);gl.glfwWindowHint(gl.GLFW_FOCUSED,gl.GLFW_FALSE);
@@ -30,9 +31,9 @@ public final class NativeCompactGpuFixture {
                     v[7]=(v[0]+1)*.5f;v[8]=(v[1]+1)*.5f;v[9]=blend/255f;v[10]=(255-blend)/255f;v[11]=((blend+n)&255)/255f;v[12]=1;v[14]=blend;v[15]=v[3];v[16]=v[4];v[17]=v[5];v[18]=slope;v[19]=1;v[21]=kind;v[22]=1+blend%3;v[23]=blend;v[24]=90/255f;v[25]=30/255f;v[26]=200/255f;v[27]=blend/255f;
                     System.arraycopy(v,0,legacy,n*28,28);require(NativeResidentGeometry.put(compact,v),"exact pack");
                 }compact.flip();byte[] reference=null;
+                shader.useResidentChunk(floats(identity),floats(identity),textured,false,true,frame,null,null);shader.setTextureEnabled(textured);
                 for(boolean packed:new boolean[]{false,true}){
                     gl.glBindBuffer(gl.GL_ARRAY_BUFFER,vbo);if(packed)gl.glBufferData(gl.GL_ARRAY_BUFFER,compact,gl.GL_STATIC_DRAW);else gl.glBufferData(gl.GL_ARRAY_BUFFER,floats(legacy),gl.GL_STATIC_DRAW);
-                    shader.useResidentChunk(floats(identity),floats(identity),textured,false,true,frame,null,null);shader.setTextureEnabled(textured);
                     if(packed)shader.bindNativeCompactAttributes(textured);else shader.bindWorldParityAttributes(3,2,4,3,1,3,1,1,1,3,1,112,0,28,textured?36:12,60,56,72,84,88,92,96,108);
                     gl.glClearColor(.11f,.13f,.17f,1);gl.glClear(gl.GL_COLOR_BUFFER_BIT);gl.glDrawElements(gl.GL_TRIANGLES,6,gl.GL_UNSIGNED_INT,0L);
                     ByteBuffer read=ByteBuffer.allocateDirect(128*128*4);gl.glReadPixels(0,0,128,128,gl.GL_RGBA,gl.GL_UNSIGNED_BYTE,read);byte[] actual=new byte[read.remaining()];read.get(actual);

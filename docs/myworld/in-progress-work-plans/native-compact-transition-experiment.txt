@@ -1,0 +1,178 @@
+Native compact geometry and coherent transition experiments
+===========================================================
+Decision: retain bounded experiments, all controls default OFF. No demonstrated
+native transition improvement. No quality, distance or geometry reduction. No
+production upload scheduler, residency-cap change, contention/cache redesign,
+publication, merge or deployment. Browser and construction controls remain OFF.
+
+Runtime and artifacts
+---------------------
+Workspace: Core-Framework-ai-1, feat/standalone-client-optimization-exploration.
+Frozen measured runtime: 5820ee21d32069a15cf3d308a7b9eeb3e43aac10.
+Full JAR: output/builds/native-compact-geometry/5820ee21d3/client.jar
+SHA256: 94ff3e356bdd30360786a65494688d1fb6c918793deb5f494dcc99a2338e080d.
+The adjacent receipt/source/entry hashes identify the complete build. Subsequent
+changes strengthen fixtures and documentation only; no production class grafts.
+
+-Dspoiledmilk.nativeCompactGeometry=true selects an exact 52-byte native vertex
+instead of 112 bytes where eligible. Position, atlas UV and normal remain float;
+19 fields use exact admitted unsigned bytes, including independent material color
+and texture light. Blend strength is normalized, model/family/mask are not.
+Negative zero/nonfinite/unrepresentable values reject. A late rejected vertex
+regenerates the ENTIRE legacy chunk. Main and near/far shadow bindings agree.
+Eligibility requires atlas coordinates, resident shader, unbaked directional
+lighting and no projected shadow-proof path. Other modes retain legacy layout.
+The requested representation participates in resident-cache matching. Browser
+modes cannot enable this native control. This is not the browser 48-byte layout.
+
+-Dspoiledmilk.nativeMaterialBatchReuse=true independently reuses first-pass
+triangle-to-batch references in the second material-index pass, preserving exact
+first-seen batch order, indices and bounds. It is capped at 262,144 triangles,
+with literal fallback above the cap. Browser modes ignore it.
+
+-Dspoiledmilk.nativeGeometryDiagnostics=true records at most 4,096 per-frame
+upload rows: CPU packing, index copy, grouping, GL submission, bytes, compact and
+legacy vertex counts, chunk count and resident/scratch bytes. No synchronous GPU
+query is added. GL submission CPU time is NOT GPU completion. Existing asynchronous
+GPU timer ring supplies the separate diagnostic GPU observations.
+
+Memory accounting
+-----------------
+112->52 is a 53.57% vertex-byte reduction; the complete observed upload including
+both unchanged index streams is 141,441,120->70,720,560 bytes (50%). Matching
+resident geometry is 465,035,040->232,517,520 bytes, including both index streams.
+This is geometry residency, NOT total GPU/driver/atlas memory. The retained direct
+scratch ledger rises 17,825,792->26,214,400 bytes because legacy fallback scratch
+remains beside geometrically growing compact scratch. The ledger excludes old
+replaced direct buffers awaiting GC, temporary diffuse/shadow arrays, maps and
+batch records, and the independently bounded batch-reuse reference array. Do not
+claim a total CPU-memory reduction. No evidence supports changing cache residency
+or contention: the prior measured lock waits were negligible.
+
+Same-artifact populated route, discrete GPU
+-------------------------------------------
+Eight low-overhead interleaved fresh processes, followed by three separate
+instrumented diagnostics. Every comparison uses the same complete JAR, frozen
+server cd21a4abdd61738fd3130b7b78590ec57fd0339d, map/seed, harness sources and compiled
+classes. Verified in output/diagnostics/native-compact-geometry/cohort-identity.json.
+All eleven runs retain 34,751 unique cadence intervals. Hidden native windows,
+RX 6700 XT/Mesa25.2.8,1920x1080 content viewport, High shadows, Remaster directional,
+fog ON, daytime, zoom75/rotation128,17 received players/40 NPCs,780 game objects,
+25 wall objects. Six adjacent walks plus long teleport, level change and return.
+No overlapping native playtest client; owner's default-port server was retained.
+
+Low-overhead run order: mode / intervals / p95 / p99 / maximum frame gap (ms)
+OFF      3156 17.855 25.086 213.755
+compact  3148 17.862 21.183 257.569
+group    3157 17.712 21.765 212.533
+compact  3152 17.812 21.913 236.527
+OFF      3153 17.749 22.818 199.591
+group    3163 17.788 22.669 222.705
+OFF      3188 17.766 21.949 223.075
+compact  3143 17.912 21.776 247.056
+Compact's worst gap regresses in every repeat against the observed OFF range.
+Group has no convincing whole-route win. Capped frame cadence is not uncapped FPS,
+and hidden native timing is not display scanout. Keep both controls OFF.
+
+Separate diagnostic maximum-byte event,67 chunks/1,178,676 vertices:
+mode      pack ms   indices ms  grouping ms  GL-submit ms  upload bytes
+OFF       46.111    0.575       14.073       29.641        141441120
+compact   97.640    0.538       13.709       17.836         70720560
+group     37.561    0.521       10.438       33.437        141441120
+Diagnostics exported 3757/3792/3766 rows respectively, zero overflow. Packing
+cost dominates the compact regression despite reduced submission work. Grouping
+reuse has a stage-level lead, not a proved end-to-end transition improvement.
+Raw captures and exact leg summaries: comparison-v3-results.json and referenced
+busy-route directories. Arrival/readiness are polling upper bounds, NOT first
+coherent completed new-world frame latency. Original frozen baseline lacks that
+identity; no claim is made that these observations solve that missing proof.
+
+Separate asynchronous GPU diagnostics: OFF/compact/group median frame-render
+4.713/4.421/4.675 ms; near shadow0.384/0.360/0.387 ms; far1.735/1.757/1.551 ms.
+Far count34/35/34; frame count3041/3072/3050. Timestamp elapsed frame-render can
+include CPU submission bubbles, not merely active GPU work. Moving route samples
+and geometry/shadow inventories are not perfectly frame-aligned (OFF reached
+603580 resident triangles, compact437846 in sampled summaries); these numbers
+therefore do NOT establish a steady GPU speedup. Matching max-upload geometry
+and exact fixture parity establish byte reduction without intentional quality
+reduction. No weaker-machine or native-FPS benefit is claimed from this cohort.
+
+Encoder investigation and useful next direction
+-----------------------------------------------
+The first e7bc449 pilot validated every byte twice, producing140.369 ms packing
+versus44.815 OFF; its compact max gap301.21 ms. It is not pooled with5820 results.
+The optimized encoder uses one admission per byte and a256-entry exact normalized
+float-bit table; this reduced but did not remove the overhead. Absolute writes
+preserve the buffer position on rejection, and full fallback rewrites the chunk.
+One final bounded microkernel tried native-order int[13] staging plus bulk
+IntBuffer.put. Three fresh JVM medians,131072 vertices: scalar5.738/5.331/5.274 ms,
+bulk6.529/6.145/6.036 ms. Exact byte/fallback proof passed, but bulk is slower.
+It remains a benchmark fixture only, not a new runtime or another route campaign.
+See output/tests/native-compact-packing/run-{1,2,3}.csv.
+
+Most eligible fields originate as integers: writeUnbakedChunkMaterialColor
+extracts raw RGB, writeChunkShaderInputs emits integer legacy light, raw RGB,
+model/family/mask, terrain RGB/strength, and writeChunkTextureLight emits constant
+1.0 in the eligible unbaked path. The float writer then converts them to normalized
+floats, and the compact encoder reconstructs/admission-checks them. A future shared
+typed writer could emit original integers directly, preserving one material
+formula implementation and exact range rejection (especially future masks, enum
+IDs and strength). Position/UV/normal remain float. Legacy/baked brightness/light
+paths can produce arbitrary floats and must retain fallback. The result rejects
+this float-roundtrip implementation, not compact geometry as inherently slow.
+
+Coherent scheduling: tested laboratory rejection, not production integration
+---------------------------------------------------------------------------
+NativeTransitionUploadPrototype is isolated under tools/renderer-benchmark/orsc;
+no presenter uses it. Immutable copied inputs, pending/live separation, bounded
+plane/total bytes, bounded GL calls and atomic completion are exercised. Identity
+covers source/level/settings/atlas/context; same-source pose and animation coalesce
+without restarting static work. Actual identity changes cancel; publication needs
+the latest frame token and external ownership assertion. Pending input/picking is
+blocked. Tests cover stale generation, failure, cancellation, cleanup, copied
+source mutation, animation starvation and latest-animation publication.
+
+Real GL prototype submission, synthetic201 planes/67 chunks totaling141441120B:
+4MiB per tick:34 ticks,33.101 ms submission total,max tick2.598 ms,
+              upfront immutable copy37.731 ms,modeled60Hz readiness566.667 ms.
+16MiB per tick:9 ticks,16.564 ms submission total,max tick2.136 ms,
+              upfront copy25.560 ms,modeled60Hz readiness150.000 ms.
+Per-call cap64KiB,soft3ms check,max32 allocations/tick. A GL call is not preemptible.
+No timing waits for GPU completion; buffer readback validation is outside timing.
+See output/tests/native-transition-prototype/{cpu.log,gpu.log,gpu/slices-*.csv}.
+
+This can smooth submission while delaying useful-world readiness/aging the old
+image. Modeled60Hz values are NOT measured game/display latency. Actual CPU
+packing/grouping and real Frame.release/pool ownership are not scheduled here;
+the upfront copy is real and must not be omitted. Live GPU data is only1KiB in
+this fixture, not465MB. Real old residency plus two141MB pending copies exceeds
+512MiB before other resources. The game atlas can mutate UV/material ownership;
+old VBO retention alone cannot preserve a complete old scene. Production frame,
+camera, picking/input, atlas/material and shadow ownership remain unimplemented
+and unvalidated. A normal launcher skips fallback raster, so simply enabling the
+old3ms upload flag is unsafe. No production scheduler or first-new-frame speedup
+is claimed. Parent accepted this bounded rejection rather than a speculative
+full lifecycle rewrite without favorable cost/readiness evidence.
+
+Correctness and reproducibility
+-------------------------------
+python3 tests/myworld/test-native-compact-geometry.py --client-jar
+ output/builds/native-compact-geometry/5820ee21d3/client.jar --gpu
+ --java21 /usr/lib/jvm/java-21-openjdk-amd64/bin/java
+Fixture sources compile against the FULL JAR, never runtime-class replacements.
+CPU Java8/21:111059 raw-bit/layout/atlas checks, every byte code, unsupported and
+late-prefix whole-stream fallback/recovery;32 exact grouping cases including cap.
+GPU main:7680 exact byte-code/light/color/alpha/family/mask/UV/relief variants,
+1524 distinct outputs. Lighting uniforms frozen for each OFF/ON pair.
+Actual cache/upload/draw:48 configurations,6 mixed-layout cases, separated
+compact/forced-legacy/flat geometry, six drawn triangles and positive coverage in
+all three regions. Actual same-cache lighting/fog/geometry round trips and
+texture policy/session clearing exercised; shader-disabled is a fresh-renderer
+configuration, not a mutable shader toggle. Near/far shadow24 exact images include
+cutout/roof/slope/contact; existing lit-versus-shadow silhouette assertions are
+positive nonempty oracles. GL2.1 unsupported capability fallback also passes.
+Discrete-GPU receipt: output/tests/native-compact-geometry/1794602932172416270.
+Integrated-GPU receipt: output/tests/native-compact-geometry/1794602957641328142.
+Both pass with actual reported hardware renderers, not software rendering.
+Earlier fixture-only attempts are retained: incorrect flat sentinel/projection
+midpoint and moving time-of-day uniforms were corrected, not waived/tolerated.
