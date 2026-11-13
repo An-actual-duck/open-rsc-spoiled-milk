@@ -92,7 +92,7 @@ public class MerlinsCrystal implements QuestInterface, TalkNpcTrigger,
 				mez("MerlinsCrystalYouAreOutAtSea");
 				delay(5);
 				mez("MerlinsCrystalTheShipComesToAStop");
-				player.teleport(456, 520, false);
+				player.teleport(456, 520, 0, false);
 				mez("MerlinsCrystalYouSneakOutOfTheShip");
 				delay(3);
 			}

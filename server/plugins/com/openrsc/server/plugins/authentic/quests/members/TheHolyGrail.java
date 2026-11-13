@@ -313,7 +313,7 @@ public class TheHolyGrail implements QuestInterface, TalkNpcTrigger,
 				}
 			} else if (player.getLocation().inBounds(388, 4, 427, 40)) { // 1st
 				// ISLAND
-				player.teleport(490, 651, false);
+				player.teleport(490, 651, 0, false);
 			} else if (player.getLocation().inBounds(484, 4, 523, 40)
 				|| player.getLocation().inBounds(511, 976, 519, 984)
 				|| player.getLocation().inBounds(511, 1920, 518, 1925)) { // 2nd
@@ -325,7 +325,7 @@ public class TheHolyGrail implements QuestInterface, TalkNpcTrigger,
 				// top
 				// floor
 				// castle.
-				player.teleport(490, 651, false);
+				player.teleport(490, 651, 0, false);
 			} else {
 				mes("The whistle makes no noise");
 				delay(3);

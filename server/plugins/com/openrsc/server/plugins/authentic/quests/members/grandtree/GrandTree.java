@@ -147,7 +147,7 @@ public class GrandTree implements QuestInterface, TalkNpcTrigger, OpLocTrigger, 
 								say(player, n, "of course");
 								npcsay(player, n, "i'll show you the way back up");
 								player.message("you follow king shareem up the ladder");
-								player.teleport(415, 163);
+								player.teleport(415, 163, 0, false);
 							} else if (op == 1) {
 								npcsay(player, n, "thank guthix for you arrival",
 									"the first task is to find out what's killing my tree");

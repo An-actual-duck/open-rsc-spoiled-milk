@@ -111,7 +111,7 @@ public class WatchTowerObstacles implements OpLocTrigger, OpBoundTrigger, UseNpc
 			}
 		}
 		else if (obj.getID() == OGRE_ENCLAVE_EXIT) {
-			player.teleport(662, 788);
+			player.teleport(662, 788, 0, false);
 		}
 		else if (obj.getID() == WATCHTOWER_LEVER_DOWNPOSITION) {
 			player.message("The lever is stuck in the down position");
@@ -394,7 +394,7 @@ public class WatchTowerObstacles implements OpLocTrigger, OpBoundTrigger, UseNpc
 		else if (obj.getID() == DARK_PLACE_TELEPORT_ROCK) {
 			player.message("You search the rock");
 			player.message("You uncover a tunnel entrance");
-			player.teleport(638, 776);
+			player.teleport(638, 776, 0, false);
 			say(player, null, "Phew! At last i'm out...",
 				"Next time I will take some light!");
 		}
@@ -414,7 +414,7 @@ public class WatchTowerObstacles implements OpLocTrigger, OpBoundTrigger, UseNpc
 			}
 			player.playerServerMessage(MessageType.QUEST, "You enter the tunnel");
 			player.message("So that's how the skavids are getting into yanille!");
-			player.teleport(609, 742);
+			player.teleport(609, 742, 0, false);
 		}
 	}
 
@@ -427,17 +427,17 @@ public class WatchTowerObstacles implements OpLocTrigger, OpBoundTrigger, UseNpc
 	public void onOpBound(Player player, GameObject obj, Integer click) {
 		if (inArray(obj.getID(), CAVE_EXITS)) { // 6 WEBS!!
 			if (obj.getID() == CAVE_EXITS[0]) {
-				player.teleport(648, 769);
+				player.teleport(648, 769, 0, false);
 			} else if (obj.getID() == CAVE_EXITS[1]) {
-				player.teleport(638, 777);
+				player.teleport(638, 777, 0, false);
 			} else if (obj.getID() == CAVE_EXITS[2]) {
-				player.teleport(629, 777);
+				player.teleport(629, 777, 0, false);
 			} else if (obj.getID() == CAVE_EXITS[3]) {
-				player.teleport(631, 789);
+				player.teleport(631, 789, 0, false);
 			} else if (obj.getID() == CAVE_EXITS[4]) {
-				player.teleport(624, 807);
+				player.teleport(624, 807, 0, false);
 			} else if (obj.getID() == CAVE_EXITS[5]) {
-				player.teleport(645, 812);
+				player.teleport(645, 812, 0, false);
 			}
 		}
 		else if (obj.getID() == BATTLEMENT) {
