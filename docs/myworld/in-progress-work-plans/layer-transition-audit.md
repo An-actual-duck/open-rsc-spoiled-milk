@@ -1,5 +1,12 @@
 # Native layer movement audit
 
+Manager update, November 12, 2026: integrated at
+`2a6a77a7880302522029c5ad71b6b08613b43047` and staged as server-only `v0.3.20`.
+The current-code and Oracle ARM64/JDK17 replays both pass 51 cases / 342 checks;
+the running baseline fails 39 cases. The public server remains `v0.3.19`.
+See [staging and maintenance handoff](layer-transition-release-staging.txt).
+The worker's original scope and evidence below are preserved as history.
+
 Status: prepared for manager review in `fix/layer-transition-audit`, based on published
 `18d57f9ec6ea1ff8a8d4b1226e1c675ed5e81920`. The owner requested an independent
 worker audit after the Draynor Manor basement ladder fix. No deployment is part

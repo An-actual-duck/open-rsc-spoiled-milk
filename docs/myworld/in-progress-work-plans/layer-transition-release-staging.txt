@@ -1,0 +1,82 @@
+Level-transition fixes: staged server-only release
+=================================================
+Prepared November 12, 2026. Status: staged and verified; NOT activated.
+
+Frozen candidate
+----------------
+Tag: v0.3.20 (server-only source tag, no desktop updater release).
+Source: 2a6a77a7880302522029c5ad71b6b08613b43047.
+Integrated worker handoff: cdde6f9da4f6797394e0e5cb32461e5c61aacc09.
+Oracle candidate: /home/ubuntu/spoiled-milk/staging/layer-transition-2a6a77a78.
+Oracle evidence: /home/ubuntu/spoiled-milk/verification/layer-transition-2a6a77a78.
+Manager evidence: output/reviews/layer-transition-staging/.
+
+The public service remains on v0.3.19, source
+2d55983b11f36b4a488a417e05d1662eb7357801, PID93697 at staging verification.
+Browser alpha-20261112-6 and desktop v0.3.16 remain unchanged. No map replacement,
+database/schema migration, public-account fixture or new player download is needed.
+
+Scope and validation
+--------------------
+The candidate contains 28 explicit surface-return call-site repairs in ten quest/
+travel plugins and the Observatory keep-gate correction in an eleventh. Full
+scope, unchanged controls and remaining unproven candidates are recorded in
+layer-transition-audit.md. Generic teleport semantics were not changed.
+
+The exact integrated source passed the full server build, 51 offline production
+callback cases / 342 checks, and the layered-location and quest-shortcut checks.
+The Oracle ARM64/OpenJDK17 build independently passed 51/342. The running v0.3.19
+plugins, used read-only as the Oracle baseline, fail 39 of those same cases.
+The fixture uses the unchanged installed map, actual Player movement and owning
+plugin callbacks; waits are elided and menus scripted. It does not certify every
+network/approach path or complete quest walkthrough.
+
+Class comparison against the running v0.3.19 build proves:
+* Core and gameplay-overlay class rosters and bytes are identical.
+* Exactly the eleven intended plugin classes differ; no class is added/removed.
+* Installed map manifest remains
+  42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b.
+* The public service stayed active with the same PID and zero automatic restarts.
+
+The broad native-player release check still reports the previously preserved
+parked browser experiments. They were not deleted, integrated or bypassed into
+this candidate. This is the existing separate server-only staging workflow;
+no native player packaging or browser publication is part of the patch.
+
+Prepared maintenance tools
+--------------------------
+The candidate service unit changes only MYWORLD_HOSTED_RELEASE_TAG from v0.3.19
+to v0.3.20 and passes systemd-analyze verify. Its original/candidate hashes are
+recorded under service-candidate/receipt.json in the Oracle evidence directory.
+It is not installed. The following reviewed copies are staged under
+/home/ubuntu/spoiled-milk/ and preserved in the manager evidence directory:
+* backup-v0320.py: requires the stopped server; makes and integrity-checks a
+  fresh backup and compares account/table counts before activation.
+* activate-v0320.py: requires a fresh maintenance-approval.json, clean stopped
+  ports, exact published tag/source, validated JAR hashes, unchanged prior unit,
+  backup/database hashes and map. It preserves v0.3.19, changes the guarded bind
+  mount/unit only after those checks, and starts the normal hosted runner.
+* post-health-v0320.py: checks installed classes, source/tag, database link,
+  service/backups/map and unchanged browser; replays the offline 51/342 callback
+  fixture against installed JARs with class-loading proof.
+
+Next maintenance window
+-----------------------
+Staging is not shutdown permission. Obtain fresh explicit authorization, take
+the online backup, have the administrator run the normal ::update warning and
+let it finish, then verify clean saved exit and both listeners closed. Take the
+final stopped backup with backup-v0320.py and retain a checked owner-PC copy.
+Only then create verification/v0.3.20/maintenance-approval.json with the release,
+sourceCommit, shutdownAuthorized=true, updateWindowCompleted=true, exact
+userInstruction, observedCountdown and current recordedEpoch. The activation
+tool requires that evidence to be less than two hours old; flags/metadata do not
+themselves grant permission.
+
+Run activation and post-health only in that approved window. Check actual
+native/WSS configuration exchange afterward and a representative owner route.
+Keep the browser index at alpha-20261112-6 and desktop release at v0.3.16.
+The normal guarded startup still compiles its production JARs; prebuilding has
+removed the implementation/testing work, not those existing startup checks.
+Update the current-host inventory only after successful activation. Rollback
+uses the preserved v0.3.19 source/unit/mount and the same unchanged external
+database, with a newly authorized shutdown if the replacement is already live.
