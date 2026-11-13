@@ -35,6 +35,7 @@ public final class BrowserBootstrap {
     private static native int wsOpen();
     private static native byte[] wsRead(int socket, int maximum);
     private static native int wsAvailable(int socket);
+    private static native boolean wsConnected(int socket);
     private static native void wsWrite(int socket, byte[] bytes);
     private static native void wsClose(int socket);
     private static native int[] awaitMiddleMouseEvent();
@@ -94,6 +95,7 @@ public final class BrowserBootstrap {
         final String fixture=System.getProperty("spoiledmilk.browserRepeatableFixture");
         final int privatePort=privateFixturePort(fixture,System.getProperty("spoiledmilk.browserPrivateLoopbackPort"));
         final boolean combat="renderer-combat-v1".equals(fixture);
+        if("staged-login-v1".equals(fixture)&&(!webgl||!Boolean.getBoolean("spoiledmilk.browserBenchmark")||!Boolean.getBoolean("spoiledmilk.browserStagedLogin")))throw new IllegalArgumentException("Staged-login fixture requires explicit private preparation");
         final boolean repeatable="repeatable-v1".equals(fixture)||combat;
         if(repeatable&&(!webgl||!Boolean.getBoolean("spoiledmilk.browserBenchmark")))throw new IllegalArgumentException("Repeatable camera is private benchmark only");
         final RepeatableCamera fixedCamera=repeatable?new RepeatableCamera():null;
@@ -166,6 +168,7 @@ public final class BrowserBootstrap {
                 if(!actual[0]||!actual[1])throw new IllegalStateException("Requested clone templates unsupported by client JAR");
             }
             orsc.BrowserWebGLBridge.install();
+            orsc.BrowserWebGLBridge.installStagedLoginBackend();
             reportOverlayRectPolicy(System.getProperty("spoiledmilk.browserOverlayRectMode","off"),orsc.BrowserWebGLBridge.getOverlayRectMode());
             reportSpriteKeyPolicy(Boolean.parseBoolean(System.getProperty("spoiledmilk.browserSpriteKeyLimbs", "true")),orsc.BrowserWebGLBridge.isSpriteKeyLimbsEnabled());
         }
@@ -380,19 +383,21 @@ public final class BrowserBootstrap {
     }
 
     static int privateFixturePort(String fixture) {
-        return "renderer-combat-v1".equals(fixture)?43639:"repeatable-v1".equals(fixture)?43649:43629;
+        return "staged-login-v1".equals(fixture)?43659:"renderer-combat-v1".equals(fixture)?43639:"repeatable-v1".equals(fixture)?43649:43629;
     }
 
     static int privateFixturePort(String fixture,String stagedPort) {
         int expected=privateFixturePort(fixture);
         if(stagedPort==null)return expected;
-        if(!"43639".equals(stagedPort)&&!"43649".equals(stagedPort))throw new IllegalArgumentException("Invalid staged private loopback port");
+        if(!"43639".equals(stagedPort)&&!"43649".equals(stagedPort)&&!"43659".equals(stagedPort))throw new IllegalArgumentException("Invalid staged private loopback port");
         int port=Integer.parseInt(stagedPort);
-        if(fixture!=null&&(!"renderer-combat-v1".equals(fixture)&&!"repeatable-v1".equals(fixture)||expected!=port))throw new IllegalArgumentException("Staged private loopback port differs from fixture");
+        if(port==43659&&(!"staged-login-v1".equals(fixture)||!Boolean.getBoolean("spoiledmilk.browserStagedLogin")))throw new IllegalArgumentException("Staged login requires its explicit private fixture");
+        if(fixture!=null&&(!"renderer-combat-v1".equals(fixture)&&!"repeatable-v1".equals(fixture)&&!"staged-login-v1".equals(fixture)||expected!=port))throw new IllegalArgumentException("Staged private loopback port differs from fixture");
         return port;
     }
     static void validatePrivateConnection(InetAddress host,int port,String fixture,String stagedPort)throws IOException {
         final int expected;try{expected=privateFixturePort(fixture,stagedPort);}catch(IllegalArgumentException invalid){throw new IOException(invalid);}
+        if(expected==43659&&(!"staged-login-v1".equals(fixture)||!Boolean.getBoolean("spoiledmilk.browserStagedLogin")))throw new IOException("Staged login requires its explicit private fixture");
         if(!host.isLoopbackAddress()||port!=expected)throw new IOException("Private prototype permits only the selected loopback fixture port");
     }
     private static final class BrowserSocket extends SocketImpl {
@@ -411,7 +416,7 @@ public final class BrowserBootstrap {
             InetSocketAddress address = (InetSocketAddress) target; connect(address.getAddress(), address.getPort());
         }
         protected InputStream getInputStream() { return new InputStream() {
-            public int available() { return wsAvailable(connection); }
+            public int available() throws IOException { return BrowserSocket.this.available(); }
             public int read() throws IOException {
                 byte[] value = wsRead(connection, 1); return value.length == 0 ? -1 : value[0] & 255;
             }
@@ -430,7 +435,7 @@ public final class BrowserBootstrap {
             }
             public void close() { BrowserSocket.this.close(); }
         }; }
-        protected int available() { return wsAvailable(connection); }
+        protected int available() throws IOException { int buffered=wsAvailable(connection);if(buffered==0&&!wsConnected(connection))throw new IOException("Game connection closed");return buffered; }
         protected void close() { if (connection >= 0) { wsClose(connection); connection = -1; } }
         protected void bind(InetAddress host, int port) throws IOException { throw new IOException("No listening sockets"); }
         protected void listen(int backlog) throws IOException { throw new IOException("No listening sockets"); }
