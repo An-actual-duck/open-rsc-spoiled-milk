@@ -186,3 +186,13 @@ a thicker brown stock beneath the existing foliage (all opaque pixels retained).
 Editable layers, input PNGs, recipe and validation hashes are preserved.
 Before/after Firefox gallery: output/art/god-crossbow-selected-cleanup/index.html.
 No runtime sprites or gameplay changes installed yet.
+
+Owner correction and Guthix approval
+-----------------------------------
+Guthix's selected cleanup is approved and frozen. Rejected Zamorak's white
+strings/arrow. Current Zamorak restores original option 1, fills only transparent
+gaps in the right-hand string using its exact existing dark red (0x51050c),
+and recolours the original arrow into the black/charcoal horn palette. Stock
+reinforcement and left-string edits were removed. No enlarged/new arrow shape.
+All new colours already exist in the selected sprite; 48x32 native size retained.
+Saradomin and Guthix PNG hashes remain identical to their previous cleanup.

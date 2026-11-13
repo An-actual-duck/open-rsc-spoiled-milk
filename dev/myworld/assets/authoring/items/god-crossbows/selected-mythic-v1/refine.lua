@@ -29,9 +29,7 @@ for _,god in ipairs({'saradomin','zamorak','guthix'})do
  local src=app.open(base..'inputs/'..god..'.png');local original=Image(src.cels[1].image)
  assert(original.width==48 and original.height==32)
  local sprite=Sprite(48,32,ColorMode.RGB);local reinforcement=Image(48,32,ColorMode.RGB)
- if god=='zamorak'then
-  poly(reinforcement,{{4,27},{5,25},{10,23},{14,20},{18,17},{23,13},{27,11},{30,11},{29,14},{25,16},{21,19},{17,23},{13,25},{9,29},{4,29}},0x7a0912)
- elseif god=='guthix'then
+ if god=='guthix'then
   poly(reinforcement,{{4,17},{12,15},{21,15},{27,16},{30,16},{30,19},{25,19},{20,20},{13,20},{7,21},{4,21}},0x603a23)
  end
  sprite.cels[1].image=reinforcement;sprite.layers[1].name='Stock reinforcement beneath selected design'
@@ -42,13 +40,19 @@ for _,god in ipairs({'saradomin','zamorak','guthix'})do
   line(cleanup,42,8,28,17,0xfff7d6,true,original)
   line(cleanup,6,21,22,17,0xfff7d6,true,original)
  elseif god=='zamorak'then
-  -- Connect both string segments, distinct from stock and horns.
-  line(cleanup,13,11,17,17,0xaaa3ad)
-  line(cleanup,24,20,37,23,0xaaa3ad)
-  -- A continuous pale-metal arrow stands out against the red body.
-  line(cleanup,18,20,35,7,0xd4d3df)
-  poly(cleanup,{{36,6},{32,7},{35,10}},0xd4d3df)
-  dot(cleanup,36,6,0xf3f1f5);dot(cleanup,35,7,0xf3f1f5)
+  -- Match the existing dark red string; only fill its transparent right-side gaps.
+  line(cleanup,23,20,36,23,0x51050c,true,original)
+  -- Recolour the existing arrow pixels to the same black/charcoal palette as horns.
+  -- Keep its original silhouette, with no white redraw or larger replacement head.
+  for y=6,20 do for x=1,46 do
+   local centre=36-(y-6)*1.3
+   local arrow=(y<=9 and x>=32 and x<=36)or math.abs(x-centre)<=1
+   local c=original:getPixel(x,y)
+   local r,g,b=pc.rgbaR(c),pc.rgbaG(c),pc.rgbaB(c)
+   if arrow and pc.rgbaA(c)>0 and r>g*1.5 and r>b*1.5 then
+    dot(cleanup,x,y,r>=200 and 0x45424d or(r>=122 and 0x2c2932 or 0x19171d))
+   end
+  end end
  end
  local detail=sprite:newLayer();detail.name='Continuous strings and contrast arrow';sprite:newCel(detail,1,cleanup,Point(0,0));app.layer=detail
  sprite:saveAs(base..god..'-crossbow.aseprite');sprite:saveCopyAs(base..god..'-crossbow.png');sprite:close();src:close()

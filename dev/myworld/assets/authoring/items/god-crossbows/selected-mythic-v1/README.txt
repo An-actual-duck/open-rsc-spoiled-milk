@@ -4,8 +4,9 @@ Owner selected option 1 for each god from the nine reference-free designs.
 Only those actual 48x32 PNGs are inputs here; no old crossbow/mace references.
 
 Saradomin: fill existing string gaps; every original opaque pixel retained.
-Zamorak: connect strings, solidify stock with a dark-red underlay, add a pale
-metal arrow that contrasts against the red stock.
+Zamorak: restore original option 1; fill only right-string transparent gaps
+with matching dark red, recolour existing arrow black/charcoal like the horns.
+No stock reinforcement, left-string edits, white string or white arrow.
 Guthix: thicken brown stock beneath the existing wood/foliage details; every
 original opaque pixel retained.
 
@@ -17,3 +18,5 @@ Rebuild with ROOT set to the absolute worker path:
 All outputs 48x32 RGBA with binary alpha. Receipt records input/output hashes
 and changed-pixel counts. No runtime installation or gameplay changes yet.
 Preview: output/art/god-crossbow-selected-cleanup/index.html
+
+Guthix cleanup is owner-approved and frozen unchanged.
