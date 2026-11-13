@@ -169,7 +169,6 @@ const natives = {
       const previous=worldPreparation.stats.latest;
       if(!worldPreparation.accept(input))return;
       const value=worldPreparation.stats.latest;
-      if(value.stage===1&&value.owner!==previous?.owner)awaitingGameFrame=true;
       updateWorldCover();publish();
       // A bounded task yield lets real DOM updates paint during Java parsing.
       // It is independent of readiness and works in a background tab too.
