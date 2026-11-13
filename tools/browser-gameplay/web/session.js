@@ -106,8 +106,9 @@ window.addEventListener('message', event => {
     // Startup/recovery is transient. The game owns its login and initial world
     // loading cover; normal travel never restores the outer startup screen.
     const proof=event.data.proof;
-    const fatal=proof.connectionError||(proof.gpu?.worldReadiness?.phase==='error'?'Area preparation failed.':null)||proof.gpu?.lastError||(proof.gpu?.contextLost?'Graphics connection lost.':null)||proof.wholeRamError;
-    if(fatal)showRecovery(proof.connectionError?'Could not reach the game server. Check your connection, try again, or use the downloadable client.':'The game could not continue. You can restart or use the downloadable client.');
+    const worldFailure=['WORLD-MEMORY','WORLD-DATA','WORLD-RENDER'].includes(proof.worldPreparation?.latest?.failureCode)?proof.worldPreparation.latest.failureCode:null;
+    const fatal=worldFailure||proof.connectionError||(proof.gpu?.worldReadiness?.phase==='error'?'Area preparation failed.':null)||proof.gpu?.lastError||(proof.gpu?.contextLost?'Graphics connection lost.':null)||proof.wholeRamError;
+    if(fatal)showRecovery(worldFailure?'The world could not be prepared ('+worldFailure+'). Restart the game to retry.':proof.connectionError?'Could not reach the game server. Check your connection, try again, or use the downloadable client.':'The game could not continue. You can restart or use the downloadable client.');
     else if(proof.state?.mode==='LOGIN'||proof.state?.mode==='GAME'){startup?.finish(proof.state.mode);hideProgress();welcome.hidden=true;}
   } else if (event.data?.type === 'browser-session-stop') end(String(event.data.reason));
   else if (event.data?.type === 'browser-session-focus-left') {

@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import {createWorldPreparationProgress,worldPreparationMessage} from '../../tools/browser-gameplay/web/browser-world-preparation.js';
+import {createWorldCover} from '../../tools/browser-gameplay/web/browser-world-cover.js';
+let checks=0;const ok=(v,m)=>{checks++;assert(v,m);};
+const p=createWorldPreparationProgress(),packet=(stage,completed=0,total=0,seq=stage,error=0,owner=1,time=1000)=>[1,owner,seq,stage,completed,total,time,error];
+ok(!p.accept(packet(4,0,100)), 'must start a new owner with metadata');ok(p.accept(packet(1)), 'start');
+ok(p.accept(packet(2,0,3000000)), 'read stage');ok(p.accept(packet(2,1048576,3000000,3)), 'actual bytes');
+for(const bad of [packet(2,0,3000000,4),packet(2,1048576,4000000,4),packet(1,0,0,4),packet(2,1048576,3000000,3),packet(2,4000000,3000000,4),[1,1,4,2,1,Infinity,1000,0],packet(7,0,0,4,0)])ok(!p.accept(bad),'reject invalid/reordered diagnostics');
+ok(p.accept(packet(3,1797,1797,4)), 'verified file count');ok(worldPreparationMessage(p.stats.latest,{}).includes('1797 / 1797'),'file stage text');
+ok(p.accept(packet(4,65536,230205484,5)), 'prepared read');ok(worldPreparationMessage(p.stats.latest,{}).includes('MB read'),'read bytes never mean validated bytes');
+ok(p.accept(packet(5,0,0,6)), 'validation');ok(p.accept(packet(6,0,0,7)), 'verified');
+ok(worldPreparationMessage(p.stats.latest,{required:8,uploaded:3}).includes('3 / 8'),'GPU coverage stays separate');
+ok(p.accept(packet(7,0,0,8,1)), 'actual failure');ok(worldPreparationMessage(p.stats.latest,{}).includes('WORLD-MEMORY'),'sanitized error code');ok(!p.accept(packet(1,0,0,1,0,2)),'late/new preparation cannot erase genuine error');
+let now=0,tick,created=0,cleared=0;const timers={setInterval(fn){tick=fn;created++;return 1;},clearInterval(){tick=null;cleared++;}};
+function element(){return{style:{},children:[],textContent:'',setAttribute(){},removeAttribute(n){delete this[n];},append(...n){this.children.push(...n);},contains(){return false;},remove(){},getBoundingClientRect(){return{left:0,top:0,right:400,bottom:400}}};}
+const document={createElement:element,addEventListener(){},removeEventListener(){}},display=element();const cover=createWorldCover({document,window:timers,display,now:()=>now});const box=display.children[0],[title,detail,meter,elapsed,help]=box.children;
+const read={stage:4,label:'Reading world data',completed:1048576,total:230205484};cover.update({phase:'loading'},null,null,read);ok(cover.blocksWorldInput&&meter.value===read.completed,'counts paint without granting readiness');
+now=31000;tick();ok(elapsed.textContent.includes('31 seconds')&&!help.hidden,'honest elapsed and slow hint');
+cover.update({phase:'loading'},null,null,{stage:6});ok(cover.blocksWorldInput&&meter.value===undefined,'verified RAM never releases the graphics gate');
+cover.update({phase:'ready'});ok(!cover.blocksWorldInput&&cleared===1&&meter.hidden&&elapsed.hidden,'ready removes initial UI and timer');
+cover.update({phase:'streaming',blocksKeyboard:false,required:3,uploaded:2});ok(box.style.background==='transparent'&&meter.hidden&&created===1,'normal travel does not regain full loading meter');
+cover.update({phase:'login'});now=50000;cover.update({phase:'loading'},null,null,read);ok(elapsed.textContent.includes('0 seconds')&&created===2,'relogin clock starts fresh');
+cover.update({phase:'error'},null,'WORLD-DATA',{failureCode:'WORLD-DATA'});ok(detail.textContent.includes('WORLD-DATA')&&cleared===2,'real failure visible without timeout');cover.dispose();ok(cleared===2,'disposed once without leaking timer');
+console.log('PASS '+checks+' typed progress, stale/failure guards, actual stage counts, GPU independence, initial-only cover and timer lifecycle checks');

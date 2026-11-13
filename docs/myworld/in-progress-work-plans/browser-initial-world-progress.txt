@@ -1,0 +1,44 @@
+Public initial-world progress, November 12, 2026
+==============================================
+
+The external report occurs AFTER authentication, on Loading world / Preparing
+game data. No cause has been reproduced on that person's device. Public initial
+RAM validation starts only at the first real world presentation, after LOGIN;
+the earlier Play-to-login startup test did not exercise that constructor.
+
+This focused change adds passive observations, not a loading or readiness fix.
+A separate bounded 8-word public callback records metadata checks, actual source
+bytes read, source files successfully checked, actual prepared bytes read, final
+validation and data verified. The existing 18-word authoritative RAM receipt,
+all hashes/roster/source/roof checks and GPU readiness/fence conditions remain.
+The InputStream wrapper sits beneath the existing prepared buffering/digest; it
+never adds a per-byte clock/native callback. Reports use real byte/file milestones
+and 250ms checks, plus stage boundaries. Read-ahead is labeled MB read, never
+percent decoded or validated. Public callbacks occasionally yield a browser task
+so DOM text can paint while the Java parser is running. Private callback output
+is disabled; its input wrapper is the original stream object.
+
+The initial cover shows the current stage, stage-local progress, actual elapsed
+time, and a slow-device explanation after 30 seconds. No ETA, artificial overall
+percentage, timeout failure or early-ready shortcut exists. After data validation,
+current GPU coverage/material/warmup status remains separate. Ordinary streaming
+stays transparent and has no new full-screen meter. Login, ready, error and dispose
+clear the initial timer; a subsequent initial load starts at zero.
+
+A genuine caught RAM or bridge presentation failure emits only controlled
+WORLD-MEMORY, WORLD-DATA or WORLD-RENDER codes. Diagnostic failures are passive;
+the original read/validation/presentation exception is still thrown. The parent
+recovery page recognizes those codes and offers its existing Restart control.
+No account names, chat, coordinates, raw exceptions, logs or diagnostics uploads
+are added. The failure receipt is sticky within its disposable VM lifetime.
+
+CPU reproduction from a worker or manager, with an intact full client JAR:
+python3 tests/myworld/test-browser-world-preparation.py --client-jar /absolute/client.jar
+
+The suite compiles the three current Java sources against the intact JAR and
+checks literal buffered read bytes, bounded/throttled observation, stream closure,
+original exception identity, disabled private stream identity, passive sink errors,
+terminal failures, malformed/stale/reordered JS receipts, RAM/GPU separation,
+real timer/reset/disposal, and existing parent/frontend/readiness contracts.
+Actual SDK rendering/painting and fresh source-bound cooks remain manager gates.
+No public-server shutdown, desktop setting or gameplay change is part of this work.
