@@ -125,7 +125,7 @@ public final class StagedLoginSession {
             if(kind==StagedLoginProtocol.ACK){
                 int opcode=control.receiptOpcode;byte[] payload=control.receipt;Player owner=candidate;
                 enqueue(()->{
-                    if(owner!=candidate||!StagedLoginProtocol.matches(token,echoedToken)||!StagedLoginProtocol.matches(digest,echoedDigest))return;
+                    if(committing||owner!=candidate||!StagedLoginProtocol.matches(token,echoedToken)||!StagedLoginProtocol.matches(digest,echoedDigest))return;
                     Packet inner=new Packet(opcode,Unpooled.wrappedBuffer(payload));
                     AbstractStruct parsed;
                     try{parsed=new PayloadCustomParser().parse(inner,owner);}finally{inner.getBuffer().release();}
