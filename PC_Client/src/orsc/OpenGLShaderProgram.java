@@ -1051,6 +1051,26 @@ final class OpenGLShaderProgram implements AutoCloseable {
         }
     }
 
+    /** Same locations as the production parity shader; native texture light is distinct. */
+    void bindNativeCompactAttributes(boolean textured) throws Exception {
+        gl.glDisableClientState(gl.GL_COLOR_ARRAY); gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+        int[] locations=NATIVE_COMPACT_LOCATIONS;
+        int[] sizes=NATIVE_COMPACT_SIZES;
+        int[] offsets=textured?NATIVE_COMPACT_TEXTURED_OFFSETS:NATIVE_COMPACT_FLAT_OFFSETS;
+        for(int i=0;i<locations.length;i++) {
+            gl.glEnableVertexAttribArray(locations[i]);
+            gl.glVertexAttribPointer(locations[i],sizes[i],i<3?gl.GL_FLOAT:gl.GL_UNSIGNED_BYTE,
+                i==3||i==4||i==6||i==10,NativeResidentGeometry.STRIDE,(long)offsets[i]);
+        }
+    }
+    private static final int[] NATIVE_COMPACT_LOCATIONS={POSITION_ATTRIBUTE_LOCATION,TEXTURE_COORD_ATTRIBUTE_LOCATION,NORMAL_ATTRIBUTE_LOCATION,
+        MATERIAL_COLOR_ATTRIBUTE_LOCATION,RAW_MATERIAL_COLOR_ATTRIBUTE_LOCATION,BASE_LEGACY_LIGHT_ATTRIBUTE_LOCATION,
+        TERRAIN_BLEND_COLOR_ATTRIBUTE_LOCATION,MODEL_KIND_ATTRIBUTE_LOCATION,MATERIAL_FAMILY_ATTRIBUTE_LOCATION,
+        TERRAIN_VARIATION_MASK_ATTRIBUTE_LOCATION,TERRAIN_BLEND_STRENGTH_ATTRIBUTE_LOCATION};
+    private static final int[] NATIVE_COMPACT_SIZES={3,2,3,4,3,1,3,1,1,1,1};
+    private static final int[] NATIVE_COMPACT_TEXTURED_OFFSETS={0,12,20,48,36,39,40,43,44,45,46};
+    private static final int[] NATIVE_COMPACT_FLAT_OFFSETS={0,12,20,32,36,39,40,43,44,45,46};
+
 	void bindWorldParityAttributes(
 		int positionComponents,
 		int textureCoordComponents,

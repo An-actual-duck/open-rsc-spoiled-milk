@@ -212,7 +212,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private boolean cachedRemasterShadowInventoryKnown;
 	private boolean remasterShadowMaskLastUpload;
 	private boolean remasterShadowMaskLastUploadSkip;
-	private boolean closed;
+	private ByteBuffer compactUploadBuffer;
+    private boolean packedCompact;
+    private final long[] uploadStages = new long[8];
+    private boolean closed;
 
 	OpenGLWorldChunkRenderer(
 		LwjglBindings gl,
@@ -255,6 +258,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		int deferredChunks = 0;
 		String uploadReason = "steady";
 		long uploadBudgetStart = System.nanoTime();
+        java.util.Arrays.fill(uploadStages, 0L);
 		int cacheSizeBefore = residentChunks.size();
 		int[] requestedByRole =
 			new int[OpenGLWorldChunkUploadStats.ROLE_COUNT];
@@ -446,6 +450,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		}
 
 		int evictedChunks = evictOverflow();
+        if (NativeGeometryDiagnostics.ENABLED) { long liveBytes=0; for (WorldChunkBuffer b:residentChunks.values()) liveBytes+=b.uploadedByteCount;
+        NativeGeometryDiagnostics.record(uploadStages, liveBytes,
+            (long)vertexUploadCapacity*4 + (long)indexUploadCapacity*4 + (long)materialIndexUploadCapacity*4
+                + (compactUploadBuffer==null?0:compactUploadBuffer.capacity())); }
 		return new OpenGLWorldChunkUploadStats(
 			requestedChunks,
 			uploadedChunks,
@@ -1274,8 +1282,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			if (buffer == null) continue;
 			int offsetX = chunk.getVertexOffsetX() - buffer.uploadedVertexOffsetX + GeometryShadowCoordinates.worldOffsetX(frame.getWorldChunkFrame());
 			int offsetZ = chunk.getVertexOffsetZ() - buffer.uploadedVertexOffsetZ + GeometryShadowCoordinates.worldOffsetZ(frame.getWorldChunkFrame());
-			pass.bindChunk(buffer.vertexBufferId, buffer.materialIndexBufferId, STRIDE_BYTES,
-				TEXTURE_COORD_OFFSET_BYTES, offsetX, offsetZ);
+			pass.bindChunk(buffer.vertexBufferId, buffer.materialIndexBufferId, buffer.compact ? NativeResidentGeometry.STRIDE : STRIDE_BYTES,
+				buffer.compact ? 12 : TEXTURE_COORD_OFFSET_BYTES, offsetX, offsetZ);
 			for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
 				if (SHADOW_DIAGNOSTIC_EXCLUDED.contains(batch.kind)) continue;
                 int material = effectiveChunkTextureId(frame, batch.textureId, batch.fallbackColor);
@@ -2065,7 +2073,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 							if (shaderTextureEnabled == null
 								|| shaderTextureEnabled.booleanValue() != drawState.textureEnabled) {
 								residentChunkShader.setTextureEnabled(drawState.textureEnabled);
-								bindResidentChunkShaderAttributes(drawState.textureEnabled);
+								bindResidentChunkShaderAttributes(drawState.textureEnabled, buffer.compact);
 								shaderTextureEnabled = Boolean.valueOf(drawState.textureEnabled);
 							}
 						}
@@ -2186,7 +2194,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		bindPreparedRemasterGlowMask();
 	}
 
-	private void bindResidentChunkShaderAttributes(boolean textureEnabled) throws Exception {
+	private void bindResidentChunkShaderAttributes(boolean textureEnabled, boolean compact) throws Exception {
+        if (compact) { residentChunkShader.bindNativeCompactAttributes(textureEnabled); return; }
 		residentChunkShader.bindWorldParityAttributes(
 			POSITION_COMPONENT_COUNT,
 			TEXTURE_COORD_COMPONENT_COUNT,
@@ -2775,19 +2784,24 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		boolean replacementCompositeDrawOnly,
 		List<ShadowProofCaster> shadowProofCasters,
 		long shadowProofSignature) throws Exception {
-		ensureUploadBuffers(vertexCount, indexCount);
+		long stageStart=NativeGeometryDiagnostics.now();
+        ensureUploadBuffers(vertexCount, indexCount);
 		copyChunkVertices(chunk, frame, vertexCount, atlasTextureCoordinates, shadowProofCasters);
-		copyChunkIndices(chunk, indexCount);
+		uploadStages[0]+=NativeGeometryDiagnostics.now()-stageStart; stageStart=NativeGeometryDiagnostics.now();
+        copyChunkIndices(chunk, indexCount);
+        uploadStages[1]+=NativeGeometryDiagnostics.now()-stageStart; stageStart=NativeGeometryDiagnostics.now();
 		WorldChunkMaterialBatch[] materialBatches =
 			copyMaterialIndices(chunk, indexCount, replacementCompositeDrawOnly, shouldUseSpatialMaterialBatches(chunk));
-		int bufferUsage = chunkBufferUsage(chunk);
+		uploadStages[2]+=NativeGeometryDiagnostics.now()-stageStart; stageStart=NativeGeometryDiagnostics.now();
+        int bufferUsage = chunkBufferUsage(chunk);
 		long uploadedByteCount =
-			(long) vertexUploadBuffer.remaining() * 4L
+			(packedCompact ? (long)compactUploadBuffer.remaining() : (long) vertexUploadBuffer.remaining() * 4L)
 				+ (long) indexUploadBuffer.remaining() * 4L
 				+ (long) materialIndexUploadBuffer.remaining() * 4L;
 
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer.vertexBufferId);
-		gl.glBufferData(gl.GL_ARRAY_BUFFER, vertexUploadBuffer, bufferUsage);
+		if (packedCompact) gl.glBufferData(gl.GL_ARRAY_BUFFER, compactUploadBuffer, bufferUsage);
+        else gl.glBufferData(gl.GL_ARRAY_BUFFER, vertexUploadBuffer, bufferUsage);
 		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, buffer.indexBufferId);
 		gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, indexUploadBuffer, bufferUsage);
 		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, buffer.materialIndexBufferId);
@@ -2795,7 +2809,11 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0);
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
 
-		buffer.signature = bufferSignature;
+		uploadStages[3]+=NativeGeometryDiagnostics.now()-stageStart;
+        uploadStages[4]+=uploadedByteCount; uploadStages[5]+=packedCompact?vertexCount:0;
+        uploadStages[6]+=packedCompact?0:vertexCount; uploadStages[7]++;
+        buffer.compact=packedCompact;
+        buffer.signature = bufferSignature;
 		buffer.uploadedVertexOffsetX = chunk.getVertexOffsetX();
 		buffer.uploadedVertexOffsetZ = chunk.getVertexOffsetZ();
 		buffer.vertexCount = vertexCount;
@@ -2962,14 +2980,27 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		boolean atlasTextureCoordinates,
 		List<ShadowProofCaster> shadowProofCasters) {
 		vertexUploadBuffer.clear();
+        packedCompact = NativeResidentGeometry.enabled() && atlasTextureCoordinates
+            && useResidentChunkShader(true) && shouldUseUnbakedRemasterMaterialBase() && !shadowProofEnabled;
+        if (packedCompact) {
+            int bytes=Math.multiplyExact(vertexCount,NativeResidentGeometry.STRIDE);
+            if (compactUploadBuffer==null || compactUploadBuffer.capacity()<bytes)
+                compactUploadBuffer=ByteBuffer.allocateDirect(bytes).order(ByteOrder.nativeOrder());
+            compactUploadBuffer.clear(); compactUploadBuffer.limit(bytes);
+        }
 		int[] smoothDiffuseLights = buildChunkSmoothDiffuseLights(chunk, vertexCount);
 		float[] bakedTerrainShadowMask = buildBakedTerrainShadowMask(chunk, shadowProofCasters);
 		boolean unbakedRemasterBase = shouldUseUnbakedRemasterMaterialBase();
         for (int vertex=0;vertex<vertexCount;vertex++) {
             writeChunkVertex(nativePackedVertex,0,chunk,frame,vertex,atlasTextureCoordinates,false,
                 smoothDiffuseLights,bakedTerrainShadowMask,unbakedRemasterBase);
-            vertexUploadBuffer.put(nativePackedVertex);
+            if (packedCompact) {
+                if (!NativeResidentGeometry.put(compactUploadBuffer,nativePackedVertex)) {
+                    packedCompact=false; vertexUploadBuffer.clear(); vertex=-1; continue;
+                }
+            } else vertexUploadBuffer.put(nativePackedVertex);
         }
+        if (packedCompact) compactUploadBuffer.flip();
 		vertexUploadBuffer.flip();
 	}
 
@@ -4100,6 +4131,7 @@ final class WorldChunkBufferKey {
 }
 
 final class WorldChunkBuffer {
+    boolean compact;
 	final int vertexBufferId;
 	final int indexBufferId;
 	final int materialIndexBufferId;

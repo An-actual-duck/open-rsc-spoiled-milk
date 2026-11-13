@@ -111,6 +111,7 @@ final class LwjglBindings {
 	private final Method glGenBuffers;
 	private final Method glDeleteBuffers;
 	private final MethodHandle glBindBuffer;
+	private final MethodHandle glBufferDataBytes;
 	private final MethodHandle glBufferDataFloat;
 	private final MethodHandle glBufferDataInt;
 	private final MethodHandle glEnableClientState;
@@ -389,6 +390,7 @@ final class LwjglBindings {
 		glGenBuffers = method(gl15Class, "glGenBuffers");
 		glDeleteBuffers = method(gl15Class, "glDeleteBuffers", int.class);
 		glBindBuffer = methodHandle(gl15Class, "glBindBuffer", int.class, int.class);
+		glBufferDataBytes = methodHandle(gl15Class, "glBufferData", int.class, ByteBuffer.class, int.class);
 		glBufferDataFloat =
 			methodHandle(gl15Class, "glBufferData", int.class, FloatBuffer.class, int.class);
 		glBufferDataInt =
@@ -1005,6 +1007,11 @@ final class LwjglBindings {
 			rethrow(cause);
 		}
 	}
+
+	void glBufferData(int target, ByteBuffer data, int usage) throws Exception {
+        try { glBufferDataBytes.invokeExact(target, data, usage); }
+        catch (Throwable failure) { rethrow(failure); }
+    }
 
 	void glBufferData(int target, FloatBuffer data, int usage) throws Exception {
 		try {

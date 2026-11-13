@@ -29,6 +29,7 @@ public final class GeometryShadowGpuFixture {
     private static int shadowPlane;
 	private static final Set<String> gpuSamples = new HashSet<String>();
 	private static final int SIZE = 512;
+    private static final boolean COMPACT = Boolean.getBoolean("spoiledmilk.nativeCompactGeometry");
 	private static FloatBuffer floats(float... values) {
 		FloatBuffer b = ByteBuffer.allocateDirect(values.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
 		b.put(values).flip(); return b;
@@ -68,7 +69,12 @@ public final class GeometryShadowGpuFixture {
 			if(wallReceiver){geometry[i*5+1]=geometry[i*5];geometry[i*5]=-300;}
 		}
 		if(contactCard)for(int i=6;i<12;i++)geometry[i*5+1]+=128;
-		gl.glBufferData(gl.GL_ARRAY_BUFFER,floats(geometry), gl.GL_STATIC_DRAW);
+		if(COMPACT) {
+            ByteBuffer packed=ByteBuffer.allocateDirect(12*52).order(ByteOrder.nativeOrder());
+            for(int i=0;i<12;i++){float[] v=new float[28];System.arraycopy(geometry,i*5,v,0,3);v[7]=geometry[i*5+3];v[8]=geometry[i*5+4];
+                require(NativeResidentGeometry.put(packed,v),"compact shadow fixture pack");}
+            packed.flip();gl.glBufferData(gl.GL_ARRAY_BUFFER,packed,gl.GL_STATIC_DRAW);
+        } else gl.glBufferData(gl.GL_ARRAY_BUFFER,floats(geometry), gl.GL_STATIC_DRAW);
 		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER,indices);
 		gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER,ints(0,1,2,3,4,5,6,7,8,9,10,11),gl.GL_STATIC_DRAW);
 		if(alphaTexture==0)alphaTexture=gl.glGenTextures();gl.glBindTexture(gl.GL_TEXTURE_2D,alphaTexture);
@@ -84,7 +90,7 @@ public final class GeometryShadowGpuFixture {
         public int receiverPlane(){return shadowPlane;}
 		public GeometryShadowRoofMask roofMask(){return roofMask;}
 		public void drawDepth(OpenGLGeometryShadows pass,DirectionalShadowProjection projection,boolean staticOnly)throws Exception {
-			pass.bindChunk(vertices,indices,20,12,0,0);
+			pass.bindChunk(vertices,indices,COMPACT?52:20,12,0,0);
 			pass.drawRange(0,false,0,6); pass.drawRange(alphaTexture,alpha,6,6);
 		}
 	};
@@ -100,7 +106,7 @@ public final class GeometryShadowGpuFixture {
 		gl.glUniform1f(gl.glGetUniformLocation(program,"uLightDirectionY"),RendererRemasterLightSettings.getLightDirectionY());
 		gl.glUniform1f(gl.glGetUniformLocation(program,"uLightDirectionZ"),RendererRemasterLightSettings.getLightDirectionZ());
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER,vertices);gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER,indices);
-		gl.glEnableVertexAttribArray(0);gl.glVertexAttribPointer(0,3,gl.GL_FLOAT,false,20,0L);
+		gl.glEnableVertexAttribArray(0);gl.glVertexAttribPointer(0,3,gl.GL_FLOAT,false,COMPACT?52:20,0L);
 		gl.glDrawElements(gl.GL_TRIANGLES,6,gl.GL_UNSIGNED_INT,0L);
 		ByteBuffer pixels=ByteBuffer.allocateDirect(SIZE*SIZE*4);
 		gl.glReadPixels(0,0,SIZE,SIZE,gl.GL_RGBA,gl.GL_UNSIGNED_BYTE,pixels);

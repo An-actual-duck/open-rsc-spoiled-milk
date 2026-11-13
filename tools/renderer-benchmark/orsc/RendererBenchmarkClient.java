@@ -519,6 +519,16 @@ public final class RendererBenchmarkClient {
             if(!"low".equals(saved.getProperty("shadow_quality")))throw new IllegalStateException("Actual client setting store did not persist selected shadow quality");
             Files.write(capture.resolve("SETTINGS-PERSISTED"),"Actual production settings store saved Low shadow preference\n".getBytes(StandardCharsets.UTF_8));
         }
+        try {
+            Class<?> diagnostics=Class.forName("orsc.NativeGeometryDiagnostics");
+            java.lang.reflect.Method snapshot=diagnostics.getDeclaredMethod("snapshot");snapshot.setAccessible(true);
+            long[][] rows=(long[][])snapshot.invoke(null);
+            java.util.List<String> records=new java.util.ArrayList<String>();
+            records.add("# count="+rows[0][0]+",dropped="+rows[0][1]);
+            records.add("endNanos,packNanos,indexNanos,groupNanos,glNanos,uploadBytes,compactVertices,legacyVertices,chunks,liveBytes,scratchBytes");
+            for(int i=1;i<rows.length;i++){StringBuilder r=new StringBuilder();for(long n:rows[i]){if(r.length()>0)r.append(',');r.append(n);}records.add(r.toString());}
+            Files.write(capture.resolve("native-geometry.csv"),records,StandardCharsets.UTF_8);
+        } catch(ClassNotFoundException absent) { /* Frozen baseline has no candidate diagnostics. */ }
         closeGpuSink();
         RendererDiagnosticSession.close();
         Files.write(capture.resolve("CLIENT-DONE"), "Completed private renderer phase\n".getBytes(StandardCharsets.UTF_8));
