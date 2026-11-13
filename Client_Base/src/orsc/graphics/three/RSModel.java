@@ -13,6 +13,9 @@ import orsc.util.FastMath;
 import orsc.util.GenUtil;
 
 public final class RSModel {
+    private int browserProfileOwner;
+    public final void setBrowserProfileOwner(int owner){if(BrowserFinalModelProfile.ENABLED){if(owner<0||owner>2)throw new IllegalArgumentException("Profile owner");browserProfileOwner=owner+1;}}
+
 	private static final long FNV_OFFSET_BASIS = 0xcbf29ce484222325L;
 	private static final long FNV_PRIME = 0x100000001b3L;
 	private static final int FISHING_SPOT_RIPPLE_PERIOD = 24;
@@ -1104,6 +1107,8 @@ public final class RSModel {
 	}
 
 	private void calculateBoundingBoxes(int var1) {
+        long profileStart=BrowserFinalModelProfile.start();
+        try{
 		try {
 
 			this.minX = 999999;
@@ -1199,7 +1204,9 @@ public final class RSModel {
 		} catch (RuntimeException var13) {
 			throw GenUtil.makeThrowable(var13, "ca.C(" + var1 + ')');
 		}
-	}
+
+        }finally{if(BrowserFinalModelProfile.ENABLED)BrowserFinalModelProfile.elapsed(browserProfileOwner,2,profileStart);}
+    }
 
 	private void clearRotDataAndParams26(byte var1) {
 		try {
@@ -1427,6 +1434,8 @@ public final class RSModel {
 	}
 
 	private void computeDiffuse(int var1) {
+        long profileStart=BrowserFinalModelProfile.start();
+        try{
 		try {
 
 			if (!this.dontComputeDiffuse) {
@@ -1479,9 +1488,13 @@ public final class RSModel {
 		} catch (RuntimeException var11) {
 			throw GenUtil.makeThrowable(var11, "ca.FA(" + var1 + ')');
 		}
-	}
+
+        }finally{if(BrowserFinalModelProfile.ENABLED)BrowserFinalModelProfile.elapsed(browserProfileOwner,4,profileStart);}
+    }
 
 	private void computeNormals(byte var1) {
+        long profileStart=BrowserFinalModelProfile.start();
+        try{
 		try {
 
 			if (!this.dontComputeDiffuse || !this.m_c) {
@@ -1527,7 +1540,9 @@ public final class RSModel {
 		} catch (RuntimeException var17) {
 			throw GenUtil.makeThrowable(var17, "ca.K(" + var1 + ')');
 		}
-	}
+
+        }finally{if(BrowserFinalModelProfile.ENABLED)BrowserFinalModelProfile.elapsed(browserProfileOwner,3,profileStart);}
+    }
 
 	private void copyFaceTo(int[] faceVert, RSModel dest, int faceVertCount, int srcFaceID, int var5) {
 		try {
@@ -1866,6 +1881,7 @@ public final class RSModel {
 				this.maxFaceDimension = 9999999;
 				this.minX = -9999999;
 			} else if (this.m_Yb == 1) {
+                long transformStart=BrowserFinalModelProfile.start();
 				this.m_Yb = 0;
 
 				for (i = 0; this.vertHead > i; ++i) {
@@ -1891,7 +1907,8 @@ public final class RSModel {
 					this.translate(var1 - 7972, this.translateY, this.translateZ, this.translateX);
 				}
 
-				this.calculateBoundingBoxes(999999);
+				if(BrowserFinalModelProfile.ENABLED)BrowserFinalModelProfile.elapsed(browserProfileOwner,1,transformStart);
+                this.calculateBoundingBoxes(999999);
 				this.computeNormals((byte) 14);
 			}
 
@@ -2842,6 +2859,8 @@ public final class RSModel {
 	}
 
 	public final void setDiffuseLightAndColor(int dirX, int dirY, int dirZ, int p1, int p2, boolean var5, int var7) {
+        long profileStart=BrowserFinalModelProfile.start();
+        try{
 		try {
 			this.diffuseParam2 = (64 - p2) * 16 + 128;
 			this.diffuseParam1 = 256 - p1 * 4;
@@ -2865,7 +2884,9 @@ public final class RSModel {
 			throw GenUtil.makeThrowable(var10,
 				"ca.N(" + dirZ + ',' + p1 + ',' + dirY + ',' + dirX + ',' + var5 + ',' + p2 + ',' + var7 + ')');
 		}
-	}
+
+        }finally{if(BrowserFinalModelProfile.ENABLED)BrowserFinalModelProfile.elapsed(browserProfileOwner,5,profileStart);}
+    }
 
 	private void setFaceVertexCount(int faceCount, int vertexCount, int var3) {
 		try {

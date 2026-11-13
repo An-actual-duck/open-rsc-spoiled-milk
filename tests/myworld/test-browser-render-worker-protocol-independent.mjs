@@ -217,3 +217,9 @@ class FakeWorker{
  }finally{view?.dispose();globalThis.window=oldWindow;}
 }
 console.log(JSON.stringify({passed:true,checks,cpuOnly:true,actualGPU:false,actualWorker:false,scope:'owned bytes/transfer, ordered resources, bounded ACK slots, result barriers, physical metadata, rejection and cleanup'}));
+
+{
+ const source=new Float32Array([1,2,3]);const own=P.ownRenderCommand('replaceChunkVertices',[7,source]);source.fill(99);eq(Array.from(own.command.args[1]),[1,2,3]);eq(own.bytes,12);eq(own.transfers.length,1);
+ const b=backend(),r=createRenderWorkerReplay({backend:b,outputSizer:createWorkerOutputSizer()});await r.execute(batch([own.command]));eq(b.calls.map(x=>x[0]),['replaceChunkVertices']);eq(Array.from(b.calls[0][1][1]),[1,2,3]);r.dispose();
+ assert.throws(()=>P.inspectRenderCommand('replaceChunkVertices',[7,new Int32Array(3)]));checks++;
+}

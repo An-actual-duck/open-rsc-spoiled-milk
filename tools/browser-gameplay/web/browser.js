@@ -26,7 +26,7 @@ import {createWorldPreparationProgress} from './browser-world-preparation.js';
 import {createStagedLoginGate} from './browser-staged-login.js';
 import {createBrowserMiddleMouseInput} from './browser-middle-mouse.js';
 import {createBrowserDisplay} from './browser-display.js';
-import {browserPreparationBenchmarkControls,browserOwnedStateBenchmarkPolicy,browserModelBenchmarkControls} from './browser-benchmark-controls.js';
+import {browserPreparationBenchmarkControls,browserOwnedStateBenchmarkPolicy,browserModelBenchmarkControls,browserVertexOnlyPolicy,browserFinalModelProfilePolicy} from './browser-benchmark-controls.js';
 const status = document.querySelector('#status');
 const deployment=resolveBrowserDeployment(deploymentConfig,location);
 const options = deployment.options;
@@ -37,6 +37,8 @@ function nativeCallPolicy(mode,parameters){
   return value;
 }
 const nativeCallDispatch=nativeCallPolicy(options.get('mode')||'software',options);
+const finalModelProfile=browserFinalModelProfilePolicy(options.get('mode')||'software',options);
+const vertexOnly=browserVertexOnlyPolicy(options.get('mode')||'software',options);
 const renderWorker=renderWorkerPolicy(options.get('mode')||'software',options);
 const wholeZone=wholeZonePolicy(options.get('mode')||'software',options);
 const cloneTemplates=cloneTemplatePolicy(options.get('mode')||'software',options);
@@ -196,6 +198,10 @@ const natives = {
       if(document.visibilityState==='visible'&&(value.stage!==previous?.stage||now-lastPreparationYield>=100)){lastPreparationYield=now;await new Promise(resolve=>setTimeout(resolve,0));}
     }catch{/* Passive progress must never replace Java data/validation failures. */}
   },
+  Java_orsc_browser_BrowserBootstrap_reportFinalModelProfile(lib,input){
+    const values=Array.from(input);if(values.length!==51||values[0]!==1||values.some(v=>!Number.isFinite(v)||v<0))throw new Error('Invalid final model profile');
+    window.browserProof.finalModelProfile={receivedTime:performance.now(),values};
+  },
   Java_orsc_BrowserWebGLBridge_loadingWork:loadProfileCollector.report,
   Java_orsc_browser_BrowserBootstrap_reportRegionHandoffTrace:regionHandoffCollector.report,
   Java_orsc_graphics_three_BrowserBatchedModelKernel_transformPacket: modelBatchKernel.native,
@@ -258,7 +264,7 @@ const natives = {
     }
   },
   async Java_orsc_browser_BrowserBootstrap_reportCandidatePolicy(lib,name,requested,available,enabled){
-    if(!['cloneTemplates','baselineReuse','wholeRam','wholeZone','regionBuild','regionLoadProfile','geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'].includes(name))throw new Error('Unknown private policy receipt');
+    if(!['finalModelProfile','vertexOnlyUpdates','cloneTemplates','baselineReuse','wholeRam','wholeZone','regionBuild','regionLoadProfile','geometryTransfer','regionPreparation','descriptorWriting','haloHeightLookup','sceneryProjection','chunkCoverage','batchedModelKernel','overlayDeltaTransport','terrainQueryIndex'].includes(name))throw new Error('Unknown private policy receipt');
     (window.browserProof.privatePolicies||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
     if(!options.has('benchmark')&&['batchedModelKernel','terrainQueryIndex'].includes(name))(window.browserProof.optimizedRenderDefaults||={})[name]={requested:requested===true,available:available===true,enabled:enabled===true};
   },
@@ -442,7 +448,7 @@ try {
   startupProgress.update('runtime-start');
   await cheerpjInit({version: javaVersion, ...(options.has('wasmgc') ? {wasmGC: true} : {}), disableScaling: true,
     enableInputMethods: false, clipboardMode: 'java', overrideShortcuts: () => false,
-    javaProperties: canonicalRenderProperties(['user.dir=/files', ...deployment.properties, ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...loadProfilePolicy.properties, ...wholeZone.properties, ...wholeRam.properties, 'spoiledmilk.browserStagedLogin='+stagedLoginEnabled, ...baselineReuse.properties, ...cloneTemplates.properties, ...(wholeRam.enabled?['spoiledmilk.browserWholeRamManifestSha256='+wholeRamCatalogConfig.manifestSha256]:[]), ...(wholeZone.enabled?['spoiledmilk.browserWholeZoneClientSha256='+wholeZoneCatalogConfig.clientJarSha256,'spoiledmilk.browserWholeZoneCatalogSha256='+wholeZoneCatalogConfig.manifestSha256]:[]), ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])],optimizedDefaults), natives});
+    javaProperties: canonicalRenderProperties(['user.dir=/files', ...deployment.properties, ...fixturePolicy.properties, ...geometryTransfer.properties, ...candidatePreparation.properties, ...loadProfilePolicy.properties, ...wholeZone.properties, ...wholeRam.properties, 'spoiledmilk.browserStagedLogin='+stagedLoginEnabled, ...baselineReuse.properties, ...cloneTemplates.properties, ...(wholeRam.enabled?['spoiledmilk.browserWholeRamManifestSha256='+wholeRamCatalogConfig.manifestSha256]:[]), ...(wholeZone.enabled?['spoiledmilk.browserWholeZoneClientSha256='+wholeZoneCatalogConfig.clientJarSha256,'spoiledmilk.browserWholeZoneCatalogSha256='+wholeZoneCatalogConfig.manifestSha256]:[]), ...finalModelProfile.properties, ...vertexOnly.properties, ...preparationControls.properties, ...spriteKeyControls.properties, ...modelPreparationControls.properties, ...(options.get('inputdiagnostics')==='1'?['spoiledmilk.browserInputDiagnostics=true']:[]), ...(window.browserProof.mode==='webgl'&&options.has('benchmark') ? ['spoiledmilk.browserBenchmark=true','spoiledmilk.browserCachePolicy='+options.get('cache'),'spoiledmilk.browserUnderlay='+options.get('underlay'),'spoiledmilk.browserDepthSource='+(options.get('depth')||'cpu'),'spoiledmilk.browserLoop='+(options.get('loop')||'legacy'),'spoiledmilk.browserEarlyFaceCull='+(options.get('cull')==='early'),'spoiledmilk.browserOwnsWallsAndRoofs='+(options.get('ownership')==='all'),'spoiledmilk.browserSpriteCache='+(options.get('sprites')||'uncached'),'spoiledmilk.browserOverlayCoverage='+(options.get('overlay')==='coverage')] : []), ...(window.browserProof.mode==='webgl'&&options.get('profile')==='1' ? ['spoiledmilk.browserProfile=true','spoiledmilk.rendererTelemetry=true','spoiledmilk.rendererTelemetryCountersOnly=true','spoiledmilk.rendererTelemetryInterval=1200','spoiledmilk.rendererSlowFrameMs=1000000'] : [])],optimizedDefaults), natives});
   ensureStarting();
   report('Browser Java ready');
   const display = document.querySelector('#display');

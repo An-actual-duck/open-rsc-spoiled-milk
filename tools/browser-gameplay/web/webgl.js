@@ -46,7 +46,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   if(geometryFormat==='compact'&&!wholeZoneConfig?.compact)throw new Error('Compact geometry derivative has not been staged');
   const gl=canvas.getContext('webgl2',{alpha:true,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});
   if(!gl) throw new Error('WebGL2 unavailable: browser GPU proof requires WebGL2');
-  const stats={worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,javaBridgeReportedWorldFrames:0,heldWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas, <=8MiB marker overlay plus optional <=32MiB combined C/T/retained texture peak, <=160MiB shadow maps and <=8MiB masks and separately bounded <=2MiB sky peak; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Marker UI lacks partial-alpha reconstruction unless coverage mode is enabled','Browser/device coverage and broader gameplay parity pending'],frameSamples:[]};
+  const stats={worldFrameSampleSequence:0,worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,javaBridgeReportedWorldFrames:0,heldWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas, <=8MiB marker overlay plus optional <=32MiB combined C/T/retained texture peak, <=160MiB shadow maps and <=8MiB masks and separately bounded <=2MiB sky peak; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Marker UI lacks partial-alpha reconstruction unless coverage mode is enabled','Browser/device coverage and broader gameplay parity pending'],frameSamples:[]};
   if(capacity.enabled){if(!capacity.bounded)stats.resourceBudgetScope=stats.resourceBudgetScope.replace('256MiB chunk/texture pixels','private3072MiB chunk/texture pixels');stats.resourceBudgetScope+='; whole-zone catalogue metadata/loader/Worker/driver/Java heap separate';stats.wholeZone={enabled:true,residencyPolicy:capacity.bounded?'bounded':'full',phase:'unloaded',ready:false,capacityBytes:capacity.gpuBytes,maxResidentChunks:capacity.maxChunks,pinnedChunks:0,pinnedBytes:0,currentLocalDraws:0};}
   const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0,lastWorld=0,lighting,lightingValues,sky,overlay;
   let wholeZoneCatalog=null,wholeZoneSelection=null,zoneController=null;
@@ -233,6 +233,18 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       } catch(error){stats.backendFailed=true;throw error;}
       finally{if(!ownedFrame?.active){gl.bindVertexArray(previousVAO);gl.bindBuffer(gl.ARRAY_BUFFER,previousArray);}}
     },
+    async Java_orsc_BrowserWebGLBridge_replaceChunkVertices(lib,id,vertexInput){
+      alive();if(pinnedChunks.has(id))throw new Error('Pinned zone geometry cannot be repacked');const chunk=chunks.get(id);if(!chunk)throw new Error('Repack references absent GPU chunk');
+      const vertices=typed(vertexInput,Float32Array);
+      if(vertices.length%28||vertices.length/28>524288||vertices.byteLength!==chunk.vertexBytes)throw new Error('Immutable chunk shape changed during vertex repack');
+      const bounds=colorCullingSupported?buildChunkColorBounds(vertices):null;
+      const previousVAO=ownedFrame?.active?null:gl.getParameter(gl.VERTEX_ARRAY_BINDING),previousArray=ownedFrame?.active?null:gl.getParameter(gl.ARRAY_BUFFER_BINDING);
+      try{
+        gl.bindVertexArray(chunk.vao);gl.bindBuffer(gl.ARRAY_BUFFER,chunk.vbo);gl.bufferSubData(gl.ARRAY_BUFFER,0,vertices);uploadValidation.deferOrCheck(check);
+        chunk.bounds=bounds;stats.uploadedBytes+=vertices.byteLength;stats.repackedChunks=(stats.repackedChunks||0)+1;stats.vertexOnlyUpdates=(stats.vertexOnlyUpdates||0)+1;
+      }catch(error){stats.backendFailed=true;throw error;}
+      finally{if(!ownedFrame?.active){gl.bindVertexArray(previousVAO);gl.bindBuffer(gl.ARRAY_BUFFER,previousArray);}}
+    },
     async Java_orsc_BrowserWebGLBridge_deleteTextures(lib,input){alive();if(capacity.enabled)for(const id of typed(input,Int32Array))if(pinnedTextures.has(id))throw new Error('Pinned zone material cannot be removed');for(const id of typed(input,Int32Array)){const old=textures.get(id);if(!old)throw new Error('Removal references absent browser texture');gl.deleteTexture(old.texture);stats.gpuBytes-=old.bytes;textures.delete(id);for(const chunk of chunks.values())for(let n=0;n<chunk.batches.length;n+=5)if(chunk.batches[n]===id)chunk.batches[n+4]=0;}},
     async Java_orsc_BrowserWebGLBridge_uploadTexture(lib,id,width,height,pixelInput,hasTransparency){
       alive();const old=textures.get(id);
@@ -367,7 +379,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(alphaProof){const final=new Uint8Array(outputWidth*outputHeight*4);gl.readPixels(0,0,outputWidth,outputHeight,gl.RGBA,gl.UNSIGNED_BYTE,final);let count=0;for(let n=3;n<final.length;n+=4)if(final[n]!==255)count++;stats.opaqueAlphaProof.finalNonOpaque=count;check();}
       if(timerQuery){gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);pendingQueries.push(timerQuery);activeTimerQuery=null;}
       const now=performance.now();stats.jsSubmissionSamples.push(now-submitStart);if(stats.jsSubmissionSamples.length>(stats.measurement?4096:600))stats.jsSubmissionSamples.shift();
-      if(world&&!retainedWorld){boundedFrameGap?.resumed(now);if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);stats.worldFramePolicies.push(stats.presentedOwnedState);stats.worldFrameSpriteGroups.push(spriteDraws.length);stats.physicalOutputWorldFramePolicies.push(physicalOutput?1:0);if(stats.worldFrameSamples.length>(stats.measurement?4096:600)){stats.worldFrameSamples.shift();stats.worldFramePolicies.shift();stats.worldFrameSpriteGroups.shift();stats.physicalOutputWorldFramePolicies.shift();}}lastWorld=now;}else lastWorld=0;
+      if(world&&!retainedWorld){boundedFrameGap?.resumed(now);if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);stats.worldFrameSampleSequence++;stats.worldFramePolicies.push(stats.presentedOwnedState);stats.worldFrameSpriteGroups.push(spriteDraws.length);stats.physicalOutputWorldFramePolicies.push(physicalOutput?1:0);if(stats.worldFrameSamples.length>(stats.measurement?4096:600)){stats.worldFrameSamples.shift();stats.worldFramePolicies.shift();stats.worldFrameSpriteGroups.shift();stats.physicalOutputWorldFramePolicies.shift();}}lastWorld=now;}else lastWorld=0;
       worldReady.presented({world:world&&!retainedWorld,width,height,textures:textures.size,sprites:spriteDraws.length,lighting:!!lightingValues});
       stats.javaFrames++;stats.drawCalls=calls;stats.triangles=triangles;stats.activeChunks=draws.length/8;stats.lastFrame=now;
       if(last){stats.frameSamples.push(now-last);if(stats.frameSamples.length>(stats.measurement?4096:600))stats.frameSamples.shift();}last=now;

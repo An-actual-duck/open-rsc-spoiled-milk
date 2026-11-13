@@ -62,6 +62,14 @@ const replacement=new Float32Array(84);replacement[0]=9;const nextBatches=new In
 await n.Java_orsc_BrowserWebGLBridge_replaceChunk(null,1,replacement,indices,nextBatches);nextBatches[2]=0;replacement[0]=100;
 assert.equal(backend.stats.gpuBytes,resident);assert.equal(backend.stats.repackedChunks,1);assert.equal((await frame())[0].count,3,'repack retained borrowed batch metadata');
 await assert.rejects(()=>n.Java_orsc_BrowserWebGLBridge_replaceChunk(null,1,new Float32Array(112),indices,nextBatches),/shape changed/);assert.equal(backend.stats.gpuBytes,resident);
+const savedIndexBytes=[...buffers.values()].filter(b=>b.length===12).map(b=>Array.from(b));
+const vertexBefore=backend.stats.uploadedBytes,oldVAO=currentVAO,oldArray=bindings.get(gl.ARRAY_BUFFER);
+await n.Java_orsc_BrowserWebGLBridge_replaceChunkVertices(null,1,new Float32Array(84));
+assert.equal(lastSubData.target,gl.ARRAY_BUFFER);assert.equal(backend.stats.uploadedBytes-vertexBefore,84*4);
+assert.deepEqual([...buffers.values()].filter(b=>b.length===12).map(b=>Array.from(b)),savedIndexBytes);
+assert.equal(currentVAO,oldVAO);assert.equal(bindings.get(gl.ARRAY_BUFFER),oldArray);assert.equal((await frame())[0].count,3);
+await assert.rejects(()=>n.Java_orsc_BrowserWebGLBridge_replaceChunkVertices(null,1,new Float32Array(112)),/shape changed/);
+await assert.rejects(()=>n.Java_orsc_BrowserWebGLBridge_replaceChunkVertices(null,999,new Float32Array(84)),/absent/);
 await n.Java_orsc_BrowserWebGLBridge_deleteTextures(null,new Int32Array([7]));textureCount=0;assert.deepEqual(await frame(),[{count:3,offset:0,cutoff:.5,blend:false,texture:0}]);
 const quad=new Float32Array(20);for(let i=0;i<4;i++){quad[i*5+3]=i===0||i===3?1:0;quad[i*5+4]=i<2?0:1;}
 assert.deepEqual(Array.from(await n.Java_orsc_BrowserWebGLBridge_planWorldSprites(null,1,1,new Int32Array([1,3,5]))),[1]);
@@ -112,7 +120,7 @@ if(process.argv[3]){
  assert.equal(c.stats.javaBridgeReportedWorldFrames,c.stats.javaWorldFrames,'Completed bridge metadata not published atomically');
  const reported=c.stats.javaBridgeReportedWorldFrames;await colorFrame();assert.equal(c.stats.javaBridgeReportedWorldFrames,reported,'Present advanced bridge receipt before its later callback');
  await cn.Java_orsc_BrowserWebGLBridge_frameWork(null,new Float32Array(14),new Int32Array(14));assert.equal(c.stats.javaBridgeReportedWorldFrames,c.stats.javaWorldFrames,'Later metadata did not close snapshot skew');
- const moved=geometry(0);await cn.Java_orsc_BrowserWebGLBridge_replaceChunk(null,2,moved,new Int32Array([2,1,0]),new Int32Array([-1,0,3,1,0]));moved.fill(1e8);await colorFrame();assert.equal(c.stats.drawCalls,2,'repacked bounds stale or retained borrowed vertices');assert.equal(c.stats.shadowNearDraws,101);
+ const moved=geometry(0);await cn.Java_orsc_BrowserWebGLBridge_replaceChunkVertices(null,2,moved);moved.fill(1e8);await colorFrame();assert.equal(c.stats.drawCalls,2,'repacked bounds stale or retained borrowed vertices');assert.equal(c.stats.shadowNearDraws,101);
  const unknown=geometry(1e30);unknown[0]=NaN;await cn.Java_orsc_BrowserWebGLBridge_replaceChunk(null,3,unknown,indices,new Int32Array([-1,0,3,1,0]));await colorFrame();assert.equal(c.stats.drawCalls,3,'unproven bounds must stay visible');
  clip[0]=NaN;await colorFrame();assert.equal(c.stats.drawCalls,101,'unproven projection must retain all color draws');
  c.dispose();c.dispose();for(const [kind,items]of owned)assert.equal(items.size,0,'color culling leaked '+kind);

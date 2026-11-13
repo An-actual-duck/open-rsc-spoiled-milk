@@ -1,4 +1,5 @@
 package orsc;
+import orsc.graphics.three.BrowserFinalModelProfile;
 
 import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.entityhandling.EntityHandler.GUIPARTS;
@@ -4766,6 +4767,11 @@ public final class mudclient implements Runnable {
     public static boolean isBrowserCloneTemplatesEnabled(){return BrowserPresentationCloneCache.isEnabled();}
     public long[] getBrowserCloneTemplateWork(){BrowserPresentationCloneCache c=browserPresentationCloneCache;return c==null?new long[]{1,BrowserPresentationCloneCache.isEnabled()?1:0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}:c.work();}
     RSModel cloneBrowserPresentationGameObject(int id,int owner){
+        long start=BrowserFinalModelProfile.start();
+        try{RSModel result=cloneBrowserPresentationGameObjectLiteral(id,owner);result.setBrowserProfileOwner(owner);return result;}
+        finally{if(BrowserFinalModelProfile.ENABLED)BrowserFinalModelProfile.elapsed(owner+1,0,start);}
+    }
+    private RSModel cloneBrowserPresentationGameObjectLiteral(int id,int owner){
         if(!BrowserPresentationCloneCache.isEnabled())return getModelCacheItem(EntityHandler.getObjectDef(id).modelID).clone();
         BrowserPresentationCloneCache cache=browserPresentationCloneCache;
         if(cache==null){synchronized(this){cache=browserPresentationCloneCache;if(cache==null){cache=new BrowserPresentationCloneCache();browserPresentationCloneCache=cache;}}}

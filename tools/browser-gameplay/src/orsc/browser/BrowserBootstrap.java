@@ -28,6 +28,7 @@ public final class BrowserBootstrap {
     public static native void reportCloneTemplateWork(double[] counters);
     public static native void reportWholeRamWork(int[] counters);
     public static native void reportWholeRamRoofSelection(int[] counters);
+    public static native void reportFinalModelProfile(double[] values);
     public static native void reportRegionHandoffTrace(String phases,double[] values);
     public static native void reportRepeatableState(String username,int[] counters);
     public static native void reportCombatState(String username,String names,int[] counters);
@@ -261,7 +262,9 @@ public final class BrowserBootstrap {
                                     modelPickReported=true;
                                 }
                                 if(!candidatePoliciesReported&&observedScene!=null) {
-                                    String[][] policies={{"geometryTransfer","spoiledmilk.browserGeometryTransferReuse","orsc.BrowserWebGLBridge","isGeometryTransferReuseEnabled"},
+                                    String[][] policies={{"finalModelProfile","spoiledmilk.browserFinalModelProfile","orsc.BrowserWebGLBridge","isFinalModelProfileEnabled"},
+                                        {"vertexOnlyUpdates","spoiledmilk.browserVertexOnlyUpdates","orsc.BrowserWebGLBridge","isVertexOnlyUpdatesEnabled"},
+                                        {"geometryTransfer","spoiledmilk.browserGeometryTransferReuse","orsc.BrowserWebGLBridge","isGeometryTransferReuseEnabled"},
                                         {"wholeZone","spoiledmilk.browserWholeZone","orsc.BrowserWebGLBridge","isWholeZoneEnabled"},
                                         {"wholeRam","spoiledmilk.browserWholeRam","orsc.BrowserWebGLBridge","isWholeRamEnabled"},
                                         {"baselineReuse","spoiledmilk.browserBaselineReuse","orsc.PacketHandler","isBrowserBaselineReuseEnabled"},
@@ -293,6 +296,7 @@ public final class BrowserBootstrap {
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeZone")){reportWholeZoneWork(snapshotWholeZoneWork());reportStaticSceneWork(snapshotStaticSceneWork());reportStaticIdentityWork(snapshotStaticIdentityWork(client));reportBaselineReuseWork(snapshotBaselineReuseWork(client));reportCloneTemplateWork(snapshotCloneTemplateWork(client));}
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeRam")){reportWholeRamWork(snapshotWholeRamWork());if(publicAlpha)reportWholeRamRoofSelection(orsc.BrowserWholeOverworldRam.getRoofSelectionWork());}
+                                if(Boolean.getBoolean("spoiledmilk.browserFinalModelProfile"))reportFinalModelProfile((double[])Class.forName("orsc.BrowserWebGLBridge").getMethod("getFinalModelProfile").invoke(null));
                                 if(Boolean.getBoolean("spoiledmilk.browserLoadProfile")){
                                     double[] trace=snapshotRegionHandoffTrace();
                                     if(trace[2]!=lastHandoffRevision){

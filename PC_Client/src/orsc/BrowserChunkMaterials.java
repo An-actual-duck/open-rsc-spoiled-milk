@@ -14,6 +14,31 @@ final class BrowserChunkMaterials {
         final int[] indices, batches;
         Buffers(int[] indices, int[] batches) { this.indices=indices;this.batches=batches; }
     }
+    // At most 24 KiB per resident entry (512 entries): bounded exact input proof.
+    // No mutable ChunkMesh arrays are retained and no hash is accepted as proof.
+    static int[] topologyProof(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+        int count=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3);
+        if(count>1024)return null;
+        int[] proof=new int[count*6];
+        for(int t=0;t<count;t++) {
+            int at=t*6;
+            for(int c=0;c<3;c++)proof[at+c]=chunk.getIndex(t*3+c);
+            proof[at+3]=chunk.getTriangleTexture(t);proof[at+4]=chunk.getTriangleFallbackColor(t);
+            proof[at+5]=chunk.getTriangleModelKind(t).ordinal();
+        }
+        return proof;
+    }
+    static boolean topologyMatches(int[] proof,Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+        int count=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3);
+        if(proof==null||proof.length!=count*6)return false;
+        for(int t=0;t<count;t++) {
+            int at=t*6;
+            for(int c=0;c<3;c++)if(proof[at+c]!=chunk.getIndex(t*3+c))return false;
+            if(proof[at+3]!=chunk.getTriangleTexture(t)||proof[at+4]!=chunk.getTriangleFallbackColor(t)
+                ||proof[at+5]!=chunk.getTriangleModelKind(t).ordinal())return false;
+        }
+        return true;
+    }
     static Buffers pack(OpenGLWorldChunkRenderer renderer, Renderer3DFrame frame,
                         Renderer3DWorldChunkFrame.ChunkMesh chunk) {
         int triangles=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3);

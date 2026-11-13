@@ -18,6 +18,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     public static boolean isSpriteKeyLimbsEnabled(){return BrowserWorldSpriteCache.isKeyLimbsEnabled();}
     public static String getOverlayRectMode(){return isOverlayDeltaTransportEnabled()
         ? System.getProperty("spoiledmilk.browserOverlayRectMode","off") : "off";}
+    private static final boolean VERTEX_ONLY=Boolean.getBoolean("spoiledmilk.browserBenchmark")&&Boolean.getBoolean("spoiledmilk.browserVertexOnlyUpdates");
+    public static boolean isFinalModelProfileEnabled(){return BrowserFinalModelProfile.ENABLED;}
+    public static double[] getFinalModelProfile(){return BrowserFinalModelProfile.snapshot();}
+    public static boolean isVertexOnlyUpdatesEnabled(){return VERTEX_ONLY;}
     private static final boolean WHOLE_ZONE=WholeOverworldZoneRegistry.isEnabled();
     private BrowserWholeOverworldZone wholeZone;
     private BrowserWholeOverworldRam wholeRam;
@@ -128,18 +132,21 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     interface ChunkBackend {
         void upload(int id,float[] vertices,int[] indices,int[] batches);
         void replace(int id,float[] vertices,int[] indices,int[] batches);
+        default void replaceVertices(int id,float[] vertices){throw new UnsupportedOperationException("Vertex-only backend unavailable");}
         void delete(int[] ids);
     }
     private final ChunkBackend chunkBackend;
     public BrowserWebGLBridge() { this(new ChunkBackend() {
         public void upload(int id,float[] vertices,int[] indices,int[] batches){uploadChunk(id,vertices,indices,batches);}
         public void replace(int id,float[] vertices,int[] indices,int[] batches){replaceChunk(id,vertices,indices,batches);}
+        public void replaceVertices(int id,float[] vertices){replaceChunkVertices(id,vertices);}
         public void delete(int[] ids){deleteChunks(ids);}
     }); }
     BrowserWebGLBridge(ChunkBackend backend) { if(backend==null)throw new NullPointerException("chunk backend");chunkBackend=backend; }
     private static native void uploadChunk(int id,float[] vertices,int[] indices,int[] batches);
     private static native void uploadTexture(int id,int width,int height,int[] rgba,boolean transparency);
     private static native void replaceChunk(int id,float[] vertices,int[] indices,int[] batches);
+    private static native void replaceChunkVertices(int id,float[] vertices);
     private static native void deleteTextures(int[] ids);
     private static native void present(int width,int height,boolean world,float[] matrices,float[] uniforms,int[] draws,int[] overlay);
     private static native void frameWork(float[] milliseconds,int[] pose);
@@ -149,6 +156,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     @Override public void worldTransition(boolean ordinaryWalking) {
         overlayDeltaReset=true;
         loadState.beginTransition();
+        BrowserFinalModelProfile.transition();
         if(initialized)regionTransition(ordinaryWalking);
     }
     private static native void overlayFrame(int width,int height,int mode,double generation,double frameSequence,int fades,boolean reset,float[] transmittance);
@@ -377,11 +385,27 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             chunkBackend.delete(new int[]{cached.id});
             return replacement;
         }
-        BrowserChunkMaterials.Buffers buffers=packMaterials(frame,chunk);
-        submitChunk(true,cached.id,chunk,packVertices(frame,chunk),buffers.indices,buffers.batches);
+        boolean vertexOnly=VERTEX_ONLY&&chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS
+            &&Arrays.equals(cached.settings,settings)&&Arrays.equals(cached.materials,materials)
+            &&BrowserChunkMaterials.topologyMatches(cached.topologyProof,chunk);
+        if(vertexOnly) {
+            float[] vertices=packVertices(frame,chunk);long start=loadProfile==null?0:System.nanoTime();
+            try{chunkBackend.replaceVertices(cached.id,vertices);
+                if(loadProfile!=null)loadProfile.submitted(true,chunk.getVertexCount(),(long)vertices.length*4);
+            }finally{if(loadProfile!=null)loadProfile.elapsed(BrowserLoadProfile.SUBMIT,start);}
+        } else {
+            BrowserChunkMaterials.Buffers buffers=packMaterials(frame,chunk);
+            int[] proof=proofFor(chunk);
+            submitChunk(true,cached.id,chunk,packVertices(frame,chunk),buffers.indices,buffers.batches);
+            cached.topologyProof=proof;
+        }
         cached.x=chunk.getVertexOffsetX();cached.z=chunk.getVertexOffsetZ();cached.settings=settings;cached.materials=materials;
         cached.signature=chunk.getStorageSignature();cached.materialRevision=materialRevision;cached.packedAt=++packingSequence;
         return cached;
+    }
+    private static int[] proofFor(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+        return VERTEX_ONLY&&chunk.getChunkRole()==Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS
+            ?BrowserChunkMaterials.topologyProof(chunk):null;
     }
     private static long chunkBytes(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
         if(chunk.getVertexCount()>MAX_VERTICES||chunk.getIndexCount()>MAX_VERTICES*3)throw new IllegalStateException("Browser chunk exceeds capacity");
@@ -543,7 +567,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         PendingRepack(CachedChunk cached,Renderer3DWorldChunkFrame.ChunkMesh chunk,int[] materials){this.cached=cached;this.chunk=chunk;this.materials=materials;}
     }
     private static final class CachedChunk {
-        final int id,vertices,indices;int x,z;final long bytes;int[] settings,materials;long signature,materialRevision,packedAt;
-        CachedChunk(int id,Renderer3DWorldChunkFrame.ChunkMesh chunk,long bytes,int[] settings,int[] materials,long materialRevision,long packedAt){this.id=id;this.x=chunk.getVertexOffsetX();this.z=chunk.getVertexOffsetZ();this.vertices=chunk.getVertexCount();this.indices=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3;this.signature=chunk.getStorageSignature();this.bytes=bytes;this.settings=settings;this.materials=materials;this.materialRevision=materialRevision;this.packedAt=packedAt;}
+        final int id,vertices,indices;int x,z;final long bytes;int[] settings,materials,topologyProof;long signature,materialRevision,packedAt;
+        CachedChunk(int id,Renderer3DWorldChunkFrame.ChunkMesh chunk,long bytes,int[] settings,int[] materials,long materialRevision,long packedAt){this.topologyProof=proofFor(chunk);this.id=id;this.x=chunk.getVertexOffsetX();this.z=chunk.getVertexOffsetZ();this.vertices=chunk.getVertexCount();this.indices=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3;this.signature=chunk.getStorageSignature();this.bytes=bytes;this.settings=settings;this.materials=materials;this.materialRevision=materialRevision;this.packedAt=packedAt;}
     }
 }

@@ -1,0 +1,44 @@
+Private browser vertex-only experiment (in progress)
+===================================================
+Worker: Core-Framework-ai-1, standalone-client-optimization-exploration.
+No publication, deployment or default adoption. Browser FPS and adjacent travel
+are the goals; CPU fixtures alone do not establish either improvement.
+
+vertexonly=on is a private benchmark-only, default-OFF control. Animated resident
+updates may skip material packing and index transfer only after exact equality
+of cached packing settings, texture metadata and an owned topology/material
+snapshot (three indices, texture, fallback and kind per triangle). The proof is
+bounded to1024 triangles,24KiB per entry, at most12MiB across512 entries, plus
+array headers; larger models use the original full path. Every vertex is still
+packed and uploaded. Static, topology/shape, settings/material changes fall back.
+The new two-argument native operation is represented in the closed Worker schema,
+so generic owned capture/replay retains order, transfer isolation and backpressure.
+WebGL refreshes bounds and preserves index storage, batches and resource identity.
+
+finalprofile=on independently enables direct owner totals for DELTA, BASELINE,
+CANONICAL and unknown models. Phases are clone, transform, bounds,
+normals-inclusive, diffuse and placement-light. Inclusive times overlap and must
+not be summed. Diagnostics carry a transition ordinal, NOT a server/source epoch.
+No preparation shortcut is implemented without measured attribution and parity.
+Clone caches remain OFF. The counters retain no models or per-event allocations.
+
+worldFrameSampleSequence counts actual pushes to the existing cadence ring.
+tests/myworld/browser-frame-sequence.py deduplicates by exact sequence, rejecting
+missing events and resets; equal interval values remain distinct. Its p95/p99
+cover steady-world intervals only. Held and crossing pauses need separate source
+readiness/frame receipts, not a percentile synthesized from this ring.
+
+Initial frozen451bc765 baseline JAR is preserved under output/builds/
+client-optimization/baseline-451bc765 with source/resource/JAR-entry hashes.
+An initial diagnostic repeatable fixture run at1200x675 physical,37 actor groups,
+Radeon R9200 reports1609 fresh world frames over30.157s (53.35FPS), no holds,
+visible/focused and unchanged pose/epoch. Its modelbatch/regionbuild/terrainquery
+were OFF: it is NOT public-settings acceptance evidence. The first travel capture
+is incomplete (two legs only, accepted=false), and must not be reported as a
+successful route. Full public-settings exact-source cooking/comparison is pending.
+
+Focused checks: build, animated bridge twelve policy combinations, real material
+packing, variant invalidation, WebGL resource/failure double, Worker ownership/
+replay, sequence deduplication, and120 frozen-model differential cases with profile
+OFF/ON pass. Hardware pixels/performance and broader final regression gates remain
+pending; later results must state the exact tested commit and artifact.

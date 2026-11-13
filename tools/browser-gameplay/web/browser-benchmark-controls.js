@@ -29,3 +29,15 @@ export function browserModelBenchmarkControls(mode, options) {
   const modelPickBounds=read('modelpickbounds','off'),haloMatchReuse=read('halomatch','on');
   return {properties:['spoiledmilk.browserModelPickBounds='+modelPickBounds,'spoiledmilk.presentationHaloMatchReuse='+haloMatchReuse],requested:{modelPickBounds,haloMatchReuse}};
 }
+
+export function browserVertexOnlyPolicy(mode,options){
+  if(mode!=='webgl'||!options.has('benchmark'))return {properties:[],enabled:false};
+  const value=options.get('vertexonly')||'off';if(!['on','off'].includes(value))throw new Error('Invalid private vertexonly policy');
+  return {properties:['spoiledmilk.browserVertexOnlyUpdates='+(value==='on')],enabled:value==='on'};
+}
+
+export function browserFinalModelProfilePolicy(mode,options){
+  if(mode!=='webgl'||!options.has('benchmark'))return {properties:[],enabled:false};
+  const value=options.get('finalprofile')||'off';if(!['on','off'].includes(value))throw new Error('Invalid private finalprofile policy');
+  return {properties:['spoiledmilk.browserFinalModelProfile='+(value==='on')],enabled:value==='on'};
+}

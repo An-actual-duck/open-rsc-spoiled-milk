@@ -15,9 +15,10 @@ public final class BrowserAnimatedChunkFixture {
     }
     private static final class Backend implements BrowserWebGLBridge.ChunkBackend {
         final Map<Integer,Data> resources=new HashMap<Integer,Data>();
-        int uploads,replaces,deletes;boolean failUpload,failReplace;
+        int uploads,replaces,deletes,vertexUpdates;boolean failUpload,failReplace;
         public void upload(int id,float[] v,int[] i,int[] b){if(failUpload)throw new IllegalStateException("fixture upload failure");require(!resources.containsKey(id),"Upload reused live ID");resources.put(id,new Data(v,i,b));uploads++;}
         public void replace(int id,float[] v,int[] i,int[] b){if(failReplace)throw new IllegalStateException("fixture replace failure");Data old=resources.get(id);require(old!=null&&old.vertices.length==v.length&&old.indices.length==i.length,"replace changed buffer shape");resources.put(id,new Data(v,i,b));replaces++;}
+        public void replaceVertices(int id,float[] v){if(failReplace)throw new IllegalStateException("fixture replace failure");Data old=resources.get(id);require(old!=null&&old.vertices.length==v.length,"vertex-only changed shape");resources.put(id,new Data(v,old.indices,old.batches));replaces++;vertexUpdates++;}
         public void delete(int[] ids){for(int id:ids){require(resources.remove(id)!=null,"Deleted absent resource");deletes++;}}
     }
     private static Renderer3DWorldChunkFrame.ChunkMesh mesh(int role,int plane,int section,int origin,int pose,int triangles,long signature,int texture){
@@ -70,6 +71,11 @@ public final class BrowserAnimatedChunkFixture {
         int id=prepare(bridge,frame,a).draws[0];reference(backend,id,frame,a);long initialBytes=bytes(bridge);
         require(WorldChunkBufferKey.from(a,true).equals(WorldChunkBufferKey.from(b,true)),"Pose changed logical native identity");
         for(int n=0;n<100;n++){Renderer3DWorldChunkFrame.ChunkMesh pose=mesh(animated,-1,7,100,n+1,2,1000+n,0);require(prepare(bridge,frame,pose).draws[0]==id,"Animated pose allocated another ID");reference(backend,id,frame,pose);}
+        require(backend.vertexUpdates==(BrowserWebGLBridge.isVertexOnlyUpdatesEnabled()?100:0),"Vertex-only path did not match actual policy");
+        int[] proof=BrowserChunkMaterials.topologyProof(a);
+        require(BrowserChunkMaterials.topologyMatches(proof,b),"Pose contaminated exact topology proof");
+        for(int n=0;n<proof.length;n++){int saved=proof[n];proof[n]^=1;require(!BrowserChunkMaterials.topologyMatches(proof,b),"Topology/material mutation was accepted at "+n);proof[n]=saved;}
+        require(BrowserChunkMaterials.topologyProof(mesh(animated,0,0,0,0,1025,7,0))==null,"Proof capacity bound bypassed");
         require(backend.uploads==1&&backend.replaces==100&&backend.deletes==0&&backend.resources.size()==1&&bytes(bridge)==initialBytes,"Animated poses churned cache/bytes");
         require(prepare(bridge,frame,a).draws[0]==id,"Returning prior pose allocated a second resource");reference(backend,id,frame,a);
         int before=backend.replaces;Renderer3DWorldChunkFrame.ChunkMesh materialPose=mesh(animated,-1,7,100,5,2,2000,-1);prepare(bridge,frame,materialPose);reference(backend,id,frame,materialPose);require(backend.replaces==before+1,"New pose/material not replaced");

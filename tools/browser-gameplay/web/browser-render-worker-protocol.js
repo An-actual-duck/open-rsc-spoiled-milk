@@ -7,7 +7,7 @@ const P='Java_orsc_BrowserWebGLBridge_';
 export const RENDER_WORKER_SCHEMA=Object.freeze({
   initialize:['s','s'],initializeWholeZone:['s','I','I'],wholeZoneFrame:['I','I'],initializeLighting:['s','s'],initializeSky:[],
   uploadLightingMask:['i','i','i','B','F'],lightingFrame:['F'],uploadSkyGeometry:['F','I','i'],skyFrame:['F','F'],
-  overlayFrame:['i','i','i','n','n','i','b','N'],uploadChunk:['i','F','I','I'],replaceChunk:['i','F','I','I'],
+  overlayFrame:['i','i','i','n','n','i','b','N'],uploadChunk:['i','F','I','I'],replaceChunk:['i','F','I','I'],replaceChunkVertices:['i','F'],
   deleteTextures:['I'],uploadTexture:['i','i','i','I','b'],deleteChunks:['I'],
   present:['i','i','b','F','F','I','I'],frameWork:['F','I'],worldProgress:['I'],regionTransition:['b'],holdWorld:[],
   planWorldSprites:['i','n','I'],commitWorldSprites:['i','n','B','F'],
