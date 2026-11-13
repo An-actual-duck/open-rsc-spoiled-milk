@@ -10,6 +10,11 @@ import orsc.graphics.three.*;
 /** Differential checks against the unchanged production input builder, not a duplicate algorithm. */
 public final class BrowserResidentInputsFixture {
  static int checks;
+ static boolean nativeBackend;
+ static void backend(boolean available) {
+  Renderer3DSettings.setOpenGLPresentationAvailable(nativeBackend && available);
+  BrowserFrameSinkRegistry.install(!nativeBackend && available ? new BrowserFrameSinkRegistry.Sink(){public void present(java.awt.image.BufferedImage a,orsc.graphics.Renderer2DFrame v,Renderer3DFrame f){}public boolean needsCpuDepthFrame(){return false;}} : null);
+ }
  static void check(boolean b,String why){checks++;if(!b)throw new AssertionError(why);}
  static Field field(Class<?> c,String n)throws Exception{while(c!=null){try{Field f=c.getDeclaredField(n);f.setAccessible(true);return f;}catch(NoSuchFieldException e){c=c.getSuperclass();}}throw new NoSuchFieldException(n);}
  static Object get(Object o,String n)throws Exception{return field(o.getClass(),n).get(o);}
@@ -55,9 +60,10 @@ public final class BrowserResidentInputsFixture {
  }
  static Object firstStatic(List<Object> a)throws Exception{for(Object i:a)if((Integer)get(i,"chunkRole")==Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS)return i;return null;}
  @SuppressWarnings("unchecked") public static void main(String[] args)throws Exception{
-  definitions();mudclient c=client();Renderer3DWorldChunkFrame b=base(0,0);BrowserFrameSinkRegistry.install(new BrowserFrameSinkRegistry.Sink(){public void present(java.awt.image.BufferedImage a,orsc.graphics.Renderer2DFrame v,Renderer3DFrame f){}public boolean needsCpuDepthFrame(){return false;}});
-  boolean enabled=!"false".equalsIgnoreCase(System.getProperty("spoiledmilk.browserResidentInputCache","true"));
-  List<Object> first=compare(c,b,true),second=compare(c,b,true);check((firstStatic(first)==firstStatic(second))==enabled,"Static reuse does not follow explicit browser policy");
+  nativeBackend=args.length>0 && args[0].equals("native");
+  definitions();mudclient c=client();Renderer3DWorldChunkFrame b=base(0,0);backend(true);
+  boolean enabled=nativeBackend ? Boolean.getBoolean("spoiledmilk.nativeResidentInputCache") : !"false".equalsIgnoreCase(System.getProperty("spoiledmilk.browserResidentInputCache","true"));
+  List<Object> first=compare(c,b,true),second=compare(c,b,true);check((firstStatic(first)==firstStatic(second))==enabled,"Static reuse does not follow backend policy");
   Object fixed=firstStatic(second);for(int n=0;n<30;n++){c.getGameObjectInstanceModel(2).addRotation(0,5,0);List<Object> next=compare(c,b,true);if(enabled)check(firstStatic(next)==fixed,"Animation invalidated stable static groups");}
   c.setGameObjectInstanceDir(0,2);compare(c,b,true);c.setWallObjectInstanceDir(0,1);compare(c,b,true);
   c.setGameObjectInstanceMaterialized(0,false);compare(c,b,true);c.setGameObjectInstanceMaterialized(0,true);compare(c,b,true);
@@ -71,9 +77,10 @@ public final class BrowserResidentInputsFixture {
   EntityHandler.getObjectDef(1).modelID=-1;compare(c,b,true);EntityHandler.getObjectDef(1).modelID=0;EntityHandler.getObjectDef(1).width=3;compare(c,b,true);
   Random random=new Random(531122);for(int n=0;n<200;n++){int i=random.nextInt(2);c.setGameObjectInstanceX(i,random.nextInt(80));c.setGameObjectInstanceZ(i,random.nextInt(80));c.setGameObjectInstanceDir(i,random.nextInt(8));c.setGameObjectInstanceID(i,random.nextInt(4));c.setWallObjectInstanceDir(0,random.nextInt(4));compare(c,b,n%10==0);}
   call(c,"clearResidentObjectChunkCache",new Class<?>[]{});check(get(c,"residentStaticInputCache")==null&&get(c,"residentStaticInputProbe")==null,"Area/relog clear retained input cache");compare(c,b,true);
-  BrowserFrameSinkRegistry.install(null);List<Object> nativeA=compare(c,b,true),nativeB=compare(c,b,true);check(firstStatic(nativeA)!=firstStatic(nativeB),"Native path retained browser-only cache");
-  BrowserFrameSinkRegistry.install(new BrowserFrameSinkRegistry.Sink(){public void present(java.awt.image.BufferedImage a,orsc.graphics.Renderer2DFrame v,Renderer3DFrame f){}public boolean needsCpuDepthFrame(){return false;}});
+  backend(false);List<Object> nativeA=compare(c,b,true),nativeB=compare(c,b,true);check(firstStatic(nativeA)!=firstStatic(nativeB),"Unavailable backend retained input cache");
+  check(get(c,"residentStaticInputCache")==null && get(c,"residentStaticInputProbe")==null,"Unavailable backend retained cache storage");
+  backend(true);
   set(c,"staticPresentationSceneryRecords",Collections.nCopies(131073,new SceneBaselineState.Record(0,2,2,0,0)));inputs(c,b,false);check(get(c,"residentStaticInputCache")==null&&get(c,"residentStaticInputProbe")==null,"Oversized input set bypassed descriptor bound");
-  BrowserFrameSinkRegistry.install(null);System.out.println("PASS "+checks+" actual static-input reuse/animation/canonical mesh/elevation/definition/door/instance/plane/rebase/reset/default/budget checks; selected="+enabled+"; no GPU/FPS claim");
+  backend(false);System.out.println("PASS "+checks+" actual static-input reuse/animation/canonical mesh/elevation/definition/door/instance/plane/rebase/reset/default/budget checks; selected="+enabled+"; native="+nativeBackend+"; no GPU/FPS claim");
  }
 }
