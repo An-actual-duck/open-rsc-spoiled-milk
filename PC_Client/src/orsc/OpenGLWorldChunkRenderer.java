@@ -1184,10 +1184,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	}
 
 	void drawCharacterGroundShadows(Renderer3DFrame frame) throws Exception {
-        if(frame==null || !Renderer3DFrame.CharacterGroundShadow.ENABLED || frame.isUnderground()
-            || frame.getCharacterGroundShadows().isEmpty() || frame.getWorldChunkFrame().getChunkCount()==0
-            || RendererShadowSettings.getQuality()==RendererShadowSettings.Quality.OFF
-            || RendererLightingSettings.getMode()!=RendererLightingSettings.Mode.DIRECTIONAL)return;
+        if(characterGroundShadows!=null)characterGroundShadows.mesh.clear();
+        if(!OpenGLCharacterGroundShadows.enabledFor(frame))return;
         if(characterGroundShadows==null)characterGroundShadows=new OpenGLCharacterGroundShadows(gl);
         Renderer3DWorldChunkFrame.ChunkMesh anchor=frame.getWorldChunkFrame().getChunks().get(0);
         loadWorldProjectionAndView(frame);

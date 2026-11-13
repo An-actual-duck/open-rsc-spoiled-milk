@@ -14,6 +14,13 @@ final class OpenGLCharacterGroundShadows implements AutoCloseable {
     private float[] visibleAlpha=new float[256];
     OpenGLCharacterGroundShadows(LwjglBindings gl) {this.gl=gl;}
 
+    static boolean enabledFor(Renderer3DFrame frame) {
+        return frame!=null && Renderer3DFrame.CharacterGroundShadow.ENABLED && !frame.isUnderground()
+            && !frame.getCharacterGroundShadows().isEmpty() && frame.getWorldChunkFrame().getChunkCount()>0
+            && RendererShadowSettings.getQuality()!=RendererShadowSettings.Quality.OFF
+            && RendererLightingSettings.getMode()==RendererLightingSettings.Mode.DIRECTIONAL;
+    }
+
     void draw(Renderer3DFrame frame,GeometryShadowRoofMask roofs,int offsetX,int offsetZ)throws Exception {
         mesh.clear();
         int faces=0;
@@ -34,6 +41,10 @@ final class OpenGLCharacterGroundShadows implements AutoCloseable {
             float fade=Math.max(0,Math.min(1,(frame.getFogDistance()-distance)/Math.max(1,frame.getFogDistance()*.2f)));
             mesh.append(shadow.x,shadow.y,shadow.z,shadow.radius,shadow.slopeX,shadow.slopeZ,.28f*fade*visibleAlpha[shadow.faceId],roofs,offsetX,offsetZ);
         }
+        drawMesh();
+    }
+
+    void drawMesh() throws Exception {
         if(mesh.vertexCount()==0)return;
         if(vbo==0) {
             vbo=gl.glGenBuffers();ebo=gl.glGenBuffers();
