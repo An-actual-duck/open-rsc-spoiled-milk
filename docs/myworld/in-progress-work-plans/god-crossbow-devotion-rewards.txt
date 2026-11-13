@@ -175,3 +175,14 @@ authoring/items/god-crossbows/fresh-mythic-v1/. Generator returned large source
 images despite the requested grid; actual 48x32 PNG exports are shown at 1x/8x
 in output/art/god-crossbow-mythic-exploration/index.html, with optional source
 comparison. No runtime changes. Previous passes remain preserved as history.
+
+Selected option 1 for all gods — CURRENT
+--------------------------------------
+Owner chose option 1 across the board. Native cleanup candidates live under
+authoring/items/god-crossbows/selected-mythic-v1/. Saradomin receives string-gap
+fills only (all existing opaque pixels retained). Zamorak gets continuous
+strings, stock reinforcement and a contrasting pale metal arrow. Guthix gets
+a thicker brown stock beneath the existing foliage (all opaque pixels retained).
+Editable layers, input PNGs, recipe and validation hashes are preserved.
+Before/after Firefox gallery: output/art/god-crossbow-selected-cleanup/index.html.
+No runtime sprites or gameplay changes installed yet.
