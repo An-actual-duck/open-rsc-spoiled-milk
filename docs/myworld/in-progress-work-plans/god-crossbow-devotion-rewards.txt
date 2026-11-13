@@ -162,3 +162,16 @@ Zamorak horn integration: replaced the entire ordinary bow with two continuous
 curved/tapered black horn silhouettes, rather than horn caps on existing limbs.
 Red stock and original trigger/latch/string pixels verified identical; Sara
 and Guthix PNG hashes unchanged. Native size remains 48x32 with clear border.
+
+Reference-free mythical exploration — CURRENT REVIEW
+---------------------------------------------------
+Owner requested another fresh start: three independently generated sprites
+for EACH god, no crossbow or mace image references, unique mythical designs
+based only on colour/lore themes. Nine text-only image_gen calls were made,
+with no referenced_image_paths or conversation-image inputs. Earlier artwork
+was not inspected for this pass or used as input. Exact prompts, generated
+masters, native exports, editable Aseprite files and receipts are preserved in
+authoring/items/god-crossbows/fresh-mythic-v1/. Generator returned large source
+images despite the requested grid; actual 48x32 PNG exports are shown at 1x/8x
+in output/art/god-crossbow-mythic-exploration/index.html, with optional source
+comparison. No runtime changes. Previous passes remain preserved as history.
