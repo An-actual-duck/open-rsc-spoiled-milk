@@ -18,7 +18,8 @@ changes strengthen fixtures and documentation only; no production class grafts.
 instead of 112 bytes where eligible. Position, atlas UV and normal remain float;
 19 fields use exact admitted unsigned bytes, including independent material color
 and texture light. Blend strength is normalized, model/family/mask are not.
-Negative zero/nonfinite/unrepresentable values reject. A late rejected vertex
+Negative zero in byte channels and nonfinite/unrepresentable values reject;
+float position/UV/normal channels preserve negative zero. A late rejected vertex
 regenerates the ENTIRE legacy chunk. Main and near/far shadow bindings agree.
 Eligibility requires atlas coordinates, resident shader, unbaked directional
 lighting and no projected shadow-proof path. Other modes retain legacy layout.
@@ -176,3 +177,77 @@ Integrated-GPU receipt: output/tests/native-compact-geometry/1794602957641328142
 Both pass with actual reported hardware renderers, not software rendering.
 Earlier fixture-only attempts are retained: incorrect flat sentinel/projection
 midpoint and moving time-of-day uniforms were corrected, not waived/tolerated.
+
+Bounded secondary integrated-GPU diagnostic
+-------------------------------------------
+DRI_PRIME=pci-0000_12_00_0 selected accelerated AMD Raphael (1002:164e), verified
+both by host glxinfo and each actual client GL_RENDERER. No software rendering.
+Same5820 fullJAR, settings, route and host CPU/OS; this is not a different weak
+computer. One OFF/ON pair, diagnostic only, not acceptance. Raw results:
+output/diagnostics/native-compact-geometry/igpu-results.json.
+OFF/compact unique intervals3172/3152,p95 gap17.737/17.926ms,p99 gap22.181/21.911ms,
+maximum gap251.546/253.849ms. No useful transition-win claim.
+Asynchronous GPU median frame-render12.120/10.871ms,near1.141/0.952ms,
+far4.033/2.986ms. Frame counts3066/3045,near3064/3043,far35/34. Far means actually
+9.811/10.013ms. These differences are descriptive and confounded, not a demonstrated GPU
+improvement: phase sampling and moving geometry are not aligned, and endpoint drawn triangles272851/272811 differ
+while endpoint resident triangles411526 and object/wall counts match. No deliberate
+geometry/distance reduction. The retained route summaries do not establish a common steady-tail subset
+with matching triangle/shadow-pass inventories and aligned asynchronous query
+edges; comparability is insufficient for a GPU gain claim. Fixed-scene aligned
+GPU work would be needed
+before a performance claim or adoption, after the CPU encoder problem is solved.
+Matching67-chunk/1178676-vertex maximum uploads:
+OFF pack56.009ms,index0.551,group14.448,GL submission48.266,141441120 bytes.
+ON  pack88.102ms,index0.576,group26.326,GL submission10.876, 70720560 bytes.
+Resident/scratch byte totals exactly match the discrete-GPU observation above.
+The original ON capture ended on NativeRouteProbe.status NoSuchFileException
+while status.json was being replaced, with no CLIENT-DONE. It is retained and
+excluded, not treated as compact correctness/performance evidence. Host-verified
+guarded cleanup left alternate ports free and owner's server intact. One unchanged
+harness ON retry completed. No new campaign or runtime optimization followed.
+
+Final functional coverage and cleanup
+-------------------------------------
+Compact ON/group OFF fullJAR combat-real and visible lifecycle checks completed:
+output/diagnostics/native-compact-geometry/functional-20261113T205413Z/result.json.
+Combat had14/20 samples with live effects (maximum4 actors). Lifecycle covered
+owned-window resize/fullscreen/borderless/iconify/restore, same-area/teleport/level
+and return movement, High/Low/Off shadows, two logout/relogin cycles (shadow inactive
+at logout), session-cache replacement and actual Low-shadow setting persistence
+inside the cloned private client directory. No fixture runtime exceptions. Each
+completed one bounded post-phase snapshot, not a strict12-frame proof. These are
+functional tests, not performance comparisons or a scheduler lifecycle proof.
+
+Host-side cleanup audit: output/diagnostics/native-compact-geometry/final-host-cleanup.json.
+All36 recorded native client/server identities are no longer live; alternate
+44639/44539 free; owner StandalonePlaytestServer PID2822999 remains listening on
+43639/43539. This worker started no browser processes. No fallback signals or
+ownership-guard bypass. Earlier sandbox /proc/socket observations did not reflect
+the host and were invalid evidence; preserve the superseded observation and
+host-verified guarded retry receipts, especially diagnostic-off run09:
+cleanup-sandbox-observation-superseded.json and cleanup-exit-race.json. Its remaining
+owned server was stopped through the supported guard after host verification of
+client exit. Failed preparations and failed iGPU status-read capture remain intact.
+Ignored artifacts are retained. Approximately15GiB host disk space remains.
+
+Remaining proof limits: same-cache settings round trips assert reupload/counts,
+but do not draw/read back after every changed state. Same-cache compact OFF->ON
+->OFF does not have a complete pixel proof. No promotion is justified or claimed.
+
+Final regression results
+------------------------
+All requested existing regressions pass: native resident inputs, independent
+fullJAR baseline/candidate construction (default/native2x2/browser isolation),
+browser chunk materials/variants, geometry modes, shadow coordinates/projection,
+18 benchmark guard tests, native route analysis/failure preservation, workspace
+layout and git diff --check. Receipts/logs:
+output/diagnostics/native-compact-geometry/final-tests/.
+The first route-failure invocation omitted its required --client-jar argument
+and exited2 before executing tests; retain results.json/route-failure.log. The
+corrected frozen-JAR invocation passes all route/sample/observer failure-evidence
+checks, recorded separately in route-failure-corrected.json/log and
+output/tests/native-route-failure/20261113T205753733940Z/receipt.json.
+Independent native construction fullJAR proof receipt:
+output/tests/native-construction-independent/20261113T205659072036Z/result.json.
+No failed substantive parity test was waived. No new runtime was built after5820.
