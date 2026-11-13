@@ -73,6 +73,9 @@ public class RSCConnectionHandler extends ChannelInboundHandlerAdapter implement
 			if (att != null) {
 				player = att.player.get();
 			}
+            if(player==null&&com.openrsc.server.login.StagedLoginSession.handlePreWorld(getServer(),channel,packet)) {
+                ReferenceCountUtil.release(message);return;
+            }
 			// Authentic client > 194 <= 204 sends packet 32 to request a session ID.
 			if (player == null && packet.getLength() == 2 && packet.getID() == 32) {
 				// The first byte sent by 204 is always 32, the opcode for "session id request"

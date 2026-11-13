@@ -278,6 +278,86 @@ public final class GameStateUpdater {
 		sendWorldTimeIfNeeded(player);
 	}
 
+    /** Detached browser login preparation: terrain/static packets only, never actors or timers. */
+    public boolean sendStagedLoginScene(final Player player) {
+        if(player.isLoggedIn()||com.openrsc.server.login.StagedLoginSession.forPlayer(player)==null)
+            throw new IllegalStateException("Player is not a detached prepared login");
+        if(!ensureLayeredSceneContext(player))return false;
+        VisibilitySnapshot visible=buildPacketVisibilitySnapshot(player,false);
+        updateGameObjects(player,visible.getSceneryObjects(),false);
+        updateWallObjects(player,visible.getWallObjects(),false);
+        StaticScenePresentationSnapshot presentation=buildStaticScenePresentationSnapshot(player);
+        sendAtomicSceneActivationFenceIfNeeded(player);
+        sendSceneBaselineIfEnabled(player,true,true,false,presentation);
+        SceneBaselineSummary summary=player.getAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE,null);
+        int sequence=requireLayeredSceneContextSequence(player);
+        boolean haloReady=!nativeTerrainSymmetricResidencyEnabled()
+            ||Integer.valueOf(sequence).equals(player.getAttribute(NATIVE_TERRAIN_SYMMETRIC_VISUAL_CONTEXT_ATTRIBUTE,null))
+            &&Integer.valueOf(sequence).equals(player.getAttribute(NATIVE_TERRAIN_SYMMETRIC_STRUCTURE_CONTEXT_ATTRIBUTE,null));
+        return hasAcceptedNativeTerrainReadiness(player)&&haloReady&&summary!=null&&summary.hasSentCompleteStaticBaseline();
+    }
+    public int stagedLoginContextSequence(Player player){return requireLayeredSceneContextSequence(player);}
+    /** Hash exact current static content, not a global revision which changes elsewhere. */
+    public byte[] stagedLoginSceneIdentity(final Player player) {
+        try {
+            updateCustomMovementClientRegion(player);
+            java.io.ByteArrayOutputStream bytes=new java.io.ByteArrayOutputStream();java.io.DataOutputStream out=new java.io.DataOutputStream(bytes);
+            WorldLocation location=player.getWorldLocation();
+            out.writeUTF(location.getWorldSpace().getValue());out.writeInt(location.getCoordinate().getX());out.writeInt(location.getCoordinate().getY());out.writeInt(location.getCoordinate().getLevel());
+            out.writeInt(player.getX());out.writeInt(player.getY());
+            com.openrsc.server.net.rsc.struct.outgoing.GameSettingsStruct options=ActionSender.buildGameSettings(player);
+            out.writeInt(options.cameraModeAuto);out.writeInt(options.mouseButtonOne);out.writeInt(options.soundDisabled);out.writeInt(options.playerKiller);out.writeInt(options.pkChangesLeft);
+            out.writeInt(options.customOptions.size());for(Integer option:options.customOptions)out.writeInt(option.intValue());
+            NativeLayeredWorldPackage source=getServer().getWorld().getRegionManager().findNativeLayeredWorldPackage(location).orElseThrow(()->new IllegalStateException("No prepared login source"));
+            out.writeUTF(source.getPackageId());out.writeUTF(source.getPackageVersion());out.writeUTF(source.getManifestSha256());out.writeUTF(getServer().getWorld().getRegionManager().runtimeProjectionId(location));
+            VisibilitySnapshot visible=buildPacketVisibilitySnapshot(player,false);
+            writeStagedObjectIdentity(out,visible.getSceneryObjects());writeStagedObjectIdentity(out,visible.getWallObjects());
+            StaticScenePresentationSnapshot presentation=buildStaticScenePresentationSnapshot(player);
+            if(presentation==null)throw new IllegalStateException("No native static preparation window");
+            out.writeInt(presentation.getCenterSectorX());out.writeInt(presentation.getCenterSectorY());
+            for(java.util.List<StaticScenePresentationSnapshot.Record> rows:java.util.Arrays.asList(presentation.getScenery(),presentation.getWalls())){
+                java.util.List<StaticScenePresentationSnapshot.Record> sorted=new java.util.ArrayList<>(rows);
+                sorted.sort(java.util.Comparator.comparingInt(StaticScenePresentationSnapshot.Record::getX)
+                    .thenComparingInt(StaticScenePresentationSnapshot.Record::getY).thenComparingInt(StaticScenePresentationSnapshot.Record::getId)
+                    .thenComparingInt(StaticScenePresentationSnapshot.Record::getDirection).thenComparingInt(StaticScenePresentationSnapshot.Record::getType));
+                out.writeInt(sorted.size());for(StaticScenePresentationSnapshot.Record row:sorted){out.writeInt(row.getId());out.writeInt(row.getX());out.writeInt(row.getY());out.writeInt(row.getDirection());out.writeInt(row.getType());}
+            }
+            out.flush();return java.security.MessageDigest.getInstance("SHA-256").digest(bytes.toByteArray());
+        }catch(java.io.IOException|java.security.GeneralSecurityException impossible){throw new IllegalStateException("Cannot bind login preparation",impossible);}
+    }
+    private static void writeStagedObjectIdentity(java.io.DataOutputStream out,java.util.Collection<GameObject> objects)throws java.io.IOException {
+        java.util.List<GameObject> sorted=new java.util.ArrayList<>(objects);
+        sorted.sort(java.util.Comparator.comparing((GameObject object)->object.getWorldLocation().toString())
+            .thenComparingInt(GameObject::getID).thenComparingInt(GameObject::getDirection).thenComparingInt(GameObject::getType));
+        out.writeInt(sorted.size());for(GameObject object:sorted){out.writeInt(object.getID());out.writeInt(object.getDirection());out.writeInt(object.getType());out.writeUTF(object.getWorldLocation().toString());}
+    }
+    public void resetStagedLoginScene(Player player) {
+        if(player.isLoggedIn())throw new IllegalStateException("Cannot reset a live login");
+        String[] keys={LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE,LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE,LAYERED_SCENE_CONTEXT_PROTOCOL_ATTRIBUTE,
+            LAYERED_ACTOR_SCENE_SCOPE_ATTRIBUTE,NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE,NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE,
+            NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE,NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE,
+            NATIVE_TERRAIN_SYMMETRIC_VISUAL_CONTEXT_ATTRIBUTE,NATIVE_TERRAIN_SYMMETRIC_STRUCTURE_CONTEXT_ATTRIBUTE,
+            NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE,NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE,NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE,
+            NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE,SCENE_BASELINE_SUMMARY_ATTRIBUTE,ATOMIC_SCENE_FENCE_SEQUENCE_ATTRIBUTE,
+            ATOMIC_SCENE_BASELINE_PENDING_SEQUENCE_ATTRIBUTE,CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE};
+        for(String key:keys)player.removeAttribute(key);
+        player.getLocalGameObjects().clear();player.getLocalWallObjects().clear();
+    }
+    /** Transfer only checked terrain/static transport state into a freshly reloaded account. */
+    public void adoptStagedLoginScene(Player from,Player to) {
+        if(from.isLoggedIn()||to.isLoggedIn()||!from.getWorldLocation().equals(to.getWorldLocation())
+            ||!java.util.Arrays.equals(stagedLoginSceneIdentity(from),stagedLoginSceneIdentity(to)))throw new IllegalStateException("Prepared login scene changed");
+        String[] keys={LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE,LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE,LAYERED_SCENE_CONTEXT_PROTOCOL_ATTRIBUTE,
+            LAYERED_ACTOR_SCENE_SCOPE_ATTRIBUTE,NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE,NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE,
+            NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE,NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE,
+            NATIVE_TERRAIN_SYMMETRIC_VISUAL_CONTEXT_ATTRIBUTE,NATIVE_TERRAIN_SYMMETRIC_STRUCTURE_CONTEXT_ATTRIBUTE,
+            NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE,NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE,NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE,
+            NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE,SCENE_BASELINE_SUMMARY_ATTRIBUTE,ATOMIC_SCENE_FENCE_SEQUENCE_ATTRIBUTE,
+            ATOMIC_SCENE_BASELINE_PENDING_SEQUENCE_ATTRIBUTE,CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE};
+        for(String key:keys){Object value=from.getAttribute(key,null);if(value!=null)to.setAttribute(key,value);}
+        to.getLocalGameObjects().addAll(from.getLocalGameObjects());to.getLocalWallObjects().addAll(from.getLocalWallObjects());
+    }
+
 	private boolean ensureLayeredSceneContext(final Player player) {
 		return ensureLayeredSceneContext(player, true);
 	}

@@ -39,6 +39,55 @@ public abstract class LoginRequest extends LoginExecutorProcess{
 	private boolean isSimLogin;
 	private int[] nonces;
 	private UsernameChangeType usernameChangeType = UsernameChangeType.NOT_RENAMED;
+    private volatile LoginAdmissionReservations.Lease admission;
+    private int authenticatedAccountId;
+    private String authenticatedHash,authenticatedSalt;
+    protected boolean stagedLoginRequested(){return false;}
+    public void configureStagedPlayer(Player candidate){ }
+    public LoginAdmissionReservations.Lease getAdmission(){return admission;}
+    public final void releaseAdmission(){LoginAdmissionReservations.Lease lease=admission;if(lease!=null)lease.release();}
+    public final void clearLoginSecret(){password=null;}
+    public Player reloadStagedPlayer() {
+        try {
+            PlayerLoginData current=server.getDatabase().getPlayerLoginData(getUsername());
+            if(current==null||current.id!=authenticatedAccountId||!java.util.Objects.equals(current.password,authenticatedHash)
+                ||!java.util.Objects.equals(current.salt,authenticatedSalt)||current.banned==-1||current.banned>System.currentTimeMillis()
+                ||server.isRestarting()||server.isShuttingDown()||!getChannel().isActive()
+                ||!admission.isLive(System.currentTimeMillis())||server.getWorld().getPlayerID(authenticatedAccountId)!=null)return null;
+            Player candidate=server.getPlayerService().loadPlayer(this);
+            if(candidate!=null)configureStagedPlayer(candidate);
+            return candidate;
+        }catch(GameDatabaseException failure){LOGGER.error("Unable to revalidate prepared login",failure);return null;}
+    }
+    public final boolean finishAdmission(final Player candidate,final Runnable beforeCommit) {
+        if(admission==null||!getChannel().isActive())return false;
+        try {
+            return admission.commit(System.currentTimeMillis(),()->{
+                if(!getChannel().isActive()||!admission.isLive(System.currentTimeMillis())
+                    ||server.isRestarting()||server.isShuttingDown()||server.getWorld().getPlayerID(candidate.getDatabaseID())!=null)
+                    throw new IllegalStateException("Login admission changed");
+                if(server.getWorld().getPlayers().size()>=server.getConfig().MAX_PLAYERS&&!candidate.isAdmin())
+                    throw new IllegalStateException("World filled during preparation");
+                beforeCommit.run();
+                if(!getChannel().isActive())throw new IllegalStateException("Connection closed before admission");
+                candidate.setLoggedIn(true);loadingComplete(candidate);
+                if(server.getWorld().getPlayerID(candidate.getDatabaseID())!=candidate)throw new IllegalStateException("Player was not admitted");
+                if(!getChannel().isActive())candidate.unregister(com.openrsc.server.model.entity.UnregisterForcefulness.WAIT_UNTIL_COMBAT_ENDS,"Login connection closed");
+                candidate.desertHeatInit();ActionSender.sendReleasedNameExplanation(candidate,usernameChangeType);
+            },()->server.getWorld().getPlayerID(candidate.getDatabaseID())==candidate);
+        }catch(RuntimeException|Error failure){
+            LOGGER.error("Login admission failed",failure);
+            if(server.getWorld().getPlayerID(candidate.getDatabaseID())!=candidate){
+                if(candidate.getDrainer()!=null){candidate.getDrainer().stop();server.getGameEventHandler().remove(candidate.getDrainer());}
+                candidate.getStatRestorationEvent().stop();server.getGameEventHandler().remove(candidate.getStatRestorationEvent());
+                candidate.setLoggedIn(false);candidate.closePersistenceSession();
+                com.openrsc.server.net.ConnectionAttachment att=getChannel().attr(com.openrsc.server.net.RSCConnectionHandler.attachment).get();
+                if(att!=null)att.player.compareAndSet(candidate,null);
+            }
+            getChannel().close();return false;
+        }
+    }
+
 
 	protected LoginRequest(final Server server, final Channel channel, final String username, final String password, final boolean isAuthenticClient, final int clientVersion, final boolean reconnecting, final int[] nonces) {
 		this.server = server;
@@ -128,35 +177,31 @@ public abstract class LoginRequest extends LoginExecutorProcess{
 	public abstract void loadingComplete(Player loadedPlayer);
 
     protected void processInternal() {
-        ValidatedLogin vl = validateLogin();
-        int loginResponse = vl.responseCode;
-        Player candidate = null;
-        if (!isSimLogin && isValidatedLoginSuccessful(loginResponse)) {
-            candidate = getServer().getPlayerService().loadPlayer(this);
-            if (candidate == null) {
-                // Never acknowledge success before the settlement barrier and
-                // complete account snapshot succeed. Release validation's slot.
-                getServer().getPacketFilter().removeLoggedInPlayer(getIpAddress(), getUsernameHash());
-                loginResponse = LoginResponse.LOGINSERVER_OFFLINE;
+        boolean queued=false;
+        try {
+            ValidatedLogin vl=validateLogin();int response=vl.responseCode;Player candidate=null;
+            if(!isSimLogin&&isValidatedLoginSuccessful(response)){
+                candidate=getServer().getPlayerService().loadPlayer(this);
+                if(candidate==null)response=LoginResponse.LOGINSERVER_OFFLINE;
             }
-        }
-        if (clientVersion <= 204) {
-            loginResponse = RegisterLoginResponse.translateNewToOld(loginResponse, clientVersion, false);
-        }
-        loginValidated(loginResponse);
-        if (candidate != null) {
-            final Player loadedPlayer = candidate;
-            loadedPlayer.setLoggedIn(true);
-            LOGGER.info("Player Loaded: " + getUsername() + String.format("; Client Version: %d", clientVersion));
-            getServer().getGameEventHandler().add(new ImmediateEvent(getServer().getWorld(), "Login Player") {
-                @Override public void action() {
-                    loadingComplete(loadedPlayer);
-                    loadedPlayer.desertHeatInit();
-                    ActionSender.sendReleasedNameExplanation(loadedPlayer, usernameChangeType);
-                }
-            });
-        }
-        LOGGER.info("Processed login request for " + getUsername() + " response: " + loginResponse);
+            if(candidate!=null&&stagedLoginRequested()){
+                clearLoginSecret();final Player loaded=candidate;final int success=response;
+                getServer().getGameEventHandler().add(new ImmediateEvent(server.getWorld(),"Prepare Browser Login"){
+                    public void action(){
+                        if(!getChannel().isActive()||admission==null||!admission.isLive(System.currentTimeMillis())){releaseAdmission();getChannel().close();return;}
+                        configureStagedPlayer(loaded);StagedLoginSession.begin(LoginRequest.this,loaded,success);
+                    }
+                });queued=true;return;
+            }
+            if(clientVersion<=204)response=RegisterLoginResponse.translateNewToOld(response,clientVersion,false);
+            loginValidated(response);
+            if(candidate!=null){
+                final Player loaded=candidate;
+                getServer().getGameEventHandler().add(new ImmediateEvent(server.getWorld(),"Login Player"){
+                    public void action(){if(!finishAdmission(loaded,()->{})){releaseAdmission();getChannel().close();}}
+                });queued=true;
+            }
+        }finally{clearLoginSecret();if(!queued)releaseAdmission();}
     }
 
 	public ValidatedLogin validateLogin() {
@@ -291,10 +336,21 @@ public abstract class LoginRequest extends LoginExecutorProcess{
 			return new ValidatedLogin(LoginResponse.LOGIN_UNSUCCESSFUL);
 		}
 
-		if (reconnecting && clientVersion <= 204) {
-			return new ValidatedLogin(LoginResponse.RECONNECT_SUCCESFUL);
-		}
-		getServer().getPacketFilter().addLoggedInPlayer(getIpAddress(), getUsernameHash());
+        if(!isSimLogin){
+            if(server.getWorld().getPlayerID(playerData.id)!=null)return new ValidatedLogin(LoginResponse.ACCOUNT_LOGGEDIN);
+            authenticatedAccountId=playerData.id;authenticatedHash=playerData.password;authenticatedSalt=playerData.salt;
+            final boolean track=!(reconnecting&&clientVersion<=204);
+            admission=server.getLoginAdmissions().acquire(playerData.id,getIpAddress(),getChannel(),System.currentTimeMillis(),stagedLoginRequested(),
+                Math.max(1,server.getConfig().MAX_PLAYERS_PER_IP),
+                ()->{if(track)server.getPacketFilter().addLoggedInPlayer(getIpAddress(),getUsernameHash());},
+                ()->{if(track)server.getPacketFilter().removeLoggedInPlayer(getIpAddress(),getUsernameHash());});
+            if(admission==null)return new ValidatedLogin(LoginResponse.ACCOUNT_LOGGEDIN);
+            final LoginAdmissionReservations.Lease lease=admission;
+            getChannel().closeFuture().addListener(ignored->lease.release());
+            lease.expirationTask(getChannel().eventLoop().schedule(()->{if(lease.expire(System.currentTimeMillis()))getChannel().close();},
+                LoginAdmissionReservations.TTL_MILLIS,java.util.concurrent.TimeUnit.MILLISECONDS));
+        }
+        if(reconnecting&&clientVersion<=204)return new ValidatedLogin(LoginResponse.RECONNECT_SUCCESFUL);
 		return new ValidatedLogin(LoginResponse.LOGIN_SUCCESSFUL[groupId]);
 	}
 

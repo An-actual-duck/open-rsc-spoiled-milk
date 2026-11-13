@@ -117,6 +117,9 @@ public class Server implements Runnable {
 	private final DiscordService discordService;
 	private final LoginExecutor loginExecutor;
 	private final ServerConfiguration config;
+    private final com.openrsc.server.login.LoginAdmissionReservations loginAdmissions=new com.openrsc.server.login.LoginAdmissionReservations();
+    public com.openrsc.server.login.LoginAdmissionReservations getLoginAdmissions(){return loginAdmissions;}
+
 	private final ProcessNetworkConfiguration processNetworkConfiguration;
 	private final DiagnosticsConfiguration diagnosticsConfiguration;
 	private ScheduledExecutorService scheduledExecutor;
