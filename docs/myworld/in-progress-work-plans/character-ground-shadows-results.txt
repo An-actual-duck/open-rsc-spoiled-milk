@@ -1,8 +1,10 @@
 Standalone character ground shadows — November 13, 2026
 ======================================================
 
-Status: owner-approved appearance; correctness, hardware pixels and final native
-functional checks passed. Integrated on main. No public release or
+Status: SHELVED after the owner's populated-world walking test on November 13,
+2026. The circles looked out of place beside the detailed scenery shadows.
+Disabled by default for NPCs, summons and players; implementation and evidence
+are preserved for a later decision after public feedback. No public release or
 server activation was requested by this work.
 
 Result
@@ -28,8 +30,9 @@ are clipped to outdoor tiles so edges cannot bleed into adjacent roof coverage.
 Positive roof declarations remain authoritative when roof geometry is hidden.
 Use the frame's signed underground policy: negative levels receive no circle.
 Shadow Off and classic lighting also disable it; Low and High retain the same
-low-cost circle. The native opt-out is:
- -Dspoiledmilk.characterGroundShadows=false
+low-cost circle when explicitly enabled. The shelved experiment is disabled
+by default, with no player-facing option. Developer preview opt-in only:
+ -Dspoiledmilk.characterGroundShadows=true
 
 This inherits existing roof metadata availability. It does not infer roofs from
 walls or repair the previously deferred multi-storey roof-data gaps. The real
