@@ -8,6 +8,29 @@ The main website stays on GitHub Pages. Only `play.rscspoiledmilk.com` points to
 Oracle `132.145.137.142`. HTTPS static content uses 443; browser gameplay connects
 directly to `wss://play.rscspoiledmilk.com:43505/`, subprotocol `binary`.
 
+## Current staged-login deployment
+
+Browser `alpha-20261112-6` and server-only `v0.3.19` are active together at source
+`2d55983b11f36b4a488a417e05d1662eb7357801`. The immutable release manifest is
+`6de94bcb8f28d1b613cbb183ef9d18122745621168b5fc1f6c4a68679912d594`.
+The desktop player release remains v0.3.16.
+
+The browser negotiates the versioned pre-entry capability before authentication.
+After authentication, bounded account reservations and a detached Player snapshot
+provide the real destination, account settings and checked static scene. No world
+registration, gameplay events or combat begins while data/graphics prepare. Only
+an owned readiness fence, fresh account revalidation and COMMIT admit the player.
+Heartbeats do not extend the five-minute hard deadline. Cancellation releases the
+reservation; stale commits and cross-channel receipts do not grant entry. A new
+browser fails helpfully before authentication on an unsupported old server.
+
+Rollback must respect this compatibility: preserve the server protocol while
+new browser sessions exist, or roll the browser index back and coordinate any
+server rollback through the public shutdown gate. Immutable old assets remain.
+No account schema or map migration was introduced. See the
+[server protocol](../myworld/in-progress-work-plans/browser-staged-login-server.md)
+and [client review](../myworld/in-progress-work-plans/browser-staged-login-client-review.md).
+
 ## Why direct WSS
 
 The existing game's connection admission, packet limits, login checks and player

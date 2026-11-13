@@ -12,15 +12,36 @@ public worlds against diverging player databases.
 | Game port | TCP `43605` |
 | VM | `VM.Standard.A1.Flex`, 1 OCPU, 6 GB RAM, ARM64 |
 | OS / Java | Ubuntu 26.04.1 LTS / OpenJDK 17 |
-| Server release tag | `v0.3.18` (server-only secure browser connection) |
+| Server release tag | `v0.3.19` (server-only staged browser login) |
 | Published client release | `v0.3.16` (steady underground lighting) |
-| Game source | `a8d176233ef82d47a7a7ea91e5bb91b3732a7f53` |
+| Game source | `2d55983b11f36b4a488a417e05d1662eb7357801` |
 | Client protocol | `10059` |
 | Public service | `spoiled-milk.service`, enabled at boot |
-| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.18` |
+| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.19` |
 | Guarded live path | `/tmp/spoiled-milk-live-main` |
 | Git object repository | `/home/ubuntu/spoiled-milk/repository.git` |
 | External state | `/home/ubuntu/.local/share/spoiled-milk/live` |
+
+The November 13 UTC / November 12 local activation installed server-only
+`v0.3.19` and browser `alpha-20261112-6` together. The browser manifest SHA256 is
+`6de94bcb8f28d1b613cbb183ef9d18122745621168b5fc1f6c4a68679912d594`.
+Authentication now reserves a detached account while checked map data and the
+static GPU scene prepare; only a validated ready/commit exchange admits the
+player. Preparation progress remains visible. Native protocol 10059 and the
+published desktop client v0.3.16 are unchanged.
+
+A real private Firefox cold login held preparation beyond 40 seconds, with no
+registered player, then entered successfully. Cancellation released the pending
+reservation without world admission. The Oracle ARM64/JDK17 build and the actual
+installed core each passed 61 focused checks; class-loading logs bind the latter
+to the deployed JAR. All changed classes belong to the eleven reviewed server
+source families; plugin and gameplay-overlay classes remain identical to
+v0.3.18. All 74 accounts and the existing map were preserved, with integrity-checked
+backups on Oracle and the owner's PC. Public trusted HTTPS, immutable 206 Range
+assets, byte-exact native/WSS configs and pre-auth staged negotiation passed.
+The prior server v0.3.18 and browser alpha-20261112-3 remain available for rollback.
+Receipts are in `output/reviews/browser-staged-login/` and Oracle
+`/home/ubuntu/spoiled-milk/verification/v0.3.19/activation/`.
 
 The guarded live path is a **bind mount** of the persistent source directory,
 recorded in `/etc/fstab`. It is not a symlink or disposable `/tmp` source copy.
@@ -28,7 +49,7 @@ The service requires that mount. The source is a clean detached checkout of the
 exact published tag; it is never a development workspace.
 
 The service calls `scripts/run-hosted-server.sh` with
-`MYWORLD_HOSTED_RELEASE_TAG=v0.3.18`. Existing exact-tag, clean-source, installed
+`MYWORLD_HOSTED_RELEASE_TAG=v0.3.19`. Existing exact-tag, clean-source, installed
 map, generator, external-database, and occupied-port guards remain active.
 `JAVA_TOOL_OPTIONS` caps the heap at 3 GiB. The unit uses `Restart=on-failure`;
 a successful in-game shutdown exits normally and stays stopped.
@@ -59,7 +80,7 @@ backup timer and zero automatic restarts were verified. The released desktop
 client still fetched configs and reached its hardware OpenGL login surface.
 v0.3.17 remains available for server rollback.
 
-The current browser build is `alpha-20261112-3`, activated as a static-only
+The previous browser build was `alpha-20261112-3`, activated as a static-only
 update later on November 12. Its source is
 `f7bb88188bf48f3753983984010678690a5cd1f9`; the exact manifest SHA256 is
 `6616ce58b07f2e79a9cd882593d2c69fdc4cfcacf2155aeb260c3146e010ecf4`.
