@@ -342,15 +342,17 @@ public final class RendererBenchmarkClient {
     private static void recordCharacterGroundShadowState(mudclient client,OpenGLFramePresenter presenter,Path capture)throws Exception {
         String requested=System.getProperty("renderer.benchmark.characterGroundShadows");if(requested==null)return;
         boolean selected=Boolean.parseBoolean(requested);
-        if(Renderer3DFrame.CharacterGroundShadow.ENABLED!=selected)throw new IllegalStateException("NPC shadow comparison policy differs");
+        Class<?> policy=Class.forName("orsc.graphics.three.Renderer3DFrame$CharacterGroundShadow");
+        if(((Boolean)field(null,policy,"ENABLED"))!=selected)throw new IllegalStateException("Character shadow comparison policy differs");
         Object renderer=field(presenter,OpenGLFramePresenter.class,"worldChunkRenderer");
         Object shadows=field(renderer,renderer.getClass(),"characterGroundShadows");
         Object mesh=shadows==null?null:field(shadows,shadows.getClass(),"mesh");
         int circles=mesh==null?0:((Number)field(mesh,mesh.getClass(),"circles")).intValue();
         int roofed=mesh==null?0:((Number)field(mesh,mesh.getClass(),"roofSuppressed")).intValue();
         Renderer3DFrame frame=tryPublishedFrame(presenter);
+        String footprints=frame==null?"null":Integer.toString(((java.util.List<?>)frame.getClass().getMethod("getCharacterGroundShadows").invoke(frame)).size());
         Files.write(capture.resolve("npc-ground-shadows.json"),("{\"enabled\":"+selected+",\"circles\":"+circles
-            +",\"roofSuppressed\":"+roofed+",\"sourceFootprints\":"+(frame==null?"null":Integer.toString(frame.getCharacterGroundShadows().size()))+"}\n").getBytes(StandardCharsets.UTF_8));
+            +",\"roofSuppressed\":"+roofed+",\"sourceFootprints\":"+footprints+"}\n").getBytes(StandardCharsets.UTF_8));
     }
     private static void recordNativeResidentInputPolicy(mudclient client, Path capture) throws Exception {
         String requested=System.getProperty("renderer.benchmark.nativeResidentInputCache");

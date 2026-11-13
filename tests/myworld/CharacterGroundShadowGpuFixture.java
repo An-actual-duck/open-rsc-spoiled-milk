@@ -65,7 +65,10 @@ public final class CharacterGroundShadowGpuFixture {
         try {
             gl.glfwDefaultWindowHints();gl.glfwWindowHint(gl.GLFW_VISIBLE,gl.GLFW_FALSE);gl.glfwWindowHint(gl.GLFW_FOCUSED,gl.GLFW_FALSE);
             window=gl.glfwCreateWindow(SIZE,SIZE,"Hidden character shadow pixels",0,0);require(window!=0,"Hidden context failed");
-            gl.glfwMakeContextCurrent(window);gl.createCapabilities();pass=new OpenGLCharacterGroundShadows(gl);
+            gl.glfwMakeContextCurrent(window);gl.createCapabilities();
+            System.out.println("GL_RENDERER="+gl.glGetString(0x1F01));
+            System.out.println("GL_VERSION="+gl.glGetString(0x1F02));
+            pass=new OpenGLCharacterGroundShadows(gl);
             GeometryShadowRoofMask.Cache cache=new GeometryShadowRoofMask.Cache();
             GeometryShadowRoofMask hidden=cache.get(GeometryShadowRoofMaskFixture.frame(1L<<2,false,3),0);
             ByteBuffer plain=render(gl,pass,GeometryShadowRoofMask.EMPTY,120,output.resolve("outdoor.png"));
