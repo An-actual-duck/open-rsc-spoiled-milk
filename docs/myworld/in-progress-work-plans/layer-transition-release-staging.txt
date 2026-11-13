@@ -2,6 +2,12 @@ Level-transition fixes: staged server-only release
 =================================================
 Prepared November 12, 2026. Status: staged and verified; NOT activated.
 
+Follow-up after this freeze: the six associate satchel-completion lines have
+been updated on main, with contact/Influence route checks passing. Frozen tag
+v0.3.20 does not contain that later dialogue change. To ship it alongside these
+transition fixes, prepare a new immutable candidate/tag; do not overwrite v0.3.20
+or replace its verified JARs under the existing receipt.
+
 Frozen candidate
 ----------------
 Tag: v0.3.20 (server-only source tag, no desktop updater release).
