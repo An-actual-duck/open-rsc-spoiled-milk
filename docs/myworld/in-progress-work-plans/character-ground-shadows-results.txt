@@ -2,7 +2,7 @@ Standalone character ground shadows — November 13, 2026
 ======================================================
 
 Status: owner-approved appearance; correctness, hardware pixels and final native
-functional checks passed. Ready for manager integration. No public release or
+functional checks passed. Integrated on main. No public release or
 server activation was requested by this work.
 
 Result
@@ -67,7 +67,7 @@ Later commits change fixtures/benchmark tools/documentation only.
 Worker-local full maintained build:
  output/builds/npc-ground-shadows/candidate-02e5039c9/client.jar
  SHA256 44d4ef92224afa1612a12b2cc01d75eda3dba6236669a47fab2b4abe48e40789
-Adjacent receipts retain all379 source hashes,1,005 compiled classes and3,194 own
+Adjacent receipts retain all381 source hashes,1,005 compiled classes and3,194 own
 resources. Build was clean, with no transplanted classes. Asset manifest remains
 a74d9bf3a936f2a02a46d4ef66b5d47ee2a2f4a037ba7804be7e5f5b61c56e08.
 
@@ -117,3 +117,15 @@ The first discarded comparison preserved a missing optional published-frame
 observation rather than zero. Final diagnostics represent that source count as
 null/unknown and report actual renderer circles independently. Frozen logs are
 retained; unknown observations never establish missing actors or zero work.
+
+Manager integration
+-------------------
+Integrated at8ffa6aa1280edf5e6b80b63977d79aca266aaa02. A fresh full-source manager
+build at output/builds/character-ground-shadow-integration/main-8ffa6aa128/ has
+identical381 source hashes,1,005 compiled-class hashes and3,194 resource hashes
+to the tested final worker artifact. Post-merge CPU/native GPU checks passed in
+manager output/tests/npc-ground-shadows/1794588762118889687/; workspace layout
+passed. An additional605 signed grid-edge circle-partition cases also passed
+against the same final artifact (worker tests/npc-ground-shadows/
+clip-boundary-1794588653771939613/). The player package and public server remain
+unchanged. Subsequent integration bookkeeping edits only this report.
