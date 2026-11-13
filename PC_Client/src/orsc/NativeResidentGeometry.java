@@ -31,6 +31,49 @@ final class NativeResidentGeometry {
         for (int c : FLOAT_SOURCE) out.putFloat(source[c]);
         out.put(start+47,(byte)0); out.position(start+STRIDE); return true;
     }
+    // These encode already-derived integer shader fields, never arbitrary floats.
+    // No clamping/truncation is allowed here: future IDs/masks/strengths must fall
+    // back for the entire chunk. RGB extraction is the existing 24-bit contract.
+    static boolean putTypedShaderInputs(ByteBuffer out, int light, int rawColor,
+        int kind, int family, int mask, int terrainColor, int strength) {
+        if (((light | kind | family | mask | strength) & ~255) != 0) return false;
+        int start = out.position();
+        putRgb(out, start + 36, rawColor);
+        out.put(start + 39, (byte)light);
+        putRgb(out, start + 40, terrainColor);
+        out.put(start + 43, (byte)kind);
+        out.put(start + 44, (byte)family);
+        out.put(start + 45, (byte)mask);
+        out.put(start + 46, (byte)strength);
+        return true;
+    }
+    private static void putRgb(ByteBuffer out, int at, int color) {
+        out.put(at, (byte)((color >> 16) & 255));
+        out.put(at + 1, (byte)((color >> 8) & 255));
+        out.put(at + 2, (byte)(color & 255));
+    }
+    static void putTypedMaterialColor(ByteBuffer out, int color) {
+        int start = out.position();
+        putRgb(out, start + 32, color);
+        out.put(start + 35, (byte)255);
+    }
+    static void putUnbakedTextureLight(ByteBuffer out) {
+        int start = out.position();
+        for (int i = 48; i < 52; i++) out.put(start + i, (byte)255);
+    }
+    /** Commit a vertex only after admission. Negative zero is preserved in floats;
+     * integers cannot express it. Arbitrary float byte fields still use exactByte. */
+    static boolean putTypedFloats(ByteBuffer out, float[] source) {
+        for (int c : FLOAT_SOURCE) if (!Float.isFinite(source[c])) return false;
+        int start = out.position();
+        for (int c : FLOAT_SOURCE) out.putFloat(source[c]);
+        out.put(start + 47, (byte)0);
+        out.position(start + STRIDE);
+        return true;
+    }
+    static boolean typedWriterEnabled() {
+        return Boolean.getBoolean("spoiledmilk.nativeCompactTypedWriter") && enabled();
+    }
     static boolean enabled() {
         return Boolean.getBoolean("spoiledmilk.nativeCompactGeometry")
             && !Boolean.getBoolean("spoiledmilk.browserBenchmark") && !Boolean.getBoolean("spoiledmilk.browserPublicAlpha");
