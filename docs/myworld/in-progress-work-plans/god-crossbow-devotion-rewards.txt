@@ -153,3 +153,7 @@ retaining stock, trigger, latch and string positions; limb tips now deliberately
 change their silhouettes. Solid opaque/transparent pixels, clean canvas border,
 original grey mechanical parts verified unchanged. Firefox index updated with
 1x/8x comparison and mace references. Still art review only; no runtime changes.
+
+Owner refinement: Zamorak limbs and curled horns changed to black with subtle
+charcoal highlights; red stock retained. Saradomin and Guthix PNG hashes are
+unchanged from the reviewed native-restart-v2 candidates.

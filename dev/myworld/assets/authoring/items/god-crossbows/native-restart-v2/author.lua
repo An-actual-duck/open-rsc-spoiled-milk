@@ -23,7 +23,7 @@ local function line(image,x0,y0,x1,y1,c,clip)
  end
 end
 local styles={
- {name='zamorak',woodDark=0x6e1600,woodMid=0x9e1f00,woodLight=0xd23b21,limb=0x6e1600,limbShade=0x360500},
+ {name='zamorak',woodDark=0x6e1600,woodMid=0x9e1f00,woodLight=0xd23b21,limb=0x191919,limbShade=0x000000},
  {name='saradomin',woodDark=0x818181,woodMid=0xbababa,woodLight=0xdfdfdf,limb=0xd2ad35,limbShade=0xa5830a},
  {name='guthix',woodDark=0x644010,woodMid=0x9c7248,woodLight=0xad7f52,limb=0x92be6e,limbShade=0x5e8148}
 }
@@ -46,13 +46,13 @@ for _,s in ipairs(styles)do
  local name
  if s.name=='zamorak'then
   name='Mace horns form the limb tips'
-  -- Two curled, tapering red-black horns terminate the existing curved limbs.
+  -- Two curled, tapering black horns terminate the existing curved limbs.
   local paths={{{7,13},{6,11},{6,9},{7,8},{9,7},{10,8},{10,9}},{{35,28},{38,28},{40,27},{40,25},{39,24},{37,24},{36,25}}}
   for _,points in ipairs(paths)do
-   for i=1,#points-1 do local a,b=points[i],points[i+1];line(detail,a[1],a[2],b[1],b[2],0x360500)end
+   for i=1,#points-1 do local a,b=points[i],points[i+1];line(detail,a[1],a[2],b[1],b[2],0x000000)end
   end
-  line(detail,7,12,7,9,0x9e1f00);line(detail,7,9,9,8,0x9e1f00)
-  line(detail,35,27,38,27,0x9e1f00);line(detail,38,27,39,26,0x9e1f00)
+  line(detail,7,12,7,9,0x323232);line(detail,7,9,9,8,0x323232)
+  line(detail,35,27,38,27,0x323232);line(detail,38,27,39,26,0x323232)
   dot(detail,10,9,0x191919);dot(detail,36,25,0x191919)
  elseif s.name=='saradomin'then
   name='Golden limb tips shaped into mace stars'
