@@ -11,7 +11,7 @@ vertexonly=on is a private benchmark-only, default-OFF control. Animated residen
 updates may skip material packing and index transfer only after exact equality
 of cached packing settings, texture metadata and an owned topology/material
 snapshot (three indices, texture, fallback and kind per triangle). The proof is
-bounded to1024 triangles,24KiB per entry, at most12MiB across512 entries, plus
+bounded to 1024 triangles, 24 KiB per entry, at most 12 MiB across 512 entries, plus
 array headers; larger models use the original full path. Every vertex is still
 packed and uploaded. Static, topology/shape, settings/material changes fall back.
 The new two-argument native operation is represented in the closed Worker schema,
@@ -34,10 +34,10 @@ leave lastWorld intact, so a resumed interval can include the full hold. Reject
 nonsteady windows for steady comparisons; never trim those crossing gaps. Keep
 unfiltered route evidence and source-readiness receipts separately.
 
-Initial frozen451bc765 baseline JAR is preserved under output/builds/
+Initial frozen 451bc765 baseline JAR is preserved under output/builds/
 client-optimization/baseline-451bc765 with source/resource/JAR-entry hashes.
-An initial diagnostic repeatable fixture run at1200x675 physical,37 actor groups,
-Radeon R9200 reports1609 fresh world frames over30.157s (53.35FPS), no holds,
+An initial diagnostic repeatable fixture run at 1200 x 675 physical, 37 actor groups,
+Radeon R9200 reports 1609 fresh world frames over 30.157 s (53.35 FPS), no holds,
 visible/focused and unchanged pose/epoch. Its modelbatch/regionbuild/terrainquery
 were OFF: it is NOT public-settings acceptance evidence. The first travel capture
 is incomplete (two legs only, accepted=false), and must not be reported as a
@@ -59,26 +59,26 @@ Source, compiled-class, packaged-resource and build-log receipts are beside it.
 Full-public cooking was ATTEMPTED and refused before producing a catalogue:
 whole-zone/bake.py requires --full to run from exact integrated main, and the RAM
 cook has the same manager/main guard. The complete client stagers refuse pilots
-(mandatory1330 sectors/24580 placements and445 recipes/1330 queries). No guard was
+(mandatory 1330 sectors/24580 placements and 445 recipes/1330 queries). No guard was
 weakened; no manager/main changes or catalogue-source rebinding occurred. Thus
 there is NO full-public compact/whole-zone/whole-RAM performance acceptance here.
 
 Supported non-catalogue diagnostic cohorts used the SAME frozen stage/JAR,
-WorkerON, modelbatch/regionbuild/terrainquery/spritekeylimbs ON, identical camera,
-1200x675 physical output,32 fixture NPCs/37 rendered groups, and diagnostics OFF.
-OFF/ON/ON/OFF populated20-second FPS:59.131,58.800,59.483,59.266.
-Means:OFF59.198,ON59.142 (-0.096%). p95 all20ms; p9923/23/23/24ms;
+Worker ON, modelbatch/regionbuild/terrainquery/spritekeylimbs ON, identical camera,
+1200x675 physical output, 32 fixture NPCs/37 rendered groups, and diagnostics OFF.
+OFF/ON/ON/OFF populated 20-second FPS:59.131,58.800,59.483,59.266.
+Means:OFF 59.198,ON 59.142 (-0.096%). p95 all 20 ms; p99 23/23/23/24 ms;
 steady max68/63/69/67ms. All steady windows had no holds, same source epoch/pose,
 visible/focused state, coherent frame counts and actual fixture identity.
 Exact sequence-based interval deduplication rejects missing or nonsteady context.
 
-Steady uploaded bytes per fresh frame:OFF299434 average,ON289124,3.44% lower.
-Both ON cohorts actually used vertex-only for all2057/2070 observed repacks;
+Steady uploaded bytes per fresh frame:OFF 299434 average,ON 289124,3.44% lower.
+Both ON cohorts actually used vertex-only for all 2057/2070 observed repacks;
 OFF had zero vertex-only calls. This confirms the mechanism, NOT an FPS benefit.
 
 All four seven-leg original-pointer routes completed six ordinary boundaries
-with epochs1..7. Route durations15.84/16.53/15.73/16.77s include input/poll/settle.
-Maximum observed completed-world tail gaps2961/2918/2911/3428ms retain all outliers.
+with epochs1..7. Route durations 15.84/16.53/15.73/16.77s include input/poll/settle.
+Maximum observed completed-world tail gaps 2961/2918/2911/3428ms retain all outliers.
 These are overlapping-tail maxima, not per-leg distributions or clean isolated
 cold/warm estimates. No transition speedup is established. The incomplete initial
 baseline capture remains explicitly excluded. Original unmodified screenshot
@@ -96,7 +96,7 @@ shortcut was implemented. This is not a claim about full-public catalogue mode.
 Decision: keep vertexonly and finalprofile private/default OFF. Retain the
 experiment and evidence, but do not adopt a broader cache or claim browser FPS/
 chunk-transition improvement. Native phases must compare candidate OFF against
-the original frozen451bc765 JAR; diagnostic wrapper overhead is not assumed zero.
+the original frozen 451bc765 JAR; diagnostic wrapper overhead is not assumed zero.
 
 Evidence and reproducibility
 ----------------------------

@@ -455,9 +455,11 @@ public final class RendererBenchmarkClient {
         OpenGLFramePresenter presenter = (OpenGLFramePresenter) field(ScaledWindow.getInstance(), ScaledWindow.class, "openGLFramePresenter");
         OpenGLViewportPresenter viewport = (OpenGLViewportPresenter) field(presenter, OpenGLFramePresenter.class, "viewportPresenter");
         System.out.println(RendererPerformanceDiagnostics.handleCommand("::pf start " + phase));
-        NativeRouteProbe routeProbe=phase.equals("busy-route") ? new NativeRouteProbe(run,capture,client) : null;
-        boolean routeCompleted=false;
-        if(routeProbe!=null)try {routeProbe.route();routeCompleted=true;} finally {if(!routeCompleted)routeProbe.close();}
+        // Own the probe across both movement and the subsequent context sample loop.
+        // AutoCloseable preserves partial evidence and suppresses close errors behind
+        // the original failure, without producing CLIENT-DONE on either failure.
+        try (NativeRouteProbe routeProbe=phase.equals("busy-route") ? new NativeRouteProbe(run,capture,client) : null) {
+        if(routeProbe!=null)routeProbe.route();
         for (int second = 0; second < seconds; second++) {
             if(Files.exists(run.resolve("FIXTURE-FAILED"))) throw new IllegalStateException("Private fixture setup failed; aborting measurement");
             client.setCameraZoomSetting(Integer.getInteger("renderer.benchmark.zoom", 75));
@@ -481,7 +483,7 @@ public final class RendererBenchmarkClient {
             Files.write(capture.resolve("client-samples.jsonl"), (sample + "\n").getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             Thread.sleep(1000);
         }
-        if(routeProbe!=null)routeProbe.close();
+        }
         System.out.println(RendererPerformanceDiagnostics.handleCommand("::pf stop " + phase));
         recordNativeResidentInputEnd(client,capture,phase);
         recordCharacterGroundShadowState(client,presenter,capture);

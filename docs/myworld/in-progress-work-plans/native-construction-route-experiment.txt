@@ -1,0 +1,193 @@
+Native construction and populated route experiments
+===================================================
+Status: experiments retained, both native controls remain default OFF. No publish,
+merge, deployment, cache expansion, new loader, clone cache or ground-shadow change.
+Workspace: Core-Framework-ai-1, feat/standalone-client-optimization-exploration.
+
+Decision
+--------
+The bounded XYZ index substantially accelerates the synthetic large merged-model
+kernel. Primitive World accumulation allocates less in that kernel but is slower.
+Neither establishes a broad native FPS or chunk-transition improvement on the
+populated hardware route. Combined worst gaps are lower in two repeats, but p99
+is mixed and there are only two repeats per mode. Do not adopt either by default.
+
+The next useful target is large native resident chunk upload work. A diagnostic
+long teleport uploads 141,441,120 bytes in one observed frame, with 91.91 ms in the
+chunk-upload CPU stage. This is an observed hotspot, not a complete attribution
+of all first-useful-world latency. Recorded lock wait is too small to justify a
+prepared-product contention or retention-cache change.
+
+Controls and bounds
+-------------------
+-Dspoiledmilk.nativeConstructionVertexIndex=true enables only RSModel.addModels'
+existing construction-local XYZ index. The table stores indices, preserving exact
+integer coordinate equality and earliest match. It is capped at 131,072 maximum
+vertices, falls back to literal insertion at half occupancy or invalid bounds,
+and is cleared in finally. It does not replace mutable global insertVertex,
+copyFaceTo or split paths. Transform commits and metadata-copy order are unchanged.
+
+-Dspoiledmilk.nativePrimitiveWorldBuild=true independently enables the ten numeric
+WorldGpuChunkMeshBuilder accumulators. Each primitive scratch array retains the
+existing 1,048,576-element cap and legacy overflow-list fallback. Enum/object
+collections, raw float behavior, output ordering and ownership are unchanged.
+
+Both properties default false and are ignored under browserBenchmark or
+browserPublicAlpha. BrowserRegionBuild.isEnabled still controls browser-only
+hash arithmetic; native signatures retain literal long FNV, not two int limbs.
+
+Artifact and measurement identity
+---------------------------------
+Frozen original client: 451bc765db487daf9013936e3547282f99c6a6a2
+output/builds/client-optimization/baseline-451bc765/Open_RSC_Client.jar
+SHA256 526912bd1c865dfd82e6da38fd4f6d6f34541f48f16d7b44239804855d46b225
+
+Fresh full desktop client: 6777f28a54634997ec499806a8c9b01a0feae488
+output/builds/client-optimization/native-6777f28a/client.jar
+SHA256 40cee7534c2b1416a5dead93c21cb26572d5ff896c78e0b98dd89da71436aacb
+Built with scripts/build-client.sh, including both Client_Base/src and PC_Client/src.
+Its receipt binds Git source hashes and every packaged entry to the JAR hash.
+All 2,088 class entries match the earlier native-39ff4157 microbenchmark JAR byte
+for byte. The final later changes affect harness/tests/documentation, not runtime.
+
+Measured harness: 618a678f4b62664be2628f0b5cb680479020dc0c.
+The final harness subsequently wraps both route and trailing sample loop in one
+AutoCloseable scope to preserve evidence on failure. That failure-preservation
+revision has CPU failure tests; it was not substituted into measured captures.
+
+Server fixture source: cd21a4abdd61738fd3130b7b78590ec57fd0339d, from the verified
+cohort-20261113T053908Z-1-off private artifact snapshot. All eleven captures share
+identical server artifacts, map manifest, bootstrap source hashes and compiled
+bootstrap class hashes. This is not a claim that the current production server
+was tested. The public server and the owner's existing StandalonePlaytestServer
+were not modified or stopped.
+
+Hardware route and safety
+-------------------------
+GPU: AMD Radeon RX 6700 XT, Mesa 25.2.8, OpenGL compatibility 4.6.
+Hidden native window with actual 1920 x 1080 content viewport, High shadows,
+Remaster geometry, directional lighting, fog ON, zoom 75 and rotation 128.
+The ordinary client production rate remains capped; vsync is disabled by the
+existing diagnostic fixture. These are instrumented CPU-observed post-swap
+intervals, NOT scanout, owner-visible presentation acceptance or uninstrumented FPS.
+
+The default fixture ports 43639/43539 were occupied by the owner's playtest.
+The harness now supports only the explicit alternate pair 44639/44539 as well.
+Markers, server bindings, client endpoints and Java bootstraps must agree;
+all binds remain 127.0.0.1. Mismatch/public-port refusals and process ownership
+checks are tested. The existing cooperative GPU lock remains in use. Native
+competitor process observations were checked at one-second intervals; no competing
+native game client was observed. This is not a claim of monitoring every GPU app.
+All owned test fixtures stopped through their own guarded graceful cleanup.
+
+Each route has ten legs:
+  0. Setup teleport to (478,464,L0).
+  1-6. Ordinary walking between (478,464,L0) and (482,464,L0), three out/returns.
+  7. Long teleport to (685,508,L0).
+  8. Signed-level change to the resolved walkable (684,508,L2).
+  9. Return to (478,464,L0).
+The deterministic route plan is frozen in every receipt; each command must match
+its next exact plan entry. Adjacent walks must change actual client region bases.
+Sixteen controlled players and 32 controlled NPCs are maintained, with summons;
+the client observes 17 players and 40 NPCs. Endpoint receipts verify received
+crowds, logical coordinates/level, readiness and rendering settings on every leg.
+Settings are endpoint observations, not continuous monitoring. Walking arrival
+includes normal movement time and polling, not merely chunk preparation.
+
+Exact interval collection and limitations
+-----------------------------------------
+The fixture drains existing RenderTelemetry rings under their writer lock using
+cached reflection metadata and bounded primitive copies. It formats after releasing
+the lock. Lifetime count identifies events, so equal durations remain distinct;
+missing/reset/duplicate events invalidate evidence. All 34,740 unique cadence
+events across ten comparison captures and one diagnostic capture were retained.
+
+Only cadence anchorNanos reconstructs an event end. Other stages use the latest
+frame at drain time, not their own event timestamp. Their distributions are whole
+run only; do not align independent stage counters or claim per-leg stage timing.
+Per-leg cadence uses whole intersecting intervals, preserving pauses without
+clipping; neighboring windows can overlap. Observer total/max wall times, including
+possible scheduling or GC interruption, are recorded in observer-overhead.json.
+For example, first baseline: 1,069 polls, 19.09 ms total collector wall time,
+9.21 ms summed writer-lock hold and 4.55 ms maximum lock hold. Other runs and outliers
+are retained in the verified summary; the observer is not asserted to be free.
+
+The frozen baseline has no completed-frame source/center identity. Therefore exact
+first coherent useful presented world is UNAVAILABLE. Pose/readiness acknowledgement
+is a polling upper bound, not first-frame latency. Existing diagnostic traces have
+frame.opengl.sequence, offsets, intervals and upload phases plus contextSequence
+and atomic readiness offsets, but do not prove each completed frame's source.
+A later same-artifact scheduler experiment can add a narrow post-swap identity hook.
+Do not relabel retained/pending frames or presentation.release=-1 as presentation.
+
+Low-overhead comparison results
+------------------------------
+Ten fresh fixtures, order baseline/OFF/index/primitive/both, then reverse order.
+GPU timing queries and boundary profiling OFF. Each has ten-second steady tail
+following the same route, with ten-second initial warmup. No cold/warm split is
+claimed. Values are nearest-rank per-run full cadence p95 / p99 / maximum in ms:
+
+original baseline     17.74 / 22.81 / 218.16     17.94 / 21.73 / 221.11
+candidate OFF         17.68 / 22.05 / 330.87     17.77 / 21.27 / 217.44
+index only            17.68 / 21.34 / 223.13     17.69 / 21.00 / 213.91
+primitive only        17.80 / 22.87 / 210.68     17.84 / 21.72 / 222.58
+both                  17.85 / 21.34 / 201.68     17.91 / 23.90 / 194.41
+
+The OFF outlier includes 206.74 ms chunk-upload stage work; its second repeat has
+90.97 ms maximum chunk-upload work. Most other runs have 87-104 ms maxima there.
+This variability prevents attributing a win to construction toggles. Exact leg
+maxima, arrival bounds, >16.67/33.33/50/100 ms counts and individual stage samples
+are in each native-route-summary.json and unique-frame-events.csv.
+
+Separate diagnostic capture
+---------------------------
+The eleventh run uses both toggles, boundary profiling, GPU queries and GC logging.
+It is not pooled into comparison results. Long teleport: 141,441,120 uploaded bytes,
+91.91 ms chunk-upload CPU. Ten route-associated boundary summaries record only
+0.036 ms total lock wait. Several summaries are superseded/session-close and the
+bounded trace drops samples; this is partial attribution, not complete percentiles.
+The separate unique cadence ring remains complete. No cache changes follow from it.
+
+CPU construction kernels
+------------------------
+Three fresh JVMs per mode, eight warmups and twelve measured iterations per kernel
+per JVM; 36 measured iterations per kernel/mode. Merged-model input has four models
+of 4,000 vertices; World input has 6,000 faces. No GPU/server/browser runs here.
+Median pooled merge time: original 20.64 ms, candidate OFF 21.59 ms, index 1.63 ms,
+primitive 20.72 ms, both 1.92 ms. Index adds about 131 KB bounded scratch per merge.
+Median World time: original 1.12 ms, OFF 1.16 ms, primitive 1.40 ms, both 1.41 ms.
+World allocation falls from 5.81 MB to 4.84 MB with primitives. Fresh JVM medians
+vary, especially OFF merge; do not interpret synthetic pooled medians as game FPS.
+The large index kernel benefit is real in this workload but does not establish a
+route benefit or justify enabling it globally.
+
+Correctness and regression evidence
+-----------------------------------
+- Full-JAR original baseline versus candidate property-absent default, explicit OFF,
+  native 2x2, browser OFF/ON with native flags, and public-browser isolation: PASS.
+- Build receipts, exact Git source and every packaged-entry hash validated. Actual
+  compiled addModels selector/table insertion wiring is asserted, not just getters.
+- Raw arrays/signatures, earliest duplicates with conflicting fishing metadata,
+  texture ranges, faceParam1, diffuse settings, normals, transform commits, failure
+  prefixes, overflow limits, collision wrapping and raw float copying: PASS.
+- Browser construction frozen-source regression and 120 model profile OFF/ON cases.
+- Eighteen endpoint/process/benchmark guards; exact sequence/analysis rejection;
+  actual route, sample-loop and observer failure-preservation cases; layout check.
+- No visual approval or owner-visible scanout proof is claimed.
+
+Reproducibility
+---------------
+output/diagnostics/native-construction/comparison-verified-summary.json checks
+identical harness/server/map identities and separates diagnostic results.
+comparison-results.json retains every run and leg. run-comparison.py records the
+serial orchestration and explicit settings. All native-cmp3-20261113-* fixtures
+under output/tests/renderer-shadow-benchmarks preserve commands, source/class hashes,
+route plans, actor/settings receipts, exact CSV, overhead and private logs.
+Earlier interrupted cmp1/cmp2 and failed observer pilots are preserved and excluded.
+The first pilot's editor-level getter misread signed L2 as L0; corrected observers
+use the packet's authoritative logical context. No failure was counted as success.
+
+output/tests/native-construction-benchmark retains JVM commands, JAR/fixture hashes,
+per-iteration allocation/timing CSV and summary.json. Final regression command logs
+are under output/diagnostics/native-construction/final-tests. Full-JAR build receipts
+are alongside the frozen JARs. Final source changes are local-only checkpoints.
