@@ -8918,6 +8918,13 @@ public final class mudclient implements Runnable {
 						int var7 = this.scene.drawSprite(20000 + centerX, var5, centerX + 30000, var4, var6,
 							npcDef.getCamera1(),
 							npcDef.getCamera2(), (byte) 109);
+                        if (Renderer3DFrame.NpcGroundShadow.ENABLED && !Renderer3DSettings.isBrowserPresentationAvailable()
+                                && Renderer3DSettings.canUseResidentObjectChunks()) {
+                            int r = Renderer3DFrame.NpcGroundShadow.radiusForWidth(npcDef.getCamera1());
+                            this.scene.tagNpcGroundShadow(var7, r,
+                                -world.getElevation(var4-r,var5), -world.getElevation(var4+r,var5),
+                                -world.getElevation(var4,var5-r), -world.getElevation(var4,var5+r));
+                        }
 						this.scene.tagCharacterSprite(
 							var7,
 							"NPC",
