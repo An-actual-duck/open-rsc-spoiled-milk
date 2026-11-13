@@ -1,0 +1,72 @@
+Native terrain lookup prototype — November 12, 2026
+==================================================
+
+Status: implemented and correctness checked; native performance acceptance is
+pending. This is the first independent slice of the standalone rendering and
+chunk-loading plan. No launcher default, player package or public service changed.
+
+Frozen inputs
+-------------
+Baseline main: 42e8c2a32eb0ecb128e1fee704a566e78dbc5702.
+Candidate source/build: 98b06a1175ed0c6599451e5231b13e9f203cb45a.
+Worker: feat/native-terrain-query-index, Core-Framework-ai-1.
+The complete maintained client and server builds passed. The candidate client is
+output/builds/native-terrain-query-index/candidate-98b06a117/client.jar; adjacent
+receipts retain source, compiled-class and resource hashes. No class transplant.
+
+Change
+------
+Add the separate opt-in spoiledmilk.nativeTerrainQueryIndex to the existing pure
+Java terrain slot/bounds implementation. Browser policy retains its original
+getter and behavior. Both flags default false in ordinary native startup.
+Regular validated rosters use exact indexed lookup; mixed-size rosters retain
+ordered scanning. There is no new retained terrain cache or per-query allocation.
+
+Evidence so far
+---------------
+tests/myworld/test-native-terrain-query-index.py compiles the frozen baseline
+and candidate against the frozen independent fixture. All canonical results are
+identical for candidate default/native/browser/both policies and baseline OFF.
+Coverage includes protocols 3–10, void/mixed-size slots, signed coordinates and
+levels, edge integers, scalar/Tile results, source ownership and exceptions.
+The suite passed on the installed Java 8 and Java 21 runtimes. Worker evidence:
+output/tests/native-terrain-query-index/reference-1794539642789394843/result.json
+output/tests/native-terrain-query-index/reference-1794540109952180858/result.json
+
+The full native hidden busy-camera scene completed with the opt-in enabled:
+output/tests/renderer-shadow-benchmarks/native-index-functional-on-1/
+busy-camera-20261113T031749Z/. The policy receipt proves native=true,
+browser=false, eligible=true, protocol=8, slots=9. Its final image was inspected:
+terrain, scenery, shadows and the controlled players/NPCs/summons are present.
+This is functional evidence only. A competing StardewModdingAPI process remained
+active after the owner closed game windows; these frame timings cannot establish
+an improvement. Hidden rendering also does not certify visible display pacing.
+The fixture stopped through its guarded private shutdown; evidence is retained.
+The matching native OFF functional scene also completed without client errors:
+output/tests/renderer-shadow-benchmarks/native-index-functional-off-1/
+busy-camera-20261113T032134Z/. Its receipt confirms both flags false with the
+same eligible protocol8 nine-slot roster. It likewise is not a timing comparison.
+
+Performance acceptance still required
+------------------------------------
+Use the same frozen candidate JAR with explicit native OFF/ON so the one startup
+policy is the only client-source difference. Fresh disposable fixtures per run;
+1920x1080, normal zoom75, identical map/assets, quality, sun, fog and warmup.
+Run three interleaved pairs OFF/ON, ON/OFF, OFF/ON with no competing games,
+builds or heavy profiler. Start with busy-camera, then travel/transition and real
+combat controls if attribution supports the change. Preserve policy receipts,
+actual content counts, raw stage/cadence tails, memory and machine/runtime data.
+Do not infer overall FPS improvements from lookup-only synthetic measurements.
+Maximum zoom is a separate stress case; retain the ordinary visible playtest.
+
+Next independent CPU candidate remains static resident input-group reuse.
+The current native path rebuilds grouping maps despite unchanged descriptors;
+the browser cache compares fresh canonical identities, heights, memberships,
+anchor/base/settings and revisions, rebuilding animated groups. A future native
+port must prove actual native cache use, mutable-input invalidation and literal
+OFF mesh parity; do not impersonate browser presentation to enable it. Do not
+bundle it into this candidate before collecting the lookup comparison.
+
+Follow the larger standalone-rendering-and-chunk-loading-plan.txt for compact
+native geometry and coherent budgeted uploads. Those steps are not implemented
+by this prototype. This checkpoint is not a READY handoff or a release approval.
