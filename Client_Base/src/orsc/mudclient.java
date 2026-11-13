@@ -965,10 +965,13 @@ public final class mudclient implements Runnable {
 		staticPresentationWallRecords =
 			Collections.emptyList();
 	private long staticPresentationRevision = 0L;
-	// The browser validates exact primitive inputs rather than rebuilding static
-	// canonical groups every frame. Animation inputs remain frame-local.
+	// Validate exact primitive inputs instead of rebuilding static canonical
+	// groups every frame. Animation inputs remain frame-local; each backend has
+	// its own opt-out, and native software rendering retains the literal builder.
 	private static final boolean BROWSER_RESIDENT_INPUT_CACHE = !"false".equalsIgnoreCase(
 		System.getProperty("spoiledmilk.browserResidentInputCache", "true"));
+	private static final boolean NATIVE_RESIDENT_INPUT_CACHE = !"false".equalsIgnoreCase(
+		System.getProperty("spoiledmilk.nativeResidentInputCache", "true"));
 	private static final int MAX_RESIDENT_INPUT_DESCRIPTOR_INTS = 1024 * 1024;
 	private ResidentStaticInputCache residentStaticInputCache;
 	private int[] residentStaticInputProbe;
@@ -4452,7 +4455,10 @@ public final class mudclient implements Runnable {
 	private List<ResidentObjectChunkInput> buildResidentObjectChunkInputs(Renderer3DWorldChunkFrame baseFrame) {
 		long maximumInputs = (long) getGameObjectInstanceCount() + getWallObjectInstanceCount()
 			+ staticPresentationSceneryRecords.size() + staticPresentationWallRecords.size();
-		if (!BROWSER_RESIDENT_INPUT_CACHE || !Renderer3DSettings.isBrowserPresentationAvailable()
+		boolean reuseInputs = Renderer3DSettings.isBrowserPresentationAvailable()
+			? BROWSER_RESIDENT_INPUT_CACHE
+			: NATIVE_RESIDENT_INPUT_CACHE && Renderer3DSettings.canUseResidentObjectChunks();
+		if (!reuseInputs
 			|| SceneObjectDebugSettings.isEnabled() || RESIDENT_OBJECT_GEOMETRY_DIAGNOSTICS_ENABLED
 			|| maximumInputs > MAX_RESIDENT_INPUT_DESCRIPTOR_INTS / 8) {
 			clearResidentStaticInputCache();

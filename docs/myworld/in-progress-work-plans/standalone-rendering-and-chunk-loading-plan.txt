@@ -1,8 +1,10 @@
 Standalone client: rendering and chunk-loading follow-up
 =======================================================
 Recorded November 12, 2026, after the browser staged-login rollout.
-Status: planned; no new standalone optimization is enabled by this document.
-Standalone player release: v0.3.16. Public server: v0.3.19; browser:
+Status: first native CPU slice implemented in a private candidate; larger
+geometry/loading stages remain planned. See native-static-input-reuse-results.txt
+for exact builds, measured results, validation limits and publication status.
+Standalone player release: v0.3.16. Public server: v0.3.21; browser:
 alpha-20261112-6. Recheck those versions and source before implementation.
 
 Purpose
@@ -46,7 +48,11 @@ Execution order
    Keep the previously accepted renderer quality and movement behavior.
 
 1. Port contained CPU improvements, one change per comparison.
-   Start with the validated terrain-slot lookup index and its mixed-size/void
+   The terrain-slot prototype was compared and parked without default adoption:
+   no useful whole-frame improvement in the measured native busy-camera workload.
+   Static resident input-group reuse is the first successful native candidate;
+   its exact comparison and remaining approval are in the results file above.
+   Preserve the validated terrain-slot lookup index and its mixed-size/void
    fallback. Native Java21 synthetic lookup tests measured 3x3 queries at
    13.394 -> 4.669 ns and 5x5 at 21.548 -> 5.876 ns, with matching reference
    results. Those numbers do not predict whole-client FPS.
@@ -145,8 +151,10 @@ call-site fixes across ten plugins and the Observatory keep-gate correction in
 an eleventh. Its report/fixture covers 51 cases / 342 checks; preserved baseline
 plugins fail 39 cases. This is an offline callback/map audit, not a complete
 quest walkthrough or network/approach-path certification.
-At this plan's creation the changes remain unmerged and undeployed. Current
-main has no intervening gameplay-plugin edits from the worker's base, and a
+At this plan's creation the changes remained unmerged and undeployed. They were
+subsequently integrated and deployed in v0.3.21. The historical review below is
+retained as provenance, not an outstanding deployment task. At creation, main
+had no intervening gameplay-plugin edits from the worker's base, and a
 read-only merge check is conflict-free. A manager replay on the exact worker branch passed the same 51/342 checks and
 reproduced all 39 baseline failures (worker evidence: output/tests/
 layer-transition-audit/manager-check-20261112/validation.json). Current-core
