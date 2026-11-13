@@ -25,6 +25,8 @@ def analyze(capture):
     if not (capture/'CLIENT-DONE').is_file():raise ValueError('Incomplete client run')
     route=json.loads((capture/'route.json').read_text());plan=json.loads((capture/'route-plan.json').read_text())
     if not route.get('accepted') or len(route['legs'])!=10:raise ValueError('Incomplete route')
+    overhead=json.loads((capture/'observer-overhead.json').read_text())
+    if overhead['failed']:raise ValueError('Observer failed')
     stages=events(capture/'unique-frame-events.csv');cadence=stages['openGLFrameIntervalStats'];legs=[]
     for i,leg in enumerate(route['legs']):
         step=leg['step'];state=leg['server'];after=leg['after'];before=leg['before']
@@ -45,9 +47,10 @@ def analyze(capture):
     if sum(x['kind']=='walk' for x in legs)!=6:raise ValueError('Six adjacent crossings required')
     context=[json.loads(x) for x in (capture/'client-samples.jsonl').read_text().splitlines()]
     if not context or any((r['contentViewportWidth'],r['contentViewportHeight'])!=(1920,1080) or r['shadowQuality']!='HIGH' for r in context):raise ValueError('Normal 1080p High quality not observed')
-    return dict(accepted=True,stages={k:summary([x[1] for x in v.values()]) for k,v in stages.items()},legs=legs,
+    return dict(accepted=True,observerOverhead=overhead,stages={k:summary([x[1] for x in v.values()]) for k,v in stages.items()},legs=legs,
         command=json.loads((capture/'command.json').read_text()),artifact=json.loads((capture.parent/'RENDERER-BENCHMARK.json').read_text()),
-        limits=['Hidden-window post-swap CPU-observed intervals, not scanout or visible presentation acceptance.',
+        limits=['Instrumented cadence with observer overhead recorded; not uninstrumented FPS.',
+        'Hidden-window post-swap CPU-observed intervals, not scanout or visible presentation acceptance.',
         'First coherent useful presented world unavailable: frozen baseline has no completed-frame source identity.',
         'Arrival/readiness is polling upper bound, not first-frame latency. Per-leg intersecting intervals may overlap adjacent windows.',
         'No cold/warm labels: repeated visits are retained but not separately controlled cold/warm cohorts.',

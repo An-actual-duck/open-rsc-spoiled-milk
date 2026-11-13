@@ -11,7 +11,24 @@ final class NativeRouteProbe implements AutoCloseable {
     private final mudclient client;
     private final List<String> frames = new ArrayList<String>();
     private final JSONArray legs = new JSONArray();
-    private final Map<String,Long> seen = new HashMap<String,Long>();
+    private final List<Stage> stages = new ArrayList<Stage>();
+    private final Field anchorField;
+    private long samples, lockNanos, maxLockNanos, collectNanos, maxCollectNanos;
+    private static Field accessible(Class<?> c,String name)throws Exception {Field f=c.getDeclaredField(name);f.setAccessible(true);return f;}
+    private static final class Stage {
+        final String name; final Object stats; final Field count,index,size; final long[] ring,scratch;
+        long seen=-1,current; int delta,cursor;
+        Stage(String name)throws Exception {
+            this.name=name;stats=field(null,RenderTelemetry.class,name);Class<?> c=stats.getClass();
+            count=accessible(c,"count");index=accessible(c,"recentIndex");size=accessible(c,"recentCount");
+            ring=(long[])field(stats,c,"recentSamples");scratch=new long[ring.length];
+        }
+        void copy()throws Exception {
+            current=count.getLong(stats);long difference=seen<0?0:current-seen;
+            if(difference<0||difference>size.getInt(stats))throw new IllegalStateException("Lost unique "+name+" samples: "+difference);
+            delta=(int)difference;cursor=index.getInt(stats);System.arraycopy(ring,0,scratch,0,ring.length);seen=current;
+        }
+    }
     private volatile boolean running = true;
     private volatile Throwable failure;
     private final Thread sampler;
@@ -20,30 +37,32 @@ final class NativeRouteProbe implements AutoCloseable {
     }
     NativeRouteProbe(Path run, Path capture, mudclient client) throws Exception {
         this.run=run;this.capture=capture;this.client=client;
+        anchorField=accessible(RenderTelemetry.class,"lastOpenGLFrameNanos");
+        for(String name:new String[]{"openGLFrameIntervalStats","openGLUploadStats","openGLRenderStats","openGLWorldStats","openGLWorldChunkUploadPhaseStats"})stages.add(new Stage(name));
         collect(); // Establish a count baseline, excluding pre-window samples.
         sampler=new Thread(() -> {try {while(running){Thread.sleep(50);collect();}}catch(Throwable e){failure=e;}},"native-route-sampler");
         sampler.setDaemon(true);sampler.start();
     }
     private void collect() throws Exception {
+        long started=System.nanoTime(),anchor;
         synchronized(RenderTelemetry.class) {
-            long anchor=((Number)field(null,RenderTelemetry.class,"lastOpenGLFrameNanos")).longValue();
-            for(String name:new String[]{"openGLFrameIntervalStats","openGLUploadStats","openGLRenderStats","openGLWorldStats"}) {
-                Object stats=field(null,RenderTelemetry.class,name);Class<?> c=stats.getClass();
-                long count=((Number)field(stats,c,"count")).longValue();Long prior=seen.put(name,count);
-                if(prior==null)continue;
-                long delta=count-prior;
-                long[] ring=(long[])field(stats,c,"recentSamples");
-                int index=((Number)field(stats,c,"recentIndex")).intValue(),size=((Number)field(stats,c,"recentCount")).intValue();
-                if(delta<0||delta>size)throw new IllegalStateException("Lost unique "+name+" samples: "+delta+" / "+size);
-                long end=anchor;
-                for(int offset=0;offset<delta;offset++) {
-                    long value=ring[(index-1-offset+ring.length)%ring.length];
-                    if(frames.size()>=250000)throw new IllegalStateException("Bounded frame collector full");
-                    frames.add(name+","+(count-offset)+","+end+","+value);
-                    if(name.equals("openGLFrameIntervalStats"))end-=value;
-                }
+            long held=System.nanoTime();
+            anchor=anchorField.getLong(null);
+            // Cache all reflection metadata; only primitive reads/copies under writer lock.
+            for(Stage stage:stages)stage.copy();
+            long elapsed=System.nanoTime()-held;lockNanos+=elapsed;maxLockNanos=Math.max(maxLockNanos,elapsed);
+        }
+        // Formatting/allocation occurs after releasing the production writer lock.
+        for(Stage stage:stages) {
+            long end=anchor;
+            for(int offset=0;offset<stage.delta;offset++) {
+                long value=stage.scratch[(stage.cursor-1-offset+stage.scratch.length)%stage.scratch.length];
+                if(frames.size()>=250000)throw new IllegalStateException("Bounded frame collector full");
+                frames.add(stage.name+","+(stage.current-offset)+","+end+","+value);
+                if(stage.name.equals("openGLFrameIntervalStats"))end-=value;
             }
         }
+        long elapsed=System.nanoTime()-started;collectNanos+=elapsed;maxCollectNanos=Math.max(maxCollectNanos,elapsed);samples++;
     }
     private JSONObject status() throws Exception {
         if(Files.exists(run.resolve("FIXTURE-FAILED")))throw new IllegalStateException("Private fixture failed");
@@ -91,9 +110,15 @@ final class NativeRouteProbe implements AutoCloseable {
             .put("arrivalMeaning","Authoritative and client pose acknowledgement, not first coherent presented frame. Diagnostic boundary traces provide separate render evidence.").toString(2).getBytes(StandardCharsets.UTF_8));
     }
     public void close() throws Exception {
-        running=false;sampler.join();collect();
+        running=false;sampler.join();
+        try {collect();} catch(Throwable error){if(failure==null)failure=error;}
         List<String> output=new ArrayList<String>();output.add("stage,sequence,anchorNanos,durationNanos");output.addAll(frames);
         Files.write(capture.resolve("unique-frame-events.csv"),output,StandardCharsets.UTF_8);
+        JSONObject overhead=new JSONObject().put("samples",samples).put("lockHoldNanos",lockNanos).put("maxLockHoldNanos",maxLockNanos)
+            .put("collectorNanos",collectNanos).put("maxCollectorNanos",maxCollectNanos).put("pollMillis",50).put("eventCapacity",250000)
+            .put("scope","Instrumented cadence. Collector time includes lock wait/copy and formatting, not filesystem flush after sampling. No uninstrumented FPS claim.")
+            .put("failed",failure!=null);
+        Files.write(capture.resolve("observer-overhead.json"),overhead.toString(2).getBytes(StandardCharsets.UTF_8));
         if(failure!=null)throw new IllegalStateException("Frame collector lost events",failure);
     }
 }
