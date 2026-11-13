@@ -534,6 +534,13 @@ public class LoginPacketHandler {
 					if (packet.getReadableBytes() > 0) {
 						cl.isAndroidClient = (packet.readUnsignedByte() & 0xFF) != 0;
 					}
+                    boolean stagedRequested=false;
+                    if(packet.getReadableBytes()>0){
+                        if(packet.getReadableBytes()!=5||!attachment.stagedLoginAdvertised.get()||!StagedLoginSession.supports(server,attachment)
+                            ||packet.readInt()!=StagedLoginProtocol.MAGIC||packet.readUnsignedByte()!=StagedLoginProtocol.VERSION){channel.close();return;}
+                        stagedRequested=true;
+                    }
+                    final boolean stagedBrowser=stagedRequested;
 					LOGGER.info(
 						"CUSTOM_CLIENT_LIMITS username={} clientVersion={} maxItemId={} maxNpcId={} maxSceneryId={} maxAnimationId={} maxBankItems={} mapHash={}",
 						username,
@@ -547,6 +554,12 @@ public class LoginPacketHandler {
 					);
 
 					final LoginRequest request = new LoginRequest(server, channel, username, password, false, clientVersion, opcode == OpcodeIn.RELOGIN, null) {
+                        @Override protected boolean stagedLoginRequested(){return stagedBrowser;}
+                        @Override public void configureStagedPlayer(Player player){
+                            if(player.getLastLogin()==0L){player.setInitialLocation(firstTimeLocation);player.setChangingAppearance(true);}
+                            player.setClientVersion(clientVersion);player.setClientLimitations(cl);
+                        }
+
 						@Override
 						public void loginValidated(int response) {
 							loginResponse = response;

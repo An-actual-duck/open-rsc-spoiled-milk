@@ -132,6 +132,12 @@ public class ActionSender {
 	 * Result-bearing form for transactional protocol state which may advance
 	 * only after a packet reaches the player's ordered outbound queue.
 	 */
+    private static boolean writeLoginPreparationOrQueue(Player player,Packet packet) {
+        com.openrsc.server.login.StagedLoginSession pending=com.openrsc.server.login.StagedLoginSession.forPlayer(player);
+        if(pending!=null&&!player.isLoggedIn())return pending.writePreparation(player,packet);
+        player.write(packet);return true;
+    }
+
 	public static boolean tryFinalizeAndSendPacketChecked(
 			OpcodeOut opcode,
 			AbstractStruct<OpcodeOut> payload,
@@ -154,7 +160,7 @@ public class ActionSender {
 						return false;
 					}
 					for (Packet terrainPacket : terrainPackets) {
-						player.write(terrainPacket);
+                        if(!writeLoginPreparationOrQueue(player,terrainPacket))return false;
 					}
 					if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS
 						&& terrainPackets.size() > 1) {
@@ -168,7 +174,7 @@ public class ActionSender {
 							terrainPackets.size());
 					}
 				} else {
-					player.write(p);
+                    if(!writeLoginPreparationOrQueue(player,p))return false;
 				}
 				return true;
 			}
@@ -779,7 +785,7 @@ public class ActionSender {
 	/**
 	 * Updates game settings, ie sound effects etc
 	 */
-	public static void sendGameSettings(Player player) {
+	public static GameSettingsStruct buildGameSettings(Player player) {
 		GameSettingsStruct struct = new GameSettingsStruct();
 		struct.cameraModeAuto = player.getSettings().getGameSetting(PlayerSettings.GAME_SETTING_AUTO_CAMERA) ? 1 : 0;
 		struct.mouseButtonOne = player.getSettings().getGameSetting(PlayerSettings.GAME_SETTING_MOUSE_BUTTONS) ? 1 : 0;
@@ -830,8 +836,10 @@ public class ActionSender {
 			customOptions.add(player.getShowSummonHealthBars() ? 1 : 0);
 		}
 		struct.customOptions = customOptions;
-		tryFinalizeAndSendPacket(OpcodeOut.SEND_GAME_SETTINGS, struct, player);
+		return struct;
 	}
+
+    public static void sendGameSettings(Player player){tryFinalizeAndSendPacket(OpcodeOut.SEND_GAME_SETTINGS,buildGameSettings(player),player);}
 
 	public static void sendInitialServerConfigs(Server server, Channel channel) {
 		LOGGER.info("Sending initial configs to: " + channel.remoteAddress());
@@ -2060,7 +2068,7 @@ public class ActionSender {
 	/**
 	 * Sent when the user changes coords incase they moved up/down a level
 	 */
-	public static void sendWorldInfo(Player player) {
+	public static WorldInfoStruct buildWorldInfo(Player player) {
 		WorldInfoStruct struct = new WorldInfoStruct();
 		struct.serverIndex = player.getIndex();
 		struct.planeWidth = 2304;
@@ -2070,8 +2078,10 @@ public class ActionSender {
 				player.getLayeredLocation())
 			: Formulae.getHeight(player.getLocation());
 		struct.distanceBetweenFloors = 944;
-		tryFinalizeAndSendPacket(OpcodeOut.SEND_WORLD_INFO, struct, player);
+		return struct;
 	}
+
+    public static void sendWorldInfo(Player player){tryFinalizeAndSendPacket(OpcodeOut.SEND_WORLD_INFO,buildWorldInfo(player),player);}
 
 	public static void sendWorldTime(Player player) {
 		if (!player.isUsingCustomClient()) {
