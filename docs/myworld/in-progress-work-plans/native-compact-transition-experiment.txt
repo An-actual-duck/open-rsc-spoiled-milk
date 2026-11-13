@@ -152,8 +152,8 @@ old VBO retention alone cannot preserve a complete old scene. Production frame,
 camera, picking/input, atlas/material and shadow ownership remain unimplemented
 and unvalidated. A normal launcher skips fallback raster, so simply enabling the
 old3ms upload flag is unsafe. No production scheduler or first-new-frame speedup
-is claimed. Parent accepted this bounded rejection rather than a speculative
-full lifecycle rewrite without favorable cost/readiness evidence.
+is claimed. The prototype remains isolated because the measured tradeoff does not
+justify a production lifecycle rewrite.
 
 Correctness and reproducibility
 -------------------------------
@@ -222,7 +222,7 @@ functional tests, not performance comparisons or a scheduler lifecycle proof.
 Host-side cleanup audit: output/diagnostics/native-compact-geometry/final-host-cleanup.json.
 All36 recorded native client/server identities are no longer live; alternate
 44639/44539 free; owner StandalonePlaytestServer PID2822999 remains listening on
-43639/43539. This worker started no browser processes. No fallback signals or
+43639/43539. This experiment started no browser processes. No fallback signals or
 ownership-guard bypass. Earlier sandbox /proc/socket observations did not reflect
 the host and were invalid evidence; preserve the superseded observation and
 host-verified guarded retry receipts, especially diagnostic-off run09:
