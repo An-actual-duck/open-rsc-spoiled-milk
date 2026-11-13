@@ -20,13 +20,16 @@ CANONICAL and unknown models. Phases are clone, transform, bounds,
 normals-inclusive, diffuse and placement-light. Inclusive times overlap and must
 not be summed. Diagnostics carry a transition ordinal, NOT a server/source epoch.
 No preparation shortcut is implemented without measured attribution and parity.
-Clone caches remain OFF. The counters retain no models or per-event allocations.
+Clone caches remain OFF. Profile OFF still adds method/branch overhead; compare
+native candidate OFF with the frozen baseline rather than assuming zero cost. The counters retain no models or per-event allocations.
 
 worldFrameSampleSequence counts actual pushes to the existing cadence ring.
 tests/myworld/browser-frame-sequence.py deduplicates by exact sequence, rejecting
 missing events and resets; equal interval values remain distinct. Its p95/p99
-cover steady-world intervals only. Held and crossing pauses need separate source
-readiness/frame receipts, not a percentile synthesized from this ring.
+require explicit unchanged held-frame counters and source epoch. holdWorld can
+leave lastWorld intact, so a resumed interval can include the full hold. Reject
+nonsteady windows for steady comparisons; never trim those crossing gaps. Keep
+unfiltered route evidence and source-readiness receipts separately.
 
 Initial frozen451bc765 baseline JAR is preserved under output/builds/
 client-optimization/baseline-451bc765 with source/resource/JAR-entry hashes.
@@ -42,3 +45,101 @@ packing, variant invalidation, WebGL resource/failure double, Worker ownership/
 replay, sequence deduplication, and120 frozen-model differential cases with profile
 OFF/ON pass. Hardware pixels/performance and broader final regression gates remain
 pending; later results must state the exact tested commit and artifact.
+
+Completed diagnostic hardware comparison
+----------------------------------------
+Runtime/frontend checkpoint:aee50d28ec1b6f40b767bdc5a9d9122a7be3fe0b.
+Exact clean client JAR:output/builds/client-optimization/candidate-aee50d28/client.jar
+SHA256:8bfe5f65a954531c66483dae968bdf6bfe5b557b70d919b75745fdc8064665c3.
+Source, compiled-class, packaged-resource and build-log receipts are beside it.
+
+Full-public cooking was ATTEMPTED and refused before producing a catalogue:
+whole-zone/bake.py requires --full to run from exact integrated main, and the RAM
+cook has the same manager/main guard. The complete client stagers refuse pilots
+(mandatory1330 sectors/24580 placements and445 recipes/1330 queries). No guard was
+weakened; no manager/main changes or catalogue-source rebinding occurred. Thus
+there is NO full-public compact/whole-zone/whole-RAM performance acceptance here.
+
+Supported non-catalogue diagnostic cohorts used the SAME frozen stage/JAR,
+WorkerON, modelbatch/regionbuild/terrainquery/spritekeylimbs ON, identical camera,
+1200x675 physical output,32 fixture NPCs/37 rendered groups, and diagnostics OFF.
+OFF/ON/ON/OFF populated20-second FPS:59.131,58.800,59.483,59.266.
+Means:OFF59.198,ON59.142 (-0.096%). p95 all20ms; p9923/23/23/24ms;
+steady max68/63/69/67ms. All steady windows had no holds, same source epoch/pose,
+visible/focused state, coherent frame counts and actual fixture identity.
+Exact sequence-based interval deduplication rejects missing or nonsteady context.
+
+Steady uploaded bytes per fresh frame:OFF299434 average,ON289124,3.44% lower.
+Both ON cohorts actually used vertex-only for all2057/2070 observed repacks;
+OFF had zero vertex-only calls. This confirms the mechanism, NOT an FPS benefit.
+
+All four seven-leg original-pointer routes completed six ordinary boundaries
+with epochs1..7. Route durations15.84/16.53/15.73/16.77s include input/poll/settle.
+Maximum observed completed-world tail gaps2961/2918/2911/3428ms retain all outliers.
+These are overlapping-tail maxima, not per-leg distributions or clean isolated
+cold/warm estimates. No transition speedup is established. The incomplete initial
+baseline capture remains explicitly excluded. Original unmodified screenshot
+pairs show no obvious geometry/shadow difference, but are not pixel-identical
+animation or GPU-fence oracles. API doubles and Java exact-packed-array parity
+are separate from that actual-browser smoke.
+
+Direct-owner diagnostic route (separate profile-ON cohort):DELTA transform61ms,
+bounds17ms,normals-inclusive173ms;CANONICAL64/20/130ms;unknown1/2/11ms.
+Clone inclusive DELTA94ms/CANONICAL282ms. Diffuse and placement-light overlap
+those costs and must not be added. These bounded factory/RSModel totals do not
+establish dominant finalization cost in this16.3s route. No preparation/translation
+shortcut was implemented. This is not a claim about full-public catalogue mode.
+
+Decision: keep vertexonly and finalprofile private/default OFF. Retain the
+experiment and evidence, but do not adopt a broader cache or claim browser FPS/
+chunk-transition improvement. Native phases must compare candidate OFF against
+the original frozen451bc765 JAR; diagnostic wrapper overhead is not assumed zero.
+
+Evidence and reproducibility
+----------------------------
+output/diagnostics/client-optimization/comparison-summary.json and
+comparison-results.json contain four raw cohorts. Each comparison-N-mode has
+busy-20s/{samples,result}.json,travel/capture/{samples.jsonl,result.json}, original
+setup/completion PNGs and source/session/authority receipts. The separate
+profile-on-1/route-diagnostic/owner-phase-delta.json contains direct owner totals.
+start_candidate.py,login_candidate.py,position_candidate.py,measure_candidate.py,
+route_candidate.py and run_comparison.py preserve the exact diagnostic workflow.
+They use only disposable loopback fixture input, not the public host or owner data.
+
+Focused verification commands (latest retained logs under diagnostic final-tests;
+lighting/picking retain their normal suite outputs, and frontend/build logs are
+in diagnostic client-optimization):
+ ./scripts/build-client.sh
+ python3 tests/myworld/test-browser-animated-chunks.py --client-jar EXACT_JAR
+ python3 tests/myworld/test-browser-chunk-materials.py
+ python3 tests/myworld/test-browser-chunk-variants.py
+ node tests/myworld/test-browser-gpu-cache.mjs
+ node tests/myworld/test-browser-render-worker-protocol-independent.mjs tools/browser-gameplay/web
+ node tests/myworld/test-browser-render-worker.mjs
+ python3 tests/myworld/test-browser-final-model-profile.py --baseline-jar FROZEN_BASELINE
+ python3 tests/myworld/test-browser-frame-sequence.py
+ node tests/myworld/test-browser-vertex-only-policy.mjs
+ python3 tests/myworld/test-browser-lighting.py
+ python3 tests/myworld/test-browser-model-pick-bounds.py
+ node --experimental-vm-modules tests/myworld/test-browser-webgl-frontend.mjs
+ node --experimental-vm-modules tests/myworld/test-browser-webgl-frontend.mjs --repeatable --benchmark-key-limbs --model-batch --region-build
+ python3 scripts/workspace-layout.py check
+ git diff --check
+
+Known aggregate limitation:legacy test-browser-preparation-controls.py passes its
+actual Java getter checks but its JS source-regex assertion expects the old
+javaProperties array syntax. Frozen451bc765 already uses canonicalRenderProperties,
+so that source assertion is stale before this change. Ordinary/private behavioral
+frontend tests and the new independent control tests pass. This is not represented
+as a full aggregate suite pass. No push,handoff,merge or deployment was performed.
+
+Cleanup and continuation
+------------------------
+All six owned browser sessions were closed normally. Only their recorded drivers
+and the two experiment HTTP servers were then terminated after PID/command
+verification; cleanup.json records targets. Existing repeatable fixture/server,
+other user processes, preserved outputs and public services were left unchanged.
+The worker is ready to release exclusive implementation/timing ownership to the
+next serial native phase. Full-public validation remains pending the supported
+manager/integrated-main cook prerequisite. This is a local checkpoint, not READY
+handoff or publication approval.
