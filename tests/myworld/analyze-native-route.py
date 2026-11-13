@@ -11,7 +11,7 @@ def summary(values):
 def events(path):
     stages={}
     for row in csv.DictReader(path.open()):
-        stage=row['stage'];seq=int(row['sequence']);end=int(row['endNanos']);duration=int(row['durationNanos'])
+        stage=row['stage'];seq=int(row['sequence']);end=int(row['anchorNanos']);duration=int(row['durationNanos'])
         if seq<0 or end<0 or duration<0:raise ValueError('Invalid event')
         seen=stages.setdefault(stage,{})
         if seq in seen:raise ValueError('Duplicate sequence')
@@ -32,7 +32,9 @@ def analyze(capture):
         for key in ['x','y','level']:
             if state[key]!=step[key] or after[key]!=step[key]:raise ValueError('Arrival mismatch')
         if state['routeId']!=i+1 or state['controlledPlayers']!=16 or state['controlledNpcs']!=32:raise ValueError('Authority/population mismatch')
-        if (after.get('viewportWidth'),after.get('viewportHeight'))!=(1920,1080):raise ValueError('Route viewport mismatch')
+        for observed in (before,after):
+            if (observed.get('viewportWidth'),observed.get('viewportHeight'))!=(1920,1080):raise ValueError('Route viewport mismatch')
+            if (observed.get('shadowQuality'),observed.get('profile'),observed.get('lighting'),observed.get('fog'),observed.get('zoom'),observed.get('rotation'))!=('HIGH','REMASTER','DIRECTIONAL','ON',75,128):raise ValueError('Route rendering settings mismatch')
         if not after.get('ready') or after.get('players',0)<16 or after.get('npcs',0)<32:raise ValueError('Received crowd/readiness missing')
         if step['kind']=='walk' and (before['baseX'],before['baseZ'])==(after['baseX'],after['baseZ']):raise ValueError('No actual boundary crossing')
         start=leg['requestNanos'];end=leg['endNanos']
@@ -49,6 +51,7 @@ def analyze(capture):
         'First coherent useful presented world unavailable: frozen baseline has no completed-frame source identity.',
         'Arrival/readiness is polling upper bound, not first-frame latency. Per-leg intersecting intervals may overlap adjacent windows.',
         'No cold/warm labels: repeated visits are retained but not separately controlled cold/warm cohorts.',
+        'Only cadence anchorNanos is reconstructed event-end time. Non-cadence anchorNanos is the latest completed-frame drain anchor, NOT its stage event timestamp; whole-run aggregates only, never per-leg stage attribution.',
         'World/render/upload stage counts are independent; do not join them to frame intervals by equal sequence.'])
 
 def main():

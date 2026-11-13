@@ -54,7 +54,7 @@ final class NativeRouteProbe implements AutoCloseable {
         PacketHandler packets=(PacketHandler)field(client,mudclient.class,"packetHandler");
         OpenGLFramePresenter presenter=(OpenGLFramePresenter)field(ScaledWindow.getInstance(),ScaledWindow.class,"openGLFramePresenter");
         OpenGLViewportPresenter viewport=(OpenGLViewportPresenter)field(presenter,OpenGLFramePresenter.class,"viewportPresenter");
-        return new JSONObject().put("viewportWidth",viewport.framebufferViewport().width).put("viewportHeight",viewport.framebufferViewport().height).put("x",packets.getLogicalPlayerX(client.getEditorPlayerWorldX())).put("y",packets.getLogicalPlayerY(client.getEditorPlayerWorldX(),client.getMidRegionBaseZ()+client.getLocalPlayerZ()))
+        return new JSONObject().put("shadowQuality",String.valueOf(RendererShadowSettings.getQuality())).put("profile",String.valueOf(RendererProfileSettings.getMode())).put("lighting",String.valueOf(RendererLightingSettings.getMode())).put("fog",String.valueOf(RendererFogSettings.getMode())).put("zoom",osConfig.C_LAST_ZOOM).put("rotation",client.cameraRotation).put("viewportWidth",viewport.framebufferViewport().width).put("viewportHeight",viewport.framebufferViewport().height).put("x",packets.getLogicalPlayerX(client.getEditorPlayerWorldX())).put("y",packets.getLogicalPlayerY(client.getEditorPlayerWorldX(),client.getMidRegionBaseZ()+client.getLocalPlayerZ()))
             .put("level",packets.getLogicalWorldLevel(client.getMidRegionBaseZ()+client.getLocalPlayerZ())).put("ready",client.isRenderer3DWorldReady()).put("players",client.getPlayerCount()).put("npcs",client.getNpcCount()).put("context",packets.getLayeredSceneContextDebugSummary()).put("baseX",client.getMidRegionBaseX()).put("baseZ",client.getMidRegionBaseZ());
     }
     void route() throws Exception {
@@ -92,7 +92,7 @@ final class NativeRouteProbe implements AutoCloseable {
     }
     public void close() throws Exception {
         running=false;sampler.join();collect();
-        List<String> output=new ArrayList<String>();output.add("stage,sequence,endNanos,durationNanos");output.addAll(frames);
+        List<String> output=new ArrayList<String>();output.add("stage,sequence,anchorNanos,durationNanos");output.addAll(frames);
         Files.write(capture.resolve("unique-frame-events.csv"),output,StandardCharsets.UTF_8);
         if(failure!=null)throw new IllegalStateException("Frame collector lost events",failure);
     }
