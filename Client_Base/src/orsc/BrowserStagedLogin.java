@@ -81,6 +81,7 @@ public final class BrowserStagedLogin {
         private boolean settings,context,prepared,readySent,committed;
         Session(mudclient client,Network_Socket stream){this.client=client;this.stream=stream;this.presentation=backend;}
         boolean active(){return !committed&&destination!=null;}
+        boolean committedFor(mudclient owner){return committed&&client==owner&&destination!=null&&readySent&&hasFence();}
         int owner(){return owner;}
         boolean hasContext(){return context;}
         boolean hasFence(){return context&&fencedSequence>0&&fencedSequence==contextSequence;}

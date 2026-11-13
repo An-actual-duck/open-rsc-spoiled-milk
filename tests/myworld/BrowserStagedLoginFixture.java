@@ -44,6 +44,42 @@ public final class BrowserStagedLoginFixture {
         public synchronized void close(){}
     }
     static byte[] frame(byte[] body)throws Exception{ByteArrayOutputStream b=new ByteArrayOutputStream();DataOutputStream out=new DataOutputStream(b);out.writeShort(body.length+2);out.write(body);return b.toByteArray();}
+    static void entryLifecycle(sun.misc.Unsafe unsafe,BrowserStagedLogin.Destination destination,byte[] commit)throws Exception{
+        mudclient client=(mudclient)unsafe.allocateInstance(mudclient.class);
+        orsc.graphics.three.World retained=(orsc.graphics.three.World)unsafe.allocateInstance(orsc.graphics.three.World.class);
+        set(client,"world",retained);set(client,"currentViewMode",orsc.enumerations.GameMode.LOGIN);
+        set(client,"hasCompletedInitialRegionLoad",true);set(client,"cameraPositionX",1234);set(client,"cameraPositionZ",5678);
+        set(client,"midRegionBaseX",200);set(client,"midRegionBaseZ",400);
+        int[] resets={0};
+        client.packetHandler=new PacketHandler(client){
+            @Override public void resetLayeredSceneProtocolState(){resets[0]++;}
+            @Override boolean browserStagedContextMatches(BrowserStagedLogin.Destination d,int seq){return d==destination&&seq==17;}
+        };
+        Backend backend=new Backend();BrowserStagedLogin.install(backend);
+        Network_Socket stream=new Network_Socket(new FakeSocket(frame(commit)),new PacketHandler(null));client.packetHandler.setClientStream(stream);
+        BrowserStagedLogin.Session pending=new BrowserStagedLogin.Session(client,stream);pending.destination=destination;
+        set(pending,"owner",3);set(pending,"readySent",true);set(pending,"context",true);set(pending,"contextSequence",17);set(pending,"fencedSequence",17);
+        set(client,"browserStagedLogin",pending);
+        try{
+            check(client.isBrowserStagedLoginPreparing()&&!client.isGameView()&&client.getLocalPlayer()==null,"actual caller starts pending with no entity");
+            check(client.finishBrowserStagedLogin()==0x40,"actual run/finally/entry caller consumes real framed COMMIT");
+            check(client.browserStagedLoginSession()==null&&client.isGameView()&&client.getLocalPlayer()!=null,"entry succeeds after finally cleared pending field");
+            check(pending.committedFor(client)&&!pending.committedFor(null)&&backend.finishes==1&&backend.committed,"entry uses this client's validated commit only");
+            check(resets[0]==0&&client.getWorld()==retained&&client.getMidRegionBaseX()==200&&client.getMidRegionBaseZ()==400,"COMMIT keeps prepared protocol and region products");
+            check(client.getLocalPlayer().currentX==1234&&client.getLocalPlayer().currentZ==5678,"committed placeholder uses prepared camera until actual self packet");
+            check(client.consumeBrowserPreparedWorldInfo(2304,1776,1,944),"committed result survives pending cleanup for matching worldInfo");
+            check(!client.consumeBrowserPreparedWorldInfo(2304,1776,1,944),"entry preserves only first exact worldInfo");
+        }finally{stream.close();}
+        set(client,"currentViewMode",orsc.enumerations.GameMode.LOGIN);set(client,"localPlayer",null);
+        byte[] stale=commit.clone();stale[7]++;
+        Backend cancelled=new Backend();BrowserStagedLogin.install(cancelled);
+        Network_Socket rejected=new Network_Socket(new FakeSocket(frame(stale)),new PacketHandler(null));client.packetHandler.setClientStream(rejected);
+        BrowserStagedLogin.Session retry=new BrowserStagedLogin.Session(client,rejected);retry.destination=destination;
+        set(retry,"owner",4);set(retry,"readySent",true);set(retry,"context",true);set(retry,"contextSequence",17);set(retry,"fencedSequence",17);set(client,"browserStagedLogin",retry);
+        try{client.finishBrowserStagedLogin();throw new AssertionError("Caller admitted stale COMMIT");}catch(IOException expected){checks++;}
+        check(client.browserStagedLoginSession()==null&&!client.isGameView()&&client.getLocalPlayer()==null&&resets[0]==1,"rejected caller clears pending without entering game");
+        check(client.packetHandler.getClientStream()==null&&cancelled.finishes==1&&!cancelled.committed,"rejected caller closes stream and cancels backend");
+    }
     public static void main(String[] args)throws Exception{
         String map=WorldBuilderTerrainBootstrap.mapIdentity();
         byte[] token=new byte[16],digest=new byte[32];Arrays.fill(token,(byte)7);Arrays.fill(digest,(byte)9);
@@ -81,6 +117,7 @@ public final class BrowserStagedLoginFixture {
         }
         check(!BrowserStagedLogin.enabled(),"native default never opts in");
         Field singleton=sun.misc.Unsafe.class.getDeclaredField("theUnsafe");singleton.setAccessible(true);
+        entryLifecycle((sun.misc.Unsafe)singleton.get(null),session.destination,commit);
         mudclient client=(mudclient)((sun.misc.Unsafe)singleton.get(null)).allocateInstance(mudclient.class);
         BrowserStagedLogin.Session pending=new BrowserStagedLogin.Session(client,null);pending.destination=session.destination;
         set(client,"browserStagedLogin",pending);set(client,"currentViewMode",orsc.enumerations.GameMode.LOGIN);
