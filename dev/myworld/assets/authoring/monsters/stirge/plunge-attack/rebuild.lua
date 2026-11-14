@@ -13,6 +13,32 @@ local function line(im,x,y,xx,yy,color,width)
  end
 end
 local function path(im,pts,color,width)for i=1,#pts-1 do line(im,pts[i][1],pts[i][2],pts[i+1][1],pts[i+1][2],color,width)end end
+-- Hand-shaped profile far-wing surfaces, painted as native Aseprite pixels.
+local function polygon(im,pts,color)
+ local miny,maxy=H,0;for _,p in ipairs(pts)do miny=math.min(miny,p[2]);maxy=math.max(maxy,p[2])end
+ for y=miny,maxy do local xs={};for i,a in ipairs(pts)do local b=pts[i%#pts+1];if (a[2]<=y and b[2]>y)or(b[2]<=y and a[2]>y)then xs[#xs+1]=a[1]+(y-a[2])*(b[1]-a[1])/(b[2]-a[2])end end;table.sort(xs);for i=1,#xs-1,2 do for x=math.ceil(xs[i]),math.floor(xs[i+1])do im:drawPixel(x,y,color)end end end
+end
+local function recoveryFarWing()
+ local im=Image(W,H,ColorMode.RGB)
+ local edge=C(91,45,27);local deep=C(112,48,31);local rust=C(153,61,28);local lit=C(193,85,32);local ridge=C(218,113,42)
+ -- Narrow underside turns below the overlapping top surface at the distal fold.
+ polygon(im,{{53,59},{57,62},{60,69},{59,77},{56,84},{53,78},{51,69},{51,64}},edge)
+ polygon(im,{{53,62},{56,64},{58,70},{57,77},{55,81},{53,75},{52,68}},deep)
+ path(im,{{54,64},{56,70},{56,77},{55,81}},rust,1)
+ -- Seen from above: shoulder -> high forearm ridge -> membrane folding away.
+ local top={{89,59},{81,53},{71,47},{62,43},{57,45},{54,50},{52,58},{53,66},{59,65},{65,62},{70,64},{76,62},{83,64},{88,63}}
+ polygon(im,top,edge)
+ polygon(im,{{87,59},{79,53},{70,49},{62,46},{58,48},{55,53},{54,59},{55,63},{60,62},{65,60},{70,62},{76,60},{83,62}},rust)
+ polygon(im,{{83,58},{74,51},{63,47},{59,49},{57,53},{64,52},{71,55},{76,56},{79,59}},lit)
+ -- Sparse existing-palette membrane texture follows the broad upper panel.
+ for y=47,63 do for x=54,86 do if im:getPixel(x,y)==rust and (x*17+y*11)%23<3 then im:drawPixel(x,y,lit)end end end
+ path(im,{{88,59},{79,53},{70,48},{62,44},{58,46},{55,51},{53,58},{54,64}},ridge,1)
+ path(im,{{61,47},{65,53},{65,60},{60,63}},edge,1)
+ path(im,{{62,47},{73,54},{76,60}},edge,1)
+ -- This fold edge occludes most of the underside, leaving only the distal strip.
+ path(im,{{54,63},{59,64},{65,61},{70,63},{76,61},{83,63}},edge,1)
+ return im
+end
 local function full(l,f)local im=Image(150,130,ColorMode.RGB);local c=l:cel(f);if c then im:drawImage(c.image,c.position)end;return im end
 local function rotate(x,y,degrees)local a=math.rad(degrees);return x*math.cos(a)-y*math.sin(a),x*math.sin(a)+y*math.cos(a)end
 local function transform(src,px,py,tx,ty,angle,sx,sy)
@@ -84,7 +110,13 @@ for i,sp in ipairs(specs)do
   if i==3 then
    local front=transform(plate,81,36,sp.cx+3,sp.cy-9,-64,1,1)
    spr:newCel(near,frame,front,Point(0,0))
-   spr:newCel(layers['Rust bat wings'],frame,transform(farPlate,83,40,sp.cx+2,sp.cy-3,-53,1,1),Point(0,0))
+   spr:newCel(layers['Rust bat wings'],frame,recoveryFarWing(),Point(0,0))
+   -- Continuous thorax/backing between wing mounts, rather than thin gold
+   -- abdominal marks and exposed far-leg fragments reading as extra limbs.
+   polygon(torso,{{77,60},{85,59},{88,64},{86,71},{80,76},{65,81},{58,77},{60,70},{65,64}},C(83,39,29))
+   polygon(torso,{{78,62},{83,61},{85,65},{82,69},{83,72},{77,74},{65,78},{62,75},{64,69},{70,65}},C(112,48,31))
+   path(torso,{{78,63},{76,66},{78,67}},C(146,65,36),1)
+   spr:newCel(layers['Striped abdomen and moth thorax'],frame,torso,Point(0,0))
   else
    -- Sweep the two full-length wings back independently, parallel to the thrust axis.
    local swept=transform(farPlate,83,40,sp.cx+2,sp.cy-3,-30,1,1)

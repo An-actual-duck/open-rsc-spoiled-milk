@@ -49,3 +49,10 @@ layer with no pixel or position changes; far wing stays behind. Frame 15's two
 far-side coiled legs extend past separate silhouette edges so all four legs
 are visible, with all original root positions retained. Frame 17 is unchanged.
 inputs/plunge-before-final-fixes.aseprite preserves the reviewed base.
+
+Recovery far-wing perspective revision: hand-shaped upper ridge and top
+surface turn away from the viewer, overlapping a narrow dark underside strip.
+The old broad, camera-facing far plate is replaced. Continuous brown thorax
+backing fills the inter-wing gap. Near-wing pixels, all leg pixels and the
+head are unchanged; all first/second attack and all flight cels are identical.
+Frozen reviewed base: inputs/recovery-before-far-wing-fix.aseprite.
