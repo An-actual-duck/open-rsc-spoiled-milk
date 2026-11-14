@@ -1,3 +1,64 @@
+CURRENT APPROVED DESIGN — Holy Bolts prayer
+============================================
+Owner accepted the selected option-1 artwork after the matching-red string and
+black-arrow correction. Current inventory/ground art candidates:
+ dev/myworld/assets/authoring/items/god-crossbows/selected-mythic-v1/
+Guthix and Saradomin cleanup PNGs are unchanged; all three now accepted.
+Gameplay and equipped-frame integration remain pending. Dot owns ai-1;
+Core's crossbow work is isolated on ai-2 feat/god-crossbow-devotion-rewards.
+
+The owner explicitly corrected "levels" to reservation points: this prayer
+has NO separate activation skill-level requirement. It reserves 80 points,
+or 60 when wearing the cape matching the equipped god crossbow. This replaces
+the earlier automatic 80-point reservation just for equipping the weapon.
+
+Holy Bolts can be activated only with a god crossbow equipped. While active it
+supplies free virtual holy bolts with tier-6 power, or tier-8 power with the
+matching god cape. All equipped ammunition is overridden: no additive damage,
+poison or other bolt effects, no ammunition consumption, and no recoverable
+physical bolt is created. There is no per-shot prayer-point payment.
+When inactive, the crossbow fires ordinary compatible bolts normally, including
+normal ammo power/effects/consumption/recovery. No automatic reserve on equip.
+
+Checked against current effective definitions:
+ Tier-11 crossbow base Ranged offense 38, speed 4.
+ Tier-6 Mithril bolt offense 12: Holy Bolts total weapon+ammo offense 50.
+ Tier-8 Adamantite bolt offense 16: matching-cape total offense 54.
+These totals precede skill, other equipment, prayers and normal combat effects.
+Keep physical crossbow offense at 38; do not bake free bolt power into its
+item definition, since ordinary bolts must continue working when prayer is off.
+
+"Matching cape" means the same god as the equipped crossbow, not any god cape.
+The old suggested extra 80-Worship equip/activation gate is not an approved
+requirement and must not be introduced. Existing devotion-artifact acquisition
+rules remain unchanged unless separately requested (80 Worship, 800 devotion,
+400 devotion cost per successful reward, per-item unclaimed reward pools).
+Add one crossbow to each god's existing artifact pool. Preserve prior claim keys.
+
+Runtime implementation must integrate this reserve into server/client prayer
+allocation, and dynamically re-evaluate cape/equipment changes. Removing the
+crossbow disables the prayer. Removing the cape raises the cost and lowers bolt
+power immediately; if the 80-point reservation cannot fit, deactivate the
+prayer through allocation overflow handling. The virtual ammo tier must be
+captured at launch; later equipment changes must not alter in-flight damage.
+UI and actual combat offense must both ignore physical ammo when Holy Bolts is
+active. With it inactive, preserve ordinary crossbow behavior in both equipment
+and legacy inventory-wield modes. Never counterfeit a physical free bolt item.
+
+PrayerCatalog currently has 16 entries per god, with the mace prayer in slot15.
+A dedicated new prayer requires a reviewed extra slot and matching client/UI/
+packet/catalog handling; do not overwrite the existing mace prayer. Keep slot15
+and existing item IDs stable. Test cost80/60, wrong-cape behavior, affordability,
+weapon/cape swap and removal, book change, death/relog restoration, real-ammo
+fallback and override, no consumed/dropped free ammo, damage tiers and ordinary
+crossbow regression. Final equipped visuals also need their own native review.
+
+The notes below preserve earlier design exploration and are HISTORICAL wherever
+they conflict with this approved design (especially automatic reservation,
+bundled offense50 and the old hypothetical Worship gate).
+
+--------------------------------------------------------------------------
+
 God crossbows — design and implementation outline, November 13, 2026
 ====================================================================
 
