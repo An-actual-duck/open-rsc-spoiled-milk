@@ -1,0 +1,102 @@
+Scimitar / Anti-coagulant first implementation — November 13, 2026
+=================================================================
+Scope
+-----
+Add a single-use coating dose and permanent coated forms for all 14 current
+scimitars. Acquisition is UNASSIGNED: no recipe, ingredient, shop, drop or player
+starting item has been added. Moderator/private-test item ID: 3447. Coated forms
+are 3448..3461, mapped in config/scimitar-coatings.json. Do not invent an
+acquisition route while finishing the later god-crossbow effects.
+
+The vial uses the existing native potion sprite with a dark red liquid mask.
+Coated weapons retain their original inventory icons and effective held frames,
+including material, classic/custom appearance, Worship restrictions, reserved
+knight equipment points, equip levels, speed and other stats. No new art family.
+One dose plus one unwielded, unnoted base scimitar -> coated scimitar + empty vial.
+Wool plus an unwielded coated scimitar -> original scimitar; wool is consumed.
+No right-click wipe action. Atomic inventory exchange rejects stale identities,
+noted/wielded items and missing inputs without partially consuming anything.
+
+Initial tuning (provisional, not final release balance)
+-----------------------------------------------------
+ - Hard primary hit threshold: 70% of that attack's snapshotted comparable max.
+ - Require actual positive settled damage. A delivered critical qualifies.
+ - One independent wound per source player/session and target lifetime.
+ - Three pulses, one every 3 game ticks; no immediate pulse.
+ - Tiers 1..4: Bleed1, independent inclusive 1..3 per pulse.
+ - Tiers 5..8 (including black/white/grey): Bleed2, 3..5 per pulse.
+ - Tiers 9..12: Bleed3, 5..7 per pulse. No tier-11 scimitar currently exists.
+ - Reopening restores three remaining pulses without moving the next pulse.
+   Keep the higher severity if different coated tiers reopen the same wound.
+ - No per-hit proc chance in addition to the hard-hit roll.
+ - Pulse damage uses the source player's existing Combat Luck system: an extra
+   favorable candidate can change the roll, never duplicate the pulse.
+ - Offhand, AoE/splash, poison, bleed, reflected damage and other secondary
+   attacks cannot open wounds. No wound may be inferred from current equipment
+   after the primary weapon/roll has been committed.
+ - Messages are the owner's minor wound / wound / sizable wound lines and
+   "You reopen the wound". Pulses currently use the standard red damage splat.
+
+Bleed uses typed DOT settlement, player kill attribution and normal terminal
+NPC handling. Nonmagical phase rules and final PvP safety apply to every pulse.
+A player crossing into safety, source logout/death/session replacement, target
+removal/death/respawn or signed-level change terminates that wound. Wounds are
+short-lived runtime effects and are not saved into account data. Ordinary
+poison remains a separate shared target state.
+
+Scimitar damage roll
+--------------------
+Primary scimitar ceiling becomes ceil(original maximum * 0.90). Very small
+maxima consequently remain unchanged. Coated and uncoated scimitars use the
+same ordinary formula; the coating adds bleed rather than paying for base DPS.
+Attack speed and equipment offense are unchanged. Existing offhand/secondary
+roll formulas are unchanged and do not acquire the new primary wound metadata.
+
+Preserve the original offense and defense draws, including existing miss chance.
+For a positive hit conditional on its defense roll, let K be the old remaining
+maximum and N=ceil(0.90*K). The old positive distribution is uniform on 1..K.
+Map its quantile monotonically to a mixture of uniform 1..N and ascending
+triangular weights 1..N, with triangular mixture q=3*(K-N)/(N-1). This preserves
+(K+1)/2 expected damage exactly for ordinary unbiased rolls, still allows 1,
+and raises the frequency of strong rolls relative to the smaller ceiling.
+Retain existing roll biases and Combat Luck by mapping their original quantile.
+The old scimitar family already had a 20% chance of an upward one-point shift;
+this remains in place. Its existing advantage is slightly compressed as well.
+
+A 20% ceiling reduction was prototyped but rejected during initial tuning:
+combined luck/critical profiles lost too much uncoated damage. The 10% reduction
+keeps ordinary damage much closer. At old M20, including the existing 20% weapon
+bias, representative analytical expectations before percentage buffs are:
+                    Defense0             Defense5             Defense20
+ No luck/crit       10.690 ->10.668       7.870 ->7.860         3.420 ->3.415
+ 50% combat luck    12.352 ->12.116       9.452 ->9.366         4.265 ->4.230
+ 15% critical       12.087 ->11.767       9.690 ->9.381         5.907 ->5.603
+ Both              13.986 ->13.374      11.707 ->11.212         7.628 ->7.174
+
+These are uncoated profiles: bleed raises coated damage. A smaller maximum
+necessarily reduces actual critical-hit power. Do not claim perfect DPS parity
+for every crit/luck/buff/rounding build; this remains a balance-review limit.
+Raw model, output and reproducible profile calculation are retained under
+output/tests/scimitar-anticoagulant/. Actual gameplay and client checks use
+maintained tests/myworld/test-scimitar-coatings.py with a synthetic native world,
+dummy database config and no accounts, owner-map copies or public listeners.
+
+Validation / integration
+------------------------
+Server core/plugin and standalone-client builds pass. Runtime checks cover all
+14 dose/cleaning exchanges, held appearance/stat inheritance, stale-input
+rejection, 24 ordinary damage/defense profiles (200,000 samples each), wound
+ownership/timing/lifecycle, actual primary melee, phase, Wilderness border
+safety and legacy inventory-wield admission. Client catalogs are loaded in both
+classic and custom modes. Existing battleaxe-coating art/runtime registrations
+and god-crossbow regression checks are retained. Their old total custom
+animation-count assertion was updated from 1170 to 1173 for the preceding god
+crossbow addition; no additional animation IDs are allocated by this feature.
+
+An additional Combat Luck runtime test had an older expectation that orphan
+player-owned poison would still invoke survival RNG in safety. It fails the
+same way on pre-feature main. The test now verifies zero damage and zero survival
+RNG for that existing PvP rejection; production poison behavior is unchanged.
+
+No public deployment, server interruption or release packaging is part of this
+implementation. Browser delivery must be rebuilt at release time as usual.

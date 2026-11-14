@@ -287,7 +287,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 
         final int committedPrimaryWeapon = attackerMob instanceof Player
-            ? com.openrsc.server.content.coatings.BattleaxeCoatings.equipped((Player)attackerMob) : -1;
+            ? com.openrsc.server.content.coatings.ScimitarCoatingCatalog.equipped((Player)attackerMob) : -1;
     com.openrsc.server.model.combat.AttackRoll primaryRoll =
         com.openrsc.server.model.combat.AttackRoll.normal(0);
 		int damage;
@@ -516,6 +516,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 			.getResolvedDamageTransaction().apply(damageRequest);
         if(!offhand&&!attackSuppressed)com.openrsc.server.content.coatings.BattleaxeCoatings.primaryHit(
             hitter,target,committedCoatingWeapon,damageResult.getActualDamage());
+        if(!offhand&&!attackSuppressed&&!damageResult.isPvpSafetyBlocked()&&!damageResult.isNonCorporealBlocked())
+            com.openrsc.server.content.Bleed.primaryHit(hitter,target,
+                com.openrsc.server.content.coatings.ScimitarCoatingCatalog.severity(committedCoatingWeapon),
+                attackRoll,damageResult.getActualDamage());
         if (damageResult.isPvpSafetyBlocked()) return damageResult;
 		final int damageDealt = damageResult.getLegacyDamageDealt();
 		damage = damageResult.getRequest().getResolvedDamage();

@@ -33,8 +33,9 @@ ai-2 feat/god-crossbow-devotion-rewards. Dot's independent ai-1 work is untouche
 Inventory/ground and prayer icons use the three accepted PNGs unchanged.
 Equipped movement/attack visuals use the existing crossbow family recolored
 for each god; bespoke equipped silhouettes have not been authored or approved.
-The unique god effects, bleed, anti-coagulant and scimitar changes below are
-future work, not part of this initial crossbow implementation.
+The unique god-crossbow effects below remain future work. The subsequent
+scimitar/Anti-coagulant/bleed implementation and its provisional tuning are in
+scimitar-anticoagulant-bleed.txt. The design history below is retained.
 
 Each prayer book gets its own dedicated prayer and approved flavour name:
  Saradomin: Saradomin's Divine Bolts — requires Saradomin crossbow.

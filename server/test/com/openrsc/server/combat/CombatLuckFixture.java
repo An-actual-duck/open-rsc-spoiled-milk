@@ -182,11 +182,17 @@ public final class CombatLuckFixture {
         com.openrsc.server.util.rsc.DataConversions.getRandom().setSeed(safeSeed);
         settlePoison.invoke(event, 100);
         java.util.Random expected = new java.util.Random(safeSeed);
-        expected.nextDouble();
+        // Existing PvP safety rejects orphan player-owned poison outside the
+        // Wilderness before survival effects; it must consume no survival RNG.
+        boolean safePlayerPoison = origins[i] != null && origins[i].isPlayer()
+            && !poisoned.getLocation().inWilderness();
+        if (!safePlayerPoison) expected.nextDouble();
         check(
             com.openrsc.server.util.rsc.DataConversions.getRandom().nextDouble()
                 == expected.nextDouble(),
-            "actual zero-luck poison Tenacity preserves one baseline survival check " + i);
+            "zero-luck poison survival RNG respects PvP safety " + i);
+        check(poisoned.getLevel(Skill.HITS.id()) == (safePlayerPoison ? 100 : 1),
+            "blocked player poison cannot damage or invoke Tenacity " + i);
       }
       h.equip(source, com.openrsc.server.constants.custom.MyWorldItemId.SULLEN_PENDANT, 1);
       npc.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), 1000, 1000, false);

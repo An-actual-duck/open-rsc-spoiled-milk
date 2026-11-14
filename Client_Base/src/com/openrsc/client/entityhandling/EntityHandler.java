@@ -6182,6 +6182,7 @@ public class EntityHandler {
 		addSlayerComponentDefinitions();
 		addAntidoteDefinitions();
         for(ItemDef item:BattleaxeCoatingDefinitions.items())setCustomItemDefinition(item.id,item);
+
 		addBangleJewelryDefinitions();
 		addClericSigilDefinitions();
 		addScytheLineDefinitions();
@@ -7150,6 +7151,20 @@ public class EntityHandler {
 			}
 		}
 	}
+
+    private static void addScimitarCoatingDefinitions() {
+        // Anti-coagulant has an existing vial icon; coated weapons retain their base art.
+        setCustomItemDefinition(3447, new ItemDef("Anti-coagulant", "Keeps deep scimitar wounds bleeding. Apply to an uncoated scimitar.", "", 300, 48, "items:48", false, false, 0, 0x8B2438, true, false, false, 3447));
+        int[][] antiCoagulantItems = {{1999,3448},{2010,3449},{82,3450},{83,3451},{84,3452},{427,3453},{2155,3454},{3117,3455},{85,3456},{2021,3457},{86,3458},{2032,3459},{398,3460},{3265,3461}};
+        for (int[] ids : antiCoagulantItems) {
+            ItemDef base = items.get(ids[0]);
+            setCustomItemDefinition(ids[1], new ItemDef("Anti-coagulant " + base.getName(),
+                "Coated to keep deep wounds bleeding. Hard primary hits open a wound.", "", base.basePrice,
+                base.spriteID, base.spriteLocation, false, true, base.wearableID,
+                base.getPictureMask(), base.getBlueMask(), base.membersItem, base.untradeable, false, ids[1]));
+        }
+
+    }
 
 	private static void replaceStaffItemVisual(int itemId, int spriteId, String spriteLocation, int pictureMask, int blueMask) {
 		if (itemId < 0 || itemId >= items.size()) {
@@ -10392,6 +10407,7 @@ public class EntityHandler {
 			applyBangleVisuals();
 			MaterialItemVisuals.apply(items, MYWORLD_STAFF_BASE_IDS, MYWORLD_RUNE_STAFF_IDS,
 				MYWORLD_STAFF_WOOD_COLORS, MYWORLD_STAFF_RUNE_COLORS);
+            addScimitarCoatingDefinitions();
 		loadTextureDefinitions();
 		loadAnimationDefinitions();
 		loadSpellDefinitions();

@@ -1,0 +1,107 @@
+{
+  "coating": 3447,
+  "thresholdPercent": 70,
+  "pulseTicks": 3,
+  "pulseRanges": [
+    [
+      1,
+      3
+    ],
+    [
+      3,
+      5
+    ],
+    [
+      5,
+      7
+    ]
+  ],
+  "acquisition": null,
+  "variants": [
+    {
+      "base": 1999,
+      "coated": 3448,
+      "tier": 1,
+      "severity": 1
+    },
+    {
+      "base": 2010,
+      "coated": 3449,
+      "tier": 2,
+      "severity": 1
+    },
+    {
+      "base": 82,
+      "coated": 3450,
+      "tier": 3,
+      "severity": 1
+    },
+    {
+      "base": 83,
+      "coated": 3451,
+      "tier": 4,
+      "severity": 1
+    },
+    {
+      "base": 84,
+      "coated": 3452,
+      "tier": 5,
+      "severity": 2
+    },
+    {
+      "base": 427,
+      "coated": 3453,
+      "tier": 5,
+      "severity": 2
+    },
+    {
+      "base": 2155,
+      "coated": 3454,
+      "tier": 5,
+      "severity": 2
+    },
+    {
+      "base": 3117,
+      "coated": 3455,
+      "tier": 5,
+      "severity": 2
+    },
+    {
+      "base": 85,
+      "coated": 3456,
+      "tier": 6,
+      "severity": 2
+    },
+    {
+      "base": 2021,
+      "coated": 3457,
+      "tier": 7,
+      "severity": 2
+    },
+    {
+      "base": 86,
+      "coated": 3458,
+      "tier": 8,
+      "severity": 2
+    },
+    {
+      "base": 2032,
+      "coated": 3459,
+      "tier": 9,
+      "severity": 3
+    },
+    {
+      "base": 398,
+      "coated": 3460,
+      "tier": 10,
+      "severity": 3
+    },
+    {
+      "base": 3265,
+      "coated": 3461,
+      "tier": 12,
+      "severity": 3
+    }
+  ],
+  "ceilingPercent": 90
+}

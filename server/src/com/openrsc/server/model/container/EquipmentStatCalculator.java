@@ -74,7 +74,8 @@ final class EquipmentStatCalculator {
 		}
 	}
 
-	static int godEquipmentResourceCost(final int itemId) {
+	static int godEquipmentResourceCost(int itemId) {
+        itemId=com.openrsc.server.content.coatings.ScimitarCoatingCatalog.base(itemId);
 		switch (itemId) {
 			case 423: // BLACK_DAGGER
 			case 565: // POISONED_BLACK_DAGGER

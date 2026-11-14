@@ -278,7 +278,13 @@ public class CombatFormula {
         if(source instanceof com.openrsc.server.model.entity.npc.Npc)
           attackMax=com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.reduceMaximumMelee((com.openrsc.server.model.entity.npc.Npc)source,attackMax);
         else if(directAttack && capDivisor==1) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
-    final int resolvedMaximum = attackMax;
+    final int ordinaryMaximum = attackMax;
+    final boolean scimitar = directAttack && capDivisor == 1 && source instanceof Player
+        && source.getConfig().WANT_MYWORLD
+        && com.openrsc.server.content.coatings.ScimitarCoatingCatalog.tier(
+            com.openrsc.server.content.coatings.ScimitarCoatingCatalog.equipped((Player)source)) > 0;
+    final int resolvedMaximum = scimitar
+        ? com.openrsc.server.content.coatings.ScimitarDamage.maximum(attackMax) : attackMax;
     AttackRoll roll =
         com.openrsc.server.content.cleric.runtime.ClericCriticalRuntime.primaryRoll(
             source, victim,
@@ -286,12 +292,14 @@ public class CombatFormula {
             directAttack && capDivisor==1,
             com.openrsc.server.model.combat.CombatStyle.MELEE,
             () ->
-                applyMitigationRoll(
+                scimitar ? scimitarMitigationRoll(source, victim, ordinaryMaximum,
+                    defenseToMitigation(victim.getMeleeDefense())) : applyMitigationRoll(
                     source,
                     victim,
                     resolvedMaximum,
                     defenseToMitigation(victim.getMeleeDefense()),
                     directAttack));
+    if (directAttack && capDivisor == 1) roll = roll.withWoundBasis(roll.getDamage(), resolvedMaximum);
     int damage = roll.getDamage();
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.MELEE);
 		damage = applyDamageMultiplier(source, damage);
@@ -626,6 +634,14 @@ public class CombatFormula {
             : CombatLuck.higher(victim,combatRandom(source,victim),()->combatRandom(source,victim).nextIntInclusive(1,defenseMax));
 		return Math.max(offenseRoll - defenseRoll, 0);
 	}
+
+    private static int scimitarMitigationRoll(Mob source, Mob victim, int maximum, int defenseMaximum) {
+        int offense = rollIncomingDamage(source, victim, maximum, true);
+        int defense = defenseMaximum <= 0 ? 0 : CombatLuck.higher(victim, combatRandom(source,victim),
+            () -> combatRandom(source,victim).nextIntInclusive(1,defenseMaximum));
+        return com.openrsc.server.content.coatings.ScimitarDamage.reshape(
+            Math.max(0,offense-defense), maximum-defense, combatRandom(source,victim));
+    }
 
 	private static GameRandom combatRandom(final Mob primary, final Mob secondary) {
 		final Mob context = primary != null ? primary : secondary;

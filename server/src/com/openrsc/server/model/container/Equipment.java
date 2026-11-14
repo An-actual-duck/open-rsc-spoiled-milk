@@ -1338,7 +1338,8 @@ public class Equipment {
 		return requiredGodLine == null || requiredGodLine == prayerBook;
 	}
 
-	private PrayerCatalog.GodLine getRequiredGodLine(final int itemId) {
+	private PrayerCatalog.GodLine getRequiredGodLine(int itemId) {
+        itemId=com.openrsc.server.content.coatings.ScimitarCoatingCatalog.base(itemId);
 		if (itemId == ItemId.SARADOMIN_CAPE.id() || itemId == ItemId.STAFF_OF_SARADOMIN.id()
 			|| itemId == ItemId.SARADOMIN_MACE.id() || itemId == ItemId.SARADOMIN_CROSSBOW.id()) {
 			return PrayerCatalog.GodLine.SARADOMIN;
@@ -3280,7 +3281,7 @@ public class Equipment {
 	}
 
 	private boolean isScimitar(Item item) {
-		int catalogId = item.getCatalogId();
+		int catalogId = com.openrsc.server.content.coatings.ScimitarCoatingCatalog.base(item.getCatalogId());
 		for (int scimitarId : scimitarIds) {
 			if (catalogId == scimitarId) {
 				return true;
