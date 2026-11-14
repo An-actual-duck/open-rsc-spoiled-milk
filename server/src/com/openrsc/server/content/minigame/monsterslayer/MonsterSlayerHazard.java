@@ -13,6 +13,7 @@ public enum MonsterSlayerHazard {
 	FEEDING_FRENZY,
 	MARKED_LIGHTNING,
 	STICKY_FLESH,
+    BLOOD_DRINKING,
 	// Strategy-only entries: these do not require a gimmick consumable.
 	NAGA_STRATEGY,
 	BLOODVELD_STRATEGY,
@@ -34,7 +35,12 @@ public enum MonsterSlayerHazard {
 			"Bring Slime Solvent so its sticky spit cannot stop you attacking.",
 			"Bring an antidote for its poison as well."
 		};
-		case STONY_GLARE: return new String[] {
+		case BLOOD_DRINKING: return new String[] {
+            "Spray Bug Off before fighting. Each spray protects you for ten minutes.",
+            "Their wounds grow worse with each hit, and they drink the blood to heal.",
+            "Melee and magic get through their defenses more easily than ranged attacks."
+        };
+        case STONY_GLARE: return new String[] {
 			"Use Eye Drops before fighting; its glare can freeze you and stop your attacks."
 		};
 		case BANSHEE_WAIL: return new String[] {

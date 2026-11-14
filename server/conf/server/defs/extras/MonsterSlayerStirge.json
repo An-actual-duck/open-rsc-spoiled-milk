@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "additions": [
+    {
+      "contactKey": "brimhaven",
+      "beforeTaskKey": "brimhaven.naga",
+      "family": {
+        "key": "stirge",
+        "displayName": "Stirges",
+        "npcIds": [
+          882
+        ]
+      },
+      "task": {
+        "key": "brimhaven.stirges",
+        "familyKey": "stirge",
+        "requiredKills": 25,
+        "pointReward": 12,
+        "hazards": [
+          "BLOOD_DRINKING"
+        ]
+      }
+    }
+  ]
+}

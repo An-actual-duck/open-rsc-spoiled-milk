@@ -15,6 +15,7 @@ public final class SlayerComponentDrops {
 	private final Map<Integer, List<DropTable>> rareComponents = new HashMap<>();
 
 	public SlayerComponentDrops() {
+        add(StirgeCombat.NPC_ID, MyWorldItemId.SANGUINARY_GLAND, 128);
 		add(GiantFrogCombat.NPC_ID, MyWorldItemId.STICKY_SALIVA_GLAND, 128);
 		add(CockatriceCombat.NPC_ID, MyWorldItemId.COCKATRICE_EYE, 128);
 		add(BansheeCombat.NPC_ID, MyWorldItemId.FROZEN_TEAR, 1000);

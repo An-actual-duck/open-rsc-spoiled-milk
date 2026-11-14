@@ -30,7 +30,17 @@ public final class SlayerOrdinaryDrops {
 	public void register(Map<Integer, DropTable> target, DropTable rare) {
 		DropTable table;
 
-		// Giant frog: Herbs, 64/128 of the ordinary roll.
+		// Stirge: modest supplies, independent of its rare gland.
+        table = new DropTable("Stirge supplies");
+        addCoins(table, 35);
+        table.addItemDrop(ItemId.AIR_RUNE.id(), 15, 12);
+        table.addItemDrop(ItemId.WATER_RUNE.id(), 10, 12);
+        table.addItemDrop(ItemId.UNIDENTIFIED_TARROMIN.id(), 1, 12, true);
+        table.addItemDrop(ItemId.UNIDENTIFIED_HARRALANDER.id(), 1, 8, true);
+        table.addEmptyDrop(48);
+        finish(target, StirgeCombat.NPC_ID, table, rare);
+
+        // Giant frog: Herbs, 64/128 of the ordinary roll.
 		table = new DropTable("Giant frog Slayer supplies");
 		table.addItemDrop(ItemId.UNIDENTIFIED_GUAM_LEAF.id(), 1, 20, true);
 		table.addItemDrop(ItemId.UNIDENTIFIED_MARRENTILL.id(), 1, 16, true);

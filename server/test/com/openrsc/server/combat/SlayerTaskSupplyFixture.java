@@ -36,14 +36,14 @@ public final class SlayerTaskSupplyFixture {
             cacheFailureRestoresItemsAndState(h, data);
             concurrentRequestsGrantExactlyOnce(h, data);
             multiCounterTasksAreAtomic(h, catalog, output);
-            System.out.println("PASS Slayer assignment supplies: " + checks + " assertions; all six gimmick tasks, first-only mandatory/repeatable grants, shared-item claims, cancellation, item loss/banking and serialized cache reload, reminder protection, full inventory, unsupported client, failed/partial grants, cache rollback, metadata preservation and concurrent assignment");
+            System.out.println("PASS Slayer assignment supplies: " + checks + " assertions; all seven gimmick tasks, first-only mandatory/repeatable grants, shared-item claims, cancellation, item loss/banking and serialized cache reload, reminder protection, full inventory, unsupported client, failed/partial grants, cache rollback, metadata preservation and concurrent assignment");
         }
     }
     private static void allGimmickAssignmentsAndReminders(CurrentCombatHarness h, MonsterSlayerData data) {
         MonsterSlayerTaskService service = new MonsterSlayerTaskService(data);int families=0;
         Map<String,Integer> expected = new LinkedHashMap<String,Integer>();
         expected.put("giant_frog",3318);expected.put("cockatrice",3321);expected.put("banshee",3324);
-        expected.put("terror_dog",3327);expected.put("dark_beast",3330);expected.put("abyssal_demon",3318);
+        expected.put("stirge",3462);expected.put("terror_dog",3327);expected.put("dark_beast",3330);expected.put("abyssal_demon",3318);
         for (MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) {
             for (MonsterSlayerDefinitions.Task task : contact.getMandatoryTasks()) {
                 List<Integer> supplies = MonsterSlayerTaskSupplies.itemIds(task);
@@ -70,7 +70,7 @@ public final class SlayerTaskSupplyFixture {
                 for(int id:supplies)check(repeat.getCarriedItems().getInventory().countId(id)==1,"later assignments do not repeat the starter gift");
             }
         }
-        check(families==6,"all six implemented gimmick encounters covered, including shared solvent");
+        check(families==7,"all seven implemented gimmick encounters covered, including shared solvent");
         for(MonsterSlayerDefinitions.Contact contact:data.getContactsInChallengeOrder())for(MonsterSlayerDefinitions.Task task:contact.getMandatoryTasks())
             if(task.getHazards().contains(MonsterSlayerHazard.NAGA_STRATEGY)||task.getHazards().contains(MonsterSlayerHazard.BLOODVELD_STRATEGY))
                 check(MonsterSlayerTaskSupplies.itemIds(task).isEmpty(),"strategy-only task grants no counter");
@@ -166,6 +166,7 @@ public final class SlayerTaskSupplyFixture {
     private static void multiCounterTasksAreAtomic(CurrentCombatHarness h,MonsterSlayerData.ReferenceCatalog catalog,Path output)throws Exception {
         Files.copy(DEFINITIONS,output.resolve("MonsterSlayer.json"),StandardCopyOption.REPLACE_EXISTING);
         Files.copy(DEFINITIONS.resolveSibling("MonsterSlayerRelease.json"),output.resolve("MonsterSlayerRelease.json"),StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(DEFINITIONS.resolveSibling("MonsterSlayerStirge.json"),output.resolve("MonsterSlayerStirge.json"),StandardCopyOption.REPLACE_EXISTING);
         JSONObject tower=new JSONObject(new String(Files.readAllBytes(DEFINITIONS.resolveSibling("MonsterSlayerTower.json")),StandardCharsets.UTF_8));
         tower.getJSONArray("additions").getJSONObject(0).getJSONObject("task").put("hazards",new JSONArray().put("FROG_SPIT").put("STICKY_FLESH").put("STONY_GLARE"));
         Files.write(output.resolve("MonsterSlayerTower.json"),tower.toString().getBytes(StandardCharsets.UTF_8));MonsterSlayerData data=MonsterSlayerData.load(output.resolve("MonsterSlayer.json"),catalog,true);h.installMonsterSlayerData(data);

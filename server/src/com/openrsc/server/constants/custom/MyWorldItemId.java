@@ -114,6 +114,7 @@ public final class MyWorldItemId {
 	public static final int GEM_CUTTER_GLOVES = 3408;
 	public static final int GEM_CUTTERS_MONOCLE = 3409;
 
+    public static final int BUG_OFF=3462, BUG_OFF_TWO=3463, BUG_OFF_ONE=3464, EMPTY_BUG_OFF_CAN=3465, SANGUINARY_GLAND=3466;
 	private MyWorldItemId() {
 	}
 }

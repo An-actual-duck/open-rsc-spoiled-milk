@@ -22,7 +22,8 @@ public final class MonsterSlayerTaskSupplies {
 			switch (hazard) {
 			case FROG_SPIT:
 			case STICKY_FLESH: items.add(GiantFrogCombat.SOLVENT_ITEM_ID); break;
-			case STONY_GLARE: items.add(CockatriceCombat.EYE_DROPS_ID); break;
+			case BLOOD_DRINKING: items.add(com.openrsc.server.content.monsterslayer.StirgeCombat.BUG_OFF); break;
+            case STONY_GLARE: items.add(CockatriceCombat.EYE_DROPS_ID); break;
 			case BANSHEE_WAIL: items.add(BansheeCombat.EARPLUGS_ID); break;
 			case FEEDING_FRENZY: items.add(TerrorDogCombat.TREATS_ID); break;
 			case MARKED_LIGHTNING: items.add(DarkBeastCombat.WIPE_ID); break;

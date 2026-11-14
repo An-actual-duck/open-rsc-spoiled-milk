@@ -1,0 +1,27 @@
+{
+  "npc": 882,
+  "name": "Stirge",
+  "source": "dev/myworld/assets/authoring/monsters/stirge/plunge-attack",
+  "approvedPaletteCommit": "3aa5eaf611effb6219b2f2e51fb7a3abc0b45e5d",
+  "atlasColumns": [
+    210,
+    210,
+    210,
+    210,
+    210,
+    210
+  ],
+  "atlasHeight": 480,
+  "rowsPerColumn": 3,
+  "pixelScale": "1.5 world units/native pixel",
+  "flightOffset": [
+    30,
+    15
+  ],
+  "attackOffset": [
+    0,
+    0
+  ],
+  "runtimeSha256": "1b44d4bc322991aac2cab86478583dc169ba83193b13aa9860a3a02922f2d55a",
+  "noNativePoseRescaling": true
+}

@@ -167,8 +167,23 @@ public final class MonsterSlayerData {
 				path.resolveSibling("MonsterSlayerRelease.json")), StandardCharsets.UTF_8));
 			applyReleaseTasks(base, release);
 			MonsterSlayerData released = parse(base, catalog);
-			return new MonsterSlayerData(released.families, released.contacts,
-				released.tasks, released.shops, towerRetired);
+			MonsterSlayerData releaseRoster = new MonsterSlayerData(released.families, released.contacts,
+                released.tasks, released.shops, towerRetired);
+            // Keep existing assignments reachable while owner-authored placements are pending.
+            if (!catalog.npcSpawned(com.openrsc.server.content.monsterslayer.StirgeCombat.NPC_ID)) return releaseRoster;
+            JSONObject stirges = new JSONObject(new String(Files.readAllBytes(
+                path.resolveSibling("MonsterSlayerStirge.json")), StandardCharsets.UTF_8));
+            applyTowerAdditions(base, stirges);
+            for (int shop=0;shop<base.getJSONArray("shops").length();shop++) {
+                JSONObject row=base.getJSONArray("shops").getJSONObject(shop);
+                JSONObject category=row.getJSONArray("categories").getJSONObject(0);
+                category.getJSONArray("rewards").put(new JSONObject().put("key",row.getString("key")+".bug_off")
+                    .put("itemId",3462).put("amount",1).put("stock",20).put("restockAmount",2)
+                    .put("cost",new JSONObject().put("VETERAN",1)));
+            }
+            MonsterSlayerData stirgeRoster=parse(base,catalog);
+            return new MonsterSlayerData(stirgeRoster.families,stirgeRoster.contacts,
+                stirgeRoster.tasks,stirgeRoster.shops,releaseRoster);
 		} catch (RuntimeException ex) {
 			throw new IllegalArgumentException("Invalid Monster Slayer definitions at " + path + ": "
 				+ ex.getMessage(), ex);
@@ -526,6 +541,7 @@ public final class MonsterSlayerData {
 			case GiantFrogCombat.SOLVENT_ITEM_ID: return MonsterSlayerChallenge.FLEDGLING;
 			case CockatriceCombat.EYE_DROPS_ID: return MonsterSlayerChallenge.INITIATE;
 			case BansheeCombat.EARPLUGS_ID: return MonsterSlayerChallenge.VETERAN;
+            case com.openrsc.server.content.monsterslayer.StirgeCombat.BUG_OFF: return MonsterSlayerChallenge.VETERAN;
 			case TerrorDogCombat.TREATS_ID: return MonsterSlayerChallenge.ELITE;
 			case DarkBeastCombat.WIPE_ID: return MonsterSlayerChallenge.CHAMPION;
 			default: return null;

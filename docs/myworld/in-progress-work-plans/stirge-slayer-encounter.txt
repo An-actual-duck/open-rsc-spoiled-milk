@@ -1,0 +1,79 @@
+Stirge encounter — initial implementation
+=======================================
+Owner approvals: completed five flight directions and three-pose profile attack,
+including bat-gray wings. Canonical approved source is under assets/authoring/
+monsters/stirge/plunge-attack. Initial can/gland icons are presented for review.
+
+Stats and identity
+NPC 882, Stirge, combat 55, 60 HP, legacy Att/Str/Def 60/50/50.
+Modern melee offense 55, melee/ranged/magic defense 50/80/50. Melee only.
+Base maximum melee damage is 8 before any external modifiers. Passive until
+attacked, 30-second respawn. World placement is explicitly reserved for owner.
+
+Bleed and drinking
+Every positive, unsuppressed primary melee hit applies a wound without the
+player's 70%-of-max-roll rule. Per-source/per-target wound ownership is retained.
+Subsequent hits raise severity 1 -> 2 -> 3 (cap) and refresh three pulses,
+without adding another simultaneous wound or postponing the next scheduled
+pulse. Shared bleed cadence: every three game ticks; pulse ranges 1–3, 3–5,
+5–7 respectively. Wounds expire after three pulses without another hit.
+The originating Stirge heals 100% of actual delivered bleed damage, capped at
+its maximum health. Direct melee damage does not heal it. Dead/despawned/
+respawned sources, dead/logged-out targets and spatial-domain changes invalidate
+wounds. Player bleed, Cosmic luck, PvP legality and provenance remain intact.
+
+Bug Off
+3462 full three-use can; 3463 two sprays; 3464 one spray; 3465 empty can.
+Spray uses exact inventory replacement, returns an empty can on the third use,
+and applies ten minutes of protection. This initial duration follows existing
+Slayer counters and can be tuned. Examine: "Keeps pesky stirges from drinking
+your blood." Protection prevents new Stirge wounds and immediately removes
+existing Stirge-owned wounds, stopping their healing. It does not remove other
+players' bleed or alter poison/burn. An active item status shows its timer.
+
+Slayer
+Bran, Brimhaven Veteran tier: 25 Stirges for 12 Veteran points, inserted before
+Nagas, both mandatory and repeatable. BLOOD_DRINKING hazard explains preparation
+and defenses. First applicable assignment grants one full can through the
+existing first-only supply system; later assignments/reminders do not duplicate
+it. All Slayer suppliers sell full cans for one Veteran point, initial stock
+20/restock two. Existing backpack costs remain unchanged.
+
+Roster v1–v5 remain historical inputs. New v6 activates only when the world's
+spawn catalog contains NPC 882, so no one is assigned an unplaced monster.
+Migration preserves earned rank, currency, partial task credit and inventory
+upgrades; completed higher ranks are grandfathered per existing policy. Keep
+at least one Stirge placement after v6 goes live: removing the entire family
+would be a roster rollback, which the existing progression policy rejects.
+
+Drops and crafting
+3466 Sanguinary gland, independent base 1/128 component roll, using existing
+rare-component luck and contribution rules. Ordinary loot uses the standard
+128-weight budget: coins, air/water runes, tarromin/harralander, shared rare
+access and empty outcomes. The anti-coagulant's recipe is still undecided;
+this change supplies the ingredient, not an invented herb/XP recipe.
+
+Art/runtime integration
+Runtime atlas is six 210-wide direction columns, three 160-high rows, containing
+all eighteen approved native poses. Flight PNGs are copied at +30,+15 within
+runtime cells; attack PNGs at +0,+0. No rescaling/repainting of approved pixels.
+Presentation scale is 1.5 world units per native pixel, consistent with the
+bat reference. New animation appends after every published equipment alias,
+so god crossbows, coated axes and other published appearances retain IDs.
+Can/gland sources and Aseprite masters are under assets/authoring/items; only
+native 48x32 binary-alpha exports are in runtime. Generation inputs preserved.
+
+Validation
+- Server and client production Ant builds pass.
+- tests/myworld/test-stirge.py: 36 combat/inventory/lifecycle checks; real NPC
+  melee hook; 14,542 progression checks / 465 v1–v5 synthetic migrations;
+  304 first-only Slayer supply assertions; disk/JAR icons and NPC atlas in
+  both custom/authentic sprite modes; every approved native pose preserved.
+- test-scimitar-coatings.py: 842 server assertions and both client modes pass.
+- test-god-crossbows.py: server mechanics and 19 client catalog assertions pass.
+- test-slayer-art-recovery.py: published equipment identities and both modes.
+- test-slayer-movement-preview.py: all nine atlas families and disk/JAR loading.
+- git diff --check. Workspace layout check retains unrelated legacy violations.
+
+Private evidence and owner preview: output/art/stirge-encounter/index.html.
+No public server, database or saved map is changed by this work.
