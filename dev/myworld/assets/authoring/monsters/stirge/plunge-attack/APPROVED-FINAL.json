@@ -1,8 +1,8 @@
 {
-  "status": "GEOMETRY_APPROVED_PALETTE_REVIEW_PENDING",
+  "status": "APPROVED_FINAL",
   "approved_by": "repository owner",
-  "approval": "good, this can be considered the finalized version and approved for use",
-  "art_checkpoint": "e1cdb0e9ac450de6a06853a7a4cad5743334536a",
+  "approval": "k approved, we'll use this",
+  "art_checkpoint": "5bbb73f79094a36a7a614db159ca5e0e79c5e6c5",
   "canonical_directory": "dev/myworld/assets/authoring/monsters/stirge/plunge-attack",
   "flight_frames": {
     "range": [

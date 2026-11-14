@@ -1,3 +1,6 @@
+FINAL PALETTE APPROVED by owner: gray bat wings, approved full animation.
+This status supersedes historical pending-review notes below.
+
 WING PALETTE REVISION — awaiting owner color review.
 Geometry, texture and poses remain approved. The previous orange-wing approval
 is preserved in inputs/approved-orange-wing-manifest.json. Current colors use
