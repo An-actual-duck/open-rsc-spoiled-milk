@@ -6168,6 +6168,9 @@ public class EntityHandler {
 		setCustomItemDefinition(3252, new ItemDef("Saradomin mace", "A tier 11 mace blessed by Saradomin", "", 120000, -1, "external-png:saradomin-mace-icon", false, true, 16, 0, true, true, true, 3252));
 		setCustomItemDefinition(3253, new ItemDef("Zamorak mace", "A tier 11 mace blessed by Zamorak", "", 120000, -1, "external-png:zamorak-mace-icon", false, true, 16, 0, true, true, true, 3253));
 		setCustomItemDefinition(3254, new ItemDef("Guthix mace", "A tier 11 mace blessed by Guthix", "", 120000, -1, "external-png:guthix-mace-icon", false, true, 16, 0, true, true, true, 3254));
+		setCustomItemDefinition(3444, new ItemDef("Saradomin crossbow", "A tier 11 crossbow blessed by Saradomin.", "", 600000, -1, "external-png:saradomin-crossbow-icon", false, true, 16, 0, false, true, false, 3444));
+		setCustomItemDefinition(3445, new ItemDef("Zamorak crossbow", "A tier 11 crossbow blessed by Zamorak.", "", 600000, -1, "external-png:zamorak-crossbow-icon", false, true, 16, 0, false, true, false, 3445));
+		setCustomItemDefinition(3446, new ItemDef("Guthix crossbow", "A tier 11 crossbow blessed by Guthix.", "", 600000, -1, "external-png:guthix-crossbow-icon", false, true, 16, 0, false, true, false, 3446));
 		setCustomItemDefinition(3255, new ItemDef("Dragon sulfur", "A volatile sulfurous ore used for high-tier alloys", "", 12000, 23, "items:23", false, false, 0, 0xF05A1A, false, false, true, 3255));
 		setCustomItemDefinition(3256, new ItemDef("Fern leaf", "A leafy potion ingredient harvested from ferns", "", 4, -1, "external-png:fern-leaf@17x19", false, false, 0, 0, false, false, true, 3256));
 		setCustomItemDefinition(3257, new ItemDef("Mushroom", "A mushroom used as a potion ingredient", "", 8, -1, "external-png:mushroom@18x18", false, false, 0, 0, false, false, true, 3257));
@@ -8235,6 +8238,10 @@ public class EntityHandler {
 					throw new IllegalStateException("Held-family appearance ID drift");
 				animations.add(new AnimationDef(definition.family, "equipment", definition.mask, 0, true, false, 0));
 			}
+            if (animations.size() != 1170) throw new IllegalStateException("God crossbow appearance ID drift");
+            animations.add(new AnimationDef("crossbow", "equipment", 0xFFD66D, 0, false, false, 0)); //1170: Saradomin crossbow
+            animations.add(new AnimationDef("crossbow", "equipment", 0x19171D, 0, false, false, 0)); //1171: Zamorak crossbow
+            animations.add(new AnimationDef("crossbow", "equipment", 0x8BA848, 0, false, false, 0)); //1172: Guthix crossbow
 		}
 	}
 

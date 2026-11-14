@@ -1,0 +1,47 @@
+[
+  {
+    "id": "saradomin-1",
+    "name": "Archivist",
+    "theme": "Saradomin: GOLD AND SILVER, a noble god pursuing knowledge above all else. Explore a graceful scholarly relic: silver body, elegant gold bow limbs evoking a quill or pages opening into a bow. An intelligent, noble sacred artifact, a visually complete crossbow rather than a book. Invent the shape freely."
+  },
+  {
+    "id": "saradomin-2",
+    "name": "Astrolabe",
+    "theme": "Saradomin: GOLD AND SILVER, a noble god pursuing knowledge above all else. Explore a celestial scholar's crossbow with precise gold geometric or astrolabe-like bow architecture and a refined silver body. Convey knowledge, discovery and noble authority. Invent the shape freely, distinct from an ordinary crossbow."
+  },
+  {
+    "id": "saradomin-3",
+    "name": "Illumination",
+    "theme": "Saradomin: GOLD AND SILVER, a noble god pursuing knowledge above all else. Explore a regal ancient crossbow with sweeping silver-and-gold architectural forms, an enlightened, almost winglike silhouette and a small luminous-looking solid pale detail. Elegant but substantial. Invent the shape freely; do not simply draw a generic bow with a badge."
+  },
+  {
+    "id": "zamorak-1",
+    "name": "Warhorn",
+    "theme": "Zamorak: BLACK AND RED. A demon god who lives for war. Invent a brutal crossbow built from two sweeping black demonic horns and a deep red body. Powerful crescent silhouette, purposeful weapon structure, sharp and aggressive. Mythical demonic relic."
+  },
+  {
+    "id": "zamorak-2",
+    "name": "Siegebreaker",
+    "theme": "Zamorak: BLACK AND RED. A demon god who lives for war. Invent a heavy infernal siege crossbow, angular black iron and blood-red lacquered fittings, broad blade-like bow architecture and a compact armored central mechanism. An imposing relic of conquest, visually distinct from a horn bow."
+  },
+  {
+    "id": "zamorak-3",
+    "name": "Ruin",
+    "theme": "Zamorak: BLACK AND RED. A demon god who lives for war. Invent a savage elegant crossbow with jagged black claw-like bow architecture and a red serpentine core, asymmetric infernal craftsmanship and red inset channels. Mythical weapon of a war deity, distinct shape rather than a recolour."
+  },
+  {
+    "id": "guthix-1",
+    "name": "Verdant",
+    "theme": "Guthix: GREEN AND BROWN. Druidic god of the natural order, which can be kindness or punishment. Explore a benevolent living-wood crossbow formed from graceful roots, fresh leaves and warm brown bark. An ancient woodland relic that feels alive, growth and harmony expressed through its unusual shape."
+  },
+  {
+    "id": "guthix-2",
+    "name": "Equilibrium",
+    "theme": "Guthix: GREEN AND BROWN. Druidic god of the natural order, kindness and punishment in balance. Explore an ancient crossbow with intertwined rich brown branch architecture, mossy green carved stone or a small green seed-like core, balanced paired limbs and purposeful druidic symmetry. Invent a distinctive mythical silhouette, neither generic wood nor a conventional bow with a badge."
+  },
+  {
+    "id": "guthix-3",
+    "name": "Briar",
+    "theme": "Guthix: GREEN AND BROWN. Druidic god of the natural order, be it a kindness or punishment. Explore nature's harsher face: a gnarled brown thornwood crossbow with dark green brambles, sharp living branches and small pale green leaf buds. A mythical woodland judgment relic, rugged organic shape, distinctly different from a leafy gentle crossbow."
+  }
+]

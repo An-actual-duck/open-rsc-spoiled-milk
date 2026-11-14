@@ -1,0 +1,71 @@
+{
+  "status": "fresh native candidates for owner review; supersede earlier generated concepts and conversions",
+  "method": "Direct Aseprite authoring from original 48x32 crossbow. No high-resolution or generated design used as input.",
+  "sourceCrossbow": "dev/myworld/assets/references/items/weapons/crossbows/id-02199.png",
+  "sourceCrossbowSha256": "5585b636951a61eb6211cfaee0ba6dc9f9f9ab2bf2bb84ac59a6ba8717bf3fd2",
+  "themeReferences": [
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/saradomin-mace-icon.png",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/zamorak-mace-icon.png",
+    "dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/guthix-mace-icon.png"
+  ],
+  "recipe": "author.lua",
+  "candidates": [
+    {
+      "god": "saradomin",
+      "dimensions": [
+        48,
+        32
+      ],
+      "opaquePixels": 459,
+      "visibleBounds": [
+        7,
+        4,
+        47,
+        31
+      ],
+      "originalSilhouetteIdentical": true,
+      "originalStringTriggerLatchColoursPreserved": true,
+      "partialAlphaPixels": 0,
+      "opaqueColours": 6,
+      "sha256": "c5ac0bc92a4b7e84a05a52a1bd474e327a581bd90ecf693a8417720367982ef8"
+    },
+    {
+      "god": "zamorak",
+      "dimensions": [
+        48,
+        32
+      ],
+      "opaquePixels": 459,
+      "visibleBounds": [
+        7,
+        4,
+        47,
+        31
+      ],
+      "originalSilhouetteIdentical": true,
+      "originalStringTriggerLatchColoursPreserved": true,
+      "partialAlphaPixels": 0,
+      "opaqueColours": 7,
+      "sha256": "89ff55a358a7f0517ad6b6184992c0b7653412be30fe9b409406a6086e29784c"
+    },
+    {
+      "god": "guthix",
+      "dimensions": [
+        48,
+        32
+      ],
+      "opaquePixels": 459,
+      "visibleBounds": [
+        7,
+        4,
+        47,
+        31
+      ],
+      "originalSilhouetteIdentical": true,
+      "originalStringTriggerLatchColoursPreserved": true,
+      "partialAlphaPixels": 0,
+      "opaqueColours": 7,
+      "sha256": "a1c86fb225e0a63caf23293ec063ec9866682be4705a077a4165026abc071bce"
+    }
+  ]
+}

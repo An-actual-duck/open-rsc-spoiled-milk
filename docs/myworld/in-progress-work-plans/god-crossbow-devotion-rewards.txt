@@ -1,0 +1,439 @@
+CURRENT APPROVED DESIGN — God crossbow prayers
+===============================================
+
+IMPLEMENTATION CHECKPOINT — November 13, 2026
+--------------------------------------------
+Item IDs: Saradomin 3444, Zamorak 3445, Guthix 3446.
+Acquisition: fourth artifact in the respective existing devotion reward pool;
+old claim keys retained, so claiming the original three leaves the new reward.
+Equip requirement: 80 Ranged and the matching god; no new Worship equip gate.
+Prayer slot: 16 (seventeenth entry), leaving original mace slot 15 unchanged.
+Client guide, icons, equipment power and reservation displays are integrated.
+Normal bolts remain supported; holy shots have no physical ammunition cost,
+recovery or inherited poison. Damage and ammo behavior are fixed at launch.
+
+Verification:
+ - Standalone client build and server compile_core: successful.
+ - tests/myworld/test-god-crossbows.py: 142 actual server runtime checks,
+   19 actual client catalog/appearance checks, three approved PNG parity checks.
+ - Existing combat characterization: 149/149 scenarios passed.
+ - Six focused existing prayer/artifact/mace/ranged-slot checks passed.
+ - Evidence: output/tests/god-crossbows/ and output/builds/god-crossbows/.
+ - Layout audit still flags pre-existing ignored legacy directories in this
+   worker. No new assets/outputs use those locations; preserve old local data.
+ - No public server, live accounts or production database used or changed.
+ - Browser packaging and public release/deployment are separate release steps.
+
+Owner accepted the selected option-1 artwork after the matching-red string and
+black-arrow correction. Current inventory/ground art candidates:
+ dev/myworld/assets/authoring/items/god-crossbows/selected-mythic-v1/
+Guthix and Saradomin cleanup PNGs are unchanged; all three now accepted.
+Initial crossbow/ammunition-prayer gameplay is implemented and tested on
+ai-2 feat/god-crossbow-devotion-rewards. Dot's independent ai-1 work is untouched.
+Inventory/ground and prayer icons use the three accepted PNGs unchanged.
+Equipped movement/attack visuals use the existing crossbow family recolored
+for each god; bespoke equipped silhouettes have not been authored or approved.
+The unique god effects, bleed, anti-coagulant and scimitar changes below are
+future work, not part of this initial crossbow implementation.
+
+Each prayer book gets its own dedicated prayer and approved flavour name:
+ Saradomin: Saradomin's Divine Bolts — requires Saradomin crossbow.
+ Zamorak: Zamorak's Bolts of Wrath — requires Zamorak crossbow.
+ Guthix: Guthix's Thorned Bolts — requires Guthix crossbow.
+These are three book-specific entries sharing the same mechanical rules, not
+one generic named prayer shown in all books. "Holy Bolts" below is shorthand
+for the shared free-ammunition mechanic, not the final displayed prayer name.
+No differing damage type or additional effect is implied by the names.
+
+The owner explicitly corrected "levels" to reservation points: this prayer
+has NO separate activation skill-level requirement. It reserves 80 points,
+or 60 when wearing the cape matching the equipped god crossbow. This replaces
+the earlier automatic 80-point reservation just for equipping the weapon.
+
+Holy Bolts can be activated only with a god crossbow equipped. While active it
+supplies free virtual holy bolts with tier-6 power, or tier-8 power with the
+matching god cape. All equipped ammunition is overridden: no additive damage,
+poison or other bolt effects, no ammunition consumption, and no recoverable
+physical bolt is created. There is no per-shot prayer-point payment.
+When inactive, the crossbow fires ordinary compatible bolts normally, including
+normal ammo power/effects/consumption/recovery. No automatic reserve on equip.
+
+Checked against current effective definitions:
+ Tier-11 crossbow base Ranged offense 38, speed 4.
+ Tier-6 Mithril bolt offense 12: Holy Bolts total weapon+ammo offense 50.
+ Tier-8 Adamantite bolt offense 16: matching-cape total offense 54.
+These totals precede skill, other equipment, prayers and normal combat effects.
+Keep physical crossbow offense at 38; do not bake free bolt power into its
+item definition, since ordinary bolts must continue working when prayer is off.
+
+"Matching cape" means the same god as the equipped crossbow, not any god cape.
+The old suggested extra 80-Worship equip/activation gate is not an approved
+requirement and must not be introduced. Existing devotion-artifact acquisition
+rules remain unchanged unless separately requested (80 Worship, 800 devotion,
+400 devotion cost per successful reward, per-item unclaimed reward pools).
+Add one crossbow to each god's existing artifact pool. Preserve prior claim keys.
+
+The runtime integrates this reserve into server/client prayer
+allocation, and dynamically re-evaluate cape/equipment changes. Removing the
+crossbow disables the prayer. Removing the cape raises the cost and lowers bolt
+power immediately; if the 80-point reservation cannot fit, deactivate the
+prayer through allocation overflow handling. The virtual ammo tier must be
+captured at launch; later equipment changes must not alter in-flight damage.
+UI and actual combat offense must both ignore physical ammo when Holy Bolts is
+active. With it inactive, preserve ordinary crossbow behavior in both equipment
+and legacy inventory-wield modes. Never counterfeit a physical free bolt item.
+
+PrayerCatalog currently has 16 entries per god, with the mace prayer in slot15.
+A dedicated new prayer requires a reviewed extra slot and matching client/UI/
+packet/catalog handling; do not overwrite the existing mace prayer. Keep slot15
+and existing item IDs stable. Test cost80/60, wrong-cape behavior, affordability,
+weapon/cape swap and removal, book change, death/relog restoration, real-ammo
+fallback and override, no consumed/dropped free ammo, damage tiers and ordinary
+crossbow regression. Final equipped visuals also need their own native review.
+
+Universal bleed — owner-directed application design
+---------------------------------------------------
+ALL bleed sources use the hard-hit wound mechanic, including Anti-coagulant on
+scimitars. No independent generic proc chance is added. Proposed starting
+threshold is damage >=70% of that attack's maximum hit (70% remains tentative).
+Compare integers using damage*100 >= maximum*70, equivalent to ceil(maximum*0.70).
+A qualifying ordinary hit opens a wound; a critical maximum roll also qualifies.
+The RNG comes from the damage roll itself, without another chance-to-bleed test.
+
+LATEST OWNER CLARIFICATION: one active wound PER SOURCE PER ENEMY. This supersedes
+the earlier question reply saying one wound total per source. A player may wound
+several enemies simultaneously, and several players may independently wound the
+same enemy. Two qualifying hits by one player against one enemy must never
+create two concurrent wounds for that pair. Track source identity and target
+lifetime explicitly; never merge different players' bleeds into poison-like
+shared target potency. Keep each wound's damage, severity and attribution separate.
+
+Only an eligible PRIMARY attack from the bleed-capable weapon can open/reopen
+its wound. For the coating, that is direct primary scimitar damage itself.
+Splash/AoE, reflected damage, bleed/poison/burn, summons, unrelated weapon damage
+and other incidental secondary effects cannot qualify merely because a scimitar
+is equipped. Switching targets and landing another qualifying primary hit may
+open a separate wound on that enemy. A qualifying same-pair repeat can display:
+ "You reopen the wound"
+No doubled concurrent bleed for that pair. OWNER CONFIRMED reopening behaviour:
+refresh that single wound to three remaining pulses without postponing its
+already scheduled next pulse. Do not add a second event or an immediate pulse.
+
+A wound delivers three bonus damage pulses. Wounds have severity: Bleed1,
+Bleed2, Bleed3 and potentially higher. Zamorak is tentatively Bleed2. Higher-tier
+scimitars should open more severe wounds; the exact material-to-severity mapping
+is not yet approved. Anti-coagulant's flavour is that it prevents the wound from
+stopping bleeding, rather than being the reason a stronger weapon cuts deeper.
+Owner-provided opening messages, in ascending severity:
+ Bleed1: "You open up a minor wound"
+ Bleed2: "You open up a wound"
+ Bleed3: "You open up a sizable wound"
+Owner proposes independent RNG damage for each of the three pulses. TENTATIVE
+per-pulse ranges (inclusive), illustrating severity rather than final balance:
+ Bleed1: 1..3 per pulse; complete three-pulse wound total3..9, expected6.
+ Bleed2: 3..5 per pulse; complete three-pulse wound total9..15, expected12.
+ Bleed3: 5..7 per pulse; complete three-pulse wound total15..21, expected18.
+Roll anew for each pulse; do not roll once and repeat the same value three times.
+These totals describe a fresh wound that finishes without being reopened, before
+any applicable damage settlement rules. Reopening refreshes remaining pulses.
+The exact ranges, cadence, higher severities and severity replacement on reopen
+remain unsettled. These tentative ranges supersede the old proposed 25%-of-hit
+payload; do not treat the example values as locked implementation balance.
+
+Implementation must compare roll and maximum on the same basis, snapshot the
+maximum for that attack at launch, and only apply a wound after a successful
+positive primary hit. Blocked/suppressed/missed attacks must not bleed. Avoid
+comparing a modified/mitigated final hit against an unrelated unmodified max;
+preserve the intended synergy that a delivered critical maximum roll qualifies.
+Existing AttackRoll retains critical identity but has no maximum field; the
+comparable maximum needs deliberate launch/settlement plumbing, not inference
+from the equipped weapon after a projectile is already in flight. Secondary
+bleed pulses must not recursively open wounds or trigger more weapon effects.
+Saradomin and Guthix now have owner-directed mechanics recorded below; the
+earlier defense-bypass Revelation and reactive-damage Briar Seed suggestions
+are superseded.
+
+Guthix — Briar Seed (owner-directed)
+------------------------------------
+"Imbed briar seeds into your enemies that explode into thorns every 5 shots
+for extra damage and may hit nearby enemies as well."
+After five resolved primary hits, including zero-damage hits, trigger one extra
+AoE hit on the target and eligible nearby enemies within a one-tile radius.
+Bonus damage is an RNG roll from 0 through 3, inclusive. The centre target gets
+one extra hit, not both a centre hit and a duplicate splash hit. Start a new
+five-hit cycle after the burst. No secondary burst hit may add another seed or
+recursively trigger another burst. Invalid launches/blocked interactions are
+not resolved zero-damage hits and must not create seeds.
+Recommendation pending confirmation: count seeds separately for each attacker/
+enemy pair, since the seeds are embedded in that enemy. Do not silently count
+shots across five different victims. Independent 0..3 rolls per burst victim
+are a proposed implementation detail; the owner has specified the cap and AoE,
+not whether victims share one roll. Follow ordinary AoE eligibility, signed
+level and PvP/party/clan/friend safety rules without bespoke exceptions.
+This is the unique effect of Guthix's Thorned Bolts while its prayer is active.
+
+Saradomin — Revelation (owner-directed)
+---------------------------------------
+While using the bow/prayer, build familiarity with the current enemy type.
+Begin at 0%, gain one percentage point per kill, and cap at 15%. Continuing
+against other individuals of the same enemy type retains the accumulated bonus.
+Switching from zombies to giants resets it and starts building against giants.
+Enemy families/types must not be individual spawn UUIDs; variant grouping needs
+an explicit reviewed mapping. Existing Monster Slayer family groups are useful
+input but are not a complete world-wide taxonomy. Do not infer solely from names.
+The bonus skews damage rolls upward rather than raising the maximum hit.
+It is lost only by unequipping the weapon, deactivating the prayer, or choosing
+a different enemy type. No idle timeout or per-kill reset. Matching-cape changes
+alone must not discard the familiarity while the bow/prayer remain active.
+Credit qualifying kills once through the authoritative kill/reward path.
+
+Exact roll-bias math is pending an owner clarification: recommended lifting the
+minimum roll by the learned percentage of maximum, leaving maximum unchanged;
+e.g. at maximum20 and familiarity15%, a pre-defense roll range of3..20 rather
+than0..20. This interpretation has been asked but NOT approved as of this note.
+It must not be silently implemented as +15% maximum damage, crit chance or luck.
+This is the unique effect of Saradomin's Divine Bolts while its prayer is active.
+
+Future idea only — Anti-coagulant coating
+----------------------------------------
+Owner requested recording a later coating named Anti-coagulant, now specifically
+for SCIMITARS. Alongside it, the owner wants scimitars to favour higher damage
+rolls while reducing their maximum, aiming to preserve current uncoated DPS and
+exceed it when coated with bleed. Keep this distinct from stacking poison.
+No scimitar/coating runtime changes are implemented by these design notes.
+
+Owner has now settled application: Anti-coagulant uses the universal hard-hit
+wound threshold, not a separate flat proc or an additional proc roll. It is for
+scimitars, and severity rises with scimitar tier. Only the scimitar's own eligible
+primary hit can apply/reopen its bleed. Preserve the approved per-source/per-enemy
+independent wound rules above. Recipe, duration, exact scimitar tier-to-severity
+mapping, final pulse damage/cadence and balance remain undecided. Tentative RNG
+severity ranges and confirmed reopening behaviour are recorded above. The owner wants
+the uncoated weapon to preserve DPS, with the coating providing the increase;
+do not bake bleed's DPS into the base compensation.
+
+Illustrative balancing prototype, NOT approved final numbers: current player
+ordinary rolls use1..M before defense. For a hypothetical old maximum20, uniform
+1..20 averages10.5. A weighted1..16 distribution with weights17+8*r likewise
+averages10.5, and qualifying rolls against70% of the reduced maximum rise from
+35% (14..20) to47.426% (12..16). This demonstrates the requested interaction
+without guaranteeing a minimum hit or increasing attack speed. It is a mathematical
+example, not a commitment to those weights, ceiling reduction or proc chance.
+The hard-hit threshold would use the actual reduced maximum, not the old cap.
+
+Matching raw averages is insufficient for real DPS. Actual code subtracts an
+independent defense roll and clamps at zero. Exact illustrative expectations:
+ defense maximum0: old10.5, prototype10.5;
+ defense maximum5: old7.7, prototype7.5912;
+ defense maximum10: old5.825, prototype5.4974;
+ defense maximum20: old3.325, prototype2.925.
+Actual tuning needs representative tiers/skills and weak/medium/strong defenses,
+plus critical hits, Combat Luck, damage-roll biases, buffs and offhand behavior.
+A reduced ceiling also reduces critical-hit damage; include that in balancing.
+If implemented later, use a focused gameplay branch and meaningful distribution/
+combat fixtures rather than silently adding it to the inventory-art stage.
+
+The notes below preserve earlier design exploration and are HISTORICAL wherever
+they conflict with this approved design (especially automatic reservation,
+bundled offense50 and the old hypothetical Worship gate).
+
+--------------------------------------------------------------------------
+
+God crossbows — design and implementation outline, November 13, 2026
+====================================================================
+
+Status: DESIGN REVIEW. No gameplay changes, item IDs, runtime sprites or live
+server changes have been installed. Core worker ai-2 owns branch
+feat/god-crossbow-devotion-rewards; Dot independently owns ai-1 for optimization.
+
+Owner requirements
+------------------
+Add one god crossbow to each of Saradomin, Zamorak and Guthix's devotion artifact
+reward pools. Use their god maces as the visual theme references. Equipping the
+weapon reserves 80 prayer points; shots require no bolts or other ammunition.
+The effective weapon should match a tier-11 crossbow with approximately tier-6
+bolts, subject to balance review.
+
+Proposed initial balance
+------------------------
+All three start with identical combat statistics and no additional god-specific
+proc. The current Dragon crossbow (tier 11) has 38 rangedOffense and weaponSpeed
+4. Mithril bolts (tier 6: tin, copper, bronze, iron, steel, mithril) have 12
+rangedOffense. Use a self-contained 50 Ranged offense, speed 4, normal crossbow
+range, one-handed mainhand equipment like existing crossbows. Recommend 80
+Ranged and 80 Worship to equip, matching the existing top crossbow and artifact
+Worship gate. Match the wielder's worshipped god as existing god weapons do.
+Do not grant an extra prayer bonus that offsets the intended 80-point reserve.
+These are starting recommendations, not yet implemented values.
+
+The reserve is a persistent allocation, not an 80-point payment on equip and
+not a per-shot drain. Count it in both server and client prayer allocation so
+prayers cannot also spend it. Free it immediately on unequip, weapon swap,
+death or other equipment removal. Refuse equipping when fewer than 80 points
+are available after the equipment swap; keep the old equipment/prayers intact.
+Recheck affordability before every shot if Worship or equipment bonuses change.
+Never leave a weapon firing when the reserve cannot be funded. Handle login
+restoration and prayer-book changes through the same authoritative rules.
+
+Ammunition-slot bolts must contribute no extra offense, poison, resource cost
+or recovery while a god crossbow is equipped. The same applies to inventory
+ammunition in legacy inventory-equipment mode. Ordinary crossbows retain all
+existing ammo rules. Do not implement this as a real/free Mithril bolt: doing
+so risks spawning recoverable bolts or consuming unrelated equipped ammo.
+Continue to use normal ranged critical, stagger, slow, PvP eligibility, XP,
+projectile collision and hit-resolution systems.
+
+Reward acquisition
+------------------
+GodArtifacts currently requires 80 Worship, 800 devotion, matching prayer book,
+and an unclaimed reward. It spends 400 devotion when a reward is successfully
+received. Add each new crossbow as that god's fourth artifact, preserving the
+existing per-item claim keys. Players who claimed all three older artifacts
+must become eligible for the crossbow. Preserve full-inventory failure safety
+and existing reward dialogue. Recommend untradeable artifacts like god maces.
+No new crafting or blessing recipe is implied by the request.
+
+Art
+---
+The inspected native crossbow reference is 48x32, visible bounds (7,4,40,27).
+Use that occupancy, angle and pixel shading as the final inventory scale anchor.
+The concept lineup is deliberately enlarged for owner review, not a runtime
+asset. Saradomin uses warm wood/gold and the mace's star; Zamorak uses a dark
+purple stock/red horn motif; Guthix uses wood, tan and green living limbs.
+Preserved concept and provenance:
+ dev/myworld/assets/authoring/items/god-crossbows/concept-lineup-v1.png
+ dev/myworld/assets/authoring/items/god-crossbows/provenance.json
+Review export:
+ output/art/god-crossbow-devotion-rewards/concept-lineup-v1.png
+
+Final inventory/ground icons and equipped direction/attack frames need separate
+native-size review. A finished inventory icon does not prove the equipped
+appearance is implemented. Use the ordinary crossbow's animation timing and
+hand anchors, with god-specific artwork rather than an unrelated placeholder.
+Preserve editable masters and authoring recipes; package only runtime assets.
+
+Implementation touchpoints discovered
+------------------------------------
+server/content/GodArtifacts: per-god pools and existing persistent claim keys.
+server/constants/ItemId and AppearanceId: allocate against current catalogs.
+server/conf/server/defs/ItemDefsCustom.json and ItemDefsMyWorld.json: effective
+ definitions and stats; EntityHandler: appearance registration/discovery.
+server/model/container/Equipment: matching god, equip transaction, offense
+ accounting (currently sums mainhand, offhand and ammo), removal and swaps.
+server/model/entity/player/Prayers and Player.getPrayerAllocationPoints:
+ shared allocation bookkeeping, overflow changes and funded-shot checks.
+server/event/rsc/impl/projectile/RangeUtils and RangeEvent: crossbow
+ classification, ammo-free launch, resource ledger, recovery and poison.
+Client EntityHandler, external assets and mudclient: icons/equipment visuals,
+ Ranged equipment display and prayer allocation display/activation affordances.
+In-game guide: reward availability, 80 reserved points and ammo-free shots.
+Paths above omit their existing Java package prefixes for readability.
+
+Focused verification before READY
+---------------------------------
+Exercise actual equip/swap/unequip/relog/death/book-change paths, exact 80-point
+boundary and insufficient-free-point rejection without inventory loss. Verify
+client/server allocation parity, point-release and loss-of-capacity behavior.
+Compare actual offense with a normal tier-11 crossbow plus Mithril bolts; test
+empty ammo, arrows, stronger bolts and poisoned bolts equipped and in inventory.
+Verify no ammo cost/recovery/poison and no artificial bolt loot from repeated
+hits, including zero damage, stagger and ranged cape behavior. Ordinary bows,
+crossbows and thrown weapons must retain their normal consumption/recovery.
+Test every god's fresh/partially claimed/fully claimed legacy reward accounts,
+full inventory, devotion spend, god mismatch and untradeability. Review native
+inventory and equipped sprites standing/attacking in every supported direction,
+plus browser custom-asset parity. No public activation without normal release
+and shutdown authorization.
+
+November 13 shape revision
+--------------------------
+Owner requested closer adherence to original stock, trigger and direction,
+with mace and holy-necklace motifs. Revision 2 supplies separate Saradomin,
+Zamorak and Guthix concept renders, using both actual mace and pendant images
+as references. The preview now compares all three against the unchanged
+original and displays their theme references. These remain enlarged design
+renders with rendering halos; native-size pixel cleanup is still required.
+Authoring files, exact prompts and provenance are preserved under
+assets/authoring/items/god-crossbows/*v2*; runtime artwork remains unchanged.
+
+Native inventory candidates, November 13
+---------------------------------------
+All three candidates are now actual 48x32 RGBA PNGs, with binary alpha, limited
+colours and no halos. Generated simplified masters were exported using the
+preserved Aseprite Lua recipe, then strings, triggers and Saradomin star were
+cleaned on the native pixel grid. Final native Aseprite masters, PNGs and
+validation receipt live in authoring/items/god-crossbows/native-v1/.
+The Firefox index shows all four native canvases at exactly 1x and 8x, including
+the unchanged ordinary crossbow reference. Runtime sprites remain unmodified
+pending review; equipped frames and gameplay implementation are still pending.
+
+Native restart — current art direction
+------------------------------------
+Owner rejected the high-resolution conversions and requested a fresh native
+pass based on the standard crossbow framework and original god mace themes.
+All preceding concepts/conversions are superseded, preserved as history only.
+Current candidates: assets/authoring/items/god-crossbows/native-restart-v1/.
+These are authored directly in Aseprite at 48x32 from the unchanged crossbow
+reference, with no generated or resampled input. Their entire opacity masks
+match the reference exactly; original grey trigger, stock-latch and string
+pixels remain byte-identical. Bow-limb and stock colours follow the maces,
+with small star/horn/pinecone stock insets. Two editable layers, deterministic
+author.lua recipe and receipt.json are preserved. Current Firefox index shows
+these at 1x/8x alongside the original and god mace references. Runtime sprites
+and gameplay remain unchanged pending review.
+
+Second native restart — owner-specified limb themes (CURRENT)
+------------------------------------------------------------
+Owner requested a fresh pass: Zamorak red stock with mace-head horns expressed
+in the limbs; Saradomin silver stock and gold limbs with star-shaped tips;
+Guthix brown stock, light green limbs, dark green brambles along stock.
+Current candidates and editable recipe: authoring/items/god-crossbows/
+native-restart-v2/. All earlier passes are superseded and are not inputs.
+Native 48x32 design uses the unchanged standard crossbow as its framework,
+retaining stock, trigger, latch and string positions; limb tips now deliberately
+change their silhouettes. Solid opaque/transparent pixels, clean canvas border,
+original grey mechanical parts verified unchanged. Firefox index updated with
+1x/8x comparison and mace references. Still art review only; no runtime changes.
+
+Owner refinement: Zamorak limbs and curled horns changed to black with subtle
+charcoal highlights; red stock retained. Saradomin and Guthix PNG hashes are
+unchanged from the reviewed native-restart-v2 candidates.
+
+Zamorak horn integration: replaced the entire ordinary bow with two continuous
+curved/tapered black horn silhouettes, rather than horn caps on existing limbs.
+Red stock and original trigger/latch/string pixels verified identical; Sara
+and Guthix PNG hashes unchanged. Native size remains 48x32 with clear border.
+
+Reference-free mythical exploration — CURRENT REVIEW
+---------------------------------------------------
+Owner requested another fresh start: three independently generated sprites
+for EACH god, no crossbow or mace image references, unique mythical designs
+based only on colour/lore themes. Nine text-only image_gen calls were made,
+with no referenced_image_paths or conversation-image inputs. Earlier artwork
+was not inspected for this pass or used as input. Exact prompts, generated
+masters, native exports, editable Aseprite files and receipts are preserved in
+authoring/items/god-crossbows/fresh-mythic-v1/. Generator returned large source
+images despite the requested grid; actual 48x32 PNG exports are shown at 1x/8x
+in output/art/god-crossbow-mythic-exploration/index.html, with optional source
+comparison. No runtime changes. Previous passes remain preserved as history.
+
+Selected option 1 for all gods — CURRENT
+--------------------------------------
+Owner chose option 1 across the board. Native cleanup candidates live under
+authoring/items/god-crossbows/selected-mythic-v1/. Saradomin receives string-gap
+fills only (all existing opaque pixels retained). Zamorak gets continuous
+strings, stock reinforcement and a contrasting pale metal arrow. Guthix gets
+a thicker brown stock beneath the existing foliage (all opaque pixels retained).
+Editable layers, input PNGs, recipe and validation hashes are preserved.
+Before/after Firefox gallery: output/art/god-crossbow-selected-cleanup/index.html.
+No runtime sprites or gameplay changes installed yet.
+
+Owner correction and Guthix approval
+-----------------------------------
+Guthix's selected cleanup is approved and frozen. Rejected Zamorak's white
+strings/arrow. Current Zamorak restores original option 1, fills only transparent
+gaps in the right-hand string using its exact existing dark red (0x51050c),
+and recolours the original arrow into the black/charcoal horn palette. Stock
+reinforcement and left-string edits were removed. No enlarged/new arrow shape.
+All new colours already exist in the selected sprite; 48x32 native size retained.
+Saradomin and Guthix PNG hashes remain identical to their previous cleanup.

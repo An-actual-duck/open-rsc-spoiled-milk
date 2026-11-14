@@ -1,0 +1,79 @@
+{
+  "status": "fresh native inventory candidates, pending owner review",
+  "method": "Aseprite native-grid authoring from original crossbow only. Earlier god-crossbow versions are not inputs.",
+  "recipe": "author.lua",
+  "requirements": {
+    "zamorak": "Red stock; whole black horn limbs grow continuously from front mount and taper into curled tips. No ordinary limbs with add-on horn caps.",
+    "saradomin": "Silver stock; golden limbs with star-shaped tips from mace head.",
+    "guthix": "Brown stock; light green limbs; dark green brambles along stock."
+  },
+  "candidates": [
+    {
+      "god": "saradomin",
+      "dimensions": [
+        48,
+        32
+      ],
+      "visibleBounds": [
+        5,
+        4,
+        47,
+        31
+      ],
+      "opaqueColours": 8,
+      "originalFrameworkPreserved": true,
+      "originalTriggerLatchStringPreserved": true,
+      "fullyTransparentCanvasBorder": true,
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sha256": "744a829f90dcdf91b963afed7d4c56b1ad2ac58c13fa754499c7a7b00729d4dc"
+    },
+    {
+      "god": "zamorak",
+      "dimensions": [
+        48,
+        32
+      ],
+      "visibleBounds": [
+        5,
+        4,
+        47,
+        31
+      ],
+      "opaqueColours": 7,
+      "originalTriggerLatchStringPreserved": true,
+      "fullyTransparentCanvasBorder": true,
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sha256": "668d87d1312d5560da8dd4e8875a1c2a962f7abc0649327fa1f85e47b1614bc3",
+      "originalStockPreserved": true,
+      "wholeBowReplacedByHornLimbs": true
+    },
+    {
+      "god": "guthix",
+      "dimensions": [
+        48,
+        32
+      ],
+      "visibleBounds": [
+        7,
+        4,
+        47,
+        31
+      ],
+      "opaqueColours": 9,
+      "originalFrameworkPreserved": true,
+      "originalTriggerLatchStringPreserved": true,
+      "fullyTransparentCanvasBorder": true,
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sha256": "589a80965016c3690e5cd5f6310bde81c61552db5f7ada04ffcf27fa73c7b5d1"
+    }
+  ]
+}

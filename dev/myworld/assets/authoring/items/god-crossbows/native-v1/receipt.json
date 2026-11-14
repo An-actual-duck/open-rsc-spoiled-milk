@@ -1,0 +1,70 @@
+{
+  "status": "native-size inventory/ground candidates for owner review; not installed",
+  "generator": "built-in image_gen refinement followed by Aseprite native-grid export and pixel cleanup",
+  "recipe": "export-native.lua",
+  "prompts": "prompts-native-v1.json",
+  "masters": "native-inputs/ (preserved generated masters), native-v1/*.aseprite (editable native candidates)",
+  "export": "48x32 RGBA, fixed shared source-canvas sampling, limited palette, binary alpha, native string/trigger/star cleanup",
+  "candidates": [
+    {
+      "god": "saradomin",
+      "file": "native-v1/saradomin-crossbow-icon.png",
+      "dimensions": [
+        48,
+        32
+      ],
+      "visibleBounds": [
+        8,
+        5,
+        46,
+        29
+      ],
+      "opaqueColours": 11,
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sha256": "1f346e54bf3ddf28e4c8dccb4a199e2e56836fa466354e26629d458787b92532"
+    },
+    {
+      "god": "zamorak",
+      "file": "native-v1/zamorak-crossbow-icon.png",
+      "dimensions": [
+        48,
+        32
+      ],
+      "visibleBounds": [
+        10,
+        4,
+        46,
+        30
+      ],
+      "opaqueColours": 10,
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sha256": "22ae7af4bc65779bc6e14e93051c82c50803d1cf08f02c69f1f0e4b93ea61bd3"
+    },
+    {
+      "god": "guthix",
+      "file": "native-v1/guthix-crossbow-icon.png",
+      "dimensions": [
+        48,
+        32
+      ],
+      "visibleBounds": [
+        8,
+        3,
+        47,
+        29
+      ],
+      "opaqueColours": 11,
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sha256": "684bc2d2fc1e6bbe3a73a666a529a5f7d9d9050a22fca67959f33116a5e480e6"
+    }
+  ]
+}

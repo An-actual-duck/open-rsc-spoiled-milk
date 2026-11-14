@@ -1,0 +1,180 @@
+{
+  "status": "nine reference-free native-size design options for owner review, not installed",
+  "generator": "built-in image_gen, one call per option",
+  "referenceImages": [],
+  "promptFile": "prompts.json",
+  "nativeExport": "Aseprite export-native.lua; fixed full-canvas nearest sample, god-specific palette and binary alpha. Generator returned 1536x1024 sources; final PNGs are actual 48x32.",
+  "candidates": [
+    {
+      "id": "saradomin-1",
+      "label": "Archivist",
+      "dimensions": [
+        48,
+        32
+      ],
+      "sourceDimensions": [
+        1536,
+        1024
+      ],
+      "alphaValues": [
+        0,
+        255
+      ],
+      "opaqueColours": 15,
+      "nativeSha256": "427b64142f06803b423daad2b490e44a830b368afa7d319470774b3a48c48f4c",
+      "sourceSha256": "9cd84793e367069e39285c48d3d3c53a1be7604cfcf49fccca344ff35b6ffefd"
+    },
+    {
+      "id": "saradomin-2",
+      "label": "Astrolabe",
+      "dimensions": [
+        48,
+        32
+      ],
+      "sourceDimensions": [
+        1536,
+        1024
+      ],
+      "alphaValues": [
+        0,
+        255
+      ],
+      "opaqueColours": 15,
+      "nativeSha256": "d40966c7397fd82c894bc3675ded2ccf236034f11fdfe98700c8a3ea4f66a4ad",
+      "sourceSha256": "daf6014e104f79b1c8354af05bded503f0e77904c610d10bc70d3c5612df8394"
+    },
+    {
+      "id": "saradomin-3",
+      "label": "Illumination",
+      "dimensions": [
+        48,
+        32
+      ],
+      "sourceDimensions": [
+        1536,
+        1024
+      ],
+      "alphaValues": [
+        0,
+        255
+      ],
+      "opaqueColours": 15,
+      "nativeSha256": "7793488cee8b77983441247d527fa85ecafb0fadd45c06a012a689bf6a4f9984",
+      "sourceSha256": "4e6b6463f176c36f93ec23b7c7689614ac114f3aa81d892ac972523976360cbe"
+    },
+    {
+      "id": "zamorak-1",
+      "label": "Warhorn",
+      "dimensions": [
+        48,
+        32
+      ],
+      "sourceDimensions": [
+        1536,
+        1024
+      ],
+      "alphaValues": [
+        0,
+        255
+      ],
+      "opaqueColours": 10,
+      "nativeSha256": "f5de9cd90493655144ab9de67c11aa1dca51441826031dc66d1df1409bd5ca5b",
+      "sourceSha256": "4c0c917fa8618d6826ef1d0d2425e51f98ecb43e3649b373d4e1d7b0f53afb3a"
+    },
+    {
+      "id": "zamorak-2",
+      "label": "Siegebreaker",
+      "dimensions": [
+        48,
+        32
+      ],
+      "sourceDimensions": [
+        1536,
+        1024
+      ],
+      "alphaValues": [
+        0,
+        255
+      ],
+      "opaqueColours": 12,
+      "nativeSha256": "0ef1ce2de1c1fd4124b2cc533f984432ca50ade1c7dba17af9b409349b20d724",
+      "sourceSha256": "0e65a57a098e844d3d234923e0a0c0076a9d0018330a7c6baeead0b927e9bacb"
+    },
+    {
+      "id": "zamorak-3",
+      "label": "Ruin",
+      "dimensions": [
+        48,
+        32
+      ],
+      "sourceDimensions": [
+        1536,
+        1024
+      ],
+      "alphaValues": [
+        0,
+        255
+      ],
+      "opaqueColours": 10,
+      "nativeSha256": "917a7aedf29a231a73a4ec340d3c32b3574a70353f095c58098d45aee7e2847c",
+      "sourceSha256": "4fdc3a61b9cd6f6204c2238fbbffae2291e278c58cd095aae5a65f5fd9e1f175"
+    },
+    {
+      "id": "guthix-1",
+      "label": "Verdant",
+      "dimensions": [
+        48,
+        32
+      ],
+      "sourceDimensions": [
+        1536,
+        1024
+      ],
+      "alphaValues": [
+        0,
+        255
+      ],
+      "opaqueColours": 10,
+      "nativeSha256": "7e2f1affcaa9fcc1b1c06ca7b75a4becd7c27eedfe6e4daf9c473dfcc6d09bb9",
+      "sourceSha256": "e5e14d0940b59a94db44c15739a175cbe0ef5ff074d6b4668d10212794c27e9e"
+    },
+    {
+      "id": "guthix-2",
+      "label": "Equilibrium",
+      "dimensions": [
+        48,
+        32
+      ],
+      "sourceDimensions": [
+        1536,
+        1024
+      ],
+      "alphaValues": [
+        0,
+        255
+      ],
+      "opaqueColours": 11,
+      "nativeSha256": "dfef553881016d2ff22e2e4389463df3f09176fe3d36f7913b9c16d113384e50",
+      "sourceSha256": "8ac7a148adc38c70fd62cfb4ff989d1ad3b32cc4dfa33f1d38a2c6145b7936bb"
+    },
+    {
+      "id": "guthix-3",
+      "label": "Briar",
+      "dimensions": [
+        48,
+        32
+      ],
+      "sourceDimensions": [
+        1536,
+        1024
+      ],
+      "alphaValues": [
+        0,
+        255
+      ],
+      "opaqueColours": 11,
+      "nativeSha256": "c15f2fa34a414a8db2d45f9319b1bf564f59348150cba14c4bd50ae2318d780f",
+      "sourceSha256": "ab97f43e264f7d9c49824a4e320b04a9831babae1ed4c73a8bbf104d815f0bed"
+    }
+  ]
+}

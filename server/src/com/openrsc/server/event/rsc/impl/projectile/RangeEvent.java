@@ -80,6 +80,8 @@ public class RangeEvent extends GameTickEvent {
 		if (player.getAttribute("can_range_again", 0L) > currentTick) return;
 		if (!com.openrsc.server.content.Slow.ready(player, com.openrsc.server.content.Slow.Cadence.RANGED)) return;
 
+        player.getPrayers().deactivateUnavailableEquipmentPrayers();
+        player.getPrayers().deactivateOverflowingPrayers();
 		final int weaponId = player.getRangeEquip();
 
 		if (weaponId == -1 ||
@@ -148,14 +150,17 @@ public class RangeEvent extends GameTickEvent {
 
 		final int ammoId;
 		final boolean isCrossbow = RangeUtils.isCrossbow(weaponId);
+        final boolean holyBolts = com.openrsc.server.content.GodCrossbows.usesHolyBolts(player);
 
-    final int availableAmmo =
+    final int availableAmmo = holyBolts ? com.openrsc.server.content.GodCrossbows.holyAmmoDefinition(player) :
         config.WANT_EQUIPMENT_TAB
             ? takeAmmoFromEquipment(weaponId, isCrossbow, false)
             : takeAmmoFromInventory(weaponId, isCrossbow, false);
     if (availableAmmo == -1) return;
     if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(player, com.openrsc.server.content.Slow.Cadence.RANGED)) return;
-		if (config.WANT_EQUIPMENT_TAB) {
+        if (holyBolts) {
+            ammoId = availableAmmo;
+        } else if (config.WANT_EQUIPMENT_TAB) {
       ammoId = takeAmmoFromEquipment(weaponId, isCrossbow, true);
 		} else {
       ammoId = takeAmmoFromInventory(weaponId, isCrossbow, true);
@@ -192,7 +197,7 @@ public class RangeEvent extends GameTickEvent {
 		final ProjectileResourceLedger resourceLedger =
 			ProjectileResourceLedger.trackedLaunch(
 				ProjectileLaunchSpecification.Producer.PLAYER_BOW);
-		resourceLedger.recordItemCost(ammoId, 1, 1,
+		if (!holyBolts) resourceLedger.recordItemCost(ammoId, 1, 1,
 			config.WANT_EQUIPMENT_TAB
 				? ProjectileResourceLedger.ItemSource.EQUIPMENT
 				: ProjectileResourceLedger.ItemSource.INVENTORY,
@@ -206,10 +211,10 @@ public class RangeEvent extends GameTickEvent {
 		}
 
 		RangeUtils.applyDragonFireBreath(player, target, deliveredFirstProjectile);
-		final ProjectileResourceLedger.RecoveryDestination recovery =
-			RangeUtils.settleProjectileRecovery(
+		final ProjectileResourceLedger.RecoveryDestination recovery = holyBolts
+            ? ProjectileResourceLedger.RecoveryDestination.NOT_RECOVERED : RangeUtils.settleProjectileRecovery(
 				getWorld(), player, target, damage, ammoId);
-		resourceLedger.recordRecovery(ammoId,
+		if (!holyBolts) resourceLedger.recordRecovery(ammoId,
 			recovery == ProjectileResourceLedger.RecoveryDestination.NOT_RECOVERED
 				? 0 : 1,
 			recovery, target.getWorldLocation());
@@ -241,7 +246,7 @@ public class RangeEvent extends GameTickEvent {
                 ProjectileLaunchSpecification.builder(
                         ProjectileLaunchSpecification.Producer.PLAYER_BOW, damage, 2)
                     .chase(true)
-                    .poisonWeaponId(ammoId)
+                    .poisonWeaponId(holyBolts ? -1 : ammoId)
                     .presentation(isCrossbow ? Projectile.BOLT : Projectile.ARROW, 0, true)
                     .dragonBreathDamage(dragonBreathDamage)
                     .duplicationStrategy(DuplicationStrategy.ONE_PER_MOB)

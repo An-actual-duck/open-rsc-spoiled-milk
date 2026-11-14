@@ -1435,6 +1435,7 @@ public class ActionSender {
 			i++;
 		}
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_PRAYERS_ACTIVE, struct, player);
+        if (player.getConfig().WANT_MYWORLD) sendDerivedEquipmentStats(player);
 	}
 
 	public static void sendPrayerBook(Player player, PrayerCatalog.GodLine prayerBook) {

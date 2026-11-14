@@ -1,0 +1,49 @@
+{
+  "status": "selected option 1 cleanup for owner review; not installed",
+  "recipe": "refine.lua",
+  "source": "../fresh-mythic-v1/native/*-1.png",
+  "changes": {
+    "saradomin": "Only transparent gaps filled along existing strings; all original opaque pixels unchanged.",
+    "zamorak": "Original option 1 restored; only right-string transparent gaps filled in matching dark red, and original arrow recoloured to the horns black/charcoal palette. No left-string or stock changes.",
+    "guthix": "Owner-approved thicker stock. Frozen unchanged."
+  },
+  "candidates": [
+    {
+      "god": "saradomin",
+      "chosenOption": 1,
+      "dimensions": [
+        48,
+        32
+      ],
+      "changedPixels": 2,
+      "partiallyTransparentPixels": 0,
+      "sha256": "32975f66294f5c85cc9d077c6c9e12ce7c66e4687324721e04ff35b3423ac9d6",
+      "inputSha256": "427b64142f06803b423daad2b490e44a830b368afa7d319470774b3a48c48f4c"
+    },
+    {
+      "god": "zamorak",
+      "chosenOption": 1,
+      "dimensions": [
+        48,
+        32
+      ],
+      "changedPixels": 41,
+      "partiallyTransparentPixels": 0,
+      "sha256": "0a23908497886eea2f3c788884e4ea9e31e4fbf992429d47a6382a7dc8de34e2",
+      "inputSha256": "f5de9cd90493655144ab9de67c11aa1dca51441826031dc66d1df1409bd5ca5b"
+    },
+    {
+      "god": "guthix",
+      "chosenOption": 1,
+      "dimensions": [
+        48,
+        32
+      ],
+      "changedPixels": 10,
+      "partiallyTransparentPixels": 0,
+      "sha256": "80049b63141089fda4f1b0d2b659a08c216d2f45c5d246e97c4cea279aa2caf0",
+      "inputSha256": "7e2f1affcaa9fcc1b1c06ca7b75a4becd7c27eedfe6e4daf9c473dfcc6d09bb9",
+      "ownerApproved": true
+    }
+  ]
+}
