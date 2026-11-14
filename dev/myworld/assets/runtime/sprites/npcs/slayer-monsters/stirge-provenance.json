@@ -2,7 +2,6 @@
   "npc": 882,
   "name": "Stirge",
   "source": "dev/myworld/assets/authoring/monsters/stirge/plunge-attack",
-  "approvedPaletteCommit": "3aa5eaf611effb6219b2f2e51fb7a3abc0b45e5d",
   "atlasColumns": [
     210,
     210,
@@ -22,6 +21,8 @@
     0,
     0
   ],
-  "runtimeSha256": "1b44d4bc322991aac2cab86478583dc169ba83193b13aa9860a3a02922f2d55a",
-  "noNativePoseRescaling": true
+  "runtimeSha256": "6871df8fbc40d58a9a94fd5d0706715c19944738fcdd153071738539e3811cf9",
+  "noNativePoseRescaling": true,
+  "previousGrayPaletteApprovedCommit": "3aa5eaf611effb6219b2f2e51fb7a3abc0b45e5d",
+  "wingPalette": "owner-approved light tan"
 }
