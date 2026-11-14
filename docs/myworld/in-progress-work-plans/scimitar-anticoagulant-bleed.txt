@@ -93,5 +93,10 @@ and god-crossbow regression checks are retained. Their old total custom
 animation-count assertion was updated from 1170 to 1173 for the preceding god
 crossbow addition; no additional animation IDs are allocated by this feature.
 
+An additional Combat Luck runtime test had an older expectation that orphan
+player-owned poison would still invoke survival RNG in safety. It fails the
+same way on pre-feature main. The test now verifies zero damage and zero survival
+RNG for that existing PvP rejection; production poison behavior is unchanged.
+
 No public deployment, server interruption or release packaging is part of this
 implementation. Browser delivery must be rebuilt at release time as usual.
