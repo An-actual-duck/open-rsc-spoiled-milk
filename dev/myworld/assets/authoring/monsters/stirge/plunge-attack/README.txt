@@ -43,3 +43,9 @@ for the foreground recovery wing.
 Review: output/art/stirge-plunge-attack/index.html. Enlarged and native animated
 views, pause/step, slow speeds, three still poses and approved profile reference.
 Owner visual review pending; no game/runtime installation or public deployment.
+
+Final owner corrections: frame 16's near-wing plate is moved to the foreground
+layer with no pixel or position changes; far wing stays behind. Frame 15's two
+far-side coiled legs extend past separate silhouette edges so all four legs
+are visible, with all original root positions retained. Frame 17 is unchanged.
+inputs/plunge-before-final-fixes.aseprite preserves the reviewed base.

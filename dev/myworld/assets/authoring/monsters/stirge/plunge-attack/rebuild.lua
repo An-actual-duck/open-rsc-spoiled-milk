@@ -28,7 +28,7 @@ for f=1,18 do if f>1 then spr:newEmptyFrame()end;spr.frames[f].duration=old.fram
  for _,l in ipairs(old.layers)do local c=l:cel(f);if c then spr:newCel(layers[l.name],f,Image(c.image),Point(c.position.x,c.position.y))end end
 end
 for _,t in ipairs(old.tags)do local tag=spr:newTag(t.fromFrame.frameNumber,t.toFrame.frameNumber);tag.name=t.name;tag.aniDir=t.aniDir end
-local near=spr:newLayer();near.name='Attack recovery - near wing in front';near.stackIndex=layers['Striped abdomen and moth thorax'].stackIndex+1
+local near=spr:newLayer();near.name='Attack near wing - plunge and recovery';near.stackIndex=layers['Striped abdomen and moth thorax'].stackIndex+1
 local f=io.open(base..'inputs/profile-anatomy.json');local anatomy=json.decode(f:read('*a'));f:close()
 local specs={
  {name='Coil / pull back',cx=65,cy=65,body=-8,sx=.90,sy=1.04,hx=-5,hy=1,headAngle=-2,headX=.94,headY=1,wingFrame=9,wingAngle=12,wingX=1,wingY=1,duration=.24},
@@ -56,6 +56,14 @@ for i,sp in ipairs(specs)do
   if i==1 then -- A tight angular coil under each original thoracic station.
    local dx=rear and -6 or 5;local dy=far and 0 or 3
    knee={r[1]+dx,r[2]+5+dy};ankle={r[1]-dx*.40,r[2]+10+dy};toe={r[1]+dx*.45,r[2]+9+dy}
+   if far then
+    -- Expose each far-side coil past a different side of the silhouette;
+    -- roots remain at their original thoracic stations behind the body.
+    local side=rear and -1 or 1
+    knee={r[1]+side*(rear and 26 or 16),r[2]+9}
+    ankle={r[1]+side*(rear and 25 or 13),r[2]+17}
+    toe={r[1]+side*(rear and 19 or 8),r[2]+14}
+   end
   elseif i==2 then -- Straight, swept-back legs run alongside the body during the thrust.
    local dy=far and -1 or 3;local back=rear and 28 or 21
    knee={r[1]-back*.40,r[2]+dy+1};ankle={r[1]-back,r[2]+dy-2};toe={ankle[1]-4,ankle[2]-1}
@@ -80,7 +88,7 @@ for i,sp in ipairs(specs)do
   else
    -- Sweep the two full-length wings back independently, parallel to the thrust axis.
    local swept=transform(farPlate,83,40,sp.cx+2,sp.cy-3,-30,1,1)
-   swept:drawImage(transform(plate,81,36,sp.cx-2,sp.cy-4,-4,1,1),Point(0,0))
+   spr:newCel(near,frame,transform(plate,81,36,sp.cx-2,sp.cy-4,-4,1,1),Point(0,0))
    spr:newCel(layers['Rust bat wings'],frame,swept,Point(0,0))
   end
  else
