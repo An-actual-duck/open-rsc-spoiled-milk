@@ -1,0 +1,380 @@
+[
+  {
+    "frame": 0,
+    "sourceBox": [
+      18,
+      60,
+      315,
+      159
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      146,
+      47
+    ],
+    "batOffset": [
+      2,
+      16
+    ]
+  },
+  {
+    "frame": 1,
+    "sourceBox": [
+      331,
+      57,
+      623,
+      155
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      149,
+      42
+    ],
+    "batOffset": [
+      0,
+      13
+    ]
+  },
+  {
+    "frame": 2,
+    "sourceBox": [
+      656,
+      34,
+      928,
+      158
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      121,
+      55
+    ],
+    "batOffset": [
+      13,
+      0
+    ]
+  },
+  {
+    "frame": 3,
+    "sourceBox": [
+      21,
+      338,
+      270,
+      451
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      114,
+      48
+    ],
+    "batOffset": [
+      8,
+      20
+    ]
+  },
+  {
+    "frame": 4,
+    "sourceBox": [
+      333,
+      340,
+      582,
+      436
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      117,
+      42
+    ],
+    "batOffset": [
+      2,
+      13
+    ]
+  },
+  {
+    "frame": 5,
+    "sourceBox": [
+      660,
+      319,
+      891,
+      437
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      101,
+      48
+    ],
+    "batOffset": [
+      9,
+      6
+    ]
+  },
+  {
+    "frame": 6,
+    "sourceBox": [
+      67,
+      622,
+      240,
+      701
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      67,
+      36
+    ],
+    "batOffset": [
+      37,
+      21
+    ]
+  },
+  {
+    "frame": 7,
+    "sourceBox": [
+      373,
+      588,
+      558,
+      705
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      82,
+      48
+    ],
+    "batOffset": [
+      24,
+      8
+    ]
+  },
+  {
+    "frame": 8,
+    "sourceBox": [
+      693,
+      576,
+      867,
+      704
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      74,
+      55
+    ],
+    "batOffset": [
+      31,
+      0
+    ]
+  },
+  {
+    "frame": 9,
+    "sourceBox": [
+      45,
+      875,
+      282,
+      989
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      107,
+      57
+    ],
+    "batOffset": [
+      22,
+      10
+    ]
+  },
+  {
+    "frame": 10,
+    "sourceBox": [
+      362,
+      855,
+      591,
+      969
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      104,
+      54
+    ],
+    "batOffset": [
+      29,
+      5
+    ]
+  },
+  {
+    "frame": 11,
+    "sourceBox": [
+      693,
+      844,
+      912,
+      964
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      100,
+      55
+    ],
+    "batOffset": [
+      38,
+      0
+    ]
+  },
+  {
+    "frame": 12,
+    "sourceBox": [
+      18,
+      1126,
+      304,
+      1225
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      148,
+      46
+    ],
+    "batOffset": [
+      1,
+      14
+    ]
+  },
+  {
+    "frame": 13,
+    "sourceBox": [
+      331,
+      1122,
+      622,
+      1223
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      148,
+      42
+    ],
+    "batOffset": [
+      1,
+      10
+    ]
+  },
+  {
+    "frame": 14,
+    "sourceBox": [
+      661,
+      1113,
+      922,
+      1225
+    ],
+    "batCanvas": [
+      150,
+      130
+    ],
+    "batCrop": [
+      125,
+      53
+    ],
+    "batOffset": [
+      13,
+      0
+    ]
+  },
+  {
+    "frame": 15,
+    "sourceBox": [
+      24,
+      1395,
+      190,
+      1498
+    ],
+    "batCanvas": [
+      97,
+      130
+    ],
+    "batCrop": [
+      75,
+      42
+    ],
+    "batOffset": [
+      0,
+      4
+    ]
+  },
+  {
+    "frame": 16,
+    "sourceBox": [
+      362,
+      1401,
+      532,
+      1508
+    ],
+    "batCanvas": [
+      97,
+      130
+    ],
+    "batCrop": [
+      63,
+      44
+    ],
+    "batOffset": [
+      28,
+      8
+    ]
+  },
+  {
+    "frame": 17,
+    "sourceBox": [
+      680,
+      1389,
+      847,
+      1516
+    ],
+    "batCanvas": [
+      97,
+      130
+    ],
+    "batCrop": [
+      67,
+      57
+    ],
+    "batOffset": [
+      30,
+      3
+    ]
+  }
+]

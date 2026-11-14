@@ -1,9 +1,10 @@
-Stirge front pose v1 — unapproved authoring candidate
+Stirge front pose v1 — owner-approved design anchor
 ====================================================
 Owner selected Stirge and Sanguinary gland. Work begins with a single camera-
 facing hovering pose, using the existing bat's anatomy, posing and native pixel
 constraints. Animation must be wing flapping, not a left/right walking cycle.
-Do not build other directions or animation frames before this pose is approved.
+Owner approved this pose and authorized all remaining directions and flap frames
+in one pass. The full candidate set is in ../flight-v1/.
 
 Reference: Client_Base/Cache/video/Custom_Sprites.osar, npc:bat frame 0.
 Bat full canvas: 150x130; visible bounds (2,16)-(148,63), 146x47.

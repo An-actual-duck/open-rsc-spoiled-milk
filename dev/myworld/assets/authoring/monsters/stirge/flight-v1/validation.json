@@ -1,0 +1,285 @@
+{
+  "status": "full-flight candidate for owner review",
+  "approvedFrontPixelsUnchanged": true,
+  "runtimeInstalled": false,
+  "frames": [
+    {
+      "frame": 0,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        4,
+        17,
+        146,
+        59
+      ],
+      "opaqueColors": 22,
+      "sha256": "af564481d17ef0bad0d0d01d392a9dd6c5bad0478671712733eda0231e945f99"
+    },
+    {
+      "frame": 1,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        0,
+        11,
+        149,
+        58
+      ],
+      "opaqueColors": 23,
+      "sha256": "84437936f8b6e46e10729f6aedfd05b11cafc52e80934767edcd82fe8db18556"
+    },
+    {
+      "frame": 2,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        13,
+        0,
+        134,
+        59
+      ],
+      "opaqueColors": 21,
+      "sha256": "a8844c2fdc7fc95e76a064dced7a7422b45828e7dd4e1a0afb430d11e9ffccae"
+    },
+    {
+      "frame": 3,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        8,
+        18,
+        122,
+        70
+      ],
+      "opaqueColors": 21,
+      "sha256": "aac3909a52147295382aa38434227eccf7a70baad330c267ea5203cdfcb968ba"
+    },
+    {
+      "frame": 4,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        1,
+        21,
+        118,
+        66
+      ],
+      "opaqueColors": 20,
+      "sha256": "b208f494f411e2e3d03104fd0616abaca016740425413a4d1f966e59ecb816a5"
+    },
+    {
+      "frame": 5,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        12,
+        14,
+        113,
+        66
+      ],
+      "opaqueColors": 21,
+      "sha256": "9c2a48bec30bbd713107008b34c31867ea314e4f419d90c5d5ebdcb6f06fa878"
+    },
+    {
+      "frame": 6,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        37,
+        24,
+        104,
+        55
+      ],
+      "opaqueColors": 19,
+      "sha256": "6fdf21243ea22afdb1729941231f9cfdb6e38294528d75f4aaf018d8ad2c3e8d"
+    },
+    {
+      "frame": 7,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        26,
+        6,
+        107,
+        58
+      ],
+      "opaqueColors": 19,
+      "sha256": "6a37f84138d5223b943ae3050fc697874520f3007db6eaaf008de327393cf02f"
+    },
+    {
+      "frame": 8,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        30,
+        2,
+        104,
+        54
+      ],
+      "opaqueColors": 20,
+      "sha256": "757df62b45e81d7fb676a0a2e25111b00caa79b01421b80ea4150cb0057dbc9b"
+    },
+    {
+      "frame": 9,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        22,
+        13,
+        129,
+        64
+      ],
+      "opaqueColors": 18,
+      "sha256": "12536efb8ef597f5d8adb6ff175ecf52dd612a621fd16ee26c80df7432c78c2b"
+    },
+    {
+      "frame": 10,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        22,
+        4,
+        126,
+        56
+      ],
+      "opaqueColors": 19,
+      "sha256": "105e2f4e3205a71e27d31ed946bfbaf08caf2e1c063f984f15af714a377f9812"
+    },
+    {
+      "frame": 11,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        26,
+        3,
+        126,
+        58
+      ],
+      "opaqueColors": 18,
+      "sha256": "7f0758da01d559380421af971f86829b667b85d9343d52752b808c373d430415"
+    },
+    {
+      "frame": 12,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        1,
+        13,
+        149,
+        63
+      ],
+      "opaqueColors": 19,
+      "sha256": "dd51d63685b4371688c44ac2592fe8df1c4748963fdd6b77c851bba80c48a1cc"
+    },
+    {
+      "frame": 13,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        2,
+        12,
+        150,
+        63
+      ],
+      "opaqueColors": 19,
+      "sha256": "eddc2483eedab5d456bd676ff6a07f1e65b37f77cd99507d1b05af42ebabeddd"
+    },
+    {
+      "frame": 14,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        14,
+        8,
+        139,
+        61
+      ],
+      "opaqueColors": 18,
+      "sha256": "a84911881ff6c2b84d992c6ba2a4555579bdf9a801739f5052dcf7179c110328"
+    },
+    {
+      "frame": 15,
+      "canvas": [
+        97,
+        130
+      ],
+      "bounds": [
+        0,
+        2,
+        72,
+        47
+      ],
+      "opaqueColors": 19,
+      "sha256": "177531fd5d3a2ea37fa4db8abb51a68f385a0420fc0b51085e57283b444604f4"
+    },
+    {
+      "frame": 16,
+      "canvas": [
+        97,
+        130
+      ],
+      "bounds": [
+        29,
+        12,
+        91,
+        52
+      ],
+      "opaqueColors": 19,
+      "sha256": "b07ac8619d066c8de443cc32d8289a62f05139335fafc7f624ad965316ba8841"
+    },
+    {
+      "frame": 17,
+      "canvas": [
+        97,
+        130
+      ],
+      "bounds": [
+        29,
+        3,
+        94,
+        51
+      ],
+      "opaqueColors": 20,
+      "sha256": "404cab7216dfe7b00b9a9c697c32e35c20cf8baba1ed40b48eda3e2f6e0c11aa"
+    }
+  ],
+  "previewGifFrames": 120,
+  "mirrorDirections": "left-facing views mirrored from right-facing originals, as with the bat",
+  "attackPreviewPadding": "97x130 attack exports are centered on 150x130 preview canvases only",
+  "editableProjectMatchesExports": true,
+  "editableProjectFrameCount": 18,
+  "editableProjectTagCount": 6,
+  "compositeSheetMatchesNativeFrames": true,
+  "all120GifFramesMatchNativePixels": true
+}
