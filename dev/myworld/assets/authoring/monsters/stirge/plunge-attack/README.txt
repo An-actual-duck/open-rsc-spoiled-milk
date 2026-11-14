@@ -1,3 +1,10 @@
+WING PALETTE REVISION — awaiting owner color review.
+Geometry, texture and poses remain approved. The previous orange-wing approval
+is preserved in inputs/approved-orange-wing-manifest.json. Current colors use
+the game bat membrane palette (97/124/182 neutral gray) and brown supports.
+Only the four wing layers are recolored; body/head/legs are unchanged.
+All prior approval wording below refers to the frozen orange-wing version.
+
 APPROVED FINAL — repository owner approved the complete all-directions preview.
 Canonical final master: stirge-plunge-attack.aseprite.
 Final native exports: frame-00.png through frame-17.png.

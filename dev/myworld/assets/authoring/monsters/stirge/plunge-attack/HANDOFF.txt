@@ -1,3 +1,7 @@
+UPDATE: owner requested a wing palette revision after final approval.
+The revised bat-gray palette is pending visual review; do not integrate the
+old orange palette as the final selection. Previous handoff details follow.
+
 Stirge artwork — complete, owner approved, ready for Core review
 
 Task: finalize five flight directions and the three-pose profile attack.

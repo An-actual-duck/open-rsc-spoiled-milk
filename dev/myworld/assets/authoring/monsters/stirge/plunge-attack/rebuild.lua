@@ -166,6 +166,23 @@ for n,po in ipairs(rearPoses)do
  for y=0,H-1 do for x=0,W-1 do if pc.rgbaA(mask:getPixel(x,y))==0 then body:drawPixel(x,y,0)end end end
  spr:newCel(l,frame,body,Point(0,0))
 end
+-- Owner-requested bat-like wing palette; geometry and non-wing layers stay fixed.
+local wingPalette={
+ [C(153,61,28)]=C(97,97,97),
+ [C(193,85,32)]=C(124,124,124),
+ [C(218,113,42)]=C(182,182,182),
+ [C(91,45,27)]=C(108,68,18),
+ [C(112,48,31)]=C(70,70,70),
+ [C(167,105,51)]=C(146,103,33)
+}
+local wingNames={['Rust bat wings']=true,['Near wing - mid/upstroke behind body']=true,['Near wing - downstroke in front of body']=true,['Attack near wing - plunge and recovery']=true}
+for _,l in ipairs(spr.layers)do if wingNames[l.name]then
+ for frame=1,18 do local cel=l:cel(frame);if cel then
+  local image=Image(cel.image)
+  for y=0,image.height-1 do for x=0,image.width-1 do local pixel=image:getPixel(x,y);if pc.rgbaA(pixel)>0 then assert(wingPalette[pixel],'Unmapped wing color');image:drawPixel(x,y,wingPalette[pixel])end end end
+  spr:newCel(l,frame,image,Point(cel.position.x,cel.position.y))
+ end end
+end end
 spr:saveAs(base..'stirge-plunge-attack.aseprite')
 local sheet=Image(630,960,ColorMode.RGB)
 for n=0,17 do local im=Image(n>=15 and W or 150,n>=15 and H or 130,ColorMode.RGB);im:drawSprite(spr,n+1);im:saveAs(base..string.format('frame-%02d.png',n));im:saveAs(out..string.format('frame-%02d.png',n));sheet:drawImage(im,Point(n%3*W,math.floor(n/3)*H))end
