@@ -1,0 +1,200 @@
+{
+  "status": "Dot candidate 3 with Core wing-root repair for owner review",
+  "changedFrames": [
+    3,
+    4,
+    5
+  ],
+  "changedLayer": "Rust bat wings",
+  "other15FramesPixelIdentical": true,
+  "other123LayerFrameCombinationsIdentical": true,
+  "wingShift": [
+    3,
+    -5
+  ],
+  "projectedShoulders": [
+    [
+      78,
+      31
+    ],
+    [
+      77,
+      32
+    ],
+    [
+      77,
+      33
+    ]
+  ],
+  "shouldersOnThorax": true,
+  "wingTipsNotClipped": true,
+  "editableRoundtripMatches": true,
+  "nativeAlphaBinary": true,
+  "preservedSourceLayers": 7,
+  "visibleLayers": 5,
+  "runtimeInstalled": false,
+  "frames": [
+    {
+      "frame": 0,
+      "changed": false,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "359fd30f2aad23495e9fa8c1080e9d9871f692663e58c957790562eca694adfa"
+    },
+    {
+      "frame": 1,
+      "changed": false,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "bc4deaa1a80172d61abe387c2667f6d219b2a222e622adc84c970e75b9bfd2c5"
+    },
+    {
+      "frame": 2,
+      "changed": false,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "280ecf7c7251be25e611a3d4dbe262c76b083a1ae694af2d204108f898672399"
+    },
+    {
+      "frame": 3,
+      "changed": true,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "1e11793a8be0d8f3028bbbe4821c42a7610ea7a143b4211460959396d8c1367e"
+    },
+    {
+      "frame": 4,
+      "changed": true,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "3c75cca1ccf9c261df74b369a3ce5fdafc6e4cad9dfcd2ee419fb5c3f1a9cd94"
+    },
+    {
+      "frame": 5,
+      "changed": true,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "5da6cc1f814eb641d5214c7ac3072be94d475158732795a7c240b61db0b3cca2"
+    },
+    {
+      "frame": 6,
+      "changed": false,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "476b9c5fcc8deb04d6f528a70e1af36897f5ff2ccf1a9e90e71776e290849847"
+    },
+    {
+      "frame": 7,
+      "changed": false,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "6e4aa9a4c0a18f507f1866b7dfb5c76cc8b63d298a68744f1005e06fcde15fa7"
+    },
+    {
+      "frame": 8,
+      "changed": false,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "3c82eee5b4cbd535fa063fe30537bb72e0eca12f2e6f1306f569f898b797cb22"
+    },
+    {
+      "frame": 9,
+      "changed": false,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "cd05c88c8d522013e9f7275a52bc0ad93f5795a9130c07c611171381597cf8f5"
+    },
+    {
+      "frame": 10,
+      "changed": false,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "9835a34ac068cf90c7b3866c6cf2ad87d6e87bc988e9b5916c7919d568b359a5"
+    },
+    {
+      "frame": 11,
+      "changed": false,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "af65266e3c5de1342253b2edfd2c1dc530830d498cada2759b6bdbada10820b4"
+    },
+    {
+      "frame": 12,
+      "changed": false,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "40f3bf97b40c45785f2fc2c18adcb0299a40271da52adf3fc9c4d938e35f858a"
+    },
+    {
+      "frame": 13,
+      "changed": false,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "d5780d67b7e3c92b8daa81d676452c3dc159d342db728e02897fed44ad4b5aa3"
+    },
+    {
+      "frame": 14,
+      "changed": false,
+      "size": [
+        150,
+        130
+      ],
+      "sha256": "764a87c3559ec39e367b4307e2a5cef39258c0a255c29690dfd166bdbbd3f77b"
+    },
+    {
+      "frame": 15,
+      "changed": false,
+      "size": [
+        97,
+        130
+      ],
+      "sha256": "fadaa90d3b366a100fb0afce45608781403c13c7896d08ec4f3765f6cab9ae2b"
+    },
+    {
+      "frame": 16,
+      "changed": false,
+      "size": [
+        97,
+        130
+      ],
+      "sha256": "4819e464641a4a2770d0dc6296134a7a801def9c6d708360766302526302fa08"
+    },
+    {
+      "frame": 17,
+      "changed": false,
+      "size": [
+        97,
+        130
+      ],
+      "sha256": "045a90020a383a7c4d0fda46363b22ec5d9fae6041e601dae883c8319c6bc9ac"
+    }
+  ]
+}

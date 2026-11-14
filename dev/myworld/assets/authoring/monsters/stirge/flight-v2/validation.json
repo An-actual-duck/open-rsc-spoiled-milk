@@ -1,0 +1,625 @@
+{
+  "status": "revised anatomy candidate for owner review",
+  "runtimeInstalled": false,
+  "allEditsInsideLegOrUndersideMasks": true,
+  "nativeFrames": 18,
+  "fourDistinctThoraxRootsPerFrame": true,
+  "editableLayers": 3,
+  "sixAnimationTags": true,
+  "gifFrames": 120,
+  "gifPixelsMatchNativeExports": true,
+  "frames": [
+    {
+      "frame": 0,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        4,
+        17,
+        146,
+        66
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          80,
+          37
+        ],
+        [
+          69,
+          37
+        ],
+        [
+          79,
+          40
+        ],
+        [
+          70,
+          40
+        ]
+      ],
+      "changedPixels": 463,
+      "sha256": "8935847e5b40248e1104747ffe2df33b37376486f22324a7599602823a0a07cc"
+    },
+    {
+      "frame": 1,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        0,
+        11,
+        149,
+        65
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          80,
+          36
+        ],
+        [
+          69,
+          36
+        ],
+        [
+          79,
+          39
+        ],
+        [
+          70,
+          39
+        ]
+      ],
+      "changedPixels": 466,
+      "sha256": "92a8a7c836bce5a56079aeedc964ed27bd2a98a97114ca587dab1545e120b015"
+    },
+    {
+      "frame": 2,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        13,
+        0,
+        134,
+        65
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          80,
+          37
+        ],
+        [
+          69,
+          37
+        ],
+        [
+          79,
+          40
+        ],
+        [
+          70,
+          40
+        ]
+      ],
+      "changedPixels": 459,
+      "sha256": "6ea76466461b509ad083500e563afeb62d55fb583000a499f2f5627d99ba5aff"
+    },
+    {
+      "frame": 3,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        8,
+        18,
+        122,
+        70
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          83,
+          40
+        ],
+        [
+          79,
+          42
+        ],
+        [
+          81,
+          43
+        ],
+        [
+          75,
+          45
+        ]
+      ],
+      "changedPixels": 134,
+      "sha256": "a79e9326c1c05a083b6a904d6320fe76ada368aac3fb7140cdd6c891aa1d81f9"
+    },
+    {
+      "frame": 4,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        1,
+        21,
+        118,
+        68
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          82,
+          42
+        ],
+        [
+          78,
+          44
+        ],
+        [
+          80,
+          45
+        ],
+        [
+          74,
+          46
+        ]
+      ],
+      "changedPixels": 153,
+      "sha256": "6eea7ac3fd559d981c01314db959941045d24a1174a29d26e2b10d8d9ee45e12"
+    },
+    {
+      "frame": 5,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        12,
+        14,
+        113,
+        68
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          81,
+          43
+        ],
+        [
+          77,
+          45
+        ],
+        [
+          79,
+          46
+        ],
+        [
+          73,
+          48
+        ]
+      ],
+      "changedPixels": 146,
+      "sha256": "8281bc9691a66caa88679a5f4ce5603b64dc45b7953d17c66fa9172f7b2b33bb"
+    },
+    {
+      "frame": 6,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        37,
+        24,
+        104,
+        65
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          89,
+          41
+        ],
+        [
+          87,
+          43
+        ],
+        [
+          83,
+          42
+        ],
+        [
+          80,
+          44
+        ]
+      ],
+      "changedPixels": 156,
+      "sha256": "12f1bbfa25417cc1e973620b542aa65f0be2a545f0e4b95401f72c75020cc11c"
+    },
+    {
+      "frame": 7,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        26,
+        6,
+        107,
+        65
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          90,
+          42
+        ],
+        [
+          87,
+          43
+        ],
+        [
+          84,
+          42
+        ],
+        [
+          80,
+          44
+        ]
+      ],
+      "changedPixels": 158,
+      "sha256": "d3e4ebfd48594df9d520cbab37c2ae2a2983050202b960bf6e0be5764e5e6ddd"
+    },
+    {
+      "frame": 8,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        30,
+        2,
+        104,
+        64
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          88,
+          41
+        ],
+        [
+          86,
+          43
+        ],
+        [
+          82,
+          42
+        ],
+        [
+          79,
+          43
+        ]
+      ],
+      "changedPixels": 143,
+      "sha256": "aa265d1ffaab643289da68f446a619235824d3b0cbb05f2eb4eabad598a7a43a"
+    },
+    {
+      "frame": 9,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        22,
+        13,
+        129,
+        64
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          77,
+          30
+        ],
+        [
+          73,
+          32
+        ],
+        [
+          74,
+          34
+        ],
+        [
+          71,
+          34
+        ]
+      ],
+      "changedPixels": 119,
+      "sha256": "677c7385ae8f762acbcc002e6045a9015653ad4a04febdbb5225cfb12b11af96"
+    },
+    {
+      "frame": 10,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        22,
+        4,
+        126,
+        60
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          76,
+          29
+        ],
+        [
+          72,
+          30
+        ],
+        [
+          73,
+          32
+        ],
+        [
+          70,
+          33
+        ]
+      ],
+      "changedPixels": 132,
+      "sha256": "7d9216cfe12928e8b824b9d559ac5e253713ab9962a463a0452eeeffd3ea2d95"
+    },
+    {
+      "frame": 11,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        26,
+        3,
+        126,
+        58
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          76,
+          28
+        ],
+        [
+          72,
+          30
+        ],
+        [
+          73,
+          32
+        ],
+        [
+          70,
+          33
+        ]
+      ],
+      "changedPixels": 123,
+      "sha256": "2433a9da3c246266089419ac6d16bc7c5958190cd1466f8872fb92766162aa56"
+    },
+    {
+      "frame": 12,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        1,
+        13,
+        149,
+        66
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          81,
+          34
+        ],
+        [
+          69,
+          34
+        ],
+        [
+          79,
+          38
+        ],
+        [
+          71,
+          38
+        ]
+      ],
+      "changedPixels": 97,
+      "sha256": "f9cfe6f00e1272529bc160f292ae32a9bfba8cc6136f2ad78f7e0943e2cdf6e6"
+    },
+    {
+      "frame": 13,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        2,
+        12,
+        150,
+        66
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          81,
+          34
+        ],
+        [
+          69,
+          33
+        ],
+        [
+          79,
+          38
+        ],
+        [
+          71,
+          38
+        ]
+      ],
+      "changedPixels": 96,
+      "sha256": "7aa2295fef1dd75ad9aaed6804e6461c451bf5faf4316ba5e02488171aefe433"
+    },
+    {
+      "frame": 14,
+      "canvas": [
+        150,
+        130
+      ],
+      "bounds": [
+        14,
+        8,
+        139,
+        65
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          82,
+          34
+        ],
+        [
+          71,
+          34
+        ],
+        [
+          80,
+          38
+        ],
+        [
+          72,
+          38
+        ]
+      ],
+      "changedPixels": 94,
+      "sha256": "5a9cb20bd977ecbdec1750429656df1b120eb47e22f7ed57452a1a6a7e117dac"
+    },
+    {
+      "frame": 15,
+      "canvas": [
+        97,
+        130
+      ],
+      "bounds": [
+        0,
+        2,
+        72,
+        55
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          51,
+          33
+        ],
+        [
+          48,
+          35
+        ],
+        [
+          46,
+          34
+        ],
+        [
+          43,
+          35
+        ]
+      ],
+      "changedPixels": 136,
+      "sha256": "0751322b37f23b364b132fbfeb70451e349453e8301757e6454c1d7a82ea0ec5"
+    },
+    {
+      "frame": 16,
+      "canvas": [
+        97,
+        130
+      ],
+      "bounds": [
+        29,
+        12,
+        91,
+        63
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          68,
+          40
+        ],
+        [
+          65,
+          42
+        ],
+        [
+          63,
+          41
+        ],
+        [
+          62,
+          42
+        ]
+      ],
+      "changedPixels": 141,
+      "sha256": "730bf7ee777f4f66f715686ff583ebeff9d8003c45e82377bd5d52a8e907b49f"
+    },
+    {
+      "frame": 17,
+      "canvas": [
+        97,
+        130
+      ],
+      "bounds": [
+        29,
+        3,
+        94,
+        62
+      ],
+      "legCount": 4,
+      "distinctThoraxRoots": [
+        [
+          75,
+          41
+        ],
+        [
+          72,
+          43
+        ],
+        [
+          70,
+          42
+        ],
+        [
+          69,
+          43
+        ]
+      ],
+      "changedPixels": 131,
+      "sha256": "35838a916f1eb1770a271425c25046cd147967fafef1ddec41da59840dec88a9"
+    }
+  ]
+}

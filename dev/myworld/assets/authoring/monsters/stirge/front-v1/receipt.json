@@ -1,0 +1,20 @@
+{
+  "status": "owner-approved front pose",
+  "nativeCanvas": [
+    150,
+    130
+  ],
+  "nativeBounds": [
+    4,
+    17,
+    146,
+    59
+  ],
+  "tool": "built-in image_gen followed by deterministic Aseprite native export",
+  "sourceWasNativeSize": false,
+  "reference": "Custom_Sprites.osar npc:bat frame 0",
+  "spriteSha256": "af564481d17ef0bad0d0d01d392a9dd6c5bad0478671712733eda0231e945f99",
+  "runtimeInstalled": false,
+  "animationFramesCreated": 1,
+  "approval": "User: perfect, no complaints; proceed with all other directions and in-between frames"
+}

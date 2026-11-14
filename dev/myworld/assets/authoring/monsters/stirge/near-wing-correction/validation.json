@@ -1,0 +1,88 @@
+{
+  "changed_frames": [
+    3,
+    4,
+    5
+  ],
+  "unchanged_frames": 15,
+  "unchanged_original_nonwing_layer_frames": 108,
+  "master_frames": 18,
+  "master_layers": 9,
+  "master_tags": 6,
+  "binary_alpha": true,
+  "phase_layer_order_verified": true,
+  "pngs": [
+    {
+      "frame": 0,
+      "sha256": "359fd30f2aad23495e9fa8c1080e9d9871f692663e58c957790562eca694adfa"
+    },
+    {
+      "frame": 1,
+      "sha256": "bc4deaa1a80172d61abe387c2667f6d219b2a222e622adc84c970e75b9bfd2c5"
+    },
+    {
+      "frame": 2,
+      "sha256": "280ecf7c7251be25e611a3d4dbe262c76b083a1ae694af2d204108f898672399"
+    },
+    {
+      "frame": 3,
+      "sha256": "7a498e2ac5f9a3af224179a882e1cfb3616794f687b09a7c5ea55099ebfb16eb"
+    },
+    {
+      "frame": 4,
+      "sha256": "6b81eb78b162fbb837460a63d2dbe9c5e85cf65ef2d22bb5675ccbc1036e48c0"
+    },
+    {
+      "frame": 5,
+      "sha256": "a17f028a22b6918176bb5c128bcd178ea4fa8677ac23e6395deaf26398e21389"
+    },
+    {
+      "frame": 6,
+      "sha256": "476b9c5fcc8deb04d6f528a70e1af36897f5ff2ccf1a9e90e71776e290849847"
+    },
+    {
+      "frame": 7,
+      "sha256": "6e4aa9a4c0a18f507f1866b7dfb5c76cc8b63d298a68744f1005e06fcde15fa7"
+    },
+    {
+      "frame": 8,
+      "sha256": "3c82eee5b4cbd535fa063fe30537bb72e0eca12f2e6f1306f569f898b797cb22"
+    },
+    {
+      "frame": 9,
+      "sha256": "cd05c88c8d522013e9f7275a52bc0ad93f5795a9130c07c611171381597cf8f5"
+    },
+    {
+      "frame": 10,
+      "sha256": "9835a34ac068cf90c7b3866c6cf2ad87d6e87bc988e9b5916c7919d568b359a5"
+    },
+    {
+      "frame": 11,
+      "sha256": "af65266e3c5de1342253b2edfd2c1dc530830d498cada2759b6bdbada10820b4"
+    },
+    {
+      "frame": 12,
+      "sha256": "40f3bf97b40c45785f2fc2c18adcb0299a40271da52adf3fc9c4d938e35f858a"
+    },
+    {
+      "frame": 13,
+      "sha256": "d5780d67b7e3c92b8daa81d676452c3dc159d342db728e02897fed44ad4b5aa3"
+    },
+    {
+      "frame": 14,
+      "sha256": "764a87c3559ec39e367b4307e2a5cef39258c0a255c29690dfd166bdbbd3f77b"
+    },
+    {
+      "frame": 15,
+      "sha256": "fadaa90d3b366a100fb0afce45608781403c13c7896d08ec4f3765f6cab9ae2b"
+    },
+    {
+      "frame": 16,
+      "sha256": "4819e464641a4a2770d0dc6296134a7a801def9c6d708360766302526302fa08"
+    },
+    {
+      "frame": 17,
+      "sha256": "045a90020a383a7c4d0fda46363b22ec5d9fae6041e601dae883c8319c6bc9ac"
+    }
+  ]
+}

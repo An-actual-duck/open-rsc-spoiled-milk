@@ -1,0 +1,95 @@
+{
+  "bat_palette_recolored_frames": 18,
+  "rear_abdomen_striped_frames": [
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+  ],
+  "unchanged_layer_frames_vs_before_stripes": 174,
+  "attack_canvas": [
+    210,
+    160
+  ],
+  "binary_alpha": true,
+  "forward_stab_pixels": 57.456092195907004,
+  "downward_stab_pixels": 23.2334819044908,
+  "legs_per_pose": 4,
+  "needle_angle_degrees": 14,
+  "pngs": [
+    {
+      "frame": 0,
+      "sha256": "dea5056539b41eb1cf4a5ab730ea11f075a70bc1fe296c6a980a0d6f0ab3ca57"
+    },
+    {
+      "frame": 1,
+      "sha256": "f923b6940d10c280942157f182bd9c76dbe7177d94ee766dc5c1e800718bfad7"
+    },
+    {
+      "frame": 2,
+      "sha256": "c346c6f44ae52eea9c9d840214f26b87e68f91d33c0f4b2c43c017303750a5c7"
+    },
+    {
+      "frame": 3,
+      "sha256": "14d4dd13debb1574be5218a114905ea0cc7a7030b48a1ec5273befce0889bc55"
+    },
+    {
+      "frame": 4,
+      "sha256": "203f40a949d9973febd09a78804f2a6a5ce38aa17af104690e34b598dd2cfdae"
+    },
+    {
+      "frame": 5,
+      "sha256": "8cb1b042fcbcc2db3af4ab63ee6b2f3678d6a7b6b37a8dfb89c71eb48c071d0c"
+    },
+    {
+      "frame": 6,
+      "sha256": "8bd67809627838e0d8853e7b89dd7dab115391f66207793979cdf6f27720a830"
+    },
+    {
+      "frame": 7,
+      "sha256": "a42955a3b1ad89c3da6405d908e8ab7f22d1700d28ee8df5acd68ca93d1b41a0"
+    },
+    {
+      "frame": 8,
+      "sha256": "de6ce42c1cac9f1a08007219e3ec9e4d1183ff27c30d22af4a219a81128983b4"
+    },
+    {
+      "frame": 9,
+      "sha256": "3e9a4670b1e62f222160c61814d205533d38897a645aa446d462f792988c77d2"
+    },
+    {
+      "frame": 10,
+      "sha256": "b7a6b7d55516bbc741e7c661d75a8d503cf0bba4d0c9117f18d8de0f607eb77d"
+    },
+    {
+      "frame": 11,
+      "sha256": "7ddb03e86ffdc3af036bd8ed7a54396d17a2c0653818c5b0d8d6bc889d012685"
+    },
+    {
+      "frame": 12,
+      "sha256": "32033f8810d728acd4e950f91bd337a01390b1af3b41a99aa5588cb8ca5a925f"
+    },
+    {
+      "frame": 13,
+      "sha256": "b477eb32030e5bae9711f41e7c506dbb2436d0b1c6ee2b3e1f3a823895b929cd"
+    },
+    {
+      "frame": 14,
+      "sha256": "c18a024df7ca4c423587b90a12e93f05916848c916739f5f41901cd542ff97df"
+    },
+    {
+      "frame": 15,
+      "sha256": "149032a3612743a0df12d2b962761c2c35799b04a054bdcdbcfd93cad9c0cc57"
+    },
+    {
+      "frame": 16,
+      "sha256": "964ce651d64d31189f856542a0b89cd4fb72b20400766496b7d7591eed7fe39c"
+    },
+    {
+      "frame": 17,
+      "sha256": "b0ca2124fb6abda769d2eda93d1a024c084a6360ac761791f6f4117eb4fcdcc3"
+    }
+  ]
+}
