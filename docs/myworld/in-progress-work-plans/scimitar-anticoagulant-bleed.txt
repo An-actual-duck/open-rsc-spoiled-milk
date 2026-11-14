@@ -29,6 +29,8 @@ Initial tuning (provisional, not final release balance)
  - Reopening restores three remaining pulses without moving the next pulse.
    Keep the higher severity if different coated tiers reopen the same wound.
  - No per-hit proc chance in addition to the hard-hit roll.
+ - Pulse damage uses the source player's existing Combat Luck system: an extra
+   favorable candidate can change the roll, never duplicate the pulse.
  - Offhand, AoE/splash, poison, bleed, reflected damage and other secondary
    attacks cannot open wounds. No wound may be inferred from current equipment
    after the primary weapon/roll has been committed.

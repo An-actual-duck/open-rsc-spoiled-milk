@@ -118,6 +118,17 @@ public final class ScimitarCoatingFixture {
             check(Bleed.primaryHit(attacker,victim,1,qualifying,5),"legal primary PvP wound");
             int health=victim.getLevel(Skill.HITS.id());victim.setLocation(Point.location(181,427),false);
             ticks(h,3);check(victim.getLevel(Skill.HITS.id())==health&&Bleed.activeWounds(victim)==0,"crossing Wilderness border cancels wound damage");
+            Player lucky=player(h);Npc luckyTarget=npc(h,453);
+            int robe=com.openrsc.server.content.EnchantingItemEffects.getWoolRobeProduct(
+                com.openrsc.server.content.EnchantingItemEffects.COSMIC_ALTAR,ItemId.WOOL_WIZARD_HAT.id(),10);
+            h.equip(lucky,robe,1);check(lucky.getCombatLuckChance()==.1,"actual robe luck");
+            check(Bleed.primaryHit(lucky,luckyTarget,1,qualifying,5),"lucky player's wound");
+            h.random().reset(1);h.random().scriptInts(0,2).scriptDoubles(0.0);
+            int beforeLucky=hp(luckyTarget);
+            for(GameTickEvent e:h.server().getGameEventHandler().getEvents())
+                if(e.isRunning()&&e.getOwner()==luckyTarget&&e.getDescriptor().equals("Bleed wound"))e.run();
+            check(beforeLucky-hp(luckyTarget)==3,"combat luck keeps better pulse roll without duplicating pulse");
+            Bleed.clear(luckyTarget);
             h.server().getConfig().WANT_EQUIPMENT_TAB=false;
             Player legacy=player(h);Item legacyWeapon=add(legacy,3448);legacyWeapon.setWielded(true);
             check(ScimitarCoatingCatalog.equipped(legacy)==3448,"legacy inventory-wield weapon snapshot");

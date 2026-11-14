@@ -106,7 +106,8 @@ public final class Bleed {
                 Wounds wounds=target.getAttribute(KEY,null);
                 if(wounds==null||wounds.bySource.get(sourceId)!=this||!valid(source)) {finish();return;}
                 int low=2*severity-1;
-                int damage=getWorld().getServer().getCombatRandom().nextIntInclusive(low,low+2);
+                int damage=CombatLuck.higher(source,getWorld().getServer().getCombatRandom(),
+                    () -> getWorld().getServer().getCombatRandom().nextIntInclusive(low,low+2));
                 DamageResult result=getWorld().getServer().getResolvedDamageTransaction().apply(
                     DamageRequest.resolvedLegacy(source,target,DamageRequest.SourceCategory.DOT,"bleed-wound",
                         com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target,damage))
