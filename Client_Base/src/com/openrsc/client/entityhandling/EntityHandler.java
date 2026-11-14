@@ -7156,8 +7156,8 @@ public class EntityHandler {
 
     private static void addBatWingDefinitions() {
         setCustomItemDefinition(3467,new ItemDef("Giant bat wing","A leathery wing from a giant bat.","",20,-1,"external-png:bat-wing",false,false,0,0,false,false,true,3467));
-        setCustomItemDefinition(3468,new ItemDef("Death wing wing","A leathery wing from a supernatural Death wing.","",50,-1,"external-png:bat-wing",false,false,0,0,false,false,true,3468));
-        setCustomItemDefinition(3469,new ItemDef("Stirge wing","A delicate leathery wing from a Stirge.","",35,-1,"external-png:bat-wing",false,false,0,0,false,false,true,3469));
+        setCustomItemDefinition(3468,new ItemDef("Death wing wing","A leathery wing from a supernatural Death wing.","",50,-1,"external-png:death-wing-wing",false,false,0,0,false,false,true,3468));
+        setCustomItemDefinition(3469,new ItemDef("Stirge wing","A delicate leathery wing from a Stirge.","",35,-1,"external-png:stirge-wing",false,false,0,0,false,false,true,3469));
     }
 
     private static void addScimitarCoatingDefinitions() {

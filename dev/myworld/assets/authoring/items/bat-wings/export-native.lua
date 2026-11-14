@@ -12,3 +12,17 @@ end end
 local s=Sprite(48,32,ColorMode.RGB);s:newCel(s.layers[1],1,im,Point(0,0));s:saveAs(base..'bat-wing.aseprite')
 im:saveAs(root..'/dev/myworld/assets/runtime/sprites/items/inventory-ground/bat-wing.png')
 im:saveAs(root..'/output/art/bat-wing-drops/bat-wing.png');s:close()
+
+-- Palette-only variants: preserve every native pixel, outline and texture cluster.
+local variants={
+ {name='stirge-wing',colors={{153,130,95},{193,168,124},{228,208,164},{108,68,18},{146,103,33},{175,132,58}}},
+ {name='death-wing-wing',colors={{22,23,27},{43,45,51},{76,79,87},{42,34,27},{65,53,38},{91,76,53}}}
+}
+for _,variant in ipairs(variants)do
+ local map={};for i,p in ipairs(palette)do local c=variant.colors[i];map[pc.rgba(p[1],p[2],p[3],255)]=pc.rgba(c[1],c[2],c[3],255)end
+ local image=Image(im)
+ for y=0,31 do for x=0,47 do local pixel=image:getPixel(x,y);if pc.rgbaA(pixel)>0 then assert(map[pixel]);image:drawPixel(x,y,map[pixel])end end end
+ local master=Sprite(48,32,ColorMode.RGB);master:newCel(master.layers[1],1,image,Point(0,0));master:saveAs(base..variant.name..'.aseprite')
+ image:saveAs(root..'/dev/myworld/assets/runtime/sprites/items/inventory-ground/'..variant.name..'.png')
+ image:saveAs(root..'/output/art/bat-wing-colors/'..variant.name..'.png');master:close()
+end

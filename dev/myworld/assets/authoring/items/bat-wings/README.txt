@@ -4,8 +4,9 @@ Three separate, tradeable, noteable, non-stackable material items:
 3467 Giant bat wing (NPC 43)
 3468 Death wing wing (NPC 768; owner explicitly requested this repeated name)
 3469 Stirge wing (NPC 882)
-Each uses one shared gray-membrane/brown-support bat-wing icon, matching the
-related creatures' wing palettes. Native canvas 48x32, visible wing 34x19.
+Palette variants share the approved shape and texture: Giant bat wing keeps
+its gray membrane/brown supports; Stirge wing is light tan; Death wing wing
+is dark gray/near black with subdued supports. Native canvas 48x32, visible wing 34x19.
 Generated source is preserved in inputs/; export-native.lua performs nearest
 native sampling, binary-alpha cleanup and mapping to six classic bat colors.
 Editable native master: bat-wing.aseprite. Generated inputs are authoring-only.

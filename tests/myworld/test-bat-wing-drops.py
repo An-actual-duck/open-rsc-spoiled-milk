@@ -20,7 +20,10 @@ client=ROOT/'Client_Base/Open_RSC_Client.jar'
 run(['javac','-source','8','-target','8','-cp',client,'-d',classes,ROOT/'tests/myworld/java/BatWingClientFixture.java'],'compile-client')
 for mode in ['true','false']:
  for path,label in [(ROOT,'disk'),(BASE,'jar')]:run(['java','-Xmx384m','-Djava.awt.headless=true','-cp',str(classes)+':'+str(client),'orsc.BatWingClientFixture',path,mode],f'client-{mode}-{label}',BASE)
-p=ROOT/'dev/myworld/assets/runtime/sprites/items/inventory-ground/bat-wing.png';im=Image.open(p).convert('RGBA');assert im.size==(48,32)and set(im.getchannel('A').get_flattened_data())=={0,255}
-with zipfile.ZipFile(client)as jar:assert jar.read('myworld-assets/sprites/items/inventory-ground/bat-wing.png')==p.read_bytes()
+base=ROOT/'dev/myworld/assets/runtime/sprites/items/inventory-ground'
+with zipfile.ZipFile(client)as jar:
+ for name in ['bat-wing','death-wing-wing','stirge-wing']:
+  p=base/(name+'.png');im=Image.open(p).convert('RGBA');assert im.size==(48,32)and set(im.getchannel('A').get_flattened_data())=={0,255}
+  assert jar.read('myworld-assets/sprites/items/inventory-ground/'+name+'.png')==p.read_bytes()
 (BASE/'receipt.json').write_text(json.dumps({'passed':True,'publicServerTouched':False,'baseDenominator':16,'npcItems':{'43':3467,'768':3468,'882':3469}},indent=2)+'\n')
 print('PASS native wing sprite and exact packaged PNG; evidence:',BASE)
