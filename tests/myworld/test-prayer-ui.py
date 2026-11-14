@@ -98,7 +98,7 @@ def main():
         require(prayer in prayer_books, f"Missing client prayer definition: {prayer}")
 
     require(prayer_books.count("\t\taddPrayerDefinition(") == 45
-            and prayer_books.count("\t\taddSpecialPrayerDefinition(") == 3,
+            and prayer_books.count("\t\taddSpecialPrayerDefinition(") == 6,
             "Client prayer definitions should cover the three god lines plus all special prayers")
     for snippet in (
         'addPrayerDefinition(49, "Greater Magic Power", "Magic damage +25%.");',
@@ -115,8 +115,11 @@ def main():
         require(snippet in prayer_books, f"Client prayer tooltip cost missing: {snippet}")
     require('prayers.add(new PrayerDef(0, pointCost, name, effectText));' in prayer_books,
             "Special prayer descriptions should remain limited to their effects")
-    require("cape" not in prayer_books.lower(),
-            "Special prayer descriptions should not expose the god-cape discount")
+    mace_lines = [line for line in prayer_books.splitlines() if 'addSpecialPrayerDefinition(60,' in line]
+    require(len(mace_lines) == 3 and all("cape" not in line.lower() for line in mace_lines),
+            "Existing mace prayer descriptions should retain their established wording")
+    for prayer in ("Saradomin's Divine Bolts", "Zamorak's Bolts of Wrath", "Guthix's Thorned Bolts"):
+        require(prayer in prayer_books, f"Missing god crossbow prayer: {prayer}")
     for snippet in (
         "private static final int SPECIAL_PRAYER_INDEX = 15;",
         "private static final int SPECIAL_PRAYER_NO_CAPE_COST_NUMERATOR = 3;",

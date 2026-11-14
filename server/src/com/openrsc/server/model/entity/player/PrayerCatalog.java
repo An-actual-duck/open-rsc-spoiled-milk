@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class PrayerCatalog {
-	public static final int PRAYERS_PER_BOOK = 16;
+	public static final int PRAYERS_PER_BOOK = 17;
 	public static final int[] COMBAT_TIER_POINT_COSTS = {3, 6, 15, 29, 49};
 	public static final int[] COMBAT_TIER_EFFECT_PERCENTS = {5, 10, 15, 20, 25};
 	public static final int[] SKILLING_TIER_POINT_COSTS = {2, 7, 22, 46, 80};
@@ -23,7 +23,8 @@ public final class PrayerCatalog {
 		OFFENSE,
 		DEFENSE,
 		SKILLING,
-		SPECIAL
+		SPECIAL,
+		HOLY_BOLTS
 	}
 
 	public enum CombatStyle {
@@ -200,6 +201,11 @@ public final class PrayerCatalog {
 			null,
 			null
 		));
+        for (GodLine god : GodLine.values()) {
+            String name = god == GodLine.SARADOMIN ? "Saradomin's Divine Bolts"
+                : god == GodLine.ZAMORAK ? "Zamorak's Bolts of Wrath" : "Guthix's Thorned Bolts";
+            definitions.add(new PrayerDefinition(god, PrayerKind.HOLY_BOLTS, 1, name, 80, 0, null, null));
+        }
 		return Collections.unmodifiableList(definitions);
 	}
 

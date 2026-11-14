@@ -1340,15 +1340,15 @@ public class Equipment {
 
 	private PrayerCatalog.GodLine getRequiredGodLine(final int itemId) {
 		if (itemId == ItemId.SARADOMIN_CAPE.id() || itemId == ItemId.STAFF_OF_SARADOMIN.id()
-			|| itemId == ItemId.SARADOMIN_MACE.id()) {
+			|| itemId == ItemId.SARADOMIN_MACE.id() || itemId == ItemId.SARADOMIN_CROSSBOW.id()) {
 			return PrayerCatalog.GodLine.SARADOMIN;
 		}
 		if (itemId == ItemId.ZAMORAK_CAPE.id() || itemId == ItemId.STAFF_OF_ZAMORAK.id()
-			|| itemId == ItemId.ZAMORAK_MACE.id()) {
+			|| itemId == ItemId.ZAMORAK_MACE.id() || itemId == ItemId.ZAMORAK_CROSSBOW.id()) {
 			return PrayerCatalog.GodLine.ZAMORAK;
 		}
 		if (itemId == ItemId.GUTHIX_CAPE.id() || itemId == ItemId.STAFF_OF_GUTHIX.id()
-			|| itemId == ItemId.GUTHIX_MACE.id()) {
+			|| itemId == ItemId.GUTHIX_MACE.id() || itemId == ItemId.GUTHIX_CROSSBOW.id()) {
 			return PrayerCatalog.GodLine.GUTHIX;
 		}
 		if (itemId == ItemId.HOLY_SYMBOL_OF_SARADOMIN.id()) {
@@ -2020,7 +2020,8 @@ public class Equipment {
 	}
 
 	private int getRawOffense(final PrayerCatalog.CombatStyle combatStyle) {
-		int total = 0;
+		int total = combatStyle == PrayerCatalog.CombatStyle.RANGED
+            ? com.openrsc.server.content.GodCrossbows.holyAmmoOffense(player) : 0;
 		if (player.getConfig().WANT_EQUIPMENT_TAB) {
 			synchronized (list) {
 				for (Item item : list) {
@@ -2047,6 +2048,8 @@ public class Equipment {
 			case MAGIC:
 				return isOffenseSlot(item, EquipmentSlot.SLOT_MAINHAND, EquipmentSlot.SLOT_OFFHAND);
 			case RANGED:
+                if (isOffenseSlot(item, EquipmentSlot.SLOT_AMMO)
+                        && com.openrsc.server.content.GodCrossbows.usesHolyBolts(player)) return false;
 				return isOffenseSlot(item, EquipmentSlot.SLOT_MAINHAND, EquipmentSlot.SLOT_OFFHAND, EquipmentSlot.SLOT_AMMO);
 			default:
 				return false;

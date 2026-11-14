@@ -1530,14 +1530,20 @@ public final class SkillGuideInterface {
 			addPrayerLine("Magic Power", "5 tiers of magic damage bonuses");
 			addPrayerLine("Melee Protection", "5 tiers of melee damage reduction");
 			addPrayerLine("Enchanting Favor", "5 tiers of enchanting XP bonuses");
+            addPrayerLine("Saradomin's Divine Bolts", "God crossbow: free tier 6 bolts (80 points)");
+            addPrayerLine("Matching god cape", "Tier 8 bolts; reserve 60 points instead");
 		} else if (curTab == 1) {
 			addPrayerLine("Melee Power", "5 tiers of melee damage bonuses");
 			addPrayerLine("Ranged Protection", "5 tiers of ranged damage reduction");
 			addPrayerLine("Smithing Favor", "5 tiers of smithing XP bonuses");
+            addPrayerLine("Zamorak's Bolts of Wrath", "God crossbow: free tier 6 bolts (80 points)");
+            addPrayerLine("Matching god cape", "Tier 8 bolts; reserve 60 points instead");
 		} else if (curTab == 2) {
 			addPrayerLine("Ranged Power", "5 tiers of ranged damage bonuses");
 			addPrayerLine("Magic Protection", "5 tiers of magic damage reduction");
 			addPrayerLine("Crafting Favor", "5 tiers of crafting XP bonuses");
+            addPrayerLine("Guthix's Thorned Bolts", "God crossbow: free tier 6 bolts (80 points)");
+            addPrayerLine("Matching god cape", "Tier 8 bolts; reserve 60 points instead");
 		} else if (curTab == 3) {
 			skillMenuEntries.add(new SkillMenuItem(1214, "80", "Saradomin Cape - requires Saradomin worship"));
 			skillMenuEntries.add(new SkillMenuItem(1218, "80", "Staff of Saradomin - requires Saradomin worship"));
@@ -1545,6 +1551,12 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(1216, "80", "Staff of Zamorak - requires Zamorak worship"));
 			skillMenuEntries.add(new SkillMenuItem(1215, "80", "Guthix Cape - requires Guthix worship"));
 			skillMenuEntries.add(new SkillMenuItem(1217, "80", "Staff of Guthix - requires Guthix worship"));
+            skillMenuEntries.add(new SkillMenuItem(3444, "80", "Saradomin crossbow - Ranged; matching god required"));
+            skillMenuEntries.add(new SkillMenuItem(3445, "80", "Zamorak crossbow - Ranged; matching god required"));
+            skillMenuEntries.add(new SkillMenuItem(3446, "80", "Guthix crossbow - Ranged; matching god required"));
+            skillMenuEntries.add(new SkillMenuEntry("", "Artifacts: 80 Worship and 800 devotion; costs 400 devotion"));
+            skillMenuEntries.add(new SkillMenuEntry("", "Crossbows use normal bolts unless their prayer is active"));
+            skillMenuEntries.add(new SkillMenuEntry("", "Free bolts override equipped ammo without consuming it"));
 			skillMenuEntries.add(new SkillMenuItem(1218, "", "God gear gives prayer points and empowers god spells"));
 			skillMenuEntries.add(new SkillMenuItem(2228, "1", "Staff blessed by Zamorak - requires Worship and Magic"));
 			skillMenuEntries.add(new SkillMenuItem(2229, "8", "Pine staff blessed by Zamorak - requires Worship and Magic"));

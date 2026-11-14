@@ -108,10 +108,10 @@ def main():
     for object_id in ["144", "296", "625", "939"]:
         require(f"case {object_id}:" in catalog, f"Zamorak altar id {object_id} is not mapped")
 
-    require("PRAYERS_PER_BOOK = 16" in catalog,
+    require("PRAYERS_PER_BOOK = 17" in catalog,
             "Server prayer catalog should reserve the special-prayer slot")
     require('new boolean[PrayerCatalog.PRAYERS_PER_BOOK]' in prayers,
-            "Server prayer state should track the current 16-slot god line")
+            "Server prayer state should track the current 17-slot god line")
     require('"Saving Grace"' in catalog and '"Divine Grace"' not in catalog and '"Divine Retribution"' in catalog,
             "Prayer catalog should include the Saradomin and Zamorak special prayers")
     require('"Corrosive Aura"' in catalog and "GodLine.GUTHIX" in catalog,
@@ -193,8 +193,8 @@ def main():
     require("skillIndex == Skill.PRAYER.id()" in stat_restoration
             and "!getOwner().getConfig().WANT_MYWORLD" in stat_restoration,
             "MyWorld Prayer should naturally restore with other temporary stat drains")
-    require("48 prayers" in doc, "Prayer rework doc must call out the 48-prayer catalog")
-    require("16-slot current-book UI" in doc, "Prayer rework doc must call out current-book UI wiring")
+    require("51 prayers" in doc, "Prayer rework doc must call out the 51-prayer catalog")
+    require("17-slot current-book UI" in doc, "Prayer rework doc must call out current-book UI wiring")
     require("server XP multiplier" in doc, "Prayer rework doc must track server XP multiplier replacement")
     require(object_defs.count("<name>Altar of Saradomin</name>") >= 2, "Saradomin prayer altars should be clearly named")
     require(object_defs.count("<name>Altar of Zamorak</name>") >= 4, "Zamorak prayer altars should be clearly named")

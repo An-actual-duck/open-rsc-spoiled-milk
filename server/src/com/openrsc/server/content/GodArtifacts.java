@@ -25,17 +25,20 @@ public final class GodArtifacts {
 	private static final int[] SARADOMIN_ARTIFACTS = {
 		ItemId.SARADOMIN_CAPE.id(),
 		ItemId.STAFF_OF_SARADOMIN.id(),
-		ItemId.SARADOMIN_MACE.id()
+		ItemId.SARADOMIN_MACE.id(),
+		ItemId.SARADOMIN_CROSSBOW.id()
 	};
 	private static final int[] ZAMORAK_ARTIFACTS = {
 		ItemId.ZAMORAK_CAPE.id(),
 		ItemId.STAFF_OF_ZAMORAK.id(),
-		ItemId.ZAMORAK_MACE.id()
+		ItemId.ZAMORAK_MACE.id(),
+		ItemId.ZAMORAK_CROSSBOW.id()
 	};
 	private static final int[] GUTHIX_ARTIFACTS = {
 		ItemId.GUTHIX_CAPE.id(),
 		ItemId.STAFF_OF_GUTHIX.id(),
-		ItemId.GUTHIX_MACE.id()
+		ItemId.GUTHIX_MACE.id(),
+		ItemId.GUTHIX_CROSSBOW.id()
 	};
 
 	private GodArtifacts() {

@@ -277,12 +277,13 @@ public final class mudclient implements Runnable {
 	private static final int SPELLS_SUBTAB_MAGE = 0;
 	private static final int SPELLS_SUBTAB_CLERIC = 1;
 	private static final int SPELLS_SUBTAB_HEIGHT = 18;
-	private static final int MAX_PRAYER_ICONS = 16;
+	private static final int MAX_PRAYER_ICONS = 17;
 	private static final int PRAYER_ICON_COLUMNS = MAGIC_ICON_COLUMNS;
 	private static final int PRAYER_ICON_VISIBLE_ROWS = MAGIC_ICON_VISIBLE_ROWS;
 	private static final int PRAYER_ICON_SIZE = MAGIC_ICON_SIZE;
 	private static final int PRAYER_ICON_GAP = MAGIC_ICON_GAP;
 	private static final int SPECIAL_PRAYER_INDEX = 15;
+	private static final int GOD_BOLTS_PRAYER_INDEX = 16;
 	private static final int SPECIAL_PRAYER_NO_CAPE_COST_NUMERATOR = 3;
 	private static final int SPECIAL_PRAYER_NO_CAPE_COST_DENOMINATOR = 2;
 	private static final int ZAMORAK_CAPE_ID = 1213;
@@ -14479,6 +14480,10 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		if (!this.prayerOn[prayerIndex]) {
+            if (prayerIndex == GOD_BOLTS_PRAYER_INDEX && !hasMatchingGodCrossbow()) {
+                this.showMessage(false, null, "You must wield your god's crossbow to activate this prayer", MessageType.GAME, 0, null);
+                return;
+            }
 			if (!this.canActivatePrayer(prayerIndex)) {
 				this.showMessage(false, null,
 					"You need " + this.getPrayerPointCost(prayerIndex) + " free prayer points to activate this prayer",
@@ -23150,7 +23155,8 @@ public final class mudclient implements Runnable {
 	private boolean isSinglePrayerIconAsset(String assetName) {
 		return "divine-grace".equals(assetName)
 			|| "divine-retribution".equals(assetName)
-			|| "corrosive-aura".equals(assetName);
+			|| "corrosive-aura".equals(assetName)
+            || "divine-bolts".equals(assetName) || "bolts-of-wrath".equals(assetName) || "thorned-bolts".equals(assetName);
 	}
 
 	private File getPrayerIconFile(String assetName) {
@@ -23241,6 +23247,9 @@ public final class mudclient implements Runnable {
 	}
 
 		private String getPrayerIconAssetName(String prayerName) {
+            if ("Saradomin's Divine Bolts".equals(prayerName)) return "divine-bolts";
+            if ("Zamorak's Bolts of Wrath".equals(prayerName)) return "bolts-of-wrath";
+            if ("Guthix's Thorned Bolts".equals(prayerName)) return "thorned-bolts";
 			String baseName = prayerName;
 			String[] prefixes = new String[] {"Weak ", "Lesser ", "Strong ", "Greater "};
 			for (String prefix : prefixes) {
@@ -26791,11 +26800,18 @@ public final class mudclient implements Runnable {
 		if (this.prayerOn[prayerIndex]) {
 			return true;
 		}
+        if (prayerIndex == GOD_BOLTS_PRAYER_INDEX && !hasMatchingGodCrossbow()) return false;
 		return this.getAllocatedPrayerPoints() + this.getPrayerPointCost(prayerIndex)
 			<= this.getPrayerAllocationPoints();
 	}
 
+    private boolean hasMatchingGodCrossbow() {
+        String god = EntityHandler.getActivePrayerBook();
+        return hasEquippedItem("ZAMORAK".equals(god) ? 3445 : "GUTHIX".equals(god) ? 3446 : 3444);
+    }
+
 	private int getPrayerPointCost(int prayerIndex) {
+        if (prayerIndex == GOD_BOLTS_PRAYER_INDEX) return hasMatchingGodPrayerCape() ? 60 : 80;
 		PrayerDef prayerDef = EntityHandler.getPrayerDef(prayerIndex);
 		int pointCost = prayerDef.getPointCost();
 		if (prayerIndex != SPECIAL_PRAYER_INDEX || this.hasMatchingGodPrayerCape()) {

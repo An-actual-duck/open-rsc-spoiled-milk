@@ -65,6 +65,9 @@ public class Prayers {
 		if (definition == null) {
 			return null;
 		}
+        if (definition.getKind() == PrayerCatalog.PrayerKind.HOLY_BOLTS
+                && !com.openrsc.server.content.GodCrossbows.canUse(player, definition.getGodLine()))
+            return "You must wield your god's crossbow to activate this prayer";
 		final int requiredMace = getRequiredSpecialPrayerMace(definition);
 		if (requiredMace > -1 && !player.getCarriedItems().getEquipment().hasEquipped(requiredMace)) {
 			return "You lack the necessary holy artifact";
@@ -154,6 +157,8 @@ public class Prayers {
 	}
 
 	private boolean meetsEquipmentRequirement(final PrayerCatalog.PrayerDefinition definition) {
+        if (definition != null && definition.getKind() == PrayerCatalog.PrayerKind.HOLY_BOLTS)
+            return com.openrsc.server.content.GodCrossbows.canUse(player, definition.getGodLine());
 		final int requiredMace = getRequiredSpecialPrayerMace(definition);
 		return requiredMace < 0 || player.getCarriedItems().getEquipment().hasEquipped(requiredMace);
 	}
@@ -162,6 +167,8 @@ public class Prayers {
 		if (definition == null) {
 			return 0;
 		}
+        if (definition.getKind() == PrayerCatalog.PrayerKind.HOLY_BOLTS)
+            return com.openrsc.server.content.GodCrossbows.reservation(player);
 		final int pointCost = definition.getPointCost();
 		if (definition.getKind() != PrayerCatalog.PrayerKind.SPECIAL || hasMatchingGodCape(definition)) {
 			return pointCost;

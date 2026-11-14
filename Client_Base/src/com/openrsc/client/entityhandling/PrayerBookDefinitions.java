@@ -69,6 +69,7 @@ final class PrayerBookDefinitions {
 		addPrayerDefinition(46, "Strong Enchanting Favor", "Enchanting XP +25%.");
 		addPrayerDefinition(80, "Greater Enchanting Favor", "Enchanting XP +30%.");
 		addSpecialPrayerDefinition(60, "Saving Grace", "Chance to lifesteal 100% of attack damage. Lower HP is more likely to trigger.");
+		addSpecialPrayerDefinition(80, "Saradomin's Divine Bolts", "Requires your god crossbow. Free tier 6 bolts; matching cape: 60 points and tier 8 bolts. Overrides equipped ammunition.");
 	}
 
 	private void loadZamorakPrayerDefinitions() {
@@ -88,6 +89,7 @@ final class PrayerBookDefinitions {
 		addPrayerDefinition(46, "Strong Smithing Favor", "Smithing XP +25%.");
 		addPrayerDefinition(80, "Greater Smithing Favor", "Smithing XP +30%.");
 		addSpecialPrayerDefinition(60, "Divine Retribution", "Chance to recoil double damage taken. Higher hits are more likely to trigger.");
+		addSpecialPrayerDefinition(80, "Zamorak's Bolts of Wrath", "Requires your god crossbow. Free tier 6 bolts; matching cape: 60 points and tier 8 bolts. Overrides equipped ammunition.");
 	}
 
 	private void loadGuthixPrayerDefinitions() {
@@ -107,5 +109,6 @@ final class PrayerBookDefinitions {
 		addPrayerDefinition(46, "Strong Crafting Favor", "Crafting XP +25%.");
 		addPrayerDefinition(80, "Greater Crafting Favor", "Crafting XP +30%.");
 		addSpecialPrayerDefinition(60, "Corrosive Aura", "Enemies that damage you receive 10-50 poison stacks. Lower HP applies more stacks.");
+		addSpecialPrayerDefinition(80, "Guthix's Thorned Bolts", "Requires your god crossbow. Free tier 6 bolts; matching cape: 60 points and tier 8 bolts. Overrides equipped ammunition.");
 	}
 }

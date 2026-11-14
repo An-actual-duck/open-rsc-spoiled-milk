@@ -52,6 +52,7 @@ public class RangeUtils {
             ItemId.DRAGON_LONGBOW.id()
     );
     private final static Set<Integer> CROSSBOWS = ImmutableSet.of(
+            ItemId.SARADOMIN_CROSSBOW.id(), ItemId.ZAMORAK_CROSSBOW.id(), ItemId.GUTHIX_CROSSBOW.id(),
             ItemId.CROSSBOW.id(), ItemId.PHOENIX_CROSSBOW.id(), ItemId.OAK_CROSSBOW.id(),
             ItemId.WILLOW_CROSSBOW.id(), ItemId.PALM_CROSSBOW.id(), ItemId.MAPLE_CROSSBOW.id(),
             ItemId.YEW_CROSSBOW.id(), ItemId.EBONY_CROSSBOW.id(), ItemId.MAGIC_CROSSBOW.id(),
@@ -138,6 +139,8 @@ public class RangeUtils {
 
         allowedProjectilesMap.put(com.openrsc.server.constants.custom.MyWorldItemId.LEACHING_BOW,
             allowedProjectilesMap.get(ItemId.MAGIC_LONGBOW.id()));
+        for (int id : new int[]{ItemId.SARADOMIN_CROSSBOW.id(), ItemId.ZAMORAK_CROSSBOW.id(), ItemId.GUTHIX_CROSSBOW.id()})
+            allowedProjectilesMap.put(id, allowedProjectilesMap.get(ItemId.DRAGON_CROSSBOW.id()));
         ALLOWED_PROJECTILES = ImmutableMap.copyOf(allowedProjectilesMap);
     }
 
