@@ -1,0 +1,198 @@
+Direct native compact writer: populated-route follow-up
+=======================================================
+Recorded November 14, 2026 UTC. This is a separate follow-up to the frozen
+native-compact-transition-experiment.txt campaign, not a pooled replacement.
+
+Decision
+--------
+Retain the bounded prototype with nativeCompactGeometry and
+nativeCompactTypedWriter both default OFF. Direct integer writing removes much
+of the old compact encoder's CPU overhead and retains the exact 50% observed
+geometry-upload/residency saving. It does NOT yet establish a reliable native
+transition improvement. No browser FPS gain, weaker-machine gain, first-coherent
+world latency improvement, publication, merge or deployment is claimed.
+
+A real default-OFF regression was found in populated travel despite reassuring
+warmed microbenchmarks. It has been repaired by isolating the experiment from
+literal legacy/native and browser field writers. Final low-overhead OFF runs
+match the frozen legacy range. The new test enforces identical instructions in
+six original packing routines, allowing only constant-pool index renumbering.
+
+Final runtime and controls
+--------------------------
+Runtime commit: 89b9dd33e43cc1362d107049375612b76a782ed2.
+Complete JAR: output/builds/native-typed-writer/89b9dd33e4/client.jar
+SHA256: 9eaba364fa9b7dadebdd289762443cb7e729ca8ebe75e544974ce519f4a8b9b8.
+Built by ./scripts/build-client.sh, with Java 8; no class transplantation.
+The adjacent receipt binds all 3,587 source/resource entries and all packaged
+entries to the exact commit. Subsequent changes are tests and documentation.
+
+Both -Dspoiledmilk.nativeCompactGeometry=true and
+-Dspoiledmilk.nativeCompactTypedWriter=true are required for direct writing.
+BrowserBenchmark and browserPublicAlpha ignore these native controls. Eligible
+paths require native atlas UVs, resident shader, unbaked directional material
+lighting and no projected shadow-proof path. Unsupported configurations retain
+the original float stream. Requested representation still participates in cache
+matching; the direct and roundtrip encoders produce the same representation.
+
+The 52-byte vertex retains eight float components: position, atlas UV and normals.
+Nineteen exact byte fields come from their original integer sources, including
+material and terrain RGB, base legacy light, kind/family/mask, blend strength and
+constant unbaked texture light. It avoids normalizing these integers to floats and
+then reconstructing/admitting byte values. Existing legacy-light clamping and
+24-bit RGB extraction remain the source semantics. The typed destination itself
+rejects out-of-range IDs, masks and strengths rather than truncating them.
+Nonfinite float fields reject, and negative zero in float fields is retained.
+A late rejected vertex regenerates the entire legacy chunk, never a mixed prefix.
+
+Default-path repair
+-------------------
+The earlier ed847d87e candidate shared per-vertex representation selection with
+the float writer. Three low-overhead OFF routes had worst gaps 307.604, 323.849
+and 246.614 ms, versus 224.897 and 221.590 ms in the frozen 5820ee21d3 baseline.
+Two OFF runs had 189.842/205.996 ms maximum chunk-upload phases versus about
+92 ms baseline. The separate instrumented OFF run did not reproduce those stalls;
+its faster timings cannot dismiss the low-overhead failures.
+
+The repaired writer dispatches once per chunk. Legacy/native and browser float
+routines are literal baseline implementations; unsupported or rejected direct
+packing returns to the original writer. Small output-writing paths deliberately
+remain separate so experimentation does not add per-vertex branches to default
+or browser execution. Shared material/source helpers still supply authoritative
+inputs. Independent full-JAR parity tests cover both destination implementations
+and protect against future drift. No precise JIT-cause claim is made.
+
+Final six-run low-overhead comparison, in execution order
+--------------------------------------------------------
+mode       intervals    p95 ms    p99 ms    worst gap ms   max chunk-upload ms
+baseline   3183         17.646    21.230     217.379        100.195
+OFF        3151         17.600    22.050     218.953        100.414
+direct     3156         17.691    21.603     193.701         82.869
+direct     3152         17.597    20.686     219.240        104.008
+OFF        3152         17.849    22.314     214.586         94.755
+baseline   3158         17.657    22.203     214.150         91.590
+
+The two direct runs are mixed, including one worse than both baseline runs.
+Do not turn the favorable 193.701 ms run into an adoption or percentage-gain claim.
+p95/p99 also do not establish a consistent broad win. These are whole-route
+cadence gaps from hidden native windows, not uncapped FPS or display scanout.
+Arrival/readiness polling remains an upper bound, not first coherent completed
+new-world presentation. The baseline still lacks that source/center frame proof.
+
+Two separate final diagnostics, matching maximum upload of 67 chunks and
+1,178,676 vertices:
+mode      pack ms   index ms   group ms   GL-submit ms   uploaded bytes
+OFF       41.137     0.539      14.073     35.557         141441120
+direct    48.135     0.540      15.843     19.406          70720560
+The full chunk-upload phase maxima were 92.466/84.805 ms. Instrumented stage
+observations are separate from acceptance cadence and do not prove a universal
+speedup. GL submission CPU time is not GPU completion or active GPU execution.
+
+Earlier shared-writer cohort, retained separately
+-------------------------------------------------
+Runtime ed847d87e868413c2d29cb5994d96acfdd34ee07:
+output/builds/native-typed-writer/ed847d87e8/client.jar
+SHA256: bd271a701e116196d7c92635b73bb114cab44d1c3efd4e0c8e08d563d4a352f2.
+Ten low-overhead runs plus three diagnostics. Its direct worst gaps were
+206.448/200.298/188.240 ms; old compact roundtrip 258.681/251.248 ms; legacy
+224.897/221.590 ms. The OFF regression above prevents adoption of that version.
+For identical maximum-upload geometry, diagnostic packing was 38.657 ms OFF,
+82.420 ms roundtrip and 47.473 ms direct; submission 36.065/19.661/18.618 ms.
+These data motivate the direct writer, but must not be pooled with the repaired
+runtime to hide its mixed final result. All original records remain intact.
+
+Measurement contract and memory
+-------------------------------
+The two cohorts contain 41,173 and 25,258 unique cadence intervals, respectively.
+All 21 fresh runs share verified server cd21a4abdd61738fd3130b7b78590ec57fd0339d,
+map/seed, harness sources/compiled classes, route and quality settings. Captures
+have 1920x1080 content viewport, Remaster directional lighting, SMOOTH geometry,
+High shadows, daytime, fog ON, zoom 75/rotation 128, and matching final inventories
+of 17 received players, 40 NPCs, 780 game objects and 25 wall objects. Six adjacent
+walks, long teleport, level change and return are exercised. This populated route
+uses visual projectile emitters, not authoritative real-combat testing.
+
+Hardware is the accelerated RX 6700 XT on the owner's existing CPU/OS and Java 8.
+No concurrent native playtest client was observed. The repository GPU lock is used.
+No quality, distance or geometry reduction was intentionally made. Real GPU pixel
+and shadow-depth fixtures provide the independent representation correctness proof.
+These runs do not establish benefit on an integrated GPU, a weaker PC or a browser.
+
+112 -> 52 bytes per vertex is 53.57%; with both unchanged index streams, the matched
+upload is 141,441,120 -> 70,720,560 bytes and resident geometry is
+465,035,040 -> 232,517,520 bytes, both exactly 50%. Retained direct scratch grows
+17,825,792 -> 26,214,400 bytes because the legacy fallback buffer remains beside
+compact scratch. This is not total GPU/driver memory or a total CPU-memory saving;
+old replaced buffers awaiting GC and temporary arrays/maps are excluded. No cache
+residency increase or contention redesign follows from these results.
+
+Warmed synthetic packing, separate from the route
+------------------------------------------------
+Three fresh JVMs per mode/JDK, 24 warmup and 32 measured iterations per JVM,
+49,152 FACETED vertices. Median of per-JVM medians, milliseconds:
+                  legacy baseline     repaired OFF     roundtrip     direct
+Java 8            1.444               1.451            3.369         1.653
+Java 21           1.232               1.236            3.020         1.451
+Direct remains slower than legacy CPU packing but much faster than the old
+compact roundtrip. Do not interpret these warmed synthetic values as game FPS,
+cold transition latency, or evidence that a disabled hot-path change is harmless.
+Receipt: output/tests/native-typed-writer/1794613999323406237/.
+
+Correctness and final regressions
+--------------------------------
+Final strengthened proof:
+output/tests/native-typed-writer/1794614103679263394/.
+Java 8 and 21 independent complete baseline/candidate JARs match raw float/backend
+hashes for default, explicit OFF, typed-only, roundtrip, direct, browserBenchmark
+and public-browser isolation. Every configuration covers 3,072 geometry/light/
+byte/fallback cases. Raw, projected-shadow and baked paths are independently
+compared against baseline and must reject compact output. Actual compact fixture
+passes 111,059 exact attribute/atlas/fallback checks per JDK. Boundary tests cover
+all byte codes, future invalid integers, nonfinite values and signed zero.
+
+Actual production upload/cache/draw tests exercise OFF -> roundtrip -> OFF ->
+direct -> OFF on the same renderer: 1,280 exact pixel cases, 256 distinct outputs,
+and 40 near/far depth pairs, with mixed compact/forced-legacy/flat geometry.
+The strengthened shadow proof explicitly suspends/rebuilds both passes and checks
+positive current near/far triangle counts, avoiding a reused-depth false oracle.
+An additional 48-configuration cache matrix, six mixed cases, and lighting/fog/
+geometry/texture-policy/session transitions pass with direct writing selected.
+
+Six literal instruction checks cover copyLegacyChunkVertices against baseline
+copyChunkVertices, copyBackendChunkVertices, writeChunkVertex,
+writeChunkShaderInputs, writeChunkMaterialColor and writeUnbakedChunkMaterialColor.
+The one-time new chunk dispatcher is outside these preserved routines.
+
+All final requested regressions pass against the repaired complete JAR: resident
+inputs, independent native construction, browser materials/variants, geometry
+modes, shadow coordinates/projection, 18 benchmark guard tests, route analysis,
+route failure-evidence preservation, workspace layout and git diff --check.
+Logs and exact commands: output/diagnostics/native-typed-writer/final-tests/.
+No current-JAR visible lifecycle or authoritative real-combat campaign is claimed.
+Earlier compact lifecycle coverage remains historical in its original report.
+
+Reproduction, preserved evidence and cleanup
+--------------------------------------------
+python3 tests/myworld/test-native-typed-writer.py --baseline-jar
+ output/builds/native-compact-geometry/5820ee21d3/client.jar --client-jar
+ output/builds/native-typed-writer/89b9dd33e4/client.jar --java21
+ /usr/lib/jvm/java-21-openjdk-amd64/bin/java --gpu --benchmark
+
+output/diagnostics/native-typed-writer/verified-comparisons.json binds each capture,
+JAR, route stage, common server/map/harness identity, scenario and final inventory.
+run-resumed-comparison.py and run-isolated-comparison.py retain orchestration;
+resumed-ed847/ and isolated-89b9/ retain per-run logs, legs and summaries. Diagnostic
+geometry rings have zero dropped rows. The first aggregation attempt expected a
+row in intentionally empty low-overhead diagnostic CSVs; corrected verification
+requires empty acceptance and nonempty diagnostic data, with no discarded run.
+
+Final host cleanup receipt: output/diagnostics/native-typed-writer/final-host-cleanup.json.
+All 42 recorded client/server identities from these 21 fixtures have ended;
+alternate loopback ports 44639/44539 are free. Owner's StandalonePlaytestServer
+PID 2822999 remains on 43639/43539. No public server was accessed or restarted,
+no browser was started, no foreign process or lock was removed, and ignored
+artifacts remain preserved. Approximately 11 GiB free disk remained at cleanup.
+
+The branch has local-only checkpoints, not a pushed READY handoff. Keep the new
+controls OFF. The result is an exact lower-memory representation with a much
+cheaper encoder, not a demonstrated stable whole-transition or browser FPS win.

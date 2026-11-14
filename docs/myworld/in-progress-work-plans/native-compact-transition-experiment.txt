@@ -1,5 +1,9 @@
 Native compact geometry and coherent transition experiments
 ===========================================================
+Historical compact-roundtrip campaign. The later direct integer writer and
+its default-path repair are reported separately in
+native-direct-writer-experiment.txt. Do not pool the runtime cohorts.
+
 Decision: retain bounded experiments, all controls default OFF. No demonstrated
 native transition improvement. No quality, distance or geometry reduction. No
 production upload scheduler, residency-cap change, contention/cache redesign,

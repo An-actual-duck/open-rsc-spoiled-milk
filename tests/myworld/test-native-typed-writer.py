@@ -15,6 +15,17 @@ def main():
     try:
         for name,jar in jars.items():
             receipt=json.loads((jar.parent/'receipt.json').read_text());assert receipt['jarSha256']==sha(jar),'Full JAR receipt mismatch';hashes[name]=dict(jar=str(jar),sha256=sha(jar),sourceCommit=receipt.get('sourceCommit',receipt.get('commit')),receiptSha256=sha(jar.parent/'receipt.json'))
+        # Protect the disabled native path and browser path against experiment overhead.
+        # Constant-pool indexes may move, but every original instruction must match.
+        disassembly={name:run(name+'-bytecode',['javap','-p','-c','-classpath',jar,'orsc.OpenGLWorldChunkRenderer']) for name,jar in jars.items()}
+        literal_paths=['copyChunkVertices','copyBackendChunkVertices','writeChunkVertex','writeChunkShaderInputs','writeChunkMaterialColor','writeUnbakedChunkMaterialColor']
+        def instructions(text,name):
+            match=re.search(r'^  .* '+name+r'\([^\n]+\n    Code:\n(.*?)(?=\n  \S|\Z)',text,re.M|re.S)
+            assert match,'Missing literal writer: '+name
+            return re.sub(r'#\d+','#CP',match[1]).strip()
+        for name in literal_paths:
+            candidate_name='copyLegacyChunkVertices' if name=='copyChunkVertices' else name
+            assert instructions(disassembly['baseline'],name)==instructions(disassembly['candidate'],candidate_name),'Default/browser bytecode changed: '+name
         run('compile',['javac','-source','8','-target','8','-cp',jars['candidate'],'-d',classes,*sources])
         javas=[('java8','java')]+([] if a.java21 is None else [('java21',str(a.java21))]);digests={}
         variants={'default':{},'off':{'nativeCompactGeometry':False,'nativeCompactTypedWriter':False},'typed-only':{'nativeCompactTypedWriter':True},'roundtrip':{'nativeCompactGeometry':True,'nativeCompactTypedWriter':False},'typed':{'nativeCompactGeometry':True,'nativeCompactTypedWriter':True},'browserBenchmark':{'browserBenchmark':True,'nativeCompactGeometry':True,'nativeCompactTypedWriter':True},'browserPublicAlpha':{'browserPublicAlpha':True,'nativeCompactGeometry':True,'nativeCompactTypedWriter':True}}
@@ -50,8 +61,8 @@ def main():
                         jar=jars['baseline' if mode=='baseline' else 'candidate'];flags=variants.get(mode,{})
                         label=f'bench-{jlabel}-{repeat}-{mode}';log=run(label,[java,'-Xmx1g',*[f'-Dspoiledmilk.{k}={str(v).lower()}' for k,v in flags.items()],'-cp',str(classes)+os.pathsep+str(jar),'orsc.NativeTypedWriterOracle','benchmark']);rows=[list(map(int,line.split(',')[1:])) for line in log.splitlines() if line.startswith('pack,')];assert len(rows)==32
                         timings.append(dict(java=jlabel,repeat=repeat,mode=mode,vertices=rows[0][1],medianNanos=statistics.median(r[2] for r in rows),medianAllocatedBytes=statistics.median(r[3] for r in rows),rows=rows))
-        (out/'proof.json').write_text(json.dumps(dict(digests=digests,timings=timings,passed=True),indent=2)+'\n')
+        (out/'proof.json').write_text(json.dumps(dict(digests=digests,timings=timings,literalFloatPaths=literal_paths,passed=True),indent=2)+'\n')
     finally:
-        (out/'receipt.json').write_text(json.dumps(dict(jars=hashes,fixtureHashes={str(s.relative_to(ROOT)):sha(s) for s in sources},results=results,scope='Full independent JARs, no production class substitution. Synthetic packing/allocation does not establish game FPS or transition latency.'),indent=2)+'\n')
+        (out/'receipt.json').write_text(json.dumps(dict(driverSha256=sha(Path(__file__)),jars=hashes,fixtureHashes={str(s.relative_to(ROOT)):sha(s) for s in sources},results=results,scope='Full independent JARs, no production class substitution. Synthetic packing/allocation does not establish game FPS or transition latency.'),indent=2)+'\n')
     print('PASS independent typed writer:',out)
 if __name__=='__main__':main()
