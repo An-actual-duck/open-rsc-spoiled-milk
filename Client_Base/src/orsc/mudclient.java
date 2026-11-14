@@ -21477,6 +21477,7 @@ public final class mudclient implements Runnable {
 			loadExternalFoundryDragonNpcSprite();
 			loadExternalKingBlackDragonNpcSprite();
 			loadExternalGorakNpcSprite();
+            loadExternalDeathWingNpcSprite();
 			loadGemDragonSprites();
 			loadSlayerMovementPreviewSprites();
 			loadExternalEquipmentSprites();
@@ -21500,7 +21501,7 @@ public final class mudclient implements Runnable {
 			}
 			if (com.openrsc.client.entityhandling.SlayerMovementPreview.isAnimation(s)
 				|| "foundrydragon".equalsIgnoreCase(s) || "kingblackdragon".equalsIgnoreCase(s)
-				|| "gorak".equalsIgnoreCase(s) || s.startsWith("gemdragon")) {
+				|| "gorak".equalsIgnoreCase(s) || "deathwing".equalsIgnoreCase(s) || s.startsWith("gemdragon")) {
 				EntityHandler.getAnimationDef(animationIndex).number = animationNumber;
 				animationNumber += 27;
 				continue;
@@ -22553,6 +22554,23 @@ public final class mudclient implements Runnable {
 				spriteEntry.getFrames()[frame].getSprite();
 		}
 	}
+
+    private void loadExternalDeathWingNpcSprite() {
+        File source=this.externalAssetLoader.findFirstFile(new String[]{
+            "dev/myworld/assets/runtime/sprites/npcs/death-wing"},"death-wing.png");
+        orsc.graphics.two.SpriteArchive.Entry entry=this.externalAssetLoader.loadExternalNpcDirectionSheet(
+            source,"deathwing",new int[]{150,150,150,150,150,97},3);
+        if(entry==null) {System.out.println("Missing or invalid Death wing sprite sheet");return;}
+        EntityHandler.activateDeathWingExternalVisual();
+        if(S_WANT_CUSTOM_SPRITES) {
+            Map<String,orsc.graphics.two.SpriteArchive.Entry> sprites=getSurface().spriteTree.get("npc");
+            if(sprites!=null)sprites.put("deathwing",entry);
+        } else {
+            AnimationDef animation=EntityHandler.getAnimationDef(EntityHandler.getDeathWingAnimationId());
+            for(int frame=0;frame<entry.getFrames().length;frame++)
+                getSurface().sprites[animation.getNumber()+frame]=entry.getFrames()[frame].getSprite();
+        }
+    }
 
 	private void loadSlayerMovementPreviewSprites() {
 		for (com.openrsc.client.entityhandling.SlayerMovementPreview preview
@@ -28588,6 +28606,7 @@ public final class mudclient implements Runnable {
 							this.loadExternalFoundryDragonNpcSprite();
 							this.loadExternalKingBlackDragonNpcSprite();
 							this.loadExternalGorakNpcSprite();
+            loadExternalDeathWingNpcSprite();
 			loadGemDragonSprites();
 							this.loadSlayerMovementPreviewSprites();
 							this.scene = new Scene(this.getSurface(), SCENE_MODEL_CAPACITY, SCENE_POLYGON_CAPACITY,

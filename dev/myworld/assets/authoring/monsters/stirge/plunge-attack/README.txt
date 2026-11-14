@@ -1,3 +1,9 @@
+CURRENT APPROVED FINAL: LIGHT-TAN WINGS across all eighteen poses.
+Owner approved the front comparison and requested the same palette on every
+frame. Geometry, body, head, legs, frame timing and native alpha are unchanged.
+The previous gray-wing master/approval remain preserved in inputs/.
+APPROVED-FINAL.json records the current native export hashes.
+
 FINAL PALETTE APPROVED by owner: gray bat wings, approved full animation.
 This status supersedes historical pending-review notes below.
 

@@ -115,6 +115,12 @@ public class EntityHandler {
 	private static int foundryDragonAnimationId = -1;
 	private static int kingBlackDragonAnimationId = -1;
 	private static int gorakAnimationId = -1;
+    private static int deathWingAnimationId = -1;
+    public static int getDeathWingAnimationId() {return deathWingAnimationId;}
+    public static void activateDeathWingExternalVisual() {
+        NPCDef npc=getNpcDef(768);
+        if(npc!=null&&"Death Wing".equalsIgnoreCase(npc.getName()))npc.sprites[0]=deathWingAnimationId;
+    }
 	private static final int[] gemDragonAnimationIds = new int[5];
 	public static int getGemDragonAnimationId(int tier) { return gemDragonAnimationIds[tier]; }
 	public static void activateGemDragonVisual(int tier) { getNpcDef(877 + tier).sprites[0] = gemDragonAnimationIds[tier]; }
@@ -8273,6 +8279,9 @@ public class EntityHandler {
         SlayerMovementPreview stirge=SlayerMovementPreview.STIRGE;
         slayerPreviewAnimations.put(stirge,animations.size());
         animations.add(new AnimationDef(stirge.animationName(),"npc",0,0,true,false,0));
+        // Separate family: leave Giant bat's published bat animation untouched.
+        deathWingAnimationId=animations.size();
+        animations.add(new AnimationDef("deathwing","npc",0,0,true,false,0));
 	}
 
 	private static void verifyAnimationDefinition(int appearanceId, String expectedName, int expectedColour) {

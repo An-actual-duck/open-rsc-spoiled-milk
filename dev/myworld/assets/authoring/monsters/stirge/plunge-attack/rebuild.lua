@@ -166,13 +166,13 @@ for n,po in ipairs(rearPoses)do
  for y=0,H-1 do for x=0,W-1 do if pc.rgbaA(mask:getPixel(x,y))==0 then body:drawPixel(x,y,0)end end end
  spr:newCel(l,frame,body,Point(0,0))
 end
--- Owner-requested bat-like wing palette; geometry and non-wing layers stay fixed.
+-- Owner-approved light-tan wing palette; geometry and non-wing layers stay fixed.
 local wingPalette={
- [C(153,61,28)]=C(97,97,97),
- [C(193,85,32)]=C(124,124,124),
- [C(218,113,42)]=C(182,182,182),
+ [C(153,61,28)]=C(153,130,95),
+ [C(193,85,32)]=C(193,168,124),
+ [C(218,113,42)]=C(228,208,164),
  [C(91,45,27)]=C(108,68,18),
- [C(112,48,31)]=C(70,70,70),
+ [C(112,48,31)]=C(112,94,67),
  [C(167,105,51)]=C(146,103,33)
 }
 local wingNames={['Rust bat wings']=true,['Near wing - mid/upstroke behind body']=true,['Near wing - downstroke in front of body']=true,['Attack near wing - plunge and recovery']=true}

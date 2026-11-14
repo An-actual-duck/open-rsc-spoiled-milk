@@ -1,0 +1,48 @@
+{
+  "npcId": 768,
+  "family": "deathwing",
+  "legacyBatFamilyIndex": 138,
+  "source": "existing authentic bat exports, preserved unchanged in authoring inputs/bat",
+  "ownerApprovedFront": "inputs/approved-front-dark.png",
+  "columns": [
+    150,
+    150,
+    150,
+    150,
+    150,
+    97
+  ],
+  "frameHeight": 130,
+  "frames": 18,
+  "camera": [
+    225,
+    195
+  ],
+  "runtimeSha256": "100845ecb1093b2cccde8ed9184ebbecb1f7340af4ff118ce0a20e5a1d39c19c",
+  "sourceFrameSha256": {
+    "0": "435f8d92f94bc3c01dfb313897e64066912c9e71fa8e34bffad4b3d889a804ab",
+    "1": "724cf5937341aecee656c78b4b93e394e30f81c59cc80bf8e514591ea9f0539a",
+    "2": "e3ba5e73b2acf36bf9f95d28a3672aac0d11b9eb063f7e853f70902e14d165ad",
+    "3": "a545e3555625ad55d52c212381f867b2635821f1f887adba2840f0c3bf23eb24",
+    "4": "f1d8ef892c2aa53ad8893f2cb1ffa74039da622620e904534c9d131bc87929f4",
+    "5": "45b50448a32b60ecb1709e4685a7e973e4c5912e010fdfe1f1c748b0aaed504b",
+    "6": "a3e75089a91a3377717dea3ba0709fb91f16f0dc6a39533a86a100f3bffd21c1",
+    "7": "627b7054da9b4ae522f5921915a4206d047caf43220f60717c74a5fee7439542",
+    "8": "19a7136837796fd5ba9b0dff8777e60cafd10bb7cccd143127054fddef4a9d76",
+    "9": "c05e69c0057a1b741f38730241ef53a6ecf6de698678737c88e26cee07b4204b",
+    "10": "adac81fae100c10938d77baf651304cb4b29e1fa049acd7af32a00449a3bfb82",
+    "11": "79fac7a8302457d0463c0eb8990d259450c30d62a0e1b1b957d53a25cdf1dffd",
+    "12": "a2a5b414d26814d116c410d529b3d80857a53543d45d972af02e4c87991a7b5b",
+    "13": "bfa33555bd502f46e1bc4cbb8d2de300b8c2c9258353705c1e64d024d3559fcb",
+    "14": "ba7cb6eac9cfd2ceddcb20aca1b2bb2b098ca739789ef4741acabb9f796bf9a3",
+    "15": "50f9328ee12a119d9c65d19be4c4b6c4237a5af2d56ce671dc67304e12ca8abd",
+    "16": "8cce6f2e3ea00b971556ed01102a4e5bfd9b6ee6a47593e73beca20767ef965f",
+    "17": "086b268b1e3e23a401eb9b386d15f8bacba8c1b11dd6d2ae53de9031bc98f302"
+  },
+  "attackMembraneSourceGrays": [
+    76,
+    102,
+    127,
+    183
+  ]
+}
