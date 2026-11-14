@@ -176,9 +176,15 @@ public class NpcDrops {
 		return items;
 	}
 
+	public static final int BAT_WING_DROP_DENOMINATOR = 16;
+
 	private void createHiddenUniqueDrops() {
 		// Keep hidden chase drops out of the normal 128-weight NPC tables.
 		if (config.WANT_MYWORLD) {
+            // Uncommon independent material rolls; ordinary loot and Stirge glands remain separate.
+            addHiddenUniqueDrop(NpcId.GIANT_BAT.id(), MyWorldItemId.GIANT_BAT_WING, 1, 1, BAT_WING_DROP_DENOMINATOR);
+            addHiddenUniqueDrop(NpcId.DEATH_WING.id(), MyWorldItemId.DEATH_WING_WING, 1, 1, BAT_WING_DROP_DENOMINATOR);
+            addHiddenUniqueDrop(com.openrsc.server.content.monsterslayer.StirgeCombat.NPC_ID, MyWorldItemId.STIRGE_WING, 1, 1, BAT_WING_DROP_DENOMINATOR);
 			for (int id=877; id<=881; id++) {
 				int denominator = com.openrsc.server.content.gemdragons.GemDragons.UNIQUE_DENOMINATORS[id-877];
 				addHiddenUniqueDrop(id, MyWorldItemId.GEM_CUTTER_GLOVES, 1, 1, denominator);

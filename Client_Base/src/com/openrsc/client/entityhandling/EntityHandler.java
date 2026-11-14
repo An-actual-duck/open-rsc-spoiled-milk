@@ -7154,6 +7154,12 @@ public class EntityHandler {
 		}
 	}
 
+    private static void addBatWingDefinitions() {
+        setCustomItemDefinition(3467,new ItemDef("Giant bat wing","A leathery wing from a giant bat.","",20,-1,"external-png:bat-wing",false,false,0,0,false,false,true,3467));
+        setCustomItemDefinition(3468,new ItemDef("Death wing wing","A leathery wing from a supernatural Death wing.","",50,-1,"external-png:bat-wing",false,false,0,0,false,false,true,3468));
+        setCustomItemDefinition(3469,new ItemDef("Stirge wing","A delicate leathery wing from a Stirge.","",35,-1,"external-png:bat-wing",false,false,0,0,false,false,true,3469));
+    }
+
     private static void addScimitarCoatingDefinitions() {
         for(int id=3462;id<=3464;id++)setCustomItemDefinition(id,new ItemDef("Bug Off ("+(3465-id)+")", "Keeps pesky stirges from drinking your blood.", "Spray",0,-1,"external-png:bug-off",false,false,0,0,false,true,false,id));
         setCustomItemDefinition(3465,new ItemDef("Empty Bug Off can","An empty can of Bug Off.","",0,-1,"external-png:bug-off",false,false,0,0,false,true,false,3465));
@@ -10417,6 +10423,7 @@ public class EntityHandler {
 			MaterialItemVisuals.apply(items, MYWORLD_STAFF_BASE_IDS, MYWORLD_RUNE_STAFF_IDS,
 				MYWORLD_STAFF_WOOD_COLORS, MYWORLD_STAFF_RUNE_COLORS);
             addScimitarCoatingDefinitions();
+            addBatWingDefinitions();
 		loadTextureDefinitions();
 		loadAnimationDefinitions();
 		loadSpellDefinitions();
