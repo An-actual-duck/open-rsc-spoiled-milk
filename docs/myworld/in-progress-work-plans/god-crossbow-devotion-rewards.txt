@@ -86,8 +86,50 @@ Existing AttackRoll retains critical identity but has no maximum field; the
 comparable maximum needs deliberate launch/settlement plumbing, not inference
 from the equipped weapon after a projectile is already in flight. Secondary
 bleed pulses must not recursively open wounds or trigger more weapon effects.
-Saradomin and Guthix unique mechanics are still under discussion; earlier
-Revelation and Briar Seed examples are proposals only.
+Saradomin and Guthix now have owner-directed mechanics recorded below; the
+earlier defense-bypass Revelation and reactive-damage Briar Seed suggestions
+are superseded.
+
+Guthix — Briar Seed (owner-directed)
+------------------------------------
+"Imbed briar seeds into your enemies that explode into thorns every 5 shots
+for extra damage and may hit nearby enemies as well."
+After five resolved primary hits, including zero-damage hits, trigger one extra
+AoE hit on the target and eligible nearby enemies within a one-tile radius.
+Bonus damage is an RNG roll from 0 through 3, inclusive. The centre target gets
+one extra hit, not both a centre hit and a duplicate splash hit. Start a new
+five-hit cycle after the burst. No secondary burst hit may add another seed or
+recursively trigger another burst. Invalid launches/blocked interactions are
+not resolved zero-damage hits and must not create seeds.
+Recommendation pending confirmation: count seeds separately for each attacker/
+enemy pair, since the seeds are embedded in that enemy. Do not silently count
+shots across five different victims. Independent 0..3 rolls per burst victim
+are a proposed implementation detail; the owner has specified the cap and AoE,
+not whether victims share one roll. Follow ordinary AoE eligibility, signed
+level and PvP/party/clan/friend safety rules without bespoke exceptions.
+This is the unique effect of Guthix's Thorned Bolts while its prayer is active.
+
+Saradomin — Revelation (owner-directed)
+---------------------------------------
+While using the bow/prayer, build familiarity with the current enemy type.
+Begin at 0%, gain one percentage point per kill, and cap at 15%. Continuing
+against other individuals of the same enemy type retains the accumulated bonus.
+Switching from zombies to giants resets it and starts building against giants.
+Enemy families/types must not be individual spawn UUIDs; variant grouping needs
+an explicit reviewed mapping. Existing Monster Slayer family groups are useful
+input but are not a complete world-wide taxonomy. Do not infer solely from names.
+The bonus skews damage rolls upward rather than raising the maximum hit.
+It is lost only by unequipping the weapon, deactivating the prayer, or choosing
+a different enemy type. No idle timeout or per-kill reset. Matching-cape changes
+alone must not discard the familiarity while the bow/prayer remain active.
+Credit qualifying kills once through the authoritative kill/reward path.
+
+Exact roll-bias math is pending an owner clarification: recommended lifting the
+minimum roll by the learned percentage of maximum, leaving maximum unchanged;
+e.g. at maximum20 and familiarity15%, a pre-defense roll range of3..20 rather
+than0..20. This interpretation has been asked but NOT approved as of this note.
+It must not be silently implemented as +15% maximum damage, crit chance or luck.
+This is the unique effect of Saradomin's Divine Bolts while its prayer is active.
 
 Future idea only — Anti-coagulant coating
 ----------------------------------------
