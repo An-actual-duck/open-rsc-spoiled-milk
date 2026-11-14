@@ -1,11 +1,20 @@
-CURRENT APPROVED DESIGN — Holy Bolts prayer
-============================================
+CURRENT APPROVED DESIGN — God crossbow prayers
+===============================================
 Owner accepted the selected option-1 artwork after the matching-red string and
 black-arrow correction. Current inventory/ground art candidates:
  dev/myworld/assets/authoring/items/god-crossbows/selected-mythic-v1/
 Guthix and Saradomin cleanup PNGs are unchanged; all three now accepted.
 Gameplay and equipped-frame integration remain pending. Dot owns ai-1;
 Core's crossbow work is isolated on ai-2 feat/god-crossbow-devotion-rewards.
+
+Each prayer book gets its own dedicated prayer and approved flavour name:
+ Saradomin: Saradomin's Divine Bolts — requires Saradomin crossbow.
+ Zamorak: Zamorak's Bolts of Wrath — requires Zamorak crossbow.
+ Guthix: Guthix's Thorned Bolts — requires Guthix crossbow.
+These are three book-specific entries sharing the same mechanical rules, not
+one generic named prayer shown in all books. "Holy Bolts" below is shorthand
+for the shared free-ammunition mechanic, not the final displayed prayer name.
+No differing damage type or additional effect is implied by the names.
 
 The owner explicitly corrected "levels" to reservation points: this prayer
 has NO separate activation skill-level requirement. It reserves 80 points,
