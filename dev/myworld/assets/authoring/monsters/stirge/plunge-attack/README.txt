@@ -1,3 +1,10 @@
+APPROVED FINAL — repository owner approved the complete all-directions preview.
+Canonical final master: stirge-plunge-attack.aseprite.
+Final native exports: frame-00.png through frame-17.png.
+Exact approved asset hashes: APPROVED-FINAL.json.
+This approval supersedes all historical review-candidate wording below.
+Earlier iterations and input snapshots are preserved as history, not selections.
+
 Stirge expanded plunge attack — owner review candidate
 
 Approved flight source: near-wing-correction at 63d82348d. Input snapshots

@@ -1,0 +1,35 @@
+Stirge artwork — complete, owner approved, ready for Core review
+
+Task: finalize five flight directions and the three-pose profile attack.
+Canonical deliverable is this directory's stirge-plunge-attack.aseprite plus
+frame-00.png..frame-17.png; APPROVED-FINAL.json freezes the approved bytes.
+Earlier art directories contain rejected/superseded iterations and provenance.
+
+Final behavior/visuals
+- Four-legged moth-like Stirge; consistent striped abdomen in all directions.
+- Corrected front/right wing attachment and phase-dependent body overlap.
+- Profile attack: coiled windup, forward/downward plunge, recovery downstroke.
+- Foreground wing occludes the body; far recovery wing folds away, with a
+  small visible underside and membrane texture matching the near wing.
+- Owner approved the all-directions preview after the six rear stripe edits.
+
+Changed files: authoring masters, native PNG exports, source recipes,
+provenance snapshots, approval and validation records under the Stirge tree.
+No gameplay source, runtime art package, maps or public deployment changed.
+
+Validation: validate.lua passes; 174 layer/frame combinations outside the six
+rear abdomen cels match the previously reviewed complete master. All alpha
+silhouettes and approved attack frames are unchanged. Eighteen native PNGs
+retain binary alpha and intended dimensions. build-review.py checks exports
+and forward/downward attack travel. git diff --check passes. Workspace layout
+check reports inherited legacy asset/output entries outside this task.
+
+Integration note: flight PNGs are 150x130; attack PNGs deliberately expand to
+210x160 for the owner's approved forward translation and full-length wings.
+Keep the common attack origin across its three frames; do not independently
+trim/recenter or squeeze the attack back to the obsolete 97x130 canvas.
+The full master/sheet use 210x160 cells, with flight artwork unscaled at its
+original pixel coordinates. Runtime NPC/content integration is a separate step.
+
+Review preview: output/art/stirge-all-directions/index.html in this worker.
+Editable master and all historical sources remain preserved. Handoff ready.
