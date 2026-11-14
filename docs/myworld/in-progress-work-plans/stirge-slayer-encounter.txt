@@ -47,6 +47,7 @@ at least one Stirge placement after v6 goes live: removing the entire family
 would be a roster rollback, which the existing progression policy rejects.
 
 Drops and crafting
+3469 Stirge wing, uncommon independent base 1/16 extra roll; tradeable and noteable.
 3466 Sanguinary gland, independent base 1/128 component roll, using existing
 rare-component luck and contribution rules. Ordinary loot uses the standard
 128-weight budget: coins, air/water runes, tarromin/harralander, shared rare
