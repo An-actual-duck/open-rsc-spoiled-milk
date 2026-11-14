@@ -18,7 +18,7 @@
     225,
     195
   ],
-  "runtimeSha256": "d89b86244bdc4fd63368248e4dd51d4d4e6752e0d153f1c2baa73e252da1b6ca",
+  "runtimeSha256": "100845ecb1093b2cccde8ed9184ebbecb1f7340af4ff118ce0a20e5a1d39c19c",
   "sourceFrameSha256": {
     "0": "435f8d92f94bc3c01dfb313897e64066912c9e71fa8e34bffad4b3d889a804ab",
     "1": "724cf5937341aecee656c78b4b93e394e30f81c59cc80bf8e514591ea9f0539a",
@@ -38,5 +38,11 @@
     "15": "50f9328ee12a119d9c65d19be4c4b6c4237a5af2d56ce671dc67304e12ca8abd",
     "16": "8cce6f2e3ea00b971556ed01102a4e5bfd9b6ee6a47593e73beca20767ef965f",
     "17": "086b268b1e3e23a401eb9b386d15f8bacba8c1b11dd6d2ae53de9031bc98f302"
-  }
+  },
+  "attackMembraneSourceGrays": [
+    76,
+    102,
+    127,
+    183
+  ]
 }

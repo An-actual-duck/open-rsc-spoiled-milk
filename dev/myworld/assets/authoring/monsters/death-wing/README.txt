@@ -29,3 +29,9 @@ Rebuild: aseprite -b --script-param root=ABSOLUTE_ROOT --script dev/myworld/asse
 Verification: tests/myworld/test-bat-npc-wing-colors.py; both actual graphics
 installers, disk/JAR loading, all native poses, body guards, alpha and exact
 approved-front matching. No live-server or map changes.
+
+Attack palette correction: authentic attack frames use four distinct grays
+(76/102/127/183), unlike the flight frames (97/124/182). All are explicitly
+mapped into the same near-black family, with an additional darkest shade
+18/19/22. Original dark outlines and white eyes remain intact. Validation now
+rejects any leftover mid/light neutral gray in every Death wing pose.

@@ -1,7 +1,7 @@
 local root=app.params['root'];local base=root..'/dev/myworld/assets/authoring/monsters/death-wing/';local out=root..'/output/art/bat-npc-wing-colors/';local pc=app.pixelColor
 local function C(r,g,b)return pc.rgba(r,g,b,255)end
-local dark={[C(97,97,97)]=C(22,23,27),[C(124,124,124)]=C(43,45,51),[C(182,182,182)]=C(76,79,87),[C(108,68,18)]=C(42,34,27),[C(146,103,33)]=C(65,53,38),[C(175,132,58)]=C(91,76,53)}
-local membrane={[C(97,97,97)]=true,[C(124,124,124)]=true,[C(182,182,182)]=true}
+local dark={[C(97,97,97)]=C(22,23,27),[C(124,124,124)]=C(43,45,51),[C(182,182,182)]=C(76,79,87),[C(108,68,18)]=C(42,34,27),[C(146,103,33)]=C(65,53,38),[C(175,132,58)]=C(91,76,53),[C(76,76,76)]=C(18,19,22),[C(102,102,102)]=C(22,23,27),[C(127,127,127)]=C(43,45,51),[C(183,183,183)]=C(76,79,87)}
+local membrane={[C(97,97,97)]=true,[C(124,124,124)]=true,[C(182,182,182)]=true,[C(76,76,76)]=true,[C(102,102,102)]=true,[C(127,127,127)]=true,[C(183,183,183)]=true}
 -- Original authentic sprite-frame crop offsets, restored without recentering.
 local shifts={{2,16},{0,13},{13,0},{8,20},{2,13},{9,6},{37,21},{24,8},{31,0},{22,10},{29,5},{38,0},{1,14},{1,10},{13,0},{0,4},{28,8},{30,3}}
 -- Conservative central body/leg-root guards; match the approved front guard exactly.

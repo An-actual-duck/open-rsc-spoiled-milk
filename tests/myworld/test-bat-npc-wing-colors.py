@@ -28,7 +28,8 @@ for row in layout:
   for x in range(size[0]):
    original=raw.getpixel((x-sx,y-sy)) if 0<=x-sx<raw.width and 0<=y-sy<raw.height else (0,0,0,0)
    pixel=im.getpixel((x,y));assert pixel[3]==original[3]
-   if row['bodyGuardX'][0]<=x<=row['bodyGuardX'][1] and original[0:3] not in [(97,97,97),(124,124,124),(182,182,182)]:assert pixel==original
+   if row['bodyGuardX'][0]<=x<=row['bodyGuardX'][1] and original[0:3] not in [(97,97,97),(124,124,124),(182,182,182),(76,76,76),(102,102,102),(127,127,127),(183,183,183)]:assert pixel==original
+ assert not any(pixel[3] and pixel[0]==pixel[1]==pixel[2] and 50<=pixel[0]<230 for pixel in im.getdata()), 'Unmapped membrane gray in frame '+str(n)
  cell=atlas.crop(((n//3)*150,(n%3)*130,(n//3)*150+size[0],(n%3)*130+130));assert cell.tobytes()==im.tobytes()
 client=ROOT/'Client_Base/Open_RSC_Client.jar'
 run(['javac','-source','8','-target','8','-cp',client,'-d',classes,ROOT/'tests/myworld/java/BatNpcWingColorFixture.java'],'compile-client')
