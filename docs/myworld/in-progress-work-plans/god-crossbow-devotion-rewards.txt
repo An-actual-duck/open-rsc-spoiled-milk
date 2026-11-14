@@ -86,9 +86,9 @@ and other incidental secondary effects cannot qualify merely because a scimitar
 is equipped. Switching targets and landing another qualifying primary hit may
 open a separate wound on that enemy. A qualifying same-pair repeat can display:
  "You reopen the wound"
-No doubled concurrent bleed for that pair. Exact reopen timing remains to be
-settled: recommendation is refreshing that single wound's remaining three pulses
-without postponing its already scheduled next pulse; this is not yet approved.
+No doubled concurrent bleed for that pair. OWNER CONFIRMED reopening behaviour:
+refresh that single wound to three remaining pulses without postponing its
+already scheduled next pulse. Do not add a second event or an immediate pulse.
 
 A wound delivers three bonus damage pulses. Wounds have severity: Bleed1,
 Bleed2, Bleed3 and potentially higher. Zamorak is tentatively Bleed2. Higher-tier
@@ -99,9 +99,17 @@ Owner-provided opening messages, in ascending severity:
  Bleed1: "You open up a minor wound"
  Bleed2: "You open up a wound"
  Bleed3: "You open up a sizable wound"
-Exact pulse damage by severity, timing and severity replacement on reopen remain
-unsettled. Do not silently equate severity with damage per pulse or retain the
-old proposed 25%-of-hit payload as an approved rule.
+Owner proposes independent RNG damage for each of the three pulses. TENTATIVE
+per-pulse ranges (inclusive), illustrating severity rather than final balance:
+ Bleed1: 1..3 per pulse; complete three-pulse wound total3..9, expected6.
+ Bleed2: 3..5 per pulse; complete three-pulse wound total9..15, expected12.
+ Bleed3: 5..7 per pulse; complete three-pulse wound total15..21, expected18.
+Roll anew for each pulse; do not roll once and repeat the same value three times.
+These totals describe a fresh wound that finishes without being reopened, before
+any applicable damage settlement rules. Reopening refreshes remaining pulses.
+The exact ranges, cadence, higher severities and severity replacement on reopen
+remain unsettled. These tentative ranges supersede the old proposed 25%-of-hit
+payload; do not treat the example values as locked implementation balance.
 
 Implementation must compare roll and maximum on the same basis, snapshot the
 maximum for that attack at launch, and only apply a wound after a successful
@@ -170,7 +178,8 @@ wound threshold, not a separate flat proc or an additional proc roll. It is for
 scimitars, and severity rises with scimitar tier. Only the scimitar's own eligible
 primary hit can apply/reopen its bleed. Preserve the approved per-source/per-enemy
 independent wound rules above. Recipe, duration, exact scimitar tier-to-severity
-mapping, pulse damage/cadence and final balance remain undecided. The owner wants
+mapping, final pulse damage/cadence and balance remain undecided. Tentative RNG
+severity ranges and confirmed reopening behaviour are recorded above. The owner wants
 the uncoated weapon to preserve DPS, with the coating providing the increase;
 do not bake bleed's DPS into the base compensation.
 
