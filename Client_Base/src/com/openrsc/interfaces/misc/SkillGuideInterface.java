@@ -606,6 +606,8 @@ public final class SkillGuideInterface {
 				addMeleeTierGuide("Adamantite scimitar", 54, 86);
 				addMeleeTierGuide("Orichalcum scimitar", 62, 2032);
 				addMeleeTierGuide("Rune scimitar", 70, 398);
+                skillMenuEntries.add(new SkillMenuEntry("", "Scimitars favour higher rolls with a lower maximum hit"));
+                skillMenuEntries.add(new SkillMenuEntry("", "Anti-coagulant: hard primary hits open a three-pulse wound"));
 			} else if (curTab == 3) {
 				addMeleeTierGuide("Tin 2-handed sword", 1, 2000);
 				addMeleeTierGuide("Copper 2-handed sword", 8, 2011);

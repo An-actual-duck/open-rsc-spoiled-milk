@@ -57,7 +57,7 @@ public final class BattleaxeCoatings {
     }
 
     /** A fixed-size inventory exchange: validate all identities/outputs before any mutation. */
-    private static boolean exchange(Player player,Item[] sources,int... outputs) {
+    static boolean exchange(Player player,Item[] sources,int... outputs) {
         Inventory inv=player.getCarriedItems().getInventory();List<Item> items=inv.getItems();
         synchronized(items) {
             if(outputs.length>sources.length || !player.getConfig().WANT_MYWORLD)return false;

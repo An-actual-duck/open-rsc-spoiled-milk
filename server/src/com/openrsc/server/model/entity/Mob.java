@@ -1585,6 +1585,7 @@ public abstract class Mob extends Entity {
 	 * GAME LOGIC
 	 */
 	public void cure() {
+        com.openrsc.server.content.Bleed.clear(this);
 		curePoison();
 		extinguish();
 		ElderGreenDragonArmorEffect.clearBurn(this);
@@ -2244,6 +2245,7 @@ public abstract class Mob extends Entity {
 	public long advanceCombatLifecycle(
 			final CombatEngagementTerminalReason reason) {
 		com.openrsc.server.content.Slow.clear(this);
+        com.openrsc.server.content.Bleed.clear(this);
         com.openrsc.server.model.combat.AttackState.clear(this);
 		terminateCombatOwnership(reason);
 		return combatLifecycle.incrementAndGet();
