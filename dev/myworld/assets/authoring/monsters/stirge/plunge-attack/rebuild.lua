@@ -146,6 +146,26 @@ for i,sp in ipairs(specs)do
  spr.frames[frame].duration=sp.duration
  anchors[#anchors+1]={pose=sp.name,thorax={sp.cx,sp.cy},mouth=mouth,needle_tip=tip,needle_angle=14,legs=legRecords}
 end
+-- Finish the dorsal abdomen bands in rear/right and rear views only.
+-- Same three anatomical band stations as the approved front/profile abdomen.
+local rearPoses={{71,35,-.57,.822,.9,1},{70,34,-.57,.822,.9,1},{71,34,-.57,.822,.9,1},{75,35,0,1,1,1},{75,34,0,1,1,1},{76,34,0,1,1,1}}
+for n,po in ipairs(rearPoses)do
+ local frame=9+n;local l=layers['Striped abdomen and moth thorax'];local cel=l:cel(frame)
+ local body=Image(W,H,ColorMode.RGB);body:drawImage(cel.image,cel.position);local mask=Image(body)
+ local cx,cy,ax,ay,sx,sy=table.unpack(po)
+ local function T(u,v)return {rnd(cx+ay*u*sx+ax*v*sy),rnd(cy-ax*u*sx+ay*v*sy)}end
+ for j,v in ipairs({13,20,26})do
+  local w=({7,6,3})[j];local uv={{-w+1,v-1},{-3,v},{0,v+1},{3,v},{w-1,v-1},{w-1,v+1},{3,v+2},{0,v+3},{-3,v+2},{-w+1,v+1}}
+  if j==3 then uv={{-2,v},{0,v+1},{2,v},{2,v+1},{0,v+3},{-2,v+1}}end
+  local pts={};for _,p in ipairs(uv)do pts[#pts+1]=T(p[1],p[2])end
+  polygon(body,pts,C(131,94,53))
+  path(body,{T(-w+2,v),T(-2,v+1),T(0,v+2),T(2,v+1)},C(175,139,77),1)
+  path(body,{T(-w+2,v+2),T(0,v+4),T(w-2,v+2)},C(64,33,26),1)
+ end
+ -- Preserve the complete original body silhouette and transparent canvas.
+ for y=0,H-1 do for x=0,W-1 do if pc.rgbaA(mask:getPixel(x,y))==0 then body:drawPixel(x,y,0)end end end
+ spr:newCel(l,frame,body,Point(0,0))
+end
 spr:saveAs(base..'stirge-plunge-attack.aseprite')
 local sheet=Image(630,960,ColorMode.RGB)
 for n=0,17 do local im=Image(n>=15 and W or 150,n>=15 and H or 130,ColorMode.RGB);im:drawSprite(spr,n+1);im:saveAs(base..string.format('frame-%02d.png',n));im:saveAs(out..string.format('frame-%02d.png',n));sheet:drawImage(im,Point(n%3*W,math.floor(n/3)*H))end

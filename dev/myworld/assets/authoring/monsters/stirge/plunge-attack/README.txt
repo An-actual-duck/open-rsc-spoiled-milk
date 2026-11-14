@@ -61,3 +61,12 @@ Texture finish: far-wing membrane uses native mottled pixels sampled from the
 approved near-wing plate, with the underside kept darker. Existing silhouette,
 ridge, fold edge and dark ribs are retained. All other cels are unchanged.
 Frozen input: inputs/recovery-before-texture-match.aseprite.
+
+Final rear stripe finish: rear/right frames 09–11 and rear frames 12–14 now
+show the same three abdomen-band stations (13/20/26 body-local pixels) as
+front/profile, with tan bands, darker lower edges and tapered curved ends.
+Paint is clipped to the original body alpha. All other layers, all front and
+profile flight frames, and the entire approved attack remain unchanged.
+inputs/before-rear-stripes.aseprite preserves the approved pre-stripe master.
+The current validate.lua checks 174 unchanged layer/frame combinations and
+all silhouettes, permitting edits only to the six rear abdomen cels.

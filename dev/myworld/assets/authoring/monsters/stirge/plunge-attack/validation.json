@@ -1,6 +1,14 @@
 {
-  "unchanged_flight_frames": 15,
-  "unchanged_flight_layer_frames": 135,
+  "unchanged_front_profile_flight_frames": 9,
+  "rear_abdomen_striped_frames": [
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+  ],
+  "unchanged_layer_frames_vs_before_stripes": 174,
   "attack_canvas": [
     210,
     160
@@ -49,27 +57,27 @@
     },
     {
       "frame": 9,
-      "sha256": "cd05c88c8d522013e9f7275a52bc0ad93f5795a9130c07c611171381597cf8f5"
+      "sha256": "ae88c80db20d59f36e9867585dc8ab53d1d6af8970dcea57ae3f8c4a3a0ac560"
     },
     {
       "frame": 10,
-      "sha256": "9835a34ac068cf90c7b3866c6cf2ad87d6e87bc988e9b5916c7919d568b359a5"
+      "sha256": "576a6d7a90c7bcd89ea348ad436c738eab7783706d18158c3a6f641dd1ba548a"
     },
     {
       "frame": 11,
-      "sha256": "af65266e3c5de1342253b2edfd2c1dc530830d498cada2759b6bdbada10820b4"
+      "sha256": "35770daf1eb7267eb9af36ce405f91d68e3eefdf2aa5d316a256cdbe44ef788c"
     },
     {
       "frame": 12,
-      "sha256": "40f3bf97b40c45785f2fc2c18adcb0299a40271da52adf3fc9c4d938e35f858a"
+      "sha256": "0b24aee95fdd484dbd63db0335185fc66b13d9daf4858bd0f673f745960688d6"
     },
     {
       "frame": 13,
-      "sha256": "d5780d67b7e3c92b8daa81d676452c3dc159d342db728e02897fed44ad4b5aa3"
+      "sha256": "cd980c95e373fb2c34503a3d904dfcce29c20226b77cf76f1d22003ef4b93ef5"
     },
     {
       "frame": 14,
-      "sha256": "764a87c3559ec39e367b4307e2a5cef39258c0a255c29690dfd166bdbbd3f77b"
+      "sha256": "7b9fd91bde20a40a390424d408171dfd62b1fb57a1ef3696329a5a4fa782867c"
     },
     {
       "frame": 15,
