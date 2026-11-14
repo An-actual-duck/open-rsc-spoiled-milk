@@ -21,15 +21,15 @@ public final class MonsterSlayerReleaseCharacterization {
 
     public static void run() {
         MonsterSlayerData current = MonsterSlayerData.load(Paths.get("conf/server/defs/extras/MonsterSlayer.json"), CATALOG, true);
-        check(current.getRosterVersion() == 5, "release is a new roster version");
+        check(current.getRosterVersion() == 6, "release is a new roster version");
         MonsterSlayerData disabled = MonsterSlayerData.load(Paths.get("conf/server/defs/extras/MonsterSlayer.json"), CATALOG, false);
         check(disabled.getRosterVersion() == 3 && disabled.getTask("champions.death_wings") == null,
             "disabled profile retains v3 and excludes release additions");
-        for (int version = 1; version <= 4; version++) {
+        for (int version = 1; version <= 5; version++) {
             MonsterSlayerData old = current.historicalRoster(version);
             check(old != null && old.getRosterVersion() == version, "historical roster identity " + version);
-            check(old.getTask("champions.death_wings") == null, "historical task lists unchanged " + version);
-            check((old.getTask("falador.giant_frog") != null) == (version == 2 || version == 4), "historical rollout identity");
+            check((old.getTask("champions.death_wings") != null) == (version == 5), "historical task lists unchanged " + version);
+            check((old.getTask("falador.giant_frog") != null) == (version == 2 || version == 4 || version == 5), "historical rollout identity");
             check((old.getTask("falador.bears") != null) == (version <= 2), "historical retirement identity");
             int tier = 0;
             for (Contact contact : old.getContactsInChallengeOrder()) {
@@ -51,7 +51,7 @@ public final class MonsterSlayerReleaseCharacterization {
         deathWingBoundary(current);
         rollbackFailsClosed(current, disabled);
         System.out.println("Monster Slayer release migration: PASS " + checks + " assertions, " + migrations
-            + " synthetic v1-v4 migrations; ranks, pending identities, balances, retired tasks, relog and rollback");
+            + " synthetic v1-v5 migrations; ranks, pending identities, balances, retired tasks, relog and rollback");
     }
 
     private static MonsterSlayerState.Snapshot seed(MonsterSlayerData data, int tier, int cursor, String active, int kills) {

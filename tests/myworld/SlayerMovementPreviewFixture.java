@@ -190,7 +190,7 @@ public final class SlayerMovementPreviewFixture {
 			}
 			count++;
 		}
-		require(count == 8 && SlayerMovementPreview.forNpc(862) == null, "scope");
-		System.out.println("PASS eight previews: definitions, 120 source frames, all directions, pixel fidelity, cadence and idle");
+		require(count == 9 && SlayerMovementPreview.forNpc(862) == null, "scope");
+		System.out.println("PASS nine previews: definitions, approved source frames, all directions, pixel fidelity, cadence and idle");
 	}
 }

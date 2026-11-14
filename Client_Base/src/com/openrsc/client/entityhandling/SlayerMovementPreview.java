@@ -9,7 +9,8 @@ public enum SlayerMovementPreview {
 	TERROR_DOG(867, "Terror dog", "terror-dog", 100, 100, 100, 100, 100, 100),
 	BLOODVELD(868, "Bloodveld", "bloodveld", 120, 120, 120, 120, 120, 120, 220),
 	DARK_BEAST(869, "Dark beast", "dark-beast", 120, 120, 120, 120, 120, 120, 120),
-	ABYSSAL_DEMON(870, "Abyssal demon", "abyssal-demon", 100, 100, 100, 100, 100, 112, 144);
+	ABYSSAL_DEMON(870, "Abyssal demon", "abyssal-demon", 100, 100, 100, 100, 100, 112, 144),
+    STIRGE(882, "Stirge", "stirge", 210, 210, 210, 210, 210, 210);
 
 	public final int npcId;
 	public final String displayName;
@@ -37,11 +38,11 @@ public enum SlayerMovementPreview {
 		return result;
 	}
 	public int[] columnWidths() { return columns.clone(); }
-	public int frameHeight() { return this == ABYSSAL_DEMON ? 112 : this == BLOODVELD || this == DARK_BEAST ? 110 : 100; }
+	public int frameHeight() { return this == STIRGE ? 160 : this == ABYSSAL_DEMON ? 112 : this == BLOODVELD || this == DARK_BEAST ? 110 : 100; }
 	// Uniform 2.4 world-unit scale per native pixel, including the Bloodveld's
 	// larger presentation canvas. No per-direction rescaling or pixel rewriting.
-	public int cameraWidth() { return columns[0] * 12 / 5; }
-	public int cameraHeight() { return frameHeight() * 12 / 5; }
+	public int cameraWidth() { return this == STIRGE ? 315 : columns[0] * 12 / 5; }
+	public int cameraHeight() { return this == STIRGE ? 240 : frameHeight() * 12 / 5; }
 
 	public int movementFrame(int stepFrame, int walkModel, boolean moving) {
 		if (!moving) return 0;
@@ -53,8 +54,8 @@ public enum SlayerMovementPreview {
 	}
 
 	public static SlayerMovementPreview forNpc(int id) {
-		int index = id - GIANT_FROG.npcId;
-		return index >= 0 && index < LOOKUP.length ? LOOKUP[index] : null;
+		for(SlayerMovementPreview preview:LOOKUP)if(preview.npcId==id)return preview;
+        return null;
 	}
 
 	public static boolean isAnimation(String name) {

@@ -2246,6 +2246,7 @@ public class ActionSender {
 		com.openrsc.server.content.monsterslayer.GiantFrogCombat.appendStatuses(player, statuses);
 		com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.appendStatuses(player, statuses);
 		com.openrsc.server.content.monsterslayer.CockatriceCombat.appendStatuses(player, statuses);
+        com.openrsc.server.content.monsterslayer.StirgeCombat.appendStatuses(player, statuses);
 		com.openrsc.server.content.monsterslayer.BansheeCombat.appendStatuses(player, statuses);
 		com.openrsc.server.content.monsterslayer.TerrorDogCombat.appendStatuses(player, statuses);
 		com.openrsc.server.content.monsterslayer.DarkBeastCombat.appendStatuses(player, statuses);

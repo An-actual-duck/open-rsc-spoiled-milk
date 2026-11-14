@@ -660,6 +660,8 @@ public class CombatEvent extends GameTickEvent {
 			hitter, target, damageResult.getActualDamage());
 		if (!attackSuppressed) com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.onDamage(
 			hitter, target, damageResult.getActualDamage());
+        if(!offhand&&!damageResult.isNonCorporealBlocked())com.openrsc.server.content.monsterslayer.StirgeCombat.primaryHit(
+            hitter,target,damageResult.getActualDamage(),attackSuppressed);
 		com.openrsc.server.content.monsterslayer.BloodveldCombat.lifesteal(hitter, damageResult.getActualDamage());
 		com.openrsc.server.content.monsterslayer.BansheeCombat.onDamage(target, damageDealt, wail);
 		Summoning.applySummonLifesteal(hitter, target, damageDealt);

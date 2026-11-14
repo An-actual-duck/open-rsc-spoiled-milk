@@ -7093,11 +7093,13 @@ public class EntityHandler {
 					? "A serpent warrior wielding two scimitars" : preview == SlayerMovementPreview.TERROR_DOG
 					? "A vicious hound driven into a feeding frenzy by its pack" : preview == SlayerMovementPreview.BLOODVELD
 					? "A ravenous creature with a grasping tongue" : preview == SlayerMovementPreview.DARK_BEAST
-					? "A horned beast crackling with dangerous static" : "A shifting horror of sticky flesh and exposed bone", "",
-				1, 1, preview == SlayerMovementPreview.GIANT_FROG ? 30 : preview == SlayerMovementPreview.COCKATRICE ? 45
+					? "A horned beast crackling with dangerous static" : preview == SlayerMovementPreview.STIRGE
+                    ? "A blood-drinking pest whose saliva keeps wounds open." : "A shifting horror of sticky flesh and exposed bone", "",
+                preview == SlayerMovementPreview.STIRGE ? 60 : 1, preview == SlayerMovementPreview.STIRGE ? 50 : 1,
+                preview == SlayerMovementPreview.STIRGE ? 60 : preview == SlayerMovementPreview.GIANT_FROG ? 30 : preview == SlayerMovementPreview.COCKATRICE ? 45
 					: preview == SlayerMovementPreview.BANSHEE ? 60 : preview == SlayerMovementPreview.NAGA ? 75
 					: preview == SlayerMovementPreview.TERROR_DOG ? 90 : preview == SlayerMovementPreview.BLOODVELD ? 150
-					: preview == SlayerMovementPreview.DARK_BEAST ? 200 : 250, 1,
+					: preview == SlayerMovementPreview.DARK_BEAST ? 200 : 250, preview == SlayerMovementPreview.STIRGE ? 50 : 1,
 				preview.combatEnabled(),
 				new int[]{0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 				0, 0, 0, 0, preview.cameraWidth(), preview.cameraHeight(), 10, 7, 5, preview.npcId));
@@ -7153,6 +7155,9 @@ public class EntityHandler {
 	}
 
     private static void addScimitarCoatingDefinitions() {
+        for(int id=3462;id<=3464;id++)setCustomItemDefinition(id,new ItemDef("Bug Off ("+(3465-id)+")", "Keeps pesky stirges from drinking your blood.", "Spray",0,-1,"external-png:bug-off",false,false,0,0,false,true,false,id));
+        setCustomItemDefinition(3465,new ItemDef("Empty Bug Off can","An empty can of Bug Off.","",0,-1,"external-png:bug-off",false,false,0,0,false,true,false,3465));
+        setCustomItemDefinition(3466,new ItemDef("Sanguinary gland","A stirge gland whose secretions keep blood from clotting.","",100,-1,"external-png:sanguinary-gland",false,false,0,0,false,false,true,3466));
         // Anti-coagulant has an existing vial icon; coated weapons retain their base art.
         setCustomItemDefinition(3447, new ItemDef("Anti-coagulant", "Keeps deep scimitar wounds bleeding. Apply to an uncoated scimitar.", "", 300, 48, "items:48", false, false, 0, 0x8B2438, true, false, false, 3447));
         int[][] antiCoagulantItems = {{1999,3448},{2010,3449},{82,3450},{83,3451},{84,3452},{427,3453},{2155,3454},{3117,3455},{85,3456},{2021,3457},{86,3458},{2032,3459},{398,3460},{3265,3461}};
@@ -8234,6 +8239,7 @@ public class EntityHandler {
 		animations.add(new AnimationDef("gorak", "npc", 0, 0, true, false, 0));
 		slayerPreviewAnimations.clear();
 		for (SlayerMovementPreview preview : SlayerMovementPreview.values()) {
+            if(preview == SlayerMovementPreview.STIRGE) continue; // Append after all published equipment IDs.
 			slayerPreviewAnimations.put(preview, animations.size());
 			animations.add(new AnimationDef(preview.animationName(), "npc", 0, 0,
 				preview.combatEnabled(), false, 0));
@@ -8258,6 +8264,9 @@ public class EntityHandler {
             animations.add(new AnimationDef("crossbow", "equipment", 0x19171D, 0, false, false, 0)); //1171: Zamorak crossbow
             animations.add(new AnimationDef("crossbow", "equipment", 0x8BA848, 0, false, false, 0)); //1172: Guthix crossbow
 		}
+        SlayerMovementPreview stirge=SlayerMovementPreview.STIRGE;
+        slayerPreviewAnimations.put(stirge,animations.size());
+        animations.add(new AnimationDef(stirge.animationName(),"npc",0,0,true,false,0));
 	}
 
 	private static void verifyAnimationDefinition(int appearanceId, String expectedName, int expectedColour) {

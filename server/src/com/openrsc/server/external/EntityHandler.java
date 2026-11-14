@@ -255,6 +255,7 @@ public final class EntityHandler {
 			loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/SlayerMovementPreviewNpcDefs.json");
 			loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/MonsterSlayerTowerNpcDefs.json");
 			loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/GemDragonNpcDefs.json");
+            loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/StirgeNpcDefs.json");
 		}
 		//loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/NpcDefsExpansion.json");
 		patchNpcs();
