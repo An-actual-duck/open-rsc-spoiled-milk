@@ -62,6 +62,40 @@ weapon/cape swap and removal, book change, death/relog restoration, real-ammo
 fallback and override, no consumed/dropped free ammo, damage tiers and ordinary
 crossbow regression. Final equipped visuals also need their own native review.
 
+Zamorak bleed — owner-directed application design
+------------------------------------------------
+Bleed opens a wound from a sufficiently hard hit, rather than stacking poison-
+like potency or using a separate generic proc roll. Proposed starting threshold
+is damage >=70% of that attack's maximum hit (70% remains tentative). Compare
+integers using damage*100 >= maximum*70, equivalent to ceil(maximum*0.70).
+A qualifying ordinary hit opens a wound; a critical maximum roll also qualifies.
+The RNG comes from the damage roll itself, without another chance-to-bleed test.
+A wound delivers three bonus damage pulses, a finite extra-damage payload.
+Exact payload size and pulse timing are not yet agreed: prior 25%-of-hit and
+four-tick suggestions remain suggestions, not approved balancing values.
+No poison-like hit accumulation is desired. Reapplication while a wound is
+already active still needs a final rule; recommendation is to let the existing
+three pulses finish without stacking or refreshing from further hard hits.
+
+Implementation must compare roll and maximum on the same basis, snapshot the
+maximum for that attack at launch, and only apply a wound after a successful
+positive primary hit. Blocked/suppressed/missed attacks must not bleed. Avoid
+comparing a modified/mitigated final hit against an unrelated unmodified max;
+preserve the intended synergy that a delivered critical maximum roll qualifies.
+Existing AttackRoll retains critical identity but has no maximum field; the
+comparable maximum needs deliberate launch/settlement plumbing, not inference
+from the equipped weapon after a projectile is already in flight. Secondary
+bleed pulses must not recursively open wounds or trigger more weapon effects.
+Saradomin and Guthix unique mechanics are still under discussion; earlier
+Revelation and Briar Seed examples are proposals only.
+
+Future idea only — Anti-coagulant coating
+----------------------------------------
+Owner requested recording a later coating named Anti-coagulant. Coated weapon
+hits would have a chance to cause bleed, providing another application method
+for the same wound mechanic. This is not part of current implementation.
+Chance, recipe, eligible weapons, duration and other balance rules are undecided.
+
 The notes below preserve earlier design exploration and are HISTORICAL wherever
 they conflict with this approved design (especially automatic reservation,
 bundled offense50 and the old hypothetical Worship gate).
