@@ -133,10 +133,41 @@ This is the unique effect of Saradomin's Divine Bolts while its prayer is active
 
 Future idea only — Anti-coagulant coating
 ----------------------------------------
-Owner requested recording a later coating named Anti-coagulant. Coated weapon
-hits would have a chance to cause bleed, providing another application method
-for the same wound mechanic. This is not part of current implementation.
-Chance, recipe, eligible weapons, duration and other balance rules are undecided.
+Owner requested recording a later coating named Anti-coagulant, now specifically
+for SCIMITARS. Alongside it, the owner wants scimitars to favour higher damage
+rolls while reducing their maximum, aiming to preserve current uncoated DPS and
+exceed it when coated with bleed. Keep this distinct from stacking poison.
+No scimitar/coating runtime changes are implemented by these design notes.
+
+The coating was initially described as chance-based; the owner's newer reason
+for skewing scimitar rolls suggests the same hard-hit wound threshold. A question
+is pending: hard-hit threshold alone, threshold plus a proc chance, or flat proc
+chance. Do not silently choose a rule. A flat independent proc chance does not
+become more frequent just because the ordinary damage roll skews higher.
+Recipe, duration, scimitar variant scope, bleed payload/cadence and final balance
+remain undecided. The owner wants the uncoated weapon to preserve DPS, with the
+coating providing the increase; do not bake bleed's DPS into the base compensation.
+
+Illustrative balancing prototype, NOT approved final numbers: current player
+ordinary rolls use1..M before defense. For a hypothetical old maximum20, uniform
+1..20 averages10.5. A weighted1..16 distribution with weights17+8*r likewise
+averages10.5, and qualifying rolls against70% of the reduced maximum rise from
+35% (14..20) to47.426% (12..16). This demonstrates the requested interaction
+without guaranteeing a minimum hit or increasing attack speed. It is a mathematical
+example, not a commitment to those weights, ceiling reduction or proc chance.
+The hard-hit threshold would use the actual reduced maximum, not the old cap.
+
+Matching raw averages is insufficient for real DPS. Actual code subtracts an
+independent defense roll and clamps at zero. Exact illustrative expectations:
+ defense maximum0: old10.5, prototype10.5;
+ defense maximum5: old7.7, prototype7.5912;
+ defense maximum10: old5.825, prototype5.4974;
+ defense maximum20: old3.325, prototype2.925.
+Actual tuning needs representative tiers/skills and weak/medium/strong defenses,
+plus critical hits, Combat Luck, damage-roll biases, buffs and offhand behavior.
+A reduced ceiling also reduces critical-hit damage; include that in balancing.
+If implemented later, use a focused gameplay branch and meaningful distribution/
+combat fixtures rather than silently adding it to the inventory-art stage.
 
 The notes below preserve earlier design exploration and are HISTORICAL wherever
 they conflict with this approved design (especially automatic reservation,
