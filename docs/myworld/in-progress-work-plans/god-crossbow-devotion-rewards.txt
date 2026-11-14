@@ -62,20 +62,46 @@ weapon/cape swap and removal, book change, death/relog restoration, real-ammo
 fallback and override, no consumed/dropped free ammo, damage tiers and ordinary
 crossbow regression. Final equipped visuals also need their own native review.
 
-Zamorak bleed — owner-directed application design
-------------------------------------------------
-Bleed opens a wound from a sufficiently hard hit, rather than stacking poison-
-like potency or using a separate generic proc roll. Proposed starting threshold
-is damage >=70% of that attack's maximum hit (70% remains tentative). Compare
-integers using damage*100 >= maximum*70, equivalent to ceil(maximum*0.70).
+Universal bleed — owner-directed application design
+---------------------------------------------------
+ALL bleed sources use the hard-hit wound mechanic, including Anti-coagulant on
+scimitars. No independent generic proc chance is added. Proposed starting
+threshold is damage >=70% of that attack's maximum hit (70% remains tentative).
+Compare integers using damage*100 >= maximum*70, equivalent to ceil(maximum*0.70).
 A qualifying ordinary hit opens a wound; a critical maximum roll also qualifies.
 The RNG comes from the damage roll itself, without another chance-to-bleed test.
-A wound delivers three bonus damage pulses, a finite extra-damage payload.
-Exact payload size and pulse timing are not yet agreed: prior 25%-of-hit and
-four-tick suggestions remain suggestions, not approved balancing values.
-No poison-like hit accumulation is desired. Reapplication while a wound is
-already active still needs a final rule; recommendation is to let the existing
-three pulses finish without stacking or refreshing from further hard hits.
+
+LATEST OWNER CLARIFICATION: one active wound PER SOURCE PER ENEMY. This supersedes
+the earlier question reply saying one wound total per source. A player may wound
+several enemies simultaneously, and several players may independently wound the
+same enemy. Two qualifying hits by one player against one enemy must never
+create two concurrent wounds for that pair. Track source identity and target
+lifetime explicitly; never merge different players' bleeds into poison-like
+shared target potency. Keep each wound's damage, severity and attribution separate.
+
+Only an eligible PRIMARY attack from the bleed-capable weapon can open/reopen
+its wound. For the coating, that is direct primary scimitar damage itself.
+Splash/AoE, reflected damage, bleed/poison/burn, summons, unrelated weapon damage
+and other incidental secondary effects cannot qualify merely because a scimitar
+is equipped. Switching targets and landing another qualifying primary hit may
+open a separate wound on that enemy. A qualifying same-pair repeat can display:
+ "You reopen the wound"
+No doubled concurrent bleed for that pair. Exact reopen timing remains to be
+settled: recommendation is refreshing that single wound's remaining three pulses
+without postponing its already scheduled next pulse; this is not yet approved.
+
+A wound delivers three bonus damage pulses. Wounds have severity: Bleed1,
+Bleed2, Bleed3 and potentially higher. Zamorak is tentatively Bleed2. Higher-tier
+scimitars should open more severe wounds; the exact material-to-severity mapping
+is not yet approved. Anti-coagulant's flavour is that it prevents the wound from
+stopping bleeding, rather than being the reason a stronger weapon cuts deeper.
+Owner-provided opening messages, in ascending severity:
+ Bleed1: "You open up a minor wound"
+ Bleed2: "You open up a wound"
+ Bleed3: "You open up a sizable wound"
+Exact pulse damage by severity, timing and severity replacement on reopen remain
+unsettled. Do not silently equate severity with damage per pulse or retain the
+old proposed 25%-of-hit payload as an approved rule.
 
 Implementation must compare roll and maximum on the same basis, snapshot the
 maximum for that attack at launch, and only apply a wound after a successful
@@ -139,14 +165,14 @@ rolls while reducing their maximum, aiming to preserve current uncoated DPS and
 exceed it when coated with bleed. Keep this distinct from stacking poison.
 No scimitar/coating runtime changes are implemented by these design notes.
 
-The coating was initially described as chance-based; the owner's newer reason
-for skewing scimitar rolls suggests the same hard-hit wound threshold. A question
-is pending: hard-hit threshold alone, threshold plus a proc chance, or flat proc
-chance. Do not silently choose a rule. A flat independent proc chance does not
-become more frequent just because the ordinary damage roll skews higher.
-Recipe, duration, scimitar variant scope, bleed payload/cadence and final balance
-remain undecided. The owner wants the uncoated weapon to preserve DPS, with the
-coating providing the increase; do not bake bleed's DPS into the base compensation.
+Owner has now settled application: Anti-coagulant uses the universal hard-hit
+wound threshold, not a separate flat proc or an additional proc roll. It is for
+scimitars, and severity rises with scimitar tier. Only the scimitar's own eligible
+primary hit can apply/reopen its bleed. Preserve the approved per-source/per-enemy
+independent wound rules above. Recipe, duration, exact scimitar tier-to-severity
+mapping, pulse damage/cadence and final balance remain undecided. The owner wants
+the uncoated weapon to preserve DPS, with the coating providing the increase;
+do not bake bleed's DPS into the base compensation.
 
 Illustrative balancing prototype, NOT approved final numbers: current player
 ordinary rolls use1..M before defense. For a hypothetical old maximum20, uniform
