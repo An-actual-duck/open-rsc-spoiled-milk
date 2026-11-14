@@ -18,7 +18,7 @@ local function polygon(im,pts,color)
  local miny,maxy=H,0;for _,p in ipairs(pts)do miny=math.min(miny,p[2]);maxy=math.max(maxy,p[2])end
  for y=miny,maxy do local xs={};for i,a in ipairs(pts)do local b=pts[i%#pts+1];if (a[2]<=y and b[2]>y)or(b[2]<=y and a[2]>y)then xs[#xs+1]=a[1]+(y-a[2])*(b[1]-a[1])/(b[2]-a[2])end end;table.sort(xs);for i=1,#xs-1,2 do for x=math.ceil(xs[i]),math.floor(xs[i+1])do im:drawPixel(x,y,color)end end end
 end
-local function recoveryFarWing()
+local function recoveryFarWing(texture)
  local im=Image(W,H,ColorMode.RGB)
  local edge=C(91,45,27);local deep=C(112,48,31);local rust=C(153,61,28);local lit=C(193,85,32);local ridge=C(218,113,42)
  -- Narrow underside turns below the overlapping top surface at the distal fold.
@@ -30,8 +30,23 @@ local function recoveryFarWing()
  polygon(im,top,edge)
  polygon(im,{{87,59},{79,53},{70,49},{62,46},{58,48},{55,53},{54,59},{55,63},{60,62},{65,60},{70,62},{76,60},{83,62}},rust)
  polygon(im,{{83,58},{74,51},{63,47},{59,49},{57,53},{64,52},{71,55},{76,56},{79,59}},lit)
- -- Sparse existing-palette membrane texture follows the broad upper panel.
- for y=47,63 do for x=54,86 do if im:getPixel(x,y)==rust and (x*17+y*11)%23<3 then im:drawPixel(x,y,lit)end end end
+ -- Transfer native mottled membrane pixels from the approved near wing.
+ -- Only existing interior fill colors change; silhouette, ridge and ribs stay fixed.
+ for y=44,83 do for x=52,88 do
+  local baseColor=im:getPixel(x,y)
+  if baseColor==rust or baseColor==lit or baseColor==deep then
+   local tx,ty=63+(x*3+y)%19,76+(y*2+x)%23
+   local donor=nil
+   for k=0,30 do
+    local color=texture:getPixel(63+(tx-63+k%5)%19,76+(ty-76+math.floor(k/5))%23)
+    if color==rust or color==lit or color==ridge then donor=color;break end
+   end
+   if donor then
+    if baseColor==deep then donor=donor==rust and deep or rust end
+    im:drawPixel(x,y,donor)
+   end
+  end
+ end end
  path(im,{{88,59},{79,53},{70,48},{62,44},{58,46},{55,51},{53,58},{54,64}},ridge,1)
  path(im,{{61,47},{65,53},{65,60},{60,63}},edge,1)
  path(im,{{62,47},{73,54},{76,60}},edge,1)
@@ -110,7 +125,7 @@ for i,sp in ipairs(specs)do
   if i==3 then
    local front=transform(plate,81,36,sp.cx+3,sp.cy-9,-64,1,1)
    spr:newCel(near,frame,front,Point(0,0))
-   spr:newCel(layers['Rust bat wings'],frame,recoveryFarWing(),Point(0,0))
+   spr:newCel(layers['Rust bat wings'],frame,recoveryFarWing(front),Point(0,0))
    -- Continuous thorax/backing between wing mounts, rather than thin gold
    -- abdominal marks and exposed far-leg fragments reading as extra limbs.
    polygon(torso,{{77,60},{85,59},{88,64},{86,71},{80,76},{65,81},{58,77},{60,70},{65,64}},C(83,39,29))

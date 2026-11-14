@@ -43,3 +43,19 @@ for _,l in ipairs(previous.layers)do
 end
 print('PASS: '..checked..' layer/frame combinations match pre-revision master, including near wing, legs, head, and first two attack poses.')
 previous:close();current:close()
+
+-- Texture-only finish: all other cels and the far-wing alpha mask are fixed.
+local previous=app.open(base..'/inputs/recovery-before-texture-match.aseprite')
+local current=app.open(base..'/stirge-plunge-attack.aseprite')
+for _,l in ipairs(previous.layers)do local n=lookup(current,l.name)
+ for f=1,18 do
+  if f~=18 or l.name~='Rust bat wings'then equal(full(l,f),full(n,f))end
+ end
+end
+local a=full(lookup(previous,'Rust bat wings'),18);local b=full(lookup(current,'Rust bat wings'),18)
+for y=0,159 do for x=0,209 do
+ assert(pc.rgbaA(a:getPixel(x,y))==pc.rgbaA(b:getPixel(x,y)),'Far-wing silhouette changed')
+ if a:getPixel(x,y)==pc.rgba(91,45,27,255)then assert(a:getPixel(x,y)==b:getPixel(x,y),'Far-wing rib changed')end
+end end
+print('PASS: texture-only far-wing revision; silhouette, ribs and other 179 layer/frame combinations unchanged.')
+previous:close();current:close()

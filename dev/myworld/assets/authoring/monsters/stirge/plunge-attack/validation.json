@@ -81,11 +81,7 @@
     },
     {
       "frame": 17,
-      "sha256": "e9887520b214a258271389a68f9e9df985f1db502ba4240ba1ebe3aebdf78821"
+      "sha256": "5e5743a42fccc70a1d8e3505b1f701e894103b2731fac7cfca57b0cf3b06125f"
     }
-  ],
-  "far_wing_revision_changed_frames": [
-    17
-  ],
-  "unchanged_layer_frames_vs_reviewed_master": 178
+  ]
 }

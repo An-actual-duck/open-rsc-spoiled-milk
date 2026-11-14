@@ -56,3 +56,8 @@ The old broad, camera-facing far plate is replaced. Continuous brown thorax
 backing fills the inter-wing gap. Near-wing pixels, all leg pixels and the
 head are unchanged; all first/second attack and all flight cels are identical.
 Frozen reviewed base: inputs/recovery-before-far-wing-fix.aseprite.
+
+Texture finish: far-wing membrane uses native mottled pixels sampled from the
+approved near-wing plate, with the underside kept darker. Existing silhouette,
+ridge, fold edge and dark ribs are retained. All other cels are unchanged.
+Frozen input: inputs/recovery-before-texture-match.aseprite.
