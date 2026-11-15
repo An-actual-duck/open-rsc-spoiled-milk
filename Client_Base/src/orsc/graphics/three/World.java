@@ -3361,7 +3361,8 @@ public final class World {
 		TerrainModelInputSource source,
 		int vertexX,
 		int vertexZ) {
-		if (plane != 0) {
+		// Native upper floors have no base ground; all other presentation planes do.
+		if (plane == 1 || plane == 2) {
 			return TerrainVertexBlendInput.NONE;
 		}
 
@@ -3450,7 +3451,7 @@ public final class World {
 				boolean collisionObject = false;
 				boolean waterLike = false;
 				int decorID = source.tileDecorationID(x, z);
-				boolean terrainVariationEligible = plane == 0
+				boolean terrainVariationEligible = plane != 1 && plane != 2
 					&& WorldBuilderTerrainOverlay.usesBaseColor(decorID);
 				boolean lavaGlowEmitter = decorID == LAVA_GLOW_OVERLAY_ID;
 				if (WorldBuilderTerrainOverlay.isBlockingBaseColor(decorID)) {
