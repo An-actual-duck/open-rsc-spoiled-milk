@@ -11043,9 +11043,9 @@ public final class mudclient implements Runnable {
 			boolean hideSummonDuringArrival = shouldHideSummonDuringArrival(npc);
 			if (!hideSummonDuringArrival) {
             int[] wieldAnimations = null;
-            boolean reuseBodyPreparation = BROWSER_NPC_LAYER_PREPARATION
+            boolean reuseBodyPreparation = this.getSurface().isGpuOwnedSceneSpriteCaptureActive()
+                && BROWSER_NPC_LAYER_PREPARATION
                 && Renderer3DSettings.isBrowserPresentationAvailable()
-                && this.getSurface().isGpuOwnedSceneSpriteCaptureActive()
                 && this.getSurface().isBrowserFramePreparationActive();
             for (var15 = 0; var15 < 12; ++var15) {
                 var16 = this.getAnimDirLayer_To_CharLayer()[var11][var15];
