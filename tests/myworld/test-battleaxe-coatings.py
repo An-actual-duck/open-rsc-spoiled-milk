@@ -18,11 +18,12 @@ well_classic.update(str(row['nativeSprite'])for row in wells['supplementalOrigin
 before=subprocess.check_output(['git','show','3925067ce:Client_Base/Cache/video/Custom_Sprites.osar'],cwd=ROOT)
 old={g+':'+k:hashlib.sha256(b).hexdigest()for g,e in gen.archive(gzip.decompress(before))for k,b in e}
 new={g+':'+k:hashlib.sha256(b).hexdigest()for g,e in gen.archive(gzip.decompress((ROOT/'Client_Base/Cache/video/Custom_Sprites.osar').read_bytes()))for k,b in e}
-assert set(new)-set(old)=={'equipment:viscousbattleaxe'}|well_custom
+subprocess.run(['python3',str(ROOT/'scripts/generate-scimitar-coating-art.py'),'--check'],check=True)
+assert set(new)-set(old)=={'equipment:viscousbattleaxe','equipment:anticoagulantscimitar'}|well_custom
 assert all(new[k]==v for k,v in old.items()),'unrelated serialized sprite entries changed'
 authentic=subprocess.check_output(['git','show','3925067ce:Client_Base/Cache/video/Authentic_Sprites.orsc'],cwd=ROOT)
 with zipfile.ZipFile(__import__('io').BytesIO(authentic))as a,zipfile.ZipFile(ROOT/'Client_Base/Cache/video/Authentic_Sprites.orsc')as b:
- assert set(b.namelist())-set(a.namelist())=={str(i)for i in range(4000,4018)}|well_classic
+ assert set(b.namelist())-set(a.namelist())=={str(i)for i in range(4000,4018)}|{str(i)for i in range(4300,4318)}|well_classic
  assert authentic[:a.start_dir]==(ROOT/'Client_Base/Cache/video/Authentic_Sprites.orsc').read_bytes()[:a.start_dir], 'all original local headers/compressed bytes retained'
  for name in a.namelist():
   assert a.read(name)==b.read(name),'original classic payload changed'
