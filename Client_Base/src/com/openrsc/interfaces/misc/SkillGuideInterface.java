@@ -1043,7 +1043,9 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(3402, "8", "Weak Antidote - Marrentill & Giant Spider Eggs"));
 				skillMenuEntries.add(new SkillMenuItem(1474, "22", "Antidote - Marrentill & red spiders' eggs"));
 				skillMenuEntries.add(new SkillMenuItem(3405, "38", "Strong Antidote - Marrentill & Jungle Spider Eggs"));
-                skillMenuEntries.add(new SkillMenuItem(3410,"46","Viscous coating - Avantoe, Cockatrice Eye & Sticky Saliva Gland; one use"));
+                skillMenuEntries.add(new SkillMenuItem(3447,"33","Anti-coagulant - Harralander, Sanguinary gland & 20 Naga scales; one use"));
+                skillMenuEntries.add(new SkillMenuItem(3447,"","Apply to an uncoated scimitar; hard primary hits open bleeding wounds"));
+                skillMenuEntries.add(new SkillMenuItem(3410,"46","Viscous coating - Harralander, Cockatrice Eye & Sticky Saliva Gland; one use"));
 				skillMenuEntries.add(new SkillMenuItem(3410, "", "Apply one dose to an uncoated battleaxe; hits build Slow and can apply weak poison"));
 				skillMenuEntries.add(new SkillMenuItem(3410, "", "Coating lasts until cleaned with wool; cleaning consumes the wool and coating"));
 				skillMenuEntries.add(new SkillMenuItem(1176, "10", "Explosive compound - Nitro & nitrate & charcoal & a. root"));

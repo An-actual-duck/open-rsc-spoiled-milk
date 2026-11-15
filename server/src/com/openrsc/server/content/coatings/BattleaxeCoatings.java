@@ -14,7 +14,7 @@ import java.util.List;
 
 /** Permanent item variants; combat uses the maintained shared Slow/poison engines. */
 public final class BattleaxeCoatings {
-    public static final int UNFINISHED=460, EYE=3342, GLAND=3341;
+    public static final int UNFINISHED=457, EYE=3342, GLAND=3341;
     public static final int LEVEL=46, EXPERIENCE=300;
     private BattleaxeCoatings() { }
 
@@ -97,7 +97,7 @@ public final class BattleaxeCoatings {
                 player.message("You need to complete Druidic ritual first.");return false;
             }
             if(!exchange(player,new Item[]{ingredient(player,UNFINISHED),ingredient(player,EYE),ingredient(player,GLAND)},BattleaxeCoatingCatalog.COATING)) {
-                player.message("You need an unfinished avantoe potion, one Cockatrice Eye and one Sticky Saliva Gland.");return false;
+                player.message("You need an unfinished harralander potion, one Cockatrice Eye and one Sticky Saliva Gland.");return false;
             }
             player.incExp(Skill.HERBLAW.id(),EXPERIENCE,true);
             player.message("You mix one single-use dose of viscous weapon coating.");return true;

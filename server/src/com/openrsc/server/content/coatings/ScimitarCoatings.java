@@ -1,12 +1,69 @@
 package com.openrsc.server.content.coatings;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.Quests;
+import com.openrsc.server.constants.custom.MyWorldItemId;
+import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 
-/** One dose coats one scimitar permanently; acquisition is deliberately not assigned. */
+/** Harralander-based anti-coagulant; one dose coats one scimitar permanently. */
 public final class ScimitarCoatings {
     private ScimitarCoatings() { }
+    public static final int UNFINISHED=457, GLAND=MyWorldItemId.SANGUINARY_GLAND,
+        SCALES=MyWorldItemId.NAGA_SCALES, SCALE_COUNT=20, LEVEL=33, EXPERIENCE=275;
+
+    public static boolean recipePair(int a,int b) {
+        return a!=b && recipeIngredient(a) && recipeIngredient(b);
+    }
+    private static boolean recipeIngredient(int id) {
+        return id==UNFINISHED || id==GLAND || id==SCALES;
+    }
+    private static Item ingredient(Player p,int id,int amount) {
+        for(Item item:p.getCarriedItems().getInventory().getItems())
+            if(item.getCatalogId()==id && !item.getNoted() && !item.isWielded()
+                    && (id==SCALES ? item.getAmount()>=amount : item.getAmount()==amount))return item;
+        return null;
+    }
+    private static boolean present(Player p,Item item) {
+        for(Item held:p.getCarriedItems().getInventory().getItems())if(held==item)return true;
+        return false;
+    }
+    public static boolean mix(Player p,Item used,Item with) {
+        if(used==null || with==null || used.getNoted() || with.getNoted()
+                || used.isWielded() || with.isWielded())return false;
+        synchronized(p.getCarriedItems().getInventory().getItems()) {
+            if(!p.getConfig().WANT_MYWORLD || !p.getConfig().MEMBER_WORLD
+                    || !present(p,used) || !present(p,with)
+                    || !recipePair(used.getCatalogId(),with.getCatalogId()))return false;
+            if(p.getConfig().WANT_FATIGUE && p.getConfig().STOP_SKILLING_FATIGUED>=2
+                    && p.getFatigue()>=p.MAX_FATIGUE)return false;
+            if(p.getSkills().getLevel(Skill.HERBLAW.id())<LEVEL) {
+                p.message("You need Herblaw level 33 to mix anti-coagulant.");return false;
+            }
+            if(p.getQuestStage(Quests.DRUIDIC_RITUAL)!=-1) {
+                p.message("You need to complete Druidic ritual first.");return false;
+            }
+            Item base=ingredient(p,UNFINISHED,1), gland=ingredient(p,GLAND,1),
+                scales=ingredient(p,SCALES,SCALE_COUNT);
+            if(base==null || gland==null || scales==null) {
+                p.message("You need an unfinished harralander potion, one Sanguinary gland and 20 Naga scales.");return false;
+            }
+            // Validate and exchange the two non-stackable inputs first. Under this
+            // same inventory lock, the validated scale stack cannot change or fail.
+            if(!BattleaxeCoatings.exchange(p,new Item[]{base,gland},ScimitarCoatingCatalog.COATING))return false;
+            if(scales.getAmount()==SCALE_COUNT) {
+                java.util.List<Item> items=p.getCarriedItems().getInventory().getItems();
+                for(int i=0;i<items.size();i++)if(items.get(i)==scales){items.remove(i);break;}
+            }
+            else scales.changeAmount(-SCALE_COUNT);
+            ActionSender.sendInventory(p);
+            p.incExp(Skill.HERBLAW.id(),EXPERIENCE,true);
+            p.message("You mix one single-use dose of anti-coagulant.");return true;
+        }
+    }
+
     public static boolean cleaningPair(int a,int b) {
         return ScimitarCoatingCatalog.isCoated(a)&&b==ItemId.WOOL.id()
             || ScimitarCoatingCatalog.isCoated(b)&&a==ItemId.WOOL.id();

@@ -9,12 +9,14 @@ import com.openrsc.server.plugins.triggers.UseInvTrigger;
 public final class ScimitarCoatingActions implements UseInvTrigger {
     public boolean blockUseInv(Player p,Integer index,Item a,Item b) {
         return p.getConfig().WANT_MYWORLD&&(a.getCatalogId()==ScimitarCoatingCatalog.COATING
-            ||b.getCatalogId()==ScimitarCoatingCatalog.COATING||ScimitarCoatings.cleaningPair(a.getCatalogId(),b.getCatalogId()));
+            ||b.getCatalogId()==ScimitarCoatingCatalog.COATING
+            ||ScimitarCoatings.recipePair(a.getCatalogId(),b.getCatalogId())||ScimitarCoatings.cleaningPair(a.getCatalogId(),b.getCatalogId()));
     }
     public void onUseInv(Player p,Integer index,Item a,Item b) {
         if(!blockUseInv(p,index,a,b))return;
         if(a.getCatalogId()==ScimitarCoatingCatalog.COATING)ScimitarCoatings.apply(p,a,b);
         else if(b.getCatalogId()==ScimitarCoatingCatalog.COATING)ScimitarCoatings.apply(p,b,a);
+        else if(ScimitarCoatings.recipePair(a.getCatalogId(),b.getCatalogId()))ScimitarCoatings.mix(p,a,b);
         else if(ScimitarCoatingCatalog.isCoated(a.getCatalogId()))ScimitarCoatings.wipe(p,a,b);
         else ScimitarCoatings.wipe(p,b,a);
     }

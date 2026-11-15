@@ -51,8 +51,7 @@ Drops and crafting
 3466 Sanguinary gland, independent base 1/128 component roll, using existing
 rare-component luck and contribution rules. Ordinary loot uses the standard
 128-weight budget: coins, air/water runes, tarromin/harralander, shared rare
-access and empty outcomes. The anti-coagulant's recipe is still undecided;
-this change supplies the ingredient, not an invented herb/XP recipe.
+access and empty outcomes. The finalized anti-coagulant recipe is documented below.
 
 Art/runtime integration
 Runtime atlas is six 210-wide direction columns, three 160-high rows, containing
@@ -84,6 +83,10 @@ Anti-coagulant ingredient follow-up
 Naga scales (3470): tradeable, stackable; independent common Naga roll at
 1/4 base chance, yielding 1, 2 or 3 scales with equal conditional odds.
 Existing Naga hide and ordinary loot remain intact. The coating requires
-20 scales and one Sanguinary gland. Recipe level, herb and XP await approval.
+20 scales and one Sanguinary gland. Level 33 Herblaw: one unfinished Harralander potion + one Sanguinary gland
++ 20 Naga scales produces one single-use coating, awarding 275 XP.
 The three bat wing items remain unused crafting materials. Naga scales reuse
 the established scale icon with a green material mask; no new approved art.
+
+Coating progression: weapon poison 23, anti-coagulant 33, viscous coating 46.
+All three use unfinished Harralander; viscous retains Eye + Saliva Gland and 300 XP.

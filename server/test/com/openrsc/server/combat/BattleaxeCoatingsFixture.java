@@ -30,6 +30,7 @@ public final class BattleaxeCoatingsFixture {
     private static Item find(Player p,int id){for(Item i:p.getCarriedItems().getInventory().getItems())if(i.getCatalogId()==id)return i;return null;}
     public static void main(String[] args)throws Exception {
         try(CurrentCombatHarness h=new CurrentCombatHarness()) {
+            h.recordDropLogs();
             h.server().getConfig().MEMBER_WORLD=true;h.server().getConfig().WANT_FATIGUE=false;
             Object actions=Class.forName("com.openrsc.server.plugins.custom.itemactions.BattleaxeCoatingActions").getConstructor().newInstance();
             UseInvTrigger use=(UseInvTrigger)actions;
@@ -103,6 +104,7 @@ public final class BattleaxeCoatingsFixture {
             armorPoisonPolicy(h);
             mitigatedPoisonTiming(h);
             policyAndSnapshot(h);
+            h.awaitRecordedDropLogs();
         }
         System.out.println("PASS battleaxe coatings: "+assertions+" assertions; all15 templates, atomic recipe/apply/wipe, actual primary damage and poison paths");
     }
@@ -130,22 +132,22 @@ public final class BattleaxeCoatingsFixture {
     }
 
     private static void recipes(CurrentCombatHarness h,UseInvTrigger use)throws Exception {
-        check(h.server().getEntityHandler().getItemHerbDef(450).getReqLevel()==46,"unfinished Avantoe prerequisite aligned50 to46");
+        check(h.server().getEntityHandler().getItemHerbDef(447).getReqLevel()==22,"unfinished Harralander prerequisite");
         Object herblaw=Class.forName("com.openrsc.server.plugins.authentic.skills.herblaw.Herblaw").getConstructor().newInstance();
         Method unfinishedMix=herblaw.getClass().getDeclaredMethod("batchPotionMaking",Player.class,Item.class,ItemHerbDef.class,Item.class);unfinishedMix.setAccessible(true);
-        for(int level:new int[]{45,46,50}) {
+        for(int level:new int[]{21,22,46}) {
             Player maker=player(h,"unfinished"+level);maker.getSkills().setTemporaryLevelAndMaxStat(Skill.HERBLAW.id(),level,level,false);
-            Item herb=add(maker,450),water=add(maker,ItemId.VIAL.id());
-            com.openrsc.server.plugins.Functions.startbatch(maker,1);unfinishedMix.invoke(herblaw,maker,herb,h.server().getEntityHandler().getItemHerbDef(450),water);
-            check((find(maker,460)!=null)==(level>=46),"actual unfinished prerequisite boundary "+level);
-            check((find(maker,450)!=null)==(level<46)&&(find(maker,ItemId.VIAL.id())!=null)==(level<46),"unfinished recipe input preservation "+level);
+            Item herb=add(maker,447),water=add(maker,ItemId.VIAL.id());
+            com.openrsc.server.plugins.Functions.startbatch(maker,1);unfinishedMix.invoke(herblaw,maker,herb,h.server().getEntityHandler().getItemHerbDef(447),water);
+            check((find(maker,457)!=null)==(level>=22),"actual unfinished prerequisite boundary "+level);
+            check((find(maker,447)!=null)==(level<22)&&(find(maker,ItemId.VIAL.id())!=null)==(level<22),"unfinished recipe input preservation "+level);
         }
         for(int level:new int[]{45,46,50})for(boolean reverse:new boolean[]{false,true}) {
             Player p=player(h,"recipe"+level+reverse);p.getSkills().setTemporaryLevelAndMaxStat(Skill.HERBLAW.id(),level,level,false);
-            Item unfinished=add(p,460),eye=add(p,3342),gland=add(p,3341);int before=p.getSkills().getExperience(Skill.HERBLAW.id());
+            Item unfinished=add(p,457),eye=add(p,3342),gland=add(p,3341);int before=p.getSkills().getExperience(Skill.HERBLAW.id());
             use.onUseInv(p,0,reverse?eye:unfinished,reverse?unfinished:eye);
             check((find(p,3410)!=null)==(level>=46),"actual recipe boundary "+level);
-            check((find(p,460)!=null)==(level<46)&&(find(p,3342)!=null)==(level<46)&&(find(p,3341)!=null)==(level<46),"atomic triple input removal or no-loss rejection");
+            check((find(p,457)!=null)==(level<46)&&(find(p,3342)!=null)==(level<46)&&(find(p,3341)!=null)==(level<46),"atomic triple input removal or no-loss rejection");
             if(level>=46) {
                 check(p.getCarriedItems().getInventory().countId(3410)==1,"one single-use dose, never three");
                 Player control=player(h,"xpcontrol"+level+reverse);control.getSkills().setTemporaryLevelAndMaxStat(Skill.HERBLAW.id(),level,level,false);
@@ -154,9 +156,9 @@ public final class BattleaxeCoatingsFixture {
                 check(!BattleaxeCoatings.mix(p,unfinished,eye),"stale recipe cannot duplicate output");
             }else check(p.getSkills().getExperience(Skill.HERBLAW.id())==before,"rejected recipe awards no XP");
         }
-        for(int missing:new int[]{460,3341,3342}) {
+        for(int missing:new int[]{457,3341,3342}) {
             Player p=player(h,"missing"+missing);p.getSkills().setTemporaryLevelAndMaxStat(Skill.HERBLAW.id(),99,99,false);
-            for(int id:new int[]{460,3341,3342})if(id!=missing)add(p,id);
+            for(int id:new int[]{457,3341,3342})if(id!=missing)add(p,id);
             Item a=p.getCarriedItems().getInventory().get(0),b=p.getCarriedItems().getInventory().get(1);
             check(!BattleaxeCoatings.mix(p,a,b)&&p.getCarriedItems().getInventory().size()==2,"missing ingredient no-loss "+missing);
         }
