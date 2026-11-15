@@ -84,21 +84,23 @@ public final class BattleaxeCoatingCatalog {
     rawframes=entries['equipment','battleaxe']['frames'];held=[]
     assetroot=Path('dev/myworld/assets/runtime/sprites/items/inventory-ground')
     authored=Path('dev/myworld/assets/authoring/equipment/battleaxe-coatings/art')
-    images={}
+    images={}; masters={}
+    pooled=ROOT/'dev/myworld/assets/authoring/equipment/battleaxe-coatings/pooled-v2'
+    layouts=json.loads((pooled/'frame-layout.json').read_text())
     for v in variants:
-        raw=entries['items','272' if v['baseId']==2752 else '84']['frames'][0][0]
-        images[assetroot/f"viscous-battleaxe-{v['baseId']}.png"]=art.edge_candidate(raw,raw,v['baseId']==2752)[0]
-    # Reviewed native Aseprite art: retain the murky teal potion silhouette.
-    # Native Aseprite is the reviewed PNG encoder for this artwork. Preserve its
-    # complete bytes rather than introducing Pillow-only compression churn.
+        source=pooled/'inventory'/('dragon' if v['baseId']==2752 else 'standard')
+        target=assetroot/f"viscous-battleaxe-{v['baseId']}.png"
+        images[target]=source.with_suffix('.png');masters[authored/f"viscous-battleaxe-{v['baseId']}.aseprite"]=source.with_suffix('.aseprite')
     emit(assetroot/'viscous-coating.png',
          (ROOT/'dev/myworld/assets/authoring/items/coating-reagents/art/png/viscous-coating.png').read_bytes())
     for n,(raw,meta) in enumerate(rawframes):
-        im=art.edge_candidate(raw,raw)[0];held.append((im,meta));images[authored/f'held-{n:02}.png']=im
-    for path,im in images.items():
-        import io
-        buf=io.BytesIO();im.save(buf,format='PNG');emit(path,buf.getvalue())
-    # Encode a new native family; original frame geometry/shift/offset are exact.
+        source=pooled/'held'/f'{n:02}'
+        im=Image.open(source.with_suffix('.png')).convert('RGBA');held.append((im,layouts[n]['coated']))
+        images[authored/f'held-{n:02}.png']=source.with_suffix('.png')
+        masters[authored/f'held-{n:02}.aseprite']=source.with_suffix('.aseprite')
+    for path,source in images.items():emit(path,source.read_bytes())
+    for path,source in masters.items():emit(path,source.read_bytes())
+    # Encode pooled rims on expanded crops; original registered hand anchors remain exact.
     palette=[(0,0,0)];framepixels=[]
     for im,meta in held:
         w,h=meta['crop'];x,y=meta['offset'] if meta['shift'] else (0,0);pixels=[]
@@ -145,21 +147,21 @@ public final class BattleaxeCoatingCatalog {
     if args.check:
         assert all(oldbytes.get(k)==v for k,v in desired.items()),'Classic coating frames stale'
     elif not all(oldbytes.get(k)==v for k,v in desired.items()):
-        # Replace only our appended tail. Append mode retains every original
+        # Append replacement records after every existing local record. Never rewind
+        # to the old owned range: newer unrelated families may follow it.
+        # Append mode retains every original
         # local header/compressed payload and ZipInfo (including UTF8/data-
         # descriptor flags); rewriting old Java ZIP records would change them.
         with zipfile.ZipFile(classic,'a') as z:
-            first_owned=min((i.header_offset for i in z.infolist() if i.filename in desired),default=z.start_dir)
             z.filelist=[i for i in z.infolist() if i.filename not in desired]
             z.NameToInfo={i.filename:i for i in z.filelist}
-            z.start_dir=first_owned
             for name,payload in desired.items():
                 info=zipfile.ZipInfo(name,(1980,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;z.writestr(info,payload)
     with zipfile.ZipFile(classic) as z:
         assert {i.filename:hashlib.sha256(z.read(i)).hexdigest() for i in z.infolist() if i.filename not in desired}==classic_before
     preservation['Authentic_Sprites.orsc']=classic_before
     receipt='dev/myworld/assets/authoring/equipment/battleaxe-coatings/archive-entry-hashes.json'
-    if args.check:
+    if (ROOT/receipt).exists():
         # This is the installation-time preservation receipt, not a roster of
         # all future game content. Later reviewed additions must not invalidate
         # hashes of the pre-coating entries that this receipt protects.
@@ -168,13 +170,9 @@ public final class BattleaxeCoatingCatalog {
         for name,entries in recorded.items():
             assert all(preservation[name].get(key)==digest for key,digest in entries.items()), 'Preserved entry changed: '+name
     else:
+        assert not args.check, 'Missing historical preservation receipt'
         emit(receipt,json.dumps(preservation,indent=2)+'\n')
-    # Editable Aseprite authoring files use the same native canvases, not a
-    # normalized animation sheet. PNGs remain the deterministic packer input.
-    if not args.check:
-        for path in images:
-            dest=ROOT/authored/(path.stem+'.aseprite');dest.parent.mkdir(parents=True,exist_ok=True)
-            subprocess.run(['aseprite','-b','--oneframe',str(ROOT/path),'--save-as',str(dest)],check=True,stdout=subprocess.DEVNULL)
+    # Layered Aseprite masters are copied from the approved source-owned exports.
     print('PASS coating manifest/catalog/native assets; 15 forms, 18 frames, untouched archive entries preserved')
 
 if __name__=='__main__':main()

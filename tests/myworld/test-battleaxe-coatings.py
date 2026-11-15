@@ -34,11 +34,32 @@ asset=ROOT/'dev/myworld/assets/runtime/sprites';art=ROOT/'dev/myworld/assets/aut
 entries=gen.art.archive_entries(ROOT/'Client_Base/Cache/video/Custom_Sprites.osar')
 base=entries['equipment','battleaxe'];coated=entries['equipment','viscousbattleaxe']
 assert base['kind']==coated['kind'] and base['layer']==coated['layer']==3
-for (original,meta),(result,got)in zip(base['frames'],coated['frames']):
- assert {k:v for k,v in meta.items()if k!='rgbaSha256'}=={k:v for k,v in got.items()if k!='rgbaSha256'}
- assert original.getchannel('A').tobytes()==result.getchannel('A').tobytes()
- expected=gen.art.edge_candidate(original,original)[0]
- assert result.tobytes()==expected.tobytes(),'only reviewed blade-edge edit allowed'
+pooled=ROOT/'dev/myworld/assets/authoring/equipment/battleaxe-coatings/pooled-v2'
+layouts=json.loads((pooled/'frame-layout.json').read_text())
+added_total=0
+for n,((original,meta),(result,got))in enumerate(zip(base['frames'],coated['frames'])):
+ expected=Image.open(pooled/'held'/f'{n:02}.png').convert('RGBA')
+ assert result.tobytes()==expected.tobytes(),'only reviewed pooled-rim artwork allowed'
+ assert got['canvas']==meta['canvas'] and got['offset']==layouts[n]['coated']['offset'] and got['crop']==layouts[n]['coated']['crop']
+ assert all(0<=old-new<=1 for old,new in zip(meta['offset'],got['offset'])),'hand-anchor crop adjustment exceeds one pixel'
+ for y in range(original.height):
+  for x in range(original.width):
+   a,b=original.getpixel((x,y)),result.getpixel((x,y))
+   if a[3]:
+    assert b[3]==a[3],'original axe pixel removed'
+    if a!=b:assert a[0]==a[1]==a[2] and a[0]>24,'handle or non-metal recolored'
+   elif b[3]:
+    added_total+=1
+    assert any(0<=xx<original.width and 0<=yy<original.height and (lambda c:c[3] and c[0]==c[1]==c[2] and c[0]>24)(original.getpixel((xx,yy))) for xx,yy in [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]),'detached slime pixel'
+assert added_total>0,'approved pooled lip missing'
+standard=Image.open(pooled/'inventory/standard.png').convert('RGBA')
+reference=Image.open(pooled/'inputs/inventory/84.png').convert('RGBA')
+alpha=Image.open(pooled/'approved-style-b.png').getchannel('A')
+assert standard.getchannel('A').tobytes()==alpha.tobytes(),'approved B silhouette changed'
+assert sum(a!=b for a,b in zip(reference.getdata(),standard.getdata()))==50,'approved B overlay changed'
+assert all(a==b or a[:3]in [(18,79,72),(32,128,115),(74,174,153)] for a,b in zip(standard.getdata(),reference.getdata())),'unapproved coating color'
+for row in rows:
+ assert (ROOT/f'dev/myworld/assets/runtime/sprites/items/inventory-ground/viscous-battleaxe-{row["baseId"]}.png').read_bytes()==(pooled/'inventory'/('dragon.png'if row['baseId']==2752 else 'standard.png')).read_bytes()
 with tempfile.TemporaryDirectory(prefix='coating-assets-')as tmp:
  tmp=Path(tmp)
  for source in sorted(art.glob('*.aseprite')):
