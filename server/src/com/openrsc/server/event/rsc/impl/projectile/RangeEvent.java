@@ -249,7 +249,7 @@ public class RangeEvent extends GameTickEvent {
                         ProjectileLaunchSpecification.Producer.PLAYER_BOW, damage, 2)
                     .chase(true)
                     .poisonWeaponId(holyBolts ? -1 : ammoId)
-                    .presentation(isCrossbow ? Projectile.BOLT : Projectile.ARROW, 0, true)
+                    .presentation(isCrossbow ? com.openrsc.server.content.GodCrossbows.projectileType(godShot) : Projectile.ARROW, 0, true)
                     .dragonBreathDamage(dragonBreathDamage)
                     .duplicationStrategy(DuplicationStrategy.ONE_PER_MOB)
                     .attackCommitment(attack)

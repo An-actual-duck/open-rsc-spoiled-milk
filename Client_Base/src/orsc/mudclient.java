@@ -254,7 +254,7 @@ public final class mudclient implements Runnable {
 	private static final int CHAIN_LIGHTNING_PROJECTILE_SCENE_SIZE = 96;
 	private static final int SUMMON_ARRIVAL_CIRCLE_Y_OFFSET_PERCENT = 34;
 	private static final int CUSTOM_PROJECTILE_FIRST = 7;
-	public static final int CUSTOM_PROJECTILE_COUNT = 36;
+	public static final int CUSTOM_PROJECTILE_COUNT = 39;
 	public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;
 	private static final int PROJECTILE_IMPACT_FRAME_SLOTS = 36;
 	private static final int PROJECTILE_IMPACT_FRAME_TICKS = 3;
@@ -1217,7 +1217,7 @@ public final class mudclient implements Runnable {
 		"summon-bat-vampirism-reverse", "shuriken", "enemy-air-basic", "enemy-water-basic", "blue-dragon-magic",
 		"chain-lightning/A", "chain-lightning/B", "chain-lightning/C", "wind-static-2", "water-static-2",
 		"thunder-bird", "earth-lead-2", "fire-lead-2", "ice-lead-2", "acid-lead-2", "wood-lead-2",
-		"acid-armor-proc", "ice-sword-stab", "naga-scimitar", "electric-disc-basic"
+		"acid-armor-proc", "ice-sword-stab", "naga-scimitar", "electric-disc-basic", "saradomin-bolt", "zamorak-bolt", "guthix-bolt"
 	};
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
 	private final java.util.Map<Integer,Sprite> clericIconSprites = new java.util.HashMap<Integer,Sprite>();
@@ -21509,6 +21509,9 @@ public final class mudclient implements Runnable {
 
             // Appended native family uses a new free classic range; old entities/media stay intact.
             if("viscousbattleaxe".equals(s))animationNumber=4000;
+            if("saradomincrossbow".equals(s))animationNumber=4200;
+            if("zamorakcrossbow".equals(s))animationNumber=4227;
+            if("guthixcrossbow".equals(s))animationNumber=4254;
             if(com.openrsc.client.entityhandling.ScimitarCoatingArtDefinitions.FAMILY.equals(s))
                 animationNumber=com.openrsc.client.entityhandling.ScimitarCoatingArtDefinitions.CLASSIC_START;
 			loadSprite(animationNumber, "entity", 15);

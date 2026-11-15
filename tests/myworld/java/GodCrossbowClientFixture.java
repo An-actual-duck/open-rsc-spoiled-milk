@@ -18,7 +18,7 @@ public final class GodCrossbowClientFixture {
             String god=gods[i].toLowerCase();
             if(!EntityHandler.getItemDef(3444+i).getSpriteLocation().equals("external-png:"+god+"-crossbow-icon"))throw new AssertionError("approved icon binding");checks++;
             if(!EntityHandler.getItemDef(3444+i).untradeable||EntityHandler.getItemDef(3444+i).noteable)throw new AssertionError("artifact trade/note flags");checks++;
-            if(!EntityHandler.getAnimationDef(1170+i).getName().equals("crossbow"))throw new AssertionError("equipped appearance binding");checks++;
+            if(!EntityHandler.getAnimationDef(1170+i).getName().equals(god+"crossbow"))throw new AssertionError("equipped appearance binding");checks++;
         }
         if(EntityHandler.getAnimationDef(106).getCharColour()!=0)throw new AssertionError("ordinary crossbow mutated");checks++;
         System.out.println("PASS "+checks+" real client catalog, prayer-slot, icon, trade and equipped-animation checks");

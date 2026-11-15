@@ -472,7 +472,10 @@ public class EntityHandler {
 		ACID_ARMOR_PROC(39),
 		ICE_SWORD_STAB(40),
 		NAGA_SCIMITAR(41),
-		ELECTRIC_DISC(42);
+		ELECTRIC_DISC(42),
+        SARADOMIN_BOLT(43),
+        ZAMORAK_BOLT(44),
+        GUTHIX_BOLT(45);
 
 		private final int value;
 
@@ -537,6 +540,10 @@ public class EntityHandler {
 		projectiles.add(new SpriteDef("ice sword stab projectile", mudclient.spriteProjectile + 1, "projectiles:1", 40));
 		projectiles.add(new SpriteDef("naga scimitar projectile", mudclient.spriteProjectile + 6, "projectiles:6", 41));
 		projectiles.add(new SpriteDef("electric disc projectile", mudclient.spriteProjectile + 1, "projectiles:1", 42));
+        projectiles.add(new SpriteDef("saradomin holy bolt", mudclient.spriteProjectile + 1, "projectiles:1", 43));
+        projectiles.add(new SpriteDef("zamorak holy bolt", mudclient.spriteProjectile + 1, "projectiles:1", 44));
+        projectiles.add(new SpriteDef("guthix holy bolt", mudclient.spriteProjectile + 1, "projectiles:1", 45));
+
 	}
 
 	public enum GUIPARTS {
@@ -8280,9 +8287,9 @@ public class EntityHandler {
 				animations.add(new AnimationDef(definition.family, "equipment", definition.mask, 0, true, false, 0));
 			}
             if (animations.size() != 1170) throw new IllegalStateException("God crossbow appearance ID drift");
-            animations.add(new AnimationDef("crossbow", "equipment", 0xFFD66D, 0, false, false, 0)); //1170: Saradomin crossbow
-            animations.add(new AnimationDef("crossbow", "equipment", 0x19171D, 0, false, false, 0)); //1171: Zamorak crossbow
-            animations.add(new AnimationDef("crossbow", "equipment", 0x8BA848, 0, false, false, 0)); //1172: Guthix crossbow
+            animations.add(new AnimationDef("saradomincrossbow", "equipment", 0, 0, false, false, 0)); //1170: Saradomin crossbow
+            animations.add(new AnimationDef("zamorakcrossbow", "equipment", 0, 0, false, false, 0)); //1171: Zamorak crossbow
+            animations.add(new AnimationDef("guthixcrossbow", "equipment", 0, 0, false, false, 0)); //1172: Guthix crossbow
 		}
         SlayerMovementPreview stirge=SlayerMovementPreview.STIRGE;
         slayerPreviewAnimations.put(stirge,animations.size());
@@ -8291,6 +8298,12 @@ public class EntityHandler {
         deathWingAnimationId=animations.size();
         animations.add(new AnimationDef("deathwing","npc",0,0,true,false,0));
         ScimitarCoatingArtDefinitions.animations(animations);
+        // These classic slots were padding; preserve every published appearance index.
+        if (!Config.S_WANT_CUSTOM_SPRITES) {
+            animations.set(1170, new AnimationDef("saradomincrossbow", "equipment", 0, 0, false, false, 0));
+            animations.set(1171, new AnimationDef("zamorakcrossbow", "equipment", 0, 0, false, false, 0));
+            animations.set(1172, new AnimationDef("guthixcrossbow", "equipment", 0, 0, false, false, 0));
+        }
         if(animations.size()!=1189)throw new IllegalStateException("Agility utility appearance tail moved");
         animations.add(new AnimationDef("woolboots","equipment",0x65B8AC,0,true,false,0));
         animations.add(new AnimationDef("woolgloves","equipment",0x65B8AC,0,true,false,0));

@@ -4095,11 +4095,11 @@ public final class GameStateUpdater {
 					updates.add((short) safeNPCIndex(player, victim.getIndex()));
 					if (caster.isNpc()) {
 						updates.add((byte) 3);
-						updates.add((short) projectile.getType());
+						updates.add((short) com.openrsc.server.content.GodCrossbows.projectileForViewer(projectile.getType(), player));
 						updates.add((short) safeNPCIndex(player, caster.getIndex()));
 					} else if (caster.isPlayer()) {
 						updates.add((byte) 4);
-						updates.add((short) projectile.getType());
+						updates.add((short) com.openrsc.server.content.GodCrossbows.projectileForViewer(projectile.getType(), player));
 						updates.add((short) caster.getIndex());
 					}
 				}
@@ -4484,11 +4484,11 @@ public final class GameStateUpdater {
 					updatesMain.add((short) victim.getIndex());
 					if (caster.isNpc()) {
 						updatesMain.add((byte) 3);
-						updatesMain.add((short) projectile.getType());
+						updatesMain.add((short) com.openrsc.server.content.GodCrossbows.projectileForViewer(projectile.getType(), player));
 						updatesMain.add((short) caster.getIndex());
 					} else if (caster.isPlayer()) {
 						updatesMain.add((byte) 4);
-						updatesMain.add((short) projectile.getType());
+						updatesMain.add((short) com.openrsc.server.content.GodCrossbows.projectileForViewer(projectile.getType(), player));
 						updatesMain.add((short) caster.getIndex());
 					}
 				}

@@ -1,0 +1,261 @@
+{
+  "kind": 3,
+  "layer": 3,
+  "frames": [
+    {
+      "frame": 0,
+      "crop": [
+        34,
+        19
+      ],
+      "shift": true,
+      "offset": [
+        3,
+        50
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "8a107ec1e96a3d3dd2776212af01d62488c832042c292e9c83720667d8b7d522"
+    },
+    {
+      "frame": 1,
+      "crop": [
+        34,
+        23
+      ],
+      "shift": true,
+      "offset": [
+        3,
+        49
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "0cf43c97e251160903cdbdbda534295e0b22181168a3947768e655460d021911"
+    },
+    {
+      "frame": 2,
+      "crop": [
+        34,
+        26
+      ],
+      "shift": true,
+      "offset": [
+        3,
+        48
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "0105bfd4dc6d0d041a3c8c287b61ddf605924732271c91a43a1b8195dab9f5c7"
+    },
+    {
+      "frame": 3,
+      "crop": [
+        33,
+        25
+      ],
+      "shift": true,
+      "offset": [
+        14,
+        50
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "ab0f626cdda3e4c306e86c35dd87f3ac701e6884713eee7b3f98bfd381c75128"
+    },
+    {
+      "frame": 4,
+      "crop": [
+        32,
+        23
+      ],
+      "shift": true,
+      "offset": [
+        18,
+        49
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "35587d50fd2590bb19296b5cc52723c774f528d459fd5ba75bfe7430b09b6bd5"
+    },
+    {
+      "frame": 5,
+      "crop": [
+        33,
+        20
+      ],
+      "shift": true,
+      "offset": [
+        19,
+        48
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "f21ad2eeb349e3a3e6b21a2c2e3ca30844c47a17a4149433512b7d765c1fa188"
+    },
+    {
+      "frame": 6,
+      "crop": [
+        34,
+        20
+      ],
+      "shift": true,
+      "offset": [
+        15,
+        45
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "180f6c22d8240e9f39e2a36628060b744323b996e542cec0efb0c29fa8aa4ba0"
+    },
+    {
+      "frame": 7,
+      "crop": [
+        34,
+        20
+      ],
+      "shift": true,
+      "offset": [
+        17,
+        44
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "a39d98783d519887f4b2aba109e019ee0b6c82ece996d8ccf9d22af6473697dd"
+    },
+    {
+      "frame": 8,
+      "crop": [
+        35,
+        21
+      ],
+      "shift": true,
+      "offset": [
+        19,
+        41
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "0b6c8070b2e25999610064e9facfab7d24e91a3d65d1ade1a4c0409582d5c729"
+    },
+    {
+      "frame": 9,
+      "crop": [
+        34,
+        26
+      ],
+      "shift": true,
+      "offset": [
+        30,
+        38
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "ddef11a22b77b563ccc8d80d6344766d58ed58ff1609f3b633b66dab29096934"
+    },
+    {
+      "frame": 10,
+      "crop": [
+        34,
+        22
+      ],
+      "shift": true,
+      "offset": [
+        30,
+        39
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "6774408b314ca24a71fc65c6a1317cfd3870a9fe2721a2e06db082d463a7b0ea"
+    },
+    {
+      "frame": 11,
+      "crop": [
+        34,
+        22
+      ],
+      "shift": true,
+      "offset": [
+        30,
+        36
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "9a28ef9eedf019b3dac192de38044d81b1c36cb82774f4ee885bfb64c0d9b208"
+    },
+    {
+      "frame": 12,
+      "crop": [
+        22,
+        16
+      ],
+      "shift": true,
+      "offset": [
+        40,
+        47
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "de414192d6472f722bca9ba4826672d1edfaa6098b0ee8b788410f8e4e49840e"
+    },
+    {
+      "frame": 13,
+      "crop": [
+        22,
+        19
+      ],
+      "shift": true,
+      "offset": [
+        40,
+        44
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "0165f1fd1d47b1336056266998afc546172db722be5f1390bacc9036666dd73a"
+    },
+    {
+      "frame": 14,
+      "crop": [
+        21,
+        22
+      ],
+      "shift": true,
+      "offset": [
+        40,
+        41
+      ],
+      "canvas": [
+        64,
+        102
+      ],
+      "rgbaSha256": "54ce68e021a22e07ecda8a204ec5a0fd22a8a17eea0be678e3281fd030b7a516"
+    }
+  ]
+}
