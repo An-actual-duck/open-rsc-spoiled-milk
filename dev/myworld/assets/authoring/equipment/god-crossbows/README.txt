@@ -38,3 +38,17 @@ Classic aliases retain appearance IDs1170..1172 and use free sprite ranges
 Draft shot IDs43..45 require client10061; per-viewer server fallback sends20 to
 older clients. The public server/client, latest user map and Dot's ai-1 work
 are not modified by this task. Worker remains ACTIVE pending visual acceptance.
+
+Current revision: anchored-v4 (owner correction)
+----------------------------------------------
+Silhouette-v3 was close, but had string/limb registration problems from scaling
+landmarks to each frame's bounding box. Anchored-v4 starts from the unchanged
+baseline again and uses explicit anchors for all fifteen frames, recorded in
+frame-anchors-v4.json. No bbox scaling remains. Original stock pixels and grip
+positions are retained; clean strings terminate at the same anchors as limbs.
+The Saradomin crescent is thicker, the hidden-side Zamorak horn is omitted in
+rear frames12–14, and Guthix has denser ivy on brown wood. Disconnected remnants
+from replaced original limbs are removed in native Aseprite. Editable masters
+and exports are in anchored-v4/. This revision remains a review candidate.
+Current preview: output/art/god-crossbow-equipped/anchored-v4/index.html.
+Shot visuals remain deferred. No runtime installation of this candidate yet.
