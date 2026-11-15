@@ -547,7 +547,7 @@
               "preferNoted": true
             },
             {
-              "label": "3400",
+              "label": "Giant spider eggs",
               "weight": 10,
               "itemId": 3400,
               "min": 1,
@@ -639,7 +639,7 @@
               "preferNoted": true
             },
             {
-              "label": "3402",
+              "label": "Weak antidote",
               "weight": 10,
               "itemId": 3402,
               "min": 1,
@@ -1201,7 +1201,7 @@
               "preferNoted": true
             },
             {
-              "label": "3401",
+              "label": "Jungle spider eggs",
               "weight": 8,
               "itemId": 3401,
               "min": 1,
@@ -2169,7 +2169,7 @@
               "preferNoted": true
             },
             {
-              "label": "3405",
+              "label": "Strong antidote",
               "weight": 10,
               "itemId": 3405,
               "min": 1,
