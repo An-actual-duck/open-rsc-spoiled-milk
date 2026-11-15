@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.authentic.skills.herblaw;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.SkillCapes;
@@ -721,7 +722,13 @@ public class Herblaw implements OpInvTrigger, UseInvTrigger {
 			player.sendMemberErrorMessage();
 			return;
 		}
-		int newID = -1;
+        // Custom IDs live outside ItemId; use the same grind/batch path as dragon scales.
+        boolean nagaScale = item.getCatalogId() == MyWorldItemId.NAGA_SCALES;
+        if (nagaScale && (!config().WANT_MYWORLD || item.getNoted() || mortar.getNoted()
+                || item.isWielded() || mortar.isWielded()
+                || player.getCarriedItems().getInventory().getItems().stream().noneMatch(held -> held == item)
+                || player.getCarriedItems().getInventory().getItems().stream().noneMatch(held -> held == mortar))) return;
+        int newID = nagaScale ? MyWorldItemId.GROUND_NAGA_SCALE : -1;
 		switch (ItemId.getById(item.getCatalogId())) {
 			case UNICORN_HORN:
 				newID = ItemId.GROUND_UNICORN_HORN.id();

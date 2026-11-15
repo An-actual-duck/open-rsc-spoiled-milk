@@ -3,17 +3,20 @@ Harralander coating recipes — current requirements
 All three coating recipes use unfinished Harralander (457).
 
 Weapon poison: level 23, ground blue dragon scale; 250 XP. Unchanged.
-Anti-coagulant: level 33, one Sanguinary gland (3466) and 20 Naga scales
-(3470); 275 XP; one single-use coating (3447). Level 33 was unused by
+Anti-coagulant: level 33, one Sanguinary gland (3466) and one ground Naga scale
+(3471); 275 XP; one single-use coating (3447). Level 33 was unused by
 existing finished-potion recipes; level 38 already has Strong Antidote.
 Viscous coating: level 46, one Cockatrice Eye (3342) and one Sticky Saliva
 Gland (3341); 300 XP. Replaces its former unfinished Avantoe base (460).
 
 Use any two anti-coagulant ingredients together with all three present.
-Scales must be unnoted, and exactly 20 are consumed from the stack.
+Grind one raw Naga scale (3470) with a pestle and mortar into one ground
+Naga scale (3471), following the blue dragon scale process. Both forms are
+non-stackable and noteable. Nagas drop one raw scale at base chance 1/16.
+Ingredients must be unnoted; one ground scale is consumed.
 Both custom recipes retain Druidic Ritual, member-world and fatigue gates.
 The exchange works with a full inventory and refuses stale/unsupported inputs
-before consuming anything. Remaining scales stay in the inventory.
+before consuming anything. Other ground scales stay in the inventory.
 
 This supersedes recipe details in the historical battleaxe coating design
 and implementation-review documents. Combat/application rules are unchanged.

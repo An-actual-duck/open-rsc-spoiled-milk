@@ -4,7 +4,6 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.custom.MyWorldItemId;
-import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 
@@ -12,7 +11,7 @@ import com.openrsc.server.model.entity.player.Player;
 public final class ScimitarCoatings {
     private ScimitarCoatings() { }
     public static final int UNFINISHED=457, GLAND=MyWorldItemId.SANGUINARY_GLAND,
-        SCALES=MyWorldItemId.NAGA_SCALES, SCALE_COUNT=20, LEVEL=33, EXPERIENCE=275;
+        SCALES=MyWorldItemId.GROUND_NAGA_SCALE, SCALE_COUNT=1, LEVEL=33, EXPERIENCE=275;
 
     public static boolean recipePair(int a,int b) {
         return a!=b && recipeIngredient(a) && recipeIngredient(b);
@@ -23,7 +22,7 @@ public final class ScimitarCoatings {
     private static Item ingredient(Player p,int id,int amount) {
         for(Item item:p.getCarriedItems().getInventory().getItems())
             if(item.getCatalogId()==id && !item.getNoted() && !item.isWielded()
-                    && (id==SCALES ? item.getAmount()>=amount : item.getAmount()==amount))return item;
+                    && item.getAmount()==amount)return item;
         return null;
     }
     private static boolean present(Player p,Item item) {
@@ -48,17 +47,9 @@ public final class ScimitarCoatings {
             Item base=ingredient(p,UNFINISHED,1), gland=ingredient(p,GLAND,1),
                 scales=ingredient(p,SCALES,SCALE_COUNT);
             if(base==null || gland==null || scales==null) {
-                p.message("You need an unfinished harralander potion, one Sanguinary gland and 20 Naga scales.");return false;
+                p.message("You need an unfinished harralander potion, one Sanguinary gland and one ground naga scale.");return false;
             }
-            // Validate and exchange the two non-stackable inputs first. Under this
-            // same inventory lock, the validated scale stack cannot change or fail.
-            if(!BattleaxeCoatings.exchange(p,new Item[]{base,gland},ScimitarCoatingCatalog.COATING))return false;
-            if(scales.getAmount()==SCALE_COUNT) {
-                java.util.List<Item> items=p.getCarriedItems().getInventory().getItems();
-                for(int i=0;i<items.size();i++)if(items.get(i)==scales){items.remove(i);break;}
-            }
-            else scales.changeAmount(-SCALE_COUNT);
-            ActionSender.sendInventory(p);
+            if(!BattleaxeCoatings.exchange(p,new Item[]{base,gland,scales},ScimitarCoatingCatalog.COATING))return false;
             p.incExp(Skill.HERBLAW.id(),EXPERIENCE,true);
             p.message("You mix one single-use dose of anti-coagulant.");return true;
         }
