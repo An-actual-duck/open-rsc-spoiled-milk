@@ -7172,15 +7172,15 @@ public class EntityHandler {
         for(int id=3462;id<=3464;id++)setCustomItemDefinition(id,new ItemDef("Bug Off ("+(3465-id)+")", "Keeps pesky stirges from drinking your blood.", "Spray",0,-1,"external-png:bug-off",false,false,0,0,false,true,false,id));
         setCustomItemDefinition(3465,new ItemDef("Empty Bug Off can","An empty can of Bug Off.","",0,-1,"external-png:bug-off",false,false,0,0,false,true,false,3465));
         setCustomItemDefinition(3466,new ItemDef("Sanguinary gland","A stirge gland whose secretions keep blood from clotting.","",100,-1,"external-png:sanguinary-gland",false,false,0,0,false,false,true,3466));
-        // Anti-coagulant has an existing vial icon; coated weapons retain their base art.
+        // Dark-red vial and native dripping blade overlays.
         setCustomItemDefinition(3447, new ItemDef("Anti-coagulant", "Keeps deep scimitar wounds bleeding. Apply to an uncoated scimitar.", "", 300, 48, "items:48", false, false, 0, 0x8B2438, true, false, false, 3447));
         int[][] antiCoagulantItems = {{1999,3448},{2010,3449},{82,3450},{83,3451},{84,3452},{427,3453},{2155,3454},{3117,3455},{85,3456},{2021,3457},{86,3458},{2032,3459},{398,3460},{3265,3461}};
         for (int[] ids : antiCoagulantItems) {
             ItemDef base = items.get(ids[0]);
             setCustomItemDefinition(ids[1], new ItemDef("Anti-coagulant " + base.getName(),
                 "Coated to keep deep wounds bleeding. Hard primary hits open a wound.", "", base.basePrice,
-                base.spriteID, base.spriteLocation, false, true, base.wearableID,
-                base.getPictureMask(), base.getBlueMask(), base.membersItem, base.untradeable, false, ids[1]));
+                -1, "external-png:anticoagulant-scimitar-"+ids[0], false, true, base.wearableID,
+                0, 0, base.membersItem, base.untradeable, false, ids[1]));
         }
 
     }
@@ -8284,6 +8284,7 @@ public class EntityHandler {
         // Separate family: leave Giant bat's published bat animation untouched.
         deathWingAnimationId=animations.size();
         animations.add(new AnimationDef("deathwing","npc",0,0,true,false,0));
+        ScimitarCoatingArtDefinitions.animations(animations);
 	}
 
 	private static void verifyAnimationDefinition(int appearanceId, String expectedName, int expectedColour) {

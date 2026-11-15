@@ -27,6 +27,13 @@ public final class HeldEquipmentAvatarAnimations {
    }
    throw new IllegalStateException("Missing avatar weapon family: " + definition.family);
   }
+  if(animationIndex>=1175&&animationIndex<1189) {
+   int[] masks={12044761,13134379,16737817,15654365,15658734,3158064,15196886,10397087,10072780,9348795,11717785,5914493,65535,14221311};
+   // The legacy account-avatar exporter has no appended animation catalog.
+   // Resolve its existing scimitar pose safely; the game uses coated frames.
+   for(AnimationDef base:animations)if("scimitar".equals(base.getName()))
+    return new AnimationDef("scimitar","equipment",masks[animationIndex-1175],0,true,false,base.getNumber());
+  }
   return animations.get(animationIndex);
  }
 }

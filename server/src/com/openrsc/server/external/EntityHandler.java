@@ -1055,7 +1055,7 @@ public final class EntityHandler {
 		applyHeldEquipmentAppearanceOverrides();
         if(getServer().getConfig().WANT_MYWORLD) {
             for(int id:com.openrsc.server.content.coatings.ScimitarCoatingCatalog.coatedIds())
-                setItemAppearance(id,getItemDef(com.openrsc.server.content.coatings.ScimitarCoatingCatalog.base(id)).getAppearanceId());
+                setItemAppearance(id,com.openrsc.server.content.coatings.ScimitarCoatingCatalog.appearance(id));
         }
 	}
 

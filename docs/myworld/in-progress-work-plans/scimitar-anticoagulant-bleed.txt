@@ -1,3 +1,7 @@
+Current follow-ups: recipe is finalized in harralander-coating-recipes.txt;
+approved style-B inventory/held art is under assets/authoring/equipment/scimitar-coatings.
+The initial implementation snapshot below preserves the earlier design history.
+
 Scimitar / Anti-coagulant first implementation — November 13, 2026
 =================================================================
 Scope

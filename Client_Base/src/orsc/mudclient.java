@@ -21509,6 +21509,8 @@ public final class mudclient implements Runnable {
 
             // Appended native family uses a new free classic range; old entities/media stay intact.
             if("viscousbattleaxe".equals(s))animationNumber=4000;
+            if(com.openrsc.client.entityhandling.ScimitarCoatingArtDefinitions.FAMILY.equals(s))
+                animationNumber=com.openrsc.client.entityhandling.ScimitarCoatingArtDefinitions.CLASSIC_START;
 			loadSprite(animationNumber, "entity", 15);
 			if (EntityHandler.getAnimationDef(animationIndex).hasA()) {
 				loadSprite(animationNumber + 15, "entity", 3);
