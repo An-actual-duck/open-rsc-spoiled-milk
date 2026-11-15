@@ -44,14 +44,21 @@ def main():
  if args.check:assert all(old.get(n)==b for n,b in desired.items()),'Classic family out of date'
  elif not all(old.get(n)==b for n,b in desired.items()):
   with zipfile.ZipFile(path,'a')as z:
-   first=min((i.header_offset for i in z.infolist()if i.filename in desired),default=z.start_dir)
-   z.filelist=[i for i in z.filelist if i.filename not in desired];z.NameToInfo={i.filename:i for i in z.filelist};z.start_dir=first
+   z.filelist=[i for i in z.filelist if i.filename not in desired];z.NameToInfo={i.filename:i for i in z.filelist}
    for name,blob in desired.items():
     info=zipfile.ZipInfo(name,(1980,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;z.writestr(info,blob)
  with zipfile.ZipFile(path)as z:assert {n:hashlib.sha256(z.read(n)).hexdigest()for n in z.namelist()if n not in desired}==classic
  receipt=P/'preserved-archives.json';data={'custom':before,'classic':classic}
  if receipt.exists():
-  baseline=json.loads(receipt.read_text());assert all(data[group].get(n)==h for group,entries in baseline.items()for n,h in entries.items()),'Published sprite changed'
+  baseline=json.loads(receipt.read_text())
+  # The axe family has its own reviewed source recipe and preservation checks.
+  # Its approved pooled-rim revision supersedes the earlier thin trim payload.
+  def axe_owned(group,name):
+   return group=='custom'and name=='equipment:viscousbattleaxe' or group=='classic'and name.isdigit()and 4000<=int(name)<4018
+  if any(data[group].get(n)!=h for group,entries in baseline.items()for n,h in entries.items()if axe_owned(group,n)):
+   import subprocess,sys
+   subprocess.run([sys.executable,str(ROOT/'scripts/generate-battleaxe-coatings.py'),'--check'],check=True)
+  assert all(data[group].get(n)==h for group,entries in baseline.items()for n,h in entries.items()if not axe_owned(group,n)),'Published sprite changed'
  elif not args.check:receipt.write_text(json.dumps(data,indent=2)+'\n')
  else:raise AssertionError('Missing preservation receipt')
  print('PASS fourteen inventory exports and eighteen native held frames; unrelated custom/classic entries preserved')

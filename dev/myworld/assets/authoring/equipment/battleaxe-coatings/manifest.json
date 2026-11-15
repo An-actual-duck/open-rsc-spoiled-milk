@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "coatingId": 3410,
   "appearanceStart": 1097,
   "entry": "viscousbattleaxe",
@@ -134,5 +134,6 @@
     }
   ],
   "classicSpriteStart": 4000,
-  "appearanceIndexing": "appearanceStart and variant appearanceId are zero-based client animation indices; server equipment appearance IDs add one"
+  "appearanceIndexing": "appearanceStart and variant appearanceId are zero-based client animation indices; server equipment appearance IDs add one",
+  "visualStyle": "Owner-approved B: pooled teal slime on cutting rims"
 }

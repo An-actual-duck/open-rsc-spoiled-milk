@@ -92,7 +92,12 @@ def main():
   for key,value in recorded.items():
    if key in ('preservedCustomEntries','preservedAuthenticEntries'):
     # Historical preservation baselines allow later reviewed sprite additions.
-    assert all(evidence[key].get(name)==digest for name,digest in value.items()),key
+    def axe_owned(name):
+     return key=='preservedCustomEntries'and name=='equipment:viscousbattleaxe' or key=='preservedAuthenticEntries'and name.isdigit()and 4000<=int(name)<4018
+    if any(evidence[key].get(name)!=digest for name,digest in value.items()if axe_owned(name)):
+     import subprocess,sys
+     subprocess.run([sys.executable,str(ROOT/'scripts/generate-battleaxe-coatings.py'),'--check'],check=True)
+    assert all(evidence[key].get(name)==digest for name,digest in value.items()if not axe_owned(name)),key
    else:assert evidence[key]==value,key
  else:emit(receipt,json.dumps(evidence,indent=2)+'\n')
  print('PASS73 textures in both modes;6 approved palettes;18 native records;2 blocked floors;8 walls; preexisting payloads preserved')
