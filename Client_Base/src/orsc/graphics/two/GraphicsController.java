@@ -301,8 +301,7 @@ public class GraphicsController {
 		try {
 			this.clipBottom = var2;
 			this.clipRight = var1;
-			if(BROWSER_OVERLAY_JOURNAL_OBSERVE)journalClose(OverlayJournalObserver.SURFACE);
-            this.pixelData = new int[var1 * var2];
+			this.pixelData = new int[var1 * var2];
 			this.height2 = var2;
 			this.width2 = var1;
 			try {
