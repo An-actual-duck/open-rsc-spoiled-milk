@@ -338,6 +338,7 @@ public class CombatFormula {
 		attackMax = getDragonBreathMainAttackMax(source, bowId, arrowId, attackMax);
         attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax,com.openrsc.server.model.combat.CombatStyle.RANGED);
     final int resolvedMaximum = attackMax;
+    final int revelation=com.openrsc.server.content.GodCrossbowEffects.revelationPercent(source,victim,bowId);
     AttackRoll roll =
         com.openrsc.server.content.cleric.runtime.ClericCriticalRuntime.primaryRoll(
             source, victim,
@@ -345,11 +346,8 @@ public class CombatFormula {
             true,
             com.openrsc.server.model.combat.CombatStyle.RANGED,
             () ->
-                applyMitigationRoll(
-                    source,
-                    victim,
-                    resolvedMaximum,
-                    defenseToMitigation(victim.getRangedDefense())));
+                rangedMitigationRoll(source,victim,resolvedMaximum,defenseToMitigation(victim.getRangedDefense()),revelation));
+    roll=roll.withWoundBasis(roll.getDamage(),resolvedMaximum);
     int damage = roll.getDamage();
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.RANGED);
     return roll.withDamage(applyDamageMultiplier(source, damage));
@@ -634,6 +632,14 @@ public class CombatFormula {
             : CombatLuck.higher(victim,combatRandom(source,victim),()->combatRandom(source,victim).nextIntInclusive(1,defenseMax));
 		return Math.max(offenseRoll - defenseRoll, 0);
 	}
+
+    private static int rangedMitigationRoll(Mob source,Mob target,int maximum,int defenseMaximum,int revelation) {
+        int offense=rollIncomingDamage(source,target,maximum,true);
+        offense=com.openrsc.server.content.GodCrossbowEffects.liftRoll(offense,maximum,revelation);
+        int defense=defenseMaximum<=0?0:CombatLuck.higher(target,combatRandom(source,target),
+            ()->combatRandom(source,target).nextIntInclusive(1,defenseMaximum));
+        return Math.max(0,offense-defense);
+    }
 
     private static int scimitarMitigationRoll(Mob source, Mob victim, int maximum, int defenseMaximum) {
         int offense = rollIncomingDamage(source, victim, maximum, true);

@@ -472,7 +472,7 @@
     <target name="compile_combat_tests" depends="compile_combat_core">
         <mkdir dir="${combat.build.test}"/>
         <javac srcdir="${test.src}" destdir="${combat.build.test}" debug="on"
-               includes="com/openrsc/server/combat/**/*.java" excludes="com/openrsc/server/combat/ClericWellInteractionFixture.java,com/openrsc/server/combat/GraceBlightWellInfusionFixture.java,com/openrsc/server/combat/ClericMetalSigilFixture.java,com/openrsc/server/combat/CraftingGuildCaveAccessFixture.java"
+               includes="com/openrsc/server/combat/**/*.java" excludes="com/openrsc/server/combat/ClericWellInteractionFixture.java,com/openrsc/server/combat/GraceBlightWellInfusionFixture.java,com/openrsc/server/combat/ClericMetalSigilFixture.java,com/openrsc/server/combat/CraftingGuildCaveAccessFixture.java,com/openrsc/server/combat/StirgeCombatFixture.java"
                includeantruntime="false" target="${javac.target}"
                source="${javac.source}" encoding="UTF-8">
             <classpath>

@@ -10,6 +10,7 @@ import java.util.Set;
 /** Executable A07.1 coverage for the descriptive secondary-effect catalog. */
 final class CurrentCombatSecondaryEffectPolicyCharacterization {
 	private static final String[] EXPECTED_STABLE_KEYS = {
+		"guthix-briar-seed",
 		"sullen-pendant",
 		"thunder-spire-splash",
 		"slayer-leather-electrically-charged",
@@ -63,7 +64,7 @@ final class CurrentCombatSecondaryEffectPolicyCharacterization {
 		final Set<String> expected = new LinkedHashSet<String>(
 			Arrays.asList(EXPECTED_STABLE_KEYS));
 
-		assertEquals(42, SecondaryEffectPolicy.currentPolicyCount(),
+		assertEquals(43, SecondaryEffectPolicy.currentPolicyCount(),
 			"current secondary-effect policy count");
 		assertTrue(SecondaryEffectPolicy.currentPolicyCount() > 32,
 			"32 entries cannot be used as a total catalog capacity");
@@ -75,7 +76,7 @@ final class CurrentCombatSecondaryEffectPolicyCharacterization {
 			"auxiliary family count");
 		assertEquals(12, count(SecondaryEffectPolicy.Family.REFLECTION),
 			"reflection family count");
-		assertEquals(11, count(SecondaryEffectPolicy.Family.PLAYER_CHILD),
+		assertEquals(12, count(SecondaryEffectPolicy.Family.PLAYER_CHILD),
 			"player child family count");
 		assertEquals(9, count(SecondaryEffectPolicy.Family.OWNED_CONTENT),
 			"owned content family count");

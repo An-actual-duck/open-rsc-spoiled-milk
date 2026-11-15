@@ -422,8 +422,7 @@ public class RangeUtils {
   public static com.openrsc.server.model.combat.AttackRoll rollRangedDamage(
       Mob source, int bow, int ammo, Mob target, boolean cape) {
     if (source.getConfig().OSRS_COMBAT_RANGED)
-      return com.openrsc.server.model.combat.AttackRoll.normal(
-          doRangedDamage(source, bow, ammo, target, cape));
+      return OSRSCombatFormula.Ranged.rollRangedDamage(source,bow,ammo,target,cape);
     return CombatFormula.rollRangedDamage(source, bow, ammo, target, cape);
   }
 

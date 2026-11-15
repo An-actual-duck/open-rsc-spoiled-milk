@@ -17,6 +17,7 @@ import java.util.Map;
  * planned effect cannot silently exceed an unrelated historical limit.</p>
  */
 public enum SecondaryEffectPolicy {
+	GUTHIX_BRIAR_SEED("guthix-briar-seed", Family.PLAYER_CHILD),
 	SULLEN_PENDANT("sullen-pendant", Family.REFLECTION),
 	THUNDER_SPIRE_SPLASH("thunder-spire-splash", Family.DELAYED_SPELL),
 	ELECTRICALLY_CHARGED("slayer-leather-electrically-charged", Family.REFLECTION),

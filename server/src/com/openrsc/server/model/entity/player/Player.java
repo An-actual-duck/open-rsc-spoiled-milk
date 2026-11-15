@@ -4444,6 +4444,7 @@ public final class Player extends Mob {
 
 				getWorld().sendKilledUpdate(getUsernameHash(), player.getUsernameHash(), killTypeId);
 				player.incKills();
+                com.openrsc.server.content.GodCrossbowEffects.creditedKill(player,this);
 				incDeaths();
                 if(getConfig().WANT_MYWORLD) {
                     player.chargeDeathRingFromKill((Mob)this);

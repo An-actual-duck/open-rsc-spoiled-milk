@@ -32,6 +32,7 @@ public class Prayers {
 
 	public void setPrayer(final int prayerID, final boolean activated, final boolean updatePlayer) {
 		activatedPrayers[prayerID] = activated;
+        if(prayerID==com.openrsc.server.content.GodCrossbows.PRAYER_SLOT&&!activated)com.openrsc.server.content.GodCrossbowEffects.clear(player);
 		if (updatePlayer) ActionSender.sendPrayers(player, activatedPrayers);
 	}
 
@@ -87,26 +88,28 @@ public class Prayers {
 			}
 			final PrayerCatalog.PrayerDefinition definition = PrayerCatalog.getDefinition(player.getPrayerBook(), i);
 			if (definition != null && !meetsEquipmentRequirement(definition)) {
-				activatedPrayers[i] = false;
+				setPrayer(i,false,false);
 				changed = true;
 			}
 		}
 		if (changed) {
 			ActionSender.sendPrayers(player, activatedPrayers);
 		}
+        com.openrsc.server.content.GodCrossbowEffects.equipmentChanged(player);
 	}
 
 	public void deactivateOverflowingPrayers() {
 		boolean changed = false;
 		for (int i = activatedPrayers.length - 1; i >= 0 && getAllocatedPoints() > player.getPrayerAllocationPoints(); i--) {
 			if (activatedPrayers[i]) {
-				activatedPrayers[i] = false;
+				setPrayer(i,false,false);
 				changed = true;
 			}
 		}
 		if (changed) {
 			ActionSender.sendPrayers(player, activatedPrayers);
 		}
+        com.openrsc.server.content.GodCrossbowEffects.equipmentChanged(player);
 	}
 
 	public int getOffenseBonusPercent(final PrayerCatalog.CombatStyle combatStyle) {
@@ -150,7 +153,7 @@ public class Prayers {
 	public void resetPrayers() {
 		for (int i = 0; i < activatedPrayers.length; i++) {
 			if (activatedPrayers[i]) {
-				activatedPrayers[i] = false;
+				setPrayer(i,false,false);
 			}
 		}
 		ActionSender.sendPrayers(player, activatedPrayers);

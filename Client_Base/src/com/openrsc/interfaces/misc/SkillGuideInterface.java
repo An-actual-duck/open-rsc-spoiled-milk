@@ -1536,18 +1536,25 @@ public final class SkillGuideInterface {
 			addPrayerLine("Melee Protection", "5 tiers of melee damage reduction");
 			addPrayerLine("Enchanting Favor", "5 tiers of enchanting XP bonuses");
             addPrayerLine("Saradomin's Divine Bolts", "God crossbow: free tier 6 bolts (80 points)");
+            addPrayerLine("Revelation", "Same-type kills raise minimum rolls by 1% of max; cap 15%");
+            addPrayerLine("Revelation resets", "New enemy type, bow removed, or prayer off; max unchanged");
             addPrayerLine("Matching god cape", "Tier 8 bolts; reserve 60 points instead");
 		} else if (curTab == 1) {
 			addPrayerLine("Melee Power", "5 tiers of melee damage bonuses");
 			addPrayerLine("Ranged Protection", "5 tiers of ranged damage reduction");
 			addPrayerLine("Smithing Favor", "5 tiers of smithing XP bonuses");
             addPrayerLine("Zamorak's Bolts of Wrath", "God crossbow: free tier 6 bolts (80 points)");
+            addPrayerLine("Bleed 2", "Primary hits at least 70% of max, or crits, open wounds");
+            addPrayerLine("Wound pulses", "Three 3-5 damage pulses, each 3 ticks apart");
+            addPrayerLine("Reopening wounds", "Refreshes your wound; different players bleed independently");
             addPrayerLine("Matching god cape", "Tier 8 bolts; reserve 60 points instead");
 		} else if (curTab == 2) {
 			addPrayerLine("Ranged Power", "5 tiers of ranged damage bonuses");
 			addPrayerLine("Magic Protection", "5 tiers of magic damage reduction");
 			addPrayerLine("Crafting Favor", "5 tiers of crafting XP bonuses");
             addPrayerLine("Guthix's Thorned Bolts", "God crossbow: free tier 6 bolts (80 points)");
+            addPrayerLine("Briar Seeds", "Five primary hits on one enemy, including zeroes, burst");
+            addPrayerLine("Thorn burst", "Rolls 0-3 extra damage per enemy within 1 tile");
             addPrayerLine("Matching god cape", "Tier 8 bolts; reserve 60 points instead");
 		} else if (curTab == 3) {
 			skillMenuEntries.add(new SkillMenuItem(1214, "80", "Saradomin Cape - requires Saradomin worship"));

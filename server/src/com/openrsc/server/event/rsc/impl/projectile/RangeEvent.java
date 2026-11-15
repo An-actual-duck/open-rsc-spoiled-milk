@@ -182,6 +182,8 @@ public class RangeEvent extends GameTickEvent {
 
     final com.openrsc.server.model.combat.AttackCommitment attack =
         com.openrsc.server.model.combat.AttackState.commitAttack(player);
+    final com.openrsc.server.content.GodCrossbowEffects.Shot godShot = holyBolts
+        ? com.openrsc.server.content.GodCrossbowEffects.capture(player,target) : null;
     final com.openrsc.server.model.combat.AttackRoll attackRoll =
         attack.isSuppressed()
             ? com.openrsc.server.model.combat.AttackRoll.normal(0)
@@ -252,6 +254,7 @@ public class RangeEvent extends GameTickEvent {
                     .duplicationStrategy(DuplicationStrategy.ONE_PER_MOB)
                     .attackCommitment(attack)
                     .attackRoll(attackRoll)
+                    .godCrossbowShot(godShot)
                     .build(),
                 resourceLedger));
 	}

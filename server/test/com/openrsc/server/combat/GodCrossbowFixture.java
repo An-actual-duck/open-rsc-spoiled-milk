@@ -83,6 +83,7 @@ public final class GodCrossbowFixture {
                 Player p=player(h,PrayerCatalog.GodLine.SARADOMIN);equip(p,3444,1);if(ammo>0)equip(p,ammo,20);p.getPrayers().setPrayer(16,true);
                 ProjectileEvent event=fire(h,p);ProjectileResourceLedger ledger=(ProjectileResourceLedger)CurrentCombatHarness.readPrivateField(event,"resourceLedger");
                 check(ledger.getItemCosts().isEmpty()&&ledger.getRecoveries().isEmpty(),"holy launch has no physical ammo ledger");
+                check(event.getLaunchSnapshot().getSpecification().getGodCrossbowShot()!=null,"real holy launch captures unique effect");
                 check(event.getLaunchSnapshot().getSpecification().getPoisonWeaponId()==-1,"holy launch cannot inherit bolt poison");
                 if(ammo>0)check(p.getCarriedItems().getEquipment().getAmmoItem().getAmount()==20,"overridden ammo untouched");
                 event.stop();p.getRangeEvent().stop();
@@ -90,6 +91,7 @@ public final class GodCrossbowFixture {
             Player normal=player(h,PrayerCatalog.GodLine.SARADOMIN);equip(normal,3444,1);equip(normal,ItemId.MITHRIL_BOLTS.id(),20);
             ProjectileEvent event=fire(h,normal);ProjectileResourceLedger ledger=(ProjectileResourceLedger)CurrentCombatHarness.readPrivateField(event,"resourceLedger");
             check(normal.getCarriedItems().getEquipment().getAmmoItem().getAmount()==19,"prayer off consumes ordinary bolt");
+            check(event.getLaunchSnapshot().getSpecification().getGodCrossbowShot()==null,"ordinary real launch carries no holy effect");
             check(ledger.getItemCosts().size()==1&&ledger.getRecoveries().size()==1,"ordinary ammo resources retained");
             check(event.getLaunchSnapshot().getSpecification().getPoisonWeaponId()==ItemId.MITHRIL_BOLTS.id(),"ordinary ammo identity retained");
             event.stop();normal.getRangeEvent().stop();
