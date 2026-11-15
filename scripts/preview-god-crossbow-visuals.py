@@ -4,18 +4,18 @@ from pathlib import Path
 import json,shutil,subprocess
 ROOT=Path(__file__).resolve().parents[1]
 out=Path(subprocess.check_output(['python3',str(ROOT/'scripts/workspace-layout.py'),'path','art','god-crossbow-equipped','--mkdir'],cwd=ROOT,text=True).strip())
-out=out/'anchored-v4';out.mkdir(exist_ok=True)
+out=out/'bolt-v5';out.mkdir(exist_ok=True)
 author=ROOT/'dev/myworld/assets/authoring/equipment/god-crossbows'
 for name in ['inputs','saradomin','zamorak','guthix']:
  dest=out/name;dest.mkdir(exist_ok=True)
  for p in (author/name).glob('*.png'):shutil.copyfile(p,dest/p.name)
  if name!='inputs':
-  for p in (author/'anchored-v4'/name).glob('*.png'):shutil.copyfile(p,dest/p.name)
+  for p in (author/'bolt-v5'/name).glob('*.png'):shutil.copyfile(p,dest/p.name)
 for god in ['saradomin','zamorak','guthix']:
  shutil.copyfile(ROOT/f'dev/myworld/assets/authoring/items/god-crossbows/selected-mythic-v1/{god}-crossbow.png',out/god/'icon.png')
 html='''<!doctype html><meta charset="utf-8"><title>God crossbows — held palettes and holy bolts</title>
 <style>body{background:#151a20;color:#e6e9ec;font:16px system-ui;margin:28px}h1{font-size:24px}main{display:flex;flex-wrap:wrap;gap:18px}.card{background:#222a33;border:1px solid #435361;border-radius:10px;padding:14px;text-align:center}canvas,img{image-rendering:pixelated}canvas{display:block;background:#171e26;margin:10px auto}button,select{font:inherit;padding:6px;background:#344352;color:white;border:1px solid #67798a}small{color:#aebdcb}#pose{min-width:180px}</style>
-<h1>God crossbows: limb shape review</h1><p>Native pixels, enlarged 4×. Per-frame anchors: thicker crescents, forward horns with the hidden rear horn removed, and denser ivy on brown wood.</p>
+<h1>God crossbows: limb shape review</h1><p>Native pixels, enlarged 4×. Loaded bolts retain their exact original frame geometry. Front-diagonal limb mounts now meet the forward stock.</p>
 <p><select id="pose"><option value="cycle">Cycle all five directions</option><option value="0">Front</option><option value="1">Front diagonal</option><option value="2">Side</option><option value="3">Rear diagonal</option><option value="4">Rear</option></select> <select id="frame"><option value="animate">Animate frames</option><option value="0">Frame 1</option><option value="1">Frame 2</option><option value="2">Frame 3</option></select> <button id="pause">Pause</button></p><main></main>
 <p><small>Shot effects are set aside while the held designs are reviewed. No combat numbers change.</small></p>
 <script>

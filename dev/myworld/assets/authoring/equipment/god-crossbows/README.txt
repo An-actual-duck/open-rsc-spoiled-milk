@@ -52,3 +52,18 @@ from replaced original limbs are removed in native Aseprite. Editable masters
 and exports are in anchored-v4/. This revision remains a review candidate.
 Current preview: output/art/god-crossbow-equipped/anchored-v4/index.html.
 Shot visuals remain deferred. No runtime installation of this candidate yet.
+
+Current revision: bolt-v5 (source bolt restoration)
+------------------------------------------------
+Owner identified missing bolt pixels in the rear diagonal and a disconnected
+nose in front-diagonal frames2/3. Prior recipes misclassified the original grey
+bolt as bow metal and cut it away. bolt-v5.lua restores the original 193-grey
+shaft, its adjacent 148-grey shading, and original orange fletching at their
+exact source coordinates, as a separately editable Aseprite bolt layer.
+The bolts are gold for Saradomin, charcoal for Zamorak, and wood for Guthix.
+The layer is placed after ivy so foliage cannot erase or obscure the shaft.
+Front-diagonal bow belly anchors for native frames4/5 are moved to44,65 /48,61
+to meet the forward stock rather than leaving a detached projecting nose.
+All other anchor and silhouette decisions from anchored-v4 are retained.
+Current preview: output/art/god-crossbow-equipped/bolt-v5/index.html.
+Review candidate only; shot visuals remain deferred, no live/runtime install.
