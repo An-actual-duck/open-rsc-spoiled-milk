@@ -72,7 +72,7 @@ public final class ScimitarCoatingFixture {
                 check(p.getCarriedItems().getInventory().countId(3447)==0,"dose consumed");
                 check(p.getCarriedItems().getInventory().countId(ItemId.EMPTY_VIAL.id())==1,"vial returned");
                 Item result=p.getCarriedItems().getInventory().get(p.getCarriedItems().getInventory().getLastIndexById(coated));
-                check(result!=null&&result.getDef(h.world()).getAppearanceId()==oldAppearance,"effective held family unchanged "+base);
+                check(result!=null&&result.getDef(h.world()).getAppearanceId()==ScimitarCoatingCatalog.appearance(coated)&&h.server().getEntityHandler().getItemDef(base).getAppearanceId()==oldAppearance,"coated alias and unchanged uncoated appearance "+base);
                 check(result.getDef(h.world()).getMeleeOffense()==h.server().getEntityHandler().getItemDef(base).getMeleeOffense(),"base offense retained");
                 check(!ScimitarCoatings.apply(p,add(p,3447),result),"no double coating");
                 check(ScimitarCoatings.wipe(p,result,add(p,ItemId.WOOL.id())),"wool cleaning");

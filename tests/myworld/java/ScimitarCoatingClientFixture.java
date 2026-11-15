@@ -10,9 +10,9 @@ public final class ScimitarCoatingClientFixture {
         if(dose.command!=null||dose.wieldable||dose.noteable||dose.stackable||!dose.getSpriteLocation().equals("items:48"))throw new AssertionError("inert single-dose vial");
         for(int n=0;n<bases.length;n++) {
             ItemDef base=EntityHandler.getItemDef(bases[n]),coated=EntityHandler.getItemDef(3448+n);
-            if(!coated.getName().equals("Anti-coagulant "+base.getName())||!coated.getSpriteLocation().equals(base.getSpriteLocation())
-                ||coated.getPictureMask()!=base.getPictureMask()||coated.getBlueMask()!=base.getBlueMask()
-                ||coated.spriteID!=base.spriteID||coated.wearableID!=base.wearableID||!coated.wieldable||coated.noteable
+            if(!coated.getName().equals("Anti-coagulant "+base.getName())||!coated.getSpriteLocation().equals("external-png:anticoagulant-scimitar-"+bases[n])
+                ||coated.getPictureMask()!=0||coated.getBlueMask()!=0
+                ||coated.spriteID!=-1||coated.wearableID!=base.wearableID||!coated.wieldable||coated.noteable
                 ||coated.command!=null||coated.membersItem!=base.membersItem||coated.untradeable!=base.untradeable)
                 throw new AssertionError("coated definition mismatch "+bases[n]);
         }

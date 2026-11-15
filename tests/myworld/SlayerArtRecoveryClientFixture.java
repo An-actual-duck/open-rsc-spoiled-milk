@@ -15,13 +15,13 @@ public final class SlayerArtRecoveryClientFixture {
   Config.F_CACHE_DIR=args[0]+"/Client_Base/Cache";
   EntityHandler.load(true);
   if(!Config.S_WANT_CUSTOM_SPRITES) {
-   check(EntityHandler.animationCount()==1114,"fresh authentic-mode published catalog");
+   check(EntityHandler.animationCount()==1189,"fresh authentic-mode published catalog");
    for(SlayerArtAppearances.Mapping m:SlayerArtAppearances.MAPPINGS)
     check(EntityHandler.getAnimationDef(m.fallbackAppearance-1)!=null,"authentic fallback "+m.itemId);
    System.out.println("PASS: fresh authentic-mode catalog and all 37 fallback references");
    return;
   }
-  check(EntityHandler.animationCount()==1175,"append after every published appearance");
+  check(EntityHandler.animationCount()==1189,"append after every published appearance");
   for(int id=1170;id<=1172;id++)check("crossbow".equals(EntityHandler.getAnimationDef(id).getName()),"god crossbow ID retained");
   check("slayer-preview-stirge".equals(EntityHandler.getAnimationDef(1173).getName()),"Stirge appended after published equipment");
   for(int i=0;i<15;i++)check("viscousbattleaxe".equals(EntityHandler.getAnimationDef(1097+i).getName()),"coating ID retained");

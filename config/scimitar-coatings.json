@@ -16,93 +16,142 @@
       7
     ]
   ],
-  "acquisition": {"skill": "Herblaw", "level": 33, "experience": 275, "unfinished": 457, "outputQuantity": 1},
-  "ingredients": [{"id": 3466, "quantity": 1}, {"id": 3471, "quantity": 1}],
+  "acquisition": {
+    "skill": "Herblaw",
+    "level": 33,
+    "experience": 275,
+    "unfinished": 457,
+    "outputQuantity": 1
+  },
+  "ingredients": [
+    {
+      "id": 3466,
+      "quantity": 1
+    },
+    {
+      "id": 3471,
+      "quantity": 1
+    }
+  ],
   "variants": [
     {
       "base": 1999,
       "coated": 3448,
       "tier": 1,
-      "severity": 1
+      "severity": 1,
+      "appearance": 1176,
+      "heldMask": 12044761
     },
     {
       "base": 2010,
       "coated": 3449,
       "tier": 2,
-      "severity": 1
+      "severity": 1,
+      "appearance": 1177,
+      "heldMask": 13134379
     },
     {
       "base": 82,
       "coated": 3450,
       "tier": 3,
-      "severity": 1
+      "severity": 1,
+      "appearance": 1178,
+      "heldMask": 16737817
     },
     {
       "base": 83,
       "coated": 3451,
       "tier": 4,
-      "severity": 1
+      "severity": 1,
+      "appearance": 1179,
+      "heldMask": 15654365
     },
     {
       "base": 84,
       "coated": 3452,
       "tier": 5,
-      "severity": 2
+      "severity": 2,
+      "appearance": 1180,
+      "heldMask": 15658734
     },
     {
       "base": 427,
       "coated": 3453,
       "tier": 5,
-      "severity": 2
+      "severity": 2,
+      "appearance": 1181,
+      "heldMask": 3158064
     },
     {
       "base": 2155,
       "coated": 3454,
       "tier": 5,
-      "severity": 2
+      "severity": 2,
+      "appearance": 1182,
+      "heldMask": 15196886
     },
     {
       "base": 3117,
       "coated": 3455,
       "tier": 5,
-      "severity": 2
+      "severity": 2,
+      "appearance": 1183,
+      "heldMask": 10397087
     },
     {
       "base": 85,
       "coated": 3456,
       "tier": 6,
-      "severity": 2
+      "severity": 2,
+      "appearance": 1184,
+      "heldMask": 10072780
     },
     {
       "base": 2021,
       "coated": 3457,
       "tier": 7,
-      "severity": 2
+      "severity": 2,
+      "appearance": 1185,
+      "heldMask": 9348795
     },
     {
       "base": 86,
       "coated": 3458,
       "tier": 8,
-      "severity": 2
+      "severity": 2,
+      "appearance": 1186,
+      "heldMask": 11717785
     },
     {
       "base": 2032,
       "coated": 3459,
       "tier": 9,
-      "severity": 3
+      "severity": 3,
+      "appearance": 1187,
+      "heldMask": 5914493
     },
     {
       "base": 398,
       "coated": 3460,
       "tier": 10,
-      "severity": 3
+      "severity": 3,
+      "appearance": 1188,
+      "heldMask": 65535
     },
     {
       "base": 3265,
       "coated": 3461,
       "tier": 12,
-      "severity": 3
+      "severity": 3,
+      "appearance": 1189,
+      "heldMask": 14221311
     }
   ],
-  "ceilingPercent": 90
+  "ceilingPercent": 90,
+  "art": {
+    "family": "anticoagulantscimitar",
+    "appearanceStart": 1176,
+    "classicSpriteStart": 4300,
+    "style": "B \u2014 dripping on the blade"
+  }
 }

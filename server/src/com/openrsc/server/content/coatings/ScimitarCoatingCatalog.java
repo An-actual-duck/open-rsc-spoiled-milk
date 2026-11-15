@@ -39,4 +39,5 @@ public final class ScimitarCoatingCatalog {
             if(item.isWielded()&&tier(item.getCatalogId())>0)return item.getCatalogId();
         return -1;
     }
+ public static int appearance(int id){int[] ids=coatedIds();for(int i=0;i<ids.length;i++)if(ids[i]==id)return 1176+i;return -1;}
 }
