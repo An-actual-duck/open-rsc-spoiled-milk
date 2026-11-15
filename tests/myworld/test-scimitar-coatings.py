@@ -33,12 +33,12 @@ run(['java','-Xmx768m','-XX:+UseSerialGC','-Djava.awt.headless=true','-cp',str(c
 run(['javac','-source','8','-target','8','-cp',client,'-d',classes,ROOT/'tests/myworld/java/ScimitarCoatingClientFixture.java'],'compile-client')
 for custom in ['true','false']:
     run(['java','-Djava.awt.headless=true','-cp',str(classes)+':'+str(client),'ScimitarCoatingClientFixture',custom],'client-'+custom)
-m=json.loads((ROOT/'config/scimitar-coatings.json').read_text());assert m['acquisition']is None
+m=json.loads((ROOT/'config/scimitar-coatings.json').read_text());assert m['acquisition']['level']==33 and m['acquisition']['unfinished']==457
 j=json.loads((ROOT/'server/conf/server/defs/ItemDefsCustom.json').read_text());defs={r['id']:r for r in j.get('items',j.get('item',[]))}
 assert set(range(3448,3462))=={r['coated']for r in m['variants']}
 for row in m['variants']:
     assert row['coated']in defs
     assert row['severity']==(1 if row['tier']<=4 else 2 if row['tier']<=8 else 3)
-receipt={'passed':True,'liveServerTouched':False,'acquisition':None,'serverSha256':hashlib.sha256(server.read_bytes()).hexdigest(),'clientSha256':hashlib.sha256(client.read_bytes()).hexdigest()}
+receipt={'passed':True,'liveServerTouched':False,'acquisition':m['acquisition'],'serverSha256':hashlib.sha256(server.read_bytes()).hexdigest(),'clientSha256':hashlib.sha256(client.read_bytes()).hexdigest()}
 (BASE/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
 print('Evidence:',BASE)

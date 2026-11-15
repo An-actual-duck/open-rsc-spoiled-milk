@@ -16,8 +16,8 @@
       7
     ]
   ],
-  "acquisition": null,
-  "plannedIngredients": [{"id": 3466, "quantity": 1}, {"id": 3470, "quantity": 20}],
+  "acquisition": {"skill": "Herblaw", "level": 33, "experience": 275, "unfinished": 457, "outputQuantity": 1},
+  "ingredients": [{"id": 3466, "quantity": 1}, {"id": 3470, "quantity": 20}],
   "variants": [
     {
       "base": 1999,

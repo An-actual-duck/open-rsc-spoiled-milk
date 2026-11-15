@@ -21,5 +21,5 @@ run(['javac','-source','8','-target','8','-cp',client,'-d',classes,ROOT/'tests/m
 for mode in ['true','false']:
  run(['java','-Djava.awt.headless=true','-cp',str(classes)+':'+str(client),'NagaScalesClientFixture',mode],'client-'+mode)
 recipe=json.loads((ROOT/'config/scimitar-coatings.json').read_text())
-assert recipe['plannedIngredients']==[{'id':3466,'quantity':1},{'id':3470,'quantity':20}]
+assert recipe['ingredients']==[{'id':3466,'quantity':1},{'id':3470,'quantity':20}]
 print('Evidence:',BASE)
