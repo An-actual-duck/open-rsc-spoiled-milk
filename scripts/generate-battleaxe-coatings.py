@@ -161,7 +161,7 @@ public final class BattleaxeCoatingCatalog {
         assert {i.filename:hashlib.sha256(z.read(i)).hexdigest() for i in z.infolist() if i.filename not in desired}==classic_before
     preservation['Authentic_Sprites.orsc']=classic_before
     receipt='dev/myworld/assets/authoring/equipment/battleaxe-coatings/archive-entry-hashes.json'
-    if args.check:
+    if (ROOT/receipt).exists():
         # This is the installation-time preservation receipt, not a roster of
         # all future game content. Later reviewed additions must not invalidate
         # hashes of the pre-coating entries that this receipt protects.
@@ -170,6 +170,7 @@ public final class BattleaxeCoatingCatalog {
         for name,entries in recorded.items():
             assert all(preservation[name].get(key)==digest for key,digest in entries.items()), 'Preserved entry changed: '+name
     else:
+        assert not args.check, 'Missing historical preservation receipt'
         emit(receipt,json.dumps(preservation,indent=2)+'\n')
     # Layered Aseprite masters are copied from the approved source-owned exports.
     print('PASS coating manifest/catalog/native assets; 15 forms, 18 frames, untouched archive entries preserved')
