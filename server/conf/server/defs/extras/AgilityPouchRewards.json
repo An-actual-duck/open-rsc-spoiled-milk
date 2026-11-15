@@ -1,0 +1,2184 @@
+{
+  "schemaVersion": 1,
+  "description": "Ordinary agility chest rewards. Unique equipment rolls are separate. Node weights are conditional within their group.",
+  "tiers": [
+    {
+      "tier": 1,
+      "pouchId": 2328,
+      "minRewards": 2,
+      "maxRewards": 4,
+      "categories": [
+        {
+          "label": "Ammunition",
+          "weight": 25,
+          "options": [
+            {
+              "label": "Arrows",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Tin Arrows",
+                  "weight": 30,
+                  "itemId": 2039,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Copper Arrows",
+                  "weight": 25,
+                  "itemId": 2040,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Bronze Arrows",
+                  "weight": 20,
+                  "itemId": 11,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Iron Arrows",
+                  "weight": 15,
+                  "itemId": 638,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Steel Arrows",
+                  "weight": 10,
+                  "itemId": 640,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Bolts",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Crossbow bolts",
+                  "weight": 30,
+                  "itemId": 190,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Copper bolts",
+                  "weight": 25,
+                  "itemId": 2178,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Bronze bolts",
+                  "weight": 20,
+                  "itemId": 2180,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Iron bolts",
+                  "weight": 15,
+                  "itemId": 2182,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Steel bolts",
+                  "weight": 10,
+                  "itemId": 2184,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Darts",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Tin Throwing Dart",
+                  "weight": 30,
+                  "itemId": 2043,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Copper Throwing Dart",
+                  "weight": 25,
+                  "itemId": 2044,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Bronze Throwing Dart",
+                  "weight": 20,
+                  "itemId": 1013,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Iron Throwing Dart",
+                  "weight": 15,
+                  "itemId": 1015,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Steel Throwing Dart",
+                  "weight": 10,
+                  "itemId": 1024,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Throwing knives",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Tin throwing knife",
+                  "weight": 30,
+                  "itemId": 1996,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Copper throwing knife",
+                  "weight": 25,
+                  "itemId": 2007,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Bronze throwing knife",
+                  "weight": 20,
+                  "itemId": 1076,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Iron throwing knife",
+                  "weight": 15,
+                  "itemId": 1075,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Steel throwing knife",
+                  "weight": 10,
+                  "itemId": 1077,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Shuriken",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Tin shuriken",
+                  "weight": 30,
+                  "itemId": 3208,
+                  "min": 5,
+                  "max": 10,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Copper shuriken",
+                  "weight": 25,
+                  "itemId": 3209,
+                  "min": 5,
+                  "max": 10,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Bronze shuriken",
+                  "weight": 20,
+                  "itemId": 3210,
+                  "min": 5,
+                  "max": 10,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Iron shuriken",
+                  "weight": 15,
+                  "itemId": 3211,
+                  "min": 5,
+                  "max": 10,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Steel shuriken",
+                  "weight": 10,
+                  "itemId": 3212,
+                  "min": 5,
+                  "max": 10,
+                  "preferNoted": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Runes",
+          "weight": 15,
+          "options": [
+            {
+              "label": "Air-Rune",
+              "weight": 20,
+              "itemId": 33,
+              "min": 10,
+              "max": 20,
+              "preferNoted": false
+            },
+            {
+              "label": "Water-Rune",
+              "weight": 20,
+              "itemId": 32,
+              "min": 10,
+              "max": 20,
+              "preferNoted": false
+            },
+            {
+              "label": "Earth-Rune",
+              "weight": 20,
+              "itemId": 34,
+              "min": 10,
+              "max": 20,
+              "preferNoted": false
+            },
+            {
+              "label": "Fire-Rune",
+              "weight": 20,
+              "itemId": 31,
+              "min": 10,
+              "max": 20,
+              "preferNoted": false
+            },
+            {
+              "label": "Mind-Rune",
+              "weight": 15,
+              "itemId": 35,
+              "min": 10,
+              "max": 20,
+              "preferNoted": false
+            },
+            {
+              "label": "Body-Rune",
+              "weight": 15,
+              "itemId": 36,
+              "min": 10,
+              "max": 20,
+              "preferNoted": false
+            },
+            {
+              "label": "Cosmic-Rune",
+              "weight": 8,
+              "itemId": 46,
+              "min": 5,
+              "max": 10,
+              "preferNoted": false
+            },
+            {
+              "label": "Chaos-Rune",
+              "weight": 8,
+              "itemId": 41,
+              "min": 5,
+              "max": 10,
+              "preferNoted": false
+            },
+            {
+              "label": "Life-Rune",
+              "weight": 6,
+              "itemId": 37,
+              "min": 1,
+              "max": 3,
+              "preferNoted": false
+            }
+          ]
+        },
+        {
+          "label": "Sigils",
+          "weight": 15,
+          "options": [
+            {
+              "label": "Stone",
+              "weight": 100,
+              "options": [
+                {
+                  "label": "Stone sigil of Saradomin",
+                  "weight": 1,
+                  "itemId": 3294,
+                  "min": 8,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Stone sigil of Guthix",
+                  "weight": 1,
+                  "itemId": 3296,
+                  "min": 8,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Stone sigil of Zamorak",
+                  "weight": 1,
+                  "itemId": 3298,
+                  "min": 8,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Stone Grace sigil",
+                  "weight": 1,
+                  "itemId": 3300,
+                  "min": 8,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Stone Blight sigil",
+                  "weight": 1,
+                  "itemId": 3427,
+                  "min": 8,
+                  "max": 15,
+                  "preferNoted": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Ore",
+          "weight": 8,
+          "options": [
+            {
+              "label": "tin ore",
+              "weight": 30,
+              "itemId": 202,
+              "min": 4,
+              "max": 8,
+              "preferNoted": true
+            },
+            {
+              "label": "copper ore",
+              "weight": 30,
+              "itemId": 150,
+              "min": 4,
+              "max": 8,
+              "preferNoted": true
+            },
+            {
+              "label": "iron ore",
+              "weight": 25,
+              "itemId": 151,
+              "min": 3,
+              "max": 5,
+              "preferNoted": true
+            },
+            {
+              "label": "coal",
+              "weight": 15,
+              "itemId": 155,
+              "min": 2,
+              "max": 4,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Logs",
+          "weight": 8,
+          "options": [
+            {
+              "label": "Pine Logs",
+              "weight": 45,
+              "itemId": 2111,
+              "min": 4,
+              "max": 8,
+              "preferNoted": true
+            },
+            {
+              "label": "Oak Logs",
+              "weight": 35,
+              "itemId": 632,
+              "min": 3,
+              "max": 5,
+              "preferNoted": true
+            },
+            {
+              "label": "Willow Logs",
+              "weight": 20,
+              "itemId": 633,
+              "min": 2,
+              "max": 3,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Gems",
+          "weight": 5,
+          "options": [
+            {
+              "label": "uncut sapphire",
+              "weight": 70,
+              "itemId": 160,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "uncut emerald",
+              "weight": 30,
+              "itemId": 159,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Herbs",
+          "weight": 8,
+          "options": [
+            {
+              "label": "Herb",
+              "weight": 45,
+              "itemId": 165,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Herb",
+              "weight": 35,
+              "itemId": 435,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Herb",
+              "weight": 20,
+              "itemId": 436,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Ingredients",
+          "weight": 10,
+          "options": [
+            {
+              "label": "Fern leaf",
+              "weight": 20,
+              "itemId": 3256,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Mushroom",
+              "weight": 15,
+              "itemId": 3257,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Low quality fish oil",
+              "weight": 20,
+              "itemId": 1410,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Fair quality fish oil",
+              "weight": 10,
+              "itemId": 3240,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Eye of newt",
+              "weight": 20,
+              "itemId": 270,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Spider eye",
+              "weight": 10,
+              "itemId": 3245,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "3400",
+              "weight": 10,
+              "itemId": 3400,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Food",
+          "weight": 3,
+          "options": [
+            {
+              "label": "Salmon",
+              "weight": 40,
+              "itemId": 357,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Tuna",
+              "weight": 35,
+              "itemId": 367,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Lobster",
+              "weight": 25,
+              "itemId": 373,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Potions",
+          "weight": 3,
+          "options": [
+            {
+              "label": "Potion of Brawn v1",
+              "weight": 10,
+              "itemId": 474,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Brawn v2",
+              "weight": 10,
+              "itemId": 477,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Deftness v1",
+              "weight": 10,
+              "itemId": 489,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Deftness v2",
+              "weight": 10,
+              "itemId": 492,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Insight v1",
+              "weight": 10,
+              "itemId": 569,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Insight v2",
+              "weight": 10,
+              "itemId": 963,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "3402",
+              "weight": 10,
+              "itemId": 3402,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tier": 2,
+      "pouchId": 2329,
+      "minRewards": 2,
+      "maxRewards": 4,
+      "categories": [
+        {
+          "label": "Ammunition",
+          "weight": 25,
+          "options": [
+            {
+              "label": "Arrows",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Iron Arrows",
+                  "weight": 35,
+                  "itemId": 638,
+                  "min": 20,
+                  "max": 35,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Steel Arrows",
+                  "weight": 30,
+                  "itemId": 640,
+                  "min": 20,
+                  "max": 35,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Mithril Arrows",
+                  "weight": 25,
+                  "itemId": 642,
+                  "min": 20,
+                  "max": 35,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Titan Steel Arrows",
+                  "weight": 10,
+                  "itemId": 2041,
+                  "min": 20,
+                  "max": 35,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Bolts",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Iron bolts",
+                  "weight": 35,
+                  "itemId": 2182,
+                  "min": 20,
+                  "max": 35,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Steel bolts",
+                  "weight": 30,
+                  "itemId": 2184,
+                  "min": 20,
+                  "max": 35,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Mithril bolts",
+                  "weight": 25,
+                  "itemId": 2186,
+                  "min": 20,
+                  "max": 35,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Titan Steel bolts",
+                  "weight": 10,
+                  "itemId": 2188,
+                  "min": 20,
+                  "max": 35,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Darts",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Iron Throwing Dart",
+                  "weight": 35,
+                  "itemId": 1015,
+                  "min": 12,
+                  "max": 20,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Steel Throwing Dart",
+                  "weight": 30,
+                  "itemId": 1024,
+                  "min": 12,
+                  "max": 20,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Mithril Throwing Dart",
+                  "weight": 25,
+                  "itemId": 1068,
+                  "min": 12,
+                  "max": 20,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Titan Steel Throwing Dart",
+                  "weight": 10,
+                  "itemId": 2045,
+                  "min": 12,
+                  "max": 20,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Throwing knives",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Iron throwing knife",
+                  "weight": 35,
+                  "itemId": 1075,
+                  "min": 12,
+                  "max": 20,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Steel throwing knife",
+                  "weight": 30,
+                  "itemId": 1077,
+                  "min": 12,
+                  "max": 20,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Mithril throwing knife",
+                  "weight": 25,
+                  "itemId": 1078,
+                  "min": 12,
+                  "max": 20,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Titan Steel throwing knife",
+                  "weight": 10,
+                  "itemId": 2018,
+                  "min": 12,
+                  "max": 20,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Shuriken",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Iron shuriken",
+                  "weight": 35,
+                  "itemId": 3211,
+                  "min": 8,
+                  "max": 12,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Steel shuriken",
+                  "weight": 30,
+                  "itemId": 3212,
+                  "min": 8,
+                  "max": 12,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Mithril shuriken",
+                  "weight": 25,
+                  "itemId": 3213,
+                  "min": 8,
+                  "max": 12,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Titan Steel shuriken",
+                  "weight": 10,
+                  "itemId": 3214,
+                  "min": 8,
+                  "max": 12,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "multi cannon ball",
+              "weight": 3,
+              "itemId": 1041,
+              "min": 5,
+              "max": 10,
+              "preferNoted": false
+            }
+          ]
+        },
+        {
+          "label": "Runes",
+          "weight": 15,
+          "options": [
+            {
+              "label": "Cosmic-Rune",
+              "weight": 20,
+              "itemId": 46,
+              "min": 10,
+              "max": 20,
+              "preferNoted": false
+            },
+            {
+              "label": "Chaos-Rune",
+              "weight": 20,
+              "itemId": 41,
+              "min": 10,
+              "max": 20,
+              "preferNoted": false
+            },
+            {
+              "label": "Nature-Rune",
+              "weight": 15,
+              "itemId": 40,
+              "min": 5,
+              "max": 10,
+              "preferNoted": false
+            },
+            {
+              "label": "Law-Rune",
+              "weight": 12,
+              "itemId": 42,
+              "min": 5,
+              "max": 10,
+              "preferNoted": false
+            },
+            {
+              "label": "Death-Rune",
+              "weight": 10,
+              "itemId": 38,
+              "min": 5,
+              "max": 10,
+              "preferNoted": false
+            },
+            {
+              "label": "Life-Rune",
+              "weight": 8,
+              "itemId": 37,
+              "min": 3,
+              "max": 5,
+              "preferNoted": false
+            }
+          ]
+        },
+        {
+          "label": "Sigils",
+          "weight": 15,
+          "options": [
+            {
+              "label": "Stone",
+              "weight": 60,
+              "options": [
+                {
+                  "label": "Stone sigil of Saradomin",
+                  "weight": 1,
+                  "itemId": 3294,
+                  "min": 12,
+                  "max": 20,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Stone sigil of Guthix",
+                  "weight": 1,
+                  "itemId": 3296,
+                  "min": 12,
+                  "max": 20,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Stone sigil of Zamorak",
+                  "weight": 1,
+                  "itemId": 3298,
+                  "min": 12,
+                  "max": 20,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Stone Grace sigil",
+                  "weight": 1,
+                  "itemId": 3300,
+                  "min": 12,
+                  "max": 20,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Stone Blight sigil",
+                  "weight": 1,
+                  "itemId": 3427,
+                  "min": 12,
+                  "max": 20,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Silver",
+              "weight": 40,
+              "options": [
+                {
+                  "label": "Silver sigil of Saradomin",
+                  "weight": 1,
+                  "itemId": 3302,
+                  "min": 5,
+                  "max": 10,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Silver sigil of Guthix",
+                  "weight": 1,
+                  "itemId": 3304,
+                  "min": 5,
+                  "max": 10,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Silver sigil of Zamorak",
+                  "weight": 1,
+                  "itemId": 3306,
+                  "min": 5,
+                  "max": 10,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Silver Grace sigil",
+                  "weight": 1,
+                  "itemId": 3308,
+                  "min": 5,
+                  "max": 10,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Silver Blight sigil",
+                  "weight": 1,
+                  "itemId": 3429,
+                  "min": 5,
+                  "max": 10,
+                  "preferNoted": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Ore",
+          "weight": 8,
+          "options": [
+            {
+              "label": "iron ore",
+              "weight": 30,
+              "itemId": 151,
+              "min": 4,
+              "max": 6,
+              "preferNoted": true
+            },
+            {
+              "label": "coal",
+              "weight": 30,
+              "itemId": 155,
+              "min": 4,
+              "max": 6,
+              "preferNoted": true
+            },
+            {
+              "label": "Silver",
+              "weight": 25,
+              "itemId": 383,
+              "min": 2,
+              "max": 4,
+              "preferNoted": true
+            },
+            {
+              "label": "mithril ore",
+              "weight": 15,
+              "itemId": 153,
+              "min": 2,
+              "max": 3,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Logs",
+          "weight": 8,
+          "options": [
+            {
+              "label": "Oak Logs",
+              "weight": 30,
+              "itemId": 632,
+              "min": 3,
+              "max": 5,
+              "preferNoted": true
+            },
+            {
+              "label": "Willow Logs",
+              "weight": 30,
+              "itemId": 633,
+              "min": 3,
+              "max": 5,
+              "preferNoted": true
+            },
+            {
+              "label": "Palm Logs",
+              "weight": 20,
+              "itemId": 2112,
+              "min": 2,
+              "max": 3,
+              "preferNoted": true
+            },
+            {
+              "label": "Maple Logs",
+              "weight": 20,
+              "itemId": 634,
+              "min": 2,
+              "max": 3,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Gems",
+          "weight": 5,
+          "options": [
+            {
+              "label": "uncut sapphire",
+              "weight": 40,
+              "itemId": 160,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "uncut emerald",
+              "weight": 40,
+              "itemId": 159,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "uncut ruby",
+              "weight": 20,
+              "itemId": 158,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Herbs",
+          "weight": 8,
+          "options": [
+            {
+              "label": "Herb",
+              "weight": 40,
+              "itemId": 436,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Herb",
+              "weight": 40,
+              "itemId": 437,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Herb",
+              "weight": 20,
+              "itemId": 438,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Ingredients",
+          "weight": 10,
+          "options": [
+            {
+              "label": "Mushroom",
+              "weight": 15,
+              "itemId": 3257,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Fungus",
+              "weight": 12,
+              "itemId": 3258,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Fair quality fish oil",
+              "weight": 15,
+              "itemId": 3240,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Good quality fish oil",
+              "weight": 10,
+              "itemId": 3241,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Zombie eye",
+              "weight": 10,
+              "itemId": 3238,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Red spiders eggs",
+              "weight": 12,
+              "itemId": 219,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "3401",
+              "weight": 8,
+              "itemId": 3401,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Limpwurt root",
+              "weight": 10,
+              "itemId": 220,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Snape grass",
+              "weight": 8,
+              "itemId": 469,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Food",
+          "weight": 3,
+          "options": [
+            {
+              "label": "Tuna",
+              "weight": 40,
+              "itemId": 367,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Lobster",
+              "weight": 35,
+              "itemId": 373,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Swordfish",
+              "weight": 25,
+              "itemId": 370,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Potions",
+          "weight": 3,
+          "options": [
+            {
+              "label": "Potion of Brawn v2",
+              "weight": 10,
+              "itemId": 477,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Brawn v3",
+              "weight": 10,
+              "itemId": 480,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Deftness v2",
+              "weight": 10,
+              "itemId": 492,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Deftness v3",
+              "weight": 10,
+              "itemId": 495,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Insight v2",
+              "weight": 10,
+              "itemId": 963,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Insight v3",
+              "weight": 10,
+              "itemId": 1411,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Stat restore",
+              "weight": 10,
+              "itemId": 1471,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Antidote",
+              "weight": 10,
+              "itemId": 1474,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tier": 3,
+      "pouchId": 2330,
+      "minRewards": 3,
+      "maxRewards": 4,
+      "categories": [
+        {
+          "label": "Ammunition",
+          "weight": 25,
+          "options": [
+            {
+              "label": "Arrows",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Mithril Arrows",
+                  "weight": 30,
+                  "itemId": 642,
+                  "min": 25,
+                  "max": 40,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Titan Steel Arrows",
+                  "weight": 25,
+                  "itemId": 2041,
+                  "min": 25,
+                  "max": 40,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Adamantite Arrows",
+                  "weight": 20,
+                  "itemId": 644,
+                  "min": 25,
+                  "max": 40,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Orichalcum Arrows",
+                  "weight": 15,
+                  "itemId": 2042,
+                  "min": 25,
+                  "max": 40,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Rune Arrows",
+                  "weight": 10,
+                  "itemId": 646,
+                  "min": 25,
+                  "max": 40,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Bolts",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Mithril bolts",
+                  "weight": 30,
+                  "itemId": 2186,
+                  "min": 25,
+                  "max": 40,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Titan Steel bolts",
+                  "weight": 25,
+                  "itemId": 2188,
+                  "min": 25,
+                  "max": 40,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Adamantite bolts",
+                  "weight": 20,
+                  "itemId": 2190,
+                  "min": 25,
+                  "max": 40,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Orichalcum bolts",
+                  "weight": 15,
+                  "itemId": 2192,
+                  "min": 25,
+                  "max": 40,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Rune bolts",
+                  "weight": 10,
+                  "itemId": 2194,
+                  "min": 25,
+                  "max": 40,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Darts",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Mithril Throwing Dart",
+                  "weight": 30,
+                  "itemId": 1068,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Titan Steel Throwing Dart",
+                  "weight": 25,
+                  "itemId": 2045,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Adamantite Throwing Dart",
+                  "weight": 20,
+                  "itemId": 1069,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Orichalcum Throwing Dart",
+                  "weight": 15,
+                  "itemId": 2046,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Rune Throwing Dart",
+                  "weight": 10,
+                  "itemId": 1070,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Throwing knives",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Mithril throwing knife",
+                  "weight": 30,
+                  "itemId": 1078,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Titan Steel throwing knife",
+                  "weight": 25,
+                  "itemId": 2018,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Adamantite throwing knife",
+                  "weight": 20,
+                  "itemId": 1079,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Orichalcum throwing knife",
+                  "weight": 15,
+                  "itemId": 2029,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Rune throwing knife",
+                  "weight": 10,
+                  "itemId": 1080,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Shuriken",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Mithril shuriken",
+                  "weight": 30,
+                  "itemId": 3213,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Titan Steel shuriken",
+                  "weight": 25,
+                  "itemId": 3214,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Adamantite shuriken",
+                  "weight": 20,
+                  "itemId": 3215,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Orichalcum shuriken",
+                  "weight": 15,
+                  "itemId": 3216,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Rune shuriken",
+                  "weight": 10,
+                  "itemId": 3217,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "multi cannon ball",
+              "weight": 5,
+              "itemId": 1041,
+              "min": 10,
+              "max": 15,
+              "preferNoted": false
+            }
+          ]
+        },
+        {
+          "label": "Runes",
+          "weight": 15,
+          "options": [
+            {
+              "label": "Nature-Rune",
+              "weight": 20,
+              "itemId": 40,
+              "min": 10,
+              "max": 20,
+              "preferNoted": false
+            },
+            {
+              "label": "Law-Rune",
+              "weight": 20,
+              "itemId": 42,
+              "min": 10,
+              "max": 20,
+              "preferNoted": false
+            },
+            {
+              "label": "Death-Rune",
+              "weight": 20,
+              "itemId": 38,
+              "min": 10,
+              "max": 20,
+              "preferNoted": false
+            },
+            {
+              "label": "Blood-Rune",
+              "weight": 12,
+              "itemId": 619,
+              "min": 5,
+              "max": 10,
+              "preferNoted": false
+            },
+            {
+              "label": "Soul-Rune",
+              "weight": 10,
+              "itemId": 825,
+              "min": 5,
+              "max": 10,
+              "preferNoted": false
+            },
+            {
+              "label": "Life-Rune",
+              "weight": 10,
+              "itemId": 37,
+              "min": 5,
+              "max": 8,
+              "preferNoted": false
+            }
+          ]
+        },
+        {
+          "label": "Sigils",
+          "weight": 15,
+          "options": [
+            {
+              "label": "Stone",
+              "weight": 20,
+              "options": [
+                {
+                  "label": "Stone sigil of Saradomin",
+                  "weight": 1,
+                  "itemId": 3294,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Stone sigil of Guthix",
+                  "weight": 1,
+                  "itemId": 3296,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Stone sigil of Zamorak",
+                  "weight": 1,
+                  "itemId": 3298,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Stone Grace sigil",
+                  "weight": 1,
+                  "itemId": 3300,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Stone Blight sigil",
+                  "weight": 1,
+                  "itemId": 3427,
+                  "min": 15,
+                  "max": 25,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Silver",
+              "weight": 55,
+              "options": [
+                {
+                  "label": "Silver sigil of Saradomin",
+                  "weight": 1,
+                  "itemId": 3302,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Silver sigil of Guthix",
+                  "weight": 1,
+                  "itemId": 3304,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Silver sigil of Zamorak",
+                  "weight": 1,
+                  "itemId": 3306,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Silver Grace sigil",
+                  "weight": 1,
+                  "itemId": 3308,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Silver Blight sigil",
+                  "weight": 1,
+                  "itemId": 3429,
+                  "min": 10,
+                  "max": 15,
+                  "preferNoted": false
+                }
+              ]
+            },
+            {
+              "label": "Moonsilver",
+              "weight": 25,
+              "options": [
+                {
+                  "label": "Moonsilver sigil of Saradomin",
+                  "weight": 1,
+                  "itemId": 3435,
+                  "min": 5,
+                  "max": 8,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Moonsilver sigil of Guthix",
+                  "weight": 1,
+                  "itemId": 3437,
+                  "min": 5,
+                  "max": 8,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Moonsilver sigil of Zamorak",
+                  "weight": 1,
+                  "itemId": 3439,
+                  "min": 5,
+                  "max": 8,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Moonsilver Grace sigil",
+                  "weight": 1,
+                  "itemId": 3441,
+                  "min": 5,
+                  "max": 8,
+                  "preferNoted": false
+                },
+                {
+                  "label": "Moonsilver Blight sigil",
+                  "weight": 1,
+                  "itemId": 3443,
+                  "min": 5,
+                  "max": 8,
+                  "preferNoted": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Ore",
+          "weight": 8,
+          "options": [
+            {
+              "label": "coal",
+              "weight": 25,
+              "itemId": 155,
+              "min": 4,
+              "max": 8,
+              "preferNoted": true
+            },
+            {
+              "label": "Silver",
+              "weight": 20,
+              "itemId": 383,
+              "min": 3,
+              "max": 5,
+              "preferNoted": true
+            },
+            {
+              "label": "mithril ore",
+              "weight": 20,
+              "itemId": 153,
+              "min": 3,
+              "max": 5,
+              "preferNoted": true
+            },
+            {
+              "label": "gold",
+              "weight": 15,
+              "itemId": 152,
+              "min": 2,
+              "max": 3,
+              "preferNoted": true
+            },
+            {
+              "label": "adamantite ore",
+              "weight": 12,
+              "itemId": 154,
+              "min": 2,
+              "max": 3,
+              "preferNoted": true
+            },
+            {
+              "label": "runite ore",
+              "weight": 8,
+              "itemId": 409,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Logs",
+          "weight": 8,
+          "options": [
+            {
+              "label": "Maple Logs",
+              "weight": 35,
+              "itemId": 634,
+              "min": 2,
+              "max": 4,
+              "preferNoted": true
+            },
+            {
+              "label": "Yew Logs",
+              "weight": 30,
+              "itemId": 635,
+              "min": 2,
+              "max": 4,
+              "preferNoted": true
+            },
+            {
+              "label": "Ebony Logs",
+              "weight": 25,
+              "itemId": 2113,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Magic Logs",
+              "weight": 10,
+              "itemId": 636,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Gems",
+          "weight": 5,
+          "options": [
+            {
+              "label": "uncut emerald",
+              "weight": 40,
+              "itemId": 159,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "uncut ruby",
+              "weight": 40,
+              "itemId": 158,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "uncut diamond",
+              "weight": 20,
+              "itemId": 157,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Herbs",
+          "weight": 8,
+          "options": [
+            {
+              "label": "Herb",
+              "weight": 25,
+              "itemId": 438,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Herb",
+              "weight": 25,
+              "itemId": 439,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Herb",
+              "weight": 20,
+              "itemId": 440,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Herb",
+              "weight": 20,
+              "itemId": 441,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Herb",
+              "weight": 10,
+              "itemId": 442,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Ingredients",
+          "weight": 10,
+          "options": [
+            {
+              "label": "Fungus",
+              "weight": 10,
+              "itemId": 3258,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Red flower",
+              "weight": 10,
+              "itemId": 3259,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Good quality fish oil",
+              "weight": 10,
+              "itemId": 3241,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Fine quality fish oil",
+              "weight": 10,
+              "itemId": 3242,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Limpwurt root",
+              "weight": 10,
+              "itemId": 220,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Snape grass",
+              "weight": 10,
+              "itemId": 469,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "White berries",
+              "weight": 10,
+              "itemId": 471,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Blue flower",
+              "weight": 3,
+              "itemId": 3260,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Bat eye",
+              "weight": 5,
+              "itemId": 3246,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Baby dragon's eye",
+              "weight": 3,
+              "itemId": 3247,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Demon eye",
+              "weight": 3,
+              "itemId": 3248,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Naga scales",
+              "weight": 2,
+              "itemId": 3470,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Sanguinary gland",
+              "weight": 2,
+              "itemId": 3466,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Sticky Saliva Gland",
+              "weight": 2,
+              "itemId": 3341,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Cockatrice Eye",
+              "weight": 2,
+              "itemId": 3342,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Food",
+          "weight": 3,
+          "options": [
+            {
+              "label": "Lobster",
+              "weight": 40,
+              "itemId": 373,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Swordfish",
+              "weight": 35,
+              "itemId": 370,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            },
+            {
+              "label": "Shark",
+              "weight": 25,
+              "itemId": 546,
+              "min": 1,
+              "max": 2,
+              "preferNoted": true
+            }
+          ]
+        },
+        {
+          "label": "Potions",
+          "weight": 3,
+          "options": [
+            {
+              "label": "Potion of Brawn v3",
+              "weight": 10,
+              "itemId": 480,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Brawn v4",
+              "weight": 10,
+              "itemId": 483,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Deftness v3",
+              "weight": 10,
+              "itemId": 495,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Deftness v4",
+              "weight": 10,
+              "itemId": 498,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Insight v3",
+              "weight": 10,
+              "itemId": 1411,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Potion of Insight v4",
+              "weight": 10,
+              "itemId": 1414,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Skiller's Brew",
+              "weight": 10,
+              "itemId": 1477,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "Warrior's Brew",
+              "weight": 10,
+              "itemId": 3192,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            },
+            {
+              "label": "3405",
+              "weight": 10,
+              "itemId": 3405,
+              "min": 1,
+              "max": 1,
+              "preferNoted": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

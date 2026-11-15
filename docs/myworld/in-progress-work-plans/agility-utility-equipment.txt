@@ -103,3 +103,9 @@ All129 normal reward category/item/quantity/weight rows remain byte-identical
 when normalized; SHA25646dfe3f7f995a93a5ec92dd32fdce7e54b5a01b72f3213d65f369b1bb696577f.
 Workspace layout audit reports only preserved pre-existing ignored legacy
 folders, no new misplaced asset/output paths.
+
+Follow-up: ordinary pouch rewards were subsequently replaced by the approved
+refresh documented in agility-pouch-reward-refresh.txt. Statements above that
+normal rewards were unchanged describe the initial utility-equipment change.
+Unique equipment odds, duplicate replacements and equipment mechanics remain
+as documented here.
