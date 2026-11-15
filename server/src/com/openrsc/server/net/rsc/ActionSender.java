@@ -292,6 +292,14 @@ public class ActionSender {
 
 	/** Custom, per-player capacity receipt. This is intentionally separate from
 	 * the historical mudclient-69 inventory-size packet. */
+    public static void sendPlayerMovementRate(Player viewer,Player actor) {
+        if(!viewer.isUsingCustomClient()||viewer.getClientVersion()<com.openrsc.server.content.AgilityUtilityEquipment.FIRST_MOVEMENT_RATE_CLIENT_VERSION||viewer.getClientVersion()>=20000)return;
+        String key="agility_seen_rate_"+actor.getIndex();int percent=com.openrsc.server.content.AgilityUtilityEquipment.lastStepSpeed(actor);
+        if(viewer.<Integer>getAttribute(key,-1)==percent)return;
+        PlayerMovementRateStruct rate=new PlayerMovementRateStruct();rate.serverIndex=actor.getIndex();rate.percent=percent;
+        tryFinalizeAndSendPacket(OpcodeOut.SEND_PLAYER_MOVEMENT_RATE,rate,viewer);viewer.setAttribute(key,percent);
+    }
+
 	public static void sendInventoryCapacity(Player player) {
 		if (player == null || !player.supportsExpandedInventory()) return;
 		InventoryStruct struct = new InventoryStruct();

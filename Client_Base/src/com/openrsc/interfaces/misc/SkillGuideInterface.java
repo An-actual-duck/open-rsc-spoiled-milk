@@ -1114,8 +1114,18 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(410, "70", "Taverly Dungeon pipe crawl"));
 				skillMenuEntries.add(new SkillMenuItem(410, "85", "Karamja river stepping stone"));
 			} else if (curTab == 2) {
-				skillMenuEntries.add(new SkillMenuItem(2328, "", "Chests are earned for completing obstacle courses"));
-				skillMenuEntries.add(new SkillMenuItem(2329, "", "Chests reward the player with various resources"));
+				skillMenuEntries.add(new SkillMenuItem(2328, "", "Pouches are earned for completing obstacle courses"));
+				skillMenuEntries.add(new SkillMenuItem(2329, "", "Pouches contain resources and rare utility equipment"));
+                skillMenuEntries.add(new SkillMenuItem(3472,"","Boots of Swiftness: +10% Agility XP; charged speed outside combat"));
+                skillMenuEntries.add(new SkillMenuItem(3473,"","Gloves of Suregrip: +10% XP; 25% shorter obstacles and fewer failures"));
+                skillMenuEntries.add(new SkillMenuItem(3474,"","Cape of Traversal: +10% XP; three agility-course teleports"));
+                skillMenuEntries.add(new SkillMenuEntry("","Each piece adds 10% XP, including the cape's walking XP"));
+                skillMenuEntries.add(new SkillMenuEntry("","Boots: 1% per 50 tiles; gloves +20 tiles, cape +30 tiles"));
+                skillMenuEntries.add(new SkillMenuEntry("","Boots recharge 1/2/3% per tier 1/2/3 lap while worn"));
+                skillMenuEntries.add(new SkillMenuEntry("","Speed returns 10 seconds after combat; inactive speed uses no charge"));
+                skillMenuEntries.add(new SkillMenuEntry("","Cape: walk 2,000 tiles while worn to restore one charge"));
+                skillMenuEntries.add(new SkillMenuEntry("","Cape and charged boots: earn 1 base Agility XP per walked tile"));
+                skillMenuEntries.add(new SkillMenuEntry("","All charges and partial progress belong to your character"));
 				if (Config.S_WANT_CUSTOM_SPRITES) {
 					addSkillCapeGuide(1518, "Agility");
 				}

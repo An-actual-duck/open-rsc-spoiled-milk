@@ -36,6 +36,7 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
+        com.openrsc.server.content.AgilityUtilityEquipment.beginObstacle(player);
 		if (config().WANT_FATIGUE) {
 			if (config().STOP_SKILLING_FATIGUED >= 1
 				&& player.getFatigue() >= player.MAX_FATIGUE && !inArray(obj.getID(), WATCH_TOWER, ROPE_SWING, LANDING)) {
@@ -50,17 +51,17 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 			case BALANCE_LOG:
 				player.message("you stand on the slippery log");
 				boundaryTeleport(player, Point.location(692, 494));
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				player.teleport(692, 495, 0, false);
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				boundaryTeleport(player, Point.location(692, 496));
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				boundaryTeleport(player, Point.location(692, 497));
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				boundaryTeleport(player, Point.location(692, 498));
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				boundaryTeleport(player, Point.location(692, 499));
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				player.message("and walk across");
 				player.incExp(Skill.AGILITY.id(), 30, true);
 				AgilityUtils.completedObstacle(player, obj.getID(), obstacles, lastObstacle, 150, ItemId.TIER_1_AGILITY_POUCH.id());
@@ -71,7 +72,7 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 					npcsay(player, gnomeTrainer, "move it, move it, move it");
 				}
 				player.message("you climb the net");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				player.teleport(692, 504, 1, false);
 				player.message("and pull yourself onto the platform");
 				player.incExp(Skill.AGILITY.id(), 30, true);
@@ -83,7 +84,7 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 					npcsay(player, gnomeTrainer, "that's it, straight up, no messing around");
 				}
 				player.message("you pull yourself up the tree");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				player.teleport(693, 506, 2, false);
 				player.message("to the platform above");
 				player.incExp(Skill.AGILITY.id(), 30, true);
@@ -91,9 +92,9 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 				return;
 			case ROPE_SWING:
 				player.message("you reach out and grab the rope swing");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				player.message("you hold on tight");
-				delay(4);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 4);
 				player.teleport(685, 508, 2, false);
 				player.message("and swing to the oppisite platform");
 				player.incExp(Skill.AGILITY.id(), 30, true);
@@ -101,7 +102,7 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 				return;
 			case LANDING:
 				player.message("you hang down from the tower");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				player.teleport(683, 506, 0, false);
 				player.message("and drop to the floor");
 				say(player, null, "ooof");
@@ -114,19 +115,19 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 					npcsay(player, gnomeTrainer, "my granny can move faster than you");
 				}
 				player.message("you take a few steps back");
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				player.setLocation(Point.location(683, 505));
 				player.message("and run towards the net");
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				player.teleport(683, 501, 0, false);
 				player.incExp(Skill.AGILITY.id(), 30, true);
 				AgilityUtils.completedObstacle(player, obj.getID(), obstacles, lastObstacle, 150, ItemId.TIER_1_AGILITY_POUCH.id());
 				return;
 			case PIPE:
 				mes("you squeeze into the pipe");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				mes("and shuffle down into it");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				player.teleport(683, 494, 0, false);
 				gnomeTrainer = ifnearvisnpc(player, NpcId.GNOME_TRAINER_ENTRANCE.id(), 10);
 				if (gnomeTrainer != null && !AgilityUtils.hasDoneObstacle(player, PIPE, obstacles)) {

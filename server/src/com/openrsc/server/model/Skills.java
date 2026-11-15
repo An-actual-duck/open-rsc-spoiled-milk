@@ -370,6 +370,8 @@ public class Skills {
 	}
 
 	public void addExperience(int skill, int exp) {
+        if(getMob() instanceof Player && skill==com.openrsc.server.constants.Skill.AGILITY.id())
+            exp=com.openrsc.server.content.AgilityUtilityEquipment.boostExperience((Player)getMob(),exp);
 		if (isHiddenAutoMaxedSkill(skill)) {
 			return;
 		}

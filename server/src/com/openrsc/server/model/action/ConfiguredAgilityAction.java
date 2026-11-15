@@ -13,6 +13,7 @@ public final class ConfiguredAgilityAction {
 		boolean busy();
 		void busy(boolean value);
 		int effectiveAgility();
+        default int successChance(int chance){return chance;}
 		WorldLocation location();
 		Object pending();
 		void pending(Object token);
@@ -45,7 +46,7 @@ public final class ConfiguredAgilityAction {
 					requireSafe(actor, shortcut);
 					int random = roll.getAsInt();
 					if (random < 0 || random >= 10000) throw new IllegalStateException("Shortcut random roll is outside 0..9999");
-					boolean success = random < chance;
+					boolean success = random < actor.successChance(chance);
 					actor.land(success ? shortcut.getSuccessDestination() : shortcut.getFailureDestination());
 					actor.message(success ? shortcut.getTemplate().success : shortcut.getTemplate().failure);
 				} catch (IllegalStateException unsafe) {

@@ -50,9 +50,10 @@ public final class ConfiguredAgilityShortcutHandler {
 					public boolean collisionClear(WorldLocation at) { return AgilityShortcutLanding.collisionMaskClear(regions.getTile(at).traversalMask); }
 				});
 			}
-			public void schedule(final Runnable completion) {
+			public int successChance(int chance) { return com.openrsc.server.content.AgilityUtilityEquipment.adjustedSuccess(player,chance); }
+            public void schedule(final Runnable completion) {
 				player.face(object);
-				boolean added = player.getWorld().getServer().getGameEventHandler().add(new SingleTickEvent(player.getWorld(), player, placement.getAgilityShortcut().getTemplate().ticks,
+				boolean added = player.getWorld().getServer().getGameEventHandler().add(new SingleTickEvent(player.getWorld(), player, com.openrsc.server.content.AgilityUtilityEquipment.configuredTicks(player,placement.getAgilityShortcut().getTemplate().ticks),
 					"Configured agility " + placement.getAgilityShortcut().getTemplate().id, DuplicationStrategy.ALLOW_MULTIPLE) {
 					public void action() { completion.run(); }
 				});

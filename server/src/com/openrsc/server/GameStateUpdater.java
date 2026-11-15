@@ -3224,7 +3224,8 @@ public final class GameStateUpdater {
 			if (!isWithinMobPacketRange(player, movedPlayer)) {
 				continue;
 			}
-			struct.players.add(new MovementUpdateStruct.MobMovement(
+			ActionSender.sendPlayerMovementRate(player,movedPlayer);
+            struct.players.add(new MovementUpdateStruct.MobMovement(
 				movedPlayer.getIndex(), movedPlayer.getX(), movedPlayer.getY(), movedPlayer.getSprite()));
 		}
 
@@ -3246,7 +3247,8 @@ public final class GameStateUpdater {
 			return false;
 		}
 
-		tryFinalizeAndSendPacket(OpcodeOut.SEND_MOVEMENT_UPDATE, struct, player);
+		ActionSender.sendPlayerMovementRate(player,player);
+        tryFinalizeAndSendPacket(OpcodeOut.SEND_MOVEMENT_UPDATE, struct, player);
 		return true;
 	}
 
@@ -3284,7 +3286,8 @@ public final class GameStateUpdater {
 			if (!isWithinMobPacketRange(player, movedPlayer)) {
 				continue;
 			}
-			struct.players.add(new MovementSnapshotStruct.MobMovement(
+			ActionSender.sendPlayerMovementRate(player,movedPlayer);
+            struct.players.add(new MovementSnapshotStruct.MobMovement(
 				movedPlayer.getIndex(), movedPlayer.getX(), movedPlayer.getY(), movedPlayer.getSprite()));
 		}
 
@@ -3306,7 +3309,8 @@ public final class GameStateUpdater {
 			return false;
 		}
 
-		tryFinalizeAndSendPacket(OpcodeOut.SEND_MOVEMENT_SNAPSHOT, struct, player);
+		ActionSender.sendPlayerMovementRate(player,player);
+        tryFinalizeAndSendPacket(OpcodeOut.SEND_MOVEMENT_SNAPSHOT, struct, player);
 		getServer().addMovementSnapshotMetrics(
 			1 + struct.players.size() + struct.npcs.size(),
 			MOVEMENT_SNAPSHOT_FIXED_PAYLOAD_BYTES

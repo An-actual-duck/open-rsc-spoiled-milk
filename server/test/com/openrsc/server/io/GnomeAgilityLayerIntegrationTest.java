@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutorService;
 
 /** Actual course callbacks/Player teleports on installed terrain, with only script waits elided. */
 public final class GnomeAgilityLayerIntegrationTest {
-    private static int checks;
+    private static int checks, waited;
 
     private static void check(boolean condition, String message) {
         checks++;
@@ -71,9 +71,21 @@ public final class GnomeAgilityLayerIntegrationTest {
             player.setBusy(false);
             // Keep XP awards below a level-up boundary: this fixture never opens a player database.
             player.getSkills().setTemporaryLevelAndMaxStat(Skill.AGILITY.id(), 99, 99, false);
+            boolean utility=Boolean.getBoolean("agility.utility");
+            if(utility){
+                server.getConfig().WANT_EQUIPMENT_TAB=true;server.getConfig().WANT_FATIGUE=false;server.getConfig().SKILLING_EXP_RATE=1;
+                for(int id:new int[]{3472,3473,3474}){
+                    player.getCarriedItems().getInventory().add(new com.openrsc.server.model.container.Item(id));
+                    int slot=player.getCarriedItems().getInventory().getLastIndexById(id);
+                    com.openrsc.server.model.struct.EquipRequest equip=new com.openrsc.server.model.struct.EquipRequest(player,player.getCarriedItems().getInventory().get(slot),com.openrsc.server.model.struct.EquipRequest.RequestType.FROM_INVENTORY,false);equip.inventorySlot=slot;
+                    check(player.getCarriedItems().getEquipment().equipItem(equip),"real utility equip");
+                }
+                player.getCache().set(com.openrsc.server.content.AgilityUtilityEquipment.BOOT_CHARGE,20);
+            }
+            int startXp=player.getSkills().getExperience(Skill.AGILITY.id());
             contexts.put(Thread.currentThread().getName(), new PluginTask(server.getWorld(), player, "OpLoc", new Object[0]) {
                 public int action() { return 0; }
-                public synchronized void pause(int ticks) { }
+                public synchronized void pause(int ticks) { waited+=ticks; }
             });
             GnomeAgilityCourse plugin = new GnomeAgilityCourse();
             // Two laps exercise both first-use and repeated completion/pouch state.
@@ -87,6 +99,11 @@ public final class GnomeAgilityLayerIntegrationTest {
                 obstacle(server, player, plugin, 654, 683, 497, 0, 683, 494, 0);
                 check(player.getCarriedItems().getInventory().countId(ItemId.TIER_1_AGILITY_POUCH.id()) == lap,
                     "one normal course pouch per completed lap");
+            }
+            if(utility){
+                check(waited==54,"gloves shorten obstacle waits while keeping dialogue timing: "+waited);
+                check(player.getSkills().getExperience(Skill.AGILITY.id())-startXp==936,"two full laps grant boosted XP");
+                check(com.openrsc.server.content.AgilityUtilityEquipment.bootCharge(player)==22,"two laps recharge two percent; scripted relocations never drain");
             }
             System.out.println("PASS Gnome agility native layer integration: " + checks
                 + " assertions; two full course laps with real callbacks, Player transitions and installed collision");

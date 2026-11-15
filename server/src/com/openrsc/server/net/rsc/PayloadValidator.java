@@ -68,6 +68,7 @@ public class PayloadValidator {
 		put(OpcodeOut.SEND_AUCTION_PROGRESS, AuctionProgressStruct.class); // custom - not referenced currently
 		put(OpcodeOut.SEND_FISHING_TRAWLER, TrawlerUpdateStruct.class); // custom
 		put(OpcodeOut.SEND_STATUS_PROGRESS_BAR, ProgressBarStruct.class); // custom
+		put(OpcodeOut.SEND_PLAYER_MOVEMENT_RATE, PlayerMovementRateStruct.class);
 		put(OpcodeOut.SEND_MOVEMENT_UPDATE, MovementUpdateStruct.class); // custom
 		put(OpcodeOut.SEND_WORLD_TIME, WorldTimeStruct.class); // custom
 		put(OpcodeOut.SEND_SCENE_BASELINE, SceneBaselineStruct.class); // custom

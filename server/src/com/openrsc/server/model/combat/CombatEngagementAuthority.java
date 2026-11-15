@@ -377,7 +377,9 @@ public final class CombatEngagementAuthority {
 					sourceAuthority.currentTick())) {
 					return;
 				}
-				sourceAuthority.clearOutgoingIfLocked(engagement);
+				com.openrsc.server.content.AgilityUtilityEquipment.combatEnded(source);
+                com.openrsc.server.content.AgilityUtilityEquipment.combatEnded(target);
+                sourceAuthority.clearOutgoingIfLocked(engagement);
 				final CombatEngagement incomingEngagement =
 					targetAuthority.incoming.get(source.getUUID());
 				if (incomingEngagement == engagement) {

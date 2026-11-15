@@ -120,4 +120,5 @@ public final class MyWorldItemId {
     public static final int GIANT_BAT_WING=3467, DEATH_WING_WING=3468, STIRGE_WING=3469;
 	private MyWorldItemId() {
 	}
+    public static final int BOOTS_OF_SWIFTNESS=3472, GLOVES_OF_SUREGRIP=3473, CAPE_OF_TRAVERSAL=3474;
 }

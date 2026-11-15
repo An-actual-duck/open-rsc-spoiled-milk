@@ -86,6 +86,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_STATUS_PROGRESS_BAR, 134); // custom, formerly separated labeled progress, update, remove
 		put(OpcodeOut.SEND_BANK_PIN_INTERFACE, 135); // custom
 		put(OpcodeOut.SEND_ONLINE_LIST, 136); // custom
+		put(OpcodeOut.SEND_PLAYER_MOVEMENT_RATE, 161);
 		put(OpcodeOut.SEND_MOVEMENT_UPDATE, 141); // custom
 		put(OpcodeOut.SEND_WORLD_TIME, 142); // custom
 		put(OpcodeOut.SEND_SCENE_BASELINE, 143); // custom
@@ -957,7 +958,10 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					}
 					break;
 
-				case SEND_MOVEMENT_UPDATE:
+				case SEND_PLAYER_MOVEMENT_RATE:
+                    PlayerMovementRateStruct rate=(PlayerMovementRateStruct)payload;
+                    builder.writeShort(rate.serverIndex);builder.writeShort(rate.percent);break;
+                case SEND_MOVEMENT_UPDATE:
 					MovementUpdateStruct movement = (MovementUpdateStruct) payload;
 					builder.writeShort(movement.localX);
 					builder.writeShort(movement.localY);
