@@ -17,7 +17,7 @@
     ]
   ],
   "acquisition": {"skill": "Herblaw", "level": 33, "experience": 275, "unfinished": 457, "outputQuantity": 1},
-  "ingredients": [{"id": 3466, "quantity": 1}, {"id": 3470, "quantity": 20}],
+  "ingredients": [{"id": 3466, "quantity": 1}, {"id": 3471, "quantity": 1}],
   "variants": [
     {
       "base": 1999,

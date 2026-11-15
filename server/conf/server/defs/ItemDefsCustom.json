@@ -50174,11 +50174,11 @@
     {
       "id": 3470,
       "name": "Naga scales",
-      "description": "Small scales shed by a naga. Used to make anti-coagulant.",
+      "description": "Small naga scales. Grind with a pestle and mortar.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
-      "isStackable": 1,
+      "isStackable": 0,
       "isUntradable": 0,
       "isWearable": 0,
       "appearanceID": 0,
@@ -50192,7 +50192,30 @@
       "magicBonus": 0,
       "prayerBonus": 0,
       "basePrice": 15,
-      "isNoteable": 0
+      "isNoteable": 1
+    },
+    {
+      "id": 3471,
+      "name": "Ground naga scale",
+      "description": "Powdered naga scale, used to make anti-coagulant.",
+      "command": "",
+      "isFemaleOnly": 0,
+      "isMembersOnly": 0,
+      "isStackable": 0,
+      "isUntradable": 0,
+      "isWearable": 0,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": -1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "armourBonus": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "magicBonus": 0,
+      "prayerBonus": 0,
+      "basePrice": 15,
+      "isNoteable": 1
     }
   ]
 }

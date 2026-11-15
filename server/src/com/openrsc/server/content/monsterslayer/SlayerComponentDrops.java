@@ -15,13 +15,11 @@ public final class SlayerComponentDrops {
 	private final Map<Integer, List<DropTable>> componentRolls = new HashMap<>();
 
 	public SlayerComponentDrops() {
-        // Common, independent roll: 1/4 base chance; each quantity is equally likely.
+        // Independent uncommon roll: one raw scale, base chance 1/16.
         // Keep the naga's existing hide, supplies and shared rare table intact.
         DropTable scales = new DropTable("Naga scales");
-        for (int quantity = 1; quantity <= 3; quantity++) {
-            scales.addItemDrop(MyWorldItemId.NAGA_SCALES, quantity, 100);
-        }
-        scales.addEmptyDrop(900);
+        scales.addItemDrop(MyWorldItemId.NAGA_SCALES, 1, 100);
+        scales.addEmptyDrop(1500);
         componentRolls.computeIfAbsent(NagaCombat.NPC_ID, ignored -> new ArrayList<>()).add(scales);
 
         add(StirgeCombat.NPC_ID, MyWorldItemId.SANGUINARY_GLAND, 128);
