@@ -120,8 +120,11 @@ public final class BattleaxeCoatingCatalog {
                 if key!='viscousbattleaxe':before[group+':'+key]=hashlib.sha256(blob).hexdigest()
         rebuilt=bytes([len(groups)])
         for group,items in groups:
-            items=[(k,b) for k,b in items if k!='viscousbattleaxe']
-            if group=='equipment':items.append(('viscousbattleaxe',entry))
+            # Replace our owned entry in place; later families may follow it.
+            if group=='equipment':
+                if any(k=='viscousbattleaxe' for k,_ in items):
+                    items=[(k,entry if k=='viscousbattleaxe' else b) for k,b in items]
+                else:items=items+[('viscousbattleaxe',entry)]
             rebuilt+=group.encode()+b'\0'+struct.pack('>H',len(items))+b''.join(blob for _,blob in items)
         encoded=gzip.compress(rebuilt,mtime=0)
         if args.check:assert gzip.decompress(path.read_bytes())==rebuilt,name

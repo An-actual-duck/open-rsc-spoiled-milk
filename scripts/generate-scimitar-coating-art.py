@@ -28,8 +28,10 @@ def main():
  before={group+':'+name:hashlib.sha256(blob).hexdigest() for group,entries in groups for name,blob in entries if name!=family}
  rebuilt=bytes([len(groups)])
  for group,entries in groups:
-  entries=[(n,b) for n,b in entries if n!=family]
-  if group=='equipment':entries.append((family,entry))
+  # Keep the owned entry's position so future appended families remain valid.
+  if group=='equipment':
+   if any(n==family for n,_ in entries):entries=[(n,entry if n==family else b)for n,b in entries]
+   else:entries=entries+[(family,entry)]
   rebuilt+=group.encode()+b'\0'+struct.pack('>H',len(entries))+b''.join(b for _,b in entries)
  if args.check:assert gzip.decompress(path.read_bytes())==rebuilt,'Custom family out of date'
  else:path.write_bytes(gzip.compress(rebuilt,mtime=0))
