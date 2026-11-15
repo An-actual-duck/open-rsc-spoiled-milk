@@ -1116,6 +1116,8 @@ public final class SkillGuideInterface {
 			} else if (curTab == 2) {
 				skillMenuEntries.add(new SkillMenuItem(2328, "", "Pouches are earned for completing obstacle courses"));
 				skillMenuEntries.add(new SkillMenuItem(2329, "", "Pouches contain resources and rare utility equipment"));
+                skillMenuEntries.add(new SkillMenuEntry("","Supplies include ammunition, life runes and empowered sigils"));
+                skillMenuEntries.add(new SkillMenuEntry("","Tier 3 chests can supply all four coating ingredients"));
                 skillMenuEntries.add(new SkillMenuItem(3472,"","Boots of Swiftness: +10% Agility XP; charged speed outside combat"));
                 skillMenuEntries.add(new SkillMenuItem(3473,"","Gloves of Suregrip: +10% XP; 25% shorter obstacles and fewer failures"));
                 skillMenuEntries.add(new SkillMenuItem(3474,"","Cape of Traversal: +10% XP; three agility-course teleports"));

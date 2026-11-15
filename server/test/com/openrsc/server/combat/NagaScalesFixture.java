@@ -17,15 +17,17 @@ public final class NagaScalesFixture {
    check(d!=null&&d.getName().equals("Naga scales"),"name and ID");
    check(!d.isStackable()&&d.isNoteable()&&!d.isUntradable()&&!d.isWieldable(),"non-stackable noteable ingredient");
    SlayerComponentDrops drops=new SlayerComponentDrops();int total=0;
-   for(int roll=0;roll<1600;roll++) {
+   for(int roll=0;roll<12800;roll++) {
     h.random().reset(1);h.random().scriptInts(roll);
     List<Item> result=drops.rollRare(NagaCombat.NPC_ID,p,1);
     if(roll<100){check(result.size()==1&&result.get(0).getCatalogId()==3470&&result.get(0).getAmount()==1,"quantity boundary "+roll);total++;}
     else check(result.isEmpty(),"empty boundary "+roll);
    }
-   check(total==100,"exact 100 of 1600 uncommon outcomes");
-   h.random().reset(1);h.random().scriptInts(0);
-   check(drops.rollRare(NagaCombat.NPC_ID,p,0).size()==1,"normal material does not inherit low-weight rare-item contribution gate");
+   check(total==100,"exact 100 of 12800 rare outcomes");
+   h.random().reset(1);h.random().scriptInts(0,0).scriptDoubles(0.0);
+   check(drops.rollRare(NagaCombat.NPC_ID,p,0).size()==1,"rare ingredient retains contribution-floor chance");
+   h.random().reset(1);h.random().scriptInts(0,0).scriptDoubles(0.99);
+   check(drops.rollRare(NagaCombat.NPC_ID,p,0).isEmpty(),"rare ingredient follows shared contribution gate");
    check(drops.baseline(NagaCombat.NPC_ID,h.random()).getCatalogId()==MyWorldItemId.NAGA_HIDE,"hide retained");
    check(h.world().getNpcDrops().getDropTable(NagaCombat.NPC_ID).hasItemDrop(com.openrsc.server.constants.ItemId.SALMON.id(),4,20,true),"original salmon supplies retained");
    com.openrsc.server.model.entity.npc.Npc naga=h.npc(NagaCombat.NPC_ID,442,440);naga.updateRegion();
@@ -64,6 +66,6 @@ public final class NagaScalesFixture {
    h.server().getConfig().WANT_MYWORLD=false;
    check(drops.rollRare(NagaCombat.NPC_ID,p,1).isEmpty(),"world gate");
   }
-  System.out.println("PASS Naga scales: "+checks+" checks; exact uncommon odds, single quantity, flags and existing loot.");
+  System.out.println("PASS Naga scales: "+checks+" checks; exact 1/128 base odds, single quantity, flags and existing loot.");
  }
 }

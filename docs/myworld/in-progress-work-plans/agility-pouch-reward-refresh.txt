@@ -1,0 +1,47 @@
+Agility pouch ordinary reward refresh — 2026-11-15
+
+Approved implementation
+The maintained reward definitions are server/conf/server/defs/extras/
+AgilityPouchRewards.json. Ordinary categories are selected without replacement:
+2–4 categories for tier 1/2, 3–4 for tier 3. Weights total 100:
+ammunition 25, runes 15, empowered sigils 15, ingredients 10, ore 8,
+logs 8, herbs 8, gems 5, food 3, full-dose potions 3.
+
+Ammo chooses its family before its metal, so arrows, bolts, darts, throwing
+knives and shuriken all have meaningful representation. Small cannonball
+stacks are additional uncommon ammo outcomes in tiers 2/3. No poisoned ammo.
+Life runes appear in all tiers. All five empowered sigil alignments appear;
+tier 1 uses stone, tier 2 stone/silver, tier 3 stone/silver/moonsilver.
+Resources and potion quantities are smaller than the retired tables. Current
+Brawn, Deftness and Insight potion names/IDs are used rather than the misleading
+legacy attack/restoration enum names. No separate prayer-restoration potion
+exists in the current item catalogue. Full entries, quantities and material
+weights are explicit in the JSON source.
+
+Coating ingredients
+Tier 3 ordinary Ingredients includes one raw Naga scale, Sanguinary gland,
+Sticky saliva gland or Cockatrice eye, each weight 2 out of 92. These are not
+an extra 1/2,000 bonus roll. Averaging over the 3/4 category count and weighted
+selection without replacement, each is approximately 1 in 122 tier 3 chests.
+None appears in tiers 1/2. Naga NPC scale drops now use base 1/128 with the
+shared rare-component contribution/wealth rules, matching the other three.
+Grinding and potion recipes are unchanged.
+
+Major Slayer components (3343–3348) are excluded, including Lightning Horn
+and Abyssal Vertibrae. No generic rare drop table is invoked by the pouches.
+Existing utility unique rolls and duplicate replacements are unchanged.
+
+Reliability and validation
+The immutable catalog validates schema, nesting, IDs, positive weights,
+quantities and tier identity before a chest is consumed. Existing normal
+inventory delivery/overflow behavior remains in use. A deterministic offline
+fixture checks every leaf at its quantity endpoints against real item
+catalogues, category selection, live plugin chest consumption and refusal of
+invalid configuration before consumption. Evidence is under the declared
+output/tests/agility-pouch-reward-refresh category. Naga scales and utility
+fixtures additionally verify rarity, grinding, movement, persistence and client
+bindings. No public server or live player data is used by these tests.
+
+Activation
+This change is prepared for a later release; no public deployment or restart
+is included in this task. The latest user-authored map is a separate integration.

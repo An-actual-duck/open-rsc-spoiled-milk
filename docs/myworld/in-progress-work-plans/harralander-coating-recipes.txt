@@ -12,7 +12,9 @@ Gland (3341); 300 XP. Replaces its former unfinished Avantoe base (460).
 Use any two anti-coagulant ingredients together with all three present.
 Grind one raw Naga scale (3470) with a pestle and mortar into one ground
 Naga scale (3471), following the blue dragon scale process. Both forms are
-non-stackable and noteable. Nagas drop one raw scale at base chance 1/16.
+non-stackable and noteable. Nagas drop one raw scale at base chance 1/128, using the same rare-component
+contribution and wealth rules as the other coating ingredients (updated with
+the agility pouch reward refresh).
 Ingredients must be unnoted; one ground scale is consumed.
 Both custom recipes retain Druidic Ritual, member-world and fatigue gates.
 The exchange works with a full inventory and refuses stale/unsupported inputs

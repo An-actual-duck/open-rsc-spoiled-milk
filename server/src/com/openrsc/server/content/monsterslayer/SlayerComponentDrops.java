@@ -15,12 +15,8 @@ public final class SlayerComponentDrops {
 	private final Map<Integer, List<DropTable>> componentRolls = new HashMap<>();
 
 	public SlayerComponentDrops() {
-        // Independent uncommon roll: one raw scale, base chance 1/16.
-        // Keep the naga's existing hide, supplies and shared rare table intact.
-        DropTable scales = new DropTable("Naga scales");
-        scales.addItemDrop(MyWorldItemId.NAGA_SCALES, 1, 100);
-        scales.addEmptyDrop(1500);
-        componentRolls.computeIfAbsent(NagaCombat.NPC_ID, ignored -> new ArrayList<>()).add(scales);
+        // Same rare-table/contribution/wealth rules and base chance as the other coating ingredients.
+        add(NagaCombat.NPC_ID, MyWorldItemId.NAGA_SCALES, 128);
 
         add(StirgeCombat.NPC_ID, MyWorldItemId.SANGUINARY_GLAND, 128);
 		add(GiantFrogCombat.NPC_ID, MyWorldItemId.STICKY_SALIVA_GLAND, 128);
@@ -51,7 +47,7 @@ public final class SlayerComponentDrops {
 		if (tables != null) {
 			for (DropTable table : tables) {
 				// Each component gets its own roll; rare components keep the existing
-				// contribution/luck rules. Common scales use ordinary loot rules.
+				// contribution/luck rules.
 				result.addAll(table.rollPersonalLoot(owner, contributionScale));
 			}
 		}

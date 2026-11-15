@@ -71,21 +71,32 @@ def main() -> None:
     require(POUCH_PLUGIN_PATH, "AgilityUtilityEquipment.rollUniques(player,", "AgilityRewardPouches.java")
     if "getRareDropTable" in POUCH_PLUGIN_PATH.read_text():
         fail("Agility pouches must not access the shared rare table")
-    require(POUCH_PLUGIN_PATH, "final int desiredDrops = DataConversions.random(config.minDrops, config.maxDrops);", "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, "availableCategories.remove(category);", "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, 'new RewardCategory("Runes", 18,', "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, 'new RewardCategory("Arrows", 14,', "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, 'new RewardCategory("Herbs", 10,', "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, 'new RewardCategory("Ingredients", 8,', "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, 'new RewardCategory("Potions", 8,', "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, "new RewardOption(ItemId.TIN_ORE.id()", "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, "new RewardOption(ItemId.PINE_LOGS.id()", "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, "new RewardOption(ItemId.COSMIC_RUNE.id()", "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, "new RewardOption(ItemId.CHAOS_RUNE.id()", "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, "new RewardOption(ItemId.AIR_RUNE.id(), 5, 10", "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, "new RewardOption(ItemId.TIN_ARROWS.id(), 5, 10", "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, "new RewardOption(ItemId.LAW_RUNE.id(), 5, 10", "AgilityRewardPouches.java")
-    require(POUCH_PLUGIN_PATH, "new RewardOption(ItemId.RUNE_ARROWS.id(), 5, 10", "AgilityRewardPouches.java")
+    loot = json.loads((ROOT / "server/conf/server/defs/extras/AgilityPouchRewards.json").read_text())
+    assert loot["schemaVersion"] == 1 and len(loot["tiers"]) == 3
+    weights = {"Ammunition":25,"Runes":15,"Sigils":15,"Ingredients":10,"Ore":8,"Logs":8,"Herbs":8,"Gems":5,"Food":3,"Potions":3}
+    protected = {3343,3344,3345,3346,3347,3348}
+    coating = {3341,3342,3466,3470}
+    def leaves(node):
+        if "itemId" in node: return [node]
+        return [leaf for child in node["options"] for leaf in leaves(child)]
+    for tier in loot["tiers"]:
+        number=tier["tier"]
+        assert tier["pouchId"] == 2327+number and tier["minRewards"] == (2 if number<3 else 3) and tier["maxRewards"]==4
+        assert {c["label"]:c["weight"] for c in tier["categories"]} == weights
+        all_leaves=[leaf for c in tier["categories"] for leaf in leaves(c)]
+        assert not protected & {leaf["itemId"] for leaf in all_leaves}
+        assert coating & {leaf["itemId"] for leaf in all_leaves} == (coating if number==3 else set())
+        for leaf in all_leaves:
+            assert 1<=leaf["min"]<=leaf["max"]
+        ammo=next(c for c in tier["categories"] if c["label"]=="Ammunition")
+        assert {c["label"] for c in ammo["options"] if "options" in c} == {"Arrows","Bolts","Darts","Throwing knives","Shuriken"}
+        runes=next(c for c in tier["categories"] if c["label"]=="Runes")
+        assert 37 in {leaf["itemId"] for leaf in leaves(runes)}
+        if number==3:
+            ingredients=next(c for c in tier["categories"] if c["label"]=="Ingredients")
+            rare=[leaf for leaf in leaves(ingredients) if leaf["itemId"] in coating]
+            assert len(rare)==4 and all(r["weight"]==2 and r["min"]==r["max"]==1 for r in rare)
+    require(POUCH_PLUGIN_PATH, "AgilityPouchRewards.forPlayer(player)", "Validated gameplay reward source")
 
     print("PASS: agility pouch setup validated")
 
