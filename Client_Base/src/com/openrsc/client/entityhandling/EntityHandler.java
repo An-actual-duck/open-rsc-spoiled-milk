@@ -7160,6 +7160,12 @@ public class EntityHandler {
 		}
 	}
 
+    private static void addAgilityUtilityDefinitions() {
+        setCustomItemDefinition(3472,new ItemDef("Boots of Swiftness","Grants 10% more Agility XP and charged speed outside combat.","Check",0,16,"items:16",false,true,512,0x65B8AC,false,true,false,3472));
+        setCustomItemDefinition(3473,new ItemDef("Gloves of Suregrip","Grants 10% more Agility XP, faster obstacles and fewer failures.","",0,17,"items:17",false,true,256,0x65B8AC,false,true,false,3473));
+        setCustomItemDefinition(3474,new ItemDef("Cape of Traversal","Grants 10% more Agility XP and travel between agility courses.","Teleport,Check",0,59,"items:59",false,true,2048,0x65B8AC,false,true,false,3474));
+    }
+
     private static void addBatWingDefinitions() {
         setCustomItemDefinition(3470,new ItemDef("Naga scales","Small naga scales. Grind with a pestle and mortar.","",15,146,"items:146",false,false,0,0x67986B,false,false,true,3470));
         setCustomItemDefinition(3471,new ItemDef("Ground naga scale","Powdered naga scale, used to make anti-coagulant.","",15,23,"items:23",false,false,0,0x67986B,false,false,true,3471));
@@ -8285,6 +8291,10 @@ public class EntityHandler {
         deathWingAnimationId=animations.size();
         animations.add(new AnimationDef("deathwing","npc",0,0,true,false,0));
         ScimitarCoatingArtDefinitions.animations(animations);
+        if(animations.size()!=1189)throw new IllegalStateException("Agility utility appearance tail moved");
+        animations.add(new AnimationDef("woolboots","equipment",0x65B8AC,0,true,false,0));
+        animations.add(new AnimationDef("woolgloves","equipment",0x65B8AC,0,true,false,0));
+        animations.add(new AnimationDef("cape","equipment",0x65B8AC,0,true,false,0));
 	}
 
 	private static void verifyAnimationDefinition(int appearanceId, String expectedName, int expectedColour) {
@@ -10436,6 +10446,7 @@ public class EntityHandler {
 				MYWORLD_STAFF_WOOD_COLORS, MYWORLD_STAFF_RUNE_COLORS);
             addScimitarCoatingDefinitions();
             addBatWingDefinitions();
+            addAgilityUtilityDefinitions();
 		loadTextureDefinitions();
 		loadAnimationDefinitions();
 		loadSpellDefinitions();

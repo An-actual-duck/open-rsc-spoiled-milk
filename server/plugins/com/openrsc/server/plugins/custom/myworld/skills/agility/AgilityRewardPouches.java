@@ -16,16 +16,12 @@ import static com.openrsc.server.plugins.Functions.thinkbubble;
 
 public final class AgilityRewardPouches implements OpInvTrigger {
 
-	private static final int RARE_TABLE_SCALE = 128;
-	private static final int TIER_1_RARE_WEIGHT = 6;
-	private static final int TIER_2_RARE_WEIGHT = 9;
-	private static final int TIER_3_RARE_WEIGHT = 12;
 
 	private static final int TIER_1_POUCH_ID = ItemId.TIER_1_AGILITY_POUCH.id();
 	private static final int TIER_2_POUCH_ID = ItemId.TIER_2_AGILITY_POUCH.id();
 	private static final int TIER_3_POUCH_ID = ItemId.TIER_3_AGILITY_POUCH.id();
 
-	private static final TierConfig TIER_1_CONFIG = new TierConfig(2, 4, TIER_1_RARE_WEIGHT,
+	private static final TierConfig TIER_1_CONFIG = new TierConfig(2, 4,
 		new RewardCategory("Ore", 14,
 			new RewardOption(ItemId.TIN_ORE.id(), 20, 35, 24, true),
 			new RewardOption(ItemId.COPPER_ORE.id(), 20, 35, 24, true),
@@ -72,7 +68,7 @@ public final class AgilityRewardPouches implements OpInvTrigger {
 			new RewardOption(ItemId.FULL_STAT_RESTORATION_POTION.id(), 1, 2, 10, true),
 			new RewardOption(ItemId.FULL_RESTORE_PRAYER_POTION.id(), 1, 1, 6, true)));
 
-	private static final TierConfig TIER_2_CONFIG = new TierConfig(2, 4, TIER_2_RARE_WEIGHT,
+	private static final TierConfig TIER_2_CONFIG = new TierConfig(2, 4,
 		new RewardCategory("Ore", 12,
 			new RewardOption(ItemId.IRON_ORE.id(), 20, 35, 18, true),
 			new RewardOption(ItemId.COAL.id(), 18, 30, 18, true),
@@ -115,7 +111,7 @@ public final class AgilityRewardPouches implements OpInvTrigger {
 			new RewardOption(ItemId.FULL_STAT_RESTORATION_POTION.id(), 1, 2, 8, true),
 			new RewardOption(ItemId.FULL_RESTORE_PRAYER_POTION.id(), 1, 2, 8, true)));
 
-	private static final TierConfig TIER_3_CONFIG = new TierConfig(3, 4, TIER_3_RARE_WEIGHT,
+	private static final TierConfig TIER_3_CONFIG = new TierConfig(3, 4,
 		new RewardCategory("Ore", 12,
 			new RewardOption(ItemId.COAL.id(), 25, 40, 14, true),
 			new RewardOption(ItemId.MITHRIL_ORE.id(), 15, 24, 14, true),
@@ -212,10 +208,8 @@ public final class AgilityRewardPouches implements OpInvTrigger {
 			rewards.add(category.rollItem(player));
 		}
 
-		final Item rareReward = maybeRollRareTable(player, config.rareWeight);
-		if (rareReward != null) {
-			rewards.add(rareReward);
-		}
+        rewards.addAll(com.openrsc.server.content.AgilityUtilityEquipment.rollUniques(player,
+            com.openrsc.server.content.AgilityUtilityEquipment.pouchTier(pouchId),player.getWorld().getServer().getCombatRandom()));
 
 		if (rewards.isEmpty()) {
 			rewards.add(new Item(ItemId.COINS.id(), 250));
@@ -241,18 +235,6 @@ public final class AgilityRewardPouches implements OpInvTrigger {
 			}
 		}
 		return availableCategories.get(availableCategories.size() - 1);
-	}
-
-	private static Item maybeRollRareTable(final Player player, final int rareWeight) {
-		if (rareWeight <= 0 || DataConversions.random(0, RARE_TABLE_SCALE - 1) >= rareWeight) {
-			return null;
-		}
-		if (player.getWorld().getNpcDrops().getRareDropTable() == null) {
-			return null;
-		}
-
-		final ArrayList<Item> rareRoll = player.getWorld().getNpcDrops().getRareDropTable().rollItem(player);
-		return rareRoll.isEmpty() ? null : rareRoll.get(0);
 	}
 
 	private static TierConfig getTierConfig(final int pouchId) {
@@ -305,13 +287,11 @@ public final class AgilityRewardPouches implements OpInvTrigger {
 	private static final class TierConfig {
 		private final int minDrops;
 		private final int maxDrops;
-		private final int rareWeight;
 		private final RewardCategory[] categories;
 
-		private TierConfig(final int minDrops, final int maxDrops, final int rareWeight, final RewardCategory... categories) {
+		private TierConfig(final int minDrops, final int maxDrops, final RewardCategory... categories) {
 			this.minDrops = minDrops;
 			this.maxDrops = maxDrops;
-			this.rareWeight = rareWeight;
 			this.categories = categories;
 		}
 	}

@@ -18387,7 +18387,7 @@ public final class mudclient implements Runnable {
 							stepsToMove = 10 + waypointIndexCurrent - waypointIndexNext;
 						}
 
-						amountToMove = movementAmountForFrame(updateEntity, Config.C_MOVE_PER_FRAME, movementFrameNow);
+						amountToMove = movementAmountForFrame(updateEntity, Config.C_MOVE_PER_FRAME, movementFrameNow, playerMovementRate(updateEntity.serverIndex));
 						if (stepsToMove > 2) {
 							amountToMove = stepsToMove * amountToMove - amountToMove;
 						}
@@ -24679,6 +24679,7 @@ public final class mudclient implements Runnable {
 	private void resetGame(int var1, boolean preparingBrowser) {
 		try {
 			this.browserPreparedLogin=null;this.browserPreparedLoginSequence=0;
+            if(this.playerMovementRatePercent!=null)java.util.Arrays.fill(this.playerMovementRatePercent,0);
 			this.packetHandler.resetLayeredSceneProtocolState();
 			if (this.scene != null) this.scene.setRendererSignedWorldLevel(0);
 			this.systemUpdate = 0;
@@ -25794,8 +25795,20 @@ public final class mudclient implements Runnable {
 		return this.world != null && this.world.isTerrainLoadedAtLocalPixel(pixelX, pixelZ);
 	}
 
+    private final int[] playerMovementRatePercent=new int[65536];
+    public void applyPlayerMovementRate(int index,int percent) {
+        if(playerMovementRatePercent!=null&&index>=0&&index<playerMovementRatePercent.length&&(percent==100||percent==150))playerMovementRatePercent[index]=percent;
+    }
+    public int playerMovementRate(int index) {
+        return playerMovementRatePercent!=null&&index>=0&&index<playerMovementRatePercent.length&&playerMovementRatePercent[index]==150?150:100;
+    }
+
 	private int movementAmountForFrame(ORSCharacter character, int configuredPixelsPerClassicFrame, long frameNow) {
-		int safeMovePerClassicFrame = Math.max(1, configuredPixelsPerClassicFrame);
+		return movementAmountForFrame(character,configuredPixelsPerClassicFrame,frameNow,100);
+    }
+
+    private int movementAmountForFrame(ORSCharacter character,int configuredPixelsPerClassicFrame,long frameNow,int percent) {
+        int safeMovePerClassicFrame = Math.max(1, configuredPixelsPerClassicFrame);
 		long previousFrame = character.movementLastFrameMillis;
 		int targetFps = ScaledWindow.isOpenGLPrimaryWindowEnabled()
 			? OPENGL_PRIMARY_TARGET_FPS
@@ -25805,7 +25818,7 @@ public final class mudclient implements Runnable {
 			: Math.max(1L, Math.min(250L, frameNow - previousFrame));
 		character.movementLastFrameMillis = frameNow;
 
-		double pixels = (elapsedMillis / 20.0D) * safeMovePerClassicFrame + character.movementPixelRemainder;
+		double pixels = (elapsedMillis / 20.0D) * safeMovePerClassicFrame * percent / 100.0D + character.movementPixelRemainder;
 		int amount = (int)Math.floor(pixels);
 		character.movementPixelRemainder = pixels - amount;
 		return Math.max(1, amount);

@@ -34,7 +34,8 @@ public class AgilityUtils {
 				player.incExp(Skill.AGILITY.id(), bonus, true);
 				player.setAttribute("obstaclesDone", new HashSet<Integer>());
 				if (completionRewardId != ItemId.NOTHING.id()) {
-					Item pouch = new Item(completionRewardId, 1);
+					com.openrsc.server.content.AgilityUtilityEquipment.completedLap(player,com.openrsc.server.content.AgilityUtilityEquipment.pouchTier(completionRewardId));
+                    Item pouch = new Item(completionRewardId, 1);
 					player.getCarriedItems().getInventory().add(pouch);
 					player.playerServerMessage(MessageType.QUEST, "You receive a " + pouch.getDef(player.getWorld()).getName() + ".");
 				}

@@ -30,6 +30,7 @@ public final class LumbridgeAlKharidSteppingStones implements OpLocTrigger {
 
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
+        com.openrsc.server.content.AgilityUtilityEquipment.beginObstacle(player);
 		if (getCurrentLevel(player, Skill.AGILITY.id()) < REQUIRED_AGILITY_LEVEL) {
 			player.message("You need an agility level of 25 to use this shortcut.");
 			return;
@@ -56,20 +57,20 @@ public final class LumbridgeAlKharidSteppingStones implements OpLocTrigger {
 		Point firstStone, Point lastStone) {
 		player.message("You jump onto the stepping stones.");
 		teleport(player, firstStone.getX(), firstStone.getY());
-		delay();
+		com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player,1);
 		teleport(player, CENTRE_STONE.getX(), CENTRE_STONE.getY());
-		delay();
+		com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player,1);
 
 		if (!succeeds(player)) {
 			player.message("You slip and splash into the river.");
-			delay();
+			com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player,1);
 			teleport(player, departureBank.getX(), departureBank.getY());
 			player.message("You scramble back onto the bank.");
 			return;
 		}
 
 		teleport(player, lastStone.getX(), lastStone.getY());
-		delay();
+		com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player,1);
 		teleport(player, destinationBank.getX(), destinationBank.getY());
 		player.message("You make it safely to the other bank.");
 	}
@@ -78,7 +79,7 @@ public final class LumbridgeAlKharidSteppingStones implements OpLocTrigger {
 		if (player.getCarriedItems().getEquipment().hasEquipped(ItemId.AGILITY_CAPE.id())) {
 			return true;
 		}
-		return Formulae.calcProductionSuccessfulLegacy(REQUIRED_AGILITY_LEVEL,
+		return com.openrsc.server.content.AgilityUtilityEquipment.productionSuccess(player,REQUIRED_AGILITY_LEVEL,
 			getCurrentLevel(player, Skill.AGILITY.id()), false, LEVEL_STOP_FAIL);
 	}
 }

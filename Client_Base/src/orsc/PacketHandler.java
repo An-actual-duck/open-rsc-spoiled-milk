@@ -387,6 +387,7 @@ public class PacketHandler {
 		put(156, "SET_STATS");
 		put(159, "UPDATE_STAT");
 		put(160, "SET_INVENTORY_CAPACITY");
+        put(161, "PLAYER_MOVEMENT_RATE");
 		put(162, "UPDATE_TRADE_RECIPIENT_ACCEPTANCE");
 		put(165, "CLOSE_CONNECTION");
 		put(172, "SHOW_CONFIRM_DUEL");
@@ -609,6 +610,8 @@ public class PacketHandler {
         }*/
 
 			else if (opcode == 118) announceKill(); // Kill Announcement
+
+			else if (opcode == 161 && length == 5) mc.applyPlayerMovementRate(packetsIncoming.getShort(), packetsIncoming.getShort());
 
 			else if (opcode == 141) updateMovement();
 

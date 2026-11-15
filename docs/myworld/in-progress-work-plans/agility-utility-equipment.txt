@@ -1,0 +1,105 @@
+AGILITY UTILITY EQUIPMENT — approved design and implementation
+November 15, 2026
+
+Scope
+-----
+Add three untradeable, unnoteable zero-stat equipment items. Pouches remain
+tradeable. Normal weighted category/item/quantity rewards are unchanged.
+Remove all shared rare-drop-table access. Broader resource-table redesign is
+a later owner discussion, not part of this implementation.
+
+IDs and unique odds per opened pouch
+----------------------------------
+3472 Boots of Swiftness: T1 1/1000, T2 1/500, T3 1/100.
+3473 Gloves of Suregrip: T2 1/1000, T3 1/500.
+3474 Cape of Traversal: T3 1/1000.
+Unique rolls are independent and additional to normal pouch resources.
+Duplicate ownership includes inventory, worn equipment and bank. Replacements:
+boots -> Rune greaves (1994, the existing rune footwear); gloves -> Rune
+gauntlets (1993); cape -> one random tooth/loop crystal-key half, equally likely.
+Losing a piece allows another copy, but obtaining any copy never resets charges.
+
+XP
+--
+Each worn piece adds 10%; the full set adds 30%, regardless of charge/combat.
+Hook is central Skills.addExperience for positive Agility awards, including
+quests and shared XP. Other skills/worlds are unchanged. Integer remainder
+is retained in player cache, in hundredths of the engine's quarter-XP units.
+Walking awards one displayed base XP (four internal units) through incExp,
+so normal boosts, fatigue, XP freezing and server rates apply.
+
+Boots
+-----
+100% initial charge, maximum100. Ordinary walking cadence is divided by1.5:
+430ms -> 287ms; normal adjacent-step collision/path validation is retained.
+Disable speed while any combat direction is active, and until ten seconds
+after the final engagement ends. Existing recent-combat timers also apply.
+No boot charge drains while speed is inactive, at zero charge, on blocked
+steps, teleports, blink or scripted obstacle relocation.
+Drain1% per50 tiles, plus20 with gloves and30 with cape: 50/70/80/100.
+Fractional drain uses a common2800-unit denominator, preserving progress when
+changing gear; toggling equipment cannot reset partial charge consumption.
+Completed tier1/2/3 laps restore1/2/3% only while boots are worn.
+
+Gloves
+------
+Uncharged. Standard courses, the Lumbridge/Al Kharid stepping stones and
+agility shortcuts shorten explicit obstacle
+waits by25%, carrying quarter-tick fractions through the obstacle sequence.
+The cumulative wait is ceil(originalTicks*0.75), minimum one tick for a
+nonzero obstacle. Dialogue/global plugin waits and quest cutscenes are untouched.
+Legacy failures have a25% rescue chance:40% failure ->30%, not15%.
+Configured shortcuts adjust their authored basis-point success threshold.
+Required levels, failure damage, landing checks and obstacle order persist.
+
+Cape
+----
+Starts with3 teleports, maximum3. Wear and walk2000 ordinary queued tiles to
+regain one. Partial progress persists; a full cape banks no extra charge.
+Cape charging counts ordinary walking in/out of combat. Walking XP requires
+charged worn boots; combat suspends boot speed/drain, not the cape's walking
+XP or recharge. All of these counters are player-owned, not ItemStatus.
+Teleport menu: Gnome Stronghold, Barbarian Outpost, Wilderness and Yanille
+Agility Dungeon. Validate the current arrival tile and normal teleport
+restrictions after menu selection, then consume exactly one charge.
+Normal restriction: no teleport at Wilderness20+, during a duel, or other
+blocked quest locations / while carrying Ana. Cancelling costs nothing.
+
+Visuals / compatibility
+----------------------
+Existing inventory silhouettes and wool-boots/wool-gloves/cape equipment art
+use a coordinated0x65B8AC colour. No new image files or external art dependency.
+Append-only appearances1190..1192 leave old IDs unchanged in both sprite modes.
+Maintained client10060 adds actor-specific movement-rate opcode161 (four-byte
+payload). The server sends it only to client10060+. Other actors/NPCs retain
+their own normal rate, and existing movement packets remain byte-compatible.
+Charges/counters survive removal, banking, death and logout via player cache.
+
+Validation / release
+--------------------
+Offline fixtures use synthetic terrain plus exact installed course landing
+geometry; no live accounts, listeners, database or public process is involved.
+The public server and installed player clients are not deployed by this task.
+A later release must publish the matching desktop/browser client builds.
+Evidence: output/tests/agility-utility-equipment/ and output/reviews/agility-utility-equipment/.
+
+FINAL VALIDATION
+----------------
+Server and desktop client builds pass. Client protocol is10060.
+Focused actual-gameplay equipment fixture passes: charge boundaries, partial
+progress, reload, combat lockout, all recharge rates, real walking and teleport
+exclusion, central XP scaling, exact cross-tier RNG bounds, duplicate rewards,
+installed landing collision and real cape teleports, version-gated rate packets.
+Client catalog/appearance/packet/interpolation checks pass in both sprite modes.
+Existing first-step/movement regression:4935 checks pass.
+General combat:149/149 scenarios pass.
+Nonzero agility:279 installed-world branches,2443 assertions,0 failures.
+Configured shortcuts:442 parser/lifecycle assertions and116 real runtime assertions.
+Gnome course:86 original assertions and92 full-utility assertions, two laps each;
+XP936 internal units with full set,20->22 boot charge, same safe landings.
+Gloves reduce explicit waits; existing dialogue waits remain unchanged.
+Scimitar/battleaxe and Slayer art suites pass; every old appearance stays fixed.
+All129 normal reward category/item/quantity/weight rows remain byte-identical
+when normalized; SHA25646dfe3f7f995a93a5ec92dd32fdce7e54b5a01b72f3213d65f369b1bb696577f.
+Workspace layout audit reports only preserved pre-existing ignored legacy
+folders, no new misplaced asset/output paths.

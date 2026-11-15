@@ -39,6 +39,7 @@ public class BarbarianAgilityCourse implements OpBoundTrigger,
 
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
+        com.openrsc.server.content.AgilityUtilityEquipment.beginObstacle(player);
 		if (obj.getID() == BACK_PIPE || obj.getID() == PIPE) {
 			if (getCurrentLevel(player, Skill.AGILITY.id()) < 35) {
 				player.message("You need an agility level of 35 to attempt to squeeze through the pipe");
@@ -52,7 +53,7 @@ public class BarbarianAgilityCourse implements OpBoundTrigger,
 				}
 			}
 			player.message("You squeeze through the pipe");
-			delay(3);
+			com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 			if (player.getY() <= 551) {
 				boundaryTeleport(player, Point.location(487, 554));
 			} else {
@@ -73,19 +74,19 @@ public class BarbarianAgilityCourse implements OpBoundTrigger,
 		switch (obj.getID()) {
 			case SWING:
 				player.message("You grab the rope and try and swing across");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				if (passObstacle) {
 					player.message("You skillfully swing across the hole");
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					player.teleport(486, 559, 0, false);
 					player.incExp(Skill.AGILITY.id(), 80, true);
 					AgilityUtils.completedObstacle(player, obj.getID(), obstacles, lastObstacle, 300, ItemId.TIER_2_AGILITY_POUCH.id());
 				} else {
 					player.message("Your hands slip and you fall to the level below");
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					player.teleport(486, 557, -1, false);
 					player.message("You land painfully on the spikes");
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					int swingDamage = (int) Math.round((player.getSkills().getLevel(Skill.HITS.id())) * 0.15D);
 					player.damage(swingDamage);
 					say(player, "ouch");
@@ -93,12 +94,12 @@ public class BarbarianAgilityCourse implements OpBoundTrigger,
 				break;
 			case LOG:
 				player.message("you stand on the slippery log");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				if (passObstacle) {
 					boundaryTeleport(player, Point.location(489, 563));
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 					boundaryTeleport(player, Point.location(490, 563));
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 					player.message("and walk across");
 					boundaryTeleport(player, Point.location(492, 563));
 					player.incExp(Skill.AGILITY.id(), 50, true);
@@ -122,7 +123,7 @@ public class BarbarianAgilityCourse implements OpBoundTrigger,
 					return;
 				}
 				player.message("You put your foot on the ledge and try to edge across");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				if (passObstacle) {
 					player.teleport(501, 562, 1, false);
 					player.message("You skillfully balance across the hole");
@@ -160,14 +161,14 @@ public class BarbarianAgilityCourse implements OpBoundTrigger,
 			}
 		}
 		player.message("You jump over the wall");
-		delay(1);
+		com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 		boundaryTeleport(player, Point.location(player.getX() == obj.getX() ? player.getX() - 1 : player.getX() + 1, player.getY()));
 		player.incExp(Skill.AGILITY.id(), 20, true);
 		AgilityUtils.completedObstacle(player, obj.getID(), obstacles, lastObstacle, 300, ItemId.TIER_2_AGILITY_POUCH.id());
 	}
 
 	private boolean succeed(Player player) {
-		return Formulae.calcProductionSuccessfulLegacy(35, getCurrentLevel(player, Skill.AGILITY.id()), false, 50, 4);
+		return com.openrsc.server.content.AgilityUtilityEquipment.productionSuccess(player, 35, getCurrentLevel(player, Skill.AGILITY.id()), false, 50, 4);
 	}
 
 }

@@ -68,7 +68,9 @@ def main() -> None:
     require(BARBARIAN_PATH, "ItemId.TIER_2_AGILITY_POUCH.id()", "BarbarianAgilityCourse.java")
     require(WILDERNESS_PATH, "ItemId.TIER_3_AGILITY_POUCH.id()", "WildernessAgilityCourse.java")
 
-    require(POUCH_PLUGIN_PATH, "getRareDropTable().rollItem(player)", "AgilityRewardPouches.java")
+    require(POUCH_PLUGIN_PATH, "AgilityUtilityEquipment.rollUniques(player,", "AgilityRewardPouches.java")
+    if "getRareDropTable" in POUCH_PLUGIN_PATH.read_text():
+        fail("Agility pouches must not access the shared rare table")
     require(POUCH_PLUGIN_PATH, "final int desiredDrops = DataConversions.random(config.minDrops, config.maxDrops);", "AgilityRewardPouches.java")
     require(POUCH_PLUGIN_PATH, "availableCategories.remove(category);", "AgilityRewardPouches.java")
     require(POUCH_PLUGIN_PATH, 'new RewardCategory("Runes", 18,', "AgilityRewardPouches.java")

@@ -133,6 +133,7 @@ public class WalkingQueue {
 			player.face(Point.location(destX, destY));
 			player.setLocation(Point.location(destX, destY));
 			player.stepIncrementActivity();
+            com.openrsc.server.content.AgilityUtilityEquipment.walkedTile(player);
 		}
 		return startX != mob.getX() || startY != mob.getY();
 	}

@@ -15,7 +15,7 @@ public final class ScimitarCoatingArtFixture {
  static void check(boolean b,String m){checks++;if(!b)throw new AssertionError(m);}
  public static void main(String[]args)throws Exception {
   Config.S_WANT_CUSTOM_SPRITES=Boolean.parseBoolean(args[1]);Config.F_CACHE_DIR=args[0]+"/Client_Base/Cache";EntityHandler.load(true);
-  check(EntityHandler.animationCount()==1189,"append-only alias tail");
+  check(EntityHandler.animationCount()==1192,"append-only alias tail");
   Entry entry=null,base=null;
   for(Entry e:new Unpacker().unpackArchive(new java.io.File(args[0]+"/Client_Base/Cache/video/Custom_Sprites.osar")).getSubspaceByName("equipment").getEntryList()) {
    if(e.getID().equals("anticoagulantscimitar"))entry=e;

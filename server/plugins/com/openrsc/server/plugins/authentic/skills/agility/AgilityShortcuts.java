@@ -85,6 +85,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
+        com.openrsc.server.content.AgilityUtilityEquipment.beginObstacle(player);
 		int success = 0, damage = 0;
 		switch (obj.getID()) {
 			case SHILO_VILLAGE_BRIDGE_BLOCKADE_JUMP:
@@ -93,24 +94,24 @@ public class AgilityShortcuts implements OpLocTrigger,
 					return;
 				}
 				mes("The bridge beyond this fence looks very unsafe.");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				mes("However, you could try to negotiate it if you're feeling very agile.");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				player.message("Would you like to try?");
 				int jumpMenu = multi(player,
 					"No thanks! It looks far too dangerous!",
 					"Yes, I'm totally brave and quite agile!");
 				if (jumpMenu == 0) {
 					mes("You decide that common sense is the better part of valour.");
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					mes("And stop yourself from being hurled to what must be an ");
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					player.message("inevitable death.");
 				} else if (jumpMenu == 1) {
 					mes("You prepare to negotiate the bridge fence...");
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					mes("You run and jump...");
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					if (succeed(player, 32)) {
 						player.message("...and land perfectly on the other side!");
 						if (player.getX() >= 460) { // back
@@ -123,19 +124,19 @@ public class AgilityShortcuts implements OpLocTrigger,
 						player.teleport(458, 832);
 						say(player, null, "* Ahhhhhhhhhh! *");
 						player.damage((getCurrentLevel(player, Skill.HITS.id()) / 10));
-						delay();
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 						player.teleport(458, 836);
 						player.damage((getCurrentLevel(player, Skill.HITS.id()) / 10));
-						delay(2);
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 						say(player, null, "* Gulp! *");
-						delay(3);
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 						player.teleport(459, 841);
 						say(player, null, "* Gulp! *");
-						delay(2);
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 						player.message("You just manage to drag your pitiful frame onto the river bank.");
 						say(player, null, "* Gasp! *");
 						player.damage((getCurrentLevel(player, Skill.HITS.id()) / 10));
-						delay(2);
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 						player.message("Though you nearly drowned in the river!");
 					}
 				}
@@ -146,9 +147,9 @@ public class AgilityShortcuts implements OpLocTrigger,
 					return;
 				}
 				mes("These rocks look quite dangerous to climb.");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				mes("But you may be able to scale them.");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				player.message("Would you like to try?");
 				int menu = multi(player,
 					"Yes, I can easily climb this!",
@@ -156,7 +157,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 				if (menu == 0) {
 					if (succeed(player, 32)) {
 						mes("You manage to climb the rocks succesfully and pick");
-						delay(3);
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 						if (obj.getX() == 450) {
 							player.message("a route though the trecherous embankment to the top.");
 							player.teleport(452, 829);
@@ -167,9 +168,9 @@ public class AgilityShortcuts implements OpLocTrigger,
 					} else {
 						player.teleport(450, 828);
 						mes("You fall and hurt yourself.");
-						delay(3);
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 						player.damage((getCurrentLevel(player, Skill.HITS.id()) / 10));
-						delay();
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 						player.teleport(449, 828);
 					}
 				} else if (menu == 1) {
@@ -191,7 +192,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					return;
 				}
 				player.message("You grab the vine and try and swing across");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				teleport(player, 511, 669);
 				player.message("You skillfully swing across the stream");
 				say(player, null, "Aaaaahahah");
@@ -203,7 +204,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					return;
 				}
 				player.message("You grab the vine and try and swing across");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				teleport(player, 508, 668);
 				player.message("You skillfully swing across the stream");
 				say(player, null, "Aaaaahahah");
@@ -214,7 +215,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					player.message("You need an agility level of 15 to attempt to swing on this rope");
 					return;
 				}
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				player.teleport(207, 389, -1, false);
 				player.message("You skillfully swing across the hole");
 				player.incExp(Skill.AGILITY.id(), 40, true);
@@ -224,7 +225,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					player.message("You need an agility level of 15 to attempt to swing on this rope");
 					return;
 				}
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				player.teleport(206, 393, -1, false);
 				player.message("You skillfully swing across the hole");
 				player.incExp(Skill.AGILITY.id(), 40, true);
@@ -237,7 +238,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 				player.message("You stand on the slippery log");
 				for (int x = 595; x >= 592; x--) {
 					teleport(player, x, 458);
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				}
 				player.message("and you walk across");
 				player.incExp(Skill.AGILITY.id(), 34, true);
@@ -250,7 +251,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 				player.message("You stand on the slippery log");
 				for (int x = 595; x <= 598; x++) {
 					teleport(player, x, 458);
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				}
 				player.message("and you walk across");
 				player.incExp(Skill.AGILITY.id(), 34, true);
@@ -268,7 +269,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					}
 				}
 				player.message("You grab the rope and try and swing across");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				if (!succeed(player, 57, 77)) {
 					mes("You miss the opposite side and fall to the level below");
 					player.teleport(596, 702, -1, false);
@@ -290,7 +291,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					}
 				}
 				player.message("You grab the rope and try and swing across");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				if (!succeed(player, 57, 77)) {
 					mes("You miss the opposite side and fall to the level below");
 					player.teleport(598, 704, -1, false);
@@ -313,7 +314,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					}
 				}
 				player.message("You put your foot on the ledge and try to edge across");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				if (!succeed(player, 40, 65)) {
 					mes("you lose your footing and fall to the level below");
 					player.teleport(603, 688, -1, false);
@@ -336,7 +337,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					}
 				}
 				player.message("You put your foot on the ledge and try to edge across");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				if (!succeed(player, 40, 65)) {
 					mes("you lose your footing and fall to the level below");
 					player.teleport(603, 688, -1, false);
@@ -384,7 +385,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					}
 				}
 				player.message("You squeeze through the pipe");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				player.teleport(608, 736, -1, false);
 				player.incExp(Skill.AGILITY.id(), 30, true);
 				break;
@@ -400,7 +401,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 					}
 				}
 				player.message("You squeeze through the pipe");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				player.teleport(605, 736, -1, false);
 				player.incExp(Skill.AGILITY.id(), 30, true);
 				break;
@@ -418,14 +419,14 @@ public class AgilityShortcuts implements OpLocTrigger,
 					return;
 				}
 				player.message("You grab the rope and try and swing across");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				teleport(player, 664, 755);
 				player.message("You skillfully swing across the stream");
 				player.incExp(Skill.AGILITY.id(), 50, true);
 				break;
 			case GREW_ISLAND_SWING_BACK:
 				player.message("You grab the rope and try and swing across");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				teleport(player, 666, 755);
 				player.message("You skillfully swing across the stream");
 				player.incExp(Skill.AGILITY.id(), 50, true);
@@ -436,10 +437,10 @@ public class AgilityShortcuts implements OpLocTrigger,
 					return;
 				}
 				player.message("You attempt to walk over the the slippery log..");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				if (!succeed(player, 32)) {
 					teleport(player, 368, 781);
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 					player.message("@red@You fall into the stream!");
 					player.message("You lose some health");
 					teleport(player, 370, 776);
@@ -448,11 +449,11 @@ public class AgilityShortcuts implements OpLocTrigger,
 				}
 				if (player.getX() <= 367) {
 					teleport(player, 368, 781);
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 					teleport(player, 370, 781);
 				} else {
 					teleport(player, 368, 781);
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 					teleport(player, 366, 781);
 				}
 				player.message("...and make it without any problems!");
@@ -472,30 +473,30 @@ public class AgilityShortcuts implements OpLocTrigger,
 				player.message("You jump onto the rock");
 				if (player.getY() <= 805) {
 					teleport(player, 347, 806);
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 					if (!succeed(player, 32)) {
-						delay(2);
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 						teleport(player, 341, 809);
 						player.message("@red@!!! You Fall !!!");
 						mes("You get washed up on the other side of the river...");
-						delay(3);
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 						mes("After being nearly half drowned");
-						delay(3);
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 						player.damage((int) (player.getSkills().getLevel(Skill.HITS.id()) / 4) + 2);
 						return;
 					}
 					teleport(player, 346, 808);
 				} else {
 					teleport(player, 346, 807);
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 					if (!succeed(player, 32)) {
-						delay(2);
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 						teleport(player, 341, 805);
 						player.message("@red@!!! You Fall !!!");
 						mes("You get washed up on the other side of the river...");
-						delay(3);
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 						mes("After being nearly half drowned");
-						delay(3);
+						com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 						player.damage((int) (player.getSkills().getLevel(Skill.HITS.id()) / 4) + 2);
 						return;
 					}
@@ -578,7 +579,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 						return;
 					}
 				}
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				if (player.getLocation().getY() < 550) {
 					teleport(player, 434, 551);
 					player.incExp(Skill.AGILITY.id(), 15, true);
@@ -599,13 +600,13 @@ public class AgilityShortcuts implements OpLocTrigger,
 					}
 				}
 				player.teleport(395, 502);
-				delay(1);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				player.face(397, 502);
 				player.message("You sure your footing...");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				teleport(player, 396, 502);
 				player.message("and attempt to cross the stones...");
-				delay(4);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 4);
 				success = DataConversions.random(1, 100);
 				if (success > 10 || wearingSkillcape(player)) {
 					teleport(player, 397, 502);
@@ -636,13 +637,13 @@ public class AgilityShortcuts implements OpLocTrigger,
 					}
 				}
 				player.teleport(397, 502);
-				delay(1);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				player.face(395, 502);
 				player.message("You sure your footing...");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				teleport(player, 396, 502);
 				player.message("and attempt to cross the stones...");
-				delay(4);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 4);
 				success = DataConversions.random(1, 100);
 				if (success > 10 || wearingSkillcape(player)) {
 					teleport(player, 395, 502);
@@ -683,18 +684,18 @@ public class AgilityShortcuts implements OpLocTrigger,
 				player.teleport(280, 183, -1, false);
 				player.face(274, player.getY());
 				player.message("You focus on not slipping...");
-				delay(4);
-				if (Formulae.calcProductionSuccessfulLegacy(19, getCurrentLevel(player, Skill.AGILITY.id()) - 48, false, 58, 26)
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 4);
+				if (com.openrsc.server.content.AgilityUtilityEquipment.productionSuccess(player, 19, getCurrentLevel(player, Skill.AGILITY.id()) - 48, false, 58, 26)
 					|| wearingSkillcape(player)) {
 					player.teleport(278, 183, -1, false);
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					player.teleport(276, 183, -1, false);
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					player.teleport(274, 183, -1, false);
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					player.teleport(272, 183, -1, false);
 					player.face(player.getX(), player.getY() - 2);
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					player.teleport(272, 180, -1, false);
 					player.message("and skillfully cross the lava");
 					player.incExp(Skill.AGILITY.id(), 160, true);
@@ -720,18 +721,18 @@ public class AgilityShortcuts implements OpLocTrigger,
 				player.teleport(272, 181, -1, false);
 				player.face(player.getX(), player.getY() + 2);
 				player.message("You focus on not slipping...");
-				delay(4);
-				if (Formulae.calcProductionSuccessfulLegacy(19, getCurrentLevel(player, Skill.AGILITY.id()) - 48, false, 58, 26)
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 4);
+				if (com.openrsc.server.content.AgilityUtilityEquipment.productionSuccess(player, 19, getCurrentLevel(player, Skill.AGILITY.id()) - 48, false, 58, 26)
 					|| wearingSkillcape(player)) {
 					player.teleport(272, 183, -1, false);
 					player.face(280, player.getY());
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					player.teleport(274, 183, -1, false);
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					player.teleport(276, 183, -1, false);
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					player.teleport(278, 183, -1, false);
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					player.teleport(281, 183, -1, false);
 					player.message("and skillfully cross the lava");
 					player.incExp(Skill.AGILITY.id(), 160, true);
@@ -763,7 +764,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 
 				mes("You jump out onto the stone");
 				player.teleport(368, 830);
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				if (cross) {
 					mes("You successfully cross the river");
 					player.teleport(successPoint.getX(), successPoint.getY());
@@ -783,12 +784,12 @@ public class AgilityShortcuts implements OpLocTrigger,
 
 	boolean succeed(Player player, int req) {
 		if (wearingSkillcape(player)) return true;
-		return Formulae.calcProductionSuccessfulLegacy(req, getCurrentLevel(player, Skill.AGILITY.id()), false, req + 30);
+		return com.openrsc.server.content.AgilityUtilityEquipment.productionSuccess(player, req, getCurrentLevel(player, Skill.AGILITY.id()), false, req + 30);
 	}
 
 	boolean succeed(Player player, int req, int lvlStopFail) {
 		if (wearingSkillcape(player)) return true;
-		return Formulae.calcProductionSuccessfulLegacy(req, getCurrentLevel(player, Skill.AGILITY.id()), true, lvlStopFail);
+		return com.openrsc.server.content.AgilityUtilityEquipment.productionSuccess(player, req, getCurrentLevel(player, Skill.AGILITY.id()), true, lvlStopFail);
 	}
 
 	@Override
@@ -798,6 +799,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 
 	@Override
 	public void onUseLoc(Player player, GameObject obj, Item item) {
+        com.openrsc.server.content.AgilityUtilityEquipment.beginObstacle(player);
 		if (obj.getID() == GREW_ISLAND_ROPE_ATTACH && item.getCatalogId() == ItemId.ROPE.id()) {
 			player.message("you tie the rope to the tree");
 			player.getCarriedItems().remove(new Item(ItemId.ROPE.id()));

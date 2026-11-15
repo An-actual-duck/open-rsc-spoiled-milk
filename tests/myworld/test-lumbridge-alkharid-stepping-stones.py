@@ -145,7 +145,7 @@ def main() -> None:
         "LEVEL_STOP_FAIL = REQUIRED_AGILITY_LEVEL + 30",
         "getCurrentLevel(player, Skill.AGILITY.id()) < REQUIRED_AGILITY_LEVEL",
         'player.message("You need an agility level of 25 to use this shortcut.")',
-        "Formulae.calcProductionSuccessfulLegacy(REQUIRED_AGILITY_LEVEL,",
+        "AgilityUtilityEquipment.productionSuccess(player,REQUIRED_AGILITY_LEVEL,",
         "getCurrentLevel(player, Skill.AGILITY.id()), false, LEVEL_STOP_FAIL)",
         "hasEquipped(ItemId.AGILITY_CAPE.id())",
         "teleport(player, departureBank.getX(), departureBank.getY())",

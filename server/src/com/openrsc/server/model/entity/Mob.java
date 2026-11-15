@@ -278,6 +278,11 @@ public abstract class Mob extends Entity {
 	public static final int ELEMENTAL_DEBUFF_DURATION_TICKS = 24;
 
 	public int getWalkingTick() {
+        int base = baseWalkingTick();
+        return this instanceof Player ? com.openrsc.server.content.AgilityUtilityEquipment.walkingInterval((Player)this,base) : base;
+    }
+
+    private int baseWalkingTick() {
 		if (getWorld().getServer().getConfig().WANT_CUSTOM_WALK_SPEED) {
 			return getWorld().getServer().getConfig().WALKING_TICK;
 		}

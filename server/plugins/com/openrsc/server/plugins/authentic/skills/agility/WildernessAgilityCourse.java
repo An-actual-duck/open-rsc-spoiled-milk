@@ -34,48 +34,50 @@ public class WildernessAgilityCourse implements OpLocTrigger {
 
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
-		final int failRate = failRate();
+        com.openrsc.server.content.AgilityUtilityEquipment.beginObstacle(player);
+		final int initialFailRate = failRate();
+        final int failRate = obj.getID()==GATE && initialFailRate <= 2 && com.openrsc.server.content.AgilityUtilityEquipment.obstacleSuccess(player,false) ? 3 : initialFailRate;
 		if (obj.getID() == GATE) {
 			if (getCurrentLevel(player, Skill.AGILITY.id()) < 52) {
 				player.message("You need an agility level of 52 to attempt balancing along the ridge");
 				return;
 			}
 			player.message("You go through the gate and try to edge over the ridge");
-			delay(2);
+			com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 			teleport(player, 298, 130);
-			delay(2);
+			com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 			if (failRate == 1) {
 				mes("you lose your footing and fall into the wolf pit");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				teleport(player, 300, 129);
 			} else if (failRate == 2) {
 				mes("you lose your footing and fall into the wolf pit");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				teleport(player, 296, 129);
 			} else {
 				mes("You skillfully balance across the ridge");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				teleport(player, 298, 125);
 				player.incExp(Skill.AGILITY.id(), 50, true);
 			}
 			return;
 		} else if (obj.getID() == SECOND_GATE) {
 			player.message("You go through the gate and try to edge over the ridge");
-			delay(2);
+			com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 			teleport(player, 298, 130);
-			delay(2);
+			com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 			if (failRate == 1) {
 				mes("you lose your footing and fall into the wolf pit");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				teleport(player, 300, 129);
 
 			} else if (failRate == 2) {
 				mes("you lose your footing and fall into the wolf pit");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				teleport(player, 296, 129);
 			} else {
 				mes("You skillfully balance across the ridge");
-				delay(3);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 				teleport(player, 298, 134);
 				player.incExp(Skill.AGILITY.id(), 50, true);
 			}
@@ -92,17 +94,17 @@ public class WildernessAgilityCourse implements OpLocTrigger {
 		switch (obj.getID()) {
 			case WILD_PIPE:
 				player.message("You squeeze through the pipe");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				teleport(player, 294, 112);
 				player.incExp(Skill.AGILITY.id(), 50, true);
 				AgilityUtils.completedObstacle(player, obj.getID(), obstacles, lastObstacle, 1500, ItemId.TIER_3_AGILITY_POUCH.id());
 				return;
 			case WILD_ROPESWING:
 				player.message("You grab the rope and try and swing across");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				if (passObstacle) {
 					mes("You skillfully swing across the hole");
-					delay(3);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 3);
 					boundaryTeleport(player, Point.location(292, 108));
 					player.incExp(Skill.AGILITY.id(), 100, true);
 					AgilityUtils.completedObstacle(player, obj.getID(), obstacles, lastObstacle, 1500, ItemId.TIER_3_AGILITY_POUCH.id());
@@ -111,7 +113,7 @@ public class WildernessAgilityCourse implements OpLocTrigger {
 					// 11 damage on 73hp.
 					//
 					player.message("Your hands slip and you fall to the level below");
-					delay(2);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				}
 				int damage = (int) Math.round((player.getSkills().getLevel(Skill.HITS.id())) * 0.15D);
 				player.teleport(293, 110, -1, false);
@@ -121,10 +123,10 @@ public class WildernessAgilityCourse implements OpLocTrigger {
 				return;
 			case STONE:
 				player.message("you stand on the stepping stones");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				if (passObstacle) {
 					boundaryTeleport(player, Point.location(293, 105));
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				} else {
 					player.message("Your lose your footing and land in the lava");
 					teleport(player, 292, 104);
@@ -133,37 +135,37 @@ public class WildernessAgilityCourse implements OpLocTrigger {
 					return ;
 				}
 				boundaryTeleport(player, Point.location(294, 104));
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				boundaryTeleport(player, Point.location(295, 104));
 				player.message("and walk across");
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				boundaryTeleport(player, Point.location(296, 105));
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				boundaryTeleport(player, Point.location(297, 106));
 				player.incExp(Skill.AGILITY.id(), 80, true);
 				AgilityUtils.completedObstacle(player, obj.getID(), obstacles, lastObstacle, 1500, ItemId.TIER_3_AGILITY_POUCH.id());
 				return;
 			case LEDGE:
 				player.message("you stand on the ledge");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				if (passObstacle) {
 					boundaryTeleport(player, Point.location(296, 112));
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 					player.message("and walk across");
 					boundaryTeleport(player, Point.location(297, 112));
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 					boundaryTeleport(player, Point.location(298, 112));
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 					boundaryTeleport(player, Point.location(299, 111));
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 					boundaryTeleport(player, Point.location(300, 111));
-					delay();
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 					boundaryTeleport(player, Point.location(301, 111));
 					player.incExp(Skill.AGILITY.id(), 80, true);
 					AgilityUtils.completedObstacle(player, obj.getID(), obstacles, lastObstacle, 1500, ItemId.TIER_3_AGILITY_POUCH.id());
 				} else {
 					player.message("you lose your footing and fall to the level below");
-					delay(2);
+					com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 					int ledgeDamage = (int) Math.round((player.getSkills().getLevel(Skill.HITS.id())) * 0.25D);
 					player.teleport(298, 113, -1, false);
 					player.message("You land painfully on the spikes");
@@ -173,11 +175,11 @@ public class WildernessAgilityCourse implements OpLocTrigger {
 				return;
 			case VINE:
 				player.message("You climb up the cliff");
-				delay(2);
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 2);
 				boundaryTeleport(player, Point.location(305, 118));
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				boundaryTeleport(player, Point.location(304, 119));
-				delay();
+				com.openrsc.server.content.AgilityUtilityEquipment.obstacleDelay(player, 1);
 				boundaryTeleport(player, Point.location(304, 120));
 				player.incExp(Skill.AGILITY.id(), 80, true); // COMPLETION OF THE COURSE.
 				AgilityUtils.completedObstacle(player, obj.getID(), obstacles, lastObstacle, 1500, ItemId.TIER_3_AGILITY_POUCH.id());
@@ -186,7 +188,7 @@ public class WildernessAgilityCourse implements OpLocTrigger {
 	}
 
 	private boolean succeed(Player player) {
-		return Formulae.calcProductionSuccessfulLegacy(52, getCurrentLevel(player, Skill.AGILITY.id()), false, 77, 4);
+		return com.openrsc.server.content.AgilityUtilityEquipment.productionSuccess(player, 52, getCurrentLevel(player, Skill.AGILITY.id()), false, 77, 4);
 	}
 
 	private int failRate() {
