@@ -874,6 +874,7 @@ public class Npc extends Mob {
 		ActionSender.sendSound(owner, "victory");
 		owner.getWorld().getServer().getAchievementSystem().checkAndIncSlayNpcTasks(owner, this);
 		owner.incNpcKills();
+        com.openrsc.server.content.GodCrossbowEffects.creditedKill(owner,this);
 		owner.chargeDeathRingFromKill(this);
 		owner.applyDeathAmuletBurst(this);
 		owner.applySoulAmuletBurst(this);

@@ -611,6 +611,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		int lastHits = opponent.getLevel(Skill.HITS.id());
 		final int hitSplatType = Summoning.getSummonDamageHitSplatType(caster);
 		final int damageDealt;
+        DamageResult godPrimaryResult=null;
 		if (isPrimaryProjectileAttackType()) {
 			final CombatEngagement engagement =
 				caster.getOutgoingCombatEngagement();
@@ -633,6 +634,7 @@ public class ProjectileEvent extends SingleTickEvent {
               .build();
 			final DamageResult damageResult = opponent.getWorld().getServer()
 				.getResolvedDamageTransaction().apply(damageRequest);
+            godPrimaryResult=damageResult;
 			damageDealt = damageResult.getLegacyDamageDealt();
 			damage = damageResult.getRequest().getResolvedDamage();
 		} else if (damage >= 0) {
@@ -659,6 +661,11 @@ public class ProjectileEvent extends SingleTickEvent {
 			opponent.getUpdateFlags().setCombatEffect(new CombatEffect(opponent, impactEffectType));
 		}
 		final int slayerActualDamage = Math.max(0, lastHits - opponent.getLevel(Skill.HITS.id()));
+        if(caster instanceof Player && type==2 && godPrimaryResult!=null
+            && launchSnapshot.getSpecification().getProducer()==ProjectileLaunchSpecification.Producer.PLAYER_BOW)
+            com.openrsc.server.content.GodCrossbowEffects.primaryImpact((Player)caster,opponent,
+                launchSnapshot.getSpecification().getGodCrossbowShot(),launchSnapshot.getSpecification().getAttackRoll(),
+                godPrimaryResult.getActualDamage(),godPrimaryResult.isAttackSuppressed(),getUUID());
         if(opponent instanceof Player)com.openrsc.server.model.combat.PlayerPvpCombat.recordPrimaryDamage(caster,(Player)opponent,slayerActualDamage);
 		if (leachingBowAtLaunch && !attackSuppressed)
 			com.openrsc.server.content.monsterslayer.SlayerRewardCombat.leachingBowHit((Player)caster, slayerActualDamage);

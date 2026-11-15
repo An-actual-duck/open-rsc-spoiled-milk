@@ -279,11 +279,22 @@ public class OSRSCombatFormula {
 		 * @param defender The defending mob
 		 * @return The damage dealt to the defending mob
 		 */
-		public static int doRangedDamage(final Mob attacker, final int bowId, final int arrowId, final Mob defender, final boolean skillCape) {
-			boolean isHit = rollHit(calcHitChance(attacker, defender, bowId));
-			final int maxHit = calcMaxHit(attacker, arrowId) * (skillCape ? 2 : 1);
-			return isHit ? applyFervorRollBias(attacker, rollDamage(maxHit), maxHit) : 0;
-		}
+        public static int doRangedDamage(final Mob attacker,final int bowId,final int arrowId,final Mob defender,final boolean skillCape) {
+            return rollRangedDamage(attacker,bowId,arrowId,defender,skillCape).getDamage();
+        }
+        public static com.openrsc.server.model.combat.AttackRoll rollRangedDamage(final Mob attacker,final int bowId,final int arrowId,final Mob defender,final boolean skillCape) {
+            final boolean hit=rollHit(calcHitChance(attacker,defender,bowId));
+            final int maximum=calcMaxHit(attacker,arrowId)*(skillCape?2:1);
+            final int familiarity=com.openrsc.server.content.GodCrossbowEffects.revelationPercent(attacker,defender,bowId);
+            java.util.function.IntSupplier normal=()->hit?com.openrsc.server.content.GodCrossbowEffects.liftRoll(
+                applyFervorRollBias(attacker,rollDamage(maximum),maximum),maximum,familiarity):0;
+            com.openrsc.server.model.combat.AttackRoll roll=attacker instanceof Player
+                &&com.openrsc.server.content.GodCrossbows.usesHolyBolts((Player)attacker)
+                ? com.openrsc.server.content.cleric.runtime.ClericCriticalRuntime.primaryRoll(attacker,defender,maximum,true,
+                    com.openrsc.server.model.combat.CombatStyle.RANGED,normal)
+                :com.openrsc.server.model.combat.AttackRoll.normal(normal.getAsInt());
+            return roll.withWoundBasis(roll.getDamage(),maximum);
+        }
 
 		/**
 		 * Returns a power to associate with each arrow

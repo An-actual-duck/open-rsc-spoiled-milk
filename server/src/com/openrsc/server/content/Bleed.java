@@ -36,12 +36,15 @@ public final class Bleed {
 
     /** Call only for a committed, unsuppressed primary attack from a bleed-capable source. */
     public static boolean primaryHit(Mob source,Mob target,int severity,AttackRoll roll,int actualDamage) {
+        return primaryHit(source,target,severity,roll,actualDamage,CombatStyle.MELEE);
+    }
+    public static boolean primaryHit(Mob source,Mob target,int severity,AttackRoll roll,int actualDamage,CombatStyle style) {
         if(!(source instanceof Player)||severity<1||severity>3||!source.getConfig().WANT_MYWORLD
             ||!qualifies(roll,actualDamage)||!alive(source)||!alive(target)||source==target
             ||!source.sharesSpatialDomain(target)
             ||NonCorporealState.blocks(source,target,CombatHarmNature.NONMAGICAL)
-            ||target instanceof Player&&!PlayerPvpCombat.eligible((Player)source,(Player)target,CombatStyle.MELEE))return false;
-        return applyWound(source,target,severity,false);
+            ||target instanceof Player&&!PlayerPvpCombat.eligible((Player)source,(Player)target,style))return false;
+        return applyWound(source,target,severity,false,style);
     }
 
     /** Stirge gimmick: every positive primary hit escalates its own wound; no player roll threshold. */
@@ -50,22 +53,22 @@ public final class Bleed {
             ||com.openrsc.server.content.monsterslayer.StirgeCombat.protectedByBugOff(target)
             ||!alive(source)||!alive(target)||!source.sharesSpatialDomain(target)
             ||NonCorporealState.blocks(source,target,CombatHarmNature.NONMAGICAL))return false;
-        return applyWound(source,target,1,true);
+        return applyWound(source,target,1,true,CombatStyle.MELEE);
     }
-    private static boolean applyWound(Mob source,Mob target,int severity,boolean escalating) {
+    private static boolean applyWound(Mob source,Mob target,int severity,boolean escalating,CombatStyle style) {
         synchronized(target) {
             Wounds wounds=target.getAttribute(KEY,null);
             if(wounds==null){wounds=new Wounds();target.setAttribute(KEY,wounds);}
             Wound existing=wounds.bySource.get(source.getUUID());
             if(existing!=null&&existing.isRunning()&&existing.valid(source)) {
-                existing.remaining=PULSES;
+                existing.remaining=PULSES;existing.style=style;
                 existing.severity=escalating?Math.min(3,existing.severity+1):Math.max(existing.severity,severity);
                 if(source instanceof Player)((Player)source).message("You reopen the wound");
                 else ((Player)target).message("The stirge deepens your wound (Bleed "+existing.severity+").");
                 return true;
             }
             if(existing!=null)existing.stop();
-            Wound wound=new Wound(source,target,severity);
+            Wound wound=new Wound(source,target,severity,style);
             if(!target.getWorld().getServer().getGameEventHandler().add(wound))return false;
             wounds.bySource.put(source.getUUID(),wound);
             if(source instanceof Player)((Player)source).message(severity==1?"You open up a minor wound":severity==2?"You open up a wound":"You open up a sizable wound");
@@ -105,15 +108,16 @@ public final class Bleed {
         private final Mob sourceSession;
         private final long sourceLife,targetLife;
         private int severity,remaining=PULSES;
-        Wound(Mob source,Mob target,int severity) {
+        private CombatStyle style;
+        Wound(Mob source,Mob target,int severity,CombatStyle style) {
             super(target.getWorld(),target,PULSE_TICKS,"Bleed wound",DuplicationStrategy.ALLOW_MULTIPLE);
             this.target=target;sourceSession=source;sourceId=source.getUUID();sourceLife=source.getCombatLifecycle();
-            targetLife=target.getCombatLifecycle();this.severity=severity;
+            targetLife=target.getCombatLifecycle();this.severity=severity;this.style=style;
         }
         boolean valid(Mob source) {
             return source==sourceSession&&alive(source)&&alive(target)&&source.getCombatLifecycle()==sourceLife
                 &&target.getCombatLifecycle()==targetLife&&source.sharesSpatialDomain(target)
-                &&(!(source instanceof Player)||!(target instanceof Player)||PlayerPvpCombat.eligible((Player)source,(Player)target,CombatStyle.MELEE))
+                &&(!(source instanceof Player)||!(target instanceof Player)||PlayerPvpCombat.eligible((Player)source,(Player)target,style))
                 &&(!(source instanceof Npc)||!(target instanceof Player)||!com.openrsc.server.content.monsterslayer.StirgeCombat.protectedByBugOff((Player)target));
         }
         private void finish() {
@@ -137,13 +141,13 @@ public final class Bleed {
                     DamageRequest.resolvedLegacy(source,target,DamageRequest.SourceCategory.DOT,"bleed-wound",
                         com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target,damage))
                         .periodicProvenance(source instanceof Player?PeriodicEffectProvenance.player(sourceId):PeriodicEffectProvenance.npc(sourceId,sourceLife))
-                        .eventId(getUUID()).style(CombatStyle.MELEE).harmNature(CombatHarmNature.NONMAGICAL)
+                        .eventId(getUUID()).style(style).harmNature(CombatHarmNature.NONMAGICAL)
                         .hitSplatType(HitSplat.TYPE_STANDARD).build());
                 if(target instanceof Npc&&source instanceof Player)((Npc)target).addCombatDamage((Player)source,result.getActualDamage());
                 else {ActionSender.sendStat((Player)target,Skill.HITS.id());if(source instanceof Player)PlayerPvpCombat.recordPrimaryDamage(source,(Player)target,result.getActualDamage());}
                 com.openrsc.server.content.monsterslayer.StirgeCombat.drink(source,result.getActualDamage());
                 if(result.isTargetTerminal()) {
-                    finish();source.setKillType(KillType.COMBAT);target.killedBy(source);return;
+                    finish();source.setKillType(style==CombatStyle.RANGED?KillType.RANGED:KillType.COMBAT);target.killedBy(source);return;
                 }
                 if(--remaining<=0)finish();
             }

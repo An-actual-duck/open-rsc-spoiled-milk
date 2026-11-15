@@ -106,6 +106,7 @@ public final class ProjectileLaunchSpecification {
 
   private final AttackCommitment attackCommitment;
   private final AttackRoll attackRoll;
+  private final com.openrsc.server.content.GodCrossbowEffects.Shot godCrossbowShot;
 	private final boolean automaticTarget;
 	private final Producer producer;
 	private final int proposedDamage;
@@ -137,6 +138,7 @@ public final class ProjectileLaunchSpecification {
                 ? AttackRoll.normal(builder.proposedDamage)
                 : builder.attackRoll)
             .committed(attackCommitment);
+    this.godCrossbowShot = builder.godCrossbowShot;
     this.automaticTarget = builder.automaticTarget;
     this.producer = builder.producer;
     this.proposedDamage = attackCommitment.resolveDamage(builder.proposedDamage);
@@ -170,6 +172,8 @@ public final class ProjectileLaunchSpecification {
   public AttackCommitment getAttackCommitment() {
     return attackCommitment;
   }
+
+  public com.openrsc.server.content.GodCrossbowEffects.Shot getGodCrossbowShot() { return godCrossbowShot; }
 
   public AttackRoll getAttackRoll() {
     return attackRoll;
@@ -279,6 +283,7 @@ public final class ProjectileLaunchSpecification {
 	public static final class Builder {
     private AttackCommitment attackCommitment = AttackCommitment.normal();
     private AttackRoll attackRoll;
+    private com.openrsc.server.content.GodCrossbowEffects.Shot godCrossbowShot;
 		private final Producer producer;
 		private final int proposedDamage;
 		private final int attackType;
@@ -319,6 +324,8 @@ public final class ProjectileLaunchSpecification {
       this.attackCommitment = java.util.Objects.requireNonNull(value);
       return this;
     }
+
+    public Builder godCrossbowShot(com.openrsc.server.content.GodCrossbowEffects.Shot value) { this.godCrossbowShot=value; return this; }
 
     public Builder attackRoll(AttackRoll value) {
       this.attackRoll = java.util.Objects.requireNonNull(value);
