@@ -12,9 +12,18 @@ import java.util.Map;
 
 /** Independent component rolls, separate from ordinary loot and Slayer task credit. */
 public final class SlayerComponentDrops {
-	private final Map<Integer, List<DropTable>> rareComponents = new HashMap<>();
+	private final Map<Integer, List<DropTable>> componentRolls = new HashMap<>();
 
 	public SlayerComponentDrops() {
+        // Common, independent roll: 1/4 base chance; each quantity is equally likely.
+        // Keep the naga's existing hide, supplies and shared rare table intact.
+        DropTable scales = new DropTable("Naga scales");
+        for (int quantity = 1; quantity <= 3; quantity++) {
+            scales.addItemDrop(MyWorldItemId.NAGA_SCALES, quantity, 100);
+        }
+        scales.addEmptyDrop(900);
+        componentRolls.computeIfAbsent(NagaCombat.NPC_ID, ignored -> new ArrayList<>()).add(scales);
+
         add(StirgeCombat.NPC_ID, MyWorldItemId.SANGUINARY_GLAND, 128);
 		add(GiantFrogCombat.NPC_ID, MyWorldItemId.STICKY_SALIVA_GLAND, 128);
 		add(CockatriceCombat.NPC_ID, MyWorldItemId.COCKATRICE_EYE, 128);
@@ -34,17 +43,17 @@ public final class SlayerComponentDrops {
 		// Hundredths preserve small luck bonuses when DropTable rounds weights.
 		access.addTableDrop(reward, 100);
 		access.addEmptyDrop((denominator - 1) * 100);
-		rareComponents.computeIfAbsent(npcId, ignored -> new ArrayList<>()).add(access);
+		componentRolls.computeIfAbsent(npcId, ignored -> new ArrayList<>()).add(access);
 	}
 
 	public ArrayList<Item> rollRare(int npcId, Player owner, double contributionScale) {
 		ArrayList<Item> result = new ArrayList<>();
 		if (owner == null || !owner.getConfig().WANT_MYWORLD) return result;
-		List<DropTable> tables = rareComponents.get(npcId);
+		List<DropTable> tables = componentRolls.get(npcId);
 		if (tables != null) {
 			for (DropTable table : tables) {
-				// Each component gets its own roll. Rare-table delivery retains the
-				// existing contribution gate, luck weighting and wealth retry. No pity.
+				// Each component gets its own roll; rare components keep the existing
+				// contribution/luck rules. Common scales use ordinary loot rules.
 				result.addAll(table.rollPersonalLoot(owner, contributionScale));
 			}
 		}

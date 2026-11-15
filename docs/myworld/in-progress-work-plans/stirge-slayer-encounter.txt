@@ -78,3 +78,12 @@ Validation
 
 Private evidence and owner preview: output/art/stirge-encounter/index.html.
 No public server, database or saved map is changed by this work.
+
+Anti-coagulant ingredient follow-up
+---------------------------------
+Naga scales (3470): tradeable, stackable; independent common Naga roll at
+1/4 base chance, yielding 1, 2 or 3 scales with equal conditional odds.
+Existing Naga hide and ordinary loot remain intact. The coating requires
+20 scales and one Sanguinary gland. Recipe level, herb and XP await approval.
+The three bat wing items remain unused crafting materials. Naga scales reuse
+the established scale icon with a green material mask; no new approved art.

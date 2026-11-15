@@ -17,6 +17,7 @@
     ]
   ],
   "acquisition": null,
+  "plannedIngredients": [{"id": 3466, "quantity": 1}, {"id": 3470, "quantity": 20}],
   "variants": [
     {
       "base": 1999,
