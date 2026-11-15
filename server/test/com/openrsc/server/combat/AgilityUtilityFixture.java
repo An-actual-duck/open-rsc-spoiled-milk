@@ -127,7 +127,7 @@ public final class AgilityUtilityFixture {
             com.openrsc.server.net.rsc.struct.outgoing.PlayerMovementRateStruct rate=new com.openrsc.server.net.rsc.struct.outgoing.PlayerMovementRateStruct();
             rate.serverIndex=77;rate.percent=150;rate.setOpcode(com.openrsc.server.net.rsc.enums.OpcodeOut.SEND_PLAYER_MOVEMENT_RATE);
             com.openrsc.server.net.Packet packet=new com.openrsc.server.net.rsc.generators.impl.PayloadCustomGenerator().generate(rate,visual);
-            check(packet.getID()==161&&packet.getBuffer().readUnsignedShort()==77&&packet.getBuffer().readUnsignedShort()==150&&!packet.getBuffer().isReadable(),"real fixed four-byte rate payload");packet.release();
+            check(packet.getID()==161&&packet.getBuffer().readUnsignedShort()==77&&packet.getBuffer().readUnsignedShort()==150&&!packet.getBuffer().isReadable(),"real fixed four-byte rate payload");packet.getBuffer().release();
             Player glovesOnly=player(h);equip(glovesOnly,G);before=xp(glovesOnly);glovesOnly.incExp(Skill.AGILITY.id(),100,false);
             check(xp(glovesOnly)-before==110&&glovesOnly.getWalkingTick()==430,"gloves work independently without charges");
             h.server().getConfig().WANT_MYWORLD=false;check(AgilityUtilityEquipment.xpPercent(loot)==0&&loot.getWalkingTick()==430,"other worlds unchanged");

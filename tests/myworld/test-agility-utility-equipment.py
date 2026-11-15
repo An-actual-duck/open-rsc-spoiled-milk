@@ -21,9 +21,11 @@ run(['python3',ROOT/'tests/myworld/prepare-agility-utility-fixture.py',BASE/'run
 cp=':'.join(str(ROOT/p) for p in ['server/core.jar','server/plugins.jar','server/lib/*'])
 run(['javac','-source','8','-target','8','-proc:none','-cp',cp,'-sourcepath',ROOT/'server/test','-d',classes,ROOT/'server/test/com/openrsc/server/combat/AgilityUtilityFixture.java'],name='compile-server-test')
 run(['java','-Xmx768m','-XX:+UseSerialGC','-Djava.awt.headless=true','-cp',str(classes)+':'+cp,'com.openrsc.server.combat.AgilityUtilityFixture'],cwd=BASE/'runtime',name='server')
+run(['javac','-source','8','-target','8','-proc:none','-cp',cp,'-sourcepath',ROOT/'server/test','-d',classes,ROOT/'server/test/com/openrsc/server/combat/MovementFirstStepFixture.java'],name='compile-movement')
+run(['java','-Xmx768m','-XX:+UseSerialGC','-Djava.awt.headless=true','-cp',str(classes)+':'+cp,'com.openrsc.server.combat.MovementFirstStepFixture','candidate',BASE/'movement.json'],cwd=BASE/'runtime',name='movement')
 client=ROOT/'Client_Base/Open_RSC_Client.jar'
 run(['javac','-source','8','-target','8','-cp',client,'-d',classes,ROOT/'tests/myworld/java/AgilityUtilityClientFixture.java'],name='compile-client')
 for custom in ['true','false']:
     run(['java','-Djava.awt.headless=true','-cp',str(classes)+':'+str(client),'AgilityUtilityClientFixture',custom],name='client-'+custom)
-(BASE/'receipt.json').write_text(json.dumps({'passed':True,'serverSha256':hashlib.sha256(server.read_bytes()).hexdigest(),'liveServerTouched':False},indent=2)+'\n')
+(BASE/'receipt.json').write_text(json.dumps({'passed':True,'serverSha256':hashlib.sha256(server.read_bytes()).hexdigest(),'clientSha256':hashlib.sha256(client.read_bytes()).hexdigest(),'liveServerTouched':False},indent=2)+'\n')
 print("Evidence:",BASE)

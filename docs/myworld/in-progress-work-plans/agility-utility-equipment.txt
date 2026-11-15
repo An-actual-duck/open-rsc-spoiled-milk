@@ -81,3 +81,24 @@ geometry; no live accounts, listeners, database or public process is involved.
 The public server and installed player clients are not deployed by this task.
 A later release must publish the matching desktop/browser client builds.
 Evidence: output/tests/agility-utility-equipment/ and output/reviews/agility-utility-equipment/.
+
+FINAL VALIDATION
+----------------
+Server and desktop client builds pass. Client protocol is10060.
+Focused actual-gameplay equipment fixture passes: charge boundaries, partial
+progress, reload, combat lockout, all recharge rates, real walking and teleport
+exclusion, central XP scaling, exact cross-tier RNG bounds, duplicate rewards,
+installed landing collision and real cape teleports, version-gated rate packets.
+Client catalog/appearance/packet/interpolation checks pass in both sprite modes.
+Existing first-step/movement regression:4935 checks pass.
+General combat:149/149 scenarios pass.
+Nonzero agility:279 installed-world branches,2443 assertions,0 failures.
+Configured shortcuts:442 parser/lifecycle assertions and116 real runtime assertions.
+Gnome course:86 original assertions and92 full-utility assertions, two laps each;
+XP936 internal units with full set,20->22 boot charge, same safe landings.
+Gloves reduce explicit waits; existing dialogue waits remain unchanged.
+Scimitar/battleaxe and Slayer art suites pass; every old appearance stays fixed.
+All129 normal reward category/item/quantity/weight rows remain byte-identical
+when normalized; SHA25646dfe3f7f995a93a5ec92dd32fdce7e54b5a01b72f3213d65f369b1bb696577f.
+Workspace layout audit reports only preserved pre-existing ignored legacy
+folders, no new misplaced asset/output paths.
