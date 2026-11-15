@@ -799,6 +799,7 @@ public class AgilityShortcuts implements OpLocTrigger,
 
 	@Override
 	public void onUseLoc(Player player, GameObject obj, Item item) {
+        com.openrsc.server.content.AgilityUtilityEquipment.beginObstacle(player);
 		if (obj.getID() == GREW_ISLAND_ROPE_ATTACH && item.getCatalogId() == ItemId.ROPE.id()) {
 			player.message("you tie the rope to the tree");
 			player.getCarriedItems().remove(new Item(ItemId.ROPE.id()));

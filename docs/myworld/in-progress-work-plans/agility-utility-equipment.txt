@@ -43,7 +43,8 @@ Completed tier1/2/3 laps restore1/2/3% only while boots are worn.
 
 Gloves
 ------
-Uncharged. Standard courses and agility shortcuts shorten explicit obstacle
+Uncharged. Standard courses, the Lumbridge/Al Kharid stepping stones and
+agility shortcuts shorten explicit obstacle
 waits by25%, carrying quarter-tick fractions through the obstacle sequence.
 The cumulative wait is ceil(originalTicks*0.75), minimum one tick for a
 nonzero obstacle. Dialogue/global plugin waits and quest cutscenes are untouched.
