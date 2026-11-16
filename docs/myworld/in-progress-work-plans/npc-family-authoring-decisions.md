@@ -90,3 +90,39 @@ Review batches rather than requiring meticulous authoring of every NPC by the
 owner. Keep powers, HP, displayed levels and attack behavior separate from this
 defense-guideline exercise. Power values, special attacks and the canonical
 loader schema still need their own concrete decisions before implementation.
+
+## Follow-up clarification: original protection, bands and bosses
+
+Owner-confirmed 2026-11-16. The earlier fourteen-row pilot may be replaced by
+recommendations fitting the agreed families. Its numbers are not constraints.
+
+The six ordinary bands should follow the existing Slayer level-band ranges,
+excluding boss monsters. Include non-Slayer NPCs in the corresponding ranges.
+Read the actual Slayer thresholds when authoring the roster; no new cutoffs are
+chosen here. Boss is a separate seventh category, not simply a high combat level.
+
+The preservation rule is per-style, not a summed budget: original Defense 100
+must retain at least 100 in one style. A proposed 50/50/75 fails despite its sum
+of 175 because every style faces less armor. Secondary weaknesses, including
+intentional zero values, are allowed. At zero, the NPC receives no defense-roll
+opportunity in that style. Sub-level-10 enemies commonly having one or two zeros
+is guidance, not a mandatory conversion formula. The owner confirmed that Young
+Giant Spider's protected style is Ranged, not Melee.
+
+Boss classification should be explicitly flagged in future NPC authoring/runtime
+data, rather than inferred from name, combat level, family or Slayer membership.
+This record establishes the intended classification and initial membership; it
+does not add a runtime field or choose its final schema/name.
+
+| Runtime ID | Confirmed boss | Original Defense | Authored defense target M/R/G |
+| --- | --- | --- | --- |
+| 809 | Balrog | 80 | 80 / 80 / 80 |
+| 477 | King Black Dragon | 240 | 240 / 240 / 240 |
+| 844 | Elder Green Dragon | 265 | 265 / 265 / 265 |
+
+Bosses retain 100% of original Defense independently in all three defenses.
+The table applies the agreed rule to current source values; it is not a live
+stat change. This boss rule overrides ordinary family ordering: dragon bosses
+have equal full-baseline protection, while ordinary dragons remain Magic-led.
+No other quest encounter or named monster is automatically flagged as a boss.
+Power, HP, attack behavior and special mitigation are unchanged by this decision.
