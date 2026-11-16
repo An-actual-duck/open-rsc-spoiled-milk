@@ -185,6 +185,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 
 ## Proposed Work Plans
 
+- [NPC offense and style audit](proposed-work-plans/npc-offense-style-audit/README.md):
+  current magic/ranged users, specialist behavior gaps, candidate changes and full 298-NPC audit.
+
 - [NPC defense assignments](proposed-work-plans/npc-defense-roster/README.md):
   complete 298-NPC family/band draft with current values, assigned values and exceptions.
 
