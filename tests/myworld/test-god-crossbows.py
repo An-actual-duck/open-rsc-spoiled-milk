@@ -30,11 +30,12 @@ for god,prayer in [('saradomin','divine-bolts'),('zamorak','bolts-of-wrath'),('g
     source=ROOT/f'dev/myworld/assets/authoring/items/god-crossbows/selected-mythic-v1/{god}-crossbow.png'
     runtime=ROOT/f'dev/myworld/assets/runtime/sprites/items/inventory-ground/weapons/god-crossbows/{god}-crossbow-icon.png'
     ui=ROOT/f'dev/myworld/assets/runtime/ui/prayer/{prayer}.png'
-    assert source.read_bytes()==runtime.read_bytes()==ui.read_bytes(),god+' approved asset drift'
+    assert source.read_bytes()==runtime.read_bytes(),god+' approved inventory asset drift'
+    assert ui.read_bytes()==(ROOT/f'dev/myworld/assets/authoring/ui/prayer/god-bolts/{prayer}.png').read_bytes(),prayer+' prayer candidate drift'
     im=Image.open(runtime).convert('RGBA');assert im.size==(48,32)
     assert set(im.getchannel('A').get_flattened_data())=={0,255}
     assets.append({'god':god,'runtimeSha256':hashlib.sha256(runtime.read_bytes()).hexdigest()})
 receipt={'passed':True,'clientSha256':hashlib.sha256(client.read_bytes()).hexdigest(),'serverSha256':hashlib.sha256(server.read_bytes()).hexdigest(),'assets':assets,'liveServerTouched':False}
 (BASE/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
-print('PASS three approved native PNGs unchanged in runtime and prayer artwork')
+print('PASS three approved inventory PNGs unchanged; dedicated prayer pictograms packaged')
 print('Evidence:',BASE)

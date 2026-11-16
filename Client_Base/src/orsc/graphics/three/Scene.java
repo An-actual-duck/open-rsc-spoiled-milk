@@ -2550,6 +2550,25 @@ public final class Scene {
 		return newCapacity;
 	}
 
+    /** Current camera projection, also available when software rendering disables geometry capture.
+     * destination receives screen X, screen Y and positive camera depth. */
+    public boolean projectWorldPoint(int x, int y, int z, int[] destination) {
+        int cx=x-rot1024_off_x, cy=y-rot1024_off_y, cz=z-rot1024_off_z, temporary;
+        if(cameraProjZ!=0){int sin=FastMath.trigTable1024[cameraProjZ], cos=FastMath.trigTable1024[cameraProjZ+1024];
+            temporary=cy*sin+cos*cx>>15;cy=cy*cos-cx*sin>>15;cx=temporary;}
+        if(cameraProjY!=0){int sin=FastMath.trigTable1024[cameraProjY], cos=FastMath.trigTable1024[cameraProjY+1024];
+            temporary=cos*cx+cz*sin>>15;cz=cos*cz-cx*sin>>15;cx=temporary;}
+        if(cameraProjX!=0){int sin=FastMath.trigTable1024[cameraProjX], cos=FastMath.trigTable1024[cameraProjX+1024];
+            temporary=cy*cos-sin*cz>>15;cz=sin*cy+cos*cz>>15;cy=temporary;}
+        if(cz<rot1024_zTop)return false;
+        destination[0]=m_Zb+(cx<<rot1024_vp_src)/cz;
+        destination[1]=m_Nb+(cy<<rot1024_vp_src)/cz;
+        destination[2]=cz;
+        return true;
+    }
+
+    public int getPerspectiveShift() { return rot1024_vp_src; }
+
 	public Renderer3DFrame getRenderer3DFrame() {
 		return renderer3DFrame;
 	}

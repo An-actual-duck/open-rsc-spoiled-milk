@@ -1,0 +1,10 @@
+{
+  "source": "shots-v4",
+  "reviewState": "owner-approved-2026-11-15",
+  "sheets": {
+    "saradomin/bolt.png": "2688da9e46c33db684cfb6f80157b8ef1d235f1943811a0f5e8a6147226f3aec",
+    "zamorak/bolt.png": "2fd2bd93b2a17daad2a5516d7f0e9eda1ea287cf23dc5dcba50a85bc1d084eee",
+    "guthix/bolt.png": "3b74fcc9bddaac6be558679f7eb37a552cb65240af8a2d2fc1189f7ae0b0a2b0"
+  },
+  "basicSha256": "dc3b8bfdab641ee210201f0876fcf5e695145a89b5946d698d3d7f32d645fae4"
+}

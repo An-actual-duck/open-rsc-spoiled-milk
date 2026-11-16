@@ -104,3 +104,8 @@ Zamorak's Wrath
 Zamorak's Malice
 Zamorak's Cruelty
 Zamorak's Ruin
+
+God crossbow bolt-prayer icons (divine-bolts, thorned-bolts, bolts-of-wrath):
+New OpenAI-generated white silhouettes, November 15, 2026. Source and extraction
+notes: assets/authoring/ui/prayer/god-bolts/. These replace the interim crossbow
+item-icon copies; existing third-party prayer and Cleric credits remain above.

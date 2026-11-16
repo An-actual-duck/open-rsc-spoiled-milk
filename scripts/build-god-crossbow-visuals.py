@@ -10,7 +10,13 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
     layout=json.loads((AUTHOR/'frame-layout.json').read_text());assert len(layout['frames'])==15
     approved=json.loads((AUTHOR/'approved-held.json').read_text())
-    shots=json.loads((AUTHOR/'approved-shots.json').read_text())
+    shots=json.loads((AUTHOR/('shot-selection.json' if (AUTHOR/'shot-selection.json').exists() else 'approved-shots.json')).read_text())
+    if 'basicSha256' in shots:
+        basic=AUTHOR/shots['source']/'basic/bolt.png'
+        assert hashlib.sha256(basic.read_bytes()).hexdigest()==shots['basicSha256']
+        runtimeBasic=ROOT/'dev/myworld/assets/runtime/animations/projectile-moving/bolt-basic/bolt-basic.png'
+        if args.check:assert runtimeBasic.read_bytes()==basic.read_bytes()
+        else:shutil.copyfile(basic,runtimeBasic)
     spec=importlib.util.spec_from_file_location('archive_codec',ROOT/'scripts/generate-battleaxe-coatings.py');codec=importlib.util.module_from_spec(spec);spec.loader.exec_module(codec)
     custom=ROOT/'Client_Base/Cache/video/Custom_Sprites.osar';groups=codec.archive(gzip.decompress(custom.read_bytes()))
     owned={g+'crossbow'for g in GODS};entries={};classic={}
