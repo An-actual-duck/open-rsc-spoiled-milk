@@ -14,7 +14,7 @@ def main():
  archive=ROOT/'output/releases'/a.version/f'spoiled-milk-{a.version}-java.zip'
  jar=ROOT/'Client_Base/Open_RSC_Client.jar'
  with zipfile.ZipFile(archive) as z:
-  sources=[n for n in z.namelist() if n.endswith('/game-files/SOURCE-COMMIT.txt')];jars=[n for n in z.namelist() if n.endswith('/game-files/Open_RSC_Client.jar')]
+  sources=[n for n in z.namelist() if n.endswith('/game-files/SOURCE-COMMIT.txt')];jars=[n for n in z.namelist() if n.endswith('/game-files/Spoiled_Milk_Client.jar')]
   if len(sources)!=1 or z.read(sources[0]).decode().strip()!=head or len(jars)!=1 or hashlib.sha256(z.read(jars[0])).hexdigest()!=sha(jar):raise SystemExit('Official release archive source/JAR differs')
  out=Path(subprocess.check_output(['python3',str(ROOT/'scripts/workspace-layout.py'),'path','builds','browser-release-input','--mkdir'],cwd=ROOT,text=True).strip())/a.version;out.mkdir()
  shutil.copyfile(jar,out/'client.jar')
