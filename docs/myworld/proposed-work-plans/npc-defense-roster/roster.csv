@@ -1,0 +1,299 @@
+id,name,level,family,band,boss,originalDefense,anchorDefense,currentMelee,currentRanged,currentMagic,assignedMelee,assignedRanged,assignedMagic,notes
+0,Unicorn,21,beasts,Low,False,23,23,11,2,23,23,4,0,
+3,Chicken,3,flying,Low,False,4,4,4,0,0,0,4,0,
+4,Tough Goblin,13,goblinoids,Low,False,14,14,14,7,1,14,1,0,
+5,Hans,3,unarmoured_humanoids,Low,False,3,3,3,0,0,3,0,0,
+6,cow,8,beasts,Low,False,8,8,8,0,0,8,0,0,
+8,Bear,24,beasts,Low,False,23,23,23,2,2,23,4,0,
+11,Man,9,unarmoured_humanoids,Low,False,8,8,8,0,0,8,0,0,
+19,Rat,8,beasts,Low,False,10,10,1,10,1,10,0,0,
+21,mugger,10,unarmoured_humanoids,Low,False,10,10,10,1,1,10,1,0,
+22,Lesser Demon,79,demons,Mid High,False,79,79,59,39,79,63,27,79,
+23,Young Giant Spider,8,insects_arachnids,Low,False,10,10,2,10,1,0,10,0,
+25,Jonny the beard,10,unarmoured_humanoids,Low,False,20,20,20,2,2,20,2,0,
+29,Rat,2,beasts,Low,False,4,4,0,4,0,4,0,0,
+34,spider,2,insects_arachnids,Low,False,2,2,0,2,0,0,2,0,
+35,Delrith,30,demons,Low,False,35,35,10,7,35,8,0,35,
+37,Weaponsmaster,25,armoured_humanoids,Low,False,20,20,20,2,2,20,4,0,
+40,skeleton,21,skeletons,Low,False,20,20,5,20,10,0,20,4,
+41,zombie,24,corporeal_undead,Low,False,28,28,28,14,14,28,4,4,
+43,Giant bat,32,flying,Mid Low,False,32,32,3,32,3,0,32,12,
+45,skeleton,31,skeletons,Low,False,30,30,7,30,15,0,30,7,
+46,skeleton,25,skeletons,Low,False,24,24,6,24,12,0,24,4,
+47,Large Rat,13,beasts,Low,False,12,12,1,12,1,12,1,0,
+50,skeleton,19,skeletons,Low,False,18,18,4,18,9,0,18,1,
+52,zombie,19,corporeal_undead,Low,False,20,20,20,10,10,20,3,3,
+53,Ghost,25,spirits,Low,False,30,30,15,30,7,30,0,6,Melee selected provisionally as physical primary; owner has only settled Magic secondary.
+57,Darkwizard,13,casters,Low,False,15,15,1,1,15,0,1,15,
+60,Darkwizard,25,casters,Low,False,24,24,2,2,24,0,4,24,
+61,Giant,37,giants_ogres,Mid Low,False,36,36,36,9,9,36,0,14,
+62,Goblin,7,goblinoids,Low,False,9,9,9,4,0,9,0,0,
+63,farmer,15,unarmoured_humanoids,Low,False,16,16,16,1,1,16,1,0,
+64,Thief,21,unarmoured_humanoids,Low,False,22,22,22,2,2,22,4,0,
+65,Guard,28,armoured_humanoids,Low,False,30,30,30,3,3,30,6,0,
+66,Black Knight,46,armoured_humanoids,Mid Low,False,50,50,50,5,5,50,20,0,
+67,Hobgoblin,32,goblinoids,Mid Low,False,34,34,34,17,3,34,13,0,
+68,zombie,32,corporeal_undead,Mid Low,False,31,31,31,15,15,31,9,9,
+70,Scorpion,21,insects_arachnids,Low,False,24,24,6,24,2,4,24,0,
+72,Man,9,unarmoured_humanoids,Low,False,8,8,8,0,0,8,0,0,
+74,Giant Spider,31,insects_arachnids,Low,False,31,31,7,31,3,7,31,0,
+76,Barbarian,16,unarmoured_humanoids,Low,False,15,15,15,1,1,15,1,0,
+78,Gunthor the Brave,37,armoured_humanoids,Mid Low,False,40,40,40,4,4,40,16,0,
+79,Witch,25,casters,Low,False,25,25,2,2,25,0,5,25,
+80,Ghost,25,spirits,Low,False,30,30,15,30,7,30,0,6,Melee selected provisionally as physical primary; owner has only settled Magic secondary.
+81,Wizard,16,casters,Low,False,15,15,1,1,15,0,1,15,
+86,Warrior,18,armoured_humanoids,Low,False,17,17,17,4,1,17,1,0,
+89,Highwayman,13,unarmoured_humanoids,Low,False,15,15,15,1,1,15,1,0,
+93,Monk,13,casters,Low,False,13,13,1,1,13,0,1,13,
+94,Dwarf,18,armoured_humanoids,Low,False,17,17,17,8,1,17,1,0,
+96,Count Draynor,43,corporeal_undead,Mid Low,False,65,65,32,26,65,65,19,19,Vampire mapped to corporeal undead for this defense draft.
+99,Deadly Red spider,36,insects_arachnids,Mid Low,False,36,36,9,36,3,14,36,0,
+100,Guard,28,armoured_humanoids,Low,False,30,30,30,3,3,30,6,0,
+102,White Knight,56,armoured_humanoids,Mid,False,60,60,60,6,6,60,36,12,
+104,Moss Giant,62,giants_ogres,Mid,False,61,61,61,15,15,61,12,36,
+108,Black Knight,46,armoured_humanoids,Mid Low,False,50,50,50,5,5,50,20,0,
+109,Greldo,7,goblinoids,Low,False,9,9,9,0,0,9,0,0,
+114,Imp,5,demons,Low,False,4,4,4,2,0,0,0,4,
+127,Jailguard,34,armoured_humanoids,Mid Low,False,34,34,34,3,3,34,13,0,
+135,Ice Giant,68,giants_ogres,Mid High,False,66,66,66,16,16,66,23,52,
+136,King Scorpion,36,insects_arachnids,Mid Low,False,38,38,9,38,3,15,38,0,
+137,Pirate,27,unarmoured_humanoids,Low,False,25,25,25,6,2,25,5,0,
+139,Monk of Zamorak,29,casters,Low,False,32,32,3,3,32,0,6,32,
+140,Monk of Zamorak,19,casters,Low,False,22,22,2,2,22,0,2,22,
+153,Tough Goblin,13,goblinoids,Low,False,14,14,14,7,1,14,1,0,
+154,Tough Goblin,13,goblinoids,Low,False,14,14,14,7,1,14,1,0,
+158,Ice warrior,57,elemental_warriors,Mid,False,56,56,28,28,56,56,11,33,Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review.
+159,Warrior,27,armoured_humanoids,Low,False,25,25,25,6,2,25,5,0,
+177,Large Rat,13,beasts,Low,False,12,12,1,12,1,12,1,0,
+178,Ghost,25,spirits,Low,False,30,30,15,30,7,30,0,6,Melee selected provisionally as physical primary; owner has only settled Magic secondary.
+179,skeleton,31,skeletons,Low,False,30,30,7,30,15,0,30,7,
+180,zombie,32,corporeal_undead,Mid Low,False,31,31,31,15,15,31,9,9,
+181,Lesser Demon,79,demons,Mid High,False,79,79,59,39,79,63,27,79,
+182,Melzar the mad,45,casters,Mid Low,False,44,44,13,8,44,0,17,44,
+184,Greater Demon,87,demons,Mid High,False,87,87,65,43,87,69,30,87,
+188,Bear,26,beasts,Low,False,25,25,25,2,2,25,5,0,
+189,Black Knight,46,armoured_humanoids,Mid Low,False,50,50,50,5,5,50,20,0,
+190,chaos Dwarf,59,armoured_humanoids,Mid,False,59,59,59,29,29,59,35,11,
+192,Wormbrain,7,goblinoids,Low,False,9,9,9,0,0,9,0,0,
+195,skeleton,54,skeletons,Mid,False,50,50,12,50,25,10,50,30,
+196,Dragon,110,dragons,High,False,110,110,110,55,55,99,82,110,
+199,Dark Warrior,21,armoured_humanoids,Low,False,25,25,25,2,2,25,5,0,
+200,Druid,29,casters,Low,False,32,32,3,3,32,0,6,32,
+201,Red Dragon,140,dragons,High,False,140,140,140,105,140,126,105,140,
+202,Blue Dragon,105,dragons,High,False,105,105,105,78,105,94,78,105,
+203,Baby Blue Dragon,50,dragons,Mid Low,False,50,50,25,25,50,32,20,50,
+214,zombie,32,corporeal_undead,Mid Low,False,31,31,31,15,15,31,9,9,
+216,tree spirit,95,living_plants,High,False,90,90,67,67,90,45,90,81,
+232,Bandit,29,unarmoured_humanoids,Low,False,33,33,33,3,3,33,6,0,
+234,Bandit,29,unarmoured_humanoids,Low,False,33,33,33,3,3,33,6,0,
+236,Donny the lad,39,unarmoured_humanoids,Mid Low,False,43,43,43,12,8,43,17,0,
+237,Black Heather,39,unarmoured_humanoids,Mid Low,False,43,43,43,12,8,43,17,0,
+238,Speedy Keith,39,unarmoured_humanoids,Mid Low,False,43,43,43,12,8,43,17,0,
+239,White wolf sentry,31,beasts,Low,False,32,32,32,16,3,32,8,0,
+243,Grey wolf,64,beasts,Mid,False,62,62,62,31,6,62,37,12,
+244,shapeshifter,24,magical_beasts,Low,False,29,29,7,29,7,5,0,29,Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review.
+248,White wolf,41,beasts,Mid Low,False,42,42,42,21,4,42,16,0,
+249,Pack leader,71,beasts,Mid High,False,72,72,72,36,7,72,57,25,
+251,Thug,18,unarmoured_humanoids,Low,False,20,20,20,2,2,20,2,0,
+252,Firebird,6,flying,Low,False,7,7,0,0,7,0,7,0,
+254,Ice queen,103,casters,High,False,101,101,50,40,101,50,90,101,
+259,Grip,46,armoured_humanoids,Mid Low,False,60,60,60,30,24,60,24,0,
+262,Guard Dog,46,beasts,Mid Low,False,47,47,47,23,4,47,18,0,
+263,Ice spider,64,insects_arachnids,Mid,False,66,66,16,66,33,13,66,39,"Magical spider variant: Magic secondary, Melee weakest."
+264,Pirate,30,unarmoured_humanoids,Low,False,28,28,28,7,2,28,7,0,
+265,Jailer,51,armoured_humanoids,Mid Low,False,55,55,55,13,5,55,22,0,
+266,Lord Darquarius,76,armoured_humanoids,Mid High,False,80,80,40,32,80,80,64,28,
+270,Chaos Druid,19,casters,Low,False,22,22,2,2,22,0,2,22,
+271,Poison Scorpion,26,insects_arachnids,Low,False,29,29,7,29,2,5,29,0,
+276,Sir Mordred,58,armoured_humanoids,Mid,False,62,62,62,31,24,62,37,12,
+277,Renegade knight,51,armoured_humanoids,Mid Low,False,55,55,55,5,5,55,22,0,
+290,Black Demon,156,demons,Very High,False,157,157,117,78,157,149,117,157,
+291,Black Dragon,200,dragons,Very High,False,190,190,190,142,190,180,171,190,
+292,Poison Spider,63,insects_arachnids,Mid,False,62,62,15,62,31,37,62,12,
+293,Monk of Zamorak,47,casters,Mid Low,False,52,52,5,5,52,0,20,52,
+294,Hellhound,114,demons,High,False,112,112,112,56,56,100,56,112,Hellhound retained as demonic beast (Magic-led); distinct from ordinary Terror dog.
+295,Animated axe,46,constructs,Mid Low,False,45,45,22,22,45,45,18,0,
+296,Black Unicorn,31,beasts,Low,False,33,33,16,16,33,33,8,0,
+298,Otherworldly being,66,spirits,Mid High,False,66,66,49,33,66,66,23,52,Melee selected provisionally as physical primary; owner has only settled Magic secondary.
+311,Hobgoblin,48,goblinoids,Mid Low,False,47,47,47,23,4,47,18,0,
+312,Ogre,58,giants_ogres,Mid,False,33,33,33,24,8,33,6,19,
+315,Chronozon,121,demons,High,False,60,60,24,60,60,54,30,60,
+318,Man,9,unarmoured_humanoids,Low,False,8,8,8,0,0,8,0,0,
+319,farmer,15,unarmoured_humanoids,Low,False,16,16,16,1,1,16,1,0,
+320,Warrior,27,armoured_humanoids,Low,False,25,25,25,6,2,25,5,0,
+321,Guard,28,armoured_humanoids,Low,False,30,30,30,3,3,30,6,0,
+322,Knight,56,armoured_humanoids,Mid,False,60,60,60,6,6,60,36,12,
+323,Paladin,71,armoured_humanoids,Mid High,False,55,55,55,5,5,55,44,19,
+324,Hero,83,armoured_humanoids,Mid High,False,80,80,80,8,8,80,64,28,
+338,zoo keeper,20,unarmoured_humanoids,Low,False,20,20,20,2,2,20,4,0,
+342,Rogue,21,unarmoured_humanoids,Low,False,22,22,22,2,2,22,4,0,
+343,Shadow spider,53,insects_arachnids,Mid Low,False,51,51,12,51,25,0,51,20,"Magical spider variant: Magic secondary, Melee weakest."
+344,Fire Giant,109,giants_ogres,High,False,112,112,112,28,28,112,56,100,
+348,Forester,21,unarmoured_humanoids,Low,False,22,22,22,2,2,22,4,0,
+351,Thief,21,unarmoured_humanoids,Low,False,22,22,22,2,2,22,4,0,
+352,Head Thief,34,unarmoured_humanoids,Mid Low,False,32,32,32,3,3,32,12,0,
+356,Mountain Dwarf,28,armoured_humanoids,Low,False,27,27,27,13,2,27,5,0,
+358,Necromancer,34,casters,Mid Low,False,42,42,4,4,42,0,16,42,
+359,zombie,24,corporeal_undead,Low,False,28,28,28,14,14,28,4,4,
+361,The Fire warrior of lesarkus,63,elemental_warriors,Mid,False,50,50,25,25,50,50,10,30,Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review.
+364,Lucien,21,casters,Low,False,22,22,2,2,22,0,4,22,
+367,Dungeon Rat,16,beasts,Low,False,10,10,1,10,1,10,1,0,
+383,General Khazard,100,armoured_humanoids,High,False,80,80,80,40,32,80,72,40,
+384,Khazard Ogre,58,giants_ogres,Mid,False,33,33,33,24,8,33,6,19,
+386,Khazard Scorpion,46,insects_arachnids,Mid Low,False,48,48,12,48,4,19,48,0,
+388,Bouncer,122,beasts,High,False,112,112,112,56,44,112,100,56,
+399,local gnome,3,unarmoured_humanoids,Low,False,3,3,0,1,3,3,0,0,
+401,Black Knight titan,146,armoured_humanoids,Very High,False,150,150,150,75,60,150,142,112,
+402,kalron,3,unarmoured_humanoids,Low,False,3,3,3,0,0,3,0,0,
+407,Khazard troop,28,armoured_humanoids,Low,False,30,30,30,7,3,30,6,0,
+409,gnome troop,3,unarmoured_humanoids,Low,False,3,3,0,1,3,3,0,0,
+410,khazard warlord,100,armoured_humanoids,High,False,80,80,80,20,8,80,72,40,
+416,unhappy peasant,25,unarmoured_humanoids,Low,False,26,26,26,2,2,26,5,0,
+417,happy peasant,25,unarmoured_humanoids,Low,False,26,26,26,2,2,26,5,0,
+420,carnillean guard,28,armoured_humanoids,Low,False,30,30,30,9,6,30,6,0,
+421,Tribesman,39,unarmoured_humanoids,Mid Low,False,39,39,39,9,3,39,15,0,
+425,cult member,20,unarmoured_humanoids,Low,False,20,20,2,2,20,20,4,0,
+426,Lord hazeel,100,corporeal_undead,High,False,80,80,40,32,80,80,56,56,Vampire mapped to corporeal undead for this defense draft.
+428,Khazard commander,41,armoured_humanoids,Mid Low,False,50,50,50,12,5,50,20,0,
+438,Citizen,11,unarmoured_humanoids,Low,False,11,11,11,1,1,11,1,0,
+439,Citizen,10,unarmoured_humanoids,Low,False,10,10,10,1,1,10,1,0,
+440,Citizen,12,unarmoured_humanoids,Low,False,10,10,10,1,1,10,1,0,
+441,Citizen,20,unarmoured_humanoids,Low,False,20,20,20,2,2,20,4,0,
+442,Citizen,15,unarmoured_humanoids,Low,False,12,12,12,1,1,12,1,0,
+462,Platform Fisherman,30,unarmoured_humanoids,Low,False,60,60,60,6,6,60,15,0,
+463,Platform Fisherman,30,unarmoured_humanoids,Low,False,60,60,60,6,6,60,15,0,
+464,Platform Fisherman,30,unarmoured_humanoids,Low,False,60,60,60,6,6,60,15,0,
+473,Rat,7,beasts,Low,False,2,2,0,2,0,2,0,0,
+477,King Black Dragon,245,dragons,Boss,True,240,240,240,180,240,240,240,240,Confirmed boss; full original Defense in all three styles.
+495,Mourner,22,armoured_humanoids,Low,False,20,20,20,2,2,20,4,0,
+498,skeleton mage,21,skeletons,Low,False,20,20,5,20,10,0,4,20,"Skeleton mage: Magic primary, Ranged secondary."
+502,Mourner,25,armoured_humanoids,Low,False,20,20,20,2,2,20,4,0,
+516,target practice zombie,24,corporeal_undead,Low,False,28,28,28,14,14,28,4,4,
+518,Colonel Radick,51,armoured_humanoids,Mid Low,False,70,70,70,7,7,70,28,0,
+519,Soldier,28,armoured_humanoids,Low,False,30,30,30,7,3,30,6,0,
+521,Jungle Spider,47,insects_arachnids,Mid Low,False,46,46,11,46,4,18,46,0,
+523,Jogre,58,giants_ogres,Mid,False,33,33,33,24,8,33,6,19,
+525,Ogre,58,giants_ogres,Mid,False,33,33,33,24,8,33,6,19,
+531,Ogre chieftan,78,giants_ogres,Mid High,False,53,53,53,39,13,53,18,42,
+542,UndeadOne,62,corporeal_undead,Mid,False,59,59,17,11,59,59,23,23,
+550,charlie,0,unarmoured_humanoids,Low,False,0,0,0,0,0,0,0,0,Level-0 Charlie: all-zero source stats; encounter/unused-role review required.
+551,Gnome guard,31,armoured_humanoids,Low,False,31,31,3,15,31,31,7,0,
+555,Chaos Druid warrior,44,armoured_humanoids,Mid Low,False,42,42,4,4,42,42,16,0,
+557,Shipyard worker,44,armoured_humanoids,Mid Low,False,42,42,42,4,4,42,16,0,
+558,Shipyard worker,44,armoured_humanoids,Mid Low,False,42,42,42,4,4,42,16,0,
+559,Shipyard worker,44,armoured_humanoids,Mid Low,False,42,42,42,4,4,42,16,0,
+562,Gnome guard,23,armoured_humanoids,Low,False,23,23,2,11,23,23,4,0,
+567,Salarin the twisted,69,casters,Mid High,False,72,72,21,14,72,25,57,72,
+568,Black Demon,175,demons,Very High,False,168,168,126,84,168,159,126,168,
+574,Yanille Watchman,33,armoured_humanoids,Mid Low,False,30,30,30,3,3,30,12,0,
+582,Gnome guard,27,armoured_humanoids,Low,False,31,31,3,15,31,31,6,0,
+583,Gnome child,3,unarmoured_humanoids,Low,False,3,3,0,1,3,3,0,0,
+584,Earth warrior,52,elemental_warriors,Mid Low,False,51,51,25,25,51,51,0,20,Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review.
+585,Gnome child,3,unarmoured_humanoids,Low,False,3,3,0,1,3,3,0,0,
+586,Gnome child,3,unarmoured_humanoids,Low,False,3,3,0,1,3,3,0,0,
+592,Gnome local,9,unarmoured_humanoids,Low,False,9,9,0,4,9,9,0,0,
+593,Gnome local,3,unarmoured_humanoids,Low,False,3,3,0,1,3,3,0,0,
+594,Moss Giant,62,giants_ogres,Mid,False,61,61,61,15,15,61,12,36,
+595,Gnome Baller,70,unarmoured_humanoids,Mid High,False,70,70,7,35,70,70,56,24,Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions.
+597,Gnome Baller,70,unarmoured_humanoids,Mid High,False,70,70,7,35,70,70,56,24,Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions.
+598,Gnome Baller,70,unarmoured_humanoids,Mid High,False,70,70,7,35,70,70,56,24,Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions.
+599,Gnome Baller,70,unarmoured_humanoids,Mid High,False,70,70,7,35,70,70,56,24,Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions.
+600,Gnome Baller,70,unarmoured_humanoids,Mid High,False,70,70,7,35,70,70,56,24,Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions.
+602,Gnome Baller,70,unarmoured_humanoids,Mid High,False,70,70,7,35,70,70,56,24,Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions.
+603,Gnome Baller,70,unarmoured_humanoids,Mid High,False,70,70,7,35,70,70,56,24,Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions.
+604,Gnome Baller,70,unarmoured_humanoids,Mid High,False,70,70,7,35,70,70,56,24,Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions.
+605,Gnome Baller,70,unarmoured_humanoids,Mid High,False,70,70,7,35,70,70,56,24,Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions.
+606,Gnome Baller,70,unarmoured_humanoids,Mid High,False,70,70,7,35,70,70,56,24,Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions.
+607,Gnome Baller,70,unarmoured_humanoids,Mid High,False,70,70,7,35,70,70,56,24,Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions.
+608,Gnome Baller,70,unarmoured_humanoids,Mid High,False,70,70,7,35,70,70,56,24,Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions.
+613,Nazastarool Zombie,83,corporeal_undead,Mid High,False,70,70,70,35,35,70,38,38,
+614,Nazastarool Skeleton,83,skeletons,Mid High,False,70,70,17,70,35,24,70,56,
+615,Nazastarool Ghost,83,spirits,Mid High,False,70,70,35,70,17,70,24,56,Melee selected provisionally as physical primary; owner has only settled Magic secondary.
+630,Blessed Vermen,14,corporeal_undead,Low,False,7,7,0,7,0,7,1,1,Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review.
+631,Blessed Spider,35,insects_arachnids,Mid Low,False,31,31,7,31,3,0,31,12,"Magical spider variant: Magic secondary, Melee weakest."
+632,Paladin,71,armoured_humanoids,Mid High,False,55,55,55,5,5,55,44,19,
+633,Paladin,71,armoured_humanoids,Mid High,False,55,55,55,5,5,55,44,19,
+634,slave,16,unarmoured_humanoids,Low,False,15,15,15,1,1,15,1,0,
+635,slave,16,unarmoured_humanoids,Low,False,15,15,15,1,1,15,1,0,
+636,slave,16,unarmoured_humanoids,Low,False,15,15,15,1,1,15,1,0,
+637,slave,16,unarmoured_humanoids,Low,False,15,15,15,1,1,15,1,0,
+638,slave,16,unarmoured_humanoids,Low,False,15,15,15,1,1,15,1,0,
+639,slave,16,unarmoured_humanoids,Low,False,15,15,15,1,1,15,1,0,
+640,slave,16,unarmoured_humanoids,Low,False,15,15,15,1,1,15,1,0,
+641,Kalrag,78,insects_arachnids,Mid High,False,69,69,27,69,69,55,69,24,
+644,Souless,16,corporeal_undead,Low,False,15,15,7,15,3,15,2,2,Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review.
+645,Othainian,78,demons,Mid High,False,78,78,39,31,78,62,27,78,
+646,Doomion,98,demons,High,False,98,98,49,39,98,88,49,98,
+647,Holthion,78,demons,Mid High,False,78,78,39,31,78,62,27,78,
+651,Goblin guard,48,goblinoids,Mid Low,False,51,51,51,25,5,51,20,0,
+653,Ugthanki,45,beasts,Mid Low,False,45,45,45,4,4,45,18,0,
+655,Souless,24,corporeal_undead,Low,False,28,28,14,28,7,28,4,4,Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review.
+656,Dungeon spider,22,insects_arachnids,Low,False,20,20,5,20,2,4,20,0,
+658,Iban disciple,19,casters,Low,False,22,22,2,2,22,0,2,22,
+660,Goblin,19,goblinoids,Low,False,20,20,20,10,2,20,2,0,
+663,San Tojalon,120,spirits,High,False,120,120,48,120,120,120,60,108,Melee selected provisionally as physical primary; owner has only settled Magic secondary.
+664,Ghost,29,spirits,Low,False,33,33,16,33,8,33,0,6,Melee selected provisionally as physical primary; owner has only settled Magic secondary.
+668,Mercenary,50,armoured_humanoids,Mid Low,False,60,60,60,15,6,60,24,0,
+669,Mercenary Captain,64,armoured_humanoids,Mid,False,80,80,80,20,8,80,48,16,
+670,Mercenary,39,armoured_humanoids,Mid Low,False,30,30,30,7,3,30,12,0,
+671,Mining Slave,16,unarmoured_humanoids,Low,False,15,15,15,1,1,15,1,0,
+683,Gorad,78,giants_ogres,Mid High,False,53,53,21,53,53,53,18,42,
+684,Ogre guard,96,giants_ogres,High,False,99,99,99,74,24,99,49,89,
+690,Mercenary,39,armoured_humanoids,Mid Low,False,30,30,30,7,3,30,12,0,
+692,Mercenary,39,armoured_humanoids,Mid Low,False,30,30,30,7,3,30,12,0,
+694,Dwarf,18,armoured_humanoids,Low,False,17,17,17,8,1,17,1,0,
+697,Ogre guard,78,giants_ogres,Mid High,False,53,53,53,39,13,53,18,42,
+699,Dwarf,18,armoured_humanoids,Low,False,17,17,17,8,1,17,1,0,
+702,Captain Siad,48,armoured_humanoids,Mid Low,False,48,48,48,12,4,48,19,0,
+703,Bedabin Nomad Guard,70,armoured_humanoids,Mid High,False,70,70,70,17,7,70,56,24,
+704,Ogre citizen,58,giants_ogres,Mid,False,33,33,33,24,8,33,6,19,
+705,Rock of ages,150,constructs,Very High,False,150,150,150,150,75,142,150,112,"Stone construct: Ranged primary, Melee secondary; material-specific proposal."
+706,Ogre,58,giants_ogres,Mid,False,33,33,33,24,8,33,6,19,
+710,Draft Mercenary Guard,50,armoured_humanoids,Mid Low,False,60,60,60,15,6,60,24,0,
+713,kolodion,12,casters,Low,False,15,15,4,3,15,0,1,15,
+716,Rowdy Guard,50,armoured_humanoids,Mid Low,False,60,60,60,15,6,60,24,0,
+717,Shantay Pass Guard,32,armoured_humanoids,Mid Low,False,32,32,32,8,3,32,12,0,
+718,Rowdy Slave,16,unarmoured_humanoids,Low,False,15,15,15,1,1,15,1,0,
+721,Desert Wolf,31,beasts,Low,False,32,32,32,16,3,32,8,0,
+729,civillian,18,unarmoured_humanoids,Low,False,17,17,17,1,1,17,1,0,
+757,kolodion,65,giants_ogres,Mid High,False,55,55,22,55,55,55,19,44,Kolodion quest form: family follows its individual body; phase/attack mechanics remain unchanged.
+758,kolodion,68,insects_arachnids,Mid High,False,69,69,27,69,69,24,69,55,"Magical spider variant: Magic secondary, Melee weakest. Kolodion quest form: family follows its individual body; phase/attack mechanics remain unchanged."
+759,kolodion,46,spirits,Mid Low,False,88,88,88,26,88,88,0,35,Kolodion quest form: family follows its individual body; phase/attack mechanics remain unchanged. Melee selected provisionally as physical primary; owner has only settled Magic secondary.
+760,kolodion,98,demons,High,False,85,85,85,34,85,76,42,85,Kolodion quest form: family follows its individual body; phase/attack mechanics remain unchanged.
+761,Irvig Senay,125,spirits,High,False,125,125,125,125,50,125,62,112,Melee selected provisionally as physical primary; owner has only settled Magic secondary.
+762,Ranalph Devere,130,spirits,High,False,130,130,130,130,52,130,65,117,Melee selected provisionally as physical primary; owner has only settled Magic secondary.
+766,Ungadulu,75,casters,Mid High,False,75,75,30,75,75,26,60,75,
+767,Ungadulu,75,casters,Mid High,False,75,75,30,75,75,26,60,75,Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review.
+768,Death Wing,80,flying,Mid High,False,80,80,80,60,80,28,80,64,
+769,Nezikchened,172,demons,Very High,False,177,177,177,177,70,168,132,177,
+772,Viyeldi,80,casters,Mid High,False,80,80,32,80,40,28,64,80,
+775,Karamja Wolf,61,beasts,Mid,False,61,61,61,30,6,61,36,12,
+776,Jungle Savage,87,armoured_humanoids,Mid High,False,60,60,60,15,6,60,48,21,
+777,Oomlie Bird,32,flying,Mid Low,False,20,20,20,2,2,0,20,8,
+786,Pit Scorpion,35,insects_arachnids,Mid Low,False,30,30,7,30,3,12,30,0,
+787,Shadow Warrior,64,spirits,Mid,False,68,68,34,34,68,68,13,40,Melee selected provisionally as physical primary; owner has only settled Magic secondary.
+789,Battle mage,52,casters,Mid Low,False,90,90,9,9,90,0,36,90,
+790,Battle mage,52,casters,Mid Low,False,90,90,9,9,90,0,36,90,
+791,Battle mage,52,casters,Mid Low,False,90,90,9,9,90,0,36,90,
+798,Gaia,79,casters,Mid High,False,80,80,40,40,80,28,64,80,
+802,Greatwood,300,living_plants,Very High,False,300,300,300,300,300,225,300,285,
+809,Balrog,217,demons,Boss,True,80,80,60,40,80,80,80,80,Confirmed boss; full original Defense in all three styles.
+816,PK Bot,57,armoured_humanoids,Mid,False,1,1,1,0,0,1,0,0,PK bot: role/owner review before applying an NPC-only migration.
+836,Grey Knight,56,armoured_humanoids,Mid,False,60,60,60,6,6,60,36,12,
+843,Fire warrior,61,elemental_warriors,Mid,False,58,58,58,14,5,58,11,34,Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review.
+844,Elder Green Dragon,275,dragons,Boss,True,265,265,265,210,265,265,265,265,Confirmed boss; full original Defense in all three styles.
+862,Green Dragon,110,dragons,High,False,110,110,110,82,110,99,82,110,
+863,Giant frog,20,reptiles_amphibians,Low,False,1,35,10,20,35,0,7,35,Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor.
+864,Cockatrice,35,magical_birds,Mid Low,False,1,40,35,40,30,0,16,40,Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor.
+865,Banshee,50,spirits,Mid Low,False,1,40,40,40,40,40,0,16,Melee selected provisionally as physical primary; owner has only settled Magic secondary. Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor.
+866,Naga,60,reptiles_amphibians,Mid,False,1,95,20,65,95,19,57,95,Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor.
+867,Terror dog,75,beasts,Mid High,False,1,55,55,55,55,55,44,19,Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor.
+868,Bloodveld,85,beasts,Mid High,False,1,30,30,30,30,30,24,10,Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor.
+869,Dark beast,105,magical_beasts,High,False,1,120,120,100,120,108,60,120,Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor.
+870,Abyssal demon,125,demons,High,False,1,220,110,220,220,198,110,220,Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor.
+877,Sapphire Dragon,97,dragons,High,False,100,100,125,93,100,90,75,100,Historical above-100% conversion; draft uses original Defense anchor and redistributes strengths. Review deliberate delta.
+878,Emerald Dragon,118,dragons,High,False,123,123,153,115,123,110,92,123,Historical above-100% conversion; draft uses original Defense anchor and redistributes strengths. Review deliberate delta.
+879,Ruby Dragon,142,dragons,Very High,False,148,148,185,138,148,140,133,148,Historical above-100% conversion; draft uses original Defense anchor and redistributes strengths. Review deliberate delta.
+880,Diamond Dragon,166,dragons,Very High,False,173,173,216,162,173,164,155,173,Historical above-100% conversion; draft uses original Defense anchor and redistributes strengths. Review deliberate delta.
+881,Dragonstone Dragon,192,dragons,Very High,False,198,198,247,185,198,188,178,198,Historical above-100% conversion; draft uses original Defense anchor and redistributes strengths. Review deliberate delta.
+882,Stirge,55,insects_arachnids,Mid,False,50,80,50,80,50,48,80,16,Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor.

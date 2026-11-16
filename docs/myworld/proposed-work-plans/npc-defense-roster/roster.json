@@ -1,0 +1,7037 @@
+{
+  "schemaVersion": 1,
+  "status": "Assigned defense draft; no runtime consumer or gameplay migration",
+  "sourceCommit": "6803a28043d5c62c9295cc842b4b3249560f56ec",
+  "inventorySourceCommit": "92306a7b093d6e42edae87c8398e42f50b037ccb",
+  "definitionHashes": {
+    "server/conf/server/defs/GemDragonNpcDefs.json": "0df44eb5ac0985b42fbc1762930c2fa21fe3e6dc9d11e5eb1482a99a10e4e72b",
+    "server/conf/server/defs/MonsterSlayerNpcDefs.json": "5e7e6e276d46d37e9572679518740d431f034e209f8bb64411bd58d53883c213",
+    "server/conf/server/defs/MonsterSlayerTowerNpcDefs.json": "93af568535e0c2a8735d018432b88c1bb0b2c45b4ede8c3d26d00374bb09f73b",
+    "server/conf/server/defs/MyWorldNpcDefs.json": "480808a928c8f8d6025ce1ba9db5e0094ee563079bd7ad710a0207f303fe017b",
+    "server/conf/server/defs/NpcDefs.json": "c9028ecb7307e1e508e80ba0f6f3c145554d7c729c24a5bc49ff0de2900f62f4",
+    "server/conf/server/defs/NpcDefsCustom.json": "cff22b7a478b0b6c9a9ee56e0eecdc14bac65ef4197d03786f3e0ce139167438",
+    "server/conf/server/defs/NpcDefsMyWorld.json": "d98afd6e4bf06ae7ccf33446ec4d587e1fe454a8a395a2b7791460c7d5065c2c",
+    "server/conf/server/defs/SlayerMovementPreviewNpcDefs.json": "4f2041e539b1c7d20a887da0a877cf8b41029aef0fc46f295a72e04f9d0cebf1",
+    "server/conf/server/defs/StirgeNpcDefs.json": "cf5630a002febb2d187f8ebf629a43c9e2cd09cfedf46f6739a4eb386af4a2eb",
+    "server/conf/server/defs/VisualTestNpcDefs.json": "d69a800599117d5ac40463501c972cc82fcfcdd21ba7333c0e9629a8d505e3e4",
+    "server/conf/server/defs/locs/MyWorldNpcLocs.json": "de18c7f5c0bde5aa9e6d77639082b85077b1e4dd54f6ed5ec54b95f6ac694e4b",
+    "server/conf/server/defs/locs/MyWorldNpcRemovals.json": "c13fdab3e3d04ea85e2b88393fcea56b9a8cd542110d1442267a18fe50f25183",
+    "server/conf/server/defs/locs/NpcLocs.json": "76341de559f1804ccd1965cae8b6eceeb2305e11ddcb603b25fbef57a66f9c6b"
+  },
+  "bandSource": "MonsterSlayer.json mandatory contact roster maxima excluding bosses; contiguous extensions are authoring recommendations, not existing runtime thresholds",
+  "ordinaryBands": [
+    {
+      "name": "Low",
+      "minLevel": 0,
+      "maxLevel": 31
+    },
+    {
+      "name": "Mid Low",
+      "minLevel": 32,
+      "maxLevel": 53
+    },
+    {
+      "name": "Mid",
+      "minLevel": 54,
+      "maxLevel": 64
+    },
+    {
+      "name": "Mid High",
+      "minLevel": 65,
+      "maxLevel": 87
+    },
+    {
+      "name": "High",
+      "minLevel": 88,
+      "maxLevel": 140
+    },
+    {
+      "name": "Very High",
+      "minLevel": 141,
+      "maxLevel": null
+    }
+  ],
+  "npcs": [
+    {
+      "id": 0,
+      "name": "Unicorn",
+      "level": 21,
+      "family": "beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 23,
+      "anchorDefense": 23,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 11,
+        "ranged": 2,
+        "magic": 23
+      },
+      "assignedDefense": {
+        "melee": 23,
+        "ranged": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 3,
+      "name": "Chicken",
+      "level": 3,
+      "family": "flying",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 4,
+      "anchorDefense": 4,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 4,
+        "ranged": 0,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "ranged": 4,
+        "magic": 0,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 4,
+      "name": "Tough Goblin",
+      "level": 13,
+      "family": "goblinoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 14,
+      "anchorDefense": 14,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 14,
+        "ranged": 7,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 14,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 5,
+      "name": "Hans",
+      "level": 3,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 3,
+      "anchorDefense": 3,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 6,
+      "name": "cow",
+      "level": 8,
+      "family": "beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 8,
+      "anchorDefense": 8,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 8,
+        "ranged": 0,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 8,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 8,
+      "name": "Bear",
+      "level": 24,
+      "family": "beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 23,
+      "anchorDefense": 23,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 23,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 23,
+        "ranged": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 11,
+      "name": "Man",
+      "level": 9,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 8,
+      "anchorDefense": 8,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 8,
+        "ranged": 0,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 8,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 19,
+      "name": "Rat",
+      "level": 8,
+      "family": "beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 10,
+      "anchorDefense": 10,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 1,
+        "ranged": 10,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 10,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 21,
+      "name": "mugger",
+      "level": 10,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 10,
+      "anchorDefense": 10,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 10,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 10,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 22,
+      "name": "Lesser Demon",
+      "level": 79,
+      "family": "demons",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 79,
+      "anchorDefense": 79,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 59,
+        "ranged": 39,
+        "magic": 79
+      },
+      "assignedDefense": {
+        "magic": 79,
+        "melee": 63,
+        "ranged": 27
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 23,
+      "name": "Young Giant Spider",
+      "level": 8,
+      "family": "insects_arachnids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 10,
+      "anchorDefense": 10,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 2,
+        "ranged": 10,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "ranged": 10,
+        "melee": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 25,
+      "name": "Jonny the beard",
+      "level": 10,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 20,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 20,
+        "ranged": 2,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 29,
+      "name": "Rat",
+      "level": 2,
+      "family": "beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 4,
+      "anchorDefense": 4,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 0,
+        "ranged": 4,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 4,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 34,
+      "name": "spider",
+      "level": 2,
+      "family": "insects_arachnids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 2,
+      "anchorDefense": 2,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 0,
+        "ranged": 2,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "ranged": 2,
+        "melee": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 35,
+      "name": "Delrith",
+      "level": 30,
+      "family": "demons",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 35,
+      "anchorDefense": 35,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 10,
+        "ranged": 7,
+        "magic": 35
+      },
+      "assignedDefense": {
+        "magic": 35,
+        "melee": 8,
+        "ranged": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 37,
+      "name": "Weaponsmaster",
+      "level": 25,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 20,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 20,
+        "ranged": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 40,
+      "name": "skeleton",
+      "level": 21,
+      "family": "skeletons",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 5,
+        "ranged": 20,
+        "magic": 10
+      },
+      "assignedDefense": {
+        "ranged": 20,
+        "magic": 4,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 41,
+      "name": "zombie",
+      "level": 24,
+      "family": "corporeal_undead",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 28,
+      "anchorDefense": 28,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 28,
+        "ranged": 14,
+        "magic": 14
+      },
+      "assignedDefense": {
+        "melee": 28,
+        "ranged": 4,
+        "magic": 4
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 43,
+      "name": "Giant bat",
+      "level": 32,
+      "family": "flying",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 32,
+      "anchorDefense": 32,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 3,
+        "ranged": 32,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "ranged": 32,
+        "magic": 12,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 45,
+      "name": "skeleton",
+      "level": 31,
+      "family": "skeletons",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 30,
+        "magic": 15
+      },
+      "assignedDefense": {
+        "ranged": 30,
+        "magic": 7,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 46,
+      "name": "skeleton",
+      "level": 25,
+      "family": "skeletons",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 24,
+      "anchorDefense": 24,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 6,
+        "ranged": 24,
+        "magic": 12
+      },
+      "assignedDefense": {
+        "ranged": 24,
+        "magic": 4,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 47,
+      "name": "Large Rat",
+      "level": 13,
+      "family": "beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 12,
+      "anchorDefense": 12,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 1,
+        "ranged": 12,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 12,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 50,
+      "name": "skeleton",
+      "level": 19,
+      "family": "skeletons",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 18,
+      "anchorDefense": 18,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 4,
+        "ranged": 18,
+        "magic": 9
+      },
+      "assignedDefense": {
+        "ranged": 18,
+        "magic": 1,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 52,
+      "name": "zombie",
+      "level": 19,
+      "family": "corporeal_undead",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 20,
+        "ranged": 10,
+        "magic": 10
+      },
+      "assignedDefense": {
+        "melee": 20,
+        "ranged": 3,
+        "magic": 3
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 53,
+      "name": "Ghost",
+      "level": 25,
+      "family": "spirits",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 30,
+        "magic": 7
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "magic": 6,
+        "ranged": 0
+      },
+      "notes": [
+        "Melee selected provisionally as physical primary; owner has only settled Magic secondary."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 57,
+      "name": "Darkwizard",
+      "level": 13,
+      "family": "casters",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 1,
+        "ranged": 1,
+        "magic": 15
+      },
+      "assignedDefense": {
+        "magic": 15,
+        "ranged": 1,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 60,
+      "name": "Darkwizard",
+      "level": 25,
+      "family": "casters",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 24,
+      "anchorDefense": 24,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 2,
+        "ranged": 2,
+        "magic": 24
+      },
+      "assignedDefense": {
+        "magic": 24,
+        "ranged": 4,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 61,
+      "name": "Giant",
+      "level": 37,
+      "family": "giants_ogres",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 36,
+      "anchorDefense": 36,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 36,
+        "ranged": 9,
+        "magic": 9
+      },
+      "assignedDefense": {
+        "melee": 36,
+        "magic": 14,
+        "ranged": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 62,
+      "name": "Goblin",
+      "level": 7,
+      "family": "goblinoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 9,
+      "anchorDefense": 9,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 9,
+        "ranged": 4,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 9,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 63,
+      "name": "farmer",
+      "level": 15,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 16,
+      "anchorDefense": 16,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 16,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 16,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 64,
+      "name": "Thief",
+      "level": 21,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 22,
+      "anchorDefense": 22,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 22,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 22,
+        "ranged": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 65,
+      "name": "Guard",
+      "level": 28,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 30,
+        "ranged": 3,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "ranged": 6,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 66,
+      "name": "Black Knight",
+      "level": 46,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 50,
+      "anchorDefense": 50,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 50,
+        "ranged": 5,
+        "magic": 5
+      },
+      "assignedDefense": {
+        "melee": 50,
+        "ranged": 20,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 67,
+      "name": "Hobgoblin",
+      "level": 32,
+      "family": "goblinoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 34,
+      "anchorDefense": 34,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 34,
+        "ranged": 17,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 34,
+        "ranged": 13,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 68,
+      "name": "zombie",
+      "level": 32,
+      "family": "corporeal_undead",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 31,
+      "anchorDefense": 31,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 31,
+        "ranged": 15,
+        "magic": 15
+      },
+      "assignedDefense": {
+        "melee": 31,
+        "ranged": 9,
+        "magic": 9
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 70,
+      "name": "Scorpion",
+      "level": 21,
+      "family": "insects_arachnids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 24,
+      "anchorDefense": 24,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 6,
+        "ranged": 24,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "ranged": 24,
+        "melee": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 72,
+      "name": "Man",
+      "level": 9,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 8,
+      "anchorDefense": 8,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 8,
+        "ranged": 0,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 8,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 74,
+      "name": "Giant Spider",
+      "level": 31,
+      "family": "insects_arachnids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 31,
+      "anchorDefense": 31,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 31,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "ranged": 31,
+        "melee": 7,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 76,
+      "name": "Barbarian",
+      "level": 16,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 78,
+      "name": "Gunthor the Brave",
+      "level": 37,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 40,
+      "anchorDefense": 40,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 40,
+        "ranged": 4,
+        "magic": 4
+      },
+      "assignedDefense": {
+        "melee": 40,
+        "ranged": 16,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 79,
+      "name": "Witch",
+      "level": 25,
+      "family": "casters",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 25,
+      "anchorDefense": 25,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 2,
+        "ranged": 2,
+        "magic": 25
+      },
+      "assignedDefense": {
+        "magic": 25,
+        "ranged": 5,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 80,
+      "name": "Ghost",
+      "level": 25,
+      "family": "spirits",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 30,
+        "magic": 7
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "magic": 6,
+        "ranged": 0
+      },
+      "notes": [
+        "Melee selected provisionally as physical primary; owner has only settled Magic secondary."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 81,
+      "name": "Wizard",
+      "level": 16,
+      "family": "casters",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 1,
+        "ranged": 1,
+        "magic": 15
+      },
+      "assignedDefense": {
+        "magic": 15,
+        "ranged": 1,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 86,
+      "name": "Warrior",
+      "level": 18,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 17,
+      "anchorDefense": 17,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 17,
+        "ranged": 4,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 17,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 89,
+      "name": "Highwayman",
+      "level": 13,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 93,
+      "name": "Monk",
+      "level": 13,
+      "family": "casters",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 13,
+      "anchorDefense": 13,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 1,
+        "ranged": 1,
+        "magic": 13
+      },
+      "assignedDefense": {
+        "magic": 13,
+        "ranged": 1,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 94,
+      "name": "Dwarf",
+      "level": 18,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 17,
+      "anchorDefense": 17,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 17,
+        "ranged": 8,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 17,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 96,
+      "name": "Count Draynor",
+      "level": 43,
+      "family": "corporeal_undead",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 65,
+      "anchorDefense": 65,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 32,
+        "ranged": 26,
+        "magic": 65
+      },
+      "assignedDefense": {
+        "melee": 65,
+        "ranged": 19,
+        "magic": 19
+      },
+      "notes": [
+        "Vampire mapped to corporeal undead for this defense draft."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 99,
+      "name": "Deadly Red spider",
+      "level": 36,
+      "family": "insects_arachnids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 36,
+      "anchorDefense": 36,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 9,
+        "ranged": 36,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "ranged": 36,
+        "melee": 14,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 100,
+      "name": "Guard",
+      "level": 28,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 30,
+        "ranged": 3,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "ranged": 6,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 102,
+      "name": "White Knight",
+      "level": 56,
+      "family": "armoured_humanoids",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 60,
+      "anchorDefense": 60,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 60,
+        "ranged": 6,
+        "magic": 6
+      },
+      "assignedDefense": {
+        "melee": 60,
+        "ranged": 36,
+        "magic": 12
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 104,
+      "name": "Moss Giant",
+      "level": 62,
+      "family": "giants_ogres",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 61,
+      "anchorDefense": 61,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 61,
+        "ranged": 15,
+        "magic": 15
+      },
+      "assignedDefense": {
+        "melee": 61,
+        "magic": 36,
+        "ranged": 12
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 108,
+      "name": "Black Knight",
+      "level": 46,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 50,
+      "anchorDefense": 50,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 50,
+        "ranged": 5,
+        "magic": 5
+      },
+      "assignedDefense": {
+        "melee": 50,
+        "ranged": 20,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 109,
+      "name": "Greldo",
+      "level": 7,
+      "family": "goblinoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 9,
+      "anchorDefense": 9,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 9,
+        "ranged": 0,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 9,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 114,
+      "name": "Imp",
+      "level": 5,
+      "family": "demons",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 4,
+      "anchorDefense": 4,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 4,
+        "ranged": 2,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "magic": 4,
+        "melee": 0,
+        "ranged": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 127,
+      "name": "Jailguard",
+      "level": 34,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 34,
+      "anchorDefense": 34,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 34,
+        "ranged": 3,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 34,
+        "ranged": 13,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 135,
+      "name": "Ice Giant",
+      "level": 68,
+      "family": "giants_ogres",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 66,
+      "anchorDefense": 66,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 66,
+        "ranged": 16,
+        "magic": 16
+      },
+      "assignedDefense": {
+        "melee": 66,
+        "magic": 52,
+        "ranged": 23
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 136,
+      "name": "King Scorpion",
+      "level": 36,
+      "family": "insects_arachnids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 38,
+      "anchorDefense": 38,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 9,
+        "ranged": 38,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "ranged": 38,
+        "melee": 15,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 137,
+      "name": "Pirate",
+      "level": 27,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 25,
+      "anchorDefense": 25,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 25,
+        "ranged": 6,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 25,
+        "ranged": 5,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 139,
+      "name": "Monk of Zamorak",
+      "level": 29,
+      "family": "casters",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 32,
+      "anchorDefense": 32,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 3,
+        "ranged": 3,
+        "magic": 32
+      },
+      "assignedDefense": {
+        "magic": 32,
+        "ranged": 6,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 140,
+      "name": "Monk of Zamorak",
+      "level": 19,
+      "family": "casters",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 22,
+      "anchorDefense": 22,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 2,
+        "ranged": 2,
+        "magic": 22
+      },
+      "assignedDefense": {
+        "magic": 22,
+        "ranged": 2,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 153,
+      "name": "Tough Goblin",
+      "level": 13,
+      "family": "goblinoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 14,
+      "anchorDefense": 14,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 14,
+        "ranged": 7,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 14,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 154,
+      "name": "Tough Goblin",
+      "level": 13,
+      "family": "goblinoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 14,
+      "anchorDefense": 14,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 14,
+        "ranged": 7,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 14,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 158,
+      "name": "Ice warrior",
+      "level": 57,
+      "family": "elemental_warriors",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 56,
+      "anchorDefense": 56,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 28,
+        "ranged": 28,
+        "magic": 56
+      },
+      "assignedDefense": {
+        "melee": 56,
+        "magic": 33,
+        "ranged": 11
+      },
+      "notes": [
+        "Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 159,
+      "name": "Warrior",
+      "level": 27,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 25,
+      "anchorDefense": 25,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 25,
+        "ranged": 6,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 25,
+        "ranged": 5,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 177,
+      "name": "Large Rat",
+      "level": 13,
+      "family": "beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 12,
+      "anchorDefense": 12,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 1,
+        "ranged": 12,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 12,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 178,
+      "name": "Ghost",
+      "level": 25,
+      "family": "spirits",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 30,
+        "magic": 7
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "magic": 6,
+        "ranged": 0
+      },
+      "notes": [
+        "Melee selected provisionally as physical primary; owner has only settled Magic secondary."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 179,
+      "name": "skeleton",
+      "level": 31,
+      "family": "skeletons",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 30,
+        "magic": 15
+      },
+      "assignedDefense": {
+        "ranged": 30,
+        "magic": 7,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 180,
+      "name": "zombie",
+      "level": 32,
+      "family": "corporeal_undead",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 31,
+      "anchorDefense": 31,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 31,
+        "ranged": 15,
+        "magic": 15
+      },
+      "assignedDefense": {
+        "melee": 31,
+        "ranged": 9,
+        "magic": 9
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 181,
+      "name": "Lesser Demon",
+      "level": 79,
+      "family": "demons",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 79,
+      "anchorDefense": 79,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 59,
+        "ranged": 39,
+        "magic": 79
+      },
+      "assignedDefense": {
+        "magic": 79,
+        "melee": 63,
+        "ranged": 27
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 182,
+      "name": "Melzar the mad",
+      "level": 45,
+      "family": "casters",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 44,
+      "anchorDefense": 44,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 13,
+        "ranged": 8,
+        "magic": 44
+      },
+      "assignedDefense": {
+        "magic": 44,
+        "ranged": 17,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 184,
+      "name": "Greater Demon",
+      "level": 87,
+      "family": "demons",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 87,
+      "anchorDefense": 87,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 65,
+        "ranged": 43,
+        "magic": 87
+      },
+      "assignedDefense": {
+        "magic": 87,
+        "melee": 69,
+        "ranged": 30
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 188,
+      "name": "Bear",
+      "level": 26,
+      "family": "beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 25,
+      "anchorDefense": 25,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 25,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 25,
+        "ranged": 5,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 189,
+      "name": "Black Knight",
+      "level": 46,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 50,
+      "anchorDefense": 50,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 50,
+        "ranged": 5,
+        "magic": 5
+      },
+      "assignedDefense": {
+        "melee": 50,
+        "ranged": 20,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 190,
+      "name": "chaos Dwarf",
+      "level": 59,
+      "family": "armoured_humanoids",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 59,
+      "anchorDefense": 59,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 59,
+        "ranged": 29,
+        "magic": 29
+      },
+      "assignedDefense": {
+        "melee": 59,
+        "ranged": 35,
+        "magic": 11
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 192,
+      "name": "Wormbrain",
+      "level": 7,
+      "family": "goblinoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 9,
+      "anchorDefense": 9,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 9,
+        "ranged": 0,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 9,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 195,
+      "name": "skeleton",
+      "level": 54,
+      "family": "skeletons",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 50,
+      "anchorDefense": 50,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 12,
+        "ranged": 50,
+        "magic": 25
+      },
+      "assignedDefense": {
+        "ranged": 50,
+        "magic": 30,
+        "melee": 10
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 196,
+      "name": "Dragon",
+      "level": 110,
+      "family": "dragons",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 110,
+      "anchorDefense": 110,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 110,
+        "ranged": 55,
+        "magic": 55
+      },
+      "assignedDefense": {
+        "magic": 110,
+        "melee": 99,
+        "ranged": 82
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 199,
+      "name": "Dark Warrior",
+      "level": 21,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 25,
+      "anchorDefense": 25,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 25,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 25,
+        "ranged": 5,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 200,
+      "name": "Druid",
+      "level": 29,
+      "family": "casters",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 32,
+      "anchorDefense": 32,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 3,
+        "ranged": 3,
+        "magic": 32
+      },
+      "assignedDefense": {
+        "magic": 32,
+        "ranged": 6,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 201,
+      "name": "Red Dragon",
+      "level": 140,
+      "family": "dragons",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 140,
+      "anchorDefense": 140,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 140,
+        "ranged": 105,
+        "magic": 140
+      },
+      "assignedDefense": {
+        "magic": 140,
+        "melee": 126,
+        "ranged": 105
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 202,
+      "name": "Blue Dragon",
+      "level": 105,
+      "family": "dragons",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 105,
+      "anchorDefense": 105,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 105,
+        "ranged": 78,
+        "magic": 105
+      },
+      "assignedDefense": {
+        "magic": 105,
+        "melee": 94,
+        "ranged": 78
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 203,
+      "name": "Baby Blue Dragon",
+      "level": 50,
+      "family": "dragons",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 50,
+      "anchorDefense": 50,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 25,
+        "ranged": 25,
+        "magic": 50
+      },
+      "assignedDefense": {
+        "magic": 50,
+        "melee": 32,
+        "ranged": 20
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 214,
+      "name": "zombie",
+      "level": 32,
+      "family": "corporeal_undead",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 31,
+      "anchorDefense": 31,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 31,
+        "ranged": 15,
+        "magic": 15
+      },
+      "assignedDefense": {
+        "melee": 31,
+        "ranged": 9,
+        "magic": 9
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 216,
+      "name": "tree spirit",
+      "level": 95,
+      "family": "living_plants",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 90,
+      "anchorDefense": 90,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 67,
+        "ranged": 67,
+        "magic": 90
+      },
+      "assignedDefense": {
+        "ranged": 90,
+        "magic": 81,
+        "melee": 45
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 232,
+      "name": "Bandit",
+      "level": 29,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 33,
+      "anchorDefense": 33,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 33,
+        "ranged": 3,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 33,
+        "ranged": 6,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 234,
+      "name": "Bandit",
+      "level": 29,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 33,
+      "anchorDefense": 33,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 33,
+        "ranged": 3,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 33,
+        "ranged": 6,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 236,
+      "name": "Donny the lad",
+      "level": 39,
+      "family": "unarmoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 43,
+      "anchorDefense": 43,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 43,
+        "ranged": 12,
+        "magic": 8
+      },
+      "assignedDefense": {
+        "melee": 43,
+        "ranged": 17,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 237,
+      "name": "Black Heather",
+      "level": 39,
+      "family": "unarmoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 43,
+      "anchorDefense": 43,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 43,
+        "ranged": 12,
+        "magic": 8
+      },
+      "assignedDefense": {
+        "melee": 43,
+        "ranged": 17,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 238,
+      "name": "Speedy Keith",
+      "level": 39,
+      "family": "unarmoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 43,
+      "anchorDefense": 43,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 43,
+        "ranged": 12,
+        "magic": 8
+      },
+      "assignedDefense": {
+        "melee": 43,
+        "ranged": 17,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 239,
+      "name": "White wolf sentry",
+      "level": 31,
+      "family": "beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 32,
+      "anchorDefense": 32,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 32,
+        "ranged": 16,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 32,
+        "ranged": 8,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 243,
+      "name": "Grey wolf",
+      "level": 64,
+      "family": "beasts",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 62,
+      "anchorDefense": 62,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 62,
+        "ranged": 31,
+        "magic": 6
+      },
+      "assignedDefense": {
+        "melee": 62,
+        "ranged": 37,
+        "magic": 12
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 244,
+      "name": "shapeshifter",
+      "level": 24,
+      "family": "magical_beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 29,
+      "anchorDefense": 29,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 29,
+        "magic": 7
+      },
+      "assignedDefense": {
+        "magic": 29,
+        "melee": 5,
+        "ranged": 0
+      },
+      "notes": [
+        "Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 248,
+      "name": "White wolf",
+      "level": 41,
+      "family": "beasts",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 42,
+      "anchorDefense": 42,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 42,
+        "ranged": 21,
+        "magic": 4
+      },
+      "assignedDefense": {
+        "melee": 42,
+        "ranged": 16,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 249,
+      "name": "Pack leader",
+      "level": 71,
+      "family": "beasts",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 72,
+      "anchorDefense": 72,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 72,
+        "ranged": 36,
+        "magic": 7
+      },
+      "assignedDefense": {
+        "melee": 72,
+        "ranged": 57,
+        "magic": 25
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 251,
+      "name": "Thug",
+      "level": 18,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 20,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 20,
+        "ranged": 2,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 252,
+      "name": "Firebird",
+      "level": 6,
+      "family": "flying",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 7,
+      "anchorDefense": 7,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 0,
+        "ranged": 0,
+        "magic": 7
+      },
+      "assignedDefense": {
+        "ranged": 7,
+        "magic": 0,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 254,
+      "name": "Ice queen",
+      "level": 103,
+      "family": "casters",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 101,
+      "anchorDefense": 101,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 50,
+        "ranged": 40,
+        "magic": 101
+      },
+      "assignedDefense": {
+        "magic": 101,
+        "ranged": 90,
+        "melee": 50
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 259,
+      "name": "Grip",
+      "level": 46,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 60,
+      "anchorDefense": 60,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 60,
+        "ranged": 30,
+        "magic": 24
+      },
+      "assignedDefense": {
+        "melee": 60,
+        "ranged": 24,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 262,
+      "name": "Guard Dog",
+      "level": 46,
+      "family": "beasts",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 47,
+      "anchorDefense": 47,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 47,
+        "ranged": 23,
+        "magic": 4
+      },
+      "assignedDefense": {
+        "melee": 47,
+        "ranged": 18,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 263,
+      "name": "Ice spider",
+      "level": 64,
+      "family": "insects_arachnids",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 66,
+      "anchorDefense": 66,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 16,
+        "ranged": 66,
+        "magic": 33
+      },
+      "assignedDefense": {
+        "ranged": 66,
+        "magic": 39,
+        "melee": 13
+      },
+      "notes": [
+        "Magical spider variant: Magic secondary, Melee weakest."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 264,
+      "name": "Pirate",
+      "level": 30,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 28,
+      "anchorDefense": 28,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 28,
+        "ranged": 7,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 28,
+        "ranged": 7,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 265,
+      "name": "Jailer",
+      "level": 51,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 55,
+      "anchorDefense": 55,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 55,
+        "ranged": 13,
+        "magic": 5
+      },
+      "assignedDefense": {
+        "melee": 55,
+        "ranged": 22,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 266,
+      "name": "Lord Darquarius",
+      "level": 76,
+      "family": "armoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 80,
+      "anchorDefense": 80,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 40,
+        "ranged": 32,
+        "magic": 80
+      },
+      "assignedDefense": {
+        "melee": 80,
+        "ranged": 64,
+        "magic": 28
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 270,
+      "name": "Chaos Druid",
+      "level": 19,
+      "family": "casters",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 22,
+      "anchorDefense": 22,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 2,
+        "ranged": 2,
+        "magic": 22
+      },
+      "assignedDefense": {
+        "magic": 22,
+        "ranged": 2,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 271,
+      "name": "Poison Scorpion",
+      "level": 26,
+      "family": "insects_arachnids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 29,
+      "anchorDefense": 29,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 29,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "ranged": 29,
+        "melee": 5,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 276,
+      "name": "Sir Mordred",
+      "level": 58,
+      "family": "armoured_humanoids",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 62,
+      "anchorDefense": 62,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 62,
+        "ranged": 31,
+        "magic": 24
+      },
+      "assignedDefense": {
+        "melee": 62,
+        "ranged": 37,
+        "magic": 12
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 277,
+      "name": "Renegade knight",
+      "level": 51,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 55,
+      "anchorDefense": 55,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 55,
+        "ranged": 5,
+        "magic": 5
+      },
+      "assignedDefense": {
+        "melee": 55,
+        "ranged": 22,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 290,
+      "name": "Black Demon",
+      "level": 156,
+      "family": "demons",
+      "band": "Very High",
+      "boss": false,
+      "originalDefense": 157,
+      "anchorDefense": 157,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 117,
+        "ranged": 78,
+        "magic": 157
+      },
+      "assignedDefense": {
+        "magic": 157,
+        "melee": 149,
+        "ranged": 117
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 291,
+      "name": "Black Dragon",
+      "level": 200,
+      "family": "dragons",
+      "band": "Very High",
+      "boss": false,
+      "originalDefense": 190,
+      "anchorDefense": 190,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 190,
+        "ranged": 142,
+        "magic": 190
+      },
+      "assignedDefense": {
+        "magic": 190,
+        "melee": 180,
+        "ranged": 171
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 292,
+      "name": "Poison Spider",
+      "level": 63,
+      "family": "insects_arachnids",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 62,
+      "anchorDefense": 62,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 62,
+        "magic": 31
+      },
+      "assignedDefense": {
+        "ranged": 62,
+        "melee": 37,
+        "magic": 12
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 293,
+      "name": "Monk of Zamorak",
+      "level": 47,
+      "family": "casters",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 52,
+      "anchorDefense": 52,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 5,
+        "ranged": 5,
+        "magic": 52
+      },
+      "assignedDefense": {
+        "magic": 52,
+        "ranged": 20,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 294,
+      "name": "Hellhound",
+      "level": 114,
+      "family": "demons",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 112,
+      "anchorDefense": 112,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 112,
+        "ranged": 56,
+        "magic": 56
+      },
+      "assignedDefense": {
+        "magic": 112,
+        "melee": 100,
+        "ranged": 56
+      },
+      "notes": [
+        "Hellhound retained as demonic beast (Magic-led); distinct from ordinary Terror dog."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 295,
+      "name": "Animated axe",
+      "level": 46,
+      "family": "constructs",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 45,
+      "anchorDefense": 45,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 22,
+        "ranged": 22,
+        "magic": 45
+      },
+      "assignedDefense": {
+        "melee": 45,
+        "ranged": 18,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 296,
+      "name": "Black Unicorn",
+      "level": 31,
+      "family": "beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 33,
+      "anchorDefense": 33,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 16,
+        "ranged": 16,
+        "magic": 33
+      },
+      "assignedDefense": {
+        "melee": 33,
+        "ranged": 8,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 298,
+      "name": "Otherworldly being",
+      "level": 66,
+      "family": "spirits",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 66,
+      "anchorDefense": 66,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 49,
+        "ranged": 33,
+        "magic": 66
+      },
+      "assignedDefense": {
+        "melee": 66,
+        "magic": 52,
+        "ranged": 23
+      },
+      "notes": [
+        "Melee selected provisionally as physical primary; owner has only settled Magic secondary."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 311,
+      "name": "Hobgoblin",
+      "level": 48,
+      "family": "goblinoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 47,
+      "anchorDefense": 47,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 47,
+        "ranged": 23,
+        "magic": 4
+      },
+      "assignedDefense": {
+        "melee": 47,
+        "ranged": 18,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 312,
+      "name": "Ogre",
+      "level": 58,
+      "family": "giants_ogres",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 33,
+      "anchorDefense": 33,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 33,
+        "ranged": 24,
+        "magic": 8
+      },
+      "assignedDefense": {
+        "melee": 33,
+        "magic": 19,
+        "ranged": 6
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 315,
+      "name": "Chronozon",
+      "level": 121,
+      "family": "demons",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 60,
+      "anchorDefense": 60,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 24,
+        "ranged": 60,
+        "magic": 60
+      },
+      "assignedDefense": {
+        "magic": 60,
+        "melee": 54,
+        "ranged": 30
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 318,
+      "name": "Man",
+      "level": 9,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 8,
+      "anchorDefense": 8,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 8,
+        "ranged": 0,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 8,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 319,
+      "name": "farmer",
+      "level": 15,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 16,
+      "anchorDefense": 16,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 16,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 16,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 320,
+      "name": "Warrior",
+      "level": 27,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 25,
+      "anchorDefense": 25,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 25,
+        "ranged": 6,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 25,
+        "ranged": 5,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 321,
+      "name": "Guard",
+      "level": 28,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 30,
+        "ranged": 3,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "ranged": 6,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 322,
+      "name": "Knight",
+      "level": 56,
+      "family": "armoured_humanoids",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 60,
+      "anchorDefense": 60,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 60,
+        "ranged": 6,
+        "magic": 6
+      },
+      "assignedDefense": {
+        "melee": 60,
+        "ranged": 36,
+        "magic": 12
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 323,
+      "name": "Paladin",
+      "level": 71,
+      "family": "armoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 55,
+      "anchorDefense": 55,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 55,
+        "ranged": 5,
+        "magic": 5
+      },
+      "assignedDefense": {
+        "melee": 55,
+        "ranged": 44,
+        "magic": 19
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 324,
+      "name": "Hero",
+      "level": 83,
+      "family": "armoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 80,
+      "anchorDefense": 80,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 80,
+        "ranged": 8,
+        "magic": 8
+      },
+      "assignedDefense": {
+        "melee": 80,
+        "ranged": 64,
+        "magic": 28
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 338,
+      "name": "zoo keeper",
+      "level": 20,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 20,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 20,
+        "ranged": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 342,
+      "name": "Rogue",
+      "level": 21,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 22,
+      "anchorDefense": 22,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 22,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 22,
+        "ranged": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 343,
+      "name": "Shadow spider",
+      "level": 53,
+      "family": "insects_arachnids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 51,
+      "anchorDefense": 51,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 12,
+        "ranged": 51,
+        "magic": 25
+      },
+      "assignedDefense": {
+        "ranged": 51,
+        "magic": 20,
+        "melee": 0
+      },
+      "notes": [
+        "Magical spider variant: Magic secondary, Melee weakest."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 344,
+      "name": "Fire Giant",
+      "level": 109,
+      "family": "giants_ogres",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 112,
+      "anchorDefense": 112,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 112,
+        "ranged": 28,
+        "magic": 28
+      },
+      "assignedDefense": {
+        "melee": 112,
+        "magic": 100,
+        "ranged": 56
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 348,
+      "name": "Forester",
+      "level": 21,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 22,
+      "anchorDefense": 22,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 22,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 22,
+        "ranged": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 351,
+      "name": "Thief",
+      "level": 21,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 22,
+      "anchorDefense": 22,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 22,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 22,
+        "ranged": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 352,
+      "name": "Head Thief",
+      "level": 34,
+      "family": "unarmoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 32,
+      "anchorDefense": 32,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 32,
+        "ranged": 3,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 32,
+        "ranged": 12,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 356,
+      "name": "Mountain Dwarf",
+      "level": 28,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 27,
+      "anchorDefense": 27,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 27,
+        "ranged": 13,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 27,
+        "ranged": 5,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 358,
+      "name": "Necromancer",
+      "level": 34,
+      "family": "casters",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 42,
+      "anchorDefense": 42,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 4,
+        "ranged": 4,
+        "magic": 42
+      },
+      "assignedDefense": {
+        "magic": 42,
+        "ranged": 16,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 359,
+      "name": "zombie",
+      "level": 24,
+      "family": "corporeal_undead",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 28,
+      "anchorDefense": 28,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 28,
+        "ranged": 14,
+        "magic": 14
+      },
+      "assignedDefense": {
+        "melee": 28,
+        "ranged": 4,
+        "magic": 4
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 361,
+      "name": "The Fire warrior of lesarkus",
+      "level": 63,
+      "family": "elemental_warriors",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 50,
+      "anchorDefense": 50,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 25,
+        "ranged": 25,
+        "magic": 50
+      },
+      "assignedDefense": {
+        "melee": 50,
+        "magic": 30,
+        "ranged": 10
+      },
+      "notes": [
+        "Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 364,
+      "name": "Lucien",
+      "level": 21,
+      "family": "casters",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 22,
+      "anchorDefense": 22,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 2,
+        "ranged": 2,
+        "magic": 22
+      },
+      "assignedDefense": {
+        "magic": 22,
+        "ranged": 4,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 367,
+      "name": "Dungeon Rat",
+      "level": 16,
+      "family": "beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 10,
+      "anchorDefense": 10,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 1,
+        "ranged": 10,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 10,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 383,
+      "name": "General Khazard",
+      "level": 100,
+      "family": "armoured_humanoids",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 80,
+      "anchorDefense": 80,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 80,
+        "ranged": 40,
+        "magic": 32
+      },
+      "assignedDefense": {
+        "melee": 80,
+        "ranged": 72,
+        "magic": 40
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 384,
+      "name": "Khazard Ogre",
+      "level": 58,
+      "family": "giants_ogres",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 33,
+      "anchorDefense": 33,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 33,
+        "ranged": 24,
+        "magic": 8
+      },
+      "assignedDefense": {
+        "melee": 33,
+        "magic": 19,
+        "ranged": 6
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 386,
+      "name": "Khazard Scorpion",
+      "level": 46,
+      "family": "insects_arachnids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 48,
+      "anchorDefense": 48,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 12,
+        "ranged": 48,
+        "magic": 4
+      },
+      "assignedDefense": {
+        "ranged": 48,
+        "melee": 19,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 388,
+      "name": "Bouncer",
+      "level": 122,
+      "family": "beasts",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 112,
+      "anchorDefense": 112,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 112,
+        "ranged": 56,
+        "magic": 44
+      },
+      "assignedDefense": {
+        "melee": 112,
+        "ranged": 100,
+        "magic": 56
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 399,
+      "name": "local gnome",
+      "level": 3,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 3,
+      "anchorDefense": 3,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 0,
+        "ranged": 1,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 401,
+      "name": "Black Knight titan",
+      "level": 146,
+      "family": "armoured_humanoids",
+      "band": "Very High",
+      "boss": false,
+      "originalDefense": 150,
+      "anchorDefense": 150,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 150,
+        "ranged": 75,
+        "magic": 60
+      },
+      "assignedDefense": {
+        "melee": 150,
+        "ranged": 142,
+        "magic": 112
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 402,
+      "name": "kalron",
+      "level": 3,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 3,
+      "anchorDefense": 3,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 407,
+      "name": "Khazard troop",
+      "level": 28,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 30,
+        "ranged": 7,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "ranged": 6,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 409,
+      "name": "gnome troop",
+      "level": 3,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 3,
+      "anchorDefense": 3,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 0,
+        "ranged": 1,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 410,
+      "name": "khazard warlord",
+      "level": 100,
+      "family": "armoured_humanoids",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 80,
+      "anchorDefense": 80,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 80,
+        "ranged": 20,
+        "magic": 8
+      },
+      "assignedDefense": {
+        "melee": 80,
+        "ranged": 72,
+        "magic": 40
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 416,
+      "name": "unhappy peasant",
+      "level": 25,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 26,
+      "anchorDefense": 26,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 26,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 26,
+        "ranged": 5,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 417,
+      "name": "happy peasant",
+      "level": 25,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 26,
+      "anchorDefense": 26,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 26,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 26,
+        "ranged": 5,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 420,
+      "name": "carnillean guard",
+      "level": 28,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 30,
+        "ranged": 9,
+        "magic": 6
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "ranged": 6,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 421,
+      "name": "Tribesman",
+      "level": 39,
+      "family": "unarmoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 39,
+      "anchorDefense": 39,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 39,
+        "ranged": 9,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 39,
+        "ranged": 15,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 425,
+      "name": "cult member",
+      "level": 20,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 2,
+        "ranged": 2,
+        "magic": 20
+      },
+      "assignedDefense": {
+        "melee": 20,
+        "ranged": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 426,
+      "name": "Lord hazeel",
+      "level": 100,
+      "family": "corporeal_undead",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 80,
+      "anchorDefense": 80,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 40,
+        "ranged": 32,
+        "magic": 80
+      },
+      "assignedDefense": {
+        "melee": 80,
+        "ranged": 56,
+        "magic": 56
+      },
+      "notes": [
+        "Vampire mapped to corporeal undead for this defense draft."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 428,
+      "name": "Khazard commander",
+      "level": 41,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 50,
+      "anchorDefense": 50,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 50,
+        "ranged": 12,
+        "magic": 5
+      },
+      "assignedDefense": {
+        "melee": 50,
+        "ranged": 20,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 438,
+      "name": "Citizen",
+      "level": 11,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 11,
+      "anchorDefense": 11,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 11,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 11,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 439,
+      "name": "Citizen",
+      "level": 10,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 10,
+      "anchorDefense": 10,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 10,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 10,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 440,
+      "name": "Citizen",
+      "level": 12,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 10,
+      "anchorDefense": 10,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 10,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 10,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 441,
+      "name": "Citizen",
+      "level": 20,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 20,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 20,
+        "ranged": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 442,
+      "name": "Citizen",
+      "level": 15,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 12,
+      "anchorDefense": 12,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 12,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 12,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 462,
+      "name": "Platform Fisherman",
+      "level": 30,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 60,
+      "anchorDefense": 60,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 60,
+        "ranged": 6,
+        "magic": 6
+      },
+      "assignedDefense": {
+        "melee": 60,
+        "ranged": 15,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 463,
+      "name": "Platform Fisherman",
+      "level": 30,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 60,
+      "anchorDefense": 60,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 60,
+        "ranged": 6,
+        "magic": 6
+      },
+      "assignedDefense": {
+        "melee": 60,
+        "ranged": 15,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 464,
+      "name": "Platform Fisherman",
+      "level": 30,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 60,
+      "anchorDefense": 60,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 60,
+        "ranged": 6,
+        "magic": 6
+      },
+      "assignedDefense": {
+        "melee": 60,
+        "ranged": 15,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 473,
+      "name": "Rat",
+      "level": 7,
+      "family": "beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 2,
+      "anchorDefense": 2,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 0,
+        "ranged": 2,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 2,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 477,
+      "name": "King Black Dragon",
+      "level": 245,
+      "family": "dragons",
+      "band": "Boss",
+      "boss": true,
+      "originalDefense": 240,
+      "anchorDefense": 240,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 240,
+        "ranged": 180,
+        "magic": 240
+      },
+      "assignedDefense": {
+        "magic": 240,
+        "melee": 240,
+        "ranged": 240
+      },
+      "notes": [
+        "Confirmed boss; full original Defense in all three styles."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 495,
+      "name": "Mourner",
+      "level": 22,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 20,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 20,
+        "ranged": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 498,
+      "name": "skeleton mage",
+      "level": 21,
+      "family": "skeletons",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 5,
+        "ranged": 20,
+        "magic": 10
+      },
+      "assignedDefense": {
+        "magic": 20,
+        "ranged": 4,
+        "melee": 0
+      },
+      "notes": [
+        "Skeleton mage: Magic primary, Ranged secondary."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 502,
+      "name": "Mourner",
+      "level": 25,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 20,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 20,
+        "ranged": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 516,
+      "name": "target practice zombie",
+      "level": 24,
+      "family": "corporeal_undead",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 28,
+      "anchorDefense": 28,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 28,
+        "ranged": 14,
+        "magic": 14
+      },
+      "assignedDefense": {
+        "melee": 28,
+        "ranged": 4,
+        "magic": 4
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 518,
+      "name": "Colonel Radick",
+      "level": 51,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 70,
+        "ranged": 7,
+        "magic": 7
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 28,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 519,
+      "name": "Soldier",
+      "level": 28,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 30,
+        "ranged": 7,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "ranged": 6,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 521,
+      "name": "Jungle Spider",
+      "level": 47,
+      "family": "insects_arachnids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 46,
+      "anchorDefense": 46,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 11,
+        "ranged": 46,
+        "magic": 4
+      },
+      "assignedDefense": {
+        "ranged": 46,
+        "melee": 18,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 523,
+      "name": "Jogre",
+      "level": 58,
+      "family": "giants_ogres",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 33,
+      "anchorDefense": 33,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 33,
+        "ranged": 24,
+        "magic": 8
+      },
+      "assignedDefense": {
+        "melee": 33,
+        "magic": 19,
+        "ranged": 6
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 525,
+      "name": "Ogre",
+      "level": 58,
+      "family": "giants_ogres",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 33,
+      "anchorDefense": 33,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 33,
+        "ranged": 24,
+        "magic": 8
+      },
+      "assignedDefense": {
+        "melee": 33,
+        "magic": 19,
+        "ranged": 6
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 531,
+      "name": "Ogre chieftan",
+      "level": 78,
+      "family": "giants_ogres",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 53,
+      "anchorDefense": 53,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 53,
+        "ranged": 39,
+        "magic": 13
+      },
+      "assignedDefense": {
+        "melee": 53,
+        "magic": 42,
+        "ranged": 18
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 542,
+      "name": "UndeadOne",
+      "level": 62,
+      "family": "corporeal_undead",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 59,
+      "anchorDefense": 59,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 17,
+        "ranged": 11,
+        "magic": 59
+      },
+      "assignedDefense": {
+        "melee": 59,
+        "ranged": 23,
+        "magic": 23
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 550,
+      "name": "charlie",
+      "level": 0,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 0,
+      "anchorDefense": 0,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 0,
+        "ranged": 0,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 0,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [
+        "Level-0 Charlie: all-zero source stats; encounter/unused-role review required."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 551,
+      "name": "Gnome guard",
+      "level": 31,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 31,
+      "anchorDefense": 31,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 3,
+        "ranged": 15,
+        "magic": 31
+      },
+      "assignedDefense": {
+        "melee": 31,
+        "ranged": 7,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 555,
+      "name": "Chaos Druid warrior",
+      "level": 44,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 42,
+      "anchorDefense": 42,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 4,
+        "ranged": 4,
+        "magic": 42
+      },
+      "assignedDefense": {
+        "melee": 42,
+        "ranged": 16,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 557,
+      "name": "Shipyard worker",
+      "level": 44,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 42,
+      "anchorDefense": 42,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 42,
+        "ranged": 4,
+        "magic": 4
+      },
+      "assignedDefense": {
+        "melee": 42,
+        "ranged": 16,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 558,
+      "name": "Shipyard worker",
+      "level": 44,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 42,
+      "anchorDefense": 42,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 42,
+        "ranged": 4,
+        "magic": 4
+      },
+      "assignedDefense": {
+        "melee": 42,
+        "ranged": 16,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 559,
+      "name": "Shipyard worker",
+      "level": 44,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 42,
+      "anchorDefense": 42,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 42,
+        "ranged": 4,
+        "magic": 4
+      },
+      "assignedDefense": {
+        "melee": 42,
+        "ranged": 16,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 562,
+      "name": "Gnome guard",
+      "level": 23,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 23,
+      "anchorDefense": 23,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 2,
+        "ranged": 11,
+        "magic": 23
+      },
+      "assignedDefense": {
+        "melee": 23,
+        "ranged": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 567,
+      "name": "Salarin the twisted",
+      "level": 69,
+      "family": "casters",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 72,
+      "anchorDefense": 72,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 21,
+        "ranged": 14,
+        "magic": 72
+      },
+      "assignedDefense": {
+        "magic": 72,
+        "ranged": 57,
+        "melee": 25
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 568,
+      "name": "Black Demon",
+      "level": 175,
+      "family": "demons",
+      "band": "Very High",
+      "boss": false,
+      "originalDefense": 168,
+      "anchorDefense": 168,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 126,
+        "ranged": 84,
+        "magic": 168
+      },
+      "assignedDefense": {
+        "magic": 168,
+        "melee": 159,
+        "ranged": 126
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 574,
+      "name": "Yanille Watchman",
+      "level": 33,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 30,
+        "ranged": 3,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "ranged": 12,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 582,
+      "name": "Gnome guard",
+      "level": 27,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 31,
+      "anchorDefense": 31,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 3,
+        "ranged": 15,
+        "magic": 31
+      },
+      "assignedDefense": {
+        "melee": 31,
+        "ranged": 6,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 583,
+      "name": "Gnome child",
+      "level": 3,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 3,
+      "anchorDefense": 3,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 0,
+        "ranged": 1,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 584,
+      "name": "Earth warrior",
+      "level": 52,
+      "family": "elemental_warriors",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 51,
+      "anchorDefense": 51,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 25,
+        "ranged": 25,
+        "magic": 51
+      },
+      "assignedDefense": {
+        "melee": 51,
+        "magic": 20,
+        "ranged": 0
+      },
+      "notes": [
+        "Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 585,
+      "name": "Gnome child",
+      "level": 3,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 3,
+      "anchorDefense": 3,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 0,
+        "ranged": 1,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 586,
+      "name": "Gnome child",
+      "level": 3,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 3,
+      "anchorDefense": 3,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 0,
+        "ranged": 1,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 592,
+      "name": "Gnome local",
+      "level": 9,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 9,
+      "anchorDefense": 9,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 0,
+        "ranged": 4,
+        "magic": 9
+      },
+      "assignedDefense": {
+        "melee": 9,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 593,
+      "name": "Gnome local",
+      "level": 3,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 3,
+      "anchorDefense": 3,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 0,
+        "ranged": 1,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 594,
+      "name": "Moss Giant",
+      "level": 62,
+      "family": "giants_ogres",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 61,
+      "anchorDefense": 61,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 61,
+        "ranged": 15,
+        "magic": 15
+      },
+      "assignedDefense": {
+        "melee": 61,
+        "magic": 36,
+        "ranged": 12
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 595,
+      "name": "Gnome Baller",
+      "level": 70,
+      "family": "unarmoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 35,
+        "magic": 70
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 56,
+        "magic": 24
+      },
+      "notes": [
+        "Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 597,
+      "name": "Gnome Baller",
+      "level": 70,
+      "family": "unarmoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 35,
+        "magic": 70
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 56,
+        "magic": 24
+      },
+      "notes": [
+        "Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 598,
+      "name": "Gnome Baller",
+      "level": 70,
+      "family": "unarmoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 35,
+        "magic": 70
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 56,
+        "magic": 24
+      },
+      "notes": [
+        "Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 599,
+      "name": "Gnome Baller",
+      "level": 70,
+      "family": "unarmoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 35,
+        "magic": 70
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 56,
+        "magic": 24
+      },
+      "notes": [
+        "Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 600,
+      "name": "Gnome Baller",
+      "level": 70,
+      "family": "unarmoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 35,
+        "magic": 70
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 56,
+        "magic": 24
+      },
+      "notes": [
+        "Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 602,
+      "name": "Gnome Baller",
+      "level": 70,
+      "family": "unarmoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 35,
+        "magic": 70
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 56,
+        "magic": 24
+      },
+      "notes": [
+        "Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 603,
+      "name": "Gnome Baller",
+      "level": 70,
+      "family": "unarmoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 35,
+        "magic": 70
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 56,
+        "magic": 24
+      },
+      "notes": [
+        "Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 604,
+      "name": "Gnome Baller",
+      "level": 70,
+      "family": "unarmoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 35,
+        "magic": 70
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 56,
+        "magic": 24
+      },
+      "notes": [
+        "Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 605,
+      "name": "Gnome Baller",
+      "level": 70,
+      "family": "unarmoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 35,
+        "magic": 70
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 56,
+        "magic": 24
+      },
+      "notes": [
+        "Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 606,
+      "name": "Gnome Baller",
+      "level": 70,
+      "family": "unarmoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 35,
+        "magic": 70
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 56,
+        "magic": 24
+      },
+      "notes": [
+        "Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 607,
+      "name": "Gnome Baller",
+      "level": 70,
+      "family": "unarmoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 35,
+        "magic": 70
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 56,
+        "magic": 24
+      },
+      "notes": [
+        "Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 608,
+      "name": "Gnome Baller",
+      "level": 70,
+      "family": "unarmoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 35,
+        "magic": 70
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 56,
+        "magic": 24
+      },
+      "notes": [
+        "Gnome Ball participant: minigame behavior; proposal is not permission to alter protected interactions."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 613,
+      "name": "Nazastarool Zombie",
+      "level": 83,
+      "family": "corporeal_undead",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 70,
+        "ranged": 35,
+        "magic": 35
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 38,
+        "magic": 38
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 614,
+      "name": "Nazastarool Skeleton",
+      "level": 83,
+      "family": "skeletons",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 17,
+        "ranged": 70,
+        "magic": 35
+      },
+      "assignedDefense": {
+        "ranged": 70,
+        "magic": 56,
+        "melee": 24
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 615,
+      "name": "Nazastarool Ghost",
+      "level": 83,
+      "family": "spirits",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 35,
+        "ranged": 70,
+        "magic": 17
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "magic": 56,
+        "ranged": 24
+      },
+      "notes": [
+        "Melee selected provisionally as physical primary; owner has only settled Magic secondary."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 630,
+      "name": "Blessed Vermen",
+      "level": 14,
+      "family": "corporeal_undead",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 7,
+      "anchorDefense": 7,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 0,
+        "ranged": 7,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 7,
+        "ranged": 1,
+        "magic": 1
+      },
+      "notes": [
+        "Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 631,
+      "name": "Blessed Spider",
+      "level": 35,
+      "family": "insects_arachnids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 31,
+      "anchorDefense": 31,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 31,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "ranged": 31,
+        "magic": 12,
+        "melee": 0
+      },
+      "notes": [
+        "Magical spider variant: Magic secondary, Melee weakest."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 632,
+      "name": "Paladin",
+      "level": 71,
+      "family": "armoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 55,
+      "anchorDefense": 55,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 55,
+        "ranged": 5,
+        "magic": 5
+      },
+      "assignedDefense": {
+        "melee": 55,
+        "ranged": 44,
+        "magic": 19
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 633,
+      "name": "Paladin",
+      "level": 71,
+      "family": "armoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 55,
+      "anchorDefense": 55,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 55,
+        "ranged": 5,
+        "magic": 5
+      },
+      "assignedDefense": {
+        "melee": 55,
+        "ranged": 44,
+        "magic": 19
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 634,
+      "name": "slave",
+      "level": 16,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 635,
+      "name": "slave",
+      "level": 16,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 636,
+      "name": "slave",
+      "level": 16,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 637,
+      "name": "slave",
+      "level": 16,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 638,
+      "name": "slave",
+      "level": 16,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 639,
+      "name": "slave",
+      "level": 16,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 640,
+      "name": "slave",
+      "level": 16,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 641,
+      "name": "Kalrag",
+      "level": 78,
+      "family": "insects_arachnids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 69,
+      "anchorDefense": 69,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 27,
+        "ranged": 69,
+        "magic": 69
+      },
+      "assignedDefense": {
+        "ranged": 69,
+        "melee": 55,
+        "magic": 24
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 644,
+      "name": "Souless",
+      "level": 16,
+      "family": "corporeal_undead",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 15,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 15,
+        "ranged": 2,
+        "magic": 2
+      },
+      "notes": [
+        "Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 645,
+      "name": "Othainian",
+      "level": 78,
+      "family": "demons",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 78,
+      "anchorDefense": 78,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 39,
+        "ranged": 31,
+        "magic": 78
+      },
+      "assignedDefense": {
+        "magic": 78,
+        "melee": 62,
+        "ranged": 27
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 646,
+      "name": "Doomion",
+      "level": 98,
+      "family": "demons",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 98,
+      "anchorDefense": 98,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 49,
+        "ranged": 39,
+        "magic": 98
+      },
+      "assignedDefense": {
+        "magic": 98,
+        "melee": 88,
+        "ranged": 49
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 647,
+      "name": "Holthion",
+      "level": 78,
+      "family": "demons",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 78,
+      "anchorDefense": 78,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 39,
+        "ranged": 31,
+        "magic": 78
+      },
+      "assignedDefense": {
+        "magic": 78,
+        "melee": 62,
+        "ranged": 27
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 651,
+      "name": "Goblin guard",
+      "level": 48,
+      "family": "goblinoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 51,
+      "anchorDefense": 51,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 51,
+        "ranged": 25,
+        "magic": 5
+      },
+      "assignedDefense": {
+        "melee": 51,
+        "ranged": 20,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 653,
+      "name": "Ugthanki",
+      "level": 45,
+      "family": "beasts",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 45,
+      "anchorDefense": 45,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 45,
+        "ranged": 4,
+        "magic": 4
+      },
+      "assignedDefense": {
+        "melee": 45,
+        "ranged": 18,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 655,
+      "name": "Souless",
+      "level": 24,
+      "family": "corporeal_undead",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 28,
+      "anchorDefense": 28,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 14,
+        "ranged": 28,
+        "magic": 7
+      },
+      "assignedDefense": {
+        "melee": 28,
+        "ranged": 4,
+        "magic": 4
+      },
+      "notes": [
+        "Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 656,
+      "name": "Dungeon spider",
+      "level": 22,
+      "family": "insects_arachnids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 5,
+        "ranged": 20,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "ranged": 20,
+        "melee": 4,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 658,
+      "name": "Iban disciple",
+      "level": 19,
+      "family": "casters",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 22,
+      "anchorDefense": 22,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 2,
+        "ranged": 2,
+        "magic": 22
+      },
+      "assignedDefense": {
+        "magic": 22,
+        "ranged": 2,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 660,
+      "name": "Goblin",
+      "level": 19,
+      "family": "goblinoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 20,
+        "ranged": 10,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "melee": 20,
+        "ranged": 2,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 663,
+      "name": "San Tojalon",
+      "level": 120,
+      "family": "spirits",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 120,
+      "anchorDefense": 120,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 48,
+        "ranged": 120,
+        "magic": 120
+      },
+      "assignedDefense": {
+        "melee": 120,
+        "magic": 108,
+        "ranged": 60
+      },
+      "notes": [
+        "Melee selected provisionally as physical primary; owner has only settled Magic secondary."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 664,
+      "name": "Ghost",
+      "level": 29,
+      "family": "spirits",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 33,
+      "anchorDefense": 33,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 16,
+        "ranged": 33,
+        "magic": 8
+      },
+      "assignedDefense": {
+        "melee": 33,
+        "magic": 6,
+        "ranged": 0
+      },
+      "notes": [
+        "Melee selected provisionally as physical primary; owner has only settled Magic secondary."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 668,
+      "name": "Mercenary",
+      "level": 50,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 60,
+      "anchorDefense": 60,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 60,
+        "ranged": 15,
+        "magic": 6
+      },
+      "assignedDefense": {
+        "melee": 60,
+        "ranged": 24,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 669,
+      "name": "Mercenary Captain",
+      "level": 64,
+      "family": "armoured_humanoids",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 80,
+      "anchorDefense": 80,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 80,
+        "ranged": 20,
+        "magic": 8
+      },
+      "assignedDefense": {
+        "melee": 80,
+        "ranged": 48,
+        "magic": 16
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 670,
+      "name": "Mercenary",
+      "level": 39,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 30,
+        "ranged": 7,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "ranged": 12,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 671,
+      "name": "Mining Slave",
+      "level": 16,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 683,
+      "name": "Gorad",
+      "level": 78,
+      "family": "giants_ogres",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 53,
+      "anchorDefense": 53,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 21,
+        "ranged": 53,
+        "magic": 53
+      },
+      "assignedDefense": {
+        "melee": 53,
+        "magic": 42,
+        "ranged": 18
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 684,
+      "name": "Ogre guard",
+      "level": 96,
+      "family": "giants_ogres",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 99,
+      "anchorDefense": 99,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 99,
+        "ranged": 74,
+        "magic": 24
+      },
+      "assignedDefense": {
+        "melee": 99,
+        "magic": 89,
+        "ranged": 49
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 690,
+      "name": "Mercenary",
+      "level": 39,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 30,
+        "ranged": 7,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "ranged": 12,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 692,
+      "name": "Mercenary",
+      "level": 39,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 30,
+        "ranged": 7,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "ranged": 12,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 694,
+      "name": "Dwarf",
+      "level": 18,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 17,
+      "anchorDefense": 17,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 17,
+        "ranged": 8,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 17,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 697,
+      "name": "Ogre guard",
+      "level": 78,
+      "family": "giants_ogres",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 53,
+      "anchorDefense": 53,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 53,
+        "ranged": 39,
+        "magic": 13
+      },
+      "assignedDefense": {
+        "melee": 53,
+        "magic": 42,
+        "ranged": 18
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 699,
+      "name": "Dwarf",
+      "level": 18,
+      "family": "armoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 17,
+      "anchorDefense": 17,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 17,
+        "ranged": 8,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 17,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 702,
+      "name": "Captain Siad",
+      "level": 48,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 48,
+      "anchorDefense": 48,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 48,
+        "ranged": 12,
+        "magic": 4
+      },
+      "assignedDefense": {
+        "melee": 48,
+        "ranged": 19,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 703,
+      "name": "Bedabin Nomad Guard",
+      "level": 70,
+      "family": "armoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 70,
+      "anchorDefense": 70,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 70,
+        "ranged": 17,
+        "magic": 7
+      },
+      "assignedDefense": {
+        "melee": 70,
+        "ranged": 56,
+        "magic": 24
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 704,
+      "name": "Ogre citizen",
+      "level": 58,
+      "family": "giants_ogres",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 33,
+      "anchorDefense": 33,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 33,
+        "ranged": 24,
+        "magic": 8
+      },
+      "assignedDefense": {
+        "melee": 33,
+        "magic": 19,
+        "ranged": 6
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 705,
+      "name": "Rock of ages",
+      "level": 150,
+      "family": "constructs",
+      "band": "Very High",
+      "boss": false,
+      "originalDefense": 150,
+      "anchorDefense": 150,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 150,
+        "ranged": 150,
+        "magic": 75
+      },
+      "assignedDefense": {
+        "ranged": 150,
+        "melee": 142,
+        "magic": 112
+      },
+      "notes": [
+        "Stone construct: Ranged primary, Melee secondary; material-specific proposal."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 706,
+      "name": "Ogre",
+      "level": 58,
+      "family": "giants_ogres",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 33,
+      "anchorDefense": 33,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 33,
+        "ranged": 24,
+        "magic": 8
+      },
+      "assignedDefense": {
+        "melee": 33,
+        "magic": 19,
+        "ranged": 6
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 710,
+      "name": "Draft Mercenary Guard",
+      "level": 50,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 60,
+      "anchorDefense": 60,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 60,
+        "ranged": 15,
+        "magic": 6
+      },
+      "assignedDefense": {
+        "melee": 60,
+        "ranged": 24,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 713,
+      "name": "kolodion",
+      "level": 12,
+      "family": "casters",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 4,
+        "ranged": 3,
+        "magic": 15
+      },
+      "assignedDefense": {
+        "magic": 15,
+        "ranged": 1,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 716,
+      "name": "Rowdy Guard",
+      "level": 50,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 60,
+      "anchorDefense": 60,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 60,
+        "ranged": 15,
+        "magic": 6
+      },
+      "assignedDefense": {
+        "melee": 60,
+        "ranged": 24,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 717,
+      "name": "Shantay Pass Guard",
+      "level": 32,
+      "family": "armoured_humanoids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 32,
+      "anchorDefense": 32,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 32,
+        "ranged": 8,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 32,
+        "ranged": 12,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 718,
+      "name": "Rowdy Slave",
+      "level": 16,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 15,
+      "anchorDefense": 15,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 15,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 721,
+      "name": "Desert Wolf",
+      "level": 31,
+      "family": "beasts",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 32,
+      "anchorDefense": 32,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 32,
+        "ranged": 16,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "melee": 32,
+        "ranged": 8,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 729,
+      "name": "civillian",
+      "level": 18,
+      "family": "unarmoured_humanoids",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 17,
+      "anchorDefense": 17,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 17,
+        "ranged": 1,
+        "magic": 1
+      },
+      "assignedDefense": {
+        "melee": 17,
+        "ranged": 1,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 757,
+      "name": "kolodion",
+      "level": 65,
+      "family": "giants_ogres",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 55,
+      "anchorDefense": 55,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 22,
+        "ranged": 55,
+        "magic": 55
+      },
+      "assignedDefense": {
+        "melee": 55,
+        "magic": 44,
+        "ranged": 19
+      },
+      "notes": [
+        "Kolodion quest form: family follows its individual body; phase/attack mechanics remain unchanged."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 758,
+      "name": "kolodion",
+      "level": 68,
+      "family": "insects_arachnids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 69,
+      "anchorDefense": 69,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 27,
+        "ranged": 69,
+        "magic": 69
+      },
+      "assignedDefense": {
+        "ranged": 69,
+        "magic": 55,
+        "melee": 24
+      },
+      "notes": [
+        "Magical spider variant: Magic secondary, Melee weakest.",
+        "Kolodion quest form: family follows its individual body; phase/attack mechanics remain unchanged."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 759,
+      "name": "kolodion",
+      "level": 46,
+      "family": "spirits",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 88,
+      "anchorDefense": 88,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 88,
+        "ranged": 26,
+        "magic": 88
+      },
+      "assignedDefense": {
+        "melee": 88,
+        "magic": 35,
+        "ranged": 0
+      },
+      "notes": [
+        "Kolodion quest form: family follows its individual body; phase/attack mechanics remain unchanged.",
+        "Melee selected provisionally as physical primary; owner has only settled Magic secondary."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 760,
+      "name": "kolodion",
+      "level": 98,
+      "family": "demons",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 85,
+      "anchorDefense": 85,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 85,
+        "ranged": 34,
+        "magic": 85
+      },
+      "assignedDefense": {
+        "magic": 85,
+        "melee": 76,
+        "ranged": 42
+      },
+      "notes": [
+        "Kolodion quest form: family follows its individual body; phase/attack mechanics remain unchanged."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 761,
+      "name": "Irvig Senay",
+      "level": 125,
+      "family": "spirits",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 125,
+      "anchorDefense": 125,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 125,
+        "ranged": 125,
+        "magic": 50
+      },
+      "assignedDefense": {
+        "melee": 125,
+        "magic": 112,
+        "ranged": 62
+      },
+      "notes": [
+        "Melee selected provisionally as physical primary; owner has only settled Magic secondary."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 762,
+      "name": "Ranalph Devere",
+      "level": 130,
+      "family": "spirits",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 130,
+      "anchorDefense": 130,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 130,
+        "ranged": 130,
+        "magic": 52
+      },
+      "assignedDefense": {
+        "melee": 130,
+        "magic": 117,
+        "ranged": 65
+      },
+      "notes": [
+        "Melee selected provisionally as physical primary; owner has only settled Magic secondary."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 766,
+      "name": "Ungadulu",
+      "level": 75,
+      "family": "casters",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 75,
+      "anchorDefense": 75,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 30,
+        "ranged": 75,
+        "magic": 75
+      },
+      "assignedDefense": {
+        "magic": 75,
+        "ranged": 60,
+        "melee": 26
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 767,
+      "name": "Ungadulu",
+      "level": 75,
+      "family": "casters",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 75,
+      "anchorDefense": 75,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 30,
+        "ranged": 75,
+        "magic": 75
+      },
+      "assignedDefense": {
+        "magic": 75,
+        "ranged": 60,
+        "melee": 26
+      },
+      "notes": [
+        "Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 768,
+      "name": "Death Wing",
+      "level": 80,
+      "family": "flying",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 80,
+      "anchorDefense": 80,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 80,
+        "ranged": 60,
+        "magic": 80
+      },
+      "assignedDefense": {
+        "ranged": 80,
+        "magic": 64,
+        "melee": 28
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 769,
+      "name": "Nezikchened",
+      "level": 172,
+      "family": "demons",
+      "band": "Very High",
+      "boss": false,
+      "originalDefense": 177,
+      "anchorDefense": 177,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 177,
+        "ranged": 177,
+        "magic": 70
+      },
+      "assignedDefense": {
+        "magic": 177,
+        "melee": 168,
+        "ranged": 132
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 772,
+      "name": "Viyeldi",
+      "level": 80,
+      "family": "casters",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 80,
+      "anchorDefense": 80,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 32,
+        "ranged": 80,
+        "magic": 40
+      },
+      "assignedDefense": {
+        "magic": 80,
+        "ranged": 64,
+        "melee": 28
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 775,
+      "name": "Karamja Wolf",
+      "level": 61,
+      "family": "beasts",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 61,
+      "anchorDefense": 61,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 61,
+        "ranged": 30,
+        "magic": 6
+      },
+      "assignedDefense": {
+        "melee": 61,
+        "ranged": 36,
+        "magic": 12
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 776,
+      "name": "Jungle Savage",
+      "level": 87,
+      "family": "armoured_humanoids",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 60,
+      "anchorDefense": 60,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 60,
+        "ranged": 15,
+        "magic": 6
+      },
+      "assignedDefense": {
+        "melee": 60,
+        "ranged": 48,
+        "magic": 21
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 777,
+      "name": "Oomlie Bird",
+      "level": 32,
+      "family": "flying",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 20,
+      "anchorDefense": 20,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 20,
+        "ranged": 2,
+        "magic": 2
+      },
+      "assignedDefense": {
+        "ranged": 20,
+        "magic": 8,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 786,
+      "name": "Pit Scorpion",
+      "level": 35,
+      "family": "insects_arachnids",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 30,
+      "anchorDefense": 30,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 7,
+        "ranged": 30,
+        "magic": 3
+      },
+      "assignedDefense": {
+        "ranged": 30,
+        "melee": 12,
+        "magic": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 787,
+      "name": "Shadow Warrior",
+      "level": 64,
+      "family": "spirits",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 68,
+      "anchorDefense": 68,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 34,
+        "ranged": 34,
+        "magic": 68
+      },
+      "assignedDefense": {
+        "melee": 68,
+        "magic": 40,
+        "ranged": 13
+      },
+      "notes": [
+        "Melee selected provisionally as physical primary; owner has only settled Magic secondary."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 789,
+      "name": "Battle mage",
+      "level": 52,
+      "family": "casters",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 90,
+      "anchorDefense": 90,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 9,
+        "ranged": 9,
+        "magic": 90
+      },
+      "assignedDefense": {
+        "magic": 90,
+        "ranged": 36,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 790,
+      "name": "Battle mage",
+      "level": 52,
+      "family": "casters",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 90,
+      "anchorDefense": 90,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 9,
+        "ranged": 9,
+        "magic": 90
+      },
+      "assignedDefense": {
+        "magic": 90,
+        "ranged": 36,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 791,
+      "name": "Battle mage",
+      "level": 52,
+      "family": "casters",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 90,
+      "anchorDefense": 90,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 9,
+        "ranged": 9,
+        "magic": 90
+      },
+      "assignedDefense": {
+        "magic": 90,
+        "ranged": 36,
+        "melee": 0
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 798,
+      "name": "Gaia",
+      "level": 79,
+      "family": "casters",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 80,
+      "anchorDefense": 80,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 40,
+        "ranged": 40,
+        "magic": 80
+      },
+      "assignedDefense": {
+        "magic": 80,
+        "ranged": 64,
+        "melee": 28
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 802,
+      "name": "Greatwood",
+      "level": 300,
+      "family": "living_plants",
+      "band": "Very High",
+      "boss": false,
+      "originalDefense": 300,
+      "anchorDefense": 300,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 300,
+        "ranged": 300,
+        "magic": 300
+      },
+      "assignedDefense": {
+        "ranged": 300,
+        "magic": 285,
+        "melee": 225
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 809,
+      "name": "Balrog",
+      "level": 217,
+      "family": "demons",
+      "band": "Boss",
+      "boss": true,
+      "originalDefense": 80,
+      "anchorDefense": 80,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 60,
+        "ranged": 40,
+        "magic": 80
+      },
+      "assignedDefense": {
+        "magic": 80,
+        "melee": 80,
+        "ranged": 80
+      },
+      "notes": [
+        "Confirmed boss; full original Defense in all three styles."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 816,
+      "name": "PK Bot",
+      "level": 57,
+      "family": "armoured_humanoids",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 1,
+      "anchorDefense": 1,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 1,
+        "ranged": 0,
+        "magic": 0
+      },
+      "assignedDefense": {
+        "melee": 1,
+        "ranged": 0,
+        "magic": 0
+      },
+      "notes": [
+        "PK bot: role/owner review before applying an NPC-only migration."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 836,
+      "name": "Grey Knight",
+      "level": 56,
+      "family": "armoured_humanoids",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 60,
+      "anchorDefense": 60,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 60,
+        "ranged": 6,
+        "magic": 6
+      },
+      "assignedDefense": {
+        "melee": 60,
+        "ranged": 36,
+        "magic": 12
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 843,
+      "name": "Fire warrior",
+      "level": 61,
+      "family": "elemental_warriors",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 58,
+      "anchorDefense": 58,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 58,
+        "ranged": 14,
+        "magic": 5
+      },
+      "assignedDefense": {
+        "melee": 58,
+        "magic": 34,
+        "ranged": 11
+      },
+      "notes": [
+        "Hybrid/quest form: explicit per-ID family proposal; behavior and immunities require separate review."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 844,
+      "name": "Elder Green Dragon",
+      "level": 275,
+      "family": "dragons",
+      "band": "Boss",
+      "boss": true,
+      "originalDefense": 265,
+      "anchorDefense": 265,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 265,
+        "ranged": 210,
+        "magic": 265
+      },
+      "assignedDefense": {
+        "magic": 265,
+        "melee": 265,
+        "ranged": 265
+      },
+      "notes": [
+        "Confirmed boss; full original Defense in all three styles."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 862,
+      "name": "Green Dragon",
+      "level": 110,
+      "family": "dragons",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 110,
+      "anchorDefense": 110,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 110,
+        "ranged": 82,
+        "magic": 110
+      },
+      "assignedDefense": {
+        "magic": 110,
+        "melee": 99,
+        "ranged": 82
+      },
+      "notes": [],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 863,
+      "name": "Giant frog",
+      "level": 20,
+      "family": "reptiles_amphibians",
+      "band": "Low",
+      "boss": false,
+      "originalDefense": 1,
+      "anchorDefense": 35,
+      "anchorBasis": "highest existing direct defense",
+      "currentDefense": {
+        "melee": 10,
+        "ranged": 20,
+        "magic": 35
+      },
+      "assignedDefense": {
+        "magic": 35,
+        "ranged": 7,
+        "melee": 0
+      },
+      "notes": [
+        "Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 864,
+      "name": "Cockatrice",
+      "level": 35,
+      "family": "magical_birds",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 1,
+      "anchorDefense": 40,
+      "anchorBasis": "highest existing direct defense",
+      "currentDefense": {
+        "melee": 35,
+        "ranged": 40,
+        "magic": 30
+      },
+      "assignedDefense": {
+        "magic": 40,
+        "ranged": 16,
+        "melee": 0
+      },
+      "notes": [
+        "Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 865,
+      "name": "Banshee",
+      "level": 50,
+      "family": "spirits",
+      "band": "Mid Low",
+      "boss": false,
+      "originalDefense": 1,
+      "anchorDefense": 40,
+      "anchorBasis": "highest existing direct defense",
+      "currentDefense": {
+        "melee": 40,
+        "ranged": 40,
+        "magic": 40
+      },
+      "assignedDefense": {
+        "melee": 40,
+        "magic": 16,
+        "ranged": 0
+      },
+      "notes": [
+        "Melee selected provisionally as physical primary; owner has only settled Magic secondary.",
+        "Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 866,
+      "name": "Naga",
+      "level": 60,
+      "family": "reptiles_amphibians",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 1,
+      "anchorDefense": 95,
+      "anchorBasis": "highest existing direct defense",
+      "currentDefense": {
+        "melee": 20,
+        "ranged": 65,
+        "magic": 95
+      },
+      "assignedDefense": {
+        "magic": 95,
+        "ranged": 57,
+        "melee": 19
+      },
+      "notes": [
+        "Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 867,
+      "name": "Terror dog",
+      "level": 75,
+      "family": "beasts",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 1,
+      "anchorDefense": 55,
+      "anchorBasis": "highest existing direct defense",
+      "currentDefense": {
+        "melee": 55,
+        "ranged": 55,
+        "magic": 55
+      },
+      "assignedDefense": {
+        "melee": 55,
+        "ranged": 44,
+        "magic": 19
+      },
+      "notes": [
+        "Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 868,
+      "name": "Bloodveld",
+      "level": 85,
+      "family": "beasts",
+      "band": "Mid High",
+      "boss": false,
+      "originalDefense": 1,
+      "anchorDefense": 30,
+      "anchorBasis": "highest existing direct defense",
+      "currentDefense": {
+        "melee": 30,
+        "ranged": 30,
+        "magic": 30
+      },
+      "assignedDefense": {
+        "melee": 30,
+        "ranged": 24,
+        "magic": 10
+      },
+      "notes": [
+        "Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 869,
+      "name": "Dark beast",
+      "level": 105,
+      "family": "magical_beasts",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 1,
+      "anchorDefense": 120,
+      "anchorBasis": "highest existing direct defense",
+      "currentDefense": {
+        "melee": 120,
+        "ranged": 100,
+        "magic": 120
+      },
+      "assignedDefense": {
+        "magic": 120,
+        "melee": 108,
+        "ranged": 60
+      },
+      "notes": [
+        "Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 870,
+      "name": "Abyssal demon",
+      "level": 125,
+      "family": "demons",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 1,
+      "anchorDefense": 220,
+      "anchorBasis": "highest existing direct defense",
+      "currentDefense": {
+        "melee": 110,
+        "ranged": 220,
+        "magic": 220
+      },
+      "assignedDefense": {
+        "magic": 220,
+        "melee": 198,
+        "ranged": 110
+      },
+      "notes": [
+        "Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 877,
+      "name": "Sapphire Dragon",
+      "level": 97,
+      "family": "dragons",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 100,
+      "anchorDefense": 100,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 125,
+        "ranged": 93,
+        "magic": 100
+      },
+      "assignedDefense": {
+        "magic": 100,
+        "melee": 90,
+        "ranged": 75
+      },
+      "notes": [
+        "Historical above-100% conversion; draft uses original Defense anchor and redistributes strengths. Review deliberate delta."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 878,
+      "name": "Emerald Dragon",
+      "level": 118,
+      "family": "dragons",
+      "band": "High",
+      "boss": false,
+      "originalDefense": 123,
+      "anchorDefense": 123,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 153,
+        "ranged": 115,
+        "magic": 123
+      },
+      "assignedDefense": {
+        "magic": 123,
+        "melee": 110,
+        "ranged": 92
+      },
+      "notes": [
+        "Historical above-100% conversion; draft uses original Defense anchor and redistributes strengths. Review deliberate delta."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 879,
+      "name": "Ruby Dragon",
+      "level": 142,
+      "family": "dragons",
+      "band": "Very High",
+      "boss": false,
+      "originalDefense": 148,
+      "anchorDefense": 148,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 185,
+        "ranged": 138,
+        "magic": 148
+      },
+      "assignedDefense": {
+        "magic": 148,
+        "melee": 140,
+        "ranged": 133
+      },
+      "notes": [
+        "Historical above-100% conversion; draft uses original Defense anchor and redistributes strengths. Review deliberate delta."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 880,
+      "name": "Diamond Dragon",
+      "level": 166,
+      "family": "dragons",
+      "band": "Very High",
+      "boss": false,
+      "originalDefense": 173,
+      "anchorDefense": 173,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 216,
+        "ranged": 162,
+        "magic": 173
+      },
+      "assignedDefense": {
+        "magic": 173,
+        "melee": 164,
+        "ranged": 155
+      },
+      "notes": [
+        "Historical above-100% conversion; draft uses original Defense anchor and redistributes strengths. Review deliberate delta."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 881,
+      "name": "Dragonstone Dragon",
+      "level": 192,
+      "family": "dragons",
+      "band": "Very High",
+      "boss": false,
+      "originalDefense": 198,
+      "anchorDefense": 198,
+      "anchorBasis": "original legacy Defense",
+      "currentDefense": {
+        "melee": 247,
+        "ranged": 185,
+        "magic": 198
+      },
+      "assignedDefense": {
+        "magic": 198,
+        "melee": 188,
+        "ranged": 178
+      },
+      "notes": [
+        "Historical above-100% conversion; draft uses original Defense anchor and redistributes strengths. Review deliberate delta."
+      ],
+      "status": "assigned draft; not installed"
+    },
+    {
+      "id": 882,
+      "name": "Stirge",
+      "level": 55,
+      "family": "insects_arachnids",
+      "band": "Mid",
+      "boss": false,
+      "originalDefense": 50,
+      "anchorDefense": 80,
+      "anchorBasis": "highest existing direct defense",
+      "currentDefense": {
+        "melee": 50,
+        "ranged": 80,
+        "magic": 50
+      },
+      "assignedDefense": {
+        "ranged": 80,
+        "melee": 48,
+        "magic": 16
+      },
+      "notes": [
+        "Already-explicit encounter: anchor retains highest current defense rather than collapsing to legacy placeholder; review anchor."
+      ],
+      "status": "assigned draft; not installed"
+    }
+  ]
+}
