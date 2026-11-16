@@ -1,0 +1,5713 @@
+{
+  "status": "Source audit and recommendations only; no gameplay changes or power assignments",
+  "sourceCommit": "daef1acedd8612647c7b338ede02ec1be8be05c4",
+  "snapshotInventoryCommit": "92306a7b093d6e42edae87c8398e42f50b037ccb",
+  "profiles": {
+    "MELEE": 195,
+    "MELEE_MAGIC": 46,
+    "PURE_MAGIC": 13,
+    "PURE_RANGED": 20,
+    "MELEE_RARE_MAGIC": 7,
+    "MELEE_RANGED": 14,
+    "MELEE_FREQUENT_MAGIC": 3
+  },
+  "rows": [
+    {
+      "id": 0,
+      "name": "Unicorn",
+      "level": 21,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 21,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 3,
+      "name": "Chicken",
+      "level": 3,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 3,
+      "legacyAttack": 3,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 4,
+      "name": "Tough Goblin",
+      "level": 13,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 7,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 7,
+      "legacyAttack": 16,
+      "recommendation": "OPTIONAL_RANGED_PRIMARY_VARIANTS",
+      "priority": "C",
+      "rationale": "Potential goblin stone/spear throwers. Prefer selected distinct variants with readable equipment/projectile art, not blanket conversion of all goblinoids."
+    },
+    {
+      "id": 5,
+      "name": "Hans",
+      "level": 3,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 3,
+      "legacyAttack": 3,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 6,
+      "name": "cow",
+      "level": 8,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 7,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 7,
+      "legacyAttack": 9,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 8,
+      "name": "Bear",
+      "level": 24,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 20,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 20,
+      "legacyAttack": 25,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 11,
+      "name": "Man",
+      "level": 9,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 11,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 11,
+      "legacyAttack": 11,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 19,
+      "name": "Rat",
+      "level": 8,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 10,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 10,
+      "legacyAttack": 10,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 21,
+      "name": "mugger",
+      "level": 10,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 8,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 8,
+      "legacyAttack": 15,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "New throwing-knife candidate matching existing thief/rogue support; new per-ID profile assignment and equipment review needed."
+    },
+    {
+      "id": 22,
+      "name": "Lesser Demon",
+      "level": 79,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 78
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 78,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Demonic mixed candidate; some currently melee-only. Retain boss/quest and Abyssal mobility mechanics; generic magic alone is not a complete encounter audit."
+    },
+    {
+      "id": 23,
+      "name": "Young Giant Spider",
+      "level": 8,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 10,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 10,
+      "legacyAttack": 10,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 25,
+      "name": "Jonny the beard",
+      "level": 10,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 5,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 5,
+      "legacyAttack": 10,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 29,
+      "name": "Rat",
+      "level": 2,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 2,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 2,
+      "legacyAttack": 3,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 34,
+      "name": "spider",
+      "level": 2,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 1,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 1,
+      "legacyAttack": 5,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 35,
+      "name": "Delrith",
+      "level": 30,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 37,
+        "ranged": 0,
+        "magic": 42
+      },
+      "legacyStrength": 37,
+      "legacyAttack": 42,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Demonic mixed candidate; some currently melee-only. Retain boss/quest and Abyssal mobility mechanics; generic magic alone is not a complete encounter audit."
+    },
+    {
+      "id": 37,
+      "name": "Weaponsmaster",
+      "level": 25,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 28,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 28,
+      "legacyAttack": 35,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 40,
+      "name": "skeleton",
+      "level": 21,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 20,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 20,
+      "legacyAttack": 24,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 41,
+      "name": "zombie",
+      "level": 24,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 20,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 20,
+      "legacyAttack": 23,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 43,
+      "name": "Giant bat",
+      "level": 32,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 32,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 32,
+      "legacyAttack": 32,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 45,
+      "name": "skeleton",
+      "level": 31,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 35,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 35,
+      "legacyAttack": 32,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 46,
+      "name": "skeleton",
+      "level": 25,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 28,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 28,
+      "legacyAttack": 27,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 47,
+      "name": "Large Rat",
+      "level": 13,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 15,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 15,
+      "legacyAttack": 16,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 50,
+      "name": "skeleton",
+      "level": 19,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 21,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 21,
+      "legacyAttack": 20,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 52,
+      "name": "zombie",
+      "level": 19,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 19,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 19,
+      "legacyAttack": 18,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 53,
+      "name": "Ghost",
+      "level": 25,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 0,
+        "magic": 23
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 23,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "B",
+      "rationale": "Existing supernatural mixed caster: recommended exclusive magic; quest forms retain encounter restrictions."
+    },
+    {
+      "id": 57,
+      "name": "Darkwizard",
+      "level": 13,
+      "generalProfile": "PURE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 12,
+        "ranged": 0,
+        "magic": 15
+      },
+      "legacyStrength": 12,
+      "legacyAttack": 15,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing nominal magic specialist: retain projectile and enforce exclusive style, shot-hold and pursuit rules."
+    },
+    {
+      "id": 60,
+      "name": "Darkwizard",
+      "level": 25,
+      "generalProfile": "PURE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 27,
+        "ranged": 0,
+        "magic": 27
+      },
+      "legacyStrength": 27,
+      "legacyAttack": 27,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing nominal magic specialist: retain projectile and enforce exclusive style, shot-hold and pursuit rules."
+    },
+    {
+      "id": 61,
+      "name": "Giant",
+      "level": 37,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 40,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 40,
+      "legacyAttack": 37,
+      "recommendation": "OPTIONAL_RANGED_ATTACK",
+      "priority": "C",
+      "rationale": "Potential ogre/giant rock-throw variants; preserve obvious melee enemies by default. New attack/presentation, not existing general ranged support."
+    },
+    {
+      "id": 62,
+      "name": "Goblin",
+      "level": 7,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 9,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 9,
+      "legacyAttack": 8,
+      "recommendation": "OPTIONAL_RANGED_PRIMARY_VARIANTS",
+      "priority": "C",
+      "rationale": "Potential goblin stone/spear throwers. Prefer selected distinct variants with readable equipment/projectile art, not blanket conversion of all goblinoids."
+    },
+    {
+      "id": 63,
+      "name": "farmer",
+      "level": 15,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 15,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 64,
+      "name": "Thief",
+      "level": 21,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 24,
+        "magic": 0
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 24,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 65,
+      "name": "Guard",
+      "level": 28,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 31,
+        "ranged": 31,
+        "magic": 0
+      },
+      "legacyStrength": 31,
+      "legacyAttack": 31,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Already nominal ranged guard; inspect visible equipment/role per ID before treating every guard as a bow user."
+    },
+    {
+      "id": 66,
+      "name": "Black Knight",
+      "level": 46,
+      "generalProfile": "MELEE_RARE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 48,
+        "ranged": 0,
+        "magic": 48
+      },
+      "legacyStrength": 48,
+      "legacyAttack": 45,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Armoured/warrior identity: keep melee emphasis and make magical support secondary; intended rare-cast profiles may retain stronger melee weighting."
+    },
+    {
+      "id": 67,
+      "name": "Hobgoblin",
+      "level": 32,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 34,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 34,
+      "legacyAttack": 32,
+      "recommendation": "OPTIONAL_RANGED_PRIMARY_VARIANTS",
+      "priority": "C",
+      "rationale": "Potential goblin stone/spear throwers. Prefer selected distinct variants with readable equipment/projectile art, not blanket conversion of all goblinoids."
+    },
+    {
+      "id": 68,
+      "name": "zombie",
+      "level": 32,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 35,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 35,
+      "legacyAttack": 32,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 70,
+      "name": "Scorpion",
+      "level": 21,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 22,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 22,
+      "legacyAttack": 21,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 72,
+      "name": "Man",
+      "level": 9,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 11,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 11,
+      "legacyAttack": 11,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 74,
+      "name": "Giant Spider",
+      "level": 31,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 34,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 34,
+      "legacyAttack": 30,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 76,
+      "name": "Barbarian",
+      "level": 16,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 18,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 78,
+      "name": "Gunthor the Brave",
+      "level": 37,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 38,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 38,
+      "legacyAttack": 37,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 79,
+      "name": "Witch",
+      "level": 25,
+      "generalProfile": "PURE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 30,
+        "ranged": 0,
+        "magic": 35
+      },
+      "legacyStrength": 30,
+      "legacyAttack": 35,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing nominal magic specialist: retain projectile and enforce exclusive style, shot-hold and pursuit rules."
+    },
+    {
+      "id": 80,
+      "name": "Ghost",
+      "level": 25,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 0,
+        "magic": 23
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 23,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "B",
+      "rationale": "Existing supernatural mixed caster: recommended exclusive magic; quest forms retain encounter restrictions."
+    },
+    {
+      "id": 81,
+      "name": "Wizard",
+      "level": 16,
+      "generalProfile": "PURE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 18
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 18,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing nominal magic specialist: retain projectile and enforce exclusive style, shot-hold and pursuit rules."
+    },
+    {
+      "id": 86,
+      "name": "Warrior",
+      "level": 18,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 20,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 89,
+      "name": "Highwayman",
+      "level": 13,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 13,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 13,
+      "legacyAttack": 14,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "New throwing-knife candidate matching existing thief/rogue support; new per-ID profile assignment and equipment review needed."
+    },
+    {
+      "id": 93,
+      "name": "Monk",
+      "level": 13,
+      "generalProfile": "PURE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 12,
+        "ranged": 0,
+        "magic": 12
+      },
+      "legacyStrength": 12,
+      "legacyAttack": 12,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing nominal magic specialist: retain projectile and enforce exclusive style, shot-hold and pursuit rules."
+    },
+    {
+      "id": 94,
+      "name": "Dwarf",
+      "level": 18,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 20,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 20,
+      "legacyAttack": 20,
+      "recommendation": "OPTIONAL_RANGED_PRIMARY_VARIANTS",
+      "priority": "C",
+      "rationale": "Potential dwarf crossbow/throwing-weapon roles, conditional on visible equipment and new projectile assignment; do not convert every civilian dwarf."
+    },
+    {
+      "id": 96,
+      "name": "Count Draynor",
+      "level": 43,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 28,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 28,
+      "legacyAttack": 40,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 99,
+      "name": "Deadly Red spider",
+      "level": 36,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 35,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 35,
+      "legacyAttack": 40,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 100,
+      "name": "Guard",
+      "level": 28,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 31,
+        "ranged": 31,
+        "magic": 0
+      },
+      "legacyStrength": 31,
+      "legacyAttack": 31,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Already nominal ranged guard; inspect visible equipment/role per ID before treating every guard as a bow user."
+    },
+    {
+      "id": 102,
+      "name": "White Knight",
+      "level": 56,
+      "generalProfile": "MELEE_RARE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 58,
+        "ranged": 0,
+        "magic": 58
+      },
+      "legacyStrength": 58,
+      "legacyAttack": 55,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Armoured/warrior identity: keep melee emphasis and make magical support secondary; intended rare-cast profiles may retain stronger melee weighting."
+    },
+    {
+      "id": 104,
+      "name": "Moss Giant",
+      "level": 62,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 65,
+        "ranged": 0,
+        "magic": 65
+      },
+      "legacyStrength": 65,
+      "legacyAttack": 62,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing elemental mixed user: preserve body/weapon melee identity and existing elemental projectiles."
+    },
+    {
+      "id": 108,
+      "name": "Black Knight",
+      "level": 46,
+      "generalProfile": "MELEE_RARE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 48,
+        "ranged": 0,
+        "magic": 48
+      },
+      "legacyStrength": 48,
+      "legacyAttack": 45,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Armoured/warrior identity: keep melee emphasis and make magical support secondary; intended rare-cast profiles may retain stronger melee weighting."
+    },
+    {
+      "id": 109,
+      "name": "Greldo",
+      "level": 7,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 9,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 9,
+      "legacyAttack": 8,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 114,
+      "name": "Imp",
+      "level": 5,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 5,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 5,
+      "legacyAttack": 4,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 127,
+      "name": "Jailguard",
+      "level": 34,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 36,
+        "ranged": 36,
+        "magic": 0
+      },
+      "legacyStrength": 36,
+      "legacyAttack": 34,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Already nominal ranged guard; inspect visible equipment/role per ID before treating every guard as a bow user."
+    },
+    {
+      "id": 135,
+      "name": "Ice Giant",
+      "level": 68,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 70
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 67,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing elemental mixed user: preserve body/weapon melee identity and existing elemental projectiles."
+    },
+    {
+      "id": 136,
+      "name": "King Scorpion",
+      "level": 36,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 39,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 39,
+      "legacyAttack": 40,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 137,
+      "name": "Pirate",
+      "level": 27,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 30,
+        "ranged": 35,
+        "magic": 0
+      },
+      "legacyStrength": 30,
+      "legacyAttack": 35,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 139,
+      "name": "Monk of Zamorak",
+      "level": 29,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 28,
+        "ranged": 0,
+        "magic": 28
+      },
+      "legacyStrength": 28,
+      "legacyAttack": 28,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing mixed magic user with caster identity; preserve quest/prayer/special restrictions."
+    },
+    {
+      "id": 140,
+      "name": "Monk of Zamorak",
+      "level": 19,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 18
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 18,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing mixed magic user with caster identity; preserve quest/prayer/special restrictions."
+    },
+    {
+      "id": 153,
+      "name": "Tough Goblin",
+      "level": 13,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 13,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 13,
+      "legacyAttack": 16,
+      "recommendation": "OPTIONAL_RANGED_PRIMARY_VARIANTS",
+      "priority": "C",
+      "rationale": "Potential goblin stone/spear throwers. Prefer selected distinct variants with readable equipment/projectile art, not blanket conversion of all goblinoids."
+    },
+    {
+      "id": 154,
+      "name": "Tough Goblin",
+      "level": 13,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 13,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 13,
+      "legacyAttack": 16,
+      "recommendation": "OPTIONAL_RANGED_PRIMARY_VARIANTS",
+      "priority": "C",
+      "rationale": "Potential goblin stone/spear throwers. Prefer selected distinct variants with readable equipment/projectile art, not blanket conversion of all goblinoids."
+    },
+    {
+      "id": 158,
+      "name": "Ice warrior",
+      "level": 57,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 59,
+        "ranged": 0,
+        "magic": 59
+      },
+      "legacyStrength": 59,
+      "legacyAttack": 57,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing elemental mixed user: preserve body/weapon melee identity and existing elemental projectiles."
+    },
+    {
+      "id": 159,
+      "name": "Warrior",
+      "level": 27,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 30,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 30,
+      "legacyAttack": 35,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 177,
+      "name": "Large Rat",
+      "level": 13,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 7,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 7,
+      "legacyAttack": 16,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 178,
+      "name": "Ghost",
+      "level": 25,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 0,
+        "magic": 23
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 23,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "B",
+      "rationale": "Existing supernatural mixed caster: recommended exclusive magic; quest forms retain encounter restrictions."
+    },
+    {
+      "id": 179,
+      "name": "skeleton",
+      "level": 31,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 35,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 35,
+      "legacyAttack": 32,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 180,
+      "name": "zombie",
+      "level": 32,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 35,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 35,
+      "legacyAttack": 32,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 181,
+      "name": "Lesser Demon",
+      "level": 79,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 78
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 78,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Demonic mixed candidate; some currently melee-only. Retain boss/quest and Abyssal mobility mechanics; generic magic alone is not a complete encounter audit."
+    },
+    {
+      "id": 182,
+      "name": "Melzar the mad",
+      "level": 45,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 47,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 47,
+      "legacyAttack": 47,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "B",
+      "rationale": "Currently general melee despite caster identity; new ordinary spell selection needed (reuse suitable existing effects)."
+    },
+    {
+      "id": 184,
+      "name": "Greater Demon",
+      "level": 87,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 77,
+        "ranged": 0,
+        "magic": 86
+      },
+      "legacyStrength": 77,
+      "legacyAttack": 86,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Demonic mixed candidate; some currently melee-only. Retain boss/quest and Abyssal mobility mechanics; generic magic alone is not a complete encounter audit."
+    },
+    {
+      "id": 188,
+      "name": "Bear",
+      "level": 26,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 28,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 28,
+      "legacyAttack": 27,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 189,
+      "name": "Black Knight",
+      "level": 46,
+      "generalProfile": "MELEE_RARE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 48,
+        "ranged": 0,
+        "magic": 48
+      },
+      "legacyStrength": 48,
+      "legacyAttack": 45,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Armoured/warrior identity: keep melee emphasis and make magical support secondary; intended rare-cast profiles may retain stronger melee weighting."
+    },
+    {
+      "id": 190,
+      "name": "chaos Dwarf",
+      "level": 59,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 60,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 60,
+      "legacyAttack": 58,
+      "recommendation": "OPTIONAL_RANGED_PRIMARY_VARIANTS",
+      "priority": "C",
+      "rationale": "Potential dwarf crossbow/throwing-weapon roles, conditional on visible equipment and new projectile assignment; do not convert every civilian dwarf."
+    },
+    {
+      "id": 192,
+      "name": "Wormbrain",
+      "level": 7,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 9,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 9,
+      "legacyAttack": 8,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 195,
+      "name": "skeleton",
+      "level": 54,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 55,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 55,
+      "legacyAttack": 52,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 196,
+      "name": "Dragon",
+      "level": 110,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Dragon breath paths require separate source/mitigation review; not a generic spell classification."
+      ],
+      "baselinePower": {
+        "melee": 110,
+        "ranged": 0,
+        "magic": 110
+      },
+      "legacyStrength": 110,
+      "legacyAttack": 110,
+      "recommendation": "MELEE_MAGIC_MIXED_REVIEW_PRIMARY",
+      "priority": "C",
+      "rationale": "Existing dragon magic plus separate breath handling. Choose primary power/style deliberately; defense family does not determine offense."
+    },
+    {
+      "id": 199,
+      "name": "Dark Warrior",
+      "level": 21,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 20,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 200,
+      "name": "Druid",
+      "level": 29,
+      "generalProfile": "PURE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 28,
+        "ranged": 0,
+        "magic": 28
+      },
+      "legacyStrength": 28,
+      "legacyAttack": 28,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing nominal magic specialist: retain projectile and enforce exclusive style, shot-hold and pursuit rules."
+    },
+    {
+      "id": 201,
+      "name": "Red Dragon",
+      "level": 140,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Dragon breath paths require separate source/mitigation review; not a generic spell classification."
+      ],
+      "baselinePower": {
+        "melee": 98,
+        "ranged": 0,
+        "magic": 140
+      },
+      "legacyStrength": 98,
+      "legacyAttack": 140,
+      "recommendation": "MELEE_MAGIC_MIXED_REVIEW_PRIMARY",
+      "priority": "C",
+      "rationale": "Existing dragon magic plus separate breath handling. Choose primary power/style deliberately; defense family does not determine offense."
+    },
+    {
+      "id": 202,
+      "name": "Blue Dragon",
+      "level": 105,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Dragon breath paths require separate source/mitigation review; not a generic spell classification."
+      ],
+      "baselinePower": {
+        "melee": 91,
+        "ranged": 0,
+        "magic": 105
+      },
+      "legacyStrength": 91,
+      "legacyAttack": 105,
+      "recommendation": "MELEE_MAGIC_MIXED_REVIEW_PRIMARY",
+      "priority": "C",
+      "rationale": "Existing dragon magic plus separate breath handling. Choose primary power/style deliberately; defense family does not determine offense."
+    },
+    {
+      "id": 203,
+      "name": "Baby Blue Dragon",
+      "level": 50,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Dragon breath paths require separate source/mitigation review; not a generic spell classification."
+      ],
+      "baselinePower": {
+        "melee": 84,
+        "ranged": 0,
+        "magic": 84
+      },
+      "legacyStrength": 84,
+      "legacyAttack": 50,
+      "recommendation": "MELEE_MAGIC_MIXED_REVIEW_PRIMARY",
+      "priority": "C",
+      "rationale": "Existing dragon magic plus separate breath handling. Choose primary power/style deliberately; defense family does not determine offense."
+    },
+    {
+      "id": 214,
+      "name": "zombie",
+      "level": 32,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 35,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 35,
+      "legacyAttack": 32,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 216,
+      "name": "tree spirit",
+      "level": 95,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 105,
+        "ranged": 0,
+        "magic": 105
+      },
+      "legacyStrength": 105,
+      "legacyAttack": 100,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing elemental mixed user: preserve body/weapon melee identity and existing elemental projectiles."
+    },
+    {
+      "id": 232,
+      "name": "Bandit",
+      "level": 29,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 26,
+        "ranged": 32,
+        "magic": 0
+      },
+      "legacyStrength": 26,
+      "legacyAttack": 32,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 234,
+      "name": "Bandit",
+      "level": 29,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 26,
+        "ranged": 32,
+        "magic": 0
+      },
+      "legacyStrength": 26,
+      "legacyAttack": 32,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 236,
+      "name": "Donny the lad",
+      "level": 39,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 36,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 36,
+      "legacyAttack": 42,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 237,
+      "name": "Black Heather",
+      "level": 39,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 36,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 36,
+      "legacyAttack": 42,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 238,
+      "name": "Speedy Keith",
+      "level": 39,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 36,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 36,
+      "legacyAttack": 42,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 239,
+      "name": "White wolf sentry",
+      "level": 31,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 31,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 31,
+      "legacyAttack": 30,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 243,
+      "name": "Grey wolf",
+      "level": 64,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 65,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 65,
+      "legacyAttack": 60,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 244,
+      "name": "shapeshifter",
+      "level": 24,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 20,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 20,
+      "legacyAttack": 28,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 248,
+      "name": "White wolf",
+      "level": 41,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 41,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 41,
+      "legacyAttack": 40,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 249,
+      "name": "Pack leader",
+      "level": 71,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 71,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 71,
+      "legacyAttack": 70,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 251,
+      "name": "Thug",
+      "level": 18,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 17,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 17,
+      "legacyAttack": 19,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 252,
+      "name": "Firebird",
+      "level": 6,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 7,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 7,
+      "legacyAttack": 6,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 254,
+      "name": "Ice queen",
+      "level": 103,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 104,
+        "ranged": 0,
+        "magic": 105
+      },
+      "legacyStrength": 104,
+      "legacyAttack": 105,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing mixed magic user with caster identity; preserve quest/prayer/special restrictions."
+    },
+    {
+      "id": 259,
+      "name": "Grip",
+      "level": 46,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 31,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 31,
+      "legacyAttack": 31,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 262,
+      "name": "Guard Dog",
+      "level": 46,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 46,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 46,
+      "legacyAttack": 45,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 263,
+      "name": "Ice spider",
+      "level": 64,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 65,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 65,
+      "legacyAttack": 60,
+      "recommendation": "OPTIONAL_MAGIC_SECONDARY",
+      "priority": "C",
+      "rationale": "Magical spider variants could add web/frost/shadow casts; currently general melee. New attack behavior/effects need deliberate design."
+    },
+    {
+      "id": 264,
+      "name": "Pirate",
+      "level": 30,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 33,
+        "ranged": 38,
+        "magic": 0
+      },
+      "legacyStrength": 33,
+      "legacyAttack": 38,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 265,
+      "name": "Jailer",
+      "level": 51,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 53,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 53,
+      "legacyAttack": 50,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 266,
+      "name": "Lord Darquarius",
+      "level": 76,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 78,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 78,
+      "legacyAttack": 75,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 270,
+      "name": "Chaos Druid",
+      "level": 19,
+      "generalProfile": "PURE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 14,
+        "ranged": 0,
+        "magic": 18
+      },
+      "legacyStrength": 14,
+      "legacyAttack": 18,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing nominal magic specialist: retain projectile and enforce exclusive style, shot-hold and pursuit rules."
+    },
+    {
+      "id": 271,
+      "name": "Poison Scorpion",
+      "level": 26,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 27,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 27,
+      "legacyAttack": 26,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 276,
+      "name": "Sir Mordred",
+      "level": 58,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 60,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 60,
+      "legacyAttack": 57,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 277,
+      "name": "Renegade knight",
+      "level": 51,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 53,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 53,
+      "legacyAttack": 50,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 290,
+      "name": "Black Demon",
+      "level": 156,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 91,
+        "ranged": 0,
+        "magic": 155
+      },
+      "legacyStrength": 91,
+      "legacyAttack": 155,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Demonic mixed candidate; some currently melee-only. Retain boss/quest and Abyssal mobility mechanics; generic magic alone is not a complete encounter audit."
+    },
+    {
+      "id": 291,
+      "name": "Black Dragon",
+      "level": 200,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Dragon breath paths require separate source/mitigation review; not a generic spell classification."
+      ],
+      "baselinePower": {
+        "melee": 182,
+        "ranged": 0,
+        "magic": 210
+      },
+      "legacyStrength": 182,
+      "legacyAttack": 210,
+      "recommendation": "MELEE_MAGIC_MIXED_REVIEW_PRIMARY",
+      "priority": "C",
+      "rationale": "Existing dragon magic plus separate breath handling. Choose primary power/style deliberately; defense family does not determine offense."
+    },
+    {
+      "id": 292,
+      "name": "Poison Spider",
+      "level": 63,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 68,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 68,
+      "legacyAttack": 60,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 293,
+      "name": "Monk of Zamorak",
+      "level": 47,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 48,
+        "ranged": 0,
+        "magic": 48
+      },
+      "legacyStrength": 48,
+      "legacyAttack": 48,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing mixed magic user with caster identity; preserve quest/prayer/special restrictions."
+    },
+    {
+      "id": 294,
+      "name": "Hellhound",
+      "level": 114,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 114,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 114,
+      "legacyAttack": 115,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 295,
+      "name": "Animated axe",
+      "level": 46,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 48,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 48,
+      "legacyAttack": 48,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 296,
+      "name": "Black Unicorn",
+      "level": 31,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 33,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 33,
+      "legacyAttack": 31,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 298,
+      "name": "Otherworldly being",
+      "level": 66,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 66,
+        "ranged": 0,
+        "magic": 66
+      },
+      "legacyStrength": 66,
+      "legacyAttack": 66,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "B",
+      "rationale": "Existing supernatural mixed caster: recommended exclusive magic; quest forms retain encounter restrictions."
+    },
+    {
+      "id": 311,
+      "name": "Hobgoblin",
+      "level": 48,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 48,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 48,
+      "legacyAttack": 49,
+      "recommendation": "OPTIONAL_RANGED_PRIMARY_VARIANTS",
+      "priority": "C",
+      "rationale": "Potential goblin stone/spear throwers. Prefer selected distinct variants with readable equipment/projectile art, not blanket conversion of all goblinoids."
+    },
+    {
+      "id": 312,
+      "name": "Ogre",
+      "level": 58,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 72,
+      "recommendation": "OPTIONAL_RANGED_ATTACK",
+      "priority": "C",
+      "rationale": "Potential ogre/giant rock-throw variants; preserve obvious melee enemies by default. New attack/presentation, not existing general ranged support."
+    },
+    {
+      "id": 315,
+      "name": "Chronozon",
+      "level": 121,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 182,
+        "ranged": 0,
+        "magic": 183
+      },
+      "legacyStrength": 182,
+      "legacyAttack": 183,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Demonic mixed candidate; some currently melee-only. Retain boss/quest and Abyssal mobility mechanics; generic magic alone is not a complete encounter audit."
+    },
+    {
+      "id": 318,
+      "name": "Man",
+      "level": 9,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 11,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 11,
+      "legacyAttack": 11,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 319,
+      "name": "farmer",
+      "level": 15,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 15,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 320,
+      "name": "Warrior",
+      "level": 27,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 30,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 30,
+      "legacyAttack": 35,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 321,
+      "name": "Guard",
+      "level": 28,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 31,
+        "ranged": 31,
+        "magic": 0
+      },
+      "legacyStrength": 31,
+      "legacyAttack": 31,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Already nominal ranged guard; inspect visible equipment/role per ID before treating every guard as a bow user."
+    },
+    {
+      "id": 322,
+      "name": "Knight",
+      "level": 56,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 58,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 58,
+      "legacyAttack": 55,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 323,
+      "name": "Paladin",
+      "level": 71,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 88,
+        "ranged": 0,
+        "magic": 88
+      },
+      "legacyStrength": 88,
+      "legacyAttack": 85,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Armoured/warrior identity: keep melee emphasis and make magical support secondary; intended rare-cast profiles may retain stronger melee weighting."
+    },
+    {
+      "id": 324,
+      "name": "Hero",
+      "level": 83,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 88,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 88,
+      "legacyAttack": 85,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 338,
+      "name": "zoo keeper",
+      "level": 20,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 20,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 20,
+      "legacyAttack": 20,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 342,
+      "name": "Rogue",
+      "level": 21,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 24,
+        "magic": 0
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 24,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 343,
+      "name": "Shadow spider",
+      "level": 53,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 52,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 52,
+      "legacyAttack": 54,
+      "recommendation": "OPTIONAL_MAGIC_SECONDARY",
+      "priority": "C",
+      "rationale": "Magical spider variants could add web/frost/shadow casts; currently general melee. New attack behavior/effects need deliberate design."
+    },
+    {
+      "id": 344,
+      "name": "Fire Giant",
+      "level": 109,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 105,
+        "ranged": 0,
+        "magic": 110
+      },
+      "legacyStrength": 105,
+      "legacyAttack": 110,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing elemental mixed user: preserve body/weapon melee identity and existing elemental projectiles."
+    },
+    {
+      "id": 348,
+      "name": "Forester",
+      "level": 21,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 24,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 351,
+      "name": "Thief",
+      "level": 21,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 24,
+        "magic": 0
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 24,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 352,
+      "name": "Head Thief",
+      "level": 34,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 33,
+        "ranged": 34,
+        "magic": 0
+      },
+      "legacyStrength": 33,
+      "legacyAttack": 34,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 356,
+      "name": "Mountain Dwarf",
+      "level": 28,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 30,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 30,
+      "legacyAttack": 30,
+      "recommendation": "OPTIONAL_RANGED_PRIMARY_VARIANTS",
+      "priority": "C",
+      "rationale": "Potential dwarf crossbow/throwing-weapon roles, conditional on visible equipment and new projectile assignment; do not convert every civilian dwarf."
+    },
+    {
+      "id": 358,
+      "name": "Necromancer",
+      "level": 34,
+      "generalProfile": "PURE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 28,
+        "ranged": 0,
+        "magic": 28
+      },
+      "legacyStrength": 28,
+      "legacyAttack": 28,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing nominal magic specialist: retain projectile and enforce exclusive style, shot-hold and pursuit rules."
+    },
+    {
+      "id": 359,
+      "name": "zombie",
+      "level": 24,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 23,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 361,
+      "name": "The Fire warrior of lesarkus",
+      "level": 63,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 72,
+        "ranged": 0,
+        "magic": 72
+      },
+      "legacyStrength": 72,
+      "legacyAttack": 72,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing elemental mixed user: preserve body/weapon melee identity and existing elemental projectiles."
+    },
+    {
+      "id": 364,
+      "name": "Lucien",
+      "level": 21,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 0,
+        "magic": 24
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 24,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing mixed magic user with caster identity; preserve quest/prayer/special restrictions."
+    },
+    {
+      "id": 367,
+      "name": "Dungeon Rat",
+      "level": 16,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 22,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 22,
+      "legacyAttack": 20,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 383,
+      "name": "General Khazard",
+      "level": 100,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 78,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 78,
+      "legacyAttack": 75,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 384,
+      "name": "Khazard Ogre",
+      "level": 58,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 72,
+      "recommendation": "OPTIONAL_RANGED_ATTACK",
+      "priority": "C",
+      "rationale": "Potential ogre/giant rock-throw variants; preserve obvious melee enemies by default. New attack/presentation, not existing general ranged support."
+    },
+    {
+      "id": 386,
+      "name": "Khazard Scorpion",
+      "level": 46,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 49,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 49,
+      "legacyAttack": 50,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 388,
+      "name": "Bouncer",
+      "level": 122,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 130,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 130,
+      "legacyAttack": 130,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 399,
+      "name": "local gnome",
+      "level": 3,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 3,
+      "legacyAttack": 3,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 401,
+      "name": "Black Knight titan",
+      "level": 146,
+      "generalProfile": "MELEE_RARE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 148,
+        "ranged": 0,
+        "magic": 148
+      },
+      "legacyStrength": 148,
+      "legacyAttack": 145,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Armoured/warrior identity: keep melee emphasis and make magical support secondary; intended rare-cast profiles may retain stronger melee weighting."
+    },
+    {
+      "id": 402,
+      "name": "kalron",
+      "level": 3,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 3,
+      "legacyAttack": 3,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 407,
+      "name": "Khazard troop",
+      "level": 28,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 31,
+        "ranged": 31,
+        "magic": 0
+      },
+      "legacyStrength": 31,
+      "legacyAttack": 31,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing mixed ranged troops/mercenaries; ranged emphasis is plausible where equipment supports it."
+    },
+    {
+      "id": 409,
+      "name": "gnome troop",
+      "level": 3,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 3,
+        "ranged": 3,
+        "magic": 0
+      },
+      "legacyStrength": 3,
+      "legacyAttack": 3,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing mixed ranged troops/mercenaries; ranged emphasis is plausible where equipment supports it."
+    },
+    {
+      "id": 410,
+      "name": "khazard warlord",
+      "level": 100,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 78,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 78,
+      "legacyAttack": 75,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 416,
+      "name": "unhappy peasant",
+      "level": 25,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 28,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 28,
+      "legacyAttack": 25,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 417,
+      "name": "happy peasant",
+      "level": 25,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 28,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 28,
+      "legacyAttack": 25,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 420,
+      "name": "carnillean guard",
+      "level": 28,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 31,
+        "ranged": 31,
+        "magic": 0
+      },
+      "legacyStrength": 31,
+      "legacyAttack": 31,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Already nominal ranged guard; inspect visible equipment/role per ID before treating every guard as a bow user."
+    },
+    {
+      "id": 421,
+      "name": "Tribesman",
+      "level": 39,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 40,
+        "ranged": 40,
+        "magic": 0
+      },
+      "legacyStrength": 40,
+      "legacyAttack": 38,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 425,
+      "name": "cult member",
+      "level": 20,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 20,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 20,
+      "legacyAttack": 20,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 426,
+      "name": "Lord hazeel",
+      "level": 100,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 78,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 78,
+      "legacyAttack": 75,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 428,
+      "name": "Khazard commander",
+      "level": 41,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 45,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 45,
+      "legacyAttack": 50,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 438,
+      "name": "Citizen",
+      "level": 11,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 10,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 10,
+      "legacyAttack": 12,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 439,
+      "name": "Citizen",
+      "level": 10,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 8,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 8,
+      "legacyAttack": 10,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 440,
+      "name": "Citizen",
+      "level": 12,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 14,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 14,
+      "legacyAttack": 11,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 441,
+      "name": "Citizen",
+      "level": 20,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 20,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 442,
+      "name": "Citizen",
+      "level": 15,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 20,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 20,
+      "legacyAttack": 18,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 462,
+      "name": "Platform Fisherman",
+      "level": 30,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 15,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 15,
+      "legacyAttack": 15,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 463,
+      "name": "Platform Fisherman",
+      "level": 30,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 15,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 15,
+      "legacyAttack": 15,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 464,
+      "name": "Platform Fisherman",
+      "level": 30,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 15,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 15,
+      "legacyAttack": 15,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 473,
+      "name": "Rat",
+      "level": 7,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 8,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 8,
+      "legacyAttack": 15,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 477,
+      "name": "King Black Dragon",
+      "level": 245,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Dragon breath paths require separate source/mitigation review; not a generic spell classification."
+      ],
+      "baselinePower": {
+        "melee": 224,
+        "ranged": 0,
+        "magic": 250
+      },
+      "legacyStrength": 224,
+      "legacyAttack": 250,
+      "recommendation": "MELEE_MAGIC_MIXED_REVIEW_PRIMARY",
+      "priority": "C",
+      "rationale": "Existing dragon magic plus separate breath handling. Choose primary power/style deliberately; defense family does not determine offense."
+    },
+    {
+      "id": 495,
+      "name": "Mourner",
+      "level": 22,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 30,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 30,
+      "legacyAttack": 20,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 498,
+      "name": "skeleton mage",
+      "level": 21,
+      "generalProfile": "PURE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 0,
+        "magic": 24
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 24,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing nominal magic specialist: retain projectile and enforce exclusive style, shot-hold and pursuit rules."
+    },
+    {
+      "id": 502,
+      "name": "Mourner",
+      "level": 25,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 25,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 25,
+      "legacyAttack": 30,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 516,
+      "name": "target practice zombie",
+      "level": 24,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 23,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 518,
+      "name": "Colonel Radick",
+      "level": 51,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 30,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 30,
+      "legacyAttack": 40,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 519,
+      "name": "Soldier",
+      "level": 28,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 31,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 31,
+      "legacyAttack": 31,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 521,
+      "name": "Jungle Spider",
+      "level": 47,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 47,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 47,
+      "legacyAttack": 45,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 523,
+      "name": "Jogre",
+      "level": 58,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 72,
+      "recommendation": "OPTIONAL_RANGED_ATTACK",
+      "priority": "C",
+      "rationale": "Potential ogre/giant rock-throw variants; preserve obvious melee enemies by default. New attack/presentation, not existing general ranged support."
+    },
+    {
+      "id": 525,
+      "name": "Ogre",
+      "level": 58,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 72,
+      "recommendation": "OPTIONAL_RANGED_ATTACK",
+      "priority": "C",
+      "rationale": "Potential ogre/giant rock-throw variants; preserve obvious melee enemies by default. New attack/presentation, not existing general ranged support."
+    },
+    {
+      "id": 531,
+      "name": "Ogre chieftan",
+      "level": 78,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 90,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 90,
+      "legacyAttack": 92,
+      "recommendation": "OPTIONAL_RANGED_ATTACK",
+      "priority": "C",
+      "rationale": "Potential ogre/giant rock-throw variants; preserve obvious melee enemies by default. New attack/presentation, not existing general ranged support."
+    },
+    {
+      "id": 542,
+      "name": "UndeadOne",
+      "level": 62,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 50,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 50,
+      "legacyAttack": 80,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 550,
+      "name": "charlie",
+      "level": 0,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 0,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 0,
+      "legacyAttack": 0,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 551,
+      "name": "Gnome guard",
+      "level": 31,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 31,
+        "ranged": 31,
+        "magic": 0
+      },
+      "legacyStrength": 31,
+      "legacyAttack": 31,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 555,
+      "name": "Chaos Druid warrior",
+      "level": 44,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 48,
+        "ranged": 0,
+        "magic": 48
+      },
+      "legacyStrength": 48,
+      "legacyAttack": 48,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Armoured/warrior identity: keep melee emphasis and make magical support secondary; intended rare-cast profiles may retain stronger melee weighting."
+    },
+    {
+      "id": 557,
+      "name": "Shipyard worker",
+      "level": 44,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 48,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 48,
+      "legacyAttack": 48,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 558,
+      "name": "Shipyard worker",
+      "level": 44,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 48,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 48,
+      "legacyAttack": 48,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 559,
+      "name": "Shipyard worker",
+      "level": 44,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 48,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 48,
+      "legacyAttack": 48,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 562,
+      "name": "Gnome guard",
+      "level": 23,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 23,
+        "magic": 0
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 23,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 567,
+      "name": "Salarin the twisted",
+      "level": 69,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Salarin player-cast response drains Melee; separate from ordinary NPC projectile attack."
+      ],
+      "baselinePower": {
+        "melee": 68,
+        "ranged": 0,
+        "magic": 68
+      },
+      "legacyStrength": 68,
+      "legacyAttack": 68,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing mixed magic user with caster identity; preserve quest/prayer/special restrictions."
+    },
+    {
+      "id": 568,
+      "name": "Black Demon",
+      "level": 175,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 91,
+        "ranged": 0,
+        "magic": 195
+      },
+      "legacyStrength": 91,
+      "legacyAttack": 195,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Demonic mixed candidate; some currently melee-only. Retain boss/quest and Abyssal mobility mechanics; generic magic alone is not a complete encounter audit."
+    },
+    {
+      "id": 574,
+      "name": "Yanille Watchman",
+      "level": 33,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 41,
+        "ranged": 41,
+        "magic": 0
+      },
+      "legacyStrength": 41,
+      "legacyAttack": 41,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 582,
+      "name": "Gnome guard",
+      "level": 27,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 17,
+        "ranged": 31,
+        "magic": 0
+      },
+      "legacyStrength": 17,
+      "legacyAttack": 31,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 583,
+      "name": "Gnome child",
+      "level": 3,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 3,
+      "legacyAttack": 3,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 584,
+      "name": "Earth warrior",
+      "level": 52,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 54,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 54,
+      "legacyAttack": 52,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 585,
+      "name": "Gnome child",
+      "level": 3,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 3,
+      "legacyAttack": 3,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 586,
+      "name": "Gnome child",
+      "level": 3,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 3,
+      "legacyAttack": 3,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 592,
+      "name": "Gnome local",
+      "level": 9,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 9,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 9,
+      "legacyAttack": 9,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 593,
+      "name": "Gnome local",
+      "level": 3,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 3,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 3,
+      "legacyAttack": 3,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 594,
+      "name": "Moss Giant",
+      "level": 62,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 65,
+        "ranged": 0,
+        "magic": 65
+      },
+      "legacyStrength": 65,
+      "legacyAttack": 62,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing elemental mixed user: preserve body/weapon melee identity and existing elemental projectiles."
+    },
+    {
+      "id": 595,
+      "name": "Gnome Baller",
+      "level": 70,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 70,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 597,
+      "name": "Gnome Baller",
+      "level": 70,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 70,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 598,
+      "name": "Gnome Baller",
+      "level": 70,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 70,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 599,
+      "name": "Gnome Baller",
+      "level": 70,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 70,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 600,
+      "name": "Gnome Baller",
+      "level": 70,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 70,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 602,
+      "name": "Gnome Baller",
+      "level": 70,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 70,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 603,
+      "name": "Gnome Baller",
+      "level": 70,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 70,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 604,
+      "name": "Gnome Baller",
+      "level": 70,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 70,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 605,
+      "name": "Gnome Baller",
+      "level": 70,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 70,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 606,
+      "name": "Gnome Baller",
+      "level": 70,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 70,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 607,
+      "name": "Gnome Baller",
+      "level": 70,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 70,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 608,
+      "name": "Gnome Baller",
+      "level": 70,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 70,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 613,
+      "name": "Nazastarool Zombie",
+      "level": 83,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 90,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 90,
+      "legacyAttack": 95,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 614,
+      "name": "Nazastarool Skeleton",
+      "level": 83,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 90,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 90,
+      "legacyAttack": 95,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 615,
+      "name": "Nazastarool Ghost",
+      "level": 83,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 90,
+        "ranged": 0,
+        "magic": 95
+      },
+      "legacyStrength": 90,
+      "legacyAttack": 95,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "B",
+      "rationale": "Existing supernatural mixed caster: recommended exclusive magic; quest forms retain encounter restrictions."
+    },
+    {
+      "id": 630,
+      "name": "Blessed Vermen",
+      "level": 14,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 7,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 7,
+      "legacyAttack": 15,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 631,
+      "name": "Blessed Spider",
+      "level": 35,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 34,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 34,
+      "legacyAttack": 45,
+      "recommendation": "OPTIONAL_MAGIC_SECONDARY",
+      "priority": "C",
+      "rationale": "Magical spider variants could add web/frost/shadow casts; currently general melee. New attack behavior/effects need deliberate design."
+    },
+    {
+      "id": 632,
+      "name": "Paladin",
+      "level": 71,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 88,
+        "ranged": 0,
+        "magic": 88
+      },
+      "legacyStrength": 88,
+      "legacyAttack": 85,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Armoured/warrior identity: keep melee emphasis and make magical support secondary; intended rare-cast profiles may retain stronger melee weighting."
+    },
+    {
+      "id": 633,
+      "name": "Paladin",
+      "level": 71,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 88,
+        "ranged": 0,
+        "magic": 88
+      },
+      "legacyStrength": 88,
+      "legacyAttack": 85,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Armoured/warrior identity: keep melee emphasis and make magical support secondary; intended rare-cast profiles may retain stronger melee weighting."
+    },
+    {
+      "id": 634,
+      "name": "slave",
+      "level": 16,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 17,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 635,
+      "name": "slave",
+      "level": 16,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 17,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 636,
+      "name": "slave",
+      "level": 16,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 17,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 637,
+      "name": "slave",
+      "level": 16,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 17,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 638,
+      "name": "slave",
+      "level": 16,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 17,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 639,
+      "name": "slave",
+      "level": 16,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 17,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 640,
+      "name": "slave",
+      "level": 16,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 17,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 641,
+      "name": "Kalrag",
+      "level": 78,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 78,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 78,
+      "legacyAttack": 88,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 644,
+      "name": "Souless",
+      "level": 16,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 17,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 645,
+      "name": "Othainian",
+      "level": 78,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 78,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 78,
+      "legacyAttack": 78,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Demonic mixed candidate; some currently melee-only. Retain boss/quest and Abyssal mobility mechanics; generic magic alone is not a complete encounter audit."
+    },
+    {
+      "id": 646,
+      "name": "Doomion",
+      "level": 98,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 98,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 98,
+      "legacyAttack": 98,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Demonic mixed candidate; some currently melee-only. Retain boss/quest and Abyssal mobility mechanics; generic magic alone is not a complete encounter audit."
+    },
+    {
+      "id": 647,
+      "name": "Holthion",
+      "level": 78,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 78,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 78,
+      "legacyAttack": 78,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Demonic mixed candidate; some currently melee-only. Retain boss/quest and Abyssal mobility mechanics; generic magic alone is not a complete encounter audit."
+    },
+    {
+      "id": 651,
+      "name": "Goblin guard",
+      "level": 48,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 51,
+        "ranged": 51,
+        "magic": 0
+      },
+      "legacyStrength": 51,
+      "legacyAttack": 48,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 653,
+      "name": "Ugthanki",
+      "level": 45,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 45,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 45,
+      "legacyAttack": 45,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 655,
+      "name": "Souless",
+      "level": 24,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 23,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 656,
+      "name": "Dungeon spider",
+      "level": 22,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 10,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 10,
+      "legacyAttack": 25,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 658,
+      "name": "Iban disciple",
+      "level": 19,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 18,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "B",
+      "rationale": "Currently general melee despite caster identity; new ordinary spell selection needed (reuse suitable existing effects)."
+    },
+    {
+      "id": 660,
+      "name": "Goblin",
+      "level": 19,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 24,
+      "recommendation": "OPTIONAL_RANGED_PRIMARY_VARIANTS",
+      "priority": "C",
+      "rationale": "Potential goblin stone/spear throwers. Prefer selected distinct variants with readable equipment/projectile art, not blanket conversion of all goblinoids."
+    },
+    {
+      "id": 663,
+      "name": "San Tojalon",
+      "level": 120,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 120,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 120,
+      "legacyAttack": 120,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 664,
+      "name": "Ghost",
+      "level": 29,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 30,
+        "ranged": 0,
+        "magic": 33
+      },
+      "legacyStrength": 30,
+      "legacyAttack": 33,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "B",
+      "rationale": "Existing supernatural mixed caster: recommended exclusive magic; quest forms retain encounter restrictions."
+    },
+    {
+      "id": 668,
+      "name": "Mercenary",
+      "level": 50,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 32,
+        "ranged": 48,
+        "magic": 0
+      },
+      "legacyStrength": 32,
+      "legacyAttack": 48,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing mixed ranged troops/mercenaries; ranged emphasis is plausible where equipment supports it."
+    },
+    {
+      "id": 669,
+      "name": "Mercenary Captain",
+      "level": 64,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 48,
+        "ranged": 48,
+        "magic": 0
+      },
+      "legacyStrength": 48,
+      "legacyAttack": 48,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing mixed ranged troops/mercenaries; ranged emphasis is plausible where equipment supports it."
+    },
+    {
+      "id": 670,
+      "name": "Mercenary",
+      "level": 39,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 32,
+        "ranged": 48,
+        "magic": 0
+      },
+      "legacyStrength": 32,
+      "legacyAttack": 48,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing mixed ranged troops/mercenaries; ranged emphasis is plausible where equipment supports it."
+    },
+    {
+      "id": 671,
+      "name": "Mining Slave",
+      "level": 16,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 17,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 683,
+      "name": "Gorad",
+      "level": 78,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 90,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 90,
+      "legacyAttack": 92,
+      "recommendation": "OPTIONAL_RANGED_ATTACK",
+      "priority": "C",
+      "rationale": "Potential ogre/giant rock-throw variants; preserve obvious melee enemies by default. New attack/presentation, not existing general ranged support."
+    },
+    {
+      "id": 684,
+      "name": "Ogre guard",
+      "level": 96,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 90,
+        "ranged": 98,
+        "magic": 0
+      },
+      "legacyStrength": 90,
+      "legacyAttack": 98,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Already nominal ranged guard; inspect visible equipment/role per ID before treating every guard as a bow user."
+    },
+    {
+      "id": 690,
+      "name": "Mercenary",
+      "level": 39,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 32,
+        "ranged": 48,
+        "magic": 0
+      },
+      "legacyStrength": 32,
+      "legacyAttack": 48,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing mixed ranged troops/mercenaries; ranged emphasis is plausible where equipment supports it."
+    },
+    {
+      "id": 692,
+      "name": "Mercenary",
+      "level": 39,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 32,
+        "ranged": 48,
+        "magic": 0
+      },
+      "legacyStrength": 32,
+      "legacyAttack": 48,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing mixed ranged troops/mercenaries; ranged emphasis is plausible where equipment supports it."
+    },
+    {
+      "id": 694,
+      "name": "Dwarf",
+      "level": 18,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 20,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 20,
+      "legacyAttack": 20,
+      "recommendation": "OPTIONAL_RANGED_PRIMARY_VARIANTS",
+      "priority": "C",
+      "rationale": "Potential dwarf crossbow/throwing-weapon roles, conditional on visible equipment and new projectile assignment; do not convert every civilian dwarf."
+    },
+    {
+      "id": 697,
+      "name": "Ogre guard",
+      "level": 78,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 90,
+        "ranged": 92,
+        "magic": 0
+      },
+      "legacyStrength": 90,
+      "legacyAttack": 92,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Already nominal ranged guard; inspect visible equipment/role per ID before treating every guard as a bow user."
+    },
+    {
+      "id": 699,
+      "name": "Dwarf",
+      "level": 18,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 20,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 20,
+      "legacyAttack": 20,
+      "recommendation": "OPTIONAL_RANGED_PRIMARY_VARIANTS",
+      "priority": "C",
+      "rationale": "Potential dwarf crossbow/throwing-weapon roles, conditional on visible equipment and new projectile assignment; do not convert every civilian dwarf."
+    },
+    {
+      "id": 702,
+      "name": "Captain Siad",
+      "level": 48,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 48,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 48,
+      "legacyAttack": 48,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 703,
+      "name": "Bedabin Nomad Guard",
+      "level": 70,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 70,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 70,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 704,
+      "name": "Ogre citizen",
+      "level": 58,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 72,
+      "recommendation": "OPTIONAL_RANGED_ATTACK",
+      "priority": "C",
+      "rationale": "Potential ogre/giant rock-throw variants; preserve obvious melee enemies by default. New attack/presentation, not existing general ranged support."
+    },
+    {
+      "id": 705,
+      "name": "Rock of ages",
+      "level": 150,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 150,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 150,
+      "legacyAttack": 150,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 706,
+      "name": "Ogre",
+      "level": 58,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 72,
+      "recommendation": "OPTIONAL_RANGED_ATTACK",
+      "priority": "C",
+      "rationale": "Potential ogre/giant rock-throw variants; preserve obvious melee enemies by default. New attack/presentation, not existing general ranged support."
+    },
+    {
+      "id": 710,
+      "name": "Draft Mercenary Guard",
+      "level": 50,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 32,
+        "ranged": 48,
+        "magic": 0
+      },
+      "legacyStrength": 32,
+      "legacyAttack": 48,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Already nominal ranged guard; inspect visible equipment/role per ID before treating every guard as a bow user."
+    },
+    {
+      "id": 713,
+      "name": "kolodion",
+      "level": 12,
+      "generalProfile": "PURE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 10,
+        "ranged": 0,
+        "magic": 20
+      },
+      "legacyStrength": 10,
+      "legacyAttack": 20,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing nominal magic specialist: retain projectile and enforce exclusive style, shot-hold and pursuit rules."
+    },
+    {
+      "id": 716,
+      "name": "Rowdy Guard",
+      "level": 50,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 32,
+        "ranged": 48,
+        "magic": 0
+      },
+      "legacyStrength": 32,
+      "legacyAttack": 48,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "B",
+      "rationale": "Already nominal ranged guard; inspect visible equipment/role per ID before treating every guard as a bow user."
+    },
+    {
+      "id": 717,
+      "name": "Shantay Pass Guard",
+      "level": 32,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 32,
+        "ranged": 32,
+        "magic": 0
+      },
+      "legacyStrength": 32,
+      "legacyAttack": 32,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 718,
+      "name": "Rowdy Slave",
+      "level": 16,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 17,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 721,
+      "name": "Desert Wolf",
+      "level": 31,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 31,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 31,
+      "legacyAttack": 30,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 729,
+      "name": "civillian",
+      "level": 18,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 18,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 18,
+      "legacyAttack": 20,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 757,
+      "name": "kolodion",
+      "level": 65,
+      "generalProfile": "MELEE_FREQUENT_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 70,
+        "ranged": 0,
+        "magic": 72
+      },
+      "legacyStrength": 70,
+      "legacyAttack": 72,
+      "recommendation": "QUEST_FORM_SPECIFIC_MIXED",
+      "priority": "C",
+      "rationale": "Preserve separately authored Kolodion forms; intro remains magic-only. Existing adjacency preferences are 85/15 for forms757-759 and 10/90 for760, not guaranteed attack shares."
+    },
+    {
+      "id": 758,
+      "name": "kolodion",
+      "level": 68,
+      "generalProfile": "MELEE_FREQUENT_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 78,
+        "ranged": 0,
+        "magic": 78
+      },
+      "legacyStrength": 78,
+      "legacyAttack": 47,
+      "recommendation": "QUEST_FORM_SPECIFIC_MIXED",
+      "priority": "C",
+      "rationale": "Preserve separately authored Kolodion forms; intro remains magic-only. Existing adjacency preferences are 85/15 for forms757-759 and 10/90 for760, not guaranteed attack shares."
+    },
+    {
+      "id": 759,
+      "name": "kolodion",
+      "level": 46,
+      "generalProfile": "MELEE_FREQUENT_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 23,
+        "ranged": 0,
+        "magic": 38
+      },
+      "legacyStrength": 23,
+      "legacyAttack": 38,
+      "recommendation": "QUEST_FORM_SPECIFIC_MIXED",
+      "priority": "C",
+      "rationale": "Preserve separately authored Kolodion forms; intro remains magic-only. Existing adjacency preferences are 85/15 for forms757-759 and 10/90 for760, not guaranteed attack shares."
+    },
+    {
+      "id": 760,
+      "name": "kolodion",
+      "level": 98,
+      "generalProfile": "MELEE_RARE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 98,
+        "ranged": 0,
+        "magic": 105
+      },
+      "legacyStrength": 98,
+      "legacyAttack": 105,
+      "recommendation": "QUEST_FORM_SPECIFIC_MIXED",
+      "priority": "C",
+      "rationale": "Preserve separately authored Kolodion forms; intro remains magic-only. Existing adjacency preferences are 85/15 for forms757-759 and 10/90 for760, not guaranteed attack shares."
+    },
+    {
+      "id": 761,
+      "name": "Irvig Senay",
+      "level": 125,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 125,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 125,
+      "legacyAttack": 125,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 762,
+      "name": "Ranalph Devere",
+      "level": 130,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 130,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 130,
+      "legacyAttack": 130,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 766,
+      "name": "Ungadulu",
+      "level": 75,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 75,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 75,
+      "legacyAttack": 75,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "C",
+      "rationale": "Shaman/dead-sorcerer quest actor; separate normal/possessed forms and quest triggers before activation."
+    },
+    {
+      "id": 767,
+      "name": "Ungadulu",
+      "level": 75,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 75,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 75,
+      "legacyAttack": 75,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "C",
+      "rationale": "Shaman/dead-sorcerer quest actor; separate normal/possessed forms and quest triggers before activation."
+    },
+    {
+      "id": 768,
+      "name": "Death Wing",
+      "level": 80,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 80,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 80,
+      "legacyAttack": 80,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 769,
+      "name": "Nezikchened",
+      "level": 172,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 178,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 178,
+      "legacyAttack": 175,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Demonic mixed candidate; some currently melee-only. Retain boss/quest and Abyssal mobility mechanics; generic magic alone is not a complete encounter audit."
+    },
+    {
+      "id": 772,
+      "name": "Viyeldi",
+      "level": 80,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 80,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 80,
+      "legacyAttack": 80,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "C",
+      "rationale": "Shaman/dead-sorcerer quest actor; separate normal/possessed forms and quest triggers before activation."
+    },
+    {
+      "id": 775,
+      "name": "Karamja Wolf",
+      "level": 61,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 61,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 61,
+      "legacyAttack": 61,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 776,
+      "name": "Jungle Savage",
+      "level": 87,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 100,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 100,
+      "legacyAttack": 100,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 777,
+      "name": "Oomlie Bird",
+      "level": 32,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 20,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 20,
+      "legacyAttack": 50,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 786,
+      "name": "Pit Scorpion",
+      "level": 35,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 48,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 48,
+      "legacyAttack": 33,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 787,
+      "name": "Shadow Warrior",
+      "level": 64,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 61,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 61,
+      "legacyAttack": 61,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 789,
+      "name": "Battle mage",
+      "level": 52,
+      "generalProfile": "PURE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 52,
+        "ranged": 0,
+        "magic": 52
+      },
+      "legacyStrength": 52,
+      "legacyAttack": 0,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing nominal magic specialist: retain projectile and enforce exclusive style, shot-hold and pursuit rules."
+    },
+    {
+      "id": 790,
+      "name": "Battle mage",
+      "level": 52,
+      "generalProfile": "PURE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 52,
+        "ranged": 0,
+        "magic": 52
+      },
+      "legacyStrength": 52,
+      "legacyAttack": 0,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing nominal magic specialist: retain projectile and enforce exclusive style, shot-hold and pursuit rules."
+    },
+    {
+      "id": 791,
+      "name": "Battle mage",
+      "level": 52,
+      "generalProfile": "PURE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 52,
+        "ranged": 0,
+        "magic": 52
+      },
+      "legacyStrength": 52,
+      "legacyAttack": 0,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "A",
+      "rationale": "Existing nominal magic specialist: retain projectile and enforce exclusive style, shot-hold and pursuit rules."
+    },
+    {
+      "id": 798,
+      "name": "Gaia",
+      "level": 79,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 79,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 79,
+      "legacyAttack": 78,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "B",
+      "rationale": "Currently general melee despite caster identity; new ordinary spell selection needed (reuse suitable existing effects)."
+    },
+    {
+      "id": 802,
+      "name": "Greatwood",
+      "level": 300,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 245,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 245,
+      "legacyAttack": 255,
+      "recommendation": "OPTIONAL_MAGIC_SECONDARY",
+      "priority": "C",
+      "rationale": "Greatwood could gain roots/wood magic; currently general melee. Do not infer existing magic from appearance or high level."
+    },
+    {
+      "id": 809,
+      "name": "Balrog",
+      "level": 217,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 250,
+        "ranged": 0,
+        "magic": 999
+      },
+      "legacyStrength": 250,
+      "legacyAttack": 999,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Demonic mixed candidate; some currently melee-only. Retain boss/quest and Abyssal mobility mechanics; generic magic alone is not a complete encounter audit."
+    },
+    {
+      "id": 816,
+      "name": "PK Bot",
+      "level": 57,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 230,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 230,
+      "legacyAttack": 40,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 836,
+      "name": "Grey Knight",
+      "level": 56,
+      "generalProfile": "MELEE_RARE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 58,
+        "ranged": 0,
+        "magic": 58
+      },
+      "legacyStrength": 58,
+      "legacyAttack": 55,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Armoured/warrior identity: keep melee emphasis and make magical support secondary; intended rare-cast profiles may retain stronger melee weighting."
+    },
+    {
+      "id": 843,
+      "name": "Fire warrior",
+      "level": 61,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 64,
+        "ranged": 0,
+        "magic": 64
+      },
+      "legacyStrength": 64,
+      "legacyAttack": 62,
+      "recommendation": "MELEE_PRIMARY_MAGIC_SECONDARY",
+      "priority": "B",
+      "rationale": "Existing elemental mixed user: preserve body/weapon melee identity and existing elemental projectiles."
+    },
+    {
+      "id": 844,
+      "name": "Elder Green Dragon",
+      "level": 275,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Scripted Elder Ranged fireshot, melee sweep, Magic/Burn; ordinary profile is melee/magic.",
+        "Dragon breath paths require separate source/mitigation review; not a generic spell classification."
+      ],
+      "baselinePower": {
+        "melee": 250,
+        "ranged": 235,
+        "magic": 270
+      },
+      "legacyStrength": 250,
+      "legacyAttack": 275,
+      "recommendation": "MELEE_MAGIC_RANGED_SCRIPTED",
+      "priority": "C",
+      "rationale": "Already all three damage styles: ordinary magic/melee, scripted melee sweep, Ranged fireshot and separate burn. Boss power/weights require individual review."
+    },
+    {
+      "id": 862,
+      "name": "Green Dragon",
+      "level": 110,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Dragon breath paths require separate source/mitigation review; not a generic spell classification."
+      ],
+      "baselinePower": {
+        "melee": 98,
+        "ranged": 0,
+        "magic": 110
+      },
+      "legacyStrength": 98,
+      "legacyAttack": 110,
+      "recommendation": "MELEE_MAGIC_MIXED_REVIEW_PRIMARY",
+      "priority": "C",
+      "rationale": "Existing dragon magic plus separate breath handling. Choose primary power/style deliberately; defense family does not determine offense."
+    },
+    {
+      "id": 863,
+      "name": "Giant frog",
+      "level": 20,
+      "generalProfile": "PURE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 1,
+        "ranged": 30,
+        "magic": 0
+      },
+      "legacyStrength": 1,
+      "legacyAttack": 1,
+      "recommendation": "KEEP_EXISTING_RANGED_SPECIALIST",
+      "priority": "C",
+      "rationale": "Giant Frog already acid-spits through Ranged and explicitly cannot melee. Retain unless owner wants a different style; no need to invent a melee fallback."
+    },
+    {
+      "id": 864,
+      "name": "Cockatrice",
+      "level": 35,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 40,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 1,
+      "legacyAttack": 1,
+      "recommendation": "OPTIONAL_MAGIC_PRIMARY",
+      "priority": "C",
+      "rationale": "Cockatrice gaze is a thematic candidate, not existing generic magic. Preserve mirror-shield/gaze protections and inspect combat hooks first."
+    },
+    {
+      "id": 865,
+      "name": "Banshee",
+      "level": 50,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Distance>1 enforced for generic projectile preference; adjacency currently favors melee."
+      ],
+      "baselinePower": {
+        "melee": 55,
+        "ranged": 0,
+        "magic": 55
+      },
+      "legacyStrength": 1,
+      "legacyAttack": 1,
+      "recommendation": "MAGIC_ONLY",
+      "priority": "C",
+      "rationale": "Banshee theme fits exclusive magical wail; preserve earplug protection, wail replacement, windups and lifecycle."
+    },
+    {
+      "id": 866,
+      "name": "Naga",
+      "level": 60,
+      "generalProfile": "MELEE_RANGED",
+      "generalMagic": false,
+      "generalRanged": true,
+      "specialNotes": [
+        "Distance>1 enforced for generic projectile preference; adjacency currently favors melee."
+      ],
+      "baselinePower": {
+        "melee": 65,
+        "ranged": 55,
+        "magic": 0
+      },
+      "legacyStrength": 1,
+      "legacyAttack": 1,
+      "recommendation": "RANGED_PRIMARY_MELEE_SECONDARY",
+      "priority": "A",
+      "rationale": "Existing bolt/dart/knife/arrow/thrown-scimitar support; retain short-range melee as secondary. Naga has an explicit adjacent-melee override to revise."
+    },
+    {
+      "id": 867,
+      "name": "Terror dog",
+      "level": 75,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 80,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 1,
+      "legacyAttack": 1,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 868,
+      "name": "Bloodveld",
+      "level": 85,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 80,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 1,
+      "legacyAttack": 1,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    },
+    {
+      "id": 869,
+      "name": "Dark beast",
+      "level": 105,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [
+        "Scripted DarkBeast lightning (Magic)."
+      ],
+      "baselinePower": {
+        "melee": 110,
+        "ranged": 0,
+        "magic": 210
+      },
+      "legacyStrength": 1,
+      "legacyAttack": 1,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Existing scripted lightning outside general MELEE profile; preserve charge/detonation and cadence, do not stack a new generic cast on top."
+    },
+    {
+      "id": 870,
+      "name": "Abyssal demon",
+      "level": 125,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 125,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 1,
+      "legacyAttack": 1,
+      "recommendation": "MAGIC_PRIMARY_MELEE_SECONDARY",
+      "priority": "C",
+      "rationale": "Demonic mixed candidate; some currently melee-only. Retain boss/quest and Abyssal mobility mechanics; generic magic alone is not a complete encounter audit."
+    },
+    {
+      "id": 877,
+      "name": "Sapphire Dragon",
+      "level": 97,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Dragon breath paths require separate source/mitigation review; not a generic spell classification."
+      ],
+      "baselinePower": {
+        "melee": 90,
+        "ranged": 0,
+        "magic": 100
+      },
+      "legacyStrength": 90,
+      "legacyAttack": 100,
+      "recommendation": "MELEE_MAGIC_MIXED_REVIEW_PRIMARY",
+      "priority": "C",
+      "rationale": "Existing dragon magic plus separate breath handling. Choose primary power/style deliberately; defense family does not determine offense."
+    },
+    {
+      "id": 878,
+      "name": "Emerald Dragon",
+      "level": 118,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Dragon breath paths require separate source/mitigation review; not a generic spell classification."
+      ],
+      "baselinePower": {
+        "melee": 110,
+        "ranged": 0,
+        "magic": 122
+      },
+      "legacyStrength": 110,
+      "legacyAttack": 122,
+      "recommendation": "MELEE_MAGIC_MIXED_REVIEW_PRIMARY",
+      "priority": "C",
+      "rationale": "Existing dragon magic plus separate breath handling. Choose primary power/style deliberately; defense family does not determine offense."
+    },
+    {
+      "id": 879,
+      "name": "Ruby Dragon",
+      "level": 142,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Dragon breath paths require separate source/mitigation review; not a generic spell classification."
+      ],
+      "baselinePower": {
+        "melee": 132,
+        "ranged": 0,
+        "magic": 146
+      },
+      "legacyStrength": 132,
+      "legacyAttack": 146,
+      "recommendation": "MELEE_MAGIC_MIXED_REVIEW_PRIMARY",
+      "priority": "C",
+      "rationale": "Existing dragon magic plus separate breath handling. Choose primary power/style deliberately; defense family does not determine offense."
+    },
+    {
+      "id": 880,
+      "name": "Diamond Dragon",
+      "level": 166,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Dragon breath paths require separate source/mitigation review; not a generic spell classification."
+      ],
+      "baselinePower": {
+        "melee": 153,
+        "ranged": 0,
+        "magic": 174
+      },
+      "legacyStrength": 153,
+      "legacyAttack": 174,
+      "recommendation": "MELEE_MAGIC_MIXED_REVIEW_PRIMARY",
+      "priority": "C",
+      "rationale": "Existing dragon magic plus separate breath handling. Choose primary power/style deliberately; defense family does not determine offense."
+    },
+    {
+      "id": 881,
+      "name": "Dragonstone Dragon",
+      "level": 192,
+      "generalProfile": "MELEE_MAGIC",
+      "generalMagic": true,
+      "generalRanged": false,
+      "specialNotes": [
+        "Dragon breath paths require separate source/mitigation review; not a generic spell classification."
+      ],
+      "baselinePower": {
+        "melee": 178,
+        "ranged": 0,
+        "magic": 202
+      },
+      "legacyStrength": 178,
+      "legacyAttack": 202,
+      "recommendation": "MELEE_MAGIC_MIXED_REVIEW_PRIMARY",
+      "priority": "C",
+      "rationale": "Existing dragon magic plus separate breath handling. Choose primary power/style deliberately; defense family does not determine offense."
+    },
+    {
+      "id": 882,
+      "name": "Stirge",
+      "level": 55,
+      "generalProfile": "MELEE",
+      "generalMagic": false,
+      "generalRanged": false,
+      "specialNotes": [],
+      "baselinePower": {
+        "melee": 55,
+        "ranged": 0,
+        "magic": 0
+      },
+      "legacyStrength": 50,
+      "legacyAttack": 60,
+      "recommendation": "KEEP_CURRENT_FOR_NOW",
+      "priority": "D",
+      "rationale": "No style change recommended in this pass; special/quest mechanics still require their own review."
+    }
+  ]
+}
