@@ -1765,7 +1765,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 								getPlayer().playerServerMessage(MessageType.QUEST, "Your shield prevents some of the damage from the flames");
 							}
 							fireDamage = (int) Math.floor(getCurrentLevel(getPlayer(), Skill.HITS.id()) * percentage / 100.0);
-							getPlayer().damage(fireDamage);
+							com.openrsc.server.content.npccombat.NpcTrueDamage.dragonBreath(getPlayer(), fireDamage, false);
 
 							//reduce ranged level (case for KBD)
 							if (n.getID() == NpcId.KING_BLACK_DRAGON.id()) {

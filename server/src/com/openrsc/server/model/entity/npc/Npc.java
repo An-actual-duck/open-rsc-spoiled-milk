@@ -674,6 +674,8 @@ public class Npc extends Mob {
 
 	@Override
 	public int getMeleeOffense() {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition canonical=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(this);
+        if(canonical!=null)return canonical.power(com.openrsc.server.model.combat.CombatStyle.MELEE);
 		int explicitOffense = getDef().getMeleeOffense();
 		if (explicitOffense > 0) {
 			return explicitOffense;
@@ -683,6 +685,8 @@ public class Npc extends Mob {
 
 	@Override
 	public int getRangedOffense() {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition canonical=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(this);
+        if(canonical!=null)return canonical.power(com.openrsc.server.model.combat.CombatStyle.RANGED);
 		int explicitOffense = getDef().getRangedOffense();
 		if (explicitOffense > 0) {
 			return explicitOffense;
@@ -696,6 +700,8 @@ public class Npc extends Mob {
 
 	@Override
 	public int getMagicOffense() {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition canonical=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(this);
+        if(canonical!=null)return canonical.power(com.openrsc.server.model.combat.CombatStyle.MAGIC);
 		int explicitOffense = getDef().getMagicOffense();
 		if (explicitOffense > 0) {
 			return explicitOffense;
@@ -705,6 +711,8 @@ public class Npc extends Mob {
 
 	@Override
 	public int getMeleeDefense() {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition canonical=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(this);
+        if(canonical!=null)return applyFireDefenseDebuffToValue(canonical.defense(com.openrsc.server.model.combat.CombatStyle.MELEE));
 		int defense = getDef().getMeleeDefense() > 0
 			? getDef().getMeleeDefense()
 			: deriveDefense(getDef().getDef(), getDef().getMeleeDefenseMultiplier(), getDef().getMeleeDefenseDivisor(), DEFAULT_MELEE_DEFENSE_MULTIPLIER);
@@ -713,6 +721,8 @@ public class Npc extends Mob {
 
 	@Override
 	public int getRangedDefense() {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition canonical=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(this);
+        if(canonical!=null)return applyFireDefenseDebuffToValue(canonical.defense(com.openrsc.server.model.combat.CombatStyle.RANGED));
 		int defense = getDef().getRangedDefense() > 0
 			? getDef().getRangedDefense()
 			: deriveDefense(getDef().getDef(), getDef().getRangedDefenseMultiplier(), getDef().getRangedDefenseDivisor(), DEFAULT_RANGED_DEFENSE_MULTIPLIER);
@@ -721,6 +731,8 @@ public class Npc extends Mob {
 
 	@Override
 	public int getMagicDefense() {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition canonical=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(this);
+        if(canonical!=null)return com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.reduceMagicDefense(this,applyFireDefenseDebuffToValue(canonical.defense(com.openrsc.server.model.combat.CombatStyle.MAGIC)));
 		int defense = getDef().getMagicDefense() > 0
 			? getDef().getMagicDefense()
 			: deriveDefense(getDef().getDef(), getDef().getMagicDefenseMultiplier(), getDef().getMagicDefenseDivisor(), DEFAULT_MAGIC_DEFENSE_MULTIPLIER);
@@ -737,6 +749,17 @@ public class Npc extends Mob {
 		return 1.0D;
 	}
 
+    /** Inert reserved NPC value. No Holy damage/defense or NPC Cleric casting is enabled. */
+    public int getHolyPower() {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition d=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(this);
+        return d==null?0:d.holyPower;
+    }
+    public boolean isBoss() {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition d=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(this);
+        return d!=null&&d.boss;
+    }
+    /** Legacy-only adapter for explicitly protected/noncombat/non-MyWorld/summon instances.
+     * Canonical modern combat must never reach these A/S/D conversions. */
 	private int deriveDefense(int legacyDefense, double configuredMultiplier, double legacyDivisor, double defaultMultiplier) {
 		if (legacyDefense <= 0) {
 			return 0;

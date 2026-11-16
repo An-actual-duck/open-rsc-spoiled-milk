@@ -617,7 +617,7 @@ public class CombatFormula {
 	private static int applyMitigationRoll(final int attackMax, final int defenseMax, final boolean npcAttacker) {
 		int offenseRoll = npcAttacker ? rollNpcDamage(null, attackMax) : rollDamage(null, attackMax);
 		int defenseRoll = defenseMax <= 0 ? 0
-			: ProductionGameRandom.INSTANCE.nextIntInclusive(1, defenseMax);
+			: ProductionGameRandom.INSTANCE.nextIntInclusive(0, defenseMax);
 		return Math.max(offenseRoll - defenseRoll, 0);
 	}
 
@@ -629,7 +629,7 @@ public class CombatFormula {
 			final int attackMax, final int defenseMax, final boolean directAttack) {
 		int offenseRoll = rollIncomingDamage(source, victim, attackMax, directAttack);
 		int defenseRoll = defenseMax <= 0 ? 0
-            : CombatLuck.higher(victim,combatRandom(source,victim),()->combatRandom(source,victim).nextIntInclusive(1,defenseMax));
+            : CombatLuck.higher(victim,combatRandom(source,victim),()->combatRandom(source,victim).nextIntInclusive(com.openrsc.server.content.npccombat.CanonicalNpcCombat.defenseRollMinimum(source,victim),defenseMax));
 		return Math.max(offenseRoll - defenseRoll, 0);
 	}
 
@@ -637,14 +637,14 @@ public class CombatFormula {
         int offense=rollIncomingDamage(source,target,maximum,true);
         offense=com.openrsc.server.content.GodCrossbowEffects.liftRoll(offense,maximum,revelation);
         int defense=defenseMaximum<=0?0:CombatLuck.higher(target,combatRandom(source,target),
-            ()->combatRandom(source,target).nextIntInclusive(1,defenseMaximum));
+            ()->combatRandom(source,target).nextIntInclusive(com.openrsc.server.content.npccombat.CanonicalNpcCombat.defenseRollMinimum(source,target),defenseMaximum));
         return Math.max(0,offense-defense);
     }
 
     private static int scimitarMitigationRoll(Mob source, Mob victim, int maximum, int defenseMaximum) {
         int offense = rollIncomingDamage(source, victim, maximum, true);
         int defense = defenseMaximum <= 0 ? 0 : CombatLuck.higher(victim, combatRandom(source,victim),
-            () -> combatRandom(source,victim).nextIntInclusive(1,defenseMaximum));
+            () -> combatRandom(source,victim).nextIntInclusive(com.openrsc.server.content.npccombat.CanonicalNpcCombat.defenseRollMinimum(source,victim),defenseMaximum));
         return com.openrsc.server.content.coatings.ScimitarDamage.reshape(
             Math.max(0,offense-defense), maximum-defense, combatRandom(source,victim));
     }

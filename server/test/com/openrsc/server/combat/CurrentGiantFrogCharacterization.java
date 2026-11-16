@@ -85,7 +85,7 @@ final class CurrentGiantFrogCharacterization {
 		harness.recordOutgoingPackets(player);
 		check(NpcAttackStyleProfile.forNpc(frog) == NpcAttackStyleProfile.PURE_RANGED, "ranged-only profile");
 		check(frog.getRangedOffense() == 30, "explicit ranged offense");
-		check(frog.getMeleeDefense() == 10 && frog.getRangedDefense() == 20
+		check(frog.getMeleeDefense() == 0 && frog.getRangedDefense() == 7
 			&& frog.getMagicDefense() == 35, "explicit ordered defenses");
 		check(frog.getDef().getAtt() == 1 && frog.getDef().getDef() == 1, "legacy stats are not the modern values");
 		GiantFrogCombat.onSpitImpact(frog, player, 0);

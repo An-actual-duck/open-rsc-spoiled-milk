@@ -592,6 +592,8 @@ public class ProjectileEvent extends SingleTickEvent {
 				damage = Summoning.applySummonDamageAbsorption(opponentPlayer, caster, damage);
 			}
 		}
+        damage = com.openrsc.server.content.npccombat.GodAlignedNpcMagic.reduce(
+            caster, opponent, launchSnapshot.getSpecification(), damage);
 		if (!wail) damage = applyFrostbiteReflection(caster, opponent, damage);
 		final int damageBeforeTrueDefense = damage;
 		if (!wail && opponent.isPlayer() && isPrimaryProjectileAttackType()) {

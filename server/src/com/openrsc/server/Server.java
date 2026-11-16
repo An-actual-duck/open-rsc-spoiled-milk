@@ -126,6 +126,7 @@ public class Server implements Runnable {
 	private final PluginHandler pluginHandler;
 	private final CombatScriptLoader combatScriptLoader;
 	private final EntityHandler entityHandler;
+    private volatile com.openrsc.server.content.npccombat.NpcCombatCatalog npcCombatCatalog;
 	private final MySqlGameLogger gameLogger;
 	private final PcapLoggerService pcapLogger;
 	private final GameDatabase database;
@@ -939,6 +940,7 @@ public class Server implements Runnable {
 
 				LOGGER.info("Loading Game Definitions...");
 				getEntityHandler().load();
+                getNpcCombatCatalog();
 				LOGGER.info("Definitions Completed");
 
 				WorldBuilderAccountProvisioner.provision(this);
@@ -2662,6 +2664,12 @@ public class Server implements Runnable {
 	public EntityHandler getEntityHandler() {
 		return entityHandler;
 	}
+
+    /** Gameplay-only lazy seam: editor source discovery still reads ordinary definitions. */
+    public synchronized com.openrsc.server.content.npccombat.NpcCombatCatalog getNpcCombatCatalog() {
+        if(npcCombatCatalog==null) npcCombatCatalog=com.openrsc.server.content.npccombat.NpcCombatCatalog.load(this);
+        return npcCombatCatalog;
+    }
 
 	public GameDatabase getDatabase() {
 		return database;

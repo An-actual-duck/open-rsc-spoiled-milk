@@ -214,6 +214,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 				resetCombat(false);
 				return;
 			}
+			if (com.openrsc.server.content.npccombat.CanonicalNpcCombat.generic(attackerMob)
+                && ((Npc) attackerMob).getBehavior().tryCanonicalProjectileAttack(targetMob)) {
+                setDelayTicks(1); return;
+            }
 			if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(attackerMob)
 				&& ((Npc) attackerMob).getBehavior().tryBansheeProjectileAttack(targetMob)) {
 				setDelayTicks(1);
@@ -234,6 +238,21 @@ public class PvmMeleeEvent extends GameTickEvent {
 			return;
 		}
 
+        if (com.openrsc.server.content.npccombat.CanonicalNpcCombat.generic(attackerMob)) {
+            Npc actor = (Npc) attackerMob;
+            if (!com.openrsc.server.content.npccombat.CanonicalNpcCombat.ready(actor)) {
+                setDelayTicks(1); return;
+            }
+            int range = com.openrsc.server.model.entity.npc.NpcCombatProfile.resolve(actor).getProjectileRange();
+            boolean shot = actor.withinRange(targetMob, range)
+                && PathValidation.checkEnemyCombatProjectilePath(getWorld(), actor.getWorldLocation(), targetMob.getWorldLocation());
+            com.openrsc.server.model.combat.CombatStyle selected =
+                com.openrsc.server.content.npccombat.CanonicalNpcCombat.select(actor, targetMob, true, shot);
+            if (selected != com.openrsc.server.model.combat.CombatStyle.MELEE) {
+                actor.getBehavior().tryCanonicalProjectileAttack(targetMob);
+                setDelayTicks(1); return;
+            }
+        }
 		if (!com.openrsc.server.content.Slow.ready(attackerMob, com.openrsc.server.content.Slow.Cadence.MELEE)) {
 			setDelayTicks(1); return;
 		}
@@ -270,6 +289,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.beforeMelee(
 			attackerMob, targetMob, attackSuppressed,
 			(victim, hit) -> inflictDamage(attackerMob, victim, hit, false))) {
+            com.openrsc.server.content.npccombat.CanonicalNpcCombat.committed(attackerMob, 1);
 			setDelayTicks(1);
 			return;
 		}
@@ -365,6 +385,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			delayTicks += scytheTargetsHit - 1;
 		}
 		com.openrsc.server.content.Slow.commit(attackerMob, com.openrsc.server.content.Slow.Cadence.MELEE, delayTicks, interval.tier);
+        com.openrsc.server.content.npccombat.CanonicalNpcCombat.committed(attackerMob, delayTicks);
 		setDelayTicks(delayTicks);
 	}
 

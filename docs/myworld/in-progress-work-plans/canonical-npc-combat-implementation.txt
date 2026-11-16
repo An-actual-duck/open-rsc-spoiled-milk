@@ -1,0 +1,54 @@
+Canonical NPC combat implementation — active 2026-11-16
+
+Owner authorized implementation after accepting defense/loadout/power authoring.
+Latest decision: Elder burn remains outside defenses. Dragon breath retains all
+existing species/HP/shield branches, classified as True damage, not Magic Power.
+No public deployment or restart is authorized by this implementation request.
+
+Implementation worktree: Core-ai-3, feat/canonical-npc-combat. Manager owns review,
+merge, final checks and publication; preserve its five remaining local files.
+All authoring inputs are under docs/myworld/proposed-work-plans/ (defense roster,
+attack loadouts/tags, offensive powers). They contain exact IDs and exceptions.
+
+Planned sequence:
+1. Add server-owned immutable canonical combat catalog, explicit full numeric
+   records and metadata, validated once per Server. Load outside EntityHandler's
+   source-discovery pipeline to preserve toolkit NPC/item discovery. Startup
+   preloads; isolated harnesses may load lazily after EntityHandler.load().
+2. NPC getters read canonical numbers, including zero, with timed effects after
+   baseline. Retain clearly annotated compatibility only for protected minigame/
+   role records, noncombat definitions, non-MyWorld and owned summons. No silent
+   fallback for missing canonical combat fields. Inert Holy Power0, boss flag,
+   separate creature/attack tags, explicit elements/god line.
+3. Explicit style dispatch, primary weights and shared per-NPC attack decision/
+   cadence. Dedicated casters/shooters hold valid shot during cooldown and only
+   pursue with existing navigation when shot invalid. Block their NPC melee,
+   not player melee against them. Mixed eligible styles selected once per attack.
+   Special owners and minigames bypass generic dispatch changes.
+4. Modern matching defense rolls include0 through cap; cap0 skips RNG. Preserve
+   compatibility/minigame boundaries; keep existing scale, luck and effects.
+5. Capture NPC spell god at launch; matching player prayer book reduces aligned
+   NPC Magic damage20%, once, with floor rounding. No new UI, no PvP/player-cast
+   change, no inference from holy-looking art or generic demonic identity.
+6. Central True-damage classification adapter for existing breath calls, leaving
+   roll, shield, Tenacity/death handling unchanged. Existing burn/DOT bypass stays.
+7. Actual loader/zero/sentinel/legacy-independence, weighted cadence/LOS/pursuit,
+   exclusive adjacency, god-trait and protected/special regression fixtures;
+   full build and combat suite, source/toolkit compatibility check as appropriate.
+
+Current investigation findings:
+- EntityHandler optional direct-zero override reserves Integer.MAX_VALUE. Avoid
+  that path for canonical data entirely; preserve old code as compatibility.
+- Existing nominal PURE profiles do not universally disable melee. Only Frog863
+  and Kolodion713 have early melee suppression. Projectile-on-cooldown normally
+  returnsfalse and allows pursuit. Mixed65/85/10 checks apply at adjacency/polls.
+- NPC constructor retains legacy skill slots for compatibility. Shared modern
+  getters can bypass them without deleting/reordering persistent skill identities.
+- Dark beast/Banshee/Elder/Frog retain special owners. Naga retains per-style
+  readiness/cadence while its generic style choice becomes ranged-primary.
+- Existing breath shield behavior is not simply damage*.2: protected branches
+  include target-current-HP percentages; keep exact current logic, label True.
+- The toolkit interprets EntityHandler source during content discovery. A new
+  gameplay catalog should not introduce unsupported runtime calls into that path.
+
+No implementation completed or tests passed yet at creation of this note.

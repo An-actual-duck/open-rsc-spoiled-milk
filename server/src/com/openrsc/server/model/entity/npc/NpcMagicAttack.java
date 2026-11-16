@@ -13,6 +13,11 @@ public final class NpcMagicAttack {
 		this.element = element;
 	}
 
+	public com.openrsc.server.model.entity.player.PrayerCatalog.GodLine getGodLine() {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition d = com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(npc);
+        return d != null && d.genericDispatch ? d.magicGod : null;
+    }
+
 	public NpcMagicElement getElement() {
 		return element;
 	}
