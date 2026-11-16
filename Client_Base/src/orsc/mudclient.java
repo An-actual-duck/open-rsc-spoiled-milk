@@ -23935,7 +23935,8 @@ public final class mudclient implements Runnable {
 			int deltaY = victim.sceneScreenCenterY - caster.sceneScreenCenterY;
 			int length = Math.max(1, (int) Math.round(Math.sqrt((double) deltaX * deltaX + (double) deltaY * deltaY)));
 			int renderLength = length;
-			int thickness = Math.max(1, definition.getThickness());
+			int thickness = Math.max(1, orsc.graphics.two.AnimationSizing.onEntity(
+                definition.getThickness(), caster.sceneScreenHeight));
 			Sprite scaled = getScaledStaticProjectileSprite(
 				projectileId, frame, source, renderLength, thickness);
 			if (scaled == null) {
@@ -24143,7 +24144,8 @@ public final class mudclient implements Runnable {
 		if (definition != null) {
 			size = ProjectileAnimationCatalog.getImpactScreenSize(definition.getKey());
 		}
-		queuedProjectileImpactSprite[queuedProjectileImpactCount] = sprite;
+		size = orsc.graphics.two.AnimationSizing.onEntity(size, height);
+        queuedProjectileImpactSprite[queuedProjectileImpactCount] = sprite;
 		queuedProjectileImpactX[queuedProjectileImpactCount] = x + width / 2 - size / 2;
 		queuedProjectileImpactY[queuedProjectileImpactCount] = y + height / 2 - size / 2;
 		queuedProjectileImpactSize[queuedProjectileImpactCount] = size;

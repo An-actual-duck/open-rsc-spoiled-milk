@@ -154,3 +154,8 @@ The dedicated visual fixture exercises the real attached effect draw, Cleric
 playback and queued world-effect paths across zoom sizes, including reference
 size preservation. Firefox preview adds a zoom selector that scales the figure
 and effect together. In-game owner verification is still required before release.
+
+The final sizing sweep also covers projectile impact overlays and static beam
+thickness, which otherwise retained fixed pixel sizes even though moving shots
+and beam lengths were already projected. Both now use the same reference-actor
+scaling. An actual impact-queue regression verifies half/reference/double zoom.
