@@ -90,3 +90,41 @@ static projectiles; preserve approved appearances at a documented reference zoom
 Use stable sequence-wide bounds and anchors, avoid per-frame auto-fitting, and
 verify software, OpenGL and browser paths across zoom levels. Poison sizing is
 part of this follow-up. The previously fixed bat summon is not reopened.
+
+## Release scope and later catalog overhaul — owner direction
+
+For the coming update, establish proper visible animation sizes and make those
+sizes follow camera zoom, preserving the accepted reference appearances. Review
+poison and other undersized effects without blanket enlargement. Keep the current
+asset layout, catalog organization, effect assignments and positioning behavior
+except where a focused sizing correction requires otherwise. The larger animation
+catalog and positioning overhaul follows this release; it must not delay it.
+
+### Long-term catalog intent (documented, not implemented in this release)
+
+Animation assets will have short descriptive titles such as **Acid Drop** and
+**Acid Burst**. Their identity must be independent of folder categorization and
+independent of whether they are currently used as a projectile or an on-entity
+effect. Names are examples, not a decision to rename existing files now.
+
+Usage keywords/metadata determine how an animation is played: projectile,
+on-entity, attachment/recipient, target zone, size percentage, and later anchor/
+facing adjustments. An animation is not permanently classified as one use type.
+For example, a spell could request:
+
+- Acid Burst; on-entity; 100% size; target middle.
+- Acid Drop; projectile; 50% size; target middle.
+
+Reversing the usage keywords should allow Acid Burst to be the projectile and
+Acid Drop the on-entity impact, without relocating or duplicating the assets.
+The eventual browsing/search interface should center descriptive titles and
+keyword assignment rather than the current folder tree. Define what 100%,
+on-entity and each target zone mean consistently, and allow explicit exceptions
+for unusual artwork. Percentages are not yet a finalized catalog schema.
+
+The later positioning work should support top/middle/bottom zones and artwork
+anchors: teleport at the feet, summon arrival beneath the summon, lightning
+ending at the ground, fireball at middle/front, and rising effects anchored at
+the bottom. Preserve stable anchors and sequence-wide scaling. Do not implement
+this larger abstraction or move asset directories as part of the release-sizing
+fixes.
