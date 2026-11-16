@@ -120,6 +120,16 @@ public final class DivineBoltVisualFixture {
         Field widths=mudclient.class.getDeclaredField("queuedCombatEffectWidth");widths.setAccessible(true);int[] w=(int[])widths.get(c);
         check(Math.abs(w[1]-2*w[0])<=1&&Math.abs(w[2]-2*w[1])<=1,"world/detached zoom remains proportional");
         check(AnimationSizing.onEntity(108,128)==108&&AnimationSizing.onEntity(82,128)==82,"approved reference sizes preserved");
+        Sprite[][] impactFrames=new Sprite[39][64];int[] impactCounts=new int[39];int impactId=7;
+        impactCounts[impactId-7]=1;impactFrames[impactId-7][0]=marker;
+        set(c,"projectileImpactSprites",impactFrames);set(c,"projectileImpactFrameCounts",impactCounts);
+        set(c,"queuedProjectileImpactSprite",new Sprite[32]);
+        for(String field:new String[]{"queuedProjectileImpactX","queuedProjectileImpactY","queuedProjectileImpactSize"})set(c,field,new int[32]);
+        ORSCharacter impacted=new ORSCharacter();impacted.projectileImpactId=impactId;impacted.projectileImpactTime=1;
+        Method impact=method("queueProjectileImpactOverlay",ORSCharacter.class,int.class,int.class,int.class,int.class);
+        impact.invoke(c,impacted,0,0,64,64);impact.invoke(c,impacted,0,0,128,128);impact.invoke(c,impacted,0,0,256,256);
+        Field impactSize=mudclient.class.getDeclaredField("queuedProjectileImpactSize");impactSize.setAccessible(true);int[] sizes=(int[])impactSize.get(c);
+        check(sizes[0]>0&&sizes[1]==2*sizes[0]&&sizes[2]==2*sizes[1],"actual projectile impact follows zoom");
         for(String icon:new String[]{"divine-bolts","thorned-bolts","bolts-of-wrath"}){
             Sprite s=loader.loadExternalPrayerIconFile(new File("dev/myworld/assets/runtime/ui/prayer/"+icon+".png"));check(s!=null,"packaged prayer icon "+icon);export(s,out.resolve(icon+".png"));
         }

@@ -10990,6 +10990,7 @@ public final class mudclient implements Runnable {
 			npc.hasSceneScreenAnchor = true;
 			npc.sceneScreenCenterX = x + width1 / 2;
 			npc.sceneScreenCenterY = y + height / 2;
+            npc.sceneScreenHeight = height;
 			queueProjectileImpactOverlay(npc, x, y, width1, height);
 			NPCDef def = EntityHandler.getNpcDef(npc.npcId);
 			int npcColourTransform = getNpcSpriteColourTransform(npc);
@@ -11278,6 +11279,7 @@ public final class mudclient implements Runnable {
 			player.hasSceneScreenAnchor = true;
 			player.sceneScreenCenterX = x + width / 2;
 			player.sceneScreenCenterY = y + height / 2;
+            player.sceneScreenHeight = height;
 			queueProjectileImpactOverlay(player, x, y, width, height);
 			if (player.colourBottom != 255) {
 				int wantedAnimDir = (player.direction.rsDir + ((this.cameraRotation + 16) / 32)) & 7;
@@ -23935,7 +23937,8 @@ public final class mudclient implements Runnable {
 			int deltaY = victim.sceneScreenCenterY - caster.sceneScreenCenterY;
 			int length = Math.max(1, (int) Math.round(Math.sqrt((double) deltaX * deltaX + (double) deltaY * deltaY)));
 			int renderLength = length;
-			int thickness = Math.max(1, definition.getThickness());
+			int thickness = Math.max(1, orsc.graphics.two.AnimationSizing.onEntity(
+                definition.getThickness(), caster.sceneScreenHeight));
 			Sprite scaled = getScaledStaticProjectileSprite(
 				projectileId, frame, source, renderLength, thickness);
 			if (scaled == null) {
@@ -24143,7 +24146,8 @@ public final class mudclient implements Runnable {
 		if (definition != null) {
 			size = ProjectileAnimationCatalog.getImpactScreenSize(definition.getKey());
 		}
-		queuedProjectileImpactSprite[queuedProjectileImpactCount] = sprite;
+		size = orsc.graphics.two.AnimationSizing.onEntity(size, height);
+        queuedProjectileImpactSprite[queuedProjectileImpactCount] = sprite;
 		queuedProjectileImpactX[queuedProjectileImpactCount] = x + width / 2 - size / 2;
 		queuedProjectileImpactY[queuedProjectileImpactCount] = y + height / 2 - size / 2;
 		queuedProjectileImpactSize[queuedProjectileImpactCount] = size;

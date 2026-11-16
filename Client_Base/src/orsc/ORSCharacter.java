@@ -46,6 +46,7 @@ public final class ORSCharacter {
 	public boolean hasSceneScreenAnchor = false;
 	public int sceneScreenCenterX = 0;
 	public int sceneScreenCenterY = 0;
+    public int sceneScreenHeight = 0;
 	int healTimeout = 0;
 	public int currentX;
 	public int currentZ;
