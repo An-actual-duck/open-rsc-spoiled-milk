@@ -178,3 +178,15 @@ Trajectory, animation timing, colors and transparent canvases are unchanged.
 The offline preview uses the same reversal, and all eight octants are checked.
 Private test Melee is raised to 40 to equip the poisoned mithril dagger (38
 required); no production balance or account is changed.
+
+### Correct poison artwork selection
+
+The owner clarified that poison application should borrow Corrosive Aura, not
+Guthix's Agrizoophobia animation. Effect 119 now reads the existing
+assets/runtime/legacy-animations/On Enemy/corrosive-aura/corrosive-aura.png
+directly, using its full 16-frame sequence, with the current zoom-aware sizing.
+No asset is moved or duplicated. Agrizoophobia (105) remains poison-snake; the
+Corrosive Aura prayer's own assignment and poison gameplay rules are unchanged.
+The catalog definition exposes a runtime-relative path for this existing legacy
+source; loaders, sizing audit and packaged-only fixtures honor it. Both sprite
+modes and the poison gameplay/application fixtures pass.

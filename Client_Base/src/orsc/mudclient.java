@@ -22451,7 +22451,7 @@ public final class mudclient implements Runnable {
 
 	private File getExternalAnimationSheet(String category, String relativePath) {
 		return this.externalAssetLoader.findFirstFile(new String[] {
-			"dev/myworld/assets/runtime/animations/" + category
+			"dev/myworld/assets/runtime/" + (CombatEffectAnimationCatalog.LEGACY_ON_ENEMY.equals(category) ? category : "animations/" + category)
 		}, relativePath);
 	}
 
