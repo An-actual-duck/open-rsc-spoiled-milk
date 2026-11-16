@@ -88,13 +88,38 @@ public final class DivineBoltVisualFixture {
         Method screen=method("getCombatEffectScreenSize",int.class,int.class),world=method("getCombatEffectSceneSize",int.class);
         check((Integer)screen.invoke(c,117,64)==108&&(Integer)world.invoke(c,117)==384,"Revelation four times original");
         check((Integer)screen.invoke(c,118,64)==82&&(Integer)world.invoke(c,118)==288,"bleed exactly doubled");
-        check((Integer)screen.invoke(c,119,64)==41&&(Integer)world.invoke(c,119)==144,"poison unchanged");
+        check((Integer)screen.invoke(c,119,64)==164&&(Integer)world.invoke(c,119)==576,"poison visible size corrected");
         for(int effect:new int[]{117,118,119}){
             CombatEffectAnimationCatalog.Definition d=CombatEffectAnimationCatalog.getDefinition(effect);Sprite[] frames=new Sprite[64];
             File file=Paths.get("dev/myworld/assets/runtime/animations",d.getCategory(),d.getSheetPath()).toFile();
             int count=loader.appendExternalAnimationGridSheetFrames(file,frames,d.getMaxTargetSize(),d.getColumns(),d.getRows(),d.getFirstFrame(),d.getFrameCount(),0);
             check(count==d.getFrameCount(),"packaged impact frames");for(int f=0;f<count;f++)export(frames[f],out.resolve("effect-"+effect+"-"+f+".png"));
         }
+        // Exercise the actual attached, Cleric and detached/world queue paths,
+        // rather than checking only a scaling helper in isolation.
+        Sprite[][] combat=new Sprite[120][64];int[] combatCounts=new int[120];
+        set(c,"combatEffectSprites",combat);set(c,"combatEffectFrameCounts",combatCounts);
+        for(int id:new int[]{87,117,118,119}){
+            CombatEffectAnimationCatalog.Definition d=CombatEffectAnimationCatalog.getDefinition(id);
+            combatCounts[id]=loader.appendExternalAnimationGridSheetFrames(new File("dev/myworld/assets/runtime/animations/"+d.getCategory()+"/"+d.getSheetPath()),combat[id],d.getMaxTargetSize(),d.getColumns(),d.getRows(),d.getFirstFrame(),d.getFrameCount(),0);
+        }
+        ORSCharacter actor=new ORSCharacter();actor.combatEffectType=119;actor.combatEffectTime=c.getCombatEffectDuration(119)/2;
+        Method attached=method("drawCombatEffectOverlay",ORSCharacter.class,int.class,int.class,int.class,int.class);
+        for(int h:new int[]{32,64,128,256}){
+            attached.invoke(c,actor,150,0,128,h);
+            check(actor.combatEffectScreenWidth==AnimationSizing.onEntity(164,h),"actual attached poison follows zoom "+h);
+            check(actor.combatEffectScreenX+actor.combatEffectScreenWidth/2==214,"attached center remains stable");
+        }
+        ClericEffectPlayback cleric=new ClericEffectPlayback(false);cleric.enqueue(87,10);
+        Method clericDraw=method("drawClericEffectOverlay",ClericEffectPlayback.class,int.class,int.class,int.class,int.class);
+        for(int h:new int[]{64,128,256}){Arrays.fill(g.pixelData,0);clericDraw.invoke(c,cleric,200,0,128,h);int painted=0;for(int pixel:g.pixelData)if(pixel!=0)painted++;check(painted>0,"Cleric effect remains visible at zoom "+h);}
+        for(String field:new String[]{"queuedCombatEffectSprite","queuedCombatEffectX","queuedCombatEffectY","queuedCombatEffectWidth","queuedCombatEffectHeight"})set(c,field,new int[512]);
+        Method queueEffect=mudclient.class.getMethod("queueCombatEffectOverlay",int.class,int.class,int.class,int.class,int.class);
+        int sceneIndex=mudclient.spriteCombatEffectBase+(119-1)*64;
+        for(int projected:new int[]{144,288,576})check((Boolean)queueEffect.invoke(c,sceneIndex,20,30,projected,projected),"world/detached effect accepted");
+        Field widths=mudclient.class.getDeclaredField("queuedCombatEffectWidth");widths.setAccessible(true);int[] w=(int[])widths.get(c);
+        check(Math.abs(w[1]-2*w[0])<=1&&Math.abs(w[2]-2*w[1])<=1,"world/detached zoom remains proportional");
+        check(AnimationSizing.onEntity(108,128)==108&&AnimationSizing.onEntity(82,128)==82,"approved reference sizes preserved");
         for(String icon:new String[]{"divine-bolts","thorned-bolts","bolts-of-wrath"}){
             Sprite s=loader.loadExternalPrayerIconFile(new File("dev/myworld/assets/runtime/ui/prayer/"+icon+".png"));check(s!=null,"packaged prayer icon "+icon);export(s,out.resolve(icon+".png"));
         }

@@ -11187,7 +11187,7 @@ public final class mudclient implements Runnable {
 		this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
 		try {
 			// Keep the 64px canvas: loaded artwork already fits its 48/32/24px bound.
-			int size = COMBAT_EFFECT_STANDARD_SCREEN_SIZE;
+			int size = orsc.graphics.two.AnimationSizing.onEntity(COMBAT_EFFECT_STANDARD_SCREEN_SIZE, height);
 			this.getSurface().drawSprite(effect, x + width / 2 - size / 2,
 				y + height / 2 - size / 2, size, size, 5924, 224);
 		} finally {
@@ -11212,10 +11212,10 @@ public final class mudclient implements Runnable {
 		if (effect == null) {
 			return;
 		}
-		int drawWidth = getCombatEffectScreenWidth(
-			character.combatEffectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE);
-		int drawHeight = getCombatEffectScreenHeight(
-			character.combatEffectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE);
+		int drawWidth = orsc.graphics.two.AnimationSizing.onEntity(getCombatEffectScreenWidth(
+			character.combatEffectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE), height);
+		int drawHeight = orsc.graphics.two.AnimationSizing.onEntity(getCombatEffectScreenHeight(
+			character.combatEffectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE), height);
 		this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
 		try {
 			if (isDragonBreathCombatEffect(character.combatEffectType)) {
@@ -22132,7 +22132,7 @@ public final class mudclient implements Runnable {
 		if (duration <= 0 || getCombatEffectFrameCount(character.combatEffectType) <= 0) {
 			return;
 		}
-		if (character.hasCombatEffectScreenAnchor) {
+		if (character.hasCombatEffectScreenAnchor && (world == null || scene == null)) {
 			detachScreenCombatEffect(character);
 			return;
 		}
@@ -22283,7 +22283,7 @@ public final class mudclient implements Runnable {
         if (effectType == COMBAT_EFFECT_BRIAR_SEED_BURST) return 192;
         if (effectType == COMBAT_EFFECT_REVELATION_GAIN) return 384;
         if (effectType == COMBAT_EFFECT_BLEED_WOUND) return 288;
-        if (effectType == COMBAT_EFFECT_POISON_APPLIED) return 144;
+        if (effectType == COMBAT_EFFECT_POISON_APPLIED) return 576;
 
 		if (effectType == COMBAT_EFFECT_THUNDER_STRIKE) {
 			return 280; // thunder-3: 224 * 1.25, artwork/timing unchanged
@@ -22333,7 +22333,7 @@ public final class mudclient implements Runnable {
         if (effectType == COMBAT_EFFECT_BRIAR_SEED_BURST) return Math.max(1, baseSize * 6 / 7);
         if (effectType == COMBAT_EFFECT_REVELATION_GAIN) return 4 * Math.max(1, baseSize * 3 / 7);
         if (effectType == COMBAT_EFFECT_BLEED_WOUND) return 2 * Math.max(1, baseSize * 9 / 14);
-        if (effectType == COMBAT_EFFECT_POISON_APPLIED) return Math.max(1, baseSize * 9 / 14);
+        if (effectType == COMBAT_EFFECT_POISON_APPLIED) return 4 * Math.max(1, baseSize * 9 / 14);
 
 		if (effectType == COMBAT_EFFECT_THUNDER_STRIKE) {
 			return Math.max(1, (baseSize * 5) / 4);
@@ -24018,8 +24018,10 @@ public final class mudclient implements Runnable {
 		}
 		int effectType = getCombatEffectTypeForSceneIndex(sceneIndex);
 		int frame = getCombatEffectFrameForSceneIndex(sceneIndex);
-		int drawWidth = getCombatEffectScreenWidth(effectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE);
-		int drawHeight = getCombatEffectScreenHeight(effectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE);
+		int drawWidth = orsc.graphics.two.AnimationSizing.projectedEffect(
+            getCombatEffectScreenWidth(effectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE), width, getCombatEffectSceneWidth(effectType));
+		int drawHeight = orsc.graphics.two.AnimationSizing.projectedEffect(
+            getCombatEffectScreenHeight(effectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE), height, getCombatEffectSceneHeight(effectType));
 		int offsetSize = Math.max(drawWidth, drawHeight);
 		queuedCombatEffectSprite[queuedCombatEffectCount] = sceneIndex;
 		queuedCombatEffectX[queuedCombatEffectCount] = x + (width / 2) - (drawWidth / 2)
@@ -24052,7 +24054,7 @@ public final class mudclient implements Runnable {
 		if (effectType == COMBAT_EFFECT_SUMMON
 			&& frame >= SUMMON_CHARGE_LOOP_START_FRAME
 			&& frame <= SUMMON_CHARGE_LOOP_END_FRAME) {
-			return SUMMON_CHARGE_LOOP_X_OFFSET;
+			return (SUMMON_CHARGE_LOOP_X_OFFSET * size) / COMBAT_EFFECT_STANDARD_SCREEN_SIZE;
 		}
 		return 0;
 	}
