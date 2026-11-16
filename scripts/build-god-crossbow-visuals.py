@@ -9,6 +9,7 @@ GODS=('saradomin','zamorak','guthix')
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
     layout=json.loads((AUTHOR/'frame-layout.json').read_text());assert len(layout['frames'])==15
+    approved=json.loads((AUTHOR/'approved-held.json').read_text())
     spec=importlib.util.spec_from_file_location('archive_codec',ROOT/'scripts/generate-battleaxe-coatings.py');codec=importlib.util.module_from_spec(spec);spec.loader.exec_module(codec)
     custom=ROOT/'Client_Base/Cache/video/Custom_Sprites.osar';groups=codec.archive(gzip.decompress(custom.read_bytes()))
     owned={g+'crossbow'for g in GODS};entries={};classic={}
@@ -16,9 +17,11 @@ def main():
     for index,god in enumerate(GODS):
         palette=[(0,0,0)];encoded=[]
         for row in layout['frames']:
-            f=row['frame'];source=AUTHOR/god/f'{f:02}.png';im=Image.open(source).convert('RGBA');anchor=Image.open(AUTHOR/'inputs'/f'{f:02}.png').convert('RGBA')
+            f=row['frame'];source=AUTHOR/approved['source']/god/f'{f:02}.png';im=Image.open(source).convert('RGBA');anchor=Image.open(AUTHOR/'inputs'/f'{f:02}.png').convert('RGBA')
+            assert hashlib.sha256(source.read_bytes()).hexdigest()==approved['frames'][f'{god}/{f:02}.png'],'Approved held pixels changed'
             assert im.size==anchor.size==tuple(row['canvas'])
-            assert im.getchannel('A').tobytes()==anchor.getchannel('A').tobytes(),'Native silhouette or grip position changed'
+            # Approved limb shapes have new cropped bounds; the full canvas/grip is unchanged.
+            x,y,right,bottom=im.getbbox();row=dict(row,crop=[right-x,bottom-y],offset=[x,y],shift=True)
             runtime=ROOT/f'dev/myworld/assets/runtime/sprites/equipment/god-crossbows/{god}/{f:02}.png'
             if args.check:assert runtime.read_bytes()==source.read_bytes()
             else:runtime.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,runtime)
@@ -34,8 +37,8 @@ def main():
         blob=(god+'crossbow').encode()+b'\0'+bytes([layout['kind'],layout['layer'],15,len(palette)-1])+b''.join(bytes(c)for c in palette)
         for row,pixels in encoded:blob+=struct.pack('>HHBhhHH',*row['crop'],row['shift'],*row['offset'],*row['canvas'])+pixels
         entries[god+'crossbow']=blob
-        for name in ('bolt','impact'):
-            source=AUTHOR/god/(name+'.png');dest=ROOT/f'dev/myworld/assets/runtime/animations/projectile-moving/god-bolts/{god}/{name}.png'
+        for name in ('bolt',):
+            source=AUTHOR/'shots-v3'/god/(name+'.png');dest=ROOT/f'dev/myworld/assets/runtime/animations/projectile-moving/god-bolts/{god}/{name}.png'
             if args.check:assert source.read_bytes()==dest.read_bytes()
             else:dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,dest)
     rebuilt=bytes([len(groups)])
@@ -59,5 +62,5 @@ def main():
         with zipfile.ZipFile(authentic,'w')as z:
             for n,b in {**old,**classic}.items():
                 info=zipfile.ZipInfo(n,(1980,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;z.writestr(info,b)
-    print('PASS 45 held poses, native anchors, 6 effect sheets and preserved unrelated archive payloads')
+    print('PASS 45 held poses, native anchors, 3 bolt/trail sheets and preserved unrelated archive payloads')
 if __name__=='__main__':main()

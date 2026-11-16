@@ -35,13 +35,13 @@ public final class GodCrossbowVisualFixture {
    if(!Config.S_WANT_CUSTOM_SPRITES)check(alias.getNumber()==4200+i*27,"reserved classic allocation");
    for(int f=0;f<15;f++){
     Sprite raw=base.getFrames()[f].getSprite(),art=entry.getFrames()[f].getSprite(),selected=client.spriteSelect(alias,f);
-    check(raw.getWidth()==art.getWidth()&&raw.getHeight()==art.getHeight()&&raw.getXShift()==art.getXShift()&&raw.getYShift()==art.getYShift()&&raw.getSomething1()==art.getSomething1()&&raw.getSomething2()==art.getSomething2(),"same native framing");
+    check(raw.getSomething1()==art.getSomething1()&&raw.getSomething2()==art.getSomething2(),"same native canvas and grip coordinate space");
     check(selected!=null&&Arrays.equals(selected.getPixels(),art.getPixels()),"actual custom/classic frame selection");
    }
    ProjectileAnimationCatalog.Definition effect=ProjectileAnimationCatalog.getProjectileFallback(43+i);
-   check(effect!=null&&effect.getKey().equals(gods[i]+"-bolt")&&effect.getFrameCount()==4,"bolt animation binding");
-   check(ProjectileAnimationCatalog.getImpactSegments(effect.getKey())[0].getFrameCount()==6&&ProjectileAnimationCatalog.getImpactScreenSize(effect.getKey())==32,"compact impact binding");
-   for(String name:new String[]{"bolt","impact"})check(GodCrossbowVisualFixture.class.getResource("/myworld-assets/animations/projectile-moving/god-bolts/"+gods[i]+"/"+name+".png")!=null,"packaged effect sheet");
+   check(effect!=null&&effect.getKey().equals(gods[i]+"-bolt")&&effect.getFrameCount()==6,"bolt animation binding");
+   check(ProjectileAnimationCatalog.getImpactSegments(effect.getKey()).length==0,"no unapproved impact effect");
+   for(String name:new String[]{"bolt"})check(GodCrossbowVisualFixture.class.getResource("/myworld-assets/animations/projectile-moving/god-bolts/"+gods[i]+"/"+name+".png")!=null,"packaged effect sheet");
   }
   check(EntityHandler.getAnimationDef(106).getName().equals("crossbow"),"ordinary family intact");
   System.out.println("PASS "+checks+" actual held selection and packaged effect checks; custom="+Config.S_WANT_CUSTOM_SPRITES);
