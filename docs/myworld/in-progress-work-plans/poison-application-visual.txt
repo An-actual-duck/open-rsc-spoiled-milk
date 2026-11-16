@@ -1,0 +1,27 @@
+Shared poison application visual — November 15, 2026
+
+Owner requested borrowing the existing Guthix green poison-snake animation for
+poison applications generally. Reuse the exact runtime sheet already assigned
+to Agrizoophobia: on-entity/poison-snake/poison-snake.png. No art bytes change.
+Effect119 samples its28 source frames into12 playback frames, matching the
+existing Guthix sequence. Use fast2-client-tick frames and a compact scene size.
+
+Mob.applyPoison emits the visual after positive, accepted application state and
+event registration are committed. This covers player/NPC attacks, weapon and
+armour procs, spells and environmental sources through the shared API. Extra
+accepted doses, including applications at the existing cap, show the visual.
+Invalid input, ineligible NPCs and failed event registration do not. Damage
+pulses, cures, decay, login/process restoration do not replay application.
+Poison power, proc chances, ownership, damage, cleanse and persistence rules
+remain unchanged. Existing caller protections and PvP admission remain in place.
+
+Client10062 adds effect119 and capacity; earlier observers omit it before packet
+counts. God-crossbow/bleed effects retain their10061 compatibility gate.
+
+Validation: isolated real Mob/event fixture covers both player-to-NPC and
+NPC-to-player application, extra/capped doses, ticks, restore and old/new viewers.
+Both sprite modes use the real animation-grid loader and packaged original
+sheet; source28-frame geometry and12-frame playback match the borrowed effect.
+Existing poison model/balance and general combat characterization are checked.
+Evidence: output/tests/poison-application-visuals. No public server, live account
+or database is used; release packaging and public activation are separate.

@@ -2030,6 +2030,8 @@ public abstract class Mob extends Entity {
 			active.setPoisonPower(next.getCurrentPower());
 			active.setProvenance(next.getProvenance());
 			persistPoisonState();
+            getUpdateFlags().setCombatEffect(new com.openrsc.server.model.entity.update.CombatEffect(
+                this,com.openrsc.server.model.entity.update.CombatEffect.POISON_APPLIED));
 		}
 	}
 

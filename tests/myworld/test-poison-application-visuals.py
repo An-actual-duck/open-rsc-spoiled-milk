@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+"""Offline poison application effects and real animation-grid loading. Build client and server first."""
+from pathlib import Path
+import hashlib,json,subprocess,time
+ROOT=Path(__file__).resolve().parents[2]
+BASE=ROOT/'output/tests/poison-application-visuals'/str(time.time_ns())
+BASE.mkdir(parents=True)
+classes=BASE/'classes';classes.mkdir()
+def run(argv,cwd=ROOT,name='step'):
+    result=subprocess.run([str(x) for x in argv],cwd=cwd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+    (BASE/(name+'.log')).write_text(result.stdout)
+    if result.returncode:
+        print('\n'.join(result.stdout.splitlines()[-30:]));raise SystemExit(result.returncode)
+    for line in result.stdout.splitlines():
+        if 'PASS ' in line:print(line)
+    return result
+client=ROOT/'Client_Base/Open_RSC_Client.jar'
+server=ROOT/'server/core.jar'
+for jar in (client,server):
+    if not jar.is_file():raise SystemExit('Build required: '+str(jar))
+run(['python3',ROOT/'tests/myworld/prepare-cleric-well-fixture.py',BASE/'runtime'],name='prepare')
+cp=':'.join(str(ROOT/p) for p in ['server/core.jar','server/plugins.jar','server/lib/*'])
+run(['javac','-source','8','-target','8','-proc:none','-cp',cp,'-sourcepath',ROOT/'server/test','-d',classes,ROOT/'server/test/com/openrsc/server/combat/PoisonApplicationVisualFixture.java'],name='compile-server-test')
+run(['java','-Xmx768m','-XX:+UseSerialGC','-Djava.awt.headless=true','-cp',str(classes)+':'+cp,'com.openrsc.server.combat.PoisonApplicationVisualFixture'],cwd=BASE/'runtime',name='server')
+run(['javac','-source','8','-target','8','-cp',client,'-d',classes,ROOT/'tests/myworld/java/PoisonVisualClientFixture.java'],name='compile-client-test')
+run(['java','-Djava.awt.headless=true','-cp',str(classes)+':'+str(client),'orsc.PoisonVisualClientFixture',ROOT,'true'],name='client-true')
+run(['java','-Djava.awt.headless=true','-cp',str(classes)+':'+str(client),'orsc.PoisonVisualClientFixture',ROOT,'false'],name='client-false')
+(BASE/'receipt.json').write_text(json.dumps({'passed':True,'serverSha256':hashlib.sha256(server.read_bytes()).hexdigest(),'clientSha256':hashlib.sha256(client.read_bytes()).hexdigest(),'publicServerTouched':False},indent=2)+'\n')
+print("Evidence:",BASE)

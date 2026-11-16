@@ -186,6 +186,8 @@ public final class CombatEffectAnimationCatalog {
         define(definitions, 118, "bleed-wound", ON_ENTITY,
             "cut/cut.png", 15, 1, 0, 15, 48);
 
+        defineResampled(definitions, 119, "poison-applied", "poison-snake/poison-snake.png", 28, 12);
+
 		LinkedHashMap<Integer, Definition[]> sequences = new LinkedHashMap<Integer, Definition[]>();
 		for (Map.Entry<Integer, Definition> entry : definitions.entrySet()) {
 			sequences.put(entry.getKey(), new Definition[] {entry.getValue()});
