@@ -1,0 +1,22 @@
+NPC stat work retained by Core — 2026-11-16
+
+The owner asked Core to absorb Dot's NPC-stat planning, retire the unrelated
+unfinished experiments and stop the worker pending further clarification.
+This preserves the four NPC documents, README navigation and read-only inventory
+generator. No proposed number, schema, migration or runtime change is approved
+by this preservation operation. The owner will clarify intent next.
+
+The inventory remains pinned to its captured source. On v0.3.22, three guarded
+Java files changed and two configuration hashes differ; the strict generator
+refuses regeneration until those changes are reviewed. All NPC definition inputs
+and the pilot's relevant stat logic remain unchanged. All fourteen pilot rows
+and mitigation caps were independently checked. The four proposed changed rows
+remain proposals (52, 68, 74, 136).
+
+Review/evidence retained locally:
+output/reviews/npc-stat-work-review/20261116/
+output/diagnostics/npc-stat-inventory/source-64b06dd0/
+These output trees are not shipped in Git or player packages. The generator,
+pinned source references and artifact hashes are retained in the documents.
+
+Next step is owner discussion, not automatic implementation or balance changes.

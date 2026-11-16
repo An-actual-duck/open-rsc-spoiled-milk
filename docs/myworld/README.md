@@ -75,6 +75,18 @@ into one of the category folders, not directly into `docs/myworld/`.
 
 ## In Progress Work Plans
 
+- [NPC defense pilot proposal](in-progress-work-plans/npc-defense-pilot-proposal.md):
+  fourteen current/proposed statlines, family progression, four explicit defense
+  changes for review, preserved controls and deferred special cases.
+- [Zero defense and enemy attack power contract](in-progress-work-plans/npc-zero-defense-and-attack-contract.md):
+  player armor-zero trace, power-source gaps and special mitigation, planned
+  inert NPC Holy Power, and legacy preservation boundaries for later implementation.
+- [Current NPC stat inventory](in-progress-work-plans/npc-stat-inventory.md):
+  all loaded definitions, effective baseline values and provenance, reproducible
+  exports and a review queue for legacy-stat dependencies and special cases.
+- [Unified combat statline and NPC authoring guide](in-progress-work-plans/npc-explicit-stat-authoring-guide.md):
+  shared player/NPC end state, current stat sources, Balrog investigation,
+  explicit-value authoring and the recommended phased migration path.
 - [bug-fixes-and-small-updates.md](in-progress-work-plans/bug-fixes-and-small-updates.md):
   ongoing maintenance queue for focused small fixes and quick updates.
 - [fixes-and-changes-plan.md](in-progress-work-plans/fixes-and-changes-plan.md):
