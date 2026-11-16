@@ -8,6 +8,7 @@ import java.util.Map;
 public final class CombatEffectAnimationCatalog {
 
 	public static final String ON_ENTITY = "on-entity";
+    public static final String LEGACY_ON_ENEMY = "legacy-animations/On Enemy";
 	public static final String PROJECTILE_MOVING = "projectile-moving";
 
 	public static final class Definition {
@@ -42,6 +43,9 @@ public final class CombatEffectAnimationCatalog {
 		public String getKey() { return key; }
 		public String getCategory() { return category; }
 		public String getSheetPath() { return sheetPath; }
+        public String getRuntimeRelativePath() {
+            return (LEGACY_ON_ENEMY.equals(category) ? category : "animations/"+category)+"/"+sheetPath;
+        }
 		public int getColumns() { return columns; }
 		public int getRows() { return rows; }
 		public int getFirstFrame() { return firstFrame; }
@@ -186,7 +190,8 @@ public final class CombatEffectAnimationCatalog {
         define(definitions, 118, "bleed-wound", ON_ENTITY,
             "cut/cut.png", 15, 1, 0, 15, 48);
 
-        defineResampled(definitions, 119, "poison-applied", "poison-snake/poison-snake.png", 28, 12);
+        define(definitions, 119, "poison-applied", LEGACY_ON_ENEMY,
+            "corrosive-aura/corrosive-aura.png", 16, 1, 0, 16, 24);
 
 		LinkedHashMap<Integer, Definition[]> sequences = new LinkedHashMap<Integer, Definition[]>();
 		for (Map.Entry<Integer, Definition> entry : definitions.entrySet()) {

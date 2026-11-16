@@ -94,7 +94,7 @@ public final class DivineBoltVisualFixture {
         check((Integer)screen.invoke(c,119,64)==164&&(Integer)world.invoke(c,119)==576,"poison visible size corrected");
         for(int effect:new int[]{117,118,119}){
             CombatEffectAnimationCatalog.Definition d=CombatEffectAnimationCatalog.getDefinition(effect);Sprite[] frames=new Sprite[64];
-            File file=Paths.get("dev/myworld/assets/runtime/animations",d.getCategory(),d.getSheetPath()).toFile();
+            File file=Paths.get("dev/myworld/assets/runtime",d.getRuntimeRelativePath()).toFile();
             int count=loader.appendExternalAnimationGridSheetFrames(file,frames,d.getMaxTargetSize(),d.getColumns(),d.getRows(),d.getFirstFrame(),d.getFrameCount(),0);
             check(count==d.getFrameCount(),"packaged impact frames");for(int f=0;f<count;f++)export(frames[f],out.resolve("effect-"+effect+"-"+f+".png"));
         }
@@ -104,7 +104,7 @@ public final class DivineBoltVisualFixture {
         set(c,"combatEffectSprites",combat);set(c,"combatEffectFrameCounts",combatCounts);
         for(int id:new int[]{87,117,118,119}){
             CombatEffectAnimationCatalog.Definition d=CombatEffectAnimationCatalog.getDefinition(id);
-            combatCounts[id]=loader.appendExternalAnimationGridSheetFrames(new File("dev/myworld/assets/runtime/animations/"+d.getCategory()+"/"+d.getSheetPath()),combat[id],d.getMaxTargetSize(),d.getColumns(),d.getRows(),d.getFirstFrame(),d.getFrameCount(),0);
+            combatCounts[id]=loader.appendExternalAnimationGridSheetFrames(new File("dev/myworld/assets/runtime/"+d.getRuntimeRelativePath()),combat[id],d.getMaxTargetSize(),d.getColumns(),d.getRows(),d.getFirstFrame(),d.getFrameCount(),0);
         }
         ORSCharacter actor=new ORSCharacter();actor.combatEffectType=119;actor.combatEffectTime=c.getCombatEffectDuration(119)/2;
         Method attached=method("drawCombatEffectOverlay",ORSCharacter.class,int.class,int.class,int.class,int.class);
