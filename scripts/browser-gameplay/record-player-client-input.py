@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Record the freshly built official player JAR as the exact browser bake input."""
 from pathlib import Path
-import argparse,hashlib,json,shutil,subprocess,zipfile
+import argparse,hashlib,json,re,shutil,subprocess,zipfile
 ROOT=Path(__file__).resolve().parents[2]
 def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def write(p,d):p.write_text(json.dumps(d,sort_keys=True,indent=2)+'\n')
 def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--version',required=True);a=p.parse_args()
+ if not re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+(?:-alpha\.[0-9]+)?',a.version):p.error('Exact release version required')
  head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
  if subprocess.check_output(['git','status','--porcelain'],cwd=ROOT,text=True).strip():raise SystemExit('Clean published manager source required')
  if subprocess.check_output(['git','branch','--show-current'],cwd=ROOT,text=True).strip()!='main' or head!=subprocess.check_output(['git','rev-parse','spoiled-milk/main'],cwd=ROOT,text=True).strip():raise SystemExit('Published main required')
