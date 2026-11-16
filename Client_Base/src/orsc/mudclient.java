@@ -23975,7 +23975,7 @@ public final class mudclient implements Runnable {
         int z = getProjectileTravelCoordinate(definition, caster.currentZ, victim.currentZ, range);
         if (!scene.projectWorldPoint(x, y, z, boltTravelProjection)
                 || boltTravelProjection[2] >= scene.fogEntityDistance) return;
-        int angle = orsc.graphics.two.BoltFlightVisuals.angle(
+        int angle = orsc.graphics.two.BoltFlightVisuals.artAngle(
             boltVictimProjection[0] - boltCasterProjection[0], boltVictimProjection[1] - boltCasterProjection[1]);
         int scale = orsc.graphics.two.BoltFlightVisuals.scale(scene.getPerspectiveShift(), boltTravelProjection[2]);
         getSurface().drawMinimapSprite(sprite, boltTravelProjection[1], boltTravelProjection[0], 0, scale, angle);

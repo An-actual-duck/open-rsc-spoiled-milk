@@ -169,3 +169,12 @@ and full canvas dimensions. The visual fixture asserts background preservation
 for basic and all holy bolts in eight orientations and every animation phase.
 The requested poisoned mithril dagger is catalog ID 562; private scenario edits
 must occur only after the test client logs out and its private server stops.
+
+### Owner-selected reverse orientation
+
+At the owner's request, the complete basic/holy bolt artwork (bolt and attached
+trail together) is rotated 180 degrees relative to the previous flight facing.
+Trajectory, animation timing, colors and transparent canvases are unchanged.
+The offline preview uses the same reversal, and all eight octants are checked.
+Private test Melee is raised to 40 to equip the poisoned mithril dagger (38
+required); no production balance or account is changed.

@@ -79,6 +79,7 @@ public final class DivineBoltVisualFixture {
         Sprite marker=new Sprite(markerPixels,9,5);marker.setSomething(9,5);marker.setRequiresShift(true);
         for(int a=0;a<8;a++){
             int dx=(int)Math.round(Math.cos(a*Math.PI/4)*100),dy=(int)Math.round(Math.sin(a*Math.PI/4)*100);
+            check(BoltFlightVisuals.artAngle(dx,dy)==((BoltFlightVisuals.angle(dx,dy)+128)&255),"owner-selected reversed artwork orientation");
             Arrays.fill(g.pixelData,0);g.drawMinimapSprite(marker,150,320,0,1024,BoltFlightVisuals.angle(dx,dy));
             double redX=0,redY=0,blueX=0,blueY=0;int red=0,blue=0;
             for(int y=0;y<300;y++)for(int x=0;x<640;x++){int v=g.pixelData[y*640+x]&0xffffff;if(v==0xff0000){redX+=x;redY+=y;red++;}if(v==0x0000ff){blueX+=x;blueY+=y;blue++;}}
