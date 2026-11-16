@@ -188,6 +188,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 
 ## Proposed Work Plans
 
+- [NPC offensive Power assignments](proposed-work-plans/npc-offensive-powers/README.md):
+  complete explicit powers, current/proposed damage ceilings, selection weights and preserved exceptions.
+
 - [Exact NPC attack loadouts and tags](proposed-work-plans/npc-attack-loadouts/README.md):
   298 primary/style assignments, elemental/divine metadata and protected encounter boundaries.
 
