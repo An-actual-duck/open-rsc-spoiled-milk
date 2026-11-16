@@ -11360,6 +11360,12 @@ public final class mudclient implements Runnable {
 									? (mySpriteOffset < 15 ? 64 : 84) : something1;
 								int xOffset = (spriteOffsetX * width) / handOffsetBound;
 								int yOffset = (spriteOffsetY * height) / something2;
+                                // Match the side-view stock to the carrying hand in both facings.
+                                if (mappedLayer == 4 && actualAnimDir == 2
+                                        && EntityHandler.getAnimationDef(animID).getName().endsWith("crossbow")) {
+                                    xOffset += (mirrorX ? -8 : 8) * width / 64;
+                                    yOffset += 8 * height / 102;
+                                }
 								int spriteWidth = (something1 * width) / something3;
 								xOffset -= (spriteWidth - width) / 2;
 								int colorMask1 = EntityHandler.getAnimationDef(animID).getCharColour();

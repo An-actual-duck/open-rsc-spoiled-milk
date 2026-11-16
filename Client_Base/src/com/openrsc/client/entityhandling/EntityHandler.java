@@ -7174,7 +7174,7 @@ public class EntityHandler {
     }
 
     private static void addBatWingDefinitions() {
-        setCustomItemDefinition(3470,new ItemDef("Naga scales","Small naga scales. Grind with a pestle and mortar.","",15,146,"items:146",false,false,0,0x67986B,false,false,true,3470));
+        setCustomItemDefinition(3470,new ItemDef("Naga scales","Small naga scales. Grind with a pestle and mortar.","",15,-1,"external-png:naga-scales@28x18",false,false,0,0,false,false,true,3470));
         setCustomItemDefinition(3471,new ItemDef("Ground naga scale","Powdered naga scale, used to make anti-coagulant.","",15,23,"items:23",false,false,0,0x67986B,false,false,true,3471));
         setCustomItemDefinition(3467,new ItemDef("Giant bat wing","A leathery wing from a giant bat.","",20,-1,"external-png:bat-wing",false,false,0,0,false,false,true,3467));
         setCustomItemDefinition(3468,new ItemDef("Death wing wing","A leathery wing from a supernatural Death wing.","",50,-1,"external-png:death-wing-wing",false,false,0,0,false,false,true,3468));
