@@ -116,6 +116,7 @@ public final class GodCrossbowEffects {
             ||mark.sourceLife!=player.getCombatLifecycle()||mark.epoch!=state.epoch
             ||!Objects.equals(mark.family,state.family)||state.familiarity>=MAX_FAMILIARITY)return;
         state.familiarity++;player.message("Revelation grows to "+state.familiarity+"% familiarity.");
+        player.getUpdateFlags().setCombatEffect(new com.openrsc.server.model.entity.update.CombatEffect(player,com.openrsc.server.model.entity.update.CombatEffect.REVELATION_GAIN));
     }
     private static void seed(Player source,Mob primary,UUID eventId){
         Map<UUID,Seeds> seeds=primary.getAttribute(SEEDS,null);
@@ -125,6 +126,8 @@ public final class GodCrossbowEffects {
         if(counter==null){counter=new Seeds(source,primary);seeds.put(source.getUUID(),counter);}
         if(++counter.count<SEEDS_PER_BURST)return;
         seeds.remove(source.getUUID());if(seeds.isEmpty())primary.removeAttribute(SEEDS);
+        // One burst at the primary impact centre, rather than one on every collateral victim.
+        primary.getUpdateFlags().setCombatEffect(new com.openrsc.server.model.entity.update.CombatEffect(primary,com.openrsc.server.model.entity.update.CombatEffect.BRIAR_SEED_BURST));
         List<Mob> targets=new ArrayList<>();targets.add(primary);
         if(primary instanceof Npc)targets.addAll(CombatEffectUtil.findPlayerOwnedNpcSplashTargets(source,(Npc)primary,BURST_RADIUS));
         else if(primary instanceof Player)targets.addAll(CombatEffectUtil.findPlayerOwnedPvpSplashTargets(source,(Player)primary,BURST_RADIUS));

@@ -4,6 +4,9 @@ import com.openrsc.server.model.entity.Mob;
 
 public class CombatEffect {
 	public static final int NONE = 0;
+    public static final int BRIAR_SEED_BURST=116, REVELATION_GAIN=117, BLEED_WOUND=118;
+    public static final int FIRST_PROC_VISUAL_CLIENT_VERSION=10061;
+
 	public static final int HELLS_FIRE = 1;
 	public static final int HELLS_BLAZE = 2;
 	public static final int AIR_SLASH = 3;
@@ -109,6 +112,11 @@ public class CombatEffect {
 
 	/** Filter before packet counts: blessing cosmetics belong only to their recipient. */
 	public boolean isVisibleTo(com.openrsc.server.model.entity.player.Player viewer) {
+        if (effectType >= BRIAR_SEED_BURST && effectType <= BLEED_WOUND) {
+            if (!viewer.isUsingCustomClient() || viewer.getClientVersion() < FIRST_PROC_VISUAL_CLIENT_VERSION
+                    || viewer.getClientVersion() >= 20000) return false;
+            if (effectType == REVELATION_GAIN) return target == viewer;
+        }
 		return !com.openrsc.server.net.rsc.ClericBlessingContract.isRecipientOnlyBuffAnimation(effectType)
 			|| target == viewer;
 	}

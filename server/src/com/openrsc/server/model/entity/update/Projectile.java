@@ -46,6 +46,7 @@ public class Projectile {
 	public static final int ICE_SWORD_STAB = 40;
 	public static final int NAGA_SCIMITAR = 41;
 	public static final int ELECTRIC_DISC = 42;
+    public static final int SARADOMIN_BOLT=43, ZAMORAK_BOLT=44, GUTHIX_BOLT=45;
 
 	/**
 	 * Who fired the projectile

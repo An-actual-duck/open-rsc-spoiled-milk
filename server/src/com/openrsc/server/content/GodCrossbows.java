@@ -9,6 +9,27 @@ import com.openrsc.server.model.entity.player.PrayerCatalog;
 /** God crossbow equipment and reserved, virtual ammunition. Never creates physical bolts. */
 public final class GodCrossbows {
     public static final int PRAYER_SLOT = 16;
+    public static final int FIRST_BOLT_VISUAL_CLIENT_VERSION = 10061;
+
+    /** Shot identity is captured at launch; ordinary ammunition keeps its own visual. */
+    public static int projectileType(GodCrossbowEffects.Shot shot) {
+        if (shot == null) return com.openrsc.server.model.entity.update.Projectile.BOLT;
+        switch (shot.getGod()) {
+            case SARADOMIN: return com.openrsc.server.model.entity.update.Projectile.SARADOMIN_BOLT;
+            case ZAMORAK: return com.openrsc.server.model.entity.update.Projectile.ZAMORAK_BOLT;
+            default: return com.openrsc.server.model.entity.update.Projectile.GUTHIX_BOLT;
+        }
+    }
+
+    /** Old observing clients receive the established bolt ID, including observers in PvP. */
+    public static int projectileForViewer(int type, Player viewer) {
+        if (type >= com.openrsc.server.model.entity.update.Projectile.SARADOMIN_BOLT
+                && type <= com.openrsc.server.model.entity.update.Projectile.GUTHIX_BOLT
+                && (viewer.getClientVersion() < FIRST_BOLT_VISUAL_CLIENT_VERSION || viewer.getClientVersion() >= 20000))
+            return com.openrsc.server.model.entity.update.Projectile.BOLT;
+        return type;
+    }
+
     public static final int RESERVATION = 80;
     public static final int CAPE_RESERVATION = 60;
     private GodCrossbows() { }

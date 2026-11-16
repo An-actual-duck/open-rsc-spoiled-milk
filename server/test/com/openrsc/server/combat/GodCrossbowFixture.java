@@ -79,11 +79,18 @@ public final class GodCrossbowFixture {
                 check(((List<?>)pool.invoke(null,p,god)).equals(Collections.singletonList(bow)),"only new crossbow remains");
                 p.getCache().store("god_artifact_claimed_"+god.name().toLowerCase()+"_"+bow,true);check(!GodArtifacts.isEligible(p,god),"fourth claim exhausts pool");
             }
-            for(int ammo:new int[]{-1,ItemId.TIN_ARROWS.id(),ItemId.POISON_DRAGON_BOLTS.id()}) {
-                Player p=player(h,PrayerCatalog.GodLine.SARADOMIN);equip(p,3444,1);if(ammo>0)equip(p,ammo,20);p.getPrayers().setPrayer(16,true);
+            for(PrayerCatalog.GodLine visualGod:gods) for(int ammo:new int[]{-1,ItemId.TIN_ARROWS.id(),ItemId.POISON_DRAGON_BOLTS.id()}) {
+                int bow=visualGod==PrayerCatalog.GodLine.SARADOMIN?3444:visualGod==PrayerCatalog.GodLine.ZAMORAK?3445:3446;
+                Player p=player(h,visualGod);equip(p,bow,1);if(ammo>0)equip(p,ammo,20);p.getPrayers().setPrayer(16,true);
                 ProjectileEvent event=fire(h,p);ProjectileResourceLedger ledger=(ProjectileResourceLedger)CurrentCombatHarness.readPrivateField(event,"resourceLedger");
                 check(ledger.getItemCosts().isEmpty()&&ledger.getRecoveries().isEmpty(),"holy launch has no physical ammo ledger");
                 check(event.getLaunchSnapshot().getSpecification().getGodCrossbowShot()!=null,"real holy launch captures unique effect");
+                check(event.getLaunchSnapshot().getSpecification().getProjectileType()==43+(bow-3444),"god-specific holy bolt presentation");
+                p.setClientVersion(10060);
+                check(GodCrossbows.projectileForViewer(43+(bow-3444),p)==20,"older observer gets ordinary bolt");
+                p.setClientVersion(10061);
+                check(GodCrossbows.projectileForViewer(43+(bow-3444),p)==43+(bow-3444),"new observer gets holy bolt");
+
                 check(event.getLaunchSnapshot().getSpecification().getPoisonWeaponId()==-1,"holy launch cannot inherit bolt poison");
                 if(ammo>0)check(p.getCarriedItems().getEquipment().getAmmoItem().getAmount()==20,"overridden ammo untouched");
                 event.stop();p.getRangeEvent().stop();
@@ -92,6 +99,7 @@ public final class GodCrossbowFixture {
             ProjectileEvent event=fire(h,normal);ProjectileResourceLedger ledger=(ProjectileResourceLedger)CurrentCombatHarness.readPrivateField(event,"resourceLedger");
             check(normal.getCarriedItems().getEquipment().getAmmoItem().getAmount()==19,"prayer off consumes ordinary bolt");
             check(event.getLaunchSnapshot().getSpecification().getGodCrossbowShot()==null,"ordinary real launch carries no holy effect");
+            check(event.getLaunchSnapshot().getSpecification().getProjectileType()==20,"ordinary ammo visual unchanged");
             check(ledger.getItemCosts().size()==1&&ledger.getRecoveries().size()==1,"ordinary ammo resources retained");
             check(event.getLaunchSnapshot().getSpecification().getPoisonWeaponId()==ItemId.MITHRIL_BOLTS.id(),"ordinary ammo identity retained");
             event.stop();normal.getRangeEvent().stop();

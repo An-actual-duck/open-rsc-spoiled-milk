@@ -65,6 +65,7 @@ public final class Bleed {
                 existing.severity=escalating?Math.min(3,existing.severity+1):Math.max(existing.severity,severity);
                 if(source instanceof Player)((Player)source).message("You reopen the wound");
                 else ((Player)target).message("The stirge deepens your wound (Bleed "+existing.severity+").");
+                showWound(target);
                 return true;
             }
             if(existing!=null)existing.stop();
@@ -73,8 +74,13 @@ public final class Bleed {
             wounds.bySource.put(source.getUUID(),wound);
             if(source instanceof Player)((Player)source).message(severity==1?"You open up a minor wound":severity==2?"You open up a wound":"You open up a sizable wound");
             else ((Player)target).message("The stirge opens a bleeding wound.");
+            showWound(target);
             return true;
         }
+    }
+    private static void showWound(Mob target) {
+        target.getUpdateFlags().setCombatEffect(new com.openrsc.server.model.entity.update.CombatEffect(
+            target,com.openrsc.server.model.entity.update.CombatEffect.BLEED_WOUND));
     }
     public static void clearStirgeWounds(Player target) {
         synchronized(target) {

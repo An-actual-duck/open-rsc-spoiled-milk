@@ -1,0 +1,482 @@
+{
+  "description": "Explicit source-frame string attachments, bow belly and stock axis. Rear hidden-side anchor is virtual; only the right half of the bow is visible. No bbox scaling.",
+  "frames": [
+    {
+      "frame": 0,
+      "stringA": [
+        5,
+        58
+      ],
+      "stringB": [
+        34,
+        58
+      ],
+      "belly": [
+        20,
+        64
+      ],
+      "stockRear": [
+        20,
+        51
+      ],
+      "stockFront": [
+        20,
+        68
+      ],
+      "forward": [
+        0,
+        1
+      ],
+      "visibleBowStart": 0,
+      "visibleHorns": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 1,
+      "stringA": [
+        5,
+        58
+      ],
+      "stringB": [
+        34,
+        58
+      ],
+      "belly": [
+        20,
+        67
+      ],
+      "stockRear": [
+        20,
+        50
+      ],
+      "stockFront": [
+        20,
+        71
+      ],
+      "forward": [
+        0,
+        1
+      ],
+      "visibleBowStart": 0,
+      "visibleHorns": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 2,
+      "stringA": [
+        5,
+        60
+      ],
+      "stringB": [
+        34,
+        60
+      ],
+      "belly": [
+        20,
+        70
+      ],
+      "stockRear": [
+        20,
+        49
+      ],
+      "stockFront": [
+        20,
+        73
+      ],
+      "forward": [
+        0,
+        1
+      ],
+      "visibleBowStart": 0,
+      "visibleHorns": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 3,
+      "stringA": [
+        21,
+        66
+      ],
+      "stringB": [
+        44,
+        60
+      ],
+      "belly": [
+        37,
+        72
+      ],
+      "stockRear": [
+        20,
+        52
+      ],
+      "stockFront": [
+        40,
+        70
+      ],
+      "forward": [
+        0.8,
+        0.6
+      ],
+      "visibleBowStart": 0,
+      "visibleHorns": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 4,
+      "stringA": [
+        25,
+        66
+      ],
+      "stringB": [
+        47,
+        56
+      ],
+      "belly": [
+        38,
+        69
+      ],
+      "stockRear": [
+        23,
+        52
+      ],
+      "stockFront": [
+        45,
+        65
+      ],
+      "forward": [
+        0.8,
+        0.6
+      ],
+      "visibleBowStart": 0,
+      "visibleHorns": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 5,
+      "stringA": [
+        28,
+        64
+      ],
+      "stringB": [
+        48,
+        50
+      ],
+      "belly": [
+        40,
+        65
+      ],
+      "stockRear": [
+        23,
+        50
+      ],
+      "stockFront": [
+        49,
+        61
+      ],
+      "forward": [
+        0.8,
+        0.6
+      ],
+      "visibleBowStart": 0,
+      "visibleHorns": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 6,
+      "stringA": [
+        35,
+        60
+      ],
+      "stringB": [
+        44,
+        47
+      ],
+      "belly": [
+        46,
+        56
+      ],
+      "stockRear": [
+        19,
+        47
+      ],
+      "stockFront": [
+        47,
+        55
+      ],
+      "forward": [
+        1,
+        0
+      ],
+      "visibleBowStart": 0,
+      "visibleHorns": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 7,
+      "stringA": [
+        39,
+        59
+      ],
+      "stringB": [
+        46,
+        46
+      ],
+      "belly": [
+        49,
+        54
+      ],
+      "stockRear": [
+        21,
+        48
+      ],
+      "stockFront": [
+        49,
+        53
+      ],
+      "forward": [
+        1,
+        0
+      ],
+      "visibleBowStart": 0,
+      "visibleHorns": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 8,
+      "stringA": [
+        43,
+        59
+      ],
+      "stringB": [
+        45,
+        43
+      ],
+      "belly": [
+        52,
+        50
+      ],
+      "stockRear": [
+        22,
+        48
+      ],
+      "stockFront": [
+        52,
+        50
+      ],
+      "forward": [
+        1,
+        0
+      ],
+      "visibleBowStart": 0,
+      "visibleHorns": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 9,
+      "stringA": [
+        43,
+        41
+      ],
+      "stringB": [
+        60,
+        58
+      ],
+      "belly": [
+        62,
+        48
+      ],
+      "stockRear": [
+        34,
+        47
+      ],
+      "stockFront": [
+        62,
+        48
+      ],
+      "forward": [
+        0.85,
+        -0.5
+      ],
+      "visibleBowStart": 0,
+      "visibleHorns": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 10,
+      "stringA": [
+        42,
+        42
+      ],
+      "stringB": [
+        61,
+        55
+      ],
+      "belly": [
+        62,
+        47
+      ],
+      "stockRear": [
+        34,
+        49
+      ],
+      "stockFront": [
+        62,
+        47
+      ],
+      "forward": [
+        0.85,
+        -0.5
+      ],
+      "visibleBowStart": 0,
+      "visibleHorns": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 11,
+      "stringA": [
+        40,
+        40
+      ],
+      "stringB": [
+        61,
+        51
+      ],
+      "belly": [
+        62,
+        43
+      ],
+      "stockRear": [
+        34,
+        49
+      ],
+      "stockFront": [
+        62,
+        43
+      ],
+      "forward": [
+        0.85,
+        -0.5
+      ],
+      "visibleBowStart": 0,
+      "visibleHorns": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 12,
+      "stringA": [
+        30,
+        55
+      ],
+      "stringB": [
+        60,
+        55
+      ],
+      "belly": [
+        45,
+        49
+      ],
+      "stockRear": [
+        45,
+        61
+      ],
+      "stockFront": [
+        45,
+        47
+      ],
+      "forward": [
+        0,
+        -1
+      ],
+      "visibleBowStart": 0.5,
+      "visibleHorns": [
+        1
+      ]
+    },
+    {
+      "frame": 13,
+      "stringA": [
+        30,
+        54
+      ],
+      "stringB": [
+        60,
+        54
+      ],
+      "belly": [
+        45,
+        46
+      ],
+      "stockRear": [
+        45,
+        61
+      ],
+      "stockFront": [
+        45,
+        44
+      ],
+      "forward": [
+        0,
+        -1
+      ],
+      "visibleBowStart": 0.5,
+      "visibleHorns": [
+        1
+      ]
+    },
+    {
+      "frame": 14,
+      "stringA": [
+        30,
+        53
+      ],
+      "stringB": [
+        59,
+        53
+      ],
+      "belly": [
+        45,
+        43
+      ],
+      "stockRear": [
+        45,
+        60
+      ],
+      "stockFront": [
+        45,
+        41
+      ],
+      "forward": [
+        0,
+        -1
+      ],
+      "visibleBowStart": 0.5,
+      "visibleHorns": [
+        1
+      ]
+    }
+  ]
+}

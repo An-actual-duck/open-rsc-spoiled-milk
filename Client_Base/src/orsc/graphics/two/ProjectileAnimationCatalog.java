@@ -119,6 +119,9 @@ public final class ProjectileAnimationCatalog {
 		define(definitions, "thunder-2", "Thunder bird", "thunder-2/Projectile/Projectile 2 wo blur.png", 16, 1, 0, 16);
 		define(definitions, "acid-basic-2", "Acid armor proc", "acid-basic-2/Acid VFX 03(56x48).png", 16, 1, 0, 16);
 		define(definitions, "electric-disc-basic", "Electric Disc", "Eletric Disc (32x32)/Eletricity Disc wo blur.png", 13, 1, 7, 6);
+        define(definitions, "saradomin-bolt", "Saradomin holy bolt", "god-bolts/saradomin/bolt.png", 6, 1, 0, 6);
+        define(definitions, "zamorak-bolt", "Zamorak holy bolt", "god-bolts/zamorak/bolt.png", 6, 1, 0, 6);
+        define(definitions, "guthix-bolt", "Guthix holy bolt", "god-bolts/guthix/bolt.png", 6, 1, 0, 6);
 		DEFINITIONS = Collections.unmodifiableMap(definitions);
 
 		LinkedHashMap<String, Segment[]> startupSegments = new LinkedHashMap<String, Segment[]>();
@@ -189,6 +192,10 @@ public final class ProjectileAnimationCatalog {
 		fallback(fallbacks, PROJECTILE_TYPES.WOOD_LEAD_2, "wood-basic");
 		fallback(fallbacks, PROJECTILE_TYPES.ACID_ARMOR_PROC, "acid-basic-2");
 		fallback(fallbacks, PROJECTILE_TYPES.ELECTRIC_DISC, "electric-disc-basic");
+        fallback(fallbacks, PROJECTILE_TYPES.SARADOMIN_BOLT, "saradomin-bolt");
+        fallback(fallbacks, PROJECTILE_TYPES.ZAMORAK_BOLT, "zamorak-bolt");
+        fallback(fallbacks, PROJECTILE_TYPES.GUTHIX_BOLT, "guthix-bolt");
+
 		PROJECTILE_FALLBACKS = Collections.unmodifiableMap(fallbacks);
 	}
 

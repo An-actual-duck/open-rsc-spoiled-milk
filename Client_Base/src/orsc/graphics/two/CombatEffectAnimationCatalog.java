@@ -179,6 +179,13 @@ public final class CombatEffectAnimationCatalog {
 		define(definitions, 109, "weak-constitution", ON_ENTITY,
 			"general-buffs-debuffs/skull/skull-down.png", 13, 1, 0, 13, 24);
 
+        define(definitions, 116, "briar-seed-burst", ON_ENTITY,
+            "Wood VFX 03/Wood VFX 03(48x48).png", 30, 1, 0, 30, 48);
+        define(definitions, 117, "revelation-gain", ON_ENTITY,
+            "general-buffs-debuffs/accuracy/accuracy-up.png", 10, 1, 0, 10, 24);
+        define(definitions, 118, "bleed-wound", ON_ENTITY,
+            "cut/cut.png", 15, 1, 0, 15, 48);
+
 		LinkedHashMap<Integer, Definition[]> sequences = new LinkedHashMap<Integer, Definition[]>();
 		for (Map.Entry<Integer, Definition> entry : definitions.entrySet()) {
 			sequences.put(entry.getKey(), new Definition[] {entry.getValue()});
