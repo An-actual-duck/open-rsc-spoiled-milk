@@ -128,3 +128,29 @@ ending at the ground, fireball at middle/front, and rising effects anchored at
 the bottom. Preserve stable anchors and sequence-wide scaling. Do not implement
 this larger abstraction or move asset directories as part of the release-sizing
 fixes.
+
+## Release correction implementation
+
+A focused sizing fix now applies camera scale to attached spell/status overlays,
+Cleric buff/curse sequences, and the world-projected effect queue. Previously
+these paths replaced projected sizes with fixed screen pixels. Reference sizing
+uses a 128-pixel-tall actor, retaining the owner-approved Revelation (108-pixel
+canvas) and bleed (82-pixel canvas) at that reference. NPC overlays follow the
+actual projected entity height. All sprite proportions/sequence framing remain
+unchanged; no per-frame crop or new animation catalog is introduced.
+
+Poison now uses a 164-pixel reference canvas (4x its prior 41), bringing its
+visible peak from roughly 7x6 to 28x26 at reference size, comparable in height to
+approved bleed. Other compact Cleric/mage sizes remain as audited; there is no
+blanket enlargement. The bat summon remains untouched.
+
+Detached effects use their existing world-position continuation when a world/
+scene is available, so they follow camera movement/zoom after the target leaves,
+rather than freezing a screen rectangle. The legacy screen-only fallback remains
+for contexts with no scene. Projectiles already project through world/camera
+space; their sizes and approved visuals are retained.
+
+The dedicated visual fixture exercises the real attached effect draw, Cleric
+playback and queued world-effect paths across zoom sizes, including reference
+size preservation. Firefox preview adds a zoom selector that scales the figure
+and effect together. In-game owner verification is still required before release.
