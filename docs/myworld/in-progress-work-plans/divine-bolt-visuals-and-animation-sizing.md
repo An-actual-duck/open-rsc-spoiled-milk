@@ -77,4 +77,16 @@ specific effect requiring an owner size choice.
 Preview: scripts/preview-divine-bolt-visuals.py (requires passing current-JAR
 fixture exports). Firefox page is under output/art/god-crossbow-prayer-shots/study-v4.
 It includes current poison beside approved bleed and the final Revelation size.
-The worker remains active until the remaining sizing decision is settled.
+The owner deferred poison resizing to a separate shared animation-sizing pass.
+The approved crossbow/bleed/Revelation work is ready for integration.
+
+## Next pass: zoom-aware animation sizing
+
+After completing this batch, standardize intended visible effect sizes and scale
+them with camera projection. Effects must retain their size relative to actors
+and terrain when zooming, rather than remaining fixed screen-pixel overlays.
+Cover on-entity effects, Cleric buff/curse sequences, detached effects and moving/
+static projectiles; preserve approved appearances at a documented reference zoom.
+Use stable sequence-wide bounds and anchors, avoid per-frame auto-fitting, and
+verify software, OpenGL and browser paths across zoom levels. Poison sizing is
+part of this follow-up. The previously fixed bat summon is not reopened.
