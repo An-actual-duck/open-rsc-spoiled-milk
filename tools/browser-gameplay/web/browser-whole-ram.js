@@ -1,7 +1,7 @@
 /** Private prepared system-RAM experiment. No cache-count or raw-only readiness shortcut. */
 const HASH=/^[0-9a-f]{64}$/;
-export const WHOLE_RAM_SOURCE_BYTES=46101718;
-export const WHOLE_RAM_BUNDLE_BYTES=46101734;
+export const WHOLE_RAM_SOURCE_BYTES=46111318;
+export const WHOLE_RAM_BUNDLE_BYTES=46111334;
 export const WHOLE_RAM_PREPARED_MAX=1536*1024*1024;
 function integer(n,min,max,label){if(!Number.isSafeInteger(n)||n<min||n>max)throw new Error('Whole RAM '+label+' bounds');return n;}
 function hash(value,label){if(typeof value!=='string'||!HASH.test(value))throw new Error('Whole RAM '+label+' SHA256');return value;}

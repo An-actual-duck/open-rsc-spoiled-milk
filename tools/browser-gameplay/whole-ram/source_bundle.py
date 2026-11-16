@@ -84,7 +84,7 @@ def validate_source(directory,expected=None,verify_payloads=True):
   for key,value in expected.items():
    if not typed_equal(m.get(key),value):refuse('RAM binding mismatch: '+key)
  b=m.get('sourceBundle');files=m.get('files')
- if not isinstance(b,dict)or b.get('path')!='source.bin'or b.get('headerBytes')!=16 or b.get('fileCount')!=1797 or b.get('rawBytes')!=46111318 or b.get('bytes')!=46101734:refuse('Complete RAM source bundle declaration')
+ if not isinstance(b,dict)or b.get('path')!='source.bin'or b.get('headerBytes')!=16 or b.get('fileCount')!=1797 or b.get('rawBytes')!=46111318 or b.get('bytes')!=46111334:refuse('Complete RAM source bundle declaration')
  check_hash(b.get('sha256'),'bundle');bundle=directory/'source.bin'
  if bundle.is_symlink()or not bundle.is_file()or bundle.stat().st_size!=b['bytes']or b['bytes']>MAX_BUNDLE:refuse('RAM source file bounds')
  if not isinstance(files,list)or len(files)!=1797:refuse('RAM source file roster')
