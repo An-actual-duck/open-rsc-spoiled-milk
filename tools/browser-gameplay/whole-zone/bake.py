@@ -4,7 +4,7 @@ import argparse,hashlib,importlib.util,json,re,shutil,struct,subprocess,sys,time
 from pathlib import Path
 sys.dont_write_bytecode=True
 ROOT=Path(__file__).resolve().parents[3]
-FINGERPRINT='7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc'
+FINGERPRINT='46f8e3cb2ed57164932d16ef0197124ba74fc966f5ca91a2105cd472c3a42de6'
 ASSET_PATHS=['Cache/video/'+n for n in ['Authentic_Landscape.orsc','Authentic_Sprites.orsc','Custom_Sprites.osar','library.orsc','models.orsc']]
 def sha(path):
  h=hashlib.sha256()

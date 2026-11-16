@@ -14,7 +14,7 @@ Usage:
   ./scripts/ai-manager.sh park <ai-N>
   ./scripts/ai-manager.sh collect-contributor <ai-N> <remote-topic-branch> <exact-commit>
   ./scripts/ai-manager.sh merge <topic-branch>
-  ./scripts/ai-manager.sh release-check
+  ./scripts/ai-manager.sh release-check [--version VERSION --release-exception MANIFEST]
   ./scripts/ai-manager.sh release <package-player-release options>
 
 Rescue is an explicit preservation action for an abandoned slot. Merge accepts
@@ -273,7 +273,25 @@ manager_release_check() {
   local stash_count path path_real slot branch phase remote_state problems=0
   local primary_real live_real branch_path operation published_ref head
 
+  local release_version="" release_exception="" excluded_branch
+  local -A release_excluded=()
+  while (($#)); do
+    case "$1" in
+      --version) [[ $# -ge 2 ]] || ai_fail "Missing exception release version"; release_version="$2"; shift 2 ;;
+      --release-exception) [[ $# -ge 2 ]] || ai_fail "Missing exception manifest"; release_exception="$2"; shift 2 ;;
+      *) ai_fail "Unknown release-check argument: $1" ;;
+    esac
+  done
   ai_require_manager
+  if [[ -n "$release_exception" ]]; then
+    [[ -n "$release_version" ]] || ai_fail "Exceptions require an exact release version"
+    local excluded_list
+    excluded_list="$(python3 "$SCRIPT_ROOT/scripts/check-release-exception.py" --root "$ROOT_DIR" --manifest "$release_exception" --version "$release_version")" || ai_fail "Release exception validation failed"
+    while IFS= read -r excluded_branch; do [[ -z "$excluded_branch" ]] || release_excluded["$excluded_branch"]=1; done <<< "$excluded_list"
+    printf 'Scoped owner exception: %s; all excluded tips verified on remote.\n' "$release_version"
+  elif [[ -n "$release_version" ]]; then
+    ai_fail "A release-check version is only meaningful with its exception manifest"
+  fi
   if [[ -f "$ROOT_DIR/Client_Base/src/orsc/Config.java" ]]; then
     python3 "$ROOT_DIR/scripts/check-client-version-alignment.py" --root "$ROOT_DIR" \
       || ai_fail "Align maintained server/client protocol versions before release."
@@ -371,6 +389,10 @@ manager_release_check() {
     [[ -n "$branch" && "$branch" != "$AI_MAIN_BRANCH" ]] || continue
     branch_path="$(ai_branch_worktree "$branch" || true)"
     if [[ -z "$branch_path" ]]; then
+      if [[ "${release_excluded[$branch]:-}" == 1 ]]; then
+        printf 'PRESERVED/EXCLUDED: %s (not integrated).\n' "$branch"
+        continue
+      fi
       ai_warn "Unmanaged local branch remains without a worker slot: $branch"
       problems=1
     fi
@@ -382,7 +404,17 @@ manager_release_check() {
 }
 
 manager_release() {
-  local argument version="" previous="" consolidate_existing=false
+  local argument version="" previous="" consolidate_existing=false release_exception=""
+  local -a package_arguments=()
+  while (($#)); do
+    if [[ "$1" == --release-exception ]]; then
+      [[ $# -ge 2 ]] || ai_fail "Missing exception manifest"
+      release_exception="$2"; shift 2
+    else
+      package_arguments+=("$1"); shift
+    fi
+  done
+  set -- "${package_arguments[@]}"
 
   for argument in "$@"; do
     [[ "$argument" != --consolidate-existing ]] || consolidate_existing=true
@@ -395,7 +427,11 @@ manager_release() {
   done
   [[ -n "$version" ]] \
     || ai_fail "Manager releases require --version so the layered-world artifact can share exact provenance."
-  manager_release_check
+  if [[ -n "$release_exception" ]]; then
+    manager_release_check --version "$version" --release-exception "$release_exception"
+  else
+    manager_release_check
+  fi
   "$SCRIPT_ROOT/scripts/package-player-release.sh" "$@"
   [[ "$consolidate_existing" != true ]] || return 0
   "$SCRIPT_ROOT/scripts/package-layered-world-release.sh" --version "$version"
@@ -444,8 +480,7 @@ case "$command" in
     manager_merge "$@"
     ;;
   release-check)
-    [[ $# -eq 0 ]] || ai_fail "release-check takes no arguments."
-    manager_release_check
+    manager_release_check "$@"
     ;;
   release)
     [[ $# -gt 0 ]] || ai_fail "release requires package-player-release options; run that script with --help for details."

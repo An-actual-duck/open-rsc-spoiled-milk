@@ -171,3 +171,21 @@ an output directory with `python3 scripts/workspace-layout.py path tests
 my-feature --mkdir`; run `make asset-output-check` to validate placement and
 exercise the preservation checks. Existing output relocations are recorded
 under `output/archive/layout-migrations/`. No cleanup or pruning is implicit.
+
+### Owner-approved, version-specific release exclusions
+
+The normal release check continues to reject unmanaged unmerged branches.
+For an explicit owner-approved release exception, a committed manifest under
+`config/release-exceptions/VERSION.json` may inventory exact preserved branch
+tips and reasons. Run `ai-manager.sh release-check --version VERSION
+--release-exception config/release-exceptions/VERSION.json`, and pass the same
+exception argument to `ai-manager.sh release --version VERSION ...`.
+
+The exception only excludes those exact historical unmanaged refs from the
+collection gate; it does not merge them or claim their work is finished. It
+verifies each local tip, tracking ref and actual remote branch against the
+committed inventory. Moving/missing refs, a different version, an uncommitted
+manifest, main exclusions, new unmanaged branches, dirty worktrees and all other
+normal gates still fail. Worker work remains preserved. No shutdown or deployment
+permission is implied. The v0.3.22 exception was explicitly approved by the owner
+while preparing the November 15–16 content release.

@@ -1,0 +1,50 @@
+v0.3.22 release preparation — November 15–16, 2026
+
+Owner requested completed packaging for standalone and browser clients following
+private acceptance of Stirges, rune armour, Bug Off, coating/crossbow gameplay,
+new icons, projectile transparency/orientation, Corrosive Aura poison visuals
+and zoom-aware effect sizing. This is preparation, not live shutdown/activation.
+
+Release inputs
+- Published main plus the exact owner-tested generation237 map package:
+  fingerprint 46f8e3cb2ed57164932d16ef0197124ba74fc966f5ca91a2105cd472c3a42de6
+  manifest 99cfdb028ef40d73b7eb3a2ce54ba300716d91c262877c7e137203e88d1c447b
+- Owner export: RSC Development Toolkit/Projects/modern-session-5a91fdc7-66e3-4742-ae1e-8254619bb589/test-copies/map-2026-11-15T18-09-26.523597874Z-b4d1a583
+- Both paired copies are byte-exact. No editable save or account DB is packaged.
+- Nine levels, 1,787 terrain sectors, nine placement sets; 4,107 NPC placements,
+  including 24 Stirges; 28,632 scenery, 979 boundaries, 926 ground items.
+- Browser source identity and raw-byte bounds follow this exact accepted map;
+  surface/upper static geometry counts remain 22,981 / 1,260 / 339.
+- Protocol 10063. Public endpoint 132.145.137.142:43605; browser WSS uses
+  wss://play.rscspoiledmilk.com:43505/. No private credentials/ports/accounts.
+
+Explicit exclusion authorization
+The owner answered: "Prepare the documented exception" to the specific request
+for a version-scoped exception preserving/excluding the historical browser
+experiments and unfinished Dot optimization branch. config/release-exceptions/
+v0.3.22.json records all 25 exact tips. All are remotely backed up, including
+Dot's ec99bf3ff tip. None is deleted or merged to satisfy this release.
+The normal gate remains unchanged unless the exact committed version manifest
+is explicitly supplied. The helper checks local/tracking/actual remote tips;
+wrong versions, dirty manifests, moved refs and main exclusions refuse.
+Manager-local NPC-stat documents/settings remain preserved and excluded too.
+
+Preparation verification completed before integration
+- Accepted paired map inventory and generic package validation passed.
+- Server build and all 149 combat characterization scenarios passed.
+- Stirge: 38 runtime checks; complete approved art/client checks in both modes;
+  first-only Slayer assignment supplies passed 304 checks.
+- Release-exception helper passed seven real disposable-Git cases, including
+  remote tip divergence, local movement, dirty manifests and version mismatch.
+- Actual exception inventory verifies every one of its 25 remote tips.
+- Bash/Python syntax and git diff --check passed.
+
+Artifact plan
+Use ai-manager.sh release with --version v0.3.22 and the reviewed exception to
+produce the single-download client, platform updater archives and paired world
+ZIP. The normal command requires a fresh player build. Record that exact JAR
+as browser bake input with scripts/browser-gameplay/record-player-client-input.py;
+then perform fresh complete GPU, compact geometry and RAM bakes and run the
+source-bound public browser packager. Preserve checksums and receipts under
+output/reviews/release-v0.3.22. No publication or public restart is performed by
+preparation. The current Oracle server remains running until separately authorized.
