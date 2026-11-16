@@ -23,14 +23,15 @@ public final class AgilityUtilityClientFixture {
         Field u=sun.misc.Unsafe.class.getDeclaredField("theUnsafe");u.setAccessible(true);mudclient mc=(mudclient)((sun.misc.Unsafe)u.get(null)).allocateInstance(mudclient.class);
         Field rates=mudclient.class.getDeclaredField("playerMovementRatePercent");rates.setAccessible(true);rates.set(mc,new int[65536]);
         check(mc.playerMovementRate(7)==100,"normal default");
-        PacketHandler handler=new PacketHandler(mc);handler.getPacketsIncoming().dataBuffer=new byte[]{(byte)161,0,7,0,(byte)150};handler.getPacketsIncoming().packetEnd=1;
-        handler.handlePacket(161,5);check(mc.playerMovementRate(7)==150,"actual actor rate receipt");check(mc.playerMovementRate(8)==100,"other actors unchanged");
-        mc.applyPlayerMovementRate(7,999);check(mc.playerMovementRate(7)==150,"invalid percentage rejected");
+        PacketHandler handler=new PacketHandler(mc);handler.getPacketsIncoming().dataBuffer=new byte[]{(byte)161,0,7,0,(byte)125};handler.getPacketsIncoming().packetEnd=1;
+        handler.handlePacket(161,5);check(mc.playerMovementRate(7)==125,"actual actor rate receipt");check(mc.playerMovementRate(8)==100,"other actors unchanged");
+        mc.applyPlayerMovementRate(7,999);check(mc.playerMovementRate(7)==125,"invalid percentage rejected");
         mc.applyPlayerMovementRate(7,100);check(mc.playerMovementRate(7)==100,"normal speed restored");
         Method movement=mudclient.class.getDeclaredMethod("movementAmountForFrame",ORSCharacter.class,int.class,long.class,int.class);movement.setAccessible(true);
         ORSCharacter normal=new ORSCharacter(),fast=new ORSCharacter();normal.movementLastFrameMillis=1000;fast.movementLastFrameMillis=1000;
-        int slowPixels=(Integer)movement.invoke(mc,normal,6,1020L,100),fastPixels=(Integer)movement.invoke(mc,fast,6,1020L,150);
-        check(slowPixels==6&&fastPixels==9,"smooth1.5x interpolation; no NPC/global speed change");
+        int slowPixels=(Integer)movement.invoke(mc,normal,6,1020L,100),fastPixels=(Integer)movement.invoke(mc,fast,6,1020L,125);
+        int nextFastPixels=(Integer)movement.invoke(mc,fast,6,1040L,125);
+        check(slowPixels==6&&fastPixels+nextFastPixels==15,"smooth1.25x interpolation carries fractional pixels; no NPC/global speed change");
         System.out.println("PASS "+checks+" agility utility client catalog, appearance, packet and interpolation checks; custom="+args[0]);
     }
 }
