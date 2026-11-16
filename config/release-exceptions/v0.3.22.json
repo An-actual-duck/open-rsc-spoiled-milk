@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "releaseVersion": "v0.3.22",
+  "authorization": "Owner explicitly approved: Prepare the documented exception. Preserve all excluded work; no experiment merges or deletions.",
+  "excludedBranches": [
+    {
+      "branch": "feat/browser-fog-bounded-preparation",
+      "commit": "d1ac6189a19f4d9eb96a55a9e1bd50222b186660",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "feat/browser-frame-ownership-prototype",
+      "commit": "f01738f12187f8e7e157205b0ccf010e8cf518c9",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "feat/browser-native-model-kernel",
+      "commit": "85c632c4a054fd7a103ad69559129e0cd9e2dac2",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "feat/browser-overlay-writer-spans",
+      "commit": "f871358c1de453935a021f2aa50611437717fe6a",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "feat/browser-owned-actor-pixels",
+      "commit": "b6559689f3fb7ed6d8e72635b91a8863c7ccffd2",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "feat/browser-retained-roof-membership",
+      "commit": "ee8195a1f3e8babc46aa2dc56a9cc83a112adaa8",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "feat/browser-segmented-text-raster",
+      "commit": "0fa8e1e4ffb2574c78387502146b42c7f542881d",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "feat/native-terrain-query-index",
+      "commit": "c1a50e0aa10e284f1923791e41b2efa37ed10b0e",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "feat/standalone-client-optimization-exploration",
+      "commit": "ec99bf3ff771485d780fbc76bb1a94f38c0f4a5d",
+      "remote": "spoiled-milk",
+      "reason": "Unfinished independent optimization work; explicitly excluded"
+    },
+    {
+      "branch": "fix/browser-elevation-sample-batch",
+      "commit": "62c217210afd2e11b470f80ba36e7538b62097a9",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "fix/browser-geometry-transfer",
+      "commit": "fecc9b19c7ec0f2d456e2c3918542e0091efe4fd",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "fix/browser-halo-height-lookup",
+      "commit": "9fd3957429d43ca07e929a999461f1b540f752cf",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "fix/browser-native-call-dispatch",
+      "commit": "b76ab773a36dc7c1c6a53008671642b3bbd4d7f0",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "fix/browser-overlay-clear-reuse",
+      "commit": "5262b276fa6edcfb62227aabc96e320cdda85d94",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "fix/browser-preworld-ui-upload",
+      "commit": "1dcf5414a061be2f1b947fca4a3e2dde0ae8539c",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "fix/browser-region-preparation",
+      "commit": "ad30bfaa8c27674461fc3a7c40aa80ecc14d6091",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "fix/browser-repeatable-frame-work",
+      "commit": "291409c889ccc3516f5270d91cb04de39d2ade55",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "fix/browser-resident-descriptor-writing",
+      "commit": "356888ef040dedbf83a151601a446843c5bbf9e8",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "fix/browser-scene-projection-cost",
+      "commit": "ed4dac9e33bc72ab0c06475b851be96f49400ba2",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "fix/browser-scenery-projection-work",
+      "commit": "73f0119260db02cbeecb3aa43a702a29891f4e62",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "fix/browser-sprite-fixed-point",
+      "commit": "2b00d9d7f217c8a8ae71fdf47f43fa0a346acf2f",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "fix/browser-texture-stability",
+      "commit": "fafa2215b63be2052b3710cccd0477549604c3d0",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "test/browser-overlay-writer-span-review",
+      "commit": "590fba57b683a795fc4c870e72a21cecb180855d",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "test/browser-segmented-text-boundaries",
+      "commit": "9637db4dc4cf44636bb1229d2dea801b49ecaaae",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    },
+    {
+      "branch": "test/browser-segmented-text-review",
+      "commit": "3502f1813cfe8511ec9afc7cc67ef9947c18e9c4",
+      "remote": "spoiled-milk",
+      "reason": "Preserved historical browser experiment; explicitly excluded, not claimed integrated"
+    }
+  ]
+}

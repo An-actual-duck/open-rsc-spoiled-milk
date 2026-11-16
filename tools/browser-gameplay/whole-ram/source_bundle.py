@@ -10,8 +10,8 @@ ROOT=Path(__file__).resolve().parents[3]
 MAGIC=0x57524131
 MAX_BUNDLE=64*1024*1024
 MAX_INDEX=4*1024*1024
-FINGERPRINT='7e04367b1de143053f66d67a6e5c9b7ff02c00cedb4c917fc249e3902626c8cc'
-SOURCE_SHA='42e20c36f19bd7c5a2ce7cfd2d65c91809c8671ff4bdf7b4e8b45014e8290c2b'
+FINGERPRINT='46f8e3cb2ed57164932d16ef0197124ba74fc966f5ca91a2105cd472c3a42de6'
+SOURCE_SHA='99cfdb028ef40d73b7eb3a2ce54ba300716d91c262877c7e137203e88d1c447b'
 ASSET_PATHS=['Cache/video/'+n for n in ['Authentic_Landscape.orsc','Authentic_Sprites.orsc','Custom_Sprites.osar','library.orsc','models.orsc']]
 def refuse(message):raise ValueError(message)
 def unique(pairs):
@@ -84,7 +84,7 @@ def validate_source(directory,expected=None,verify_payloads=True):
   for key,value in expected.items():
    if not typed_equal(m.get(key),value):refuse('RAM binding mismatch: '+key)
  b=m.get('sourceBundle');files=m.get('files')
- if not isinstance(b,dict)or b.get('path')!='source.bin'or b.get('headerBytes')!=16 or b.get('fileCount')!=1797 or b.get('rawBytes')!=46101718 or b.get('bytes')!=46101734:refuse('Complete RAM source bundle declaration')
+ if not isinstance(b,dict)or b.get('path')!='source.bin'or b.get('headerBytes')!=16 or b.get('fileCount')!=1797 or b.get('rawBytes')!=46111318 or b.get('bytes')!=46101734:refuse('Complete RAM source bundle declaration')
  check_hash(b.get('sha256'),'bundle');bundle=directory/'source.bin'
  if bundle.is_symlink()or not bundle.is_file()or bundle.stat().st_size!=b['bytes']or b['bytes']>MAX_BUNDLE:refuse('RAM source file bounds')
  if not isinstance(files,list)or len(files)!=1797:refuse('RAM source file roster')
@@ -98,7 +98,7 @@ def validate_source(directory,expected=None,verify_payloads=True):
  source=None;whole_hash=hashlib.sha256()
  with bundle.open('rb')as stream:
   header=stream.read(16);whole_hash.update(header)
-  if len(header)!=16 or struct.unpack('<4I',header)!=(MAGIC,1,1797,46101718):refuse('RAM WRA1 header')
+  if len(header)!=16 or struct.unpack('<4I',header)!=(MAGIC,1,1797,46111318):refuse('RAM WRA1 header')
   for r in files:
    remaining=r['bytes'];h=hashlib.sha256();raw=bytearray()if r['path']=='manifest.json'else None
    while remaining:
@@ -145,11 +145,11 @@ def build_source(root,output,client_jar_sha,gpu_catalog_sha,settings,external_as
  spec=importlib.util.spec_from_file_location('ram_selected',root/'scripts/installed-map-selection.py');selected=importlib.util.module_from_spec(spec);spec.loader.exec_module(selected);selection=selected.select(root)
  if selection['packageFingerprintSha256']!=FINGERPRINT or selection['manifestSha256']!=SOURCE_SHA:refuse('Use exact full selected paired source')
  package=Path(selection['serverPackage']);inventory,actual=selected.inventory(package);source=document(package/'manifest.json');typed=payload_roster(source)
- if actual!=FINGERPRINT or len(inventory)!=1797 or sum(size for _,size,_ in inventory)!=46101718:refuse('Unexpected full source inventory')
+ if actual!=FINGERPRINT or len(inventory)!=1797 or sum(size for _,size,_ in inventory)!=46111318:refuse('Unexpected full source inventory')
  if output.exists():refuse('Preserve previous source bundles; choose a new output directory')
  output.mkdir(parents=True);files=[];offset=16
  with(output/'source.bin').open('xb')as bundle:
-  bundle.write(struct.pack('<4I',MAGIC,1,1797,46101718))
+  bundle.write(struct.pack('<4I',MAGIC,1,1797,46111318))
   for path,size,expected_sha in inventory:
    metadata=typed.get(path)
    if metadata is None:refuse('Unclassified package input')
@@ -158,7 +158,7 @@ def build_source(root,output,client_jar_sha,gpu_catalog_sha,settings,external_as
     for data in iter(lambda:stream.read(1048576),b''):bundle.write(data);h.update(data);copied+=len(data)
    if copied!=size or h.hexdigest()!=expected_sha:refuse('Source changed while bundling')
    files.append(dict(metadata,path=path,offset=offset,bytes=size,sha256=expected_sha));offset+=size
- m={'schemaVersion':1,'type':'spoiled-milk-whole-overworld-ram','complete':False,'packageFingerprintSha256':FINGERPRINT,'sourceManifestSha256':SOURCE_SHA,'clientJarSha256':client_jar_sha,'gpuCatalogSha256':gpu_catalog_sha,'settings':settings,'externalAssets':external_assets,'sourceBundle':{'path':'source.bin','bytes':offset,'sha256':sha(output/'source.bin'),'headerBytes':16,'fileCount':1797,'rawBytes':46101718},'files':files,'scope':{'rawPackageFiles':1797,'rawTerrainSectors':1787,'rawPlacementSets':9,'preparedWorldSpace':'global','preparedLevel':0,'preparedRecipes':445,'preparedQueryLevels':[0,1,2],'preparedQueryCells':1330},'prepared':None,'sourceOnlyNotice':'Exact source delivery only; useful CPU preparation and atomic runtime readiness are not established.'}
+ m={'schemaVersion':1,'type':'spoiled-milk-whole-overworld-ram','complete':False,'packageFingerprintSha256':FINGERPRINT,'sourceManifestSha256':SOURCE_SHA,'clientJarSha256':client_jar_sha,'gpuCatalogSha256':gpu_catalog_sha,'settings':settings,'externalAssets':external_assets,'sourceBundle':{'path':'source.bin','bytes':offset,'sha256':sha(output/'source.bin'),'headerBytes':16,'fileCount':1797,'rawBytes':46111318},'files':files,'scope':{'rawPackageFiles':1797,'rawTerrainSectors':1787,'rawPlacementSets':9,'preparedWorldSpace':'global','preparedLevel':0,'preparedRecipes':445,'preparedQueryLevels':[0,1,2],'preparedQueryCells':1330},'prepared':None,'sourceOnlyNotice':'Exact source delivery only; useful CPU preparation and atomic runtime readiness are not established.'}
  data=(json.dumps(m,indent=2,sort_keys=True)+'\n').encode()
  if len(data)>MAX_INDEX:refuse('RAM source index exceeds4MiB')
  (output/'manifest.json').write_bytes(data);validate_source(output);return m
