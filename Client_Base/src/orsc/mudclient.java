@@ -1247,6 +1247,9 @@ public final class mudclient implements Runnable {
 	private final ORSCharacter[] queuedStaticProjectileVictim = new ORSCharacter[MAX_QUEUED_STATIC_PROJECTILES];
 	private final int[] queuedStaticProjectileId = new int[MAX_QUEUED_STATIC_PROJECTILES];
 	private final int[] queuedStaticProjectileFrame = new int[MAX_QUEUED_STATIC_PROJECTILES];
+    private final int[] queuedStaticProjectileRange = new int[MAX_QUEUED_STATIC_PROJECTILES];
+    private final int[] queuedStaticProjectileCasterY = new int[MAX_QUEUED_STATIC_PROJECTILES], queuedStaticProjectileVictimY = new int[MAX_QUEUED_STATIC_PROJECTILES];
+    private final int[] boltCasterProjection = new int[3], boltVictimProjection = new int[3], boltTravelProjection = new int[3];
 	private int queuedStaticProjectileCount = 0;
 	private static final int MAX_SCALED_STATIC_PROJECTILE_CACHE = 256;
 	private final Map<String, Sprite> scaledStaticProjectileSprites = new HashMap<String, Sprite>();
@@ -8839,7 +8842,7 @@ public final class mudclient implements Runnable {
 								int var9 = var3.currentZ;
 								int var10 = getPlayerProjectileCenterY(var3);
 								SpriteDef projectileDef = var3.incomingProjectileSprite;
-								if (queueStaticProjectile(projectileDef, var16, var3, var3.projectileRange)) {
+								if (queueStaticProjectile(projectileDef, var16, var3, var3.projectileRange, var7, var10)) {
 									continue;
 								}
 								int var11 = getProjectileTravelCoordinate(projectileDef, var5, var8, var3.projectileRange);
@@ -8886,7 +8889,7 @@ public final class mudclient implements Runnable {
 								int var9 = var3.currentZ;
 								int var10 = getNpcProjectileCenterY(var3);
 								SpriteDef projectileDef = var3.incomingProjectileSprite;
-								if (queueStaticProjectile(projectileDef, var16, var3, var3.projectileRange)) {
+								if (queueStaticProjectile(projectileDef, var16, var3, var3.projectileRange, var7, var10)) {
 									continue;
 								}
 								int var11 = getProjectileTravelCoordinate(projectileDef, var5, var8, var3.projectileRange);
@@ -22278,8 +22281,9 @@ public final class mudclient implements Runnable {
 
 	private int getCombatEffectSceneSize(int effectType) {
         if (effectType == COMBAT_EFFECT_BRIAR_SEED_BURST) return 192;
-        if (effectType == COMBAT_EFFECT_REVELATION_GAIN) return 96;
-        if (effectType == COMBAT_EFFECT_BLEED_WOUND || effectType == COMBAT_EFFECT_POISON_APPLIED) return 144;
+        if (effectType == COMBAT_EFFECT_REVELATION_GAIN) return 384;
+        if (effectType == COMBAT_EFFECT_BLEED_WOUND) return 288;
+        if (effectType == COMBAT_EFFECT_POISON_APPLIED) return 144;
 
 		if (effectType == COMBAT_EFFECT_THUNDER_STRIKE) {
 			return 280; // thunder-3: 224 * 1.25, artwork/timing unchanged
@@ -22327,8 +22331,9 @@ public final class mudclient implements Runnable {
 
 	private int getCombatEffectScreenSize(int effectType, int baseSize) {
         if (effectType == COMBAT_EFFECT_BRIAR_SEED_BURST) return Math.max(1, baseSize * 6 / 7);
-        if (effectType == COMBAT_EFFECT_REVELATION_GAIN) return Math.max(1, baseSize * 3 / 7);
-        if (effectType == COMBAT_EFFECT_BLEED_WOUND || effectType == COMBAT_EFFECT_POISON_APPLIED) return Math.max(1, baseSize * 9 / 14);
+        if (effectType == COMBAT_EFFECT_REVELATION_GAIN) return 4 * Math.max(1, baseSize * 3 / 7);
+        if (effectType == COMBAT_EFFECT_BLEED_WOUND) return 2 * Math.max(1, baseSize * 9 / 14);
+        if (effectType == COMBAT_EFFECT_POISON_APPLIED) return Math.max(1, baseSize * 9 / 14);
 
 		if (effectType == COMBAT_EFFECT_THUNDER_STRIKE) {
 			return Math.max(1, (baseSize * 5) / 4);
@@ -23045,6 +23050,10 @@ public final class mudclient implements Runnable {
 				+ ": " + sheet.getPath());
 			return loadedFrames;
 		}
+		if (isDirectedBoltKey(definition.getKey())) {
+            return this.externalAssetLoader.appendExternalAnimationNativeGridSheetFrames(sheet, targetFrames,
+                definition.getColumns(), definition.getRows(), definition.getFirstFrame(), definition.getFrameCount());
+        }
 		return this.externalAssetLoader.appendExternalAnimationGridSheetFrames(sheet, targetFrames,
 			definition.getMaxTargetSize(), definition.getColumns(), definition.getRows(),
 			definition.getFirstFrame(), definition.getFrameCount(), loadedFrames);
@@ -23867,9 +23876,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean queueStaticProjectile(SpriteDef projectile, ORSCharacter caster,
-			ORSCharacter victim, int projectileRange) {
+			ORSCharacter victim, int projectileRange, int casterY, int victimY) {
 		if (projectile == null || caster == null || victim == null
-			|| ProjectileStaticAnimationCatalog.getDefinition(projectile.id) == null) {
+			|| (!isDirectedBolt(projectile.id) && ProjectileStaticAnimationCatalog.getDefinition(projectile.id) == null)) {
 			return false;
 		}
 		if (queuedStaticProjectileCount >= MAX_QUEUED_STATIC_PROJECTILES) {
@@ -23890,6 +23899,9 @@ public final class mudclient implements Runnable {
 		queuedStaticProjectileVictim[queuedStaticProjectileCount] = victim;
 		queuedStaticProjectileId[queuedStaticProjectileCount] = projectile.id;
 		queuedStaticProjectileFrame[queuedStaticProjectileCount] = frame;
+        queuedStaticProjectileRange[queuedStaticProjectileCount] = projectileRange;
+        queuedStaticProjectileCasterY[queuedStaticProjectileCount] = casterY;
+        queuedStaticProjectileVictimY[queuedStaticProjectileCount] = victimY;
 		queuedStaticProjectileCount++;
 		return true;
 	}
@@ -23898,9 +23910,14 @@ public final class mudclient implements Runnable {
 		for (int i = 0; i < queuedStaticProjectileCount; i++) {
 			ORSCharacter caster = queuedStaticProjectileCaster[i];
 			ORSCharacter victim = queuedStaticProjectileVictim[i];
-			if (caster == null || victim == null || !caster.hasSceneScreenAnchor || !victim.hasSceneScreenAnchor) {
-				continue;
-			}
+			if (caster == null || victim == null) continue;
+            if (isDirectedBolt(queuedStaticProjectileId[i])) {
+                drawDirectedBolt(queuedStaticProjectileId[i], queuedStaticProjectileFrame[i],
+                    queuedStaticProjectileRange[i], caster, victim,
+                    queuedStaticProjectileCasterY[i], queuedStaticProjectileVictimY[i]);
+                continue;
+            }
+            if (!caster.hasSceneScreenAnchor || !victim.hasSceneScreenAnchor) continue;
 			int projectileId = queuedStaticProjectileId[i];
 			int projectileIndex = projectileId - CUSTOM_PROJECTILE_FIRST;
 			int frame = queuedStaticProjectileFrame[i];
@@ -23931,6 +23948,35 @@ public final class mudclient implements Runnable {
 		}
 		queuedStaticProjectileCount = 0;
 	}
+
+    private static boolean isDirectedBoltKey(String key) {
+        return "bolt-basic".equals(key) || "saradomin-bolt".equals(key)
+            || "zamorak-bolt".equals(key) || "guthix-bolt".equals(key);
+    }
+
+    private static boolean isDirectedBolt(int id) {
+        return id == PROJECTILE_TYPES.BOLT.id() || id == PROJECTILE_TYPES.SARADOMIN_BOLT.id()
+            || id == PROJECTILE_TYPES.ZAMORAK_BOLT.id() || id == PROJECTILE_TYPES.GUTHIX_BOLT.id();
+    }
+
+    /** Moving bolts rotate along their projected flight line; trails share the same pivot. */
+    private void drawDirectedBolt(int id, int frameIndex, int range, ORSCharacter caster, ORSCharacter victim, int casterY, int victimY) {
+        int index = id - CUSTOM_PROJECTILE_FIRST;
+        Sprite sprite = projectileEffectSprites[index][frameIndex];
+        if (sprite == null || scene == null) return;
+        if (!scene.projectWorldPoint(caster.currentX, casterY, caster.currentZ, boltCasterProjection)
+                || !scene.projectWorldPoint(victim.currentX, victimY, victim.currentZ, boltVictimProjection)) return;
+        SpriteDef definition = EntityHandler.projectiles.get(id);
+        int x = getProjectileTravelCoordinate(definition, caster.currentX, victim.currentX, range);
+        int y = getProjectileTravelCoordinate(definition, casterY, victimY, range);
+        int z = getProjectileTravelCoordinate(definition, caster.currentZ, victim.currentZ, range);
+        if (!scene.projectWorldPoint(x, y, z, boltTravelProjection)
+                || boltTravelProjection[2] >= scene.fogEntityDistance) return;
+        int angle = orsc.graphics.two.BoltFlightVisuals.angle(
+            boltVictimProjection[0] - boltCasterProjection[0], boltVictimProjection[1] - boltCasterProjection[1]);
+        int scale = orsc.graphics.two.BoltFlightVisuals.scale(scene.getPerspectiveShift(), boltTravelProjection[2]);
+        getSurface().drawMinimapSprite(sprite, boltTravelProjection[1], boltTravelProjection[0], 0, scale, angle);
+    }
 
 	private Sprite getScaledStaticProjectileSprite(int projectileId, int frame, Sprite source,
 			int length, int thickness) {

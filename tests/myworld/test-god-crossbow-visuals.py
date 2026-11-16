@@ -26,4 +26,4 @@ run(['javac','-source','8','-target','8','-cp','Client_Base/Open_RSC_Client.jar'
 for mode in ['true','false']:
  run(['java','-Djava.awt.headless=true','-cp',str(BASE)+':'+str(ROOT/'Client_Base/Open_RSC_Client.jar'),'orsc.GodCrossbowVisualFixture',ROOT,mode],'client-'+mode)
 (BASE/'receipt.json').write_text(json.dumps({'passed':True,'staticBoltChecks':checks,'clientSha256':hashlib.sha256((ROOT/'Client_Base/Open_RSC_Client.jar').read_bytes()).hexdigest(),'publicServerTouched':False},indent=2)+'\n')
-print('PASS',checks,'fixed-bolt geometry and small-trail checks; evidence:',BASE)
+print('PASS',checks,'archived-v3 fixed-bolt geometry checks; selected art also verified; evidence:',BASE)

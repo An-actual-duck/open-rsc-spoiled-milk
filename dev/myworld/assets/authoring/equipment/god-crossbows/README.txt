@@ -1,3 +1,17 @@
+Current v4 update — November 15, 2026
+------------------------------------
+The owner approved shots-v4 and the new dedicated prayer icons after viewing
+packaged-client previews. shot-selection.json selects v4; approved-shots.json
+retains the older approved v3 for history. Basic/god bolts now point along their
+projected flight path, with fixed native pivots and larger enveloping trails.
+The new preview is scripts/preview-divine-bolt-visuals.py, also reached through
+scripts/preview-god-crossbow-shots.py. Bleed is approved at 2x original size;
+Revelation at 4x. Poison remains under sizing review. See
+ docs/myworld/in-progress-work-plans/divine-bolt-visuals-and-animation-sizing.md.
+
+Historical notes (v3 and earlier)
+================================
+
 God crossbow held visuals and prayer-shot studies — November 15, 2026
 
 Approved held frames

@@ -1,0 +1,92 @@
+# Divine bolt visuals and animation sizing
+
+November 15, 2026. Candidate worker branch: art/divine-bolt-prayer-visuals.
+No public deployment, private-client replacement or server/stat changes.
+
+## Owner decisions
+
+Approved: dedicated white prayer icons (heart-piercing bolt, bramble bolt,
+blood-dripping bolt), new enveloping holy-bolt trails, the corrected bolt
+orientation, bleed at twice its original size, and Revelation at four times its
+original size. Poison remains unchanged pending review of the shared sizing.
+The bat summon's attack visual was fixed earlier and is not an outstanding fix.
+
+## Implementation
+
+Basic and god bolts use a stable native 96x96 canvas with a horizontal bolt and
+fixed center pivot. God trails surround the bolt and taper backward. Source
+Aseprite masters/recipe and the original basic bolt are retained in shots-v4/;
+older approved shots-v3 and its manifest remain preserved. shot-selection.json
+selects the owner-approved v4. Inventory and held-crossbow art is unchanged.
+
+A bounded existing projectile queue now also renders these moving bolts,
+projecting their actual world position and aiming toward the target's projected
+position. Camera projection works without GPU geometry capture, supporting the
+software path too. Caller-supplied NPC/player projectile heights are retained;
+flight direction, speed, server mechanics and projectile IDs are unchanged.
+Native loading avoids re-fitting each trail phase, and the existing rotated
+sprite renderer handles aiming/perspective scaling. Fog culling remains applied.
+
+Revelation and bleed change both world and overlay size paths by the same approved
+factors. Poison and other effect sizes are unchanged. New generated prayer icons
+have source/provenance and separate credits, retaining existing third-party credits.
+
+## Shared sizing audit
+
+scripts/audit-animation-sizing.py reads the actual packaged loader and all 86
+catalog effects. All 86 load successfully. Loading caps are 64 for 40 entries,
+48 for 26, 32 for three, and 24 for 17. These are not all globally reduced.
+
+Compounded sizing explains the unusually small new status effects: artwork is
+fitted within a small portion of a padded 64x64 canvas, retaining its source
+padding, then that canvas is scaled down again by certain drawing paths. At the
+64-pixel-overlay reference used by the preview:
+
+| Effect | Loaded peak artwork | Original rendered peak | Selected rendered peak |
+| --- | --- | --- | --- |
+| Revelation | 18x17 | 7.6x7.2 | 30.4x28.7 (4x) |
+| Bleed | 37x19 | 23.7x12.2 | 47.4x24.3 (2x) |
+| Poison | 11x10 | 7.0x6.4 | unchanged |
+
+These are preview/overlay-reference dimensions, not fixed pixel sizes at every
+in-game camera distance; world effects also scale with projection. Many mage
+effects use the full loading cap and do not suffer the same small extra cap.
+Cleric buff/debuff playback deliberately uses a separate 64-pixel overlay path,
+so compact artwork there is not multiplied by the generic status-effect reduction.
+
+Recommended follow-up: make intended visible size explicit in one shared effect
+sizing contract. Measure a stable union of content bounds over the whole sequence
+so source padding cannot silently reduce it. Preserve anchors, relative frame
+movement and currently approved visible sizes. Avoid independently cropping or
+fitting each frame, and do not blanket-enlarge every animation. Poison is the next
+specific effect requiring an owner size choice.
+
+## Verification / preview
+
+- Client build passed.
+- Dedicated visual suite: 208 checks in each sprite mode, including actual native
+  packaged loading, directed queue routing, renderer aiming in eight octants,
+  software projection, perspective scale, approved sizes and unchanged poison.
+- Existing crossbow visual checks: 427 custom, 430 classic, approved held/archive
+  preservation; archived v3 geometry is also retained.
+- Existing gameplay suite: 216 runtime and 19 real-client checks passed.
+- New prayer icon and source/runtime parity checks passed.
+- git diff --check passed. Layout checking reports retained pre-existing legacy
+  output-root folders; no evidence was deleted.
+
+Preview: scripts/preview-divine-bolt-visuals.py (requires passing current-JAR
+fixture exports). Firefox page is under output/art/god-crossbow-prayer-shots/study-v4.
+It includes current poison beside approved bleed and the final Revelation size.
+The owner deferred poison resizing to a separate shared animation-sizing pass.
+The approved crossbow/bleed/Revelation work is ready for integration.
+
+## Next pass: zoom-aware animation sizing
+
+After completing this batch, standardize intended visible effect sizes and scale
+them with camera projection. Effects must retain their size relative to actors
+and terrain when zooming, rather than remaining fixed screen-pixel overlays.
+Cover on-entity effects, Cleric buff/curse sequences, detached effects and moving/
+static projectiles; preserve approved appearances at a documented reference zoom.
+Use stable sequence-wide bounds and anchors, avoid per-frame auto-fitting, and
+verify software, OpenGL and browser paths across zoom levels. Poison sizing is
+part of this follow-up. The previously fixed bat summon is not reopened.
