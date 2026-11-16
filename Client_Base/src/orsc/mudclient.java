@@ -10990,6 +10990,7 @@ public final class mudclient implements Runnable {
 			npc.hasSceneScreenAnchor = true;
 			npc.sceneScreenCenterX = x + width1 / 2;
 			npc.sceneScreenCenterY = y + height / 2;
+            npc.sceneScreenHeight = height;
 			queueProjectileImpactOverlay(npc, x, y, width1, height);
 			NPCDef def = EntityHandler.getNpcDef(npc.npcId);
 			int npcColourTransform = getNpcSpriteColourTransform(npc);
@@ -11278,6 +11279,7 @@ public final class mudclient implements Runnable {
 			player.hasSceneScreenAnchor = true;
 			player.sceneScreenCenterX = x + width / 2;
 			player.sceneScreenCenterY = y + height / 2;
+            player.sceneScreenHeight = height;
 			queueProjectileImpactOverlay(player, x, y, width, height);
 			if (player.colourBottom != 255) {
 				int wantedAnimDir = (player.direction.rsDir + ((this.cameraRotation + 16) / 32)) & 7;
