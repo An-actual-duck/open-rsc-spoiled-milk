@@ -229,6 +229,10 @@ into one of the category folders, not directly into `docs/myworld/`.
 
 ## Rough Drafts
 
+- [Rebirth Visual Overhaul](rough-drafts/rebirth-visual-overhaul.md):
+  speculative prestige/soul-transfer concept with a modern visual sister world;
+  retained for future discussion, not an official roadmap item.
+
 - [bank-tag-filter-plan.md](rough-drafts/bank-tag-filter-plan.md):
   deferred bank tag/filter quality-of-life idea.
 - [carapace-expansion-notes.md](rough-drafts/carapace-expansion-notes.md):
