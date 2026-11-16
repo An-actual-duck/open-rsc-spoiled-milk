@@ -188,6 +188,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 
 ## Proposed Work Plans
 
+- [Exact NPC attack loadouts and tags](proposed-work-plans/npc-attack-loadouts/README.md):
+  298 primary/style assignments, elemental/divine metadata and protected encounter boundaries.
+
 - [NPC offense and style audit](proposed-work-plans/npc-offense-style-audit/README.md):
   current magic/ranged users, specialist behavior gaps, candidate changes and full 298-NPC audit.
 

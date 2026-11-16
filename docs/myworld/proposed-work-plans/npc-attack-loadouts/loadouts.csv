@@ -1,0 +1,299 @@
+id,name,level,mode,primaryStyle,secondaryStyle,tertiaryStyle,enabledStyles,creatureTags,creatureAffinities,magicElements,magicGod,notes
+0,Unicorn,21,exclusive,melee,,,melee,beast; family.beasts,,,,
+3,Chicken,3,exclusive,melee,,,melee,family.flying,,,,
+4,Tough Goblin,13,exclusive,melee,,,melee,family.goblinoids,,,,
+5,Hans,3,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+6,cow,8,exclusive,melee,,,melee,beast; family.beasts,,,,
+8,Bear,24,exclusive,melee,,,melee,beast; family.beasts,,,,
+11,Man,9,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+19,Rat,8,exclusive,melee,,,melee,beast; family.beasts; quest_referenced,,,,
+21,mugger,10,mixed,ranged,melee,,ranged / melee,family.unarmoured_humanoids,,,,New throwing-knife role; reuses an existing projectile family.
+22,Lesser Demon,79,mixed,magic,melee,,magic / melee,demon; family.demons,,fire,,
+23,Young Giant Spider,8,exclusive,melee,,,melee,family.insects_arachnids,,,,
+25,Jonny the beard,10,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+29,Rat,2,protected_minigame,melee,,,melee,beast; family.beasts; minigame_protected; quest_referenced,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+34,spider,2,exclusive,melee,,,melee,family.insects_arachnids,,,,
+35,Delrith,30,mixed,magic,melee,,magic / melee,demon; family.demons; quest_referenced,,fire,,
+37,Weaponsmaster,25,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+40,skeleton,21,exclusive,melee,,,melee,family.skeletons; undead,,,,
+41,zombie,24,exclusive,melee,,,melee,family.corporeal_undead; undead,,,,
+43,Giant bat,32,exclusive,melee,,,melee,family.flying,,,,
+45,skeleton,31,exclusive,melee,,,melee,family.skeletons; undead,,,,
+46,skeleton,25,exclusive,melee,,,melee,family.skeletons; undead,,,,
+47,Large Rat,13,exclusive,melee,,,melee,beast; family.beasts,,,,
+50,skeleton,19,exclusive,melee,,,melee,family.skeletons; quest_referenced; undead,,,,
+52,zombie,19,exclusive,melee,,,melee,family.corporeal_undead; undead,,,,
+53,Ghost,25,exclusive,magic,,,magic,family.spirits; spectral; undead,,water / earth,,
+57,Darkwizard,13,exclusive,magic,,,magic,family.casters,,fire / air,,
+60,Darkwizard,25,exclusive,magic,,,magic,family.casters,,fire / air,,
+61,Giant,37,exclusive,melee,,,melee,family.giants_ogres,,,,
+62,Goblin,7,exclusive,melee,,,melee,family.goblinoids,,,,
+63,farmer,15,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+64,Thief,21,exclusive,ranged,,,ranged,family.unarmoured_humanoids,,,,
+65,Guard,28,exclusive,ranged,,,ranged,family.armoured_humanoids,,,,
+66,Black Knight,46,mixed,melee,magic,,melee / magic,family.armoured_humanoids; god.zamorak; quest_referenced,,neutral,zamorak,
+67,Hobgoblin,32,exclusive,melee,,,melee,family.goblinoids,,,,
+68,zombie,32,exclusive,melee,,,melee,family.corporeal_undead; undead,,,,
+70,Scorpion,21,exclusive,melee,,,melee,family.insects_arachnids,,,,
+72,Man,9,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+74,Giant Spider,31,exclusive,melee,,,melee,family.insects_arachnids,,,,
+76,Barbarian,16,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+78,Gunthor the Brave,37,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+79,Witch,25,exclusive,magic,,,magic,family.casters,,earth / air,,
+80,Ghost,25,exclusive,magic,,,magic,family.spirits; spectral; undead,,water / earth,,
+81,Wizard,16,exclusive,magic,,,magic,family.casters,,water / air,,
+86,Warrior,18,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+89,Highwayman,13,mixed,ranged,melee,,ranged / melee,family.unarmoured_humanoids,,,,New throwing-knife role; reuses an existing projectile family.
+93,Monk,13,exclusive,magic,,,magic,family.casters; god.saradomin,,neutral,saradomin,
+94,Dwarf,18,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+96,Count Draynor,43,exclusive,melee,,,melee,family.corporeal_undead; quest_referenced,,,,
+99,Deadly Red spider,36,exclusive,melee,,,melee,family.insects_arachnids,,,,
+100,Guard,28,mixed,ranged,melee,,ranged / melee,family.armoured_humanoids; quest_referenced,,,,"Quest-reference safeguard retains melee; reference is a conservative signal, not a complete quest-consumer census."
+102,White Knight,56,mixed,melee,magic,,melee / magic,family.armoured_humanoids; god.saradomin,,neutral,saradomin,
+104,Moss Giant,62,mixed,melee,magic,,melee / magic,family.giants_ogres,,earth,,
+108,Black Knight,46,mixed,melee,magic,,melee / magic,family.armoured_humanoids; god.zamorak; quest_referenced,,neutral,zamorak,
+109,Greldo,7,exclusive,melee,,,melee,family.goblinoids; quest_referenced,,,,
+114,Imp,5,exclusive,melee,,,melee,demon; family.demons,,,,
+127,Jailguard,34,mixed,ranged,melee,,ranged / melee,family.armoured_humanoids; quest_referenced,,,,"Quest-reference safeguard retains melee; reference is a conservative signal, not a complete quest-consumer census."
+135,Ice Giant,68,mixed,melee,magic,,melee / magic,family.giants_ogres,ice,ice,,
+136,King Scorpion,36,exclusive,melee,,,melee,family.insects_arachnids,,,,
+137,Pirate,27,mixed,ranged,melee,,ranged / melee,family.unarmoured_humanoids,,,,
+139,Monk of Zamorak,29,exclusive,magic,,,magic,family.casters; god.zamorak,,neutral,zamorak,
+140,Monk of Zamorak,19,exclusive,magic,,,magic,family.casters; god.zamorak,,neutral,zamorak,
+153,Tough Goblin,13,exclusive,melee,,,melee,family.goblinoids; quest_referenced,,,,
+154,Tough Goblin,13,exclusive,melee,,,melee,family.goblinoids; quest_referenced,,,,
+158,Ice warrior,57,mixed,melee,magic,,melee / magic,family.elemental_warriors,ice,ice,,
+159,Warrior,27,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+177,Large Rat,13,exclusive,melee,,,melee,beast; family.beasts; quest_referenced,,,,
+178,Ghost,25,mixed,magic,melee,,magic / melee,family.spirits; quest_referenced; spectral; undead,,water / earth,,"Quest-reference safeguard retains melee; reference is a conservative signal, not a complete quest-consumer census."
+179,skeleton,31,exclusive,melee,,,melee,family.skeletons; quest_referenced; undead,,,,
+180,zombie,32,exclusive,melee,,,melee,family.corporeal_undead; quest_referenced; undead,,,,
+181,Lesser Demon,79,mixed,magic,melee,,magic / melee,demon; family.demons; quest_referenced,,fire,,
+182,Melzar the mad,45,mixed,magic,melee,,magic / melee,family.casters; quest_referenced,,fire / air,,
+184,Greater Demon,87,mixed,magic,melee,,magic / melee,demon; family.demons,,fire,,
+188,Bear,26,exclusive,melee,,,melee,beast; family.beasts,,,,
+189,Black Knight,46,mixed,melee,magic,,melee / magic,family.armoured_humanoids; god.zamorak,,neutral,zamorak,
+190,chaos Dwarf,59,exclusive,melee,,,melee,family.armoured_humanoids; quest_referenced,,,,
+192,Wormbrain,7,exclusive,melee,,,melee,family.goblinoids; quest_referenced,,,,
+195,skeleton,54,exclusive,melee,,,melee,family.skeletons; undead,,,,
+196,Dragon,110,mixed,melee,magic,,melee / magic,dragon; family.dragons; quest_referenced,fire,fire,,"Assigned melee-primary physical dragon, Magic secondary; breath remains a separate special rather than a third ordinary style."
+199,Dark Warrior,21,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+200,Druid,29,exclusive,magic,,,magic,family.casters; god.guthix,,neutral,guthix,
+201,Red Dragon,140,mixed,melee,magic,,melee / magic,dragon; family.dragons,fire,fire,,"Assigned melee-primary physical dragon, Magic secondary; breath remains a separate special rather than a third ordinary style."
+202,Blue Dragon,105,mixed,melee,magic,,melee / magic,dragon; family.dragons,water,water,,"Assigned melee-primary physical dragon, Magic secondary; breath remains a separate special rather than a third ordinary style."
+203,Baby Blue Dragon,50,mixed,melee,magic,,melee / magic,dragon; family.dragons,water,water,,"Assigned melee-primary physical dragon, Magic secondary; breath remains a separate special rather than a third ordinary style."
+214,zombie,32,exclusive,melee,,,melee,family.corporeal_undead; undead,,,,
+216,tree spirit,95,mixed,melee,magic,,melee / magic,family.living_plants; quest_referenced,earth,earth,,
+232,Bandit,29,mixed,ranged,melee,,ranged / melee,family.unarmoured_humanoids,,,,
+234,Bandit,29,mixed,ranged,melee,,ranged / melee,family.unarmoured_humanoids,,,,
+236,Donny the lad,39,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+237,Black Heather,39,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+238,Speedy Keith,39,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+239,White wolf sentry,31,exclusive,melee,,,melee,beast; family.beasts,,,,
+243,Grey wolf,64,exclusive,melee,,,melee,beast; family.beasts,,,,
+244,shapeshifter,24,exclusive,melee,,,melee,beast; family.magical_beasts; quest_referenced,,,,
+248,White wolf,41,exclusive,melee,,,melee,beast; family.beasts,,,,
+249,Pack leader,71,exclusive,melee,,,melee,beast; family.beasts,,,,
+251,Thug,18,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+252,Firebird,6,exclusive,melee,,,melee,family.flying,fire,,,
+254,Ice queen,103,mixed,magic,melee,,magic / melee,family.casters,ice,ice,,Owner exception: both Melee and Magic use 100% original Strength reference; primary Magic does not imply unequal powers.
+259,Grip,46,exclusive,melee,,,melee,family.armoured_humanoids; quest_referenced,,,,
+262,Guard Dog,46,exclusive,melee,,,melee,beast; family.beasts,,,,
+263,Ice spider,64,exclusive,melee,,,melee,family.insects_arachnids,ice,,,
+264,Pirate,30,mixed,ranged,melee,,ranged / melee,family.unarmoured_humanoids,,,,
+265,Jailer,51,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+266,Lord Darquarius,76,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+270,Chaos Druid,19,exclusive,magic,,,magic,family.casters; god.guthix,,neutral,guthix,
+271,Poison Scorpion,26,exclusive,melee,,,melee,family.insects_arachnids; quest_referenced,,,,
+276,Sir Mordred,58,exclusive,melee,,,melee,family.armoured_humanoids; quest_referenced,,,,
+277,Renegade knight,51,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+290,Black Demon,156,mixed,magic,melee,,magic / melee,demon; family.demons,,fire,,
+291,Black Dragon,200,mixed,melee,magic,,melee / magic,dragon; family.dragons,fire,fire,,"Assigned melee-primary physical dragon, Magic secondary; breath remains a separate special rather than a third ordinary style."
+292,Poison Spider,63,exclusive,melee,,,melee,family.insects_arachnids; quest_referenced,,,,
+293,Monk of Zamorak,47,exclusive,magic,,,magic,family.casters; god.zamorak,,neutral,zamorak,
+294,Hellhound,114,exclusive,melee,,,melee,demon; family.demons,,,,
+295,Animated axe,46,exclusive,melee,,,melee,family.constructs,,,,
+296,Black Unicorn,31,exclusive,melee,,,melee,beast; family.beasts,,,,
+298,Otherworldly being,66,exclusive,magic,,,magic,family.spirits; spectral,,neutral,,
+311,Hobgoblin,48,exclusive,melee,,,melee,family.goblinoids,,,,
+312,Ogre,58,exclusive,melee,,,melee,family.giants_ogres,,,,
+315,Chronozon,121,mixed,magic,melee,,magic / melee,demon; family.demons; quest_referenced,,fire,,
+318,Man,9,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+319,farmer,15,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+320,Warrior,27,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+321,Guard,28,exclusive,ranged,,,ranged,family.armoured_humanoids,,,,
+322,Knight,56,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+323,Paladin,71,mixed,melee,magic,,melee / magic,family.armoured_humanoids; god.saradomin,,neutral,saradomin,
+324,Hero,83,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+338,zoo keeper,20,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+342,Rogue,21,exclusive,ranged,,,ranged,family.unarmoured_humanoids,,,,
+343,Shadow spider,53,exclusive,melee,,,melee,family.insects_arachnids,,,,
+344,Fire Giant,109,mixed,melee,magic,,melee / magic,family.giants_ogres,fire,fire,,
+348,Forester,21,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+351,Thief,21,exclusive,ranged,,,ranged,family.unarmoured_humanoids,,,,
+352,Head Thief,34,exclusive,ranged,,,ranged,family.unarmoured_humanoids,,,,
+356,Mountain Dwarf,28,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+358,Necromancer,34,exclusive,magic,,,magic,family.casters,,fire / water,,
+359,zombie,24,exclusive,melee,,,melee,family.corporeal_undead; undead,,,,
+361,The Fire warrior of lesarkus,63,mixed,melee,magic,,melee / magic,family.elemental_warriors; quest_referenced,fire,fire,,
+364,Lucien,21,mixed,magic,melee,,magic / melee,family.casters; quest_referenced,,neutral,,
+367,Dungeon Rat,16,exclusive,melee,,,melee,beast; family.beasts; quest_referenced,,,,
+383,General Khazard,100,exclusive,melee,,,melee,family.armoured_humanoids; quest_referenced,,,,
+384,Khazard Ogre,58,exclusive,melee,,,melee,family.giants_ogres; quest_referenced,,,,
+386,Khazard Scorpion,46,exclusive,melee,,,melee,family.insects_arachnids; quest_referenced,,,,
+388,Bouncer,122,exclusive,melee,,,melee,beast; family.beasts; quest_referenced,,,,
+399,local gnome,3,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+401,Black Knight titan,146,mixed,melee,magic,,melee / magic,family.armoured_humanoids; god.zamorak; quest_referenced,,neutral,zamorak,
+402,kalron,3,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+407,Khazard troop,28,mixed,ranged,melee,,ranged / melee,family.armoured_humanoids,,,,
+409,gnome troop,3,mixed,ranged,melee,,ranged / melee,family.unarmoured_humanoids; quest_referenced,,,,
+410,khazard warlord,100,exclusive,melee,,,melee,family.armoured_humanoids; quest_referenced,,,,
+416,unhappy peasant,25,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+417,happy peasant,25,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+420,carnillean guard,28,mixed,ranged,melee,,ranged / melee,family.armoured_humanoids; quest_referenced,,,,"Quest-reference safeguard retains melee; reference is a conservative signal, not a complete quest-consumer census."
+421,Tribesman,39,mixed,ranged,melee,,ranged / melee,family.unarmoured_humanoids,,,,
+425,cult member,20,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+426,Lord hazeel,100,exclusive,melee,,,melee,family.corporeal_undead; quest_referenced,,,,
+428,Khazard commander,41,exclusive,melee,,,melee,family.armoured_humanoids; quest_referenced,,,,
+438,Citizen,11,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+439,Citizen,10,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+440,Citizen,12,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+441,Citizen,20,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+442,Citizen,15,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+462,Platform Fisherman,30,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+463,Platform Fisherman,30,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+464,Platform Fisherman,30,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+473,Rat,7,exclusive,melee,,,melee,beast; family.beasts,,,,
+477,King Black Dragon,245,mixed,melee,magic,,melee / magic,boss; dragon; family.dragons,fire,fire,,"Assigned melee-primary physical dragon, Magic secondary; breath remains a separate special rather than a third ordinary style."
+495,Mourner,22,exclusive,melee,,,melee,family.armoured_humanoids; quest_referenced,,,,
+498,skeleton mage,21,exclusive,magic,,,magic,family.skeletons; undead,,fire / earth,,
+502,Mourner,25,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+516,target practice zombie,24,exclusive,melee,,,melee,family.corporeal_undead; undead,,,,
+518,Colonel Radick,51,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+519,Soldier,28,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+521,Jungle Spider,47,exclusive,melee,,,melee,family.insects_arachnids; quest_referenced,,,,
+523,Jogre,58,exclusive,melee,,,melee,family.giants_ogres; quest_referenced,,,,
+525,Ogre,58,exclusive,melee,,,melee,family.giants_ogres,,,,
+531,Ogre chieftan,78,exclusive,melee,,,melee,family.giants_ogres,,,,
+542,UndeadOne,62,exclusive,melee,,,melee,family.corporeal_undead; undead,,,,
+550,charlie,0,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+551,Gnome guard,31,mixed,ranged,melee,,ranged / melee,family.armoured_humanoids; quest_referenced,,,,"Quest-reference safeguard retains melee; reference is a conservative signal, not a complete quest-consumer census."
+555,Chaos Druid warrior,44,mixed,melee,magic,,melee / magic,family.armoured_humanoids; god.guthix,,neutral,guthix,
+557,Shipyard worker,44,exclusive,melee,,,melee,family.armoured_humanoids; quest_referenced,,,,
+558,Shipyard worker,44,exclusive,melee,,,melee,family.armoured_humanoids; quest_referenced,,,,
+559,Shipyard worker,44,exclusive,melee,,,melee,family.armoured_humanoids; quest_referenced,,,,
+562,Gnome guard,23,exclusive,ranged,,,ranged,family.armoured_humanoids,,,,
+567,Salarin the twisted,69,exclusive,magic,,,magic,family.casters,,neutral,,
+568,Black Demon,175,mixed,magic,melee,,magic / melee,demon; family.demons; quest_referenced,,fire,,
+574,Yanille Watchman,33,mixed,ranged,melee,,ranged / melee,family.armoured_humanoids,,,,
+582,Gnome guard,27,exclusive,ranged,,,ranged,family.armoured_humanoids,,,,
+583,Gnome child,3,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+584,Earth warrior,52,exclusive,melee,,,melee,family.elemental_warriors,,,,
+585,Gnome child,3,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+586,Gnome child,3,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+592,Gnome local,9,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+593,Gnome local,3,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+594,Moss Giant,62,mixed,melee,magic,,melee / magic,family.giants_ogres,,earth,,
+595,Gnome Baller,70,protected_minigame,melee,,,melee,family.unarmoured_humanoids; minigame_protected,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+597,Gnome Baller,70,protected_minigame,melee,,,melee,family.unarmoured_humanoids; minigame_protected,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+598,Gnome Baller,70,protected_minigame,melee,,,melee,family.unarmoured_humanoids; minigame_protected,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+599,Gnome Baller,70,protected_minigame,melee,,,melee,family.unarmoured_humanoids; minigame_protected,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+600,Gnome Baller,70,protected_minigame,melee,,,melee,family.unarmoured_humanoids; minigame_protected,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+602,Gnome Baller,70,protected_minigame,melee,,,melee,family.unarmoured_humanoids; minigame_protected,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+603,Gnome Baller,70,protected_minigame,melee,,,melee,family.unarmoured_humanoids; minigame_protected,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+604,Gnome Baller,70,protected_minigame,melee,,,melee,family.unarmoured_humanoids; minigame_protected,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+605,Gnome Baller,70,protected_minigame,melee,,,melee,family.unarmoured_humanoids; minigame_protected,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+606,Gnome Baller,70,protected_minigame,melee,,,melee,family.unarmoured_humanoids; minigame_protected,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+607,Gnome Baller,70,protected_minigame,melee,,,melee,family.unarmoured_humanoids; minigame_protected,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+608,Gnome Baller,70,protected_minigame,melee,,,melee,family.unarmoured_humanoids; minigame_protected,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+613,Nazastarool Zombie,83,exclusive,melee,,,melee,family.corporeal_undead; quest_referenced; undead,,,,
+614,Nazastarool Skeleton,83,exclusive,melee,,,melee,family.skeletons; quest_referenced; undead,,,,
+615,Nazastarool Ghost,83,mixed,magic,melee,,magic / melee,family.spirits; quest_referenced; spectral; undead,,water / earth,,"Quest-reference safeguard retains melee; reference is a conservative signal, not a complete quest-consumer census."
+630,Blessed Vermen,14,exclusive,melee,,,melee,family.corporeal_undead,,,,
+631,Blessed Spider,35,exclusive,melee,,,melee,family.insects_arachnids,,,,
+632,Paladin,71,mixed,melee,magic,,melee / magic,family.armoured_humanoids; god.saradomin; quest_referenced,,neutral,saradomin,
+633,Paladin,71,mixed,melee,magic,,melee / magic,family.armoured_humanoids; god.saradomin; quest_referenced,,neutral,saradomin,
+634,slave,16,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+635,slave,16,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+636,slave,16,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+637,slave,16,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+638,slave,16,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+639,slave,16,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+640,slave,16,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+641,Kalrag,78,exclusive,melee,,,melee,family.insects_arachnids; quest_referenced,,,,
+644,Souless,16,exclusive,melee,,,melee,family.corporeal_undead; quest_referenced,,,,
+645,Othainian,78,mixed,magic,melee,,magic / melee,demon; family.demons; quest_referenced,,fire,,"New ordinary demon Magic is an authoring assignment, not an existing general cast; preserve unique mobility/quest mechanics."
+646,Doomion,98,mixed,magic,melee,,magic / melee,demon; family.demons; quest_referenced,,fire,,"New ordinary demon Magic is an authoring assignment, not an existing general cast; preserve unique mobility/quest mechanics."
+647,Holthion,78,mixed,magic,melee,,magic / melee,demon; family.demons; quest_referenced,,fire,,"New ordinary demon Magic is an authoring assignment, not an existing general cast; preserve unique mobility/quest mechanics."
+651,Goblin guard,48,mixed,ranged,melee,,ranged / melee,family.goblinoids; quest_referenced,,,,"Quest-reference safeguard retains melee; reference is a conservative signal, not a complete quest-consumer census."
+653,Ugthanki,45,exclusive,melee,,,melee,beast; family.beasts,,,,
+655,Souless,24,exclusive,melee,,,melee,family.corporeal_undead,,,,
+656,Dungeon spider,22,exclusive,melee,,,melee,family.insects_arachnids; quest_referenced,,,,
+658,Iban disciple,19,mixed,magic,melee,,magic / melee,devotion.iban; family.casters; quest_referenced,,fire,,
+660,Goblin,19,exclusive,melee,,,melee,family.goblinoids,,,,
+663,San Tojalon,120,mixed,melee,magic,,melee / magic,family.spirits; quest_referenced; spectral,,neutral,,Spectral warrior variant retains melee-led identity; neutral supernatural Magic is newly proposed where absent.
+664,Ghost,29,exclusive,magic,,,magic,family.spirits; spectral; undead,,water / earth,,
+668,Mercenary,50,mixed,ranged,melee,,ranged / melee,family.armoured_humanoids; quest_referenced,,,,
+669,Mercenary Captain,64,mixed,ranged,melee,,ranged / melee,family.armoured_humanoids; quest_referenced,,,,
+670,Mercenary,39,mixed,ranged,melee,,ranged / melee,family.armoured_humanoids; quest_referenced,,,,
+671,Mining Slave,16,exclusive,melee,,,melee,family.unarmoured_humanoids; quest_referenced,,,,
+683,Gorad,78,exclusive,melee,,,melee,family.giants_ogres; quest_referenced,,,,
+684,Ogre guard,96,mixed,ranged,melee,,ranged / melee,family.giants_ogres; quest_referenced,,,,"Quest-reference safeguard retains melee; reference is a conservative signal, not a complete quest-consumer census."
+690,Mercenary,39,mixed,ranged,melee,,ranged / melee,family.armoured_humanoids; quest_referenced,,,,
+692,Mercenary,39,mixed,ranged,melee,,ranged / melee,family.armoured_humanoids; quest_referenced,,,,
+694,Dwarf,18,exclusive,melee,,,melee,family.armoured_humanoids; quest_referenced,,,,
+697,Ogre guard,78,mixed,ranged,melee,,ranged / melee,family.giants_ogres; quest_referenced,,,,"Quest-reference safeguard retains melee; reference is a conservative signal, not a complete quest-consumer census."
+699,Dwarf,18,exclusive,melee,,,melee,family.armoured_humanoids,,,,
+702,Captain Siad,48,exclusive,melee,,,melee,family.armoured_humanoids; quest_referenced,,,,
+703,Bedabin Nomad Guard,70,mixed,ranged,melee,,ranged / melee,family.armoured_humanoids; quest_referenced,,,,"Quest-reference safeguard retains melee; reference is a conservative signal, not a complete quest-consumer census."
+704,Ogre citizen,58,exclusive,melee,,,melee,family.giants_ogres; quest_referenced,,,,
+705,Rock of ages,150,exclusive,melee,,,melee,family.constructs,,,,
+706,Ogre,58,exclusive,melee,,,melee,family.giants_ogres; quest_referenced,,,,
+710,Draft Mercenary Guard,50,mixed,ranged,melee,,ranged / melee,family.armoured_humanoids; quest_referenced,,,,"Quest-reference safeguard retains melee; reference is a conservative signal, not a complete quest-consumer census."
+713,kolodion,12,protected_minigame,magic,,,magic,family.casters; minigame_protected,,air / water / earth / fire,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+716,Rowdy Guard,50,exclusive,ranged,,,ranged,family.armoured_humanoids,,,,
+717,Shantay Pass Guard,32,exclusive,ranged,,,ranged,family.armoured_humanoids,,,,
+718,Rowdy Slave,16,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+721,Desert Wolf,31,exclusive,melee,,,melee,beast; family.beasts,,,,
+729,civillian,18,exclusive,melee,,,melee,family.unarmoured_humanoids,,,,
+757,kolodion,65,protected_minigame,magic,melee,,magic / melee,family.giants_ogres; minigame_protected,,air / earth,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+758,kolodion,68,protected_minigame,magic,melee,,magic / melee,family.insects_arachnids; minigame_protected,,neutral,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+759,kolodion,46,protected_minigame,magic,melee,,magic / melee,family.spirits; minigame_protected; spectral,,air / thunder / wood,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+760,kolodion,98,protected_minigame,melee,magic,,melee / magic,demon; family.demons; minigame_protected,,fire,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+761,Irvig Senay,125,mixed,melee,magic,,melee / magic,family.spirits; quest_referenced; spectral,,neutral,,Spectral warrior variant retains melee-led identity; neutral supernatural Magic is newly proposed where absent.
+762,Ranalph Devere,130,mixed,melee,magic,,melee / magic,family.spirits; quest_referenced; spectral,,neutral,,Spectral warrior variant retains melee-led identity; neutral supernatural Magic is newly proposed where absent.
+766,Ungadulu,75,mixed,magic,melee,,magic / melee,family.casters; quest_referenced,,earth / fire,,
+767,Ungadulu,75,mixed,magic,melee,,magic / melee,family.casters; quest_referenced,,earth / fire,,
+768,Death Wing,80,exclusive,melee,,,melee,family.flying,,,,
+769,Nezikchened,172,mixed,magic,melee,,magic / melee,demon; family.demons; quest_referenced,,fire,,"New ordinary demon Magic is an authoring assignment, not an existing general cast; preserve unique mobility/quest mechanics."
+772,Viyeldi,80,mixed,magic,melee,,magic / melee,family.casters; quest_referenced,,neutral,,
+775,Karamja Wolf,61,exclusive,melee,,,melee,beast; family.beasts; quest_referenced,,,,
+776,Jungle Savage,87,exclusive,melee,,,melee,family.armoured_humanoids; quest_referenced,,,,
+777,Oomlie Bird,32,exclusive,melee,,,melee,family.flying; quest_referenced,,,,
+786,Pit Scorpion,35,exclusive,melee,,,melee,family.insects_arachnids,,,,
+787,Shadow Warrior,64,mixed,melee,magic,,melee / magic,family.spirits; spectral,,neutral,,Spectral warrior variant retains melee-led identity; neutral supernatural Magic is newly proposed where absent.
+789,Battle mage,52,protected_minigame,magic,,,magic,family.casters; minigame_protected,,air / water / earth / fire,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+790,Battle mage,52,protected_minigame,magic,,,magic,family.casters; minigame_protected,,air / water / earth / fire,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+791,Battle mage,52,protected_minigame,magic,,,magic,family.casters; minigame_protected,,air / water / earth / fire,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here."
+798,Gaia,79,mixed,magic,melee,,magic / melee,family.casters,earth,earth,,
+802,Greatwood,300,exclusive,melee,,,melee,family.living_plants,wood,,,
+809,Balrog,217,mixed,magic,melee,,magic / melee,boss; demon; family.demons,,fire,,
+816,PK Bot,57,protected_minigame,melee,,,melee,family.armoured_humanoids; minigame_protected,,,,"Observed nominal profile only. Preserve every existing attack/movement/quest behavior, including any incidental melee; do not enforce new exclusivity or weights here. PK bot retained under conservative role-review hold, not claimed to be a classified minigame."
+836,Grey Knight,56,mixed,melee,magic,,melee / magic,family.armoured_humanoids; god.guthix,,neutral,guthix,
+843,Fire warrior,61,mixed,melee,magic,,melee / magic,family.elemental_warriors,fire,fire,,
+844,Elder Green Dragon,275,scripted_preserve,magic,melee,ranged,magic / melee / ranged,boss; dragon; family.dragons,fire,fire,,"Boss primary label follows strongest current explicit power; scripted selection/cadence remains owned by encounter. Ranged power belongs to scripted fireshot, not an ordinary arrow shot."
+862,Green Dragon,110,mixed,melee,magic,,melee / magic,dragon; family.dragons,earth,earth,,"Assigned melee-primary physical dragon, Magic secondary; breath remains a separate special rather than a third ordinary style."
+863,Giant frog,20,scripted_preserve,ranged,,,ranged,family.reptiles_amphibians,,,,Existing ranged-only acid spitter; retain no-melee guard and protection mechanics.
+864,Cockatrice,35,exclusive,melee,,,melee,family.magical_birds,,,,
+865,Banshee,50,scripted_preserve,melee,magic,,melee / magic,family.spirits; spectral; undead,,neutral,,"Holy-looking wail presentation is not god alignment; no matching-god reduction is assigned. Preservation label only for existing adjacent melee / distant wail. Keep current powers, timing and all mechanics; do not force new secondary scaling."
+866,Naga,60,mixed,ranged,melee,,ranged / melee,family.reptiles_amphibians,,,,
+867,Terror dog,75,exclusive,melee,,,melee,beast; family.beasts,,,,
+868,Bloodveld,85,exclusive,melee,,,melee,beast; family.beasts,,,,
+869,Dark beast,105,scripted_preserve,magic,melee,,magic / melee,beast; family.magical_beasts,thunder,thunder,,"Magic is existing scripted charge/lightning, not permission to add a generic projectile in parallel. Thunder metadata describes lightning intent; current direct Magic settlement has no ordinary elemental projectile descriptor. Tags do not silently activate elemental mitigation."
+870,Abyssal demon,125,mixed,magic,melee,,magic / melee,demon; family.demons,,fire,,"New ordinary demon Magic is an authoring assignment, not an existing general cast; preserve unique mobility/quest mechanics."
+877,Sapphire Dragon,97,mixed,melee,magic,,melee / magic,dragon; family.dragons,fire,fire,,"Assigned melee-primary physical dragon, Magic secondary; breath remains a separate special rather than a third ordinary style."
+878,Emerald Dragon,118,mixed,melee,magic,,melee / magic,dragon; family.dragons,fire,fire,,"Assigned melee-primary physical dragon, Magic secondary; breath remains a separate special rather than a third ordinary style."
+879,Ruby Dragon,142,mixed,melee,magic,,melee / magic,dragon; family.dragons,fire,fire,,"Assigned melee-primary physical dragon, Magic secondary; breath remains a separate special rather than a third ordinary style."
+880,Diamond Dragon,166,mixed,melee,magic,,melee / magic,dragon; family.dragons,fire,fire,,"Assigned melee-primary physical dragon, Magic secondary; breath remains a separate special rather than a third ordinary style."
+881,Dragonstone Dragon,192,mixed,melee,magic,,melee / magic,dragon; family.dragons,fire,fire,,"Assigned melee-primary physical dragon, Magic secondary; breath remains a separate special rather than a third ordinary style."
+882,Stirge,55,exclusive,melee,,,melee,family.insects_arachnids,,,,
