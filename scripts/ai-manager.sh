@@ -274,6 +274,10 @@ manager_release_check() {
   local primary_real live_real branch_path operation published_ref head
 
   ai_require_manager
+  if [[ -f "$ROOT_DIR/Client_Base/src/orsc/Config.java" ]]; then
+    python3 "$ROOT_DIR/scripts/check-client-version-alignment.py" --root "$ROOT_DIR" \
+      || ai_fail "Align maintained server/client protocol versions before release."
+  fi
   stash_count="$(git -C "$ROOT_DIR" stash list | wc -l | tr -d ' ')"
   if ((stash_count > 0)); then
     ai_warn "$stash_count Git stash(es) remain. Rescue or deliberately resolve them before release."
