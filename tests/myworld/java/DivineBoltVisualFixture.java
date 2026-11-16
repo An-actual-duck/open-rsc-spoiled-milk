@@ -59,6 +59,8 @@ public final class DivineBoltVisualFixture {
                     draw.invoke(c,ids[i],f,20,caster,target,0,y);
                     int changed=0;for(int rgb:g.pixelData)if(rgb!=0x202830)changed++;
                     check(changed>8,"actual directed flight visible at angle "+a);
+                    boolean preserved=true;for(int rgb:g.pixelData)if(rgb==0){preserved=false;break;}
+                    check(preserved,"transparent bolt canvas must preserve background at angle "+a);
                 }
             }
         }
