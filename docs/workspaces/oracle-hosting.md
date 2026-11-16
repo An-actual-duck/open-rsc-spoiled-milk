@@ -12,15 +12,42 @@ public worlds against diverging player databases.
 | Game port | TCP `43605` |
 | VM | `VM.Standard.A1.Flex`, 1 OCPU, 6 GB RAM, ARM64 |
 | OS / Java | Ubuntu 26.04.1 LTS / OpenJDK 17 |
-| Server release tag | `v0.3.21` (server-only level transitions and satchel dialogue) |
-| Published client release | `v0.3.16` (steady underground lighting) |
-| Game source | `977a5c310b232b4184ca5b87f7ef440665b72b50` |
-| Client protocol | `10059` |
+| Server release tag | `v0.3.22` (crossbows, Stirges, coatings, agility rewards and map) |
+| Published client release | `v0.3.22` |
+| Game source | `315cf3151b7d9e29c5b0738157c9bca4198273f0` |
+| Client protocol | `10063` |
 | Public service | `spoiled-milk.service`, enabled at boot |
-| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.21` |
+| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.22` |
 | Guarded live path | `/tmp/spoiled-milk-live-main` |
 | Git object repository | `/home/ubuntu/spoiled-milk/repository.git` |
 | External state | `/home/ubuntu/.local/share/spoiled-milk/live` |
+
+The November 16, 2026 activation installed v0.3.22 and browser
+`alpha-20261116-v0322` together. Both clients share the release JAR SHA256
+`cbb0448a9b9ecd078cee6ed84a91f3e5cd4170197d5192736c4a9c8db37d65f0`.
+Browser manifest SHA256:
+`56e165f0cd9b14634ee3ad3da821e1dcd64c9c3887a1c211515209e31c2698c8`.
+The accepted paired map fingerprint is
+`46f8e3cb2ed57164932d16ef0197124ba74fc966f5ca91a2105cd472c3a42de6`,
+including 24 Stirges. All 74 accounts were preserved, with integrity-checked
+Oracle and PC backups. The owner issued the observed in-game update command;
+players saved and the service exited cleanly before activation. No AI shutdown
+signal was used. The previous v0.3.21 source and browser alpha-20261112-6 remain
+preserved for rollback.
+
+Fresh Oracle ARM64/JDK17 builds and isolated crossbow, agility, scimitar,
+coating and Stirge fixtures passed before activation. The hosted runner rebuilt
+from the exact clean tagged source at startup; installed artifact hashes are
+recorded separately. Public native/WSS configuration parity and staged-login
+negotiation, trusted HTTPS, immutable Range delivery, external DB linkage and
+zero automatic restarts passed. The published POSIX updater upgraded v0.3.16
+to v0.3.22 while preserving synthetic preferences/identity. A downloaded client
+reached the hardware OpenGL login screen without account authentication.
+Native Windows/macOS execution is not claimed. The explicit version-scoped
+release exception preserves/excludes 25 remotely backed-up unfinished or
+historical experiment refs; it does not include them in this release.
+Receipts: `output/reviews/release-v0.3.22/` locally and
+`/home/ubuntu/spoiled-milk/verification/v0.3.22/` on Oracle.
 
 The subsequent November 13 UTC / November 12 local server-only v0.3.21
 activation includes the 28 explicit surface-return repairs, Observatory keep gate
@@ -68,7 +95,7 @@ The service requires that mount. The source is a clean detached checkout of the
 exact published tag; it is never a development workspace.
 
 The service calls `scripts/run-hosted-server.sh` with
-`MYWORLD_HOSTED_RELEASE_TAG=v0.3.21`. Existing exact-tag, clean-source, installed
+`MYWORLD_HOSTED_RELEASE_TAG=v0.3.22`. Existing exact-tag, clean-source, installed
 map, generator, external-database, and occupied-port guards remain active.
 `JAVA_TOOL_OPTIONS` caps the heap at 3 GiB. The unit uses `Restart=on-failure`;
 a successful in-game shutdown exits normally and stays stopped.
