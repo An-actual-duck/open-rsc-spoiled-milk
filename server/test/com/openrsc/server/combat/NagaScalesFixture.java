@@ -63,6 +63,27 @@ public final class NagaScalesFixture {
     check(grinder.getSkills().getExperience(com.openrsc.server.constants.Skill.HERBLAW.id())==xp,"grinding matches vanilla no-XP rule");
     h.server().getConfig().MEMBER_WORLD=true;
    }
+   // Regression: the owner's full-inventory batch must consume exactly three
+   // scales and retain the scimitar, tool, and unrelated ingredients.
+   h.server().getConfig().BATCH_PROGRESSION=true;
+   Player batch=h.player("scale batch",440,440);batch.getClientLimitations().maxItemId=65535;
+   batch.getCarriedItems().getInventory().add(new Item(1999));
+   batch.getCarriedItems().getInventory().add(new Item(468));
+   for(int n=0;n<3;n++)batch.getCarriedItems().getInventory().add(new Item(3470));
+   while(batch.getCarriedItems().getInventory().size()<28)batch.getCarriedItems().getInventory().add(new Item(447));
+   Item tool=batch.getCarriedItems().getInventory().get(1),raw=batch.getCarriedItems().getInventory().get(2);
+   com.openrsc.server.event.rsc.PluginTask task=new com.openrsc.server.event.rsc.PluginTask(h.world(),batch,"useinv",new Object[0]){
+    public int action(){return 0;} public synchronized void pause(int ticks){}
+   };
+   java.lang.reflect.Field field=com.openrsc.server.event.rsc.PluginTask.class.getDeclaredField("tasksMap");field.setAccessible(true);
+   @SuppressWarnings("unchecked") java.util.Map<String,com.openrsc.server.event.rsc.PluginTask> tasks=(java.util.Map<String,com.openrsc.server.event.rsc.PluginTask>)field.get(null);
+   tasks.put(Thread.currentThread().getName(),task);
+   try{herblaw.onUseInv(batch,0,tool,raw);}finally{tasks.remove(Thread.currentThread().getName());}
+   check(batch.getCarriedItems().getInventory().countId(3470)==0,"batch consumes all three raw scales");
+   check(batch.getCarriedItems().getInventory().countId(3471)==3,"batch produces exactly three powders");
+   check(batch.getCarriedItems().getInventory().countId(1999)==1,"batch retains tin scimitar");
+   check(batch.getCarriedItems().getInventory().countId(468)==1,"batch retains mortar");
+   check(batch.getCarriedItems().getInventory().countId(447)==23,"batch retains unrelated ingredients");
    h.server().getConfig().WANT_MYWORLD=false;
    check(drops.rollRare(NagaCombat.NPC_ID,p,1).isEmpty(),"world gate");
   }

@@ -43,6 +43,22 @@ public final class GodCrossbowVisualFixture {
    check(ProjectileAnimationCatalog.getImpactSegments(effect.getKey()).length==0,"no unapproved impact effect");
    for(String name:new String[]{"bolt"})check(GodCrossbowVisualFixture.class.getResource("/myworld-assets/animations/projectile-moving/god-bolts/"+gods[i]+"/"+name+".png")!=null,"packaged effect sheet");
   }
+  ClientExternalAssetLoader packed=new ClientExternalAssetLoader(
+      java.nio.file.Files.createTempDirectory("packaged-god-icons-"),mudclient.class);
+  for(int id=3444;id<=3446;id++)check(packed.getExternalItemSprite(EntityHandler.getItemDef(id))!=null,
+      "actual packaged-only god icon lookup "+id);
+  com.openrsc.client.entityhandling.defs.ItemDef scale=EntityHandler.getItemDef(3470);
+  Sprite scaleSprite=packed.getExternalItemSprite(scale);
+  check(scaleSprite!=null,"actual packaged-only Naga scale lookup");
+  Arrays.fill(surface.pixelData,0);
+  surface.drawSpriteClipping(scaleSprite,0,0,48,32,scale.getPictureMask(),0,scale.getBlueMask(),false,0,1);
+  int visible=0,minX=48,maxX=0,minY=32,maxY=0;
+  for(int y=0;y<32;y++)for(int x=0;x<48;x++){
+   int rgb=surface.pixelData[y*240+x];if(rgb==0)continue;visible++;
+   minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);
+   check(((rgb>>8)&255)>(rgb&255),"Naga scale renders green rather than blue");
+  }
+  check(visible>100&&maxX-minX+1<=28&&maxY-minY+1<=18,"smaller scale visible bounds");
   int[] counts={30,10,15};String[] paths={"Wood VFX 03/Wood VFX 03(48x48).png","general-buffs-debuffs/accuracy/accuracy-up.png","cut/cut.png"};
   for(int i=0;i<3;i++){
    orsc.graphics.two.CombatEffectAnimationCatalog.Definition def=orsc.graphics.two.CombatEffectAnimationCatalog.getDefinition(116+i);
