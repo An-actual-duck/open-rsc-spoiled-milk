@@ -30,8 +30,8 @@ so normal boosts, fatigue, XP freezing and server rates apply.
 
 Boots
 -----
-100% initial charge, maximum100. Ordinary walking cadence is divided by1.5:
-430ms -> 287ms; normal adjacent-step collision/path validation is retained.
+100% initial charge, maximum100. Ordinary walking cadence is divided by1.25:
+430ms -> 344ms; normal adjacent-step collision/path validation is retained.
 Disable speed while any combat direction is active, and until ten seconds
 after the final engagement ends. Existing recent-combat timers also apply.
 No boot charge drains while speed is inactive, at zero charge, on blocked
@@ -59,8 +59,7 @@ regain one. Partial progress persists; a full cape banks no extra charge.
 Cape charging counts ordinary walking in/out of combat. Walking XP requires
 charged worn boots; combat suspends boot speed/drain, not the cape's walking
 XP or recharge. All of these counters are player-owned, not ItemStatus.
-Teleport menu: Gnome Stronghold, Barbarian Outpost, Wilderness and Yanille
-Agility Dungeon. Validate the current arrival tile and normal teleport
+Teleport menu: Gnome Stronghold, Barbarian Outpost and Wilderness. Validate the current arrival tile and normal teleport
 restrictions after menu selection, then consume exactly one charge.
 Normal restriction: no teleport at Wilderness20+, during a duel, or other
 blocked quest locations / while carrying Ana. Cancelling costs nothing.
@@ -70,7 +69,7 @@ Visuals / compatibility
 Existing inventory silhouettes and wool-boots/wool-gloves/cape equipment art
 use a coordinated0x65B8AC colour. No new image files or external art dependency.
 Append-only appearances1190..1192 leave old IDs unchanged in both sprite modes.
-Maintained client10060 adds actor-specific movement-rate opcode161 (four-byte
+Initial client10060 added actor-specific movement-rate opcode161 (four-byte
 payload). The server sends it only to client10060+. Other actors/NPCs retain
 their own normal rate, and existing movement packets remain byte-compatible.
 Charges/counters survive removal, banking, death and logout via player cache.
@@ -109,3 +108,8 @@ refresh documented in agility-pouch-reward-refresh.txt. Statements above that
 normal rewards were unchanged describe the initial utility-equipment change.
 Unique equipment odds, duplicate replacements and equipment mechanics remain
 as documented here.
+
+Owner tuning after private acceptance: movement reduced to1.25x and cape
+destinations limited to the three traditional courses. Client10063 accepts125%
+receipts while retaining150% compatibility; maintained server profiles align.
+Charges, XP bonuses, combat lockout and all other utility benefits are unchanged.

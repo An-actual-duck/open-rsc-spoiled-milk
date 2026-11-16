@@ -17,8 +17,8 @@ public final class AgilityUtilityEquipment {
         CAPE_CHARGE="agility_traversal_charge", CAPE_PROGRESS="agility_traversal_progress", XP_REMAINDER="agility_utility_xp_remainder";
     private static final int ENERGY_PER_PERCENT=2800; // LCM of 50,70,80,100; swapping equipment cannot reset partial drain.
     private static final String TIMING="agility_suregrip_timing", LAST_SPEED="agility_last_step_speed";
-    public static final String[] COURSE_NAMES={"Gnome Stronghold","Barbarian Outpost","Wilderness","Yanille Agility Dungeon"};
-    public static final int[][] COURSE_LANDINGS={{692,493,0},{487,555,0},{298,131,0},{591,765,0}};
+    public static final String[] COURSE_NAMES={"Gnome Stronghold","Barbarian Outpost","Wilderness"};
+    public static final int[][] COURSE_LANDINGS={{692,493,0},{487,555,0},{298,131,0}};
     private AgilityUtilityEquipment() {}
     public static boolean worn(Player p,int id){return p!=null&&p.getConfig().WANT_MYWORLD&&p.getCarriedItems().getEquipment().hasEquipped(id);}
     private static int stored(Player p,String key,int initial,int maximum){
@@ -45,13 +45,13 @@ public final class AgilityUtilityEquipment {
     public static void combatEnded(com.openrsc.server.model.entity.Mob actor){
         if(actor instanceof Player&&actor.getConfig().WANT_MYWORLD)((Player)actor).getCache().store("agility_combat_until",actor.getWorld().getServer().getGameClock().currentTimeMillis()+10_000L);
     }
-    public static int walkingInterval(Player p,int base){return speedActive(p)?Math.max(1,(int)Math.round(base/1.5D)):base;}
+    public static int walkingInterval(Player p,int base){return speedActive(p)?Math.max(1,(int)Math.round(base/1.25D)):base;}
     public static int tilesPerPercent(Player p){return 50+(worn(p,GLOVES)?20:0)+(worn(p,CAPE)?30:0);}
     /** Called exactly once for a successfully validated ordinary walking-queue step, never teleport/forced movement. */
     public static void walkedTile(Player p){
         if(!p.getConfig().WANT_MYWORLD)return;
         boolean charged=worn(p,BOOTS)&&bootCharge(p)>0;
-        boolean fast=speedActive(p);p.setAttribute(LAST_SPEED,fast?150:100);
+        boolean fast=speedActive(p);p.setAttribute(LAST_SPEED,fast?125:100);
         if(worn(p,CAPE)){
             int charges=capeCharge(p);
             if(charges<3){

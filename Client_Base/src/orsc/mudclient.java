@@ -25815,10 +25815,10 @@ public final class mudclient implements Runnable {
 
     private final int[] playerMovementRatePercent=new int[65536];
     public void applyPlayerMovementRate(int index,int percent) {
-        if(playerMovementRatePercent!=null&&index>=0&&index<playerMovementRatePercent.length&&(percent==100||percent==150))playerMovementRatePercent[index]=percent;
+        if(playerMovementRatePercent!=null&&index>=0&&index<playerMovementRatePercent.length&&(percent==100||percent==125||percent==150))playerMovementRatePercent[index]=percent;
     }
     public int playerMovementRate(int index) {
-        return playerMovementRatePercent!=null&&index>=0&&index<playerMovementRatePercent.length&&playerMovementRatePercent[index]==150?150:100;
+        return playerMovementRatePercent!=null&&index>=0&&index<playerMovementRatePercent.length&&(playerMovementRatePercent[index]==125||playerMovementRatePercent[index]==150)?playerMovementRatePercent[index]:100;
     }
 
 	private int movementAmountForFrame(ORSCharacter character, int configuredPixelsPerClassicFrame, long frameNow) {

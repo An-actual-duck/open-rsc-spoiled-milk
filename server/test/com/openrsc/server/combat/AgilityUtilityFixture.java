@@ -44,7 +44,7 @@ public final class AgilityUtilityFixture {
                 check(d!=null&&d.isWieldable()&&d.isUntradable()&&!d.isNoteable(),"utility flags "+id);
                 check(d.getArmourBonus()==0&&d.getMeleeDefense()==0&&d.getRangedDefense()==0&&d.getMagicDefense()==0&&d.getMagicBonus()==0&&d.getPrayerBonus()==0,"zero stats "+id);
             }
-            Player p=player(h);equip(p,B);check(AgilityUtilityEquipment.bootCharge(p)==100&&p.getWalkingTick()==287,"full boots, 1.5x cadence");
+            Player p=player(h);equip(p,B);check(AgilityUtilityEquipment.bootCharge(p)==100&&p.getWalkingTick()==344,"full boots, 1.25x cadence");
             int before=xp(p);p.incExp(Skill.AGILITY.id(),100,false);check(xp(p)-before==110,"boots XP");
             steps(p,49);check(AgilityUtilityEquipment.bootCharge(p)==100,"49 tiles no full percent");steps(p,1);check(AgilityUtilityEquipment.bootCharge(p)==99,"50 tiles drain1");
             equip(p,G);resetBoot(p);steps(p,69);check(AgilityUtilityEquipment.bootCharge(p)==100,"69 with gloves");steps(p,1);check(AgilityUtilityEquipment.bootCharge(p)==99,"70 with gloves");
@@ -81,10 +81,12 @@ public final class AgilityUtilityFixture {
                 com.openrsc.server.model.world.coordinate.WorldLocation location=com.openrsc.server.model.world.coordinate.WorldLocation.global(new com.openrsc.server.model.world.coordinate.WorldCoordinate(at[0],at[1],at[2]));
                 check(com.openrsc.server.io.AgilityShortcutLanding.collisionMaskClear(h.world().getTile(location).traversalMask),"installed landing walkable "+Arrays.toString(at)+" mask="+h.world().getTile(location).traversalMask);
             }
+            check(AgilityUtilityEquipment.COURSE_NAMES.length==3&&AgilityUtilityEquipment.COURSE_LANDINGS.length==3,"only the three traditional courses");
             Player cape=player(h);equip(cape,C);check(AgilityUtilityEquipment.capeCharge(cape)==3,"cape starts3");steps(cape,3000);check(!cape.getCache().hasKey(AgilityUtilityEquipment.CAPE_PROGRESS),"full cape banks no extra charge");
             cape.getCache().set(AgilityUtilityEquipment.CAPE_CHARGE,0);steps(cape,1999);check(AgilityUtilityEquipment.capeCharge(cape)==0,"1999 no charge");steps(cape,1);check(AgilityUtilityEquipment.capeCharge(cape)==1,"2000 charge");
             steps(cape,4000);check(AgilityUtilityEquipment.capeCharge(cape)==3&&cape.getCache().getInt(AgilityUtilityEquipment.CAPE_PROGRESS)==0,"cape cap3");
             check(!AgilityUtilityEquipment.teleport(cape,99)&&AgilityUtilityEquipment.capeCharge(cape)==3,"cancel costs no charge");
+            check(!AgilityUtilityEquipment.teleport(cape,3)&&AgilityUtilityEquipment.capeCharge(cape)==3,"retired Yanille index refuses without charge");
             int capeXp=xp(cape);
             check(AgilityUtilityEquipment.teleport(cape,0)&&cape.getX()==692&&cape.getY()==493&&AgilityUtilityEquipment.capeCharge(cape)==2,"actual cape teleport spends exactly1");
             check(xp(cape)==capeXp,"teleport no walking XP");
@@ -125,9 +127,9 @@ public final class AgilityUtilityFixture {
             com.openrsc.server.net.rsc.ActionSender.sendPlayerMovementRate(visual,loot);
             check(h.countOutgoingPackets(visual,com.openrsc.server.net.rsc.enums.OpcodeOut.SEND_PLAYER_MOVEMENT_RATE)==1,"send-on-change rate receipt");
             com.openrsc.server.net.rsc.struct.outgoing.PlayerMovementRateStruct rate=new com.openrsc.server.net.rsc.struct.outgoing.PlayerMovementRateStruct();
-            rate.serverIndex=77;rate.percent=150;rate.setOpcode(com.openrsc.server.net.rsc.enums.OpcodeOut.SEND_PLAYER_MOVEMENT_RATE);
+            rate.serverIndex=77;rate.percent=125;rate.setOpcode(com.openrsc.server.net.rsc.enums.OpcodeOut.SEND_PLAYER_MOVEMENT_RATE);
             com.openrsc.server.net.Packet packet=new com.openrsc.server.net.rsc.generators.impl.PayloadCustomGenerator().generate(rate,visual);
-            check(packet.getID()==161&&packet.getBuffer().readUnsignedShort()==77&&packet.getBuffer().readUnsignedShort()==150&&!packet.getBuffer().isReadable(),"real fixed four-byte rate payload");packet.getBuffer().release();
+            check(packet.getID()==161&&packet.getBuffer().readUnsignedShort()==77&&packet.getBuffer().readUnsignedShort()==125&&!packet.getBuffer().isReadable(),"real fixed four-byte rate payload");packet.getBuffer().release();
             Player glovesOnly=player(h);equip(glovesOnly,G);before=xp(glovesOnly);glovesOnly.incExp(Skill.AGILITY.id(),100,false);
             check(xp(glovesOnly)-before==110&&glovesOnly.getWalkingTick()==430,"gloves work independently without charges");
             h.server().getConfig().WANT_MYWORLD=false;check(AgilityUtilityEquipment.xpPercent(loot)==0&&loot.getWalkingTick()==430,"other worlds unchanged");
