@@ -20,3 +20,16 @@ These output trees are not shipped in Git or player packages. The generator,
 pinned source references and artifact hashes are retained in the documents.
 
 Next step is owner discussion, not automatic implementation or balance changes.
+
+Retirement completed later on 2026-11-16:
+- NPC planning was reviewed, merged and pushed independently of optimization.
+- ai-1 was parked through the manager lifecycle and returned to IDLE. No active
+  agent was attached; six old private fixture processes were gracefully stopped.
+- The 25 experiment branches listed in the historical v0.3.22 exception were
+  removed from active local/remote branch lists after their exact tips were
+  preserved and verified remotely under refs/tags/archive/retired-20261116/.
+- A verified incremental recovery bundle and exact original-tip roster are in
+  output/reviews/npc-stat-work-review/20261116/. Recreate an old branch from its
+  archive tag if needed; none of that experimental code was merged into main.
+- Saved projects, databases, ignored outputs and other local work were retained.
+  Oracle and the released clients were not changed by this operation.
