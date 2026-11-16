@@ -183,6 +183,11 @@ into one of the category folders, not directly into `docs/myworld/`.
   alignment, expandable signed levels, native loader direction, Preservation
   baseline conversion, capacity audit, and migration constraints.
 
+## Proposed Work Plans
+
+- [NPC defense assignments](proposed-work-plans/npc-defense-roster/README.md):
+  complete 298-NPC family/band draft with current values, assigned values and exceptions.
+
 ## Completed Work Plans
 
 - [altar-enchantment-and-conversion-plan.md](completed-work-plans/altar-enchantment-and-conversion-plan.md):
