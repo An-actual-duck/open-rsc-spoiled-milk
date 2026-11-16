@@ -29,6 +29,7 @@ public final class GodCrossbowEffectsFixture {
         Npc n=h.npc(id,x,y);n.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),1000,1000,false);return n;
     }
     private static Npc npc(CurrentCombatHarness h){return npc(h,NpcId.GREATER_DEMON.id(),452,450);}
+    private static long effects(com.openrsc.server.model.entity.Mob mob,int type){return mob.getUpdateFlags().getCombatEffects().stream().filter(e->e.getEffectType()==type).count();}
     private static int hp(Npc n){return n.getLevel(Skill.HITS.id());}
     private static void impact(Player p,Npc n,GodCrossbowEffects.Shot shot,int damage,boolean suppressed){
         GodCrossbowEffects.primaryImpact(p,n,shot,AttackRoll.normal(damage).withWoundBasis(damage,10),damage,suppressed,UUID.randomUUID());
@@ -58,11 +59,15 @@ public final class GodCrossbowEffectsFixture {
             impact(z,wound,zs,6,false);check(Bleed.activeWounds(wound)==0,"below70 excluded");
             impact(z,wound,zs,7,true);check(Bleed.activeWounds(wound)==0,"suppressed qualifying hit excluded");
             impact(z,wound,null,7,false);check(Bleed.activeWounds(wound)==0,"ordinary ammunition excluded");
+            check(effects(wound,118)==0,"rejected hits have no cut animation");
             ProjectileEvent ze=projectile(h,z,wound,7,false,true);ze.run();check(Bleed.activeWounds(wound)==1,"real projectile opens wound");
             int health=hp(wound);ze.run();check(hp(wound)==health&&Bleed.activeWounds(wound)==1,"impact exactly once");
+            check(effects(wound,118)==1,"one cut on accepted wound, duplicate impact is silent");
             impact(z,wound,zs,7,false);check(Bleed.activeWounds(wound)==1,"reopen keeps one wound");
+            check(effects(wound,118)==2,"reopening plays one cut");
             Player z2=player(h,3445);impact(z2,wound,GodCrossbowEffects.capture(z2,wound),7,false);
             check(Bleed.activeWounds(wound)==2,"two sources independent");
+            check(effects(wound,118)==3,"independent source plays cut");
             ticks(h,9);check(Bleed.activeWounds(wound)==0,"three pulses finish");
             check(health-hp(wound)>=18&&health-hp(wound)<=30,"two Bleed2 wounds roll three times 3..5");
             Object phase=new Object();NonCorporealState.tryEnter(wound,phase,100,3,()->true);
@@ -70,15 +75,22 @@ public final class GodCrossbowEffectsFixture {
             Npc flight=npc(h);ProjectileEvent launched=projectile(h,z,flight,7,false,true);z.getPrayers().setPrayer(16,false);launched.run();
             check(Bleed.activeWounds(flight)==1,"committed wound survives prayer swap");Bleed.clear(flight);
 
+            com.openrsc.server.model.entity.update.CombatEffect cut=new com.openrsc.server.model.entity.update.CombatEffect(wound,118);
+            z.setClientVersion(10060);check(!cut.isVisibleTo(z),"old observer does not receive new effect ID");
+            z.setClientVersion(10061);z2.setClientVersion(10061);check(cut.isVisibleTo(z),"new observer receives shared wound animation");
+            com.openrsc.server.model.entity.update.CombatEffect gain=new com.openrsc.server.model.entity.update.CombatEffect(z,117);
+            check(gain.isVisibleTo(z)&&!gain.isVisibleTo(z2),"Revelation cosmetic belongs to the buffed player");
             Player g=player(h,3446),g2=player(h,3446);Npc seeds=npc(h),other=npc(h);
             GodCrossbowEffects.Shot gs=GodCrossbowEffects.capture(g,seeds);
             for(int i=1;i<=4;i++){impact(g,seeds,gs,0,false);check(GodCrossbowEffects.seeds(g,seeds)==i,"zero hit counts "+i);}
             impact(g,seeds,gs,7,true);check(GodCrossbowEffects.seeds(g,seeds)==4,"suppressed hit not seed");
+            check(effects(seeds,116)==0,"no burst for first four or suppressed hit");
             impact(g2,seeds,GodCrossbowEffects.capture(g2,seeds),0,false);impact(g,other,GodCrossbowEffects.capture(g,other),0,false);
             check(GodCrossbowEffects.seeds(g2,seeds)==1&&GodCrossbowEffects.seeds(g,other)==1,"per-source per-target counters");
             int before=hp(seeds);ProjectileEvent fifth=projectile(h,g,seeds,0,false,true);fifth.run();
             check(GodCrossbowEffects.seeds(g,seeds)==0,"fifth real impact bursts and clears");check(before-hp(seeds)>=0&&before-hp(seeds)<=3,"centre hit once, 0..3");
             before=hp(seeds);fifth.run();check(GodCrossbowEffects.seeds(g,seeds)==0&&hp(seeds)==before,"duplicate impact no new seeds");
+            check(effects(seeds,116)==1,"exactly one burst from fifth impact");
             ProjectileEvent suppressed=projectile(h,g,seeds,7,true,true);suppressed.run();check(GodCrossbowEffects.seeds(g,seeds)==0,"actual stagger no seed");
             ProjectileEvent ordinary=projectile(h,g,seeds,0,false,false);ordinary.run();check(GodCrossbowEffects.seeds(g,seeds)==0,"ordinary projectile no seed");
             seeds.advanceCombatLifecycle();check(GodCrossbowEffects.seeds(g2,seeds)==0,"respawn invalidates counters");
@@ -167,6 +179,7 @@ public final class GodCrossbowEffectsFixture {
                 Npc killed=npc(h);impact(s,killed,GodCrossbowEffects.capture(s,killed),1,false);
                 check(killed.tryBeginDeathLifecycle(s).isStarted(),"death context");GodCrossbowEffects.creditedKill(s,killed);
                 check(GodCrossbowEffects.familiarity(s)==Math.min(i,15),"kill growth/cap "+i);
+                check(effects(s,117)==Math.min(i,15),"Revelation animation only on real gains, stops at cap");
                 GodCrossbowEffects.creditedKill(s,killed);check(GodCrossbowEffects.familiarity(s)==Math.min(i,15),"credit once");
             }
             check(GodCrossbowEffects.revelationPercent(s,kind,3444)==15,"same-type instance keeps bonus");

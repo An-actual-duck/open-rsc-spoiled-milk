@@ -43,6 +43,18 @@ public final class GodCrossbowVisualFixture {
    check(ProjectileAnimationCatalog.getImpactSegments(effect.getKey()).length==0,"no unapproved impact effect");
    for(String name:new String[]{"bolt"})check(GodCrossbowVisualFixture.class.getResource("/myworld-assets/animations/projectile-moving/god-bolts/"+gods[i]+"/"+name+".png")!=null,"packaged effect sheet");
   }
+  int[] counts={30,10,15};String[] paths={"Wood VFX 03/Wood VFX 03(48x48).png","general-buffs-debuffs/accuracy/accuracy-up.png","cut/cut.png"};
+  for(int i=0;i<3;i++){
+   orsc.graphics.two.CombatEffectAnimationCatalog.Definition def=orsc.graphics.two.CombatEffectAnimationCatalog.getDefinition(116+i);
+   check(def!=null&&def.getFrameCount()==counts[i]&&def.getSheetPath().equals(paths[i]),"assigned effect sheet and frame geometry");
+   check(GodCrossbowVisualFixture.class.getResource("/myworld-assets/animations/on-entity/"+paths[i])!=null,"packaged proc animation");
+   check(client.getCombatEffectName(116+i).equals(def.getKey()),"client resolves new combat effect");
+   ClientExternalAssetLoader effectLoader=new ClientExternalAssetLoader(java.nio.file.Paths.get(args[0]),GodCrossbowVisualFixture.class);
+   Sprite[] vfx=new Sprite[64];
+   int loaded=effectLoader.appendExternalAnimationGridSheetFrames(new java.io.File(args[0]+"/dev/myworld/assets/runtime/animations/on-entity/"+paths[i]),vfx,def.getMaxTargetSize(),def.getColumns(),def.getRows(),def.getFirstFrame(),def.getFrameCount(),0,def.getPlaybackFrameCount());
+   check(loaded==counts[i],"actual grid loader reads every assigned frame");
+   for(int f=0;f<loaded;f++)check(vfx[f]!=null&&vfx[f].getWidth()<=64&&vfx[f].getHeight()<=64,"individual animation frame, never entire strip");
+  }
   check(EntityHandler.getAnimationDef(106).getName().equals("crossbow"),"ordinary family intact");
   System.out.println("PASS "+checks+" actual held selection and packaged effect checks; custom="+Config.S_WANT_CUSTOM_SPRITES);
  }

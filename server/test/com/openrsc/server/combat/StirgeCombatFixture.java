@@ -37,7 +37,9 @@ public final class StirgeCombatFixture {
             StirgeCombat.primaryHit(a,p,0,false);check(Bleed.activeWounds(p)==0,"miss cannot bleed");
             StirgeCombat.primaryHit(a,p,1,true);check(Bleed.activeWounds(p)==0,"suppressed primary cannot bleed");
             StirgeCombat.primaryHit(a,p,1,false);check(Bleed.severity(a,p)==1,"even smallest positive primary opens wound, no max-roll threshold");
+            check(p.getUpdateFlags().getCombatEffects().stream().filter(e->e.getEffectType()==118).count()==1,"Stirge wound cuts the player");
             StirgeCombat.primaryHit(a,p,1,false);check(Bleed.severity(a,p)==2,"second hit increases severity");
+            check(p.getUpdateFlags().getCombatEffects().stream().filter(e->e.getEffectType()==118).count()==2,"Stirge reopening cuts the player again");
             StirgeCombat.primaryHit(a,p,1,false);StirgeCombat.primaryHit(a,p,1,false);
             check(Bleed.severity(a,p)==3&&Bleed.activeWounds(p)==1,"severity caps at three without duplicate wound");
             a.getSkills().setLevel(Skill.HITS.id(),20);int victim=p.getLevel(Skill.HITS.id()),health=a.getLevel(Skill.HITS.id());

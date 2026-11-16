@@ -18,7 +18,8 @@ public final class StirgeClientFixture {
   for(int id=3462;id<=3466;id++)if(loader.getExternalItemSprite(EntityHandler.getItemDef(id))==null)throw new AssertionError("Missing item sprite "+id);
   for(int id=3462;id<=3465;id++)if(!EntityHandler.getItemDef(id).untradeable||EntityHandler.getItemDef(id).membersItem)throw new AssertionError("Gimmick item trade/membership parity");
   for(int id=3462;id<=3464;id++)if(!java.util.Arrays.asList(EntityHandler.getItemDef(id).getCommand()).contains("Spray"))throw new AssertionError("Missing spray action");
-  if(Config.S_WANT_CUSTOM_SPRITES)for(int id=1170;id<=1172;id++)if(!EntityHandler.getAnimationDef(id).getName().equals("crossbow"))throw new AssertionError("Published god crossbow appearance shifted");
+  String[] godFamilies={"saradomincrossbow","zamorakcrossbow","guthixcrossbow"};
+  for(int id=1170;id<=1172;id++)if(!EntityHandler.getAnimationDef(id).getName().equals(godFamilies[id-1170]))throw new AssertionError("Approved god crossbow appearance ID shifted");
   System.out.println("PASS Stirge client atlas, five item icons, spray actions and published appearance IDs; custom="+Config.S_WANT_CUSTOM_SPRITES);
  }
 }

@@ -178,6 +178,7 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_ICE_BURST = 31;
 	public static final int COMBAT_EFFECT_ACID_FROG = 32;
 	public static final int COMBAT_EFFECT_WOOD_DRILL = 33;
+    public static final int COMBAT_EFFECT_BRIAR_SEED_BURST=116, COMBAT_EFFECT_REVELATION_GAIN=117, COMBAT_EFFECT_BLEED_WOUND=118;
 	public static final int COMBAT_EFFECT_THUNDER_STRIKE = 34;
 	public static final int COMBAT_EFFECT_ICE_CRYSTAL = 35;
 	public static final int COMBAT_EFFECT_ACID_GUSH = 36;
@@ -229,7 +230,7 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_EXPLOSION = COMBAT_EFFECT_FIRE_BOMB;
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
-	public static final int COMBAT_EFFECT_COUNT = 115; // Through ClericBlessingContract.LAST_CURSE_ANIMATION.
+	public static final int COMBAT_EFFECT_COUNT = 118; // Includes briar burst, Revelation gain and shared wound application.
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 64;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_FRAME_TICKS = 3;
@@ -22270,6 +22271,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getCombatEffectSceneSize(int effectType) {
+        if (effectType == COMBAT_EFFECT_BRIAR_SEED_BURST) return 192;
+        if (effectType == COMBAT_EFFECT_REVELATION_GAIN) return 96;
+        if (effectType == COMBAT_EFFECT_BLEED_WOUND) return 144;
+
 		if (effectType == COMBAT_EFFECT_THUNDER_STRIKE) {
 			return 280; // thunder-3: 224 * 1.25, artwork/timing unchanged
 		}
@@ -22315,6 +22320,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getCombatEffectScreenSize(int effectType, int baseSize) {
+        if (effectType == COMBAT_EFFECT_BRIAR_SEED_BURST) return Math.max(1, baseSize * 6 / 7);
+        if (effectType == COMBAT_EFFECT_REVELATION_GAIN) return Math.max(1, baseSize * 3 / 7);
+        if (effectType == COMBAT_EFFECT_BLEED_WOUND) return Math.max(1, baseSize * 9 / 14);
+
 		if (effectType == COMBAT_EFFECT_THUNDER_STRIKE) {
 			return Math.max(1, (baseSize * 5) / 4);
 		}
@@ -23704,6 +23713,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getCombatEffectFrameTicks(int effectType) {
+        if (effectType >= COMBAT_EFFECT_BRIAR_SEED_BURST && effectType <= COMBAT_EFFECT_BLEED_WOUND) return 2;
 		if (ClericBlessingContract.isNpcCurseAnimation(effectType)) return 2;
 		if (effectType == COMBAT_EFFECT_LESSER_HEAL) {
 			return LESSER_HEAL_FRAME_TICKS;
@@ -23712,6 +23722,11 @@ public final class mudclient implements Runnable {
 	}
 
 	public String getCombatEffectName(int effectType) {
+        if (effectType >= COMBAT_EFFECT_BRIAR_SEED_BURST && effectType <= COMBAT_EFFECT_BLEED_WOUND) {
+            CombatEffectAnimationCatalog.Definition definition=CombatEffectAnimationCatalog.getDefinition(effectType);
+            return definition==null ? "unknown" : definition.getKey();
+        }
+
 		if (ClericBlessingContract.isRecipientOnlyBuffAnimation(effectType)
 				|| ClericBlessingContract.isNpcCurseAnimation(effectType)) {
 			CombatEffectAnimationCatalog.Definition definition = CombatEffectAnimationCatalog.getDefinition(effectType);

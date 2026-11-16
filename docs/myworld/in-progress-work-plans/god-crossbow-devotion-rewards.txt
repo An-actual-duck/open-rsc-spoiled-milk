@@ -1,3 +1,23 @@
+VISUAL COMPLETION — November 15, 2026
+-------------------------------------
+Owner-approved bespoke held families now replace the generic recolours while
+retaining appearance IDs1170..1172. All45 accepted frames keep native grip/
+canvas positions, crescent Saradomin limbs, forward Zamorak horns with rear
+occlusion, brown Guthix limbs with ivy, and exact original loaded-bolt poses.
+The three prayer shots reuse the existing static bolt with approved coloured
+pixel trails. These are visual changes, with no combat/power/resource changes.
+Briar Seed triggers Wood VFX03 once at the fifth-hit burst origin. Revelation
+triggers Accuracy Up on its owner only when familiarity increases. Shared Bleed
+triggers Cut on every successful wound/reopen, including Stirge wounds on players
+and player attacks on enemies; damage pulses do not replay it. No generic
+per-hit impact or prayer-activation animation is added. The original sheets
+are reused unchanged. Client10061 carries new shot/effect IDs; older observers
+receive ordinary bolt presentation and omit unsupported proc effect IDs.
+Approved hashes, native masters and reproduction notes are under authoring/
+equipment/god-crossbows. Both classic/custom archives preserve unrelated content.
+The older statements below about generic held visuals describe prior checkpoints.
+Public activation and matching browser/desktop player packaging remain release steps.
+
 CURRENT APPROVED DESIGN — God crossbow prayers
 ===============================================
 

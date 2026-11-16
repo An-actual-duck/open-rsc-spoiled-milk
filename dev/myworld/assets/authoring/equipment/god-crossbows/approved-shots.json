@@ -1,0 +1,9 @@
+{
+  "approval": "Owner approved stronger trails with bright yellow Saradomin and dark brown Guthix, then assigned on-entity proc animations.",
+  "source": "shots-v3",
+  "sheets": {
+    "saradomin/bolt.png": "2fd2cf3da08a15bf79e9ad0190c938a633238006e95d2714bf05f3d8a673a0ab",
+    "zamorak/bolt.png": "743b7ac7a857f2ebd6665c1cf0472f673e3d3e1d5c0b6bd8145f6741c6f04569",
+    "guthix/bolt.png": "505dbf75674356a20afa02448bf5d01089d1bed931bc2bd6f4a490dff815a11f"
+  }
+}

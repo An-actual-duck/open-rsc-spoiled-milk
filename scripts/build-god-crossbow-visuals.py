@@ -10,6 +10,7 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
     layout=json.loads((AUTHOR/'frame-layout.json').read_text());assert len(layout['frames'])==15
     approved=json.loads((AUTHOR/'approved-held.json').read_text())
+    shots=json.loads((AUTHOR/'approved-shots.json').read_text())
     spec=importlib.util.spec_from_file_location('archive_codec',ROOT/'scripts/generate-battleaxe-coatings.py');codec=importlib.util.module_from_spec(spec);spec.loader.exec_module(codec)
     custom=ROOT/'Client_Base/Cache/video/Custom_Sprites.osar';groups=codec.archive(gzip.decompress(custom.read_bytes()))
     owned={g+'crossbow'for g in GODS};entries={};classic={}
@@ -38,7 +39,8 @@ def main():
         for row,pixels in encoded:blob+=struct.pack('>HHBhhHH',*row['crop'],row['shift'],*row['offset'],*row['canvas'])+pixels
         entries[god+'crossbow']=blob
         for name in ('bolt',):
-            source=AUTHOR/'shots-v3'/god/(name+'.png');dest=ROOT/f'dev/myworld/assets/runtime/animations/projectile-moving/god-bolts/{god}/{name}.png'
+            source=AUTHOR/shots['source']/god/(name+'.png');assert hashlib.sha256(source.read_bytes()).hexdigest()==shots['sheets'][god+'/'+name+'.png'],'Approved shot pixels changed'
+            dest=ROOT/f'dev/myworld/assets/runtime/animations/projectile-moving/god-bolts/{god}/{name}.png'
             if args.check:assert source.read_bytes()==dest.read_bytes()
             else:dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,dest)
     rebuilt=bytes([len(groups)])

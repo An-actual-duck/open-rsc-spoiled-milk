@@ -27,7 +27,7 @@ Do not regenerate accepted PNGs without checking approved-held.json afterwards.
 
 Current prayer-shot study
 --------------------------
-shots-v3/ is the current unapproved study. shots-v2/ preserves the first subtle
+shots-v3/ is the owner-approved prayer-shot design. shots-v2/ preserves the first subtle
 version, and effects.lua plus the root god folders preserve the older discarded
 procedural-bolt/impact draft. The current study borrows the existing runtime
 projectile-moving/bolt-basic/bolt-basic.png (unchanged copy in shots-v3/inputs).
@@ -62,6 +62,21 @@ bytes and a static original projectile shape across every flight phase. God
 crossbow runtime checks cover real primary launches and older/newer observers.
 Evidence: output/tests/god-crossbow-visuals and output/tests/god-crossbows.
 
-This worker remains ACTIVE while the shot visuals are reviewed. No public
+Held and shot visuals are approved, with final proc assignments implemented. No public
 release/deployment, map import, live database change or Dot ai-1 change occurred.
 Desktop/browser player packages will be rebuilt separately for release.
+
+Approved proc animations
+------------------------
+Briar Seed: Wood VFX 03(48x48), all30 frames, emitted once on the primary target
+when the fifth accepted hit triggers the burst, not on each bolt or collateral.
+Revelation: accuracy-up, all10 frames, emitted on the player when authoritative
+kill credit actually increases familiarity; no repeat at the15% cap or duplicate
+credit. Like other buff visuals, this is visible only to the receiving player.
+Bleed: cut, all15 frames, emitted by shared Bleed.applyWound on every accepted
+new wound or reopen, for NPC/player sources and recipients. Pulses do not
+repeat the cut. Misses, suppressed hits, Bug Off and rejected wounds stay silent.
+All three use original runtime artwork unchanged, compact render sizes and
+quick2-client-tick frame playback. Effect IDs116..118 require client10061 and
+are filtered before packet counts for older observers. No activation VFX or
+unconditional per-bolt impact flash is added.
