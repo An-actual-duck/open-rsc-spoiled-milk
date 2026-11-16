@@ -1,5 +1,7 @@
 # NPC offense and attack-style audit
 
+**Later owner decisions supersede the recommendations below:** see [accepted styles, quest/minigame safeguards and matching-god magic trait](../../in-progress-work-plans/npc-offense-owner-decisions.md). The roster/CSV preserve the original audit proposals; they are not an approved implementation list.
+
 2026-11-16. **Source audit and recommendations only. No profiles, powers,
 pathfinding or gameplay behavior changed.** All 298 attackable definitions are
 covered. Nonattackable NPCs are not being made attackable by this proposal.

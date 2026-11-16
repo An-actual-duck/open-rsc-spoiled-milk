@@ -75,6 +75,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 
 ## In Progress Work Plans
 
+- [NPC offense owner decisions](in-progress-work-plans/npc-offense-owner-decisions.md):
+  accepted styles, Ice Queen power exception, quest/minigame exclusions and hidden matching-god magic reduction.
+
 - [NPC family authoring decisions](in-progress-work-plans/npc-family-authoring-decisions.md):
   agreed families, progression guidance, explicit-stat authority and zero-inclusive defense rolls.
 
