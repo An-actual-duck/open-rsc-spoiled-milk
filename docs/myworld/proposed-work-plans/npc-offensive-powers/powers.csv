@@ -1,0 +1,299 @@
+id,name,level,band,primaryStyle,assignmentPolicy,legacyStrength,powerReference,referenceBasis,currentMelee,currentRanged,currentMagic,assignedMelee,assignedRanged,assignedMagic,oldMeleeCeiling,oldRangedCeiling,oldMagicCeiling,newMeleeCeiling,newRangedCeiling,newMagicCeiling,selectionWeights,notes
+0,Unicorn,21,Low,melee,band_reference,23,23,legacy_strength,23,0,0,23,0,0,4,,,4,,,melee:100,
+3,Chicken,3,Low,melee,band_reference,3,3,legacy_strength,3,0,0,3,0,0,1,,,1,,,melee:100,
+4,Tough Goblin,13,Low,melee,band_reference,7,7,legacy_strength,7,0,0,7,0,0,2,,,2,,,melee:100,
+5,Hans,3,Low,melee,band_reference,3,3,legacy_strength,3,0,0,3,0,0,1,,,1,,,melee:100,
+6,cow,8,Low,melee,band_reference,7,7,legacy_strength,7,0,0,7,0,0,2,,,2,,,melee:100,
+8,Bear,24,Low,melee,band_reference,20,20,legacy_strength,20,0,0,20,0,0,3,,,3,,,melee:100,
+11,Man,9,Low,melee,band_reference,11,11,legacy_strength,11,0,0,11,0,0,2,,,2,,,melee:100,
+19,Rat,8,Low,melee,band_reference,10,10,legacy_strength,10,0,0,10,0,0,2,,,2,,,melee:100,
+21,mugger,10,Low,ranged,band_reference,8,8,legacy_strength,8,0,0,3,8,0,2,,,1,2,,ranged:75 / melee:25,"melee: 2 -> 1 ranged: new enabled attack, raw ceiling2"
+22,Lesser Demon,79,Mid High,magic,band_reference,70,70,legacy_strength,70,0,78,49,0,70,11,,18,8,,16,magic:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: 11 -> 8 [large delta] magic: 18 -> 16
+23,Young Giant Spider,8,Low,melee,band_reference,10,10,legacy_strength,10,0,0,10,0,0,2,,,2,,,melee:100,
+25,Jonny the beard,10,Low,melee,band_reference,5,5,legacy_strength,5,0,0,5,0,0,1,,,1,,,melee:100,
+29,Rat,2,Low,melee,protected_no_change,2,,current_powers_retained_no_migration,2,0,0,2,0,0,1,,,1,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+34,spider,2,Low,melee,band_reference,1,1,legacy_strength,1,0,0,1,0,0,1,,,1,,,melee:100,
+35,Delrith,30,Low,magic,band_reference,37,37,legacy_strength,37,0,42,14,0,37,6,,10,3,,9,magic:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: 6 -> 3 [large delta] magic: 10 -> 9
+37,Weaponsmaster,25,Low,melee,band_reference,28,28,legacy_strength,28,0,0,28,0,0,5,,,5,,,melee:100,
+40,skeleton,21,Low,melee,band_reference,20,20,legacy_strength,20,0,0,20,0,0,3,,,3,,,melee:100,
+41,zombie,24,Low,melee,band_reference,20,20,legacy_strength,20,0,0,20,0,0,3,,,3,,,melee:100,
+43,Giant bat,32,Mid Low,melee,band_reference,32,32,legacy_strength,32,0,0,32,0,0,5,,,5,,,melee:100,
+45,skeleton,31,Low,melee,band_reference,35,35,legacy_strength,35,0,0,35,0,0,6,,,6,,,melee:100,
+46,skeleton,25,Low,melee,band_reference,28,28,legacy_strength,28,0,0,28,0,0,5,,,5,,,melee:100,
+47,Large Rat,13,Low,melee,band_reference,15,15,legacy_strength,15,0,0,15,0,0,3,,,3,,,melee:100,
+50,skeleton,19,Low,melee,band_reference,21,21,legacy_strength,21,0,0,21,0,0,4,,,4,,,melee:100,
+52,zombie,19,Low,melee,band_reference,19,19,legacy_strength,19,0,0,19,0,0,3,,,3,,,melee:100,
+53,Ghost,25,Low,magic,band_reference,23,23,legacy_strength,23,0,23,0,0,23,4,,5,,,5,magic:100,melee: disabled (old raw ceiling4)
+57,Darkwizard,13,Low,magic,band_reference,12,12,legacy_strength,12,0,15,0,0,12,2,,4,,,2,magic:100,Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: disabled (old raw ceiling2) magic: 4 -> 2
+60,Darkwizard,25,Low,magic,band_reference,27,27,legacy_strength,27,0,27,0,0,27,4,,6,,,6,magic:100,melee: disabled (old raw ceiling4)
+61,Giant,37,Mid Low,melee,band_reference,40,40,legacy_strength,40,0,0,40,0,0,6,,,6,,,melee:100,
+62,Goblin,7,Low,melee,band_reference,9,9,legacy_strength,9,0,0,9,0,0,2,,,2,,,melee:100,
+63,farmer,15,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+64,Thief,21,Low,ranged,band_reference,23,23,legacy_strength,23,24,0,0,23,0,4,4,,,4,,ranged:100,melee: disabled (old raw ceiling4)
+65,Guard,28,Low,ranged,band_reference,31,31,legacy_strength,31,31,0,0,31,0,5,5,,,5,,ranged:100,melee: disabled (old raw ceiling5)
+66,Black Knight,46,Mid Low,melee,band_reference,48,48,legacy_strength,48,0,48,48,0,24,7,,10,7,,5,melee:90 / magic:10,Melee knight: keep supporting holy casts rare rather than ordinary75/25. Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 10 -> 5 [large delta]
+67,Hobgoblin,32,Mid Low,melee,band_reference,34,34,legacy_strength,34,0,0,34,0,0,5,,,5,,,melee:100,
+68,zombie,32,Mid Low,melee,band_reference,35,35,legacy_strength,35,0,0,35,0,0,6,,,6,,,melee:100,
+70,Scorpion,21,Low,melee,band_reference,22,22,legacy_strength,22,0,0,22,0,0,4,,,4,,,melee:100,
+72,Man,9,Low,melee,band_reference,11,11,legacy_strength,11,0,0,11,0,0,2,,,2,,,melee:100,
+74,Giant Spider,31,Low,melee,band_reference,34,34,legacy_strength,34,0,0,34,0,0,5,,,5,,,melee:100,
+76,Barbarian,16,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+78,Gunthor the Brave,37,Mid Low,melee,band_reference,38,38,legacy_strength,38,0,0,38,0,0,6,,,6,,,melee:100,
+79,Witch,25,Low,magic,band_reference,30,30,legacy_strength,30,0,35,0,0,30,5,,8,,,7,magic:100,Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: disabled (old raw ceiling5) magic: 8 -> 7
+80,Ghost,25,Low,magic,band_reference,23,23,legacy_strength,23,0,23,0,0,23,4,,5,,,5,magic:100,melee: disabled (old raw ceiling4)
+81,Wizard,16,Low,magic,band_reference,18,18,legacy_strength,18,0,18,0,0,18,3,,4,,,4,magic:100,melee: disabled (old raw ceiling3)
+86,Warrior,18,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+89,Highwayman,13,Low,ranged,band_reference,13,13,legacy_strength,13,0,0,5,13,0,2,,,1,2,,ranged:75 / melee:25,"melee: 2 -> 1 ranged: new enabled attack, raw ceiling2"
+93,Monk,13,Low,magic,band_reference,12,12,legacy_strength,12,0,12,0,0,12,2,,2,,,2,magic:100,melee: disabled (old raw ceiling2)
+94,Dwarf,18,Low,melee,band_reference,20,20,legacy_strength,20,0,0,20,0,0,3,,,3,,,melee:100,
+96,Count Draynor,43,Mid Low,melee,band_reference,28,28,legacy_strength,28,0,0,28,0,0,5,,,5,,,melee:100,
+99,Deadly Red spider,36,Mid Low,melee,band_reference,35,35,legacy_strength,35,0,0,35,0,0,6,,,6,,,melee:100,
+100,Guard,28,Low,ranged,band_reference,31,31,legacy_strength,31,31,0,12,31,0,5,5,,2,5,,ranged:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 5 -> 2 [large delta]
+102,White Knight,56,Mid,melee,band_reference,58,58,legacy_strength,58,0,58,58,0,34,9,,13,9,,7,melee:90 / magic:10,Melee knight: keep supporting holy casts rare rather than ordinary75/25. Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 13 -> 7 [large delta]
+104,Moss Giant,62,Mid,melee,band_reference,65,65,legacy_strength,65,0,65,65,0,39,10,,15,10,,9,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 15 -> 9 [large delta]
+108,Black Knight,46,Mid Low,melee,band_reference,48,48,legacy_strength,48,0,48,48,0,24,7,,10,7,,5,melee:90 / magic:10,Melee knight: keep supporting holy casts rare rather than ordinary75/25. Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 10 -> 5 [large delta]
+109,Greldo,7,Low,melee,band_reference,9,9,legacy_strength,9,0,0,9,0,0,2,,,2,,,melee:100,
+114,Imp,5,Low,melee,band_reference,5,5,legacy_strength,5,0,0,5,0,0,1,,,1,,,melee:100,
+127,Jailguard,34,Mid Low,ranged,band_reference,36,36,legacy_strength,36,36,0,18,36,0,6,6,,3,6,,ranged:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 6 -> 3 [large delta]
+135,Ice Giant,68,Mid High,melee,band_reference,70,70,legacy_strength,70,0,70,70,0,49,11,,16,11,,12,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 16 -> 12 [large delta]
+136,King Scorpion,36,Mid Low,melee,band_reference,39,39,legacy_strength,39,0,0,39,0,0,6,,,6,,,melee:100,
+137,Pirate,27,Low,ranged,band_reference,30,30,legacy_strength,30,35,0,12,30,0,5,6,,2,5,,ranged:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 5 -> 2 [large delta] ranged: 6 -> 5
+139,Monk of Zamorak,29,Low,magic,band_reference,28,28,legacy_strength,28,0,28,0,0,28,5,,7,,,7,magic:100,melee: disabled (old raw ceiling5)
+140,Monk of Zamorak,19,Low,magic,band_reference,18,18,legacy_strength,18,0,18,0,0,18,3,,4,,,4,magic:100,melee: disabled (old raw ceiling3)
+153,Tough Goblin,13,Low,melee,band_reference,13,13,legacy_strength,13,0,0,13,0,0,2,,,2,,,melee:100,
+154,Tough Goblin,13,Low,melee,band_reference,13,13,legacy_strength,13,0,0,13,0,0,2,,,2,,,melee:100,
+158,Ice warrior,57,Mid,melee,band_reference,59,59,legacy_strength,59,0,59,59,0,35,9,,13,9,,8,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 13 -> 8 [large delta]
+159,Warrior,27,Low,melee,band_reference,30,30,legacy_strength,30,0,0,30,0,0,5,,,5,,,melee:100,
+177,Large Rat,13,Low,melee,band_reference,7,7,legacy_strength,7,0,0,7,0,0,2,,,2,,,melee:100,
+178,Ghost,25,Low,magic,band_reference,23,23,legacy_strength,23,0,23,9,0,23,4,,5,2,,5,magic:75 / melee:25,melee: 4 -> 2
+179,skeleton,31,Low,melee,band_reference,35,35,legacy_strength,35,0,0,35,0,0,6,,,6,,,melee:100,
+180,zombie,32,Mid Low,melee,band_reference,35,35,legacy_strength,35,0,0,35,0,0,6,,,6,,,melee:100,
+181,Lesser Demon,79,Mid High,magic,band_reference,70,70,legacy_strength,70,0,78,49,0,70,11,,18,8,,16,magic:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: 11 -> 8 [large delta] magic: 18 -> 16
+182,Melzar the mad,45,Mid Low,magic,band_reference,47,47,legacy_strength,47,0,0,23,0,47,7,,,4,,10,magic:75 / melee:25,"Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 7 -> 4 [large delta] magic: new enabled attack, raw ceiling10"
+184,Greater Demon,87,Mid High,magic,band_reference,77,77,legacy_strength,77,0,86,53,0,77,12,,20,8,,18,magic:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: 12 -> 8 [large delta] magic: 20 -> 18
+188,Bear,26,Low,melee,band_reference,28,28,legacy_strength,28,0,0,28,0,0,5,,,5,,,melee:100,
+189,Black Knight,46,Mid Low,melee,band_reference,48,48,legacy_strength,48,0,48,48,0,24,7,,10,7,,5,melee:90 / magic:10,Melee knight: keep supporting holy casts rare rather than ordinary75/25. Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 10 -> 5 [large delta]
+190,chaos Dwarf,59,Mid,melee,band_reference,60,60,legacy_strength,60,0,0,60,0,0,9,,,9,,,melee:100,
+192,Wormbrain,7,Low,melee,band_reference,9,9,legacy_strength,9,0,0,9,0,0,2,,,2,,,melee:100,
+195,skeleton,54,Mid,melee,band_reference,55,55,legacy_strength,55,0,0,55,0,0,8,,,8,,,melee:100,
+196,Dragon,110,High,melee,band_reference,110,110,legacy_strength,110,0,110,110,0,88,16,,25,16,,20,melee:75 / magic:25,magic: 25 -> 20
+199,Dark Warrior,21,Low,melee,band_reference,23,23,legacy_strength,23,0,0,23,0,0,4,,,4,,,melee:100,
+200,Druid,29,Low,magic,band_reference,28,28,legacy_strength,28,0,28,0,0,28,5,,7,,,7,magic:100,melee: disabled (old raw ceiling5)
+201,Red Dragon,140,High,melee,band_reference,98,98,legacy_strength,98,0,140,98,0,78,15,,32,15,,18,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 32 -> 18 [large delta]
+202,Blue Dragon,105,High,melee,band_reference,91,91,legacy_strength,91,0,105,91,0,72,14,,24,14,,16,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 24 -> 16 [large delta]
+203,Baby Blue Dragon,50,Mid Low,melee,band_reference,84,84,legacy_strength,84,0,84,84,0,42,13,,19,13,,10,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 19 -> 10 [large delta]
+214,zombie,32,Mid Low,melee,band_reference,35,35,legacy_strength,35,0,0,35,0,0,6,,,6,,,melee:100,
+216,tree spirit,95,High,melee,band_reference,105,105,legacy_strength,105,0,105,105,0,84,16,,24,16,,19,melee:75 / magic:25,magic: 24 -> 19
+232,Bandit,29,Low,ranged,band_reference,26,26,legacy_strength,26,32,0,10,26,0,4,5,,2,4,,ranged:75 / melee:25,melee: 4 -> 2 ranged: 5 -> 4
+234,Bandit,29,Low,ranged,band_reference,26,26,legacy_strength,26,32,0,10,26,0,4,5,,2,4,,ranged:75 / melee:25,melee: 4 -> 2 ranged: 5 -> 4
+236,Donny the lad,39,Mid Low,melee,band_reference,36,36,legacy_strength,36,0,0,36,0,0,6,,,6,,,melee:100,
+237,Black Heather,39,Mid Low,melee,band_reference,36,36,legacy_strength,36,0,0,36,0,0,6,,,6,,,melee:100,
+238,Speedy Keith,39,Mid Low,melee,band_reference,36,36,legacy_strength,36,0,0,36,0,0,6,,,6,,,melee:100,
+239,White wolf sentry,31,Low,melee,band_reference,31,31,legacy_strength,31,0,0,31,0,0,5,,,5,,,melee:100,
+243,Grey wolf,64,Mid,melee,band_reference,65,65,legacy_strength,65,0,0,65,0,0,10,,,10,,,melee:100,
+244,shapeshifter,24,Low,melee,band_reference,20,20,legacy_strength,20,0,0,20,0,0,3,,,3,,,melee:100,
+248,White wolf,41,Mid Low,melee,band_reference,41,41,legacy_strength,41,0,0,41,0,0,6,,,6,,,melee:100,
+249,Pack leader,71,Mid High,melee,band_reference,71,71,legacy_strength,71,0,0,71,0,0,11,,,11,,,melee:100,
+251,Thug,18,Low,melee,band_reference,17,17,legacy_strength,17,0,0,17,0,0,3,,,3,,,melee:100,
+252,Firebird,6,Low,melee,band_reference,7,7,legacy_strength,7,0,0,7,0,0,2,,,2,,,melee:100,
+254,Ice queen,103,High,magic,ice_queen_dual_full,104,104,legacy_strength,104,0,105,104,0,104,15,,24,15,,23,magic:75 / melee:25,Owner exception: both enabled powers are100% original Strength104. Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. magic: 24 -> 23
+259,Grip,46,Mid Low,melee,band_reference,31,31,legacy_strength,31,0,0,31,0,0,5,,,5,,,melee:100,
+262,Guard Dog,46,Mid Low,melee,band_reference,46,46,legacy_strength,46,0,0,46,0,0,7,,,7,,,melee:100,
+263,Ice spider,64,Mid,melee,band_reference,65,65,legacy_strength,65,0,0,65,0,0,10,,,10,,,melee:100,
+264,Pirate,30,Low,ranged,band_reference,33,33,legacy_strength,33,38,0,13,33,0,5,6,,2,5,,ranged:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 5 -> 2 [large delta] ranged: 6 -> 5
+265,Jailer,51,Mid Low,melee,band_reference,53,53,legacy_strength,53,0,0,53,0,0,8,,,8,,,melee:100,
+266,Lord Darquarius,76,Mid High,melee,band_reference,78,78,legacy_strength,78,0,0,78,0,0,12,,,12,,,melee:100,
+270,Chaos Druid,19,Low,magic,band_reference,14,14,legacy_strength,14,0,18,0,0,14,3,,4,,,4,magic:100,Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: disabled (old raw ceiling3)
+271,Poison Scorpion,26,Low,melee,band_reference,27,27,legacy_strength,27,0,0,27,0,0,4,,,4,,,melee:100,
+276,Sir Mordred,58,Mid,melee,band_reference,60,60,legacy_strength,60,0,0,60,0,0,9,,,9,,,melee:100,
+277,Renegade knight,51,Mid Low,melee,band_reference,53,53,legacy_strength,53,0,0,53,0,0,8,,,8,,,melee:100,
+290,Black Demon,156,Very High,magic,band_reference,91,91,legacy_strength,91,0,155,81,0,91,14,,35,12,,21,magic:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: 14 -> 12 magic: 35 -> 21 [large delta]
+291,Black Dragon,200,Very High,melee,band_reference,182,182,legacy_strength,182,0,210,182,0,163,27,,48,27,,37,melee:75 / magic:25,magic: 48 -> 37
+292,Poison Spider,63,Mid,melee,band_reference,68,68,legacy_strength,68,0,0,68,0,0,10,,,10,,,melee:100,
+293,Monk of Zamorak,47,Mid Low,magic,band_reference,48,48,legacy_strength,48,0,48,0,0,48,7,,10,,,10,magic:100,melee: disabled (old raw ceiling7)
+294,Hellhound,114,High,melee,band_reference,114,114,legacy_strength,114,0,0,114,0,0,17,,,17,,,melee:100,
+295,Animated axe,46,Mid Low,melee,band_reference,48,48,legacy_strength,48,0,0,48,0,0,7,,,7,,,melee:100,
+296,Black Unicorn,31,Low,melee,band_reference,33,33,legacy_strength,33,0,0,33,0,0,5,,,5,,,melee:100,
+298,Otherworldly being,66,Mid High,magic,band_reference,66,66,legacy_strength,66,0,66,0,0,66,10,,15,,,15,magic:100,melee: disabled (old raw ceiling10)
+311,Hobgoblin,48,Mid Low,melee,band_reference,48,48,legacy_strength,48,0,0,48,0,0,7,,,7,,,melee:100,
+312,Ogre,58,Mid,melee,band_reference,70,70,legacy_strength,70,0,0,70,0,0,11,,,11,,,melee:100,
+315,Chronozon,121,High,magic,band_reference,182,182,legacy_strength,182,0,183,145,0,182,27,,42,21,,42,magic:75 / melee:25,Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: 27 -> 21
+318,Man,9,Low,melee,band_reference,11,11,legacy_strength,11,0,0,11,0,0,2,,,2,,,melee:100,
+319,farmer,15,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+320,Warrior,27,Low,melee,band_reference,30,30,legacy_strength,30,0,0,30,0,0,5,,,5,,,melee:100,
+321,Guard,28,Low,ranged,band_reference,31,31,legacy_strength,31,31,0,0,31,0,5,5,,,5,,ranged:100,melee: disabled (old raw ceiling5)
+322,Knight,56,Mid,melee,band_reference,58,58,legacy_strength,58,0,0,58,0,0,9,,,9,,,melee:100,
+323,Paladin,71,Mid High,melee,band_reference,88,88,legacy_strength,88,0,88,88,0,61,13,,20,13,,14,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 20 -> 14 [large delta]
+324,Hero,83,Mid High,melee,band_reference,88,88,legacy_strength,88,0,0,88,0,0,13,,,13,,,melee:100,
+338,zoo keeper,20,Low,melee,band_reference,20,20,legacy_strength,20,0,0,20,0,0,3,,,3,,,melee:100,
+342,Rogue,21,Low,ranged,band_reference,23,23,legacy_strength,23,24,0,0,23,0,4,4,,,4,,ranged:100,melee: disabled (old raw ceiling4)
+343,Shadow spider,53,Mid Low,melee,band_reference,52,52,legacy_strength,52,0,0,52,0,0,8,,,8,,,melee:100,
+344,Fire Giant,109,High,melee,band_reference,105,105,legacy_strength,105,0,110,105,0,84,16,,25,16,,19,melee:75 / magic:25,magic: 25 -> 19
+348,Forester,21,Low,melee,band_reference,23,23,legacy_strength,23,0,0,23,0,0,4,,,4,,,melee:100,
+351,Thief,21,Low,ranged,band_reference,23,23,legacy_strength,23,24,0,0,23,0,4,4,,,4,,ranged:100,melee: disabled (old raw ceiling4)
+352,Head Thief,34,Mid Low,ranged,band_reference,33,33,legacy_strength,33,34,0,0,33,0,5,5,,,5,,ranged:100,melee: disabled (old raw ceiling5)
+356,Mountain Dwarf,28,Low,melee,band_reference,30,30,legacy_strength,30,0,0,30,0,0,5,,,5,,,melee:100,
+358,Necromancer,34,Mid Low,magic,band_reference,28,28,legacy_strength,28,0,28,0,0,28,5,,7,,,7,magic:100,melee: disabled (old raw ceiling5)
+359,zombie,24,Low,melee,band_reference,23,23,legacy_strength,23,0,0,23,0,0,4,,,4,,,melee:100,
+361,The Fire warrior of lesarkus,63,Mid,melee,band_reference,72,72,legacy_strength,72,0,72,72,0,43,11,,16,11,,10,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 16 -> 10 [large delta]
+364,Lucien,21,Low,magic,band_reference,23,23,legacy_strength,23,0,24,9,0,23,4,,5,2,,5,magic:75 / melee:25,Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: 4 -> 2
+367,Dungeon Rat,16,Low,melee,band_reference,22,22,legacy_strength,22,0,0,22,0,0,4,,,4,,,melee:100,
+383,General Khazard,100,High,melee,band_reference,78,78,legacy_strength,78,0,0,78,0,0,12,,,12,,,melee:100,
+384,Khazard Ogre,58,Mid,melee,band_reference,70,70,legacy_strength,70,0,0,70,0,0,11,,,11,,,melee:100,
+386,Khazard Scorpion,46,Mid Low,melee,band_reference,49,49,legacy_strength,49,0,0,49,0,0,8,,,8,,,melee:100,
+388,Bouncer,122,High,melee,band_reference,130,130,legacy_strength,130,0,0,130,0,0,19,,,19,,,melee:100,
+399,local gnome,3,Low,melee,band_reference,3,3,legacy_strength,3,0,0,3,0,0,1,,,1,,,melee:100,
+401,Black Knight titan,146,Very High,melee,band_reference,148,148,legacy_strength,148,0,148,148,0,133,22,,34,22,,31,melee:90 / magic:10,Melee knight: keep supporting holy casts rare rather than ordinary75/25. magic: 34 -> 31
+402,kalron,3,Low,melee,band_reference,3,3,legacy_strength,3,0,0,3,0,0,1,,,1,,,melee:100,
+407,Khazard troop,28,Low,ranged,band_reference,31,31,legacy_strength,31,31,0,12,31,0,5,5,,2,5,,ranged:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 5 -> 2 [large delta]
+409,gnome troop,3,Low,ranged,band_reference,3,3,legacy_strength,3,3,0,1,3,0,1,1,,1,1,,ranged:75 / melee:25,
+410,khazard warlord,100,High,melee,band_reference,78,78,legacy_strength,78,0,0,78,0,0,12,,,12,,,melee:100,
+416,unhappy peasant,25,Low,melee,band_reference,28,28,legacy_strength,28,0,0,28,0,0,5,,,5,,,melee:100,
+417,happy peasant,25,Low,melee,band_reference,28,28,legacy_strength,28,0,0,28,0,0,5,,,5,,,melee:100,
+420,carnillean guard,28,Low,ranged,band_reference,31,31,legacy_strength,31,31,0,12,31,0,5,5,,2,5,,ranged:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 5 -> 2 [large delta]
+421,Tribesman,39,Mid Low,ranged,band_reference,40,40,legacy_strength,40,40,0,20,40,0,6,6,,3,6,,ranged:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 6 -> 3 [large delta]
+425,cult member,20,Low,melee,band_reference,20,20,legacy_strength,20,0,0,20,0,0,3,,,3,,,melee:100,
+426,Lord hazeel,100,High,melee,band_reference,78,78,legacy_strength,78,0,0,78,0,0,12,,,12,,,melee:100,
+428,Khazard commander,41,Mid Low,melee,band_reference,45,45,legacy_strength,45,0,0,45,0,0,7,,,7,,,melee:100,
+438,Citizen,11,Low,melee,band_reference,10,10,legacy_strength,10,0,0,10,0,0,2,,,2,,,melee:100,
+439,Citizen,10,Low,melee,band_reference,8,8,legacy_strength,8,0,0,8,0,0,2,,,2,,,melee:100,
+440,Citizen,12,Low,melee,band_reference,14,14,legacy_strength,14,0,0,14,0,0,3,,,3,,,melee:100,
+441,Citizen,20,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+442,Citizen,15,Low,melee,band_reference,20,20,legacy_strength,20,0,0,20,0,0,3,,,3,,,melee:100,
+462,Platform Fisherman,30,Low,melee,band_reference,15,15,legacy_strength,15,0,0,15,0,0,3,,,3,,,melee:100,
+463,Platform Fisherman,30,Low,melee,band_reference,15,15,legacy_strength,15,0,0,15,0,0,3,,,3,,,melee:100,
+464,Platform Fisherman,30,Low,melee,band_reference,15,15,legacy_strength,15,0,0,15,0,0,3,,,3,,,melee:100,
+473,Rat,7,Low,melee,band_reference,8,8,legacy_strength,8,0,0,8,0,0,2,,,2,,,melee:100,
+477,King Black Dragon,245,Boss,melee,boss_individual,224,224,legacy_strength,224,0,250,224,0,201,33,,56,33,,45,melee:75 / magic:25,"KBD: full Strength-reference melee,90% supporting Magic. Breath remains separate. Magic no longer inherits Attack250. magic: 56 -> 45"
+495,Mourner,22,Low,melee,band_reference,30,30,legacy_strength,30,0,0,30,0,0,5,,,5,,,melee:100,
+498,skeleton mage,21,Low,magic,band_reference,23,23,legacy_strength,23,0,24,0,0,23,4,,5,,,5,magic:100,Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: disabled (old raw ceiling4)
+502,Mourner,25,Low,melee,band_reference,25,25,legacy_strength,25,0,0,25,0,0,4,,,4,,,melee:100,
+516,target practice zombie,24,Low,melee,band_reference,23,23,legacy_strength,23,0,0,23,0,0,4,,,4,,,melee:100,
+518,Colonel Radick,51,Mid Low,melee,band_reference,30,30,legacy_strength,30,0,0,30,0,0,5,,,5,,,melee:100,
+519,Soldier,28,Low,melee,band_reference,31,31,legacy_strength,31,0,0,31,0,0,5,,,5,,,melee:100,
+521,Jungle Spider,47,Mid Low,melee,band_reference,47,47,legacy_strength,47,0,0,47,0,0,7,,,7,,,melee:100,
+523,Jogre,58,Mid,melee,band_reference,70,70,legacy_strength,70,0,0,70,0,0,11,,,11,,,melee:100,
+525,Ogre,58,Mid,melee,band_reference,70,70,legacy_strength,70,0,0,70,0,0,11,,,11,,,melee:100,
+531,Ogre chieftan,78,Mid High,melee,band_reference,90,90,legacy_strength,90,0,0,90,0,0,13,,,13,,,melee:100,
+542,UndeadOne,62,Mid,melee,band_reference,50,50,legacy_strength,50,0,0,50,0,0,8,,,8,,,melee:100,
+550,charlie,0,Low,melee,role_review_hold,0,,current_zero_role_preserved,0,0,0,0,0,0,1,,,1,,,preserve,Charlie level0/HP3 has zero Power but existing ordinary max1. Keep outside runtime migration until its role and enabled-zero semantics are reviewed.
+551,Gnome guard,31,Low,ranged,band_reference,31,31,legacy_strength,31,31,0,12,31,0,5,5,,2,5,,ranged:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 5 -> 2 [large delta]
+555,Chaos Druid warrior,44,Mid Low,melee,band_reference,48,48,legacy_strength,48,0,48,48,0,24,7,,10,7,,5,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 10 -> 5 [large delta]
+557,Shipyard worker,44,Mid Low,melee,band_reference,48,48,legacy_strength,48,0,0,48,0,0,7,,,7,,,melee:100,
+558,Shipyard worker,44,Mid Low,melee,band_reference,48,48,legacy_strength,48,0,0,48,0,0,7,,,7,,,melee:100,
+559,Shipyard worker,44,Mid Low,melee,band_reference,48,48,legacy_strength,48,0,0,48,0,0,7,,,7,,,melee:100,
+562,Gnome guard,23,Low,ranged,band_reference,23,23,legacy_strength,23,23,0,0,23,0,4,4,,,4,,ranged:100,melee: disabled (old raw ceiling4)
+567,Salarin the twisted,69,Mid High,magic,band_reference,68,68,legacy_strength,68,0,68,0,0,68,10,,15,,,15,magic:100,melee: disabled (old raw ceiling10)
+568,Black Demon,175,Very High,magic,band_reference,91,91,legacy_strength,91,0,195,81,0,91,14,,44,12,,21,magic:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: 14 -> 12 magic: 44 -> 21 [large delta]
+574,Yanille Watchman,33,Mid Low,ranged,band_reference,41,41,legacy_strength,41,41,0,20,41,0,6,6,,3,6,,ranged:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 6 -> 3 [large delta]
+582,Gnome guard,27,Low,ranged,band_reference,17,17,legacy_strength,17,31,0,0,17,0,3,5,,,3,,ranged:100,melee: disabled (old raw ceiling3) ranged: 5 -> 3
+583,Gnome child,3,Low,melee,band_reference,3,3,legacy_strength,3,0,0,3,0,0,1,,,1,,,melee:100,
+584,Earth warrior,52,Mid Low,melee,band_reference,54,54,legacy_strength,54,0,0,54,0,0,8,,,8,,,melee:100,
+585,Gnome child,3,Low,melee,band_reference,3,3,legacy_strength,3,0,0,3,0,0,1,,,1,,,melee:100,
+586,Gnome child,3,Low,melee,band_reference,3,3,legacy_strength,3,0,0,3,0,0,1,,,1,,,melee:100,
+592,Gnome local,9,Low,melee,band_reference,9,9,legacy_strength,9,0,0,9,0,0,2,,,2,,,melee:100,
+593,Gnome local,3,Low,melee,band_reference,3,3,legacy_strength,3,0,0,3,0,0,1,,,1,,,melee:100,
+594,Moss Giant,62,Mid,melee,band_reference,65,65,legacy_strength,65,0,65,65,0,39,10,,15,10,,9,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 15 -> 9 [large delta]
+595,Gnome Baller,70,Mid High,melee,protected_no_change,70,,current_powers_retained_no_migration,70,0,0,70,0,0,11,,,11,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+597,Gnome Baller,70,Mid High,melee,protected_no_change,70,,current_powers_retained_no_migration,70,0,0,70,0,0,11,,,11,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+598,Gnome Baller,70,Mid High,melee,protected_no_change,70,,current_powers_retained_no_migration,70,0,0,70,0,0,11,,,11,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+599,Gnome Baller,70,Mid High,melee,protected_no_change,70,,current_powers_retained_no_migration,70,0,0,70,0,0,11,,,11,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+600,Gnome Baller,70,Mid High,melee,protected_no_change,70,,current_powers_retained_no_migration,70,0,0,70,0,0,11,,,11,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+602,Gnome Baller,70,Mid High,melee,protected_no_change,70,,current_powers_retained_no_migration,70,0,0,70,0,0,11,,,11,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+603,Gnome Baller,70,Mid High,melee,protected_no_change,70,,current_powers_retained_no_migration,70,0,0,70,0,0,11,,,11,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+604,Gnome Baller,70,Mid High,melee,protected_no_change,70,,current_powers_retained_no_migration,70,0,0,70,0,0,11,,,11,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+605,Gnome Baller,70,Mid High,melee,protected_no_change,70,,current_powers_retained_no_migration,70,0,0,70,0,0,11,,,11,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+606,Gnome Baller,70,Mid High,melee,protected_no_change,70,,current_powers_retained_no_migration,70,0,0,70,0,0,11,,,11,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+607,Gnome Baller,70,Mid High,melee,protected_no_change,70,,current_powers_retained_no_migration,70,0,0,70,0,0,11,,,11,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+608,Gnome Baller,70,Mid High,melee,protected_no_change,70,,current_powers_retained_no_migration,70,0,0,70,0,0,11,,,11,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+613,Nazastarool Zombie,83,Mid High,melee,band_reference,90,90,legacy_strength,90,0,0,90,0,0,13,,,13,,,melee:100,
+614,Nazastarool Skeleton,83,Mid High,melee,band_reference,90,90,legacy_strength,90,0,0,90,0,0,13,,,13,,,melee:100,
+615,Nazastarool Ghost,83,Mid High,magic,band_reference,90,90,legacy_strength,90,0,95,63,0,90,13,,21,10,,20,magic:75 / melee:25,Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: 13 -> 10 magic: 21 -> 20
+630,Blessed Vermen,14,Low,melee,band_reference,7,7,legacy_strength,7,0,0,7,0,0,2,,,2,,,melee:100,
+631,Blessed Spider,35,Mid Low,melee,band_reference,34,34,legacy_strength,34,0,0,34,0,0,5,,,5,,,melee:100,
+632,Paladin,71,Mid High,melee,band_reference,88,88,legacy_strength,88,0,88,88,0,61,13,,20,13,,14,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 20 -> 14 [large delta]
+633,Paladin,71,Mid High,melee,band_reference,88,88,legacy_strength,88,0,88,88,0,61,13,,20,13,,14,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 20 -> 14 [large delta]
+634,slave,16,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+635,slave,16,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+636,slave,16,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+637,slave,16,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+638,slave,16,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+639,slave,16,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+640,slave,16,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+641,Kalrag,78,Mid High,melee,band_reference,78,78,legacy_strength,78,0,0,78,0,0,12,,,12,,,melee:100,
+644,Souless,16,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+645,Othainian,78,Mid High,magic,band_reference,78,78,legacy_strength,78,0,0,54,0,78,12,,,8,,18,magic:75 / melee:25,"Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 12 -> 8 [large delta] magic: new enabled attack, raw ceiling18"
+646,Doomion,98,High,magic,band_reference,98,98,legacy_strength,98,0,0,78,0,98,15,,,12,,23,magic:75 / melee:25,"melee: 15 -> 12 magic: new enabled attack, raw ceiling23"
+647,Holthion,78,Mid High,magic,band_reference,78,78,legacy_strength,78,0,0,54,0,78,12,,,8,,18,magic:75 / melee:25,"Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 12 -> 8 [large delta] magic: new enabled attack, raw ceiling18"
+651,Goblin guard,48,Mid Low,ranged,band_reference,51,51,legacy_strength,51,51,0,25,51,0,8,8,,4,8,,ranged:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 8 -> 4 [large delta]
+653,Ugthanki,45,Mid Low,melee,band_reference,45,45,legacy_strength,45,0,0,45,0,0,7,,,7,,,melee:100,
+655,Souless,24,Low,melee,band_reference,23,23,legacy_strength,23,0,0,23,0,0,4,,,4,,,melee:100,
+656,Dungeon spider,22,Low,melee,band_reference,10,10,legacy_strength,10,0,0,10,0,0,2,,,2,,,melee:100,
+658,Iban disciple,19,Low,magic,band_reference,18,18,legacy_strength,18,0,0,7,0,18,3,,,2,,4,magic:75 / melee:25,"melee: 3 -> 2 magic: new enabled attack, raw ceiling4"
+660,Goblin,19,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+663,San Tojalon,120,High,melee,band_reference,120,120,legacy_strength,120,0,0,120,0,96,18,,,18,,21,melee:75 / magic:25,"magic: new enabled attack, raw ceiling21"
+664,Ghost,29,Low,magic,band_reference,30,30,legacy_strength,30,0,33,0,0,30,5,,7,,,7,magic:100,Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. melee: disabled (old raw ceiling5)
+668,Mercenary,50,Mid Low,ranged,band_reference,32,32,legacy_strength,32,48,0,16,32,0,5,7,,3,5,,ranged:75 / melee:25,melee: 5 -> 3 ranged: 7 -> 5
+669,Mercenary Captain,64,Mid,ranged,band_reference,48,48,legacy_strength,48,48,0,28,48,0,7,7,,5,7,,ranged:75 / melee:25,melee: 7 -> 5
+670,Mercenary,39,Mid Low,ranged,band_reference,32,32,legacy_strength,32,48,0,16,32,0,5,7,,3,5,,ranged:75 / melee:25,melee: 5 -> 3 ranged: 7 -> 5
+671,Mining Slave,16,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+683,Gorad,78,Mid High,melee,band_reference,90,90,legacy_strength,90,0,0,90,0,0,13,,,13,,,melee:100,
+684,Ogre guard,96,High,ranged,band_reference,90,90,legacy_strength,90,98,0,72,90,0,13,15,,11,13,,ranged:75 / melee:25,melee: 13 -> 11 ranged: 15 -> 13
+690,Mercenary,39,Mid Low,ranged,band_reference,32,32,legacy_strength,32,48,0,16,32,0,5,7,,3,5,,ranged:75 / melee:25,melee: 5 -> 3 ranged: 7 -> 5
+692,Mercenary,39,Mid Low,ranged,band_reference,32,32,legacy_strength,32,48,0,16,32,0,5,7,,3,5,,ranged:75 / melee:25,melee: 5 -> 3 ranged: 7 -> 5
+694,Dwarf,18,Low,melee,band_reference,20,20,legacy_strength,20,0,0,20,0,0,3,,,3,,,melee:100,
+697,Ogre guard,78,Mid High,ranged,band_reference,90,90,legacy_strength,90,92,0,63,90,0,13,14,,10,13,,ranged:75 / melee:25,melee: 13 -> 10 ranged: 14 -> 13
+699,Dwarf,18,Low,melee,band_reference,20,20,legacy_strength,20,0,0,20,0,0,3,,,3,,,melee:100,
+702,Captain Siad,48,Mid Low,melee,band_reference,48,48,legacy_strength,48,0,0,48,0,0,7,,,7,,,melee:100,
+703,Bedabin Nomad Guard,70,Mid High,ranged,band_reference,70,70,legacy_strength,70,70,0,49,70,0,11,11,,8,11,,ranged:75 / melee:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 11 -> 8 [large delta]
+704,Ogre citizen,58,Mid,melee,band_reference,70,70,legacy_strength,70,0,0,70,0,0,11,,,11,,,melee:100,
+705,Rock of ages,150,Very High,melee,band_reference,150,150,legacy_strength,150,0,0,150,0,0,22,,,22,,,melee:100,
+706,Ogre,58,Mid,melee,band_reference,70,70,legacy_strength,70,0,0,70,0,0,11,,,11,,,melee:100,
+710,Draft Mercenary Guard,50,Mid Low,ranged,band_reference,32,32,legacy_strength,32,48,0,16,32,0,5,7,,3,5,,ranged:75 / melee:25,melee: 5 -> 3 ranged: 7 -> 5
+713,kolodion,12,Low,magic,protected_no_change,10,,current_powers_retained_no_migration,10,0,20,10,0,20,,,4,,,4,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+716,Rowdy Guard,50,Mid Low,ranged,band_reference,32,32,legacy_strength,32,48,0,0,32,0,5,7,,,5,,ranged:100,melee: disabled (old raw ceiling5) ranged: 7 -> 5
+717,Shantay Pass Guard,32,Mid Low,ranged,band_reference,32,32,legacy_strength,32,32,0,0,32,0,5,5,,,5,,ranged:100,melee: disabled (old raw ceiling5)
+718,Rowdy Slave,16,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+721,Desert Wolf,31,Low,melee,band_reference,31,31,legacy_strength,31,0,0,31,0,0,5,,,5,,,melee:100,
+729,civillian,18,Low,melee,band_reference,18,18,legacy_strength,18,0,0,18,0,0,3,,,3,,,melee:100,
+757,kolodion,65,Mid High,magic,protected_no_change,70,,current_powers_retained_no_migration,70,0,72,70,0,72,11,,16,11,,16,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+758,kolodion,68,Mid High,magic,protected_no_change,78,,current_powers_retained_no_migration,78,0,78,78,0,78,12,,18,12,,18,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+759,kolodion,46,Mid Low,magic,protected_no_change,23,,current_powers_retained_no_migration,23,0,38,23,0,38,4,,9,4,,9,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+760,kolodion,98,High,melee,protected_no_change,98,,current_powers_retained_no_migration,98,0,105,98,0,105,15,,24,15,,24,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+761,Irvig Senay,125,High,melee,band_reference,125,125,legacy_strength,125,0,0,125,0,100,18,,,18,,23,melee:75 / magic:25,"magic: new enabled attack, raw ceiling23"
+762,Ranalph Devere,130,High,melee,band_reference,130,130,legacy_strength,130,0,0,130,0,104,19,,,19,,23,melee:75 / magic:25,"magic: new enabled attack, raw ceiling23"
+766,Ungadulu,75,Mid High,magic,band_reference,75,75,legacy_strength,75,0,0,52,0,75,11,,,8,,17,magic:75 / melee:25,"Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 11 -> 8 [large delta] magic: new enabled attack, raw ceiling17"
+767,Ungadulu,75,Mid High,magic,band_reference,75,75,legacy_strength,75,0,0,52,0,75,11,,,8,,17,magic:75 / melee:25,"Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 11 -> 8 [large delta] magic: new enabled attack, raw ceiling17"
+768,Death Wing,80,Mid High,melee,band_reference,80,80,legacy_strength,80,0,0,80,0,0,12,,,12,,,melee:100,
+769,Nezikchened,172,Very High,magic,band_reference,178,178,legacy_strength,178,0,0,160,0,178,26,,,23,,40,magic:75 / melee:25,"melee: 26 -> 23 magic: new enabled attack, raw ceiling40"
+772,Viyeldi,80,Mid High,magic,band_reference,80,80,legacy_strength,80,0,0,56,0,80,12,,,9,,18,magic:75 / melee:25,"Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 12 -> 9 [large delta] magic: new enabled attack, raw ceiling18"
+775,Karamja Wolf,61,Mid,melee,band_reference,61,61,legacy_strength,61,0,0,61,0,0,9,,,9,,,melee:100,
+776,Jungle Savage,87,Mid High,melee,band_reference,100,100,legacy_strength,100,0,0,100,0,0,15,,,15,,,melee:100,
+777,Oomlie Bird,32,Mid Low,melee,band_reference,20,20,legacy_strength,20,0,0,20,0,0,3,,,3,,,melee:100,
+786,Pit Scorpion,35,Mid Low,melee,band_reference,48,48,legacy_strength,48,0,0,48,0,0,7,,,7,,,melee:100,
+787,Shadow Warrior,64,Mid,melee,band_reference,61,61,legacy_strength,61,0,0,61,0,36,9,,,9,,8,melee:75 / magic:25,"magic: new enabled attack, raw ceiling8"
+789,Battle mage,52,Mid Low,magic,protected_no_change,52,,current_powers_retained_no_migration,52,0,52,52,0,52,8,,12,8,,12,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+790,Battle mage,52,Mid Low,magic,protected_no_change,52,,current_powers_retained_no_migration,52,0,52,52,0,52,8,,12,8,,12,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+791,Battle mage,52,Mid Low,magic,protected_no_change,52,,current_powers_retained_no_migration,52,0,52,52,0,52,8,,12,8,,12,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+798,Gaia,79,Mid High,magic,band_reference,79,79,legacy_strength,79,0,0,55,0,79,12,,,8,,18,magic:75 / melee:25,"Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 12 -> 8 [large delta] magic: new enabled attack, raw ceiling18"
+802,Greatwood,300,Very High,melee,band_reference,245,245,legacy_strength,245,0,0,245,0,0,36,,,36,,,melee:100,
+809,Balrog,217,Boss,magic,boss_individual,250,250,legacy_strength,250,0,999,250,0,250,36,,226,36,,56,magic:75 / melee:25,"Balrog: retain melee250, deliberately replace Attack999-derived Magic with250. Boss exception gives both active styles full reference; primary remains Magic by selection. Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. Old Attack exceeded Strength; proposed Magic deliberately uses the Strength reference. Inspect ceiling change rather than copying the old fallback. magic: 226 -> 56 [large delta]"
+816,PK Bot,57,Mid,melee,protected_no_change,230,,current_powers_retained_no_migration,230,0,0,230,0,0,33,,,33,,,preserve,Minigame/role hold: keep raw getters and all existing behavior. Nonzero incidental powers are not permission to enable attacks.
+836,Grey Knight,56,Mid,melee,band_reference,58,58,legacy_strength,58,0,58,58,0,34,9,,13,9,,7,melee:90 / magic:10,Melee knight: keep supporting holy casts rare rather than ordinary75/25. Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 13 -> 7 [large delta]
+843,Fire warrior,61,Mid,melee,band_reference,64,64,legacy_strength,64,0,64,64,0,38,10,,15,10,,9,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 15 -> 9 [large delta]
+844,Elder Green Dragon,275,Boss,magic,preserve_authored_encounter,250,,existing_explicit_powers,250,235,270,250,235,270,36,34,61,36,34,61,preserve,Retain existing authored powers and scripted attack owner; do not normalize by secondary ratios or add parallel generic attacks.
+862,Green Dragon,110,High,melee,band_reference,98,98,legacy_strength,98,0,110,98,0,78,15,,25,15,,18,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 25 -> 18 [large delta]
+863,Giant frog,20,Low,ranged,preserve_active_specialist,1,30,authored_primary_power,1,30,0,0,30,0,,5,,,5,,preserve,Existing explicit reference retained instead of legacy placeholder; secondary powers still follow the band where this is an ordinary mixed assignment. Keep authored Ranged30; disabled Melee becomes0. Existing ranged-only spit behavior and status effects remain unchanged.
+864,Cockatrice,35,Mid Low,melee,band_reference,1,40,authored_melee_strength_equivalent,40,0,0,40,0,0,6,,,6,,,melee:100,Existing explicit reference retained instead of legacy placeholder; secondary powers still follow the band where this is an ordinary mixed assignment.
+865,Banshee,50,Mid Low,melee,preserve_authored_encounter,1,,existing_explicit_powers,55,0,55,55,0,55,8,,12,8,,12,preserve,Retain existing authored powers and scripted attack owner; do not normalize by secondary ratios or add parallel generic attacks.
+866,Naga,60,Mid,ranged,band_reference,1,65,authored_melee_strength_equivalent,65,55,0,39,65,0,10,8,,6,10,,ranged:75 / melee:25,Existing explicit reference retained instead of legacy placeholder; secondary powers still follow the band where this is an ordinary mixed assignment. Naga changes emphasis: Ranged65 / Melee39 instead of Ranged55 / Melee65; preserve its existing throw/melee cadence and protection rules. Review the resulting damage change. Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. melee: 10 -> 6 [large delta] ranged: 8 -> 10
+867,Terror dog,75,Mid High,melee,band_reference,1,80,authored_melee_strength_equivalent,80,0,0,80,0,0,12,,,12,,,melee:100,Existing explicit reference retained instead of legacy placeholder; secondary powers still follow the band where this is an ordinary mixed assignment.
+868,Bloodveld,85,Mid High,melee,band_reference,1,80,authored_melee_strength_equivalent,80,0,0,80,0,0,12,,,12,,,melee:100,Existing explicit reference retained instead of legacy placeholder; secondary powers still follow the band where this is an ordinary mixed assignment.
+869,Dark beast,105,High,magic,preserve_authored_encounter,1,,existing_explicit_powers,110,0,210,110,0,210,16,,48,16,,48,preserve,Retain existing authored powers and scripted attack owner; do not normalize by secondary ratios or add parallel generic attacks.
+870,Abyssal demon,125,High,magic,band_reference,1,125,authored_melee_strength_equivalent,125,0,0,100,0,125,18,,,15,,28,magic:75 / melee:25,"Existing explicit reference retained instead of legacy placeholder; secondary powers still follow the band where this is an ordinary mixed assignment. melee: 18 -> 15 magic: new enabled attack, raw ceiling28"
+877,Sapphire Dragon,97,High,melee,band_reference,90,90,legacy_strength,90,0,100,90,0,72,13,,23,13,,16,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 23 -> 16 [large delta]
+878,Emerald Dragon,118,High,melee,band_reference,110,110,legacy_strength,110,0,122,110,0,88,16,,28,16,,20,melee:75 / magic:25,Large raw-ceiling delta: review deliberate correction/secondary reassignment before installation; not proof of the same DPS. magic: 28 -> 20 [large delta]
+879,Ruby Dragon,142,Very High,melee,band_reference,132,132,legacy_strength,132,0,146,132,0,118,19,,33,19,,26,melee:75 / magic:25,magic: 33 -> 26
+880,Diamond Dragon,166,Very High,melee,band_reference,153,153,legacy_strength,153,0,174,153,0,137,22,,39,22,,31,melee:75 / magic:25,magic: 39 -> 31
+881,Dragonstone Dragon,192,Very High,melee,band_reference,178,178,legacy_strength,178,0,202,178,0,160,26,,45,26,,36,melee:75 / magic:25,magic: 45 -> 36
+882,Stirge,55,Mid,melee,band_reference,50,55,authored_melee_strength_equivalent,55,0,0,55,0,0,8,,,8,,,melee:100,Existing explicit reference retained instead of legacy placeholder; secondary powers still follow the band where this is an ordinary mixed assignment.
