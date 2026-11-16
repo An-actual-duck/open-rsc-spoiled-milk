@@ -776,7 +776,11 @@ final class ClientExternalAssetLoader {
 				int[] pixels = new int[frameWidth * frameHeight];
 				frame.getRGB(0, 0, frameWidth, frameHeight, pixels, 0, frameWidth);
 				normalizePixels(pixels, 64);
-				targetFrames[loadedFrames++] = createSprite(pixels, frameWidth, frameHeight);
+				// Rotated-sprite rendering uses this legacy flag to skip transparent
+                // pixels as well as honor offsets. Native PNG canvases have holes.
+                Sprite sprite = createSprite(pixels, frameWidth, frameHeight);
+                sprite.setRequiresShift(true);
+                targetFrames[loadedFrames++] = sprite;
 			}
 			return loadedFrames;
 		} catch (IOException failure) {

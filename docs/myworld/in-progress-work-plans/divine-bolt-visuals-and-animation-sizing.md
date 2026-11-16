@@ -159,3 +159,13 @@ The final sizing sweep also covers projectile impact overlays and static beam
 thickness, which otherwise retained fixed pixel sizes even though moving shots
 and beam lengths were already projected. Both now use the same reference-actor
 scaling. An actual impact-queue regression verifies half/reference/double zoom.
+
+### Rotated bolt transparency correction
+
+Native grid PNG frames retained transparent pixels but were tagged as opaque for
+the legacy rotated-sprite renderer, producing black flight rectangles. Native
+grid frames now enable its transparent-pixel path while retaining zero offsets
+and full canvas dimensions. The visual fixture asserts background preservation
+for basic and all holy bolts in eight orientations and every animation phase.
+The requested poisoned mithril dagger is catalog ID 562; private scenario edits
+must occur only after the test client logs out and its private server stops.
