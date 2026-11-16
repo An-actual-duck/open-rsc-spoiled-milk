@@ -1,5 +1,7 @@
 # Unified Combat Statline and NPC Authoring Guide
 
+Later owner decisions: [family authoring and zero-inclusive defense rolls](npc-family-authoring-decisions.md) (2026-11-16). These supersede conflicting recommendations below. Existing-source descriptions remain historical facts, not the future roll contract.
+
 Status: active investigation and authoring reference; no NPC rebalance or runtime
 migration has been implemented by this documentation task.
 

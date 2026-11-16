@@ -75,6 +75,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 
 ## In Progress Work Plans
 
+- [NPC family authoring decisions](in-progress-work-plans/npc-family-authoring-decisions.md):
+  agreed families, progression guidance, explicit-stat authority and zero-inclusive defense rolls.
+
 - [NPC defense pilot proposal](in-progress-work-plans/npc-defense-pilot-proposal.md):
   fourteen current/proposed statlines, family progression, four explicit defense
   changes for review, preserved controls and deferred special cases.
