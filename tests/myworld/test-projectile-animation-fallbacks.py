@@ -20,7 +20,7 @@ EXPORTER_PATH = ROOT / "tools/myworld/ExportBasicProjectileSheets.java"
 
 EXPECTED_DEFINITIONS = {
     "acid-basic": ("acid-basic/Acid VFX 01.png", 16, 1, 0, 10),
-    "earth-basic": ("earth-basic/Earth projectile Spritesheet .png", 9, 2, 0, 6),
+    "earth-basic": ("earth-basic/Earth projectile Spritesheet .png", 6, 2, 0, 6),
     "fire-basic": ("fire-basic/Firebolt SpriteSheet.png", 11, 1, 0, 4),
     "ice-basic": ("ice-basic/IceVFX 1 Repeatable.png", 10, 1, 0, 10),
     "thunder-basic": ("thunder-basic/Thunder ball wo blur.png", 9, 2, 0, 9),
@@ -36,6 +36,9 @@ EXPECTED_DEFINITIONS = {
     "thunder-2": ("thunder-2/Projectile/Projectile 2 wo blur.png", 16, 1, 0, 16),
     "acid-basic-2": ("acid-basic-2/Acid VFX 03(56x48).png", 16, 1, 0, 16),
     "electric-disc-basic": ("Eletric Disc (32x32)/Eletricity Disc wo blur.png", 13, 1, 7, 6),
+    "saradomin-bolt": ("god-bolts/saradomin/bolt.png", 6, 1, 0, 6),
+    "zamorak-bolt": ("god-bolts/zamorak/bolt.png", 6, 1, 0, 6),
+    "guthix-bolt": ("god-bolts/guthix/bolt.png", 6, 1, 0, 6),
 }
 
 EXPECTED_STARTUP_SEGMENTS = {
@@ -46,7 +49,7 @@ EXPECTED_STARTUP_SEGMENTS = {
 
 EXPECTED_IMPACT_SEGMENTS = {
     "acid-basic": [("acid-basic/Acid VFX 01.png", 16, 1, 10, 6)],
-    "earth-basic": [("earth-basic/Earth projectile Spritesheet .png", 9, 2, 6, 10)],
+    "earth-basic": [("earth-basic/Earth projectile Spritesheet .png", 6, 2, 6, 4)],
     "fire-basic": [("fire-basic/Firebolt SpriteSheet.png", 11, 1, 5, 6)],
     "ice-basic": [("ice-basic/Ice VFX 1 Hit.png", 8, 1, 0, 8)],
     "thunder-basic": [("thunder-basic/Thunder ball wo blur.png", 9, 2, 9, 7)],
@@ -88,6 +91,9 @@ EXPECTED_FALLBACKS = {
     "WOOD_LEAD_2": "wood-basic",
     "ACID_ARMOR_PROC": "acid-basic-2",
     "ELECTRIC_DISC": "electric-disc-basic",
+    "SARADOMIN_BOLT": "saradomin-bolt",
+    "ZAMORAK_BOLT": "zamorak-bolt",
+    "GUTHIX_BOLT": "guthix-bolt",
 }
 
 
@@ -176,7 +182,7 @@ def main() -> None:
 
     moving_root = ANIMATIONS / "projectile-moving"
     for key, (relative_path, columns, rows, first_frame, frame_count) in definitions.items():
-        if key not in ("thunder-2", "acid-basic-2") and not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*-basic", key):
+        if key not in ("thunder-2", "acid-basic-2", "saradomin-bolt", "zamorak-bolt", "guthix-bolt") and not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*-basic", key):
             fail(f"fallback key must use [type]-basic naming: {key}")
         sheet = moving_root / relative_path
         if not sheet.is_file():
@@ -283,7 +289,8 @@ def main() -> None:
         fail("Wind Slash must use all twelve authored 48x32 frames")
     for snippet in (
         "int renderLength = length;",
-        "int thickness = Math.max(1, definition.getThickness());",
+        "int thickness = Math.max(1, orsc.graphics.two.AnimationSizing.onEntity(",
+        "definition.getThickness(), caster.sceneScreenHeight));",
         "int centerX = (caster.sceneScreenCenterX + victim.sceneScreenCenterX) / 2;",
     ):
         if snippet not in client:

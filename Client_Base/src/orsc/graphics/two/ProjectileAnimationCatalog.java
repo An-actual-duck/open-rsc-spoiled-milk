@@ -103,7 +103,7 @@ public final class ProjectileAnimationCatalog {
 	static {
 		LinkedHashMap<String, Definition> definitions = new LinkedHashMap<String, Definition>();
 		define(definitions, "acid-basic", "Acid VFX 1", "acid-basic/Acid VFX 01.png", 16, 1, 0, 10);
-		define(definitions, "earth-basic", "Earth projectile", "earth-basic/Earth projectile Spritesheet .png", 9, 2, 0, 6);
+		define(definitions, "earth-basic", "Earth projectile", "earth-basic/Earth projectile Spritesheet .png", 6, 2, 0, 6);
 		define(definitions, "fire-basic", "Firebolt", "fire-basic/Firebolt SpriteSheet.png", 11, 1, 0, 4);
 		define(definitions, "ice-basic", "Ice VFX 1", "ice-basic/IceVFX 1 Repeatable.png", 10, 1, 0, 10);
 		define(definitions, "thunder-basic", "Thunder Ball", "thunder-basic/Thunder ball wo blur.png", 9, 2, 0, 9);
@@ -137,7 +137,7 @@ public final class ProjectileAnimationCatalog {
 		phases(impactSegments, "acid-basic",
 			segment("acid-basic/Acid VFX 01.png", 16, 1, 10, 6));
 		phases(impactSegments, "earth-basic",
-			segment("earth-basic/Earth projectile Spritesheet .png", 9, 2, 6, 10));
+			segment("earth-basic/Earth projectile Spritesheet .png", 6, 2, 6, 4));
 		phases(impactSegments, "fire-basic",
 			segment("fire-basic/Firebolt SpriteSheet.png", 11, 1, 5, 6));
 		phases(impactSegments, "ice-basic",
