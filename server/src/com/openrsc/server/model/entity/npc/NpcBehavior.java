@@ -539,7 +539,20 @@ public class NpcBehavior {
         target=opponent;return tryProjectileAttack(currentTimeMillis());
     }
 
-    private boolean holdProjectilePosition() {npc.resetPath();npc.face(target);return true;}
+    private boolean holdProjectilePosition() {
+        // face() uses walking/idle sprites (0..7). Do not erase a melee swing
+        // just because the mixed-style projectile controller is on cooldown.
+        final com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent melee = npc.getPvmMeleeEvent();
+        final com.openrsc.server.content.npccombat.NpcCombatDefinition definition =
+            com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(npc);
+        final boolean preserveMelee = npc.inCombat() && definition != null
+            && definition.uses(com.openrsc.server.model.combat.CombatStyle.MELEE)
+            && melee != null && melee.isRunning() && melee.getTarget() == target;
+        npc.resetPath();
+        if (preserveMelee) npc.faceCombat(target);
+        else npc.face(target);
+        return true;
+    }
 
 	private boolean tryProjectileAttack(final long now) {
 		if (com.openrsc.server.content.monsterslayer.BloodveldCombat.tryPull(npc, target)) return true;
@@ -560,7 +573,8 @@ public class NpcBehavior {
             if(!com.openrsc.server.content.npccombat.CanonicalNpcCombat.ready(npc)
                 ||!com.openrsc.server.content.Slow.ready(npc,com.openrsc.server.content.Slow.Cadence.RANGED))return holdProjectilePosition();
             final boolean same=npc.getX()==target.getX()&&npc.getY()==target.getY();
-            final boolean adjacent=!same&&PathValidation.checkAdjacentDistance(npc,target,true,false);
+            final boolean adjacent=!same&&npc.withinRange(target,1)
+                &&PathValidation.checkAdjacentDistance(npc,target,true,false);
             com.openrsc.server.model.combat.CombatStyle selected=
                 com.openrsc.server.content.npccombat.CanonicalNpcCombat.select(npc,target,adjacent,true);
             if(selected==com.openrsc.server.model.combat.CombatStyle.MELEE)return false;

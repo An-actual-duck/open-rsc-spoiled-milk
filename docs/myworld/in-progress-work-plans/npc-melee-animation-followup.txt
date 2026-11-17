@@ -1,0 +1,38 @@
+NPC melee presentation follow-up — 2026-11-16
+
+Owner reported intermittent missing melee retaliation/weapon swings during ranged
+and magic testing, including a Moss Giant adjacent to the player. Live private
+capture confirmed ordinary Giant melee attacks were committing and dealing damage;
+this was not a global removal of melee. The owner also identified leash limits as
+one contributing situation. Do not infer that every reported case had one cause.
+
+A reproducible mixed-style presentation defect was found: the canonical projectile
+cooldown controller called face(), selecting an idle/walking sprite and clearing
+an active melee combat sprite. Preserve the current melee pose while holding that
+cooldown when the same target still has an active NPC melee event. Dedicated
+casters/shooters retain their projectile presentation; an actual Magic launch
+switches away from melee and its cooldown does not invent a melee swing.
+
+An adjacent-eligibility issue was found alongside it: checkAdjacentDistance checks
+an edge/path and does not itself enforce distance. Canonical projectile selection
+now also requires withinRange(target,1) before admitting melee. This avoids caching
+a melee choice against a distant target with a valid projectile shot.
+
+No Power, Defense, damage dice, weights, items, map or client-art changes.
+The owner's level-one tin-scimitar test confirmed a full2 hit when mitigation rolls0.
+
+Evidence under output/tests/npc-melee-retaliation/:
+- before-fix.log: new test fails specifically on lost mixed melee combat stance.
+- after-fix.log:1801 canonical actual-production assertions pass, including active
+  melee pose retention, actual Magic switch, no phantom Magic-cooldown melee pose,
+  and distant-style eligibility.
+- build.log: full core/plugins build and generated-artifact audit pass.
+- combat-regression.log / summary.properties:149/149 combat scenarios pass.
+- SlowFixture, CurrentNagaCharacterization, CurrentBansheeCharacterization focused
+  runtime logs verify cadence, special-owner compatibility and positioning.
+- git diff --check passes.
+
+Private-only instrumentation and setup outputs remain outside Git. Diagnostic
+capture is removed on private-server restart. The owner's private character and
+inventory are preserved; client remains closed while corrected binaries are staged.
+No public server shutdown, deployment or restart was requested or performed.
