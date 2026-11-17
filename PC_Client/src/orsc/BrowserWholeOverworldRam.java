@@ -21,6 +21,7 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
         return new int[]{1,PUBLIC_ROOF_FALLBACK?1:0,ready?1:0,hidden?1:0,preference?1:0,compatible?1:0};
     }
     private final byte[] source;
+    private final int rawSourceBytes;
     private final WholeRamPrepared prepared;
     private final String manifestSha;
     private final Map<String,String> sectors=new HashMap<String,String>();
@@ -41,6 +42,14 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
     }
     private static int sat(long n){return (int)Math.min(Integer.MAX_VALUE,Math.max(0,n));}
     private static int[] words(JSONArray values){int[] out=new int[values.length()];for(int i=0;i<out.length;i++)out[i]=values.getInt(i);return out;}
+    /** The authenticated manifest owns the exact size; keep the source budget bounded. */
+    static int sourceRawBytes(JSONObject bundle) {
+        long raw=bundle.getLong("rawBytes"), bytes=bundle.getLong("bytes");
+        if(!"source.bin".equals(bundle.getString("path"))||bundle.getInt("headerBytes")!=16
+            ||bundle.getInt("fileCount")!=1797||raw<1||raw>64L*1024*1024-16||bytes!=raw+16)
+            throw new IllegalStateException("Whole-RAM source declaration");
+        return (int)raw;
+    }
     public BrowserWholeOverworldRam(String expectedMap,int[] expectedSettings){
         if(!isEnabled()||!WorldBuilderTerrainBootstrap.isNativeOnly()||WorldEditorBuildSettings.isEnabled()||!Renderer3DSettings.canSkipProjectedWorldCapture())throw new IllegalStateException("Whole-RAM requires private native-only whole-zone browser ownership");
         BrowserWorldPreparationProgress progress=BrowserWebGLBridge.beginWorldPreparation();progress.stage(BrowserWorldPreparationProgress.METADATA,0);
@@ -51,12 +60,12 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
             manifestSha=m.getString("sourceManifestSha256");if(!manifestSha.equals(expectedMap)||!manifestSha.equals(WorldBuilderTerrainBootstrap.mapIdentity()))throw new IllegalStateException("Whole-RAM map identity differs from GPU/server source");
             if(!m.getString("clientJarSha256").equals(System.getProperty("spoiledmilk.browserWholeZoneClientSha256",""))||!m.getString("gpuCatalogSha256").equals(System.getProperty("spoiledmilk.browserWholeZoneCatalogSha256","")))throw new IllegalStateException("Whole-RAM CPU/GPU/client artifact binding mismatch");
             settings=words(m.getJSONArray("settings"));if(settings.length!=4||!Arrays.equals(settings,expectedSettings))throw new IllegalStateException("Whole-RAM packing options mismatch");
-            JSONObject bundle=m.getJSONObject("sourceBundle");if(!"source.bin".equals(bundle.getString("path"))||bundle.getInt("headerBytes")!=16||bundle.getInt("fileCount")!=1797||bundle.getInt("rawBytes")!=46101718||bundle.getInt("bytes")!=46101734)throw new IllegalStateException("Whole-RAM source declaration");
+            JSONObject bundle=m.getJSONObject("sourceBundle");rawSourceBytes=sourceRawBytes(bundle);
             progress.stage(BrowserWorldPreparationProgress.SOURCE_READ,bundle.getInt("bytes"));
             source=read(new File(dir,"source.bin"),64*1024*1024,progress);
             progress.stage(BrowserWorldPreparationProgress.SOURCE_CHECK,1797);
             if(source.length!=bundle.getInt("bytes")||!sha(source,0,source.length).equals(bundle.getString("sha256")))throw new IllegalStateException("Whole-RAM source bundle hash");
-            ByteBuffer header=ByteBuffer.wrap(source,0,16).order(ByteOrder.LITTLE_ENDIAN);if(header.getInt()!=0x57524131||header.getInt()!=1||header.getInt()!=1797||header.getInt()!=46101718)throw new IllegalStateException("WRA1 header");
+            ByteBuffer header=ByteBuffer.wrap(source,0,16).order(ByteOrder.LITTLE_ENDIAN);if(header.getInt()!=0x57524131||header.getInt()!=1||header.getInt()!=1797||header.getInt()!=rawSourceBytes)throw new IllegalStateException("WRA1 header");
             JSONArray files=m.getJSONArray("files");if(files.length()!=1797)throw new IllegalStateException("Whole-RAM raw roster");int offset=16;String previous="";MessageDigest fingerprint=MessageDigest.getInstance("SHA-256");JSONObject original=null;Map<String,JSONObject> fileByPath=new HashMap<String,JSONObject>();
             int checkedFiles=0;
             for(Object value:files){JSONObject r=(JSONObject)value;String path=r.getString("path");int at=r.getInt("offset"),size=r.getInt("bytes");if(path.length()>512||!path.matches("[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*")||Arrays.asList(path.split("/")).contains("..")||path.compareTo(previous)<=0||at!=offset||size<1||size>source.length-at)throw new IllegalStateException("Whole-RAM source intervals/order");String hash=sha(source,at,size);if(!hash.equals(r.getString("sha256")))throw new IllegalStateException("Whole-RAM source payload hash: "+path);for(String word:new String[]{path,Integer.toString(size),hash}){fingerprint.update(word.getBytes(StandardCharsets.UTF_8));fingerprint.update((byte)0);}fileByPath.put(path,r);if(path.equals("manifest.json")){if(size>4*1024*1024||!hash.equals(manifestSha))throw new IllegalStateException("Whole-RAM original manifest");original=new JSONObject(new String(source,at,size,StandardCharsets.UTF_8));}offset+=size;previous=path;progress.advance(++checkedFiles);}
@@ -66,7 +75,7 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
             for(Object value:terrain){JSONObject row=(JSONObject)value;String path=row.getString("path");JSONObject owned=fileByPath.get(path);if(owned==null||!named.add(path)||!"terrain".equals(owned.getString("kind"))||!owned.getString("sha256").equals(row.getString("sha256"))||!owned.getString("encoding").equals(row.getString("encoding"))||owned.getInt("level")!=row.getInt("level")||!owned.getString("worldSpace").equals(row.getString("worldSpace"))||owned.getInt("sectorX")!=row.getInt("sectorX")||owned.getInt("sectorY")!=row.getInt("sectorY"))throw new IllegalStateException("Whole-RAM typed terrain roster");if("global".equals(row.getString("worldSpace"))&&row.getInt("level")>=0&&row.getInt("level")<=2){String key=WholeRamPrepared.key(row.getInt("level"),row.getInt("sectorX"),row.getInt("sectorY"));if(sectors.put(key,row.getString("sha256"))!=null)throw new IllegalStateException("Duplicate RAM source cell");query.add(key);if(row.getInt("level")==0)l0.add(key);}}
             for(Object value:placements){JSONObject row=(JSONObject)value;String path=row.getString("path");JSONObject owned=fileByPath.get(path);if(owned==null||!named.add(path)||!"placements".equals(owned.getString("kind"))||!owned.getString("sha256").equals(row.getString("sha256"))||owned.getInt("level")!=row.getInt("level")||!owned.getString("worldSpace").equals(row.getString("worldSpace")))throw new IllegalStateException("Whole-RAM placement roster");}
             if(named.size()!=1797||l0.size()!=445||query.size()!=1330)throw new IllegalStateException("Whole-RAM complete source membership");
-            pending[1]=1;pending[3]=1797;pending[4]=46101718;pending[7]=source.length;pending[16]=sat((System.nanoTime()-start)/1000000);BrowserWebGLBridge.publishWholeRamWork(pending);
+            pending[1]=1;pending[3]=1797;pending[4]=rawSourceBytes;pending[7]=source.length;pending[16]=sat((System.nanoTime()-start)/1000000);BrowserWebGLBridge.publishWholeRamWork(pending);
             JSONObject product=m.getJSONObject("prepared");if(product.getInt("schemaVersion")!=1||!"prepared.bin".equals(product.getString("path"))||product.getInt("recipes")!=445||product.getInt("queryCells")!=1330)throw new IllegalStateException("Whole-RAM prepared declaration");
             File data=new File(dir,"prepared.bin");if(data.length()!=product.getLong("bytes")||data.length()<1||data.length()>WholeRamData.MAX_BYTES)throw new IllegalStateException("Whole-RAM prepared payload budget");MessageDigest digest=MessageDigest.getInstance("SHA-256");
             progress.stage(BrowserWorldPreparationProgress.PREPARED_READ,(int)data.length());
@@ -112,5 +121,5 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
     public synchronized void avoidedBuild(){avoided=sat((long)avoided+1);}
     public void validateOptions(int[] current){if(!ready||!Arrays.equals(settings,current)||!PUBLIC_ROOF_FALLBACK&&hiddenRoofs!=Config.C_HIDE_ROOFS)throw new IllegalStateException("Whole-RAM render/CPU options changed");}
     public void invalidate(){ready=false;validated=null;WholeOverworldRamRegistry.clear();}
-    public int[] diagnostics(){long bytes=source.length+prepared.pool.bytes();return new int[]{1,ready?1:0,ready?1:0,1797,46101718,prepared.recipes(),prepared.queryCells(),(int)bytes,(int)(bytes>>>32),activations,hits,models,(int)copiedBytes,(int)(copiedBytes>>>32),avoided,validations,prepareMillis,activationMillis};}
+    public int[] diagnostics(){long bytes=source.length+prepared.pool.bytes();return new int[]{1,ready?1:0,ready?1:0,1797,rawSourceBytes,prepared.recipes(),prepared.queryCells(),(int)bytes,(int)(bytes>>>32),activations,hits,models,(int)copiedBytes,(int)(copiedBytes>>>32),avoided,validations,prepareMillis,activationMillis};}
 }
