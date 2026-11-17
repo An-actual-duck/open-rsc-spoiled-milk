@@ -2666,9 +2666,13 @@ public class Server implements Runnable {
 	}
 
     /** Gameplay-only lazy seam: editor source discovery still reads ordinary definitions. */
-    public synchronized com.openrsc.server.content.npccombat.NpcCombatCatalog getNpcCombatCatalog() {
-        if(npcCombatCatalog==null) npcCombatCatalog=com.openrsc.server.content.npccombat.NpcCombatCatalog.load(this);
-        return npcCombatCatalog;
+    public com.openrsc.server.content.npccombat.NpcCombatCatalog getNpcCombatCatalog() {
+        com.openrsc.server.content.npccombat.NpcCombatCatalog result = npcCombatCatalog;
+        if (result == null) synchronized (this) {
+            result = npcCombatCatalog;
+            if (result == null) npcCombatCatalog = result = com.openrsc.server.content.npccombat.NpcCombatCatalog.load(this);
+        }
+        return result;
     }
 
 	public GameDatabase getDatabase() {

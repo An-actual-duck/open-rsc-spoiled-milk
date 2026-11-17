@@ -249,7 +249,8 @@ public class PvmMeleeEvent extends GameTickEvent {
             com.openrsc.server.model.combat.CombatStyle selected =
                 com.openrsc.server.content.npccombat.CanonicalNpcCombat.select(actor, targetMob, true, shot);
             if (selected != com.openrsc.server.model.combat.CombatStyle.MELEE) {
-                actor.getBehavior().tryCanonicalProjectileAttack(targetMob);
+                if (!actor.getBehavior().tryCanonicalProjectileAttack(targetMob))
+                    actor.walkAdjacentToEntity(targetMob);
                 setDelayTicks(1); return;
             }
         }

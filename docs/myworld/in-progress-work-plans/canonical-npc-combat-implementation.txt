@@ -1,4 +1,4 @@
-Canonical NPC combat implementation — active 2026-11-16
+Canonical NPC combat implementation — verified 2026-11-16
 
 Owner authorized implementation after accepting defense/loadout/power authoring.
 Latest decision: Elder burn remains outside defenses. Dragon breath retains all
@@ -51,4 +51,65 @@ Current investigation findings:
 - The toolkit interprets EntityHandler source during content discovery. A new
   gameplay catalog should not introduce unsupported runtime calls into that path.
 
-No implementation completed or tests passed yet at creation of this note.
+Implementation and verification completed in the focused worker branch.
+
+Delivered:
+- NpcCombatMyWorld.json is the runtime authority: 275 canonical attackable NPCs,
+  23 explicitly protected/held attackable definitions, 585 nonattackable records.
+  All authored numbers, style lists, weights and tags match the approved inputs.
+  Future balance edits can use this gameplay file directly. The initial migration
+  generator is an audit tool; production builds/runtime do not depend on proposals.
+- Zero defense/power is literal. Disabled primary styles return zero without RNG;
+  enabled modern defense dice span0..ceil(Defense/7). Protected/minigame/non-MyWorld/
+  owned-summon fights retain the old compatibility dice/conversions.
+- Dedicated casters/shooters hold LOS through cooldown and remain their style when
+  adjacent. Existing pursuit is used when no shot is possible. Both melee engines
+  and projectile behavior share a lifetime-bound weighted decision/cooldown.
+  Committed Slow remains latched across decay/clear and retargeting, matching its
+  existing contract. The special encounter owners and protected minigames persist.
+- Aligned NPC Magic captures its god at launch; matching prayer book reduces damage
+  by20%, once, rounded down, after robe/potion/summon mitigation. No new UI/rules
+  derive from otherwise inert tags. Holy Power0 remains inert. Three boss flags.
+- Breath classification adapter preserves the full existing shield/roll logic and
+  legacy HP/death/combat-luck settlement. Player-first shielded KBD uses4% current
+  HP, NPC-first shielded KBD retains a0..13 die. Elder burn/DOT code is unchanged.
+
+Verification evidence (ignored, preserved):
+output/tests/canonical-npc-combat/
+- build.log: scripts/build-server.sh passes core/plugins/generated-artifact audit.
+- gate.log and runtime-*/runtime.log: test-canonical-npc-combat.py
+  --check-authoring-migration passes1794 actual-production assertions, including
+  all883 records, malformed/missing/zero/sentinel handling, legacy-independence,
+  disabled-style no-RNG behavior, adjacency/pursuit/cooldown/weights/retargeting,
+  actual god-aligned projectile impacts and actual shielded breath branches.
+- summary.properties / combat-regression-native.log:149/149 current combat scenarios
+  on the current native world package, using an isolated configuration and no
+  live accounts/database. Final run includes both melee engines and disabled-style
+  guards. The offline harness now records drop logs by default and waits for them;
+  no hidden MySQL connection failures remain in this run.
+- focused-results.json:10/10 focused suites: Slow, god crossbow effects, scimitar
+  coating, Stirge, Naga, Banshee, Dark beast, PvP foundation, cleric hostile producer
+  and cleric hostile runtime. Expectations were updated to approved defenses and
+  Naga ranged-primary stationary cooldown behavior. Slow tests explicitly select
+  melee when testing melee. A stale Banshee suppression test now captures the
+  committed attack in its typed launch instead of expecting a legacy constructor
+  to consume Startle implicitly.
+- toolkit-source-discovery.json: actual independent toolkit source interpreter
+  discovers883 NPCs,3475 items,1356 scenery,228 doors,28 tiles from this checkout.
+  No toolkit implementation or bundled custom content was changed.
+- Full breath source matches main after normalizing only the classification call
+  and comment; all shield arithmetic and random branches are unchanged.
+- Defense authoring validator passes current definition bindings; loadout/power
+  validators pass --historical-source against their frozen sourceCommit. Their
+  default checks still reject current-source drift, intentionally. Canonical data
+  parity is independently verified by the migration generator.
+- git diff --check and Python compilation pass.
+- workspace-layout.py check reports pre-existing ignored output-root entries in
+  this long-lived worker (older static-analysis, renderer and sprite outputs).
+  They were preserved; new outputs are entirely in the declared tests category.
+
+Limits and rollout:
+No interactive balance/fun assessment was substituted by these tests. Private
+playtesting of the full roster remains useful before release. This is server
+combat/data work; no client art/protocol or map edits were needed. No public
+shutdown, restart, deployment, player-data mutation or release occurred.

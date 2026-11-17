@@ -11,7 +11,8 @@ public final class GodAlignedNpcMagic {
     private GodAlignedNpcMagic() {}
     public static int reduce(Mob source, Mob target, ProjectileLaunchSpecification launch, int damage) {
         if (damage <= 0 || !(source instanceof Npc) || !(target instanceof Player)
-            || launch.getProducer() != ProjectileLaunchSpecification.Producer.NPC_MAGIC) return damage;
+            || launch.getProducer() != ProjectileLaunchSpecification.Producer.NPC_MAGIC
+            || launch.getAttackType() != 1) return damage;
         NpcCombatDefinition d = CanonicalNpcCombat.definition((Npc) source);
         PrayerCatalog.GodLine god = launch.getNpcMagicGodLine();
         if (d == null || !d.genericDispatch || god == null || ((Player) target).getPrayerBook() != god) return damage;

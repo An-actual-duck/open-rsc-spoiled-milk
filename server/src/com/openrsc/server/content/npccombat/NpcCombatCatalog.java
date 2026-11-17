@@ -83,6 +83,7 @@ public final class NpcCombatCatalog {
       List<NpcMagicElement> elements=new ArrayList<>();JSONArray el=r.getJSONArray("magicElements");
       for(int j=0;j<el.length();j++){String s=el.getString(j);NpcMagicElement e=NpcMagicElement.valueOf(s.equals("neutral")?"NONE":s.toUpperCase(Locale.ROOT));require(!elements.contains(e),"duplicate element");elements.add(e);}
       require(styles.contains(CombatStyle.MAGIC)?!elements.isEmpty():elements.isEmpty(),"element/style mismatch");
+      require(r.has("magicGod"),"explicit god line or null required");
       PrayerCatalog.GodLine god=r.isNull("magicGod")?null:PrayerCatalog.GodLine.valueOf(r.getString("magicGod").toUpperCase(Locale.ROOT));
       require(god==null||styles.contains(CombatStyle.MAGIC),"god alignment without Magic");
       Set<String> creature=tags(r.getJSONArray("creatureTags"));JSONObject attacks=r.getJSONObject("attackTags");
@@ -91,7 +92,18 @@ public final class NpcCombatCatalog {
       for(String key:attackKeys){Set<String> t=tags(attacks.getJSONArray(key));require(t.contains("style."+key),"missing style tag");
         if(key.equals("magic")&&god!=null)require(t.contains("holy")&&t.contains("god."+god.name().toLowerCase(Locale.ROOT)),"missing aligned Magic tags");}
       String visual=r.getString("rangedVisual");require(Arrays.asList("arrow","bolt","dart","throwing_knife","naga_scimitar","acid_drop").contains(visual),"unknown projectile visual");
-      r.getJSONArray("creatureAffinities");r.getJSONArray("specialAttacks");
+      tags(r.getJSONArray("creatureAffinities"));
+      JSONArray specials=r.getJSONArray("specialAttacks");Set<String> specialKeys=new HashSet<>();
+      for(int j=0;j<specials.length();j++){
+        JSONObject a=specials.getJSONObject(j);String key=a.getString("key");
+        require(key.matches("[a-z][a-z0-9_]*")&&specialKeys.add(key),"invalid/duplicate special attack");
+        require(a.getString("dispatch").equals("existing_special_owner"),"special attack must retain its owner");
+        String damageKind=a.getString("damageKind");
+        require(Arrays.asList("standard","dot","true_damage").contains(damageKind),"invalid special damage kind");
+        require(!key.equals("dragon_breath")||damageKind.equals("true_damage"),"breath is True damage, not ordinary Magic");
+        require(!Arrays.asList("burn","bleeding_wound").contains(key)||damageKind.equals("dot"),"DOT must remain outside ordinary defense/Power rolls");
+        tags(a.getJSONArray("tags"));
+      }
       defs.put(id,new NpcCombatDefinition(id,original.getName(),power,defense,holy,boss,primary,styles,weights,range,generic,elements,god,visual,creature,r.toString()));
     }
     int count=0;while(server.getEntityHandler().getNpcDef(count)!=null){require(seen.contains(count),"missing canonical/explicit compatibility record for id "+count);count++;}

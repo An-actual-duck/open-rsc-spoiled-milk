@@ -109,7 +109,7 @@ final class SlowBoundaries {
    // Keep one-shot creature mechanics separate; solvent protects the player, never Slow.
    GiantFrogCombat.applySolvent(p);
    PvmMeleeEvent e=new PvmMeleeEvent(h.world(),n,p);n.setPvmMeleeEvent(e);
-   Slow.apply(n,22,22);h.random().scriptInts(99,99,99,99,99,99);
+   Slow.apply(n,22,22);h.random().reset(9123);h.random().scriptInts(id==866||id==870?0:99,99,99,99,99,99);
    int before=n.getHitsMade();e.run();
    eq(before,n.getHitsMade(),"fresh Slow2 delays upcoming first melee "+id);
    advanceTo(h,h.server().getCurrentTick()+2);e.run();
@@ -119,7 +119,7 @@ final class SlowBoundaries {
    int hits=n.getHitsMade();
    PvmMeleeEvent replacement=new PvmMeleeEvent(h.world(),n,p);n.setPvmMeleeEvent(replacement);
    replacement.run();eq(hits,n.getHitsMade(),"event replacement cannot bypass latched Slow "+id);
-   advanceTo(h,due);h.random().scriptInts(99,99,99,99);replacement.run();
+   advanceTo(h,due);h.random().reset(9123);h.random().scriptInts(id==866||id==870?0:99,99,99,99);replacement.run();
    check(n.getHitsMade()>hits,"NPC ready at captured deadline "+id+" running="+replacement.isRunning()+" current="+n.isCurrentPvmMeleeEvent(replacement)+" hp="+n.getLevel(3)+" removed="+n.isRemoved()+" positions="+n.getLocation()+"/"+p.getLocation()+" slowReady="+Slow.ready(n,Slow.Cadence.MELEE)+" tick="+h.server().getCurrentTick()+" due="+due);
    replacement.stop();n.resetCombatEvent();p.resetCombatEvent();
   }

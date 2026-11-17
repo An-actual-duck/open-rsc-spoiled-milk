@@ -13,6 +13,7 @@ import com.openrsc.server.model.combat.CriticalHitResolver;
 import com.openrsc.server.model.combat.CombatLuck;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
+import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
@@ -87,6 +88,7 @@ public class CombatFormula {
 
   private static AttackRoll rollMagicDamage(
       final Mob source, final Mob victim, final double spellPower, final boolean directAttack) {
+    if (directAttack && com.openrsc.server.content.npccombat.CanonicalNpcCombat.disabledPrimary(source, CombatStyle.MAGIC)) return AttackRoll.normal(0);
 		int spellMax = Math.max(1, (int) Math.ceil(spellPower));
 		int offenseBonus = offenseBonus(source, source.getMagicOffense());
 		int defenseMax = defenseToMitigation(victim.getMagicDefense());
@@ -120,6 +122,7 @@ public class CombatFormula {
       final double spellPower,
       final double maxHitPercent,
       final boolean directAttack) {
+    if (directAttack && com.openrsc.server.content.npccombat.CanonicalNpcCombat.disabledPrimary(source, CombatStyle.MAGIC)) return AttackRoll.normal(0);
 		int spellMax = Math.max(1, (int) Math.ceil(spellPower));
 		int offenseBonus = offenseBonus(source, source.getMagicOffense());
 		int attackMax = applyOutgoingMaxHitDebuff(source, spellMax + offenseBonus);
@@ -274,6 +277,7 @@ public class CombatFormula {
 
   private static AttackRoll rollMeleeDamage(
       final Mob source, final Mob victim, final boolean directAttack, final int capDivisor) {
+    if (directAttack && com.openrsc.server.content.npccombat.CanonicalNpcCombat.disabledPrimary(source, CombatStyle.MELEE)) return AttackRoll.normal(0);
 		int attackMax = getDragonBreathMainAttackMax(source, offenseToMaxHit(source, source.getMeleeOffense())) / capDivisor;
         if(source instanceof com.openrsc.server.model.entity.npc.Npc)
           attackMax=com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.reduceMaximumMelee((com.openrsc.server.model.entity.npc.Npc)source,attackMax);
@@ -331,6 +335,7 @@ public class CombatFormula {
       final int arrowId,
       final Mob victim,
       final boolean skillCape) {
+    if (com.openrsc.server.content.npccombat.CanonicalNpcCombat.disabledPrimary(source, CombatStyle.RANGED)) return AttackRoll.normal(0);
 		int attackMax = offenseToMaxHit(source, source.getRangedOffense());
 		if (skillCape) {
 			attackMax *= 2;

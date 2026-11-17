@@ -200,6 +200,21 @@ public class CombatEvent extends GameTickEvent {
 			target.setLastCombatState(CombatState.ERROR);
 			resetCombat();
 		} else {
+            if (com.openrsc.server.content.npccombat.CanonicalNpcCombat.generic(hitter)) {
+                Npc actor = (Npc) hitter;
+                if (!com.openrsc.server.content.npccombat.CanonicalNpcCombat.ready(actor)) return;
+                int range = com.openrsc.server.model.entity.npc.NpcCombatProfile.resolve(actor).getProjectileRange();
+                boolean shot = actor.withinRange(target, range)
+                    && com.openrsc.server.model.PathValidation.checkEnemyCombatProjectilePath(
+                        getWorld(), actor.getWorldLocation(), target.getWorldLocation());
+                boolean melee = actor.withinRange(target, 1)
+                    && com.openrsc.server.model.PathValidation.checkAdjacentDistance(actor, target, true, false);
+                if (com.openrsc.server.content.npccombat.CanonicalNpcCombat.select(actor, target, melee, shot)
+                    != com.openrsc.server.model.combat.CombatStyle.MELEE) {
+                    actor.getBehavior().tryCanonicalProjectileAttack(target);
+                    return;
+                }
+            }
 			if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(hitter)) {
 				if (!hitter.withinRange(target, 1) || !com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(hitter)) return;
 			}
@@ -240,6 +255,7 @@ public class CombatEvent extends GameTickEvent {
       // if(hitter.isNpc() && target.isPlayer() || target.isNpc() && hitter.isPlayer()) {
       final boolean attackSuppressed =
           com.openrsc.server.model.combat.AttackState.commitAttack(hitter).isSuppressed();
+      com.openrsc.server.content.npccombat.CanonicalNpcCombat.committed(hitter, (int)getDelayTicks());
       com.openrsc.server.model.combat.AttackRoll primaryRoll =
           com.openrsc.server.model.combat.AttackRoll.normal(0);
 			int damage;

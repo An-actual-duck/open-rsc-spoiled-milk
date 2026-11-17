@@ -21,13 +21,18 @@ public final class CanonicalNpcCombat {
   public static boolean generic(Mob mob){
     if(!(mob instanceof Npc))return false;NpcCombatDefinition d=definition((Npc)mob);return d!=null&&d.genericDispatch;
   }
+  public static boolean disabledPrimary(Mob source, CombatStyle style) {
+    if (!(source instanceof Npc)) return false;
+    NpcCombatDefinition d = definition((Npc) source);
+    return d != null && !d.uses(style);
+  }
   /** Keep original dice for intentionally excluded minigames/summons/legacy actors. */
   public static int defenseRollMinimum(Mob source,Mob target){
-    for(Mob mob:new Mob[]{source,target}){
-      if(mob!=null&&!mob.getConfig().WANT_MYWORLD)return 1;
-      if(mob instanceof Npc&&definition((Npc)mob)==null)return 1;
-    }
-    return 0;
+    return legacyActor(source) || legacyActor(target) ? 1 : 0;
+  }
+  private static boolean legacyActor(Mob mob) {
+    return mob != null && (!mob.getConfig().WANT_MYWORLD
+        || mob instanceof Npc && definition((Npc) mob) == null);
   }
   private static final class State {
     final CombatParticipantSnapshot life;

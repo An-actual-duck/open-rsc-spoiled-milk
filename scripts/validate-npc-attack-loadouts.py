@@ -4,9 +4,14 @@ from pathlib import Path
 import json,hashlib,csv,re,collections
 R=Path(__file__).resolve().parents[1];B=R/'docs/myworld/proposed-work-plans/npc-attack-loadouts'
 def main():
+ import argparse,subprocess
+ parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--historical-source',action='store_true',help='Validate the frozen authoring baseline at its recorded sourceCommit, rather than current runtime source');args=parser.parse_args()
+ def source_bytes(path,data):
+  return subprocess.check_output(['git','show',data['sourceCommit']+':'+path],cwd=R)if args.historical_source else(R/path).read_bytes()
+
  d=json.loads((B/'loadouts.json').read_text());v=json.loads((B/'tag-vocabulary.json').read_text());rows=d['rows'];defense=json.loads((R/'docs/myworld/proposed-work-plans/npc-defense-roster/roster.json').read_text())['npcs'];audit={x['id']:x for x in json.loads((R/'docs/myworld/proposed-work-plans/npc-offense-style-audit/audit.json').read_text())['rows']}
  assert d['runtimeLoadable']is False
- for p,h in d['sourceHashes'].items():assert hashlib.sha256((R/p).read_bytes()).hexdigest()==h,'Changed input: '+p
+ for p,h in d['sourceHashes'].items():assert hashlib.sha256(source_bytes(p,d)).hexdigest()==h,'Changed input: '+p
  ids=[x['id']for x in rows];assert len(ids)==len(set(ids))==298 and set(ids)=={r['id']for r in defense}
  vocab=set(v['tags']);modes=collections.Counter();primary=collections.Counter();byid={x['id']:x for x in rows}
  for r in rows:
@@ -42,5 +47,6 @@ def main():
  mdids=[int(x)for x in re.findall(r'^\| (\d+) \|',(B/'loadouts.md').read_text(),re.M)];assert len(mdids)==298 and set(mdids)==set(ids)
  assert modes=={'exclusive':190,'mixed':82,'protected_minigame':22,'scripted_preserve':4}
  assert primary=={'melee':213,'ranged':36,'magic':49}
+ print('Historical source snapshot; runtime parity is checked by test-canonical-npc-combat.py.'if args.historical_source else'Current source bindings checked.')
  print('PASS 298 loadouts: current-source bindings, full roster, ordered styles, quest/minigame safeguards, special owners, god/element/tag semantics and JSON/CSV/Markdown agreement. No runtime combat test or gameplay change.')
 if __name__=='__main__':main()

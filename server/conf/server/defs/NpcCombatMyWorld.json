@@ -4164,7 +4164,7 @@
             "element.fire"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Retain existing species/target-HP/shield branches. Metadata does not decide canonical damage style or Power mapping.",
+          "notes": "True damage bypasses ordinary style defenses; retain existing species, target-HP, shield, roll and settlement branches. Not Magic Power.",
           "damageKind": "true_damage"
         }
       ]
@@ -4328,7 +4328,7 @@
             "element.fire"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Retain existing species/target-HP/shield branches. Metadata does not decide canonical damage style or Power mapping.",
+          "notes": "True damage bypasses ordinary style defenses; retain existing species, target-HP, shield, roll and settlement branches. Not Magic Power.",
           "damageKind": "true_damage"
         }
       ]
@@ -4393,7 +4393,7 @@
             "element.fire"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Retain existing species/target-HP/shield branches. Metadata does not decide canonical damage style or Power mapping.",
+          "notes": "True damage bypasses ordinary style defenses; retain existing species, target-HP, shield, roll and settlement branches. Not Magic Power.",
           "damageKind": "true_damage"
         }
       ]
@@ -4458,7 +4458,7 @@
             "element.fire"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Retain existing species/target-HP/shield branches. Metadata does not decide canonical damage style or Power mapping.",
+          "notes": "True damage bypasses ordinary style defenses; retain existing species, target-HP, shield, roll and settlement branches. Not Magic Power.",
           "damageKind": "true_damage"
         }
       ]
@@ -6032,7 +6032,7 @@
             "element.fire"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Retain existing species/target-HP/shield branches. Metadata does not decide canonical damage style or Power mapping.",
+          "notes": "True damage bypasses ordinary style defenses; retain existing species, target-HP, shield, roll and settlement branches. Not Magic Power.",
           "damageKind": "true_damage"
         }
       ]
@@ -9275,7 +9275,7 @@
             "element.fire"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Retain existing species/target-HP/shield branches. Metadata does not decide canonical damage style or Power mapping.",
+          "notes": "True damage bypasses ordinary style defenses; retain existing species, target-HP, shield, roll and settlement branches. Not Magic Power.",
           "damageKind": "true_damage"
         }
       ]
@@ -15239,7 +15239,7 @@
             "element.fire"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Retain existing species/target-HP/shield branches. Metadata does not decide canonical damage style or Power mapping.",
+          "notes": "True damage bypasses ordinary style defenses; retain existing species, target-HP, shield, roll and settlement branches. Not Magic Power.",
           "damageKind": "true_damage"
         },
         {
@@ -15275,7 +15275,7 @@
             "delivery.area"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Existing burn and its distinct mitigation; Power mapping remains deferred.",
+          "notes": "Damage over time remains outside ordinary style defense and Power rolls; retain existing encounter burn rules.",
           "damageKind": "dot"
         }
       ]
@@ -15442,7 +15442,7 @@
             "element.fire"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Retain existing species/target-HP/shield branches. Metadata does not decide canonical damage style or Power mapping.",
+          "notes": "True damage bypasses ordinary style defenses; retain existing species, target-HP, shield, roll and settlement branches. Not Magic Power.",
           "damageKind": "true_damage"
         }
       ]
@@ -15939,7 +15939,7 @@
             "element.fire"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Retain existing species/target-HP/shield branches. Metadata does not decide canonical damage style or Power mapping.",
+          "notes": "True damage bypasses ordinary style defenses; retain existing species, target-HP, shield, roll and settlement branches. Not Magic Power.",
           "damageKind": "true_damage"
         }
       ]
@@ -16004,7 +16004,7 @@
             "element.fire"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Retain existing species/target-HP/shield branches. Metadata does not decide canonical damage style or Power mapping.",
+          "notes": "True damage bypasses ordinary style defenses; retain existing species, target-HP, shield, roll and settlement branches. Not Magic Power.",
           "damageKind": "true_damage"
         }
       ]
@@ -16069,7 +16069,7 @@
             "element.fire"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Retain existing species/target-HP/shield branches. Metadata does not decide canonical damage style or Power mapping.",
+          "notes": "True damage bypasses ordinary style defenses; retain existing species, target-HP, shield, roll and settlement branches. Not Magic Power.",
           "damageKind": "true_damage"
         }
       ]
@@ -16134,7 +16134,7 @@
             "element.fire"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Retain existing species/target-HP/shield branches. Metadata does not decide canonical damage style or Power mapping.",
+          "notes": "True damage bypasses ordinary style defenses; retain existing species, target-HP, shield, roll and settlement branches. Not Magic Power.",
           "damageKind": "true_damage"
         }
       ]
@@ -16199,7 +16199,7 @@
             "element.fire"
           ],
           "dispatch": "existing_special_owner",
-          "notes": "Retain existing species/target-HP/shield branches. Metadata does not decide canonical damage style or Power mapping.",
+          "notes": "True damage bypasses ordinary style defenses; retain existing species, target-HP, shield, roll and settlement branches. Not Magic Power.",
           "damageKind": "true_damage"
         }
       ]
