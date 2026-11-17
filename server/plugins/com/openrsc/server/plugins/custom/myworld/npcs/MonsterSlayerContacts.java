@@ -152,7 +152,12 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (shortcut && !hostGuildAllows(player, index)) { dialogue.npc(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 		if (!shortcut) {
 			dialogue.npc(player, npc, contactGreeting(index));
-			if (speakChoice(player, npc, contactChoices(index)) != 0) return;
+			int choice = speakChoice(player, npc, contactChoices(index));
+			if (index == 0 && choice == 1) {
+				dialogue.npc(player, npc, hobartRankAdvice(state.getRank()));
+				return;
+			}
+			if (choice != 0) return;
 			dialogue.npc(player, npc, contactProof(index));
 			if (!state.getRank().isAtLeast(REQUIRED[index])) { dialogue.player(player, npc, missingProofResponse(index)); dialogue.npc(player, npc, contactRefusal(index, state.getRank())); return; }
 			if (!hostGuildAllows(player, index)) { dialogue.npc(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
@@ -176,6 +181,9 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			} else dialogue.npc(player, npc, taskAssignmentFailureLine(result.getReason()));
 			return;
 		}
+		if (index == 0 && state.getRank() == MonsterSlayerRank.FLEDGLING
+			&& state.getMandatoryCursors().get("falador").intValue() == 0)
+			dialogue.npc(player, npc, hobartFirstTaskWelcome());
 		if (shouldUseHobartFollowUpRemark(index, state.getTasksCompleted())) dialogue.npc(player, npc, hobartFollowUpRemark());
 		if (shouldUseMaraAssignmentRemark(index, state)) dialogue.npc(player, npc, maraAssignmentRemark());
 		String taskKey = MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey();
@@ -524,10 +532,35 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	public static String[] hobartMembershipProofLines() { return HOBART_MEMBERSHIP_PROOF.clone(); }
 	/** Exact short lines spoken after a selected eligible drink is accepted. */
 	public static String[] hobartDrinkReturnLines() { return HOBART_DRINK_RETURN.clone(); }
+	/** Shown only after the first real assignment succeeds, including the Task shortcut. */
+	public static String[] hobartFirstTaskWelcome() {
+		return new String[] {"Right then. Time for some proper work.",
+			"Once you've done enough tasks for me,",
+			"I'll award you the rank of Adept.",
+			"Just keep at it. You'll get there.",
+			"The monsters certainly aren't going anywhere."};
+	}
+	/** Read-only advice follows the player's current standing rather than assigning work. */
+	public static String[] hobartRankAdvice(MonsterSlayerRank rank) {
+		if (rank == MonsterSlayerRank.LEGEND) return new String[] {
+			"You're a Legend already!",
+			"No higher rank for me to hand you.",
+			"Radimus can still keep you busy, mind."};
+		if (rank.isAtLeast(MonsterSlayerRank.INITIATE)) {
+			String[] destination = rankDestination(rank).split(" at ", 2);
+			return new String[] {"You've outgrown my work for promotions.",
+				"Go and see " + destination[0] + ".", "At " + destination[1] + ".",
+				"Keep doing their tasks. Put in the work."};
+		}
+		return new String[] {"Just keep doing the tasks I give you.",
+			"It's all about putting in the work.",
+			"Once you've done enough, I'll make you an Adept.",
+			"Can't hand out promotions for drinking, can I?"};
+	}
 	/** Contact-specific greeting seam; every later contact follows the same proof-first pattern. */
 	public static String contactGreeting(int index) { String[] lines = {"Oh, it's you again. Another task then?", "Are you here to slay monsters?", "Back for another hard job? The Blue Moon has seen worse.", "Ah! An Elite hunter. Here for a real challenge?", "Do you stand ready to defend this world?", "Have you come seeking a task worthy of a legend?"}; return lines[index]; }
 	/** Natural yes/no responses; menu text is repeated as player speech before continuing. */
-	public static String[] contactChoices(int index) { String[][] choices = {{"Yes please.", "Not now."}, {"Yes, I am.", "No, not today."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"I have.", "Not today."}}; return choices[index].clone(); }
+	public static String[] contactChoices(int index) { String[][] choices = {{"Yes please.", "How do I earn my next rank?", "Not now."}, {"Yes, I am.", "No, not today."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"I have.", "Not today."}}; return choices[index].clone(); }
 	/** The rank proof required before normal assignment is attempted. */
 	public static String contactProof(int index) { String[] lines = {"Stamp?", "Let's see that Adept sticker.", "Button?", "Badge, if you please!", "Your medal.", "Then let me see your Hero's crest."}; return lines[index]; }
 	/** Player acknowledgement after a proof request but before a proof-gated refusal. */
