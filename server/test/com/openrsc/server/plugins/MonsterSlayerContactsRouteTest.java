@@ -896,6 +896,26 @@ public final class MonsterSlayerContactsRouteTest {
 		RecordingDialogue hobartDialogue = new RecordingDialogue(0);
 		new MonsterSlayerContacts(hobartDialogue).onTalkNpc(eligibleHobart, new Npc(server.getWorld(), 846, 276, 600));
 		assertEquals(java.util.Arrays.asList("N:" + MonsterSlayerContacts.contactGreeting(0), "P:Yes please.", "N:" + MonsterSlayerContacts.contactProof(0), "P:Right here!"), hobartDialogue.events.subList(0, 4), "eligible Hobart Talk-to acknowledges proof before assignment");
+		String[] hobartWelcome = MonsterSlayerContacts.hobartFirstTaskWelcome();
+		assertTrue(containsAnyNpcLine(hobartDialogue.events, hobartWelcome), "first Talk-to assignment explains progression");
+		for (String line : hobartWelcome) assertTrue(line.length() <= 48, "short first-task line");
+		assertTrue(hobartDialogue.events.get(4 + hobartWelcome.length).startsWith("N:Your next task is to slay "), "explanation leads into assignment");
+		String activeKey = MonsterSlayerState.read(eligibleHobart.getCache(), data).getActiveTaskKey();
+		RecordingDialogue reminder = new RecordingDialogue();
+		new MonsterSlayerContacts(reminder).onOpNpc(eligibleHobart, new Npc(server.getWorld(), 846, 276, 600), "Task");
+		assertFalse(containsAnyNpcLine(reminder.events, hobartWelcome), "active task reminder never repeats first-task explanation");
+		RecordingDialogue rankQuestion = new RecordingDialogue(1);
+		new MonsterSlayerContacts(rankQuestion).onTalkNpc(eligibleHobart, new Npc(server.getWorld(), 846, 276, 600));
+		assertEquals("P:How do I earn my next rank?", rankQuestion.events.get(1), "rank question is spoken by player");
+		assertTrue(rankQuestion.events.contains("N:Once you've done enough, I'll make you an Adept."), "Fledgling receives Adept advice");
+		assertEquals(activeKey, MonsterSlayerState.read(eligibleHobart.getCache(), data).getActiveTaskKey(), "rank question preserves active task");
+		Player firstShortcut = player(server, "hobartfirstrank", 275, 601);
+		MonsterSlayerState.write(firstShortcut.getCache(), data, fledgling);
+		RecordingDialogue firstShortcutDialogue = new RecordingDialogue();
+		new MonsterSlayerContacts(firstShortcutDialogue).onOpNpc(firstShortcut, new Npc(server.getWorld(), 846, 276, 601), "Task");
+		assertTrue(containsAnyNpcLine(firstShortcutDialogue.events, hobartWelcome), "first Task shortcut also explains progression");
+		assertTrue(MonsterSlayerState.read(firstShortcut.getCache(), data).getActiveTaskKey() != null, "shortcut still assigns first real task");
+		assertEquals("Not now.", MonsterSlayerContacts.contactChoices(0)[2], "decline follows rank question");
 		Player pendingPromotion = player(server, "hobartpromotionfirst", 276, 600);
 		MonsterSlayerState.write(pendingPromotion.getCache(), data, MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE, MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
 		RecordingDialogue promotionDialogue = new RecordingDialogue();
@@ -904,9 +924,25 @@ public final class MonsterSlayerContactsRouteTest {
 		assertFalse(promotionDialogue.events.contains("N:" + MonsterSlayerContacts.contactGreeting(0)), "pending promotion suppresses normal greeting");
 		assertTrue(MonsterSlayerState.read(pendingPromotion.getCache(), data).isPromotionAcknowledged("falador", data), "promotion is acknowledged after its one interaction");
 		assertTrue(MonsterSlayerState.read(pendingPromotion.getCache(), data).getActiveTaskKey() == null, "promotion interaction does not assign another task");
-		RecordingDialogue afterPromotion = new RecordingDialogue(1);
+		RecordingDialogue afterPromotion = new RecordingDialogue(2);
 		new MonsterSlayerContacts(afterPromotion).onTalkNpc(pendingPromotion, new Npc(server.getWorld(), 846, 278, 600));
 		assertEquals(java.util.Arrays.asList("N:" + MonsterSlayerContacts.contactGreeting(0), "P:Not now."), afterPromotion.events, "acknowledged promotion does not repeat and normal dialogue resumes");
+		RecordingDialogue promotedAdvice = new RecordingDialogue(1);
+		new MonsterSlayerContacts(promotedAdvice).onTalkNpc(pendingPromotion, new Npc(server.getWorld(), 846, 278, 600));
+		assertTrue(promotedAdvice.events.contains("N:Go and see Mara."), "promoted player is directed to Mara");
+		assertTrue(promotedAdvice.events.contains("N:At the Rusty Anchor in Port Sarim."), "advice names Mara's location");
+		assertTrue(MonsterSlayerState.read(pendingPromotion.getCache(), data).getActiveTaskKey() == null, "advice does not assign repeatable work");
+		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "For your next rank, go and see Mara."), "promotion itself explains where to go next");
+		for (MonsterSlayerRank rank : MonsterSlayerRank.values()) {
+			if (!rank.isAtLeast(MonsterSlayerRank.FLEDGLING)) continue;
+			String[] advice = MonsterSlayerContacts.hobartRankAdvice(rank);
+			for (String line : advice) assertTrue(line.length() <= 48, "short rank advice line for " + rank);
+			if (rank.isAtLeast(MonsterSlayerRank.INITIATE) && rank != MonsterSlayerRank.LEGEND) {
+				String[] destination = MonsterSlayerContacts.rankDestination(rank).split(" at ", 2);
+				assertEquals("Go and see " + destination[0] + ".", advice[1], "advice follows current progression " + rank);
+			}
+		}
+		assertEquals("You're a Legend already!", MonsterSlayerContacts.hobartRankAdvice(MonsterSlayerRank.LEGEND)[0], "Legend advice does not promise another rank");
 	}
 
 	private static void maraAssignmentDialogueUsesAuthoritativeProgression(Server server) {
