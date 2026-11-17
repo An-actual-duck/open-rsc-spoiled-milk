@@ -2573,7 +2573,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		} else {
 			// The compatibility helper invokes lethal death before presentation
 			// and contribution. Preserve that path until death authority moves.
-			target.damage(damage);
+			target.damage(damage, HitSplat.TYPE_MAGIC);
 			appliedDamage = Math.min(damage, lastHits);
 		}
 		if (target.isNpc()) {

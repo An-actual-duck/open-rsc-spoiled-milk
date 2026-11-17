@@ -35,7 +35,9 @@ final class CurrentCombatHitSplatSourceCharacterization {
                 } else {
                     invoke(event, "applyElementalSwordProc", new Class<?>[] {Mob.class, Mob.class}, source, target);
                 }
-                assertOneHit(target, HitSplat.TYPE_STANDARD, "weapon callback " + weapon + "/pvm=" + pvm);
+                assertOneHit(target, weapon == ItemId.DEMON_PITCHFORK
+                    ? HitSplat.TYPE_MAGIC : HitSplat.TYPE_STANDARD,
+                    "weapon callback " + weapon + "/pvm=" + pvm);
                 position += 6;
             }
             Player armor = h.player("color bear " + position, position, 900);
