@@ -1,0 +1,12 @@
+Static gate: PASS from independent anatomy and identity reviewers, pending owner feedback.
+Construction guide was reviewed separately before rendering.
+
+Anatomy reviewer:
+PASS — final v2 static anatomy/construction. Inspected brief, native and enlarged candidate, and original A. Rear skull, exposed back, shoulders, pelvis and feet consistently support rear three-quarter upper-right. Ears attach separately; near ear overlaps right skull, far ear emerges upper-left. Separate shoulders and hips; near limbs lower/right and far upper/left. Feet separated across pelvis. No blocking structural finding. Static only, no animation consistency or user artistic approval.
+
+Identity reviewer:
+PASS — static identity revision2. Inspected native/enlarged original and candidate. Angular bald head, large ears, wiry torso, long arms, knobby hands and broad feet recognizable. Reduced width compatible with perspective; no convincing identity volume/length change requiring correction. Ragged cloth and rope retained. No identity correction requested. Static only; hidden details and exact3D construction not established.
+
+Technical validation:
+128x128, bounds (39,14)-(89,118), binary alpha, 14 original-A palette colors, no edge clipping.
+No animation made or evaluated. Prior rejected directional study and original still unchanged.
