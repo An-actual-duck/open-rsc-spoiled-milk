@@ -1,0 +1,26 @@
+{
+  "status": "Diagonal-away consistency study; pending owner feedback, not installed in game",
+  "identityReference": "../v1/goblin-a.aseprite",
+  "identitySha256": "6bad1e037f3e017e9f3dda811e5fdfb9e96723dd3e925ea5acdcff97bf3a8699",
+  "generatedSource": "source-generated.png",
+  "generatedSourceSha256": "4ecdcb11304265643f2bbdf22fa672910266e1d9657d1a99700bf052f8bcd5d4",
+  "prompt": "prompt.txt",
+  "method": "New direction generated from approved A identity reference, prepared and articulated in native Aseprite Lua",
+  "canvas": [
+    128,
+    128
+  ],
+  "direction": "rear three-quarter right, toward upper right",
+  "frames": 8,
+  "frameMilliseconds": 110,
+  "containsIdle": false,
+  "palette": "Original A palette only, binary alpha",
+  "layers": 6,
+  "master": "goblin-a-walk-away.aseprite",
+  "masterSha256": "caf9d64eec0f5fe752b52c49cf940a37c59acccac750cfaf774303a3465ff89e",
+  "recipes": [
+    "prepare-base.lua",
+    "animate.lua"
+  ],
+  "scope": "Overall directional and movement consistency; front walk cleanup deferred per owner"
+}
