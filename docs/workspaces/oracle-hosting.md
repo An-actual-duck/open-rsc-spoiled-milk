@@ -22,6 +22,32 @@ public worlds against diverging player databases.
 | Git object repository | `/home/ubuntu/spoiled-milk/repository.git` |
 | External state | `/home/ubuntu/.local/share/spoiled-milk/live` |
 
+The current browser build is `alpha-20261117-v0323-2`, a browser-only
+correction published later on November 17. Its source is
+`12baac71d9b7fe98b84c30971a8169049130cec1`, JAR SHA256 is
+`acffe3ca739dcdda59fba1d0f61905499b21aceae21c62600a15a24be8bc9911`,
+and public manifest SHA256 is
+`0c38634245d24ea575f2017974112205d7fa3fb79a3232e4ad7a5024b8a4b1bc`.
+The Java browser loader had retained the earlier 46,101,718-byte source size,
+while the prepared bundle now contains 46,111,318 raw bytes. It therefore
+rejected world preparation after successful sign-in with WORLD-DATA. The loader
+now takes the exact size from the hash-bound manifest within its existing
+64 MiB source limit; header, roster, map, JAR, GPU, payload hash and prepared-data
+checks remain enforced. Only BrowserWholeOverworldRam.class differs from the
+v0.3.23 client; game assets and gameplay classes are unchanged.
+
+The released loader reproduced the rejection, and the corrected complete reader
+passed 34 actual admission/activation checks plus ten declaration cases and the
+progress/frontend/RAM-policy suites. Stale JS fixture byte counts were corrected.
+The owner entered the public world through a same-origin staged Firefox preview,
+with observed GAME mode and verified Java source/prepared readiness, before the
+main Play pointer changed. The initial release check had reached sign-in only;
+that check did not establish world-entry readiness. HTTPS, Range delivery and
+immutable new asset hashes passed after publication. The public server was not
+restarted, accounts/map were not changed, and standalone remains v0.3.23.
+Evidence: `output/reviews/release-v0.3.23/browser-login-fix/` and
+`/home/ubuntu/spoiled-milk/verification/v0.3.23/browser-login-fix/`.
+
 The November 17, 2026 activation installed v0.3.23 and
 browser `alpha-20261117-v0323` together. This update adds the owner-approved
 explicit NPC power/defense roster and attack styles, mixed-NPC melee animation
