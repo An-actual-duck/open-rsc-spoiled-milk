@@ -21,9 +21,12 @@ public final class FloatingHitSplatState {
 
     public static int priority(int type) {
         switch (type) {
-            case ORSCharacter.HIT_SPLAT_STANDARD: return 0;
+            case ORSCharacter.HIT_SPLAT_STANDARD:
+            case ORSCharacter.HIT_SPLAT_RANGED:
+            case ORSCharacter.HIT_SPLAT_MAGIC: return 0;
             case ORSCharacter.HIT_SPLAT_HEAL: return 1;
-            case ORSCharacter.HIT_SPLAT_POISON: return 2;
+            case ORSCharacter.HIT_SPLAT_POISON:
+            case ORSCharacter.HIT_SPLAT_BLEED: return 2;
             case ORSCharacter.HIT_SPLAT_SUMMON: return 3;
             case ORSCharacter.HIT_SPLAT_RECOIL: return 4;
             default: return 5;

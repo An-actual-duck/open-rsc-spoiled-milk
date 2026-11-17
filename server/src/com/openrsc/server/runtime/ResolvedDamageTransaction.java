@@ -34,7 +34,7 @@ public final class ResolvedDamageTransaction {
       if (checkedRequest.getPresentation() == DamageRequest.Presentation.DAMAGE_AND_HITSPLAT)
         target
             .getUpdateFlags()
-            .addHitSplat(new HitSplat(target, checkedRequest.getHitSplatType(), 0));
+            .addHitSplat(new HitSplat(target, HitSplat.typeForDamage(checkedRequest), 0));
       DamageResult blocked = DamageResult.blockedNonCorporeal(checkedRequest, hitsBefore);
       CombatDamageObservation.publish(blocked);
       return blocked;
@@ -58,7 +58,7 @@ public final class ResolvedDamageTransaction {
           .getUpdateFlags()
           .addHitSplat(
               new HitSplat(
-                  target, checkedRequest.getHitSplatType(), checkedRequest.getResolvedDamage()));
+                  target, HitSplat.typeForDamage(checkedRequest), checkedRequest.getResolvedDamage()));
     }
 
     final DamageResult result =

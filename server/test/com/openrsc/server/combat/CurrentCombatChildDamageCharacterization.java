@@ -182,7 +182,7 @@ final class CurrentCombatChildDamageCharacterization {
 			invoke(event, "applySplinter", new Class<?>[0]);
 			assertEquals(15, valid.getLevel(Skill.HITS.id()),
 				"Splinter uses ceil half of the resolved primary damage");
-			assertHit(valid, 5, HitSplat.TYPE_STANDARD,
+			assertHit(valid, 5, HitSplat.TYPE_MAGIC,
 				"Splinter child presentation");
 			assertEquals(5, contribution(valid, caster,
 				"getMageDamageInfoBy"), "Splinter Magic contribution");

@@ -1839,8 +1839,10 @@ public final class CurrentCombatCharacterizationTest {
 				.matches(settlement.target), path + " target snapshot");
 			assertEquals(7, result.getRequest().getResolvedDamage(),
 				path + " resolved damage");
-			assertEquals(settlement.variant.expectedHitSplatType,
-				result.getRequest().getHitSplatType(), path + " hitsplat type");
+			// Style colors are resolved at presentation; explicit source metadata stays intact.
+			assertEquals(settlement.variant.sourceKind == 2
+				? HitSplat.TYPE_SUMMON : HitSplat.TYPE_STANDARD,
+				result.getRequest().getHitSplatType(), path + " explicit hitsplat type");
 			assertEquals(20, result.getHitsBefore(), path + " Hits before");
 			assertEquals(7, result.getActualDamage(), path + " actual damage");
 			assertEquals(7, result.getLegacyDamageDealt(),
@@ -2059,25 +2061,25 @@ public final class CurrentCombatCharacterizationTest {
 		final PrimaryProjectileVariant[] variants = {
 			new PrimaryProjectileVariant("player magic", 0, 1, -1,
 				Projectile.FIREBALL, 0, "getMageDamageInfoBy",
-				"projectile-player-magic-primary", CombatStyle.MAGIC, 0),
+				"projectile-player-magic-primary", CombatStyle.MAGIC, HitSplat.TYPE_MAGIC),
 			new PrimaryProjectileVariant("player ranged", 0, 2,
 				ItemId.BRONZE_ARROWS.id(), Projectile.ARROW, 0,
 				"getRangeDamageInfoBy", "projectile-player-ranged-primary",
-				CombatStyle.RANGED, 0),
+				CombatStyle.RANGED, HitSplat.TYPE_RANGED),
 			new PrimaryProjectileVariant("player thrown", 0, 2,
 				ItemId.BRONZE_THROWING_KNIFE.id(), Projectile.THROWING_KNIFE,
 				0, "getRangeDamageInfoBy",
-				"projectile-player-thrown-primary", CombatStyle.RANGED, 0),
+				"projectile-player-thrown-primary", CombatStyle.RANGED, HitSplat.TYPE_RANGED),
 			new PrimaryProjectileVariant("player shuriken", 0, 2,
 				ItemId.TIN_SHURIKEN.id(), Projectile.SHURIKEN,
 				0, "getRangeDamageInfoBy",
-				"projectile-player-thrown-primary", CombatStyle.RANGED, 0),
+				"projectile-player-thrown-primary", CombatStyle.RANGED, HitSplat.TYPE_RANGED),
 			new PrimaryProjectileVariant("NPC magic", 1, 1, -1,
 				Projectile.ENEMY_FIRE_BASIC, 0, null,
-				"projectile-npc-magic-primary", CombatStyle.MAGIC, 0),
+				"projectile-npc-magic-primary", CombatStyle.MAGIC, HitSplat.TYPE_MAGIC),
 			new PrimaryProjectileVariant("NPC ranged", 1, 2, -1,
 				Projectile.ROCK_THROW, 0, null,
-				"projectile-npc-ranged-primary", CombatStyle.RANGED, 0),
+				"projectile-npc-ranged-primary", CombatStyle.RANGED, HitSplat.TYPE_RANGED),
 			new PrimaryProjectileVariant("summon magic", 2, 1, -1,
 				Projectile.HOLY_MAGIC, 0, "getSummonDamageInfoBy",
 				"projectile-summon-magic-primary", CombatStyle.MAGIC, HitSplat.TYPE_SUMMON),
@@ -2088,10 +2090,10 @@ public final class CurrentCombatCharacterizationTest {
 				Projectile.SKULL,
 				com.openrsc.server.model.entity.update.CombatEffect.IBAN_BLAST,
 				"getMageDamageInfoBy", "projectile-iban-primary",
-				CombatStyle.MAGIC, 0),
+				CombatStyle.MAGIC, HitSplat.TYPE_MAGIC),
 			new PrimaryProjectileVariant("cannon compatibility", 0, 5, -1,
 				Projectile.SPIKED_BALL, 0, "getRangeDamageInfoBy",
-				"projectile-cannon-primary", CombatStyle.RANGED, 0)
+				"projectile-cannon-primary", CombatStyle.RANGED, HitSplat.TYPE_RANGED)
 		};
 		final List<PrimaryProjectileSettlement> settlements =
 			new ArrayList<PrimaryProjectileSettlement>();

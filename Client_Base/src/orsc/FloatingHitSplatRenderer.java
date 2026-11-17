@@ -86,12 +86,23 @@ public final class FloatingHitSplatRenderer {
         if (style == Style.BACKGROUND) {
             cached = backgroundSprite(type, digits, surface);
         } else {
-            // Keep the accepted text-only placement and appearance unchanged.
+            // Retain native text placement; bleed gets a one-pixel red rim for dark scenes.
             int width = surface.stringWidth(0, digits) + 4;
             int height = surface.fontHeight(0) + 2;
             MudClientGraphics scratch = new MudClientGraphics(width, height, 1);
             scratch.beginSoftwareOwnedRenderer2DFrame();
-            scratch.drawShadowText(digits, 2, height - 3, textColor(type), 0, false);
+            if (type == ORSCharacter.HIT_SPLAT_BLEED) {
+                scratch.drawString(digits, 2, height - 3, textColor(type), 0);
+                int[] glyph = scratch.pixelData.clone();
+                for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
+                    if (glyph[y * width + x] == 0) continue;
+                    for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
+                        int xx = x + dx, yy = y + dy;
+                        if (xx >= 0 && xx < width && yy >= 0 && yy < height
+                            && glyph[yy * width + xx] == 0) scratch.pixelData[yy * width + xx] = 0xE04A42;
+                    }
+                }
+            } else scratch.drawShadowText(digits, 2, height - 3, textColor(type), 0, false);
             cached = new Sprite(scratch.pixelData, width, height);
         }
         sprites.put(key, cached);
@@ -132,6 +143,9 @@ public final class FloatingHitSplatRenderer {
     public static int textColor(int type) {
         switch (type) {
             case ORSCharacter.HIT_SPLAT_STANDARD: return 0xFF6860;
+            case ORSCharacter.HIT_SPLAT_RANGED: return 0xF2E5BE;
+            case ORSCharacter.HIT_SPLAT_MAGIC: return 0x62DEEF;
+            case ORSCharacter.HIT_SPLAT_BLEED: return 0xB82E3A;
             case ORSCharacter.HIT_SPLAT_POISON: return 0x65DF80;
             case ORSCharacter.HIT_SPLAT_HEAL: return 0x69B8FF;
             case ORSCharacter.HIT_SPLAT_SUMMON: return 0xFFE263;
@@ -144,6 +158,9 @@ public final class FloatingHitSplatRenderer {
     public static int backgroundColor(int type) {
         switch (type) {
             case ORSCharacter.HIT_SPLAT_STANDARD: return 0xA62B28;
+            case ORSCharacter.HIT_SPLAT_RANGED: return 0x756443;
+            case ORSCharacter.HIT_SPLAT_MAGIC: return 0x236C7C;
+            case ORSCharacter.HIT_SPLAT_BLEED: return 0x7A1724;
             case ORSCharacter.HIT_SPLAT_POISON: return 0x256938;
             case ORSCharacter.HIT_SPLAT_HEAL: return 0x245B9B;
             case ORSCharacter.HIT_SPLAT_SUMMON: return 0x876611;

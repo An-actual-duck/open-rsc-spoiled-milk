@@ -58,6 +58,12 @@ public final class FloatingHitSplatFixture {
         check(FloatingHitSplatRenderer.textColor(2) == FloatingHitSplatRenderer.textColor(5)
             && FloatingHitSplatRenderer.backgroundColor(2) == FloatingHitSplatRenderer.backgroundColor(5), "armor and jewelry share purple");
         check(FloatingHitSplatRenderer.textColor(6) != FloatingHitSplatRenderer.textColor(2), "burn has its own orange");
+        check(FloatingHitSplatRenderer.textColor(ORSCharacter.HIT_SPLAT_RANGED)==0xF2E5BE,"approved ranged ivory");
+        check(FloatingHitSplatRenderer.textColor(ORSCharacter.HIT_SPLAT_MAGIC)==0x62DEEF,"approved Magic cyan");
+        check(FloatingHitSplatRenderer.textColor(ORSCharacter.HIT_SPLAT_BLEED)==0xB82E3A,"approved deep-crimson bleed");
+        check(FloatingHitSplatState.priority(ORSCharacter.HIT_SPLAT_RANGED)==0
+            &&FloatingHitSplatState.priority(ORSCharacter.HIT_SPLAT_MAGIC)==0,"direct styles retain primary ordering");
+        check(FloatingHitSplatState.priority(ORSCharacter.HIT_SPLAT_BLEED)==FloatingHitSplatState.priority(ORSCharacter.HIT_SPLAT_POISON),"bleed uses periodic-damage ordering");
         s = state();
         s.offer(0, 11, 0); s.offer(0, 12, 0); s.offer(0, 13, 0);
         check(s.advance(0).get(0).amount == 11 && s.pendingCount() == 2, "repeated type preserved");
@@ -96,6 +102,20 @@ public final class FloatingHitSplatFixture {
     private static void layoutAndCapture() {
         MudClientGraphics surface = new MudClientGraphics(400, 220, 1);
         FloatingHitSplatRenderer r = new FloatingHitSplatRenderer();
+        try {
+            java.lang.reflect.Method sprite = FloatingHitSplatRenderer.class.getDeclaredMethod(
+                "sprite", int.class, int.class, MudClientGraphics.class);
+            sprite.setAccessible(true);
+            com.openrsc.client.model.Sprite wound = (com.openrsc.client.model.Sprite) sprite.invoke(
+                new FloatingHitSplatRenderer(FloatingHitSplatRenderer.Style.TEXT),
+                ORSCharacter.HIT_SPLAT_BLEED, 3, surface);
+            check(Arrays.stream(wound.getPixels()).anyMatch(pixel -> pixel == 0xB82E3A),
+                "bleed retains deep-crimson glyph pixels");
+            check(Arrays.stream(wound.getPixels()).anyMatch(pixel -> pixel == 0xE04A42),
+                "bleed has a lighter red edge for dark backgrounds");
+        } catch (ReflectiveOperationException exception) {
+            throw new AssertionError(exception);
+        }
         ORSCharacter a = new ORSCharacter(), b = new ORSCharacter();
         a.serverIndex = 1; b.serverIndex = 2;
         a.floatingHitSplats.offer(0, 255, 0); b.floatingHitSplats.offer(5, 24, 0);
@@ -148,8 +168,8 @@ public final class FloatingHitSplatFixture {
             new FloatingHitSplatRenderer(FloatingHitSplatRenderer.Style.TEXT),
             new FloatingHitSplatRenderer(FloatingHitSplatRenderer.Style.BACKGROUND)};
         ORSCharacter[][] actors = new ORSCharacter[2][14];
-        int[] types = {0, 3, 1, 4, 5, 2, 6};
-        String[] names = {"Attack", "Healing", "Poison", "Summon", "Jewelry", "Armor", "Burn"};
+        int[] types = {0, 7, 8, 9, 1, 6, 4};
+        String[] names = {"Melee", "Ranged", "Magic", "Bleed", "Poison", "Burn", "Summon"};
         for (int col = 0; col < 2; col++) for (int i = 0; i < 14; i++) {
             actors[col][i] = new ORSCharacter(); actors[col][i].serverIndex = i;
         }
@@ -170,7 +190,7 @@ public final class FloatingHitSplatFixture {
                 s.drawString(col == 0 ? "A / COLORED TEXT" : "B / TIGHT COLORED BACKGROUND", base + 18, 82, 0xF1E3BC, 1);
                 for (int i = 0; i < 7; i++) {
                     int x = base + 36 + i * 68, y = 185;
-                    if (now == 0 || now == 2400) actors[col][i].floatingHitSplats.offer(types[i], new int[] {28, 9, 3, 12, 6, 14, 1}[i], now);
+                    if (now == 0 || now == 2400) actors[col][i].floatingHitSplats.offer(types[i], new int[] {28, 12, 16, 3, 3, 1, 12}[i], now);
                     actor(s, x, y, i % 2 == 0);
                     s.drawString(names[i], x - 22, y + 72, 0xD3D9D3, 0);
                     r.collect(actors[col][i], x, y, now, s);
@@ -192,7 +212,7 @@ public final class FloatingHitSplatFixture {
                 s.drawString("Moving owner", base + 316, 466, 0xD3D9D3, 0);
                 r.draw(s);
             }
-            s.drawString("Red attacks / blue healing / green poison / yellow summons / purple armor + jewelry / orange burn", 18, 511, 0xC8D5D1, 0);
+            s.drawString("Coral melee / ivory ranged / cyan magic / crimson bleed; existing source/effect colors retained", 18, 511, 0xC8D5D1, 0);
             s.drawString("t=" + now + "ms | 64px rise cap | 2.1s lifetime | finite queue; extreme crowding may still overlap", 18, 529, 0xADB9B4, 0);
             png(s, out.resolve(String.format("frame-%03d.png", frame)));
             if (now == 1000) png(s, out.resolve("comparison.png"));

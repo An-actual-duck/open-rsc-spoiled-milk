@@ -17,7 +17,10 @@ public final class ORSCharacter {
 	public static final int HIT_SPLAT_SUMMON = 4;
 	public static final int HIT_SPLAT_RECOIL = 5;
 	public static final int HIT_SPLAT_BURN = 6;
-	public static final int HIT_SPLAT_COUNT = 7;
+	public static final int HIT_SPLAT_RANGED = 7;
+    public static final int HIT_SPLAT_MAGIC = 8;
+    public static final int HIT_SPLAT_BLEED = 9;
+    public static final int HIT_SPLAT_COUNT = 10;
 	public static final int HIT_SPLAT_TIMEOUT = 200;
 
 	public String accountName;

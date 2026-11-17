@@ -80,7 +80,7 @@ final class CurrentCombatDelayedSpellCharacterization {
 		assertTrue(child.getLevel(Skill.HITS.id()) < 100,
 			"God spell damages an eligible child after one scheduler tick");
 		assertHit(child, 100 - child.getLevel(Skill.HITS.id()),
-			HitSplat.TYPE_STANDARD, "God spell child presentation");
+			HitSplat.TYPE_MAGIC, "God spell child presentation");
 		assertTrue(contribution(child, caster) > 0,
 			"God spell child records Magic contribution");
 		assertTrue(child.isChasing(),
@@ -144,7 +144,7 @@ final class CurrentCombatDelayedSpellCharacterization {
 		assertTrue(child.getLevel(Skill.HITS.id()) < 100,
 			"Iban Blast damages an eligible child after one scheduler tick");
 		assertHit(child, 100 - child.getLevel(Skill.HITS.id()),
-			HitSplat.TYPE_STANDARD, "Iban Blast child presentation");
+			HitSplat.TYPE_MAGIC, "Iban Blast child presentation");
 		assertTrue(contribution(child, caster) > 0,
 			"Iban Blast child records Magic contribution");
 		assertTrue(child.isChasing(),
@@ -249,7 +249,7 @@ final class CurrentCombatDelayedSpellCharacterization {
 			"God/Iban helper death precedes damage presentation");
 		assertEquals(0, contributionAtDeath.get(),
 			"God/Iban helper death precedes delayed Magic contribution");
-		assertHit(lethal, 7, HitSplat.TYPE_STANDARD,
+		assertHit(lethal, 7, HitSplat.TYPE_MAGIC,
 			"God/Iban helper displayed lethal overkill");
 		assertEquals(5, contribution(lethal, caster),
 			"God/Iban helper adds delayed Magic contribution after death");
