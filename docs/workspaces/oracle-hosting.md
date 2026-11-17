@@ -12,15 +12,48 @@ public worlds against diverging player databases.
 | Game port | TCP `43605` |
 | VM | `VM.Standard.A1.Flex`, 1 OCPU, 6 GB RAM, ARM64 |
 | OS / Java | Ubuntu 26.04.1 LTS / OpenJDK 17 |
-| Server release tag | `v0.3.22` (crossbows, Stirges, coatings, agility rewards and map) |
-| Published client release | `v0.3.22` |
-| Game source | `315cf3151b7d9e29c5b0738157c9bca4198273f0` |
+| Server release tag | `v0.3.23` (explicit NPC combat stats, attack styles and visual fixes) |
+| Published client release | `v0.3.23` |
+| Game source | `44f428107058347ae4d4f0eba45aa9c76322645b` |
 | Client protocol | `10063` |
 | Public service | `spoiled-milk.service`, enabled at boot |
-| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.22` |
+| Persistent source | `/home/ubuntu/spoiled-milk/live/v0.3.23` |
 | Guarded live path | `/tmp/spoiled-milk-live-main` |
 | Git object repository | `/home/ubuntu/spoiled-milk/repository.git` |
 | External state | `/home/ubuntu/.local/share/spoiled-milk/live` |
+
+The November 17, 2026 activation installed v0.3.23 and
+browser `alpha-20261117-v0323` together. This update adds the owner-approved
+explicit NPC power/defense roster and attack styles, mixed-NPC melee animation
+repair, corrected Moss Giant projectile/impact grid, style-colored damage
+numbers with a distinct bleed marker, and the equipment-panel background fix.
+Both clients share JAR SHA256
+`8ddefc9e5174920f408d9ee773ef116da944985a234dcbbca9ea0a1c2fcf0740`;
+the browser manifest is
+`826c4349fabd80624a307eb20cec2fc5997d864d3486340a942bf4763409325c`.
+Protocol 10063 and the accepted map fingerprint remain unchanged.
+
+The owner reported the public server off in the current maintenance window;
+Oracle confirmed players saved at 05:40:49 UTC and successful service exit at
+05:40:53. No AI shutdown signal was used. Integrity-checked Oracle and PC backup
+copies preserve all 74 accounts. The exact ARM64/JDK17 candidate passed 149
+combat scenarios on the installed map, 1,801 canonical-NPC assertions, and the
+style/bleed fixture. The actual installed core passed the canonical and color
+fixtures again with class-loading proof. Test launches explicitly use the hosted
+Log4j 2.17 classpath; the small arena is used for focused checks, and the full
+installed map for the broader combat suite.
+
+All six uploaded release assets were downloaded and checksum checked. The
+published v0.3.22 POSIX updater installed v0.3.23 while preserving synthetic
+preferences and identity. The downloaded client reached the hardware OpenGL
+login screen, and real Firefox reached the public browser login screen without
+AI account authentication. Trusted HTTPS, immutable Range delivery, byte-exact
+native/WSS configurations, staged-login negotiation, external DB linkage,
+enabled backup timer and zero automatic restarts passed. Native Windows/macOS
+execution is not claimed. Previous server v0.3.22 and browser
+`alpha-20261116-v0322` remain preserved for rollback. Receipts:
+`output/reviews/release-v0.3.23/` locally and
+`/home/ubuntu/spoiled-milk/verification/v0.3.23/` on Oracle.
 
 The November 16, 2026 activation installed v0.3.22 and browser
 `alpha-20261116-v0322` together. Both clients share the release JAR SHA256
@@ -95,7 +128,7 @@ The service requires that mount. The source is a clean detached checkout of the
 exact published tag; it is never a development workspace.
 
 The service calls `scripts/run-hosted-server.sh` with
-`MYWORLD_HOSTED_RELEASE_TAG=v0.3.22`. Existing exact-tag, clean-source, installed
+`MYWORLD_HOSTED_RELEASE_TAG=v0.3.23`. Existing exact-tag, clean-source, installed
 map, generator, external-database, and occupied-port guards remain active.
 `JAVA_TOOL_OPTIONS` caps the heap at 3 GiB. The unit uses `Restart=on-failure`;
 a successful in-game shutdown exits normally and stays stopped.
