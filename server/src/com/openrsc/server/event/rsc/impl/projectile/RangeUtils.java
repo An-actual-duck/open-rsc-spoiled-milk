@@ -348,7 +348,7 @@ public class RangeUtils {
                 }
                 fireDamage = (int) Math.floor(getCurrentLevel(player, Skill.HITS.id()) * percentage / 100.0);
                 // Explicit magical combat harm: phase permits it; retain legacy settlement/death order.
-                player.damageFromCombat(fireDamage);
+                com.openrsc.server.content.npccombat.NpcTrueDamage.dragonBreath(player, fireDamage, true);
 
                 //reduce ranged level (case for KBD)
                 if (npc.getID() == NpcId.KING_BLACK_DRAGON.id()) {

@@ -120,6 +120,7 @@ public final class ProjectileLaunchSpecification {
 	private final int projectileType;
 	private final int impactEffectType;
 	private final boolean showProjectile;
+	private final com.openrsc.server.model.entity.player.PrayerCatalog.GodLine npcMagicGodLine;
 	private final NpcMagicElement magicElement;
 	private final int startleProcChancePercent;
 	private final int acidPoisonPower;
@@ -152,6 +153,7 @@ public final class ProjectileLaunchSpecification {
 		this.projectileType = builder.projectileType;
 		this.impactEffectType = builder.impactEffectType;
 		this.showProjectile = builder.showProjectile;
+		this.npcMagicGodLine = builder.npcMagicGodLine;
 		this.magicElement = builder.magicElement;
 		this.startleProcChancePercent = builder.startleProcChancePercent;
 		this.acidPoisonPower = builder.acidPoisonPower;
@@ -280,6 +282,8 @@ public final class ProjectileLaunchSpecification {
 		return duplicationStrategy;
 	}
 
+	public com.openrsc.server.model.entity.player.PrayerCatalog.GodLine getNpcMagicGodLine() { return npcMagicGodLine; }
+
 	public static final class Builder {
     private AttackCommitment attackCommitment = AttackCommitment.normal();
     private AttackRoll attackRoll;
@@ -297,6 +301,7 @@ public final class ProjectileLaunchSpecification {
 		private int projectileType;
 		private int impactEffectType;
 		private boolean showProjectile = true;
+		private com.openrsc.server.model.entity.player.PrayerCatalog.GodLine npcMagicGodLine;
 		private NpcMagicElement magicElement = NpcMagicElement.NONE;
 		private int startleProcChancePercent;
 		private int acidPoisonPower;
@@ -331,6 +336,11 @@ public final class ProjectileLaunchSpecification {
       this.attackRoll = java.util.Objects.requireNonNull(value);
       return this;
     }
+
+        public Builder npcMagicGodLine(com.openrsc.server.model.entity.player.PrayerCatalog.GodLine value) {
+            if (producer != Producer.NPC_MAGIC && value != null) throw new IllegalArgumentException("NPC Magic alignment on another producer");
+            npcMagicGodLine = value; return this;
+        }
 
         public Builder automaticTarget(final boolean automaticTarget) {
             this.automaticTarget = automaticTarget;

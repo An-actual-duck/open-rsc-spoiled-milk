@@ -49,6 +49,8 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public int getProjectileRange(final Npc npc) {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition d=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(npc);
+        if(d!=null&&d.genericDispatch)return d.projectileRange;
 		if (npc != null && npc.getDef() != null && npc.getDef().getProjectileRange() > 0) {
 			return npc.getDef().getProjectileRange();
 		}
@@ -87,6 +89,8 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public int getRangedOffense(final Npc npc) {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition d=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(npc);
+        if(d!=null)return d.power(com.openrsc.server.model.combat.CombatStyle.RANGED);
 		if (!usesRangedProjectiles()) {
 			return 0;
 		}
@@ -94,6 +98,12 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public int getRangedProjectileVisual(final Npc npc) {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition d=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(npc);
+        if(d!=null&&d.genericDispatch){switch(d.rangedVisual){
+            case "bolt":return Projectile.BOLT;case "dart":return Projectile.THROWING_DART;
+            case "throwing_knife":return Projectile.THROWING_KNIFE;case "naga_scimitar":return Projectile.NAGA_SCIMITAR;
+            case "acid_drop":return Projectile.ACID_DROP;default:return Projectile.ARROW;}}
+
 		if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(npc)) return Projectile.NAGA_SCIMITAR;
 		if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(npc)) return Projectile.ACID_DROP;
 		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
@@ -121,6 +131,8 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public int getMagicProjectileVisual(final Npc npc, final NpcMagicElement element) {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition d=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(npc);
+        if(d!=null&&d.genericDispatch&&d.magicGod!=null&&element==NpcMagicElement.NONE)return Projectile.HOLY_MAGIC;
 		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc)) return Projectile.HOLY_MAGIC;
 		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return Projectile.MAGIC;
@@ -238,6 +250,8 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public int getMagicOffense(final Npc npc) {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition d=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(npc);
+        if(d!=null)return d.power(com.openrsc.server.model.combat.CombatStyle.MAGIC);
 		if (!usesMagicProjectiles()) {
 			return 0;
 		}
@@ -273,6 +287,11 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public NpcMagicElement getMagicElement(final Npc npc) {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition d=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(npc);
+        if(d!=null&&d.genericDispatch&&d.uses(com.openrsc.server.model.combat.CombatStyle.MAGIC)){
+            java.util.List<NpcMagicElement> choices=d.elements();
+            return choices.get(choices.size()==1?0:npc.getWorld().getServer().getCombatRandom().nextInt(choices.size()));
+        }
 		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc)) return NpcMagicElement.NONE;
 		if (!usesMagicProjectiles() || npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return NpcMagicElement.NONE;
@@ -377,6 +396,9 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public static NpcAttackStyleProfile forNpc(final Npc npc) {
+        com.openrsc.server.content.npccombat.NpcCombatDefinition canonical=com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(npc);
+        if(canonical!=null&&canonical.genericDispatch)return canonical.genericProfile();
+        // The following name/ID rules are retained only for protected and special owners.
 		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc)) return MELEE_MAGIC;
 		if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(npc)) return MELEE_RANGED;
 		if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(npc)) return PURE_RANGED;

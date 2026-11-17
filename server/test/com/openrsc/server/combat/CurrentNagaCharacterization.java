@@ -29,30 +29,31 @@ final class CurrentNagaCharacterization {
 		Npc n = h.npc(866, 440, 440);
 		Player p = h.player("naga range", 444, 440);
 		p.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), 200, 200, false);
-		check(n.getMeleeOffense() == 65 && n.getRangedOffense() == 55, "modern offenses");
-		check(n.getMeleeDefense() == 20 && n.getRangedDefense() == 65 && n.getMagicDefense() == 95, "defense priorities");
+		check(n.getMeleeOffense() == 39 && n.getRangedOffense() == 65, "modern offenses");
+		check(n.getMeleeDefense() == 19 && n.getRangedDefense() == 57 && n.getMagicDefense() == 95, "defense priorities");
 		NpcCombatProfile profile = NpcCombatProfile.resolve(n);
-		for (int i = 0; i < 30; i++) check(!profile.prefersProjectileAtDistance(1)
-			&& profile.prefersProjectileAtDistance(2) && profile.prefersProjectileAtDistance(5)
-			&& !profile.prefersProjectileAtDistance(6), "no random adjacent throws");
+        check(profile.usesRangedProjectiles() && !profile.usesMagicProjectiles()
+            && com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(n).primary
+                == com.openrsc.server.model.combat.CombatStyle.RANGED, "authored ranged-primary capabilities");
 		check(profile.getRangedProjectileVisual() == Projectile.NAGA_SCIMITAR, "dedicated scimitar projectile");
 		PvmMeleeEvent event = new PvmMeleeEvent(h.world(), n, p);
 		n.setPvmMeleeEvent(event);
 		event.run();
 		check(n.finishedPath() && !NagaCombat.attackReady(n), "throw pauses movement and starts shared cooldown");
 		long next = n.getAttribute("slayer_naga_next_attack_tick", -1L);
-		check(!n.getBehavior().tryNagaProjectileAttack(p), "behavior does not throw again on cooldown");
+		check(n.getBehavior().tryNagaProjectileAttack(p), "behavior holds position without another throw on cooldown");
 		event.run();
-		check(!n.finishedPath(), "advances between throws");
+		check(n.finishedPath(), "valid shot remains stationary between throws");
 		n.getWalkingQueue().processNextMovement();
-		check(n.getX() == 441, "actual step toward player");
+		check(n.getX() == 440, "no pursuit while clear shot exists");
 		check(n.<Long>getAttribute("slayer_naga_next_attack_tick", -1L) == next, "chasing does not restart cooldown");
-		p.setLocation(Point.location(442, 440));
+		p.setLocation(Point.location(441, 440));
 		int swings = n.getHitsMade();
 		event.run();
 		check(n.finishedPath() && n.getHitsMade() == swings, "adjacency cannot bypass throw cooldown");
 		for (int i = 0; i < 3; i++) h.advanceOneCombatTick();
-		check(!n.getBehavior().tryNagaProjectileAttack(p), "never throws adjacent");
+		h.random().reset(91); h.random().scriptInts(0);
+		check(!n.getBehavior().tryNagaProjectileAttack(p), "eligible secondary melee selected once at adjacency");
 		event.run();
 		check(n.getHitsMade() == swings + 1, "one swing despite two damage rolls");
 		h.logout(p);
@@ -70,11 +71,12 @@ final class CurrentNagaCharacterization {
 		h.random().scriptDoubles(0.0, 0.999999).scriptInts(1, 1);
 		int main = CombatFormula.doMeleeDamage(n, p);
 		int off = CombatFormula.doOffhandMeleeDamage(n, p);
-		check(main == 0 && off > 0 && off <= 5, "independent offhand succeeds after main miss");
-		for (int i = 0; i < 200; i++) check(CombatFormula.doOffhandMeleeDamage(n, p) <= 5, "half cap before normal defense roll");
+		check(main == 0 && off > 0 && off <= 3, "independent offhand succeeds after main miss");
+		for (int i = 0; i < 200; i++) check(CombatFormula.doOffhandMeleeDamage(n, p) <= 3, "half cap before normal defense roll");
 		PvmMeleeEvent event = new PvmMeleeEvent(h.world(), n, p);
 		n.setPvmMeleeEvent(event);
 		outcomes.clear();
+        h.random().reset(881); h.random().scriptInts(0);
 		event.run();
 		List<DamageResult> strikes = new ArrayList<>();
 		for (DamageResult result : outcomes) if (result.getRequest().getSource() == n && result.getRequest().getTarget() == p) strikes.add(result);
@@ -88,13 +90,14 @@ final class CurrentNagaCharacterization {
 		check(outcomes.size() == count, "cannot double swing same tick");
 		for (int i = 0; i < 2; i++) h.advanceOneCombatTick();
 		n.applyStartleDebuff(p);
+        h.random().reset(882); h.random().scriptInts(0);
 		outcomes.clear();
 		event.run();
 		check(outcomes.stream().noneMatch(r -> "naga-melee-offhand".equals(r.getRequest().getEffectKey())), "suppression blocks offhand too");
 		for (int i = 0; i < 2; i++) h.advanceOneCombatTick();
 		p.getSkills().setLevel(Skill.HITS.id(), 1);
 		h.random().reset(5);
-		h.random().scriptDoubles(0.999999).scriptInts(1);
+		h.random().scriptDoubles(0.999999).scriptInts(0, 0);
 		outcomes.clear();
 		event.run();
 		check(outcomes.stream().anyMatch(r -> r.getRequest().getTarget() == p && r.isTargetTerminal()), "main hand can kill normally");

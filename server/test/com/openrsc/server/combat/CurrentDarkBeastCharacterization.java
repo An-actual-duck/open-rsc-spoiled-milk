@@ -27,7 +27,7 @@ final class CurrentDarkBeastCharacterization {
 			Player edge = player(h,"static edge",444,444);
 			Player late = player(h,"static late",445,440);
 			check(n.getLevel(Skill.HITS.id())==200 && n.getMeleeOffense()==110 && n.getMagicOffense()==210
-				&& n.getMeleeDefense()==120 && n.getMagicDefense()==120 && n.getRangedDefense()==100,"modern stats");
+				&& n.getMeleeDefense()==108 && n.getMagicDefense()==120 && n.getRangedDefense()==60,"modern stats");
 			check(NpcCombatProfile.resolve(n).isMeleeOnly(),"lightning does not enable ordinary magic projectiles");
 			DarkBeastCombat.startCharge(n);
 			check(DarkBeastCombat.markCount(p)==1 && DarkBeastCombat.markCount(edge)==1

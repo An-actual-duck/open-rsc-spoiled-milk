@@ -1,0 +1,42 @@
+MyWorld canonical NPC combat catalog
+
+NpcCombatMyWorld.json is the gameplay authority for the migrated NPC Power,
+Defense, enabled primary attack styles, weights and thematic metadata. All three
+style values must be present. Zero is literal, never an override/fallback marker.
+NPC definitions still own identity, HP, combat level, appearance and placements.
+The old Attack/Strength/Defense fields are compatibility data for excluded actors;
+ordinary modern rolls do not derive Power or Defense from them.
+
+Initial migration: 883 definitions; 275 canonical combat records, 22 protected
+minigame/role records, one zero-power role-review hold (Charlie), 585 nonattackable
+compatibility records. Owned summons are excluded per instance. The preserved
+special owners are Elder green dragon, Banshee, Dark beast and Giant frog.
+
+Server startup validates the entire catalog and refuses absent, duplicate,
+incomplete or invalid records. No runtime dependency on docs or output exists.
+Changes take effect on a new Server instance, not an uncoordinated hot reload.
+
+Generic dedicated casters/shooters hold a valid shot, including during cooldown.
+When a shot is unavailable they use existing pursuit, without a new repositioning
+system. Mixed styles choose once among eligible attacks, and both combat engines
+share a per-NPC cooldown. Committed Slow delay survives decay and retargeting.
+
+Tags and creature affinities are inert. Explicit magicGod plus matching player
+prayer book is the one approved active rule: reduce that NPC's Magic damage by
+20%, floored once after robe/potion/summon mitigation. Holy remains a theme, not
+another damage style. NPC holyPower is an inert zero placeholder. boss is an
+explicit flag, currently Balrog, King black dragon and Elder green dragon.
+
+Breath is True damage: bypass ordinary style Defense, preserving each existing
+species/shield/initiator/HP branch and legacy settlement behavior. Burn and other
+DOT mechanics remain outside ordinary Defense/Power rolls. No new damage visual
+or network opcode is introduced by this classification.
+
+Historical review inputs live under docs/myworld/proposed-work-plans/npc-*/.
+They intentionally retain their original baselines. The migration generator is
+an audit/reproduction tool, not a production-build requirement. Future approved
+balance changes may edit this gameplay catalog directly; do not blindly regenerate
+it from frozen proposals. Run tests/myworld/test-canonical-npc-combat.py after
+building the server. Its optional --check-authoring-migration verifies the initial
+migration exactly. Historical proposal validators accept --historical-source for
+their archived sourceCommit; default current-source checks still detect drift.

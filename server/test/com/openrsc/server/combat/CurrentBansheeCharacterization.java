@@ -30,7 +30,7 @@ public final class CurrentBansheeCharacterization {
 	private static void damage(CurrentCombatHarness h) throws Exception {
 		Npc banshee = h.npc(865, 440, 440);
 		check(banshee.getMeleeOffense() == 55 && banshee.getMagicOffense() == 55, "explicit dual offense");
-		check(banshee.getMeleeDefense() == 40 && banshee.getRangedDefense() == 40 && banshee.getMagicDefense() == 40, "explicit defenses");
+		check(banshee.getMeleeDefense() == 40 && banshee.getRangedDefense() == 0 && banshee.getMagicDefense() == 16, "explicit defenses");
 		for (int mode = 0; mode < 3; mode++) {
 			Player p = h.player("wail" + mode, 441, 440);
 			h.recordOutgoingPackets(p);
@@ -65,7 +65,10 @@ public final class CurrentBansheeCharacterization {
 			p.getSkills().setLevel(Skill.HITS.id(), 40);
 			if (mode == 2) {
 				banshee.applyStartleDebuff(p);
-				event = new ProjectileEvent(h.world(), banshee, p, 999, 1, false);
+                event = new ProjectileEvent(h.world(), banshee, p,
+                    com.openrsc.server.model.combat.ProjectileLaunchSpecification.builder(
+                        com.openrsc.server.model.combat.ProjectileLaunchSpecification.Producer.NPC_MAGIC, 999, 1)
+                    .attackCommitment(com.openrsc.server.model.combat.AttackState.commitAttack(banshee)).build());
 				hit(event, banshee, p, 999);
 			} else {
 				CurrentCombatHarness.invokePrivate(event, "inflictDamage",

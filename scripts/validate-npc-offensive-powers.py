@@ -4,9 +4,14 @@ from pathlib import Path
 import json,hashlib,csv,re,math
 R=Path(__file__).resolve().parents[1];B=R/'docs/myworld/proposed-work-plans/npc-offensive-powers';S=('melee','ranged','magic')
 def main():
+ import argparse,subprocess
+ parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--historical-source',action='store_true',help='Validate the frozen authoring baseline at its recorded sourceCommit, rather than current runtime source');args=parser.parse_args()
+ def source_bytes(path,data):
+  return subprocess.check_output(['git','show',data['sourceCommit']+':'+path],cwd=R)if args.historical_source else(R/path).read_bytes()
+
  data=json.loads((B/'powers.json').read_text());rows=data['rows'];L=R/'docs/myworld/proposed-work-plans/npc-attack-loadouts/loadouts.json'
  assert data['runtimeLoadable']is False and hashlib.sha256(L.read_bytes()).hexdigest()==data['loadoutSha256']
- for p,h in data['sourceHashes'].items():assert hashlib.sha256((R/p).read_bytes()).hexdigest()==h,p
+ for p,h in data['sourceHashes'].items():assert hashlib.sha256(source_bytes(p,data)).hexdigest()==h,p
  load={x['id']:x for x in json.loads(L.read_text())['rows']};audit={x['id']:x for x in json.loads((R/'docs/myworld/proposed-work-plans/npc-offense-style-audit/audit.json').read_text())['rows']}
  assert len(rows)==len({r['id']for r in rows})==298 and {r['id']for r in rows}==set(load)
  byid={r['id']:r for r in rows};ratios={'Low':[100,40,10],'Mid Low':[100,50,20],'Mid':[100,60,30],'Mid High':[100,70,40],'High':[100,80,50],'Very High':[100,90,60]}
@@ -54,5 +59,6 @@ def main():
    assert int(c['assigned'+st.title()])==r['assignedPower'][st]and int(c['current'+st.title()])==r['currentPower'][st]
    for prefix,key in [('old','currentRawCeilings'),('new','assignedRawCeilings')]:assert c[prefix+st.title()+'Ceiling']==(''if r[key][st]is None else str(r[key][st]))
  ids=[int(x)for x in re.findall(r'^\| (\d+) \|',(B/'powers.md').read_text(),re.M)];assert len(ids)==298 and set(ids)==set(byid)
+ print('Historical source snapshot; runtime parity is checked by test-canonical-npc-combat.py.'if args.historical_source else'Current source bindings checked.')
  print('PASS298 power assignments: source/loadout bindings, Strength/band rules, disabled zeros, authored references, boss/Ice Queen/script/minigame exceptions, weights, independent raw ceilings and JSON/CSV/Markdown parity. No runtime gameplay tests or changes.')
 if __name__=='__main__':main()

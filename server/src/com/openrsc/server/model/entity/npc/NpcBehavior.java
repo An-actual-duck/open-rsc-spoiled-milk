@@ -534,6 +534,13 @@ public class NpcBehavior {
 		return tryProjectileAttack(currentTimeMillis());
 	}
 
+	public boolean tryCanonicalProjectileAttack(final Mob opponent) {
+        if(!com.openrsc.server.content.npccombat.CanonicalNpcCombat.generic(npc))return false;
+        target=opponent;return tryProjectileAttack(currentTimeMillis());
+    }
+
+    private boolean holdProjectilePosition() {npc.resetPath();npc.face(target);return true;}
+
 	private boolean tryProjectileAttack(final long now) {
 		if (com.openrsc.server.content.monsterslayer.BloodveldCombat.tryPull(npc, target)) return true;
 		final NpcCombatProfile profile = NpcCombatProfile.resolve(npc);
@@ -541,27 +548,33 @@ public class NpcBehavior {
 			return false;
 		}
 
-		final int distance = Math.max(Math.abs(npc.getX() - target.getX()), Math.abs(npc.getY() - target.getY()));
-		if (!profile.prefersProjectileAtDistance(distance)) {
-			return false;
-		}
-
-		if (!npc.withinRange(target, profile.getProjectileRange())
-			|| !PathValidation.checkEnemyCombatProjectilePath(
-				npc.getWorld(),
-				npc.getWorldLocation(),
-				target.getWorldLocation())) {
-			return false;
-		}
+        final com.openrsc.server.content.npccombat.NpcCombatDefinition definition=
+            com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(npc);
+        final boolean canonical=definition!=null&&definition.genericDispatch;
+        final int distance=Math.max(Math.abs(npc.getX()-target.getX()),Math.abs(npc.getY()-target.getY()));
+        if(!canonical&&!profile.prefersProjectileAtDistance(distance))return false;
+        final boolean clearShot=npc.withinRange(target,profile.getProjectileRange())
+            &&PathValidation.checkEnemyCombatProjectilePath(npc.getWorld(),npc.getWorldLocation(),target.getWorldLocation());
+        if(!clearShot)return false;
+        if(canonical){
+            if(!com.openrsc.server.content.npccombat.CanonicalNpcCombat.ready(npc)
+                ||!com.openrsc.server.content.Slow.ready(npc,com.openrsc.server.content.Slow.Cadence.RANGED))return holdProjectilePosition();
+            final boolean same=npc.getX()==target.getX()&&npc.getY()==target.getY();
+            final boolean adjacent=!same&&PathValidation.checkAdjacentDistance(npc,target,true,false);
+            com.openrsc.server.model.combat.CombatStyle selected=
+                com.openrsc.server.content.npccombat.CanonicalNpcCombat.select(npc,target,adjacent,true);
+            if(selected==com.openrsc.server.model.combat.CombatStyle.MELEE)return false;
+            if(selected==null)return holdProjectilePosition();
+        }
 		final boolean banshee = com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc);
 		final boolean naga = com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(npc);
 		final boolean slowCooldown = projectileCooldownLifetime != null && projectileCooldownLifetime.matches(npc)
 			&& npc.getWorld().getServer().getCurrentTick() < nextProjectileTick;
 		if (naga ? !com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(npc)
 			: banshee ? !com.openrsc.server.content.monsterslayer.BansheeCombat.attackReady(npc)
-			: slowCooldown || !checkCombatTimer(now, npc.getCombatTimer(), 3 * tickFactor)) {
+			: !canonical && (slowCooldown || !checkCombatTimer(now, npc.getCombatTimer(), 3 * tickFactor))) {
 			// A clear ranged shot on cooldown is not a reason to approach melee.
-			if (banshee || com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(npc)) {
+			if (canonical || banshee || com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(npc)) {
 				npc.resetPath();
 				npc.face(target);
 				return true;
@@ -592,6 +605,7 @@ public class NpcBehavior {
 
     final com.openrsc.server.model.combat.AttackCommitment attack =
         com.openrsc.server.model.combat.AttackState.commitAttack(npc);
+        com.openrsc.server.content.npccombat.CanonicalNpcCombat.committed(npc,interval.ticks);
 		if (profile.usesRangedProjectiles()) {
 
       com.openrsc.server.model.combat.AttackRoll roll =
@@ -646,6 +660,7 @@ public class NpcBehavior {
                       .elementalDebuffs(0, 0, 0, fireDefenseDebuffPercent)
                       .presentation(magicAttack.getProjectileVisual(), impactEffectType, true)
                       .magicElement(magicAttack.getElement())
+                      .npcMagicGodLine(magicAttack.getGodLine())
                       .dualElementProcs(
                           startleProcChancePercent, acidPoisonPower, 0, splinterProcChancePercent)
                       .attackCommitment(attack)

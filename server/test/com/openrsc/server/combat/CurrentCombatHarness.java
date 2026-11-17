@@ -78,16 +78,17 @@ final class CurrentCombatHarness implements AutoCloseable {
 		server.getEntityHandler().load();
 		world = server.getWorld();
 		world.getNpcDrops().load();
+        try { recordDropLogs(); } catch (ReflectiveOperationException e) { throw new IOException("Cannot install offline drop logger", e); }
 	}
 
 	Server server() {
 		return server;
 	}
 
-	/** Opt-in drop-only boundary. Other fixtures keep their original database. */
+	/** Offline drop-only boundary. Explicit database fixtures may replace it deliberately. */
 	void recordDropLogs() throws ReflectiveOperationException {
 		ensureOpen();
-		if (recordingDropDatabase != null) throw new IllegalStateException("Drop recorder already installed");
+		if (recordingDropDatabase != null) return;
 		recordingDropDatabase = new RecordingDropDatabase(server);
 		final Field databaseField = Server.class.getDeclaredField("database");
 		databaseField.setAccessible(true);

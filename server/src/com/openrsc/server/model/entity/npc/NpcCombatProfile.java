@@ -1,13 +1,12 @@
 package com.openrsc.server.model.entity.npc;
 
 /**
- * One resolved view of an NPC's existing attack-style authority.
+ * One view of an NPC's attack capabilities and a single cast's dependent payload.
  *
- * <p>The underlying selection remains {@link NpcAttackStyleProfile}; this
- * value does not introduce a second NPC table or change any profile rule. It
- * keeps a single cast's selected element and all of its dependent presentation
- * and proc values together, so callers cannot accidentally mix values from
- * separate selections.</p>
+ * <p>Canonical MyWorld records supply capabilities and raw values. Their eligible
+ * weighted attack selection and shared cadence belong to CanonicalNpcCombat;
+ * enum names such as MELEE_MAGIC do not imply a primary style or modern weight.
+ * Protected encounters and compatibility profiles retain their existing rules.</p>
  */
 public final class NpcCombatProfile {
 	private final Npc npc;
@@ -43,7 +42,7 @@ public final class NpcCombatProfile {
 		return style.getProjectileRange(npc);
 	}
 
-	/** Delegates at the original decision point, preserving any RNG draw. */
+	/** Legacy/special preference only; ordinary canonical dispatch uses CanonicalNpcCombat. */
 	public boolean prefersProjectileAtDistance(final int distance) {
 		return style.prefersProjectileAtDistance(npc, distance);
 	}
@@ -66,7 +65,7 @@ public final class NpcCombatProfile {
 
 	/**
 	 * Selects the element exactly once for this cast. Call only after the
-	 * existing projectile-preference gate; some profiles intentionally consume
+	 * attack commitment; some profiles intentionally consume
 	 * combat RNG to choose their element.
 	 */
 	public NpcMagicAttack selectMagicAttack() {
