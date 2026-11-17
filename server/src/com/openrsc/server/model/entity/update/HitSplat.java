@@ -1,5 +1,7 @@
 package com.openrsc.server.model.entity.update;
 
+import com.openrsc.server.model.combat.DamageRequest;
+
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.entity.Mob;
 
@@ -12,6 +14,22 @@ public class HitSplat {
 	public static final int TYPE_SUMMON = 4;
 	public static final int TYPE_RECOIL = 5;
 	public static final int TYPE_BURN = 6;
+	public static final int TYPE_RANGED = 7;
+	public static final int TYPE_MAGIC = 8;
+	public static final int TYPE_BLEED = 9;
+
+	/** Explicit source/effect colors win; ordinary direct hits use their damage style. */
+	public static int typeForDamage(DamageRequest request) {
+		int explicit = request.getHitSplatType();
+		if (explicit != TYPE_STANDARD
+			|| request.getSourceCategory() == DamageRequest.SourceCategory.DOT
+			|| request.getStyle() == null) return explicit;
+		switch (request.getStyle()) {
+			case RANGED: case THROWING: return TYPE_RANGED;
+			case MAGIC: return TYPE_MAGIC;
+			default: return TYPE_STANDARD;
+		}
+	}
 
 	private final Mob mob;
 	private final int type;

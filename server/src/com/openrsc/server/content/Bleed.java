@@ -148,7 +148,7 @@ public final class Bleed {
                         com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target,damage))
                         .periodicProvenance(source instanceof Player?PeriodicEffectProvenance.player(sourceId):PeriodicEffectProvenance.npc(sourceId,sourceLife))
                         .eventId(getUUID()).style(style).harmNature(CombatHarmNature.NONMAGICAL)
-                        .hitSplatType(HitSplat.TYPE_STANDARD).build());
+                        .hitSplatType(HitSplat.TYPE_BLEED).build());
                 if(target instanceof Npc&&source instanceof Player)((Npc)target).addCombatDamage((Player)source,result.getActualDamage());
                 else {ActionSender.sendStat((Player)target,Skill.HITS.id());if(source instanceof Player)PlayerPvpCombat.recordPrimaryDamage(source,(Player)target,result.getActualDamage());}
                 com.openrsc.server.content.monsterslayer.StirgeCombat.drink(source,result.getActualDamage());

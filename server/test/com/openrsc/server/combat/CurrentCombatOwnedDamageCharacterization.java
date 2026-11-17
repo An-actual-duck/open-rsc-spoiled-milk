@@ -297,7 +297,7 @@ final class CurrentCombatOwnedDamageCharacterization {
 
 			assertEquals(38, valid.getLevel(Skill.HITS.id()),
 				"Balrog splash applies fire Magic then potion mitigation");
-			assertHit(valid, 2, HitSplat.TYPE_STANDARD,
+			assertHit(valid, 2, HitSplat.TYPE_MAGIC,
 				"Balrog splash presentation");
 			assertEquals(2, valid.getTrackedDamage(balrog),
 				"Balrog splash damage tracking");

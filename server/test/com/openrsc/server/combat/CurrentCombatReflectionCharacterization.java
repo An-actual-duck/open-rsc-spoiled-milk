@@ -66,7 +66,7 @@ final class CurrentCombatReflectionCharacterization {
 				path + " Frostbite reduces the pending hit by reflected damage");
 			assertEquals(15, attacker.getLevel(Skill.HITS.id()),
 				path + " Frostbite reflected Hits");
-			assertHit(attacker, 5, HitSplat.TYPE_STANDARD,
+			assertHit(attacker, 5, HitSplat.TYPE_MAGIC,
 				path + " Frostbite presentation");
 			assertEquals(5, contribution(
 				attacker, source, "getMageDamageInfoBy"),
@@ -108,7 +108,7 @@ final class CurrentCombatReflectionCharacterization {
 				lethalAttacker, lethalDefender, Integer.valueOf(9))).intValue();
 			assertEquals(4, lethalPending,
 				path + " lethal Frostbite preserves pending-hit reduction");
-			assertHit(lethalAttacker, 5, HitSplat.TYPE_STANDARD,
+			assertHit(lethalAttacker, 5, HitSplat.TYPE_MAGIC,
 				path + " lethal Frostbite displayed overkill");
 			assertEquals(3, contribution(
 				lethalAttacker, lethalSource, "getMageDamageInfoBy"),

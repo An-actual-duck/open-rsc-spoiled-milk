@@ -268,8 +268,8 @@ final class CurrentCombatSecondaryDamageCharacterization {
 			"god/Iban delayed secondary reports capped helper damage");
 		assertEquals(14, target.getLevel(Skill.HITS.id()),
 			"god/Iban delayed secondary damage");
-		assertHit(target, 6, HitSplat.TYPE_STANDARD,
-			"god/Iban delayed secondary uses the standard helper hitsplat");
+		assertHit(target, 6, HitSplat.TYPE_MAGIC,
+			"god/Iban delayed secondary uses the Magic helper hitsplat");
 		assertEquals(6, contribution(
 			target, caster, "getMageDamageInfoBy"),
 			"god/Iban delayed secondary Magic contribution");
