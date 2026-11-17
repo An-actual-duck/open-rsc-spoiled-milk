@@ -59,6 +59,7 @@ public final class CanonicalNpcCombatFixture {
             JSONObject duplicate = new JSONObject(data.toString()); duplicate.getJSONArray("npcs").put(duplicate.getJSONArray("npcs").getJSONObject(23));
             expectReject(h, duplicate);
             zeroAndCompatibility(h);
+            meleePresentation(h);
             timing(h);
             alignedMagic(h);
             trueDamage(h);
@@ -102,6 +103,30 @@ public final class CanonicalNpcCombatFixture {
         check(damage >= 1, "zero defense roll no longer guarantees blocking one");
         check(h.random().describeState().contains("int(3)=0"), "defense die includes zero through cap two");
         spider.remove(); owned.remove(); minigame.remove(); h.logout(p);
+    }
+    private static void meleePresentation(CurrentCombatHarness h) throws Exception {
+        h.openCombatProjectileRectangle(450,456,450,452);
+        Npc mixed=h.npc(104,450,450); Player p=h.player("mixed stance",451,450);
+        p.getCache().store("setting_auto_retaliate",false);
+        p.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),500,500,false);
+        h.random().reset(992); h.random().scriptInts(0);
+        PvmMeleeEvent attack=new PvmMeleeEvent(h.world(),mixed,p);mixed.setPvmMeleeEvent(attack);
+        attack.run();
+        check(mixed.getHitsMade()==1&&mixed.inCombat(),"mixed NPC starts actual melee swing");
+        check(mixed.getBehavior().tryCanonicalProjectileAttack(p),"mixed NPC holds projectile cooldown");
+        check(mixed.inCombat()&&mixed.getSprite()>=8,"cooldown must preserve active melee animation stance");
+        for(int i=0;i<2;i++)h.advanceOneCombatTick();
+        h.random().reset(994);h.random().scriptInts(99);
+        check(mixed.getBehavior().tryCanonicalProjectileAttack(p),"mixed NPC commits eligible Magic cast");
+        check(mixed.getSprite()<8,"actual Magic cast switches away from melee swing");
+        check(mixed.getBehavior().tryCanonicalProjectileAttack(p)&&mixed.getSprite()<8,
+            "Magic cooldown does not invent a melee swing");
+        mixed.remove();h.logout(p);
+        Npc distant=h.npc(104,450,450);Player far=h.player("distant style",454,450);
+        far.getCache().store("setting_auto_retaliate",false);
+        h.random().reset(993);h.random().scriptInts(0);
+        check(distant.getBehavior().tryCanonicalProjectileAttack(far),"distant melee cannot be selected just because an adjacency edge check passes");
+        distant.remove();h.logout(far);
     }
     private static void timing(CurrentCombatHarness h) throws Exception {
         h.openCombatProjectileRectangle(440, 454, 440, 445);
