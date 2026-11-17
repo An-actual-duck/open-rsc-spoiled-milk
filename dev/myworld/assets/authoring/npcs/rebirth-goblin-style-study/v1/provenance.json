@@ -1,0 +1,46 @@
+{
+  "status": "A selected by owner for Rebirth style exploration; B and C unselected alternatives; no game installation",
+  "creation": "Built-in image_gen concepts, no reference images, followed by Aseprite Lua nearest-neighbor native-size preparation and palette reduction",
+  "canvas": [
+    128,
+    128
+  ],
+  "visibleHeight": 104,
+  "feetBaselineExclusive": 118,
+  "background": "Transparent; binary alpha",
+  "variants": {
+    "a": {
+      "label": "Rough clusters",
+      "opaqueColors": 19
+    },
+    "b": {
+      "label": "Balanced shading",
+      "opaqueColors": 25
+    },
+    "c": {
+      "label": "Scruffy outlines",
+      "opaqueColors": 23
+    }
+  },
+  "masters": [
+    "goblin-a.aseprite",
+    "goblin-b.aseprite",
+    "goblin-c.aseprite"
+  ],
+  "recipe": "prepare.lua",
+  "prompts": "prompts.json",
+  "sourceCanvas": [
+    1254,
+    1254
+  ],
+  "assetSha256": {
+    "prepare.lua": "1ff11c7bb0ee8d07b5d43ef73422f26b75bcde0738eeed1e7a7520f73ab906d8",
+    "goblin-a.aseprite": "6bad1e037f3e017e9f3dda811e5fdfb9e96723dd3e925ea5acdcff97bf3a8699",
+    "prompts.json": "fbaca6b2c0420dbec0ee9fdfcb192c8d25a10056c80c99214a043aca565c45e9",
+    "goblin-b.aseprite": "27762e90f058af1c39931100771b38ac1ac9e209fdc44c41ff4c08a4307c36e3",
+    "goblin-c.aseprite": "44ef3bd68bc8abeba96f38bdd655d295dc16bc8a8c3ced34b4b4d43250dcced8",
+    "sources/b-generated.png": "ba4d65b21936b66758ad70eac63801ac6b880885ca65a28a4c767cb53d172076",
+    "sources/a-generated.png": "6e3d7ae91201c6a2c0ee59faf94ad41bb491325f50aaf2189ecfc05466365a80",
+    "sources/c-generated.png": "b644b5b4a24c13337c609aa1b82ea2ed5ee8d68bb84196fa1820e31dbf253f7b"
+  }
+}

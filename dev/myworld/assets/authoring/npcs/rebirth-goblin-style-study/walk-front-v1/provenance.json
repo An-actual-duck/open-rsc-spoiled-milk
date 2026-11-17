@@ -1,0 +1,31 @@
+{
+  "status": "Useful exploratory front walk; not finalized, forehead connection and rear-foot pixel cleanup deferred by owner",
+  "source": "../v1/goblin-a.aseprite",
+  "sourceSha256": "6bad1e037f3e017e9f3dda811e5fdfb9e96723dd3e925ea5acdcff97bf3a8699",
+  "method": "Aseprite-native articulated pixel layers with reconstructed occluded thigh surfaces; no new image generation",
+  "canvas": [
+    128,
+    128
+  ],
+  "direction": "front",
+  "frames": 8,
+  "frameMilliseconds": 110,
+  "cycleMilliseconds": 880,
+  "containsIdle": false,
+  "loop": "forward",
+  "layers": 7,
+  "palette": "Approved A colors only",
+  "recipe": "animate.lua",
+  "master": "goblin-a-walk-front.aseprite",
+  "masterSha256": "0a53cf261089e86c75e205fbbcef38adfdedb26d41666b3715d8d09c0e77777b",
+  "poseOrder": [
+    "contact",
+    "down",
+    "passing",
+    "up",
+    "opposite contact",
+    "opposite down",
+    "opposite passing",
+    "opposite up"
+  ]
+}

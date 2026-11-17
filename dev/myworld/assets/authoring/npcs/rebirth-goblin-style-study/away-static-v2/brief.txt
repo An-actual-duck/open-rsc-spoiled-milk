@@ -1,0 +1,8 @@
+Rebirth goblin A: diagonal-away static direction, revision 2
+Scope: one still only; no animation or gameplay installation. Preserve all earlier studies.
+Identity: approved v1/goblin-a.aseprite, not the rejected away study.
+Canvas 128x128. Visible height 104px, top14, baseline118 exclusive. Original 19-color palette, binary alpha. Editable Aseprite master.
+A: broad angular bald skull, large pointed ears attached separately to skull sides, long nose, wiry bare torso, knobby hands and broad bare feet, ragged brown waistcloth with rope belt. No armor, hair, tail, weapon, extra detail or modern polish.
+View: rear three-quarter toward upper right. Same orientation for skull, shoulders, torso, pelvis and feet. Near side on screen-right/lower, far side screen-left/upper. Two arms and two legs on separate sockets. Neutral construction stance, feet apart across the pelvis, not a single-file stride. Back surface visible; no chest/abs or back belt knot. Tiny nose edge permissible; do not turn face back toward viewer.
+Guide: geometric spatial masses only. Colours label near/far depth, not final palette; do not copy its crude proportions or simplified feature design. Upper-right direction should read from complete body, not nose alone.
+Reviews: independent anatomy/construction and identity reviewers inspect exact generated and native prepared images; any structural ambiguity blocks animation. User requested still so no animation in this task regardless of result.

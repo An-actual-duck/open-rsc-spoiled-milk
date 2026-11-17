@@ -1,0 +1,24 @@
+{
+  "status": "Owner accepted static directional study on 2026-11-17; independent static gates passed; not installed in game",
+  "sourceIdentity": "../v1/goblin-a.aseprite",
+  "identitySha256": "6bad1e037f3e017e9f3dda811e5fdfb9e96723dd3e925ea5acdcff97bf3a8699",
+  "method": "Built-in imagegen using original A identity and separately reviewed Aseprite construction proxy; native Aseprite preparation to A palette",
+  "generatedSource": "source-generated.png",
+  "sourceSha256": "023e872c208261f57ae6261aee4b75c7d0ec3232517913a795a4498d1db3c205",
+  "prompt": "prompt.txt",
+  "master": "goblin-a-away-static.aseprite",
+  "masterSha256": "b0f30c3c41d4eed3b881a75d30c41b2bb0ab31f53601900667dd88269addfd83",
+  "canvas": [
+    128,
+    128
+  ],
+  "visibleHeight": 104,
+  "direction": "rear three-quarter toward upper right",
+  "containsAnimation": false,
+  "recipes": [
+    "guide.lua",
+    "prepare.lua"
+  ],
+  "review": "review.txt",
+  "installation": "Art study only; not installed in game"
+}
