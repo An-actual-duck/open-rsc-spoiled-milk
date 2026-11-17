@@ -32,9 +32,9 @@ final class CurrentNagaCharacterization {
 		check(n.getMeleeOffense() == 39 && n.getRangedOffense() == 65, "modern offenses");
 		check(n.getMeleeDefense() == 19 && n.getRangedDefense() == 57 && n.getMagicDefense() == 95, "defense priorities");
 		NpcCombatProfile profile = NpcCombatProfile.resolve(n);
-		for (int i = 0; i < 30; i++) check(!profile.prefersProjectileAtDistance(1)
-			&& profile.prefersProjectileAtDistance(2) && profile.prefersProjectileAtDistance(5)
-			&& !profile.prefersProjectileAtDistance(6), "no random adjacent throws");
+        check(profile.usesRangedProjectiles() && !profile.usesMagicProjectiles()
+            && com.openrsc.server.content.npccombat.CanonicalNpcCombat.definition(n).primary
+                == com.openrsc.server.model.combat.CombatStyle.RANGED, "authored ranged-primary capabilities");
 		check(profile.getRangedProjectileVisual() == Projectile.NAGA_SCIMITAR, "dedicated scimitar projectile");
 		PvmMeleeEvent event = new PvmMeleeEvent(h.world(), n, p);
 		n.setPvmMeleeEvent(event);
