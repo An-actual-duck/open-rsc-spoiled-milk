@@ -1,5 +1,5 @@
 {
-  "status": "Independent static gates passed; pending owner artistic feedback",
+  "status": "Owner accepted static directional study on 2026-11-17; independent static gates passed; not installed in game",
   "sourceIdentity": "../v1/goblin-a.aseprite",
   "identitySha256": "6bad1e037f3e017e9f3dda811e5fdfb9e96723dd3e925ea5acdcff97bf3a8699",
   "method": "Built-in imagegen using original A identity and separately reviewed Aseprite construction proxy; native Aseprite preparation to A palette",

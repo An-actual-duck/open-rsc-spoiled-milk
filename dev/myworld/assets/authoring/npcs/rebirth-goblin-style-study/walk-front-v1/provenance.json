@@ -1,5 +1,5 @@
 {
-  "status": "Walk animation test; A style selected by owner, this cycle pending visual feedback",
+  "status": "Useful exploratory front walk; not finalized, forehead connection and rear-foot pixel cleanup deferred by owner",
   "source": "../v1/goblin-a.aseprite",
   "sourceSha256": "6bad1e037f3e017e9f3dda811e5fdfb9e96723dd3e925ea5acdcff97bf3a8699",
   "method": "Aseprite-native articulated pixel layers with reconstructed occluded thigh surfaces; no new image generation",

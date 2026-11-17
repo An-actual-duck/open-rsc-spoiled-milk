@@ -6,8 +6,9 @@ be reconstructed later.
 **Status: speculative, distant concept. Not an official goal, approved roadmap
 item, implementation assignment, or commitment to replace the current client.**
 The owner initially wanted discussion only, then requested this reference note.
-No prototype, performance guarantee, asset selection or engine decision follows
-from saving it.
+Saving the concept did not authorize implementation. The later goblin art study
+below records a selected visual reference, without committing to a game feature,
+performance guarantee or engine decision.
 
 ## Core idea
 
@@ -56,6 +57,40 @@ lighting, camera/facing directions, animation timing and how sprites fit beside
 3D scenery. Equipment and character parts must stay aligned across poses.
 Whether frames are hand-authored, AI-assisted, rendered from rigged models, or
 produced through a mixture remains open.
+
+## Selected goblin style study
+
+On 2026-11-17 the owner selected **goblin A** from three independently generated
+front-facing prototypes. A was preferred for its lower detail and simpler shading:
+it retains a minimalist handmade feeling while adding readable anatomy. A later
+rear three-quarter still, facing upper right, was also accepted after a geometry
+guide and independent anatomy/identity review. These are art references, not
+installed NPC assets or a complete directional animation set.
+
+The maintained [goblin study](../../../dev/myworld/assets/authoring/npcs/rebirth-goblin-style-study/README.txt)
+contains the selected PNGs and editable Aseprite masters, exact submitted prompts,
+original generated sources, palette and native-size preparation recipes.
+Its [style notes](../../../dev/myworld/assets/authoring/npcs/rebirth-goblin-style-study/style-notes.txt)
+separate the owner's choices from the assistant's prompt elaboration and explain
+how to resume the style. Use the saved original as the visual anchor rather than
+expecting a prompt to regenerate identical pixels.
+
+![Selected original goblin A](../../../dev/myworld/assets/authoring/npcs/rebirth-goblin-style-study/v1/goblin-a.png)
+![Accepted diagonal away goblin A](../../../dev/myworld/assets/authoring/npcs/rebirth-goblin-style-study/away-static-v2/goblin-a-away.png)
+
+Both stills use a 128×128 transparent canvas, 104-pixel visible character height,
+and baseline at pixel 118 exclusive. A has 19 opaque colors, broad irregular
+clusters and colored shadow planes rather than a continuous dark contour.
+These goblin dimensions/palette are a reference, not a requirement that every
+future creature share its body size or skin colors.
+
+The front walk was a useful eight-frame experiment but retains forehead/foot
+cleanup issues. The first diagonal-away walk was rejected for contradictory
+orientation and attachments; do not use it as a directional model. The accepted
+second attempt is a still only. Future directional work should use the
+`$multidirectional-sprites` workflow: establish construction, review actual
+anatomy/identity, then animate and inspect both frames and playback. Internal
+review does not replace the owner's visual judgment.
 
 ## Compatibility principle
 

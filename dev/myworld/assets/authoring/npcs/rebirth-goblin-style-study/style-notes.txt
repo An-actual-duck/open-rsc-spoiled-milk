@@ -1,0 +1,65 @@
+Rebirth goblin A style and recreation notes
+Owner-selected reference, 2026-11-17
+
+OWNER'S DIRECTION
+Clearly pixel art, without excessive polish or an extremely blocky appearance.
+Retain some of RSC's crude handmade quality while allowing additional detail.
+The owner chose A from three front-facing concepts because it had less detail
+and simpler shading. This is a newly designed goblin, not an upscale of RSC art.
+The second diagonal-away still was accepted as a successful on-model direction.
+The Rebirth concept remains speculative; these choices do not authorize replacing
+classic artwork or implementing a new renderer/world.
+
+ASSISTANT'S ORIGINAL PROMPT ELABORATION
+The exact submitted A prompt is preserved in v1/selected-a-prompt.txt. It specified:
+- Earthy, primitive early computer RPG character art; rough handmade charm.
+- Broad irregular pixel clusters, slightly lumpy anatomy, understated face.
+- No continuous dark contour; dark green shadow planes define the silhouette.
+- Approximately 16-20 opaque colors, two or three rough shades per material.
+- Readable hands, face and knees without slick highlights or decoration.
+- Moss-green skin, big pointed ears, angular long nose, slightly hunched shoulders,
+  wiry arms, broad hands/bare feet, ragged brown waistcloth and rope belt.
+- Bare chest, no weapon/props; front-facing, arms slightly away, planted feet.
+- Crisp stepped edges; no antialiasing, gradients, blur or subpixel detail.
+These were added implementation choices in the prompt, not independently supplied
+requirements from the owner. The selected result is the primary style evidence.
+Do not apply goblin-specific anatomy, green skin or clothing to unrelated NPCs.
+
+ACTUAL PREPARATION
+The prompt requested an 8x enlargement of a native 128px design. The returned
+source was 1254x1254, not the requested 1024x1024; it was not used as native art.
+Aseprite Lua found the opaque bounds (alpha >=128), resampled nearest-neighbor to
+104px visible height, centered it in a 128x128 canvas, set top to14 and baseline
+to118 exclusive, and quantized with no dithering. A ended with19 opaque colors.
+Use the recorded masters/recipes and actual palette, not the requested source
+dimensions as a guarantee about image-generator output.
+
+RESUME THE STYLE
+1. Inspect the selected front PNG/master at native and enlarged size.
+2. Supply that original as the identity/style reference for further views.
+3. Describe direction in screen terms, with head/torso/pelvis/feet all aligned.
+4. Establish separate appendage roots and near/far depth in a construction guide.
+5. Use multidirectional-sprites for independent anatomy and identity review.
+6. Only propagate a reviewed static pose into animation; compare ordered frames
+   and playback, then clean pixels. A file-format pass is not an anatomy pass.
+7. Keep approved original artwork unchanged; save new candidates separately.
+
+For another creature, reuse the economical cluster/shading treatment, native
+pixel-density target and rough finish; create species-specific proportions,
+materials, palette and landmarks. Avoid drifting toward glossy illustration,
+dense texture/noisy dithering, continuous black ink outlines or chibi proportions.
+
+ANIMATION LESSONS
+The front test used8 distinct frames at110ms/frame (880ms loop), without idle.
+It remains exploratory: owner noted a separating forehead and back-foot artifacts.
+This timing is an experiment, not an engine/gameplay requirement.
+The rejected first away cycle showed why palette and technical validation are
+insufficient: it mixed facing directions and ear/hip attachments. Rejected poses
+must not become identity references simply because they have more completed frames.
+The accepted away-static-v2 has no completed walk animation.
+
+REPRODUCTION LIMIT
+Exact prompts here are the text submitted through built-in image_gen. They do
+not expose hidden model instructions, and no seed or fixed model-build identifier
+was recorded. This package preserves the actual images and editable native
+masters so continuation does not rely on stochastic text-only regeneration.

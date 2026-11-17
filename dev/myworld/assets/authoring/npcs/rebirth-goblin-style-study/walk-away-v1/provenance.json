@@ -1,5 +1,5 @@
 {
-  "status": "Diagonal-away consistency study; pending owner feedback, not installed in game",
+  "status": "Rejected by owner: mixed facing directions and incorrect ear/limb attachments; historical study only",
   "identityReference": "../v1/goblin-a.aseprite",
   "identitySha256": "6bad1e037f3e017e9f3dda811e5fdfb9e96723dd3e925ea5acdcff97bf3a8699",
   "generatedSource": "source-generated.png",
@@ -22,5 +22,10 @@
     "prepare-base.lua",
     "animate.lua"
   ],
-  "scope": "Overall directional and movement consistency; front walk cleanup deferred per owner"
+  "scope": "Overall directional and movement consistency; front walk cleanup deferred per owner",
+  "ownerFindings": [
+    "Ears joined on rear skull instead of separate side attachments",
+    "Torso and arms face diagonal left while face and legs face diagonal right",
+    "Legs read single-file rather than attached across the pelvis"
+  ]
 }

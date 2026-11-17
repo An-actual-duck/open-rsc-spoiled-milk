@@ -1,4 +1,4 @@
-Static gate: PASS from independent anatomy and identity reviewers, pending owner feedback.
+Static gate: PASS from independent anatomy and identity reviewers; owner accepted on 2026-11-17.
 Construction guide was reviewed separately before rendering.
 
 Anatomy reviewer:
