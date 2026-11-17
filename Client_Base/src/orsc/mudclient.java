@@ -12994,7 +12994,7 @@ public final class mudclient implements Runnable {
 				yOffset = C_CUSTOM_UI
 					? getCustomEquipmentPanelTop()
 					: inventoryTabsY - EQUIPMENT_PANEL_HEIGHT;
-				this.getSurface().drawBoxAlpha(xOffset, yOffset, 245, 204, this.clearBox, 128);
+				this.getSurface().drawBoxAlpha(xOffset, yOffset, 245, 228, this.clearBox, 128);
 				this.getSurface().drawBoxAlpha(xOffset, yOffset + 228, 245, 58, this.clearBox, 128);
 				Sprite todraw = null;
 
