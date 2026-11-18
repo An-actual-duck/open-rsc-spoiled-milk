@@ -90,3 +90,47 @@ verified product reuse or runtime preload may offer further savings, but this
 change deliberately does not trust partial old /files outputs as a cache. Any
 such reuse needs its own source-bound integrity and cross-session lifetime
 review. Lower-bandwidth devices will still take longer than these PC timings.
+
+Private gzip transport comparison, November 17, 2026
+---------------------------------------------------
+Using the alpha-20261117-v0323-2 executable and map, a loopback HTTP preview
+served source.bin and prepared.bin at 100 Mbit/s per response. The candidate
+used gzip Content-Encoding with the same decoded bytes and SHA-256 bindings.
+Both variants ran in Firefox with isolated profiles. Each warm run reused its
+variant's cold profile and started a fresh browser and Java VM. One run per
+condition measured Play to client LOGIN mode with at least 20 Java frames, all
+bulk files verified, and the outer startup screen hidden.
+
+                       Identity       gzip
+Cold startup             33.015 s     13.350 s
+Warm startup             30.545 s     11.213 s
+Cold asset body bytes   276948386     30457984
+Warm bulk wire bytes    230205784            0
+
+Cold asset body bytes include the unchanged manifest. Warm wire bytes include
+HTTP overhead reported by Resource Timing. Firefox reused all compressed bulk
+responses on the warm run; the identity preview fetched prepared.bin again.
+The client still verified and copied 276948386 decoded bytes on all four runs,
+then released all three temporary mounts. These timings represent one machine,
+one browser, and a controlled transfer rate. They are startup milestone timings,
+not measurements of authentication or time to first playable world frame.
+
+The transfer adapter accepts gzip wire lengths and still bounds the decoded
+stream, hashes it, and applies the existing cancellation and mount cleanup.
+The Java bootstrap and browser startup fixture suite passed. Production delivery
+would need precompressed sidecars on the two bulk URLs with identity fallback
+and Vary: Accept-Encoding. Keep normal JAR Range handling on its existing path.
+
+The gzip preview passed staged entry for a disposable returning character.
+The readiness gate opened after 39.31 seconds from submit, with 34 world
+frames observed at the sampled transition. This single functional run does
+not measure a post-login speedup. The same preview exposed a separate first
+login issue: the loading overlay stayed over the character creation screen.
+The returning-character fixture bypassed first-time setup in its local
+database. First-time character creation still needs its own browser check.
+
+The Play screen now displays a linked Built with CheerpJ credit.
+
+Local receipts: output/diagnostics/browser-startup-gzip/ab-20261117/
+(identity-verified, gzip-verified, and gzip-world-existing). Preview origin
+and WebSocket substitutions are confined to the loopback test server.

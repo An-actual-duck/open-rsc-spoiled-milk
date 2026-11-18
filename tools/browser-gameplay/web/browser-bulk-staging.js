@@ -30,7 +30,12 @@ export function createBulkStaging({enabled=false,assetPrefix,config,fetcher=glob
       const url=new URL(file.relative,ORIGIN+assetPrefix);
       const response=await fetcher(url.href,{cache:'default',credentials:'omit',redirect:'error',signal:owner.controller.signal});alive(owner);
       if(!response.ok)throw Error('Public staging HTTP failure');
-      const size=response.headers?.get?.('content-length');if(size!=null&&Number(size)!==file.bytes)throw Error('Public staging HTTP size mismatch');
+      const size=response.headers?.get?.('content-length');
+      const encoding=response.headers?.get?.('content-encoding')?.trim().toLowerCase();
+      // Fetch exposes decoded bytes, but Content-Length refers to the wire body.
+      // The bounded read and digest below still verify the original file.
+      if(encoding&&encoding!=='identity'&&encoding!=='gzip')throw Error('Unsupported public staging encoding');
+      if((!encoding||encoding==='identity')&&size!=null&&Number(size)!==file.bytes)throw Error('Public staging HTTP size mismatch');
       if(!response.body?.getReader)throw Error('Public staging bounded stream unavailable');
       const reader=response.body.getReader();owner.data=new Uint8Array(file.bytes);stats.ownedBytes=file.bytes;stats.peakOwnedBytes=Math.max(stats.peakOwnedBytes,stats.ownedBytes);let at=0;
       try{
