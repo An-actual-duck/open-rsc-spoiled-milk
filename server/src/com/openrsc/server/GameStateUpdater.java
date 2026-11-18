@@ -331,31 +331,56 @@ public final class GameStateUpdater {
             .thenComparingInt(GameObject::getID).thenComparingInt(GameObject::getDirection).thenComparingInt(GameObject::getType));
         out.writeInt(sorted.size());for(GameObject object:sorted){out.writeInt(object.getID());out.writeInt(object.getDirection());out.writeInt(object.getType());out.writeUTF(object.getWorldLocation().toString());}
     }
+    private static final String[] STAGED_LOGIN_SCENE_ATTRIBUTES = {
+        LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE,
+        LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE,
+        LAYERED_SCENE_CONTEXT_PROTOCOL_ATTRIBUTE,
+        LAYERED_ACTOR_SCENE_SCOPE_ATTRIBUTE,
+        NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE,
+        NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE,
+        NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE,
+        NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE,
+        NATIVE_TERRAIN_SYMMETRIC_VISUAL_CONTEXT_ATTRIBUTE,
+        NATIVE_TERRAIN_SYMMETRIC_STRUCTURE_CONTEXT_ATTRIBUTE,
+        // The client keeps its terrain stage sequence when preparation commits.
+        NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE,
+        NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE,
+        NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE,
+        NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE,
+        NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE,
+        SCENE_BASELINE_SUMMARY_ATTRIBUTE,
+        ATOMIC_SCENE_FENCE_SEQUENCE_ATTRIBUTE,
+        ATOMIC_SCENE_BASELINE_PENDING_SEQUENCE_ATTRIBUTE,
+        CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,
+        CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE
+    };
+
     public void resetStagedLoginScene(Player player) {
-        if(player.isLoggedIn())throw new IllegalStateException("Cannot reset a live login");
-        String[] keys={LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE,LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE,LAYERED_SCENE_CONTEXT_PROTOCOL_ATTRIBUTE,
-            LAYERED_ACTOR_SCENE_SCOPE_ATTRIBUTE,NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE,NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE,
-            NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE,NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE,
-            NATIVE_TERRAIN_SYMMETRIC_VISUAL_CONTEXT_ATTRIBUTE,NATIVE_TERRAIN_SYMMETRIC_STRUCTURE_CONTEXT_ATTRIBUTE,
-            NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE,NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE,NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE,
-            NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE,SCENE_BASELINE_SUMMARY_ATTRIBUTE,ATOMIC_SCENE_FENCE_SEQUENCE_ATTRIBUTE,
-            ATOMIC_SCENE_BASELINE_PENDING_SEQUENCE_ATTRIBUTE,CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE};
-        for(String key:keys)player.removeAttribute(key);
-        player.getLocalGameObjects().clear();player.getLocalWallObjects().clear();
+        if (player.isLoggedIn()) {
+            throw new IllegalStateException("Cannot reset a live login");
+        }
+        for (String key : STAGED_LOGIN_SCENE_ATTRIBUTES) {
+            player.removeAttribute(key);
+        }
+        player.getLocalGameObjects().clear();
+        player.getLocalWallObjects().clear();
     }
+
     /** Transfer only checked terrain/static transport state into a freshly reloaded account. */
-    public void adoptStagedLoginScene(Player from,Player to) {
-        if(from.isLoggedIn()||to.isLoggedIn()||!from.getWorldLocation().equals(to.getWorldLocation())
-            ||!java.util.Arrays.equals(stagedLoginSceneIdentity(from),stagedLoginSceneIdentity(to)))throw new IllegalStateException("Prepared login scene changed");
-        String[] keys={LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE,LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE,LAYERED_SCENE_CONTEXT_PROTOCOL_ATTRIBUTE,
-            LAYERED_ACTOR_SCENE_SCOPE_ATTRIBUTE,NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE,NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE,
-            NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE,NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE,
-            NATIVE_TERRAIN_SYMMETRIC_VISUAL_CONTEXT_ATTRIBUTE,NATIVE_TERRAIN_SYMMETRIC_STRUCTURE_CONTEXT_ATTRIBUTE,
-            NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE,NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE,NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE,
-            NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE,SCENE_BASELINE_SUMMARY_ATTRIBUTE,ATOMIC_SCENE_FENCE_SEQUENCE_ATTRIBUTE,
-            ATOMIC_SCENE_BASELINE_PENDING_SEQUENCE_ATTRIBUTE,CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE};
-        for(String key:keys){Object value=from.getAttribute(key,null);if(value!=null)to.setAttribute(key,value);}
-        to.getLocalGameObjects().addAll(from.getLocalGameObjects());to.getLocalWallObjects().addAll(from.getLocalWallObjects());
+    public void adoptStagedLoginScene(Player from, Player to) {
+        if (from.isLoggedIn() || to.isLoggedIn()
+            || !from.getWorldLocation().equals(to.getWorldLocation())
+            || !java.util.Arrays.equals(stagedLoginSceneIdentity(from), stagedLoginSceneIdentity(to))) {
+            throw new IllegalStateException("Prepared login scene changed");
+        }
+        for (String key : STAGED_LOGIN_SCENE_ATTRIBUTES) {
+            Object value = from.getAttribute(key, null);
+            if (value != null) {
+                to.setAttribute(key, value);
+            }
+        }
+        to.getLocalGameObjects().addAll(from.getLocalGameObjects());
+        to.getLocalWallObjects().addAll(from.getLocalWallObjects());
     }
 
 	private boolean ensureLayeredSceneContext(final Player player) {
