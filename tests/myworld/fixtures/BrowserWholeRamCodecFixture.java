@@ -26,7 +26,21 @@ public final class BrowserWholeRamCodecFixture {
         @SuppressWarnings("unchecked") Map<String,Integer> ids=(Map<String,Integer>)field(p.getClass(),"cellIds").get(p);int cellId=ids.get("0:2:12");int[] cd=p.pool.ints(cellId),kinds=p.pool.ints(cd[23]);int oldKind=kinds[0];kinds[0]=Integer.MAX_VALUE;
         corrupt=new ByteArrayOutputStream();p.write(corrupt);kinds[0]=oldKind;reject(corrupt.toByteArray());
         int[] rd=(int[])field(p.recipe(2,13).getClass(),"d").get(p.recipe(2,13));old=rd[15];rd[15]=2;corrupt=new ByteArrayOutputStream();p.write(corrupt);rd[15]=old;reject(corrupt.toByteArray());
-        long[] roof=p.recipe(2,12).roofBits();check(roof.length==(143*143+63)/64);Renderer3DWorldChunkFrame frame=p.queryFrame(2,12);check(frame.getChunks().get(0).getRoofCoverageAxis()==143);for(int x=0;x<143;x++)for(int y=0;y<143;y++){int bit=y+x*143;check(frame.getChunks().get(0).isRoofCoveredTile(x,y)==((roof[bit>>>6]&(1L<<(bit&63)))!=0));}
+        long[] roof = p.recipe(2,12).roofBits();
+        int tiles = 143 * 143;
+        int presenceWords = (tiles + 63) / 64;
+        check(roof.length == presenceWords || roof.length == presenceWords + (tiles + 15) / 16);
+        Renderer3DWorldChunkFrame.ChunkMesh chunk = p.queryFrame(2,12).getChunks().get(0);
+        check(chunk.getRoofCoverageAxis() == 143);
+        for (int x = 0; x < 143; x++) for (int y = 0; y < 143; y++) {
+            int tile = y + x * 143;
+            boolean covered = (roof[tile >>> 6] & (1L << (tile & 63))) != 0;
+            check(chunk.isRoofCoveredTile(x, y) == covered);
+            int shapeWord = presenceWords + (tile >>> 4);
+            int half = shapeWord < roof.length ? (int) (roof[shapeWord] >>> ((tile & 15) * 4)) & 15 : 0;
+            int inside = half == 0 ? RoofTileCoverage.FULL : half;
+            check(chunk.getRoofTileCoverage(x, y) == (covered ? inside : RoofTileCoverage.OUTDOOR));
+        }
         System.out.println("PASS checks="+checks+" preparedBytes="+bytes.length+" recipes="+p.recipes()+" queryCells="+p.queryCells());
     }
 }
