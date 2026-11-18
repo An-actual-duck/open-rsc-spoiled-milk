@@ -19,6 +19,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -282,7 +283,7 @@ public final class World {
             int at=24;for(int i=0;i<288;i++)if(pool.ints(d[at++]).length!=144)throw new IllegalStateException("Prepared tile page dimensions");
             for(int x=0;x<12;x++)for(int z=0;z<12;z++)if(pool.ints(d[at++]).length!=Math.min(36,429-x*36)*Math.min(36,429-z*36))throw new IllegalStateException("Prepared minimap page dimensions");
             for(int i=0;i<288;i++){int id=d[at++];if(id>=0&&models.add(id))RSModel.instantiatePreparedState(id,pool);else if(id< -1)throw new IllegalStateException("Prepared model reference");}
-            if(((long[])pool.get(d[at++])).length!=(143*143+63)/64||d[at]<0||d[at]>143*143)throw new IllegalStateException("Prepared roof metadata");
+            if(!RoofTileCoverage.validStorage(((long[])pool.get(d[at++])).length, 143*143)||d[at]<0||d[at]>143*143)throw new IllegalStateException("Prepared roof metadata");
         }
         public long activate(World w){WholeRamBasis basis=w.getWholeRamBasis();return activate(w,basis.carrierX(sectionX),basis.carrierZ(sectionY));}
         private long activate(World w,int carrierX,int carrierY){
@@ -4141,8 +4142,9 @@ public final class World {
 			roofCoverage.count);
 	}
 
-	private RoofCoverageTiles collectRoofCoverageTiles(TerrainModelInputSource source) {
-		long[] bits = new long[((LOCAL_FACE_TILE_COUNT * LOCAL_FACE_TILE_COUNT) + 63) / 64];
+	private static RoofCoverageTiles collectRoofCoverageTiles(TerrainModelInputSource source) {
+		int tiles = LOCAL_FACE_TILE_COUNT * LOCAL_FACE_TILE_COUNT;
+		long[] bits = new long[RoofTileCoverage.presenceWords(tiles)];
 		int count = 0;
 		for (int x = 0; x < LOCAL_FACE_TILE_COUNT; x++) {
 			for (int z = 0; z < LOCAL_FACE_TILE_COUNT; z++) {
@@ -4152,9 +4154,36 @@ public final class World {
 				int bitIndex = z + x * LOCAL_FACE_TILE_COUNT;
 				bits[bitIndex >>> 6] |= 1L << (bitIndex & 63);
 				count++;
+				int shape = roofCoverageShape(source, x, z);
+				if (shape != RoofTileCoverage.FULL) {
+					if (bits.length == RoofTileCoverage.presenceWords(tiles)) {
+						bits = Arrays.copyOf(bits, RoofTileCoverage.shapedWords(tiles));
+					}
+					RoofTileCoverage.setHalf(bits, tiles, bitIndex, shape);
+				}
 			}
 		}
 		return new RoofCoverageTiles(bits, count);
+	}
+
+	private static int roofCoverageShape(TerrainModelInputSource source, int x, int z) {
+		// Match the wall's endpoints and the roof mesh's diagonal cut.
+		// Equal coverage keeps an interior partition or an ambiguous edge whole.
+		int diagonal = source.wallDiagonal(x, z);
+		if (diagonal > 0 && diagonal < 12000) {
+			boolean below = source.wallRoof(x - 1, z + 1) > 0;
+			boolean above = source.wallRoof(x + 1, z - 1) > 0;
+			if (below != above) {
+				return below ? RoofTileCoverage.BELOW_DIAGONAL : RoofTileCoverage.ABOVE_DIAGONAL;
+			}
+		} else if (diagonal > 12000 && diagonal < 24000) {
+			boolean below = source.wallRoof(x - 1, z - 1) > 0;
+			boolean above = source.wallRoof(x + 1, z + 1) > 0;
+			if (below != above) {
+				return below ? RoofTileCoverage.BELOW_ANTIDIAGONAL : RoofTileCoverage.ABOVE_ANTIDIAGONAL;
+			}
+		}
+		return RoofTileCoverage.FULL;
 	}
 
 	private RoofElevationWorkspace prepareRoofElevationProduct(

@@ -1610,6 +1610,14 @@ public final class Renderer3DWorldChunkFrame {
 				&& (roofCoverageBits[wordIndex] & (1L << (bitIndex & 63))) != 0L;
 		}
 
+		public int getRoofTileCoverage(int tileX, int tileZ) {
+			if (!isRoofCoveredTile(tileX, tileZ)) {
+				return RoofTileCoverage.OUTDOOR;
+			}
+			return RoofTileCoverage.shape(roofCoverageBits, roofCoverageAxis * roofCoverageAxis,
+				tileZ + tileX * roofCoverageAxis);
+		}
+
 		public int roofClassificationForWorldPoint(int worldX, int worldZ) {
 			if (!hasRoofCoverageData()) {
 				return -1;
@@ -1619,7 +1627,8 @@ public final class Renderer3DWorldChunkFrame {
 			if (tileX < 0 || tileZ < 0 || tileX >= roofCoverageAxis || tileZ >= roofCoverageAxis) {
 				return -1;
 			}
-			return isRoofCoveredTile(tileX, tileZ) ? 1 : 0;
+			return RoofTileCoverage.contains(getRoofTileCoverage(tileX, tileZ),
+				Math.floorMod(worldX, TILE_SIZE), Math.floorMod(worldZ, TILE_SIZE)) ? 1 : 0;
 		}
 
 		public boolean isObjectChunk() {

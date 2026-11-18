@@ -2,6 +2,7 @@ package orsc;
 
 import java.nio.ByteBuffer;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
+import orsc.graphics.three.RoofTileCoverage;
 
 /** Declared roof coverage only; an enclosed courtyard without roof bits is outdoor. */
 final class GeometryShadowRoofMask {
@@ -17,7 +18,9 @@ final class GeometryShadowRoofMask {
 	boolean covered(int worldX, int worldZ) {
 		if (isEmpty()) return false;
 		int x=Math.floorDiv(worldX-minX,128), z=Math.floorDiv(worldZ-minZ,128);
-		return x>=0&&z>=0&&x<width&&z<height&&(rgba.get((z*width+x)*4)&255)!=0;
+		return x >= 0 && z >= 0 && x < width && z < height
+			&& RoofTileCoverage.contains(rgba.get((z * width + x) * 4) & 255,
+				Math.floorMod(worldX - minX, 128), Math.floorMod(worldZ - minZ, 128));
 	}
 
 	static final class Cache {
@@ -51,9 +54,18 @@ final class GeometryShadowRoofMask {
 					if(chunk.isObjectChunk()||chunk.getPlane()!=plane||!chunk.hasRoofCoverageData()) continue;
 					int ox=Math.floorDiv(chunk.getOriginWorldX(),128)-minX, oz=Math.floorDiv(chunk.getOriginWorldZ(),128)-minZ;
 					for(int x=0;x<chunk.getRoofCoverageAxis();x++)for(int z=0;z<chunk.getRoofCoverageAxis();z++) {
-						if(!chunk.isRoofCoveredTile(x,z)) continue;
+						int coverage = chunk.getRoofTileCoverage(x, z);
+						if (coverage == RoofTileCoverage.OUTDOOR) continue;
 						int at=((oz+z)*width+ox+x)*4;
-						pixels.put(at,(byte)255);pixels.put(at+1,(byte)255);pixels.put(at+2,(byte)255);pixels.put(at+3,(byte)255);any=true;
+						int previous = pixels.get(at) & 255;
+						if (previous != RoofTileCoverage.OUTDOOR && previous != coverage) {
+							coverage = RoofTileCoverage.FULL;
+						}
+						pixels.put(at, (byte) coverage);
+						pixels.put(at + 1, (byte) 255);
+						pixels.put(at + 2, (byte) 255);
+						pixels.put(at + 3, (byte) 255);
+						any = true;
 					}
 				}
 				if(any) result=new GeometryShadowRoofMask(plane,minX*128,minZ*128,width,height,next,pixels);

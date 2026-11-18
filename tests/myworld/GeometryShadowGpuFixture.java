@@ -237,6 +237,11 @@ public final class GeometryShadowGpuFixture {
 			for(float kind:new float[]{4,5}){receiverKind=kind;require(brightness(draw(pass,program,null),180,40)==0,"covered prop retains direct sun");}
 			for(float kind:new float[]{2,3}){receiverKind=kind;require(brightness(draw(pass,program,null),180,40)>240,"facade/roof top was treated as interior");}
 			receiverKind=1;receiverPlane=1;require(brightness(draw(pass,program,null),180,40)>240,"roof mask leaked onto another plane");receiverPlane=0;
+			roofMask=roofCache.get(GeometryShadowRoofMaskFixture.halfTileFrame(),0);
+			pass.prepare(SCENE,0,0,0);
+			ByteBuffer diagonalRoof=draw(pass,program,output.resolve("diagonal-roof-floor.png"));
+			require(brightness(diagonalRoof,160,96)==0,"Diagonal roof failed to shade indoor half");
+			require(brightness(diagonalRoof,224,32)>240,"Diagonal roof cast a wedge outside the wall");
 			roofMask=roofCache.get(GeometryShadowRoofMaskFixture.frame(0,false,102),0);pass.prepare(SCENE,0,0,0);
 			require(brightness(draw(pass,program,null),180,40)>240,"unknown/outdoor coverage inferred indoor shadow");
 			java.lang.reflect.Field roofField=OpenGLGeometryShadows.class.getDeclaredField("roofTexture");roofField.setAccessible(true);int roofTexture=roofField.getInt(pass);
