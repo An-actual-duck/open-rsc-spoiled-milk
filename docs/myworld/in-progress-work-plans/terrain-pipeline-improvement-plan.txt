@@ -71,17 +71,33 @@ mask preparation went from 123 to 101 ms and from 97 to 88 ms.
 Three hundred CPU parity cases produced 9,040,512 identical RGBA bytes.
 The complete frame gaps were 513/290 ms in the timed control and
 524/341 ms in the candidate, so the overall crossing remains dominated
-by other work in this route. The earlier interval between scene
-readiness and the first whole-zone submission still needs profiling.
-Evaluate reuse of completed terrain masks by exact terrain content
-separately from that earlier scene work.
+by other work in this route.
+
+In the detailed scene-readiness trace, the first frame was built and
+held before the client released a second matching frame. In the timed
+control, the held frame took 133 ms outbound and 78 ms on return. Its
+model phase took 58/46 ms, and its scenery chunk assembly 64/24 ms.
+Only 2/3 ms went into face culling. The next frame took 16 ms in each
+direction. Terrain was already available before these frames.
+
+The private candidate skipped a model's per-face loop only when the
+current ownership and picking rules would already skip every face.
+CPU scene digests matched with and without picking, and the wall/roof
+fixture passed 2,975 checks. In Firefox the candidate skipped 672/680
+eligible faces on the first held frames. Face-cull timing was still
+3/3 ms. The full crossings took 488/308 ms in the timed control and
+532/274 ms with the shortcut. Keep the shortcut experimental. Time
+dirty model finalization separately from camera projection, and inspect
+which scenery mesh rebuilds can reuse an exact prepared result. Keep the
+two-frame scene stability gate and the current picking rules.
 
 Retest any scenery policy across broader routes and weaker hardware for
 loading, memory and frame pacing before adopting it. Browser-only traces
 are in the worker checkout under output/diagnostics/ in
 browser-region-crossing/v0325-traced/, browser-scenery-prewarm/v0325/,
 browser-scene-handoff/v0325-repeat/, and browser-lighting-breakdown/
-v0325/ and v0325-hoisted/.
+v0325/ and v0325-hoisted/, and browser-scene-preparation/
+v0325-detailed-control/ and v0325-face-cull/.
 
 Work to test
 ------------
