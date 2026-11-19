@@ -175,11 +175,41 @@ upload and picking fixtures and the signed-level terrain blending checks
 also passed. The map inventory and GPU capture are in the worker checkout
 under output/diagnostics/diagonal-terrain-audit/v0325/.
 
-For the next private visual pass, rebuild the standalone client and cook
-fresh browser world data so both use the revised mask. Visit the five roof
+For the private visual pass, use fresh world data in both clients so both
+use the revised mask. Visit the five roof
 tiles and sample mixed floors, slopes, shorelines and signed levels with
 matching camera and lighting settings. Carry the picking and walkability
 checks through those live routes.
+
+Private review build and repeat crossings
+-----------------------------------------
+
+The private review runs both clients from the same rebuilt client archive
+and current native map manifest. Its Firefox WebGL client prepares the
+streamed world during play, so the reviewer sees fresh terrain geometry
+and lighting masks. A production-format browser package still needs its
+own updated cook before integration. The review route and build proof are
+under output/diagnostics/diagonal-terrain-private/ and
+output/tests/browser-gameplay-spike/diagonal-terrain-review/.
+
+The cache comparison used the same Firefox stage files and route for
+both modes. Only the private Java lighting observer archive differed.
+Each run included the original walking crossing, a warm same-level
+teleport return on a second route, and a separate return from level -1.
+The integrated AMD GPU reused the mask on the walking return, cutting
+terrain preparation from 82 to 17 ms and the fresh-frame gap from 277
+to 235 ms. On the second surface return preparation fell from 80 to
+18 ms. Returning from underground still rebuilt the mask, at 107 ms
+in both runs. The discrete AMD GPU also reused both surface masks. Its
+walking return went from 93 to 17 ms in terrain preparation and from
+324 to 208 ms between fresh frames. Its second surface return went from
+86 to 17 ms in preparation. Across both GPU pairs, the cold outbound
+walking gap moved by less than 20 ms, and the return from level -1 still
+rebuilt the mask. Tracked GPU memory peaked at 344,413,040 bytes in all
+four runs. The candidate retained at most 1,858,592 bytes of CPU mask
+arrays in these trials. The evidence supports warm same-level returns.
+The trial remains on the worker branch for visual review. Exact results
+are in diagonal-terrain-private/comparison.json under output/diagnostics/.
 
 Work to test
 ------------
