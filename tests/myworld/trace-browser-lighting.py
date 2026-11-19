@@ -21,7 +21,7 @@ def instrument(name, edits):
     return source
 
 
-def terrain_source(hoist_distances=False):
+def terrain_source(hoist_distances=False, cache_masks=False):
     edits = [
         ('    boolean update(Renderer3DFrame frame) {', '''    final long[] traceNanos = new long[3];
 
@@ -49,11 +49,80 @@ def terrain_source(hoist_distances=False):
                 int[] d = directions[direction];'''),
             ('                double length = Math.hypot(d[0],d[1]) * TILE;', '                double length = lengths[direction];'),
         ])
+    if cache_masks:
+        edits.extend([
+            ('    boolean update(Renderer3DFrame frame) {', """    private static final int MASK_CACHE_BYTES = 4 * 1024 * 1024;
+    private static final int MASK_CACHE_ENTRIES = 4;
+    private final java.util.ArrayList<CompletedMask> completedMasks = new java.util.ArrayList<>(MASK_CACHE_ENTRIES);
+    int completedHits, completedMisses, completedBytes;
+
+    private static final class CompletedMask {
+        final int minX, minZ, width, height, level, plane;
+        final int[] heights;
+        final byte[] pixels;
+
+        CompletedMask(TerrainDefinitionField field, int level, int[] heights, byte[] pixels) {
+            minX = field.minX;
+            minZ = field.minZ;
+            width = field.width;
+            height = field.height;
+            plane = field.plane;
+            this.level = level;
+            this.heights = heights;
+            this.pixels = pixels;
+        }
+
+        boolean matches(TerrainDefinitionField field, int level, int[] heights) {
+            return minX == field.minX && minZ == field.minZ && width == field.width && height == field.height
+                && plane == field.plane && this.level == level && Arrays.equals(this.heights, heights);
+        }
+
+        int bytes() {
+            return heights.length * Integer.BYTES + pixels.length;
+        }
+    }
+
+    private byte[] restoreCompletedMask(int level, int[] heights) {
+        for (int i = 0; i < completedMasks.size(); i++) {
+            CompletedMask entry = completedMasks.get(i);
+            if (entry.matches(this, level, heights)) {
+                completedMasks.remove(i);
+                completedMasks.add(entry);
+                completedHits++;
+                return entry.pixels;
+            }
+        }
+        completedMisses++;
+        return null;
+    }
+
+    private void rememberCompletedMask(int level, int[] heights, byte[] pixels) {
+        CompletedMask entry = new CompletedMask(this, level, heights, pixels);
+        // Each axis is already capped and a single allowed mask fits the byte budget.
+        while (completedMasks.size() >= MASK_CACHE_ENTRIES || completedBytes + entry.bytes() > MASK_CACHE_BYTES) {
+            completedBytes -= completedMasks.remove(0).bytes();
+        }
+        completedMasks.add(entry);
+        completedBytes += entry.bytes();
+    }
+
+    boolean update(Renderer3DFrame frame) {"""),
+            ('        rgba = build(heights, width, height);\n        traceNanos[2] = System.nanoTime() - shadeStart;',
+             """        byte[] restored = restoreCompletedMask(frame.getSignedWorldLevel(), heights);
+        if (restored == null) {
+            rgba = build(heights, width, height);
+            rememberCompletedMask(frame.getSignedWorldLevel(), heights, rgba);
+            traceNanos[2] = System.nanoTime() - shadeStart;
+        } else {
+            rgba = restored;
+        }"""),
+            ('void clear() { sourceSignature', 'void clear() { completedMasks.clear();completedBytes=0;sourceSignature'),
+        ])
     return instrument('TerrainDefinitionField', edits)
 
 
-def lighting_source():
-    return instrument('BrowserLightingData', [
+def lighting_source(cache_masks=False):
+    edits = [
         ('        List<Mask> changes=new ArrayList<Mask>(3);', '''        final long traceStart=System.nanoTime();
         long terrainWork=0,glowWork=0,roofWork=0,copyWork=0,copyStarted;
         long terrainSignatureWork=0,terrainSamplesWork=0,terrainShadingWork=0;
@@ -88,7 +157,15 @@ def lighting_source():
         return new Frame(values,changes);
     }
     private static double ms(long elapsed){return elapsed/1000000d;}'''),
-    ])
+    ]
+    if cache_masks:
+        edits.append((
+            '+" shadeMs="+ms(terrainShadingWork)',
+            '+" maskHits="+terrain.completedHits+" maskMisses="+terrain.completedMisses+" maskBytes="+terrain.completedBytes'
+            '+" shadeMs="+ms(terrainShadingWork)',
+        ))
+    return instrument('BrowserLightingData', edits)
+
 
 
 def main():
@@ -97,6 +174,7 @@ def main():
     parser.add_argument('output', type=Path)
     parser.add_argument('--jdk', type=Path, required=True)
     parser.add_argument('--hoist-distances', action='store_true')
+    parser.add_argument('--cache-completed-masks', action='store_true')
     args = parser.parse_args()
     source = args.loopback_web.resolve()
     assets, = (source / 'assets').iterdir()
@@ -114,7 +192,8 @@ def main():
         classes = temp / 'classes'
         classes.mkdir()
         sources = []
-        for name, text in [('TerrainDefinitionField', terrain_source(args.hoist_distances)), ('BrowserLightingData', lighting_source())]:
+        for name, text in [('TerrainDefinitionField', terrain_source(args.hoist_distances, args.cache_completed_masks)),
+                           ('BrowserLightingData', lighting_source(args.cache_completed_masks))]:
             path = temp / (name + '.java')
             path.write_text(text)
             sources.append(path)

@@ -127,9 +127,25 @@ Firefox recorded more than 2,200 cumulative hits, including startup.
 On the matched route, static mesh build time was 42 to 63 ms outbound
 and 5 to 3 ms on the return. Total frame gaps were 505 to 573 ms
 outbound and 375 to 278 ms on the return. The timings provide no
-consistent crossing win. Keep the prototype private. The next open
-items are completed terrain-mask reuse and the diagonal terrain and
-lighting audit.
+consistent crossing win. Keep the prototype private.
+
+The completed terrain-mask trial retained up to four CPU masks,
+with a 4 MiB array payload cap. On a change of terrain source, it
+checks the signed level, active plane, absolute bounds and exact
+sampled heights before reuse. A hit still publishes a new revision
+for GPU upload. The existing steady-frame path remains in use.
+
+Against the distance-hoist control, the warm return restored the
+completed mask and skipped 66 ms of shading. Terrain-mask preparation
+fell from 83 to 16 ms. End-to-end fresh-frame gaps were 524/341 ms in
+the previously captured control and 513/202 ms in the cache run.
+The outbound was a miss and still shaded a fresh mask. Two entries
+used 929,296 bytes of CPU array payload. These are single-route
+measurements. The CPU fixture checked exact return pixels, changed
+elevations, signed levels, publication revisions, eviction and session
+clear. The candidate is private. Retest more warm routes and graphics
+settings before integrating it. The diagonal terrain and lighting
+audit is still open.
 
 Retest any scenery policy across broader routes and weaker hardware for
 loading, memory and frame pacing before adopting it. Browser-only traces
@@ -139,7 +155,8 @@ browser-scene-handoff/v0325-repeat/, and browser-lighting-breakdown/
 v0325/ and v0325-hoisted/, and browser-scene-preparation/
 v0325-detailed-control/ and v0325-face-cull/, and
 browser-model-finalization/v0325/ and v0325-diffuse-zero/, and
-browser-prepared-model-lighting/v0325/.
+browser-prepared-model-lighting/v0325/, and
+browser-completed-terrain-masks/v0325/.
 
 Work to test
 ------------
