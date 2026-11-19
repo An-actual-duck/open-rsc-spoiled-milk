@@ -12,7 +12,7 @@ The v0.3.25 browser audit covered all 1,400 static geometry chunks. Within
 each chunk, sharing byte-identical vertices preserved every indexed attribute
 and triangle order. With 32-bit indices, estimated vertex and index storage
 fell 29.17% for terrain, walls, and roofs, 17.60% for static scenery, and
-21.49% across the catalogue. The audit measured geometry bytes. Travel time,
+about 21.5% across the catalogue. The audit measured geometry bytes. Travel time,
 GPU memory in use, and FPS still need an in-game comparison.
 Evidence lives under output/diagnostics/terrain-pipeline-audit/v0325/.
 
