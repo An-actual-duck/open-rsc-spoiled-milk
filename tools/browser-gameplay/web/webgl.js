@@ -110,7 +110,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   }
   function startBoundedResidency(){
     const zoneStats=stats.wholeZone;stats.boundedResidency={};
-    boundedPrefetch=createBoundedPrefetch(wholeZoneCatalog);boundedFrameGap=createBoundedFrameGap(stats.boundedResidency);
+    boundedPrefetch=createBoundedPrefetch(wholeZoneCatalog,options.terrainLookahead===true);boundedFrameGap=createBoundedFrameGap(stats.boundedResidency);
     boundedResidency=createBoundedResidency({catalog:wholeZoneCatalog,stats:stats.boundedResidency,capacityBytes:capacity.gpuBytes,maxChunks:capacity.maxChunks,
       resident:chunks,totalBytes:()=>stats.gpuBytes,totalCount:()=>chunks.size+pendingZoneChunks,
       evict:id=>{const c=chunks.get(id);if(!c||!pinnedChunks.has(id))throw new Error('Bounded eviction ownership');gl.deleteVertexArray(c.vao);gl.deleteBuffer(c.vbo);gl.deleteBuffer(c.ibo);stats.gpuBytes-=c.bytes;chunks.delete(id);pinnedChunks.delete(id);},

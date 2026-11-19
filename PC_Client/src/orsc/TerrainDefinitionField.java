@@ -23,9 +23,28 @@ final class TerrainDefinitionField {
 
     boolean update(Renderer3DFrame frame) {
         Renderer3DWorldChunkFrame world = frame == null ? null : frame.getWorldChunkFrame();
+        return update(world, frame == null ? 0 : frame.getActivePlane(),
+            frame == null ? 0 : frame.getSignedWorldLevel(),
+            frame == null ? 0 : frame.getShadowContextEpoch(), null);
+    }
+
+    boolean update(Renderer3DFrame frame, BrowserTerrainLookahead lookahead) {
+        return lookahead == null ? update(frame) : update(frame.getWorldChunkFrame(),
+            frame.getActivePlane(), frame.getSignedWorldLevel(), frame.getShadowContextEpoch(), lookahead);
+    }
+
+    BrowserTerrainLookahead.Mask prepareLookahead(Renderer3DWorldChunkFrame world) {
+        captureSamples = true;
+        if (!update(world, 0, 0, 0, null)) return null;
+        return new BrowserTerrainLookahead.Mask(minX, minZ, width, height, sampledHeights, rgba);
+    }
+
+    private boolean captureSamples;
+    private int[] sampledHeights;
+    private boolean update(Renderer3DWorldChunkFrame world, int active, int level, long epoch,
+                           BrowserTerrainLookahead lookahead) {
         if (world == null || world.getChunkCount() == 0) { clear(); return false; }
-        int active = frame.getActivePlane();
-        long signature = frame.getShadowContextEpoch() * 31 + active;
+        long signature = epoch * 31 + active;
         int offX = GeometryShadowCoordinates.worldOffsetX(world), offZ = GeometryShadowCoordinates.worldOffsetZ(world);
         int loX = Integer.MAX_VALUE, loZ = loX, hiX = Integer.MIN_VALUE, hiZ = hiX;
         for (Renderer3DWorldChunkFrame.ChunkMesh chunk : world.getChunks()) {
@@ -56,7 +75,10 @@ final class TerrainDefinitionField {
                 }
             }
         }
-        rgba = build(heights, width, height); sourceSignature = signature; revision++; rebuilds++;
+        byte[] prepared = lookahead == null ? null : lookahead.find(active, level, minX, minZ, width, height, heights);
+        rgba = prepared == null ? build(heights, width, height) : prepared;
+        if (captureSamples) sampledHeights = heights;
+        sourceSignature = signature; revision++; rebuilds++;
         return true;
     }
     static byte[] build(int[] heights, int width, int height) {

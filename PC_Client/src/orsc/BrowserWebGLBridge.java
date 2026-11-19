@@ -302,6 +302,13 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             progress[6]=progress[7]=spriteGroups;worldProgress(progress);
             present(w,h,true,matrices,uniforms(frame),draws,borrowOverlay(image));
             acknowledgeOverlay(preparedOverlay);
+            if (lightingData.lookahead != null && authority && wholeRam != null && client.isGameView()
+                    && RendererLightingSettings.getMode() == RendererLightingSettings.Mode.DIRECTIONAL
+                    && RendererTerrainDefinitionSettings.getMode().shaderId >= 2) {
+                lightingData.lookahead.offer(wholeRam, wholeZone.metadata(), client.getWorld().getWholeRamBasis(),
+                    client.getLocalPlayerX() + client.getMidRegionBaseX(),
+                    client.getLocalPlayerZ() + client.getMidRegionBaseZ());
+            }
             loadState.presented(OVERLAY_COVERAGE&&authority,world.getChunkCount(),count/8+catalogCoveredSources,remainingRepacks);
             long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()},pose(frame));
             if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=3;

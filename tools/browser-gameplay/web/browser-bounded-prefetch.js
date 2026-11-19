@@ -1,6 +1,6 @@
 /** Small source-space cardinal ring, never drawable membership. No diagonal
  * corners, extra planes, source admission or mutation authority are invented. */
-export function createBoundedPrefetch(catalog){
+export function createBoundedPrefetch(catalog, includeFootprintScenery=false){
   const cells=new Map();for(const c of catalog.chunks)cells.set(c.role+':'+c.plane+':'+c.cellX+':'+c.cellY,c.id);
   let previous=null,direction=[0,0],signature=null,cached=[];
   function plan(scope){
@@ -17,6 +17,10 @@ export function createBoundedPrefetch(catalog){
         const cx=x*scale+(dx?outside:along),cy=y*scale+(dy?outside:along);
         const id=cells.get(role+':'+plane+':'+cx+':'+cy);if(id!==undefined&&!seen.has(id)){out.push(id);seen.add(id);}
       }
+    }
+    if(includeFootprintScenery)for(let cx=(x-2)*2;cx<(x+3)*2;cx++)for(let cy=(y-2)*2;cy<(y+3)*2;cy++){
+      const id=cells.get('1:0:'+cx+':'+cy);
+      if(id!==undefined&&!seen.has(id)){out.push(id);seen.add(id);}
     }
     cached=out;return cached;
   }

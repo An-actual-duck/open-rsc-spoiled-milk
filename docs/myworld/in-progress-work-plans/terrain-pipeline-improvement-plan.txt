@@ -16,6 +16,27 @@ about 21.5% across the catalogue. The audit measured geometry bytes. Travel time
 GPU memory in use, and FPS still need an in-game comparison.
 Evidence lives under output/diagnostics/terrain-pipeline-audit/v0325/.
 
+Private walk-ahead preview
+--------------------------
+
+The prototype kept the prepared map in RAM and moved two jobs ahead of
+ordinary overworld crossings. It prepared terrain-lighting masks for
+nearby regions and used the existing GPU upload budget to preload nearby
+scenery. When the player arrived, it reused the mask only where the live
+bounds, level and height samples matched. The normal scene authority and
+publication fence still controlled the switch.
+
+In one matched Firefox replay the outbound pause fell from 675 to
+400 ms and the return fell from 285 to 249 ms. The outbound renderer
+reported four missing geometry cells without the prototype and zero
+with it. Both prepared masks matched. The peak tracked GPU allocation
+rose by 9,183,408 bytes, under the same residency cap. This was one
+route on the discrete AMD GPU. The residual stalls still need work
+before calling walking seamless. The timings apply to the private
+preview snapshot. The source adds a guard against repeatedly retrying
+a failed speculative job. Evidence is under output/diagnostics/
+browser-walk-ahead/ in the worker checkout.
+
 Work to test
 ------------
 
