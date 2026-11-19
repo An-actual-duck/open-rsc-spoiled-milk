@@ -91,13 +91,38 @@ dirty model finalization separately from camera projection, and inspect
 which scenery mesh rebuilds can reuse an exact prepared result. Keep the
 two-frame scene stability gate and the current picking rules.
 
+The model trace measured dirty model finalization at 50/44 ms of the
+first held frame's 61/58 ms model phase. Normal calculation, including
+diffuse lighting, took 45/35 ms, and diffuse lighting alone took
+28/21 ms. The first frames finalized 1,360/1,200 models, with zero
+batched projection calls. The next frame finalized only 6/5 and used
+batched projection. Some literal projection calls fell below the
+browser clock's resolution.
+
+Six outbound static chunk builds accounted for 42 ms of 44 ms of
+measured mesh build time, including 21 ms for one 92-model chunk.
+The warm return built one static chunk in 5 ms, with 2 ms in animated
+chunk builds. None of the sampled misses repeated an exact full build
+key across the four measured frames. Widening the whole-chunk cache
+therefore lacks supporting evidence on this route. Profile source
+model, orientation, transform state and lighting when preparing
+scenery, to find reusable work at the model level.
+
+Removing explicit zero writes into four freshly allocated diffuse
+scratch arrays preserved all model/picking fixture digests. Diffuse
+time was 27/26 ms versus 28/21 ms in the control. The full frame gaps
+were 553/277 ms versus 505/375 ms in the control. Keep the change
+experimental because these measurements show no repeatable reduction
+in the lighting phase or the complete crossing.
+
 Retest any scenery policy across broader routes and weaker hardware for
 loading, memory and frame pacing before adopting it. Browser-only traces
 are in the worker checkout under output/diagnostics/ in
 browser-region-crossing/v0325-traced/, browser-scenery-prewarm/v0325/,
 browser-scene-handoff/v0325-repeat/, and browser-lighting-breakdown/
 v0325/ and v0325-hoisted/, and browser-scene-preparation/
-v0325-detailed-control/ and v0325-face-cull/.
+v0325-detailed-control/ and v0325-face-cull/, and
+browser-model-finalization/v0325/ and v0325-diffuse-zero/.
 
 Work to test
 ------------

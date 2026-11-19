@@ -21,7 +21,7 @@ def instrument(path, edits):
     return java
 
 
-def client_source():
+def client_source(trace_models=False):
     edits = [
         ('\tprivate void drawGame(int var1) {', '''    private int sceneTraceRemaining, sceneTraceSequence, sceneTraceFrame;
     private long sceneTraceOrigin, sceneTraceBeforeTerrain, sceneTraceBeforeScene;
@@ -106,10 +106,41 @@ def client_source():
                     }
 \t\t\t\t\tRenderTelemetry.recordClientDrawPreparation(beforeSceneNanos, residentObjectsNanos,'''),
     ]
+    if trace_models:
+        edits.extend([
+            ('    private boolean sceneTraceDrawing;', """    private boolean sceneTraceDrawing;
+    private StringBuilder traceSceneryRows;
+
+    private void traceSceneryBuild(ResidentObjectChunkInput input, ResidentObjectChunkBuildResult result) {
+        if (traceSceneryRows == null || traceSceneryRows.length() > 4000) return;
+        int cellSize = residentObjectChunkTileSize(input.chunkRole);
+        int cellX = Math.floorDiv(this.midRegionBaseX + input.localOriginTileX, cellSize);
+        int cellZ = Math.floorDiv(this.midRegionBaseZ + input.localOriginTileZ, cellSize);
+        traceSceneryRows.append(input.chunkRole).append(':').append(input.anchor.getPlane())
+            .append(':').append(cellX).append(':').append(cellZ).append(':')
+            .append(Long.toHexString(input.canonicalContentKey)).append(':')
+            .append(Long.toHexString(input.cacheKey)).append(':')
+            .append(input.liveModelCount).append(':').append(input.presentationModelCount).append(':')
+            .append(result.durationNanos/1000000d).append(';');
+    }"""),
+            ('                            sceneTraceHits = sceneTraceMisses = 0;', """                            sceneTraceHits = sceneTraceMisses = 0;
+                            traceSceneryRows = sceneTraceFrame < 2 ? new StringBuilder() : null;"""),
+            ('				meshBuildNanos += result.durationNanos;', """                traceSceneryBuild(input, result);
+				meshBuildNanos += result.durationNanos;"""),
+            ('			meshCpuNanos += result.durationNanos;\n			objectChunks.set(', """            traceSceneryBuild(pending.input, result);
+			meshCpuNanos += result.durationNanos;
+			objectChunks.set("""),
+            ('+ " hits=" + sceneTraceHits + " misses=" + sceneTraceMisses);', """+ " hits=" + sceneTraceHits + " misses=" + sceneTraceMisses);
+                        if (traceSceneryRows != null) {
+                            System.out.println("BROWSER_SCENERY_BUILDS sequence=" + sceneTraceSequence
+                                + " sample=" + sceneTraceFrame + " rows=" + traceSceneryRows);
+                            traceSceneryRows = null;
+                        }"""),
+        ])
     return instrument('mudclient.java', edits)
 
 
-def scene_source(skip_owned_faces):
+def scene_source(skip_owned_faces, trace_models=False):
     edits = [
         ('\tpublic final void endScene(int var1) {', """    private int browserTraceSequence, browserTraceFrame;
 
@@ -155,7 +186,133 @@ def scene_source(skip_owned_faces):
 \t\t}
 \t}"""),
     ]
+    if trace_models:
+        edits.extend([
+            ('			long modelRotateStart = RenderTelemetry.now();', """            if (traceScene) {
+                RSModel.beginFinalizationTrace();
+                BrowserBatchedModelKernel.beginProjectionTrace();
+            }
+			long modelRotateStart = RenderTelemetry.now();"""),
+            ('            if (traceScene) traceAfterModels = System.nanoTime();', """            if (traceScene) {
+                traceAfterModels = System.nanoTime();
+                System.out.println("BROWSER_MODEL_WORK sequence=" + browserTraceSequence
+                    + " sample=" + browserTraceFrame + RSModel.finishFinalizationTrace()
+                    + BrowserBatchedModelKernel.finishProjectionTrace());
+            }"""),
+        ])
     return instrument('graphics/three/Scene.java', edits)
+
+
+def model_source(skip_diffuse_zero_fill):
+    edits = [
+        ('\tprivate void resetTransformCache(int var1) {', '''    static final class FinalizationTrace {
+        final Thread owner = Thread.currentThread();
+        int dirty, normals, diffuse, projections, rotatedVertices;
+        long dirtyNanos, normalNanos, diffuseNanos, projectionNanos;
+    }
+
+    private static FinalizationTrace finalizationTrace;
+
+    static void beginFinalizationTrace() {
+        finalizationTrace = new FinalizationTrace();
+    }
+
+    static String finishFinalizationTrace() {
+        FinalizationTrace trace = finalizationTrace;
+        finalizationTrace = null;
+        return " dirty=" + trace.dirty + " dirtyMs=" + (trace.dirtyNanos/1000000d)
+            + " normalCalls=" + trace.normals + " normalsMs=" + (trace.normalNanos/1000000d)
+            + " diffuseCalls=" + trace.diffuse + " diffuseMs=" + (trace.diffuseNanos/1000000d)
+            + " literalProjectionCalls=" + trace.projections + " literalProjectionMs=" + (trace.projectionNanos/1000000d)
+            + " literalProjectionVertices=" + trace.rotatedVertices;
+    }
+
+    private static FinalizationTrace currentFinalizationTrace() {
+        FinalizationTrace trace = finalizationTrace;
+        return trace != null && trace.owner == Thread.currentThread() ? trace : null;
+    }
+
+\tprivate void resetTransformCache(int var1) {'''),
+        ('\t\t\t} else if (this.m_Yb == 1) {\n\t\t\t\tthis.m_Yb = 0;', '''\t\t\t} else if (this.m_Yb == 1) {
+                FinalizationTrace trace = currentFinalizationTrace();
+                long dirtyStart = trace == null ? 0L : System.nanoTime();
+\t\t\t\tthis.m_Yb = 0;'''),
+        ('\t\t\t\tthis.calculateBoundingBoxes(999999);\n\t\t\t\tthis.computeNormals((byte) 14);', '''\t\t\t\tthis.calculateBoundingBoxes(999999);
+                long normalsStart = trace == null ? 0L : System.nanoTime();
+\t\t\t\tthis.computeNormals((byte) 14);
+                if (trace != null) {
+                    long end = System.nanoTime();
+                    trace.dirty++;
+                    trace.normals++;
+                    trace.dirtyNanos += end - dirtyStart;
+                    trace.normalNanos += end - normalsStart;
+                }'''),
+        ('\t\t\t\t\tthis.computeDiffuse(var1 ^ -85);', '''                    FinalizationTrace trace = currentFinalizationTrace();
+                    long diffuseStart = trace == null ? 0L : System.nanoTime();
+\t\t\t\t\tthis.computeDiffuse(var1 ^ -85);
+                    if (trace != null) {
+                        trace.diffuseNanos += System.nanoTime() - diffuseStart;
+                        trace.diffuse++;
+                    }'''),
+        ('\t\t\t\tthis.m_dc = true;\n\t\t\t\tint xy_xy = 0;', '''\t\t\t\tthis.m_dc = true;
+                FinalizationTrace trace = currentFinalizationTrace();
+                long projectStart = trace == null ? 0L : System.nanoTime();
+\t\t\t\tint xy_xy = 0;'''),
+        ('\t\t\t\t\tthis.vertZRot[var17] = zO;\n\t\t\t\t}\n\n\t\t\t} else {', '''\t\t\t\t\tthis.vertZRot[var17] = zO;
+\t\t\t\t}
+                if (trace != null) {
+                    trace.projections++;
+                    trace.rotatedVertices += this.vertHead;
+                    trace.projectionNanos += System.nanoTime() - projectStart;
+                }
+
+\t\t\t} else {'''),
+    ]
+    if skip_diffuse_zero_fill:
+        edits.append((
+            """				int var7;
+				for (var7 = 0; this.vertHead > var7; ++var7) {
+					tmpXNorm[var7] = 0;
+					tmpYNorm[var7] = 0;
+					tmpZNorm[var7] = 0;
+					faceCount[var7] = 0;
+				}
+
+				var7 = -16""",
+            "\t\t\t\tint var7 = -16",
+        ))
+    return instrument('graphics/three/RSModel.java', edits)
+
+
+def kernel_source():
+    return instrument('graphics/three/BrowserBatchedModelKernel.java', [
+        ('    void flush() {', '''    private static Thread traceOwner;
+    private static long traceNativeNanos;
+    private static int traceNativeCalls, traceNativeVertices;
+
+    static void beginProjectionTrace() {
+        traceOwner = Thread.currentThread();
+        traceNativeNanos = 0L;
+        traceNativeCalls = traceNativeVertices = 0;
+    }
+
+    static String finishProjectionTrace() {
+        traceOwner = null;
+        return " batchedCalls=" + traceNativeCalls + " batchedVertices=" + traceNativeVertices
+            + " batchedCallMs=" + (traceNativeNanos/1000000d);
+    }
+
+    void flush() {'''),
+        ('                used = backend.transform(size, rows, counts, camera, trig, trigSource);', '''                boolean tracing = traceOwner != null && traceOwner == Thread.currentThread();
+                long begin = tracing ? System.nanoTime() : 0L;
+                used = backend.transform(size, rows, counts, camera, trig, trigSource);
+                if (tracing) {
+                    traceNativeNanos += System.nanoTime() - begin;
+                    traceNativeCalls++;
+                    traceNativeVertices += packetVertices;
+                }'''),
+    ])
+
 
 
 def main():
@@ -164,7 +321,11 @@ def main():
     parser.add_argument('output', type=Path)
     parser.add_argument('--jdk', type=Path, required=True)
     parser.add_argument('--skip-owned-faces', action='store_true')
+    parser.add_argument('--trace-models', action='store_true')
+    parser.add_argument('--skip-diffuse-zero-fill', action='store_true')
     args = parser.parse_args()
+    if args.skip_diffuse_zero_fill and not args.trace_models:
+        parser.error('--skip-diffuse-zero-fill requires --trace-models')
     web = args.loopback_web.resolve()
     assets, = (web / 'assets').iterdir()
     policy = (assets / 'browser-public-alpha.js').read_text()
@@ -181,10 +342,16 @@ def main():
         classes = temporary / 'classes'
         classes.mkdir()
         java = temporary / 'mudclient.java'
-        java.write_text(client_source())
+        java.write_text(client_source(args.trace_models))
         scene = temporary / 'Scene.java'
-        scene.write_text(scene_source(args.skip_owned_faces))
-        subprocess.run([args.jdk/'bin/javac', '-encoding', 'UTF-8', '-cp', client, '-d', classes, java, scene], check=True)
+        scene.write_text(scene_source(args.skip_owned_faces, args.trace_models))
+        sources = [java, scene]
+        if args.trace_models:
+            for name, content in [('RSModel', model_source(args.skip_diffuse_zero_fill)), ('BrowserBatchedModelKernel', kernel_source())]:
+                path = temporary / (name + '.java')
+                path.write_text(content)
+                sources.append(path)
+        subprocess.run([args.jdk/'bin/javac', '-encoding', 'UTF-8', '-cp', client, '-d', classes, *sources], check=True)
         overlay = temporary / 'scene-observer.jar'
         subprocess.run([args.jdk/'bin/jar', 'cf', overlay, '-C', classes, 'orsc'], check=True)
         shutil.copytree(web, args.output, copy_function=os.link)
