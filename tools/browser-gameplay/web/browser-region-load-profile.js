@@ -6,7 +6,7 @@ export function browserLoadProfilePolicy(mode,options){
   return {requested,properties:mode==='webgl'&&options.has('benchmark')?['spoiledmilk.browserLoadProfile='+requested]:[]};
 }
 export function createBrowserLoadProfileCollector({enabled=false,gpu=()=>null,clock=()=>performance.now()}={}){
-  const stats={requested:enabled,totalReports:0,last:null,samples:[],scope:'Java source attempt phases; nested timers. Native submit includes enqueue/copy/backpressure, not Worker/GPU execution.'};
+  const stats={requested:enabled,totalReports:0,last:null,samples:[],firstPresentedByEpoch:[],scope:'Java source attempt phases; nested timers. Native submit includes enqueue/copy/backpressure, not Worker/GPU execution.'};
   const lastAttempts=new Map();
   function report(lib,input){
     if(!enabled||input.length!==36)throw new Error('Unexpected bounded load profile');
@@ -18,6 +18,14 @@ export function createBrowserLoadProfileCollector({enabled=false,gpu=()=>null,cl
     const sample=Object.fromEntries(BROWSER_LOAD_PROFILE_FIELDS.map((key,n)=>[key,a[n]]));
     Object.assign(sample,{receivedTime:clock(),workerSubmittedPacket:w?.submittedPackets??null,workerCompletedPacket:w?.lastCompletedPacket??null,workerCompletedFrame:w?.lastCompletedFrame??null});
     stats.last=sample;stats.totalReports++;stats.samples.push(sample);if(stats.samples.length>128)stats.samples.shift();
+    // The rolling sample window expires during a walking leg. Retain the
+    // first full Java submission for each recent scene epoch separately.
+    const first = stats.firstPresentedByEpoch;
+    if(sample.path===3 && sample.sourceEpoch>0 && !first.some(row=>
+        row.owner===sample.owner && row.sourceEpoch===sample.sourceEpoch)) {
+      first.push(sample);
+      if(first.length>8)first.shift();
+    }
     if(g){g.stats.loadProfile=stats;g.stats.loadProfileSamples=stats.samples;}
   }
   return {stats,report};

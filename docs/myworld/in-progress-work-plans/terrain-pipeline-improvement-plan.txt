@@ -87,6 +87,33 @@ is still active. Preserve the regular server authority and frame safety gates.
 Evidence is under output/diagnostics/browser-overlapping-handoff/ in the
 worker checkout.
 
+Optional streaming policy
+-------------------------
+
+Keep the current loading mode as the default. Develop an opt-in mode that
+keeps a wider buffer of prepared world data in RAM and gives nearby GPU
+geometry more room to stay resident. Treat whole-overworld GPU residency
+as an upper-bound test. The compact private replay held about 942 MiB of
+geometry alone, plus textures, shadows and driver overhead. Measure login
+time, peak memory and crossings together before choosing a player budget.
+
+The private profiler preserves the first full Java submission per recent
+scene epoch. A replay measured 122 of 135 ms outbound and 105 of 116 ms
+on return inside lighting preparation and submission. Geometry took 7 and
+2 ms respectively. These are Java bridge measurements, including calls
+to submit lighting, and do not measure GPU execution. Split terrain relief,
+glow and roof-mask work next, and reuse the verified walk-ahead terrain
+mask test where the inputs match. Evidence is in
+output/diagnostics/browser-overlapping-handoff/profile/first-crossing-frames.json.
+
+Index static scenery by where it belongs. Preload along actual travel and
+keep the recently visited area available for reversals. Refresh live
+actors, changed objects and collision from the server-authoritative
+scene. Present the current scene through preparation and publish the
+incoming one once its matching render products are ready. Keep separate
+coverage for crossing, reversing at the boundary, interacting during a
+crossing, changing floors and reconnecting after graphics context loss.
+
 Work to test
 ------------
 

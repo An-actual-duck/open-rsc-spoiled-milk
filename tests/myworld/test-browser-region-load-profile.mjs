@@ -13,4 +13,15 @@ for(let n=2;n<=140;n++){a[2]=n;a[8]=3;c.report(null,a);}check(c.stats.samples.le
 assert.throws(()=>c.report(null,a));checks++;
 for(const [index,value]of [[0,2],[1,-1],[7,300],[8,9],[13,NaN],[4,1e6]]){const bad=a.slice();bad[2]=141;bad[index]=value;const before=c.stats.totalReports;assert.throws(()=>c.report(null,bad));check(c.stats.totalReports===before);}
 const raw=Object.fromEntries(Array.from(a,(v,n)=>[n,v]));raw.length=36;raw[2]=141;raw[Symbol.iterator]=()=>{throw new Error('must not iterate');};c.report(null,raw);check(c.stats.last.attempt===141);
+a[2]=141;
+for(let epoch=1;epoch<=9;epoch++) {
+  a[2]++;a[3]=2;a[6]=epoch;c.report(null,a);
+  a[2]++;a[3]=3;a[8]=8;a[18]=epoch*10;c.report(null,a);
+  a[2]++;a[18]=0;c.report(null,a);
+}
+const first=c.stats.firstPresentedByEpoch;
+check(first.length===8&&first[0].sourceEpoch===2&&first[7].sourceEpoch===9);
+check(first[0].lightingMs===20&&first[7].lightingMs===90);
+for(let n=0;n<140;n++){a[2]++;c.report(null,a);}
+check(c.stats.samples[0].attempt>first[7].attempt&&first[7].lightingMs===90);
 console.log(JSON.stringify({passed:true,checks,scope:'bounded diagnostic policy/copy only; no timings or rendering claim'}));
