@@ -1,3 +1,4 @@
+import {cameraWorldPosition, sceneryCells, terrainCells} from './browser-persistent-world.js';
 import {LEGACY_GEOMETRY,COMPACT_GEOMETRY,COMPACT_MAGIC,geometryLayout} from './browser-geometry-layout.js';
 import {MAX_COMPACT_MANIFEST,validateCompactConfig,selectCompactCatalog} from './browser-compact-catalog.js';
 import {WHOLE_ZONE_SOURCE,WHOLE_ZONE_GPU_BYTES,WHOLE_ZONE_MAX_CHUNKS} from './browser-whole-zone-policy.js';
@@ -153,7 +154,7 @@ export async function loadWholeZone({baseURL,manifestBytes,manifestSha256,client
   await finishGpu();assertAlive();Object.assign(stats,{phase:'ready',ready:true,startupGpuCompleted:true});return m;
 }
 /** Per-frame selection keeps the bounded live renderer and the immutable arena distinct. */
-export function createWholeZoneSelection(catalog,stats){
+export function createWholeZoneSelection(catalog,stats,{persistent=false,flyover=false}={}){
   const world=new Map(),objects=new Map(),objectCells=new Map();
   for(const c of catalog.chunks)(c.sourceKind==='world'?world:objects).set(c.plane+':'+c.cellX+':'+c.cellY,c);
   for(const c of catalog.objectCells||[])objectCells.set(c.plane+':'+c.cellX+':'+c.cellY,c);
@@ -171,7 +172,7 @@ export function createWholeZoneSelection(catalog,stats){
     }
     current={v,rows};pending=true;lastEpoch=epoch;stats.active=v[1]===1;stats.sourceEpochLow=epoch[1];stats.sourceEpochHigh=epoch[0];stats.currentLevel=v[2];stats.nonGlobalWorldSpace=v[17]===1;
   }
-  function merge(input,level){
+  function merge(input,level,matrices){
     if(!pending||!current||current.v[2]!==level)throw new Error('Whole zone presentation missing fresh frame declaration');pending=false;
     if(input.length%8||input.length>256*8)throw new Error('Whole zone local draw bounds');
     const {v,rows}=current;stats.currentLocalDraws=input.length/8;
@@ -179,9 +180,14 @@ export function createWholeZoneSelection(catalog,stats){
     if(!v[1]){if(level===0&&v[17]===0)throw new Error('Whole zone overworld source inactive');Object.assign(stats,{currentPinnedDraws:0,currentMergedDraws:input.length/8,verifiedObjectCells:0,mutatedObjectCells:0,animatedObjectCells:0,authoredBaselineObjectCells:0,selectedObjectCells:0,selectedPinnedFirstIds:[],selectedPinnedIdHash:0,maskedObjectCellSamples:[],authoredBaselineCellSamples:[]});return input;}
     const out=[],changedSamples=[],animatedSamples=[],baselineSamples=[];let unchanged=0,mutated=0,animated=0,baseline=0,knownCells=0;
     const add=c=>{if(!c||c.sourceKind==='objects'&&c.plane>0)return;const dx=c.originX-v[3],dz=c.originZ-v[4];integer(dx,-2147483648,2147483647,'rebased X');integer(dz,-2147483648,2147483647,'rebased Z');out.push(c.id,dx,dz,v[3],v[4],v[8+c.plane]&c.visibilityMask,c.plane,c.role);};
-    for(let plane=0;plane<3;plane++)for(let x=v[5]-2;x<=v[5]+2;x++)for(let y=v[6]-2;y<=v[6]+2;y++)add(world.get(plane+':'+x+':'+y));
-    for(let plane=0;plane<3;plane++)for(let x=(v[5]-2)*2;x<(v[5]+3)*2;x++)for(let y=(v[6]-2)*2;y<(v[6]+3)*2;y++){
-      const key=plane+':'+x+':'+y,cell=objectCells.get(key);if(!cell)continue;knownCells++;const row=rows.get(key);if(!row)throw new Error('Missing whole zone object authority: '+key);
+    const camera=persistent?cameraWorldPosition(matrices,v[3],v[4]):null;
+    const terrainBounds=persistent?terrainCells(...camera):{minX:v[5]-2,maxX:v[5]+2,minZ:v[6]-2,maxZ:v[6]+2};
+    const objectBounds=flyover?sceneryCells(...camera):{minX:(v[5]-2)*2,maxX:(v[5]+3)*2-1,minZ:(v[6]-2)*2,maxZ:(v[6]+3)*2-1};
+    for(let plane=0;plane<3;plane++)for(let x=terrainBounds.minX;x<=terrainBounds.maxX;x++)for(let y=terrainBounds.minZ;y<=terrainBounds.maxZ;y++)add(world.get(plane+':'+x+':'+y));
+    for(let plane=0;plane<3;plane++)for(let x=objectBounds.minX;x<=objectBounds.maxX;x++)for(let y=objectBounds.minZ;y<=objectBounds.maxZ;y++){
+      const key=plane+':'+x+':'+y,cell=objectCells.get(key);if(!cell)continue;knownCells++;
+      if(flyover){add(objects.get(key));continue;}
+      const row=rows.get(key);if(!row)throw new Error('Missing whole zone object authority: '+key);
       const matches=row.key===cell.canonicalContentKey;
       if(row.reason===0){if(!matches)throw new Error('Whole zone unchanged key mismatch');unchanged++;add(objects.get(key));}
       else if(row.reason===3){if(!matches)throw new Error('Whole zone authored baseline key mismatch');baseline++;if(baselineSamples.length<4)baselineSamples.push(key+':3:'+row.key);add(objects.get(key));}

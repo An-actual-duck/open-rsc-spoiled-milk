@@ -16,6 +16,39 @@ about 21.5% across the catalogue. The audit measured geometry bytes. Travel time
 GPU memory in use, and FPS still need an in-game comparison.
 Evidence lives under output/diagnostics/terrain-pipeline-audit/v0325/.
 
+Private persistent overworld experiment
+--------------------------------------
+
+The private full-residency mode uploads the whole compact overworld
+catalogue at entry. A persistent static terrain selection derives its
+window from the absolute camera position. The same resident geometry
+identities survive camera travel and changes to the gameplay region
+origin. When walking, scenery retains the authoritative rows for
+live and changed objects. The production renderer keeps its default
+bounded policy.
+
+The detached camera demonstration selects authored terrain and
+scenery directly from the resident catalogue. The test account stays
+put. The flyover omits actors and local lighting masks. The matching
+walking mode retains actors, normal lighting and gameplay authority.
+
+On one matched walking route both modes held all 1,400 catalogue
+entries, with 988,074,828 bytes of resident geometry. The layout with
+the original region selection paused for 526 ms outbound and 286 ms
+on return. Camera-based terrain selection measured 495 ms and 341 ms.
+Both sent real region transitions for the gameplay scene. The test
+therefore leaves the gameplay transition on the path to a new frame.
+The full-residency login still requires checked CPU and graphics
+readiness, with no bounded residency gate when full mode is selected.
+
+The 20-second flyover replay crossed two old boundaries while the
+player position and gameplay scene epoch stayed fixed. All 1,400
+geometry entries stayed resident, with zero additional catalogue
+downloads. The sampled boundary frame intervals were 22 and 24 ms.
+The renderer continued to report ordinary uploads outside the static
+catalogue. The replay and comparison are under output/diagnostics/
+browser-persistent-world/ in the worker checkout.
+
 Work to test
 ------------
 

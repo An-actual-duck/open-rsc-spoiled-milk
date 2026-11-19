@@ -1,5 +1,6 @@
 import {GEOMETRY_ATTRIBUTES,LEGACY_GEOMETRY,COMPACT_GEOMETRY,geometryBounds,bindGeometryAttributes,validateCompactShaderAttributes} from './browser-geometry-layout.js';
 import {loadWholeZone,validateWholeZoneConfig,validateWholeZoneLive,validateWholeZoneTexture,createWholeZoneSelection,fetchWholeZoneBytes,digestWholeZoneBytes} from './browser-whole-zone.js';
+import {createOverworldFlyover} from './browser-persistent-world.js';
 import {createBoundedResidency} from './browser-bounded-residency.js';
 import {createBoundedChunkUpload} from './browser-bounded-upload.js';
 import {createBoundedPrefetch} from './browser-bounded-prefetch.js';
@@ -49,6 +50,10 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   const stats={worldFrameSamples:[],gpuWorkSamples:[],jsSubmissionSamples:[],javaBridgeWorkSamples:[],backend:'WebGL2 resident production geometry',javaFrames:0,javaWorldFrames:0,javaBridgeReportedWorldFrames:0,heldWorldFrames:0,uploadedChunks:0,reusedChunkDraws:0,uploadedBytes:0,gpuBytes:0,resourceBudgetScope:"256MiB chunk/texture pixels; separate bounded16MiB sprite atlas, <=8MiB marker overlay plus optional <=32MiB combined C/T/retained texture peak, <=160MiB shadow maps and <=8MiB masks and separately bounded <=2MiB sky peak; excludes driver/program overhead",drawCalls:0,triangles:0,contextLost:false,limitations:['Marker UI lacks partial-alpha reconstruction unless coverage mode is enabled','Browser/device coverage and broader gameplay parity pending'],frameSamples:[]};
   if(capacity.enabled){if(!capacity.bounded)stats.resourceBudgetScope=stats.resourceBudgetScope.replace('256MiB chunk/texture pixels','private3072MiB chunk/texture pixels');stats.resourceBudgetScope+='; whole-zone catalogue metadata/loader/Worker/driver/Java heap separate';stats.wholeZone={enabled:true,residencyPolicy:capacity.bounded?'bounded':'full',phase:'unloaded',ready:false,capacityBytes:capacity.gpuBytes,maxResidentChunks:capacity.maxChunks,pinnedChunks:0,pinnedBytes:0,currentLocalDraws:0};}
   const chunks=new Map(),textures=new Map(),programs=[],shaders=[],baseTextures=[];let program,overlayProgram,overlayTexture,emptyVAO,spriteProgram,spriteTexture,spriteVBO,spriteIBO,spriteVAO,disposed=false,last=0,lastWorld=0,lighting,lightingValues,sky,overlay;
+  const persistent=options.persistentScene===true, flyover=options.persistentFlyover===true;
+  if(persistent&&(!capacity.enabled||capacity.bounded)||flyover&&!persistent)throw new Error('Invalid persistent renderer configuration');
+  const flyCamera=flyover?createOverworldFlyover(stats):null;
+  stats.persistentScene=persistent;stats.persistentFlyover=flyover;
   let wholeZoneCatalog=null,wholeZoneSelection=null,zoneController=null;
   let boundedResidency=null,pendingZoneChunks=0,boundedPrefetch=null,boundedFrameGap=null;
   const pinnedChunks=new Set(),pinnedTextures=new Set(),pinnedMaterials=new Map();
@@ -145,7 +150,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
         });
         if(capacity.bounded){wholeZoneSelection=createWholeZoneSelection(wholeZoneCatalog,stats.wholeZone);startBoundedResidency();report('Source-bound overworld catalogue admitted; bounded GPU coverage pending');return wholeZoneCatalog.chunks.length;}
         if(pinnedChunks.size!==wholeZoneCatalog.chunks.length)throw new Error('Whole zone actual GPU membership incomplete');
-        wholeZoneSelection=createWholeZoneSelection(wholeZoneCatalog,stats.wholeZone);stats.wholeZone.residentChunks=chunks.size;report('Full overworld GPU catalog ready: '+pinnedChunks.size+' pinned cells');return pinnedChunks.size;
+        wholeZoneSelection=createWholeZoneSelection(wholeZoneCatalog,stats.wholeZone,{persistent,flyover});stats.wholeZone.residentChunks=chunks.size;report('Full overworld GPU catalog ready: '+pinnedChunks.size+' pinned cells');return pinnedChunks.size;
       }catch(error){if(!disposed&&!stats.contextLost){stats.backendFailed=true;stats.wholeZone.ready=false;stats.wholeZone.startupGpuCompleted=false;stats.wholeZone.phase='error';}throw error;}
     },
     async Java_orsc_BrowserWebGLBridge_wholeZoneFrame(lib,metadata,overrides){alive();if(!capacity.enabled||!wholeZoneSelection||!capacity.bounded&&!stats.wholeZone.ready)throw new Error('Whole zone frame before catalogue admission/residency');wholeZoneSelection.frame(metadata,overrides);},
@@ -264,9 +269,11 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       uploadValidation.beforeDraw();
       if(gpuTimer){while(pendingQueries.length&&gl.getQueryParameter(pendingQueries[0],gl.QUERY_RESULT_AVAILABLE)){const q=pendingQueries.shift();if(!gl.getParameter(gpuTimer.GPU_DISJOINT_EXT)){stats.gpuWorkSamples.push(gl.getQueryParameter(q,gl.QUERY_RESULT)/1e6);if(stats.gpuWorkSamples.length>(stats.measurement?4096:600))stats.gpuWorkSamples.shift();}gl.deleteQuery(q);}}
       const timerQuery=gpuTimer&&pendingQueries.length<8?gl.createQuery():null;if(timerQuery){activeTimerQuery=timerQuery;gl.beginQuery(gpuTimer.TIME_ELAPSED_EXT,timerQuery);}
-      const matrices=typed(matrixInput,Float32Array),u=typed(uniformInput,Float32Array),pixels=typed(pixelInput,Int32Array);let draws=typed(drawInput,Int32Array);
+      let matrices=typed(matrixInput,Float32Array);const u=typed(uniformInput,Float32Array),pixels=typed(pixelInput,Int32Array);let draws=typed(drawInput,Int32Array);
       if(width<1||height<1||width*height>MAX_PIXELS||pixels.length!==width*height||matrices.length!==48||u.length!==30||draws.length%8||draws.length>256*8)throw new Error('Browser frame bounds violated');
-      if(capacity.enabled&&world){if(!wholeZoneSelection||!capacity.bounded&&!stats.wholeZone.ready)throw new Error('Whole zone world frame before catalogue admission/residency');draws=wholeZoneSelection.merge(draws,u[29]);if(draws.length>1024*8)throw new Error('Whole zone merged draw bounds');stats.wholeZone.residentChunks=chunks.size;
+      if(capacity.enabled&&world){if(!wholeZoneSelection||!capacity.bounded&&!stats.wholeZone.ready)throw new Error('Whole zone world frame before catalogue admission/residency');const scope=wholeZoneSelection.scope;
+        if(flyCamera&&scope?.[1]===1){matrices=flyCamera(matrices,scope[3],scope[4],submitStart);draws=new Int32Array();}
+        draws=wholeZoneSelection.merge(draws,u[29],matrices);if(draws.length>1024*8)throw new Error('Whole zone merged draw bounds');stats.wholeZone.residentChunks=chunks.size;
         if(capacity.bounded&&!boundedCoverage(draws)){
           // BASE/death/sleep fading consumes its exact retained-pixel protocol;
           // it needs no fresh geometry and must still advance its fade token.
@@ -297,7 +304,14 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(canvas.width!==outputWidth)canvas.width=outputWidth;if(canvas.height!==outputHeight)canvas.height=outputHeight;
       if(!lightingValues)throw new Error('Browser frame missing lighting declaration');
       if(ownedFrame?.active)ownedFrame.begin(outputWidth,outputHeight,world&&u[29]>=0?u[15]:0,world&&u[29]>=0?u[16]:0,world&&u[29]>=0?u[17]:0);
-      lighting.prepare(lightingValues,draws);
+      const detached=flyover&&world&&wholeZoneSelection?.scope?.[1]===1;
+      let frameLighting=lightingValues;
+      if(detached){
+        frameLighting=new Float32Array(lightingValues);
+        // The free camera has no authoritative local roof, relief or shadow mask.
+        for(const index of [1,11,13,14,16,17])frameLighting[index]=0;
+      }
+      lighting.prepare(frameLighting,draws);
       gl.viewport(0,0,outputWidth,outputHeight);gl.disable(gl.SCISSOR_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);gl.depthMask(true);gl.clearDepth(1);
       gl.clearColor(world&&u[29]>=0?u[15]:0,world&&u[29]>=0?u[16]:0,world&&u[29]>=0?u[17]:0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
       const retainedWorld=overlay?overlay.begin(width,height,outputWidth,outputHeight):false;
@@ -341,7 +355,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
         }
         }
         gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);gl.disable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(0,0);
-        if(spriteDraws.length){
+        if(!detached&&spriteDraws.length){
           gl.useProgram(spriteProgram);gl.bindVertexArray(spriteVAO);gl.uniformMatrix4fv(gl.getUniformLocation(spriteProgram,'projection'),false,matrices.subarray(32,48));gl.uniform3f(gl.getUniformLocation(spriteProgram,'tone'),u[4],u[5],u[6]);gl.uniform1i(gl.getUniformLocation(spriteProgram,'image'),0);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,spriteTexture);
           gl.depthMask(false);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
           gl.drawElements(gl.TRIANGLES,spriteDraws.length*6,gl.UNSIGNED_INT,0);gl.disable(gl.BLEND);gl.depthMask(true);

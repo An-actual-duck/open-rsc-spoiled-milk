@@ -6,6 +6,7 @@ import {cloneTemplatePolicy} from './browser-clone-template-policy.js';
 import {baselineReusePolicy} from './browser-baseline-reuse-policy.js';
 import {wholeRamPolicy,validateWholeRamConfig,decodeWholeRamWork} from './browser-whole-ram.js';
 import {wholeZonePolicy} from './browser-whole-zone-policy.js';
+import {persistentWorldPolicy} from './browser-persistent-world.js';
 import {createBoundedInputGate} from './browser-bounded-input.js';
 import {browserLoadProfilePolicy,createBrowserLoadProfileCollector} from './browser-region-load-profile.js';
 import {createRegionHandoffTraceCollector} from './browser-region-handoff-profile.js';
@@ -42,6 +43,7 @@ const wholeZone=wholeZonePolicy(options.get('mode')||'software',options);
 const cloneTemplates=cloneTemplatePolicy(options.get('mode')||'software',options);
 const baselineReuse=baselineReusePolicy(options.get('mode')||'software',options);
 const wholeRam=wholeRamPolicy(options.get('mode')||'software',options);
+const persistentScene=persistentWorldPolicy(options,{publicAlpha:deployment.publicAlpha,renderWorker,wholeZone,wholeRam});
 const stagedLoginEnabled=options.get('stagedlogin')==='on';
 if(options.has('stagedlogin')&&!['on','off'].includes(options.get('stagedlogin'))||stagedLoginEnabled&&(!wholeRam.enabled||!wholeZone.enabled||!renderWorker.enabled))throw new Error('Staged browser login requires the complete WebGL preparation backend');
 const stagedLogin=createStagedLoginGate({enabled:stagedLoginEnabled});
@@ -75,7 +77,7 @@ function updateWholeRamProof(){
 }
 function updateWorldCover(){
   updateWholeRamProof();
-  stagedLogin.observe(window.browserProof.state?.mode,{worldReady:gpu?.stats.worldReadiness?.phase==='ready',completedFrame:gpu?.stats.renderWorker?.lastCompletedFrame||0,blocked:boundedInputGate?.blocked!==false});
+  stagedLogin.observe(window.browserProof.state?.mode,{worldReady:gpu?.stats.worldReadiness?.phase==='ready',completedFrame:gpu?.stats.renderWorker?.lastCompletedFrame||0,blocked:boundedInputGate?.blocked===true});
   if(boundedInputGate)window.browserProof.boundedResidencyInput={blocked:boundedInputGate.blocked,requiredWorkerFrame:boundedInputGate.afterFrame,scope:'Producer scope/mutation identity must receive a matching-or-newer coverage-ready ACK before world input'};
   let state=gpu?.stats.worldReadiness;const error=gpu?.stats.lastError||(gpu?.stats.contextLost?'Graphics context lost. Stop and restart to retry.':null)||window.browserProof.wholeRamError||worldPreparation.stats.latest?.failureCode;
   if(boundedInputGate?.blocked&&!['loading','error','login'].includes(state?.phase))state={...state,phase:'streaming',reason:'Preparing required GPU cells',blocksWorldInput:true,blocksKeyboard:true};
@@ -158,7 +160,7 @@ const natives = {
     if(stopped)return false;
     return stagedLogin.ready(owner,{completedFrame:gpu?.stats.renderWorker?.lastCompletedFrame||0,
       worldReady:gpu?.stats.worldReadiness?.phase==='ready',coverageReady:gpu?.stats.wholeZone?.ready===true,
-      cpuReady:window.browserProof.wholeRamJava?.preparedReady===true,blocked:boundedInputGate?.blocked!==false,
+      cpuReady:window.browserProof.wholeRamJava?.preparedReady===true,blocked:boundedInputGate?.blocked===true,
       error:!!(gpu?.stats.lastError||gpu?.stats.contextLost||window.browserProof.wholeRamError||worldPreparation.stats.latest?.failureCode)});
   },
   async Java_orsc_browser_BrowserBootstrap_prepareRamBulkFile(lib,relative){
@@ -364,7 +366,7 @@ try {
       window.browserProof.bulkStaging=bulkStaging.stats;
     }
     if(wholeZone.enabled&&!wholeZoneCatalog)throw new Error('Private whole-zone catalog has not been staged');
-    const gpuOptions={wholeZone:wholeZone.enabled,geometryFormat:wholeZone.geometryFormat,gpuResidency:wholeZone.residency,gpuBudgetMiB:wholeZone.gpuBudgetMiB,wholeZoneCatalog,nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
+    const gpuOptions={persistentScene:persistentScene.enabled,persistentFlyover:persistentScene.flyover,wholeZone:wholeZone.enabled,geometryFormat:wholeZone.geometryFormat,gpuResidency:wholeZone.residency,gpuBudgetMiB:wholeZone.gpuBudgetMiB,wholeZoneCatalog,nativeCallDispatch,opaqueProof:options.get('alpha-proof')==='1',ownedState,streamUploadValidation,overlayDeltaTransport:candidatePreparation.requested?.overlayDeltaTransport===true,overlayJournalObserve:candidatePreparation.journalObserve===true,overlayRectMode:candidatePreparation.rectMode||'off',physicalOutput,physicalOutputControl:options.has('benchmark'),benchmarkControl:options.has('benchmark')};
     ensureStarting();
     if(renderWorker.enabled){const factory=(await import('./browser-render-worker.js')).createBrowserRenderWorker;ensureStarting();gpu=await factory(canvas,report,{...gpuOptions,onFatal:error=>finish('Private render worker failed: '+error),onComplete:ack=>{if(stopped)return;boundedInputGate?.acknowledge(ack,{coverageReady:gpu.stats.wholeZone?.ready===true,worldReady:gpu.stats.worldReadiness?.phase==='ready'});if(ack.frameId&&gpu.stats.javaWorldFrames>0&&gpu.stats.worldReadiness?.phase==='ready')awaitingGameFrame=false;const blocked=worldCover?.blocksWorldInput;updateWorldCover();if(blocked!==worldCover?.blocksWorldInput)publish();}});if(stopped)gpu.dispose();ensureStarting();}
     else gpu=createBrowserWebGL(canvas,report,gpuOptions);
