@@ -211,6 +211,21 @@ arrays in these trials. The evidence supports warm same-level returns.
 The trial remains on the worker branch for visual review. Exact results
 are in diagonal-terrain-private/comparison.json under output/diagnostics/.
 
+The owner approved the standalone terrain preview. The first Firefox
+review used streamed WebGL, which omitted the prepared terrain and
+render-worker preset tested above. The owner reported long repeat
+crossings and the full world loading bar in that preview. For review of
+terrain changes, use the prepared Firefox stage with the fixed preset,
+matching complete GPU and RAM cooks, and the signed local map. The
+private cook mode preserves exact-source and asset validation and marks
+the receipts for loopback review. Public packaging refuses those receipts.
+The replacement used complete freshly cooked data and the release preset
+on the local test world. Firefox crossed both boundaries without a
+sampled full loading phase after login. The smaller streaming indicator
+still appeared. The longest fresh-frame intervals were 586 ms outbound
+and 334 ms on return. The owner review remains open. The route proof is
+output/diagnostics/browser-prepared-roof-review/walking-proof.json.
+
 Work to test
 ------------
 
