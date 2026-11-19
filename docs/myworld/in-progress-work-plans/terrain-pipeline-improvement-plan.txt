@@ -16,6 +16,30 @@ about 21.5% across the catalogue. The audit measured geometry bytes. Travel time
 GPU memory in use, and FPS still need an in-game comparison.
 Evidence lives under output/diagnostics/terrain-pipeline-audit/v0325/.
 
+The private Firefox pilot reindexed 25 level-0 meshes and saved 5.63 MB
+(28.66% of those meshes). The same route reported 5.63 MB less GPU residency,
+while both runs still paused about 700 ms at the crossing.
+
+A timing-only replay of the control route recorded a 626 ms fresh-frame gap.
+The native terrain product was a predicted cache hit. The private trace
+recorded 194 ms from the render worker's transition to declaration of the new
+required geometry, then 141 ms until coverage was ready and another 6 ms
+until the first fresh frame. The four missing resources were immutable
+scenery meshes inside the previous geographical footprint but outside its
+cardinal prefetch plan. Fetch and verification took about 9 ms in aggregate
+on loopback. After verification, the jobs waited 55 ms in total to start
+uploading, then took 53 ms elapsed to publish, including waits between
+upload slices. These are scheduler and CPU-side timings. The trace also
+recorded about 285 ms before the worker received the transition, which
+still needs timing at the Java bridge and worker queue.
+
+Two focused follow-ups are to test prewarming eligible scenery from inside
+the previous footprint while keeping live draw authority and memory caps,
+and to trace the render handoff before the worker sees the transition.
+Repeat against the same route in both directions to check the effect.
+The browser-only timing replay is under
+output/diagnostics/browser-region-crossing/v0325-traced/ in the worker checkout.
+
 Work to test
 ------------
 
