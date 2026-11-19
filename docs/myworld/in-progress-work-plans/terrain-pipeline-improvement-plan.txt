@@ -33,12 +33,23 @@ upload slices. These are scheduler and CPU-side timings. The trace also
 recorded about 285 ms before the worker received the transition, which
 still needs timing at the Java bridge and worker queue.
 
-Two focused follow-ups are to test prewarming eligible scenery from inside
-the previous footprint while keeping live draw authority and memory caps,
-and to trace the render handoff before the worker sees the transition.
-Repeat against the same route in both directions to check the effect.
-The browser-only timing replay is under
-output/diagnostics/browser-region-crossing/v0325-traced/ in the worker checkout.
+A matched Firefox replay tested optional prewarming of authored level-0
+scenery within the current footprint, after the existing cardinal plan and
+under the same residency limits. The outbound crossing went from four
+missing required meshes to zero, eight held frames to two, and a 693 ms
+fresh-frame gap to 542 ms. The warm reverse crossing already had coverage
+in both runs and measured 292 ms and 289 ms. The prewarm build used 11.29 MB
+more geometry data before the first crossing, and 9.18 MB more by the end
+of the route. The live draw selection and 512 MiB residency cap were the
+same. This is a single private loopback comparison, with the candidate
+disabled in the shipping renderer.
+
+The next investigation is the handoff before the worker receives the
+new scene's geometry list. Retest any scenery policy across broader
+routes and weaker hardware for loading, memory and frame pacing before
+adopting it. Browser-only traces are in the worker checkout under
+output/diagnostics/browser-region-crossing/v0325-traced/ and
+output/diagnostics/browser-scenery-prewarm/v0325/.
 
 Work to test
 ------------
