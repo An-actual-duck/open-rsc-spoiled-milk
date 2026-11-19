@@ -115,6 +115,22 @@ were 553/277 ms versus 505/375 ms in the control. Keep the change
 experimental because these measurements show no repeatable reduction
 in the lighting phase or the complete crossing.
 
+The prepared-model trial cached camera-independent normals and diffuse
+results for canonical static scenery. The cache matched exact relative
+transformed vertices, ordered face indices and lighting inputs, and had
+a 64-entry bound. Placement, bounds, material emission, shadows, glow
+and the live scene's model path still used the existing code. All 180
+fixture cases matched the literal model and mesh output, including
+translated cache hits and geometry/light invalidation.
+
+Firefox recorded more than 2,200 cumulative hits, including startup.
+On the matched route, static mesh build time was 42 to 63 ms outbound
+and 5 to 3 ms on the return. Total frame gaps were 505 to 573 ms
+outbound and 375 to 278 ms on the return. The timings provide no
+consistent crossing win. Keep the prototype private. The next open
+items are completed terrain-mask reuse and the diagonal terrain and
+lighting audit.
+
 Retest any scenery policy across broader routes and weaker hardware for
 loading, memory and frame pacing before adopting it. Browser-only traces
 are in the worker checkout under output/diagnostics/ in
@@ -122,7 +138,8 @@ browser-region-crossing/v0325-traced/, browser-scenery-prewarm/v0325/,
 browser-scene-handoff/v0325-repeat/, and browser-lighting-breakdown/
 v0325/ and v0325-hoisted/, and browser-scene-preparation/
 v0325-detailed-control/ and v0325-face-cull/, and
-browser-model-finalization/v0325/ and v0325-diffuse-zero/.
+browser-model-finalization/v0325/ and v0325-diffuse-zero/, and
+browser-prepared-model-lighting/v0325/.
 
 Work to test
 ------------

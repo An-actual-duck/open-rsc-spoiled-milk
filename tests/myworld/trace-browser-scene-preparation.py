@@ -21,7 +21,7 @@ def instrument(path, edits):
     return java
 
 
-def client_source(trace_models=False):
+def client_source(trace_models=False, prepared_lighting=False):
     edits = [
         ('\tprivate void drawGame(int var1) {', '''    private int sceneTraceRemaining, sceneTraceSequence, sceneTraceFrame;
     private long sceneTraceOrigin, sceneTraceBeforeTerrain, sceneTraceBeforeScene;
@@ -137,6 +137,23 @@ def client_source(trace_models=False):
                             traceSceneryRows = null;
                         }"""),
         ])
+    if prepared_lighting:
+        edits.extend([
+            ("""\t\treturn prepareGameObjectInstanceModel(
+\t\t\trecord.id, model);
+\t}""", """        if (isBrowserBaselineStaticObject(record.id)) {
+            model.markPreparedSceneryLighting(record.id, record.direction);
+        }
+\t\treturn prepareGameObjectInstanceModel(
+\t\t\trecord.id, model);
+\t}"""),
+            ('                            traceSceneryRows = null;',
+             """                            traceSceneryRows = null;
+                            int[] prepared = RSModel.preparedSceneryLightingCounts();
+                            System.out.println("BROWSER_PREPARED_LIGHTING sequence=" + sceneTraceSequence
+                                + " sample=" + sceneTraceFrame + " hits=" + prepared[0]
+                                + " misses=" + prepared[1] + " refusals=" + prepared[2] + " entries=" + prepared[3]);"""),
+        ])
     return instrument('mudclient.java', edits)
 
 
@@ -203,7 +220,7 @@ def scene_source(skip_owned_faces, trace_models=False):
     return instrument('graphics/three/Scene.java', edits)
 
 
-def model_source(skip_diffuse_zero_fill):
+def model_source(skip_diffuse_zero_fill, prepared_lighting=False):
     edits = [
         ('\tprivate void resetTransformCache(int var1) {', '''    static final class FinalizationTrace {
         final Thread owner = Thread.currentThread();
@@ -281,6 +298,13 @@ def model_source(skip_diffuse_zero_fill):
 				var7 = -16""",
             "\t\t\t\tint var7 = -16",
         ))
+    if prepared_lighting:
+        member = (ROOT / 'tests/myworld/prepared-scenery-lighting.inc').read_text()
+        edits.extend([
+            ('    static final class FinalizationTrace {', member + '\n    static final class FinalizationTrace {'),
+            ('\t\t\t\tthis.computeNormals((byte) 14);\n                if (trace != null)',
+             '                this.computePreparedSceneryNormals();\n                if (trace != null)'),
+        ])
     return instrument('graphics/three/RSModel.java', edits)
 
 
@@ -323,7 +347,10 @@ def main():
     parser.add_argument('--skip-owned-faces', action='store_true')
     parser.add_argument('--trace-models', action='store_true')
     parser.add_argument('--skip-diffuse-zero-fill', action='store_true')
+    parser.add_argument('--prepared-lighting', action='store_true')
     args = parser.parse_args()
+    if args.prepared_lighting and not args.trace_models:
+        parser.error('--prepared-lighting requires --trace-models')
     if args.skip_diffuse_zero_fill and not args.trace_models:
         parser.error('--skip-diffuse-zero-fill requires --trace-models')
     web = args.loopback_web.resolve()
@@ -342,12 +369,12 @@ def main():
         classes = temporary / 'classes'
         classes.mkdir()
         java = temporary / 'mudclient.java'
-        java.write_text(client_source(args.trace_models))
+        java.write_text(client_source(args.trace_models, args.prepared_lighting))
         scene = temporary / 'Scene.java'
         scene.write_text(scene_source(args.skip_owned_faces, args.trace_models))
         sources = [java, scene]
         if args.trace_models:
-            for name, content in [('RSModel', model_source(args.skip_diffuse_zero_fill)), ('BrowserBatchedModelKernel', kernel_source())]:
+            for name, content in [('RSModel', model_source(args.skip_diffuse_zero_fill, args.prepared_lighting)), ('BrowserBatchedModelKernel', kernel_source())]:
                 path = temporary / (name + '.java')
                 path.write_text(content)
                 sources.append(path)
