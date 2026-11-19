@@ -1,4 +1,7 @@
 package orsc;
+import com.openrsc.client.entityhandling.EntityHandler;
+import com.openrsc.client.entityhandling.defs.DoorDef;
+import com.openrsc.client.entityhandling.defs.ElevationDef;
 import com.openrsc.client.model.Sector;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -43,13 +46,12 @@ public final class GeometryShadowRoofMaskFixture {
 		Sector tiles = Sector.blankLoaded();
 		tiles.getTile(1, 0).roofTexture = 1;
 		tiles.getTile(1, 0).diagonalWalls = 1;
-		tiles.getTile(0, 1).roofTexture = 1;
 		return shapedFrame(tiles);
 	}
 
 	private static void checkDiagonals() throws Exception {
 		Sector tiles = Sector.blankLoaded();
-		for (int x : new int[]{3, 7, 11, 15, 19}) tiles.getTile(x, 3).roofTexture = 1;
+		for (int x : new int[]{3, 7, 11, 15, 19, 23, 27}) tiles.getTile(x, 3).roofTexture = 1;
 		tiles.getTile(3, 3).diagonalWalls = 1;
 		tiles.getTile(2, 4).roofTexture = 1;
 		tiles.getTile(7, 3).diagonalWalls = 1;
@@ -61,10 +63,13 @@ public final class GeometryShadowRoofMaskFixture {
 		tiles.getTile(19, 3).diagonalWalls = 12001;
 		tiles.getTile(18, 2).roofTexture = 1;
 		tiles.getTile(20, 4).roofTexture = 1;
+		// The geometry takes its first corner rule when both neighbours are bare.
+		tiles.getTile(23, 3).diagonalWalls = 1;
+		tiles.getTile(27, 3).diagonalWalls = 12001;
 
 		Renderer3DWorldChunkFrame frame = shapedFrame(tiles);
 		GeometryShadowRoofMask mask = new GeometryShadowRoofMask.Cache().get(frame, 0);
-		for (int[] tile : new int[][]{{3,32,96,96,32},{7,96,32,32,96},{11,32,32,96,96},{15,96,96,32,32}}) {
+		for (int[] tile : new int[][]{{3,32,96,96,32},{7,96,32,32,96},{11,32,32,96,96},{15,96,96,32,32},{23,32,96,96,32},{27,96,96,32,32}}) {
 			int x = tile[0]*128, z = 3*128;
 			require(mask.covered(x + tile[1], z + tile[2]), "Diagonal lost roofed half at " + tile[0]);
 			require(!mask.covered(x + tile[3], z + tile[4]), "Diagonal darkened outdoor half at " + tile[0]);
@@ -75,6 +80,56 @@ public final class GeometryShadowRoofMaskFixture {
 		}
 		require(mask.covered(19*128 + 32, 3*128 + 32) && mask.covered(19*128 + 96, 3*128 + 96),
 			"Interior partition with roofs either side lost coverage");
+	}
+
+	private static Field field(Class<?> owner, String name) throws Exception {
+		Field field = owner.getDeclaredField(name);
+		field.setAccessible(true);
+		return field;
+	}
+
+	private static boolean containsTriangle(int[] xyz, int x, int z) {
+		boolean positive = false, negative = false;
+		for (int i = 0; i < 9; i += 3) {
+			int next = (i + 3) % 9;
+			int cross = (xyz[next] - xyz[i]) * (z - xyz[i + 2])
+				- (xyz[next + 2] - xyz[i + 2]) * (x - xyz[i]);
+			positive |= cross > 0;
+			negative |= cross < 0;
+		}
+		return !positive || !negative;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void checkIsolatedRoofGeometry() throws Exception {
+		Class<?> unsafeType = Class.forName("sun.misc.Unsafe");
+		Object unsafe = field(unsafeType, "theUnsafe").get(null);
+		World world = (World) unsafeType.getMethod("allocateInstance", Class.class).invoke(unsafe, World.class);
+		List<DoorDef> doors = (List<DoorDef>) field(EntityHandler.class, "doors").get(null);
+		doors.clear();
+		doors.add(new DoorDef("Test wall", "", "WalkTo", "Examine", 1, 0, 192, 2, 2, 0));
+		List<ElevationDef> roofs = (List<ElevationDef>) field(EntityHandler.class, "elevation").get(null);
+		roofs.clear();
+		roofs.add(new ElevationDef(32, 3));
+		Method build = World.class.getDeclaredMethod("buildRoofModelInput", Sector[].class, int[][].class);
+		build.setAccessible(true);
+		for (int diagonal : new int[]{1, 12001}) {
+			Sector tiles = Sector.blankLoaded();
+			tiles.getTile(9, 9).roofTexture = 1;
+			tiles.getTile(9, 9).diagonalWalls = diagonal;
+			Object product = build.invoke(world, new Sector[]{tiles}, null);
+			Object[] faces = (Object[]) field(product.getClass(), "faces").get(product);
+			require(faces.length == 1, "Isolated diagonal roof geometry changed");
+			int[] xyz = (int[]) field(faces[0].getClass(), "vertexCoords").get(faces[0]);
+			GeometryShadowRoofMask mask = new GeometryShadowRoofMask.Cache().get(shapedFrame(tiles), 0);
+			int[][] points = diagonal == 1 ? new int[][]{{28, 100}, {100, 28}}
+				: new int[][]{{100, 100}, {28, 28}};
+			for (int i = 0; i < points.length; i++) {
+				int x = 9 * 128 + points[i][0], z = 9 * 128 + points[i][1];
+				require(containsTriangle(xyz, x, z) == (i == 0), "Unexpected diagonal roof half");
+				require(mask.covered(x, z) == (i == 0), "Roof triangle disagrees with its receiver mask");
+			}
+		}
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -96,6 +151,7 @@ public final class GeometryShadowRoofMaskFixture {
 		require(cache.get(Renderer3DWorldChunkFrame.fromChunks(Collections.singletonList(unknown)),0).isEmpty(),"unknown roof metadata inferred indoor from wall geometry");
 		cache.clear();require(cache.get(hidden,0).covered(180,40),"mask cache did not recover after session clear");
 		checkDiagonals();
+		checkIsolatedRoofGeometry();
 		System.out.println("PASS declared and diagonal roof coverage, hidden/visible roofs, outdoor/unknown, planes, metadata origins and cache lifecycle");
 	}
 }
