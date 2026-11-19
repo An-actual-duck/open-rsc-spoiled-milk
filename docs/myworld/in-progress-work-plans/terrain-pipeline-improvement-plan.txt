@@ -223,8 +223,9 @@ The replacement used complete freshly cooked data and the release preset
 on the local test world. Firefox crossed both boundaries without a
 sampled full loading phase after login. The smaller streaming indicator
 still appeared. The longest fresh-frame intervals were 586 ms outbound
-and 334 ms on return. The owner review remains open. The route proof is
-output/diagnostics/browser-prepared-roof-review/walking-proof.json.
+and 334 ms on return. The owner retested the prepared Firefox preview
+and approved it, confirming the reported repeat-loading issue was resolved.
+The route proof is output/diagnostics/browser-prepared-roof-review/walking-proof.json.
 
 Work to test
 ------------
