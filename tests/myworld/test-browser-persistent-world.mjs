@@ -39,6 +39,9 @@ const catalogue={chunks:[terrain,farTerrain,object],objectCells:[object],setting
 const state=(x,base,epoch)=>Int32Array.from([1,1,0,base,0,x,13,2,127,127,127,0,0,0,0,epoch,0,0]);
 const rows=Int32Array.from([0,4,26,1,0,1]);
 const ids=draws=>Array.from(draws).filter((_,i)=>i%8===0);
+assert.equal(persistentWorldPolicy(new URLSearchParams('persistentscene=on&terrainlookahead=on'),admission).terrainLookahead,true);
+assert.throws(() => persistentWorldPolicy(new URLSearchParams('terrainlookahead=on'),admission));
+assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&terrainlookahead=on'),{...admission,publicAlpha:true}));
 const selection=createWholeZoneSelection(catalogue,{}, {persistent:true});
 selection.frame(state(2,0,1),rows);
 const before=ids(selection.merge(new Int32Array(),0,matrices(143*scale,644*scale)));

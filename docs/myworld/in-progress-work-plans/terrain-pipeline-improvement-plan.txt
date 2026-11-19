@@ -87,6 +87,31 @@ is still active. Preserve the regular server authority and frame safety gates.
 Evidence is under output/diagnostics/browser-overlapping-handoff/ in the
 worker checkout.
 
+Terrain relief preparation during travel
+----------------------------------------
+
+The private terrainlookahead option prepares neighbouring overworld
+relief masks on a background worker. It reuses a mask only when the live
+plane, signed level, absolute bounds and every height sample match. A
+mismatch uses the normal builder. The cache holds up to six masks. GPU
+residency and the authoritative scene handoff use the same settings as
+the control.
+
+On one controlled Firefox replay, the mask matched at both crossings.
+Outbound lighting fell from 122 to 44 ms, and the fresh-frame gap from
+463 to 395 ms. On return, lighting fell from 105 to 17 ms, and the gap
+from 289 to 187 ms. Both runs reached the same server destinations and
+still briefly activated the loading cover. The full first submission
+fell from 135 to 57 ms outbound and from 116 to 27 ms on return.
+The results are in output/diagnostics/browser-overlapping-handoff/
+lighting-comparison.json in the worker checkout.
+
+Next keep ordinary movement presentation active during the remaining
+handoff. Time the authoritative receipts and first scene assembly
+separately from the bridge. Check whether live object reconciliation
+or actor rebasing holds that first frame. Use the normal loading path
+for floor changes and teleports.
+
 Optional streaming policy
 -------------------------
 

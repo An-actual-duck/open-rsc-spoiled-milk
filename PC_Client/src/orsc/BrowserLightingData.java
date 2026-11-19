@@ -14,6 +14,7 @@ import orsc.graphics.three.Renderer3DWorldChunkFrame;
 public final class BrowserLightingData {
     public static final int HEADER_FLOATS = 81;
     private final TerrainDefinitionField terrain = new TerrainDefinitionField();
+    final BrowserTerrainLookahead lookahead = BrowserTerrainLookahead.enabled() ? new BrowserTerrainLookahead() : null;
     private final RemasterGlowMaskBuilder glow = new RemasterGlowMaskBuilder();
     private final GeometryShadowRoofMask.Cache roofs = new GeometryShadowRoofMask.Cache();
     private long terrainRevision = Long.MIN_VALUE, glowSignature = Long.MIN_VALUE, roofSignature = Long.MIN_VALUE;
@@ -45,6 +46,7 @@ public final class BrowserLightingData {
         catch(ReflectiveOperationException error){throw new IllegalStateException("Production shadow source unavailable",error);}
     }
     public void clear() {
+        if (lookahead != null) lookahead.clear();
         terrain.clear();glow.clear();roofs.clear();terrainRevision=glowSignature=roofSignature=Long.MIN_VALUE;
         near=far=previousFar=null;quality=null;farAge=blendAge=0;
     }
@@ -63,7 +65,7 @@ public final class BrowserLightingData {
         int offX=GeometryShadowCoordinates.worldOffsetX(world),offZ=GeometryShadowCoordinates.worldOffsetZ(world);
         values[9]=offX;values[10]=offZ;
         boolean directional=RendererLightingSettings.getMode()==RendererLightingSettings.Mode.DIRECTIONAL;
-        if(directional&&RendererTerrainDefinitionSettings.getMode().shaderId>=2&&terrain.update(frame)) {
+        if(directional&&RendererTerrainDefinitionSettings.getMode().shaderId>=2&&terrain.update(frame,lookahead)) {
             values[13]=1;putBounds(values,24,terrain.minX,terrain.minZ,1f/terrain.width,1f/terrain.height);
             if(terrainRevision!=terrain.revision){changes.add(new Mask(7,terrain.width,terrain.height,terrain.pixels(),bounds(values,24)));terrainRevision=terrain.revision;}
         }

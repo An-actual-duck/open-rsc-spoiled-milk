@@ -6,12 +6,13 @@ export function persistentWorldPolicy(options, {publicAlpha, renderWorker, whole
   const enabled = options.get('persistentscene') === 'on';
   const flyover = options.get('flyover') === 'on';
   const preparedWalk = options.get('preparedwalk') === 'on';
-  if ((enabled || flyover || preparedWalk) && (publicAlpha || !enabled || !renderWorker.enabled
+  const terrainLookahead = options.get('terrainlookahead') === 'on';
+  if ((enabled || flyover || preparedWalk || terrainLookahead) && (publicAlpha || !enabled || !renderWorker.enabled
       || !wholeZone.enabled || wholeZone.residency !== 'full' || !wholeRam.enabled)) {
     throw new Error('Persistent scene requires a private full-residency WebGL session');
   }
-  if (preparedWalk && flyover) throw new Error('Prepared walking requires live gameplay');
-  return {enabled, flyover, preparedWalk};
+  if ((preparedWalk || terrainLookahead) && flyover) throw new Error('Prepared walking requires live gameplay');
+  return {enabled, flyover, preparedWalk, terrainLookahead};
 }
 
 // The existing Java view is R * translate(-eye), with R an orthonormal basis.

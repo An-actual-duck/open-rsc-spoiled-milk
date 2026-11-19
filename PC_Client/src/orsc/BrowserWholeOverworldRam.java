@@ -117,6 +117,7 @@ public final class BrowserWholeOverworldRam implements WholeOverworldRamRegistry
             World.PreparedActivation recipe=prepared.recipe(logicalX,logicalY);if(recipe==null)throw new IllegalStateException("Global L0 centre is outside complete authored RAM recipe roster: logical="+logicalX+":"+logicalY+" carrier="+sx+":"+sy);Renderer3DWorldChunkFrame frame=prepared.queryFrame(logicalX,logicalY,basis.offsetTilesX,basis.offsetTilesZ);long bytes=world.publishWholeRamActivation(recipe,frame);copiedBytes+=bytes;activations=sat((long)activations+1);hits=sat((long)hits+1);models=sat((long)models+(hiddenRoofs?144:288));activationMillis=sat((long)activationMillis+(System.nanoTime()-start)/1000000);return true;}
         catch(RuntimeException|Error failure){invalidate();BrowserWebGLBridge.publishWholeRamWork(diagnostics());throw failure;}
     }
+    boolean hasLookaheadRecipe(int x, int z) { return prepared.recipe(x, z) != null; }
     public Renderer3DWorldChunkFrame queryFrame(World world,int sx,int sy,int capturedOffsetTilesX,int capturedOffsetTilesZ){return prepared.queryFrame(sx,sy,capturedOffsetTilesX,capturedOffsetTilesZ);}
     public synchronized void avoidedBuild(){avoided=sat((long)avoided+1);}
     public void validateOptions(int[] current){if(!ready||!Arrays.equals(settings,current)||!PUBLIC_ROOF_FALLBACK&&hiddenRoofs!=Config.C_HIDE_ROOFS)throw new IllegalStateException("Whole-RAM render/CPU options changed");}
