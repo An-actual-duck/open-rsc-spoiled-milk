@@ -111,12 +111,14 @@ const ramPolicyModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../too
 const ramConfig={schemaVersion:1,manifestSha256:'a'.repeat(64),manifestBytes:4096,clientJarSha256:zoneConfig.clientJarSha256,gpuCatalogSha256:zoneConfig.manifestSha256,sourceBundleSha256:'b'.repeat(64),sourceBundleBytes:46111334,preparedSha256:'e'.repeat(64),preparedBytes:4096,retainedPrimitiveBytes:60000000,hiddenRoofs:false,rawFiles:1797,recipes:445,queryCells:1330};
 const ramConfigModule=new vm.SyntheticModule(['default'],function(){this.setExport('default',ramConfig);},{context});
 const worldPreparationModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-world-preparation.js',import.meta.url),'utf8'),{context});
+const persistentWorldModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-persistent-world.js',import.meta.url),'utf8'),{context});
 const stagedLoginModule=new vm.SourceTextModule(fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser-staged-login.js',import.meta.url),'utf8'),{context});
 const source = fs.readFileSync(new URL('../../tools/browser-gameplay/web/browser.js',import.meta.url),'utf8');
 const module = new vm.SourceTextModule(source,{context,importModuleDynamically:async specifier=>{if(specifier==='./browser-whole-ram-config.js'){if(ramConfigModule.status==='unlinked')await ramConfigModule.link(()=>{});if(ramConfigModule.status==='linked')await ramConfigModule.evaluate();return ramConfigModule;}if(specifier==='./browser-whole-zone-config.js'){if(zoneConfigModule.status==='unlinked')await zoneConfigModule.link(()=>{});if(zoneConfigModule.status==='linked')await zoneConfigModule.evaluate();return zoneConfigModule;}if(specifier==='./browser-render-worker.js'){if(renderWorkerModule.status==='unlinked')await renderWorkerModule.link(()=>{});if(renderWorkerModule.status==='linked')await renderWorkerModule.evaluate();return renderWorkerModule;}const selected=specifier==='./browser-native-call-dispatch.js'?nativeModule:gpuModule;if(selected===gpuModule)assert.equal(specifier,nativeMode==='sync'?'./webgl-sync.js':'./webgl.js');assert(selected,'Unexpected native helper import');if(selected.status==='unlinked')await selected.link(()=>{});if(selected.status==='linked')await selected.evaluate();return selected;}});
 await module.link(specifier=>{
   if(specifier==='./browser-world-preparation.js')return worldPreparationModule;
   if(specifier==='./browser-staged-login.js')return stagedLoginModule;
+  if(specifier==='./browser-persistent-world.js')return persistentWorldModule;
   if(specifier==='./browser-startup-progress.js')return startupModule;
   if(specifier==='./browser-bulk-staging.js')return bulkModule;
   if(specifier==='./browser-deployment-config.js')return deploymentModule;

@@ -8654,6 +8654,8 @@ public final class mudclient implements Runnable {
 						this.drawLoadingPleaseWaitFrame();
 					} else if (this.world.playerAlive) {
 						long drawPreparationStart = RenderTelemetry.now();
+						long handoffDrawStart = BrowserRegionHandoffTrace.ENABLED
+							&& this.shouldRetainLastPresentedFrame() ? System.nanoTime() : 0L;
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 
 						Renderer3DRoofVisibility roofVisibility = this.currentRenderer3DRoofVisibility();
@@ -9119,7 +9121,9 @@ public final class mudclient implements Runnable {
 					long sceneRenderStart = RenderTelemetry.now();
 					this.scene.setRendererSignedWorldLevel(this.packetHandler.getLogicalWorldLevel(
 						this.midRegionBaseZ + (this.localPlayer == null ? this.playerLocalZ : this.localPlayer.currentZ / this.tileSize)));
+					long handoffSceneStart = handoffFramePhase("game-scene-setup", handoffDrawStart);
 					this.scene.endScene(-113);
+					long handoffObjectsStart = handoffFramePhase("scene-render", handoffSceneStart);
 					RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
 					long residentObjectsStart = RenderTelemetry.now();
 					Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
@@ -9131,6 +9135,7 @@ public final class mudclient implements Runnable {
 							this.appendResidentObjectChunkFrame(terrainFrame);
 						renderer3DFrame.setWorldChunkFrame(
 							presentedWorldChunkFrame);
+						handoffObjectsStart = handoffFramePhase("resident-scenery", handoffObjectsStart);
 						this.completeLayeredSceneActivationFreshFrame(
 							presentedWorldChunkFrame, terrainFrame, renderer3DFrame.getSignedWorldLevel());
 						Renderer3DDepthFrame depthFrame = renderer3DFrame.getDepthFrame();
@@ -9562,6 +9567,7 @@ public final class mudclient implements Runnable {
 						worldOverlayNanos, RenderTelemetry.elapsedSince(uiOverlayStart));
 					// this.getSurface().draw(this.graphics, this.screenOffsetX,
 					// 256, this.screenOffsetY);
+					handoffFramePhase("game-overlay", handoffObjectsStart);
 					clientPort.draw();
 				}
 			}
@@ -26687,6 +26693,13 @@ public final class mudclient implements Runnable {
 	public boolean shouldRetainLastPresentedFrame() {
 		return this.layeredScenePresentationLatch
 			.shouldRetainLastPresentedFrame();
+	}
+
+	private static long handoffFramePhase(String phase, long start) {
+		if (start == 0L) return 0L;
+		long end = System.nanoTime();
+		BoundaryLoadingDiagnostics.recordPhase("frame", phase, start, end - start);
+		return end;
 	}
 
 	private void completeLayeredSceneActivationFreshFrame(

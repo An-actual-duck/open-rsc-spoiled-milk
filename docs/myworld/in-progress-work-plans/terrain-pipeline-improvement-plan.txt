@@ -112,6 +112,31 @@ separately from the bridge. Check whether live object reconciliation
 or actor rebasing holds that first frame. Use the normal loading path
 for floor changes and teleports.
 
+Ordinary walking notice and scene assembly trace
+-----------------------------------------------
+
+The private quietwalk option delays the ordinary streaming notice by
+500 ms after a previously ready scene. It keeps the previous scene
+visible and keeps the normal click gate until the authoritative new
+scene is ready. Hard transitions, startup and errors still show a
+notice immediately. A prolonged ordinary transition still gets a notice.
+
+Both crossings in one private Firefox replay kept the notice hidden
+while the click gate closed and reopened. Fresh-frame pauses were
+426 and 188 ms. This pass targets the visible notice and measures the
+remaining freeze. It does not provide continuous camera or actor frames.
+
+The first new Java frame spent 60 and 54 ms in scene rendering and
+82 and 17 ms in resident scenery assembly. Scene setup was 2 ms on
+each crossing and HUD/overlay work was 1 ms. The return click landed
+one tile south of the earlier replay. Evidence is in
+output/diagnostics/browser-overlapping-handoff/quiet/walking-notice-and-cpu.json.
+
+Move scene render preparation and exact static scenery reconciliation
+forward on the old scene's timeline. Prioritize down to the inner
+render phases and reuse checks before adding workers. Keep contact,
+picking and server receipts bound to the authoritative scene.
+
 Optional streaming policy
 -------------------------
 

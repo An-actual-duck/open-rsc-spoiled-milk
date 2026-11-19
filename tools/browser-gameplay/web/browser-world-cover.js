@@ -1,17 +1,26 @@
 import {worldPreparationMessage} from './browser-world-preparation.js';
 /** DOM cover and input boundary; does not stop Java updates or GPU presentation. */
-export function createWorldCover({document,window,display,onGateChange=()=>{},now=()=>performance.now()}) {
+export function createWorldCover({document,window,display,onGateChange=()=>{},now=()=>performance.now(),deferWalkNoticeMs=0}) {
   const cover=document.createElement('div');cover.id='browser-world-loading';cover.setAttribute('role','status');cover.setAttribute('aria-live','polite');
   Object.assign(cover.style,{position:'absolute',display:'none',zIndex:'2',background:'#101820',color:'#eef4f7',alignItems:'center',justifyContent:'center',flexDirection:'column',font:'16px system-ui',textAlign:'center',pointerEvents:'auto'});
   const title=document.createElement('strong'),detail=document.createElement('div');detail.style.marginTop='12px';cover.append(title,detail);display.append(cover);
   const meter=document.createElement('progress'),elapsed=document.createElement('div'),help=document.createElement('div');
   meter.style.marginTop='16px';meter.style.width='min(360px,80%)';meter.setAttribute('aria-label','Current world preparation stage');
   elapsed.style.marginTop='10px';elapsed.style.fontSize=help.style.fontSize='13px';help.style.marginTop='8px';help.style.maxWidth='400px';cover.append(meter,elapsed,help);meter.hidden=elapsed.hidden=help.hidden=true;
-  const stats={blocked:false,transitions:0,blockedPointerEvents:0,blockedKeydowns:0};
+  const stats={blocked:false,transitions:0,visible:false,visualTransitions:0,blockedPointerEvents:0,blockedKeydowns:0};
   let blocked=false,keyboardBlocked=false,disposed=false,started=null,timer=null;
   function tick(){if(started===null||disposed)return;const seconds=Math.max(0,Math.floor((now()-started)/1000));elapsed.textContent='Elapsed: '+seconds+' seconds';help.hidden=seconds<30;help.textContent='The first world load can take longer on slower devices. Keep this tab open while preparation finishes.';}
   function stopTimer(){if(timer!==null){window.clearInterval?.(timer);timer=null;}started=null;}
 
+  let noticeTimer=null,noticeDeferred=false,noticeShown=false;
+  function showNotice(visible){
+    cover.style.visibility=visible?'visible':'hidden';
+    if(stats.visible!==visible){stats.visible=visible;stats.visualTransitions++;}
+  }
+  function resetNotice(){
+    if(noticeTimer!==null)window.clearTimeout(noticeTimer);
+    noticeTimer=null;noticeDeferred=noticeShown=false;
+  }
   function within(event){const point=event.changedTouches?.[0]||event.touches?.[0]||event;const r=cover.getBoundingClientRect();return point.clientX>=r.left&&point.clientX<r.right&&point.clientY>=r.top&&point.clientY<r.bottom;}
   function gate(event){
     if(!blocked||disposed)return;
@@ -44,9 +53,22 @@ export function createWorldCover({document,window,display,onGateChange=()=>{},no
     Object.assign(cover.style,{background:streaming?'transparent':'#101820',pointerEvents:streaming?'none':'auto',justifyContent:streaming?'flex-end':'center',font:streaming?'12px system-ui':'16px system-ui'});
     title.style.display=streaming?'none':'';detail.style.background=streaming?'#101820cc':'';detail.style.padding=streaming?'4px 8px':'';
     cover.style.display=next?'flex':'none';cover.setAttribute('aria-busy',next?'true':'false');
+    const deferNotice=streaming&&state?.ordinaryWalking===true&&deferWalkNoticeMs>0;
+    if(deferNotice){
+      if(!noticeDeferred){
+        noticeDeferred=true;
+        noticeTimer=window.setTimeout(()=>{
+          noticeTimer=null;noticeShown=true;showNotice(true);
+        },deferWalkNoticeMs);
+      }
+      showNotice(noticeShown);
+    }else{
+      resetNotice();
+      showNotice(next);
+    }
     if(next!==blocked){blocked=next;stats.blocked=next;stats.transitions++;onGateChange();}
   }
   function attach(){if(cover.parentElement!==display)display.append(cover);}
-  function dispose(){if(disposed)return;disposed=true;stopTimer();for(const type of types)document.removeEventListener(type,gate,true);cover.remove();if(blocked){blocked=false;stats.blocked=false;stats.transitions++;onGateChange();}}
+  function dispose(){if(disposed)return;disposed=true;stopTimer();resetNotice();showNotice(false);for(const type of types)document.removeEventListener(type,gate,true);cover.remove();if(blocked){blocked=false;stats.blocked=false;stats.transitions++;onGateChange();}}
   return {stats,update,attach,dispose,get blocksWorldInput(){return blocked;}};
 }

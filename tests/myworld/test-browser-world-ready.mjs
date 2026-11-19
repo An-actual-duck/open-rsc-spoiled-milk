@@ -22,10 +22,10 @@ x=fixture();assert.throws(()=>x.state.presented({}),/missing/);assert.throws(()=
 x=fixture();for(let i=0;i<7;i++)x.frame();x.frame({9:800},30,{width:800});assert.equal(x.stats.worldReadiness.phase,'ready','complete resize unnecessarily repeated login warmup');
 // Ordinary movement starts the pointer gate before core retains its previous scene.
 x=fixture();for(let i=0;i<7;i++)x.frame();const initialFences=x.created;
-x.state.beginTransition(true);assert.equal(x.stats.worldReadiness.phase,'streaming');assert.equal(x.stats.worldReadiness.blocksKeyboard,false);
+x.state.beginTransition(true);assert.equal(x.stats.worldReadiness.phase,'streaming');assert.equal(x.stats.worldReadiness.ordinaryWalking,true);assert.equal(x.stats.worldReadiness.blocksKeyboard,false);
 x.state.declare(x.data({2:2,4:2}));x.state.held();assert.equal(x.stats.worldReadiness.phase,'streaming');
 assert.throws(()=>x.state.held(),/missing/);x.frame({2:2});assert.equal(x.stats.worldReadiness.phase,'ready');assert.equal(x.created,initialFences,'streamed world repeated initial shader warmup');assert.equal(x.stats.worldStreamSamples.length,1);
-x.state.beginTransition(false);assert.equal(x.stats.worldReadiness.blocksKeyboard,true);x.frame({2:3},30,{lighting:false});assert.equal(x.stats.worldReadiness.phase,'streaming');x.frame({2:3});assert.equal(x.stats.worldReadiness.phase,'ready');
+x.state.beginTransition(false);assert.equal(x.stats.worldReadiness.blocksKeyboard,true);assert.equal(x.stats.worldReadiness.ordinaryWalking,false);x.frame({2:3},30,{lighting:false});assert.equal(x.stats.worldReadiness.phase,'streaming');x.frame({2:3});assert.equal(x.stats.worldReadiness.phase,'ready');
 x.frame({1:0},30,{world:false});x.frame({2:4});assert.equal(x.stats.worldReadiness.phase,'loading','relogin skipped initial warmup');
 // A real capture-style dispatch order; releases are deliberately passed through.
 const handlers=new Map(),elements=[];function el(){const e={style:{},children:[],textContent:'',contains(n){return n===e||e.children.some(c=>c.contains?.(n));},setAttribute(){},append(...nodes){for(const n of nodes){n.parentElement=e;e.children.push(n);}},remove(){e.removals=(e.removals||0)+1;e.removed=true;},getBoundingClientRect(){return{left:10,top:20,right:110,bottom:100}}};elements.push(e);return e;}
@@ -39,4 +39,37 @@ cover.update({phase:'loading',required:4,uploaded:3});assert.equal(changes,1);co
 cover.update({phase:'streaming',blocksKeyboard:false});assert.equal(dispatch('keydown').prevented,undefined);assert.equal(dispatch('pointerdown').prevented,true);assert.equal(display.children[0].style.background,'transparent');
 cover.update({phase:'streaming',blocksKeyboard:true});assert.equal(dispatch('keydown').prevented,true);assert.equal(dispatch('keyup').prevented,undefined);
 cover.update({phase:'ready'});assert.equal(changes,4);cover.update({phase:'error',reason:'Controlled graphics failure'});assert.equal(cover.blocksWorldInput,true);assert.match(display.children[0].children[1].textContent,/Restart the game/);cover.dispose();assert.equal(cover.blocksWorldInput,false);assert.equal([...handlers.values()].flat().length,0);const disposedChanges=changes,disposedTransitions=cover.stats.transitions;cover.dispose();assert.equal(changes,disposedChanges);assert.equal(cover.stats.transitions,disposedTransitions);assert.equal(display.children[0].removals,1,'repeated disposal removes cover exactly once');
+const delays=new Map();let nextDelay=0;
+const quiet=createWorldCover({document:doc,display,deferWalkNoticeMs:500,window:{
+ setTimeout(fn,ms){assert.equal(ms,500);delays.set(++nextDelay,fn);return nextDelay;},
+ clearTimeout(id){delays.delete(id);}
+}});
+const walking={phase:'streaming',ordinaryWalking:true,blocksKeyboard:false};
+quiet.update(walking);
+assert.equal(quiet.stats.visible,false);
+assert.equal(dispatch('pointerdown').prevented,true);
+assert.equal(dispatch('keydown').prevented,undefined);
+quiet.update(walking);
+assert.equal(delays.size,1);
+quiet.update({phase:'ready'});
+assert.equal(delays.size,0);
+assert.equal(quiet.stats.visualTransitions,0);
+quiet.update(walking);
+const [id,show]=delays.entries().next().value;
+delays.delete(id);show();
+assert.equal(quiet.stats.visible,true);
+quiet.update({phase:'ready'});
+assert.equal(quiet.stats.visible,false);
+quiet.update(walking);
+quiet.update({phase:'streaming',ordinaryWalking:false});
+assert.equal(delays.size,0);
+assert.equal(quiet.stats.visible,true);
+quiet.update({phase:'ready'});
+quiet.update(walking);
+quiet.update(walking,null,'error');
+assert.equal(delays.size,0);
+assert.equal(quiet.stats.visible,true);
+quiet.dispose();
+assert.equal(quiet.stats.visible,false);
+assert.equal([...handlers.values()].flat().length,0);
 console.log('PASS source completion, real GPU fence contract, bounded warm-up without FPS floor, live-update stability, area/viewport/login/modal/error states, input capture/release boundaries and cleanup. No GPU/FPS claim.');

@@ -8,7 +8,7 @@ export function createWorldReadiness(gl,{stats,clock=()=>performance.now()}={}) 
   function reset(){removeFence();ready=false;completeFrames=0;last=0;intervals=[];}
   function set(phase,reason,extra={}){stats.worldReadiness={phase,reason,blocksWorldInput:phase==='loading'||phase==='streaming'||phase==='error',blocksKeyboard:phase==='loading'||phase==='error'||phase==='streaming'&&!ordinary,completeFrames,required:current?.[3]||0,uploaded:current?.[4]||0,pendingRepacks:current?.[5]||0,epoch:current?.[2]||0,...extra};}
   set('login','Waiting for login');
-  function waiting(reason){set(everReady?'streaming':'loading',reason);}
+  function waiting(reason){set(everReady?'streaming':'loading',reason,{ordinaryWalking:everReady&&transition&&ordinary});}
   function beginTransition(soft){
     if(failed)return;
     reset();transition=true;ordinary=soft===true;transitionStarted=clock();heldFrames=sourceDeclarations=0;startUploads=stats.uploadedChunks||0;startBytes=stats.uploadedBytes||0;
