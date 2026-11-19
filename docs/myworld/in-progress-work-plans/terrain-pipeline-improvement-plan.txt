@@ -44,12 +44,30 @@ of the route. The live draw selection and 512 MiB residency cap were the
 same. This is a single private loopback comparison, with the candidate
 disabled in the shipping renderer.
 
-The next investigation is the handoff before the worker receives the
-new scene's geometry list. Retest any scenery policy across broader
-routes and weaker hardware for loading, memory and frame pacing before
-adopting it. Browser-only traces are in the worker checkout under
-output/diagnostics/browser-region-crossing/v0325-traced/ and
-output/diagnostics/browser-scenery-prewarm/v0325/.
+A handoff replay with the same optional scenery resident timed two
+crossings from the last fresh frame. The gaps were 531 ms outbound and
+336 ms on return. Java announced the transition within 6 ms on both,
+but the first whole-zone declaration followed about 302 ms and 205 ms
+later. The initial transition command stayed in the producer batch
+until that batch was sent. Once sent, the relevant packets reached the
+worker in about 0–1 ms, with no measured slot waits and at most 7 ms of
+native argument copying per crossing. The actual worker coverage and
+first fresh frame were about 5 ms apart in both directions.
+
+The first-frame Java bridge work near each boundary was 138 ms and
+120 ms. Of that, lighting export took 127 ms and 110 ms. Terrain was
+already a warm cache hit. Logs measured 35–36 ms for Java region loading
+and 77–113 ms to atomic scene readiness. These intervals can overlap.
+The strongest remaining measured targets are the CPU-side lighting-mask
+preparation and the earlier interval from the ready scene to the first
+whole-zone submission. Profile the terrain-definition, glow and roof
+mask builders separately, keeping the current visual output for comparison.
+
+Retest any scenery policy across broader routes and weaker hardware for
+loading, memory and frame pacing before adopting it. Browser-only traces
+are in the worker checkout under output/diagnostics/browser-region-crossing/
+v0325-traced/, browser-scenery-prewarm/v0325/, and
+browser-scene-handoff/v0325-repeat/.
 
 Work to test
 ------------
