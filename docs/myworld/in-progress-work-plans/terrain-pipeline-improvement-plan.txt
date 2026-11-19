@@ -144,8 +144,7 @@ used 929,296 bytes of CPU array payload. These are single-route
 measurements. The CPU fixture checked exact return pixels, changed
 elevations, signed levels, publication revisions, eviction and session
 clear. The candidate is private. Retest more warm routes and graphics
-settings before integrating it. The diagonal terrain and lighting
-audit is still open.
+settings before integrating it.
 
 Retest any scenery policy across broader routes and weaker hardware for
 loading, memory and frame pacing before adopting it. Browser-only traces
@@ -157,6 +156,30 @@ v0325-detailed-control/ and v0325-face-cull/, and
 browser-model-finalization/v0325/ and v0325-diffuse-zero/, and
 browser-prepared-model-lighting/v0325/, and
 browser-completed-terrain-masks/v0325/.
+
+Diagonal terrain and lighting audit
+-----------------------------------
+
+The configured map package contains 7,187 diagonal wall tiles across
+1,787 sectors. On five tiles the roof mesh covered half the tile while
+the lighting mask treated the entire tile as indoors. The affected
+coordinates are (419, 31, 0), (515, 31, 0), (81, 526, 1), (208, 555, 1)
+and (316, 571, 1). The mesh and mask now share the existing roof mesh
+corner priority for both diagonal orientations.
+
+The editor and client wall endpoints agree with the server's diagonal
+collision mapping. Floor material boundaries follow adjacent tile paint,
+so their split can differ from the wall angle. The native GPU fixture
+verified floor shadow sampling on a half-covered tile. The browser mask
+upload and picking fixtures and the signed-level terrain blending checks
+also passed. The map inventory and GPU capture are in the worker checkout
+under output/diagnostics/diagonal-terrain-audit/v0325/.
+
+For the next private visual pass, rebuild the standalone client and cook
+fresh browser world data so both use the revised mask. Visit the five roof
+tiles and sample mixed floors, slopes, shorelines and signed levels with
+matching camera and lighting settings. Carry the picking and walkability
+checks through those live routes.
 
 Work to test
 ------------

@@ -4167,20 +4167,22 @@ public final class World {
 	}
 
 	private static int roofCoverageShape(TerrainModelInputSource source, int x, int z) {
-		// Match the wall's endpoints and the roof mesh's diagonal cut.
-		// Equal coverage keeps an interior partition or an ambiguous edge whole.
+		// Preserve the geometry's corner priority, including isolated diagonal roofs
+		// whose two outside neighbours both lack roof tiles.
 		int diagonal = source.wallDiagonal(x, z);
 		if (diagonal > 0 && diagonal < 12000) {
-			boolean below = source.wallRoof(x - 1, z + 1) > 0;
-			boolean above = source.wallRoof(x + 1, z - 1) > 0;
-			if (below != above) {
-				return below ? RoofTileCoverage.BELOW_DIAGONAL : RoofTileCoverage.ABOVE_DIAGONAL;
+			if (source.wallRoof(x + 1, z - 1) == 0) {
+				return RoofTileCoverage.BELOW_DIAGONAL;
+			}
+			if (source.wallRoof(x - 1, z + 1) == 0) {
+				return RoofTileCoverage.ABOVE_DIAGONAL;
 			}
 		} else if (diagonal > 12000 && diagonal < 24000) {
-			boolean below = source.wallRoof(x - 1, z - 1) > 0;
-			boolean above = source.wallRoof(x + 1, z + 1) > 0;
-			if (below != above) {
-				return below ? RoofTileCoverage.BELOW_ANTIDIAGONAL : RoofTileCoverage.ABOVE_ANTIDIAGONAL;
+			if (source.wallRoof(x - 1, z - 1) == 0) {
+				return RoofTileCoverage.ABOVE_ANTIDIAGONAL;
+			}
+			if (source.wallRoof(x + 1, z + 1) == 0) {
+				return RoofTileCoverage.BELOW_ANTIDIAGONAL;
 			}
 		}
 		return RoofTileCoverage.FULL;
@@ -4406,26 +4408,23 @@ public final class World {
 					ec01 = -ec01;
 					ec11 = -ec11;
 					ec00 = -ec00;
-					if (source.wallDiagonal(x, z) > 12000 && source.wallDiagonal(x, z) < 24000
-						&& source.wallRoof(x - 1, z - 1) == 0) {
+					int coverage = roofCoverageShape(source, x, z);
+					if (coverage == RoofTileCoverage.ABOVE_ANTIDIAGONAL) {
 						addRoofFaceInput(faces, roof,
 							p11x, ec11, p11z,
 							p01x, ec01, p01z,
 							p10x, ec10, p10z);
-					} else if (source.wallDiagonal(x, z) > 12000 && source.wallDiagonal(x, z) < 24000
-						&& source.wallRoof(x + 1, z + 1) == 0) {
+					} else if (coverage == RoofTileCoverage.BELOW_ANTIDIAGONAL) {
 						addRoofFaceInput(faces, roof,
 							p00x, ec00, p00z,
 							p10x, ec10, p10z,
 							p01x, ec01, p01z);
-					} else if (source.wallDiagonal(x, z) > 0 && source.wallDiagonal(x, z) < 12000
-						&& source.wallRoof(x + 1, z - 1) == 0) {
+					} else if (coverage == RoofTileCoverage.BELOW_DIAGONAL) {
 						addRoofFaceInput(faces, roof,
 							p01x, ec01, p01z,
 							p00x, ec00, p00z,
 							p11x, ec11, p11z);
-					} else if (source.wallDiagonal(x, z) > 0 && source.wallDiagonal(x, z) < 12000
-						&& source.wallRoof(x - 1, z + 1) == 0) {
+					} else if (coverage == RoofTileCoverage.ABOVE_DIAGONAL) {
 						addRoofFaceInput(faces, roof,
 							p10x, ec10, p10z,
 							p11x, ec11, p11z,
