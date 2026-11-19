@@ -65,8 +65,9 @@ def admit_build(jar,receipt,head):
    if not name.endswith('/')and any(token in z.read(name)for token in SECRET_TOKENS):raise ValueError('Test account data in client archive')
  return b
 
-def admit_gpu(bake,compact_run,jar_sha):
+def admit_gpu(bake,compact_run,jar_sha,private_review=False):
  bake=Path(bake);r=document(bake/'bake-receipt.json');data=bake/'whole-zone';m=document(data/'manifest.json');source=data/'source-manifest.json'
+ if bool(r.get('privateReviewOnly'))!=private_review:raise ValueError('GPU cook scope does not match packaging scope')
  if not(r.get('passed')is True and r.get('complete')is True and r.get('fullRequested')is True and r.get('requestedSectorLimit')==1330 and r.get('clientJarSha256')==jar_sha and r.get('manifestSha256')==sha(data/'manifest.json')and m.get('clientJarSha256')==jar_sha and m.get('complete')is True and m.get('preparedSectors')==1330 and m.get('preparedPlacements')==24580):raise ValueError('Complete matching GPU catalogue required')
  # Use the actual frontend validators, not just a packaging-only approximation.
  module=(ROOT/'tools/browser-gameplay/web/browser-whole-zone.js').as_uri()
@@ -122,6 +123,7 @@ def main():
  build=admit_build(a.client_jar,a.client_receipt,head);jar_sha=sha(a.client_jar)
  gpu,compact,resources=admit_gpu(a.bake_run,a.compact_run,jar_sha);gpu_manifest=Path(a.bake_run)/'whole-zone/manifest.json';gpu_sha=sha(gpu_manifest)
  lib=load_ram_module();ram_data=Path(a.ram_run)/'whole-ram';ram_receipt=document(Path(a.ram_run)/'ram-bake-receipt.json')
+ if ram_receipt.get('privateReviewOnly'):raise ValueError('Private review RAM data cannot be packaged for public delivery')
  if not(ram_receipt.get('passed')is True and ram_receipt.get('complete')is True and ram_receipt.get('fullRequested')is True and ram_receipt.get('requestedRecipes')==445 and ram_receipt.get('clientJarSha256')==jar_sha and ram_receipt.get('gpuCatalogSha256')==gpu_sha):raise ValueError('Complete source-bound RAM bake required')
  ram=lib.validate_ram(ram_data,{'clientJarSha256':jar_sha,'gpuCatalogSha256':gpu_sha,'settings':gpu['settings'],'externalAssets':gpu['externalAssets']})
  if sha(ram_data/'manifest.json')!=ram_receipt['manifestSha256']or ram['prepared']!=ram_receipt['prepared']or ram_receipt.get('hiddenRoofs')is not ram['prepared']['hiddenRoofs']:raise ValueError('RAM receipt binding mismatch')
