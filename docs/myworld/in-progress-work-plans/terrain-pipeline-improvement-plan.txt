@@ -219,6 +219,32 @@ and incoming sprite atlas, lighting masks, and changed local geometry.
 Reconcile the two poses on commit and test reversals and steep terrain
 before adopting the experiment.
 
+Keep old resources through frame planning
+-----------------------------------------
+
+The private walkbuffer option leaves the committed scene's GPU resources
+available through sprite planning and intermediate holds. The worker
+copies incoming mesh and texture updates into a queue of at most 128
+commands and 16 MiB. It applies them in packet order when the replacement
+frame is submitted. A new layout, superseding transition or budget refusal
+ends the overlap and uses the ordinary update path. There is no extra
+copy of the old whole-world GPU catalogue. The protocol and renderer
+readiness checks continue to control the new interactive scene.
+
+On the matched private Firefox route the gap from the last worker redraw
+that applied the motion transform to the first replacement frame fell
+from 158 to 35 ms outbound and from 31 to 17 ms on return. Worker redraw
+counts rose from 17 to 22 and from 9 to 11. The queue delayed 21 resource
+commands outbound and five on return, peaking at 11,414,884 bytes.
+Server destinations matched and ordinary crossings showed no notice.
+The Java submission gaps were 457/187 ms without staging and 417/209 ms
+with staging. These numbers measure submission intervals. They cannot
+detect how long the worker has held at its confirmed movement endpoint.
+
+Check endpoint dwell and pose reconciliation separately, then repeat on
+turnarounds and sloped terrain. Evidence is in output/diagnostics/
+browser-overlapping-handoff/walk-buffer-comparison.json.
+
 Optional streaming policy
 -------------------------
 

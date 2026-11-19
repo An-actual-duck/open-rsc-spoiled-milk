@@ -103,6 +103,50 @@ check(invalidations===1,'Holding a frame preserves committed walking scene');
 await walkingReplay.execute({type:'batch',version:1,id:3,frameId:0,layout:layout(),bytes:4,
   commands:[{name:'lightingFrame',args:[Float32Array.of(1)]}]});
 
+// A sprite planning ACK must leave the old GPU resources drawable.
+const updates=[];
+let activeWalk=false;
+const bank=createRenderWorkerReplay({walkBuffer:true,outputSizer:createWorkerOutputSizer(),backend:{
+  stats:{},hasActiveWalkingReplay:()=>activeWalk,
+  stopWalkingReplay(){activeWalk=false;updates.push('stop');},
+  dispose(){},
+  natives:{
+    [endpoint('walkingTransition')]:()=>{activeWalk=true;updates.push('begin');},
+    [endpoint('worldProgress')]:()=>{},
+    [endpoint('holdWorld')]:()=>updates.push('held'),
+    [endpoint('replaceChunk')]:(_lib,id,words)=>updates.push('replace '+id+' '+words[0]),
+    [endpoint('planWorldSprites')]:()=>{updates.push('plan');return Int32Array.of(4);},
+    [endpoint('present')]:()=>updates.push('present'),
+    [endpoint('frameWork')]:()=>{}
+  }
+}});
+let bankId=0;
+const batch=(commands,bytes=0,frameId=0)=>bank.execute({
+  type:'batch',version:1,id:++bankId,layout:layout(),frameId,commands,bytes
+});
+await batch([{name:'worldProgress',args:[new Int32Array(12)]}],48);
+await batch([{name:'walkingTransition',args:[1,1]}]);
+const oldPlane=Float32Array.of(17);
+const planned=await batch([
+  {name:'replaceChunk',args:[8,oldPlane,new Int32Array(0),new Int32Array(0)]},
+  {name:'planWorldSprites',args:[1,1,new Int32Array(0)]}],4);
+check(planned.result[0]===4&&updates.join(',')==='stop,begin,plan');
+oldPlane[0]=99;
+await batch([{name:'holdWorld',args:[]}],0,1);
+check(activeWalk&&updates.at(-1)==='held');
+await batch([{name:'present',args:[1,1,false,new Float32Array(48),new Float32Array(30),new Int32Array(0),new Int32Array(1)]}],316,2);
+check(updates.join(',')==='stop,begin,plan,held,stop,replace 8 17,present');
+await batch([{name:'walkingTransition',args:[1,1]}]);
+await batch([{name:'replaceChunk',args:[9,Float32Array.of(31),new Int32Array(0),new Int32Array(0)]}],4);
+await batch([{name:'walkingTransition',args:[2,2]}]);
+check(updates.slice(-3).join(',')==='stop,replace 9 31,begin');
+const oversized=Array.from({length:129},(_,i)=>({
+  name:'replaceChunk',args:[i,Float32Array.of(3),new Int32Array(0),new Int32Array(0)]
+}));
+await batch(oversized,129*4);
+check(!activeWalk&&updates.at(-130)==='stop'&&updates.at(-1)==='replace 128 3');
+bank.dispose();
+
 // Cold startup geometry must not permanently exclude reusable hot frame planes.
 let posted;const poolTransport=createRenderWorkerTransport({layout:()=>({epoch:1,width:1,height:1,dpr:1}),postMessage:(p,b)=>{posted=structuredClone(p,{transfer:b});}});
 async function roundTrip(plane){poolTransport.enqueue('lightingFrame',[plane]);const done=poolTransport.enqueue('planWorldSprites',[1,1,new Int32Array(0)]);await new Promise(resolve=>setImmediate(resolve));const buffers=posted.commands.flatMap(c=>c.args.filter(a=>ArrayBuffer.isView(a)).map(a=>a.buffer));const ack=structuredClone({type:'ack',version:1,id:posted.id,frameId:0,layoutEpoch:1,buffers},{transfer:buffers});poolTransport.receive(ack);await done;}

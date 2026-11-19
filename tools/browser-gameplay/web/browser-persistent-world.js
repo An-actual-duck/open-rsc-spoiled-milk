@@ -10,12 +10,14 @@ export function persistentWorldPolicy(options, {publicAlpha, renderWorker, whole
   const quietWalk = options.get('quietwalk') === 'on';
   const liveWalk = options.get('livewalk') === 'on';
   const workerReplay = options.get('workerreplay') === 'on';
+  const walkBuffer = options.get('walkbuffer') === 'on';
+  if (walkBuffer && !workerReplay) throw new Error('Walking resources require worker replay');
   if ((enabled || flyover || preparedWalk || terrainLookahead || quietWalk || liveWalk || workerReplay) && (publicAlpha || !enabled || !renderWorker.enabled
       || !wholeZone.enabled || wholeZone.residency !== 'full' || !wholeRam.enabled)) {
     throw new Error('Persistent scene requires a private full-residency WebGL session');
   }
   if ((preparedWalk || terrainLookahead || quietWalk || liveWalk || workerReplay) && flyover) throw new Error('Prepared walking requires live gameplay');
-  return {enabled, flyover, preparedWalk, terrainLookahead, quietWalk, liveWalk, workerReplay};
+  return {enabled, flyover, preparedWalk, terrainLookahead, quietWalk, liveWalk, workerReplay, walkBuffer};
 }
 
 // The existing Java view is R * translate(-eye), with R an orthonormal basis.

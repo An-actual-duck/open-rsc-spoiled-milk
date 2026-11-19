@@ -16,7 +16,7 @@ self.onmessage=event=>{
       backend=createBrowserWebGL(message.canvas,text=>self.postMessage({type:'report',text}),{...message.options,outputSizer});
       snapshot=createWorkerStatsSnapshot(backend.stats);
       message.canvas.addEventListener('webglcontextlost',()=>fatal(new Error('Render worker context lost')));
-      replay=createRenderWorkerReplay({backend,outputSizer});
+      replay=createRenderWorkerReplay({backend,outputSizer,walkBuffer:message.options?.walkBuffer===true});
       self.postMessage({type:'ready',version:1});return;
     }
     if(!replay)throw new Error('Render worker not initialized');

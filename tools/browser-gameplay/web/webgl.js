@@ -138,6 +138,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   }
   let committedWalkScene=null,walkTimer=null,walkDeadline=0,walkPreviousFrame=0;
   let nextWalkingAnchor=null,walkingTarget=null,walkingStart=0;
+  let lastMovingReplay=0;
   const walkingReplayEnabled=options.workerReplay===true;
   function stopWalkingReplay(){
     if(walkTimer!==null)clearTimeout(walkTimer);
@@ -147,6 +148,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   function beginWalkingReplay(target){
     if(!walkingReplayEnabled||!committedWalkScene||walkTimer!==null)return;
     walkingTarget=target;
+    lastMovingReplay=0;
     walkingStart=performance.now();
     walkDeadline=walkingStart+500;
     walkPreviousFrame=walkingStart;
@@ -174,6 +176,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     stats.walkingReplayFrames=(stats.walkingReplayFrames||0)+1;
     stats.walkingReplayMaxInterval=Math.max(stats.walkingReplayMaxInterval||0,now-walkPreviousFrame);
     if(step) {
+      lastMovingReplay=now;
       stats.walkingMotionFrames=(stats.walkingMotionFrames||0)+1;
       stats.walkingMotionMaxUnits=Math.max(stats.walkingMotionMaxUnits||0,Math.hypot(...step));
     }
@@ -407,6 +410,11 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       const now=performance.now();stats.jsSubmissionSamples.push(now-submitStart);if(stats.jsSubmissionSamples.length>(stats.measurement?4096:600))stats.jsSubmissionSamples.shift();
       if(world&&!retainedWorld){boundedFrameGap?.resumed(now);if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);stats.worldFramePolicies.push(stats.presentedOwnedState);stats.worldFrameSpriteGroups.push(spriteDraws.length);stats.physicalOutputWorldFramePolicies.push(physicalOutput?1:0);if(stats.worldFrameSamples.length>(stats.measurement?4096:600)){stats.worldFrameSamples.shift();stats.worldFramePolicies.shift();stats.worldFrameSpriteGroups.shift();stats.physicalOutputWorldFramePolicies.shift();}}lastWorld=now;}else lastWorld=0;
       worldReady.presented({world:world&&!retainedWorld,width,height,textures:textures.size,sprites:spriteDraws.length,lighting:!!lightingValues});
+      if(lastMovingReplay && world && !retainedWorld){
+        stats.walkingReplayTailMs=now-lastMovingReplay;
+        stats.walkingReplayTailSamples=(stats.walkingReplayTailSamples||0)+1;
+        lastMovingReplay=0;
+      }
       if(walkingReplayEnabled && world && !retainedWorld && u[29]===0
           && wholeZoneSelection?.scope?.[1]===1 && stats.worldReadiness?.phase==='ready'
           && stats.overlayCoverageMode===1) {
@@ -490,5 +498,5 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   }
   function queuePhysicalOutput(enabled){alive();if(!physicalControl||typeof enabled!=='boolean')throw new Error('Private physical output control unavailable');pendingPhysicalOutput=enabled;stats.pendingPhysicalOutput=enabled;return {queued:enabled,active:physicalOutput};}
   function queueStreamUploadValidation(enabled){alive();if(options.benchmarkControl!==true)throw new Error('Private benchmark control unavailable');uploadValidation.queue(enabled);}
-  return {natives,stats,dispose,canvas,...(walkingReplayEnabled?{stopWalkingReplay}:{}),...(options.benchmarkControl===true?{queueOwnedState,queueStreamUploadValidation,queuePhysicalOutput}:{})};
+  return {natives,stats,dispose,canvas,...(walkingReplayEnabled?{stopWalkingReplay,hasActiveWalkingReplay:()=>walkTimer!==null}:{}),...(options.benchmarkControl===true?{queueOwnedState,queueStreamUploadValidation,queuePhysicalOutput}:{})};
 }
