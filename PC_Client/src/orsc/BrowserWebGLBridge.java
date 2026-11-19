@@ -146,6 +146,20 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void worldProgress(int[] metadata);
     private static native void regionTransition(boolean ordinaryWalking);
     private static native void holdWorld();
+    private static native void walkingAnchor(int worldX, int worldZ, int spriteSlot);
+    private static native void walkingTransition(int worldX, int worldZ);
+    private static final boolean WORKER_MOTION = Boolean.getBoolean("spoiledmilk.browserWorkerMotion")
+        && Boolean.getBoolean("spoiledmilk.browserBenchmark") && !Boolean.getBoolean("spoiledmilk.browserPublicAlpha");
+    @Override public void worldTransition(boolean ordinaryWalking, int targetX, int targetZ) {
+        if (!WORKER_MOTION || !initialized || !ordinaryWalking || targetX == Integer.MIN_VALUE
+                || targetZ == Integer.MIN_VALUE) {
+            worldTransition(ordinaryWalking);
+            return;
+        }
+        overlayDeltaReset = true;
+        loadState.beginTransition();
+        walkingTransition(targetX * 128 + 64, targetZ * 128 + 64);
+    }
     @Override public void worldTransition(boolean ordinaryWalking) {
         overlayDeltaReset=true;
         loadState.beginTransition();
@@ -292,7 +306,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             float[] clip=OpenGLWorldChunkRenderer.multiply(OpenGLWorldChunkRenderer.projectionMatrix(frame),view);
             float[] matrices=new float[48];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);columnMajor(OpenGLFramePresenter.backendCameraToClipProjectionMatrix(frame),matrices,32);
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.SPRITES);
-            int spriteGroups=uploadSprites(frame);
+            int spriteGroups=uploadSprites(frame, client);
             long spriteEnd=System.nanoTime();
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.LIGHTING);
             exportLighting(frame);
@@ -456,9 +470,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         for(BrowserLightingData.Mask mask:light.changes)uploadLightingMask(mask.unit,mask.width,mask.height,mask.rgba,mask.bounds);
         lightingFrame(light.values);
     }
-    private int uploadSprites(Renderer3DFrame frame) {
+    private int uploadSprites(Renderer3DFrame frame, mudclient client) {
         if(frame.getWorldSpriteSnapshotCount()>1024)throw new IllegalStateException("Browser world sprite count exceeds capacity");
         BrowserWorldSpriteBatch batch=new BrowserWorldSpriteBatch();
+        int localSlot = -1;
         // Strong references protect the entire gathered frame from CPU LRU evictions.
         for(Renderer3DFrame.WorldSpriteSnapshot snapshot:frame.getWorldSpriteSnapshots()) {
             if(snapshot==null||snapshot.getAnchor()==null||snapshot.getLayerCount()==0)continue;
@@ -472,12 +487,18 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 cached=new BrowserWorldSpriteCache.Result(composite.x,composite.y,composite.width,composite.height,rgba,spriteCache.nextImageId());
             }
             if(composite.width<1||composite.height<1||(long)composite.width*composite.height>MAX_PIXELS)throw new IllegalStateException("Browser world sprite exceeds capacity");
+            if (WORKER_MOTION && localSlot < 0 && client != null
+                    && client.isLocalPlayerRenderSprite(snapshot.getAnchor().getSpriteId())) {
+                localSlot = batch.size();
+            }
             batch.add(cached,spriteQuad(frame,snapshot.getAnchor(),composite));
         }
         if(spriteSequence>=9007199254740991L)throw new IllegalStateException("Sprite sequence exhausted");
         long sequence=++spriteSequence;int epoch=spriteCache.getEpoch();
         int[] missing=planWorldSprites(epoch,sequence,batch.descriptors());
         commitWorldSprites(epoch,sequence,batch.pixels(missing),batch.vertices());
+        if (localSlot >= 0) walkingAnchor(client.getLocalPlayerWorldPixelX(),
+            client.getLocalPlayerWorldPixelZ(), localSlot);
         return batch.size();
     }
     static float[] spriteQuad(Renderer3DFrame frame,Renderer3DFrame.SpriteAnchor anchor,CompositeWorldSpriteTexture composite) {

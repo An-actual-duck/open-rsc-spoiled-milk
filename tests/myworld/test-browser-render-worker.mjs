@@ -76,6 +76,14 @@ const walkingTransport=createRenderWorkerTransport({layout,flushRegionTransition
 await walkingTransport.enqueue('regionTransition',[true]);
 check(walkingPackets.length===1&&walkingPackets[0].frameId===0);
 check(walkingPackets[0].commands[0].name==='regionTransition');
+const motionPackets=[];
+const motionTransport=createRenderWorkerTransport({layout,flushRegionTransition:true,
+  postMessage:packet=>motionPackets.push(packet)});
+await motionTransport.enqueue('walkingTransition',[1024,2048]);
+check(motionPackets.length===1&&motionPackets[0].frameId===0);
+check(motionPackets[0].commands[0].args.join(',')==='1024,2048');
+motionTransport.dispose();
+
 walkingTransport.dispose();
 
 let invalidations=0;

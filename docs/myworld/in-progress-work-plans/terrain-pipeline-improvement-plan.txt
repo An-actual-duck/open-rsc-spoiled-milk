@@ -191,6 +191,34 @@ The final handoff also needs a safe lifetime for the old GPU resources
 until the new scene is committed, since the current replay stops as
 soon as scene updates can mutate those resources.
 
+Confirmed movement in the worker
+--------------------------------
+
+The private worker replay receives the accepted surface context's packed
+player destination in world units. Each committed frame labels the local
+player sprite and stores its rendered world position. The worker moves from
+that position toward the confirmed destination with an upper bound of four
+tiles, never passing the destination. The same camera translation projects
+terrain, scenery and the other actor sprites; the local sprite moves with
+the camera. It uses the previously captured sprite image, height, lighting
+masks and UI. The server still controls movement and interaction.
+
+The private Firefox route drew 16 outbound and 8 return worker frames
+with a movement transform. Draws were spaced at most 18 ms apart within
+the replay window, excluding the end of replay through the next Java
+frame. Gaps between Java submissions were 422 and 181 ms. Both routes
+crossed successfully with no new catalogue downloads or visible notice.
+No claim of continuous movement through the entire handoff, sprite
+animation parity, floor or teleport behavior, or scanout is made.
+Evidence is in output/diagnostics/browser-overlapping-handoff/
+worker-motion/motion-result.json.
+
+Next measure the tail from the final moving worker frame to the first
+replacement frame. Give the renderer separate lifetimes for the committed
+and incoming sprite atlas, lighting masks, and changed local geometry.
+Reconcile the two poses on commit and test reversals and steep terrain
+before adopting the experiment.
+
 Optional streaming policy
 -------------------------
 

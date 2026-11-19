@@ -930,7 +930,9 @@ public class PacketHandler {
 				hadLayeredSceneContext && !result.isScopeChanged()
 					&& previousLogicalLevel == logicalLevel
 					&& Math.abs((long) previousLogicalX - logicalX) <= 8L
-					&& Math.abs((long) previousLogicalY - logicalY) <= 8L);
+					&& Math.abs((long) previousLogicalY - logicalY) <= 8L,
+				logicalLevel == 0 && "global".equals(worldSpace) ? legacyX : Integer.MIN_VALUE,
+				logicalLevel == 0 && "global".equals(worldSpace) ? legacyY : Integer.MIN_VALUE);
 			refreshLayeredSceneActivationCover();
 		} else {
 			clearReadyPredictedLayeredTerrainHalo();

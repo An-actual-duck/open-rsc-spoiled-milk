@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   cameraWorldPosition, createOverworldFlyover, moveWorldCamera,
-  persistentWorldPolicy, terrainCells
+  persistentWorldPolicy, terrainCells, walkingReplayOffset
 } from '../../tools/browser-gameplay/web/browser-persistent-world.js';
 import {createWholeZoneSelection} from '../../tools/browser-gameplay/web/browser-whole-zone.js';
 
@@ -53,6 +53,12 @@ assert.equal(persistentWorldPolicy(new URLSearchParams('persistentscene=on&worke
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('workerreplay=on'),admission));
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&workerreplay=on&flyover=on'),admission));
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&workerreplay=on'),{...admission,publicAlpha:true}));
+assert.deepEqual(walkingReplayOffset([100,200,1],[228,200],128),[64,0]);
+assert.deepEqual(walkingReplayOffset([100,200,1],[100,72],1024),[0,-128]);
+assert.deepEqual(walkingReplayOffset([100,200,1],[228,328],-10),[0,0]);
+assert.equal(walkingReplayOffset([100,200,1],[100,200],20),null);
+assert.equal(walkingReplayOffset([100,200,1],[613,200],20),null);
+assert.equal(walkingReplayOffset(null,[228,200],20),null);
 const selection=createWholeZoneSelection(catalogue,{}, {persistent:true});
 selection.frame(state(2,0,1),rows);
 const before=ids(selection.merge(new Int32Array(),0,matrices(143*scale,644*scale)));

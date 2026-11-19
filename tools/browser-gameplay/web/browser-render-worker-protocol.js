@@ -10,6 +10,7 @@ export const RENDER_WORKER_SCHEMA=Object.freeze({
   overlayFrame:['i','i','i','n','n','i','b','N'],uploadChunk:['i','F','I','I'],replaceChunk:['i','F','I','I'],
   deleteTextures:['I'],uploadTexture:['i','i','i','I','b'],deleteChunks:['I'],
   present:['i','i','b','F','F','I','I'],frameWork:['F','I'],worldProgress:['I'],regionTransition:['b'],holdWorld:[],
+  walkingAnchor:['i','i','i'],walkingTransition:['i','i'],
   planWorldSprites:['i','n','I'],commitWorldSprites:['i','n','B','F'],
   '$owned':['b'],'$validation':['b'],'$physical':['b'],'$measurement':['b']
 });

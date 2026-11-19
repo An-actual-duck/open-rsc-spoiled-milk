@@ -36,6 +36,16 @@ export function moveWorldCamera(matrices, dx, dz) {
   return out;
 }
 
+/** Move toward a confirmed tile without extrapolating past it. */
+export function walkingReplayOffset(anchor, destination, elapsedMs) {
+  if (!anchor || !destination) return null;
+  const dx = destination[0] - anchor[0], dz = destination[1] - anchor[1];
+  const distance = Math.max(Math.abs(dx), Math.abs(dz));
+  if (distance < 1 || distance > 4 * TILE) return null;
+  const amount = Math.max(0, Math.min(1, elapsedMs / Math.max(100, distance * 2)));
+  return [dx * amount, dz * amount];
+}
+
 export function persistentCells(cameraX, cameraZ, size) {
   const x = cameraX / TILE, z = cameraZ / TILE;
   return {

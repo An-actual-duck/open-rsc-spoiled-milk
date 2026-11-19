@@ -26260,6 +26260,19 @@ public final class mudclient implements Runnable {
 		return this.players[i];
 	}
 
+	public boolean isLocalPlayerRenderSprite(int spriteId) {
+		int index = spriteId - 5000;
+		return index >= 0 && index < this.playerCount && this.players[index] == this.localPlayer;
+	}
+
+	public int getLocalPlayerWorldPixelX() {
+		return this.localPlayer.currentX + this.midRegionBaseX * this.tileSize;
+	}
+
+	public int getLocalPlayerWorldPixelZ() {
+		return this.localPlayer.currentZ + this.midRegionBaseZ * this.tileSize;
+	}
+
 	public int getLocalPlayerX() {
 		return this.playerLocalX;
 	}
@@ -26697,7 +26710,13 @@ public final class mudclient implements Runnable {
 
 	public void beginLayeredSceneActivation(
 		final boolean retainPresentedFrame, final boolean ordinaryWalking) {
-		if (clientPort != null) clientPort.beginWorldTransition(ordinaryWalking);
+		beginLayeredSceneActivation(retainPresentedFrame, ordinaryWalking,
+			Integer.MIN_VALUE, Integer.MIN_VALUE);
+	}
+
+	public void beginLayeredSceneActivation(boolean retainPresentedFrame, boolean ordinaryWalking,
+			int targetTileX, int targetTileZ) {
+		if (clientPort != null) clientPort.beginWorldTransition(ordinaryWalking, targetTileX, targetTileZ);
 		this.layeredSceneActivationPending = true;
 		this.layeredSceneTerrainStageWaitLogged = false;
 		this.browserOrdinaryWalking = retainPresentedFrame && ordinaryWalking;

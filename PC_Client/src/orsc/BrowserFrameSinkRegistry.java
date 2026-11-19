@@ -10,6 +10,9 @@ public final class BrowserFrameSinkRegistry {
     public interface Sink {
         void present(BufferedImage image, Renderer2DFrame commands, Renderer3DFrame frame);
         default void worldTransition(boolean ordinaryWalking) { }
+        default void worldTransition(boolean ordinaryWalking, int targetX, int targetZ) {
+            worldTransition(ordinaryWalking);
+        }
         default boolean needsCpuDepthFrame() { return true; }
     }
     private static volatile Sink sink;
@@ -24,6 +27,10 @@ public final class BrowserFrameSinkRegistry {
     }
     public static void worldTransition(boolean ordinaryWalking) {
         Sink target=sink;if(target!=null)target.worldTransition(ordinaryWalking);
+    }
+    public static void worldTransition(boolean ordinaryWalking, int targetX, int targetZ) {
+        Sink target = sink;
+        if (target != null) target.worldTransition(ordinaryWalking, targetX, targetZ);
     }
     /** Preserve the ordinary AWT input surface, but do not repaint pixels hidden by WebGL. */
     static synchronized boolean shouldPaintUnderlay(int width,int height) {
