@@ -22,6 +22,10 @@ assert.equal(persistentWorldPolicy(new URLSearchParams('persistentscene=on'),adm
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on'),{...admission,publicAlpha:true}));
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on'),{...admission,wholeZone:{enabled:true,residency:'bounded'}}));
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('flyover=on'),admission));
+assert.equal(persistentWorldPolicy(new URLSearchParams('persistentscene=on&preparedwalk=on'),admission).preparedWalk,true);
+assert.throws(() => persistentWorldPolicy(new URLSearchParams('preparedwalk=on'),admission));
+assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&flyover=on&preparedwalk=on'),admission));
+assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&preparedwalk=on'),{...admission,publicAlpha:true}));
 
 const flightStats = {};
 const flight = createOverworldFlyover(flightStats);

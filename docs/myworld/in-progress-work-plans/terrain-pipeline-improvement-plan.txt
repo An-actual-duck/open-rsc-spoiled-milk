@@ -49,6 +49,44 @@ The renderer continued to report ordinary uploads outside the static
 catalogue. The replay and comparison are under output/diagnostics/
 browser-persistent-world/ in the worker checkout.
 
+Live walking handoff
+--------------------
+
+A Firefox replay on the private world walked across the boundary near
+(144, 644, 0) in both directions using the same map, options, and route.
+The server reached the same waypoints in both runs. Both held all 1,400
+catalogue entries and downloaded zero new catalogue bytes during travel.
+
+The prepared walking prototype keeps the active scene until authoritative
+player and static receipts finish. Same-scope global level 0 walking can
+release the first assembled frame once it has the current immutable
+prepared terrain, matching scenery revision and origin, and no pending
+terrain presentation product. Other transitions keep the two-sample
+stability check. WebGL still waits for the scene's required geometry.
+The prototype is opt-in with preparedwalk=on in private full-residency mode.
+
+                                    Existing   Prepared walk
+  Fresh frame gap, outbound           512 ms      480 ms
+  Fresh frame gap, return             286 ms      284 ms
+  Receipts to Java release, outbound  180 ms      141 ms
+  Receipts to Java release, return    106 ms       92 ms
+  First full WebGL bridge, outbound   138 ms      146 ms
+  First full WebGL bridge, return     114 ms      120 ms
+  Stationary frame median              20 ms       20 ms
+
+These are one paired replay on one GPU, with Java-phase and browser-frame
+clocks recorded separately. Frame gaps measure browser presentation
+intervals. Both runs briefly activated the loading cover at both
+crossings. The matching triangle and chunk counts and successful route
+validate the narrow experiment. They do not establish pixel parity or
+cover interactions, rapid reversals, teleports, or level changes in Firefox.
+Keep the prototype private. The next experiment should split the first
+bridge cost into dynamic scenery repacks, actor submission, lighting masks,
+and Worker waits, then prepare eligible products while the current scene
+is still active. Preserve the regular server authority and frame safety gates.
+Evidence is under output/diagnostics/browser-overlapping-handoff/ in the
+worker checkout.
+
 Work to test
 ------------
 

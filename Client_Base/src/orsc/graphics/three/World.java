@@ -2816,6 +2816,14 @@ public final class World {
 			true).roofInput.finalElevations;
 	}
 
+	// The immutable query installed by the successful prepared activation.
+	private Renderer3DWorldChunkFrame preparedActivationFrame;
+
+	public boolean isCurrentPreparedActivationFrame(Renderer3DWorldChunkFrame frame) {
+		return frame != null && frame == preparedActivationFrame
+			&& frame == getRenderer3DWorldChunkFrame();
+	}
+
 	public Renderer3DWorldChunkFrame getRenderer3DWorldChunkFrame() {
 		Renderer3DWorldChunkFrame symmetricFrame =
 			symmetricRenderer3DWorldChunkFrame;
@@ -4771,6 +4779,7 @@ public final class World {
 
 	public final void loadSections(int worldX, int worldZ, int plane) {
 		try {
+			preparedActivationFrame = null;
             WholeOverworldRamRegistry.Provider ram=WholeOverworldRamRegistry.forWorld(this,nativeLayeredTerrainSnapshot);
             if(ram!=null&&ram.activate(this,plane,activeSectionXForWorldTile(worldX),activeSectionYForWorldTile(worldZ)))return;
 			long loadStart = WorldStreamManager.now();
@@ -4865,6 +4874,7 @@ public final class World {
         if(query.getChunkCount()==0||query.getChunks().get(0).getCenterSectionX()!=carrierX||query.getChunks().get(0).getCenterSectionY()!=carrierY||query.getChunks().get(0).getLogicalWorldOffsetX()!=Math.multiplyExact(Math.multiplyExact(carrierX-1,48),128)||query.getChunks().get(0).getLogicalWorldOffsetZ()!=Math.multiplyExact(Math.multiplyExact(carrierY-1,48),128))throw new IllegalStateException("Whole-RAM prepared query/carrier basis mismatch: carrier="+carrierX+","+carrierY+" logical="+recipe.sectionX+","+recipe.sectionY+" offsets="+basis.offsetTilesX+","+basis.offsetTilesZ);
         long start=WorldStreamManager.now();long copied=recipe.activate(this,carrierX,carrierY);renderer3DWorldChunkFrame=query;clearPredictiveRenderer3DWorldChunkFrame();
         symmetricRenderer3DWorldChunkFrame=null;symmetricOuterRenderer3DWorldChunkFrame=null;symmetricRetainableRenderer3DWorldChunkFrame=null;
+        preparedActivationFrame = query;
         worldStreamManager.markActiveWindow(0,carrierX,carrierY,ACTIVE_SECTION_GRID,ACTIVE_SECTION_ORIGIN_OFFSET);
         worldStreamManager.recordActiveWindowLoad(0,carrierX,carrierY,WorldStreamManager.elapsedSince(start));
         logNativeLayeredTerrainActivation(Math.multiplyExact(carrierX,48),Math.multiplyExact(carrierY,48),0,carrierX,carrierY);return copied;

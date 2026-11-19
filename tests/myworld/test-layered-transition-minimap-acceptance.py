@@ -635,6 +635,9 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
                     ),
                     str(classifier_stub),
                     str(WORLD_CHUNK_FRAME),
+                    str(WORLD_CHUNK_FRAME.with_name("WholeRamData.java")),
+                    str(WORLD_CHUNK_FRAME.with_name("WholeRamBasis.java")),
+                    str(WORLD_CHUNK_FRAME.with_name("RoofTileCoverage.java")),
                     str(harness_path),
                 ],
                 cwd=ROOT,
@@ -804,6 +807,29 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
                     require(!latch.completeFreshFrame(
                             200L, 5, true),
                         "release is single-use");
+
+                    latch.begin(true, true);
+                    require(!latch.completeFreshFrame(300L, 6, true, true),
+                        "verified frame still needs both authority receipts");
+                    latch.updatePending(false);
+                    require(!latch.completeFreshFrame(300L, 6, false, true),
+                        "verified terrain still waits for pending products");
+                    require(!latch.completeFreshFrame(300L, 0, true, true),
+                        "an empty scene cannot certify a release");
+                    require(latch.completeFreshFrame(300L, 6, true, true),
+                        "verified prepared products release on first populated frame");
+
+                    latch.begin(true, true);
+                    latch.updatePending(false);
+                    require(!latch.completeFreshFrame(400L, 5, true, false),
+                        "unverified prepared path retains a first sample");
+                    require(latch.completeFreshFrame(400L, 5, true, false),
+                        "unverified path falls back to two stable samples");
+
+                    latch.begin(true);
+                    latch.updatePending(false);
+                    require(!latch.completeFreshFrame(400L, 5, true, true),
+                        "ineligible transitions keep the stability check");
 
                     latch.begin(false);
                     require(!latch.shouldRetainLastPresentedFrame(),

@@ -5,11 +5,13 @@ const VIEW_RADIUS = 112;
 export function persistentWorldPolicy(options, {publicAlpha, renderWorker, wholeZone, wholeRam}) {
   const enabled = options.get('persistentscene') === 'on';
   const flyover = options.get('flyover') === 'on';
-  if ((enabled || flyover) && (publicAlpha || !enabled || !renderWorker.enabled
+  const preparedWalk = options.get('preparedwalk') === 'on';
+  if ((enabled || flyover || preparedWalk) && (publicAlpha || !enabled || !renderWorker.enabled
       || !wholeZone.enabled || wholeZone.residency !== 'full' || !wholeRam.enabled)) {
     throw new Error('Persistent scene requires a private full-residency WebGL session');
   }
-  return {enabled, flyover};
+  if (preparedWalk && flyover) throw new Error('Prepared walking requires live gameplay');
+  return {enabled, flyover, preparedWalk};
 }
 
 // The existing Java view is R * translate(-eye), with R an orthonormal basis.

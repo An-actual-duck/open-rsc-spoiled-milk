@@ -9,7 +9,8 @@ package orsc;
  * scenery/object chunks. The first assembled frame can also precede the
  * asynchronous structure-stage publication. The latch therefore refuses to
  * sample while an authoritative presentation product is pending, then requires
- * two consecutive matching static-world signatures before releasing it. A
+ * two consecutive matching static-world signatures before releasing it. An
+ * eligible walking transition can instead prove its products at assembly. A
  * hard sample bound prevents an incorrectly classified continuously-changing
  * chunk from holding the old presentation forever.</p>
  */
@@ -19,6 +20,7 @@ final class LayeredScenePresentationLatch {
 	private boolean pending;
 	private boolean retainPresentedFrame;
 	private boolean awaitingFreshFrame;
+	private boolean preparedWalking;
 	private boolean candidateKnown;
 	private long candidateStaticWorldSignature;
 	private int candidateStaticChunkCount;
@@ -26,6 +28,11 @@ final class LayeredScenePresentationLatch {
 	private boolean lastReleaseStable;
 
 	void begin(boolean retainCurrentFrame) {
+		begin(retainCurrentFrame, false);
+	}
+
+	void begin(boolean retainCurrentFrame, boolean preparedWalking) {
+		this.preparedWalking = retainCurrentFrame && preparedWalking;
 		pending = true;
 		retainPresentedFrame = retainCurrentFrame;
 		awaitingFreshFrame = false;
@@ -54,6 +61,15 @@ final class LayeredScenePresentationLatch {
 		long staticWorldSignature,
 		int staticChunkCount,
 		boolean presentationProductsReady) {
+		return completeFreshFrame(staticWorldSignature, staticChunkCount,
+			presentationProductsReady, false);
+	}
+
+	boolean completeFreshFrame(
+		long staticWorldSignature,
+		int staticChunkCount,
+		boolean presentationProductsReady,
+		boolean preparedProductsVerified) {
 		if (!awaitingFreshFrame
 			|| !presentationProductsReady) {
 			return false;
@@ -61,10 +77,10 @@ final class LayeredScenePresentationLatch {
 		freshFrameSamples++;
 		boolean stable =
 			staticChunkCount > 0
-				&& candidateKnown
-				&& candidateStaticChunkCount == staticChunkCount
-				&& candidateStaticWorldSignature
-					== staticWorldSignature;
+				&& (preparedWalking && preparedProductsVerified
+					|| candidateKnown
+						&& candidateStaticChunkCount == staticChunkCount
+						&& candidateStaticWorldSignature == staticWorldSignature);
 		if (!stable
 			&& freshFrameSamples < MAX_FRESH_FRAME_SAMPLES) {
 			candidateKnown = staticChunkCount > 0;
@@ -74,6 +90,7 @@ final class LayeredScenePresentationLatch {
 		}
 		awaitingFreshFrame = false;
 		retainPresentedFrame = false;
+		preparedWalking = false;
 		lastReleaseStable = stable;
 		return true;
 	}
@@ -90,6 +107,7 @@ final class LayeredScenePresentationLatch {
 		pending = false;
 		retainPresentedFrame = false;
 		awaitingFreshFrame = false;
+		preparedWalking = false;
 		resetFreshFrameCandidate();
 	}
 

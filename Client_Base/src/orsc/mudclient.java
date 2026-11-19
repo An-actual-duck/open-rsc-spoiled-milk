@@ -927,6 +927,11 @@ public final class mudclient implements Runnable {
 	private int lastObjectAnimatonNumberClaw = -1;
 	private boolean loadingArea = false;
 	private boolean layeredSceneActivationPending = false;
+	private static final boolean BROWSER_PREPARED_WALK_HANDOFF =
+		Boolean.getBoolean("spoiledmilk.browserBenchmark")
+			&& !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+			&& Boolean.getBoolean("spoiledmilk.browserPreparedWalkHandoff");
+
 	private final LayeredScenePresentationLatch
 		layeredScenePresentationLatch =
 			new LayeredScenePresentationLatch();
@@ -9120,13 +9125,14 @@ public final class mudclient implements Runnable {
 					Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
 					if (renderer3DFrame != null) {
 						renderer3DFrame.setRoofVisibility(roofVisibility, this.lastHeightOffset);
+						Renderer3DWorldChunkFrame terrainFrame =
+							this.world.getRenderer3DWorldChunkFrame();
 						Renderer3DWorldChunkFrame presentedWorldChunkFrame =
-							this.appendResidentObjectChunkFrame(
-								this.world.getRenderer3DWorldChunkFrame());
+							this.appendResidentObjectChunkFrame(terrainFrame);
 						renderer3DFrame.setWorldChunkFrame(
 							presentedWorldChunkFrame);
 						this.completeLayeredSceneActivationFreshFrame(
-							presentedWorldChunkFrame);
+							presentedWorldChunkFrame, terrainFrame, renderer3DFrame.getSignedWorldLevel());
 						Renderer3DDepthFrame depthFrame = renderer3DFrame.getDepthFrame();
 						Renderer3DMeshFrame meshFrame = renderer3DFrame.getMeshFrame();
 						RenderTelemetry.recordWorldGeometryFrame(
@@ -26666,7 +26672,10 @@ public final class mudclient implements Runnable {
 	public void beginLayeredSceneActivation(
 		final boolean retainPresentedFrame, final boolean ordinaryWalking) {
 		if (clientPort != null) clientPort.beginWorldTransition(ordinaryWalking);
-		beginLayeredSceneActivation(retainPresentedFrame);
+		this.layeredSceneActivationPending = true;
+		this.layeredSceneTerrainStageWaitLogged = false;
+		this.layeredScenePresentationLatch.begin(retainPresentedFrame,
+			BROWSER_PREPARED_WALK_HANDOFF && ordinaryWalking);
 	}
 
 	public void resetLayeredSceneActivationPresentation() {
@@ -26681,7 +26690,8 @@ public final class mudclient implements Runnable {
 	}
 
 	private void completeLayeredSceneActivationFreshFrame(
-		Renderer3DWorldChunkFrame worldChunkFrame) {
+		Renderer3DWorldChunkFrame worldChunkFrame,
+		Renderer3DWorldChunkFrame terrainFrame, int signedLevel) {
 		long staticWorldSignature =
 			worldChunkFrame == null
 				? 0L
@@ -26719,11 +26729,21 @@ public final class mudclient implements Runnable {
 				RendererDiagnosticSession.writeEventRecord(wait);
 			}
 		}
+		// Ready receipts are still required by the latch. The prepared terrain
+		// and scenery built for the current revision and origin can certify the
+		// first assembled frame. The WebGL bridge still checks GPU readiness.
+		boolean preparedProductsVerified = BROWSER_PREPARED_WALK_HANDOFF
+			&& signedLevel == 0 && "global".equals(this.packetHandler.getLogicalWorldSpace())
+			&& this.world.isCurrentPreparedActivationFrame(terrainFrame)
+			&& this.builtStaticPresentationRevision == this.staticPresentationRevision
+			&& this.builtStaticPresentationBaseX == this.midRegionBaseX
+			&& this.builtStaticPresentationBaseZ == this.midRegionBaseZ;
 		boolean released =
 			this.layeredScenePresentationLatch.completeFreshFrame(
 				staticWorldSignature,
 				staticChunkCount,
-				presentationProductsReady);
+				presentationProductsReady,
+				preparedProductsVerified);
 		int freshFrameSamples =
 			this.layeredScenePresentationLatch.getFreshFrameSamples();
 		if (freshFrameSamples > previousSamples) {
