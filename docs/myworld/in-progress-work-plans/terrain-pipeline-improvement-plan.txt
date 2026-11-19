@@ -137,6 +137,32 @@ forward on the old scene's timeline. Profile the individual render phases and re
 workers. Keep contact,
 picking and server receipts bound to the authoritative scene.
 
+Early visual submission attempt
+-------------------------------
+
+The private livewalk experiment allows a visual frame during an ordinary
+same-scope surface handoff after the player receipt and complete prepared
+terrain are available. It verifies renderer coverage, leaves the static
+scene receipt and picking gates in place, and gives the browser no reason
+to mark a provisional frame authoritative. The reference game/UI path
+still assembles the frame.
+
+In a private Firefox replay the server player receipt arrived at 12 and
+9 ms from context entry. Both receipts were complete at 111 and 66 ms,
+and the first scene assembly started at 126 and 78 ms. The attempted
+overlap produced zero intervening visual frames. The freshness gaps
+were 426 and 180 ms. This prototype did not improve ordinary movement.
+Evidence is in output/diagnostics/browser-overlapping-handoff/live/
+handoff-result.json.
+
+The next design should give the render worker an independently replayable
+committed scene, with origin, terrain/object draw references and camera and
+actor positions captured before transition. Establish buffer ownership and
+independent cadence first, then feed confirmed motion in world coordinates
+and measure the actual Worker frame times while the Java build is blocked.
+Keep the interactive scene on its normal authority and readiness path.
+Avoid treating a retained screenshot or deferred notice as motion proof.
+
 Optional streaming policy
 -------------------------
 

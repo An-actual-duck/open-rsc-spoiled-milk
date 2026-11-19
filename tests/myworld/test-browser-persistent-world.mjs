@@ -45,6 +45,10 @@ assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=o
 assert.equal(persistentWorldPolicy(new URLSearchParams('persistentscene=on&quietwalk=on'),admission).quietWalk,true);
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('quietwalk=on'),admission));
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&quietwalk=on'),{...admission,publicAlpha:true}));
+assert.equal(persistentWorldPolicy(new URLSearchParams('persistentscene=on&livewalk=on'),admission).liveWalk,true);
+assert.throws(() => persistentWorldPolicy(new URLSearchParams('livewalk=on'),admission));
+assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&livewalk=on&flyover=on'),admission));
+assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&livewalk=on'),{...admission,publicAlpha:true}));
 const selection=createWholeZoneSelection(catalogue,{}, {persistent:true});
 selection.frame(state(2,0,1),rows);
 const before=ids(selection.merge(new Int32Array(),0,matrices(143*scale,644*scale)));

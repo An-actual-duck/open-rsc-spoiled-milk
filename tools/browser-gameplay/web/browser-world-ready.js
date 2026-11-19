@@ -46,6 +46,9 @@ export function createWorldReadiness(gl,{stats,clock=()=>performance.now()}={}) 
     if(!current||!pending)throw new Error('Browser frame missing world readiness declaration');pending=false;
     if(current[9]!==width||current[10]!==height)throw new Error('World readiness viewport changed during presentation');
     if(failed)return;
+    if (current[1] === 1 && world && everReady && ordinary && transition) {
+      stats.provisionalWalkingFrames = (stats.provisionalWalkingFrames || 0) + 1;
+    }
     if(current[1]!==2||!world)return;
     if(ready){set('ready','Ready',{liveUpdatesPending:current[4]<current[3]||current[5]>0});return;}
     const complete=current[8]===1&&current[3]===current[4]&&current[5]===0&&current[6]===current[7]&&current[7]===sprites&&current[11]===textures&&lighting;

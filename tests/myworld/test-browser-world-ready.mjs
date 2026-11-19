@@ -24,6 +24,11 @@ x=fixture();for(let i=0;i<7;i++)x.frame();x.frame({9:800},30,{width:800});assert
 x=fixture();for(let i=0;i<7;i++)x.frame();const initialFences=x.created;
 x.state.beginTransition(true);assert.equal(x.stats.worldReadiness.phase,'streaming');assert.equal(x.stats.worldReadiness.ordinaryWalking,true);assert.equal(x.stats.worldReadiness.blocksKeyboard,false);
 x.state.declare(x.data({2:2,4:2}));x.state.held();assert.equal(x.stats.worldReadiness.phase,'streaming');
+x.frame({1:1,2:2,8:0});
+assert.equal(x.stats.provisionalWalkingFrames,1);
+assert.equal(x.stats.worldReadiness.phase,'streaming','visual frame released authority');
+assert.equal(x.stats.worldReadiness.blocksWorldInput,true,'visual frame released input');
+
 assert.throws(()=>x.state.held(),/missing/);x.frame({2:2});assert.equal(x.stats.worldReadiness.phase,'ready');assert.equal(x.created,initialFences,'streamed world repeated initial shader warmup');assert.equal(x.stats.worldStreamSamples.length,1);
 x.state.beginTransition(false);assert.equal(x.stats.worldReadiness.blocksKeyboard,true);assert.equal(x.stats.worldReadiness.ordinaryWalking,false);x.frame({2:3},30,{lighting:false});assert.equal(x.stats.worldReadiness.phase,'streaming');x.frame({2:3});assert.equal(x.stats.worldReadiness.phase,'ready');
 x.frame({1:0},30,{world:false});x.frame({2:4});assert.equal(x.stats.worldReadiness.phase,'loading','relogin skipped initial warmup');

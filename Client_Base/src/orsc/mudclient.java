@@ -932,6 +932,12 @@ public final class mudclient implements Runnable {
 			&& !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 			&& Boolean.getBoolean("spoiledmilk.browserPreparedWalkHandoff");
 
+	private static final boolean BROWSER_LIVE_WALK_HANDOFF =
+		Boolean.getBoolean("spoiledmilk.browserBenchmark")
+			&& !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+			&& Boolean.getBoolean("spoiledmilk.browserLiveWalkHandoff");
+	private boolean browserOrdinaryWalking;
+
 	private final LayeredScenePresentationLatch
 		layeredScenePresentationLatch =
 			new LayeredScenePresentationLatch();
@@ -8588,6 +8594,8 @@ public final class mudclient implements Runnable {
 			}
 
 			if (var1 == 13) {
+				boolean walkingPresentation = canPresentBrowserWalkingHandoff();
+				if (walkingPresentation) this.mouseButtonClick = 0;
 				if (this.deathScreenTimeout != 0) {
 					this.getSurface().fade2black(16316665);
 					this.getSurface().drawColoredStringCentered(this.halfGameWidth(), "Oh dear! You are dead...",
@@ -8647,10 +8655,10 @@ public final class mudclient implements Runnable {
 					// this.getSurface().draw(this.graphics, this.screenOffsetX,
 					// 256, this.screenOffsetY);
 					clientPort.draw();
-					} else if (this.layeredSceneActivationPending
+					} else if (this.layeredSceneActivationPending && !walkingPresentation
 							&& this.shouldRetainLastPresentedFrame()) {
 						clientPort.draw();
-					} else if (this.layeredSceneActivationPending) {
+					} else if (this.layeredSceneActivationPending && !walkingPresentation) {
 						this.drawLoadingPleaseWaitFrame();
 					} else if (this.world.playerAlive) {
 						long drawPreparationStart = RenderTelemetry.now();
@@ -26530,6 +26538,17 @@ public final class mudclient implements Runnable {
 			&&this.packetHandler.browserStagedContextMatches(prepared,preparedSequence);
 	}
 
+	/** Visual continuity only. Input and the fresh-scene latch still wait for the baseline. */
+	public boolean canPresentBrowserWalkingHandoff() {
+		return BROWSER_LIVE_WALK_HANDOFF && this.browserOrdinaryWalking
+			&& this.layeredSceneActivationPending && this.shouldRetainLastPresentedFrame()
+			&& this.isGameView() && this.hasCompletedInitialRegionLoad
+			&& !this.loadingArea && !this.isFullScreenModalUiActive()
+			&& this.localPlayer != null && this.world != null && this.world.playerAlive
+			&& this.packetHandler.hasBrowserWalkingPlayerReceipt()
+			&& this.world.isCurrentPreparedActivationFrame(this.world.getRenderer3DWorldChunkFrame());
+	}
+
 	public boolean isRenderer3DWorldReady() {
 		return this.currentViewMode == GameMode.GAME
 			&& this.hasCompletedInitialRegionLoad
@@ -26672,6 +26691,7 @@ public final class mudclient implements Runnable {
 		final boolean retainPresentedFrame) {
 		this.layeredSceneActivationPending = true;
 		this.layeredSceneTerrainStageWaitLogged = false;
+		this.browserOrdinaryWalking = false;
 		this.layeredScenePresentationLatch.begin(retainPresentedFrame);
 	}
 
@@ -26680,6 +26700,7 @@ public final class mudclient implements Runnable {
 		if (clientPort != null) clientPort.beginWorldTransition(ordinaryWalking);
 		this.layeredSceneActivationPending = true;
 		this.layeredSceneTerrainStageWaitLogged = false;
+		this.browserOrdinaryWalking = retainPresentedFrame && ordinaryWalking;
 		this.layeredScenePresentationLatch.begin(retainPresentedFrame,
 			BROWSER_PREPARED_WALK_HANDOFF && ordinaryWalking);
 	}
@@ -26687,6 +26708,7 @@ public final class mudclient implements Runnable {
 	public void resetLayeredSceneActivationPresentation() {
 		this.layeredSceneActivationPending = false;
 		this.layeredSceneTerrainStageWaitLogged = false;
+		this.browserOrdinaryWalking = false;
 		this.layeredScenePresentationLatch.reset();
 	}
 

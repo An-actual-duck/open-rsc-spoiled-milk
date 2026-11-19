@@ -232,7 +232,9 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=4;
             return;
         }
-        if(WHOLE_ZONE&&client!=null&&(client.isGameView()||client.isBrowserStagedLoginPreparing())&&!client.isFullScreenModalUiActive()&&!client.isRenderer3DWorldReady()&&!client.isBrowserStagedSceneReady()){
+        boolean walkingPresentation = WHOLE_ZONE && client != null
+            && client.canPresentBrowserWalkingHandoff();
+        if(!walkingPresentation&&WHOLE_ZONE&&client!=null&&(client.isGameView()||client.isBrowserStagedLoginPreparing())&&!client.isFullScreenModalUiActive()&&!client.isRenderer3DWorldReady()&&!client.isBrowserStagedSceneReady()){
             int[] progress=loadState.frame(client.isGameView()||client.isBrowserStagedLoginPreparing(),client.isFullScreenModalUiActive(),false,frame,world.getChunkCount(),0,0,0,0,w,h,textures.size());
             overlayDeltaReset=true;worldProgress(progress);holdWorld();if(loadProfile!=null){loadProfile.progress(progress);loadProfile.values[BrowserLoadProfile.PATH]=2;}return;
         }
@@ -281,7 +283,9 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             // Core already retained its last coherent CPU frame during area activation.
             // Preserve that same final GPU image until EVERY new source chunk is ready.
             // Uploads are synchronous, so no borrowed frame storage escapes this call.
-            if(progress[1]!=BrowserWorldLoadState.UI&&loadState.shouldHold(authority,world.getChunkCount(),count/8+catalogCoveredSources,remainingRepacks)) {
+            boolean showWalkingFrame = walkingPresentation && progress[1] == BrowserWorldLoadState.LOADING
+                && world.getChunkCount() == count/8+catalogCoveredSources && remainingRepacks == 0;
+            if(!showWalkingFrame&&progress[1]!=BrowserWorldLoadState.UI&&loadState.shouldHold(authority,world.getChunkCount(),count/8+catalogCoveredSources,remainingRepacks)) {
                 overlayDeltaReset=true;if(loadProfile!=null){loadProfile.progress(progress);loadProfile.enter(BrowserLoadProfile.TERMINAL);}worldProgress(progress);holdWorld();if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=2;return;
             }
             float[] view=OpenGLWorldChunkRenderer.backendWorldViewMatrix(frame);

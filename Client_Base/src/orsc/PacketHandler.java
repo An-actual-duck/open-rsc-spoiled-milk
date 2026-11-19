@@ -1028,6 +1028,15 @@ public class PacketHandler {
 		ClientRuntimeLogger.log(summary);
 	}
 
+	boolean hasBrowserWalkingPlayerReceipt() {
+		return layeredSceneActivationState.isPending()
+			&& layeredSceneActivationState.hasPlayerReceipt()
+			&& layeredSceneContextState.getLogicalLevel() == 0
+			&& "global".equals(layeredSceneContextState.getWorldSpace())
+			&& !nativeTerrainRecovery.isPending()
+			&& !isLayeredTerrainPresentationStagePending();
+	}
+
 	private void refreshLayeredSceneActivationCover() {
 		if (mc != null) {
 			mc.setLayeredSceneActivationPending(
