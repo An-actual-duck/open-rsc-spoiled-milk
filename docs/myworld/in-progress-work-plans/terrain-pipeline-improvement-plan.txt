@@ -1,0 +1,49 @@
+Terrain rendering and world loading plan
+=======================================
+
+Improve terrain consistency, travel, and rendering headroom in the browser
+and standalone clients. Start with a measured region-crossing route and a
+small vertex-reuse prototype. Keep the tile map as the source of truth.
+
+Evidence
+--------
+
+The v0.3.25 browser audit covered all 1,400 static geometry chunks. Within
+each chunk, sharing byte-identical vertices preserved every indexed attribute
+and triangle order. With 32-bit indices, estimated vertex and index storage
+fell 29.17% for terrain, walls, and roofs, 17.60% for static scenery, and
+about 21.5% across the catalogue. The audit measured geometry bytes. Travel time,
+GPU memory in use, and FPS still need an in-game comparison.
+Evidence lives under output/diagnostics/terrain-pipeline-audit/v0325/.
+
+Work to test
+------------
+
+1. Region loading. Compare cold and warm crossings and return trips in both
+   clients. Time terrain preparation, scenery transforms, mesh packing, GPU
+   upload, and the gap until the next playable frame. Reuse the existing
+   preload and bounded residency paths. Let the measurements decide whether
+   to reduce rebuilds, change upload scheduling, or cache more regional data.
+
+2. Rendering cost. Prototype vertex reuse in one area. Share vertices only
+   when all submitted attributes match, and preserve index order and material
+   batches. Measure upload bytes, resident geometry, CPU packing, and GPU
+   frame time. Time the main draw and shadow passes separately. Compare a
+   busy scene at normal zoom and wide zoom with matching settings.
+
+3. Tile geometry. Resolve the diagonal and surface on each half, wall
+   endpoints, and roof coverage from the same tile description. Preserve
+   automatic matching for existing maps and allow editor overrides where
+   matching is ambiguous. Compare both clients on diagonal buildings,
+   mixed floors, slopes, shorelines, and upper and underground levels.
+   Keep collision, picking, and pathing behavior intact.
+
+Use the same route, map, camera, and graphics settings on each A/B run.
+Record steady frame time, worst gaps at crossings, and visual parity
+before adopting a change. Record the result even if a prototype stays off.
+
+Related plans in this directory
+-------------------------------
+
+- browser-region-cost-review.txt
+- standalone-rendering-and-chunk-loading-plan.txt
