@@ -136,6 +136,39 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     Object.assign(stats.wholeZone,{ready,phase:ready?'coverage-ready':'streaming',residentChunks:chunks.size,pinnedChunks:pinnedChunks.size,pinnedBytes:[...pinnedChunks].reduce((n,id)=>n+chunks.get(id).bytes,0)});
     return ready;
   }
+  let committedWalkScene=null,walkTimer=null,walkDeadline=0,walkPreviousFrame=0;
+  const walkingReplayEnabled=options.workerReplay===true;
+  function stopWalkingReplay(){
+    if(walkTimer!==null)clearTimeout(walkTimer);
+    walkTimer=null;walkDeadline=walkPreviousFrame=0;
+    committedWalkScene=null;
+  }
+  function beginWalkingReplay(){
+    if(!walkingReplayEnabled||!committedWalkScene||walkTimer!==null)return;
+    walkDeadline=performance.now()+500;
+    walkPreviousFrame=performance.now();
+    walkTimer=setTimeout(redrawWalkingScene,16);
+  }
+  function redrawWalkingScene(){
+    walkTimer=null;
+    const scene=committedWalkScene,now=performance.now();
+    if(!scene||now>=walkDeadline||disposed||stats.contextLost)return;
+    const {draws,matrices,u,width,height,outWidth,outHeight}=scene;
+    if(canvas.width!==outWidth||canvas.height!==outHeight)return;
+    if(ownedFrame?.active)ownedFrame.begin(outWidth,outHeight,u[15],u[16],u[17]);
+    gl.viewport(0,0,outWidth,outHeight);gl.disable(gl.SCISSOR_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);gl.depthMask(true);
+    gl.clearDepth(1);gl.clearColor(u[15],u[16],u[17],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+    sky.draw();
+    drawWorldColor(draws,matrices,u,width,height,false,false);
+    normalizeOpaqueCanvas(gl,ownedFrame?.active?ownedFrame:null);
+    overlay.redrawCoverage(width,height,outWidth,outHeight);
+    gl.flush();
+    stats.walkingReplayFrames=(stats.walkingReplayFrames||0)+1;
+    stats.walkingReplayMaxInterval=Math.max(stats.walkingReplayMaxInterval||0,now-walkPreviousFrame);
+    walkPreviousFrame=now;
+    walkTimer=setTimeout(redrawWalkingScene,16);
+  }
+
   const natives={
     async Java_orsc_BrowserWebGLBridge_initializeWholeZone(lib,mapIdentity,settings,materials){
       alive();if(!capacity.enabled||!program)throw new Error('Whole zone initialization requires private initialized renderer');
@@ -155,8 +188,8 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     },
     async Java_orsc_BrowserWebGLBridge_wholeZoneFrame(lib,metadata,overrides){alive();if(!capacity.enabled||!wholeZoneSelection||!capacity.bounded&&!stats.wholeZone.ready)throw new Error('Whole zone frame before catalogue admission/residency');wholeZoneSelection.frame(metadata,overrides);},
     async Java_orsc_BrowserWebGLBridge_worldProgress(lib,metadata){alive();worldReady.declare(metadata);},
-    async Java_orsc_BrowserWebGLBridge_regionTransition(lib,soft){alive();if(options.overlayDeltaTransport===true&&overlay)overlay.invalidateDeltaHistory();if(capacity.bounded){boundedResidency?.suspend();stats.wholeZone.ready=false;stats.wholeZone.phase='awaiting-scope';}worldReady.beginTransition(soft===true);},
-    async Java_orsc_BrowserWebGLBridge_holdWorld(){alive();uploadValidation.beforeDraw();gl.bindSampler(0,null);if(!overlay)throw new Error('Region retention requires coverage compositor');if(ownedFrame?.active)ownedFrame.begin(canvas.width,canvas.height,0,0,0);overlay.hold(canvas.width,canvas.height);worldReady.held();gl.flush();stats.heldWorldFrames++;boundedFrameGap?.held(performance.now(),lastWorld);},
+    async Java_orsc_BrowserWebGLBridge_regionTransition(lib,soft){alive();if(options.overlayDeltaTransport===true&&overlay)overlay.invalidateDeltaHistory();if(capacity.bounded){boundedResidency?.suspend();stats.wholeZone.ready=false;stats.wholeZone.phase='awaiting-scope';}worldReady.beginTransition(soft===true);if(soft===true)beginWalkingReplay();else stopWalkingReplay();},
+    async Java_orsc_BrowserWebGLBridge_holdWorld(){alive();uploadValidation.beforeDraw();gl.bindSampler(0,null);if(!overlay)throw new Error('Region retention requires coverage compositor');if(ownedFrame?.active)ownedFrame.begin(canvas.width,canvas.height,0,0,0);if(walkTimer===null)overlay.hold(canvas.width,canvas.height);worldReady.held();gl.flush();stats.heldWorldFrames++;boundedFrameGap?.held(performance.now(),lastWorld);},
     async Java_orsc_BrowserWebGLBridge_initialize(lib,vertex,fragment){
       alive();if(program)throw new Error('WebGL backend initialized twice');
       program=link(adaptResidentShader(vertex,false),adaptResidentShader(fragment,true));
@@ -318,48 +351,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(!retainedWorld)sky.draw();
       let calls=0,triangles=0;stats.colorCulledChunkDraws=stats.colorVisibleChunkDraws=0;
       if(world&&!retainedWorld){
-        let culled=0;
-        for(let at=0;at<draws.length;at+=8){
-          const chunk=chunks.get(draws[at]);
-          const outside=colorCullingSupported&&chunk&&isChunkOutsideColorFrustum(chunk.bounds,matrices,width,height,draws[at+1],draws[at+2],colorCullScratch);
-          colorVisible[at/8]=outside?0:1;if(outside)culled++;
-        }
-        stats.colorCulledChunkDraws=culled;stats.colorVisibleChunkDraws=draws.length/8-culled;
-        gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);if(ownedFrame?.active)gl.depthMask(true);gl.useProgram(program);gl.uniformMatrix4fv(loc('uProjectionMatrix'),false,matrices.subarray(0,16));gl.uniformMatrix4fv(loc('uWorldViewMatrix'),false,matrices.subarray(16,32));
-        FLOAT_UNIFORMS.forEach((name,n)=>f(name,u[n]));i('uTerrainDefinitionMode',u[25]);i('uTerrainVariationEnabled',u[26]);i('uRemasterLightingEnabled',u[27]);i('uFogEnabled',u[28]);lighting.bindReceiver();
-        // The color pass owns these bindings until the sprite pass. Cache only
-        // within this invocation: lighting/upload/context work may change GL state
-        // between frames, so no prior-frame state is trusted.
-        let residentVAO,residentTexture,textureEnabled,chunkX,chunkZ,terrainX,terrainZ,receiverPlane;
-        gl.activeTexture(gl.TEXTURE0);
-        for(const transparent of [false,true]) {
-          if(transparent){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);}else gl.disable(gl.BLEND);
-          f('uBrowserAlphaCutoff',transparent?0:0.5);
-          for(const kind of [1,2,3,5,4,0]) {
-          if(kind===4||kind===5){gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);}else gl.disable(gl.CULL_FACE);
-          if(kind===2){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-1);}else gl.disable(gl.POLYGON_OFFSET_FILL);
-          for(let at=0;at<draws.length;at+=8){
-          if(!colorVisible[at/8]||!(draws[at+5]&(1<<kind)))continue;const chunk=chunks.get(draws[at]);if(!chunk)throw new Error('Draw references absent browser chunk');
-          if(residentVAO!==chunk.vao){gl.bindVertexArray(chunk.vao);residentVAO=chunk.vao;}
-          if(chunkX!==draws[at+1]){chunkX=draws[at+1];f('uChunkOffsetX',chunkX);}
-          if(chunkZ!==draws[at+2]){chunkZ=draws[at+2];f('uChunkOffsetZ',chunkZ);}
-          if(terrainX!==draws[at+3]){terrainX=draws[at+3];f('uTerrainWorldOffsetX',terrainX);}
-          if(terrainZ!==draws[at+4]){terrainZ=draws[at+4];f('uTerrainWorldOffsetZ',terrainZ);}
-          if(receiverPlane!==draws[at+6]){receiverPlane=draws[at+6];lighting.bindReceiverPlane(receiverPlane);}
-          const b=chunk.batches;for(let n=0;n<b.length;n+=5){if(b[n+3]!==kind||(b[n+4]===1)!==transparent)continue;const tex=textures.get(b[n]),enabled=tex?1:0,texture=tex?tex.texture:baseTextures[0];
-            if(textureEnabled!==enabled){i('uTextureEnabled',enabled);textureEnabled=enabled;}
-            if(residentTexture!==texture){gl.bindTexture(gl.TEXTURE_2D,texture);residentTexture=texture;}
-            gl.drawElements(gl.TRIANGLES,b[n+2],gl.UNSIGNED_INT,b[n+1]*4);calls++;triangles+=b[n+2]/3;}
-          stats.reusedChunkDraws++;
-        }
-        }
-        }
-        gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);gl.disable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(0,0);
-        if(!detached&&spriteDraws.length){
-          gl.useProgram(spriteProgram);gl.bindVertexArray(spriteVAO);gl.uniformMatrix4fv(gl.getUniformLocation(spriteProgram,'projection'),false,matrices.subarray(32,48));gl.uniform3f(gl.getUniformLocation(spriteProgram,'tone'),u[4],u[5],u[6]);gl.uniform1i(gl.getUniformLocation(spriteProgram,'image'),0);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,spriteTexture);
-          gl.depthMask(false);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
-          gl.drawElements(gl.TRIANGLES,spriteDraws.length*6,gl.UNSIGNED_INT,0);gl.disable(gl.BLEND);gl.depthMask(true);
-        }
+        ({calls,triangles}=drawWorldColor(draws,matrices,u,width,height,detached,true));
         stats.worldSpriteGroups=spriteDraws.length;
         stats.javaWorldFrames++;
         stats.presentedStreamUploadValidation=uploadValidation.active;
@@ -383,6 +375,13 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       const now=performance.now();stats.jsSubmissionSamples.push(now-submitStart);if(stats.jsSubmissionSamples.length>(stats.measurement?4096:600))stats.jsSubmissionSamples.shift();
       if(world&&!retainedWorld){boundedFrameGap?.resumed(now);if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);stats.worldFramePolicies.push(stats.presentedOwnedState);stats.worldFrameSpriteGroups.push(spriteDraws.length);stats.physicalOutputWorldFramePolicies.push(physicalOutput?1:0);if(stats.worldFrameSamples.length>(stats.measurement?4096:600)){stats.worldFrameSamples.shift();stats.worldFramePolicies.shift();stats.worldFrameSpriteGroups.shift();stats.physicalOutputWorldFramePolicies.shift();}}lastWorld=now;}else lastWorld=0;
       worldReady.presented({world:world&&!retainedWorld,width,height,textures:textures.size,sprites:spriteDraws.length,lighting:!!lightingValues});
+      if(walkingReplayEnabled && world && !retainedWorld && u[29]===0
+          && wholeZoneSelection?.scope?.[1]===1 && stats.worldReadiness?.phase==='ready'
+          && stats.overlayCoverageMode===1) {
+        // Worker command buffers are transferred back in the ACK. The replay owns these small copies.
+        committedWalkScene={draws:draws.slice(),matrices:matrices.slice(),u:u.slice(),width,height,
+          outWidth:outputWidth,outHeight:outputHeight};
+      }
       stats.javaFrames++;stats.drawCalls=calls;stats.triangles=triangles;stats.activeChunks=draws.length/8;stats.lastFrame=now;
       if(last){stats.frameSamples.push(now-last);if(stats.frameSamples.length>(stats.measurement?4096:600))stats.frameSamples.shift();}last=now;
     },
@@ -398,7 +397,54 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     const observer=createOverlayJournalObserver(stats);
     natives.Java_orsc_BrowserWebGLBridge_overlayDeltaFrameObserved=observedOverlayDelta(observer,natives.Java_orsc_BrowserWebGLBridge_overlayDeltaFrame);
   }
-  function dispose(){if(disposed)return;boundedResidency?.dispose();if(capacity.enabled){zoneController?.abort();stats.wholeZone.ready=false;stats.wholeZone.startupGpuCompleted=false;stats.wholeZone.phase='disposed';stats.wholeZone.pinnedChunks=stats.wholeZone.pinnedBytes=0;}pinnedChunks.clear();pinnedTextures.clear();pinnedMaterials.clear();wholeZoneSelection=wholeZoneCatalog=null;outputSizer.dispose();uploadValidation.dispose();if(activeTimerQuery){try{gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);}finally{gl.deleteQuery(activeTimerQuery);activeTimerQuery=null;}}pendingOwnedState=null;pendingPhysicalOutput=null;stats.pendingPhysicalOutput=null;stats.pendingOwnedState=null;worldReady.dispose();if(spriteAtlas)spriteAtlas.dispose();if(lighting)lighting.dispose();if(sky)sky.dispose();if(overlay)overlay.dispose();for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);for(const q of pendingQueries)gl.deleteQuery(q);if(overlayTexture)gl.deleteTexture(overlayTexture);if(spriteTexture)gl.deleteTexture(spriteTexture);if(spriteVBO)gl.deleteBuffer(spriteVBO);if(spriteIBO)gl.deleteBuffer(spriteIBO);if(spriteVAO)gl.deleteVertexArray(spriteVAO);if(emptyVAO)gl.deleteVertexArray(emptyVAO);chunks.clear();textures.clear();programs.length=shaders.length=baseTextures.length=pendingQueries.length=0;stats.gpuBytes=0;stats.spriteResourceBytes=0;canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
+  function drawWorldColor(draws,matrices,u,width,height,detached,countReuse){
+    let calls=0,triangles=0;
+    let culled=0;
+    for(let at=0;at<draws.length;at+=8){
+      const chunk=chunks.get(draws[at]);
+      const outside=colorCullingSupported&&chunk&&isChunkOutsideColorFrustum(chunk.bounds,matrices,width,height,draws[at+1],draws[at+2],colorCullScratch);
+      colorVisible[at/8]=outside?0:1;if(outside)culled++;
+    }
+    stats.colorCulledChunkDraws=culled;stats.colorVisibleChunkDraws=draws.length/8-culled;
+    gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);if(ownedFrame?.active)gl.depthMask(true);gl.useProgram(program);gl.uniformMatrix4fv(loc('uProjectionMatrix'),false,matrices.subarray(0,16));gl.uniformMatrix4fv(loc('uWorldViewMatrix'),false,matrices.subarray(16,32));
+    FLOAT_UNIFORMS.forEach((name,n)=>f(name,u[n]));i('uTerrainDefinitionMode',u[25]);i('uTerrainVariationEnabled',u[26]);i('uRemasterLightingEnabled',u[27]);i('uFogEnabled',u[28]);lighting.bindReceiver();
+    // The color pass owns these bindings until the sprite pass. Cache only
+    // within this invocation: lighting/upload/context work may change GL state
+    // between frames, so no prior-frame state is trusted.
+    let residentVAO,residentTexture,textureEnabled,chunkX,chunkZ,terrainX,terrainZ,receiverPlane;
+    gl.activeTexture(gl.TEXTURE0);
+    for(const transparent of [false,true]) {
+      if(transparent){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);}else gl.disable(gl.BLEND);
+      f('uBrowserAlphaCutoff',transparent?0:0.5);
+      for(const kind of [1,2,3,5,4,0]) {
+      if(kind===4||kind===5){gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);}else gl.disable(gl.CULL_FACE);
+      if(kind===2){gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-1);}else gl.disable(gl.POLYGON_OFFSET_FILL);
+      for(let at=0;at<draws.length;at+=8){
+      if(!colorVisible[at/8]||!(draws[at+5]&(1<<kind)))continue;const chunk=chunks.get(draws[at]);if(!chunk)throw new Error('Draw references absent browser chunk');
+      if(residentVAO!==chunk.vao){gl.bindVertexArray(chunk.vao);residentVAO=chunk.vao;}
+      if(chunkX!==draws[at+1]){chunkX=draws[at+1];f('uChunkOffsetX',chunkX);}
+      if(chunkZ!==draws[at+2]){chunkZ=draws[at+2];f('uChunkOffsetZ',chunkZ);}
+      if(terrainX!==draws[at+3]){terrainX=draws[at+3];f('uTerrainWorldOffsetX',terrainX);}
+      if(terrainZ!==draws[at+4]){terrainZ=draws[at+4];f('uTerrainWorldOffsetZ',terrainZ);}
+      if(receiverPlane!==draws[at+6]){receiverPlane=draws[at+6];lighting.bindReceiverPlane(receiverPlane);}
+      const b=chunk.batches;for(let n=0;n<b.length;n+=5){if(b[n+3]!==kind||(b[n+4]===1)!==transparent)continue;const tex=textures.get(b[n]),enabled=tex?1:0,texture=tex?tex.texture:baseTextures[0];
+        if(textureEnabled!==enabled){i('uTextureEnabled',enabled);textureEnabled=enabled;}
+        if(residentTexture!==texture){gl.bindTexture(gl.TEXTURE_2D,texture);residentTexture=texture;}
+        gl.drawElements(gl.TRIANGLES,b[n+2],gl.UNSIGNED_INT,b[n+1]*4);calls++;triangles+=b[n+2]/3;}
+      if(countReuse)stats.reusedChunkDraws++;
+    }
+    }
+    }
+    gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);gl.disable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(0,0);
+    if(!detached&&spriteDraws.length){
+      gl.useProgram(spriteProgram);gl.bindVertexArray(spriteVAO);gl.uniformMatrix4fv(gl.getUniformLocation(spriteProgram,'projection'),false,matrices.subarray(32,48));gl.uniform3f(gl.getUniformLocation(spriteProgram,'tone'),u[4],u[5],u[6]);gl.uniform1i(gl.getUniformLocation(spriteProgram,'image'),0);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,spriteTexture);
+      gl.depthMask(false);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+      gl.drawElements(gl.TRIANGLES,spriteDraws.length*6,gl.UNSIGNED_INT,0);gl.disable(gl.BLEND);gl.depthMask(true);
+    }
+    return {calls,triangles};
+  }
+
+  function dispose(){if(disposed)return;stopWalkingReplay();boundedResidency?.dispose();if(capacity.enabled){zoneController?.abort();stats.wholeZone.ready=false;stats.wholeZone.startupGpuCompleted=false;stats.wholeZone.phase='disposed';stats.wholeZone.pinnedChunks=stats.wholeZone.pinnedBytes=0;}pinnedChunks.clear();pinnedTextures.clear();pinnedMaterials.clear();wholeZoneSelection=wholeZoneCatalog=null;outputSizer.dispose();uploadValidation.dispose();if(activeTimerQuery){try{gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);}finally{gl.deleteQuery(activeTimerQuery);activeTimerQuery=null;}}pendingOwnedState=null;pendingPhysicalOutput=null;stats.pendingPhysicalOutput=null;stats.pendingOwnedState=null;worldReady.dispose();if(spriteAtlas)spriteAtlas.dispose();if(lighting)lighting.dispose();if(sky)sky.dispose();if(overlay)overlay.dispose();for(const x of chunks.values()){gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);}for(const x of textures.values())gl.deleteTexture(x.texture);for(const p of programs)gl.deleteProgram(p);for(const s of shaders)gl.deleteShader(s);for(const t of baseTextures)gl.deleteTexture(t);for(const q of pendingQueries)gl.deleteQuery(q);if(overlayTexture)gl.deleteTexture(overlayTexture);if(spriteTexture)gl.deleteTexture(spriteTexture);if(spriteVBO)gl.deleteBuffer(spriteVBO);if(spriteIBO)gl.deleteBuffer(spriteIBO);if(spriteVAO)gl.deleteVertexArray(spriteVAO);if(emptyVAO)gl.deleteVertexArray(emptyVAO);chunks.clear();textures.clear();programs.length=shaders.length=baseTextures.length=pendingQueries.length=0;stats.gpuBytes=0;stats.spriteResourceBytes=0;canvas.removeEventListener('webglcontextlost',lost);disposed=true;stats.disposed=true;}
   for(const name of Object.keys(natives)) {
     const call=natives[name];natives[name]=async(...args)=>{
       try{uploadValidation.assertAlive();return await call(...args);}catch(error){if(uploadValidation.active)uploadValidation.fail(error);worldReady.fail(String(error));stats.lastError=String(error);stats.lastErrorAt=performance.now();report('Browser GPU error: '+error);throw error;}
@@ -406,5 +452,5 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   }
   function queuePhysicalOutput(enabled){alive();if(!physicalControl||typeof enabled!=='boolean')throw new Error('Private physical output control unavailable');pendingPhysicalOutput=enabled;stats.pendingPhysicalOutput=enabled;return {queued:enabled,active:physicalOutput};}
   function queueStreamUploadValidation(enabled){alive();if(options.benchmarkControl!==true)throw new Error('Private benchmark control unavailable');uploadValidation.queue(enabled);}
-  return {natives,stats,dispose,canvas,...(options.benchmarkControl===true?{queueOwnedState,queueStreamUploadValidation,queuePhysicalOutput}:{})};
+  return {natives,stats,dispose,canvas,...(walkingReplayEnabled?{stopWalkingReplay}:{}),...(options.benchmarkControl===true?{queueOwnedState,queueStreamUploadValidation,queuePhysicalOutput}:{})};
 }

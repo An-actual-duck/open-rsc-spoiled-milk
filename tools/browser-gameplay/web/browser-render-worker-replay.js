@@ -17,6 +17,8 @@ export function createRenderWorkerReplay({backend,outputSizer,now=()=>performanc
       if(packet.layout.epoch===lastLayout&&lastGeometry&&(packet.layout.width!==lastGeometry.width||packet.layout.height!==lastGeometry.height||packet.layout.dpr!==lastGeometry.dpr))throw new Error('Changed layout requires fresh epoch');
       // Verify all entrypoints before any prefix may change backend state.
       for(const c of packet.commands)if(c.name==='$measurement'?false:c.name[0]==='$'?typeof backend[{ '$owned':'queueOwnedState','$validation':'queueStreamUploadValidation','$physical':'queuePhysicalOutput'}[c.name]]!=='function':typeof backend.natives[renderNativeName(c.name)]!=='function')throw new Error('Missing render worker entrypoint');
+      if(backend.stopWalkingReplay&&(packet.layout.epoch!==lastLayout||packet.commands.some(c=>
+          c.name!=='regionTransition'&&c.name!=='worldProgress'&&c.name!=='holdWorld')))backend.stopWalkingReplay();
       outputSizer.setLayout(packet.layout);lastGeometry={...packet.layout};lastLayout=packet.layout.epoch;
       let result;const start=now();
       for(const c of packet.commands){

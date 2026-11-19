@@ -1,6 +1,6 @@
 import {ownRenderCommand,inspectRenderCommand,validateRenderLayout,RENDER_WORKER_MAX_BYTES,RENDER_WORKER_MAX_COMMANDS} from './browser-render-worker-protocol.js';
 /** Two unACKed packets + one bounded producer; promises never retain borrowed inputs. */
-export function createRenderWorkerTransport({postMessage,layout,now=()=>performance.now(),onStats=()=>{},onFatal=()=>{},onReturnedBuffers=null}){
+export function createRenderWorkerTransport({postMessage,layout,now=()=>performance.now(),onStats=()=>{},onFatal=()=>{},onReturnedBuffers=null,flushRegionTransition=false}){
   let commands=[],transfers=[],bytes=0,nextId=1,nextFrame=1,lastAck=0,lastLayout=0,flushing=false,failed=null,disposed=false,worldPending=false;
   const pending=new Map(),waiters=[],pool=new Map();let poolCount=0,poolBytes=0;const MAX_POOL_BYTES=16*1024*1024,MAX_POOL_BUFFERS=1024;
   const bufferLength=Object.getOwnPropertyDescriptor(ArrayBuffer.prototype,'byteLength').get;
@@ -46,6 +46,7 @@ export function createRenderWorkerTransport({postMessage,layout,now=()=>performa
     }
     if(name==='frameWork'){if(!worldPending){const e=new Error('frameWork without world presentation');fail(e);throw e;}worldPending=false;return flush({frame:true});}
     if(name==='holdWorld')return flush({frame:true});
+    if(name==='regionTransition'&&flushRegionTransition)return flush();
     if(name==='initialize'||name==='initializeWholeZone'||name==='planWorldSprites')return flush({result:true});
   }
   function enqueue(name,args){try{return capture(name,args);}catch(error){fail(error);throw error;}}

@@ -163,6 +163,34 @@ and measure the actual Worker frame times while the Java build is blocked.
 Keep the interactive scene on its normal authority and readiness path.
 Avoid treating a retained screenshot or deferred notice as motion proof.
 
+Independent render worker replay
+-------------------------------
+
+The private workerreplay option lets the worker retain the last complete
+global level 0 view's draw list, matrices and uniforms. The worker owns
+these arrays after returning the Java transport buffers. It redraws the
+resident scenery, existing sprite batch, sky and UI coverage without a new
+Java frame. An ordinary transition reaches the worker in its own packet.
+A new layout or command that can mutate renderer resources stops replay
+before the worker applies it. Replay has a 500 ms time limit and uses no
+new authority or input path.
+
+A Firefox replay submitted 15 worker redraws outbound and 10 on return.
+The longest measured start-to-start interval within replay was 18 ms.
+That timer statistic excludes the gap from the last replay draw to the
+new Java scene and does not measure browser scanout. The Java frame
+gaps were 407 and 220 ms. Camera and actors kept their committed poses,
+so visual movement continuity has not yet been achieved. Evidence is in
+output/diagnostics/browser-overlapping-handoff/worker-replay/replay-result.json.
+
+The next step is to pass bounded, confirmed movement in world coordinates
+to the worker. Reproject static scenery and actor anchors from a shared
+camera pose. A local actor may move along a confirmed segment. Avoid
+advancing past it or playing a segment after a reversal or scope change.
+The final handoff also needs a safe lifetime for the old GPU resources
+until the new scene is committed, since the current replay stops as
+soon as scene updates can mutate those resources.
+
 Optional streaming policy
 -------------------------
 

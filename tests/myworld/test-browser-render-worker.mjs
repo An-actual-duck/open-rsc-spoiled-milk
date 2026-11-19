@@ -68,6 +68,33 @@ const disposal=await gpu.disposeAndConfirm();check(disposal.disposed&&disposal.g
 check(callbacks>=3);
 const source=Float32Array.of(1,2,3);assert.throws(()=>ownRenderCommand('lightingFrame',[source],()=>new ArrayBuffer(1)));checks++;
 check(source[0]===1);
+// Walking transition reaches the retained scene before any new Java frame.
+const walkingPackets=[];
+const layout=()=>({epoch:1,width:1,height:1,dpr:1});
+const walkingTransport=createRenderWorkerTransport({layout,flushRegionTransition:true,
+  postMessage:packet=>walkingPackets.push(packet)});
+await walkingTransport.enqueue('regionTransition',[true]);
+check(walkingPackets.length===1&&walkingPackets[0].frameId===0);
+check(walkingPackets[0].commands[0].name==='regionTransition');
+walkingTransport.dispose();
+
+let invalidations=0;
+const walkingReplay=createRenderWorkerReplay({
+  backend:{stats:{},natives:{
+    [endpoint('regionTransition')]:()=>{},
+    [endpoint('worldProgress')]:()=>{},
+    [endpoint('holdWorld')]:()=>{},
+    [endpoint('lightingFrame')]:()=>check(invalidations===2,'Invalidate before any new GPU resource work')
+  },stopWalkingReplay(){invalidations++;},dispose(){}},
+  outputSizer:createWorkerOutputSizer()
+});
+await walkingReplay.execute(walkingPackets[0]);
+await walkingReplay.execute({type:'batch',version:1,id:2,frameId:1,layout:layout(),bytes:48,
+  commands:[{name:'worldProgress',args:[new Int32Array(12)]},{name:'holdWorld',args:[]}]});
+check(invalidations===1,'Holding a frame preserves committed walking scene');
+await walkingReplay.execute({type:'batch',version:1,id:3,frameId:0,layout:layout(),bytes:4,
+  commands:[{name:'lightingFrame',args:[Float32Array.of(1)]}]});
+
 // Cold startup geometry must not permanently exclude reusable hot frame planes.
 let posted;const poolTransport=createRenderWorkerTransport({layout:()=>({epoch:1,width:1,height:1,dpr:1}),postMessage:(p,b)=>{posted=structuredClone(p,{transfer:b});}});
 async function roundTrip(plane){poolTransport.enqueue('lightingFrame',[plane]);const done=poolTransport.enqueue('planWorldSprites',[1,1,new Int32Array(0)]);await new Promise(resolve=>setImmediate(resolve));const buffers=posted.commands.flatMap(c=>c.args.filter(a=>ArrayBuffer.isView(a)).map(a=>a.buffer));const ack=structuredClone({type:'ack',version:1,id:posted.id,frameId:0,layoutEpoch:1,buffers},{transfer:buffers});poolTransport.receive(ack);await done;}
