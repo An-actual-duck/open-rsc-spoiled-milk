@@ -347,6 +347,38 @@ captured pose for its facing. Treat animation continuity on that path
 as unverified. Evidence is in output/diagnostics/
 browser-overlapping-handoff/camera-cutover-comparison.json.
 
+Live rendering between region receive batches
+---------------------------------------------
+
+The visible Firefox lighting comparison prebuilt both masks for the test
+boundary before entering the world. All applied masks had matching hashes
+and the same walking destinations. The gap between Java frames fell from
+523 to 445 ms outbound and from 275 to 189 ms returning. Owner review
+still found a walk animation pause and visible catch-up. Preserve that
+review as the visual acceptance result.
+
+The private slicewalk option keeps the scene packets ordered and yields
+when the existing live walking guard first allows a draw. While that
+guard remains true, subsequent receive slices yield after a six
+millisecond budget at packet boundaries. The ordinary draw gets a turn
+even if the client runs multiple simulation ticks before submitting it.
+Scene readiness and interaction still require the usual receipt checks.
+The experiment disables worker replay, so captured poses cannot count
+as evidence that a live draw occurred.
+
+On the matched visible Firefox route, slicing let Java start scene
+assembly several times before the receipts were complete. None of those
+attempts became a presented provisional frame. The outbound and return
+gaps grew from 452 and 205 ms to 815 and 527 ms. One intermediate scenery
+build took 168 ms. A separate outbound run before a harness status-file
+race also produced zero provisional frames and an 856 ms gap.
+The option remains private and off by default. Reuse the committed
+scenery while presenting ordinary player and camera updates, with the
+replacement scenery assembled separately. Calling the full current draw
+earlier just makes it rebuild partial scenery on the same thread.
+Evidence is in output/diagnostics/browser-overlapping-handoff/
+live-receive-ab/comparison.json.
+
 Optional streaming policy
 -------------------------
 

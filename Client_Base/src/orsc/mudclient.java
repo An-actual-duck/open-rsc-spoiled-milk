@@ -936,7 +936,11 @@ public final class mudclient implements Runnable {
 		Boolean.getBoolean("spoiledmilk.browserBenchmark")
 			&& !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 			&& Boolean.getBoolean("spoiledmilk.browserLiveWalkHandoff");
+	private static final boolean BROWSER_SLICE_WALKING_RECEIVE =
+		BROWSER_LIVE_WALK_HANDOFF && Boolean.getBoolean("spoiledmilk.browserSliceWalkingReceive");
+	private static final long BROWSER_WALKING_RECEIVE_BUDGET_NANOS = 6_000_000L;
 	private boolean browserOrdinaryWalking;
+	private boolean browserWalkingDrawPending;
 
 	private final LayeredScenePresentationLatch
 		layeredScenePresentationLatch =
@@ -2583,7 +2587,13 @@ public final class mudclient implements Runnable {
 			 */
 			int processedPackets = 0;
 			boolean activationBurst = this.layeredSceneActivationPending;
-			while (LayeredScenePacketDrainPolicy.shouldReadNext(
+			boolean walkingFrameAvailable = BROWSER_SLICE_WALKING_RECEIVE
+				&& canPresentBrowserWalkingHandoff();
+			long receiveSliceStart = BROWSER_SLICE_WALKING_RECEIVE ? System.nanoTime() : 0L;
+			// The game loop can run multiple simulation ticks before one draw.
+			// Leave the ordered receive queue alone until that draw gets a turn.
+			boolean deferForDrawing = walkingFrameAvailable && this.browserWalkingDrawPending;
+			while (!deferForDrawing && LayeredScenePacketDrainPolicy.shouldReadNext(
 					processedPackets,
 					activationBurst,
 					this.layeredSceneActivationPending,
@@ -2605,6 +2615,13 @@ public final class mudclient implements Runnable {
 				processedPackets++;
 				activationBurst |= wasActivationPending
 					|| this.layeredSceneActivationPending;
+				if (BROWSER_SLICE_WALKING_RECEIVE && activationBurst
+						&& (!walkingFrameAvailable
+							|| System.nanoTime() - receiveSliceStart >= BROWSER_WALKING_RECEIVE_BUDGET_NANOS)
+						&& canPresentBrowserWalkingHandoff()) {
+					this.browserWalkingDrawPending = true;
+					break;
+				}
 			}
 
 			if (System.currentTimeMillis() - timeOfLastCombatStylePacket > 1000) {
@@ -8586,6 +8603,7 @@ public final class mudclient implements Runnable {
 
 	private void drawGame(int var1) {
 		try {
+			this.browserWalkingDrawPending = false;
 			this.getSurface().beginRenderer2DFrame();
 			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
 
@@ -26734,6 +26752,7 @@ public final class mudclient implements Runnable {
 		this.layeredSceneActivationPending = false;
 		this.layeredSceneTerrainStageWaitLogged = false;
 		this.browserOrdinaryWalking = false;
+		this.browserWalkingDrawPending = false;
 		this.layeredScenePresentationLatch.reset();
 	}
 

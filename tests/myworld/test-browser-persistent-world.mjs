@@ -49,6 +49,10 @@ assert.equal(persistentWorldPolicy(new URLSearchParams('persistentscene=on&livew
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('livewalk=on'),admission));
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&livewalk=on&flyover=on'),admission));
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&livewalk=on'),{...admission,publicAlpha:true}));
+assert.equal(persistentWorldPolicy(new URLSearchParams('persistentscene=on&livewalk=on&slicewalk=on'),admission).sliceWalk,true);
+assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&slicewalk=on'),admission));
+assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&livewalk=on&slicewalk=on&workerreplay=on'),admission));
+assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&livewalk=on&slicewalk=on'),{...admission,publicAlpha:true}));
 assert.equal(persistentWorldPolicy(new URLSearchParams('persistentscene=on&workerreplay=on'),admission).workerReplay,true);
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('workerreplay=on'),admission));
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&workerreplay=on&flyover=on'),admission));
