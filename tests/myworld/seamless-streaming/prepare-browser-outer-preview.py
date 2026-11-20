@@ -38,6 +38,7 @@ def main():
     run = category / args.name
     web = run / 'web'
     classes = run / 'classes'
+    (web / 'Cache' / 'port.txt').write_text(f'{TCP_PORT}\n')
     bootstrap = run / 'BrowserBootstrap.java'
     bootstrap.write_bytes((ROOT / 'tools/browser-gameplay/src/orsc/browser/BrowserBootstrap.java').read_bytes())
     insert(bootstrap, '        orsc.OpenRSC.main(new String[0]);',
@@ -59,14 +60,22 @@ def main():
         'python3', str(scripts / 'prepare-server.py'), str(run), '--tcp-port', str(TCP_PORT),
         '--ws-port', str(WS_PORT), '--covered-walking-preview', '--outer-coverage',
     ], cwd=ROOT, check=True)
+    staged_hashes = {
+        name: hashlib.sha256((web / name).read_bytes()).hexdigest()
+        for name in ('browser.js', 'runtime.html', 'browser-spike.jar', 'Cache/port.txt')
+    }
+    stage_path = run / 'stage.json'
+    stage = json.loads(stage_path.read_text())
+    stage['tcp'] = f'127.0.0.1:{TCP_PORT}'
+    stage['websocket'] = f'127.0.0.1:{WS_PORT}'
+    for name in ('browser.js', 'runtime.html'):
+        stage['frontendSha256'][name] = staged_hashes[name]
+    stage_path.write_text(json.dumps(stage, indent=2) + '\n')
     receipt = {
         'spawn': [239, 609], 'destination': [269, 609], 'port': args.http_port,
         'tcpPort': TCP_PORT, 'websocketPort': WS_PORT,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',
-        'stagedSha256': {
-            name: hashlib.sha256((web / name).read_bytes()).hexdigest()
-            for name in ('browser.js', 'runtime.html', 'browser-spike.jar')
-        },
+        'stagedSha256': staged_hashes,
     }
     (run / 'outer-coverage-fixture.json').write_text(json.dumps(receipt, indent=2) + '\n')
     print(run)

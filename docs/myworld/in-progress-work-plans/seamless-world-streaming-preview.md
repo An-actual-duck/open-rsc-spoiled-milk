@@ -59,15 +59,14 @@ structure on this run. The diagnostic trace recorded a hit on the prepared
 terrain product at the transition. The scene handoff still went through the
 client's context and baseline activation and held the previous frame.
 
-The headless Firefox WebGL run waited for the initial world to report ready
+Two headless Firefox WebGL runs waited for the initial world to report ready
 before requesting the same walk. The private server confirmed arrival at
-`(269, 609, 0)`. The Java client held the old scene for 1,062 ms across
-`x = 264`, and the browser's ordinary-walking readiness transition blocked
-world input for 1,813 ms. It counted 18 held frames and 37 chunk uploads
-totaling 88,526,328 bytes. The longest gap in fresh Java scene production
-on the leg was 1,040 ms. These timings describe one headless run and its
-software-reported presentation state. They provide a reproduction of the
-pause, with hardware display cadence and repeat measurements still pending.
+`(269, 609, 0)` both times. The Java client held the old scene for
+1,011–1,062 ms across `x = 264`, and the browser's ordinary-walking readiness
+transition blocked world input for 1,813–1,890 ms. Both runs counted 18 held
+frames and 37 chunk uploads totaling 88,526,328 bytes. The longest gaps
+in fresh Java scene production were 1,040 and 1,063 ms. These timings are
+from headless Firefox and its software-reported presentation state.
 
 ## Reproduce the private preview
 
