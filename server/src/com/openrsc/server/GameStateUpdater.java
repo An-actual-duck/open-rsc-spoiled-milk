@@ -65,6 +65,10 @@ public final class GameStateUpdater {
 			"SPOILED_MILK_BOUNDARY_DIAGNOSTICS"));
 	private static final boolean COVERED_WALKING_PREVIEW =
 		Boolean.getBoolean("spoiledmilk.coveredWalkingPreview");
+	private static final boolean PREDICTED_SCENERY_PREVIEW =
+		Boolean.getBoolean("spoiledmilk.predictedSceneryPreview");
+	private static final int PREDICTED_SCENERY_CELL_TILES = 24;
+	private static final int PREDICTED_SCENERY_CELL_MAX_RECORDS = 256;
 	private enum VisibilitySnapshotMode {
 		LEGACY,
 		SNAPSHOT
@@ -1002,6 +1006,49 @@ public final class GameStateUpdater {
 		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE);
 	}
 
+	private void sendPredictedSceneryCells(Player player, NativeLayeredSceneTerrain active,
+		NativeLayeredSceneTerrain predicted, int stageSequence) {
+		if (!PREDICTED_SCENERY_PREVIEW || !usesCoveredWalkingPreview(player)
+			|| !player.isLoggedIn() || !getServer().getConfig().WANT_SYNC_SCENE_BASELINE) {
+			return;
+		}
+		int stepX = predicted.currentChunkX - active.currentChunkX;
+		int stepY = predicted.currentChunkY - active.currentChunkY;
+		if (Math.abs(stepX) + Math.abs(stepY) != 1) {
+			return;
+		}
+		int radius = NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS;
+		StaticScenePresentationSnapshot presentation = getServer().getWorld().getRegionManager()
+			.buildStaticScenePresentationSnapshot(player, predicted.currentChunkX, predicted.currentChunkY,
+				radius, NATIVE_LAYERED_CHUNK_RADIUS);
+		int enteringSectorX = predicted.currentChunkX + stepX * radius;
+		int enteringSectorY = predicted.currentChunkY + stepY * radius;
+		Map<Long, PredictedSceneryCellStruct> cells = new TreeMap<>();
+		for (List<StaticScenePresentationSnapshot.Record> rows :
+			Arrays.asList(presentation.getScenery(), presentation.getWalls())) {
+			for (StaticScenePresentationSnapshot.Record row : rows) {
+				if ((stepX != 0 && Math.floorDiv(row.getX(), CLIENT_LOCAL_SECTION_SIZE) != enteringSectorX)
+					|| (stepY != 0 && Math.floorDiv(row.getY(), CLIENT_LOCAL_SECTION_SIZE) != enteringSectorY)) {
+					continue;
+				}
+				int cellX = Math.floorDiv(row.getX(), PREDICTED_SCENERY_CELL_TILES);
+				int cellY = Math.floorDiv(row.getY(), PREDICTED_SCENERY_CELL_TILES);
+				long key = ((long) cellX << 32) | (cellY & 0xffffffffL);
+				PredictedSceneryCellStruct cell = cells.computeIfAbsent(key, ignored -> new PredictedSceneryCellStruct());
+				if (cell.records.size() <= PREDICTED_SCENERY_CELL_MAX_RECORDS) {
+					cell.records.add(new SceneBaselineStruct.ObjectRecord(
+						row.getId(), row.getX(), row.getY(), row.getDirection(), row.getType()));
+				}
+			}
+		}
+		for (PredictedSceneryCellStruct cell : cells.values()) {
+			if (cell.records.size() <= PREDICTED_SCENERY_CELL_MAX_RECORDS) {
+				cell.terrainStageSequence = stageSequence;
+				tryFinalizeAndSendPacketChecked(OpcodeOut.SEND_PREDICTED_SCENERY_CELL, cell, player);
+			}
+		}
+	}
+
 	private void maybeSendNativeTerrainSymmetricResidency(
 		final Player player,
 		final WorldLocation location,
@@ -1128,6 +1175,12 @@ public final class GameStateUpdater {
 				targetCenter[1]);
 		sendNativeTerrainPredictedSymmetricStage(
 			player, location, stagedTerrain, advanceToStructure);
+		final NativeLayeredTerrainStageReadiness sent = player.getAttribute(
+			NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE, null);
+		if (!advanceToStructure && sent != null) {
+			int sequence = player.getAttribute(NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE, 0);
+			sendPredictedSceneryCells(player, activeTerrain, stagedTerrain, sequence);
+		}
 	}
 
 	private int[] predictNativeTerrainCenter(

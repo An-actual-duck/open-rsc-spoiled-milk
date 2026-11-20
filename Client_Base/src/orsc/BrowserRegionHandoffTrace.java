@@ -21,7 +21,7 @@ public final class BrowserRegionHandoffTrace {
         "world-section.active-chunk-build", "world-section.predictive-clear",
         "world-section.symmetric-compose", "world-section.preload", "scenery.input", "scenery.mesh", "baseline.legacy-reconcile",
         "handoff.world-frame", "handoff.scene-render", "handoff.object-frame", "handoff.fresh-candidate",
-        "scenery.cache"
+        "scenery.cache", "scenery.prepared"
     };
     private static long ordinal;
     private static int count, next, context, packetBudget, frameBudget;
@@ -99,6 +99,10 @@ public final class BrowserRegionHandoffTrace {
         if (!ENABLED) return;
         row(3, phaseCode("scenery", "mesh"), start, duration, 0, 0, 0, 0, 0);
         row(3, phaseCode("scenery", "cache"), 0L, 0L, inputs, hits, misses, workers, 0);
+    }
+
+    static synchronized void preparedScenery(int requested, int reused, long workerNanos) {
+        if (ENABLED) row(3, phaseCode("scenery", "prepared"), 0L, workerNanos, requested, reused, 0, 0, 0);
     }
 
     static void finishFramePhase(String name, long start) {

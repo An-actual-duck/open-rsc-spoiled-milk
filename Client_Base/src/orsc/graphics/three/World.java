@@ -1955,8 +1955,6 @@ public final class World {
 		}
 		int tileX = pixelX >> 7;
 		int tileZ = pixelZ >> 7;
-		int xLerp = pixelX & 127;
-		int zLerp = pixelZ & 127;
 		NativeLayeredTerrainSnapshot active =
 			nativeLayeredTerrainSnapshot;
 		NativeLayeredTerrainSnapshot visual =
@@ -1969,12 +1967,33 @@ public final class World {
 			tileX, tileZ + 1, active, visual);
 		int northeast = presentationVertexElevation(
 			tileX + 1, tileZ + 1, active, visual);
+		return interpolatePresentationElevation(pixelX, pixelZ, southwest, southeast, northwest, northeast);
+	}
+
+	/** Samples immutable predicted terrain in logical pixel coordinates. */
+	public static int getPredictedPresentationElevation(NativeLayeredTerrainSnapshot terrain, int pixelX, int pixelZ) {
+		int x = pixelX >> 7;
+		int z = pixelZ >> 7;
+		return interpolatePresentationElevation(pixelX, pixelZ,
+			predictedPresentationVertex(terrain, x, z), predictedPresentationVertex(terrain, x + 1, z),
+			predictedPresentationVertex(terrain, x, z + 1), predictedPresentationVertex(terrain, x + 1, z + 1));
+	}
+
+	private static int predictedPresentationVertex(NativeLayeredTerrainSnapshot terrain, int x, int z) {
+		return terrain.covers(terrain.getWorldSpace(), terrain.getLevel(), x, z)
+			? terrain.getGroundElevation(x, z) * 3 : PRESENTATION_ELEVATION_UNAVAILABLE;
+	}
+
+	private static int interpolatePresentationElevation(int pixelX, int pixelZ,
+		int southwest, int southeast, int northwest, int northeast) {
 		if (southwest == PRESENTATION_ELEVATION_UNAVAILABLE
 			|| southeast == PRESENTATION_ELEVATION_UNAVAILABLE
 			|| northwest == PRESENTATION_ELEVATION_UNAVAILABLE
 			|| northeast == PRESENTATION_ELEVATION_UNAVAILABLE) {
 			return PRESENTATION_ELEVATION_UNAVAILABLE;
 		}
+		int xLerp = pixelX & 127;
+		int zLerp = pixelZ & 127;
 		if (xLerp <= 128 - zLerp) {
 			return southwest
 				+ (southeast - southwest) * xLerp / 128

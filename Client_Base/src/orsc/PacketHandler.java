@@ -103,6 +103,7 @@ public class PacketHandler {
 	private World.NativeLayeredTerrainHaloPrebuildResult
 		readyPredictedLayeredTerrainHalo;
 	private NativeLayeredTerrainSnapshot readyPredictedLayeredTerrainStage;
+	private NativeLayeredTerrainSnapshot predictedSceneryTerrain;
 	private NativeLayeredTerrainSnapshot
 		readyPredictedLayeredTerrainStructureStage;
 	private long readyPredictionDecodeNanos;
@@ -308,6 +309,12 @@ public class PacketHandler {
 	}
 
 	private void clearReadyPredictedLayeredTerrainHalo() {
+		clearReadyPredictedLayeredTerrainHalo(false);
+	}
+
+	private void clearReadyPredictedLayeredTerrainHalo(boolean sceneryAuthorized) {
+		predictedSceneryTerrain = null;
+		if (!sceneryAuthorized) mc.clearPredictedScenery();
 		readyPredictedLayeredTerrainHalo = null;
 		readyPredictedLayeredTerrainStage = null;
 		readyPredictedLayeredTerrainStructureStage = null;
@@ -437,6 +444,7 @@ public class PacketHandler {
 		put(151, "WORLD_EDITOR");
 		put(152, "ACTIVE_POTION_EFFECTS");
 		put(154, "LAYERED_TERRAIN_STAGE");
+		put(163, "PREDICTED_SCENERY_CELL");
 		put(155, "SEND_HISCORES");
 		put(157, "LAYERED_SCENE_CONTEXT");
 		put(250, "UPDATE_UNLOCKED_APPEARANCES");
@@ -663,6 +671,8 @@ public class PacketHandler {
 			else if (opcode == 152) updateActivePotionEffects(length);
 
 			else if (opcode == 154) updateLayeredTerrainStage(length);
+
+			else if (opcode == 163) updatePredictedSceneryCell(length);
 
 				// Hiscores
 			else if (opcode == 155) loadHiscores();
@@ -1264,6 +1274,10 @@ public class PacketHandler {
 				pollLayeredTerrainHaloReady();
 			}
 		} else if (protocolVersion == 4) {
+			if (mudclient.PREDICTED_SCENERY_PREVIEW) {
+				mc.clearPredictedScenery();
+				predictedSceneryTerrain = stagedTerrain;
+			}
 			pendingLayeredTerrainHaloPrebuild =
 				mc.getWorld().preloadPredictedNativeLayeredTerrainHalo(
 					stagedTerrain,
@@ -1616,7 +1630,9 @@ public class PacketHandler {
 				readyPredictedLayeredTerrainStructureStage,
 				mc.getWorldOffsetX(),
 				mc.getWorldOffsetZ());
-		clearReadyPredictedLayeredTerrainHalo();
+		boolean sceneryAuthorized = published && predicted == predictedSceneryTerrain;
+		if (sceneryAuthorized) mc.authorizePredictedScenery();
+		clearReadyPredictedLayeredTerrainHalo(sceneryAuthorized);
 		if (!published) {
 			throw new IllegalStateException(
 				"Acknowledged predicted terrain could not publish at activation");
@@ -1628,6 +1644,50 @@ public class PacketHandler {
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);
 		return true;
+	}
+
+	private void updatePredictedSceneryCell(int length) {
+		if (!mudclient.PREDICTED_SCENERY_PREVIEW || predictedSceneryTerrain == null
+			|| nativeTerrainRecovery.isPending()) {
+			packetsIncoming.packetEnd = length;
+			return;
+		}
+		if (length - packetsIncoming.packetEnd < 6) {
+			throw new IllegalArgumentException("Incomplete predicted scenery cell header");
+		}
+		int stage = packetsIncoming.get32();
+		int count = packetsIncoming.getShort();
+		if (count <= 0 || count > 256 || length - packetsIncoming.packetEnd != count * 12) {
+			throw new IllegalArgumentException("Invalid predicted scenery cell length");
+		}
+		if (stage != layeredTerrainStageSequence) {
+			packetsIncoming.packetEnd = length;
+			return;
+		}
+		NativeLayeredTerrainSnapshot active = layeredSceneContextState.getNativeTerrainSnapshot();
+		NativeLayeredTerrainSnapshot predicted = predictedSceneryTerrain;
+		int stepX = predicted.getCurrentChunkX() - active.getCurrentChunkX();
+		int stepZ = predicted.getCurrentChunkY() - active.getCurrentChunkY();
+		if (Math.abs(stepX) + Math.abs(stepZ) != 1) {
+			packetsIncoming.packetEnd = length;
+			return;
+		}
+		List<SceneBaselineState.Record> records = new ArrayList<>(count);
+		for (int i = 0; i < count; i++) {
+			int id = packetsIncoming.getShort();
+			int x = packetsIncoming.get32();
+			int z = packetsIncoming.get32();
+			int direction = packetsIncoming.getUnsignedByte();
+			int type = packetsIncoming.getUnsignedByte();
+			long deltaX = (long) Math.floorDiv(x, World.SECTION_SIZE) - predicted.getCurrentChunkX();
+			long deltaZ = (long) Math.floorDiv(z, World.SECTION_SIZE) - predicted.getCurrentChunkY();
+			if (Math.abs(deltaX) > 2 || Math.abs(deltaZ) > 2 || deltaX * stepX + deltaZ * stepZ != 2
+				|| (type != 0 && type != 1) || direction > (type == 0 ? 7 : 3)) {
+				throw new IllegalArgumentException("Invalid predicted scenery placement");
+			}
+			records.add(new SceneBaselineState.Record(id, x, z, direction, type));
+		}
+		mc.prebuildPredictedSceneryCell(predicted, records);
 	}
 
 	private void sendLayeredTerrainStageReady(

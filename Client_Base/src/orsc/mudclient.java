@@ -127,6 +127,8 @@ public final class mudclient implements Runnable {
 	private static final long RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS = 0xcbf29ce484222325L;
 	private static final long RESIDENT_OBJECT_CHUNK_FNV_PRIME = 0x100000001b3L;
 	private static final int RESIDENT_OBJECT_CHUNK_TILE_SIZE = 24;
+	static final boolean PREDICTED_SCENERY_PREVIEW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		&& Boolean.getBoolean("spoiledmilk.predictedSceneryPreview");
 	private static final int RESIDENT_ANIMATED_OBJECT_CHUNK_TILE_SIZE = 8;
 	private static final int RESIDENT_OBJECT_BUILD_WORKER_LIMIT = 4;
 	private static final int RESIDENT_OBJECT_PARALLEL_BUILD_MINIMUM = 8;
@@ -935,6 +937,8 @@ public final class mudclient implements Runnable {
 	private boolean hasCompletedInitialRegionLoad = false;
 	private final Map<Long, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
 		new HashMap<Long, ResidentObjectChunkCacheEntry>();
+	private final Map<Long, PendingResidentObjectChunkBuild> predictedSceneryCells = new HashMap<>();
+	private boolean predictedSceneryAuthorized;
 	private final ExecutorService residentObjectBuildExecutor =
 		Executors.newFixedThreadPool(
 			residentObjectBuildWorkerCount(),
@@ -3901,6 +3905,84 @@ public final class mudclient implements Runnable {
 		this.builtStaticPresentationRevision = -1L;
 	}
 
+	void prebuildPredictedSceneryCell(NativeLayeredTerrainSnapshot terrain, List<SceneBaselineState.Record> records) {
+		if (!Renderer3DSettings.isBrowserPresentationAvailable() || !Renderer3DSettings.canUseResidentObjectChunks()) {
+			return;
+		}
+		Renderer3DWorldChunkFrame frame = world.getRenderer3DWorldChunkFrame();
+		if (frame == null || frame.getChunkCount() == 0 || predictedSceneryCells.size() >= 20) {
+			return;
+		}
+		int role = Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
+		int cellSize = residentObjectChunkTileSize(role);
+		int cellX = Math.floorDiv(records.get(0).x, cellSize);
+		int cellZ = Math.floorDiv(records.get(0).y, cellSize);
+		long key = residentObjectChunkCellKey(cellX, cellZ, role);
+		if (predictedSceneryCells.containsKey(key)) {
+			return;
+		}
+		int baseX = midRegionBaseX;
+		int baseZ = midRegionBaseZ;
+		ResidentObjectChunkInputBuilder builder = new ResidentObjectChunkInputBuilder(
+			frame.getChunks().get(0), key, cellX * cellSize - baseX, cellZ * cellSize - baseZ,
+			cellX, cellZ, role, cellSize, baseX, baseZ, tileSize);
+		for (SceneBaselineState.Record record : records) {
+			if (Math.floorDiv(record.x, cellSize) != cellX || Math.floorDiv(record.y, cellSize) != cellZ) {
+				return;
+			}
+			Renderer3DModelKind kind = record.type == 0 ? Renderer3DModelKind.GAME_OBJECT : Renderer3DModelKind.WALL_OBJECT;
+			ResidentObjectCanonicalIdentity identity = createResidentObjectCanonicalIdentity(
+				kind, record.x, record.y, record.id, record.direction, baseX, baseZ, tileSize, terrain);
+			builder.canonicalIdentities.add(identity);
+		}
+		ResidentObjectChunkInput input = builder.build();
+		Future<ResidentObjectChunkBuildResult> build = residentObjectBuildExecutor.submit(
+			() -> buildResidentObjectChunkMeshMeasured(input));
+		predictedSceneryCells.put(key, new PendingResidentObjectChunkBuild(-1, input, build));
+	}
+
+	void authorizePredictedScenery() {
+		predictedSceneryAuthorized = !predictedSceneryCells.isEmpty();
+	}
+
+	void clearPredictedScenery() {
+		for (PendingResidentObjectChunkBuild pending : predictedSceneryCells.values()) {
+			pending.future.cancel(false);
+		}
+		predictedSceneryCells.clear();
+		predictedSceneryAuthorized = false;
+	}
+
+	private ResidentObjectChunkBuildResult takePreparedScenery(ResidentObjectChunkInput actual) {
+		PendingResidentObjectChunkBuild pending = predictedSceneryCells.get(actual.cellKey);
+		if (pending == null || !pending.future.isDone() || pending.future.isCancelled()) {
+			return null;
+		}
+		ResidentObjectChunkInput built = pending.input;
+		if (actual.chunkRole != built.chunkRole || actual.cacheKey != built.cacheKey
+			|| actual.tileSize != built.tileSize || actual.canonicalIdentities.length != built.canonicalIdentities.length) {
+			return null;
+		}
+		for (int i = 0; i < actual.canonicalIdentities.length; i++) {
+			if (actual.canonicalIdentities[i].compareTo(built.canonicalIdentities[i]) != 0) {
+				return null;
+			}
+		}
+		try {
+			ResidentObjectChunkBuildResult result = pending.future.get();
+			if (result.chunk == null) return result;
+			return new ResidentObjectChunkBuildResult(result.chunk.rebaseStaticObjectPresentation(
+				actual.anchor.getCenterSectionX(), actual.anchor.getCenterSectionY(),
+				(built.baseX - actual.baseX) * actual.tileSize, (built.baseZ - actual.baseZ) * actual.tileSize),
+				result.durationNanos);
+		} catch (InterruptedException interrupted) {
+			Thread.currentThread().interrupt();
+		} catch (ExecutionException failed) {
+			ClientRuntimeLogger.log("Predicted scenery build failed: " + failed.getCause());
+		}
+		return null;
+	}
+
 	private RSModel createStaticPresentationGameObjectModel(
 		ResidentObjectChunkInput input,
 		SceneBaselineState.Record record,
@@ -4068,6 +4150,8 @@ public final class mudclient implements Runnable {
 		Set<Long> activeCells = new HashSet<Long>();
 		int cacheHits = 0;
 		int cacheMisses = 0;
+		int preparedSceneryHits = 0;
+		long preparedSceneryNanos = 0L;
 		int canonicalOwnershipMatches = 0;
 		int canonicalOwnershipChanges = 0;
 		int canonicalOwnershipReuse = 0;
@@ -4179,6 +4263,15 @@ public final class mudclient implements Runnable {
 				objectChunk = null;
 			}
 			if (cached == null) {
+				if (predictedSceneryAuthorized) {
+					ResidentObjectChunkBuildResult prepared = takePreparedScenery(input);
+					if (prepared != null) {
+						preparedSceneryHits++;
+						preparedSceneryNanos += prepared.durationNanos;
+						objectChunks.set(inputIndex, acceptResidentObjectChunkBuild(input, prepared.chunk));
+						continue;
+					}
+				}
 				cacheMisses++;
 				if (parallelBuild) {
 					if (pendingBuilds.isEmpty()) {
@@ -4315,6 +4408,10 @@ public final class mudclient implements Runnable {
 		if (traceHandoffScenery) {
 			BrowserRegionHandoffTrace.sceneryBuild(objectInputs.size(), cacheHits, cacheMisses,
 				parallelBuild ? residentObjectBuildWorkerCount() : 1, parallelBuildStartNanos, meshBuildNanos);
+		}
+		if (predictedSceneryAuthorized) {
+			BrowserRegionHandoffTrace.preparedScenery(predictedSceneryCells.size(), preparedSceneryHits, preparedSceneryNanos);
+			clearPredictedScenery();
 		}
 		for (Renderer3DWorldChunkFrame.ChunkMesh objectChunk
 				: objectChunks) {
@@ -4869,8 +4966,15 @@ public final class mudclient implements Runnable {
 			int worldTileZ,
 			int objectId,
 			int direction) {
-		int localX = worldTileX - this.midRegionBaseX;
-		int localZ = worldTileZ - this.midRegionBaseZ;
+		return createResidentObjectCanonicalIdentity(kind, worldTileX, worldTileZ, objectId, direction,
+			midRegionBaseX, midRegionBaseZ, tileSize, null);
+	}
+
+	private ResidentObjectCanonicalIdentity createResidentObjectCanonicalIdentity(
+		Renderer3DModelKind kind, int worldTileX, int worldTileZ, int objectId, int direction,
+		int baseX, int baseZ, int scale, NativeLayeredTerrainSnapshot predictedTerrain) {
+		int localX = worldTileX - baseX;
+		int localZ = worldTileZ - baseZ;
 		int elevation1 = World.PRESENTATION_ELEVATION_UNAVAILABLE;
 		int elevation2 = World.PRESENTATION_ELEVATION_UNAVAILABLE;
 		if (kind == Renderer3DModelKind.GAME_OBJECT) {
@@ -4886,13 +4990,9 @@ public final class mudclient implements Runnable {
 					xSize = definition.getHeight();
 					zSize = definition.getWidth();
 				}
-				int centerX =
-					(2 * localX + xSize) * this.tileSize / 2;
-				int centerZ =
-					(2 * localZ + zSize) * this.tileSize / 2;
-				elevation1 =
-					this.world.getPresentationTerrainElevation(
-						centerX, centerZ);
+				int centerX = (2 * localX + xSize) * scale / 2;
+				int centerZ = (2 * localZ + zSize) * scale / 2;
+				elevation1 = residentSceneryElevation(predictedTerrain, centerX, centerZ, baseX, baseZ, scale);
 				elevation2 = elevation1;
 			}
 		} else if (kind == Renderer3DModelKind.WALL_OBJECT) {
@@ -4911,14 +5011,8 @@ public final class mudclient implements Runnable {
 				endpointX++;
 				endpointZ++;
 			}
-			elevation1 =
-				this.world.getPresentationTerrainElevation(
-					startX * this.tileSize,
-					startZ * this.tileSize);
-			elevation2 =
-				this.world.getPresentationTerrainElevation(
-					endpointX * this.tileSize,
-					endpointZ * this.tileSize);
+			elevation1 = residentSceneryElevation(predictedTerrain, startX * scale, startZ * scale, baseX, baseZ, scale);
+			elevation2 = residentSceneryElevation(predictedTerrain, endpointX * scale, endpointZ * scale, baseX, baseZ, scale);
 		}
 		return new ResidentObjectCanonicalIdentity(
 			kind.ordinal(),
@@ -4928,6 +5022,13 @@ public final class mudclient implements Runnable {
 			direction,
 			elevation1,
 			elevation2);
+	}
+
+	private int residentSceneryElevation(NativeLayeredTerrainSnapshot terrain,
+		int localPixelX, int localPixelZ, int baseX, int baseZ, int scale) {
+		return terrain == null
+			? world.getPresentationTerrainElevation(localPixelX, localPixelZ)
+			: World.getPredictedPresentationElevation(terrain, localPixelX + baseX * scale, localPixelZ + baseZ * scale);
 	}
 
 	private static final class Renderer3DGlowSpec {

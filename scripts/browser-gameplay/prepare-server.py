@@ -17,12 +17,15 @@ def main():
     parser.add_argument('--tcp-port', type=int, default=43629)
     parser.add_argument('--ws-port', type=int, default=43529)
     parser.add_argument('--covered-walking-preview', action='store_true')
+    parser.add_argument('--predicted-scenery', action='store_true', help='Enable the private scenery prediction')
     parser.add_argument('--outer-coverage', action='store_true', help='Spawn at the private outer coverage test route')
     args = parser.parse_args(); run = args.run.resolve()
     if not all(1024 <= port <= 65535 for port in (args.tcp_port, args.ws_port)) or args.tcp_port == args.ws_port:
         parser.error('Use two different nonprivileged loopback ports')
     if args.outer_coverage and not args.covered_walking_preview:
         parser.error('The outer coverage route requires the covered walking preview')
+    if args.predicted_scenery and not args.covered_walking_preview:
+        parser.error('Predicted scenery requires the covered walking preview')
     if not (run / 'stage.json').is_file() or (run / 'server').exists(): parser.error('Use a staged run without a server; existing data is preserved')
     selection = json.loads(subprocess.check_output(['python3', str(ROOT / 'scripts/installed-map-selection.py'), str(ROOT)]))
     server = run / 'server'; server.mkdir()
@@ -79,6 +82,8 @@ def main():
     command = ['java', '-Xmx2g', '-XX:+UseSerialGC']
     if args.covered_walking_preview:
         command.append('-Dspoiledmilk.coveredWalkingPreview=true')
+    if args.predicted_scenery:
+        command.append('-Dspoiledmilk.predictedSceneryPreview=true')
     command += ['-cp', cp, 'BrowserPrivateServer', str(args.tcp_port), str(args.ws_port)]
     (run / 'server-command.json').write_text(json.dumps(dict(cwd=str(server), command=command), indent=2) + '\n')
     print('Prepared private server. Disposable credentials: browserdemo / BrowserProof13')

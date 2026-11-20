@@ -104,6 +104,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_LAYERED_SCENE_CONTEXT, 157); // custom, versioned layered scene scope
 		put(OpcodeOut.SEND_EQUIPMENT_STATS, 153);
 		put(OpcodeOut.SEND_LAYERED_TERRAIN_STAGE, 154); // custom, cache-only predicted terrain
+		put(OpcodeOut.SEND_PREDICTED_SCENERY_CELL, 163); // private, cache-only predicted scenery
 		put(OpcodeOut.SEND_HISCORES, 155); // custom
 		put(OpcodeOut.SEND_STATS, 156);
 		put(OpcodeOut.SEND_STAT, 159);
@@ -1014,6 +1015,19 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					builder.writeInt(worldTime.cycleMillis);
 					builder.writeInt(worldTime.currentCycleMillis);
 					builder.writeInt(worldTime.rateMultiplier);
+					break;
+
+				case SEND_PREDICTED_SCENERY_CELL:
+					PredictedSceneryCellStruct cell = (PredictedSceneryCellStruct) payload;
+					builder.writeInt(cell.terrainStageSequence);
+					builder.writeShort(cell.records.size());
+					for (SceneBaselineStruct.ObjectRecord record : cell.records) {
+						builder.writeShort(record.id);
+						builder.writeInt(record.x);
+						builder.writeInt(record.y);
+						builder.writeByte((byte) record.direction);
+						builder.writeByte((byte) record.type);
+					}
 					break;
 
 				case SEND_SCENE_BASELINE:
