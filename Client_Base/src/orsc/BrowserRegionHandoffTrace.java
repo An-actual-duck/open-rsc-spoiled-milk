@@ -21,7 +21,7 @@ public final class BrowserRegionHandoffTrace {
         "world-section.active-chunk-build", "world-section.predictive-clear",
         "world-section.symmetric-compose", "world-section.preload", "scenery.input", "scenery.mesh", "baseline.legacy-reconcile",
         "handoff.world-frame", "handoff.scene-render", "handoff.object-frame", "handoff.fresh-candidate",
-        "scenery.cache", "scenery.prepared"
+        "scenery.cache", "scenery.prepared", "terrain.prepared-install"
     };
     private static long ordinal;
     private static int count, next, context, packetBudget, frameBudget;

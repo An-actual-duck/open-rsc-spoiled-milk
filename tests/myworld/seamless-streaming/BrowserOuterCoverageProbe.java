@@ -2,10 +2,13 @@ package orsc.browser;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import orsc.ORSCApplet;
 import orsc.BrowserWebGLBridge;
 import orsc.graphics.gui.Panel;
 import orsc.graphics.three.Renderer3DFrame;
+import orsc.graphics.three.World;
+import orsc.graphics.two.GraphicsController;
 import orsc.mudclient;
 
 /** Starts on the signed-map fixture and uses the normal client walk request. */
@@ -114,6 +117,7 @@ public final class BrowserOuterCoverageProbe {
 			if (x == 269 && worldZ(client) == 609 && !retain) {
 				BrowserBootstrap.report("outer-coverage:preupload-final:" + BrowserWebGLBridge.getPredictedTerrainReceipt());
 				BrowserBootstrap.report("outer-coverage:upload-totals-after:" + BrowserWebGLBridge.getSceneUploadReceipt());
+				reportTerrainState(client.getWorld());
 				BrowserBootstrap.report("outer-coverage:complete:javaFrameGap=" + maximumGap
 					+ ":approachGap=" + approachGap + ":approachX=" + approachGapFromX + "->" + approachGapToX
 					+ ":retained=" + maximumHold);
@@ -126,6 +130,14 @@ public final class BrowserOuterCoverageProbe {
 
 	private static int worldX(mudclient client) { return client.getMidRegionBaseX() + client.getLocalPlayerX(); }
 	private static int worldZ(mudclient client) { return client.getMidRegionBaseZ() + client.getLocalPlayerZ(); }
+
+	private static void reportTerrainState(World world) throws ReflectiveOperationException {
+		int[][] elevations = (int[][]) field(World.class, "tileElevationCache").get(world);
+		GraphicsController graphics = (GraphicsController) field(World.class, "minimapGraphics").get(world);
+		BrowserBootstrap.report("outer-coverage:terrain-state:collision=" + Arrays.deepHashCode(world.collisionFlags)
+			+ ":elevation=" + Arrays.deepHashCode(elevations)
+			+ ":minimap=" + Arrays.hashCode(graphics.minimapSprite.getPixels()));
+	}
 
 	private static Field field(Class<?> owner, String name) throws Exception {
 		Field field = owner.getDeclaredField(name);

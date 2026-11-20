@@ -938,16 +938,17 @@ public class PacketHandler {
 		phaseStartedNanos = BoundaryLoadingDiagnostics.now();
 		boolean predictedPublished = false;
 		if (atomicActivation) {
+			boolean ordinaryWalking = hadLayeredSceneContext && !result.isScopeChanged()
+				&& previousLogicalLevel == logicalLevel
+				&& Math.abs((long) previousLogicalX - logicalX) <= 8L
+				&& Math.abs((long) previousLogicalY - logicalY) <= 8L;
 			cancelPendingLayeredTerrainPrebuild();
 			predictedPublished =
-				publishReadyPredictedLayeredTerrainHalo(nativeTerrain);
+				publishReadyPredictedLayeredTerrainHalo(nativeTerrain, ordinaryWalking);
 			layeredSceneActivationState.begin(sequence);
 			mc.beginLayeredSceneActivation(
 				hadLayeredSceneContext && !result.isScopeChanged(),
-				hadLayeredSceneContext && !result.isScopeChanged()
-					&& previousLogicalLevel == logicalLevel
-					&& Math.abs((long) previousLogicalX - logicalX) <= 8L
-					&& Math.abs((long) previousLogicalY - logicalY) <= 8L);
+				ordinaryWalking);
 			refreshLayeredSceneActivationCover();
 		} else {
 			clearReadyPredictedLayeredTerrainHalo();
@@ -1604,7 +1605,7 @@ public class PacketHandler {
 	}
 
 	private boolean publishReadyPredictedLayeredTerrainHalo(
-		NativeLayeredTerrainSnapshot activeTerrain) {
+		NativeLayeredTerrainSnapshot activeTerrain, boolean ordinaryWalking) {
 		if (readyPredictedLayeredTerrainHalo == null
 			|| readyPredictedLayeredTerrainStage == null
 			|| readyPredictedLayeredTerrainStructureStage == null) {
@@ -1633,7 +1634,7 @@ public class PacketHandler {
 				predicted,
 				readyPredictedLayeredTerrainStructureStage,
 				mc.getWorldOffsetX(),
-				mc.getWorldOffsetZ());
+				mc.getWorldOffsetZ(), ordinaryWalking);
 		boolean sceneryAuthorized = published && predicted == predictedSceneryTerrain;
 		if (sceneryAuthorized) mc.authorizePredictedScenery();
 		clearReadyPredictedLayeredTerrainHalo(sceneryAuthorized);
