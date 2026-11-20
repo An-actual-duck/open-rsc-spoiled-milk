@@ -147,6 +147,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void regionTransition(boolean ordinaryWalking);
     private static native void holdWorld();
     private static native void walkingAnchor(int worldX, int worldZ, int spriteSlot);
+    private static native void walkingGait(int gait);
     private static native void walkingTransition(int worldX, int worldZ);
     private static final boolean WORKER_MOTION = Boolean.getBoolean("spoiledmilk.browserWorkerMotion")
         && Boolean.getBoolean("spoiledmilk.browserBenchmark") && !Boolean.getBoolean("spoiledmilk.browserPublicAlpha");
@@ -499,6 +500,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         commitWorldSprites(epoch,sequence,batch.pixels(missing),batch.vertices());
         if (localSlot >= 0) walkingAnchor(client.getLocalPlayerWorldPixelX(),
             client.getLocalPlayerWorldPixelZ(), localSlot);
+        if (localSlot >= 0 && Boolean.getBoolean("spoiledmilk.browserWalkTimeline"))
+            walkingGait(client.getLocalPlayerWalkingGait());
         return batch.size();
     }
     static float[] spriteQuad(Renderer3DFrame frame,Renderer3DFrame.SpriteAnchor anchor,CompositeWorldSpriteTexture composite) {

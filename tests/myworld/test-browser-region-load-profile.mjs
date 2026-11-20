@@ -24,4 +24,10 @@ check(first.length===8&&first[0].sourceEpoch===2&&first[7].sourceEpoch===9);
 check(first[0].lightingMs===20&&first[7].lightingMs===90);
 for(let n=0;n<140;n++){a[2]++;c.report(null,a);}
 check(c.stats.samples[0].attempt>first[7].attempt&&first[7].lightingMs===90);
+a[3]=3;a[6]=10;a[22]=54;
+for(let n=0;n<12;n++){a[2]++;c.report(null,a);}
+check(c.stats.slowPresentedFrames.filter(sample=>sample.sourceEpoch===10).length===8);
+a[22]=5;
+for(let n=0;n<140;n++){a[2]++;c.report(null,a);}
+check(c.stats.slowPresentedFrames.some(sample=>sample.sourceEpoch===10&&sample.totalMs===54));
 console.log(JSON.stringify({passed:true,checks,scope:'bounded diagnostic policy/copy only; no timings or rendering claim'}));

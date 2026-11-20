@@ -296,6 +296,31 @@ this path. The normal authority path remains the comparison. A next
 candidate should advance the local animation and use one shared visual
 movement timeline through the handoff, including release of any correction.
 
+Walking animation and full cutover trace
+---------------------------------------
+
+The opt-in walking timeline now indexes the local player's recently
+rendered sprites by the actual Java walk phase and camera-facing
+direction. The worker reuses the captured resident images for the walk
+cycle and holds the confirmed forward presentation until Java catches up,
+with a bounded fallback. The original displacement-only image history
+did not produce a sprite change on the outbound route. Its one-tile
+visual reconciliation limit also missed an observed step slightly larger
+than one tile. The revised path bounds correction to two tiles and
+cancels on reversal, phase timeout or scope change.
+
+Both directions in the revised Firefox replay used four captured poses,
+changed sprite images during worker playback, and had zero measured
+backward steps through the first second following the switch. The same
+trace confirmed a sustained hitch. Four Java bridge submissions in each
+direction took approximately 100–137 ms. Of those, 96–132 ms was inside
+terminal submission and dispatch. Geometry, sprites, lighting and overlay
+preparation were individually small during the burst. The headless result
+does not certify visible parity or 60 FPS. Keep private and split the
+terminal trace by world progress, native present and worker batch enqueue
+and ACK to find the second burst. Evidence is in output/diagnostics/
+browser-overlapping-handoff/timeline-result.json.
+
 Optional streaming policy
 -------------------------
 

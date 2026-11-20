@@ -26265,6 +26265,12 @@ public final class mudclient implements Runnable {
 		return index >= 0 && index < this.playerCount && this.players[index] == this.localPlayer;
 	}
 
+	public int getLocalPlayerWalkingGait() {
+		if (this.localPlayer == null || isCombatDirection(this.localPlayer.direction)) return -1;
+		int facing = (this.localPlayer.direction.rsDir + (this.cameraRotation + 16) / 32) & 7;
+		return facing * 4 + this.localPlayer.stepFrame / 6 % 4;
+	}
+
 	public int getLocalPlayerWorldPixelX() {
 		return this.localPlayer.currentX + this.midRegionBaseX * this.tileSize;
 	}

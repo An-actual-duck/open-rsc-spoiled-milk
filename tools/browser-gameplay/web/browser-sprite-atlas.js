@@ -1,11 +1,12 @@
 /** Exact-ID sprite residency. One existing RGBA8 atlas; no extra texture on compaction.
  * Java IDs identify owned exact-content cache entries, never a probabilistic hash.
  * All current IDs are pinned before eviction. Borrowed arrays are consumed inline. */
-export function createBrowserSpriteAtlas(gl,{texture,vbo,stats={},extent=2048,maxSprites=1024,ownedFrame=null,deferOrCheck=null}={}) {
+export function createBrowserSpriteAtlas(gl,{texture,vbo,stats={},extent=2048,maxSprites=1024,ownedFrame=null,deferOrCheck=null,replayPoses=false}={}) {
   if(!Number.isInteger(extent)||extent<1||extent>2048||!Number.isInteger(maxSprites)||maxSprites<1||maxSprites>1024)throw new Error('Invalid sprite atlas bounds');
   const MAX_RESIDENT=4096;
   let entries=new Map(),free=[{x:0,y:0,w:extent,h:extent}],epoch=0,sequence=0,pending=null,failed=false,disposed=false;
   Object.assign(stats,{spriteResidentImages:0,spriteDrawReuses:0,spriteUploadedImages:0,spriteUploadedBytes:0,spriteCompactions:0,spriteEvictions:0,spriteDescriptorUploads:0,spritePlanCalls:0,spriteCommitCalls:0,spriteSourceImageBytes:0,spriteDescriptorBytes:0});
+  let committedOrder=null,committedQuads=null;
   function alive(){if(disposed||failed)throw new Error('Sprite atlas unavailable; restart session');}
   function check(){const error=gl.getError();if(error!==gl.NO_ERROR)throw new Error('Sprite atlas GL error '+error);}
   function allocate(rectangles,w,h){
@@ -55,9 +56,23 @@ export function createBrowserSpriteAtlas(gl,{texture,vbo,stats={},extent=2048,ma
     finally{if(!ownedFrame?.active){gl.bindBuffer(gl.ARRAY_BUFFER,array);gl.bindTexture(gl.TEXTURE_2D,binding);gl.pixelStorei(gl.UNPACK_ALIGNMENT,alignment);gl.activeTexture(active);}else gl.activeTexture(gl.TEXTURE0);}
     entries=pending.next;free=pending.rectangles;epoch=e;sequence=s;
     stats.spriteDrawReuses+=pending.hits;stats.spriteUploadedImages+=pending.missing.length;stats.spriteUploadedBytes+=pending.bytes;stats.spriteCompactions+=pending.compacted?1:0;stats.spriteEvictions+=pending.evictions;stats.spriteDescriptorUploads++;stats.spriteCommitCalls++;stats.spriteDescriptorBytes+=quads.byteLength;stats.spriteSourceImageBytes+=pending.sourceBytes;stats.spriteFrameGroups=pending.order.length;stats.spriteResidentImages=entries.size;
+    if(replayPoses){committedOrder=pending.order;committedQuads=quads;}
     const count=pending.order.length;pending=null;return count;
   }catch(error){failed=true;throw error;}}
+  function replayPoseAt(slot){
+    const id=committedOrder?.[slot];
+    if(id===undefined)return null;
+    const at=slot*20;
+    return {id,epoch,base:[(committedQuads[at+10]+committedQuads[at+15])/2,
+      (committedQuads[at+11]+committedQuads[at+16])/2]};
+  }
+  function replayRect(id,expectedEpoch){
+    const rect=expectedEpoch===epoch?entries.get(id):null;
+    if(!rect)return null;
+    return {uv:[center(rect.x,rect.w,0),center(rect.y,rect.h,0),
+      center(rect.x,rect.w,1),center(rect.y,rect.h,1)],size:[rect.w,rect.h]};
+  }
   function assertCommitted(){alive();if(pending){failed=true;throw new Error('Sprite plan was not committed before presentation');}}
-  function dispose(){if(disposed)return;disposed=true;entries.clear();free=[];pending=null;stats.spriteResidentImages=0;}
-  return{plan,commit,assertCommitted,dispose};
+  function dispose(){if(disposed)return;disposed=true;entries.clear();free=[];pending=committedOrder=committedQuads=null;stats.spriteResidentImages=0;}
+  return{plan,commit,assertCommitted,dispose,replayPoseAt,replayRect};
 }

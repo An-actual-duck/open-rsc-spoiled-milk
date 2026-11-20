@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   cameraWorldPosition, createOverworldFlyover, moveWorldCamera,
-  persistentWorldPolicy, terrainCells, walkingReplayOffset, walkingResumeOffset
+  persistentWorldPolicy, terrainCells, walkingReplayOffset, walkingResumeOffset, walkingSpriteCycle
 } from '../../tools/browser-gameplay/web/browser-persistent-world.js';
 import {createWholeZoneSelection} from '../../tools/browser-gameplay/web/browser-whole-zone.js';
 
@@ -69,6 +69,20 @@ assert.deepEqual(walkingResumeOffset([150,100],[130,100],[1,0],300),[0,0]);
 assert.deepEqual(walkingResumeOffset([150,100],[0,100],[1,0],0),[0,0]);
 assert.equal(persistentWorldPolicy(new URLSearchParams('persistentscene=on&workerreplay=on&walkstabilize=on'),admission).walkStabilize,true);
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&walkstabilize=on'),admission));
+assert.deepEqual(walkingResumeOffset([150,100],[130,100],[1,0],240,true),[20,0]);
+assert.deepEqual(walkingResumeOffset([150,100],[130,100],[1,0],649,true),[20,0]);
+assert.deepEqual(walkingResumeOffset([150,100],[130,100],[1,0],650,true),[0,0]);
+assert.deepEqual(walkingResumeOffset([160,100],[20,100],[1,0],240,true),[140,0]);
+const snapshots=[
+ {id:1,epoch:2,gait:4,at:0},
+ {id:2,epoch:2,gait:5,at:1750},
+ {id:3,epoch:2,gait:8,at:1800},
+ {id:4,epoch:1,gait:6,at:1850},
+ {id:5,epoch:2,gait:7,at:1900}
+];
+assert.deepEqual(walkingSpriteCycle(snapshots,2,7,2000).map(p=>p.id),[5,2]);
+assert.equal(persistentWorldPolicy(new URLSearchParams('persistentscene=on&workerreplay=on&walkstabilize=on&walktimeline=on'),admission).walkTimeline,true);
+assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&workerreplay=on&walktimeline=on'),admission));
 const selection=createWholeZoneSelection(catalogue,{}, {persistent:true});
 selection.frame(state(2,0,1),rows);
 const before=ids(selection.merge(new Int32Array(),0,matrices(143*scale,644*scale)));

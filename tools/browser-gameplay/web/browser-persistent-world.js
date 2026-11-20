@@ -12,6 +12,8 @@ export function persistentWorldPolicy(options, {publicAlpha, renderWorker, whole
   const workerReplay = options.get('workerreplay') === 'on';
   const walkBuffer = options.get('walkbuffer') === 'on';
   const walkStabilize = options.get('walkstabilize') === 'on';
+  const walkTimeline = options.get('walktimeline') === 'on';
+  if (walkTimeline && !walkStabilize) throw new Error('Walking timeline requires stabilized worker replay');
   if (walkStabilize && !workerReplay) throw new Error('Walking stabilization requires worker replay');
   if (walkBuffer && !workerReplay) throw new Error('Walking resources require worker replay');
   if ((enabled || flyover || preparedWalk || terrainLookahead || quietWalk || liveWalk || workerReplay) && (publicAlpha || !enabled || !renderWorker.enabled
@@ -19,7 +21,7 @@ export function persistentWorldPolicy(options, {publicAlpha, renderWorker, whole
     throw new Error('Persistent scene requires a private full-residency WebGL session');
   }
   if ((preparedWalk || terrainLookahead || quietWalk || liveWalk || workerReplay) && flyover) throw new Error('Prepared walking requires live gameplay');
-  return {enabled, flyover, preparedWalk, terrainLookahead, quietWalk, liveWalk, workerReplay, walkBuffer, walkStabilize};
+  return {enabled, flyover, preparedWalk, terrainLookahead, quietWalk, liveWalk, workerReplay, walkBuffer, walkStabilize, walkTimeline};
 }
 
 // The existing Java view is R * translate(-eye), with R an orthonormal basis.
@@ -51,12 +53,21 @@ export function walkingReplayOffset(anchor, destination, elapsedMs) {
 }
 
 /** Hold the forward component briefly if Java resumes behind the visible player. */
-export function walkingResumeOffset(visible, anchor, direction, elapsedMs) {
+export function walkingResumeOffset(visible, anchor, direction, elapsedMs, holdUntilCaughtUp = false) {
+  if (holdUntilCaughtUp) elapsedMs = elapsedMs >= 650 ? 300 : 0;
   if (elapsedMs >= 300) return [0, 0];
   const lead = (visible[0] - anchor[0]) * direction[0] + (visible[1] - anchor[1]) * direction[1];
-  if (lead <= 0 || lead > TILE) return [0, 0];
+  if (lead <= 0 || lead > TILE * (holdUntilCaughtUp ? 2 : 1)) return [0, 0];
   const strength = Math.min(1, (300 - elapsedMs) / 120);
   return [direction[0] * lead * strength, direction[1] * lead * strength];
+}
+
+/** Return only captured animation poses from the same recent walk. */
+export function walkingSpriteCycle(history, epoch, gait, now) {
+  if(!Number.isInteger(gait)||gait<0)return [];
+  const facing=gait>>2,phase=gait&3;
+  return history.filter(p=>p.epoch===epoch && now-p.at<=1500 && (p.gait>>2)===facing)
+    .sort((a,b)=>((a.gait-phase)&3)-((b.gait-phase)&3));
 }
 
 export function persistentCells(cameraX, cameraZ, size) {
