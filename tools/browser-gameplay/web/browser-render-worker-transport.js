@@ -47,6 +47,7 @@ export function createRenderWorkerTransport({postMessage,layout,now=()=>performa
     if(name==='frameWork'){if(!worldPending){const e=new Error('frameWork without world presentation');fail(e);throw e;}worldPending=false;return flush({frame:true});}
     if(name==='holdWorld')return flush({frame:true});
     if((name==='regionTransition'||name==='walkingTransition')&&flushRegionTransition)return flush();
+    if(name==='walkingLivePose'&&args[6])return flush();
     if(name==='initialize'||name==='initializeWholeZone'||name==='planWorldSprites')return flush({result:true});
   }
   function enqueue(name,args){try{return capture(name,args);}catch(error){fail(error);throw error;}}

@@ -14,6 +14,7 @@ public final class BrowserFrameSinkRegistry {
             worldTransition(ordinaryWalking);
         }
         default boolean needsCpuDepthFrame() { return true; }
+        default void liveWalkingPose(int playerX, int playerZ, int cameraX, int cameraZ, int gait, int rotation) { }
     }
     private static volatile Sink sink;
     private static int underlayWidth=-1,underlayHeight=-1;
@@ -32,6 +33,11 @@ public final class BrowserFrameSinkRegistry {
         Sink target = sink;
         if (target != null) target.worldTransition(ordinaryWalking, targetX, targetZ);
     }
+    public static void liveWalkingPose(int playerX, int playerZ, int cameraX, int cameraZ, int gait, int rotation) {
+        Sink target = sink;
+        if (target != null) target.liveWalkingPose(playerX, playerZ, cameraX, cameraZ, gait, rotation);
+    }
+
     /** Preserve the ordinary AWT input surface, but do not repaint pixels hidden by WebGL. */
     static synchronized boolean shouldPaintUnderlay(int width,int height) {
         if(ALWAYS_PAINT)return true;

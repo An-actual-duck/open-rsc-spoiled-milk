@@ -379,6 +379,35 @@ earlier just makes it rebuild partial scenery on the same thread.
 Evidence is in output/diagnostics/browser-overlapping-handoff/
 live-receive-ab/comparison.json.
 
+Live movement while retaining scenery
+-------------------------------------
+
+The private holdwalkscenery experiment skips normal scene draws for
+500 ms after an ordinary surface region transition. Game updates send
+the actual local player position, camera translation and walk phase to
+the render worker. The worker uses the last committed scenery, UI and
+sprite atlas. It reprojects the local player and camera independently.
+There is no generated walk path or synthetic walk clock in this mode.
+The proof is scoped to a surface walk with a stable camera rotation.
+
+In visible Firefox, both boundary crossings received 28 simulation
+samples and drew 23 changing player and camera positions while the old
+scenery was still visible. Successive samples were at most 23 ms apart.
+The first such worker draw took approximately 97 ms from the transition
+notice. The return displayed four sprite changes driven by the live
+walk phase. The outbound walk phases had no matching resident sprite
+images. The normal Java scene still took 781 and 626 ms between frames,
+so suppressing draws and resuming the same assembly still leaves a
+visible seam. The return route ended one tile south of the earlier
+comparison. Evidence is in output/diagnostics/browser-overlapping-handoff/
+scenery-hold/result.json.
+
+Provide the worker with the full set of local walk images for the
+equipped appearance before the crossing, then separate scene assembly
+from the producer of live poses. The deliberate hold demonstrates that
+the simulation can keep sending movement while scene draws are paused.
+It does not certify seamless scenery replacement or GPU scanout.
+
 Optional streaming policy
 -------------------------
 

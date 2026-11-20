@@ -87,6 +87,10 @@ const snapshots=[
 assert.deepEqual(walkingSpriteCycle(snapshots,2,7,2000).map(p=>p.id),[5,2]);
 assert.equal(persistentWorldPolicy(new URLSearchParams('persistentscene=on&workerreplay=on&walkstabilize=on&walktimeline=on'),admission).walkTimeline,true);
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&workerreplay=on&walktimeline=on'),admission));
+const holdQuery='persistentscene=on&workerreplay=on&walkstabilize=on&walktimeline=on&holdwalkscenery=on';
+assert.equal(persistentWorldPolicy(new URLSearchParams(holdQuery),admission).holdWalkingScenery,true);
+assert.throws(() => persistentWorldPolicy(new URLSearchParams(holdQuery),{...admission,publicAlpha:true}));
+assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&holdwalkscenery=on'),admission));
 assert.deepEqual(walkingCameraOffset([150,100],[120,90],[1,0],[0,10],0),[30,10]);
 assert.deepEqual(walkingCameraOffset([150,100],[130,100],[1,0],[0,10],200),[20,0]);
 assert.deepEqual(walkingCameraOffset([150,100],[160,100],[1,0],[0,10],200),[0,0]);

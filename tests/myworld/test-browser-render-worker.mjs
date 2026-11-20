@@ -82,6 +82,9 @@ const motionTransport=createRenderWorkerTransport({layout,flushRegionTransition:
 await motionTransport.enqueue('walkingTransition',[1024,2048]);
 check(motionPackets.length===1&&motionPackets[0].frameId===0);
 check(motionPackets[0].commands[0].args.join(',')==='1024,2048');
+await motionTransport.enqueue('walkingLivePose',[1025,2048,1200,2100,6,128,true]);
+check(motionPackets.length===2&&motionPackets[1].frameId===0,'Live pose can reach the worker before a full scene frame');
+assert.deepEqual(motionPackets[1].commands[0].args,[1025,2048,1200,2100,6,128,true]);
 motionTransport.dispose();
 
 walkingTransport.dispose();

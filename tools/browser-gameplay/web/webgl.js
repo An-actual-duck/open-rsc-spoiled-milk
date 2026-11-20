@@ -143,6 +143,8 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   const stabilizeWalk=walkingReplayEnabled&&options.walkStabilize===true;
   let replayFence=null,lastReplayOffset=null,visibleWalkPose=null,resumeWalk=null;
   const useWalkTimeline=stabilizeWalk&&options.walkTimeline===true;
+  const holdWalkingScenery=useWalkTimeline&&options.holdWalkingScenery===true;
+  let nextLiveCamera=null,livePose=null,lastLiveDraw=null,livePoseAt=0;
   let walkSpriteHistory=[],walkCycle=[],walkTrace=null,nextWalkingGait=-1;
   function traceWalkingFrame(now,pose,sprite,replay,camera){
     if(!walkTrace||!pose)return;
@@ -195,6 +197,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       walkSpriteHistory=[];walkCycle=[];walkTrace=null;
     }
     if(walkTimer!==null)clearTimeout(walkTimer);
+    livePose=null;lastLiveDraw=null;
     walkTimer=null;walkDeadline=walkPreviousFrame=0;
     committedWalkScene=null;walkingTarget=null;
   }
@@ -203,7 +206,13 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     walkingTarget=target;
     lastMovingReplay=0;lastReplayOffset=null;visibleWalkPose=null;resumeWalk=null;
     walkingStart=performance.now();
-    if(useWalkTimeline&&target&&committedWalkScene.anchor){
+    if(holdWalkingScenery){
+      livePose=null;lastLiveDraw=null;livePoseAt=0;
+      stats.livePoseSamples=stats.livePoseFrames=stats.livePoseMissingGait=stats.livePoseMaxSampleGapMs=0;
+      stats.livePoseLastSampleMs=stats.livePoseLastDrawMs=stats.livePoseMaxDrawGapMs=0;
+      stats.livePosePlayerChanges=stats.livePoseCameraChanges=stats.livePoseGaitChanges=0;
+    }
+    if(useWalkTimeline&&!holdWalkingScenery&&target&&committedWalkScene.anchor){
       const a=committedWalkScene.anchor,dx=target[0]-a[0],dz=target[1]-a[1];
       const length=Math.hypot(dx,dz);
       if(length>0){
@@ -217,7 +226,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
           replayFrames:0,replaySpriteChanges:0,javaFrames:0,maxGapMs:0,backsteps:0,maxBackstepUnits:0,camera:cameraWorldPosition(committedWalkScene.matrices,...committedWalkScene.origin),cameraBacksteps:0,maxCameraBackstepUnits:0,stationaryMs:0};
       }
     }
-    walkDeadline=walkingStart+500;
+    walkDeadline=walkingStart+(holdWalkingScenery?1000:500);
     walkPreviousFrame=walkingStart;
     walkTimer=setTimeout(redrawWalkingScene,16);
   }
@@ -226,8 +235,14 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     const scene=committedWalkScene,now=performance.now();
     if(!scene||now>=walkDeadline||disposed||stats.contextLost)return;
     const {draws,matrices,u,width,height,outWidth,outHeight}=scene;
-    const step=walkingReplayOffset(scene.anchor,walkingTarget,now-walkingStart);
-    if(stabilizeWalk && (!step || lastReplayOffset?.every((value,i)=>value===step[i]))) {
+    const sample=holdWalkingScenery?livePose:null;
+    if(holdWalkingScenery && (!scene.liveCamera || !sample || sample===lastLiveDraw || !scene.anchor
+        || sample.rotation!==scene.liveCamera.rotation)) {
+      walkTimer=setTimeout(redrawWalkingScene,16);
+      return;
+    }
+    const step=sample?sample.player.map((v,i)=>v-scene.anchor[i]):walkingReplayOffset(scene.anchor,walkingTarget,now-walkingStart);
+    if(!holdWalkingScenery&&stabilizeWalk && (!step || lastReplayOffset?.every((value,i)=>value===step[i]))) {
       stats.walkReplayRepeatedPoseSkips=(stats.walkReplayRepeatedPoseSkips||0)+1;
       walkTimer=setTimeout(redrawWalkingScene,16);
       return;
@@ -242,15 +257,20 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(result===gl.WAIT_FAILED)throw new Error('Walking replay GPU fence failed');
       gl.deleteSync(replayFence);replayFence=null;
     }
-    const moved=step ? moveWorldCamera(matrices,...step) : matrices;
+    const cameraStep=sample?sample.camera.map((v,i)=>v-scene.liveCamera.camera[i]):step;
+    if(sample&&(Math.hypot(...step)>512||Math.hypot(...cameraStep)>512))return;
+    const moved=cameraStep ? moveWorldCamera(matrices,...cameraStep) : matrices;
     // Sprite vertices are in the old camera space. Reproject all of them
     // with the translated camera, and advance only the confirmed player.
-    const spriteShift=step ? cameraShiftFor(matrices,step) : null;
+    const spriteShift=cameraStep ? cameraShiftFor(matrices,cameraStep) : null;
+    const localShift=sample?cameraShiftFor(matrices,cameraStep.map((v,i)=>v-step[i])):null;
     let replaySprite=null,displayedSprite=scene.spritePose?.id??null;
-    if(walkCycle.length>=2 && scene.spritePose){
+    if((sample||walkCycle.length>=2) && scene.spritePose){
       const old=spriteAtlas.replayRect(scene.spritePose.id,scene.spritePose.epoch);
-      const pick=walkCycle[Math.floor((now-walkingStart)/92)%walkCycle.length];
-      const image=spriteAtlas.replayRect(pick.id,pick.epoch);
+      const pick=sample?walkSpriteHistory.find(p=>p.gait===sample.gait&&p.epoch===scene.spritePose.epoch)
+        :walkCycle[Math.floor((now-walkingStart)/92)%walkCycle.length];
+      const image=pick&&spriteAtlas.replayRect(pick.id,pick.epoch);
+      if(sample&&!image)stats.livePoseMissingGait++;
       if(old&&image&&pick.id!==scene.spritePose.id){
         replaySprite={from:old.uv,to:image.uv,base:scene.spritePose.base,
           scale:image.size.map((v,i)=>v/old.size[i])};
@@ -262,14 +282,25 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     gl.viewport(0,0,outWidth,outHeight);gl.disable(gl.SCISSOR_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);gl.depthMask(true);
     gl.clearDepth(1);gl.clearColor(u[15],u[16],u[17],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     sky.draw();
-    drawWorldColor(draws,moved,u,width,height,false,false,spriteShift,scene.anchor?.[2],null,replaySprite);
+    drawWorldColor(draws,moved,u,width,height,false,false,spriteShift,scene.anchor?.[2],localShift,replaySprite);
     normalizeOpaqueCanvas(gl,ownedFrame?.active?ownedFrame:null);
     overlay.redrawCoverage(width,height,outWidth,outHeight);
     if(stabilizeWalk)replayFence=gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE,0);
     gl.flush();
+    if(sample){
+      const sinceStart=now-walkingStart;
+      stats.livePoseMaxDrawGapMs=Math.max(stats.livePoseMaxDrawGapMs,sinceStart-stats.livePoseLastDrawMs);
+      stats.livePoseLastDrawMs=sinceStart;
+      stats.livePoseFrames++;
+      if(!lastLiveDraw||sample.player.some((v,i)=>v!==lastLiveDraw.player[i]))stats.livePosePlayerChanges++;
+      if(!lastLiveDraw||sample.camera.some((v,i)=>v!==lastLiveDraw.camera[i]))stats.livePoseCameraChanges++;
+      if(displayedSprite!=null&&lastLiveDraw?.imageId!=null&&displayedSprite!==lastLiveDraw.imageId)stats.livePoseGaitChanges++;
+      lastLiveDraw=sample;
+      sample.imageId=displayedSprite;
+    }
     stats.walkingReplayFrames=(stats.walkingReplayFrames||0)+1;
     stats.walkingReplayMaxInterval=Math.max(stats.walkingReplayMaxInterval||0,now-walkPreviousFrame);
-    if(step) {
+    if(step&&!sample) {
       lastMovingReplay=now;
       lastReplayOffset=step;
       const length=Math.hypot(...step);
@@ -284,6 +315,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     walkPreviousFrame=now;
     walkTimer=setTimeout(redrawWalkingScene,16);
   }
+
 
   function regionTransition(soft,target){
     alive();
@@ -326,6 +358,16 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       alive();
       if(!useWalkTimeline||gait< -1||gait>31)throw new Error('Invalid walking gait');
       nextWalkingGait=gait;
+    },
+    async Java_orsc_BrowserWebGLBridge_walkingLivePose(lib,x,z,cx,cz,gait,rotation,duringHold){
+      alive();
+      if(!holdWalkingScenery||gait< -1||gait>31||rotation<0||rotation>255)throw new Error('Invalid live walking pose');
+      const pose={player:[x,z],camera:[cx,cz],gait,rotation};
+      if(!duringHold){nextLiveCamera=pose;return;}
+      if(walkTimer===null)return;
+      const now=performance.now();
+      if(livePoseAt)stats.livePoseMaxSampleGapMs=Math.max(stats.livePoseMaxSampleGapMs,now-livePoseAt);
+      livePoseAt=now;livePose=pose;stats.livePoseSamples++;stats.livePoseLastSampleMs=now-walkingStart;
     },
     async Java_orsc_BrowserWebGLBridge_holdWorld(){alive();uploadValidation.beforeDraw();gl.bindSampler(0,null);if(!overlay)throw new Error('Region retention requires coverage compositor');if(ownedFrame?.active)ownedFrame.begin(canvas.width,canvas.height,0,0,0);if(walkTimer===null)overlay.hold(canvas.width,canvas.height);worldReady.held();gl.flush();stats.heldWorldFrames++;boundedFrameGap?.held(performance.now(),lastWorld);},
     async Java_orsc_BrowserWebGLBridge_initialize(lib,vertex,fragment){
@@ -589,9 +631,9 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
           && stats.overlayCoverageMode===1 && !resumeWalk) {
         // Worker command buffers are transferred back in the ACK. The replay owns these small copies.
         committedWalkScene={draws:draws.slice(),matrices:visualMatrices.slice(),u:u.slice(),width,height,
-          outWidth:outputWidth,outHeight:outputHeight,anchor:visualAnchor,origin,spritePose};
+          outWidth:outputWidth,outHeight:outputHeight,anchor:visualAnchor,origin,spritePose,liveCamera:nextLiveCamera};
       }
-      nextWalkingAnchor=null;nextWalkingGait=-1;
+      nextWalkingAnchor=null;nextWalkingGait=-1;nextLiveCamera=null;
       stats.javaFrames++;stats.drawCalls=calls;stats.triangles=triangles;stats.activeChunks=draws.length/8;stats.lastFrame=now;
       if(last){stats.frameSamples.push(now-last);if(stats.frameSamples.length>(stats.measurement?4096:600))stats.frameSamples.shift();}last=now;
     },

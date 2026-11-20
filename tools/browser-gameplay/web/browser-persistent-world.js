@@ -14,6 +14,8 @@ export function persistentWorldPolicy(options, {publicAlpha, renderWorker, whole
   const walkBuffer = options.get('walkbuffer') === 'on';
   const walkStabilize = options.get('walkstabilize') === 'on';
   const walkTimeline = options.get('walktimeline') === 'on';
+  const holdWalkingScenery = options.get('holdwalkscenery') === 'on';
+  if (holdWalkingScenery && (!walkTimeline || sliceWalk)) throw new Error('Scenery hold requires the private walking sprite capture without receive slicing');
   if (sliceWalk && (!liveWalk || workerReplay)) throw new Error('Walking receive slicing requires live walking without worker replay');
   if (walkTimeline && !walkStabilize) throw new Error('Walking timeline requires stabilized worker replay');
   if (walkStabilize && !workerReplay) throw new Error('Walking stabilization requires worker replay');
@@ -23,7 +25,7 @@ export function persistentWorldPolicy(options, {publicAlpha, renderWorker, whole
     throw new Error('Persistent scene requires a private full-residency WebGL session');
   }
   if ((preparedWalk || terrainLookahead || quietWalk || liveWalk || workerReplay) && flyover) throw new Error('Prepared walking requires live gameplay');
-  return {enabled, flyover, preparedWalk, terrainLookahead, quietWalk, liveWalk, sliceWalk, workerReplay, walkBuffer, walkStabilize, walkTimeline};
+  return {enabled, flyover, preparedWalk, terrainLookahead, quietWalk, liveWalk, sliceWalk, workerReplay, walkBuffer, walkStabilize, walkTimeline, holdWalkingScenery};
 }
 
 // The existing Java view is R * translate(-eye), with R an orthonormal basis.

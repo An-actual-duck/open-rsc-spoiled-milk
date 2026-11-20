@@ -10,7 +10,7 @@ export function createWorkerOutputSizer(){
 export function createRenderWorkerReplay({backend,outputSizer,now=()=>performance.now(),walkBuffer=false}){
   let nextId=1,lastFrame=0,lastLayout=0,lastGeometry=null,failed=false;
   const deferredResources=new Set(['uploadChunk','replaceChunk','deleteChunks','uploadTexture','deleteTextures']);
-  const liveCommands=new Set(['regionTransition','walkingTransition','worldProgress','holdWorld']);
+  const liveCommands=new Set(['regionTransition','walkingTransition','walkingLivePose','worldProgress','holdWorld']);
   const planningCommands=new Set([...liveCommands,...deferredResources,'wholeZoneFrame','planWorldSprites']);
   const maxDeferredBytes=16*1024*1024,maxDeferredCommands=128;
   let deferred=[],deferredBytes=0;

@@ -37,6 +37,7 @@ public interface ClientPort {
 
 	/** Optional presentation-only notice; gameplay authority remains in the client. */
 	default void beginWorldTransition(boolean ordinaryWalking) { }
+	default void liveWalkingPose(int playerX, int playerZ, int cameraX, int cameraZ, int gait, int rotation) { }
 	default void beginWorldTransition(boolean ordinaryWalking, int targetX, int targetZ) {
 		beginWorldTransition(ordinaryWalking);
 	}

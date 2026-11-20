@@ -939,8 +939,13 @@ public final class mudclient implements Runnable {
 	private static final boolean BROWSER_SLICE_WALKING_RECEIVE =
 		BROWSER_LIVE_WALK_HANDOFF && Boolean.getBoolean("spoiledmilk.browserSliceWalkingReceive");
 	private static final long BROWSER_WALKING_RECEIVE_BUDGET_NANOS = 6_000_000L;
+	private static final boolean BROWSER_HOLD_WALKING_SCENERY =
+		Boolean.getBoolean("spoiledmilk.browserBenchmark")
+			&& !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+			&& Boolean.getBoolean("spoiledmilk.browserHoldWalkingScenery");
 	private boolean browserOrdinaryWalking;
 	private boolean browserWalkingDrawPending;
+	private long browserWalkingSceneryUntil;
 
 	private final LayeredScenePresentationLatch
 		layeredScenePresentationLatch =
@@ -6327,7 +6332,7 @@ public final class mudclient implements Runnable {
 
 						if (this.currentViewMode == GameMode.GAME) {
 							this.getSurface().loggedIn = true;
-							this.drawGame(13);
+							if (!holdingBrowserWalkingScenery()) this.drawGame(13);
 						}
 					} catch (OutOfMemoryError var4) {
 						var4.printStackTrace();
@@ -18756,6 +18761,9 @@ public final class mudclient implements Runnable {
 					this.cameraPositionZ = this.localPlayer.currentZ;
 				}
 
+				if (holdingBrowserWalkingScenery() && this.localPlayer != null)
+					clientPort.liveWalkingPose(getLocalPlayerWorldPixelX(), getLocalPlayerWorldPixelZ(),
+						getBrowserCameraWorldX(), getBrowserCameraWorldZ(), getLocalPlayerWalkingGait(), this.cameraRotation);
 				this.preloadTerrainForActiveMovementContext();
 
 				if (!this.isSleeping) {
@@ -26297,6 +26305,16 @@ public final class mudclient implements Runnable {
 		return this.localPlayer.currentZ + this.midRegionBaseZ * this.tileSize;
 	}
 
+	public int getBrowserCameraWorldX() {
+		return this.cameraPositionX + this.cameraAutoMoveX + this.midRegionBaseX * this.tileSize;
+	}
+
+	public int getBrowserCameraWorldZ() {
+		return this.cameraPositionZ + this.cameraAutoMoveZ + this.midRegionBaseZ * this.tileSize;
+	}
+
+	public int getBrowserCameraRotation() { return this.cameraRotation; }
+
 	public int getLocalPlayerX() {
 		return this.playerLocalX;
 	}
@@ -26726,6 +26744,7 @@ public final class mudclient implements Runnable {
 
 	public void beginLayeredSceneActivation(
 		final boolean retainPresentedFrame) {
+		this.browserWalkingSceneryUntil = 0;
 		this.layeredSceneActivationPending = true;
 		this.layeredSceneTerrainStageWaitLogged = false;
 		this.browserOrdinaryWalking = false;
@@ -26741,6 +26760,9 @@ public final class mudclient implements Runnable {
 	public void beginLayeredSceneActivation(boolean retainPresentedFrame, boolean ordinaryWalking,
 			int targetTileX, int targetTileZ) {
 		if (clientPort != null) clientPort.beginWorldTransition(ordinaryWalking, targetTileX, targetTileZ);
+		this.browserWalkingSceneryUntil = BROWSER_HOLD_WALKING_SCENERY && retainPresentedFrame
+			&& ordinaryWalking && targetTileX != Integer.MIN_VALUE && targetTileZ != Integer.MIN_VALUE
+				? System.nanoTime() + 500_000_000L : 0L;
 		this.layeredSceneActivationPending = true;
 		this.layeredSceneTerrainStageWaitLogged = false;
 		this.browserOrdinaryWalking = retainPresentedFrame && ordinaryWalking;
@@ -26749,6 +26771,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void resetLayeredSceneActivationPresentation() {
+		this.browserWalkingSceneryUntil = 0;
 		this.layeredSceneActivationPending = false;
 		this.layeredSceneTerrainStageWaitLogged = false;
 		this.browserOrdinaryWalking = false;
@@ -26759,6 +26782,11 @@ public final class mudclient implements Runnable {
 	public boolean shouldRetainLastPresentedFrame() {
 		return this.layeredScenePresentationLatch
 			.shouldRetainLastPresentedFrame();
+	}
+
+	private boolean holdingBrowserWalkingScenery() {
+		return BROWSER_HOLD_WALKING_SCENERY && this.browserWalkingSceneryUntil != 0L
+			&& System.nanoTime() < this.browserWalkingSceneryUntil && !isFullScreenModalUiActive();
 	}
 
 	private static long handoffFramePhase(String phase, long start) {

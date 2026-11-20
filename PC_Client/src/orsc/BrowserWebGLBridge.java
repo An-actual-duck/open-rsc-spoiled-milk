@@ -149,8 +149,16 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void walkingAnchor(int worldX, int worldZ, int spriteSlot);
     private static native void walkingGait(int gait);
     private static native void walkingTransition(int worldX, int worldZ);
+    private static native void walkingLivePose(int playerX, int playerZ, int cameraX, int cameraZ,
+        int gait, int rotation, boolean duringHold);
     private static final boolean WORKER_MOTION = Boolean.getBoolean("spoiledmilk.browserWorkerMotion")
         && Boolean.getBoolean("spoiledmilk.browserBenchmark") && !Boolean.getBoolean("spoiledmilk.browserPublicAlpha");
+    private static final boolean HOLD_WALKING_SCENERY = WORKER_MOTION
+        && Boolean.getBoolean("spoiledmilk.browserHoldWalkingScenery");
+    @Override public void liveWalkingPose(int playerX, int playerZ, int cameraX, int cameraZ, int gait, int rotation) {
+        if (HOLD_WALKING_SCENERY && initialized)
+            walkingLivePose(playerX, playerZ, cameraX, cameraZ, gait, rotation, true);
+    }
     @Override public void worldTransition(boolean ordinaryWalking, int targetX, int targetZ) {
         if (!WORKER_MOTION || !initialized || !ordinaryWalking || targetX == Integer.MIN_VALUE
                 || targetZ == Integer.MIN_VALUE) {
@@ -513,6 +521,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             client.getLocalPlayerWorldPixelZ(), localSlot);
         if (localSlot >= 0 && Boolean.getBoolean("spoiledmilk.browserWalkTimeline"))
             walkingGait(client.getLocalPlayerWalkingGait());
+        if (localSlot >= 0 && HOLD_WALKING_SCENERY)
+            walkingLivePose(client.getLocalPlayerWorldPixelX(), client.getLocalPlayerWorldPixelZ(),
+                client.getBrowserCameraWorldX(), client.getBrowserCameraWorldZ(),
+                client.getLocalPlayerWalkingGait(), client.getBrowserCameraRotation(), false);
         return batch.size();
     }
     static float[] spriteQuad(Renderer3DFrame frame,Renderer3DFrame.SpriteAnchor anchor,CompositeWorldSpriteTexture composite) {
