@@ -270,6 +270,32 @@ the player's camera and window settings before claiming it is fixed.
 Evidence is in output/diagnostics/browser-overlapping-handoff/
 stabilized/stabilization-result.json.
 
+Visual review of worker replay
+------------------------------
+
+The player's review of the stabilized Firefox preview reported a visible
+backward correction, frozen player animation, and a sustained FPS drop.
+The preview request included walkbuffer and walkstabilize and fetched the
+matching renderer. The previous automated result covered just the first
+replacement pose's forward component in a separate replay.
+
+Worker replay still draws the same composed character sprite for the
+whole overlap. The correction holds a forward offset and eases it out.
+If Java's next positions are still behind when the offset decays, the
+character can visibly move back after the first replacement frame.
+The worker busy-draw guard limits replay submissions; Java scene assembly,
+resource promotion, and the next several frames can still hitch.
+
+Keep the replay experiment private and treat the current build as a failed
+visual review. Measure the local character's displayed positions and sprite
+changes through replay and the next second of ordinary rendering. Record
+the full run of frame intervals and the player's display and camera settings.
+Require preserved walking animation, no unintended backward step or camera
+jump, and no sustained cadence drop on ordinary walking before promoting
+this path. The normal authority path remains the comparison. A next
+candidate should advance the local animation and use one shared visual
+movement timeline through the handoff, including release of any correction.
+
 Optional streaming policy
 -------------------------
 
