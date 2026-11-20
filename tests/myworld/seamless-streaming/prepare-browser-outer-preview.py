@@ -37,6 +37,7 @@ def main():
     parser.add_argument('--preupload-scene', action='store_true', help='Stage prepared scenery and the predicted center mesh')
     parser.add_argument('--compact-scenery', action='store_true', help='Use compact GPU buffers for static scenery')
     parser.add_argument('--pace-terrain', action='store_true', help='Yield during browser terrain prediction builds')
+    parser.add_argument('--prebuild-ownership', action='store_true', help='Stage scenery in the ownership transition strips')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
@@ -45,6 +46,8 @@ def main():
         parser.error('Scene uploads require terrain uploads and scenery preparation')
     if args.compact_scenery and not args.preupload_scene:
         parser.error('Compact scenery requires scene uploads')
+    if args.prebuild_ownership and not args.predicted_scenery:
+        parser.error('Scenery ownership prediction requires the scenery preview')
     tcp_port, ws_port = (TRACE_TCP_PORT, TRACE_WS_PORT) if args.trace else (TCP_PORT, WS_PORT)
     if args.manual:
         tcp_port, ws_port = MANUAL_TCP_PORT, MANUAL_WS_PORT
@@ -110,6 +113,7 @@ def main():
         'python3', str(scripts / 'prepare-server.py'), str(run), '--tcp-port', str(tcp_port),
         '--ws-port', str(ws_port), '--covered-walking-preview', '--outer-coverage',
         *(['--predicted-scenery'] if args.predicted_scenery else []),
+        *(['--prebuild-ownership'] if args.prebuild_ownership else []),
     ], cwd=ROOT, check=True)
     staged_hashes = {
         name: hashlib.sha256((web / name).read_bytes()).hexdigest()
@@ -129,6 +133,7 @@ def main():
         'preuploadScene': args.preupload_scene,
         'compactScenery': args.compact_scenery,
         'paceTerrain': args.pace_terrain,
+        'prebuildOwnership': args.prebuild_ownership,
         'tcpPort': tcp_port, 'websocketPort': ws_port,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',
         'stagedSha256': staged_hashes,

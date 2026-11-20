@@ -67,6 +67,8 @@ public final class GameStateUpdater {
 		Boolean.getBoolean("spoiledmilk.coveredWalkingPreview");
 	private static final boolean PREDICTED_SCENERY_PREVIEW =
 		Boolean.getBoolean("spoiledmilk.predictedSceneryPreview");
+	private static final boolean PREDICTED_SCENERY_OWNERSHIP_PREVIEW =
+		Boolean.getBoolean("spoiledmilk.predictedSceneryOwnershipPreview");
 	private static final int PREDICTED_SCENERY_CELL_TILES = 24;
 	private static final int PREDICTED_SCENERY_CELL_MAX_RECORDS = 256;
 	private enum VisibilitySnapshotMode {
@@ -1018,26 +1020,42 @@ public final class GameStateUpdater {
 			return;
 		}
 		int radius = NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS;
-		StaticScenePresentationSnapshot presentation = getServer().getWorld().getRegionManager()
-			.buildStaticScenePresentationSnapshot(player, predicted.currentChunkX, predicted.currentChunkY,
+		final com.openrsc.server.model.world.region.RegionManager regions = getServer().getWorld().getRegionManager();
+		StaticScenePresentationSnapshot presentation = regions.buildStaticScenePresentationSnapshot(
+			player, predicted.currentChunkX, predicted.currentChunkY,
 				radius, NATIVE_LAYERED_CHUNK_RADIUS);
-		int enteringSectorX = predicted.currentChunkX + stepX * radius;
-		int enteringSectorY = predicted.currentChunkY + stepY * radius;
 		Map<Long, PredictedSceneryCellStruct> cells = new TreeMap<>();
 		for (List<StaticScenePresentationSnapshot.Record> rows :
 			Arrays.asList(presentation.getScenery(), presentation.getWalls())) {
 			for (StaticScenePresentationSnapshot.Record row : rows) {
-				if ((stepX != 0 && Math.floorDiv(row.getX(), CLIENT_LOCAL_SECTION_SIZE) != enteringSectorX)
-					|| (stepY != 0 && Math.floorDiv(row.getY(), CLIENT_LOCAL_SECTION_SIZE) != enteringSectorY)) {
-					continue;
+				int deltaX = Math.floorDiv(row.getX(), CLIENT_LOCAL_SECTION_SIZE) - predicted.currentChunkX;
+				int deltaY = Math.floorDiv(row.getY(), CLIENT_LOCAL_SECTION_SIZE) - predicted.currentChunkY;
+				int along = stepX * deltaX + stepY * deltaY;
+				int across = Math.abs(stepY * deltaX + stepX * deltaY);
+				if (along == radius || (PREDICTED_SCENERY_OWNERSHIP_PREVIEW
+					&& along == -radius && across <= NATIVE_LAYERED_CHUNK_RADIUS)) {
+					addPredictedSceneryPlacement(cells, row.getId(), row.getX(), row.getY(), row.getDirection(), row.getType());
 				}
-				int cellX = Math.floorDiv(row.getX(), PREDICTED_SCENERY_CELL_TILES);
-				int cellY = Math.floorDiv(row.getY(), PREDICTED_SCENERY_CELL_TILES);
-				long key = ((long) cellX << 32) | (cellY & 0xffffffffL);
-				PredictedSceneryCellStruct cell = cells.computeIfAbsent(key, ignored -> new PredictedSceneryCellStruct());
-				if (cell.records.size() <= PREDICTED_SCENERY_CELL_MAX_RECORDS) {
-					cell.records.add(new SceneBaselineStruct.ObjectRecord(
-						row.getId(), row.getX(), row.getY(), row.getDirection(), row.getType()));
+			}
+		}
+		if (PREDICTED_SCENERY_OWNERSHIP_PREVIEW) {
+			WorldLocation location = player.getWorldLocation();
+			int offsetX = player.getX() - location.getCoordinate().getX();
+			int offsetY = player.getY() - location.getCoordinate().getY();
+			int minX = predicted.currentChunkX + (stepX == 0 ? -1 : stepX);
+			int minY = predicted.currentChunkY + (stepY == 0 ? -1 : stepY);
+			int width = stepX == 0 ? 3 : 1;
+			int height = stepY == 0 ? 3 : 1;
+			VisibilitySnapshot entering = regions.buildClientSceneVisibilitySnapshot(player,
+				minX * CLIENT_LOCAL_SECTION_SIZE + offsetX, minY * CLIENT_LOCAL_SECTION_SIZE + offsetY,
+				(minX + width) * CLIENT_LOCAL_SECTION_SIZE + offsetX, (minY + height) * CLIENT_LOCAL_SECTION_SIZE + offsetY);
+			for (Collection<GameObject> rows : Arrays.asList(entering.getSceneryObjects(), entering.getWallObjects())) {
+				for (GameObject object : rows) {
+					if (!object.isRemoved() && !object.isInvisibleTo(player)) {
+						// Bit 1 marks a future live placement. Its animated models remain outside the static cache.
+						addPredictedSceneryPlacement(cells, object.getID(), object.getX(), object.getY(),
+							object.getDirection(), object.getType() | 2);
+					}
 				}
 			}
 		}
@@ -1046,6 +1064,17 @@ public final class GameStateUpdater {
 				cell.terrainStageSequence = stageSequence;
 				tryFinalizeAndSendPacketChecked(OpcodeOut.SEND_PREDICTED_SCENERY_CELL, cell, player);
 			}
+		}
+	}
+
+	private static void addPredictedSceneryPlacement(Map<Long, PredictedSceneryCellStruct> cells,
+		int id, int x, int y, int direction, int type) {
+		int cellX = Math.floorDiv(x, PREDICTED_SCENERY_CELL_TILES);
+		int cellY = Math.floorDiv(y, PREDICTED_SCENERY_CELL_TILES);
+		long key = ((long) cellX << 32) | (cellY & 0xffffffffL);
+		PredictedSceneryCellStruct cell = cells.computeIfAbsent(key, ignored -> new PredictedSceneryCellStruct());
+		if (cell.records.size() <= PREDICTED_SCENERY_CELL_MAX_RECORDS) {
+			cell.records.add(new SceneBaselineStruct.ObjectRecord(id, x, y, direction, type));
 		}
 	}
 

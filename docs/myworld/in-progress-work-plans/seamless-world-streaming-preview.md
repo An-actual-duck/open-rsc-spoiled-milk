@@ -177,6 +177,36 @@ player starts at `(239, 609)`. Walk toward `(269, 609)` and watch for the
 handoff near `x = 264`. Use fresh output names and add `--predicted-scenery`
 to only the candidate to compare automatic runs.
 
+### GPU staging and compact scenery
+
+With `--preupload-scene`, the browser can stage the replacement center and
+scenery meshes alongside the predicted outer terrain ring. The active scene
+left room for about 10 MB in the existing GPU budget, so that run retained
+only one additional scenery buffer. The matched control staged five buffers
+and submitted 79.69 MB at the handoff. The candidate staged six buffers and
+submitted 78.70 MB.
+
+`--compact-scenery` uses the existing 48-byte shader vertex layout for local
+static scenery when every used attribute can be represented exactly. Terrain
+and animated object meshes keep their existing format. The GPU budget tracks
+the stored bytes of each buffer. The same-commit Firefox comparison reused
+26 predicted buffers totaling 41.56 MB, including all 17 prepared scenery
+meshes. New uploads at the handoff dropped from 78.59 MB to 14.80 MB, and
+held frames dropped from 16 to 7. The measured input hold went from 1.42
+seconds to 1.60 seconds on those runs. The scene still depends on Java's
+atomic activation and on the browser receiving a complete replacement draw
+set. Both runs reached `(269, 609, 0)` and released 112 chunks with 568,324
+triangles. The browser packing fixture compared the actual Java compact
+shader attributes bit for bit against its legacy output.
+
+`--pace-terrain` yields during predicted terrain mesh construction. In a
+repeat with compact scenery enabled, the largest frame gap on approach
+dropped from 1,105 ms to 556 ms. The paced run again reused 26 buffers and
+submitted 14.80 MB at the handoff. Java released at 728 ms, including a
+155 ms local region load and 356 ms of remaining mesh builds. The browser
+still held input for 1,609 ms. The private manual build at port 8239 uses
+this pacing and compact staging.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

@@ -3916,7 +3916,7 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		Renderer3DWorldChunkFrame frame = world.getRenderer3DWorldChunkFrame();
-		if (frame == null || frame.getChunkCount() == 0 || predictedSceneryCells.size() >= 20) {
+		if (frame == null || frame.getChunkCount() == 0 || predictedSceneryCells.size() >= 44) {
 			return;
 		}
 		int role = Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
@@ -3936,12 +3936,15 @@ public final class mudclient implements Runnable {
 			if (Math.floorDiv(record.x, cellSize) != cellX || Math.floorDiv(record.y, cellSize) != cellZ) {
 				return;
 			}
-			Renderer3DModelKind kind = record.type == 0 ? Renderer3DModelKind.GAME_OBJECT : Renderer3DModelKind.WALL_OBJECT;
+			Renderer3DModelKind kind = (record.type & 1) == 0 ? Renderer3DModelKind.GAME_OBJECT : Renderer3DModelKind.WALL_OBJECT;
+			if ((record.type & 2) != 0 && isAnimatedResidentObjectChunkModel(kind, record.id)) continue;
 			ResidentObjectCanonicalIdentity identity = createResidentObjectCanonicalIdentity(
 				kind, record.x, record.y, record.id, record.direction, baseX, baseZ, tileSize, terrain);
 			builder.canonicalIdentities.add(identity);
 		}
 		ResidentObjectChunkInput input = builder.build();
+		ResidentObjectChunkCacheEntry active = cachedResidentObjectChunks.get(key);
+		if (input.modelCount == 0 || (active != null && active.cacheKey == input.cacheKey)) return;
 		FutureTask<ResidentObjectChunkBuildResult> build = new FutureTask<>(
 			() -> buildResidentObjectChunkMeshMeasured(input));
 		predictedSceneryCells.put(key, new PendingResidentObjectChunkBuild(-1, input, build));

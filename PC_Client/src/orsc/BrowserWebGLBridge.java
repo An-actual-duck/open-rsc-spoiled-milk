@@ -111,7 +111,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         && Boolean.getBoolean("spoiledmilk.browserPreuploadSceneMeshes");
     private static final boolean COMPACT_SCENERY = PREUPLOAD_SCENE_MESHES
         && Boolean.getBoolean("spoiledmilk.browserCompactScenery");
-    private static final long PREDICTED_BUFFER_BUDGET = 48L * 1024 * 1024;
+    private static final long PREDICTED_BUFFER_BUDGET = (COMPACT_SCENERY ? 64L : 48L) * 1024 * 1024;
     private static final long PREDICTED_UPLOAD_INTERVAL_NANOS = 75_000_000L;
     private final Map<WorldChunkBufferKey, CachedChunk> stagedTerrain = new HashMap<>();
     private List<Renderer3DWorldChunkFrame.ChunkMesh> stagedSource = Collections.emptyList();

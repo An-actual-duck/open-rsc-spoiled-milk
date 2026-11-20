@@ -1685,8 +1685,11 @@ public class PacketHandler {
 			int type = packetsIncoming.getUnsignedByte();
 			long deltaX = (long) Math.floorDiv(x, World.SECTION_SIZE) - predicted.getCurrentChunkX();
 			long deltaZ = (long) Math.floorDiv(z, World.SECTION_SIZE) - predicted.getCurrentChunkY();
-			if (Math.abs(deltaX) > 2 || Math.abs(deltaZ) > 2 || deltaX * stepX + deltaZ * stepZ != 2
-				|| (type != 0 && type != 1) || direction > (type == 0 ? 7 : 3)) {
+			long along = deltaX * stepX + deltaZ * stepZ;
+			long across = Math.abs(deltaX * stepZ + deltaZ * stepX);
+			boolean validBand = (type & 2) != 0 ? along == 1 && across <= 1
+				: (along == 2 && across <= 2) || (along == -2 && across <= 1);
+			if (!validBand || type > 3 || direction > ((type & 1) == 0 ? 7 : 3)) {
 				throw new IllegalArgumentException("Invalid predicted scenery placement");
 			}
 			records.add(new SceneBaselineState.Record(id, x, z, direction, type));

@@ -239,6 +239,13 @@ renderer can use it. A missing or changed cell takes the existing build
 path. The preview measures mesh adoption and frame spacing on the approach
 and at the handoff. [Private preview and results](seamless-world-streaming-preview.md)
 
+Allow the current and incoming buffers to occupy the same budget by using
+the browser's compact layout for exact static scenery. The first trial
+moved the entire terrain upload ahead of the handoff and cut remaining
+upload bytes substantially. The end-to-end input pause still measured over
+one second. Evaluate release against frame timing and interactive coverage
+as well as transfer bytes. [GPU staging comparison](seamless-world-streaming-preview.md#gpu-staging-and-compact-scenery)
+
 ### Publish the next coverage
 
 The first Firefox handoff trace identified resident scenery construction as
