@@ -42,6 +42,7 @@ export function normalizeOpaqueCanvas(gl,known=null) {
 export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   const capacity=wholeZoneCapacity(options);
   const geometryFormat=options.geometryFormat||'legacy';if(!['legacy','compact'].includes(geometryFormat)||geometryFormat==='compact'&&!capacity.enabled)throw new Error('Compact geometry requires private wholezone admission');
+  const compactScene=options.compactScene===true&&!capacity.enabled;
   const wholeZoneConfig=capacity.enabled?validateWholeZoneConfig(options.wholeZoneCatalog):null;
   if(geometryFormat==='compact'&&!wholeZoneConfig?.compact)throw new Error('Compact geometry derivative has not been staged');
   const gl=canvas.getContext('webgl2',{alpha:true,antialias:false,depth:true,preserveDrawingBuffer:false,powerPreference:'high-performance'});
@@ -81,12 +82,34 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   function check(){const error=gl.getError();if(error!==gl.NO_ERROR)throw new Error('WebGL error 0x'+error.toString(16));}
   function reserve(bytes,count=0){if(!Number.isSafeInteger(bytes)||bytes<0)throw new Error('Browser GPU resource budget exceeded');if(capacity.bounded)boundedResidency?.reclaim(bytes,count);if(stats.gpuBytes+bytes>capacity.gpuBytes||chunks.size+pendingZoneChunks+count>capacity.maxChunks)throw new Error('Browser GPU resource budget/count exceeded');}
   function textureParameters(filter=gl.NEAREST){gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,filter);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,filter);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
-  function chunkData(vertexInput,indexInput,batchInput) {
-    const vertices=typed(vertexInput,Float32Array),indices=typed(indexInput,Int32Array),batches=new Int32Array(batchInput);
-    if(vertices.length%28||vertices.length/28>524288||indices.length>1572864||batches.length%5)throw new Error('Invalid browser chunk dimensions');
-    const count=vertices.length/28;for(const index of indices)if(index<0||index>=count)throw new Error('Invalid browser chunk index');
+  function chunkData(vertexInput,indexInput,batchInput,layout=LEGACY_GEOMETRY) {
+    const compact=layout===COMPACT_GEOMETRY;
+    const vertices=typed(vertexInput,compact?Int32Array:Float32Array),indices=typed(indexInput,Int32Array),batches=new Int32Array(batchInput);
+    const stride=compact?12:28;
+    if(vertices.length%stride||vertices.length/stride>524288||indices.length>1572864||batches.length%5)throw new Error('Invalid browser chunk dimensions');
+    const count=vertices.length/stride;for(const index of indices)if(index<0||index>=count)throw new Error('Invalid browser chunk index');
+    if(compact)for(let last=11;last<vertices.length;last+=stride)if((vertices[last]>>>24)!==0)throw new Error('Compact reserved vertex byte');
     for(let b=0;b<batches.length;b+=5)if(batches[b+1]<0||batches[b+2]<0||batches[b+1]+batches[b+2]>indices.length)throw new Error('Invalid browser material range');
-    return {vertices,indices,batches,bounds:colorCullingSupported?buildChunkColorBounds(vertices):null};
+    const bounds=colorCullingSupported?(compact?geometryBounds(vertices,layout):buildChunkColorBounds(vertices)):null;
+    return {vertices,indices,batches,bounds};
+  }
+  function uploadLocalChunk(id,vertexInput,indexInput,batchInput,layout) {
+    alive();if(capacity.enabled&&id>=1000000)throw new Error('Pinned zone IDs are immutable loader-owned resources');if(!capacity.bounded&&chunks.size>=capacity.maxChunks||chunks.has(id))throw new Error('Browser chunk cache limit/identity violation');
+    const {vertices,indices,batches,bounds}=chunkData(vertexInput,indexInput,batchInput,layout);
+    const bytes=vertices.byteLength+indices.byteLength;reserve(bytes,1);
+    const previousVAO=ownedFrame?.active?null:gl.getParameter(gl.VERTEX_ARRAY_BINDING),previousArray=ownedFrame?.active?null:gl.getParameter(gl.ARRAY_BUFFER_BINDING);
+    let vao,vbo,ibo,committed=false;
+    try {
+      vao=gl.createVertexArray();vbo=gl.createBuffer();ibo=gl.createBuffer();
+      if(!vao||!vbo||!ibo)throw new Error('WebGL chunk allocation failed');
+      gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.STATIC_DRAW);
+      bindGeometryAttributes(gl,program,layout);
+      check();chunks.set(id,{vao,vbo,ibo,batches,bounds,bytes,geometryLayout:layout,vertexBytes:vertices.byteLength,indexBytes:indices.byteLength});
+      stats.gpuBytes+=bytes;stats.uploadedBytes+=bytes;stats.uploadedChunks++;committed=true;
+    } finally {
+      if(!ownedFrame?.active){gl.bindVertexArray(previousVAO);gl.bindBuffer(gl.ARRAY_BUFFER,previousArray);}
+      if(!committed){if(vao)gl.deleteVertexArray(vao);if(vbo)gl.deleteBuffer(vbo);if(ibo)gl.deleteBuffer(ibo);}
+    }
   }
   async function uploadWholeZoneChunk(c,planes){
     alive();if(chunks.has(c.id)||chunks.size>=capacity.maxChunks)throw new Error('Duplicate whole zone chunk publication');
@@ -155,7 +178,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     async Java_orsc_BrowserWebGLBridge_initialize(lib,vertex,fragment){
       alive();if(program)throw new Error('WebGL backend initialized twice');
       program=link(adaptResidentShader(vertex,false),adaptResidentShader(fragment,true));
-      if(geometryFormat==='compact')validateCompactShaderAttributes(gl,program);
+      if(geometryFormat==='compact'||compactScene)validateCompactShaderAttributes(gl,program);
       const supported=options.colorFrustumCulling!==false&&(await hasResidentPositionContract(vertex));
       alive(); // Stop/context loss may happen while the exact shader digest is pending.
       colorCullingSupported=supported;
@@ -204,26 +227,15 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       catch(error){stats.backendFailed=true;throw error;}
     },
     async Java_orsc_BrowserWebGLBridge_uploadChunk(lib,id,vertexInput,indexInput,batchInput){
-      alive();if(capacity.enabled&&id>=1000000)throw new Error('Pinned zone IDs are immutable loader-owned resources');if(!capacity.bounded&&chunks.size>=capacity.maxChunks||chunks.has(id))throw new Error('Browser chunk cache limit/identity violation');
-      const {vertices,indices,batches,bounds}=chunkData(vertexInput,indexInput,batchInput);
-      const bytes=vertices.byteLength+indices.byteLength;reserve(bytes,1);
-      const previousVAO=ownedFrame?.active?null:gl.getParameter(gl.VERTEX_ARRAY_BINDING),previousArray=ownedFrame?.active?null:gl.getParameter(gl.ARRAY_BUFFER_BINDING);
-      let vao,vbo,ibo,committed=false;
-      try {
-        vao=gl.createVertexArray();vbo=gl.createBuffer();ibo=gl.createBuffer();
-        if(!vao||!vbo||!ibo)throw new Error('WebGL chunk allocation failed');
-        gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ibo);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.STATIC_DRAW);
-        for(const [name,size,offset] of ATTRIBUTES){const at=gl.getAttribLocation(program,name);if(at>=0){gl.enableVertexAttribArray(at);gl.vertexAttribPointer(at,size,gl.FLOAT,false,28*4,offset*4);}}
-        check();chunks.set(id,{vao,vbo,ibo,batches,bounds,bytes,vertexBytes:vertices.byteLength,indexBytes:indices.byteLength});
-        stats.gpuBytes+=bytes;stats.uploadedBytes+=bytes;stats.uploadedChunks++;committed=true;
-      } finally {
-        if(!ownedFrame?.active){gl.bindVertexArray(previousVAO);gl.bindBuffer(gl.ARRAY_BUFFER,previousArray);}
-        if(!committed){if(vao)gl.deleteVertexArray(vao);if(vbo)gl.deleteBuffer(vbo);if(ibo)gl.deleteBuffer(ibo);}
-      }
+      uploadLocalChunk(id,vertexInput,indexInput,batchInput,LEGACY_GEOMETRY);
       // No Java array is retained: bufferData copied geometry; metadata was explicitly copied.
     },
+    async Java_orsc_BrowserWebGLBridge_uploadCompactSceneChunk(lib,id,vertexInput,indexInput,batchInput){
+      if(!compactScene)throw new Error('Local compact geometry requires the private preview');
+      uploadLocalChunk(id,vertexInput,indexInput,batchInput,COMPACT_GEOMETRY);
+    },
     async Java_orsc_BrowserWebGLBridge_replaceChunk(lib,id,vertexInput,indexInput,batchInput){
-      alive();if(pinnedChunks.has(id))throw new Error('Pinned zone geometry cannot be repacked');const chunk=chunks.get(id);if(!chunk)throw new Error('Repack references absent GPU chunk');
+      alive();if(pinnedChunks.has(id))throw new Error('Pinned zone geometry cannot be repacked');const chunk=chunks.get(id);if(!chunk||chunk.geometryLayout===COMPACT_GEOMETRY)throw new Error('Repack references absent or compact GPU chunk');
       const {vertices,indices,batches,bounds}=chunkData(vertexInput,indexInput,batchInput);
       if(vertices.byteLength!==chunk.vertexBytes||indices.byteLength!==chunk.indexBytes)throw new Error('Immutable chunk shape changed during repack');
       const previousVAO=ownedFrame?.active?null:gl.getParameter(gl.VERTEX_ARRAY_BINDING),previousArray=ownedFrame?.active?null:gl.getParameter(gl.ARRAY_BUFFER_BINDING);

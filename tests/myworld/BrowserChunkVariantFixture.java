@@ -1,6 +1,8 @@
 package orsc;
 
 import java.lang.reflect.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.*;
 import java.util.*;
 import orsc.graphics.three.*;
@@ -44,6 +46,18 @@ public final class BrowserChunkVariantFixture {
         scene.loadTexture(0,new int[]{0xff00ff,0x555555,0x333333},0,pixels);Renderer3DFrame c=frame(scene);require(!BrowserChunkVariant.sameTexture(metadata,c.getTexture(0)),"Average material color override did not invalidate");
         pixels[0]=0;scene.loadTexture(0,new int[]{0xff00ff,0x111111,0x333333},0,pixels);Renderer3DFrame d=frame(scene);require(d.getTexture(0).hasTransparency()&&!Arrays.equals(materials,BrowserChunkVariant.materials(d,mesh)),"Alpha-class change did not invalidate");
         OpenGLWorldChunkRenderer packing=new OpenGLWorldChunkRenderer(null,null,null,true,true,false,false,true,true,false);
+        if (args.length > 0) {
+            float[] legacyVertices = packing.copyBackendChunkVertices(mesh, b);
+            int[] compactVertices = packing.copyBackendCompactChunkVertices(mesh, b);
+            require(compactVertices != null && compactVertices.length == mesh.getVertexCount() * 12,
+                "Compact fixture mesh could not be represented");
+            ByteBuffer legacyBytes = ByteBuffer.allocate(legacyVertices.length * 4).order(ByteOrder.LITTLE_ENDIAN);
+            ByteBuffer compactBytes = ByteBuffer.allocate(compactVertices.length * 4).order(ByteOrder.LITTLE_ENDIAN);
+            legacyBytes.asFloatBuffer().put(legacyVertices);
+            compactBytes.asIntBuffer().put(compactVertices);
+            Files.write(Paths.get(args[0] + ".legacy"), legacyBytes.array());
+            Files.write(Paths.get(args[0] + ".compact"), compactBytes.array());
+        }
         require(BrowserChunkMaterials.pack(packing,d,mesh).batches[4]==1,"Current alpha classification not exported");
         scene.setFrustum(0,11,7,0);Renderer3DFrame absent=frame(scene);require(!Arrays.equals(materials,BrowserChunkVariant.materials(absent,mesh))&&BrowserChunkMaterials.pack(packing,absent,mesh).batches.length==0,"Texture removal did not alter effective material");
         scene.setFrustum(0,11,7,1);byte[] large=new byte[16384];Arrays.fill(large,(byte)1);scene.loadTexture(0,new int[]{0xff00ff,0x111111},1,large);Renderer3DFrame resized=frame(scene);require(!BrowserChunkVariant.sameTexture(metadata,resized.getTexture(0)),"Texture dimensions did not invalidate UV state");

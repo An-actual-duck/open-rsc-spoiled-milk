@@ -2932,6 +2932,55 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
         return values;
     }
 
+    /** Writes the browser's compact48-v1 layout without allocating a float plane. */
+    int[] copyBackendCompactChunkVertices(Renderer3DWorldChunkFrame.ChunkMesh chunk, Renderer3DFrame frame) {
+        int count = chunk.getVertexCount();
+        int[] words = new int[count * 12];
+        float[] vertex = new float[FLOATS_PER_VERTEX];
+        int[] diffuse = buildChunkSmoothDiffuseLights(chunk, count);
+        boolean unbaked = shouldUseUnbakedRemasterMaterialBase();
+        for (int i = 0; i < count; i++) {
+            writeChunkVertex(vertex, 0, chunk, frame, i, false, true, diffuse, null, unbaked);
+            int at = i * 12;
+            for (int axis = 0; axis < 3; axis++) {
+                words[at + axis] = Float.floatToIntBits(vertex[axis]);
+                words[at + 5 + axis] = Float.floatToIntBits(vertex[18 + axis]);
+            }
+            words[at + 3] = Float.floatToIntBits(vertex[7]);
+            words[at + 4] = Float.floatToIntBits(vertex[8]);
+            long color = compactBytes(vertex, 3, 4);
+            int raw = (int) compactBytes(vertex, 15, 3);
+            int blend = (int) compactBytes(vertex, 24, 3);
+            int light = compactByte(vertex[14], false);
+            int kind = compactByte(vertex[21], false);
+            int family = compactByte(vertex[22], false);
+            int variation = compactByte(vertex[23], false);
+            int strength = compactByte(vertex[27], false);
+            if (color < 0 || raw < 0 || blend < 0 || light < 0 || kind < 0 || family < 0 || variation < 0 || strength < 0) return null;
+            words[at + 8] = (int) color;
+            words[at + 9] = raw | light << 24;
+            words[at + 10] = blend | kind << 24;
+            words[at + 11] = family | variation << 8 | strength << 16;
+        }
+        return words;
+    }
+
+    private static long compactBytes(float[] vertex, int first, int count) {
+        long word = 0;
+        for (int i = 0; i < count; i++) {
+            int value = compactByte(vertex[first + i], true);
+            if (value < 0) return -1;
+            word |= (long) value << (8 * i);
+        }
+        return word;
+    }
+
+    private static int compactByte(float value, boolean normalized) {
+        int code = Math.round(normalized ? value * 255f : value);
+        float expected = normalized ? code / 255f : code;
+        return code >= 0 && code <= 255 && Float.floatToIntBits(value) == Float.floatToIntBits(expected) ? code : -1;
+    }
+
     int[] backendPackingSettings() {
         return new int[]{currentBrightnessBits(),currentFogModeBits(),currentLightingModeBits(),currentGeometryModeBits()};
     }

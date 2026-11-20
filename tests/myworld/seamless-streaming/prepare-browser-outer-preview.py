@@ -35,12 +35,15 @@ def main():
     parser.add_argument('--trace', action='store_true', help='Trace the Java handoff on separate private ports')
     parser.add_argument('--predicted-scenery', action='store_true', help='Prebuild the predicted outer scenery strip')
     parser.add_argument('--preupload-scene', action='store_true', help='Stage prepared scenery and the predicted center mesh')
+    parser.add_argument('--compact-scenery', action='store_true', help='Use compact GPU buffers for static scenery')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
     args = parser.parse_args()
     if args.preupload_scene and not (args.preupload and args.predicted_scenery):
         parser.error('Scene uploads require terrain uploads and scenery preparation')
+    if args.compact_scenery and not args.preupload_scene:
+        parser.error('Compact scenery requires scene uploads')
     tcp_port, ws_port = (TRACE_TCP_PORT, TRACE_WS_PORT) if args.trace else (TCP_PORT, WS_PORT)
     if args.manual:
         tcp_port, ws_port = MANUAL_TCP_PORT, MANUAL_WS_PORT
@@ -70,6 +73,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserPreuploadPredictedTerrain", "{str(args.preupload).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserRegionHandoffTrace", "{str(args.trace).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPreuploadSceneMeshes", "{str(args.preupload_scene).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserCompactScenery", "{str(args.compact_scenery).lower()}");\n'
            f'        System.setProperty("spoiledmilk.predictedSceneryPreview", "{str(args.predicted_scenery).lower()}");')
     if not args.manual:
         insert(bootstrap, '        final BrowserStartupDiagnostics startupDiagnostics=',
@@ -85,6 +89,9 @@ def main():
     if args.trace:
         replace(web / 'browser.js', 'createRegionHandoffTraceCollector({enabled:loadProfilePolicy.requested,',
                 'createRegionHandoffTraceCollector({enabled:!deployment.publicAlpha,')
+    if args.compact_scenery:
+        replace(web / 'browser.js', 'const gpuOptions={wholeZone:',
+                'const gpuOptions={compactScene:!deployment.publicAlpha,wholeZone:')
     java_sources = [str(bootstrap)]
     if not args.manual:
         insert(web / 'browser.js', '  Java_orsc_BrowserWebGLBridge_loadingWork:',
@@ -118,6 +125,7 @@ def main():
         'preupload': args.preupload, 'trace': args.trace, 'manual': args.manual,
         'predictedScenery': args.predicted_scenery,
         'preuploadScene': args.preupload_scene,
+        'compactScenery': args.compact_scenery,
         'tcpPort': tcp_port, 'websocketPort': ws_port,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',
         'stagedSha256': staged_hashes,

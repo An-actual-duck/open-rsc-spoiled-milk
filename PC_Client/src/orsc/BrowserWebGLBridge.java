@@ -109,6 +109,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         && Boolean.getBoolean("spoiledmilk.browserPreuploadPredictedTerrain");
     private static final boolean PREUPLOAD_SCENE_MESHES = PREUPLOAD_PREDICTED
         && Boolean.getBoolean("spoiledmilk.browserPreuploadSceneMeshes");
+    private static final boolean COMPACT_SCENERY = PREUPLOAD_SCENE_MESHES
+        && Boolean.getBoolean("spoiledmilk.browserCompactScenery");
     private static final long PREDICTED_BUFFER_BUDGET = 48L * 1024 * 1024;
     private static final long PREDICTED_UPLOAD_INTERVAL_NANOS = 75_000_000L;
     private final Map<WorldChunkBufferKey, CachedChunk> stagedTerrain = new HashMap<>();
@@ -120,6 +122,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private int preuploadedChunks, adoptedChunks;
     private final long[] submittedSceneBytes = new long[3];
     private int adoptedScenery;
+    private int compactSceneryUploads;
     private boolean stagingUpload;
     private volatile String predictedTerrainReceipt = "uploaded=0:bytes=0:adopted=0:adoptedBytes=0:stagedBytes=0";
 
@@ -132,7 +135,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         BrowserWebGLBridge bridge = installedBridge;
         return bridge == null ? "unavailable" : "terrain=" + bridge.submittedSceneBytes[0]
             + ":scenery=" + bridge.submittedSceneBytes[1] + ":animated=" + bridge.submittedSceneBytes[2]
-            + ":adoptedScenery=" + bridge.adoptedScenery;
+            + ":adoptedScenery=" + bridge.adoptedScenery + ":compactUploads=" + bridge.compactSceneryUploads;
     }
 
     private static final boolean ANIMATED_BUFFER_REUSE=Boolean.parseBoolean(System.getProperty("spoiledmilk.browserAnimatedBufferReuse","true"));
@@ -169,6 +172,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     }); }
     BrowserWebGLBridge(ChunkBackend backend) { if(backend==null)throw new NullPointerException("chunk backend");chunkBackend=backend; }
     private static native void uploadChunk(int id,float[] vertices,int[] indices,int[] batches);
+    private static native void uploadCompactSceneChunk(int id,int[] vertices,int[] indices,int[] batches);
     private static native void uploadTexture(int id,int width,int height,int[] rgba,boolean transparency);
     private static native void replaceChunk(int id,float[] vertices,int[] indices,int[] batches);
     private static native void deleteTextures(int[] ids);
@@ -429,10 +433,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             longestPreuploadNanos = Math.max(longestPreuploadNanos, System.nanoTime() - started);
             chunks.put(key, cached);
             stagedTerrain.put(key, cached);
-            residentChunkBytes += bytes;
-            stagedBytes += bytes;
+            residentChunkBytes += cached.bytes;
+            stagedBytes += cached.bytes;
             preuploadedChunks++;
-            preuploadedBytes += bytes;
+            preuploadedBytes += cached.bytes;
             updatePredictedTerrainReceipt();
             return true;
         }
@@ -488,7 +492,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             if(cached==null && (uploaded==0||uploaded+chunk.getVertexCount()<=UPLOAD_VERTICES_PER_FRAME)) {
                 long required=chunkBytes(chunk);
                 makeRoom(active,required);
-                cached=upload(frame,chunk,required,packingSettings);chunks.put(key,cached);residentChunkBytes+=required;uploaded+=chunk.getVertexCount();
+                cached=upload(frame,chunk,required,packingSettings);chunks.put(key,cached);residentChunkBytes+=cached.bytes;uploaded+=chunk.getVertexCount();
             }
             if(cached==null)continue;
             draws[count++]=cached.id;draws[count++]=chunk.getVertexOffsetX()-cached.x;draws[count++]=chunk.getVertexOffsetZ()-cached.z;
@@ -500,13 +504,13 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     }
     private CachedChunk updateChunk(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk,CachedChunk cached,int[] settings,int[] materials,Set<WorldChunkBufferKey> active) {
         int packedIndices=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3;
-        if(cached.vertices!=chunk.getVertexCount()||cached.indices!=packedIndices) {
+        if(cached.compact||cached.vertices!=chunk.getVertexCount()||cached.indices!=packedIndices) {
             long required=chunkBytes(chunk);makeRoom(active,required);
             CachedChunk replacement=upload(frame,chunk,required,settings);
             // Allocate+validate first. A failed native upload leaves the old cache
             // entry and accounting intact; it can never masquerade as this pose.
             chunks.put(chunkKey(chunk),replacement);
-            residentChunkBytes+=required-cached.bytes;
+            residentChunkBytes+=replacement.bytes-cached.bytes;
             chunkBackend.delete(new int[]{cached.id});
             return replacement;
         }
@@ -627,8 +631,18 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     }
     private CachedChunk upload(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk,long bytes,int[] settings) {
         BrowserChunkMaterials.Buffers materials=packMaterials(frame,chunk);
-        int id=nextId++;submitChunk(false,id,chunk,packVertices(frame,chunk),materials.indices,materials.batches);
-        return new CachedChunk(id,chunk,bytes,settings,BrowserChunkVariant.materials(frame,chunk),materialRevision,++packingSequence);
+        int id=nextId++;
+        int[] compact = COMPACT_SCENERY && chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS
+            ? packing.copyBackendCompactChunkVertices(chunk,frame) : null;
+        if (compact != null) {
+            uploadCompactSceneChunk(id,compact,materials.indices,materials.batches);
+            bytes = ((long) compact.length + materials.indices.length) * 4;
+            recordSceneUploadBytes(chunk, bytes);
+            compactSceneryUploads++;
+        } else {
+            submitChunk(false,id,chunk,packVertices(frame,chunk),materials.indices,materials.batches);
+        }
+        return new CachedChunk(id,chunk,bytes,compact!=null,settings,BrowserChunkVariant.materials(frame,chunk),materialRevision,++packingSequence);
     }
     private BrowserChunkMaterials.Buffers packMaterials(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk){
         if(loadProfile==null)return BrowserChunkMaterials.pack(packing,frame,chunk);
@@ -641,14 +655,17 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private void submitChunk(boolean replacement,int id,Renderer3DWorldChunkFrame.ChunkMesh chunk,float[] vertices,int[] indices,int[] batches){
         long start=loadProfile==null?0:System.nanoTime();
         try{if(replacement)chunkBackend.replace(id,vertices,indices,batches);else chunkBackend.upload(id,vertices,indices,batches);
-            if (PREUPLOAD_PREDICTED && !stagingUpload) {
-                int role = chunk.getChunkRole();
-                int bucket = role == Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD ? 0
-                    : role == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS ? 1 : 2;
-                submittedSceneBytes[bucket] += (long) vertices.length * 4 + (long) indices.length * 4;
-            }
+            recordSceneUploadBytes(chunk, ((long) vertices.length + indices.length) * 4);
             if(loadProfile!=null)loadProfile.submitted(replacement,chunk.getVertexCount(),(long)vertices.length*4+(long)indices.length*4+(long)batches.length*4);
         }finally{if(loadProfile!=null)loadProfile.elapsed(BrowserLoadProfile.SUBMIT,start);}
+    }
+
+    private void recordSceneUploadBytes(Renderer3DWorldChunkFrame.ChunkMesh chunk, long bytes) {
+        if (!PREUPLOAD_PREDICTED || stagingUpload) return;
+        int role = chunk.getChunkRole();
+        int bucket = role == Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD ? 0
+            : role == Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS ? 1 : 2;
+        submittedSceneBytes[bucket] += bytes;
     }
     static int[] borrowOverlay(BufferedImage image) {
         if (!(image.getRaster().getDataBuffer() instanceof DataBufferInt)
@@ -682,7 +699,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         PendingRepack(CachedChunk cached,Renderer3DWorldChunkFrame.ChunkMesh chunk,int[] materials){this.cached=cached;this.chunk=chunk;this.materials=materials;}
     }
     private static final class CachedChunk {
-        final int id,vertices,indices;int x,z;final long bytes;int[] settings,materials;long signature,materialRevision,packedAt;
-        CachedChunk(int id,Renderer3DWorldChunkFrame.ChunkMesh chunk,long bytes,int[] settings,int[] materials,long materialRevision,long packedAt){this.id=id;this.x=chunk.getVertexOffsetX();this.z=chunk.getVertexOffsetZ();this.vertices=chunk.getVertexCount();this.indices=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3;this.signature=chunk.getStorageSignature();this.bytes=bytes;this.settings=settings;this.materials=materials;this.materialRevision=materialRevision;this.packedAt=packedAt;}
+        final int id,vertices,indices;int x,z;final long bytes;final boolean compact;int[] settings,materials;long signature,materialRevision,packedAt;
+        CachedChunk(int id,Renderer3DWorldChunkFrame.ChunkMesh chunk,long bytes,boolean compact,int[] settings,int[] materials,long materialRevision,long packedAt){this.id=id;this.x=chunk.getVertexOffsetX();this.z=chunk.getVertexOffsetZ();this.vertices=chunk.getVertexCount();this.indices=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3;this.signature=chunk.getStorageSignature();this.bytes=bytes;this.compact=compact;this.settings=settings;this.materials=materials;this.materialRevision=materialRevision;this.packedAt=packedAt;}
     }
 }
