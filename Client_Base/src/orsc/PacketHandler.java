@@ -314,7 +314,7 @@ public class PacketHandler {
 
 	private void clearReadyPredictedLayeredTerrainHalo(boolean sceneryAuthorized) {
 		predictedSceneryTerrain = null;
-		if (!sceneryAuthorized) mc.clearPredictedScenery();
+		if (!sceneryAuthorized && mudclient.PREDICTED_SCENERY_PREVIEW && mc != null) mc.clearPredictedScenery();
 		readyPredictedLayeredTerrainHalo = null;
 		readyPredictedLayeredTerrainStage = null;
 		readyPredictedLayeredTerrainStructureStage = null;
@@ -1329,6 +1329,9 @@ public class PacketHandler {
 		if (pendingLayeredTerrainHaloPrebuild != null) {
 			pollLayeredTerrainHaloReady();
 			return;
+		}
+		if (predictedSceneryTerrain != null && readyPredictedLayeredTerrainStructureStage != null) {
+			mc.dispatchPredictedSceneryBuild();
 		}
 		Future<World.NativeLayeredTerrainPrebuildResult> pending =
 			pendingLayeredTerrainPrebuild;

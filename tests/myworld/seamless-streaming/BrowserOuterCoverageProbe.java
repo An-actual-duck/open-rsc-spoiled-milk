@@ -71,6 +71,9 @@ public final class BrowserOuterCoverageProbe {
 		long previous = System.currentTimeMillis();
 		long maximumGap = 0;
 		long approachGap = 0;
+		int approachGapFromX = 239;
+		int approachGapToX = 239;
+		int previousFrameX = 239;
 		long retainedSince = 0;
 		long maximumHold = 0;
 		int previousX = -1;
@@ -82,7 +85,12 @@ public final class BrowserOuterCoverageProbe {
 			if (frame != null && frame != last) {
 				last = frame;
 				maximumGap = Math.max(maximumGap, now - previous);
-				if (x >= 239 && x < 264) approachGap = Math.max(approachGap, now - previous);
+				if (x >= 239 && x < 264 && now - previous > approachGap) {
+					approachGap = now - previous;
+					approachGapFromX = previousFrameX;
+					approachGapToX = x;
+				}
+				previousFrameX = x;
 				previous = now;
 			}
 			boolean retain = client.shouldRetainLastPresentedFrame();
@@ -100,7 +108,8 @@ public final class BrowserOuterCoverageProbe {
 			if (x == 269 && worldZ(client) == 609 && !retain) {
 				BrowserBootstrap.report("outer-coverage:preupload-final:" + BrowserWebGLBridge.getPredictedTerrainReceipt());
 				BrowserBootstrap.report("outer-coverage:complete:javaFrameGap=" + maximumGap
-					+ ":approachGap=" + approachGap + ":retained=" + maximumHold);
+					+ ":approachGap=" + approachGap + ":approachX=" + approachGapFromX + "->" + approachGapToX
+					+ ":retained=" + maximumHold);
 				return;
 			}
 			Thread.sleep(12);

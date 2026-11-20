@@ -35,10 +35,17 @@ def main():
     parser.add_argument('--trace', action='store_true', help='Trace the Java handoff on separate private ports')
     parser.add_argument('--predicted-scenery', action='store_true', help='Prebuild the predicted outer scenery strip')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
+    parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
+    parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
     args = parser.parse_args()
     tcp_port, ws_port = (TRACE_TCP_PORT, TRACE_WS_PORT) if args.trace else (TCP_PORT, WS_PORT)
     if args.manual:
         tcp_port, ws_port = MANUAL_TCP_PORT, MANUAL_WS_PORT
+    if args.tcp_port is not None or args.ws_port is not None:
+        if (None in (args.tcp_port, args.ws_port) or args.tcp_port == args.ws_port
+                or not all(1024 <= port <= 65535 for port in (args.tcp_port, args.ws_port))):
+            parser.error('Supply two different nonprivileged loopback ports')
+        tcp_port, ws_port = args.tcp_port, args.ws_port
     scripts = ROOT / 'scripts/browser-gameplay'
     category = Path(subprocess.check_output([
         'python3', str(ROOT / 'scripts/workspace-layout.py'), 'path',
@@ -66,7 +73,7 @@ def main():
                '        new Thread(BrowserOuterCoverageProbe::run, "outer-coverage-fixture").start();')
     insert(web / 'runtime.html', "    await import('./browser.js');",
            f"    window.browserPrivateTestRoute = {{tcpPort:{tcp_port}, websocket:'ws://127.0.0.1:{ws_port}/'}};")
-    if tcp_port != TCP_PORT:
+    if (tcp_port, ws_port) != (TCP_PORT, WS_PORT):
         replace(bootstrap, '&&!"43659".equals(stagedPort)',
                 f'&&!"43659".equals(stagedPort)&&!"{tcp_port}".equals(stagedPort)')
         replace(web / 'browser-repeatable-policy.js', "[43659,'ws://127.0.0.1:43559/']",

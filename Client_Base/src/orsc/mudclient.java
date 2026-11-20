@@ -77,6 +77,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.ThreadFactory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -129,6 +130,7 @@ public final class mudclient implements Runnable {
 	private static final int RESIDENT_OBJECT_CHUNK_TILE_SIZE = 24;
 	static final boolean PREDICTED_SCENERY_PREVIEW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.predictedSceneryPreview");
+	private static final long PREDICTED_SCENERY_BUILD_INTERVAL_NANOS = 75_000_000L;
 	private static final int RESIDENT_ANIMATED_OBJECT_CHUNK_TILE_SIZE = 8;
 	private static final int RESIDENT_OBJECT_BUILD_WORKER_LIMIT = 4;
 	private static final int RESIDENT_OBJECT_PARALLEL_BUILD_MINIMUM = 8;
@@ -938,6 +940,9 @@ public final class mudclient implements Runnable {
 	private final Map<Long, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
 		new HashMap<Long, ResidentObjectChunkCacheEntry>();
 	private final Map<Long, PendingResidentObjectChunkBuild> predictedSceneryCells = new HashMap<>();
+	private final Deque<FutureTask<ResidentObjectChunkBuildResult>> predictedSceneryQueue = new ArrayDeque<>();
+	private FutureTask<ResidentObjectChunkBuildResult> activePredictedSceneryBuild;
+	private long lastPredictedSceneryDispatch;
 	private boolean predictedSceneryAuthorized;
 	private final ExecutorService residentObjectBuildExecutor =
 		Executors.newFixedThreadPool(
@@ -3936,9 +3941,25 @@ public final class mudclient implements Runnable {
 			builder.canonicalIdentities.add(identity);
 		}
 		ResidentObjectChunkInput input = builder.build();
-		Future<ResidentObjectChunkBuildResult> build = residentObjectBuildExecutor.submit(
+		FutureTask<ResidentObjectChunkBuildResult> build = new FutureTask<>(
 			() -> buildResidentObjectChunkMeshMeasured(input));
 		predictedSceneryCells.put(key, new PendingResidentObjectChunkBuild(-1, input, build));
+		predictedSceneryQueue.addLast(build);
+	}
+
+	/** Admit at most one build per interval, after the predicted terrain worker is done. */
+	void dispatchPredictedSceneryBuild() {
+		if (predictedSceneryQueue.isEmpty()
+			|| (activePredictedSceneryBuild != null && !activePredictedSceneryBuild.isDone())) {
+			return;
+		}
+		long now = System.nanoTime();
+		if (now - lastPredictedSceneryDispatch < PREDICTED_SCENERY_BUILD_INTERVAL_NANOS) {
+			return;
+		}
+		lastPredictedSceneryDispatch = now;
+		activePredictedSceneryBuild = predictedSceneryQueue.removeFirst();
+		residentObjectBuildExecutor.execute(activePredictedSceneryBuild);
 	}
 
 	void authorizePredictedScenery() {
@@ -3950,6 +3971,8 @@ public final class mudclient implements Runnable {
 			pending.future.cancel(false);
 		}
 		predictedSceneryCells.clear();
+		predictedSceneryQueue.clear();
+		activePredictedSceneryBuild = null;
 		predictedSceneryAuthorized = false;
 	}
 
