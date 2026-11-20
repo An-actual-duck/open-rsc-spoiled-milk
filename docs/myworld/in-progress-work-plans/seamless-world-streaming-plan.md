@@ -246,6 +246,14 @@ upload bytes substantially. The end-to-end input pause still measured over
 one second. Evaluate release against frame timing and interactive coverage
 as well as transfer bytes. [GPU staging comparison](seamless-world-streaming-preview.md#gpu-staging-and-compact-scenery)
 
+Preparing the cells that cross the inner ownership boundary reduced the
+remaining browser upload to 6.26 MB. The browser still waited nearly a
+second for the new scene on the controlled surface route. Move the exact
+local collision and scenery installation out of the recenter transaction,
+then allow distant presentation cells to publish independently of the live
+interaction area. Measure the early build and upload intervals as well as
+the boundary so the work does not create a new pause during the approach.
+
 ### Publish the next coverage
 
 The first Firefox handoff trace identified resident scenery construction as

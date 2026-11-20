@@ -207,6 +207,19 @@ submitted 14.80 MB at the handoff. Java released at 728 ms, including a
 still held input for 1,609 ms. The private manual build at port 8239 uses
 this pacing and compact staging.
 
+`--prebuild-ownership` adds candidate cells where scenery enters or leaves
+the authoritative inner window. The server derives candidates from the
+viewer's normal static queries. The client keeps the existing exact
+placement and height check at adoption. In the paced Firefox follow-up,
+all 20 prepared scenery cells matched, including three more than the
+entering-strip run. The Java hold dropped from 728 ms to 523 ms, and the
+browser input hold dropped from 1,609 ms to 986 ms. The final view had the
+same 112 chunks and 568,324 triangles and the server confirmed arrival at
+`(269, 609, 0)`. The browser reused 29 buffers and submitted 6.26 MB at the
+handoff. The approach gap measured 725 ms and the longest single early
+buffer submission measured 203 ms. Both require further work. The manual
+build at port 8241 includes this experiment.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
