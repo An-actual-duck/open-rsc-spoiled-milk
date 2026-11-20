@@ -1051,7 +1051,7 @@ public final class World {
 							plane,
 							sectionX,
 							sectionY,
-							window.sectors);
+							window.sectors, slice);
 					if (slice != null) slice.checkpoint();
 					WallModelInput wallInput =
 						new WallModelInput(new WallSegmentInput[0]);
@@ -1248,7 +1248,7 @@ public final class World {
 					plane,
 					sectionX,
 					sectionY,
-					window.sectors);
+					window.sectors, slice);
 			if (slice != null) slice.checkpoint();
 			WallModelInput wallInput =
 				buildWallModelInput(window.sectors);
@@ -3475,15 +3475,20 @@ public final class World {
 		int sectionX,
 		int sectionY,
 		Sector[] sourceSectors) {
+		return buildTerrainModelInput(plane, sectionX, sectionY, sourceSectors, null);
+	}
+
+	private TerrainModelInput buildTerrainModelInput(int plane, int sectionX, int sectionY,
+		Sector[] sourceSectors, TerrainPredictionSlice slice) {
 		TerrainModelInputSource source = new TerrainModelInputSource(sourceSectors);
 		return new TerrainModelInput(
 			collectTerrainVertexInputs(
 				plane,
 				sectionX,
 				sectionY,
-				source),
-			collectTerrainTileFaceInputs(plane, source),
-			collectTerrainOverlayFaceInputs(plane, source));
+				source, slice),
+			collectTerrainTileFaceInputs(plane, source, slice),
+			collectTerrainOverlayFaceInputs(plane, source, slice));
 	}
 
 	private TerrainModelInput loadTerrainModelInput(int plane, int sectionX, int sectionY) {
@@ -3541,13 +3546,14 @@ public final class World {
 		int plane,
 		int sectionX,
 		int sectionY,
-		TerrainModelInputSource source) {
+		TerrainModelInputSource source, TerrainPredictionSlice slice) {
 		TerrainVertexInput[] vertices = new TerrainVertexInput[LOCAL_TILE_COUNT * LOCAL_TILE_COUNT];
 		int originTileX =
 			(sectionX - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
 		int originTileZ =
 			(sectionY - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
 		for (int x = 0; x < LOCAL_TILE_COUNT; ++x) {
+			if (slice != null) slice.checkpoint();
 			for (int z = 0; z < LOCAL_TILE_COUNT; ++z) {
 				int y = -source.tileElevation(x, z);
 				if (source.tileDecorationID(x, z) > 0
@@ -3657,10 +3663,12 @@ public final class World {
 		return (red << 19) + (green << 11) + (blue << 3);
 	}
 
-	private TerrainTileFaceInput[] collectTerrainTileFaceInputs(int plane, TerrainModelInputSource source) {
+	private TerrainTileFaceInput[] collectTerrainTileFaceInputs(int plane, TerrainModelInputSource source,
+		TerrainPredictionSlice slice) {
 		TerrainTileFaceInput[] faces = new TerrainTileFaceInput[LOCAL_FACE_TILE_COUNT * LOCAL_FACE_TILE_COUNT];
 		int count = 0;
 		for (int x = 0; x < LOCAL_FACE_TILE_COUNT; ++x) {
+			if (slice != null) slice.checkpoint();
 			for (int z = 0; z < LOCAL_FACE_TILE_COUNT; ++z) {
 				int colorResource = this.colorToResource[source.terrainColour(x, z)];
 				int res01 = colorResource;
@@ -3760,9 +3768,11 @@ public final class World {
 		return faces;
 	}
 
-	private TerrainOverlayFaceInput[] collectTerrainOverlayFaceInputs(int plane, TerrainModelInputSource source) {
+	private TerrainOverlayFaceInput[] collectTerrainOverlayFaceInputs(int plane, TerrainModelInputSource source,
+		TerrainPredictionSlice slice) {
 		List<TerrainOverlayFaceInput> overlays = new ArrayList<TerrainOverlayFaceInput>();
 		for (int x = 1; x < LOCAL_FACE_TILE_COUNT; ++x) {
+			if (slice != null) slice.checkpoint();
 			for (int z = 1; z < LOCAL_FACE_TILE_COUNT; ++z) {
 				if (source.tileDecorationID(x, z) > 0
 					&& tileDecorationType(source.tileDecorationID(x, z)) == 4) {
