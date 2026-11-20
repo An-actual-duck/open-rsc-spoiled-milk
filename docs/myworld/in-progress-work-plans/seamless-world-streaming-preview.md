@@ -237,6 +237,31 @@ to 392 ms and the browser input hold went from 999 ms to 842 ms. The longest
 approach gap was 619 ms with local terrain preparation and 603 ms in the
 control. The private manual build at port 8245 includes this change.
 
+### Incoming interactive scenery
+
+`--prepare-incoming-scenery` prepares detached models for objects that will
+enter the interactive window. The authoritative delta still decides which
+objects to place and supplies their positions and directions. The client
+checks the exact placement and model source before reusing each clone.
+Collision, picking, and live placement still apply on the client thread.
+
+In the matched Firefox runs, the client reused all 271 requested models.
+The same 3,786-byte scenery update took 9 ms with prebuild and 97 ms in the
+control. Java released after 293 ms with prebuild and 389 ms in the
+control. The browser input pause was 780 ms with prebuild and 822 ms in the
+control. The longest frame gaps on approach were 568 ms and 728 ms in those
+individual runs. Collision, structural elevation, and minimap checksums
+matched again. Both runs arrived at `(269, 609, 0)` with 112 chunks and
+568,324 triangles. This compares one ordinary crossing in Firefox.
+
+The final repeat also yielded while collecting the predicted terrain's
+vertices, faces, and overlays. It reduced the observed approach gap to
+488 ms on that run. Java released after 293 ms and browser input reopened
+after 793 ms. The remaining 141 ms mesh build and four held browser frames
+keep the handoff visible. The server-confirmed endpoint, render counts,
+and terrain checksums matched again. The private manual build at port 8250
+includes the prepared terrain, incoming model reuse, and finer pacing.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

@@ -254,6 +254,16 @@ then allow distant presentation cells to publish independently of the live
 interaction area. Measure the early build and upload intervals as well as
 the boundary so the work does not create a new pause during the approach.
 
+The browser preview now prepares the exact native terrain collision window,
+structural elevation, minimap layout, and wall and roof models before the
+recenter. It also prepares models for the authoritative incoming scenery
+delta. The controlled route matched collision, elevation, and minimap
+checksums with the preparation enabled. The remaining hold includes
+unprepared mesh cells and the browser waiting on the full draw set. A
+later publication change must prove that the first live frame has all
+interactive and visible geometry it needs before opening input.
+[Prepared local terrain results](seamless-world-streaming-preview.md#prepared-local-terrain)
+
 ### Publish the next coverage
 
 The first Firefox handoff trace identified resident scenery construction as
