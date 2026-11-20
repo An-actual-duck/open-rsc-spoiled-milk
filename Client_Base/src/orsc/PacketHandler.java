@@ -1636,7 +1636,7 @@ public class PacketHandler {
 				mc.getWorldOffsetX(),
 				mc.getWorldOffsetZ(), ordinaryWalking);
 		boolean sceneryAuthorized = published && predicted == predictedSceneryTerrain;
-		if (sceneryAuthorized) mc.authorizePredictedScenery();
+		if (sceneryAuthorized) mc.authorizePredictedScenery(ordinaryWalking);
 		clearReadyPredictedLayeredTerrainHalo(sceneryAuthorized);
 		if (!published) {
 			throw new IllegalStateException(
@@ -3823,12 +3823,14 @@ public class PacketHandler {
 		int dir = record.getDirection();
 		int xTile = record.getX();
 		int zTile = record.getZ();
-		int modelIndex = EntityHandler.getObjectDef(id).modelID;
-		RSModel m = mc.cloneBrowserPresentationGameObject(id, BrowserPresentationCloneCache.LEGACY_DELTA);
+		RSModel m = mc.takePreparedIncomingScenery(xTile, zTile, id, dir);
+		if (m == null) {
+			m = mc.cloneBrowserPresentationGameObject(id, BrowserPresentationCloneCache.LEGACY_DELTA);
+			m.addRotation(0, dir * 32, 0);
+			m.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, 117);
+		}
 		applyExpandedGameObjectPickBounds(id, m);
 		m.key = instanceIndex;
-		m.addRotation(0, dir * 32, 0);
-		m.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, 117);
 
 		mc.setGameObjectInstanceX(instanceIndex, xTile);
 		mc.setGameObjectInstanceZ(instanceIndex, zTile);

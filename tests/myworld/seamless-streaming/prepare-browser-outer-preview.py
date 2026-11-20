@@ -39,6 +39,7 @@ def main():
     parser.add_argument('--pace-terrain', action='store_true', help='Yield during browser terrain prediction builds')
     parser.add_argument('--prebuild-ownership', action='store_true', help='Stage scenery in the ownership transition strips')
     parser.add_argument('--prepare-local-terrain', action='store_true', help='Prepare collision, minimap layout and structure models before a walking handoff')
+    parser.add_argument('--prepare-incoming-scenery', action='store_true', help='Clone incoming interactive object models before their authoritative update')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
@@ -49,6 +50,8 @@ def main():
         parser.error('Compact scenery requires scene uploads')
     if args.prebuild_ownership and not args.predicted_scenery:
         parser.error('Scenery ownership prediction requires the scenery preview')
+    if args.prepare_incoming_scenery and not args.prebuild_ownership:
+        parser.error('Incoming scenery preparation requires the ownership strips')
     tcp_port, ws_port = (TRACE_TCP_PORT, TRACE_WS_PORT) if args.trace else (TCP_PORT, WS_PORT)
     if args.manual:
         tcp_port, ws_port = MANUAL_TCP_PORT, MANUAL_WS_PORT
@@ -81,6 +84,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserCompactScenery", "{str(args.compact_scenery).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPaceTerrainPrediction", "{str(args.pace_terrain).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPrepareLocalTerrain", "{str(args.prepare_local_terrain).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserPrepareIncomingScenery", "{str(args.prepare_incoming_scenery).lower()}");\n'
            f'        System.setProperty("spoiledmilk.predictedSceneryPreview", "{str(args.predicted_scenery).lower()}");')
     if not args.manual:
         insert(bootstrap, '        final BrowserStartupDiagnostics startupDiagnostics=',
@@ -137,6 +141,7 @@ def main():
         'paceTerrain': args.pace_terrain,
         'prebuildOwnership': args.prebuild_ownership,
         'prepareLocalTerrain': args.prepare_local_terrain,
+        'prepareIncomingScenery': args.prepare_incoming_scenery,
         'tcpPort': tcp_port, 'websocketPort': ws_port,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',
         'stagedSha256': staged_hashes,

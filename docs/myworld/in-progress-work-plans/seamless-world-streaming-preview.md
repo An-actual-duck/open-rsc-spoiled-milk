@@ -220,6 +220,23 @@ handoff. The approach gap measured 725 ms and the longest single early
 buffer submission measured 203 ms. Both require further work. The manual
 build at port 8241 includes this experiment.
 
+### Prepared local terrain
+
+`--prepare-local-terrain` makes the prediction worker prepare a detached
+copy of the native surface window, including base collision, structural
+elevations, minimap layout, and wall and roof models. Only an exact terrain
+scope and revision confirmed for ordinary walking can install the result.
+Palette lookup and publication remain on the client thread. Live scenery
+collision and actor updates still come from the authoritative packets.
+
+The matched Firefox runs arrived at `(269, 609, 0)` with matching checksums
+for collision, structural elevations, and minimap pixels. Both released
+112 chunks and 568,324 triangles. The local terrain load went from 130 ms
+to 2 ms, including a 1 ms prepared install. The Java hold went from 513 ms
+to 392 ms and the browser input hold went from 999 ms to 842 ms. The longest
+approach gap was 619 ms with local terrain preparation and 603 ms in the
+control. The private manual build at port 8245 includes this change.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
