@@ -8,6 +8,19 @@ applies ordinary movement updates. At the outer margin the server still sends
 a replacement scene through the existing path. Independent cell publication
 and movement context changes remain follow-up work.
 
+## Waiting for adjacent coverage
+
+The next private server revision keeps the last acknowledged surface window
+as its packet and visibility authority while an adjacent window prepares. It
+can continue sending movement and normal updates within that available area.
+A queued step cannot leave the installed window while the transition is
+pending. At the last tile the server can fall back to sending a complete
+context if prediction is still waiting.
+
+The client still installs the eventual replacement scene through the existing
+activation path. The reported long pause during sustained browser travel
+remains an acceptance case for independent cell publication.
+
 ## Review route
 
 On the private test world, start at Lumbridge `(120, 648, 0)` and walk to

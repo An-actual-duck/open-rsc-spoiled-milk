@@ -143,6 +143,7 @@ public final class GameStateUpdater {
 	private static final String WORLD_TIME_LAST_SYNC_MILLIS_ATTRIBUTE = "world_time_last_sync_millis";
 	private static final String CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE = "custom_movement_client_mid_x";
 	private static final String CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE = "custom_movement_client_mid_y";
+	private static final String INSTALLED_SURFACE_COVERAGE_ATTRIBUTE = "installed_surface_coverage";
 	private static final String LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE =
 		"layered_scene_context_scope";
 	private static final String LAYERED_ACTOR_SCENE_SCOPE_ATTRIBUTE =
@@ -355,7 +356,8 @@ public final class GameStateUpdater {
         ATOMIC_SCENE_FENCE_SEQUENCE_ATTRIBUTE,
         ATOMIC_SCENE_BASELINE_PENDING_SEQUENCE_ATTRIBUTE,
         CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,
-        CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE
+        CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE,
+        INSTALLED_SURFACE_COVERAGE_ATTRIBUTE
     };
 
     public void resetStagedLoginScene(Player player) {
@@ -464,11 +466,11 @@ public final class GameStateUpdater {
 		 * Doing so starts the client's atomic presentation hold up to one
 		 * 640 ms game tick before the complete Player/static-scene update can
 		 * follow. The normal game-state update establishes the context and
-		 * emits its baseline in the same ordered batch; movement resumes once
-		 * that context is current.
+		 * emits its baseline in the same ordered batch. The private preview can
+		 * continue sending against the acknowledged coverage during that wait.
 		 */
 		if (!allowContextCreation) {
-			return false;
+			return canContinueUsingInstalledSurface(player, nativeTerrain, previousScope);
 		}
 		if (previousScope == null) {
 			clearNativeTerrainStage(player);
@@ -480,7 +482,7 @@ public final class GameStateUpdater {
 		if (nativeTerrain != null
 			&& !canActivateNativeTerrainStage(
 				player, location, nativeTerrain)) {
-			return false;
+			return canContinueUsingInstalledSurface(player, nativeTerrain, previousScope);
 		}
 		final boolean predictedSymmetricReady =
 			nativeTerrain != null
@@ -532,6 +534,12 @@ public final class GameStateUpdater {
 		player.setAttribute(
 			LAYERED_SCENE_CONTEXT_PROTOCOL_ATTRIBUTE,
 			Integer.valueOf(context.protocolVersion));
+		if (usesCoveredWalkingPreview(player)
+			&& context.protocolVersion == ATOMIC_NATIVE_LAYERED_SCENE_CONTEXT_PROTOCOL_VERSION) {
+			player.setAttribute(INSTALLED_SURFACE_COVERAGE_ATTRIBUTE, new InstalledSurfaceCoverage(context));
+		} else {
+			player.removeAttribute(INSTALLED_SURFACE_COVERAGE_ATTRIBUTE);
+		}
 		if (predictedSymmetricReady) {
 			/*
 			 * The client already acknowledged the exact radius-two terrain and
@@ -568,6 +576,18 @@ public final class GameStateUpdater {
 		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
 		player.removeAttribute(NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE);
 		return true;
+	}
+
+	private boolean canContinueUsingInstalledSurface(final Player player,
+		final NativeLayeredSceneTerrain nextTerrain, final LayeredProtocolSceneScope previousScope) {
+		if (previousScope == null || nextTerrain == null || player.isTeleporting()
+			|| !usesCoveredWalkingPreview(player) || !hasAcceptedNativeTerrainReadiness(player)
+			|| player.getAttribute(LAYERED_ACTOR_BASELINE_RESET_ATTRIBUTE, false)) {
+			return false;
+		}
+		final InstalledSurfaceCoverage installed = player.getAttribute(INSTALLED_SURFACE_COVERAGE_ATTRIBUTE, null);
+		return installed != null && installed.matches(nextTerrain.terrainPackage)
+			&& installed.contains(player.getX(), player.getY());
 	}
 
 	private void synchronizeLayeredActorScene(
@@ -670,6 +690,15 @@ public final class GameStateUpdater {
 			&& player.getAttribute(
 				NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE,
 				Boolean.FALSE).booleanValue();
+	}
+
+	public boolean isOutsideInstalledSurfaceCoverage(final Player player, final Point nextStep) {
+		if (!usesCoveredWalkingPreview(player) || player.isTeleporting()) {
+			return false;
+		}
+		final InstalledSurfaceCoverage installed = player.getAttribute(INSTALLED_SURFACE_COVERAGE_ATTRIBUTE, null);
+		return installed != null && installed.contains(player.getX(), player.getY())
+			&& !installed.inWindow(nextStep.getX(), nextStep.getY());
 	}
 
 	public void acceptLayeredTerrainStageReady(
@@ -780,6 +809,13 @@ public final class GameStateUpdater {
 				nativeTerrain.currentChunkY,
 				nativeTerrain.terrainPackage.getManifestSha256())) {
 			return true;
+		}
+		if (usesCoveredWalkingPreview(player)) {
+			final InstalledSurfaceCoverage installed = player.getAttribute(INSTALLED_SURFACE_COVERAGE_ATTRIBUTE, null);
+			if (installed != null && installed.atOuterEdge(player.getX(), player.getY())) {
+				// Use the complete context path if lookahead runs out of room.
+				return true;
+			}
 		}
 		final NativeLayeredTerrainStageReadiness accepted =
 			player.getAttribute(
@@ -1229,18 +1265,26 @@ public final class GameStateUpdater {
 		findNativeLayeredSceneSector(terrainPackage,sectorId)
 			.orElseThrow(() -> new IllegalStateException(
 				"Native layered scene has no terrain page at " + sectorId));
-		final int centerSectorX = Math.floorDiv(
+		int centerSectorX = Math.floorDiv(
 			currentClientLocalMidpoint(
 				player,
 				CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,
 				CLIENT_LOCAL_PLANE_WIDTH),
 			NATIVE_LAYERED_WIRE_CHUNK_SIZE);
-		final int centerSectorY = Math.floorDiv(
+		int centerSectorY = Math.floorDiv(
 			currentClientLocalMidpoint(
 				player,
 				CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE,
 				CLIENT_LOCAL_PLANE_HEIGHT),
 			NATIVE_LAYERED_WIRE_CHUNK_SIZE);
+		if (usesCoveredWalkingPreview(player) && !player.isTeleporting()) {
+			final InstalledSurfaceCoverage installed = player.getAttribute(INSTALLED_SURFACE_COVERAGE_ATTRIBUTE, null);
+			if (installed != null && (!installed.matches(terrainPackage)
+				|| !canRetainCoveredWalkingCenter(player.getX(), player.getY(), installed.centerX(), installed.centerY()))) {
+				centerSectorX = sectorId.getSectorX();
+				centerSectorY = sectorId.getSectorY();
+			}
+		}
 		if (Math.abs(sectorId.getSectorX() - centerSectorX)
 				> NATIVE_LAYERED_CHUNK_RADIUS
 			|| Math.abs(sectorId.getSectorY() - centerSectorY)
@@ -3444,16 +3488,6 @@ public final class GameStateUpdater {
 	}
 
 	private static void updateCenteredClientSceneWindow(final Player viewer) {
-		if (usesCoveredWalkingPreview(viewer) && !viewer.isTeleporting()) {
-			final Integer previousX = viewer.getAttribute(
-				CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE, null);
-			final Integer previousY = viewer.getAttribute(
-				CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE, null);
-			if (previousX != null && previousY != null
-				&& canRetainCoveredWalkingCenter(viewer.getX(), viewer.getY(), previousX, previousY)) {
-				return;
-			}
-		}
 		viewer.setAttribute(CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,
 			clientLocalCenteredSectionAnchorForTile(viewer.getX(), CLIENT_LOCAL_PLANE_WIDTH));
 		viewer.setAttribute(CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE,
@@ -3477,8 +3511,10 @@ public final class GameStateUpdater {
 	) {
 		if (usesCenteredClientSceneWindow(viewer)) {
 			if (usesCoveredWalkingPreview(viewer) && !viewer.isTeleporting()) {
-				updateCenteredClientSceneWindow(viewer);
-				return viewer.getAttribute(attribute, null);
+				final InstalledSurfaceCoverage installed = viewer.getAttribute(INSTALLED_SURFACE_COVERAGE_ATTRIBUTE, null);
+				if (installed != null) {
+					return planeOffset == CLIENT_LOCAL_PLANE_WIDTH ? installed.centerX() : installed.centerY();
+				}
 			}
 			return clientLocalCenteredSectionAnchorForTile(
 				planeOffset == CLIENT_LOCAL_PLANE_WIDTH
@@ -3528,7 +3564,8 @@ public final class GameStateUpdater {
 		return COVERED_WALKING_PREVIEW
 			&& "127.0.0.1".equals(viewer.getConfig().SERVER_BIND_ADDRESS)
 			&& !viewer.getConfig().WORLD_BUILDER_MODE
-			&& viewer.getWorldLocation().getCoordinate().getLevel() == 0;
+			&& viewer.getWorldLocation().getCoordinate().getLevel() == 0
+			&& "global".equals(viewer.getWorldLocation().getWorldSpace().getValue());
 	}
 
 	static boolean canRetainCoveredWalkingCenter(

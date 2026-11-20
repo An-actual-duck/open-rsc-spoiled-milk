@@ -91,6 +91,11 @@ public class WalkingQueue {
 				.isNativeTerrainActivationMovementHeld((Player) mob)) {
 			return false;
 		}
+		if (mob.isPlayer() && !mob.getAttribute("blink", false)
+			&& mob.getWorld().getServer().getGameUpdater()
+				.isOutsideInstalledSurfaceCoverage((Player) mob, path.getNextPoint())) {
+			return false;
+		}
 
 		// Player is walking if path is not null or empty.
 		playerWasWalking = true;
