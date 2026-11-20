@@ -162,6 +162,55 @@ continuity by themselves. Pass this gate with the existing movement
 cadence before removing either presentation hold or adding new movement
 packet behavior. [Actor rebase](../../../Client_Base/src/orsc/ORSCharacter.java) · [Focused waypoint fixture](../../../tests/myworld/seamless-streaming/ActorWaypointRebase.java)
 
+### Prepare browser draw buffers before the scene handoff
+
+Sodium builds render sections from captured world slices, queues the mesh jobs
+on workers, and budgets mesh work and graphics uploads separately. Its
+renderer uploads section results through region-owned buffers. It can defer
+routine work while still waiting for selected urgent work or an explicit
+immediate update. The relevant design is the handoff between captured inputs,
+completed mesh work, and render-owned uploads. [Sodium section capture and scheduling](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/RenderSectionManager.java#L654) · [Sodium mesh workers](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkBuilder.java#L19) · [Sodium region uploads](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/region/RenderRegionManager.java#L60)
+
+RSC already builds the adjacent center's terrain and structural meshes on the
+sector preload executor. The completed prediction includes immutable mesh
+products. The browser still packs the replacement frame's vertices, material
+batches and indices and submits the uploads through its active frame path.
+Materials depend on texture metadata and packing settings captured from the
+client. The existing immutable storage key permits rebased meshes to reuse
+their buffers. Reuse requires matching mesh and material variants. [Prediction worker](../../../Client_Base/src/orsc/graphics/three/World.java#L566) · [Browser upload path](../../../PC_Client/src/orsc/BrowserWebGLBridge.java#L331) · [Vertex packing](../../../PC_Client/src/orsc/OpenGLWorldChunkRenderer.java#L2923) · [Material dependencies](../../../PC_Client/src/orsc/BrowserChunkVariant.java)
+
+Run the first private browser experiment with the existing movement packets,
+path queue, actor presentation, and scene activation. Stage one adjacent
+prediction and walk through `x = 264` with the current origin and scene
+ownership rules. The candidate changes where draw buffers are packed and
+uploaded. The existing preview supplies the control. Use the same signed map
+and fresh route in both runs.
+
+1. Start with incoming static terrain and structure meshes whose final
+   browser storage keys can be matched to the predicted product. Capture
+   the needed texture metadata and packing settings in an immutable input.
+   Pack vertices, indices, and material batches off the live frame and
+   compare the result with the current packer. The worker may read only
+   captured inputs. Keep dynamic actors, animations, and live scenery
+   changes on their existing paths during this experiment.
+2. Budget render-owned uploads during ordinary frames before the boundary.
+   Retain active buffers and admit only as many pending bytes as fit beside
+   them. Give visible and soon-needed cells the first slots. A reversed
+   route, changed renderer settings, replaced source, or graphics context
+   reset can invalidate the pending product. Reject stale results and use
+   the existing path for mismatches. The first implementation can use
+   the browser's existing graphics backend for upload ownership. Validate
+   actual completion separately from Java packing and native submission.
+3. At the handoff, record which predicted buffers the active renderer
+   adopts. Separate initial upload bytes from changed material variants and
+   dynamic content. Record work completed before the handoff, remaining
+   uploads, frame intervals throughout the walk, peak pending and resident
+   bytes, Java scene retention, and the browser's world-input gate. A useful
+   result moves verified work earlier without creating a new hitch in the
+   approach. Keep the movement continuity gate for any subsequent change to
+   scene publication. Browser buffer readiness alone cannot authorize new
+   collision coverage or replace viewer-specific live object state.
+
 ### Publish the next coverage
 
 At this handoff, keep the server's existing movement stream and the
