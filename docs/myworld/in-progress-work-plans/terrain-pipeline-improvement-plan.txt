@@ -408,6 +408,28 @@ from the producer of live poses. The deliberate hold demonstrates that
 the simulation can keep sending movement while scene draws are paused.
 It does not certify seamless scenery replacement or GPU scanout.
 
+Prepare the equipped walk poses independently of camera visibility
+------------------------------------------------------------------
+
+The private scenery hold builds 32 facing and phase poses, in groups of
+four per frame, using the ordinary player equipment layer drawer on a
+dedicated capture surface. It keys the preparation on the visible
+appearance and sprite epoch, and draws the bank only for the local
+actor during the hold. Pose selection still follows the live Java walk
+phase. The proof rasterizes at a fixed reference size and projects the
+result onto the captured actor anchor. It has not been reviewed across
+equipment, elevation, or camera changes.
+
+The matched visible Firefox route had zero missing walk poses. The
+outbound and return crossings showed seven and five image changes with
+live player and camera samples. The time from the last retained-scene
+draw to the first normal draw was 306 and 116 ms, respectively. The
+first replacement Java frame still spent 57 and 49 ms in scene geometry
+and 73 and 19 ms preparing resident scenery. The animation fix closes
+the missing-pose gap but leaves scene assembly on the movement thread.
+Evidence is in output/diagnostics/browser-overlapping-handoff/
+prepared-walk-sprites/result.json.
+
 Optional streaming policy
 -------------------------
 

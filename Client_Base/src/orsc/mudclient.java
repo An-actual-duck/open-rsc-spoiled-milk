@@ -11310,6 +11310,125 @@ public final class mudclient implements Runnable {
 		return isCombatBHalf(cameraRelativeDirection);
 	}
 
+	private void drawPlayerSpriteLayers(ORSCharacter player, MudClientGraphics surface, int x, int y,
+			int width, int height, int topPixelSkew, int wantedAnimDir, int actualAnimDir, boolean mirrorX,
+			int spriteOffset, int walkFrame) {
+		for (int lay = 0; lay < 12; ++lay) {
+			int mappedLayer = this.getAnimDirLayer_To_CharLayer()[wantedAnimDir][lay];
+			int animID = player.layerAnimation[mappedLayer] - 1;
+			if (animID >= 0) {
+				byte spriteOffsetX = 0;
+				byte spriteOffsetY = 0;
+				int mySpriteOffset = spriteOffset;
+				if (mirrorX && actualAnimDir >= 1 && actualAnimDir <= 3) {
+					if (EntityHandler.getAnimationDef(animID).hasF()) {
+						mySpriteOffset = spriteOffset + 15;
+					} else if (mappedLayer == 4 && actualAnimDir == 1) {
+						mySpriteOffset = actualAnimDir * 3
+							+ this.animFrameToSprite_Walk[(walkFrame + 2) % 4];
+						spriteOffsetY = -3;
+						spriteOffsetX = -22;
+					} else if (mappedLayer == 4 && actualAnimDir == 2) {
+						spriteOffsetX = 0;
+						spriteOffsetY = -8;
+						mySpriteOffset = this.animFrameToSprite_Walk[(walkFrame + 2) % 4]
+							+ actualAnimDir * 3;
+					} else if (mappedLayer == 4 && actualAnimDir == 3) {
+						spriteOffsetY = -5;
+						mySpriteOffset = actualAnimDir * 3
+							+ this.animFrameToSprite_Walk[(2 + walkFrame) % 4];
+						spriteOffsetX = 26;
+					} else if (mappedLayer == 3 && actualAnimDir == 1) {
+						mySpriteOffset = actualAnimDir * 3
+							+ this.animFrameToSprite_Walk[(2 + walkFrame) % 4];
+						spriteOffsetX = 22;
+						spriteOffsetY = 3;
+					} else if (mappedLayer == 3 && actualAnimDir == 2) {
+						spriteOffsetY = 8;
+						mySpriteOffset = actualAnimDir * 3
+							+ this.animFrameToSprite_Walk[(walkFrame + 2) % 4];
+						spriteOffsetX = 0;
+					} else if (mappedLayer == 3 && actualAnimDir == 3) {
+						spriteOffsetX = -26;
+						mySpriteOffset = this.animFrameToSprite_Walk[(2 + walkFrame) % 4]
+							+ actualAnimDir * 3;
+						spriteOffsetY = 5;
+					}
+				}
+
+				if (actualAnimDir != 5 || EntityHandler.getAnimationDef(animID).hasA()) {
+					//int sprite = EntityHandler.getAnimationDef(animID).getNumber() + mySpriteOffset;
+					Sprite sprite = spriteSelect(EntityHandler.getAnimationDef(animID), mySpriteOffset);
+					int something1 = sprite.getSomething1();
+					int something2 = sprite.getSomething2();
+					int something3 = this.spriteSelect(EntityHandler.getAnimationDef(animID), 0).getSomething1();
+					if (something1 != 0 && something2 != 0 && something3 != 0) {
+						// Whip padding expands the canvas, not the canonical mirrored hand offset.
+						int handOffsetBound = "abyssalwhip".equals(EntityHandler.getAnimationDef(animID).getName())
+							? (mySpriteOffset < 15 ? 64 : 84) : something1;
+						int xOffset = (spriteOffsetX * width) / handOffsetBound;
+						int yOffset = (spriteOffsetY * height) / something2;
+						// Match the side-view stock to the carrying hand in both facings.
+						if (mappedLayer == 4 && actualAnimDir == 2
+								&& EntityHandler.getAnimationDef(animID).getName().endsWith("crossbow")) {
+							xOffset += (mirrorX ? -8 : 8) * width / 64;
+							yOffset += 8 * height / 102;
+						}
+						int spriteWidth = (something1 * width) / something3;
+						xOffset -= (spriteWidth - width) / 2;
+						int colorMask1 = EntityHandler.getAnimationDef(animID).getCharColour();
+						int blueScaleColor = EntityHandler.getAnimationDef(animID).getBlueMask();
+						if (colorMask1 == 1) {
+							colorMask1 = this.getPlayerHairColors()[player.colourHair];
+						} else if (colorMask1 == 2) {
+							colorMask1 = this.getPlayerClothingColors()[player.colourTop];
+						} else if (colorMask1 == 3) {
+							colorMask1 = this.getPlayerClothingColors()[player.colourBottom];
+						}
+
+						int colorMask2 = this.getPlayerSkinColors()[player.colourSkin];
+						int colourTransform = player.nonCorporeal ? 0x80FFFFFF : 0xFFFFFFFF;
+
+						if (player.isInvisible)
+							colourTransform &= 0x80FFFFFF;
+
+						if (player.isInvulnerable)
+							colourTransform &= 0xFF202020;
+
+						surface.drawSpriteClipping(sprite, xOffset + x, y + yOffset, spriteWidth,
+							height, colorMask1, colorMask2, blueScaleColor, mirrorX, topPixelSkew, 1, colourTransform);
+					}
+				}
+			}
+		}
+	}
+
+	public int[] getBrowserWalkAppearance() {
+		if (localPlayer == null || localPlayer.colourBottom == 255) return null;
+		int[] key = Arrays.copyOf(localPlayer.layerAnimation, localPlayer.layerAnimation.length + 7);
+		int i = localPlayer.layerAnimation.length;
+		key[i++] = localPlayer.colourHair;
+		key[i++] = localPlayer.colourTop;
+		key[i++] = localPlayer.colourBottom;
+		key[i++] = localPlayer.colourSkin;
+		key[i++] = localPlayer.nonCorporeal ? 1 : 0;
+		key[i++] = localPlayer.isInvisible ? 1 : 0;
+		key[i] = localPlayer.isInvulnerable ? 1 : 0;
+		return key;
+	}
+
+	/** The proof uses a dedicated raster surface and the ordinary equipment layer drawer. */
+	public Renderer2DFrame.SpriteCommand[] captureBrowserWalkingLayers(MudClientGraphics scratch, int gait,
+			int x, int y, int width, int height) {
+		int facing = gait >> 2, phase = gait & 3;
+		int direction = facing > 4 ? 8 - facing : facing;
+		scratch.beginRenderer2DFrame();
+		scratch.setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
+		drawPlayerSpriteLayers(localPlayer, scratch, x, y, width, height, 0, facing, direction,
+			facing > 4, animFrameToSprite_Walk[phase] + direction * 3, phase);
+		return scratch.consumeRenderer2DFrame().getSpriteCommands();
+	}
+
 	public final void drawPlayer(int index, int x, int y, int width, int height, int topPixelSkew, int var3,
 								 int overlayMovement) {
 		try {
@@ -11353,105 +11472,8 @@ public final class mudclient implements Runnable {
 					}
 				}
 
-				for (int lay = 0; lay < 12; ++lay) {
-					int mappedLayer = this.getAnimDirLayer_To_CharLayer()[wantedAnimDir][lay];
-					int animID = player.layerAnimation[mappedLayer] - 1;
-					if (animID >= 0) {
-						byte spriteOffsetX = 0;
-						byte spriteOffsetY = 0;
-						int mySpriteOffset = spriteOffset;
-						if (mirrorX && actualAnimDir >= 1 && actualAnimDir <= 3) {
-							if (EntityHandler.getAnimationDef(animID).hasF()) {
-								mySpriteOffset = spriteOffset + 15;
-							} else if (mappedLayer == 4 && actualAnimDir == 1) {
-								mySpriteOffset = actualAnimDir * 3
-									+ this.animFrameToSprite_Walk[(player.stepFrame / 6 + 2) % 4];
-								spriteOffsetY = -3;
-								spriteOffsetX = -22;
-							} else if (mappedLayer == 4 && actualAnimDir == 2) {
-								spriteOffsetX = 0;
-								spriteOffsetY = -8;
-								mySpriteOffset = this.animFrameToSprite_Walk[(player.stepFrame / 6 + 2) % 4]
-									+ actualAnimDir * 3;
-							} else if (mappedLayer == 4 && actualAnimDir == 3) {
-								spriteOffsetY = -5;
-								mySpriteOffset = actualAnimDir * 3
-									+ this.animFrameToSprite_Walk[(2 + player.stepFrame / 6) % 4];
-								spriteOffsetX = 26;
-							} else if (mappedLayer == 3 && actualAnimDir == 1) {
-								mySpriteOffset = actualAnimDir * 3
-									+ this.animFrameToSprite_Walk[(2 + player.stepFrame / 6) % 4];
-								spriteOffsetX = 22;
-								spriteOffsetY = 3;
-							} else if (mappedLayer == 3 && actualAnimDir == 2) {
-								spriteOffsetY = 8;
-								mySpriteOffset = actualAnimDir * 3
-									+ this.animFrameToSprite_Walk[(player.stepFrame / 6 + 2) % 4];
-								spriteOffsetX = 0;
-							} else if (mappedLayer == 3 && actualAnimDir == 3) {
-								spriteOffsetX = -26;
-								mySpriteOffset = this.animFrameToSprite_Walk[(2 + player.stepFrame / 6) % 4]
-									+ actualAnimDir * 3;
-								spriteOffsetY = 5;
-							}
-						}
-
-						if (actualAnimDir != 5 || EntityHandler.getAnimationDef(animID).hasA()) {
-							//int sprite = EntityHandler.getAnimationDef(animID).getNumber() + mySpriteOffset;
-							Sprite sprite = spriteSelect(EntityHandler.getAnimationDef(animID), mySpriteOffset);
-							int something1 = sprite.getSomething1();
-							int something2 = sprite.getSomething2();
-							int something3 = this.spriteSelect(EntityHandler.getAnimationDef(animID), 0).getSomething1();
-							if (something1 != 0 && something2 != 0 && something3 != 0) {
-								// Whip padding expands the canvas, not the canonical mirrored hand offset.
-								int handOffsetBound = "abyssalwhip".equals(EntityHandler.getAnimationDef(animID).getName())
-									? (mySpriteOffset < 15 ? 64 : 84) : something1;
-								int xOffset = (spriteOffsetX * width) / handOffsetBound;
-								int yOffset = (spriteOffsetY * height) / something2;
-                                // Match the side-view stock to the carrying hand in both facings.
-                                if (mappedLayer == 4 && actualAnimDir == 2
-                                        && EntityHandler.getAnimationDef(animID).getName().endsWith("crossbow")) {
-                                    xOffset += (mirrorX ? -8 : 8) * width / 64;
-                                    yOffset += 8 * height / 102;
-                                }
-								int spriteWidth = (something1 * width) / something3;
-								xOffset -= (spriteWidth - width) / 2;
-								int colorMask1 = EntityHandler.getAnimationDef(animID).getCharColour();
-								int blueScaleColor = EntityHandler.getAnimationDef(animID).getBlueMask();
-								if (colorMask1 == 1) {
-									colorMask1 = this.getPlayerHairColors()[player.colourHair];
-								} else if (colorMask1 == 2) {
-									colorMask1 = this.getPlayerClothingColors()[player.colourTop];
-								} else if (colorMask1 == 3) {
-									colorMask1 = this.getPlayerClothingColors()[player.colourBottom];
-								}
-
-								int colorMask2 = this.getPlayerSkinColors()[player.colourSkin];
-								int colourTransform = player.nonCorporeal ? 0x80FFFFFF : 0xFFFFFFFF;
-
-								if (player.isInvisible)
-									colourTransform &= 0x80FFFFFF;
-
-								if (player.isInvulnerable)
-									colourTransform &= 0xFF202020;
-
-								this.getSurface().drawSpriteClipping(sprite, xOffset + x, y + yOffset, spriteWidth,
-									height, colorMask1, colorMask2, blueScaleColor, mirrorX, topPixelSkew, 1, colourTransform);
-
-									/*if(sprite != 1948 && sprite != 1947 && sprite != 1949) {
-										this.getSurface().drawSpriteClipping(sprite, xOffset + x, y + yOffset, spriteWidth,
-												height, colorMask1, colorMask2, mirrorX, topPixelSkew, 1);
-									}
-									if(sprite == 1948 || sprite == 1947 || sprite == 1949) {
-										this.getSurface().drawSpriteClipping(sprite, xOffset + x, y + yOffset, spriteWidth,
-												height, colorMask1, colorMask2, mirrorX, topPixelSkew, 1);
-									}*/
-							}
-						}
-
-						//System.out.println("Animation dir: " + (EntityHandler.getAnimationDef(animID).getNumber() + spriteOffset));
-					}
-				}
+				drawPlayerSpriteLayers(player, this.getSurface(), x, y, width, height, topPixelSkew,
+					wantedAnimDir, actualAnimDir, mirrorX, spriteOffset, player.stepFrame / 6);
 
 				if (player.messageTimeout > 0) {
 					ensureCharacterDialogCapacity(this.characterDialogCount + 1);

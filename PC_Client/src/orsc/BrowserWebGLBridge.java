@@ -1,6 +1,7 @@
 package orsc;
 
 import java.awt.image.BufferedImage;
+import orsc.graphics.two.MudClientGraphics;
 import java.awt.image.DataBufferInt;
 import java.awt.image.SinglePixelPackedSampleModel;
 import java.lang.reflect.Field;
@@ -151,6 +152,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native void walkingTransition(int worldX, int worldZ);
     private static native void walkingLivePose(int playerX, int playerZ, int cameraX, int cameraZ,
         int gait, int rotation, boolean duringHold);
+    private static native void walkingPoseBank(int start, int count);
     private static final boolean WORKER_MOTION = Boolean.getBoolean("spoiledmilk.browserWorkerMotion")
         && Boolean.getBoolean("spoiledmilk.browserBenchmark") && !Boolean.getBoolean("spoiledmilk.browserPublicAlpha");
     private static final boolean HOLD_WALKING_SCENERY = WORKER_MOTION
@@ -193,6 +195,11 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private static native int[] planWorldSprites(int epoch,double sequence,int[] images);
     private static native void commitWorldSprites(int epoch,double sequence,byte[] rgba,float[] quads);
     private long spriteSequence;
+    private final BrowserWorldSpriteCache.Result[] walkingSprites = new BrowserWorldSpriteCache.Result[32];
+    private MudClientGraphics walkingScratch;
+    private int[] walkingAppearance;
+    private int walkingSpritesReady, walkingSpriteEpoch;
+    private static final int WALK_X = 96, WALK_Y = 72, WALK_WIDTH = 64, WALK_HEIGHT = 102;
     public static void install() {
         if(Boolean.getBoolean("spoiledmilk.browserBenchmark")) {
             System.setProperty("spoiledmilk.remasterLightAzimuth","135");System.setProperty("spoiledmilk.remasterLightElevation","45");
@@ -494,6 +501,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         if(frame.getWorldSpriteSnapshotCount()>1024)throw new IllegalStateException("Browser world sprite count exceeds capacity");
         BrowserWorldSpriteBatch batch=new BrowserWorldSpriteBatch();
         int localSlot = -1;
+        Renderer3DFrame.SpriteAnchor localAnchor = null;
         // Strong references protect the entire gathered frame from CPU LRU evictions.
         for(Renderer3DFrame.WorldSpriteSnapshot snapshot:frame.getWorldSpriteSnapshots()) {
             if(snapshot==null||snapshot.getAnchor()==null||snapshot.getLayerCount()==0)continue;
@@ -510,13 +518,18 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             if (WORKER_MOTION && localSlot < 0 && client != null
                     && client.isLocalPlayerRenderSprite(snapshot.getAnchor().getSpriteId())) {
                 localSlot = batch.size();
+                localAnchor = snapshot.getAnchor();
             }
             batch.add(cached,spriteQuad(frame,snapshot.getAnchor(),composite));
         }
+        int walkBankStart = batch.size();
+        if (HOLD_WALKING_SCENERY && localAnchor != null && walkBankStart <= 1024 - walkingSprites.length)
+            addPreparedWalkingSprites(batch, frame, client, localAnchor);
         if(spriteSequence>=9007199254740991L)throw new IllegalStateException("Sprite sequence exhausted");
         long sequence=++spriteSequence;int epoch=spriteCache.getEpoch();
         int[] missing=planWorldSprites(epoch,sequence,batch.descriptors());
         commitWorldSprites(epoch,sequence,batch.pixels(missing),batch.vertices());
+        if (HOLD_WALKING_SCENERY) walkingPoseBank(walkBankStart, batch.size() - walkBankStart);
         if (localSlot >= 0) walkingAnchor(client.getLocalPlayerWorldPixelX(),
             client.getLocalPlayerWorldPixelZ(), localSlot);
         if (localSlot >= 0 && Boolean.getBoolean("spoiledmilk.browserWalkTimeline"))
@@ -526,6 +539,36 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 client.getBrowserCameraWorldX(), client.getBrowserCameraWorldZ(),
                 client.getLocalPlayerWalkingGait(), client.getBrowserCameraRotation(), false);
         return batch.size();
+    }
+
+    private void addPreparedWalkingSprites(BrowserWorldSpriteBatch batch, Renderer3DFrame frame,
+            mudclient client, Renderer3DFrame.SpriteAnchor anchor) {
+        int[] appearance = client.getBrowserWalkAppearance();
+        if (appearance == null) return;
+        int epoch = spriteCache.getEpoch();
+        if (walkingSpriteEpoch != epoch || !Arrays.equals(walkingAppearance, appearance)) {
+            walkingAppearance = appearance;
+            walkingSpriteEpoch = epoch;
+            walkingSpritesReady = 0;
+        }
+        if (walkingScratch == null) walkingScratch = new MudClientGraphics(256, 256, 0);
+        int limit = Math.min(walkingSprites.length, walkingSpritesReady + 4);
+        while (walkingSpritesReady < limit) {
+            BrowserWorldSpriteCache.Result image = spriteCache.compose(Arrays.asList(
+                client.captureBrowserWalkingLayers(walkingScratch, walkingSpritesReady,
+                    WALK_X, WALK_Y, WALK_WIDTH, WALK_HEIGHT)), spriteWorkspace);
+            if (image == null) return;
+            walkingSprites[walkingSpritesReady++] = image;
+        }
+        if (walkingSpritesReady != walkingSprites.length || walkingSpriteEpoch != spriteCache.getEpoch()) return;
+        for (BrowserWorldSpriteCache.Result image : walkingSprites) {
+            int width = anchor.getDrawWidth(), height = anchor.getDrawHeight();
+            int x = anchor.getDrawX() + Math.round((image.x - WALK_X) * width / (float) WALK_WIDTH);
+            int y = anchor.getDrawY() + Math.round((image.y - WALK_Y) * height / (float) WALK_HEIGHT);
+            int w = Math.max(1, Math.round(image.width * width / (float) WALK_WIDTH));
+            int h = Math.max(1, Math.round(image.height * height / (float) WALK_HEIGHT));
+            batch.add(image, spriteQuad(frame, anchor, new CompositeWorldSpriteTexture(x, y, w, h, null)));
+        }
     }
     static float[] spriteQuad(Renderer3DFrame frame,Renderer3DFrame.SpriteAnchor anchor,CompositeWorldSpriteTexture composite) {
         float scale=(float)(1<<Math.max(0,Math.min(24,frame.getPerspectiveShift())));

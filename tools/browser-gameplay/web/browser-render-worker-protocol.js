@@ -11,7 +11,7 @@ export const RENDER_WORKER_SCHEMA=Object.freeze({
   deleteTextures:['I'],uploadTexture:['i','i','i','I','b'],deleteChunks:['I'],
   present:['i','i','b','F','F','I','I'],frameWork:['F','I'],worldProgress:['I'],regionTransition:['b'],holdWorld:[],
   walkingAnchor:['i','i','i'],walkingGait:['i'],walkingTransition:['i','i'],
-  walkingLivePose:['i','i','i','i','i','i','b'],
+  walkingLivePose:['i','i','i','i','i','i','b'], walkingPoseBank:['i','i'],
   planWorldSprites:['i','n','I'],commitWorldSprites:['i','n','B','F'],
   '$owned':['b'],'$validation':['b'],'$physical':['b'],'$measurement':['b']
 });

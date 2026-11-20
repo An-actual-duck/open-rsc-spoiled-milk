@@ -144,7 +144,8 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   let replayFence=null,lastReplayOffset=null,visibleWalkPose=null,resumeWalk=null;
   const useWalkTimeline=stabilizeWalk&&options.walkTimeline===true;
   const holdWalkingScenery=useWalkTimeline&&options.holdWalkingScenery===true;
-  let nextLiveCamera=null,livePose=null,lastLiveDraw=null,livePoseAt=0;
+  let nextLiveCamera=null,livePose=null,lastLiveDraw=null,livePoseAt=0,liveDrawAt=0;
+  let walkBankStart=-1,walkBankCount=0;
   let walkSpriteHistory=[],walkCycle=[],walkTrace=null,nextWalkingGait=-1;
   function traceWalkingFrame(now,pose,sprite,replay,camera){
     if(!walkTrace||!pose)return;
@@ -207,7 +208,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     lastMovingReplay=0;lastReplayOffset=null;visibleWalkPose=null;resumeWalk=null;
     walkingStart=performance.now();
     if(holdWalkingScenery){
-      livePose=null;lastLiveDraw=null;livePoseAt=0;
+      livePose=null;lastLiveDraw=null;livePoseAt=0;liveDrawAt=0;stats.livePoseTailMs=0;
       stats.livePoseSamples=stats.livePoseFrames=stats.livePoseMissingGait=stats.livePoseMaxSampleGapMs=0;
       stats.livePoseLastSampleMs=stats.livePoseLastDrawMs=stats.livePoseMaxDrawGapMs=0;
       stats.livePosePlayerChanges=stats.livePoseCameraChanges=stats.livePoseGaitChanges=0;
@@ -264,8 +265,9 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     // with the translated camera, and advance only the confirmed player.
     const spriteShift=cameraStep ? cameraShiftFor(matrices,cameraStep) : null;
     const localShift=sample?cameraShiftFor(matrices,cameraStep.map((v,i)=>v-step[i])):null;
-    let replaySprite=null,displayedSprite=scene.spritePose?.id??null;
-    if((sample||walkCycle.length>=2) && scene.spritePose){
+    const preparedSlot=sample&&sample.gait>=0&&sample.gait<walkBankCount?walkBankStart+sample.gait:-1;
+    let replaySprite=null,displayedSprite=(preparedSlot<0?scene.spritePose:spriteAtlas.replayPoseAt(preparedSlot))?.id??null;
+    if(preparedSlot<0&&(sample||walkCycle.length>=2) && scene.spritePose){
       const old=spriteAtlas.replayRect(scene.spritePose.id,scene.spritePose.epoch);
       const pick=sample?walkSpriteHistory.find(p=>p.gait===sample.gait&&p.epoch===scene.spritePose.epoch)
         :walkCycle[Math.floor((now-walkingStart)/92)%walkCycle.length];
@@ -282,7 +284,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     gl.viewport(0,0,outWidth,outHeight);gl.disable(gl.SCISSOR_TEST);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);gl.depthMask(true);
     gl.clearDepth(1);gl.clearColor(u[15],u[16],u[17],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     sky.draw();
-    drawWorldColor(draws,moved,u,width,height,false,false,spriteShift,scene.anchor?.[2],localShift,replaySprite);
+    drawWorldColor(draws,moved,u,width,height,false,false,spriteShift,scene.anchor?.[2],localShift,replaySprite,preparedSlot);
     normalizeOpaqueCanvas(gl,ownedFrame?.active?ownedFrame:null);
     overlay.redrawCoverage(width,height,outWidth,outHeight);
     if(stabilizeWalk)replayFence=gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE,0);
@@ -290,7 +292,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     if(sample){
       const sinceStart=now-walkingStart;
       stats.livePoseMaxDrawGapMs=Math.max(stats.livePoseMaxDrawGapMs,sinceStart-stats.livePoseLastDrawMs);
-      stats.livePoseLastDrawMs=sinceStart;
+      stats.livePoseLastDrawMs=sinceStart;liveDrawAt=now;
       stats.livePoseFrames++;
       if(!lastLiveDraw||sample.player.some((v,i)=>v!==lastLiveDraw.player[i]))stats.livePosePlayerChanges++;
       if(!lastLiveDraw||sample.camera.some((v,i)=>v!==lastLiveDraw.camera[i]))stats.livePoseCameraChanges++;
@@ -369,6 +371,13 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(livePoseAt)stats.livePoseMaxSampleGapMs=Math.max(stats.livePoseMaxSampleGapMs,now-livePoseAt);
       livePoseAt=now;livePose=pose;stats.livePoseSamples++;stats.livePoseLastSampleMs=now-walkingStart;
     },
+    async Java_orsc_BrowserWebGLBridge_walkingPoseBank(lib,start,count){
+      alive();
+      if(!holdWalkingScenery||start<0||start>spriteDraws.length||(count!==0&&count!==32)||start+count!==spriteDraws.length)
+        throw new Error('Invalid prepared walking sprite bank');
+      walkBankStart=count?start:-1;walkBankCount=count;
+      stats.livePosePreparedSprites=count;
+    },
     async Java_orsc_BrowserWebGLBridge_holdWorld(){alive();uploadValidation.beforeDraw();gl.bindSampler(0,null);if(!overlay)throw new Error('Region retention requires coverage compositor');if(ownedFrame?.active)ownedFrame.begin(canvas.width,canvas.height,0,0,0);if(walkTimer===null)overlay.hold(canvas.width,canvas.height);worldReady.held();gl.flush();stats.heldWorldFrames++;boundedFrameGap?.held(performance.now(),lastWorld);},
     async Java_orsc_BrowserWebGLBridge_initialize(lib,vertex,fragment){
       alive();if(program)throw new Error('WebGL backend initialized twice');
@@ -380,7 +389,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       stats.colorFrustumCulling=colorCullingSupported;
       overlayProgram=link('#version 300 es\nprecision highp float;out vec2 uv;void main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));uv=vec2(p.x,1.0-p.y);gl_Position=vec4(p*2.0-1.0,0,1);}', '#version 300 es\nprecision highp float;uniform sampler2D image;uniform bool world;in vec2 uv;out vec4 color;void main(){vec4 s=texture(image,uv);if(world&&s.a>0.003&&s.a<0.005)discard;color=vec4(s.bgr,1.0);}');
       const spritePosition = walkingReplayEnabled
-        ? 'uniform vec3 cameraShift;uniform vec3 playerShift;uniform int movingSprite;uniform bool replayImage;uniform vec4 oldUv;uniform vec4 newUv;uniform vec2 replayBase;uniform vec2 replayScale;out vec2 uv;void main(){uv=texCoord;bool local=gl_VertexID/4==movingSprite;vec3 vertex=position;if(local&&replayImage){vec2 t=(texCoord-oldUv.xy)/max(oldUv.zw-oldUv.xy,vec2(0.000001));uv=mix(newUv.xy,newUv.zw,t);vertex.xy=replayBase+(vertex.xy-replayBase)*replayScale;}gl_Position=projection*vec4(vertex+(local?playerShift:cameraShift),1);}'
+        ? 'uniform vec3 cameraShift;uniform vec3 playerShift;uniform int movingSprite;uniform int bankStart;uniform int bankSelected;uniform int hiddenActor;uniform bool replayImage;uniform vec4 oldUv;uniform vec4 newUv;uniform vec2 replayBase;uniform vec2 replayScale;out vec2 uv;void main(){uv=texCoord;int slot=gl_VertexID/4;if((bankStart>=0&&slot>=bankStart&&slot!=bankSelected)||slot==hiddenActor){gl_Position=vec4(2,2,2,1);return;}bool local=slot==movingSprite;vec3 vertex=position;if(local&&replayImage){vec2 t=(texCoord-oldUv.xy)/max(oldUv.zw-oldUv.xy,vec2(0.000001));uv=mix(newUv.xy,newUv.zw,t);vertex.xy=replayBase+(vertex.xy-replayBase)*replayScale;}gl_Position=projection*vec4(vertex+(local?playerShift:cameraShift),1);}'
         : 'out vec2 uv;void main(){uv=texCoord;gl_Position=projection*vec4(position,1);}';
       spriteProgram=link('#version 300 es\nprecision highp float;in vec3 position;in vec2 texCoord;uniform mat4 projection;'+spritePosition, '#version 300 es\nprecision highp float;in vec2 uv;uniform sampler2D image;uniform vec3 tone;out vec4 color;void main(){color=texture(image,uv);if(color.a<=0.0)discard;color.rgb*=tone;}');
       spriteTexture=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,spriteTexture);textureParameters();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,SPRITE_ATLAS,SPRITE_ATLAS,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
@@ -617,6 +626,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       const now=performance.now();stats.jsSubmissionSamples.push(now-submitStart);if(stats.jsSubmissionSamples.length>(stats.measurement?4096:600))stats.jsSubmissionSamples.shift();
       if(world&&!retainedWorld){boundedFrameGap?.resumed(now);if(lastWorld){stats.worldFrameSamples.push(now-lastWorld);stats.worldFramePolicies.push(stats.presentedOwnedState);stats.worldFrameSpriteGroups.push(spriteDraws.length);stats.physicalOutputWorldFramePolicies.push(physicalOutput?1:0);if(stats.worldFrameSamples.length>(stats.measurement?4096:600)){stats.worldFrameSamples.shift();stats.worldFramePolicies.shift();stats.worldFrameSpriteGroups.shift();stats.physicalOutputWorldFramePolicies.shift();}}lastWorld=now;}else lastWorld=0;
       worldReady.presented({world:world&&!retainedWorld,width,height,textures:textures.size,sprites:spriteDraws.length,lighting:!!lightingValues});
+      if(liveDrawAt && world && !retainedWorld){stats.livePoseTailMs=now-liveDrawAt;liveDrawAt=0;}
       if(lastMovingReplay && world && !retainedWorld){
         stats.walkingReplayTailMs=now-lastMovingReplay;
         stats.walkingReplayTailSamples=(stats.walkingReplayTailSamples||0)+1;
@@ -649,7 +659,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     const observer=createOverlayJournalObserver(stats);
     natives.Java_orsc_BrowserWebGLBridge_overlayDeltaFrameObserved=observedOverlayDelta(observer,natives.Java_orsc_BrowserWebGLBridge_overlayDeltaFrame);
   }
-  function drawWorldColor(draws,matrices,u,width,height,detached,countReuse,spriteShift=null,localSlot=-1,localShift=null,replaySprite=null){
+  function drawWorldColor(draws,matrices,u,width,height,detached,countReuse,spriteShift=null,localSlot=-1,localShift=null,replaySprite=null,preparedSlot=-1){
     let calls=0,triangles=0;
     let culled=0;
     for(let at=0;at<draws.length;at+=8){
@@ -693,7 +703,10 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(walkingReplayEnabled){
         gl.uniform3f(gl.getUniformLocation(spriteProgram,'cameraShift'),spriteShift?.[0]||0,spriteShift?.[1]||0,spriteShift?.[2]||0);
         gl.uniform3f(gl.getUniformLocation(spriteProgram,'playerShift'),localShift?.[0]||0,localShift?.[1]||0,localShift?.[2]||0);
-        gl.uniform1i(gl.getUniformLocation(spriteProgram,'movingSprite'),localSlot??-1);
+        gl.uniform1i(gl.getUniformLocation(spriteProgram,'movingSprite'),preparedSlot>=0?preparedSlot:localSlot??-1);
+        gl.uniform1i(gl.getUniformLocation(spriteProgram,'bankStart'),walkBankStart);
+        gl.uniform1i(gl.getUniformLocation(spriteProgram,'bankSelected'),preparedSlot);
+        gl.uniform1i(gl.getUniformLocation(spriteProgram,'hiddenActor'),preparedSlot>=0?localSlot:-1);
         gl.uniform1i(gl.getUniformLocation(spriteProgram,'replayImage'),replaySprite?1:0);
         if(replaySprite){
           gl.uniform4fv(gl.getUniformLocation(spriteProgram,'oldUv'),replaySprite.from);
