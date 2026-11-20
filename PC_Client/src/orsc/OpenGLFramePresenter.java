@@ -377,6 +377,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		frame.submittedNanos = RenderTelemetry.boundaryDiagnosticsNow();
 
 		synchronized (frameLock) {
+			if (closed || disabled) {
+				frame.release();
+				return;
+			}
 			if (pendingFrame != null) {
 				RenderTelemetry.recordOpenGLDroppedFrame();
 				pendingFrame.release();
@@ -399,6 +403,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 	private void renderLoop() {
 		Renderer3DSettings.setOpenGLPresentationAvailable(false);
+		boolean windowCloseRequested = false;
 		try {
 			gl = LwjglBindings.load();
 			windowController = new OpenGLWindowController(
@@ -517,7 +522,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				+ viewportPresenter.currentScaleMode().id
 				+ (primaryWindow ? " automatic" : ""));
 
-			boolean windowCloseRequested = false;
 			while (!closed) {
 				windowCloseRequested = windowController.shouldClose();
 				if (windowCloseRequested) {
@@ -539,11 +543,20 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			log("OpenGL presenter loop ended: closed=" + closed + ", windowCloseRequested=" + windowCloseRequested);
 		} catch (ClassNotFoundException e) {
 			disable("OpenGL presenter disabled: LWJGL jars were not found. Run scripts/download-lwjgl.sh and rebuild.");
+			ClientRuntimeLogger.logThrowable("OpenGL presenter could not load LWJGL", e);
 		} catch (Throwable t) {
 			disable("OpenGL presenter disabled after an unexpected error: " + t.getMessage());
+			ClientRuntimeLogger.logThrowable("OpenGL presenter failed", t);
 			t.printStackTrace();
 		} finally {
-			cleanup();
+			cleanup(windowCloseRequested);
+			if (disabled && !closed && primaryWindow && !OpenGLWindowController.HIDDEN_DIAGNOSTIC) {
+				EventQueue.invokeLater(() -> {
+					if (!closed) {
+						ScaledWindow.showSoftwareFallback();
+					}
+				});
+			}
 		}
 	}
 
@@ -4082,17 +4095,17 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		RenderTelemetry.recordDiagnosticBoundary("capture-burst-before");
 	}
 
-	private void cleanup() {
+	private void cleanup(boolean windowCloseRequested) {
 		Renderer3DSettings.setOpenGLPresentationAvailable(false);
-		if (worldSpriteDrawController != null) {
-			worldSpriteDrawController.clearScratch();
-			worldSpriteDrawController = null;
-		}
-		releaseInputState();
-		if (windowController != null) {
-			windowController.prepareForShutdown();
-		}
 		try {
+			releaseInputState();
+			if (worldSpriteDrawController != null) {
+				worldSpriteDrawController.clearScratch();
+				worldSpriteDrawController = null;
+			}
+			if (windowController != null) {
+				windowController.prepareForShutdown();
+			}
 			if (gl != null && windowController != null && windowController.hasWindow()) {
 				if (frameGpuTimer != null) { frameGpuTimer.close(); frameGpuTimer = null; }
 				if (spriteTextureCache != null) {
@@ -4152,7 +4165,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			logCleanupFailure("release OpenGL resources", t);
 		} finally {
 			if (windowController != null) {
-				windowController.shutdown(closed);
+				windowController.shutdown(windowCloseRequested && !closed);
 			}
 		}
 	}
