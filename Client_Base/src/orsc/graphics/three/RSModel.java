@@ -2640,6 +2640,13 @@ public final class RSModel {
 		}
 	}
 
+	/** Camera-independent part of the existing projection path. */
+	final boolean prepareDirtyWorldTransform() {
+		if (m_Yb != 1) return false;
+		resetTransformCache(7972);
+		return true;
+	}
+
 	final void rotate1024(int yOffset, int vParamSrc, int xOffset, byte var4, int zOffset, int rotY, int rotZ, int rotX,
 						  int zTop) {
 		try {

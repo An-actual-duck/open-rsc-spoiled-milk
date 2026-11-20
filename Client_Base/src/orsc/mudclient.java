@@ -943,9 +943,13 @@ public final class mudclient implements Runnable {
 		Boolean.getBoolean("spoiledmilk.browserBenchmark")
 			&& !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 			&& Boolean.getBoolean("spoiledmilk.browserHoldWalkingScenery");
+	private static final boolean BROWSER_PREPARE_WALKING_TRANSFORMS = BROWSER_HOLD_WALKING_SCENERY
+		&& Boolean.getBoolean("spoiledmilk.browserPrepareWalkingTransforms");
 	private boolean browserOrdinaryWalking;
 	private boolean browserWalkingDrawPending;
 	private long browserWalkingSceneryUntil;
+	private final int[] browserWalkingTransformMetrics = new int[2];
+	private int browserWalkingTransformCursor;
 
 	private final LayeredScenePresentationLatch
 		layeredScenePresentationLatch =
@@ -6332,7 +6336,14 @@ public final class mudclient implements Runnable {
 
 						if (this.currentViewMode == GameMode.GAME) {
 							this.getSurface().loggedIn = true;
-							if (!holdingBrowserWalkingScenery()) this.drawGame(13);
+							if (!holdingBrowserWalkingScenery()) {
+								if (BROWSER_PREPARE_WALKING_TRANSFORMS && browserWalkingSceneryUntil != 0L) {
+									System.out.println("WALK_TRANSFORM_PREP models=" + browserWalkingTransformMetrics[0]
+										+ " roundedSliceMs=" + browserWalkingTransformMetrics[1]);
+									browserWalkingSceneryUntil = 0L;
+								}
+								this.drawGame(13);
+							}
 						}
 					} catch (OutOfMemoryError var4) {
 						var4.printStackTrace();
@@ -18786,6 +18797,11 @@ public final class mudclient implements Runnable {
 				if (holdingBrowserWalkingScenery() && this.localPlayer != null)
 					clientPort.liveWalkingPose(getLocalPlayerWorldPixelX(), getLocalPlayerWorldPixelZ(),
 						getBrowserCameraWorldX(), getBrowserCameraWorldZ(), getLocalPlayerWalkingGait(), this.cameraRotation);
+				if (BROWSER_PREPARE_WALKING_TRANSFORMS && holdingBrowserWalkingScenery()
+						&& !this.layeredSceneActivationPending && !this.loadingArea) {
+					browserWalkingTransformCursor = scene.prepareWalkingWorldTransforms(
+						browserWalkingTransformCursor, browserWalkingTransformMetrics);
+				}
 				this.preloadTerrainForActiveMovementContext();
 
 				if (!this.isSleeping) {
@@ -26785,6 +26801,10 @@ public final class mudclient implements Runnable {
 		this.browserWalkingSceneryUntil = BROWSER_HOLD_WALKING_SCENERY && retainPresentedFrame
 			&& ordinaryWalking && targetTileX != Integer.MIN_VALUE && targetTileZ != Integer.MIN_VALUE
 				? System.nanoTime() + 500_000_000L : 0L;
+		if (BROWSER_PREPARE_WALKING_TRANSFORMS) {
+			browserWalkingTransformCursor = 0;
+			Arrays.fill(browserWalkingTransformMetrics, 0);
+		}
 		this.layeredSceneActivationPending = true;
 		this.layeredSceneTerrainStageWaitLogged = false;
 		this.browserOrdinaryWalking = retainPresentedFrame && ordinaryWalking;

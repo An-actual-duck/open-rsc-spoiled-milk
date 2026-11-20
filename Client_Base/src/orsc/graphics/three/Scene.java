@@ -2931,6 +2931,20 @@ public final class Scene {
         characterShadowSlopeZ[face] = Math.max(-1.5f, Math.min(1.5f, (frontY - (float) backY) / (2 * radius)));
     }
 
+	/** Finalize ordinary model transforms in bounded slices. Camera projection and
+	 * picking still run on the ordinary frame; later changes mark models dirty. */
+	public final int prepareWalkingWorldTransforms(int start, int[] metrics) {
+		long started = System.nanoTime();
+		int cursor = start;
+		int limit = Math.min(modelCount, start + 96);
+		while (cursor < limit) {
+			if (models[cursor++].prepareDirtyWorldTransform()) metrics[0]++;
+			if (System.nanoTime() - started >= 2_000_000L) break;
+		}
+		metrics[1] += (int) ((System.nanoTime() - started + 999_999L) / 1_000_000L);
+		return cursor;
+	}
+
 	public final void endScene(int var1) {
 		try {
 

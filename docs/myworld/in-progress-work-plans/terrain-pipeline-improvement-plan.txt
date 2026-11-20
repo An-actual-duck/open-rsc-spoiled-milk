@@ -430,6 +430,22 @@ the missing-pose gap but leaves scene assembly on the movement thread.
 Evidence is in output/diagnostics/browser-overlapping-handoff/
 prepared-walk-sprites/result.json.
 
+The owner's visual test confirmed the walk poses are a clear improvement
+and the scenery swap still visibly stops movement. A private follow-up
+calls the existing camera-independent model finalizer between movement
+updates during the hold, using slices of about two milliseconds and
+at most 96 models. The ordinary frame still handles camera projection
+and picking, and model changes still invalidate their transforms.
+
+The follow-up finalized 841 models outbound and 1,066 on the return.
+Scene-render time on the first replacement frame fell from 57/49 ms
+to 30/13 ms. The gap from the last live draw to the first replacement
+draw fell from 306/116 ms to 272/76 ms. Live sample spacing stayed at
+22 ms or less with all walk poses present. The return ended one tile
+south of the earlier run. Outbound resident scenery still took 72 ms,
+so the same pass should be evaluated for bounded preparation. Evidence
+is in output/diagnostics/browser-overlapping-handoff/sliced-transforms/.
+
 Optional streaming policy
 -------------------------
 
