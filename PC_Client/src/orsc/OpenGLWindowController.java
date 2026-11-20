@@ -201,8 +201,8 @@ final class OpenGLWindowController {
 		}
 	}
 
-	void shutdown(boolean presenterClosed) {
-		boolean closeClient = glfwInitialized && window != 0L && !presenterClosed && primaryWindow;
+	void shutdown(boolean windowCloseRequested) {
+		boolean closeClient = glfwInitialized && window != 0L && windowCloseRequested && primaryWindow;
 		prepareForShutdown();
 		try {
 			if (window != 0L) {

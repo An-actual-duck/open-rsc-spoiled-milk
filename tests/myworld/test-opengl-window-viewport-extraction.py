@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
 VIEWPORT = ROOT / "PC_Client/src/orsc/OpenGLViewportPresenter.java"
 WINDOW = ROOT / "PC_Client/src/orsc/OpenGLWindowController.java"
+SCALED_WINDOW = ROOT / "PC_Client/src/orsc/ScaledWindow.java"
 PRESENTATION_SETTINGS = ROOT / "Client_Base/src/orsc/OpenGLPresentationSettings.java"
 WINDOW_SETTINGS = ROOT / "Client_Base/src/orsc/OpenGLWindowSettings.java"
 MONITOR_MODE = ROOT / "PC_Client/src/orsc/MonitorMode.java"
@@ -27,6 +28,7 @@ def verify_source_ownership() -> None:
     presenter = PRESENTER.read_text(encoding="utf-8")
     viewport = VIEWPORT.read_text(encoding="utf-8")
     window = WINDOW.read_text(encoding="utf-8")
+    scaled_window = SCALED_WINDOW.read_text(encoding="utf-8")
 
     require("OpenGLWindowController windowController" in presenter, "presenter window delegate missing")
     require("OpenGLViewportPresenter viewportPresenter" in presenter, "presenter viewport delegate missing")
@@ -43,7 +45,7 @@ def verify_source_ownership() -> None:
         require(moved_symbol not in presenter, f"presenter still owns {moved_symbol}")
 
     require("SurfaceSize prepareFrame" in window, "window/frame sizing boundary missing")
-    require("void shutdown(boolean presenterClosed)" in window, "window shutdown boundary missing")
+    require("void shutdown(boolean windowCloseRequested)" in window, "window shutdown boundary missing")
     require("OpenGL window cleanup failure during" in window, "native cleanup diagnostics missing")
     require("OpenGL presenter cleanup failure during" in presenter, "resource cleanup diagnostics missing")
     readiness_enabled = "Renderer3DSettings.setOpenGLPresentationAvailable(true);"
@@ -54,11 +56,19 @@ def verify_source_ownership() -> None:
         < presenter.index('log("OpenGL presenter active.");'),
         "OpenGL replacement readiness must follow successful initialization",
     )
-    cleanup = presenter[presenter.index("private void cleanup()") : presenter.index("private static void logCleanupFailure")]
+    cleanup = presenter[presenter.index("private void cleanup(") : presenter.index("private static void logCleanupFailure")]
     disable = presenter[presenter.index("private void disable(") : presenter.index("@Override\n\tpublic void close()")]
     readiness_disabled = "Renderer3DSettings.setOpenGLPresentationAvailable(false);"
     require(readiness_disabled in cleanup, "cleanup must restore software replacement ownership")
     require(readiness_disabled in disable, "disable must restore software replacement ownership")
+    require("windowController.shutdown(windowCloseRequested && !closed);" in cleanup,
+            "only a native close request should close the primary client")
+    require('ClientRuntimeLogger.logThrowable("OpenGL presenter failed", t);' in presenter,
+            "unexpected presenter failures must reach the client log")
+    require("ScaledWindow.showSoftwareFallback();" in presenter
+            and "openGLPrimaryWindowActive = false;" in scaled_window
+            and "if (isOpenGLPrimaryWindowEnabled() && openGLFramePresenter != null)" in scaled_window,
+            "primary presenter failure must restore the software frame path")
     require("static Viewport computeViewport" in viewport, "viewport layout owner missing")
     require("int mapMouseX(double cursorX)" in viewport, "viewport mouse mapping owner missing")
 
@@ -487,8 +497,8 @@ def verify_window_behavior() -> None:
                 require(gl.swapCalls == 1 && gl.pollCalls == 1, "swap/event forwarding");
                 controller.prepareForShutdown();
                 require(delegate.saves == 2, "resized bounds persisted on shutdown");
-                controller.shutdown(true);
-                controller.shutdown(true);
+                controller.shutdown(false);
+                controller.shutdown(false);
                 require(gl.destroyCalls == 1 && gl.terminateCalls == 1,
                     "idempotent window shutdown");
                 require(delegate.closes == 0, "programmatic close must not close client twice");
@@ -501,7 +511,9 @@ def verify_window_behavior() -> None:
                 require(startup.initializeGlfw(), "fullscreen startup GLFW init");
                 startup.createWindow(512, 346, false);
                 require(startupGl.monitor == 99L, "saved fullscreen applies at startup");
-                startup.shutdown(true);
+                startup.shutdown(false);
+                require(startupGl.destroyCalls == 1 && startupDelegate.closes == 0,
+                    "presenter failure can tear down a primary window without closing the client");
 
                 OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.FULLSCREEN);
                 LwjglBindings unavailableGl = new LwjglBindings();
@@ -517,7 +529,7 @@ def verify_window_behavior() -> None:
                     "missing monitor falls back to borderless without invalid native attachment");
                 require(unavailableDelegate.saves == 1,
                     "unavailable fullscreen fallback is saved");
-                unavailable.shutdown(true);
+                unavailable.shutdown(false);
 
                 OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.WINDOWED);
                 LwjglBindings failingGl = new LwjglBindings();
@@ -528,7 +540,7 @@ def verify_window_behavior() -> None:
                 failing.createWindow(512, 346, false);
                 failingGl.destroyFailure = true;
                 failingGl.terminateFailure = true;
-                failing.shutdown(false);
+                failing.shutdown(true);
                 require(failingDelegate.closes == 1, "native window close forwards client close");
                 require(failingDelegate.logs.toString().contains("destroy window")
                         && failingDelegate.logs.toString().contains("destroy marker")

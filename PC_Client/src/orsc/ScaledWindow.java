@@ -41,6 +41,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 	private static final String OPENGL_PRIMARY_WINDOW_ENV = "SPOILED_MILK_OPENGL_PRIMARY_WINDOW";
 	private static final boolean OPENGL_PRIMARY_WINDOW_ENABLED =
 		OPENGL_PRESENTER_ENABLED && readBoolean(OPENGL_PRIMARY_WINDOW_PROPERTY, OPENGL_PRIMARY_WINDOW_ENV);
+	private static volatile boolean openGLPrimaryWindowActive = OPENGL_PRIMARY_WINDOW_ENABLED;
 	private static ScaledWindow instance = null;
 	private static boolean initialRender = true;
 	private static int javaVersion = 0;
@@ -66,7 +67,15 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 	private int presentationBufferType = BufferedImage.TYPE_INT_RGB;
 
 	public static boolean isOpenGLPrimaryWindowEnabled() {
-		return OPENGL_PRIMARY_WINDOW_ENABLED;
+		return openGLPrimaryWindowActive;
+	}
+
+	static void showSoftwareFallback() {
+		ScaledWindow window = getInstance();
+		openGLPrimaryWindowActive = false;
+		window.resizeWindowToScalar();
+		window.launchScaledWindow();
+		ClientRuntimeLogger.log("Switched to the software game window after OpenGL presentation failed");
 	}
 
 	/** Private constructor to ensure singleton nature */
@@ -238,7 +247,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	/** Opens the window */
 	public void launchScaledWindow() {
-		if (OPENGL_PRIMARY_WINDOW_ENABLED) {
+		if (isOpenGLPrimaryWindowEnabled()) {
 			return;
 		}
 
@@ -315,7 +324,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 		viewportHeight = gameImage.getHeight();
 
 		if (initialRender) {
-			if (!OPENGL_PRIMARY_WINDOW_ENABLED) {
+			if (!isOpenGLPrimaryWindowEnabled()) {
 				// Set the window size for the scalar (will be realigned in the method)
 				resizeWindowToScalar();
 			}
@@ -334,7 +343,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 			? renderer2DUiBaseImage
 			: gameImage;
 
-		if (OPENGL_PRIMARY_WINDOW_ENABLED && openGLFramePresenter != null) {
+		if (isOpenGLPrimaryWindowEnabled() && openGLFramePresenter != null) {
 			openGLFramePresenter.present(
 				openGLImage,
 				1.0f,
@@ -459,7 +468,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	/** Resizes the window size for the scalar */
 	public void resizeWindowToScalar() {
-		if (OPENGL_PRIMARY_WINDOW_ENABLED) {
+		if (isOpenGLPrimaryWindowEnabled()) {
 			return;
 		}
 
@@ -502,7 +511,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	/** Resizes the applet contained within {@link OpenRSC} */
 	private void resizeApplet() {
-		if (OPENGL_PRIMARY_WINDOW_ENABLED) {
+		if (isOpenGLPrimaryWindowEnabled()) {
 			return;
 		}
 
@@ -526,7 +535,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	/** Resizes the mudclient if its dimensions don't match the current frame size */
 	public void validateAppletSize() {
-		if (OPENGL_PRIMARY_WINDOW_ENABLED) {
+		if (isOpenGLPrimaryWindowEnabled()) {
 			return;
 		}
 
@@ -597,7 +606,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	@Override
 	public void componentResized(ComponentEvent e) {
-		if (!OPENGL_PRIMARY_WINDOW_ENABLED) {
+		if (!isOpenGLPrimaryWindowEnabled()) {
 			resizeApplet();
 		}
 
