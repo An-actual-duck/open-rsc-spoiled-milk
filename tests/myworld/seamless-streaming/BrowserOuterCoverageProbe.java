@@ -139,7 +139,7 @@ public final class BrowserOuterCoverageProbe {
 			+ ":minimap=" + Arrays.hashCode(graphics.minimapSprite.getPixels()));
 	}
 
-	private static Field field(Class<?> owner, String name) throws Exception {
+	private static Field field(Class<?> owner, String name) throws NoSuchFieldException {
 		Field field = owner.getDeclaredField(name);
 		field.setAccessible(true);
 		return field;
