@@ -63,6 +63,8 @@ public final class GameStateUpdater {
 	private static final boolean LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS =
 		Boolean.parseBoolean(System.getenv(
 			"SPOILED_MILK_BOUNDARY_DIAGNOSTICS"));
+	private static final boolean COVERED_WALKING_PREVIEW =
+		Boolean.getBoolean("spoiledmilk.coveredWalkingPreview");
 	private enum VisibilitySnapshotMode {
 		LEGACY,
 		SNAPSHOT
@@ -105,6 +107,7 @@ public final class GameStateUpdater {
 	private static final int
 		LAYERED_TERRAIN_PREDICTED_SYMMETRIC_STRUCTURE_PROTOCOL_VERSION = 5;
 	private static final int NATIVE_LAYERED_PREDICTIVE_LEAD_TILES = 48;
+	private static final int COVERED_WALKING_MARGIN_TILES = 24;
 	private static final int NATIVE_LAYERED_CHUNK_RADIUS = 1;
 	private static final int NATIVE_LAYERED_SYMMETRIC_RESIDENCY_RADIUS = 2;
 	private static final int NATIVE_LAYERED_WIRE_CHUNK_SIZE =
@@ -3405,14 +3408,7 @@ public final class GameStateUpdater {
 			 * the player in the trailing sector and exposed a nearby strip
 			 * where roaming NPCs could fall into presentation-only space.
 			 */
-			viewer.setAttribute(
-				CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,
-				clientLocalCenteredSectionAnchorForTile(
-					viewer.getX(), CLIENT_LOCAL_PLANE_WIDTH));
-			viewer.setAttribute(
-				CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE,
-				clientLocalCenteredSectionAnchorForTile(
-					viewer.getY(), CLIENT_LOCAL_PLANE_HEIGHT));
+			updateCenteredClientSceneWindow(viewer);
 			return;
 		}
 		Integer midpointX = viewer.getAttribute(CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE, null);
@@ -3447,6 +3443,23 @@ public final class GameStateUpdater {
 		viewer.setAttribute(CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE, midpointY);
 	}
 
+	private static void updateCenteredClientSceneWindow(final Player viewer) {
+		if (usesCoveredWalkingPreview(viewer) && !viewer.isTeleporting()) {
+			final Integer previousX = viewer.getAttribute(
+				CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE, null);
+			final Integer previousY = viewer.getAttribute(
+				CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE, null);
+			if (previousX != null && previousY != null
+				&& canRetainCoveredWalkingCenter(viewer.getX(), viewer.getY(), previousX, previousY)) {
+				return;
+			}
+		}
+		viewer.setAttribute(CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE,
+			clientLocalCenteredSectionAnchorForTile(viewer.getX(), CLIENT_LOCAL_PLANE_WIDTH));
+		viewer.setAttribute(CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE,
+			clientLocalCenteredSectionAnchorForTile(viewer.getY(), CLIENT_LOCAL_PLANE_HEIGHT));
+	}
+
 	private static int currentClientLocalBaseX(final Player viewer) {
 		return currentClientLocalMidpoint(viewer, CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE, CLIENT_LOCAL_PLANE_WIDTH)
 			- (CLIENT_LOCAL_ACTIVE_SECTION_ORIGIN_OFFSET * CLIENT_LOCAL_SECTION_SIZE);
@@ -3463,6 +3476,10 @@ public final class GameStateUpdater {
 		final int planeOffset
 	) {
 		if (usesCenteredClientSceneWindow(viewer)) {
+			if (usesCoveredWalkingPreview(viewer) && !viewer.isTeleporting()) {
+				updateCenteredClientSceneWindow(viewer);
+				return viewer.getAttribute(attribute, null);
+			}
 			return clientLocalCenteredSectionAnchorForTile(
 				planeOffset == CLIENT_LOCAL_PLANE_WIDTH
 					? viewer.getX()
@@ -3503,6 +3520,24 @@ public final class GameStateUpdater {
 			&& viewer.getConfig().WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
 			&& viewer.getWorld().getRegionManager()
 				.hasNativeLayeredTerrain(viewer.getWorldLocation());
+	}
+
+	// This first milestone isolates walking within installed surface coverage.
+	// A transition at the outer margin still uses the current scene protocol.
+	private static boolean usesCoveredWalkingPreview(final Player viewer) {
+		return COVERED_WALKING_PREVIEW
+			&& "127.0.0.1".equals(viewer.getConfig().SERVER_BIND_ADDRESS)
+			&& !viewer.getConfig().WORLD_BUILDER_MODE
+			&& viewer.getWorldLocation().getCoordinate().getLevel() == 0;
+	}
+
+	static boolean canRetainCoveredWalkingCenter(
+		final int x, final int y, final int centerX, final int centerY) {
+		final long offsetX = (long) x - centerX;
+		final long offsetY = (long) y - centerY;
+		final int limit = CLIENT_LOCAL_SECTION_SIZE + COVERED_WALKING_MARGIN_TILES;
+		return offsetX >= -COVERED_WALKING_MARGIN_TILES && offsetX < limit
+			&& offsetY >= -COVERED_WALKING_MARGIN_TILES && offsetY < limit;
 	}
 
 	private int safeNPCIndex(final Player player, final int npcIndex) {

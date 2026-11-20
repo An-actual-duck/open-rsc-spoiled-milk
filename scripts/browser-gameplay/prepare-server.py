@@ -14,7 +14,12 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__); parser.add_argument('run', type=Path)
+    parser.add_argument('--tcp-port', type=int, default=43629)
+    parser.add_argument('--ws-port', type=int, default=43529)
+    parser.add_argument('--covered-walking-preview', action='store_true')
     args = parser.parse_args(); run = args.run.resolve()
+    if not all(1024 <= port <= 65535 for port in (args.tcp_port, args.ws_port)) or args.tcp_port == args.ws_port:
+        parser.error('Use two different nonprivileged loopback ports')
     if not (run / 'stage.json').is_file() or (run / 'server').exists(): parser.error('Use a staged run without a server; existing data is preserved')
     selection = json.loads(subprocess.check_output(['python3', str(ROOT / 'scripts/installed-map-selection.py'), str(ROOT)]))
     server = run / 'server'; server.mkdir()
@@ -23,7 +28,7 @@ def main():
     package = server / 'package'; shutil.copytree(selection['serverPackage'], package)
     config = (ROOT / 'server/myworld.conf').read_text()
     values = dict(db_name='browser_spike_dev', server_name='Private Browser Proof', server_name_welcome='Private Browser Proof',
-                  server_bind_address='127.0.0.1', server_port='43629', ws_server_port='43529', want_feature_websockets='true',
+                  server_bind_address='127.0.0.1', server_port=str(args.tcp_port), ws_server_port=str(args.ws_port), want_feature_websockets='true',
                   want_discord_bot='false', want_discord_general_logging='false', want_discord_auction_updates='false',
                   want_discord_item_showcase='false', want_discord_monitoring_updates='false', want_auto_server_shutdown='false',
                   layered_native_terrain_package_path=str(package), layered_native_terrain_manifest_sha256=selection['manifestSha256'],
@@ -66,7 +71,11 @@ def main():
     classes = run / 'server-classes'; classes.mkdir()
     cp = ':'.join([str(lib / name) for name in ordered] + [str(server / 'core-gameplay-overlay.jar'), str(server / 'core.jar'), str(server / 'plugins.jar'), str(lib / '*'), str(classes)])
     subprocess.run(['javac', '-source', '8', '-target', '8', '-cp', cp, '-d', str(classes), str(ROOT / 'tools/browser-gameplay/src/BrowserPrivateServer.java')], check=True)
-    (run / 'server-command.json').write_text(json.dumps(dict(cwd=str(server), command=['java', '-Xmx2g', '-XX:+UseSerialGC', '-cp', cp, 'BrowserPrivateServer']), indent=2) + '\n')
+    command = ['java', '-Xmx2g', '-XX:+UseSerialGC']
+    if args.covered_walking_preview:
+        command.append('-Dspoiledmilk.coveredWalkingPreview=true')
+    command += ['-cp', cp, 'BrowserPrivateServer', str(args.tcp_port), str(args.ws_port)]
+    (run / 'server-command.json').write_text(json.dumps(dict(cwd=str(server), command=command), indent=2) + '\n')
     print('Prepared private server. Disposable credentials: browserdemo / BrowserProof13')
 
 

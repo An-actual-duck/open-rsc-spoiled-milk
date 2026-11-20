@@ -21705,9 +21705,7 @@ public final class mudclient implements Runnable {
 				if (!hardAreaLoad
 					&& this.hasCompletedInitialRegionLoad
 					&& this.lastHeightOffset == this.requestedPlane
-					&& this.currentRegionMinX < wantX
-					&& this.currentRegionMaxX > wantX && this.currentRegionMinZ < wantZ
-					&& wantZ < this.currentRegionMaxZ) {
+					&& this.isInsideLoadedRegion(wantX, wantZ)) {
 					this.world.playerAlive = true;
 					return false;
 				} else {
@@ -21897,6 +21895,20 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var22) {
 			throw GenUtil.makeThrowable(var22, "client.MB(" + wantZ + ',' + wantX + ',' + var3 + ')');
 		}
+	}
+
+	private boolean isInsideLoadedRegion(int worldX, int worldZ) {
+		if (this.world.hasNativeLayeredTerrain()) {
+			int loadedBaseX = this.midRegionBaseX + this.worldOffsetX;
+			int loadedBaseZ = this.midRegionBaseZ + this.worldOffsetZ;
+			// Native receipts select the active center. A step within that same
+			// installed window does not need to load it again at its middle edge.
+			return loadedBaseX == World.sectionToLocalBaseTile(this.world.activeSectionXForWorldTile(worldX))
+				&& loadedBaseZ == World.sectionToLocalBaseTile(this.world.activeSectionYForWorldTile(worldZ))
+				&& World.isLocalTile(worldX - loadedBaseX, worldZ - loadedBaseZ);
+		}
+		return this.currentRegionMinX < worldX && worldX < this.currentRegionMaxX
+			&& this.currentRegionMinZ < worldZ && worldZ < this.currentRegionMaxZ;
 	}
 
 	private void drawLoadingPleaseWaitFrame() {

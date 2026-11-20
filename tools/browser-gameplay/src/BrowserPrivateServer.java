@@ -14,9 +14,12 @@ public final class BrowserPrivateServer {
         final Path serverRoot = Paths.get(".").toRealPath();
         final Path run = serverRoot.getParent();
         if (!Files.isRegularFile(run.resolve("stage.json")) || !Files.isRegularFile(serverRoot.resolve("BROWSER-PRIVATE.json"))) throw new IllegalStateException("Private staged world required");
+        if (args.length != 0 && args.length != 2) throw new IllegalArgumentException("Supply both loopback ports");
+        int tcpPort = args.length == 0 ? 43629 : Integer.parseInt(args[0]);
+        int wsPort = args.length == 0 ? 43529 : Integer.parseInt(args[1]);
         com.openrsc.server.config.ServerConfigurationLoadResult loaded = ServerConfigurationLoader.load("myworld.conf");
         com.openrsc.server.ServerConfiguration config = loaded.getLegacyConfiguration();
-        if (!"127.0.0.1".equals(config.SERVER_BIND_ADDRESS) || loaded.getProcessNetwork().getServerPort() != 43629 || loaded.getProcessNetwork().getWebsocketPort() != 43529 || !config.WANT_FEATURE_WEBSOCKETS || config.DB_TYPE != DatabaseType.SQLITE || !"browser_spike_dev".equals(config.DB_NAME)) throw new IllegalStateException("Private bindings/database required");
+        if (!"127.0.0.1".equals(config.SERVER_BIND_ADDRESS) || loaded.getProcessNetwork().getServerPort() != tcpPort || loaded.getProcessNetwork().getWebsocketPort() != wsPort || !config.WANT_FEATURE_WEBSOCKETS || config.DB_TYPE != DatabaseType.SQLITE || !"browser_spike_dev".equals(config.DB_NAME)) throw new IllegalStateException("Private bindings/database required");
         if (config.WANT_DISCORD_BOT || config.WANT_DISCORD_GENERAL_LOGGING || config.WANT_DISCORD_AUCTION_UPDATES || config.WANT_DISCORD_ITEM_SHOWCASE || config.WANT_DISCORD_MONITORING_UPDATES) throw new IllegalStateException("External services must be disabled");
         Files.write(run.resolve("server.pid"), java.lang.management.ManagementFactory.getRuntimeMXBean().getName().split("@")[0].getBytes("UTF-8"));
         final Server server = Server.startServer("myworld.conf");
