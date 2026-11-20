@@ -64,6 +64,17 @@ public final class BrowserResidentInputsFixture {
   definitions();mudclient c=client();Renderer3DWorldChunkFrame b=base(0,0);backend(true);
   boolean enabled=nativeBackend ? !"false".equalsIgnoreCase(System.getProperty("spoiledmilk.nativeResidentInputCache","true")) : !"false".equalsIgnoreCase(System.getProperty("spoiledmilk.browserResidentInputCache","true"));
   List<Object> first=compare(c,b,true),second=compare(c,b,true);check((firstStatic(first)==firstStatic(second))==enabled,"Static reuse does not follow backend policy");
+  String capturedMesh=meshSignature(c,first);
+  set(c,"midRegionBaseX",48);
+  set(c,"midRegionBaseZ",-48);
+  set(c,"tileSize",64);
+  try {
+   check(capturedMesh.equals(meshSignature(c,first)),"A pending mesh followed changes to the live origin or tile scale");
+  } finally {
+   set(c,"midRegionBaseX",0);
+   set(c,"midRegionBaseZ",0);
+   set(c,"tileSize",128);
+  }
   Object fixed=firstStatic(second);for(int n=0;n<30;n++){c.getGameObjectInstanceModel(2).addRotation(0,5,0);List<Object> next=compare(c,b,true);if(enabled)check(firstStatic(next)==fixed,"Animation invalidated stable static groups");}
   c.setGameObjectInstanceDir(0,2);compare(c,b,true);c.setWallObjectInstanceDir(0,1);compare(c,b,true);
   c.setGameObjectInstanceMaterialized(0,false);compare(c,b,true);c.setGameObjectInstanceMaterialized(0,true);compare(c,b,true);

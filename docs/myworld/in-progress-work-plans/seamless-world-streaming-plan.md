@@ -230,6 +230,27 @@ or adding Java direct buffers. [Sodium upload fallback](https://github.com/Caffe
 
 ### Publish the next coverage
 
+The first Firefox handoff trace identified resident scenery construction as
+the largest Java wait. The player and scenery baseline were both accepted
+about 290 ms after context receipt. The first frame then spent 658 ms in
+resident object frame assembly. The second spent 3 ms and released the
+presentation latch. Terrain prediction had matched the destination.
+Prepare static object cells before the context change, then compare their
+content against the authoritative scenery baseline at publication.
+[Firefox route evidence](seamless-world-streaming-preview.md#java-handoff-trace)
+
+For the first private scenery stage, attach a candidate placement snapshot
+to the existing adjacent terrain prediction. Use the same viewer-specific
+queries as the normal baseline. Carry the destination center, signed map
+and level, and exact placement revision or descriptor. Deliver pages within
+the existing traffic budget. Keep the candidate snapshot separate from
+the active collision and object lists, and capture the destination origin
+and terrain heights in each worker input. At publication, adopt matching
+cell meshes and build changed cells from the authoritative state. A door,
+wall, or object changed during preparation must invalidate the affected
+cell. Missing or stale predictions should use the existing full-scene
+path during this first experiment.
+
 At this handoff, keep the server's existing movement stream and the
 client's current collision view active. Build the incoming strip and its
 neighbors as one publishable group while the live frame still consumes

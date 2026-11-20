@@ -3902,6 +3902,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private RSModel createStaticPresentationGameObjectModel(
+		ResidentObjectChunkInput input,
 		SceneBaselineState.Record record,
 		int index,
 		int elevation) {
@@ -3911,8 +3912,8 @@ public final class mudclient implements Runnable {
 			|| elevation == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
 			return null;
 		}
-		int localX = record.x - this.midRegionBaseX;
-		int localZ = record.y - this.midRegionBaseZ;
+		int localX = record.x - input.baseX;
+		int localZ = record.y - input.baseZ;
 		int xSize;
 		int zSize;
 		if (record.direction == 0 || record.direction == 4) {
@@ -3922,8 +3923,8 @@ public final class mudclient implements Runnable {
 			xSize = def.getHeight();
 			zSize = def.getWidth();
 		}
-		int x = (2 * localX + xSize) * this.tileSize / 2;
-		int z = (2 * localZ + zSize) * this.tileSize / 2;
+		int x = (2 * localX + xSize) * input.tileSize / 2;
+		int z = (2 * localZ + zSize) * input.tileSize / 2;
 		RSModel model = cloneBrowserPresentationGameObject(record.id, BrowserPresentationCloneCache.CANONICAL);
 		model.key = -1 - index;
 		model.addRotation(0, record.direction * 32, 0);
@@ -3939,6 +3940,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private RSModel createStaticPresentationWallObjectModel(
+		ResidentObjectChunkInput input,
 		SceneBaselineState.Record record,
 		int index,
 		int elevation1,
@@ -3949,9 +3951,9 @@ public final class mudclient implements Runnable {
 			|| elevation2 == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
 			return null;
 		}
-		int x1 = record.x - this.midRegionBaseX;
+		int x1 = record.x - input.baseX;
 		int x2 = x1;
-		int y1 = record.y - this.midRegionBaseZ;
+		int y1 = record.y - input.baseZ;
 		int y2 = y1;
 		if (record.direction == 1) {
 			y2++;
@@ -3967,10 +3969,10 @@ public final class mudclient implements Runnable {
 			x2++;
 			y2++;
 		}
-		int x1World = x1 * this.tileSize;
-		int y1World = y1 * this.tileSize;
-		int x2World = x2 * this.tileSize;
-		int y2World = y2 * this.tileSize;
+		int x1World = x1 * input.tileSize;
+		int y1World = y1 * input.tileSize;
+		int x2World = x2 * input.tileSize;
+		int y2World = y2 * input.tileSize;
 		int height = definition.getWallObjectHeight();
 		RSModel model = new RSModel(4, 1);
 		int v1 = model.insertVertex(
@@ -4027,6 +4029,10 @@ public final class mudclient implements Runnable {
 		List<ResidentObjectChunkInput> objectInputs = buildResidentObjectChunkInputs(baseFrame);
         if(orsc.graphics.three.WholeOverworldZoneRegistry.isEnabled())captureWholeOverworldObjectCells(objectInputs);
 		long inputNanos = System.nanoTime() - inputStartNanos;
+		boolean traceHandoffScenery = BrowserRegionHandoffTrace.ENABLED && this.shouldRetainLastPresentedFrame();
+		if (traceHandoffScenery) {
+			BrowserRegionHandoffTrace.phase("scenery", "input", inputStartNanos, inputNanos);
+		}
 		if (objectInputs.isEmpty()) {
 			clearResidentObjectChunkCache();
 			this.builtStaticPresentationRevision =
@@ -4305,6 +4311,10 @@ public final class mudclient implements Runnable {
 		if (!pendingBuilds.isEmpty()) {
 			meshBuildNanos =
 				System.nanoTime() - parallelBuildStartNanos;
+		}
+		if (traceHandoffScenery) {
+			BrowserRegionHandoffTrace.sceneryBuild(objectInputs.size(), cacheHits, cacheMisses,
+				parallelBuild ? residentObjectBuildWorkerCount() : 1, parallelBuildStartNanos, meshBuildNanos);
 		}
 		for (Renderer3DWorldChunkFrame.ChunkMesh objectChunk
 				: objectChunks) {
@@ -4661,7 +4671,10 @@ public final class mudclient implements Runnable {
 				worldCellX,
 				worldCellZ,
 				chunkRole,
-				cellTileSize);
+				cellTileSize,
+				this.midRegionBaseX,
+				this.midRegionBaseZ,
+				this.tileSize);
 			builders.put(cellKey, builder);
 		}
 		boolean debugMatched = shouldDebugResidentObjectChunkModel(kind, tileX, tileZ, objectId);
@@ -4941,9 +4954,9 @@ public final class mudclient implements Runnable {
 			input.anchor.getCenterSectionX(),
 			input.anchor.getCenterSectionY(),
 			input.anchor.getOriginWorldX()
-				+ input.localOriginTileX * this.tileSize,
+				+ input.localOriginTileX * input.tileSize,
 			input.anchor.getOriginWorldZ()
-				+ input.localOriginTileZ * this.tileSize,
+				+ input.localOriginTileZ * input.tileSize,
 			models,
 			input.modelCount,
 			input.chunkRole);
@@ -4971,10 +4984,12 @@ public final class mudclient implements Runnable {
 				identity.kind
 						== Renderer3DModelKind.GAME_OBJECT.ordinal()
 					? createStaticPresentationGameObjectModel(
+						input,
 						record,
 						index,
 						identity.elevation1)
 					: createStaticPresentationWallObjectModel(
+						input,
 						record,
 						index,
 						identity.elevation1,
@@ -5017,8 +5032,8 @@ public final class mudclient implements Runnable {
 				input.cacheKey,
 				input.canonicalContentKey,
 				objectChunk,
-				this.midRegionBaseX,
-				this.midRegionBaseZ,
+				input.baseX,
+				input.baseZ,
 				input.liveModelCount,
 				input.presentationModelCount));
 		return objectChunk;
@@ -5349,6 +5364,7 @@ public final class mudclient implements Runnable {
 	private static final class ResidentObjectChunkInput {
 		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
 		private final long cellKey;
+		private final int baseX, baseZ, tileSize;
 		private final int localOriginTileX;
 		private final int localOriginTileZ;
 		private final int chunkRole;
@@ -5366,6 +5382,9 @@ public final class mudclient implements Runnable {
 		private ResidentObjectChunkInput(
 			Renderer3DWorldChunkFrame.ChunkMesh anchor,
 			long cellKey,
+			int baseX,
+			int baseZ,
+			int tileSize,
 			int localOriginTileX,
 			int localOriginTileZ,
 			int chunkRole,
@@ -5380,6 +5399,9 @@ public final class mudclient implements Runnable {
 			String debugFirstModelSummary) {
 			this.anchor = anchor;
 			this.cellKey = cellKey;
+			this.baseX = baseX;
+			this.baseZ = baseZ;
+			this.tileSize = tileSize;
 			this.localOriginTileX = localOriginTileX;
 			this.localOriginTileZ = localOriginTileZ;
 			this.chunkRole = chunkRole;
@@ -5398,6 +5420,7 @@ public final class mudclient implements Runnable {
 	private static final class ResidentObjectChunkInputBuilder {
 		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
 		private final long cellKey;
+		private final int baseX, baseZ, tileSize;
 		private final int localOriginTileX;
 		private final int localOriginTileZ;
 		private final int chunkRole;
@@ -5419,9 +5442,15 @@ public final class mudclient implements Runnable {
 			int worldCellX,
 			int worldCellZ,
 			int chunkRole,
-			int cellTileSize) {
+			int cellTileSize,
+			int baseX,
+			int baseZ,
+			int tileSize) {
 			this.anchor = anchor;
 			this.cellKey = cellKey;
+			this.baseX = baseX;
+			this.baseZ = baseZ;
+			this.tileSize = tileSize;
 			this.localOriginTileX = localOriginTileX;
 			this.localOriginTileZ = localOriginTileZ;
 			this.chunkRole = chunkRole;
@@ -5517,6 +5546,9 @@ public final class mudclient implements Runnable {
 			return new ResidentObjectChunkInput(
 				this.anchor,
 				this.cellKey,
+				this.baseX,
+				this.baseZ,
+				this.tileSize,
 				this.localOriginTileX,
 				this.localOriginTileZ,
 				this.chunkRole,
@@ -9109,22 +9141,30 @@ public final class mudclient implements Runnable {
 					this.queuedProjectileEffectCount = 0;
 					this.queuedProjectileImpactCount = 0;
 					this.queuedCombatEffectCount = 0;
+					boolean traceHandoffFrame = BrowserRegionHandoffTrace.ENABLED
+						&& this.shouldRetainLastPresentedFrame();
+					long handoffPhaseStart = traceHandoffFrame ? System.nanoTime() : 0L;
 					this.ensureGameplayRendererWorldChunkFrame();
+					BrowserRegionHandoffTrace.finishFramePhase("world-frame", handoffPhaseStart);
 					long beforeSceneNanos = RenderTelemetry.elapsedSince(drawPreparationStart);
 					long sceneRenderStart = RenderTelemetry.now();
+					handoffPhaseStart = traceHandoffFrame ? System.nanoTime() : 0L;
 					this.scene.setRendererSignedWorldLevel(this.packetHandler.getLogicalWorldLevel(
 						this.midRegionBaseZ + (this.localPlayer == null ? this.playerLocalZ : this.localPlayer.currentZ / this.tileSize)));
 					this.scene.endScene(-113);
+					BrowserRegionHandoffTrace.finishFramePhase("scene-render", handoffPhaseStart);
 					RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
 					long residentObjectsStart = RenderTelemetry.now();
 					Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
 					if (renderer3DFrame != null) {
 						renderer3DFrame.setRoofVisibility(roofVisibility, this.lastHeightOffset);
+						handoffPhaseStart = traceHandoffFrame ? System.nanoTime() : 0L;
 						Renderer3DWorldChunkFrame presentedWorldChunkFrame =
 							this.appendResidentObjectChunkFrame(
 								this.world.getRenderer3DWorldChunkFrame());
 						renderer3DFrame.setWorldChunkFrame(
 							presentedWorldChunkFrame);
+						BrowserRegionHandoffTrace.finishFramePhase("object-frame", handoffPhaseStart);
 						this.completeLayeredSceneActivationFreshFrame(
 							presentedWorldChunkFrame);
 						Renderer3DDepthFrame depthFrame = renderer3DFrame.getDepthFrame();
@@ -26697,6 +26737,9 @@ public final class mudclient implements Runnable {
 		boolean presentationProductsReady =
 			!this.packetHandler
 				.isLayeredTerrainPresentationStagePending();
+		if (BrowserRegionHandoffTrace.ENABLED && this.shouldRetainLastPresentedFrame()) {
+			BrowserRegionHandoffTrace.candidate(presentationProductsReady, staticChunkCount, previousSamples);
+		}
 		RenderTelemetry.recordBoundaryPresentationProductsReady(
 			presentationProductsReady);
 		if (!presentationProductsReady

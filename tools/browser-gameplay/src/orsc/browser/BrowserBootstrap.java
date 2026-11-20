@@ -293,19 +293,21 @@ public final class BrowserBootstrap {
                                 if(batchWork!=null)reportBatchedModelWork(batchWork);
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeZone")){reportWholeZoneWork(snapshotWholeZoneWork());reportStaticSceneWork(snapshotStaticSceneWork());reportStaticIdentityWork(snapshotStaticIdentityWork(client));reportBaselineReuseWork(snapshotBaselineReuseWork(client));reportCloneTemplateWork(snapshotCloneTemplateWork(client));}
                                 if(Boolean.getBoolean("spoiledmilk.browserWholeRam")){reportWholeRamWork(snapshotWholeRamWork());if(publicAlpha)reportWholeRamRoofSelection(orsc.BrowserWholeOverworldRam.getRoofSelectionWork());}
-                                if(Boolean.getBoolean("spoiledmilk.browserLoadProfile")){
-                                    double[] trace=snapshotRegionHandoffTrace();
-                                    if(trace[2]!=lastHandoffRevision){
-                                        String phases=(String)Class.forName("orsc.BrowserWebGLBridge").getMethod("getRegionHandoffTracePhases").invoke(null);
-                                        reportRegionHandoffTrace(phases,trace);lastHandoffRevision=trace[2];
-                                    }
-                                }
                                 orsc.graphics.two.GraphicsController surface=((orsc.mudclient)client).getSurface();
                                 double[] regionCounts=regionDiagnostics.snapshot(((orsc.mudclient)client).getWorld());
                                 reportRegionPreparationDiagnostics(regionCounts!=null,terrainDiagnostics.append(((orsc.mudclient)client).getWorld(),regionCounts));
                                 reportPreparation(orsc.graphics.two.GraphicsController.isBrowserFramePreparationEnabled(),
                                     surface!=null && surface.isBrowserFramePreparationActive(),
                                     Boolean.parseBoolean(System.getProperty("spoiledmilk.browserAnimatedBufferReuse","true")));
+                            }
+                            if(webgl && ((benchmark && Boolean.getBoolean("spoiledmilk.browserLoadProfile"))
+                                    || !publicAlpha && Boolean.getBoolean("spoiledmilk.browserRegionHandoffTrace"))) {
+                                double[] trace=snapshotRegionHandoffTrace();
+                                if(trace[2]!=lastHandoffRevision) {
+                                    String phases=(String)Class.forName("orsc.BrowserWebGLBridge").getMethod("getRegionHandoffTracePhases").invoke(null);
+                                    reportRegionHandoffTrace(phases,trace);
+                                    lastHandoffRevision=trace[2];
+                                }
                             }
                             reportState(String.valueOf(modeField.get(client)), fpsField.getInt(null), orsc.ORSCApplet.globalLoadingPercent);
                         }

@@ -96,6 +96,35 @@ browser input gate at 1,724 ms and the Java hold at 978 ms. Both candidates
 moved measurable work earlier. The headless timings vary enough that the
 input-gate reduction should be treated as provisional.
 
+### Java handoff trace
+
+A private headless Firefox trace used early uploads and ordinary rendering
+settings. At `x = 264` the adjacent terrain prediction matched. The client
+accepted the player update about 20 ms after context receipt and completed
+the scenery baseline about 290 ms after receipt. Region installation took
+151 ms within that interval. The first fresh frame then spent 658 ms in
+resident object frame assembly. The second spent 3 ms in the same phase.
+It passed the existing two-frame stability check and released the scene
+about 1,026 ms after context receipt. The private server confirmed arrival
+at `(269, 609, 0)`. The trace had no missing events. Durations can overlap.
+
+The repeat with captured scenery origins spent 8 ms preparing object inputs
+and 624 ms rebuilding meshes on the first replacement frame. It reused 67
+of 95 object cells and rebuilt the other 28. The second frame took 3 ms for
+object work, and Java released the scene about 1,003 ms after context receipt.
+Both traces released after two matching presentation frames with 112 total
+chunks and 568,324 triangles. Capturing the origin prepares the mesh builder
+for future work on a pending scene. The repeat still built the new meshes
+at the handoff.
+
+The trace can run alongside an owner preview. Stage a fresh run with
+`--preupload --trace` and a separate HTTP port. The trace fixture reserves
+private ports `43669` and `43569`. Read the events in
+`browserProof.regionHandoff.events`. Context `2` identifies the walk
+handoff. Events distinguish baseline completion, world and object frame
+assembly, presentation candidates, and release. This mode collects timings
+without enabling the browser benchmark preset.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
