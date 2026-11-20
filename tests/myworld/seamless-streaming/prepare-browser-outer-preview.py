@@ -51,7 +51,8 @@ def main():
     insert(web / 'runtime.html', "    await import('./browser.js');",
            f"    window.browserPrivateTestRoute = {{tcpPort:{TCP_PORT}, websocket:'ws://127.0.0.1:{WS_PORT}/'}};")
     insert(web / 'browser.js', '  Java_orsc_BrowserWebGLBridge_loadingWork:',
-           "  Java_orsc_browser_BrowserOuterCoverageProbe_loginReady:()=>window.browserProof.state?.mode==='LOGIN'?1:0,\n"
+           "  Java_orsc_browser_BrowserOuterCoverageProbe_loginReady:()=>window.browserProof.state?.mode==='LOGIN'\n"
+           "    && window.browserProof.events.some(event=>event.message==='WebSocket closed')?1:0,\n"
            "  Java_orsc_browser_BrowserOuterCoverageProbe_worldReady:()=>gpu?.stats.worldReadiness?.phase==='ready'?1:0,")
     subprocess.run([
         'javac', '-source', '8', '-target', '8', '-cp', f'{web / "client.jar"}:{classes}',

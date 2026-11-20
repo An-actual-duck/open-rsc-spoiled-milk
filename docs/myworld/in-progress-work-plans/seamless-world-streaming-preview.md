@@ -90,6 +90,12 @@ pack and submit one speculative mesh was 8 ms. The fixture measures Java
 submission and subsequent resource reuse. GPU completion before the
 boundary and hardware display cadence still need direct measurement.
 
+A fresh candidate repeat adopted five staged meshes totaling 8,617,176
+bytes. The transition submitted 32 uploads and 79,800,576 bytes, with the
+browser input gate at 1,724 ms and the Java hold at 978 ms. Both candidates
+moved measurable work earlier. The headless timings vary enough that the
+input-gate reduction should be treated as provisional.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

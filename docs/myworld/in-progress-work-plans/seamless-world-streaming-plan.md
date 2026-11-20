@@ -220,12 +220,13 @@ worker and bytes in flight. Start from the existing single terrain worker.
 Increase the worker count only if fresh traces show that preparation misses
 its lead time and extra CPU work leaves live frame cadence intact. [Sodium build context](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext.java) · [Sodium mesh scratch and finished buffers](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildBuffers.java#L39)
 
-Native OpenGL can later use a bounded staging ring with explicit GPU
-completion before reusing space. Sodium checks for persistent mapping and
+Native OpenGL already reuses direct vertex and index scratch buffers. A
+later native experiment can add a bounded staging ring with explicit GPU
+completion before reusing its space. Sodium checks for persistent mapping and
 uses a write path when it is unavailable. Browser uploads already cross a
 Java-to-JavaScript copy boundary and use WebGL buffer commands. Measure this
 submission cost and GPU completion separately before changing that backend
-or adding Java direct buffers. [Sodium upload fallback](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/gpu/arena/staging/MojangStagingBuffer.java#L7) · [RSC WebGL buffer upload](../../../tools/browser-gameplay/web/webgl.js#L206)
+or adding Java direct buffers. [Sodium upload fallback](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/gpu/arena/staging/MojangStagingBuffer.java#L7) · [RSC native upload scratch](../../../PC_Client/src/orsc/OpenGLWorldChunkRenderer.java#L2886) · [RSC WebGL buffer upload](../../../tools/browser-gameplay/web/webgl.js#L206)
 
 ### Publish the next coverage
 
