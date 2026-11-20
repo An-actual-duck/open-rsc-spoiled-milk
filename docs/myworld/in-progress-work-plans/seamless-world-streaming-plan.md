@@ -140,6 +140,30 @@ frame and browser readiness gates. Use this crossing for milestone 2 and
 keep the older context path as its control. Prove a live handoff with a
 ready overlap before introducing artificial delivery or upload delays.
 
+### Movement continuity gate
+
+The owner reported rubber-banding, NPC jumps, and stalled or sliding walk
+animations in earlier attempts. A walk that reaches its destination can
+still fail this gate. Keep the current server movement cadence and actor
+update path as the control. First verify that changing the local origin
+alone preserves the same world position, each pending waypoint in order,
+facing, animation phase, and interpolation state. Include wrapped
+waypoint queues and test origin changes in both directions. Ordinary
+handoffs must never reset these values. Real teleports and respawns
+continue to use their explicit reset path.
+
+On the fresh surface route, compare server steps and client receipt order
+with the player and continuously visible moving NPCs' world positions
+and poses around publication. Look for correction snaps, backward moves
+without a turn, duplicate or discarded steps, a walk phase that stops
+while an actor moves, and actors reappearing at a new position. The
+existing endpoint and aggregate motion counts cannot establish this
+continuity by themselves. Pass this gate with the existing movement
+cadence before removing either presentation hold or adding new movement
+packet behavior. [Actor rebase](../../../Client_Base/src/orsc/ORSCharacter.java) · [Focused waypoint fixture](../../../tests/myworld/seamless-streaming/ActorWaypointRebase.java)
+
+### Publish the next coverage
+
 At this handoff, keep the server's existing movement stream and the
 client's current collision view active. Build the incoming strip and its
 neighbors as one publishable group while the live frame still consumes
@@ -155,10 +179,10 @@ still blocked world input until the replacement's resources were ready.
 
 ### 1. Establish continuity across a former boundary
 
-- Start a focused Core worker branch from published `main`. Define and negotiate
-  the new movement context, sequencing, actor lifetime, and relocation rules
-  end to end. Specify which current packets still carry each field and which
-  old activation checks remain on the existing protocol path.
+- In the focused Core worker, pass the movement continuity gate with the
+  existing packet paths. Define the movement context, actor lifetime, and
+  relocation rules for the rolling handoff. Adopt wire changes separately
+  where the handoff needs an explicit movement or coverage identity.
 - On one ordinary surface crossing, install sufficient authoritative coverage
   on both sides in advance so streaming latency is controlled. Use the normal
   walk entry point and actual server simulation, with no fixed camera or

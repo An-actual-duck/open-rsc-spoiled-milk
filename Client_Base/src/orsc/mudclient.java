@@ -21827,33 +21827,19 @@ public final class mudclient implements Runnable {
 					long groundItemsNanos =
 						System.nanoTime() - phaseStartNanos;
 					phaseStartNanos = System.nanoTime();
+					int baseOffsetX = this.tileSize * baseDX;
+					int baseOffsetZ = this.tileSize * baseDZ;
 					for (int i = 0; i < this.playerCount; ++i) {
-						ORSCharacter var23 = this.players[i];
-						var23.currentX -= this.tileSize * baseDX;
-						var23.currentZ -= baseDZ * this.tileSize;
-
-						for (int j = 0; j <= var23.waypointIndexCurrent; ++j) {
-							var23.waypointsX[j] -= this.tileSize * baseDX;
-							var23.waypointsZ[j] -= baseDZ * this.tileSize;
-						}
+						this.players[i].rebaseMovementPosition(baseOffsetX, baseOffsetZ);
 					}
 
 					for (int i = 0; i < this.npcCount; ++i) {
-						ORSCharacter var23 = this.npcs[i];
-						var23.currentZ -= this.tileSize * baseDZ;
-						var23.currentX -= this.tileSize * baseDX;
-
-						for (int j = 0; var23.waypointIndexCurrent >= j; ++j) {
-							var23.waypointsX[j] -= this.tileSize * baseDX;
-							var23.waypointsZ[j] -= baseDZ * this.tileSize;
-						}
+						this.npcs[i].rebaseMovementPosition(baseOffsetX, baseOffsetZ);
 					}
 					long actorRebaseNanos =
 						System.nanoTime() - phaseStartNanos;
 
 					phaseStartNanos = System.nanoTime();
-					int baseOffsetX = this.tileSize * baseDX;
-					int baseOffsetZ = this.tileSize * baseDZ;
 					this.cameraPositionX -= baseOffsetX;
 					this.cameraPositionZ -= baseOffsetZ;
 

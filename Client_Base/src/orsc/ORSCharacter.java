@@ -92,6 +92,16 @@ public final class ORSCharacter {
 	public int groupID = Group.DEFAULT_GROUP;
 	ORSCharacterDirection direction = ORSCharacterDirection.NORTH;
 
+	void rebaseMovementPosition(int offsetX, int offsetZ) {
+		currentX -= offsetX;
+		currentZ -= offsetZ;
+		// The next unread waypoint can be above the write index when the ring wraps.
+		for (int i = 0; i < waypointsX.length; i++) {
+			waypointsX[i] -= offsetX;
+			waypointsZ[i] -= offsetZ;
+		}
+	}
+
 	public void setHitSplat(int type, int amount) {
         floatingHitSplats.typed(type, amount, FloatingHitSplatState.now());
     }
