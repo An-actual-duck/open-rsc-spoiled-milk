@@ -11,13 +11,15 @@ export function persistentWorldPolicy(options, {publicAlpha, renderWorker, whole
   const liveWalk = options.get('livewalk') === 'on';
   const workerReplay = options.get('workerreplay') === 'on';
   const walkBuffer = options.get('walkbuffer') === 'on';
+  const walkStabilize = options.get('walkstabilize') === 'on';
+  if (walkStabilize && !workerReplay) throw new Error('Walking stabilization requires worker replay');
   if (walkBuffer && !workerReplay) throw new Error('Walking resources require worker replay');
   if ((enabled || flyover || preparedWalk || terrainLookahead || quietWalk || liveWalk || workerReplay) && (publicAlpha || !enabled || !renderWorker.enabled
       || !wholeZone.enabled || wholeZone.residency !== 'full' || !wholeRam.enabled)) {
     throw new Error('Persistent scene requires a private full-residency WebGL session');
   }
   if ((preparedWalk || terrainLookahead || quietWalk || liveWalk || workerReplay) && flyover) throw new Error('Prepared walking requires live gameplay');
-  return {enabled, flyover, preparedWalk, terrainLookahead, quietWalk, liveWalk, workerReplay, walkBuffer};
+  return {enabled, flyover, preparedWalk, terrainLookahead, quietWalk, liveWalk, workerReplay, walkBuffer, walkStabilize};
 }
 
 // The existing Java view is R * translate(-eye), with R an orthonormal basis.
@@ -46,6 +48,15 @@ export function walkingReplayOffset(anchor, destination, elapsedMs) {
   if (distance < 1 || distance > 4 * TILE) return null;
   const amount = Math.max(0, Math.min(1, elapsedMs / Math.max(100, distance * 2)));
   return [dx * amount, dz * amount];
+}
+
+/** Hold the forward component briefly if Java resumes behind the visible player. */
+export function walkingResumeOffset(visible, anchor, direction, elapsedMs) {
+  if (elapsedMs >= 300) return [0, 0];
+  const lead = (visible[0] - anchor[0]) * direction[0] + (visible[1] - anchor[1]) * direction[1];
+  if (lead <= 0 || lead > TILE) return [0, 0];
+  const strength = Math.min(1, (300 - elapsedMs) / 120);
+  return [direction[0] * lead * strength, direction[1] * lead * strength];
 }
 
 export function persistentCells(cameraX, cameraZ, size) {

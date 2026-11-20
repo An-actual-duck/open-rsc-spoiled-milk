@@ -44,7 +44,7 @@ export function createRenderWorkerReplay({backend,outputSizer,now=()=>performanc
         &&packet.commands.every(c=>liveCommands.has(c.name));
       const staged=walkBuffer&&sameLayout&&!superseded&&backend.hasActiveWalkingReplay?.()
         &&packet.commands.every(c=>planningCommands.has(c.name))&&stageResources(packet.commands);
-      if(!keepLive&&!staged)backend.stopWalkingReplay?.();
+      if(!keepLive&&!staged)backend.stopWalkingReplay?.(!sameLayout);
       outputSizer.setLayout(packet.layout);lastGeometry={...packet.layout};lastLayout=packet.layout.epoch;
       let result;const start=now();
       if(!keepLive&&!staged&&deferred.length){

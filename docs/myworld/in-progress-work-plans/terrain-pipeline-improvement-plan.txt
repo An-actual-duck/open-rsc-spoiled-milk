@@ -245,6 +245,31 @@ Check endpoint dwell and pose reconciliation separately, then repeat on
 turnarounds and sloped terrain. Evidence is in output/diagnostics/
 browser-overlapping-handoff/walk-buffer-comparison.json.
 
+Walking pose correction and graphics backpressure
+------------------------------------------------
+
+Player testing reported a backward snap and a severe perceived slowdown
+despite the shorter worker-to-Java submission interval. That interval
+can include repeated poses and says nothing about the direction of the
+replacement pose. The private walkstabilize option skips duplicate
+worker poses and limits replay to one outstanding GPU draw. A bounded
+visual correction holds a small forward lead during Java catch-up, blends
+from the last visible camera and ends on timeout, reversal or scope loss.
+
+The candidate's first raw Java pose was about 114 and 92 world units
+behind its last worker pose, with 128 units per tile. The correction
+reduced the backward component along travel to zero on those first
+submissions. Intervals from the last distinct worker pose to the
+replacement were 29 and 15 ms. Java submission gaps were still 408 and
+225 ms. There were no busy-GPU or identical-pose skips on this run, and
+the return ended two Y tiles from the previous route endpoint. A very
+slow browser startup timed out once and was retried separately.
+This remains a private preview. Reproduce the frame-rate drop under
+the player's camera and window settings before claiming it is fixed.
+
+Evidence is in output/diagnostics/browser-overlapping-handoff/
+stabilized/stabilization-result.json.
+
 Optional streaming policy
 -------------------------
 
