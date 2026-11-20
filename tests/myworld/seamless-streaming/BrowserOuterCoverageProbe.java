@@ -78,6 +78,7 @@ public final class BrowserOuterCoverageProbe {
 		long retainedSince = 0;
 		long maximumHold = 0;
 		int previousX = -1;
+		boolean reportedUploadsBefore = false;
 		deadline = previous + 55_000;
 		while (System.currentTimeMillis() < deadline) {
 			long now = System.currentTimeMillis();
@@ -104,10 +105,15 @@ public final class BrowserOuterCoverageProbe {
 				BrowserBootstrap.report("outer-coverage:position:" + x + ":" + retain);
 				if (x < 264) BrowserBootstrap.report("outer-coverage:preupload-before:" + x + ":"
 					+ BrowserWebGLBridge.getPredictedTerrainReceipt());
+				if (x == 263 && !reportedUploadsBefore) {
+					reportedUploadsBefore = true;
+					BrowserBootstrap.report("outer-coverage:upload-totals-before:" + BrowserWebGLBridge.getSceneUploadReceipt());
+				}
 			}
 			previousX = x;
 			if (x == 269 && worldZ(client) == 609 && !retain) {
 				BrowserBootstrap.report("outer-coverage:preupload-final:" + BrowserWebGLBridge.getPredictedTerrainReceipt());
+				BrowserBootstrap.report("outer-coverage:upload-totals-after:" + BrowserWebGLBridge.getSceneUploadReceipt());
 				BrowserBootstrap.report("outer-coverage:complete:javaFrameGap=" + maximumGap
 					+ ":approachGap=" + approachGap + ":approachX=" + approachGapFromX + "->" + approachGapToX
 					+ ":retained=" + maximumHold);

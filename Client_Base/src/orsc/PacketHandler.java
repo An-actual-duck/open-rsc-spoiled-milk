@@ -303,9 +303,10 @@ public class PacketHandler {
 		clearPendingLayeredTerrainPrebuild();
 	}
 
-	List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedOuterTerrainMeshes() {
-		return mc.getWorld().getPreparedOuterTerrainMeshes(
-			readyPredictedLayeredTerrainStructureStage == null ? null : readyPredictedLayeredTerrainHalo);
+	List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedTerrainMeshes(boolean includeCenter) {
+		return mc.getWorld().getPreparedTerrainMeshes(
+			readyPredictedLayeredTerrainStructureStage == null ? null : readyPredictedLayeredTerrainHalo,
+			includeCenter);
 	}
 
 	private void clearReadyPredictedLayeredTerrainHalo() {

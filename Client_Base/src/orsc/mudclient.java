@@ -942,6 +942,7 @@ public final class mudclient implements Runnable {
 	private final Map<Long, PendingResidentObjectChunkBuild> predictedSceneryCells = new HashMap<>();
 	private final Deque<FutureTask<ResidentObjectChunkBuildResult>> predictedSceneryQueue = new ArrayDeque<>();
 	private FutureTask<ResidentObjectChunkBuildResult> activePredictedSceneryBuild;
+	private volatile List<Renderer3DWorldChunkFrame.ChunkMesh> preparedSceneryMeshes = Collections.emptyList();
 	private long lastPredictedSceneryDispatch;
 	private boolean predictedSceneryAuthorized;
 	private final ExecutorService residentObjectBuildExecutor =
@@ -3949,8 +3950,19 @@ public final class mudclient implements Runnable {
 
 	/** Admit at most one build per interval, after the predicted terrain worker is done. */
 	void dispatchPredictedSceneryBuild() {
-		if (predictedSceneryQueue.isEmpty()
-			|| (activePredictedSceneryBuild != null && !activePredictedSceneryBuild.isDone())) {
+		if (activePredictedSceneryBuild != null) {
+			if (!activePredictedSceneryBuild.isDone()) return;
+			if (Boolean.getBoolean("spoiledmilk.browserPreuploadSceneMeshes")) {
+				ResidentObjectChunkBuildResult ready = completedPredictedSceneryBuild(activePredictedSceneryBuild);
+				if (ready != null && ready.chunk != null && ready.chunk.getTriangleCount() > 0) {
+					List<Renderer3DWorldChunkFrame.ChunkMesh> meshes = new ArrayList<>(preparedSceneryMeshes);
+					meshes.add(ready.chunk);
+					preparedSceneryMeshes = Collections.unmodifiableList(meshes);
+				}
+			}
+			activePredictedSceneryBuild = null;
+		}
+		if (predictedSceneryQueue.isEmpty()) {
 			return;
 		}
 		long now = System.nanoTime();
@@ -3973,6 +3985,7 @@ public final class mudclient implements Runnable {
 		predictedSceneryCells.clear();
 		predictedSceneryQueue.clear();
 		activePredictedSceneryBuild = null;
+		preparedSceneryMeshes = Collections.emptyList();
 		predictedSceneryAuthorized = false;
 	}
 
@@ -3991,13 +4004,18 @@ public final class mudclient implements Runnable {
 				return null;
 			}
 		}
+		ResidentObjectChunkBuildResult result = completedPredictedSceneryBuild(pending.future);
+		if (result == null || result.chunk == null) return result;
+		return new ResidentObjectChunkBuildResult(result.chunk.rebaseStaticObjectPresentation(
+			actual.anchor.getCenterSectionX(), actual.anchor.getCenterSectionY(),
+			(built.baseX - actual.baseX) * actual.tileSize, (built.baseZ - actual.baseZ) * actual.tileSize),
+			result.durationNanos);
+	}
+
+	private static ResidentObjectChunkBuildResult completedPredictedSceneryBuild(Future<ResidentObjectChunkBuildResult> build) {
+		if (!build.isDone() || build.isCancelled()) return null;
 		try {
-			ResidentObjectChunkBuildResult result = pending.future.get();
-			if (result.chunk == null) return result;
-			return new ResidentObjectChunkBuildResult(result.chunk.rebaseStaticObjectPresentation(
-				actual.anchor.getCenterSectionX(), actual.anchor.getCenterSectionY(),
-				(built.baseX - actual.baseX) * actual.tileSize, (built.baseZ - actual.baseZ) * actual.tileSize),
-				result.durationNanos);
+			return build.get();
 		} catch (InterruptedException interrupted) {
 			Thread.currentThread().interrupt();
 		} catch (ExecutionException failed) {
@@ -26837,8 +26855,12 @@ public final class mudclient implements Runnable {
 		this.layeredScenePresentationLatch.reset();
 	}
 
-	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedOuterTerrainMeshes() {
-		return packetHandler.getPreparedOuterTerrainMeshes();
+	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedTerrainMeshes(boolean includeCenter) {
+		return packetHandler.getPreparedTerrainMeshes(includeCenter);
+	}
+
+	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedSceneryMeshes() {
+		return preparedSceneryMeshes;
 	}
 
 	public boolean shouldRetainLastPresentedFrame() {

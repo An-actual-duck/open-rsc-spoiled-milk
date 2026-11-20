@@ -772,9 +772,9 @@ public final class World {
 			worldOffsetZ);
 	}
 
-	/** Immutable outer presentation cells for a renderer's speculative cache. */
-	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedOuterTerrainMeshes(
-		NativeLayeredTerrainHaloPrebuildResult result) {
+	/** Immutable terrain buffers for a renderer's speculative cache. */
+	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedTerrainMeshes(
+		NativeLayeredTerrainHaloPrebuildResult result, boolean includeCenter) {
 		NativeLayeredTerrainSnapshot active = nativeLayeredTerrainSnapshot;
 		if (result == null || active == null
 			|| !result.activeScopeIdentity.equals(active.scopeIdentity())
@@ -784,7 +784,7 @@ public final class World {
 			|| result.includeRoofGeometry != !Config.C_HIDE_ROOFS) {
 			return Collections.emptyList();
 		}
-		return result.outerChunks;
+		return includeCenter ? result.preparedDrawChunks : result.outerChunks;
 	}
 
 	public boolean canAcceptPredictedNativeLayeredTerrainStructure(
@@ -928,7 +928,7 @@ public final class World {
             int sx=haloTerrain.getCurrentChunkX(),sy=haloTerrain.getCurrentChunkY();
             WholeRamBasis basis=new WholeRamBasis(worldOffsetX,worldOffsetZ);
             Renderer3DWorldChunkFrame query=ram.queryFrame(this,sx,sy,worldOffsetX,worldOffsetZ);List<Renderer3DWorldChunkFrame.ChunkMesh> cells=query.getChunks();ram.avoidedBuild();
-            return new NativeLayeredTerrainHaloPrebuildResult(activeScopeIdentity,receivedHaloScopeIdentity,receivedProtocolVersion,sourceRevision,worldOffsetX,worldOffsetZ,0,basis.carrierX(sx),basis.carrierZ(sy),includeRoofGeometry,cells,cells,query.getTotalTriangleCount(),true,cells.size(),0,"whole-ram query-ready","whole-ram immutable query cells",System.nanoTime()-buildStart);
+            return new NativeLayeredTerrainHaloPrebuildResult(activeScopeIdentity,receivedHaloScopeIdentity,receivedProtocolVersion,sourceRevision,worldOffsetX,worldOffsetZ,0,basis.carrierX(sx),basis.carrierZ(sy),includeRoofGeometry,cells,cells,null,query.getTotalTriangleCount(),true,cells.size(),0,"whole-ram query-ready","whole-ram immutable query cells",System.nanoTime()-buildStart);
         }
 		int logicalCenterX = Math.multiplyExact(
 			haloTerrain.getCurrentChunkX(), SECTION_SIZE);
@@ -1109,6 +1109,7 @@ public final class World {
 			includeRoofGeometry,
 			outerChunks,
 			retentionChunks,
+			activePrebuild == null ? null : activePrebuild.drawMesh,
 			triangles,
 			activePrebuild != null && activePrebuild.productCacheHit,
 			reusedCells,
@@ -1159,7 +1160,7 @@ public final class World {
 		boolean includeRoofGeometry) {
 		long buildStart = System.nanoTime();
         WholeOverworldRamRegistry.Provider ram=WholeOverworldRamRegistry.forCaptured(terrain,worldOffsetX,worldOffsetZ,includeRoofGeometry);
-        if(ram!=null){ram.avoidedBuild();return new NativeWorldModelPrebuild(true,System.nanoTime()-buildStart);}
+        if(ram!=null){ram.avoidedBuild();return new NativeWorldModelPrebuild(true,System.nanoTime()-buildStart,null);}
 		int sectionX = worldTileToSection(Math.addExact(
 			Math.multiplyExact(
 				terrain.getCurrentChunkX(), SECTION_SIZE),
@@ -1252,10 +1253,11 @@ public final class World {
 				}
 			}
 		}
-		prepareRenderer3DWorldChunkMesh(product, true);
+		Renderer3DWorldChunkFrame.ChunkMesh drawMesh = prepareRenderer3DWorldChunkMesh(product, true);
 		return new NativeWorldModelPrebuild(
 			productCacheHit,
-			System.nanoTime() - buildStart);
+			System.nanoTime() - buildStart,
+			drawMesh);
 	}
 
 	private static String formatMillis(long nanos) {
@@ -6183,12 +6185,15 @@ public final class World {
 	private static final class NativeWorldModelPrebuild {
 		private final boolean productCacheHit;
 		private final long elapsedNanos;
+		private final Renderer3DWorldChunkFrame.ChunkMesh drawMesh;
 
 		private NativeWorldModelPrebuild(
 			boolean productCacheHit,
-			long elapsedNanos) {
+			long elapsedNanos,
+			Renderer3DWorldChunkFrame.ChunkMesh drawMesh) {
 			this.productCacheHit = productCacheHit;
 			this.elapsedNanos = elapsedNanos;
+			this.drawMesh = drawMesh;
 		}
 	}
 
@@ -6204,6 +6209,7 @@ public final class World {
 		private final int sectionY;
 		private final boolean includeRoofGeometry;
 		private final List<Renderer3DWorldChunkFrame.ChunkMesh> outerChunks;
+		private final List<Renderer3DWorldChunkFrame.ChunkMesh> preparedDrawChunks;
 		private final List<Renderer3DWorldChunkFrame.ChunkMesh>
 			retentionChunks;
 		private final int triangleCount;
@@ -6227,6 +6233,7 @@ public final class World {
 			boolean includeRoofGeometry,
 			List<Renderer3DWorldChunkFrame.ChunkMesh> outerChunks,
 			List<Renderer3DWorldChunkFrame.ChunkMesh> retentionChunks,
+			Renderer3DWorldChunkFrame.ChunkMesh center,
 			int triangleCount,
 			boolean activeProductCacheHit,
 			int reusedCells,
@@ -6247,6 +6254,14 @@ public final class World {
 			this.outerChunks = Collections.unmodifiableList(
 				new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(
 					outerChunks));
+			if (center == null) {
+				this.preparedDrawChunks = this.outerChunks;
+			} else {
+				List<Renderer3DWorldChunkFrame.ChunkMesh> drawMeshes = new ArrayList<>(outerChunks.size() + 1);
+				drawMeshes.add(center);
+				drawMeshes.addAll(outerChunks);
+				this.preparedDrawChunks = Collections.unmodifiableList(drawMeshes);
+			}
 			this.retentionChunks = Collections.unmodifiableList(
 				new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(
 					retentionChunks));
