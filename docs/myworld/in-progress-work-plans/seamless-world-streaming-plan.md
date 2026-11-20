@@ -129,6 +129,10 @@ budgets from fresh runs on the supported client and hardware profiles.
 
 ## Implementation milestones
 
+The first [covered walking preview](seamless-world-streaming-preview.md)
+exercises continuity inside an installed surface window. Use its fresh route
+and control to review that part of milestone 1.
+
 ### 1. Establish continuity across a former boundary
 
 - Start a focused Core worker branch from published `main`. Define and negotiate
