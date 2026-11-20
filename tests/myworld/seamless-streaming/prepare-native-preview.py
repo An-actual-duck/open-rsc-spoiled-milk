@@ -18,11 +18,14 @@ def main():
     parser.add_argument('--tcp-port', type=int, required=True)
     parser.add_argument('--ws-port', type=int, required=True)
     parser.add_argument('--control', action='store_true')
+    parser.add_argument('--outer-coverage', action='store_true')
     args = parser.parse_args()
     if not args.name or not all(c.isascii() and (c.isalnum() or c in '-_') for c in args.name):
         parser.error('Use a simple new run name')
     if not all(1024 <= port <= 65535 for port in (args.tcp_port, args.ws_port)) or args.tcp_port == args.ws_port:
         parser.error('Use two different nonprivileged loopback ports')
+    if args.control and args.outer_coverage:
+        parser.error('The outer coverage route requires the covered walking preview')
 
     category = Path(subprocess.check_output([
         'python3', str(ROOT / 'scripts/workspace-layout.py'), 'path',
@@ -58,6 +61,7 @@ def main():
         'tcp': f'127.0.0.1:{args.tcp_port}',
         'websocket': f'127.0.0.1:{args.ws_port}',
         'coveredWalkingPreview': not args.control,
+        'route': 'outer-coverage' if args.outer_coverage else 'middle-boundary',
     }
     (run / 'stage.json').write_text(json.dumps(stage, indent=2) + '\n')
     command = [
@@ -66,6 +70,8 @@ def main():
     ]
     if not args.control:
         command.append('--covered-walking-preview')
+    if args.outer_coverage:
+        command.append('--outer-coverage')
     subprocess.run(command, cwd=ROOT, check=True)
 
     launcher = run / 'Open Covered Walking Preview.sh'

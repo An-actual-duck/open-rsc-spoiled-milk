@@ -17,9 +17,12 @@ def main():
     parser.add_argument('--tcp-port', type=int, default=43629)
     parser.add_argument('--ws-port', type=int, default=43529)
     parser.add_argument('--covered-walking-preview', action='store_true')
+    parser.add_argument('--outer-coverage', action='store_true', help='Spawn at the private outer coverage test route')
     args = parser.parse_args(); run = args.run.resolve()
     if not all(1024 <= port <= 65535 for port in (args.tcp_port, args.ws_port)) or args.tcp_port == args.ws_port:
         parser.error('Use two different nonprivileged loopback ports')
+    if args.outer_coverage and not args.covered_walking_preview:
+        parser.error('The outer coverage route requires the covered walking preview')
     if not (run / 'stage.json').is_file() or (run / 'server').exists(): parser.error('Use a staged run without a server; existing data is preserved')
     selection = json.loads(subprocess.check_output(['python3', str(ROOT / 'scripts/installed-map-selection.py'), str(ROOT)]))
     server = run / 'server'; server.mkdir()
@@ -33,6 +36,8 @@ def main():
                   want_discord_item_showcase='false', want_discord_monitoring_updates='false', want_auto_server_shutdown='false',
                   layered_native_terrain_package_path=str(package), layered_native_terrain_manifest_sha256=selection['manifestSha256'],
                   layered_native_world_runtime_profile='world-builder-installed')
+    if args.outer_coverage:
+        values.update(respawn_location_x='239', respawn_location_y='609')
     for key, value in values.items():
         config, count = re.subn(r'(?m)^([ \t]*)' + key + r':.*$', lambda m: m[1] + key + ': ' + value, config)
         if not count: config += '\n' + key + ': ' + value + '\n'

@@ -17,11 +17,15 @@ import orsc.graphics.three.World;
 public final class CoveredWalkClient {
 
 	public static void main(String[] args) throws Exception {
-		if (args.length != 2 || (!"true".equals(args[1]) && !"false".equals(args[1]))) {
-			throw new IllegalArgumentException("Expected the private server status path and preview flag");
+		boolean longerRoute = args.length == 3 && "--outer-coverage".equals(args[2]);
+		if ((args.length != 2 && !longerRoute) || (!"true".equals(args[1]) && !"false".equals(args[1]))) {
+			throw new IllegalArgumentException("Expected the private server status path, preview flag, and optional outer route");
 		}
 		Path status = Paths.get(args[0]).toRealPath();
 		boolean preview = Boolean.parseBoolean(args[1]);
+		if (longerRoute && !preview) {
+			throw new IllegalArgumentException("The outer coverage route requires the preview");
+		}
 		String password = System.getenv("SPOILED_MILK_PRIVATE_WALK_PASSWORD");
 		Path run = status.getParent();
 		if (password == null || !Files.isRegularFile(run.resolve("server/BROWSER-PRIVATE.json"))
@@ -30,7 +34,7 @@ public final class CoveredWalkClient {
 			throw new IllegalArgumentException("Start the disposable preview and supply its test login");
 		}
 		try {
-			run(status, preview, password);
+			run(status, preview, password, longerRoute);
 			System.exit(0);
 		} catch (Throwable failure) {
 			failure.printStackTrace();
@@ -38,7 +42,7 @@ public final class CoveredWalkClient {
 		}
 	}
 
-	private static void run(Path status, boolean preview, String password) throws Exception {
+	private static void run(Path status, boolean preview, String password, boolean longerRoute) throws Exception {
 		OpenRSC.main(new String[0]);
 		Field game = field(ORSCApplet.class, "mudclient");
 		Field loginPanel = field(mudclient.class, "panelLogin");
@@ -83,13 +87,25 @@ public final class CoveredWalkClient {
 		}
 		int startX = client.getMidRegionBaseX() + client.getLocalPlayerX();
 		int startZ = client.getMidRegionBaseZ() + client.getLocalPlayerZ();
+		if (longerRoute) {
+			if (startX != 239 || startZ != 609) {
+				throw new AssertionError("Outer coverage route needs the private spawn at 239,609");
+			}
+			int startSequence = context.getSequence();
+			int result = walk(client, status, context, 269, 609, 264, false, true);
+			if (result != startSequence + 1) {
+				throw new AssertionError("Outer coverage route did not publish exactly one new window");
+			}
+			System.out.printf("PASS outer coverage route reached 269,609, epochs %d/%d%n", startSequence, result);
+			return;
+		}
 		int seam = (Math.floorDiv(startZ, World.SECTION_SIZE) + 1) * World.SECTION_SIZE;
 		int targetX = chooseTarget(client, startX, seam + 2);
 		int startSequence = context.getSequence();
 		System.out.printf("ROUTE %d,%d to %d,%d over y=%d startSequence=%d%n",
 			startX, startZ, targetX, seam + 2, seam, startSequence);
-		int outward = walk(client, status, context, targetX, seam + 2, seam, preview);
-		int returned = walk(client, status, context, startX, startZ, seam, preview);
+		int outward = walk(client, status, context, targetX, seam + 2, seam, preview, false);
+		int returned = walk(client, status, context, startX, startZ, seam, preview, false);
 		if (preview ? outward != startSequence || returned != startSequence
 			: outward <= startSequence || returned <= outward) {
 			throw new AssertionError("Unexpected context sequence across the verified two-way route");
@@ -120,7 +136,7 @@ public final class CoveredWalkClient {
 	}
 
 	private static int walk(mudclient client, Path status, LayeredSceneContextState context,
-		int targetX, int targetZ, int seam, boolean preview) throws Exception {
+		int targetX, int targetZ, int seam, boolean preview, boolean crossX) throws Exception {
 		Method walk = mudclient.class.getDeclaredMethod("walkToArea", int.class, int.class,
 			int.class, int.class, int.class, int.class, boolean.class, boolean.class);
 		walk.setAccessible(true);
@@ -142,15 +158,18 @@ public final class CoveredWalkClient {
 		Map<Integer, ORSCharacter> npcsBefore = null;
 		int retainedNpcs = 0;
 		int replacedNpcs = 0;
-		int beforeSeam = targetZ >= seam ? seam - 1 : seam;
-		int afterSeam = targetZ >= seam ? seam : seam - 1;
+		int beforeSeam = (crossX ? targetX : targetZ) >= seam ? seam - 1 : seam;
+		int afterSeam = beforeSeam == seam ? seam - 1 : seam;
 		int retainedSamples = 0;
 		Field cameraPositionX = field(mudclient.class, "cameraPositionX");
 		Field cameraPositionZ = field(mudclient.class, "cameraPositionZ");
+		long lastFrameNanos = System.nanoTime();
+		long longestFrameGapNanos = 0;
 		while (System.nanoTime() < deadline) {
-			int tile = client.getMidRegionBaseZ() + client.getLocalPlayerZ();
+			int tile = crossX ? client.getMidRegionBaseX() + client.getLocalPlayerX()
+				: client.getMidRegionBaseZ() + client.getLocalPlayerZ();
 			if (tile != lastTile && Math.abs(tile - seam) <= 3) {
-				System.out.printf("SEAM y=%d context=%d retain=%s%n", tile, context.getSequence(),
+				System.out.printf("SEAM %s=%d context=%d retain=%s%n", crossX ? "x" : "y", tile, context.getSequence(),
 					client.shouldRetainLastPresentedFrame());
 			}
 			if (tile != lastTile && tile == beforeSeam) {
@@ -188,8 +207,12 @@ public final class CoveredWalkClient {
 			if (frame != null && frame != previousFrame) {
 				previousFrame = frame;
 				freshFrames++;
+				long now = System.nanoTime();
+				longestFrameGapNanos = Math.max(longestFrameGapNanos, now - lastFrameNanos);
+				lastFrameNanos = now;
 			}
-			if (tile == targetZ && client.getMidRegionBaseX() + client.getLocalPlayerX() == targetX
+			if (client.getMidRegionBaseZ() + client.getLocalPlayerZ() == targetZ
+				&& client.getMidRegionBaseX() + client.getLocalPlayerX() == targetX
 				&& (!preview || !client.shouldRetainLastPresentedFrame())) {
 				JSONObject server = new JSONObject(new String(Files.readAllBytes(status), "UTF-8"));
 				if (server.optBoolean("online") && server.optInt("x") == targetX && server.optInt("y") == targetZ) {
@@ -198,15 +221,16 @@ public final class CoveredWalkClient {
 						throw new AssertionError("Covered walk lost camera, actor or scene continuity");
 					}
 					System.out.printf("LEG server=%d,%d cameraSamples=%d actorSamples=%d walkPhases=%d frames=%d "
-						+ "retainedSamples=%d sharedNpcInstances=%d replacedNpcInstances=%d context=%d%n",
+						+ "retainedSamples=%d sharedNpcInstances=%d replacedNpcInstances=%d context=%d maxJavaFrameGapMs=%d%n",
 						targetX, targetZ, changingCamera, changingActor, changingWalkPhases, freshFrames,
-						retainedSamples, retainedNpcs, replacedNpcs, context.getSequence());
+						retainedSamples, retainedNpcs, replacedNpcs, context.getSequence(),
+						TimeUnit.NANOSECONDS.toMillis(longestFrameGapNanos));
 					return context.getSequence();
 				}
 			}
 			Thread.sleep(12);
 		}
-		throw new AssertionError("Walk did not reach " + targetX + "," + targetZ + ", last client y=" + lastTile);
+		throw new AssertionError("Walk did not reach " + targetX + "," + targetZ + ", last seam-axis tile=" + lastTile);
 	}
 
 	private static Map<Integer, ORSCharacter> nearbyNpcs(mudclient client) {

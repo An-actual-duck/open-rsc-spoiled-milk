@@ -41,11 +41,33 @@ Displayed cadence, visual NPC motion, doorway interaction, and end-to-end
 browser walking still need review.
 
 The bounds fixture exercises the center-retention decision on all four sides.
-An exploratory native route toward the outer margin stopped before reaching
-it, so a live exit remains unverified. Fresh Firefox WebGL reached the
-visible sign-in screen through the isolated preview socket. The subsequent
-headless input attempt did not authenticate, so use native for the verified
-walking route.
+
+## Outer coverage route
+
+The signed surface walk from `(239, 609, 0)` to `(269, 609, 0)` crosses
+the storage boundary at `x = 240` and the preview's scene handoff at
+`x = 264`. The matched native client and server reached the destination in
+one walk request. At the handoff the context advanced from sequence 1 to 2,
+the fixture sampled the retained scene four times, and all 18 nearby NPCs
+sampled on both sides kept their client actor instances. The longest gap
+between fresh Java scene frames on the leg was 132 ms on the isolated native
+display. That interval measures scene production, with display cadence
+outside the fixture's scope.
+
+The server and client had already prepared the predicted terrain and
+structure on this run. The diagnostic trace recorded a hit on the prepared
+terrain product at the transition. The scene handoff still went through the
+client's context and baseline activation and held the previous frame.
+
+The headless Firefox WebGL run waited for the initial world to report ready
+before requesting the same walk. The private server confirmed arrival at
+`(269, 609, 0)`. The Java client held the old scene for 1,062 ms across
+`x = 264`, and the browser's ordinary-walking readiness transition blocked
+world input for 1,813 ms. It counted 18 held frames and 37 chunk uploads
+totaling 88,526,328 bytes. The longest gap in fresh Java scene production
+on the leg was 1,040 ms. These timings describe one headless run and its
+software-reported presentation state. They provide a reproduction of the
+pause, with hardware display cadence and repeat measurements still pending.
 
 ## Reproduce the private preview
 
@@ -58,6 +80,8 @@ python3 tests/myworld/seamless-streaming/prepare-native-preview.py preview \
   --tcp-port 43777 --ws-port 43778
 python3 tests/myworld/seamless-streaming/prepare-native-preview.py control \
   --tcp-port 43779 --ws-port 43780 --control
+python3 tests/myworld/seamless-streaming/prepare-native-preview.py outer \
+  --tcp-port 43785 --ws-port 43786 --outer-coverage
 ```
 
 Each run is under `output/tests/seamless-world-streaming/`. Start it with the
@@ -74,4 +98,24 @@ the fixture against the built client JAR, then launch it from the staged
 `client` directory with the fixture classes and `client.jar` on the classpath.
 Supply the disposable password in `SPOILED_MILK_PRIVATE_WALK_PASSWORD` and set
 `-Duser.home` to the staged `home` directory. The fixture uses the normal game
-client, logs the context at the seam, and checks both server endpoints.
+client, logs the context at the seam, and checks the server endpoints. For the
+outer run, pass `true --outer-coverage` after the status path. Use a fresh
+staged run because the private server saves the disposable character's
+position on logout.
+
+To stage the Firefox route, run the following with both browser fixture
+ports `43639` and `43539` free.
+
+```sh
+python3 tests/myworld/seamless-streaming/prepare-browser-outer-preview.py outer-browser \
+  --http-port 8201
+```
+
+The browser run is under `output/tests/browser-gameplay-spike/`. Start its
+recorded private server, then serve its `web` directory with
+`scripts/browser-gameplay/serve.py` on the same HTTP port. Open the URL in
+`outer-coverage-fixture.json` and select Play. This fixture signs into its
+disposable account, walks once initial graphics are ready, and reports the
+crossing through the browser's `browserProof` data. The route emits
+`outer-coverage:` events. The browser records the independent world input
+gate and upload work in `browserProof.gpu.worldStreamSamples`.

@@ -133,6 +133,26 @@ The first [covered walking preview](seamless-world-streaming-preview.md)
 exercises continuity inside an installed surface window. Use its fresh route
 and control to review that part of milestone 1.
 
+The outer coverage route shows where the preview still falls short. At
+`x = 264` the server has a prepared replacement, yet publishing it advances
+the client's scene context and sends the transition through the retained
+frame and browser readiness gates. Use this crossing for milestone 2 and
+keep the older context path as its control. Prove a live handoff with a
+ready overlap before introducing artificial delivery or upload delays.
+
+At this handoff, keep the server's existing movement stream and the
+client's current collision view active. Build the incoming strip and its
+neighbors as one publishable group while the live frame still consumes
+the overlap. Replace the derived collision view at a game-tick boundary
+after confirming its map identity, coverage, and live-object revision.
+Publish drawing resources per ready group. Track interactive coverage
+and optional surrounding presentation separately. A late roof or an
+offscreen mesh should add work to the queue without opening a world-wide
+load epoch. Keep the full readiness path for login, relocation, and
+recovery. Use an explicit server travel identity to distinguish these
+cases. Firefox already identified this fixture as ordinary walking and
+still blocked world input until the replacement's resources were ready.
+
 ### 1. Establish continuity across a former boundary
 
 - Start a focused Core worker branch from published `main`. Define and negotiate
