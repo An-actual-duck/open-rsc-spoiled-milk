@@ -1,6 +1,10 @@
 Browser modern streaming plan — saved November 11, 2026
 =======================================================
 
+Superseded for ordinary walking and chunk loading on November 20, 2026.
+Use seamless-world-streaming-plan.md in this directory for new assignments.
+The original status and proposals below record the November 11 direction.
+
 Status: PLANNED / DEFERRED during the whole-overworld single-zone audit.
 This is the earlier prioritized direction, saved so that it is not forgotten.
 It has not been rejected. Do not implement it before reviewing the separate

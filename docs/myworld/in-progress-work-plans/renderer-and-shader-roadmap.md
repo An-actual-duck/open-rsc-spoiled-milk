@@ -376,6 +376,10 @@ Still incomplete:
 
 4. True world streaming ownership
 
+   For seamless walking and chunk loading, follow the November 20, 2026
+   [Seamless World Streaming Implementation Plan](seamless-world-streaming-plan.md).
+   It coordinates the server, client world state, and renderer milestones.
+
    Turn the current section-window caches and resident chunk products into an
    explicit world-stream manager. It should own decode, model-input products,
    GPU upload, predictive preload, dirty flags, roof inclusion, and ready-state

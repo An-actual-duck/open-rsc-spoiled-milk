@@ -4,7 +4,14 @@ This document tracks the high-level path from the current alpha toward beta.
 Detailed implementation plans remain in their subject-specific documents; this
 roadmap defines priorities, milestone boundaries, and release progression.
 
-## Current browser recommendation — November 11, 2026
+## Active seamless world streaming plan — November 20, 2026
+
+Use the [Seamless World Streaming Implementation Plan](seamless-world-streaming-plan.md)
+for ordinary walking and chunk loading across the server, native client, and
+browser client. It supersedes the earlier chunk-loading recommendations and
+defines fresh implementation and acceptance milestones.
+
+## Historical browser recommendation — November 11, 2026
 
 Record two complementary planned tracks: RAM-backed bounded GPU streaming and a
 persistent browser-owned static scene to reduce repeated CPU work. Start with a

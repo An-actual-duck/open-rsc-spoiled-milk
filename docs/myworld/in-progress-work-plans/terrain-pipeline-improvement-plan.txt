@@ -1,6 +1,10 @@
 Terrain rendering and world loading plan
 =======================================
 
+Historical for seamless travel. The November 20, 2026 active implementation
+plan is seamless-world-streaming-plan.md in this directory. It supersedes the
+chunk-loading direction below. Keep this file as the terrain investigation record.
+
 Improve terrain consistency, travel, and rendering headroom in the browser
 and standalone clients. Start with a measured region-crossing route and a
 small vertex-reuse prototype. Keep the tile map as the source of truth.

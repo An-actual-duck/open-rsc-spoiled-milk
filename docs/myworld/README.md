@@ -58,6 +58,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [Movement and action responsiveness](in-progress-work-plans/movement-action-responsiveness-plan.md):
   integrated first-step and idle-command improvements, matched native input evidence,
   and remaining action lifecycle work.
+- [Seamless world streaming](in-progress-work-plans/seamless-world-streaming-plan.md):
+  active plan for continuous server-authoritative walking, independent cell
+  streaming, and fresh native and browser acceptance.
 - [Roadmap](in-progress-work-plans/roadmap.md): high-level alpha milestone and
   version progression.
 - [Next release checklist](in-progress-work-plans/next-major-release-goals.md):
