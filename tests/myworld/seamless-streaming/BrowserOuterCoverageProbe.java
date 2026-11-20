@@ -37,12 +37,13 @@ public final class BrowserOuterCoverageProbe {
 		}
 		String password = System.getProperty("spoiledmilk.outerCoverageFixturePassword");
 		if (password == null) throw new IllegalStateException("No disposable account configured");
+		field(mudclient.class, "loginScreenNumber").setInt(client, 2);
+		Thread.sleep(250);
 		Panel panel = (Panel) loginPanel.get(client);
 		Field clicked = field(Panel.class, "controlClicked");
 		panel.setText(field(mudclient.class, "controlLoginUser").getInt(client), "browserdemo");
 		panel.setText(field(mudclient.class, "controlLoginPass").getInt(client), password);
-		field(mudclient.class, "loginScreenNumber").setInt(client, 2);
-		((boolean[]) clicked.get(panel))[field(mudclient.class, "m_be").getInt(client)] = true;
+		field(mudclient.class, "enterPressed").setBoolean(client, true);
 
 		Field appearanceVisible = field(mudclient.class, "showAppearanceChange");
 		Field appearancePanel = field(mudclient.class, "panelAppearance");

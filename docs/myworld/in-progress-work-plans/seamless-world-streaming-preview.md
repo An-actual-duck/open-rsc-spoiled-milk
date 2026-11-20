@@ -125,6 +125,58 @@ handoff. Events distinguish baseline completion, world and object frame
 assembly, presentation candidates, and release. This mode collects timings
 without enabling the browser benchmark preset.
 
+### Predicted outer scenery
+
+In a matched headless Firefox pair, batching the predicted scenery jobs
+reused all 17 cells from the entering strip. The first replacement frame
+rebuilt 11 of 95 object cells instead of 28. Mesh construction inside that
+frame took 339 ms with prebuild and 660 ms with the flag off. Java released
+the scene at 708 ms with prebuild and 1,032 ms with the flag off. Both runs
+arrived at `(269, 609, 0)` with 112 chunks and 568,324 triangles in the
+released frame. The candidate's maximum observed approach gap was 1,412 ms
+compared with 1,093 ms in the control. That result prompted the paced
+dispatch experiment. The runs also adopted different numbers of terrain
+buffers, which limits what can be attributed to scenery from the WebGL
+input timing alone.
+
+The paced build waits for the predicted terrain structure to be ready, then
+dispatches at most one scenery cell every 75 ms. It waits for the previous
+job to finish before dispatching another. The scene can take completed
+matching jobs at the handoff. A pending job causes the ordinary mesh build
+for that cell.
+
+The paced candidate at `0ba3179c6` reused all 17 predicted cells again and
+built 11 at the handoff. It spent 292 ms on reused meshes before the
+handoff and 350 ms on mesh construction in the replacement frame. The
+handoff released after 713 ms in Java. The WebGL input gate lasted 1,415 ms
+and the renderer submitted 32 uploads totaling 79,800,576 bytes. The
+largest measured approach gap was 1,112 ms at the start of the walk, before
+the player left `x = 239`. The server confirmed the same destination and
+the released frame had the same chunk and triangle counts as the unpaced
+pair. This covers one direction on the private surface route.
+
+The matched paced control rebuilt 28 object cells, spent 620 ms on mesh
+construction in the replacement frame, released at 991 ms in Java, and
+held the WebGL input gate for 1,655 ms. Its largest approach gap was 1,082
+ms from `x = 239` to `x = 242`. Both runs reused the same five terrain
+buffers and submitted the same bytes at the handoff. The shorter hold
+shows why the prebuild is worth keeping in the private preview. The first
+movement gap and roughly 80 MB of handoff uploads still need work.
+
+Stage a fresh private run for manual testing with one HTTP port and two
+unused loopback game ports.
+
+```sh
+python3 tests/myworld/seamless-streaming/prepare-browser-outer-preview.py scenery-manual \
+  --http-port 8228 --tcp-port 43689 --ws-port 43589 \
+  --preupload --trace --predicted-scenery --manual
+```
+
+Sign in with the disposable credentials printed by the staging script. The
+player starts at `(239, 609)`. Walk toward `(269, 609)` and watch for the
+handoff near `x = 264`. Use fresh output names and add `--predicted-scenery`
+to only the candidate to compare automatic runs.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

@@ -228,6 +228,17 @@ Java-to-JavaScript copy boundary and use WebGL buffer commands. Measure this
 submission cost and GPU completion separately before changing that backend
 or adding Java direct buffers. [Sodium upload fallback](https://github.com/CaffeineMC/sodium/blob/637883acfe2a2e160a377a65b27b78e91c5a6d3e/common/src/main/java/net/caffeinemc/mods/sodium/client/gpu/arena/staging/MojangStagingBuffer.java#L7) · [RSC native upload scratch](../../../PC_Client/src/orsc/OpenGLWorldChunkRenderer.java#L2886) · [RSC WebGL buffer upload](../../../tools/browser-gameplay/web/webgl.js#L206)
 
+The private browser scenery experiment uses the server's existing adjacent
+terrain prediction. At a cardinal surface handoff, the server sends
+viewer-filtered placements for complete 24×24-tile cells in the entering outer
+strip. The client derives heights from the immutable terrain prediction and
+paces mesh builds after terrain preparation. The normal activation and
+baseline still establish the scene. A prepared mesh must be complete and
+match the final cell's sorted placements and sampled heights before the
+renderer can use it. A missing or changed cell takes the existing build
+path. The preview measures mesh adoption and frame spacing on the approach
+and at the handoff. [Private preview and results](seamless-world-streaming-preview.md)
+
 ### Publish the next coverage
 
 The first Firefox handoff trace identified resident scenery construction as
