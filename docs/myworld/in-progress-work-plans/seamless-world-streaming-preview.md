@@ -68,6 +68,28 @@ frames and 37 chunk uploads totaling 88,526,328 bytes. The longest gaps
 in fresh Java scene production were 1,040 and 1,063 ms. These timings are
 from headless Firefox and its software-reported presentation state.
 
+### Predicted browser buffers
+
+The private browser candidate takes completed static outer terrain and
+structure meshes from the existing prediction. It packs and submits at
+most one eligible mesh on an ordinary frame with no discretionary
+active-scene upload. The existing renderer owns submission. Speculative
+buffers use free space within the existing cache budget and have a separate
+48 MiB cap. The active scene adopts an entry when the storage key, material
+revision, and packing settings match. Movement and scene activation use the
+same code paths in both modes.
+
+In the matched headless Firefox runs, the candidate submitted seven meshes
+by `x = 260` and adopted all seven at the handoff, reusing 12,141,720
+bytes. The transition recorded 30 uploads and 76,167,456 bytes versus
+37 uploads and 88,526,328 bytes in the control. The Java scene hold was
+about one second in both runs. The browser world-input gate measured
+1,610 ms for the candidate and 1,818 ms for the control. Both accounts
+reached the server-confirmed destination. The longest measured time to
+pack and submit one speculative mesh was 8 ms. The fixture measures Java
+submission and subsequent resource reuse. GPU completion before the
+boundary and hardware display cadence still need direct measurement.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
@@ -118,3 +140,9 @@ disposable account, walks once initial graphics are ready, and reports the
 crossing through the browser's `browserProof` data. The route emits
 `outer-coverage:` events. The browser records the independent world input
 gate and upload work in `browserProof.gpu.worldStreamSamples`.
+
+Use a second fresh stage with `--preupload` to run the candidate. Leave that
+option off for the control. Run the stages in sequence because their private
+game ports are shared. The `outer-coverage:preupload-before` and
+`outer-coverage:preupload-final` events show work submitted before the
+handoff and the buffers adopted by the renderer.

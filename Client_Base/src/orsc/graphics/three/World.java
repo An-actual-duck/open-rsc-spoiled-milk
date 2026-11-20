@@ -772,6 +772,21 @@ public final class World {
 			worldOffsetZ);
 	}
 
+	/** Immutable outer presentation cells for a renderer's speculative cache. */
+	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedOuterTerrainMeshes(
+		NativeLayeredTerrainHaloPrebuildResult result) {
+		NativeLayeredTerrainSnapshot active = nativeLayeredTerrainSnapshot;
+		if (result == null || active == null
+			|| !result.activeScopeIdentity.equals(active.scopeIdentity())
+			|| result.sourceRevision != worldEditorTerrainRevision.get()
+			|| result.worldOffsetX != syntheticDeepFixtureOffsetX
+			|| result.worldOffsetZ != syntheticDeepFixtureOffsetZ
+			|| result.includeRoofGeometry != !Config.C_HIDE_ROOFS) {
+			return Collections.emptyList();
+		}
+		return result.outerChunks;
+	}
+
 	public boolean canAcceptPredictedNativeLayeredTerrainStructure(
 		NativeLayeredTerrainHaloPrebuildResult result,
 		NativeLayeredTerrainSnapshot visualTerrain,

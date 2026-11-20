@@ -24,6 +24,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('name')
     parser.add_argument('--http-port', type=int, required=True)
+    parser.add_argument('--preupload', action='store_true', help='Stage predicted terrain buffers before the handoff')
     args = parser.parse_args()
     scripts = ROOT / 'scripts/browser-gameplay'
     category = Path(subprocess.check_output([
@@ -41,8 +42,9 @@ def main():
     (web / 'Cache' / 'port.txt').write_text(f'{TCP_PORT}\n')
     bootstrap = run / 'BrowserBootstrap.java'
     bootstrap.write_bytes((ROOT / 'tools/browser-gameplay/src/orsc/browser/BrowserBootstrap.java').read_bytes())
-    insert(bootstrap, '        orsc.OpenRSC.main(new String[0]);',
-           '        if (publicAlpha) throw new IllegalStateException("Private route fixture only");')
+    insert(bootstrap, '        BrowserPublicAlpha.validate(System.getProperties(),webgl);',
+           '        if (publicAlpha) throw new IllegalStateException("Private route fixture only");\n'
+           f'        System.setProperty("spoiledmilk.browserPreuploadPredictedTerrain", "{str(args.preupload).lower()}");')
     insert(bootstrap, '        final BrowserStartupDiagnostics startupDiagnostics=',
            '        System.setProperty("spoiledmilk.outerCoverageFixturePassword", "BrowserProof13");\n'
            '        new Thread(BrowserOuterCoverageProbe::run, "outer-coverage-fixture").start();')
@@ -73,6 +75,7 @@ def main():
     stage_path.write_text(json.dumps(stage, indent=2) + '\n')
     receipt = {
         'spawn': [239, 609], 'destination': [269, 609], 'port': args.http_port,
+        'preupload': args.preupload,
         'tcpPort': TCP_PORT, 'websocketPort': WS_PORT,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',
         'stagedSha256': staged_hashes,

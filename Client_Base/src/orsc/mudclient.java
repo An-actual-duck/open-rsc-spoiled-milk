@@ -26673,6 +26673,10 @@ public final class mudclient implements Runnable {
 		this.layeredScenePresentationLatch.reset();
 	}
 
+	public List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedOuterTerrainMeshes() {
+		return packetHandler.getPreparedOuterTerrainMeshes();
+	}
+
 	public boolean shouldRetainLastPresentedFrame() {
 		return this.layeredScenePresentationLatch
 			.shouldRetainLastPresentedFrame();

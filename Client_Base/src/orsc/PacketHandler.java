@@ -16,6 +16,7 @@ import orsc.graphics.gui.KillAnnouncer;
 import orsc.graphics.gui.SocialLists;
 import orsc.graphics.three.RSModel;
 import orsc.graphics.three.World;
+import orsc.graphics.three.Renderer3DWorldChunkFrame;
 import orsc.multiclient.ClientPort;
 import orsc.net.Network_Socket;
 import orsc.net.Opcodes;
@@ -299,6 +300,11 @@ public class PacketHandler {
 			pendingLayeredTerrainHaloPrebuild.cancel(true);
 		}
 		clearPendingLayeredTerrainPrebuild();
+	}
+
+	List<Renderer3DWorldChunkFrame.ChunkMesh> getPreparedOuterTerrainMeshes() {
+		return mc.getWorld().getPreparedOuterTerrainMeshes(
+			readyPredictedLayeredTerrainStructureStage == null ? null : readyPredictedLayeredTerrainHalo);
 	}
 
 	private void clearReadyPredictedLayeredTerrainHalo() {

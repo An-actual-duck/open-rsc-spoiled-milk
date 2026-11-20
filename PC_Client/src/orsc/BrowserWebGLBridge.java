@@ -104,6 +104,21 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     private int maxTextureSize;
     private static final long CHUNK_BUDGET=224L*1024*1024; // reserve32MiB for the bounded world texture catalog
     private static final boolean ACTIVE_ONLY="active".equals(System.getProperty("spoiledmilk.browserCachePolicy","lru"));
+    private static final boolean PREUPLOAD_PREDICTED = !WHOLE_ZONE && !ACTIVE_ONLY
+        && !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+        && Boolean.getBoolean("spoiledmilk.browserPreuploadPredictedTerrain");
+    private static final long PREDICTED_BUFFER_BUDGET = 48L * 1024 * 1024;
+    private final Map<WorldChunkBufferKey, CachedChunk> stagedTerrain = new HashMap<>();
+    private List<Renderer3DWorldChunkFrame.ChunkMesh> stagedSource = Collections.emptyList();
+    private long stagedBytes, preuploadedBytes, adoptedBytes, longestPreuploadNanos;
+    private int preuploadedChunks, adoptedChunks;
+    private volatile String predictedTerrainReceipt = "uploaded=0:bytes=0:adopted=0:adoptedBytes=0:stagedBytes=0";
+
+    public static String getPredictedTerrainReceipt() {
+        BrowserWebGLBridge bridge = installedBridge;
+        return bridge == null ? "unavailable" : bridge.predictedTerrainReceipt;
+    }
+
     private static final boolean ANIMATED_BUFFER_REUSE=Boolean.parseBoolean(System.getProperty("spoiledmilk.browserAnimatedBufferReuse","true"));
     /** Actual Java-selected private control; never changes desktop renderer policy. */
     public static boolean isAnimatedBufferReuseEnabled(){return ANIMATED_BUFFER_REUSE;}
@@ -271,6 +286,11 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             Iterator<Map.Entry<Integer,int[]>> materialIterator=textureMetadata.entrySet().iterator();
             while(materialIterator.hasNext()){int id=materialIterator.next().getKey();if(frame.getTexture(id)==null){removedTextures[removedCount++]=id;materialIterator.remove();textures.remove(id);materialRevision++;}}
             if(removedCount>0)deleteTextures(Arrays.copyOf(removedTextures,removedCount));
+            if (PREUPLOAD_PREDICTED) {
+                List<Renderer3DWorldChunkFrame.ChunkMesh> predicted = client == null
+                    ? Collections.emptyList() : client.getPreparedOuterTerrainMeshes();
+                reconcileStagedTerrain(active, predicted);
+            }
             long textureEnd=System.nanoTime();
             if(loadProfile!=null)loadProfile.enter(BrowserLoadProfile.GEOMETRY);
             ChunkDraws geometry=prepareChunks(frame,presentationWorld,active);
@@ -283,6 +303,10 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             // Uploads are synchronous, so no borrowed frame storage escapes this call.
             if(progress[1]!=BrowserWorldLoadState.UI&&loadState.shouldHold(authority,world.getChunkCount(),count/8+catalogCoveredSources,remainingRepacks)) {
                 overlayDeltaReset=true;if(loadProfile!=null){loadProfile.progress(progress);loadProfile.enter(BrowserLoadProfile.TERMINAL);}worldProgress(progress);holdWorld();if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=2;return;
+            }
+            if (PREUPLOAD_PREDICTED && progress[1] == BrowserWorldLoadState.WORLD
+                && count / 8 == world.getChunkCount() && remainingRepacks == 0 && geometry.uploadedVertices == 0) {
+                preuploadPredictedTerrain(frame);
             }
             float[] view=OpenGLWorldChunkRenderer.backendWorldViewMatrix(frame);
             float[] clip=OpenGLWorldChunkRenderer.multiply(OpenGLWorldChunkRenderer.projectionMatrix(frame),view);
@@ -308,8 +332,76 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         } finally { RendererFrameLighting.restore(previous); }
     }
     static final class ChunkDraws {
-        final int[] draws;final int remainingRepacks;
-        ChunkDraws(int[] draws,int remainingRepacks){this.draws=draws;this.remainingRepacks=remainingRepacks;}
+        final int[] draws;
+        final int remainingRepacks, uploadedVertices;
+        ChunkDraws(int[] draws,int remainingRepacks,int uploadedVertices){
+            this.draws=draws;this.remainingRepacks=remainingRepacks;this.uploadedVertices=uploadedVertices;
+        }
+    }
+
+    private void reconcileStagedTerrain(Set<WorldChunkBufferKey> active,
+                                        List<Renderer3DWorldChunkFrame.ChunkMesh> predicted) {
+        if (stagedTerrain.isEmpty()) {
+            stagedSource = predicted;
+            return;
+        }
+        int[] settings = packing.backendPackingSettings();
+        int[] deleted = null;
+        int count = 0;
+        long previousStagedBytes = stagedBytes;
+        Iterator<Map.Entry<WorldChunkBufferKey, CachedChunk>> iterator = stagedTerrain.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<WorldChunkBufferKey, CachedChunk> entry = iterator.next();
+            WorldChunkBufferKey key = entry.getKey();
+            CachedChunk staged = entry.getValue();
+            boolean resident = chunks.get(key) == staged;
+            boolean matches = resident && staged.materialRevision == materialRevision
+                && Arrays.equals(staged.settings, settings);
+            if (matches && !active.contains(key) && stagedSource == predicted) continue;
+            if (matches && active.contains(key)) {
+                adoptedChunks++;
+                adoptedBytes += staged.bytes;
+            } else if (resident) {
+                chunks.remove(key);
+                residentChunkBytes -= staged.bytes;
+                if (deleted == null) deleted = new int[stagedTerrain.size()];
+                deleted[count++] = staged.id;
+            }
+            stagedBytes -= staged.bytes;
+            iterator.remove();
+        }
+        if (deleted != null) chunkBackend.delete(Arrays.copyOf(deleted, count));
+        stagedSource = predicted;
+        if (previousStagedBytes != stagedBytes) updatePredictedTerrainReceipt();
+    }
+
+    private void preuploadPredictedTerrain(Renderer3DFrame frame) {
+        for (Renderer3DWorldChunkFrame.ChunkMesh chunk : stagedSource) {
+            WorldChunkBufferKey key = chunkKey(chunk);
+            if (chunk.getChunkRole() != Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD
+                || chunk.getVertexCount() > UPLOAD_VERTICES_PER_FRAME || chunks.containsKey(key)) continue;
+            long bytes = chunkBytes(chunk);
+            if (stagedBytes + bytes > PREDICTED_BUFFER_BUDGET || residentChunkBytes + bytes > CHUNK_BUDGET
+                || chunks.size() >= MAX_CHUNKS * 2) continue;
+            // The ordinary presenter owns this upload. It has already exported this frame's textures.
+            long started = System.nanoTime();
+            CachedChunk cached = upload(frame, chunk, bytes, packing.backendPackingSettings());
+            longestPreuploadNanos = Math.max(longestPreuploadNanos, System.nanoTime() - started);
+            chunks.put(key, cached);
+            stagedTerrain.put(key, cached);
+            residentChunkBytes += bytes;
+            stagedBytes += bytes;
+            preuploadedChunks++;
+            preuploadedBytes += bytes;
+            updatePredictedTerrainReceipt();
+            return;
+        }
+    }
+
+    private void updatePredictedTerrainReceipt() {
+        predictedTerrainReceipt = "uploaded=" + preuploadedChunks + ":bytes=" + preuploadedBytes
+            + ":adopted=" + adoptedChunks + ":adoptedBytes=" + adoptedBytes + ":stagedBytes=" + stagedBytes
+            + ":maxSubmitMillis=" + longestPreuploadNanos / 1_000_000L;
     }
     // Production native identity: static chunks retain immutable/rebased storage;
     // animated chunks own one positional slot and replace its latest exact pose.
@@ -363,7 +455,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             int visibility=0;for(Renderer3DModelKind kind:Renderer3DModelKind.values())if(frame.isWorldChunkModelKindVisible(kind,chunk.getPlane()))visibility|=1<<kind.ordinal();
             draws[count++]=visibility;draws[count++]=chunk.getPlane();draws[count++]=chunk.getChunkRole();
         }
-        return new ChunkDraws(Arrays.copyOf(draws,count),remainingRepacks);
+        return new ChunkDraws(Arrays.copyOf(draws,count),remainingRepacks,uploaded);
     }
     private CachedChunk updateChunk(Renderer3DFrame frame,Renderer3DWorldChunkFrame.ChunkMesh chunk,CachedChunk cached,int[] settings,int[] materials,Set<WorldChunkBufferKey> active) {
         int packedIndices=Math.min(chunk.getTriangleCount(),chunk.getIndexCount()/3)*3;

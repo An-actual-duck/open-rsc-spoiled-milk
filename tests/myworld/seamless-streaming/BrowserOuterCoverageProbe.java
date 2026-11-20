@@ -3,6 +3,7 @@ package orsc.browser;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import orsc.ORSCApplet;
+import orsc.BrowserWebGLBridge;
 import orsc.graphics.gui.Panel;
 import orsc.graphics.three.Renderer3DFrame;
 import orsc.mudclient;
@@ -69,16 +70,19 @@ public final class BrowserOuterCoverageProbe {
 		Renderer3DFrame last = client.getScene().getRenderer3DFrame();
 		long previous = System.currentTimeMillis();
 		long maximumGap = 0;
+		long approachGap = 0;
 		long retainedSince = 0;
 		long maximumHold = 0;
 		int previousX = -1;
 		deadline = previous + 55_000;
 		while (System.currentTimeMillis() < deadline) {
 			long now = System.currentTimeMillis();
+			int x = worldX(client);
 			Renderer3DFrame frame = client.getScene().getRenderer3DFrame();
 			if (frame != null && frame != last) {
 				last = frame;
 				maximumGap = Math.max(maximumGap, now - previous);
+				if (x >= 239 && x < 264) approachGap = Math.max(approachGap, now - previous);
 				previous = now;
 			}
 			boolean retain = client.shouldRetainLastPresentedFrame();
@@ -87,13 +91,16 @@ public final class BrowserOuterCoverageProbe {
 				maximumHold = Math.max(maximumHold, now - retainedSince);
 				retainedSince = 0;
 			}
-			int x = worldX(client);
 			if (x != previousX && x >= 260 && x <= 269 && worldZ(client) == 609) {
 				BrowserBootstrap.report("outer-coverage:position:" + x + ":" + retain);
+				if (x < 264) BrowserBootstrap.report("outer-coverage:preupload-before:" + x + ":"
+					+ BrowserWebGLBridge.getPredictedTerrainReceipt());
 			}
 			previousX = x;
 			if (x == 269 && worldZ(client) == 609 && !retain) {
-				BrowserBootstrap.report("outer-coverage:complete:javaFrameGap=" + maximumGap + ":retained=" + maximumHold);
+				BrowserBootstrap.report("outer-coverage:preupload-final:" + BrowserWebGLBridge.getPredictedTerrainReceipt());
+				BrowserBootstrap.report("outer-coverage:complete:javaFrameGap=" + maximumGap
+					+ ":approachGap=" + approachGap + ":retained=" + maximumHold);
 				return;
 			}
 			Thread.sleep(12);
