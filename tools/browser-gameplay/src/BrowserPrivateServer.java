@@ -28,6 +28,7 @@ public final class BrowserPrivateServer {
             if (id < 0) throw new IllegalStateException("Could not create disposable browser account");
         }
         server.getGameEventHandler().add(new GameTickEvent(server.getWorld(), null, 1, "Private browser proof status", DuplicationStrategy.ONE_PER_SERVER) {
+            private final boolean traceTravel = Boolean.getBoolean("spoiledmilk.browserTravelTrace");
             public void run() {
                 try {
                     Player player = server.getWorld().getPlayer(DataConversions.usernameToHash("browserdemo"));
@@ -35,6 +36,11 @@ public final class BrowserPrivateServer {
                     if (player != null) state.put("x", player.getX()).put("y", player.getY()).put("level", player.getWorldLocation().getCoordinate().getLevel());
                     Path temp = run.resolve("status.next"); Files.write(temp, state.toString().getBytes("UTF-8"));
                     Files.move(temp, run.resolve("status.json"), StandardCopyOption.REPLACE_EXISTING);
+                    if (traceTravel && player != null) {
+                        JSONObject row = state.put("time", System.currentTimeMillis()).put("tick", server.getCurrentTick());
+                        Files.write(run.resolve("travel-server.ndjson"), (row + "\n").getBytes("UTF-8"),
+                            StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                    }
                 } catch (Exception error) { error.printStackTrace(); }
             }
         });

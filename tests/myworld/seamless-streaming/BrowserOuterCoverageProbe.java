@@ -63,6 +63,10 @@ public final class BrowserOuterCoverageProbe {
 		}
 		if (worldReady() != 1) throw new IllegalStateException("Initial graphics did not become ready");
 		if (worldX(client) != 239 || worldZ(client) != 609) throw new IllegalStateException("Wrong private spawn");
+		if (Boolean.getBoolean("spoiledmilk.sustainedBrowserWalk")) {
+			runSustainedWalk(client);
+			return;
+		}
 		BrowserBootstrap.report("outer-coverage:walking:239,609->269,609");
 		Method walk = mudclient.class.getDeclaredMethod("walkToArea", int.class, int.class, int.class,
 			int.class, int.class, int.class, boolean.class, boolean.class);
@@ -130,6 +134,31 @@ public final class BrowserOuterCoverageProbe {
 
 	private static int worldX(mudclient client) { return client.getMidRegionBaseX() + client.getLocalPlayerX(); }
 	private static int worldZ(mudclient client) { return client.getMidRegionBaseZ() + client.getLocalPlayerZ(); }
+
+	private static void runSustainedWalk(mudclient client) throws Exception {
+		Method walk = mudclient.class.getDeclaredMethod("walkToArea", int.class, int.class, int.class,
+			int.class, int.class, int.class, boolean.class, boolean.class);
+		walk.setAccessible(true);
+		int[][] destinations = {{284, 609}, {291, 597}, {322, 597}, {254, 609}};
+		for (int[] destination : destinations) {
+			int x = destination[0], z = destination[1];
+			BrowserBootstrap.report("outer-coverage:walking:" + worldX(client) + "," + worldZ(client) + "->" + x + "," + z);
+			int localX = x - client.getMidRegionBaseX(), localZ = z - client.getMidRegionBaseZ();
+			walk.invoke(client, client.getLocalPlayerX(), client.getLocalPlayerZ(), localX, localZ, localX, localZ, false, false);
+			long deadline = System.currentTimeMillis() + 48_000;
+			while ((worldX(client) != x || worldZ(client) != z || worldReady() != 1) && System.currentTimeMillis() < deadline) {
+				Thread.sleep(75L);
+			}
+			if (worldX(client) != x || worldZ(client) != z || worldReady() != 1) {
+				throw new IllegalStateException("Sustained walk ended at " + worldX(client) + "," + worldZ(client)
+					+ " while walking to " + x + "," + z);
+			}
+			BrowserBootstrap.report("outer-coverage:arrived:" + x + "," + z);
+		}
+		Thread.sleep(8_000L);
+		reportTerrainState(client.getWorld());
+		BrowserBootstrap.report("outer-coverage:complete:sustained");
+	}
 
 	private static void reportTerrainState(World world) throws ReflectiveOperationException {
 		int[][] elevations = (int[][]) field(World.class, "tileElevationCache").get(world);

@@ -67,6 +67,15 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   function queueOwnedState(enabled){alive();if(options.benchmarkControl!==true||typeof enabled!=='boolean')throw new Error('Private benchmark owned-state control unavailable');pendingOwnedState=enabled;stats.pendingOwnedState=enabled;return {queued:enabled,active:!!ownedFrame?.active};}
   function commitOwnedState(){if(pendingOwnedState===null)return;const before=!!ownedFrame.active;ownedFrame.active=pendingOwnedState;pendingOwnedState=null;stats.pendingOwnedState=null;stats.ownedStateActive=ownedFrame.active;stats.ownedStateTransitions.push({afterJavaFrame:stats.javaFrames,afterWorldFrame:stats.javaWorldFrames,before,enabled:ownedFrame.active,milliseconds:performance.now()});if(stats.ownedStateTransitions.length>64)stats.ownedStateTransitions.shift();}
   const worldReady=createWorldReadiness(gl,{stats});
+  const travel=options.travelTrace===true?{rows:[],dropped:0}:null;
+  if(travel)stats.travelTrace=travel;
+  function recordTravel(row){
+    if(!travel)return;
+    if(travel.rows.length===8192){travel.rows.splice(0,1024);travel.dropped+=1024;}
+    travel.rows.push({...row,time:performance.timeOrigin+performance.now(),epoch:stats.worldReadiness?.epoch,
+      uploadedBytes:stats.uploadedBytes,uploads:stats.uploadedChunks,repacks:stats.repackedChunks||0,
+      gpuBytes:stats.gpuBytes});
+  }
   const uploadValidation=createStreamUploadValidation(gl,{stats,enabled:options.streamUploadValidation===true,poison:error=>worldReady.fail(String(error))});
   const gpuTimer=gl.getExtension("EXT_disjoint_timer_query_webgl2"),pendingQueries=[];let activeTimerQuery=null;
   let cachedMaxTextureSize=0;
@@ -173,8 +182,8 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
     },
     async Java_orsc_BrowserWebGLBridge_wholeZoneFrame(lib,metadata,overrides){alive();if(!capacity.enabled||!wholeZoneSelection||!capacity.bounded&&!stats.wholeZone.ready)throw new Error('Whole zone frame before catalogue admission/residency');wholeZoneSelection.frame(metadata,overrides);},
     async Java_orsc_BrowserWebGLBridge_worldProgress(lib,metadata){alive();worldReady.declare(metadata);},
-    async Java_orsc_BrowserWebGLBridge_regionTransition(lib,soft){alive();if(options.overlayDeltaTransport===true&&overlay)overlay.invalidateDeltaHistory();if(capacity.bounded){boundedResidency?.suspend();stats.wholeZone.ready=false;stats.wholeZone.phase='awaiting-scope';}worldReady.beginTransition(soft===true);},
-    async Java_orsc_BrowserWebGLBridge_holdWorld(){alive();uploadValidation.beforeDraw();gl.bindSampler(0,null);if(!overlay)throw new Error('Region retention requires coverage compositor');if(ownedFrame?.active)ownedFrame.begin(canvas.width,canvas.height,0,0,0);overlay.hold(canvas.width,canvas.height);worldReady.held();gl.flush();stats.heldWorldFrames++;boundedFrameGap?.held(performance.now(),lastWorld);},
+    async Java_orsc_BrowserWebGLBridge_regionTransition(lib,soft){alive();if(options.overlayDeltaTransport===true&&overlay)overlay.invalidateDeltaHistory();if(capacity.bounded){boundedResidency?.suspend();stats.wholeZone.ready=false;stats.wholeZone.phase='awaiting-scope';}worldReady.beginTransition(soft===true);if(travel)recordTravel({kind:'transition',walking:soft===true});},
+    async Java_orsc_BrowserWebGLBridge_holdWorld(){alive();uploadValidation.beforeDraw();gl.bindSampler(0,null);if(!overlay)throw new Error('Region retention requires coverage compositor');if(ownedFrame?.active)ownedFrame.begin(canvas.width,canvas.height,0,0,0);overlay.hold(canvas.width,canvas.height);worldReady.held();gl.flush();stats.heldWorldFrames++;boundedFrameGap?.held(performance.now(),lastWorld);if(travel)recordTravel({kind:'hold',required:stats.worldReadiness.required,ready:stats.worldReadiness.uploaded});},
     async Java_orsc_BrowserWebGLBridge_initialize(lib,vertex,fragment){
       alive();if(program)throw new Error('WebGL backend initialized twice');
       program=link(adaptResidentShader(vertex,false),adaptResidentShader(fragment,true));
@@ -384,7 +393,16 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       stats.javaFrames++;stats.drawCalls=calls;stats.triangles=triangles;stats.activeChunks=draws.length/8;stats.lastFrame=now;
       if(last){stats.frameSamples.push(now-last);if(stats.frameSamples.length>(stats.measurement?4096:600))stats.frameSamples.shift();}last=now;
     },
-    async Java_orsc_BrowserWebGLBridge_frameWork(lib,values,poseInput){alive();const p=typed(poseInput,Int32Array);if(p.length!==14)throw new Error("Invalid frame pose schema");stats.pose={cameraOffset:Array.from(p.subarray(0,3)),rotation:Array.from(p.subarray(3,6)),center:Array.from(p.subarray(6,8)),viewport:Array.from(p.subarray(8,10)),perspectiveShift:p[10],fogStart:p[11],fogEnd:p[12],signedLevel:p[13]};stats.spriteCompositeCache={enabled:values[10]===1,hits:values[11],misses:values[12],bytes:values[13]};stats.javaSkyExportMs=values[9];stats.cpuDepthFramePresent=values[7]===1;stats.javaLightingExportMs=values[8];stats.javaCacheEntries=values[5];stats.javaCacheResidentBytes=values[6];stats.javaBridgeWorkSamples.push(Array.from(values));if(stats.javaBridgeWorkSamples.length>(stats.measurement?4096:600))stats.javaBridgeWorkSamples.shift();uploadValidation.frameComplete();commitOwnedState();stats.javaBridgeReportedWorldFrames=stats.javaWorldFrames;},
+    async Java_orsc_BrowserWebGLBridge_frameWork(lib,values,poseInput){
+      alive();const p=typed(poseInput,Int32Array);
+      if(p.length!==14&&!(travel&&p.length===18))throw new Error("Invalid frame pose schema");
+      if(travel&&p.length===18&&stats.javaBridgeReportedWorldFrames<stats.javaWorldFrames&&lastWorld>0){
+        recordTravel({kind:'frame',submittedAt:performance.timeOrigin+lastWorld,receipt:[p[14],p[15]],
+          shown:[p[16],p[17]],work:Array.from(values).slice(0,10),stagingMs:values[14],
+          js:stats.jsSubmissionSamples[stats.jsSubmissionSamples.length-1]});
+      }
+      stats.pose={cameraOffset:Array.from(p.subarray(0,3)),rotation:Array.from(p.subarray(3,6)),center:Array.from(p.subarray(6,8)),viewport:Array.from(p.subarray(8,10)),perspectiveShift:p[10],fogStart:p[11],fogEnd:p[12],signedLevel:p[13]};stats.spriteCompositeCache={enabled:values[10]===1,hits:values[11],misses:values[12],bytes:values[13]};stats.javaSkyExportMs=values[9];stats.cpuDepthFramePresent=values[7]===1;stats.javaLightingExportMs=values[8];stats.javaCacheEntries=values[5];stats.javaCacheResidentBytes=values[6];stats.javaBridgeWorkSamples.push(Array.from(values));if(stats.javaBridgeWorkSamples.length>(stats.measurement?4096:600))stats.javaBridgeWorkSamples.shift();uploadValidation.frameComplete();commitOwnedState();stats.javaBridgeReportedWorldFrames=stats.javaWorldFrames;
+    },
     async Java_orsc_BrowserWebGLBridge_deleteChunks(lib,input){
       alive();const ids=typed(input,Int32Array);if(capacity.enabled)for(const id of ids)if(pinnedChunks.has(id))throw new Error('Pinned zone geometry cannot be evicted');for(const id of ids){const x=chunks.get(id);if(!x)throw new Error('Eviction references absent GPU chunk');gl.deleteVertexArray(x.vao);gl.deleteBuffer(x.vbo);gl.deleteBuffer(x.ibo);stats.gpuBytes-=x.bytes;chunks.delete(id);}stats.evictedChunks=(stats.evictedChunks||0)+ids.length;
     },

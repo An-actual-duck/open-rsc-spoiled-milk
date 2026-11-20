@@ -111,6 +111,8 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
         && Boolean.getBoolean("spoiledmilk.browserPreuploadSceneMeshes");
     private static final boolean COMPACT_SCENERY = PREUPLOAD_SCENE_MESHES
         && Boolean.getBoolean("spoiledmilk.browserCompactScenery");
+    private static final boolean TRAVEL_TRACE = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+        && Boolean.getBoolean("spoiledmilk.browserTravelTrace");
     private static final long PREDICTED_BUFFER_BUDGET = (COMPACT_SCENERY ? 64L : 48L) * 1024 * 1024;
     private static final long PREDICTED_UPLOAD_INTERVAL_NANOS = 75_000_000L;
     private final Map<WorldChunkBufferKey, CachedChunk> stagedTerrain = new HashMap<>();
@@ -330,6 +332,7 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
                 && count / 8 == world.getChunkCount() && remainingRepacks == 0 && geometry.uploadedVertices == 0) {
                 preuploadPredictedTerrain(frame);
             }
+            long stagingEnd = TRAVEL_TRACE ? System.nanoTime() : 0L;
             float[] view=OpenGLWorldChunkRenderer.backendWorldViewMatrix(frame);
             float[] clip=OpenGLWorldChunkRenderer.multiply(OpenGLWorldChunkRenderer.projectionMatrix(frame),view);
             float[] matrices=new float[48];columnMajor(clip,matrices,0);columnMajor(view,matrices,16);columnMajor(OpenGLFramePresenter.backendCameraToClipProjectionMatrix(frame),matrices,32);
@@ -346,10 +349,15 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
             PreparedOverlay preparedOverlay=prepareOverlay(image,currentSurface);
             if(loadProfile!=null){loadProfile.progress(progress);loadProfile.enter(BrowserLoadProfile.TERMINAL);}
             progress[6]=progress[7]=spriteGroups;worldProgress(progress);
+            int[] presentedPose = TRAVEL_TRACE && client != null && client.getLocalPlayer() != null
+                ? travelPose(frame, client) : pose(frame);
             present(w,h,true,matrices,uniforms(frame),draws,borrowOverlay(image));
             acknowledgeOverlay(preparedOverlay);
             loadState.presented(OVERLAY_COVERAGE&&authority,world.getChunkCount(),count/8+catalogCoveredSources,remainingRepacks);
-            long end=System.nanoTime();frameWork(new float[]{(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()},pose(frame));
+            long end=System.nanoTime();
+            float[] frameStats = {(end-frameStart)/1000000f,(textureEnd-frameStart)/1000000f,(geometryEnd-textureEnd)/1000000f,(spriteEnd-geometryEnd)/1000000f,(end-skyEnd)/1000000f,chunks.size(),residentChunkBytes,frame.getDepthFrame()==null?0:1,(lightingEnd-spriteEnd)/1000000f,(skyEnd-lightingEnd)/1000000f,SPRITE_CACHE?1:0,spriteCache.getHits(),spriteCache.getMisses(),spriteCache.getCacheBytes()};
+            if(TRAVEL_TRACE){frameStats=Arrays.copyOf(frameStats,15);frameStats[14]=(stagingEnd-geometryEnd)/1000000f;}
+            frameWork(frameStats,presentedPose);
             if(loadProfile!=null)loadProfile.values[BrowserLoadProfile.PATH]=3;
         } finally { RendererFrameLighting.restore(previous); }
     }
@@ -571,6 +579,15 @@ public final class BrowserWebGLBridge implements BrowserFrameSinkRegistry.Sink {
     }
     static int[] pose(Renderer3DFrame frame) {
         return new int[]{frame.getCameraOffsetX(),frame.getCameraOffsetY(),frame.getCameraOffsetZ(),frame.getCameraRotationX(),frame.getCameraRotationY(),frame.getCameraRotationZ(),frame.getCenterX(),frame.getCenterY(),frame.getViewportWidth(),frame.getViewportHeight(),frame.getPerspectiveShift(),frame.getFogStartDistance(),frame.getFogDistance(),frame.getSignedWorldLevel()};
+    }
+    private static int[] travelPose(Renderer3DFrame frame, mudclient client) {
+        int[] result = Arrays.copyOf(pose(frame), 18);
+        int x = client.getMidRegionBaseX(), z = client.getMidRegionBaseZ(), scale = client.getTileSize();
+        result[14] = x + client.getLocalPlayerX();
+        result[15] = z + client.getLocalPlayerZ();
+        result[16] = x * scale + client.getLocalPlayer().currentX;
+        result[17] = z * scale + client.getLocalPlayer().currentZ;
+        return result;
     }
     private void exportSky(Renderer3DFrame frame) {
         BrowserSkyData.Frame sky=skyData.prepare(frame);
