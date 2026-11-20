@@ -446,6 +446,10 @@ south of the earlier run. Outbound resident scenery still took 72 ms,
 so the same pass should be evaluated for bounded preparation. Evidence
 is in output/diagnostics/browser-overlapping-handoff/sliced-transforms/.
 
+The owner observed NPCs jumping positions at the boundary in the
+private preview and ended this experiment. The retained scene and
+live-pose work is archived as a failed visual review.
+
 Optional streaming policy
 -------------------------
 
