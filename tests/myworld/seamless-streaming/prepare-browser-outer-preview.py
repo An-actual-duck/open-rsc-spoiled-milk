@@ -36,6 +36,7 @@ def main():
     parser.add_argument('--predicted-scenery', action='store_true', help='Prebuild the predicted outer scenery strip')
     parser.add_argument('--preupload-scene', action='store_true', help='Stage prepared scenery and the predicted center mesh')
     parser.add_argument('--compact-scenery', action='store_true', help='Use compact GPU buffers for static scenery')
+    parser.add_argument('--pace-terrain', action='store_true', help='Yield during browser terrain prediction builds')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
@@ -74,6 +75,7 @@ def main():
            f'        System.setProperty("spoiledmilk.browserRegionHandoffTrace", "{str(args.trace).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserPreuploadSceneMeshes", "{str(args.preupload_scene).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserCompactScenery", "{str(args.compact_scenery).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.browserPaceTerrainPrediction", "{str(args.pace_terrain).lower()}");\n'
            f'        System.setProperty("spoiledmilk.predictedSceneryPreview", "{str(args.predicted_scenery).lower()}");')
     if not args.manual:
         insert(bootstrap, '        final BrowserStartupDiagnostics startupDiagnostics=',
@@ -126,6 +128,7 @@ def main():
         'predictedScenery': args.predicted_scenery,
         'preuploadScene': args.preupload_scene,
         'compactScenery': args.compact_scenery,
+        'paceTerrain': args.pace_terrain,
         'tcpPort': tcp_port, 'websocketPort': ws_port,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',
         'stagedSha256': staged_hashes,

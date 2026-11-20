@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -41,6 +42,8 @@ import java.util.zip.ZipFile;
 public final class World {
 	private static final boolean PRESENTATION_HALO_MATCH_REUSE = !"false".equalsIgnoreCase(
 		System.getProperty("spoiledmilk.presentationHaloMatchReuse", "true"));
+	private static final boolean PACE_BROWSER_TERRAIN_PREDICTION = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		&& Boolean.getBoolean("spoiledmilk.browserPaceTerrainPrediction");
 	private static final int RENDERER_3D_WALL_SHADOW_MAX_FOOTPRINT = 512;
 
 	public static final int SECTION_SIZE = 48;
@@ -945,6 +948,7 @@ public final class World {
 					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION;
 		boolean predicted =
 			!matchesActiveHalo(activeTerrain, haloTerrain);
+		TerrainPredictionSlice slice = predicted && PACE_BROWSER_TERRAIN_PREDICTION ? new TerrainPredictionSlice() : null;
 		int predictedRebaseX = predicted
 			? Math.multiplyExact(
 				activeTerrain.getCurrentChunkX()
@@ -970,7 +974,8 @@ public final class World {
 					predicted
 						? Math.addExact(sourceRevision, 1L)
 						: sourceRevision,
-					includeRoofGeometry)
+					includeRoofGeometry,
+					slice)
 				: null;
 		int sourceOuterSectors = 0;
 		StringBuilder cellDiagnostics = new StringBuilder();
@@ -1031,12 +1036,14 @@ public final class World {
 							haloTerrain,
 							worldOffsetX,
 							worldOffsetZ);
+					if (slice != null) slice.checkpoint();
 					TerrainModelInput terrainInput =
 						buildTerrainModelInput(
 							plane,
 							sectionX,
 							sectionY,
 							window.sectors);
+					if (slice != null) slice.checkpoint();
 					WallModelInput wallInput =
 						new WallModelInput(new WallSegmentInput[0]);
 					RoofModelInput roofInput = null;
@@ -1048,6 +1055,7 @@ public final class World {
 								terrainInput, wallInput);
 						roofInput =
 							buildRoofModelInput(window.sectors);
+						if (slice != null) slice.checkpoint();
 					}
 					WorldGpuChunkMesh mesh =
 						buildWorldGpuChunkMesh(
@@ -1058,11 +1066,13 @@ public final class World {
 							wallInput,
 							roofInput,
 							includeRoofGeometry && !terrainOnly,
-							false);
+							false,
+							slice);
 					presentation =
 						mesh.toRenderer3DWorldPresentationCell(
 							deltaX, deltaY);
 					builtCells++;
+					if (slice != null) slice.checkpoint();
 				}
 				if (presentation != null) {
 					retentionChunks.add(presentation);
@@ -1158,6 +1168,12 @@ public final class World {
 		int worldOffsetZ,
 		long terrainRevision,
 		boolean includeRoofGeometry) {
+		return prebuildNativeWorldModelProduct(terrain, worldOffsetX, worldOffsetZ, terrainRevision, includeRoofGeometry, null);
+	}
+
+	private NativeWorldModelPrebuild prebuildNativeWorldModelProduct(
+		NativeLayeredTerrainSnapshot terrain, int worldOffsetX, int worldOffsetZ,
+		long terrainRevision, boolean includeRoofGeometry, TerrainPredictionSlice slice) {
 		long buildStart = System.nanoTime();
         WholeOverworldRamRegistry.Provider ram=WholeOverworldRamRegistry.forCaptured(terrain,worldOffsetX,worldOffsetZ,includeRoofGeometry);
         if(ram!=null){ram.avoidedBuild();return new NativeWorldModelPrebuild(true,System.nanoTime()-buildStart,null);}
@@ -1216,18 +1232,21 @@ public final class World {
 		productCacheHit = product != null
 			&& product.hasTerrainIfNeeded(true);
 		if (!productCacheHit) {
+			if (slice != null) slice.checkpoint();
 			TerrainModelInput terrainInput =
 				buildTerrainModelInput(
 					plane,
 					sectionX,
 					sectionY,
 					window.sectors);
+			if (slice != null) slice.checkpoint();
 			WallModelInput wallInput =
 				buildWallModelInput(window.sectors);
 			terrainInput =
 				applyWallEndpointShadows(terrainInput, wallInput);
 			RoofModelInput roofInput =
 				buildRoofModelInput(window.sectors);
+			if (slice != null) slice.checkpoint();
 			WorldModelProduct built = new WorldModelProduct(
 				terrainInput,
 				wallInput,
@@ -1239,7 +1258,7 @@ public final class World {
 					terrainInput,
 					wallInput,
 					roofInput,
-					includeRoofGeometry));
+					includeRoofGeometry, true, slice));
 			synchronized (worldModelProductCacheLock) {
 				WorldModelProduct cached =
 					worldModelProductCache.get(productKey);
@@ -1253,6 +1272,7 @@ public final class World {
 				}
 			}
 		}
+		if (slice != null) slice.checkpoint();
 		Renderer3DWorldChunkFrame.ChunkMesh drawMesh = prepareRenderer3DWorldChunkMesh(product, true);
 		return new NativeWorldModelPrebuild(
 			productCacheHit,
@@ -3005,6 +3025,14 @@ public final class World {
 		RoofModelInput roofInput,
 		boolean includeRoofGeometry,
 		boolean includePresentationEffects) {
+		return buildWorldGpuChunkMesh(plane, sectionX, sectionY, terrainInput, wallInput, roofInput,
+			includeRoofGeometry, includePresentationEffects, null);
+	}
+
+	private static WorldGpuChunkMesh buildWorldGpuChunkMesh(
+		int plane, int sectionX, int sectionY, TerrainModelInput terrainInput,
+		WallModelInput wallInput, RoofModelInput roofInput, boolean includeRoofGeometry,
+		boolean includePresentationEffects, TerrainPredictionSlice slice) {
 		int originWorldX = (sectionX - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE * 128;
 		int originWorldZ = (sectionY - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE * 128;
 		WorldGpuChunkMeshBuilder builder = new WorldGpuChunkMeshBuilder(
@@ -3025,9 +3053,10 @@ public final class World {
 		int drawOriginX = 0;
 		int drawOriginZ = 0;
 		if (terrainInput != null) {
-			addTerrainGpuChunkMesh(builder, terrainInput, drawOriginX, drawOriginZ);
+			addTerrainGpuChunkMesh(builder, terrainInput, drawOriginX, drawOriginZ, slice);
 		}
 		addWallGpuChunkMesh(builder, wallInput, drawOriginX, drawOriginZ);
+		if (slice != null) slice.checkpoint();
 		if (includeRoofGeometry) {
 			addRoofGpuChunkMesh(builder, roofInput, drawOriginX, drawOriginZ);
 		}
@@ -3038,12 +3067,15 @@ public final class World {
 		WorldGpuChunkMeshBuilder builder,
 		TerrainModelInput input,
 		int drawOriginX,
-		int drawOriginZ) {
+		int drawOriginZ,
+		TerrainPredictionSlice slice) {
+		int tiles = 0;
 		for (TerrainTileFaceInput face : input.tileFaces) {
 			if (face.lavaGlowEmitter) {
 				addTerrainTileGlowEmitter(builder, input, face, drawOriginX, drawOriginZ);
 			}
 			addTerrainTileGpuFaces(builder, input, face, drawOriginX, drawOriginZ);
+			if (slice != null && (++tiles & 127) == 0) slice.checkpoint();
 		}
 
 		for (TerrainOverlayFaceInput overlay : input.overlayFaces) {
@@ -3054,6 +3086,22 @@ public final class World {
 				Scene.TRANSPARENT,
 				offsetCoords(drawOriginX, drawOriginZ, overlay.vertexCoords),
 				null);
+		}
+	}
+
+	/** CheerpJ can schedule another Java task while this predicted builder is asleep. */
+	private static final class TerrainPredictionSlice {
+		private long lastYield = System.nanoTime();
+
+		private void checkpoint() {
+			if (System.nanoTime() - lastYield < 8_000_000L) return;
+			try {
+				Thread.sleep(1L);
+			} catch (InterruptedException interrupted) {
+				Thread.currentThread().interrupt();
+				throw new CancellationException("Terrain prediction was superseded");
+			}
+			lastYield = System.nanoTime();
 		}
 	}
 
