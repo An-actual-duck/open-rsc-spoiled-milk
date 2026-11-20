@@ -62,6 +62,14 @@ export function walkingResumeOffset(visible, anchor, direction, elapsedMs, holdU
   return [direction[0] * lead * strength, direction[1] * lead * strength];
 }
 
+/** Match the last displayed camera at cutover and let the live camera catch up. */
+export function walkingCameraOffset(visible, live, direction, lateral, elapsedMs) {
+  const forward=(visible[0]-live[0])*direction[0]+(visible[1]-live[1])*direction[1];
+  const hold=Math.max(0,forward);
+  const settle=Math.max(0,1-elapsedMs/150);
+  return direction.map((v,i)=>v*hold+lateral[i]*settle);
+}
+
 /** Return only captured animation poses from the same recent walk. */
 export function walkingSpriteCycle(history, epoch, gait, now) {
   if(!Number.isInteger(gait)||gait<0)return [];

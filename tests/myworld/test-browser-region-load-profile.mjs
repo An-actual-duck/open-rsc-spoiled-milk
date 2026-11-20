@@ -30,4 +30,10 @@ check(c.stats.slowPresentedFrames.filter(sample=>sample.sourceEpoch===10).length
 a[22]=5;
 for(let n=0;n<140;n++){a[2]++;c.report(null,a);}
 check(c.stats.slowPresentedFrames.some(sample=>sample.sourceEpoch===10&&sample.totalMs===54));
+const terminal = new Float64Array(40);
+terminal.set(a);terminal[2]++;terminal[6]=11;
+terminal.set([1.25,2.5,0.25,3.5],36);
+c.report(null,terminal);
+check(c.stats.last.progressCallMs===1.25&&c.stats.last.presentCallMs===2.5
+  &&c.stats.last.lookaheadOfferMs===0.25&&c.stats.last.frameWorkCallMs===3.5);
 console.log(JSON.stringify({passed:true,checks,scope:'bounded diagnostic policy/copy only; no timings or rendering claim'}));

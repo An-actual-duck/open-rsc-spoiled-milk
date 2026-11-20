@@ -1,6 +1,6 @@
 import {GEOMETRY_ATTRIBUTES,LEGACY_GEOMETRY,COMPACT_GEOMETRY,geometryBounds,bindGeometryAttributes,validateCompactShaderAttributes} from './browser-geometry-layout.js';
 import {loadWholeZone,validateWholeZoneConfig,validateWholeZoneLive,validateWholeZoneTexture,createWholeZoneSelection,fetchWholeZoneBytes,digestWholeZoneBytes} from './browser-whole-zone.js';
-import {cameraWorldPosition,createOverworldFlyover,moveWorldCamera,walkingReplayOffset,walkingResumeOffset,walkingSpriteCycle} from './browser-persistent-world.js';
+import {cameraWorldPosition,createOverworldFlyover,moveWorldCamera,walkingReplayOffset,walkingResumeOffset,walkingSpriteCycle,walkingCameraOffset} from './browser-persistent-world.js';
 import {createBoundedResidency} from './browser-bounded-residency.js';
 import {createBoundedChunkUpload} from './browser-bounded-upload.js';
 import {createBoundedPrefetch} from './browser-bounded-prefetch.js';
@@ -144,7 +144,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
   let replayFence=null,lastReplayOffset=null,visibleWalkPose=null,resumeWalk=null;
   const useWalkTimeline=stabilizeWalk&&options.walkTimeline===true;
   let walkSpriteHistory=[],walkCycle=[],walkTrace=null,nextWalkingGait=-1;
-  function traceWalkingFrame(now,pose,sprite,replay){
+  function traceWalkingFrame(now,pose,sprite,replay,camera){
     if(!walkTrace||!pose)return;
     const t=walkTrace;
     if(t.lastAt!==null){
@@ -155,6 +155,13 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
         t.maxBackstepUnits=Math.max(t.maxBackstepUnits,-advance);
       }
       if(Math.hypot(pose[0]-t.pose[0],pose[1]-t.pose[1])<0.5)t.stationaryMs+=now-t.lastAt;
+      if(camera&&t.camera){
+        const cameraAdvance=(camera[0]-t.camera[0])*t.direction[0]+(camera[1]-t.camera[1])*t.direction[1];
+        if(cameraAdvance < -0.5){
+          t.cameraBacksteps++;
+          t.maxCameraBackstepUnits=Math.max(t.maxCameraBackstepUnits,-cameraAdvance);
+        }
+      }
     }
     if(replay){
       t.replayFrames++;
@@ -165,12 +172,12 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(now-t.firstJavaAt>=1000){
         stats.walkingTimelineResult={durationMs:now-t.started,javaFrames:t.javaFrames,
           replayFrames:t.replayFrames,replaySpriteChanges:t.replaySpriteChanges,cyclePoses:t.cyclePoses,maxGapMs:t.maxGapMs,
-          backsteps:t.backsteps,maxBackstepUnits:t.maxBackstepUnits,stationaryMs:t.stationaryMs};
+          backsteps:t.backsteps,maxBackstepUnits:t.maxBackstepUnits,cameraBacksteps:t.cameraBacksteps,maxCameraBackstepUnits:t.maxCameraBackstepUnits,stationaryMs:t.stationaryMs};
         walkTrace=null;
         return;
       }
     }
-    t.lastAt=now;t.pose=pose;t.sprite=sprite;
+    t.lastAt=now;t.pose=pose;t.sprite=sprite;t.camera=camera;
   }
   function rememberWalkingSprite(pose){
     if(!useWalkTimeline||!pose||pose.gait<0)return;
@@ -206,7 +213,8 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
         walkTrace={started:walkingStart,firstJavaAt:null,lastAt:lastWorld||walkingStart,pose:a,
           cyclePoses:walkCycle.length,
           direction:[dx/length,dz/length],sprite:committedWalkScene.spritePose?.id??null,
-          replayFrames:0,replaySpriteChanges:0,javaFrames:0,maxGapMs:0,backsteps:0,maxBackstepUnits:0,stationaryMs:0};
+          cameraBasis:committedWalkScene.matrices.slice(16,28),rawAnchor:a,cameraFollow:true,lateral:null,
+          replayFrames:0,replaySpriteChanges:0,javaFrames:0,maxGapMs:0,backsteps:0,maxBackstepUnits:0,camera:cameraWorldPosition(committedWalkScene.matrices,...committedWalkScene.origin),cameraBacksteps:0,maxCameraBackstepUnits:0,stationaryMs:0};
       }
     }
     walkDeadline=walkingStart+500;
@@ -269,7 +277,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
         visibleWalkPose={player:[scene.anchor[0]+step[0],scene.anchor[1]+step[1]],
           camera:cameraWorldPosition(moved,...scene.origin),direction:step.map(v=>v/length),at:now};
       }
-      traceWalkingFrame(now,visibleWalkPose?.player,displayedSprite,true);
+      traceWalkingFrame(now,visibleWalkPose?.player,displayedSprite,true,visibleWalkPose?.camera);
       stats.walkingMotionFrames=(stats.walkingMotionFrames||0)+1;
       stats.walkingMotionMaxUnits=Math.max(stats.walkingMotionMaxUnits||0,Math.hypot(...step));
     }
@@ -491,14 +499,15 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
       if(walkingReplayEnabled&&world&&!retainedWorld&&u[29]===0&&origin&&nextWalkingAnchor){
         const elapsed=visibleWalkPose ? performance.now()-visibleWalkPose.at : Infinity;
         const camera=cameraWorldPosition(matrices,...origin);
+        let cameraOffset=[0,0],playerOffset=[0,0];
         if(visibleWalkPose && elapsed<250){
           const pose=visibleWalkPose;visibleWalkPose=null;
           const rawLead=(pose.player[0]-nextWalkingAnchor[0])*pose.direction[0]
             +(pose.player[1]-nextWalkingAnchor[1])*pose.direction[1];
           stats.walkRawBackstepUnits=Math.max(0,rawLead);
           if(stabilizeWalk){
-            const cameraOffset=pose.camera.map((v,i)=>v-camera[i]);
-            resumeWalk={...pose,cameraOffset:Math.hypot(...cameraOffset)<=128?cameraOffset:[0,0],
+            const initialCameraOffset=pose.camera.map((v,i)=>v-camera[i]);
+            resumeWalk={...pose,cameraOffset:Math.hypot(...initialCameraOffset)<=128?initialCameraOffset:[0,0],
               start:performance.now(),first:true,rawAnchor:nextWalkingAnchor};
           }
         }
@@ -510,19 +519,35 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
           if(passed>=(useWalkTimeline?650:300)||advance < -4)resumeWalk=null;
           else {
             resumeWalk.rawAnchor=nextWalkingAnchor;
-            const playerOffset=walkingResumeOffset(resumeWalk.player,nextWalkingAnchor,resumeWalk.direction,passed,useWalkTimeline);
-            const cameraOffset=resumeWalk.cameraOffset.map(v=>v*Math.max(0,1-passed/150));
-            othersShift=cameraShiftFor(matrices,cameraOffset);
-            const actorNetOffset=cameraOffset.map((value,i)=>value-playerOffset[i]);
-            localShift=cameraShiftFor(matrices,actorNetOffset);
-            visualMatrices=moveWorldCamera(matrices,...cameraOffset);
-            visualAnchor=[nextWalkingAnchor[0]+playerOffset[0],nextWalkingAnchor[1]+playerOffset[1],nextWalkingAnchor[2]];
+            playerOffset=walkingResumeOffset(resumeWalk.player,nextWalkingAnchor,direction,passed,useWalkTimeline);
+            if(!useWalkTimeline)cameraOffset=resumeWalk.cameraOffset.map(v=>v*Math.max(0,1-passed/150));
             if(resumeWalk.first){
               stats.walkFirstVisibleBackstepUnits=Math.max(0,(stats.walkRawBackstepUnits||0)-Math.hypot(...playerOffset));
               resumeWalk.first=false;
             }
             stats.walkResumeFrames=(stats.walkResumeFrames||0)+1;
           }
+        }
+        if(useWalkTimeline&&walkTrace?.cameraFollow){
+          const t=walkTrace;
+          const [dx,dz]=t.direction;
+          const advance=dx*(nextWalkingAnchor[0]-t.rawAnchor[0])+dz*(nextWalkingAnchor[1]-t.rawAnchor[1]);
+          const gap=t.camera.map((v,i)=>v-camera[i]);
+          const rotated=t.cameraBasis.some((v,i)=>Math.abs(v-matrices[16+i])>0.001);
+          if((t.firstJavaAt!==null&&advance < -4)||rotated||Math.hypot(...gap)>512)t.cameraFollow=false;
+          else {
+            t.rawAnchor=nextWalkingAnchor;
+            const along=dx*gap[0]+dz*gap[1];
+            t.lateral??=gap.map((v,i)=>v-t.direction[i]*along);
+            const now=performance.now();
+            cameraOffset=walkingCameraOffset(t.camera,camera,t.direction,t.lateral,now-(t.firstJavaAt??now));
+          }
+        }
+        if(cameraOffset.some(Boolean)||playerOffset.some(Boolean)){
+          othersShift=cameraShiftFor(matrices,cameraOffset);
+          localShift=cameraShiftFor(matrices,cameraOffset.map((v,i)=>v-playerOffset[i]));
+          visualMatrices=moveWorldCamera(matrices,...cameraOffset);
+          visualAnchor=[nextWalkingAnchor[0]+playerOffset[0],nextWalkingAnchor[1]+playerOffset[1],nextWalkingAnchor[2]];
         }
       }else if(!world || !origin || u[29]!==0){visibleWalkPose=null;resumeWalk=null;}
       if(world&&!retainedWorld){
@@ -556,7 +581,7 @@ export function createBrowserWebGL(canvas, report=()=>{}, options={}) {
         lastMovingReplay=0;
       }
       if(world&&!retainedWorld&&u[29]===0&&origin){
-        if(useWalkTimeline&&visualAnchor)traceWalkingFrame(now,visualAnchor,spritePose?.id??null,false);
+        if(useWalkTimeline&&visualAnchor)traceWalkingFrame(now,visualAnchor,spritePose?.id??null,false,cameraWorldPosition(visualMatrices,...origin));
         rememberWalkingSprite(spritePose);
       }
       if(walkingReplayEnabled && world && !retainedWorld && u[29]===0

@@ -321,6 +321,32 @@ terminal trace by world progress, native present and worker batch enqueue
 and ACK to find the second burst. Evidence is in output/diagnostics/
 browser-overlapping-handoff/timeline-result.json.
 
+The private walking timeline holds the camera's last displayed forward
+position through the handoff and its first second of live frames. It
+releases the constraint on a reversal, view rotation or large position
+change. The initial sideways correction settles over 150 ms. The trace
+counts camera and player backsteps independently during that interval.
+The Java submission trace separates progress notification, presentation,
+the optional terrain lookahead offer and frame dispatch.
+
+On the same private Firefox route and at the same settings, terrain
+lookahead produced four successive slow submissions per crossing.
+Frame dispatch took 94–121 ms during those bursts. With lookahead off,
+these bursts disappeared and each crossing showed one slow submission
+with 106–132 ms spent on terrain lighting. Leave lookahead off in the
+walking preview. Treat the remaining terrain mask build as a separate
+cost and compare any proposed fix against both crossings and steady
+movement.
+
+With lookahead off and the final camera correction, neither crossing
+showed a backward camera or player step in the trace. The replay and
+first second of resumed frames had maximum observed gaps of 47 ms and
+50 ms. The outbound replay used four captured walk poses. The return
+path ended two tiles south of the comparison runs and had only one
+captured pose for its facing. Treat animation continuity on that path
+as unverified. Evidence is in output/diagnostics/
+browser-overlapping-handoff/camera-cutover-comparison.json.
+
 Optional streaming policy
 -------------------------
 

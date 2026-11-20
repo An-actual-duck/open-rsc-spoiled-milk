@@ -2,9 +2,9 @@ package orsc;
 
 /** Bounded private transition diagnostics. Durations overlap: never sum phases. */
 final class BrowserLoadProfile {
-    static final int SIZE=36, PATH=3, INITIALIZE=35, ACTIVE=11, TEXTURES=12,
+    static final int SIZE=40, PATH=3, INITIALIZE=35, ACTIVE=11, TEXTURES=12,
         GEOMETRY=13, VERTICES=14, MATERIALS=15, SUBMIT=16, SPRITES=17,
-        LIGHTING=18, SKY=19, OVERLAY=20, TERMINAL=21;
+        LIGHTING=18, SKY=19, OVERLAY=20, TERMINAL=21, PROGRESS_CALL=36, PRESENT_CALL=37, LOOKAHEAD_OFFER=38, FRAME_WORK_CALL=39;
     final double[] values=new double[SIZE];
     private final long started=System.nanoTime();
     private int phase=-1;private long phaseStart;

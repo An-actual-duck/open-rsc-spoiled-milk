@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   cameraWorldPosition, createOverworldFlyover, moveWorldCamera,
-  persistentWorldPolicy, terrainCells, walkingReplayOffset, walkingResumeOffset, walkingSpriteCycle
+  persistentWorldPolicy, terrainCells, walkingReplayOffset, walkingResumeOffset, walkingSpriteCycle, walkingCameraOffset
 } from '../../tools/browser-gameplay/web/browser-persistent-world.js';
 import {createWholeZoneSelection} from '../../tools/browser-gameplay/web/browser-whole-zone.js';
 
@@ -83,6 +83,17 @@ const snapshots=[
 assert.deepEqual(walkingSpriteCycle(snapshots,2,7,2000).map(p=>p.id),[5,2]);
 assert.equal(persistentWorldPolicy(new URLSearchParams('persistentscene=on&workerreplay=on&walkstabilize=on&walktimeline=on'),admission).walkTimeline,true);
 assert.throws(() => persistentWorldPolicy(new URLSearchParams('persistentscene=on&workerreplay=on&walktimeline=on'),admission));
+assert.deepEqual(walkingCameraOffset([150,100],[120,90],[1,0],[0,10],0),[30,10]);
+assert.deepEqual(walkingCameraOffset([150,100],[130,100],[1,0],[0,10],200),[20,0]);
+assert.deepEqual(walkingCameraOffset([150,100],[160,100],[1,0],[0,10],200),[0,0]);
+let shownCamera=[150,100];
+const cameraDuringHandoff=[130,160,158,165].map((x,i)=>{
+  const liveCamera=[x,100];
+  const offset=walkingCameraOffset(shownCamera,liveCamera,[1,0],[0,0],i*35);
+  shownCamera=liveCamera.map((coordinate,axis)=>coordinate+offset[axis]);
+  return shownCamera[0];
+});
+assert.deepEqual(cameraDuringHandoff,[150,160,160,165]);
 const selection=createWholeZoneSelection(catalogue,{}, {persistent:true});
 selection.frame(state(2,0,1),rows);
 const before=ids(selection.merge(new Int32Array(),0,matrices(143*scale,644*scale)));
