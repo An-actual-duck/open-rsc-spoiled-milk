@@ -29,9 +29,10 @@ browser walking still need review.
 
 The bounds fixture exercises the center-retention decision on all four sides.
 An exploratory native route toward the outer margin stopped before reaching
-it, so a live exit remains unverified. A fresh Firefox WebGL startup compiled
-the production resident shader and connected to the isolated preview socket.
-That smoke check ended during sign-in startup.
+it, so a live exit remains unverified. Fresh Firefox WebGL reached the
+visible sign-in screen through the isolated preview socket. The subsequent
+headless input attempt did not authenticate, so use native for the verified
+walking route.
 
 ## Reproduce the private preview
 
