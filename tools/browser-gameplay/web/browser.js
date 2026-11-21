@@ -338,9 +338,9 @@ const natives = {
     window.browserProof.surfaceMeshWorker = surfaceMeshWorker.stats;
     return true;
   },
-  async Java_orsc_browser_BrowserBootstrap_buildSurfaceMesh(lib, source, offsetX, offsetZ, dx, dz, withRoofs, customSprites) {
+  async Java_orsc_browser_BrowserBootstrap_buildSurfaceMesh(lib, source, offsetX, offsetZ, dx, dz, withRoofs, customSprites, gameplay) {
     if (deployment.publicAlpha || stopped || !surfaceMeshWorker) return null;
-    return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites]);
+    return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites, gameplay]);
   },
   async Java_orsc_browser_BrowserBootstrap_wsOpen() { return transport.open(); },
   async Java_orsc_browser_BrowserBootstrap_wsAvailable(lib, id) { return transport.available(id); },

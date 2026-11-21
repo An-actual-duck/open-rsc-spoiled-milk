@@ -10,7 +10,7 @@ public final class BrowserBootstrap {
     private static native byte[] inflateTerrainSector(byte[] compressed, int expectedLength);
     private static native boolean startSurfaceMeshWorker();
     private static native byte[] buildSurfaceMesh(byte[] source, int offsetX, int offsetZ, int dx, int dz,
-        boolean withRoofs, boolean customSprites);
+        boolean withRoofs, boolean customSprites, boolean gameplay);
 
     private BrowserBootstrap() { }
     public static native void report(String message);

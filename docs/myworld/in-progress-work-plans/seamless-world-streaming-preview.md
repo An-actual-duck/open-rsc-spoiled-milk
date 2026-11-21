@@ -727,6 +727,23 @@ in the approach. The encounter contains three fishing spots, a windmill
 sail and four fires. The longest submission gap was 334 ms at the first
 crossing. [Resident animation capture](../../../output/tests/browser-gameplay-spike/live-surface-resident-fishing/firefox-result.json) · [Latest diagonal capture](../../../output/tests/browser-gameplay-spike/live-surface-late-draws-final/firefox-result.json)
 
+The warmed control repeated `(239,609)` to `(257,609)` and back inside the
+same gameplay coverage. After prediction and initial uploads, 1,420 fresh
+Firefox frames had a maximum interval of 36 ms. Its terrain and scenery
+geometry byte totals stayed steady, and animated scenery still submitted
+about 376 MB. The cold approach in that same capture peaked at 342 ms.
+This gives the next changes a control that exercises real movement and
+renders the same scenery without a terrain handoff.
+[Warmed control](../../../output/tests/browser-gameplay-spike/live-surface-steady-profile/firefox-result.json)
+
+The dedicated browser VM also built the exact 3×3 gameplay product. Its
+collision, minimap palette, roof elevations, model data and query mesh
+matched the local build on the signed fixture. Firefox installed three of
+those detached products on the sustained route with zero holds, sampled
+input blocks, or new load epochs. The biggest gap on approach was 226 ms.
+The first crossing still had a 359 ms interval between submitted frames.
+[Detached gameplay capture](../../../output/tests/browser-gameplay-spike/live-surface-detached-gameplay/firefox-result.json)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

@@ -5160,6 +5160,12 @@ public final class mudclient implements Runnable {
 				worldCellZ, this.midRegionBaseZ, cellTileSize);
 		long cellKey = residentObjectChunkCellKey(
 			worldCellX, worldCellZ, chunkRole);
+		if (LIVE_SURFACE_HANDOFF && Renderer3DSettings.isBrowserPresentationAvailable()
+			&& chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS
+			&& model != null && model.getFishingPose() >= 0) {
+			// The ripple period owns its buffers even when a fire or rotating sail shares the cell.
+			cellKey = mixResidentObjectChunkCacheKey(cellKey, 1);
+		}
 		ResidentObjectChunkInputBuilder builder = builders.get(cellKey);
 		if (builder == null) {
 			builder = new ResidentObjectChunkInputBuilder(

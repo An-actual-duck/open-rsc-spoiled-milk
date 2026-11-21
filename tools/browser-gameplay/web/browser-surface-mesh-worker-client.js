@@ -1,6 +1,6 @@
 export function createBrowserSurfaceMeshWorker(runtime, javaVersion) {
   const worker = new Worker(new URL('./browser-surface-mesh-worker.js', import.meta.url), {name: 'Spoiled Milk surface mesher'});
-  const stats = {ready: false, completed: 0, bytes: 0, error: null};
+  const stats = {ready: false, completed: 0, gameplay: 0, bytes: 0, error: null};
   let pending;
   let closed = false;
 
@@ -21,6 +21,7 @@ export function createBrowserSurfaceMeshWorker(runtime, javaVersion) {
     } else if (pending) {
       const result = new Int8Array(data.result);
       stats.completed++;
+      if (pending.gameplay) stats.gameplay++;
       stats.bytes += result.byteLength;
       const request = pending;
       pending = undefined;
@@ -40,7 +41,7 @@ export function createBrowserSurfaceMeshWorker(runtime, javaVersion) {
           resolve(null);
           return;
         }
-        pending = {resolve};
+        pending = {resolve, gameplay: args[args.length - 1]};
         try {
           worker.postMessage({bytes, args}, [bytes.buffer]);
         } catch (error) {

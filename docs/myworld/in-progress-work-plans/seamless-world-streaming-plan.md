@@ -210,11 +210,14 @@ packet behavior. [Actor rebase](../../../Client_Base/src/orsc/ORSCharacter.java)
 The private rolling path now passes the held-fringe test. The diagonal
 crossing retained 16 terrain buffers and drew all nine gameplay cells while
 the worker withheld the incoming visual terrain. A completed route can still
-fail the fresh-frame target. The next browser work should separate animated
-scenery's changing pose from its immutable geometry and retire the assumption
-that a fresh pose needs a full buffer update. Measure frame submission and
-browser animation-frame sampling with and without active terrain preparation.
-Use the same server movement and camera on both routes.
+fail the fresh-frame target. The warmed control walked the same tiles four
+times with the terrain already installed and recorded a maximum of 36 ms
+between fresh frames. Its animated scenery continued uploading throughout.
+The detached worker now prepares collision, minimap and picking for the
+verified terrain window. The next browser work should keep Java scenery
+preparation and per-cell publication out of the frame that activates the
+authoritative walk boundary. Compare the same travel route against the warmed
+control using the same server movement and camera.
 [Current crossing evidence](seamless-world-streaming-preview.md#repeated-crossings-with-live-coverage)
 
 The browser's bounded catalog and render worker are candidates for reuse after

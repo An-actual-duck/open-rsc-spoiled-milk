@@ -1950,7 +1950,8 @@ public final class Renderer3DWorldChunkFrame {
 		}
 	}
 
-	public static final class ShadowCaster {
+	public static final class ShadowCaster implements java.io.Serializable {
+		private static final long serialVersionUID = 1L;
 		private final Renderer3DModelKind modelKind;
 		private final int baseX0;
 		private final int baseY;
@@ -2082,7 +2083,8 @@ public final class Renderer3DWorldChunkFrame {
 		}
 	}
 
-	public static final class GlowEmitter {
+	public static final class GlowEmitter implements java.io.Serializable {
+		private static final long serialVersionUID = 1L;
 		private final Renderer3DModelKind modelKind;
 		private final int centerX;
 		private final int centerY;

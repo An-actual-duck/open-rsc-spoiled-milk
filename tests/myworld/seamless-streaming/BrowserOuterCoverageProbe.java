@@ -156,8 +156,14 @@ public final class BrowserOuterCoverageProbe {
 		walkLeg(client, walk, 257, 609);
 		int[] before = client.packetHandler.getPersistentMovementReceipt();
 		if (before[0] <= 0 || before[1] <= 0) throw new IllegalStateException("Private travel stream was not applied");
+		if (Boolean.getBoolean("spoiledmilk.steadySurfaceWalk")) {
+			verifySteadyWalking(client, walk, before);
+			BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
+			return;
+		}
 		if (Boolean.getBoolean("spoiledmilk.retargetSurfaceWalk")) {
 			verifyPreparedDirectionChange(client, walk, before);
+			verifyDetachedGameplayInstalls(client, 1);
 			BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
 			return;
 		}
@@ -256,7 +262,17 @@ public final class BrowserOuterCoverageProbe {
 		}
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":applied=" + after[1]
 			+ ":outside-coverage=" + after[2] + ":terrain-epochs=" + before[3] + "," + afterScene + "," + after[3]);
+		verifyDetachedGameplayInstalls(client, Boolean.getBoolean("spoiledmilk.sustainedBrowserWalk") ? 3 : 2);
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
+	}
+
+	private static void verifyDetachedGameplayInstalls(mudclient client, int expected) {
+		if (!Boolean.getBoolean("spoiledmilk.browserSurfaceMeshWorker")) return;
+		int installed = client.getWorld().getDetachedSurfaceGameplayInstalls();
+		if (installed < expected) {
+			throw new IllegalStateException("Expected " + expected + " gameplay products from the detached worker, installed " + installed);
+		}
+		BrowserBootstrap.report("outer-coverage:detached-gameplay-installs:" + installed);
 	}
 
 	private static void verifyPreparedDirectionChange(mudclient client, Method walk, int[] movement) throws Exception {
@@ -315,6 +331,24 @@ public final class BrowserOuterCoverageProbe {
 		}
 		BrowserBootstrap.report("outer-coverage:diagonal:overlap=16:gameplay-terrain=9");
 
+	}
+
+	private static void verifySteadyWalking(mudclient client, Method walk, int[] movement) throws Exception {
+		awaitPreparedCenter(client, movement[3], field(PacketHandler.class, "readyPredictedLayeredTerrainStructureStage"), 5, 12);
+		awaitLiveOuterDrawBuffers(client, movement[3]);
+		awaitOptionalSceneryDraws(client, movement[3]);
+		Object actor = client.getLocalPlayer();
+		int[] terrain = awaitSurfaceDrawBuffers();
+		BrowserBootstrap.report("outer-coverage:steady-walk-start:" + BrowserWebGLBridge.getSceneUploadReceipt());
+		for (int destination : new int[]{239, 257, 239, 257}) {
+			walkLeg(client, walk, destination, 609);
+			int[] receipt = client.packetHandler.getPersistentMovementReceipt();
+			if (receipt[0] != movement[0] || receipt[2] != 0 || receipt[3] != movement[3]
+				|| client.getLocalPlayer() != actor || !Arrays.equals(terrain, awaitSurfaceDrawBuffers()) || worldInputReady() != 1) {
+				throw new IllegalStateException("The steady walk changed the installed terrain or actor");
+			}
+		}
+		BrowserBootstrap.report("outer-coverage:steady-walk-end:" + BrowserWebGLBridge.getSceneUploadReceipt());
 	}
 
 	private static void reportAnimatedScenery(mudclient client) throws Exception {

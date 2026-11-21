@@ -7,7 +7,10 @@ import orsc.NativeLayeredTerrainChunk;
 import orsc.NativeLayeredTerrainSnapshot;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -79,6 +82,52 @@ public final class SurfaceMeshSourceFixture {
 			}
 		}
 		System.out.println("PASS signed fixed and compatibility meshes match across the worker transport");
+		verifyGameplayProduct(world, field.toAtomicActivationInnerWindow(), slice);
+	}
+
+	private static void verifyGameplayProduct(World world, NativeLayeredTerrainSnapshot terrain, Class<?> slice) throws Exception {
+		Class<?> incoming = Class.forName(World.class.getName() + "$IncomingSurfaceCollision");
+		Method build = World.class.getDeclaredMethod("prebuildNativeWorldModelProduct", NativeLayeredTerrainSnapshot.class,
+			int.class, int.class, long.class, boolean.class, slice, boolean.class, incoming);
+		Method receive = World.class.getDeclaredMethod("prepareDetachedSurfaceGameplay", NativeLayeredTerrainSnapshot.class,
+			int.class, int.class, long.class, boolean.class, incoming);
+		build.setAccessible(true);
+		receive.setAccessible(true);
+		World worker = new World(null, null);
+		World.installSurfaceMeshWorker((source, x, z, dx, dz, roofs, sprites, gameplay) -> {
+			try {
+				return worker.buildSurfaceGameplayPacket(source, x, z, roofs);
+			} catch (java.io.IOException failure) {
+				throw new IllegalStateException(failure);
+			}
+		});
+		try {
+			Object direct = build.invoke(world, terrain, 0, 0, 1L, true, null, true, null);
+			Object detached = receive.invoke(world, terrain, 0, 0, 1L, true, null);
+			Field drawMesh = direct.getClass().getDeclaredField("drawMesh");
+			drawMesh.setAccessible(true);
+			if (detached == null || !Arrays.equals(gameplayProduct(direct), gameplayProduct(detached))
+				|| ((Renderer3DWorldChunkFrame.ChunkMesh) drawMesh.get(direct)).getStorageSignature()
+					!= ((Renderer3DWorldChunkFrame.ChunkMesh) drawMesh.get(detached)).getStorageSignature()) {
+				throw new AssertionError("Worker changed gameplay collision, minimap or pick geometry");
+			}
+			System.out.println("PASS signed gameplay product matches across the worker transport");
+		} finally {
+			World.installSurfaceMeshWorker(null);
+		}
+	}
+
+	private static byte[] gameplayProduct(Object result) throws Exception {
+		Field prepared = result.getClass().getDeclaredField("localTerrain");
+		prepared.setAccessible(true);
+		Object local = prepared.get(result);
+		Method write = local.getClass().getDeclaredMethod("writeProduct", DataOutput.class);
+		write.setAccessible(true);
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		try (DataOutputStream output = new DataOutputStream(bytes)) {
+			write.invoke(local, output);
+		}
+		return bytes.toByteArray();
 	}
 
 	private static String sha256(byte[] bytes) throws Exception {

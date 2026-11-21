@@ -53,6 +53,7 @@ def main():
     parser.add_argument('--surface-scenery-draw', action='store_true', help='Publish revisioned scenery meshes ahead of the crossing')
     parser.add_argument('--live-surface-handoff', action='store_true', help='Keep verified playable coverage live through a rolling rebase')
     parser.add_argument('--retarget-walk', action='store_true', help='Change course before the original predicted window activates')
+    parser.add_argument('--steady-walk', action='store_true', help='Repeat the approach inside the installed area after its prediction is ready')
     parser.add_argument('--surface-draw-worker', action='store_true', help='Submit live WebGL drawing through the existing render worker')
     parser.add_argument('--surface-mesh-worker', action='store_true', help='Prepare entering terrain geometry in a separate browser VM')
     parser.add_argument('--hold-optional-terrain', action='store_true', help='Hold the retargeted fringe meshes until the actual crossing')
@@ -64,6 +65,8 @@ def main():
         parser.error('The automated sustained walk requires travel tracing')
     if args.hold_optional_terrain and not (args.retarget_walk and args.surface_mesh_worker and not args.manual):
         parser.error('The fringe hold requires the automated retarget walk and the terrain worker')
+    if args.steady_walk and (args.manual or args.sustained_walk or args.retarget_walk or not args.live_surface_handoff):
+        parser.error('The steady walk uses its own automated live-surface route')
     if args.slice_preupload and not args.preupload_scene:
         parser.error('Sliced packing requires scene uploads')
     if args.preupload_scene and not (args.preupload and args.predicted_scenery):
@@ -135,6 +138,7 @@ def main():
            f'        System.setProperty("spoiledmilk.surfaceSceneryDraw", "{str(args.surface_scenery_draw).lower()}");\n'
            f'        System.setProperty("spoiledmilk.liveSurfaceHandoff", "{str(args.live_surface_handoff).lower()}");\n'
            f'        System.setProperty("spoiledmilk.retargetSurfaceWalk", "{str(args.retarget_walk).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.steadySurfaceWalk", "{str(args.steady_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSurfaceMeshWorker", "{str(args.surface_mesh_worker).lower()}");\n'
            f'        System.setProperty("spoiledmilk.fixtureHoldOptionalTerrain", "{str(args.hold_optional_terrain).lower()}");\n'
            f'        System.setProperty("spoiledmilk.sustainedBrowserWalk", "{str(args.sustained_walk).lower()}");\n'
@@ -177,8 +181,8 @@ def main():
                '    if (hold) window.fixtureFringeGate = Promise.withResolvers();\n'
                '    else { window.fixtureFringeGate?.resolve(); delete window.fixtureFringeGate; }\n'
                '  },')
-        insert(web / 'browser.js', '    return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites]);',
-               '    if (window.fixtureFringeGate) await window.fixtureFringeGate.promise;')
+        insert(web / 'browser.js', '    return surfaceMeshWorker.build(source, [offsetX, offsetZ, dx, dz, withRoofs, customSprites, gameplay]);',
+               '    if (window.fixtureFringeGate && !gameplay) await window.fixtureFringeGate.promise;')
     subprocess.run([
         'javac', '-source', '8', '-target', '8', '-cp', f'{web / "client.jar"}:{classes}',
         '-d', str(classes), *java_sources,
@@ -238,6 +242,8 @@ def main():
         'surfaceDrawWorker': args.surface_draw_worker,
         'sustainedWalk': args.sustained_walk,
         'retargetWalk': args.retarget_walk,
+        'steadyWalk': args.steady_walk,
+        'holdOptionalTerrain': args.hold_optional_terrain,
         'tcpPort': tcp_port, 'websocketPort': ws_port,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',
         'stagedSha256': staged_hashes,

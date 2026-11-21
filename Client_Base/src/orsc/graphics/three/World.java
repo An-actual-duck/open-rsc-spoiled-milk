@@ -19,6 +19,8 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -142,6 +144,10 @@ public final class World {
 	private volatile String nativeLayeredTerrainActivationSummary = "";
 	private volatile boolean nativeTerrainAuthorityOnlyActive;
 	private PreparedLocalTerrain pendingLocalTerrain;
+	private PreparedLocalTerrain installedDetachedTerrain;
+	private int detachedSurfaceGameplayInstalls;
+
+	public int getDetachedSurfaceGameplayInstalls() { return detachedSurfaceGameplayInstalls; }
 	private final Map<String, Sector> sectorTemplateCache = Collections.synchronizedMap(
 		new LinkedHashMap<String, Sector>(SECTOR_CACHE_LIMIT, 0.75F, true) {
 			@Override
@@ -419,6 +425,7 @@ public final class World {
 				&& (syntheticDeepFixtureOffsetX != worldOffsetX
 					|| syntheticDeepFixtureOffsetZ != worldOffsetZ)) {
 			pendingLocalTerrain = null;
+			installedDetachedTerrain = null;
 			boolean installPrepared = canInstallPreparedWalkingTerrain(
 				preparedWalkingTerrain, nativeTerrainSnapshot, worldOffsetX, worldOffsetZ);
 			if (nativeTerrainSnapshot == null
@@ -1069,7 +1076,8 @@ public final class World {
 
 	@FunctionalInterface
 	public interface SurfaceMeshWorker {
-		byte[] build(byte[] source, int offsetX, int offsetZ, int dx, int dz, boolean includeRoofs, boolean customSprites);
+		byte[] build(byte[] source, int offsetX, int offsetZ, int dx, int dz, boolean includeRoofs,
+			boolean customSprites, boolean gameplay);
 	}
 
 	private static volatile SurfaceMeshWorker browserSurfaceMeshWorker;
@@ -1100,9 +1108,62 @@ public final class World {
 		return bytes.toByteArray();
 	}
 
+	/** The detached browser VM prepares the exact same collision, minimap and pick models as native play. */
+	public byte[] buildSurfaceGameplayPacket(byte[] source, int offsetX, int offsetZ, boolean includeRoofs) throws IOException {
+		NativeLayeredTerrainSnapshot terrain = NativeLayeredTerrainSnapshot.readSurfaceWorkerSource(source);
+		NativeWorldModelPrebuild product = prebuildNativeWorldModelProduct(terrain, offsetX, offsetZ,
+			0L, includeRoofs, null, true, null);
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+			output.writeUTF(terrain.scopeIdentity());
+			output.writeBoolean(includeRoofs);
+			output.writeObject(product.drawMesh);
+			product.localTerrain.writeProduct(output);
+		}
+		return bytes.toByteArray();
+	}
+
+	private NativeWorldModelPrebuild prepareDetachedSurfaceGameplay(NativeLayeredTerrainSnapshot terrain,
+		int offsetX, int offsetZ, long revision, boolean includeRoofs, IncomingSurfaceCollision incoming) {
+		SurfaceMeshWorker worker = browserSurfaceMeshWorker;
+		if (worker == null) return null;
+		long started = System.nanoTime();
+		int logicalX = terrain.getCurrentChunkX(), logicalZ = terrain.getCurrentChunkY();
+		int x = worldTileToSection(Math.addExact(Math.multiplyExact(logicalX, SECTION_SIZE), offsetX));
+		int z = worldTileToSection(Math.addExact(Math.multiplyExact(logicalZ, SECTION_SIZE), offsetZ));
+		try {
+			byte[] source = terrain.surfaceWorkerSource(logicalX, logicalZ);
+			byte[] bytes = worker.build(source, offsetX, offsetZ, 0, 0, includeRoofs, Config.S_WANT_CUSTOM_SPRITES, true);
+			if (bytes == null) return null;
+			try (ObjectInputStream input = openSurfaceProduct(bytes, 24 * 1024 * 1024)) {
+				if (!terrain.scopeIdentity().equals(input.readUTF()) || includeRoofs != input.readBoolean()) {
+					throw new IOException("Surface gameplay product source changed");
+				}
+				Renderer3DWorldChunkFrame.ChunkMesh mesh = readSurfaceMesh(input, x, z);
+				if (mesh == null) throw new IOException("Surface gameplay product has no query geometry");
+				PreparedLocalTerrain ready = PreparedLocalTerrain.readProduct(input, terrain.scopeIdentity(), revision, x, z, includeRoofs);
+				if (input.read() != -1) throw new IOException("Trailing surface gameplay product");
+				ready.detachedDrawMesh = mesh;
+				if (incoming != null) offerIncomingCollision(incoming, x, z, ready.collision);
+				return new NativeWorldModelPrebuild(false, System.nanoTime() - started, mesh, ready);
+			}
+		} catch (IOException | ClassNotFoundException | IllegalStateException invalid) {
+			System.err.println("Could not accept detached surface gameplay product: " + invalid);
+			return null;
+		}
+	}
+
 	private static Renderer3DWorldChunkFrame.ChunkMesh[] readSurfaceMeshPacket(byte[] bytes, int x, int z) throws IOException {
-		if (bytes.length > 8 * 1024 * 1024) throw new IOException("Surface mesh size");
-		try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes)) {
+		try (ObjectInputStream input = openSurfaceProduct(bytes, 8 * 1024 * 1024)) {
+			return new Renderer3DWorldChunkFrame.ChunkMesh[]{readSurfaceMesh(input, x, z), readSurfaceMesh(input, x, z)};
+		} catch (ClassNotFoundException invalid) {
+			throw new IOException("Surface mesh type mismatch", invalid);
+		}
+	}
+
+	private static ObjectInputStream openSurfaceProduct(byte[] bytes, int limit) throws IOException {
+		if (bytes.length > limit) throw new IOException("Surface product size " + bytes.length);
+		return new ObjectInputStream(new ByteArrayInputStream(bytes)) {
 			@Override protected Class<?> resolveClass(ObjectStreamClass descriptor)
 				throws IOException, ClassNotFoundException {
 				String type = descriptor.getName();
@@ -1110,23 +1171,22 @@ public final class World {
 					|| type.equals("java.lang.Enum") || type.equals("[I") || type.equals("[J") || type.equals("[F")
 					|| type.equals("[L" + Renderer3DModelKind.class.getName() + ";") || type.equals(Renderer3DModelKind.class.getName())
 					|| type.equals("[L" + Renderer3DMaterialFamily.class.getName() + ";") || type.equals(Renderer3DMaterialFamily.class.getName())
+					|| type.equals(Renderer3DWorldChunkFrame.ShadowCaster.class.getName())
+					|| type.equals(Renderer3DWorldChunkFrame.GlowEmitter.class.getName())
 					|| type.equals("[L" + Renderer3DWorldChunkFrame.ShadowCaster.class.getName() + ";")
 					|| type.equals("[L" + Renderer3DWorldChunkFrame.GlowEmitter.class.getName() + ";")) return super.resolveClass(descriptor);
 				throw new IOException("Unexpected surface mesh type");
 			}
-		}) {
-			Renderer3DWorldChunkFrame.ChunkMesh[] meshes = new Renderer3DWorldChunkFrame.ChunkMesh[2];
-			for (int i = 0; i < meshes.length; i++) {
-				Renderer3DWorldChunkFrame.ChunkMesh mesh = (Renderer3DWorldChunkFrame.ChunkMesh) input.readObject();
-				if (mesh != null && (mesh.getPlane() != 0 || mesh.getCenterSectionX() != x || mesh.getCenterSectionY() != z)) {
-					throw new IOException("Surface mesh coordinate mismatch");
-				}
-				meshes[i] = mesh;
-			}
-			return meshes;
-		} catch (ClassNotFoundException invalid) {
-			throw new IOException("Surface mesh type mismatch", invalid);
+		};
+	}
+
+	private static Renderer3DWorldChunkFrame.ChunkMesh readSurfaceMesh(ObjectInputStream input, int x, int z)
+		throws IOException, ClassNotFoundException {
+		Renderer3DWorldChunkFrame.ChunkMesh mesh = (Renderer3DWorldChunkFrame.ChunkMesh) input.readObject();
+		if (mesh != null && (mesh.getPlane() != 0 || mesh.getCenterSectionX() != x || mesh.getCenterSectionY() != z)) {
+			throw new IOException("Surface mesh coordinate mismatch");
 		}
+		return mesh;
 	}
 
 	private WorldGpuChunkMesh buildPresentationGeometry(int plane, int x, int z, NativeLayeredTerrainSnapshot terrain,
@@ -1225,20 +1285,16 @@ public final class World {
 		IncomingSurfaceCollision incomingCollision = incomingSurfaceCollision != null && predicted && !terrainOnly
 			&& plane == 0 && "global".equals(haloTerrain.getWorldSpace())
 			? new IncomingSurfaceCollision(activeTerrain, sourceRevision, worldOffsetX, worldOffsetZ) : null;
-		NativeWorldModelPrebuild activePrebuild =
-			terrainOnly || predicted
-				? prebuildNativeWorldModelProduct(
-					activeProductTerrain,
-					worldOffsetX,
-					worldOffsetZ,
-					predicted
-						? Math.addExact(sourceRevision, 1L)
-						: sourceRevision,
-					includeRoofGeometry,
-					slice,
-					PREPARE_BROWSER_LOCAL_TERRAIN && predicted && !terrainOnly && plane == 0
-						&& haloTerrain.getLevel() == 0 && "global".equals(haloTerrain.getWorldSpace()), incomingCollision)
-				: null;
+		boolean prepareLocal = PREPARE_BROWSER_LOCAL_TERRAIN && predicted && !terrainOnly && plane == 0
+			&& haloTerrain.getLevel() == 0 && "global".equals(haloTerrain.getWorldSpace());
+		long preparationRevision = predicted ? Math.addExact(sourceRevision, 1L) : sourceRevision;
+		NativeWorldModelPrebuild activePrebuild = prepareLocal && drawPreparation != null && fixedDraw != null
+			? prepareDetachedSurfaceGameplay(activeProductTerrain, worldOffsetX, worldOffsetZ, preparationRevision,
+				includeRoofGeometry, incomingCollision) : null;
+		if (activePrebuild == null && (terrainOnly || predicted)) {
+			activePrebuild = prebuildNativeWorldModelProduct(activeProductTerrain, worldOffsetX, worldOffsetZ,
+				preparationRevision, includeRoofGeometry, slice, prepareLocal, incomingCollision);
+		}
 		int sourceOuterSectors = 0;
 		StringBuilder cellDiagnostics = new StringBuilder();
 		for (int deltaX = -2; deltaX <= 2; deltaX++) {
@@ -1309,7 +1365,7 @@ public final class World {
 								byte[] source = haloTerrain.surfaceWorkerSource(haloTerrain.getCurrentChunkX() + deltaX,
 									haloTerrain.getCurrentChunkY() + deltaY);
 								byte[] result = worker.build(source, worldOffsetX, worldOffsetZ, deltaX, deltaY, includeRoofGeometry,
-									Config.S_WANT_CUSTOM_SPRITES);
+									Config.S_WANT_CUSTOM_SPRITES, false);
 								if (result != null) detached = readSurfaceMeshPacket(result, sectionX, sectionY);
 							} catch (IOException invalid) {
 								throw new IllegalStateException("Invalid detached surface mesh", invalid);
@@ -1570,6 +1626,10 @@ public final class World {
 				applyWallSegmentCollision(staticFlags, segment);
 			}
 		}
+		offerIncomingCollision(incoming, sectionX, sectionZ, staticFlags);
+	}
+
+	private void offerIncomingCollision(IncomingSurfaceCollision incoming, int sectionX, int sectionZ, int[][] staticFlags) {
 		incoming.cells = SurfaceCollisionCells.prepare(sectionToLocalBaseTile(sectionX) - incoming.offsetX,
 			sectionToLocalBaseTile(sectionZ) - incoming.offsetZ, staticFlags);
 		incomingSurfaceCollision.set(incoming);
@@ -1726,6 +1786,8 @@ public final class World {
 		PreparedLocalTerrain prepared = pendingLocalTerrain;
 		pendingLocalTerrain = null;
 		if (!matchesPreparedLocalTerrain(prepared, plane, sectionX, sectionY)) return false;
+		installedDetachedTerrain = prepared.detachedDrawMesh == null ? null : prepared;
+		if (installedDetachedTerrain != null) detachedSurfaceGameplayInstalls++;
 		long started = RenderTelemetry.boundaryDiagnosticsNow();
 		int[] palette = new int[PreparedLocalTerrain.PALETTE_START + prepared.resources.length * 2];
 		palette[PreparedLocalTerrain.WALL_PIXEL] = 6316128;
@@ -1780,6 +1842,7 @@ public final class World {
 		private final RoofModelInput roofInput;
 		private final int[] minimap, resources;
 		private final RSModel[] walls, roofs;
+		private Renderer3DWorldChunkFrame.ChunkMesh detachedDrawMesh;
 
 		private PreparedLocalTerrain(String scope, long revision, int sectionX, int sectionY, boolean includeRoofs,
 			Sector[] tiles, CpuSectionWindow window, int[][] collision, RoofModelInput roofInput,
@@ -1798,6 +1861,86 @@ public final class World {
 			this.resources = resources;
 			this.walls = walls;
 			this.roofs = roofs;
+		}
+
+		private void writeProduct(DataOutput output) throws IOException {
+			output.writeInt(appliedTiles);
+			output.writeInt(nonVoidTiles);
+			for (Sector sector : tiles) {
+				output.writeBoolean(sector.isLoaded());
+				for (int i = 0; i < SECTION_SIZE * SECTION_SIZE; i++) {
+					Tile tile = sector.getTile(i);
+					output.writeInt(tile.groundElevation);
+					output.writeInt(tile.diagonalWalls);
+					output.writeByte(tile.groundTexture);
+					output.writeByte(tile.groundOverlay);
+					output.writeByte(tile.roofTexture);
+					output.writeByte(tile.horizontalWall);
+					output.writeByte(tile.verticalWall);
+				}
+			}
+			for (int[] row : collision) for (int value : row) output.writeInt(value);
+			for (int[] row : roofInput.finalElevations) for (int value : row) output.writeInt(value);
+			output.writeInt(resources.length);
+			for (int value : resources) output.writeInt(value);
+			for (int value : minimap) output.writeInt(value);
+			WholeRamData.Pool pool = new WholeRamData.Pool(8L * 1024 * 1024);
+			for (RSModel model : walls) output.writeInt(RSModel.capturePreparedState(model, pool));
+			for (RSModel model : roofs) output.writeInt(RSModel.capturePreparedState(model, pool));
+			pool.write(output);
+		}
+
+		private static PreparedLocalTerrain readProduct(DataInput input, String scope, long revision,
+			int sectionX, int sectionZ, boolean includeRoofs) throws IOException {
+			int applied = input.readInt(), nonVoid = input.readInt();
+			if (applied < 0 || applied > LOCAL_TILE_COUNT * LOCAL_TILE_COUNT || nonVoid < 0 || nonVoid > applied) {
+				throw new IOException("Surface gameplay tile counts");
+			}
+			Sector[] tiles = new Sector[ACTIVE_SECTION_COUNT];
+			for (int n = 0; n < tiles.length; n++) {
+				Sector sector = input.readBoolean() ? Sector.blankLoaded() : new Sector();
+				for (int i = 0; i < SECTION_SIZE * SECTION_SIZE; i++) {
+					Tile tile = sector.getTile(i);
+					tile.groundElevation = input.readInt();
+					tile.diagonalWalls = input.readInt();
+					tile.groundTexture = input.readByte();
+					tile.groundOverlay = input.readByte();
+					tile.roofTexture = input.readByte();
+					tile.horizontalWall = input.readByte();
+					tile.verticalWall = input.readByte();
+				}
+				tiles[n] = sector;
+			}
+			int[][] collision = readProductGrid(input), heights = readProductGrid(input);
+			int resourceCount = input.readInt();
+			if (resourceCount < 0 || resourceCount > LOCAL_TILE_COUNT * LOCAL_TILE_COUNT * 2) {
+				throw new IOException("Surface gameplay minimap resource count");
+			}
+			int[] resources = new int[resourceCount];
+			for (int i = 0; i < resources.length; i++) resources[i] = input.readInt();
+			int[] pixels = new int[NATIVE_MINIMAP_PIXEL_SIZE * NATIVE_MINIMAP_PIXEL_SIZE];
+			for (int i = 0; i < pixels.length; i++) {
+				int value = input.readInt();
+				if (value < 0 || value >= PALETTE_START + resourceCount * 2) throw new IOException("Surface gameplay minimap palette");
+				pixels[i] = value;
+			}
+			int[] models = new int[MODEL_GRID_COUNT * 2];
+			for (int i = 0; i < models.length; i++) models[i] = input.readInt();
+			WholeRamData.Pool pool = WholeRamData.Pool.read(input);
+			RSModel[] walls = new RSModel[MODEL_GRID_COUNT], roofs = new RSModel[MODEL_GRID_COUNT];
+			for (int i = 0; i < MODEL_GRID_COUNT; i++) {
+				walls[i] = RSModel.instantiatePreparedState(models[i], pool);
+				roofs[i] = RSModel.instantiatePreparedState(models[i + MODEL_GRID_COUNT], pool);
+			}
+			return new PreparedLocalTerrain(scope, revision, sectionX, sectionZ, includeRoofs, tiles,
+				new CpuSectionWindow(tiles, true, applied, nonVoid), collision,
+				new RoofModelInput(new RoofFaceInput[0], heights, null, 0), pixels, resources, walls, roofs);
+		}
+
+		private static int[][] readProductGrid(DataInput input) throws IOException {
+			int[][] grid = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT];
+			for (int[] row : grid) for (int i = 0; i < row.length; i++) row[i] = input.readInt();
+			return grid;
 		}
 	}
 
@@ -3457,6 +3600,11 @@ public final class World {
 		int sectionX,
 		int sectionY,
 		boolean requireTerrain) {
+		PreparedLocalTerrain detached = installedDetachedTerrain;
+		if (requireTerrain && matchesPreparedLocalTerrain(detached, plane, sectionX, sectionY)) {
+			chunks.add(detached.detachedDrawMesh);
+			return;
+		}
 		WorldModelProduct product;
 		long cacheLockStartedNanos =
 			RenderTelemetry.boundaryDiagnosticsNow();

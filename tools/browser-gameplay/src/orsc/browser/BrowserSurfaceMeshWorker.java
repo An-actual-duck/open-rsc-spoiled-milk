@@ -14,7 +14,7 @@ public final class BrowserSurfaceMeshWorker {
     private static boolean custom;
 
     public static byte[] build(String cacheDir, byte[] source, int offsetX, int offsetZ,
-                               int dx, int dz, boolean withRoofs, boolean customSprites) throws IOException {
+                               int dx, int dz, boolean withRoofs, boolean customSprites, boolean gameplay) throws IOException {
         if (world == null) {
             Config.F_CACHE_DIR = cacheDir;
             Config.S_WANT_CUSTOM_SPRITES = customSprites;
@@ -24,6 +24,7 @@ public final class BrowserSurfaceMeshWorker {
             custom = customSprites;
         }
         if (custom != customSprites) throw new IllegalStateException("Surface worker definitions changed");
+        if (gameplay) return world.buildSurfaceGameplayPacket(source, offsetX, offsetZ, withRoofs);
         return world.buildSurfaceMeshPacket(source, offsetX, offsetZ, dx, dz, withRoofs, BrowserWebGLBridge::prepareWorkerSurfaceLighting);
     }
 }
