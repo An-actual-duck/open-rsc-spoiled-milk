@@ -676,6 +676,15 @@ Java frame gaps of 28, 27, and 27 ms. The initial approach recorded a 123 ms
 gap. The disposable native account was protected from incidental combat after
 an earlier run died on the route. [Native travel log](../../../output/tests/seamless-world-streaming/live-surface-native-travel/native-travel.log)
 
+At `3288cac39`, the server referenced all nine already checked inner terrain
+cells on the first ordinary handoff. The client validated each reference
+against its normal resident cache or the exact acknowledged prediction. The
+context then installed the same gameplay bounds with zero terrain payloads.
+Login, teleports, editor terrain and resynchronization retain the full-data
+path whenever their cache requires it. Firefox produced 3,274 fresh frames
+over the three crossings, with zero holds, input blocks or new load epochs.
+The longest frame gap remained 379 ms. [Prepared-reference capture](../../../output/tests/browser-gameplay-spike/live-surface-reference-handoff/firefox-result.json)
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the

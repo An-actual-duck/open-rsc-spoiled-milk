@@ -52,6 +52,7 @@ def main():
     parser.add_argument('--expanded-surface-draw-border', action='store_true', help='Include the signed source neighbors of outer draw cells')
     parser.add_argument('--surface-scenery-draw', action='store_true', help='Publish revisioned scenery meshes ahead of the crossing')
     parser.add_argument('--live-surface-handoff', action='store_true', help='Keep verified playable coverage live through a rolling rebase')
+    parser.add_argument('--retarget-walk', action='store_true', help='Change course before the original predicted window activates')
     parser.add_argument('--surface-draw-worker', action='store_true', help='Submit live WebGL drawing through the existing render worker')
     parser.add_argument('--surface-mesh-worker', action='store_true', help='Prepare entering terrain geometry in a separate browser VM')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
@@ -84,6 +85,8 @@ def main():
         parser.error('Live surface handoff requires independent scenery draws')
     if (args.surface_mesh_worker or args.surface_draw_worker) and not args.live_surface_handoff:
         parser.error('Surface workers require live surface handoff')
+    if args.retarget_walk and (args.manual or not args.live_surface_handoff or args.sustained_walk):
+        parser.error('Retarget walking requires the separate automated live surface route')
     tcp_port, ws_port = (TRACE_TCP_PORT, TRACE_WS_PORT) if args.trace else (TCP_PORT, WS_PORT)
     if args.manual:
         tcp_port, ws_port = MANUAL_TCP_PORT, MANUAL_WS_PORT
@@ -128,6 +131,7 @@ def main():
            f'        System.setProperty("spoiledmilk.expandedSurfaceDrawBorder", "{str(args.expanded_surface_draw_border).lower()}");\n'
            f'        System.setProperty("spoiledmilk.surfaceSceneryDraw", "{str(args.surface_scenery_draw).lower()}");\n'
            f'        System.setProperty("spoiledmilk.liveSurfaceHandoff", "{str(args.live_surface_handoff).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.retargetSurfaceWalk", "{str(args.retarget_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.browserSurfaceMeshWorker", "{str(args.surface_mesh_worker).lower()}");\n'
            f'        System.setProperty("spoiledmilk.sustainedBrowserWalk", "{str(args.sustained_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.predictedSceneryPreview", "{str(args.predicted_scenery).lower()}");')
@@ -179,7 +183,8 @@ def main():
         *(['--expanded-surface-draw-border'] if args.expanded_surface_draw_border else []),
         *(['--surface-scenery-draw'] if args.surface_scenery_draw else []),
         *(['--live-surface-handoff'] if args.live_surface_handoff else []),
-        *(['--surface-scenery-mutation'] if args.surface_scenery_cells and not args.manual else []),
+        *(['--safe-walk-fixture'] if args.retarget_walk else []),
+        *(['--surface-scenery-mutation'] if args.surface_scenery_cells and not (args.manual or args.retarget_walk) else []),
     ], cwd=ROOT, check=True)
     staged_hashes = {
         name: hashlib.sha256((web / name).read_bytes()).hexdigest()
@@ -220,6 +225,7 @@ def main():
         'surfaceMeshWorker': args.surface_mesh_worker,
         'surfaceDrawWorker': args.surface_draw_worker,
         'sustainedWalk': args.sustained_walk,
+        'retargetWalk': args.retarget_walk,
         'tcpPort': tcp_port, 'websocketPort': ws_port,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',
         'stagedSha256': staged_hashes,

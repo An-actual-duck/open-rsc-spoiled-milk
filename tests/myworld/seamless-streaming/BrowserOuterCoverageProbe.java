@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import orsc.ORSCApplet;
+import orsc.NativeLayeredTerrainSnapshot;
+import orsc.PacketHandler;
 import orsc.BrowserWebGLBridge;
 import orsc.graphics.gui.Panel;
 import orsc.graphics.three.Renderer3DFrame;
@@ -149,6 +151,11 @@ public final class BrowserOuterCoverageProbe {
 		walkLeg(client, walk, 257, 609);
 		int[] before = client.packetHandler.getPersistentMovementReceipt();
 		if (before[0] <= 0 || before[1] <= 0) throw new IllegalStateException("Private travel stream was not applied");
+		if (Boolean.getBoolean("spoiledmilk.retargetSurfaceWalk")) {
+			verifyPreparedDirectionChange(client, walk, before);
+			BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
+			return;
+		}
 		if (Boolean.getBoolean("spoiledmilk.surfaceSceneryCells")) {
 			verifyIncomingSceneryMutations(client, walk, before[3]);
 		}
@@ -245,6 +252,45 @@ public final class BrowserOuterCoverageProbe {
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":applied=" + after[1]
 			+ ":outside-coverage=" + after[2] + ":terrain-epochs=" + before[3] + "," + afterScene + "," + after[3]);
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
+	}
+
+	private static void verifyPreparedDirectionChange(mudclient client, Method walk, int[] movement) throws Exception {
+		Field ready = field(PacketHandler.class, "readyPredictedLayeredTerrainStructureStage");
+		awaitPreparedCenter(client, movement[3], ready, 5, 12);
+		int targetZ = 574, targetX = -1;
+		int[] pathX = new int[World.LOCAL_TILE_COUNT * World.LOCAL_TILE_COUNT], pathZ = new int[pathX.length];
+		for (int candidate : new int[] {250, 243, 237, 230, 225}) {
+			int localX = candidate - client.getMidRegionBaseX(), localZ = targetZ - client.getMidRegionBaseZ();
+			int waypoints = client.getWorld().findPath(pathX, pathZ, client.getLocalPlayerX(), client.getLocalPlayerZ(),
+				localX, localX, localZ, localZ, false);
+			if (waypoints > 0) {
+				targetX = candidate;
+				break;
+			}
+		}
+		if (targetX < 0) throw new IllegalStateException("The native surface route cannot reach the north strip");
+		BrowserBootstrap.report("outer-coverage:prediction-ready:5,12");
+		walkLeg(client, walk, targetX, targetZ);
+		int x = Math.floorDiv(targetX, World.SECTION_SIZE);
+		awaitPreparedCenter(client, movement[3], ready, x, 11);
+		int[] after = client.packetHandler.getPersistentMovementReceipt();
+		if (after[0] != movement[0] || after[2] != 0 || after[3] != movement[3] || worldInputReady() != 1) {
+			throw new IllegalStateException("Changing the prepared direction interrupted the installed world");
+		}
+		BrowserBootstrap.report("outer-coverage:prediction-retargeted:5,12->" + x + ",11");
+	}
+
+	private static void awaitPreparedCenter(mudclient client, int sequence, Field field, int x, int z) throws Exception {
+		long deadline = System.currentTimeMillis() + 20_000;
+		do {
+			if (client.packetHandler.getPersistentMovementReceipt()[3] != sequence || worldInputReady() != 1) {
+				throw new IllegalStateException("Prediction changed the installed authority");
+			}
+			NativeLayeredTerrainSnapshot terrain = (NativeLayeredTerrainSnapshot) field.get(client.packetHandler);
+			if (terrain != null && terrain.getCurrentChunkX() == x && terrain.getCurrentChunkY() == z) return;
+			Thread.sleep(50);
+		} while (System.currentTimeMillis() < deadline);
+		throw new IllegalStateException("The planned center was never prepared at " + x + "," + z);
 	}
 
 	private static void verifySurfaceWalkLeg(mudclient client, Method walk, int x, int z, int epoch, Object actor) throws Exception {

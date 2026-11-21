@@ -1346,8 +1346,12 @@ public class PacketHandler {
 				? mc.getWorld().decodePredictedSurfaceTerrain(() -> decoder.advance(Long.MAX_VALUE)) : null;
 			pendingPredictedTerrainDecode = new PredictedTerrainDecode(decoder, background, protocolVersion, stageSequence,
 				contextSequence, serverTick, worldSpace, logicalLevel, bodyCopyNanos);
-			if (protocolVersion == 4) beginSurfaceSceneryPrediction(stageSequence, contextSequence,
-				decoder.centerX(), decoder.centerY(), activeTerrain);
+			if (protocolVersion == 4) {
+				// A newer prediction may replace an acknowledged candidate after the player turns.
+				clearReadyPredictedLayeredTerrainHalo();
+				mc.getWorld().invalidateIncomingSurfaceDraws();
+				beginSurfaceSceneryPrediction(stageSequence, contextSequence, decoder.centerX(), decoder.centerY(), activeTerrain);
+			}
 			return;
 		}
 		final long decodeStartedNanos =

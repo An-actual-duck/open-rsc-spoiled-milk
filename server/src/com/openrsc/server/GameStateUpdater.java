@@ -990,7 +990,7 @@ public final class GameStateUpdater {
 			player, location, targetTerrain, true);
 	}
 
-	private void sendNativeTerrainPredictedSymmetricStage(
+	private boolean sendNativeTerrainPredictedSymmetricStage(
 		final Player player,
 		final WorldLocation location,
 		final NativeLayeredSceneTerrain stagedTerrain,
@@ -1018,7 +1018,7 @@ public final class GameStateUpdater {
 				OpcodeOut.SEND_LAYERED_TERRAIN_STAGE,
 				stage,
 				player)) {
-			return;
+			return false;
 		}
 		player.setAttribute(
 			NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE, sequence);
@@ -1029,6 +1029,7 @@ public final class GameStateUpdater {
 			NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE,
 			stagedTerrain);
 		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE);
+		return true;
 	}
 
 	private void sendPredictedSceneryCells(Player player, NativeLayeredSceneTerrain active,
@@ -1180,14 +1181,12 @@ public final class GameStateUpdater {
 		final NativeLayeredTerrainStageReadiness accepted =
 			player.getAttribute(
 				NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE, null);
-		final boolean advanceToStructure =
-			pending != null
-				&& pending.hasProtocolVersion(
-					LAYERED_TERRAIN_PREDICTED_SYMMETRIC_PROTOCOL_VERSION)
-				&& pending.equals(accepted);
-		if (pending != null && !advanceToStructure) {
-			return;
-		}
+		final boolean preparedRetargeting = LIVE_SURFACE_HANDOFF && usesCoveredWalkingPreview(player);
+		final boolean acknowledged = pending != null && pending.equals(accepted);
+		final boolean visualReady = acknowledged && pending.hasProtocolVersion(LAYERED_TERRAIN_PREDICTED_SYMMETRIC_PROTOCOL_VERSION);
+		final boolean structuralReady = acknowledged
+			&& pending.hasProtocolVersion(LAYERED_TERRAIN_PREDICTED_SYMMETRIC_STRUCTURE_PROTOCOL_VERSION);
+		if (pending != null && !visualReady && !(preparedRetargeting && structuralReady)) return;
 		final int contextSequence =
 			requireLayeredSceneContextSequence(player);
 		final Integer structuralContext = player.getAttribute(
@@ -1201,15 +1200,11 @@ public final class GameStateUpdater {
 		if (targetCenter == null) {
 			return;
 		}
-		if (advanceToStructure
-			&& !pending.matchesTarget(
-				location.getWorldSpace().getValue(),
-				location.getCoordinate().getLevel(),
-				targetCenter[0],
-				targetCenter[1],
-				activeTerrain.terrainPackage.getManifestSha256())) {
-			return;
-		}
+		final boolean sameTarget = pending != null && pending.matchesTarget(
+			location.getWorldSpace().getValue(), location.getCoordinate().getLevel(),
+			targetCenter[0], targetCenter[1], activeTerrain.terrainPackage.getManifestSha256());
+		if ((visualReady && !sameTarget && !preparedRetargeting) || (structuralReady && sameTarget)) return;
+		final boolean advanceToStructure = visualReady && sameTarget;
 		final NativeLayeredSceneTerrain stagedTerrain =
 			new NativeLayeredSceneTerrain(
 				getServer(),
@@ -1219,8 +1214,7 @@ public final class GameStateUpdater {
 				location,
 				targetCenter[0],
 				targetCenter[1]);
-		sendNativeTerrainPredictedSymmetricStage(
-			player, location, stagedTerrain, advanceToStructure);
+		if (!sendNativeTerrainPredictedSymmetricStage(player, location, stagedTerrain, advanceToStructure)) return;
 		final NativeLayeredTerrainStageReadiness sent = player.getAttribute(
 			NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE, null);
 		if (!advanceToStructure && sent != null) {
