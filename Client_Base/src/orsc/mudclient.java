@@ -136,6 +136,9 @@ public final class mudclient implements Runnable {
 	private int slowestTravelPacketOpcode = -1;
 	static final boolean PREDICTED_SCENERY_PREVIEW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.predictedSceneryPreview");
+	static final boolean ROLLING_SURFACE_WINDOW = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
+		&& Boolean.getBoolean("spoiledmilk.rollingSurfaceWindow");
+	private int rollingSurfaceWindows;
 	private static final boolean PREPARE_INCOMING_SCENERY = PREDICTED_SCENERY_PREVIEW
 		&& Boolean.getBoolean("spoiledmilk.browserPrepareIncomingScenery");
 	private static final int MAX_PREPARED_INCOMING_MODELS = 512;
@@ -22022,8 +22025,6 @@ public final class mudclient implements Runnable {
 					this.world.playerAlive = true;
 					return false;
 				} else {
-					clearClericBuffPlayback();
-					clearClericCursePlaybacks();
 					long transitionStartNanos = System.nanoTime();
 					int oldBaseX = this.midRegionBaseX;
 					int oldBaseZ = this.midRegionBaseZ;
@@ -22035,9 +22036,18 @@ public final class mudclient implements Runnable {
 						this.world.hasNativeLayeredTerrain();
 					int midRegionX =
 						this.world.activeSectionXForWorldTile(wantX);
-					this.midRegionBaseX = World.sectionToLocalBaseTile(midRegionX);
 					int midRegionZ =
 						this.world.activeSectionYForWorldTile(wantZ);
+					int nextBaseX = World.sectionToLocalBaseTile(midRegionX) - this.worldOffsetX;
+					int nextBaseZ = World.sectionToLocalBaseTile(midRegionZ) - this.worldOffsetZ;
+					int baseDX = nextBaseX - oldBaseX, baseDZ = nextBaseZ - oldBaseZ;
+					boolean rolling = ROLLING_SURFACE_WINDOW && !hardAreaLoad && !heightOffsetChanged
+						&& this.hasCompletedInitialRegionLoad
+						&& this.world.canRollSurfaceWindow(this.requestedPlane, midRegionX, midRegionZ);
+					if (!rolling) {
+						clearClericBuffPlayback();
+						clearClericCursePlaybacks();
+					}
 					this.lastHeightOffset = this.requestedPlane;
 					this.currentRegionMaxZ = midRegionZ * World.SECTION_SIZE
 						+ (centeredNativeWindow ? World.SECTION_SIZE : 32);
@@ -22045,15 +22055,14 @@ public final class mudclient implements Runnable {
 						+ (centeredNativeWindow ? World.SECTION_SIZE : 32);
 					this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE
 						- (centeredNativeWindow ? 1 : 32);
-					this.midRegionBaseZ = World.sectionToLocalBaseTile(midRegionZ);
 					this.currentRegionMinX = midRegionX * World.SECTION_SIZE
 						- (centeredNativeWindow ? 1 : 32);
 					long phaseStartNanos = System.nanoTime();
-					for (int i = 0; this.getGameObjectInstanceCount() > i; ++i) {
-						this.dematerializeGameObjectInstance(i);
-					}
-					for (int i = 0; this.getWallObjectInstanceCount() > i; ++i) {
-						this.dematerializeWallObjectInstance(i);
+					if (rolling) {
+						rollSurfaceScenery(baseDX, baseDZ);
+					} else {
+						for (int i = 0; i < this.getGameObjectInstanceCount(); i++) this.dematerializeGameObjectInstance(i);
+						for (int i = 0; i < this.getWallObjectInstanceCount(); i++) this.dematerializeWallObjectInstance(i);
 					}
 					if (hardAreaLoad || heightOffsetChanged) {
 						this.clearResidentObjectChunkCache();
@@ -22061,13 +22070,12 @@ public final class mudclient implements Runnable {
 					long dematerializeNanos =
 						System.nanoTime() - phaseStartNanos;
 					phaseStartNanos = System.nanoTime();
-					this.world.loadSections(wantX, wantZ, this.lastHeightOffset);
+					this.world.loadSections(wantX, wantZ, this.lastHeightOffset, rolling);
 					long worldLoadNanos =
 						System.nanoTime() - phaseStartNanos;
-					this.midRegionBaseZ -= this.worldOffsetZ;
-					this.midRegionBaseX -= this.worldOffsetX;
-					int baseDX = this.midRegionBaseX - oldBaseX;
-					int baseDZ = this.midRegionBaseZ - oldBaseZ;
+					this.midRegionBaseX = nextBaseX;
+					this.midRegionBaseZ = nextBaseZ;
+					if (ROLLING_SURFACE_WINDOW) this.world.clearIncomingSurfaceScenery();
 
 					if (hardAreaLoad || heightOffsetChanged) {
 						this.retainPendingAreaLoadStaticScene();
@@ -22075,14 +22083,20 @@ public final class mudclient implements Runnable {
 
 					phaseStartNanos = System.nanoTime();
 					for (int i = 0; this.getGameObjectInstanceCount() > i; ++i) {
-						this.setGameObjectInstanceX(i, this.getGameObjectInstanceX(i) - baseDX);
-						this.setGameObjectInstanceZ(i, this.getGameObjectInstanceZ(i) - baseDZ);
+						if (!rolling) {
+							this.setGameObjectInstanceX(i, this.getGameObjectInstanceX(i) - baseDX);
+							this.setGameObjectInstanceZ(i, this.getGameObjectInstanceZ(i) - baseDZ);
+						}
 						int xTile = this.getGameObjectInstanceX(i);
 						int zTile = this.getGameObjectInstanceZ(i);
 
 						try {
 							int dir = this.getGameObjectInstanceDir(i);
 							this.getWorld().registerObjectDir(xTile, zTile, dir);
+							if (rolling && this.isGameObjectInstanceMaterialized(i)
+								&& !World.isLocalFaceTile(xTile + baseDX, zTile + baseDZ)) {
+								this.world.updateSurfaceObjectCollision(this.getGameObjectInstanceID(i), xTile, zTile, dir, true);
+							}
 						} catch (RuntimeException var21) {
 							System.out.println("Loc Error: " + var21.getMessage());
 							System.out.println("i:" + i + " obj:" + this.getGameObjectInstanceModel(i));
@@ -22091,15 +22105,20 @@ public final class mudclient implements Runnable {
 					}
 
 					for (int i = 0; this.getWallObjectInstanceCount() > i; ++i) {
-						this.setWallObjectInstanceX(i, this.getWallObjectInstanceX(i) - baseDX);
-						this.setWallObjectInstanceZ(i, this.getWallObjectInstanceZ(i) - baseDZ);
+						if (!rolling) {
+							this.setWallObjectInstanceX(i, this.getWallObjectInstanceX(i) - baseDX);
+							this.setWallObjectInstanceZ(i, this.getWallObjectInstanceZ(i) - baseDZ);
+							this.setWallObjectInstanceModel(i, null);
+						}
 						int xTile = this.getWallObjectInstanceX(i);
 						int zTile = this.getWallObjectInstanceZ(i);
 						int dir = this.getWallObjectInstanceDir(i);
-						this.setWallObjectInstanceModel(i, null);
-
 						try {
 							this.getWorld().registerObjectDir(xTile, zTile, dir);
+							if (rolling && this.isWallObjectInstanceMaterialized(i)
+								&& !World.isLocalFaceTile(xTile + baseDX, zTile + baseDZ)) {
+								this.world.applyWallToCollisionFlags(this.getWallObjectInstanceID(i), xTile, zTile, dir);
+							}
 						} catch (RuntimeException var20) {
 							System.out.println("Bound Error: " + var20.getMessage());
 							var20.printStackTrace();
@@ -22155,6 +22174,17 @@ public final class mudclient implements Runnable {
 					phaseStartNanos = System.nanoTime();
 					this.cameraPositionX -= baseOffsetX;
 					this.cameraPositionZ -= baseOffsetZ;
+					if (rolling) {
+						for (int i = 0; i < this.teleportBubbleCount; i++) {
+							this.teleportBubbleX[i] -= baseDX;
+							this.teleportBubbleZ[i] -= baseDZ;
+						}
+						for (int i = 0; i < this.detachedCombatEffectCount; i++) {
+							this.detachedCombatEffectX[i] -= baseOffsetX;
+							this.detachedCombatEffectZ[i] -= baseOffsetZ;
+						}
+						this.rollingSurfaceWindows++;
+					}
 
 					this.hasCompletedInitialRegionLoad = true;
 					this.world.playerAlive = true;
@@ -22168,7 +22198,7 @@ public final class mudclient implements Runnable {
 					long baselineNanos =
 						System.nanoTime() - phaseStartNanos;
 					RenderTelemetry.recordClientRegionTransition(
-						this.world.hasNativeLayeredTerrain()
+						rolling ? "rolling-surface" : this.world.hasNativeLayeredTerrain()
 							? "native-authoritative"
 							: "legacy",
 						hardAreaLoad,
@@ -22194,6 +22224,48 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var22) {
 			throw GenUtil.makeThrowable(var22, "client.MB(" + wantZ + ',' + wantX + ',' + var3 + ')');
 		}
+	}
+
+	public int getRollingSurfaceWindows() { return rollingSurfaceWindows; }
+
+	private void rollSurfaceScenery(int dx, int dz) {
+		RSModel[] retired = new RSModel[getGameObjectInstanceCount() + getWallObjectInstanceCount()];
+		int removed = 0, retained = 0;
+		int pixelX = -dx * tileSize, pixelZ = -dz * tileSize;
+		for (int i = 0; i < getGameObjectInstanceCount(); i++) {
+			int x = getGameObjectInstanceX(i), z = getGameObjectInstanceZ(i);
+			if (!World.isLocalTile(x - dx, z - dz)) {
+				RSModel model = deferGameObjectSceneRemoval(i);
+				if (model != null) retired[removed++] = model;
+				continue;
+			}
+			if (isGameObjectInstanceMaterialized(i)) {
+				if (!World.isLocalFaceTile(x - dx, z - dz)) {
+					world.updateSurfaceObjectCollision(getGameObjectInstanceID(i), x, z, getGameObjectInstanceDir(i), false);
+				}
+				getGameObjectInstanceModel(i).translate2(pixelX, 0, pixelZ);
+			}
+			sceneInstanceStore.moveGameObject(i, retained++, x - dx, z - dz);
+		}
+		setGameObjectInstanceCount(retained);
+		retained = 0;
+		for (int i = 0; i < getWallObjectInstanceCount(); i++) {
+			int x = getWallObjectInstanceX(i), z = getWallObjectInstanceZ(i);
+			if (!World.isLocalTile(x - dx, z - dz)) {
+				RSModel model = deferWallObjectSceneRemoval(i);
+				if (model != null) retired[removed++] = model;
+				continue;
+			}
+			if (isWallObjectInstanceMaterialized(i)) {
+				if (!World.isLocalFaceTile(x - dx, z - dz)) {
+					world.removeWallObject_CollisionFlags(true, getWallObjectInstanceDir(i), z, x, getWallObjectInstanceID(i));
+				}
+				getWallObjectInstanceModel(i).translate2(pixelX, 0, pixelZ);
+			}
+			sceneInstanceStore.moveWallObject(i, retained++, x - dx, z - dz);
+		}
+		setWallObjectInstanceCount(retained);
+		scene.removeModels(retired, removed);
 	}
 
 	private boolean isInsideLoadedRegion(int worldX, int worldZ) {

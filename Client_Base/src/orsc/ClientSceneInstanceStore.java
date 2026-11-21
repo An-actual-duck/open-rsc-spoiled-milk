@@ -296,6 +296,28 @@ final class ClientSceneInstanceStore {
 		Arrays.fill(wallObjectPendingAreaLoad, 0, wallObjectCount, false);
 	}
 
+	void moveGameObject(int from, int to, int x, int z) {
+		setGameObjectX(to, x);
+		setGameObjectZ(to, z);
+		if (from == to) return;
+		setGameObjectId(to, gameObjectIds[from]);
+		setGameObjectDirection(to, gameObjectDirections[from]);
+		setGameObjectModel(to, gameObjectModels[from]);
+		gameObjectMaterialized[to] = gameObjectMaterialized[from];
+		gameObjectPendingAreaLoad[to] = gameObjectPendingAreaLoad[from];
+	}
+
+	void moveWallObject(int from, int to, int x, int z) {
+		setWallObjectX(to, x);
+		setWallObjectZ(to, z);
+		if (from == to) return;
+		wallObjectIds[to] = wallObjectIds[from];
+		wallObjectDirections[to] = wallObjectDirections[from];
+		setWallObjectModel(to, wallObjectModels[from]);
+		wallObjectMaterialized[to] = wallObjectMaterialized[from];
+		wallObjectPendingAreaLoad[to] = wallObjectPendingAreaLoad[from];
+	}
+
 	void clearFrameMarks() {
 		Arrays.fill(gameObjectFrameMarks, 0, gameObjectCount, false);
 		Arrays.fill(wallObjectFrameMarks, 0, wallObjectCount, false);

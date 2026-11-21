@@ -927,7 +927,7 @@ public class PacketHandler {
 			nativeTerrainRecovery.reset();
 		}
 		layeredTerrainStageAssembler.reset();
-		clearSurfaceSceneryPrediction();
+		if (surfaceScenery != null) surfaceScenery.reset();
 		BoundaryLoadingDiagnostics.recordPhase(
 			"context",
 			"state-accept",
@@ -971,6 +971,7 @@ public class PacketHandler {
 				? 0L : System.nanoTime() - phaseStartedNanos);
 		phaseStartedNanos = BoundaryLoadingDiagnostics.now();
 		boolean predictedPublished = false;
+		boolean keepSurfaceScenery = false;
 		if (atomicActivation) {
 			boolean ordinaryWalking = hadLayeredSceneContext && !result.isScopeChanged()
 				&& previousLogicalLevel == logicalLevel
@@ -979,6 +980,8 @@ public class PacketHandler {
 			cancelPendingLayeredTerrainPrebuild();
 			predictedPublished =
 				publishReadyPredictedLayeredTerrainHalo(nativeTerrain, ordinaryWalking);
+			keepSurfaceScenery = surfaceScenery != null && ordinaryWalking && predictedPublished
+				&& mudclient.ROLLING_SURFACE_WINDOW;
 			layeredSceneActivationState.begin(sequence);
 			mc.beginLayeredSceneActivation(
 				hadLayeredSceneContext && !result.isScopeChanged(),
@@ -987,6 +990,7 @@ public class PacketHandler {
 		} else {
 			clearReadyPredictedLayeredTerrainHalo();
 		}
+		if (surfaceScenery != null && !keepSurfaceScenery) mc.getWorld().clearIncomingSurfaceScenery();
 		BoundaryLoadingDiagnostics.recordPhase(
 			"context",
 			"prediction-and-activation",

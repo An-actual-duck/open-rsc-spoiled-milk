@@ -3,10 +3,13 @@ package orsc.browser;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import orsc.ORSCApplet;
 import orsc.BrowserWebGLBridge;
 import orsc.graphics.gui.Panel;
 import orsc.graphics.three.Renderer3DFrame;
+import orsc.graphics.three.RSModel;
 import orsc.graphics.three.World;
 import orsc.graphics.two.GraphicsController;
 import orsc.mudclient;
@@ -148,9 +151,25 @@ public final class BrowserOuterCoverageProbe {
 		if (Boolean.getBoolean("spoiledmilk.surfaceSceneryCells")) {
 			verifyIncomingSceneryMutations(client, walk, before[3]);
 		}
+		boolean rolling = Boolean.getBoolean("spoiledmilk.rollingSurfaceWindow");
+		Map<RSModel, Long> overlapModels = rolling ? snapshotOverlapModels(client, false) : null;
+		Map<RSModel, Long> overlapWalls = rolling ? snapshotOverlapModels(client, true) : null;
+		Object actor = client.getLocalPlayer();
 		walkLeg(client, walk, 278, 609);
 		int afterScene = client.packetHandler.getPersistentMovementReceipt()[3];
 		if (afterScene <= before[3]) throw new IllegalStateException("Route did not cross the terrain center boundary");
+		if (rolling) {
+			int objects = retainedModels(overlapModels, snapshotOverlapModels(client, false));
+			int walls = retainedModels(overlapWalls, snapshotOverlapModels(client, true));
+			if (client.getRollingSurfaceWindows() != 1 || objects == 0 || walls == 0 || client.getLocalPlayer() != actor) {
+				throw new IllegalStateException("Did not retain overlap models and the actor on the rolling path: "
+					+ client.getRollingSurfaceWindows() + "/" + objects + "/" + walls);
+			}
+			BrowserBootstrap.report("outer-coverage:rolled:retained=" + objects + "/" + walls);
+			walkLeg(client, walk, 284, 609);
+			walkLeg(client, walk, 291, 597);
+			walkLeg(client, walk, 284, 609);
+		}
 		walkLeg(client, walk, 252, 609);
 		int[] after = client.packetHandler.getPersistentMovementReceipt();
 		if (after[0] != before[0] || after[1] <= before[1] || after[2] != 0) {
@@ -168,6 +187,31 @@ public final class BrowserOuterCoverageProbe {
 		BrowserBootstrap.report("outer-coverage:movement-generation:" + after[0] + ":applied=" + after[1]
 			+ ":outside-coverage=" + after[2] + ":terrain-epochs=" + before[3] + "," + afterScene + "," + after[3]);
 		BrowserBootstrap.report("outer-coverage:complete:persistent-movement");
+	}
+
+	private static Map<RSModel, Long> snapshotOverlapModels(mudclient client, boolean wall) {
+		Map<RSModel, Long> models = new IdentityHashMap<>();
+		int count = wall ? client.getWallObjectInstanceCount() : client.getGameObjectInstanceCount();
+		for (int i = 0; i < count; i++) {
+			int x = client.getMidRegionBaseX() + (wall ? client.getWallObjectInstanceX(i) : client.getGameObjectInstanceX(i));
+			int z = client.getMidRegionBaseZ() + (wall ? client.getWallObjectInstanceZ(i) : client.getGameObjectInstanceZ(i));
+			if (x < 192 || x >= 288 || z < 528 || z >= 672) continue;
+			RSModel model = wall ? client.getWallObjectInstanceModel(i) : client.getGameObjectInstanceModel(i);
+			boolean materialized = wall ? client.isWallObjectInstanceMaterialized(i) : client.isGameObjectInstanceMaterialized(i);
+			if (model != null && materialized) {
+				if (model.key != i + (wall ? 20000 : 0)) throw new IllegalStateException("Stale scenery pick key");
+				models.put(model, ((long)x << 32) | (z & 0xffffffffL));
+			}
+		}
+		return models;
+	}
+
+	private static int retainedModels(Map<RSModel, Long> first, Map<RSModel, Long> second) {
+		int retained = 0;
+		for (Map.Entry<RSModel, Long> entry : first.entrySet()) {
+			if (entry.getValue().equals(second.get(entry.getKey()))) retained++;
+		}
+		return retained;
 	}
 
 	private static void verifyIncomingSceneryMutations(mudclient client, Method walk, int scene) throws Exception {

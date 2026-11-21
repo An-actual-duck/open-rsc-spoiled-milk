@@ -46,7 +46,8 @@ public final class World {
 	private static final boolean PACE_BROWSER_TERRAIN_PREDICTION = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.browserPaceTerrainPrediction");
 	private static final boolean PREPARE_BROWSER_LOCAL_TERRAIN = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
-		&& Boolean.getBoolean("spoiledmilk.browserPrepareLocalTerrain");
+		&& (Boolean.getBoolean("spoiledmilk.browserPrepareLocalTerrain")
+			|| Boolean.getBoolean("spoiledmilk.rollingSurfaceWindow"));
 	private static final boolean PERSISTENT_SURFACE_COLLISION = !Boolean.getBoolean("spoiledmilk.browserPublicAlpha")
 		&& Boolean.getBoolean("spoiledmilk.persistentSurfaceCollision");
 	private final SurfaceCollisionCells surfaceCollision = PERSISTENT_SURFACE_COLLISION ? new SurfaceCollisionCells() : null;
@@ -1471,12 +1472,7 @@ public final class World {
 	private boolean installPreparedLocalTerrain(int plane, int sectionX, int sectionY) {
 		PreparedLocalTerrain prepared = pendingLocalTerrain;
 		pendingLocalTerrain = null;
-		if (prepared == null || plane != 0 || prepared.sectionX != sectionX || prepared.sectionY != sectionY
-			|| nativeLayeredTerrainSnapshot == null || !prepared.scope.equals(nativeLayeredTerrainSnapshot.scopeIdentity())
-			|| prepared.revision != worldEditorTerrainRevision.get() || prepared.includeRoofs != !Config.C_HIDE_ROOFS
-			|| !shouldUseNativeTerrainAuthorityOnly() || shouldLoadUpperPlaneModels(plane)) {
-			return false;
-		}
+		if (!matchesPreparedLocalTerrain(prepared, plane, sectionX, sectionY)) return false;
 		long started = RenderTelemetry.boundaryDiagnosticsNow();
 		int[] palette = new int[PreparedLocalTerrain.PALETTE_START + prepared.resources.length * 2];
 		palette[PreparedLocalTerrain.WALL_PIXEL] = 6316128;
@@ -1503,6 +1499,20 @@ public final class World {
 		RenderTelemetry.recordBoundaryPhase("terrain", "prepared-install", started,
 			started == 0L ? 0L : System.nanoTime() - started);
 		return true;
+	}
+
+	private boolean matchesPreparedLocalTerrain(PreparedLocalTerrain prepared, int plane, int sectionX, int sectionZ) {
+		return prepared != null && plane == 0 && prepared.sectionX == sectionX && prepared.sectionY == sectionZ
+			&& nativeLayeredTerrainSnapshot != null && prepared.scope.equals(nativeLayeredTerrainSnapshot.scopeIdentity())
+			&& prepared.revision == worldEditorTerrainRevision.get() && prepared.includeRoofs == !Config.C_HIDE_ROOFS
+			&& shouldUseNativeTerrainAuthorityOnly() && !shouldLoadUpperPlaneModels(plane);
+	}
+
+	public boolean canRollSurfaceWindow(int plane, int sectionX, int sectionZ) {
+		return surfaceCollisionScope() != null && matchesPreparedLocalTerrain(pendingLocalTerrain, plane, sectionX, sectionZ)
+			&& surfaceCollision.hasIncomingWindow(sectionToLocalBaseTile(sectionX) - syntheticDeepFixtureOffsetX,
+				sectionToLocalBaseTile(sectionZ) - syntheticDeepFixtureOffsetZ)
+			&& WholeOverworldRamRegistry.forWorld(this, nativeLayeredTerrainSnapshot) == null;
 	}
 
 	private static final class PreparedLocalTerrain {
@@ -5152,6 +5162,10 @@ public final class World {
 	}
 
 	public final void loadSections(int worldX, int worldZ, int plane) {
+		loadSections(worldX, worldZ, plane, false);
+	}
+
+	public void loadSections(int worldX, int worldZ, int plane, boolean retainScenery) {
 		try {
 			if (surfaceCollision != null) surfaceCollision.detachView();
             WholeOverworldRamRegistry.Provider ram=WholeOverworldRamRegistry.forWorld(this,nativeLayeredTerrainSnapshot);
@@ -5162,7 +5176,8 @@ public final class World {
 			long loadStart = WorldStreamManager.now();
 			long transitionStart = System.nanoTime();
 			long phaseStart = System.nanoTime();
-			this.resetModels();
+			if (retainScenery) this.retireTerrainModels();
+			else this.resetModels();
 			this.nativeTerrainAuthorityOnlyActive =
 				this.shouldUseNativeTerrainAuthorityOnly();
 			long resetNanos = System.nanoTime() - phaseStart;
@@ -5243,6 +5258,20 @@ public final class World {
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "k.L(" + worldX + ',' + "dummy" + ',' + worldZ + ',' + plane + ')');
 		}
+	}
+
+	private void retireTerrainModels() {
+		RSModel[] retired = new RSModel[MODEL_GRID_COUNT * 9];
+		System.arraycopy(modelLandscapeGrid, 0, retired, 0, MODEL_GRID_COUNT);
+		int offset = MODEL_GRID_COUNT;
+		for (int plane = 0; plane < 4; plane++) {
+			System.arraycopy(modelWallGrid[plane], 0, retired, offset, MODEL_GRID_COUNT);
+			offset += MODEL_GRID_COUNT;
+			System.arraycopy(modelRoofGrid[plane], 0, retired, offset, MODEL_GRID_COUNT);
+			offset += MODEL_GRID_COUNT;
+		}
+		scene.removeModels(retired, offset);
+		clearTerrainModelGrids();
 	}
 
     public boolean isWholeRamSourceBasisSupported(){return WorldBuilderTerrainBootstrap.isNativeOnly()&&shouldUseNativeTerrainAuthorityOnly()&&Math.floorMod(syntheticDeepFixtureOffsetX,48)==0&&Math.floorMod(syntheticDeepFixtureOffsetZ,48)==0;}
@@ -6041,23 +6070,18 @@ public final class World {
 
 	private void resetModels() {
 		try {
-			boolean removeAllObjectsOnReset = true;
-			if (removeAllObjectsOnReset)
-				this.scene.removeAllGameObjects(false);
-
-
-			for (int j = 0; j < MODEL_GRID_COUNT; ++j) {
-				this.modelLandscapeGrid[j] = null;
-
-				int i;
-				for (i = 0; i < 4; ++i)
-					this.modelWallGrid[i][j] = null;
-
-				for (i = 0; i < 4; ++i)
-					this.modelRoofGrid[i][j] = null;
-			}
+			this.scene.removeAllGameObjects(false);
+			clearTerrainModelGrids();
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "k.G(" + -10185 + ')');
+		}
+	}
+
+	private void clearTerrainModelGrids() {
+		Arrays.fill(modelLandscapeGrid, null);
+		for (int plane = 0; plane < 4; plane++) {
+			Arrays.fill(modelWallGrid[plane], null);
+			Arrays.fill(modelRoofGrid[plane], null);
 		}
 	}
 

@@ -47,6 +47,7 @@ def main():
     parser.add_argument('--persistent-movement', action='store_true', help='Use the private movement stream independent of the terrain center')
     parser.add_argument('--persistent-collision', action='store_true', help='Publish world-addressed collision cells and live contributors')
     parser.add_argument('--surface-scenery-cells', action='store_true', help='Receive complete viewer-authorized incoming scenery cells')
+    parser.add_argument('--rolling-surface-window', action='store_true', help='Preserve overlapping world instances when the playable window moves')
     parser.add_argument('--manual', action='store_true', help='Keep the route available for a manual login and walk')
     parser.add_argument('--tcp-port', type=int, help='Override the private game port together with --ws-port')
     parser.add_argument('--ws-port', type=int, help='Override the private WebSocket port together with --tcp-port')
@@ -65,6 +66,8 @@ def main():
         parser.error('Incoming scenery preparation requires the ownership strips')
     if args.surface_scenery_cells and not (args.persistent_collision and args.persistent_movement):
         parser.error('Surface scenery cells require persistent collision and movement')
+    if args.rolling_surface_window and not args.surface_scenery_cells:
+        parser.error('Rolling surface windows require live scenery cells')
     tcp_port, ws_port = (TRACE_TCP_PORT, TRACE_WS_PORT) if args.trace else (TCP_PORT, WS_PORT)
     if args.manual:
         tcp_port, ws_port = MANUAL_TCP_PORT, MANUAL_WS_PORT
@@ -104,6 +107,7 @@ def main():
            f'        System.setProperty("spoiledmilk.persistentMovementPreview", "{str(args.persistent_movement).lower()}");\n'
            f'        System.setProperty("spoiledmilk.persistentSurfaceCollision", "{str(args.persistent_collision).lower()}");\n'
            f'        System.setProperty("spoiledmilk.surfaceSceneryCells", "{str(args.surface_scenery_cells).lower()}");\n'
+           f'        System.setProperty("spoiledmilk.rollingSurfaceWindow", "{str(args.rolling_surface_window).lower()}");\n'
            f'        System.setProperty("spoiledmilk.sustainedBrowserWalk", "{str(args.sustained_walk).lower()}");\n'
            f'        System.setProperty("spoiledmilk.predictedSceneryPreview", "{str(args.predicted_scenery).lower()}");')
     if not args.manual:
@@ -182,6 +186,7 @@ def main():
         'persistentMovement': args.persistent_movement,
         'persistentCollision': args.persistent_collision,
         'surfaceSceneryCells': args.surface_scenery_cells,
+        'rollingSurfaceWindow': args.rolling_surface_window,
         'sustainedWalk': args.sustained_walk,
         'tcpPort': tcp_port, 'websocketPort': ws_port,
         'url': f'http://127.0.0.1:{args.http_port}/?mode=webgl',
