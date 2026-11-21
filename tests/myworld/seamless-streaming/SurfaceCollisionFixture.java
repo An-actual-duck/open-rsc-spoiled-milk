@@ -1,5 +1,7 @@
 package orsc.graphics.three;
 
+import java.util.Collections;
+
 public final class SurfaceCollisionFixture {
 	public static void main(String[] args) {
 		SurfaceCollisionCells cells = new SurfaceCollisionCells();
@@ -32,6 +34,15 @@ public final class SurfaceCollisionFixture {
 		check(cells.terrainFlags(47, 60) == CollisionFlag.WALL_WEST, "incoming snapshot kept active terrain");
 		cells.stage("signed-surface", incoming);
 		check(cells.incomingCells() == 3, "identical cells were retained");
+		check(!cells.hasIncomingWindow(48, 0), "terrain alone cannot roll the interactive window");
+		cells.publishIncomingScenery(3, 0, 1, Collections.emptyList());
+		cells.publishIncomingScenery(3, 1, 1, Collections.emptyList());
+		check(!cells.hasIncomingWindow(48, 0), "an incomplete entering strip is unavailable");
+		cells.publishIncomingScenery(3, 2, 1, Collections.emptyList());
+		check(cells.hasIncomingWindow(48, 0), "explicit empty scenery completes all three terrain cells");
+		check(!cells.hasIncomingWindow(48, 48) && !cells.hasIncomingWindow(-48, 0), "wrong edge cannot reuse readiness");
+		cells.invalidateIncomingScenery(3, 1);
+		check(!cells.hasIncomingWindow(48, 0), "replacement revision must complete before rolling");
 
 		cells.wall(5, 85, 0, 0, true);
 		cells.detachView();

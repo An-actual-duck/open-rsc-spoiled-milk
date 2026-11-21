@@ -496,6 +496,36 @@ python3 tests/myworld/seamless-streaming/prepare-browser-outer-preview.py <fresh
   --trace --travel-trace --persistent-movement --persistent-collision --surface-scenery-cells
 ```
 
+## Rolling the interactive surface window
+
+The private `--rolling-surface-window` path uses the prepared terrain
+projection when the walking context moves by one cardinal cell and all
+three incoming terrain and scenery cells are present. It prunes outgoing
+placements and retires the old terrain models. Overlapping game objects and
+walls keep their instances, picking indices are remapped during compaction,
+and collision contributors remain keyed to their world tiles. The camera,
+existing actors and their queued waypoints, and local effects use the
+same origin change. The server's normal ordered scenery deltas still add
+entering interactive instances and confirm them with the scene fence.
+
+A fresh Firefox run at `3540125f5` kept 692 overlapping scenery model
+references and 53 wall model references at the same world coordinates
+and retained the local actor object. The picking indices agreed with the
+compacted lists. The server's two scene fences matched. The walk reached
+`(291, 597)` in the entering strip and returned to `(252, 609)` under
+one travel session, with 562 movement receipts and zero dropped for
+missing terrain coverage. The client and focused collision tests also
+check that a partial or stale strip cannot qualify for the rolling path.
+
+The browser still held 18 frames at the first crossing and reported
+37 chunk uploads totaling 88.4 MB. The renderer still draws a merged
+center mesh that changes identity when the origin moves. The next
+implementation work is to use fixed world cells in actual gameplay
+frames and keep the same GPU buffers for the overlap. Entering draw cells
+must be admitted ahead of the origin change. Once that is proven, the
+walking path can use the current live presentation instead of triggering
+the whole-scene browser readiness gate.
+
 ## Reproduce the private preview
 
 Build with `./scripts/build-client.sh` and `./scripts/build-server.sh` from the
