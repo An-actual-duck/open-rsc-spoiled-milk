@@ -7,17 +7,19 @@ final class PersistentMovementReceipt {
 	private int anchor;
 	private int sequence;
 
-	boolean accept(int incomingGeneration, int incomingAnchor, int incomingSequence, int activeScene) {
-		if (incomingGeneration <= 0 || incomingAnchor <= 0 || incomingGeneration < generation) {
-			return false;
-		}
-		if (incomingGeneration == generation) {
-			if (incomingAnchor != anchor || incomingSequence - sequence <= 0) return false;
-		} else if (activeScene != incomingAnchor) {
+	boolean open(int incomingGeneration, int incomingAnchor, int incomingSequence, int activeScene) {
+		if (incomingGeneration <= generation || incomingAnchor <= 0 || activeScene != incomingAnchor) {
 			return false;
 		}
 		generation = incomingGeneration;
 		anchor = incomingAnchor;
+		sequence = incomingSequence;
+		return true;
+	}
+
+	boolean accept(int incomingGeneration, int incomingAnchor, int incomingSequence) {
+		if (generation == 0 || generation != incomingGeneration || anchor != incomingAnchor
+			|| incomingSequence - sequence <= 0) return false;
 		sequence = incomingSequence;
 		return true;
 	}

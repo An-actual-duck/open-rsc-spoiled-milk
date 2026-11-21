@@ -3480,7 +3480,7 @@ public final class GameStateUpdater {
 			1 + struct.players.size() + struct.npcs.size(),
 			MOVEMENT_SNAPSHOT_FIXED_PAYLOAD_BYTES
 				+ (layeredProtocol ? LAYERED_CONTEXT_SEQUENCE_BYTES : 0)
-				+ (independent ? Integer.BYTES : 0)
+				+ (independent ? Integer.BYTES + 1 : 0)
 				+ ((struct.players.size() + struct.npcs.size()) * MOVEMENT_SNAPSHOT_MOB_RECORD_BYTES));
 		return true;
 	}
@@ -3500,9 +3500,22 @@ public final class GameStateUpdater {
 		final TravelBaseline previous = player.getAttribute(TRAVEL_BASELINE_ATTRIBUTE, null);
 		if (previous != null && previous.relocation == relocation) return;
 		final int generation = Math.addExact(player.getAttribute(TRAVEL_GENERATION_ATTRIBUTE, 0), 1);
+		final int anchor = requireLayeredSceneContextSequence(player);
+		// Queue an initial receipt with the baseline so an idle player can cross a
+		// terrain revision before the first fast movement tick of this lifetime.
+		MovementSnapshotStruct start = new MovementSnapshotStruct();
+		start.protocolVersion = MovementSnapshotStruct.INDEPENDENT_TRAVEL_VERSION;
+		start.locationContextSequence = anchor;
+		start.travelGeneration = generation;
+		start.opensTravel = true;
+		start.serverTick = (int)(getServer().getCurrentTick() & 0x7FFFFFFF);
+		start.sequence = ++movementSnapshotSequence;
+		start.localX = player.getX();
+		start.localY = player.getY();
+		start.localSprite = player.getSprite();
+		if (!tryFinalizeAndSendPacketChecked(OpcodeOut.SEND_MOVEMENT_SNAPSHOT, start, player)) return;
 		player.setAttribute(TRAVEL_GENERATION_ATTRIBUTE, generation);
-		player.setAttribute(TRAVEL_BASELINE_ATTRIBUTE, new TravelBaseline(
-			generation, requireLayeredSceneContextSequence(player), relocation));
+		player.setAttribute(TRAVEL_BASELINE_ATTRIBUTE, new TravelBaseline(generation, anchor, relocation));
 	}
 
 	private static final class TravelBaseline {

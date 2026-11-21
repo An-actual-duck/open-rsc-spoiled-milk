@@ -77,11 +77,23 @@ def run_walk(run, driver_port):
             result = evaluate('return {events:' + ROUTE_EVENTS + ''',browserEvents:p.events,runtime:p.state, reason:p.stopReason,
                 region:p.regionHandoff, travel:p.gpu?.travelTrace, stream:p.gpu?.worldStreamSamples,
                 display:p.gpu?.display, visibility:w.document.visibilityState, timeOrigin:w.performance.timeOrigin};''')
-            result['serverStatus'] = json.loads((run / 'status.json').read_text())
-            (run / 'firefox-result.json').write_text(json.dumps(result, indent=2) + '\n')
-            print(result['serverStatus'], result.get('stream'), flush=True)
             route = 'persistent-movement' if fixture.get('persistentMovement') else 'sustained'
             completed = any(event['message'] == 'outer-coverage:complete:' + route for event in result['events'])
+            server_status = json.loads((run / 'status.json').read_text())
+            if completed and fixture.get('persistentMovement'):
+                arrival = next(event['message'] for event in reversed(result['events'])
+                               if event['message'].startswith('outer-coverage:arrived:'))
+                destination = tuple(map(int, arrival.rsplit(':', 1)[1].split(',')))
+                for _ in range(30):
+                    server_status = json.loads((run / 'status.json').read_text())
+                    if (server_status.get('x'), server_status.get('y')) == destination:
+                        break
+                    time.sleep(.1)
+                else:
+                    completed = False
+            result['serverStatus'] = server_status
+            (run / 'firefox-result.json').write_text(json.dumps(result, indent=2) + '\n')
+            print(result['serverStatus'], result.get('stream'), flush=True)
             return 0 if completed else 1
         finally:
             if session:

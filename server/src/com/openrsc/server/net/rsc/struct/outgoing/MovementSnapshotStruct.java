@@ -11,6 +11,7 @@ public class MovementSnapshotStruct extends AbstractStruct<OpcodeOut> {
 	public int protocolVersion;
 	public int locationContextSequence;
 	public int travelGeneration;
+	public boolean opensTravel;
 	public int serverTick;
 	public int sequence;
 	public int localX;

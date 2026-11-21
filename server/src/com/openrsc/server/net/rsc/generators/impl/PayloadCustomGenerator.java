@@ -991,6 +991,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					}
 					if (movementSnapshot.protocolVersion == MovementSnapshotStruct.INDEPENDENT_TRAVEL_VERSION) {
 						builder.writeInt(movementSnapshot.travelGeneration);
+						builder.writeByte((byte) (movementSnapshot.opensTravel ? 1 : 0));
 					}
 					builder.writeInt(movementSnapshot.serverTick);
 					builder.writeInt(movementSnapshot.sequence);

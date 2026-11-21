@@ -3202,11 +3202,12 @@ public class PacketHandler {
 	}
 
 	private void updatePersistentMovementSnapshot(int length) {
-		if (length - packetsIncoming.packetEnd < 25) {
+		if (length - packetsIncoming.packetEnd < 26) {
 			throw new IllegalArgumentException("Incomplete travel movement header");
 		}
 		int anchor = packetsIncoming.get32();
 		int generation = packetsIncoming.get32();
+		int opensTravel = packetsIncoming.getUnsignedByte();
 		int tick = packetsIncoming.get32();
 		int sequence = packetsIncoming.get32();
 		MovementSnapshotStage.Frame frame = new MovementSnapshotStage.Frame(
@@ -3228,10 +3229,15 @@ public class PacketHandler {
 			frame.addNpc(packetsIncoming.getShort(), packetsIncoming.getShort(),
 				packetsIncoming.getShort(), packetsIncoming.getUnsignedByte());
 		}
-		if (!layeredSceneContextState.hasContext() || nativeTerrainRecovery.isPending()
-			|| !persistentMovement.accept(generation, anchor, sequence, layeredSceneContextState.getSequence())) {
+		if (opensTravel > 1 || opensTravel == 1 && (players != 0 || npcs != 0)) {
+			throw new IllegalArgumentException("Invalid travel movement baseline");
+		}
+		if (!layeredSceneContextState.hasContext() || nativeTerrainRecovery.isPending()) return;
+		if (opensTravel == 1) {
+			persistentMovement.open(generation, anchor, sequence, layeredSceneContextState.getSequence());
 			return;
 		}
+		if (!persistentMovement.accept(generation, anchor, sequence)) return;
 		if (frame.applyToInstalledTerrain(mc)) {
 			persistentMovementApplied++;
 			MovementTimingDiagnostics.recordMovementSnapshot(tick, sequence, players, npcs);
